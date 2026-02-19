@@ -4,290 +4,194 @@
 
 ## Tech Debt
 
-**Unimplemented API Features:**
-- Issue: DataForSEO balance checking endpoint is stubbed but not implemented
-- Files: `src/integrations/dataforseo/client.ts` (line 379)
-- Impact: Cannot monitor API credit usage or predict when credits will run out. Risk of silent failures when balance reaches zero.
-- Fix approach: Implement the `getAccountBalance()` function to call `GET https://api.dataforseo.com/v3/appendix/user_data` and expose balance monitoring in the control plane or alerts system.
+**Unimplemented DataForSEO Balance Checking:**
+- Issue: `getAccountBalance()` function is stubbed and returns null
+- Files: `src/integrations/dataforseo/client.ts` (line 375-383)
+- Impact: Cannot monitor API cost consumption or detect budget exhaustion, leading to unexpected service disruptions
+- Fix approach: Implement the DataForSEO `/v3/appendix/user_data` endpoint integration to query account balance and remaining credits
 
-**Orphaned Backup Files in Codebase:**
-- Issue: Multiple `._*.ts` files present in `src/skills/rd-scout/` directory (e.g., `._types.ts`, `._index.ts`, `._cross-reference.ts`)
-- Files: `src/skills/rd-scout/scrapers/._types.ts`, `src/skills/rd-scout/analysis/._index.ts`, `src/skills/rd-scout/reports/._types.ts`, and others
-- Impact: File bloat, potential confusion about which files are active. These appear to be Mac OS resource forks or backup files.
-- Fix approach: Remove all `._*.ts` files from the repository. These are likely generated artifacts from file operations on macOS and should not be committed.
-
-**Large Monolithic Files:**
-- Issue: Several files exceed 380+ lines, suggesting consolidated responsibilities
-- Files affected:
-  - `src/skills/rd-scout/reports/template.ts` (589 lines) - Report template generation
-  - `src/skills/rd-scout/scrapers/alibaba.ts` (442 lines) - Alibaba scraping logic
-  - `src/skills/rd-scout/pipeline.ts` (389 lines) - Pipeline orchestration
-  - `src/governance/control-plane.ts` (386 lines) - Governance logic
-  - `src/telegram/notifications.ts` (384 lines) - Notification system
-- Impact: Difficult to test, reason about, and maintain. High risk of introducing bugs during refactoring.
-- Fix approach: Break down largest files into smaller modules by concern (e.g., split template.ts by report section type, split control-plane.ts by responsibility domain).
-
----
-
-## Known Bugs
-
-**Unhandled JSON Parsing in Task Processor:**
-- Issue: `processNextTask()` parses `task.input_json` without try-catch
-- Files: `src/agent/processor.ts` (line 88)
-- Code: `const input = task.input_json ? JSON.parse(task.input_json) : {};`
-- Trigger: Malformed JSON in `input_json` column of tasks table
-- Impact: Crashes task processor loop, stops all task processing until restart
-- Workaround: Ensure database constraints or validation before inserting tasks. Monitor error logs.
-- Fix approach: Wrap JSON.parse in try-catch, mark task as failed with error message if parsing fails.
-
-**Alibaba HTML Parsing Relies on Fragile Regex Patterns:**
-- Issue: Alibaba scraper uses regex fallback after JSON-LD parsing fails
-- Files: `src/skills/rd-scout/scrapers/alibaba.ts` (lines 165-200+)
-- Pattern: `/div[^>]*class="[^"]*organic-list[^"]*"` and similar patterns
-- Trigger: Alibaba changes HTML structure or class names
-- Impact: Scraper silently returns empty results when patterns don't match. No error raised, just silent failure.
-- Workaround: Monitor scraping results; if many tasks return zero Alibaba products, HTML structure likely changed.
-- Fix approach: Add logging when regex patterns fail to match. Implement fallback to alternative selectors or page structure detection.
-
-**Missing Error Handling in Skill Execution Default Path:**
-- Issue: `classifyTask()` defaults to 'general' skill when classification fails
-- Files: `src/agent/coordinator.ts` (lines 97-105)
-- Code: Returns hardcoded general task without escalating the error
-- Trigger: Invalid JSON from classifier, API timeout, or classifier response format change
-- Impact: Tasks are silently downgraded to 'general' skill even if they require specialized handling. No audit trail of the failure.
-- Workaround: Monitor task success rates by skill type. 'general' skill tasks with high error rates indicate classifier issues.
-- Fix approach: Log the original error and returned default explicitly. Consider failing the task instead of silently downgrading.
-
----
-
-## Security Considerations
-
-**Environment Variable Exposure Risk:**
-- Risk: Multiple environment variables read throughout codebase without centralized validation
-- Files affected: 76 occurrences across 28 files including:
-  - `src/index.ts` - `PORT`, `ENABLE_TASK_PROCESSOR`, `ANTHROPIC_API_KEY`, `TASK_POLL_INTERVAL`
-  - `src/integrations/dataforseo/client.ts` - `DATAFORSEO_LOGIN`, `DATAFORSEO_PASSWORD`
-  - `src/integrations/scraperapi/client.ts` - `SCRAPERAPI_KEY`
-  - `src/governance/circuit-breaker.ts` - `TELEGRAM_ADMIN_CHAT_ID`
-- Current mitigation: Logging module has PII redaction (`src/governance/logger.ts`), but PII redaction only covers known patterns (emails, phones, SSNs, IPs)
-- Recommendations:
-  - Centralize all environment variable reading into a single `src/config/env.ts` file with validation
-  - Use schema validation (zod) to ensure all required vars are present and type-correct
-  - Ensure all API keys default to safe values or throw early if missing
-  - Audit PII redaction patterns to include API key formats (base64, sk-*, etc.)
-
-**Credentials in Error Messages:**
-- Risk: API error messages may leak credentials or sensitive data
-- Files affected: All external API clients (`src/integrations/`)
-- Mitigation needed: Redact error messages before logging
-- Fix approach: Implement `sanitizeErrorMessage()` utility that redacts common secret patterns before error logging.
-
-**Control Plane Singleton Not Thread-Safe:**
-- Risk: Agent control plane is a singleton with mutable state that could be accessed concurrently
-- Files: `src/governance/control-plane.ts` (lines 69-77)
-- State: `globalKillSwitch`, `agentEnabled`, `recentActions` maps
-- Trigger: Multiple concurrent task processors or API requests
-- Impact: Race conditions on state checks could allow blocked actions to execute
-- Current mitigation: better-sqlite3 uses WAL mode and foreign keys enabled, but JavaScript is single-threaded. Node.js event loop may not guarantee atomicity.
-- Recommendations: Add explicit locking mechanism or ensure all state mutations are atomic database operations rather than in-memory.
-
----
-
-## Performance Bottlenecks
-
-**Blocking JSON Parsing in Scrapers:**
-- Problem: Alibaba scraper uses synchronous JSON parsing in a loop during HTML parsing
-- Files: `src/skills/rd-scout/scrapers/alibaba.ts` (line 133)
-- Code: `const data = JSON.parse(jsonLdMatch[1])` inside while loop
-- Current capacity: Can handle ~100-200 products per scrape, but performance degrades with larger pages
-- Cause: JSON parsing happens on every JSON-LD block found in HTML, and malformed JSON is silently caught
-- Improvement path:
-  - Cache parsed JSON-LD results to avoid reparsing
-  - Use streaming JSON parser for large documents
-  - Profile actual parsing time with real Alibaba HTML
-
-**API Rate Limiting Not Coordinated Across Skills:**
-- Problem: Rate limiter is per-action, but multiple skills may hit same external API simultaneously
-- Files: `src/governance/rate-limiter.ts`, multiple skill implementations
-- Current capacity: 20 high-risk requests/hour, but no request pooling or batching
-- Cause: Each skill independently calls external APIs without coordinating on shared rate limits
-- Scaling path:
-  - Implement request queue per external API with adaptive rate limiting
-  - Track actual API response times to predict failures earlier
-  - Add API credit/cost estimation before executing requests
-
-**Circuit Breaker Timeout Too Long for Some Endpoints:**
-- Problem: ScraperAPI circuit breaker has 30 second timeout
-- Files: `src/integrations/scraperapi/client.ts` (line 192)
-- Current threshold: 30000ms, but this may cause cascading failures if many concurrent scrapes timeout
-- Improvement path: Reduce timeout to 15-20 seconds and implement request queuing instead of parallel scraping
-
----
-
-## Fragile Areas
-
-**HTML Parsing Architecture:**
-- Files: `src/skills/rd-scout/scrapers/alibaba.ts`, `src/skills/rd-scout/scrapers/amazon.ts`
-- Why fragile: Relies on regex patterns and JSON-LD extraction from HTML. No parsing library used. Direct dependency on external site structure.
-- Safe modification:
-  - Add comprehensive logging when patterns fail to match
-  - Implement version detection or hash-based structure validation
-  - Create test fixtures with real HTML samples from target sites
-  - Add fallback detection that alerts on structure changes
-- Test coverage: No unit tests found for scraper logic. Integration tests would need live site access.
-
-**Price Parsing Logic:**
-- Files: `src/skills/rd-scout/scrapers/alibaba.ts` (line 74), `src/skills/rd-scout/scrapers/amazon.ts` (line 153)
-- Why fragile: Hardcoded currency symbol stripping and regex patterns. Different currencies/formats not handled.
-- Example: `priceText.replace(/[^\d.\-–]/g, ' ')` assumes Western numerals and specific dash types
-- Safe modification:
-  - Add explicit currency detection before parsing
-  - Handle international number formats (e.g., European 1.000,00)
-  - Create comprehensive test suite with real pricing data from multiple regions
-  - Log when price parsing fails instead of silently returning 0
-
-**Database Transaction Race Condition in Task Pickup:**
-- Files: `src/db/repositories/tasks.ts` (line 81+)
-- Why fragile: `getNextPendingTask()` marks tasks as 'running' in a transaction, but if two processors call simultaneously, one succeeds and one gets null silently
-- Safe modification:
-  - Verify transaction isolation level is SERIALIZABLE
-  - Add retry logic with exponential backoff for failed pickups
-  - Add audit trail of task pickup attempts
-  - Monitor for tasks that stay 'running' forever (hung processors)
-
----
-
-## Scaling Limits
-
-**SQLite Concurrency Bottleneck:**
-- Current capacity: SQLite WAL mode allows multiple readers and one concurrent writer
-- Limit: If multiple task processors run simultaneously, write contention will create slowdown at ~10+ writers
-- Scaling path:
-  - Migrate to PostgreSQL or similar for true concurrent writes (at 50+ task processors)
-  - Implement connection pooling and prepared statement caching
-  - Add indexes on frequently queried columns (status, skill_id, created_at)
-
-**External API Credit Depletion Unmonitored:**
-- Current capacity: ScraperAPI and DataForSEO are quota-based. No cost tracking or alerts.
-- Limit: Unimplemented `getAccountBalance()` means no proactive warning before hitting limits
-- Scaling path:
-  - Implement cost tracking per skill and per request
-  - Add predictive alerts when burn rate suggests depleting quota within N days
-  - Implement request budgeting per skill (e.g., max 100 Amazon scrapes/day)
-  - Add cost comparison to decide when to use cached vs. fresh data
-
-**In-Memory Rate Limiter State Not Persistent:**
-- Current capacity: `rate-limiter-flexible` stores state in-memory only
-- Limit: If process restarts, all rate limit state is lost. No way to coordinate rate limits across multiple instances.
-- Scaling path:
-  - Migrate rate limiter state to Redis or database
-  - Implement distributed rate limiting for multi-instance deployments
-  - Add metrics export to monitor limit consumption
-
----
-
-## Dependencies at Risk
-
-**Unspecified Node.js Version:**
-- Risk: No `.nvmrc` file and `package.json` engines field not visible in package contents
-- Impact: Developers may use incompatible Node versions, causing build failures or runtime issues
-- Migration plan: Add `.nvmrc` file pinning to specific LTS version (e.g., 20.11.0). Add `engines` field to `package.json`.
-
-**Stale Model Versions in Coordinator:**
-- Risk: Hardcoded model IDs may become outdated
-- Files: `src/agent/coordinator.ts` (lines 44-48)
-- Models:
-  - `claude-haiku-3-5-20241022` (October 2024)
-  - `claude-sonnet-4-20250514` (May 2025)
-  - `claude-opus-4-5-20250514` (May 2025)
-- Impact: If models are deprecated/removed, all task classification and execution fails
-- Migration plan: Externalize model selection to environment variables. Implement model availability fallback logic.
-
----
-
-## Test Coverage Gaps
-
-**No Unit Tests for Core Scrapers:**
-- Untested functionality: HTML parsing logic, price extraction, product matching
-- Files: `src/skills/rd-scout/scrapers/alibaba.ts`, `src/skills/rd-scout/scrapers/amazon.ts`
-- Risk: Regex pattern failures, malformed price data, missing fields cause silent data loss
-- Priority: High - These are critical external data sources
-- Approach: Create fixture-based tests with real HTML samples. Mock ScraperAPI responses.
-
-**No Tests for Control Plane Decision Logic:**
-- Untested functionality: Governance gate checks, rate limiting, anomaly detection
-- Files: `src/governance/control-plane.ts`, `src/governance/rate-limiter.ts`, `src/governance/anomaly-detector.ts`
-- Risk: Incorrect permission checks could allow unauthorized actions. Rate limits could be bypassed.
-- Priority: Critical - Security-critical code path
-- Approach: Unit tests for each check function. Integration tests verifying kill switch blocks all actions.
-
-**No Tests for Task State Transitions:**
-- Untested functionality: Task pickup, completion, failure, retry logic
-- Files: `src/db/repositories/tasks.ts`, `src/agent/processor.ts`
-- Risk: Tasks could get stuck in invalid states (running forever, duplicate processing, orphaned tasks)
-- Priority: High - Affects system reliability
-- Approach: State machine tests covering all valid transitions and rejecting invalid ones.
-
-**No Tests for PII Redaction:**
-- Untested functionality: Pattern-based redaction of sensitive data
-- Files: `src/governance/pii-redactor.ts`
-- Risk: Sensitive patterns not in regex list could leak to logs (API keys, tokens, new PII types)
-- Priority: Critical - Security and compliance
-- Approach: Unit tests with comprehensive test data (emails, phones, SSNs, IPs, API keys, credit cards). Regression tests for any new patterns added.
-
-**No Integration Tests for End-to-End Pipeline:**
-- Untested flows: Full task from input → classification → execution → result storage
-- Risk: Failures in integration points (database writes after skill execution, concurrent access) only caught in production
-- Priority: High
-- Approach: Integration tests with real database and mocked external APIs. Test both success and failure paths.
-
-**No Load/Stress Tests:**
-- Untested capacity: System behavior under sustained high request load
-- Risk: Discover bottlenecks, race conditions, and resource leaks only in production
-- Priority: Medium - Important before scaling
-- Approach: Load tests targeting 100+ concurrent tasks, 10+ simultaneous scrapers, sustained API calls over 24 hours.
-
----
+**macOS File Artifacts in Source Tree:**
+- Issue: Numerous `._*` and `.*` hidden files (macOS metadata) committed to repository
+- Files:
+  - `src/integrations/xero/._draft.ts`
+  - `src/integrations/xero/._client.ts`
+  - `src/briefing/._alerts.ts`
+  - `src/briefing/._scheduler.ts`
+  - `src/db/migrations/._*.ts` (6+ files)
+  - `src/db/._migrations/`, `src/db/._repositories/`
+  - `src/agent/._executor.ts`, `src/agent/._coordinator.ts`
+- Impact: Pollutes repository with system files, complicates version control diffs, adds ~40KB of junk
+- Fix approach: Add to .gitignore (`._*`, `.AppleDouble`, `.DS_Store`), then remove from git history with BFG or interactive rebase
 
 ## Missing Critical Features
 
-**No Cost Monitoring or Budget Alerts:**
-- Problem: DataForSEO, ScraperAPI, and Anthropic API charges are not tracked or budgeted
-- Blocks: Cannot prevent accidental spending spikes. No way to enforce daily/monthly spending limits.
-- Priority: High
-- Approach:
-  - Implement cost tracking per skill and per request
-  - Add cost estimation before execution (e.g., "This scrape will cost $0.12")
-  - Implement request budget per skill with daily resets
-  - Send alerts when cumulative costs exceed threshold
+**DataForSEO Cost Monitoring:**
+- Problem: No mechanism to track or limit API spending on DataForSEO calls
+- Blocks: Cost-sensitive operations, budget compliance, preventing runaway expenses
+- Files: `src/integrations/dataforseo/client.ts`
+- Risk: Unlimited API calls could rapidly consume allocated budget without visibility
 
-**No Dead Letter Queue for Failed Tasks:**
-- Problem: Tasks that fail are marked as failed but never retried. No human inspection queue.
-- Blocks: Cannot recover from transient failures. Cannot debug failed tasks.
-- Priority: Medium
-- Approach:
-  - Implement exponential backoff retry with configurable max attempts
-  - Create manual review queue for failed tasks with detailed error context
-  - Add task re-submission API for ops team
+**Graceful Degradation for Optional Integrations:**
+- Problem: Webhook endpoints fail with 503 when secrets aren't configured (lines 115-121, 101-105)
+- Blocks: Running in degraded mode with some integrations disabled
+- Files:
+  - `src/integrations/clickup/webhook.ts` (line 115-121)
+  - `src/telegram/webhook.ts` (line 101-105)
+- Risk: Service becomes unavailable instead of accepting requests with reduced functionality
 
-**No Request Validation Before Execution:**
-- Problem: Task inputs are JSON.parse'd without validation against task schema
-- Blocks: Invalid inputs can cause skill execution errors. No clear error feedback to submitter.
-- Priority: Medium
-- Approach:
-  - Define input schema per skill using Zod
-  - Validate task input before marking as running
-  - Return validation errors to task submitter if possible
+## Test Coverage Gaps
 
-**No Observability Dashboard:**
-- Problem: No centralized view of agent health, request rates, error rates, cost
-- Blocks: Cannot quickly diagnose issues in production. No metrics for performance optimization.
-- Priority: Medium-High
-- Approach:
-  - Export metrics to Prometheus (request counts, error rates, latencies, cost)
-  - Build Grafana dashboards for real-time monitoring
-  - Set up alerts for error rate spikes, slow requests, cost overruns
+**No Unit Tests for Core Logic:**
+- What's not tested:
+  - `src/agent/processor.ts` (348 lines) - Task processing loop and risk classification
+  - `src/skills/rd-scout/pipeline.ts` (389 lines) - Research pipeline orchestration
+  - `src/governance/control-plane.ts` (386 lines) - Governance gate and decision logic
+  - `src/db/repositories/trustScores.ts` (353 lines) - Trust calculation algorithm
+- Files: Zero test files found in `src/` directory (0 `.test.ts` or `.spec.ts` files)
+- Risk: Critical agent decision-making untested; bugs in task processing, model selection, and trust scoring could propagate to production
+- Priority: HIGH - Agent autonomy decisions are irreversible
 
----
+**No Integration Tests:**
+- What's not tested: DataForSEO API interactions, ClickUp webhooks, Telegram command handling
+- Risk: External service integration failures only caught at runtime
+- Priority: HIGH - External API failures could cascade through system
 
-*Concerns audit: 2026-02-19*
+**No E2E Tests:**
+- What's not tested: Full task execution workflow from webhook through skill execution to completion
+- Risk: Unknown failure modes when systems interact
+
+## Fragile Areas
+
+**Large Monolithic Files Without Clear Separation:**
+- Files:
+  - `src/skills/rd-scout/reports/template.ts` (589 lines) - Single file with all HTML generation
+  - `src/skills/rd-scout/scrapers/alibaba.ts` (442 lines) - Mixed scraping logic and data mapping
+  - `src/skills/rd-scout/scrapers/amazon.ts` (329 lines) - Amazon scraper logic
+  - `src/integrations/dataforseo/client.ts` (383 lines) - Client + auth + retry logic bundled
+- Why fragile: Changes to one aspect (e.g., HTML styling) require understanding entire file; hard to unit test; difficult to reuse logic
+- Safe modification: Extract concerns into separate modules (e.g., `template-renderer.ts`, `scraper-base.ts`) before making changes
+- Test coverage: No tests to verify refactoring doesn't break behavior
+
+**Xero Draft Bill Creation with Hardcoded Defaults:**
+- Files: `src/integrations/xero/draft.ts` (line 74)
+- Issue: `XERO_DEFAULT_ACCOUNT_CODE` hardcoded to '400' (purchases) with no validation that account exists or is appropriate
+- Why fragile: If Xero chart of accounts differs between tenants, bills silently post to wrong account
+- Safe modification:
+  1. Add validation that account code exists in target Xero organization
+  2. Make account code configurable per supplier or organization
+  3. Add audit logging of account code used
+- Test coverage: No validation tests for account code handling
+
+**Webhook Signature Verification Timing:**
+- Files: `src/integrations/clickup/webhook.ts` (line 65-75)
+- Issue: Uses constant-time comparison but still has length check first (timing side-channel possible)
+- Why fragile: Signature bypass possible if timing correlates with signature length
+- Safe modification: Remove length check; constant-time comparison handles mismatched lengths
+- Current code still has safety but not optimal
+
+**Task Retry Logic Missing Exponential Backoff:**
+- Files: `src/db/repositories/tasks.ts` (line 82-112)
+- Issue: `getNextPendingTask()` will re-try failed tasks immediately without delay
+- Impact: Failed tasks hammer external services, cause cascading failures
+- Fix approach: Add `retry_delay_until` column to defer task retry; implement exponential backoff in task selection
+
+## Scaling Limits
+
+**Database Connection Pool Not Visible:**
+- Files: `src/db/connection.ts`
+- Current capacity: Unknown (using better-sqlite3 default)
+- Limit: better-sqlite3 is single-threaded; no connection pooling
+- Scaling path: For high-concurrency workloads, migrate to SQL.js or pooled connection via `sql.js` + worker threads, or switch to libsql (Turso) with connection pooling
+
+**Circuit Breaker Config Not Tunable Per-Service:**
+- Files: `src/governance/circuit-breaker.ts` (line 84)
+- Current: Hardcoded defaults (3s timeout, 50% error threshold, 5 request minimum)
+- Limit: DataForSEO (slow) and Xero (fast) both use same timeout; inappropriate thresholds cause premature circuit opens
+- Scaling path: Make circuit breaker config env-var per service name; add metrics for tuning
+
+**In-Memory Circuit Breaker Registry:**
+- Files: `src/governance/circuit-breaker.ts` (line 63)
+- Issue: `BREAKERS` map stored in memory; lost on process restart
+- Limit: Stats and recovery history not persisted across restarts
+- Scaling path: Persist breaker state to database or Redis; replay state on startup
+
+## Performance Bottlenecks
+
+**Alibaba Scraper Sequential Requests:**
+- Problem: Alibaba scraper (`src/skills/rd-scout/scrapers/alibaba.ts`) appears to fetch products sequentially
+- Files: `src/skills/rd-scout/scrapers/alibaba.ts`
+- Cause: No visible parallelization; each product requires separate request
+- Improvement path: Batch requests or use concurrent request queuing with rate limiting
+
+**Template Generation With String Concatenation:**
+- Problem: Report HTML generated via massive string template in `src/skills/rd-scout/reports/template.ts` (589 lines)
+- Files: `src/skills/rd-scout/reports/template.ts`
+- Cause: Inline styles + dynamic data + hardcoded HTML structure all in one function
+- Improvement path: Use template engine (handlebars, EJS) or move to React Server Components for better maintainability and reuse
+
+**No Caching of SEO Trend Analysis:**
+- Problem: SEO keyword trends fetched every time pipeline runs, even if data is fresh
+- Files: `src/skills/rd-scout/trends/seo.ts`
+- Impact: Unnecessary DataForSEO API calls consuming budget and adding latency
+- Improvement path: Cache results for 24-48 hours; invalidate on manual trigger
+
+## Dependencies at Risk
+
+**@anthropic-ai/sdk Version Pinning:**
+- Risk: Using `^0.74.0` (allows up to < 1.0.0); breaking changes possible with minor version bumps
+- Impact: Unexpected API changes in model selection, tool definitions, or response formats
+- Migration plan: Pin to exact version `0.74.0`, test new versions in separate branch before upgrading
+
+**Xero Node SDK Version Unknown:**
+- Risk: Version not visible in provided package.json
+- Impact: Could have security vulnerabilities or deprecated endpoints
+- Recommendation: Audit current version, consider pinning to tested version
+
+## Security Considerations
+
+**Webhook Secret Verification Graceful Degradation Risk:**
+- Risk: Service returns 503 instead of rejecting unsigned webhooks
+- Files: `src/integrations/clickup/webhook.ts` (line 116-119), `src/telegram/webhook.ts` (line 101-105)
+- Current mitigation: Logs warning, returns 503 to prevent retries
+- Recommendations:
+  1. Add configuration validation on startup to fail early if secrets missing in production
+  2. Add environment-specific checks (e.g., require secrets in production only)
+  3. Add metrics for unconfigured webhooks to alert ops
+
+**No Rate Limiting on Public Endpoints:**
+- Files: `src/index.ts` (line 27-64) - Simple router with no rate limiting
+- Risk: Webhook endpoints (`/clickup/webhook`, `/telegram/*`) vulnerable to DoS
+- Recommendations:
+  1. Add rate limiter middleware using `src/governance/rate-limiter.ts`
+  2. Implement per-endpoint limits (e.g., 100 req/min per webhook)
+  3. Add backpressure handling for overload scenarios
+
+**PII Redaction in Logs Missing Coverage:**
+- Files: `src/governance/pii-redactor.ts`
+- Risk: Email addresses, phone numbers, bank details logged in plaintext if not caught by redactor
+- Coverage gaps:
+  - Australian phone number pattern regex on line 60 only matches landlines (0X XXXX XXXX), misses mobiles
+  - No regex for Australian ABN/ACN numbers
+  - No regex for credit card patterns
+- Recommendations: Expand redaction patterns, add tests for common Australian financial data formats
+
+**Trust Score Calculation No Input Validation:**
+- Files: `src/db/repositories/trustScores.ts`
+- Risk: Division by zero or negative counts could cause calculation errors leading to incorrect autonomy levels
+- Recommendations: Add assertions for non-negative counts and valid reliability scores before calculation
+
+## Known Bugs
+
+**Timezone Handling Inconsistent:**
+- Symptoms: Created timestamps stored in UTC (ISO 8601) but displayed in local time without conversion
+- Files: `src/db/repositories/tasks.ts`, `src/governance/logger.ts` - timestamp generation
+- Trigger: Check logs at different timezones; timestamps appear to jump
+- Workaround: Always interpret timestamps as UTC
+
+**Task Status Transitions Not Validated:**
+- Symptoms: Tasks could be marked as failed then later marked as completed, overwriting error state
+- Files: `src/db/repositories/tasks.ts`
+- Trigger: Concurrent updates to same task ID (though transactions prevent most race conditions)
+- Cause: No check that new status is valid given current status
+- Fix: Add status transition validation function before updates
+
