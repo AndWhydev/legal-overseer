@@ -18,9 +18,9 @@ Requirements for Milestone 1. Each maps to roadmap phases.
 - [ ] **PLAT-07**: Domain bitbit.com.au pointed to Vercel with SSL
 - [ ] **PLAT-08**: Smoke test passes (login, kanban, chat, contacts, activity)
 - [ ] **PLAT-09**: Sample kanban tasks seeded for demo richness
-- [ ] **PLAT-10**: Anthropic API billing fixed (card updated)
-- [ ] **PLAT-11**: Stripe identity verification fixed (payouts unblocked)
-- [ ] **PLAT-12**: Meta Business Verification submitted (WhatsApp prep)
+- [ ] **PLAT-10**: Anthropic API billing fixed (card updated) — HUMAN TASK (Andy)
+- [ ] **PLAT-11**: Stripe identity verification fixed (payouts unblocked) — HUMAN TASK (Andy)
+- [ ] **PLAT-12**: Meta Business Verification submitted (WhatsApp prep) — HUMAN TASK (Andy)
 
 ### Semantic Context Engine
 
@@ -107,13 +107,47 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| (populated by roadmapper) | | |
+| PLAT-01 | Phase 1 — Platform Deploy | Pending |
+| PLAT-02 | Phase 1 — Platform Deploy | Pending |
+| PLAT-03 | Phase 1 — Platform Deploy | Pending |
+| PLAT-04 | Phase 1 — Platform Deploy | Pending |
+| PLAT-05 | Phase 1 — Platform Deploy | Pending |
+| PLAT-06 | Phase 1 — Platform Deploy | Pending |
+| PLAT-07 | Phase 1 — Platform Deploy | Pending |
+| PLAT-08 | Phase 1 — Platform Deploy | Pending |
+| PLAT-09 | Phase 1 — Platform Deploy | Pending |
+| PLAT-10 | Phase 1 — Platform Deploy | Pending (human task) |
+| PLAT-11 | Phase 1 — Platform Deploy | Pending (human task) |
+| PLAT-12 | Phase 1 — Platform Deploy | Pending (human task) |
+| AGNT-14 | Phase 1 — Platform Deploy | Pending |
+| SCTX-01 | Phase 2 — Schema Expansion | Pending |
+| SCTX-02 | Phase 2 — Schema Expansion | Pending |
+| SCTX-03 | Phase 2 — Schema Expansion | Pending |
+| SCTX-04 | Phase 2 — Schema Expansion | Pending |
+| AGNT-01 | Phase 2 — Schema Expansion | Pending |
+| AGNT-02 | Phase 2 — Schema Expansion | Pending |
+| AGNT-03 | Phase 2 — Schema Expansion | Pending |
+| AGNT-04 | Phase 2 — Schema Expansion | Pending |
+| AGNT-05 | Phase 2 — Schema Expansion | Pending |
+| AGNT-06 | Phase 2 — Schema Expansion | Pending |
+| AGNT-07 | Phase 2 — Schema Expansion | Pending |
+| AGNT-08 | Phase 2 — Schema Expansion | Pending |
+| AGNT-09 | Phase 2 — Schema Expansion | Pending |
+| AGNT-10 | Phase 2 — Schema Expansion | Pending |
+| SCTX-05 | Phase 3 — Semantic Context Engine | Pending |
+| SCTX-06 | Phase 3 — Semantic Context Engine | Pending |
+| SCTX-07 | Phase 3 — Semantic Context Engine | Pending |
+| SCTX-08 | Phase 3 — Semantic Context Engine | Pending |
+| SCTX-09 | Phase 3 — Semantic Context Engine | Pending |
+| AGNT-11 | Phase 4 — Agent Infrastructure | Pending |
+| AGNT-12 | Phase 4 — Agent Infrastructure | Pending |
+| AGNT-13 | Phase 4 — Agent Infrastructure | Pending |
 
 **Coverage:**
 - v1 requirements: 35 total
-- Mapped to phases: 0
-- Unmapped: 35 ⚠️
+- Mapped to phases: 35
+- Unmapped: 0 (coverage complete)
 
 ---
 *Requirements defined: 2026-02-19*
-*Last updated: 2026-02-19 after initial definition*
+*Last updated: 2026-02-19 — traceability populated after roadmap creation*

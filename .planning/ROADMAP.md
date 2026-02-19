@@ -1,0 +1,97 @@
+# Roadmap: BitBit AWU — Milestone 1
+
+## Overview
+
+Milestone 1 transforms a working codebase into a deployed, contextually intelligent platform for Andy at All Webbed Up. The journey moves from deployment (Andy can access the platform) through schema expansion (the data model that supports semantic understanding) to the semantic brain itself (entity-aware context assembly) and finally the agent infrastructure layer (registry, routing, shared tools). Each phase delivers a verifiable capability that unblocks the next. Human-required tasks (billing, verification) are tracked within Phase 1 as parallel blockers.
+
+## Phases
+
+**Phase Numbering:**
+- Integer phases (1, 2, 3): Planned milestone work
+- Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
+
+- [ ] **Phase 1: Platform Deploy** - BitBit deployed to Vercel with Supabase, AWU seeded, Andy live
+- [ ] **Phase 2: Schema Expansion** - All new DB migrations run with RLS policies
+- [ ] **Phase 3: Semantic Context Engine** - Entity relationships, timeline, context assembly, and fuzzy resolution operational
+- [ ] **Phase 4: Agent Infrastructure** - Registry, confidence routing, and shared CRUD tools wired in
+
+## Phase Details
+
+### Phase 1: Platform Deploy
+**Goal**: Andy can log in to a live BitBit instance with AWU data and chat with Claude
+**Depends on**: Nothing (first phase)
+**Requirements**: PLAT-01, PLAT-02, PLAT-03, PLAT-04, PLAT-05, PLAT-06, PLAT-07, PLAT-08, PLAT-09, PLAT-10, PLAT-11, PLAT-12, AGNT-14
+**Success Criteria** (what must be TRUE):
+  1. Andy can navigate to bitbit.com.au, log in, and see the kanban board with seeded AWU tasks
+  2. Andy can open the chat interface and receive a response from Claude (Anthropic API live)
+  3. Andy can browse the contacts view and see the 6 seeded AWU client contacts
+  4. @bitbit/core package exports resolve without errors (monorepo builds cleanly)
+  5. Supabase project is live in ap-southeast-2 with all 4 existing migrations applied and RLS active
+**Plans**: TBD
+
+Plans:
+- [ ] 01-01: Supabase project setup, migrations, seed data (PLAT-01 to PLAT-05, PLAT-09)
+- [ ] 01-02: Vercel deployment, domain, env vars (PLAT-06, PLAT-07, PLAT-08)
+- [ ] 01-03: Fix @bitbit/core exports and verify monorepo (AGNT-14)
+- [ ] 01-04: Human tasks — Anthropic billing, Stripe verification, Meta submission (PLAT-10, PLAT-11, PLAT-12)
+
+### Phase 2: Schema Expansion
+**Goal**: All 13 new database tables exist with RLS policies and the semantic context schema is designed
+**Depends on**: Phase 1
+**Requirements**: SCTX-01, SCTX-02, SCTX-03, SCTX-04, AGNT-01, AGNT-02, AGNT-03, AGNT-04, AGNT-05, AGNT-06, AGNT-07, AGNT-08, AGNT-09, AGNT-10
+**Success Criteria** (what must be TRUE):
+  1. All 9 agent migrations (005-013) run cleanly against the live Supabase project
+  2. entity_relationships, entity_timeline, and semantic_memories tables exist with correct columns
+  3. Every new table has RLS policies enforcing org_id scoping (no cross-org data leakage)
+  4. Supabase schema inspector shows all 25 tables (12 existing + 13 new) with correct foreign keys
+**Plans**: TBD
+
+Plans:
+- [ ] 02-01: Entity schema design and semantic context migrations (SCTX-01, SCTX-02, SCTX-03, SCTX-04)
+- [ ] 02-02: Agent infrastructure migrations 005-009 (AGNT-01 to AGNT-05)
+- [ ] 02-03: Agent infrastructure migrations 010-013 (AGNT-06 to AGNT-09)
+- [ ] 02-04: RLS policies for all new tables (AGNT-10)
+
+### Phase 3: Semantic Context Engine
+**Goal**: BitBit can resolve who an entity is, build its relationship graph, and assemble a context briefing for any query
+**Depends on**: Phase 2
+**Requirements**: SCTX-05, SCTX-06, SCTX-07, SCTX-08, SCTX-09
+**Success Criteria** (what must be TRUE):
+  1. When Andy says "Sezer", the system resolves to the correct contact via 5-step fuzzy match (exact alias → email → phone → partial name → phone variants)
+  2. Every CRUD action on a task, contact, or invoice automatically creates a corresponding entity_relationship record
+  3. Every channel message and task update writes a timestamped entry to entity_timeline
+  4. The context assembler returns a structured briefing (entity + relationships + timeline + memories) for a given query
+  5. Cross-reference engine returns related tasks, deadlines, and financial signals when queried with a contact or project entity
+**Plans**: TBD
+
+Plans:
+- [ ] 03-01: Relationship auto-linker and timeline writer (SCTX-05, SCTX-06)
+- [ ] 03-02: Entity resolution — 5-step fuzzy match (SCTX-08)
+- [ ] 03-03: Context assembler port from personal AGI + cross-reference engine (SCTX-07, SCTX-09)
+
+### Phase 4: Agent Infrastructure
+**Goal**: Agents can register themselves, route by confidence, and share a common CRUD toolset
+**Depends on**: Phase 3
+**Requirements**: AGNT-11, AGNT-12, AGNT-13
+**Success Criteria** (what must be TRUE):
+  1. An agent module can call self-register and appear in the agent registry without manual configuration
+  2. A task classified at 0.90 confidence executes immediately; at 0.65 it prompts Andy for approval; below 0.55 it escalates
+  3. Any agent can call the shared CRUD tools to read/write contacts, tasks, invoices, and messages without reimplementing DB access
+**Plans**: TBD
+
+Plans:
+- [ ] 04-01: Agent registry with self-registration (AGNT-11)
+- [ ] 04-02: Confidence routing (act / ask / escalate thresholds) (AGNT-12)
+- [ ] 04-03: Shared CRUD tool system (AGNT-13)
+
+## Progress
+
+**Execution Order:**
+Phases execute in numeric order: 1 → 2 → 3 → 4
+
+| Phase | Plans Complete | Status | Completed |
+|-------|----------------|--------|-----------|
+| 1. Platform Deploy | 0/4 | Not started | - |
+| 2. Schema Expansion | 0/4 | Not started | - |
+| 3. Semantic Context Engine | 0/3 | Not started | - |
+| 4. Agent Infrastructure | 0/3 | Not started | - |
