@@ -32,7 +32,7 @@ Milestone 1 transforms a working codebase into a deployed, contextually intellig
 Plans:
 - [ ] 01-01-PLAN.md — Supabase project setup, migrations, AWU seed data (PLAT-01 to PLAT-05, PLAT-09) [Wave 1]
 - [ ] 01-02-PLAN.md — Vercel deployment, domain, smoke test (PLAT-06, PLAT-07, PLAT-08) [Wave 2, depends on 01-01]
-- [ ] 01-03-PLAN.md — Fix @bitbit/core exports and verify monorepo (AGNT-14) [Wave 1]
+- [x] 01-03-PLAN.md — Fix @bitbit/core exports and verify monorepo (AGNT-14) [Wave 1]
 - [ ] 01-04-PLAN.md — Human tasks: Anthropic billing, Stripe, Meta verification (PLAT-10, PLAT-11, PLAT-12) [Wave 1]
 
 ### Phase 2: Schema Expansion

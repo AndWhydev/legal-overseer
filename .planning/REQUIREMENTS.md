@@ -49,7 +49,7 @@ Requirements for Milestone 1. Each maps to roadmap phases.
 - [ ] **AGNT-11**: Agent registry with self-registration pattern
 - [ ] **AGNT-12**: Confidence routing (act >0.85 / ask 0.55-0.85 / escalate <0.55)
 - [ ] **AGNT-13**: Shared CRUD tool system for all agents
-- [ ] **AGNT-14**: Fix @bitbit/core (audit exports, remove broken refs, verify monorepo resolution)
+- [x] **AGNT-14**: Fix @bitbit/core (audit exports, remove broken refs, verify monorepo resolution)
 
 ## v2 Requirements
 
@@ -119,7 +119,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PLAT-10 | Phase 1 — Platform Deploy | Pending (human task) |
 | PLAT-11 | Phase 1 — Platform Deploy | Pending (human task) |
 | PLAT-12 | Phase 1 — Platform Deploy | Pending (human task) |
-| AGNT-14 | Phase 1 — Platform Deploy | Pending |
+| AGNT-14 | Phase 1 — Platform Deploy | Complete |
 | SCTX-01 | Phase 2 — Schema Expansion | Pending |
 | SCTX-02 | Phase 2 — Schema Expansion | Pending |
 | SCTX-03 | Phase 2 — Schema Expansion | Pending |
