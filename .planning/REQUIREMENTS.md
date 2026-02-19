@@ -9,15 +9,15 @@ Requirements for Milestone 1. Each maps to roadmap phases.
 
 ### Platform Foundation
 
-- [ ] **PLAT-01**: Supabase project created (bitbit-awu, ap-southeast-2) with auth configured
-- [ ] **PLAT-02**: 4 existing migrations run (core schema, RLS, seed defaults, channels)
-- [ ] **PLAT-03**: AWU org seed SQL written and run (from config.ts)
-- [ ] **PLAT-04**: Andy's auth user created with profile linked to AWU org
-- [ ] **PLAT-05**: 6 AWU client contacts seeded
+- [x] **PLAT-01**: Supabase project created (bitbit-awu, ap-southeast-2) with auth configured
+- [x] **PLAT-02**: 4 existing migrations run (core schema, RLS, seed defaults, channels)
+- [x] **PLAT-03**: AWU org seed SQL written and run (from config.ts)
+- [x] **PLAT-04**: Andy's auth user created with profile linked to AWU org
+- [x] **PLAT-05**: 6 AWU client contacts seeded
 - [ ] **PLAT-06**: Vercel deployment with env vars (Supabase URL/keys, Anthropic key)
 - [ ] **PLAT-07**: Domain bitbit.com.au pointed to Vercel with SSL
 - [ ] **PLAT-08**: Smoke test passes (login, kanban, chat, contacts, activity)
-- [ ] **PLAT-09**: Sample kanban tasks seeded for demo richness
+- [x] **PLAT-09**: Sample kanban tasks seeded for demo richness
 - [x] **PLAT-10**: Anthropic API billing fixed (card updated) — HUMAN TASK (Andy)
 - [x] **PLAT-11**: Stripe identity verification fixed (payouts unblocked) — HUMAN TASK (Andy)
 - [x] **PLAT-12**: Meta Business Verification submitted (WhatsApp prep) — HUMAN TASK (Andy)
@@ -107,15 +107,15 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| PLAT-01 | Phase 1 — Platform Deploy | Pending |
-| PLAT-02 | Phase 1 — Platform Deploy | Pending |
-| PLAT-03 | Phase 1 — Platform Deploy | Pending |
-| PLAT-04 | Phase 1 — Platform Deploy | Pending |
-| PLAT-05 | Phase 1 — Platform Deploy | Pending |
+| PLAT-01 | Phase 1 — Platform Deploy | Complete |
+| PLAT-02 | Phase 1 — Platform Deploy | Complete |
+| PLAT-03 | Phase 1 — Platform Deploy | Complete |
+| PLAT-04 | Phase 1 — Platform Deploy | Complete |
+| PLAT-05 | Phase 1 — Platform Deploy | Complete |
 | PLAT-06 | Phase 1 — Platform Deploy | Pending |
 | PLAT-07 | Phase 1 — Platform Deploy | Pending |
 | PLAT-08 | Phase 1 — Platform Deploy | Pending |
-| PLAT-09 | Phase 1 — Platform Deploy | Pending |
+| PLAT-09 | Phase 1 — Platform Deploy | Complete |
 | PLAT-10 | Phase 1 — Platform Deploy | Pending (human task) |
 | PLAT-11 | Phase 1 — Platform Deploy | Pending (human task) |
 | PLAT-12 | Phase 1 — Platform Deploy | Pending (human task) |
