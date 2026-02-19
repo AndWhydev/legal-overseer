@@ -1,0 +1,199 @@
+'use client'
+
+import { useState, useCallback, useMemo } from 'react'
+import { Pill, ChevronLeft, ChevronRight } from 'lucide-react'
+import { MonthlyGrid } from '@/components/medications/monthly-grid'
+import { PillIcon } from '@/components/medications/pill-icon'
+import { february2026, medications, medicationMap } from '@/lib/medications/seed-data'
+import type { MonthData, DaySchedule } from '@/lib/medications/types'
+
+const MONTH_NAMES = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
+]
+
+export default function MedicationsPage() {
+  const [year, setYear] = useState(2026)
+  const [month, setMonth] = useState(1) // 0-indexed, 1 = February
+  const [monthData, setMonthData] = useState<MonthData>(february2026)
+
+  const prevMonth = () => {
+    if (month === 0) {
+      setMonth(11)
+      setYear(y => y - 1)
+    } else {
+      setMonth(m => m - 1)
+    }
+  }
+
+  const nextMonth = () => {
+    if (month === 11) {
+      setMonth(0)
+      setYear(y => y + 1)
+    } else {
+      setMonth(m => m + 1)
+    }
+  }
+
+  const handleToggleDose = useCallback((date: string, medicationId: string) => {
+    setMonthData(prev => prev.map(day => {
+      if (day.date !== date) return day
+      const meds = day.medications.map(m => {
+        if (m.medicationId !== medicationId) return m
+        return {
+          ...m,
+          taken: !m.taken,
+          takenAt: !m.taken ? new Date().toISOString() : undefined,
+        }
+      })
+      const allTaken = meds.every(m => m.taken)
+      const someTaken = meds.some(m => m.taken)
+      return {
+        ...day,
+        medications: meds,
+        status: meds.length === 0 ? 'empty' : allTaken ? 'complete' : someTaken ? 'partial' : 'pending',
+      } as DaySchedule
+    }))
+  }, [])
+
+  const handleTakeAll = useCallback((date: string) => {
+    setMonthData(prev => prev.map(day => {
+      if (day.date !== date) return day
+      const meds = day.medications.map(m => ({
+        ...m,
+        taken: true,
+        takenAt: m.takenAt || new Date().toISOString(),
+      }))
+      return { ...day, medications: meds, status: 'complete' } as DaySchedule
+    }))
+  }, [])
+
+  // Summary stats
+  const stats = useMemo(() => {
+    const completed = monthData.filter(d => d.status === 'complete').length
+    const total = monthData.filter(d => d.medications.length > 0).length
+    const totalDoses = monthData.reduce((sum, d) => sum + d.medications.reduce((s, m) => s + m.doses, 0), 0)
+    const takenDoses = monthData.reduce((sum, d) => sum + d.medications.filter(m => m.taken).reduce((s, m) => s + m.doses, 0), 0)
+    return { completed, total, totalDoses, takenDoses }
+  }, [monthData])
+
+  // Today's schedule
+  const todayStr = `${year}-${String(month + 1).padStart(2, '0')}-18`
+  const todaySchedule = monthData.find(d => d.date === todayStr)
+
+  return (
+    <div className="flex flex-col h-full">
+      {/* Header */}
+      <header className="flex items-center justify-between border-b border-border px-6 py-4">
+        <div className="flex items-center gap-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/15 text-primary">
+            <Pill className="h-5 w-5" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-semibold">Medications</h1>
+            <p className="text-sm text-muted-foreground">
+              {stats.completed}/{stats.total} days complete &middot; {stats.takenDoses}/{stats.totalDoses} doses taken
+            </p>
+          </div>
+        </div>
+
+        {/* Month selector */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={prevMonth}
+            className="rounded-lg p-1.5 text-text-secondary transition-colors hover:bg-elevated hover:text-foreground"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+          <span className="min-w-[140px] text-center text-sm font-medium">
+            {MONTH_NAMES[month]} {year}
+          </span>
+          <button
+            onClick={nextMonth}
+            className="rounded-lg p-1.5 text-text-secondary transition-colors hover:bg-elevated hover:text-foreground"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        </div>
+      </header>
+
+      {/* Content */}
+      <div className="flex-1 overflow-auto p-6">
+        <div className="flex gap-6">
+          {/* Main grid */}
+          <div className="flex-1 min-w-0">
+            <MonthlyGrid
+              monthData={monthData}
+              medications={medicationMap}
+              year={year}
+              month={month}
+              onToggleDose={handleToggleDose}
+              onTakeAll={handleTakeAll}
+            />
+          </div>
+
+          {/* Sidebar — Today's meds + inventory */}
+          <aside className="hidden xl:block w-72 shrink-0 space-y-4">
+            {/* Today's schedule */}
+            <div className="glass-card rounded-xl p-4">
+              <h3 className="text-sm font-medium text-foreground mb-3">
+                Today&apos;s Schedule
+              </h3>
+              {todaySchedule && todaySchedule.medications.length > 0 ? (
+                <div className="space-y-2.5">
+                  {todaySchedule.medications.map((dosage) => {
+                    const med = medicationMap[dosage.medicationId]
+                    if (!med) return null
+                    return (
+                      <button
+                        key={dosage.medicationId}
+                        onClick={() => handleToggleDose(todayStr, dosage.medicationId)}
+                        className="flex items-center gap-3 w-full rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-elevated"
+                      >
+                        <PillIcon style={med.pillStyle} size={16} taken={dosage.taken} />
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-xs font-medium truncate ${dosage.taken ? 'text-text-muted line-through' : 'text-foreground'}`}>
+                            {med.name}
+                          </p>
+                          <p className="text-[10px] text-text-muted">
+                            {med.doseMg}mg &times; {dosage.doses}
+                          </p>
+                        </div>
+                        {dosage.taken && (
+                          <span className="text-[10px] text-success font-medium">Done</span>
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
+              ) : (
+                <p className="text-xs text-text-muted">No medications scheduled</p>
+              )}
+            </div>
+
+            {/* Quick inventory */}
+            <div className="glass-card rounded-xl p-4">
+              <h3 className="text-sm font-medium text-foreground mb-3">
+                Active Medications
+              </h3>
+              <div className="space-y-2">
+                {medications.map((med) => (
+                  <div
+                    key={med.id}
+                    className="flex items-center gap-2.5 py-1"
+                  >
+                    <PillIcon style={med.pillStyle} size={12} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-text-secondary truncate">{med.name}</p>
+                    </div>
+                    <span className="text-[10px] text-text-muted">{med.doseMg}mg</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </div>
+  )
+}

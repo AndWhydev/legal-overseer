@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BitBit x AWU — Meeting Prep</title>
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --surface2: #1a1a28;
+    --border: #2a2a3a;
+    --text: #e4e4ec;
+    --text2: #8888a0;
+    --accent: #6366f1;
+    --accent2: #818cf8;
+    --green: #22c55e;
+    --amber: #f59e0b;
+    --red: #ef4444;
+    --cyan: #06b6d4;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(10,10,15,0.85); backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border); padding: 0 24px;
+  }
+  nav .inner {
+    max-width: 1100px; margin: 0 auto; display: flex;
+    align-items: center; gap: 8px; height: 56px; overflow-x: auto;
+  }
+  nav .inner::-webkit-scrollbar { display: none; }
+  nav a {
+    color: var(--text2); text-decoration: none; font-size: 13px;
+    font-weight: 500; padding: 6px 12px; border-radius: 6px;
+    white-space: nowrap; transition: all 0.15s;
+  }
+  nav a:hover, nav a.active { color: var(--text); background: var(--surface2); }
+  .logo { font-weight: 700; font-size: 16px; color: var(--accent2) !important; margin-right: 12px; letter-spacing: -0.5px; }
+  main { max-width: 1100px; margin: 0 auto; padding: 80px 24px 100px; }
+  .hero { text-align: center; padding: 60px 0 40px; }
+  .hero h1 {
+    font-size: 42px; font-weight: 700; letter-spacing: -1.5px;
+    background: linear-gradient(135deg, var(--accent2), var(--cyan));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 12px;
+  }
+  .hero .subtitle { font-size: 18px; color: var(--text2); max-width: 600px; margin: 0 auto 24px; }
+  .hero .meta { display: flex; justify-content: center; gap: 24px; font-size: 13px; color: var(--text2); }
+  .hero .meta span { display: flex; align-items: center; gap: 6px; }
+  section { margin-bottom: 48px; scroll-margin-top: 72px; }
+  section h2 {
+    font-size: 22px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 20px;
+    padding-bottom: 12px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 10px;
+  }
+  section h2 .badge {
+    font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 4px;
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .badge-green { background: rgba(34,197,94,0.15); color: var(--green); }
+  .badge-amber { background: rgba(245,158,11,0.15); color: var(--amber); }
+  .badge-red { background: rgba(239,68,68,0.15); color: var(--red); }
+  .badge-accent { background: rgba(99,102,241,0.15); color: var(--accent2); }
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 20px; transition: border-color 0.15s;
+  }
+  .card:hover { border-color: var(--accent); }
+  .card h3 { font-size: 16px; font-weight: 600; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+  .card p, .card li { font-size: 14px; color: var(--text2); line-height: 1.7; }
+  .card ul { padding-left: 16px; margin-top: 8px; }
+  .card .tag { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; margin-right: 4px; }
+  .tag-p0 { background: rgba(239,68,68,0.15); color: var(--red); }
+  .tag-p1 { background: rgba(245,158,11,0.15); color: var(--amber); }
+  .tag-p2 { background: rgba(99,102,241,0.15); color: var(--accent2); }
+  .tag-p3 { background: rgba(136,136,160,0.15); color: var(--text2); }
+  .card-full { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 16px; }
+  .card-full h3 { font-size: 17px; font-weight: 600; margin-bottom: 12px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { text-align: left; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text2); padding: 10px 14px; border-bottom: 1px solid var(--border); }
+  td { padding: 10px 14px; border-bottom: 1px solid rgba(42,42,58,0.5); color: var(--text2); }
+  tr:hover td { color: var(--text); background: rgba(99,102,241,0.03); }
+  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+  .dot-green { background: var(--green); }
+  .dot-amber { background: var(--amber); }
+  .dot-red { background: var(--red); }
+  .dot-blue { background: var(--accent2); }
+  .checklist { list-style: none; padding: 0; }
+  .checklist li { font-size: 15px; padding: 10px 0; border-bottom: 1px solid rgba(42,42,58,0.4); display: flex; align-items: flex-start; gap: 10px; }
+  .checklist li:last-child { border-bottom: none; }
+  .check-box { width: 20px; height: 20px; border: 2px solid var(--border); border-radius: 4px; flex-shrink: 0; margin-top: 2px; }
+  .timeline { position: relative; padding-left: 28px; }
+  .timeline::before { content: ''; position: absolute; left: 8px; top: 0; bottom: 0; width: 2px; background: var(--border); }
+  .timeline-item { position: relative; padding-bottom: 28px; }
+  .timeline-item::before { content: ''; position: absolute; left: -24px; top: 6px; width: 12px; height: 12px; border-radius: 50%; background: var(--accent); border: 2px solid var(--bg); }
+  .timeline-item h4 { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+  .timeline-item .week { font-size: 12px; color: var(--accent2); font-weight: 600; margin-bottom: 6px; }
+  .timeline-item p, .timeline-item li { font-size: 14px; color: var(--text2); }
+  .timeline-item ul { padding-left: 16px; margin-top: 6px; }
+  .callout { background: rgba(99,102,241,0.08); border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0; padding: 16px 20px; margin-bottom: 16px; font-size: 15px; }
+  .callout strong { color: var(--accent2); }
+  .callout-amber { background: rgba(245,158,11,0.08); border-left-color: var(--amber); }
+  .callout-amber strong { color: var(--amber); }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 24px; }
+  .stat { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; text-align: center; }
+  .stat .num { font-size: 28px; font-weight: 700; color: var(--accent2); letter-spacing: -1px; }
+  .stat .label { font-size: 12px; color: var(--text2); margin-top: 4px; }
+  .conf-bar { display: flex; height: 28px; border-radius: 6px; overflow: hidden; margin: 12px 0; font-size: 11px; font-weight: 600; }
+  .conf-act { background: var(--green); color: #000; display: flex; align-items: center; justify-content: center; }
+  .conf-ask { background: var(--amber); color: #000; display: flex; align-items: center; justify-content: center; }
+  .conf-esc { background: var(--red); color: #fff; display: flex; align-items: center; justify-content: center; }
+  code { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 13px; background: var(--surface2); padding: 2px 6px; border-radius: 4px; }
+  pre { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 16px; overflow-x: auto; font-size: 13px; line-height: 1.5; margin: 12px 0; }
+  .to-top { position: fixed; bottom: 24px; right: 24px; width: 40px; height: 40px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; text-decoration: none; color: white; font-size: 18px; box-shadow: 0 4px 12px rgba(99,102,241,0.3); transition: transform 0.15s; }
+  .to-top:hover { transform: scale(1.1); }
+  @media (max-width: 640px) {
+    .hero h1 { font-size: 28px; }
+    .card-grid { grid-template-columns: 1fr; }
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    nav a { font-size: 12px; padding: 4px 8px; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="inner">
+    <a href="#" class="logo">BitBit</a>
+    <a href="#tldr">TL;DR</a>
+    <a href="#what">What Is It</a>
+    <a href="#agents">Agents</a>
+    <a href="#timeline">Timeline</a>
+    <a href="#connections">Connections</a>
+    <a href="#clients">Clients</a>
+    <a href="#architecture">Architecture</a>
+    <a href="#costs">Costs</a>
+    <a href="#questions">Questions</a>
+    <a href="#cluely">Call Notes</a>
+    <a href="#built">What's Built</a>
+  </div>
+</nav>
+
+<main>
+
+<div class="hero" id="top">
+  <h1>BitBit x AWU</h1>
+  <div class="subtitle">Meeting prep — everything you need to know about deploying AI agents inside All Webbed Up</div>
+  <div class="meta">
+    <span>50/50 Partnership</span>
+    <span>|</span>
+    <span>AWU = Live Testbed</span>
+    <span>|</span>
+    <span>Feb 2026</span>
+  </div>
+</div>
+
+<!-- TL;DR -->
+<section id="tldr">
+  <h2>The One-Minute Summary</h2>
+  <div class="callout">
+    <strong>What:</strong> Deploy a swarm of AI agents inside Andy's agency (AWU) that handle real work — capturing leads, sending invoices, triaging comms, writing proposals, generating ad scripts.<br><br>
+    <strong>Why:</strong> Andy gets his agency automated. We get a live production testbed. Every problem we solve becomes a product feature. Once it works at AWU, we take it to market.<br><br>
+    <strong>How:</strong> BitBit platform (already built — Next.js, Supabase, Claude API) + modular agents deployed bit-by-bit. AWU org config, policies, and voice profiles already scaffolded.<br><br>
+    <strong>North Star:</strong> <em>"You send a message. The problem disappears."</em>
+  </div>
+  <div class="stats">
+    <div class="stat"><div class="num">10</div><div class="label">Agents Designed</div></div>
+    <div class="stat"><div class="num">16</div><div class="label">Channel Integrations</div></div>
+    <div class="stat"><div class="num">6</div><div class="label">AWU Clients</div></div>
+    <div class="stat"><div class="num">~$150</div><div class="label">Monthly Infra Cost</div></div>
+    <div class="stat"><div class="num">12</div><div class="label">Weeks to Full Deploy</div></div>
+    <div class="stat"><div class="num">4</div><div class="label">GTM Phases</div></div>
+  </div>
+</section>
+
+<!-- WHAT IS BITBIT -->
+<section id="what">
+  <h2>What BitBit Actually Is</h2>
+  <div class="card-full">
+    <h3>The Problem (Andy's World Right Now)</h3>
+    <table>
+      <tr><td style="width:200px;color:var(--red);font-weight:600">Lead leakage</td><td>Inquiries come across 5+ channels. Slow response = lost deals.</td></tr>
+      <tr><td style="color:var(--red);font-weight:600">Admin paralysis</td><td>Invoicing, proposals, follow-ups, scheduling — 60% of time on ops instead of selling.</td></tr>
+      <tr><td style="color:var(--red);font-weight:600">Comms chaos</td><td>Gmail, Outlook, WhatsApp, iMessage, Asana, ClickUp — context fragmented everywhere.</td></tr>
+      <tr><td style="color:var(--red);font-weight:600">Scaling bottleneck</td><td>Can't hire fast enough. Every new client = linear overhead.</td></tr>
+      <tr><td style="color:var(--red);font-weight:600">Knowledge concentration</td><td>When Andy's unavailable, operations stop. Nobody else knows the history.</td></tr>
+    </table>
+  </div>
+  <div class="card-full">
+    <h3>The Solution</h3>
+    <p style="font-size:15px;margin-bottom:16px;">A swarm of specialized AI agents that <strong style="color:var(--green)">act</strong>, not just recommend. Each agent owns a domain and operates autonomously within policies you define.</p>
+    <h4 style="margin-bottom:8px;font-size:14px;color:var(--accent2)">Confidence-Based Routing</h4>
+    <div class="conf-bar">
+      <div class="conf-act" style="width:45%">ACT (>80%) — Auto-execute</div>
+      <div class="conf-ask" style="width:35%">ASK (50-80%) — Get approval</div>
+      <div class="conf-esc" style="width:20%">ESCALATE (<50%)</div>
+    </div>
+    <p style="font-size:13px;color:var(--text2)">Agents aren't black boxes. Every action is auditable, policy-aware, and the confidence threshold is tuneable per agent.</p>
+  </div>
+  <div class="card-full">
+    <h3>Dual Purpose</h3>
+    <table>
+      <tr><td style="width:140px;font-weight:600;color:var(--green)">For AWU (now)</td><td>Andy gets his agency automated. Leads captured instantly. Invoices on time. Proposals write themselves. Client comms 24/7.</td></tr>
+      <tr><td style="font-weight:600;color:var(--accent2)">For BitBit (later)</td><td>Every AWU deployment = real-world stress test. Edge cases become features. Battle-tested = market-ready SaaS product.</td></tr>
+    </table>
+  </div>
+</section>
+
+<!-- AGENTS -->
+<section id="agents">
+  <h2>The 10 Agents <span class="badge badge-accent">Full Swarm</span></h2>
+  <div class="card-grid">
+    <div class="card">
+      <h3><span class="tag tag-p0">P0</span> Lead Swarm</h3>
+      <p>Monitors all inbound channels, classifies leads, auto-acknowledges in <strong style="color:var(--green)">&lt;2 min</strong>, qualifies, books Calendly slots, scores (hot/warm/cold), escalates high-value to Andy.</p>
+      <ul>
+        <li>Channels: Gmail, Outlook, WhatsApp, Facebook, Instagram, website forms</li>
+        <li>Never auto-rejects — uncertain leads escalate</li>
+        <li>Daily pipeline summary to Andy</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3><span class="tag tag-p0">P0</span> Invoice Flow</h3>
+      <p>Auto-generates invoices from completed tasks, branded PDFs, sends via email, tracks payment status, automated reminder sequence.</p>
+      <ul>
+        <li>Duplicate detection — never sends same invoice twice</li>
+        <li>Reminders: Day 1 (friendly), Day 7 (firm), Day 14 (final)</li>
+        <li>Stripe payment links + Xero/MYOB sync</li>
+        <li>Supports deposits, milestones, recurring</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3><span class="tag tag-p0">P0</span> Sentry</h3>
+      <p>Background monitor using Gemini Flash (cheap). Watches for events and triggers other agents.</p>
+      <ul>
+        <li>New lead from website &rarr; qualify + respond</li>
+        <li>Client replied to proposal &rarr; notify Andy</li>
+        <li>Invoice overdue &rarr; trigger reminder</li>
+        <li>Negative sentiment &rarr; escalate immediately</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3><span class="tag tag-p1">P1</span> Channel Triage</h3>
+      <p>Pulls all channels into one prioritized feed. Classifies, deduplicates cross-channel, auto-creates tasks for actionable items.</p>
+      <ul>
+        <li>Daily digest: "Here's what needs attention"</li>
+        <li>Thread tracking — who's waiting on who</li>
+        <li>Priority override: paying clients = minimum "high"</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3><span class="tag tag-p1">P1</span> Client Comms</h3>
+      <p>Drafts replies in the correct <strong>voice</strong> (Andy's style, AWU brand, or client-specific). Weekly project updates. Sentiment analysis.</p>
+      <ul>
+        <li>Per-client voice profiles and channel preferences</li>
+        <li>Meeting summary distribution after calls</li>
+        <li>Flags frustrated clients early</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3><span class="tag tag-p1">P1</span> Proposal Bot</h3>
+      <p>Generates scope docs + pricing tiers from brief inputs or Cluely call transcripts. Professional PDFs. Follow-up sequences.</p>
+      <ul>
+        <li>Target: brief to PDF in &lt;30 min (currently 2-4 hrs)</li>
+        <li>Auto-includes relevant case studies</li>
+        <li>Contract generation from accepted proposals</li>
+        <li>Uses Opus (complex reasoning)</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3><span class="tag tag-p2">P2</span> Ad Script Generator</h3>
+      <p>Generates 30+ video scripts/month for social ads. Hook variations, platform-adapted (Reels, TikTok, Shorts, Feed).</p>
+      <ul>
+        <li>Ingests offer packages + competitor research</li>
+        <li>A/B hook variants per core script</li>
+        <li>Storyboard generation with shot descriptions</li>
+        <li>Performance feedback loop — learns what converts</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3><span class="tag tag-p2">P2</span> Client Onboarding</h3>
+      <p>Triggers on deal acceptance. Auto-creates Asana project, sends welcome pack, requests credentials, books kickoff call.</p>
+      <ul>
+        <li>Templates by project type (web, SEO, ads, AI)</li>
+        <li>Sets up GSC + Analytics access</li>
+        <li>Tracks onboarding completion checklist</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3><span class="tag tag-p2">P2</span> AI Search Optimizer</h3>
+      <p>Audits visibility on ChatGPT, Gemini, Perplexity, Claude. Generates AI-optimized content. <strong style="color:var(--green)">$2k/month service opportunity.</strong></p>
+      <ul>
+        <li>Low competition — most agencies haven't caught on</li>
+        <li>Australian market particularly underserved</li>
+        <li>First-mover advantage</li>
+        <li>Schema + entity markup optimization</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3><span class="tag tag-p3">P3</span> Tender Hunter</h3>
+      <p>Monitors AusTender, QTenders, NSW eTendering. Filters by AWU capabilities. Auto-extracts requirements. Drafts responses.</p>
+      <ul>
+        <li>Scores tender fit (effort vs. contract value)</li>
+        <li>Compiles required docs (ABN, insurance, case studies)</li>
+        <li>Builds template library over time</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- TIMELINE -->
+<section id="timeline">
+  <h2>Rollout Timeline <span class="badge badge-green">12 Weeks</span></h2>
+  <div class="timeline">
+    <div class="timeline-item">
+      <div class="week">Week 1-2 — Foundation</div>
+      <h4>Set Up AWU Organization</h4>
+      <ul>
+        <li>AWU org in Supabase with RLS</li>
+        <li>Deploy BitBit dashboard to Vercel</li>
+        <li>Connect real Gmail + Outlook adapters</li>
+        <li>Import AWU contacts into CRM</li>
+        <li>Load AWU policy pack + voice profiles</li>
+        <li>Set up Andy's user account</li>
+      </ul>
+    </div>
+    <div class="timeline-item">
+      <div class="week">Week 3-4 — First Agents (P0)</div>
+      <h4>Lead Swarm + Invoice Flow + Sentry</h4>
+      <ul>
+        <li>Deploy first 3 agents</li>
+        <li>Connect Calendly integration</li>
+        <li>Set up WhatsApp bot for Andy</li>
+        <li>Configure Sentry watches for lead monitoring</li>
+        <li>Test with 1-2 active clients</li>
+      </ul>
+    </div>
+    <div class="timeline-item">
+      <div class="week">Week 5-6 — Communication Layer (P1)</div>
+      <h4>Channel Triage + Client Comms</h4>
+      <ul>
+        <li>Unified inbox across all channels</li>
+        <li>Asana bidirectional sync</li>
+        <li>Voice profile system live</li>
+        <li>Daily digest notifications</li>
+        <li>Expand to all active AWU clients</li>
+      </ul>
+    </div>
+    <div class="timeline-item">
+      <div class="week">Week 7-8 — Revenue Agents (P1)</div>
+      <h4>Proposal Bot + Client Onboarding</h4>
+      <ul>
+        <li>Cluely call transcript ingestion</li>
+        <li>Proposal templates from AWU history</li>
+        <li>Contract/NDA generation</li>
+        <li>Automated onboarding checklists</li>
+      </ul>
+    </div>
+    <div class="timeline-item">
+      <div class="week">Week 9-12 — Growth Agents (P2-P3)</div>
+      <h4>Ad Scripts + AI Search + Tender Hunter</h4>
+      <ul>
+        <li>30+ video scripts/month pipeline</li>
+        <li>AI search visibility audits</li>
+        <li>Government tender monitoring</li>
+        <li>Analytics and ROI dashboards</li>
+        <li>Prepare for beta with external agencies</li>
+      </ul>
+    </div>
+  </div>
+  <div class="callout" style="margin-top:20px;">
+    <strong>Go-To-Market Path:</strong><br>
+    Month 1-3: AWU internal (battle-test) &rarr; Month 3-6: 5-10 beta agencies (Andy's network) &rarr; Month 6-9: Public launch (self-serve SaaS) &rarr; Month 9+: Platform (marketplace for agent templates)
+  </div>
+</section>
+
+<!-- CONNECTIONS -->
+<section id="connections">
+  <h2>What We Need to Connect <span class="badge badge-red">Andy's Action Items</span></h2>
+
+  <div class="callout">
+    <strong>Why this matters:</strong> BitBit agents are only as smart as the data they can see. Each connection below gives agents the context they need to do real work — without it, they're guessing. The more channels connected, the better the agents understand the full picture of every client, every deal, and every conversation.
+  </div>
+  <div class="callout-amber callout">
+    <strong>What we need from Andy:</strong> Credentials, API keys, or admin access for each of these. Some we already have, some need Andy to set up. The priority column matches which agents need it first.
+  </div>
+
+  <div class="card-full" style="margin-top:20px">
+    <h3 style="color:var(--accent2)">Communication Channels</h3>
+    <p style="font-size:14px;color:var(--text2);margin-bottom:16px">Where client conversations happen. Agents read incoming messages and (with approval) send replies.</p>
+    <table>
+      <thead><tr><th>Channel</th><th>What It Does for BitBit</th><th>What We Need</th><th>Priority</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr>
+          <td style="font-weight:600">Gmail<br><span style="font-size:11px;color:var(--text2)">(andy@allwebbedup.com.au)</span></td>
+          <td>Reads client emails, lead inquiries, invoice replies. Agents draft and send responses in Andy's voice. Tracks threads across clients.</td>
+          <td>Gmail API OAuth or App Password. We already have Tor's AWU Outlook — need Andy's main Gmail.</td>
+          <td><span class="tag tag-p0">P0</span></td>
+          <td><span class="dot dot-amber"></span>Need Andy's</td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">Outlook<br><span style="font-size:11px;color:var(--text2)">(tor@allwebbedup.com.au)</span></td>
+          <td>AWU's business email. Receives forwarded emails, client correspondence, invoices. Already connected for Tor's account.</td>
+          <td>Already connected via forwarding + browser auth. May need Microsoft Graph API for programmatic access.</td>
+          <td><span class="tag tag-p0">P0</span></td>
+          <td><span class="dot dot-green"></span>Connected</td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">WhatsApp<br><span style="font-size:11px;color:var(--text2)">(Andy's primary channel)</span></td>
+          <td>Andy's main way of talking to clients. Lead Swarm auto-acknowledges here. Approval requests sent here ("Approve this invoice? Y/N"). Daily summaries delivered here.</td>
+          <td>WhatsApp Business API account. OR: WhatsApp Business app linked to AWU number. Costs ~$0.005/message.</td>
+          <td><span class="tag tag-p0">P0</span></td>
+          <td><span class="dot dot-red"></span>Need setup</td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">iMessage<br><span style="font-size:11px;color:var(--text2)">(macOS only)</span></td>
+          <td>Read-only access to messages on Tor's Mac. Catches client messages that come through iMessage.</td>
+          <td>Already working via macOS chat.db. Read-only.</td>
+          <td><span class="tag tag-p1">P1</span></td>
+          <td><span class="dot dot-green"></span>Connected</td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">Facebook Messenger<br><span style="font-size:11px;color:var(--text2)">(AWU business page)</span></td>
+          <td>Leads often message via Facebook. Lead Swarm monitors and auto-responds. Routes to qualification pipeline.</td>
+          <td>Facebook Page admin access + Messenger API token from Meta Business Suite.</td>
+          <td><span class="tag tag-p2">P2</span></td>
+          <td><span class="dot dot-red"></span>Need setup</td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">Instagram DMs<br><span style="font-size:11px;color:var(--text2)">(AWU business account)</span></td>
+          <td>Captures leads from Instagram. Especially relevant for ad campaigns driving DM inquiries.</td>
+          <td>Instagram Business account linked to Meta. Instagram Graph API access.</td>
+          <td><span class="tag tag-p2">P2</span></td>
+          <td><span class="dot dot-red"></span>Need setup</td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">Slack<br><span style="font-size:11px;color:var(--text2)">(if AWU uses it)</span></td>
+          <td>Internal team comms. If Andy uses Slack with contractors or clients, agents can monitor channels for tasks and updates.</td>
+          <td>Slack workspace admin + Bot token. Create a BitBit bot user.</td>
+          <td><span class="tag tag-p2">P2</span></td>
+          <td><span class="dot dot-amber"></span>TBD if used</td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">SMS / Twilio<br><span style="font-size:11px;color:var(--text2)">(optional)</span></td>
+          <td>Text message fallback for leads who don't use WhatsApp/email. Also useful for appointment reminders.</td>
+          <td>Twilio account + phone number. ~$1/mo + per-message costs.</td>
+          <td><span class="tag tag-p3">P3</span></td>
+          <td><span class="dot dot-red"></span>Optional</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card-full">
+    <h3 style="color:var(--accent2)">Project Management & Tasks</h3>
+    <p style="font-size:14px;color:var(--text2);margin-bottom:16px">Where work gets tracked. Agents create tasks from emails, update progress, and flag blockers.</p>
+    <table>
+      <thead><tr><th>Tool</th><th>What It Does for BitBit</th><th>What We Need</th><th>Priority</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr>
+          <td style="font-weight:600">Asana<br><span style="font-size:11px;color:var(--text2)">(allwebbedup.com.au workspace)</span></td>
+          <td>Central task management. Agents create tasks from emails, update statuses, add subtasks, track client projects. 20+ open tasks already exist.</td>
+          <td>Already connected via Asana MCP. May want to restructure projects for agent-friendly templates.</td>
+          <td><span class="tag tag-p0">P0</span></td>
+          <td><span class="dot dot-green"></span>Connected</td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">ClickUp<br><span style="font-size:11px;color:var(--text2)">(Andy's other PM tool)</span></td>
+          <td>Andy uses ClickUp alongside Asana. Agents need to check both or we pick one as the source of truth. Some client tasks live here only.</td>
+          <td>ClickUp API key + workspace access. OR: decision to consolidate into Asana only.</td>
+          <td><span class="tag tag-p1">P1</span></td>
+          <td><span class="dot dot-amber"></span>Need decision</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card-full">
+    <h3 style="color:var(--accent2)">Scheduling & Calendar</h3>
+    <p style="font-size:14px;color:var(--text2);margin-bottom:16px">How meetings get booked. Lead Swarm books calls. Client Comms schedules follow-ups.</p>
+    <table>
+      <thead><tr><th>Tool</th><th>What It Does for BitBit</th><th>What We Need</th><th>Priority</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr>
+          <td style="font-weight:600">Calendly<br><span style="font-size:11px;color:var(--text2)">(andy@allwebbedup.com.au)</span></td>
+          <td>Lead Swarm books qualified leads into Andy's calendar automatically. Links included in auto-acknowledgment messages.</td>
+          <td>Calendly API key. Andy's booking page URL. Webhook for new bookings.</td>
+          <td><span class="tag tag-p0">P0</span></td>
+          <td><span class="dot dot-amber"></span>Need API key</td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">Google Calendar<br><span style="font-size:11px;color:var(--text2)">(Andy's calendar)</span></td>
+          <td>See Andy's availability for scheduling. Agents check calendar before committing to deadlines.</td>
+          <td>Google Calendar API OAuth for Andy's account. Read access is enough initially.</td>
+          <td><span class="tag tag-p1">P1</span></td>
+          <td><span class="dot dot-red"></span>Need access</td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">Apple Calendar<br><span style="font-size:11px;color:var(--text2)">(Tor's Mac)</span></td>
+          <td>Already working for Tor's personal calendar via osascript.</td>
+          <td>Already connected.</td>
+          <td><span class="tag tag-p1">P1</span></td>
+          <td><span class="dot dot-green"></span>Connected</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card-full">
+    <h3 style="color:var(--accent2)">Meeting Intelligence & Knowledge</h3>
+    <p style="font-size:14px;color:var(--text2);margin-bottom:16px">Call recordings and knowledge sources. Proposal Bot and Client Comms use these to understand what was discussed.</p>
+    <table>
+      <thead><tr><th>Tool</th><th>What It Does for BitBit</th><th>What We Need</th><th>Priority</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr>
+          <td style="font-weight:600">Cluely<br><span style="font-size:11px;color:var(--text2)">(meeting transcripts)</span></td>
+          <td>Records calls and generates AI summaries. Proposal Bot extracts requirements from transcripts. Every call feeds into agent memory.</td>
+          <td>Already connected via reverse-engineered API.</td>
+          <td><span class="tag tag-p1">P1</span></td>
+          <td><span class="dot dot-green"></span>Connected</td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">Loom<br><span style="font-size:11px;color:var(--text2)">(video walkthroughs)</span></td>
+          <td>Andy records Loom walkthroughs for clients (FCF pattern). Agents reference these in onboarding, proposals, and follow-ups.</td>
+          <td>Loom API key or workspace access. List of existing recordings per client.</td>
+          <td><span class="tag tag-p2">P2</span></td>
+          <td><span class="dot dot-red"></span>Need access</td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">Google Drive<br><span style="font-size:11px;color:var(--text2)">(docs, scope docs, contracts)</span></td>
+          <td>Stores scope documents, contracts, case studies, templates. Proposal Bot pulls templates. Client Onboarding creates folders.</td>
+          <td>Google Drive API OAuth for AWU shared drive.</td>
+          <td><span class="tag tag-p1">P1</span></td>
+          <td><span class="dot dot-amber"></span>Partially set up</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card-full">
+    <h3 style="color:var(--accent2)">Payments & Billing</h3>
+    <p style="font-size:14px;color:var(--text2);margin-bottom:16px">Where money flows. Invoice Flow needs these to generate payment links and sync with accounting.</p>
+    <table>
+      <thead><tr><th>Tool</th><th>What It Does for BitBit</th><th>What We Need</th><th>Priority</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr>
+          <td style="font-weight:600">Stripe<br><span style="font-size:11px;color:var(--text2)">(payment processing)</span></td>
+          <td>Invoice Flow generates Stripe payment links. Webhooks notify on payment. Enables subscription billing.</td>
+          <td>Stripe API keys. Webhook endpoint. Note: Tor's Stripe needs identity verification.</td>
+          <td><span class="tag tag-p0">P0</span></td>
+          <td><span class="dot dot-amber"></span>Need verification</td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">Xero or MYOB<br><span style="font-size:11px;color:var(--text2)">(accounting)</span></td>
+          <td>Syncs invoices and payments with accounting. Keeps books clean without manual entry.</td>
+          <td>Xero/MYOB API credentials. Which one does AWU use?</td>
+          <td><span class="tag tag-p2">P2</span></td>
+          <td><span class="dot dot-amber"></span>Need decision</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card-full">
+    <h3 style="color:var(--accent2)">Websites, SEO & Analytics</h3>
+    <p style="font-size:14px;color:var(--text2);margin-bottom:16px">Where client websites live and how we track performance.</p>
+    <table>
+      <thead><tr><th>Tool</th><th>What It Does for BitBit</th><th>What We Need</th><th>Priority</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr>
+          <td style="font-weight:600">WordPress REST API<br><span style="font-size:11px;color:var(--text2)">(client sites)</span></td>
+          <td>Programmatic access to client WordPress sites. Update content, create pages, modify SEO meta, inject schema.</td>
+          <td>Application passwords per client site. List of AWU-managed WordPress sites.</td>
+          <td><span class="tag tag-p1">P1</span></td>
+          <td><span class="dot dot-amber"></span>Per-client</td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">Google Search Console<br><span style="font-size:11px;color:var(--text2)">(per client site)</span></td>
+          <td>Tracks search appearance. AI Search Optimizer uses this to identify ranking opportunities.</td>
+          <td>GSC API OAuth. Add BitBit service account per client property.</td>
+          <td><span class="tag tag-p1">P1</span></td>
+          <td><span class="dot dot-red"></span>Need per-client</td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">Google Analytics 4<br><span style="font-size:11px;color:var(--text2)">(per client site)</span></td>
+          <td>Traffic data, conversions, user behavior. Agents generate client reports and measure campaign performance.</td>
+          <td>GA4 API OAuth. Viewer access per client property.</td>
+          <td><span class="tag tag-p1">P1</span></td>
+          <td><span class="dot dot-red"></span>Need per-client</td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">Cloudways / Hosting<br><span style="font-size:11px;color:var(--text2)">(AWU's hosting platform)</span></td>
+          <td>Server management for client WordPress sites. Check uptime, SSL, trigger deployments.</td>
+          <td>Cloudways API key + application access.</td>
+          <td><span class="tag tag-p2">P2</span></td>
+          <td><span class="dot dot-amber"></span>Being migrated</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card-full">
+    <h3 style="color:var(--accent2)">Advertising & Social Media</h3>
+    <p style="font-size:14px;color:var(--text2);margin-bottom:16px">Where ads run and content gets posted.</p>
+    <table>
+      <thead><tr><th>Tool</th><th>What It Does for BitBit</th><th>What We Need</th><th>Priority</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr>
+          <td style="font-weight:600">Meta Business Suite<br><span style="font-size:11px;color:var(--text2)">(Facebook + Instagram Ads)</span></td>
+          <td>Ad Script Generator pushes scripts to campaigns. Lead Swarm captures leads from Facebook Lead Ads. CAPI token setup per client.</td>
+          <td>Meta Business Suite admin access. CAPI tokens per client.</td>
+          <td><span class="tag tag-p1">P1</span></td>
+          <td><span class="dot dot-amber"></span>Need admin</td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">Google Ads<br><span style="font-size:11px;color:var(--text2)">(client ad accounts)</span></td>
+          <td>Monitors ad performance, pauses underperformers, adjusts budgets.</td>
+          <td>Google Ads API access. Manager account (MCC) if managing multiple clients.</td>
+          <td><span class="tag tag-p2">P2</span></td>
+          <td><span class="dot dot-red"></span>Need access</td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">TikTok Business<br><span style="font-size:11px;color:var(--text2)">(optional)</span></td>
+          <td>Ad Script Generator adapts scripts for TikTok. Creative Center API for trending content.</td>
+          <td>TikTok Business account + API access.</td>
+          <td><span class="tag tag-p3">P3</span></td>
+          <td><span class="dot dot-red"></span>Future</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card-full">
+    <h3 style="color:var(--accent2)">Domain, DNS & Infrastructure</h3>
+    <p style="font-size:14px;color:var(--text2);margin-bottom:16px">The underlying infrastructure that makes everything run.</p>
+    <table>
+      <thead><tr><th>Tool</th><th>What It Does for BitBit</th><th>What We Need</th><th>Priority</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr>
+          <td style="font-weight:600">AWU Domain / DNS<br><span style="font-size:11px;color:var(--text2)">(allwebbedup.com.au)</span></td>
+          <td>Email routing, SPF/DKIM, subdomain for BitBit dashboard (e.g. app.bitbit.com.au).</td>
+          <td>DNS provider access. Add records for email auth and app subdomain.</td>
+          <td><span class="tag tag-p0">P0</span></td>
+          <td><span class="dot dot-amber"></span>Need access</td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">AWU Website Backend<br><span style="font-size:11px;color:var(--text2)">(allwebbedup.com.au site)</span></td>
+          <td>Lead Swarm captures contact form submissions. Website forms need to webhook into BitBit for instant lead capture.</td>
+          <td>WordPress admin access or form plugin webhook URL.</td>
+          <td><span class="tag tag-p0">P0</span></td>
+          <td><span class="dot dot-amber"></span>Need access</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="stats" style="margin-top:20px">
+    <div class="stat"><div class="num" style="color:var(--green)">5</div><div class="label">Already Connected</div></div>
+    <div class="stat"><div class="num" style="color:var(--amber)">9</div><div class="label">Need Credentials</div></div>
+    <div class="stat"><div class="num" style="color:var(--red)">6</div><div class="label">Need Setup</div></div>
+    <div class="stat"><div class="num" style="color:var(--text2)">3</div><div class="label">Future / Optional</div></div>
+  </div>
+  <div class="callout" style="margin-top:4px">
+    <strong>Minimum viable connections (to get P0 agents running):</strong><br>
+    Andy's Gmail + WhatsApp Business + Calendly API + Stripe + AWU website webhook + DNS access. That's 6 things to get Lead Swarm + Invoice Flow + Sentry operational.
+  </div>
+</section>
+
+<!-- AWU CLIENTS -->
+<section id="clients">
+  <h2>AWU Client Roster <span class="badge badge-amber">Deployment Targets</span></h2>
+  <table>
+    <thead><tr><th>Client</th><th>Contact</th><th>Project</th><th>Value</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td style="font-weight:600">White House RE</td><td>Sezer Yunus</td><td>WordPress + VaultRE</td><td>$200</td><td><span class="dot dot-green"></span>Complete, invoiced</td></tr>
+      <tr><td style="font-weight:600">Event Hero</td><td>Harun</td><td>Marketplace MVP</td><td>$10-12k</td><td><span class="dot dot-amber"></span>Scoping (need .docx)</td></tr>
+      <tr><td style="font-weight:600">BEPOP</td><td>Dima, Rawya</td><td>Marketplace app</td><td>$7-15k</td><td><span class="dot dot-blue"></span>Proposal sent (3 tiers)</td></tr>
+      <tr><td style="font-weight:600">SexPay</td><td>TBD</td><td>Adult content platform</td><td>$7k</td><td><span class="dot dot-amber"></span>Quote pending (need ABN)</td></tr>
+      <tr><td style="font-weight:600">Ozy Homes</td><td>Ghazi</td><td>Ad materials</td><td>TBD</td><td><span class="dot dot-green"></span>Active</td></tr>
+      <tr><td style="font-weight:600">Salken / CTM</td><td>Marquis Abela</td><td>Mobile app</td><td>TBD</td><td><span class="dot dot-red"></span>Month 5, frustrated</td></tr>
+    </tbody>
+  </table>
+  <div class="callout-amber callout" style="margin-top:16px">
+    <strong>First test targets:</strong> Start agents on completed/low-risk clients (White House RE data, Ozy Homes), then expand to active deals (Event Hero, BEPOP) once confidence is proven.
+  </div>
+</section>
+
+<!-- ARCHITECTURE -->
+<section id="architecture">
+  <h2>Architecture At a Glance</h2>
+  <div class="card-full">
+    <h3>Monorepo Structure</h3>
+    <pre>~/bitbit/
+├── packages/
+│   ├── core/           &rarr; Engine, model router, orchestrator, types
+│   ├── dashboard/      &rarr; Next.js 16 app (personal-assistant migrates here)
+│   └── agents/
+│       ├── lead-swarm/       &larr; Self-registers with @bitbit/core
+│       ├── invoice-flow/
+│       ├── channel-triage/
+│       ├── client-comms/
+│       ├── proposal-bot/
+│       ├── ad-script-gen/
+│       ├── client-onboarding/
+│       ├── ai-search-optimizer/
+│       ├── tender-hunter/
+│       └── sentry/
+├── deployments/
+│   ├── awu/            &rarr; AWU config, policies, voice profiles, seeds
+│   ├── torkay/         &rarr; Tor's personal agency (dogfooding)
+│   └── demo/           &rarr; Demo instance for pitches
+├── package.json        &rarr; npm workspaces root
+└── MIGRATION.md        &rarr; Code migration plan</pre>
+  </div>
+  <div class="card-full">
+    <h3>Model Routing (Cost Optimization)</h3>
+    <table>
+      <thead><tr><th>Tier</th><th>Model</th><th>% of Calls</th><th>Use Case</th></tr></thead>
+      <tbody>
+        <tr><td style="font-weight:600;color:var(--green)">Haiku</td><td>claude-haiku-4.5</td><td>~70%</td><td>Classification, routing, triage, tagging</td></tr>
+        <tr><td style="font-weight:600;color:var(--accent2)">Sonnet</td><td>claude-sonnet-4.6</td><td>~25%</td><td>Drafting, CRUD, data extraction</td></tr>
+        <tr><td style="font-weight:600;color:var(--amber)">Opus</td><td>claude-opus-4.6</td><td>~5%</td><td>Proposals, strategy, complex reasoning</td></tr>
+        <tr><td style="font-weight:600;color:var(--cyan)">Gemini Flash</td><td>gemini-2.5-flash</td><td>Background</td><td>Sentry polling, simple lookups</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="card-full">
+    <h3>AWU Policy Engine (Key Rules)</h3>
+    <div class="card-grid" style="margin-top:12px">
+      <div>
+        <h4 style="font-size:14px;color:var(--accent2);margin-bottom:6px">Pricing</h4>
+        <ul style="font-size:13px;color:var(--text2);padding-left:16px">
+          <li>Min project: $500</li><li>Hourly: $90-150/hr</li><li>Always include GST</li><li>20% deposit default</li><li>Max 15% discount without Andy</li>
+        </ul>
+      </div>
+      <div>
+        <h4 style="font-size:14px;color:var(--accent2);margin-bottom:6px">Communication</h4>
+        <ul style="font-size:13px;color:var(--text2);padding-left:16px">
+          <li>Response SLA: 2 hours</li><li>Lead response: 2 minutes</li><li>Andy = face, Tor = tech</li><li>CC Andy on new client contact</li><li>Never reveal AI involvement</li>
+        </ul>
+      </div>
+      <div>
+        <h4 style="font-size:14px;color:var(--accent2);margin-bottom:6px">Escalation</h4>
+        <ul style="font-size:13px;color:var(--text2);padding-left:16px">
+          <li>Complaint &rarr; Andy immediately</li><li>Legal language &rarr; Andy + halt</li><li>Budget overrun >10% &rarr; Andy</li><li>Scope change &rarr; Andy approval</li><li>Payment >30d overdue &rarr; Andy decides</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- COSTS -->
+<section id="costs">
+  <h2>Cost Estimates <span class="badge badge-green">~$100-200/mo</span></h2>
+  <table>
+    <thead><tr><th>Item</th><th>Monthly</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>Supabase Pro</td><td>$25</td><td>8GB DB, 250GB bandwidth, realtime, RLS</td></tr>
+      <tr><td>Vercel Pro</td><td>$20</td><td>Edge functions, cron jobs, analytics</td></tr>
+      <tr><td>Claude API (Haiku-heavy)</td><td>$50-150</td><td>70% Haiku keeps this low. Scales with volume.</td></tr>
+      <tr><td>Gemini API (Sentry)</td><td>$5-10</td><td>Flash tier for background polling only</td></tr>
+      <tr><td>Domain</td><td>~$2</td><td>bitbit.com.au (already purchased)</td></tr>
+      <tr style="font-weight:600;color:var(--accent2)"><td>Total</td><td>$100-200</td><td>Split 50/50 or AWU business expense — discuss</td></tr>
+    </tbody>
+  </table>
+  <div class="stats" style="margin-top:20px">
+    <div class="stat"><div class="num">&lt;$0.05</div><div class="label">Per Agent Action (target)</div></div>
+    <div class="stat"><div class="num">-50%</div><div class="label">Andy's Ops Time Reduction</div></div>
+    <div class="stat"><div class="num">+30%</div><div class="label">Revenue Increase Target (M6)</div></div>
+    <div class="stat"><div class="num">$2-5k</div><div class="label">Beta MRR Target (M6)</div></div>
+  </div>
+</section>
+
+<!-- QUESTIONS -->
+<section id="questions">
+  <h2>Questions for the Meeting <span class="badge badge-red">Decisions Needed</span></h2>
+  <ol class="checklist" style="list-style:none; counter-reset: q;">
+    <li><div class="check-box"></div><div><strong>Agent priority order</strong> — Is Lead Swarm + Invoice Flow + Sentry correct as the first three, or does Andy have a different burning need?</div></li>
+    <li><div class="check-box"></div><div><strong>WhatsApp Business API</strong> — Does AWU have a WhatsApp Business account? Need this for Lead Swarm and Andy's voice interface.</div></li>
+    <li><div class="check-box"></div><div><strong>Asana vs ClickUp</strong> — Andy uses both. Which is the source of truth for project management going forward?</div></li>
+    <li><div class="check-box"></div><div><strong>First test clients</strong> — Which AWU clients should agents operate on first? Event Hero? BEPOP? New ones?</div></li>
+    <li><div class="check-box"></div><div><strong>Andy's interface</strong> — How does he want to interact day-to-day? WhatsApp commands? Voice notes? Dashboard? All of the above?</div></li>
+    <li><div class="check-box"></div><div><strong>Branding</strong> — BitBit branding, AWU-branded, or white-label for clients?</div></li>
+    <li><div class="check-box"></div><div><strong>Revenue model</strong> — When we go to market: per-agent pricing? Per-seat? Usage-based? Tiered SaaS?</div></li>
+    <li><div class="check-box"></div><div><strong>IP ownership</strong> — 50/50 on platform. What about AWU-specific configs and client data?</div></li>
+    <li><div class="check-box"></div><div><strong>Business entity</strong> — Register new entity for BitBit? Or operate under existing (Torkay / AWU)?</div></li>
+    <li><div class="check-box"></div><div><strong>Phase 0 budget</strong> — Infra ~$100-200/mo. Split 50/50 or AWU business expense?</div></li>
+  </ol>
+</section>
+
+<!-- CLUELY CALL NOTES -->
+<section id="cluely">
+  <h2>Recent Call Notes (Cluely) <span class="badge badge-accent">Context</span></h2>
+  <table>
+    <thead><tr><th>Date</th><th>Session</th><th>Key Takeaways</th></tr></thead>
+    <tbody>
+      <tr><td style="white-space:nowrap">Feb 16</td><td style="font-weight:600">Sales Quote, Facebook Token</td><td>SexPay $7k quote. CAPI token needed for Meta. ABN required. Hosting: Supabase + Vercel + Bunny CDN.</td></tr>
+      <tr><td>Feb 12</td><td style="font-weight:600">Night Shift Availability</td><td><strong style="color:var(--green)">AI Search Optimization $2k/month concept.</strong> Ad strategy. Micro-niches. Low competition opportunity.</td></tr>
+      <tr><td>Feb 11</td><td style="font-weight:600">VaultRE WordPress Sync</td><td>White House RE plugin debugging. Lease sync modifications. DisplayAddress fix.</td></tr>
+      <tr><td>Feb 11</td><td style="font-weight:600">Banter About Dogs</td><td>Cloudways migration. Email infrastructure setup. Training protocols.</td></tr>
+      <tr><td>Feb 5</td><td style="font-weight:600">Case Study Prep</td><td><strong style="color:var(--green)">Event Hero $10-12k MVP scope.</strong> Feature prioritization. Payment schedule discussion.</td></tr>
+      <tr><td>Feb 1</td><td style="font-weight:600">Technical Fix Chat</td><td><strong style="color:var(--green)">Ad strategy: need 30 videos/month.</strong> Remotion for video assembly. Competitor research process.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- WHAT'S ALREADY BUILT -->
+<section id="built">
+  <h2>What's Already Built <span class="badge badge-green">Existing Assets</span></h2>
+  <div class="card-grid">
+    <div class="card">
+      <h3>BitBit Platform (personal-assistant)</h3>
+      <ul>
+        <li>Next.js 16 + React 19 app</li><li>Supabase (Postgres + RLS + Realtime)</li><li>Agent engine with model routing (H/S/O)</li><li>Orchestrator for multi-agent tasks</li><li>Confidence-based routing</li><li>12 tools (8 CRUD + 4 channel)</li><li>Channel synthesis pipeline</li><li>Kanban board with DnD</li><li>Contact CRM</li><li>Activity feed + audit trail</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Agent Repo (Tor's Live System)</h3>
+      <ul>
+        <li>Context propagation (state across sessions)</li><li>Contact profiles with voice matching</li><li>Sentry daemon (background monitoring)</li><li>Gemini agent (cheap task dispatch)</li><li>Gmail MCP integration (live)</li><li>Outlook integration (live)</li><li>Asana integration (live)</li><li>iMessage adapter (read-only)</li><li>WhatsApp adapter (live)</li><li>60+ skills library</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Monorepo Scaffold (New)</h3>
+      <ul>
+        <li>npm workspaces configured</li><li><code>@bitbit/core</code> — 30+ TypeScript interfaces</li><li>Agent registry (self-registration pattern)</li><li>10 agent packages scaffolded</li><li>P0 agents have handler stubs</li><li>AWU deployment config + policies</li><li>Torkay + Demo deployment configs</li><li>Voice profiles (Andy, Tor)</li><li>Migration plan documented</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>BitBit Demo v1.0 (Shipped Jan 29)</h3>
+      <ul>
+        <li>E-commerce MVP (CheekyGlo)</li><li>7 Claude tools</li><li>Confidence routing (act/ask/escalate)</li><li>Policy-aware decision making</li><li>Chat + audit interfaces</li><li>~9,300 lines of code</li><li style="color:var(--green);font-weight:600">Live demo available</li>
+      </ul>
+    </div>
+  </div>
+  <div class="callout" style="margin-top:16px">
+    <strong>Key point for Andy:</strong> This isn't starting from scratch. The platform core exists. The live agent system runs daily (it literally manages Tor's clients, emails, and invoices right now). We're productizing what already works.
+  </div>
+</section>
+
+<!-- SUCCESS METRICS -->
+<section id="metrics" style="scroll-margin-top:72px;">
+  <h2>Success Targets (Month 3)</h2>
+  <table>
+    <thead><tr><th>Metric</th><th>Now</th><th>Target</th></tr></thead>
+    <tbody>
+      <tr><td>Lead response time</td><td style="color:var(--red)">Hours to days</td><td style="color:var(--green)">&lt; 2 minutes</td></tr>
+      <tr><td>Leads lost/month</td><td style="color:var(--red)">Unknown (several)</td><td style="color:var(--green)">Zero</td></tr>
+      <tr><td>Invoice turnaround</td><td style="color:var(--red)">Days after completion</td><td style="color:var(--green)">Same day</td></tr>
+      <tr><td>Proposal creation</td><td style="color:var(--red)">2-4 hours</td><td style="color:var(--green)">&lt; 30 minutes</td></tr>
+      <tr><td>Channels monitored</td><td style="color:var(--red)">Manual, sporadic</td><td style="color:var(--green)">All, continuous</td></tr>
+      <tr><td>Client update frequency</td><td style="color:var(--red)">Ad-hoc</td><td style="color:var(--green)">Weekly automated</td></tr>
+      <tr><td>Andy's ops time/week</td><td style="color:var(--red)">~25 hours</td><td style="color:var(--green)">&lt; 5 hours</td></tr>
+    </tbody>
+  </table>
+</section>
+
+</main>
+
+<a href="#top" class="to-top" title="Back to top">&uarr;</a>
+
+<script>
+const sections = document.querySelectorAll('section[id]');
+const navLinks = document.querySelectorAll('nav a:not(.logo)');
+window.addEventListener('scroll', () => {
+  let current = '';
+  sections.forEach(s => { if (window.scrollY >= s.offsetTop - 100) current = s.id; });
+  navLinks.forEach(a => { a.classList.toggle('active', a.getAttribute('href') === '#' + current); });
+});
+</script>
+
+</body>
+</html>

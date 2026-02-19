@@ -1,0 +1,10 @@
+{
+  "name": "@bitbit/agent-invoice-flow",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Invoice generation, delivery, tracking, and payment follow-up agent",
+  "main": "index.ts",
+  "dependencies": {
+    "@bitbit/core": "*"
+  }
+}

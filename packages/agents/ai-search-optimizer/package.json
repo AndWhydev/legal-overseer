@@ -1,0 +1,10 @@
+{
+  "name": "@bitbit/agent-ai-search-optimizer",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AI search engine visibility auditing, optimization, and monitoring agent",
+  "main": "index.ts",
+  "dependencies": {
+    "@bitbit/core": "*"
+  }
+}

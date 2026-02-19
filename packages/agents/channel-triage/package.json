@@ -1,0 +1,10 @@
+{
+  "name": "@bitbit/agent-channel-triage",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Cross-channel message synthesis, classification, deduplication, and routing agent",
+  "main": "index.ts",
+  "dependencies": {
+    "@bitbit/core": "*"
+  }
+}

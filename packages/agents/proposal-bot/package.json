@@ -1,0 +1,10 @@
+{
+  "name": "@bitbit/agent-proposal-bot",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Scope document, pricing tier, and proposal PDF generation agent",
+  "main": "index.ts",
+  "dependencies": {
+    "@bitbit/core": "*"
+  }
+}

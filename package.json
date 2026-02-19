@@ -1,0 +1,26 @@
+{
+  "name": "bitbit",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Agentic AI operations platform — deploy autonomous agents to run business operations",
+  "workspaces": [
+    "packages/core",
+    "packages/dashboard",
+    "packages/agents/*",
+    "deployments/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=packages/dashboard",
+    "build": "npm run build --workspace=packages/core && npm run build --workspace=packages/dashboard",
+    "dev:awu": "BITBIT_DEPLOYMENT=awu npm run dev --workspace=packages/dashboard",
+    "dev:torkay": "BITBIT_DEPLOYMENT=torkay npm run dev --workspace=packages/dashboard",
+    "dev:demo": "BITBIT_DEPLOYMENT=demo npm run dev --workspace=packages/dashboard",
+    "lint": "npm run lint --workspaces --if-present",
+    "db:migrate": "npm run db:migrate --workspace=packages/core",
+    "db:seed": "npm run db:seed --workspace=packages/core",
+    "agents:list": "node packages/core/src/agent-registry.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

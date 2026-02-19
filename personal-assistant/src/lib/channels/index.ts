@@ -1,0 +1,8 @@
+export * from './types'
+export { gmailAdapter } from './gmail'
+export { outlookAdapter } from './outlook'
+export { imessageAdapter } from './imessage'
+export { calendarAdapter } from './calendar'
+export { remindersAdapter } from './reminders'
+export { synthesize, getAllAdapters, getAdapter } from './synthesizer'
+export type { SynthesisOptions } from './synthesizer'
