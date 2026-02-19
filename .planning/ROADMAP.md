@@ -27,13 +27,13 @@ Milestone 1 transforms a working codebase into a deployed, contextually intellig
   3. Andy can browse the contacts view and see the 6 seeded AWU client contacts
   4. @bitbit/core package exports resolve without errors (monorepo builds cleanly)
   5. Supabase project is live in ap-southeast-2 with all 4 existing migrations applied and RLS active
-**Plans**: TBD
+**Plans:** 4 plans in 2 waves
 
 Plans:
-- [ ] 01-01: Supabase project setup, migrations, seed data (PLAT-01 to PLAT-05, PLAT-09)
-- [ ] 01-02: Vercel deployment, domain, env vars (PLAT-06, PLAT-07, PLAT-08)
-- [ ] 01-03: Fix @bitbit/core exports and verify monorepo (AGNT-14)
-- [ ] 01-04: Human tasks — Anthropic billing, Stripe verification, Meta submission (PLAT-10, PLAT-11, PLAT-12)
+- [ ] 01-01-PLAN.md — Supabase project setup, migrations, AWU seed data (PLAT-01 to PLAT-05, PLAT-09) [Wave 1]
+- [ ] 01-02-PLAN.md — Vercel deployment, domain, smoke test (PLAT-06, PLAT-07, PLAT-08) [Wave 2, depends on 01-01]
+- [ ] 01-03-PLAN.md — Fix @bitbit/core exports and verify monorepo (AGNT-14) [Wave 1]
+- [ ] 01-04-PLAN.md — Human tasks: Anthropic billing, Stripe, Meta verification (PLAT-10, PLAT-11, PLAT-12) [Wave 1]
 
 ### Phase 2: Schema Expansion
 **Goal**: All 13 new database tables exist with RLS policies and the semantic context schema is designed
