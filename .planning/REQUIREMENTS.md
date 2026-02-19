@@ -18,9 +18,9 @@ Requirements for Milestone 1. Each maps to roadmap phases.
 - [ ] **PLAT-07**: Domain bitbit.com.au pointed to Vercel with SSL
 - [ ] **PLAT-08**: Smoke test passes (login, kanban, chat, contacts, activity)
 - [ ] **PLAT-09**: Sample kanban tasks seeded for demo richness
-- [ ] **PLAT-10**: Anthropic API billing fixed (card updated) — HUMAN TASK (Andy)
-- [ ] **PLAT-11**: Stripe identity verification fixed (payouts unblocked) — HUMAN TASK (Andy)
-- [ ] **PLAT-12**: Meta Business Verification submitted (WhatsApp prep) — HUMAN TASK (Andy)
+- [x] **PLAT-10**: Anthropic API billing fixed (card updated) — HUMAN TASK (Andy)
+- [x] **PLAT-11**: Stripe identity verification fixed (payouts unblocked) — HUMAN TASK (Andy)
+- [x] **PLAT-12**: Meta Business Verification submitted (WhatsApp prep) — HUMAN TASK (Andy)
 
 ### Semantic Context Engine
 

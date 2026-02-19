@@ -33,7 +33,7 @@ Plans:
 - [ ] 01-01-PLAN.md — Supabase project setup, migrations, AWU seed data (PLAT-01 to PLAT-05, PLAT-09) [Wave 1]
 - [ ] 01-02-PLAN.md — Vercel deployment, domain, smoke test (PLAT-06, PLAT-07, PLAT-08) [Wave 2, depends on 01-01]
 - [x] 01-03-PLAN.md — Fix @bitbit/core exports and verify monorepo (AGNT-14) [Wave 1]
-- [ ] 01-04-PLAN.md — Human tasks: Anthropic billing, Stripe, Meta verification (PLAT-10, PLAT-11, PLAT-12) [Wave 1]
+- [x] 01-04-PLAN.md — Human tasks: Anthropic billing, Stripe, Meta verification (PLAT-10, PLAT-11, PLAT-12) [Wave 1]
 
 ### Phase 2: Schema Expansion
 **Goal**: All 13 new database tables exist with RLS policies and the semantic context schema is designed
@@ -91,7 +91,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Platform Deploy | 0/4 | Not started | - |
+| 1. Platform Deploy | 2/4 | In progress | - |
 | 2. Schema Expansion | 0/4 | Not started | - |
 | 3. Semantic Context Engine | 0/3 | Not started | - |
 | 4. Agent Infrastructure | 0/3 | Not started | - |
