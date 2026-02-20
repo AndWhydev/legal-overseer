@@ -11,7 +11,7 @@ Milestone 1 transforms a working codebase into a deployed, contextually intellig
 - Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
 
 - [ ] **Phase 1: Platform Deploy** - BitBit deployed to Vercel with Supabase, AWU seeded, Andy live
-- [ ] **Phase 2: Schema Expansion** - All new DB migrations run with RLS policies
+- [x] **Phase 2: Schema Expansion** - All new DB migrations run with RLS policies
 - [ ] **Phase 3: Semantic Context Engine** - Entity relationships, timeline, context assembly, and fuzzy resolution operational
 - [ ] **Phase 4: Agent Infrastructure** - Registry, confidence routing, and shared CRUD tools wired in
 
@@ -36,21 +36,21 @@ Plans:
 - [x] 01-04-PLAN.md — Human tasks: Anthropic billing, Stripe, Meta verification (PLAT-10, PLAT-11, PLAT-12) [Wave 1]
 
 ### Phase 2: Schema Expansion
-**Goal**: All 13 new database tables exist with RLS policies and the semantic context schema is designed
+**Goal**: All 12 new database tables exist with RLS policies, contacts enhanced, and the semantic context schema is designed
 **Depends on**: Phase 1
 **Requirements**: SCTX-01, SCTX-02, SCTX-03, SCTX-04, AGNT-01, AGNT-02, AGNT-03, AGNT-04, AGNT-05, AGNT-06, AGNT-07, AGNT-08, AGNT-09, AGNT-10
 **Success Criteria** (what must be TRUE):
   1. All 9 agent migrations (005-013) run cleanly against the live Supabase project
   2. entity_relationships, entity_timeline, and semantic_memories tables exist with correct columns
   3. Every new table has RLS policies enforcing org_id scoping (no cross-org data leakage)
-  4. Supabase schema inspector shows all 25 tables (12 existing + 13 new) with correct foreign keys
+  4. Supabase schema inspector shows all 24 tables (12 existing + 12 new) with correct foreign keys
 **Plans:** 4 plans in 2 waves
 
 Plans:
-- [ ] 02-01-PLAN.md — Semantic context migrations: entity_relationships, entity_timeline, semantic_memories (SCTX-01, SCTX-02, SCTX-03, SCTX-04) [Wave 1]
-- [ ] 02-02-PLAN.md — Agent infrastructure migrations 008-012: agent_configs, agent_runs, leads, invoices, watches (AGNT-01, AGNT-02, AGNT-03, AGNT-04, AGNT-05) [Wave 1]
-- [ ] 02-03-PLAN.md — Agent infrastructure migrations 013-016: templates, voice_profiles, proposals, offer_packages, contacts enhancements (AGNT-06, AGNT-07, AGNT-08, AGNT-09) [Wave 1]
-- [ ] 02-04-PLAN.md — RLS policies for all 12 new tables (AGNT-10) [Wave 2, depends on 02-01, 02-02, 02-03]
+- [x] 02-01-PLAN.md — Semantic context migrations: entity_relationships, entity_timeline, semantic_memories (SCTX-01, SCTX-02, SCTX-03, SCTX-04) [Wave 1]
+- [x] 02-02-PLAN.md — Agent infrastructure migrations 008-012: agent_configs, agent_runs, leads, invoices, watches (AGNT-01, AGNT-02, AGNT-03, AGNT-04, AGNT-05) [Wave 1]
+- [x] 02-03-PLAN.md — Agent infrastructure migrations 013-016: templates, voice_profiles, proposals, offer_packages, contacts enhancements (AGNT-06, AGNT-07, AGNT-08, AGNT-09) [Wave 1]
+- [x] 02-04-PLAN.md — RLS policies for all 12 new tables (AGNT-10) [Wave 2, depends on 02-01, 02-02, 02-03]
 
 ### Phase 3: Semantic Context Engine
 **Goal**: BitBit can resolve who an entity is, build its relationship graph, and assemble a context briefing for any query
@@ -92,6 +92,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Platform Deploy | 3/4 | In progress | - |
-| 2. Schema Expansion | 0/4 | Not started | - |
+| 2. Schema Expansion | 4/4 | Complete | 2026-02-21 |
 | 3. Semantic Context Engine | 0/3 | Not started | - |
 | 4. Agent Infrastructure | 0/3 | Not started | - |
