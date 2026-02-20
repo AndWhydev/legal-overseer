@@ -44,13 +44,13 @@ Plans:
   2. entity_relationships, entity_timeline, and semantic_memories tables exist with correct columns
   3. Every new table has RLS policies enforcing org_id scoping (no cross-org data leakage)
   4. Supabase schema inspector shows all 25 tables (12 existing + 13 new) with correct foreign keys
-**Plans**: TBD
+**Plans:** 4 plans in 2 waves
 
 Plans:
-- [ ] 02-01: Entity schema design and semantic context migrations (SCTX-01, SCTX-02, SCTX-03, SCTX-04)
-- [ ] 02-02: Agent infrastructure migrations 005-009 (AGNT-01 to AGNT-05)
-- [ ] 02-03: Agent infrastructure migrations 010-013 (AGNT-06 to AGNT-09)
-- [ ] 02-04: RLS policies for all new tables (AGNT-10)
+- [ ] 02-01-PLAN.md — Semantic context migrations: entity_relationships, entity_timeline, semantic_memories (SCTX-01, SCTX-02, SCTX-03, SCTX-04) [Wave 1]
+- [ ] 02-02-PLAN.md — Agent infrastructure migrations 008-012: agent_configs, agent_runs, leads, invoices, watches (AGNT-01, AGNT-02, AGNT-03, AGNT-04, AGNT-05) [Wave 1]
+- [ ] 02-03-PLAN.md — Agent infrastructure migrations 013-016: templates, voice_profiles, proposals, offer_packages, contacts enhancements (AGNT-06, AGNT-07, AGNT-08, AGNT-09) [Wave 1]
+- [ ] 02-04-PLAN.md — RLS policies for all 12 new tables (AGNT-10) [Wave 2, depends on 02-01, 02-02, 02-03]
 
 ### Phase 3: Semantic Context Engine
 **Goal**: BitBit can resolve who an entity is, build its relationship graph, and assemble a context briefing for any query
