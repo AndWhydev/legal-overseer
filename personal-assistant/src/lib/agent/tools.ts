@@ -1,6 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@/lib/supabase/server'
 import { channelToolDefinitions, channelToolHandlers } from './tools/channel-tools'
+import { resolveEntityRanked } from '@/lib/context/entity-resolver'
 
 export interface ToolResult {
   success: boolean
@@ -240,18 +241,14 @@ const handlers: Record<string, AgentToolHandler> = {
   },
 
   async search_contacts(input, orgId) {
-    const supabase = await getSupabase()
-    const q = (input.query as string).toLowerCase()
-
-    // Search across aliases, emails, phones, and name using GIN indexes
-    const { data, error } = await supabase
-      .from('contacts')
-      .select('*')
-      .eq('org_id', orgId)
-      .or(`name.ilike.%${q}%,slug.ilike.%${q}%,aliases.cs.{${q}},emails.cs.{${q}},phones.cs.{${q}}`)
-
-    if (error) return { success: false, error: error.message }
-    return { success: true, data: { results: data, total: data?.length ?? 0 } }
+    const query = input.query as string
+    const ranked = await resolveEntityRanked(query, orgId)
+    const results = ranked.map((r) => ({
+      ...r.contact,
+      matchConfidence: r.matchConfidence,
+      matchStep: r.matchStep,
+    }))
+    return { success: true, data: { results, total: results.length } }
   },
 
   async get_contact(input, orgId) {

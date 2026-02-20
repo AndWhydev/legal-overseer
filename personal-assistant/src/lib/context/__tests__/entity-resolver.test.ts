@@ -47,19 +47,23 @@ const andyContact = {
 }
 
 function setupChain(results: Record<string, unknown[] | null>) {
-  // Each call to from('contacts') starts a new query chain
-  // The resolver calls steps sequentially; we track call count to return different results
+  // Steps 1-4 each make one from() call. Step 5 (phone_variant) may make multiple calls
+  // (one per phone variant). We track which step we're on by call count.
+  // Steps: 0=alias, 1=email, 2=phone, 3=name, 4+=phone_variant
   let callCount = 0
-  const stepOrder = ['alias', 'email', 'phone', 'name', 'phone_variant']
 
   mockFrom.mockImplementation(() => {
-    const step = stepOrder[callCount] || 'name'
+    let step: string
+    if (callCount < 4) {
+      step = ['alias', 'email', 'phone', 'name'][callCount]
+    } else {
+      step = 'phone_variant'
+    }
     callCount++
     const data = results[step] ?? []
 
     // Build a chainable query builder that resolves to { data, error: null }
     const chain: Record<string, unknown> = {}
-    const handler = () => chain
     chain.select = vi.fn().mockReturnValue(chain)
     chain.eq = vi.fn().mockReturnValue(chain)
     chain.or = vi.fn().mockReturnValue(chain)
