@@ -62,12 +62,12 @@ Plans:
   3. Every channel message and task update writes a timestamped entry to entity_timeline
   4. The context assembler returns a structured briefing (entity + relationships + timeline + memories) for a given query
   5. Cross-reference engine returns related tasks, deadlines, and financial signals when queried with a contact or project entity
-**Plans**: TBD
+**Plans:** 3 plans in 2 waves
 
 Plans:
-- [ ] 03-01: Relationship auto-linker and timeline writer (SCTX-05, SCTX-06)
-- [ ] 03-02: Entity resolution — 5-step fuzzy match (SCTX-08)
-- [ ] 03-03: Context assembler port from personal AGI + cross-reference engine (SCTX-07, SCTX-09)
+- [ ] 03-01-PLAN.md — Relationship auto-linker and timeline writer (SCTX-05, SCTX-06) [Wave 1]
+- [ ] 03-02-PLAN.md — Entity resolution: 5-step fuzzy match (SCTX-08) [Wave 1]
+- [ ] 03-03-PLAN.md — Context assembler + cross-reference engine (SCTX-07, SCTX-09) [Wave 2, depends on 03-01, 03-02]
 
 ### Phase 4: Agent Infrastructure
 **Goal**: Agents can register themselves, route by confidence, and share a common CRUD toolset
