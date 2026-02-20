@@ -35,6 +35,7 @@ Progress: [███░░░░░░░] 25%
 
 *Updated after each plan completion*
 | Phase 01 P01 | 1min | 2 tasks | 1 files |
+| Phase 01 P02 | 2min | 3 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -48,6 +49,7 @@ Recent decisions affecting current work:
 - [Init]: Human tasks (PLAT-10/11/12) tracked in Phase 1 Plan 04 — parallel to technical deploy, not blocking Phases 2-4
 - [Phase 01-03]: Added packages/core/tsconfig.json to isolate compilation from personal-assistant errors
 - [Phase 01-01]: AWU org uses deterministic UUID for seed FK references; Andy auth user created via Supabase Auth not raw SQL
+- [Phase 01-02]: Deployed via Vercel dashboard import; www.bitbit.com.au as 308 redirect to apex
 
 ### Pending Todos
 
@@ -63,6 +65,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-02-19
-Stopped at: Completed 01-01-PLAN.md (seed_awu.sql created, needs execution via MCP)
+Last session: 2026-02-20
+Stopped at: Completed 01-02-PLAN.md (Vercel deploy + domain + smoke test)
 Resume file: None

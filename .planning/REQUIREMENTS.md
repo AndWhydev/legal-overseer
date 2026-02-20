@@ -14,9 +14,9 @@ Requirements for Milestone 1. Each maps to roadmap phases.
 - [x] **PLAT-03**: AWU org seed SQL written and run (from config.ts)
 - [x] **PLAT-04**: Andy's auth user created with profile linked to AWU org
 - [x] **PLAT-05**: 6 AWU client contacts seeded
-- [ ] **PLAT-06**: Vercel deployment with env vars (Supabase URL/keys, Anthropic key)
-- [ ] **PLAT-07**: Domain bitbit.com.au pointed to Vercel with SSL
-- [ ] **PLAT-08**: Smoke test passes (login, kanban, chat, contacts, activity)
+- [x] **PLAT-06**: Vercel deployment with env vars (Supabase URL/keys, Anthropic key)
+- [x] **PLAT-07**: Domain bitbit.com.au pointed to Vercel with SSL
+- [x] **PLAT-08**: Smoke test passes (login, kanban, chat, contacts, activity)
 - [x] **PLAT-09**: Sample kanban tasks seeded for demo richness
 - [x] **PLAT-10**: Anthropic API billing fixed (card updated) — HUMAN TASK (Andy)
 - [x] **PLAT-11**: Stripe identity verification fixed (payouts unblocked) — HUMAN TASK (Andy)
@@ -112,9 +112,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PLAT-03 | Phase 1 — Platform Deploy | Complete |
 | PLAT-04 | Phase 1 — Platform Deploy | Complete |
 | PLAT-05 | Phase 1 — Platform Deploy | Complete |
-| PLAT-06 | Phase 1 — Platform Deploy | Pending |
-| PLAT-07 | Phase 1 — Platform Deploy | Pending |
-| PLAT-08 | Phase 1 — Platform Deploy | Pending |
+| PLAT-06 | Phase 1 — Platform Deploy | Complete |
+| PLAT-07 | Phase 1 — Platform Deploy | Complete |
+| PLAT-08 | Phase 1 — Platform Deploy | Complete |
 | PLAT-09 | Phase 1 — Platform Deploy | Complete |
 | PLAT-10 | Phase 1 — Platform Deploy | Pending (human task) |
 | PLAT-11 | Phase 1 — Platform Deploy | Pending (human task) |
