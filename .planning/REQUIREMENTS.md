@@ -46,7 +46,7 @@ Requirements for Milestone 1. Each maps to roadmap phases.
 - [ ] **AGNT-08**: Migration 012_offer_packages.sql
 - [ ] **AGNT-09**: Migration 013_contacts_enhancements.sql
 - [ ] **AGNT-10**: RLS policies for all new tables (org_id scoping)
-- [ ] **AGNT-11**: Agent registry with self-registration pattern
+- [x] **AGNT-11**: Agent registry with self-registration pattern
 - [ ] **AGNT-12**: Confidence routing (act >0.85 / ask 0.55-0.85 / escalate <0.55)
 - [ ] **AGNT-13**: Shared CRUD tool system for all agents
 - [x] **AGNT-14**: Fix @bitbit/core (audit exports, remove broken refs, verify monorepo resolution)
@@ -139,7 +139,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SCTX-07 | Phase 3 — Semantic Context Engine | Complete |
 | SCTX-08 | Phase 3 — Semantic Context Engine | Complete |
 | SCTX-09 | Phase 3 — Semantic Context Engine | Complete |
-| AGNT-11 | Phase 4 — Agent Infrastructure | Pending |
+| AGNT-11 | Phase 4 — Agent Infrastructure | Complete |
 | AGNT-12 | Phase 4 — Agent Infrastructure | Pending |
 | AGNT-13 | Phase 4 — Agent Infrastructure | Pending |
 
