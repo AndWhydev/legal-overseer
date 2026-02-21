@@ -41,11 +41,11 @@
   2. Every agent execution logs token count, cost, actions taken, and confidence score to the database
   3. Confidence routing (act/ask/escalate) produces correct decisions when given test inputs in production
   4. Shared CRUD tools (contact, task, invoice operations) execute successfully against production Supabase
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 07-01: Supabase DI refactor
-- [ ] 07-02: Agent run logging and v1.0 infra verification
+- [ ] 07-01-PLAN.md — Supabase DI refactor (all agent/context/channel modules accept SupabaseClient parameter)
+- [ ] 07-02-PLAN.md — Agent run logging and v1.0 infra verification (run-logger, confidence routing tests, shared CRUD tests)
 
 ### Phase 8: Agent Runtime
 **Goal**: Messages flow automatically from Gmail into BitBit, get classified with full context awareness, and route to the correct processing path
