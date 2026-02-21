@@ -28,11 +28,11 @@ Requirements for Milestone 1. Each maps to roadmap phases.
 - [ ] **SCTX-02**: Migration: entity_relationships table (entity_a, entity_b, relationship_type, metadata, strength)
 - [ ] **SCTX-03**: Migration: entity_timeline table (entity_id, event_type, event_data, channel_source, timestamp)
 - [ ] **SCTX-04**: Migration: semantic_memories table (org_id, entity_ids[], category, content, confidence, source_events[])
-- [ ] **SCTX-05**: Relationship auto-linker (task/contact/invoice CRUD → auto-create entity_relationships)
+- [x] **SCTX-05**: Relationship auto-linker (task/contact/invoice CRUD → auto-create entity_relationships)
 - [x] **SCTX-06**: Timeline writer (every channel message, task update, invoice event → entity_timeline entry)
 - [x] **SCTX-07**: Context assembler ported from personal AGI to TypeScript
-- [ ] **SCTX-08**: Entity resolution: 5-step fuzzy match (exact alias → email → phone → partial name → phone variants)
-- [ ] **SCTX-09**: Cross-reference engine (given entity → related tasks, waiting-for, deadlines, financial signals)
+- [x] **SCTX-08**: Entity resolution: 5-step fuzzy match (exact alias → email → phone → partial name → phone variants)
+- [x] **SCTX-09**: Cross-reference engine (given entity → related tasks, waiting-for, deadlines, financial signals)
 
 ### Agent Infrastructure
 
@@ -134,11 +134,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | AGNT-08 | Phase 6 — Verification Artifacts | Pending |
 | AGNT-09 | Phase 6 — Verification Artifacts | Pending |
 | AGNT-10 | Phase 6 — Verification Artifacts | Pending |
-| SCTX-05 | Phase 5 — Wire Integration Points | Pending |
+| SCTX-05 | Phase 5 — Wire Integration Points | Complete |
 | SCTX-06 | Phase 3 — Semantic Context Engine | Complete |
 | SCTX-07 | Phase 3 — Semantic Context Engine | Complete |
-| SCTX-08 | Phase 5 — Wire Integration Points | Pending |
-| SCTX-09 | Phase 5 — Wire Integration Points | Pending |
+| SCTX-08 | Phase 5 — Wire Integration Points | Complete |
+| SCTX-09 | Phase 5 — Wire Integration Points | Complete |
 | AGNT-11 | Phase 5 — Wire Integration Points | Complete |
 | AGNT-12 | Phase 5 — Wire Integration Points | Pending |
 | AGNT-13 | Phase 5 — Wire Integration Points | Pending |

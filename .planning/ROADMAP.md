@@ -14,7 +14,7 @@ Milestone 1 transforms a working codebase into a deployed, contextually intellig
 - [x] **Phase 2: Schema Expansion** - All new DB migrations run with RLS policies
 - [x] **Phase 3: Semantic Context Engine** - Entity relationships, timeline, context assembly, and fuzzy resolution operational
 - [x] **Phase 4: Agent Infrastructure** - Registry, confidence routing, and shared CRUD tools wired in
-- [ ] **Phase 5: Wire Integration Points** - Cross-phase wiring: entity prompts, registry startup, schema fix
+- [x] **Phase 5: Wire Integration Points** - Cross-phase wiring: entity prompts, registry startup, schema fix (completed 2026-02-21)
 - [ ] **Phase 6: Verification Artifacts** - Create VERIFICATION.md for Phase 1 and Phase 2
 
 ## Phase Details
@@ -96,7 +96,7 @@ Plans:
   1. Chat messages trigger buildEntityAwarePrompt (not buildSystemPrompt) so entity context enriches every response
   2. loadAllAgents() runs on first chat request and populates the in-memory agent registry
   3. cross-reference.ts queries match actual invoices schema columns (total, paid_date)
-**Plans:** 2 plans in 1 wave
+**Plans:** 2/2 plans complete
 
 Plans:
 - [ ] 05-01-PLAN.md — Wire entity-aware prompts into chat engine and fix cross-reference schema mismatch (SCTX-05, SCTX-08, SCTX-09) [Wave 1]
@@ -123,5 +123,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | 2. Schema Expansion | 4/4 | Complete | 2026-02-21 |
 | 3. Semantic Context Engine | 3/3 | Complete | 2026-02-21 |
 | 4. Agent Infrastructure | 4/4 | Complete    | 2026-02-21 |
-| 5. Wire Integration Points | 0/2 | Planned | — |
+| 5. Wire Integration Points | 2/2 | Complete   | 2026-02-21 |
 | 6. Verification Artifacts | 0/0 | Pending | — |
