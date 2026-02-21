@@ -254,6 +254,14 @@ export interface Watch {
   updated_at: string
 }
 
+// --- Agent Registry Entry ---
+
+export interface AgentRegistryEntry {
+  definition: import('./agent-registry').AgentDefinition
+  config: AgentConfig
+  registered_at: Date
+}
+
 // --- Voice Profiles ---
 
 export interface VoiceProfile {

@@ -6,7 +6,15 @@
  */
 
 // Agent registry
-export { registerAgent, getAgent, listAgents, type AgentDefinition } from './agent-registry'
+export {
+  registerAgent,
+  getAgent,
+  listAgents,
+  getRegisteredTypes,
+  getAgentConfig,
+  validateDefinition,
+  type AgentDefinition,
+} from './agent-registry'
 
 // Types
 export type {
@@ -17,6 +25,7 @@ export type {
   Proposal,
   AgentConfig,
   AgentRun,
+  AgentRegistryEntry,
   Watch,
   VoiceProfile,
   Template,
