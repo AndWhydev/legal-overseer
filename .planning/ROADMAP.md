@@ -89,11 +89,11 @@ Plans:
   2. When an issue is detected, Sentry suggests a specific remediation action (not just "something broke")
   3. If Andy does not acknowledge an alert within N minutes, the notification escalates (e.g., repeat ping, louder channel)
   4. Andy can create, pause, and delete watches from the dashboard
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 10-01: Sentry agent core (watches, detection, remediation suggestions)
-- [ ] 10-02: Escalation chain and dashboard watches UI
+- [ ] 10-01-PLAN.md — Sentry agent core (watch evaluation, issue detection, remediation suggestions, scheduler wiring)
+- [ ] 10-02-PLAN.md — Escalation chain and dashboard watches UI
 
 ### Phase 11: Lead Swarm Agent
 **Goal**: Inbound leads are automatically classified, qualified, and fast-tracked -- Andy never misses a hot lead
