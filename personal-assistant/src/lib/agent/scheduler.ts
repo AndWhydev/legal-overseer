@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { AgentSchedule } from '@/lib/bitbit-core'
 import { logAgentRun } from './run-logger'
+import { runSentryTick } from './sentry'
 
 /**
  * Result of checking one agent's schedule.
@@ -159,13 +160,20 @@ export async function runScheduledAgents(
       continue
     }
 
-    // 4. Insert placeholder agent_run
+    let outputSummary = 'pending'
+
+    if (config.agent_type === 'sentry') {
+      const sentryResult = await runSentryTick(supabase, config.org_id, config.id)
+      outputSummary = `sentry processed=${sentryResult.processed} triggered=${sentryResult.triggered} alerts=${sentryResult.alertsCreated}`
+    }
+
+    // 4. Record scheduler run
     await logAgentRun(supabase, {
       org_id: config.org_id,
       agent_config_id: config.id,
       trigger_type: 'scheduled',
       input_summary: `Scheduled tick at ${now.toISOString()}`,
-      output_summary: 'pending',
+      output_summary: outputSummary,
       actions_taken: [],
       tools_called: [],
       model_used: 'haiku',
