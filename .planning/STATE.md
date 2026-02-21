@@ -43,6 +43,7 @@ See PROJECT.md Key Decisions table.
 - **07-01:** Supabase DI pattern: createClient() only at HTTP boundary, SupabaseClient passed as first param to all agent/context/channel functions
 - **07-02:** Run logger never throws (returns null on failure); cost estimation uses static per-million-token pricing per model tier
 - **08-01:** Bearer token auth (RELAY_SECRET) for cron endpoint; ignoreDuplicates upsert for idempotent message ingestion
+- **08-02:** Haiku model for cost-optimized classification; pure deterministic routing function; spam/newsletter always skip
 - **08-03:** Minimal cron parser (no external deps) for agent scheduling; stateless tick function pattern; separate SCHEDULER_SECRET env var
 
 ### Pending Todos
