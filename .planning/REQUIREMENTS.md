@@ -9,7 +9,7 @@ Requirements for milestone v1.1: Agent Runtime + First Agents.
 
 ### Runtime
 
-- [ ] **RNTM-01**: Channel relay daemon polls Gmail on configurable intervals, buffers and processes messages
+- [x] **RNTM-01**: Channel relay daemon polls Gmail on configurable intervals, buffers and processes messages
 - [ ] **RNTM-02**: LLM classification assigns significance (1-10), time sensitivity, and recommended actions to each message
 - [ ] **RNTM-03**: Action router dispatches messages as immediate/queue/batch/skip based on significance + urgency
 - [ ] **RNTM-04**: Agent scheduler triggers agents on cron schedules (configurable per agent per org)
@@ -92,7 +92,7 @@ Deferred to future milestones. Tracked but not in current roadmap.
 | INFR-01 | Phase 7 | Complete |
 | INFR-02 | Phase 7 | Complete |
 | INFR-03 | Phase 7 | Complete |
-| RNTM-01 | Phase 8 | Pending |
+| RNTM-01 | Phase 8 | Complete |
 | RNTM-02 | Phase 8 | Pending |
 | RNTM-03 | Phase 8 | Pending |
 | RNTM-04 | Phase 8 | Pending |

@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-22)
 
 **Core value:** BitBit understands the business better than the business owner -- when Andy says "Invoice Sezer for the White House RE work", BitBit knows who Sezer is, what the work was, the rate, and whether it's already been invoiced.
-**Current focus:** v1.1 Phase 7 - Infrastructure Foundation
+**Current focus:** v1.1 Phase 8 - Agent Runtime
 
 ## Current Position
 
-Phase: 7 of 12 (Infrastructure Foundation) -- COMPLETE
-Plan: 2 of 2 in current phase
-Status: Phase Complete
-Last activity: 2026-02-22 -- Completed 07-02 Agent Run Logger + Infrastructure Verification
+Phase: 8 of 12 (Agent Runtime)
+Plan: 1 of 4 in current phase
+Status: Executing
+Last activity: 2026-02-22 -- Completed 08-01 Channel Relay Daemon
 
-Progress: [████████████░░░░░░░░] 60% (21/35 plans across all milestones)
+Progress: [████████████░░░░░░░░] 63% (22/35 plans across all milestones)
 
 ## Performance Metrics
 
@@ -42,6 +42,7 @@ See PROJECT.md Key Decisions table.
 
 - **07-01:** Supabase DI pattern: createClient() only at HTTP boundary, SupabaseClient passed as first param to all agent/context/channel functions
 - **07-02:** Run logger never throws (returns null on failure); cost estimation uses static per-million-token pricing per model tier
+- **08-01:** Bearer token auth (RELAY_SECRET) for cron endpoint; ignoreDuplicates upsert for idempotent message ingestion
 
 ### Pending Todos
 
@@ -57,5 +58,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-22
-Stopped at: Completed 07-02-PLAN.md (Phase 7 complete)
+Stopped at: Completed 08-01-PLAN.md
 Resume file: None
