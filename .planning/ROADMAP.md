@@ -13,7 +13,7 @@ Milestone 1 transforms a working codebase into a deployed, contextually intellig
 - [ ] **Phase 1: Platform Deploy** - BitBit deployed to Vercel with Supabase, AWU seeded, Andy live
 - [x] **Phase 2: Schema Expansion** - All new DB migrations run with RLS policies
 - [ ] **Phase 3: Semantic Context Engine** - Entity relationships, timeline, context assembly, and fuzzy resolution operational
-- [ ] **Phase 4: Agent Infrastructure** - Registry, confidence routing, and shared CRUD tools wired in
+- [x] **Phase 4: Agent Infrastructure** - Registry, confidence routing, and shared CRUD tools wired in
 
 ## Phase Details
 
@@ -81,8 +81,8 @@ Plans:
 
 Plans:
 - [x] 04-01-PLAN.md — Agent registry with self-registration, validation, DB config merge (AGNT-11) [Wave 1]
-- [ ] 04-02-PLAN.md — Confidence routing with threshold cascade and tests (AGNT-12) [Wave 1]
-- [ ] 04-03-PLAN.md — Shared CRUD tool system extracted from tools.ts (AGNT-13) [Wave 2, depends on 04-01]
+- [x] 04-02-PLAN.md — Confidence routing with threshold cascade and tests (AGNT-12) [Wave 1]
+- [x] 04-03-PLAN.md — Shared CRUD tool system extracted from tools.ts (AGNT-13) [Wave 2, depends on 04-01]
 
 ## Progress
 
@@ -94,4 +94,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | 1. Platform Deploy | 3/4 | In progress | - |
 | 2. Schema Expansion | 4/4 | Complete | 2026-02-21 |
 | 3. Semantic Context Engine | 3/3 | Complete | 2026-02-21 |
-| 4. Agent Infrastructure | 1/3 | In progress | - |
+| 4. Agent Infrastructure | 3/3 | Complete | 2026-02-21 |
