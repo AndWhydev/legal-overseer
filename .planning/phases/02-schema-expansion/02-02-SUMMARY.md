@@ -2,6 +2,7 @@
 plan: 02-02
 status: complete
 commit: c1d3abe, 0827bf0
+requirements-completed: [AGNT-01, AGNT-02, AGNT-03, AGNT-04, AGNT-05]
 ---
 
 ## Result

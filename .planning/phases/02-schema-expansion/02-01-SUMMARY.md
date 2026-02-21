@@ -2,6 +2,7 @@
 plan: 02-01
 status: complete
 commit: c1d3abe, 0827bf0
+requirements-completed: [SCTX-01, SCTX-02, SCTX-03, SCTX-04]
 ---
 
 ## Result
