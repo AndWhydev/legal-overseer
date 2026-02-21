@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { resolveEntityRanked } from '@/lib/context/entity-resolver'
 import { writeTaskEvent } from '@/lib/context/timeline-writer'
 import { linkTaskToContact } from '@/lib/context/relationship-linker'
@@ -55,14 +55,7 @@ export interface ContactMatch {
 
 // --- Internal Helpers ---
 
-async function getSupabase() {
-  const supabase = await createClient()
-  if (!supabase) throw new Error('Supabase not configured')
-  return supabase
-}
-
-async function resolveColumnId(orgId: string, columnName: string): Promise<string | null> {
-  const supabase = await getSupabase()
+async function resolveColumnId(supabase: SupabaseClient, orgId: string, columnName: string): Promise<string | null> {
   const { data } = await supabase
     .from('kanban_columns')
     .select('id')
@@ -76,6 +69,7 @@ async function resolveColumnId(orgId: string, columnName: string): Promise<strin
 // --- Task CRUD ---
 
 export async function createTask(
+  supabase: SupabaseClient,
   orgId: string,
   params: {
     title: string
@@ -86,14 +80,12 @@ export async function createTask(
     tags?: string[]
   }
 ): Promise<TaskResult> {
-  const supabase = await getSupabase()
-
   let columnId: string | undefined
   if (params.column) {
-    columnId = (await resolveColumnId(orgId, params.column)) ?? undefined
+    columnId = (await resolveColumnId(supabase, orgId, params.column)) ?? undefined
   }
   if (!columnId) {
-    columnId = (await resolveColumnId(orgId, 'To Do')) ?? undefined
+    columnId = (await resolveColumnId(supabase, orgId, 'To Do')) ?? undefined
   }
 
   // Get next position in column
@@ -120,7 +112,7 @@ export async function createTask(
   if (error) return { success: false, error: error.message }
 
   // Fire-and-forget: timeline event
-  writeTaskEvent(orgId, data.id, 'task_created', {
+  writeTaskEvent(supabase, orgId, data.id, 'task_created', {
     title: params.title,
     column: params.column,
     priority: params.priority || 'medium',
@@ -128,13 +120,14 @@ export async function createTask(
 
   // Fire-and-forget: link contact
   if (params.contact_id) {
-    linkTaskToContact(orgId, data.id, params.contact_id)
+    linkTaskToContact(supabase, orgId, data.id, params.contact_id)
   }
 
   return { success: true, data }
 }
 
 export async function updateTask(
+  supabase: SupabaseClient,
   orgId: string,
   taskId: string,
   params: {
@@ -145,7 +138,6 @@ export async function updateTask(
     priority?: string
   }
 ): Promise<TaskResult> {
-  const supabase = await getSupabase()
   const updates: Record<string, unknown> = {}
 
   if (params.title) updates.title = params.title
@@ -153,7 +145,7 @@ export async function updateTask(
   if (params.status) updates.status = params.status
   if (params.priority) updates.priority = params.priority
   if (params.column) {
-    const colId = await resolveColumnId(orgId, params.column)
+    const colId = await resolveColumnId(supabase, orgId, params.column)
     if (colId) updates.column_id = colId
   }
 
@@ -168,20 +160,20 @@ export async function updateTask(
   if (error) return { success: false, error: error.message }
 
   // Fire-and-forget: timeline event
-  writeTaskEvent(orgId, taskId, 'task_updated', updates)
+  writeTaskEvent(supabase, orgId, taskId, 'task_updated', updates)
 
   if (params.status === 'completed') {
-    writeTaskEvent(orgId, taskId, 'task_completed', updates)
+    writeTaskEvent(supabase, orgId, taskId, 'task_completed', updates)
   }
 
   return { success: true, data }
 }
 
 export async function searchTasks(
+  supabase: SupabaseClient,
   orgId: string,
   params: { query?: string; status?: string; priority?: string }
 ): Promise<SearchResult<Record<string, unknown>>> {
-  const supabase = await getSupabase()
   let query = supabase.from('tasks').select('*').eq('org_id', orgId)
 
   if (params.status) query = query.eq('status', params.status)
@@ -197,8 +189,7 @@ export async function searchTasks(
 
 // --- Contact CRUD ---
 
-export async function getContact(orgId: string, slug: string): Promise<Contact | null> {
-  const supabase = await getSupabase()
+export async function getContact(supabase: SupabaseClient, orgId: string, slug: string): Promise<Contact | null> {
   const { data, error } = await supabase
     .from('contacts')
     .select('*')
@@ -211,10 +202,11 @@ export async function getContact(orgId: string, slug: string): Promise<Contact |
 }
 
 export async function searchContacts(
+  supabase: SupabaseClient,
   orgId: string,
   query: string
 ): Promise<ContactMatch[]> {
-  const ranked = await resolveEntityRanked(query, orgId)
+  const ranked = await resolveEntityRanked(supabase, query, orgId)
   return ranked.map((r) => ({
     contact: r.contact,
     matchConfidence: r.matchConfidence,
@@ -225,6 +217,7 @@ export async function searchContacts(
 // --- Invoice CRUD ---
 
 export async function createInvoice(
+  supabase: SupabaseClient,
   orgId: string,
   params: {
     invoice_number: string
@@ -234,8 +227,6 @@ export async function createInvoice(
     currency?: string
   }
 ): Promise<InvoiceResult> {
-  const supabase = await getSupabase()
-
   const subtotal = params.items.reduce((sum, item) => sum + item.total, 0)
   const tax = subtotal * 0.1 // 10% GST (AU default)
   const total = subtotal + tax
@@ -264,6 +255,7 @@ export async function createInvoice(
 }
 
 export async function updateInvoice(
+  supabase: SupabaseClient,
   orgId: string,
   invoiceId: string,
   params: {
@@ -272,7 +264,6 @@ export async function updateInvoice(
     payment_method?: string
   }
 ): Promise<InvoiceResult> {
-  const supabase = await getSupabase()
   const updates: Record<string, unknown> = {}
 
   if (params.status) updates.status = params.status
@@ -292,10 +283,10 @@ export async function updateInvoice(
 }
 
 export async function searchInvoices(
+  supabase: SupabaseClient,
   orgId: string,
   params: { status?: InvoiceStatus; client_contact_id?: string }
 ): Promise<SearchResult<Record<string, unknown>>> {
-  const supabase = await getSupabase()
   let query = supabase.from('invoices').select('*').eq('org_id', orgId)
 
   if (params.status) query = query.eq('status', params.status)
@@ -309,10 +300,10 @@ export async function searchInvoices(
 // --- Messages ---
 
 export async function searchMessages(
+  supabase: SupabaseClient,
   orgId: string,
   params: { channel?: string; contact_id?: string; query?: string; since?: string }
 ): Promise<SearchResult<ChannelMessage>> {
-  const supabase = await getSupabase()
   let dbQuery = supabase.from('channel_messages').select('*').eq('org_id', orgId)
 
   if (params.channel) dbQuery = dbQuery.eq('channel', params.channel)
@@ -328,10 +319,10 @@ export async function searchMessages(
 // --- Activity ---
 
 export async function logActivity(
+  supabase: SupabaseClient,
   orgId: string,
   params: { action_type: string; action: string; reasoning?: string; result?: string }
 ): Promise<CrudResult<{ id: string }>> {
-  const supabase = await getSupabase()
   const { data, error } = await supabase
     .from('activity_feed')
     .insert({

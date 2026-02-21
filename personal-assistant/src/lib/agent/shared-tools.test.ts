@@ -13,10 +13,6 @@ function createMockSupabase() {
 
 const mockSupabase = createMockSupabase()
 
-vi.mock('@/lib/supabase/server', () => ({
-  createClient: vi.fn(async () => mockSupabase),
-}))
-
 vi.mock('@/lib/context/entity-resolver', () => ({
   resolveEntityRanked: vi.fn(),
 }))
@@ -77,7 +73,7 @@ describe('shared-tools', () => {
         return mockSupabase
       })
 
-      const result = await createTask(ORG_ID, { title: 'Test' })
+      const result = await createTask(mockSupabase as any, ORG_ID, { title: 'Test' })
 
       expect(result.success).toBe(true)
       expect(mockSupabase.from).toHaveBeenCalledWith('tasks')
@@ -86,7 +82,7 @@ describe('shared-tools', () => {
         title: 'Test',
         position: 3,
       }))
-      expect(writeTaskEvent).toHaveBeenCalledWith(ORG_ID, 'task-1', 'task_created', expect.any(Object))
+      expect(writeTaskEvent).toHaveBeenCalledWith(mockSupabase, ORG_ID, 'task-1', 'task_created', expect.any(Object))
     })
 
     it('links contact if contact_id provided', async () => {
@@ -103,9 +99,9 @@ describe('shared-tools', () => {
         return mockSupabase
       })
 
-      await createTask(ORG_ID, { title: 'Linked', contact_id: 'contact-1' })
+      await createTask(mockSupabase as any, ORG_ID, { title: 'Linked', contact_id: 'contact-1' })
 
-      expect(linkTaskToContact).toHaveBeenCalledWith(ORG_ID, 'task-2', 'contact-1')
+      expect(linkTaskToContact).toHaveBeenCalledWith(mockSupabase, ORG_ID, 'task-2', 'contact-1')
     })
   })
 
@@ -113,20 +109,20 @@ describe('shared-tools', () => {
     it('updates correct fields and writes timeline event', async () => {
       mockSupabase.single.mockResolvedValueOnce({ data: { id: 'task-1', title: 'Updated' }, error: null })
 
-      const result = await updateTask(ORG_ID, 'task-1', { title: 'Updated' })
+      const result = await updateTask(mockSupabase as any, ORG_ID, 'task-1', { title: 'Updated' })
 
       expect(result.success).toBe(true)
       expect(mockSupabase.eq).toHaveBeenCalledWith('id', 'task-1')
       expect(mockSupabase.eq).toHaveBeenCalledWith('org_id', ORG_ID)
-      expect(writeTaskEvent).toHaveBeenCalledWith(ORG_ID, 'task-1', 'task_updated', { title: 'Updated' })
+      expect(writeTaskEvent).toHaveBeenCalledWith(mockSupabase, ORG_ID, 'task-1', 'task_updated', { title: 'Updated' })
     })
 
     it('writes task_completed event when status=completed', async () => {
       mockSupabase.single.mockResolvedValueOnce({ data: { id: 'task-1' }, error: null })
 
-      await updateTask(ORG_ID, 'task-1', { status: 'completed' })
+      await updateTask(mockSupabase as any, ORG_ID, 'task-1', { status: 'completed' })
 
-      expect(writeTaskEvent).toHaveBeenCalledWith(ORG_ID, 'task-1', 'task_completed', expect.any(Object))
+      expect(writeTaskEvent).toHaveBeenCalledWith(mockSupabase, ORG_ID, 'task-1', 'task_completed', expect.any(Object))
     })
   })
 
@@ -134,7 +130,7 @@ describe('shared-tools', () => {
     it('applies query/status/priority filters', async () => {
       mockSupabase.limit.mockResolvedValueOnce({ data: [{ id: 'task-1' }], error: null })
 
-      const result = await searchTasks(ORG_ID, { query: 'test', status: 'pending', priority: 'high' })
+      const result = await searchTasks(mockSupabase as any, ORG_ID, { query: 'test', status: 'pending', priority: 'high' })
 
       expect(result.success).toBe(true)
       expect(result.data?.results).toHaveLength(1)
@@ -152,9 +148,9 @@ describe('shared-tools', () => {
       ]
       vi.mocked(resolveEntityRanked).mockResolvedValue(mockRanked as never)
 
-      const results = await searchContacts(ORG_ID, 'Alice')
+      const results = await searchContacts(mockSupabase as any, ORG_ID, 'Alice')
 
-      expect(resolveEntityRanked).toHaveBeenCalledWith('Alice', ORG_ID)
+      expect(resolveEntityRanked).toHaveBeenCalledWith(mockSupabase, 'Alice', ORG_ID)
       expect(results).toHaveLength(1)
       expect(results[0].matchConfidence).toBe(0.95)
     })
@@ -164,7 +160,7 @@ describe('shared-tools', () => {
     it('queries by org_id + slug', async () => {
       mockSupabase.single.mockResolvedValueOnce({ data: { id: 'c1', slug: 'alice', name: 'Alice' }, error: null })
 
-      const contact = await getContact(ORG_ID, 'alice')
+      const contact = await getContact(mockSupabase as any, ORG_ID, 'alice')
 
       expect(contact).not.toBeNull()
       expect(contact!.name).toBe('Alice')
@@ -175,7 +171,7 @@ describe('shared-tools', () => {
     it('returns null on not found', async () => {
       mockSupabase.single.mockResolvedValueOnce({ data: null, error: { message: 'not found' } })
 
-      const contact = await getContact(ORG_ID, 'nobody')
+      const contact = await getContact(mockSupabase as any, ORG_ID, 'nobody')
 
       expect(contact).toBeNull()
     })
@@ -192,7 +188,7 @@ describe('shared-tools', () => {
         error: null,
       })
 
-      const result = await createInvoice(ORG_ID, {
+      const result = await createInvoice(mockSupabase as any, ORG_ID, {
         invoice_number: 'INV-001',
         client_contact_id: 'c1',
         items,
@@ -216,7 +212,7 @@ describe('shared-tools', () => {
     it('inserts into activity_feed with all fields', async () => {
       mockSupabase.single.mockResolvedValueOnce({ data: { id: 'act-1' }, error: null })
 
-      const result = await logActivity(ORG_ID, {
+      const result = await logActivity(mockSupabase as any, ORG_ID, {
         action_type: 'task',
         action: 'Created task',
         reasoning: 'User requested',
@@ -239,7 +235,7 @@ describe('shared-tools', () => {
     it('every query function passes org_id', async () => {
       // searchTasks
       mockSupabase.limit.mockResolvedValueOnce({ data: [], error: null })
-      await searchTasks(ORG_ID, {})
+      await searchTasks(mockSupabase as any, ORG_ID, {})
       expect(mockSupabase.eq).toHaveBeenCalledWith('org_id', ORG_ID)
 
       vi.clearAllMocks()
@@ -249,7 +245,7 @@ describe('shared-tools', () => {
 
       // getContact
       mockSupabase.single.mockResolvedValueOnce({ data: null, error: { message: 'nf' } })
-      await getContact(ORG_ID, 'test')
+      await getContact(mockSupabase as any, ORG_ID, 'test')
       expect(mockSupabase.eq).toHaveBeenCalledWith('org_id', ORG_ID)
 
       vi.clearAllMocks()
@@ -259,7 +255,7 @@ describe('shared-tools', () => {
 
       // logActivity
       mockSupabase.single.mockResolvedValueOnce({ data: { id: 'a1' }, error: null })
-      await logActivity(ORG_ID, { action_type: 'system', action: 'test' })
+      await logActivity(mockSupabase as any, ORG_ID, { action_type: 'system', action: 'test' })
       expect(mockSupabase.insert).toHaveBeenCalledWith(expect.objectContaining({ org_id: ORG_ID }))
     })
   })

@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { channelToolDefinitions, channelToolHandlers } from './tools/channel-tools'
 import {
   createTask,
@@ -157,9 +158,11 @@ async function getSupabase() {
 }
 
 // Thin wrappers: parse Record<string, unknown> -> call typed shared function -> return ToolResult
+// These create the Supabase client at the HTTP boundary and pass it to shared-tools
 const handlers: Record<string, AgentToolHandler> = {
   async create_task(input, orgId) {
-    return createTask(orgId, {
+    const supabase = await getSupabase()
+    return createTask(supabase, orgId, {
       title: input.title as string,
       description: input.description as string | undefined,
       priority: input.priority as string | undefined,
@@ -170,7 +173,8 @@ const handlers: Record<string, AgentToolHandler> = {
   },
 
   async update_task(input, orgId) {
-    return updateTask(orgId, input.task_id as string, {
+    const supabase = await getSupabase()
+    return updateTask(supabase, orgId, input.task_id as string, {
       title: input.title as string | undefined,
       description: input.description as string | undefined,
       status: input.status as string | undefined,
@@ -180,7 +184,8 @@ const handlers: Record<string, AgentToolHandler> = {
   },
 
   async search_tasks(input, orgId) {
-    return searchTasks(orgId, {
+    const supabase = await getSupabase()
+    return searchTasks(supabase, orgId, {
       query: input.query as string | undefined,
       status: input.status as string | undefined,
       priority: input.priority as string | undefined,
@@ -188,7 +193,8 @@ const handlers: Record<string, AgentToolHandler> = {
   },
 
   async search_contacts(input, orgId) {
-    const matches = await searchContacts(orgId, input.query as string)
+    const supabase = await getSupabase()
+    const matches = await searchContacts(supabase, orgId, input.query as string)
     const results = matches.map((m) => ({
       ...m.contact,
       matchConfidence: m.matchConfidence,
@@ -198,13 +204,15 @@ const handlers: Record<string, AgentToolHandler> = {
   },
 
   async get_contact(input, orgId) {
-    const contact = await getContact(orgId, input.slug as string)
+    const supabase = await getSupabase()
+    const contact = await getContact(supabase, orgId, input.slug as string)
     if (!contact) return { success: false, error: 'Contact not found' }
     return { success: true, data: contact }
   },
 
   async log_activity(input, orgId) {
-    return logActivity(orgId, {
+    const supabase = await getSupabase()
+    return logActivity(supabase, orgId, {
       action_type: input.action_type as string,
       action: input.action as string,
       reasoning: input.reasoning as string | undefined,
