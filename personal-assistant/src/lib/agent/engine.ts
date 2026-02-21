@@ -1,6 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { getAgentTools, executeAgentTool } from './tools'
-import { buildSystemPrompt } from './prompt-builder'
+import { buildEntityAwarePrompt } from './prompt-builder'
 import { selectModel, getModel } from './model-router'
 
 export interface ChatMessage {
@@ -43,7 +43,7 @@ export async function* runAgentChat(
   const model = config.model || selection?.model || 'claude-sonnet-4-5-20250929'
   const maxTokens = selection ? getModel(selection.tier).maxTokens : 4096
 
-  const systemPrompt = await buildSystemPrompt(config.orgId)
+  const systemPrompt = await buildEntityAwarePrompt(config.orgId, message)
 
   if (autoRouted && selection) {
     console.log(`[model-router] ${selection.tier}: ${selection.reasoning}`)

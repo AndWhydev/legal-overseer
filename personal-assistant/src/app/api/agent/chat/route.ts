@@ -1,11 +1,19 @@
 import { NextRequest } from 'next/server'
 import { runAgentChat } from '@/lib/agent/engine'
+import { loadAllAgents } from '@/lib/agent/registry-loader'
 import { createClient } from '@/lib/supabase/server'
+
+let registryInitialized = false
 
 export async function POST(request: NextRequest) {
   const { message } = await request.json()
   if (!message) {
     return new Response('Message required', { status: 400 })
+  }
+
+  if (!registryInitialized) {
+    loadAllAgents()
+    registryInitialized = true
   }
 
   // Authenticate and get org_id
