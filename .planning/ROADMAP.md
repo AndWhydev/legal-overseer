@@ -97,6 +97,11 @@ Plans:
   2. loadAllAgents() runs at app startup and populates the in-memory agent registry
   3. routeAgentAction() gates tool execution with confidence thresholds (act/ask/escalate)
   4. cross-reference.ts queries match actual invoices schema columns (total, paid_date)
+**Plans:** 2 plans in 1 wave
+
+Plans:
+- [ ] 05-01-PLAN.md — Wire entity-aware prompts into chat engine and fix cross-reference schema mismatch (SCTX-05, SCTX-08, SCTX-09) [Wave 1]
+- [ ] 05-02-PLAN.md — Wire agent registry startup and confidence routing into chat pipeline (AGNT-11, AGNT-12, AGNT-13) [Wave 1]
 
 ### Phase 6: Verification Artifacts
 **Goal**: Phase 1 and Phase 2 have VERIFICATION.md files proving all requirements were satisfied
@@ -119,5 +124,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | 2. Schema Expansion | 4/4 | Complete | 2026-02-21 |
 | 3. Semantic Context Engine | 3/3 | Complete | 2026-02-21 |
 | 4. Agent Infrastructure | 4/4 | Complete    | 2026-02-21 |
-| 5. Wire Integration Points | 0/0 | Pending | — |
+| 5. Wire Integration Points | 0/2 | Planned | — |
 | 6. Verification Artifacts | 0/0 | Pending | — |
