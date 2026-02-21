@@ -32,6 +32,8 @@ import {
   getContact,
   searchContacts,
   createInvoice,
+  updateInvoice,
+  searchInvoices,
   logActivity,
 } from './shared-tools'
 import { resolveEntityRanked } from '@/lib/context/entity-resolver'
@@ -228,6 +230,95 @@ describe('shared-tools', () => {
           action: 'Created task',
         })
       )
+    })
+  })
+
+  describe('updateInvoice', () => {
+    it('updates status with org_id scoping', async () => {
+      mockSupabase.single.mockResolvedValueOnce({
+        data: { id: 'inv-1', status: 'sent' },
+        error: null,
+      })
+
+      const result = await updateInvoice(mockSupabase as any, ORG_ID, 'inv-1', { status: 'sent' })
+
+      expect(result.success).toBe(true)
+      expect(mockSupabase.eq).toHaveBeenCalledWith('id', 'inv-1')
+      expect(mockSupabase.eq).toHaveBeenCalledWith('org_id', ORG_ID)
+    })
+  })
+
+  describe('searchInvoices', () => {
+    it('filters by status', async () => {
+      mockSupabase.limit.mockResolvedValueOnce({
+        data: [{ id: 'inv-1', status: 'overdue' }],
+        error: null,
+      })
+
+      const result = await searchInvoices(mockSupabase as any, ORG_ID, { status: 'overdue' })
+
+      expect(result.success).toBe(true)
+      expect(mockSupabase.eq).toHaveBeenCalledWith('org_id', ORG_ID)
+      expect(mockSupabase.eq).toHaveBeenCalledWith('status', 'overdue')
+    })
+  })
+
+  describe('error handling', () => {
+    it('createTask returns error result on Supabase failure', async () => {
+      mockSupabase.single
+        .mockResolvedValueOnce({ data: { id: 'col-todo' } }) // column lookup
+        .mockResolvedValueOnce({ data: null, error: { message: 'insert failed' } })
+
+      let selectCallCount = 0
+      mockSupabase.select.mockImplementation(() => {
+        selectCallCount++
+        if (selectCallCount === 2) {
+          return { eq: vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ count: 0 }) }) }
+        }
+        return mockSupabase
+      })
+
+      const result = await createTask(mockSupabase as any, ORG_ID, { title: 'Fail' })
+
+      expect(result.success).toBe(false)
+    })
+
+    it('updateTask returns error result on Supabase failure', async () => {
+      mockSupabase.single.mockResolvedValueOnce({
+        data: null,
+        error: { message: 'update failed' },
+      })
+
+      const result = await updateTask(mockSupabase as any, ORG_ID, 'task-1', { title: 'Fail' })
+
+      expect(result.success).toBe(false)
+    })
+
+    it('searchTasks returns error result on Supabase failure', async () => {
+      mockSupabase.limit.mockResolvedValueOnce({
+        data: null,
+        error: { message: 'query failed' },
+      })
+
+      const result = await searchTasks(mockSupabase as any, ORG_ID, {})
+
+      expect(result.success).toBe(false)
+    })
+
+    it('createInvoice returns error result on Supabase failure', async () => {
+      mockSupabase.single.mockResolvedValueOnce({
+        data: null,
+        error: { message: 'insert failed' },
+      })
+
+      const result = await createInvoice(mockSupabase as any, ORG_ID, {
+        invoice_number: 'INV-FAIL',
+        client_contact_id: 'c1',
+        items: [{ description: 'x', quantity: 1, unit_price: 100, total: 100 }],
+        due_date: '2026-03-01',
+      })
+
+      expect(result.success).toBe(false)
     })
   })
 

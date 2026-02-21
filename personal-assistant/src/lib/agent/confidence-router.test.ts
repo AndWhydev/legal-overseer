@@ -42,6 +42,10 @@ describe('confidence-router', () => {
     it('routes 0.5499 to escalate', () => {
       expect(routeByConfidence(0.5499).decision).toBe('escalate')
     })
+
+    it('routes 0.8499 to ask (just below act)', () => {
+      expect(routeByConfidence(0.8499).decision).toBe('ask')
+    })
   })
 
   describe('routeByConfidence - custom thresholds', () => {
@@ -67,6 +71,14 @@ describe('confidence-router', () => {
 
     it('routes 1.0 to act', () => {
       expect(routeByConfidence(1.0).decision).toBe('act')
+    })
+
+    it('routes negative confidence to escalate', () => {
+      expect(routeByConfidence(-0.1).decision).toBe('escalate')
+    })
+
+    it('routes confidence > 1 to act', () => {
+      expect(routeByConfidence(1.5).decision).toBe('act')
     })
 
     it('includes confidence and thresholds in result', () => {
@@ -146,6 +158,39 @@ describe('confidence-router', () => {
 
     it('uses org when agent has no thresholds', () => {
       const result = routeAgentAction(0.80, {}, { confidence_thresholds: { act: 0.75 } })
+      expect(result.decision).toBe('act')
+    })
+  })
+
+  describe('Production scenarios', () => {
+    it('invoice send (confidence 0.92) routes to act', () => {
+      const result = routeAgentAction(0.92)
+      expect(result.decision).toBe('act')
+    })
+
+    it('lead reply draft (confidence 0.70) routes to ask', () => {
+      const result = routeAgentAction(0.70)
+      expect(result.decision).toBe('ask')
+    })
+
+    it('unknown request (confidence 0.30) routes to escalate', () => {
+      const result = routeAgentAction(0.30)
+      expect(result.decision).toBe('escalate')
+    })
+
+    it('borderline task with strict agent thresholds escalates', () => {
+      const result = routeAgentAction(
+        0.60,
+        { confidence_thresholds: { act: 0.95, ask: 0.75 } },
+      )
+      expect(result.decision).toBe('escalate')
+    })
+
+    it('agent with relaxed thresholds acts on moderate confidence', () => {
+      const result = routeAgentAction(
+        0.65,
+        { confidence_thresholds: { act: 0.60, ask: 0.30 } },
+      )
       expect(result.decision).toBe('act')
     })
   })
