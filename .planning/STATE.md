@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-02-19)
 ## Current Position
 
 Phase: 4 of 4 (Agent Infrastructure)
-Plan: 1 of 3 in current phase (COMPLETE)
+Plan: 2 of 3 in current phase (COMPLETE)
 Status: In Progress
-Last activity: 2026-02-21 — Completed 04-01 (agent registry and self-registration)
+Last activity: 2026-02-21 — Completed 04-02 (confidence router)
 
-Progress: [████████░░] 85%
+Progress: [█████████░] 90%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 5
+- Total plans completed: 6
 - Average duration: 4min
-- Total execution time: 0.10 hours
+- Total execution time: 0.12 hours
 
 **By Phase:**
 
@@ -29,10 +29,10 @@ Progress: [████████░░] 85%
 |-------|-------|-------|----------|
 | 01-platform-deploy | 2 | 3min | 1.5min |
 | 03-semantic-context-engine | 3 | 11min | 3.7min |
-| 04-agent-infrastructure | 1 | 7min | 7min |
+| 04-agent-infrastructure | 2 | 10min | 5min |
 
 **Recent Trend:**
-- Last 5 plans: 01-04 (1min), 03-02 (4min), 03-01 (4min), 03-03 (3min), 04-01 (7min)
+- Last 5 plans: 03-02 (4min), 03-01 (4min), 03-03 (3min), 04-01 (7min), 04-02 (3min)
 - Trend: -
 
 *Updated after each plan completion*
@@ -42,6 +42,7 @@ Progress: [████████░░] 85%
 | Phase 03 P01 | 4min | 2 tasks | 5 files |
 | Phase 03 P03 | 3min | 2 tasks | 5 files |
 | Phase 04 P01 | 7min | 2 tasks | 4 files |
+| Phase 04 P02 | 3min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -60,6 +61,7 @@ Recent decisions affecting current work:
 - [Phase 03-01]: Fire-and-forget pattern for context writes (never block CRUD flow); channel messages treated as inbound
 - [Phase 03]: Entity context section capped at 4000 chars to stay within token budget
 - [Phase 04-01]: DB configs passed as parameter to keep registry pure/sync (no async DB calls in core)
+- [Phase 04]: Defined ConfidenceThresholds types locally in personal-assistant instead of importing from @bitbit/core — no path alias configured
 
 ### Pending Todos
 
@@ -76,5 +78,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-21
-Stopped at: Completed 04-01-PLAN.md (agent registry and self-registration)
+Stopped at: Completed 04-02-PLAN.md (confidence router)
 Resume file: None
