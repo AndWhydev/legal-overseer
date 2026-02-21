@@ -77,7 +77,7 @@ Plans:
   1. An agent module can call self-register and appear in the agent registry without manual configuration
   2. A task classified at 0.90 confidence executes immediately; at 0.65 it prompts Andy for approval; below 0.55 it escalates
   3. Any agent can call the shared CRUD tools to read/write contacts, tasks, invoices, and messages without reimplementing DB access
-**Plans:** 4 plans in 2 waves
+**Plans:** 4/4 plans complete
 
 Plans:
 - [x] 04-01-PLAN.md — Agent registry with self-registration, validation, DB config merge (AGNT-11) [Wave 1]
@@ -95,4 +95,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | 1. Platform Deploy | 3/4 | In progress | - |
 | 2. Schema Expansion | 4/4 | Complete | 2026-02-21 |
 | 3. Semantic Context Engine | 3/3 | Complete | 2026-02-21 |
-| 4. Agent Infrastructure | 3/3 | Complete | 2026-02-21 |
+| 4. Agent Infrastructure | 4/4 | Complete   | 2026-02-21 |
