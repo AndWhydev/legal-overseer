@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-22)
 
 **Core value:** BitBit understands the business better than the business owner -- when Andy says "Invoice Sezer for the White House RE work", BitBit knows who Sezer is, what the work was, the rate, and whether it's already been invoiced.
-**Current focus:** v1.1 Phase 8 - Agent Runtime
+**Current focus:** v1.1 Phase 9 - Approval Flow
 
 ## Current Position
 
-Phase: 8 of 12 (Agent Runtime)
-Plan: 3 of 4 in current phase
+Phase: 9 of 12 (Approval Flow)
+Plan: 1 of 3 in current phase
 Status: Executing
-Last activity: 2026-02-22 -- Completed 08-03 Agent Scheduler
+Last activity: 2026-02-22 -- Completed 09-01 Approval Queue Foundation
 
-Progress: [█████████████░░░░░░░] 69% (24/35 plans across all milestones)
+Progress: [██████████████░░░░░░░] 71% (25/35 plans across all milestones)
 
 ## Performance Metrics
 
@@ -33,6 +33,7 @@ Progress: [█████████████░░░░░░░] 69% (24
 | 4. Agent Infra | 4 | ~1.5h | ~22 min |
 | 5. Wire Integration | 2 | ~40 min | ~20 min |
 | 6. Verification | 2 | ~30 min | ~15 min |
+| Phase 09 P01 | 15m | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -45,6 +46,8 @@ See PROJECT.md Key Decisions table.
 - **08-01:** Bearer token auth (RELAY_SECRET) for cron endpoint; ignoreDuplicates upsert for idempotent message ingestion
 - **08-02:** Haiku model for cost-optimized classification; pure deterministic routing function; spam/newsletter always skip
 - **08-03:** Minimal cron parser (no external deps) for agent scheduling; stateless tick function pattern; separate SCHEDULER_SECRET env var
+- [Phase 09]: Resolve conflicts by checking current approval status before update and returning explicit not-found/already-resolved errors.
+- [Phase 09]: Keep urgent-first ordering deterministic by sorting pending results after query while preserving created_at tie-breaks.
 
 ### Pending Todos
 
@@ -60,5 +63,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-22
-Stopped at: Completed 08-03-PLAN.md
+Stopped at: Completed 09-01-PLAN.md
 Resume file: None

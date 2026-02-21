@@ -1,0 +1,2 @@
+- `npx tsc --noEmit src/lib/agent/approval-queue.ts` fails due pre-existing path-alias/typecheck setup (`Cannot find module '@/lib/bitbit-core'`).
+- `npx tsc --noEmit src/app/api/agent/approvals/route.ts` fails due pre-existing workspace TypeScript/Next.js environment issues and missing alias resolution in single-file mode.
