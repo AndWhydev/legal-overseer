@@ -14,7 +14,7 @@ Milestone 1 transforms a working codebase into a deployed, contextually intellig
 - [x] **Phase 2: Schema Expansion** - All new DB migrations run with RLS policies
 - [x] **Phase 3: Semantic Context Engine** - Entity relationships, timeline, context assembly, and fuzzy resolution operational
 - [x] **Phase 4: Agent Infrastructure** - Registry, confidence routing, and shared CRUD tools wired in
-- [ ] **Phase 5: Wire Integration Points** - Cross-phase wiring: entity prompts, registry startup, confidence gating, schema fix
+- [ ] **Phase 5: Wire Integration Points** - Cross-phase wiring: entity prompts, registry startup, schema fix
 - [ ] **Phase 6: Verification Artifacts** - Create VERIFICATION.md for Phase 1 and Phase 2
 
 ## Phase Details
@@ -90,18 +90,17 @@ Plans:
 ### Phase 5: Wire Integration Points
 **Goal**: All cross-phase integration points are wired so entity-aware prompts, agent registry, and confidence routing activate in production
 **Depends on**: Phase 4
-**Requirements**: SCTX-05, SCTX-08, SCTX-09, AGNT-11, AGNT-12, AGNT-13
+**Requirements**: SCTX-05, SCTX-08, SCTX-09, AGNT-11
 **Gap Closure:** Closes 4 integration gaps and 2 broken E2E flows from audit
 **Success Criteria** (what must be TRUE):
   1. Chat messages trigger buildEntityAwarePrompt (not buildSystemPrompt) so entity context enriches every response
-  2. loadAllAgents() runs at app startup and populates the in-memory agent registry
-  3. routeAgentAction() gates tool execution with confidence thresholds (act/ask/escalate)
-  4. cross-reference.ts queries match actual invoices schema columns (total, paid_date)
+  2. loadAllAgents() runs on first chat request and populates the in-memory agent registry
+  3. cross-reference.ts queries match actual invoices schema columns (total, paid_date)
 **Plans:** 2 plans in 1 wave
 
 Plans:
 - [ ] 05-01-PLAN.md — Wire entity-aware prompts into chat engine and fix cross-reference schema mismatch (SCTX-05, SCTX-08, SCTX-09) [Wave 1]
-- [ ] 05-02-PLAN.md — Wire agent registry startup and confidence routing into chat pipeline (AGNT-11, AGNT-12, AGNT-13) [Wave 1]
+- [ ] 05-02-PLAN.md — Wire agent registry startup into chat pipeline (AGNT-11) [Wave 1]
 
 ### Phase 6: Verification Artifacts
 **Goal**: Phase 1 and Phase 2 have VERIFICATION.md files proving all requirements were satisfied
