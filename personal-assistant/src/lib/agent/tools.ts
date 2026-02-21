@@ -2,6 +2,8 @@ import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@/lib/supabase/server'
 import { channelToolDefinitions, channelToolHandlers } from './tools/channel-tools'
 import { resolveEntityRanked } from '@/lib/context/entity-resolver'
+import { writeTaskEvent } from '@/lib/context/timeline-writer'
+import { linkTaskToContact } from '@/lib/context/relationship-linker'
 
 export interface ToolResult {
   success: boolean
@@ -196,6 +198,19 @@ const handlers: Record<string, AgentToolHandler> = {
       .single()
 
     if (error) return { success: false, error: error.message }
+
+    // Write timeline event for task creation
+    writeTaskEvent(orgId, data.id, 'task_created', {
+      title: input.title as string,
+      column: input.column as string | undefined,
+      priority: (input.priority as string) || 'medium',
+    })
+
+    // Link task to contact if contact_id provided
+    if (input.contact_id) {
+      linkTaskToContact(orgId, data.id, input.contact_id as string)
+    }
+
     return { success: true, data }
   },
 
@@ -222,6 +237,15 @@ const handlers: Record<string, AgentToolHandler> = {
       .single()
 
     if (error) return { success: false, error: error.message }
+
+    // Write timeline event for task update
+    writeTaskEvent(orgId, input.task_id as string, 'task_updated', updates)
+
+    // Also write task_completed if status changed to completed
+    if (input.status === 'completed') {
+      writeTaskEvent(orgId, input.task_id as string, 'task_completed', updates)
+    }
+
     return { success: true, data }
   },
 

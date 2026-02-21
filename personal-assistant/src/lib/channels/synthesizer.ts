@@ -1,4 +1,5 @@
 import type { ChannelMessage, ChannelType, SyncResult, ChannelAdapter } from './types'
+import { writeMessageEvent } from '@/lib/context/timeline-writer'
 import { gmailAdapter } from './gmail'
 import { outlookAdapter } from './outlook'
 import { imessageAdapter } from './imessage'
@@ -227,6 +228,25 @@ export async function synthesize(options: SynthesisOptions): Promise<SyncResult[
       } else if (supabase && !toDoColumnId) {
         result.errors.push('No "To Do" column found for this organization')
         result.tasksCreated = actionable.length // Report what would have been created
+      }
+      // Write timeline events for ALL deduplicated messages (not just actionable)
+      for (const msg of unique) {
+        try {
+          writeMessageEvent(
+            options.orgId,
+            msg.externalId || crypto.randomUUID(),
+            'inbound',
+            msg.channel,
+            {
+              sender: msg.sender,
+              subject: msg.subject,
+              bodyPreview: msg.body.slice(0, 200),
+            },
+            undefined
+          )
+        } catch (timelineErr) {
+          console.error('[synthesizer] Failed to write timeline event:', timelineErr)
+        }
       }
     } catch (err) {
       result.errors.push(String(err))
