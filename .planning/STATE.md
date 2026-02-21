@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-22)
 
 **Core value:** BitBit understands the business better than the business owner -- when Andy says "Invoice Sezer for the White House RE work", BitBit knows who Sezer is, what the work was, the rate, and whether it's already been invoiced.
-**Current focus:** v1.1 Phase 9 - Approval Flow
+**Current focus:** v1.0 Phase 10 - Sentry Agent
 
 ## Current Position
 
-Phase: 9 of 12 (Approval Flow)
-Plan: 1 of 3 in current phase
+Phase: 10 of 12 (Sentry Agent)
+Plan: 2 of 2 in current phase
 Status: Executing
-Last activity: 2026-02-22 -- Completed 09-01 Approval Queue Foundation
+Last activity: 2026-02-22 -- Completed 10-01 Sentry Agent Core
 
-Progress: [██████████████░░░░░░░] 71% (25/35 plans across all milestones)
+Progress: [███████████████░░░░░░] 74% (26/35 plans across all milestones)
 
 ## Performance Metrics
 
@@ -34,6 +34,7 @@ Progress: [██████████████░░░░░░░] 71% 
 | 5. Wire Integration | 2 | ~40 min | ~20 min |
 | 6. Verification | 2 | ~30 min | ~15 min |
 | Phase 09 P01 | 15m | 2 tasks | 4 files |
+| Phase 10 P01 | 8m | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -48,6 +49,9 @@ See PROJECT.md Key Decisions table.
 - **08-03:** Minimal cron parser (no external deps) for agent scheduling; stateless tick function pattern; separate SCHEDULER_SECRET env var
 - [Phase 09]: Resolve conflicts by checking current approval status before update and returning explicit not-found/already-resolved errors.
 - [Phase 09]: Keep urgent-first ordering deterministic by sorting pending results after query while preserving created_at tie-breaks.
+- [Phase 10]: Evaluate due watches using next_check_at first with interval fallback from last_checked_at.
+- [Phase 10]: Scheduler executes runSentryTick for sentry configs and logs processed/triggered/alerts counts.
+- [Phase 10]: Installed vitest as workspace devDependency to unblock plan-mandated verification.
 
 ### Pending Todos
 
@@ -59,9 +63,10 @@ None.
 - AGNT-12/AGNT-13 production-verified with boundary tests and error handling (Phase 7 complete)
 - Supabase DI refactor complete (Phase 7 complete)
 - WhatsApp Business API requires Meta Business Verification (3-14 day lead time for Phase 9)
+- Local Docker daemon unavailable, so `npx supabase db lint` could not be executed for migration verification.
 
 ## Session Continuity
 
 Last session: 2026-02-22
-Stopped at: Completed 09-01-PLAN.md
+Stopped at: Completed 10-01-PLAN.md
 Resume file: None
