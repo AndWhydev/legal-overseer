@@ -9,18 +9,18 @@ Requirements for Milestone 1. Each maps to roadmap phases.
 
 ### Platform Foundation
 
-- [x] **PLAT-01**: Supabase project created (bitbit-awu, ap-southeast-2) with auth configured
-- [x] **PLAT-02**: 4 existing migrations run (core schema, RLS, seed defaults, channels)
-- [x] **PLAT-03**: AWU org seed SQL written and run (from config.ts)
-- [x] **PLAT-04**: Andy's auth user created with profile linked to AWU org
-- [x] **PLAT-05**: 6 AWU client contacts seeded
-- [x] **PLAT-06**: Vercel deployment with env vars (Supabase URL/keys, Anthropic key)
-- [x] **PLAT-07**: Domain bitbit.com.au pointed to Vercel with SSL
-- [x] **PLAT-08**: Smoke test passes (login, kanban, chat, contacts, activity)
-- [x] **PLAT-09**: Sample kanban tasks seeded for demo richness
-- [x] **PLAT-10**: Anthropic API billing fixed (card updated) — HUMAN TASK (Andy)
-- [x] **PLAT-11**: Stripe identity verification fixed (payouts unblocked) — HUMAN TASK (Andy)
-- [x] **PLAT-12**: Meta Business Verification submitted (WhatsApp prep) — HUMAN TASK (Andy)
+- [ ] **PLAT-01**: Supabase project created (bitbit-awu, ap-southeast-2) with auth configured
+- [ ] **PLAT-02**: 4 existing migrations run (core schema, RLS, seed defaults, channels)
+- [ ] **PLAT-03**: AWU org seed SQL written and run (from config.ts)
+- [ ] **PLAT-04**: Andy's auth user created with profile linked to AWU org
+- [ ] **PLAT-05**: 6 AWU client contacts seeded
+- [ ] **PLAT-06**: Vercel deployment with env vars (Supabase URL/keys, Anthropic key)
+- [ ] **PLAT-07**: Domain bitbit.com.au pointed to Vercel with SSL
+- [ ] **PLAT-08**: Smoke test passes (login, kanban, chat, contacts, activity)
+- [ ] **PLAT-09**: Sample kanban tasks seeded for demo richness
+- [ ] **PLAT-10**: Anthropic API billing fixed (card updated) — HUMAN TASK (Andy)
+- [ ] **PLAT-11**: Stripe identity verification fixed (payouts unblocked) — HUMAN TASK (Andy)
+- [ ] **PLAT-12**: Meta Business Verification submitted (WhatsApp prep) — HUMAN TASK (Andy)
 
 ### Semantic Context Engine
 
@@ -28,11 +28,11 @@ Requirements for Milestone 1. Each maps to roadmap phases.
 - [ ] **SCTX-02**: Migration: entity_relationships table (entity_a, entity_b, relationship_type, metadata, strength)
 - [ ] **SCTX-03**: Migration: entity_timeline table (entity_id, event_type, event_data, channel_source, timestamp)
 - [ ] **SCTX-04**: Migration: semantic_memories table (org_id, entity_ids[], category, content, confidence, source_events[])
-- [x] **SCTX-05**: Relationship auto-linker (task/contact/invoice CRUD → auto-create entity_relationships)
+- [ ] **SCTX-05**: Relationship auto-linker (task/contact/invoice CRUD → auto-create entity_relationships)
 - [x] **SCTX-06**: Timeline writer (every channel message, task update, invoice event → entity_timeline entry)
 - [x] **SCTX-07**: Context assembler ported from personal AGI to TypeScript
-- [x] **SCTX-08**: Entity resolution: 5-step fuzzy match (exact alias → email → phone → partial name → phone variants)
-- [x] **SCTX-09**: Cross-reference engine (given entity → related tasks, waiting-for, deadlines, financial signals)
+- [ ] **SCTX-08**: Entity resolution: 5-step fuzzy match (exact alias → email → phone → partial name → phone variants)
+- [ ] **SCTX-09**: Cross-reference engine (given entity → related tasks, waiting-for, deadlines, financial signals)
 
 ### Agent Infrastructure
 
@@ -46,10 +46,10 @@ Requirements for Milestone 1. Each maps to roadmap phases.
 - [ ] **AGNT-08**: Migration 012_offer_packages.sql
 - [ ] **AGNT-09**: Migration 013_contacts_enhancements.sql
 - [ ] **AGNT-10**: RLS policies for all new tables (org_id scoping)
-- [x] **AGNT-11**: Agent registry with self-registration pattern
-- [x] **AGNT-12**: Confidence routing (act >0.85 / ask 0.55-0.85 / escalate <0.55)
-- [x] **AGNT-13**: Shared CRUD tool system for all agents
-- [x] **AGNT-14**: Fix @bitbit/core (audit exports, remove broken refs, verify monorepo resolution)
+- [ ] **AGNT-11**: Agent registry with self-registration pattern
+- [ ] **AGNT-12**: Confidence routing (act >0.85 / ask 0.55-0.85 / escalate <0.55)
+- [ ] **AGNT-13**: Shared CRUD tool system for all agents
+- [ ] **AGNT-14**: Fix @bitbit/core (audit exports, remove broken refs, verify monorepo resolution)
 
 ## v2 Requirements
 
@@ -107,47 +107,48 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| PLAT-01 | Phase 1 — Platform Deploy | Complete |
-| PLAT-02 | Phase 1 — Platform Deploy | Complete |
-| PLAT-03 | Phase 1 — Platform Deploy | Complete |
-| PLAT-04 | Phase 1 — Platform Deploy | Complete |
-| PLAT-05 | Phase 1 — Platform Deploy | Complete |
-| PLAT-06 | Phase 1 — Platform Deploy | Complete |
-| PLAT-07 | Phase 1 — Platform Deploy | Complete |
-| PLAT-08 | Phase 1 — Platform Deploy | Complete |
-| PLAT-09 | Phase 1 — Platform Deploy | Complete |
-| PLAT-10 | Phase 1 — Platform Deploy | Pending (human task) |
-| PLAT-11 | Phase 1 — Platform Deploy | Pending (human task) |
-| PLAT-12 | Phase 1 — Platform Deploy | Pending (human task) |
-| AGNT-14 | Phase 1 — Platform Deploy | Complete |
-| SCTX-01 | Phase 2 — Schema Expansion | Pending |
-| SCTX-02 | Phase 2 — Schema Expansion | Pending |
-| SCTX-03 | Phase 2 — Schema Expansion | Pending |
-| SCTX-04 | Phase 2 — Schema Expansion | Pending |
-| AGNT-01 | Phase 2 — Schema Expansion | Pending |
-| AGNT-02 | Phase 2 — Schema Expansion | Pending |
-| AGNT-03 | Phase 2 — Schema Expansion | Pending |
-| AGNT-04 | Phase 2 — Schema Expansion | Pending |
-| AGNT-05 | Phase 2 — Schema Expansion | Pending |
-| AGNT-06 | Phase 2 — Schema Expansion | Pending |
-| AGNT-07 | Phase 2 — Schema Expansion | Pending |
-| AGNT-08 | Phase 2 — Schema Expansion | Pending |
-| AGNT-09 | Phase 2 — Schema Expansion | Pending |
-| AGNT-10 | Phase 2 — Schema Expansion | Pending |
-| SCTX-05 | Phase 3 — Semantic Context Engine | Complete |
+| PLAT-01 | Phase 6 — Verification Artifacts | Pending |
+| PLAT-02 | Phase 6 — Verification Artifacts | Pending |
+| PLAT-03 | Phase 6 — Verification Artifacts | Pending |
+| PLAT-04 | Phase 6 — Verification Artifacts | Pending |
+| PLAT-05 | Phase 6 — Verification Artifacts | Pending |
+| PLAT-06 | Phase 6 — Verification Artifacts | Pending |
+| PLAT-07 | Phase 6 — Verification Artifacts | Pending |
+| PLAT-08 | Phase 6 — Verification Artifacts | Pending |
+| PLAT-09 | Phase 6 — Verification Artifacts | Pending |
+| PLAT-10 | Phase 6 — Verification Artifacts | Pending |
+| PLAT-11 | Phase 6 — Verification Artifacts | Pending |
+| PLAT-12 | Phase 6 — Verification Artifacts | Pending |
+| AGNT-14 | Phase 6 — Verification Artifacts | Pending |
+| SCTX-01 | Phase 6 — Verification Artifacts | Pending |
+| SCTX-02 | Phase 6 — Verification Artifacts | Pending |
+| SCTX-03 | Phase 6 — Verification Artifacts | Pending |
+| SCTX-04 | Phase 6 — Verification Artifacts | Pending |
+| AGNT-01 | Phase 6 — Verification Artifacts | Pending |
+| AGNT-02 | Phase 6 — Verification Artifacts | Pending |
+| AGNT-03 | Phase 6 — Verification Artifacts | Pending |
+| AGNT-04 | Phase 6 — Verification Artifacts | Pending |
+| AGNT-05 | Phase 6 — Verification Artifacts | Pending |
+| AGNT-06 | Phase 6 — Verification Artifacts | Pending |
+| AGNT-07 | Phase 6 — Verification Artifacts | Pending |
+| AGNT-08 | Phase 6 — Verification Artifacts | Pending |
+| AGNT-09 | Phase 6 — Verification Artifacts | Pending |
+| AGNT-10 | Phase 6 — Verification Artifacts | Pending |
+| SCTX-05 | Phase 5 — Wire Integration Points | Pending |
 | SCTX-06 | Phase 3 — Semantic Context Engine | Complete |
 | SCTX-07 | Phase 3 — Semantic Context Engine | Complete |
-| SCTX-08 | Phase 3 — Semantic Context Engine | Complete |
-| SCTX-09 | Phase 3 — Semantic Context Engine | Complete |
-| AGNT-11 | Phase 4 — Agent Infrastructure | Complete |
-| AGNT-12 | Phase 4 — Agent Infrastructure | Complete |
-| AGNT-13 | Phase 4 — Agent Infrastructure | Complete |
+| SCTX-08 | Phase 5 — Wire Integration Points | Pending |
+| SCTX-09 | Phase 5 — Wire Integration Points | Pending |
+| AGNT-11 | Phase 5 — Wire Integration Points | Pending |
+| AGNT-12 | Phase 5 — Wire Integration Points | Pending |
+| AGNT-13 | Phase 5 — Wire Integration Points | Pending |
 
 **Coverage:**
 - v1 requirements: 35 total
-- Mapped to phases: 35
-- Unmapped: 0 (coverage complete)
+- Complete: 2 (SCTX-06, SCTX-07)
+- Pending verification: 33 (remapped to Phase 5 and Phase 6)
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-02-19*
-*Last updated: 2026-02-19 — traceability populated after roadmap creation*
+*Last updated: 2026-02-21 — gap closure phases 5-6 added, requirements reset per audit*

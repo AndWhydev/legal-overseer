@@ -10,10 +10,12 @@ Milestone 1 transforms a working codebase into a deployed, contextually intellig
 - Integer phases (1, 2, 3): Planned milestone work
 - Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
 
-- [ ] **Phase 1: Platform Deploy** - BitBit deployed to Vercel with Supabase, AWU seeded, Andy live
+- [x] **Phase 1: Platform Deploy** - BitBit deployed to Vercel with Supabase, AWU seeded, Andy live
 - [x] **Phase 2: Schema Expansion** - All new DB migrations run with RLS policies
-- [ ] **Phase 3: Semantic Context Engine** - Entity relationships, timeline, context assembly, and fuzzy resolution operational
+- [x] **Phase 3: Semantic Context Engine** - Entity relationships, timeline, context assembly, and fuzzy resolution operational
 - [x] **Phase 4: Agent Infrastructure** - Registry, confidence routing, and shared CRUD tools wired in
+- [ ] **Phase 5: Wire Integration Points** - Cross-phase wiring: entity prompts, registry startup, confidence gating, schema fix
+- [ ] **Phase 6: Verification Artifacts** - Create VERIFICATION.md for Phase 1 and Phase 2
 
 ## Phase Details
 
@@ -27,10 +29,10 @@ Milestone 1 transforms a working codebase into a deployed, contextually intellig
   3. Andy can browse the contacts view and see the 6 seeded AWU client contacts
   4. @bitbit/core package exports resolve without errors (monorepo builds cleanly)
   5. Supabase project is live in ap-southeast-2 with all 4 existing migrations applied and RLS active
-**Plans:** 4 plans in 2 waves
+**Plans:** 4/4 plans complete
 
 Plans:
-- [ ] 01-01-PLAN.md — Supabase project setup, migrations, AWU seed data (PLAT-01 to PLAT-05, PLAT-09) [Wave 1]
+- [x] 01-01-PLAN.md — Supabase project setup, migrations, AWU seed data (PLAT-01 to PLAT-05, PLAT-09) [Wave 1]
 - [x] 01-02-PLAN.md — Vercel deployment, domain, smoke test (PLAT-06, PLAT-07, PLAT-08) [Wave 2, depends on 01-01]
 - [x] 01-03-PLAN.md — Fix @bitbit/core exports and verify monorepo (AGNT-14) [Wave 1]
 - [x] 01-04-PLAN.md — Human tasks: Anthropic billing, Stripe, Meta verification (PLAT-10, PLAT-11, PLAT-12) [Wave 1]
@@ -83,7 +85,28 @@ Plans:
 - [x] 04-01-PLAN.md — Agent registry with self-registration, validation, DB config merge (AGNT-11) [Wave 1]
 - [x] 04-02-PLAN.md — Confidence routing with threshold cascade and tests (AGNT-12) [Wave 1]
 - [x] 04-03-PLAN.md — Shared CRUD tool system extracted from tools.ts (AGNT-13) [Wave 2, depends on 04-01]
-- [ ] 04-04-PLAN.md — Gap closure: fix workspace resolution and canonical type imports (AGNT-11, AGNT-12, AGNT-13) [Wave 1]
+- [x] 04-04-PLAN.md — Gap closure: fix workspace resolution and canonical type imports (AGNT-11, AGNT-12, AGNT-13) [Wave 1]
+
+### Phase 5: Wire Integration Points
+**Goal**: All cross-phase integration points are wired so entity-aware prompts, agent registry, and confidence routing activate in production
+**Depends on**: Phase 4
+**Requirements**: SCTX-05, SCTX-08, SCTX-09, AGNT-11, AGNT-12, AGNT-13
+**Gap Closure:** Closes 4 integration gaps and 2 broken E2E flows from audit
+**Success Criteria** (what must be TRUE):
+  1. Chat messages trigger buildEntityAwarePrompt (not buildSystemPrompt) so entity context enriches every response
+  2. loadAllAgents() runs at app startup and populates the in-memory agent registry
+  3. routeAgentAction() gates tool execution with confidence thresholds (act/ask/escalate)
+  4. cross-reference.ts queries match actual invoices schema columns (total, paid_date)
+
+### Phase 6: Verification Artifacts
+**Goal**: Phase 1 and Phase 2 have VERIFICATION.md files proving all requirements were satisfied
+**Depends on**: Phase 5
+**Requirements**: PLAT-01, PLAT-02, PLAT-03, PLAT-04, PLAT-05, PLAT-06, PLAT-07, PLAT-08, PLAT-09, PLAT-10, PLAT-11, PLAT-12, AGNT-14, SCTX-01, SCTX-02, SCTX-03, SCTX-04, AGNT-01, AGNT-02, AGNT-03, AGNT-04, AGNT-05, AGNT-06, AGNT-07, AGNT-08, AGNT-09, AGNT-10
+**Gap Closure:** Closes 23 partial/orphaned requirements from audit
+**Success Criteria** (what must be TRUE):
+  1. 01-VERIFICATION.md exists with evidence for all 13 Phase 1 requirements
+  2. 02-VERIFICATION.md exists with evidence for all 10 Phase 2 requirements
+  3. Phase 2 SUMMARY files updated with requirements-completed frontmatter
 
 ## Progress
 
@@ -92,7 +115,9 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Platform Deploy | 3/4 | In progress | - |
+| 1. Platform Deploy | 4/4 | Complete | 2026-02-21 |
 | 2. Schema Expansion | 4/4 | Complete | 2026-02-21 |
 | 3. Semantic Context Engine | 3/3 | Complete | 2026-02-21 |
 | 4. Agent Infrastructure | 4/4 | Complete    | 2026-02-21 |
+| 5. Wire Integration Points | 0/0 | Pending | — |
+| 6. Verification Artifacts | 0/0 | Pending | — |
