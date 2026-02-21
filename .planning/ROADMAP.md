@@ -73,12 +73,12 @@ Plans:
   3. Andy receives WhatsApp messages summarizing agent actions that need approval
   4. Andy can approve or reject actions by replying to WhatsApp messages (Y/N)
   5. Low-priority approval requests batch into a single daily digest instead of individual notifications
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 09-01: Confidence routing engine and approval queue
-- [ ] 09-02: Dashboard approval UI
-- [ ] 09-03: WhatsApp approval notifications and reply handling
+- [ ] 09-01-PLAN.md — Approval queue DB table, service module, and REST API endpoints
+- [ ] 09-02-PLAN.md — Dashboard approval queue UI with approve/reject cards
+- [ ] 09-03-PLAN.md — WhatsApp approval notifications, Y/N reply handling, and daily digest
 
 ### Phase 10: Sentry Agent
 **Goal**: BitBit continuously monitors for problems (errors, downtime, negative sentiment) and alerts Andy with suggested fixes
