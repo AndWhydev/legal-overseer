@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import type { EntityType, TimelineEventType, EntityRef } from './types'
 
 /**
@@ -6,6 +6,7 @@ import type { EntityType, TimelineEventType, EntityRef } from './types'
  * Fire-and-forget: logs errors but never throws.
  */
 export async function writeTimelineEvent(
+  supabase: SupabaseClient,
   orgId: string,
   entityType: EntityType,
   entityId: string,
@@ -15,9 +16,6 @@ export async function writeTimelineEvent(
   relatedEntity?: EntityRef
 ): Promise<void> {
   try {
-    const supabase = await createClient()
-    if (!supabase) return
-
     const { error } = await supabase.from('entity_timeline').insert({
       org_id: orgId,
       entity_type: entityType,
@@ -39,36 +37,40 @@ export async function writeTimelineEvent(
 
 /** Write a task lifecycle event */
 export async function writeTaskEvent(
+  supabase: SupabaseClient,
   orgId: string,
   taskId: string,
   eventType: 'task_created' | 'task_updated' | 'task_completed',
   data: Record<string, unknown>
 ): Promise<void> {
-  return writeTimelineEvent(orgId, 'task', taskId, eventType, data)
+  return writeTimelineEvent(supabase, orgId, 'task', taskId, eventType, data)
 }
 
 /** Write a contact lifecycle event */
 export async function writeContactEvent(
+  supabase: SupabaseClient,
   orgId: string,
   contactId: string,
   eventType: 'contact_created' | 'contact_updated',
   data: Record<string, unknown>
 ): Promise<void> {
-  return writeTimelineEvent(orgId, 'contact', contactId, eventType, data)
+  return writeTimelineEvent(supabase, orgId, 'contact', contactId, eventType, data)
 }
 
 /** Write an invoice lifecycle event */
 export async function writeInvoiceEvent(
+  supabase: SupabaseClient,
   orgId: string,
   invoiceId: string,
   eventType: 'invoice_created' | 'invoice_sent' | 'invoice_paid' | 'invoice_overdue',
   data: Record<string, unknown>
 ): Promise<void> {
-  return writeTimelineEvent(orgId, 'invoice', invoiceId, eventType, data)
+  return writeTimelineEvent(supabase, orgId, 'invoice', invoiceId, eventType, data)
 }
 
 /** Write a channel message event */
 export async function writeMessageEvent(
+  supabase: SupabaseClient,
   orgId: string,
   messageId: string,
   direction: 'inbound' | 'outbound',
@@ -80,5 +82,5 @@ export async function writeMessageEvent(
   const relatedEntity: EntityRef | undefined = contactId
     ? { type: 'contact', id: contactId }
     : undefined
-  return writeTimelineEvent(orgId, 'channel_message', messageId, eventType, data, channelSource, relatedEntity)
+  return writeTimelineEvent(supabase, orgId, 'channel_message', messageId, eventType, data, channelSource, relatedEntity)
 }

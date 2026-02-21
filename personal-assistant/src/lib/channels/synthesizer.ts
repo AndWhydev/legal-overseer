@@ -5,9 +5,8 @@ import { outlookAdapter } from './outlook'
 import { imessageAdapter } from './imessage'
 import { calendarAdapter } from './calendar'
 import { remindersAdapter } from './reminders'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
-
-type SupabaseClient = ReturnType<typeof createSupabaseClient>
 
 const adapters: Record<ChannelType, ChannelAdapter> = {
   gmail: gmailAdapter,
@@ -118,13 +117,14 @@ export interface SynthesisOptions {
   channels: ChannelType[]
   since?: Date
   orgId: string
+  supabase?: SupabaseClient
 }
 
 export async function synthesize(options: SynthesisOptions): Promise<SyncResult[]> {
   const results: SyncResult[] = []
 
-  // Use direct Supabase client (no cookie auth needed)
-  const supabase = createDirectSupabase()
+  // Use provided Supabase client or create direct one (no cookie auth needed)
+  const supabase = options.supabase ?? createDirectSupabase()
   let toDoColumnId: string | null = null
 
   if (supabase) {
@@ -230,22 +230,25 @@ export async function synthesize(options: SynthesisOptions): Promise<SyncResult[
         result.tasksCreated = actionable.length // Report what would have been created
       }
       // Write timeline events for ALL deduplicated messages (not just actionable)
-      for (const msg of unique) {
-        try {
-          writeMessageEvent(
-            options.orgId,
-            msg.externalId || crypto.randomUUID(),
-            'inbound',
-            msg.channel,
-            {
-              sender: msg.sender,
-              subject: msg.subject,
-              bodyPreview: msg.body.slice(0, 200),
-            },
-            undefined
-          )
-        } catch (timelineErr) {
-          console.error('[synthesizer] Failed to write timeline event:', timelineErr)
+      if (supabase) {
+        for (const msg of unique) {
+          try {
+            writeMessageEvent(
+              supabase,
+              options.orgId,
+              msg.externalId || crypto.randomUUID(),
+              'inbound',
+              msg.channel,
+              {
+                sender: msg.sender,
+                subject: msg.subject,
+                bodyPreview: msg.body.slice(0, 200),
+              },
+              undefined
+            )
+          } catch (timelineErr) {
+            console.error('[synthesizer] Failed to write timeline event:', timelineErr)
+          }
         }
       }
     } catch (err) {

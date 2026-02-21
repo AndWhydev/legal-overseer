@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Goal, Task, ActivityEntry } from '@/lib/types'
 
 export interface AppContext {
@@ -9,10 +9,7 @@ export interface AppContext {
   columns: { id: string; title: string }[]
 }
 
-export async function loadContext(orgId: string): Promise<AppContext> {
-  const supabase = await createClient()
-  if (!supabase) return { goals: [], tasks: [], contacts: [], recentActivity: [], columns: [] }
-
+export async function loadContext(supabase: SupabaseClient, orgId: string): Promise<AppContext> {
   const [goalsRes, tasksRes, contactsRes, activityRes, columnsRes] = await Promise.all([
     supabase
       .from('goals')

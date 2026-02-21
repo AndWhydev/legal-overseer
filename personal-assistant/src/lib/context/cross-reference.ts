@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import type {
   EntityType,
   CrossReference,
@@ -12,12 +12,10 @@ import type {
  * Get tasks related to a contact via entity_relationships.
  */
 export async function getRelatedTasks(
+  supabase: SupabaseClient,
   orgId: string,
   contactId: string
 ): Promise<TaskRef[]> {
-  const supabase = await createClient()
-  if (!supabase) return []
-
   // Find task IDs linked to this contact
   const { data: rels, error: relError } = await supabase
     .from('entity_relationships')
@@ -55,13 +53,11 @@ export async function getRelatedTasks(
  * Get financial signals for a contact: outstanding invoices, overdue count, last payment.
  */
 export async function getFinancialSignals(
+  supabase: SupabaseClient,
   orgId: string,
   contactId: string
 ): Promise<FinancialSignal> {
   const empty: FinancialSignal = { totalOutstanding: 0, overdueCount: 0, lastPaymentDate: null, invoiceCount: 0 }
-
-  const supabase = await createClient()
-  if (!supabase) return empty
 
   // Find invoice IDs linked to this contact
   const { data: rels, error: relError } = await supabase
@@ -117,12 +113,10 @@ export async function getFinancialSignals(
  * Get deadlines for tasks linked to an entity in the next 14 days.
  */
 export async function getDeadlines(
+  supabase: SupabaseClient,
   orgId: string,
   entityId: string
 ): Promise<Deadline[]> {
-  const supabase = await createClient()
-  if (!supabase) return []
-
   // Find task IDs related to this entity
   const { data: rels, error: relError } = await supabase
     .from('entity_relationships')
@@ -175,6 +169,7 @@ export async function getDeadlines(
  * Full cross-reference for an entity: related tasks, deadlines, financial signals, waiting-for.
  */
 export async function crossReference(
+  supabase: SupabaseClient,
   orgId: string,
   entityType: EntityType,
   entityId: string
@@ -188,9 +183,9 @@ export async function crossReference(
 
   if (entityType === 'contact') {
     const [relatedTasks, deadlines, financialSignals] = await Promise.all([
-      getRelatedTasks(orgId, entityId),
-      getDeadlines(orgId, entityId),
-      getFinancialSignals(orgId, entityId),
+      getRelatedTasks(supabase, orgId, entityId),
+      getDeadlines(supabase, orgId, entityId),
+      getFinancialSignals(supabase, orgId, entityId),
     ])
 
     // Waiting-for: tasks assigned to someone else that are blocked or in progress
@@ -207,6 +202,6 @@ export async function crossReference(
   }
 
   // For non-contact entities, just get deadlines
-  const deadlines = await getDeadlines(orgId, entityId)
+  const deadlines = await getDeadlines(supabase, orgId, entityId)
   return { ...empty, deadlines }
 }

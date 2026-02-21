@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { resolveEntityRanked } from './entity-resolver'
 import type {
   EntityType,
@@ -14,16 +14,12 @@ import type {
  * Assemble a full briefing for a single entity: relationships, timeline, and memories.
  */
 export async function assembleEntityBriefing(
+  supabase: SupabaseClient,
   orgId: string,
   entityType: EntityType,
   entityId: string,
   options?: { maxTimelineEvents?: number; maxMemories?: number }
 ): Promise<EntityBriefing> {
-  const supabase = await createClient()
-  if (!supabase) {
-    return { entity: { type: entityType, id: entityId }, relationships: [], timeline: [], memories: [] }
-  }
-
   const maxTimeline = options?.maxTimelineEvents ?? 15
   const maxMemories = options?.maxMemories ?? 10
 
@@ -129,6 +125,7 @@ function formatBriefingSummary(briefing: EntityBriefing, entityName: string): st
  * Assemble context for a user query: resolve entities and build briefings.
  */
 export async function assembleContext(
+  supabase: SupabaseClient,
   orgId: string,
   query: string
 ): Promise<ContextBriefing> {
@@ -147,7 +144,7 @@ export async function assembleContext(
 
   for (const candidate of candidates) {
     if (resolvedEntities.length >= 3) break
-    const ranked = await resolveEntityRanked(candidate, orgId)
+    const ranked = await resolveEntityRanked(supabase, candidate, orgId)
     for (const match of ranked) {
       if (!seenIds.has(match.contact.id)) {
         seenIds.add(match.contact.id)
@@ -167,7 +164,7 @@ export async function assembleContext(
   // Build briefings for each resolved entity
   const briefings: EntityBriefing[] = await Promise.all(
     resolvedEntities.slice(0, 3).map(e =>
-      assembleEntityBriefing(orgId, e.type, e.id)
+      assembleEntityBriefing(supabase, orgId, e.type, e.id)
     )
   )
 

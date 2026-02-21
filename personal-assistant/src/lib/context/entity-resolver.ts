@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Contact } from '@/lib/types'
 
 export interface RankedContact {
@@ -6,8 +6,6 @@ export interface RankedContact {
   matchConfidence: number
   matchStep: string
 }
-
-type SupabaseClient = Awaited<ReturnType<typeof createClient>>
 
 /**
  * Normalize a phone number by stripping spaces, dashes, parens.
@@ -30,7 +28,7 @@ function normalizePhone(raw: string): string[] {
 }
 
 async function stepAlias(
-  supabase: NonNullable<SupabaseClient>,
+  supabase: SupabaseClient,
   query: string,
   orgId: string
 ): Promise<Contact[]> {
@@ -46,7 +44,7 @@ async function stepAlias(
 }
 
 async function stepEmail(
-  supabase: NonNullable<SupabaseClient>,
+  supabase: SupabaseClient,
   query: string,
   orgId: string
 ): Promise<Contact[]> {
@@ -62,7 +60,7 @@ async function stepEmail(
 }
 
 async function stepPhone(
-  supabase: NonNullable<SupabaseClient>,
+  supabase: SupabaseClient,
   query: string,
   orgId: string
 ): Promise<Contact[]> {
@@ -78,7 +76,7 @@ async function stepPhone(
 }
 
 async function stepName(
-  supabase: NonNullable<SupabaseClient>,
+  supabase: SupabaseClient,
   query: string,
   orgId: string
 ): Promise<Contact[]> {
@@ -94,7 +92,7 @@ async function stepName(
 }
 
 async function stepPhoneVariant(
-  supabase: NonNullable<SupabaseClient>,
+  supabase: SupabaseClient,
   query: string,
   orgId: string
 ): Promise<Contact[]> {
@@ -117,7 +115,7 @@ async function stepPhoneVariant(
 interface Step {
   name: string
   confidence: number
-  fn: (supabase: NonNullable<SupabaseClient>, query: string, orgId: string) => Promise<Contact[]>
+  fn: (supabase: SupabaseClient, query: string, orgId: string) => Promise<Contact[]>
 }
 
 const STEPS: Step[] = [
@@ -133,12 +131,10 @@ const STEPS: Step[] = [
  * Cascades through steps, stopping at the first that returns results.
  */
 export async function resolveEntityRanked(
+  supabase: SupabaseClient,
   query: string,
   orgId: string
 ): Promise<RankedContact[]> {
-  const supabase = await createClient()
-  if (!supabase) return []
-
   for (const step of STEPS) {
     const contacts = await step.fn(supabase, query, orgId)
     if (contacts.length > 0) {
@@ -158,9 +154,10 @@ export async function resolveEntityRanked(
  * Returns Contact[] (no ranked metadata).
  */
 export async function resolveEntity(
+  supabase: SupabaseClient,
   query: string,
   orgId: string
 ): Promise<Contact[]> {
-  const ranked = await resolveEntityRanked(query, orgId)
+  const ranked = await resolveEntityRanked(supabase, query, orgId)
   return ranked.map((r) => r.contact)
 }

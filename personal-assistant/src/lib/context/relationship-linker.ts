@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import type { EntityRef, RelationshipType } from './types'
 
 /**
@@ -7,6 +7,7 @@ import type { EntityRef, RelationshipType } from './types'
  * Fire-and-forget: logs errors but never throws.
  */
 export async function linkRelationship(
+  supabase: SupabaseClient,
   orgId: string,
   entityA: EntityRef,
   entityB: EntityRef,
@@ -14,9 +15,6 @@ export async function linkRelationship(
   metadata?: Record<string, unknown>
 ): Promise<void> {
   try {
-    const supabase = await createClient()
-    if (!supabase) return
-
     const { error } = await supabase
       .from('entity_relationships')
       .upsert(
@@ -46,11 +44,13 @@ export async function linkRelationship(
 
 /** Link a task to a contact via 'assigned_to' relationship */
 export async function linkTaskToContact(
+  supabase: SupabaseClient,
   orgId: string,
   taskId: string,
   contactId: string
 ): Promise<void> {
   return linkRelationship(
+    supabase,
     orgId,
     { type: 'task', id: taskId },
     { type: 'contact', id: contactId },
@@ -60,11 +60,13 @@ export async function linkTaskToContact(
 
 /** Link an invoice to a contact via 'bills_for' relationship */
 export async function linkInvoiceToContact(
+  supabase: SupabaseClient,
   orgId: string,
   invoiceId: string,
   contactId: string
 ): Promise<void> {
   return linkRelationship(
+    supabase,
     orgId,
     { type: 'invoice', id: invoiceId },
     { type: 'contact', id: contactId },
@@ -74,11 +76,13 @@ export async function linkInvoiceToContact(
 
 /** Link a task to a goal via 'part_of' relationship */
 export async function linkTaskToGoal(
+  supabase: SupabaseClient,
   orgId: string,
   taskId: string,
   goalId: string
 ): Promise<void> {
   return linkRelationship(
+    supabase,
     orgId,
     { type: 'task', id: taskId },
     { type: 'goal', id: goalId },

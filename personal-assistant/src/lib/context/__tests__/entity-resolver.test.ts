@@ -1,20 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 // Mock the supabase client
-const mockSelect = vi.fn()
-const mockEq = vi.fn()
-const mockOr = vi.fn()
-const mockIlike = vi.fn()
-const mockContains = vi.fn()
 const mockFrom = vi.fn()
 
 const mockSupabase = {
   from: mockFrom,
 }
-
-vi.mock('@/lib/supabase/server', () => ({
-  createClient: vi.fn(() => Promise.resolve(mockSupabase)),
-}))
 
 import { resolveEntity, resolveEntityRanked } from '../entity-resolver'
 
@@ -86,7 +77,7 @@ describe('entity-resolver', () => {
     it('Step 1: resolves by exact alias match with confidence 1.0', async () => {
       setupChain({ alias: [sezerContact] })
 
-      const results = await resolveEntityRanked('Sezer', ORG_ID)
+      const results = await resolveEntityRanked(mockSupabase as any, 'Sezer', ORG_ID)
 
       expect(results).toHaveLength(1)
       expect(results[0].contact.id).toBe('c1')
@@ -97,7 +88,7 @@ describe('entity-resolver', () => {
     it('Step 2: resolves by email match with confidence 0.95', async () => {
       setupChain({ alias: [], email: [sezerContact] })
 
-      const results = await resolveEntityRanked('sezer@example.com', ORG_ID)
+      const results = await resolveEntityRanked(mockSupabase as any, 'sezer@example.com', ORG_ID)
 
       expect(results).toHaveLength(1)
       expect(results[0].contact.id).toBe('c1')
@@ -108,7 +99,7 @@ describe('entity-resolver', () => {
     it('Step 3: resolves by phone match with confidence 0.90', async () => {
       setupChain({ alias: [], email: [], phone: [sezerContact] })
 
-      const results = await resolveEntityRanked('0412345678', ORG_ID)
+      const results = await resolveEntityRanked(mockSupabase as any, '0412345678', ORG_ID)
 
       expect(results).toHaveLength(1)
       expect(results[0].contact.id).toBe('c1')
@@ -119,7 +110,7 @@ describe('entity-resolver', () => {
     it('Step 4: resolves by partial name match with confidence 0.70', async () => {
       setupChain({ alias: [], email: [], phone: [], name: [sezerContact] })
 
-      const results = await resolveEntityRanked('Sez', ORG_ID)
+      const results = await resolveEntityRanked(mockSupabase as any, 'Sez', ORG_ID)
 
       expect(results).toHaveLength(1)
       expect(results[0].contact.id).toBe('c1')
@@ -136,7 +127,7 @@ describe('entity-resolver', () => {
         phone_variant: [sezerContact],
       })
 
-      const results = await resolveEntityRanked('0412 345 678', ORG_ID)
+      const results = await resolveEntityRanked(mockSupabase as any, '0412 345 678', ORG_ID)
 
       expect(results).toHaveLength(1)
       expect(results[0].contact.id).toBe('c1')
@@ -147,7 +138,7 @@ describe('entity-resolver', () => {
     it('cascades: skips empty step 1, returns step 2 result', async () => {
       setupChain({ alias: [], email: [andyContact] })
 
-      const results = await resolveEntityRanked('andy@example.com', ORG_ID)
+      const results = await resolveEntityRanked(mockSupabase as any, 'andy@example.com', ORG_ID)
 
       expect(results).toHaveLength(1)
       expect(results[0].contact.id).toBe('c2')
@@ -163,7 +154,7 @@ describe('entity-resolver', () => {
         phone_variant: [],
       })
 
-      const results = await resolveEntityRanked('nonexistent', ORG_ID)
+      const results = await resolveEntityRanked(mockSupabase as any, 'nonexistent', ORG_ID)
 
       expect(results).toEqual([])
     })
@@ -173,7 +164,7 @@ describe('entity-resolver', () => {
     it('returns Contact[] without ranked metadata', async () => {
       setupChain({ alias: [sezerContact] })
 
-      const results = await resolveEntity('Sezer', ORG_ID)
+      const results = await resolveEntity(mockSupabase as any, 'Sezer', ORG_ID)
 
       expect(results).toHaveLength(1)
       expect(results[0].id).toBe('c1')

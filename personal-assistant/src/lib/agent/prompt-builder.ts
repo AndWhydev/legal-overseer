@@ -1,5 +1,6 @@
 import { loadContext } from '@/lib/context/loader'
 import { assembleContext } from '@/lib/context/assembler'
+import { createClient } from '@/lib/supabase/server'
 
 interface CachedEvent {
   title: string
@@ -97,8 +98,12 @@ async function getDueReminders(): Promise<string> {
 }
 
 export async function buildSystemPrompt(orgId: string): Promise<string> {
+  const supabase = await createClient()
+
   const [ctx, channelSummary, todayEvents, dueReminders] = await Promise.all([
-    loadContext(orgId),
+    supabase
+      ? loadContext(supabase, orgId)
+      : Promise.resolve({ goals: [], tasks: [], contacts: [], recentActivity: [], columns: [] }),
     getChannelSummary(),
     getTodayEvents(),
     getDueReminders(),
@@ -203,9 +208,13 @@ export async function buildEntityAwarePrompt(
   orgId: string,
   userMessage: string
 ): Promise<string> {
+  const supabase = await createClient()
+
   const [basePrompt, contextBriefing] = await Promise.all([
     buildSystemPrompt(orgId),
-    assembleContext(orgId, userMessage),
+    supabase
+      ? assembleContext(supabase, orgId, userMessage)
+      : Promise.resolve({ resolvedEntities: [], briefings: [], summary: '' }),
   ])
 
   if (contextBriefing.resolvedEntities.length === 0) {
