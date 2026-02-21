@@ -1,9 +1,14 @@
 import Anthropic from '@anthropic-ai/sdk'
-import { createClient } from '@/lib/supabase/server'
 import { channelToolDefinitions, channelToolHandlers } from './tools/channel-tools'
-import { resolveEntityRanked } from '@/lib/context/entity-resolver'
-import { writeTaskEvent } from '@/lib/context/timeline-writer'
-import { linkTaskToContact } from '@/lib/context/relationship-linker'
+import {
+  createTask,
+  updateTask,
+  searchTasks,
+  searchContacts,
+  getContact,
+  logActivity,
+} from './shared-tools'
+import { createClient } from '@/lib/supabase/server'
 
 export interface ToolResult {
   success: boolean
@@ -151,161 +156,63 @@ async function getSupabase() {
   return supabase
 }
 
-async function resolveColumnId(orgId: string, columnName: string): Promise<string | null> {
-  const supabase = await getSupabase()
-  const { data } = await supabase
-    .from('kanban_columns')
-    .select('id')
-    .eq('org_id', orgId)
-    .ilike('title', columnName)
-    .limit(1)
-    .single()
-  return data?.id ?? null
-}
-
+// Thin wrappers: parse Record<string, unknown> -> call typed shared function -> return ToolResult
 const handlers: Record<string, AgentToolHandler> = {
   async create_task(input, orgId) {
-    const supabase = await getSupabase()
-
-    let columnId = input.column_id as string | undefined
-    if (!columnId && input.column) {
-      columnId = (await resolveColumnId(orgId, input.column as string)) ?? undefined
-    }
-    if (!columnId) {
-      // Default to "To Do" column
-      columnId = (await resolveColumnId(orgId, 'To Do')) ?? undefined
-    }
-
-    // Get next position in column
-    const { count } = await supabase
-      .from('tasks')
-      .select('*', { count: 'exact', head: true })
-      .eq('org_id', orgId)
-      .eq('column_id', columnId!)
-
-    const { data, error } = await supabase
-      .from('tasks')
-      .insert({
-        org_id: orgId,
-        title: input.title as string,
-        description: (input.description as string) || null,
-        priority: (input.priority as string) || 'medium',
-        column_id: columnId,
-        position: count ?? 0,
-        metadata: input.tags ? { tags: input.tags } : {},
-      })
-      .select()
-      .single()
-
-    if (error) return { success: false, error: error.message }
-
-    // Write timeline event for task creation
-    writeTaskEvent(orgId, data.id, 'task_created', {
+    return createTask(orgId, {
       title: input.title as string,
+      description: input.description as string | undefined,
+      priority: input.priority as string | undefined,
       column: input.column as string | undefined,
-      priority: (input.priority as string) || 'medium',
+      contact_id: input.contact_id as string | undefined,
+      tags: input.tags as string[] | undefined,
     })
-
-    // Link task to contact if contact_id provided
-    if (input.contact_id) {
-      linkTaskToContact(orgId, data.id, input.contact_id as string)
-    }
-
-    return { success: true, data }
   },
 
   async update_task(input, orgId) {
-    const supabase = await getSupabase()
-    const updates: Record<string, unknown> = {}
-
-    if (input.title) updates.title = input.title
-    if (input.description !== undefined) updates.description = input.description
-    if (input.status) updates.status = input.status
-    if (input.priority) updates.priority = input.priority
-    if (input.column) {
-      const colId = await resolveColumnId(orgId, input.column as string)
-      if (colId) updates.column_id = colId
-    }
-    if (input.column_id) updates.column_id = input.column_id
-
-    const { data, error } = await supabase
-      .from('tasks')
-      .update(updates)
-      .eq('id', input.task_id as string)
-      .eq('org_id', orgId)
-      .select()
-      .single()
-
-    if (error) return { success: false, error: error.message }
-
-    // Write timeline event for task update
-    writeTaskEvent(orgId, input.task_id as string, 'task_updated', updates)
-
-    // Also write task_completed if status changed to completed
-    if (input.status === 'completed') {
-      writeTaskEvent(orgId, input.task_id as string, 'task_completed', updates)
-    }
-
-    return { success: true, data }
+    return updateTask(orgId, input.task_id as string, {
+      title: input.title as string | undefined,
+      description: input.description as string | undefined,
+      status: input.status as string | undefined,
+      column: input.column as string | undefined,
+      priority: input.priority as string | undefined,
+    })
   },
 
   async search_tasks(input, orgId) {
-    const supabase = await getSupabase()
-    let query = supabase.from('tasks').select('*').eq('org_id', orgId)
-
-    if (input.status) query = query.eq('status', input.status as string)
-    if (input.priority) query = query.eq('priority', input.priority as string)
-    if (input.query) {
-      query = query.or(`title.ilike.%${input.query}%,description.ilike.%${input.query}%`)
-    }
-
-    const { data, error } = await query.order('position').limit(20)
-    if (error) return { success: false, error: error.message }
-    return { success: true, data: { results: data, total: data?.length ?? 0 } }
+    return searchTasks(orgId, {
+      query: input.query as string | undefined,
+      status: input.status as string | undefined,
+      priority: input.priority as string | undefined,
+    })
   },
 
   async search_contacts(input, orgId) {
-    const query = input.query as string
-    const ranked = await resolveEntityRanked(query, orgId)
-    const results = ranked.map((r) => ({
-      ...r.contact,
-      matchConfidence: r.matchConfidence,
-      matchStep: r.matchStep,
+    const matches = await searchContacts(orgId, input.query as string)
+    const results = matches.map((m) => ({
+      ...m.contact,
+      matchConfidence: m.matchConfidence,
+      matchStep: m.matchStep,
     }))
     return { success: true, data: { results, total: results.length } }
   },
 
   async get_contact(input, orgId) {
-    const supabase = await getSupabase()
-    const { data, error } = await supabase
-      .from('contacts')
-      .select('*')
-      .eq('org_id', orgId)
-      .eq('slug', input.slug as string)
-      .single()
-
-    if (error) return { success: false, error: error.message }
-    return { success: true, data }
+    const contact = await getContact(orgId, input.slug as string)
+    if (!contact) return { success: false, error: 'Contact not found' }
+    return { success: true, data: contact }
   },
 
   async log_activity(input, orgId) {
-    const supabase = await getSupabase()
-    const { data, error } = await supabase
-      .from('activity_feed')
-      .insert({
-        org_id: orgId,
-        action_type: input.action_type as string,
-        action: input.action as string,
-        reasoning: (input.reasoning as string) || null,
-        result: (input.result as string) || null,
-      })
-      .select()
-      .single()
-
-    if (error) return { success: false, error: error.message }
-    return { success: true, data }
+    return logActivity(orgId, {
+      action_type: input.action_type as string,
+      action: input.action as string,
+      reasoning: input.reasoning as string | undefined,
+      result: input.result as string | undefined,
+    })
   },
 
+  // Memory tools stay in tools.ts (not shared — chat-specific)
   async search_memory(input, orgId) {
     const supabase = await getSupabase()
     let query = supabase.from('memory_entries').select('*').eq('org_id', orgId)
