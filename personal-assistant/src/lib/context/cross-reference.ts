@@ -80,7 +80,7 @@ export async function getFinancialSignals(
 
   const { data: invoices, error: invError } = await supabase
     .from('invoices')
-    .select('id, status, total_amount, paid_at, due_date')
+    .select('id, status, total, paid_date, due_date')
     .eq('org_id', orgId)
     .in('id', invoiceIds)
 
@@ -93,14 +93,14 @@ export async function getFinancialSignals(
 
   for (const inv of invoices as Record<string, unknown>[]) {
     if (inv.status !== 'paid') {
-      totalOutstanding += (inv.total_amount as number) || 0
+      totalOutstanding += (inv.total as number) || 0
       if (inv.due_date && new Date(inv.due_date as string) < now) {
         overdueCount++
       }
     }
-    if (inv.paid_at) {
-      if (!lastPaymentDate || (inv.paid_at as string) > lastPaymentDate) {
-        lastPaymentDate = inv.paid_at as string
+    if (inv.paid_date) {
+      if (!lastPaymentDate || (inv.paid_date as string) > lastPaymentDate) {
+        lastPaymentDate = inv.paid_date as string
       }
     }
   }
