@@ -1,4 +1,5 @@
 import { loadContext } from '@/lib/context/loader'
+import { assembleContext } from '@/lib/context/assembler'
 
 interface CachedEvent {
   title: string
@@ -190,5 +191,37 @@ ${contactsSummary}
 
 ### Recent Activity
 ${recentActivitySummary}
+`
+}
+
+/**
+ * Build a system prompt enriched with entity context from the semantic engine.
+ * If the user message mentions known contacts/entities, appends a briefing section.
+ * Falls back to the base prompt if no entities are detected.
+ */
+export async function buildEntityAwarePrompt(
+  orgId: string,
+  userMessage: string
+): Promise<string> {
+  const [basePrompt, contextBriefing] = await Promise.all([
+    buildSystemPrompt(orgId),
+    assembleContext(orgId, userMessage),
+  ])
+
+  if (contextBriefing.resolvedEntities.length === 0) {
+    return basePrompt
+  }
+
+  let entitySection = contextBriefing.summary
+  const maxEntityContext = 4000
+  if (entitySection.length > maxEntityContext) {
+    entitySection = entitySection.slice(0, maxEntityContext - 3) + '...'
+  }
+
+  return `${basePrompt}
+
+## Entity Context
+
+${entitySection}
 `
 }
