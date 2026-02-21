@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-22)
 ## Current Position
 
 Phase: 7 of 12 (Infrastructure Foundation)
-Plan: 0 of 2 in current phase
-Status: Ready to plan
-Last activity: 2026-02-22 -- Roadmap created for v1.1 milestone
+Plan: 1 of 2 in current phase
+Status: Executing
+Last activity: 2026-02-22 -- Completed 07-01 Supabase DI Refactor
 
-Progress: [██████████░░░░░░░░░░] 54% (19/35 plans across all milestones)
+Progress: [███████████░░░░░░░░░] 57% (20/35 plans across all milestones)
 
 ## Performance Metrics
 
@@ -40,6 +40,8 @@ Progress: [██████████░░░░░░░░░░] 54% (19
 
 See PROJECT.md Key Decisions table.
 
+- **07-01:** Supabase DI pattern: createClient() only at HTTP boundary, SupabaseClient passed as first param to all agent/context/channel functions
+
 ### Pending Todos
 
 None.
@@ -54,5 +56,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-22
-Stopped at: v1.1 roadmap created, ready to plan Phase 7
+Stopped at: Completed 07-01-PLAN.md
 Resume file: None
