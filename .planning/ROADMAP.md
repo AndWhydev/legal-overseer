@@ -56,12 +56,12 @@ Plans:
   2. Each incoming message receives a significance score (1-10), time sensitivity, and recommended actions via LLM classification
   3. High-significance urgent messages route to immediate processing while low-significance messages batch or skip
   4. Agents trigger on their configured cron schedules (e.g., Sentry every 5 min, Lead Swarm on new email)
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 08-01: Channel relay daemon (Gmail polling and buffering)
-- [ ] 08-02: LLM classification and action routing
-- [ ] 08-03: Agent scheduler (cron-based triggers)
+- [ ] 08-01-PLAN.md — Channel relay daemon (Gmail polling, buffering, dedup persistence)
+- [ ] 08-02-PLAN.md — LLM classification and action routing (significance scoring, dispatch)
+- [ ] 08-03-PLAN.md — Agent scheduler (cron/interval triggers, scheduler tick API)
 
 ### Phase 9: Approval Flow
 **Goal**: Andy controls agent autonomy -- low-confidence actions require his approval via dashboard or WhatsApp before executing
@@ -143,7 +143,7 @@ Phases execute in numeric order: 7 -> 8 -> 9 -> 10/11/12 (parallel after 9).
 | 5. Wire Integration Points | v1.0 | 2/2 | Complete | 2026-02-21 |
 | 6. Verification Artifacts | v1.0 | 2/2 | Complete | 2026-02-21 |
 | 7. Infrastructure Foundation | v1.1 | 0/2 | Not started | - |
-| 8. Agent Runtime | v1.1 | 0/3 | Not started | - |
+| 8. Agent Runtime | v1.1 | 0/3 | Planned | - |
 | 9. Approval Flow | v1.1 | 0/3 | Not started | - |
 | 10. Sentry Agent | v1.1 | 0/2 | Not started | - |
 | 11. Lead Swarm Agent | v1.1 | 0/3 | Not started | - |
