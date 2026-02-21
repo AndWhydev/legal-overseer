@@ -30,9 +30,9 @@ Requirements for Milestone 1. Each maps to roadmap phases.
 - [ ] **SCTX-04**: Migration: semantic_memories table (org_id, entity_ids[], category, content, confidence, source_events[])
 - [x] **SCTX-05**: Relationship auto-linker (task/contact/invoice CRUD → auto-create entity_relationships)
 - [x] **SCTX-06**: Timeline writer (every channel message, task update, invoice event → entity_timeline entry)
-- [ ] **SCTX-07**: Context assembler ported from personal AGI to TypeScript
+- [x] **SCTX-07**: Context assembler ported from personal AGI to TypeScript
 - [x] **SCTX-08**: Entity resolution: 5-step fuzzy match (exact alias → email → phone → partial name → phone variants)
-- [ ] **SCTX-09**: Cross-reference engine (given entity → related tasks, waiting-for, deadlines, financial signals)
+- [x] **SCTX-09**: Cross-reference engine (given entity → related tasks, waiting-for, deadlines, financial signals)
 
 ### Agent Infrastructure
 
@@ -136,9 +136,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | AGNT-10 | Phase 2 — Schema Expansion | Pending |
 | SCTX-05 | Phase 3 — Semantic Context Engine | Complete |
 | SCTX-06 | Phase 3 — Semantic Context Engine | Complete |
-| SCTX-07 | Phase 3 — Semantic Context Engine | Pending |
+| SCTX-07 | Phase 3 — Semantic Context Engine | Complete |
 | SCTX-08 | Phase 3 — Semantic Context Engine | Complete |
-| SCTX-09 | Phase 3 — Semantic Context Engine | Pending |
+| SCTX-09 | Phase 3 — Semantic Context Engine | Complete |
 | AGNT-11 | Phase 4 — Agent Infrastructure | Pending |
 | AGNT-12 | Phase 4 — Agent Infrastructure | Pending |
 | AGNT-13 | Phase 4 — Agent Infrastructure | Pending |
