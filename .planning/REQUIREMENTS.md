@@ -18,8 +18,8 @@ Requirements for milestone v1.1: Agent Runtime + First Agents.
 
 - [x] **APPR-01**: Confidence routing decides act (>0.85) / ask (0.55-0.85) / escalate (<0.55) per agent action
 - [ ] **APPR-02**: Dashboard approval queue shows pending agent actions with approve/reject buttons
-- [ ] **APPR-03**: WhatsApp notification sends approval requests to Andy with action summary
-- [ ] **APPR-04**: Andy can approve/reject via WhatsApp reply (Y/N or tap)
+- [x] **APPR-03**: WhatsApp notification sends approval requests to Andy with action summary
+- [x] **APPR-04**: Andy can approve/reject via WhatsApp reply (Y/N or tap)
 - [x] **APPR-05**: Low-priority approvals batch into a daily digest instead of individual pings
 
 ### Sentry Agent
@@ -98,8 +98,8 @@ Deferred to future milestones. Tracked but not in current roadmap.
 | RNTM-04 | Phase 8 | Complete |
 | APPR-01 | Phase 9 | Complete |
 | APPR-02 | Phase 9 | Pending |
-| APPR-03 | Phase 9 | Pending |
-| APPR-04 | Phase 9 | Pending |
+| APPR-03 | Phase 9 | Complete |
+| APPR-04 | Phase 9 | Complete |
 | APPR-05 | Phase 9 | Complete |
 | SNTR-01 | Phase 10 | Complete |
 | SNTR-02 | Phase 10 | Complete |

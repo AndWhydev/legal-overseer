@@ -1,2 +1,4 @@
 - `npx tsc --noEmit src/lib/agent/approval-queue.ts` fails due pre-existing path-alias/typecheck setup (`Cannot find module '@/lib/bitbit-core'`).
 - `npx tsc --noEmit src/app/api/agent/approvals/route.ts` fails due pre-existing workspace TypeScript/Next.js environment issues and missing alias resolution in single-file mode.
+- `npx tsc --noEmit src/lib/channels/whatsapp.ts src/app/api/channels/whatsapp/webhook/route.ts` fails due pre-existing workspace Next.js/TypeScript declaration issues and legacy alias resolution from existing files (`@/lib/bitbit-core` via `confidence-router`).
+- `npx tsc --noEmit src/lib/agent/approval-notifier.ts src/app/api/agent/approvals/digest/route.ts` fails for the same pre-existing workspace Next.js declaration and `@/lib/bitbit-core` alias issues unrelated to this plan.

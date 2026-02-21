@@ -76,9 +76,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 09-01-PLAN.md — Approval queue DB table, service module, and REST API endpoints
+- [x] 09-01-PLAN.md — Approval queue DB table, service module, and REST API endpoints
 - [ ] 09-02-PLAN.md — Dashboard approval queue UI with approve/reject cards
-- [ ] 09-03-PLAN.md — WhatsApp approval notifications, Y/N reply handling, and daily digest
+- [x] 09-03-PLAN.md — WhatsApp approval notifications, Y/N reply handling, and daily digest
 
 ### Phase 10: Sentry Agent
 **Goal**: BitBit continuously monitors for problems (errors, downtime, negative sentiment) and alerts Andy with suggested fixes
@@ -144,7 +144,7 @@ Phases execute in numeric order: 7 -> 8 -> 9 -> 10/11/12 (parallel after 9).
 | 6. Verification Artifacts | v1.0 | 2/2 | Complete | 2026-02-21 |
 | 7. Infrastructure Foundation | v1.1 | 0/2 | Not started | - |
 | 8. Agent Runtime | 2/3 | In Progress|  | - |
-| 9. Approval Flow | v1.1 | 0/3 | Not started | - |
+| 9. Approval Flow | v1.1 | 2/3 | In Progress | - |
 | 10. Sentry Agent | 1/2 | In Progress|  | - |
 | 11. Lead Swarm Agent | v1.1 | 0/3 | Not started | - |
 | 12. Invoice Flow Agent | v1.1 | 0/3 | Not started | - |
