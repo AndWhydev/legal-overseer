@@ -77,12 +77,13 @@ Plans:
   1. An agent module can call self-register and appear in the agent registry without manual configuration
   2. A task classified at 0.90 confidence executes immediately; at 0.65 it prompts Andy for approval; below 0.55 it escalates
   3. Any agent can call the shared CRUD tools to read/write contacts, tasks, invoices, and messages without reimplementing DB access
-**Plans:** 3 plans in 2 waves
+**Plans:** 4 plans in 2 waves
 
 Plans:
 - [x] 04-01-PLAN.md — Agent registry with self-registration, validation, DB config merge (AGNT-11) [Wave 1]
 - [x] 04-02-PLAN.md — Confidence routing with threshold cascade and tests (AGNT-12) [Wave 1]
 - [x] 04-03-PLAN.md — Shared CRUD tool system extracted from tools.ts (AGNT-13) [Wave 2, depends on 04-01]
+- [ ] 04-04-PLAN.md — Gap closure: fix workspace resolution and canonical type imports (AGNT-11, AGNT-12, AGNT-13) [Wave 1]
 
 ## Progress
 
