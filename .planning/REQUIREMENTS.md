@@ -28,8 +28,8 @@ Requirements for Milestone 1. Each maps to roadmap phases.
 - [ ] **SCTX-02**: Migration: entity_relationships table (entity_a, entity_b, relationship_type, metadata, strength)
 - [ ] **SCTX-03**: Migration: entity_timeline table (entity_id, event_type, event_data, channel_source, timestamp)
 - [ ] **SCTX-04**: Migration: semantic_memories table (org_id, entity_ids[], category, content, confidence, source_events[])
-- [ ] **SCTX-05**: Relationship auto-linker (task/contact/invoice CRUD → auto-create entity_relationships)
-- [ ] **SCTX-06**: Timeline writer (every channel message, task update, invoice event → entity_timeline entry)
+- [x] **SCTX-05**: Relationship auto-linker (task/contact/invoice CRUD → auto-create entity_relationships)
+- [x] **SCTX-06**: Timeline writer (every channel message, task update, invoice event → entity_timeline entry)
 - [ ] **SCTX-07**: Context assembler ported from personal AGI to TypeScript
 - [x] **SCTX-08**: Entity resolution: 5-step fuzzy match (exact alias → email → phone → partial name → phone variants)
 - [ ] **SCTX-09**: Cross-reference engine (given entity → related tasks, waiting-for, deadlines, financial signals)
@@ -134,8 +134,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | AGNT-08 | Phase 2 — Schema Expansion | Pending |
 | AGNT-09 | Phase 2 — Schema Expansion | Pending |
 | AGNT-10 | Phase 2 — Schema Expansion | Pending |
-| SCTX-05 | Phase 3 — Semantic Context Engine | Pending |
-| SCTX-06 | Phase 3 — Semantic Context Engine | Pending |
+| SCTX-05 | Phase 3 — Semantic Context Engine | Complete |
+| SCTX-06 | Phase 3 — Semantic Context Engine | Complete |
 | SCTX-07 | Phase 3 — Semantic Context Engine | Pending |
 | SCTX-08 | Phase 3 — Semantic Context Engine | Complete |
 | SCTX-09 | Phase 3 — Semantic Context Engine | Pending |

@@ -65,7 +65,7 @@ Plans:
 **Plans:** 3 plans in 2 waves
 
 Plans:
-- [ ] 03-01-PLAN.md — Relationship auto-linker and timeline writer (SCTX-05, SCTX-06) [Wave 1]
+- [x] 03-01-PLAN.md — Relationship auto-linker and timeline writer (SCTX-05, SCTX-06) [Wave 1]
 - [x] 03-02-PLAN.md — Entity resolution: 5-step fuzzy match (SCTX-08) [Wave 1]
 - [ ] 03-03-PLAN.md — Context assembler + cross-reference engine (SCTX-07, SCTX-09) [Wave 2, depends on 03-01, 03-02]
 
@@ -93,5 +93,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 |-------|----------------|--------|-----------|
 | 1. Platform Deploy | 3/4 | In progress | - |
 | 2. Schema Expansion | 4/4 | Complete | 2026-02-21 |
-| 3. Semantic Context Engine | 1/3 | In progress | - |
+| 3. Semantic Context Engine | 2/3 | In progress | - |
 | 4. Agent Infrastructure | 0/3 | Not started | - |

@@ -10,34 +10,35 @@ See: .planning/PROJECT.md (updated 2026-02-19)
 ## Current Position
 
 Phase: 3 of 4 (Semantic Context Engine)
-Plan: 2 of 3 in current phase
+Plan: 3 of 3 in current phase
 Status: In Progress
-Last activity: 2026-02-21 — Completed 03-02 (5-step fuzzy entity resolution)
+Last activity: 2026-02-21 — Completed 03-01 (relationship auto-linker and timeline writer)
 
-Progress: [█████░░░░░] 50%
+Progress: [██████░░░░] 60%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 2
-- Average duration: 1.5min
-- Total execution time: 0.05 hours
+- Total plans completed: 3
+- Average duration: 2min
+- Total execution time: 0.07 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-platform-deploy | 2 | 3min | 1.5min |
-| 03-semantic-context-engine | 1 | 4min | 4min |
+| 03-semantic-context-engine | 2 | 8min | 4min |
 
 **Recent Trend:**
-- Last 5 plans: 01-03 (2min), 01-04 (1min), 03-02 (4min)
+- Last 5 plans: 01-03 (2min), 01-04 (1min), 03-02 (4min), 03-01 (4min)
 - Trend: -
 
 *Updated after each plan completion*
 | Phase 01 P01 | 1min | 2 tasks | 1 files |
 | Phase 01 P02 | 2min | 3 tasks | 1 files |
 | Phase 03 P02 | 4min | 2 tasks | 4 files |
+| Phase 03 P01 | 4min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -53,6 +54,7 @@ Recent decisions affecting current work:
 - [Phase 01-01]: AWU org uses deterministic UUID for seed FK references; Andy auth user created via Supabase Auth not raw SQL
 - [Phase 01-02]: Deployed via Vercel dashboard import; www.bitbit.com.au as 308 redirect to apex
 - [Phase 03-02]: Used contains() for Supabase array queries; phone variants iterated sequentially; vitest added as test framework
+- [Phase 03-01]: Fire-and-forget pattern for context writes (never block CRUD flow); channel messages treated as inbound
 
 ### Pending Todos
 
@@ -69,5 +71,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-21
-Stopped at: Completed 03-02-PLAN.md (5-step fuzzy entity resolution)
+Stopped at: Completed 03-01-PLAN.md (relationship auto-linker and timeline writer)
 Resume file: None
