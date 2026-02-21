@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-22)
 ## Current Position
 
 Phase: 8 of 12 (Agent Runtime)
-Plan: 1 of 4 in current phase
+Plan: 3 of 4 in current phase
 Status: Executing
-Last activity: 2026-02-22 -- Completed 08-01 Channel Relay Daemon
+Last activity: 2026-02-22 -- Completed 08-03 Agent Scheduler
 
-Progress: [████████████░░░░░░░░] 63% (22/35 plans across all milestones)
+Progress: [█████████████░░░░░░░] 69% (24/35 plans across all milestones)
 
 ## Performance Metrics
 
@@ -43,6 +43,7 @@ See PROJECT.md Key Decisions table.
 - **07-01:** Supabase DI pattern: createClient() only at HTTP boundary, SupabaseClient passed as first param to all agent/context/channel functions
 - **07-02:** Run logger never throws (returns null on failure); cost estimation uses static per-million-token pricing per model tier
 - **08-01:** Bearer token auth (RELAY_SECRET) for cron endpoint; ignoreDuplicates upsert for idempotent message ingestion
+- **08-03:** Minimal cron parser (no external deps) for agent scheduling; stateless tick function pattern; separate SCHEDULER_SECRET env var
 
 ### Pending Todos
 
@@ -58,5 +59,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-22
-Stopped at: Completed 08-01-PLAN.md
+Stopped at: Completed 08-03-PLAN.md
 Resume file: None
