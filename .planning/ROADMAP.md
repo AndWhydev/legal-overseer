@@ -77,7 +77,7 @@ Plans:
 
 Plans:
 - [x] 09-01-PLAN.md — Approval queue DB table, service module, and REST API endpoints
-- [ ] 09-02-PLAN.md — Dashboard approval queue UI with approve/reject cards
+- [x] 09-02-PLAN.md — Dashboard approval queue UI with approve/reject cards
 - [x] 09-03-PLAN.md — WhatsApp approval notifications, Y/N reply handling, and daily digest
 
 ### Phase 10: Sentry Agent

@@ -12,14 +12,14 @@ See: .planning/PROJECT.md (updated 2026-02-22)
 Phase: 9 of 12 (Approval Flow)
 Plan: 3 of 3 in current phase
 Status: Executing
-Last activity: 2026-02-21 -- Completed 09-03 WhatsApp Approval Delivery
+Last activity: 2026-02-22 -- Completed 09-02 Dashboard Approval Queue UI
 
 Progress: [████████████████░░░░░░] 77% (27/35 plans across all milestones)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 19 (v1.0)
+- Total plans completed: 20 (v1.0)
 - Average duration: ~25 min (v1.0)
 - Total execution time: ~8 hours (v1.0)
 
@@ -34,6 +34,7 @@ Progress: [████████████████░░░░░░] 7
 | 5. Wire Integration | 2 | ~40 min | ~20 min |
 | 6. Verification | 2 | ~30 min | ~15 min |
 | Phase 09 P01 | 15m | 2 tasks | 4 files |
+| Phase 09 P02 | 2 min | 2 tasks | 6 files |
 | Phase 10 P01 | 8m | 2 tasks | 7 files |
 | Phase 09 P03 | 4 min | 2 tasks | 5 files |
 
@@ -50,6 +51,8 @@ See PROJECT.md Key Decisions table.
 - **08-03:** Minimal cron parser (no external deps) for agent scheduling; stateless tick function pattern; separate SCHEDULER_SECRET env var
 - [Phase 09]: Resolve conflicts by checking current approval status before update and returning explicit not-found/already-resolved errors.
 - [Phase 09]: Keep urgent-first ordering deterministic by sorting pending results after query while preserving created_at tie-breaks.
+- [Phase 09]: Integrate approvals into SPA tab registry + sidebar so queue navigation behaves like other dashboard sections.
+- [Phase 09]: Use optimistic approval resolution with rollback for responsive queue interactions and safe error recovery.
 - [Phase 10]: Evaluate due watches using next_check_at first with interval fallback from last_checked_at.
 - [Phase 10]: Scheduler executes runSentryTick for sentry configs and logs processed/triggered/alerts counts.
 - [Phase 10]: Installed vitest as workspace devDependency to unblock plan-mandated verification.
@@ -70,6 +73,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-02-21
-Stopped at: Completed 09-03-PLAN.md
+Last session: 2026-02-22
+Stopped at: Completed 09-02-PLAN.md
 Resume file: None
