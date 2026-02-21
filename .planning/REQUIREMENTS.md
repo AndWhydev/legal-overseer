@@ -1,7 +1,7 @@
 # Requirements: BitBit AWU
 
 **Defined:** 2026-02-22
-**Core Value:** BitBit understands the business better than the business owner — when Andy says "Invoice Sezer for the White House RE work", BitBit knows who Sezer is, what the work was, the rate, and whether it's already been invoiced.
+**Core Value:** BitBit understands the business better than the business owner -- when Andy says "Invoice Sezer for the White House RE work", BitBit knows who Sezer is, what the work was, the rate, and whether it's already been invoiced.
 
 ## v1.1 Requirements
 
@@ -33,21 +33,21 @@ Requirements for milestone v1.1: Agent Runtime + First Agents.
 
 - [ ] **LEAD-01**: Lead Swarm classifies inbound messages as lead/client/spam/personal
 - [ ] **LEAD-02**: Lead Swarm qualifies leads (budget, service match, timeline) and scores hot/warm/cold
-- [ ] **LEAD-03**: Lead Swarm auto-acknowledges qualified leads within 2 minutes (draft → approval flow)
+- [ ] **LEAD-03**: Lead Swarm auto-acknowledges qualified leads within 2 minutes (draft -> approval flow)
 - [ ] **LEAD-04**: Lead Swarm escalates high-value leads (>$5k) directly to Andy
-- [ ] **LEAD-05**: Dashboard shows leads pipeline (kanban: New→Qualified→Booked→Won/Lost)
+- [ ] **LEAD-05**: Dashboard shows leads pipeline (kanban: New->Qualified->Booked->Won/Lost)
 
 ### Invoice Flow Agent
 
 - [ ] **INVC-01**: Invoice Flow creates invoices from natural language ("Invoice Sezer for White House RE")
 - [ ] **INVC-02**: Invoice Flow generates branded PDF invoices with configurable payment terms
 - [ ] **INVC-03**: Invoice Flow sends invoices via email with PDF attachment (with approval)
-- [ ] **INVC-04**: Invoice Flow tracks status (draft→sent→viewed→overdue→paid)
+- [ ] **INVC-04**: Invoice Flow tracks status (draft->sent->viewed->overdue->paid)
 - [ ] **INVC-05**: Invoice Flow detects and prevents duplicate invoicing (never send same invoice twice)
 
 ### Infrastructure
 
-- [ ] **INFR-01**: Supabase DI refactor — all tools receive client from context, not module-level import
+- [ ] **INFR-01**: Supabase DI refactor -- all tools receive client from context, not module-level import
 - [ ] **INFR-02**: Agent run logging captures tokens, cost, actions, and confidence per execution
 - [ ] **INFR-03**: AGNT-12 (confidence routing) and AGNT-13 (shared CRUD tools) verified in production flow
 
@@ -87,17 +87,40 @@ Deferred to future milestones. Tracked but not in current roadmap.
 
 ## Traceability
 
-Which phases cover which requirements. Updated during roadmap creation.
-
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| (populated by roadmapper) | | |
+| INFR-01 | Phase 7 | Pending |
+| INFR-02 | Phase 7 | Pending |
+| INFR-03 | Phase 7 | Pending |
+| RNTM-01 | Phase 8 | Pending |
+| RNTM-02 | Phase 8 | Pending |
+| RNTM-03 | Phase 8 | Pending |
+| RNTM-04 | Phase 8 | Pending |
+| APPR-01 | Phase 9 | Pending |
+| APPR-02 | Phase 9 | Pending |
+| APPR-03 | Phase 9 | Pending |
+| APPR-04 | Phase 9 | Pending |
+| APPR-05 | Phase 9 | Pending |
+| SNTR-01 | Phase 10 | Pending |
+| SNTR-02 | Phase 10 | Pending |
+| SNTR-03 | Phase 10 | Pending |
+| SNTR-04 | Phase 10 | Pending |
+| LEAD-01 | Phase 11 | Pending |
+| LEAD-02 | Phase 11 | Pending |
+| LEAD-03 | Phase 11 | Pending |
+| LEAD-04 | Phase 11 | Pending |
+| LEAD-05 | Phase 11 | Pending |
+| INVC-01 | Phase 12 | Pending |
+| INVC-02 | Phase 12 | Pending |
+| INVC-03 | Phase 12 | Pending |
+| INVC-04 | Phase 12 | Pending |
+| INVC-05 | Phase 12 | Pending |
 
 **Coverage:**
-- v1.1 requirements: 23 total
-- Mapped to phases: 0
-- Unmapped: 23 ⚠️
+- v1.1 requirements: 26 total
+- Mapped to phases: 26
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-02-22*
-*Last updated: 2026-02-22 after initial definition*
+*Last updated: 2026-02-22 after roadmap creation*
