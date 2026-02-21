@@ -2,92 +2,34 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-02-19)
+See: .planning/PROJECT.md (updated 2026-02-21)
 
 **Core value:** BitBit understands the business better than the business owner — when Andy says "Invoice Sezer for the White House RE work", BitBit knows who Sezer is, what the work was, the rate, and whether it's already been invoiced.
-**Current focus:** Phase 6 — Verification Artifacts
+**Current focus:** Planning next milestone
 
 ## Current Position
 
-Phase: 6 of 6 (Verification Artifacts)
-Plan: 2 of 2 in current phase
-Status: Complete
-Last activity: 2026-02-21 — Completed 06-02 (Phase 2 verification report)
-
-Progress: [████████████████] 100%
-
-## Performance Metrics
-
-**Velocity:**
-- Total plans completed: 10
-- Average duration: 5min
-- Total execution time: 0.14 hours
-
-**By Phase:**
-
-| Phase | Plans | Total | Avg/Plan |
-|-------|-------|-------|----------|
-| 01-platform-deploy | 2 | 3min | 1.5min |
-| 03-semantic-context-engine | 3 | 11min | 3.7min |
-| 04-agent-infrastructure | 4 | 28min | 7min |
-
-**Recent Trend:**
-- Last 5 plans: 03-01 (4min), 03-03 (3min), 04-01 (7min), 04-02 (3min), 04-03 (14min)
-- Trend: -
-
-*Updated after each plan completion*
-| Phase 01 P01 | 1min | 2 tasks | 1 files |
-| Phase 01 P02 | 2min | 3 tasks | 1 files |
-| Phase 03 P02 | 4min | 2 tasks | 4 files |
-| Phase 03 P01 | 4min | 2 tasks | 5 files |
-| Phase 03 P03 | 3min | 2 tasks | 5 files |
-| Phase 04 P01 | 7min | 2 tasks | 4 files |
-| Phase 04 P02 | 3min | 2 tasks | 2 files |
-| Phase 04 P03 | 14min | 2 tasks | 3 files |
-| Phase 04-agent-infrastructure P04 | 4min | 1 tasks | 3 files |
-| Phase 05 P01 | 10min | 2 tasks | 2 files |
-| Phase 05 P02 | 5min | 1 tasks | 1 files |
-| Phase 06 P01 | 6min | 1 tasks | 1 files |
-| Phase 06 P02 | 4min | 2 tasks | 5 files |
+Phase: v1.0 complete (6 phases, 19 plans)
+Status: Milestone shipped
+Last activity: 2026-02-21 — v1.0 MVP milestone archived
 
 ## Accumulated Context
 
 ### Decisions
 
-Decisions logged in PROJECT.md Key Decisions table.
-Recent decisions affecting current work:
-
-- [Init]: Deploy personal-assistant/ directly (not migrate to packages/dashboard) — weeks of work with zero user-visible benefit
-- [Init]: AGNT-14 (@bitbit/core fix) placed in Phase 1 — broken exports block all downstream development
-- [Init]: Human tasks (PLAT-10/11/12) tracked in Phase 1 Plan 04 — parallel to technical deploy, not blocking Phases 2-4
-- [Phase 01-03]: Added packages/core/tsconfig.json to isolate compilation from personal-assistant errors
-- [Phase 01-01]: AWU org uses deterministic UUID for seed FK references; Andy auth user created via Supabase Auth not raw SQL
-- [Phase 01-02]: Deployed via Vercel dashboard import; www.bitbit.com.au as 308 redirect to apex
-- [Phase 03-02]: Used contains() for Supabase array queries; phone variants iterated sequentially; vitest added as test framework
-- [Phase 03-01]: Fire-and-forget pattern for context writes (never block CRUD flow); channel messages treated as inbound
-- [Phase 03]: Entity context section capped at 4000 chars to stay within token budget
-- [Phase 04-01]: DB configs passed as parameter to keep registry pure/sync (no async DB calls in core)
-- [Phase 04]: Defined ConfidenceThresholds types locally in personal-assistant instead of importing from @bitbit/core — no path alias configured
-- [Phase 04-03]: Invoice types defined locally in shared-tools.ts (no @bitbit/core path alias); memory tools kept in tools.ts as chat-specific
-- [Phase 04-agent-infrastructure]: Exported all types from @bitbit/core index.ts for completeness
-- [Phase 05-02]: Lazy init with module-level guard flag for agent registry in serverless route
-- [Phase 06]: All 13 Phase 1 requirements marked SATISFIED with artifact/commit/summary evidence
-- [Phase 06-02]: All 14 Phase 2 requirements (SCTX-01-04, AGNT-01-10) verified SATISFIED from migration files 005-017
+See PROJECT.md Key Decisions table (updated with v1.0 outcomes).
 
 ### Pending Todos
 
-None yet.
+None.
 
 ### Blockers/Concerns
 
-- ~~[Phase 1]: Anthropic API card expiring (PLAT-10) — blocks Claude chat functionality; Andy must update billing~~ RESOLVED in 01-04
-- ~~[Phase 1]: Stripe identity verification (PLAT-11) — blocks payouts; Andy must complete verification~~ RESOLVED in 01-04
-- ~~[Phase 1]: Meta Business Verification (PLAT-12) — blocks WhatsApp (Milestone 2 scope); submit now, 3-14 day wait~~ RESOLVED in 01-04
-- [Phase 1]: Vercel 30s timeout risk with IMAP — Gmail API migration may be needed (v2)
-- ~~[Phase 1]: root npm install fails — @bitbit/core broken exports must be fixed before Phase 2+ work~~ RESOLVED in 01-03
+- Vercel 30s timeout risk with IMAP — Gmail API migration may be needed (v2)
+- AGNT-12/AGNT-13 built but not production-verified (known gaps from v1.0)
 
 ## Session Continuity
 
 Last session: 2026-02-21
-Stopped at: Completed 06-02-PLAN.md (Phase 2 verification report)
+Stopped at: v1.0 milestone completion
 Resume file: None
