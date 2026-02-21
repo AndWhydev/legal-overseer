@@ -1,10 +1,5 @@
-// Types matching @bitbit/core definitions
-export interface ConfidenceThresholds {
-  act: number   // >= this -> auto-execute
-  ask: number   // >= this -> request approval; below -> escalate
-}
-
-export type ConfidenceDecision = 'act' | 'ask' | 'escalate'
+import type { ConfidenceThresholds, ConfidenceDecision } from '@bitbit/core'
+export type { ConfidenceThresholds, ConfidenceDecision }
 
 export const DEFAULT_THRESHOLDS: ConfidenceThresholds = {
   act: 0.85,

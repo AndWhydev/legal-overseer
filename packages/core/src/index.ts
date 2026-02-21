@@ -18,6 +18,7 @@ export {
 
 // Types
 export type {
+  AgentType,
   Organization,
   Contact,
   Lead,
@@ -30,4 +31,23 @@ export type {
   VoiceProfile,
   Template,
   OfferPackage,
+  ConfidenceThresholds,
+  ConfidenceDecision,
+  ModelTier,
+  OrgSettings,
+  NotificationConfig,
+  AgentSchedule,
+  AgentAction,
+  InvoiceStatus,
+  InvoiceLineItem,
+  LeadStatus,
+  LeadScore,
+  ProposalStatus,
+  ProposalTier,
+  WatchStatus,
+  OfferStatus,
+  ChannelType,
+  ChannelMessage,
+  ChannelAdapter,
+  CommunicationPatterns,
 } from './types'
