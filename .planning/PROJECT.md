@@ -36,24 +36,21 @@ BitBit understands the business better than the business owner — when Andy say
 
 ### Active
 
-- [ ] Confidence routing fully verified in production flow (AGNT-12)
-- [ ] Shared CRUD tool system verified in production flow (AGNT-13)
-- [ ] LLM-based channel classification (Gemini Flash + context briefing)
-- [ ] Action router (immediate/queue/batch/skip based on significance + urgency)
-- [ ] Channel relay daemon (poll → buffer → classify → route → write)
-- [ ] Reflection agent (extract learnable facts after significant events)
-- [ ] Policy + voice profile runtime loading from database
-- [ ] Context-assembled prompt builder (selective, budgeted, entity-aware)
-- [ ] Policy engine (load rules.md → runtime enforcement)
-- [ ] Agent execution scheduler (cron triggers)
-- [ ] Agent approval flow API (act/ask/escalate → dashboard + WhatsApp)
-- [ ] Agent run logging (tokens, cost, actions, confidence)
-- [ ] Supabase dependency injection refactor (module-level client → context-based)
+## Current Milestone: v1.1 Agent Runtime + First Agents
+
+**Goal:** Andy uses BitBit daily — agents run in background, classify emails, take autonomous actions (low-risk) or ping WhatsApp for approval (high-risk).
+
+**Target features:**
+- Agent runtime (channel relay, classification, action routing, scheduler, approval flow)
+- WhatsApp approval channel (act/ask notifications, not full conversational bot)
+- Three first agents: Sentry (error monitoring), Lead Swarm (lead qualification), Invoice Flow (invoicing)
+- Agent run logging, Supabase DI refactor (v1.0 prerequisites)
+
+**Active requirements:** See REQUIREMENTS.md
 
 ### Out of Scope
 
-- WhatsApp bot + conversational interface — deferred to Milestone 2 (Phase 1.5)
-- First agents (Sentry, Lead Swarm, Invoice Flow) — deferred to Milestone 2
+- WhatsApp full conversational bot — deferred (approval-only channel in v1.1)
 - Channel integrations (Outlook rebuild, Asana, Calendly, WhatsApp, Stripe adapters) — deferred
 - Communication agents (Channel Triage, Client Comms) — Milestone 3
 - Revenue agents (Proposal Bot, Client Onboarding) — Milestone 3
@@ -94,4 +91,4 @@ Agent infrastructure built: registry, confidence routing, shared CRUD tools (nee
 | Entity context capped at 4000 chars | Stay within token budget while providing context | ⚠️ Revisit — may need dynamic budget |
 
 ---
-*Last updated: 2026-02-21 after v1.0 milestone*
+*Last updated: 2026-02-22 after v1.1 milestone start*
