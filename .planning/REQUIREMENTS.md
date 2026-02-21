@@ -48,8 +48,8 @@ Requirements for milestone v1.1: Agent Runtime + First Agents.
 ### Infrastructure
 
 - [x] **INFR-01**: Supabase DI refactor -- all tools receive client from context, not module-level import
-- [ ] **INFR-02**: Agent run logging captures tokens, cost, actions, and confidence per execution
-- [ ] **INFR-03**: AGNT-12 (confidence routing) and AGNT-13 (shared CRUD tools) verified in production flow
+- [x] **INFR-02**: Agent run logging captures tokens, cost, actions, and confidence per execution
+- [x] **INFR-03**: AGNT-12 (confidence routing) and AGNT-13 (shared CRUD tools) verified in production flow
 
 ## v2 Requirements
 
@@ -90,8 +90,8 @@ Deferred to future milestones. Tracked but not in current roadmap.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | INFR-01 | Phase 7 | Complete |
-| INFR-02 | Phase 7 | Pending |
-| INFR-03 | Phase 7 | Pending |
+| INFR-02 | Phase 7 | Complete |
+| INFR-03 | Phase 7 | Complete |
 | RNTM-01 | Phase 8 | Pending |
 | RNTM-02 | Phase 8 | Pending |
 | RNTM-03 | Phase 8 | Pending |
