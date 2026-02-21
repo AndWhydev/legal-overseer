@@ -111,6 +111,11 @@ Plans:
   1. 01-VERIFICATION.md exists with evidence for all 13 Phase 1 requirements
   2. 02-VERIFICATION.md exists with evidence for all 10 Phase 2 requirements
   3. Phase 2 SUMMARY files updated with requirements-completed frontmatter
+**Plans:** 2 plans in 1 wave
+
+Plans:
+- [ ] 06-01-PLAN.md — Create 01-VERIFICATION.md for Phase 1 requirements (PLAT-01 to PLAT-12, AGNT-14) [Wave 1]
+- [ ] 06-02-PLAN.md — Create 02-VERIFICATION.md for Phase 2 requirements (SCTX-01 to SCTX-04, AGNT-01 to AGNT-10) + update summaries [Wave 1]
 
 ## Progress
 
@@ -124,4 +129,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | 3. Semantic Context Engine | 3/3 | Complete | 2026-02-21 |
 | 4. Agent Infrastructure | 4/4 | Complete    | 2026-02-21 |
 | 5. Wire Integration Points | 2/2 | Complete   | 2026-02-21 |
-| 6. Verification Artifacts | 0/0 | Pending | — |
+| 6. Verification Artifacts | 0/2 | In Progress | — |
