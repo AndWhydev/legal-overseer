@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest'
 import { shouldRunAgent, runScheduledAgents } from './scheduler'
 import type { AgentSchedule } from '@/lib/bitbit-core'
 
-const { logAgentRunMock, runSentryTickMock, processSentryEscalationsMock } = vi.hoisted(() => ({
+const { logAgentRunMock, runSentryTickMock, processSentryEscalationsMock, runLeadSwarmTickMock } = vi.hoisted(() => ({
   logAgentRunMock: vi.fn().mockResolvedValue({ id: 'run-123' }),
   runSentryTickMock: vi.fn().mockResolvedValue({
     processed: 1,
@@ -12,6 +12,13 @@ const { logAgentRunMock, runSentryTickMock, processSentryEscalationsMock } = vi.
   processSentryEscalationsMock: vi.fn().mockResolvedValue({
     processed: 1,
     escalated: 1,
+    failed: 0,
+  }),
+  runLeadSwarmTickMock: vi.fn().mockResolvedValue({
+    processed: 2,
+    created: 1,
+    qualified: 1,
+    hot: 1,
     failed: 0,
   }),
 }))
@@ -26,6 +33,10 @@ vi.mock('./sentry', () => ({
 
 vi.mock('./sentry-escalation', () => ({
   processSentryEscalations: processSentryEscalationsMock,
+}))
+
+vi.mock('./lead-swarm', () => ({
+  runLeadSwarmTick: runLeadSwarmTickMock,
 }))
 
 // ---------------------------------------------------------------------------
@@ -99,10 +110,21 @@ function createMockSupabase(configs: Record<string, unknown>[], lastRuns: Record
   const mockFrom = vi.fn().mockImplementation((table: string) => {
     if (table === 'agent_configs') {
       return {
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockImplementation(() => ({
-            eq: vi.fn().mockResolvedValue({ data: configs, error: null }),
-          })),
+        select: vi.fn().mockImplementation(() => {
+          const filters: Record<string, unknown> = {}
+          const chain = {
+            eq(key: string, value: unknown) {
+              filters[key] = value
+              return chain
+            },
+            then(resolve: (value: { data: Record<string, unknown>[]; error: null }) => unknown) {
+              const filtered = configs.filter((config) =>
+                Object.entries(filters).every(([filterKey, filterValue]) => config[filterKey] === filterValue),
+              )
+              return Promise.resolve({ data: filtered, error: null }).then(resolve)
+            },
+          }
+          return chain
         }),
       }
     }
@@ -262,5 +284,88 @@ describe('runScheduledAgents', () => {
     expect(logAgentRunMock).toHaveBeenCalledTimes(1)
     const payload = logAgentRunMock.mock.calls[0]?.[1]
     expect(String(payload?.output_summary)).toContain('escalated=0')
+  })
+
+  it('runs lead-swarm configs when due and logs deterministic counters', async () => {
+    runLeadSwarmTickMock.mockClear()
+    logAgentRunMock.mockClear()
+
+    const configs = [
+      {
+        id: 'config-lead',
+        org_id: 'org-1',
+        agent_type: 'lead-swarm',
+        schedule: { type: 'continuous' },
+        enabled: true,
+      },
+    ]
+
+    const supabase = createMockSupabase(configs, [[]])
+    const results = await runScheduledAgents(supabase, 'org-1')
+
+    expect(results).toHaveLength(1)
+    expect(results[0].triggered).toBe(true)
+    expect(runLeadSwarmTickMock).toHaveBeenCalledWith(supabase, 'org-1', 'config-lead')
+    const payload = logAgentRunMock.mock.calls[0]?.[1]
+    expect(String(payload?.output_summary)).toContain('lead-swarm processed=2 created=1 qualified=1 hot=1 failed=0')
+  })
+
+  it('skips non-due lead-swarm configs', async () => {
+    runLeadSwarmTickMock.mockClear()
+    logAgentRunMock.mockClear()
+
+    const configs = [
+      {
+        id: 'config-lead',
+        org_id: 'org-1',
+        agent_type: 'lead-swarm',
+        schedule: { type: 'interval', interval_seconds: 3600 },
+        enabled: true,
+      },
+    ]
+
+    const supabase = createMockSupabase(configs, [[{ created_at: new Date().toISOString() }]])
+    const results = await runScheduledAgents(supabase, 'org-1')
+
+    expect(results).toHaveLength(1)
+    expect(results[0].triggered).toBe(false)
+    expect(results[0].reason).toBe('not_due')
+    expect(runLeadSwarmTickMock).not.toHaveBeenCalled()
+    expect(logAgentRunMock).not.toHaveBeenCalled()
+  })
+
+  it('continues scheduler execution when lead-swarm reports failed messages', async () => {
+    runLeadSwarmTickMock.mockClear()
+    logAgentRunMock.mockClear()
+
+    runLeadSwarmTickMock
+      .mockResolvedValueOnce({ processed: 3, created: 1, qualified: 1, hot: 0, failed: 1 })
+      .mockResolvedValueOnce({ processed: 2, created: 1, qualified: 1, hot: 1, failed: 0 })
+
+    const configs = [
+      {
+        id: 'config-lead-1',
+        org_id: 'org-1',
+        agent_type: 'lead-swarm',
+        schedule: { type: 'continuous' },
+        enabled: true,
+      },
+      {
+        id: 'config-lead-2',
+        org_id: 'org-2',
+        agent_type: 'lead-swarm',
+        schedule: { type: 'continuous' },
+        enabled: true,
+      },
+    ]
+
+    const supabase = createMockSupabase(configs, [[], []])
+    const results = await runScheduledAgents(supabase)
+
+    expect(results).toHaveLength(2)
+    expect(results[0].triggered).toBe(true)
+    expect(results[1].triggered).toBe(true)
+    expect(runLeadSwarmTickMock).toHaveBeenCalledTimes(2)
+    expect(logAgentRunMock).toHaveBeenCalledTimes(2)
   })
 })

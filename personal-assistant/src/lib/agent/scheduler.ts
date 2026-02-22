@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { AgentSchedule } from '@/lib/bitbit-core'
 import { logAgentRun } from './run-logger'
+import { runLeadSwarmTick } from './lead-swarm'
 import { runSentryTick } from './sentry'
 import { processSentryEscalations } from './sentry-escalation'
 
@@ -122,6 +123,7 @@ export async function runScheduledAgents(
   const now = new Date()
   const results: AgentScheduleResult[] = []
   const processedSentryOrgs = new Set<string>()
+  const processedLeadSwarmOrgs = new Set<string>()
 
   for (const config of configs) {
     const schedule = config.schedule as AgentSchedule | null
@@ -187,6 +189,29 @@ export async function runScheduledAgents(
       } catch (error) {
         const message = error instanceof Error ? error.message : 'unknown'
         outputSummary = `sentry error=${message}`
+      }
+    } else if (config.agent_type === 'lead-swarm') {
+      if (processedLeadSwarmOrgs.has(config.org_id)) {
+        results.push({
+          agentType: config.agent_type,
+          orgId: config.org_id,
+          triggered: false,
+          reason: 'already_running',
+          lastRunAt: lastRunAt?.toISOString(),
+        })
+        continue
+      }
+
+      processedLeadSwarmOrgs.add(config.org_id)
+
+      try {
+        const leadResult = await runLeadSwarmTick(supabase, config.org_id, config.id)
+        outputSummary =
+          `lead-swarm processed=${leadResult.processed} created=${leadResult.created} ` +
+          `qualified=${leadResult.qualified} hot=${leadResult.hot} failed=${leadResult.failed}`
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'unknown'
+        outputSummary = `lead-swarm error=${message}`
       }
     }
 
