@@ -2,12 +2,17 @@ import { describe, it, expect, vi } from 'vitest'
 import { shouldRunAgent, runScheduledAgents } from './scheduler'
 import type { AgentSchedule } from '@/lib/bitbit-core'
 
-const { logAgentRunMock, runSentryTickMock } = vi.hoisted(() => ({
+const { logAgentRunMock, runSentryTickMock, processSentryEscalationsMock } = vi.hoisted(() => ({
   logAgentRunMock: vi.fn().mockResolvedValue({ id: 'run-123' }),
   runSentryTickMock: vi.fn().mockResolvedValue({
     processed: 1,
     triggered: 1,
     alertsCreated: 1,
+  }),
+  processSentryEscalationsMock: vi.fn().mockResolvedValue({
+    processed: 1,
+    escalated: 1,
+    failed: 0,
   }),
 }))
 
@@ -17,6 +22,10 @@ vi.mock('./run-logger', () => ({
 
 vi.mock('./sentry', () => ({
   runSentryTick: runSentryTickMock,
+}))
+
+vi.mock('./sentry-escalation', () => ({
+  processSentryEscalations: processSentryEscalationsMock,
 }))
 
 // ---------------------------------------------------------------------------
@@ -121,6 +130,7 @@ function createMockSupabase(configs: Record<string, unknown>[], lastRuns: Record
 describe('runScheduledAgents', () => {
   it('calls runSentryTick for due sentry configs', async () => {
     runSentryTickMock.mockClear()
+    processSentryEscalationsMock.mockClear()
     logAgentRunMock.mockClear()
     const configs = [
       {
@@ -138,11 +148,13 @@ describe('runScheduledAgents', () => {
     expect(results).toHaveLength(1)
     expect(results[0].triggered).toBe(true)
     expect(runSentryTickMock).toHaveBeenCalledWith(supabase, 'org-1', 'config-sentry')
+    expect(processSentryEscalationsMock).toHaveBeenCalledWith(supabase, 'org-1')
     expect(logAgentRunMock).toHaveBeenCalledTimes(1)
   })
 
   it('keeps existing behavior for non-sentry configs', async () => {
     runSentryTickMock.mockClear()
+    processSentryEscalationsMock.mockClear()
     logAgentRunMock.mockClear()
     const configs = [
       {
@@ -160,11 +172,13 @@ describe('runScheduledAgents', () => {
     expect(results).toHaveLength(1)
     expect(results[0].triggered).toBe(true)
     expect(runSentryTickMock).not.toHaveBeenCalled()
+    expect(processSentryEscalationsMock).not.toHaveBeenCalled()
     expect(logAgentRunMock).toHaveBeenCalledTimes(1)
   })
 
   it('skips disabled agents (they are not returned by enabled=true query)', async () => {
     runSentryTickMock.mockClear()
+    processSentryEscalationsMock.mockClear()
     logAgentRunMock.mockClear()
     const supabase = createMockSupabase([])
     const results = await runScheduledAgents(supabase, 'org-1')
@@ -173,6 +187,7 @@ describe('runScheduledAgents', () => {
 
   it('inserts agent_run for triggered agents', async () => {
     runSentryTickMock.mockClear()
+    processSentryEscalationsMock.mockClear()
     logAgentRunMock.mockClear()
     const configs = [
       {
@@ -189,5 +204,63 @@ describe('runScheduledAgents', () => {
     expect(results[0].triggered).toBe(true)
     expect(results[0].reason).toBe('due')
     expect(logAgentRunMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('processes each sentry org once per tick to avoid duplicate escalations', async () => {
+    runSentryTickMock.mockClear()
+    processSentryEscalationsMock.mockClear()
+    logAgentRunMock.mockClear()
+
+    const configs = [
+      {
+        id: 'config-1',
+        org_id: 'org-1',
+        agent_type: 'sentry',
+        schedule: { type: 'continuous' },
+        enabled: true,
+      },
+      {
+        id: 'config-2',
+        org_id: 'org-1',
+        agent_type: 'sentry',
+        schedule: { type: 'continuous' },
+        enabled: true,
+      },
+    ]
+
+    const supabase = createMockSupabase(configs, [[], []])
+    const results = await runScheduledAgents(supabase, 'org-1')
+
+    expect(results).toHaveLength(2)
+    expect(results[0].triggered).toBe(true)
+    expect(results[1].triggered).toBe(false)
+    expect(results[1].reason).toBe('already_running')
+    expect(runSentryTickMock).toHaveBeenCalledTimes(1)
+    expect(processSentryEscalationsMock).toHaveBeenCalledTimes(1)
+    expect(logAgentRunMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('includes escalation counts in scheduler output summary when no alerts are due', async () => {
+    runSentryTickMock.mockClear()
+    processSentryEscalationsMock.mockClear()
+    logAgentRunMock.mockClear()
+    processSentryEscalationsMock.mockResolvedValueOnce({ processed: 0, escalated: 0, failed: 0 })
+
+    const configs = [
+      {
+        id: 'config-sentry',
+        org_id: 'org-1',
+        agent_type: 'sentry',
+        schedule: { type: 'continuous' },
+        enabled: true,
+      },
+    ]
+
+    const supabase = createMockSupabase(configs, [[]])
+    await runScheduledAgents(supabase, 'org-1')
+
+    expect(logAgentRunMock).toHaveBeenCalledTimes(1)
+    const payload = logAgentRunMock.mock.calls[0]?.[1]
+    expect(String(payload?.output_summary)).toContain('escalated=0')
   })
 })

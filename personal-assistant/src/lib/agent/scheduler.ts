@@ -2,6 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import type { AgentSchedule } from '@/lib/bitbit-core'
 import { logAgentRun } from './run-logger'
 import { runSentryTick } from './sentry'
+import { processSentryEscalations } from './sentry-escalation'
 
 /**
  * Result of checking one agent's schedule.
@@ -120,6 +121,7 @@ export async function runScheduledAgents(
 
   const now = new Date()
   const results: AgentScheduleResult[] = []
+  const processedSentryOrgs = new Set<string>()
 
   for (const config of configs) {
     const schedule = config.schedule as AgentSchedule | null
@@ -163,8 +165,29 @@ export async function runScheduledAgents(
     let outputSummary = 'pending'
 
     if (config.agent_type === 'sentry') {
-      const sentryResult = await runSentryTick(supabase, config.org_id, config.id)
-      outputSummary = `sentry processed=${sentryResult.processed} triggered=${sentryResult.triggered} alerts=${sentryResult.alertsCreated}`
+      if (processedSentryOrgs.has(config.org_id)) {
+        results.push({
+          agentType: config.agent_type,
+          orgId: config.org_id,
+          triggered: false,
+          reason: 'already_running',
+          lastRunAt: lastRunAt?.toISOString(),
+        })
+        continue
+      }
+
+      processedSentryOrgs.add(config.org_id)
+
+      try {
+        const sentryResult = await runSentryTick(supabase, config.org_id, config.id)
+        const escalationResult = await processSentryEscalations(supabase, config.org_id)
+        outputSummary =
+          `sentry processed=${sentryResult.processed} triggered=${sentryResult.triggered} ` +
+          `alerts=${sentryResult.alertsCreated} escalated=${escalationResult.escalated} failed=${escalationResult.failed}`
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'unknown'
+        outputSummary = `sentry error=${message}`
+      }
     }
 
     // 4. Record scheduler run
