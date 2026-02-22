@@ -149,5 +149,5 @@ Phases execute in numeric order: 7 -> 8 -> 9 -> 10/11/12 (parallel after 9).
 | 8. Agent Runtime | 2/3 | In Progress|  | - |
 | 9. Approval Flow | v1.1 | 2/3 | In Progress | - |
 | 10. Sentry Agent | 4/4 | Complete    | 2026-02-22 | - |
-| 11. Lead Swarm Agent | 3/3 | Complete   | 2026-02-22 | - |
+| 11. Lead Swarm Agent | 3/3 | Complete    | 2026-02-22 | - |
 | 12. Invoice Flow Agent | v1.1 | 0/3 | Not started | - |
