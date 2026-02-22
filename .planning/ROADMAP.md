@@ -41,7 +41,7 @@
   2. Every agent execution logs token count, cost, actions taken, and confidence score to the database
   3. Confidence routing (act/ask/escalate) produces correct decisions when given test inputs in production
   4. Shared CRUD tools (contact, task, invoice operations) execute successfully against production Supabase
-**Plans**: 4 plans
+**Plans**: 3 plans
 
 Plans:
 - [ ] 07-01-PLAN.md — Supabase DI refactor (all agent/context/channel modules accept SupabaseClient parameter)
@@ -107,12 +107,13 @@ Plans:
   3. Qualified leads receive an auto-acknowledgement draft within 2 minutes, sent after approval
   4. Leads over $5k value escalate directly to Andy via notification
   5. Dashboard shows a leads pipeline kanban (New, Qualified, Booked, Won/Lost)
-**Plans**: 3 plans
+**Plans**: 4 plans
 
 Plans:
 - [ ] 11-01-PLAN.md — Lead intake classification/qualification runtime and scheduler wiring
 - [ ] 11-02-PLAN.md — Approval-gated auto-acknowledgment and high-value escalation flows
 - [ ] 11-03-PLAN.md — Leads pipeline APIs and dashboard kanban integration
+- [ ] 11-04-PLAN.md — Gap closure: approved ack outbound delivery + provider result persistence
 
 ### Phase 12: Invoice Flow Agent
 **Goal**: Andy says "Invoice Sezer for the White House RE work" and BitBit creates, generates, and sends a branded invoice -- with duplicate protection
