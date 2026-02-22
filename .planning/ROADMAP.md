@@ -107,12 +107,12 @@ Plans:
   3. Qualified leads receive an auto-acknowledgement draft within 2 minutes, sent after approval
   4. Leads over $5k value escalate directly to Andy via notification
   5. Dashboard shows a leads pipeline kanban (New, Qualified, Booked, Won/Lost)
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 11-01: Lead classification and qualification engine
-- [ ] 11-02: Auto-acknowledge and escalation flows
-- [ ] 11-03: Leads pipeline dashboard
+- [ ] 11-01-PLAN.md — Lead intake classification/qualification runtime and scheduler wiring
+- [ ] 11-02-PLAN.md — Approval-gated auto-acknowledgment and high-value escalation flows
+- [ ] 11-03-PLAN.md — Leads pipeline APIs and dashboard kanban integration
 
 ### Phase 12: Invoice Flow Agent
 **Goal**: Andy says "Invoice Sezer for the White House RE work" and BitBit creates, generates, and sends a branded invoice -- with duplicate protection
