@@ -8,6 +8,8 @@ import {
   Cable,
   Pill,
   Users,
+  Handshake,
+  ShieldAlert,
   ShieldCheck,
   Activity,
   Settings,
@@ -22,12 +24,14 @@ const ICON_MAP: Record<string, React.ElementType> = {
   channels:    Cable,
   medications: Pill,
   contacts:    Users,
+  leads:       Handshake,
+  sentry:      ShieldAlert,
   approvals:   ShieldCheck,
   activity:    Activity,
   settings:    Settings,
 };
 
-const MAIN_TAB_IDS = ['dashboard', 'chat', 'channels', 'medications', 'contacts', 'approvals', 'activity'];
+const MAIN_TAB_IDS = ['dashboard', 'chat', 'channels', 'medications', 'contacts', 'leads', 'sentry', 'approvals', 'activity'];
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
