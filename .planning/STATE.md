@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-22)
 ## Current Position
 
 Phase: 11 of 12 (Lead Swarm Agent)
-Plan: 1 of 3 in current phase
+Plan: 2 of 3 in current phase
 Status: Ready
-Last activity: 2026-02-22 -- Completed 10-02 Sentry supersession ownership guardrails
+Last activity: 2026-02-22 -- Completed 11-01 Lead Swarm intake runtime
 
-Progress: [█████████████████░░░] 86% (30/35 plans across all milestones)
+Progress: [██████████████████░░] 89% (31/35 plans across all milestones)
 
 ## Performance Metrics
 
@@ -40,6 +40,7 @@ Progress: [█████████████████░░░] 86% (30
 | Phase 10 P03 | 1 min | 2 tasks | 6 files |
 | Phase 10 P04 | 5 min | 2 tasks | 2 files |
 | Phase 10 P02 | 1 min | 2 tasks | 1 files |
+| Phase 11 P01 | 5 min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -68,6 +69,9 @@ See PROJECT.md Key Decisions table.
 - [Phase 10]: Use visible inline success/error banners so API failures are immediately operator-visible in dashboard operations.
 - [Phase 10]: 10-02 remains non-implementing; SNTR-03 and SNTR-04 implementation authority stays with 10-03 and 10-04.
 - [Phase 10]: Execution guardrail order for sentry gap closure is fixed at 10-03 -> 10-04 -> 10-02 to avoid ownership overlap.
+- [Phase 11]: Mapped fallback categories deterministically for lead intake labels (newsletter->spam, vendor->client, notification->personal).
+- [Phase 11]: Lead qualification uses deterministic budget/service/timeline points to produce hot/warm/cold scoring.
+- [Phase 11]: Scheduler applies per-org lead-swarm dedupe and logs processed/created/qualified/hot/failed counters.
 
 ### Pending Todos
 
@@ -84,5 +88,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-22
-Stopped at: Completed 10-02-PLAN.md
+Stopped at: Completed 11-01-PLAN.md
 Resume file: None

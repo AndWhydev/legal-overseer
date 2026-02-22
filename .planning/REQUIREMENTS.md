@@ -31,8 +31,8 @@ Requirements for milestone v1.1: Agent Runtime + First Agents.
 
 ### Lead Swarm Agent
 
-- [ ] **LEAD-01**: Lead Swarm classifies inbound messages as lead/client/spam/personal
-- [ ] **LEAD-02**: Lead Swarm qualifies leads (budget, service match, timeline) and scores hot/warm/cold
+- [x] **LEAD-01**: Lead Swarm classifies inbound messages as lead/client/spam/personal
+- [x] **LEAD-02**: Lead Swarm qualifies leads (budget, service match, timeline) and scores hot/warm/cold
 - [ ] **LEAD-03**: Lead Swarm auto-acknowledges qualified leads within 2 minutes (draft -> approval flow)
 - [ ] **LEAD-04**: Lead Swarm escalates high-value leads (>$5k) directly to Andy
 - [ ] **LEAD-05**: Dashboard shows leads pipeline (kanban: New->Qualified->Booked->Won/Lost)
@@ -105,8 +105,8 @@ Deferred to future milestones. Tracked but not in current roadmap.
 | SNTR-02 | Phase 10 | Complete |
 | SNTR-03 | Phase 10 | Complete |
 | SNTR-04 | Phase 10 | Complete |
-| LEAD-01 | Phase 11 | Pending |
-| LEAD-02 | Phase 11 | Pending |
+| LEAD-01 | Phase 11 | Complete |
+| LEAD-02 | Phase 11 | Complete |
 | LEAD-03 | Phase 11 | Pending |
 | LEAD-04 | Phase 11 | Pending |
 | LEAD-05 | Phase 11 | Pending |
