@@ -129,13 +129,13 @@ function Hero() {
       <HeroArt />
 
       <div className="relative z-10 mx-auto max-w-3xl text-center">
-        <BlurFade delay={0.1} inView>
+        <BlurFade delay={0.1}>
           <p className="mb-6 text-[13px] font-medium tracking-wide text-[#8b6f47]">
             AI Agents That Actually Work
           </p>
         </BlurFade>
 
-        <BlurFade delay={0.2} inView>
+        <BlurFade delay={0.2}>
           <h1
             className="mb-6 text-[clamp(2.5rem,6vw,4.5rem)] leading-[1.1] tracking-[-0.02em] text-[#1a1a1a]"
             style={{ fontFamily: "var(--font-serif)" }}
@@ -146,7 +146,7 @@ function Hero() {
           </h1>
         </BlurFade>
 
-        <BlurFade delay={0.35} inView>
+        <BlurFade delay={0.35}>
           <p className="mx-auto mb-10 max-w-xl text-lg leading-relaxed text-[#6b6560]">
             BitBit integrates deeply with your life and business. It learns your context,
             understands your priorities, and acts on your behalf — so you can focus on
@@ -154,7 +154,7 @@ function Hero() {
           </p>
         </BlurFade>
 
-        <BlurFade delay={0.5} inView>
+        <BlurFade delay={0.5}>
           <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
             <Link
               href="/login"
@@ -184,7 +184,7 @@ function Philosophy() {
     <section id="philosophy" className="py-28 px-6">
       <div className="mx-auto max-w-6xl">
         <div className="grid gap-16 lg:grid-cols-2 items-center">
-          <BlurFade delay={0.1} inView>
+          <BlurFade delay={0.1}>
             <div>
               <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.2em] text-[#8b6f47]">
                 Philosophy
@@ -205,7 +205,7 @@ function Philosophy() {
             </div>
           </BlurFade>
 
-          <BlurFade delay={0.2} inView>
+          <BlurFade delay={0.2}>
             <div className="relative">
               {/* Abstract SVG illustration */}
               <svg viewBox="0 0 400 300" fill="none" className="w-full">
@@ -271,12 +271,12 @@ function Capabilities() {
   return (
     <section className="py-28 px-6 border-t border-[#e8e4dc]">
       <div className="mx-auto max-w-6xl">
-        <BlurFade delay={0.1} inView>
+        <BlurFade delay={0.1}>
           <p className="mb-3 text-[11px] font-medium uppercase tracking-[0.2em] text-[#8b6f47]">
             Capabilities
           </p>
         </BlurFade>
-        <BlurFade delay={0.15} inView>
+        <BlurFade delay={0.15}>
           <h2
             className="mb-16 max-w-2xl text-2xl tracking-tight text-[#1a1a1a] sm:text-3xl"
             style={{ fontFamily: "var(--font-serif)" }}
@@ -287,7 +287,7 @@ function Capabilities() {
 
         <div className="grid gap-8 md:grid-cols-3">
           {capabilities.map((cap, i) => (
-            <BlurFade key={cap.title} delay={0.2 + i * 0.1} inView>
+            <BlurFade key={cap.title} delay={0.2 + i * 0.1}>
               <div className="rounded-lg border border-[#e8e4dc] bg-white p-8 transition-colors hover:border-[#d4cfc6]">
                 <div className="mb-5">
                   <SketchIcon type={cap.icon} />
@@ -331,12 +331,12 @@ function HowItWorks() {
         <div className="grid gap-16 lg:grid-cols-[1fr_1.5fr]">
           {/* Left — sticky heading */}
           <div className="lg:sticky lg:top-32 lg:self-start">
-            <BlurFade delay={0.1} inView>
+            <BlurFade delay={0.1}>
               <p className="mb-3 text-[11px] font-medium uppercase tracking-[0.2em] text-[#8b6f47]">
                 How It Works
               </p>
             </BlurFade>
-            <BlurFade delay={0.15} inView>
+            <BlurFade delay={0.15}>
               <h2
                 className="mb-4 text-2xl tracking-tight text-[#1a1a1a] sm:text-3xl"
                 style={{ fontFamily: "var(--font-serif)" }}
@@ -345,7 +345,7 @@ function HowItWorks() {
                 <br />that knows your world
               </h2>
             </BlurFade>
-            <BlurFade delay={0.2} inView>
+            <BlurFade delay={0.2}>
               <p className="text-[15px] text-[#6b6560]">
                 No complex setup. No training period.
                 Connect your tools and BitBit starts learning.
@@ -360,7 +360,7 @@ function HowItWorks() {
 
             <div className="space-y-12">
               {steps.map((step, i) => (
-                <BlurFade key={step.title} delay={0.2 + i * 0.15} inView>
+                <BlurFade key={step.title} delay={0.2 + i * 0.15}>
                   <div className="relative flex gap-8">
                     <div className="relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#d97757]/30 bg-[#faf9f0] font-mono text-[15px] font-semibold text-[#d97757]">
                       {i + 1}
@@ -389,7 +389,7 @@ function SocialProof() {
   return (
     <section className="py-20 px-6 border-t border-[#e8e4dc] bg-[#f5f3ea]">
       <div className="mx-auto max-w-3xl text-center">
-        <BlurFade delay={0.1} inView>
+        <BlurFade delay={0.1}>
           <p className="mb-6 text-[13px] font-medium tracking-wide text-[#8b6f47]">
             Built for real life
           </p>
@@ -421,7 +421,7 @@ function FinalCTA() {
       </svg>
 
       <div className="relative z-10 mx-auto max-w-3xl text-center">
-        <BlurFade delay={0.1} inView>
+        <BlurFade delay={0.1}>
           <h2
             className="mb-6 text-3xl tracking-tight text-[#1a1a1a] sm:text-[2.75rem] sm:leading-[1.1]"
             style={{ fontFamily: "var(--font-serif)" }}
@@ -429,12 +429,12 @@ function FinalCTA() {
             Meet your AI.
           </h2>
         </BlurFade>
-        <BlurFade delay={0.2} inView>
+        <BlurFade delay={0.2}>
           <p className="mb-10 text-lg text-[#6b6560]">
             Start with what you have. BitBit adapts to you.
           </p>
         </BlurFade>
-        <BlurFade delay={0.3} inView>
+        <BlurFade delay={0.3}>
           <Link
             href="/login"
             className="inline-flex h-12 items-center gap-2 rounded-md bg-[#d97757] px-8 text-[15px] font-semibold text-white shadow-[0_10px_28px_rgba(217,119,87,0.4)] transition-colors hover:bg-[#c4684a]"
