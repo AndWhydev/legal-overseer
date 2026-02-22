@@ -2,7 +2,13 @@ import { describe, it, expect, vi } from 'vitest'
 import { shouldRunAgent, runScheduledAgents } from './scheduler'
 import type { AgentSchedule } from '@/lib/bitbit-core'
 
-const { logAgentRunMock, runSentryTickMock, processSentryEscalationsMock, runLeadSwarmTickMock } = vi.hoisted(() => ({
+const {
+  logAgentRunMock,
+  runSentryTickMock,
+  processSentryEscalationsMock,
+  runLeadSwarmTickMock,
+  runInvoiceFlowTickMock,
+} = vi.hoisted(() => ({
   logAgentRunMock: vi.fn().mockResolvedValue({ id: 'run-123' }),
   runSentryTickMock: vi.fn().mockResolvedValue({
     processed: 1,
@@ -21,6 +27,14 @@ const { logAgentRunMock, runSentryTickMock, processSentryEscalationsMock, runLea
     hot: 1,
     failed: 0,
   }),
+  runInvoiceFlowTickMock: vi.fn().mockResolvedValue({
+    processed: 3,
+    created: 1,
+    duplicatesBlocked: 1,
+    sent: 1,
+    overdue: 1,
+    failed: 0,
+  }),
 }))
 
 vi.mock('./run-logger', () => ({
@@ -37,6 +51,10 @@ vi.mock('./sentry-escalation', () => ({
 
 vi.mock('./lead-swarm', () => ({
   runLeadSwarmTick: runLeadSwarmTickMock,
+}))
+
+vi.mock('./invoice-flow', () => ({
+  runInvoiceFlowTick: runInvoiceFlowTickMock,
 }))
 
 // ---------------------------------------------------------------------------
@@ -174,28 +192,29 @@ describe('runScheduledAgents', () => {
     expect(logAgentRunMock).toHaveBeenCalledTimes(1)
   })
 
-  it('keeps existing behavior for non-sentry configs', async () => {
-    runSentryTickMock.mockClear()
-    processSentryEscalationsMock.mockClear()
+  it('runs invoice-flow configs when due and logs deterministic counters', async () => {
+    runInvoiceFlowTickMock.mockClear()
     logAgentRunMock.mockClear()
+
     const configs = [
       {
-        id: 'config-other',
+        id: 'config-invoice',
         org_id: 'org-1',
         agent_type: 'invoice-flow',
         schedule: { type: 'continuous' },
         enabled: true,
       },
     ]
-    const supabase = createMockSupabase(configs, [[]])
 
+    const supabase = createMockSupabase(configs, [[]])
     const results = await runScheduledAgents(supabase, 'org-1')
 
     expect(results).toHaveLength(1)
     expect(results[0].triggered).toBe(true)
-    expect(runSentryTickMock).not.toHaveBeenCalled()
-    expect(processSentryEscalationsMock).not.toHaveBeenCalled()
-    expect(logAgentRunMock).toHaveBeenCalledTimes(1)
+    expect(runInvoiceFlowTickMock).toHaveBeenCalledWith(supabase, 'org-1', 'config-invoice')
+
+    const payload = logAgentRunMock.mock.calls[0]?.[1]
+    expect(String(payload?.output_summary)).toContain('invoice-flow processed=3 created=1 duplicates=1 sent=1 overdue=1 failed=0')
   })
 
   it('skips disabled agents (they are not returned by enabled=true query)', async () => {
@@ -259,6 +278,38 @@ describe('runScheduledAgents', () => {
     expect(results[1].reason).toBe('already_running')
     expect(runSentryTickMock).toHaveBeenCalledTimes(1)
     expect(processSentryEscalationsMock).toHaveBeenCalledTimes(1)
+    expect(logAgentRunMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('processes each invoice-flow org once per tick to avoid duplicate invoice processing', async () => {
+    runInvoiceFlowTickMock.mockClear()
+    logAgentRunMock.mockClear()
+
+    const configs = [
+      {
+        id: 'config-1',
+        org_id: 'org-1',
+        agent_type: 'invoice-flow',
+        schedule: { type: 'continuous' },
+        enabled: true,
+      },
+      {
+        id: 'config-2',
+        org_id: 'org-1',
+        agent_type: 'invoice-flow',
+        schedule: { type: 'continuous' },
+        enabled: true,
+      },
+    ]
+
+    const supabase = createMockSupabase(configs, [[], []])
+    const results = await runScheduledAgents(supabase, 'org-1')
+
+    expect(results).toHaveLength(2)
+    expect(results[0].triggered).toBe(true)
+    expect(results[1].triggered).toBe(false)
+    expect(results[1].reason).toBe('already_running')
+    expect(runInvoiceFlowTickMock).toHaveBeenCalledTimes(1)
     expect(logAgentRunMock).toHaveBeenCalledTimes(1)
   })
 

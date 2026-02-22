@@ -2,6 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import type { AgentSchedule } from '@/lib/bitbit-core'
 import { logAgentRun } from './run-logger'
 import { runLeadSwarmTick } from './lead-swarm'
+import { runInvoiceFlowTick } from './invoice-flow'
 import { runSentryTick } from './sentry'
 import { processSentryEscalations } from './sentry-escalation'
 
@@ -42,7 +43,7 @@ function matchesCron(expression: string, now: Date): boolean {
   const hour = now.getHours()
   const dom = now.getDate()
   const month = now.getMonth() + 1 // 1-12
-  const dow = now.getDay()         // 0=Sun
+  const dow = now.getDay() // 0=Sun
 
   return (
     matchCronField(minF, minute) &&
@@ -124,6 +125,7 @@ export async function runScheduledAgents(
   const results: AgentScheduleResult[] = []
   const processedSentryOrgs = new Set<string>()
   const processedLeadSwarmOrgs = new Set<string>()
+  const processedInvoiceFlowOrgs = new Set<string>()
 
   for (const config of configs) {
     const schedule = config.schedule as AgentSchedule | null
@@ -146,9 +148,7 @@ export async function runScheduledAgents(
       .order('created_at', { ascending: false })
       .limit(1)
 
-    const lastRunAt = lastRuns?.[0]?.created_at
-      ? new Date(lastRuns[0].created_at)
-      : null
+    const lastRunAt = lastRuns?.[0]?.created_at ? new Date(lastRuns[0].created_at) : null
 
     // 3. Check if due
     const due = shouldRunAgent(schedule, lastRunAt, now)
@@ -212,6 +212,29 @@ export async function runScheduledAgents(
       } catch (error) {
         const message = error instanceof Error ? error.message : 'unknown'
         outputSummary = `lead-swarm error=${message}`
+      }
+    } else if (config.agent_type === 'invoice-flow') {
+      if (processedInvoiceFlowOrgs.has(config.org_id)) {
+        results.push({
+          agentType: config.agent_type,
+          orgId: config.org_id,
+          triggered: false,
+          reason: 'already_running',
+          lastRunAt: lastRunAt?.toISOString(),
+        })
+        continue
+      }
+
+      processedInvoiceFlowOrgs.add(config.org_id)
+
+      try {
+        const invoiceResult = await runInvoiceFlowTick(supabase, config.org_id, config.id)
+        outputSummary =
+          `invoice-flow processed=${invoiceResult.processed} created=${invoiceResult.created} ` +
+          `duplicates=${invoiceResult.duplicatesBlocked} sent=${invoiceResult.sent} overdue=${invoiceResult.overdue} failed=${invoiceResult.failed}`
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'unknown'
+        outputSummary = `invoice-flow error=${message}`
       }
     }
 

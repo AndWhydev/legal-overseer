@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useRef, useEffect, useState } from 'react';
+import React, { useCallback, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import {
   LayoutDashboard,
@@ -9,6 +9,7 @@ import {
   Pill,
   Users,
   Handshake,
+  ReceiptText,
   ShieldAlert,
   ShieldCheck,
   Activity,
@@ -25,13 +26,14 @@ const ICON_MAP: Record<string, React.ElementType> = {
   medications: Pill,
   contacts:    Users,
   leads:       Handshake,
+  invoices:    ReceiptText,
   sentry:      ShieldAlert,
   approvals:   ShieldCheck,
   activity:    Activity,
   settings:    Settings,
 };
 
-const MAIN_TAB_IDS = ['dashboard', 'chat', 'channels', 'medications', 'contacts', 'leads', 'sentry', 'approvals', 'activity'];
+const MAIN_TAB_IDS = ['dashboard', 'chat', 'channels', 'medications', 'contacts', 'leads', 'invoices', 'sentry', 'approvals', 'activity'];
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 

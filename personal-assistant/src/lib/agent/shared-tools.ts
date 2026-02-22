@@ -225,6 +225,9 @@ export async function createInvoice(
     items: InvoiceLineItem[]
     due_date: string
     currency?: string
+    project_reference?: string
+    source_intent?: string | null
+    created_by?: string
   }
 ): Promise<InvoiceResult> {
   const subtotal = params.items.reduce((sum, item) => sum + item.total, 0)
@@ -242,6 +245,9 @@ export async function createInvoice(
       tax,
       total,
       currency: params.currency || 'AUD',
+      project_reference: params.project_reference ?? '',
+      source_intent: params.source_intent ?? null,
+      created_by: params.created_by ?? 'manual',
       due_date: params.due_date,
       issued_date: new Date().toISOString().split('T')[0],
       status: 'draft' as InvoiceStatus,
