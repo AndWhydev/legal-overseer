@@ -93,7 +93,7 @@ Plans:
 
 Plans:
 - [x] 10-01-PLAN.md — Sentry agent core (watch evaluation, issue detection, remediation suggestions, scheduler wiring)
-- [ ] 10-02-PLAN.md — Escalation chain and dashboard watches UI
+- [x] 10-02-PLAN.md — Escalation chain and dashboard watches UI
 - [x] 10-03-PLAN.md — Escalation runtime, API wiring, and scheduler dedupe behavior
 - [x] 10-04-PLAN.md — Dashboard sentry watch manager UI and route composition
 
@@ -147,6 +147,6 @@ Phases execute in numeric order: 7 -> 8 -> 9 -> 10/11/12 (parallel after 9).
 | 7. Infrastructure Foundation | v1.1 | 0/2 | Not started | - |
 | 8. Agent Runtime | 2/3 | In Progress|  | - |
 | 9. Approval Flow | v1.1 | 2/3 | In Progress | - |
-| 10. Sentry Agent | 3/4 | Complete    | 2026-02-22 | - |
+| 10. Sentry Agent | 4/4 | Complete   | 2026-02-22 | - |
 | 11. Lead Swarm Agent | v1.1 | 0/3 | Not started | - |
 | 12. Invoice Flow Agent | v1.1 | 0/3 | Not started | - |
