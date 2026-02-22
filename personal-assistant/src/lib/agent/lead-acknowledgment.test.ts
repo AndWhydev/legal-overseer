@@ -1,0 +1,303 @@
+import { describe, expect, it, vi } from 'vitest'
+import {
+  escalateHighValueLead,
+  processPendingLeadAcks,
+  queueLeadAcknowledgment,
+} from './lead-acknowledgment'
+
+const { notifyApprovalMock } = vi.hoisted(() => ({
+  notifyApprovalMock: vi.fn().mockResolvedValue(true),
+}))
+
+vi.mock('./approval-notifier', () => ({
+  notifyApproval: notifyApprovalMock,
+}))
+
+interface LeadRow {
+  id: string
+  org_id: string
+  source_channel: string
+  source_detail: string | null
+  status: string
+  ack_status: string
+  created_at: string
+  estimated_value: number | null
+  service_interest: string[] | null
+  timeline_days: number | null
+  metadata: Record<string, unknown> | null
+  ack_draft_created_at?: string | null
+}
+
+interface ApprovalRow {
+  id: string
+  org_id: string
+  agent_config_id: string
+  action_type: string
+  action_payload: Record<string, unknown>
+  action_summary: string
+  confidence_score: number
+  routing_decision: 'ask' | 'escalate'
+  priority: 'urgent' | 'normal' | 'low'
+  digest_eligible: boolean
+  status: 'pending' | 'approved'
+  context_snapshot: Record<string, unknown>
+  created_at: string
+  agent_configs?: { name: string | null }
+}
+
+interface AgentConfigRow {
+  id: string
+  org_id: string
+  agent_type: string
+}
+
+function createMockSupabase(input: {
+  leads?: LeadRow[]
+  approvals?: ApprovalRow[]
+  agentConfigs?: AgentConfigRow[]
+}) {
+  const state = {
+    leads: [...(input.leads ?? [])],
+    approvals: [...(input.approvals ?? [])],
+    agentConfigs: [...(input.agentConfigs ?? [])],
+    approvalSeq: 1,
+  }
+
+  const api = {
+    from(table: string) {
+      if (table === 'leads') {
+        return {
+          select() {
+            const filters: Record<string, unknown> = {}
+            return {
+              eq(key: string, value: unknown) {
+                filters[key] = value
+                return this
+              },
+              in(key: string, values: unknown[]) {
+                filters[key] = values
+                const rows = state.leads.filter((lead) => {
+                  if (filters.org_id && lead.org_id !== String(filters.org_id)) return false
+                  if (filters.status && lead.status !== String(filters.status)) return false
+                  const allowed = (values as string[]).map(String)
+                  return allowed.includes(String((lead as unknown as Record<string, unknown>)[key]))
+                })
+                return Promise.resolve({ data: rows, error: null })
+              },
+              single() {
+                const row = state.leads.find(
+                  (lead) =>
+                    (filters.id ? lead.id === String(filters.id) : true) &&
+                    (filters.org_id ? lead.org_id === String(filters.org_id) : true),
+                )
+                if (!row) {
+                  return Promise.resolve({ data: null, error: { message: 'not found' } })
+                }
+                return Promise.resolve({ data: row, error: null })
+              },
+            }
+          },
+          update(patch: Record<string, unknown>) {
+            const filters: Record<string, unknown> = {}
+            return {
+              eq(key: string, value: unknown) {
+                filters[key] = value
+                const lead = state.leads.find(
+                  (candidate) =>
+                    (filters.id ? candidate.id === String(filters.id) : true) &&
+                    (filters.org_id ? candidate.org_id === String(filters.org_id) : true),
+                )
+                if (!lead) {
+                  return Promise.resolve({ data: null, error: { message: 'not found' } })
+                }
+                Object.assign(lead, patch)
+                return Promise.resolve({ data: null, error: null })
+              },
+            }
+          },
+        }
+      }
+
+      if (table === 'approval_queue') {
+        return {
+          insert(payload: Record<string, unknown>) {
+            const row: ApprovalRow = {
+              id: `approval-${state.approvalSeq++}`,
+              org_id: String(payload.org_id),
+              agent_config_id: String(payload.agent_config_id),
+              action_type: String(payload.action_type),
+              action_payload: (payload.action_payload as Record<string, unknown>) ?? {},
+              action_summary: String(payload.action_summary),
+              confidence_score: Number(payload.confidence_score ?? 0),
+              routing_decision: payload.routing_decision as 'ask' | 'escalate',
+              priority: (payload.priority as 'urgent' | 'normal' | 'low') ?? 'normal',
+              digest_eligible: Boolean(payload.digest_eligible ?? false),
+              status: (payload.status as 'pending' | 'approved') ?? 'pending',
+              context_snapshot: (payload.context_snapshot as Record<string, unknown>) ?? {},
+              created_at: new Date().toISOString(),
+              agent_configs: { name: null },
+            }
+            state.approvals.push(row)
+            return {
+              select() {
+                return {
+                  single() {
+                    return Promise.resolve({ data: row, error: null })
+                  },
+                }
+              },
+            }
+          },
+          select() {
+            const filters: Record<string, unknown> = {}
+            return {
+              eq(key: string, value: unknown) {
+                filters[key] = value
+                if (Object.keys(filters).length >= 3) {
+                  const rows = state.approvals.filter((approval) => {
+                    if (filters.org_id && approval.org_id !== String(filters.org_id)) return false
+                    if (filters.action_type && approval.action_type !== String(filters.action_type)) return false
+                    if (filters.status && approval.status !== String(filters.status)) return false
+                    return true
+                  })
+                  return Promise.resolve({ data: rows, error: null })
+                }
+                return this
+              },
+            }
+          },
+        }
+      }
+
+      if (table === 'agent_configs') {
+        return {
+          select() {
+            const filters: Record<string, unknown> = {}
+            return {
+              eq(key: string, value: unknown) {
+                filters[key] = value
+                return this
+              },
+              limit(value: number) {
+                const rows = state.agentConfigs
+                  .filter((cfg) => {
+                    if (filters.org_id && cfg.org_id !== String(filters.org_id)) return false
+                    if (filters.agent_type && cfg.agent_type !== String(filters.agent_type)) return false
+                    return true
+                  })
+                  .slice(0, value)
+                return Promise.resolve({ data: rows, error: null })
+              },
+            }
+          },
+        }
+      }
+
+      throw new Error(`Unsupported table ${table}`)
+    },
+  }
+
+  return {
+    supabase: api as unknown as import('@supabase/supabase-js').SupabaseClient,
+    state,
+  }
+}
+
+describe('queueLeadAcknowledgment', () => {
+  it('queues draft approvals inside the 2-minute SLA window', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-02-22T14:00:00.000Z'))
+
+    const { supabase, state } = createMockSupabase({
+      leads: [
+        {
+          id: 'lead-1',
+          org_id: 'org-1',
+          source_channel: 'gmail',
+          source_detail: 'buyer@example.com',
+          status: 'qualified',
+          ack_status: 'pending',
+          created_at: '2026-02-22T13:59:10.000Z',
+          estimated_value: 4500,
+          service_interest: ['seo'],
+          timeline_days: 14,
+          metadata: {},
+        },
+      ],
+    })
+
+    const result = await queueLeadAcknowledgment(supabase, {
+      lead: state.leads[0],
+      agentConfigId: 'cfg-1',
+    })
+
+    expect(result).toEqual({ queued: true, skippedOverdue: false, approvalId: 'approval-1' })
+    expect(state.approvals).toHaveLength(1)
+    expect(state.approvals[0].action_type).toBe('lead_ack_send')
+    expect(state.leads[0].ack_status).toBe('draft_queued')
+
+    vi.useRealTimers()
+  })
+})
+
+describe('processPendingLeadAcks', () => {
+  it('does not mark leads as sent before approval', async () => {
+    const { supabase, state } = createMockSupabase({
+      agentConfigs: [{ id: 'cfg-1', org_id: 'org-1', agent_type: 'lead-swarm' }],
+      leads: [
+        {
+          id: 'lead-2',
+          org_id: 'org-1',
+          source_channel: 'gmail',
+          source_detail: 'prospect@example.com',
+          status: 'qualified',
+          ack_status: 'pending',
+          created_at: new Date(Date.now() - 30_000).toISOString(),
+          estimated_value: 3000,
+          service_interest: ['web-development'],
+          timeline_days: 20,
+          metadata: {},
+        },
+      ],
+    })
+
+    const result = await processPendingLeadAcks(supabase, 'org-1')
+
+    expect(result.sent).toBe(0)
+    expect(result.queued).toBe(1)
+    expect(state.leads[0].ack_status).toBe('draft_queued')
+  })
+})
+
+describe('escalateHighValueLead', () => {
+  it('creates urgent escalation for leads above $5k and notifies Andy', async () => {
+    notifyApprovalMock.mockClear()
+
+    const { supabase, state } = createMockSupabase({
+      leads: [
+        {
+          id: 'lead-3',
+          org_id: 'org-1',
+          source_channel: 'gmail',
+          source_detail: 'vip@example.com',
+          status: 'qualified',
+          ack_status: 'pending',
+          created_at: '2026-02-22T14:00:00.000Z',
+          estimated_value: 7000,
+          service_interest: ['ads'],
+          timeline_days: 10,
+          metadata: {},
+        },
+      ],
+    })
+
+    const escalated = await escalateHighValueLead(supabase, state.leads[0], 'cfg-1')
+
+    expect(escalated).toBe(true)
+    expect(state.approvals).toHaveLength(1)
+    expect(state.approvals[0].action_type).toBe('lead_high_value_escalation')
+    expect(state.approvals[0].priority).toBe('urgent')
+    expect(state.approvals[0].routing_decision).toBe('escalate')
+    expect(notifyApprovalMock).toHaveBeenCalledTimes(1)
+  })
+})

@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { ChannelMessage } from '@/lib/channels/types'
 import { classifyMessage } from './classifier'
+import { escalateHighValueLead, queueLeadAcknowledgment } from './lead-acknowledgment'
 
 export type LeadLabel = 'lead' | 'client' | 'spam' | 'personal'
 export type LeadScore = 'hot' | 'warm' | 'cold'
@@ -222,7 +223,7 @@ async function markMessageProcessed(supabase: SupabaseClient, messageId: string)
 export async function runLeadSwarmTick(
   supabase: SupabaseClient,
   orgId: string,
-  _agentConfigId: string,
+  agentConfigId: string,
 ): Promise<LeadSwarmTickResult> {
   const result: LeadSwarmTickResult = { processed: 0, created: 0, qualified: 0, hot: 0, failed: 0 }
 
@@ -257,7 +258,7 @@ export async function runLeadSwarmTick(
           timelineDays: extractTimelineDays(text),
         })
 
-        const { error: upsertError } = await supabase
+        const { data: upsertedLead, error: upsertError } = await supabase
           .from('leads')
           .upsert(
             {
@@ -284,9 +285,21 @@ export async function runLeadSwarmTick(
             },
             { onConflict: 'org_id,source_message_id' },
           )
+          .select(
+            'id, org_id, source_channel, source_detail, status, ack_status, created_at, estimated_value, service_interest, timeline_days, metadata',
+          )
+          .single()
 
         if (upsertError) {
           throw new Error(upsertError.message)
+        }
+
+        if (upsertedLead) {
+          await queueLeadAcknowledgment(supabase, {
+            lead: upsertedLead,
+            agentConfigId,
+          })
+          await escalateHighValueLead(supabase, upsertedLead, agentConfigId)
         }
 
         result.created += 1
