@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-22)
 ## Current Position
 
 Phase: 10 of 12 (Sentry Agent)
-Plan: 3 of 4 in current phase
+Plan: 4 of 4 in current phase
 Status: Executing
-Last activity: 2026-02-22 -- Completed 10-03 Sentry Escalation Runtime
+Last activity: 2026-02-22 -- Completed 10-04 Sentry Dashboard Operations
 
-Progress: [████████████████░░░░] 80% (28/35 plans across all milestones)
+Progress: [█████████████████░░░] 83% (29/35 plans across all milestones)
 
 ## Performance Metrics
 
@@ -38,6 +38,7 @@ Progress: [████████████████░░░░] 80% (28
 | Phase 10 P01 | 8m | 2 tasks | 7 files |
 | Phase 09 P03 | 4 min | 2 tasks | 5 files |
 | Phase 10 P03 | 1 min | 2 tasks | 6 files |
+| Phase 10 P04 | 5 min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -62,6 +63,8 @@ See PROJECT.md Key Decisions table.
 - [Phase 10]: Escalation processing returns deterministic processed/escalated/failed counts and continues on per-alert failures.
 - [Phase 10]: Alert acknowledgment uses explicit NOT_FOUND/ALREADY_ACKNOWLEDGED outcomes for stable API responses.
 - [Phase 10]: Scheduler runs sentry escalation once per org per tick to prevent duplicate escalation approvals.
+- [Phase 10]: Use optimistic local updates for pause/delete/ack actions, then refresh from APIs to keep operator view in sync.
+- [Phase 10]: Use visible inline success/error banners so API failures are immediately operator-visible in dashboard operations.
 
 ### Pending Todos
 
@@ -78,5 +81,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-22
-Stopped at: Completed 10-03-PLAN.md
+Stopped at: Completed 10-04-PLAN.md
 Resume file: None

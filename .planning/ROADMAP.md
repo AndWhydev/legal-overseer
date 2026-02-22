@@ -41,7 +41,7 @@
   2. Every agent execution logs token count, cost, actions taken, and confidence score to the database
   3. Confidence routing (act/ask/escalate) produces correct decisions when given test inputs in production
   4. Shared CRUD tools (contact, task, invoice operations) execute successfully against production Supabase
-**Plans**: 2 plans
+**Plans**: 4 plans
 
 Plans:
 - [ ] 07-01-PLAN.md — Supabase DI refactor (all agent/context/channel modules accept SupabaseClient parameter)
@@ -92,8 +92,10 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 10-01-PLAN.md — Sentry agent core (watch evaluation, issue detection, remediation suggestions, scheduler wiring)
+- [x] 10-01-PLAN.md — Sentry agent core (watch evaluation, issue detection, remediation suggestions, scheduler wiring)
 - [ ] 10-02-PLAN.md — Escalation chain and dashboard watches UI
+- [x] 10-03-PLAN.md — Escalation runtime, API wiring, and scheduler dedupe behavior
+- [x] 10-04-PLAN.md — Dashboard sentry watch manager UI and route composition
 
 ### Phase 11: Lead Swarm Agent
 **Goal**: Inbound leads are automatically classified, qualified, and fast-tracked -- Andy never misses a hot lead
@@ -145,6 +147,6 @@ Phases execute in numeric order: 7 -> 8 -> 9 -> 10/11/12 (parallel after 9).
 | 7. Infrastructure Foundation | v1.1 | 0/2 | Not started | - |
 | 8. Agent Runtime | 2/3 | In Progress|  | - |
 | 9. Approval Flow | v1.1 | 2/3 | In Progress | - |
-| 10. Sentry Agent | 2/4 | In Progress|  | - |
+| 10. Sentry Agent | 3/4 | In Progress|  | - |
 | 11. Lead Swarm Agent | v1.1 | 0/3 | Not started | - |
 | 12. Invoice Flow Agent | v1.1 | 0/3 | Not started | - |

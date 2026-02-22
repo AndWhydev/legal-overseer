@@ -27,7 +27,7 @@ Requirements for milestone v1.1: Agent Runtime + First Agents.
 - [x] **SNTR-01**: Sentry monitors configured watches (error keywords, uptime, negative sentiment)
 - [x] **SNTR-02**: Sentry detects issues and suggests remediation actions
 - [x] **SNTR-03**: Sentry escalates via notification chain if no acknowledgement within N minutes
-- [ ] **SNTR-04**: Dashboard shows watches management UI (create, pause, delete)
+- [x] **SNTR-04**: Dashboard shows watches management UI (create, pause, delete)
 
 ### Lead Swarm Agent
 
@@ -104,7 +104,7 @@ Deferred to future milestones. Tracked but not in current roadmap.
 | SNTR-01 | Phase 10 | Complete |
 | SNTR-02 | Phase 10 | Complete |
 | SNTR-03 | Phase 10 | Complete |
-| SNTR-04 | Phase 10 | Pending |
+| SNTR-04 | Phase 10 | Complete |
 | LEAD-01 | Phase 11 | Pending |
 | LEAD-02 | Phase 11 | Pending |
 | LEAD-03 | Phase 11 | Pending |
