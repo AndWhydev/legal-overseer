@@ -57,6 +57,12 @@ completed: 2026-02-22
 - `--gaps-only` execution remains authoritative for phase-10 requirement closure.
 - Any implementation activity for SNTR-03/SNTR-04 is defined by 10-03 and 10-04, not 10-02.
 
+## Execution Guardrails
+
+- Do not modify SNTR-03/SNTR-04 product files in 10-02.
+- Execute 10-03 before 10-04, and execute 10-02 only after both are complete.
+- If product changes are needed for SNTR-03/SNTR-04, add follow-up gap plans instead of reactivating 10-02 scope.
+
 ## Issues Encountered
 
 - None.
