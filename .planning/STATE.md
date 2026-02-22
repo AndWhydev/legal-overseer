@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-22)
 ## Current Position
 
 Phase: 11 of 12 (Lead Swarm Agent)
-Plan: 2 of 3 in current phase
+Plan: 3 of 3 in current phase
 Status: Ready
-Last activity: 2026-02-22 -- Completed 11-01 Lead Swarm intake runtime
+Last activity: 2026-02-22 -- Completed 11-02 Lead acknowledgment + escalation orchestration
 
-Progress: [██████████████████░░] 89% (31/35 plans across all milestones)
+Progress: [██████████████████░░] 91% (32/35 plans across all milestones)
 
 ## Performance Metrics
 
@@ -41,6 +41,8 @@ Progress: [██████████████████░░] 89% (31
 | Phase 10 P04 | 5 min | 2 tasks | 2 files |
 | Phase 10 P02 | 1 min | 2 tasks | 1 files |
 | Phase 11 P01 | 5 min | 2 tasks | 5 files |
+| Phase 11 P02 | 12 min | 2 tasks | 4 files |
+| Phase 11 P03 | 4 min | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -72,6 +74,11 @@ See PROJECT.md Key Decisions table.
 - [Phase 11]: Mapped fallback categories deterministically for lead intake labels (newsletter->spam, vendor->client, notification->personal).
 - [Phase 11]: Lead qualification uses deterministic budget/service/timeline points to produce hot/warm/cold scoring.
 - [Phase 11]: Scheduler applies per-org lead-swarm dedupe and logs processed/created/qualified/hot/failed counters.
+- [Phase 11]: Lead acknowledgments are now created as lead_ack_send approval drafts and remain blocked from direct send until approval.
+- [Phase 11]: High-value lead escalation uses strict estimated_value > 5000 with urgent approval priority and immediate notifyApproval dispatch.
+- [Phase 11]: Lead send completion stores ackSentAt metadata while transitioning ack_status to sent to preserve schema stability.
+- [Phase 11]: Use explicit per-card stage transition actions for deterministic lead movement UX.
+- [Phase 11]: Render converted and lost in one Won/Lost lane while preserving discrete persisted statuses.
 
 ### Pending Todos
 
@@ -88,5 +95,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-22
-Stopped at: Completed 11-01-PLAN.md
+Stopped at: Completed 11-02-PLAN.md
 Resume file: None
