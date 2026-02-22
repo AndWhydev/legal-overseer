@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-22)
 
 **Core value:** BitBit understands the business better than the business owner -- when Andy says "Invoice Sezer for the White House RE work", BitBit knows who Sezer is, what the work was, the rate, and whether it's already been invoiced.
-**Current focus:** v1.1 Phase 11 - Lead Swarm Agent
+**Current focus:** v1.1 Phase 12 - Invoice Flow Agent
 
 ## Current Position
 
-Phase: 11 of 12 (Lead Swarm Agent)
-Plan: 3 of 3 in current phase
+Phase: 12 of 12 (Invoice Flow Agent)
+Plan: 1 of 3 in current phase
 Status: Ready
-Last activity: 2026-02-22 -- Completed 11-02 Lead acknowledgment + escalation orchestration
+Last activity: 2026-02-22 -- Completed 11-03 leads pipeline APIs and dashboard kanban
 
-Progress: [██████████████████░░] 91% (32/35 plans across all milestones)
+Progress: [███████████████████░] 94% (33/35 plans across all milestones)
 
 ## Performance Metrics
 
@@ -95,5 +95,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-22
-Stopped at: Completed 11-02-PLAN.md
+Stopped at: Completed 11-03-PLAN.md
 Resume file: None
