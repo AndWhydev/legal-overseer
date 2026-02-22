@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { createApproval, type ApprovalRecord } from './approval-queue'
 import { notifyApproval } from './approval-notifier'
+import { sendMessage } from '../channels/whatsapp'
 
 const TWO_MINUTES_MS = 2 * 60 * 1000
 
@@ -25,6 +26,22 @@ interface AgentConfigRow {
 interface ApprovedAckRow {
   id: string
   action_payload: Record<string, unknown>
+}
+
+interface LeadAckDeliverySuccess {
+  status: 'sent'
+  providerMessageId: string
+  channel: string
+  sentAt: string
+  approvalId: string
+}
+
+interface LeadAckDeliveryFailure {
+  status: 'failed'
+  channel: string
+  failedAt: string
+  reason: string
+  approvalId: string
 }
 
 export interface QueueLeadAcknowledgmentParams {
@@ -183,11 +200,82 @@ async function resolveAgentConfigId(
   return row?.id ?? null
 }
 
-async function markLeadSent(
+function readPayloadString(payload: Record<string, unknown>, key: string): string | null {
+  const value = payload[key]
+  if (typeof value !== 'string') return null
+  const trimmed = value.trim()
+  return trimmed.length > 0 ? trimmed : null
+}
+
+type DeliveryAttemptResult =
+  | { success: true; channel: string; providerMessageId: string }
+  | { success: false; channel: string; reason: string }
+
+async function attemptAckDelivery(
+  payload: Record<string, unknown>,
+): Promise<DeliveryAttemptResult> {
+  const channel = readPayloadString(payload, 'message_channel')?.toLowerCase() ?? 'unknown'
+  const recipient = readPayloadString(payload, 'recipient')
+  const draftBody = readPayloadString(payload, 'draft_body')
+
+  if (!recipient) {
+    return {
+      success: false,
+      channel,
+      reason: 'missing_recipient',
+    }
+  }
+
+  if (!draftBody) {
+    return {
+      success: false,
+      channel,
+      reason: 'missing_draft_body',
+    }
+  }
+
+  if (channel !== 'whatsapp') {
+    return {
+      success: false,
+      channel,
+      reason: `unsupported_channel:${channel}`,
+    }
+  }
+
+  try {
+    const providerMessageId = await sendMessage(recipient, draftBody)
+    if (!providerMessageId) {
+      return {
+        success: false,
+        channel,
+        reason: 'provider_send_failed',
+      }
+    }
+
+    return {
+      success: true,
+      channel,
+      providerMessageId,
+    }
+  } catch {
+    return {
+      success: false,
+      channel,
+      reason: 'provider_send_exception',
+    }
+  }
+}
+
+async function processApprovedAck(
   supabase: SupabaseClient,
   orgId: string,
-  leadId: string,
-): Promise<boolean> {
+  approval: ApprovedAckRow,
+): Promise<'sent' | 'failed' | 'ignored'> {
+  const leadId = readPayloadString(approval.action_payload, 'lead_id')
+  if (!leadId) {
+    return 'failed'
+  }
+
   const { data: leadData, error: leadError } = await supabase
     .from('leads')
     .select('id, org_id, ack_status, metadata')
@@ -195,27 +283,68 @@ async function markLeadSent(
     .eq('org_id', orgId)
     .single<LeadRow>()
 
-  if (leadError || !leadData || leadData.ack_status === 'sent') {
-    return false
+  if (leadError || !leadData) {
+    return 'failed'
+  }
+
+  if (leadData.ack_status === 'sent') {
+    return 'ignored'
+  }
+
+  const deliveryResult = await attemptAckDelivery(approval.action_payload)
+  if (deliveryResult.success) {
+    const ackDelivery: LeadAckDeliverySuccess = {
+      status: 'sent',
+      providerMessageId: deliveryResult.providerMessageId,
+      channel: deliveryResult.channel,
+      sentAt: new Date().toISOString(),
+      approvalId: approval.id,
+    }
+
+    const { error: updateError } = await supabase
+      .from('leads')
+      .update({
+        ack_status: 'sent',
+        metadata: {
+          ...(leadData.metadata ?? {}),
+          ackSentAt: ackDelivery.sentAt,
+          ackDelivery,
+        },
+      })
+      .eq('id', leadId)
+      .eq('org_id', orgId)
+
+    if (updateError) {
+      return 'failed'
+    }
+
+    return 'sent'
+  }
+
+  const ackDelivery: LeadAckDeliveryFailure = {
+    status: 'failed',
+    channel: deliveryResult.channel,
+    failedAt: new Date().toISOString(),
+    reason: deliveryResult.reason,
+    approvalId: approval.id,
   }
 
   const { error: updateError } = await supabase
     .from('leads')
     .update({
-      ack_status: 'sent',
       metadata: {
         ...(leadData.metadata ?? {}),
-        ackSentAt: new Date().toISOString(),
+        ackDelivery,
       },
     })
-    .eq('id', leadId)
+    .eq('id', leadData.id)
     .eq('org_id', orgId)
 
   if (updateError) {
-    return false
+    return 'failed'
   }
 
-  return true
+  return 'failed'
 }
 
 export async function processPendingLeadAcks(
@@ -277,17 +406,14 @@ export async function processPendingLeadAcks(
   }
 
   for (const approval of (approvals ?? []) as ApprovedAckRow[]) {
-    const leadId = typeof approval.action_payload.lead_id === 'string'
-      ? approval.action_payload.lead_id
-      : null
-    if (!leadId) {
-      result.failed += 1
+    const outcome = await processApprovedAck(supabase, orgId, approval)
+    if (outcome === 'sent') {
+      result.sent += 1
       continue
     }
 
-    const marked = await markLeadSent(supabase, orgId, leadId)
-    if (marked) {
-      result.sent += 1
+    if (outcome === 'failed') {
+      result.failed += 1
     }
   }
 
