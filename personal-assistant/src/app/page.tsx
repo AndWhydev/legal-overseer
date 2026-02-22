@@ -1,6 +1,7 @@
 "use client";
 
 import { BlurFade } from "@/components/ui/blur-fade";
+import { useEffect } from "react";
 import Link from "next/link";
 import styles from "./page.module.css";
 
@@ -474,6 +475,16 @@ function Footer() {
 
 // ─── Page ───────────────────────────────────────────────────────────
 export default function Home() {
+  useEffect(() => {
+    document.documentElement.classList.add("landing-route")
+    document.body.classList.add("landing-route")
+
+    return () => {
+      document.documentElement.classList.remove("landing-route")
+      document.body.classList.remove("landing-route")
+    }
+  }, [])
+
   return (
     <main className={`${styles.home} landing-stack`}>
       <Nav />

@@ -267,3 +267,34 @@ body {
   background: #2A2A2E;
 }
 
+
+/* Landing route style isolation: prevent dashboard/global dark theme bleed */
+html.landing-route,
+html:has(body main.landing-stack) {
+  background: #faf9f0;
+}
+
+body.landing-route,
+body:has(main.landing-stack) {
+  --background: #faf9f0;
+  --foreground: #1a1a1a;
+  --card: #ffffff;
+  --card-foreground: #1a1a1a;
+  --popover: #ffffff;
+  --popover-foreground: #1a1a1a;
+  --border: #e8e4dc;
+  --text-primary: #1a1a1a;
+  --text-secondary: #6b6560;
+  --text-muted: #8b6f47;
+
+  background: #faf9f0 !important;
+  color: #1a1a1a !important;
+}
+
+body.landing-route main.landing-stack,
+body:has(main.landing-stack) main.landing-stack {
+  position: relative;
+  z-index: 1;
+  background: #faf9f0;
+  color: #1a1a1a;
+}
