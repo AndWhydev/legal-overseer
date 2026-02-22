@@ -9,8 +9,16 @@ const { notifyApprovalMock } = vi.hoisted(() => ({
   notifyApprovalMock: vi.fn().mockResolvedValue(true),
 }))
 
+const { sendMessageMock } = vi.hoisted(() => ({
+  sendMessageMock: vi.fn(),
+}))
+
 vi.mock('./approval-notifier', () => ({
   notifyApproval: notifyApprovalMock,
+}))
+
+vi.mock('../channels/whatsapp', () => ({
+  sendMessage: sendMessageMock,
 }))
 
 interface LeadRow {
@@ -49,6 +57,36 @@ interface AgentConfigRow {
   id: string
   org_id: string
   agent_type: string
+}
+
+function createApprovedAck(input: {
+  id: string
+  orgId: string
+  leadId: string
+  payload?: Record<string, unknown>
+}): ApprovalRow {
+  return {
+    id: input.id,
+    org_id: input.orgId,
+    agent_config_id: 'cfg-1',
+    action_type: 'lead_ack_send',
+    action_payload: {
+      lead_id: input.leadId,
+      message_channel: 'whatsapp',
+      recipient: '+15551234567',
+      draft_body: 'Thanks for reaching out.',
+      ...(input.payload ?? {}),
+    },
+    action_summary: 'Send lead acknowledgment draft',
+    confidence_score: 0,
+    routing_decision: 'ask',
+    priority: 'normal',
+    digest_eligible: false,
+    status: 'approved',
+    context_snapshot: {},
+    created_at: new Date().toISOString(),
+    agent_configs: { name: null },
+  }
 }
 
 function createMockSupabase(input: {
@@ -99,21 +137,30 @@ function createMockSupabase(input: {
           },
           update(patch: Record<string, unknown>) {
             const filters: Record<string, unknown> = {}
-            return {
+            const runUpdate = () => {
+              const lead = state.leads.find(
+                (candidate) =>
+                  (filters.id ? candidate.id === String(filters.id) : true) &&
+                  (filters.org_id ? candidate.org_id === String(filters.org_id) : true),
+              )
+              if (!lead) {
+                return { data: null, error: { message: 'not found' } }
+              }
+              Object.assign(lead, patch)
+              return { data: null, error: null }
+            }
+
+            const chain = {
               eq(key: string, value: unknown) {
                 filters[key] = value
-                const lead = state.leads.find(
-                  (candidate) =>
-                    (filters.id ? candidate.id === String(filters.id) : true) &&
-                    (filters.org_id ? candidate.org_id === String(filters.org_id) : true),
-                )
-                if (!lead) {
-                  return Promise.resolve({ data: null, error: { message: 'not found' } })
-                }
-                Object.assign(lead, patch)
-                return Promise.resolve({ data: null, error: null })
+                return chain
+              },
+              then(resolve: (value: { data: null; error: { message: string } | null }) => unknown) {
+                return Promise.resolve(runUpdate()).then(resolve)
               },
             }
+
+            return chain
           },
         }
       }
@@ -242,6 +289,8 @@ describe('queueLeadAcknowledgment', () => {
 
 describe('processPendingLeadAcks', () => {
   it('does not mark leads as sent before approval', async () => {
+    sendMessageMock.mockReset()
+
     const { supabase, state } = createMockSupabase({
       agentConfigs: [{ id: 'cfg-1', org_id: 'org-1', agent_type: 'lead-swarm' }],
       leads: [
@@ -266,6 +315,139 @@ describe('processPendingLeadAcks', () => {
     expect(result.sent).toBe(0)
     expect(result.queued).toBe(1)
     expect(state.leads[0].ack_status).toBe('draft_queued')
+  })
+
+  it('marks lead sent and stores ackDelivery metadata when provider send succeeds', async () => {
+    sendMessageMock.mockReset()
+    sendMessageMock.mockResolvedValue('wamid.12345')
+
+    const { supabase, state } = createMockSupabase({
+      agentConfigs: [{ id: 'cfg-1', org_id: 'org-1', agent_type: 'lead-swarm' }],
+      leads: [
+        {
+          id: 'lead-approved-success',
+          org_id: 'org-1',
+          source_channel: 'whatsapp',
+          source_detail: '+15551234567',
+          status: 'qualified',
+          ack_status: 'draft_queued',
+          created_at: new Date(Date.now() - 30_000).toISOString(),
+          estimated_value: 2500,
+          service_interest: ['seo'],
+          timeline_days: 10,
+          metadata: {},
+        },
+      ],
+      approvals: [
+        createApprovedAck({
+          id: 'approval-success',
+          orgId: 'org-1',
+          leadId: 'lead-approved-success',
+        }),
+      ],
+    })
+
+    const result = await processPendingLeadAcks(supabase, 'org-1')
+
+    expect(result.sent).toBe(1)
+    expect(result.failed).toBe(0)
+    expect(state.leads[0].ack_status).toBe('sent')
+    expect(state.leads[0].metadata?.ackDelivery).toMatchObject({
+      status: 'sent',
+      providerMessageId: 'wamid.12345',
+      channel: 'whatsapp',
+      approvalId: 'approval-success',
+    })
+    expect(sendMessageMock).toHaveBeenCalledWith('+15551234567', 'Thanks for reaching out.')
+  })
+
+  it('records failed ackDelivery and keeps lead non-sent when provider send fails', async () => {
+    sendMessageMock.mockReset()
+    sendMessageMock.mockResolvedValue(null)
+
+    const { supabase, state } = createMockSupabase({
+      agentConfigs: [{ id: 'cfg-1', org_id: 'org-1', agent_type: 'lead-swarm' }],
+      leads: [
+        {
+          id: 'lead-approved-failure',
+          org_id: 'org-1',
+          source_channel: 'whatsapp',
+          source_detail: '+15551234567',
+          status: 'qualified',
+          ack_status: 'draft_queued',
+          created_at: new Date(Date.now() - 30_000).toISOString(),
+          estimated_value: 2500,
+          service_interest: ['seo'],
+          timeline_days: 10,
+          metadata: {},
+        },
+      ],
+      approvals: [
+        createApprovedAck({
+          id: 'approval-failure',
+          orgId: 'org-1',
+          leadId: 'lead-approved-failure',
+        }),
+      ],
+    })
+
+    const result = await processPendingLeadAcks(supabase, 'org-1')
+
+    expect(result.sent).toBe(0)
+    expect(result.failed).toBe(1)
+    expect(state.leads[0].ack_status).toBe('draft_queued')
+    expect(state.leads[0].metadata?.ackDelivery).toMatchObject({
+      status: 'failed',
+      channel: 'whatsapp',
+      reason: 'provider_send_failed',
+      approvalId: 'approval-failure',
+    })
+  })
+
+  it('records missing-recipient failure metadata and keeps lead non-sent', async () => {
+    sendMessageMock.mockReset()
+
+    const { supabase, state } = createMockSupabase({
+      agentConfigs: [{ id: 'cfg-1', org_id: 'org-1', agent_type: 'lead-swarm' }],
+      leads: [
+        {
+          id: 'lead-approved-missing-recipient',
+          org_id: 'org-1',
+          source_channel: 'whatsapp',
+          source_detail: null,
+          status: 'qualified',
+          ack_status: 'draft_queued',
+          created_at: new Date(Date.now() - 30_000).toISOString(),
+          estimated_value: 2500,
+          service_interest: ['seo'],
+          timeline_days: 10,
+          metadata: {},
+        },
+      ],
+      approvals: [
+        createApprovedAck({
+          id: 'approval-missing-recipient',
+          orgId: 'org-1',
+          leadId: 'lead-approved-missing-recipient',
+          payload: {
+            recipient: '',
+          },
+        }),
+      ],
+    })
+
+    const result = await processPendingLeadAcks(supabase, 'org-1')
+
+    expect(result.sent).toBe(0)
+    expect(result.failed).toBe(1)
+    expect(state.leads[0].ack_status).toBe('draft_queued')
+    expect(state.leads[0].metadata?.ackDelivery).toMatchObject({
+      status: 'failed',
+      channel: 'whatsapp',
+      reason: 'missing_recipient',
+      approvalId: 'approval-missing-recipient',
+    })
+    expect(sendMessageMock).not.toHaveBeenCalled()
   })
 })
 
