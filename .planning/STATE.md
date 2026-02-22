@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-22)
 
 **Core value:** BitBit understands the business better than the business owner -- when Andy says "Invoice Sezer for the White House RE work", BitBit knows who Sezer is, what the work was, the rate, and whether it's already been invoiced.
-**Current focus:** v1.0 Phase 09 - Approval Flow
+**Current focus:** v1.0 Phase 10 - Sentry Agent
 
 ## Current Position
 
-Phase: 9 of 12 (Approval Flow)
-Plan: 3 of 3 in current phase
+Phase: 10 of 12 (Sentry Agent)
+Plan: 3 of 4 in current phase
 Status: Executing
-Last activity: 2026-02-22 -- Completed 09-02 Dashboard Approval Queue UI
+Last activity: 2026-02-22 -- Completed 10-03 Sentry Escalation Runtime
 
-Progress: [████████████████░░░░░░] 77% (27/35 plans across all milestones)
+Progress: [████████████████░░░░] 80% (28/35 plans across all milestones)
 
 ## Performance Metrics
 
@@ -37,6 +37,7 @@ Progress: [████████████████░░░░░░] 7
 | Phase 09 P02 | 2 min | 2 tasks | 6 files |
 | Phase 10 P01 | 8m | 2 tasks | 7 files |
 | Phase 09 P03 | 4 min | 2 tasks | 5 files |
+| Phase 10 P03 | 1 min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -58,6 +59,9 @@ See PROJECT.md Key Decisions table.
 - [Phase 10]: Installed vitest as workspace devDependency to unblock plan-mandated verification.
 - [Phase 09]: Webhook replies are accepted only from WHATSAPP_ANDY_PHONE after normalization, then acknowledged with a WhatsApp confirmation message.
 - [Phase 09]: Digest and webhook processing use the existing single-user default org ID pattern to stay consistent with current scheduler/sync routes.
+- [Phase 10]: Escalation processing returns deterministic processed/escalated/failed counts and continues on per-alert failures.
+- [Phase 10]: Alert acknowledgment uses explicit NOT_FOUND/ALREADY_ACKNOWLEDGED outcomes for stable API responses.
+- [Phase 10]: Scheduler runs sentry escalation once per org per tick to prevent duplicate escalation approvals.
 
 ### Pending Todos
 
@@ -74,5 +78,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-22
-Stopped at: Completed 09-02-PLAN.md
+Stopped at: Completed 10-03-PLAN.md
 Resume file: None
