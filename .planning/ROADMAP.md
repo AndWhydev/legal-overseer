@@ -3,7 +3,7 @@
 ## Milestones
 
 - ✅ **v1.0 MVP** -- Phases 1-6 (shipped 2026-02-21)
-- 🚧 **v1.1 Agent Runtime + First Agents** -- Phases 7-12 (in progress)
+- ✅ **v1.1 Agent Runtime + First Agents** -- Phases 7-12 (shipped 2026-02-22)
 
 ## Phases
 
@@ -19,16 +19,17 @@
 
 </details>
 
-### 🚧 v1.1 Agent Runtime + First Agents (In Progress)
+<details>
+<summary>✅ v1.1 Agent Runtime + First Agents (Phases 7-12) -- SHIPPED 2026-02-22</summary>
 
-**Milestone Goal:** Andy uses BitBit daily -- agents run in background, classify emails, take autonomous actions (low-risk) or ping WhatsApp for approval (high-risk).
+- [x] Phase 7: Infrastructure Foundation (2/2 plans) -- completed 2026-02-22
+- [x] Phase 8: Agent Runtime (3/3 plans) -- completed 2026-02-22
+- [x] Phase 9: Approval Flow (3/3 plans) -- completed 2026-02-22
+- [x] Phase 10: Sentry Agent (4/4 plans) -- completed 2026-02-22
+- [x] Phase 11: Lead Swarm Agent (4/4 plans) -- completed 2026-02-22
+- [x] Phase 12: Invoice Flow Agent (3/3 plans) -- completed 2026-02-22
 
-- [ ] **Phase 7: Infrastructure Foundation** - DI refactor, run logging, production verification of v1.0 agent infra
-- [ ] **Phase 8: Agent Runtime** - Channel relay daemon, LLM classification, action routing, agent scheduler
-- [ ] **Phase 9: Approval Flow** - Confidence routing, dashboard approval queue, WhatsApp approval notifications
-- [x] **Phase 10: Sentry Agent** - Background monitoring with watches, issue detection, escalation chains (completed 2026-02-22)
-- [x] **Phase 11: Lead Swarm Agent** - Lead classification, qualification, auto-acknowledge, pipeline dashboard (completed 2026-02-22)
-- [ ] **Phase 12: Invoice Flow Agent** - Natural language invoicing, PDF generation, sending, status tracking
+</details>
 
 ## Phase Details
 
@@ -41,11 +42,11 @@
   2. Every agent execution logs token count, cost, actions taken, and confidence score to the database
   3. Confidence routing (act/ask/escalate) produces correct decisions when given test inputs in production
   4. Shared CRUD tools (contact, task, invoice operations) execute successfully against production Supabase
-**Plans**: 3 plans
+**Plans**: 2 plans
 
 Plans:
-- [ ] 07-01-PLAN.md — Supabase DI refactor (all agent/context/channel modules accept SupabaseClient parameter)
-- [ ] 07-02-PLAN.md — Agent run logging and v1.0 infra verification (run-logger, confidence routing tests, shared CRUD tests)
+- [x] 07-01-PLAN.md — Supabase DI refactor (all agent/context/channel modules accept SupabaseClient parameter)
+- [x] 07-02-PLAN.md — Agent run logging and v1.0 infra verification (run-logger, confidence routing tests, shared CRUD tests)
 
 ### Phase 8: Agent Runtime
 **Goal**: Messages flow automatically from Gmail into BitBit, get classified with full context awareness, and route to the correct processing path
@@ -59,9 +60,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 08-01-PLAN.md — Channel relay daemon (Gmail polling, buffering, dedup persistence)
-- [ ] 08-02-PLAN.md — LLM classification and action routing (significance scoring, dispatch)
-- [ ] 08-03-PLAN.md — Agent scheduler (cron/interval triggers, scheduler tick API)
+- [x] 08-01-PLAN.md — Channel relay daemon (Gmail polling, buffering, dedup persistence)
+- [x] 08-02-PLAN.md — LLM classification and action routing (significance scoring, dispatch)
+- [x] 08-03-PLAN.md — Agent scheduler (cron/interval triggers, scheduler tick API)
 
 ### Phase 9: Approval Flow
 **Goal**: Andy controls agent autonomy -- low-confidence actions require his approval via dashboard or WhatsApp before executing
@@ -89,7 +90,7 @@ Plans:
   2. When an issue is detected, Sentry suggests a specific remediation action (not just "something broke")
   3. If Andy does not acknowledge an alert within N minutes, the notification escalates (e.g., repeat ping, louder channel)
   4. Andy can create, pause, and delete watches from the dashboard
-**Plans**: 2 plans
+**Plans**: 4 plans
 
 Plans:
 - [x] 10-01-PLAN.md — Sentry agent core (watch evaluation, issue detection, remediation suggestions, scheduler wiring)
@@ -110,10 +111,10 @@ Plans:
 **Plans**: 4 plans
 
 Plans:
-- [ ] 11-01-PLAN.md — Lead intake classification/qualification runtime and scheduler wiring
-- [ ] 11-02-PLAN.md — Approval-gated auto-acknowledgment and high-value escalation flows
-- [ ] 11-03-PLAN.md — Leads pipeline APIs and dashboard kanban integration
-- [ ] 11-04-PLAN.md — Gap closure: approved ack outbound delivery + provider result persistence
+- [x] 11-01-PLAN.md — Lead intake classification/qualification runtime and scheduler wiring
+- [x] 11-02-PLAN.md — Approval-gated auto-acknowledgment and high-value escalation flows
+- [x] 11-03-PLAN.md — Leads pipeline APIs and dashboard kanban integration
+- [x] 11-04-PLAN.md — Gap closure: approved ack outbound delivery + provider result persistence
 
 ### Phase 12: Invoice Flow Agent
 **Goal**: Andy says "Invoice Sezer for the White House RE work" and BitBit creates, generates, and sends a branded invoice -- with duplicate protection
@@ -125,12 +126,12 @@ Plans:
   3. Invoices send via email with PDF attachment (after approval)
   4. Invoice status tracks through draft, sent, viewed, overdue, and paid
   5. BitBit detects and prevents duplicate invoicing (same contact + project + amount + period = blocked)
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 12-01: Natural language invoice creation and PDF generation
-- [ ] 12-02: Invoice sending and status tracking
-- [ ] 12-03: Duplicate detection and prevention
+- [x] 12-01-PLAN.md — Natural language invoice creation, entity resolution, and duplicate detection
+- [x] 12-02-PLAN.md — PDF generation, sending workflow, and status lifecycle handling
+- [x] 12-03-PLAN.md — Invoice APIs, dashboard integration, and scheduler/runtime wiring
 
 ## Progress
 
@@ -145,9 +146,11 @@ Phases execute in numeric order: 7 -> 8 -> 9 -> 10/11/12 (parallel after 9).
 | 4. Agent Infrastructure | v1.0 | 4/4 | Complete | 2026-02-21 |
 | 5. Wire Integration Points | v1.0 | 2/2 | Complete | 2026-02-21 |
 | 6. Verification Artifacts | v1.0 | 2/2 | Complete | 2026-02-21 |
-| 7. Infrastructure Foundation | v1.1 | 0/2 | Not started | - |
-| 8. Agent Runtime | 2/3 | In Progress|  | - |
-| 9. Approval Flow | v1.1 | 2/3 | In Progress | - |
-| 10. Sentry Agent | 4/4 | Complete    | 2026-02-22 | - |
-| 11. Lead Swarm Agent | 3/3 | Complete    | 2026-02-22 | - |
-| 12. Invoice Flow Agent | v1.1 | 0/3 | Not started | - |
+| 7. Infrastructure Foundation | v1.1 | 2/2 | Complete | 2026-02-22 |
+| 8. Agent Runtime | v1.1 | 3/3 | Complete | 2026-02-22 |
+| 9. Approval Flow | v1.1 | 3/3 | Complete | 2026-02-22 |
+| 10. Sentry Agent | v1.1 | 4/4 | Complete | 2026-02-22 |
+| 11. Lead Swarm Agent | v1.1 | 4/4 | Complete | 2026-02-22 |
+| 12. Invoice Flow Agent | v1.1 | 3/3 | Complete | 2026-02-22 |
+
+**Overall:** 35/35 plans complete (100%).
