@@ -2,6 +2,7 @@
 
 import { BlurFade } from "@/components/ui/blur-fade";
 import Link from "next/link";
+import styles from "./page.module.css";
 
 // ─── SVG Illustrations ──────────────────────────────────────────────
 
@@ -474,7 +475,7 @@ function Footer() {
 // ─── Page ───────────────────────────────────────────────────────────
 export default function Home() {
   return (
-    <main className="min-h-screen bg-[#faf9f0]">
+    <main className={styles.home}>
       <Nav />
       <Hero />
       <Philosophy />
