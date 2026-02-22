@@ -99,7 +99,8 @@ None - plan executed exactly as written.
 
 ## Issues Encountered
 
-- None.
+- `gsd-tools state advance-plan`, `state update-progress`, and `state record-session` could not parse the existing `STATE.md` format; position/session fields were updated manually.
+- `gsd-tools requirements mark-complete SNTR-03 SNTR-04` returned `not_found`, but both requirements were already marked complete in `.planning/REQUIREMENTS.md`.
 
 ## User Setup Required
 
