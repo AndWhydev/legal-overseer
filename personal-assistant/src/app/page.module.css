@@ -41,3 +41,23 @@
 .home :global(.animate-spin-slow) {
   animation: spin-slow 20s linear infinite;
 }
+
+.home :global(.landing-stack) {
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+}
+
+.home :global(.landing-stack .motion-reduce-safe) {
+  opacity: 1;
+}
+
+@media (max-width: 640px) {
+  .home :global(.landing-nav .mx-auto) {
+    height: 56px;
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .home :global(.landing-hero .max-w-3xl) {
+    max-width: 34rem;
+  }
+}

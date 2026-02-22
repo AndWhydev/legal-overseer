@@ -95,7 +95,7 @@ function SketchIcon({ type }: { type: "communication" | "operations" | "intellig
 // ─── Navigation ─────────────────────────────────────────────────────
 function Nav() {
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 border-b border-[#e8e4dc] bg-[#faf9f0]/90 backdrop-blur-xl">
+    <nav className="landing-nav fixed top-0 left-0 right-0 z-50 border-b border-[#e8e4dc] bg-[#faf9f0]/90 backdrop-blur-xl">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
         <Link href="/" className="flex items-center gap-2.5">
           <span className="font-[var(--font-serif)] text-2xl font-semibold tracking-tight text-[#1a1a1a]" style={{ fontFamily: "var(--font-serif)" }}>
@@ -125,7 +125,7 @@ function Nav() {
 // ─── Hero ───────────────────────────────────────────────────────────
 function Hero() {
   return (
-    <section className="relative flex min-h-[88vh] flex-col items-center justify-center overflow-hidden px-6 pt-24">
+    <section className="landing-hero relative flex min-h-[70vh] flex-col items-center justify-start overflow-hidden px-6 pt-28 pb-12 sm:min-h-[88vh] sm:justify-center sm:pt-24 sm:pb-0">
       <HeroArt />
 
       <div className="relative z-10 mx-auto max-w-3xl text-center">
@@ -181,7 +181,7 @@ function Hero() {
 // ─── Philosophy ─────────────────────────────────────────────────────
 function Philosophy() {
   return (
-    <section id="philosophy" className="py-28 px-6">
+    <section id="philosophy" className="landing-section px-6 py-20 sm:py-28">
       <div className="mx-auto max-w-6xl">
         <div className="grid gap-16 lg:grid-cols-2 items-center">
           <BlurFade delay={0.1}>
@@ -269,7 +269,7 @@ function Capabilities() {
   ];
 
   return (
-    <section className="py-28 px-6 border-t border-[#e8e4dc]">
+    <section className="landing-section border-t border-[#e8e4dc] px-6 py-20 sm:py-28">
       <div className="mx-auto max-w-6xl">
         <BlurFade delay={0.1}>
           <p className="mb-3 text-[11px] font-medium uppercase tracking-[0.2em] text-[#8b6f47]">
@@ -326,7 +326,7 @@ function HowItWorks() {
   ];
 
   return (
-    <section id="how-it-works" className="py-28 px-6 border-t border-[#e8e4dc]">
+    <section id="how-it-works" className="landing-section border-t border-[#e8e4dc] px-6 py-20 sm:py-28">
       <div className="mx-auto max-w-6xl">
         <div className="grid gap-16 lg:grid-cols-[1fr_1.5fr]">
           {/* Left — sticky heading */}
@@ -387,7 +387,7 @@ function HowItWorks() {
 // ─── Social Proof ───────────────────────────────────────────────────
 function SocialProof() {
   return (
-    <section className="py-20 px-6 border-t border-[#e8e4dc] bg-[#f5f3ea]">
+    <section className="landing-section border-t border-[#e8e4dc] bg-[#f5f3ea] px-6 py-16 sm:py-20">
       <div className="mx-auto max-w-3xl text-center">
         <BlurFade delay={0.1}>
           <p className="mb-6 text-[13px] font-medium tracking-wide text-[#8b6f47]">
@@ -413,7 +413,7 @@ function SocialProof() {
 // ─── Final CTA ──────────────────────────────────────────────────────
 function FinalCTA() {
   return (
-    <section className="relative overflow-hidden py-32 px-6">
+    <section className="landing-section relative overflow-hidden px-6 py-20 sm:py-32">
       {/* Subtle background art */}
       <svg className="pointer-events-none absolute inset-0 h-full w-full opacity-[0.03]" viewBox="0 0 800 400" fill="none">
         <circle cx="400" cy="200" r="180" stroke="#d97757" strokeWidth="1" strokeDasharray="6 8" />
@@ -453,7 +453,7 @@ function FinalCTA() {
 // ─── Footer ─────────────────────────────────────────────────────────
 function Footer() {
   return (
-    <footer className="border-t border-[#e8e4dc] py-12 px-6">
+    <footer className="border-t border-[#e8e4dc] px-6 py-10 sm:py-12">
       <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-6 sm:flex-row">
         <span className="text-sm font-semibold text-[#1a1a1a]" style={{ fontFamily: "var(--font-serif)" }}>
           BitBit
@@ -475,7 +475,7 @@ function Footer() {
 // ─── Page ───────────────────────────────────────────────────────────
 export default function Home() {
   return (
-    <main className={styles.home}>
+    <main className={`${styles.home} landing-stack`}>
       <Nav />
       <Hero />
       <Philosophy />
