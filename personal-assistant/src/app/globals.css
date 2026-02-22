@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "../styles/bitbit-design-system.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -51,6 +52,33 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
   --radius-2xl: calc(var(--radius) + 8px);
+
+  /* ── BitBit Design System Tokens ── */
+  --color-bb-bg-primary: #0A0E1A;
+  --color-bb-bg-secondary: #0D1117;
+  --color-bb-bg-card: #131B26;
+  --color-bb-bg-sidebar: #0A0F16;
+  --color-bb-bg-elevated: #1A2332;
+  --color-bb-border-subtle: #1E2D3D;
+  --color-bb-border-active: #FF5A1F;
+  --color-bb-orange: #FF5A1F;
+  --color-bb-orange-light: #FF7A45;
+  --color-bb-green: #22C55E;
+  --color-bb-blue: #3B82F6;
+  --color-bb-amber: #F59E0B;
+  --color-bb-red: #EF4444;
+  --color-bb-purple: #A855F7;
+  --color-bb-cyan: #06B6D4;
+  --color-bb-text-primary: #F0F0F0;
+  --color-bb-text-secondary: #6B7280;
+  --color-bb-text-dim: #4B5563;
+  --spacing-sidebar: 64px;
+  --spacing-topbar: 56px;
+  --font-bb-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-bb-mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
+  --shadow-bb-glow-sm: 0 0 16px rgba(255, 90, 31, 0.3);
+  --shadow-bb-glow-md: 0 0 24px rgba(255, 90, 31, 0.12);
+  --shadow-bb-glow-lg: 0 0 60px rgba(255, 90, 31, 0.1);
 }
 
 body {
@@ -237,4 +265,41 @@ body {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #2A2A2E;
+}
+
+/* Landing-page motion utilities (ported from prior working deployment) */
+@keyframes draw-in {
+  from { stroke-dashoffset: 1; }
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes float-gentle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-12px) rotate(2deg); }
+}
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-draw-in {
+  animation: draw-in 2s ease-out forwards;
+}
+
+.animate-float-gentle {
+  animation: float-gentle 6s ease-in-out infinite;
+}
+
+.animate-float-slow {
+  animation: float-slow 8s ease-in-out infinite;
+}
+
+.animate-spin-slow {
+  animation: spin-slow 20s linear infinite;
 }
