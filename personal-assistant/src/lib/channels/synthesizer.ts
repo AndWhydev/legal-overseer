@@ -7,6 +7,9 @@ import { calendarAdapter } from './calendar'
 import { remindersAdapter } from './reminders'
 import { whatsappAdapter } from './whatsapp'
 import { gscAdapter } from './gsc'
+import { asanaAdapter } from './asana'
+import { calendlyAdapter } from './calendly'
+import { stripeAdapter } from './stripe'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 
@@ -18,6 +21,9 @@ const adapters: Partial<Record<ChannelType, ChannelAdapter>> = {
   reminders: remindersAdapter,
   whatsapp: whatsappAdapter,
   gsc: gscAdapter,
+  asana: asanaAdapter,
+  calendly: calendlyAdapter,
+  stripe: stripeAdapter,
 }
 
 export function getAdapter(type: ChannelType): ChannelAdapter | undefined {

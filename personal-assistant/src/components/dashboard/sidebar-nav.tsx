@@ -15,6 +15,7 @@ import {
   ShieldCheck,
   Activity,
   Settings,
+  ChevronDown,
 } from 'lucide-react';
 import type { TabDef } from './spa-shell';
 import { NotificationCenter } from './notification-center';
@@ -39,6 +40,10 @@ const ICON_MAP: Record<string, React.ElementType> = {
 };
 
 const MAIN_TAB_IDS = ['command-center', 'dashboard', 'chat', 'channels', 'medications', 'contacts', 'leads', 'invoices', 'sentry', 'approvals', 'activity'];
+
+// Primary tabs always visible; advanced tabs hidden behind toggle
+const PRIMARY_TAB_IDS = ['command-center', 'dashboard', 'chat', 'leads', 'invoices', 'contacts', 'approvals'];
+const ADVANCED_TAB_IDS = ['channels', 'medications', 'sentry', 'activity'];
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
@@ -77,6 +82,20 @@ export function SidebarNav({
   const sidebarRef = useRef<HTMLElement>(null);
   const navRef = useRef<HTMLElement>(null);
   const indicatorRef = useRef<HTMLDivElement>(null);
+
+  // Progressive disclosure: show/hide advanced tabs
+  const [showAdvanced, setShowAdvanced] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem('bb-show-advanced') === 'true';
+  });
+
+  const toggleAdvanced = useCallback(() => {
+    setShowAdvanced(prev => {
+      const next = !prev;
+      localStorage.setItem('bb-show-advanced', String(next));
+      return next;
+    });
+  }, []);
 
   // State for badge counts
   const [badgeCounts, setBadgeCounts] = useState({
@@ -193,21 +212,40 @@ export function SidebarNav({
     }
   }, []);
 
-  // Initial fetch and polling
+  // Initial fetch + realtime with polling fallback
   useEffect(() => {
     if (!clientRef.current) return;
+    const client = clientRef.current;
 
     fetchBadgeCounts();
 
-    pollIntervalRef.current = setInterval(() => {
-      fetchBadgeCounts();
-    }, 30000); // Poll every 30 seconds
+    // Try realtime subscription
+    try {
+      const channel = client
+        .channel('sidebar-badge-counts')
+        .on('postgres_changes' as any, { event: '*', schema: 'public', table: 'approval_queue' }, () => fetchBadgeCounts())
+        .on('postgres_changes' as any, { event: '*', schema: 'public', table: 'leads' }, () => fetchBadgeCounts())
+        .on('postgres_changes' as any, { event: '*', schema: 'public', table: 'invoices' }, () => fetchBadgeCounts())
+        .subscribe((status: string) => {
+          if (status === 'SUBSCRIBED' && pollIntervalRef.current) {
+            clearInterval(pollIntervalRef.current);
+            pollIntervalRef.current = null;
+          }
+        });
 
-    return () => {
-      if (pollIntervalRef.current) {
-        clearInterval(pollIntervalRef.current);
-      }
-    };
+      // Fallback polling
+      pollIntervalRef.current = setInterval(() => fetchBadgeCounts(), 30000);
+
+      return () => {
+        client.removeChannel(channel);
+        if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+      };
+    } catch {
+      pollIntervalRef.current = setInterval(() => fetchBadgeCounts(), 30000);
+      return () => {
+        if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+      };
+    }
   }, [fetchBadgeCounts]);
 
   // ── Render nav item ─────────────────────────────────────────────────────
@@ -232,6 +270,8 @@ export function SidebarNav({
       badgeCount = badgeCounts.invoices;
     }
 
+    const isAdvanced = ADVANCED_TAB_IDS.includes(tabId);
+
     return (
       <button
         key={tabId}
@@ -241,9 +281,13 @@ export function SidebarNav({
           active && 'bb-sidebar__item--active',
         ].filter(Boolean).join(' ')}
         data-tooltip={label}
+        data-advanced={isAdvanced || undefined}
         aria-label={label}
         aria-current={active ? 'page' : undefined}
-        style={{ position: 'relative' }}
+        style={{
+          position: 'relative',
+          display: isAdvanced && !showAdvanced ? 'none' : undefined,
+        }}
       >
         <Icon size={20} strokeWidth={1.8} />
         {badgeColor && badgeCount > 0 && (
@@ -285,6 +329,28 @@ export function SidebarNav({
           aria-hidden="true"
         />
         {MAIN_TAB_IDS.map(id => renderNavItem(id, tabLabels[id] || id))}
+
+        {/* Advanced toggle */}
+        <button
+          onClick={toggleAdvanced}
+          className="bb-sidebar__item"
+          data-tooltip={showAdvanced ? 'Hide Advanced' : 'Show Advanced'}
+          aria-label={showAdvanced ? 'Hide advanced tabs' : 'Show advanced tabs'}
+          style={{
+            marginTop: '4px',
+            opacity: 0.6,
+            transition: 'opacity 0.15s, transform 0.2s',
+          }}
+        >
+          <ChevronDown
+            size={16}
+            strokeWidth={2}
+            style={{
+              transform: showAdvanced ? 'rotate(180deg)' : 'rotate(0deg)',
+              transition: 'transform 0.2s ease',
+            }}
+          />
+        </button>
       </nav>
 
       {/* Notification Center */}

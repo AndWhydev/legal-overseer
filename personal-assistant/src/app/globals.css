@@ -302,10 +302,73 @@ body:has(main.landing-stack) main.landing-stack {
 /* --------------------------------------------------------------------------
    Responsive Overrides
    -------------------------------------------------------------------------- */
-@media (max-width: 1024px) {
+
+/* ── Tablet (768–1024px): Collapsible sidebar overlay ───────────────────── */
+@media (max-width: 1024px) and (min-width: 769px) {
   .bb-layout {
     grid-template-columns: 1fr;
-    grid-template-rows: 1fr 64px;
+    grid-template-rows: 1fr;
+    grid-template-areas: "main";
+    height: 100dvh;
+    min-height: 100dvh;
+  }
+
+  .bb-sidebar-area {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 100;
+    height: 100dvh;
+    transform: translateX(-100%);
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .bb-sidebar-area[data-open="true"] {
+    transform: translateX(0);
+  }
+
+  .bb-sidebar {
+    position: relative;
+    width: 72px;
+    height: 100dvh;
+    border-right: 1px solid var(--border-subtle);
+  }
+
+  .bb-spa-content {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  /* Hamburger toggle — shown on tablet */
+  .bb-sidebar-toggle {
+    display: flex;
+  }
+
+  .bb-sidebar__indicator {
+    display: none;
+  }
+}
+
+/* ── Tablet overlay backdrop ───────────────────────────────────────────── */
+.bb-sidebar-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 99;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.bb-sidebar-backdrop[data-visible="true"] {
+  display: block;
+}
+
+/* ── Mobile (<768px): Bottom navigation bar ─────────────────────────────── */
+@media (max-width: 768px) {
+  .bb-layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr 56px;
     grid-template-areas:
       "main"
       "sidebar";
@@ -325,16 +388,18 @@ body:has(main.landing-stack) main.landing-stack {
   }
 
   .bb-sidebar {
+    position: relative;
     flex-direction: row;
     width: 100vw;
-    height: 64px;
+    height: 56px;
     border-right: none;
     border-top: 1px solid var(--border-subtle);
-    padding: 0 8px;
+    padding: 0 4px;
     align-items: center;
     justify-content: space-around;
+    transform: none;
   }
-  
+
   html.light .bb-sidebar {
     border-top: 1px solid #E5E7EB;
   }
@@ -343,9 +408,10 @@ body:has(main.landing-stack) main.landing-stack {
     flex-direction: row;
     width: 100%;
     justify-content: space-around;
-    gap: 4px;
+    gap: 2px;
     overflow-x: auto;
-    padding: 0 8px;
+    padding: 0 4px;
+    flex: initial;
   }
 
   .bb-sidebar__nav::-webkit-scrollbar {
@@ -353,8 +419,8 @@ body:has(main.landing-stack) main.landing-stack {
   }
 
   .bb-sidebar__item {
-    width: 44px;
-    height: 44px;
+    width: 40px;
+    height: 40px;
     margin-bottom: 0;
     flex-shrink: 0;
   }
@@ -365,5 +431,57 @@ body:has(main.landing-stack) main.landing-stack {
 
   .bb-sidebar__logo, .bb-sidebar__bottom, .bb-sidebar__avatar {
     display: none;
+  }
+
+  /* Hide advanced tabs on mobile bottom bar */
+  .bb-sidebar__item[data-advanced="true"] {
+    display: none;
+  }
+
+  /* Hide tablet toggle on mobile */
+  .bb-sidebar-toggle {
+    display: none;
+  }
+}
+
+/* ── Desktop: hide tablet toggle ─────────────────────────────────────── */
+@media (min-width: 1025px) {
+  .bb-sidebar-toggle {
+    display: none;
+  }
+}
+
+/* ── Sidebar toggle button ────────────────────────────────────────────── */
+.bb-sidebar-toggle {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  z-index: 98;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--bg-card, rgba(15, 20, 30, 0.8));
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  display: none;
+}
+
+.bb-sidebar-toggle:hover {
+  background: var(--bg-hover, rgba(255, 255, 255, 0.08));
+}
+
+/* ── Notification panel mobile positioning ────────────────────────────── */
+@media (max-width: 768px) {
+  .bb-notification-panel {
+    left: 16px !important;
+    top: auto !important;
+    bottom: 72px !important;
+    right: 16px !important;
+    width: auto !important;
   }
 }

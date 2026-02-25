@@ -1681,14 +1681,15 @@ body.bitbit-dark {
 }
 
 @media (max-width: 768px) {
-  :root {
-    --sidebar-width: 0px;
-  }
-  .bb-sidebar {
-    transform: translateX(-100%);
-  }
   .bb-overlay__card {
     width: calc(100vw - 24px);
+  }
+  .bb-sidebar__item {
+    width: 40px;
+    height: 40px;
+  }
+  .bb-sidebar__item[data-tooltip]::after {
+    display: none;
   }
 }
 

@@ -1,26 +1,253 @@
 import type { ChannelAdapter, ChannelMessage } from './types'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import { getOrgCredential } from '@/lib/integrations/credentials'
 
-async function getAccessToken(tenantId: string, clientId: string, clientSecret: string): Promise<string> {
-  const url = `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`
-  const params = new URLSearchParams()
-  params.append('client_id', clientId)
-  params.append('client_secret', clientSecret)
-  params.append('scope', 'https://graph.microsoft.com/.default')
-  params.append('grant_type', 'client_credentials')
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
 
-  const response = await fetch(url, {
-    method: 'POST',
-    body: params,
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+interface OutlookTokenResponse {
+  access_token: string
+  refresh_token?: string
+  expires_in: number
+  token_type: string
+}
+
+interface GraphMessage {
+  id: string
+  conversationId?: string
+  sender?: { emailAddress?: { name?: string; address?: string } }
+  subject?: string
+  bodyPreview?: string
+  body?: { content?: string; contentType?: string }
+  receivedDateTime?: string
+  isRead?: boolean
+}
+
+interface GraphMessagesResponse {
+  value: GraphMessage[]
+  '@odata.nextLink'?: string
+}
+
+export interface OutlookConfig {
+  maxMessages?: number
+  userId?: string
+  folderName?: string
+}
+
+interface OutlookCredentials {
+  tenant_id: string
+  client_id: string
+  client_secret: string
+  access_token?: string
+  refresh_token?: string
+}
+
+export interface OutlookError {
+  error: string
+  details?: string
+}
+
+interface WebhookSubscription {
+  id: string
+  resource: string
+  expirationDateTime: string
+}
+
+// ---------------------------------------------------------------------------
+// Token helpers
+// ---------------------------------------------------------------------------
+
+async function getClientCredentialsToken(creds: OutlookCredentials): Promise<string> {
+  const url = `https://login.microsoftonline.com/${creds.tenant_id}/oauth2/v2.0/token`
+  const params = new URLSearchParams({
+    client_id: creds.client_id,
+    client_secret: creds.client_secret,
+    scope: 'https://graph.microsoft.com/.default',
+    grant_type: 'client_credentials',
   })
 
-  if (!response.ok) {
-    throw new Error(`Failed to get MS Graph access token: ${response.status} ${response.statusText}`)
+  const res = await fetch(url, {
+    method: 'POST',
+    body: params,
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+  })
+
+  if (!res.ok) {
+    const text = await res.text()
+    throw new Error(`MS token exchange failed (${res.status}): ${text}`)
   }
 
-  const data = await response.json()
+  const data = (await res.json()) as OutlookTokenResponse
   return data.access_token
 }
+
+async function refreshAccessToken(creds: OutlookCredentials): Promise<OutlookTokenResponse> {
+  if (!creds.refresh_token) throw new Error('No refresh token available')
+
+  const url = `https://login.microsoftonline.com/${creds.tenant_id}/oauth2/v2.0/token`
+  const params = new URLSearchParams({
+    client_id: creds.client_id,
+    client_secret: creds.client_secret,
+    refresh_token: creds.refresh_token,
+    grant_type: 'refresh_token',
+    scope: 'https://graph.microsoft.com/Mail.Read https://graph.microsoft.com/Mail.Send',
+  })
+
+  const res = await fetch(url, {
+    method: 'POST',
+    body: params,
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+  })
+  if (!res.ok) throw new Error(`Token refresh failed: ${res.status}`)
+  return (await res.json()) as OutlookTokenResponse
+}
+
+async function resolveAccessToken(creds: OutlookCredentials): Promise<string> {
+  if (creds.refresh_token) {
+    try {
+      const tokens = await refreshAccessToken(creds)
+      return tokens.access_token
+    } catch {
+      // fall through to other methods
+    }
+  }
+  if (creds.access_token) return creds.access_token
+  return getClientCredentialsToken(creds)
+}
+
+// ---------------------------------------------------------------------------
+// Graph helpers
+// ---------------------------------------------------------------------------
+
+async function graphFetch<T>(token: string, url: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(url, {
+    ...init,
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      ...(init?.headers as Record<string, string> | undefined),
+    },
+  })
+  if (!res.ok) {
+    const text = await res.text()
+    throw new Error(`Graph API ${res.status}: ${text}`)
+  }
+  return (await res.json()) as T
+}
+
+// ---------------------------------------------------------------------------
+// Public DI functions (SupabaseClient first param)
+// ---------------------------------------------------------------------------
+
+export async function fetchOutlookMessages(
+  client: SupabaseClient,
+  orgId: string,
+  config: OutlookConfig = {},
+): Promise<ChannelMessage[] | OutlookError> {
+  try {
+    const creds = (await getOrgCredential(client, orgId, 'outlook')) as OutlookCredentials | null
+    if (!creds) return { error: 'No Outlook credentials configured for this organization' }
+
+    const token = await resolveAccessToken(creds)
+    const userId = config.userId || 'me'
+    const maxMessages = config.maxMessages || 50
+
+    const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+    const filter = `receivedDateTime ge ${since}`
+    const select = 'id,conversationId,sender,subject,bodyPreview,body,receivedDateTime,isRead'
+    const userPath = userId === 'me' ? 'me' : `users/${encodeURIComponent(userId)}`
+    const url = `https://graph.microsoft.com/v1.0/${userPath}/messages?$filter=${encodeURIComponent(filter)}&$select=${select}&$top=${maxMessages}&$orderby=receivedDateTime desc`
+
+    const data = await graphFetch<GraphMessagesResponse>(token, url, {
+      headers: { Prefer: 'outlook.body-content-type="text"' },
+    })
+
+    return (data.value || []).map((msg): ChannelMessage => ({
+      id: `outlook-${msg.id}`,
+      channel: 'outlook',
+      externalId: msg.conversationId || `outlook-${msg.id}`,
+      sender: msg.sender?.emailAddress?.name || msg.sender?.emailAddress?.address || 'Unknown',
+      senderEmail: msg.sender?.emailAddress?.address || '',
+      subject: msg.subject || '(no subject)',
+      body: (msg.body?.content || msg.bodyPreview || '').slice(0, 2000).trim(),
+      receivedAt: msg.receivedDateTime ? new Date(msg.receivedDateTime) : new Date(),
+      isActionable: false,
+      priority: 'medium',
+      metadata: { messageId: msg.id, conversationId: msg.conversationId, isRead: msg.isRead },
+    }))
+  } catch (err) {
+    return { error: 'Failed to fetch Outlook messages', details: String(err) }
+  }
+}
+
+export async function sendOutlookMessage(
+  client: SupabaseClient,
+  orgId: string,
+  to: string,
+  subject: string,
+  body: string,
+): Promise<{ success: boolean } | OutlookError> {
+  try {
+    const creds = (await getOrgCredential(client, orgId, 'outlook')) as OutlookCredentials | null
+    if (!creds) return { error: 'No Outlook credentials configured' }
+
+    const token = await resolveAccessToken(creds)
+
+    const res = await fetch('https://graph.microsoft.com/v1.0/me/sendMail', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message: {
+          subject,
+          body: { contentType: 'Text', content: body },
+          toRecipients: [{ emailAddress: { address: to } }],
+        },
+      }),
+    })
+
+    if (!res.ok) {
+      const text = await res.text()
+      return { error: `Send failed (${res.status})`, details: text }
+    }
+
+    return { success: true }
+  } catch (err) {
+    return { error: 'Failed to send Outlook message', details: String(err) }
+  }
+}
+
+export async function createOutlookWebhookSubscription(
+  client: SupabaseClient,
+  orgId: string,
+  notificationUrl: string,
+): Promise<WebhookSubscription | OutlookError> {
+  try {
+    const creds = (await getOrgCredential(client, orgId, 'outlook')) as OutlookCredentials | null
+    if (!creds) return { error: 'No Outlook credentials configured' }
+
+    const token = await resolveAccessToken(creds)
+    const expiration = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString()
+
+    return await graphFetch<WebhookSubscription>(token, 'https://graph.microsoft.com/v1.0/subscriptions', {
+      method: 'POST',
+      body: JSON.stringify({
+        changeType: 'created',
+        notificationUrl,
+        resource: 'me/mailFolders/inbox/messages',
+        expirationDateTime: expiration,
+        clientState: `bitbit-${orgId}`,
+      }),
+    })
+  } catch (err) {
+    return { error: 'Failed to create webhook subscription', details: String(err) }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// ChannelAdapter for synthesizer compatibility (env-var based)
+// ---------------------------------------------------------------------------
 
 export const outlookAdapter: ChannelAdapter = {
   type: 'outlook',
@@ -32,66 +259,38 @@ export const outlookAdapter: ChannelAdapter = {
     const tenantId = process.env.OUTLOOK_TENANT_ID
     const clientId = process.env.OUTLOOK_CLIENT_ID
     const clientSecret = process.env.OUTLOOK_CLIENT_SECRET
-    const userId = process.env.OUTLOOK_USER_ID // Usually the user's UPN (email address)
+    const userId = process.env.OUTLOOK_USER_ID
 
-    if (!tenantId || !clientId || !clientSecret || !userId) {
-      console.warn('Outlook adapter missing credentials in environment')
-      return []
-    }
+    if (!tenantId || !clientId || !clientSecret || !userId) return []
 
     try {
-      const accessToken = await getAccessToken(tenantId, clientId, clientSecret)
+      const token = await getClientCredentialsToken({
+        tenant_id: tenantId,
+        client_id: clientId,
+        client_secret: clientSecret,
+      })
       const sinceDate = since || new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+      const filter = `receivedDateTime ge ${sinceDate.toISOString()}`
+      const select = 'id,conversationId,sender,subject,bodyPreview,body,receivedDateTime,isRead'
+      const url = `https://graph.microsoft.com/v1.0/users/${encodeURIComponent(userId)}/messages?$filter=${encodeURIComponent(filter)}&$select=${select}&$top=50&$orderby=receivedDateTime desc`
 
-      // Filter by received date
-      const filter = `$filter=receivedDateTime ge ${sinceDate.toISOString()}`
-      const select = `$select=id,conversationId,sender,subject,bodyPreview,body,receivedDateTime,isRead`
-      const url = `https://graph.microsoft.com/v1.0/users/${encodeURIComponent(userId)}/messages?${filter}&${select}&$top=50&$orderby=receivedDateTime desc`
-
-      const response = await fetch(url, {
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Accept': 'application/json',
-          'Prefer': 'outlook.body-content-type="text"'
-        }
+      const data = await graphFetch<GraphMessagesResponse>(token, url, {
+        headers: { Prefer: 'outlook.body-content-type="text"' },
       })
 
-      if (!response.ok) {
-        throw new Error(`Failed to fetch messages: ${response.status} ${response.statusText}`)
-      }
-
-      const data = await response.json()
-      const messages: ChannelMessage[] = []
-
-      for (const msg of data.value || []) {
-        const senderName = msg.sender?.emailAddress?.name || msg.sender?.emailAddress?.address || 'Unknown'
-        const senderEmail = msg.sender?.emailAddress?.address || ''
-        const subject = msg.subject || '(no subject)'
-        const date = msg.receivedDateTime ? new Date(msg.receivedDateTime) : new Date()
-
-        // Grab the text body from Microsoft, fallback to bodyPreview or subject
-        const bodyContent = msg.body?.content || msg.bodyPreview || subject
-
-        messages.push({
-          id: `outlook-${msg.id}`,
-          channel: 'outlook',
-          externalId: msg.conversationId || `outlook-${msg.id}`,
-          sender: senderName,
-          senderEmail,
-          subject,
-          body: bodyContent.slice(0, 2000).trim() || subject,
-          receivedAt: date,
-          isActionable: false,
-          priority: 'medium',
-          metadata: {
-            messageId: msg.id,
-            conversationId: msg.conversationId,
-            isRead: msg.isRead
-          }
-        })
-      }
-
-      return messages
+      return (data.value || []).map((msg): ChannelMessage => ({
+        id: `outlook-${msg.id}`,
+        channel: 'outlook',
+        externalId: msg.conversationId || `outlook-${msg.id}`,
+        sender: msg.sender?.emailAddress?.name || msg.sender?.emailAddress?.address || 'Unknown',
+        senderEmail: msg.sender?.emailAddress?.address || '',
+        subject: msg.subject || '(no subject)',
+        body: (msg.body?.content || msg.bodyPreview || '').slice(0, 2000).trim(),
+        receivedAt: msg.receivedDateTime ? new Date(msg.receivedDateTime) : new Date(),
+        isActionable: false,
+        priority: 'medium',
+        metadata: { messageId: msg.id, conversationId: msg.conversationId, isRead: msg.isRead },
+      }))
     } catch (err) {
       console.error('Outlook Graph API pull failed:', err)
       return []
@@ -103,7 +302,7 @@ export const outlookAdapter: ChannelAdapter = {
       process.env.OUTLOOK_TENANT_ID &&
       process.env.OUTLOOK_CLIENT_ID &&
       process.env.OUTLOOK_CLIENT_SECRET &&
-      process.env.OUTLOOK_USER_ID
+      process.env.OUTLOOK_USER_ID,
     )
-  }
+  },
 }

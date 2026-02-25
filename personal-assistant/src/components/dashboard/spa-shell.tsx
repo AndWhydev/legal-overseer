@@ -9,9 +9,11 @@ import React, {
   useRef,
 } from 'react';
 import { startTransition } from 'react';
+import { Menu } from 'lucide-react';
 import { SidebarNav } from './sidebar-nav';
 import { BitBitOverlay } from './bitbit-overlay';
 import { SplashScreen } from './splash-screen';
+import { OnboardingTour } from './onboarding-tour';
 
 // ─── Tab definitions ────────────────────────────────────────────────────────
 
@@ -179,16 +181,42 @@ export function SPAShell({ displayName, initials }: SPAShellProps) {
 
   const currentPage = TABS[activeNavIndex]?.label || 'Dashboard';
 
+  // Tablet sidebar overlay state
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const closeSidebar = useCallback(() => setSidebarOpen(false), []);
+
+  // Close sidebar on tab change (tablet)
+  const handleTabChange = useCallback((tabId: string) => {
+    navigateToId(tabId);
+    setSidebarOpen(false);
+  }, [navigateToId]);
+
   return (
     <SplashScreen ready={tabsReady} minDisplayMs={1200}>
       <BitBitOverlay currentPage={currentPage} activeTabId={TABS[activeNavIndex].id}>
         <div className="bb-layout bb-dot-grid">
-          <div className="bb-sidebar-area">
+          {/* Tablet sidebar toggle */}
+          <button
+            className="bb-sidebar-toggle"
+            onClick={() => setSidebarOpen(o => !o)}
+            aria-label="Toggle navigation"
+          >
+            <Menu size={20} />
+          </button>
+
+          {/* Tablet backdrop */}
+          <div
+            className="bb-sidebar-backdrop"
+            data-visible={sidebarOpen}
+            onClick={closeSidebar}
+          />
+
+          <div className="bb-sidebar-area" data-open={sidebarOpen}>
             <SidebarNav
               avatarFallback={initials}
               displayName={displayName}
               activeTabId={TABS[activeNavIndex].id}
-              onTabChange={navigateToId}
+              onTabChange={handleTabChange}
               tabs={TABS}
             />
           </div>
@@ -220,6 +248,9 @@ export function SPAShell({ displayName, initials }: SPAShellProps) {
             })}
           </div>
         </div>
+
+        {/* Onboarding tour for first-time users */}
+        <OnboardingTour onNavigate={handleTabChange} />
       </BitBitOverlay>
     </SplashScreen>
   );

@@ -192,19 +192,76 @@ export function NotificationCenter({ onTabChange }: NotificationCenterProps) {
     }
   }, [fetchNotifications]);
 
-  // Set up polling
+  // Set up Supabase realtime subscriptions with polling fallback
   useEffect(() => {
     if (!clientRef.current) return;
 
-    pollIntervalRef.current = setInterval(() => {
-      fetchNotifications();
-    }, 30000); // Poll every 30 seconds
+    const client = clientRef.current;
+    let realtimeActive = false;
 
-    return () => {
-      if (pollIntervalRef.current) {
-        clearInterval(pollIntervalRef.current);
-      }
-    };
+    // Try to subscribe to realtime changes
+    try {
+      const channel = client
+        .channel('notification-changes')
+        .on(
+          'postgres_changes' as any,
+          { event: '*', schema: 'public', table: 'approval_queue' },
+          () => { fetchNotifications(); }
+        )
+        .on(
+          'postgres_changes' as any,
+          { event: 'INSERT', schema: 'public', table: 'leads' },
+          () => { fetchNotifications(); }
+        )
+        .on(
+          'postgres_changes' as any,
+          { event: '*', schema: 'public', table: 'invoices' },
+          () => { fetchNotifications(); }
+        )
+        .subscribe((status: string) => {
+          if (status === 'SUBSCRIBED') {
+            realtimeActive = true;
+            // Clear polling if realtime is active
+            if (pollIntervalRef.current) {
+              clearInterval(pollIntervalRef.current);
+              pollIntervalRef.current = null;
+            }
+          }
+        });
+
+      // Cleanup realtime on unmount
+      const cleanup = () => {
+        client.removeChannel(channel);
+      };
+
+      // Fallback to polling if realtime not active after 5s
+      const fallbackTimer = setTimeout(() => {
+        if (!realtimeActive && !pollIntervalRef.current) {
+          pollIntervalRef.current = setInterval(() => {
+            fetchNotifications();
+          }, 15000); // 15s polling as fallback
+        }
+      }, 5000);
+
+      return () => {
+        cleanup();
+        clearTimeout(fallbackTimer);
+        if (pollIntervalRef.current) {
+          clearInterval(pollIntervalRef.current);
+        }
+      };
+    } catch {
+      // Realtime not available, fall back to polling
+      pollIntervalRef.current = setInterval(() => {
+        fetchNotifications();
+      }, 15000);
+
+      return () => {
+        if (pollIntervalRef.current) {
+          clearInterval(pollIntervalRef.current);
+        }
+      };
+    }
   }, [fetchNotifications]);
 
   // Close dropdown when clicking outside
@@ -284,11 +341,13 @@ export function NotificationCenter({ onTabChange }: NotificationCenterProps) {
       {isOpen && (
         <div
           ref={panelRef}
+          className="bb-notification-panel"
           style={{
             position: 'fixed',
             top: '80px',
             left: '80px',
             width: '360px',
+            maxWidth: 'calc(100vw - 32px)',
             maxHeight: '600px',
             zIndex: 1000,
             background: 'var(--bg-card)',

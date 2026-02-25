@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { StatCard, StatusBadge, ProcessPipeline, TimelineBar } from '@/components/ui/data-viz';
-import { AlertCircle, Clock, ShieldCheck, Zap, Handshake, Users, CheckCircle2, Link as LinkIcon, TrendingUp, Calendar } from 'lucide-react';
+import { AlertCircle, Clock, ShieldCheck, Zap, Handshake, Users, CheckCircle2, Link as LinkIcon, TrendingUp, Calendar, ReceiptText, MessageSquare, BellOff } from 'lucide-react';
 import { TabSkeleton } from './tab-skeleton';
 
 function CommandCenterTab() {
@@ -88,29 +88,75 @@ function CommandCenterTab() {
 
   return (
     <div className="flex-1 overflow-y-auto h-full p-4 md:p-8 space-y-8">
-      {/* Header with Quick Actions */}
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Command Center</h1>
-          <p className="text-muted-foreground mt-1">What needs attention NOW.</p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <a
-            href="/dashboard/invoices"
-            className="bb-btn bb-btn-secondary flex items-center gap-2 text-sm"
-          >
-            <LinkIcon size={16} /> New Invoice
-          </a>
-          <a
-            href="/dashboard/approvals"
-            className="bb-btn bb-btn-secondary flex items-center gap-2 text-sm"
-          >
-            <ShieldCheck size={16} /> Review Approvals
-          </a>
-          <button className="bb-btn bb-btn-primary flex items-center gap-2 text-sm">
-            <Zap size={16} /> Create Task
-          </button>
-        </div>
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight">Command Center</h1>
+        <p className="text-muted-foreground mt-1">What needs attention NOW.</p>
+      </div>
+
+      {/* Quick Actions Bar */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <button
+          onClick={() => {
+            if (approvals.length > 0) handleApprove(approvals[0].id);
+          }}
+          disabled={approvals.length === 0}
+          className="flex items-center gap-3 p-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-elevated)] hover:bg-[var(--bg-hover)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-left"
+        >
+          <div className="w-9 h-9 rounded-lg bg-amber-500/15 flex items-center justify-center flex-shrink-0">
+            <ShieldCheck size={18} className="text-amber-500" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-xs font-medium truncate">Approve Next</p>
+            <p className="text-[11px] text-muted-foreground">{approvals.length} pending</p>
+          </div>
+        </button>
+
+        <button
+          onClick={() => {
+            window.dispatchEvent(new CustomEvent('bb-navigate', { detail: 'invoices' }));
+          }}
+          className="flex items-center gap-3 p-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-elevated)] hover:bg-[var(--bg-hover)] transition-colors text-left"
+        >
+          <div className="w-9 h-9 rounded-lg bg-emerald-500/15 flex items-center justify-center flex-shrink-0">
+            <ReceiptText size={18} className="text-emerald-500" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-xs font-medium truncate">New Invoice</p>
+            <p className="text-[11px] text-muted-foreground">Create & send</p>
+          </div>
+        </button>
+
+        <button
+          onClick={() => {
+            window.dispatchEvent(new CustomEvent('bb-navigate', { detail: 'chat' }));
+          }}
+          className="flex items-center gap-3 p-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-elevated)] hover:bg-[var(--bg-hover)] transition-colors text-left"
+        >
+          <div className="w-9 h-9 rounded-lg bg-blue-500/15 flex items-center justify-center flex-shrink-0">
+            <MessageSquare size={18} className="text-blue-500" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-xs font-medium truncate">Reply Message</p>
+            <p className="text-[11px] text-muted-foreground">Open chat</p>
+          </div>
+        </button>
+
+        <button
+          onClick={() => {
+            if (approvals.length > 0) handleDismiss(approvals[0].id);
+          }}
+          disabled={approvals.length === 0}
+          className="flex items-center gap-3 p-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-elevated)] hover:bg-[var(--bg-hover)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-left"
+        >
+          <div className="w-9 h-9 rounded-lg bg-red-500/15 flex items-center justify-center flex-shrink-0">
+            <BellOff size={18} className="text-red-500" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-xs font-medium truncate">Dismiss Top</p>
+            <p className="text-[11px] text-muted-foreground">Clear alert</p>
+          </div>
+        </button>
       </div>
 
       {/* KPI Widgets */}

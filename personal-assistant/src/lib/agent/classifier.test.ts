@@ -1,13 +1,23 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import type { ChannelMessage } from '@/lib/channels/types'
 
+// Mock context assembler
+vi.mock('@/lib/context/assembler', () => ({
+  assembleContext: vi.fn().mockResolvedValue({
+    resolvedEntities: [],
+    briefings: [],
+    summary: '',
+  }),
+}))
+
 // Mock Anthropic SDK
 vi.mock('@anthropic-ai/sdk', () => {
   const mockCreate = vi.fn()
+  function MockAnthropic() {
+    return { messages: { create: mockCreate } }
+  }
   return {
-    default: vi.fn().mockImplementation(() => ({
-      messages: { create: mockCreate },
-    })),
+    default: MockAnthropic,
     __mockCreate: mockCreate,
   }
 })
