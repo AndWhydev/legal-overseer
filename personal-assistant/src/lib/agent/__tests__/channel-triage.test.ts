@@ -47,8 +47,8 @@ describe('scorePriority', () => {
       timeSensitivity: 'today',
     })
     const result = scorePriority(classification)
-    // 7 + 1 (today) = 8 => critical actually
-    expect(result).toBe('critical')
+    // 7 + 1 (today) = 8 => high (>=9 is critical)
+    expect(result).toBe('high')
   })
 
   it('returns medium for moderate significance', () => {
