@@ -18,8 +18,10 @@ import {
   Film,
   SearchCheck,
   FileSearch,
+  FileText,
   DollarSign,
   BarChart3,
+  Wrench,
   Settings,
   ChevronDown,
   Sun,
@@ -47,17 +49,19 @@ const ICON_MAP: Record<string, React.ElementType> = {
   approvals:   ShieldCheck,
   'ad-scripts': Film,
   'ai-search': SearchCheck,
+  reports:     FileText,
   costs:       DollarSign,
   analytics:   BarChart3,
   activity:    Activity,
+  admin:       Wrench,
   settings:    Settings,
 };
 
-const MAIN_TAB_IDS = ['command-center', 'dashboard', 'chat', 'inbox', 'channels', 'medications', 'contacts', 'leads', 'invoices', 'tenders', 'sentry', 'approvals', 'ad-scripts', 'ai-search', 'costs', 'analytics', 'activity'];
+const MAIN_TAB_IDS = ['command-center', 'dashboard', 'chat', 'inbox', 'channels', 'medications', 'contacts', 'leads', 'invoices', 'tenders', 'sentry', 'approvals', 'ad-scripts', 'ai-search', 'reports', 'costs', 'analytics', 'activity', 'admin'];
 
 // Primary tabs always visible; advanced tabs hidden behind toggle
 const PRIMARY_TAB_IDS = ['command-center', 'dashboard', 'chat', 'inbox', 'leads', 'invoices', 'tenders', 'contacts', 'approvals'];
-const ADVANCED_TAB_IDS = ['channels', 'medications', 'sentry', 'costs', 'activity'];
+const ADVANCED_TAB_IDS = ['channels', 'medications', 'sentry', 'costs', 'activity', 'admin'];
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 

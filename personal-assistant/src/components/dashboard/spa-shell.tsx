@@ -16,6 +16,7 @@ import { SplashScreen } from './splash-screen';
 import { OnboardingTour } from './onboarding-tour';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { ToastProvider } from '@/components/ui/toast';
+import { GlobalSearch } from './global-search';
 
 // ─── Tab definitions ────────────────────────────────────────────────────────
 
@@ -40,9 +41,11 @@ export const TABS: TabDef[] = [
   { id: 'approvals', label: 'Approvals', path: '/dashboard/approvals' },
   { id: 'ad-scripts', label: 'Ad Scripts', path: '/dashboard/ad-scripts' },
   { id: 'ai-search', label: 'AI Search', path: '/dashboard/ai-search' },
+  { id: 'reports', label: 'Reports', path: '/dashboard/reports' },
   { id: 'costs', label: 'Costs', path: '/dashboard/costs' },
   { id: 'analytics', label: 'Analytics', path: '/dashboard/analytics' },
   { id: 'activity', label: 'Activity', path: '/dashboard/activity' },
+  { id: 'admin', label: 'Admin', path: '/dashboard/admin' },
   { id: 'settings', label: 'Settings', path: '/dashboard/settings' },
 ];
 
@@ -65,9 +68,11 @@ const tabImports: Record<string, Promise<{ default: React.ComponentType }>> = {
   approvals: import('./tabs/approvals-tab'),
   'ad-scripts': import('./tabs/ad-scripts-tab'),
   'ai-search': import('./tabs/ai-search-tab'),
+  reports: import('./tabs/reports-tab'),
   costs: import('./tabs/costs-tab'),
   analytics: import('./tabs/analytics-tab'),
   activity: import('./tabs/activity-tab'),
+  admin: import('./tabs/admin-tab'),
   settings: import('./tabs/settings-tab'),
 };
 
@@ -87,9 +92,11 @@ const TabComponents: Record<string, React.LazyExoticComponent<React.ComponentTyp
   approvals: lazy(() => tabImports.approvals),
   'ad-scripts': lazy(() => tabImports['ad-scripts']),
   'ai-search': lazy(() => tabImports['ai-search']),
+  reports: lazy(() => tabImports.reports),
   costs: lazy(() => tabImports.costs),
   analytics: lazy(() => tabImports.analytics),
   activity: lazy(() => tabImports.activity),
+  admin: lazy(() => tabImports.admin),
   settings: lazy(() => tabImports.settings),
 };
 
@@ -275,6 +282,9 @@ export function SPAShell({ displayName, initials }: SPAShellProps) {
             })}
           </div>
         </div>
+
+        {/* Global search command palette (Cmd+K) */}
+        <GlobalSearch onNavigate={handleTabChange} />
 
         {/* Onboarding tour for first-time users */}
         <OnboardingTour onNavigate={handleTabChange} />
