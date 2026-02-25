@@ -1,0 +1,71 @@
+version: "3.9"
+
+# BitBit Agent Worker Infrastructure
+# Target: Hetzner CX22 (2 vCPU, 4GB RAM, 40GB SSD)
+
+services:
+  # Agent cron worker — runs scheduled agent ticks
+  agent-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      - NODE_ENV=production
+      - WORKER_TYPE=cron
+    volumes:
+      - worker-data:/app/data
+    deploy:
+      resources:
+        limits:
+          memory: 1536M
+          cpus: "1.0"
+    healthcheck:
+      test: ["CMD", "node", "-e", "process.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Headless Chrome worker — for PDF generation, scraping
+  chrome-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        INSTALL_CHROME: "true"
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      - NODE_ENV=production
+      - WORKER_TYPE=chrome
+      - PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+    volumes:
+      - worker-data:/app/data
+    deploy:
+      resources:
+        limits:
+          memory: 2048M
+          cpus: "1.0"
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "node", "-e", "process.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Watchtower — auto-update containers from registry
+  watchtower:
+    image: containrrr/watchtower:latest
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - WATCHTOWER_POLL_INTERVAL=300
+      - WATCHTOWER_CLEANUP=true
+      - WATCHTOWER_LABEL_ENABLE=false
+
+volumes:
+  worker-data:
+    driver: local

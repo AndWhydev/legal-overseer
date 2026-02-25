@@ -1,0 +1,175 @@
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'Privacy Policy | BitBit',
+  description: 'BitBit Privacy Policy — how we collect, use, and protect your data',
+}
+
+const EFFECTIVE_DATE = '1 March 2026'
+
+export default function PrivacyPage() {
+  return (
+    <main className="min-h-screen bg-white text-gray-900">
+      <div className="mx-auto max-w-3xl px-6 py-16">
+        <h1 className="text-3xl font-semibold mb-2">Privacy Policy</h1>
+        <p className="text-sm text-gray-500 mb-10">Effective: {EFFECTIVE_DATE}</p>
+
+        <Section title="1. Who We Are">
+          <p>
+            BitBit Pty Ltd (ABN pending) (&quot;BitBit&quot;, &quot;we&quot;, &quot;us&quot;) operates
+            an AI-powered operations platform for digital agencies. This policy explains how we
+            collect, use, store, and protect your personal information in compliance with the
+            Privacy Act 1988 (Cth) and the Australian Privacy Principles (APPs).
+          </p>
+          <p>
+            Where we process data of individuals in the European Economic Area, we also comply
+            with the General Data Protection Regulation (GDPR).
+          </p>
+        </Section>
+
+        <Section title="2. Information We Collect">
+          <h3 className="font-medium mt-3 mb-1">Account Information</h3>
+          <p>Name, email address, organisation name, billing address, and payment details (processed by Stripe).</p>
+
+          <h3 className="font-medium mt-3 mb-1">Usage Data</h3>
+          <p>
+            Feature usage, agent invocations, token consumption, API call logs, and session
+            analytics. We use this data to operate, improve, and bill for the Service.
+          </p>
+
+          <h3 className="font-medium mt-3 mb-1">Connected Channel Data</h3>
+          <p>
+            When you connect third-party channels (email, Asana, Calendly, Stripe, WhatsApp),
+            we receive messages, events, and metadata from those services as authorised by you.
+            This data is processed by AI agents to provide automation features.
+          </p>
+
+          <h3 className="font-medium mt-3 mb-1">AI-Processed Content</h3>
+          <p>
+            Content submitted to AI features (drafting, classification, analysis) is sent to
+            Anthropic&apos;s Claude API for processing. Anthropic does not use API inputs for
+            model training. See{' '}
+            <a
+              href="https://www.anthropic.com/privacy"
+              className="text-blue-600 underline"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Anthropic&apos;s Privacy Policy
+            </a>.
+          </p>
+        </Section>
+
+        <Section title="3. How We Use Your Information">
+          <ul className="list-disc pl-5 space-y-1">
+            <li>Provide, maintain, and improve the Service.</li>
+            <li>Process payments and manage subscriptions.</li>
+            <li>Send transactional emails (invoices, alerts, system notifications).</li>
+            <li>Generate analytics and usage reports for your organisation.</li>
+            <li>Detect and prevent fraud, abuse, or security incidents.</li>
+            <li>Comply with legal obligations.</li>
+          </ul>
+        </Section>
+
+        <Section title="4. Data Storage and Security">
+          <p>
+            Your data is stored in Supabase-managed PostgreSQL databases in the
+            <strong> ap-southeast-2 (Sydney, Australia)</strong> region. Data is encrypted at
+            rest (AES-256) and in transit (TLS 1.3). Integration credentials are encrypted with
+            AES-256-GCM before storage.
+          </p>
+          <p>
+            We implement row-level security (RLS) policies to ensure strict tenant isolation.
+            Each organisation&apos;s data is accessible only to authenticated members of that organisation.
+          </p>
+        </Section>
+
+        <Section title="5. Third-Party Processors">
+          <table className="w-full text-sm border-collapse mt-2">
+            <thead>
+              <tr className="border-b">
+                <th className="text-left py-2 pr-4">Processor</th>
+                <th className="text-left py-2 pr-4">Purpose</th>
+                <th className="text-left py-2">Location</th>
+              </tr>
+            </thead>
+            <tbody className="text-gray-600">
+              <tr className="border-b"><td className="py-2 pr-4">Supabase</td><td className="pr-4">Database, auth, storage</td><td>Sydney, AU</td></tr>
+              <tr className="border-b"><td className="py-2 pr-4">Anthropic</td><td className="pr-4">AI model inference</td><td>US</td></tr>
+              <tr className="border-b"><td className="py-2 pr-4">Stripe</td><td className="pr-4">Payment processing</td><td>US / Global</td></tr>
+              <tr className="border-b"><td className="py-2 pr-4">Vercel</td><td className="pr-4">Application hosting</td><td>Global CDN</td></tr>
+              <tr><td className="py-2 pr-4">Sentry</td><td className="pr-4">Error monitoring</td><td>US</td></tr>
+            </tbody>
+          </table>
+        </Section>
+
+        <Section title="6. Data Retention">
+          <ul className="list-disc pl-5 space-y-1">
+            <li>Active account data: retained while your subscription is active.</li>
+            <li>After cancellation: data available for export for 30 days, then deleted.</li>
+            <li>Billing records: retained for 7 years per Australian tax law.</li>
+            <li>Anonymised analytics: may be retained indefinitely.</li>
+          </ul>
+        </Section>
+
+        <Section title="7. Your Rights">
+          <p>Under the APPs (and GDPR where applicable), you have the right to:</p>
+          <ul className="list-disc pl-5 space-y-1 mt-2">
+            <li>Access personal information we hold about you.</li>
+            <li>Request correction of inaccurate information.</li>
+            <li>Request deletion of your personal information.</li>
+            <li>Export your data in a machine-readable format.</li>
+            <li>Object to processing (GDPR) or withdraw consent.</li>
+            <li>Lodge a complaint with the OAIC or relevant supervisory authority.</li>
+          </ul>
+          <p className="mt-2">
+            To exercise these rights, email{' '}
+            <a href="mailto:privacy@bitbit.au" className="text-blue-600 underline">privacy@bitbit.au</a>.
+          </p>
+        </Section>
+
+        <Section title="8. Cookies">
+          <p>
+            We use essential cookies for authentication and session management. We do not use
+            advertising or third-party tracking cookies. Analytics are collected server-side.
+          </p>
+        </Section>
+
+        <Section title="9. Children">
+          <p>
+            The Service is not directed at individuals under 18. We do not knowingly collect
+            personal information from children.
+          </p>
+        </Section>
+
+        <Section title="10. Changes to This Policy">
+          <p>
+            We may update this policy from time to time. We will notify you via email at least
+            14 days before material changes take effect.
+          </p>
+        </Section>
+
+        <Section title="11. Contact">
+          <p>
+            Privacy Officer: <a href="mailto:privacy@bitbit.au" className="text-blue-600 underline">privacy@bitbit.au</a>
+          </p>
+          <p>
+            Office of the Australian Information Commissioner:{' '}
+            <a href="https://www.oaic.gov.au" className="text-blue-600 underline" target="_blank" rel="noopener noreferrer">
+              www.oaic.gov.au
+            </a>
+          </p>
+        </Section>
+      </div>
+    </main>
+  )
+}
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section className="mb-8">
+      <h2 className="text-lg font-semibold mb-3">{title}</h2>
+      <div className="text-sm leading-relaxed text-gray-700 space-y-2">{children}</div>
+    </section>
+  )
+}

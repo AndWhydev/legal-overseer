@@ -8,3 +8,6 @@ export {
   makeChannelMessage,
   resetIdCounter,
 } from './fixtures'
+export { createMockChannels, createMockAdapter, makeChannelMsg, resetMsgCounter } from './mock-channels'
+export { createMockTools } from './mock-tools'
+export { createAgentHarness, type AgentHarness } from './agent-harness'
