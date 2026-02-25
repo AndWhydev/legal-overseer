@@ -5,23 +5,27 @@ import { outlookAdapter } from './outlook'
 import { imessageAdapter } from './imessage'
 import { calendarAdapter } from './calendar'
 import { remindersAdapter } from './reminders'
+import { whatsappAdapter } from './whatsapp'
+import { gscAdapter } from './gsc'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 
-const adapters: Record<ChannelType, ChannelAdapter> = {
+const adapters: Partial<Record<ChannelType, ChannelAdapter>> = {
   gmail: gmailAdapter,
   outlook: outlookAdapter,
   imessage: imessageAdapter,
   calendar: calendarAdapter,
   reminders: remindersAdapter,
+  whatsapp: whatsappAdapter,
+  gsc: gscAdapter,
 }
 
-export function getAdapter(type: ChannelType): ChannelAdapter {
+export function getAdapter(type: ChannelType): ChannelAdapter | undefined {
   return adapters[type]
 }
 
 export function getAllAdapters(): ChannelAdapter[] {
-  return Object.values(adapters)
+  return Object.values(adapters).filter((a): a is ChannelAdapter => !!a)
 }
 
 function createDirectSupabase(): SupabaseClient | null {

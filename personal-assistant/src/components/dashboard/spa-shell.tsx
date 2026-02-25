@@ -7,7 +7,6 @@ import React, {
   useCallback,
   useEffect,
   useRef,
-  useMemo,
 } from 'react';
 import { startTransition } from 'react';
 import { SidebarNav } from './sidebar-nav';
@@ -23,17 +22,18 @@ export interface TabDef {
 }
 
 export const TABS: TabDef[] = [
-  { id: 'dashboard',   label: 'Tasks',       path: '/dashboard' },
-  { id: 'chat',        label: 'Chat',        path: '/dashboard/chat' },
-  { id: 'channels',    label: 'Channels',    path: '/dashboard/channels' },
+  { id: 'command-center', label: 'Command Center', path: '/dashboard' },
+  { id: 'dashboard', label: 'Tasks', path: '/dashboard/tasks' },
+  { id: 'chat', label: 'Chat', path: '/dashboard/chat' },
+  { id: 'channels', label: 'Channels', path: '/dashboard/channels' },
   { id: 'medications', label: 'Medications', path: '/dashboard/medications' },
-  { id: 'contacts',    label: 'Contacts',    path: '/dashboard/contacts' },
-  { id: 'leads',       label: 'Leads',       path: '/dashboard/leads' },
-  { id: 'invoices',    label: 'Invoices',    path: '/dashboard/invoices' },
-  { id: 'sentry',      label: 'Sentry',      path: '/dashboard/sentry' },
-  { id: 'approvals',   label: 'Approvals',   path: '/dashboard/approvals' },
-  { id: 'activity',    label: 'Activity',    path: '/dashboard/activity' },
-  { id: 'settings',    label: 'Settings',    path: '/dashboard/settings' },
+  { id: 'contacts', label: 'Contacts', path: '/dashboard/contacts' },
+  { id: 'leads', label: 'Leads', path: '/dashboard/leads' },
+  { id: 'invoices', label: 'Invoices', path: '/dashboard/invoices' },
+  { id: 'sentry', label: 'Sentry', path: '/dashboard/sentry' },
+  { id: 'approvals', label: 'Approvals', path: '/dashboard/approvals' },
+  { id: 'activity', label: 'Activity', path: '/dashboard/activity' },
+  { id: 'settings', label: 'Settings', path: '/dashboard/settings' },
 ];
 
 // ─── Pre-warm all tab imports immediately ───────────────────────────────────
@@ -41,32 +41,34 @@ export const TABS: TabDef[] = [
 // The resolved modules feed into React.lazy wrappers below.
 
 const tabImports: Record<string, Promise<{ default: React.ComponentType }>> = {
-  dashboard:   import('./tabs/dashboard-tab'),
-  chat:        import('./tabs/chat-tab'),
-  channels:    import('./tabs/channels-tab'),
+  'command-center': import('./tabs/command-center-tab'),
+  dashboard: import('./tabs/dashboard-tab'),
+  chat: import('./tabs/chat-tab'),
+  channels: import('./tabs/channels-tab'),
   medications: import('./tabs/medications-tab'),
-  contacts:    import('./tabs/contacts-tab'),
-  leads:       import('./tabs/leads-tab'),
-  invoices:    import('./tabs/invoices-tab'),
-  sentry:      import('./tabs/sentry-tab'),
-  approvals:   import('./tabs/approvals-tab'),
-  activity:    import('./tabs/activity-tab'),
-  settings:    import('./tabs/settings-tab'),
+  contacts: import('./tabs/contacts-tab'),
+  leads: import('./tabs/leads-tab'),
+  invoices: import('./tabs/invoices-tab'),
+  sentry: import('./tabs/sentry-tab'),
+  approvals: import('./tabs/approvals-tab'),
+  activity: import('./tabs/activity-tab'),
+  settings: import('./tabs/settings-tab'),
 };
 
 // Lazy wrappers that resolve from the already-triggered promises
 const TabComponents: Record<string, React.LazyExoticComponent<React.ComponentType>> = {
-  dashboard:   lazy(() => tabImports.dashboard),
-  chat:        lazy(() => tabImports.chat),
-  channels:    lazy(() => tabImports.channels),
+  'command-center': lazy(() => tabImports['command-center']),
+  dashboard: lazy(() => tabImports.dashboard),
+  chat: lazy(() => tabImports.chat),
+  channels: lazy(() => tabImports.channels),
   medications: lazy(() => tabImports.medications),
-  contacts:    lazy(() => tabImports.contacts),
-  leads:       lazy(() => tabImports.leads),
-  invoices:    lazy(() => tabImports.invoices),
-  sentry:      lazy(() => tabImports.sentry),
-  approvals:   lazy(() => tabImports.approvals),
-  activity:    lazy(() => tabImports.activity),
-  settings:    lazy(() => tabImports.settings),
+  contacts: lazy(() => tabImports.contacts),
+  leads: lazy(() => tabImports.leads),
+  invoices: lazy(() => tabImports.invoices),
+  sentry: lazy(() => tabImports.sentry),
+  approvals: lazy(() => tabImports.approvals),
+  activity: lazy(() => tabImports.activity),
+  settings: lazy(() => tabImports.settings),
 };
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -99,22 +101,30 @@ export function SPAShell({ displayName, initials }: SPAShellProps) {
     Promise.all(Object.values(tabImports)).then(() => setTabsReady(true));
   }, []);
 
-  // Determine initial tab — check sessionStorage first, then URL
-  const initialIndex = useMemo(() => {
-    if (typeof window === 'undefined') return 0;
-    const stored = sessionStorage.getItem('bitbit-tab');
-    if (stored) {
-      const idx = TABS.findIndex(t => t.id === stored);
-      if (idx >= 0) return idx;
-    }
-    return pathToTabIndex(window.location.pathname);
-  }, []);
-
   // State: nav indicator (instant) and rendered page (with transition)
-  const [activeNavIndex, setActiveNavIndex] = useState(initialIndex);
-  const [renderedPage, setRenderedPage] = useState(initialIndex);
+  const [activeNavIndex, setActiveNavIndex] = useState(0);
+  const [renderedPage, setRenderedPage] = useState(0);
   const [transitionDir, setTransitionDir] = useState<'up' | 'down' | null>(null);
-  const prevPageRef = useRef(initialIndex);
+  const prevPageRef = useRef(0);
+
+  // Resolve preferred tab after mount to avoid hydration mismatch
+  useEffect(() => {
+    const stored = sessionStorage.getItem('bitbit-tab');
+    let idx = -1;
+
+    if (stored) {
+      idx = TABS.findIndex(t => t.id === stored);
+    }
+
+    if (idx < 0) {
+      idx = pathToTabIndex(window.location.pathname);
+    }
+
+    const nextIndex = idx >= 0 ? idx : 0;
+    setActiveNavIndex(nextIndex);
+    setRenderedPage(nextIndex);
+    prevPageRef.current = nextIndex;
+  }, []);
 
   // Navigate to a tab — instant nav, smooth content slide
   const navigateTo = useCallback((index: number) => {
@@ -162,48 +172,55 @@ export function SPAShell({ displayName, initials }: SPAShellProps) {
     return () => window.removeEventListener('popstate', handlePopState);
   }, [renderedPage]);
 
+  // Keep the viewport locked to the shell so docked chat input never falls below the fold.
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  }, [activeNavIndex, renderedPage]);
+
   const currentPage = TABS[activeNavIndex]?.label || 'Dashboard';
 
   return (
     <SplashScreen ready={tabsReady} minDisplayMs={1200}>
-    <BitBitOverlay currentPage={currentPage} activeTabId={TABS[activeNavIndex].id}>
-      <div className="bb-layout bb-dot-grid">
-        <div className="bb-sidebar-area">
-          <SidebarNav
-            avatarFallback={initials}
-            displayName={displayName}
-            activeTabId={TABS[activeNavIndex].id}
-            onTabChange={navigateToId}
-            tabs={TABS}
-          />
-        </div>
+      <BitBitOverlay currentPage={currentPage} activeTabId={TABS[activeNavIndex].id}>
+        <div className="bb-layout bb-dot-grid">
+          <div className="bb-sidebar-area">
+            <SidebarNav
+              avatarFallback={initials}
+              displayName={displayName}
+              activeTabId={TABS[activeNavIndex].id}
+              onTabChange={navigateToId}
+              tabs={TABS}
+            />
+          </div>
 
-        {/* SPA Content Area */}
-        <div
-          className="bb-spa-content"
-          style={{ gridColumn: 2, gridRow: '1 / -1', position: 'relative', overflow: 'hidden' }}
-        >
-          {TABS.map((tab, index) => {
-            const isActive = index === renderedPage;
-            const Comp = TabComponents[tab.id];
+          {/* SPA Content Area */}
+          <div
+            className="bb-spa-content"
+            style={{ position: 'relative', overflow: 'hidden' }}
+          >
+            {TABS.map((tab, index) => {
+              const isActive = index === renderedPage;
+              const Comp = TabComponents[tab.id];
 
-            return (
-              <div
-                key={tab.id}
-                className="bb-tab-panel"
-                data-active={isActive}
-                data-dir={isActive && transitionDir ? transitionDir : undefined}
-                aria-hidden={!isActive}
-              >
-                <Suspense fallback={<TabFallback />}>
-                  <Comp />
-                </Suspense>
-              </div>
-            );
-          })}
+              return (
+                <div
+                  key={tab.id}
+                  className="bb-tab-panel"
+                  data-active={isActive}
+                  data-dir={isActive && transitionDir ? transitionDir : undefined}
+                  aria-hidden={!isActive}
+                >
+                  {isActive ? (
+                    <Suspense fallback={<TabFallback />}>
+                      <Comp />
+                    </Suspense>
+                  ) : null}
+                </div>
+              );
+            })}
+          </div>
         </div>
-      </div>
-    </BitBitOverlay>
+      </BitBitOverlay>
     </SplashScreen>
   );
 }

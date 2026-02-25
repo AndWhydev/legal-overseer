@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useCallback, useRef, useEffect } from 'react';
+import React, { useCallback, useRef, useEffect, useState } from 'react';
 import Image from 'next/image';
 import {
   LayoutDashboard,
+  Gauge,
   MessageSquare,
   Cable,
   Pill,
@@ -16,10 +17,14 @@ import {
   Settings,
 } from 'lucide-react';
 import type { TabDef } from './spa-shell';
+import { NotificationCenter } from './notification-center';
+import { createClient } from '@/lib/supabase/client';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 // ─── Nav icon mapping ───────────────────────────────────────────────────────
 
 const ICON_MAP: Record<string, React.ElementType> = {
+  'command-center': Gauge,
   dashboard:   LayoutDashboard,
   chat:        MessageSquare,
   channels:    Cable,
@@ -33,7 +38,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
   settings:    Settings,
 };
 
-const MAIN_TAB_IDS = ['dashboard', 'chat', 'channels', 'medications', 'contacts', 'leads', 'invoices', 'sentry', 'approvals', 'activity'];
+const MAIN_TAB_IDS = ['command-center', 'dashboard', 'chat', 'channels', 'medications', 'contacts', 'leads', 'invoices', 'sentry', 'approvals', 'activity'];
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
@@ -72,6 +77,15 @@ export function SidebarNav({
   const sidebarRef = useRef<HTMLElement>(null);
   const navRef = useRef<HTMLElement>(null);
   const indicatorRef = useRef<HTMLDivElement>(null);
+
+  // State for badge counts
+  const [badgeCounts, setBadgeCounts] = useState({
+    approvals: 0,
+    leads: 0,
+    invoices: 0,
+  });
+  const clientRef = useRef<SupabaseClient | null>(null);
+  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // ── Update nav indicator via CSS variable (zero React re-renders) ───────
   const updateIndicator = useCallback((tabId: string) => {
@@ -142,12 +156,81 @@ export function SidebarNav({
     return () => el.removeEventListener('wheel', handleWheel);
   }, [handleWheel]);
 
+  // ── Initialize Supabase client ─────────────────────────────────────────
+  useEffect(() => {
+    const client = createClient();
+    if (!client) return;
+    clientRef.current = client;
+  }, []);
+
+  // ── Fetch badge counts ─────────────────────────────────────────────────
+  const fetchBadgeCounts = useCallback(async () => {
+    if (!clientRef.current) return;
+
+    try {
+      const [approvalsRes, leadsRes, invoicesRes] = await Promise.all([
+        clientRef.current
+          .from('approval_queue')
+          .select('id', { count: 'exact', head: true })
+          .eq('status', 'pending'),
+        clientRef.current
+          .from('leads')
+          .select('id', { count: 'exact', head: true })
+          .eq('status', 'new'),
+        clientRef.current
+          .from('invoices')
+          .select('id', { count: 'exact', head: true })
+          .eq('status', 'overdue'),
+      ]);
+
+      setBadgeCounts({
+        approvals: approvalsRes.count || 0,
+        leads: leadsRes.count || 0,
+        invoices: invoicesRes.count || 0,
+      });
+    } catch (err) {
+      console.warn('Error fetching badge counts:', err);
+    }
+  }, []);
+
+  // Initial fetch and polling
+  useEffect(() => {
+    if (!clientRef.current) return;
+
+    fetchBadgeCounts();
+
+    pollIntervalRef.current = setInterval(() => {
+      fetchBadgeCounts();
+    }, 30000); // Poll every 30 seconds
+
+    return () => {
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current);
+      }
+    };
+  }, [fetchBadgeCounts]);
+
   // ── Render nav item ─────────────────────────────────────────────────────
 
   const renderNavItem = (tabId: string, label: string) => {
     const Icon = ICON_MAP[tabId];
     if (!Icon) return null;
     const active = tabId === activeTabId;
+
+    // Determine badge color and count
+    let badgeColor: string | null = null;
+    let badgeCount = 0;
+
+    if (tabId === 'approvals' && badgeCounts.approvals > 0) {
+      badgeColor = 'var(--bb-orange)';
+      badgeCount = badgeCounts.approvals;
+    } else if (tabId === 'leads' && badgeCounts.leads > 0) {
+      badgeColor = '#60a5fa';
+      badgeCount = badgeCounts.leads;
+    } else if (tabId === 'invoices' && badgeCounts.invoices > 0) {
+      badgeColor = '#ef4444';
+      badgeCount = badgeCounts.invoices;
+    }
 
     return (
       <button
@@ -160,8 +243,24 @@ export function SidebarNav({
         data-tooltip={label}
         aria-label={label}
         aria-current={active ? 'page' : undefined}
+        style={{ position: 'relative' }}
       >
         <Icon size={20} strokeWidth={1.8} />
+        {badgeColor && badgeCount > 0 && (
+          <div
+            style={{
+              position: 'absolute',
+              top: '6px',
+              right: '6px',
+              width: '6px',
+              height: '6px',
+              borderRadius: '50%',
+              backgroundColor: badgeColor,
+            }}
+            aria-hidden="true"
+            title={`${badgeCount} pending`}
+          />
+        )}
       </button>
     );
   };
@@ -187,6 +286,11 @@ export function SidebarNav({
         />
         {MAIN_TAB_IDS.map(id => renderNavItem(id, tabLabels[id] || id))}
       </nav>
+
+      {/* Notification Center */}
+      <div style={{ padding: '8px 0', display: 'flex', justifyContent: 'center' }}>
+        <NotificationCenter onTabChange={onTabChange} />
+      </div>
 
       {/* Settings pinned to bottom */}
       <div className="bb-sidebar__bottom">

@@ -1,5 +1,6 @@
 export type IntegrationStatus = 'available' | 'connected' | 'coming_soon'
 export type IntegrationCategory = 'communication' | 'productivity' | 'analytics' | 'finance'
+export type AuthMethod = 'oauth' | 'api_key' | 'guided'
 
 export interface Integration {
   id: string
@@ -9,6 +10,7 @@ export interface Integration {
   category: IntegrationCategory
   status: IntegrationStatus
   color: string
+  authMethod: AuthMethod
 }
 
 export const AVAILABLE_INTEGRATIONS: Integration[] = [
@@ -21,6 +23,17 @@ export const AVAILABLE_INTEGRATIONS: Integration[] = [
     category: 'communication',
     status: 'available',
     color: '#EA4335',
+    authMethod: 'oauth',
+  },
+  {
+    id: 'resend',
+    name: 'Resend',
+    description: 'Transactional email delivery',
+    icon: 'Send',
+    category: 'communication',
+    status: 'available',
+    color: '#000000',
+    authMethod: 'api_key',
   },
   {
     id: 'slack',
@@ -30,6 +43,7 @@ export const AVAILABLE_INTEGRATIONS: Integration[] = [
     category: 'communication',
     status: 'coming_soon',
     color: '#4A154B',
+    authMethod: 'oauth',
   },
   {
     id: 'whatsapp',
@@ -39,6 +53,7 @@ export const AVAILABLE_INTEGRATIONS: Integration[] = [
     category: 'communication',
     status: 'coming_soon',
     color: '#25D366',
+    authMethod: 'api_key',
   },
   {
     id: 'imessage',
@@ -48,6 +63,7 @@ export const AVAILABLE_INTEGRATIONS: Integration[] = [
     category: 'communication',
     status: 'coming_soon',
     color: '#34C759',
+    authMethod: 'guided',
   },
 
   // Productivity
@@ -59,6 +75,17 @@ export const AVAILABLE_INTEGRATIONS: Integration[] = [
     category: 'productivity',
     status: 'available',
     color: '#F06A6A',
+    authMethod: 'oauth',
+  },
+  {
+    id: 'calendly',
+    name: 'Calendly',
+    description: 'Manage scheduling and appointments',
+    icon: 'CalendarClock',
+    category: 'productivity',
+    status: 'available',
+    color: '#006BFF',
+    authMethod: 'oauth',
   },
   {
     id: 'google-calendar',
@@ -68,6 +95,7 @@ export const AVAILABLE_INTEGRATIONS: Integration[] = [
     category: 'productivity',
     status: 'available',
     color: '#4285F4',
+    authMethod: 'oauth',
   },
   {
     id: 'notion',
@@ -77,6 +105,7 @@ export const AVAILABLE_INTEGRATIONS: Integration[] = [
     category: 'productivity',
     status: 'coming_soon',
     color: '#FFFFFF',
+    authMethod: 'oauth',
   },
   {
     id: 'hubspot',
@@ -86,6 +115,7 @@ export const AVAILABLE_INTEGRATIONS: Integration[] = [
     category: 'productivity',
     status: 'coming_soon',
     color: '#FF7A59',
+    authMethod: 'oauth',
   },
 
   // Analytics
@@ -97,6 +127,7 @@ export const AVAILABLE_INTEGRATIONS: Integration[] = [
     category: 'analytics',
     status: 'coming_soon',
     color: '#F9AB00',
+    authMethod: 'oauth',
   },
 
   // Finance
@@ -106,8 +137,9 @@ export const AVAILABLE_INTEGRATIONS: Integration[] = [
     description: 'Monitor payments, invoices, and revenue',
     icon: 'CreditCard',
     category: 'finance',
-    status: 'coming_soon',
+    status: 'available',
     color: '#635BFF',
+    authMethod: 'api_key',
   },
 ]
 

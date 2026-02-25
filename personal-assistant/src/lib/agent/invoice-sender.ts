@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { createApproval } from './approval-queue'
 import { generateInvoicePdf } from './invoice-pdf'
+import { sendInvoiceEmail } from '@/lib/email/send-invoice'
 import type { InvoiceLineItem, InvoiceStatus } from './shared-tools'
 
 interface InvoiceRow {
@@ -262,6 +263,27 @@ export async function processApprovedInvoiceSends(
       },
     )
 
+    if (pdf.html.length === 0) {
+      result.failed += 1
+      continue
+    }
+
+    // Send email via Resend if configured
+    const emailResult = await sendInvoiceEmail({
+      to: email,
+      invoiceNumber: invoice.invoice_number,
+      html: pdf.html,
+    })
+
+    if (!emailResult.success) {
+      console.error(`Failed to send invoice ${invoice.invoice_number} email:`, emailResult.error)
+      // Still update status if RESEND_API_KEY isn't configured (dev mode)
+      if (emailResult.error !== 'RESEND_API_KEY not configured') {
+        result.failed += 1
+        continue
+      }
+    }
+
     const { error: updateError } = await supabase
       .from('invoices')
       .update({
@@ -273,7 +295,7 @@ export async function processApprovedInvoiceSends(
       .eq('id', invoice.id)
       .eq('org_id', orgId)
 
-    if (updateError || pdf.html.length === 0) {
+    if (updateError) {
       result.failed += 1
       continue
     }

@@ -1,0 +1,214 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { createClient } from '@/lib/supabase/client';
+import { StatCard, StatusBadge, ProcessPipeline, TimelineBar } from '@/components/ui/data-viz';
+import { AlertCircle, Clock, ShieldCheck, Zap, Handshake, Users, CheckCircle2, Link as LinkIcon, TrendingUp, Calendar } from 'lucide-react';
+import { TabSkeleton } from './tab-skeleton';
+
+function CommandCenterTab() {
+  const [loading, setLoading] = useState(true);
+  const [approvals, setApprovals] = useState<any[]>([]);
+  const [leads, setLeads] = useState<any[]>([]);
+  const [tasks, setTasks] = useState<any[]>([]);
+  const [recentActivity, setRecentActivity] = useState<any[]>([]);
+
+  useEffect(() => {
+    const supabase = createClient();
+    if (!supabase) { setLoading(false); return; }
+
+    Promise.all([
+      supabase.from('approval_queue').select('*').eq('status', 'pending').limit(5),
+      supabase.from('leads').select('*').in('status', ['new', 'contacted', 'qualified']).order('created_at', { ascending: false }).limit(3),
+      supabase.from('tasks').select('*').eq('status', 'todo').lt('due_date', new Date().toISOString()).limit(5),
+      supabase.from('channel_messages').select('*').order('received_at', { ascending: false }).limit(5),
+    ]).then(([appRes, leadRes, taskRes, actRes]) => {
+      setApprovals(appRes.data || []);
+      setLeads(leadRes.data || []);
+      setTasks(taskRes.data || []);
+      setRecentActivity(actRes.data || []);
+      setLoading(false);
+    }).catch(() => {
+      setLoading(false);
+    });
+  }, []);
+
+  if (loading) return <TabSkeleton />;
+
+  return (
+    <div className="flex-1 overflow-y-auto h-full p-4 md:p-8 space-y-8">
+      {/* Header with Quick Actions */}
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Command Center</h1>
+          <p className="text-muted-foreground mt-1">What needs attention NOW.</p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <a
+            href="/dashboard/invoices"
+            className="bb-btn bb-btn-secondary flex items-center gap-2 text-sm"
+          >
+            <LinkIcon size={16} /> New Invoice
+          </a>
+          <a
+            href="/dashboard/approvals"
+            className="bb-btn bb-btn-secondary flex items-center gap-2 text-sm"
+          >
+            <ShieldCheck size={16} /> Review Approvals
+          </a>
+          <button className="bb-btn bb-btn-primary flex items-center gap-2 text-sm">
+            <Zap size={16} /> Create Task
+          </button>
+        </div>
+      </div>
+
+      {/* KPI Widgets */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard
+          label="Pending Approvals"
+          value={approvals.length}
+          icon={<ShieldCheck className="text-amber-500" />}
+        />
+        <StatCard
+          label="Hot Leads"
+          value={leads.length}
+          icon={<Handshake className="text-blue-500" />}
+        />
+        <StatCard
+          label="Overdue Tasks"
+          value={tasks.length}
+          icon={<AlertCircle className="text-red-500" />}
+        />
+        <StatCard
+          label="System Status"
+          value="Nominal"
+          icon={<CheckCircle2 className="text-emerald-500" />}
+        />
+      </div>
+
+      {/* Main Content Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Approvals - Left Column (spans 2) */}
+        <div className="bb-card col-span-1 lg:col-span-2">
+          <div className="p-4 border-b border-[var(--border-subtle)]">
+            <h2 className="text-lg font-medium flex items-center gap-2">
+              <ShieldCheck size={20} className="text-amber-500" /> Action Required
+            </h2>
+            <p className="text-xs text-muted-foreground mt-1">{approvals.length} pending approvals</p>
+          </div>
+          <div className="p-4 space-y-4">
+            {approvals.length === 0 ? (
+              <p className="text-muted-foreground text-sm py-4 text-center">No pending approvals. Great work!</p>
+            ) : (
+              approvals.map(app => (
+                <div key={app.id} className="flex items-center justify-between p-3 rounded-md bg-[var(--bg-elevated)] border border-[var(--border-subtle)]">
+                  <div>
+                    <p className="font-medium text-sm">{app.title || app.action_type || 'Approval Request'}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{app.description}</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button className="px-3 py-1 text-xs font-medium rounded-md bg-[var(--bg-element)] hover:bg-[var(--bg-hover)] border border-[var(--border-subtle)]">
+                      Dismiss
+                    </button>
+                    <button className="px-3 py-1 text-xs font-medium rounded-md bg-[var(--accent)] text-white hover:opacity-90">
+                      Approve
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Today's Schedule - Right Column */}
+        <div className="bb-card col-span-1">
+          <div className="p-4 border-b border-[var(--border-subtle)]">
+            <h2 className="text-lg font-medium flex items-center gap-2">
+              <Clock size={20} className="text-blue-500" /> Today's Schedule
+            </h2>
+          </div>
+          <div className="p-4">
+            <div className="text-xs text-muted-foreground mb-4 flex items-center gap-2">
+              <Calendar size={14} />
+              <span>Connect Google Calendar to see your schedule</span>
+            </div>
+            <TimelineBar
+              startLabel="09:00"
+              endLabel="17:00"
+              events={[]}
+              selection={[0.25, 0.38]}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Hot Leads + Recent Activity */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Hot Leads */}
+        <div className="bb-card">
+          <div className="p-4 border-b border-[var(--border-subtle)]">
+            <h2 className="text-lg font-medium flex items-center gap-2">
+              <TrendingUp size={20} className="text-pink-500" /> Hot Leads
+            </h2>
+            <p className="text-xs text-muted-foreground mt-1">Top opportunities this week</p>
+          </div>
+          <div className="p-4 space-y-3">
+            {leads.length === 0 ? (
+              <p className="text-muted-foreground text-sm py-4 text-center">No active leads at the moment.</p>
+            ) : (
+              leads.map(lead => (
+                <div key={lead.id} className="flex items-center justify-between p-3 rounded-md bg-[var(--bg-elevated)] border border-[var(--border-subtle)]">
+                  <div className="flex-1">
+                    <p className="font-medium text-sm">{lead.name || lead.company || 'Unnamed Lead'}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {lead.status === 'new' && '📞 New Contact'}
+                      {lead.status === 'contacted' && '💬 Contacted'}
+                      {lead.status === 'qualified' && '✓ Qualified'}
+                    </p>
+                  </div>
+                  <div className="text-xs font-medium text-amber-500">{lead.value ? `$${lead.value}` : '—'}</div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Recent Activity */}
+        <div className="bb-card">
+          <div className="p-4 border-b border-[var(--border-subtle)]">
+            <h2 className="text-lg font-medium flex items-center gap-2">
+              <Users size={20} className="text-cyan-500" /> Recent Activity
+            </h2>
+            <p className="text-xs text-muted-foreground mt-1">Latest interactions</p>
+          </div>
+          <div className="p-4 space-y-3 max-h-64 overflow-y-auto">
+            {recentActivity.length === 0 ? (
+              <p className="text-muted-foreground text-sm py-4 text-center">No recent activity.</p>
+            ) : (
+              recentActivity.map((activity, idx) => (
+                <div key={activity.id || idx} className="flex items-start gap-3 pb-3 border-b border-[var(--border-subtle)] last:border-0">
+                  <div className="w-2 h-2 rounded-full bg-[var(--accent)] mt-2 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium truncate">
+                      {activity.content || activity.message || 'Activity Update'}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {activity.received_at || activity.created_at ? (
+                        new Date(activity.received_at || activity.created_at).toLocaleTimeString([], {
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })
+                      ) : 'Just now'}
+                    </p>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default React.memo(CommandCenterTab);

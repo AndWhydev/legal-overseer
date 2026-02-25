@@ -1,15 +1,20 @@
 'use client'
 
-import { Mail, MessageCircle, Calendar, Bell } from 'lucide-react'
-import type { ChannelMessage } from '@/lib/channels/types'
+import { Mail, MessageCircle, Calendar, Bell, Search, CheckSquare, CreditCard, CalendarClock } from 'lucide-react'
+import type { ChannelMessage, ChannelType } from '@/lib/channels/types'
 
-const channelIcons = {
+const channelIcons: Record<ChannelType, React.ComponentType<{ className?: string }>> = {
   gmail: Mail,
   outlook: Mail,
   imessage: MessageCircle,
   calendar: Calendar,
   reminders: Bell,
-} as const
+  whatsapp: MessageCircle,
+  asana: CheckSquare,
+  calendly: CalendarClock,
+  stripe: CreditCard,
+  gsc: Search,
+}
 
 interface MessagePreviewProps {
   message: ChannelMessage
@@ -29,13 +34,12 @@ export function MessagePreview({ message, classification }: MessagePreviewProps)
           <div className="flex items-center gap-2">
             <span className="truncate text-sm font-medium text-foreground">{message.sender}</span>
             {classification && (
-              <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${
-                classification === 'actionable'
+              <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${classification === 'actionable'
                   ? 'bg-primary/10 text-primary'
                   : classification === 'noise'
                     ? 'bg-secondary text-muted-foreground'
                     : 'bg-chart-2/10 text-chart-2'
-              }`}>
+                }`}>
                 {classification}
               </span>
             )}

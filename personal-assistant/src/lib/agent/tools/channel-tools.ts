@@ -183,7 +183,7 @@ export const channelToolHandlers: Record<string, AgentToolHandler> = {
     const allMessages: ChannelMessage[] = []
 
     const targetAdapters: ChannelAdapter[] = channelFilter
-      ? [getAdapter(channelFilter)]
+      ? [getAdapter(channelFilter)].filter((a): a is ChannelAdapter => !!a)
       : getAllAdapters()
 
     for (const adapter of targetAdapters) {
