@@ -14,6 +14,7 @@ import { SidebarNav } from './sidebar-nav';
 import { BitBitOverlay } from './bitbit-overlay';
 import { SplashScreen } from './splash-screen';
 import { OnboardingTour } from './onboarding-tour';
+import { ErrorBoundary } from '@/components/ui/error-boundary';
 
 // ─── Tab definitions ────────────────────────────────────────────────────────
 
@@ -257,9 +258,11 @@ export function SPAShell({ displayName, initials }: SPAShellProps) {
                   aria-hidden={!isActive}
                 >
                   {isActive ? (
-                    <Suspense fallback={<TabFallback />}>
-                      <Comp />
-                    </Suspense>
+                    <ErrorBoundary>
+                      <Suspense fallback={<TabFallback />}>
+                        <Comp />
+                      </Suspense>
+                    </ErrorBoundary>
                   ) : null}
                 </div>
               );

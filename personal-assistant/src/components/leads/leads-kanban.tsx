@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { SkeletonKanban } from '@/components/ui/skeleton'
 
 type LeadStatus = 'new' | 'qualified' | 'booked' | 'converted' | 'lost'
 type LeadScore = 'hot' | 'warm' | 'cold'
@@ -149,11 +150,7 @@ export function LeadsKanban() {
   }, [leads])
 
   if (isLoading) {
-    return (
-      <div className="rounded-xl border border-border bg-card p-5 text-sm text-muted-foreground">
-        Loading lead pipeline...
-      </div>
-    )
+    return <SkeletonKanban columns={4} />
   }
 
   return (

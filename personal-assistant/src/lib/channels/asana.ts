@@ -239,6 +239,20 @@ export async function registerAsanaWebhook(
   }
 }
 
+/**
+ * Verify Asana webhook HMAC-SHA256 signature.
+ * Asana sends `X-Hook-Signature` header with HMAC of the request body.
+ */
+export async function verifyAsanaWebhookSignature(
+  body: string,
+  signature: string,
+  webhookSecret: string,
+): Promise<boolean> {
+  const crypto = await import('crypto')
+  const expected = crypto.createHmac('sha256', webhookSecret).update(body).digest('hex')
+  return crypto.timingSafeEqual(Buffer.from(expected, 'hex'), Buffer.from(signature, 'hex'))
+}
+
 export function parseAsanaWebhookEvents(body: {
   events?: AsanaWebhookEvent[]
 }): AsanaWebhookEvent[] {

@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { SkeletonTable } from '@/components/ui/skeleton'
 
 type InvoiceStatus = 'draft' | 'sent' | 'viewed' | 'overdue' | 'paid' | 'cancelled'
 
@@ -149,11 +150,7 @@ export function InvoiceList() {
   }
 
   if (isLoading) {
-    return (
-      <div className="rounded-xl border border-border bg-card p-5 text-sm text-muted-foreground">
-        Loading invoices...
-      </div>
-    )
+    return <SkeletonTable rows={5} cols={6} />
   }
 
   return (

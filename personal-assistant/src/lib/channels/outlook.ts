@@ -41,6 +41,7 @@ interface OutlookCredentials {
   client_secret: string
   access_token?: string
   refresh_token?: string
+  token_expires_at?: string
 }
 
 export interface OutlookError {
@@ -103,15 +104,58 @@ async function refreshAccessToken(creds: OutlookCredentials): Promise<OutlookTok
   return (await res.json()) as OutlookTokenResponse
 }
 
-async function resolveAccessToken(creds: OutlookCredentials): Promise<string> {
+/**
+ * Check if an access token is expired or about to expire (5-min buffer).
+ * `token_expires_at` is stored as ISO string in channel_configs.
+ */
+function isTokenExpired(expiresAt?: string): boolean {
+  if (!expiresAt) return true
+  const bufferMs = 5 * 60 * 1000
+  return new Date(expiresAt).getTime() - bufferMs <= Date.now()
+}
+
+/**
+ * Resolve a valid access token, refreshing if expired and persisting new tokens
+ * back to Supabase channel_configs.
+ */
+async function resolveAccessToken(
+  creds: OutlookCredentials,
+  client?: SupabaseClient,
+  orgId?: string,
+): Promise<string> {
+  // If we have a non-expired access token, use it directly
+  if (creds.access_token && !isTokenExpired(creds.token_expires_at)) {
+    return creds.access_token
+  }
+
+  // Try refresh flow
   if (creds.refresh_token) {
     try {
       const tokens = await refreshAccessToken(creds)
+
+      // Persist refreshed tokens to Supabase
+      if (client && orgId) {
+        const expiresAt = new Date(Date.now() + tokens.expires_in * 1000).toISOString()
+        await client
+          .from('channel_configs')
+          .update({
+            credentials: {
+              ...creds,
+              access_token: tokens.access_token,
+              refresh_token: tokens.refresh_token || creds.refresh_token,
+              token_expires_at: expiresAt,
+            },
+          })
+          .eq('org_id', orgId)
+          .eq('channel_type', 'outlook')
+      }
+
       return tokens.access_token
     } catch {
       // fall through to other methods
     }
   }
+
   if (creds.access_token) return creds.access_token
   return getClientCredentialsToken(creds)
 }
@@ -150,7 +194,7 @@ export async function fetchOutlookMessages(
     const creds = (await getOrgCredential(client, orgId, 'outlook')) as OutlookCredentials | null
     if (!creds) return { error: 'No Outlook credentials configured for this organization' }
 
-    const token = await resolveAccessToken(creds)
+    const token = await resolveAccessToken(creds, client, orgId)
     const userId = config.userId || 'me'
     const maxMessages = config.maxMessages || 50
 
@@ -193,7 +237,7 @@ export async function sendOutlookMessage(
     const creds = (await getOrgCredential(client, orgId, 'outlook')) as OutlookCredentials | null
     if (!creds) return { error: 'No Outlook credentials configured' }
 
-    const token = await resolveAccessToken(creds)
+    const token = await resolveAccessToken(creds, client, orgId)
 
     const res = await fetch('https://graph.microsoft.com/v1.0/me/sendMail', {
       method: 'POST',
@@ -227,7 +271,7 @@ export async function createOutlookWebhookSubscription(
     const creds = (await getOrgCredential(client, orgId, 'outlook')) as OutlookCredentials | null
     if (!creds) return { error: 'No Outlook credentials configured' }
 
-    const token = await resolveAccessToken(creds)
+    const token = await resolveAccessToken(creds, client, orgId)
     const expiration = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString()
 
     return await graphFetch<WebhookSubscription>(token, 'https://graph.microsoft.com/v1.0/subscriptions', {

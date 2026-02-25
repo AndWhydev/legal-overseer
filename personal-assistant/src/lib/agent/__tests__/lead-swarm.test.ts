@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { qualifyLead, parseInvoiceIntent, type LeadQualificationInput } from '../lead-swarm'
+import { qualifyLead, type LeadQualificationInput } from '../lead-swarm'
 
 // classifyInboundLead and runLeadSwarmTick depend on LLM calls via classifier.
 // We test the pure functions (qualifyLead) and mock the classifier for integration.

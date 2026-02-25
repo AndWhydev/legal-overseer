@@ -71,7 +71,7 @@ export function createIntegrationSupabase(seed: Partial<SeedData> = {}) {
       isInsert = true
       insertPayload = payload
       operations.push({ table, op: 'insert', payload })
-      const tableData = (data as Record<string, unknown[]>)[table] ?? []
+      const tableData = (data as unknown as Record<string, unknown[]>)[table] ?? []
       if (Array.isArray(payload)) {
         tableData.push(...payload)
       } else {
@@ -102,7 +102,7 @@ export function createIntegrationSupabase(seed: Partial<SeedData> = {}) {
     chain.range = vi.fn(() => chain)
 
     chain.single = vi.fn(() => {
-      const tableData = ((data as Record<string, unknown[]>)[table] ?? []) as Record<string, unknown>[]
+      const tableData = ((data as unknown as Record<string, unknown[]>)[table] ?? []) as Record<string, unknown>[]
       const match = tableData.find(row =>
         Object.entries(filters).every(([k, v]) => row[k] === v),
       )
@@ -115,7 +115,7 @@ export function createIntegrationSupabase(seed: Partial<SeedData> = {}) {
 
     // Make thenable for queries without .single()
     chain.then = (resolve: (v: unknown) => void) => {
-      const tableData = ((data as Record<string, unknown[]>)[table] ?? []) as Record<string, unknown>[]
+      const tableData = ((data as unknown as Record<string, unknown[]>)[table] ?? []) as Record<string, unknown>[]
       const filtered = tableData.filter(row =>
         Object.entries(filters).every(([k, v]) => {
           if (Array.isArray(v)) return v.includes(row[k])
