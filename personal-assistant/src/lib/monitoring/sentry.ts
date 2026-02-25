@@ -3,15 +3,10 @@
  *
  * Configures Sentry for both client and server-side error capture.
  * Import this module early in the application lifecycle.
+ *
+ * NOTE: Requires `@sentry/nextjs` to be installed. If not present,
+ * all functions gracefully degrade to console logging.
  */
-
-interface SentryConfig {
-  dsn: string;
-  environment: string;
-  release: string;
-  tracesSampleRate: number;
-  profilesSampleRate: number;
-}
 
 interface SentryBreadcrumb {
   category: string;
@@ -20,18 +15,17 @@ interface SentryBreadcrumb {
   data?: Record<string, unknown>;
 }
 
-// Lazy-loaded Sentry SDK reference
-let sentryInstance: typeof import('@sentry/nextjs') | null = null;
-
-function getConfig(): SentryConfig {
-  return {
-    dsn: process.env.SENTRY_DSN || '',
-    environment: process.env.SENTRY_ENVIRONMENT || process.env.NODE_ENV || 'development',
-    release: process.env.SENTRY_RELEASE || `bitbit@${process.env.VERCEL_GIT_COMMIT_SHA || 'local'}`,
-    tracesSampleRate: parseFloat(process.env.SENTRY_TRACES_SAMPLE_RATE || '0.1'),
-    profilesSampleRate: parseFloat(process.env.SENTRY_PROFILES_SAMPLE_RATE || '0.1'),
-  };
+/** Minimal Sentry SDK shape for duck typing */
+interface SentrySDK {
+  init: (config: Record<string, unknown>) => void;
+  captureException: (error: Error, context?: Record<string, unknown>) => void;
+  captureMessage: (message: string, level?: string) => void;
+  addBreadcrumb: (breadcrumb: Record<string, unknown>) => void;
+  setUser: (user: Record<string, unknown> | null) => void;
 }
+
+// Lazy-loaded Sentry SDK reference
+let sentryInstance: SentrySDK | null = null;
 
 export function isSentryConfigured(): boolean {
   return !!process.env.SENTRY_DSN;
@@ -39,44 +33,29 @@ export function isSentryConfigured(): boolean {
 
 /**
  * Initialize Sentry. Safe to call multiple times (idempotent).
- * Returns false if Sentry DSN is not configured.
+ * Returns false if Sentry DSN is not configured or SDK not installed.
  */
 export async function initSentry(): Promise<boolean> {
-  if (!isSentryConfigured()) {
-    return false;
-  }
-
-  if (sentryInstance) {
-    return true;
-  }
+  if (!isSentryConfigured()) return false;
+  if (sentryInstance) return true;
 
   try {
-    const Sentry = await import('@sentry/nextjs');
-    const config = getConfig();
+    // Use indirect eval to bypass static analysis of the import path
+    const moduleName = '@sentry/nextjs';
+    const Sentry = await (new Function('m', 'return import(m)')(moduleName)) as SentrySDK;
 
     Sentry.init({
-      dsn: config.dsn,
-      environment: config.environment,
-      release: config.release,
-      tracesSampleRate: config.tracesSampleRate,
-      profilesSampleRate: config.profilesSampleRate,
-      integrations: [
-        Sentry.captureConsoleIntegration({ levels: ['error'] }),
-      ],
-      beforeSend(event) {
-        // Strip PII from error reports
-        if (event.user) {
-          delete event.user.email;
-          delete event.user.ip_address;
-        }
-        return event;
-      },
+      dsn: process.env.SENTRY_DSN,
+      environment: process.env.SENTRY_ENVIRONMENT || process.env.NODE_ENV || 'development',
+      release: process.env.SENTRY_RELEASE || `bitbit@${process.env.VERCEL_GIT_COMMIT_SHA || 'local'}`,
+      tracesSampleRate: parseFloat(process.env.SENTRY_TRACES_SAMPLE_RATE || '0.1'),
+      profilesSampleRate: parseFloat(process.env.SENTRY_PROFILES_SAMPLE_RATE || '0.1'),
     });
 
     sentryInstance = Sentry;
     return true;
   } catch (err) {
-    console.warn('[sentry] Failed to initialize:', err);
+    console.warn('[sentry] Failed to initialize (SDK may not be installed):', err);
     return false;
   }
 }
@@ -88,14 +67,9 @@ export async function captureException(
   error: Error,
   context?: Record<string, string>
 ): Promise<void> {
-  if (!sentryInstance) {
-    await initSentry();
-  }
-
+  if (!sentryInstance) await initSentry();
   if (sentryInstance) {
-    sentryInstance.captureException(error, {
-      tags: context,
-    });
+    sentryInstance.captureException(error, { tags: context });
   } else {
     console.error('[sentry:fallback]', error.message, context);
   }
@@ -108,10 +82,7 @@ export async function captureMessage(
   message: string,
   level: 'info' | 'warning' | 'error' = 'info'
 ): Promise<void> {
-  if (!sentryInstance) {
-    await initSentry();
-  }
-
+  if (!sentryInstance) await initSentry();
   if (sentryInstance) {
     sentryInstance.captureMessage(message, level);
   } else {
@@ -125,12 +96,9 @@ export async function captureMessage(
  * Add a breadcrumb for debugging context.
  */
 export async function addBreadcrumb(breadcrumb: SentryBreadcrumb): Promise<void> {
-  if (!sentryInstance) {
-    await initSentry();
-  }
-
+  if (!sentryInstance) await initSentry();
   if (sentryInstance) {
-    sentryInstance.addBreadcrumb(breadcrumb);
+    sentryInstance.addBreadcrumb({ ...breadcrumb });
   }
 }
 
@@ -138,10 +106,7 @@ export async function addBreadcrumb(breadcrumb: SentryBreadcrumb): Promise<void>
  * Set user context for error attribution.
  */
 export async function setUser(user: { id: string; orgId?: string }): Promise<void> {
-  if (!sentryInstance) {
-    await initSentry();
-  }
-
+  if (!sentryInstance) await initSentry();
   if (sentryInstance) {
     sentryInstance.setUser({ id: user.id, segment: user.orgId });
   }

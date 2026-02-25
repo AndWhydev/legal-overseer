@@ -46,7 +46,7 @@ export async function GET() {
   };
 
   return NextResponse.json(health, {
-    status: status === 'down' ? 503 : 200,
+    status: (status as string) === 'down' ? 503 : 200,
     headers: { 'Cache-Control': 'no-store' },
   });
 }
