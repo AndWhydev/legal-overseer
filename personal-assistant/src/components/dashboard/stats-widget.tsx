@@ -66,9 +66,36 @@ export function StatsWidget({ className }: StatsWidgetProps) {
         .select('metadata->source_channel', { count: 'exact', head: true })
         .not('metadata->source_channel', 'is', null)
 
+      // Compute weekly streak: count consecutive days (going backwards) with at least 1 completed task
+      let streak = 0
+      const checkDate = new Date()
+      checkDate.setHours(0, 0, 0, 0)
+
+      for (let i = 0; i < 30; i++) {
+        const dayStart = new Date(checkDate)
+        const dayEnd = new Date(checkDate)
+        dayEnd.setDate(dayEnd.getDate() + 1)
+
+        const { count: dayCount } = await supabase
+          .from('tasks')
+          .select('*', { count: 'exact', head: true })
+          .eq('status', 'done')
+          .gte('updated_at', dayStart.toISOString())
+          .lt('updated_at', dayEnd.toISOString())
+
+        if ((dayCount ?? 0) > 0) {
+          streak++
+        } else if (i > 0) {
+          // Allow today (i=0) to have zero completions without breaking streak
+          break
+        }
+
+        checkDate.setDate(checkDate.getDate() - 1)
+      }
+
       setStats({
         completedToday: completedToday ?? 0,
-        weeklyStreak: 0, // TODO: compute from daily completion history
+        weeklyStreak: streak,
         channelsSynced: Math.min(channelsSynced ?? 0, 5),
       })
     }
