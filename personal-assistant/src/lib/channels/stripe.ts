@@ -84,6 +84,22 @@ async function resolveKey(
   return (await getOrgCredential(client, orgId, 'stripe')) as StripeCredentials | null
 }
 
+/**
+ * Generate a deterministic idempotency key for Stripe API calls.
+ * Uses orgId + operation + key params to ensure retries are safe.
+ */
+function generateIdempotencyKey(orgId: string, operation: string, ...parts: string[]): string {
+  const raw = [orgId, operation, ...parts].join(':')
+  // Use a simple hash for determinism — no crypto import needed at module level
+  let hash = 0
+  for (let i = 0; i < raw.length; i++) {
+    const char = raw.charCodeAt(i)
+    hash = ((hash << 5) - hash) + char
+    hash |= 0
+  }
+  return `bb_${operation}_${Math.abs(hash).toString(36)}_${Date.now()}`
+}
+
 function formatAmount(amount: number | undefined, currency: string | undefined): string {
   if (amount === undefined || !currency) return 'unknown amount'
   const divisor = ['jpy', 'krw', 'vnd'].includes(currency.toLowerCase()) ? 1 : 100
@@ -113,9 +129,13 @@ export async function createStripePaymentLink(
       'product_data[name]': description,
     })
 
+    const priceIdempotencyKey = generateIdempotencyKey(orgId, 'price', description, currency, String(amount))
     const price = await stripeFetch<{ id: string }>(creds.secret_key, '/prices', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Idempotency-Key': priceIdempotencyKey,
+      },
       body: priceParams.toString(),
     })
 
@@ -125,9 +145,13 @@ export async function createStripePaymentLink(
       'line_items[0][quantity]': '1',
     })
 
+    const linkIdempotencyKey = generateIdempotencyKey(orgId, 'paylink', price.id)
     return await stripeFetch<StripePaymentLink>(creds.secret_key, '/payment_links', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Idempotency-Key': linkIdempotencyKey,
+      },
       body: linkParams.toString(),
     })
   } catch (err) {
