@@ -326,16 +326,26 @@ export function SidebarNav({
           <div
             style={{
               position: 'absolute',
-              top: '6px',
-              right: '6px',
-              width: '6px',
-              height: '6px',
-              borderRadius: '50%',
+              top: '2px',
+              right: '2px',
+              minWidth: '16px',
+              height: '16px',
+              borderRadius: '8px',
               backgroundColor: badgeColor,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '9px',
+              fontWeight: 700,
+              color: '#fff',
+              lineHeight: 1,
+              padding: '0 3px',
             }}
             aria-hidden="true"
             title={`${badgeCount} pending`}
-          />
+          >
+            {badgeCount > 99 ? '99+' : badgeCount}
+          </div>
         )}
       </button>
     );
