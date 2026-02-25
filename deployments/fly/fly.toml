@@ -1,0 +1,40 @@
+app = "bitbit-workers"
+primary_region = "syd"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  NODE_ENV = "production"
+  WORKER_TYPE = "cron"
+  LOG_LEVEL = "info"
+
+[http_service]
+  internal_port = 3001
+  force_https = true
+  auto_stop_machines = "suspend"
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [http_service.concurrency]
+    type = "requests"
+    hard_limit = 50
+    soft_limit = 25
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"
+  count = 2
+
+[checks]
+  [checks.health]
+    port = 3001
+    type = "http"
+    interval = "30s"
+    timeout = "5s"
+    path = "/health"
+    method = "GET"
+
+[metrics]
+  port = 9091
+  path = "/metrics"
