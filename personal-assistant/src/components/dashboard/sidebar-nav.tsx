@@ -19,6 +19,7 @@ import {
   SearchCheck,
   FileSearch,
   FileText,
+  Brain,
   DollarSign,
   BarChart3,
   Wrench,
@@ -50,6 +51,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
   'ad-scripts': Film,
   'ai-search': SearchCheck,
   reports:     FileText,
+  knowledge:   Brain,
   costs:       DollarSign,
   analytics:   BarChart3,
   activity:    Activity,
@@ -57,7 +59,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
   settings:    Settings,
 };
 
-const MAIN_TAB_IDS = ['command-center', 'dashboard', 'chat', 'inbox', 'channels', 'medications', 'contacts', 'leads', 'invoices', 'tenders', 'sentry', 'approvals', 'ad-scripts', 'ai-search', 'reports', 'costs', 'analytics', 'activity', 'admin'];
+const MAIN_TAB_IDS = ['command-center', 'dashboard', 'chat', 'inbox', 'channels', 'medications', 'contacts', 'leads', 'invoices', 'tenders', 'sentry', 'approvals', 'ad-scripts', 'ai-search', 'reports', 'knowledge', 'costs', 'analytics', 'activity', 'admin'];
 
 // Primary tabs always visible; advanced tabs hidden behind toggle
 const PRIMARY_TAB_IDS = ['command-center', 'dashboard', 'chat', 'inbox', 'leads', 'invoices', 'tenders', 'contacts', 'approvals'];
