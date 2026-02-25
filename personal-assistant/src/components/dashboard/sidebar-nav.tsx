@@ -22,6 +22,8 @@ import {
   BarChart3,
   Settings,
   ChevronDown,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import type { TabDef } from './spa-shell';
 import { NotificationCenter } from './notification-center';
@@ -94,6 +96,21 @@ export function SidebarNav({
   const sidebarRef = useRef<HTMLElement>(null);
   const navRef = useRef<HTMLElement>(null);
   const indicatorRef = useRef<HTMLDivElement>(null);
+
+  // Theme toggle
+  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
+    if (typeof window === 'undefined') return 'dark';
+    return (localStorage.getItem('bitbit-theme') as 'dark' | 'light') || 'dark';
+  });
+
+  const toggleTheme = useCallback(() => {
+    setTheme(prev => {
+      const next = prev === 'dark' ? 'light' : 'dark';
+      localStorage.setItem('bitbit-theme', next);
+      document.documentElement.className = next;
+      return next;
+    });
+  }, []);
 
   // Progressive disclosure: show/hide advanced tabs
   const [showAdvanced, setShowAdvanced] = useState(() => {
@@ -370,8 +387,16 @@ export function SidebarNav({
         <NotificationCenter onTabChange={onTabChange} />
       </div>
 
-      {/* Settings pinned to bottom */}
+      {/* Theme toggle + Settings pinned to bottom */}
       <div className="bb-sidebar__bottom">
+        <button
+          onClick={toggleTheme}
+          className="bb-sidebar__item"
+          data-tooltip={theme === 'dark' ? 'Light mode' : 'Dark mode'}
+          aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+        >
+          {theme === 'dark' ? <Sun size={18} strokeWidth={1.8} /> : <Moon size={18} strokeWidth={1.8} />}
+        </button>
         {renderNavItem('settings', tabLabels['settings'] || 'Settings')}
       </div>
 

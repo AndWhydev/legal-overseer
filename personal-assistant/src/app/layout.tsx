@@ -30,12 +30,33 @@ const ebGaramond = EB_Garamond({
 });
 
 export const metadata: Metadata = {
-  title: "BitBit",
-  description: "AI-powered operations assistant",
+  title: {
+    default: "BitBit - AI Operations Platform",
+    template: "%s | BitBit",
+  },
+  description: "Agentic AI operations platform for digital agencies. Automate leads, invoices, comms, and tenders with intelligent agents.",
+  keywords: ["AI operations", "digital agency", "automation", "agents", "leads", "invoices"],
+  authors: [{ name: "BitBit" }],
   icons: {
     icon: "/bitbit-logo.svg",
     shortcut: "/bitbit-logo.svg",
     apple: "/bitbit-logo-192.png",
+  },
+  openGraph: {
+    type: "website",
+    siteName: "BitBit",
+    title: "BitBit - AI Operations Platform",
+    description: "Agentic AI operations platform for digital agencies. Automate leads, invoices, comms, and tenders.",
+    locale: "en_AU",
+  },
+  twitter: {
+    card: "summary",
+    title: "BitBit - AI Operations Platform",
+    description: "Agentic AI operations platform for digital agencies.",
+  },
+  robots: {
+    index: false,
+    follow: false,
   },
 };
 

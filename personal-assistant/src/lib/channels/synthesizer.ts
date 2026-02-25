@@ -10,6 +10,9 @@ import { gscAdapter } from './gsc'
 import { asanaAdapter } from './asana'
 import { calendlyAdapter } from './calendly'
 import { stripeAdapter } from './stripe'
+import { waitForRateLimit } from './rate-limiter'
+import { checkAllChannelHealth, storeHealthReports } from './health'
+import type { ChannelHealthReport } from './health'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 
@@ -163,6 +166,9 @@ export async function synthesize(options: SynthesisOptions): Promise<SyncResult[
         continue
       }
 
+      // Rate-limit before pulling
+      await waitForRateLimit(channelType)
+
       const messages = await adapter.pull({}, options.since)
       result.messagesFound = messages.length
 
@@ -270,4 +276,21 @@ export async function synthesize(options: SynthesisOptions): Promise<SyncResult[
   }
 
   return results
+}
+
+/**
+ * Get health status for all registered channel adapters.
+ * Optionally persists results to Supabase for dashboard display.
+ */
+export async function getChannelHealth(
+  options?: { supabase?: SupabaseClient; orgId?: string },
+): Promise<ChannelHealthReport[]> {
+  const allAdapters = getAllAdapters()
+  const reports = await checkAllChannelHealth(allAdapters)
+
+  if (options?.supabase && options.orgId) {
+    await storeHealthReports(options.supabase, options.orgId, reports)
+  }
+
+  return reports
 }

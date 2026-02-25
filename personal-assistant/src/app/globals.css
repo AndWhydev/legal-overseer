@@ -150,6 +150,77 @@ body {
   --sidebar-ring: #D4A574;
 }
 
+/* Light mode overrides */
+html.light {
+  --background: #FAFAF9;
+  --foreground: #1A1A1B;
+  --card: #FFFFFF;
+  --card-foreground: #1A1A1B;
+  --popover: #FFFFFF;
+  --popover-foreground: #1A1A1B;
+  --elevated: #F0F0EE;
+
+  --primary: #9A7B5B;
+  --primary-foreground: #FFFFFF;
+  --primary-hover: #7D6348;
+  --primary-light: #C4A882;
+
+  --secondary: #F0F0EE;
+  --secondary-foreground: #1A1A1B;
+  --muted: #F0F0EE;
+  --muted-foreground: #78736A;
+
+  --accent: #9A7B5B;
+  --accent-foreground: #FFFFFF;
+
+  --destructive: #DC5858;
+  --success: #5A9B6B;
+  --warning: #C4943E;
+
+  --border: #E4E2DD;
+  --border-hover: #D4D1CC;
+  --input: #F0F0EE;
+  --ring: #9A7B5B;
+
+  --text-primary: #1A1A1B;
+  --text-secondary: #5C5750;
+  --text-muted: #78736A;
+
+  --chart-1: #9A7B5B;
+  --chart-2: #5A9B6B;
+  --chart-3: #C4A882;
+  --chart-4: #7C5FC7;
+  --chart-5: #DC5858;
+
+  --sidebar: #FAFAF9;
+  --sidebar-foreground: #1A1A1B;
+  --sidebar-primary: #9A7B5B;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #F0F0EE;
+  --sidebar-accent-foreground: #1A1A1B;
+  --sidebar-border: #E4E2DD;
+  --sidebar-ring: #9A7B5B;
+
+  color-scheme: light;
+}
+
+html.light .glass-card {
+  background: rgba(255, 255, 255, 0.8);
+  border-color: rgba(228, 226, 221, 0.6);
+}
+
+html.light .glass-sidebar {
+  background: rgba(250, 250, 249, 0.9);
+}
+
+html.light ::-webkit-scrollbar-thumb {
+  background: #D4D1CC;
+}
+
+html.light ::-webkit-scrollbar-thumb:hover {
+  background: #B8B5B0;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
