@@ -39,11 +39,11 @@ Requirements for milestone v1.1: Agent Runtime + First Agents.
 
 ### Invoice Flow Agent
 
-- [ ] **INVC-01**: Invoice Flow creates invoices from natural language ("Invoice Sezer for White House RE")
-- [ ] **INVC-02**: Invoice Flow generates branded PDF invoices with configurable payment terms
-- [ ] **INVC-03**: Invoice Flow sends invoices via email with PDF attachment (with approval)
-- [ ] **INVC-04**: Invoice Flow tracks status (draft->sent->viewed->overdue->paid)
-- [ ] **INVC-05**: Invoice Flow detects and prevents duplicate invoicing (never send same invoice twice)
+- [x] **INVC-01**: Invoice Flow creates invoices from natural language ("Invoice Sezer for White House RE")
+- [x] **INVC-02**: Invoice Flow generates branded PDF invoices with configurable payment terms *(implemented as HTML invoice with org branding; binary PDF generation deferred)*
+- [ ] **INVC-03**: Invoice Flow sends invoices via email with PDF attachment (with approval) *(HTML generation and status update implemented; actual email transport via SMTP/Resend/SendGrid not yet wired)*
+- [x] **INVC-04**: Invoice Flow tracks status (draft->sent->viewed->overdue->paid)
+- [x] **INVC-05**: Invoice Flow detects and prevents duplicate invoicing (never send same invoice twice)
 
 ### Infrastructure
 
@@ -110,11 +110,11 @@ Deferred to future milestones. Tracked but not in current roadmap.
 | LEAD-03 | Phase 11 | Complete |
 | LEAD-04 | Phase 11 | Complete |
 | LEAD-05 | Phase 11 | Complete |
-| INVC-01 | Phase 12 | Pending |
-| INVC-02 | Phase 12 | Pending |
-| INVC-03 | Phase 12 | Pending |
-| INVC-04 | Phase 12 | Pending |
-| INVC-05 | Phase 12 | Pending |
+| INVC-01 | Phase 12 | Complete |
+| INVC-02 | Phase 12 | Complete (HTML; binary PDF deferred) |
+| INVC-03 | Phase 12 | Partial (email transport not wired) |
+| INVC-04 | Phase 12 | Complete |
+| INVC-05 | Phase 12 | Complete |
 
 **Coverage:**
 - v1.1 requirements: 26 total
@@ -123,4 +123,4 @@ Deferred to future milestones. Tracked but not in current roadmap.
 
 ---
 *Requirements defined: 2026-02-22*
-*Last updated: 2026-02-22 after roadmap creation*
+*Last updated: 2026-02-25 after P0 stabilization pass*

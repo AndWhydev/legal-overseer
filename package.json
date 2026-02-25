@@ -5,17 +5,16 @@
   "description": "Agentic AI operations platform — deploy autonomous agents to run business operations",
   "workspaces": [
     "packages/core",
-    "packages/dashboard",
     "packages/agents/*",
     "deployments/*",
     "personal-assistant"
   ],
   "scripts": {
-    "dev": "npm run dev --workspace=packages/dashboard",
-    "build": "npm run build --workspace=packages/core && npm run build --workspace=packages/dashboard",
-    "dev:awu": "BITBIT_DEPLOYMENT=awu npm run dev --workspace=packages/dashboard",
-    "dev:torkay": "BITBIT_DEPLOYMENT=torkay npm run dev --workspace=packages/dashboard",
-    "dev:demo": "BITBIT_DEPLOYMENT=demo npm run dev --workspace=packages/dashboard",
+    "dev": "npm run dev --workspace=personal-assistant",
+    "build": "npm run build --workspace=packages/core && npm run build --workspace=personal-assistant",
+    "dev:awu": "BITBIT_DEPLOYMENT=awu npm run dev --workspace=personal-assistant",
+    "dev:torkay": "BITBIT_DEPLOYMENT=torkay npm run dev --workspace=personal-assistant",
+    "dev:demo": "BITBIT_DEPLOYMENT=demo npm run dev --workspace=personal-assistant",
     "lint": "npm run lint --workspaces --if-present",
     "db:migrate": "npm run db:migrate --workspace=packages/core",
     "db:seed": "npm run db:seed --workspace=packages/core",

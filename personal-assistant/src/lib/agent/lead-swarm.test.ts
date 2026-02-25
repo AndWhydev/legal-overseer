@@ -74,6 +74,15 @@ function createMockSupabase(messages: MessageRow[]) {
 
       if (table === 'leads') {
         return {
+          update(patch: Record<string, unknown>) {
+            return {
+              eq(key: string, value: unknown) {
+                const lead = state.leads.find((l) => l[key] === value)
+                if (lead) Object.assign(lead, patch)
+                return Promise.resolve({ data: null, error: null })
+              },
+            }
+          },
           upsert(payload: Record<string, unknown>) {
             const key = `${String(payload.org_id)}:${String(payload.source_message_id)}`
             const existingIndex = state.leads.findIndex(
@@ -86,12 +95,34 @@ function createMockSupabase(messages: MessageRow[]) {
               state.leads.push(payload)
             }
 
-            return Promise.resolve({ data: null, error: null })
+            const leadData = { id: `lead-${state.leads.length}`, ...payload }
+            return {
+              select() {
+                return {
+                  single() {
+                    return Promise.resolve({ data: leadData, error: null })
+                  },
+                }
+              },
+            }
           },
         }
       }
 
-      throw new Error(`Unsupported table ${table}`)
+      // Catch-all for tables used by downstream functions (agent_configs, approval_queue, etc.)
+      const fakeRecord = { id: 'fake-1', org_id: 'org-1', status: 'pending', name: 'mock', action_summary: 'mock' }
+      const noopChain: Record<string, unknown> = {
+        select() { return noopChain },
+        eq() { return noopChain },
+        in() { return noopChain },
+        order() { return noopChain },
+        limit() { return Promise.resolve({ data: [], error: null, count: 0 }) },
+        single() { return Promise.resolve({ data: fakeRecord, error: null }) },
+        insert() { return noopChain },
+        update() { return noopChain },
+        upsert() { return noopChain },
+      }
+      return noopChain
     },
   }
 
