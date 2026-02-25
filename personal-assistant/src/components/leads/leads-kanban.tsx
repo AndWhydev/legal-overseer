@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Handshake } from 'lucide-react'
 import { SkeletonKanban } from '@/components/ui/skeleton'
 import { EmptyState } from '@/components/ui/empty-state'
+import { useToast } from '@/components/ui/toast'
 
 type LeadStatus = 'new' | 'qualified' | 'booked' | 'converted' | 'lost'
 type LeadScore = 'hot' | 'warm' | 'cold'
@@ -59,6 +60,7 @@ function moveOptionsFor(status: LeadStatus): LeadStatus[] {
 }
 
 export function LeadsKanban() {
+  const { toast } = useToast()
   const [leads, setLeads] = useState<LeadCardData[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isRefreshing, setIsRefreshing] = useState(false)
@@ -135,9 +137,12 @@ export function LeadsKanban() {
       }
 
       await refreshAfterMutation(`Lead moved to ${STATUS_LABEL[nextStatus]}.`)
+      toast('success', `Lead moved to ${STATUS_LABEL[nextStatus]}.`)
     } catch (error) {
       setLeads(previousLeads)
-      setErrorMessage(error instanceof Error ? error.message : 'Failed to update lead stage')
+      const msg = error instanceof Error ? error.message : 'Failed to update lead stage'
+      setErrorMessage(msg)
+      toast('error', msg)
     } finally {
       setMovingLeadId(null)
     }

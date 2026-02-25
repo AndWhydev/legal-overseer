@@ -15,6 +15,7 @@ import { BitBitOverlay } from './bitbit-overlay';
 import { SplashScreen } from './splash-screen';
 import { OnboardingTour } from './onboarding-tour';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
+import { ToastProvider } from '@/components/ui/toast';
 
 // ─── Tab definitions ────────────────────────────────────────────────────────
 
@@ -211,6 +212,7 @@ export function SPAShell({ displayName, initials }: SPAShellProps) {
   }, [navigateToId]);
 
   return (
+    <ToastProvider>
     <SplashScreen ready={tabsReady} minDisplayMs={1200}>
       <BitBitOverlay currentPage={currentPage} activeTabId={TABS[activeNavIndex].id}>
         <div className="bb-layout bb-dot-grid">
@@ -274,6 +276,7 @@ export function SPAShell({ displayName, initials }: SPAShellProps) {
         <OnboardingTour onNavigate={handleTabChange} />
       </BitBitOverlay>
     </SplashScreen>
+    </ToastProvider>
   );
 }
 

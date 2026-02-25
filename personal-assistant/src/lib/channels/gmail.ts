@@ -1,4 +1,77 @@
 import type { ChannelAdapter, ChannelMessage } from './types'
+import type { SupabaseClient } from '@supabase/supabase-js'
+
+// ---------------------------------------------------------------------------
+// Gmail OAuth2 token refresh (for OAuth-based Gmail, alongside IMAP app-password)
+// ---------------------------------------------------------------------------
+
+interface GmailOAuthCredentials {
+  client_id: string
+  client_secret: string
+  access_token?: string
+  refresh_token?: string
+  token_expires_at?: string
+}
+
+function isGmailTokenExpired(expiresAt?: string): boolean {
+  if (!expiresAt) return true
+  return new Date(expiresAt).getTime() - 5 * 60 * 1000 <= Date.now()
+}
+
+/**
+ * Refresh Gmail OAuth2 token and persist to Supabase channel_configs.
+ */
+export async function refreshGmailToken(
+  client: SupabaseClient,
+  orgId: string,
+  creds: GmailOAuthCredentials,
+): Promise<string | null> {
+  if (creds.access_token && !isGmailTokenExpired(creds.token_expires_at)) {
+    return creds.access_token
+  }
+
+  if (!creds.refresh_token) return null
+
+  try {
+    const res = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id: creds.client_id,
+        client_secret: creds.client_secret,
+        refresh_token: creds.refresh_token,
+        grant_type: 'refresh_token',
+      }),
+    })
+
+    if (!res.ok) return null
+
+    const data = (await res.json()) as {
+      access_token: string
+      expires_in: number
+      refresh_token?: string
+    }
+
+    const expiresAt = new Date(Date.now() + data.expires_in * 1000).toISOString()
+
+    await client
+      .from('channel_configs')
+      .update({
+        credentials: {
+          ...creds,
+          access_token: data.access_token,
+          refresh_token: data.refresh_token || creds.refresh_token,
+          token_expires_at: expiresAt,
+        },
+      })
+      .eq('org_id', orgId)
+      .eq('channel_type', 'gmail')
+
+    return data.access_token
+  } catch {
+    return null
+  }
+}
 
 export const gmailAdapter: ChannelAdapter = {
   type: 'gmail',

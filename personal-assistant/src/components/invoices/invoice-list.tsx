@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ReceiptText } from 'lucide-react'
 import { SkeletonTable } from '@/components/ui/skeleton'
 import { EmptyState } from '@/components/ui/empty-state'
+import { useToast } from '@/components/ui/toast'
 
 type InvoiceStatus = 'draft' | 'sent' | 'viewed' | 'overdue' | 'paid' | 'cancelled'
 
@@ -65,6 +66,7 @@ function canCancel(status: InvoiceStatus): boolean {
 }
 
 export function InvoiceList() {
+  const { toast } = useToast()
   const [invoices, setInvoices] = useState<InvoiceRow[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [activeFilter, setActiveFilter] = useState<'all' | InvoiceStatus>('all')
@@ -133,19 +135,25 @@ export function InvoiceList() {
       }
 
       if (payload.queued) {
+        toast('info', 'Invoice send queued for approval.')
         setMessage('Invoice send queued for approval.')
       } else if (status === 'paid') {
+        toast('success', 'Invoice marked as paid.')
         setMessage('Invoice marked as paid.')
       } else if (status === 'cancelled') {
+        toast('success', 'Invoice cancelled.')
         setMessage('Invoice cancelled.')
       } else {
+        toast('success', 'Invoice updated.')
         setMessage('Invoice updated.')
       }
 
       const statusFilter = activeFilter === 'all' ? undefined : activeFilter
       await loadInvoices(statusFilter)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update invoice')
+      const msg = err instanceof Error ? err.message : 'Failed to update invoice'
+      toast('error', msg)
+      setError(msg)
     } finally {
       setBusyInvoiceId(null)
     }
