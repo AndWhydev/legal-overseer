@@ -12,6 +12,8 @@ import { runOnboardingTick } from './client-onboarding'
 import { runAdScriptGenTick } from './ad-script-gen'
 import { runAISearchTick } from './ai-search-optimizer'
 import { runTenderHunterTick } from './tender-hunter'
+import { canProceed } from './cost-guard'
+import { withCircuitBreaker, CircuitOpenError } from './circuit-breaker'
 
 /**
  * Result of checking one agent's schedule.
@@ -178,7 +180,26 @@ export async function runScheduledAgents(
       continue
     }
 
+    // Cost guard: check daily budget before running agent
+    const costCheck = await canProceed(supabase, config.org_id)
+    if (!costCheck.allowed) {
+      console.warn(`[scheduler] Cost guard halted ${config.agent_type} for org ${config.org_id}: ${costCheck.reason}`)
+      results.push({
+        agentType: config.agent_type,
+        orgId: config.org_id,
+        triggered: false,
+        reason: 'not_due',
+        lastRunAt: lastRunAt?.toISOString(),
+      })
+      continue
+    }
+
     let outputSummary = 'pending'
+    const circuitKey = `agent:${config.agent_type}:${config.org_id}`
+
+    // Circuit breaker: skip if circuit is open for this agent+org
+    const runWithBreaker = <T>(fn: () => Promise<T>) =>
+      withCircuitBreaker(circuitKey, fn)
 
     if (config.agent_type === 'sentry') {
       if (processedSentryOrgs.has(config.org_id)) {
@@ -195,7 +216,7 @@ export async function runScheduledAgents(
       processedSentryOrgs.add(config.org_id)
 
       try {
-        const sentryResult = await runSentryTick(supabase, config.org_id, config.id)
+        const sentryResult = await runWithBreaker(() => runSentryTick(supabase, config.org_id, config.id))
         const escalationResult = await processSentryEscalations(supabase, config.org_id)
         outputSummary =
           `sentry processed=${sentryResult.processed} triggered=${sentryResult.triggered} ` +
@@ -219,7 +240,7 @@ export async function runScheduledAgents(
       processedLeadSwarmOrgs.add(config.org_id)
 
       try {
-        const leadResult = await runLeadSwarmTick(supabase, config.org_id, config.id)
+        const leadResult = await runWithBreaker(() => runLeadSwarmTick(supabase, config.org_id, config.id))
         outputSummary =
           `lead-swarm processed=${leadResult.processed} created=${leadResult.created} ` +
           `qualified=${leadResult.qualified} hot=${leadResult.hot} failed=${leadResult.failed}`
@@ -242,7 +263,7 @@ export async function runScheduledAgents(
       processedInvoiceFlowOrgs.add(config.org_id)
 
       try {
-        const invoiceResult = await runInvoiceFlowTick(supabase, config.org_id, config.id)
+        const invoiceResult = await runWithBreaker(() => runInvoiceFlowTick(supabase, config.org_id, config.id))
         outputSummary =
           `invoice-flow processed=${invoiceResult.processed} created=${invoiceResult.created} ` +
           `duplicates=${invoiceResult.duplicatesBlocked} sent=${invoiceResult.sent} overdue=${invoiceResult.overdue} failed=${invoiceResult.failed}`
@@ -265,7 +286,7 @@ export async function runScheduledAgents(
       processedTriageOrgs.add(config.org_id)
 
       try {
-        const triageResult = await runTriage(supabase, config.org_id)
+        const triageResult = await runWithBreaker(() => runTriage(supabase, config.org_id))
         outputSummary =
           `channel-triage processed=${triageResult.processed} actionable=${triageResult.actionable} ` +
           `informational=${triageResult.informational} spam=${triageResult.spam} routed=${triageResult.routed.length}`
@@ -288,7 +309,7 @@ export async function runScheduledAgents(
       processedClientCommsOrgs.add(config.org_id)
 
       try {
-        const commsResult = await runClientCommsTick(supabase, config.org_id, config.id)
+        const commsResult = await runWithBreaker(() => runClientCommsTick(supabase, config.org_id, config.id))
         outputSummary =
           `client-comms processed=${commsResult.processed} drafted=${commsResult.drafted} ` +
           `sent=${commsResult.sent} queued=${commsResult.queued} failed=${commsResult.failed}`
@@ -311,7 +332,7 @@ export async function runScheduledAgents(
       processedProposalBotOrgs.add(config.org_id)
 
       try {
-        const proposalResult = await runProposalBotTick(supabase, config.org_id, config.id)
+        const proposalResult = await runWithBreaker(() => runProposalBotTick(supabase, config.org_id, config.id))
         outputSummary =
           `proposal-bot processed=${proposalResult.processed} follow-ups=${proposalResult.followUpsSent} ` +
           `failed=${proposalResult.failed}`
@@ -334,7 +355,7 @@ export async function runScheduledAgents(
       processedOnboardingOrgs.add(config.org_id)
 
       try {
-        const onbResult = await runOnboardingTick(supabase, config.org_id, config.id)
+        const onbResult = await runWithBreaker(() => runOnboardingTick(supabase, config.org_id, config.id))
         outputSummary =
           `client-onboarding processed=${onbResult.processed} welcomes=${onbResult.welcomesSent} ` +
           `credential-reminders=${onbResult.credentialReminders} projects=${onbResult.projectsCreated} failed=${onbResult.failed}`
@@ -357,7 +378,7 @@ export async function runScheduledAgents(
       processedAdScriptGenOrgs.add(config.org_id)
 
       try {
-        const adResult = await runAdScriptGenTick(supabase, config.org_id, config.id)
+        const adResult = await runWithBreaker(() => runAdScriptGenTick(supabase, config.org_id, config.id))
         outputSummary =
           `ad-script-gen processed=${adResult.processed} generated=${adResult.generated} ` +
           `failed=${adResult.failed}`
@@ -380,7 +401,7 @@ export async function runScheduledAgents(
       processedAISearchOrgs.add(config.org_id)
 
       try {
-        const searchResult = await runAISearchTick(supabase, config.org_id, config.id)
+        const searchResult = await runWithBreaker(() => runAISearchTick(supabase, config.org_id, config.id))
         outputSummary =
           `ai-search-optimizer audits=${searchResult.auditsRun} changes=${searchResult.changesDetected} ` +
           `alerts=${searchResult.alertsSent} failed=${searchResult.failed}`
@@ -403,7 +424,7 @@ export async function runScheduledAgents(
       processedTenderHunterOrgs.add(config.org_id)
 
       try {
-        const tenderResult = await runTenderHunterTick(supabase, config.org_id, config.id)
+        const tenderResult = await runWithBreaker(() => runTenderHunterTick(supabase, config.org_id, config.id))
         outputSummary =
           `tender-hunter scanned=${tenderResult.scanned} new=${tenderResult.newTenders} ` +
           `evaluated=${tenderResult.evaluated} errors=${tenderResult.errors}`
