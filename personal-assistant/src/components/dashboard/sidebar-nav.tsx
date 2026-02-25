@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   Gauge,
   MessageSquare,
+  Inbox,
   Cable,
   Pill,
   Users,
@@ -28,6 +29,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
   'command-center': Gauge,
   dashboard:   LayoutDashboard,
   chat:        MessageSquare,
+  inbox:       Inbox,
   channels:    Cable,
   medications: Pill,
   contacts:    Users,
@@ -39,10 +41,10 @@ const ICON_MAP: Record<string, React.ElementType> = {
   settings:    Settings,
 };
 
-const MAIN_TAB_IDS = ['command-center', 'dashboard', 'chat', 'channels', 'medications', 'contacts', 'leads', 'invoices', 'sentry', 'approvals', 'activity'];
+const MAIN_TAB_IDS = ['command-center', 'dashboard', 'chat', 'inbox', 'channels', 'medications', 'contacts', 'leads', 'invoices', 'sentry', 'approvals', 'activity'];
 
 // Primary tabs always visible; advanced tabs hidden behind toggle
-const PRIMARY_TAB_IDS = ['command-center', 'dashboard', 'chat', 'leads', 'invoices', 'contacts', 'approvals'];
+const PRIMARY_TAB_IDS = ['command-center', 'dashboard', 'chat', 'inbox', 'leads', 'invoices', 'contacts', 'approvals'];
 const ADVANCED_TAB_IDS = ['channels', 'medications', 'sentry', 'activity'];
 
 // ─── Constants ──────────────────────────────────────────────────────────────

@@ -6,6 +6,9 @@ import { runInvoiceFlowTick } from './invoice-flow'
 import { runSentryTick } from './sentry'
 import { processSentryEscalations } from './sentry-escalation'
 import { runTriage } from './channel-triage'
+import { runClientCommsTick } from './client-comms'
+import { runProposalBotTick } from './proposal-bot'
+import { runOnboardingTick } from './client-onboarding'
 
 /**
  * Result of checking one agent's schedule.
@@ -128,6 +131,9 @@ export async function runScheduledAgents(
   const processedLeadSwarmOrgs = new Set<string>()
   const processedInvoiceFlowOrgs = new Set<string>()
   const processedTriageOrgs = new Set<string>()
+  const processedClientCommsOrgs = new Set<string>()
+  const processedProposalBotOrgs = new Set<string>()
+  const processedOnboardingOrgs = new Set<string>()
 
   for (const config of configs) {
     const schedule = config.schedule as AgentSchedule | null
@@ -260,6 +266,75 @@ export async function runScheduledAgents(
       } catch (error) {
         const message = error instanceof Error ? error.message : 'unknown'
         outputSummary = `channel-triage error=${message}`
+      }
+    } else if (config.agent_type === 'client-comms') {
+      if (processedClientCommsOrgs.has(config.org_id)) {
+        results.push({
+          agentType: config.agent_type,
+          orgId: config.org_id,
+          triggered: false,
+          reason: 'already_running',
+          lastRunAt: lastRunAt?.toISOString(),
+        })
+        continue
+      }
+
+      processedClientCommsOrgs.add(config.org_id)
+
+      try {
+        const commsResult = await runClientCommsTick(supabase, config.org_id, config.id)
+        outputSummary =
+          `client-comms processed=${commsResult.processed} drafted=${commsResult.drafted} ` +
+          `sent=${commsResult.sent} queued=${commsResult.queued} failed=${commsResult.failed}`
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'unknown'
+        outputSummary = `client-comms error=${message}`
+      }
+    } else if (config.agent_type === 'proposal-bot') {
+      if (processedProposalBotOrgs.has(config.org_id)) {
+        results.push({
+          agentType: config.agent_type,
+          orgId: config.org_id,
+          triggered: false,
+          reason: 'already_running',
+          lastRunAt: lastRunAt?.toISOString(),
+        })
+        continue
+      }
+
+      processedProposalBotOrgs.add(config.org_id)
+
+      try {
+        const proposalResult = await runProposalBotTick(supabase, config.org_id, config.id)
+        outputSummary =
+          `proposal-bot processed=${proposalResult.processed} follow-ups=${proposalResult.followUpsSent} ` +
+          `failed=${proposalResult.failed}`
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'unknown'
+        outputSummary = `proposal-bot error=${message}`
+      }
+    } else if (config.agent_type === 'client-onboarding') {
+      if (processedOnboardingOrgs.has(config.org_id)) {
+        results.push({
+          agentType: config.agent_type,
+          orgId: config.org_id,
+          triggered: false,
+          reason: 'already_running',
+          lastRunAt: lastRunAt?.toISOString(),
+        })
+        continue
+      }
+
+      processedOnboardingOrgs.add(config.org_id)
+
+      try {
+        const onbResult = await runOnboardingTick(supabase, config.org_id, config.id)
+        outputSummary =
+          `client-onboarding processed=${onbResult.processed} welcomes=${onbResult.welcomesSent} ` +
+          `credential-reminders=${onbResult.credentialReminders} projects=${onbResult.projectsCreated} failed=${onbResult.failed}`
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'unknown'
+        outputSummary = `client-onboarding error=${message}`
       }
     }
 

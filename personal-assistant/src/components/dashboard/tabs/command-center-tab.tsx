@@ -3,15 +3,32 @@
 import React, { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { StatCard, StatusBadge, ProcessPipeline, TimelineBar } from '@/components/ui/data-viz';
-import { AlertCircle, Clock, ShieldCheck, Zap, Handshake, Users, CheckCircle2, Link as LinkIcon, TrendingUp, Calendar, ReceiptText, MessageSquare, BellOff } from 'lucide-react';
+import { AlertCircle, Clock, ShieldCheck, Zap, Handshake, Users, CheckCircle2, Link as LinkIcon, TrendingUp, Calendar, ReceiptText, MessageSquare, BellOff, Inbox, Activity } from 'lucide-react';
 import { TabSkeleton } from './tab-skeleton';
+
+interface AgentRun {
+  id: string;
+  output_summary: string;
+  created_at: string;
+  agent_configs?: { name: string | null; agent_type: string } | null;
+}
+
+interface PriorityTask {
+  id: string;
+  title: string;
+  priority: string;
+  status: string;
+}
 
 function CommandCenterTab() {
   const [loading, setLoading] = useState(true);
-  const [approvals, setApprovals] = useState<any[]>([]);
-  const [leads, setLeads] = useState<any[]>([]);
-  const [tasks, setTasks] = useState<any[]>([]);
-  const [recentActivity, setRecentActivity] = useState<any[]>([]);
+  const [approvals, setApprovals] = useState<Record<string, unknown>[]>([]);
+  const [leads, setLeads] = useState<Record<string, unknown>[]>([]);
+  const [tasks, setTasks] = useState<Record<string, unknown>[]>([]);
+  const [recentActivity, setRecentActivity] = useState<Record<string, unknown>[]>([]);
+  const [agentRuns, setAgentRuns] = useState<AgentRun[]>([]);
+  const [todaysPriorities, setTodaysPriorities] = useState<PriorityTask[]>([]);
+  const [inboxCount, setInboxCount] = useState(0);
   const [processingIds, setProcessingIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -23,11 +40,20 @@ function CommandCenterTab() {
       supabase.from('leads').select('*').in('status', ['new', 'contacted', 'qualified']).order('created_at', { ascending: false }).limit(3),
       supabase.from('tasks').select('*').eq('status', 'todo').lt('due_date', new Date().toISOString()).limit(5),
       supabase.from('channel_messages').select('*').order('received_at', { ascending: false }).limit(5),
-    ]).then(([appRes, leadRes, taskRes, actRes]) => {
+      // Agent activity feed
+      supabase.from('agent_runs').select('id, output_summary, created_at, agent_configs(name, agent_type)').order('created_at', { ascending: false }).limit(8),
+      // Today's priorities (critical + high tasks)
+      supabase.from('tasks').select('id, title, priority, status').in('priority', ['critical', 'high']).in('status', ['pending', 'in_progress']).order('priority', { ascending: true }).limit(5),
+      // Unread inbox count
+      supabase.from('channel_messages').select('id', { count: 'exact', head: true }).eq('processed', false),
+    ]).then(([appRes, leadRes, taskRes, actRes, agentRes, priorityRes, inboxRes]) => {
       setApprovals(appRes.data || []);
       setLeads(leadRes.data || []);
       setTasks(taskRes.data || []);
       setRecentActivity(actRes.data || []);
+      setAgentRuns((agentRes.data || []) as unknown as AgentRun[]);
+      setTodaysPriorities((priorityRes.data || []) as PriorityTask[]);
+      setInboxCount(inboxRes.count || 0);
       setLoading(false);
     }).catch(() => {
       setLoading(false);
@@ -98,7 +124,7 @@ function CommandCenterTab() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <button
           onClick={() => {
-            if (approvals.length > 0) handleApprove(approvals[0].id);
+            if (approvals.length > 0) handleApprove(approvals[0].id as string);
           }}
           disabled={approvals.length === 0}
           className="flex items-center gap-3 p-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-elevated)] hover:bg-[var(--bg-hover)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-left"
@@ -129,22 +155,22 @@ function CommandCenterTab() {
 
         <button
           onClick={() => {
-            window.dispatchEvent(new CustomEvent('bb-navigate', { detail: 'chat' }));
+            window.dispatchEvent(new CustomEvent('bb-navigate', { detail: 'inbox' }));
           }}
           className="flex items-center gap-3 p-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-elevated)] hover:bg-[var(--bg-hover)] transition-colors text-left"
         >
-          <div className="w-9 h-9 rounded-lg bg-blue-500/15 flex items-center justify-center flex-shrink-0">
-            <MessageSquare size={18} className="text-blue-500" />
+          <div className="w-9 h-9 rounded-lg bg-violet-500/15 flex items-center justify-center flex-shrink-0">
+            <Inbox size={18} className="text-violet-500" />
           </div>
           <div className="min-w-0">
-            <p className="text-xs font-medium truncate">Reply Message</p>
-            <p className="text-[11px] text-muted-foreground">Open chat</p>
+            <p className="text-xs font-medium truncate">Inbox</p>
+            <p className="text-[11px] text-muted-foreground">{inboxCount} unread</p>
           </div>
         </button>
 
         <button
           onClick={() => {
-            if (approvals.length > 0) handleDismiss(approvals[0].id);
+            if (approvals.length > 0) handleDismiss(approvals[0].id as string);
           }}
           disabled={approvals.length === 0}
           className="flex items-center gap-3 p-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-elevated)] hover:bg-[var(--bg-hover)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-left"
@@ -160,14 +186,14 @@ function CommandCenterTab() {
       </div>
 
       {/* KPI Widgets */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
         <StatCard
           label="Pending Approvals"
           value={approvals.length}
           icon={<ShieldCheck className="text-amber-500" />}
         />
         <StatCard
-          label="Hot Leads"
+          label="Active Leads"
           value={leads.length}
           icon={<Handshake className="text-blue-500" />}
         />
@@ -175,6 +201,11 @@ function CommandCenterTab() {
           label="Overdue Tasks"
           value={tasks.length}
           icon={<AlertCircle className="text-red-500" />}
+        />
+        <StatCard
+          label="Unread Messages"
+          value={inboxCount}
+          icon={<Inbox className="text-violet-500" />}
         />
         <StatCard
           label="System Status"
@@ -198,25 +229,25 @@ function CommandCenterTab() {
               <p className="text-muted-foreground text-sm py-4 text-center">No pending approvals. Great work!</p>
             ) : (
               approvals.map(app => (
-                <div key={app.id} className="flex items-center justify-between p-3 rounded-md bg-[var(--bg-elevated)] border border-[var(--border-subtle)]">
+                <div key={app.id as string} className="flex items-center justify-between p-3 rounded-md bg-[var(--bg-elevated)] border border-[var(--border-subtle)]">
                   <div>
-                    <p className="font-medium text-sm">{app.title || app.action_type || 'Approval Request'}</p>
-                    <p className="text-xs text-muted-foreground mt-1">{app.description}</p>
+                    <p className="font-medium text-sm">{(app.title || app.action_type || 'Approval Request') as string}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{app.description as string}</p>
                   </div>
                   <div className="flex gap-2">
                     <button
-                      onClick={() => handleDismiss(app.id)}
-                      disabled={processingIds.has(app.id)}
+                      onClick={() => handleDismiss(app.id as string)}
+                      disabled={processingIds.has(app.id as string)}
                       className="px-3 py-1 text-xs font-medium rounded-md bg-[var(--bg-element)] hover:bg-[var(--bg-hover)] border border-[var(--border-subtle)] disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {processingIds.has(app.id) ? 'Processing...' : 'Dismiss'}
+                      {processingIds.has(app.id as string) ? 'Processing...' : 'Dismiss'}
                     </button>
                     <button
-                      onClick={() => handleApprove(app.id)}
-                      disabled={processingIds.has(app.id)}
+                      onClick={() => handleApprove(app.id as string)}
+                      disabled={processingIds.has(app.id as string)}
                       className="px-3 py-1 text-xs font-medium rounded-md bg-[var(--accent)] text-white hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {processingIds.has(app.id) ? 'Processing...' : 'Approve'}
+                      {processingIds.has(app.id as string) ? 'Processing...' : 'Approve'}
                     </button>
                   </div>
                 </div>
@@ -225,11 +256,102 @@ function CommandCenterTab() {
           </div>
         </div>
 
-        {/* Today's Schedule - Right Column */}
+        {/* Today's Priorities - Right Column */}
         <div className="bb-card col-span-1">
           <div className="p-4 border-b border-[var(--border-subtle)]">
             <h2 className="text-lg font-medium flex items-center gap-2">
-              <Clock size={20} className="text-blue-500" /> Today's Schedule
+              <Zap size={20} className="text-amber-400" /> Today&apos;s Priorities
+            </h2>
+          </div>
+          <div className="p-4 space-y-3">
+            {todaysPriorities.length === 0 ? (
+              <p className="text-muted-foreground text-sm py-4 text-center">No high-priority tasks right now.</p>
+            ) : (
+              todaysPriorities.map(task => (
+                <div key={task.id} className="flex items-center gap-3 p-2 rounded-md bg-[var(--bg-elevated)] border border-[var(--border-subtle)]">
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded border ${
+                    task.priority === 'critical'
+                      ? 'bg-red-500/20 text-red-400 border-red-500/30'
+                      : 'bg-amber-500/20 text-amber-400 border-amber-500/30'
+                  }`}>
+                    {task.priority}
+                  </span>
+                  <p className="text-xs font-medium truncate flex-1">{task.title}</p>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Agent Activity Feed + Hot Leads + Schedule */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Agent Activity Feed */}
+        <div className="bb-card">
+          <div className="p-4 border-b border-[var(--border-subtle)]">
+            <h2 className="text-lg font-medium flex items-center gap-2">
+              <Activity size={20} className="text-cyan-500" /> Agent Activity
+            </h2>
+            <p className="text-xs text-muted-foreground mt-1">Recent agent runs</p>
+          </div>
+          <div className="p-4 space-y-3 max-h-64 overflow-y-auto">
+            {agentRuns.length === 0 ? (
+              <p className="text-muted-foreground text-sm py-4 text-center">No recent agent activity.</p>
+            ) : (
+              agentRuns.map((run) => (
+                <div key={run.id} className="flex items-start gap-3 pb-3 border-b border-[var(--border-subtle)] last:border-0">
+                  <div className="w-2 h-2 rounded-full bg-cyan-400 mt-2 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium truncate">
+                      {run.agent_configs?.name || run.agent_configs?.agent_type || 'Agent'}
+                    </p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5 truncate">
+                      {run.output_summary}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">
+                      {new Date(run.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Hot Leads */}
+        <div className="bb-card">
+          <div className="p-4 border-b border-[var(--border-subtle)]">
+            <h2 className="text-lg font-medium flex items-center gap-2">
+              <TrendingUp size={20} className="text-pink-500" /> Hot Leads
+            </h2>
+            <p className="text-xs text-muted-foreground mt-1">Top opportunities this week</p>
+          </div>
+          <div className="p-4 space-y-3">
+            {leads.length === 0 ? (
+              <p className="text-muted-foreground text-sm py-4 text-center">No active leads at the moment.</p>
+            ) : (
+              leads.map(lead => (
+                <div key={lead.id as string} className="flex items-center justify-between p-3 rounded-md bg-[var(--bg-elevated)] border border-[var(--border-subtle)]">
+                  <div className="flex-1">
+                    <p className="font-medium text-sm">{(lead.name || lead.company || 'Unnamed Lead') as string}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {lead.status === 'new' && 'New Contact'}
+                      {lead.status === 'contacted' && 'Contacted'}
+                      {lead.status === 'qualified' && 'Qualified'}
+                    </p>
+                  </div>
+                  <div className="text-xs font-medium text-amber-500">{lead.value ? `$${lead.value}` : '--'}</div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Today's Schedule */}
+        <div className="bb-card col-span-1">
+          <div className="p-4 border-b border-[var(--border-subtle)]">
+            <h2 className="text-lg font-medium flex items-center gap-2">
+              <Clock size={20} className="text-blue-500" /> Today&apos;s Schedule
             </h2>
           </div>
           <div className="p-4">
@@ -247,69 +369,41 @@ function CommandCenterTab() {
         </div>
       </div>
 
-      {/* Hot Leads + Recent Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Hot Leads */}
-        <div className="bb-card">
-          <div className="p-4 border-b border-[var(--border-subtle)]">
-            <h2 className="text-lg font-medium flex items-center gap-2">
-              <TrendingUp size={20} className="text-pink-500" /> Hot Leads
-            </h2>
-            <p className="text-xs text-muted-foreground mt-1">Top opportunities this week</p>
-          </div>
-          <div className="p-4 space-y-3">
-            {leads.length === 0 ? (
-              <p className="text-muted-foreground text-sm py-4 text-center">No active leads at the moment.</p>
-            ) : (
-              leads.map(lead => (
-                <div key={lead.id} className="flex items-center justify-between p-3 rounded-md bg-[var(--bg-elevated)] border border-[var(--border-subtle)]">
-                  <div className="flex-1">
-                    <p className="font-medium text-sm">{lead.name || lead.company || 'Unnamed Lead'}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {lead.status === 'new' && '📞 New Contact'}
-                      {lead.status === 'contacted' && '💬 Contacted'}
-                      {lead.status === 'qualified' && '✓ Qualified'}
-                    </p>
-                  </div>
-                  <div className="text-xs font-medium text-amber-500">{lead.value ? `$${lead.value}` : '—'}</div>
-                </div>
-              ))
-            )}
-          </div>
+      {/* Recent Channel Activity */}
+      <div className="bb-card">
+        <div className="p-4 border-b border-[var(--border-subtle)]">
+          <h2 className="text-lg font-medium flex items-center gap-2">
+            <Users size={20} className="text-cyan-500" /> Recent Channel Activity
+          </h2>
+          <p className="text-xs text-muted-foreground mt-1">Latest messages across all channels</p>
         </div>
-
-        {/* Recent Activity */}
-        <div className="bb-card">
-          <div className="p-4 border-b border-[var(--border-subtle)]">
-            <h2 className="text-lg font-medium flex items-center gap-2">
-              <Users size={20} className="text-cyan-500" /> Recent Activity
-            </h2>
-            <p className="text-xs text-muted-foreground mt-1">Latest interactions</p>
-          </div>
-          <div className="p-4 space-y-3 max-h-64 overflow-y-auto">
-            {recentActivity.length === 0 ? (
-              <p className="text-muted-foreground text-sm py-4 text-center">No recent activity.</p>
-            ) : (
-              recentActivity.map((activity, idx) => (
-                <div key={activity.id || idx} className="flex items-start gap-3 pb-3 border-b border-[var(--border-subtle)] last:border-0">
-                  <div className="w-2 h-2 rounded-full bg-[var(--accent)] mt-2 flex-shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium truncate">
-                      {activity.content || activity.message || 'Activity Update'}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {activity.received_at || activity.created_at ? (
-                        new Date(activity.received_at || activity.created_at).toLocaleTimeString([], {
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })
-                      ) : 'Just now'}
-                    </p>
-                  </div>
+        <div className="p-4 space-y-3 max-h-64 overflow-y-auto">
+          {recentActivity.length === 0 ? (
+            <p className="text-muted-foreground text-sm py-4 text-center">No recent activity.</p>
+          ) : (
+            recentActivity.map((activity, idx) => (
+              <div key={(activity.id as string) || idx} className="flex items-start gap-3 pb-3 border-b border-[var(--border-subtle)] last:border-0">
+                <div className="w-2 h-2 rounded-full bg-[var(--accent)] mt-2 flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium truncate">
+                    {(activity.sender_name || activity.content || activity.message || 'Activity Update') as string}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground truncate">
+                    {activity.subject ? `${activity.subject}` : (activity.body as string || '').slice(0, 80)}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {activity.received_at || activity.created_at ? (
+                      new Date((activity.received_at || activity.created_at) as string).toLocaleTimeString([], {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })
+                    ) : 'Just now'}
+                    {activity.channel_type ? <span className="ml-2 text-[10px] opacity-60">via {String(activity.channel_type)}</span> : null}
+                  </p>
                 </div>
-              ))
-            )}
-          </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </div>
