@@ -9,6 +9,9 @@ import { runTriage } from './channel-triage'
 import { runClientCommsTick } from './client-comms'
 import { runProposalBotTick } from './proposal-bot'
 import { runOnboardingTick } from './client-onboarding'
+import { runAdScriptGenTick } from './ad-script-gen'
+import { runAISearchTick } from './ai-search-optimizer'
+import { runTenderHunterTick } from './tender-hunter'
 
 /**
  * Result of checking one agent's schedule.
@@ -133,7 +136,10 @@ export async function runScheduledAgents(
   const processedTriageOrgs = new Set<string>()
   const processedClientCommsOrgs = new Set<string>()
   const processedProposalBotOrgs = new Set<string>()
+  const processedAdScriptGenOrgs = new Set<string>()
+  const processedAISearchOrgs = new Set<string>()
   const processedOnboardingOrgs = new Set<string>()
+  const processedTenderHunterOrgs = new Set<string>()
 
   for (const config of configs) {
     const schedule = config.schedule as AgentSchedule | null
@@ -335,6 +341,75 @@ export async function runScheduledAgents(
       } catch (error) {
         const message = error instanceof Error ? error.message : 'unknown'
         outputSummary = `client-onboarding error=${message}`
+      }
+    } else if (config.agent_type === 'ad-script-gen') {
+      if (processedAdScriptGenOrgs.has(config.org_id)) {
+        results.push({
+          agentType: config.agent_type,
+          orgId: config.org_id,
+          triggered: false,
+          reason: 'already_running',
+          lastRunAt: lastRunAt?.toISOString(),
+        })
+        continue
+      }
+
+      processedAdScriptGenOrgs.add(config.org_id)
+
+      try {
+        const adResult = await runAdScriptGenTick(supabase, config.org_id, config.id)
+        outputSummary =
+          `ad-script-gen processed=${adResult.processed} generated=${adResult.generated} ` +
+          `failed=${adResult.failed}`
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'unknown'
+        outputSummary = `ad-script-gen error=${message}`
+      }
+    } else if (config.agent_type === 'ai-search-optimizer') {
+      if (processedAISearchOrgs.has(config.org_id)) {
+        results.push({
+          agentType: config.agent_type,
+          orgId: config.org_id,
+          triggered: false,
+          reason: 'already_running',
+          lastRunAt: lastRunAt?.toISOString(),
+        })
+        continue
+      }
+
+      processedAISearchOrgs.add(config.org_id)
+
+      try {
+        const searchResult = await runAISearchTick(supabase, config.org_id, config.id)
+        outputSummary =
+          `ai-search-optimizer audits=${searchResult.auditsRun} changes=${searchResult.changesDetected} ` +
+          `alerts=${searchResult.alertsSent} failed=${searchResult.failed}`
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'unknown'
+        outputSummary = `ai-search-optimizer error=${message}`
+      }
+    } else if (config.agent_type === 'tender-hunter') {
+      if (processedTenderHunterOrgs.has(config.org_id)) {
+        results.push({
+          agentType: config.agent_type,
+          orgId: config.org_id,
+          triggered: false,
+          reason: 'already_running',
+          lastRunAt: lastRunAt?.toISOString(),
+        })
+        continue
+      }
+
+      processedTenderHunterOrgs.add(config.org_id)
+
+      try {
+        const tenderResult = await runTenderHunterTick(supabase, config.org_id, config.id)
+        outputSummary =
+          `tender-hunter scanned=${tenderResult.scanned} new=${tenderResult.newTenders} ` +
+          `evaluated=${tenderResult.evaluated} errors=${tenderResult.errors}`
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'unknown'
+        outputSummary = `tender-hunter error=${message}`
       }
     }
 
