@@ -1,8 +1,18 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { resolveEntityRanked, type RankedContact } from '../context/entity-resolver'
+import { assembleContext } from '../context/assembler'
 import Anthropic from '@anthropic-ai/sdk'
 
-export type Intent = 'invoice' | 'lead_status' | 'task_create' | 'search' | 'approve' | 'help' | 'unknown'
+export type Intent =
+  | 'invoice'
+  | 'lead_status'
+  | 'schedule'
+  | 'approve'
+  | 'task_create'
+  | 'report'
+  | 'search'
+  | 'help'
+  | 'unknown'
 
 export interface ParsedCommand {
   intent: Intent
@@ -12,85 +22,162 @@ export interface ParsedCommand {
     amounts?: number[]
     dates?: string[]
     rawQuery?: string
+    projectReference?: string
+    reportType?: string
+    scheduleAction?: 'list' | 'create' | 'cancel'
   }
   resolvedContacts?: RankedContact[]
+  contextSummary?: string
 }
 
-const PARSE_PROMPT = `You are a natural language command parser for a WhatsApp assistant.
-Extract the user's intent and any relevant entities (contact names, amounts, dates) from the message.
+const VALID_INTENTS: Intent[] = [
+  'invoice',
+  'lead_status',
+  'schedule',
+  'approve',
+  'task_create',
+  'report',
+  'search',
+  'help',
+]
+
+const PARSE_PROMPT = `You are a natural language command parser for a WhatsApp business assistant.
+Extract the user's intent and any relevant entities from the message.
 
 Valid intents:
-- invoice (e.g., "invoice sezer for $200", "send a bill to John")
-- lead_status (e.g., "what's the status of the Acme lead", "any updates on Sezer?")
-- task_create (e.g., "remind me to call sarah tomorrow", "add a task to fix the roof")
-- search (e.g., "find the email from bob", "search my contacts for alice")
-- approve (e.g., "approve that", "yes to the invoice", "Y", "1Y")
-- help (e.g., "what can you do?", "help", "menu")
+- invoice: Creating, checking, or sending invoices. E.g. "invoice sezer for $200", "send a bill", "what invoices are overdue?"
+- lead_status: Checking lead pipeline, asking about prospects. E.g. "any new leads?", "what's happening with Acme?"
+- schedule: Calendar and scheduling. E.g. "what's on today?", "schedule a call with Bob tomorrow", "cancel my 3pm"
+- approve: Approving or rejecting a pending agent action. E.g. "yes", "Y", "approve", "no", "reject", "1Y", "2N"
+- task_create: Creating tasks or reminders. E.g. "remind me to call sarah", "add task: fix the roof"
+- report: Requesting summaries or reports. E.g. "weekly summary", "how did we do this month?", "revenue report"
+- search: Finding contacts, emails, or records. E.g. "find bob's email", "search for plumber contacts"
+- help: Asking what the assistant can do. E.g. "help", "menu", "what can you do?"
 
-Return ONLY a JSON object matching this schema:
+Return ONLY a JSON object:
 {
   "intent": "<intent>",
-  "confidence": <number 0-1>,
+  "confidence": <0-1>,
   "entities": {
-    "contactNames": ["<name1>", "<name2>"], // Optional
-    "amounts": [<number1>, <number2>], // Optional, just the numbers
-    "dates": ["<date1>"], // Optional, ISO strings or natural language
-    "rawQuery": "<the rest of the query/task description>" // Optional
+    "contactNames": ["<name>"],
+    "amounts": [<number>],
+    "dates": ["<date in natural language or ISO>"],
+    "rawQuery": "<remaining task/query description>",
+    "projectReference": "<project name if mentioned>",
+    "reportType": "<weekly|monthly|revenue|leads|overdue>",
+    "scheduleAction": "<list|create|cancel>"
   }
-}`
+}
 
+Only include entity fields that are actually present. Be generous with confidence for clear requests.`
+
+/**
+ * Parse a WhatsApp message into structured intent + entities.
+ * Uses Claude Haiku for fast NL parsing, then resolves entities against the org's contact database.
+ */
 export async function parseCommand(
   supabase: SupabaseClient,
   orgId: string,
   text: string
 ): Promise<ParsedCommand> {
-  const client = new Anthropic()
+  // Fast-path: check for obvious approval patterns without LLM
+  const approvalResult = tryParseApprovalFast(text)
+  if (approvalResult) return approvalResult
 
-  let parsed: any = { intent: 'unknown', confidence: 0, entities: {} }
+  // Fast-path: help
+  const helpPattern = /^(help|menu|commands|\?)$/i
+  if (helpPattern.test(text.trim())) {
+    return { intent: 'help', confidence: 1.0, entities: {} }
+  }
+
+  const client = new Anthropic()
+  let parsed: Record<string, unknown> = { intent: 'unknown', confidence: 0, entities: {} }
 
   try {
     const response = await client.messages.create({
       model: 'claude-3-5-haiku-latest',
       max_tokens: 500,
       system: PARSE_PROMPT,
-      messages: [
-        { role: 'user', content: text }
-      ],
+      messages: [{ role: 'user', content: text }],
     })
 
     const textBlock = response.content.find((b) => b.type === 'text')
     if (textBlock && textBlock.type === 'text') {
       const jsonMatch = textBlock.text.match(/\{[\s\S]*\}/)
       if (jsonMatch) {
-        parsed = JSON.parse(jsonMatch[0])
+        parsed = JSON.parse(jsonMatch[0]) as Record<string, unknown>
       }
     }
   } catch (error) {
-    console.error('Failed to parse command with LLM:', error)
+    console.error('[command-parser] LLM parse failed:', error)
   }
 
-  const validIntents = ['invoice', 'lead_status', 'task_create', 'search', 'approve', 'help']
-  if (!validIntents.includes(parsed.intent)) {
-    parsed.intent = 'unknown'
-  }
+  const intentRaw = parsed.intent as string
+  const intent: Intent = VALID_INTENTS.includes(intentRaw as Intent)
+    ? (intentRaw as Intent)
+    : 'unknown'
+
+  const entities = (parsed.entities ?? {}) as ParsedCommand['entities']
 
   const result: ParsedCommand = {
-    intent: parsed.intent,
-    confidence: parsed.confidence || 0,
-    entities: parsed.entities || {},
+    intent,
+    confidence: typeof parsed.confidence === 'number' ? parsed.confidence : 0,
+    entities,
   }
 
-  // Resolve contacts if any were found
-  if (result.entities.contactNames && result.entities.contactNames.length > 0) {
+  // Resolve contact names against org database
+  if (entities.contactNames && entities.contactNames.length > 0) {
     const resolved: RankedContact[] = []
-    for (const name of result.entities.contactNames) {
+    for (const name of entities.contactNames) {
       const matches = await resolveEntityRanked(supabase, name, orgId)
       if (matches.length > 0) {
-        resolved.push(matches[0]) // Take the highest ranked match
+        resolved.push(matches[0])
       }
     }
     result.resolvedContacts = resolved
   }
 
+  // Assemble context summary for richer responses (only when entities found)
+  if (result.resolvedContacts && result.resolvedContacts.length > 0) {
+    try {
+      const context = await assembleContext(supabase, orgId, text)
+      if (context.summary) {
+        result.contextSummary = context.summary
+      }
+    } catch {
+      // Context assembly is optional enrichment
+    }
+  }
+
   return result
+}
+
+/**
+ * Fast approval detection without calling LLM.
+ * Handles: Y, N, yes, no, approve, reject, 1Y, 2N, etc.
+ */
+function tryParseApprovalFast(text: string): ParsedCommand | null {
+  const normalized = text.trim().toUpperCase()
+
+  if (/^(Y|YES|APPROVE|OK|CONFIRM|YEP|YEAH|GO|DO IT)$/i.test(normalized)) {
+    return { intent: 'approve', confidence: 1.0, entities: { rawQuery: 'approved' } }
+  }
+
+  if (/^(N|NO|REJECT|CANCEL|NAH|NOPE|STOP|DONT)$/i.test(normalized)) {
+    return { intent: 'approve', confidence: 1.0, entities: { rawQuery: 'rejected' } }
+  }
+
+  const indexedMatch = normalized.match(/^(\d+)\s*(Y|N|YES|NO|APPROVE|REJECT)$/i)
+  if (indexedMatch) {
+    const decision = indexedMatch[2].startsWith('Y') || indexedMatch[2] === 'APPROVE'
+      ? 'approved'
+      : 'rejected'
+    return {
+      intent: 'approve',
+      confidence: 1.0,
+      entities: { rawQuery: `${indexedMatch[1]}:${decision}` },
+    }
+  }
+
+  return null
 }
