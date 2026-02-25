@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { routeAgentAction } from './confidence-router'
+import { dispatchNotification } from '../notifications/dispatcher'
 
 type ApprovalPriority = 'urgent' | 'normal' | 'low'
 type ApprovalStatus = 'pending' | 'approved' | 'rejected' | 'expired' | 'auto_expired'
@@ -97,7 +98,28 @@ export async function createApproval(
     throw new Error(error?.message ?? 'Failed to create approval')
   }
 
-  return normalizeApprovalRow(data)
+  const record = normalizeApprovalRow(data)
+
+  // Dispatch notification for new approval
+  const urgency = priority === 'urgent' ? 'high' as const : 'normal' as const
+  dispatchNotification(supabase, {
+    orgId: params.org_id,
+    type: 'approval_needed',
+    title: `Approval Needed: ${params.action_summary}`,
+    body: `Agent action requires approval (${(params.confidence_score * 100).toFixed(0)}% confidence)`,
+    urgency,
+    metadata: {
+      approvalId: record.id,
+      summary: params.action_summary,
+      agentName: record.agent_name ?? 'Agent',
+      confidence: params.confidence_score,
+      actionType: params.action_type,
+    },
+  }).catch(err => {
+    console.warn('[approval-queue] Notification dispatch failed:', err)
+  })
+
+  return record
 }
 
 export async function resolveApproval(
