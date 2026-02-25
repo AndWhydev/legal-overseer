@@ -18,6 +18,7 @@ import {
   Film,
   SearchCheck,
   FileSearch,
+  DollarSign,
   Settings,
   ChevronDown,
 } from 'lucide-react';
@@ -43,15 +44,16 @@ const ICON_MAP: Record<string, React.ElementType> = {
   approvals:   ShieldCheck,
   'ad-scripts': Film,
   'ai-search': SearchCheck,
+  costs:       DollarSign,
   activity:    Activity,
   settings:    Settings,
 };
 
-const MAIN_TAB_IDS = ['command-center', 'dashboard', 'chat', 'inbox', 'channels', 'medications', 'contacts', 'leads', 'invoices', 'tenders', 'sentry', 'approvals', 'ad-scripts', 'ai-search', 'activity'];
+const MAIN_TAB_IDS = ['command-center', 'dashboard', 'chat', 'inbox', 'channels', 'medications', 'contacts', 'leads', 'invoices', 'tenders', 'sentry', 'approvals', 'ad-scripts', 'ai-search', 'costs', 'activity'];
 
 // Primary tabs always visible; advanced tabs hidden behind toggle
 const PRIMARY_TAB_IDS = ['command-center', 'dashboard', 'chat', 'inbox', 'leads', 'invoices', 'tenders', 'contacts', 'approvals'];
-const ADVANCED_TAB_IDS = ['channels', 'medications', 'sentry', 'activity'];
+const ADVANCED_TAB_IDS = ['channels', 'medications', 'sentry', 'costs', 'activity'];
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 

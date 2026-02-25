@@ -38,6 +38,7 @@ export const TABS: TabDef[] = [
   { id: 'approvals', label: 'Approvals', path: '/dashboard/approvals' },
   { id: 'ad-scripts', label: 'Ad Scripts', path: '/dashboard/ad-scripts' },
   { id: 'ai-search', label: 'AI Search', path: '/dashboard/ai-search' },
+  { id: 'costs', label: 'Costs', path: '/dashboard/costs' },
   { id: 'activity', label: 'Activity', path: '/dashboard/activity' },
   { id: 'settings', label: 'Settings', path: '/dashboard/settings' },
 ];
@@ -61,6 +62,7 @@ const tabImports: Record<string, Promise<{ default: React.ComponentType }>> = {
   approvals: import('./tabs/approvals-tab'),
   'ad-scripts': import('./tabs/ad-scripts-tab'),
   'ai-search': import('./tabs/ai-search-tab'),
+  costs: import('./tabs/costs-tab'),
   activity: import('./tabs/activity-tab'),
   settings: import('./tabs/settings-tab'),
 };
@@ -81,6 +83,7 @@ const TabComponents: Record<string, React.LazyExoticComponent<React.ComponentTyp
   approvals: lazy(() => tabImports.approvals),
   'ad-scripts': lazy(() => tabImports['ad-scripts']),
   'ai-search': lazy(() => tabImports['ai-search']),
+  costs: lazy(() => tabImports.costs),
   activity: lazy(() => tabImports.activity),
   settings: lazy(() => tabImports.settings),
 };
