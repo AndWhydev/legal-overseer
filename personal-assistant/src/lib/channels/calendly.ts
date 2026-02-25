@@ -200,6 +200,42 @@ export async function registerCalendlyWebhook(
   }
 }
 
+/**
+ * Verify Calendly webhook signature (HMAC-SHA256).
+ * Calendly sends `Calendly-Webhook-Signature` header with `t=timestamp,v1=signature`.
+ */
+export async function verifyCalendlyWebhookSignature(
+  body: string,
+  signatureHeader: string,
+  webhookSigningKey: string,
+): Promise<{ valid: boolean; error?: string }> {
+  const crypto = await import('crypto')
+
+  const parts = signatureHeader.split(',').reduce<Record<string, string>>((acc, part) => {
+    const [k, v] = part.split('=')
+    if (k && v) acc[k.trim()] = v.trim()
+    return acc
+  }, {})
+
+  const timestamp = parts['t']
+  const sig = parts['v1']
+  if (!timestamp || !sig) return { valid: false, error: 'Invalid signature format' }
+
+  // Tolerance: 5 minutes
+  const age = Math.abs(Date.now() / 1000 - parseInt(timestamp, 10))
+  if (age > 300) return { valid: false, error: 'Webhook timestamp too old' }
+
+  const payload = `${timestamp}.${body}`
+  const expected = crypto.createHmac('sha256', webhookSigningKey).update(payload).digest('hex')
+
+  try {
+    const valid = crypto.timingSafeEqual(Buffer.from(expected, 'hex'), Buffer.from(sig, 'hex'))
+    return { valid }
+  } catch {
+    return { valid: false, error: 'Signature mismatch' }
+  }
+}
+
 export function parseCalendlyWebhook(body: CalendlyWebhookPayload): CalendlyWebhookPayload {
   return body
 }
