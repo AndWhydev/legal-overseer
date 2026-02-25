@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createInvoiceFromIntent, parseInvoiceIntent, type InvoiceIntent } from '@/lib/agent/invoice-flow'
 import { searchInvoices, type InvoiceStatus, type InvoiceLineItem } from '@/lib/agent/shared-tools'
+import { logAuditEvent } from '@/lib/audit/logger'
 
 const ALLOWED_STATUSES = new Set<InvoiceStatus>(['draft', 'sent', 'viewed', 'overdue', 'paid', 'cancelled'])
 
@@ -176,6 +177,16 @@ export async function POST(request: NextRequest) {
   })
 
   if (outcome.status === 'queued') {
+    await logAuditEvent(auth.supabase, {
+      orgId: auth.orgId,
+      actorType: 'user',
+      actorId: 'api',
+      action: 'created',
+      entityType: 'invoice',
+      entityId: outcome.approvalId ?? 'pending',
+      metadata: { status: 'queued', contact_name: intent.contact_name },
+    })
+
     return NextResponse.json({
       queued: true,
       approvalId: outcome.approvalId,
@@ -186,6 +197,16 @@ export async function POST(request: NextRequest) {
   if (outcome.status === 'error') {
     return NextResponse.json({ error: outcome.error }, { status: 400 })
   }
+
+  await logAuditEvent(auth.supabase, {
+    orgId: auth.orgId,
+    actorType: 'user',
+    actorId: 'api',
+    action: 'created',
+    entityType: 'invoice',
+    entityId: String((outcome as Record<string, unknown>).invoiceId ?? 'unknown'),
+    metadata: { status: 'created', contact_name: intent.contact_name },
+  })
 
   return NextResponse.json({ queued: false, outcome })
 }

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+// Audit logger available for future PATCH/POST mutations:
+// import { logAuditEvent } from '@/lib/audit/logger'
 
 const ALLOWED_STATUSES = new Set(['new', 'qualified', 'booked', 'converted', 'lost'])
 

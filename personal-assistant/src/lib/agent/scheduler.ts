@@ -13,6 +13,7 @@ import { runAdScriptGenTick } from './ad-script-gen'
 import { runAISearchTick } from './ai-search-optimizer'
 import { runTenderHunterTick } from './tender-hunter'
 import { canProceed } from './cost-guard'
+import { logAuditEvent } from '@/lib/audit/logger'
 import { withCircuitBreaker, CircuitOpenError } from './circuit-breaker'
 
 /**
@@ -449,6 +450,17 @@ export async function runScheduledAgents(
       confidence_score: 0,
       routing_decision: 'act',
       duration_ms: 0,
+    })
+
+    // Audit log: record agent execution
+    await logAuditEvent(supabase, {
+      orgId: config.org_id,
+      actorType: 'cron',
+      actorId: `scheduler:${config.agent_type}`,
+      action: 'executed',
+      entityType: 'task',
+      entityId: config.id,
+      metadata: { agent_type: config.agent_type, output_summary: outputSummary },
     })
 
     results.push({

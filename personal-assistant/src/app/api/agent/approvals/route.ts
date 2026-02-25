@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getPendingApprovals, resolveApproval } from '@/lib/agent/approval-queue'
+import { logAuditEvent } from '@/lib/audit/logger'
 
 type Decision = 'approved' | 'rejected'
 
@@ -96,6 +97,17 @@ export async function PATCH(request: NextRequest) {
       auth.userId,
       'dashboard',
     )
+
+    await logAuditEvent(auth.supabase, {
+      orgId: auth.orgId,
+      actorType: 'user',
+      actorId: auth.userId,
+      action: body.decision === 'approved' ? 'approved' : 'rejected',
+      entityType: 'approval',
+      entityId: body.approvalId,
+      metadata: { decision: body.decision, source: 'dashboard' },
+    })
+
     return NextResponse.json({ approval })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to resolve approval'
