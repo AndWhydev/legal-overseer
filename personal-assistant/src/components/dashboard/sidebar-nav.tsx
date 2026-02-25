@@ -19,6 +19,7 @@ import {
   SearchCheck,
   FileSearch,
   DollarSign,
+  BarChart3,
   Settings,
   ChevronDown,
 } from 'lucide-react';
@@ -45,11 +46,12 @@ const ICON_MAP: Record<string, React.ElementType> = {
   'ad-scripts': Film,
   'ai-search': SearchCheck,
   costs:       DollarSign,
+  analytics:   BarChart3,
   activity:    Activity,
   settings:    Settings,
 };
 
-const MAIN_TAB_IDS = ['command-center', 'dashboard', 'chat', 'inbox', 'channels', 'medications', 'contacts', 'leads', 'invoices', 'tenders', 'sentry', 'approvals', 'ad-scripts', 'ai-search', 'costs', 'activity'];
+const MAIN_TAB_IDS = ['command-center', 'dashboard', 'chat', 'inbox', 'channels', 'medications', 'contacts', 'leads', 'invoices', 'tenders', 'sentry', 'approvals', 'ad-scripts', 'ai-search', 'costs', 'analytics', 'activity'];
 
 // Primary tabs always visible; advanced tabs hidden behind toggle
 const PRIMARY_TAB_IDS = ['command-center', 'dashboard', 'chat', 'inbox', 'leads', 'invoices', 'tenders', 'contacts', 'approvals'];
