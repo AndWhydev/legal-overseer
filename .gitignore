@@ -9,3 +9,6 @@
 .security-key
 logs/security/
 .gitnexus
+
+# Demo artifacts
+demo-1/
