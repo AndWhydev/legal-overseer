@@ -298,3 +298,72 @@ body:has(main.landing-stack) main.landing-stack {
   background: #faf9f0;
   color: #1a1a1a;
 }
+
+/* --------------------------------------------------------------------------
+   Responsive Overrides
+   -------------------------------------------------------------------------- */
+@media (max-width: 1024px) {
+  .bb-layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr 64px;
+    grid-template-areas:
+      "main"
+      "sidebar";
+    height: 100dvh;
+    min-height: 100dvh;
+  }
+
+  .bb-sidebar-area {
+    grid-column: 1;
+    grid-row: 2;
+    z-index: 50;
+  }
+
+  .bb-spa-content {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .bb-sidebar {
+    flex-direction: row;
+    width: 100vw;
+    height: 64px;
+    border-right: none;
+    border-top: 1px solid var(--border-subtle);
+    padding: 0 8px;
+    align-items: center;
+    justify-content: space-around;
+  }
+  
+  html.light .bb-sidebar {
+    border-top: 1px solid #E5E7EB;
+  }
+
+  .bb-sidebar__nav {
+    flex-direction: row;
+    width: 100%;
+    justify-content: space-around;
+    gap: 4px;
+    overflow-x: auto;
+    padding: 0 8px;
+  }
+
+  .bb-sidebar__nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .bb-sidebar__item {
+    width: 44px;
+    height: 44px;
+    margin-bottom: 0;
+    flex-shrink: 0;
+  }
+
+  .bb-sidebar__indicator {
+    display: none;
+  }
+
+  .bb-sidebar__logo, .bb-sidebar__bottom, .bb-sidebar__avatar {
+    display: none;
+  }
+}
