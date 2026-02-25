@@ -90,7 +90,8 @@ export async function createDraftBill(
 
     const result = await xero.accountingApi.createInvoices(
       tenantId,
-      { invoices: [xeroBill] }
+      { invoices: [xeroBill] },
+      true
     );
 
     const createdInvoice = result.body.invoices?.[0];

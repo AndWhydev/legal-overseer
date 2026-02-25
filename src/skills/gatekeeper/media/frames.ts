@@ -77,7 +77,7 @@ function extractFrameAtTimestamp(
       .outputOptions('-q:v', '2') // High quality JPEG (2 = near-lossless)
       .output(path.join(outputDir, outputFilename))
       .on('end', () => resolve())
-      .on('error', (err) =>
+      .on('error', (err: Error) =>
         reject(new Error(`Frame extraction failed at ${timestamp}s: ${err.message}`))
       )
       .run();

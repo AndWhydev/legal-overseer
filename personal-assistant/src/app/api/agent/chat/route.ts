@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
   const stream = new ReadableStream({
     async start(controller) {
       try {
-        const events = runAgentChat(message, { orgId: profile.org_id })
+        const events = runAgentChat(message, { orgId: profile.org_id, supabase })
         for await (const event of events) {
           controller.enqueue(
             encoder.encode(`data: ${JSON.stringify(event)}\n\n`)

@@ -77,6 +77,7 @@ export interface EntityBriefing {
   relationships: RelationshipEdge[]
   timeline: TimelineEntry[]
   memories: MemoryEntry[]
+  crossReferences: CrossReference
 }
 
 export interface ContextBriefing {

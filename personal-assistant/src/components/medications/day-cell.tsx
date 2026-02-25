@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { PillIcon } from './pill-icon'
@@ -16,7 +16,7 @@ interface DayCellProps {
   onTakeAll: (date: string) => void
 }
 
-export function DayCell({
+export const DayCell = React.memo(function DayCell({
   schedule,
   medications,
   isToday,
@@ -135,4 +135,4 @@ export function DayCell({
       )}
     </div>
   )
-}
+})

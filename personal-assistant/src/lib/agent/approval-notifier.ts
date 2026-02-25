@@ -2,6 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import type { ApprovalRecord } from './approval-queue'
 import { getDigestApprovals } from './approval-queue'
 import { sendApprovalRequest, sendDigest } from '../channels/whatsapp'
+import { sendApprovalEmail, sendDigestEmail } from '../email/email-transport'
 
 export async function notifyApproval(
   _supabase: SupabaseClient,
@@ -18,23 +19,42 @@ export async function notifyApproval(
     }
 
     const andyPhone = process.env.WHATSAPP_ANDY_PHONE
-    if (!andyPhone) {
-      console.warn('notifyApproval skipped: missing WHATSAPP_ANDY_PHONE')
-      return false
+    if (andyPhone) {
+      const messageId = await sendApprovalRequest(
+        andyPhone,
+        approval.id,
+        approval.action_summary,
+        approval.agent_name ?? approval.agent_configs?.name ?? 'Agent',
+        approval.confidence_score,
+      )
+
+      if (messageId) {
+        return true
+      }
     }
 
-    const messageId = await sendApprovalRequest(
-      andyPhone,
+    // Fallback to email if WhatsApp is not configured or failed
+    const emailSent = await sendApprovalEmail(
       approval.id,
       approval.action_summary,
       approval.agent_name ?? approval.agent_configs?.name ?? 'Agent',
       approval.confidence_score,
     )
 
-    return Boolean(messageId)
+    return emailSent
   } catch (error) {
     console.warn('notifyApproval failed', error)
-    return false
+    // Attempt email fallback on error
+    try {
+      return await sendApprovalEmail(
+        approval.id,
+        approval.action_summary,
+        approval.agent_name ?? approval.agent_configs?.name ?? 'Agent',
+        approval.confidence_score,
+      )
+    } catch {
+      return false
+    }
   }
 }
 
@@ -48,24 +68,45 @@ export async function sendDailyDigest(
       return 0
     }
 
+    const digestItems = approvals.map((approval) => ({
+      id: approval.id,
+      summary: approval.action_summary,
+      agentName: approval.agent_name ?? approval.agent_configs?.name ?? 'Agent',
+    }))
+
     const andyPhone = process.env.WHATSAPP_ANDY_PHONE
-    if (!andyPhone) {
-      console.warn('sendDailyDigest skipped: missing WHATSAPP_ANDY_PHONE')
-      return 0
+    if (andyPhone) {
+      const messageId = await sendDigest(andyPhone, digestItems)
+
+      if (messageId) {
+        return approvals.length
+      }
     }
 
-    const messageId = await sendDigest(
-      andyPhone,
-      approvals.map((approval) => ({
-        id: approval.id,
-        summary: approval.action_summary,
-        agentName: approval.agent_name ?? approval.agent_configs?.name ?? 'Agent',
-      })),
-    )
+    // Fallback to email if WhatsApp is not configured or failed
+    const emailSent = await sendDigestEmail(digestItems)
 
-    return messageId ? approvals.length : 0
+    return emailSent ? approvals.length : 0
   } catch (error) {
     console.warn('sendDailyDigest failed', error)
-    return 0
+    // Attempt email fallback on error
+    try {
+      const approvals = await getDigestApprovals(supabase, orgId)
+      if (approvals.length === 0) {
+        return 0
+      }
+
+      const emailSent = await sendDigestEmail(
+        approvals.map((approval) => ({
+          id: approval.id,
+          summary: approval.action_summary,
+          agentName: approval.agent_name ?? approval.agent_configs?.name ?? 'Agent',
+        })),
+      )
+
+      return emailSent ? approvals.length : 0
+    } catch {
+      return 0
+    }
   }
 }

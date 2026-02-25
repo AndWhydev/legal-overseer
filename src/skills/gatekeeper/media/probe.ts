@@ -64,7 +64,7 @@ function parseFrameRate(frameRateStr: string | undefined): number {
  */
 export function probeMedia(filePath: string): Promise<MediaMetadata> {
   return new Promise((resolve, reject) => {
-    ffmpeg.ffprobe(filePath, (err, metadata) => {
+    ffmpeg.ffprobe(filePath, (err: Error | null, metadata: any) => {
       if (err) {
         reject(new Error(`FFprobe failed: ${err.message}`));
         return;
@@ -72,7 +72,7 @@ export function probeMedia(filePath: string): Promise<MediaMetadata> {
 
       // Find video stream
       const videoStream = metadata.streams.find(
-        (s) => s.codec_type === 'video'
+        (s: any) => s.codec_type === 'video'
       );
 
       if (!videoStream) {
@@ -82,7 +82,7 @@ export function probeMedia(filePath: string): Promise<MediaMetadata> {
 
       // Find audio stream (may not exist)
       const audioStream = metadata.streams.find(
-        (s) => s.codec_type === 'audio'
+        (s: any) => s.codec_type === 'audio'
       );
 
       // Extract metadata with null-safe defaults

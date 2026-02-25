@@ -41,7 +41,7 @@ const getTaskStatus = tool(
   {
     taskId: z.string().describe('The task UUID to look up'),
   },
-  async (args) => {
+  async (args: Record<string, unknown>) => {
     try {
       const result = await withTimeout(async () => {
         const db = getDatabase();
@@ -109,7 +109,7 @@ const logAuditEvent = tool(
       .optional()
       .describe('Additional details about the action (JSON string)'),
   },
-  async (args) => {
+  async (args: Record<string, unknown>) => {
     try {
       const result = await withTimeout(async () => {
         const db = getDatabase();
@@ -170,7 +170,7 @@ const healthCheck = tool(
       .optional()
       .describe('Include detailed metrics in the response'),
   },
-  async (args) => {
+  async (args: Record<string, unknown>) => {
     try {
       const result = await withTimeout(async () => {
         const db = getDatabase();
@@ -197,7 +197,7 @@ const healthCheck = tool(
           };
         }
 
-        const healthStatus = {
+        const healthStatus: Record<string, unknown> = {
           status: dbCheck?.ok === 1 ? 'healthy' : 'degraded',
           database: {
             connected: dbCheck?.ok === 1,
@@ -205,8 +205,11 @@ const healthCheck = tool(
           },
           timestamp: new Date().toISOString(),
           version: '0.1.0',
-          ...(args.verbose && { metrics }),
         };
+
+        if (args.verbose) {
+          healthStatus.metrics = metrics;
+        }
 
         return {
           content: [

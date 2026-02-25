@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { sendEscalationEmail } from '../email/email-transport'
 
 export interface SentryEscalationResult {
   processed: number
@@ -116,6 +117,9 @@ export async function processSentryEscalations(
         result.failed += 1
         continue
       }
+
+      // Send escalation email notification
+      await sendEscalationEmail(alert.id, alert.issue_summary, alert.severity)
 
       const escalationMinutes = resolveEscalationMinutes(alert)
       const nextEscalationAt = new Date(now.getTime() + escalationMinutes * 60_000).toISOString()

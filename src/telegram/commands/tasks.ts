@@ -5,6 +5,7 @@
  */
 
 import { Bot } from 'grammy';
+import type { Context } from 'grammy';
 import { getRecentTasks, Task } from '../../db/repositories/tasks.js';
 import { createSafeLogger } from '../../governance/index.js';
 
@@ -78,7 +79,7 @@ function truncate(str: string, maxLen: number): string {
  * Register /tasks command on bot
  */
 export function registerTasksCommand(bot: Bot): void {
-  bot.command('tasks', async (ctx) => {
+  bot.command('tasks', async (ctx: Context) => {
     try {
       const tasks = getRecentTasks(5);
 

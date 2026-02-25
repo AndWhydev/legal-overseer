@@ -1,0 +1,20 @@
+/* ============================================================================
+   BitBit Splash Screen — Base layout (animations handled by Motion)
+   ============================================================================ */
+
+.bb-splash {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-primary, #0a0f1a);
+  background-image:
+    radial-gradient(circle, rgba(255, 90, 31, 0.06) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.bb-splash--exit {
+  pointer-events: none;
+}

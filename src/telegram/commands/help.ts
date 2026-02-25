@@ -5,6 +5,7 @@
  */
 
 import { Bot } from 'grammy';
+import type { Context } from 'grammy';
 
 const VERSION = '0.1.0';
 
@@ -12,7 +13,7 @@ const VERSION = '0.1.0';
  * Register /help command on bot
  */
 export function registerHelpCommand(bot: Bot): void {
-  bot.command('help', async (ctx) => {
+  bot.command('help', async (ctx: Context) => {
     const message = `<b>BitBit Help</b>
 
 BitBit is your AI operations assistant for CheekyGlo.

@@ -15,7 +15,7 @@ BEGIN
     (org_uuid, 'Review',      '#a371f7', 3),
     (org_uuid, 'Done',        '#238636', 4);
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 CREATE OR REPLACE FUNCTION on_organization_created()
 RETURNS TRIGGER AS $$
@@ -23,7 +23,7 @@ BEGIN
   PERFORM seed_default_columns(NEW.id);
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 CREATE TRIGGER trg_seed_columns_on_org
   AFTER INSERT ON organizations
@@ -65,7 +65,7 @@ BEGIN
 
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, auth;
 
 CREATE TRIGGER trg_on_auth_user_created
   AFTER INSERT ON auth.users

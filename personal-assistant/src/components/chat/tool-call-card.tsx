@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { ChevronDown, ChevronRight, Loader2, Check, X, Wrench } from 'lucide-react'
-import { cn } from '@/lib/utils'
 
 interface ToolCall {
   name: string
@@ -29,49 +28,42 @@ export function ToolCallCard({ toolCall }: { toolCall: ToolCall }) {
   const StatusIcon = () => {
     switch (toolCall.status) {
       case 'running':
-        return <Loader2 className="size-3.5 animate-spin text-primary" />
+        return <Loader2 className="bb-chat__tc-icon bb-chat__tc-icon--spin" size={14} />
       case 'done':
-        return <Check className="size-3.5 text-green-400" />
+        return <Check className="bb-chat__tc-icon bb-chat__tc-icon--done" size={14} />
       case 'error':
-        return <X className="size-3.5 text-destructive" />
+        return <X className="bb-chat__tc-icon bb-chat__tc-icon--error" size={14} />
     }
   }
 
   return (
-    <div className="ml-10 my-0.5">
+    <div className="bb-chat__tc">
       <button
         onClick={() => setExpanded(!expanded)}
-        className={cn(
-          'flex w-full items-center gap-2 rounded-lg border px-3 py-2 text-left text-xs transition-colors',
-          'border-border/50 bg-muted/30 hover:bg-muted/50'
-        )}
+        className="bb-chat__tc-header"
       >
-        {expanded ? (
-          <ChevronDown className="size-3 text-muted-foreground" />
-        ) : (
-          <ChevronRight className="size-3 text-muted-foreground" />
-        )}
-        <Wrench className="size-3 text-muted-foreground" />
-        <span className="font-medium text-foreground/80">
+        {expanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+        <Wrench size={12} />
+        <span className="bb-chat__tc-name">
           {toolDisplayNames[toolCall.name] || toolCall.name}
         </span>
-        <span className="ml-auto">
+        <span className="bb-chat__tc-status">
           <StatusIcon />
         </span>
       </button>
 
       {expanded && (
-        <div className="mt-1 rounded-lg border border-border/30 bg-muted/20 p-3 text-xs">
+        <div className="bb-chat__tc-body">
           <div>
-            <span className="font-medium text-muted-foreground">Input:</span>
-            <pre className="mt-1 overflow-x-auto rounded bg-background/50 p-2 font-mono text-[11px] text-foreground/70">
+            <span className="bb-chat__tc-label">Input:</span>
+            <pre className="bb-chat__tc-pre">
               {JSON.stringify(toolCall.input, null, 2)}
             </pre>
           </div>
           {toolCall.result !== undefined && (
-            <div className="mt-2">
-              <span className="font-medium text-muted-foreground">Result:</span>
-              <pre className="mt-1 overflow-x-auto rounded bg-background/50 p-2 font-mono text-[11px] text-foreground/70">
+            <div>
+              <span className="bb-chat__tc-label">Result:</span>
+              <pre className="bb-chat__tc-pre">
                 {JSON.stringify(toolCall.result, null, 2)}
               </pre>
             </div>

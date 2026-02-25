@@ -7,6 +7,8 @@ function makeClassification(overrides: Partial<ClassificationResult> = {}): Clas
   return {
     significance: 5,
     timeSensitivity: 'today',
+    resolves: [],
+    unblocks: [],
     recommendedActions: [],
     reasoning: 'Test',
     category: 'client',
@@ -104,6 +106,8 @@ describe('routeMessages', () => {
       classifyMessage: vi.fn().mockResolvedValue({
         significance: 5,
         timeSensitivity: 'today',
+        resolves: [],
+        unblocks: [],
         recommendedActions: [],
         reasoning: 'test',
         category: 'client',

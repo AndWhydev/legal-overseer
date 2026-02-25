@@ -9,7 +9,6 @@ import {
   getContact,
   logActivity,
 } from './shared-tools'
-import { createClient } from '@/lib/supabase/server'
 
 export interface ToolResult {
   success: boolean
@@ -19,7 +18,8 @@ export interface ToolResult {
 
 export type AgentToolHandler = (
   input: Record<string, unknown>,
-  orgId: string
+  orgId: string,
+  supabase: SupabaseClient
 ) => Promise<ToolResult>
 
 const toolDefinitions: Anthropic.Tool[] = [
@@ -151,17 +151,10 @@ const toolDefinitions: Anthropic.Tool[] = [
   },
 ]
 
-async function getSupabase() {
-  const supabase = await createClient()
-  if (!supabase) throw new Error('Supabase not configured')
-  return supabase
-}
-
 // Thin wrappers: parse Record<string, unknown> -> call typed shared function -> return ToolResult
-// These create the Supabase client at the HTTP boundary and pass it to shared-tools
+// These receive the Supabase client and pass it to shared-tools
 const handlers: Record<string, AgentToolHandler> = {
-  async create_task(input, orgId) {
-    const supabase = await getSupabase()
+  async create_task(input, orgId, supabase) {
     return createTask(supabase, orgId, {
       title: input.title as string,
       description: input.description as string | undefined,
@@ -172,8 +165,7 @@ const handlers: Record<string, AgentToolHandler> = {
     })
   },
 
-  async update_task(input, orgId) {
-    const supabase = await getSupabase()
+  async update_task(input, orgId, supabase) {
     return updateTask(supabase, orgId, input.task_id as string, {
       title: input.title as string | undefined,
       description: input.description as string | undefined,
@@ -183,8 +175,7 @@ const handlers: Record<string, AgentToolHandler> = {
     })
   },
 
-  async search_tasks(input, orgId) {
-    const supabase = await getSupabase()
+  async search_tasks(input, orgId, supabase) {
     return searchTasks(supabase, orgId, {
       query: input.query as string | undefined,
       status: input.status as string | undefined,
@@ -192,8 +183,7 @@ const handlers: Record<string, AgentToolHandler> = {
     })
   },
 
-  async search_contacts(input, orgId) {
-    const supabase = await getSupabase()
+  async search_contacts(input, orgId, supabase) {
     const matches = await searchContacts(supabase, orgId, input.query as string)
     const results = matches.map((m) => ({
       ...m.contact,
@@ -203,15 +193,13 @@ const handlers: Record<string, AgentToolHandler> = {
     return { success: true, data: { results, total: results.length } }
   },
 
-  async get_contact(input, orgId) {
-    const supabase = await getSupabase()
+  async get_contact(input, orgId, supabase) {
     const contact = await getContact(supabase, orgId, input.slug as string)
     if (!contact) return { success: false, error: 'Contact not found' }
     return { success: true, data: contact }
   },
 
-  async log_activity(input, orgId) {
-    const supabase = await getSupabase()
+  async log_activity(input, orgId, supabase) {
     return logActivity(supabase, orgId, {
       action_type: input.action_type as string,
       action: input.action as string,
@@ -221,8 +209,7 @@ const handlers: Record<string, AgentToolHandler> = {
   },
 
   // Memory tools stay in tools.ts (not shared — chat-specific)
-  async search_memory(input, orgId) {
-    const supabase = await getSupabase()
+  async search_memory(input, orgId, supabase) {
     let query = supabase.from('memory_entries').select('*').eq('org_id', orgId)
 
     if (input.category) query = query.eq('category', input.category as string)
@@ -233,8 +220,7 @@ const handlers: Record<string, AgentToolHandler> = {
     return { success: true, data: { results: data, total: data?.length ?? 0 } }
   },
 
-  async add_memory(input, orgId) {
-    const supabase = await getSupabase()
+  async add_memory(input, orgId, supabase) {
     const { data, error } = await supabase
       .from('memory_entries')
       .insert({
@@ -263,14 +249,15 @@ export function getAgentTools(): Anthropic.Tool[] {
 export async function executeAgentTool(
   name: string,
   input: Record<string, unknown>,
-  orgId: string
+  orgId: string,
+  supabase: SupabaseClient
 ): Promise<ToolResult> {
   const handler = allHandlers[name]
   if (!handler) {
     return { success: false, error: `Unknown tool: ${name}` }
   }
   try {
-    return await handler(input, orgId)
+    return await handler(input, orgId, supabase)
   } catch (err) {
     return { success: false, error: String(err) }
   }

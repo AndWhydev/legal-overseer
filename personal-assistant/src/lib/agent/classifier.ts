@@ -1,10 +1,13 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { ChannelMessage } from '@/lib/channels/types'
 import Anthropic from '@anthropic-ai/sdk'
+import { assembleContext } from '@/lib/context/assembler'
 
 export interface ClassificationResult {
   significance: number // 1-10
   timeSensitivity: 'immediate' | 'today' | 'this_week' | 'whenever' | 'none'
+  resolves: string[]
+  unblocks: string[]
   recommendedActions: string[] // e.g., ["reply", "create_task", "forward_to_lead_swarm"]
   reasoning: string
   category: 'lead' | 'client' | 'vendor' | 'personal' | 'spam' | 'notification' | 'newsletter'
@@ -13,6 +16,8 @@ export interface ClassificationResult {
 const DEFAULT_RESULT: ClassificationResult = {
   significance: 2,
   timeSensitivity: 'none',
+  resolves: [],
+  unblocks: [],
   recommendedActions: [],
   reasoning: 'Classification failed -- defaulting to low significance',
   category: 'notification',
@@ -20,7 +25,7 @@ const DEFAULT_RESULT: ClassificationResult = {
 
 const MAX_BODY_LENGTH = 2000
 
-function buildClassificationPrompt(message: ChannelMessage): string {
+function buildClassificationPrompt(message: ChannelMessage, contextSummary: string): string {
   const body = message.body.length > MAX_BODY_LENGTH
     ? message.body.slice(0, MAX_BODY_LENGTH) + '...[truncated]'
     : message.body
@@ -36,10 +41,15 @@ Return JSON:
 {
   "significance": <1-10>,
   "timeSensitivity": "<immediate|today|this_week|whenever|none>",
+  "resolves": ["<task_id>", ...],
+  "unblocks": ["<task_id>", ...],
   "recommendedActions": ["<action1>", ...],
   "reasoning": "<brief explanation>",
   "category": "<lead|client|vendor|personal|spam|notification|newsletter>"
 }
+
+Background Context for Sender:
+${contextSummary || 'None available.'}
 
 Scoring guidelines:
 - 10: Business-critical (contract, legal, payment dispute)
@@ -71,6 +81,8 @@ function parseClassificationResponse(text: string): ClassificationResult {
   return {
     significance,
     timeSensitivity,
+    resolves: Array.isArray(parsed.resolves) ? parsed.resolves : [],
+    unblocks: Array.isArray(parsed.unblocks) ? parsed.unblocks : [],
     recommendedActions: Array.isArray(parsed.recommendedActions) ? parsed.recommendedActions : [],
     reasoning: String(parsed.reasoning ?? ''),
     category,
@@ -88,7 +100,12 @@ export async function classifyMessage(
 ): Promise<ClassificationResult> {
   try {
     const client = new Anthropic()
-    const prompt = buildClassificationPrompt(message)
+
+    // Assemble context for the sender to enrich classification
+    const query = `${message.sender} ${message.senderEmail || ''}`.trim()
+    const context = await assembleContext(supabase, orgId, query)
+
+    const prompt = buildClassificationPrompt(message, context.summary)
 
     const response = await client.messages.create({
       model: 'claude-3-5-haiku-latest',
@@ -110,6 +127,8 @@ export async function classifyMessage(
       .update({
         significance: result.significance,
         time_sensitivity: result.timeSensitivity,
+        resolves: result.resolves,
+        unblocks: result.unblocks,
         recommended_actions: result.recommendedActions,
         classification_model: 'claude-3-5-haiku-latest',
         classified_at: new Date().toISOString(),

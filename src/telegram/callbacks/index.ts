@@ -5,6 +5,7 @@
  */
 
 import { Bot } from 'grammy';
+import type { Context } from 'grammy';
 import { registerApprovalCallbacks } from './approval.js';
 import { createSafeLogger } from '../../governance/index.js';
 
@@ -23,7 +24,11 @@ export function registerAllCallbacks(bot: Bot): void {
   registerApprovalCallbacks(bot);
 
   // Catch-all handler for unknown callbacks (must be last)
-  bot.on('callback_query:data', async (ctx) => {
+  bot.on('callback_query:data', async (ctx: Context) => {
+    if (!ctx.callbackQuery) {
+      logger.warn('Callback query is undefined');
+      return;
+    }
     const data = ctx.callbackQuery.data;
     logger.warn(`Unknown callback query: ${data}`);
     await ctx.answerCallbackQuery({

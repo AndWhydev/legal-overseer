@@ -50,7 +50,7 @@ function mockSupabase() {
 describe('buildClassificationPrompt', () => {
   it('includes sender, subject, and body', () => {
     const msg = makeMessage()
-    const prompt = buildClassificationPrompt(msg)
+    const prompt = buildClassificationPrompt(msg, '')
     expect(prompt).toContain('Jane Doe')
     expect(prompt).toContain('jane@example.com')
     expect(prompt).toContain('Invoice for project')
@@ -60,7 +60,7 @@ describe('buildClassificationPrompt', () => {
   it('truncates long bodies', () => {
     const longBody = 'x'.repeat(3000)
     const msg = makeMessage({ body: longBody })
-    const prompt = buildClassificationPrompt(msg)
+    const prompt = buildClassificationPrompt(msg, '')
     expect(prompt).toContain('...[truncated]')
     expect(prompt.length).toBeLessThan(longBody.length)
   })
@@ -71,6 +71,8 @@ describe('parseClassificationResponse', () => {
     const json = JSON.stringify({
       significance: 8,
       timeSensitivity: 'immediate',
+      resolves: [],
+      unblocks: [],
       recommendedActions: ['reply', 'create_task'],
       reasoning: 'Important client email',
       category: 'client',
@@ -86,6 +88,8 @@ describe('parseClassificationResponse', () => {
     const result = parseClassificationResponse(JSON.stringify({
       significance: 15,
       timeSensitivity: 'today',
+      resolves: [],
+      unblocks: [],
       recommendedActions: [],
       reasoning: '',
       category: 'client',
@@ -97,6 +101,8 @@ describe('parseClassificationResponse', () => {
     const result = parseClassificationResponse(JSON.stringify({
       significance: 5,
       timeSensitivity: 'invalid',
+      resolves: [],
+      unblocks: [],
       recommendedActions: [],
       reasoning: '',
       category: 'client',
@@ -117,6 +123,8 @@ describe('classifyMessage', () => {
         text: JSON.stringify({
           significance: 7,
           timeSensitivity: 'today',
+          resolves: [],
+          unblocks: [],
           recommendedActions: ['reply'],
           reasoning: 'Client follow-up',
           category: 'client',

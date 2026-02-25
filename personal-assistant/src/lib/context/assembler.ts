@@ -8,6 +8,10 @@ import type {
   TimelineEntry,
   MemoryEntry,
   ResolvedEntity,
+  CrossReference,
+  TaskRef,
+  Deadline,
+  WaitingFor,
 } from './types'
 
 /**
@@ -23,7 +27,7 @@ export async function assembleEntityBriefing(
   const maxTimeline = options?.maxTimelineEvents ?? 15
   const maxMemories = options?.maxMemories ?? 10
 
-  const [relRes, timelineRes, memoriesRes] = await Promise.all([
+  const [relRes, timelineRes, memoriesRes, crossReferences] = await Promise.all([
     supabase
       .from('entity_relationships')
       .select('*')
@@ -49,6 +53,7 @@ export async function assembleEntityBriefing(
       .eq('is_active', true)
       .order('confidence', { ascending: false })
       .limit(maxMemories),
+    loadCrossReferences(supabase, orgId, entityType, entityId),
   ])
 
   const relationships: RelationshipEdge[] = (relRes.data ?? []).map((r: Record<string, unknown>) => {
@@ -85,7 +90,99 @@ export async function assembleEntityBriefing(
     relationships,
     timeline,
     memories,
+    crossReferences,
   }
+}
+
+async function loadCrossReferences(
+  supabase: SupabaseClient,
+  orgId: string,
+  entityType: EntityType,
+  entityId: string
+): Promise<CrossReference> {
+  const empty: CrossReference = {
+    relatedTasks: [],
+    deadlines: [],
+    financialSignals: { totalOutstanding: 0, overdueCount: 0, lastPaymentDate: null, invoiceCount: 0 },
+    waitingFor: []
+  }
+  if (entityType !== 'contact') return empty
+
+  // 1. Fetch Invoices
+  const { data: invoices } = await supabase
+    .from('invoices')
+    .select('id, invoice_number, status, total, due_date, paid_date')
+    .eq('org_id', orgId)
+    .eq('client_contact_id', entityId)
+
+  let totalOutstanding = 0
+  let overdueCount = 0
+  let invoiceCount = 0
+  let lastPaymentDate: string | null = null
+
+  if (invoices) {
+    invoiceCount = invoices.length
+    for (const inv of invoices) {
+      if (inv.status === 'sent' || inv.status === 'viewed') {
+        totalOutstanding += Number(inv.total)
+      } else if (inv.status === 'overdue') {
+        totalOutstanding += Number(inv.total)
+        overdueCount++
+      } else if (inv.status === 'paid') {
+        if (!lastPaymentDate || new Date(inv.paid_date) > new Date(lastPaymentDate)) {
+          lastPaymentDate = inv.paid_date
+        }
+      }
+    }
+  }
+
+  // 2. Fetch Tasks via relationships
+  const { data: taskRels } = await supabase
+    .from('entity_relationships')
+    .select('entity_a_id')
+    .eq('org_id', orgId)
+    .eq('entity_b_id', entityId)
+    .eq('entity_a_type', 'task')
+    .eq('relationship_type', 'assigned_to')
+
+  const taskIds = (taskRels ?? []).map((r: any) => r.entity_a_id)
+
+  const relatedTasks: TaskRef[] = []
+  const deadlines: Deadline[] = []
+  const waitingFor: WaitingFor[] = []
+
+  if (taskIds.length > 0) {
+    const { data: tasks } = await supabase
+      .from('tasks')
+      .select('id, title, status, priority, metadata')
+      .eq('org_id', orgId)
+      .in('id', taskIds)
+
+    if (tasks) {
+      for (const t of tasks) {
+        const targetDate = t.metadata?.target_date ?? null
+        relatedTasks.push({
+          id: t.id,
+          title: t.title,
+          status: t.status,
+          priority: t.priority,
+          targetDate
+        })
+
+        if (t.status === 'pending' || t.status === 'in_progress') {
+          if (targetDate) {
+            const daysUntil = Math.ceil((new Date(targetDate).getTime() - new Date().getTime()) / 86400000)
+            deadlines.push({ taskId: t.id, title: t.title, targetDate, daysUntil })
+          }
+        }
+        if (t.status === 'blocked' || t.metadata?.waiting_on) {
+          waitingFor.push({ taskId: t.id, title: t.title, status: t.status, assignedTo: null })
+        }
+      }
+    }
+  }
+
+  return { relatedTasks, deadlines, financialSignals: { totalOutstanding, overdueCount, lastPaymentDate, invoiceCount }, waitingFor }
 }
 
 /**
@@ -114,6 +211,34 @@ function formatBriefingSummary(briefing: EntityBriefing, entityName: string): st
     lines.push('Memories:')
     for (const mem of briefing.memories.slice(0, 3)) {
       lines.push(`  - ${mem.content.slice(0, 100)}`)
+    }
+  }
+
+  // Cross References (Financial & Operational Signals)
+  const cross = briefing.crossReferences
+  const signals: string[] = []
+
+  if (cross.financialSignals.invoiceCount > 0) {
+    if (cross.financialSignals.totalOutstanding > 0) {
+      signals.push(`Outstanding Invoices: $${cross.financialSignals.totalOutstanding} (${cross.financialSignals.overdueCount} overdue)`)
+    } else {
+      signals.push(`All invoices paid (last: ${cross.financialSignals.lastPaymentDate ? new Date(cross.financialSignals.lastPaymentDate).toLocaleDateString() : 'N/A'})`)
+    }
+  }
+
+  if (cross.relatedTasks.length > 0) {
+    const activeTasks = cross.relatedTasks.filter(t => t.status === 'pending' || t.status === 'in_progress')
+    signals.push(`Active Tasks: ${activeTasks.length}`)
+  }
+
+  if (cross.deadlines.length > 0) {
+    signals.push(`Deadlines: ${cross.deadlines.map(d => `${d.title} (in ${d.daysUntil} days)`).join(', ')}`)
+  }
+
+  if (signals.length > 0) {
+    lines.push('Operational Signals:')
+    for (const sig of signals) {
+      lines.push(`  - ${sig}`)
     }
   }
 

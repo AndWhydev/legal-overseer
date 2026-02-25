@@ -5,6 +5,7 @@ import { runLeadSwarmTick } from './lead-swarm'
 import { runInvoiceFlowTick } from './invoice-flow'
 import { runSentryTick } from './sentry'
 import { processSentryEscalations } from './sentry-escalation'
+import { runTriage } from './channel-triage'
 
 /**
  * Result of checking one agent's schedule.
@@ -126,6 +127,7 @@ export async function runScheduledAgents(
   const processedSentryOrgs = new Set<string>()
   const processedLeadSwarmOrgs = new Set<string>()
   const processedInvoiceFlowOrgs = new Set<string>()
+  const processedTriageOrgs = new Set<string>()
 
   for (const config of configs) {
     const schedule = config.schedule as AgentSchedule | null
@@ -235,6 +237,29 @@ export async function runScheduledAgents(
       } catch (error) {
         const message = error instanceof Error ? error.message : 'unknown'
         outputSummary = `invoice-flow error=${message}`
+      }
+    } else if (config.agent_type === 'channel-triage') {
+      if (processedTriageOrgs.has(config.org_id)) {
+        results.push({
+          agentType: config.agent_type,
+          orgId: config.org_id,
+          triggered: false,
+          reason: 'already_running',
+          lastRunAt: lastRunAt?.toISOString(),
+        })
+        continue
+      }
+
+      processedTriageOrgs.add(config.org_id)
+
+      try {
+        const triageResult = await runTriage(supabase, config.org_id)
+        outputSummary =
+          `channel-triage processed=${triageResult.processed} actionable=${triageResult.actionable} ` +
+          `informational=${triageResult.informational} spam=${triageResult.spam} routed=${triageResult.routed.length}`
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'unknown'
+        outputSummary = `channel-triage error=${message}`
       }
     }
 

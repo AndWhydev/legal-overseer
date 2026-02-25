@@ -6,6 +6,7 @@
  */
 
 import { Bot } from 'grammy';
+import type { Context } from 'grammy';
 import { registerAllCommands } from './commands/index.js';
 import { registerAllCallbacks } from './callbacks/index.js';
 import { createSafeLogger } from '../governance/index.js';
@@ -62,13 +63,13 @@ export function isBotReady(): boolean {
 
 if (bot) {
   // Error handling middleware - logs errors without exposing sensitive data
-  bot.catch((err) => {
-    const ctx = err.ctx;
-    logger.error(`Telegram bot error: Update ID: ${ctx.update.update_id}, Error: ${err.error}`);
+  bot.catch((err: unknown) => {
+    const ctx = (err as any).ctx as Context;
+    logger.error(`Telegram bot error: Update ID: ${ctx.update.update_id}, Error: ${(err as any).error}`);
   });
 
   // /start command - welcome message
-  bot.command('start', async (ctx) => {
+  bot.command('start', async (ctx: Context) => {
     await ctx.reply(
       '<b>🤖 BitBit</b> - Enterprise Agentic AI System\n\n' +
         'I am the AI assistant for CheekyGlo operations.\n\n' +

@@ -1,4 +1,4 @@
-import type { ConfidenceThresholds, ConfidenceDecision } from '@bitbit/core'
+import type { ConfidenceThresholds, ConfidenceDecision } from '@/lib/bitbit-core'
 export type { ConfidenceThresholds, ConfidenceDecision }
 
 export const DEFAULT_THRESHOLDS: ConfidenceThresholds = {

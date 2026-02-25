@@ -1,0 +1,203 @@
+# ============================================
+# BitBit Tool Definitions
+# ============================================
+# Declarative tool configuration for the BitBit agent.
+# Each tool maps to a handler function in lib/services/tool-handlers.ts
+
+tools:
+  # ==========================================
+  # 1. LOOKUP ORDER
+  # ==========================================
+  - name: lookup_order
+    description: |
+      Look up an order by order number or tracking number.
+
+      Use this tool when:
+      - Customer asks "where is my order" (WISMO)
+      - Customer provides an order number (e.g., "CG-12345")
+      - Customer provides a tracking number
+      - You need to check order status, items, or delivery info
+
+      Returns: Order details including status, items, shipping address, tracking, and dates.
+    handler: services/tool-handlers#handleLookupOrder
+    params:
+      order_number:
+        type: string
+        description: The order number (e.g., "CG-12345")
+      tracking_number:
+        type: string
+        description: The tracking number if order number is not available
+
+  # ==========================================
+  # 2. GET SHIPPING STATUS
+  # ==========================================
+  - name: get_shipping_status
+    description: |
+      Get detailed shipping status for an order.
+
+      Use this tool when:
+      - Customer specifically asks about shipping/delivery timeline
+      - You need estimated delivery date
+      - Order has been shipped and you need carrier details
+      - You need to know days since shipment
+
+      Returns: Shipping status, tracking number, carrier, ship date, estimated delivery, and days in transit.
+    handler: services/tool-handlers#handleGetShippingStatus
+    params:
+      order_number:
+        type: string
+        description: The order number to check shipping for
+        required: true
+
+  # ==========================================
+  # 3. GET CUSTOMER HISTORY
+  # ==========================================
+  - name: get_customer_history
+    description: |
+      Get a customer's full profile and order history.
+
+      Use this tool when:
+      - You need to see a customer's past orders
+      - Checking if customer is a repeat buyer
+      - Need to understand customer's total spend/value
+      - Customer doesn't have an order number but you have their email
+
+      Returns: Customer profile with all orders, total spent, and order count.
+    handler: services/tool-handlers#handleGetCustomerHistory
+    params:
+      email:
+        type: string
+        description: Customer email address
+        required: true
+
+  # ==========================================
+  # 4. SEND REPLY
+  # ==========================================
+  - name: send_reply
+    description: |
+      Send a reply to the customer via their preferred channel.
+
+      Use this tool when:
+      - You have information to share with the customer
+      - Confirming order status
+      - Answering product questions
+      - Providing tracking information
+      - Responding to any customer inquiry
+
+      IMPORTANT: Always use CheekyGlo brand voice - friendly, helpful, premium but approachable.
+      For email, include subject line. For WhatsApp/SMS/Telegram, keep messages concise.
+
+      Returns: Confirmation of message sent with message ID.
+    handler: services/tool-handlers#handleSendReply
+    params:
+      channel:
+        type: string
+        enum: [email, whatsapp, sms, telegram]
+        description: Channel to send the reply through
+        required: true
+      to:
+        type: string
+        description: Recipient (email address, phone number, or telegram chat ID)
+        required: true
+      message:
+        type: string
+        description: The message body to send
+        required: true
+      subject:
+        type: string
+        description: Email subject line (required for email, ignored for other channels)
+
+  # ==========================================
+  # 5. CREATE TASK
+  # ==========================================
+  - name: create_task
+    description: |
+      Create a task for Xixi or Allen to follow up on.
+
+      Use this tool when:
+      - Issue needs human follow-up
+      - Creating reminders for team members
+      - Something requires manual action (refund processing, vendor contact)
+      - Logging items for the operations queue
+
+      Route to:
+      - Xixi: Customer support, content approval, brand/marketing issues
+      - Allen: Operations, shipping exceptions, inventory, vendor issues
+
+      Returns: Created task with ID and details.
+    handler: services/tool-handlers#handleCreateTask
+    params:
+      title:
+        type: string
+        description: Brief task title describing what needs to be done
+        required: true
+      owner:
+        type: string
+        enum: [xixi, allen]
+        description: Who should handle this task
+        required: true
+      description:
+        type: string
+        description: Detailed description with context and any relevant order/customer info
+      due_days:
+        type: number
+        description: Days from now until due (optional, defaults to no due date)
+
+  # ==========================================
+  # 6. CHECK INVENTORY
+  # ==========================================
+  - name: check_inventory
+    description: |
+      Check stock levels and product information for a SKU.
+
+      Use this tool when:
+      - Customer asks about product availability
+      - Need to check if item is in stock before promising fulfillment
+      - Allen asks about inventory levels
+      - Checking if reorder is needed
+
+      Returns: Stock count, in-stock status, low-stock warning, and product details.
+    handler: services/tool-handlers#handleCheckInventory
+    params:
+      sku:
+        type: string
+        description: Product SKU to check (e.g., "CG-GLOVE-REG")
+        required: true
+
+  # ==========================================
+  # 7. ESCALATE
+  # ==========================================
+  - name: escalate
+    description: |
+      Escalate an issue to human review immediately.
+
+      Use this tool when:
+      - Legal threats or chargeback mentions
+      - Safety complaints about products
+      - Influencer contract disputes
+      - Policy edge cases you're unsure about
+      - Customer is very upset or situation is complex
+      - Confidence in correct action is low (<50%)
+
+      This creates an urgent task and flags for immediate human attention.
+
+      Returns: Acknowledgment with escalation ID.
+    handler: services/tool-handlers#handleEscalate
+    params:
+      reason:
+        type: string
+        description: Why this needs human attention
+        required: true
+      category:
+        type: string
+        enum: [legal, safety, chargeback, influencer, policy_edge_case, customer_upset, other]
+        description: Category of escalation
+        required: true
+      context:
+        type: string
+        description: Full context including any order numbers, customer info, and conversation history
+        required: true
+      suggested_owner:
+        type: string
+        enum: [xixi, allen]
+        description: Suggested person to handle (xixi for customer issues, allen for ops)

@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { getAgentTools, executeAgentTool } from './tools'
 import { buildEntityAwarePrompt } from './prompt-builder'
 import { selectModel, getModel } from './model-router'
@@ -18,6 +19,7 @@ export interface ToolCallResult {
 
 export interface EngineConfig {
   orgId: string
+  supabase: SupabaseClient
   model?: string
   maxIterations?: number
 }
@@ -43,7 +45,7 @@ export async function* runAgentChat(
   const model = config.model || selection?.model || 'claude-sonnet-4-5-20250929'
   const maxTokens = selection ? getModel(selection.tier).maxTokens : 4096
 
-  const systemPrompt = await buildEntityAwarePrompt(config.orgId, message)
+  const systemPrompt = await buildEntityAwarePrompt(config.supabase, config.orgId, message)
 
   if (autoRouted && selection) {
     console.log(`[model-router] ${selection.tier}: ${selection.reasoning}`)
@@ -90,7 +92,8 @@ export async function* runAgentChat(
         const result = await executeAgentTool(
           tool.name,
           tool.input as Record<string, unknown>,
-          config.orgId
+          config.orgId,
+          config.supabase
         )
         yield {
           type: 'tool_result',

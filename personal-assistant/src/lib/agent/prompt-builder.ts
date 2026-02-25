@@ -1,6 +1,8 @@
 import { loadContext } from '@/lib/context/loader'
 import { assembleContext } from '@/lib/context/assembler'
-import { createClient } from '@/lib/supabase/server'
+import { loadPolicies } from './policy-loader'
+import { loadVoiceProfile } from './voice-loader'
+import type { SupabaseClient } from '@supabase/supabase-js'
 
 interface CachedEvent {
   title: string
@@ -97,16 +99,18 @@ async function getDueReminders(): Promise<string> {
   return lines.length > 0 ? lines.join('\n') : 'No reminders.'
 }
 
-export async function buildSystemPrompt(orgId: string): Promise<string> {
-  const supabase = await createClient()
+export async function buildSystemPrompt(supabase: SupabaseClient, orgId: string): Promise<string> {
+  const deploymentSlug = process.env.BITBIT_DEPLOYMENT || 'awu'
 
-  const [ctx, channelSummary, todayEvents, dueReminders] = await Promise.all([
+  const [ctx, channelSummary, todayEvents, dueReminders, policyText, voiceText] = await Promise.all([
     supabase
       ? loadContext(supabase, orgId)
       : Promise.resolve({ goals: [], tasks: [], contacts: [], recentActivity: [], columns: [] }),
     getChannelSummary(),
     getTodayEvents(),
     getDueReminders(),
+    loadPolicies(deploymentSlug),
+    loadVoiceProfile(deploymentSlug),
   ])
 
   const now = new Date()
@@ -127,9 +131,9 @@ export async function buildSystemPrompt(orgId: string): Promise<string> {
   const columnMap = new Map(ctx.columns.map(c => [c.id, c.title]))
   const tasksSummary = ctx.tasks.length > 0
     ? ctx.tasks.slice(0, 30).map(t => {
-        const col = t.column_id ? columnMap.get(t.column_id) ?? 'Unknown' : 'Unassigned'
-        return `- [${t.priority}] ${t.title} (${col}, ${t.status})`
-      }).join('\n')
+      const col = t.column_id ? columnMap.get(t.column_id) ?? 'Unknown' : 'Unassigned'
+      return `- [${t.priority}] ${t.title} (${col}, ${t.status})`
+    }).join('\n')
     : 'No tasks on the board.'
 
   const contactsSummary = ctx.contacts.length > 0
@@ -138,13 +142,13 @@ export async function buildSystemPrompt(orgId: string): Promise<string> {
 
   const recentActivitySummary = ctx.recentActivity.length > 0
     ? ctx.recentActivity.slice(0, 10).map(a =>
-        `- [${a.action_type}] ${a.action}${a.result ? ` → ${a.result}` : ''}`
-      ).join('\n')
+      `- [${a.action_type}] ${a.action}${a.result ? ` → ${a.result}` : ''}`
+    ).join('\n')
     : 'No recent activity.'
 
   const availableColumns = ctx.columns.map(c => c.title).join(', ')
 
-  return `You are BitBit, an intelligent personal assistant. You help manage tasks, communications, and schedule across multiple channels.
+  let prompt = `You are BitBit, an intelligent personal assistant. You help manage tasks, communications, and schedule across multiple channels.
 
 ## Identity
 You are concise, proactive, and action-oriented. You manage your user's kanban board, contacts, memory, activity feed, and communication channels (Gmail, Outlook, iMessage, Calendar, Reminders).
@@ -197,6 +201,24 @@ ${contactsSummary}
 ### Recent Activity
 ${recentActivitySummary}
 `
+
+  if (policyText) {
+    prompt += `
+## Organization Policies
+
+${policyText}
+`
+  }
+
+  if (voiceText) {
+    prompt += `
+## Voice Profile
+
+${voiceText}
+`
+  }
+
+  return prompt
 }
 
 /**
@@ -205,13 +227,12 @@ ${recentActivitySummary}
  * Falls back to the base prompt if no entities are detected.
  */
 export async function buildEntityAwarePrompt(
+  supabase: SupabaseClient,
   orgId: string,
   userMessage: string
 ): Promise<string> {
-  const supabase = await createClient()
-
   const [basePrompt, contextBriefing] = await Promise.all([
-    buildSystemPrompt(orgId),
+    buildSystemPrompt(supabase, orgId),
     supabase
       ? assembleContext(supabase, orgId, userMessage)
       : Promise.resolve({ resolvedEntities: [], briefings: [], summary: '' }),

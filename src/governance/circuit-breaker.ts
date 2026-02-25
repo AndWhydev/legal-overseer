@@ -179,11 +179,11 @@ export function getCircuitBreakerStatus(name: string): CircuitBreakerStatus | nu
     name,
     state,
     stats: {
-      successes: stats.successes,
-      failures: stats.failures,
-      timeouts: stats.timeouts,
-      rejects: stats.rejects,
-      latencyMean: stats.latencyMean,
+      successes: stats.successes ?? 0,
+      failures: stats.failures ?? 0,
+      timeouts: stats.timeouts ?? 0,
+      rejects: stats.rejects ?? 0,
+      latencyMean: stats.latencyMean ?? 0,
     },
   };
 }

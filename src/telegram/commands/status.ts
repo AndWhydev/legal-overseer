@@ -5,6 +5,7 @@
  */
 
 import { Bot } from 'grammy';
+import type { Context } from 'grammy';
 import { getDatabase } from '../../db/index.js';
 
 const VERSION = '0.1.0';
@@ -89,7 +90,7 @@ function getTaskCounts(): { pending: number; running: number; completedToday: nu
  * Register /status command on bot
  */
 export function registerStatusCommand(bot: Bot): void {
-  bot.command('status', async (ctx) => {
+  bot.command('status', async (ctx: Context) => {
     const dbConnected = checkDatabase();
     const uptime = formatUptime(Date.now() - startTime);
     const taskCounts = getTaskCounts();

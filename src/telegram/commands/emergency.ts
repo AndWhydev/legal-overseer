@@ -58,7 +58,7 @@ async function handleEmergencyStop(ctx: Context): Promise<void> {
 
   // Parse optional agent ID from command
   const text = ctx.message?.text || '';
-  const parts = text.split(' ').filter((p) => p);
+  const parts = text.split(' ').filter((p: string) => p);
   const agentId = parts[1]; // /emergency_stop [agentId]
 
   // Execute emergency stop
@@ -109,7 +109,7 @@ async function handleResume(ctx: Context): Promise<void> {
 
   // Parse agent ID from command
   const text = ctx.message?.text || '';
-  const parts = text.split(' ').filter((p) => p);
+  const parts = text.split(' ').filter((p: string) => p);
   const target = parts[1]; // /resume [all|agentId]
 
   if (!target) {

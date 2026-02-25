@@ -1,4 +1,4 @@
-export type ChannelType = 'gmail' | 'outlook' | 'imessage' | 'calendar' | 'reminders'
+export type ChannelType = 'gmail' | 'outlook' | 'imessage' | 'calendar' | 'reminders' | 'whatsapp' | 'asana' | 'calendly' | 'stripe' | 'gsc'
 
 export interface ChannelMessage {
   id: string
@@ -38,7 +38,11 @@ export interface ChannelAdapter {
   name: string
   description: string
   icon: string
-  pull: (config: Record<string, unknown>, since?: Date) => Promise<ChannelMessage[]>
+  pull: (
+    config: Record<string, unknown>,
+    since?: Date,
+    options?: Record<string, unknown>,
+  ) => Promise<ChannelMessage[]>
   isAvailable: () => Promise<boolean>
 }
 

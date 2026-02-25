@@ -6,6 +6,7 @@
  */
 
 import { Bot } from 'grammy';
+import type { Context } from 'grammy';
 import { aggregateDailyBriefing, type DailyBriefing, type BriefingAlert } from '../../briefing/index.js';
 
 /**
@@ -176,7 +177,7 @@ function formatBriefingMessage(briefing: DailyBriefing): string {
  * Register /briefing command on bot
  */
 export function registerBriefingCommand(bot: Bot): void {
-  bot.command('briefing', async (ctx) => {
+  bot.command('briefing', async (ctx: Context) => {
     try {
       // Generate the daily briefing
       const briefing = await aggregateDailyBriefing();

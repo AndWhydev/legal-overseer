@@ -11,6 +11,34 @@ import { createSafeLogger } from '../governance/index.js';
 const logger = createSafeLogger('Executor');
 
 /**
+ * Type guard to check if a message has the type property
+ */
+function hasType(message: unknown): message is { type: string } {
+  return typeof message === 'object' && message !== null && 'type' in message;
+}
+
+/**
+ * Type guard to check if a message is a tool_use_summary type
+ */
+function isToolUseSummaryMessage(message: unknown): message is { type: 'tool_use_summary'; summary: string } {
+  return hasType(message) && message.type === 'tool_use_summary';
+}
+
+/**
+ * Type guard to check if a message is a tool_progress type
+ */
+function isToolProgressMessage(message: unknown): message is { type: 'tool_progress'; tool_name: string } {
+  return hasType(message) && message.type === 'tool_progress';
+}
+
+/**
+ * Type guard to check if a message is a result type
+ */
+function isResultMessage(message: unknown): message is { type: 'result'; subtype: 'success' | 'error'; result?: string; total_cost_usd?: number } {
+  return hasType(message) && message.type === 'result';
+}
+
+/**
  * Options for configuring query execution
  */
 export interface QueryOptions {
@@ -103,24 +131,23 @@ export async function executeQuery(
       },
     })) {
       // Track tool usage from tool_use_summary messages
-      if (message.type === 'tool_use_summary') {
+      if (isToolUseSummaryMessage(message)) {
         // tool_use_summary contains a summary of tools used
         logger.info(`Agent tool summary: ${message.summary}`);
       }
 
       // Track tool progress for individual tool calls
-      if (message.type === 'tool_progress') {
-        const toolName = message.tool_name;
-        if (!toolCalls.includes(toolName)) {
-          toolCalls.push(toolName);
+      if (isToolProgressMessage(message)) {
+        if (!toolCalls.includes(message.tool_name)) {
+          toolCalls.push(message.tool_name);
         }
-        logger.info(`Agent tool call: ${toolName}`);
+        logger.info(`Agent tool call: ${message.tool_name}`);
       }
 
       // Capture final result from SDKResultSuccess
-      if (message.type === 'result') {
+      if (isResultMessage(message)) {
         if (message.subtype === 'success') {
-          output = message.result;
+          output = message.result || '';
           costUsd = message.total_cost_usd;
         } else {
           // Error result

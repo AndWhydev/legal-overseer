@@ -13,7 +13,7 @@ vi.mock('./gmail', () => ({
   },
 }))
 
-function createMockSupabase(overrides: Record<string, unknown> = {}) {
+function createMockSupabase(overrides: Record<string, unknown> = {}): any {
   const mockChain = {
     select: vi.fn().mockReturnThis(),
     eq: vi.fn().mockReturnThis(),
@@ -38,10 +38,10 @@ describe('relay-daemon', () => {
   describe('pollChannel', () => {
     it('returns skipped when relay_enabled is false', async () => {
       const supabase = createMockSupabase()
-      ;(supabase._chain.single as ReturnType<typeof vi.fn>).mockResolvedValue({
-        data: { relay_enabled: false, config: {} },
-        error: null,
-      })
+        ; (supabase._chain.single as ReturnType<typeof vi.fn>).mockResolvedValue({
+          data: { relay_enabled: false, config: {} },
+          error: null,
+        })
 
       const result = await pollChannel(supabase as any, 'org-1', 'gmail')
       expect(result.skipped).toBe(true)
@@ -50,27 +50,27 @@ describe('relay-daemon', () => {
 
     it('upserts messages from adapter', async () => {
       const { gmailAdapter } = await import('./gmail')
-      ;(gmailAdapter.pull as ReturnType<typeof vi.fn>).mockResolvedValue([
-        {
-          id: 'gmail-1',
-          channel: 'gmail',
-          externalId: 'msg-1',
-          sender: 'Alice',
-          senderEmail: 'alice@test.com',
-          subject: 'Test',
-          body: 'Hello',
-          receivedAt: new Date('2026-01-01'),
-          isActionable: false,
-          priority: 'medium',
-          metadata: {},
-        },
-      ])
+        ; (gmailAdapter.pull as ReturnType<typeof vi.fn>).mockResolvedValue([
+          {
+            id: 'gmail-1',
+            channel: 'gmail',
+            externalId: 'msg-1',
+            sender: 'Alice',
+            senderEmail: 'alice@test.com',
+            subject: 'Test',
+            body: 'Hello',
+            receivedAt: new Date('2026-01-01'),
+            isActionable: false,
+            priority: 'medium',
+            metadata: {},
+          },
+        ])
 
       const supabase = createMockSupabase()
-      ;(supabase._chain.single as ReturnType<typeof vi.fn>).mockResolvedValue({
-        data: { relay_enabled: true, config: {}, poll_cursor: null },
-        error: null,
-      })
+        ; (supabase._chain.single as ReturnType<typeof vi.fn>).mockResolvedValue({
+          data: { relay_enabled: true, config: {}, poll_cursor: null },
+          error: null,
+        })
 
       const result = await pollChannel(supabase as any, 'org-1', 'gmail')
       expect(result.skipped).toBe(false)
@@ -82,25 +82,25 @@ describe('relay-daemon', () => {
     it('updates poll_cursor after successful poll', async () => {
       const { gmailAdapter } = await import('./gmail')
       const msgDate = new Date('2026-01-15T10:00:00Z')
-      ;(gmailAdapter.pull as ReturnType<typeof vi.fn>).mockResolvedValue([
-        {
-          id: 'gmail-2',
-          channel: 'gmail',
-          externalId: 'msg-2',
-          sender: 'Bob',
-          body: 'Hi',
-          receivedAt: msgDate,
-          isActionable: false,
-          priority: 'medium',
-          metadata: {},
-        },
-      ])
+        ; (gmailAdapter.pull as ReturnType<typeof vi.fn>).mockResolvedValue([
+          {
+            id: 'gmail-2',
+            channel: 'gmail',
+            externalId: 'msg-2',
+            sender: 'Bob',
+            body: 'Hi',
+            receivedAt: msgDate,
+            isActionable: false,
+            priority: 'medium',
+            metadata: {},
+          },
+        ])
 
       const supabase = createMockSupabase()
-      ;(supabase._chain.single as ReturnType<typeof vi.fn>).mockResolvedValue({
-        data: { relay_enabled: true, config: {}, poll_cursor: null },
-        error: null,
-      })
+        ; (supabase._chain.single as ReturnType<typeof vi.fn>).mockResolvedValue({
+          data: { relay_enabled: true, config: {}, poll_cursor: null },
+          error: null,
+        })
 
       await pollChannel(supabase as any, 'org-1', 'gmail')
 
@@ -110,13 +110,13 @@ describe('relay-daemon', () => {
 
     it('handles adapter errors gracefully', async () => {
       const { gmailAdapter } = await import('./gmail')
-      ;(gmailAdapter.pull as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('IMAP timeout'))
+        ; (gmailAdapter.pull as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('IMAP timeout'))
 
       const supabase = createMockSupabase()
-      ;(supabase._chain.single as ReturnType<typeof vi.fn>).mockResolvedValue({
-        data: { relay_enabled: true, config: {}, poll_cursor: null },
-        error: null,
-      })
+        ; (supabase._chain.single as ReturnType<typeof vi.fn>).mockResolvedValue({
+          data: { relay_enabled: true, config: {}, poll_cursor: null },
+          error: null,
+        })
 
       const result = await pollChannel(supabase as any, 'org-1', 'gmail')
       expect(result.error).toBe('IMAP timeout')
@@ -127,25 +127,25 @@ describe('relay-daemon', () => {
   describe('processNewMessages', () => {
     it('returns only unprocessed messages', async () => {
       const supabase = createMockSupabase()
-      ;(supabase._chain.limit as ReturnType<typeof vi.fn>).mockResolvedValue({
-        data: [
-          {
-            id: 'uuid-1',
-            channel: 'gmail',
-            external_id: 'msg-1',
-            sender: 'Alice',
-            sender_email: 'alice@test.com',
-            subject: 'Test',
-            body: 'Hello',
-            received_at: '2026-01-01T00:00:00Z',
-            is_actionable: false,
-            priority: 'medium',
-            processed: false,
-            metadata: {},
-          },
-        ],
-        error: null,
-      })
+        ; (supabase._chain.limit as ReturnType<typeof vi.fn>).mockResolvedValue({
+          data: [
+            {
+              id: 'uuid-1',
+              channel: 'gmail',
+              external_id: 'msg-1',
+              sender: 'Alice',
+              sender_email: 'alice@test.com',
+              subject: 'Test',
+              body: 'Hello',
+              received_at: '2026-01-01T00:00:00Z',
+              is_actionable: false,
+              priority: 'medium',
+              processed: false,
+              metadata: {},
+            },
+          ],
+          error: null,
+        })
 
       const messages = await processNewMessages(supabase as any, 'org-1')
       expect(messages).toHaveLength(1)

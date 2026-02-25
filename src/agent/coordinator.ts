@@ -14,6 +14,27 @@ import { createSafeLogger } from '../governance/index.js';
 const logger = createSafeLogger('Coordinator');
 
 /**
+ * Type guard to check if a value has the type property
+ */
+function hasType(msg: unknown): msg is { type: string } {
+  return typeof msg === 'object' && msg !== null && 'type' in msg;
+}
+
+/**
+ * Type guard to check if a message is a result type
+ */
+function isResultMessage(msg: unknown): msg is { type: 'result'; subtype: 'success' | 'error'; result?: string; total_cost_usd?: number } {
+  return hasType(msg) && msg.type === 'result';
+}
+
+/**
+ * Type guard to check if a message is a tool_progress type
+ */
+function isToolProgressMessage(msg: unknown): msg is { type: 'tool_progress'; tool_name: string } {
+  return hasType(msg) && msg.type === 'tool_progress';
+}
+
+/**
  * Classifier prompt template
  *
  * Haiku classifies tasks to determine which skill should handle them.
@@ -71,8 +92,8 @@ export async function classifyTask(prompt: string): Promise<TaskClassification> 
         maxBudgetUsd: 0.05, // Classification should be very cheap
       },
     })) {
-      if (msg.type === 'result' && msg.subtype === 'success') {
-        result = msg.result;
+      if (isResultMessage(msg) && msg.subtype === 'success') {
+        result = msg.result || '';
       }
     }
 
@@ -164,17 +185,16 @@ export async function executeWithSkill(
       },
     })) {
       // Track tool usage
-      if (msg.type === 'tool_progress') {
-        const toolName = msg.tool_name;
-        if (!toolCalls.includes(toolName)) {
-          toolCalls.push(toolName);
+      if (isToolProgressMessage(msg)) {
+        if (!toolCalls.includes(msg.tool_name)) {
+          toolCalls.push(msg.tool_name);
         }
       }
 
       // Capture final result
-      if (msg.type === 'result') {
+      if (isResultMessage(msg)) {
         if (msg.subtype === 'success') {
-          output = msg.result;
+          output = msg.result || '';
         }
         costUsd = msg.total_cost_usd;
       }

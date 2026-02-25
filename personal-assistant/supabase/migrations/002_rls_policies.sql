@@ -8,7 +8,7 @@
 CREATE OR REPLACE FUNCTION get_user_org_id()
 RETURNS uuid AS $$
   SELECT org_id FROM profiles WHERE id = auth.uid()
-$$ LANGUAGE sql SECURITY DEFINER STABLE;
+$$ LANGUAGE sql SECURITY DEFINER STABLE SET search_path = public, auth;
 
 -- =============================================================================
 -- ENABLE RLS ON ALL TABLES

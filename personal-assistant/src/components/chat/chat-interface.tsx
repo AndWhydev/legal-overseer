@@ -1,11 +1,11 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Send, Loader2, Bot } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { ScrollArea } from '@/components/ui/scroll-area'
+import { motion, AnimatePresence } from 'motion/react'
 import { MessageBubble } from './message-bubble'
 import { ToolCallCard } from './tool-call-card'
+import { BitBitLogoVideo } from './bitbit-logo-video'
+import { BitBitLogoAnimated } from './bitbit-logo-animated'
 
 interface ToolCall {
   name: string
@@ -23,13 +23,28 @@ interface Message {
   timestamp: Date
 }
 
-export function ChatInterface() {
+function getGreeting(): string {
+  const h = new Date().getHours()
+  if (h >= 22) return 'Working late?'
+  if (h >= 17) return 'Good evening'
+  if (h >= 12) return 'Good afternoon'
+  return 'Good morning'
+}
+
+const SUGGESTIONS = [
+  'Create a task',
+  'Summarize my day',
+  "What's on my schedule?",
+]
+
+const CHAT_SEND_EVENT = 'bitbit-chat-send'
+const CHAT_LAYOUT_EVENT = 'bitbit-chat-layout'
+
+export function ChatInterface({ userName }: { userName?: string }) {
   const [messages, setMessages] = useState<Message[]>([])
-  const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [thinkingText, setThinkingText] = useState<string | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   const scrollToBottom = useCallback(() => {
     if (scrollRef.current) {
@@ -41,8 +56,8 @@ export function ChatInterface() {
     scrollToBottom()
   }, [messages, thinkingText, scrollToBottom])
 
-  const handleSend = async () => {
-    const trimmed = input.trim()
+  const handleSend = useCallback(async (text: string) => {
+    const trimmed = text.trim()
     if (!trimmed || isLoading) return
 
     const userMsg: Message = {
@@ -53,7 +68,6 @@ export function ChatInterface() {
     }
 
     setMessages(prev => [...prev, userMsg])
-    setInput('')
     setIsLoading(true)
     setThinkingText(null)
 
@@ -208,76 +222,124 @@ export function ChatInterface() {
       setIsLoading(false)
       setThinkingText(null)
     }
-  }
+  }, [isLoading])
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      handleSend()
+  // Listen for custom events from the docked pill
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const text = (e as CustomEvent<string>).detail
+      if (text) handleSend(text)
     }
-  }
+    window.addEventListener(CHAT_SEND_EVENT, handler)
+    return () => window.removeEventListener(CHAT_SEND_EVENT, handler)
+  }, [handleSend])
+
+  // Also handle suggestion chip clicks via the same path
+  const onSuggestionClick = useCallback((text: string) => {
+    handleSend(text)
+  }, [handleSend])
+
+  const hasMessages = messages.length > 0
+  const chatStarted = hasMessages || isLoading || Boolean(thinkingText)
+
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent(CHAT_LAYOUT_EVENT, { detail: { started: chatStarted } }))
+  }, [chatStarted])
+
+  useEffect(() => {
+    return () => {
+      window.dispatchEvent(new CustomEvent(CHAT_LAYOUT_EVENT, { detail: { started: false } }))
+    }
+  }, [])
 
   return (
-    <div className="flex h-full flex-col">
-      {/* Messages area */}
-      <ScrollArea className="flex-1">
-        <div ref={scrollRef} className="flex flex-col gap-1 p-4">
-          {messages.length === 0 && (
-            <div className="flex flex-1 flex-col items-center justify-center gap-4 py-20">
-              <div className="flex size-16 items-center justify-center rounded-2xl bg-primary/10">
-                <Bot className="size-8 text-primary" />
+    <div className={`bb-chat ${chatStarted ? 'bb-chat--active' : 'bb-chat--pre-session'}`}>
+      {/* Messages or empty state */}
+      <div
+        className={`bb-chat__messages ${!hasMessages ? 'bb-chat__messages--empty' : ''}`}
+        ref={scrollRef}
+      >
+        <AnimatePresence mode="wait">
+          {!hasMessages ? (
+            <motion.div
+              key="empty"
+              className="bb-chat__empty"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.3 }}
+            >
+              <div className="bb-chat__center-cluster">
+                <BitBitLogoVideo size={140} />
+                <h2 className="bb-chat__greeting">
+                  {getGreeting()}{userName ? `, ${userName}` : ''}
+                </h2>
+                <p className="bb-chat__tagline">What can I help you with?</p>
+                <div className="bb-chat__suggestions">
+                  {SUGGESTIONS.map(s => (
+                    <button
+                      key={s}
+                      className="bb-chat__chip"
+                      onClick={() => onSuggestionClick(s)}
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
               </div>
-              <div className="text-center">
-                <h3 className="text-lg font-semibold">BitBit Assistant</h3>
-                <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-                  Ask me to create tasks, look up contacts, manage your workflow, or just chat.
-                </p>
-              </div>
-            </div>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="messages"
+              className="bb-chat__msg-list"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+            >
+              {messages.map((msg, i) => {
+                const prev = messages[i - 1]
+                const isGroupChange = prev && prev.role !== msg.role
+                return (
+                  <div
+                    key={msg.id}
+                    className={isGroupChange ? 'bb-chat__msg-group-gap' : ''}
+                  >
+                    <MessageBubble message={msg} />
+                    {msg.toolCalls?.map((tc, j) => (
+                      <ToolCallCard key={`${msg.id}-tc-${j}`} toolCall={tc} />
+                    ))}
+                  </div>
+                )
+              })}
+
+              {isLoading && !thinkingText && (
+                <div className="bb-chat__msg bb-chat__msg--assistant">
+                  <div className="bb-chat__assistant-icon">
+                    <BitBitLogoAnimated size={24} />
+                  </div>
+                  <div className="bb-chat__dots">
+                    <span /><span /><span />
+                  </div>
+                </div>
+              )}
+
+              {thinkingText && (
+                <div className="bb-chat__msg bb-chat__msg--assistant">
+                  <div className="bb-chat__assistant-icon">
+                    <BitBitLogoAnimated size={24} />
+                  </div>
+                  <span className="bb-chat__thinking">{thinkingText}</span>
+                </div>
+              )}
+            </motion.div>
           )}
+        </AnimatePresence>
+      </div>
 
-          {messages.map(msg => (
-            <div key={msg.id} className="flex flex-col gap-1">
-              <MessageBubble message={msg} />
-              {msg.toolCalls?.map((tc, i) => (
-                <ToolCallCard key={`${msg.id}-tc-${i}`} toolCall={tc} />
-              ))}
-            </div>
-          ))}
-
-          {thinkingText && (
-            <div className="flex items-center gap-2 px-2 py-3 text-sm text-muted-foreground">
-              <Loader2 className="size-4 animate-spin" />
-              <span>{thinkingText}</span>
-            </div>
-          )}
-        </div>
-      </ScrollArea>
-
-      {/* Input bar */}
-      <div className="border-t border-border bg-background p-4">
-        <div className="mx-auto flex max-w-3xl items-end gap-2">
-          <textarea
-            ref={textareaRef}
-            value={input}
-            onChange={e => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Ask BitBit anything..."
-            rows={1}
-            className="field-sizing-content max-h-32 min-h-[40px] flex-1 resize-none rounded-lg border border-input bg-card px-3 py-2.5 text-sm outline-none placeholder:text-muted-foreground focus:border-ring focus:ring-1 focus:ring-ring"
-          />
-          <Button
-            size="icon"
-            onClick={handleSend}
-            disabled={!input.trim() || isLoading}
-          >
-            {isLoading ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : (
-              <Send className="size-4" />
-            )}
-          </Button>
-        </div>
+      {/* Docked pill input */}
+      <div
+        className={`bb-chat__input-area ${chatStarted ? 'bb-chat__input-area--bottom' : 'bb-chat__input-area--centered'}`}
+      >
+        <div id="pill-dock" />
       </div>
     </div>
   )

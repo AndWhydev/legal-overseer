@@ -138,3 +138,21 @@ export function parseApprovalReply(text: string): ParsedApprovalReply | null {
 export function getWhatsAppConfig() {
   return getEnv()
 }
+
+export const whatsappAdapter: import('./types').ChannelAdapter = {
+  type: 'whatsapp',
+  name: 'WhatsApp',
+  description: 'Webhook-driven messaging via WhatsApp Business API',
+  icon: 'MessageCircle',
+
+  async pull() {
+    // WhatsApp is push-based (webhooks). We don't pull messages on a schedule here.
+    // The actual processing is handled via /api/channels/whatsapp/route.ts
+    return []
+  },
+
+  async isAvailable() {
+    const env = getEnv()
+    return Boolean(env.phoneNumberId && env.accessToken)
+  }
+}

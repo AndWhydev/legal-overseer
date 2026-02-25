@@ -12,6 +12,7 @@ function CommandCenterTab() {
   const [leads, setLeads] = useState<any[]>([]);
   const [tasks, setTasks] = useState<any[]>([]);
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
+  const [processingIds, setProcessingIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const supabase = createClient();
@@ -32,6 +33,56 @@ function CommandCenterTab() {
       setLoading(false);
     });
   }, []);
+
+  const handleApprove = async (approvalId: string) => {
+    setProcessingIds(prev => new Set(prev).add(approvalId));
+    try {
+      const response = await fetch('/api/agent/approvals', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ approvalId, decision: 'approved' })
+      });
+
+      if (response.ok) {
+        setApprovals(prev => prev.filter(app => app.id !== approvalId));
+      } else {
+        console.error('Failed to approve:', await response.text());
+      }
+    } catch (error) {
+      console.error('Error approving:', error);
+    } finally {
+      setProcessingIds(prev => {
+        const next = new Set(prev);
+        next.delete(approvalId);
+        return next;
+      });
+    }
+  };
+
+  const handleDismiss = async (approvalId: string) => {
+    setProcessingIds(prev => new Set(prev).add(approvalId));
+    try {
+      const response = await fetch('/api/agent/approvals', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ approvalId, decision: 'rejected' })
+      });
+
+      if (response.ok) {
+        setApprovals(prev => prev.filter(app => app.id !== approvalId));
+      } else {
+        console.error('Failed to dismiss:', await response.text());
+      }
+    } catch (error) {
+      console.error('Error dismissing:', error);
+    } finally {
+      setProcessingIds(prev => {
+        const next = new Set(prev);
+        next.delete(approvalId);
+        return next;
+      });
+    }
+  };
 
   if (loading) return <TabSkeleton />;
 
@@ -107,11 +158,19 @@ function CommandCenterTab() {
                     <p className="text-xs text-muted-foreground mt-1">{app.description}</p>
                   </div>
                   <div className="flex gap-2">
-                    <button className="px-3 py-1 text-xs font-medium rounded-md bg-[var(--bg-element)] hover:bg-[var(--bg-hover)] border border-[var(--border-subtle)]">
-                      Dismiss
+                    <button
+                      onClick={() => handleDismiss(app.id)}
+                      disabled={processingIds.has(app.id)}
+                      className="px-3 py-1 text-xs font-medium rounded-md bg-[var(--bg-element)] hover:bg-[var(--bg-hover)] border border-[var(--border-subtle)] disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {processingIds.has(app.id) ? 'Processing...' : 'Dismiss'}
                     </button>
-                    <button className="px-3 py-1 text-xs font-medium rounded-md bg-[var(--accent)] text-white hover:opacity-90">
-                      Approve
+                    <button
+                      onClick={() => handleApprove(app.id)}
+                      disabled={processingIds.has(app.id)}
+                      className="px-3 py-1 text-xs font-medium rounded-md bg-[var(--accent)] text-white hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {processingIds.has(app.id) ? 'Processing...' : 'Approve'}
                     </button>
                   </div>
                 </div>

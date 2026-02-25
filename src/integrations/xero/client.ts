@@ -155,13 +155,24 @@ async function ensureValidTokenInternal(): Promise<string> {
       scope: XERO_SCOPES
     });
 
-    const newTokenSet = await xero.refreshToken();
+    const clientId = process.env.XERO_CLIENT_ID;
+    const clientSecret = process.env.XERO_CLIENT_SECRET;
+
+    if (!clientId || !clientSecret) {
+      throw new Error('XERO_CLIENT_ID and XERO_CLIENT_SECRET must be set');
+    }
+
+    const newTokenSet = await xero.refreshWithRefreshToken(
+      clientId,
+      clientSecret,
+      stored.refresh_token
+    );
 
     // Save new token
     saveTokenSet({
-      access_token: newTokenSet.access_token!,
-      refresh_token: newTokenSet.refresh_token!,
-      expires_at: newTokenSet.expires_at!,
+      access_token: newTokenSet.access_token as string,
+      refresh_token: newTokenSet.refresh_token as string,
+      expires_at: newTokenSet.expires_at as number,
       tenant_id: stored.tenant_id
     });
 
