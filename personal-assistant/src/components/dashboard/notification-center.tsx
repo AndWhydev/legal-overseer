@@ -279,8 +279,16 @@ export function NotificationCenter({ onTabChange }: NotificationCenterProps) {
       }
     };
 
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsOpen(false);
+    };
+
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleEscape);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleEscape);
+    };
   }, [isOpen]);
 
   // Handle notification click
@@ -314,7 +322,9 @@ export function NotificationCenter({ onTabChange }: NotificationCenterProps) {
         onClick={() => setIsOpen(!isOpen)}
         className="bb-sidebar__item"
         data-tooltip="Notifications"
-        aria-label="Notifications"
+        aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ''}`}
+        aria-expanded={isOpen}
+        aria-haspopup="true"
         style={{
           position: 'relative',
         }}
@@ -342,6 +352,8 @@ export function NotificationCenter({ onTabChange }: NotificationCenterProps) {
         <div
           ref={panelRef}
           className="bb-notification-panel"
+          role="dialog"
+          aria-label="Notifications"
           style={{
             position: 'fixed',
             top: '80px',
@@ -384,6 +396,7 @@ export function NotificationCenter({ onTabChange }: NotificationCenterProps) {
             {unreadCount > 0 && (
               <button
                 onClick={handleMarkAllAsRead}
+                aria-label="Mark all notifications as read"
                 style={{
                   background: 'none',
                   border: 'none',

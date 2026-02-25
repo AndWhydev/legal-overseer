@@ -255,6 +255,10 @@ export function SPAShell({ displayName, initials }: SPAShellProps) {
                 <div
                   key={tab.id}
                   className="bb-tab-panel"
+                  role="tabpanel"
+                  id={`tabpanel-${tab.id}`}
+                  aria-labelledby={`tab-${tab.id}`}
+                  tabIndex={isActive ? 0 : -1}
                   data-active={isActive}
                   data-dir={isActive && transitionDir ? transitionDir : undefined}
                   aria-hidden={!isActive}

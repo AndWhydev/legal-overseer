@@ -309,10 +309,13 @@ export function SidebarNav({
           'bb-sidebar__item',
           active && 'bb-sidebar__item--active',
         ].filter(Boolean).join(' ')}
+        role="tab"
+        id={`tab-${tabId}`}
+        aria-selected={active}
+        aria-controls={`tabpanel-${tabId}`}
         data-tooltip={label}
         data-advanced={isAdvanced || undefined}
         aria-label={label}
-        aria-current={active ? 'page' : undefined}
         style={{
           position: 'relative',
           display: isAdvanced && !showAdvanced ? 'none' : undefined,
@@ -350,7 +353,7 @@ export function SidebarNav({
       </div>
 
       {/* Main Nav Icons with sliding indicator */}
-      <nav className="bb-sidebar__nav" ref={navRef}>
+      <nav className="bb-sidebar__nav" ref={navRef} role="tablist" aria-label="Dashboard sections" aria-orientation="vertical">
         {/* Sliding active indicator — CSS transform only, no re-renders */}
         <div
           ref={indicatorRef}
