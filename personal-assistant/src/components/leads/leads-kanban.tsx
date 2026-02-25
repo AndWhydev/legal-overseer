@@ -1,7 +1,9 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Handshake } from 'lucide-react'
 import { SkeletonKanban } from '@/components/ui/skeleton'
+import { EmptyState } from '@/components/ui/empty-state'
 
 type LeadStatus = 'new' | 'qualified' | 'booked' | 'converted' | 'lost'
 type LeadScore = 'hot' | 'warm' | 'cold'
@@ -151,6 +153,16 @@ export function LeadsKanban() {
 
   if (isLoading) {
     return <SkeletonKanban columns={4} />
+  }
+
+  if (leads.length === 0 && !errorMessage) {
+    return (
+      <EmptyState
+        icon={<Handshake size={40} />}
+        title="No leads yet"
+        description="Leads will appear here as they come in from your channels."
+      />
+    )
   }
 
   return (

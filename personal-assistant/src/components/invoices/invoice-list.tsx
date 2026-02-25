@@ -1,7 +1,9 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { ReceiptText } from 'lucide-react'
 import { SkeletonTable } from '@/components/ui/skeleton'
+import { EmptyState } from '@/components/ui/empty-state'
 
 type InvoiceStatus = 'draft' | 'sent' | 'viewed' | 'overdue' | 'paid' | 'cancelled'
 
@@ -201,8 +203,12 @@ export function InvoiceList() {
             <tbody>
               {visibleInvoices.length === 0 ? (
                 <tr>
-                  <td className="px-4 py-8 text-center text-muted-foreground" colSpan={6}>
-                    No invoices found.
+                  <td colSpan={6}>
+                    <EmptyState
+                      icon={<ReceiptText size={40} />}
+                      title="No invoices found"
+                      description="Try changing your filter or create a new invoice."
+                    />
                   </td>
                 </tr>
               ) : (
