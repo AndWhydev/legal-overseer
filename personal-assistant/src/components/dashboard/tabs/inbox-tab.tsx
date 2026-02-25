@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { useRealtimeSubscription } from '@/lib/realtime/supabase-realtime';
 import { TabSkeleton } from './tab-skeleton';
 import {
   Inbox,
@@ -123,22 +124,13 @@ function InboxTab() {
     fetchInbox();
   }, [fetchInbox]);
 
-  // Subscribe to realtime updates
-  useEffect(() => {
-    const supabase = createClient();
-    if (!supabase) return;
+  // Live new message indicator via realtime subscription
+  const [newMessageAlert, setNewMessageAlert] = useState(false);
 
-    const channel = supabase
-      .channel('inbox-updates')
-      .on('postgres_changes' as never, { event: 'INSERT', schema: 'public', table: 'channel_messages' }, () => {
-        fetchInbox(true);
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [fetchInbox]);
+  useRealtimeSubscription('channel_messages', { event: 'INSERT' }, () => {
+    setNewMessageAlert(true);
+    fetchInbox(true);
+  });
 
   const handleRunTriage = async () => {
     setRefreshing(true);
@@ -165,7 +157,16 @@ function InboxTab() {
             <Inbox className="h-5 w-5" />
           </div>
           <div>
-            <h1 className="text-2xl font-semibold">Unified Inbox</h1>
+            <h1 className="text-2xl font-semibold flex items-center gap-2">
+              Unified Inbox
+              {newMessageAlert && (
+                <span
+                  className="inline-block w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"
+                  title="New messages received"
+                  onClick={() => setNewMessageAlert(false)}
+                />
+              )}
+            </h1>
             <p className="text-sm text-muted-foreground">
               {total} messages across all channels
             </p>

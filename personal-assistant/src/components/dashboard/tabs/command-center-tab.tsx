@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { useRealtimeSubscription } from '@/lib/realtime/supabase-realtime';
 import { StatCard, StatusBadge, ProcessPipeline, TimelineBar } from '@/components/ui/data-viz';
 import { AlertCircle, Clock, ShieldCheck, Zap, Handshake, Users, CheckCircle2, Link as LinkIcon, TrendingUp, Calendar, ReceiptText, MessageSquare, BellOff, Inbox, Activity } from 'lucide-react';
 import { TabSkeleton } from './tab-skeleton';
@@ -59,6 +60,48 @@ function CommandCenterTab() {
       setLoading(false);
     });
   }, []);
+
+  // Live agent activity feed via realtime
+  const refreshAgentRuns = useCallback(() => {
+    const supabase = createClient();
+    if (!supabase) return;
+    supabase.from('agent_runs')
+      .select('id, output_summary, created_at, agent_configs(name, agent_type)')
+      .order('created_at', { ascending: false })
+      .limit(8)
+      .then(({ data }) => {
+        if (data) setAgentRuns(data as unknown as AgentRun[]);
+      });
+  }, []);
+
+  useRealtimeSubscription('agent_runs', { event: '*' }, refreshAgentRuns);
+
+  // Live approval updates
+  const refreshApprovals = useCallback(() => {
+    const supabase = createClient();
+    if (!supabase) return;
+    supabase.from('approval_queue')
+      .select('*')
+      .eq('status', 'pending')
+      .limit(5)
+      .then(({ data }) => {
+        if (data) setApprovals(data);
+      });
+  }, []);
+
+  useRealtimeSubscription('approval_queue', { event: '*' }, refreshApprovals);
+
+  // Live inbox count
+  useRealtimeSubscription('channel_messages', { event: 'INSERT' }, () => {
+    const supabase = createClient();
+    if (!supabase) return;
+    supabase.from('channel_messages')
+      .select('id', { count: 'exact', head: true })
+      .eq('processed', false)
+      .then(({ count }) => {
+        setInboxCount(count || 0);
+      });
+  });
 
   const handleApprove = async (approvalId: string) => {
     setProcessingIds(prev => new Set(prev).add(approvalId));
