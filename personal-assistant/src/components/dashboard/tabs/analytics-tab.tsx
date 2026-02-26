@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { TabSkeleton } from './tab-skeleton'
+import { TabShell } from '@/components/ui/tab-shell'
+import { TabHeader } from '@/components/ui/tab-header'
 import {
   DollarSign,
   Users,
@@ -10,6 +12,7 @@ import {
   TrendingUp,
   Cpu,
   AlertTriangle,
+  BarChart3,
 } from 'lucide-react'
 
 // ---------------------------------------------------------------------------
@@ -101,180 +104,183 @@ function AnalyticsTab() {
 
   if (error || !data) {
     return (
-      <div className="p-6">
-        <h2 className="text-lg font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>
-          Analytics
-        </h2>
-        <p style={{ color: 'var(--text-secondary)' }}>
-          {error ?? 'No analytics data available. Connect your billing to see MRR metrics.'}
-        </p>
-      </div>
+      <TabShell>
+        <TabHeader icon={BarChart3} iconColor="var(--bb-blue)" title="Analytics" />
+        <div className="p-6">
+          <p style={{ color: 'var(--text-secondary)' }}>
+            {error ?? 'No analytics data available. Connect your billing to see MRR metrics.'}
+          </p>
+        </div>
+      </TabShell>
     )
   }
 
   const { mrr, usage, churn } = data
 
   return (
-    <div className="p-6 space-y-8" style={{ color: 'var(--text-primary)' }}>
-      <h2 className="text-xl font-semibold">Analytics</h2>
+    <TabShell>
+      <TabHeader icon={BarChart3} iconColor="var(--bb-blue)" title="Analytics" />
 
-      {/* MRR Stats */}
-      <section>
-        <h3 className="text-sm font-medium uppercase tracking-wide mb-3" style={{ color: 'var(--text-secondary)' }}>
-          Monthly Recurring Revenue
-        </h3>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard icon={DollarSign} label="Total MRR" value={`$${mrr.totalMRR.toLocaleString()}`} />
-          <StatCard icon={Users} label="Active Subs" value={String(mrr.activeSubscriptions)} />
-          <StatCard icon={TrendingDown} label="Churn Rate" value={`${mrr.churnRate}%`} alert={mrr.churnRate > 5} />
-          <StatCard icon={TrendingUp} label="Net New MRR" value={`$${mrr.netNewMRR.toLocaleString()}`} />
-        </div>
+      <div className="p-6 space-y-8" style={{ color: 'var(--text-primary)' }}>
 
-        {/* MRR by Tier */}
-        <div className="mt-4 rounded-lg border p-4" style={{ borderColor: 'var(--border-subtle)', background: 'var(--bg-card)' }}>
-          <h4 className="text-sm font-medium mb-3">Revenue by Tier</h4>
-          <div className="space-y-2">
-            {Object.entries(mrr.byTier).map(([tier, info]) => {
-              const pct = mrr.totalMRR > 0 ? (info.mrr / mrr.totalMRR) * 100 : 0
-              return (
-                <div key={tier} className="flex items-center gap-3">
-                  <span className="text-sm w-20 capitalize">{tier}</span>
-                  <div className="flex-1 h-2 rounded-full" style={{ background: 'var(--bg-elevated)' }}>
-                    <div
-                      className="h-2 rounded-full"
-                      style={{ width: `${pct}%`, background: 'var(--bb-blue, #3b82f6)' }}
-                    />
-                  </div>
-                  <span className="text-sm w-24 text-right" style={{ color: 'var(--text-secondary)' }}>
-                    ${info.mrr} ({info.count})
-                  </span>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* Token Usage */}
-      {usage && (
+        {/* MRR Stats */}
         <section>
           <h3 className="text-sm font-medium uppercase tracking-wide mb-3" style={{ color: 'var(--text-secondary)' }}>
-            Token Usage &amp; Costs
+            Monthly Recurring Revenue
           </h3>
-          <div className="grid grid-cols-2 gap-4 mb-4">
-            <StatCard icon={Cpu} label="Total Tokens" value={formatTokens(usage.totalTokens)} />
-            <StatCard icon={DollarSign} label="Total Cost" value={`$${usage.totalCostUSD.toFixed(2)}`} />
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <StatCard icon={DollarSign} label="Total MRR" value={`$${mrr.totalMRR.toLocaleString()}`} />
+            <StatCard icon={Users} label="Active Subs" value={String(mrr.activeSubscriptions)} />
+            <StatCard icon={TrendingDown} label="Churn Rate" value={`${mrr.churnRate}%`} alert={mrr.churnRate > 5} />
+            <StatCard icon={TrendingUp} label="Net New MRR" value={`$${mrr.netNewMRR.toLocaleString()}`} />
           </div>
 
-          {/* By Agent */}
-          <div className="rounded-lg border overflow-hidden" style={{ borderColor: 'var(--border-subtle)' }}>
-            <table className="w-full text-sm">
-              <thead>
-                <tr style={{ background: 'var(--bg-elevated)' }}>
-                  <th className="text-left px-4 py-2 font-medium">Agent</th>
-                  <th className="text-right px-4 py-2 font-medium">Invocations</th>
-                  <th className="text-right px-4 py-2 font-medium">Tokens</th>
-                  <th className="text-right px-4 py-2 font-medium">Cost</th>
-                </tr>
-              </thead>
-              <tbody>
-                {usage.byAgent.map((a) => (
-                  <tr key={a.agentType} style={{ borderTop: '1px solid var(--border-subtle)' }}>
-                    <td className="px-4 py-2 capitalize">{a.agentType.replace(/-/g, ' ')}</td>
-                    <td className="px-4 py-2 text-right">{a.invocations}</td>
-                    <td className="px-4 py-2 text-right">{formatTokens(a.inputTokens + a.outputTokens)}</td>
-                    <td className="px-4 py-2 text-right">${a.costUSD.toFixed(2)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {/* By Client */}
-          {usage.byClient.length > 0 && (
-            <div className="mt-4">
-              <h4 className="text-sm font-medium mb-2">Cost per Client</h4>
-              <div className="space-y-1">
-                {usage.byClient
-                  .sort((a, b) => b.costUSD - a.costUSD)
-                  .slice(0, 10)
-                  .map((c) => (
-                    <div key={c.clientName} className="flex items-center justify-between text-sm px-2 py-1">
-                      <span>{c.clientName}</span>
-                      <span style={{ color: 'var(--text-secondary)' }}>
-                        ${c.costUSD.toFixed(2)} ({c.actions} actions)
-                      </span>
+          {/* MRR by Tier */}
+          <div className="mt-4 rounded-lg border p-4" style={{ borderColor: 'var(--border-subtle)', background: 'var(--bg-card)' }}>
+            <h4 className="text-sm font-medium mb-3">Revenue by Tier</h4>
+            <div className="space-y-2">
+              {Object.entries(mrr.byTier).map(([tier, info]) => {
+                const pct = mrr.totalMRR > 0 ? (info.mrr / mrr.totalMRR) * 100 : 0
+                return (
+                  <div key={tier} className="flex items-center gap-3">
+                    <span className="text-sm w-20 capitalize">{tier}</span>
+                    <div className="flex-1 h-2 rounded-full" style={{ background: 'var(--bg-elevated)' }}>
+                      <div
+                        className="h-2 rounded-full"
+                        style={{ width: `${pct}%`, background: 'var(--bb-blue, #3b82f6)' }}
+                      />
                     </div>
-                  ))}
-              </div>
-            </div>
-          )}
-        </section>
-      )}
-
-      {/* Churn Risk */}
-      {churn && churn.risks.length > 0 && (
-        <section>
-          <h3 className="text-sm font-medium uppercase tracking-wide mb-3" style={{ color: 'var(--text-secondary)' }}>
-            Churn Risk ({churn.atRiskOrgs} orgs)
-          </h3>
-          <div className="space-y-2">
-            {churn.risks.map((r) => (
-              <div
-                key={r.orgId}
-                className="rounded-lg border p-4 flex items-start gap-3"
-                style={{ borderColor: 'var(--border-subtle)', background: 'var(--bg-card)' }}
-              >
-                <AlertTriangle
-                  size={18}
-                  className={r.riskScore >= 70 ? 'text-red-500' : r.riskScore >= 50 ? 'text-amber-500' : 'text-yellow-500'}
-                />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium text-sm">{r.orgName}</span>
-                    <span className="text-xs px-2 py-0.5 rounded" style={{ background: 'var(--bg-elevated)' }}>
-                      Risk: {r.riskScore}
+                    <span className="text-sm w-24 text-right" style={{ color: 'var(--text-secondary)' }}>
+                      ${info.mrr} ({info.count})
                     </span>
                   </div>
-                  <div className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
-                    {r.signals.map((s) => s.description).join(' | ')}
-                  </div>
-                </div>
-              </div>
-            ))}
+                )
+              })}
+            </div>
           </div>
         </section>
-      )}
 
-      {/* ROI Metrics */}
-      <section>
-        <h3 className="text-sm font-medium uppercase tracking-wide mb-3" style={{ color: 'var(--text-secondary)' }}>
-          ROI Metrics
-        </h3>
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-          <MetricCard
-            label="Revenue per Sub"
-            value={mrr.activeSubscriptions > 0 ? `$${Math.round(mrr.totalMRR / mrr.activeSubscriptions)}` : '$0'}
-          />
-          <MetricCard
-            label="AI Cost per Sub"
-            value={
-              usage && mrr.activeSubscriptions > 0
-                ? `$${(usage.totalCostUSD / mrr.activeSubscriptions).toFixed(2)}`
-                : '$0'
-            }
-          />
-          <MetricCard
-            label="Gross Margin"
-            value={
-              usage && mrr.totalMRR > 0
-                ? `${Math.round(((mrr.totalMRR - usage.totalCostUSD) / mrr.totalMRR) * 100)}%`
-                : 'N/A'
-            }
-          />
-        </div>
-      </section>
-    </div>
+        {/* Token Usage */}
+        {usage && (
+          <section>
+            <h3 className="text-sm font-medium uppercase tracking-wide mb-3" style={{ color: 'var(--text-secondary)' }}>
+              Token Usage &amp; Costs
+            </h3>
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <StatCard icon={Cpu} label="Total Tokens" value={formatTokens(usage.totalTokens)} />
+              <StatCard icon={DollarSign} label="Total Cost" value={`$${usage.totalCostUSD.toFixed(2)}`} />
+            </div>
+
+            {/* By Agent */}
+            <div className="rounded-lg border overflow-hidden" style={{ borderColor: 'var(--border-subtle)' }}>
+              <table className="w-full text-sm">
+                <thead>
+                  <tr style={{ background: 'var(--bg-elevated)' }}>
+                    <th className="text-left px-4 py-2 font-medium">Agent</th>
+                    <th className="text-right px-4 py-2 font-medium">Invocations</th>
+                    <th className="text-right px-4 py-2 font-medium">Tokens</th>
+                    <th className="text-right px-4 py-2 font-medium">Cost</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {usage.byAgent.map((a) => (
+                    <tr key={a.agentType} style={{ borderTop: '1px solid var(--border-subtle)' }}>
+                      <td className="px-4 py-2 capitalize">{a.agentType.replace(/-/g, ' ')}</td>
+                      <td className="px-4 py-2 text-right">{a.invocations}</td>
+                      <td className="px-4 py-2 text-right">{formatTokens(a.inputTokens + a.outputTokens)}</td>
+                      <td className="px-4 py-2 text-right">${a.costUSD.toFixed(2)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* By Client */}
+            {usage.byClient.length > 0 && (
+              <div className="mt-4">
+                <h4 className="text-sm font-medium mb-2">Cost per Client</h4>
+                <div className="space-y-1">
+                  {usage.byClient
+                    .sort((a, b) => b.costUSD - a.costUSD)
+                    .slice(0, 10)
+                    .map((c) => (
+                      <div key={c.clientName} className="flex items-center justify-between text-sm px-2 py-1">
+                        <span>{c.clientName}</span>
+                        <span style={{ color: 'var(--text-secondary)' }}>
+                          ${c.costUSD.toFixed(2)} ({c.actions} actions)
+                        </span>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            )}
+          </section>
+        )}
+
+        {/* Churn Risk */}
+        {churn && churn.risks.length > 0 && (
+          <section>
+            <h3 className="text-sm font-medium uppercase tracking-wide mb-3" style={{ color: 'var(--text-secondary)' }}>
+              Churn Risk ({churn.atRiskOrgs} orgs)
+            </h3>
+            <div className="space-y-2">
+              {churn.risks.map((r) => (
+                <div
+                  key={r.orgId}
+                  className="rounded-lg border p-4 flex items-start gap-3"
+                  style={{ borderColor: 'var(--border-subtle)', background: 'var(--bg-card)' }}
+                >
+                  <AlertTriangle
+                    size={18}
+                    className={r.riskScore >= 70 ? 'text-red-500' : r.riskScore >= 50 ? 'text-amber-500' : 'text-yellow-500'}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium text-sm">{r.orgName}</span>
+                      <span className="text-xs px-2 py-0.5 rounded" style={{ background: 'var(--bg-elevated)' }}>
+                        Risk: {r.riskScore}
+                      </span>
+                    </div>
+                    <div className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
+                      {r.signals.map((s) => s.description).join(' | ')}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* ROI Metrics */}
+        <section>
+          <h3 className="text-sm font-medium uppercase tracking-wide mb-3" style={{ color: 'var(--text-secondary)' }}>
+            ROI Metrics
+          </h3>
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+            <MetricCard
+              label="Revenue per Sub"
+              value={mrr.activeSubscriptions > 0 ? `$${Math.round(mrr.totalMRR / mrr.activeSubscriptions)}` : '$0'}
+            />
+            <MetricCard
+              label="AI Cost per Sub"
+              value={
+                usage && mrr.activeSubscriptions > 0
+                  ? `$${(usage.totalCostUSD / mrr.activeSubscriptions).toFixed(2)}`
+                  : '$0'
+              }
+            />
+            <MetricCard
+              label="Gross Margin"
+              value={
+                usage && mrr.totalMRR > 0
+                  ? `${Math.round(((mrr.totalMRR - usage.totalCostUSD) / mrr.totalMRR) * 100)}%`
+                  : 'N/A'
+              }
+            />
+          </div>
+        </section>
+      </div>
+    </TabShell>
   )
 }
 

@@ -17,6 +17,7 @@ import { OnboardingTour } from './onboarding-tour';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { ToastProvider } from '@/components/ui/toast';
 import { GlobalSearch } from './global-search';
+import { TabSkeleton } from './tabs/tab-skeleton';
 
 // ─── Tab definitions ────────────────────────────────────────────────────────
 
@@ -111,11 +112,7 @@ function pathToTabIndex(path: string): number {
 }
 
 function TabFallback() {
-  return (
-    <div className="flex items-center justify-center h-full">
-      <div className="animate-pulse text-muted-foreground text-sm">Loading…</div>
-    </div>
-  );
+  return <TabSkeleton />;
 }
 
 // ─── SPA Shell ──────────────────────────────────────────────────────────────
@@ -203,6 +200,16 @@ export function SPAShell({ displayName, initials }: SPAShellProps) {
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
   }, [renderedPage]);
+
+  // Listen for bb-navigate custom events (dispatched by Quick Actions, etc.)
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent<{ tab: string }>).detail;
+      if (detail?.tab) navigateToId(detail.tab);
+    };
+    window.addEventListener('bb-navigate', handler);
+    return () => window.removeEventListener('bb-navigate', handler);
+  }, [navigateToId]);
 
   // Keep the viewport locked to the shell so docked chat input never falls below the fold.
   useEffect(() => {

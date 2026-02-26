@@ -1,7 +1,9 @@
 'use client'
 
 import React, { useState, useEffect, useCallback } from 'react'
-import { FileText, Download, Loader2, RefreshCw } from 'lucide-react'
+import { FileText, Download, Loader2, RefreshCw, FileBarChart } from 'lucide-react'
+import { TabShell } from '@/components/ui/tab-shell'
+import { TabHeader } from '@/components/ui/tab-header'
 
 type ReportType = 'monthly' | 'agent-roi' | 'pipeline'
 
@@ -118,182 +120,186 @@ export default function ReportsTab() {
   }
 
   return (
-    <div style={{ padding: '24px', maxWidth: 960, margin: '0 auto' }}>
-      <h1 style={{ fontSize: '20px', fontWeight: 700, marginBottom: '24px', color: 'var(--text-primary)' }}>
-        Reports
-      </h1>
+    <TabShell>
+      <TabHeader
+        icon={FileBarChart}
+        iconColor="var(--bb-purple)"
+        title="Reports"
+      />
 
-      {/* Controls */}
-      <div style={{
-        display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'end',
-        marginBottom: '24px', padding: '20px', background: 'var(--bg-elevated)', borderRadius: '12px',
-      }}>
-        <div style={{ flex: 1, minWidth: 160 }}>
-          <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '6px', textTransform: 'uppercase' }}>
-            Report Type
-          </label>
-          <select
-            value={reportType}
-            onChange={e => setReportType(e.target.value as ReportType)}
+      <div style={{ padding: '24px', maxWidth: 960, margin: '0 auto' }}>
+        {/* Controls */}
+        <div style={{
+          display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'end',
+          marginBottom: '24px', padding: '20px', background: 'var(--bg-elevated)', borderRadius: '12px',
+        }}>
+          <div style={{ flex: 1, minWidth: 160 }}>
+            <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '6px', textTransform: 'uppercase' }}>
+              Report Type
+            </label>
+            <select
+              value={reportType}
+              onChange={e => setReportType(e.target.value as ReportType)}
+              style={{
+                width: '100%', padding: '8px 12px', borderRadius: '8px',
+                background: 'var(--bg-primary)', color: 'var(--text-primary)',
+                border: '1px solid var(--border)', fontSize: '14px',
+              }}
+            >
+              {Object.entries(REPORT_LABELS).map(([k, v]) => (
+                <option key={k} value={k}>{v}</option>
+              ))}
+            </select>
+          </div>
+
+          <div style={{ flex: 1, minWidth: 160 }}>
+            <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '6px', textTransform: 'uppercase' }}>
+              Period
+            </label>
+            <select
+              value={periodIndex}
+              onChange={e => setPeriodIndex(Number(e.target.value))}
+              style={{
+                width: '100%', padding: '8px 12px', borderRadius: '8px',
+                background: 'var(--bg-primary)', color: 'var(--text-primary)',
+                border: '1px solid var(--border)', fontSize: '14px',
+              }}
+            >
+              {periods.map((p, i) => (
+                <option key={i} value={i}>{p.label}</option>
+              ))}
+            </select>
+          </div>
+
+          <button
+            onClick={handleGenerate}
+            disabled={generating}
             style={{
-              width: '100%', padding: '8px 12px', borderRadius: '8px',
-              background: 'var(--bg-primary)', color: 'var(--text-primary)',
-              border: '1px solid var(--border)', fontSize: '14px',
+              padding: '8px 20px', borderRadius: '8px', border: 'none',
+              background: '#ff6b35', color: '#fff', fontWeight: 600,
+              fontSize: '14px', cursor: generating ? 'wait' : 'pointer',
+              display: 'flex', alignItems: 'center', gap: '6px',
+              opacity: generating ? 0.7 : 1,
             }}
           >
-            {Object.entries(REPORT_LABELS).map(([k, v]) => (
-              <option key={k} value={k}>{v}</option>
-            ))}
-          </select>
+            {generating ? <Loader2 size={16} className="animate-spin" /> : <FileText size={16} />}
+            {generating ? 'Generating...' : 'Generate Report'}
+          </button>
         </div>
 
-        <div style={{ flex: 1, minWidth: 160 }}>
-          <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '6px', textTransform: 'uppercase' }}>
-            Period
-          </label>
-          <select
-            value={periodIndex}
-            onChange={e => setPeriodIndex(Number(e.target.value))}
-            style={{
-              width: '100%', padding: '8px 12px', borderRadius: '8px',
-              background: 'var(--bg-primary)', color: 'var(--text-primary)',
-              border: '1px solid var(--border)', fontSize: '14px',
-            }}
-          >
-            {periods.map((p, i) => (
-              <option key={i} value={i}>{p.label}</option>
-            ))}
-          </select>
-        </div>
+        {/* Preview */}
+        {previewHtml && (
+          <div style={{ marginBottom: '24px' }}>
+            <div style={{
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+              marginBottom: '12px',
+            }}>
+              <h2 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)' }}>
+                Report Preview
+              </h2>
+              <button
+                onClick={handlePrintPreview}
+                style={{
+                  padding: '6px 14px', borderRadius: '6px', border: '1px solid var(--border)',
+                  background: 'var(--bg-elevated)', color: 'var(--text-primary)',
+                  fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px',
+                }}
+              >
+                <Download size={14} /> Download PDF
+              </button>
+            </div>
+            <div
+              style={{
+                border: '1px solid var(--border)', borderRadius: '12px', overflow: 'hidden',
+                background: '#fff', maxHeight: '600px', overflowY: 'auto',
+              }}
+            >
+              <iframe
+                srcDoc={previewHtml}
+                title="Report Preview"
+                style={{ width: '100%', height: '560px', border: 'none' }}
+              />
+            </div>
+          </div>
+        )}
 
-        <button
-          onClick={handleGenerate}
-          disabled={generating}
-          style={{
-            padding: '8px 20px', borderRadius: '8px', border: 'none',
-            background: '#ff6b35', color: '#fff', fontWeight: 600,
-            fontSize: '14px', cursor: generating ? 'wait' : 'pointer',
-            display: 'flex', alignItems: 'center', gap: '6px',
-            opacity: generating ? 0.7 : 1,
-          }}
-        >
-          {generating ? <Loader2 size={16} className="animate-spin" /> : <FileText size={16} />}
-          {generating ? 'Generating...' : 'Generate Report'}
-        </button>
-      </div>
-
-      {/* Preview */}
-      {previewHtml && (
-        <div style={{ marginBottom: '24px' }}>
+        {/* History */}
+        <div>
           <div style={{
             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
             marginBottom: '12px',
           }}>
             <h2 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)' }}>
-              Report Preview
+              Generated Reports
             </h2>
             <button
-              onClick={handlePrintPreview}
+              onClick={fetchReports}
               style={{
-                padding: '6px 14px', borderRadius: '6px', border: '1px solid var(--border)',
-                background: 'var(--bg-elevated)', color: 'var(--text-primary)',
-                fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px',
+                padding: '4px', background: 'none', border: 'none',
+                color: 'var(--text-secondary)', cursor: 'pointer',
               }}
+              aria-label="Refresh"
             >
-              <Download size={14} /> Download PDF
+              <RefreshCw size={16} />
             </button>
           </div>
-          <div
-            style={{
-              border: '1px solid var(--border)', borderRadius: '12px', overflow: 'hidden',
-              background: '#fff', maxHeight: '600px', overflowY: 'auto',
-            }}
-          >
-            <iframe
-              srcDoc={previewHtml}
-              title="Report Preview"
-              style={{ width: '100%', height: '560px', border: 'none' }}
-            />
-          </div>
-        </div>
-      )}
 
-      {/* History */}
-      <div>
-        <div style={{
-          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          marginBottom: '12px',
-        }}>
-          <h2 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)' }}>
-            Generated Reports
-          </h2>
-          <button
-            onClick={fetchReports}
-            style={{
-              padding: '4px', background: 'none', border: 'none',
-              color: 'var(--text-secondary)', cursor: 'pointer',
-            }}
-            aria-label="Refresh"
-          >
-            <RefreshCw size={16} />
-          </button>
-        </div>
-
-        {loading ? (
-          <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)' }}>
-            Loading...
-          </div>
-        ) : reports.length === 0 ? (
-          <div style={{
-            textAlign: 'center', padding: '40px', color: 'var(--text-secondary)',
-            background: 'var(--bg-elevated)', borderRadius: '12px',
-          }}>
-            No reports generated yet. Select a report type and period above to get started.
-          </div>
-        ) : (
-          <div style={{
-            background: 'var(--bg-elevated)', borderRadius: '12px', overflow: 'hidden',
-          }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                  <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Type</th>
-                  <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Period</th>
-                  <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Generated</th>
-                  <th style={{ padding: '10px 16px', textAlign: 'right', fontSize: '12px', color: 'var(--text-secondary)' }}></th>
-                </tr>
-              </thead>
-              <tbody>
-                {reports.map(r => (
-                  <tr key={r.id} style={{ borderBottom: '1px solid var(--border)' }}>
-                    <td style={{ padding: '10px 16px', fontSize: '14px', color: 'var(--text-primary)' }}>
-                      {REPORT_LABELS[r.report_type as ReportType] ?? r.report_type}
-                    </td>
-                    <td style={{ padding: '10px 16px', fontSize: '14px', color: 'var(--text-secondary)' }}>
-                      {r.period_from ?? '-'}
-                    </td>
-                    <td style={{ padding: '10px 16px', fontSize: '13px', color: 'var(--text-secondary)' }}>
-                      {new Date(r.created_at).toLocaleDateString('en-AU')}
-                    </td>
-                    <td style={{ padding: '10px 16px', textAlign: 'right' }}>
-                      <button
-                        onClick={() => handleDownload(r.id)}
-                        style={{
-                          padding: '4px 10px', borderRadius: '6px', border: '1px solid var(--border)',
-                          background: 'none', color: 'var(--text-primary)',
-                          fontSize: '12px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px',
-                        }}
-                      >
-                        <Download size={12} /> View
-                      </button>
-                    </td>
+          {loading ? (
+            <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)' }}>
+              Loading...
+            </div>
+          ) : reports.length === 0 ? (
+            <div style={{
+              textAlign: 'center', padding: '40px', color: 'var(--text-secondary)',
+              background: 'var(--bg-elevated)', borderRadius: '12px',
+            }}>
+              No reports generated yet. Select a report type and period above to get started.
+            </div>
+          ) : (
+            <div style={{
+              background: 'var(--bg-elevated)', borderRadius: '12px', overflow: 'hidden',
+            }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid var(--border)' }}>
+                    <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Type</th>
+                    <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Period</th>
+                    <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Generated</th>
+                    <th style={{ padding: '10px 16px', textAlign: 'right', fontSize: '12px', color: 'var(--text-secondary)' }}></th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+                </thead>
+                <tbody>
+                  {reports.map(r => (
+                    <tr key={r.id} style={{ borderBottom: '1px solid var(--border)' }}>
+                      <td style={{ padding: '10px 16px', fontSize: '14px', color: 'var(--text-primary)' }}>
+                        {REPORT_LABELS[r.report_type as ReportType] ?? r.report_type}
+                      </td>
+                      <td style={{ padding: '10px 16px', fontSize: '14px', color: 'var(--text-secondary)' }}>
+                        {r.period_from ?? '-'}
+                      </td>
+                      <td style={{ padding: '10px 16px', fontSize: '13px', color: 'var(--text-secondary)' }}>
+                        {new Date(r.created_at).toLocaleDateString('en-AU')}
+                      </td>
+                      <td style={{ padding: '10px 16px', textAlign: 'right' }}>
+                        <button
+                          onClick={() => handleDownload(r.id)}
+                          style={{
+                            padding: '4px 10px', borderRadius: '6px', border: '1px solid var(--border)',
+                            background: 'none', color: 'var(--text-primary)',
+                            fontSize: '12px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px',
+                          }}
+                        >
+                          <Download size={12} /> View
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </TabShell>
   )
 }

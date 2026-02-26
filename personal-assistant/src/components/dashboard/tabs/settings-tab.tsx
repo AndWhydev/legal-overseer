@@ -6,8 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { IntegrationGrid } from '@/components/integrations/integration-grid';
-import { Sun, Moon, Plus, Trash2, Save, Loader2 } from 'lucide-react';
+import { Sun, Moon, Plus, Trash2, Save, Loader2, Settings } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import { TabHeader } from '@/components/ui/tab-header';
+import { TabShell } from '@/components/ui/tab-shell';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 // ─── Agent types ─────────────────────────────────────────────────────────────
@@ -462,18 +464,19 @@ function SettingsTab() {
   };
 
   return (
-    <div className="flex flex-col gap-6 p-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Settings</h1>
-        <button
-          onClick={handleSaveSettings}
-          disabled={saving}
-          className="flex items-center gap-1.5 rounded-md bg-[var(--bb-orange,#FF5A1F)] px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
-        >
-          {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-          Save All Settings
-        </button>
-      </div>
+    <TabShell>
+      <TabHeader icon={Settings} iconColor="var(--bb-orange)" title="Settings" />
+      <div className="flex flex-col gap-6 p-6">
+        <div className="flex items-center justify-end">
+          <button
+            onClick={handleSaveSettings}
+            disabled={saving}
+            className="flex items-center gap-1.5 rounded-md bg-[var(--bb-orange,#FF5A1F)] px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+          >
+            {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+            Save All Settings
+          </button>
+        </div>
 
       <Tabs defaultValue="agents">
         <TabsList>
@@ -599,7 +602,8 @@ function SettingsTab() {
           </div>
         </TabsContent>
       </Tabs>
-    </div>
+      </div>
+    </TabShell>
   );
 }
 

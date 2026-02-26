@@ -1,7 +1,9 @@
 'use client'
 
 import React, { useState, useCallback } from 'react'
-import { Search, TrendingUp, TrendingDown, Minus, Copy, Check, Play, Code, FileText } from 'lucide-react'
+import { Search, TrendingUp, TrendingDown, Minus, Copy, Check, Play, Code, FileText, SearchCheck } from 'lucide-react'
+import { TabShell } from '@/components/ui/tab-shell'
+import { TabHeader } from '@/components/ui/tab-header'
 
 // ---------------------------------------------------------------------------
 // Types (mirrors agent types without importing server code)
@@ -532,226 +534,210 @@ function AISearchTab() {
   ]
 
   return (
-    <div style={{ padding: 24, maxWidth: 1200, display: 'flex', flexDirection: 'column', gap: 24 }}>
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          width: 36,
-          height: 36,
-          borderRadius: 10,
-          background: 'rgba(249, 115, 22, 0.15)',
-          color: '#f97316',
-        }}>
-          <Search size={20} />
-        </div>
-        <div>
-          <h1 style={{ fontSize: 20, fontWeight: 600, color: 'rgba(255,255,255,0.9)', margin: 0 }}>
-            AI Search Optimizer
-          </h1>
-          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', margin: 0 }}>
-            Monitor and improve your visibility across AI search engines
-          </p>
-        </div>
-      </div>
+    <TabShell>
+      <TabHeader
+        icon={SearchCheck}
+        iconColor="var(--bb-orange)"
+        title="AI Search"
+      />
 
-      {/* Score overview (shown when audit exists) */}
-      {auditResult && (
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
-          gap: 16,
-        }}>
-          <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: 12, padding: 20 }}>
-            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>
-              Visibility Score
+      <div style={{ padding: 24, maxWidth: 1200, display: 'flex', flexDirection: 'column', gap: 24 }}>
+        {/* Score overview (shown when audit exists) */}
+        {auditResult && (
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
+            gap: 16,
+          }}>
+            <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: 12, padding: 20 }}>
+              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>
+                Visibility Score
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <ScoreBadge score={auditResult.overallScore} />
+                <TrendArrow current={auditResult.overallScore} previous={previousScore} />
+                <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>/100</span>
+              </div>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <ScoreBadge score={auditResult.overallScore} />
-              <TrendArrow current={auditResult.overallScore} previous={previousScore} />
-              <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>/100</span>
+            <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: 12, padding: 20 }}>
+              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>
+                Queries Tracked
+              </div>
+              <div style={{ fontSize: 24, fontWeight: 700, color: '#3b82f6', fontFamily: 'JetBrains Mono, monospace' }}>
+                {new Set(auditResult.queryResults.map((r) => r.query)).size}
+              </div>
+            </div>
+            <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: 12, padding: 20 }}>
+              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>
+                Mentioned
+              </div>
+              <div style={{ fontSize: 24, fontWeight: 700, color: '#22c55e', fontFamily: 'JetBrains Mono, monospace' }}>
+                {auditResult.queryResults.filter((r) => r.position === 'mentioned').length}
+              </div>
+            </div>
+            <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: 12, padding: 20 }}>
+              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>
+                Absent
+              </div>
+              <div style={{ fontSize: 24, fontWeight: 700, color: '#ef4444', fontFamily: 'JetBrains Mono, monospace' }}>
+                {auditResult.queryResults.filter((r) => r.position === 'absent').length}
+              </div>
             </div>
           </div>
-          <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: 12, padding: 20 }}>
-            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>
-              Queries Tracked
-            </div>
-            <div style={{ fontSize: 24, fontWeight: 700, color: '#3b82f6', fontFamily: 'JetBrains Mono, monospace' }}>
-              {new Set(auditResult.queryResults.map((r) => r.query)).size}
-            </div>
-          </div>
-          <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: 12, padding: 20 }}>
-            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>
-              Mentioned
-            </div>
-            <div style={{ fontSize: 24, fontWeight: 700, color: '#22c55e', fontFamily: 'JetBrains Mono, monospace' }}>
-              {auditResult.queryResults.filter((r) => r.position === 'mentioned').length}
-            </div>
-          </div>
-          <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: 12, padding: 20 }}>
-            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>
-              Absent
-            </div>
-            <div style={{ fontSize: 24, fontWeight: 700, color: '#ef4444', fontFamily: 'JetBrains Mono, monospace' }}>
-              {auditResult.queryResults.filter((r) => r.position === 'absent').length}
-            </div>
-          </div>
+        )}
+
+        {/* Panel selector */}
+        <div style={{ display: 'flex', gap: 8 }}>
+          {panelButtons.map((btn) => (
+            <button
+              key={btn.id}
+              onClick={() => setActivePanel(btn.id)}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '8px 16px',
+                borderRadius: 8,
+                border: '1px solid rgba(255,255,255,0.1)',
+                background: activePanel === btn.id ? 'rgba(255,255,255,0.1)' : 'transparent',
+                color: activePanel === btn.id ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.5)',
+                fontSize: 13,
+                fontWeight: 500,
+                cursor: 'pointer',
+                transition: 'all 0.15s',
+              }}
+            >
+              {btn.icon}
+              {btn.label}
+            </button>
+          ))}
         </div>
-      )}
 
-      {/* Panel selector */}
-      <div style={{ display: 'flex', gap: 8 }}>
-        {panelButtons.map((btn) => (
-          <button
-            key={btn.id}
-            onClick={() => setActivePanel(btn.id)}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-              padding: '8px 16px',
-              borderRadius: 8,
-              border: '1px solid rgba(255,255,255,0.1)',
-              background: activePanel === btn.id ? 'rgba(255,255,255,0.1)' : 'transparent',
-              color: activePanel === btn.id ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.5)',
-              fontSize: 13,
-              fontWeight: 500,
-              cursor: 'pointer',
-              transition: 'all 0.15s',
-            }}
-          >
-            {btn.icon}
-            {btn.label}
-          </button>
-        ))}
-      </div>
+        {/* Panels */}
+        {activePanel === 'overview' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+            <div style={{
+              background: 'rgba(255,255,255,0.03)',
+              borderRadius: 12,
+              padding: 20,
+            }}>
+              <h3 style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.8)', marginTop: 0, marginBottom: 16 }}>
+                Run Visibility Audit
+              </h3>
+              <AuditForm onRunAudit={handleRunAudit} loading={loading} />
+            </div>
 
-      {/* Panels */}
-      {activePanel === 'overview' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+            {auditResult && (
+              <>
+                <div>
+                  <h3 style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.8)', marginBottom: 12 }}>
+                    Query Breakdown
+                  </h3>
+                  <QueryBreakdown results={auditResult.queryResults} />
+                </div>
+
+                {Object.keys(auditResult.competitorScores).length > 0 && (
+                  <div>
+                    <h3 style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.8)', marginBottom: 12 }}>
+                      Competitor Comparison
+                    </h3>
+                    <CompetitorTable scores={auditResult.competitorScores} myScore={auditResult.overallScore} />
+                  </div>
+                )}
+
+                <div>
+                  <h3 style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.8)', marginBottom: 12 }}>
+                    Recommendations
+                  </h3>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {auditResult.recommendations.map((rec, i) => (
+                      <div
+                        key={i}
+                        style={{
+                          padding: '12px 16px',
+                          borderRadius: 8,
+                          background: 'rgba(255,255,255,0.03)',
+                          fontSize: 13,
+                          color: 'rgba(255,255,255,0.7)',
+                          lineHeight: 1.5,
+                          borderLeft: '3px solid var(--bb-orange, #f97316)',
+                        }}
+                      >
+                        {rec}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
+        {activePanel === 'content' && (
           <div style={{
             background: 'rgba(255,255,255,0.03)',
             borderRadius: 12,
             padding: 20,
           }}>
-            <h3 style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.8)', marginTop: 0, marginBottom: 16 }}>
-              Run Visibility Audit
+            <h3 style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.8)', marginTop: 0, marginBottom: 12 }}>
+              AI-Optimized Content Suggestions
             </h3>
-            <AuditForm onRunAudit={handleRunAudit} loading={loading} />
-          </div>
-
-          {auditResult && (
-            <>
-              <div>
-                <h3 style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.8)', marginBottom: 12 }}>
-                  Query Breakdown
-                </h3>
-                <QueryBreakdown results={auditResult.queryResults} />
-              </div>
-
-              {Object.keys(auditResult.competitorScores).length > 0 && (
-                <div>
-                  <h3 style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.8)', marginBottom: 12 }}>
-                    Competitor Comparison
-                  </h3>
-                  <CompetitorTable scores={auditResult.competitorScores} myScore={auditResult.overallScore} />
-                </div>
-              )}
-
-              <div>
-                <h3 style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.8)', marginBottom: 12 }}>
-                  Recommendations
-                </h3>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {auditResult.recommendations.map((rec, i) => (
+            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', marginBottom: 16 }}>
+              Run a visibility audit first to generate targeted content recommendations. The content generator creates FAQ-structured,
+              entity-rich pages optimized for AI search engines to cite your business.
+            </p>
+            {auditResult ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)' }}>
+                  Based on your audit, focus content on these absent/partial queries:
+                </p>
+                {auditResult.queryResults
+                  .filter((r) => r.position !== 'mentioned')
+                  .reduce<string[]>((acc, r) => {
+                    if (!acc.includes(r.query)) acc.push(r.query)
+                    return acc
+                  }, [])
+                  .slice(0, 5)
+                  .map((query) => (
                     <div
-                      key={i}
+                      key={query}
                       style={{
-                        padding: '12px 16px',
+                        padding: '10px 14px',
                         borderRadius: 8,
-                        background: 'rgba(255,255,255,0.03)',
+                        background: 'rgba(255,255,255,0.05)',
                         fontSize: 13,
-                        color: 'rgba(255,255,255,0.7)',
-                        lineHeight: 1.5,
-                        borderLeft: '3px solid var(--bb-orange, #f97316)',
+                        color: 'rgba(255,255,255,0.8)',
                       }}
                     >
-                      {rec}
+                      Create a dedicated FAQ page for: <strong>&quot;{query}&quot;</strong>
                     </div>
                   ))}
-                </div>
               </div>
-            </>
-          )}
-        </div>
-      )}
-
-      {activePanel === 'content' && (
-        <div style={{
-          background: 'rgba(255,255,255,0.03)',
-          borderRadius: 12,
-          padding: 20,
-        }}>
-          <h3 style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.8)', marginTop: 0, marginBottom: 12 }}>
-            AI-Optimized Content Suggestions
-          </h3>
-          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', marginBottom: 16 }}>
-            Run a visibility audit first to generate targeted content recommendations. The content generator creates FAQ-structured,
-            entity-rich pages optimized for AI search engines to cite your business.
-          </p>
-          {auditResult ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)' }}>
-                Based on your audit, focus content on these absent/partial queries:
+            ) : (
+              <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', fontStyle: 'italic' }}>
+                Run an audit to see content suggestions.
               </p>
-              {auditResult.queryResults
-                .filter((r) => r.position !== 'mentioned')
-                .reduce<string[]>((acc, r) => {
-                  if (!acc.includes(r.query)) acc.push(r.query)
-                  return acc
-                }, [])
-                .slice(0, 5)
-                .map((query) => (
-                  <div
-                    key={query}
-                    style={{
-                      padding: '10px 14px',
-                      borderRadius: 8,
-                      background: 'rgba(255,255,255,0.05)',
-                      fontSize: 13,
-                      color: 'rgba(255,255,255,0.8)',
-                    }}
-                  >
-                    Create a dedicated FAQ page for: <strong>&quot;{query}&quot;</strong>
-                  </div>
-                ))}
-            </div>
-          ) : (
-            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', fontStyle: 'italic' }}>
-              Run an audit to see content suggestions.
-            </p>
-          )}
-        </div>
-      )}
+            )}
+          </div>
+        )}
 
-      {activePanel === 'schema' && (
-        <div style={{
-          background: 'rgba(255,255,255,0.03)',
-          borderRadius: 12,
-          padding: 20,
-        }}>
-          <h3 style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.8)', marginTop: 0, marginBottom: 12 }}>
-            Schema Markup Generator
-          </h3>
-          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', marginBottom: 16 }}>
-            Generate JSON-LD structured data for your client websites. Copy and paste the output into the page &lt;head&gt;.
-          </p>
-          <SchemaGenerator />
-        </div>
-      )}
-    </div>
+        {activePanel === 'schema' && (
+          <div style={{
+            background: 'rgba(255,255,255,0.03)',
+            borderRadius: 12,
+            padding: 20,
+          }}>
+            <h3 style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.8)', marginTop: 0, marginBottom: 12 }}>
+              Schema Markup Generator
+            </h3>
+            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', marginBottom: 16 }}>
+              Generate JSON-LD structured data for your client websites. Copy and paste the output into the page &lt;head&gt;.
+            </p>
+            <SchemaGenerator />
+          </div>
+        )}
+      </div>
+    </TabShell>
   )
 }
 

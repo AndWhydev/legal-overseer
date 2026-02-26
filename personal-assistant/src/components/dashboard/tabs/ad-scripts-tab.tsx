@@ -2,6 +2,8 @@
 
 import React, { useCallback, useEffect, useState } from 'react'
 import { Film, Copy, Check, Loader2, ChevronDown, ChevronRight } from 'lucide-react'
+import { TabShell } from '@/components/ui/tab-shell'
+import { TabHeader } from '@/components/ui/tab-header'
 
 // ---------------------------------------------------------------------------
 // Types (mirrored from ad-script-gen)
@@ -454,66 +456,60 @@ function AdScriptsTab() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col gap-6 p-6">
-        <div className="h-8 w-48 rounded bg-muted animate-pulse" />
-        <div className="h-48 rounded-xl bg-muted animate-pulse" />
-      </div>
+      <TabShell>
+        <TabHeader icon={Film} iconColor="var(--bb-orange)" title="Ad Scripts" />
+        <div className="flex flex-col gap-6 p-6">
+          <div className="h-8 w-48 rounded bg-muted animate-pulse" />
+          <div className="h-48 rounded-xl bg-muted animate-pulse" />
+        </div>
+      </TabShell>
     )
   }
 
   return (
-    <div className="flex flex-col gap-6 p-6">
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-500/15 text-violet-400">
-          <Film className="h-5 w-5" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-semibold">Ad Scripts</h1>
-          <p className="text-sm text-muted-foreground">
-            Generate video ad scripts with hook variations and storyboards
-          </p>
-        </div>
-      </div>
+    <TabShell>
+      <TabHeader icon={Film} iconColor="var(--bb-orange)" title="Ad Scripts" />
 
-      {/* Generate Form */}
-      <GenerateForm
-        offers={offers}
-        onGenerate={handleGenerate}
-        isGenerating={isGenerating}
-      />
+      <div className="flex flex-col gap-6 p-6">
+        {/* Generate Form */}
+        <GenerateForm
+          offers={offers}
+          onGenerate={handleGenerate}
+          isGenerating={isGenerating}
+        />
 
-      {/* Current result */}
-      {currentResult && (
-        <div className="space-y-4">
-          <h2 className="text-lg font-semibold">
-            Scripts for {currentResult.offerName}
-          </h2>
+        {/* Current result */}
+        {currentResult && (
+          <div className="space-y-4">
+            <h2 className="text-lg font-semibold">
+              Scripts for {currentResult.offerName}
+            </h2>
 
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-            {currentResult.scripts.map((script, i) => (
-              <ScriptCard key={`${script.platform}-${script.hookType}-${i}`} script={script} />
-            ))}
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+              {currentResult.scripts.map((script, i) => (
+                <ScriptCard key={`${script.platform}-${script.hookType}-${i}`} script={script} />
+              ))}
+            </div>
+
+            {currentResult.variations.length > 0 && (
+              <>
+                <h3 className="text-md font-semibold text-muted-foreground mt-4">
+                  A/B Variations
+                </h3>
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+                  {currentResult.variations.map((v, i) => (
+                    <VariationCard key={`var-${i}`} variation={v} />
+                  ))}
+                </div>
+              </>
+            )}
           </div>
+        )}
 
-          {currentResult.variations.length > 0 && (
-            <>
-              <h3 className="text-md font-semibold text-muted-foreground mt-4">
-                A/B Variations
-              </h3>
-              <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-                {currentResult.variations.map((v, i) => (
-                  <VariationCard key={`var-${i}`} variation={v} />
-                ))}
-              </div>
-            </>
-          )}
-        </div>
-      )}
-
-      {/* History */}
-      <HistorySection batches={batches} onSelect={handleSelectBatch} />
-    </div>
+        {/* History */}
+        <HistorySection batches={batches} onSelect={handleSelectBatch} />
+      </div>
+    </TabShell>
   )
 }
 

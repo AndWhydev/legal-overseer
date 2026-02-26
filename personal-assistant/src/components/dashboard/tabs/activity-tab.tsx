@@ -1,7 +1,10 @@
 'use client';
 
 import React, { useEffect, useState, useCallback, useRef } from 'react';
+import { Activity } from 'lucide-react';
 import { TabSkeleton } from './tab-skeleton';
+import { TabHeader } from '@/components/ui/tab-header';
+import { TabShell } from '@/components/ui/tab-shell';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -259,15 +262,14 @@ function ActivityTab() {
   if (loading) return <TabSkeleton />;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: 24 }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
-        <h1 style={{ fontSize: 20, fontWeight: 600, color: 'var(--text-primary, #eee)', margin: 0 }}>
-          Activity Timeline
-        </h1>
-        <span style={{ fontSize: 13, color: 'var(--text-secondary, #888)' }}>
-          {total} total events
-        </span>
-      </div>
+    <TabShell>
+      <TabHeader icon={Activity} iconColor="var(--bb-cyan)" title="Activity" />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: 24 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+          <span style={{ fontSize: 13, color: 'var(--text-secondary, #888)' }}>
+            {total} total events
+          </span>
+        </div>
 
       {/* Filters */}
       <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
@@ -297,7 +299,8 @@ function ActivityTab() {
           </div>
         )}
       </div>
-    </div>
+      </div>
+    </TabShell>
   );
 }
 

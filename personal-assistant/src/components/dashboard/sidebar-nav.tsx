@@ -298,10 +298,10 @@ export function SidebarNav({
       badgeColor = 'var(--bb-orange)';
       badgeCount = badgeCounts.approvals;
     } else if (tabId === 'leads' && badgeCounts.leads > 0) {
-      badgeColor = '#60a5fa';
+      badgeColor = 'var(--bb-blue)';
       badgeCount = badgeCounts.leads;
     } else if (tabId === 'invoices' && badgeCounts.invoices > 0) {
-      badgeColor = '#ef4444';
+      badgeColor = 'var(--bb-red)';
       badgeCount = badgeCounts.invoices;
     }
 

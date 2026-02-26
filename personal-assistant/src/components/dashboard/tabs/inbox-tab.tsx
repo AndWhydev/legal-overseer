@@ -4,10 +4,15 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useRealtimeSubscription } from '@/lib/realtime/supabase-realtime';
 import { TabSkeleton } from './tab-skeleton';
+import { TabShell } from '@/components/ui/tab-shell';
+import { TabHeader } from '@/components/ui/tab-header';
+import { EmptyState } from '@/components/ui/empty-state';
 import {
   Inbox,
   Mail,
-  MessageSquare,
+  MessageCircle,
+  Smartphone,
+  CheckSquare,
   Filter,
   Clock,
   AlertCircle,
@@ -15,6 +20,8 @@ import {
   Archive,
   ChevronDown,
   RefreshCw,
+  Calendar as CalendarIcon,
+  CreditCard,
 } from 'lucide-react';
 
 // ---------------------------------------------------------------------------
@@ -48,14 +55,14 @@ interface InboxMessage {
 // Constants
 // ---------------------------------------------------------------------------
 
-const CHANNEL_ICONS: Record<string, string> = {
-  gmail: 'G',
-  outlook: 'O',
-  whatsapp: 'W',
-  imessage: 'iM',
-  asana: 'A',
-  calendly: 'Ca',
-  stripe: '$',
+const CHANNEL_ICON_MAP: Record<string, { icon: React.ElementType; color: string }> = {
+  gmail: { icon: Mail, color: 'var(--bb-status-error)' },
+  outlook: { icon: Mail, color: 'var(--bb-status-info)' },
+  whatsapp: { icon: MessageCircle, color: 'var(--bb-status-success)' },
+  imessage: { icon: Smartphone, color: 'var(--bb-status-info)' },
+  asana: { icon: CheckSquare, color: 'var(--bb-purple)' },
+  calendly: { icon: CalendarIcon, color: 'var(--bb-cyan)' },
+  stripe: { icon: CreditCard, color: 'var(--bb-status-warning)' },
 };
 
 const PRIORITY_COLORS: Record<PriorityLevel, string> = {
@@ -149,7 +156,7 @@ function InboxTab() {
   const waitingOnYouCount = messages.filter(m => m.threadStatus === 'waiting_on_you').length;
 
   return (
-    <div className="flex-1 overflow-y-auto h-full p-4 md:p-8 space-y-6">
+    <TabShell>
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -176,7 +183,7 @@ function InboxTab() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowFilters(f => !f)}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md border border-[var(--border-subtle)] bg-[var(--bg-elevated)] hover:bg-[var(--bg-hover)]"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md border border-[var(--border-subtle)] bg-[var(--bg-elevated)] hover:bg-[var(--bb-surface-hover)]"
           >
             <Filter size={14} />
             Filters
@@ -267,18 +274,18 @@ function InboxTab() {
       {/* Message List */}
       <div className="space-y-2">
         {messages.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground">
-            <Inbox size={40} className="mx-auto mb-3 opacity-30" />
-            <p className="text-sm">No messages to show.</p>
-            <p className="text-xs mt-1">Try adjusting your filters or run triage to process new messages.</p>
-          </div>
+          <EmptyState
+            icon={<CheckCircle2 size={40} />}
+            title="All caught up"
+            description="No messages to show. Try adjusting your filters or run triage to process new messages."
+          />
         ) : (
           messages.map((msg) => (
             <MessageRow key={msg.id} message={msg} />
           ))
         )}
       </div>
-    </div>
+    </TabShell>
   );
 }
 
@@ -287,7 +294,9 @@ function InboxTab() {
 // ---------------------------------------------------------------------------
 
 function MessageRow({ message }: { message: InboxMessage }) {
-  const channelIcon = CHANNEL_ICONS[message.channelType] || message.channelType.slice(0, 2).toUpperCase();
+  const channelInfo = CHANNEL_ICON_MAP[message.channelType];
+  const ChannelIcon = channelInfo?.icon || Mail;
+  const channelColor = channelInfo?.color || 'var(--text-secondary)';
   const priorityClass = PRIORITY_COLORS[message.priority];
   const threadInfo = message.threadStatus ? THREAD_STATUS_LABELS[message.threadStatus] : null;
   const isUnread = message.status === 'unread';
@@ -298,10 +307,13 @@ function MessageRow({ message }: { message: InboxMessage }) {
       isUnread
         ? 'border-[var(--accent)]/30 bg-[var(--accent)]/5'
         : 'border-[var(--border-subtle)] bg-[var(--bg-elevated)]'
-    } hover:bg-[var(--bg-hover)]`}>
+    } hover:bg-[var(--bb-surface-hover)]`}>
       {/* Channel badge */}
-      <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-[var(--bg-element)] flex items-center justify-center text-[10px] font-bold text-muted-foreground">
-        {channelIcon}
+      <div
+        className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center"
+        style={{ backgroundColor: `color-mix(in srgb, ${channelColor} 15%, transparent)`, color: channelColor }}
+      >
+        <ChannelIcon size={14} />
       </div>
 
       {/* Content */}

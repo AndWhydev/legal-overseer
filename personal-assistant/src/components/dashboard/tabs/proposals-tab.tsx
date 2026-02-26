@@ -2,6 +2,8 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { FileText } from 'lucide-react'
+import { TabShell } from '@/components/ui/tab-shell'
+import { TabHeader } from '@/components/ui/tab-header'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -245,21 +247,15 @@ function ProposalsKanban() {
 
 function ProposalsTab() {
   return (
-    <div className="flex flex-col gap-6 p-6">
-      <div className="flex items-center gap-3">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-500/15 text-violet-400">
-          <FileText className="h-5 w-5" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-semibold">Proposals</h1>
-          <p className="text-sm text-muted-foreground">
-            Track proposals across Draft, Sent, Viewed, and Accepted/Declined
-          </p>
-        </div>
-      </div>
-
+    <TabShell>
+      <TabHeader
+        icon={<FileText size={22} />}
+        iconColor="var(--bb-purple)"
+        title="Proposals"
+        subtitle="Track proposals across Draft, Sent, Viewed, and Accepted/Declined"
+      />
       <ProposalsKanban />
-    </div>
+    </TabShell>
   )
 }
 

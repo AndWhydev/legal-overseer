@@ -36,6 +36,12 @@
   --bb-pink: #EC4899;
   --bb-cyan: #06B6D4;
 
+  /* ── Semantic Status Aliases ── */
+  --bb-status-success: var(--bb-green);
+  --bb-status-warning: var(--bb-amber);
+  --bb-status-error: var(--bb-red);
+  --bb-status-info: var(--bb-blue);
+
   /* ── Surfaces ── */
   --bb-surface: rgba(15, 20, 30, 0.6);
   --bb-surface-hover: rgba(20, 28, 40, 0.7);
@@ -104,7 +110,7 @@
   --border-subtle: rgba(255, 255, 255, 0.03);
   --border-subtle-alpha: rgba(255, 255, 255, 0.03);
   --border-active: rgba(255, 255, 255, 0.2);
-  --border-focus-ring: rgba(255, 255, 255, 0.1);
+  --border-focus-ring: rgba(255, 90, 31, 0.5);
   --glass-border: rgba(255, 255, 255, 0.03);
 
   /* ── AI Gradient (for magic/AI buttons) ── */

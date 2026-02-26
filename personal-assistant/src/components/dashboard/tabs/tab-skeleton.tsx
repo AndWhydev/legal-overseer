@@ -4,7 +4,7 @@ import { Skeleton, SkeletonCard } from '@/components/ui/skeleton';
 
 export function TabSkeleton() {
   return (
-    <div className="flex flex-col gap-6 p-6">
+    <div className="flex flex-col gap-6 p-6" aria-busy="true" role="status">
       {/* Header skeleton */}
       <div className="flex items-center gap-3">
         <Skeleton className="h-9 w-9 rounded-lg" />

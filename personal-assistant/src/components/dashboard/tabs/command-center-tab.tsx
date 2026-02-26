@@ -4,8 +4,12 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useRealtimeSubscription } from '@/lib/realtime/supabase-realtime';
 import { StatCard, StatusBadge, ProcessPipeline, TimelineBar } from '@/components/ui/data-viz';
-import { AlertCircle, Clock, ShieldCheck, Zap, Handshake, Users, CheckCircle2, Link as LinkIcon, TrendingUp, Calendar, ReceiptText, MessageSquare, BellOff, Inbox, Activity } from 'lucide-react';
+import { AlertCircle, Clock, ShieldCheck, Zap, Handshake, Users, CheckCircle2, Link as LinkIcon, TrendingUp, Calendar, ReceiptText, MessageSquare, BellOff, Inbox, Activity, LayoutDashboard } from 'lucide-react';
 import { TabSkeleton } from './tab-skeleton';
+import { TabShell } from '@/components/ui/tab-shell';
+import { TabHeader } from '@/components/ui/tab-header';
+import { SectionCard } from '@/components/ui/section-card';
+import { EmptyState } from '@/components/ui/empty-state';
 
 interface AgentRun {
   id: string;
@@ -156,12 +160,14 @@ function CommandCenterTab() {
   if (loading) return <TabSkeleton />;
 
   return (
-    <div className="flex-1 overflow-y-auto h-full p-4 md:p-8 space-y-8">
+    <TabShell variant="fixed">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Command Center</h1>
-        <p className="text-muted-foreground mt-1">What needs attention NOW.</p>
-      </div>
+      <TabHeader
+        icon={<LayoutDashboard size={22} />}
+        iconColor="var(--bb-orange)"
+        title="Command Center"
+        subtitle="What needs attention NOW."
+      />
 
       {/* Quick Actions Bar */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -173,7 +179,7 @@ function CommandCenterTab() {
           className="flex items-center gap-3 p-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-elevated)] hover:bg-[var(--bg-hover)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-left"
         >
           <div className="w-9 h-9 rounded-lg bg-amber-500/15 flex items-center justify-center flex-shrink-0">
-            <ShieldCheck size={18} className="text-amber-500" />
+            <ShieldCheck size={18} style={{ color: 'var(--bb-status-warning)' }} />
           </div>
           <div className="min-w-0">
             <p className="text-xs font-medium truncate">Approve Next</p>
@@ -188,7 +194,7 @@ function CommandCenterTab() {
           className="flex items-center gap-3 p-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-elevated)] hover:bg-[var(--bg-hover)] transition-colors text-left"
         >
           <div className="w-9 h-9 rounded-lg bg-emerald-500/15 flex items-center justify-center flex-shrink-0">
-            <ReceiptText size={18} className="text-emerald-500" />
+            <ReceiptText size={18} style={{ color: 'var(--bb-status-success)' }} />
           </div>
           <div className="min-w-0">
             <p className="text-xs font-medium truncate">New Invoice</p>
@@ -203,7 +209,7 @@ function CommandCenterTab() {
           className="flex items-center gap-3 p-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-elevated)] hover:bg-[var(--bg-hover)] transition-colors text-left"
         >
           <div className="w-9 h-9 rounded-lg bg-violet-500/15 flex items-center justify-center flex-shrink-0">
-            <Inbox size={18} className="text-violet-500" />
+            <Inbox size={18} style={{ color: 'var(--bb-purple)' }} />
           </div>
           <div className="min-w-0">
             <p className="text-xs font-medium truncate">Inbox</p>
@@ -219,7 +225,7 @@ function CommandCenterTab() {
           className="flex items-center gap-3 p-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-elevated)] hover:bg-[var(--bg-hover)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-left"
         >
           <div className="w-9 h-9 rounded-lg bg-red-500/15 flex items-center justify-center flex-shrink-0">
-            <BellOff size={18} className="text-red-500" />
+            <BellOff size={18} style={{ color: 'var(--bb-status-error)' }} />
           </div>
           <div className="min-w-0">
             <p className="text-xs font-medium truncate">Dismiss Top</p>
@@ -233,27 +239,27 @@ function CommandCenterTab() {
         <StatCard
           label="Pending Approvals"
           value={approvals.length}
-          icon={<ShieldCheck className="text-amber-500" />}
+          icon={<ShieldCheck style={{ color: 'var(--bb-status-warning)' }} />}
         />
         <StatCard
           label="Active Leads"
           value={leads.length}
-          icon={<Handshake className="text-blue-500" />}
+          icon={<Handshake style={{ color: 'var(--bb-status-info)' }} />}
         />
         <StatCard
           label="Overdue Tasks"
           value={tasks.length}
-          icon={<AlertCircle className="text-red-500" />}
+          icon={<AlertCircle style={{ color: 'var(--bb-status-error)' }} />}
         />
         <StatCard
           label="Unread Messages"
           value={inboxCount}
-          icon={<Inbox className="text-violet-500" />}
+          icon={<Inbox style={{ color: 'var(--bb-purple)' }} />}
         />
         <StatCard
           label="System Status"
           value="Nominal"
-          icon={<CheckCircle2 className="text-emerald-500" />}
+          icon={<CheckCircle2 style={{ color: 'var(--bb-status-success)' }} />}
         />
       </div>
 
@@ -263,13 +269,13 @@ function CommandCenterTab() {
         <div className="bb-card col-span-1 lg:col-span-2">
           <div className="p-4 border-b border-[var(--border-subtle)]">
             <h2 className="text-lg font-medium flex items-center gap-2">
-              <ShieldCheck size={20} className="text-amber-500" /> Action Required
+              <ShieldCheck size={20} style={{ color: 'var(--bb-status-warning)' }} /> Action Required
             </h2>
             <p className="text-xs text-muted-foreground mt-1">{approvals.length} pending approvals</p>
           </div>
           <div className="p-4 space-y-4">
             {approvals.length === 0 ? (
-              <p className="text-muted-foreground text-sm py-4 text-center">No pending approvals. Great work!</p>
+              <EmptyState icon={<ShieldCheck size={32} />} title="No pending approvals" description="Great work! All actions have been reviewed." />
             ) : (
               approvals.map(app => (
                 <div key={app.id as string} className="flex items-center justify-between p-3 rounded-md bg-[var(--bg-elevated)] border border-[var(--border-subtle)]">
@@ -303,12 +309,12 @@ function CommandCenterTab() {
         <div className="bb-card col-span-1">
           <div className="p-4 border-b border-[var(--border-subtle)]">
             <h2 className="text-lg font-medium flex items-center gap-2">
-              <Zap size={20} className="text-amber-400" /> Today&apos;s Priorities
+              <Zap size={20} style={{ color: 'var(--bb-status-warning)' }} /> Today&apos;s Priorities
             </h2>
           </div>
           <div className="p-4 space-y-3">
             {todaysPriorities.length === 0 ? (
-              <p className="text-muted-foreground text-sm py-4 text-center">No high-priority tasks right now.</p>
+              <EmptyState icon={<Zap size={32} />} title="No high-priority tasks" description="Enjoy the calm — nothing urgent right now." />
             ) : (
               todaysPriorities.map(task => (
                 <div key={task.id} className="flex items-center gap-3 p-2 rounded-md bg-[var(--bg-elevated)] border border-[var(--border-subtle)]">
@@ -333,13 +339,13 @@ function CommandCenterTab() {
         <div className="bb-card">
           <div className="p-4 border-b border-[var(--border-subtle)]">
             <h2 className="text-lg font-medium flex items-center gap-2">
-              <Activity size={20} className="text-cyan-500" /> Agent Activity
+              <Activity size={20} style={{ color: 'var(--bb-cyan)' }} /> Agent Activity
             </h2>
             <p className="text-xs text-muted-foreground mt-1">Recent agent runs</p>
           </div>
           <div className="p-4 space-y-3 max-h-64 overflow-y-auto">
             {agentRuns.length === 0 ? (
-              <p className="text-muted-foreground text-sm py-4 text-center">No recent agent activity.</p>
+              <EmptyState icon={<Activity size={32} />} title="No recent agent activity" description="Agents will appear here when they run." />
             ) : (
               agentRuns.map((run) => (
                 <div key={run.id} className="flex items-start gap-3 pb-3 border-b border-[var(--border-subtle)] last:border-0">
@@ -365,13 +371,13 @@ function CommandCenterTab() {
         <div className="bb-card">
           <div className="p-4 border-b border-[var(--border-subtle)]">
             <h2 className="text-lg font-medium flex items-center gap-2">
-              <TrendingUp size={20} className="text-pink-500" /> Hot Leads
+              <TrendingUp size={20} style={{ color: 'var(--bb-pink, #EC4899)' }} /> Hot Leads
             </h2>
             <p className="text-xs text-muted-foreground mt-1">Top opportunities this week</p>
           </div>
           <div className="p-4 space-y-3">
             {leads.length === 0 ? (
-              <p className="text-muted-foreground text-sm py-4 text-center">No active leads at the moment.</p>
+              <EmptyState icon={<TrendingUp size={32} />} title="No active leads" description="New leads will appear here as they come in." />
             ) : (
               leads.map(lead => (
                 <div key={lead.id as string} className="flex items-center justify-between p-3 rounded-md bg-[var(--bg-elevated)] border border-[var(--border-subtle)]">
@@ -394,7 +400,7 @@ function CommandCenterTab() {
         <div className="bb-card col-span-1">
           <div className="p-4 border-b border-[var(--border-subtle)]">
             <h2 className="text-lg font-medium flex items-center gap-2">
-              <Clock size={20} className="text-blue-500" /> Today&apos;s Schedule
+              <Clock size={20} style={{ color: 'var(--bb-status-info)' }} /> Today&apos;s Schedule
             </h2>
           </div>
           <div className="p-4">
@@ -416,13 +422,13 @@ function CommandCenterTab() {
       <div className="bb-card">
         <div className="p-4 border-b border-[var(--border-subtle)]">
           <h2 className="text-lg font-medium flex items-center gap-2">
-            <Users size={20} className="text-cyan-500" /> Recent Channel Activity
+            <Users size={20} style={{ color: 'var(--bb-cyan)' }} /> Recent Channel Activity
           </h2>
           <p className="text-xs text-muted-foreground mt-1">Latest messages across all channels</p>
         </div>
         <div className="p-4 space-y-3 max-h-64 overflow-y-auto">
           {recentActivity.length === 0 ? (
-            <p className="text-muted-foreground text-sm py-4 text-center">No recent activity.</p>
+            <EmptyState icon={<Users size={32} />} title="No recent activity" description="Channel messages will appear here." />
           ) : (
             recentActivity.map((activity, idx) => (
               <div key={(activity.id as string) || idx} className="flex items-start gap-3 pb-3 border-b border-[var(--border-subtle)] last:border-0">
@@ -449,7 +455,7 @@ function CommandCenterTab() {
           )}
         </div>
       </div>
-    </div>
+    </TabShell>
   );
 }
 

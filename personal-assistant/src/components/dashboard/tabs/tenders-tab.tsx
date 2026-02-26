@@ -13,6 +13,9 @@ import {
   Plus,
   X,
 } from 'lucide-react';
+import { TabShell } from '@/components/ui/tab-shell';
+import { TabHeader } from '@/components/ui/tab-header';
+import { TabSkeleton } from './tab-skeleton';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -208,31 +211,18 @@ function TendersTab() {
   // ── Render ─────────────────────────────────────────────────────────────
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-pulse text-muted-foreground text-sm">Loading tenders...</div>
-      </div>
-    );
+    return <TabSkeleton />;
   }
 
   return (
-    <div className="flex flex-col gap-6 p-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-500/15 text-violet-400">
-            <FileSearch className="h-5 w-5" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-semibold">Tender Hunter</h1>
-            <p className="text-sm text-muted-foreground">
-              Find, evaluate, and respond to government tenders
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <div className="flex rounded-lg border border-white/10 overflow-hidden text-xs">
+    <TabShell>
+      <TabHeader
+        icon={<FileSearch size={22} />}
+        iconColor="var(--bb-purple)"
+        title="Tender Hunter"
+        subtitle="Find, evaluate, and respond to government tenders"
+        actions={[
+          <div key="views" className="flex rounded-lg border border-white/10 overflow-hidden text-xs">
             {(['pipeline', 'list', 'profiles'] as const).map((v) => (
               <button
                 key={v}
@@ -244,18 +234,18 @@ function TendersTab() {
                 {v}
               </button>
             ))}
-          </div>
-
+          </div>,
           <button
+            key="scan"
             onClick={handleScan}
             disabled={scanning}
             className="flex items-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-500 disabled:opacity-50 transition-colors"
           >
             <RefreshCw className={`h-4 w-4 ${scanning ? 'animate-spin' : ''}`} />
             {scanning ? 'Scanning...' : 'Scan Now'}
-          </button>
-        </div>
-      </div>
+          </button>,
+        ]}
+      />
 
       {/* Pipeline View */}
       {view === 'pipeline' && (
@@ -426,7 +416,7 @@ function TendersTab() {
           actionLoading={actionLoading}
         />
       )}
-    </div>
+    </TabShell>
   );
 }
 

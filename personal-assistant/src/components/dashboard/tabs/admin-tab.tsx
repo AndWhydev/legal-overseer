@@ -1,8 +1,12 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { Shield } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { createClient } from '@/lib/supabase/client';
+import { TabHeader } from '@/components/ui/tab-header';
+import { TabShell } from '@/components/ui/tab-shell';
+import { TabSkeleton } from './tab-skeleton';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 // ---------------------------------------------------------------------------
@@ -155,20 +159,24 @@ export default function AdminTab() {
 
   // Guard
   if (isAdmin === null) {
-    return <div style={{ padding: 32, color: 'var(--text-secondary)' }}>Loading...</div>;
+    return <TabSkeleton />;
   }
   if (!isAdmin) {
     return (
-      <div style={{ padding: 32, textAlign: 'center' }}>
-        <h2 style={{ color: 'var(--text-primary)', fontSize: 20, marginBottom: 8 }}>Access Denied</h2>
-        <p style={{ color: 'var(--text-secondary)' }}>Admin role required to access this panel.</p>
-      </div>
+      <TabShell>
+        <TabHeader icon={Shield} iconColor="var(--bb-status-error)" title="Admin" />
+        <div style={{ padding: 32, textAlign: 'center' }}>
+          <h2 style={{ color: 'var(--text-primary)', fontSize: 20, marginBottom: 8 }}>Access Denied</h2>
+          <p style={{ color: 'var(--text-secondary)' }}>Admin role required to access this panel.</p>
+        </div>
+      </TabShell>
     );
   }
 
   return (
-    <div style={{ padding: 24, maxWidth: 900, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 24 }}>
-      <h1 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)' }}>Admin Tools</h1>
+    <TabShell>
+      <TabHeader icon={<Shield size={22} />} iconColor="var(--bb-status-error)" title="Admin" />
+      <div style={{ padding: 24, maxWidth: 900, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 24 }}>
 
       {/* System Health */}
       <Card>
@@ -310,6 +318,7 @@ export default function AdminTab() {
           </div>
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </TabShell>
   );
 }

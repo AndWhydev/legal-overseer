@@ -3,22 +3,20 @@
 import React from 'react';
 import { Handshake } from 'lucide-react';
 import { LeadsKanban } from '@/components/leads/leads-kanban';
+import { TabShell } from '@/components/ui/tab-shell';
+import { TabHeader } from '@/components/ui/tab-header';
 
 function LeadsTab() {
   return (
-    <div className="flex flex-col gap-6 p-6">
-      <div className="flex items-center gap-3">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-sky-500/15 text-sky-400">
-          <Handshake className="h-5 w-5" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-semibold">Leads</h1>
-          <p className="text-sm text-muted-foreground">Track and move leads across New, Qualified, Booked, and Won/Lost</p>
-        </div>
-      </div>
-
+    <TabShell>
+      <TabHeader
+        icon={<Handshake size={22} />}
+        iconColor="var(--bb-blue)"
+        title="Leads"
+        subtitle="Track and move leads across New, Qualified, Booked, and Won/Lost"
+      />
       <LeadsKanban />
-    </div>
+    </TabShell>
   );
 }
 

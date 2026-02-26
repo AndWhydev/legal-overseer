@@ -4,6 +4,9 @@ import React, { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { DashboardRedesign } from '../dashboard-redesign';
 import { TabSkeleton } from './tab-skeleton';
+import { TabShell } from '@/components/ui/tab-shell';
+import { TabHeader } from '@/components/ui/tab-header';
+import { CheckSquare } from 'lucide-react';
 import type { KanbanColumn, Task } from '@/lib/types';
 
 function DashboardTab() {
@@ -37,13 +40,21 @@ function DashboardTab() {
   const activeTasks = tasks.filter(t => t.status !== 'archived');
 
   return (
-    <DashboardRedesign
-      columns={columns}
-      tasks={tasks}
-      messages={messages}
-      completedToday={completedToday}
-      totalActive={activeTasks.length}
-    />
+    <TabShell>
+      <TabHeader
+        icon={<CheckSquare size={22} />}
+        iconColor="var(--bb-orange)"
+        title="Tasks"
+        subtitle={`${activeTasks.length} active tasks · ${completedToday} completed today`}
+      />
+      <DashboardRedesign
+        columns={columns}
+        tasks={tasks}
+        messages={messages}
+        completedToday={completedToday}
+        totalActive={activeTasks.length}
+      />
+    </TabShell>
   );
 }
 
