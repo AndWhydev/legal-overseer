@@ -36,6 +36,10 @@ export {
 export { loadContext } from './loader'
 export type { AppContext } from './loader'
 
+// Graph queries
+export { getEntityGraph, searchEntities } from './graph-query'
+export type { GraphNode, GraphEdge, EntityGraph, SearchResult } from './graph-query'
+
 // Types
 export type {
   EntityType,
