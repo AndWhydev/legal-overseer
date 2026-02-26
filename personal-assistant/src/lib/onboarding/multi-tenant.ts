@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { getPack, resolveIndustry } from '@/lib/industry/registry'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -9,6 +10,7 @@ export interface CreateOrgInput {
   ownerEmail: string
   ownerName: string
   plan: 'starter' | 'growth' | 'scale' | 'enterprise'
+  industry?: string
 }
 
 export interface OrgCreationResult {
@@ -53,14 +55,19 @@ export async function createOrg(
   client: SupabaseClient,
   input: CreateOrgInput,
 ): Promise<OrgCreationResult> {
-  const limits = getPlanLimits(input.plan)
+  const industry = resolveIndustry(input.industry)
+  const pack = getPack(industry)
+  const packLimits = pack.planLimits?.[input.plan]
+  const limits = packLimits ?? getPlanLimits(input.plan)
 
-  // 1. Create organisation with plan metadata
+  // 1. Create organisation with plan metadata + industry
   const { data: org, error: orgErr } = await client
     .from('organisations')
     .insert({
       name: input.name,
       plan: input.plan,
+      industry,
+      ui_profile: 'essential',
       status: 'active',
       settings: {
         max_users: limits.maxUsers,

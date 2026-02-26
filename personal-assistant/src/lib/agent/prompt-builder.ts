@@ -2,6 +2,7 @@ import { loadContext } from '@/lib/context/loader'
 import { assembleContext } from '@/lib/context/assembler'
 import { loadPolicies } from './policy-loader'
 import { loadVoiceProfile } from './voice-loader'
+import { getPack, resolveIndustry } from '@/lib/industry/registry'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 interface CachedEvent {
@@ -99,8 +100,9 @@ async function getDueReminders(): Promise<string> {
   return lines.length > 0 ? lines.join('\n') : 'No reminders.'
 }
 
-export async function buildSystemPrompt(supabase: SupabaseClient, orgId: string): Promise<string> {
+export async function buildSystemPrompt(supabase: SupabaseClient, orgId: string, industry?: string): Promise<string> {
   const deploymentSlug = process.env.BITBIT_DEPLOYMENT || 'awu'
+  const pack = getPack(resolveIndustry(industry))
 
   const [ctx, channelSummary, todayEvents, dueReminders, policyText, voiceText] = await Promise.all([
     supabase
@@ -148,10 +150,11 @@ export async function buildSystemPrompt(supabase: SupabaseClient, orgId: string)
 
   const availableColumns = ctx.columns.map(c => c.title).join(', ')
 
-  let prompt = `You are BitBit, an intelligent personal assistant. You help manage tasks, communications, and schedule across multiple channels.
+  let prompt = `You are ${pack.persona.name}, an intelligent personal assistant for ${pack.persona.context}. You help manage tasks, communications, and schedule across multiple channels.
 
 ## Identity
 You are concise, proactive, and action-oriented. You manage your user's kanban board, contacts, memory, activity feed, and communication channels (Gmail, Outlook, iMessage, Calendar, Reminders).
+${pack.persona.systemPromptSuffix}
 
 ## Capabilities
 - Create and manage tasks on the task board

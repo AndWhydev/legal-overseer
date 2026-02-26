@@ -18,6 +18,8 @@ import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { ToastProvider } from '@/components/ui/toast';
 import { GlobalSearch } from './global-search';
 import { TabSkeleton } from './tabs/tab-skeleton';
+import { AppDataProvider } from '@/lib/data/app-data-provider';
+import { useEnabledModulesFetch, EnabledModulesContext } from '@/lib/modules/use-enabled-modules';
 
 // ─── Tab definitions ────────────────────────────────────────────────────────
 
@@ -125,6 +127,16 @@ interface SPAShellProps {
 export function SPAShell({ displayName, initials }: SPAShellProps) {
   // Track when all tab imports have resolved (pre-warm complete)
   const [tabsReady, setTabsReady] = useState(false);
+  const [dataReady, setDataReady] = useState(false);
+
+  // Module gating — filter tabs by org plan + overrides + composition
+  const enabledModulesState = useEnabledModulesFetch();
+  const { composition } = enabledModulesState;
+  const visibleTabs = TABS.filter(t => enabledModulesState.modules.includes(t.id));
+
+  // Track visited tabs for keep-alive
+  const PRIORITY_TABS = new Set(['command-center', 'dashboard', 'chat', 'inbox']);
+  const [visitedTabs, setVisitedTabs] = useState<Set<string>>(() => new Set(PRIORITY_TABS));
 
   useEffect(() => {
     Promise.all(Object.values(tabImports)).then(() => setTabsReady(true));
@@ -149,6 +161,11 @@ export function SPAShell({ displayName, initials }: SPAShellProps) {
       idx = pathToTabIndex(window.location.pathname);
     }
 
+    // Fall back to composition default tab
+    if (idx < 0) {
+      idx = TABS.findIndex(t => t.id === composition.defaultTab);
+    }
+
     const nextIndex = idx >= 0 ? idx : 0;
     setActiveNavIndex(nextIndex);
     setRenderedPage(nextIndex);
@@ -167,12 +184,20 @@ export function SPAShell({ displayName, initials }: SPAShellProps) {
     // 2. Persist tab choice without touching URL bar
     sessionStorage.setItem('bitbit-tab', tab.id);
 
-    // 3. Set transition direction for CSS animation
+    // 3. Mark tab as visited for keep-alive
+    setVisitedTabs(prev => {
+      if (prev.has(tab.id)) return prev;
+      const next = new Set(prev);
+      next.add(tab.id);
+      return next;
+    });
+
+    // 4. Set transition direction for CSS animation
     const dir = index > renderedPage ? 'down' : 'up';
     setTransitionDir(dir);
     prevPageRef.current = renderedPage;
 
-    // 4. Content switches via startTransition
+    // 5. Content switches via startTransition
     startTransition(() => {
       setRenderedPage(index);
     });
@@ -230,7 +255,9 @@ export function SPAShell({ displayName, initials }: SPAShellProps) {
 
   return (
     <ToastProvider>
-    <SplashScreen ready={tabsReady} minDisplayMs={1200}>
+    <EnabledModulesContext.Provider value={enabledModulesState}>
+    <SplashScreen codeReady={tabsReady} dataReady={dataReady} minDisplayMs={1200}>
+      <AppDataProvider onReady={() => setDataReady(true)}>
       <BitBitOverlay currentPage={currentPage} activeTabId={TABS[activeNavIndex].id}>
         <div className="bb-layout bb-dot-grid">
           {/* Tablet sidebar toggle */}
@@ -255,7 +282,7 @@ export function SPAShell({ displayName, initials }: SPAShellProps) {
               displayName={displayName}
               activeTabId={TABS[activeNavIndex].id}
               onTabChange={handleTabChange}
-              tabs={TABS}
+              tabs={visibleTabs}
             />
           </div>
 
@@ -280,7 +307,7 @@ export function SPAShell({ displayName, initials }: SPAShellProps) {
                   data-dir={isActive && transitionDir ? transitionDir : undefined}
                   aria-hidden={!isActive}
                 >
-                  {isActive ? (
+                  {(isActive || visitedTabs.has(tab.id)) ? (
                     <ErrorBoundary>
                       <Suspense fallback={<TabFallback />}>
                         <Comp />
@@ -297,9 +324,11 @@ export function SPAShell({ displayName, initials }: SPAShellProps) {
         <GlobalSearch onNavigate={handleTabChange} />
 
         {/* Onboarding tour for first-time users */}
-        <OnboardingTour onNavigate={handleTabChange} />
+        <OnboardingTour onNavigate={handleTabChange} tourVariant={composition.tourVariant} />
       </BitBitOverlay>
+      </AppDataProvider>
     </SplashScreen>
+    </EnabledModulesContext.Provider>
     </ToastProvider>
   );
 }

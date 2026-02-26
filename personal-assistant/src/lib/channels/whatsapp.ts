@@ -1,3 +1,5 @@
+import type { SupabaseClient } from '@supabase/supabase-js'
+
 interface WhatsAppMessageResponse {
   messages?: Array<{ id?: string }>
 }
@@ -15,15 +17,6 @@ type SimpleDecision = {
 
 export type ParsedApprovalReply = SimpleDecision | IndexedDecision
 
-function getEnv() {
-  return {
-    phoneNumberId: process.env.WHATSAPP_PHONE_NUMBER_ID,
-    accessToken: process.env.WHATSAPP_ACCESS_TOKEN,
-    verifyToken: process.env.WHATSAPP_VERIFY_TOKEN,
-    andyPhone: process.env.WHATSAPP_ANDY_PHONE,
-  }
-}
-
 function formatConfidencePercent(confidence: number): number {
   if (!Number.isFinite(confidence)) return 0
   if (confidence <= 1) return Math.round(confidence * 100)
@@ -34,6 +27,61 @@ function shortApprovalId(approvalId: string): string {
   return approvalId.slice(0, 8)
 }
 
+// ─── Baileys-backed transport (via Supabase outbox) ─────────────────────────
+export async function sendMessageViaBridge(
+  client: SupabaseClient,
+  orgId: string,
+  to: string,
+  text: string,
+): Promise<string | null> {
+  // Find connected session for this org
+  const { data: session } = await client
+    .from('whatsapp_sessions')
+    .select('id')
+    .eq('org_id', orgId)
+    .eq('status', 'connected')
+    .limit(1)
+    .single()
+
+  if (!session) {
+    console.warn('WhatsApp: no connected session for org', orgId)
+    return null
+  }
+
+  const { data, error } = await client
+    .from('whatsapp_outbox')
+    .insert({
+      org_id: orgId,
+      session_id: session.id,
+      recipient: to,
+      body: text,
+      status: 'pending',
+    })
+    .select('id')
+    .single()
+
+  if (error) {
+    console.warn('WhatsApp: failed to queue message', error.message)
+    return null
+  }
+
+  return data?.id ?? null
+}
+
+// ─── Legacy Meta Graph API transport (fallback) ─────────────────────────────
+
+function getEnv() {
+  return {
+    phoneNumberId: process.env.WHATSAPP_PHONE_NUMBER_ID,
+    accessToken: process.env.WHATSAPP_ACCESS_TOKEN,
+    verifyToken: process.env.WHATSAPP_VERIFY_TOKEN,
+    andyPhone: process.env.WHATSAPP_ANDY_PHONE,
+  }
+}
+
+/**
+ * Send via Meta Graph API (legacy fallback, also the default export for backward compat).
+ */
 export async function sendMessage(to: string, text: string): Promise<string | null> {
   const env = getEnv()
   if (!env.phoneNumberId || !env.accessToken) {
@@ -139,20 +187,39 @@ export function getWhatsAppConfig() {
   return getEnv()
 }
 
+/**
+ * Check if WhatsApp is available — either via Baileys bridge or Meta API.
+ */
+export async function isAvailable(client?: SupabaseClient, orgId?: string): Promise<boolean> {
+  // Check Baileys bridge first
+  if (client && orgId) {
+    const { count } = await client
+      .from('whatsapp_sessions')
+      .select('id', { count: 'exact', head: true })
+      .eq('org_id', orgId)
+      .eq('status', 'connected')
+
+    if (count && count > 0) return true
+  }
+
+  // Fallback to Meta API config
+  const env = getEnv()
+  return Boolean(env.phoneNumberId && env.accessToken)
+}
+
 export const whatsappAdapter: import('./types').ChannelAdapter = {
   type: 'whatsapp',
   name: 'WhatsApp',
-  description: 'Webhook-driven messaging via WhatsApp Business API',
+  description: 'Messaging via WhatsApp (Baileys bridge or Meta Business API)',
   icon: 'MessageCircle',
 
   async pull() {
-    // WhatsApp is push-based (webhooks). We don't pull messages on a schedule here.
-    // The actual processing is handled via /api/channels/whatsapp/route.ts
+    // WhatsApp is push-based. Inbound handled by bridge worker or webhooks.
     return []
   },
 
   async isAvailable() {
     const env = getEnv()
     return Boolean(env.phoneNumberId && env.accessToken)
-  }
+  },
 }

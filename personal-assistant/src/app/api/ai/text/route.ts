@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@/lib/supabase/server'
 import { assembleContext } from '@/lib/context/assembler'
+import { getPack, resolveIndustry } from '@/lib/industry/registry'
 
 export async function POST(request: Request) {
   const supabase = await createClient()
@@ -20,8 +21,20 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'AI service not configured' }, { status: 503 })
   }
 
-  // Resolve org_id from user metadata
+  // Resolve org_id and industry from user metadata / org record
   const orgId = (user.user_metadata?.org_id as string) ?? user.id
+
+  let industry: string | undefined
+  try {
+    const { data: org } = await supabase
+      .from('organisations')
+      .select('industry')
+      .eq('id', orgId)
+      .single()
+    industry = (org?.industry as string) ?? undefined
+  } catch { /* use default */ }
+
+  const pack = getPack(resolveIndustry(industry))
 
   // Assemble context from the knowledge graph
   let contextSummary = ''
@@ -33,7 +46,7 @@ export async function POST(request: Request) {
   }
 
   const systemParts: string[] = [
-    'You are BitBit, an AI operations assistant for a digital agency. Be concise, helpful, and action-oriented.',
+    `You are ${pack.persona.name}, an AI operations assistant for ${pack.persona.context}. ${pack.persona.systemPromptSuffix} Be concise, helpful, and action-oriented.`,
   ]
   if (contextSummary) {
     systemParts.push(`\nRelevant context from the knowledge graph:\n${contextSummary}`)

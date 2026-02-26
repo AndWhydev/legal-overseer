@@ -6,9 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { IntegrationGrid } from '@/components/integrations/integration-grid';
-import { Sun, Moon, Plus, Trash2, Save, Loader2, Settings } from 'lucide-react';
+import { Sun, Moon, Plus, Trash2, Save, Loader2, Smartphone, LayoutGrid, Maximize2 } from 'lucide-react';
+import { QrAuthConnect } from '@/components/ui/qr-auth-connect';
 import { createClient } from '@/lib/supabase/client';
-import { TabHeader } from '@/components/ui/tab-header';
+import { BBTabTitle } from '@/components/ui/bb-components';
 import { TabShell } from '@/components/ui/tab-shell';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
@@ -140,6 +141,132 @@ const CHANNELS = [
   { id: 'stripe', label: 'Stripe', keyField: 'api_key' },
   { id: 'whatsapp', label: 'WhatsApp', keyField: 'phone_number_id' },
 ] as const;
+
+// ─── WhatsApp Connect Card ──────────────────────────────────────────────────
+
+function WhatsAppConnectCard() {
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [connected, setConnected] = useState(false);
+  const [connectedPhone, setConnectedPhone] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [supabase, setSupabase] = useState<SupabaseClient | null>(null);
+
+  useEffect(() => {
+    const client = createClient();
+    if (!client) return;
+    setSupabase(client);
+
+    // Check for existing connected session
+    (async () => {
+      const { data: { user } } = await client.auth.getUser();
+      if (!user) return;
+      const { data: profile } = await client.from('profiles').select('org_id').eq('id', user.id).single();
+      if (!profile?.org_id) return;
+
+      const { data: session } = await client
+        .from('whatsapp_sessions')
+        .select('id, status, phone_number')
+        .eq('org_id', profile.org_id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (session?.status === 'connected') {
+        setConnected(true);
+        setConnectedPhone(session.phone_number);
+      } else if (session?.status === 'qr_pending') {
+        setSessionId(session.id);
+      }
+    })();
+  }, []);
+
+  const handleConnect = async () => {
+    if (!supabase) return;
+    setLoading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data: profile } = await supabase.from('profiles').select('org_id').eq('id', user.id).single();
+      if (!profile?.org_id) return;
+
+      const { data: session, error } = await supabase
+        .from('whatsapp_sessions')
+        .insert({ org_id: profile.org_id, status: 'qr_pending' })
+        .select('id')
+        .single();
+
+      if (error || !session) {
+        console.error('Failed to create WhatsApp session:', error?.message);
+        return;
+      }
+
+      setSessionId(session.id);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDisconnect = async () => {
+    if (!supabase || !sessionId) return;
+    await supabase
+      .from('whatsapp_sessions')
+      .update({ status: 'disconnected' })
+      .eq('id', sessionId);
+    setSessionId(null);
+    setConnected(false);
+    setConnectedPhone(null);
+  };
+
+  return (
+    <Card className="border-border/50">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-base">
+          <Smartphone size={16} />
+          WhatsApp (Baileys Bridge)
+        </CardTitle>
+        <CardDescription>
+          Connect your WhatsApp account via QR code. Messages are sent through a local bridge worker.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {connected ? (
+          <div className="flex items-center justify-between rounded-md border border-border/30 bg-muted/20 px-4 py-3">
+            <div>
+              <p className="text-sm font-medium text-foreground">Connected</p>
+              {connectedPhone && (
+                <p className="text-xs text-muted-foreground font-mono">{connectedPhone}</p>
+              )}
+            </div>
+            <button
+              onClick={handleDisconnect}
+              className="rounded-md border border-destructive/50 px-3 py-1.5 text-xs text-destructive hover:bg-destructive/10 transition-colors"
+            >
+              Disconnect
+            </button>
+          </div>
+        ) : sessionId ? (
+          <QrAuthConnect
+            sessionId={sessionId}
+            serviceName="WhatsApp"
+            onConnected={(phone) => {
+              setConnected(true);
+              setConnectedPhone(phone);
+            }}
+          />
+        ) : (
+          <button
+            onClick={handleConnect}
+            disabled={loading}
+            className="flex items-center gap-1.5 rounded-md bg-[var(--bb-orange,#FF5A1F)] px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+          >
+            {loading ? <Loader2 size={14} className="animate-spin" /> : <Smartphone size={14} />}
+            Connect WhatsApp
+          </button>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
 
 function ChannelConfigSection() {
   const [channels, setChannels] = useState<Record<string, { active: boolean; connected: boolean; maskedKey: string }>>({});
@@ -373,6 +500,91 @@ function PolicyPackEditor({
   );
 }
 
+// ─── Dashboard Layout Section ─────────────────────────────────────────────────
+
+function DashboardLayoutSection({ supabase }: { supabase: SupabaseClient | null }) {
+  const [currentProfile, setCurrentProfile] = useState<string>('full');
+  const [loading, setLoading] = useState(true);
+  const [userRole, setUserRole] = useState<string>('member');
+
+  useEffect(() => {
+    if (!supabase) return;
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data: profile } = await supabase.from('profiles').select('org_id, role').eq('id', user.id).single();
+      if (!profile?.org_id) return;
+      setUserRole(profile.role ?? 'member');
+      const { data: org } = await supabase.from('organisations').select('ui_profile').eq('id', profile.org_id).single();
+      setCurrentProfile((org?.ui_profile as string) ?? 'full');
+      setLoading(false);
+    })();
+  }, [supabase]);
+
+  const handleSelect = async (profile: string) => {
+    if (!supabase || profile === currentProfile) return;
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const { data: prof } = await supabase.from('profiles').select('org_id').eq('id', user.id).single();
+    if (!prof?.org_id) return;
+
+    await supabase.from('organisations').update({ ui_profile: profile }).eq('id', prof.org_id);
+    window.location.reload();
+  };
+
+  const isAdmin = userRole === 'owner' || userRole === 'admin';
+
+  if (loading) return null;
+  if (!isAdmin) return null;
+
+  const profiles = [
+    {
+      id: 'essential',
+      label: 'Essential',
+      description: 'Streamlined: Home, Inbox, Approvals, Contacts',
+      icon: LayoutGrid,
+    },
+    {
+      id: 'full',
+      label: 'Full',
+      description: 'All tabs for power users',
+      icon: Maximize2,
+    },
+  ];
+
+  return (
+    <Card className="border-border/50">
+      <CardHeader>
+        <CardTitle className="text-base">Dashboard Layout</CardTitle>
+        <CardDescription>Choose which tabs appear in the sidebar for your organization.</CardDescription>
+      </CardHeader>
+      <CardContent className="grid grid-cols-2 gap-3">
+        {profiles.map(p => {
+          const active = p.id === currentProfile;
+          const Icon = p.icon;
+          return (
+            <button
+              key={p.id}
+              onClick={() => handleSelect(p.id)}
+              className="flex flex-col items-start gap-2 rounded-lg border p-4 text-left transition-colors"
+              style={{
+                borderColor: active ? 'var(--bb-orange, #FF5A1F)' : 'var(--border-subtle, rgba(255,255,255,0.1))',
+                background: active ? 'rgba(255, 90, 31, 0.08)' : 'var(--bg-muted, rgba(255,255,255,0.03))',
+              }}
+            >
+              <Icon size={20} style={{ color: active ? 'var(--bb-orange, #FF5A1F)' : 'var(--text-secondary)' }} />
+              <div>
+                <p className="text-sm font-medium text-foreground">{p.label}</p>
+                <p className="text-xs text-muted-foreground">{p.description}</p>
+              </div>
+            </button>
+          );
+        })}
+      </CardContent>
+    </Card>
+  );
+}
+
 // ─── Main Settings Tab ───────────────────────────────────────────────────────
 
 function SettingsTab() {
@@ -465,7 +677,7 @@ function SettingsTab() {
 
   return (
     <TabShell>
-      <TabHeader icon={Settings} iconColor="var(--bb-orange)" title="Settings" />
+      <BBTabTitle title="Settings" />
       <div className="flex flex-col gap-6 p-6">
         <div className="flex items-center justify-end">
           <button
@@ -486,6 +698,7 @@ function SettingsTab() {
           <TabsTrigger value="voice">Voice Profiles</TabsTrigger>
           <TabsTrigger value="policy">Policy</TabsTrigger>
           <TabsTrigger value="integrations">Integrations</TabsTrigger>
+          <TabsTrigger value="organization">Organization</TabsTrigger>
           <TabsTrigger value="profile">Profile</TabsTrigger>
           <TabsTrigger value="preferences">Preferences</TabsTrigger>
         </TabsList>
@@ -503,7 +716,8 @@ function SettingsTab() {
           />
         </TabsContent>
 
-        <TabsContent value="channels" className="mt-4 max-w-2xl">
+        <TabsContent value="channels" className="mt-4 max-w-2xl flex flex-col gap-4">
+          <WhatsAppConnectCard />
           <ChannelConfigSection />
         </TabsContent>
 
@@ -517,6 +731,10 @@ function SettingsTab() {
 
         <TabsContent value="integrations" className="mt-4">
           <IntegrationGrid />
+        </TabsContent>
+
+        <TabsContent value="organization" className="mt-4 max-w-2xl">
+          <DashboardLayoutSection supabase={supabase} />
         </TabsContent>
 
         <TabsContent value="profile" className="mt-4">

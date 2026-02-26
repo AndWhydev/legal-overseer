@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@/lib/supabase/server'
 import { assembleContext } from '@/lib/context/assembler'
+import { getPack, resolveIndustry } from '@/lib/industry/registry'
 
 /**
  * Voice endpoint: accepts audio via multipart/form-data,
@@ -77,6 +78,18 @@ export async function POST(request: Request) {
 
   const orgId = (user.user_metadata?.org_id as string) ?? user.id
 
+  let industry: string | undefined
+  try {
+    const { data: org } = await supabase
+      .from('organisations')
+      .select('industry')
+      .eq('id', orgId)
+      .single()
+    industry = (org?.industry as string) ?? undefined
+  } catch { /* use default */ }
+
+  const pack = getPack(resolveIndustry(industry))
+
   let contextSummary = ''
   try {
     const briefing = await assembleContext(supabase, orgId, transcript)
@@ -86,7 +99,7 @@ export async function POST(request: Request) {
   }
 
   const systemParts: string[] = [
-    'You are BitBit, an AI operations assistant for a digital agency. The user sent a voice message. Be concise and action-oriented.',
+    `You are ${pack.persona.name}, an AI operations assistant for ${pack.persona.context}. ${pack.persona.systemPromptSuffix} The user sent a voice message. Be concise and action-oriented.`,
   ]
   if (contextSummary) {
     systemParts.push(`\nRelevant context:\n${contextSummary}`)

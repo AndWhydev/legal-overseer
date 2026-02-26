@@ -31,6 +31,7 @@ import {
 import type { TabDef } from './spa-shell';
 import { NotificationCenter } from './notification-center';
 import { createClient } from '@/lib/supabase/client';
+import { useEnabledModules } from '@/lib/modules/use-enabled-modules';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 // ─── Nav icon mapping ───────────────────────────────────────────────────────
@@ -59,11 +60,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
   settings:    Settings,
 };
 
-const MAIN_TAB_IDS = ['command-center', 'dashboard', 'chat', 'inbox', 'channels', 'medications', 'contacts', 'leads', 'invoices', 'tenders', 'sentry', 'approvals', 'ad-scripts', 'ai-search', 'reports', 'knowledge', 'costs', 'analytics', 'activity', 'admin'];
-
-// Primary tabs always visible; advanced tabs hidden behind toggle
-const PRIMARY_TAB_IDS = ['command-center', 'dashboard', 'chat', 'inbox', 'leads', 'invoices', 'tenders', 'contacts', 'approvals'];
-const ADVANCED_TAB_IDS = ['channels', 'medications', 'sentry', 'costs', 'activity', 'admin'];
+// Note: PRIMARY/ADVANCED tab lists are now driven by composition profiles via useEnabledModules()
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
@@ -103,6 +100,12 @@ export function SidebarNav({
   const navRef = useRef<HTMLElement>(null);
   const indicatorRef = useRef<HTMLDivElement>(null);
 
+  // Filter nav items through module gating + composition profile
+  const { modules: enabledModules, composition } = useEnabledModules();
+  const filteredPrimaryTabIds = composition.primaryModules.filter(id => enabledModules.includes(id));
+  const filteredAdvancedTabIds = composition.advancedModules.filter(id => enabledModules.includes(id));
+  const filteredMainTabIds = [...filteredPrimaryTabIds, ...filteredAdvancedTabIds];
+
   // Theme toggle
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
     if (typeof window === 'undefined') return 'dark';
@@ -141,15 +144,18 @@ export function SidebarNav({
   const clientRef = useRef<SupabaseClient | null>(null);
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Keep a ref to the current main tab list for imperative callbacks
+  const mainTabIdsRef = useRef(filteredMainTabIds);
+  mainTabIdsRef.current = filteredMainTabIds;
+
   // ── Update nav indicator via CSS variable (zero React re-renders) ───────
   const updateIndicator = useCallback((tabId: string) => {
-    const allIds = [...MAIN_TAB_IDS, 'settings'];
-    const idx = allIds.indexOf(tabId);
-    if (idx < 0 || !indicatorRef.current) return;
+    const mainIds = mainTabIdsRef.current;
+    if (!indicatorRef.current) return;
 
     // For main tabs, use continuous offset; settings is separate
-    if (MAIN_TAB_IDS.includes(tabId)) {
-      const mainIdx = MAIN_TAB_IDS.indexOf(tabId);
+    if (mainIds.includes(tabId)) {
+      const mainIdx = mainIds.indexOf(tabId);
       indicatorRef.current.style.setProperty('--active-offset', `${mainIdx * NAV_ITEM_STRIDE}px`);
       indicatorRef.current.style.opacity = '1';
       indicatorRef.current.dataset.section = 'main';
@@ -187,7 +193,7 @@ export function SidebarNav({
     if (Math.abs(accumulatedDelta.current) > WHEEL_THRESHOLD) {
       const direction = accumulatedDelta.current > 0 ? 1 : -1;
       // Only cycle through main tabs, not settings
-      const wheelTabs = tabs.filter(t => MAIN_TAB_IDS.includes(t.id));
+      const wheelTabs = tabs.filter(t => mainTabIdsRef.current.includes(t.id));
       const currentIdx = wheelTabs.findIndex(t => t.id === activeTabId);
       if (currentIdx < 0) return;
 
@@ -305,7 +311,7 @@ export function SidebarNav({
       badgeCount = badgeCounts.invoices;
     }
 
-    const isAdvanced = ADVANCED_TAB_IDS.includes(tabId);
+    const isAdvanced = filteredAdvancedTabIds.includes(tabId);
 
     return (
       <button
@@ -357,9 +363,9 @@ export function SidebarNav({
     );
   };
 
-  // Build labels from tabs
+  // Build labels from tabs, applying composition overrides
   const tabLabels: Record<string, string> = {};
-  tabs.forEach(t => { tabLabels[t.id] = t.label; });
+  tabs.forEach(t => { tabLabels[t.id] = composition.labelOverrides[t.id] ?? t.label; });
 
   return (
     <aside className="bb-sidebar" role="navigation" aria-label="Main navigation" ref={sidebarRef}>
@@ -376,7 +382,7 @@ export function SidebarNav({
           className="bb-sidebar__indicator"
           aria-hidden="true"
         />
-        {MAIN_TAB_IDS.map(id => renderNavItem(id, tabLabels[id] || id))}
+        {filteredMainTabIds.map(id => renderNavItem(id, tabLabels[id] || id))}
 
         {/* Advanced toggle */}
         <button
