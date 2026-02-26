@@ -14,7 +14,7 @@ import { runAISearchTick } from './ai-search-optimizer'
 import { runTenderHunterTick } from './tender-hunter'
 import { canProceed } from './cost-guard'
 import { logAuditEvent } from '@/lib/audit/logger'
-import { withCircuitBreaker, CircuitOpenError } from './circuit-breaker'
+import { withCircuitBreaker } from './circuit-breaker'
 
 /**
  * Result of checking one agent's schedule.
@@ -133,16 +133,55 @@ export async function runScheduledAgents(
 
   const now = new Date()
   const results: AgentScheduleResult[] = []
-  const processedSentryOrgs = new Set<string>()
-  const processedLeadSwarmOrgs = new Set<string>()
-  const processedInvoiceFlowOrgs = new Set<string>()
-  const processedTriageOrgs = new Set<string>()
-  const processedClientCommsOrgs = new Set<string>()
-  const processedProposalBotOrgs = new Set<string>()
-  const processedAdScriptGenOrgs = new Set<string>()
-  const processedAISearchOrgs = new Set<string>()
-  const processedOnboardingOrgs = new Set<string>()
-  const processedTenderHunterOrgs = new Set<string>()
+  // Track processed orgs per agent type to prevent duplicate runs in same tick
+  const processedOrgs = new Map<string, Set<string>>()
+
+  // Agent dispatch map: agent_type → runner function
+  type AgentRunner = (sb: SupabaseClient, orgId: string, configId: string) => Promise<string>
+
+  const agentRunners: Record<string, AgentRunner> = {
+    'sentry': async (sb, oid, cid) => {
+      const r = await runSentryTick(sb, oid, cid)
+      const e = await processSentryEscalations(sb, oid)
+      return `sentry processed=${r.processed} triggered=${r.triggered} alerts=${r.alertsCreated} escalated=${e.escalated} failed=${e.failed}`
+    },
+    'lead-swarm': async (sb, oid, cid) => {
+      const r = await runLeadSwarmTick(sb, oid, cid)
+      return `lead-swarm processed=${r.processed} created=${r.created} qualified=${r.qualified} hot=${r.hot} failed=${r.failed}`
+    },
+    'invoice-flow': async (sb, oid, cid) => {
+      const r = await runInvoiceFlowTick(sb, oid, cid)
+      return `invoice-flow processed=${r.processed} created=${r.created} duplicates=${r.duplicatesBlocked} sent=${r.sent} overdue=${r.overdue} failed=${r.failed}`
+    },
+    'channel-triage': async (sb, oid, _cid) => {
+      const r = await runTriage(sb, oid)
+      return `channel-triage processed=${r.processed} actionable=${r.actionable} informational=${r.informational} spam=${r.spam} routed=${r.routed.length}`
+    },
+    'client-comms': async (sb, oid, cid) => {
+      const r = await runClientCommsTick(sb, oid, cid)
+      return `client-comms processed=${r.processed} drafted=${r.drafted} sent=${r.sent} queued=${r.queued} failed=${r.failed}`
+    },
+    'proposal-bot': async (sb, oid, cid) => {
+      const r = await runProposalBotTick(sb, oid, cid)
+      return `proposal-bot processed=${r.processed} follow-ups=${r.followUpsSent} failed=${r.failed}`
+    },
+    'client-onboarding': async (sb, oid, cid) => {
+      const r = await runOnboardingTick(sb, oid, cid)
+      return `client-onboarding processed=${r.processed} welcomes=${r.welcomesSent} credential-reminders=${r.credentialReminders} projects=${r.projectsCreated} failed=${r.failed}`
+    },
+    'ad-script-gen': async (sb, oid, cid) => {
+      const r = await runAdScriptGenTick(sb, oid, cid)
+      return `ad-script-gen processed=${r.processed} generated=${r.generated} failed=${r.failed}`
+    },
+    'ai-search-optimizer': async (sb, oid, cid) => {
+      const r = await runAISearchTick(sb, oid, cid)
+      return `ai-search-optimizer audits=${r.auditsRun} changes=${r.changesDetected} alerts=${r.alertsSent} failed=${r.failed}`
+    },
+    'tender-hunter': async (sb, oid, cid) => {
+      const r = await runTenderHunterTick(sb, oid, cid)
+      return `tender-hunter scanned=${r.scanned} new=${r.newTenders} evaluated=${r.evaluated} errors=${r.errors}`
+    },
+  }
 
   for (const config of configs) {
     const schedule = config.schedule as AgentSchedule | null
@@ -195,243 +234,35 @@ export async function runScheduledAgents(
       continue
     }
 
+    // Deduplicate: only run each agent type once per org per tick
+    if (!processedOrgs.has(config.agent_type)) {
+      processedOrgs.set(config.agent_type, new Set())
+    }
+    const orgSet = processedOrgs.get(config.agent_type)!
+    if (orgSet.has(config.org_id)) {
+      results.push({
+        agentType: config.agent_type,
+        orgId: config.org_id,
+        triggered: false,
+        reason: 'already_running',
+        lastRunAt: lastRunAt?.toISOString(),
+      })
+      continue
+    }
+    orgSet.add(config.org_id)
+
     let outputSummary = 'pending'
     const circuitKey = `agent:${config.agent_type}:${config.org_id}`
+    const runner = agentRunners[config.agent_type]
 
-    // Circuit breaker: skip if circuit is open for this agent+org
-    const runWithBreaker = <T>(fn: () => Promise<T>) =>
-      withCircuitBreaker(circuitKey, fn)
-
-    if (config.agent_type === 'sentry') {
-      if (processedSentryOrgs.has(config.org_id)) {
-        results.push({
-          agentType: config.agent_type,
-          orgId: config.org_id,
-          triggered: false,
-          reason: 'already_running',
-          lastRunAt: lastRunAt?.toISOString(),
-        })
-        continue
-      }
-
-      processedSentryOrgs.add(config.org_id)
-
+    if (runner) {
       try {
-        const sentryResult = await runWithBreaker(() => runSentryTick(supabase, config.org_id, config.id))
-        const escalationResult = await processSentryEscalations(supabase, config.org_id)
-        outputSummary =
-          `sentry processed=${sentryResult.processed} triggered=${sentryResult.triggered} ` +
-          `alerts=${sentryResult.alertsCreated} escalated=${escalationResult.escalated} failed=${escalationResult.failed}`
+        outputSummary = await withCircuitBreaker(circuitKey, () =>
+          runner(supabase, config.org_id, config.id),
+        )
       } catch (error) {
         const message = error instanceof Error ? error.message : 'unknown'
-        outputSummary = `sentry error=${message}`
-      }
-    } else if (config.agent_type === 'lead-swarm') {
-      if (processedLeadSwarmOrgs.has(config.org_id)) {
-        results.push({
-          agentType: config.agent_type,
-          orgId: config.org_id,
-          triggered: false,
-          reason: 'already_running',
-          lastRunAt: lastRunAt?.toISOString(),
-        })
-        continue
-      }
-
-      processedLeadSwarmOrgs.add(config.org_id)
-
-      try {
-        const leadResult = await runWithBreaker(() => runLeadSwarmTick(supabase, config.org_id, config.id))
-        outputSummary =
-          `lead-swarm processed=${leadResult.processed} created=${leadResult.created} ` +
-          `qualified=${leadResult.qualified} hot=${leadResult.hot} failed=${leadResult.failed}`
-      } catch (error) {
-        const message = error instanceof Error ? error.message : 'unknown'
-        outputSummary = `lead-swarm error=${message}`
-      }
-    } else if (config.agent_type === 'invoice-flow') {
-      if (processedInvoiceFlowOrgs.has(config.org_id)) {
-        results.push({
-          agentType: config.agent_type,
-          orgId: config.org_id,
-          triggered: false,
-          reason: 'already_running',
-          lastRunAt: lastRunAt?.toISOString(),
-        })
-        continue
-      }
-
-      processedInvoiceFlowOrgs.add(config.org_id)
-
-      try {
-        const invoiceResult = await runWithBreaker(() => runInvoiceFlowTick(supabase, config.org_id, config.id))
-        outputSummary =
-          `invoice-flow processed=${invoiceResult.processed} created=${invoiceResult.created} ` +
-          `duplicates=${invoiceResult.duplicatesBlocked} sent=${invoiceResult.sent} overdue=${invoiceResult.overdue} failed=${invoiceResult.failed}`
-      } catch (error) {
-        const message = error instanceof Error ? error.message : 'unknown'
-        outputSummary = `invoice-flow error=${message}`
-      }
-    } else if (config.agent_type === 'channel-triage') {
-      if (processedTriageOrgs.has(config.org_id)) {
-        results.push({
-          agentType: config.agent_type,
-          orgId: config.org_id,
-          triggered: false,
-          reason: 'already_running',
-          lastRunAt: lastRunAt?.toISOString(),
-        })
-        continue
-      }
-
-      processedTriageOrgs.add(config.org_id)
-
-      try {
-        const triageResult = await runWithBreaker(() => runTriage(supabase, config.org_id))
-        outputSummary =
-          `channel-triage processed=${triageResult.processed} actionable=${triageResult.actionable} ` +
-          `informational=${triageResult.informational} spam=${triageResult.spam} routed=${triageResult.routed.length}`
-      } catch (error) {
-        const message = error instanceof Error ? error.message : 'unknown'
-        outputSummary = `channel-triage error=${message}`
-      }
-    } else if (config.agent_type === 'client-comms') {
-      if (processedClientCommsOrgs.has(config.org_id)) {
-        results.push({
-          agentType: config.agent_type,
-          orgId: config.org_id,
-          triggered: false,
-          reason: 'already_running',
-          lastRunAt: lastRunAt?.toISOString(),
-        })
-        continue
-      }
-
-      processedClientCommsOrgs.add(config.org_id)
-
-      try {
-        const commsResult = await runWithBreaker(() => runClientCommsTick(supabase, config.org_id, config.id))
-        outputSummary =
-          `client-comms processed=${commsResult.processed} drafted=${commsResult.drafted} ` +
-          `sent=${commsResult.sent} queued=${commsResult.queued} failed=${commsResult.failed}`
-      } catch (error) {
-        const message = error instanceof Error ? error.message : 'unknown'
-        outputSummary = `client-comms error=${message}`
-      }
-    } else if (config.agent_type === 'proposal-bot') {
-      if (processedProposalBotOrgs.has(config.org_id)) {
-        results.push({
-          agentType: config.agent_type,
-          orgId: config.org_id,
-          triggered: false,
-          reason: 'already_running',
-          lastRunAt: lastRunAt?.toISOString(),
-        })
-        continue
-      }
-
-      processedProposalBotOrgs.add(config.org_id)
-
-      try {
-        const proposalResult = await runWithBreaker(() => runProposalBotTick(supabase, config.org_id, config.id))
-        outputSummary =
-          `proposal-bot processed=${proposalResult.processed} follow-ups=${proposalResult.followUpsSent} ` +
-          `failed=${proposalResult.failed}`
-      } catch (error) {
-        const message = error instanceof Error ? error.message : 'unknown'
-        outputSummary = `proposal-bot error=${message}`
-      }
-    } else if (config.agent_type === 'client-onboarding') {
-      if (processedOnboardingOrgs.has(config.org_id)) {
-        results.push({
-          agentType: config.agent_type,
-          orgId: config.org_id,
-          triggered: false,
-          reason: 'already_running',
-          lastRunAt: lastRunAt?.toISOString(),
-        })
-        continue
-      }
-
-      processedOnboardingOrgs.add(config.org_id)
-
-      try {
-        const onbResult = await runWithBreaker(() => runOnboardingTick(supabase, config.org_id, config.id))
-        outputSummary =
-          `client-onboarding processed=${onbResult.processed} welcomes=${onbResult.welcomesSent} ` +
-          `credential-reminders=${onbResult.credentialReminders} projects=${onbResult.projectsCreated} failed=${onbResult.failed}`
-      } catch (error) {
-        const message = error instanceof Error ? error.message : 'unknown'
-        outputSummary = `client-onboarding error=${message}`
-      }
-    } else if (config.agent_type === 'ad-script-gen') {
-      if (processedAdScriptGenOrgs.has(config.org_id)) {
-        results.push({
-          agentType: config.agent_type,
-          orgId: config.org_id,
-          triggered: false,
-          reason: 'already_running',
-          lastRunAt: lastRunAt?.toISOString(),
-        })
-        continue
-      }
-
-      processedAdScriptGenOrgs.add(config.org_id)
-
-      try {
-        const adResult = await runWithBreaker(() => runAdScriptGenTick(supabase, config.org_id, config.id))
-        outputSummary =
-          `ad-script-gen processed=${adResult.processed} generated=${adResult.generated} ` +
-          `failed=${adResult.failed}`
-      } catch (error) {
-        const message = error instanceof Error ? error.message : 'unknown'
-        outputSummary = `ad-script-gen error=${message}`
-      }
-    } else if (config.agent_type === 'ai-search-optimizer') {
-      if (processedAISearchOrgs.has(config.org_id)) {
-        results.push({
-          agentType: config.agent_type,
-          orgId: config.org_id,
-          triggered: false,
-          reason: 'already_running',
-          lastRunAt: lastRunAt?.toISOString(),
-        })
-        continue
-      }
-
-      processedAISearchOrgs.add(config.org_id)
-
-      try {
-        const searchResult = await runWithBreaker(() => runAISearchTick(supabase, config.org_id, config.id))
-        outputSummary =
-          `ai-search-optimizer audits=${searchResult.auditsRun} changes=${searchResult.changesDetected} ` +
-          `alerts=${searchResult.alertsSent} failed=${searchResult.failed}`
-      } catch (error) {
-        const message = error instanceof Error ? error.message : 'unknown'
-        outputSummary = `ai-search-optimizer error=${message}`
-      }
-    } else if (config.agent_type === 'tender-hunter') {
-      if (processedTenderHunterOrgs.has(config.org_id)) {
-        results.push({
-          agentType: config.agent_type,
-          orgId: config.org_id,
-          triggered: false,
-          reason: 'already_running',
-          lastRunAt: lastRunAt?.toISOString(),
-        })
-        continue
-      }
-
-      processedTenderHunterOrgs.add(config.org_id)
-
-      try {
-        const tenderResult = await runWithBreaker(() => runTenderHunterTick(supabase, config.org_id, config.id))
-        outputSummary =
-          `tender-hunter scanned=${tenderResult.scanned} new=${tenderResult.newTenders} ` +
-          `evaluated=${tenderResult.evaluated} errors=${tenderResult.errors}`
-      } catch (error) {
-        const message = error instanceof Error ? error.message : 'unknown'
-        outputSummary = `tender-hunter error=${message}`
+        outputSummary = `${config.agent_type} error=${message}`
       }
     }
 

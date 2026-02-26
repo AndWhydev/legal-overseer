@@ -335,7 +335,8 @@ export interface ChannelAdapter {
   type: ChannelType
   name: string
   description: string
-  pull: (config: Record<string, unknown>, since?: string) => Promise<ChannelMessage[]>
+  icon?: string
+  pull: (config: Record<string, unknown>, since?: Date, options?: Record<string, unknown>) => Promise<ChannelMessage[]>
   send?: (message: Omit<ChannelMessage, 'id' | 'timestamp'>) => Promise<{ success: boolean; id?: string }>
-  isAvailable: () => boolean
+  isAvailable: () => Promise<boolean>
 }
