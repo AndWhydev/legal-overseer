@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-03-01)
 ## Current Position
 
 Phase: 13 of 17 (Deployment Stability)
-Plan: 2 of 4 in current phase
+Plan: 3 of 4 in current phase
 Status: Executing
-Last activity: 2026-03-01 -- Completed 13-02 (Connection Pooling & Cold Start)
+Last activity: 2026-03-01 -- Completed 13-03 (Fly.io Worker & Cloudflare Edge Cron Hardening)
 
-Progress: [####################..........] 100% v1.0+v1.1 | 2/4 plans Phase 13
+Progress: [####################..........] 100% v1.0+v1.1 | 3/4 plans Phase 13
 
 ## Performance Metrics
 
@@ -26,7 +26,7 @@ Progress: [####################..........] 100% v1.0+v1.1 | 2/4 plans Phase 13
 
 | Phase | Plans | Status |
 |-------|-------|--------|
-| 13. Deployment Stability | 4 | 2/4 complete |
+| 13. Deployment Stability | 4 | 3/4 complete |
 | 14. Channel Relay & OAuth | TBD | Not started |
 | 15. WhatsApp Pipeline | TBD | Not started |
 | 16. Confidence Routing Validation | TBD | Not started |
@@ -41,6 +41,12 @@ See PROJECT.md Key Decisions table.
 - [13-02] Service client uses REST API; Supavisor pooling is infrastructure-side
 - [13-02] Classifier lazy-loaded via dynamic import for cold start optimization
 - [13-02] Health endpoint publicly accessible (no auth) for monitoring services
+- [13-03] Plain Node.js HTTP server for Fly.io (no Express, minimal cold start)
+- [13-03] AbortController timeouts: 5s Supabase, 10s worker dispatch, 3s status pings
+- [13-03] Dispatch failure recovery: revert task to pending for cron retry
+- [13-01] Keep ignoreBuildErrors: 106 TS errors are monorepo SupabaseClient type mismatches, not real app errors
+- [13-01] Service-role createClient for cron routes (no user session in cron context)
+- [13-01] Standardize all cron maxDuration to 300s via shared constant
 
 ### Pending Todos
 
@@ -56,5 +62,5 @@ See PROJECT.md Key Decisions table.
 ## Session Continuity
 
 Last session: 2026-03-01
-Stopped at: Completed 13-02-PLAN.md (Connection Pooling & Cold Start)
+Stopped at: Completed 13-03-PLAN.md (Fly.io Worker & Cloudflare Edge Cron Hardening)
 Resume file: None

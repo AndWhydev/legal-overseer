@@ -9,12 +9,12 @@ Requirements for battle-testing and sellability. Each maps to roadmap phases.
 
 ### Deployment Stability
 
-- [ ] **DEPLOY-01**: Vercel production build passes with zero errors
-- [ ] **DEPLOY-02**: All 9 cron endpoints trigger and execute correctly on Vercel's cron system
+- [x] **DEPLOY-01**: Vercel production build passes with zero errors
+- [x] **DEPLOY-02**: All 9 cron endpoints trigger and execute correctly on Vercel's cron system
 - [x] **DEPLOY-03**: Agent engine cold start responds in under 3 seconds for classification
 - [x] **DEPLOY-04**: Supabase connection pooling handles 10 concurrent agent requests without exhaustion
-- [ ] **DEPLOY-05**: Fly.io worker fleet is deployed and operational (not just config committed)
-- [ ] **DEPLOY-06**: Cloudflare edge cron poller is deployed and operational
+- [x] **DEPLOY-05**: Fly.io worker fleet is deployed and operational (not just config committed)
+- [x] **DEPLOY-06**: Cloudflare edge cron poller is deployed and operational
 
 ### Channel Relay
 
@@ -97,12 +97,12 @@ Requirements for battle-testing and sellability. Each maps to roadmap phases.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DEPLOY-01 | Phase 13 | Pending |
-| DEPLOY-02 | Phase 13 | Pending |
+| DEPLOY-01 | Phase 13 | Complete |
+| DEPLOY-02 | Phase 13 | Complete |
 | DEPLOY-03 | Phase 13 | Complete |
 | DEPLOY-04 | Phase 13 | Complete |
-| DEPLOY-05 | Phase 13 | Pending |
-| DEPLOY-06 | Phase 13 | Pending |
+| DEPLOY-05 | Phase 13 | Complete |
+| DEPLOY-06 | Phase 13 | Complete |
 | CHAN-01 | Phase 14 | Pending |
 | CHAN-02 | Phase 14 | Pending |
 | CHAN-03 | Phase 14 | Pending |
