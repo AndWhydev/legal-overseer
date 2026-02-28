@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-03-01)
 ## Current Position
 
 Phase: 13 of 17 (Deployment Stability)
-Plan: 0 of ? in current phase
-Status: Ready to plan
-Last activity: 2026-03-01 -- Roadmap created for v1.2 milestone (5 phases, 37 requirements)
+Plan: 2 of 4 in current phase
+Status: Executing
+Last activity: 2026-03-01 -- Completed 13-02 (Connection Pooling & Cold Start)
 
-Progress: [####################..........] 100% v1.0+v1.1 | 0% v1.2
+Progress: [####################..........] 100% v1.0+v1.1 | 2/4 plans Phase 13
 
 ## Performance Metrics
 
@@ -26,7 +26,7 @@ Progress: [####################..........] 100% v1.0+v1.1 | 0% v1.2
 
 | Phase | Plans | Status |
 |-------|-------|--------|
-| 13. Deployment Stability | TBD | Not started |
+| 13. Deployment Stability | 4 | 2/4 complete |
 | 14. Channel Relay & OAuth | TBD | Not started |
 | 15. WhatsApp Pipeline | TBD | Not started |
 | 16. Confidence Routing Validation | TBD | Not started |
@@ -37,6 +37,10 @@ Progress: [####################..........] 100% v1.0+v1.1 | 0% v1.2
 ### Decisions
 
 See PROJECT.md Key Decisions table.
+
+- [13-02] Service client uses REST API; Supavisor pooling is infrastructure-side
+- [13-02] Classifier lazy-loaded via dynamic import for cold start optimization
+- [13-02] Health endpoint publicly accessible (no auth) for monitoring services
 
 ### Pending Todos
 
@@ -52,5 +56,5 @@ See PROJECT.md Key Decisions table.
 ## Session Continuity
 
 Last session: 2026-03-01
-Stopped at: v1.2 roadmap created -- 5 phases (13-17), 37 requirements mapped
+Stopped at: Completed 13-02-PLAN.md (Connection Pooling & Cold Start)
 Resume file: None

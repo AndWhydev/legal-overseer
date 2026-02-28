@@ -11,8 +11,8 @@ Requirements for battle-testing and sellability. Each maps to roadmap phases.
 
 - [ ] **DEPLOY-01**: Vercel production build passes with zero errors
 - [ ] **DEPLOY-02**: All 9 cron endpoints trigger and execute correctly on Vercel's cron system
-- [ ] **DEPLOY-03**: Agent engine cold start responds in under 3 seconds for classification
-- [ ] **DEPLOY-04**: Supabase connection pooling handles 10 concurrent agent requests without exhaustion
+- [x] **DEPLOY-03**: Agent engine cold start responds in under 3 seconds for classification
+- [x] **DEPLOY-04**: Supabase connection pooling handles 10 concurrent agent requests without exhaustion
 - [ ] **DEPLOY-05**: Fly.io worker fleet is deployed and operational (not just config committed)
 - [ ] **DEPLOY-06**: Cloudflare edge cron poller is deployed and operational
 
@@ -99,8 +99,8 @@ Requirements for battle-testing and sellability. Each maps to roadmap phases.
 |-------------|-------|--------|
 | DEPLOY-01 | Phase 13 | Pending |
 | DEPLOY-02 | Phase 13 | Pending |
-| DEPLOY-03 | Phase 13 | Pending |
-| DEPLOY-04 | Phase 13 | Pending |
+| DEPLOY-03 | Phase 13 | Complete |
+| DEPLOY-04 | Phase 13 | Complete |
 | DEPLOY-05 | Phase 13 | Pending |
 | DEPLOY-06 | Phase 13 | Pending |
 | CHAN-01 | Phase 14 | Pending |
