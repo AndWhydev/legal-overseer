@@ -1,7 +1,7 @@
 # Requirements: BitBit AWU
 
 **Defined:** 2026-03-01
-**Core Value:** BitBit understands the business better than the business owner — when Andy says "Invoice Sezer for the White House RE work", BitBit knows who Sezer is, what the work was, the rate, and whether it's already been invoiced.
+**Core Value:** BitBit understands the business better than the business owner -- when Andy says "Invoice Sezer for the White House RE work", BitBit knows who Sezer is, what the work was, the rate, and whether it's already been invoiced.
 
 ## v1.2 Requirements
 
@@ -78,68 +78,68 @@ Requirements for battle-testing and sellability. Each maps to roadmap phases.
 
 ### Remaining Agents
 
-- **AGENT-01**: Proposal Generator — auto-generate tiered proposals from briefs
-- **AGENT-02**: Ad Script Generator — video/social ad scripts with hook variations
-- **AGENT-03**: Client Onboarding Agent — auto-create Asana project, request credentials, book kick-off
-- **AGENT-04**: Voice Agent (Eleven Labs outbound) — phone-based hands-free interaction
+- **AGENT-01**: Proposal Generator -- auto-generate tiered proposals from briefs
+- **AGENT-02**: Ad Script Generator -- video/social ad scripts with hook variations
+- **AGENT-03**: Client Onboarding Agent -- auto-create Asana project, request credentials, book kick-off
+- **AGENT-04**: Voice Agent (Eleven Labs outbound) -- phone-based hands-free interaction
 
 ## Out of Scope
 
 | Feature | Reason |
 |---------|--------|
-| Tender Hunter validation (PT-6) | High-revenue but needs real tender data from Andy first — deferred to v1.3 |
-| Model routing cost optimization (PT-8) | P2 priority — cost efficiency, not launch blocker |
-| Demo video production (G7) | Requires stable deployment first — produce after v1.2 ships |
-| CUA (computer-using agent) | Future phase — browser/desktop automation layer |
+| Tender Hunter validation (PT-6) | High-revenue but needs real tender data from Andy first -- deferred to v1.3 |
+| Model routing cost optimization (PT-8) | P2 priority -- cost efficiency, not launch blocker |
+| Demo video production (G7) | Requires stable deployment first -- produce after v1.2 ships |
+| CUA (computer-using agent) | Future phase -- browser/desktop automation layer |
 | Mobile app | Web-first, mobile later |
 
 ## Traceability
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DEPLOY-01 | — | Pending |
-| DEPLOY-02 | — | Pending |
-| DEPLOY-03 | — | Pending |
-| DEPLOY-04 | — | Pending |
-| DEPLOY-05 | — | Pending |
-| DEPLOY-06 | — | Pending |
-| CHAN-01 | — | Pending |
-| CHAN-02 | — | Pending |
-| CHAN-03 | — | Pending |
-| CHAN-04 | — | Pending |
-| CHAN-05 | — | Pending |
-| WHATS-01 | — | Pending |
-| WHATS-02 | — | Pending |
-| WHATS-03 | — | Pending |
-| WHATS-04 | — | Pending |
-| WHATS-05 | — | Pending |
-| CONF-01 | — | Pending |
-| CONF-02 | — | Pending |
-| CONF-03 | — | Pending |
-| CONF-04 | — | Pending |
-| CONF-05 | — | Pending |
-| INVC-06 | — | Pending |
-| INVC-07 | — | Pending |
-| INVC-08 | — | Pending |
-| INVC-09 | — | Pending |
-| INVC-10 | — | Pending |
-| LEAD-01 | — | Pending |
-| LEAD-02 | — | Pending |
-| LEAD-03 | — | Pending |
-| OAUTH-01 | — | Pending |
-| OAUTH-02 | — | Pending |
-| OAUTH-03 | — | Pending |
-| OAUTH-04 | — | Pending |
-| OAUTH-05 | — | Pending |
-| OAUTH-06 | — | Pending |
-| OAUTH-07 | — | Pending |
-| OAUTH-08 | — | Pending |
+| DEPLOY-01 | Phase 13 | Pending |
+| DEPLOY-02 | Phase 13 | Pending |
+| DEPLOY-03 | Phase 13 | Pending |
+| DEPLOY-04 | Phase 13 | Pending |
+| DEPLOY-05 | Phase 13 | Pending |
+| DEPLOY-06 | Phase 13 | Pending |
+| CHAN-01 | Phase 14 | Pending |
+| CHAN-02 | Phase 14 | Pending |
+| CHAN-03 | Phase 14 | Pending |
+| CHAN-04 | Phase 14 | Pending |
+| CHAN-05 | Phase 14 | Pending |
+| WHATS-01 | Phase 15 | Pending |
+| WHATS-02 | Phase 15 | Pending |
+| WHATS-03 | Phase 15 | Pending |
+| WHATS-04 | Phase 15 | Pending |
+| WHATS-05 | Phase 15 | Pending |
+| CONF-01 | Phase 16 | Pending |
+| CONF-02 | Phase 16 | Pending |
+| CONF-03 | Phase 16 | Pending |
+| CONF-04 | Phase 16 | Pending |
+| CONF-05 | Phase 16 | Pending |
+| INVC-06 | Phase 17 | Pending |
+| INVC-07 | Phase 17 | Pending |
+| INVC-08 | Phase 17 | Pending |
+| INVC-09 | Phase 17 | Pending |
+| INVC-10 | Phase 17 | Pending |
+| LEAD-01 | Phase 17 | Pending |
+| LEAD-02 | Phase 17 | Pending |
+| LEAD-03 | Phase 17 | Pending |
+| OAUTH-01 | Phase 14 | Pending |
+| OAUTH-02 | Phase 14 | Pending |
+| OAUTH-03 | Phase 14 | Pending |
+| OAUTH-04 | Phase 14 | Pending |
+| OAUTH-05 | Phase 14 | Pending |
+| OAUTH-06 | Phase 14 | Pending |
+| OAUTH-07 | Phase 14 | Pending |
+| OAUTH-08 | Phase 14 | Pending |
 
 **Coverage:**
-- v1.2 requirements: 31 total
-- Mapped to phases: 0
-- Unmapped: 31 (pending roadmap creation)
+- v1.2 requirements: 37 total
+- Mapped to phases: 37
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-01*
-*Last updated: 2026-03-01 after initial definition*
+*Last updated: 2026-03-01 after roadmap creation*
