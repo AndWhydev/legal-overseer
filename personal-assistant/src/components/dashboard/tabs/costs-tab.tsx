@@ -4,6 +4,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { DollarSign, TrendingUp, AlertTriangle, BarChart3 } from 'lucide-react';
 import { TabShell } from '@/components/ui/tab-shell';
 import { TabHeader } from '@/components/ui/tab-header';
+import { AlertBanner } from '@/components/ui/alert-banner';
 
 interface CostEntry {
   model: string;
@@ -120,9 +121,7 @@ function CostsTab() {
         )}
 
         {error && (
-          <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-300">
-            {error}
-          </div>
+          <AlertBanner variant="error">{error}</AlertBanner>
         )}
 
         {summary && !loading && (

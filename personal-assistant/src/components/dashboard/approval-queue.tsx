@@ -5,6 +5,7 @@ import { AlertCircle, RefreshCw } from 'lucide-react';
 import { ApprovalCard, type ApprovalItem } from './approval-card';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
+import { AlertBanner } from '../ui/alert-banner';
 
 type FilterKey = 'all' | 'urgent' | 'normal';
 
@@ -129,18 +130,15 @@ export function ApprovalQueue() {
       </div>
 
       {error ? (
-        <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
-          <div className="flex items-start gap-2">
-            <AlertCircle className="mt-0.5 h-4 w-4" />
-            <div className="space-y-2">
-              <p>{error}</p>
-              <Button size="sm" variant="outline" onClick={() => fetchApprovals()}>
-                <RefreshCw className="h-4 w-4" />
-                Retry
-              </Button>
-            </div>
+        <AlertBanner variant="error">
+          <div className="space-y-2">
+            <p>{error}</p>
+            <Button size="sm" variant="outline" onClick={() => fetchApprovals()}>
+              <RefreshCw className="h-4 w-4" />
+              Retry
+            </Button>
           </div>
-        </div>
+        </AlertBanner>
       ) : null}
 
       {loading ? (

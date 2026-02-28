@@ -256,7 +256,7 @@ export function WatchManager() {
         </div>
       ) : null}
       {errorMessage ? (
-        <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-2 text-sm text-destructive">
+        <div id="sentry-error" role="alert" className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-2 text-sm text-destructive">
           {errorMessage}
         </div>
       ) : null}
@@ -266,7 +266,7 @@ export function WatchManager() {
           <h2 className="text-lg font-semibold">Create watch</h2>
           <p className="text-sm text-muted-foreground">{watches.length} watches configured</p>
         </div>
-        <form className="grid gap-3 md:grid-cols-2" onSubmit={handleCreateWatch}>
+        <form className="grid gap-3 md:grid-cols-2" aria-describedby={errorMessage ? 'sentry-error' : undefined} onSubmit={handleCreateWatch}>
           <label className="flex flex-col gap-1 text-sm">
             Watch type
             <select
@@ -369,12 +369,14 @@ export function WatchManager() {
                 </pre>
                 <div className="mt-3 flex gap-2">
                   <button
+                    aria-label={watch.status === 'active' ? 'Pause watch' : 'Resume watch'}
                     className="rounded-md border border-border px-3 py-1.5 text-xs font-medium hover:bg-secondary"
                     onClick={() => void handleToggleWatch(watch)}
                   >
                     {watch.status === 'active' ? 'Pause' : 'Resume'}
                   </button>
                   <button
+                    aria-label={`Delete watch: ${watch.description}`}
                     className="rounded-md border border-destructive/30 px-3 py-1.5 text-xs font-medium text-destructive hover:bg-destructive/10"
                     onClick={() => void handleDeleteWatch(watch.id)}
                   >

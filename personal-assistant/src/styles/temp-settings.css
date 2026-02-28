@@ -102,6 +102,12 @@
   color: var(--text-secondary);
 }
 
+.bb-settings-tab-btn:focus-visible {
+  outline: 2px solid var(--bb-orange);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(255, 90, 31, 0.15);
+}
+
 .bb-settings-tab-btn[data-active] {
   color: var(--text-primary);
   background: transparent;

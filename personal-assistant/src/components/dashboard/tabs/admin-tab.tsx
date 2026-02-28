@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/client';
 import { TabHeader } from '@/components/ui/tab-header';
 import { TabShell } from '@/components/ui/tab-shell';
 import { TabSkeleton } from './tab-skeleton';
+import { AlertBanner } from '@/components/ui/alert-banner';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 // ---------------------------------------------------------------------------
@@ -165,9 +166,13 @@ export default function AdminTab() {
     return (
       <TabShell>
         <TabHeader icon={Shield} iconColor="var(--bb-status-error)" title="Admin" />
-        <div style={{ padding: 32, textAlign: 'center' }}>
-          <h2 style={{ color: 'var(--text-primary)', fontSize: 20, marginBottom: 8 }}>Access Denied</h2>
-          <p style={{ color: 'var(--text-secondary)' }}>Admin role required to access this panel.</p>
+        <div style={{ padding: 32 }}>
+          <AlertBanner variant="error">
+            <div>
+              <h2 style={{ color: 'var(--text-primary)', fontSize: 16, marginBottom: 4, fontWeight: 600 }}>Access Denied</h2>
+              <p style={{ color: 'var(--text-secondary)' }}>Admin role required to access this panel.</p>
+            </div>
+          </AlertBanner>
         </div>
       </TabShell>
     );
