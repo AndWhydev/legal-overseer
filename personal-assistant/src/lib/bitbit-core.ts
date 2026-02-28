@@ -2,7 +2,7 @@
  * BitBit Core — Local barrel re-exporting shared types and registry functions.
  *
  * This file provides the @/lib/bitbit-core import path used throughout
- * personal-assistant. Types are re-exported from packages/core/src.
+ * personal-assistant. Types are re-exported from lib/core/.
  */
 
 // Re-export types
@@ -39,9 +39,9 @@ export type {
   WatchStatus,
   OfferStatus,
   OrgSettings,
-} from '../../../packages/core/src/types'
+} from './core/types'
 
-export type { AgentDefinition } from '../../../packages/core/src/agent-registry'
+export type { AgentDefinition } from './core/agent-registry'
 
 // Re-export values (functions)
 export {
@@ -51,4 +51,4 @@ export {
   getRegisteredTypes,
   getAgentConfig,
   validateDefinition,
-} from '../../../packages/core/src/agent-registry'
+} from './core/agent-registry'
