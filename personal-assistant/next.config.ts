@@ -45,6 +45,11 @@ const nextConfig: NextConfig = {
     return config;
   },
   typescript: {
+    // Monorepo workspace packages (@bitbit/agent-*) are aliased to false above
+    // since they aren't deployed to Vercel. This causes ~100 TS2345 errors where
+    // the root node_modules SupabaseClient type differs from the personal-assistant
+    // copy. These are not real app errors -- keep ignoreBuildErrors until the
+    // monorepo package resolution is unified.
     ignoreBuildErrors: true,
   },
 };
