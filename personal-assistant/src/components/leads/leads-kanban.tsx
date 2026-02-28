@@ -5,6 +5,7 @@ import { Handshake } from 'lucide-react'
 import { SkeletonKanban } from '@/components/ui/skeleton'
 import { EmptyState } from '@/components/ui/empty-state'
 import { useToast } from '@/components/ui/toast'
+import { StatusPill, type StatusVariant } from '@/components/ui/status-pill'
 
 type LeadStatus = 'new' | 'qualified' | 'booked' | 'converted' | 'lost'
 type LeadScore = 'hot' | 'warm' | 'cold'
@@ -45,6 +46,12 @@ const SCORE_STYLES: Record<LeadScore, string> = {
   hot: 'border-red-500/30 bg-red-500/10 text-red-300',
   warm: 'border-amber-500/30 bg-amber-500/10 text-amber-300',
   cold: 'border-sky-500/30 bg-sky-500/10 text-sky-300',
+}
+
+const SCORE_VARIANT: Record<LeadScore, StatusVariant> = {
+  hot: 'error',
+  warm: 'warning',
+  cold: 'info',
 }
 
 function formatCurrency(value: number | null): string {
@@ -209,9 +216,11 @@ export function LeadsKanban() {
                       <article key={lead.id} className="rounded-lg border border-border bg-background p-3">
                         <div className="mb-2 flex items-center justify-between gap-2">
                           <span className="text-xs uppercase tracking-wide text-muted-foreground">{lead.source_channel}</span>
-                          <span className={`rounded-full border px-2 py-0.5 text-xs font-medium ${SCORE_STYLES[lead.score]}`}>
-                            {lead.score}
-                          </span>
+                          <StatusPill
+                            variant={SCORE_VARIANT[lead.score]}
+                            label={lead.score.charAt(0).toUpperCase() + lead.score.slice(1)}
+                            dot
+                          />
                         </div>
 
                         <p className="text-sm font-medium text-foreground">

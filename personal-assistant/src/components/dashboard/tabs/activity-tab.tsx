@@ -85,10 +85,12 @@ function FilterPill({
   value: string;
   onChange: (v: string) => void;
 }) {
+  const id = `activity-filter-${label.toLowerCase()}`;
   return (
     <div className="bb-activity-filter">
-      <span className="bb-activity-filter__label">{label}</span>
+      <label htmlFor={id} className="bb-activity-filter__label">{label}</label>
       <select
+        id={id}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className="bb-activity-filter__select"

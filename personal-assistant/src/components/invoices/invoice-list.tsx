@@ -5,6 +5,7 @@ import { ReceiptText } from 'lucide-react'
 import { SkeletonTable } from '@/components/ui/skeleton'
 import { EmptyState } from '@/components/ui/empty-state'
 import { useToast } from '@/components/ui/toast'
+import { StatusPill, type StatusVariant } from '@/components/ui/status-pill'
 
 type InvoiceStatus = 'draft' | 'sent' | 'viewed' | 'overdue' | 'paid' | 'cancelled'
 
@@ -35,6 +36,15 @@ const STATUS_STYLES: Record<InvoiceStatus, string> = {
   overdue: 'border-red-500/30 bg-red-500/15 text-red-300',
   paid: 'border-emerald-500/30 bg-emerald-500/15 text-emerald-300',
   cancelled: 'border-zinc-500/30 bg-zinc-500/10 text-zinc-400',
+}
+
+const INVOICE_STATUS_VARIANT: Record<InvoiceStatus, StatusVariant> = {
+  draft: 'neutral',
+  sent: 'info',
+  viewed: 'purple',
+  overdue: 'error',
+  paid: 'success',
+  cancelled: 'neutral',
 }
 
 function formatMoney(total: number, currency: string): string {
@@ -174,7 +184,7 @@ export function InvoiceList() {
             className={[
               'rounded-md border px-3 py-1.5 text-xs font-medium transition-colors',
               activeFilter === filter.key
-                ? 'border-sky-500/40 bg-sky-500/20 text-sky-200'
+                ? 'border-[var(--bb-orange)]/40 bg-[var(--bb-orange)]/20 text-[var(--bb-orange)]'
                 : 'border-border bg-background text-muted-foreground hover:bg-secondary',
             ].join(' ')}
           >
@@ -231,13 +241,12 @@ export function InvoiceList() {
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">{formatMoney(Number(invoice.total ?? 0), invoice.currency || 'AUD')}</td>
                     <td className="px-4 py-3">
-                      <span className={[
-                        'inline-flex rounded-full border px-2 py-1 text-xs font-medium',
-                        STATUS_STYLES[invoice.status],
-                        invoice.status === 'cancelled' ? 'line-through' : '',
-                      ].join(' ')}>
-                        {invoice.status}
-                      </span>
+                      <StatusPill
+                        variant={INVOICE_STATUS_VARIANT[invoice.status]}
+                        label={invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
+                        dot
+                        className={invoice.status === 'cancelled' ? 'line-through' : undefined}
+                      />
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">{formatDueDate(invoice.due_date)}</td>
                     <td className="px-4 py-3">

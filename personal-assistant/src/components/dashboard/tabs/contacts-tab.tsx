@@ -5,6 +5,7 @@ import { UserPlus, Search, ChevronRight, Mail, Phone } from 'lucide-react'
 import { SkeletonKanban } from '@/components/ui/skeleton'
 import { EmptyState } from '@/components/ui/empty-state'
 import { useDevOverrides } from '@/lib/dev/dev-overrides'
+import { StatusPill, type StatusVariant } from '@/components/ui/status-pill'
 
 type ContactType = 'client' | 'partner' | 'lead' | 'vendor' | string
 
@@ -67,6 +68,17 @@ const SEED_CONTACTS: Contact[] = [
     type: 'partner', tags: ['Photography', 'Content'],
   },
 ]
+
+// ---------------------------------------------------------------------------
+// Type mapping
+// ---------------------------------------------------------------------------
+
+const CONTACT_TYPE_VARIANT: Record<string, StatusVariant> = {
+  client: 'info',
+  lead: 'orange',
+  partner: 'purple',
+  vendor: 'cyan',
+}
 
 // ---------------------------------------------------------------------------
 // Component
@@ -249,7 +261,10 @@ function ContactCard({ contact }: { contact: Contact }) {
       <div className="bb-contacts-card__body">
         <div>
           <span className="bb-contacts-card__name">{contact.name ?? 'Unnamed contact'}</span>
-          <span className="bb-contacts-card__type">{contactType}</span>
+          <StatusPill
+            variant={CONTACT_TYPE_VARIANT[contactType] ?? 'neutral'}
+            label={contactType.charAt(0).toUpperCase() + contactType.slice(1)}
+          />
         </div>
 
         <div className="bb-contacts-card__meta">

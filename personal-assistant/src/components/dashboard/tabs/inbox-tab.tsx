@@ -22,6 +22,7 @@ import {
   Archive,
   Clock,
 } from 'lucide-react';
+import { StatusPill, type StatusVariant } from '@/components/ui/status-pill';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -62,6 +63,13 @@ const CHANNEL_ICONS: Record<string, React.ElementType> = {
   asana: CheckSquare,
   calendly: CalendarIcon,
   stripe: CreditCard,
+};
+
+const CATEGORY_VARIANT: Record<MessageCategory, StatusVariant> = {
+  actionable: 'orange',
+  informational: 'info',
+  spam: 'neutral',
+  personal: 'purple',
 };
 
 const SEED_MESSAGES: InboxMessage[] = [
@@ -449,6 +457,11 @@ function MessageRow({ message }: { message: InboxMessage }) {
 
       {/* Meta — right aligned, minimal */}
       <div className="bb-inbox-row__meta">
+        <StatusPill
+          variant={CATEGORY_VARIANT[message.category]}
+          label={message.category}
+          dot
+        />
         <span className="bb-inbox-row__time">{timeAgo}</span>
         {message.threadStatus === 'waiting_on_you' && (
           <span className="bb-inbox-row__badge">Reply</span>
@@ -462,10 +475,10 @@ function MessageRow({ message }: { message: InboxMessage }) {
 
       {/* Hover actions — fade in */}
       <div className="bb-inbox-row__hover-actions">
-        <button className="bb-inbox-row__action" title="Archive">
+        <button className="bb-inbox-row__action" title="Archive" aria-label="Archive message">
           <Archive size={14} />
         </button>
-        <button className="bb-inbox-row__action" title="Done">
+        <button className="bb-inbox-row__action" title="Done" aria-label="Mark as done">
           <CheckCircle2 size={14} />
         </button>
       </div>
