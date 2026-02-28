@@ -1,5 +1,6 @@
 import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from 'crypto'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { logAuditEvent } from '@/lib/audit/logger'
 
 const ALGORITHM = 'aes-256-gcm'
 const SALT = 'bitbit-integration-salt' // In production, use a random salt from env
@@ -103,6 +104,16 @@ export async function storeOrgCredential(
   if (error) {
     throw new Error(`Failed to store credential: ${error.message}`)
   }
+
+  await logAuditEvent(supabase, {
+    orgId,
+    actorType: 'user',
+    actorId: userId,
+    action: 'updated',
+    entityType: 'credential',
+    entityId: provider,
+    metadata: { operation: 'store', provider },
+  })
 }
 
 /**
@@ -124,6 +135,16 @@ export async function getOrgCredential(
     return null
   }
 
+  await logAuditEvent(supabase, {
+    orgId,
+    actorType: 'system',
+    actorId: 'credential-reader',
+    action: 'executed',
+    entityType: 'credential',
+    entityId: provider,
+    metadata: { operation: 'read', provider },
+  })
+
   try {
     const decrypted = decryptCredential(data.credentials_encrypted)
     return JSON.parse(decrypted) as Record<string, unknown>
@@ -131,6 +152,56 @@ export async function getOrgCredential(
     // If it's not JSON, return as plain string
     const decrypted = decryptCredential(data.credentials_encrypted)
     return { token: decrypted } as unknown as Record<string, unknown>
+  }
+}
+
+/**
+ * Store encrypted credentials in channel_configs for a specific channel.
+ * Used by channel adapters (Gmail, Outlook, etc.) for OAuth token persistence.
+ */
+export async function storeChannelCredential(
+  supabase: SupabaseClient,
+  orgId: string,
+  channelType: string,
+  credentials: Record<string, unknown>,
+): Promise<void> {
+  const encrypted = encryptCredential(JSON.stringify(credentials))
+
+  const { error } = await supabase
+    .from('channel_configs')
+    .update({ credentials_encrypted: encrypted })
+    .eq('org_id', orgId)
+    .eq('channel_type', channelType)
+
+  if (error) {
+    throw new Error(`Failed to store channel credential: ${error.message}`)
+  }
+}
+
+/**
+ * Retrieve and decrypt credentials from channel_configs.
+ */
+export async function getChannelCredential(
+  supabase: SupabaseClient,
+  orgId: string,
+  channelType: string,
+): Promise<Record<string, unknown> | null> {
+  const { data, error } = await supabase
+    .from('channel_configs')
+    .select('credentials_encrypted')
+    .eq('org_id', orgId)
+    .eq('channel_type', channelType)
+    .single()
+
+  if (error || !data?.credentials_encrypted) {
+    return null
+  }
+
+  try {
+    const decrypted = decryptCredential(data.credentials_encrypted)
+    return JSON.parse(decrypted) as Record<string, unknown>
+  } catch {
+    return null
   }
 }
 
@@ -151,6 +222,16 @@ export async function deleteOrgCredential(
   if (error) {
     throw new Error(`Failed to delete credential: ${error.message}`)
   }
+
+  await logAuditEvent(supabase, {
+    orgId,
+    actorType: 'user',
+    actorId: 'credential-manager',
+    action: 'deleted',
+    entityType: 'credential',
+    entityId: provider,
+    metadata: { operation: 'delete', provider },
+  })
 }
 
 /**

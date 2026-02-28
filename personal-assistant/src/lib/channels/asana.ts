@@ -263,6 +263,11 @@ export function parseAsanaWebhookEvents(body: {
 // ChannelAdapter for synthesizer compatibility (env-var based)
 // ---------------------------------------------------------------------------
 
+/**
+ * Asana channel adapter integrating with the Asana API.
+ * Pulls tasks and projects from configured workspace.
+ * API: https://app.asana.com/api/1.0/tasks
+ */
 export const asanaAdapter: ChannelAdapter = {
   type: 'asana',
   name: 'Asana',

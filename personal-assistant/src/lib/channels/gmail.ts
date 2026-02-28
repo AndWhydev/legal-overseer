@@ -1,5 +1,6 @@
 import type { ChannelAdapter, ChannelMessage } from './types'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { storeChannelCredential } from '@/lib/integrations/credentials'
 
 // ---------------------------------------------------------------------------
 // Gmail OAuth2 token refresh (for OAuth-based Gmail, alongside IMAP app-password)
@@ -54,18 +55,12 @@ export async function refreshGmailToken(
 
     const expiresAt = new Date(Date.now() + data.expires_in * 1000).toISOString()
 
-    await client
-      .from('channel_configs')
-      .update({
-        credentials: {
-          ...creds,
-          access_token: data.access_token,
-          refresh_token: data.refresh_token || creds.refresh_token,
-          token_expires_at: expiresAt,
-        },
-      })
-      .eq('org_id', orgId)
-      .eq('channel_type', 'gmail')
+    await storeChannelCredential(client, orgId, 'gmail', {
+      ...creds,
+      access_token: data.access_token,
+      refresh_token: data.refresh_token || creds.refresh_token,
+      token_expires_at: expiresAt,
+    })
 
     return data.access_token
   } catch {
@@ -73,6 +68,11 @@ export async function refreshGmailToken(
   }
 }
 
+/**
+ * Gmail channel adapter integrating via IMAP (RFC3501).
+ * Pulls emails from INBOX using imapflow library with OAuth2 token refresh support.
+ * API: imap.gmail.com:993 (IMAPS)
+ */
 export const gmailAdapter: ChannelAdapter = {
   type: 'gmail',
   name: 'Gmail',
@@ -87,7 +87,7 @@ export const gmailAdapter: ChannelAdapter = {
     const sinceDate = since || new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
     const maxMessages = (options?.maxMessages as number) || 50
 
-    return gmailPullWithRetry(user, pass, sinceDate, maxMessages, 1)
+    return gmailPullWithRetry(user, pass, sinceDate, maxMessages, 4)
   },
 
   async isAvailable() {
@@ -190,13 +190,17 @@ async function gmailPullWithRetry(
       await client.logout()
     }
   } catch (err) {
-    // Retry once on connection failure
     if (retriesLeft > 0) {
-      console.warn('Gmail IMAP pull failed, retrying:', err)
+      const attempt = 5 - retriesLeft // 1, 2, 3, 4
+      const baseDelay = 1000 // 1s initial delay
+      const delay = Math.min(baseDelay * Math.pow(2, attempt - 1), 30000) // cap at 30s
+      const jitter = Math.random() * delay * 0.1 // 10% jitter
+      console.warn(`[gmail] IMAP pull failed (attempt ${attempt}/4), retrying in ${Math.round(delay + jitter)}ms:`, err)
+      await new Promise(resolve => setTimeout(resolve, delay + jitter))
       return gmailPullWithRetry(user, pass, sinceDate, maxMessages, retriesLeft - 1)
     }
 
-    console.error('Gmail IMAP pull failed after retries:', err)
+    console.error('[gmail] IMAP pull failed after 4 attempts:', err)
     return []
   }
 }

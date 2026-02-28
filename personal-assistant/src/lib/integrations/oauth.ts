@@ -1,4 +1,5 @@
 import { URLSearchParams } from 'url'
+import crypto from 'crypto'
 
 interface OAuthProvider {
   clientId: string
@@ -6,6 +7,7 @@ interface OAuthProvider {
   authorizationUrl: string
   tokenUrl: string
   scopes: string[]
+  supportsPKCE?: boolean
 }
 
 const PROVIDERS: Record<string, OAuthProvider> = {
@@ -31,6 +33,7 @@ const PROVIDERS: Record<string, OAuthProvider> = {
       'https://www.googleapis.com/auth/calendar.readonly',
       'https://www.googleapis.com/auth/calendar.events',
     ],
+    supportsPKCE: true,
   },
   'google-analytics': {
     clientId: process.env.GOOGLE_CLIENT_ID || '',
@@ -41,6 +44,7 @@ const PROVIDERS: Record<string, OAuthProvider> = {
       'https://www.googleapis.com/auth/analytics.readonly',
       'https://www.googleapis.com/auth/analytics',
     ],
+    supportsPKCE: true,
   },
   calendly: {
     clientId: process.env.CALENDLY_CLIENT_ID || '',
@@ -51,10 +55,39 @@ const PROVIDERS: Record<string, OAuthProvider> = {
   },
 }
 
+// OAuth state cookie name
+export const OAUTH_STATE_COOKIE = 'oauth_state'
+export const OAUTH_VERIFIER_COOKIE = 'oauth_code_verifier'
+
 /**
- * Get the OAuth redirect URL for a provider
+ * Generate a cryptographically secure state string
  */
-export function getOAuthRedirectUrl(provider: string, state?: string): string {
+export function generateOAuthState(): string {
+  return crypto.randomUUID()
+}
+
+/**
+ * Generate PKCE code verifier and challenge
+ */
+export function generatePKCE(): { codeVerifier: string; codeChallenge: string } {
+  const codeVerifier = crypto.randomBytes(32).toString('base64url')
+  const codeChallenge = crypto
+    .createHash('sha256')
+    .update(codeVerifier)
+    .digest('base64url')
+  return { codeVerifier, codeChallenge }
+}
+
+/**
+ * Get the OAuth redirect URL for a provider.
+ * Returns the URL, the generated state, and optionally the PKCE code_verifier
+ * (which the caller must persist in a cookie for validation on callback).
+ */
+export function getOAuthRedirectUrl(provider: string): {
+  url: string
+  state: string
+  codeVerifier?: string
+} {
   const config = PROVIDERS[provider.toLowerCase()]
   if (!config) {
     throw new Error(`Unknown OAuth provider: ${provider}`)
@@ -67,23 +100,38 @@ export function getOAuthRedirectUrl(provider: string, state?: string): string {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
   const redirectUri = `${appUrl}/callback/${provider}`
 
+  const state = generateOAuthState()
+
   const params = new URLSearchParams({
     client_id: config.clientId,
     redirect_uri: redirectUri,
     response_type: 'code',
     scope: config.scopes.join(' '),
-    state: state || generateRandomState(),
+    state,
   })
 
-  return `${config.authorizationUrl}?${params.toString()}`
+  let codeVerifier: string | undefined
+  if (config.supportsPKCE) {
+    const pkce = generatePKCE()
+    codeVerifier = pkce.codeVerifier
+    params.set('code_challenge', pkce.codeChallenge)
+    params.set('code_challenge_method', 'S256')
+  }
+
+  return {
+    url: `${config.authorizationUrl}?${params.toString()}`,
+    state,
+    codeVerifier,
+  }
 }
 
 /**
- * Exchange OAuth code for tokens
+ * Exchange OAuth code for tokens, optionally with PKCE code_verifier
  */
 export async function exchangeOAuthCode(
   provider: string,
-  code: string
+  code: string,
+  codeVerifier?: string
 ): Promise<{ access_token: string; refresh_token?: string; expires_in?: number }> {
   const config = PROVIDERS[provider.toLowerCase()]
   if (!config) {
@@ -104,6 +152,10 @@ export async function exchangeOAuthCode(
     code,
     grant_type: 'authorization_code',
   })
+
+  if (codeVerifier) {
+    params.set('code_verifier', codeVerifier)
+  }
 
   const response = await fetch(config.tokenUrl, {
     method: 'POST',
@@ -130,15 +182,7 @@ export async function exchangeOAuthCode(
 }
 
 /**
- * Generate a random state string for OAuth security
- */
-function generateRandomState(): string {
-  return Math.random().toString(36).substring(2, 15) +
-    Math.random().toString(36).substring(2, 15)
-}
-
-/**
- * Validate OAuth state parameter
+ * Validate OAuth state parameter (constant-time comparison)
  */
 export function validateOAuthState(
   state: string | undefined,
@@ -147,5 +191,8 @@ export function validateOAuthState(
   if (!state || !expectedState) {
     return false
   }
-  return state === expectedState
+  if (state.length !== expectedState.length) {
+    return false
+  }
+  return crypto.timingSafeEqual(Buffer.from(state), Buffer.from(expectedState))
 }

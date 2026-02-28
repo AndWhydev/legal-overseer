@@ -171,3 +171,73 @@ export function formatAuditReport(summary: AuditSummary): string {
 
   return lines.join('\n');
 }
+
+/**
+ * Check if a specific table has comprehensive RLS coverage.
+ */
+export function isTableSecure(result: RLSAuditResult): boolean {
+  if (!result.rls_enabled) return false;
+  if (result.issues.length > 0) return false;
+
+  // Comprehensive RLS should have both SELECT and INSERT at minimum
+  return result.has_select_policy && result.has_insert_policy;
+}
+
+/**
+ * Generate recommendations for RLS fixes.
+ */
+export function generateRLSRecommendations(summary: AuditSummary): string[] {
+  const recommendations: string[] = [];
+
+  if (summary.tables_without_rls > 0) {
+    recommendations.push(`Enable RLS on ${summary.tables_without_rls} table(s) without RLS protection`);
+  }
+
+  for (const result of summary.results) {
+    if (result.issues.length === 0) continue;
+
+    if (!result.has_select_policy && result.rls_enabled) {
+      recommendations.push(`Add SELECT policy to ${result.table_name}`);
+    }
+    if (!result.has_insert_policy && result.rls_enabled) {
+      recommendations.push(`Add INSERT policy to ${result.table_name}`);
+    }
+    if (!result.has_update_policy && result.rls_enabled) {
+      recommendations.push(`Add UPDATE policy to ${result.table_name}`);
+    }
+    if (!result.has_delete_policy && result.rls_enabled) {
+      recommendations.push(`Add DELETE policy to ${result.table_name}`);
+    }
+  }
+
+  return recommendations;
+}
+
+/**
+ * Get a summary of tables at risk.
+ */
+export function getTablesAtRisk(summary: AuditSummary): RLSAuditResult[] {
+  return summary.results.filter((r) => !isTableSecure(r));
+}
+
+/**
+ * Export audit results as JSON.
+ */
+export function exportAuditJSON(summary: AuditSummary): string {
+  return JSON.stringify(
+    {
+      timestamp: new Date().toISOString(),
+      summary: {
+        passed: summary.passed,
+        total_tables: summary.total_tables,
+        tables_with_rls: summary.tables_with_rls,
+        tables_without_rls: summary.tables_without_rls,
+        tables_with_issues: summary.tables_with_issues,
+      },
+      tables_at_risk: getTablesAtRisk(summary),
+      recommendations: generateRLSRecommendations(summary),
+    },
+    null,
+    2
+  );
+}

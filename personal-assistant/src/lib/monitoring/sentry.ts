@@ -130,3 +130,51 @@ export function withSentry<T extends (...args: never[]) => Promise<unknown>>(
     }
   }) as T;
 }
+
+/**
+ * Track performance metrics (latency, success/failure).
+ */
+export async function trackMetric(
+  name: string,
+  value: number,
+  context?: Record<string, string>
+): Promise<void> {
+  if (sentryInstance) {
+    sentryInstance.captureMessage(`metric: ${name}=${value}`, 'info');
+  } else {
+    console.log(`[sentry:fallback] metric: ${name}=${value}`, context);
+  }
+}
+
+/**
+ * Set custom context for debugging.
+ */
+export async function setContext(
+  contextName: string,
+  context: Record<string, unknown>
+): Promise<void> {
+  if (!sentryInstance) await initSentry();
+  // Note: We're calling addBreadcrumb as a workaround since setContext isn't in our minimal interface
+  if (sentryInstance && 'setContext' in sentryInstance) {
+    (sentryInstance as any).setContext(contextName, context);
+  }
+}
+
+/**
+ * Create a performance span for tracing.
+ */
+export async function startSpan(
+  operationName: string
+): Promise<{ end: () => void; recordException: (err: Error) => void }> {
+  const startTime = Date.now();
+
+  return {
+    end: () => {
+      const duration = Date.now() - startTime;
+      trackMetric(`span.${operationName}`, duration).catch(console.error);
+    },
+    recordException: (err: Error) => {
+      captureException(err, { span: operationName }).catch(console.error);
+    },
+  };
+}

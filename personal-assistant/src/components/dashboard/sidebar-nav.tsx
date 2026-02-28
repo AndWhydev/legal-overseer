@@ -4,7 +4,6 @@ import React, { useCallback, useRef, useEffect, useState } from 'react';
 import Image from 'next/image';
 import {
   LayoutDashboard,
-  Gauge,
   MessageSquare,
   Inbox,
   Cable,
@@ -30,6 +29,7 @@ import {
 } from 'lucide-react';
 import type { TabDef } from './spa-shell';
 import { NotificationCenter } from './notification-center';
+import { ConnectionStatus } from './connection-status';
 import { createClient } from '@/lib/supabase/client';
 import { useEnabledModules } from '@/lib/modules/use-enabled-modules';
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -37,7 +37,6 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 // ─── Nav icon mapping ───────────────────────────────────────────────────────
 
 const ICON_MAP: Record<string, React.ElementType> = {
-  'command-center': Gauge,
   dashboard:   LayoutDashboard,
   chat:        MessageSquare,
   inbox:       Inbox,
@@ -412,8 +411,9 @@ export function SidebarNav({
         <NotificationCenter onTabChange={onTabChange} />
       </div>
 
-      {/* Theme toggle + Settings pinned to bottom */}
+      {/* Connection status + Theme toggle + Settings pinned to bottom */}
       <div className="bb-sidebar__bottom">
+        <ConnectionStatus />
         <button
           onClick={toggleTheme}
           className="bb-sidebar__item"
@@ -428,7 +428,7 @@ export function SidebarNav({
       {/* User Avatar */}
       <div className="bb-sidebar__avatar" data-tooltip={displayName || 'Profile'} role="button" tabIndex={0}>
         {avatarUrl ? (
-          <img src={avatarUrl} alt="User avatar" />
+          <Image src={avatarUrl} alt="User avatar" width={32} height={32} className="bb-sidebar__avatar-img" />
         ) : (
           <span
             style={{

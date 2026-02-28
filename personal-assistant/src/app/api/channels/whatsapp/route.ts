@@ -5,7 +5,7 @@ import { processWhatsAppMessage } from '@/lib/channels/whatsapp-parser'
 
 const VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN
 const APP_SECRET = process.env.WHATSAPP_APP_SECRET
-const DEFAULT_ORG_ID = process.env.DEFAULT_ORG_ID || '00000000-0000-0000-0000-000000000000'
+const FALLBACK_ORG_ID = process.env.DEFAULT_ORG_ID
 
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url)
@@ -17,6 +17,39 @@ export async function GET(request: Request) {
         return new NextResponse(challenge, { status: 200 })
     }
     return new NextResponse('Forbidden', { status: 403 })
+}
+
+/**
+ * Resolve org_id from the phone_number_id in the webhook payload
+ * by looking up channel_configs. Falls back to env DEFAULT_ORG_ID.
+ */
+async function resolveOrgId(
+    supabase: ReturnType<typeof createClient>,
+    phoneNumberId: string | undefined
+): Promise<string | null> {
+    if (phoneNumberId) {
+        const { data } = await supabase
+            .from('channel_configs')
+            .select('org_id')
+            .eq('channel', 'whatsapp')
+            .eq('external_id', phoneNumberId)
+            .single()
+
+        if (data?.org_id) {
+            return data.org_id
+        }
+
+        console.warn(
+            `WhatsApp webhook: no channel_config found for phone_number_id=${phoneNumberId}, falling back to DEFAULT_ORG_ID`
+        )
+    }
+
+    if (FALLBACK_ORG_ID) {
+        return FALLBACK_ORG_ID
+    }
+
+    console.error('WhatsApp webhook: no org_id resolved and no DEFAULT_ORG_ID set')
+    return null
 }
 
 export async function POST(request: Request) {
@@ -54,6 +87,15 @@ export async function POST(request: Request) {
         for (const change of entry.changes || []) {
             const value = change.value
             if (value?.messages && value.messages.length > 0) {
+                // Extract phone_number_id from the webhook metadata
+                const phoneNumberId: string | undefined = value.metadata?.phone_number_id
+
+                const orgId = await resolveOrgId(supabase, phoneNumberId)
+                if (!orgId) {
+                    console.error('WhatsApp webhook: skipping messages — could not resolve org_id')
+                    continue
+                }
+
                 for (const msg of value.messages) {
                     if (msg.type !== 'text') continue
 
@@ -65,19 +107,20 @@ export async function POST(request: Request) {
                     const { data: insertedMsg, error } = await supabase
                         .from('channel_messages')
                         .insert({
-                            org_id: DEFAULT_ORG_ID,
+                            org_id: orgId,
                             channel: 'whatsapp',
                             external_id: msg.id,
                             sender: name,
-                            sender_email: phone, // Store phone number in senderEmail field temporarily
+                            sender_email: phone,
                             subject: 'WhatsApp Message',
                             body: text,
                             received_at: new Date(msg.timestamp * 1000).toISOString(),
                             is_actionable: true,
                             priority: 'medium',
                             metadata: {
-                                rawUrl: payload, // Store full context
-                                phoneNumber: phone
+                                rawUrl: payload,
+                                phoneNumber: phone,
+                                phoneNumberId,
                             }
                         })
                         .select('*')
@@ -86,7 +129,7 @@ export async function POST(request: Request) {
                     if (!error && insertedMsg) {
                         // Background process the message intent
                         // Do not await this, let Meta Webhook receive 200 OK fast
-                        processWhatsAppMessage(supabase, DEFAULT_ORG_ID, insertedMsg, text).catch(e => {
+                        processWhatsAppMessage(supabase, orgId, insertedMsg, text).catch(e => {
                             console.error('Failed processing WhatsApp Message:', e)
                         })
                     } else {

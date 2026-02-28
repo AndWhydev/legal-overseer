@@ -26,6 +26,7 @@ export type EntityType =
   | 'proposal'
   | 'tender'
   | 'watch'
+  | 'credential'
 
 export interface AuditEvent {
   orgId: string

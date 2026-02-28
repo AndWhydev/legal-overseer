@@ -56,6 +56,11 @@ export interface CalendlyWebhookPayload {
 // API helpers
 // ---------------------------------------------------------------------------
 
+/**
+ * Calendly API base URL.
+ * Calendly integrates scheduling and appointment tracking.
+ * API: https://api.calendly.com (OAuth2-based)
+ */
 const CALENDLY_BASE = 'https://api.calendly.com'
 
 async function calendlyFetch<T>(token: string, path: string, init?: RequestInit): Promise<T> {
@@ -244,6 +249,11 @@ export function parseCalendlyWebhook(body: CalendlyWebhookPayload): CalendlyWebh
 // ChannelAdapter for synthesizer compatibility (env-var based)
 // ---------------------------------------------------------------------------
 
+/**
+ * Calendly channel adapter integrating with the Calendly API.
+ * Pulls scheduled events and event type information.
+ * API: https://api.calendly.com/scheduled_events (OAuth2)
+ */
 export const calendlyAdapter: ChannelAdapter = {
   type: 'calendly',
   name: 'Calendly',

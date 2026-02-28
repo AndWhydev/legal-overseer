@@ -1,6 +1,12 @@
 import { NextResponse } from 'next/server'
+import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
-import { exchangeOAuthCode } from '@/lib/integrations/oauth'
+import {
+  exchangeOAuthCode,
+  validateOAuthState,
+  OAUTH_STATE_COOKIE,
+  OAUTH_VERIFIER_COOKIE,
+} from '@/lib/integrations/oauth'
 import { storeOrgCredential } from '@/lib/integrations/credentials'
 
 export async function GET(
@@ -11,6 +17,7 @@ export async function GET(
     const { provider } = await params
     const { searchParams } = new URL(request.url)
     const code = searchParams.get('code')
+    const state = searchParams.get('state')
     const error = searchParams.get('error')
 
     // Handle OAuth errors
@@ -24,6 +31,22 @@ export async function GET(
     if (!code) {
       return NextResponse.redirect(
         '/dashboard/settings?error=No authorization code received'
+      )
+    }
+
+    // Validate OAuth state to prevent CSRF
+    const cookieStore = await cookies()
+    const expectedState = cookieStore.get(OAUTH_STATE_COOKIE)?.value
+    const codeVerifier = cookieStore.get(OAUTH_VERIFIER_COOKIE)?.value
+
+    if (!validateOAuthState(state ?? undefined, expectedState)) {
+      console.error('OAuth state mismatch — possible CSRF attack', {
+        provider,
+        hasState: !!state,
+        hasExpected: !!expectedState,
+      })
+      return NextResponse.redirect(
+        '/dashboard/settings?error=Invalid OAuth state. Please try connecting again.'
       )
     }
 
@@ -55,8 +78,8 @@ export async function GET(
       )
     }
 
-    // Exchange code for tokens
-    const tokens = await exchangeOAuthCode(provider, code)
+    // Exchange code for tokens (with PKCE verifier if available)
+    const tokens = await exchangeOAuthCode(provider, code, codeVerifier)
 
     // Store the credentials
     await storeOrgCredential(
@@ -72,10 +95,13 @@ export async function GET(
       user.id
     )
 
-    // Redirect back to settings with success
-    return NextResponse.redirect(
+    // Clear OAuth cookies
+    const response = NextResponse.redirect(
       `/dashboard/settings?connected=${encodeURIComponent(provider)}`
     )
+    response.cookies.delete(OAUTH_STATE_COOKIE)
+    response.cookies.delete(OAUTH_VERIFIER_COOKIE)
+    return response
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : 'Unknown error occurred'

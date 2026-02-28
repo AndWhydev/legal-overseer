@@ -1,9 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { Activity } from 'lucide-react';
 import { TabSkeleton } from './tab-skeleton';
-import { TabHeader } from '@/components/ui/tab-header';
 import { TabShell } from '@/components/ui/tab-shell';
 
 // ---------------------------------------------------------------------------
@@ -60,15 +58,16 @@ function formatTimestamp(iso: string): string {
   return d.toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
-const ACTION_COLORS: Record<string, string> = {
-  created: '#22c55e',
-  approved: '#3b82f6',
-  rejected: '#ef4444',
-  deleted: '#ef4444',
-  sent: '#8b5cf6',
-  executed: '#f59e0b',
-  escalated: '#f97316',
-  updated: '#6b7280',
+// Map actions to data attribute values
+const ACTION_DATA_MAP: Record<string, string> = {
+  created: 'create',
+  approved: 'update',
+  rejected: 'delete',
+  deleted: 'delete',
+  sent: 'update',
+  executed: 'update',
+  escalated: 'update',
+  updated: 'update',
 };
 
 // ---------------------------------------------------------------------------
@@ -87,20 +86,12 @@ function FilterPill({
   onChange: (v: string) => void;
 }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-      <span style={{ fontSize: 12, color: 'var(--text-secondary, #999)', fontWeight: 500 }}>{label}</span>
+    <div className="bb-activity-filter">
+      <span className="bb-activity-filter__label">{label}</span>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        style={{
-          fontSize: 13,
-          padding: '4px 8px',
-          borderRadius: 6,
-          border: '1px solid var(--border, #333)',
-          background: 'var(--bg-elevated, #1a1a2e)',
-          color: 'var(--text-primary, #eee)',
-          cursor: 'pointer',
-        }}
+        className="bb-activity-filter__select"
       >
         {options.map((o) => (
           <option key={o} value={o}>
@@ -117,37 +108,20 @@ function FilterPill({
 // ---------------------------------------------------------------------------
 
 function AuditRow({ entry }: { entry: AuditEntry }) {
-  const color = ACTION_COLORS[entry.action] ?? '#6b7280';
+  const actionType = ACTION_DATA_MAP[entry.action] ?? 'update';
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'flex-start',
-        gap: 12,
-        padding: '10px 0',
-        borderBottom: '1px solid var(--border, #222)',
-      }}
-    >
+    <div className="bb-activity-row" data-action={actionType}>
       {/* Dot */}
-      <div
-        style={{
-          width: 8,
-          height: 8,
-          borderRadius: '50%',
-          backgroundColor: color,
-          marginTop: 6,
-          flexShrink: 0,
-        }}
-      />
+      <div className="bb-activity-row__dot" data-action={actionType} />
 
       {/* Content */}
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 14, color: 'var(--text-primary, #eee)' }}>
+      <div className="bb-activity-row__content">
+        <div className="bb-activity-row__action">
           {formatAction(entry)}
         </div>
         {entry.metadata && Object.keys(entry.metadata).length > 0 && (
-          <div style={{ fontSize: 12, color: 'var(--text-secondary, #888)', marginTop: 2 }}>
+          <div className="bb-activity-row__metadata">
             {Object.entries(entry.metadata)
               .slice(0, 3)
               .map(([k, v]) => `${k}: ${String(v)}`)
@@ -157,7 +131,7 @@ function AuditRow({ entry }: { entry: AuditEntry }) {
       </div>
 
       {/* Timestamp */}
-      <div style={{ fontSize: 12, color: 'var(--text-secondary, #888)', whiteSpace: 'nowrap', flexShrink: 0 }}>
+      <div className="bb-activity-row__timestamp">
         {formatTimestamp(entry.created_at)}
       </div>
     </div>
@@ -171,6 +145,7 @@ function AuditRow({ entry }: { entry: AuditEntry }) {
 function ActivityTab() {
   const [entries, setEntries] = useState<AuditEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [total, setTotal] = useState(0);
@@ -213,8 +188,12 @@ function ActivityTab() {
         setHasMore(fetched.length >= PAGE_SIZE);
         offsetRef.current = fetched.length;
       })
-      .catch(() => {
-        if (mounted) setEntries([]);
+      .catch((err) => {
+        console.error('[activity-tab] fetch error:', err);
+        if (mounted) {
+          setEntries([]);
+          setError('Failed to load activity log');
+        }
       })
       .finally(() => {
         if (mounted) setLoading(false);
@@ -261,44 +240,56 @@ function ActivityTab() {
 
   if (loading) return <TabSkeleton />;
 
+  if (error && entries.length === 0) {
+    return (
+      <TabShell>
+        <div className="bb-tab-error">
+          <p className="bb-tab-error__text">{error}</p>
+          <button className="bb-btn bb-btn--ghost bb-btn--sm" onClick={() => { setError(null); setLoading(true); }}>
+            Retry
+          </button>
+        </div>
+      </TabShell>
+    );
+  }
+
   return (
     <TabShell>
-      <TabHeader icon={Activity} iconColor="var(--bb-cyan)" title="Activity" />
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: 24 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
-          <span style={{ fontSize: 13, color: 'var(--text-secondary, #888)' }}>
+      <div className="bb-activity-main">
+        <div className="bb-activity-header">
+          <span className="bb-activity-header__text">
             {total} total events
           </span>
         </div>
 
-      {/* Filters */}
-      <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-        <FilterPill label="Entity" options={ENTITY_TYPES} value={entityType} onChange={setEntityType} />
-        <FilterPill label="Actor" options={ACTOR_TYPES} value={actorType} onChange={setActorType} />
-        <FilterPill label="Action" options={ACTION_TYPES} value={actionType} onChange={setActionType} />
-      </div>
+        {/* Filters */}
+        <div className="bb-activity-filters">
+          <FilterPill label="Entity" options={ENTITY_TYPES} value={entityType} onChange={setEntityType} />
+          <FilterPill label="Actor" options={ACTOR_TYPES} value={actorType} onChange={setActorType} />
+          <FilterPill label="Action" options={ACTION_TYPES} value={actionType} onChange={setActionType} />
+        </div>
 
-      {/* Timeline */}
-      <div>
-        {entries.map((entry) => (
-          <AuditRow key={entry.id} entry={entry} />
-        ))}
+        {/* Timeline */}
+        <div className="bb-activity-timeline">
+          {entries.map((entry) => (
+            <AuditRow key={entry.id} entry={entry} />
+          ))}
 
-        {entries.length === 0 && (
-          <p style={{ textAlign: 'center', padding: '48px 0', fontSize: 14, color: 'var(--text-secondary, #888)' }}>
-            No audit events found. Agent actions will appear here.
-          </p>
-        )}
+          {entries.length === 0 && (
+            <p className="bb-activity-empty">
+              No audit events found. Agent actions will appear here.
+            </p>
+          )}
 
-        {/* Infinite scroll sentinel */}
-        <div ref={sentinelRef} style={{ height: 1 }} />
+          {/* Infinite scroll sentinel */}
+          <div ref={sentinelRef} className="bb-activity-sentinel" />
 
-        {loadingMore && (
-          <div style={{ textAlign: 'center', padding: 16, fontSize: 13, color: 'var(--text-secondary, #888)' }}>
-            Loading more...
-          </div>
-        )}
-      </div>
+          {loadingMore && (
+            <div className="bb-activity-loading">
+              Loading more...
+            </div>
+          )}
+        </div>
       </div>
     </TabShell>
   );

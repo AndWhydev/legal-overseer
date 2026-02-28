@@ -2,15 +2,15 @@ app = "bitbit-workers"
 primary_region = "syd"
 
 [build]
-  dockerfile = "Dockerfile"
+  dockerfile = "deployments/fly/Dockerfile"
+  dockerfile_entrypoint = ""
 
 [env]
   NODE_ENV = "production"
-  WORKER_TYPE = "cron"
   LOG_LEVEL = "info"
 
 [http_service]
-  internal_port = 3001
+  internal_port = 3000
   force_https = true
   auto_stop_machines = "suspend"
   auto_start_machines = true
@@ -23,16 +23,16 @@ primary_region = "syd"
 
 [[vm]]
   size = "shared-cpu-1x"
-  memory = "512mb"
+  memory = "1024mb"
   count = 2
 
 [checks]
   [checks.health]
-    port = 3001
+    port = 3000
     type = "http"
     interval = "30s"
     timeout = "5s"
-    path = "/health"
+    path = "/api/monitoring/health"
     method = "GET"
 
 [metrics]

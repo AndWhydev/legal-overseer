@@ -29,7 +29,6 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import type { Integration } from '@/lib/integrations/types'
-import { getOAuthRedirectUrl } from '@/lib/integrations/oauth'
 
 const ICON_MAP: Record<string, LucideIcon> = {
   Mail,
@@ -126,15 +125,8 @@ export function IntegrationCard({
 
   const handleConnect = () => {
     if (integration.authMethod === 'oauth') {
-      try {
-        const redirectUrl = getOAuthRedirectUrl(integration.id)
-        window.location.href = redirectUrl
-      } catch (err) {
-        const message =
-          err instanceof Error ? err.message : 'OAuth setup failed'
-        console.error('OAuth error:', err)
-        setError(message)
-      }
+      // Redirect through server route so state/PKCE cookies are set httpOnly
+      window.location.href = `/api/auth/oauth/start?provider=${encodeURIComponent(integration.id)}`
     } else if (integration.authMethod === 'api_key') {
       setApiKeyDialogOpen(true)
     }

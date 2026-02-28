@@ -5,8 +5,6 @@ import { createClient } from '@/lib/supabase/client';
 import { DashboardRedesign } from '../dashboard-redesign';
 import { TabSkeleton } from './tab-skeleton';
 import { TabShell } from '@/components/ui/tab-shell';
-import { TabHeader } from '@/components/ui/tab-header';
-import { CheckSquare } from 'lucide-react';
 import type { KanbanColumn, Task } from '@/lib/types';
 
 function DashboardTab() {
@@ -14,24 +12,42 @@ function DashboardTab() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [messages, setMessages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const supabase = createClient();
     if (!supabase) { setLoading(false); return; }
 
     Promise.all([
-      supabase.from('kanban_columns').select('*').order('position'),
-      supabase.from('tasks').select('*').order('position'),
+      supabase.from('kanban_columns').select('*').order('position', { ascending: true }).limit(50),
+      supabase.from('tasks').select('*').order('created_at', { ascending: false }).limit(200),
       supabase.from('channel_messages').select('*').order('received_at', { ascending: false }).limit(20)
     ]).then(([colRes, taskRes, msgRes]) => {
       setColumns((colRes.data ?? []) as KanbanColumn[]);
       setTasks((taskRes.data ?? []) as Task[]);
       setMessages(msgRes.data ?? []);
+    }).catch((err) => {
+      console.error('[dashboard-tab] fetch error:', err);
+      setError('Failed to load dashboard data');
+    }).finally(() => {
       setLoading(false);
     });
   }, []);
 
   if (loading) return <TabSkeleton />;
+
+  if (error) {
+    return (
+      <TabShell>
+        <div className="bb-tab-error">
+          <p className="bb-tab-error__text">{error}</p>
+          <button className="bb-btn bb-btn--ghost bb-btn--sm" onClick={() => window.location.reload()}>
+            Retry
+          </button>
+        </div>
+      </TabShell>
+    );
+  }
 
   const today = new Date().toISOString().split('T')[0];
   const completedToday = tasks.filter(t =>
@@ -41,12 +57,6 @@ function DashboardTab() {
 
   return (
     <TabShell>
-      <TabHeader
-        icon={<CheckSquare size={22} />}
-        iconColor="var(--bb-orange)"
-        title="Tasks"
-        subtitle={`${activeTasks.length} active tasks · ${completedToday} completed today`}
-      />
       <DashboardRedesign
         columns={columns}
         tasks={tasks}
