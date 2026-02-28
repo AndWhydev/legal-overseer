@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
-import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import { getServiceClient } from '@/lib/supabase/service-client'
 
 /**
  * Structured result returned by cron handler functions.
@@ -40,19 +41,18 @@ export async function withCronGuard(
     return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
   }
 
-  // Create service-role Supabase client (not cookie-based -- cron has no user session)
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-
-  if (!supabaseUrl || !supabaseKey) {
-    console.error(`${tag} Missing SUPABASE_URL or SERVICE_ROLE_KEY`)
+  // Use shared singleton service-role client (singleton with pool config from service-client.ts)
+  let supabase: SupabaseClient
+  try {
+    supabase = getServiceClient()
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : String(err)
+    console.error(`${tag} Service client initialization failed: ${errorMessage}`)
     return NextResponse.json(
       { success: false, error: 'Server configuration error' },
       { status: 500 },
     )
   }
-
-  const supabase = createClient(supabaseUrl, supabaseKey)
 
   const startTime = Date.now()
   console.log(`${tag} Starting execution`)

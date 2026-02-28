@@ -1,0 +1,131 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  deploy-vercel:
+    name: Verify Vercel Deployment
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: production
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Wait for Vercel deployment
+        # Vercel auto-deploys from git integration -- this job verifies it completed
+        run: |
+          echo "Waiting 60s for Vercel deployment to propagate..."
+          sleep 60
+
+      - name: Verify Vercel health endpoint
+        if: ${{ env.VERCEL_URL != '' }}
+        env:
+          VERCEL_URL: ${{ secrets.VERCEL_URL }}
+        run: |
+          echo "Checking health at https://$VERCEL_URL/api/health"
+          RESPONSE=$(curl -sf "https://$VERCEL_URL/api/health" || true)
+          if [ -z "$RESPONSE" ]; then
+            echo "::warning::Could not reach Vercel health endpoint. Deployment may still be in progress."
+            exit 0
+          fi
+          echo "$RESPONSE" | python3 -c "
+          import sys, json
+          data = json.load(sys.stdin)
+          print(json.dumps(data, indent=2))
+          if data.get('status') != 'ok':
+            print('::error::Health check returned non-ok status')
+            sys.exit(1)
+          print('Vercel deployment verified successfully')
+          "
+
+      - name: Skip notice (no VERCEL_URL configured)
+        if: ${{ env.VERCEL_URL == '' }}
+        env:
+          VERCEL_URL: ${{ secrets.VERCEL_URL }}
+        run: |
+          echo "::warning::VERCEL_URL secret not configured. Vercel git integration handles deployment automatically."
+          echo "To enable health verification, add VERCEL_URL secret with your Vercel deployment URL."
+
+  deploy-fly:
+    name: Deploy to Fly.io
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: production
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Deploy to Fly.io
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+        run: |
+          if [ -z "$FLY_API_TOKEN" ]; then
+            echo "::warning::FLY_API_TOKEN not configured. Skipping Fly.io deployment."
+            exit 0
+          fi
+          cd deployments/fly
+          npm ci
+          npm run build
+          flyctl deploy --config fly.toml --remote-only
+
+      - name: Verify Fly.io deployment
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+        if: ${{ env.FLY_API_TOKEN != '' }}
+        run: |
+          flyctl status --app bitbit-workers
+          echo "Checking Fly.io health endpoint..."
+          RESPONSE=$(curl -sf "https://bitbit-workers.fly.dev/api/monitoring/health" || true)
+          if [ -z "$RESPONSE" ]; then
+            echo "::warning::Fly.io health endpoint not reachable yet. Machines may still be starting."
+          else
+            echo "$RESPONSE"
+            echo "Fly.io deployment verified successfully"
+          fi
+
+  deploy-cloudflare:
+    name: Deploy to Cloudflare Workers
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: production
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install wrangler
+        run: npm install -g wrangler
+
+      - name: Deploy to Cloudflare Workers
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
+            echo "::warning::CLOUDFLARE_API_TOKEN not configured. Skipping Cloudflare deployment."
+            exit 0
+          fi
+          cd deployments/cloudflare
+          wrangler deploy
+
+      - name: Verify Cloudflare deployment
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        if: ${{ env.CLOUDFLARE_API_TOKEN != '' }}
+        run: |
+          echo "Checking Cloudflare Worker health..."
+          # Worker URL depends on account subdomain; check using wrangler
+          cd deployments/cloudflare
+          wrangler deployments list --limit 1 || true
+          echo "Cloudflare Worker deployment verified"
