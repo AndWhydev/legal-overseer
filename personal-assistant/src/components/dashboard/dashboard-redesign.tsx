@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   FolderOpen,
   DollarSign,
@@ -11,7 +11,6 @@ import {
   Clock,
   ChevronRight,
   Filter,
-  CalendarDays,
   Sparkles,
   Flame,
   Radio,
@@ -46,8 +45,6 @@ interface DashboardRedesignProps {
 // ─── Sample Activity ────────────────────────────────────────────────────────
 
 // SAMPLE_ACTIVITY removed in favor of live messages
-
-const TIMELINE_HOURS = ['6 AM', '7', '8', '9', '10', '11', '12 PM', '1', '2', '3', '4', '5', '6'];
 
 // ─── Accent mapping from task priority ──────────────────────────────────────
 
@@ -144,7 +141,7 @@ const kpiCardStyle: React.CSSProperties = {
   backdropFilter: 'blur(20px) saturate(1.2)',
   WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
   border: '1px solid rgba(255, 255, 255, 0.03)',
-  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+  boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05), inset 0 -4px 20px rgba(0, 0, 0, 0.2)',
   backgroundImage: 'linear-gradient(135deg, rgba(255, 255, 255, 0.02) 0%, transparent 100%)',
   display: 'flex',
   flexDirection: 'column',
@@ -247,44 +244,17 @@ function TaskCard({ task }: { task: Task }) {
 // ─── Main Dashboard ─────────────────────────────────────────────────────────
 
 export function DashboardRedesign({ columns, tasks, messages, completedToday, totalActive }: DashboardRedesignProps) {
-  const today = new Date();
-  const dateStr = today.toLocaleDateString('en-AU', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  });
-
+  const [autopilot, setAutopilot] = useState(false);
   // Filter for top priority actionable messages
   const actionableMessages = messages.filter(m => m.significance >= 5 || m.is_actionable);
 
   return (
-    <div style={{ display: 'contents' }}>
+    <>
       <ChartHatchPatterns />
 
-      {/* Top Bar */}
-      <header className="bb-topbar">
-        <h1 className="bb-topbar__title">Dashboard</h1>
-        <div className="bb-topbar__breadcrumb">
-          <CalendarDays size={14} />
-          <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{dateStr}</span>
-        </div>
-
-        <div className="bb-timeline">
-          {TIMELINE_HOURS.map((h, i) => (
-            <span
-              key={h}
-              className={`bb-timeline__tick ${i >= 4 && i <= 7 ? 'bb-timeline__tick--active' : ''}`}
-            >
-              {h}
-            </span>
-          ))}
-        </div>
-      </header>
-
       {/* Main Content */}
-      <main
-        className="bb-main-area grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4 p-4 lg:gap-6 lg:p-6"
+      <div
+        className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4 lg:gap-6"
       >
         {/* KPI Row */}
         <div
@@ -401,7 +371,7 @@ export function DashboardRedesign({ columns, tasks, messages, completedToday, to
         </div>
 
         {/* Command Center Inbox */}
-        <div style={{ gridColumn: '1 / 2', overflow: 'hidden' }}>
+        <div className="overflow-hidden">
           <div className="bb-flex bb-items-center bb-justify-between" style={{ marginBottom: 'var(--gap-md)' }}>
             <h2 style={{ fontSize: 16, fontWeight: 700, letterSpacing: 'var(--tracking-tight)' }}>
               Action Needed
@@ -461,9 +431,13 @@ export function DashboardRedesign({ columns, tasks, messages, completedToday, to
                           Draft Reply
                         </button>
                       )}
-                      <button className="bb-btn bb-btn--primary bb-btn--sm" style={{ padding: '4px 8px', fontSize: 11 }}>
+                      <button
+                        className={`bb-btn bb-btn--sm ${autopilot ? 'bb-btn--accent' : 'bb-btn--primary'}`}
+                        style={{ padding: '4px 8px', fontSize: 11 }}
+                        onClick={() => setAutopilot(prev => !prev)}
+                      >
                         <Sparkles size={11} />
-                        Auto-handle
+                        Autopilot {autopilot ? 'On' : 'Off'}
                       </button>
                     </div>
                   </div>
@@ -474,7 +448,7 @@ export function DashboardRedesign({ columns, tasks, messages, completedToday, to
         </div>
 
         {/* Right Panel: Activity Feed */}
-        <aside className="bb-flex-col bb-gap-md" style={{ gridColumn: '2 / 3' }}>
+        <aside className="bb-flex-col bb-gap-md lg:col-start-2">
           <div className="bb-card">
             <div className="bb-card__header">
               <h3 className="bb-card__title">Activity</h3>
@@ -522,9 +496,9 @@ export function DashboardRedesign({ columns, tasks, messages, completedToday, to
               Revenue is <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>trending up 12%</span>.
             </p>
             <div className="bb-flex bb-gap-sm" style={{ marginTop: 'var(--gap-md)' }}>
-              <button className="bb-btn bb-btn--primary bb-btn--sm">
+              <button className={`bb-btn bb-btn--sm ${autopilot ? 'bb-btn--accent' : 'bb-btn--primary'}`}>
                 <Sparkles size={12} />
-                Plan my day
+                {autopilot ? 'Autopilot On' : 'Plan my day'}
               </button>
               <button className="bb-btn bb-btn--ghost bb-btn--sm">
                 Dismiss
@@ -532,8 +506,8 @@ export function DashboardRedesign({ columns, tasks, messages, completedToday, to
             </div>
           </div>
         </aside>
-      </main>
-    </div>
+      </div>
+    </>
   );
 }
 

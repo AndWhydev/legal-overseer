@@ -629,7 +629,62 @@ export async function runProposalBotTick(
       }
     }
 
-    // Process follow-ups
+    // Process approved follow-up sends
+    const { data: followUpApprovals, error: fuError } = await supabase
+      .from('approval_queue')
+      .select('id, action_payload')
+      .eq('org_id', orgId)
+      .eq('action_type', 'proposal_follow_up')
+      .eq('status', 'approved')
+
+    if (!fuError && followUpApprovals) {
+      for (const approval of followUpApprovals as Array<{ id: string; action_payload: Record<string, unknown> }>) {
+        try {
+          const proposalId = approval.action_payload.proposal_id as string
+          const followUpNumber = approval.action_payload.follow_up_number as number
+          if (!proposalId) continue
+
+          // Resolve client email
+          const { data: proposal } = await supabase
+            .from('proposals')
+            .select('title, client_contact_id')
+            .eq('id', proposalId)
+            .single()
+
+          if (proposal?.client_contact_id) {
+            const { data: contact } = await supabase
+              .from('contacts')
+              .select('name, email')
+              .eq('id', proposal.client_contact_id)
+              .single()
+
+            if (contact?.email) {
+              const { sendInvoiceEmail } = await import('@/lib/email/send-invoice')
+              await sendInvoiceEmail({
+                to: contact.email,
+                invoiceNumber: `follow-up-${proposalId}`,
+                html: `<p>Hi ${contact.name ?? 'there'},</p>
+<p>Just following up on the proposal we sent through — <strong>${proposal.title}</strong>.</p>
+<p>Happy to jump on a quick call if you have any questions or would like to discuss further.</p>
+<p>Cheers</p>`,
+                subject: `Following up: ${proposal.title}`,
+              })
+              result.followUpsSent++
+            }
+          }
+
+          // Mark approval resolved
+          await supabase
+            .from('approval_queue')
+            .update({ status: 'approved', resolved_at: new Date().toISOString() })
+            .eq('id', approval.id)
+        } catch {
+          result.failed++
+        }
+      }
+    }
+
+    // Process pending follow-ups (create new approval items)
     const followUps = await processProposalFollowUps(supabase, orgId, agentConfigId)
     result.followUpsSent += followUps.followUpsSent
     result.failed += followUps.failed

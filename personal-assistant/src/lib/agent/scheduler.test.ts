@@ -57,6 +57,23 @@ vi.mock('./invoice-flow', () => ({
   runInvoiceFlowTick: runInvoiceFlowTickMock,
 }))
 
+vi.mock('./cost-guard', () => ({
+  canProceed: vi.fn().mockResolvedValue({ allowed: true, spentToday: 0, dailyLimit: 100 }),
+}))
+
+vi.mock('@/lib/audit/logger', () => ({
+  logAuditEvent: vi.fn().mockResolvedValue(undefined),
+}))
+
+vi.mock('./retry', () => ({
+  withRetry: vi.fn().mockImplementation((fn: () => Promise<unknown>) => fn()),
+  isTransientError: vi.fn().mockReturnValue(false),
+}))
+
+vi.mock('./dead-letter', () => ({
+  deadLetter: vi.fn().mockResolvedValue(undefined),
+}))
+
 // ---------------------------------------------------------------------------
 // shouldRunAgent tests
 // ---------------------------------------------------------------------------
@@ -214,7 +231,7 @@ describe('runScheduledAgents', () => {
     expect(runInvoiceFlowTickMock).toHaveBeenCalledWith(supabase, 'org-1', 'config-invoice')
 
     const payload = logAgentRunMock.mock.calls[0]?.[1]
-    expect(String(payload?.output_summary)).toContain('invoice-flow processed=3 created=1 duplicates=1 sent=1 overdue=1 failed=0')
+    expect(String(payload?.result_summary)).toContain('invoice-flow processed=3 created=1 duplicates=1 sent=1 overdue=1 failed=0')
   })
 
   it('skips disabled agents (they are not returned by enabled=true query)', async () => {
@@ -334,7 +351,7 @@ describe('runScheduledAgents', () => {
 
     expect(logAgentRunMock).toHaveBeenCalledTimes(1)
     const payload = logAgentRunMock.mock.calls[0]?.[1]
-    expect(String(payload?.output_summary)).toContain('escalated=0')
+    expect(String(payload?.result_summary)).toContain('escalated=0')
   })
 
   it('runs lead-swarm configs when due and logs deterministic counters', async () => {
@@ -358,7 +375,7 @@ describe('runScheduledAgents', () => {
     expect(results[0].triggered).toBe(true)
     expect(runLeadSwarmTickMock).toHaveBeenCalledWith(supabase, 'org-1', 'config-lead')
     const payload = logAgentRunMock.mock.calls[0]?.[1]
-    expect(String(payload?.output_summary)).toContain('lead-swarm processed=2 created=1 qualified=1 hot=1 failed=0')
+    expect(String(payload?.result_summary)).toContain('lead-swarm processed=2 created=1 qualified=1 hot=1 failed=0')
   })
 
   it('skips non-due lead-swarm configs', async () => {

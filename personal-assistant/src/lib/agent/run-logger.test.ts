@@ -47,16 +47,15 @@ describe('run-logger', () => {
       org_id: 'org-1',
       agent_config_id: 'agent-1',
       trigger_type: 'manual' as const,
-      input_summary: 'Test input',
-      output_summary: 'Test output',
-      actions_taken: [{ type: 'test', description: 'did thing', result: 'ok', confidence: 0.9 }],
-      tools_called: ['createTask'],
+      status: 'success',
+      result_summary: 'Test output',
       model_used: 'sonnet' as const,
       tokens_in: 1000,
       tokens_out: 500,
-      confidence_score: 0.92,
-      routing_decision: 'act' as const,
+      cost_estimate: estimateRunCost(1000, 500, 'sonnet'),
       duration_ms: 3000,
+      tool_calls: 1,
+      iterations: 1,
     }
 
     it('inserts into agent_runs table with cost_estimate', async () => {

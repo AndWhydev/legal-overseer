@@ -674,16 +674,15 @@ export async function runAdScriptGenTick(
     org_id: orgId,
     agent_config_id: agentConfigId,
     trigger_type: 'scheduled',
-    input_summary: `Ad script gen tick at ${new Date().toISOString()}`,
-    output_summary: `processed=${result.processed} generated=${result.generated} failed=${result.failed}`,
-    actions_taken: [],
-    tools_called: [],
+    status: 'success',
+    result_summary: `processed=${result.processed} generated=${result.generated} failed=${result.failed}`,
     model_used: 'opus',
     tokens_in: 0,
     tokens_out: 0,
-    confidence_score: 0,
-    routing_decision: 'act',
+    cost_estimate: 0,
     duration_ms: Date.now() - startTime,
+    tool_calls: 0,
+    iterations: 1,
   })
 
   return result

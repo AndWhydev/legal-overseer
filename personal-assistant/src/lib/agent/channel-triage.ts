@@ -472,13 +472,47 @@ export async function runTriage(
       result.informational++
     }
 
-    // 6. Route to agent if actionable
+    // 6. Route to agent if actionable — tag with routed_to for downstream pickup
     if (routing.decision !== 'skip' && routing.targetAgent) {
       result.routed.push({
         agent: routing.targetAgent,
         messageId: msg.id,
         priority: routing.priority,
       })
+
+      // Tag message so the target agent's tick can find it
+      await supabase
+        .from('channel_messages')
+        .update({
+          metadata: {
+            ...(msg.metadata || {}),
+            routed_to: routing.targetAgent,
+            routing_decision: routing.decision,
+            routing_priority: routing.priority,
+            routed_at: new Date().toISOString(),
+          },
+        })
+        .eq('id', msg.id)
+    } else if (msgCategory === 'actionable' && !routing.targetAgent) {
+      // Actionable but no specific agent — route to client-comms as fallback
+      result.routed.push({
+        agent: 'client-comms',
+        messageId: msg.id,
+        priority: routing.priority,
+      })
+
+      await supabase
+        .from('channel_messages')
+        .update({
+          metadata: {
+            ...(msg.metadata || {}),
+            routed_to: 'client-comms',
+            routing_decision: routing.decision || 'queue',
+            routing_priority: routing.priority,
+            routed_at: new Date().toISOString(),
+          },
+        })
+        .eq('id', msg.id)
     }
 
     // 7. Auto-create tasks for actionable messages (skip duplicates)

@@ -12,9 +12,29 @@ import { runOnboardingTick } from './client-onboarding'
 import { runAdScriptGenTick } from './ad-script-gen'
 import { runAISearchTick } from './ai-search-optimizer'
 import { runTenderHunterTick } from './tender-hunter'
+import { runQuoteBotTick } from './quote-bot'
+import { runJobReminderTick } from './job-reminder'
 import { canProceed } from './cost-guard'
 import { logAuditEvent } from '@/lib/audit/logger'
 import { withCircuitBreaker } from './circuit-breaker'
+import { withRetry, isTransientError } from './retry'
+import { deadLetter } from './dead-letter'
+
+// ---------------------------------------------------------------------------
+// Experimental agents — gated behind ENABLE_EXPERIMENTAL_AGENTS env var
+// ---------------------------------------------------------------------------
+
+const EXPERIMENTAL_AGENTS = new Set([
+  'tender-hunter',
+  'client-onboarding',
+  'job-reminder',
+  'ad-script-gen',
+  'ai-search-optimizer',
+])
+
+function isExperimentalEnabled(): boolean {
+  return process.env.ENABLE_EXPERIMENTAL_AGENTS === 'true'
+}
 
 /**
  * Result of checking one agent's schedule.
@@ -181,6 +201,14 @@ export async function runScheduledAgents(
       const r = await runTenderHunterTick(sb, oid, cid)
       return `tender-hunter scanned=${r.scanned} new=${r.newTenders} evaluated=${r.evaluated} errors=${r.errors}`
     },
+    'quote-bot': async (sb, oid, cid) => {
+      const r = await runQuoteBotTick(sb, oid, cid)
+      return `quote-bot processed=${r.processed} drafted=${r.drafted} failed=${r.failed}`
+    },
+    'job-reminder': async (sb, oid, cid) => {
+      const r = await runJobReminderTick(sb, oid, cid)
+      return `job-reminder processed=${r.processed} remindersSent=${r.remindersSent} followUpsSent=${r.followUpsSent} failed=${r.failed}`
+    },
   }
 
   for (const config of configs) {
@@ -251,36 +279,68 @@ export async function runScheduledAgents(
     }
     orgSet.add(config.org_id)
 
+    // Skip experimental agents unless explicitly enabled
+    if (EXPERIMENTAL_AGENTS.has(config.agent_type) && !isExperimentalEnabled()) {
+      results.push({
+        agentType: config.agent_type,
+        orgId: config.org_id,
+        triggered: false,
+        reason: 'disabled',
+        lastRunAt: lastRunAt?.toISOString(),
+      })
+      continue
+    }
+
     let outputSummary = 'pending'
+    let runStatus = 'success'
     const circuitKey = `agent:${config.agent_type}:${config.org_id}`
     const runner = agentRunners[config.agent_type]
+    const startMs = Date.now()
 
     if (runner) {
       try {
+        // Retry with exponential backoff (max 2 retries), then circuit breaker
         outputSummary = await withCircuitBreaker(circuitKey, () =>
-          runner(supabase, config.org_id, config.id),
+          withRetry(
+            () => runner(supabase, config.org_id, config.id),
+            { maxRetries: 2, baseDelayMs: 1000, isRetryable: isTransientError },
+          ),
         )
       } catch (error) {
         const message = error instanceof Error ? error.message : 'unknown'
+        const stack = error instanceof Error ? error.stack : undefined
         outputSummary = `${config.agent_type} error=${message}`
+        runStatus = 'failed'
+
+        // Push to dead letter queue for manual review
+        await deadLetter(supabase, {
+          agent_type: config.agent_type,
+          org_id: config.org_id,
+          error_message: message,
+          error_stack: stack ?? null,
+          payload: { agent_config_id: config.id, trigger: 'scheduled' },
+          agent_config_id: config.id,
+        })
       }
     }
+
+    const durationMs = Date.now() - startMs
 
     // 4. Record scheduler run
     await logAgentRun(supabase, {
       org_id: config.org_id,
       agent_config_id: config.id,
       trigger_type: 'scheduled',
-      input_summary: `Scheduled tick at ${now.toISOString()}`,
-      output_summary: outputSummary,
-      actions_taken: [],
-      tools_called: [],
-      model_used: 'haiku',
+      status: runStatus,
+      result_summary: outputSummary,
       tokens_in: 0,
       tokens_out: 0,
-      confidence_score: 0,
-      routing_decision: 'act',
-      duration_ms: 0,
+      cost_estimate: 0,
+      duration_ms: durationMs,
+      tool_calls: 0,
+      iterations: 1,
+      model_used: 'haiku',
+      error_message: runStatus === 'failed' ? outputSummary : undefined,
     })
 
     // Audit log: record agent execution

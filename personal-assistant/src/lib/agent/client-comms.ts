@@ -498,6 +498,76 @@ export async function runClientCommsTick(
   const result: ClientCommsTickResult = { processed: 0, drafted: 0, sent: 0, queued: 0, failed: 0 }
   const startTime = Date.now()
 
+  // 0. Send approved outbound messages
+  const { data: approvedReplies } = await supabase
+    .from('approval_queue')
+    .select('id, action_payload, action_type')
+    .eq('org_id', orgId)
+    .eq('action_type', 'send_client_reply')
+    .eq('status', 'approved')
+    .limit(20)
+
+  for (const approval of approvedReplies || []) {
+    try {
+      const payload = approval.action_payload as Record<string, unknown>
+      const channel = payload.channel as string
+      const contactSlug = payload.contactSlug as string
+      const draft = payload.draft as string
+      const subject = payload.subject as string | undefined
+
+      // Resolve contact email for email channels
+      const { data: contact } = await supabase
+        .from('contacts')
+        .select('id, name, email')
+        .eq('org_id', orgId)
+        .eq('slug', contactSlug)
+        .single()
+
+      if (contact?.email && (channel === 'email' || channel === 'outlook' || channel === 'gmail')) {
+        const { sendInvoiceEmail } = await import('@/lib/email/send-invoice')
+        await sendInvoiceEmail({
+          to: contact.email,
+          invoiceNumber: `reply-${approval.id}`,
+          html: `<pre style="font-family:sans-serif;white-space:pre-wrap;">${draft}</pre>`,
+          subject: subject || `Message from All Webbed Up`,
+        })
+        result.sent++
+      } else if (channel === 'whatsapp' && contact?.id) {
+        // Queue as outbound WhatsApp message
+        await supabase.from('channel_messages').insert({
+          org_id: orgId,
+          channel_type: 'whatsapp',
+          direction: 'outbound',
+          contact_id: contact.id,
+          body: draft,
+          status: 'queued',
+          metadata: { approval_id: approval.id },
+        })
+        result.sent++
+      }
+
+      // Mark approval as resolved
+      await supabase
+        .from('approval_queue')
+        .update({ status: 'approved', resolved_at: new Date().toISOString() })
+        .eq('id', approval.id)
+
+      // Log to entity timeline
+      if (contact?.id) {
+        await supabase.from('entity_timeline').insert({
+          org_id: orgId,
+          entity_type: 'contact',
+          entity_id: contact.id,
+          event_type: 'message_sent',
+          event_data: { channel, subject, body_preview: draft.slice(0, 200) },
+          occurred_at: new Date().toISOString(),
+        })
+      }
+    } catch {
+      result.failed++
+    }
+  }
+
   // 1. Process unhandled inbound messages routed to client-comms
   const { data: pendingMessages } = await supabase
     .from('channel_messages')
@@ -565,16 +635,15 @@ export async function runClientCommsTick(
     org_id: orgId,
     agent_config_id: agentConfigId,
     trigger_type: 'scheduled',
-    input_summary: `Client comms tick at ${new Date().toISOString()}`,
-    output_summary: `processed=${result.processed} drafted=${result.drafted} sent=${result.sent} queued=${result.queued} failed=${result.failed}`,
-    actions_taken: [],
-    tools_called: [],
+    status: 'success',
+    result_summary: `processed=${result.processed} drafted=${result.drafted} sent=${result.sent} queued=${result.queued} failed=${result.failed}`,
     model_used: 'sonnet',
     tokens_in: 0,
     tokens_out: 0,
-    confidence_score: 0,
-    routing_decision: 'act',
+    cost_estimate: 0,
     duration_ms: Date.now() - startTime,
+    tool_calls: 0,
+    iterations: 1,
   })
 
   return result

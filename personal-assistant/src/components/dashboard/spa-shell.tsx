@@ -18,8 +18,12 @@ import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { ToastProvider } from '@/components/ui/toast';
 import { GlobalSearch } from './global-search';
 import { TabSkeleton } from './tabs/tab-skeleton';
+import { Topbar } from './topbar';
+import { TOPBAR_CONFIGS } from './topbar-configs';
+import { NotificationCenter } from './notification-center';
 import { AppDataProvider } from '@/lib/data/app-data-provider';
 import { useEnabledModulesFetch, EnabledModulesContext } from '@/lib/modules/use-enabled-modules';
+import { DevToolbar } from '@/components/dev/dev-toolbar';
 
 // ─── Tab definitions ────────────────────────────────────────────────────────
 
@@ -30,8 +34,7 @@ export interface TabDef {
 }
 
 export const TABS: TabDef[] = [
-  { id: 'command-center', label: 'Command Center', path: '/dashboard' },
-  { id: 'dashboard', label: 'Tasks', path: '/dashboard/tasks' },
+  { id: 'dashboard', label: 'Dashboard', path: '/dashboard' },
   { id: 'chat', label: 'Chat', path: '/dashboard/chat' },
   { id: 'inbox', label: 'Inbox', path: '/dashboard/inbox' },
   { id: 'channels', label: 'Channels', path: '/dashboard/channels' },
@@ -40,6 +43,8 @@ export const TABS: TabDef[] = [
   { id: 'leads', label: 'Leads', path: '/dashboard/leads' },
   { id: 'invoices', label: 'Invoices', path: '/dashboard/invoices' },
   { id: 'tenders', label: 'Tenders', path: '/dashboard/tenders' },
+  { id: 'jobs',   label: 'Jobs',   path: '/dashboard/jobs' },
+  { id: 'quotes', label: 'Quotes', path: '/dashboard/quotes' },
   { id: 'sentry', label: 'Sentry', path: '/dashboard/sentry' },
   { id: 'approvals', label: 'Approvals', path: '/dashboard/approvals' },
   { id: 'ad-scripts', label: 'Ad Scripts', path: '/dashboard/ad-scripts' },
@@ -58,7 +63,6 @@ export const TABS: TabDef[] = [
 // The resolved modules feed into React.lazy wrappers below.
 
 const tabImports: Record<string, Promise<{ default: React.ComponentType }>> = {
-  'command-center': import('./tabs/command-center-tab'),
   dashboard: import('./tabs/dashboard-tab'),
   chat: import('./tabs/chat-tab'),
   inbox: import('./tabs/inbox-tab'),
@@ -68,6 +72,8 @@ const tabImports: Record<string, Promise<{ default: React.ComponentType }>> = {
   leads: import('./tabs/leads-tab'),
   invoices: import('./tabs/invoices-tab'),
   tenders: import('./tabs/tenders-tab'),
+  jobs: import('./tabs/jobs-tab'),
+  quotes: import('./tabs/quotes-tab'),
   sentry: import('./tabs/sentry-tab'),
   approvals: import('./tabs/approvals-tab'),
   'ad-scripts': import('./tabs/ad-scripts-tab'),
@@ -83,7 +89,6 @@ const tabImports: Record<string, Promise<{ default: React.ComponentType }>> = {
 
 // Lazy wrappers that resolve from the already-triggered promises
 const TabComponents: Record<string, React.LazyExoticComponent<React.ComponentType>> = {
-  'command-center': lazy(() => tabImports['command-center']),
   dashboard: lazy(() => tabImports.dashboard),
   chat: lazy(() => tabImports.chat),
   inbox: lazy(() => tabImports.inbox),
@@ -93,6 +98,8 @@ const TabComponents: Record<string, React.LazyExoticComponent<React.ComponentTyp
   leads: lazy(() => tabImports.leads),
   invoices: lazy(() => tabImports.invoices),
   tenders: lazy(() => tabImports.tenders),
+  jobs: lazy(() => tabImports.jobs),
+  quotes: lazy(() => tabImports.quotes),
   sentry: lazy(() => tabImports.sentry),
   approvals: lazy(() => tabImports.approvals),
   'ad-scripts': lazy(() => tabImports['ad-scripts']),
@@ -135,7 +142,7 @@ export function SPAShell({ displayName, initials }: SPAShellProps) {
   const visibleTabs = TABS.filter(t => enabledModulesState.modules.includes(t.id));
 
   // Track visited tabs for keep-alive
-  const PRIORITY_TABS = new Set(['command-center', 'dashboard', 'chat', 'inbox']);
+  const PRIORITY_TABS = new Set(['dashboard', 'chat', 'inbox']);
   const [visitedTabs, setVisitedTabs] = useState<Set<string>>(() => new Set(PRIORITY_TABS));
 
   useEffect(() => {
@@ -259,6 +266,12 @@ export function SPAShell({ displayName, initials }: SPAShellProps) {
     <SplashScreen codeReady={tabsReady} dataReady={dataReady} minDisplayMs={1200}>
       <AppDataProvider onReady={() => setDataReady(true)}>
       <BitBitOverlay currentPage={currentPage} activeTabId={TABS[activeNavIndex].id}>
+        <a
+          href="#main-content"
+          className="bb-skip-link"
+        >
+          Skip to content
+        </a>
         <div className="bb-layout bb-dot-grid">
           {/* Tablet sidebar toggle */}
           <button
@@ -286,10 +299,52 @@ export function SPAShell({ displayName, initials }: SPAShellProps) {
             />
           </div>
 
+          {/* Unified Topbar */}
+          {(() => {
+            const topbarConfig = TOPBAR_CONFIGS[TABS[activeNavIndex]?.id];
+            const isHidden = topbarConfig?.hidden;
+            // Propagate hidden state to layout div for grid collapse
+            const layoutEl = typeof document !== 'undefined'
+              ? document.querySelector('.bb-layout')
+              : null;
+            if (layoutEl) {
+              if (isHidden) layoutEl.setAttribute('data-topbar-hidden', '');
+              else layoutEl.removeAttribute('data-topbar-hidden');
+            }
+            return (
+              <div
+                className="bb-topbar-area"
+                data-topbar-hidden={isHidden || undefined}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: isHidden ? 'flex-end' : undefined,
+                  ...(isHidden ? {
+                    position: 'absolute',
+                    top: 0,
+                    right: 0,
+                    left: 'var(--sidebar-width)',
+                    height: 'var(--topbar-height)',
+                    zIndex: 10,
+                    pointerEvents: 'none',
+                    background: 'transparent',
+                  } : {}),
+                }}
+              >
+                <Topbar config={topbarConfig} />
+                <div style={{ flexShrink: 0, paddingRight: '16px', pointerEvents: 'auto' }}>
+                  <NotificationCenter onTabChange={handleTabChange} />
+                </div>
+              </div>
+            );
+          })()}
+
           {/* SPA Content Area */}
-          <div
+          <main
+            id="main-content"
             className="bb-spa-content"
             style={{ position: 'relative', overflow: 'hidden' }}
+            tabIndex={-1}
           >
             {TABS.map((tab, index) => {
               const isActive = index === renderedPage;
@@ -317,7 +372,7 @@ export function SPAShell({ displayName, initials }: SPAShellProps) {
                 </div>
               );
             })}
-          </div>
+          </main>
         </div>
 
         {/* Global search command palette (Cmd+K) */}
@@ -325,6 +380,9 @@ export function SPAShell({ displayName, initials }: SPAShellProps) {
 
         {/* Onboarding tour for first-time users */}
         <OnboardingTour onNavigate={handleTabChange} tourVariant={composition.tourVariant} />
+
+        {/* Dev toolbar — tree-shaken from production builds */}
+        {process.env.NODE_ENV === 'development' && <DevToolbar />}
       </BitBitOverlay>
       </AppDataProvider>
     </SplashScreen>

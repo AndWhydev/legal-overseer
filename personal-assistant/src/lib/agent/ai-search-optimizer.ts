@@ -805,16 +805,15 @@ export async function runAISearchTick(
     org_id: orgId,
     agent_config_id: agentConfigId,
     trigger_type: 'scheduled',
-    input_summary: 'Weekly AI search visibility audit',
-    output_summary: `audits=${result.auditsRun} changes=${result.changesDetected} alerts=${result.alertsSent} failed=${result.failed}`,
-    actions_taken: [],
-    tools_called: ['ai-visibility-audit', 'change-detection'],
+    status: 'success',
+    result_summary: `audits=${result.auditsRun} changes=${result.changesDetected} alerts=${result.alertsSent} failed=${result.failed}`,
     model_used: 'haiku',
     tokens_in: 0,
     tokens_out: 0,
-    confidence_score: 0.9,
-    routing_decision: 'act',
+    cost_estimate: 0,
     duration_ms: 0,
+    tool_calls: 0,
+    iterations: 1,
   })
 
   return result
