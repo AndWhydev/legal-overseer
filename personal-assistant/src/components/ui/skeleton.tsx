@@ -11,7 +11,7 @@ function Skeleton({ className, ...props }: React.ComponentProps<'div'>) {
 
 function SkeletonCard({ className }: { className?: string }) {
   return (
-    <div className={cn('rounded-xl border border-border bg-card p-5 space-y-3', className)}>
+    <div role="status" aria-label="Loading content" className={cn('rounded-xl border border-border bg-card p-5 space-y-3', className)}>
       <Skeleton className="h-4 w-1/3" />
       <Skeleton className="h-3 w-2/3" />
       <Skeleton className="h-3 w-1/2" />
@@ -19,13 +19,14 @@ function SkeletonCard({ className }: { className?: string }) {
         <Skeleton className="h-8 w-20 rounded-md" />
         <Skeleton className="h-8 w-20 rounded-md" />
       </div>
+      <span className="sr-only">Loading...</span>
     </div>
   );
 }
 
 function SkeletonTable({ rows = 5, cols = 4 }: { rows?: number; cols?: number }) {
   return (
-    <div className="rounded-xl border border-border bg-card overflow-hidden">
+    <div role="status" aria-label="Loading table content" className="rounded-xl border border-border bg-card overflow-hidden">
       {/* Header */}
       <div className="flex gap-4 bg-background/60 px-4 py-3">
         {Array.from({ length: cols }).map((_, i) => (
@@ -40,13 +41,14 @@ function SkeletonTable({ rows = 5, cols = 4 }: { rows?: number; cols?: number })
           ))}
         </div>
       ))}
+      <span className="sr-only">Loading table...</span>
     </div>
   );
 }
 
 function SkeletonKanban({ columns = 4 }: { columns?: number }) {
   return (
-    <div className="grid gap-4 xl:grid-cols-4">
+    <div role="status" aria-label="Loading kanban board" className="grid gap-4 xl:grid-cols-4">
       {Array.from({ length: columns }).map((_, i) => (
         <div key={i} className="flex min-h-[420px] flex-col rounded-xl border border-border bg-card p-4 space-y-3">
           <div className="flex items-center justify-between">
@@ -62,6 +64,7 @@ function SkeletonKanban({ columns = 4 }: { columns?: number }) {
           ))}
         </div>
       ))}
+      <span className="sr-only">Loading kanban board...</span>
     </div>
   );
 }
