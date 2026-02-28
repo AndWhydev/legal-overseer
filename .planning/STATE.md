@@ -9,12 +9,10 @@ See: .planning/PROJECT.md (updated 2026-02-22)
 
 ## Current Position
 
-Phase: 12 of 12 (Invoice Flow Agent)
-Plan: 3 of 3 in current phase
-Status: Milestone complete; stabilization and next-scope backlog active
-Last activity: 2026-02-25 -- P0 stabilization pass: fixed lead-swarm test mock, removed dead workspace, fixed WhatsApp route duplication and broken imports, deferred voice endpoint, reconciled INVC requirements, reclassified approval queue gaps.
-
-Progress: [████████████████████] 100% (35/35 plans across v1.0 and v1.1 milestones)
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-03-01 — Milestone v1.2 started
 
 ## Performance Metrics
 

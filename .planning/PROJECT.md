@@ -36,15 +36,19 @@ BitBit understands the business better than the business owner — when Andy say
 
 ### Active
 
-## Current Milestone: v1.1 Agent Runtime + First Agents
+## Current Milestone: v1.2 Battle-Testing & Sellability
 
-**Goal:** Andy uses BitBit daily — agents run in background, classify emails, take autonomous actions (low-risk) or ping WhatsApp for approval (high-risk).
+**Goal:** Prove BitBit works under real operational conditions and make it sellable — validate P0 pressure tests (deployment, channel relay, confidence routing, WhatsApp pipeline), then wire billing/trial so Andy can onboard paying customers.
 
 **Target features:**
-- Agent runtime (channel relay, classification, action routing, scheduler, approval flow)
-- WhatsApp approval channel (act/ask notifications, not full conversational bot)
-- Three first agents: Sentry (error monitoring), Lead Swarm (lead qualification), Invoice Flow (invoicing)
-- Agent run logging, Supabase DI refactor (v1.0 prerequisites)
+- Deployment stability (Vercel prod, cron reliability, cold starts, connection pooling)
+- Channel relay end-to-end validation (live Gmail/Outlook, dedup, classification pipeline)
+- Confidence routing validation (threshold tuning per agent, false positive testing)
+- WhatsApp production pipeline (voice note → transcription → agent, multi-turn, approval flow)
+- Invoice flow end-to-end validation (entity resolution, PDF quality, email delivery)
+- Lead response time validation (auto-approve path for high-confidence leads)
+- Stripe billing completion (subscription lifecycle, usage metering, plan gating)
+- Free trial infrastructure (30-day trial, feature gating by tier, conversion/expiry flow)
 
 **Active requirements:** See REQUIREMENTS.md
 
@@ -91,4 +95,4 @@ Agent infrastructure built: registry, confidence routing, shared CRUD tools (nee
 | Entity context capped at 4000 chars | Stay within token budget while providing context | ⚠️ Revisit — may need dynamic budget |
 
 ---
-*Last updated: 2026-02-22 after v1.1 milestone start*
+*Last updated: 2026-03-01 after v1.2 milestone start*

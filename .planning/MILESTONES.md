@@ -21,3 +21,25 @@
 
 ---
 
+## v1.1 Agent Runtime + First Agents (Shipped: 2026-02-22)
+
+**Phases completed:** 6 phases (7-12), 15 plans
+**Timeline:** 1 day (2026-02-22) + hardening through 2026-02-25
+**Last phase:** 12 (ended at phase 12)
+
+**Key accomplishments:**
+1. Supabase DI refactor — createClient() at HTTP boundary, SupabaseClient passed as first param everywhere
+2. Agent runtime — channel relay daemon, message classification, action routing, scheduler with cron
+3. Approval flow — confidence-routed queue, dashboard cards, WhatsApp notifications, digest batching
+4. Sentry agent — watch runtime, escalation, dashboard management
+5. Lead Swarm agent — intake classification, qualification scoring, approval-gated acknowledgment, pipeline APIs
+6. Invoice Flow agent — NL intent resolution, entity matching, PDF generation, approval-gated send, lifecycle tracking
+7. Post-v1.1 hardening: 100+ commits, 719 tests across 51 files, realtime, multi-tenant, notifications, audit, knowledge graph, global search, admin tools, reporting
+
+### Known Gaps
+- WhatsApp production setup requires Andy's Meta Business access
+- Some unrelated TypeScript errors remain outside milestone scope
+- Confidence routing thresholds not validated against real operational data
+
+---
+
