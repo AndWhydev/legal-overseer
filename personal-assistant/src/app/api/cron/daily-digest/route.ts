@@ -1,30 +1,16 @@
-import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { withCronGuard, cronMaxDuration, cronDynamic } from '@/lib/cron/cron-guard'
 import { dispatchNotification } from '@/lib/notifications/dispatcher'
 import type { DigestData } from '@/lib/notifications/email-templates'
 
-export const maxDuration = 60
-export const dynamic = 'force-dynamic'
+export const maxDuration = cronMaxDuration
+export const dynamic = cronDynamic
 
 export async function GET(request: Request) {
-  if (
-    process.env.CRON_SECRET &&
-    request.headers.get('Authorization') !== `Bearer ${process.env.CRON_SECRET}`
-  ) {
-    return new NextResponse('Unauthorized', { status: 401 })
-  }
+  return withCronGuard(request, async (supabase) => {
+    const orgId = process.env.DEFAULT_ORG_ID ?? '00000000-0000-0000-0000-000000000000'
+    const now = new Date()
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString()
 
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL ?? '',
-    process.env.SUPABASE_SERVICE_ROLE_KEY ?? '',
-  )
-
-  const orgId = process.env.DEFAULT_ORG_ID ?? '00000000-0000-0000-0000-000000000000'
-  const now = new Date()
-  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString()
-
-  try {
-    // Aggregate today's activity
     const [agentRuns, approvals, leads, invoices, alerts] = await Promise.all([
       supabase
         .from('agent_runs')
@@ -72,7 +58,6 @@ export async function GET(request: Request) {
       topItems: [],
     }
 
-    // Add notable items
     if (approvalsPending > 0) {
       digestData.topItems.push({
         label: 'Pending Approvals',
@@ -86,7 +71,7 @@ export async function GET(request: Request) {
       })
     }
 
-    const result = await dispatchNotification(supabase, {
+    const dispatchResult = await dispatchNotification(supabase, {
       orgId,
       type: 'daily_digest',
       title: `Daily Digest - ${digestData.date}`,
@@ -96,9 +81,9 @@ export async function GET(request: Request) {
       metadata: digestData as unknown as Record<string, unknown>,
     })
 
-    return NextResponse.json({ success: true, digest: digestData, dispatch: result })
-  } catch (err) {
-    console.error('[cron/daily-digest] Error:', err)
-    return new NextResponse('Internal Server Error', { status: 500 })
-  }
+    return {
+      message: `Daily digest dispatched for ${digestData.date}`,
+      details: { digest: digestData, dispatch: dispatchResult },
+    }
+  })
 }

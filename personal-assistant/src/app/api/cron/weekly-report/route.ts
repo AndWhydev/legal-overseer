@@ -1,41 +1,27 @@
-import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { withCronGuard, cronMaxDuration, cronDynamic } from '@/lib/cron/cron-guard'
 import { dispatchNotification } from '@/lib/notifications/dispatcher'
 import type { WeeklyReportData } from '@/lib/notifications/email-templates'
 
-export const maxDuration = 60
-export const dynamic = 'force-dynamic'
+export const maxDuration = cronMaxDuration
+export const dynamic = cronDynamic
 
 export async function GET(request: Request) {
-  if (
-    process.env.CRON_SECRET &&
-    request.headers.get('Authorization') !== `Bearer ${process.env.CRON_SECRET}`
-  ) {
-    return new NextResponse('Unauthorized', { status: 401 })
-  }
+  return withCronGuard(request, async (supabase) => {
+    const orgId = process.env.DEFAULT_ORG_ID ?? '00000000-0000-0000-0000-000000000000'
+    const now = new Date()
 
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL ?? '',
-    process.env.SUPABASE_SERVICE_ROLE_KEY ?? '',
-  )
+    const dayOfWeek = now.getDay()
+    const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1
+    const thisWeekStart = new Date(now)
+    thisWeekStart.setDate(now.getDate() - mondayOffset)
+    thisWeekStart.setHours(0, 0, 0, 0)
 
-  const orgId = process.env.DEFAULT_ORG_ID ?? '00000000-0000-0000-0000-000000000000'
-  const now = new Date()
+    const prevWeekStart = new Date(thisWeekStart)
+    prevWeekStart.setDate(prevWeekStart.getDate() - 7)
 
-  // This week: Mon-Sun
-  const dayOfWeek = now.getDay()
-  const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1
-  const thisWeekStart = new Date(now)
-  thisWeekStart.setDate(now.getDate() - mondayOffset)
-  thisWeekStart.setHours(0, 0, 0, 0)
+    const thisWeekISO = thisWeekStart.toISOString()
+    const prevWeekISO = prevWeekStart.toISOString()
 
-  const prevWeekStart = new Date(thisWeekStart)
-  prevWeekStart.setDate(prevWeekStart.getDate() - 7)
-
-  const thisWeekISO = thisWeekStart.toISOString()
-  const prevWeekISO = prevWeekStart.toISOString()
-
-  try {
     const [
       thisWeekRuns,
       prevWeekRuns,
@@ -88,7 +74,6 @@ export async function GET(request: Request) {
     const sumCost = (rows: { cost_usd: number | null }[] | null) =>
       (rows ?? []).reduce((sum, r) => sum + (r.cost_usd ?? 0), 0)
 
-    // Aggregate top agents
     const agentMap = new Map<string, { name: string; runs: number; successes: number }>()
     for (const run of (topAgents.data ?? []) as unknown as Array<{
       agent_config_id: string
@@ -97,11 +82,7 @@ export async function GET(request: Request) {
     }>) {
       const id = run.agent_config_id
       if (!agentMap.has(id)) {
-        agentMap.set(id, {
-          name: run.agent_configs?.name ?? id,
-          runs: 0,
-          successes: 0,
-        })
+        agentMap.set(id, { name: run.agent_configs?.name ?? id, runs: 0, successes: 0 })
       }
       const entry = agentMap.get(id)!
       entry.runs++
@@ -111,7 +92,7 @@ export async function GET(request: Request) {
     const topAgentsList = Array.from(agentMap.values())
       .sort((a, b) => b.runs - a.runs)
       .slice(0, 5)
-      .map(a => ({
+      .map((a) => ({
         name: a.name,
         runs: a.runs,
         successRate: a.runs > 0 ? a.successes / a.runs : 0,
@@ -131,7 +112,7 @@ export async function GET(request: Request) {
       previousWeekPipeline: 0,
     }
 
-    const result = await dispatchNotification(supabase, {
+    const dispatchResult = await dispatchNotification(supabase, {
       orgId,
       type: 'weekly_report',
       title: `Weekly Report: ${reportData.weekStart} - ${reportData.weekEnd}`,
@@ -141,9 +122,9 @@ export async function GET(request: Request) {
       metadata: reportData as unknown as Record<string, unknown>,
     })
 
-    return NextResponse.json({ success: true, report: reportData, dispatch: result })
-  } catch (err) {
-    console.error('[cron/weekly-report] Error:', err)
-    return new NextResponse('Internal Server Error', { status: 500 })
-  }
+    return {
+      message: `Weekly report dispatched for ${reportData.weekStart} - ${reportData.weekEnd}`,
+      details: { report: reportData, dispatch: dispatchResult },
+    }
+  })
 }
