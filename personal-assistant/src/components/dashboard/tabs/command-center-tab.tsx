@@ -382,14 +382,14 @@ function CommandCenterTab() {
               leads.map(lead => (
                 <div key={lead.id as string} className="flex items-center justify-between p-3 rounded-md bg-[var(--bg-elevated)] border border-[var(--border-subtle)]">
                   <div className="flex-1">
-                    <p className="font-medium text-sm">{(lead.name || lead.company || 'Unnamed Lead') as string}</p>
+                    <p className="font-medium text-sm">{((lead.metadata as Record<string, unknown>)?.name || (lead.metadata as Record<string, unknown>)?.company || lead.source_channel || 'Unnamed Lead') as string}</p>
                     <p className="text-xs text-muted-foreground mt-0.5">
                       {lead.status === 'new' && 'New Contact'}
                       {lead.status === 'contacted' && 'Contacted'}
                       {lead.status === 'qualified' && 'Qualified'}
                     </p>
                   </div>
-                  <div className="text-xs font-medium text-amber-500">{lead.value ? `$${lead.value}` : '--'}</div>
+                  <div className="text-xs font-medium text-amber-500">{(lead.metadata as Record<string, unknown>)?.value ? `$${(lead.metadata as Record<string, unknown>).value}` : (lead.budget_range as string) || '--'}</div>
                 </div>
               ))
             )}

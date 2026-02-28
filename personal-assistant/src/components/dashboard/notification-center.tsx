@@ -126,7 +126,7 @@ export function NotificationCenter({ onTabChange }: NotificationCenterProps) {
       // Fetch new leads
       const { data: leads, error: leadsError } = await clientRef.current
         .from('leads')
-        .select('id, name, created_at')
+        .select('id, source_channel, metadata, created_at')
         .eq('status', 'new')
         .limit(10);
 
@@ -135,12 +135,13 @@ export function NotificationCenter({ onTabChange }: NotificationCenterProps) {
       }
 
       if (leads) {
-        leads.forEach((lead: { id: string; name: string; created_at: string }) => {
+        leads.forEach((lead: { id: string; source_channel: string; metadata: Record<string, unknown>; created_at: string }) => {
+          const leadName = (lead.metadata?.name || lead.metadata?.company || lead.source_channel || 'Unknown') as string;
           notifications.push({
             id: `lead-${lead.id}`,
             type: 'lead',
             title: 'New Lead',
-            description: `${lead.name} signed up`,
+            description: `${leadName} signed up`,
             timestamp: new Date(lead.created_at),
             read: false,
             tabId: 'leads',

@@ -113,21 +113,25 @@ async function checkHighValueLeads(
     // Check leads table
     const { data: leads } = await supabase
       .from('leads')
-      .select('id, company_name, score, source')
+      .select('id, score, source_channel, metadata')
       .eq('org_id', orgId)
       .gte('created_at', oneHourAgo)
-      .gte('score', 80) // High-value threshold
+      .eq('score', 'hot')
       .limit(3)
 
     if (!leads?.length) return []
 
-    return leads.map((lead: Record<string, unknown>) => ({
-      type: 'high_value_lead' as AlertType,
-      title: 'High-Value Lead',
-      detail: `New lead: *${lead.company_name}* (score: ${lead.score}) via ${lead.source}`,
-      action: 'Reply "leads" to view pipeline.',
-      metadata: { lead_id: lead.id },
-    }))
+    return leads.map((lead: Record<string, unknown>) => {
+      const meta = (lead.metadata || {}) as Record<string, unknown>
+      const displayName = (meta.name || meta.company || lead.source_channel || 'Unknown') as string
+      return {
+        type: 'high_value_lead' as AlertType,
+        title: 'High-Value Lead',
+        detail: `New lead: *${displayName}* (score: ${lead.score}) via ${lead.source_channel}`,
+        action: 'Reply "leads" to view pipeline.',
+        metadata: { lead_id: lead.id },
+      }
+    })
   } catch {
     return []
   }

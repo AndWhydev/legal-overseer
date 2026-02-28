@@ -1,126 +1,145 @@
 # Requirements: BitBit AWU
 
-**Defined:** 2026-02-22
-**Core Value:** BitBit understands the business better than the business owner -- when Andy says "Invoice Sezer for the White House RE work", BitBit knows who Sezer is, what the work was, the rate, and whether it's already been invoiced.
+**Defined:** 2026-03-01
+**Core Value:** BitBit understands the business better than the business owner — when Andy says "Invoice Sezer for the White House RE work", BitBit knows who Sezer is, what the work was, the rate, and whether it's already been invoiced.
 
-## v1.1 Requirements
+## v1.2 Requirements
 
-Requirements for milestone v1.1: Agent Runtime + First Agents.
+Requirements for battle-testing and sellability. Each maps to roadmap phases.
 
-### Runtime
+### Deployment Stability
 
-- [x] **RNTM-01**: Channel relay daemon polls Gmail on configurable intervals, buffers and processes messages
-- [x] **RNTM-02**: LLM classification assigns significance (1-10), time sensitivity, and recommended actions to each message
-- [x] **RNTM-03**: Action router dispatches messages as immediate/queue/batch/skip based on significance + urgency
-- [x] **RNTM-04**: Agent scheduler triggers agents on cron schedules (configurable per agent per org)
+- [ ] **DEPLOY-01**: Vercel production build passes with zero errors
+- [ ] **DEPLOY-02**: All 9 cron endpoints trigger and execute correctly on Vercel's cron system
+- [ ] **DEPLOY-03**: Agent engine cold start responds in under 3 seconds for classification
+- [ ] **DEPLOY-04**: Supabase connection pooling handles 10 concurrent agent requests without exhaustion
+- [ ] **DEPLOY-05**: Fly.io worker fleet is deployed and operational (not just config committed)
+- [ ] **DEPLOY-06**: Cloudflare edge cron poller is deployed and operational
 
-### Approval
+### Channel Relay
 
-- [x] **APPR-01**: Confidence routing decides act (>0.85) / ask (0.55-0.85) / escalate (<0.55) per agent action
-- [x] **APPR-02**: Dashboard approval queue shows pending agent actions with approve/reject buttons
-- [x] **APPR-03**: WhatsApp notification sends approval requests to Andy with action summary
-- [x] **APPR-04**: Andy can approve/reject via WhatsApp reply (Y/N or tap)
-- [x] **APPR-05**: Low-priority approvals batch into a daily digest instead of individual pings
+- [ ] **CHAN-01**: Live Gmail pull works in deployed environment (not just local dev)
+- [ ] **CHAN-02**: Outlook Graph API adapter works against production Microsoft tenant
+- [ ] **CHAN-03**: WhatsApp Baileys bridge maintains stable connection over 7-day continuous run
+- [ ] **CHAN-04**: Message deduplication holds under burst conditions (50 messages across 3 channels in 5 minutes)
+- [ ] **CHAN-05**: Poll-to-classification latency measured and documented under normal and burst conditions
 
-### Sentry Agent
+### WhatsApp Pipeline
 
-- [x] **SNTR-01**: Sentry monitors configured watches (error keywords, uptime, negative sentiment)
-- [x] **SNTR-02**: Sentry detects issues and suggests remediation actions
-- [x] **SNTR-03**: Sentry escalates via notification chain if no acknowledgement within N minutes
-- [x] **SNTR-04**: Dashboard shows watches management UI (create, pause, delete)
+- [ ] **WHATS-01**: Voice note received via WhatsApp is transcribed by Whisper and processed by agent pipeline end-to-end
+- [ ] **WHATS-02**: Multi-turn conversation state maintained (e.g., "invoice him" after discussing a job two messages prior)
+- [ ] **WHATS-03**: Approval flow via WhatsApp Y/N replies executes actions reliably
+- [ ] **WHATS-04**: End-to-end latency from WhatsApp message to action/approval measured and under 10 seconds
+- [ ] **WHATS-05**: Baileys vs WhatsApp Cloud API trade-offs evaluated with documented recommendation
 
-### Lead Swarm Agent
+### Confidence Routing
 
-- [x] **LEAD-01**: Lead Swarm classifies inbound messages as lead/client/spam/personal
-- [x] **LEAD-02**: Lead Swarm qualifies leads (budget, service match, timeline) and scores hot/warm/cold
-- [x] **LEAD-03**: Lead Swarm auto-acknowledges qualified leads within 2 minutes (draft -> approval flow)
-- [x] **LEAD-04**: Lead Swarm escalates high-value leads (>$5k) directly to Andy
-- [x] **LEAD-05**: Dashboard shows leads pipeline (kanban: New->Qualified->Booked->Won/Lost)
+- [ ] **CONF-01**: 50 real AWU scenarios run through engine with confidence scores tracked vs human judgment
+- [ ] **CONF-02**: Per-agent threshold tuning implemented (e.g., invoice higher auto-act threshold than sentry)
+- [ ] **CONF-03**: False positive rate on auto-actions measured and documented
+- [ ] **CONF-04**: Model routing (Haiku/Sonnet/Opus) produces reliable confidence scores across tiers
+- [ ] **CONF-05**: Adversarial/ambiguous inputs tested to verify escalation reliability
 
-### Invoice Flow Agent
+### Invoice Flow Validation
 
-- [x] **INVC-01**: Invoice Flow creates invoices from natural language ("Invoice Sezer for White House RE")
-- [x] **INVC-02**: Invoice Flow generates branded PDF invoices with configurable payment terms *(implemented as HTML invoice with org branding; binary PDF generation deferred)*
-- [ ] **INVC-03**: Invoice Flow sends invoices via email with PDF attachment (with approval) *(HTML generation and status update implemented; actual email transport via SMTP/Resend/SendGrid not yet wired)*
-- [x] **INVC-04**: Invoice Flow tracks status (draft->sent->viewed->overdue->paid)
-- [x] **INVC-05**: Invoice Flow detects and prevents duplicate invoicing (never send same invoice twice)
+- [ ] **INVC-06**: Entity resolution handles ambiguous NL commands (varying specificity levels) with ask-or-resolve behavior
+- [ ] **INVC-07**: Duplicate detection triggers on slightly varied wording/amounts for same contact+project+period
+- [ ] **INVC-08**: Generated PDF is branded, professional, with correct ABN/GST details and layout
+- [ ] **INVC-09**: Invoice email arrives in recipient inbox (not spam) via working email transport
+- [ ] **INVC-10**: Full lifecycle validated: draft to approved to sent to viewed to paid
 
-### Infrastructure
+### Lead Response
 
-- [x] **INFR-01**: Supabase DI refactor -- all tools receive client from context, not module-level import
-- [x] **INFR-02**: Agent run logging captures tokens, cost, actions, and confidence per execution
-- [x] **INFR-03**: AGNT-12 (confidence routing) and AGNT-13 (shared CRUD tools) verified in production flow
+- [ ] **LEAD-01**: Auto-approve path for high-confidence leads (>85%) achieving sub-2-minute response time
+- [ ] **LEAD-02**: Classification accuracy validated across 20 sample messages (lead/client/spam/personal)
+- [ ] **LEAD-03**: Qualification scoring (hot/warm/cold) aligns with Andy's manual assessment on real leads
 
-## v2 Requirements
+### Channel Settings & OAuth
 
-Deferred to future milestones. Tracked but not in current roadmap.
+- [ ] **OAUTH-01**: User can connect Gmail via Google OAuth flow from settings page
+- [ ] **OAUTH-02**: User can connect Outlook via Microsoft OAuth flow from settings page
+- [ ] **OAUTH-03**: User can link WhatsApp via QR code / phone number pairing flow from settings page
+- [ ] **OAUTH-04**: User can connect Asana via OAuth flow from settings page
+- [ ] **OAUTH-05**: User can connect Calendly via OAuth flow from settings page
+- [ ] **OAUTH-06**: User can connect Stripe via OAuth/API key flow from settings page
+- [ ] **OAUTH-07**: Channel settings page shows connection status, last sync time, and disconnect option for each channel
+- [ ] **OAUTH-08**: OAuth token refresh handles expiry automatically without user re-auth
 
-### Communication Agents
+## Future Requirements
 
-- **COMM-01**: Channel Triage agent classifies and prioritizes all inbound messages
-- **COMM-02**: Client Comms agent drafts replies in correct voice profile
-- **COMM-03**: Daily digest "what needs attention today" via WhatsApp
+### Billing & Trial (deferred from v1.2 scoping)
 
-### Revenue Agents
+- **BILL-01**: Stripe subscription lifecycle (create, upgrade, downgrade, cancel)
+- **BILL-02**: Usage metering per agent per org
+- **BILL-03**: Plan gating (feature access by subscription tier)
+- **BILL-04**: 30-day free trial with feature gating by tier
+- **BILL-05**: Trial conversion/expiry notifications
+- **BILL-06**: Pricing page connected to live Stripe checkout
 
-- **REVN-01**: Proposal Bot generates scope documents and pricing from brief inputs
-- **REVN-02**: Client Onboarding agent auto-creates Asana projects and sends welcome packages
+### Remaining Agents
 
-### Full WhatsApp Bot
-
-- **WHAP-01**: Natural language command parser for WhatsApp
-- **WHAP-02**: Multi-turn conversation manager
-- **WHAP-03**: Voice note transcription pipeline
-- **WHAP-04**: Proactive morning briefing via WhatsApp
+- **AGENT-01**: Proposal Generator — auto-generate tiered proposals from briefs
+- **AGENT-02**: Ad Script Generator — video/social ad scripts with hook variations
+- **AGENT-03**: Client Onboarding Agent — auto-create Asana project, request credentials, book kick-off
+- **AGENT-04**: Voice Agent (Eleven Labs outbound) — phone-based hands-free interaction
 
 ## Out of Scope
 
 | Feature | Reason |
 |---------|--------|
-| Full WhatsApp conversational bot | Approval-only channel for v1.1; full bot deferred |
-| Outlook adapter rebuild | Not needed for v1.1 (Gmail-only); rebuild when adding Outlook |
-| Asana/Calendly/ClickUp integrations | Agent runtime + first agents first; channel integrations later |
-| Growth agents (Ad Script, AI Search, Tender Hunter) | Milestone 4 |
-| Marketing website / public launch | Milestone 5 |
-| Mobile app | Not planned |
-| Multi-tenant self-serve signup | Single-tenant AWU for now |
+| Tender Hunter validation (PT-6) | High-revenue but needs real tender data from Andy first — deferred to v1.3 |
+| Model routing cost optimization (PT-8) | P2 priority — cost efficiency, not launch blocker |
+| Demo video production (G7) | Requires stable deployment first — produce after v1.2 ships |
+| CUA (computer-using agent) | Future phase — browser/desktop automation layer |
+| Mobile app | Web-first, mobile later |
 
 ## Traceability
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| INFR-01 | Phase 7 | Complete |
-| INFR-02 | Phase 7 | Complete |
-| INFR-03 | Phase 7 | Complete |
-| RNTM-01 | Phase 8 | Complete |
-| RNTM-02 | Phase 8 | Pending |
-| RNTM-03 | Phase 8 | Pending |
-| RNTM-04 | Phase 8 | Complete |
-| APPR-01 | Phase 9 | Complete |
-| APPR-02 | Phase 9 | Complete |
-| APPR-03 | Phase 9 | Complete |
-| APPR-04 | Phase 9 | Complete |
-| APPR-05 | Phase 9 | Complete |
-| SNTR-01 | Phase 10 | Complete |
-| SNTR-02 | Phase 10 | Complete |
-| SNTR-03 | Phase 10 | Complete |
-| SNTR-04 | Phase 10 | Complete |
-| LEAD-01 | Phase 11 | Complete |
-| LEAD-02 | Phase 11 | Complete |
-| LEAD-03 | Phase 11 | Complete |
-| LEAD-04 | Phase 11 | Complete |
-| LEAD-05 | Phase 11 | Complete |
-| INVC-01 | Phase 12 | Complete |
-| INVC-02 | Phase 12 | Complete (HTML; binary PDF deferred) |
-| INVC-03 | Phase 12 | Partial (email transport not wired) |
-| INVC-04 | Phase 12 | Complete |
-| INVC-05 | Phase 12 | Complete |
+| DEPLOY-01 | — | Pending |
+| DEPLOY-02 | — | Pending |
+| DEPLOY-03 | — | Pending |
+| DEPLOY-04 | — | Pending |
+| DEPLOY-05 | — | Pending |
+| DEPLOY-06 | — | Pending |
+| CHAN-01 | — | Pending |
+| CHAN-02 | — | Pending |
+| CHAN-03 | — | Pending |
+| CHAN-04 | — | Pending |
+| CHAN-05 | — | Pending |
+| WHATS-01 | — | Pending |
+| WHATS-02 | — | Pending |
+| WHATS-03 | — | Pending |
+| WHATS-04 | — | Pending |
+| WHATS-05 | — | Pending |
+| CONF-01 | — | Pending |
+| CONF-02 | — | Pending |
+| CONF-03 | — | Pending |
+| CONF-04 | — | Pending |
+| CONF-05 | — | Pending |
+| INVC-06 | — | Pending |
+| INVC-07 | — | Pending |
+| INVC-08 | — | Pending |
+| INVC-09 | — | Pending |
+| INVC-10 | — | Pending |
+| LEAD-01 | — | Pending |
+| LEAD-02 | — | Pending |
+| LEAD-03 | — | Pending |
+| OAUTH-01 | — | Pending |
+| OAUTH-02 | — | Pending |
+| OAUTH-03 | — | Pending |
+| OAUTH-04 | — | Pending |
+| OAUTH-05 | — | Pending |
+| OAUTH-06 | — | Pending |
+| OAUTH-07 | — | Pending |
+| OAUTH-08 | — | Pending |
 
 **Coverage:**
-- v1.1 requirements: 26 total
-- Mapped to phases: 26
-- Unmapped: 0
+- v1.2 requirements: 31 total
+- Mapped to phases: 0
+- Unmapped: 31 (pending roadmap creation)
 
 ---
-*Requirements defined: 2026-02-22*
-*Last updated: 2026-02-25 after P0 stabilization pass*
+*Requirements defined: 2026-03-01*
+*Last updated: 2026-03-01 after initial definition*
