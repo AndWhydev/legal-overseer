@@ -29,11 +29,11 @@ async function resolveOrgId(
 ): Promise<string | null> {
     if (phoneNumberId) {
         const { data } = await supabase
-            .from('channel_configs')
+            .from('channel_configs' as any)
             .select('org_id')
             .eq('channel', 'whatsapp')
             .eq('external_id', phoneNumberId)
-            .single()
+            .single() as { data: { org_id?: string } | null }
 
         if (data?.org_id) {
             return data.org_id
