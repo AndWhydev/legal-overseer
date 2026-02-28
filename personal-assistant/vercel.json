@@ -4,12 +4,12 @@
   "installCommand": "npm install",
   "framework": "nextjs",
   "crons": [
-    { "path": "/api/cron/scheduler", "schedule": "* * * * *" },
-    { "path": "/api/cron/channel-sync", "schedule": "*/5 * * * *" },
-    { "path": "/api/cron/triage", "schedule": "*/5 * * * *" },
-    { "path": "/api/cron/sentry", "schedule": "*/5 * * * *" },
+    { "path": "/api/cron/scheduler", "schedule": "0 * * * *" },
+    { "path": "/api/cron/channel-sync", "schedule": "0 */6 * * *" },
+    { "path": "/api/cron/triage", "schedule": "0 */6 * * *" },
+    { "path": "/api/cron/sentry", "schedule": "0 */6 * * *" },
     { "path": "/api/cron/morning-briefing", "schedule": "0 21 * * *" },
-    { "path": "/api/cron/proactive-alerts", "schedule": "*/15 * * * *" },
+    { "path": "/api/cron/proactive-alerts", "schedule": "0 */4 * * *" },
     { "path": "/api/cron/daily-digest", "schedule": "0 7 * * *" },
     { "path": "/api/cron/weekly-report", "schedule": "0 8 * * MON" },
     { "path": "/api/cron/monthly-report", "schedule": "0 9 1 * *" }

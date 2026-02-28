@@ -18,3 +18,34 @@ demo-1/
 
 # Dev-only seed data (never commit)
 personal-assistant/src/lib/dev/seed-data.ts
+
+# Build artifacts
+.next/
+dist/
+*.tsbuildinfo
+
+# Test artifacts
+test-results/
+playwright-report/
+coverage/
+
+# Environment
+.env
+.env.local
+.env.production
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temp / agent artifacts
+temp-*/
+*.log
+
+# Generated HTML reports
+docs/*.html
