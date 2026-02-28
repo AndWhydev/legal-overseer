@@ -139,7 +139,13 @@ Plans:
   3. Agent classification requests return in under 3 seconds from cold start
   4. 10 concurrent agent requests execute without connection pool exhaustion
   5. Fly.io workers and Cloudflare edge cron are deployed and responding to health checks
-**Plans**: TBD
+**Plans**: 4 plans
+
+Plans:
+- [ ] 13-01-PLAN.md -- Vercel build hardening + cron route guard
+- [ ] 13-02-PLAN.md -- Connection pooling + cold start optimization
+- [ ] 13-03-PLAN.md -- Fly.io worker + Cloudflare edge cron deployment readiness
+- [ ] 13-04-PLAN.md -- CI/CD multi-runtime pipeline + verification checkpoint
 
 ### Phase 14: Channel Relay & OAuth
 **Goal**: Users can connect all channels from settings and messages flow through classification pipeline reliably
@@ -206,7 +212,7 @@ Phases 13 first (foundation), then 14 -> 15 (channel chain) and 16 (can parallel
 | 10. Sentry Agent | v1.1 | 4/4 | Complete | 2026-02-22 |
 | 11. Lead Swarm Agent | v1.1 | 4/4 | Complete | 2026-02-22 |
 | 12. Invoice Flow Agent | v1.1 | 3/3 | Complete | 2026-02-22 |
-| 13. Deployment Stability | v1.2 | 0/? | Not started | - |
+| 13. Deployment Stability | v1.2 | 0/4 | Planned | - |
 | 14. Channel Relay & OAuth | v1.2 | 0/? | Not started | - |
 | 15. WhatsApp Pipeline | v1.2 | 0/? | Not started | - |
 | 16. Confidence Routing Validation | v1.2 | 0/? | Not started | - |
