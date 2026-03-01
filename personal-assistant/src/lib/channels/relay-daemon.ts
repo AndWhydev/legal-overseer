@@ -1,17 +1,59 @@
+import crypto from 'crypto'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { ChannelMessage, ChannelType } from './types'
 import { gmailAdapter } from './gmail'
+import { outlookAdapter } from './outlook'
+import { asanaAdapter } from './asana'
+import { calendlyAdapter } from './calendly'
+import { stripeAdapter } from './stripe'
 
 export interface PollResult {
   messagesFound: number
   messagesInserted: number
+  deduplicated: number
   skipped: boolean
   error?: string
 }
 
 const adapterMap = {
   gmail: gmailAdapter,
+  outlook: outlookAdapter,
+  asana: asanaAdapter,
+  calendly: calendlyAdapter,
+  stripe: stripeAdapter,
 } as const
+
+/**
+ * Compute a SHA-256 content hash for cross-channel deduplication.
+ */
+function computeContentHash(msg: ChannelMessage): string {
+  const text = `${msg.sender}:${msg.subject || ''}:${msg.body.slice(0, 200)}`
+  return crypto.createHash('sha256').update(text).digest('hex')
+}
+
+/**
+ * Check if a message with matching content_hash already exists within a 5-minute window.
+ */
+async function isDuplicateByContentHash(
+  supabase: SupabaseClient,
+  orgId: string,
+  contentHash: string,
+  receivedAt: Date
+): Promise<boolean> {
+  const windowStart = new Date(receivedAt.getTime() - 5 * 60 * 1000).toISOString()
+  const windowEnd = new Date(receivedAt.getTime() + 5 * 60 * 1000).toISOString()
+
+  const { data } = await supabase
+    .from('channel_messages')
+    .select('id')
+    .eq('org_id', orgId)
+    .eq('content_hash', contentHash)
+    .gte('received_at', windowStart)
+    .lte('received_at', windowEnd)
+    .limit(1)
+
+  return (data?.length ?? 0) > 0
+}
 
 /**
  * Poll a channel for new messages and persist them to channel_messages.
@@ -32,16 +74,16 @@ export async function pollChannel(
       .single()
 
     if (connErr || !conn) {
-      return { messagesFound: 0, messagesInserted: 0, skipped: true, error: connErr?.message || 'No connection found' }
+      return { messagesFound: 0, messagesInserted: 0, deduplicated: 0, skipped: true, error: connErr?.message || 'No connection found' }
     }
 
     if (!conn.relay_enabled) {
-      return { messagesFound: 0, messagesInserted: 0, skipped: true }
+      return { messagesFound: 0, messagesInserted: 0, deduplicated: 0, skipped: true }
     }
 
     const adapter = adapterMap[channelType as keyof typeof adapterMap]
     if (!adapter) {
-      return { messagesFound: 0, messagesInserted: 0, skipped: true, error: `No adapter for channel: ${channelType}` }
+      return { messagesFound: 0, messagesInserted: 0, deduplicated: 0, skipped: true, error: `No adapter for channel: ${channelType}` }
     }
 
     // Pull messages since poll_cursor
@@ -49,12 +91,22 @@ export async function pollChannel(
     const messages = await adapter.pull(conn.config || {}, since)
 
     if (messages.length === 0) {
-      return { messagesFound: 0, messagesInserted: 0, skipped: false }
+      return { messagesFound: 0, messagesInserted: 0, deduplicated: 0, skipped: false }
     }
 
     // Upsert each message (idempotent via ON CONFLICT DO NOTHING)
     let inserted = 0
+    let deduplicated = 0
     for (const msg of messages) {
+      const contentHash = computeContentHash(msg)
+
+      // Cross-channel dedup: check for matching content within 5-minute window
+      const isDuplicate = await isDuplicateByContentHash(supabase, orgId, contentHash, msg.receivedAt)
+      if (isDuplicate) {
+        deduplicated++
+        continue
+      }
+
       const { error: upsertErr } = await supabase
         .from('channel_messages')
         .upsert(
@@ -71,6 +123,7 @@ export async function pollChannel(
             priority: msg.priority,
             processed: false,
             metadata: msg.metadata,
+            content_hash: contentHash,
           },
           { onConflict: 'org_id,channel,external_id', ignoreDuplicates: true }
         )
@@ -95,11 +148,12 @@ export async function pollChannel(
       .eq('org_id', orgId)
       .eq('channel_type', channelType)
 
-    return { messagesFound: messages.length, messagesInserted: inserted, skipped: false }
+    return { messagesFound: messages.length, messagesInserted: inserted, deduplicated, skipped: false }
   } catch (err) {
     return {
       messagesFound: 0,
       messagesInserted: 0,
+      deduplicated: 0,
       skipped: false,
       error: err instanceof Error ? err.message : String(err),
     }
