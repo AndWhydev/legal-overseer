@@ -11,6 +11,30 @@ interface OAuthProvider {
 }
 
 const PROVIDERS: Record<string, OAuthProvider> = {
+  gmail: {
+    clientId: process.env.GOOGLE_CLIENT_ID || '',
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
+    authorizationUrl: 'https://accounts.google.com/o/oauth2/v2/auth',
+    tokenUrl: 'https://oauth2.googleapis.com/token',
+    scopes: [
+      'https://mail.google.com/',
+      'https://www.googleapis.com/auth/gmail.readonly',
+      'https://www.googleapis.com/auth/gmail.send',
+    ],
+    supportsPKCE: true,
+  },
+  outlook: {
+    clientId: process.env.OUTLOOK_CLIENT_ID || '',
+    clientSecret: process.env.OUTLOOK_CLIENT_SECRET || '',
+    authorizationUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
+    tokenUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/token',
+    scopes: [
+      'https://graph.microsoft.com/Mail.Read',
+      'https://graph.microsoft.com/Mail.Send',
+      'offline_access',
+    ],
+    supportsPKCE: true,
+  },
   asana: {
     clientId: process.env.ASANA_CLIENT_ID || '',
     clientSecret: process.env.ASANA_CLIENT_SECRET || '',
@@ -109,6 +133,13 @@ export function getOAuthRedirectUrl(provider: string): {
     scope: config.scopes.join(' '),
     state,
   })
+
+  // Provider-specific params
+  const providerKey = provider.toLowerCase()
+  if (providerKey === 'gmail') {
+    params.set('access_type', 'offline')
+    params.set('prompt', 'consent')
+  }
 
   let codeVerifier: string | undefined
   if (config.supportsPKCE) {

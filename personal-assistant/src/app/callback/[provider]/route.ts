@@ -24,13 +24,13 @@ export async function GET(
     if (error) {
       const errorDescription = searchParams.get('error_description') || error
       return NextResponse.redirect(
-        `/dashboard/settings?error=${encodeURIComponent(errorDescription)}`
+        `/dashboard/channels?error=${encodeURIComponent(errorDescription)}`
       )
     }
 
     if (!code) {
       return NextResponse.redirect(
-        '/dashboard/settings?error=No authorization code received'
+        '/dashboard/channels?error=No authorization code received'
       )
     }
 
@@ -46,7 +46,7 @@ export async function GET(
         hasExpected: !!expectedState,
       })
       return NextResponse.redirect(
-        '/dashboard/settings?error=Invalid OAuth state. Please try connecting again.'
+        '/dashboard/channels?error=Invalid OAuth state. Please try connecting again.'
       )
     }
 
@@ -54,7 +54,7 @@ export async function GET(
     const supabase = await createClient()
     if (!supabase) {
       return NextResponse.redirect(
-        '/dashboard/settings?error=Supabase not configured'
+        '/dashboard/channels?error=Supabase not configured'
       )
     }
 
@@ -74,14 +74,14 @@ export async function GET(
 
     if (!profile?.org_id) {
       return NextResponse.redirect(
-        '/dashboard/settings?error=No organization found'
+        '/dashboard/channels?error=No organization found'
       )
     }
 
     // Exchange code for tokens (with PKCE verifier if available)
     const tokens = await exchangeOAuthCode(provider, code, codeVerifier)
 
-    // Store the credentials
+    // Store the credentials in org_integrations
     await storeOrgCredential(
       supabase,
       profile.org_id,
@@ -95,9 +95,22 @@ export async function GET(
       user.id
     )
 
+    // Upsert channel_connections row so status API reflects the new connection
+    await supabase.from('channel_connections').upsert(
+      {
+        org_id: profile.org_id,
+        channel_type: provider,
+        status: 'connected',
+        last_sync: null,
+        config: {},
+        message_count: 0,
+      },
+      { onConflict: 'org_id,channel_type' }
+    )
+
     // Clear OAuth cookies
     const response = NextResponse.redirect(
-      `/dashboard/settings?connected=${encodeURIComponent(provider)}`
+      `/dashboard/channels?connected=${encodeURIComponent(provider)}`
     )
     response.cookies.delete(OAUTH_STATE_COOKIE)
     response.cookies.delete(OAUTH_VERIFIER_COOKIE)
@@ -107,7 +120,7 @@ export async function GET(
       error instanceof Error ? error.message : 'Unknown error occurred'
     console.error('OAuth callback error:', error)
     return NextResponse.redirect(
-      `/dashboard/settings?error=${encodeURIComponent(errorMessage)}`
+      `/dashboard/channels?error=${encodeURIComponent(errorMessage)}`
     )
   }
 }
