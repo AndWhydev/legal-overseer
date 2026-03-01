@@ -161,7 +161,7 @@ Plans:
 
 Plans:
 - [x] 14-01-PLAN.md -- OAuth provider registration, DB schema expansion, relay daemon multi-channel, callback redirect fix
-- [ ] 14-02-PLAN.md -- Channel connect/disconnect APIs, config API, and token auto-refresh service with cron
+- [x] 14-02-PLAN.md -- Channel connect/disconnect APIs, config API, and token auto-refresh service with cron
 - [ ] 14-03-PLAN.md -- Channel settings UI (cards grid, connect flows, config drawer)
 - [ ] 14-04-PLAN.md -- Cross-channel dedup, burst handling, latency instrumentation, WhatsApp monitoring
 - [ ] 14-05-PLAN.md -- Environment provisioning, integration verification, and visual checkpoint
@@ -221,9 +221,9 @@ Phases 13 first (foundation), then 14 -> 15 (channel chain) and 16 (can parallel
 | 11. Lead Swarm Agent | v1.1 | 4/4 | Complete | 2026-02-22 |
 | 12. Invoice Flow Agent | v1.1 | 3/3 | Complete | 2026-02-22 |
 | 13. Deployment Stability | v1.2 | 4/4 | Complete | 2026-03-01 |
-| 14. Channel Relay & OAuth | v1.2 | 1/5 | In Progress | - |
+| 14. Channel Relay & OAuth | v1.2 | 2/5 | In Progress | - |
 | 15. WhatsApp Pipeline | v1.2 | 0/? | Not started | - |
 | 16. Confidence Routing Validation | v1.2 | 0/? | Not started | - |
 | 17. Invoice & Lead Validation | v1.2 | 0/? | Not started | - |
 
-**Overall:** 35/35 plans complete for v1.0+v1.1 (100%). v1.2: 5/? plans complete (Phase 13 done, Phase 14 1/5).
+**Overall:** 35/35 plans complete for v1.0+v1.1 (100%). v1.2: 6/? plans complete (Phase 13 done, Phase 14 2/5).

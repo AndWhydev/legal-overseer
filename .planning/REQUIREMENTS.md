@@ -63,7 +63,7 @@ Requirements for battle-testing and sellability. Each maps to roadmap phases.
 - [ ] **OAUTH-05**: User can connect Calendly via OAuth flow from settings page
 - [ ] **OAUTH-06**: User can connect Stripe via OAuth/API key flow from settings page
 - [ ] **OAUTH-07**: Channel settings page shows connection status, last sync time, and disconnect option for each channel
-- [ ] **OAUTH-08**: OAuth token refresh handles expiry automatically without user re-auth
+- [x] **OAUTH-08**: OAuth token refresh handles expiry automatically without user re-auth
 
 ## Future Requirements
 
@@ -133,7 +133,7 @@ Requirements for battle-testing and sellability. Each maps to roadmap phases.
 | OAUTH-05 | Phase 14 | In Progress |
 | OAUTH-06 | Phase 14 | In Progress |
 | OAUTH-07 | Phase 14 | Pending |
-| OAUTH-08 | Phase 14 | Pending |
+| OAUTH-08 | Phase 14 | Complete |
 
 **Coverage:**
 - v1.2 requirements: 37 total
