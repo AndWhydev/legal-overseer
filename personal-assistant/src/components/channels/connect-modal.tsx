@@ -81,7 +81,7 @@ function ApiKeyForm({
       })
       const data = await res.json()
 
-      if (res.ok && data.success) {
+      if (res.ok) {
         onSuccess()
       } else {
         onError(data.error || `Failed to connect ${channelName}`)
@@ -163,7 +163,7 @@ function WhatsAppQRPanel({
       })
       const data = await res.json()
 
-      if (res.ok && data.success) {
+      if (res.ok) {
         setSessionStarted(true)
         // In Phase 15, this will poll for QR code and connection status
         // For now, just mark as initiated

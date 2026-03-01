@@ -203,7 +203,7 @@ export function ChannelGrid() {
         body: JSON.stringify({ channel: channelType }),
       })
       const data = await res.json()
-      if (res.ok && data.success) {
+      if (res.ok) {
         addToast(`${channelType} disconnected. Messages preserved.`, 'success')
         fetchStatus()
       } else {

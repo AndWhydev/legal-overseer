@@ -56,8 +56,12 @@ async function classifyWithRetry(
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     try {
       // Classification is handled by the synthesizer pipeline (Phase 8 agent infra).
-      // The processNewMessages -> synthesize flow handles classification.
-      // This retry wrapper ensures individual message classification resilience.
+      // Mark message as pending classification — the synthesizer picks it up.
+      await supabase
+        .from('channel_messages')
+        .update({ classification: 'pending' })
+        .eq('id', messageId)
+        .eq('org_id', orgId)
       return
     } catch (err) {
       console.error(
