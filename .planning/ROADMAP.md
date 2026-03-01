@@ -36,7 +36,7 @@
 
 - [x] **Phase 13: Deployment Stability** - Vercel prod, cron, cold starts, connection pooling, Fly.io and Cloudflare workers operational (completed 2026-03-01)
 - [x] **Phase 14: Channel Relay & OAuth** - Live channel connections via OAuth, dedup, classification pipeline validated (completed 2026-03-02)
-- [ ] **Phase 15: WhatsApp Pipeline** - Voice-to-agent, multi-turn, approval flow, latency validation, Baileys bridge stability
+- [x] **Phase 15: WhatsApp Pipeline** - Voice-to-agent, multi-turn, approval flow, latency validation, Baileys bridge stability (completed 2026-03-01)
 - [ ] **Phase 16: Confidence Routing Validation** - Threshold tuning, false positive measurement, adversarial testing
 - [ ] **Phase 17: Invoice & Lead Validation** - Entity resolution, PDF quality, email delivery, lead auto-response
 
@@ -226,7 +226,7 @@ Phases 13 first (foundation), then 14 -> 15 (channel chain) and 16 (can parallel
 | 12. Invoice Flow Agent | v1.1 | 3/3 | Complete | 2026-02-22 |
 | 13. Deployment Stability | v1.2 | 4/4 | Complete | 2026-03-01 |
 | 14. Channel Relay & OAuth | v1.2 | 5/5 | Complete | 2026-03-02 |
-| 15. WhatsApp Pipeline | v1.2 | 1/2 | In progress | - |
+| 15. WhatsApp Pipeline | 2/2 | Complete   | 2026-03-01 | - |
 | 16. Confidence Routing Validation | v1.2 | 0/? | Not started | - |
 | 17. Invoice & Lead Validation | v1.2 | 0/? | Not started | - |
 

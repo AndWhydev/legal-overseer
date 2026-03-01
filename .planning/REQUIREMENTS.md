@@ -27,9 +27,9 @@ Requirements for battle-testing and sellability. Each maps to roadmap phases.
 ### WhatsApp Pipeline
 
 - [x] **WHATS-01**: Voice note received via WhatsApp is transcribed by Whisper and processed by agent pipeline end-to-end
-- [ ] **WHATS-02**: Multi-turn conversation state maintained (e.g., "invoice him" after discussing a job two messages prior)
-- [ ] **WHATS-03**: Approval flow via WhatsApp Y/N replies executes actions reliably
-- [ ] **WHATS-04**: End-to-end latency from WhatsApp message to action/approval measured and under 10 seconds
+- [x] **WHATS-02**: Multi-turn conversation state maintained (e.g., "invoice him" after discussing a job two messages prior)
+- [x] **WHATS-03**: Approval flow via WhatsApp Y/N replies executes actions reliably
+- [x] **WHATS-04**: End-to-end latency from WhatsApp message to action/approval measured and under 10 seconds
 - [x] **WHATS-05**: Baileys vs WhatsApp Cloud API trade-offs evaluated with documented recommendation
 
 ### Confidence Routing
@@ -109,9 +109,9 @@ Requirements for battle-testing and sellability. Each maps to roadmap phases.
 | CHAN-04 | Phase 14 | Complete |
 | CHAN-05 | Phase 14 | Complete |
 | WHATS-01 | Phase 15 | Complete |
-| WHATS-02 | Phase 15 | Pending |
-| WHATS-03 | Phase 15 | Pending |
-| WHATS-04 | Phase 15 | Pending |
+| WHATS-02 | Phase 15 | Complete |
+| WHATS-03 | Phase 15 | Complete |
+| WHATS-04 | Phase 15 | Complete |
 | WHATS-05 | Phase 15 | Complete |
 | CONF-01 | Phase 16 | Pending |
 | CONF-02 | Phase 16 | Pending |

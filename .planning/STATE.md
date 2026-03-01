@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-03-01)
 ## Current Position
 
 Phase: 15 of 17 (WhatsApp Pipeline)
-Plan: 1 of TBD in current phase
-Status: Executing Phase 15
-Last activity: 2026-03-02 -- Completed 15-01 (Baileys Bridge & Voice Transcription)
+Plan: 2 of 2 in current phase
+Status: Phase 15 COMPLETE
+Last activity: 2026-03-02 -- Completed 15-02 (Context-Aware Parsing & Latency Instrumentation)
 
-Progress: [####################..........] 100% v1.0+v1.1 | Phase 15 IN PROGRESS (1/TBD)
+Progress: [####################..........] 100% v1.0+v1.1 | Phase 15 COMPLETE (2/2)
 
 ## Performance Metrics
 
@@ -28,7 +28,7 @@ Progress: [####################..........] 100% v1.0+v1.1 | Phase 15 IN PROGRESS
 |-------|-------|--------|
 | 13. Deployment Stability | 4 | 4/4 COMPLETE |
 | 14. Channel Relay & OAuth | 5 | 5/5 COMPLETE |
-| 15. WhatsApp Pipeline | TBD | 1/TBD IN PROGRESS |
+| 15. WhatsApp Pipeline | 2 | 2/2 COMPLETE |
 | 16. Confidence Routing Validation | TBD | Not started |
 | 17. Invoice & Lead Validation | TBD | Not started |
 
@@ -40,6 +40,7 @@ Progress: [####################..........] 100% v1.0+v1.1 | Phase 15 IN PROGRESS
 | 14 | 03 | 13min | 2 | 5 |
 | 14 | 04 | 10min | 2 | 4 |
 | 15 | 01 | 11min | 2 | 5 |
+| 15 | 02 | 10min | 2 | 4 |
 
 ## Accumulated Context
 
@@ -77,6 +78,10 @@ See PROJECT.md Key Decisions table.
 - [15-01] Dynamic import for Baileys -- module loads without library installed, isBaileysAvailable() gates bridge ops
 - [15-01] Uint8Array wrapper for Buffer-to-Blob conversion in voice transcription
 - [15-01] Voice note prefix [Voice note] prepended in parser for lenient speech-origin parsing
+- [15-02] Conversation history passed as system prompt extension for Haiku cost efficiency
+- [15-02] Fallback heuristic for contact resolution only fires for action intents
+- [15-02] Approval retry: single retry after 1s, immediate rethrow for ALREADY_RESOLVED/NOT_FOUND
+- [15-02] Emoji approval uses string comparison not regex unicode flag for ES target compat
 
 ### Pending Todos
 
@@ -92,5 +97,5 @@ See PROJECT.md Key Decisions table.
 ## Session Continuity
 
 Last session: 2026-03-02
-Stopped at: Completed 15-01-PLAN.md (Baileys Bridge & Voice Transcription)
+Stopped at: Completed 15-02-PLAN.md (Context-Aware Parsing & Latency Instrumentation)
 Resume file: None
