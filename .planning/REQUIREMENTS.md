@@ -105,7 +105,7 @@ Requirements for battle-testing and sellability. Each maps to roadmap phases.
 | DEPLOY-06 | Phase 13 | Complete |
 | CHAN-01 | Phase 14 | Pending |
 | CHAN-02 | Phase 14 | Pending |
-| CHAN-03 | Phase 14 | Pending |
+| CHAN-03 | Phase 15 | Pending |
 | CHAN-04 | Phase 14 | Pending |
 | CHAN-05 | Phase 14 | Pending |
 | WHATS-01 | Phase 15 | Pending |

@@ -36,7 +36,7 @@
 
 - [x] **Phase 13: Deployment Stability** - Vercel prod, cron, cold starts, connection pooling, Fly.io and Cloudflare workers operational (completed 2026-03-01)
 - [ ] **Phase 14: Channel Relay & OAuth** - Live channel connections via OAuth, dedup, classification pipeline validated
-- [ ] **Phase 15: WhatsApp Pipeline** - Voice-to-agent, multi-turn, approval flow, latency validation
+- [ ] **Phase 15: WhatsApp Pipeline** - Voice-to-agent, multi-turn, approval flow, latency validation, Baileys bridge stability
 - [ ] **Phase 16: Confidence Routing Validation** - Threshold tuning, false positive measurement, adversarial testing
 - [ ] **Phase 17: Invoice & Lead Validation** - Entity resolution, PDF quality, email delivery, lead auto-response
 
@@ -150,7 +150,7 @@ Plans:
 ### Phase 14: Channel Relay & OAuth
 **Goal**: Users can connect all channels from settings and messages flow through classification pipeline reliably
 **Depends on**: Phase 13
-**Requirements**: CHAN-01, CHAN-02, CHAN-03, CHAN-04, CHAN-05, OAUTH-01, OAUTH-02, OAUTH-03, OAUTH-04, OAUTH-05, OAUTH-06, OAUTH-07, OAUTH-08
+**Requirements**: CHAN-01, CHAN-02, CHAN-04, CHAN-05, OAUTH-01, OAUTH-02, OAUTH-03, OAUTH-04, OAUTH-05, OAUTH-06, OAUTH-07, OAUTH-08
 **Success Criteria** (what must be TRUE):
   1. User can connect Gmail, Outlook, WhatsApp, Asana, Calendly, and Stripe from channel settings via OAuth/pairing flows
   2. Channel settings page shows live connection status, last sync time, and working disconnect for each channel
@@ -160,21 +160,22 @@ Plans:
 **Plans**: 5 plans
 
 Plans:
-- [ ] 14-01-PLAN.md -- OAuth provider registration, DB schema expansion, relay daemon multi-channel
-- [ ] 14-02-PLAN.md -- Channel connect/disconnect APIs and token auto-refresh service
+- [ ] 14-01-PLAN.md -- OAuth provider registration, DB schema expansion, relay daemon multi-channel, callback redirect fix
+- [ ] 14-02-PLAN.md -- Channel connect/disconnect APIs, config API, and token auto-refresh service with cron
 - [ ] 14-03-PLAN.md -- Channel settings UI (cards grid, connect flows, config drawer)
-- [ ] 14-04-PLAN.md -- Cross-channel dedup, burst handling, latency instrumentation
-- [ ] 14-05-PLAN.md -- Integration verification and visual checkpoint
+- [ ] 14-04-PLAN.md -- Cross-channel dedup, burst handling, latency instrumentation, WhatsApp monitoring
+- [ ] 14-05-PLAN.md -- Environment provisioning, integration verification, and visual checkpoint
 
 ### Phase 15: WhatsApp Pipeline
 **Goal**: Andy can interact with BitBit via WhatsApp including voice notes, multi-turn conversations, and approvals
 **Depends on**: Phase 14
-**Requirements**: WHATS-01, WHATS-02, WHATS-03, WHATS-04, WHATS-05
+**Requirements**: WHATS-01, WHATS-02, WHATS-03, WHATS-04, WHATS-05, CHAN-03
 **Success Criteria** (what must be TRUE):
   1. A WhatsApp voice note is transcribed and processed by the agent pipeline end-to-end
   2. Multi-turn conversation context is maintained (e.g., "invoice him" resolves from prior messages)
   3. Approval Y/N replies via WhatsApp reliably execute the queued action
   4. End-to-end latency from WhatsApp message to action/approval is under 10 seconds
+  5. WhatsApp Baileys bridge maintains stable connection over 7-day continuous run
 **Plans**: TBD
 
 ### Phase 16: Confidence Routing Validation
