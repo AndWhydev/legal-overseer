@@ -142,10 +142,10 @@ Plans:
 **Plans**: 4 plans
 
 Plans:
-- [ ] 13-01-PLAN.md -- Vercel build hardening + cron route guard
-- [ ] 13-02-PLAN.md -- Connection pooling + cold start optimization
-- [ ] 13-03-PLAN.md -- Fly.io worker + Cloudflare edge cron deployment readiness
-- [ ] 13-04-PLAN.md -- CI/CD multi-runtime pipeline + verification checkpoint
+- [x] 13-01-PLAN.md -- Vercel build hardening + cron route guard
+- [x] 13-02-PLAN.md -- Connection pooling + cold start optimization
+- [x] 13-03-PLAN.md -- Fly.io worker + Cloudflare edge cron deployment readiness
+- [x] 13-04-PLAN.md -- CI/CD multi-runtime pipeline + verification checkpoint
 
 ### Phase 14: Channel Relay & OAuth
 **Goal**: Users can connect all channels from settings and messages flow through classification pipeline reliably
@@ -157,7 +157,14 @@ Plans:
   3. Gmail and Outlook pull live messages in deployed environment and route them through classification
   4. Message deduplication holds under burst conditions (50 messages across 3 channels in 5 minutes)
   5. OAuth tokens refresh automatically without requiring user re-authentication
-**Plans**: TBD
+**Plans**: 5 plans
+
+Plans:
+- [ ] 14-01-PLAN.md -- OAuth provider registration, DB schema expansion, relay daemon multi-channel
+- [ ] 14-02-PLAN.md -- Channel connect/disconnect APIs and token auto-refresh service
+- [ ] 14-03-PLAN.md -- Channel settings UI (cards grid, connect flows, config drawer)
+- [ ] 14-04-PLAN.md -- Cross-channel dedup, burst handling, latency instrumentation
+- [ ] 14-05-PLAN.md -- Integration verification and visual checkpoint
 
 ### Phase 15: WhatsApp Pipeline
 **Goal**: Andy can interact with BitBit via WhatsApp including voice notes, multi-turn conversations, and approvals
@@ -212,10 +219,10 @@ Phases 13 first (foundation), then 14 -> 15 (channel chain) and 16 (can parallel
 | 10. Sentry Agent | v1.1 | 4/4 | Complete | 2026-02-22 |
 | 11. Lead Swarm Agent | v1.1 | 4/4 | Complete | 2026-02-22 |
 | 12. Invoice Flow Agent | v1.1 | 3/3 | Complete | 2026-02-22 |
-| 13. Deployment Stability | 4/4 | Complete    | 2026-03-01 | - |
-| 14. Channel Relay & OAuth | v1.2 | 0/? | Not started | - |
+| 13. Deployment Stability | v1.2 | 4/4 | Complete | 2026-03-01 |
+| 14. Channel Relay & OAuth | v1.2 | 0/5 | Not started | - |
 | 15. WhatsApp Pipeline | v1.2 | 0/? | Not started | - |
 | 16. Confidence Routing Validation | v1.2 | 0/? | Not started | - |
 | 17. Invoice & Lead Validation | v1.2 | 0/? | Not started | - |
 
-**Overall:** 35/35 plans complete for v1.0+v1.1 (100%). v1.2: 0/? plans (0%).
+**Overall:** 35/35 plans complete for v1.0+v1.1 (100%). v1.2: 4/? plans complete (Phase 13 done).
