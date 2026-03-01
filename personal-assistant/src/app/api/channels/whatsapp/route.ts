@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import crypto from 'crypto'
 import { createClient } from '@supabase/supabase-js'
 import { processWhatsAppMessage } from '@/lib/channels/whatsapp-parser'
+import { transcribeVoiceNote, downloadWhatsAppMedia } from '@/lib/channels/whatsapp-voice'
 
 const VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN
 const APP_SECRET = process.env.WHATSAPP_APP_SECRET
@@ -97,14 +98,62 @@ export async function POST(request: Request) {
                     continue
                 }
 
+                const accessToken = process.env.WHATSAPP_ACCESS_TOKEN || ''
+
                 for (const msg of value.messages) {
-                    if (msg.type !== 'text') continue
+                    // Only handle text and audio message types
+                    if (msg.type !== 'text' && msg.type !== 'audio') continue
 
                     const phone = value.contacts?.[0]?.wa_id || msg.from
                     const name = value.contacts?.[0]?.profile?.name || phone
-                    const text = msg.text.body
 
-                    // Log the raw incoming message
+                    let text: string
+                    let isActionable = true
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    const metadata: Record<string, any> = {
+                        rawUrl: payload,
+                        phoneNumber: phone,
+                        phoneNumberId,
+                    }
+
+                    if (msg.type === 'text') {
+                        text = msg.text.body
+                    } else if (msg.type === 'audio') {
+                        // Download audio from Meta Cloud API and transcribe via Whisper
+                        const mediaId = msg.audio?.id as string | undefined
+                        const mimeType = (msg.audio?.mime_type as string) || 'audio/ogg'
+
+                        if (!mediaId) {
+                            console.warn('WhatsApp webhook: audio message missing media ID')
+                            continue
+                        }
+
+                        const audioBuffer = await downloadWhatsAppMedia(mediaId, accessToken)
+                        if (audioBuffer) {
+                            const transcription = await transcribeVoiceNote(audioBuffer, mimeType)
+                            if (transcription) {
+                                text = transcription
+                                metadata.voice_note = true
+                                metadata.original_media_id = mediaId
+                            } else {
+                                text = '[Voice note - transcription unavailable]'
+                                metadata.voice_note = true
+                                metadata.original_media_id = mediaId
+                                metadata.transcription_failed = true
+                                isActionable = false
+                            }
+                        } else {
+                            text = '[Voice note - transcription unavailable]'
+                            metadata.voice_note = true
+                            metadata.original_media_id = mediaId
+                            metadata.download_failed = true
+                            isActionable = false
+                        }
+                    } else {
+                        continue
+                    }
+
+                    // Log the incoming message to channel_messages
                     const { data: insertedMsg, error } = await supabase
                         .from('channel_messages')
                         .insert({
@@ -116,13 +165,9 @@ export async function POST(request: Request) {
                             subject: 'WhatsApp Message',
                             body: text,
                             received_at: new Date(msg.timestamp * 1000).toISOString(),
-                            is_actionable: true,
+                            is_actionable: isActionable,
                             priority: 'medium',
-                            metadata: {
-                                rawUrl: payload,
-                                phoneNumber: phone,
-                                phoneNumberId,
-                            }
+                            metadata,
                         })
                         .select('*')
                         .single()
