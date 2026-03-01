@@ -1,16 +1,33 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { ChannelCard } from './channel-card'
+import { useSearchParams } from 'next/navigation'
+import { ChannelCard, type ConnectFlow } from './channel-card'
+import { ConnectModal, type ConnectModalMode } from './connect-modal'
 import { SyncButton } from './sync-button'
 import { SyncResults } from './sync-results'
 
-interface ChannelStatus {
+/** Static definition of the 6 target channels */
+const TARGET_CHANNELS: {
   type: string
   name: string
   description: string
   icon: string
+  color: string
+  connectFlow: ConnectFlow
+}[] = [
+  { type: 'gmail', name: 'Gmail', description: 'Triage, draft, and send emails automatically', icon: 'Mail', color: '#EA4335', connectFlow: 'oauth' },
+  { type: 'outlook', name: 'Outlook', description: 'Read and send emails via Microsoft Outlook', icon: 'Mail', color: '#0078D4', connectFlow: 'oauth' },
+  { type: 'whatsapp', name: 'WhatsApp', description: 'Business messaging via WhatsApp', icon: 'Phone', color: '#25D366', connectFlow: 'whatsapp_qr' },
+  { type: 'asana', name: 'Asana', description: 'Sync tasks, projects, and workflows', icon: 'CheckSquare', color: '#F06A6A', connectFlow: 'oauth' },
+  { type: 'calendly', name: 'Calendly', description: 'Manage scheduling and appointments', icon: 'CalendarClock', color: '#006BFF', connectFlow: 'oauth' },
+  { type: 'stripe', name: 'Stripe', description: 'Monitor payments, invoices, and revenue', icon: 'CreditCard', color: '#635BFF', connectFlow: 'api_key' },
+]
+
+interface ChannelStatusData {
+  type: string
   available: boolean
+  status?: 'connected' | 'error'
   lastSync: string | null
   messageCount: number
 }
@@ -43,7 +60,7 @@ function ChannelSkeleton() {
         </div>
         <div className="h-5 w-16 rounded-full bg-secondary" />
       </div>
-      <div className="mt-4 h-20 rounded-lg bg-secondary/30" />
+      <div className="mt-4 h-10 rounded-lg bg-secondary/30" />
       <div className="mt-4 flex items-center justify-between">
         <div className="h-3 w-16 rounded bg-secondary/40" />
         <div className="h-7 w-20 rounded-lg bg-secondary" />
@@ -70,12 +87,23 @@ function InlineToast({ toast, onDismiss }: { toast: Toast; onDismiss: () => void
 }
 
 export function ChannelGrid() {
-  const [channels, setChannels] = useState<ChannelStatus[]>([])
+  const searchParams = useSearchParams()
+  const [statusMap, setStatusMap] = useState<Record<string, ChannelStatusData>>({})
   const [loading, setLoading] = useState(true)
   const [syncing, setSyncing] = useState(false)
   const [syncingChannels, setSyncingChannels] = useState<Set<string>>(new Set())
   const [syncResults, setSyncResults] = useState<SyncResultItem[] | null>(null)
   const [toasts, setToasts] = useState<Toast[]>([])
+
+  // Connect modal state
+  const [modalOpen, setModalOpen] = useState(false)
+  const [modalMode, setModalMode] = useState<ConnectModalMode>('api_key')
+  const [modalChannel, setModalChannel] = useState('')
+  const [modalChannelName, setModalChannelName] = useState('')
+
+  // Config drawer state (wired in Task 2)
+  const [selectedChannel, setSelectedChannel] = useState<string | null>(null)
+  const [drawerOpen, setDrawerOpen] = useState(false)
 
   const addToast = useCallback((message: string, type: 'success' | 'error') => {
     const id = Math.random().toString(36).slice(2)
@@ -86,32 +114,123 @@ export function ChannelGrid() {
     setToasts(prev => prev.filter(t => t.id !== id))
   }, [])
 
-  useEffect(() => {
-    fetch('/api/channels/status')
-      .then(res => res.json())
-      .then(data => {
-        setChannels(data.channels || [])
-        setLoading(false)
-      })
-      .catch(() => {
-        setLoading(false)
-        addToast('Failed to load channel status', 'error')
-      })
+  const fetchStatus = useCallback(async () => {
+    try {
+      const res = await fetch('/api/channels/status')
+      const data = await res.json()
+      const channels = (data.channels || []) as ChannelStatusData[]
+      const map: Record<string, ChannelStatusData> = {}
+      for (const ch of channels) {
+        map[ch.type] = ch
+      }
+      setStatusMap(map)
+    } catch {
+      addToast('Failed to load channel status', 'error')
+    } finally {
+      setLoading(false)
+    }
   }, [addToast])
 
+  // Initial load + handle query params from OAuth callback
+  useEffect(() => {
+    fetchStatus()
+
+    const connected = searchParams.get('connected')
+    const error = searchParams.get('error')
+    if (connected) {
+      addToast(`${connected} connected successfully!`, 'success')
+      // Clean URL
+      window.history.replaceState({}, '', window.location.pathname)
+    }
+    if (error) {
+      addToast(decodeURIComponent(error), 'error')
+      window.history.replaceState({}, '', window.location.pathname)
+    }
+  }, [fetchStatus, searchParams, addToast])
+
+  /** Start OAuth flow in a popup window */
+  function startOAuthPopup(channel: string) {
+    // POST to connect endpoint to get OAuth redirect URL
+    fetch('/api/channels/connect', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ channel }),
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.redirect && data.url) {
+          const popup = window.open(data.url, `connect_${channel}`, 'width=600,height=700,scrollbars=yes')
+          // Poll for popup close, then re-fetch status
+          if (popup) {
+            const pollTimer = setInterval(() => {
+              if (popup.closed) {
+                clearInterval(pollTimer)
+                fetchStatus()
+              }
+            }, 500)
+          }
+        } else if (data.error) {
+          addToast(data.error, 'error')
+        }
+      })
+      .catch(() => {
+        addToast(`Failed to start ${channel} connection`, 'error')
+      })
+  }
+
+  function handleConnect(channelType: string, channelName: string, flow: ConnectFlow) {
+    if (flow === 'oauth') {
+      startOAuthPopup(channelType)
+    } else if (flow === 'api_key') {
+      setModalChannel(channelType)
+      setModalChannelName(channelName)
+      setModalMode('api_key')
+      setModalOpen(true)
+    } else if (flow === 'whatsapp_qr') {
+      setModalChannel(channelType)
+      setModalChannelName(channelName)
+      setModalMode('whatsapp_qr')
+      setModalOpen(true)
+    }
+  }
+
+  async function handleDisconnect(channelType: string) {
+    try {
+      const res = await fetch('/api/channels/disconnect', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ channel: channelType }),
+      })
+      const data = await res.json()
+      if (res.ok && data.success) {
+        addToast(`${channelType} disconnected. Messages preserved.`, 'success')
+        fetchStatus()
+      } else {
+        addToast(data.error || `Failed to disconnect ${channelType}`, 'error')
+      }
+    } catch {
+      addToast(`Network error disconnecting ${channelType}`, 'error')
+    }
+  }
+
+  function handleCardClick(channelType: string) {
+    setSelectedChannel(channelType)
+    setDrawerOpen(true)
+  }
+
   async function handleSyncAll() {
-    const available = channels.filter(c => c.available).map(c => c.type)
-    if (available.length === 0) return
+    const connected = TARGET_CHANNELS.filter(c => statusMap[c.type]?.available).map(c => c.type)
+    if (connected.length === 0) return
 
     setSyncing(true)
     setSyncResults(null)
-    setSyncingChannels(new Set(available))
+    setSyncingChannels(new Set(connected))
 
     try {
       const res = await fetch('/api/channels/sync', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ channels: available }),
+        body: JSON.stringify({ channels: connected }),
       })
       const data = await res.json()
 
@@ -119,16 +238,8 @@ export function ChannelGrid() {
         const results = data.results as SyncResultItem[]
         setSyncResults(results)
         const total = results.reduce((sum, r) => sum + r.tasksCreated, 0)
-        addToast(`Synced ${available.length} channels — ${total} tasks created`, 'success')
-
-        // Update lastSync times on channels
-        setChannels(prev => prev.map(ch => {
-          const result = results.find(r => r.channel === ch.type)
-          if (result) {
-            return { ...ch, lastSync: new Date().toISOString(), messageCount: result.messagesFound }
-          }
-          return ch
-        }))
+        addToast(`Synced ${connected.length} channels -- ${total} tasks created`, 'success')
+        fetchStatus()
       } else {
         addToast(data.error || 'Sync failed', 'error')
       }
@@ -154,19 +265,12 @@ export function ChannelGrid() {
       if (data.success && data.results?.length > 0) {
         const result = data.results[0] as SyncResultItem
         addToast(`${channelType}: ${result.messagesFound} messages, ${result.tasksCreated} tasks created`, 'success')
-
-        // Update this channel's sync results and status
         setSyncResults(prev => {
           if (!prev) return [result]
           const existing = prev.filter(r => r.channel !== channelType)
           return [...existing, result]
         })
-
-        setChannels(prev => prev.map(ch =>
-          ch.type === channelType
-            ? { ...ch, lastSync: new Date().toISOString(), messageCount: result.messagesFound }
-            : ch
-        ))
+        fetchStatus()
       } else {
         addToast(`Failed to sync ${channelType}`, 'error')
       }
@@ -189,7 +293,7 @@ export function ChannelGrid() {
           <div className="h-9 w-36 animate-pulse rounded-lg bg-secondary" />
         </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 5 }).map((_, i) => (
+          {Array.from({ length: 6 }).map((_, i) => (
             <ChannelSkeleton key={i} />
           ))}
         </div>
@@ -197,7 +301,7 @@ export function ChannelGrid() {
     )
   }
 
-  const connectedCount = channels.filter(c => c.available).length
+  const connectedCount = TARGET_CHANNELS.filter(c => statusMap[c.type]?.available).length
 
   return (
     <div>
@@ -217,7 +321,7 @@ export function ChannelGrid() {
       {/* Header bar */}
       <div className="mb-6 flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
-          {connectedCount} of {channels.length} channels connected
+          {connectedCount} of {TARGET_CHANNELS.length} channels connected
         </p>
         <SyncButton onClick={handleSyncAll} syncing={syncing} />
       </div>
@@ -233,28 +337,59 @@ export function ChannelGrid() {
         </div>
       )}
 
-      {/* Channel cards grid */}
+      {/* Channel cards grid -- always 6 cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {channels.map(channel => (
-          <ChannelCard
-            key={channel.type}
-            type={channel.type}
-            name={channel.name}
-            description={channel.description}
-            icon={channel.icon}
-            status={
-              syncingChannels.has(channel.type)
-                ? 'syncing'
-                : channel.available
-                  ? 'connected'
-                  : 'disconnected'
-            }
-            lastSync={channel.lastSync}
-            syncResult={syncResults?.find(r => r.channel === channel.type)}
-            onSync={() => handleSyncChannel(channel.type)}
-          />
-        ))}
+        {TARGET_CHANNELS.map(channel => {
+          const data = statusMap[channel.type]
+          const isConnected = data?.available ?? false
+          const hasError = data?.status === 'error'
+          const isSyncing = syncingChannels.has(channel.type)
+
+          let status: 'connected' | 'disconnected' | 'syncing' | 'error'
+          if (isSyncing) status = 'syncing'
+          else if (hasError) status = 'error'
+          else if (isConnected) status = 'connected'
+          else status = 'disconnected'
+
+          return (
+            <ChannelCard
+              key={channel.type}
+              type={channel.type}
+              name={channel.name}
+              description={channel.description}
+              icon={channel.icon}
+              color={channel.color}
+              connectFlow={channel.connectFlow}
+              status={status}
+              lastSync={data?.lastSync ?? null}
+              messageCount={data?.messageCount ?? 0}
+              onConnect={() => handleConnect(channel.type, channel.name, channel.connectFlow)}
+              onDisconnect={() => handleDisconnect(channel.type)}
+              onCardClick={() => handleCardClick(channel.type)}
+              onSync={() => handleSyncChannel(channel.type)}
+            />
+          )
+        })}
       </div>
+
+      {/* Connect modal for API key / WhatsApp QR */}
+      <ConnectModal
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+        mode={modalMode}
+        channel={modalChannel}
+        channelName={modalChannelName}
+        onSuccess={() => {
+          addToast(`${modalChannelName} connected successfully!`, 'success')
+          fetchStatus()
+        }}
+        onError={(msg) => addToast(msg, 'error')}
+      />
+
+      {/* Config drawer placeholder -- wired in Task 2 */}
+      {drawerOpen && selectedChannel && (
+        <div data-channel={selectedChannel} data-drawer-placeholder="true" />
+      )}
     </div>
   )
 }

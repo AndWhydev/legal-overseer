@@ -5,12 +5,15 @@ import {
   Mail,
   MessageCircle,
   CalendarDays,
-  Bell,
-  CheckCircle2,
-  XCircle,
-  Clock,
+  Phone,
+  CheckSquare,
+  CalendarClock,
+  CreditCard,
   RefreshCw,
-  AlertCircle,
+  Clock,
+  AlertTriangle,
+  Unplug,
+  Settings2,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -18,7 +21,29 @@ const iconMap: Record<string, React.ElementType> = {
   Mail,
   MessageCircle,
   CalendarDays,
-  Bell,
+  Phone,
+  CheckSquare,
+  CalendarClock,
+  CreditCard,
+}
+
+/** Channel connection type determines how the Connect flow works */
+export type ConnectFlow = 'oauth' | 'api_key' | 'whatsapp_qr'
+
+export interface ChannelCardProps {
+  type: string
+  name: string
+  description: string
+  icon: string
+  color: string
+  connectFlow: ConnectFlow
+  status: 'connected' | 'disconnected' | 'syncing' | 'error'
+  lastSync?: string | null
+  messageCount?: number
+  onConnect: () => void
+  onDisconnect: () => void
+  onCardClick?: () => void
+  onSync?: () => void
 }
 
 function relativeTime(date: string | Date): string {
@@ -38,72 +63,69 @@ function relativeTime(date: string | Date): string {
   return new Date(date).toLocaleDateString([], { month: 'short', day: 'numeric' })
 }
 
-export interface ChannelCardProps {
-  type: string
-  name: string
-  description: string
-  icon: string
-  status: 'connected' | 'disconnected' | 'syncing'
-  lastSync?: string | null
-  stats?: { messagesFound: number; tasksCreated: number; tasksUpdated: number }
-  syncResult?: {
-    messagesFound: number
-    tasksCreated: number
-    tasksUpdated: number
-    errors: string[]
-    duration: number
-  }
-  onSync: () => Promise<void>
-}
-
 export function ChannelCard({
+  type,
   name,
   description,
   icon,
+  color,
   status,
   lastSync,
-  stats,
-  syncResult,
+  messageCount,
+  onConnect,
+  onDisconnect,
+  onCardClick,
   onSync,
 }: ChannelCardProps) {
-  const [syncing, setSyncing] = useState(false)
+  const [disconnecting, setDisconnecting] = useState(false)
   const Icon = iconMap[icon] || Mail
 
   const isConnected = status === 'connected' || status === 'syncing'
-  const isSyncing = status === 'syncing' || syncing
+  const isError = status === 'error'
+  const isSyncing = status === 'syncing'
+  const isActive = isConnected || isError
 
-  async function handleSync() {
-    if (isSyncing) return
-    setSyncing(true)
-    try {
-      await onSync()
-    } finally {
-      setSyncing(false)
+  function handleCardClick(e: React.MouseEvent) {
+    // Don't trigger card click if clicking a button
+    const target = e.target as HTMLElement
+    if (target.closest('button')) return
+    if (isActive && onCardClick) {
+      onCardClick()
     }
   }
 
-  const displayResult = syncResult || (stats ? {
-    messagesFound: stats.messagesFound,
-    tasksCreated: stats.tasksCreated,
-    tasksUpdated: stats.tasksUpdated,
-    errors: [],
-    duration: 0,
-  } : null)
+  async function handleDisconnect(e: React.MouseEvent) {
+    e.stopPropagation()
+    if (!confirm(`Disconnect ${name}? Your synced messages will be preserved.`)) return
+    setDisconnecting(true)
+    try {
+      onDisconnect()
+    } finally {
+      setDisconnecting(false)
+    }
+  }
 
   return (
-    <div className={cn(
-      'group rounded-xl border border-border bg-card p-5 transition-all duration-200',
-      isConnected
-        ? 'hover:border-[#D4A574]/30 hover:shadow-[0_0_20px_rgba(212,165,116,0.08)]'
-        : 'opacity-60'
-    )}>
+    <div
+      onClick={handleCardClick}
+      className={cn(
+        'group rounded-xl border border-border bg-card p-5 transition-all duration-300',
+        isActive && 'hover:border-[#D4A574]/30 hover:shadow-[0_0_20px_rgba(212,165,116,0.08)] cursor-pointer',
+        !isActive && 'opacity-70',
+        // Connected animation target
+        isConnected && 'border-emerald-500/20',
+      )}
+    >
       {/* Header: icon + name + status */}
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
-          <div className={cn(
-            'flex h-10 w-10 items-center justify-center rounded-lg transition-colors',
-            isConnected ? 'bg-[#D4A574]/15 text-[#D4A574]' : 'bg-secondary text-muted-foreground'
-          )}>
+          <div
+            className={cn(
+              'flex h-10 w-10 items-center justify-center rounded-lg transition-colors duration-300',
+              isActive ? 'text-white' : 'bg-secondary text-muted-foreground'
+            )}
+            style={isActive ? { backgroundColor: `${color}20`, color } : undefined}
+          >
             <Icon className="h-5 w-5" />
           </div>
           <div>
@@ -112,76 +134,107 @@ export function ChannelCard({
           </div>
         </div>
 
-        {/* Status badge */}
+        {/* Status indicator */}
         <div className="flex items-center gap-1.5">
           {isSyncing ? (
             <span className="flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-400">
               <RefreshCw className="h-2.5 w-2.5 animate-spin" />
               Syncing
             </span>
+          ) : isError ? (
+            <span className="flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-400">
+              <AlertTriangle className="h-2.5 w-2.5" />
+              Needs attention
+            </span>
           ) : isConnected ? (
-            <span className="flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-400">
-              <CheckCircle2 className="h-2.5 w-2.5" />
-              Connected
+            <span className="flex items-center gap-1.5">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-50" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+              </span>
+              <span className="text-[10px] font-medium text-emerald-400">Connected</span>
             </span>
           ) : (
-            <span className="flex items-center gap-1 rounded-full bg-secondary px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-              <XCircle className="h-2.5 w-2.5" />
-              Not configured
+            <span className="relative flex h-2 w-2">
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-muted-foreground/40" />
             </span>
           )}
         </div>
       </div>
 
-      {/* Sync results */}
-      {displayResult && displayResult.messagesFound > 0 && (
-        <div className="mt-4 rounded-lg bg-secondary/50 p-3">
-          <div className="grid grid-cols-3 gap-2 text-xs">
-            <div className="text-center">
-              <p className="text-lg font-semibold text-foreground">{displayResult.messagesFound}</p>
-              <p className="text-muted-foreground">Messages</p>
-            </div>
-            <div className="text-center">
-              <p className="text-lg font-semibold text-[#4ADE80]">{displayResult.tasksCreated}</p>
-              <p className="text-muted-foreground">Created</p>
-            </div>
-            <div className="text-center">
-              <p className="text-lg font-semibold text-foreground">{displayResult.tasksUpdated}</p>
-              <p className="text-muted-foreground">Updated</p>
-            </div>
+      {/* Stats row for connected channels */}
+      {isActive && (messageCount !== undefined && messageCount > 0) && (
+        <div className="mt-3 flex items-center gap-4 rounded-lg bg-secondary/50 px-3 py-2">
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <Mail className="h-3 w-3" />
+            <span className="font-medium text-foreground">{messageCount}</span> messages
           </div>
-          {displayResult.errors.length > 0 && (
-            <div className="mt-2 flex items-start gap-1.5 text-xs text-destructive">
-              <AlertCircle className="mt-0.5 h-3 w-3 shrink-0" />
-              <span>{displayResult.errors[0]}</span>
+          {lastSync && (
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Clock className="h-3 w-3" />
+              {relativeTime(lastSync)}
             </div>
           )}
         </div>
       )}
 
-      {/* Footer: last sync + sync button */}
+      {/* Footer: actions */}
       <div className="mt-4 flex items-center justify-between">
-        {lastSync ? (
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <Clock className="h-3 w-3" />
-            {relativeTime(lastSync)}
-          </div>
+        {isActive ? (
+          <>
+            <button
+              onClick={handleDisconnect}
+              disabled={disconnecting}
+              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-destructive transition-colors disabled:opacity-50"
+            >
+              <Unplug className="h-3 w-3" />
+              {disconnecting ? 'Disconnecting...' : 'Disconnect'}
+            </button>
+            <div className="flex items-center gap-2">
+              {onSync && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); onSync(); }}
+                  disabled={isSyncing}
+                  className={cn(
+                    'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-150',
+                    'bg-secondary text-foreground hover:bg-secondary/80 active:scale-[0.97]',
+                    'disabled:opacity-40 disabled:cursor-not-allowed'
+                  )}
+                >
+                  <RefreshCw className={cn('h-3 w-3', isSyncing && 'animate-spin')} />
+                  Sync
+                </button>
+              )}
+              <button
+                onClick={(e) => { e.stopPropagation(); onCardClick?.(); }}
+                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <Settings2 className="h-3 w-3" />
+                Config
+              </button>
+            </div>
+          </>
         ) : (
-          <span className="text-xs text-muted-foreground/50">Never synced</span>
+          <>
+            {lastSync ? (
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Clock className="h-3 w-3" />
+                {relativeTime(lastSync)}
+              </div>
+            ) : (
+              <span className="text-xs text-muted-foreground/50">Not connected</span>
+            )}
+            <button
+              onClick={(e) => { e.stopPropagation(); onConnect(); }}
+              className={cn(
+                'inline-flex items-center gap-1.5 rounded-lg px-4 py-1.5 text-xs font-medium transition-all duration-150',
+                'bg-[#D4A574] text-background hover:bg-[#D4A574]/90 active:scale-[0.97]',
+              )}
+            >
+              Connect
+            </button>
+          </>
         )}
-
-        <button
-          onClick={handleSync}
-          disabled={isSyncing || !isConnected}
-          className={cn(
-            'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-150',
-            'bg-secondary text-foreground hover:bg-secondary/80 active:scale-[0.97]',
-            'disabled:opacity-40 disabled:cursor-not-allowed'
-          )}
-        >
-          <RefreshCw className={cn('h-3 w-3', isSyncing && 'animate-spin')} />
-          {isSyncing ? 'Syncing...' : 'Sync Now'}
-        </button>
       </div>
     </div>
   )
