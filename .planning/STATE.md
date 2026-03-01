@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-03-01)
 
 ## Current Position
 
-Phase: 13 of 17 (Deployment Stability)
-Plan: 3 of 4 in current phase
-Status: Executing
-Last activity: 2026-03-01 -- Completed 13-03 (Fly.io Worker & Cloudflare Edge Cron Hardening)
+Phase: 13 of 17 (Deployment Stability) -- COMPLETE
+Plan: 4 of 4 in current phase
+Status: Phase Complete
+Last activity: 2026-03-01 -- Completed 13-04 (CI/CD Pipeline & Deployment Verification)
 
-Progress: [####################..........] 100% v1.0+v1.1 | 3/4 plans Phase 13
+Progress: [####################..........] 100% v1.0+v1.1 | 4/4 plans Phase 13 DONE
 
 ## Performance Metrics
 
@@ -26,11 +26,15 @@ Progress: [####################..........] 100% v1.0+v1.1 | 3/4 plans Phase 13
 
 | Phase | Plans | Status |
 |-------|-------|--------|
-| 13. Deployment Stability | 4 | 3/4 complete |
+| 13. Deployment Stability | 4 | 4/4 COMPLETE |
 | 14. Channel Relay & OAuth | TBD | Not started |
 | 15. WhatsApp Pipeline | TBD | Not started |
 | 16. Confidence Routing Validation | TBD | Not started |
 | 17. Invoice & Lead Validation | TBD | Not started |
+
+| Phase | Plan | Duration | Tasks | Files |
+|-------|------|----------|-------|-------|
+| 13 | 04 | 8min | 2 | 2 |
 
 ## Accumulated Context
 
@@ -47,6 +51,9 @@ See PROJECT.md Key Decisions table.
 - [13-01] Keep ignoreBuildErrors: 106 TS errors are monorepo SupabaseClient type mismatches, not real app errors
 - [13-01] Service-role createClient for cron routes (no user session in cron context)
 - [13-01] Standardize all cron maxDuration to 300s via shared constant
+- [13-04] Vercel deploys via git integration; CI job only verifies health endpoint
+- [13-04] Deploy jobs skip gracefully when API tokens not configured
+- [13-04] Cron guard refactored to use getServiceClient() singleton
 
 ### Pending Todos
 
@@ -62,5 +69,5 @@ See PROJECT.md Key Decisions table.
 ## Session Continuity
 
 Last session: 2026-03-01
-Stopped at: Completed 13-03-PLAN.md (Fly.io Worker & Cloudflare Edge Cron Hardening)
+Stopped at: Completed 13-04-PLAN.md (CI/CD Pipeline & Deployment Verification) -- Phase 13 COMPLETE
 Resume file: None
