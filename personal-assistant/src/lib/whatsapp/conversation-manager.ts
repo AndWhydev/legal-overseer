@@ -85,8 +85,34 @@ function pushHistory(state: ConversationState, role: 'user' | 'assistant', text:
 }
 
 /**
+ * Resolve an approval with one retry on transient errors.
+ * If APPROVAL_ALREADY_RESOLVED, rethrows immediately (no retry).
+ */
+async function resolveApprovalWithRetry(
+  supabase: SupabaseClient,
+  approvalId: string,
+  decision: 'approved' | 'rejected',
+  userId: string
+): Promise<void> {
+  try {
+    await resolveApproval(supabase, approvalId, decision, userId, 'whatsapp')
+  } catch (err) {
+    const errMsg = err instanceof Error ? err.message : 'Unknown error'
+    // Don't retry idempotency or not-found errors
+    if (errMsg === 'APPROVAL_ALREADY_RESOLVED' || errMsg === 'APPROVAL_NOT_FOUND') {
+      throw err
+    }
+    // Retry once after 1 second for transient errors
+    console.warn('[conversation-manager] Approval resolve failed, retrying in 1s:', errMsg)
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    await resolveApproval(supabase, approvalId, decision, userId, 'whatsapp')
+  }
+}
+
+/**
  * Main entry point for all incoming WhatsApp messages.
  * Handles multi-turn conversations, confirmations, clarifications, and approvals.
+ * Includes end-to-end latency instrumentation.
  */
 export async function handleIncomingMessage(
   supabase: SupabaseClient,
@@ -94,28 +120,34 @@ export async function handleIncomingMessage(
   userId: string,
   text: string
 ): Promise<void> {
+  const startMs = Date.now()
   const state = getOrCreateState(userId, orgId)
   pushHistory(state, 'user', text)
+
+  let intentDetected = 'none'
 
   try {
     // Branch based on conversation state
     switch (state.status) {
       case 'awaiting_confirmation':
+        intentDetected = 'confirmation'
         await handleConfirmation(supabase, state, text)
-        return
+        break
 
       case 'awaiting_clarification':
+        intentDetected = 'clarification'
         await handleClarification(supabase, state, text)
-        return
+        break
 
       case 'awaiting_approval_decision':
+        intentDetected = 'approval_decision'
         await handleApprovalDecision(supabase, state, text)
-        return
+        break
 
       case 'idle':
       default:
         await handleNewMessage(supabase, state, text)
-        return
+        break
     }
   } catch (error) {
     console.error('[conversation-manager] Error handling message:', error)
@@ -125,6 +157,16 @@ export async function handleIncomingMessage(
     )
     await reply(state, errorMsg)
     resetState(state)
+  } finally {
+    // End-to-end latency instrumentation
+    console.log(JSON.stringify({
+      event: 'whatsapp_e2e_latency',
+      orgId,
+      intentDetected,
+      totalMs: Date.now() - startMs,
+      source: 'whatsapp',
+      isVoiceNote: text.startsWith('[Voice note]'),
+    }))
   }
 }
 
@@ -200,8 +242,12 @@ async function handleConfirmation(
   text: string
 ): Promise<void> {
   const normalized = text.trim().toLowerCase()
-  const isYes = /^(y|yes|yep|yeah|ok|confirm|go|do it|sure)$/i.test(normalized)
-  const isNo = /^(n|no|nah|nope|cancel|stop|nevermind|never mind)$/i.test(normalized)
+  const trimmed = text.trim()
+  // Thumbs up/down emoji detection (including skin tone variants)
+  const isThumbsUp = trimmed === '\u{1F44D}' || trimmed.startsWith('\u{1F44D}')
+  const isThumbsDown = trimmed === '\u{1F44E}' || trimmed.startsWith('\u{1F44E}')
+  const isYes = isThumbsUp || /^(y|yes|yep|yeah|ok|confirm|go|do it|sure|approved)$/i.test(normalized)
+  const isNo = isThumbsDown || /^(n|no|nah|nope|cancel|stop|nevermind|never mind|rejected)$/i.test(normalized)
 
   if (isYes && state.pendingCommand) {
     await reply(state, `Working on it...`)
@@ -298,21 +344,46 @@ async function handleApproveIntent(
   // Simple Y/N approval — find the most recent pending approval
   const pendingApprovals = await getPendingApprovals(supabase, state.orgId, { limit: 1 })
   if (pendingApprovals.length === 0) {
-    await reply(state, "No pending approvals right now. You're all caught up!")
+    // Fast-path: check for recently expired approvals in last hour
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString()
+    const { data: expired } = await supabase
+      .from('approval_queue')
+      .select('id')
+      .eq('org_id', state.orgId)
+      .in('status', ['auto_expired', 'expired'])
+      .gte('resolved_at', oneHourAgo)
+      .limit(1)
+
+    if (expired && expired.length > 0) {
+      await reply(state, 'That approval has expired. Check dashboard for details.')
+    } else {
+      await reply(state, "No pending approvals right now. You're all caught up!")
+    }
     return
   }
 
   const approval = pendingApprovals[0]
   const decision = rawQuery === 'approved' ? 'approved' : 'rejected'
+  const startMs = Date.now()
 
   try {
-    await resolveApproval(supabase, approval.id, decision, state.userId, 'whatsapp')
+    await resolveApprovalWithRetry(supabase, approval.id, decision, state.userId)
     const emoji = decision === 'approved' ? '✅' : '❌'
     await reply(state, `${emoji} ${approval.action_summary} — *${decision}*`)
+
+    // Audit log for approval resolution
+    console.log(JSON.stringify({
+      event: 'whatsapp_approval',
+      orgId: state.orgId,
+      approvalId: approval.id,
+      decision,
+      source: 'whatsapp',
+      latencyMs: Date.now() - startMs,
+    }))
   } catch (err) {
     const errMsg = err instanceof Error ? err.message : 'Unknown error'
     if (errMsg === 'APPROVAL_ALREADY_RESOLVED') {
-      await reply(state, 'That approval has already been resolved.')
+      await reply(state, 'That approval has already been handled.')
     } else {
       await reply(state, `Failed to process approval: ${errMsg}`)
     }
@@ -333,13 +404,27 @@ async function resolveIndexedApproval(
   }
 
   const approval = approvals[index - 1]
+  const startMs = Date.now()
   try {
-    await resolveApproval(supabase, approval.id, decision, state.userId, 'whatsapp')
+    await resolveApprovalWithRetry(supabase, approval.id, decision, state.userId)
     const emoji = decision === 'approved' ? '✅' : '❌'
     await reply(state, `${emoji} #${index} ${approval.action_summary} — *${decision}*`)
+
+    console.log(JSON.stringify({
+      event: 'whatsapp_approval',
+      orgId: state.orgId,
+      approvalId: approval.id,
+      decision,
+      source: 'whatsapp',
+      latencyMs: Date.now() - startMs,
+    }))
   } catch (err) {
     const errMsg = err instanceof Error ? err.message : 'Unknown error'
-    await reply(state, `Failed: ${errMsg}`)
+    if (errMsg === 'APPROVAL_ALREADY_RESOLVED') {
+      await reply(state, `#${index} has already been handled.`)
+    } else {
+      await reply(state, `Failed: ${errMsg}`)
+    }
   }
 }
 
@@ -364,13 +449,27 @@ async function handleApprovalDecision(
   }
 
   const decision = isApprove ? 'approved' : 'rejected'
+  const startMs = Date.now()
   try {
-    await resolveApproval(supabase, state.pendingApprovalId, decision, state.userId, 'whatsapp')
+    await resolveApprovalWithRetry(supabase, state.pendingApprovalId, decision, state.userId)
     const emoji = decision === 'approved' ? '✅' : '❌'
     await reply(state, `${emoji} Action *${decision}*.`)
+
+    console.log(JSON.stringify({
+      event: 'whatsapp_approval',
+      orgId: state.orgId,
+      approvalId: state.pendingApprovalId,
+      decision,
+      source: 'whatsapp',
+      latencyMs: Date.now() - startMs,
+    }))
   } catch (err) {
     const errMsg = err instanceof Error ? err.message : 'Unknown error'
-    await reply(state, `Failed: ${errMsg}`)
+    if (errMsg === 'APPROVAL_ALREADY_RESOLVED') {
+      await reply(state, 'That approval has already been handled.')
+    } else {
+      await reply(state, `Failed: ${errMsg}`)
+    }
   }
 
   resetState(state)

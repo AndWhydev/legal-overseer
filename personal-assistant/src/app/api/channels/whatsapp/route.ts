@@ -55,6 +55,7 @@ async function resolveOrgId(
 }
 
 export async function POST(request: Request) {
+    const webhookStartMs = Date.now()
     const bodyText = await request.text()
 
     // Verify Webhook Signature if secret exists
@@ -173,11 +174,24 @@ export async function POST(request: Request) {
                         .single()
 
                     if (!error && insertedMsg) {
+                        const processStartMs = Date.now()
                         // Background process the message intent
                         // Do not await this, let Meta Webhook receive 200 OK fast
-                        processWhatsAppMessage(supabase, orgId, insertedMsg, text).catch(e => {
-                            console.error('Failed processing WhatsApp Message:', e)
-                        })
+                        processWhatsAppMessage(supabase, orgId, insertedMsg, text)
+                            .catch(e => {
+                                console.error('Failed processing WhatsApp Message:', e)
+                            })
+                            .finally(() => {
+                                console.log(JSON.stringify({
+                                    event: 'whatsapp_webhook_latency',
+                                    orgId,
+                                    messageType: msg.type,
+                                    insertMs: processStartMs - webhookStartMs,
+                                    processMs: Date.now() - processStartMs,
+                                    totalMs: Date.now() - webhookStartMs,
+                                    source: 'cloud_api',
+                                }))
+                            })
                     } else {
                         console.error('Failed to log WhatsApp message to database:', error)
                     }
@@ -186,5 +200,8 @@ export async function POST(request: Request) {
         }
     }
 
-    return NextResponse.json({ status: 'success' })
+    const webhookMs = Date.now() - webhookStartMs
+    return NextResponse.json({ status: 'success' }, {
+        headers: { 'X-WhatsApp-Process-Ms': String(webhookMs) },
+    })
 }

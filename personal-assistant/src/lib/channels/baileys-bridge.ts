@@ -310,6 +310,7 @@ export class BaileysBridge {
   // ── Private helpers ─────────────────────────────────────────────────
 
   private async handleIncomingMessage(msg: Record<string, unknown>): Promise<void> {
+    const receiveStartMs = Date.now()
     const key = msg.key as Record<string, unknown> | undefined
     if (!key) return
 
@@ -339,6 +340,8 @@ export class BaileysBridge {
     if (existing && existing.length > 0) return
 
     // Determine message type and extract content
+    const receiveMs = Date.now() - receiveStartMs
+    let transcribeMs = 0
     let body: string
     let metadata: Record<string, unknown> = { source: 'baileys', jid }
 
@@ -355,6 +358,7 @@ export class BaileysBridge {
       const mimeType = (audioMsg.mimetype as string) || 'audio/ogg'
 
       try {
+        const transcribeStartMs = Date.now()
         const baileys = await loadBaileys()
         if (!baileys) {
           body = '[Voice note - Baileys unavailable for download]'
@@ -363,6 +367,7 @@ export class BaileysBridge {
           // Dynamic import to avoid circular dependency
           const { transcribeVoiceNote } = await import('./whatsapp-voice')
           const transcription = await transcribeVoiceNote(Buffer.from(buffer), mimeType)
+          transcribeMs = Date.now() - transcribeStartMs
 
           if (transcription) {
             body = transcription
@@ -415,11 +420,27 @@ export class BaileysBridge {
       return
     }
 
+    const insertMs = Date.now() - receiveStartMs - receiveMs - transcribeMs
+
     if (insertedMsg) {
+      const processStartMs = Date.now()
       // Process through the same pipeline as webhook messages
-      processWhatsAppMessage(this.supabase, this.orgId, insertedMsg, body).catch(err => {
-        console.error('[baileys-bridge] Failed to process message:', err)
-      })
+      processWhatsAppMessage(this.supabase, this.orgId, insertedMsg, body)
+        .catch(err => {
+          console.error('[baileys-bridge] Failed to process message:', err)
+        })
+        .finally(() => {
+          console.log(JSON.stringify({
+            event: 'whatsapp_bridge_latency',
+            orgId: this.orgId,
+            receiveMs,
+            transcribeMs,
+            insertMs,
+            processMs: Date.now() - processStartMs,
+            totalMs: Date.now() - receiveStartMs,
+            source: 'baileys',
+          }))
+        })
     }
   }
 

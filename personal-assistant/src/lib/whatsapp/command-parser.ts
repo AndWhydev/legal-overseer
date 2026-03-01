@@ -198,11 +198,19 @@ export async function parseCommand(
 function tryParseApprovalFast(text: string): ParsedCommand | null {
   const normalized = text.trim().toUpperCase()
 
-  if (/^(Y|YES|APPROVE|OK|CONFIRM|YEP|YEAH|GO|DO IT)$/i.test(normalized)) {
+  // Emoji approval patterns (WhatsApp users send these)
+  if (normalized === '\u{1F44D}' || normalized === '\u{1F44D}\u{1F3FB}' || normalized === '\u{1F44D}\u{1F3FC}' || normalized === '\u{1F44D}\u{1F3FD}' || normalized === '\u{1F44D}\u{1F3FE}' || normalized === '\u{1F44D}\u{1F3FF}') {
+    return { intent: 'approve', confidence: 1.0, entities: { rawQuery: 'approved' } }
+  }
+  if (normalized === '\u{1F44E}' || normalized === '\u{1F44E}\u{1F3FB}' || normalized === '\u{1F44E}\u{1F3FC}' || normalized === '\u{1F44E}\u{1F3FD}' || normalized === '\u{1F44E}\u{1F3FE}' || normalized === '\u{1F44E}\u{1F3FF}') {
+    return { intent: 'approve', confidence: 1.0, entities: { rawQuery: 'rejected' } }
+  }
+
+  if (/^(Y|YES|APPROVE|APPROVED|OK|CONFIRM|YEP|YEAH|GO|DO IT|SURE)$/i.test(normalized)) {
     return { intent: 'approve', confidence: 1.0, entities: { rawQuery: 'approved' } }
   }
 
-  if (/^(N|NO|REJECT|CANCEL|NAH|NOPE|STOP|DONT)$/i.test(normalized)) {
+  if (/^(N|NO|REJECT|REJECTED|CANCEL|NAH|NOPE|STOP|DONT)$/i.test(normalized)) {
     return { intent: 'approve', confidence: 1.0, entities: { rawQuery: 'rejected' } }
   }
 
