@@ -176,7 +176,11 @@ Plans:
   3. Approval Y/N replies via WhatsApp reliably execute the queued action
   4. End-to-end latency from WhatsApp message to action/approval is under 10 seconds
   5. WhatsApp Baileys bridge maintains stable connection over 7-day continuous run
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 15-01-PLAN.md -- Baileys bridge worker, voice note transcription, webhook audio handling
+- [ ] 15-02-PLAN.md -- Multi-turn context resolution, approval hardening, latency instrumentation
 
 ### Phase 16: Confidence Routing Validation
 **Goal**: Confidence routing produces reliable auto-act/approve/escalate decisions across all agents
