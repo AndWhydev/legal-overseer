@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-03-01)
 
 **Core value:** BitBit understands the business better than the business owner -- when Andy says "Invoice Sezer for the White House RE work", BitBit knows who Sezer is, what the work was, the rate, and whether it's already been invoiced.
-**Current focus:** Phase 14 - Channel Relay & OAuth (v1.2 Battle-Testing & Sellability)
+**Current focus:** Phase 15 - WhatsApp Pipeline (v1.2 Battle-Testing & Sellability)
 
 ## Current Position
 
-Phase: 14 of 17 (Channel Relay & OAuth) -- COMPLETE
-Plan: 5 of 5 in current phase -- COMPLETE
-Status: Phase 14 complete, ready for Phase 15
-Last activity: 2026-03-02 -- Completed 14-05 (Integration Verification & Checkpoint)
+Phase: 15 of 17 (WhatsApp Pipeline)
+Plan: 1 of TBD in current phase
+Status: Executing Phase 15
+Last activity: 2026-03-02 -- Completed 15-01 (Baileys Bridge & Voice Transcription)
 
-Progress: [####################..........] 100% v1.0+v1.1 | Phase 14 COMPLETE (5/5)
+Progress: [####################..........] 100% v1.0+v1.1 | Phase 15 IN PROGRESS (1/TBD)
 
 ## Performance Metrics
 
@@ -28,7 +28,7 @@ Progress: [####################..........] 100% v1.0+v1.1 | Phase 14 COMPLETE (5
 |-------|-------|--------|
 | 13. Deployment Stability | 4 | 4/4 COMPLETE |
 | 14. Channel Relay & OAuth | 5 | 5/5 COMPLETE |
-| 15. WhatsApp Pipeline | TBD | Not started |
+| 15. WhatsApp Pipeline | TBD | 1/TBD IN PROGRESS |
 | 16. Confidence Routing Validation | TBD | Not started |
 | 17. Invoice & Lead Validation | TBD | Not started |
 
@@ -39,6 +39,7 @@ Progress: [####################..........] 100% v1.0+v1.1 | Phase 14 COMPLETE (5
 | 14 | 02 | 17min | 2 | 5 |
 | 14 | 03 | 13min | 2 | 5 |
 | 14 | 04 | 10min | 2 | 4 |
+| 15 | 01 | 11min | 2 | 5 |
 
 ## Accumulated Context
 
@@ -73,6 +74,9 @@ See PROJECT.md Key Decisions table.
 - [14-04] Burst handling: log warning at >20/channel and >50/total, process all sequentially
 - [14-04] WhatsApp health logged to existing channel_health table via upsert
 - [14-04] Classification retry: 3 attempts with exponential backoff (1s/2s/4s), then mark unclassified
+- [15-01] Dynamic import for Baileys -- module loads without library installed, isBaileysAvailable() gates bridge ops
+- [15-01] Uint8Array wrapper for Buffer-to-Blob conversion in voice transcription
+- [15-01] Voice note prefix [Voice note] prepended in parser for lenient speech-origin parsing
 
 ### Pending Todos
 
@@ -87,6 +91,6 @@ See PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-03-01
-Stopped at: Completed 14-05-PLAN.md (Integration Verification & Checkpoint) — Phase 14 complete
+Last session: 2026-03-02
+Stopped at: Completed 15-01-PLAN.md (Baileys Bridge & Voice Transcription)
 Resume file: None
