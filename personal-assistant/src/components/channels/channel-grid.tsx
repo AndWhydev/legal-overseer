@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { ChannelCard, type ConnectFlow } from './channel-card'
 import { ConnectModal, type ConnectModalMode } from './connect-modal'
+import { ChannelConfigDrawer } from './channel-config-drawer'
 import { SyncButton } from './sync-button'
 import { SyncResults } from './sync-results'
 
@@ -386,10 +387,14 @@ export function ChannelGrid() {
         onError={(msg) => addToast(msg, 'error')}
       />
 
-      {/* Config drawer placeholder -- wired in Task 2 */}
-      {drawerOpen && selectedChannel && (
-        <div data-channel={selectedChannel} data-drawer-placeholder="true" />
-      )}
+      {/* Channel config drawer */}
+      <ChannelConfigDrawer
+        channel={selectedChannel}
+        isOpen={drawerOpen}
+        onClose={() => { setDrawerOpen(false); setSelectedChannel(null); }}
+        onDisconnect={(ch) => handleDisconnect(ch)}
+        onToast={addToast}
+      />
     </div>
   )
 }

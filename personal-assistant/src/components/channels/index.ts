@@ -1,6 +1,7 @@
 export { ChannelGrid } from './channel-grid'
 export { ChannelCard, type ChannelCardProps } from './channel-card'
 export { ConnectModal, type ConnectModalMode } from './connect-modal'
+export { ChannelConfigDrawer } from './channel-config-drawer'
 export { SyncButton } from './sync-button'
 export { SyncResults } from './sync-results'
 export { MessagePreview } from './message-preview'
