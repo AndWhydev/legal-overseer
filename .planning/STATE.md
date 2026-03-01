@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-03-01)
 
 **Core value:** BitBit understands the business better than the business owner -- when Andy says "Invoice Sezer for the White House RE work", BitBit knows who Sezer is, what the work was, the rate, and whether it's already been invoiced.
-**Current focus:** Phase 13 - Deployment Stability (v1.2 Battle-Testing & Sellability)
+**Current focus:** Phase 14 - Channel Relay & OAuth (v1.2 Battle-Testing & Sellability)
 
 ## Current Position
 
-Phase: 13 of 17 (Deployment Stability) -- COMPLETE
-Plan: 4 of 4 in current phase
-Status: Phase Complete
-Last activity: 2026-03-01 -- Completed 13-04 (CI/CD Pipeline & Deployment Verification)
+Phase: 14 of 17 (Channel Relay & OAuth) -- IN PROGRESS
+Plan: 1 of 5 in current phase -- COMPLETE
+Status: Executing Phase 14
+Last activity: 2026-03-01 -- Completed 14-01 (OAuth Provider Registration & Channel Expansion)
 
-Progress: [####################..........] 100% v1.0+v1.1 | 4/4 plans Phase 13 DONE
+Progress: [####################..........] 100% v1.0+v1.1 | 1/5 plans Phase 14
 
 ## Performance Metrics
 
@@ -27,7 +27,7 @@ Progress: [####################..........] 100% v1.0+v1.1 | 4/4 plans Phase 13 D
 | Phase | Plans | Status |
 |-------|-------|--------|
 | 13. Deployment Stability | 4 | 4/4 COMPLETE |
-| 14. Channel Relay & OAuth | TBD | Not started |
+| 14. Channel Relay & OAuth | 5 | 1/5 IN PROGRESS |
 | 15. WhatsApp Pipeline | TBD | Not started |
 | 16. Confidence Routing Validation | TBD | Not started |
 | 17. Invoice & Lead Validation | TBD | Not started |
@@ -35,6 +35,7 @@ Progress: [####################..........] 100% v1.0+v1.1 | 4/4 plans Phase 13 D
 | Phase | Plan | Duration | Tasks | Files |
 |-------|------|----------|-------|-------|
 | 13 | 04 | 8min | 2 | 2 |
+| 14 | 01 | 7min | 2 | 6 |
 
 ## Accumulated Context
 
@@ -54,6 +55,10 @@ See PROJECT.md Key Decisions table.
 - [13-04] Vercel deploys via git integration; CI job only verifies health endpoint
 - [13-04] Deploy jobs skip gracefully when API tokens not configured
 - [13-04] Cron guard refactored to use getServiceClient() singleton
+- [14-01] Migration 045 (sequential) instead of plan's 052 for proper ordering
+- [14-01] Gmail access_type=offline + prompt=consent as provider-specific URL params
+- [14-01] Content-hash dedup: SHA-256 of sender:subject:body(200) with 5-min window
+- [14-01] Channel status API merges org_integrations + channel_connections + adapter fallback
 
 ### Pending Todos
 
@@ -69,5 +74,5 @@ See PROJECT.md Key Decisions table.
 ## Session Continuity
 
 Last session: 2026-03-01
-Stopped at: Completed 13-04-PLAN.md (CI/CD Pipeline & Deployment Verification) -- Phase 13 COMPLETE
+Stopped at: Completed 14-01-PLAN.md (OAuth Provider Registration & Channel Expansion)
 Resume file: None

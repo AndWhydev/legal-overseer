@@ -103,8 +103,8 @@ Requirements for battle-testing and sellability. Each maps to roadmap phases.
 | DEPLOY-04 | Phase 13 | Complete |
 | DEPLOY-05 | Phase 13 | Complete |
 | DEPLOY-06 | Phase 13 | Complete |
-| CHAN-01 | Phase 14 | Pending |
-| CHAN-02 | Phase 14 | Pending |
+| CHAN-01 | Phase 14 | In Progress |
+| CHAN-02 | Phase 14 | In Progress |
 | CHAN-03 | Phase 15 | Pending |
 | CHAN-04 | Phase 14 | Pending |
 | CHAN-05 | Phase 14 | Pending |
@@ -126,12 +126,12 @@ Requirements for battle-testing and sellability. Each maps to roadmap phases.
 | LEAD-01 | Phase 17 | Pending |
 | LEAD-02 | Phase 17 | Pending |
 | LEAD-03 | Phase 17 | Pending |
-| OAUTH-01 | Phase 14 | Pending |
-| OAUTH-02 | Phase 14 | Pending |
+| OAUTH-01 | Phase 14 | In Progress |
+| OAUTH-02 | Phase 14 | In Progress |
 | OAUTH-03 | Phase 14 | Pending |
-| OAUTH-04 | Phase 14 | Pending |
-| OAUTH-05 | Phase 14 | Pending |
-| OAUTH-06 | Phase 14 | Pending |
+| OAUTH-04 | Phase 14 | In Progress |
+| OAUTH-05 | Phase 14 | In Progress |
+| OAUTH-06 | Phase 14 | In Progress |
 | OAUTH-07 | Phase 14 | Pending |
 | OAUTH-08 | Phase 14 | Pending |
 
@@ -142,4 +142,4 @@ Requirements for battle-testing and sellability. Each maps to roadmap phases.
 
 ---
 *Requirements defined: 2026-03-01*
-*Last updated: 2026-03-01 after roadmap creation*
+*Last updated: 2026-03-01 after 14-01 completion*
