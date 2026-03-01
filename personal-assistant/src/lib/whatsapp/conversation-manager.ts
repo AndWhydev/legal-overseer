@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { parseCommand, type ParsedCommand } from './command-parser'
+import { parseCommand, type ParsedCommand, type ConversationHistoryEntry } from './command-parser'
 import { dispatchCommand } from './agent-dispatch'
 import { formatResponse } from './response-formatter'
 import { sendMessage } from '../channels/whatsapp'
@@ -16,7 +16,7 @@ export interface ConversationState {
     question: string
     options?: string[]
   }
-  history: Array<{ role: 'user' | 'assistant'; text: string; timestamp: number }>
+  history: ConversationHistoryEntry[]
   lastActivity: number
 }
 
@@ -133,7 +133,7 @@ async function handleNewMessage(
   state: ConversationState,
   text: string
 ): Promise<void> {
-  const command = await parseCommand(supabase, state.orgId, text)
+  const command = await parseCommand(supabase, state.orgId, text, state.history)
 
   // Low confidence or unknown intent -> error recovery with suggestions
   if (command.intent === 'unknown' || command.confidence < 0.5) {
@@ -178,6 +178,18 @@ async function handleNewMessage(
 
   // Direct execution
   const result = await dispatchCommand(supabase, state.orgId, command)
+
+  // Track resolved contact in history for future pronoun resolution
+  const resolvedContact = command.resolvedContacts?.[0]?.contact?.name
+    ?? command.entities.contactNames?.[0]
+  if (resolvedContact) {
+    // Tag the most recent user history entry with the resolved contact
+    const lastUserEntry = [...state.history].reverse().find(h => h.role === 'user')
+    if (lastUserEntry) {
+      lastUserEntry.resolvedContact = resolvedContact
+    }
+  }
+
   pushHistory(state, 'assistant', result.response)
   await sendMessage(state.userId, result.response)
 }
@@ -207,7 +219,7 @@ async function handleConfirmation(
   }
 
   // Not a clear Y/N — maybe they're asking something new
-  const newCommand = await parseCommand(supabase, state.orgId, text)
+  const newCommand = await parseCommand(supabase, state.orgId, text, state.history)
   if (newCommand.intent !== 'unknown' && newCommand.confidence >= 0.7) {
     // They changed their mind, process as new message
     resetState(state)

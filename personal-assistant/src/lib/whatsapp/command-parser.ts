@@ -69,16 +69,29 @@ Return ONLY a JSON object:
   }
 }
 
-Only include entity fields that are actually present. Be generous with confidence for clear requests.`
+Only include entity fields that are actually present. Be generous with confidence for clear requests.
+
+If conversation history is provided below, use it to resolve pronouns and references:
+- "him/her/them" -> the most recently mentioned contact
+- "that/it/the invoice" -> the most recently discussed item
+- "same amount/same project" -> reuse from prior context`
 
 /**
  * Parse a WhatsApp message into structured intent + entities.
  * Uses Claude Haiku for fast NL parsing, then resolves entities against the org's contact database.
  */
+export interface ConversationHistoryEntry {
+  role: 'user' | 'assistant'
+  text: string
+  timestamp: number
+  resolvedContact?: string
+}
+
 export async function parseCommand(
   supabase: SupabaseClient,
   orgId: string,
-  text: string
+  text: string,
+  history?: ConversationHistoryEntry[]
 ): Promise<ParsedCommand> {
   // Fast-path: check for obvious approval patterns without LLM
   const approvalResult = tryParseApprovalFast(text)
@@ -93,11 +106,21 @@ export async function parseCommand(
   const client = new Anthropic()
   let parsed: Record<string, unknown> = { intent: 'unknown', confidence: 0, entities: {} }
 
+  // Build system prompt with conversation history if available
+  let systemPrompt = PARSE_PROMPT
+  if (history && history.length > 0) {
+    const recentHistory = history.slice(-6)
+    const historyLines = recentHistory
+      .map((h) => `${h.role === 'user' ? 'User' : 'Assistant'}: ${h.text}`)
+      .join('\n')
+    systemPrompt += `\n\nCONVERSATION HISTORY (most recent messages):\n${historyLines}`
+  }
+
   try {
     const response = await client.messages.create({
       model: 'claude-3-5-haiku-latest',
       max_tokens: 500,
-      system: PARSE_PROMPT,
+      system: systemPrompt,
       messages: [{ role: 'user', content: text }],
     })
 
@@ -123,6 +146,22 @@ export async function parseCommand(
     intent,
     confidence: typeof parsed.confidence === 'number' ? parsed.confidence : 0,
     entities,
+  }
+
+  // Fallback heuristic: if no contact names were parsed but history has a resolved contact,
+  // use the most recent one (handles "invoice him" where LLM missed the reference)
+  if (
+    (!entities.contactNames || entities.contactNames.length === 0) &&
+    history &&
+    history.length > 0 &&
+    ['invoice', 'task_create', 'schedule', 'lead_status'].includes(intent)
+  ) {
+    for (let i = history.length - 1; i >= 0; i--) {
+      if (history[i].resolvedContact) {
+        entities.contactNames = [history[i].resolvedContact!]
+        break
+      }
+    }
   }
 
   // Resolve contact names against org database
