@@ -58,11 +58,11 @@ Requirements for battle-testing and sellability. Each maps to roadmap phases.
 
 - [ ] **OAUTH-01**: User can connect Gmail via Google OAuth flow from settings page
 - [ ] **OAUTH-02**: User can connect Outlook via Microsoft OAuth flow from settings page
-- [ ] **OAUTH-03**: User can link WhatsApp via QR code / phone number pairing flow from settings page
+- [x] **OAUTH-03**: User can link WhatsApp via QR code / phone number pairing flow from settings page
 - [ ] **OAUTH-04**: User can connect Asana via OAuth flow from settings page
 - [ ] **OAUTH-05**: User can connect Calendly via OAuth flow from settings page
-- [ ] **OAUTH-06**: User can connect Stripe via OAuth/API key flow from settings page
-- [ ] **OAUTH-07**: Channel settings page shows connection status, last sync time, and disconnect option for each channel
+- [x] **OAUTH-06**: User can connect Stripe via OAuth/API key flow from settings page
+- [x] **OAUTH-07**: Channel settings page shows connection status, last sync time, and disconnect option for each channel
 - [x] **OAUTH-08**: OAuth token refresh handles expiry automatically without user re-auth
 
 ## Future Requirements
@@ -128,11 +128,11 @@ Requirements for battle-testing and sellability. Each maps to roadmap phases.
 | LEAD-03 | Phase 17 | Pending |
 | OAUTH-01 | Phase 14 | In Progress |
 | OAUTH-02 | Phase 14 | In Progress |
-| OAUTH-03 | Phase 14 | Pending |
+| OAUTH-03 | Phase 14 | Complete |
 | OAUTH-04 | Phase 14 | In Progress |
 | OAUTH-05 | Phase 14 | In Progress |
 | OAUTH-06 | Phase 14 | In Progress |
-| OAUTH-07 | Phase 14 | Pending |
+| OAUTH-07 | Phase 14 | Complete |
 | OAUTH-08 | Phase 14 | Complete |
 
 **Coverage:**

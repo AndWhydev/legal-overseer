@@ -12,9 +12,9 @@ See: .planning/PROJECT.md (updated 2026-03-01)
 Phase: 14 of 17 (Channel Relay & OAuth) -- IN PROGRESS
 Plan: 4 of 5 in current phase -- COMPLETE
 Status: Executing Phase 14
-Last activity: 2026-03-01 -- Completed 14-04 (Message Dedup, Burst Handling & WhatsApp Monitoring)
+Last activity: 2026-03-01 -- Completed 14-03 (Channel Settings UI)
 
-Progress: [####################..........] 100% v1.0+v1.1 | 3/5 plans Phase 14
+Progress: [####################..........] 100% v1.0+v1.1 | 4/5 plans Phase 14
 
 ## Performance Metrics
 
@@ -27,7 +27,7 @@ Progress: [####################..........] 100% v1.0+v1.1 | 3/5 plans Phase 14
 | Phase | Plans | Status |
 |-------|-------|--------|
 | 13. Deployment Stability | 4 | 4/4 COMPLETE |
-| 14. Channel Relay & OAuth | 5 | 3/5 IN PROGRESS |
+| 14. Channel Relay & OAuth | 5 | 4/5 IN PROGRESS |
 | 15. WhatsApp Pipeline | TBD | Not started |
 | 16. Confidence Routing Validation | TBD | Not started |
 | 17. Invoice & Lead Validation | TBD | Not started |
@@ -37,6 +37,7 @@ Progress: [####################..........] 100% v1.0+v1.1 | 3/5 plans Phase 14
 | 13 | 04 | 8min | 2 | 2 |
 | 14 | 01 | 7min | 2 | 6 |
 | 14 | 02 | 17min | 2 | 5 |
+| 14 | 03 | 13min | 2 | 5 |
 | 14 | 04 | 10min | 2 | 4 |
 
 ## Accumulated Context
@@ -65,6 +66,9 @@ See PROJECT.md Key Decisions table.
 - [14-02] WhatsApp connect creates pairing session for future QR bridge (Phase 15)
 - [14-02] Token refresh: 15min proactive window, 24-retry grace period before error state
 - [14-02] Error state triggers dashboard + email notification via existing dispatcher
+- [14-03] OAuth popup (600x700) stays on settings page per user decision
+- [14-03] Static 6-channel list always rendered regardless of adapter availability
+- [14-03] WhatsApp QR is UI shell only -- actual QR generation deferred to Phase 15
 - [14-04] Two-tier dedup: fast external_id check then SHA-256 content-hash cross-channel within 5-min window
 - [14-04] Burst handling: log warning at >20/channel and >50/total, process all sequentially
 - [14-04] WhatsApp health logged to existing channel_health table via upsert
@@ -84,5 +88,5 @@ See PROJECT.md Key Decisions table.
 ## Session Continuity
 
 Last session: 2026-03-01
-Stopped at: Completed 14-04-PLAN.md (Message Dedup, Burst Handling & WhatsApp Monitoring)
+Stopped at: Completed 14-03-PLAN.md (Channel Settings UI)
 Resume file: None
