@@ -1,3 +1,18 @@
+/**
+ * Channel Relay Daemon
+ *
+ * Latency Budget (CHAN-05):
+ * -------------------------
+ * - Poll initiation: <100ms
+ * - IMAP/API pull: 500ms-5s (depends on message count and provider)
+ * - Dedup check: <50ms per message (DB query)
+ * - Insert: <20ms per message (upsert)
+ * - Classification routing: <100ms (queue, not inline)
+ * - Total per-cycle target: <10s for up to 50 messages
+ * - Burst conditions (>20 messages): sequential processing, no skip
+ * - Cross-channel dedup window: 5 minutes
+ */
+
 import crypto from 'crypto'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { ChannelMessage, ChannelType } from './types'
