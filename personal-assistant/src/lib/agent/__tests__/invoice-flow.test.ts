@@ -74,6 +74,8 @@ describe('detectDuplicateInvoice', () => {
         select: () => ({
           eq: function() { return this },
           neq: function() { return this },
+          gte: function() { return this },
+          lte: function() { return this },
           order: function() { return this },
           limit: () => Promise.resolve({ data: [], error: null }),
         }),
@@ -92,6 +94,8 @@ describe('detectDuplicateInvoice', () => {
         select: () => ({
           eq: function() { return this },
           neq: function() { return this },
+          gte: function() { return this },
+          lte: function() { return this },
           order: function() { return this },
           limit: () => Promise.resolve({ data: [existing], error: null }),
         }),
