@@ -193,7 +193,11 @@ Plans:
   2. Per-agent thresholds are tuned (invoice has higher auto-act bar than sentry)
   3. False positive rate on auto-actions is measured and below acceptable threshold
   4. Adversarial/ambiguous inputs consistently trigger escalation rather than incorrect auto-action
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 16-01-PLAN.md -- 50 AWU scenario dataset, per-agent threshold tuning, confidence scoring harness
+- [ ] 16-02-PLAN.md -- False positive measurement, model-tier validation, adversarial test suite
 
 ### Phase 17: Invoice & Lead Validation
 **Goal**: Invoice and lead agent flows work end-to-end with production-quality output
@@ -263,7 +267,7 @@ Phases 13 first (foundation), then 14 -> 15 (channel chain) and 16 (can parallel
 | 13. Deployment Stability | v1.2 | 4/4 | Complete | 2026-03-01 |
 | 14. Channel Relay & OAuth | v1.2 | 5/5 | Complete | 2026-03-02 |
 | 15. WhatsApp Pipeline | v1.2 | 2/2 | Complete | 2026-03-02 |
-| 16. Confidence Routing Validation | v1.2 | 0/? | Not started | - |
+| 16. Confidence Routing Validation | v1.2 | 0/2 | Not started | - |
 | 17. Invoice & Lead Validation | v1.2 | 0/? | Not started | - |
 | 18. Integration Fixes & Tech Debt | 3/3 | Complete    | 2026-03-02 | - |
 | 19. Credential Provisioning & Live Verification | v1.2 | 0/? | Not started | - |
