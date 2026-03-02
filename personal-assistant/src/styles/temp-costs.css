@@ -1,0 +1,505 @@
+/* ==========================================================================
+   18p. COSTS — Usage tracker
+   ========================================================================== */
+
+/* ── Wrap & Container ── */
+
+.bb-costs-wrap {
+  width: 100%;
+}
+
+.bb-costs-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ── Period Selector ── */
+
+.bb-costs-period {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px;
+  border-radius: 20px;
+  background: rgba(10, 14, 23, 0.5);
+  backdrop-filter: blur(26px) saturate(1.15);
+  -webkit-backdrop-filter: blur(26px) saturate(1.15);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  width: fit-content;
+}
+
+.bb-costs-period__button {
+  padding: 7px 16px;
+  border-radius: 14px;
+  border: none;
+  background: transparent;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition:
+    background var(--duration-fast) var(--ease-default),
+    color var(--duration-fast) var(--ease-default),
+    box-shadow var(--duration-fast) var(--ease-default);
+  white-space: nowrap;
+}
+
+.bb-costs-period__button:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-secondary);
+}
+
+.bb-costs-period__button[data-active] {
+  background: rgba(249, 115, 22, 0.15);
+  color: #f97316;
+  box-shadow: inset 0 1px 0 rgba(249, 115, 22, 0.12);
+}
+
+/* ── Budget Alert Banner ── */
+
+.bb-costs-alert {
+  border-radius: 16px;
+  background: linear-gradient(
+    135deg,
+    rgba(245, 158, 11, 0.12) 0%,
+    rgba(10, 14, 23, 0.5) 100%
+  );
+  backdrop-filter: blur(26px) saturate(1.15);
+  -webkit-backdrop-filter: blur(26px) saturate(1.15);
+  box-shadow: inset 0 1px 0 rgba(245, 158, 11, 0.10);
+  padding: 14px 18px;
+}
+
+.bb-costs-alert__content {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.bb-costs-alert__icon {
+  color: #f59e0b;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.bb-costs-alert__body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.bb-costs-alert__message {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.bb-costs-alert__message strong {
+  color: #f59e0b;
+  font-weight: 600;
+}
+
+/* ── Loading State ── */
+
+.bb-costs-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+/* ── Error State ── */
+
+.bb-costs-error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  border-radius: 16px;
+  background: rgba(239, 68, 68, 0.08);
+  box-shadow: inset 0 1px 0 rgba(239, 68, 68, 0.10);
+}
+
+.bb-costs-error__text {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: #f87171;
+}
+
+/* ── Summary Stats Grid ── */
+
+.bb-costs-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+@media (max-width: 900px) {
+  .bb-costs-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .bb-costs-stats {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Summary Card ── */
+
+.bb-costs-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 18px;
+  border-radius: 20px;
+  background: rgba(10, 14, 23, 0.5);
+  backdrop-filter: blur(26px) saturate(1.15);
+  -webkit-backdrop-filter: blur(26px) saturate(1.15);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  transition:
+    transform var(--duration-fast) var(--ease-default),
+    box-shadow var(--duration-fast) var(--ease-default);
+}
+
+.bb-costs-card:hover {
+  transform: translateY(-1px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.bb-costs-card__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bb-costs-card__icon {
+  color: var(--text-dim);
+  flex-shrink: 0;
+}
+
+.bb-costs-card__label {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.bb-costs-card__value {
+  font-family: var(--font-mono);
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1;
+}
+
+/* ── Table (model / agent breakdown) ── */
+
+.bb-costs-table {
+  border-radius: 20px;
+  background: rgba(10, 14, 23, 0.5);
+  backdrop-filter: blur(26px) saturate(1.15);
+  -webkit-backdrop-filter: blur(26px) saturate(1.15);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  overflow: hidden;
+}
+
+.bb-costs-table__title {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 0;
+  padding: 14px 18px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.bb-costs-table__body {
+  display: flex;
+  flex-direction: column;
+}
+
+.bb-costs-table__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 18px;
+  transition: background var(--duration-fast) var(--ease-default);
+}
+
+.bb-costs-table__row + .bb-costs-table__row {
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.bb-costs-table__row:hover {
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.bb-costs-table__row-label {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-secondary);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bb-costs-table__row-meta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-shrink: 0;
+}
+
+.bb-costs-table__row-runs {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.bb-costs-table__row-tokens {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.bb-costs-table__row-cost {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  min-width: 56px;
+  text-align: right;
+}
+
+.bb-costs-table__empty {
+  padding: 20px 18px;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--text-dim);
+  margin: 0;
+  text-align: center;
+}
+
+/* ── Daily Trend ── */
+
+.bb-costs-trend {
+  border-radius: 20px;
+  background: rgba(10, 14, 23, 0.5);
+  backdrop-filter: blur(26px) saturate(1.15);
+  -webkit-backdrop-filter: blur(26px) saturate(1.15);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  overflow: hidden;
+}
+
+.bb-costs-trend__title {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 0;
+  padding: 14px 18px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.bb-costs-trend__list {
+  display: flex;
+  flex-direction: column;
+  padding: 10px 0;
+}
+
+.bb-costs-trend__row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 18px;
+}
+
+.bb-costs-trend__date {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  width: 36px;
+  flex-shrink: 0;
+}
+
+.bb-costs-trend__bar {
+  flex: 1;
+  height: 6px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+
+.bb-costs-trend__bar-fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  background: linear-gradient(
+    90deg,
+    rgba(16, 185, 129, 0.7) 0%,
+    rgba(16, 185, 129, 0.9) 100%
+  );
+  transition: width 0.4s var(--ease-default);
+  box-shadow: none;
+}
+
+.bb-costs-trend__cost {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-secondary);
+  min-width: 48px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* ==========================================================================
+   18p. COSTS — Light mode overrides
+   ========================================================================== */
+
+html.light .bb-costs-period {
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+html.light .bb-costs-period__button {
+  color: #4a5568;
+}
+
+html.light .bb-costs-period__button:hover {
+  background: rgba(0, 0, 0, 0.04);
+  color: #1a1a2e;
+}
+
+html.light .bb-costs-period__button[data-active] {
+  background: rgba(249, 115, 22, 0.12);
+  color: #ea6500;
+  box-shadow: inset 0 1px 0 rgba(249, 115, 22, 0.08);
+}
+
+html.light .bb-costs-alert {
+  background: linear-gradient(
+    135deg,
+    rgba(245, 158, 11, 0.10) 0%,
+    rgba(255, 255, 255, 0.7) 100%
+  );
+  box-shadow: inset 0 1px 0 rgba(245, 158, 11, 0.12);
+}
+
+html.light .bb-costs-alert__message {
+  color: #4a5568;
+}
+
+html.light .bb-costs-loading {
+  color: #6b7280;
+}
+
+html.light .bb-costs-error {
+  background: rgba(239, 68, 68, 0.06);
+  box-shadow: inset 0 1px 0 rgba(239, 68, 68, 0.08);
+}
+
+html.light .bb-costs-card {
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+html.light .bb-costs-card:hover {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+html.light .bb-costs-card__label {
+  color: #6b7280;
+}
+
+html.light .bb-costs-card__icon {
+  color: #9ca3af;
+}
+
+html.light .bb-costs-card__value {
+  color: #1a1a2e;
+}
+
+html.light .bb-costs-table {
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+html.light .bb-costs-table__title {
+  color: #6b7280;
+  border-bottom-color: rgba(0, 0, 0, 0.06);
+}
+
+html.light .bb-costs-table__row + .bb-costs-table__row {
+  border-top-color: rgba(0, 0, 0, 0.05);
+}
+
+html.light .bb-costs-table__row:hover {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+html.light .bb-costs-table__row-label {
+  color: #4a5568;
+}
+
+html.light .bb-costs-table__row-runs,
+html.light .bb-costs-table__row-tokens {
+  color: #9ca3af;
+}
+
+html.light .bb-costs-table__row-cost {
+  color: #1a1a2e;
+}
+
+html.light .bb-costs-table__empty {
+  color: #9ca3af;
+}
+
+html.light .bb-costs-trend {
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+html.light .bb-costs-trend__title {
+  color: #6b7280;
+  border-bottom-color: rgba(0, 0, 0, 0.06);
+}
+
+html.light .bb-costs-trend__date {
+  color: #9ca3af;
+}
+
+html.light .bb-costs-trend__bar {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+html.light .bb-costs-trend__bar-fill {
+  background: linear-gradient(
+    90deg,
+    rgba(16, 185, 129, 0.6) 0%,
+    rgba(16, 185, 129, 0.8) 100%
+  );
+  box-shadow: none;
+}
+
+html.light .bb-costs-trend__cost {
+  color: #4a5568;
+}

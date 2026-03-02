@@ -1,0 +1,316 @@
+/* 18r. ACTIVITY LOG — Audit timeline */
+
+.bb-activity-main {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ── Header ── */
+
+.bb-activity-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.bb-activity-header__text {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* ── Filter bar ── */
+
+.bb-activity-filters {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.bb-activity-filter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 4px 6px 12px;
+  border-radius: 14px;
+  background: rgba(10, 14, 23, 0.5);
+  backdrop-filter: blur(26px) saturate(1.15);
+  -webkit-backdrop-filter: blur(26px) saturate(1.15);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.bb-activity-filter__label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+
+.bb-activity-filter__select {
+  background-color: transparent;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23666666' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+  background-position: right 2px center;
+  background-repeat: no-repeat;
+  background-size: 12px 12px;
+  border: none;
+  outline: none;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  padding: 2px 18px 2px 2px;
+}
+
+.bb-activity-filter__select:focus {
+  color: var(--text-primary);
+}
+
+/* ── Timeline ── */
+
+.bb-activity-timeline {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-left: 24px;
+}
+
+.bb-activity-timeline::before {
+  content: "";
+  position: absolute;
+  left: 9px;
+  top: 16px;
+  bottom: 16px;
+  width: 1px;
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.06) 0%,
+    rgba(255, 255, 255, 0.03) 60%,
+    transparent 100%
+  );
+  pointer-events: none;
+}
+
+/* ── Audit row ── */
+
+.bb-activity-row {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 12px 16px;
+  border-radius: 16px;
+  margin-left: -24px;
+  background: rgba(10, 14, 23, 0.5);
+  backdrop-filter: blur(26px) saturate(1.15);
+  -webkit-backdrop-filter: blur(26px) saturate(1.15);
+  border-left: 2px solid rgba(255, 255, 255, 0.06);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  transition:
+    transform var(--duration-fast) var(--ease-default),
+    box-shadow var(--duration-fast) var(--ease-default);
+}
+
+.bb-activity-row:hover {
+  transform: translateY(-1px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+/* Action tints — rows */
+
+.bb-activity-row[data-action='create'],
+.bb-activity-row[data-action='approve'] {
+  border-left-color: rgba(16, 185, 129, 0.5);
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.07) 0%, rgba(10, 14, 23, 0.5) 100%);
+  box-shadow: inset 0 1px 0 rgba(16, 185, 129, 0.05);
+}
+
+.bb-activity-row[data-action='update'] {
+  border-left-color: rgba(59, 130, 246, 0.5);
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.07) 0%, rgba(10, 14, 23, 0.5) 100%);
+  box-shadow: inset 0 1px 0 rgba(59, 130, 246, 0.05);
+}
+
+.bb-activity-row[data-action='delete'],
+.bb-activity-row[data-action='reject'] {
+  border-left-color: rgba(239, 68, 68, 0.5);
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.07) 0%, rgba(10, 14, 23, 0.5) 100%);
+  box-shadow: inset 0 1px 0 rgba(239, 68, 68, 0.05);
+}
+
+/* Timeline dot */
+
+.bb-activity-row__dot {
+  position: absolute;
+  left: -31px;
+  top: 18px;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.15);
+  border: 1.5px solid rgba(255, 255, 255, 0.12);
+  flex-shrink: 0;
+}
+
+/* Action tints — dots */
+
+.bb-activity-row__dot[data-action='create'],
+.bb-activity-row__dot[data-action='approve'] {
+  background: rgba(16, 185, 129, 0.7);
+  border-color: rgba(16, 185, 129, 0.4);
+  box-shadow: none;
+}
+
+.bb-activity-row__dot[data-action='update'] {
+  background: rgba(59, 130, 246, 0.7);
+  border-color: rgba(59, 130, 246, 0.4);
+  box-shadow: none;
+}
+
+.bb-activity-row__dot[data-action='delete'],
+.bb-activity-row__dot[data-action='reject'] {
+  background: rgba(239, 68, 68, 0.7);
+  border-color: rgba(239, 68, 68, 0.4);
+  box-shadow: none;
+}
+
+/* Row content */
+
+.bb-activity-row__content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.bb-activity-row__action {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bb-activity-row__metadata {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bb-activity-row__timestamp {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* Empty / loading states */
+
+.bb-activity-empty {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--text-dim);
+  text-align: center;
+  padding: 48px 24px;
+  margin: 0;
+}
+
+.bb-activity-sentinel {
+  height: 1px;
+}
+
+.bb-activity-loading {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  text-align: center;
+  padding: 12px;
+  letter-spacing: 0.04em;
+}
+
+/* ==========================================================================
+   Light mode overrides
+   ========================================================================== */
+
+html.light .bb-activity-header {
+  border-bottom-color: rgba(0, 0, 0, 0.06);
+}
+
+html.light .bb-activity-timeline::before {
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.06) 0%,
+    rgba(0, 0, 0, 0.02) 60%,
+    transparent 100%
+  );
+}
+
+html.light .bb-activity-filter {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(26px) saturate(1.15);
+  -webkit-backdrop-filter: blur(26px) saturate(1.15);
+  box-shadow: inset 0 1px 0 rgba(0, 0, 0, 0.04);
+}
+
+html.light .bb-activity-row {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(26px) saturate(1.15);
+  -webkit-backdrop-filter: blur(26px) saturate(1.15);
+  border-left-color: rgba(0, 0, 0, 0.06);
+  box-shadow: inset 0 1px 0 rgba(0, 0, 0, 0.04);
+}
+
+html.light .bb-activity-row:hover {
+  box-shadow: inset 0 1px 0 rgba(0, 0, 0, 0.04);
+}
+
+html.light .bb-activity-row[data-action='create'],
+html.light .bb-activity-row[data-action='approve'] {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(255, 255, 255, 0.7) 100%);
+  box-shadow: inset 0 1px 0 rgba(16, 185, 129, 0.06);
+}
+
+html.light .bb-activity-row[data-action='update'] {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.12) 0%, rgba(255, 255, 255, 0.7) 100%);
+  box-shadow: inset 0 1px 0 rgba(59, 130, 246, 0.06);
+}
+
+html.light .bb-activity-row[data-action='delete'],
+html.light .bb-activity-row[data-action='reject'] {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.12) 0%, rgba(255, 255, 255, 0.7) 100%);
+  box-shadow: inset 0 1px 0 rgba(239, 68, 68, 0.06);
+}
+
+html.light .bb-activity-row__dot[data-action='create'],
+html.light .bb-activity-row__dot[data-action='approve'] {
+  box-shadow: none;
+}
+
+html.light .bb-activity-row__dot[data-action='update'] {
+  box-shadow: none;
+}
+
+html.light .bb-activity-row__dot[data-action='delete'],
+html.light .bb-activity-row__dot[data-action='reject'] {
+  box-shadow: none;
+}
