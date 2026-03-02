@@ -267,7 +267,7 @@ Phases 13 first (foundation), then 14 -> 15 (channel chain) and 16 (can parallel
 | 13. Deployment Stability | v1.2 | 4/4 | Complete | 2026-03-01 |
 | 14. Channel Relay & OAuth | v1.2 | 5/5 | Complete | 2026-03-02 |
 | 15. WhatsApp Pipeline | v1.2 | 2/2 | Complete | 2026-03-02 |
-| 16. Confidence Routing Validation | 2/2 | Complete   | 2026-03-02 | - |
+| 16. Confidence Routing Validation | 2/2 | Complete    | 2026-03-02 | - |
 | 17. Invoice & Lead Validation | v1.2 | 0/? | Not started | - |
 | 18. Integration Fixes & Tech Debt | 3/3 | Complete    | 2026-03-02 | - |
 | 19. Credential Provisioning & Live Verification | v1.2 | 0/? | Not started | - |
