@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-03-01)
 
 **Core value:** BitBit understands the business better than the business owner -- when Andy says "Invoice Sezer for the White House RE work", BitBit knows who Sezer is, what the work was, the rate, and whether it's already been invoiced.
-**Current focus:** Phase 17 - Invoice & Lead Validation (v1.2 Battle-Testing & Sellability)
+**Current focus:** Phase 19 - Credential Provisioning & Live Verification
 
 ## Current Position
 
-Phase: 17 of 19 (Invoice & Lead Validation)
-Plan: 3 of 3 in current phase
-Status: Phase 17 COMPLETE
-Last activity: 2026-03-02 -- Completed 17-02 (Invoice PDF Branding & Lifecycle)
+Phase: 19 of 19 (Credential Provisioning & Live Verification)
+Plan: 1 of 3 in current phase
+Status: Executing Phase 19
+Last activity: 2026-03-02 -- Completed 19-01 (WhatsApp Bridge Deployment & Credential Provisioning)
 
-Progress: [####################..........] 100% v1.0+v1.1 | Phase 17 (3/3)
+Progress: [####################..........] 100% v1.0+v1.1 | Phase 19 (1/3)
 
 ## Performance Metrics
 
@@ -32,6 +32,7 @@ Progress: [####################..........] 100% v1.0+v1.1 | Phase 17 (3/3)
 | 16. Confidence Routing Validation | 2 | 2/2 COMPLETE |
 | 17. Invoice & Lead Validation | 3 | 3/3 COMPLETE |
 | 18. Integration Fixes & Tech Debt | 3 | 3/3 COMPLETE |
+| 19. Credential Provisioning & Live Verification | 3 | 1/3 IN PROGRESS |
 
 | Phase | Plan | Duration | Tasks | Files |
 |-------|------|----------|-------|-------|
@@ -50,6 +51,7 @@ Progress: [####################..........] 100% v1.0+v1.1 | Phase 17 (3/3)
 | 17 | 01 | 11min | 2 | 2 |
 | 17 | 02 | 15min | 2 | 4 |
 | 17 | 03 | 9min | 2 | 4 |
+| 19 | 01 | 12min | 2 | 7 |
 
 ## Accumulated Context
 
@@ -117,6 +119,11 @@ See PROJECT.md Key Decisions table.
 - [17-03] Auto-approve creates approval record with status approved + immediate delivery (audit trail preserved)
 - [17-03] High-budget + no-service + slow-timeline scores cold (2 points) -- budget alone insufficient
 - [17-03] Classification mocks validate mapping pipeline, not AI model accuracy
+- [19-01] Separate Fly.io app (bitbit-whatsapp-bridge) from agent worker due to persistent WebSocket requirement
+- [19-01] Volume mount at /data for auth state persistence across deploys
+- [19-01] 5 reconnect attempts with 3x exponential backoff (5s to 405s) then notification alert
+- [19-01] Health reporting every 60s to channel_health table via upsert
+- [19-01] Public health endpoint for Fly.io monitoring, Bearer token auth on management routes
 
 ### Pending Todos
 
@@ -132,5 +139,5 @@ See PROJECT.md Key Decisions table.
 ## Session Continuity
 
 Last session: 2026-03-02
-Stopped at: Completed 17-02-PLAN.md (Invoice PDF Branding & Lifecycle) -- Phase 17 COMPLETE
+Stopped at: Completed 19-01-PLAN.md (WhatsApp Bridge Deployment & Credential Provisioning)
 Resume file: None
