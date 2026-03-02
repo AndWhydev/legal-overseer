@@ -36,9 +36,9 @@ Requirements for battle-testing and sellability. Each maps to roadmap phases.
 
 - [x] **CONF-01**: 50 real AWU scenarios run through engine with confidence scores tracked vs human judgment
 - [x] **CONF-02**: Per-agent threshold tuning implemented (e.g., invoice higher auto-act threshold than sentry)
-- [ ] **CONF-03**: False positive rate on auto-actions measured and documented
-- [ ] **CONF-04**: Model routing (Haiku/Sonnet/Opus) produces reliable confidence scores across tiers
-- [ ] **CONF-05**: Adversarial/ambiguous inputs tested to verify escalation reliability
+- [x] **CONF-03**: False positive rate on auto-actions measured and documented
+- [x] **CONF-04**: Model routing (Haiku/Sonnet/Opus) produces reliable confidence scores across tiers
+- [x] **CONF-05**: Adversarial/ambiguous inputs tested to verify escalation reliability
 
 ### Invoice Flow Validation
 
@@ -115,9 +115,9 @@ Requirements for battle-testing and sellability. Each maps to roadmap phases.
 | WHATS-05 | Phase 15 | Complete |
 | CONF-01 | Phase 16 | Complete |
 | CONF-02 | Phase 16 | Complete |
-| CONF-03 | Phase 16 | Pending |
-| CONF-04 | Phase 16 | Pending |
-| CONF-05 | Phase 16 | Pending |
+| CONF-03 | Phase 16 | Complete |
+| CONF-04 | Phase 16 | Complete |
+| CONF-05 | Phase 16 | Complete |
 | INVC-06 | Phase 17 | Pending |
 | INVC-07 | Phase 17 | Pending |
 | INVC-08 | Phase 17 | Pending |
