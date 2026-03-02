@@ -4,7 +4,11 @@ import {
   getEffectiveThresholds,
   DEFAULT_THRESHOLDS,
   routeAgentAction,
+  AGENT_THRESHOLDS,
+  getAgentThresholds,
 } from './confidence-router'
+import { AWU_SCENARIOS } from '../testing/confidence-scenarios'
+import { runConfidenceHarness, formatHarnessReport } from '../testing/confidence-harness'
 
 describe('confidence-router', () => {
   describe('DEFAULT_THRESHOLDS', () => {
@@ -192,6 +196,131 @@ describe('confidence-router', () => {
         { confidence_thresholds: { act: 0.60, ask: 0.30 } },
       )
       expect(result.decision).toBe('act')
+    })
+  })
+
+  describe('Per-agent thresholds', () => {
+    it('invoice-flow has higher act threshold (0.92) than sentry (0.75)', () => {
+      expect(AGENT_THRESHOLDS['invoice-flow'].act).toBe(0.92)
+      expect(AGENT_THRESHOLDS['sentry'].act).toBe(0.75)
+      expect(AGENT_THRESHOLDS['invoice-flow'].act).toBeGreaterThan(AGENT_THRESHOLDS['sentry'].act)
+    })
+
+    it('getAgentThresholds returns AGENT_THRESHOLDS for known types', () => {
+      expect(getAgentThresholds('invoice-flow')).toEqual({ act: 0.92, ask: 0.60 })
+      expect(getAgentThresholds('sentry')).toEqual({ act: 0.75, ask: 0.45 })
+      expect(getAgentThresholds('client-comms')).toEqual({ act: 0.88, ask: 0.58 })
+    })
+
+    it('getAgentThresholds falls back to DEFAULT_THRESHOLDS for unknown types', () => {
+      const result = getAgentThresholds('unknown-agent')
+      expect(result).toEqual(DEFAULT_THRESHOLDS)
+    })
+
+    it('routeAgentAction with agentType uses AGENT_THRESHOLDS when no explicit config', () => {
+      // Sentry threshold: act=0.75, ask=0.45
+      // Confidence 0.78 should be 'act' with sentry thresholds
+      const result = routeAgentAction(0.78, undefined, undefined, 'sentry')
+      expect(result.decision).toBe('act')
+      expect(result.thresholds.act).toBe(0.75)
+
+      // Same confidence with invoice-flow (act=0.92) should be 'ask'
+      const invoiceResult = routeAgentAction(0.78, undefined, undefined, 'invoice-flow')
+      expect(invoiceResult.decision).toBe('ask')
+      expect(invoiceResult.thresholds.act).toBe(0.92)
+    })
+
+    it('explicit config overrides AGENT_THRESHOLDS', () => {
+      // Even though invoice-flow act=0.92, explicit config act=0.70 should win
+      const result = routeAgentAction(
+        0.75,
+        { confidence_thresholds: { act: 0.70, ask: 0.40 } },
+        undefined,
+        'invoice-flow',
+      )
+      expect(result.decision).toBe('act')
+      expect(result.thresholds.act).toBe(0.70)
+    })
+
+    it('AGENT_THRESHOLDS covers all 10 agent types', () => {
+      const expectedTypes = [
+        'invoice-flow', 'lead-swarm', 'sentry', 'channel-triage',
+        'client-comms', 'proposal-bot', 'client-onboarding',
+        'quote-bot', 'tender-hunter', 'ad-script-gen',
+      ]
+      for (const agentType of expectedTypes) {
+        expect(AGENT_THRESHOLDS[agentType]).toBeDefined()
+        expect(AGENT_THRESHOLDS[agentType].act).toBeGreaterThan(AGENT_THRESHOLDS[agentType].ask)
+      }
+    })
+  })
+
+  describe('Confidence harness', () => {
+    it('runs all 50 scenarios and returns a report', () => {
+      const report = runConfidenceHarness()
+      expect(report).toBeDefined()
+      expect(report.totalScenarios).toBe(50)
+      expect(report.runAt).toBeTruthy()
+    })
+
+    it('report.totalScenarios === 50', () => {
+      const report = runConfidenceHarness()
+      expect(report.totalScenarios).toBe(50)
+    })
+
+    it('report.accuracy is > 0.80', () => {
+      const report = runConfidenceHarness()
+      expect(report.accuracy).toBeGreaterThan(0.80)
+    })
+
+    it('report.falsePositiveRate is reported (even if 0)', () => {
+      const report = runConfidenceHarness()
+      expect(typeof report.falsePositiveRate).toBe('number')
+      expect(report.falsePositiveRate).toBeGreaterThanOrEqual(0)
+      expect(report.falsePositiveRate).toBeLessThanOrEqual(1)
+    })
+
+    it('all 10 agent types appear in report.byAgent', () => {
+      const report = runConfidenceHarness()
+      const expectedTypes = [
+        'invoice-flow', 'lead-swarm', 'sentry', 'channel-triage',
+        'client-comms', 'proposal-bot', 'client-onboarding',
+        'quote-bot', 'tender-hunter', 'ad-script-gen',
+      ]
+      for (const agentType of expectedTypes) {
+        expect(report.byAgent[agentType]).toBeDefined()
+        expect(report.byAgent[agentType].total).toBeGreaterThan(0)
+      }
+    })
+
+    it('misses array contains details for any incorrect routing', () => {
+      const report = runConfidenceHarness()
+      const incorrectCount = report.totalScenarios - report.correct
+      expect(report.misses.length).toBe(incorrectCount)
+      for (const miss of report.misses) {
+        expect(miss.scenarioId).toBeTruthy()
+        expect(miss.expected).toBeTruthy()
+        expect(miss.actual).toBeTruthy()
+        expect(typeof miss.confidence).toBe('number')
+      }
+    })
+
+    it('formatHarnessReport produces readable output', () => {
+      const report = runConfidenceHarness()
+      const output = formatHarnessReport(report)
+      expect(output).toContain('Confidence Routing Harness Report')
+      expect(output).toContain('By Agent Type')
+      expect(output).toContain('By Category')
+      expect(output).toContain(`${report.totalScenarios}`)
+    })
+
+    it('AWU_SCENARIOS has exactly 50 entries', () => {
+      expect(AWU_SCENARIOS.length).toBe(50)
+    })
+
+    it('AWU_SCENARIOS covers all 10 agent types', () => {
+      const types = new Set(AWU_SCENARIOS.map(s => s.agentType))
+      expect(types.size).toBe(10)
     })
   })
 })
