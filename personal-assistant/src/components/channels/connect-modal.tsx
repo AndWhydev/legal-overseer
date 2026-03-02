@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { CreditCard, Phone, Loader2, QrCode, Smartphone } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { CreditCard, Phone, Loader2, QrCode, Smartphone, CheckCircle2 } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -150,31 +150,89 @@ function WhatsAppQRPanel({
   onSuccess: () => void
   onError: (msg: string) => void
 }) {
-  const [initiating, setInitiating] = useState(false)
-  const [sessionStarted, setSessionStarted] = useState(false)
+  const [bridgeStatus, setBridgeStatus] = useState<'idle' | 'starting' | 'pairing' | 'connected' | 'error'>('idle')
+  const [qrCode, setQrCode] = useState<string | null>(null)
+  const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  // Cleanup polling on unmount
+  useEffect(() => {
+    return () => {
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current)
+        pollIntervalRef.current = null
+      }
+    }
+  }, [])
+
+  // Poll for QR code and connection status
+  useEffect(() => {
+    if (bridgeStatus !== 'pairing') return
+
+    pollIntervalRef.current = setInterval(async () => {
+      try {
+        const res = await fetch('/api/channels/whatsapp/bridge')
+        if (!res.ok) return
+
+        const data = await res.json()
+
+        if (data.status === 'connected') {
+          setBridgeStatus('connected')
+          if (pollIntervalRef.current) {
+            clearInterval(pollIntervalRef.current)
+            pollIntervalRef.current = null
+          }
+          onSuccess()
+        } else if (data.qrCode) {
+          setQrCode(data.qrCode)
+        }
+      } catch {
+        // Silently retry on next interval
+      }
+    }, 3000)
+
+    return () => {
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current)
+        pollIntervalRef.current = null
+      }
+    }
+  }, [bridgeStatus, onSuccess])
 
   async function handleInitiate() {
-    setInitiating(true)
+    setBridgeStatus('starting')
     try {
-      const res = await fetch('/api/channels/connect', {
+      // Step 1: Create pairing session via connect endpoint
+      const connectRes = await fetch('/api/channels/connect', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ channel }),
       })
-      const data = await res.json()
+      const connectData = await connectRes.json()
 
-      if (res.ok) {
-        setSessionStarted(true)
-        // In Phase 15, this will poll for QR code and connection status
-        // For now, just mark as initiated
-        onSuccess()
-      } else {
-        onError(data.error || `Failed to start ${channelName} pairing`)
+      if (!connectRes.ok) {
+        setBridgeStatus('error')
+        onError(connectData.error || `Failed to start ${channelName} pairing`)
+        return
       }
+
+      // Step 2: Start Baileys bridge
+      const bridgeRes = await fetch('/api/channels/whatsapp/bridge', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      })
+
+      if (!bridgeRes.ok) {
+        const bridgeData = await bridgeRes.json()
+        setBridgeStatus('error')
+        onError(bridgeData.error || 'Failed to start WhatsApp bridge')
+        return
+      }
+
+      // Bridge started, begin polling for QR code
+      setBridgeStatus('pairing')
     } catch {
+      setBridgeStatus('error')
       onError(`Network error connecting ${channelName}`)
-    } finally {
-      setInitiating(false)
     }
   }
 
@@ -191,15 +249,45 @@ function WhatsAppQRPanel({
       </DialogHeader>
 
       <div className="space-y-4">
-        {/* QR Code placeholder */}
+        {/* QR Code display area */}
         <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-border bg-secondary/30 p-8">
-          {sessionStarted ? (
+          {bridgeStatus === 'connected' ? (
             <>
-              <div className="flex h-40 w-40 items-center justify-center rounded-lg bg-white">
-                <QrCode className="h-24 w-24 text-gray-300" />
+              <CheckCircle2 className="h-12 w-12 text-[#25D366]" />
+              <p className="text-sm font-medium text-foreground">
+                WhatsApp connected successfully
+              </p>
+            </>
+          ) : bridgeStatus === 'starting' ? (
+            <>
+              <Loader2 className="h-12 w-12 animate-spin text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">
+                Starting WhatsApp bridge...
+              </p>
+            </>
+          ) : bridgeStatus === 'pairing' && qrCode ? (
+            <>
+              <div className="flex h-48 w-48 items-center justify-center rounded-lg bg-white p-2">
+                <img src={qrCode} alt="WhatsApp QR Code" className="h-full w-full" />
               </div>
               <p className="text-xs text-muted-foreground">
-                QR code generation available in Phase 15 (Baileys bridge)
+                Scan this QR code with your WhatsApp app
+              </p>
+            </>
+          ) : bridgeStatus === 'pairing' ? (
+            <>
+              <div className="flex h-40 w-40 items-center justify-center rounded-lg bg-white">
+                <Loader2 className="h-12 w-12 animate-spin text-gray-300" />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Waiting for QR code...
+              </p>
+            </>
+          ) : bridgeStatus === 'error' ? (
+            <>
+              <Smartphone className="h-12 w-12 text-destructive/50" />
+              <p className="text-sm text-destructive text-center">
+                Failed to start bridge. Try again.
               </p>
             </>
           ) : (
@@ -227,11 +315,15 @@ function WhatsAppQRPanel({
         <div className="flex justify-end">
           <button
             onClick={handleInitiate}
-            disabled={initiating || sessionStarted}
+            disabled={bridgeStatus === 'starting' || bridgeStatus === 'pairing' || bridgeStatus === 'connected'}
             className="inline-flex items-center gap-2 rounded-lg bg-[#25D366] px-4 py-2 text-sm font-medium text-white hover:bg-[#25D366]/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {initiating && <Loader2 className="h-4 w-4 animate-spin" />}
-            {initiating ? 'Starting...' : sessionStarted ? 'Session Active' : 'Start Pairing'}
+            {bridgeStatus === 'starting' && <Loader2 className="h-4 w-4 animate-spin" />}
+            {bridgeStatus === 'starting' ? 'Starting...'
+              : bridgeStatus === 'pairing' ? 'Waiting for scan...'
+              : bridgeStatus === 'connected' ? 'Connected'
+              : bridgeStatus === 'error' ? 'Retry Pairing'
+              : 'Start Pairing'}
           </button>
         </div>
       </div>

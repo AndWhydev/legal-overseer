@@ -11,6 +11,7 @@
 
 import { createServer, IncomingMessage, ServerResponse } from "node:http";
 import { healthCheck } from "./health.js";
+import { executeAgentTask } from "./agent-executor.js";
 
 const PORT = parseInt(process.env.PORT || "3000", 10);
 const SUPABASE_URL = process.env.SUPABASE_URL || "";
@@ -126,11 +127,27 @@ async function handleAgentRun(
   // Update task status to "processing" in Supabase
   await updateTaskStatus(task_id, "processing");
 
-  // TODO: Wire actual agent execution here (Puppeteer/Playwright for browser-based tasks)
-  // For now, accept the task and return immediately.
-  // Agent execution will be implemented when specific agents need browser automation.
+  // Execute agent task and update status based on result
+  try {
+    const result = await executeAgentTask(
+      task_id,
+      agent_type,
+      (payload as Record<string, unknown>) || {}
+    );
 
-  json(res, 202, { accepted: true, task_id });
+    if (result.success) {
+      await updateTaskStatus(task_id, "completed");
+      json(res, 200, { completed: true, task_id, result: result.result });
+    } else {
+      await updateTaskStatus(task_id, "failed");
+      json(res, 200, { completed: false, task_id, error: result.error });
+    }
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error(`[worker] Unexpected error executing task ${task_id}: ${message}`);
+    await updateTaskStatus(task_id, "failed");
+    json(res, 500, { error: "Agent execution failed", task_id, detail: message });
+  }
 }
 
 // ─── HTTP Server ──────────────────────────────────────────────────
