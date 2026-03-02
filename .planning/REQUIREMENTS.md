@@ -18,8 +18,8 @@ Requirements for battle-testing and sellability. Each maps to roadmap phases.
 
 ### Channel Relay
 
-- [ ] **CHAN-01**: Live Gmail pull works in deployed environment (not just local dev)
-- [ ] **CHAN-02**: Outlook Graph API adapter works against production Microsoft tenant
+- [x] **CHAN-01**: Live Gmail pull works in deployed environment (not just local dev)
+- [x] **CHAN-02**: Outlook Graph API adapter works against production Microsoft tenant
 - [x] **CHAN-03**: WhatsApp Baileys bridge maintains stable connection over 7-day continuous run
 - [x] **CHAN-04**: Message deduplication holds under burst conditions (50 messages across 3 channels in 5 minutes)
 - [x] **CHAN-05**: Poll-to-classification latency measured and documented under normal and burst conditions
@@ -103,8 +103,8 @@ Requirements for battle-testing and sellability. Each maps to roadmap phases.
 | DEPLOY-04 | Phase 13 | Complete |
 | DEPLOY-05 | Phase 13 → Phase 18 | Complete |
 | DEPLOY-06 | Phase 13 → Phase 18 | Complete |
-| CHAN-01 | Phase 14 → Phase 19 | Pending |
-| CHAN-02 | Phase 14 → Phase 19 | Pending |
+| CHAN-01 | Phase 14 → Phase 19 | Complete |
+| CHAN-02 | Phase 14 → Phase 19 | Complete |
 | CHAN-03 | Phase 15 → Phase 19 | Complete |
 | CHAN-04 | Phase 14 | Complete |
 | CHAN-05 | Phase 14 | Complete |
