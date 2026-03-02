@@ -131,33 +131,32 @@ function LoginPageContent() {
     setStatus('loading')
     setErrorMessage('')
 
-    const supabase = createClient()
-    if (!supabase) {
-      setStatus('error')
-      setErrorMessage('Supabase is not configured for this environment.')
-      setActiveMethod(null)
-      return
-    }
-
     const redirectOrigin = resolveAuthRedirectOrigin()
-    const { error } = await supabase.auth.signInWithOtp({
-      email: normalizedEmail,
-      options: {
-        emailRedirectTo: `${redirectOrigin}/callback`,
-      },
-    })
 
-    if (error) {
+    try {
+      const res = await fetch('/api/auth/magic-link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: normalizedEmail,
+          redirectTo: `${redirectOrigin}/callback`,
+        }),
+      })
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({ error: 'Unknown error' }))
+        setStatus('error')
+        setErrorMessage(
+          data.error === 'not_registered'
+            ? 'This email isn\u2019t registered. BitBit is invite-only \u2014 contact your administrator to get access.'
+            : data.error || 'Failed to send sign-in email',
+        )
+        setActiveMethod(null)
+        return
+      }
+    } catch {
       setStatus('error')
-      const isSignupDisabled =
-        error.message.toLowerCase().includes('signups not allowed') ||
-        error.message.toLowerCase().includes('not allowed') ||
-        error.status === 422
-      setErrorMessage(
-        isSignupDisabled
-          ? 'This email isn\u2019t registered. BitBit is invite-only \u2014 contact your administrator to get access.'
-          : error.message,
-      )
+      setErrorMessage('Network error. Please try again.')
       setActiveMethod(null)
       return
     }

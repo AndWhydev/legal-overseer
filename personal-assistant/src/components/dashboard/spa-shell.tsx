@@ -10,6 +10,7 @@ import React, {
 } from 'react';
 import { startTransition } from 'react';
 import { Menu } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { SidebarNav } from './sidebar-nav';
 import { BitBitOverlay } from './bitbit-overlay';
 import { SplashScreen } from './splash-screen';
@@ -132,6 +133,13 @@ interface SPAShellProps {
 }
 
 export function SPAShell({ displayName, initials }: SPAShellProps) {
+  const router = useRouter();
+
+  const handleSignOut = useCallback(async () => {
+    await fetch('/auth/signout', { method: 'POST' });
+    router.push('/login');
+  }, [router]);
+
   // Track when all tab imports have resolved (pre-warm complete)
   const [tabsReady, setTabsReady] = useState(false);
   const [dataReady, setDataReady] = useState(false);
@@ -293,6 +301,7 @@ export function SPAShell({ displayName, initials }: SPAShellProps) {
             <SidebarNav
               avatarFallback={initials}
               displayName={displayName}
+              onSignOut={handleSignOut}
               activeTabId={TABS[activeNavIndex].id}
               onTabChange={handleTabChange}
               tabs={visibleTabs}

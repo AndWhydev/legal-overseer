@@ -19,6 +19,7 @@ const EXEMPT_PREFIXES = [
   '/api/webhooks/',   // Stripe, Asana, Calendly — use webhook signature verification
   '/api/cron/',       // Server-side crons — use CRON_SECRET header
   '/api/channels/',   // Incoming webhooks (WhatsApp, etc.) — use platform verification
+  '/api/auth/',       // Auth endpoints — same-origin login forms + OAuth callbacks
 ]
 
 /**
