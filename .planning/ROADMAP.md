@@ -39,7 +39,7 @@
 - [x] **Phase 15: WhatsApp Pipeline** - Voice-to-agent, multi-turn, approval flow, latency validation, Baileys bridge stability (completed 2026-03-01)
 - [ ] **Phase 16: Confidence Routing Validation** - Threshold tuning, false positive measurement, adversarial testing
 - [ ] **Phase 17: Invoice & Lead Validation** - Entity resolution, PDF quality, email delivery, lead auto-response
-- [ ] **Phase 18: Integration Fixes & Tech Debt** - Fix broken integrations in completed phases, response mismatches, dead code, env documentation
+- [x] **Phase 18: Integration Fixes & Tech Debt** - Fix broken integrations in completed phases, response mismatches, dead code, env documentation (completed 2026-03-02)
 - [ ] **Phase 19: Credential Provisioning & Live Verification** - OAuth credentials, live channel pulls, WhatsApp bridge deployment, operational sign-off
 
 ## Phase Details
@@ -265,7 +265,7 @@ Phases 13 first (foundation), then 14 -> 15 (channel chain) and 16 (can parallel
 | 15. WhatsApp Pipeline | v1.2 | 2/2 | Complete | 2026-03-02 |
 | 16. Confidence Routing Validation | v1.2 | 0/? | Not started | - |
 | 17. Invoice & Lead Validation | v1.2 | 0/? | Not started | - |
-| 18. Integration Fixes & Tech Debt | 2/3 | In Progress|  | - |
+| 18. Integration Fixes & Tech Debt | 3/3 | Complete   | 2026-03-02 | - |
 | 19. Credential Provisioning & Live Verification | v1.2 | 0/? | Not started | - |
 
 **Overall:** 35/35 plans complete for v1.0+v1.1 (100%). v1.2: 11/? plans complete (Phases 13-15 done, 16-19 not started).
