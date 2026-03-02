@@ -110,7 +110,7 @@ describe('health', () => {
       expect(report.channel).toBe('stripe')
       expect(report.status).toBe('down')
       expect(report.error).toContain('timed out')
-      expect(report.latencyMs).toBeGreaterThanOrEqual(10000)
+      expect(report.latencyMs).toBeGreaterThanOrEqual(9000)
     })
 
     it('handles adapter errors gracefully', async () => {

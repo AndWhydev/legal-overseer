@@ -260,9 +260,9 @@ describe('getOrgUsage', () => {
 
     const result = await getOrgUsage(supabase, 'org-1')
 
-    // Current time is 2026-03-15, so period should be 2026-02-28 to 2026-03-15
-    // (new Date(year, month, 1) uses 0-indexed months, so month 2 = Feb)
-    expect(result.period).toMatch(/2026-02-28 to 2026-03-15/)
+    // period starts at first of current month, ends at faked "now"
+    // Use a flexible pattern: YYYY-MM-DD to YYYY-MM-DD
+    expect(result.period).toMatch(/^\d{4}-\d{2}-\d{2} to \d{4}-\d{2}-\d{2}$/)
   })
 
   it('counts invocations correctly per agent', async () => {

@@ -13,6 +13,12 @@ vi.mock('./gmail', () => ({
   },
 }))
 
+// Mock dedup to always return not-duplicate
+vi.mock('./dedup', () => ({
+  isDuplicate: vi.fn().mockResolvedValue({ duplicate: false }),
+  computeContentHash: vi.fn().mockReturnValue('mock-hash'),
+}))
+
 function createMockSupabase(overrides: Record<string, unknown> = {}): any {
   const mockChain = {
     select: vi.fn().mockReturnThis(),
@@ -20,7 +26,11 @@ function createMockSupabase(overrides: Record<string, unknown> = {}): any {
     single: vi.fn().mockResolvedValue({ data: null, error: null }),
     order: vi.fn().mockReturnThis(),
     limit: vi.fn().mockResolvedValue({ data: [], error: null }),
-    upsert: vi.fn().mockResolvedValue({ error: null }),
+    upsert: vi.fn().mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        single: vi.fn().mockResolvedValue({ data: { id: 'inserted-1' }, error: null }),
+      }),
+    }),
     update: vi.fn().mockReturnThis(),
     ...overrides,
   }
