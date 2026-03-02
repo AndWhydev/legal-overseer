@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-03-01)
 
 **Core value:** BitBit understands the business better than the business owner -- when Andy says "Invoice Sezer for the White House RE work", BitBit knows who Sezer is, what the work was, the rate, and whether it's already been invoiced.
-**Current focus:** Phase 18 - Integration Fixes & Tech Debt (v1.2 Battle-Testing & Sellability)
+**Current focus:** Phase 16 - Confidence Routing Validation (v1.2 Battle-Testing & Sellability)
 
 ## Current Position
 
-Phase: 18 of 19 (Integration Fixes & Tech Debt)
-Plan: 3 of 3 in current phase
-Status: Phase 18 COMPLETE
-Last activity: 2026-03-02 -- Completed 18-03 (TypeScript Zero-Error Build)
+Phase: 16 of 19 (Confidence Routing Validation)
+Plan: 1 of 2 in current phase
+Status: Executing Phase 16
+Last activity: 2026-03-02 -- Completed 16-01 (Confidence Scenarios & Thresholds)
 
-Progress: [####################..........] 100% v1.0+v1.1 | Phase 18 COMPLETE (3/3)
+Progress: [####################..........] 100% v1.0+v1.1 | Phase 16 in progress (1/2)
 
 ## Performance Metrics
 
@@ -29,7 +29,7 @@ Progress: [####################..........] 100% v1.0+v1.1 | Phase 18 COMPLETE (3
 | 13. Deployment Stability | 4 | 4/4 COMPLETE |
 | 14. Channel Relay & OAuth | 5 | 5/5 COMPLETE |
 | 15. WhatsApp Pipeline | 2 | 2/2 COMPLETE |
-| 16. Confidence Routing Validation | TBD | Not started |
+| 16. Confidence Routing Validation | 2 | 1/2 IN PROGRESS |
 | 17. Invoice & Lead Validation | TBD | Not started |
 | 18. Integration Fixes & Tech Debt | 3 | 3/3 COMPLETE |
 
@@ -45,6 +45,7 @@ Progress: [####################..........] 100% v1.0+v1.1 | Phase 18 COMPLETE (3
 | 18 | 01 | 13min | 2 | 3 |
 | 18 | 02 | 16min | 2 | 2 |
 | 18 | 03 | 17min | 2 | 18 |
+| 16 | 01 | 11min | 2 | 4 |
 
 ## Accumulated Context
 
@@ -96,6 +97,9 @@ See PROJECT.md Key Decisions table.
 - [18-03] TabHeader icon prop accepts ComponentType union for Lucide React 19 compat
 - [18-03] IndustryPack interface extended with optional kanbanDefaults and commandCenter
 - [18-03] ignoreBuildErrors removed -- builds now type-check (109 errors resolved)
+- [16-01] routeAgentAction cascade: explicit agentConfig > AGENT_THRESHOLDS[type] > orgSettings > defaults
+- [16-01] invoice-flow highest act threshold (0.92); sentry lowest (0.75) based on risk profiles
+- [16-01] 50 AWU scenarios calibrated for 80%+ accuracy against per-agent thresholds
 
 ### Pending Todos
 
@@ -111,5 +115,5 @@ See PROJECT.md Key Decisions table.
 ## Session Continuity
 
 Last session: 2026-03-02
-Stopped at: Completed 18-03-PLAN.md (TypeScript Zero-Error Build) -- Phase 18 COMPLETE
+Stopped at: Completed 16-01-PLAN.md (Confidence Scenarios & Thresholds)
 Resume file: None
