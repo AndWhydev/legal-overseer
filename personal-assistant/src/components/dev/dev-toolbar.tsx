@@ -21,12 +21,12 @@ const PLANS = ['starter', 'beta', 'growth', 'scale', 'enterprise'] as const;
 const PROFILES = ['essential', 'full'] as const;
 
 export function DevToolbar() {
-  if (process.env.NODE_ENV !== 'development') return null;
-
   const [open, setOpen] = useState(false);
   const [showModules, setShowModules] = useState(false);
   const overrides = useDevOverrides();
   const { modules, composition } = useEnabledModules();
+
+  if (process.env.NODE_ENV !== 'development') return null;
 
   const activeIndustry = overrides?.industry ?? null;
   const activePlan = overrides?.plan ?? null;
