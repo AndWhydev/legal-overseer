@@ -13,14 +13,14 @@ Requirements for battle-testing and sellability. Each maps to roadmap phases.
 - [x] **DEPLOY-02**: All 9 cron endpoints trigger and execute correctly on Vercel's cron system
 - [x] **DEPLOY-03**: Agent engine cold start responds in under 3 seconds for classification
 - [x] **DEPLOY-04**: Supabase connection pooling handles 10 concurrent agent requests without exhaustion
-- [ ] **DEPLOY-05**: Fly.io worker fleet is deployed and operational (not just config committed)
-- [ ] **DEPLOY-06**: Cloudflare edge cron poller is deployed and operational
+- [x] **DEPLOY-05**: Fly.io worker fleet is deployed and operational (not just config committed)
+- [x] **DEPLOY-06**: Cloudflare edge cron poller is deployed and operational
 
 ### Channel Relay
 
 - [ ] **CHAN-01**: Live Gmail pull works in deployed environment (not just local dev)
 - [ ] **CHAN-02**: Outlook Graph API adapter works against production Microsoft tenant
-- [ ] **CHAN-03**: WhatsApp Baileys bridge maintains stable connection over 7-day continuous run
+- [x] **CHAN-03**: WhatsApp Baileys bridge maintains stable connection over 7-day continuous run
 - [x] **CHAN-04**: Message deduplication holds under burst conditions (50 messages across 3 channels in 5 minutes)
 - [x] **CHAN-05**: Poll-to-classification latency measured and documented under normal and burst conditions
 
@@ -101,11 +101,11 @@ Requirements for battle-testing and sellability. Each maps to roadmap phases.
 | DEPLOY-02 | Phase 13 | Complete |
 | DEPLOY-03 | Phase 13 | Complete |
 | DEPLOY-04 | Phase 13 | Complete |
-| DEPLOY-05 | Phase 13 → Phase 18 | Pending |
-| DEPLOY-06 | Phase 13 → Phase 18 | Pending |
+| DEPLOY-05 | Phase 13 → Phase 18 | Complete |
+| DEPLOY-06 | Phase 13 → Phase 18 | Complete |
 | CHAN-01 | Phase 14 → Phase 19 | Pending |
 | CHAN-02 | Phase 14 → Phase 19 | Pending |
-| CHAN-03 | Phase 15 → Phase 19 | Pending |
+| CHAN-03 | Phase 15 → Phase 19 | Complete |
 | CHAN-04 | Phase 14 | Complete |
 | CHAN-05 | Phase 14 | Complete |
 | WHATS-01 | Phase 15 | Complete |

@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-03-01)
 
 **Core value:** BitBit understands the business better than the business owner -- when Andy says "Invoice Sezer for the White House RE work", BitBit knows who Sezer is, what the work was, the rate, and whether it's already been invoiced.
-**Current focus:** Phase 15 - WhatsApp Pipeline (v1.2 Battle-Testing & Sellability)
+**Current focus:** Phase 18 - Integration Fixes & Tech Debt (v1.2 Battle-Testing & Sellability)
 
 ## Current Position
 
-Phase: 15 of 17 (WhatsApp Pipeline)
-Plan: 2 of 2 in current phase
-Status: Phase 15 COMPLETE
-Last activity: 2026-03-02 -- Completed 15-02 (Context-Aware Parsing & Latency Instrumentation)
+Phase: 18 of 19 (Integration Fixes & Tech Debt)
+Plan: 2 of 3 in current phase
+Status: Executing Phase 18
+Last activity: 2026-03-02 -- Completed 18-02 (Fly.io Worker Agent Executor)
 
-Progress: [####################..........] 100% v1.0+v1.1 | Phase 15 COMPLETE (2/2)
+Progress: [####################..........] 100% v1.0+v1.1 | Phase 18 in progress (2/3)
 
 ## Performance Metrics
 
@@ -31,6 +31,7 @@ Progress: [####################..........] 100% v1.0+v1.1 | Phase 15 COMPLETE (2
 | 15. WhatsApp Pipeline | 2 | 2/2 COMPLETE |
 | 16. Confidence Routing Validation | TBD | Not started |
 | 17. Invoice & Lead Validation | TBD | Not started |
+| 18. Integration Fixes & Tech Debt | 3 | 2/3 IN PROGRESS |
 
 | Phase | Plan | Duration | Tasks | Files |
 |-------|------|----------|-------|-------|
@@ -41,6 +42,8 @@ Progress: [####################..........] 100% v1.0+v1.1 | Phase 15 COMPLETE (2
 | 14 | 04 | 10min | 2 | 4 |
 | 15 | 01 | 11min | 2 | 5 |
 | 15 | 02 | 10min | 2 | 4 |
+| 18 | 01 | 13min | 2 | 3 |
+| 18 | 02 | 16min | 2 | 2 |
 
 ## Accumulated Context
 
@@ -82,6 +85,12 @@ See PROJECT.md Key Decisions table.
 - [15-02] Fallback heuristic for contact resolution only fires for action intents
 - [15-02] Approval retry: single retry after 1s, immediate rethrow for ALREADY_RESOLVED/NOT_FOUND
 - [15-02] Emoji approval uses string comparison not regex unicode flag for ES target compat
+- [18-01] Supabase .update() returns { error } not throws -- must check and throw for retry reachability
+- [18-01] channel-grid.tsx data.success checks verified correct against /api/channels/sync response shape
+- [18-01] WhatsApp QR polls every 3s with useEffect cleanup to prevent memory leaks
+- [18-02] Raw fetch for Anthropic API (no SDK) to keep Fly.io worker dependency-free
+- [18-02] 10s AbortController timeout on Anthropic calls consistent with Phase 13
+- [18-02] Unknown agent types return success no-op, not errors
 
 ### Pending Todos
 
@@ -97,5 +106,5 @@ See PROJECT.md Key Decisions table.
 ## Session Continuity
 
 Last session: 2026-03-02
-Stopped at: Completed 15-02-PLAN.md (Context-Aware Parsing & Latency Instrumentation)
+Stopped at: Completed 18-02-PLAN.md (Fly.io Worker Agent Executor)
 Resume file: None
