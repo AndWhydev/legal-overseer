@@ -10,7 +10,7 @@ import { StatusPill, type StatusVariant } from '@/components/ui/status-pill'
 type LeadStatus = 'new' | 'qualified' | 'booked' | 'converted' | 'lost'
 type LeadScore = 'hot' | 'warm' | 'cold'
 
-interface LeadCardData {
+export interface LeadCardData {
   id: string
   status: LeadStatus
   score: LeadScore

@@ -1,7 +1,7 @@
 import React from 'react';
 
 interface TabHeaderProps {
-  icon: React.ReactNode;
+  icon: React.ReactNode | React.ComponentType<{ size?: number }>;
   iconColor?: string;
   title: string;
   subtitle?: string;
@@ -9,6 +9,11 @@ interface TabHeaderProps {
 }
 
 export function TabHeader({ icon, iconColor = 'var(--bb-orange)', title, subtitle, actions }: TabHeaderProps) {
+  // Support both component references (e.g. Lucide icons) and ReactNode elements
+  const iconElement = typeof icon === 'function'
+    ? React.createElement(icon, { size: 20 })
+    : icon;
+
   return (
     <div className="flex items-center justify-between gap-4">
       <div className="flex items-center gap-3">
@@ -19,7 +24,7 @@ export function TabHeader({ icon, iconColor = 'var(--bb-orange)', title, subtitl
             color: iconColor,
           }}
         >
-          {icon}
+          {iconElement}
         </div>
         <div>
           <h1 className="text-2xl font-semibold" style={{ color: 'var(--text-primary)' }}>

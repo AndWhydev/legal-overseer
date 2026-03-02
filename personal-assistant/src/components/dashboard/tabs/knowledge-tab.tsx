@@ -63,7 +63,7 @@ function KnowledgeTab() {
   const [selectedEntity, setSelectedEntity] = useState<{ type: EntityType; id: string } | null>(null);
   const [graph, setGraph] = useState<EntityGraph | null>(null);
   const [loadingGraph, setLoadingGraph] = useState(false);
-  const debounceRef = useRef<NodeJS.Timeout>();
+  const debounceRef = useRef<NodeJS.Timeout>(undefined);
 
   // Search with debounce
   const handleSearch = useCallback((value: string) => {

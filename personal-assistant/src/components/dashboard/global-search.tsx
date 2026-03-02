@@ -46,7 +46,7 @@ export function GlobalSearch({ onNavigate }: GlobalSearchProps) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
-  const timerRef = useRef<ReturnType<typeof setTimeout>>();
+  const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   // Cmd+K / Ctrl+K listener
   useEffect(() => {

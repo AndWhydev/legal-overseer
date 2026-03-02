@@ -62,6 +62,7 @@ const STORAGE_KEY = 'bb-onboarding-complete';
 
 interface OnboardingTourProps {
   onNavigate?: (tabId: string) => void;
+  tourVariant?: 'full' | 'essential';
 }
 
 export function OnboardingTour({ onNavigate }: OnboardingTourProps) {

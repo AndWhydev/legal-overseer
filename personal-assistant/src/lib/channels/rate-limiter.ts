@@ -211,9 +211,8 @@ export async function cleanupExpiredBuckets(): Promise<number> {
   const cutoff = new Date(Date.now() - 60 * 60 * 1000).toISOString()
   const { count, error } = await db
     .from('rate_limit_buckets')
-    .delete()
+    .delete({ count: 'exact' })
     .lt('updated_at', cutoff)
-    .select('*', { count: 'exact', head: true })
 
   if (error) {
     console.error('[rate-limiter] Failed to cleanup expired buckets:', error.message)

@@ -9,7 +9,7 @@ import { StatusPill, type StatusVariant } from '@/components/ui/status-pill'
 
 type InvoiceStatus = 'draft' | 'sent' | 'viewed' | 'overdue' | 'paid' | 'cancelled'
 
-interface InvoiceRow {
+export interface InvoiceRow {
   id: string
   invoice_number: string
   client_contact_id: string | null

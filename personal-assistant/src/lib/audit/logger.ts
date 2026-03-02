@@ -26,6 +26,7 @@ export type EntityType =
   | 'proposal'
   | 'tender'
   | 'watch'
+  | 'channel_connection'
   | 'credential'
 
 export interface AuditEvent {

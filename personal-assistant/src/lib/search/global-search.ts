@@ -87,7 +87,7 @@ async function searchWithTsvector(
 
   if (error) throw error;
 
-  return (data ?? []).map((row: Record<string, unknown>, i: number) => ({
+  return ((data ?? []) as unknown as Record<string, unknown>[]).map((row, i) => ({
     type,
     id: String(row.id),
     title: String(row[cfg.titleCol] ?? ''),
@@ -118,7 +118,7 @@ async function searchWithIlike(
 
   if (error) return [];
 
-  return (data ?? []).map((row: Record<string, unknown>, i: number) => ({
+  return ((data ?? []) as unknown as Record<string, unknown>[]).map((row, i) => ({
     type,
     id: String(row.id),
     title: String(row[cfg.titleCol] ?? ''),

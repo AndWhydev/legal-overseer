@@ -103,7 +103,7 @@ export async function GET(): Promise<NextResponse> {
   }
 
   return NextResponse.json(response, {
-    status: status === 'error' ? 503 : 200,
+    status: (status as string) === 'error' ? 503 : 200,
     headers: {
       'Cache-Control': 'no-store, no-cache, must-revalidate',
     },

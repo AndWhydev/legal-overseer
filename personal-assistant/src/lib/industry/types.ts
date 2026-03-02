@@ -25,6 +25,13 @@ export interface IndustryPack {
     full: Partial<UIComposition>
   }
 
+  kanbanDefaults?: Array<{ title: string; color: string }>
+
+  commandCenter?: {
+    widgets: string[]
+    quickActions: string[]
+  }
+
   planLimits?: Record<string, {
     maxUsers: number
     maxChannels: number

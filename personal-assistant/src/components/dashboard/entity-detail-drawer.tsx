@@ -70,8 +70,8 @@ function ContactDetail({ meta }: { meta: Record<string, unknown> }) {
   return (
     <div className="space-y-3">
       <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Contact Info</h3>
-      {meta.name && <div className="text-lg font-medium">{String(meta.name)}</div>}
-      {meta.type && <div className="text-sm text-muted-foreground capitalize">{String(meta.type)}</div>}
+      {meta.name ? <div className="text-lg font-medium">{String(meta.name)}</div> : null}
+      {meta.type ? <div className="text-sm text-muted-foreground capitalize">{String(meta.type)}</div> : null}
       {emails.length > 0 && (
         <div className="flex items-center gap-2 text-sm">
           <Mail size={14} className="text-muted-foreground" />
@@ -84,12 +84,12 @@ function ContactDetail({ meta }: { meta: Record<string, unknown> }) {
           <span>{phones.join(', ')}</span>
         </div>
       )}
-      {meta.created_at && (
+      {meta.created_at ? (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Calendar size={14} />
           <span>Added {formatDate(String(meta.created_at))}</span>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }
@@ -98,13 +98,13 @@ function ProjectDetail({ meta }: { meta: Record<string, unknown> }) {
   return (
     <div className="space-y-3">
       <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Project</h3>
-      {meta.name && <div className="text-lg font-medium">{String(meta.name)}</div>}
-      {meta.status && (
+      {meta.name ? <div className="text-lg font-medium">{String(meta.name)}</div> : null}
+      {meta.status ? (
         <span className="inline-block rounded-full px-2.5 py-0.5 text-xs font-medium bg-[var(--bg-elevated)] capitalize">
           {String(meta.status)}
         </span>
-      )}
-      {meta.description && <p className="text-sm text-muted-foreground">{String(meta.description)}</p>}
+      ) : null}
+      {meta.description ? <p className="text-sm text-muted-foreground">{String(meta.description)}</p> : null}
     </div>
   );
 }
@@ -113,23 +113,23 @@ function InvoiceDetail({ meta }: { meta: Record<string, unknown> }) {
   return (
     <div className="space-y-3">
       <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Invoice</h3>
-      {meta.invoice_number && <div className="text-lg font-medium">{String(meta.invoice_number)}</div>}
+      {meta.invoice_number ? <div className="text-lg font-medium">{String(meta.invoice_number)}</div> : null}
       <div className="flex items-center gap-4">
-        {meta.status && (
+        {meta.status ? (
           <span className="inline-block rounded-full px-2.5 py-0.5 text-xs font-medium bg-[var(--bg-elevated)] capitalize">
             {String(meta.status)}
           </span>
-        )}
-        {meta.amount != null && (
+        ) : null}
+        {meta.amount != null ? (
           <div className="flex items-center gap-1 text-sm">
             <DollarSign size={14} className="text-muted-foreground" />
             <span>{Number(meta.amount).toLocaleString('en-AU', { minimumFractionDigits: 2 })}</span>
           </div>
-        )}
+        ) : null}
       </div>
-      {meta.due_date && (
+      {meta.due_date ? (
         <div className="text-sm text-muted-foreground">Due: {formatDate(String(meta.due_date))}</div>
-      )}
+      ) : null}
     </div>
   );
 }
@@ -138,16 +138,16 @@ function TaskDetail({ meta }: { meta: Record<string, unknown> }) {
   return (
     <div className="space-y-3">
       <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Task</h3>
-      {meta.title && <div className="text-lg font-medium">{String(meta.title)}</div>}
+      {meta.title ? <div className="text-lg font-medium">{String(meta.title)}</div> : null}
       <div className="flex items-center gap-3">
-        {meta.status && (
+        {meta.status ? (
           <span className="inline-block rounded-full px-2.5 py-0.5 text-xs font-medium bg-[var(--bg-elevated)] capitalize">
             {String(meta.status)}
           </span>
-        )}
-        {meta.priority && (
+        ) : null}
+        {meta.priority ? (
           <span className="text-xs text-muted-foreground capitalize">{String(meta.priority)} priority</span>
-        )}
+        ) : null}
       </div>
     </div>
   );

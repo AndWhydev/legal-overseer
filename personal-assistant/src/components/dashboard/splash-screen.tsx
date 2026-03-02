@@ -8,6 +8,10 @@ import {
 
 interface SplashScreenProps {
   ready?: boolean;
+  /** Code modules loaded */
+  codeReady?: boolean;
+  /** Data fetched */
+  dataReady?: boolean;
   minDisplayMs?: number;
   children: React.ReactNode;
 }
@@ -88,10 +92,14 @@ function LoadingDots() {
 }
 
 export function SplashScreen({
-  ready = false,
+  ready: readyProp,
+  codeReady,
+  dataReady,
   minDisplayMs = 1200,
   children,
 }: SplashScreenProps) {
+  // Support both `ready` (simple) and `codeReady + dataReady` (granular)
+  const ready = readyProp ?? ((codeReady ?? false) && (dataReady ?? false));
   const [visible, setVisible] = useState(true);
   const [canDismiss, setCanDismiss] = useState(false);
   const [exiting, setExiting] = useState(false);

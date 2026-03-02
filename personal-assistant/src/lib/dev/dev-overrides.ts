@@ -10,6 +10,7 @@ export interface DevOverrides {
   ui_profile?: string;
   enabled_modules?: string[] | null;
   industry?: string;
+  seed_data?: Record<string, boolean>;
 }
 
 function isBrowser(): boolean {
