@@ -4,7 +4,7 @@
 
 - v1.0 MVP -- Phases 1-6 (shipped 2026-02-21)
 - v1.1 Agent Runtime + First Agents -- Phases 7-12 (shipped 2026-02-22)
-- v1.2 Battle-Testing & Sellability -- Phases 13-17 (in progress)
+- v1.2 Battle-Testing & Sellability -- Phases 13-19 (in progress)
 
 ## Phases
 
@@ -39,6 +39,8 @@
 - [x] **Phase 15: WhatsApp Pipeline** - Voice-to-agent, multi-turn, approval flow, latency validation, Baileys bridge stability (completed 2026-03-01)
 - [ ] **Phase 16: Confidence Routing Validation** - Threshold tuning, false positive measurement, adversarial testing
 - [ ] **Phase 17: Invoice & Lead Validation** - Entity resolution, PDF quality, email delivery, lead auto-response
+- [ ] **Phase 18: Integration Fixes & Tech Debt** - Fix broken integrations in completed phases, response mismatches, dead code, env documentation
+- [ ] **Phase 19: Credential Provisioning & Live Verification** - OAuth credentials, live channel pulls, WhatsApp bridge deployment, operational sign-off
 
 ## Phase Details
 
@@ -205,10 +207,39 @@ Plans:
   5. Lead classification accuracy matches Andy's manual assessment across 20 sample messages
 **Plans**: TBD
 
+### Phase 18: Integration Fixes & Tech Debt
+**Goal**: All broken integrations and tech debt from completed phases are fixed — no dead code, no bypassed pipelines, no stub implementations
+**Depends on**: Phase 15
+**Requirements**: CHAN-04, CHAN-05 (integration), OAUTH-03, CHAN-03 (flow), DEPLOY-05, DEPLOY-06 (flow)
+**Gap Closure**: Closes 3 broken integrations, 3 broken E2E flows, 8 tech debt items from audit
+**Success Criteria** (what must be TRUE):
+  1. channel-sync cron routes messages through relay daemon (dedup, latency, burst detection, retry)
+  2. WhatsApp QR modal calls bridge API to start Baileys and surfaces real QR code
+  3. Fly.io worker executes actual agent logic (not a TODO stub)
+  4. connect-modal.tsx and channel-grid.tsx check correct response fields from APIs
+  5. classifyWithRetry in relay-daemon.ts has reachable retry/backoff logic
+  6. RELAY_SECRET env var is documented in setup requirements
+  7. ignoreBuildErrors removed from next.config.ts and build still passes
+**Plans**: TBD
+
+### Phase 19: Credential Provisioning & Live Verification
+**Goal**: All OAuth channels work end-to-end in production with real credentials — live message pulls verified, WhatsApp bridge stable
+**Depends on**: Phase 18
+**Requirements**: CHAN-01, CHAN-02, CHAN-03, OAUTH-01, OAUTH-02, OAUTH-04, OAUTH-05
+**Gap Closure**: Closes all NEEDS HUMAN items from audit
+**Success Criteria** (what must be TRUE):
+  1. Google Cloud OAuth credentials provisioned and Gmail live pull works in deployed env
+  2. Azure AD app registered and Outlook Graph API works against production tenant
+  3. Asana developer app credentials provisioned and OAuth flow completes
+  4. Calendly developer app credentials provisioned and OAuth flow completes
+  5. WhatsApp Baileys bridge deployed to persistent host (Fly.io) and maintains 7-day stable connection
+  6. Credential provisioning runbook documents all steps for each provider
+**Plans**: TBD
+
 ## Progress
 
 **Execution Order:**
-Phases 13 first (foundation), then 14 -> 15 (channel chain) and 16 (can parallel), then 17 (needs 13+16).
+Phases 13 first (foundation), then 14 -> 15 (channel chain) and 16 (can parallel), then 17 (needs 13+16), then 18 (integration fixes), then 19 (live verification, needs 18).
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
@@ -229,5 +260,7 @@ Phases 13 first (foundation), then 14 -> 15 (channel chain) and 16 (can parallel
 | 15. WhatsApp Pipeline | 2/2 | Complete    | 2026-03-02 | - |
 | 16. Confidence Routing Validation | v1.2 | 0/? | Not started | - |
 | 17. Invoice & Lead Validation | v1.2 | 0/? | Not started | - |
+| 18. Integration Fixes & Tech Debt | v1.2 | 0/? | Not started | - |
+| 19. Credential Provisioning & Live Verification | v1.2 | 0/? | Not started | - |
 
-**Overall:** 35/35 plans complete for v1.0+v1.1 (100%). v1.2: 10/? plans complete (Phases 13+14 done, Phase 15 in progress).
+**Overall:** 35/35 plans complete for v1.0+v1.1 (100%). v1.2: 11/? plans complete (Phases 13-15 done, 16-19 not started).

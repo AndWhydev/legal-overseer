@@ -13,8 +13,8 @@ Requirements for battle-testing and sellability. Each maps to roadmap phases.
 - [x] **DEPLOY-02**: All 9 cron endpoints trigger and execute correctly on Vercel's cron system
 - [x] **DEPLOY-03**: Agent engine cold start responds in under 3 seconds for classification
 - [x] **DEPLOY-04**: Supabase connection pooling handles 10 concurrent agent requests without exhaustion
-- [x] **DEPLOY-05**: Fly.io worker fleet is deployed and operational (not just config committed)
-- [x] **DEPLOY-06**: Cloudflare edge cron poller is deployed and operational
+- [ ] **DEPLOY-05**: Fly.io worker fleet is deployed and operational (not just config committed)
+- [ ] **DEPLOY-06**: Cloudflare edge cron poller is deployed and operational
 
 ### Channel Relay
 
@@ -101,11 +101,11 @@ Requirements for battle-testing and sellability. Each maps to roadmap phases.
 | DEPLOY-02 | Phase 13 | Complete |
 | DEPLOY-03 | Phase 13 | Complete |
 | DEPLOY-04 | Phase 13 | Complete |
-| DEPLOY-05 | Phase 13 | Complete |
-| DEPLOY-06 | Phase 13 | Complete |
-| CHAN-01 | Phase 14 | In Progress |
-| CHAN-02 | Phase 14 | In Progress |
-| CHAN-03 | Phase 15 | In Progress |
+| DEPLOY-05 | Phase 13 → Phase 18 | Pending |
+| DEPLOY-06 | Phase 13 → Phase 18 | Pending |
+| CHAN-01 | Phase 14 → Phase 19 | Pending |
+| CHAN-02 | Phase 14 → Phase 19 | Pending |
+| CHAN-03 | Phase 15 → Phase 19 | Pending |
 | CHAN-04 | Phase 14 | Complete |
 | CHAN-05 | Phase 14 | Complete |
 | WHATS-01 | Phase 15 | Complete |
@@ -126,20 +126,22 @@ Requirements for battle-testing and sellability. Each maps to roadmap phases.
 | LEAD-01 | Phase 17 | Pending |
 | LEAD-02 | Phase 17 | Pending |
 | LEAD-03 | Phase 17 | Pending |
-| OAUTH-01 | Phase 14 | In Progress |
-| OAUTH-02 | Phase 14 | In Progress |
+| OAUTH-01 | Phase 14 → Phase 19 | Pending |
+| OAUTH-02 | Phase 14 → Phase 19 | Pending |
 | OAUTH-03 | Phase 14 | Complete |
-| OAUTH-04 | Phase 14 | In Progress |
-| OAUTH-05 | Phase 14 | In Progress |
-| OAUTH-06 | Phase 14 | In Progress |
+| OAUTH-04 | Phase 14 → Phase 19 | Pending |
+| OAUTH-05 | Phase 14 → Phase 19 | Pending |
+| OAUTH-06 | Phase 14 | Complete |
 | OAUTH-07 | Phase 14 | Complete |
 | OAUTH-08 | Phase 14 | Complete |
 
 **Coverage:**
 - v1.2 requirements: 37 total
+- Satisfied: 13
+- Pending (gap closure): 24
 - Mapped to phases: 37
 - Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-01*
-*Last updated: 2026-03-02 after 15-01 completion*
+*Last updated: 2026-03-02 after gap closure phases 18-19 added*
