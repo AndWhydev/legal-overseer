@@ -220,7 +220,12 @@ Plans:
   5. classifyWithRetry in relay-daemon.ts has reachable retry/backoff logic
   6. RELAY_SECRET env var is documented in setup requirements
   7. ignoreBuildErrors removed from next.config.ts and build still passes
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [ ] 18-01-PLAN.md -- Rewire channel-sync cron to relay daemon, fix classifyWithRetry, WhatsApp QR bridge integration, UI response field fixes
+- [ ] 18-02-PLAN.md -- Fly.io worker agent execution (replace TODO stub)
+- [ ] 18-03-PLAN.md -- Remove ignoreBuildErrors by fixing all TS errors (dual SupabaseClient + 13 real errors)
 
 ### Phase 19: Credential Provisioning & Live Verification
 **Goal**: All OAuth channels work end-to-end in production with real credentials — live message pulls verified, WhatsApp bridge stable
@@ -257,10 +262,10 @@ Phases 13 first (foundation), then 14 -> 15 (channel chain) and 16 (can parallel
 | 12. Invoice Flow Agent | v1.1 | 3/3 | Complete | 2026-02-22 |
 | 13. Deployment Stability | v1.2 | 4/4 | Complete | 2026-03-01 |
 | 14. Channel Relay & OAuth | v1.2 | 5/5 | Complete | 2026-03-02 |
-| 15. WhatsApp Pipeline | 2/2 | Complete    | 2026-03-02 | - |
+| 15. WhatsApp Pipeline | v1.2 | 2/2 | Complete | 2026-03-02 |
 | 16. Confidence Routing Validation | v1.2 | 0/? | Not started | - |
 | 17. Invoice & Lead Validation | v1.2 | 0/? | Not started | - |
-| 18. Integration Fixes & Tech Debt | v1.2 | 0/? | Not started | - |
+| 18. Integration Fixes & Tech Debt | v1.2 | 0/3 | Planned | - |
 | 19. Credential Provisioning & Live Verification | v1.2 | 0/? | Not started | - |
 
 **Overall:** 35/35 plans complete for v1.0+v1.1 (100%). v1.2: 11/? plans complete (Phases 13-15 done, 16-19 not started).
