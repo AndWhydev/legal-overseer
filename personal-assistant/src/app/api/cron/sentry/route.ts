@@ -1,9 +1,9 @@
-import { withCronGuard, cronMaxDuration, cronDynamic } from '@/lib/cron/cron-guard'
+import { withCronGuard } from '@/lib/cron/cron-guard'
 import { runSentryTick } from '@/lib/agent/sentry'
 import { processSentryEscalations } from '@/lib/agent/sentry-escalation'
 
-export const maxDuration = cronMaxDuration
-export const dynamic = cronDynamic
+export const maxDuration = 300
+export const dynamic = 'force-dynamic'
 
 export async function GET(request: Request) {
   return withCronGuard(request, async (supabase) => {

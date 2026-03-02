@@ -1,9 +1,9 @@
-import { withCronGuard, cronMaxDuration, cronDynamic } from '@/lib/cron/cron-guard'
+import { withCronGuard } from '@/lib/cron/cron-guard'
 import { pollChannel, type PollResult } from '@/lib/channels/relay-daemon'
 import type { ChannelType } from '@/lib/channels/types'
 
-export const maxDuration = cronMaxDuration
-export const dynamic = cronDynamic
+export const maxDuration = 300
+export const dynamic = 'force-dynamic'
 
 export async function GET(request: Request) {
   return withCronGuard(request, async (supabase) => {

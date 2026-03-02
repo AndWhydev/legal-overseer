@@ -174,6 +174,7 @@ export type AgentType =
   | 'ai-search-optimizer'
   | 'tender-hunter'
   | 'sentry'
+  | 'quote-bot'
 
 export interface AgentConfig {
   id: string

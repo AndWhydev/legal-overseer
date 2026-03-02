@@ -56,8 +56,13 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Channel sync routes are server-side operations that don't need user auth
-  if (pathname.startsWith('/api/channels/')) {
+  // Routes that handle their own auth (Bearer tokens, cron secrets, OAuth flows)
+  if (
+    pathname.startsWith('/api/channels/') ||
+    pathname.startsWith('/api/cron/') ||
+    pathname.startsWith('/api/auth/') ||
+    pathname.startsWith('/api/monitoring/')
+  ) {
     return NextResponse.next()
   }
 
