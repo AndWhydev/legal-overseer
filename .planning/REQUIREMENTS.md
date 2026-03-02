@@ -50,9 +50,9 @@ Requirements for battle-testing and sellability. Each maps to roadmap phases.
 
 ### Lead Response
 
-- [ ] **LEAD-01**: Auto-approve path for high-confidence leads (>85%) achieving sub-2-minute response time
-- [ ] **LEAD-02**: Classification accuracy validated across 20 sample messages (lead/client/spam/personal)
-- [ ] **LEAD-03**: Qualification scoring (hot/warm/cold) aligns with Andy's manual assessment on real leads
+- [x] **LEAD-01**: Auto-approve path for high-confidence leads (>85%) achieving sub-2-minute response time
+- [x] **LEAD-02**: Classification accuracy validated across 20 sample messages (lead/client/spam/personal)
+- [x] **LEAD-03**: Qualification scoring (hot/warm/cold) aligns with Andy's manual assessment on real leads
 
 ### Channel Settings & OAuth
 
@@ -123,9 +123,9 @@ Requirements for battle-testing and sellability. Each maps to roadmap phases.
 | INVC-08 | Phase 17 | Pending |
 | INVC-09 | Phase 17 | Pending |
 | INVC-10 | Phase 17 | Pending |
-| LEAD-01 | Phase 17 | Pending |
-| LEAD-02 | Phase 17 | Pending |
-| LEAD-03 | Phase 17 | Pending |
+| LEAD-01 | Phase 17 | Complete |
+| LEAD-02 | Phase 17 | Complete |
+| LEAD-03 | Phase 17 | Complete |
 | OAUTH-01 | Phase 14 → Phase 19 | Pending |
 | OAUTH-02 | Phase 14 → Phase 19 | Pending |
 | OAUTH-03 | Phase 14 | Complete |

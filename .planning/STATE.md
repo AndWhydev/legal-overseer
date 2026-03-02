@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-03-01)
 
 **Core value:** BitBit understands the business better than the business owner -- when Andy says "Invoice Sezer for the White House RE work", BitBit knows who Sezer is, what the work was, the rate, and whether it's already been invoiced.
-**Current focus:** Phase 16 - Confidence Routing Validation (v1.2 Battle-Testing & Sellability)
+**Current focus:** Phase 17 - Invoice & Lead Validation (v1.2 Battle-Testing & Sellability)
 
 ## Current Position
 
-Phase: 16 of 19 (Confidence Routing Validation)
-Plan: 2 of 2 in current phase
-Status: Phase 16 COMPLETE
-Last activity: 2026-03-02 -- Completed 16-02 (Confidence Routing Validation)
+Phase: 17 of 19 (Invoice & Lead Validation)
+Plan: 3 of 3 in current phase
+Status: In progress
+Last activity: 2026-03-02 -- Completed 17-03 (Lead Classification & Auto-Approve)
 
-Progress: [####################..........] 100% v1.0+v1.1 | Phase 16 COMPLETE (2/2)
+Progress: [####################..........] 100% v1.0+v1.1 | Phase 17 (3/3)
 
 ## Performance Metrics
 
@@ -30,7 +30,7 @@ Progress: [####################..........] 100% v1.0+v1.1 | Phase 16 COMPLETE (2
 | 14. Channel Relay & OAuth | 5 | 5/5 COMPLETE |
 | 15. WhatsApp Pipeline | 2 | 2/2 COMPLETE |
 | 16. Confidence Routing Validation | 2 | 2/2 COMPLETE |
-| 17. Invoice & Lead Validation | TBD | Not started |
+| 17. Invoice & Lead Validation | 3 | 3/3 IN PROGRESS |
 | 18. Integration Fixes & Tech Debt | 3 | 3/3 COMPLETE |
 
 | Phase | Plan | Duration | Tasks | Files |
@@ -47,6 +47,7 @@ Progress: [####################..........] 100% v1.0+v1.1 | Phase 16 COMPLETE (2
 | 18 | 03 | 17min | 2 | 18 |
 | 16 | 01 | 11min | 2 | 4 |
 | 16 | 02 | 14min | 2 | 4 |
+| 17 | 03 | 9min | 2 | 4 |
 
 ## Accumulated Context
 
@@ -104,6 +105,9 @@ See PROJECT.md Key Decisions table.
 - [16-02] Model tier jitter: Haiku +-0.05, Sonnet 0, Opus +-0.02 deterministic for reproducibility
 - [16-02] FP rate measured on auto-actions only (not total scenarios) for business-meaningful metric
 - [16-02] High-stakes agents require >= 0.25 safety margin between ask and act thresholds
+- [17-03] Auto-approve creates approval record with status approved + immediate delivery (audit trail preserved)
+- [17-03] High-budget + no-service + slow-timeline scores cold (2 points) -- budget alone insufficient
+- [17-03] Classification mocks validate mapping pipeline, not AI model accuracy
 
 ### Pending Todos
 
@@ -119,5 +123,5 @@ See PROJECT.md Key Decisions table.
 ## Session Continuity
 
 Last session: 2026-03-02
-Stopped at: Completed 16-02-PLAN.md (Confidence Routing Validation) -- Phase 16 COMPLETE
+Stopped at: Completed 17-03-PLAN.md (Lead Classification & Auto-Approve)
 Resume file: None
