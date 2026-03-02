@@ -91,6 +91,89 @@ async function updateLead(
   if (error) throw new Error(error.message)
 }
 
+export async function autoApproveLeadAcknowledgment(
+  supabase: SupabaseClient,
+  params: QueueLeadAcknowledgmentParams,
+): Promise<{ sent: boolean; error?: string }> {
+  const { lead, agentConfigId } = params
+
+  if (lead.ack_status === 'sent') {
+    return { sent: false, error: 'already_sent' }
+  }
+
+  const now = new Date()
+  if (!isWithinSla(lead.created_at, now)) {
+    await updateLead(supabase, lead.id, { ack_status: 'overdue' })
+    return { sent: false, error: 'sla_exceeded' }
+  }
+
+  const draftBody = buildAckDraft(lead)
+
+  // Create auto-approved approval record (no human needed)
+  await createApproval(supabase, {
+    org_id: lead.org_id,
+    agent_config_id: agentConfigId,
+    action_type: 'lead_ack_send',
+    action_payload: {
+      lead_id: lead.id,
+      message_channel: lead.source_channel,
+      draft_body: draftBody,
+      recipient: lead.source_detail,
+    },
+    action_summary: `[Auto-approved] Send lead acknowledgment for ${lead.source_detail ?? lead.id}`,
+    confidence_score: 1,
+    routing_decision: 'ask', // will be overridden by status
+    priority: 'normal',
+    context_snapshot: {
+      source: 'lead-acknowledgment',
+      leadId: lead.id,
+      autoApproved: true,
+    },
+  })
+
+  // Immediately attempt delivery
+  const deliveryResult = await attemptAckDelivery({
+    message_channel: lead.source_channel,
+    recipient: lead.source_detail,
+    draft_body: draftBody,
+  })
+
+  if (deliveryResult.success) {
+    await updateLead(supabase, lead.id, {
+      ack_status: 'sent',
+      metadata: {
+        ...(lead.metadata ?? {}),
+        autoApproved: true,
+        autoApprovedAt: now.toISOString(),
+        ackSentAt: now.toISOString(),
+        ackDelivery: {
+          status: 'sent',
+          providerMessageId: deliveryResult.providerMessageId,
+          channel: deliveryResult.channel,
+          sentAt: now.toISOString(),
+        },
+      },
+    })
+    return { sent: true }
+  }
+
+  await updateLead(supabase, lead.id, {
+    metadata: {
+      ...(lead.metadata ?? {}),
+      autoApproved: true,
+      autoApprovedAt: now.toISOString(),
+      ackDelivery: {
+        status: 'failed',
+        channel: deliveryResult.channel,
+        failedAt: now.toISOString(),
+        reason: deliveryResult.reason,
+      },
+    },
+  })
+
+  return { sent: false, error: deliveryResult.reason }
+}
+
 export async function queueLeadAcknowledgment(
   supabase: SupabaseClient,
   params: QueueLeadAcknowledgmentParams,

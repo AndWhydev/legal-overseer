@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import {
+  autoApproveLeadAcknowledgment,
   escalateHighValueLead,
   processPendingLeadAcks,
   queueLeadAcknowledgment,
@@ -447,6 +448,144 @@ describe('processPendingLeadAcks', () => {
       reason: 'missing_recipient',
       approvalId: 'approval-missing-recipient',
     })
+    expect(sendMessageMock).not.toHaveBeenCalled()
+  })
+})
+
+describe('autoApproveLeadAcknowledgment', () => {
+  it('auto-approves high-confidence lead within SLA and sets ack_status to sent', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-02-22T14:00:30.000Z'))
+    sendMessageMock.mockReset()
+    sendMessageMock.mockResolvedValue('wamid.auto-1')
+
+    const { supabase, state } = createMockSupabase({
+      leads: [
+        {
+          id: 'lead-auto-1',
+          org_id: 'org-1',
+          source_channel: 'whatsapp',
+          source_detail: '+15559876543',
+          status: 'qualified',
+          ack_status: 'pending',
+          created_at: '2026-02-22T14:00:00.000Z',
+          estimated_value: 15000,
+          service_interest: ['seo', 'web-development'],
+          timeline_days: 14,
+          metadata: {},
+        },
+      ],
+    })
+
+    const result = await autoApproveLeadAcknowledgment(supabase, {
+      lead: state.leads[0],
+      agentConfigId: 'cfg-1',
+    })
+
+    expect(result).toEqual({ sent: true })
+    expect(state.leads[0].ack_status).toBe('sent')
+    expect(sendMessageMock).toHaveBeenCalledTimes(1)
+
+    vi.useRealTimers()
+  })
+
+  it('marks overdue and returns sla_exceeded when outside SLA window', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-02-22T14:05:00.000Z'))
+    sendMessageMock.mockReset()
+
+    const { supabase, state } = createMockSupabase({
+      leads: [
+        {
+          id: 'lead-auto-2',
+          org_id: 'org-1',
+          source_channel: 'whatsapp',
+          source_detail: '+15559876543',
+          status: 'qualified',
+          ack_status: 'pending',
+          created_at: '2026-02-22T14:00:00.000Z',
+          estimated_value: 10000,
+          service_interest: ['ads'],
+          timeline_days: 7,
+          metadata: {},
+        },
+      ],
+    })
+
+    const result = await autoApproveLeadAcknowledgment(supabase, {
+      lead: state.leads[0],
+      agentConfigId: 'cfg-1',
+    })
+
+    expect(result).toEqual({ sent: false, error: 'sla_exceeded' })
+    expect(state.leads[0].ack_status).toBe('overdue')
+    expect(sendMessageMock).not.toHaveBeenCalled()
+
+    vi.useRealTimers()
+  })
+
+  it('sets autoApproved: true in lead metadata', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-02-22T14:00:30.000Z'))
+    sendMessageMock.mockReset()
+    sendMessageMock.mockResolvedValue('wamid.auto-2')
+
+    const { supabase, state } = createMockSupabase({
+      leads: [
+        {
+          id: 'lead-auto-3',
+          org_id: 'org-1',
+          source_channel: 'whatsapp',
+          source_detail: '+15559876543',
+          status: 'qualified',
+          ack_status: 'pending',
+          created_at: '2026-02-22T14:00:00.000Z',
+          estimated_value: 8000,
+          service_interest: ['seo'],
+          timeline_days: 14,
+          metadata: {},
+        },
+      ],
+    })
+
+    await autoApproveLeadAcknowledgment(supabase, {
+      lead: state.leads[0],
+      agentConfigId: 'cfg-1',
+    })
+
+    expect(state.leads[0].metadata?.autoApproved).toBe(true)
+    expect(state.leads[0].metadata?.autoApprovedAt).toBeDefined()
+
+    vi.useRealTimers()
+  })
+
+  it('skips already-sent leads without duplicate send', async () => {
+    sendMessageMock.mockReset()
+
+    const { supabase, state } = createMockSupabase({
+      leads: [
+        {
+          id: 'lead-auto-4',
+          org_id: 'org-1',
+          source_channel: 'whatsapp',
+          source_detail: '+15559876543',
+          status: 'qualified',
+          ack_status: 'sent',
+          created_at: new Date(Date.now() - 30_000).toISOString(),
+          estimated_value: 12000,
+          service_interest: ['ads'],
+          timeline_days: 7,
+          metadata: {},
+        },
+      ],
+    })
+
+    const result = await autoApproveLeadAcknowledgment(supabase, {
+      lead: state.leads[0],
+      agentConfigId: 'cfg-1',
+    })
+
+    expect(result).toEqual({ sent: false, error: 'already_sent' })
     expect(sendMessageMock).not.toHaveBeenCalled()
   })
 })

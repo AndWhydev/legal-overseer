@@ -269,6 +269,7 @@ describe('runLeadSwarmTick', () => {
       created: 1,
       qualified: 1,
       hot: 1,
+      autoApproved: 1,
       failed: 1,
     })
 

@@ -1,7 +1,8 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { ChannelMessage } from '@/lib/channels/types'
 import { classifyMessage } from './classifier'
-import { escalateHighValueLead, queueLeadAcknowledgment } from './lead-acknowledgment'
+import { autoApproveLeadAcknowledgment, escalateHighValueLead, queueLeadAcknowledgment } from './lead-acknowledgment'
+import { getAgentThresholds } from './confidence-router'
 
 export type LeadLabel = 'lead' | 'client' | 'spam' | 'personal'
 export type LeadScore = 'hot' | 'warm' | 'cold'
@@ -38,6 +39,7 @@ export interface LeadSwarmTickResult {
   created: number
   qualified: number
   hot: number
+  autoApproved: number
   failed: number
 }
 
@@ -225,7 +227,7 @@ export async function runLeadSwarmTick(
   orgId: string,
   agentConfigId: string,
 ): Promise<LeadSwarmTickResult> {
-  const result: LeadSwarmTickResult = { processed: 0, created: 0, qualified: 0, hot: 0, failed: 0 }
+  const result: LeadSwarmTickResult = { processed: 0, created: 0, qualified: 0, hot: 0, autoApproved: 0, failed: 0 }
 
   const { data, error } = await supabase
     .from('channel_messages')
@@ -295,10 +297,19 @@ export async function runLeadSwarmTick(
         }
 
         if (upsertedLead) {
-          await queueLeadAcknowledgment(supabase, {
-            lead: upsertedLead,
-            agentConfigId,
-          })
+          const thresholds = getAgentThresholds('lead-swarm')
+          if (classification.confidence >= thresholds.act) {
+            await autoApproveLeadAcknowledgment(supabase, {
+              lead: upsertedLead,
+              agentConfigId,
+            })
+            result.autoApproved += 1
+          } else {
+            await queueLeadAcknowledgment(supabase, {
+              lead: upsertedLead,
+              agentConfigId,
+            })
+          }
           await escalateHighValueLead(supabase, upsertedLead, agentConfigId)
         }
 

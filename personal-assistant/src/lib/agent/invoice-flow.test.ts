@@ -4,6 +4,7 @@ import {
   detectDuplicateInvoice,
   generateInvoiceNumber,
   parseInvoiceIntent,
+  resolveInvoiceEntities,
   runInvoiceFlowTick,
 } from './invoice-flow'
 
@@ -279,6 +280,287 @@ describe('detectDuplicateInvoice', () => {
     })
 
     const result = await detectDuplicateInvoice(supabase, 'org-1', 'contact-1', 'White House updates', 550)
+    expect(result.isDuplicate).toBe(false)
+  })
+})
+
+describe('ambiguous entity resolution', () => {
+  it('returns ambiguous_contact for pronoun-only reference with no matches', async () => {
+    const supabase = createMockSupabase()
+    searchContactsMock.mockResolvedValue([])
+    resolveEntityRankedMock.mockResolvedValue([])
+
+    const result = await resolveInvoiceEntities(supabase, 'org-1', {
+      source_intent: 'Invoice him for the work',
+      contact_name: 'him',
+      project_reference: 'the work',
+      amount: null,
+      currency: 'AUD',
+      terms_days: 14,
+    })
+
+    // With zero matches this should return unknown_contact (existing behavior)
+    // but we test it as part of the ambiguity suite
+    expect(result.resolved).toBeNull()
+    expect(result.error).toBe('unknown_contact')
+  })
+
+  it('resolves nickname when resolveEntityRanked returns single high-confidence match', async () => {
+    const supabase = createMockSupabase()
+    searchContactsMock.mockResolvedValue([])
+    resolveEntityRankedMock.mockResolvedValue([
+      { contact: { id: 'contact-sez', name: 'Sezer Aksoy' }, matchConfidence: 0.85 },
+    ])
+    crossReferenceMock.mockResolvedValue({
+      relatedTasks: [{ title: 'White House RE' }],
+      deadlines: [],
+      financialSignals: { totalOutstanding: 0, overdueCount: 0, lastPaymentDate: null, invoiceCount: 0 },
+      waitingFor: [],
+    })
+
+    const result = await resolveInvoiceEntities(supabase, 'org-1', {
+      source_intent: 'Invoice Sez for White House',
+      contact_name: 'Sez',
+      project_reference: 'White House',
+      amount: 500,
+      currency: 'AUD',
+      terms_days: 14,
+    })
+
+    expect(result.resolved).not.toBeNull()
+    expect(result.resolved?.contactId).toBe('contact-sez')
+    expect(result.resolved?.contactName).toBe('Sezer Aksoy')
+  })
+
+  it('returns missing_contact when no contact name provided', async () => {
+    const supabase = createMockSupabase()
+
+    const result = await resolveInvoiceEntities(supabase, 'org-1', {
+      source_intent: 'Invoice for plumbing',
+      contact_name: null,
+      project_reference: 'plumbing',
+      amount: 500,
+      currency: 'AUD',
+      terms_days: 14,
+    })
+
+    expect(result.resolved).toBeNull()
+    expect(result.error).toBe('missing_contact')
+  })
+
+  it('resolves contact-only input and falls back to cross-reference for project', async () => {
+    const supabase = createMockSupabase()
+    searchContactsMock.mockResolvedValue([])
+    resolveEntityRankedMock.mockResolvedValue([
+      { contact: { id: 'contact-sez', name: 'Sezer Aksoy' }, matchConfidence: 0.9 },
+    ])
+    crossReferenceMock.mockResolvedValue({
+      relatedTasks: [{ title: 'White House RE renovation' }],
+      deadlines: [],
+      financialSignals: { totalOutstanding: 0, overdueCount: 0, lastPaymentDate: null, invoiceCount: 0 },
+      waitingFor: [],
+    })
+
+    const result = await resolveInvoiceEntities(supabase, 'org-1', {
+      source_intent: 'Invoice Sezer',
+      contact_name: 'Sezer',
+      project_reference: null,
+      amount: 500,
+      currency: 'AUD',
+      terms_days: 14,
+    })
+
+    expect(result.resolved).not.toBeNull()
+    expect(result.resolved?.contactId).toBe('contact-sez')
+    expect(result.resolved?.projectReference).toBe('White House RE renovation')
+  })
+
+  it('returns ambiguous_contact for single letter with 3+ low-confidence matches', async () => {
+    const supabase = createMockSupabase()
+    searchContactsMock.mockResolvedValue([])
+    resolveEntityRankedMock.mockResolvedValue([
+      { contact: { id: 'c-1', name: 'Sam Smith' }, matchConfidence: 0.3 },
+      { contact: { id: 'c-2', name: 'Sarah Jones' }, matchConfidence: 0.25 },
+      { contact: { id: 'c-3', name: 'Steve Brown' }, matchConfidence: 0.2 },
+    ])
+
+    const result = await resolveInvoiceEntities(supabase, 'org-1', {
+      source_intent: 'Invoice S for the work',
+      contact_name: 'S',
+      project_reference: 'the work',
+      amount: 500,
+      currency: 'AUD',
+      terms_days: 14,
+    })
+
+    expect(result.resolved).toBeNull()
+    expect(result.error).toBe('ambiguous_contact')
+  })
+
+  it('returns ambiguous_contact when top two matches have similar low confidence', async () => {
+    const supabase = createMockSupabase()
+    searchContactsMock.mockResolvedValue([])
+    resolveEntityRankedMock.mockResolvedValue([
+      { contact: { id: 'c-1', name: 'Sezer Aksoy' }, matchConfidence: 0.55 },
+      { contact: { id: 'c-2', name: 'Serkan Aksoy' }, matchConfidence: 0.50 },
+    ])
+
+    const result = await resolveInvoiceEntities(supabase, 'org-1', {
+      source_intent: 'Invoice Se for the project',
+      contact_name: 'Se',
+      project_reference: 'the project',
+      amount: 500,
+      currency: 'AUD',
+      terms_days: 14,
+    })
+
+    expect(result.resolved).toBeNull()
+    expect(result.error).toBe('ambiguous_contact')
+  })
+
+  it('resolves cleanly with full specificity input', async () => {
+    const supabase = createMockSupabase()
+    searchContactsMock.mockResolvedValue([])
+    resolveEntityRankedMock.mockResolvedValue([
+      { contact: { id: 'contact-sez', name: 'Sezer Aksoy' }, matchConfidence: 0.95 },
+    ])
+
+    const result = await resolveInvoiceEntities(supabase, 'org-1', {
+      source_intent: 'Invoice Sezer for White House RE work',
+      contact_name: 'Sezer',
+      project_reference: 'White House RE work',
+      amount: 550,
+      currency: 'AUD',
+      terms_days: 14,
+    })
+
+    expect(result.resolved).not.toBeNull()
+    expect(result.resolved?.contactId).toBe('contact-sez')
+    expect(result.resolved?.contactName).toBe('Sezer Aksoy')
+  })
+})
+
+describe('fuzzy duplicate detection', () => {
+  const recentDate = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString()
+  const oldDate = new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString()
+
+  it('flags duplicate with fuzzy project name match (abbreviation vs full name)', async () => {
+    const supabase = createMockSupabase({
+      invoices: [
+        {
+          id: 'inv-1',
+          org_id: 'org-1',
+          client_contact_id: 'contact-1',
+          project_reference: 'White House Real Estate',
+          total: 550,
+          status: 'sent',
+          invoice_number: 'AWU-202602-001',
+          created_at: recentDate,
+        },
+      ],
+    })
+
+    const result = await detectDuplicateInvoice(supabase, 'org-1', 'contact-1', 'White House RE', 550)
+    expect(result.isDuplicate).toBe(true)
+  })
+
+  it('flags duplicate with case-only difference in project name', async () => {
+    const supabase = createMockSupabase({
+      invoices: [
+        {
+          id: 'inv-1',
+          org_id: 'org-1',
+          client_contact_id: 'contact-1',
+          project_reference: 'Website Updates',
+          total: 500,
+          status: 'sent',
+          invoice_number: 'AWU-202602-001',
+          created_at: recentDate,
+        },
+      ],
+    })
+
+    const result = await detectDuplicateInvoice(supabase, 'org-1', 'contact-1', 'website updates', 500)
+    expect(result.isDuplicate).toBe(true)
+  })
+
+  it('flags duplicate when amount is within 10% tolerance', async () => {
+    const supabase = createMockSupabase({
+      invoices: [
+        {
+          id: 'inv-1',
+          org_id: 'org-1',
+          client_contact_id: 'contact-1',
+          project_reference: 'White House RE',
+          total: 500,
+          status: 'sent',
+          invoice_number: 'AWU-202602-001',
+          created_at: recentDate,
+        },
+      ],
+    })
+
+    const result = await detectDuplicateInvoice(supabase, 'org-1', 'contact-1', 'White House RE', 550)
+    expect(result.isDuplicate).toBe(true)
+  })
+
+  it('does NOT flag duplicate when amount exceeds 10% tolerance', async () => {
+    const supabase = createMockSupabase({
+      invoices: [
+        {
+          id: 'inv-1',
+          org_id: 'org-1',
+          client_contact_id: 'contact-1',
+          project_reference: 'White House RE',
+          total: 400,
+          status: 'sent',
+          invoice_number: 'AWU-202602-001',
+          created_at: recentDate,
+        },
+      ],
+    })
+
+    const result = await detectDuplicateInvoice(supabase, 'org-1', 'contact-1', 'White House RE', 550)
+    expect(result.isDuplicate).toBe(false)
+  })
+
+  it('does NOT flag duplicate when existing invoice is outside 30-day window', async () => {
+    const supabase = createMockSupabase({
+      invoices: [
+        {
+          id: 'inv-1',
+          org_id: 'org-1',
+          client_contact_id: 'contact-1',
+          project_reference: 'White House RE',
+          total: 550,
+          status: 'sent',
+          invoice_number: 'AWU-202602-001',
+          created_at: oldDate,
+        },
+      ],
+    })
+
+    const result = await detectDuplicateInvoice(supabase, 'org-1', 'contact-1', 'White House RE', 550)
+    expect(result.isDuplicate).toBe(false)
+  })
+
+  it('does NOT flag duplicate when project names are completely different', async () => {
+    const supabase = createMockSupabase({
+      invoices: [
+        {
+          id: 'inv-1',
+          org_id: 'org-1',
+          client_contact_id: 'contact-1',
+          project_reference: 'Kitchen renovation',
+          total: 550,
+          status: 'sent',
+          invoice_number: 'AWU-202602-001',
+          created_at: recentDate,
+        },
+      ],
+    })
+
+    const result = await detectDuplicateInvoice(supabase, 'org-1', 'contact-1', 'White House RE', 550)
     expect(result.isDuplicate).toBe(false)
   })
 })
