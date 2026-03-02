@@ -16,8 +16,6 @@ logs/security/
 # Demo artifacts
 demo-1/
 
-# Dev-only seed data (never commit)
-personal-assistant/src/lib/dev/seed-data.ts
 
 # Build artifacts
 .next/
@@ -49,3 +47,5 @@ temp-*/
 
 # Generated HTML reports
 docs/*.html
+.vercel
+.env*.local
