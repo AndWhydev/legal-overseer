@@ -23,37 +23,6 @@
 <details>
 <summary>v1.1 Agent Runtime + First Agents (Phases 7-12) -- SHIPPED 2026-02-22</summary>
 
-- [x] Phase 7: Infrastructure Foundation (2/2 plans) -- completed 2026-02-22
-- [x] Phase 8: Agent Runtime (3/3 plans) -- completed 2026-02-22
-- [x] Phase 9: Approval Flow (3/3 plans) -- completed 2026-02-22
-- [x] Phase 10: Sentry Agent (4/4 plans) -- completed 2026-02-22
-- [x] Phase 11: Lead Swarm Agent (4/4 plans) -- completed 2026-02-22
-- [x] Phase 12: Invoice Flow Agent (3/3 plans) -- completed 2026-02-22
-
-</details>
-
-### v1.2 Battle-Testing & Sellability
-
-- [x] **Phase 13: Deployment Stability** - Vercel prod, cron, cold starts, connection pooling, Fly.io and Cloudflare workers operational (completed 2026-03-01)
-- [x] **Phase 14: Channel Relay & OAuth** - Live channel connections via OAuth, dedup, classification pipeline validated (completed 2026-03-02)
-- [x] **Phase 15: WhatsApp Pipeline** - Voice-to-agent, multi-turn, approval flow, latency validation, Baileys bridge stability (completed 2026-03-01)
-- [x] **Phase 16: Confidence Routing Validation** - Threshold tuning, false positive measurement, adversarial testing (completed 2026-03-02)
-- [x] **Phase 17: Invoice & Lead Validation** - Entity resolution, PDF quality, email delivery, lead auto-response (completed 2026-03-02)
-- [x] **Phase 18: Integration Fixes & Tech Debt** - Fix broken integrations in completed phases, response mismatches, dead code, env documentation (completed 2026-03-02)
-- [ ] **Phase 19: Credential Provisioning & Live Verification** - OAuth credentials, live channel pulls, WhatsApp bridge deployment, operational sign-off
-
-## Phase Details
-
-<details>
-<summary>v1.0 Phase Details (Phases 1-6)</summary>
-
-*See MILESTONES.md for v1.0 details.*
-
-</details>
-
-<details>
-<summary>v1.1 Phase Details (Phases 7-12)</summary>
-
 ### Phase 7: Infrastructure Foundation
 **Goal**: Agent infrastructure is production-ready -- DI pattern eliminates module-level Supabase coupling, agent runs are logged with cost tracking, and v1.0 agent infra (confidence routing, shared CRUD tools) is verified working
 **Depends on**: Phase 6 (v1.0 complete)
@@ -182,7 +151,7 @@ Plans:
 
 Plans:
 - [x] 15-01-PLAN.md -- Baileys bridge worker, voice note transcription, webhook audio handling
-- [ ] 15-02-PLAN.md -- Multi-turn context resolution, approval hardening, latency instrumentation
+- [x] 15-02-PLAN.md -- Multi-turn context resolution, approval hardening, latency instrumentation
 
 ### Phase 16: Confidence Routing Validation
 **Goal**: Confidence routing produces reliable auto-act/approve/escalate decisions across all agents
@@ -196,8 +165,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 16-01-PLAN.md -- 50 AWU scenario dataset, per-agent threshold tuning, confidence scoring harness
-- [ ] 16-02-PLAN.md -- False positive measurement, model-tier validation, adversarial test suite
+- [x] 16-01-PLAN.md -- 50 AWU scenario dataset, per-agent threshold tuning, confidence scoring harness
+- [x] 16-02-PLAN.md -- False positive measurement, model-tier validation, adversarial test suite
 
 ### Phase 17: Invoice & Lead Validation
 **Goal**: Invoice and lead agent flows work end-to-end with production-quality output
@@ -212,12 +181,12 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 17-01-PLAN.md -- Ambiguous entity resolution and fuzzy duplicate detection (TDD)
-- [ ] 17-02-PLAN.md -- Invoice PDF branding (ABN/GST), email delivery, lifecycle validation
-- [ ] 17-03-PLAN.md -- Lead auto-approve path, 20-message classification suite, qualification scoring
+- [x] 17-01-PLAN.md -- Ambiguous entity resolution and fuzzy duplicate detection (TDD)
+- [x] 17-02-PLAN.md -- Invoice PDF branding (ABN/GST), email delivery, lifecycle validation
+- [x] 17-03-PLAN.md -- Lead auto-approve path, 20-message classification suite, qualification scoring
 
 ### Phase 18: Integration Fixes & Tech Debt
-**Goal**: All broken integrations and tech debt from completed phases are fixed — no dead code, no bypassed pipelines, no stub implementations
+**Goal**: All broken integrations and tech debt from completed phases are fixed -- no dead code, no bypassed pipelines, no stub implementations
 **Depends on**: Phase 15
 **Requirements**: CHAN-04, CHAN-05 (integration), OAUTH-03, CHAN-03 (flow), DEPLOY-05, DEPLOY-06 (flow)
 **Gap Closure**: Closes 3 broken integrations, 3 broken E2E flows, 8 tech debt items from audit
@@ -232,12 +201,12 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 18-01-PLAN.md -- Rewire channel-sync cron to relay daemon, fix classifyWithRetry, WhatsApp QR bridge integration, UI response field fixes
-- [ ] 18-02-PLAN.md -- Fly.io worker agent execution (replace TODO stub)
-- [ ] 18-03-PLAN.md -- Remove ignoreBuildErrors by fixing all TS errors (dual SupabaseClient + 13 real errors)
+- [x] 18-01-PLAN.md -- Rewire channel-sync cron to relay daemon, fix classifyWithRetry, WhatsApp QR bridge integration, UI response field fixes
+- [x] 18-02-PLAN.md -- Fly.io worker agent execution (replace TODO stub)
+- [x] 18-03-PLAN.md -- Remove ignoreBuildErrors by fixing all TS errors (dual SupabaseClient + 13 real errors)
 
 ### Phase 19: Credential Provisioning & Live Verification
-**Goal**: All OAuth channels work end-to-end in production with real credentials — live message pulls verified, WhatsApp bridge stable
+**Goal**: All OAuth channels work end-to-end in production with real credentials -- live message pulls verified, WhatsApp bridge stable
 **Depends on**: Phase 18
 **Requirements**: CHAN-01, CHAN-02, CHAN-03, OAUTH-01, OAUTH-02, OAUTH-04, OAUTH-05
 **Gap Closure**: Closes all NEEDS HUMAN items from audit
@@ -248,7 +217,12 @@ Plans:
   4. Calendly developer app credentials provisioned and OAuth flow completes
   5. WhatsApp Baileys bridge deployed to persistent host (Fly.io) and maintains 7-day stable connection
   6. Credential provisioning runbook documents all steps for each provider
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [ ] 19-01-PLAN.md -- WhatsApp bridge Fly.io deployment + credential provisioning runbook
+- [ ] 19-02-PLAN.md -- OAuth credential verification script + channel smoke test script
+- [ ] 19-03-PLAN.md -- Credential provisioning checkpoints + live channel verification
 
 ## Progress
 
@@ -272,9 +246,9 @@ Phases 13 first (foundation), then 14 -> 15 (channel chain) and 16 (can parallel
 | 13. Deployment Stability | v1.2 | 4/4 | Complete | 2026-03-01 |
 | 14. Channel Relay & OAuth | v1.2 | 5/5 | Complete | 2026-03-02 |
 | 15. WhatsApp Pipeline | v1.2 | 2/2 | Complete | 2026-03-02 |
-| 16. Confidence Routing Validation | 2/2 | Complete    | 2026-03-02 | - |
-| 17. Invoice & Lead Validation | 3/3 | Complete    | 2026-03-02 | - |
-| 18. Integration Fixes & Tech Debt | 3/3 | Complete    | 2026-03-02 | - |
-| 19. Credential Provisioning & Live Verification | v1.2 | 0/? | Not started | - |
+| 16. Confidence Routing Validation | v1.2 | 2/2 | Complete | 2026-03-02 |
+| 17. Invoice & Lead Validation | v1.2 | 3/3 | Complete | 2026-03-02 |
+| 18. Integration Fixes & Tech Debt | v1.2 | 3/3 | Complete | 2026-03-02 |
+| 19. Credential Provisioning & Live Verification | v1.2 | 0/3 | Planning complete | - |
 
-**Overall:** 35/35 plans complete for v1.0+v1.1 (100%). v1.2: 11/? plans complete (Phases 13-15 done, 16-19 not started).
+**Overall:** 35/35 plans complete for v1.0+v1.1 (100%). v1.2: 21/24 plans complete (Phases 13-18 done, Phase 19 planned).
