@@ -47,6 +47,7 @@ Progress: [####################..........] 100% v1.0+v1.1 | Phase 17 (3/3)
 | 18 | 03 | 17min | 2 | 18 |
 | 16 | 01 | 11min | 2 | 4 |
 | 16 | 02 | 14min | 2 | 4 |
+| 17 | 01 | 11min | 2 | 2 |
 | 17 | 03 | 9min | 2 | 4 |
 
 ## Accumulated Context
@@ -105,6 +106,9 @@ See PROJECT.md Key Decisions table.
 - [16-02] Model tier jitter: Haiku +-0.05, Sonnet 0, Opus +-0.02 deterministic for reproducibility
 - [16-02] FP rate measured on auto-actions only (not total scenarios) for business-meaningful metric
 - [16-02] High-stakes agents require >= 0.25 safety margin between ask and act thresholds
+- [17-01] Ambiguity threshold: 3+ candidates below 0.5 or top-2 within 0.1 both below 0.7 triggers ambiguous_contact
+- [17-01] Fuzzy project match uses bidirectional containment after normalization (strip suffixes, lowercase)
+- [17-01] Amount tolerance 10% using max-denominator formula; 30-day window for duplicate scope
 - [17-03] Auto-approve creates approval record with status approved + immediate delivery (audit trail preserved)
 - [17-03] High-budget + no-service + slow-timeline scores cold (2 points) -- budget alone insufficient
 - [17-03] Classification mocks validate mapping pipeline, not AI model accuracy
