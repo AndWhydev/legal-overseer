@@ -209,7 +209,12 @@ Plans:
   3. Generated PDF is branded, professional, with correct ABN/GST and arrives in inbox (not spam)
   4. High-confidence leads (>85%) get auto-approved response in under 2 minutes
   5. Lead classification accuracy matches Andy's manual assessment across 20 sample messages
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [ ] 17-01-PLAN.md -- Ambiguous entity resolution and fuzzy duplicate detection (TDD)
+- [ ] 17-02-PLAN.md -- Invoice PDF branding (ABN/GST), email delivery, lifecycle validation
+- [ ] 17-03-PLAN.md -- Lead auto-approve path, 20-message classification suite, qualification scoring
 
 ### Phase 18: Integration Fixes & Tech Debt
 **Goal**: All broken integrations and tech debt from completed phases are fixed — no dead code, no bypassed pipelines, no stub implementations
