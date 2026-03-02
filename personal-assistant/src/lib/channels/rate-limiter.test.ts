@@ -248,7 +248,7 @@ describe('rate-limiter', () => {
         await checkRateLimit('gmail')
       }
 
-      let result = await checkRateLimit('gmail')
+      const result = await checkRateLimit('gmail')
       expect(result.allowed).toBe(false)
 
       // Simulate time passing (100ms should give 0.1 tokens)
