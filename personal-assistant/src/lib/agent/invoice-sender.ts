@@ -241,6 +241,7 @@ export async function processApprovedInvoiceSends(
 
     const orgSettings = (organization?.settings ?? {}) as Record<string, unknown>
     const branding = (orgSettings.branding ?? {}) as Record<string, unknown>
+    const orgName = typeof branding.company_name === 'string' ? branding.company_name : (organization?.name ?? 'BitBit')
 
     const pdf = generateInvoicePdf(
       {
@@ -257,7 +258,7 @@ export async function processApprovedInvoiceSends(
         project_reference: invoice.project_reference,
       },
       {
-        company_name: typeof branding.company_name === 'string' ? branding.company_name : organization?.name,
+        company_name: orgName,
         logo_url: typeof branding.logo_url === 'string' ? branding.logo_url : undefined,
         primary_color: typeof branding.primary_color === 'string' ? branding.primary_color : undefined,
       },
@@ -268,11 +269,16 @@ export async function processApprovedInvoiceSends(
       continue
     }
 
+    const dueDate = invoice.due_date ?? new Date().toISOString().slice(0, 10)
+    const projectRef = invoice.project_reference || 'Services'
+
     // Send email via Resend if configured
     const emailResult = await sendInvoiceEmail({
       to: email,
       invoiceNumber: invoice.invoice_number,
       html: pdf.html,
+      from: `${orgName} Invoices <invoices@bitbit.chat>`,
+      subject: `Invoice ${invoice.invoice_number} \u2014 ${projectRef} \u2014 Due ${dueDate}`,
     })
 
     if (!emailResult.success) {
@@ -377,4 +383,78 @@ export async function checkOverdueInvoices(
   }
 
   return result
+}
+
+export interface InvoiceLifecycleResult {
+  updated: boolean
+  error?: string
+}
+
+export async function markInvoiceViewed(
+  supabase: SupabaseClient,
+  orgId: string,
+  invoiceId: string,
+): Promise<InvoiceLifecycleResult> {
+  const invoice = await fetchInvoice(supabase, orgId, invoiceId)
+  if (!invoice) {
+    return { updated: false, error: 'invoice_not_found' }
+  }
+
+  if (!isValidInvoiceStatusTransition(invoice.status, 'viewed')) {
+    return { updated: false, error: `invalid_transition:${invoice.status}->viewed` }
+  }
+
+  const { error } = await supabase
+    .from('invoices')
+    .update({
+      status: 'viewed',
+      viewed_at: new Date().toISOString(),
+    })
+    .eq('id', invoiceId)
+    .eq('org_id', orgId)
+
+  if (error) {
+    return { updated: false, error: error.message }
+  }
+
+  return { updated: true }
+}
+
+export async function markInvoicePaid(
+  supabase: SupabaseClient,
+  orgId: string,
+  invoiceId: string,
+  paymentDetails?: { method?: string; reference?: string },
+): Promise<InvoiceLifecycleResult> {
+  const invoice = await fetchInvoice(supabase, orgId, invoiceId)
+  if (!invoice) {
+    return { updated: false, error: 'invoice_not_found' }
+  }
+
+  if (!isValidInvoiceStatusTransition(invoice.status, 'paid')) {
+    return { updated: false, error: `invalid_transition:${invoice.status}->paid` }
+  }
+
+  const updatePayload: Record<string, unknown> = {
+    status: 'paid',
+    paid_at: new Date().toISOString(),
+  }
+  if (paymentDetails?.method) {
+    updatePayload.payment_method = paymentDetails.method
+  }
+  if (paymentDetails?.reference) {
+    updatePayload.payment_reference = paymentDetails.reference
+  }
+
+  const { error } = await supabase
+    .from('invoices')
+    .update(updatePayload)
+    .eq('id', invoiceId)
+    .eq('org_id', orgId)
+
+  if (error) {
+    return { updated: false, error: error.message }
+  }
+
+  return { updated: true }
 }

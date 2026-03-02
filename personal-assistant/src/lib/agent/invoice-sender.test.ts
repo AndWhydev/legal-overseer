@@ -2,16 +2,23 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   checkOverdueInvoices,
   isValidInvoiceStatusTransition,
+  markInvoicePaid,
+  markInvoiceViewed,
   processApprovedInvoiceSends,
   queueInvoiceSend,
 } from './invoice-sender'
 
-const { createApprovalMock } = vi.hoisted(() => ({
+const { createApprovalMock, sendInvoiceEmailMock } = vi.hoisted(() => ({
   createApprovalMock: vi.fn().mockResolvedValue({ id: 'approval-1' }),
+  sendInvoiceEmailMock: vi.fn().mockResolvedValue({ success: true, messageId: 'msg-1' }),
 }))
 
 vi.mock('./approval-queue', () => ({
   createApproval: createApprovalMock,
+}))
+
+vi.mock('@/lib/email/send-invoice', () => ({
+  sendInvoiceEmail: sendInvoiceEmailMock,
 }))
 
 interface InvoiceRow {
@@ -236,6 +243,8 @@ function createMockSupabase(input: {
 
 beforeEach(() => {
   createApprovalMock.mockClear()
+  sendInvoiceEmailMock.mockClear()
+  sendInvoiceEmailMock.mockResolvedValue({ success: true, messageId: 'msg-1' })
 })
 
 describe('queueInvoiceSend', () => {
@@ -363,5 +372,178 @@ describe('isValidInvoiceStatusTransition', () => {
     expect(isValidInvoiceStatusTransition('sent', 'paid')).toBe(true)
     expect(isValidInvoiceStatusTransition('draft', 'paid')).toBe(false)
     expect(isValidInvoiceStatusTransition('cancelled', 'sent')).toBe(false)
+  })
+})
+
+describe('invoice lifecycle transitions', () => {
+  function makeInvoice(overrides: Partial<InvoiceRow> = {}): InvoiceRow {
+    return {
+      id: 'inv-lc',
+      org_id: 'org-1',
+      invoice_number: 'INV-LC-001',
+      client_contact_id: 'contact-1',
+      status: 'draft',
+      items: [{ description: 'Work', quantity: 1, unit_price: 100, total: 100 }],
+      subtotal: 100,
+      tax: 10,
+      total: 110,
+      currency: 'AUD',
+      issued_date: '2026-02-22',
+      due_date: '2026-03-08',
+      reminder_count: 0,
+      project_reference: 'Project X',
+      ...overrides,
+    }
+  }
+
+  it('sent -> viewed via markInvoiceViewed', async () => {
+    const { supabase, state } = createMockSupabase({
+      invoices: [makeInvoice({ status: 'sent' })],
+    })
+
+    const result = await markInvoiceViewed(supabase, 'org-1', 'inv-lc')
+
+    expect(result.updated).toBe(true)
+    expect(result.error).toBeUndefined()
+    expect(state.invoices[0].status).toBe('viewed')
+  })
+
+  it('viewed -> paid via markInvoicePaid', async () => {
+    const { supabase, state } = createMockSupabase({
+      invoices: [makeInvoice({ status: 'viewed' })],
+    })
+
+    const result = await markInvoicePaid(supabase, 'org-1', 'inv-lc', { method: 'bank_transfer', reference: 'REF-123' })
+
+    expect(result.updated).toBe(true)
+    expect(state.invoices[0].status).toBe('paid')
+  })
+
+  it('overdue -> paid via markInvoicePaid (valid path)', async () => {
+    const { supabase, state } = createMockSupabase({
+      invoices: [makeInvoice({ status: 'overdue' })],
+    })
+
+    const result = await markInvoicePaid(supabase, 'org-1', 'inv-lc')
+
+    expect(result.updated).toBe(true)
+    expect(state.invoices[0].status).toBe('paid')
+  })
+
+  it('sent -> paid via markInvoicePaid (valid skip of viewed)', async () => {
+    const { supabase, state } = createMockSupabase({
+      invoices: [makeInvoice({ status: 'sent' })],
+    })
+
+    const result = await markInvoicePaid(supabase, 'org-1', 'inv-lc')
+
+    expect(result.updated).toBe(true)
+    expect(state.invoices[0].status).toBe('paid')
+  })
+
+  it('draft -> viewed returns error (invalid transition)', async () => {
+    const { supabase } = createMockSupabase({
+      invoices: [makeInvoice({ status: 'draft' })],
+    })
+
+    const result = await markInvoiceViewed(supabase, 'org-1', 'inv-lc')
+
+    expect(result.updated).toBe(false)
+    expect(result.error).toContain('invalid_transition')
+  })
+
+  it('draft -> paid returns error (invalid transition)', async () => {
+    const { supabase } = createMockSupabase({
+      invoices: [makeInvoice({ status: 'draft' })],
+    })
+
+    const result = await markInvoicePaid(supabase, 'org-1', 'inv-lc')
+
+    expect(result.updated).toBe(false)
+    expect(result.error).toContain('invalid_transition')
+  })
+
+  it('paid -> sent returns error (terminal state)', async () => {
+    const { supabase } = createMockSupabase({
+      invoices: [makeInvoice({ status: 'paid' })],
+    })
+
+    const result = await markInvoiceViewed(supabase, 'org-1', 'inv-lc')
+
+    expect(result.updated).toBe(false)
+    expect(result.error).toContain('invalid_transition')
+  })
+
+  it('cancelled -> anything returns error (terminal state)', async () => {
+    const { supabase } = createMockSupabase({
+      invoices: [makeInvoice({ status: 'cancelled' })],
+    })
+
+    const viewResult = await markInvoiceViewed(supabase, 'org-1', 'inv-lc')
+    expect(viewResult.updated).toBe(false)
+    expect(viewResult.error).toContain('invalid_transition')
+
+    const paidResult = await markInvoicePaid(supabase, 'org-1', 'inv-lc')
+    expect(paidResult.updated).toBe(false)
+    expect(paidResult.error).toContain('invalid_transition')
+  })
+
+  it('returns error for non-existent invoice', async () => {
+    const { supabase } = createMockSupabase({ invoices: [] })
+
+    const result = await markInvoiceViewed(supabase, 'org-1', 'inv-missing')
+
+    expect(result.updated).toBe(false)
+    expect(result.error).toBe('invoice_not_found')
+  })
+})
+
+describe('email formatting in processApprovedInvoiceSends', () => {
+  it('passes professional from and subject to sendInvoiceEmail', async () => {
+    const { supabase } = createMockSupabase({
+      approvals: [
+        {
+          id: 'appr-1',
+          org_id: 'org-1',
+          action_type: 'invoice_send',
+          status: 'approved',
+          action_payload: { invoice_id: 'inv-1' },
+        },
+      ],
+      invoices: [
+        {
+          id: 'inv-1',
+          org_id: 'org-1',
+          invoice_number: 'AWU-202602-001',
+          client_contact_id: 'contact-1',
+          status: 'draft',
+          items: [{ description: 'Website updates', quantity: 1, unit_price: 500, total: 500 }],
+          subtotal: 500,
+          tax: 50,
+          total: 550,
+          currency: 'AUD',
+          issued_date: '2026-02-22',
+          due_date: '2026-03-08',
+          reminder_count: 0,
+          project_reference: 'Website updates',
+        },
+      ],
+      contacts: [
+        { id: 'contact-1', org_id: 'org-1', name: 'Sezer', emails: ['sezer@example.com'] },
+      ],
+      organizations: [
+        { id: 'org-1', name: 'All Webbed Up', settings: { branding: { company_name: 'All Webbed Up' } } },
+      ],
+    })
+
+    await processApprovedInvoiceSends(supabase, 'org-1')
+
+    expect(sendInvoiceEmailMock).toHaveBeenCalledTimes(1)
+    const callArgs = sendInvoiceEmailMock.mock.calls[0][0]
+    expect(callArgs.from).toBe('All Webbed Up Invoices <invoices@bitbit.chat>')
+    expect(callArgs.subject).toContain('AWU-202602-001')
+    expect(callArgs.subject).toContain('Website updates')
+    expect(callArgs.subject).toContain('2026-03-08')
+    expect(callArgs.to).toBe('sezer@example.com')
   })
 })
