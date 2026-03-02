@@ -1,6 +1,6 @@
 import { withCronGuard, cronMaxDuration, cronDynamic } from '@/lib/cron/cron-guard'
-import { getAllAdapters } from '@/lib/channels/index'
-import { routeMessages } from '@/lib/agent/action-router'
+import { pollChannel, type PollResult } from '@/lib/channels/relay-daemon'
+import type { ChannelType } from '@/lib/channels/types'
 
 export const maxDuration = cronMaxDuration
 export const dynamic = cronDynamic
@@ -16,66 +16,55 @@ export async function GET(request: Request) {
       throw new Error(`Failed to fetch organizations: ${orgError.message}`)
     }
 
-    const adapters = getAllAdapters()
     let totalMessages = 0
+    let totalInserted = 0
+    const channelResults: { orgId: string; channel: string; result: PollResult }[] = []
 
     for (const org of orgs ?? []) {
       const orgId = org.id
 
-      for (const adapter of adapters) {
-        const { data: connection } = await supabase
-          .from('channel_connections')
-          .select('*')
-          .eq('org_id', orgId)
-          .eq('channel_type', adapter.type)
-          .eq('status', 'connected')
-          .single()
+      // Query relay-enabled connected channels for this org
+      const { data: connections } = await supabase
+        .from('channel_connections')
+        .select('channel_type')
+        .eq('org_id', orgId)
+        .eq('status', 'connected')
+        .eq('relay_enabled', true)
 
-        if (!connection) continue
+      if (!connections || connections.length === 0) continue
 
-        const lastSync = connection.last_sync
-          ? new Date(connection.last_sync)
-          : new Date(Date.now() - 24 * 60 * 60 * 1000)
+      for (const conn of connections) {
+        const channelType = conn.channel_type as ChannelType
+        const result = await pollChannel(supabase, orgId, channelType)
 
-        try {
-          const newMessages = await adapter.pull(connection.config as any, lastSync)
+        channelResults.push({ orgId, channel: channelType, result })
+        totalMessages += result.messagesFound
+        totalInserted += result.messagesInserted
 
-          if (newMessages.length > 0) {
-            const routedMessages = await routeMessages(supabase, newMessages, orgId)
-            totalMessages += routedMessages.length
+        if (result.messagesInserted > 0) {
+          console.log(
+            `[cron/channel-sync] org=${orgId} channel=${channelType}: ${result.messagesInserted} inserted (${result.messagesFound} found)`,
+          )
 
-            console.log(
-              `[cron/channel-sync] org=${orgId} channel=${adapter.type}: ${routedMessages.length} messages`,
-            )
+          await supabase.from('activity_feed').insert({
+            org_id: orgId,
+            action_type: 'system',
+            action: 'channel_sync',
+            result: `Processed ${result.messagesInserted} messages from ${channelType}`,
+          })
+        }
 
-            await supabase
-              .from('channel_connections')
-              .update({
-                last_sync: new Date().toISOString(),
-                message_count: connection.message_count + routedMessages.length,
-                updated_at: new Date().toISOString(),
-              })
-              .eq('id', connection.id)
-
-            await supabase.from('activity_feed').insert({
-              org_id: orgId,
-              action_type: 'system',
-              action: 'channel_sync',
-              result: `Processed ${routedMessages.length} messages from ${adapter.type}`,
-            })
-          }
-        } catch (adapterErr) {
+        if (result.error) {
           console.error(
-            `[cron/channel-sync] Failed pulling adapter ${adapter.type} for org ${orgId}:`,
-            adapterErr,
+            `[cron/channel-sync] org=${orgId} channel=${channelType} error: ${result.error}`,
           )
         }
       }
     }
 
     return {
-      message: `Sync complete, ${totalMessages} messages processed`,
-      details: { orgsProcessed: orgs?.length ?? 0, totalMessages },
+      message: `Sync complete, ${totalInserted} messages inserted (${totalMessages} found)`,
+      details: { orgsProcessed: orgs?.length ?? 0, totalMessages, totalInserted },
     }
   })
 }

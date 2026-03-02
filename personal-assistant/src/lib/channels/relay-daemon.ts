@@ -57,11 +57,16 @@ async function classifyWithRetry(
     try {
       // Classification is handled by the synthesizer pipeline (Phase 8 agent infra).
       // Mark message as pending classification — the synthesizer picks it up.
-      await supabase
+      const { error: updateError } = await supabase
         .from('channel_messages')
         .update({ classification: 'pending' })
         .eq('id', messageId)
         .eq('org_id', orgId)
+
+      if (updateError) {
+        throw new Error(updateError.message)
+      }
+
       return
     } catch (err) {
       console.error(
@@ -73,11 +78,17 @@ async function classifyWithRetry(
         await new Promise(resolve => setTimeout(resolve, backoffMs[attempt]))
       } else {
         // Final failure: mark as unclassified
-        await supabase
+        const { error: fallbackError } = await supabase
           .from('channel_messages')
           .update({ classification: 'unclassified' })
           .eq('id', messageId)
           .eq('org_id', orgId)
+
+        if (fallbackError) {
+          console.error(
+            `[relay] Failed to mark message ${messageId} as unclassified: ${fallbackError.message}`
+          )
+        }
 
         console.error(
           `[relay] Message ${messageId} marked as unclassified after ${maxAttempts} failed attempts`
