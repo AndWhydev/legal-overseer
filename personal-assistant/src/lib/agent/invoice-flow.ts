@@ -96,6 +96,29 @@ function normalizeTermsDays(value: number | null | undefined): number {
   return 14
 }
 
+export function normalizeProjectReference(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/\b(work|project|job|updates|changes)\b/gi, '')
+    .replace(/[.,;:!?]+$/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+function fuzzyProjectMatch(a: string, b: string): boolean {
+  const normA = normalizeProjectReference(a)
+  const normB = normalizeProjectReference(b)
+  if (!normA || !normB) return false
+  if (normA === normB) return true
+  return normA.includes(normB) || normB.includes(normA)
+}
+
+function amountWithinTolerance(a: number, b: number, tolerance = 0.10): boolean {
+  const maxVal = Math.max(a, b)
+  if (maxVal <= 0) return false
+  return Math.abs(a - b) / maxVal <= tolerance
+}
+
 function cleanProjectReference(value: string): string {
   return value
     .replace(/\$\s*[0-9][0-9,]*(?:\.[0-9]{1,2})?\s*[kKmM]?/g, '')
@@ -314,6 +337,21 @@ export async function resolveInvoiceEntities(
   }
 
   const sorted = [...candidates].sort((a, b) => (b.matchConfidence ?? 0) - (a.matchConfidence ?? 0))
+
+  // Ambiguity detection: too many low-confidence matches
+  if (sorted.length >= 3 && (sorted[0].matchConfidence ?? 0) < 0.5) {
+    return { resolved: null, error: 'ambiguous_contact' }
+  }
+
+  // Ambiguity detection: top two matches have similar low confidence
+  if (sorted.length >= 2) {
+    const topConf = sorted[0].matchConfidence ?? 0
+    const secondConf = sorted[1].matchConfidence ?? 0
+    if (topConf < 0.7 && secondConf < 0.7 && Math.abs(topConf - secondConf) <= 0.1) {
+      return { resolved: null, error: 'ambiguous_contact' }
+    }
+  }
+
   const best = sorted[0]
 
   let projectReference = intent.project_reference?.trim() ?? ''
@@ -376,25 +414,35 @@ export async function detectDuplicateInvoice(
     return { isDuplicate: false, existingInvoice: null }
   }
 
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
+
   const { data, error } = await supabase
     .from('invoices')
     .select('id, invoice_number, status, total, project_reference, created_at')
     .eq('org_id', orgId)
     .eq('client_contact_id', contactId)
-    .eq('project_reference', normalizedProject)
-    .eq('total', total)
     .neq('status', 'cancelled')
+    .gte('created_at', thirtyDaysAgo)
     .order('created_at', { ascending: false })
-    .limit(1)
+    .limit(50)
 
   if (error) {
     return { isDuplicate: false, existingInvoice: null }
   }
 
-  const existing = ((data ?? [])[0] ?? null) as ExistingInvoiceRow | null
+  const rows = (data ?? []) as ExistingInvoiceRow[]
+
+  // Find first invoice that fuzzy-matches on project and is within amount tolerance
+  const match = rows.find((row) => {
+    if (!row.project_reference) return false
+    if (!fuzzyProjectMatch(normalizedProject, row.project_reference)) return false
+    if (!amountWithinTolerance(total, row.total)) return false
+    return true
+  })
+
   return {
-    isDuplicate: Boolean(existing),
-    existingInvoice: existing,
+    isDuplicate: Boolean(match),
+    existingInvoice: match ?? null,
   }
 }
 

@@ -93,6 +93,10 @@ function createMockSupabase(input?: {
                 filters[`neq:${key}`] = value
                 return chain
               },
+              gte(key: string, value: unknown) {
+                filters[`gte:${key}`] = value
+                return chain
+              },
               ilike(key: string, value: unknown) {
                 filters[`ilike:${key}`] = value
                 return chain
@@ -107,6 +111,11 @@ function createMockSupabase(input?: {
                   if (filters.project_reference && (invoice.project_reference ?? '') !== String(filters.project_reference)) return false
                   if (filters.total !== undefined && Number(invoice.total) !== Number(filters.total)) return false
                   if (filters['neq:status'] && invoice.status === String(filters['neq:status'])) return false
+                  if (filters['gte:created_at']) {
+                    const threshold = new Date(String(filters['gte:created_at'])).getTime()
+                    const invoiceDate = new Date(invoice.created_at).getTime()
+                    if (invoiceDate < threshold) return false
+                  }
                   if (filters['ilike:invoice_number']) {
                     const pattern = String(filters['ilike:invoice_number']).replace(/%/g, '').toLowerCase()
                     if (!invoice.invoice_number.toLowerCase().includes(pattern)) return false
