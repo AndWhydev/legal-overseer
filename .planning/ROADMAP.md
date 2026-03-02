@@ -38,7 +38,7 @@
 - [x] **Phase 14: Channel Relay & OAuth** - Live channel connections via OAuth, dedup, classification pipeline validated (completed 2026-03-02)
 - [x] **Phase 15: WhatsApp Pipeline** - Voice-to-agent, multi-turn, approval flow, latency validation, Baileys bridge stability (completed 2026-03-01)
 - [x] **Phase 16: Confidence Routing Validation** - Threshold tuning, false positive measurement, adversarial testing (completed 2026-03-02)
-- [ ] **Phase 17: Invoice & Lead Validation** - Entity resolution, PDF quality, email delivery, lead auto-response
+- [x] **Phase 17: Invoice & Lead Validation** - Entity resolution, PDF quality, email delivery, lead auto-response (completed 2026-03-02)
 - [x] **Phase 18: Integration Fixes & Tech Debt** - Fix broken integrations in completed phases, response mismatches, dead code, env documentation (completed 2026-03-02)
 - [ ] **Phase 19: Credential Provisioning & Live Verification** - OAuth credentials, live channel pulls, WhatsApp bridge deployment, operational sign-off
 
@@ -273,7 +273,7 @@ Phases 13 first (foundation), then 14 -> 15 (channel chain) and 16 (can parallel
 | 14. Channel Relay & OAuth | v1.2 | 5/5 | Complete | 2026-03-02 |
 | 15. WhatsApp Pipeline | v1.2 | 2/2 | Complete | 2026-03-02 |
 | 16. Confidence Routing Validation | 2/2 | Complete    | 2026-03-02 | - |
-| 17. Invoice & Lead Validation | 2/3 | In Progress|  | - |
+| 17. Invoice & Lead Validation | 3/3 | Complete   | 2026-03-02 | - |
 | 18. Integration Fixes & Tech Debt | 3/3 | Complete    | 2026-03-02 | - |
 | 19. Credential Provisioning & Live Verification | v1.2 | 0/? | Not started | - |
 

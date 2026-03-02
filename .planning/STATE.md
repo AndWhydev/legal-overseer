@@ -11,8 +11,8 @@ See: .planning/PROJECT.md (updated 2026-03-01)
 
 Phase: 17 of 19 (Invoice & Lead Validation)
 Plan: 3 of 3 in current phase
-Status: In progress
-Last activity: 2026-03-02 -- Completed 17-03 (Lead Classification & Auto-Approve)
+Status: Phase 17 COMPLETE
+Last activity: 2026-03-02 -- Completed 17-02 (Invoice PDF Branding & Lifecycle)
 
 Progress: [####################..........] 100% v1.0+v1.1 | Phase 17 (3/3)
 
@@ -30,7 +30,7 @@ Progress: [####################..........] 100% v1.0+v1.1 | Phase 17 (3/3)
 | 14. Channel Relay & OAuth | 5 | 5/5 COMPLETE |
 | 15. WhatsApp Pipeline | 2 | 2/2 COMPLETE |
 | 16. Confidence Routing Validation | 2 | 2/2 COMPLETE |
-| 17. Invoice & Lead Validation | 3 | 3/3 IN PROGRESS |
+| 17. Invoice & Lead Validation | 3 | 3/3 COMPLETE |
 | 18. Integration Fixes & Tech Debt | 3 | 3/3 COMPLETE |
 
 | Phase | Plan | Duration | Tasks | Files |
@@ -48,6 +48,7 @@ Progress: [####################..........] 100% v1.0+v1.1 | Phase 17 (3/3)
 | 16 | 01 | 11min | 2 | 4 |
 | 16 | 02 | 14min | 2 | 4 |
 | 17 | 01 | 11min | 2 | 2 |
+| 17 | 02 | 15min | 2 | 4 |
 | 17 | 03 | 9min | 2 | 4 |
 
 ## Accumulated Context
@@ -109,6 +110,10 @@ See PROJECT.md Key Decisions table.
 - [17-01] Ambiguity threshold: 3+ candidates below 0.5 or top-2 within 0.1 both below 0.7 triggers ambiguous_contact
 - [17-01] Fuzzy project match uses bidirectional containment after normalization (strip suffixes, lowercase)
 - [17-01] Amount tolerance 10% using max-denominator formula; 30-day window for duplicate scope
+- [17-02] gst_registered defaults to true (Australian business assumption); explicit false required to disable
+- [17-02] payment_instructions takes precedence over bank_details when both provided
+- [17-02] Email from uses "{OrgName} Invoices" display name for professional inbox appearance
+- [17-02] Lifecycle functions return error objects not throws for graceful caller handling
 - [17-03] Auto-approve creates approval record with status approved + immediate delivery (audit trail preserved)
 - [17-03] High-budget + no-service + slow-timeline scores cold (2 points) -- budget alone insufficient
 - [17-03] Classification mocks validate mapping pipeline, not AI model accuracy
@@ -127,5 +132,5 @@ See PROJECT.md Key Decisions table.
 ## Session Continuity
 
 Last session: 2026-03-02
-Stopped at: Completed 17-03-PLAN.md (Lead Classification & Auto-Approve)
+Stopped at: Completed 17-02-PLAN.md (Invoice PDF Branding & Lifecycle) -- Phase 17 COMPLETE
 Resume file: None

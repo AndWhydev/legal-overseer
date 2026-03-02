@@ -44,9 +44,9 @@ Requirements for battle-testing and sellability. Each maps to roadmap phases.
 
 - [x] **INVC-06**: Entity resolution handles ambiguous NL commands (varying specificity levels) with ask-or-resolve behavior
 - [x] **INVC-07**: Duplicate detection triggers on slightly varied wording/amounts for same contact+project+period
-- [ ] **INVC-08**: Generated PDF is branded, professional, with correct ABN/GST details and layout
-- [ ] **INVC-09**: Invoice email arrives in recipient inbox (not spam) via working email transport
-- [ ] **INVC-10**: Full lifecycle validated: draft to approved to sent to viewed to paid
+- [x] **INVC-08**: Generated PDF is branded, professional, with correct ABN/GST details and layout
+- [x] **INVC-09**: Invoice email arrives in recipient inbox (not spam) via working email transport
+- [x] **INVC-10**: Full lifecycle validated: draft to approved to sent to viewed to paid
 
 ### Lead Response
 
@@ -120,9 +120,9 @@ Requirements for battle-testing and sellability. Each maps to roadmap phases.
 | CONF-05 | Phase 16 | Complete |
 | INVC-06 | Phase 17 | Complete |
 | INVC-07 | Phase 17 | Complete |
-| INVC-08 | Phase 17 | Pending |
-| INVC-09 | Phase 17 | Pending |
-| INVC-10 | Phase 17 | Pending |
+| INVC-08 | Phase 17 | Complete |
+| INVC-09 | Phase 17 | Complete |
+| INVC-10 | Phase 17 | Complete |
 | LEAD-01 | Phase 17 | Complete |
 | LEAD-02 | Phase 17 | Complete |
 | LEAD-03 | Phase 17 | Complete |
