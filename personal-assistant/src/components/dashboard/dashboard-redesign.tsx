@@ -14,9 +14,6 @@ import {
   Sparkles,
   Flame,
   Radio,
-  TrendingUp,
-  TrendingDown,
-  AlertCircle,
 } from 'lucide-react';
 import type { KanbanColumn, Task } from '@/lib/types';
 import {
@@ -120,6 +117,21 @@ const AGENT_ACTIVITY_7D = [
 const AXIS_TICK = { fontSize: 9, fill: 'var(--text-dim, #475569)' };
 const GRID_STROKE = 'rgba(255,255,255,0.04)';
 
+const TOOLTIP_STYLE: React.CSSProperties = {
+  background: 'rgba(15, 20, 30, 0.85)',
+  backdropFilter: 'blur(16px) saturate(1.3)',
+  WebkitBackdropFilter: 'blur(16px) saturate(1.3)',
+  border: '1px solid rgba(255, 255, 255, 0.08)',
+  borderRadius: 10,
+  fontSize: 11,
+  color: '#f1f5f9',
+  boxShadow: '0 8px 24px rgba(0, 0, 0, 0.3)',
+  padding: '8px 12px',
+};
+
+const BAR_CURSOR = { fill: 'rgba(255, 255, 255, 0.08)', radius: 3 };
+const AREA_CURSOR = { stroke: 'rgba(255, 255, 255, 0.2)', strokeWidth: 1 };
+
 // ─── KPI Card Component ────────────────────────────────────────────────────
 
 interface KpiCardProps {
@@ -137,21 +149,21 @@ interface KpiCardProps {
 const kpiCardStyle: React.CSSProperties = {
   padding: '20px',
   borderRadius: 16,
-  background: 'var(--bg-card, rgba(15, 20, 30, 0.6))',
+  background: 'rgba(15, 20, 30, 0.6)',
   backdropFilter: 'blur(20px) saturate(1.2)',
   WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
   border: '1px solid rgba(255, 255, 255, 0.03)',
-  boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05), inset 0 -4px 20px rgba(0, 0, 0, 0.2)',
-  backgroundImage: 'linear-gradient(135deg, rgba(255, 255, 255, 0.02) 0%, transparent 100%)',
+  boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
   display: 'flex',
   flexDirection: 'column',
   gap: 8,
   minWidth: 180,
   minHeight: 160,
+  overflow: 'visible',
 };
 
 function KpiCard({ title, icon, accent, value, prefix, unit, trendText, trendType, children }: KpiCardProps) {
-  const trendColor = trendType === 'positive' ? 'var(--bb-green)' : trendType === 'negative' ? '#ef4444' : 'var(--bb-amber)';
+  const trendVariant = trendType === 'positive' ? 'green' : trendType === 'negative' ? 'red' : 'amber';
 
   return (
     <article aria-label={`${title} — ${prefix || ''}${value}${unit ? ' ' + unit : ''}, ${trendText}`} style={kpiCardStyle}>
@@ -160,22 +172,9 @@ function KpiCard({ title, icon, accent, value, prefix, unit, trendText, trendTyp
         <span style={{ fontSize: 12, color: 'var(--text-secondary, #64748B)', fontWeight: 500, letterSpacing: '0.02em' }}>
           {title}
         </span>
-        <div
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 3,
-            padding: '3px 8px',
-            borderRadius: 99,
-            background: `color-mix(in srgb, ${trendColor} 12%, transparent)`,
-            color: trendColor,
-            fontSize: 11,
-            fontWeight: 600,
-            whiteSpace: 'nowrap',
-          }}
-        >
+        <span className={`bb-badge bb-badge--${trendVariant}`}>
           {trendText}
-        </div>
+        </span>
       </div>
 
       {/* Value (left) + Chart (right) — chart breathes into center */}
@@ -269,7 +268,7 @@ export function DashboardRedesign({ columns, tasks, messages, completedToday, to
             trendText="+2 this month"
             trendType="positive"
           >
-            <div style={{ width: 140, height: 80, flexShrink: 0 }}>
+            <div style={{ width: 140, height: 80, flexShrink: 0, overflow: 'visible' }}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={PROJECTS_BY_STATUS} margin={{ top: 2, right: 2, bottom: 0, left: 0 }}>
                   <defs>
@@ -281,7 +280,7 @@ export function DashboardRedesign({ columns, tasks, messages, completedToday, to
                   <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} vertical={false} />
                   <XAxis dataKey="name" tick={AXIS_TICK} axisLine={false} tickLine={false} />
                   <YAxis tick={AXIS_TICK} axisLine={false} tickLine={false} width={18} />
-                  <Tooltip contentStyle={{ background: '#1e293b', border: 'none', borderRadius: 8, fontSize: 11, color: '#f1f5f9' }} />
+                  <Tooltip contentStyle={TOOLTIP_STYLE} cursor={BAR_CURSOR} wrapperStyle={{ zIndex: 50 }} />
                   <Bar dataKey="value" fill="url(#blueBarGrad)" stroke="#3B82F6" strokeWidth={0.5} strokeOpacity={0.4} radius={[3, 3, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
@@ -296,9 +295,9 @@ export function DashboardRedesign({ columns, tasks, messages, completedToday, to
             trendText="+12%"
             trendType="positive"
           >
-            <div style={{ width: 140, height: 80, flexShrink: 0 }}>
+            <div style={{ width: 140, height: 80, flexShrink: 0, overflow: 'visible' }}>
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={REVENUE_TREND} margin={{ top: 2, right: 2, bottom: 0, left: 0 }}>
+                <AreaChart data={REVENUE_TREND} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
                   <defs>
                     <linearGradient id="greenGrad" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="0%" stopColor="#22C55E" stopOpacity={0.4} />
@@ -308,7 +307,7 @@ export function DashboardRedesign({ columns, tasks, messages, completedToday, to
                   <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} vertical={false} />
                   <XAxis dataKey="month" tick={AXIS_TICK} axisLine={false} tickLine={false} />
                   <YAxis tick={AXIS_TICK} axisLine={false} tickLine={false} width={22} tickFormatter={(v: any) => `$${v}`} />
-                  <Tooltip contentStyle={{ background: '#1e293b', border: 'none', borderRadius: 8, fontSize: 11, color: '#f1f5f9' }} formatter={(v: any) => [`$${v}k`, 'Revenue']} />
+                  <Tooltip contentStyle={TOOLTIP_STYLE} cursor={AREA_CURSOR} wrapperStyle={{ zIndex: 50 }} formatter={(v: any) => [`$${v}k`, 'Revenue']} />
                   <Area type="monotone" dataKey="value" stroke="#22C55E" fill="url(#greenGrad)" strokeWidth={1.5} />
                 </AreaChart>
               </ResponsiveContainer>
@@ -323,7 +322,7 @@ export function DashboardRedesign({ columns, tasks, messages, completedToday, to
             trendText="3 overdue"
             trendType="negative"
           >
-            <div style={{ width: 140, height: 80, flexShrink: 0 }}>
+            <div style={{ width: 140, height: 80, flexShrink: 0, overflow: 'visible' }}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={TASKS_PER_DAY} margin={{ top: 2, right: 2, bottom: 0, left: 0 }}>
                   <defs>
@@ -335,7 +334,7 @@ export function DashboardRedesign({ columns, tasks, messages, completedToday, to
                   <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} vertical={false} />
                   <XAxis dataKey="day" tick={AXIS_TICK} axisLine={false} tickLine={false} />
                   <YAxis tick={AXIS_TICK} axisLine={false} tickLine={false} width={18} />
-                  <Tooltip contentStyle={{ background: '#1e293b', border: 'none', borderRadius: 8, fontSize: 11, color: '#f1f5f9' }} />
+                  <Tooltip contentStyle={TOOLTIP_STYLE} cursor={BAR_CURSOR} wrapperStyle={{ zIndex: 50 }} />
                   <Bar dataKey="value" fill="url(#amberBarGrad)" stroke="#F59E0B" strokeWidth={0.5} strokeOpacity={0.4} radius={[3, 3, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
@@ -350,9 +349,9 @@ export function DashboardRedesign({ columns, tasks, messages, completedToday, to
             trendText="+34%"
             trendType="positive"
           >
-            <div style={{ width: 140, height: 80, flexShrink: 0 }}>
+            <div style={{ width: 140, height: 80, flexShrink: 0, overflow: 'visible' }}>
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={AGENT_ACTIVITY_7D} margin={{ top: 2, right: 2, bottom: 0, left: 0 }}>
+                <AreaChart data={AGENT_ACTIVITY_7D} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
                   <defs>
                     <linearGradient id="purpleGrad" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="0%" stopColor="#8B5CF6" stopOpacity={0.4} />
@@ -362,7 +361,7 @@ export function DashboardRedesign({ columns, tasks, messages, completedToday, to
                   <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} vertical={false} />
                   <XAxis dataKey="day" tick={AXIS_TICK} axisLine={false} tickLine={false} />
                   <YAxis tick={AXIS_TICK} axisLine={false} tickLine={false} width={25} />
-                  <Tooltip contentStyle={{ background: '#1e293b', border: 'none', borderRadius: 8, fontSize: 11, color: '#f1f5f9' }} />
+                  <Tooltip contentStyle={TOOLTIP_STYLE} cursor={AREA_CURSOR} wrapperStyle={{ zIndex: 50 }} />
                   <Area type="monotone" dataKey="value" stroke="#8B5CF6" fill="url(#purpleGrad)" strokeWidth={1.5} />
                 </AreaChart>
               </ResponsiveContainer>

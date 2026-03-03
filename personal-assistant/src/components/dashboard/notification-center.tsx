@@ -321,24 +321,35 @@ export function NotificationCenter({ onTabChange }: NotificationCenterProps) {
       <button
         ref={buttonRef}
         onClick={() => setIsOpen(!isOpen)}
-        className="bb-sidebar__item"
-        data-tooltip="Notifications"
         aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ''}`}
         aria-expanded={isOpen}
         aria-haspopup="true"
         style={{
           position: 'relative',
+          width: 36,
+          height: 36,
+          borderRadius: 8,
+          background: 'transparent',
+          border: 'none',
+          color: 'var(--text-dim)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'pointer',
+          transition: 'background 0.15s ease',
         }}
+        onMouseEnter={e => { (e.currentTarget).style.background = 'rgba(255,255,255,0.06)'; }}
+        onMouseLeave={e => { (e.currentTarget).style.background = 'transparent'; }}
       >
-        <Bell size={20} strokeWidth={1.8} />
+        <Bell size={18} strokeWidth={1.8} />
         {unreadCount > 0 && (
           <div
             style={{
               position: 'absolute',
-              top: '6px',
-              right: '6px',
-              width: '6px',
-              height: '6px',
+              top: 6,
+              right: 6,
+              width: 6,
+              height: 6,
               borderRadius: '50%',
               backgroundColor: '#ef4444',
               animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
@@ -357,8 +368,8 @@ export function NotificationCenter({ onTabChange }: NotificationCenterProps) {
           aria-label="Notifications"
           style={{
             position: 'fixed',
-            top: '80px',
-            left: '80px',
+            top: '56px',
+            right: '16px',
             width: '360px',
             maxWidth: 'calc(100vw - 32px)',
             maxHeight: '600px',

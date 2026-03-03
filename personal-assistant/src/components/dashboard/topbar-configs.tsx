@@ -1,4 +1,6 @@
-import React from 'react';
+'use client';
+
+import React, { useState, useEffect } from 'react';
 import {
   CalendarDays,
   Inbox,
@@ -23,8 +25,6 @@ import {
 } from 'lucide-react';
 import type { TopbarConfig } from './topbar';
 
-const TIMELINE_HOURS = ['6 AM', '7', '8', '9', '10', '11', '12 PM', '1', '2', '3', '4', '5', '6'];
-
 function DashboardBreadcrumb() {
   const dateStr = new Date().toLocaleDateString('en-AU', {
     weekday: 'long',
@@ -35,22 +35,56 @@ function DashboardBreadcrumb() {
   return (
     <>
       <CalendarDays size={14} />
-      <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{dateStr}</span>
+      <span>{dateStr}</span>
     </>
   );
 }
 
+const TIMELINE_HOURS = [
+  { label: '6 AM', hour: 6 },
+  { label: '7', hour: 7 },
+  { label: '8', hour: 8 },
+  { label: '9', hour: 9 },
+  { label: '10', hour: 10 },
+  { label: '11', hour: 11 },
+  { label: '12 PM', hour: 12 },
+  { label: '1', hour: 13 },
+  { label: '2', hour: 14 },
+  { label: '3', hour: 15 },
+  { label: '4', hour: 16 },
+  { label: '5', hour: 17 },
+  { label: '6', hour: 18 },
+];
+
 function TimelineStrip() {
+  const [currentHour, setCurrentHour] = useState<number | null>(null);
+
+  useEffect(() => {
+    setCurrentHour(new Date().getHours());
+    const id = setInterval(() => setCurrentHour(new Date().getHours()), 60_000);
+    return () => clearInterval(id);
+  }, []);
+
   return (
     <div className="bb-timeline" role="status" aria-label="Daily timeline">
-      {TIMELINE_HOURS.map((h, i) => (
-        <span
-          key={h}
-          className={`bb-timeline__tick ${i >= 4 && i <= 7 ? 'bb-timeline__tick--active' : ''}`}
-        >
-          {h}
-        </span>
-      ))}
+      {TIMELINE_HOURS.map(({ label, hour }) => {
+        const isNow = currentHour === hour;
+        const isNext = currentHour !== null && hour === currentHour + 1;
+        const isPast = currentHour !== null && hour < currentHour;
+        return (
+          <span
+            key={label}
+            className={[
+              'bb-timeline__tick',
+              isNow && 'bb-timeline__tick--now',
+              isNext && 'bb-timeline__tick--next',
+            ].filter(Boolean).join(' ')}
+            style={isPast && !isNow ? { opacity: 0.35 } : undefined}
+          >
+            {label}
+          </span>
+        );
+      })}
     </div>
   );
 }

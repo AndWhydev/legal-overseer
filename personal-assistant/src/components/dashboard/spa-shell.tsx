@@ -251,6 +251,21 @@ export function SPAShell({ displayName, initials }: SPAShellProps) {
     return () => window.removeEventListener('bb-navigate', handler);
   }, [navigateToId]);
 
+  // Spacebar → navigate home (dashboard) when not typing in an input
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.code !== 'Space') return;
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' ||
+          (e.target as HTMLElement)?.isContentEditable) return;
+      if (TABS[activeNavIndex]?.id === 'dashboard') return;
+      e.preventDefault();
+      navigateToId('dashboard');
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [activeNavIndex, navigateToId]);
+
   // Keep the viewport locked to the shell so docked chat input never falls below the fold.
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' });

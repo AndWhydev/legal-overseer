@@ -28,7 +28,7 @@ export function StatusPill({ variant, label, icon, dot = false, className }: Sta
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-medium leading-tight',
+        'inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] font-medium leading-tight backdrop-blur-sm',
         VARIANT_STYLES[variant],
         className,
       )}

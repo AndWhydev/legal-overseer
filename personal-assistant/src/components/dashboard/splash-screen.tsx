@@ -198,7 +198,7 @@ export function SplashScreen({
                     <Particle key={i} index={i} total={8} />
                   ))}
 
-                  {/* Pulsing glow */}
+                  {/* Pulsing glow — starts invisible, fades in with logo */}
                   <motion.div
                     style={{
                       position: 'absolute',
@@ -207,12 +207,14 @@ export function SplashScreen({
                       background:
                         'radial-gradient(circle, rgba(255, 90, 31, 0.3) 0%, transparent 70%)',
                     }}
+                    initial={{ scale: 0.5, opacity: 0 }}
                     animate={{
-                      scale: [0.85, 1.2, 0.85],
-                      opacity: [0.4, 1, 0.4],
+                      scale: [0.5, 0.85, 1.2, 0.85],
+                      opacity: [0, 0.4, 1, 0.4],
                     }}
                     transition={{
                       duration: 2.5,
+                      delay: 0.3,
                       repeat: Infinity,
                       ease: 'easeInOut',
                     }}
@@ -241,7 +243,7 @@ export function SplashScreen({
                 </motion.div>
 
                 {/* Text — swipes in from right after logo swooshes */}
-                <div style={{ overflow: 'hidden' }}>
+                <div style={{ overflow: 'visible' }}>
                   <motion.div
                     style={{
                       display: 'flex',
