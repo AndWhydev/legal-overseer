@@ -106,7 +106,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
 
             switch (event.type) {
               case 'thinking':
-                setThinkingText(event.data)
+                // Don't show internal routing info to the user
                 break
 
               case 'tool_call': {
@@ -335,7 +335,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
                 )
               })}
 
-              {isLoading && !thinkingText && (
+              {isLoading && !(messages.length > 0 && messages[messages.length - 1].role === 'assistant' && messages[messages.length - 1].content) && (
                 <div className="bb-chat__msg bb-chat__msg--assistant">
                   <div className="bb-chat__assistant-icon">
                     <BitBitLogoAnimated size={24} />
