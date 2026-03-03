@@ -31,8 +31,11 @@ export interface EngineConfig {
   skipCostGuard?: boolean
 }
 
+export type StageId = 'cost_check' | 'model_routing' | 'context_assembly' | 'api_streaming' | 'tool_execution'
+
 export type AgentEvent =
   | { type: 'thinking'; data: string }
+  | { type: 'stage'; data: { stage: StageId; status: 'start' | 'done'; meta?: Record<string, unknown> } }
   | { type: 'tool_call'; data: { name: string; input: unknown } }
   | { type: 'tool_result'; data: { name: string; result: unknown; success: boolean } }
   | { type: 'content_delta'; data: string }
@@ -55,6 +58,7 @@ export async function* runAgentChat(
 
   // Cost guard: check daily budget before running (background agents)
   if (!config.skipCostGuard) {
+    yield { type: 'stage', data: { stage: 'cost_check', status: 'start' } }
     try {
       const budget = await canProceed(config.supabase, config.orgId)
       if (!budget.allowed) {
@@ -88,23 +92,28 @@ export async function* runAgentChat(
       // Cost guard failure should not block execution
       console.warn('[engine] Cost guard check failed, proceeding anyway')
     }
+    yield { type: 'stage', data: { stage: 'cost_check', status: 'done', meta: { allowed: true } } }
   }
 
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
   const maxIterations = config.maxIterations || 8
 
   // Model routing: select model based on message complexity
+  yield { type: 'stage', data: { stage: 'model_routing', status: 'start' } }
   const autoRouted = !config.model
   const selection = autoRouted ? selectModel(message) : null
   const model = config.model || selection?.model || 'claude-sonnet-4-5-20250929'
   const maxTokens = selection ? getModel(selection.tier).maxTokens : 4096
   const tier: ModelTier = (selection?.tier as ModelTier) || 'sonnet'
+  yield { type: 'stage', data: { stage: 'model_routing', status: 'done', meta: { tier, model: autoRouted ? selection?.tier : 'manual' } } }
 
+  // Context assembly: build entity-aware system prompt
+  yield { type: 'stage', data: { stage: 'context_assembly', status: 'start' } }
   const systemPrompt = await buildEntityAwarePrompt(config.supabase, config.orgId, message)
+  yield { type: 'stage', data: { stage: 'context_assembly', status: 'done', meta: { promptLength: systemPrompt.length } } }
 
   if (autoRouted && selection) {
     console.log(`[model-router] ${selection.tier}: ${selection.reasoning}`)
-    yield { type: 'thinking', data: `Routing to ${selection.tier} (${selection.reasoning})` }
   }
 
   const tools = getAgentTools()
@@ -114,6 +123,7 @@ export async function* runAgentChat(
     iterationCount++
     let response: Anthropic.Message
     try {
+      yield { type: 'stage', data: { stage: 'api_streaming', status: 'start', meta: { model, iteration: iterationCount } } }
       const stream = client.messages.stream({
         model,
         max_tokens: maxTokens,
@@ -130,6 +140,7 @@ export async function* runAgentChat(
       }
 
       response = await stream.finalMessage()
+      yield { type: 'stage', data: { stage: 'api_streaming', status: 'done', meta: { tokens: response.usage } } }
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : String(err)
       yield { type: 'error', data: `API error: ${errorMsg}` }
@@ -196,6 +207,7 @@ export async function* runAgentChat(
     const toolResults: Anthropic.ToolResultBlockParam[] = []
     for (const tool of toolBlocks) {
       toolCallCount++
+      yield { type: 'stage', data: { stage: 'tool_execution', status: 'start', meta: { toolName: tool.name, iteration: iterationCount } } }
       yield { type: 'tool_call', data: { name: tool.name, input: tool.input } }
       try {
         const result = await executeAgentTool(
@@ -208,6 +220,7 @@ export async function* runAgentChat(
           type: 'tool_result',
           data: { name: tool.name, result: result.data, success: result.success },
         }
+        yield { type: 'stage', data: { stage: 'tool_execution', status: 'done', meta: { toolName: tool.name, success: result.success } } }
         toolResults.push({
           type: 'tool_result',
           tool_use_id: tool.id,
@@ -220,6 +233,7 @@ export async function* runAgentChat(
           type: 'tool_result',
           data: { name: tool.name, result: null, success: false },
         }
+        yield { type: 'stage', data: { stage: 'tool_execution', status: 'done', meta: { toolName: tool.name, success: false } } }
         toolResults.push({
           type: 'tool_result',
           tool_use_id: tool.id,

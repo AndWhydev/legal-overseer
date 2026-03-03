@@ -6,6 +6,8 @@ import { MessageBubble } from './message-bubble'
 import { ToolCallCard } from './tool-call-card'
 import { BitBitLogoVideo } from './bitbit-logo-video'
 import { BitBitLogoAnimated } from './bitbit-logo-animated'
+import { ThoughtPipeline, type PipelineStage } from './thought-pipeline'
+import type { StageId } from '@/lib/agent/engine'
 
 interface ToolCall {
   name: string
@@ -44,6 +46,8 @@ export function ChatInterface({ userName }: { userName?: string }) {
   const [messages, setMessages] = useState<Message[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [thinkingText, setThinkingText] = useState<string | null>(null)
+  const [pipelineStages, setPipelineStages] = useState<PipelineStage[]>([])
+  const [pipelineVisible, setPipelineVisible] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
 
   const scrollToBottom = useCallback(() => {
@@ -54,7 +58,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
 
   useEffect(() => {
     scrollToBottom()
-  }, [messages, thinkingText, scrollToBottom])
+  }, [messages, thinkingText, pipelineStages, scrollToBottom])
 
   const handleSend = useCallback(async (text: string) => {
     const trimmed = text.trim()
@@ -70,6 +74,8 @@ export function ChatInterface({ userName }: { userName?: string }) {
     setMessages(prev => [...prev, userMsg])
     setIsLoading(true)
     setThinkingText(null)
+    setPipelineStages([])
+    setPipelineVisible(true)
 
     const assistantId = `msg-${Date.now() + 1}`
     let assistantContent = ''
@@ -108,6 +114,25 @@ export function ChatInterface({ userName }: { userName?: string }) {
               case 'thinking':
                 // Don't show internal routing info to the user
                 break
+
+              case 'stage': {
+                const { stage, status, meta } = event.data as { stage: StageId; status: 'start' | 'done'; meta?: Record<string, unknown> }
+                setPipelineStages(prev => {
+                  const existing = prev.find(s => s.id === stage)
+                  if (existing) {
+                    return prev.map(s =>
+                      s.id === stage
+                        ? { ...s, status: status === 'start' ? 'active' : 'done', meta: meta ?? s.meta }
+                        : s
+                    )
+                  }
+                  return [
+                    ...prev,
+                    { id: stage, label: stage, status: status === 'start' ? 'active' : 'done', meta },
+                  ]
+                })
+                break
+              }
 
               case 'tool_call': {
                 const tc: ToolCall = {
@@ -163,6 +188,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
 
               case 'content_delta':
                 setThinkingText(null)
+                setPipelineVisible(false)
                 assistantContent += event.data
                 setMessages(prev => {
                   const existing = prev.find(m => m.id === assistantId)
@@ -246,6 +272,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
     } finally {
       setIsLoading(false)
       setThinkingText(null)
+      setPipelineVisible(false)
     }
   }, [isLoading])
 
@@ -340,9 +367,13 @@ export function ChatInterface({ userName }: { userName?: string }) {
                   <div className="bb-chat__assistant-icon">
                     <BitBitLogoAnimated size={24} />
                   </div>
-                  <div className="bb-chat__dots">
-                    <span /><span /><span />
-                  </div>
+                  {pipelineStages.length > 0 ? (
+                    <ThoughtPipeline stages={pipelineStages} visible={pipelineVisible} />
+                  ) : (
+                    <div className="bb-chat__dots">
+                      <span /><span /><span />
+                    </div>
+                  )}
                 </div>
               )}
 
