@@ -5160,10 +5160,10 @@ html.light .bb-tenders-drawer__close:hover {
   border-radius: 26px;
   flex-direction: column;
   align-items: stretch;
-  background: rgba(10, 14, 23, 0.5);
-  backdrop-filter: blur(26px) saturate(1.15);
-  -webkit-backdrop-filter: blur(26px) saturate(1.15);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  background: rgba(10, 14, 23, 0.42);
+  backdrop-filter: blur(22px) saturate(1.2);
+  -webkit-backdrop-filter: blur(22px) saturate(1.2);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
   transition:
     min-height 200ms cubic-bezier(0.22, 1, 0.36, 1),
     padding 200ms cubic-bezier(0.22, 1, 0.36, 1);
@@ -5341,6 +5341,11 @@ html.light .bb-pill__shimmer-dots span {
   filter: blur(80px);
   pointer-events: none;
   z-index: 0;
+  transition: opacity 0.15s ease;
+}
+
+.bb-chat--active::before {
+  opacity: 0;
 }
 
 .bb-chat__messages {
@@ -5357,6 +5362,23 @@ html.light .bb-pill__shimmer-dots span {
 
 .bb-chat--pre-session .bb-chat__messages {
   padding-bottom: 0;
+  flex: 0 1 auto;
+}
+
+.bb-chat--pre-session {
+  justify-content: center;
+  align-items: center;
+  padding-bottom: 100px;
+}
+
+.bb-chat--pre-session .bb-chat__input-area--centered {
+  position: relative;
+  left: auto;
+  bottom: auto;
+  transform: none;
+  margin: 16px 0 0;
+  width: var(--bb-chat-lane-width);
+  pointer-events: auto;
 }
 
 .bb-chat__messages--empty {
@@ -5364,7 +5386,7 @@ html.light .bb-pill__shimmer-dots span {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: clamp(24px, 6vh, 56px) 16px 20px;
+  padding: 0 16px;
 }
 
 .bb-chat__msg-list {
@@ -5388,7 +5410,6 @@ html.light .bb-pill__shimmer-dots span {
   align-items: center;
   justify-content: center;
   width: min(980px, 100%);
-  min-height: min(700px, calc(100dvh - 270px));
   gap: 0;
   padding: clamp(8px, 3vh, 32px) 16px 8px;
 }
@@ -5398,12 +5419,7 @@ html.light .bb-pill__shimmer-dots span {
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  transform: translateY(-92px);
   transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.bb-chat--active .bb-chat__center-cluster {
-  transform: translateY(-72px);
 }
 
 /* ── Logo Aura ── */
@@ -5533,8 +5549,9 @@ html.light .bb-pill__shimmer-dots span {
 }
 
 .bb-chat__greeting {
-  font-size: 32px !important;
+  font-size: 38px !important;
   font-weight: 500;
+  margin-top: 8px;
   color: var(--text-primary);
   font-family: 'Inter', sans-serif;
   margin: 0;
@@ -5556,10 +5573,10 @@ html.light .bb-pill__shimmer-dots span {
 }
 
 .bb-chat__chip {
-  background: rgba(10, 14, 23, 0.5);
-  backdrop-filter: blur(26px) saturate(1.15);
-  -webkit-backdrop-filter: blur(26px) saturate(1.15);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  background: rgba(10, 14, 23, 0.42);
+  backdrop-filter: blur(22px) saturate(1.2);
+  -webkit-backdrop-filter: blur(22px) saturate(1.2);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
   border: none;
   border-radius: 20px;
   padding: 6px 14px;
@@ -5786,7 +5803,8 @@ html.light .bb-pill__shimmer-dots span {
   left: auto;
   bottom: auto;
   transform: none;
-  margin: 20px auto 0;
+  margin: 16px auto 0;
+  width: 100%;
 }
 
 .bb-chat__input-area--bottom {

@@ -161,6 +161,31 @@ export function ChatInterface({ userName }: { userName?: string }) {
                 break
               }
 
+              case 'content_delta':
+                setThinkingText(null)
+                assistantContent += event.data
+                setMessages(prev => {
+                  const existing = prev.find(m => m.id === assistantId)
+                  if (existing) {
+                    return prev.map(m =>
+                      m.id === assistantId
+                        ? { ...m, content: assistantContent }
+                        : m
+                    )
+                  }
+                  return [
+                    ...prev,
+                    {
+                      id: assistantId,
+                      role: 'assistant' as const,
+                      content: assistantContent,
+                      toolCalls: toolCalls.length > 0 ? [...toolCalls] : undefined,
+                      timestamp: new Date(),
+                    },
+                  ]
+                })
+                break
+
               case 'message':
                 setThinkingText(null)
                 assistantContent = event.data
@@ -266,7 +291,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
               className="bb-chat__empty"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
+              exit={{ opacity: 0, transition: { duration: 0 } }}
               transition={{ duration: 0.3 }}
             >
               <div className="bb-chat__center-cluster">
@@ -274,7 +299,6 @@ export function ChatInterface({ userName }: { userName?: string }) {
                 <h2 className="bb-chat__greeting">
                   {getGreeting()}{userName ? `, ${userName}` : ''}
                 </h2>
-                <p className="bb-chat__tagline">What can I help you with?</p>
                 <div className="bb-chat__suggestions">
                   {SUGGESTIONS.map(s => (
                     <button

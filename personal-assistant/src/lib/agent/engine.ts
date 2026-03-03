@@ -35,6 +35,7 @@ export type AgentEvent =
   | { type: 'thinking'; data: string }
   | { type: 'tool_call'; data: { name: string; input: unknown } }
   | { type: 'tool_result'; data: { name: string; result: unknown; success: boolean } }
+  | { type: 'content_delta'; data: string }
   | { type: 'message'; data: string }
   | { type: 'error'; data: string }
   | { type: 'cost_blocked'; data: { spentToday: number; dailyLimit: number } }
@@ -113,13 +114,22 @@ export async function* runAgentChat(
     iterationCount++
     let response: Anthropic.Message
     try {
-      response = await client.messages.create({
+      const stream = client.messages.stream({
         model,
         max_tokens: maxTokens,
         system: systemPrompt,
         tools,
         messages,
       })
+
+      // Stream text deltas to the client in real-time
+      for await (const event of stream) {
+        if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
+          yield { type: 'content_delta', data: event.delta.text }
+        }
+      }
+
+      response = await stream.finalMessage()
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : String(err)
       yield { type: 'error', data: `API error: ${errorMsg}` }
