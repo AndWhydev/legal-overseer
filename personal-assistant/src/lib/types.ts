@@ -3,15 +3,35 @@ export interface Organization {
   name: string
   slug: string
   plan: string
+  tier: 'personal' | 'shared'
   settings: Record<string, unknown>
 }
 
 export interface Profile {
   id: string
-  org_id: string
+  org_id: string | null
+  personal_org_id: string | null
+  active_org_id: string | null
   display_name: string | null
   role: string
   preferences: Record<string, unknown>
+}
+
+export interface OrgMembership {
+  id: string
+  org_id: string
+  user_id: string
+  role: 'owner' | 'admin' | 'member' | 'viewer'
+  created_at: string
+}
+
+export interface TenancyContext {
+  userId: string
+  personalOrgId: string
+  activeOrgId: string
+  accessibleOrgIds: string[]
+  activeOrg: Organization | null
+  memberships: OrgMembership[]
 }
 
 export interface KanbanColumn {
