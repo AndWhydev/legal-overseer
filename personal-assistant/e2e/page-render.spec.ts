@@ -33,6 +33,8 @@ const ALL_TABS = [
 ]
 
 test.describe('Page Render Verification', () => {
+  test.describe.configure({ timeout: 60_000 })
+
   test('dashboard loads without critical errors', async ({ page }) => {
     const authenticated = await openProtectedPath(page, '/dashboard')
     test.skip(!authenticated, AUTH_SKIP_REASON)

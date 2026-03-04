@@ -10,7 +10,7 @@ export default defineConfig({
   fullyParallel: false,
   retries: process.env.CI ? 2 : 0,
   forbidOnly: !!process.env.CI,
-  workers: process.env.CI ? 1 : undefined,
+  workers: process.env.CI ? 1 : (process.env.PW_WORKERS ? Number(process.env.PW_WORKERS) : 2),
   reporter: process.env.CI ? 'html' : 'list',
   use: {
     baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000',
