@@ -3,6 +3,9 @@ import type { ChannelMessage } from '@/lib/channels/types'
 import { classifyMessage, type ClassificationResult } from './classifier'
 import { routeMessage } from './action-router'
 import { resolveEntityRanked } from '@/lib/context/entity-resolver'
+import { writeMessageEvent } from '@/lib/context/timeline-writer'
+import { linkRelationship } from '@/lib/context/relationship-linker'
+import { reflectOnEvent } from './reflection'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -529,7 +532,43 @@ export async function runTriage(
       threadStatus = await resolveThreadStatus(supabase, orgId, contactId)
     }
 
-    // 9. Update message with full triage data
+    // 9. Write timeline event for this message
+    await writeMessageEvent(
+      supabase, orgId, msg.id, 'inbound', msg.channel_type as string,
+      { sender: msg.sender_name, subject: msg.subject, priority, category: msgCategory },
+      contactId ?? undefined,
+    )
+
+    // 10. Link entity relationship (message sender → contact)
+    if (contactId) {
+      await linkRelationship(
+        supabase, orgId,
+        { type: 'channel_message', id: msg.id },
+        { type: 'contact', id: contactId },
+        'related_to',
+        { channel: msg.channel_type, sender_email: msg.sender_email },
+      )
+    }
+
+    // 11. Reflect on significant messages (extract learnable facts)
+    if (classification.significance >= 6 && !isDuplicate) {
+      reflectOnEvent(supabase, orgId, {
+        eventType: 'channel_message',
+        eventData: {
+          channel: msg.channel_type,
+          sender: msg.sender_name,
+          subject: msg.subject,
+          body: String(msg.body || '').slice(0, 500),
+          category: classification.category,
+          significance: classification.significance,
+        },
+        entityType: contactId ? 'contact' : undefined,
+        entityId: contactId ?? undefined,
+        entityName: contactName ?? undefined,
+      }).catch(() => {}) // fire-and-forget, never block triage
+    }
+
+    // 12. Update message with full triage data
     await supabase
       .from('channel_messages')
       .update({
