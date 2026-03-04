@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { handleTelegramMessage } from '@/lib/channels/telegram-handler'
+import { after } from 'next/server'
 
 const DEFAULT_ORG_ID = '289083e9-2143-44eb-9b6a-cfc615f1e81c'
+
+// Allow up to 60s for agent engine response
+export const maxDuration = 60
 
 interface TelegramUpdate {
   message?: {
@@ -62,9 +66,14 @@ export async function POST(request: NextRequest) {
     })
   }
 
-  // Fire-and-forget: don't await so Telegram gets a fast 200
-  handleTelegramMessage(orgId, chatId, text).catch((err) => {
-    console.error('Telegram handler background error:', err)
+  // Use next/server after() to keep the function alive after returning 200.
+  // This lets Telegram get a fast response while the agent engine runs.
+  after(async () => {
+    try {
+      await handleTelegramMessage(orgId, chatId, text)
+    } catch (err) {
+      console.error('Telegram handler background error:', err)
+    }
   })
 
   return NextResponse.json({ ok: true })
