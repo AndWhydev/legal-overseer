@@ -40,10 +40,14 @@ function getAllowedOrigins(): Set<string> {
     origins.add(`https://${vercelUrl}`)
   }
 
-  // Always allow localhost in development
+  // Always allow localhost in development (common dev ports)
   if (process.env.NODE_ENV !== 'production') {
     origins.add('http://localhost:3000')
+    origins.add('http://localhost:3001')
+    origins.add('http://localhost:3002')
     origins.add('http://127.0.0.1:3000')
+    origins.add('http://127.0.0.1:3001')
+    origins.add('http://127.0.0.1:3002')
   }
 
   return origins

@@ -69,14 +69,31 @@ export function OnboardingTour({ onNavigate }: OnboardingTourProps) {
   const [active, setActive] = useState(false);
   const [stepIndex, setStepIndex] = useState(0);
 
-  // Check if tour has been completed
+  // Check if tour has been completed (localStorage fast-path + server verify)
   useEffect(() => {
-    const completed = localStorage.getItem(STORAGE_KEY);
-    if (!completed) {
+    const localComplete = localStorage.getItem(STORAGE_KEY);
+    if (localComplete) return;
+
+    // Verify against server state
+    const checkServer = async () => {
+      try {
+        const res = await fetch('/api/profile/preferences');
+        if (res.ok) {
+          const { preferences } = await res.json();
+          if (preferences?.onboarding_completed) {
+            localStorage.setItem(STORAGE_KEY, 'true');
+            return;
+          }
+        }
+      } catch {
+        // Fall through to show tour
+      }
       // Small delay to let the dashboard load first
-      const timer = setTimeout(() => setActive(true), 2000);
-      return () => clearTimeout(timer);
-    }
+      setActive(true);
+    };
+
+    const timer = setTimeout(checkServer, 2000);
+    return () => clearTimeout(timer);
   }, []);
 
   const completeTour = useCallback(() => {

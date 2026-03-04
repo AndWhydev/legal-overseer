@@ -20,6 +20,33 @@ const DEFAULT_PREFERENCES: Preferences = {
   defaultEmailAction: 'draft',
 }
 
+type SubscriptionInfo = {
+  plan: string
+  status: string
+  currentPeriodEnd: string | null
+  trialEndsAt: string | null
+  daysRemaining: number | null
+  features: {
+    maxChannels: number
+    maxLeads: number
+    maxInvoicesPerMonth: number
+    agents: string[]
+    whatsapp: boolean
+    proposals: boolean
+    multiUser: boolean
+    maxUsers?: number
+  }
+  canUpgrade: boolean
+  nextTier: string | null
+}
+
+const PLAN_BADGE_COLORS: Record<string, string> = {
+  free: 'bg-gray-500/20 text-gray-400 border-gray-500/30',
+  starter: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+  growth: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
+  scale: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
+}
+
 export default function SettingsPage() {
   const [displayName, setDisplayName] = useState('')
   const [email, setEmail] = useState('')
@@ -28,6 +55,8 @@ export default function SettingsPage() {
   const [isSavingProfile, setIsSavingProfile] = useState(false)
   const [isSavingPrefs, setIsSavingPrefs] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
+  const [billing, setBilling] = useState<SubscriptionInfo | null>(null)
+  const [billingLoading, setBillingLoading] = useState(true)
 
   useEffect(() => {
     const load = async () => {
@@ -47,6 +76,23 @@ export default function SettingsPage() {
     }
 
     void load()
+  }, [])
+
+  useEffect(() => {
+    const loadBilling = async () => {
+      try {
+        const res = await fetch('/api/billing/subscription')
+        if (res.ok) {
+          const data = (await res.json()) as SubscriptionInfo
+          setBilling(data)
+        }
+      } catch {
+        // billing info is non-critical
+      } finally {
+        setBillingLoading(false)
+      }
+    }
+    void loadBilling()
   }, [])
 
   const preferenceBadges = useMemo(
@@ -108,8 +154,9 @@ export default function SettingsPage() {
       <Tabs defaultValue="integrations">
         <TabsList>
           <TabsTrigger value="profile">Profile</TabsTrigger>
-          <TabsTrigger value="integrations">Integrations</TabsTrigger>
           <TabsTrigger value="preferences">Preferences</TabsTrigger>
+          <TabsTrigger value="billing">Billing</TabsTrigger>
+          <TabsTrigger value="integrations">Integrations</TabsTrigger>
         </TabsList>
 
         <TabsContent value="profile" className="mt-4">
@@ -136,6 +183,70 @@ export default function SettingsPage() {
 
         <TabsContent value="integrations" className="mt-4">
           <IntegrationGrid />
+        </TabsContent>
+
+        <TabsContent value="billing" className="mt-4">
+          <Card className="max-w-lg border-border/50">
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <CardTitle className="text-base">Plan & Billing</CardTitle>
+                {billing && (
+                  <span
+                    className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold capitalize ${PLAN_BADGE_COLORS[billing.plan] ?? PLAN_BADGE_COLORS.free}`}
+                  >
+                    {billing.plan}
+                  </span>
+                )}
+              </div>
+              <CardDescription>
+                {billingLoading
+                  ? 'Loading billing info...'
+                  : !billing || billing.status === 'none'
+                    ? 'Free tier — no billing'
+                    : billing.status === 'trialing' && billing.trialEndsAt
+                      ? `Trial ends ${new Date(billing.trialEndsAt).toLocaleDateString('en-AU', { month: 'long', day: 'numeric', year: 'numeric' })}`
+                      : billing.currentPeriodEnd
+                        ? `Renews on ${new Date(billing.currentPeriodEnd).toLocaleDateString('en-AU', { month: 'long', day: 'numeric', year: 'numeric' })}`
+                        : 'Active subscription'}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-4 text-sm">
+              {billing && (
+                <>
+                  <div className="flex flex-col gap-2 rounded-md border border-border/30 bg-muted/20 px-4 py-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Channels</span>
+                      <span className="font-medium">{billing.features.maxChannels === 99 ? 'Unlimited' : `Up to ${billing.features.maxChannels}`}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Leads</span>
+                      <span className="font-medium">{billing.features.maxLeads >= 99999 ? 'Unlimited' : billing.features.maxLeads.toLocaleString()}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Invoices / month</span>
+                      <span className="font-medium">{billing.features.maxInvoicesPerMonth >= 9999 ? 'Unlimited' : billing.features.maxInvoicesPerMonth}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    {billing.daysRemaining !== null && (
+                      <p className="text-xs text-muted-foreground">{billing.daysRemaining} days remaining</p>
+                    )}
+                    {billing.canUpgrade && billing.nextTier ? (
+                      <Button size="sm" className="ml-auto" asChild>
+                        <a href="/pricing">
+                          Upgrade to {billing.nextTier.charAt(0).toUpperCase() + billing.nextTier.slice(1)}
+                        </a>
+                      </Button>
+                    ) : (
+                      <Button size="sm" variant="outline" className="ml-auto" asChild>
+                        <a href="mailto:support@bitbit.com.au">Enterprise — contact us</a>
+                      </Button>
+                    )}
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="preferences" className="mt-4">

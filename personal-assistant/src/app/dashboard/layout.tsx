@@ -9,6 +9,7 @@ export default async function DashboardLayout({
 }) {
   let displayName = 'Dev User'
   let initials = 'DU'
+  let isNewUser = false
 
   if (isSupabaseConfigured()) {
     const supabase = await createClient()
@@ -30,7 +31,17 @@ export default async function DashboardLayout({
       .join('')
       .toUpperCase()
       .slice(0, 2)
+
+    // Check onboarding state from profile preferences
+    const { data: profile } = await supabase!
+      .from('profiles')
+      .select('preferences')
+      .eq('id', user.id)
+      .single()
+
+    const preferences = (profile?.preferences as Record<string, unknown>) ?? {}
+    isNewUser = !preferences.onboarding_completed
   }
 
-  return <SPAShell displayName={displayName} initials={initials} />
+  return <SPAShell displayName={displayName} initials={initials} isNewUser={isNewUser} />
 }

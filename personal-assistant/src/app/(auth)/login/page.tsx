@@ -260,6 +260,10 @@ function LoginPageContent() {
               </p>
             </form>
           )}
+
+          {process.env.NODE_ENV === 'development' && status !== 'sent' && (
+            <DevPasswordLogin />
+          )}
         </section>
       </main>
     </div>
@@ -284,6 +288,88 @@ function LoginPageFallback() {
           <p className="bb-auth-card__privacy">Loading sign-in...</p>
         </section>
       </main>
+    </div>
+  )
+}
+
+function DevPasswordLogin() {
+  const [devEmail, setDevEmail] = useState('')
+  const [devPassword, setDevPassword] = useState('')
+  const [devStatus, setDevStatus] = useState<'idle' | 'loading' | 'error'>('idle')
+  const [devError, setDevError] = useState('')
+  const [expanded, setExpanded] = useState(false)
+
+  async function handleDevLogin(e: React.FormEvent) {
+    e.preventDefault()
+    const supabase = createClient()
+    if (!supabase) {
+      setDevError('Supabase not configured')
+      setDevStatus('error')
+      return
+    }
+
+    setDevStatus('loading')
+    setDevError('')
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email: devEmail.trim(),
+      password: devPassword,
+    })
+
+    if (error) {
+      setDevError(error.message)
+      setDevStatus('error')
+      return
+    }
+
+    // Redirect to dashboard on success
+    window.location.href = '/dashboard'
+  }
+
+  return (
+    <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', marginTop: 16, paddingTop: 12 }}>
+      <button
+        type="button"
+        onClick={() => setExpanded(!expanded)}
+        style={{
+          background: 'none', border: 'none', color: '#64748b',
+          fontSize: 11, fontFamily: 'monospace', cursor: 'pointer',
+          display: 'flex', alignItems: 'center', gap: 4, padding: 0,
+        }}
+      >
+        {expanded ? '▾' : '▸'} Dev: Password Login
+      </button>
+      {expanded && (
+        <form onSubmit={handleDevLogin} style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <input
+            type="email"
+            placeholder="Email"
+            value={devEmail}
+            onChange={e => setDevEmail(e.target.value)}
+            className="bb-input bb-input--lg bb-auth-card__input"
+            autoComplete="email"
+          />
+          <input
+            type="password"
+            placeholder="Password"
+            value={devPassword}
+            onChange={e => setDevPassword(e.target.value)}
+            className="bb-input bb-input--lg bb-auth-card__input"
+            autoComplete="current-password"
+          />
+          {devStatus === 'error' && (
+            <p className="bb-auth-card__error">{devError}</p>
+          )}
+          <button
+            type="submit"
+            className="bb-auth-card__submit"
+            disabled={devStatus === 'loading' || !devEmail.trim() || !devPassword}
+            style={{ opacity: (!devEmail.trim() || !devPassword) ? 0.4 : 1 }}
+          >
+            {devStatus === 'loading' ? 'Signing in...' : 'Sign in with password'}
+          </button>
+        </form>
+      )}
     </div>
   )
 }

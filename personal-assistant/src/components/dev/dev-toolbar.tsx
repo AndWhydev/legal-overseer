@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Settings, X, ChevronDown, ChevronRight, RotateCcw } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Settings, X, ChevronDown, ChevronRight, RotateCcw, LogIn, LogOut, User } from 'lucide-react';
 import { ALL_MODULES } from '@/lib/modules/registry';
 import {
   useDevOverrides,
@@ -12,6 +12,7 @@ import {
 import { useEnabledModules } from '@/lib/modules/use-enabled-modules';
 import { TABS } from '@/components/dashboard/spa-shell';
 import { INDUSTRY_PACKS } from '@/lib/industry/registry';
+import { createClient } from '@/lib/supabase/client';
 
 if (process.env.NODE_ENV !== 'development') {
   // This entire module is dead-code-eliminated in production
@@ -239,6 +240,9 @@ export function DevToolbar() {
             )}
           </div>
 
+          {/* Dev Auth */}
+          <DevAuthSection />
+
           {/* Status + Reset */}
           <div style={{
             padding: '10px 14px',
@@ -318,5 +322,136 @@ function ChipGroup({
         );
       })}
     </div>
+  );
+}
+
+function DevAuthSection() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [status, setStatus] = useState<'idle' | 'loading' | 'error'>('idle');
+  const [error, setError] = useState('');
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+
+  useEffect(() => {
+    const supabase = createClient();
+    if (!supabase) return;
+    supabase.auth.getUser().then(({ data }) => {
+      setUserEmail(data.user?.email ?? null);
+    });
+  }, []);
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const supabase = createClient();
+    if (!supabase) {
+      setError('Supabase not configured');
+      setStatus('error');
+      return;
+    }
+
+    setStatus('loading');
+    setError('');
+
+    const { data, error: authError } = await supabase.auth.signInWithPassword({
+      email: email.trim(),
+      password,
+    });
+
+    if (authError) {
+      setError(authError.message);
+      setStatus('error');
+      return;
+    }
+
+    setUserEmail(data.user?.email ?? null);
+    setStatus('idle');
+    setPassword('');
+    // Reload to pick up the new session across all routes
+    window.location.reload();
+  };
+
+  const handleLogout = async () => {
+    const supabase = createClient();
+    if (!supabase) return;
+    await supabase.auth.signOut();
+    setUserEmail(null);
+    window.location.reload();
+  };
+
+  const inputStyle: React.CSSProperties = {
+    width: '100%',
+    padding: '6px 10px',
+    borderRadius: 6,
+    border: '1px solid rgba(255,255,255,0.12)',
+    background: 'rgba(255,255,255,0.06)',
+    color: '#e2e8f0',
+    fontSize: 12,
+    outline: 'none',
+  };
+
+  return (
+    <Section title="Dev Auth">
+      {userEmail ? (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+            <User size={12} style={{ flexShrink: 0, color: '#34d399' }} />
+            <span style={{ fontSize: 11, color: '#34d399', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {userEmail}
+            </span>
+          </div>
+          <button
+            onClick={handleLogout}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 4,
+              padding: '3px 8px', borderRadius: 6, flexShrink: 0,
+              border: '1px solid rgba(255,255,255,0.1)',
+              background: 'rgba(239,68,68,0.12)',
+              color: '#f87171', fontSize: 11, fontWeight: 600, cursor: 'pointer',
+            }}
+          >
+            <LogOut size={11} />
+            Sign out
+          </button>
+        </div>
+      ) : (
+        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <input
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+            style={inputStyle}
+            autoComplete="email"
+          />
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            style={inputStyle}
+            autoComplete="current-password"
+          />
+          {status === 'error' && (
+            <span style={{ fontSize: 11, color: '#f87171' }}>{error}</span>
+          )}
+          <button
+            type="submit"
+            disabled={status === 'loading' || !email.trim() || !password}
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+              padding: '6px 10px', borderRadius: 6,
+              border: '1px solid rgba(124,58,237,0.4)',
+              background: 'rgba(124,58,237,0.2)',
+              color: '#c4b5fd', fontSize: 12, fontWeight: 600,
+              cursor: status === 'loading' ? 'wait' : 'pointer',
+              opacity: (!email.trim() || !password) ? 0.4 : 1,
+            }}
+          >
+            <LogIn size={13} />
+            {status === 'loading' ? 'Signing in...' : 'Sign in with password'}
+          </button>
+        </form>
+      )}
+    </Section>
   );
 }

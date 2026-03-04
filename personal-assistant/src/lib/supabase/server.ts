@@ -1,6 +1,10 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
+export function isDevBypass() {
+  return process.env.DEV_BYPASS_AUTH === 'true'
+}
+
 export function isSupabaseConfigured() {
   return !!(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
 }

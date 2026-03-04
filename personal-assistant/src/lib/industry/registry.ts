@@ -1,8 +1,10 @@
 import type { IndustryPack } from './types'
 import { agencyPack } from './packs/agency'
+import { contentCreatorPack } from './packs/content-creator'
 
 export const INDUSTRY_PACKS: Record<string, IndustryPack> = {
   agency: agencyPack,
+  'content-creator': contentCreatorPack,
 }
 
 export const DEFAULT_INDUSTRY = 'agency'

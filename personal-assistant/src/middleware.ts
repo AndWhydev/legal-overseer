@@ -34,8 +34,8 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // ── CSRF protection ──────────────────────────────────────────────────────
-  if (pathname.startsWith('/api/')) {
+  // ── CSRF protection (production only — dev uses Origin allowlist anyway) ──
+  if (pathname.startsWith('/api/') && process.env.NODE_ENV === 'production') {
     const csrfResponse = validateCsrf(request)
     if (csrfResponse) return csrfResponse
   }

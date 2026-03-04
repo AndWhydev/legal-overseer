@@ -15,6 +15,7 @@ import { SidebarNav } from './sidebar-nav';
 import { BitBitOverlay } from './bitbit-overlay';
 import { SplashScreen } from './splash-screen';
 import { OnboardingTour } from './onboarding-tour';
+import { OnboardingWizard } from './onboarding-wizard';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { ToastProvider } from '@/components/ui/toast';
 import { GlobalSearch } from './global-search';
@@ -133,9 +134,11 @@ function TabFallback() {
 interface SPAShellProps {
   displayName: string;
   initials: string;
+  isNewUser?: boolean;
 }
 
-export function SPAShell({ displayName, initials }: SPAShellProps) {
+export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellProps) {
+  const [showWizard, setShowWizard] = useState(isNewUser);
   const router = useRouter();
 
   const handleSignOut = useCallback(async () => {
@@ -405,8 +408,15 @@ export function SPAShell({ displayName, initials }: SPAShellProps) {
         {/* Global search command palette (Cmd+K) */}
         <GlobalSearch onNavigate={handleTabChange} />
 
-        {/* Onboarding tour for first-time users */}
-        <OnboardingTour onNavigate={handleTabChange} tourVariant={composition.tourVariant} />
+        {/* Onboarding: wizard for new users, tour fallback for returning users */}
+        {showWizard ? (
+          <OnboardingWizard
+            onNavigate={handleTabChange}
+            onComplete={() => setShowWizard(false)}
+          />
+        ) : (
+          <OnboardingTour onNavigate={handleTabChange} tourVariant={composition.tourVariant} />
+        )}
 
         {/* Dev toolbar — tree-shaken from production builds */}
         {process.env.NODE_ENV === 'development' && <DevToolbar />}
