@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import {
   CalendarDays,
   Inbox,
+  BellRing,
   Radio,
   Pill,
   Users,
@@ -112,9 +113,13 @@ export const TOPBAR_CONFIGS: Record<string, TopbarConfig> = {
     title: 'Inbox',
     breadcrumb: <IconBreadcrumb icon={Inbox} text="All channels" />,
   },
-  channels: {
-    title: 'Channels',
-    breadcrumb: <IconBreadcrumb icon={Radio} text="Connected" />,
+  'creator-studio': {
+    title: 'Creator Studio',
+    breadcrumb: <IconBreadcrumb icon={BellRing} text="Content proof assets" />,
+  },
+  connections: {
+    title: 'Connections',
+    breadcrumb: <IconBreadcrumb icon={Radio} text="Your integrations" />,
   },
   medications: {
     title: 'Medications',
