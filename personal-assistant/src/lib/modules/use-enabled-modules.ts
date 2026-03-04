@@ -9,12 +9,14 @@ import { getDevOverrides } from '@/lib/dev/dev-overrides';
 interface EnabledModulesState {
   modules: string[];
   composition: UIComposition;
+  industry?: string;
   loading: boolean;
 }
 
 const EnabledModulesContext = createContext<EnabledModulesState>({
   modules: [...ALL_MODULES], // default: show all while loading
   composition: FULL_COMPOSITION,
+  industry: undefined,
   loading: true,
 });
 
@@ -36,6 +38,7 @@ export function useEnabledModulesFetch(): EnabledModulesState {
   const [state, setState] = useState<EnabledModulesState>({
     modules: [...ALL_MODULES],
     composition: FULL_COMPOSITION,
+    industry: undefined,
     loading: true,
   });
 
@@ -52,6 +55,7 @@ export function useEnabledModulesFetch(): EnabledModulesState {
           setState({
             modules: getEnabledModules(plan, mods, industry),
             composition: getComposition(profile, industry),
+            industry,
             loading: false,
           });
           return;
@@ -95,10 +99,10 @@ export function useEnabledModulesFetch(): EnabledModulesState {
       const modules = getEnabledModules(plan, overrides, industry);
       const composition = getComposition((org?.ui_profile as string) ?? 'full', industry);
 
-      setState({ modules, composition, loading: false });
+      setState({ modules, composition, industry, loading: false });
     } catch {
       if (!cancelled) {
-        setState({ modules: [...ALL_MODULES], composition: FULL_COMPOSITION, loading: false });
+        setState({ modules: [...ALL_MODULES], composition: FULL_COMPOSITION, industry: undefined, loading: false });
       }
     }
   }, []);
