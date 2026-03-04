@@ -189,7 +189,7 @@ function CommandCenterTab() {
 
         <button
           onClick={() => {
-            window.dispatchEvent(new CustomEvent('bb-navigate', { detail: 'invoices' }));
+            window.dispatchEvent(new CustomEvent('bb-navigate', { detail: { tab: 'invoices' } }));
           }}
           className="flex items-center gap-3 p-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-elevated)] hover:bg-[var(--bg-hover)] transition-colors text-left"
         >
@@ -204,7 +204,7 @@ function CommandCenterTab() {
 
         <button
           onClick={() => {
-            window.dispatchEvent(new CustomEvent('bb-navigate', { detail: 'inbox' }));
+            window.dispatchEvent(new CustomEvent('bb-navigate', { detail: { tab: 'inbox' } }));
           }}
           className="flex items-center gap-3 p-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-elevated)] hover:bg-[var(--bg-hover)] transition-colors text-left"
         >

@@ -1,0 +1,61 @@
+{
+  "timestamp": "2026-03-02T07:30:38.726Z",
+  "target": "https://app.bitbit.chat",
+  "results": [
+    {
+      "name": "Health check",
+      "status": "PASS",
+      "detail": "App is running (2966ms)",
+      "durationMs": 2966,
+      "httpStatus": 200
+    },
+    {
+      "name": "Channel status API",
+      "status": "FAIL",
+      "detail": "HTTP 401",
+      "durationMs": 991,
+      "httpStatus": 401
+    },
+    {
+      "name": "Gmail OAuth redirect",
+      "status": "PASS",
+      "detail": "Redirect to accounts.google.com (765ms)",
+      "durationMs": 765,
+      "httpStatus": 307
+    },
+    {
+      "name": "Outlook OAuth redirect",
+      "status": "PASS",
+      "detail": "Redirect to login.microsoftonline.com (590ms)",
+      "durationMs": 590,
+      "httpStatus": 307
+    },
+    {
+      "name": "Relay daemon trigger",
+      "status": "FAIL",
+      "detail": "HTTP 401",
+      "durationMs": 726,
+      "httpStatus": 401
+    },
+    {
+      "name": "Token refresh cron",
+      "status": "FAIL",
+      "detail": "HTTP 405",
+      "durationMs": 891,
+      "httpStatus": 405
+    },
+    {
+      "name": "WhatsApp bridge health",
+      "status": "SKIP",
+      "detail": "WHATSAPP_BRIDGE_URL not set",
+      "durationMs": 0,
+      "httpStatus": null
+    }
+  ],
+  "summary": {
+    "total": 7,
+    "passed": 3,
+    "failed": 3,
+    "skipped": 1
+  }
+}

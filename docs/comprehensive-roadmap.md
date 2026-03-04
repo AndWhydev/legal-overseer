@@ -805,3 +805,784 @@ Phase 0 (Deploy, 1 week)
 ---
 
 *This roadmap is a living document. Update as tasks complete and priorities shift.*
+
+---
+---
+
+# APPENDIX: Codebase–Roadmap Synthesis & Outstanding Work Plan
+
+**Synthesis Date**: 2026-03-04
+**Method**: Full codebase inventory (505 .ts/.tsx files, 54 migrations, 74 API routes, 157 components, 54 test files) cross-referenced against every roadmap phase.
+
+---
+
+## Part 1: Roadmap vs Reality — Phase-by-Phase Delta Analysis
+
+### Phase 0: Platform Foundation & Deployment — COMPLETE
+
+| Roadmap Task | Codebase Evidence | Status |
+|---|---|---|
+| Supabase project created | 54 migrations exist (001–054) | DONE |
+| All 4 original migrations run | 001–004 present | DONE |
+| AWU seed data SQL | Migration 029_awu_seed_data.sql | DONE |
+| Vercel deployment | Commits show deploy fixes, `next.config.ts` present | DONE |
+| Dashboard loads with auth | `dashboard/page.tsx` has Supabase auth guard | DONE |
+| Kanban board functional | `kanban-board.tsx`, `kanban-card.tsx`, `kanban-column.tsx` | DONE |
+| AI chat with SSE streaming | `engine.ts` (376 lines), chat components, SSE API route | DONE |
+| Contacts page | `contact-card.tsx`, `/api/contacts` route | DONE |
+| Activity feed | `activity-feed.tsx`, `activity-item.tsx` | DONE |
+| Sidebar nav | `sidebar-nav.tsx`, `spa-shell.tsx` | DONE |
+| Dual-tier tenancy | Migrations 052–054, `tenancy.ts`, `/api/org/switch` | DONE |
+| Unified Connections page | `connections-grid.tsx`, renamed channels→connections | DONE |
+| OAuth infrastructure | `oauth.ts`, `credentials.ts`, `token-refresh.ts` (319 lines) | DONE |
+
+**Delta**: Phase 0 is fully complete. Additionally includes work NOT in original roadmap: Telegram channel, org modules, billing extensions, audit log, notification preferences.
+
+---
+
+### Phase 1: Semantic Context Engine — SUBSTANTIALLY COMPLETE
+
+| Roadmap Task | Codebase File(s) | Lines | Status |
+|---|---|---|---|
+| 1.1 Entity-relationship schema design | Migration 005_entity_relationships.sql | — | DONE |
+| 1.2 `entity_relationships` table | Migration 005 | — | DONE |
+| 1.3 `entity_timeline` table | Migration 006_entity_timeline.sql | — | DONE |
+| 1.4 `semantic_memories` table | Migration 007_semantic_memories.sql | — | DONE |
+| 1.5 Relationship auto-linker | `context/relationship-linker.ts` | 91 | DONE |
+| 1.6 Timeline writer | `context/timeline-writer.ts` | 86 | DONE |
+| 1.7 Context assembler (ported) | `context/assembler.ts` | 460 | DONE |
+| 1.8 Entity resolution (5-step fuzzy) | `context/entity-resolver.ts` | 163 | DONE |
+| 1.9 Cross-reference engine | `context/cross-reference.ts` | exists | DONE |
+| 1.10 Financial signal extraction | Within cross-reference + assembler | — | DONE |
+| 1.11 Temporal signal calculation | Within assembler | — | DONE |
+| 1.12 Selective context assembly | `context/assembler.ts` selective loading | — | DONE |
+| 1.13 Context budget manager | `prompt-builder.ts` token budgeting | 273 | DONE |
+| 1.14 LLM classification | `agent/classifier.ts` | 146 | DONE |
+| 1.15 Per-message context briefing | Wired into synthesizer | — | DONE |
+| 1.16 Structured classification output | `agent/classifier.ts` + migration 019 | — | DONE |
+| 1.17 Action router | `agent/action-router.ts` | 144 | DONE |
+| 1.18 Cross-channel dedup | `channels/dedup.ts` | 74 | DONE |
+| 1.19 Channel relay daemon | `channels/relay-daemon.ts` | 300 | DONE |
+| 1.20 Configurable poll intervals | Within relay daemon | — | DONE |
+| 1.21 Reflection agent | `agent/reflection.ts` | 153 | DONE |
+| 1.22 Memory consolidation | `agent/memory-consolidation.ts` | 180 | DONE |
+| 1.23 Policy loader from DB | `agent/policy-loader.ts` | 81 | DONE |
+| 1.24 Voice profile loader | `agent/voice-loader.ts` | 101 | DONE |
+| 1.25 Seed policies to Supabase | Loader tries Supabase before disk | — | DONE |
+| 1.26 Context-assembled prompt builder | `agent/prompt-builder.ts` entity-aware | 273 | DONE |
+| 1.27 Conversation preamble | Within prompt builder | — | DONE |
+| 1.28 Tool-call context enrichment | Entity graph on get_contact | — | DONE |
+
+**Delta**: Phase 1 is **28/28 tasks complete**. Additionally includes graph-query.ts, context types, and context index not in roadmap.
+
+**Remaining risk**: No production validation under real multi-channel load. Context assembler tested in isolation, not under concurrent relay daemon + multiple agents.
+
+---
+
+### Phase 1.5: Conversational Interface — ~75% COMPLETE
+
+| Roadmap Task | Codebase File(s) | Lines | Status |
+|---|---|---|---|
+| 1.5.1 NL command parser | `whatsapp/command-parser.ts` | 230 | DONE |
+| 1.5.2 Multi-turn conversation manager | `whatsapp/conversation-manager.ts` | 558 | DONE |
+| 1.5.3 Agent dispatch from WhatsApp | `whatsapp/agent-dispatch.ts` | 368 | DONE |
+| 1.5.4 Rich WhatsApp responses | `whatsapp/response-formatter.ts` | 227 | DONE |
+| 1.5.5 Voice note transcription | `channels/whatsapp-voice.ts` | 129 | DONE |
+| 1.5.6 Morning briefing | `whatsapp/morning-briefing.ts` | 172 | DONE |
+| 1.5.7 Proactive alerts | `whatsapp/proactive-alerts.ts` | 188 | DONE |
+| 1.5.8 Approval flow via WhatsApp | `whatsapp/approval-handler.ts` | 102 | DONE |
+| 1.5.9 Help command | Within command parser | — | DONE |
+| 1.5.10 Error recovery | Within conversation manager | — | DONE |
+| 1.5.11 Command Center landing | `tabs/command-center-tab.tsx` | exists | DONE |
+| 1.5.12 Mobile-responsive dashboard | — | — | **NOT DONE** |
+| 1.5.13 Onboarding tour | `onboarding-tour.tsx` | 317 | DONE |
+| 1.5.14 Progressive disclosure | — | — | **NOT DONE** |
+| 1.5.15 Quick actions from Command Center | — | — | **PARTIAL** |
+| 1.5.16 Notification center | `notification-center.tsx` | exists | DONE |
+| 1.5.17 Abstract conversation interface | — | — | **NOT DONE** |
+| 1.5.18 Email command interface | — | — | **NOT DONE** |
+| 1.5.19 SMS fallback | — | — | **NOT DONE** |
+
+**Delta**: Core WhatsApp bot logic is all written (10/10 1.5A tasks). Dashboard UX (1.5B) is ~50%. Multi-modal extensibility (1.5C) is 0%.
+
+**Critical blocker**: Meta Business Verification for WhatsApp Cloud API — code is written but cannot be tested without it.
+
+---
+
+### Phase 2: Agent Infrastructure — COMPLETE
+
+| Roadmap Task | Codebase Evidence | Status |
+|---|---|---|
+| Migrations 005–017 (all PRD tables) | All exist in supabase/migrations/ | DONE |
+| Agent registry (self-registration) | `packages/core/src/agent-registry.ts`, 10 agent packages | DONE |
+| Confidence routing | `agent/confidence-router.ts` (145 lines) + tests | DONE |
+| Policy engine | `agent/policy-loader.ts` | DONE |
+| Shared tool system | `agent/shared-tools.ts` + tests | DONE |
+| Agent scheduler | `agent/scheduler.ts` (367 lines) + tests | DONE |
+| Approval flow API | `agent/approval-queue.ts` (263 lines) + API routes | DONE |
+| Run logging | `agent/run-logger.ts` + tests | DONE |
+| Agent management dashboard | Agent tabs, agent-badge, agent-status-indicator | DONE |
+| Approval queue UI | `approval-card.tsx`, `approval-queue.tsx`, `approvals-tab.tsx` | DONE |
+| @bitbit/core fixed | `index.ts` exports agent-registry + types | DONE |
+| Supabase DI refactor | `engine.ts` accepts SupabaseClient via imports | DONE |
+| Confidence score on handler | Within confidence-router | DONE |
+
+**Delta**: Phase 2 is **fully complete**. Additionally includes: cost-guard, circuit-breaker, dead-letter queue, retry logic, sentry-escalation — all with tests. 30+ additional migrations beyond roadmap scope.
+
+---
+
+### Phase 3: First Agents (P0) — CODE COMPLETE, NOT PRODUCTION-VALIDATED
+
+| Agent | File | Lines | Tests | Status |
+|---|---|---|---|---|
+| Sentry | `agent/sentry.ts` | 349 | `sentry.test.ts` (2 files) | Code complete |
+| Lead Swarm | `agent/lead-swarm.ts` | 330 | `lead-swarm.test.ts` (2 files) | Code complete |
+| Invoice Flow | `agent/invoice-flow.ts` | 727 | `invoice-flow.test.ts` (2 files) | Code complete |
+| + Invoice PDF | `agent/invoice-pdf.ts` | exists | `invoice-pdf.test.ts` | Code complete |
+| + Invoice Sender | `agent/invoice-sender.ts` | exists | `invoice-sender.test.ts` | Code complete |
+| + Lead Ack | `agent/lead-acknowledgment.ts` | exists | test exists | Code complete |
+| + Sentry Escalation | `agent/sentry-escalation.ts` | exists | test exists | Code complete |
+
+**Delta**: All P0 agents implemented with supporting modules. **BUT**: tests use mocks — no integration testing against real Supabase + real channels. No production run data.
+
+---
+
+### Phase 4: Channel Integrations — SUBSTANTIALLY COMPLETE
+
+| Channel | File | Lines | Status | Notes |
+|---|---|---|---|---|
+| Gmail | `channels/gmail.ts` | 206 | Implemented | IMAP-based, serverless risk remains |
+| Outlook | `channels/outlook.ts` | 352 | **REBUILT** | Now uses Microsoft Graph API (was broken local cache) |
+| Asana | `channels/asana.ts` | 339 | Implemented | REST API adapter |
+| Calendly | `channels/calendly.ts` | 336 | Implemented | API adapter |
+| Stripe | `channels/stripe.ts` | 313 | Implemented | Webhook handler exists |
+| WhatsApp | `channels/whatsapp.ts` | 225 | Implemented | Cloud API adapter |
+| WhatsApp Voice | `channels/whatsapp-voice.ts` | 129 | Implemented | Transcription pipeline |
+| WhatsApp Monitor | `channels/whatsapp-monitor.ts` | 108 | Implemented | Status monitoring |
+| WhatsApp Parser | `channels/whatsapp-parser.ts` | 31 | Implemented | Message parsing |
+| Baileys Bridge | `channels/baileys-bridge.ts` | exists | Implemented | Local WhatsApp bridge |
+| GSC | `channels/gsc.ts` | 116 | Implemented | Google Search Console |
+| Telegram | `channels/telegram.ts` + handler | 51+ | Implemented | **NOT IN ROADMAP** — bonus |
+| iMessage | `channels/imessage.ts` | exists | macOS only | Cannot deploy to cloud |
+| Calendar | `channels/calendar.ts` | exists | macOS only | Cannot deploy to cloud |
+| Reminders | `channels/reminders.ts` | exists | macOS only | Cannot deploy to cloud |
+| Token Refresh | `channels/token-refresh.ts` | 319 | Implemented | OAuth token lifecycle |
+| Rate Limiter | `channels/rate-limiter.ts` | exists | Implemented | With tests |
+| Health Checks | `channels/health.ts` | 90 | Implemented | Channel health monitoring |
+
+**Missing from roadmap**: ClickUp, GA4, Cluely, WordPress, Facebook Messenger, Instagram DMs, Slack, Xero/MYOB, Google Calendar API.
+
+---
+
+### Phase 5: Communication Agents (P1) — CODE COMPLETE
+
+| Agent | File | Lines | Status |
+|---|---|---|---|
+| Channel Triage | `agent/channel-triage.ts` | 747 | Code complete with tests |
+| Client Comms | `agent/client-comms.ts` | 695 | Code complete |
+| + Client Profiles | `agent/client-profiles.ts` | exists | Code complete |
+| + Contact Enrichment | `agent/contact-enrichment.ts` | exists | Code complete |
+| + Sentiment Analysis | `agent/sentiment.ts` | exists | With tests |
+| + Daily Digest | `agent/daily-digest.ts` | exists | Code complete |
+| + Templates | `agent/templates.ts` | exists | Code complete |
+| Command Center | `tabs/command-center-tab.tsx` | exists | UI complete |
+| Inbox Feed | `dashboard/inbox-feed.tsx` | exists | UI complete |
+
+---
+
+### Phase 6: Revenue Agents (P2) — CODE COMPLETE
+
+| Agent | File | Lines | Status |
+|---|---|---|---|
+| Proposal Bot | `agent/proposal-bot.ts` | 712 | Code complete |
+| + Pricing Templates | `agent/pricing-templates.ts` | exists | Code complete |
+| + Quote Bot | `agent/quote-bot.ts` | exists | Code complete |
+| Client Onboarding | `agent/client-onboarding.ts` | 633 | Code complete |
+| + Onboarding Emails | `agent/onboarding-emails.ts` | exists | Code complete |
+| Proposals Tab | `tabs/proposals-tab.tsx` | exists | UI complete |
+| Quotes Tab | `tabs/quotes-tab.tsx` | exists | UI complete |
+
+---
+
+### Phase 7: Growth Agents (P3) — CODE COMPLETE
+
+| Agent | File | Lines | Status |
+|---|---|---|---|
+| Ad Script Gen | `agent/ad-script-gen.ts` | 706 | Code complete |
+| + Offer Packages | `agent/offer-packages.ts` | exists | Code complete |
+| AI Search Optimizer | `agent/ai-search-optimizer.ts` | exists | Code complete |
+| + AI Visibility Audit | `agent/ai-visibility-audit.ts` | exists | Code complete |
+| Tender Hunter | `agent/tender-hunter.ts` | 789 | Code complete |
+| + Tender Sources | `agent/tender-sources.ts` | exists | Code complete |
+| Ad Scripts Tab | `tabs/ad-scripts-tab.tsx` | exists | UI complete |
+| AI Search Tab | `tabs/ai-search-tab.tsx` | exists | UI complete |
+| Tenders Tab | `tabs/tenders-tab.tsx` | exists | UI complete |
+
+---
+
+### Phase 8: Infrastructure Evolution — PARTIALLY COMPLETE
+
+| Item | Evidence | Status |
+|---|---|---|
+| Vercel deployment | Working, commit history shows fixes | DONE |
+| Supabase Pro plan | 54 migrations, RLS policies | DONE |
+| Fly.io worker config | `deployments/fly/` with Dockerfile, worker.ts, health.ts | CONFIG DONE |
+| VPS Docker config | `deployments/vps/` with docker-compose, Dockerfile, setup.sh | CONFIG DONE |
+| Cloudflare Worker | `deployments/cloudflare/` with wrangler.toml | CONFIG DONE |
+| WhatsApp Bridge deployment | `deployments/whatsapp-bridge/` | CONFIG DONE |
+| CI/CD (GitHub Actions) | Not found in codebase | **NOT DONE** |
+| Error tracking (Sentry.io) | Not configured | **NOT DONE** |
+| Uptime monitoring | Not configured | **NOT DONE** |
+| Secret rotation | `docs/secret-rotation.md` exists (docs only) | DOCS ONLY |
+| Cost tracking dashboard | `tabs/costs-tab.tsx`, `/api/monitoring/costs` | UI DONE |
+
+---
+
+### Phase 9: GTM & Revenue — PARTIALLY COMPLETE
+
+| Item | Evidence | Status |
+|---|---|---|
+| Legal/business setup | — | **NOT DONE** |
+| Stripe checkout | `lib/billing/checkout.ts` (213 lines) | Code exists |
+| Plan gates | `lib/billing/plan-gates.ts` (117 lines) | Code exists |
+| Billing webhook | `/api/billing/webhook` route | Code exists |
+| Beta onboarding flow | `lib/onboarding/beta-flow.ts` (137 lines) | Code exists |
+| Multi-tenant signup | `lib/onboarding/multi-tenant.ts` (166 lines) | Code exists |
+| Landing page | Separate Next.js app in `landing-page/` | Scaffolded |
+| Pricing page | `/app/(public)/pricing` route | Code exists |
+| Analytics dashboard | `tabs/analytics-tab.tsx` | UI exists |
+| MRR tracking | `lib/analytics/mrr.test.ts` | Tests exist |
+| Churn tracking | `lib/analytics/churn.test.ts` | Tests exist |
+
+---
+
+### Phase 10: Testing — PARTIALLY COMPLETE
+
+| Item | Evidence | Status |
+|---|---|---|
+| Unit test setup (Vitest) | 54 test files, vitest configured | DONE |
+| Agent testing framework | Mock-based tests for all P0 agents | DONE |
+| Integration test patterns | `__tests__/integration/` directory | PARTIAL |
+| Channel adapter tests | Tests for outlook, asana, calendly, stripe, synthesizer | DONE |
+| E2E tests (Playwright) | Not found | **NOT DONE** |
+| CI integration | Not configured | **NOT DONE** |
+
+---
+
+## Part 2: Comprehensive Outstanding Task List
+
+### LEGEND
+- **[CR]** = Critical path (blocks other work)
+- **[HI]** = High priority (significant user/revenue impact)
+- **[MD]** = Medium priority (improves quality/reliability)
+- **[LO]** = Low priority (nice to have)
+
+---
+
+### STREAM A: Production Hardening & Validation (Weeks 1–3)
+
+> **Goal**: Take code-complete agents and channels from "compiles" to "runs correctly in production"
+
+#### A1: End-to-End Integration Testing [CR]
+
+| # | Task | Effort | Details |
+|---|---|---|---|
+| A1.1 | Create Supabase test environment (separate project or branch DB) | 2 hr | Isolated from production data |
+| A1.2 | Write E2E test: Gmail receive → classifier → entity resolution → action router → Sentry alert | 4 hr | Full pipeline validation |
+| A1.3 | Write E2E test: New lead email → Lead Swarm → qualification → task creation → acknowledgment | 4 hr | Tests lead-swarm.ts + classifier + action-router + shared-tools |
+| A1.4 | Write E2E test: Invoice creation → PDF generation → email send → status tracking | 4 hr | Tests invoice-flow.ts + invoice-pdf.ts + invoice-sender.ts |
+| A1.5 | Write E2E test: WhatsApp message → command parser → agent dispatch → response | 3 hr | Tests full whatsapp/ pipeline |
+| A1.6 | Write E2E test: Relay daemon poll cycle → classify → route → persist | 3 hr | Tests relay-daemon.ts under real conditions |
+| A1.7 | Write E2E test: Approval flow — agent proposes action → approval queue → WhatsApp notification → approval → execution | 4 hr | Tests confidence-router + approval-queue + approval-handler |
+| A1.8 | Write E2E test: Context assembler resolves ambiguous entity across channels | 3 hr | Tests entity-resolver + cross-reference + assembler |
+| A1.9 | Write E2E test: Memory consolidation — reflection creates memories → consolidation deduplicates | 2 hr | Tests reflection.ts + memory-consolidation.ts |
+| A1.10 | Write E2E test: Multi-tenant isolation — org A data never visible to org B | 3 hr | Tests RLS policies across all 54 migrations |
+| A1.11 | Load test: 50 concurrent relay daemon cycles against Supabase | 3 hr | Validate DB connection pooling + rate limiting |
+| A1.12 | Load test: 10 simultaneous agent runs (cost-guard + circuit-breaker) | 2 hr | Validate cost-guard.ts + circuit-breaker.ts |
+
+#### A2: Channel Credential Provisioning [CR]
+
+| # | Task | Effort | Owner | Details |
+|---|---|---|---|---|
+| A2.1 | Obtain Andy's Asana PAT (allwebbedup.com.au workspace) | 5 min | Andy | Unblocks Asana adapter testing |
+| A2.2 | Obtain Andy's Calendly API key | 5 min | Andy | Unblocks booking integration |
+| A2.3 | Obtain Andy's ClickUp API token | 5 min | Andy | Unblocks ClickUp adapter |
+| A2.4 | Configure Gmail OAuth credentials in Supabase | 30 min | Tor | App consent screen + credentials |
+| A2.5 | Configure Microsoft Graph API credentials (Azure AD app) | 45 min | Tor | For Outlook adapter |
+| A2.6 | Configure Stripe webhook endpoint + API keys | 15 min | Tor | Point to production Vercel URL |
+| A2.7 | Fix Stripe identity verification (payouts paused) | 15 min | Tor | **BLOCKER for revenue** |
+| A2.8 | Submit Meta Business Verification for WhatsApp | 1 hr | Andy+Tor | **3–14 day wait — START NOW** |
+| A2.9 | Create WhatsApp Business App in Meta Developer portal | 30 min | Tor | After A2.8 approved |
+| A2.10 | Configure GSC OAuth / service account | 15 min | Tor | For SEO monitoring |
+| A2.11 | Store all credentials in `org_integrations` table via UI | 30 min | Tor | Use connections-grid.tsx connect flow |
+| A2.12 | Smoke test each channel adapter against real credentials | 2 hr | Tor | One by one verification |
+
+#### A3: Deployment Pipeline [CR]
+
+| # | Task | Effort | Details |
+|---|---|---|---|
+| A3.1 | Deploy Fly.io worker from `deployments/fly/` — agent executor + health endpoint | 2 hr | Background agent processing |
+| A3.2 | Deploy VPS (Hetzner CX22) from `deployments/vps/` — Docker + cron + relay daemon | 3 hr | Always-on polling |
+| A3.3 | Deploy Cloudflare Worker from `deployments/cloudflare/` — edge cron triggers | 1 hr | Cheap scheduled triggers |
+| A3.4 | Deploy WhatsApp bridge from `deployments/whatsapp-bridge/` | 2 hr | Baileys bridge for testing |
+| A3.5 | Configure Vercel Cron jobs for: channel-sync, triage, sentry, scheduler, consolidation, morning-briefing, token-refresh | 1 hr | Wire `/api/cron/*` routes |
+| A3.6 | Verify Vercel serverless timeout for Gmail IMAP (Pro plan 300s) | 30 min | Or migrate to Gmail API |
+| A3.7 | Set all env vars across Vercel + Fly.io + VPS + Cloudflare | 1 hr | Consistent config |
+| A3.8 | DNS configuration for bitbit.com.au → Vercel | 30 min | If not already done |
+| A3.9 | SSL verification for all endpoints | 15 min | Auto-provisioned |
+
+#### A4: Monitoring & Observability [HI]
+
+| # | Task | Effort | Details |
+|---|---|---|---|
+| A4.1 | Set up Sentry.io error tracking (free tier) — wire into engine.ts, relay-daemon.ts, all agents | 2 hr | Catch production errors |
+| A4.2 | Set up UptimeRobot for `/api/health` endpoint | 15 min | Downtime alerts |
+| A4.3 | Wire agent cost tracking into `/api/monitoring/costs` with real token data | 2 hr | From run-logger data |
+| A4.4 | Create Supabase dashboard for: active agents, pending approvals, channel health | 3 hr | Operational visibility |
+| A4.5 | Set up dead-letter queue monitoring alerts | 1 hr | When DLQ depth > threshold |
+| A4.6 | Configure circuit-breaker thresholds per agent based on expected error rates | 1 hr | Tuning |
+
+---
+
+### STREAM B: Dashboard UX Completion (Weeks 2–4)
+
+> **Goal**: Polish the dashboard for non-technical agency owner use
+
+#### B1: Mobile Responsiveness [HI]
+
+| # | Task | Effort | Details |
+|---|---|---|---|
+| B1.1 | Convert 256px fixed sidebar to collapsible mobile drawer / bottom nav | 4 hr | `sidebar-nav.tsx` + `spa-shell.tsx` |
+| B1.2 | Stack dashboard cards vertically on mobile (<768px) | 2 hr | All tab components |
+| B1.3 | Make kanban board horizontally scrollable on mobile | 1 hr | `kanban-board.tsx` |
+| B1.4 | Optimize chat interface for mobile (full-screen, thumb-friendly input) | 2 hr | `chat-interface.tsx` |
+| B1.5 | Test all tabs on iPhone Safari + Android Chrome | 2 hr | Manual QA pass |
+
+#### B2: Progressive Disclosure & Simplification [MD]
+
+| # | Task | Effort | Details |
+|---|---|---|---|
+| B2.1 | Add "Advanced" toggle to hide: Analytics, Costs, Knowledge, Admin, Sentry tabs | 2 hr | Reduce cognitive load |
+| B2.2 | Set Command Center as default landing page (over kanban) | 1 hr | Config change + redirect |
+| B2.3 | Add quick-action buttons to Command Center (approve, invoice, reply, dismiss) | 3 hr | One-tap common operations |
+| B2.4 | Notification badges on sidebar items (unread counts) | 2 hr | Wire to real data queries |
+| B2.5 | Empty state illustrations for tabs with no data yet | 2 hr | Better first-run experience |
+
+#### B3: Onboarding Flow (Task #4) [HI]
+
+| # | Task | Effort | Details |
+|---|---|---|---|
+| B3.1 | Wire onboarding-wizard.tsx to detect first login and auto-show | 1 hr | Check profile `onboarding_complete` flag |
+| B3.2 | Step 1: Connect your channels (show connections-grid with guided highlights) | 2 hr | Uses onboarding-tour.tsx spotlight |
+| B3.3 | Step 2: Background context crawl starts — show progress indicator | 2 hr | Real-time crawl status |
+| B3.4 | Step 3: BitBit introduces itself in chat — pre-written intro conversation | 1 hr | Personality reveal |
+| B3.5 | Step 4: Guided tour of real data (kanban populated, contacts loaded) | 3 hr | Tour triggers after data hydrated |
+| B3.6 | Step 5: Dismiss tour, set `onboarding_complete` flag | 30 min | Prevent re-showing |
+| B3.7 | Handle edge case: user has no channels connected yet | 1 hr | Graceful empty state |
+
+---
+
+### STREAM C: Remaining Channel Integrations (Weeks 3–5)
+
+> **Goal**: Connect the channels in the roadmap that don't have adapters yet
+
+#### C1: P1 Channels [MD]
+
+| # | Task | Effort | Details |
+|---|---|---|---|
+| C1.1 | ClickUp API adapter — read tasks, sync status, webhooks | 4 hr | Andy has ClickUp workspace |
+| C1.2 | Google Analytics 4 API adapter — read reports, event data | 4 hr | GA4 Data API |
+| C1.3 | Cluely API adapter — call transcripts, summaries | 3 hr | Meeting intelligence |
+| C1.4 | WordPress REST API adapter — CRUD pages, posts, plugins | 4 hr | Client site management |
+| C1.5 | Gmail IMAP → Gmail API migration (if serverless timeout confirmed) | 6 hr | OAuth2 + push notifications vs polling |
+
+#### C2: P2 Channels [LO]
+
+| # | Task | Effort | Details |
+|---|---|---|---|
+| C2.1 | Facebook Messenger adapter (Meta Graph API) | 8 hr | Shares Meta Business account with WhatsApp |
+| C2.2 | Instagram DMs adapter (Instagram Graph API) | 8 hr | Requires Meta app review |
+| C2.3 | Slack adapter (Events API + Bot Token) | 6 hr | If any clients use Slack |
+| C2.4 | Xero/MYOB accounting adapter | 8 hr | Australian accounting software |
+| C2.5 | Google Calendar API adapter (replace macOS osascript) | 4 hr | Cloud-compatible calendar |
+
+#### C3: Abstract Conversation Interface [MD]
+
+| # | Task | Effort | Details |
+|---|---|---|---|
+| C3.1 | Extract shared `ConversationInterface` from WhatsApp command parser | 3 hr | Common interface for all messaging |
+| C3.2 | Wire email as conversation interface (reply to BitBit digest → command parser) | 4 hr | Email-based commands |
+| C3.3 | Wire SMS as conversation interface (Twilio/Telnyx fallback) | 4 hr | WhatsApp downtime backup |
+
+---
+
+### STREAM D: CI/CD, Security & Quality (Weeks 2–4)
+
+> **Goal**: Production-grade operational infrastructure
+
+#### D1: CI/CD Pipeline [HI]
+
+| # | Task | Effort | Details |
+|---|---|---|---|
+| D1.1 | GitHub Actions: TypeScript type-check on PR | 1 hr | `npx tsc --noEmit` |
+| D1.2 | GitHub Actions: ESLint on PR | 1 hr | Uses existing `eslint.config.js` |
+| D1.3 | GitHub Actions: Vitest unit tests on PR | 1 hr | Run 54 existing test files |
+| D1.4 | Vercel preview deployments for PRs | 30 min | Auto-configured with Vercel |
+| D1.5 | GitHub Actions: E2E integration tests (against test Supabase) | 3 hr | After A1.* tests written |
+| D1.6 | Database migration automation (apply on merge to main) | 2 hr | Supabase CLI in CI |
+
+#### D2: Security Hardening [HI]
+
+| # | Task | Effort | Details |
+|---|---|---|---|
+| D2.1 | RLS policy audit — verify org isolation across all 54 migrations | 3 hr | Critical for multi-tenant |
+| D2.2 | Implement secret rotation for Anthropic API key, Supabase service key | 2 hr | Automated rotation schedule |
+| D2.3 | Audit all API routes for auth guards (some may be public) | 2 hr | Every `/api/*` route checked |
+| D2.4 | Rate limiting on public API routes (auth, webhooks) | 2 hr | Uses existing rate-limiter.ts |
+| D2.5 | Webhook signature verification for Stripe, Asana, Calendly | 1 hr | Prevent spoofed webhooks |
+| D2.6 | Content Security Policy headers | 1 hr | Next.js middleware |
+| D2.7 | VPS SSH hardening + firewall (UFW) | 30 min | Uses existing setup.sh |
+
+#### D3: Playwright E2E Tests [MD]
+
+| # | Task | Effort | Details |
+|---|---|---|---|
+| D3.1 | Playwright setup + config | 1 hr | Test dashboard flows |
+| D3.2 | E2E: Login flow → dashboard loads → kanban renders | 1 hr | Happy path |
+| D3.3 | E2E: Chat interface sends message → receives SSE response | 2 hr | AI chat flow |
+| D3.4 | E2E: Connections page → connect Gmail → verify status | 2 hr | OAuth flow |
+| D3.5 | E2E: Leads tab → create lead → verify pipeline | 1 hr | Lead management |
+| D3.6 | E2E: Invoice tab → create invoice → PDF preview | 2 hr | Invoice flow |
+
+---
+
+### STREAM E: GTM & Revenue Operations (Weeks 3–6)
+
+> **Goal**: First revenue + beta program launch
+
+#### E1: Legal & Business Foundation [CR]
+
+| # | Task | Effort | Owner | Details |
+|---|---|---|---|---|
+| E1.1 | Decision: BitBit as new entity vs under Torkay/AWU | 1 hr | Both | Determines ABN, banking, contracts |
+| E1.2 | 50/50 equity agreement (written, signed) | 4 hr | Both | **Before any revenue** |
+| E1.3 | IP ownership documentation | 2 hr | Both | Who owns the code |
+| E1.4 | ABN/ACN registration (if new entity) | 1 hr | Both | |
+| E1.5 | Terms of service | 2 hr | Tor | Use `/app/(public)/terms` route |
+| E1.6 | Privacy policy | 2 hr | Tor | Use `/app/(public)/privacy` route |
+| E1.7 | Client service agreement template | 2 hr | Both | For beta clients |
+
+#### E2: First Revenue [CR]
+
+| # | Task | Effort | Details |
+|---|---|---|---|
+| E2.1 | Fix Stripe identity verification | 15 min | **BLOCKER** — payouts paused |
+| E2.2 | Wire Stripe checkout flow in `billing/checkout.ts` to live Stripe | 2 hr | Test with Andy subscription |
+| E2.3 | Create Andy's $200/mo founder subscription | 30 min | Growth tier at 43% discount |
+| E2.4 | Service agreement with Andy/AWU | 1 hr | Formalize relationship |
+| E2.5 | Banking setup (BitBit revenue account) | 1 hr | Separate from personal |
+| E2.6 | Wire plan-gates.ts to enforce feature limits per tier | 2 hr | Starter vs Growth vs Pro |
+
+#### E3: Beta Program [HI]
+
+| # | Task | Effort | Details |
+|---|---|---|---|
+| E3.1 | AWU case study document (before/after with real metrics from Andy's usage) | 4 hr | Social proof |
+| E3.2 | Complete landing page (`landing-page/` Next.js app) | 12 hr | Marketing site |
+| E3.3 | Wire pricing page at `/pricing` with Stripe checkout links | 3 hr | 4 tiers: $199–$999+ |
+| E3.4 | Beta onboarding flow — self-serve org creation from `onboarding/multi-tenant.ts` | 4 hr | New org + first user + connections |
+| E3.5 | Agency targeting list from Andy's network | 2 hr | Andy's contacts |
+| E3.6 | Beta outreach emails (5–10 agencies) | 2 hr | Andy sends with BitBit draft |
+| E3.7 | Referral/affiliate program design | 3 hr | Revenue share or discount |
+
+#### E4: Analytics & Reporting [MD]
+
+| # | Task | Effort | Details |
+|---|---|---|---|
+| E4.1 | Wire analytics-tab.tsx to real data (from agent_runs + token usage) | 3 hr | Currently mock data |
+| E4.2 | MRR dashboard (uses existing `analytics/mrr.test.ts` patterns) | 2 hr | Revenue tracking |
+| E4.3 | Per-client ROI calculation (agent actions vs subscription cost) | 2 hr | Value demonstration |
+| E4.4 | Churn risk indicators (uses existing `analytics/churn.test.ts`) | 2 hr | Early warning system |
+| E4.5 | Monthly revenue reporting email | 2 hr | Automated to founders |
+
+---
+
+## Part 3: Outstanding Task Count Summary
+
+| Stream | Tasks | Est. Hours | Priority |
+|--------|-------|------------|----------|
+| **A: Production Hardening** | 33 | ~52 hr | CRITICAL |
+| **B: Dashboard UX Completion** | 17 | ~32 hr | HIGH |
+| **C: Remaining Channels** | 13 | ~63 hr | MEDIUM |
+| **D: CI/CD, Security, Quality** | 17 | ~30 hr | HIGH |
+| **E: GTM & Revenue** | 20 | ~55 hr | CRITICAL |
+| **TOTAL OUTSTANDING** | **100** | **~232 hr** | |
+
+At 40 hr/week focused dev: **~5.8 weeks remaining** to production-ready beta launch.
+
+For comparison, the original roadmap estimated 269 tasks / 621 hours. **169 tasks / ~389 hours of work have already been completed** (~63% of the original scope).
+
+---
+
+## Part 4: Multi-Agent Orchestration Plan
+
+### Agent Team Structure
+
+Each team operates as a parallel workstream. Within each team, a **lead agent** coordinates sub-agents for specific domains. Teams can run concurrently unless explicitly blocked by dependencies.
+
+```
+                    ┌─────────────────────────────┐
+                    │     ORCHESTRATOR AGENT       │
+                    │  (Master scheduler + router) │
+                    └──────────┬──────────────────┘
+                               │
+          ┌────────────────────┼────────────────────┐
+          │                    │                    │
+    ┌─────▼─────┐       ┌─────▼─────┐       ┌─────▼─────┐
+    │  WAVE 1   │       │  WAVE 2   │       │  WAVE 3   │
+    │ Weeks 1-2 │       │ Weeks 2-4 │       │ Weeks 4-6 │
+    │ Unblock   │       │ Build     │       │ Launch    │
+    └───────────┘       └───────────┘       └───────────┘
+```
+
+---
+
+### WAVE 1: Unblock (Weeks 1–2) — 3 Parallel Teams
+
+**All Wave 1 teams run concurrently. No cross-dependencies.**
+
+#### Team 1: Infrastructure & Credentials (Stream A2 + A3)
+```
+Lead: infra-monitor agent
+├── Agent 1a: Credential provisioning (A2.1–A2.12)
+│   └── Coordinate with Andy for PATs/keys
+│   └── Configure OAuth apps (Google, Microsoft, Meta)
+│   └── Store credentials in org_integrations
+├── Agent 1b: Deployment pipeline (A3.1–A3.9)
+│   └── Deploy Fly.io worker
+│   └── Deploy VPS with Docker
+│   └── Deploy Cloudflare Worker
+│   └── Configure Vercel cron jobs
+│   └── Set env vars across all platforms
+└── Agent 1c: Monitoring setup (A4.1–A4.6)
+    └── Sentry.io error tracking
+    └── UptimeRobot health checks
+    └── Dead letter queue alerts
+```
+
+**Deliverable**: All deployment targets live, all channel credentials stored, monitoring active.
+
+#### Team 2: CI/CD & Security (Stream D1 + D2)
+```
+Lead: gsd-executor agent
+├── Agent 2a: CI pipeline (D1.1–D1.4)
+│   └── GitHub Actions: tsc + eslint + vitest
+│   └── Vercel preview deployments
+├── Agent 2b: Security hardening (D2.1–D2.7)
+│   └── RLS audit across 54 migrations
+│   └── Auth guard audit on 74 API routes
+│   └── Webhook signature verification
+│   └── Rate limiting on public endpoints
+└── Agent 2c: Secret rotation (D2.2)
+    └── Automated key rotation schedule
+```
+
+**Deliverable**: CI blocks bad PRs, security audit complete, no public endpoints without auth.
+
+#### Team 3: Legal & Stripe (Stream E1 + E2)
+```
+Lead: invoice-agent
+├── Agent 3a: Legal setup (E1.1–E1.7)
+│   └── Entity decision
+│   └── Equity agreement
+│   └── ToS + Privacy Policy
+├── Agent 3b: Stripe revenue (E2.1–E2.6)
+│   └── Fix identity verification (BLOCKER)
+│   └── Wire checkout to live Stripe
+│   └── Create Andy's subscription
+│   └── Banking setup
+└── Unblocks: First revenue from Day 1 of Wave 2
+```
+
+**Deliverable**: Legal entity formed, Stripe active, Andy's $200/mo subscription live.
+
+---
+
+### WAVE 2: Build & Validate (Weeks 2–4) — 4 Parallel Teams
+
+**Depends on**: Wave 1 credentials + deployments. Teams run concurrently within Wave 2.
+
+#### Team 4: Integration Testing (Stream A1)
+```
+Lead: gsd-debugger agent
+├── Agent 4a: Channel pipeline E2E (A1.2, A1.6, A1.8)
+│   └── Gmail → classify → resolve → route → alert
+│   └── Relay daemon full cycle
+│   └── Entity resolution across channels
+├── Agent 4b: Agent E2E (A1.3, A1.4, A1.5, A1.7)
+│   └── Lead Swarm full pipeline
+│   └── Invoice Flow full pipeline
+│   └── WhatsApp command pipeline
+│   └── Approval flow pipeline
+├── Agent 4c: Infrastructure E2E (A1.9–A1.12)
+│   └── Memory consolidation cycle
+│   └── Multi-tenant isolation
+│   └── Load tests (50 relay cycles, 10 agent runs)
+└── Feeds findings back to Team 5 for fixes
+```
+
+**Deliverable**: Confidence that all agents work end-to-end. Bug list for Team 5.
+
+#### Team 5: Dashboard UX (Stream B)
+```
+Lead: wp-executor agent (web specialist)
+├── Agent 5a: Mobile responsiveness (B1.1–B1.5)
+│   └── Sidebar → mobile drawer
+│   └── Cards stack vertically
+│   └── Kanban horizontal scroll
+│   └── Chat mobile optimization
+├── Agent 5b: Progressive disclosure (B2.1–B2.5)
+│   └── Advanced toggle
+│   └── Command Center as landing
+│   └── Quick action buttons
+│   └── Notification badges
+└── Agent 5c: Onboarding flow (B3.1–B3.7)
+    └── First login detection
+    └── Guided channel connection
+    └── Context crawl progress
+    └── Tour with real data
+```
+
+**Deliverable**: Dashboard works on mobile, new users have guided onboarding.
+
+#### Team 6: Remaining Channels (Stream C1)
+```
+Lead: gemini-coder agent (code generation)
+├── Agent 6a: ClickUp adapter (C1.1)
+├── Agent 6b: GA4 adapter (C1.2)
+├── Agent 6c: WordPress adapter (C1.4)
+├── Agent 6d: Gmail API migration if needed (C1.5)
+└── Each adapter: types → fetch → transform → persist → test
+```
+
+**Deliverable**: 4 new channel adapters tested and working.
+
+#### Team 7: Playwright E2E (Stream D3)
+```
+Lead: gsd-executor agent
+├── Agent 7a: Setup + auth flows (D3.1–D3.2)
+├── Agent 7b: Feature flows (D3.3–D3.6)
+└── Runs against Vercel preview deployment
+```
+
+**Deliverable**: Automated browser tests for critical user journeys.
+
+---
+
+### WAVE 3: Launch (Weeks 4–6) — 3 Parallel Teams
+
+**Depends on**: Wave 2 validation passes. All agents and channels confirmed working.
+
+#### Team 8: Beta Launch (Stream E3)
+```
+Lead: content-creator agent
+├── Agent 8a: Landing page completion (E3.2)
+│   └── Finish landing-page/ Next.js app
+│   └── Copy, design, screenshots
+├── Agent 8b: Pricing + checkout (E3.3)
+│   └── Wire /pricing to Stripe checkout
+│   └── 4 tier cards with feature comparison
+├── Agent 8c: Case study + outreach (E3.1, E3.5–E3.7)
+│   └── AWU before/after document
+│   └── Beta agency list
+│   └── Outreach emails via BitBit
+└── Agent 8d: Self-serve onboarding (E3.4)
+    └── Wire multi-tenant.ts signup flow
+    └── New org creation → connections → first crawl
+```
+
+**Deliverable**: bitbit.com.au marketing site live, 5–10 beta invites sent.
+
+#### Team 9: Analytics & Reporting (Stream E4)
+```
+Lead: seo-monitor agent (data specialist)
+├── Agent 9a: Wire analytics to real data (E4.1–E4.2)
+├── Agent 9b: ROI + churn calculations (E4.3–E4.4)
+└── Agent 9c: Automated reporting (E4.5)
+```
+
+**Deliverable**: Founders can see real MRR, per-client ROI, churn risk.
+
+#### Team 10: P2 Channels & Conversation Interface (Stream C2 + C3)
+```
+Lead: gemini-coder agent
+├── Agent 10a: Facebook Messenger (C2.1)
+├── Agent 10b: Instagram DMs (C2.2)
+├── Agent 10c: Abstract conversation interface (C3.1–C3.3)
+└── Lower priority — only if Wave 3 capacity allows
+```
+
+**Deliverable**: Additional channels for beta clients that need them.
+
+---
+
+### Wave Dependency Graph
+
+```
+WAVE 1 (Weeks 1-2)                    WAVE 2 (Weeks 2-4)              WAVE 3 (Weeks 4-6)
+┌──────────────────┐                   ┌──────────────────┐            ┌──────────────────┐
+│ Team 1: Infra    │──credentials──→   │ Team 4: E2E Test │──bugs──→   │ Team 8: Beta     │
+│ Team 2: CI/Sec   │──pipeline────→    │ Team 5: UX       │            │ Team 9: Analytics│
+│ Team 3: Legal/$  │──stripe──────→    │ Team 6: Channels │            │ Team 10: P2 Chan │
+│                  │                   │ Team 7: Playwright│            │                  │
+└──────────────────┘                   └──────────────────┘            └──────────────────┘
+
+Critical path: Stripe fix → Andy's subscription → AWU case study → beta outreach
+Parallel path:  Credentials → E2E testing → bug fixes → production confidence
+Parallel path:  CI/CD → security audit → every subsequent deploy is safe
+```
+
+---
+
+### Agent Allocation Matrix
+
+| Agent Type | Wave 1 | Wave 2 | Wave 3 | Total Involvement |
+|---|---|---|---|---|
+| `orchestrator` | Coordinate all teams | Monitor progress | Launch coordination | All waves |
+| `infra-monitor` | **Lead Team 1** | Support Team 4 | — | Waves 1-2 |
+| `gsd-executor` | Lead Team 2 | **Lead Team 7** | — | Waves 1-2 |
+| `gsd-debugger` | — | **Lead Team 4** | Fix production bugs | Waves 2-3 |
+| `wp-executor` | — | **Lead Team 5** | — | Wave 2 |
+| `gemini-coder` | — | **Lead Team 6** | **Lead Team 10** | Waves 2-3 |
+| `invoice-agent` | **Lead Team 3** | — | — | Wave 1 |
+| `content-creator` | — | — | **Lead Team 8** | Wave 3 |
+| `seo-monitor` | — | — | **Lead Team 9** | Wave 3 |
+| `gsd-verifier` | — | End of Wave 2 | End of Wave 3 | Verification gates |
+
+---
+
+### Verification Gates
+
+**Gate 1** (End of Wave 1): All deployments responding, CI pipeline blocks bad PRs, Stripe accepting payments, legal entity exists.
+
+**Gate 2** (End of Wave 2): All E2E tests pass, mobile dashboard works, onboarding flow tested, Playwright suite green, no critical security findings.
+
+**Gate 3** (End of Wave 3): Landing page live, Andy actively using platform daily, 5+ beta invites sent, analytics showing real data, first beta client onboarded.
+
+---
+
+### Risk Register for Outstanding Work
+
+| Risk | Probability | Impact | Mitigation |
+|---|---|---|---|
+| Meta Business Verification takes 14+ days | Medium | HIGH — blocks WhatsApp | Start immediately (A2.8), use Telegram as interim |
+| Stripe identity verification rejected | Low | CRITICAL — blocks revenue | Escalate to Stripe support immediately |
+| Gmail IMAP timeouts on Vercel serverless | Medium | HIGH — blocks email channel | Migrate to Gmail API (C1.5) or use VPS for polling |
+| RLS audit reveals isolation gaps | Medium | CRITICAL — data leak risk | Dedicated security sprint, block beta until resolved |
+| Load test reveals DB bottleneck | Low | HIGH — blocks scaling | Supabase connection pooler, read replicas |
+| Andy doesn't provide channel credentials promptly | Medium | MEDIUM — delays testing | Pre-schedule credential handoff session |
+| Integration tests reveal deep agent bugs | Medium | HIGH — delays launch | Budget 1 extra week for bug fixes between Wave 2-3 |
+
+---
+
+*Outstanding work inventory completed 2026-03-04. Next update: after Wave 1 completion.*
