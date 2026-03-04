@@ -10,6 +10,7 @@ import { gscAdapter } from './gsc'
 import { asanaAdapter } from './asana'
 import { calendlyAdapter } from './calendly'
 import { stripeAdapter } from './stripe'
+import { telegramAdapter } from './telegram'
 import { waitForRateLimit } from './rate-limiter'
 import { checkAllChannelHealth, storeHealthReports } from './health'
 import type { ChannelHealthReport } from './health'
@@ -29,6 +30,7 @@ const adapters: Partial<Record<ChannelType, ChannelAdapter>> = {
   asana: asanaAdapter,
   calendly: calendlyAdapter,
   stripe: stripeAdapter,
+  telegram: telegramAdapter,
 }
 
 export function getAdapter(type: ChannelType): ChannelAdapter | undefined {

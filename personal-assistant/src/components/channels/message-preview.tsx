@@ -1,6 +1,6 @@
 'use client'
 
-import { Mail, MessageCircle, Calendar, Bell, Search, CheckSquare, CreditCard, CalendarClock } from 'lucide-react'
+import { Mail, MessageCircle, Calendar, Bell, Search, CheckSquare, CreditCard, CalendarClock, Send } from 'lucide-react'
 import type { ChannelMessage, ChannelType } from '@/lib/channels/types'
 
 const channelIcons: Record<ChannelType, React.ComponentType<{ className?: string }>> = {
@@ -13,6 +13,7 @@ const channelIcons: Record<ChannelType, React.ComponentType<{ className?: string
   asana: CheckSquare,
   calendly: CalendarClock,
   stripe: CreditCard,
+  telegram: Send,
   gsc: Search,
 }
 
