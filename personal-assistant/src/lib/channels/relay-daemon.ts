@@ -21,7 +21,11 @@ import { outlookAdapter } from './outlook'
 import { asanaAdapter } from './asana'
 import { calendlyAdapter } from './calendly'
 import { stripeAdapter } from './stripe'
+import { clickupAdapter } from './clickup'
+import { ga4Adapter } from './ga4'
+import { wordpressAdapter } from './wordpress'
 import { isDuplicate, computeContentHash } from './dedup'
+import { getOrgCredential } from '@/lib/integrations/credentials'
 
 export interface PollResult {
   messagesFound: number
@@ -38,7 +42,86 @@ const adapterMap = {
   asana: asanaAdapter,
   calendly: calendlyAdapter,
   stripe: stripeAdapter,
+  clickup: clickupAdapter,
+  ga4: ga4Adapter,
+  wordpress: wordpressAdapter,
 } as const
+
+async function hydrateAdapterConfig(
+  supabase: SupabaseClient,
+  orgId: string,
+  channelType: ChannelType,
+  config: unknown,
+): Promise<Record<string, unknown>> {
+  const baseConfig =
+    config && typeof config === 'object' ? { ...(config as Record<string, unknown>) } : {}
+
+  const readCredential = async (providers: string[]): Promise<Record<string, unknown> | null> => {
+    for (const provider of providers) {
+      try {
+        const creds = await getOrgCredential(supabase, orgId, provider)
+        if (creds) return creds
+      } catch {
+        // Best-effort lookup; relay falls back to connection config/env.
+      }
+    }
+    return null
+  }
+
+  try {
+    if (channelType === 'gmail') {
+      const creds = await readCredential(['gmail'])
+      const accessToken = creds?.['access_token']
+      if (typeof accessToken === 'string' && accessToken) {
+        baseConfig.accessToken = accessToken
+      }
+      return baseConfig
+    }
+
+    if (channelType === 'clickup') {
+      const creds = await readCredential(['clickup'])
+      const accessToken = creds?.['access_token']
+      if (typeof accessToken === 'string' && accessToken) {
+        baseConfig.accessToken = accessToken
+      }
+      return baseConfig
+    }
+
+    if (channelType === 'ga4') {
+      const creds = await readCredential(['ga4', 'google-analytics'])
+      const accessToken = creds?.['access_token']
+      const propertyId = creds?.['property_id']
+      if (typeof accessToken === 'string' && accessToken) {
+        baseConfig.accessToken = accessToken
+      }
+      if (typeof propertyId === 'string' && propertyId) {
+        baseConfig.property_id = propertyId
+      }
+      return baseConfig
+    }
+
+    if (channelType === 'wordpress') {
+      const creds = await readCredential(['wordpress'])
+      const siteUrl = creds?.['site_url']
+      const username = creds?.['username']
+      const applicationPassword = creds?.['application_password']
+      if (typeof siteUrl === 'string' && siteUrl) {
+        baseConfig.site_url = siteUrl
+      }
+      if (typeof username === 'string' && username) {
+        baseConfig.username = username
+      }
+      if (typeof applicationPassword === 'string' && applicationPassword) {
+        baseConfig.application_password = applicationPassword
+      }
+      return baseConfig
+    }
+  } catch (err) {
+    console.warn(`[relay] Failed to hydrate config for ${channelType}:`, err)
+  }
+
+  return baseConfig
+}
 
 /**
  * Retry a classification call with exponential backoff.
@@ -140,7 +223,8 @@ export async function pollChannel(
     // Phase: Pull messages since poll_cursor
     const pullStartMs = Date.now()
     const since = conn.poll_cursor ? new Date(conn.poll_cursor) : undefined
-    const messages = await adapter.pull(conn.config || {}, since)
+    const adapterConfig = await hydrateAdapterConfig(supabase, orgId, channelType, conn.config)
+    const messages = await adapter.pull(adapterConfig, since)
     const pullDurationMs = Date.now() - pullStartMs
 
     if (messages.length === 0) {

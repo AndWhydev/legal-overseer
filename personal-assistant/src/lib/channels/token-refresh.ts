@@ -18,6 +18,9 @@ const TOKEN_ENDPOINTS: Record<string, {
   'google-analytics': {
     url: 'https://oauth2.googleapis.com/token',
   },
+  ga4: {
+    url: 'https://oauth2.googleapis.com/token',
+  },
   outlook: {
     url: (tenantId?: string) =>
       `https://login.microsoftonline.com/${tenantId || 'common'}/oauth2/v2.0/token`,
@@ -40,6 +43,7 @@ function getProviderClientCredentials(channel: string): { clientId: string; clie
     case 'gmail':
     case 'google-calendar':
     case 'google-analytics':
+    case 'ga4':
       return {
         clientId: process.env.GOOGLE_CLIENT_ID || '',
         clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
@@ -65,7 +69,7 @@ function getProviderClientCredentials(channel: string): { clientId: string; clie
 }
 
 /** Channels that use OAuth and need token refresh. */
-const OAUTH_CHANNELS = ['gmail', 'outlook', 'asana', 'calendly', 'google-calendar', 'google-analytics']
+const OAUTH_CHANNELS = ['gmail', 'outlook', 'asana', 'calendly', 'google-calendar', 'google-analytics', 'ga4']
 
 /** Max retry count before marking channel as error (24 hourly checks = 24h grace). */
 const MAX_RETRY_COUNT = 24
@@ -95,6 +99,16 @@ function isTokenExpiringSoon(tokenExpiresAt?: string): boolean {
   return new Date(tokenExpiresAt).getTime() - REFRESH_BUFFER_MS <= Date.now()
 }
 
+function getCredentialLookupOrder(channel: string): string[] {
+  if (channel === 'ga4') return ['ga4', 'google-analytics']
+  return [channel]
+}
+
+function getIntegrationProvider(channel: string): string {
+  if (channel === 'ga4') return 'google-analytics'
+  return channel
+}
+
 /**
  * Refresh a single channel's OAuth token for an organization.
  */
@@ -108,7 +122,11 @@ export async function refreshChannelToken(
     return { refreshed: false }
   }
 
-  const credentials = await getOrgCredential(supabase, orgId, channel)
+  let credentials: Record<string, unknown> | null = null
+  for (const provider of getCredentialLookupOrder(channel)) {
+    credentials = await getOrgCredential(supabase, orgId, provider)
+    if (credentials) break
+  }
   if (!credentials) {
     return { refreshed: false, error: 'No credentials found' }
   }
@@ -192,7 +210,7 @@ export async function refreshChannelToken(
     await storeOrgCredential(
       supabase,
       orgId,
-      channel,
+      getIntegrationProvider(channel),
       updatedCredentials,
       'token-refresh-service',
     )
@@ -250,7 +268,7 @@ async function handleRefreshFailure(
       .from('org_integrations')
       .update({ status: 'error' })
       .eq('org_id', orgId)
-      .eq('provider', channel)
+      .eq('provider', getIntegrationProvider(channel))
 
     // Send email notification to org owner about re-authorization
     try {

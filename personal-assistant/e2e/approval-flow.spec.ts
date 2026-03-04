@@ -1,9 +1,10 @@
 import { test, expect } from '@playwright/test'
-import { login, waitForDashboard, ApprovalQueuePage } from './helpers'
+import { AUTH_SKIP_REASON, waitForDashboard, ApprovalQueuePage, openProtectedPath } from './helpers'
 
 test.describe('Approval Flow', () => {
   test.beforeEach(async ({ page }) => {
-    await login(page)
+    const authenticated = await openProtectedPath(page, '/dashboard')
+    test.skip(!authenticated, AUTH_SKIP_REASON)
     await waitForDashboard(page)
   })
 

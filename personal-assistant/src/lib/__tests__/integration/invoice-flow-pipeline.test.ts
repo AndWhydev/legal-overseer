@@ -65,6 +65,7 @@ type InvoiceRow = {
   currency: string
   issued_date: string | null
   due_date: string | null
+  created_at?: string
   reminder_count: number
   project_reference: string | null
   payment_method?: string
@@ -265,7 +266,7 @@ function filterInvoices(rows: InvoiceRow[], filters: Record<string, unknown>): I
 
       if (key === 'gte:created_at') {
         const threshold = new Date(String(value)).getTime()
-        const createdAt = new Date(row.issued_date ?? '1970-01-01').getTime()
+        const createdAt = new Date(row.created_at ?? row.issued_date ?? '1970-01-01').getTime()
         if (createdAt < threshold) return false
       }
 
@@ -299,9 +300,15 @@ function applyPartialPayment(invoice: { total: number; amount_paid: number; stat
   }
 }
 
-afterEach(() => vi.restoreAllMocks())
+afterEach(() => {
+  vi.useRealTimers()
+  vi.restoreAllMocks()
+})
 
 beforeEach(() => {
+  vi.useFakeTimers()
+  vi.setSystemTime(new Date('2026-03-04T00:00:00.000Z'))
+
   createInvoiceMock.mockReset()
   searchContactsMock.mockReset()
   resolveEntityRankedMock.mockReset()
@@ -336,6 +343,41 @@ beforeEach(() => {
 })
 
 describe('Invoice Flow Pipeline Integration', () => {
+  it('queues invoice creation approval when requireApproval is enabled', async () => {
+    const { supabase } = createInvoiceSupabase({
+      organizations: [{ id: 'org-1', name: 'All Webbed Up', slug: 'awu', settings: null }],
+      invoices: [],
+    })
+
+    createApprovalMock.mockResolvedValue({ id: 'approval-create-1' })
+
+    const intent = parseInvoiceIntent('invoice Steve West $500 for website')
+    const result = await createInvoiceFromIntent(
+      supabase as any,
+      'org-1',
+      intent,
+      'agent-1',
+      { requireApproval: true, allowDuplicateOverride: false },
+    )
+
+    expect(result).toEqual({ status: 'queued', approvalId: 'approval-create-1' })
+    expect(createApprovalMock).toHaveBeenCalledWith(
+      supabase,
+      expect.objectContaining({
+        org_id: 'org-1',
+        action_type: 'invoice_create',
+        action_payload: expect.objectContaining({
+          intent: expect.objectContaining({
+            contact_name: 'Steve West',
+            amount: 500,
+            currency: 'AUD',
+          }),
+        }),
+      }),
+    )
+    expect(createInvoiceMock).not.toHaveBeenCalled()
+  })
+
   it('creates invoice with line items and calculates total', async () => {
     const { supabase } = createInvoiceSupabase({
       organizations: [{ id: 'org-1', name: 'All Webbed Up', slug: 'awu', settings: null }],
@@ -368,6 +410,60 @@ describe('Invoice Flow Pipeline Integration', () => {
         ],
       }),
     )
+  })
+
+  it('flags duplicate invoice and queues override approval', async () => {
+    const { supabase } = createInvoiceSupabase({
+      organizations: [{ id: 'org-1', name: 'All Webbed Up', slug: 'awu', settings: null }],
+      invoices: [
+        {
+          id: 'inv-existing-1',
+          org_id: 'org-1',
+          invoice_number: 'AWU-202603-009',
+          client_contact_id: 'contact-1',
+          status: 'sent',
+          items: [{ description: 'Website', quantity: 1, unit_price: 500, total: 500 }],
+          subtotal: 500,
+          tax: 50,
+          total: 550,
+          currency: 'AUD',
+          issued_date: '2026-03-03',
+          due_date: '2026-03-17',
+          created_at: '2026-03-03T08:00:00.000Z',
+          reminder_count: 0,
+          project_reference: 'Website project',
+        },
+      ],
+    })
+
+    createApprovalMock.mockResolvedValue({ id: 'approval-override-1' })
+
+    const intent = parseInvoiceIntent('invoice Steve West $550 for website')
+    const result = await createInvoiceFromIntent(
+      supabase as any,
+      'org-1',
+      intent,
+      'agent-1',
+      { requireApproval: false, allowDuplicateOverride: false },
+    )
+
+    expect(result).toEqual({
+      status: 'duplicate',
+      existingInvoiceId: 'inv-existing-1',
+      existingInvoiceNumber: 'AWU-202603-009',
+      overrideApprovalId: 'approval-override-1',
+    })
+    expect(createApprovalMock).toHaveBeenCalledWith(
+      supabase,
+      expect.objectContaining({
+        action_type: 'invoice_duplicate_override',
+        action_payload: expect.objectContaining({
+          existing_invoice_id: 'inv-existing-1',
+          existing_invoice_number: 'AWU-202603-009',
+        }),
+      }),
+    )
+    expect(createInvoiceMock).not.toHaveBeenCalled()
   })
 
   it('generates PDF data from invoice', async () => {

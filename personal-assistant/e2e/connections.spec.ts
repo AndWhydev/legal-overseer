@@ -1,43 +1,9 @@
 import { test, expect, type Page } from '@playwright/test'
-
-async function tryDevPasswordLogin(page: Page) {
-  if (!new URL(page.url()).pathname.startsWith('/login')) return
-
-  const devToggle = page.getByRole('button', { name: /dev:\s*password login/i })
-  if (await devToggle.count()) {
-    await devToggle.first().click()
-    await page
-      .locator('input[type="password"]')
-      .first()
-      .waitFor({ state: 'visible', timeout: 5000 })
-      .catch(() => {})
-  }
-
-  const passwordInput = page.locator('input[type="password"]').first()
-  if (!(await passwordInput.count())) return
-
-  const email = process.env.E2E_USER_EMAIL || 'test@bitbit.dev'
-  const password = process.env.E2E_USER_PASSWORD || 'test-password-e2e'
-
-  await page.locator('input[type="email"]').last().fill(email)
-  await passwordInput.fill(password)
-  await page.getByRole('button', { name: /sign in with password/i }).click()
-  await page.waitForURL('**/dashboard**', { timeout: 15000 }).catch(() => {})
-}
+import { AUTH_SKIP_REASON, openProtectedPath } from './helpers'
 
 async function openConnections(page: Page) {
-  await page.goto('/dashboard')
-  await page.waitForLoadState('domcontentloaded')
-
-  if (new URL(page.url()).pathname.startsWith('/login')) {
-    await tryDevPasswordLogin(page)
-    await page.goto('/dashboard')
-    await page.waitForLoadState('domcontentloaded')
-  }
-
-  if (new URL(page.url()).pathname.startsWith('/login')) {
-    return false
-  }
+  const authenticated = await openProtectedPath(page, '/dashboard')
+  if (!authenticated) return false
 
   const directConnections = page.getByRole('tab', { name: /connections/i })
   if (!(await directConnections.count())) {
@@ -63,7 +29,7 @@ async function openConnections(page: Page) {
 test.describe('Connections', () => {
   test('connections page shows grid of available connections', async ({ page }) => {
     const opened = await openConnections(page)
-    test.skip(!opened, 'Could not open connections tab in this environment')
+    test.skip(!opened, AUTH_SKIP_REASON)
 
     await page.waitForFunction(
       () => {
@@ -87,7 +53,7 @@ test.describe('Connections', () => {
 
   test('each connection tile has name and status', async ({ page }) => {
     const opened = await openConnections(page)
-    test.skip(!opened, 'Could not open connections tab in this environment')
+    test.skip(!opened, AUTH_SKIP_REASON)
 
     const gmailTile = page.locator('div:has(h3:has-text("Gmail"))').first()
     await gmailTile.waitFor({ state: 'visible', timeout: 15000 })

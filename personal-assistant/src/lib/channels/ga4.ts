@@ -76,7 +76,10 @@ async function resolveToken(
   client: SupabaseClient,
   orgId: string,
 ): Promise<GA4Credentials | null> {
-  return (await getOrgCredential(client, orgId, 'ga4')) as GA4Credentials | null
+  const ga4Creds = (await getOrgCredential(client, orgId, 'ga4')) as GA4Credentials | null
+  if (ga4Creds) return ga4Creds
+
+  return (await getOrgCredential(client, orgId, 'google-analytics')) as GA4Credentials | null
 }
 
 function formatDateISO(date: Date): string {
@@ -86,6 +89,11 @@ function formatDateISO(date: Date): string {
 function toNumber(value: string | undefined): number {
   const parsed = Number(value)
   return Number.isFinite(parsed) ? parsed : 0
+}
+
+function readStringConfig(config: Record<string, unknown>, key: string): string | undefined {
+  const value = config[key]
+  return typeof value === 'string' && value.trim().length > 0 ? value : undefined
 }
 
 // ---------------------------------------------------------------------------
@@ -185,8 +193,14 @@ export const ga4Adapter: ChannelAdapter = {
   icon: 'BarChart3',
 
   async pull(_config, since) {
-    const token = process.env.GA4_ACCESS_TOKEN
-    const propertyId = process.env.GA4_PROPERTY_ID
+    const token =
+      readStringConfig(_config, 'accessToken') ||
+      readStringConfig(_config, 'token') ||
+      process.env.GA4_ACCESS_TOKEN
+    const propertyId =
+      readStringConfig(_config, 'propertyId') ||
+      readStringConfig(_config, 'property_id') ||
+      process.env.GA4_PROPERTY_ID
     if (!token || !propertyId) return []
 
     const start = since || new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
@@ -229,6 +243,8 @@ export const ga4Adapter: ChannelAdapter = {
             views,
             sessions,
             dateRange,
+            propertyId,
+            source: 'ga4-data-api',
           },
         }
       })

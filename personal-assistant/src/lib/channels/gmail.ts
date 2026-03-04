@@ -14,6 +14,88 @@ interface GmailOAuthCredentials {
   token_expires_at?: string
 }
 
+interface GmailListResponse {
+  messages?: Array<{ id: string; threadId: string }>
+}
+
+interface GmailMessageResponse {
+  id: string
+  threadId: string
+  snippet?: string
+  internalDate?: string
+  payload?: {
+    headers?: Array<{ name: string; value: string }>
+  }
+}
+
+function readStringConfig(config: Record<string, unknown>, key: string): string | undefined {
+  const value = config[key]
+  return typeof value === 'string' && value.trim().length > 0 ? value : undefined
+}
+
+function getHeaderValue(
+  headers: Array<{ name: string; value: string }> | undefined,
+  name: string,
+): string | undefined {
+  const target = name.toLowerCase()
+  return headers?.find((header) => header.name.toLowerCase() === target)?.value
+}
+
+function parseFromHeader(value: string | undefined): { sender: string; senderEmail: string } {
+  if (!value) {
+    return { sender: 'Unknown', senderEmail: '' }
+  }
+
+  const emailMatch = value.match(/<([^>]+)>/)
+  const senderEmail = (emailMatch?.[1] || value).trim()
+  const sender = value
+    .replace(/<[^>]+>/g, '')
+    .replace(/"/g, '')
+    .trim()
+
+  return {
+    sender: sender || senderEmail || 'Unknown',
+    senderEmail,
+  }
+}
+
+function formatGmailQueryDate(date: Date): string {
+  const year = date.getUTCFullYear()
+  const month = String(date.getUTCMonth() + 1).padStart(2, '0')
+  const day = String(date.getUTCDate()).padStart(2, '0')
+  return `${year}/${month}/${day}`
+}
+
+function parseMessageDate(internalDate?: string, headerDate?: string): Date {
+  const internal = Number(internalDate)
+  if (Number.isFinite(internal) && internal > 0) {
+    return new Date(internal)
+  }
+
+  if (headerDate) {
+    const parsed = new Date(headerDate)
+    if (!Number.isNaN(parsed.getTime())) return parsed
+  }
+
+  return new Date()
+}
+
+async function gmailApiFetch<T>(accessToken: string, path: string): Promise<T> {
+  const response = await fetch(`https://gmail.googleapis.com${path}`, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      Accept: 'application/json',
+    },
+  })
+
+  if (!response.ok) {
+    const text = await response.text()
+    throw new Error(`Gmail API ${response.status}: ${text}`)
+  }
+
+  return (await response.json()) as T
+}
+
 function isGmailTokenExpired(expiresAt?: string): boolean {
   if (!expiresAt) return true
   return new Date(expiresAt).getTime() - 5 * 60 * 1000 <= Date.now()
@@ -76,23 +158,122 @@ export async function refreshGmailToken(
 export const gmailAdapter: ChannelAdapter = {
   type: 'gmail',
   name: 'Gmail',
-  description: 'Pull emails from Gmail via IMAP',
+  description: 'Pull emails from Gmail via API (OAuth) with IMAP fallback',
   icon: 'Mail',
 
-  async pull(_config, since, options) {
-    const user = process.env.GMAIL_USER
-    const pass = process.env.GMAIL_APP_PASSWORD
-    if (!user || !pass) return []
-
+  async pull(config, since, options) {
     const sinceDate = since || new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
     const maxMessages = (options?.maxMessages as number) || 50
+
+    const accessToken =
+      readStringConfig(config, 'accessToken') ||
+      readStringConfig(config, 'access_token') ||
+      process.env.GMAIL_ACCESS_TOKEN
+
+    if (accessToken) {
+      const messages = await gmailApiPullWithRetry(accessToken, sinceDate, maxMessages, 3)
+      if (messages) return messages
+
+      console.warn('[gmail] API pull failed after retries; attempting IMAP fallback')
+    }
+
+    const user =
+      readStringConfig(config, 'user') ||
+      readStringConfig(config, 'username') ||
+      process.env.GMAIL_USER
+    const pass =
+      readStringConfig(config, 'appPassword') ||
+      readStringConfig(config, 'applicationPassword') ||
+      readStringConfig(config, 'password') ||
+      process.env.GMAIL_APP_PASSWORD
+    if (!user || !pass) return []
 
     return gmailPullWithRetry(user, pass, sinceDate, maxMessages, 4)
   },
 
   async isAvailable() {
-    return Boolean(process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD)
+    return Boolean(
+      process.env.GMAIL_ACCESS_TOKEN ||
+      (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD),
+    )
   },
+}
+
+async function gmailApiPullWithRetry(
+  accessToken: string,
+  sinceDate: Date,
+  maxMessages: number,
+  retriesLeft: number,
+): Promise<ChannelMessage[] | null> {
+  try {
+    const query = encodeURIComponent(`in:inbox after:${formatGmailQueryDate(sinceDate)}`)
+    const cappedMaxMessages = Math.min(Math.max(maxMessages, 1), 100)
+    const list = await gmailApiFetch<GmailListResponse>(
+      accessToken,
+      `/gmail/v1/users/me/messages?maxResults=${cappedMaxMessages}&q=${query}`,
+    )
+
+    const items = list.messages || []
+    if (items.length === 0) {
+      return []
+    }
+
+    const detailMessages = await Promise.all(
+      items.slice(0, cappedMaxMessages).map(async (item) => {
+        try {
+          return await gmailApiFetch<GmailMessageResponse>(
+            accessToken,
+            `/gmail/v1/users/me/messages/${item.id}?format=metadata&metadataHeaders=From&metadataHeaders=Subject&metadataHeaders=Date&metadataHeaders=Message-ID`,
+          )
+        } catch (err) {
+          console.warn('[gmail] Failed to fetch message details:', err)
+          return null
+        }
+      }),
+    )
+
+    return detailMessages
+      .filter((message): message is GmailMessageResponse => !!message)
+      .map((message): ChannelMessage => {
+        const headers = message.payload?.headers
+        const fromHeader = getHeaderValue(headers, 'From')
+        const subject = getHeaderValue(headers, 'Subject') || '(no subject)'
+        const dateHeader = getHeaderValue(headers, 'Date')
+        const messageIdHeader = getHeaderValue(headers, 'Message-ID')
+        const { sender, senderEmail } = parseFromHeader(fromHeader)
+        const receivedAt = parseMessageDate(message.internalDate, dateHeader)
+
+        return {
+          id: `gmail-api-${message.id}`,
+          channel: 'gmail',
+          externalId: messageIdHeader || message.id,
+          sender,
+          senderEmail,
+          subject,
+          body: (message.snippet || subject).slice(0, 2000),
+          receivedAt,
+          isActionable: false,
+          priority: 'medium',
+          metadata: {
+            gmailId: message.id,
+            threadId: message.threadId,
+            messageId: messageIdHeader || message.id,
+            source: 'gmail-api',
+          },
+        }
+      })
+  } catch (err) {
+    if (retriesLeft > 1) {
+      const attempt = 4 - retriesLeft
+      const delay = Math.min(1000 * Math.pow(2, attempt - 1), 8000)
+      console.warn(`[gmail] API pull failed (attempt ${attempt}/3), retrying in ${delay}ms:`, err)
+      await new Promise((resolve) => setTimeout(resolve, delay))
+      return gmailApiPullWithRetry(accessToken, sinceDate, maxMessages, retriesLeft - 1)
+    }
+
+    console.error('[gmail] API pull failed after 3 attempts:', err)
+    return null
+  }
 }
 
 async function gmailPullWithRetry(
@@ -178,6 +359,7 @@ async function gmailPullWithRetry(
           metadata: {
             uid: msg.uid,
             messageId: envelope.messageId,
+            source: 'gmail-imap',
           },
         })
 

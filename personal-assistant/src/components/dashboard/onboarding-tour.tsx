@@ -27,7 +27,7 @@ const TOUR_STEPS: TourStep[] = [
     title: 'Command Center',
     description: 'This is your home base. See pending approvals, hot leads, overdue tasks, and quick actions all in one place.',
     icon: Gauge,
-    tabId: 'command-center',
+    tabId: 'dashboard',
     position: 'center',
   },
   {
@@ -69,10 +69,22 @@ export function OnboardingTour({ onNavigate }: OnboardingTourProps) {
   const [active, setActive] = useState(false);
   const [stepIndex, setStepIndex] = useState(0);
 
+  const persistCompletion = useCallback(async () => {
+    try {
+      await fetch('/api/profile/preferences', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ onboarding_completed: true }),
+      });
+    } catch {
+      // localStorage completion is still the fallback
+    }
+  }, []);
+
   // Check if tour has been completed (localStorage fast-path + server verify)
   useEffect(() => {
     const localComplete = localStorage.getItem(STORAGE_KEY);
-    if (localComplete) return;
+    if (localComplete === 'true') return;
 
     // Verify against server state
     const checkServer = async () => {
@@ -99,7 +111,8 @@ export function OnboardingTour({ onNavigate }: OnboardingTourProps) {
   const completeTour = useCallback(() => {
     localStorage.setItem(STORAGE_KEY, 'true');
     setActive(false);
-  }, []);
+    void persistCompletion();
+  }, [persistCompletion]);
 
   const nextStep = useCallback(() => {
     if (stepIndex < TOUR_STEPS.length - 1) {

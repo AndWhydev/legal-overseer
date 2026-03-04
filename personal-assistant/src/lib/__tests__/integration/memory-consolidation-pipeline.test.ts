@@ -248,6 +248,57 @@ describe('Memory Consolidation Pipeline Integration', () => {
     expect(state.memories.find((m) => m.id === 'mem-old')?.superseded_by).toBe('consolidation')
   })
 
+  it('dry-run consolidation reports actions without mutating memories', async () => {
+    anthropicCreateMock.mockResolvedValue({
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify({
+            keep: ['mem-new'],
+            deactivate: ['mem-old'],
+            merge: [
+              {
+                source_ids: ['mem-old', 'mem-new'],
+                merged_content: 'Client prefers concise weekly updates on Mondays.',
+                confidence: 0.9,
+              },
+            ],
+          }),
+        },
+      ],
+    })
+
+    const { supabase, state } = createSemanticMemoriesSupabase([
+      {
+        id: 'mem-old',
+        org_id: 'org-1',
+        content: 'Client likes weekly updates.',
+        category: 'workflow',
+        confidence: 0.7,
+        entity_ids: ['contact-1'],
+        created_at: '2026-02-01T10:00:00.000Z',
+        is_active: true,
+      },
+      {
+        id: 'mem-new',
+        org_id: 'org-1',
+        content: 'Client prefers concise updates.',
+        category: 'workflow',
+        confidence: 0.9,
+        entity_ids: ['contact-1'],
+        created_at: '2026-03-01T10:00:00.000Z',
+        is_active: true,
+      },
+    ])
+
+    const result = await consolidateMemories(supabase as any, 'org-1', { dryRun: true })
+
+    expect(result).toEqual({ merged: 1, deactivated: 1, kept: 1 })
+    expect(state.memories).toHaveLength(2)
+    expect(state.memories.every((memory) => memory.is_active)).toBe(true)
+    expect(state.memories.some((memory) => memory.content.includes('concise weekly updates on Mondays'))).toBe(false)
+  })
+
   it('consolidation merges overlapping memories', async () => {
     anthropicCreateMock.mockResolvedValue({
       content: [

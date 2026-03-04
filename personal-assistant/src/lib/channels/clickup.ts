@@ -126,6 +126,11 @@ function isTaskOpen(task: ClickUpTask): boolean {
   return !status.includes('closed') && !status.includes('complete') && !status.includes('done')
 }
 
+function readStringConfig(config: Record<string, unknown>, key: string): string | undefined {
+  const value = config[key]
+  return typeof value === 'string' && value.trim().length > 0 ? value : undefined
+}
+
 // ---------------------------------------------------------------------------
 // Public DI functions (SupabaseClient first param)
 // ---------------------------------------------------------------------------
@@ -261,10 +266,14 @@ export const clickupAdapter: ChannelAdapter = {
   icon: 'ListTodo',
 
   async pull(config, since) {
-    const token = process.env.CLICKUP_ACCESS_TOKEN || process.env.CLICKUP_PAT
+    const token =
+      readStringConfig(config, 'accessToken') ||
+      readStringConfig(config, 'token') ||
+      process.env.CLICKUP_ACCESS_TOKEN ||
+      process.env.CLICKUP_PAT
     if (!token) return []
 
-    const listId = (config.listId as string | undefined) || process.env.CLICKUP_LIST_ID
+    const listId = readStringConfig(config, 'listId') || process.env.CLICKUP_LIST_ID
     if (!listId) {
       console.error('[clickup] No listId in config or CLICKUP_LIST_ID env')
       return []
@@ -299,6 +308,7 @@ export const clickupAdapter: ChannelAdapter = {
             list: task.list,
             space: task.space,
             tags: task.tags || [],
+            source: 'clickup-api-v2',
           },
         }
       })

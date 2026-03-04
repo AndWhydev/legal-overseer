@@ -130,6 +130,22 @@ describe('Multi-tenant Isolation Integration', () => {
     expect(result.data.map((row: ContactRow) => row.org_id)).toEqual(['orgA', 'orgB'])
   })
 
+  it('returns no contacts when user has zero accessible orgs', async () => {
+    const { supabase, state } = createTenancySupabase({
+      contacts: [
+        { id: 'c-a', org_id: 'orgA', name: 'Alice' },
+        { id: 'c-b', org_id: 'orgB', name: 'Bob' },
+      ],
+      accessibleOrgIds: [],
+    })
+
+    const result = await listContactsWithinAccessibleOrgs(supabase, 'user-no-access')
+
+    expect(supabase.rpc).toHaveBeenCalledWith('get_user_accessible_org_ids', { p_user_id: 'user-no-access' })
+    expect(state.lastOrgFilter).toEqual([])
+    expect(result.data).toEqual([])
+  })
+
   it('insert uses active org ID only', async () => {
     const { supabase, state } = createTenancySupabase({
       activeOrgId: 'orgB',

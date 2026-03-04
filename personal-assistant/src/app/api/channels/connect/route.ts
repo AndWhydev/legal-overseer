@@ -4,7 +4,16 @@ import { storeOrgCredential } from '@/lib/integrations/credentials'
 import { logAuditEvent } from '@/lib/audit/logger'
 import { getActiveOrgId } from '@/lib/tenancy'
 
-const OAUTH_CHANNELS = ['gmail', 'outlook', 'asana', 'calendly', 'google-calendar', 'google-analytics']
+const OAUTH_PROVIDER_MAP: Record<string, string> = {
+  gmail: 'gmail',
+  outlook: 'outlook',
+  asana: 'asana',
+  calendly: 'calendly',
+  calendar: 'google-calendar',
+  'google-calendar': 'google-calendar',
+  ga4: 'google-analytics',
+  'google-analytics': 'google-analytics',
+}
 
 export async function POST(request: Request) {
   const supabase = await createClient()
@@ -32,9 +41,10 @@ export async function POST(request: Request) {
 
   try {
     // OAuth channels: redirect to OAuth start flow
-    if (OAUTH_CHANNELS.includes(channelLower)) {
+    const oauthProvider = OAUTH_PROVIDER_MAP[channelLower]
+    if (oauthProvider) {
       const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
-      const url = `${appUrl}/api/auth/oauth/start?provider=${channelLower}`
+      const url = `${appUrl}/api/auth/oauth/start?provider=${oauthProvider}`
       return NextResponse.json({ redirect: true, url })
     }
 

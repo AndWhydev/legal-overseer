@@ -27,6 +27,9 @@ const DEFAULT_LIMITS: Partial<Record<ChannelType, number>> = {
   stripe: 100,
   whatsapp: 80,
   gsc: 30,
+  clickup: 120,
+  ga4: 60,
+  wordpress: 60,
 }
 
 // In-memory fallback when Supabase is unavailable

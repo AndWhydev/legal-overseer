@@ -4728,6 +4728,10 @@ html.light .bb-tenders-drawer__close:hover {
   .bb-sidebar__item[data-tooltip]::after {
     display: none;
   }
+  .bb-sidebar__chevron-toggle,
+  .bb-sidebar__fade {
+    display: none !important;
+  }
 }
 
 
@@ -6626,4 +6630,27 @@ html.light .bb-chat__tc-pre {
   cursor: pointer;
   font-size: 13px;
   font-weight: 500;
+}
+
+@media (max-width: 768px) {
+  .bb-onboarding-wizard__content {
+    align-items: flex-start;
+    padding: 16px;
+  }
+
+  .bb-onboarding-wizard__panel {
+    padding: 22px;
+    border-radius: 16px;
+    margin-top: max(12px, env(safe-area-inset-top));
+  }
+
+  .bb-onboarding-chat__text {
+    max-width: min(100%, 280px);
+  }
+
+  .bb-onboarding-tooltip {
+    width: min(300px, calc(100vw - 24px));
+    max-width: calc(100vw - 24px);
+    padding: 16px;
+  }
 }

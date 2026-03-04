@@ -61,6 +61,8 @@ export const TABS: TabDef[] = [
   { id: 'settings', label: 'Settings', path: '/dashboard/settings' },
 ];
 
+const ONBOARDING_STORAGE_KEY = 'bb-onboarding-complete';
+
 // ─── Pre-warm all tab imports immediately ───────────────────────────────────
 // Trigger dynamic imports eagerly so chunks are fetched in the background.
 // The resolved modules feed into React.lazy wrappers below.
@@ -97,7 +99,6 @@ const TabComponents: Record<string, React.LazyExoticComponent<React.ComponentTyp
   chat: lazy(() => tabImports.chat),
   inbox: lazy(() => tabImports.inbox),
   'creator-studio': lazy(() => tabImports['creator-studio']),
-  channels: lazy(() => tabImports.channels),
   medications: lazy(() => tabImports.medications),
   contacts: lazy(() => tabImports.contacts),
   leads: lazy(() => tabImports.leads),
@@ -138,7 +139,11 @@ interface SPAShellProps {
 }
 
 export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellProps) {
-  const [showWizard, setShowWizard] = useState(isNewUser);
+  const [showWizard, setShowWizard] = useState(() => {
+    if (!isNewUser) return false;
+    if (typeof window === 'undefined') return true;
+    return localStorage.getItem(ONBOARDING_STORAGE_KEY) !== 'true';
+  });
   const router = useRouter();
 
   const handleSignOut = useCallback(async () => {
@@ -251,7 +256,10 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
   useEffect(() => {
     const handler = (e: Event) => {
       const detail = (e as CustomEvent<{ tab: string }>).detail;
-      if (detail?.tab) navigateToId(detail.tab);
+      if (detail?.tab) {
+        navigateToId(detail.tab);
+        setSidebarOpen(false);
+      }
     };
     window.addEventListener('bb-navigate', handler);
     return () => window.removeEventListener('bb-navigate', handler);
@@ -289,6 +297,44 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
     setSidebarOpen(false);
   }, [navigateToId]);
 
+  // Keep first-login onboarding sticky across sessions if local completion exists.
+  useEffect(() => {
+    if (!isNewUser) {
+      setShowWizard(false);
+      return;
+    }
+    if (typeof window !== 'undefined' && localStorage.getItem(ONBOARDING_STORAGE_KEY) === 'true') {
+      setShowWizard(false);
+      return;
+    }
+    setShowWizard(true);
+  }, [isNewUser]);
+
+  // Any tab navigation path (shortcuts, custom events, browser history) should close tablet drawer.
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [activeNavIndex]);
+
+  // Escape closes the tablet drawer.
+  useEffect(() => {
+    if (!sidebarOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setSidebarOpen(false);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [sidebarOpen]);
+
+  // Prevent background scrolling while drawer is open.
+  useEffect(() => {
+    if (!sidebarOpen) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, [sidebarOpen]);
+
   return (
     <ToastProvider>
     <EnabledModulesContext.Provider value={enabledModulesState}>
@@ -306,7 +352,10 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
           <button
             className="bb-sidebar-toggle"
             onClick={() => setSidebarOpen(o => !o)}
-            aria-label="Toggle navigation"
+            aria-label={sidebarOpen ? 'Close navigation' : 'Open navigation'}
+            aria-expanded={sidebarOpen}
+            aria-controls="bb-dashboard-sidebar"
+            title={sidebarOpen ? 'Close navigation' : 'Open navigation'}
           >
             <Menu size={20} />
           </button>
@@ -316,9 +365,10 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
             className="bb-sidebar-backdrop"
             data-visible={sidebarOpen}
             onClick={closeSidebar}
+            aria-hidden="true"
           />
 
-          <div className="bb-sidebar-area" data-open={sidebarOpen}>
+          <div className="bb-sidebar-area" data-open={sidebarOpen} id="bb-dashboard-sidebar">
             <SidebarNav
               avatarFallback={initials}
               displayName={displayName}

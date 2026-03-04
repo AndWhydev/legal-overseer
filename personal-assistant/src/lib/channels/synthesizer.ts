@@ -11,6 +11,9 @@ import { asanaAdapter } from './asana'
 import { calendlyAdapter } from './calendly'
 import { stripeAdapter } from './stripe'
 import { telegramAdapter } from './telegram'
+import { clickupAdapter } from './clickup'
+import { ga4Adapter } from './ga4'
+import { wordpressAdapter } from './wordpress'
 import { waitForRateLimit } from './rate-limiter'
 import { checkAllChannelHealth, storeHealthReports } from './health'
 import type { ChannelHealthReport } from './health'
@@ -31,6 +34,9 @@ const adapters: Partial<Record<ChannelType, ChannelAdapter>> = {
   calendly: calendlyAdapter,
   stripe: stripeAdapter,
   telegram: telegramAdapter,
+  clickup: clickupAdapter,
+  ga4: ga4Adapter,
+  wordpress: wordpressAdapter,
 }
 
 export function getAdapter(type: ChannelType): ChannelAdapter | undefined {

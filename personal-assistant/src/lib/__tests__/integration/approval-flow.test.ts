@@ -1,8 +1,23 @@
-import { describe, expect, it, vi, afterEach } from 'vitest'
+import { describe, expect, it, vi, afterEach, beforeEach } from 'vitest'
 import { createApproval, resolveApproval, getPendingApprovals, expireStaleApprovals } from '@/lib/agent/approval-queue'
-import { createIntegrationSupabase, TEST_ORG_ID, TEST_AGENT_CONFIG_ID, TEST_USER_ID } from '@/lib/__test-helpers__/supabase-integration'
+import { TEST_ORG_ID, TEST_AGENT_CONFIG_ID, TEST_USER_ID } from '@/lib/__test-helpers__/supabase-integration'
+
+const { dispatchNotificationMock } = vi.hoisted(() => ({
+  dispatchNotificationMock: vi.fn().mockResolvedValue({
+    dashboard: true,
+    whatsapp: false,
+    email: false,
+  }),
+}))
+
+vi.mock('@/lib/notifications/dispatcher', () => ({
+  dispatchNotification: dispatchNotificationMock,
+}))
 
 afterEach(() => vi.restoreAllMocks())
+beforeEach(() => {
+  dispatchNotificationMock.mockClear()
+})
 
 /**
  * End-to-end approval flow integration test.
@@ -98,6 +113,19 @@ describe('Approval Flow Integration', () => {
     expect(approval.id).toBeDefined()
     expect(approval.status).toBe('pending')
     expect(approval.action_type).toBe('send_email')
+    expect(dispatchNotificationMock).toHaveBeenCalledTimes(1)
+    expect(dispatchNotificationMock).toHaveBeenCalledWith(
+      supabase,
+      expect.objectContaining({
+        orgId: TEST_ORG_ID,
+        type: 'approval_needed',
+        urgency: 'normal',
+        metadata: expect.objectContaining({
+          approvalId: approval.id,
+          actionType: 'send_email',
+        }),
+      }),
+    )
 
     // 2. Resolve as approved
     const resolved = await resolveApproval(
@@ -162,6 +190,7 @@ describe('Approval Flow Integration', () => {
     const rejected = await resolveApproval(supabase, approval.id, 'rejected', TEST_USER_ID, 'whatsapp')
     expect(rejected.status).toBe('rejected')
     expect(rejected.resolved_via).toBe('whatsapp')
+    expect(dispatchNotificationMock).toHaveBeenCalledTimes(1)
   })
 
   it('throws when resolving already-resolved approval', async () => {
@@ -180,5 +209,104 @@ describe('Approval Flow Integration', () => {
 
     await expect(resolveApproval(supabase, 'a-1', 'approved', 'user-1', 'dashboard'))
       .rejects.toThrow('APPROVAL_ALREADY_RESOLVED')
+  })
+
+  it('lists pending approvals sorted by priority then creation time', async () => {
+    const approvals: Record<string, unknown>[] = [
+      { id: 'low-old', org_id: TEST_ORG_ID, status: 'pending', priority: 'low', created_at: '2026-03-01T09:00:00.000Z', action_type: 'send_email', agent_configs: { name: 'Agent' } },
+      { id: 'urgent-new', org_id: TEST_ORG_ID, status: 'pending', priority: 'urgent', created_at: '2026-03-01T11:00:00.000Z', action_type: 'send_email', agent_configs: { name: 'Agent' } },
+      { id: 'normal-old', org_id: TEST_ORG_ID, status: 'pending', priority: 'normal', created_at: '2026-03-01T08:00:00.000Z', action_type: 'send_email', agent_configs: { name: 'Agent' } },
+      { id: 'urgent-old', org_id: TEST_ORG_ID, status: 'pending', priority: 'urgent', created_at: '2026-03-01T07:00:00.000Z', action_type: 'send_email', agent_configs: { name: 'Agent' } },
+      { id: 'resolved', org_id: TEST_ORG_ID, status: 'approved', priority: 'urgent', created_at: '2026-03-01T06:00:00.000Z', action_type: 'send_email', agent_configs: { name: 'Agent' } },
+    ]
+
+    const supabase = {
+      from(table: string) {
+        if (table !== 'approval_queue') throw new Error(`Unexpected table: ${table}`)
+
+        return {
+          select() {
+            const filters: Record<string, unknown> = {}
+            return {
+              eq(key: string, value: unknown) {
+                filters[key] = value
+                return this
+              },
+              order() { return this },
+              range() { return this },
+              then(resolve: (value: unknown) => void) {
+                const rows = approvals.filter((row) =>
+                  Object.entries(filters).every(([k, v]) => (row as any)[k] === v),
+                )
+                return resolve({ data: rows, error: null })
+              },
+            }
+          },
+        }
+      },
+    } as any
+
+    const pending = await getPendingApprovals(supabase, TEST_ORG_ID)
+    expect(pending.map((row) => row.id)).toEqual([
+      'urgent-old',
+      'urgent-new',
+      'normal-old',
+      'low-old',
+    ])
+  })
+
+  it('expires only stale pending approvals for the target org', async () => {
+    const approvals: Record<string, unknown>[] = [
+      { id: 'exp-1', org_id: TEST_ORG_ID, status: 'pending', expires_at: '2026-03-01T00:00:00.000Z' },
+      { id: 'future-1', org_id: TEST_ORG_ID, status: 'pending', expires_at: '2026-12-01T00:00:00.000Z' },
+      { id: 'other-org', org_id: 'org-other', status: 'pending', expires_at: '2026-03-01T00:00:00.000Z' },
+      { id: 'already-approved', org_id: TEST_ORG_ID, status: 'approved', expires_at: '2026-03-01T00:00:00.000Z' },
+    ]
+
+    const supabase = {
+      from(table: string) {
+        if (table !== 'approval_queue') throw new Error(`Unexpected table: ${table}`)
+
+        return {
+          update(patch: Record<string, unknown>) {
+            const filters: Record<string, unknown> = {}
+            return {
+              eq(key: string, value: unknown) {
+                filters[key] = value
+                return this
+              },
+              lt(key: string, value: unknown) {
+                filters[`lt:${key}`] = value
+                return this
+              },
+              select() {
+                const rows = approvals.filter((row) => {
+                  if (filters.org_id && row.org_id !== filters.org_id) return false
+                  if (filters.status && row.status !== filters.status) return false
+                  const threshold = String(filters['lt:expires_at'] ?? '')
+                  if (threshold && String(row.expires_at) >= threshold) return false
+                  return true
+                })
+
+                for (const row of rows) {
+                  Object.assign(row, patch)
+                }
+
+                return Promise.resolve({
+                  data: rows.map((row) => ({ id: row.id })),
+                  error: null,
+                })
+              },
+            }
+          },
+        }
+      },
+    } as any
+
+    const expired = await expireStaleApprovals(supabase, TEST_ORG_ID)
+    expect(expired).toBe(1)
+    expect(approvals.find((row) => row.id === 'exp-1')?.status).toBe('auto_expired')
+    expect(approvals.find((row) => row.id === 'future-1')?.status).toBe('pending')
+    expect(approvals.find((row) => row.id === 'other-org')?.status).toBe('pending')
   })
 })

@@ -2,6 +2,20 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getAllAdapters } from '@/lib/channels/synthesizer'
 
+const CHANNEL_ALIASES: Record<string, string[]> = {
+  ga4: ['ga4', 'google-analytics'],
+  calendar: ['calendar', 'google-calendar'],
+}
+
+function getFromAliasMap<T>(map: Map<string, T>, channelType: string): T | undefined {
+  const aliases = CHANNEL_ALIASES[channelType] || [channelType]
+  for (const alias of aliases) {
+    const value = map.get(alias)
+    if (value) return value
+  }
+  return undefined
+}
+
 export async function GET() {
   const supabase = await createClient()
   if (!supabase) return NextResponse.json({ error: 'Not configured' }, { status: 503 })
@@ -48,8 +62,8 @@ export async function GET() {
   const statuses = await Promise.all(
     adapters.map(async (adapter) => {
       // Check org_integrations for real connection state
-      const integration = integrationMap.get(adapter.type)
-      const connection = connectionMap.get(adapter.type)
+      const integration = getFromAliasMap(integrationMap, adapter.type)
+      const connection = getFromAliasMap(connectionMap, adapter.type)
 
       // If org_integrations shows connected, use that as source of truth
       const connected = integration?.status === 'connected' || connection?.status === 'connected'

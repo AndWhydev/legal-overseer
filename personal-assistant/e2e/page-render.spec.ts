@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { AUTH_SKIP_REASON, openProtectedPath } from './helpers'
 
 /**
  * Verify every dashboard tab renders without JS errors.
@@ -33,6 +34,9 @@ const ALL_TABS = [
 
 test.describe('Page Render Verification', () => {
   test('dashboard loads without critical errors', async ({ page }) => {
+    const authenticated = await openProtectedPath(page, '/dashboard')
+    test.skip(!authenticated, AUTH_SKIP_REASON)
+
     const jsErrors: string[] = []
 
     page.on('pageerror', (error) => {
@@ -62,6 +66,9 @@ test.describe('Page Render Verification', () => {
 
   for (const tab of ALL_TABS) {
     test(`tab "${tab.label}" (${tab.id}) renders without errors`, async ({ page }) => {
+      const authenticated = await openProtectedPath(page, '/dashboard')
+      test.skip(!authenticated, AUTH_SKIP_REASON)
+
       const jsErrors: string[] = []
       const consoleErrors: string[] = []
 

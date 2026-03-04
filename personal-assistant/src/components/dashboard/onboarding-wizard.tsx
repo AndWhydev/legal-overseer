@@ -432,14 +432,18 @@ function StepTour({
   // Compute tooltip position (to the right of spotlight, or below on small screens)
   const tooltipStyle: React.CSSProperties = {};
   if (spotlightRect) {
+    const tooltipWidth = Math.min(300, Math.max(220, window.innerWidth - 32));
+    const maxLeft = Math.max(16, window.innerWidth - tooltipWidth - 16);
+    const maxTop = Math.max(16, window.innerHeight - 220);
     const rightSpace = window.innerWidth - spotlightRect.right;
-    if (rightSpace > 340) {
-      tooltipStyle.top = spotlightRect.top + 16;
-      tooltipStyle.left = spotlightRect.right + 16;
+    if (rightSpace > tooltipWidth + 40) {
+      tooltipStyle.top = Math.min(maxTop, Math.max(16, spotlightRect.top + 16));
+      tooltipStyle.left = Math.min(maxLeft, Math.max(16, spotlightRect.right + 16));
     } else {
-      tooltipStyle.top = spotlightRect.bottom + 16;
-      tooltipStyle.left = Math.max(16, spotlightRect.left);
+      tooltipStyle.top = Math.min(maxTop, Math.max(16, spotlightRect.bottom + 16));
+      tooltipStyle.left = Math.min(maxLeft, Math.max(16, spotlightRect.left));
     }
+    tooltipStyle.width = tooltipWidth;
   }
 
   return (

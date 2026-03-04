@@ -127,6 +127,11 @@ function stripHtml(html: string): string {
   return html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
 }
 
+function readStringConfig(config: Record<string, unknown>, key: string): string | undefined {
+  const value = config[key]
+  return typeof value === 'string' && value.trim().length > 0 ? value : undefined
+}
+
 // ---------------------------------------------------------------------------
 // Public DI functions (SupabaseClient first param)
 // ---------------------------------------------------------------------------
@@ -253,10 +258,17 @@ export const wordpressAdapter: ChannelAdapter = {
   icon: 'FileText',
 
   async pull(config, since) {
-    const siteUrl = (config.siteUrl as string | undefined) || process.env.WORDPRESS_SITE_URL
-    const username = (config.username as string | undefined) || process.env.WORDPRESS_USERNAME
+    const siteUrl =
+      readStringConfig(config, 'siteUrl') ||
+      readStringConfig(config, 'site_url') ||
+      process.env.WORDPRESS_SITE_URL
+    const username =
+      readStringConfig(config, 'username') ||
+      process.env.WORDPRESS_USERNAME
     const applicationPassword =
-      (config.applicationPassword as string | undefined) || process.env.WORDPRESS_APPLICATION_PASSWORD
+      readStringConfig(config, 'applicationPassword') ||
+      readStringConfig(config, 'application_password') ||
+      process.env.WORDPRESS_APPLICATION_PASSWORD
 
     if (!siteUrl || !username || !applicationPassword) return []
 
@@ -293,6 +305,7 @@ export const wordpressAdapter: ChannelAdapter = {
           categories: post.categories,
           tags: post.tags,
           siteUrl,
+          source: 'wordpress-rest-api',
         },
       }))
     } catch (err) {

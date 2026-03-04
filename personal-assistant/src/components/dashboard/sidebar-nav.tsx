@@ -226,6 +226,12 @@ export function SidebarNav({
     setShowAdvanced(prev => {
       const next = !prev;
       localStorage.setItem('bb-show-advanced', String(next));
+      if (!next && filteredAdvancedTabIds.includes(activeTabIdRef.current)) {
+        const fallbackTabId = filteredPrimaryTabIds[0];
+        if (fallbackTabId && fallbackTabId !== activeTabIdRef.current) {
+          onTabChangeRef.current?.(fallbackTabId);
+        }
+      }
       return next;
     });
     // Cancel any pending update from a previous rapid toggle
@@ -259,7 +265,7 @@ export function SidebarNav({
       updateChevronPosition();
       toggleTimerRef.current = null;
     }, 350);
-  }, [updateScrollFades, updateIndicator, updateChevronPosition]);
+  }, [filteredAdvancedTabIds, filteredPrimaryTabIds, updateScrollFades, updateIndicator, updateChevronPosition]);
 
   // Scroll active item into view — smooth follow like a native desktop app
   useEffect(() => {
@@ -568,6 +574,8 @@ export function SidebarNav({
             ].filter(Boolean).join(' ')}
             data-tooltip={showAdvanced ? 'Less' : 'More'}
             aria-label={showAdvanced ? 'Hide advanced tabs' : 'Show advanced tabs'}
+            aria-pressed={showAdvanced}
+            aria-expanded={showAdvanced}
           >
             <ChevronDown
               size={16}

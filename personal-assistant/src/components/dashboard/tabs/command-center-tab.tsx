@@ -107,6 +107,10 @@ function CommandCenterTab() {
       });
   });
 
+  const topApprovalId = approvals[0]?.id as string | undefined;
+  const topApprovalProcessing = topApprovalId ? processingIds.has(topApprovalId) : false;
+  const topApprovalDisabled = approvals.length === 0 || topApprovalProcessing;
+
   const handleApprove = async (approvalId: string) => {
     setProcessingIds(prev => new Set(prev).add(approvalId));
     try {
@@ -173,9 +177,9 @@ function CommandCenterTab() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <button
           onClick={() => {
-            if (approvals.length > 0) handleApprove(approvals[0].id as string);
+            if (topApprovalId && !topApprovalProcessing) handleApprove(topApprovalId);
           }}
-          disabled={approvals.length === 0}
+          disabled={topApprovalDisabled}
           className="flex items-center gap-3 p-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-elevated)] hover:bg-[var(--bg-hover)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-left"
         >
           <div className="w-9 h-9 rounded-lg bg-amber-500/15 flex items-center justify-center flex-shrink-0">
@@ -183,7 +187,9 @@ function CommandCenterTab() {
           </div>
           <div className="min-w-0">
             <p className="text-xs font-medium truncate">Approve Next</p>
-            <p className="text-[11px] text-muted-foreground">{approvals.length} pending</p>
+            <p className="text-[11px] text-muted-foreground">
+              {topApprovalProcessing ? 'Processing...' : `${approvals.length} pending`}
+            </p>
           </div>
         </button>
 
@@ -219,9 +225,9 @@ function CommandCenterTab() {
 
         <button
           onClick={() => {
-            if (approvals.length > 0) handleDismiss(approvals[0].id as string);
+            if (topApprovalId && !topApprovalProcessing) handleDismiss(topApprovalId);
           }}
-          disabled={approvals.length === 0}
+          disabled={topApprovalDisabled}
           className="flex items-center gap-3 p-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-elevated)] hover:bg-[var(--bg-hover)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-left"
         >
           <div className="w-9 h-9 rounded-lg bg-red-500/15 flex items-center justify-center flex-shrink-0">
@@ -229,7 +235,9 @@ function CommandCenterTab() {
           </div>
           <div className="min-w-0">
             <p className="text-xs font-medium truncate">Dismiss Top</p>
-            <p className="text-[11px] text-muted-foreground">Clear alert</p>
+            <p className="text-[11px] text-muted-foreground">
+              {topApprovalProcessing ? 'Processing...' : 'Clear alert'}
+            </p>
           </div>
         </button>
       </div>
