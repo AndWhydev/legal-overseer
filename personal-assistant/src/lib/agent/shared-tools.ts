@@ -1,7 +1,8 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { resolveEntityRanked } from '@/lib/context/entity-resolver'
-import { writeTaskEvent } from '@/lib/context/timeline-writer'
-import { linkTaskToContact } from '@/lib/context/relationship-linker'
+import { writeTaskEvent, writeInvoiceEvent } from '@/lib/context/timeline-writer'
+import { linkTaskToContact, linkInvoiceToContact } from '@/lib/context/relationship-linker'
+import { reflectOnEvent } from './reflection'
 import type { Contact } from '@/lib/types'
 
 // Types defined locally (mirrors @bitbit/core — no path alias configured)
@@ -164,6 +165,14 @@ export async function updateTask(
 
   if (params.status === 'completed') {
     writeTaskEvent(supabase, orgId, taskId, 'task_completed', updates)
+    // Fire-and-forget: reflect on completion for learnable patterns
+    reflectOnEvent(supabase, orgId, {
+      eventType: 'task_completed',
+      eventData: { taskId, title: data.title, ...updates },
+      entityType: 'task',
+      entityId: taskId,
+      entityName: data.title,
+    })
   }
 
   return { success: true, data }
@@ -257,6 +266,18 @@ export async function createInvoice(
     .single()
 
   if (error) return { success: false, error: error.message }
+
+  // Fire-and-forget: timeline event
+  writeInvoiceEvent(supabase, orgId, data.id, 'invoice_created', {
+    invoice_number: params.invoice_number,
+    total: total,
+    currency: params.currency || 'AUD',
+    due_date: params.due_date,
+  })
+
+  // Fire-and-forget: link invoice to client contact
+  linkInvoiceToContact(supabase, orgId, data.id, params.client_contact_id)
+
   return { success: true, data }
 }
 
@@ -285,6 +306,41 @@ export async function updateInvoice(
     .single()
 
   if (error) return { success: false, error: error.message }
+
+  // Fire-and-forget: timeline events for status changes
+  if (params.status) {
+    const eventMap: Record<string, 'invoice_sent' | 'invoice_paid' | 'invoice_overdue'> = {
+      sent: 'invoice_sent',
+      paid: 'invoice_paid',
+      overdue: 'invoice_overdue',
+    }
+    const eventType = eventMap[params.status]
+    if (eventType) {
+      writeInvoiceEvent(supabase, orgId, invoiceId, eventType, {
+        status: params.status,
+        ...(params.paid_date && { paid_date: params.paid_date }),
+        ...(params.payment_method && { payment_method: params.payment_method }),
+      })
+
+      // Fire-and-forget: reflect on significant invoice events
+      if (params.status === 'paid' || params.status === 'overdue') {
+        reflectOnEvent(supabase, orgId, {
+          eventType: `invoice_${params.status}`,
+          eventData: {
+            invoiceId,
+            invoice_number: data.invoice_number,
+            total: data.total,
+            status: params.status,
+            ...(params.paid_date && { paid_date: params.paid_date }),
+          },
+          entityType: 'invoice',
+          entityId: invoiceId,
+          entityName: data.invoice_number,
+        })
+      }
+    }
+  }
+
   return { success: true, data }
 }
 

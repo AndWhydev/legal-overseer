@@ -1,6 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { channelToolDefinitions, channelToolHandlers } from './tools/channel-tools'
+import { composeCreatorStudioDeck } from '@/lib/creator-studio'
 import {
   createTask,
   updateTask,
@@ -26,7 +27,7 @@ const toolDefinitions: Anthropic.Tool[] = [
   {
     name: 'create_task',
     description:
-      'Create a new task on the kanban board. Use this when the user asks to add a task, todo, or action item.',
+      'Create a new task on the kanban board. Use this when the user asks to add a task, todo, or action item. If a contact is relevant, include their ID.',
     input_schema: {
       type: 'object' as const,
       properties: {
@@ -40,6 +41,10 @@ const toolDefinitions: Anthropic.Tool[] = [
         column: {
           type: 'string',
           description: 'Column name to place the task in: "Backlog", "To Do", "In Progress", "Review", or "Done"',
+        },
+        contact_id: {
+          type: 'string',
+          description: 'Contact UUID to link this task to (from search_contacts or entity context)',
         },
       },
       required: ['title'],
@@ -115,6 +120,42 @@ const toolDefinitions: Anthropic.Tool[] = [
         result: { type: 'string', description: 'Outcome of the action' },
       },
       required: ['action_type', 'action'],
+    },
+  },
+  {
+    name: 'compose_creator_notification_mockup',
+    description:
+      'Compose a creator notification mockup payload (scene + notification stack) for UI rendering or content planning.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        industry: { type: 'string', description: 'Industry context (e.g. content-creator, agency)' },
+        carrier: { type: 'string', description: 'Top status bar carrier label' },
+        clock: { type: 'string', description: 'Device clock text' },
+        dateLabel: { type: 'string', description: 'Date label shown above the stack' },
+        device: { type: 'string', enum: ['iphone', 'android'] },
+        wallpaper: { type: 'string', enum: ['sunset-grid', 'night-wave', 'paper-grain', 'neon-city'] },
+        hideSensitive: { type: 'boolean' },
+        moduleOrder: {
+          type: 'array',
+          items: { type: 'string', enum: ['scene', 'notification-stack', 'appearance', 'privacy', 'export'] },
+        },
+        notifications: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              id: { type: 'string' },
+              app: { type: 'string', enum: ['stripe', 'paypal', 'x', 'youtube', 'shopify', 'custom'] },
+              amount: { type: 'string' },
+              from: { type: 'string' },
+              message: { type: 'string' },
+              timeAgo: { type: 'string' },
+            },
+            required: ['app'],
+          },
+        },
+      },
     },
   },
   {
@@ -196,7 +237,39 @@ const handlers: Record<string, AgentToolHandler> = {
   async get_contact(input, orgId, supabase) {
     const contact = await getContact(supabase, orgId, input.slug as string)
     if (!contact) return { success: false, error: 'Contact not found' }
-    return { success: true, data: contact }
+
+    // Enrich with entity graph data (relationships, timeline, memories, financial signals)
+    const { assembleEntityBriefing } = await import('@/lib/context/assembler')
+    const briefing = await assembleEntityBriefing(supabase, orgId, 'contact', contact.id)
+
+    const enriched = {
+      ...contact,
+      entityContext: {
+        relationships: briefing.relationships.slice(0, 10).map(r => ({
+          type: r.relationshipType,
+          entityType: r.entityType,
+          entityId: r.entityId,
+          strength: r.strength,
+        })),
+        recentEvents: briefing.timeline.slice(0, 5).map(e => ({
+          type: e.eventType,
+          date: e.occurredAt,
+          channel: e.channelSource,
+        })),
+        memories: briefing.memories.slice(0, 5).map(m => ({
+          content: m.content,
+          confidence: m.confidence,
+          category: m.category,
+        })),
+        financialSignals: briefing.crossReferences.financialSignals,
+        activeTasks: briefing.crossReferences.relatedTasks.filter(
+          t => t.status === 'pending' || t.status === 'in_progress'
+        ),
+        deadlines: briefing.crossReferences.deadlines,
+      },
+    }
+
+    return { success: true, data: enriched }
   },
 
   async log_activity(input, orgId, supabase) {
@@ -206,6 +279,37 @@ const handlers: Record<string, AgentToolHandler> = {
       reasoning: input.reasoning as string | undefined,
       result: input.result as string | undefined,
     })
+  },
+
+  async compose_creator_notification_mockup(input) {
+    const notifications = Array.isArray(input.notifications)
+      ? input.notifications.filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === 'object')
+      : undefined
+
+    const moduleOrder = Array.isArray(input.moduleOrder)
+      ? input.moduleOrder.filter((item): item is string => typeof item === 'string')
+      : undefined
+
+    const deck = composeCreatorStudioDeck({
+      industry: input.industry as string | undefined,
+      carrier: input.carrier as string | undefined,
+      clock: input.clock as string | undefined,
+      dateLabel: input.dateLabel as string | undefined,
+      device: input.device as 'iphone' | 'android' | undefined,
+      wallpaper: input.wallpaper as 'sunset-grid' | 'night-wave' | 'paper-grain' | 'neon-city' | undefined,
+      hideSensitive: input.hideSensitive as boolean | undefined,
+      moduleOrder: moduleOrder as Array<'scene' | 'notification-stack' | 'appearance' | 'privacy' | 'export'> | undefined,
+      notifications: notifications as Array<{
+        id?: string
+        app: 'stripe' | 'paypal' | 'x' | 'youtube' | 'shopify' | 'custom'
+        amount?: string
+        from?: string
+        message?: string
+        timeAgo?: string
+      }> | undefined,
+    })
+
+    return { success: true, data: deck }
   },
 
   // Memory tools stay in tools.ts (not shared — chat-specific)

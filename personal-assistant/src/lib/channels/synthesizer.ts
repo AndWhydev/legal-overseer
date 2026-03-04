@@ -15,6 +15,8 @@ import { checkAllChannelHealth, storeHealthReports } from './health'
 import type { ChannelHealthReport } from './health'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
+import { classifyMessage as llmClassifyMessage, type ClassificationResult } from '@/lib/agent/classifier'
+import { routeMessage, type MessageRoute } from '@/lib/agent/action-router'
 
 const adapters: Partial<Record<ChannelType, ChannelAdapter>> = {
   gmail: gmailAdapter,
@@ -89,6 +91,14 @@ function classifyMessage(msg: ChannelMessage): ChannelMessage {
   }
 
   return { ...msg, isActionable, priority }
+}
+
+/** Map LLM significance score (1-10) to task priority */
+function mapSignificanceToPriority(significance: number): ChannelMessage['priority'] {
+  if (significance >= 9) return 'critical'
+  if (significance >= 7) return 'high'
+  if (significance >= 4) return 'medium'
+  return 'low'
 }
 
 function deduplicateMessages(messages: ChannelMessage[]): ChannelMessage[] {
@@ -172,14 +182,47 @@ export async function synthesize(options: SynthesisOptions): Promise<SyncResult[
       const messages = await adapter.pull({}, options.since)
       result.messagesFound = messages.length
 
-      // Classify messages
-      const classified = messages.map(classifyMessage)
+      // Fast keyword pre-filter (noise screen — no LLM cost)
+      const preFiltered = messages.map(classifyMessage)
 
       // Deduplicate
-      const unique = deduplicateMessages(classified)
+      const unique = deduplicateMessages(preFiltered)
 
-      // Filter actionable items
-      const actionable = unique.filter(m => m.isActionable)
+      // Split: obvious noise vs candidates for LLM classification
+      const noise = unique.filter(m => !m.isActionable && m.priority === 'low')
+      const candidates = unique.filter(m => m.isActionable || m.priority !== 'low')
+
+      // LLM classify candidates for rich routing decisions
+      // Falls back to keyword classification if no API key or Supabase
+      const classifiedMessages: Array<{
+        msg: ChannelMessage
+        classification?: ClassificationResult
+        route?: MessageRoute
+      }> = []
+
+      if (supabase && candidates.length > 0 && process.env.ANTHROPIC_API_KEY) {
+        for (const msg of candidates) {
+          try {
+            const classification = await llmClassifyMessage(supabase, msg, options.orgId)
+            const route = routeMessage(classification)
+            classifiedMessages.push({ msg, classification, route })
+          } catch {
+            // LLM failed for this message — fall back to keyword classification
+            classifiedMessages.push({ msg })
+          }
+        }
+      } else {
+        // No LLM available — all candidates use keyword classification only
+        for (const msg of candidates) {
+          classifiedMessages.push({ msg })
+        }
+      }
+
+      // Determine actionable messages: use routing decision if available, else keyword isActionable
+      const actionable = classifiedMessages.filter(({ msg, route }) => {
+        if (route) return route.decision !== 'skip'
+        return msg.isActionable
+      })
 
       // Create tasks in Supabase for actionable messages
       if (supabase && toDoColumnId && actionable.length > 0) {
@@ -192,7 +235,7 @@ export async function synthesize(options: SynthesisOptions): Promise<SyncResult[
 
         let position = existingCount ?? 0
 
-        for (const msg of actionable) {
+        for (const { msg, classification, route } of actionable) {
           const title = sanitizeForJson(msg.subject
             ? `[${msg.channel}] ${msg.subject}`
             : `[${msg.channel}] ${msg.sender}: ${msg.body.slice(0, 80)}`)
@@ -204,10 +247,20 @@ export async function synthesize(options: SynthesisOptions): Promise<SyncResult[
             continue
           }
 
+          // Map LLM classification to task priority, or use keyword priority
+          const taskPriority = classification
+            ? mapSignificanceToPriority(classification.significance)
+            : msg.priority
+
           const description = sanitizeForJson([
             `From: ${msg.sender}${msg.senderEmail ? ` <${msg.senderEmail}>` : ''}`,
             `Channel: ${msg.channel}`,
             `Received: ${msg.receivedAt.toLocaleString()}`,
+            ...(classification ? [
+              `Category: ${classification.category}`,
+              `Significance: ${classification.significance}/10`,
+              `Time sensitivity: ${classification.timeSensitivity}`,
+            ] : []),
             '',
             msg.body.slice(0, 500),
           ].join('\n'))
@@ -219,7 +272,7 @@ export async function synthesize(options: SynthesisOptions): Promise<SyncResult[
               org_id: options.orgId,
               title,
               description,
-              priority: msg.priority,
+              priority: taskPriority,
               column_id: toDoColumnId,
               position: position++,
               status: 'pending',
@@ -229,6 +282,17 @@ export async function synthesize(options: SynthesisOptions): Promise<SyncResult[
                 sender: sanitizeForJson(msg.sender),
                 sender_email: msg.senderEmail,
                 synced_at: new Date().toISOString(),
+                ...(classification && {
+                  classification_category: classification.category,
+                  classification_significance: classification.significance,
+                  classification_time_sensitivity: classification.timeSensitivity,
+                  recommended_actions: classification.recommendedActions,
+                }),
+                ...(route && {
+                  routing_decision: route.decision,
+                  routing_target_agent: route.targetAgent,
+                  routing_batch_window: route.batchWindow,
+                }),
               },
             })
 
