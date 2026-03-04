@@ -14,11 +14,14 @@ interface TelegramUpdate {
 }
 
 export async function POST(request: NextRequest) {
-  // Verify webhook secret
-  const secret = request.headers.get('x-telegram-bot-api-secret-token')
+  // Verify webhook secret (skip if TELEGRAM_WEBHOOK_SECRET not configured)
   const expectedSecret = process.env.TELEGRAM_WEBHOOK_SECRET
-  if (expectedSecret && secret !== expectedSecret) {
-    return NextResponse.json({ ok: false }, { status: 403 })
+  if (expectedSecret) {
+    const secret = request.headers.get('x-telegram-bot-api-secret-token')
+    if (secret !== expectedSecret) {
+      console.warn('Telegram webhook: secret mismatch', { got: secret?.slice(0, 8), expected: expectedSecret.slice(0, 8) })
+      return NextResponse.json({ ok: false }, { status: 403 })
+    }
   }
 
   let update: TelegramUpdate
