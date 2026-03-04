@@ -8,6 +8,7 @@ import {
   OAUTH_VERIFIER_COOKIE,
 } from '@/lib/integrations/oauth'
 import { storeOrgCredential } from '@/lib/integrations/credentials'
+import { getActiveOrgId } from '@/lib/tenancy'
 
 export async function GET(
   request: Request,
@@ -65,14 +66,10 @@ export async function GET(
       return NextResponse.redirect('/auth/login?error=Not authenticated')
     }
 
-    // Get user's organization
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('org_id')
-      .eq('id', user.id)
-      .single()
+    // Use dual-tier tenancy: resolve active org for this user
+    const orgId = await getActiveOrgId(supabase, user.id)
 
-    if (!profile?.org_id) {
+    if (!orgId) {
       return NextResponse.redirect(
         '/dashboard/channels?error=No organization found'
       )
@@ -81,15 +78,21 @@ export async function GET(
     // Exchange code for tokens (with PKCE verifier if available)
     const tokens = await exchangeOAuthCode(provider, code, codeVerifier)
 
+    // Compute token_expires_at for the token refresh system
+    const tokenExpiresAt = tokens.expires_in
+      ? new Date(Date.now() + tokens.expires_in * 1000).toISOString()
+      : null
+
     // Store the credentials in org_integrations
     await storeOrgCredential(
       supabase,
-      profile.org_id,
+      orgId,
       provider,
       {
         access_token: tokens.access_token,
         refresh_token: tokens.refresh_token || null,
         expires_in: tokens.expires_in || null,
+        token_expires_at: tokenExpiresAt,
         token_type: 'Bearer',
       },
       user.id
@@ -98,7 +101,7 @@ export async function GET(
     // Upsert channel_connections row so status API reflects the new connection
     await supabase.from('channel_connections').upsert(
       {
-        org_id: profile.org_id,
+        org_id: orgId,
         channel_type: provider,
         status: 'connected',
         last_sync: null,

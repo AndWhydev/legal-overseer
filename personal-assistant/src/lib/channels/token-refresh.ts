@@ -12,6 +12,12 @@ const TOKEN_ENDPOINTS: Record<string, {
   gmail: {
     url: 'https://oauth2.googleapis.com/token',
   },
+  'google-calendar': {
+    url: 'https://oauth2.googleapis.com/token',
+  },
+  'google-analytics': {
+    url: 'https://oauth2.googleapis.com/token',
+  },
   outlook: {
     url: (tenantId?: string) =>
       `https://login.microsoftonline.com/${tenantId || 'common'}/oauth2/v2.0/token`,
@@ -25,8 +31,41 @@ const TOKEN_ENDPOINTS: Record<string, {
   },
 }
 
+/**
+ * Resolve OAuth client credentials from environment variables.
+ * These are NOT stored in the database — they come from the app's env config.
+ */
+function getProviderClientCredentials(channel: string): { clientId: string; clientSecret: string } | null {
+  switch (channel) {
+    case 'gmail':
+    case 'google-calendar':
+    case 'google-analytics':
+      return {
+        clientId: process.env.GOOGLE_CLIENT_ID || '',
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
+      }
+    case 'outlook':
+      return {
+        clientId: process.env.OUTLOOK_CLIENT_ID || '',
+        clientSecret: process.env.OUTLOOK_CLIENT_SECRET || '',
+      }
+    case 'asana':
+      return {
+        clientId: process.env.ASANA_CLIENT_ID || '',
+        clientSecret: process.env.ASANA_CLIENT_SECRET || '',
+      }
+    case 'calendly':
+      return {
+        clientId: process.env.CALENDLY_CLIENT_ID || '',
+        clientSecret: process.env.CALENDLY_CLIENT_SECRET || '',
+      }
+    default:
+      return null
+  }
+}
+
 /** Channels that use OAuth and need token refresh. */
-const OAUTH_CHANNELS = ['gmail', 'outlook', 'asana', 'calendly']
+const OAUTH_CHANNELS = ['gmail', 'outlook', 'asana', 'calendly', 'google-calendar', 'google-analytics']
 
 /** Max retry count before marking channel as error (24 hourly checks = 24h grace). */
 const MAX_RETRY_COUNT = 24
@@ -87,11 +126,10 @@ export async function refreshChannelToken(
     return { refreshed: false, error: 'No refresh token available' }
   }
 
-  const clientId = credentials.client_id as string
-  const clientSecret = credentials.client_secret as string
-
-  if (!clientId || !clientSecret) {
-    return { refreshed: false, error: 'Missing client_id or client_secret' }
+  // Resolve client credentials from env vars, not stored credentials
+  const providerCreds = getProviderClientCredentials(channel)
+  if (!providerCreds || !providerCreds.clientId || !providerCreds.clientSecret) {
+    return { refreshed: false, error: `Missing OAuth client credentials in environment for ${channel}` }
   }
 
   const endpointConfig = TOKEN_ENDPOINTS[channel]
@@ -105,8 +143,8 @@ export async function refreshChannelToken(
 
   try {
     const params = new URLSearchParams({
-      client_id: clientId,
-      client_secret: clientSecret,
+      client_id: providerCreds.clientId,
+      client_secret: providerCreds.clientSecret,
       refresh_token: refreshToken,
       grant_type: 'refresh_token',
     })

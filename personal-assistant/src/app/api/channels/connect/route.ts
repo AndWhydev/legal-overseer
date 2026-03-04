@@ -2,8 +2,9 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { storeOrgCredential } from '@/lib/integrations/credentials'
 import { logAuditEvent } from '@/lib/audit/logger'
+import { getActiveOrgId } from '@/lib/tenancy'
 
-const OAUTH_CHANNELS = ['gmail', 'outlook', 'asana', 'calendly']
+const OAUTH_CHANNELS = ['gmail', 'outlook', 'asana', 'calendly', 'google-calendar', 'google-analytics']
 
 export async function POST(request: Request) {
   const supabase = await createClient()
@@ -12,7 +13,8 @@ export async function POST(request: Request) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const orgId = (user.user_metadata?.org_id as string) ?? user.id
+  // Use dual-tier tenancy: resolve active org for this user
+  const orgId = await getActiveOrgId(supabase, user.id)
 
   let body: { channel: string; credentials?: Record<string, string> }
   try {
