@@ -1,3 +1,7 @@
+'use client'
+
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import { BitBitLogoAnimated } from './bitbit-logo-animated'
 
 interface ToolCall {
@@ -16,21 +20,18 @@ interface Message {
   timestamp: Date
 }
 
-function renderMarkdown(text: string) {
-  const parts = text.split(/(`[^`]+`|\*\*[^*]+\*\*)/g)
-  return parts.map((part, i) => {
-    if (part.startsWith('`') && part.endsWith('`')) {
-      return (
-        <code key={i} className="bb-chat__code">
-          {part.slice(1, -1)}
-        </code>
-      )
-    }
-    if (part.startsWith('**') && part.endsWith('**')) {
-      return <strong key={i}>{part.slice(2, -2)}</strong>
-    }
-    return part
-  })
+/** Close dangling markdown syntax for mid-stream rendering */
+function patchIncomplete(text: string): string {
+  // Close unclosed code fences
+  const fenceCount = (text.match(/```/g) || []).length
+  if (fenceCount % 2 !== 0) text += '\n```'
+  // Close unclosed bold
+  const boldCount = (text.match(/\*\*/g) || []).length
+  if (boldCount % 2 !== 0) text += '**'
+  // Close unclosed italic (single *)
+  const italicCount = (text.match(/(?<!\*)\*(?!\*)/g) || []).length
+  if (italicCount % 2 !== 0) text += '*'
+  return text
 }
 
 export function MessageBubble({ message }: { message: Message }) {
@@ -46,19 +47,14 @@ export function MessageBubble({ message }: { message: Message }) {
           <BitBitLogoAnimated size={24} />
         </div>
       )}
-      <div className={isUser ? 'bb-chat__bubble--user' : 'bb-chat__bubble--assistant'}>
-        {message.content.split('\n').map((line, i) => (
-          <p key={i} className={i > 0 ? 'bb-chat__line-gap' : undefined}>
-            {line.startsWith('- ') ? (
-              <span className="bb-chat__list-item">
-                <span className="bb-chat__bullet">&#8226;</span>
-                <span>{renderMarkdown(line.slice(2))}</span>
-              </span>
-            ) : (
-              renderMarkdown(line)
-            )}
-          </p>
-        ))}
+      <div className={isUser ? 'bb-chat__bubble--user' : 'bb-chat__bubble--assistant bb-chat__markdown'}>
+        {isUser ? (
+          message.content
+        ) : (
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+            {patchIncomplete(message.content)}
+          </ReactMarkdown>
+        )}
       </div>
     </div>
   )

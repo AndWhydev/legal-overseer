@@ -5,6 +5,7 @@ import { buildEntityAwarePrompt } from './prompt-builder'
 import { selectModel, getModel } from './model-router'
 import { logAgentRun, estimateRunCost } from './run-logger'
 import { canProceed } from './cost-guard'
+import { generatePlan, stageFromToolName, isTrivialMessage, type PlanStage } from './planner'
 import type { ModelTier } from '@/lib/bitbit-core'
 
 export interface ChatMessage {
@@ -35,7 +36,10 @@ export type StageId = 'cost_check' | 'model_routing' | 'context_assembly' | 'api
 
 export type AgentEvent =
   | { type: 'thinking'; data: string }
+  | { type: 'thinking_start'; data: Record<string, never> }
   | { type: 'stage'; data: { stage: StageId; status: 'start' | 'done'; meta?: Record<string, unknown> } }
+  | { type: 'plan'; data: { stages: PlanStage[] } }
+  | { type: 'plan_stage_update'; data: { stageId: string; status: 'active' | 'done' | 'error' } }
   | { type: 'tool_call'; data: { name: string; input: unknown } }
   | { type: 'tool_result'; data: { name: string; result: unknown; success: boolean } }
   | { type: 'content_delta'; data: string }
@@ -107,6 +111,9 @@ export async function* runAgentChat(
   const tier: ModelTier = (selection?.tier as ModelTier) || 'sonnet'
   yield { type: 'stage', data: { stage: 'model_routing', status: 'done', meta: { tier, model: autoRouted ? selection?.tier : 'manual' } } }
 
+  // Emit thinking_start so frontend knows engine is active
+  yield { type: 'thinking_start', data: {} }
+
   // Context assembly: build entity-aware system prompt
   yield { type: 'stage', data: { stage: 'context_assembly', status: 'start' } }
   const systemPrompt = await buildEntityAwarePrompt(config.supabase, config.orgId, message)
@@ -117,6 +124,43 @@ export async function* runAgentChat(
   }
 
   const tools = getAgentTools()
+  const toolNames = tools.map(t => t.name)
+
+  // Two-pass planning: Haiku generates user-meaningful stages (non-blocking)
+  const entityCtxMatch = systemPrompt.match(/## Entity Context\n\n([\s\S]*?)(?:\n## |$)/)
+  const entityContext = entityCtxMatch?.[1]?.trim() || ''
+
+  let planStages: PlanStage[] = []
+  const activatedStages = new Set<string>()
+
+  // Fire Haiku planner in parallel for non-trivial messages
+  let planPromise: Promise<PlanStage[]> | null = null
+  if (!isTrivialMessage(message)) {
+    planPromise = generatePlan(message, entityContext, toolNames).catch(() => [] as PlanStage[])
+  }
+
+  // Give Haiku a brief race window (500ms) before starting Sonnet
+  if (planPromise) {
+    const raceResult = await Promise.race([
+      planPromise.then(stages => ({ ready: true as const, stages })),
+      new Promise<{ ready: false }>(resolve => setTimeout(() => resolve({ ready: false }), 500)),
+    ])
+    if (raceResult.ready && raceResult.stages.length > 0) {
+      planStages = raceResult.stages
+      yield { type: 'plan', data: { stages: planStages } }
+      planPromise = null
+    }
+  }
+
+  // Build plan-aware system prompt addition
+  let fullSystemPrompt = systemPrompt
+  if (planStages.length > 0) {
+    const planDescription = planStages
+      .map((s, i) => `${i + 1}. ${s.icon} ${s.label}${s.sublabel ? ` (${s.sublabel})` : ''}${s.toolHint ? ` [tool: ${s.toolHint}]` : ''}`)
+      .join('\n')
+    fullSystemPrompt += `\n\n## Execution Plan\nFollow this plan to fulfill the user's request:\n${planDescription}\n`
+  }
+
   let messages: Anthropic.MessageParam[] = [{ role: 'user', content: message }]
 
   for (let i = 0; i < maxIterations; i++) {
@@ -127,7 +171,7 @@ export async function* runAgentChat(
       const stream = client.messages.stream({
         model,
         max_tokens: maxTokens,
-        system: systemPrompt,
+        system: fullSystemPrompt,
         tools,
         messages,
       })
@@ -141,6 +185,18 @@ export async function* runAgentChat(
 
       response = await stream.finalMessage()
       yield { type: 'stage', data: { stage: 'api_streaming', status: 'done', meta: { tokens: response.usage } } }
+
+      // Check if late Haiku plan arrived during Sonnet streaming
+      if (planPromise) {
+        try {
+          const lateStages = await planPromise
+          if (lateStages.length > 0 && planStages.length === 0) {
+            planStages = lateStages
+            yield { type: 'plan', data: { stages: planStages } }
+          }
+        } catch {}
+        planPromise = null
+      }
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : String(err)
       yield { type: 'error', data: `API error: ${errorMsg}` }
@@ -178,6 +234,14 @@ export async function* runAgentChat(
       finalMessage = text
       yield { type: 'message', data: text }
 
+      // Mark remaining plan stages as done
+      for (const stage of planStages) {
+        if (!activatedStages.has(stage.id)) {
+          yield { type: 'plan_stage_update', data: { stageId: stage.id, status: 'done' } }
+          activatedStages.add(stage.id)
+        }
+      }
+
       // Log successful run
       if (config.agentConfigId) {
         await logAgentRun(config.supabase, {
@@ -207,6 +271,23 @@ export async function* runAgentChat(
     const toolResults: Anthropic.ToolResultBlockParam[] = []
     for (const tool of toolBlocks) {
       toolCallCount++
+
+      // Match tool to plan stage and emit plan_stage_update
+      const matchedStage = planStages.find(s => s.toolHint === tool.name && !activatedStages.has(s.id))
+      if (matchedStage) {
+        yield { type: 'plan_stage_update', data: { stageId: matchedStage.id, status: 'active' } }
+        activatedStages.add(matchedStage.id)
+      } else if (planStages.length === 0) {
+        // Reactive fallback: dynamically add stage from tool name
+        const reactiveStage = stageFromToolName(tool.name)
+        if (reactiveStage) {
+          planStages.push(reactiveStage)
+          yield { type: 'plan', data: { stages: planStages } }
+          yield { type: 'plan_stage_update', data: { stageId: reactiveStage.id, status: 'active' } }
+          activatedStages.add(reactiveStage.id)
+        }
+      }
+
       yield { type: 'stage', data: { stage: 'tool_execution', status: 'start', meta: { toolName: tool.name, iteration: iterationCount } } }
       yield { type: 'tool_call', data: { name: tool.name, input: tool.input } }
       try {
@@ -221,6 +302,18 @@ export async function* runAgentChat(
           data: { name: tool.name, result: result.data, success: result.success },
         }
         yield { type: 'stage', data: { stage: 'tool_execution', status: 'done', meta: { toolName: tool.name, success: result.success } } }
+
+        // Mark matched plan stage as done
+        if (matchedStage) {
+          yield { type: 'plan_stage_update', data: { stageId: matchedStage.id, status: 'done' } }
+        } else if (planStages.length > 0) {
+          // Try to find and complete a reactive stage
+          const reactiveMatch = planStages.find(s => s.id === tool.name)
+          if (reactiveMatch) {
+            yield { type: 'plan_stage_update', data: { stageId: reactiveMatch.id, status: result.success ? 'done' : 'error' } }
+          }
+        }
+
         toolResults.push({
           type: 'tool_result',
           tool_use_id: tool.id,
@@ -234,6 +327,12 @@ export async function* runAgentChat(
           data: { name: tool.name, result: null, success: false },
         }
         yield { type: 'stage', data: { stage: 'tool_execution', status: 'done', meta: { toolName: tool.name, success: false } } }
+
+        // Mark matched plan stage as error
+        if (matchedStage) {
+          yield { type: 'plan_stage_update', data: { stageId: matchedStage.id, status: 'error' } }
+        }
+
         toolResults.push({
           type: 'tool_result',
           tool_use_id: tool.id,

@@ -5638,7 +5638,14 @@ html.light .bb-pill__shimmer-dots span {
   padding: 4px 0;
 }
 
-.bb-chat__code {
+/* ── Streaming Markdown (react-markdown) ── */
+
+.bb-chat__markdown p { margin: 0 0 8px; }
+.bb-chat__markdown p:last-child { margin-bottom: 0; }
+.bb-chat__markdown strong { font-weight: 600; }
+.bb-chat__markdown em { font-style: italic; }
+
+.bb-chat__markdown code {
   background: rgba(255, 255, 255, 0.06);
   border-radius: 4px;
   padding: 1px 5px;
@@ -5646,17 +5653,82 @@ html.light .bb-pill__shimmer-dots span {
   font-size: 12px;
 }
 
-.bb-chat__line-gap {
-  margin-top: 8px;
+.bb-chat__markdown pre {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  padding: 12px;
+  margin: 8px 0;
+  overflow-x: auto;
 }
 
-.bb-chat__list-item {
-  display: flex;
-  gap: 6px;
+.bb-chat__markdown pre code {
+  background: none;
+  padding: 0;
+  font-size: 12px;
+  line-height: 1.5;
 }
 
-.bb-chat__bullet {
-  color: var(--text-dim);
+.bb-chat__markdown ul,
+.bb-chat__markdown ol {
+  padding-left: 20px;
+  margin: 4px 0 8px;
+}
+
+.bb-chat__markdown li { margin-bottom: 2px; }
+.bb-chat__markdown li:last-child { margin-bottom: 0; }
+
+.bb-chat__markdown h1,
+.bb-chat__markdown h2,
+.bb-chat__markdown h3 {
+  margin: 12px 0 4px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.bb-chat__markdown h1 { font-size: 18px; }
+.bb-chat__markdown h2 { font-size: 16px; }
+.bb-chat__markdown h3 { font-size: 14px; }
+
+.bb-chat__markdown a {
+  color: #FF8C3C;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.bb-chat__markdown blockquote {
+  border-left: 2px solid rgba(255, 140, 60, 0.4);
+  padding-left: 12px;
+  margin: 8px 0;
+  color: var(--text-secondary);
+}
+
+.bb-chat__markdown table {
+  border-collapse: collapse;
+  margin: 8px 0;
+  font-size: 13px;
+}
+
+.bb-chat__markdown th,
+.bb-chat__markdown td {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 4px 8px;
+}
+
+.bb-chat__markdown th {
+  background: rgba(255, 255, 255, 0.04);
+  font-weight: 500;
+}
+
+.bb-chat__markdown hr {
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  margin: 12px 0;
+}
+
+/* CSS containment for smooth streaming */
+.bb-chat__msg {
+  contain: layout paint;
+  content-visibility: auto;
 }
 
 .bb-chat__thinking {
@@ -5690,103 +5762,125 @@ html.light .bb-pill__shimmer-dots span {
   animation-delay: 0.3s;
 }
 
-/* ── Thought Pipeline ── */
+/* ── Chat Pipeline (Haiku Planner stages) ── */
 
-.bb-thought {
+.bb-chat__pipeline {
   display: flex;
   align-items: center;
   min-height: 28px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
-.bb-thought__pipeline {
-  display: flex;
-  align-items: center;
-  gap: 0;
+.bb-chat__pipeline::-webkit-scrollbar {
+  display: none;
 }
 
-.bb-thought__stage-group {
-  display: flex;
-  align-items: center;
+/* Scale down ProcessPipeline cards for inline chat context */
+.bb-chat__pipeline-inner {
+  transform: scale(0.82);
+  transform-origin: left center;
 }
 
-.bb-thought__stage {
+/* Skeleton phase: pulsing shimmer */
+.bb-chat__pipeline--skeleton {
+  animation: pipeline-shimmer 1.5s ease-in-out infinite;
+}
+
+@keyframes pipeline-shimmer {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+
+/* Done phase: brief green pulse then fade */
+.bb-chat__pipeline--done {
+  transition: opacity 0.8s ease-out;
+}
+
+@media (max-width: 640px) {
+  .bb-chat__pipeline-inner {
+    transform: scale(0.68);
+  }
+}
+
+/* ── Tool Call Summary ── */
+
+.bb-chat__tc-summary-wrap {
+  margin-left: 32px;
+  margin-top: 4px;
+}
+
+.bb-chat__tc-summary {
+  width: min(528px, calc(74% - 32px));
+  max-width: calc(100% - 32px);
+}
+
+.bb-chat__tc-summary-header {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 10px;
-  border-radius: var(--radius-full, 9999px);
-  background: var(--bg-card, rgba(15, 20, 30, 0.6));
-  backdrop-filter: blur(12px) saturate(1.1);
-  -webkit-backdrop-filter: blur(12px) saturate(1.1);
-  border: 1px solid rgba(255, 255, 255, 0.04);
-  white-space: nowrap;
-  transition: border-color 0.3s ease, background 0.3s ease;
+  background: none;
+  border: none;
+  padding: 4px 0;
+  font-size: 12px;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: color 0.15s ease;
+  font-family: 'Inter', sans-serif;
 }
 
-.bb-thought__stage--active {
-  border-color: color-mix(in srgb, var(--bb-orange, #F97316) 25%, transparent);
-  background: color-mix(in srgb, var(--bb-orange, #F97316) 6%, var(--bg-card, rgba(15, 20, 30, 0.6)));
+.bb-chat__tc-summary-header:hover {
+  color: var(--text-secondary);
 }
 
-.bb-thought__stage--done {
-  border-color: color-mix(in srgb, var(--bb-green, #22C55E) 15%, transparent);
+.bb-chat__tc-summary-list {
+  margin-top: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
-.bb-thought__dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.bb-thought__label {
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--text-secondary, #94A3B8);
-  letter-spacing: 0.01em;
-}
-
-.bb-thought__stage--active .bb-thought__label {
-  color: var(--text-primary, #E2E8F0);
-}
-
-.bb-thought__stage--done .bb-thought__label {
-  color: var(--text-secondary, #94A3B8);
-}
-
-.bb-thought__meta {
-  font-size: 9px;
-  font-weight: 600;
-  color: var(--text-dim, #475569);
-  font-family: var(--font-mono, monospace);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.bb-thought__connector {
+.bb-chat__tc-summary-item {
   display: flex;
   align-items: center;
-  width: 16px;
-  height: 20px;
+  gap: 6px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.bb-chat__tc-summary-icon {
+  font-size: 12px;
   flex-shrink: 0;
 }
 
-.bb-thought__connector-line {
-  flex: 1;
-  height: 1px;
-  position: relative;
-  overflow: hidden;
+.bb-chat__tc-summary-label {
+  color: var(--text-secondary);
+  font-weight: 500;
 }
 
-.bb-thought__connector-flow {
-  position: absolute;
-  width: 6px;
-  height: 100%;
-  border-radius: 1px;
-  animation: connector-flow 1s linear infinite;
+.bb-chat__tc-summary-result {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-dim);
+  font-size: 11px;
 }
 
-/* ── Tool Call Cards ── */
+.bb-chat__tc-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 32px;
+  padding: 2px 8px;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+/* ── Legacy Tool Call Cards (kept for reference) ── */
 
 .bb-chat__tc {
   margin-left: 32px;
