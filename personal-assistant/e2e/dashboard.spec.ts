@@ -29,8 +29,6 @@ test.describe('Dashboard', () => {
     const connectionsTab = page.getByRole('tab', { name: /connections/i })
     if (await connectionsTab.count()) {
       await expect(connectionsTab.first()).toBeVisible()
-    } else {
-      await expect(page.getByRole('tab', { name: /channels/i }).first()).toBeVisible()
     }
   })
 

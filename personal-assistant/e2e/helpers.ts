@@ -10,6 +10,7 @@ export const TEST_USER = {
 }
 
 const BASE_URL = process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000'
+const ONBOARDING_STORAGE_KEY = 'bb-onboarding-complete'
 
 export const AUTH_SKIP_REASON =
   'Authentication unavailable in this environment (set E2E_SESSION_TOKEN or working E2E_USER_EMAIL/E2E_USER_PASSWORD)'
@@ -75,9 +76,13 @@ async function submitPasswordLogin(page: Page) {
 }
 
 export async function ensureAuthenticated(page: Page, targetPath = '/dashboard') {
+  await page.addInitScript((key) => {
+    window.localStorage.setItem(key, 'true')
+  }, ONBOARDING_STORAGE_KEY)
+
   await trySessionCookieLogin(page)
 
-  await page.goto(targetPath)
+  await page.goto(targetPath, { waitUntil: 'domcontentloaded' })
   await page.waitForLoadState('domcontentloaded')
 
   if (!isAuthPath(currentPath(page))) return true
@@ -87,10 +92,11 @@ export async function ensureAuthenticated(page: Page, targetPath = '/dashboard')
   if (!loggedIn) return false
 
   if (currentPath(page) !== targetPath) {
-    await page.goto(targetPath)
+    await page.goto(targetPath, { waitUntil: 'domcontentloaded' })
     await page.waitForLoadState('domcontentloaded')
   }
 
+  await dismissOnboardingWizard(page)
   return !isAuthPath(currentPath(page))
 }
 
@@ -99,11 +105,27 @@ export async function openProtectedPath(page: Page, targetPath: string) {
   if (!authenticated) return false
 
   if (currentPath(page) !== targetPath) {
-    await page.goto(targetPath)
+    await page.goto(targetPath, { waitUntil: 'domcontentloaded' })
     await page.waitForLoadState('domcontentloaded')
   }
 
+  await dismissOnboardingWizard(page)
   return !isAuthPath(currentPath(page))
+}
+
+export async function dismissOnboardingWizard(page: Page) {
+  const wizard = page.locator('.bb-onboarding-wizard').first()
+  if (!(await wizard.isVisible().catch(() => false))) return
+
+  const skipButtons = page.getByRole('button', {
+    name: /skip for now|skip tour|skip/i,
+  })
+
+  if (await skipButtons.count()) {
+    await skipButtons.first().click().catch(() => {})
+  }
+
+  await wizard.waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {})
 }
 
 /**
@@ -121,6 +143,7 @@ export async function login(page: Page) {
  * Wait for the dashboard to fully load.
  */
 export async function waitForDashboard(page: Page) {
+  await dismissOnboardingWizard(page)
   await page.waitForSelector('[data-testid="dashboard"], main', { timeout: 10_000 })
 }
 
@@ -128,8 +151,47 @@ export async function waitForDashboard(page: Page) {
  * Navigate to a specific dashboard tab.
  */
 export async function navigateToTab(page: Page, tabName: string) {
-  const tab = page.locator(`[data-tab="${tabName}"], button:has-text("${tabName}"), a:has-text("${tabName}")`)
-  await tab.first().click()
+  await dismissOnboardingWizard(page)
+  const normalized = tabName.trim().toLowerCase()
+  const tabIdAlias: Record<string, string> = {
+    channels: 'connections',
+    'creator studio': 'creator-studio',
+    'ai search': 'ai-search',
+    'ad scripts': 'ad-scripts',
+  }
+  const candidateId = tabIdAlias[normalized] ?? normalized.replace(/\s+/g, '-')
+
+  await page.evaluate((tabId) => {
+    window.dispatchEvent(new CustomEvent('bb-navigate', { detail: { tab: tabId } }))
+  }, candidateId)
+  await page.waitForTimeout(350)
+
+  const panelById = page.locator(`#tabpanel-${candidateId}`)
+  if (await panelById.count()) {
+    return
+  }
+
+  const showAdvanced = page.getByRole('button', {
+    name: /show advanced tabs|hide advanced tabs|more/i,
+  })
+
+  let tab = page.getByRole('tab', { name: new RegExp(`^${normalized}$`, 'i') }).first()
+  if (!(await tab.count())) {
+    tab = page.locator(`[data-tab="${normalized}"], #tab-${normalized}`).first()
+  }
+  if (!(await tab.count()) && (await showAdvanced.count())) {
+    await showAdvanced.first().click().catch(() => {})
+    await page.waitForTimeout(300)
+    tab = page.getByRole('tab', { name: new RegExp(`^${normalized}$`, 'i') }).first()
+    if (!(await tab.count())) {
+      tab = page.locator(`[data-tab="${normalized}"], #tab-${normalized}`).first()
+    }
+  }
+  if (!(await tab.count())) {
+    tab = page.locator(`button:has-text("${tabName}"):visible, a:has-text("${tabName}"):visible`).first()
+  }
+
+  await tab.click()
   await page.waitForTimeout(500) // Allow tab transition
 }
 
