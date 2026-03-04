@@ -106,6 +106,8 @@ async function loadCrossReferences(
     financialSignals: { totalOutstanding: 0, overdueCount: 0, lastPaymentDate: null, invoiceCount: 0 },
     waitingFor: []
   }
+  if (entityType === 'task') return loadTaskCrossReferences(supabase, orgId, entityId)
+  if (entityType === 'goal') return loadGoalCrossReferences(supabase, orgId, entityId)
   if (entityType !== 'contact') return empty
 
   // 1. Fetch Invoices
@@ -183,6 +185,108 @@ async function loadCrossReferences(
   }
 
   return { relatedTasks, deadlines, financialSignals: { totalOutstanding, overdueCount, lastPaymentDate, invoiceCount }, waitingFor }
+}
+
+async function loadTaskCrossReferences(
+  supabase: SupabaseClient,
+  orgId: string,
+  taskId: string,
+): Promise<CrossReference> {
+  const empty: CrossReference = {
+    relatedTasks: [],
+    deadlines: [],
+    financialSignals: { totalOutstanding: 0, overdueCount: 0, lastPaymentDate: null, invoiceCount: 0 },
+    waitingFor: [],
+  }
+
+  // Find linked contacts for this task
+  const { data: contactRels } = await supabase
+    .from('entity_relationships')
+    .select('entity_b_id')
+    .eq('org_id', orgId)
+    .eq('entity_a_id', taskId)
+    .eq('entity_a_type', 'task')
+    .eq('entity_b_type', 'contact')
+
+  // Find related tasks (same contact or same goal)
+  const contactIds = (contactRels ?? []).map((r: Record<string, unknown>) => r.entity_b_id as string)
+  if (contactIds.length > 0) {
+    const { data: siblingRels } = await supabase
+      .from('entity_relationships')
+      .select('entity_a_id')
+      .eq('org_id', orgId)
+      .eq('entity_a_type', 'task')
+      .in('entity_b_id', contactIds)
+      .neq('entity_a_id', taskId)
+      .limit(10)
+
+    const siblingIds = (siblingRels ?? []).map((r: Record<string, unknown>) => r.entity_a_id as string)
+    if (siblingIds.length > 0) {
+      const { data: siblings } = await supabase
+        .from('tasks')
+        .select('id, title, status, priority, metadata')
+        .eq('org_id', orgId)
+        .in('id', siblingIds)
+
+      if (siblings) {
+        for (const t of siblings) {
+          empty.relatedTasks.push({
+            id: t.id,
+            title: t.title,
+            status: t.status,
+            priority: t.priority,
+            targetDate: t.metadata?.target_date ?? null,
+          })
+        }
+      }
+    }
+  }
+
+  return empty
+}
+
+async function loadGoalCrossReferences(
+  supabase: SupabaseClient,
+  orgId: string,
+  goalId: string,
+): Promise<CrossReference> {
+  const empty: CrossReference = {
+    relatedTasks: [],
+    deadlines: [],
+    financialSignals: { totalOutstanding: 0, overdueCount: 0, lastPaymentDate: null, invoiceCount: 0 },
+    waitingFor: [],
+  }
+
+  // Find tasks linked to this goal
+  const { data: taskRels } = await supabase
+    .from('entity_relationships')
+    .select('entity_a_id')
+    .eq('org_id', orgId)
+    .eq('entity_b_id', goalId)
+    .eq('entity_b_type', 'goal')
+    .eq('entity_a_type', 'task')
+
+  const taskIds = (taskRels ?? []).map((r: Record<string, unknown>) => r.entity_a_id as string)
+  if (taskIds.length > 0) {
+    const { data: tasks } = await supabase
+      .from('tasks')
+      .select('id, title, status, priority, metadata')
+      .eq('org_id', orgId)
+      .in('id', taskIds)
+
+    if (tasks) {
+      for (const t of tasks) {
+        const targetDate = t.metadata?.target_date ?? null
+        empty.relatedTasks.push({ id: t.id, title: t.title, status: t.status, priority: t.priority, targetDate })
+        if ((t.status === 'pending' || t.status === 'in_progress') && targetDate) {
+          const daysUntil = Math.ceil((new Date(targetDate).getTime() - Date.now()) / 86400000)
+          empty.deadlines.push({ taskId: t.id, title: t.title, targetDate, daysUntil })
+        }
+      }
+    }
+  }
+
+  return empty
 }
 
 /**
@@ -267,6 +371,7 @@ export async function assembleContext(
   const resolvedEntities: ResolvedEntity[] = []
   const seenIds = new Set<string>()
 
+  // 1. Resolve contacts (existing 5-step ranked resolver)
   for (const candidate of candidates) {
     if (resolvedEntities.length >= 3) break
     const ranked = await resolveEntityRanked(supabase, candidate, orgId)
@@ -279,6 +384,58 @@ export async function assembleContext(
           name: match.contact.name,
           matchConfidence: match.matchConfidence,
           matchStep: match.matchStep,
+        })
+      }
+    }
+  }
+
+  // 2. Resolve tasks by title match (if contacts didn't consume all slots)
+  if (resolvedEntities.length < 3 && candidates.length > 0) {
+    const searchPhrase = candidates.join(' ')
+    const { data: matchedTasks } = await supabase
+      .from('tasks')
+      .select('id, title')
+      .eq('org_id', orgId)
+      .neq('status', 'archived')
+      .ilike('title', `%${searchPhrase}%`)
+      .limit(2)
+
+    for (const task of matchedTasks ?? []) {
+      if (resolvedEntities.length >= 3) break
+      if (!seenIds.has(task.id)) {
+        seenIds.add(task.id)
+        resolvedEntities.push({
+          type: 'task',
+          id: task.id,
+          name: task.title,
+          matchConfidence: 0.7,
+          matchStep: 'task_title_match',
+        })
+      }
+    }
+  }
+
+  // 3. Resolve goals by description match
+  if (resolvedEntities.length < 3 && candidates.length > 0) {
+    const searchPhrase = candidates.join(' ')
+    const { data: matchedGoals } = await supabase
+      .from('goals')
+      .select('id, description')
+      .eq('org_id', orgId)
+      .in('status', ['active', 'blocked'])
+      .ilike('description', `%${searchPhrase}%`)
+      .limit(1)
+
+    for (const goal of matchedGoals ?? []) {
+      if (resolvedEntities.length >= 3) break
+      if (!seenIds.has(goal.id)) {
+        seenIds.add(goal.id)
+        resolvedEntities.push({
+          type: 'goal',
+          id: goal.id,
+          name: goal.description,
+          matchConfidence: 0.6,
+          matchStep: 'goal_description_match',
         })
       }
     }

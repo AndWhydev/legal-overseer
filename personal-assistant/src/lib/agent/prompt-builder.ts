@@ -106,13 +106,17 @@ export async function buildSystemPrompt(supabase: SupabaseClient, orgId: string,
 
   const [ctx, channelSummary, todayEvents, dueReminders, policyText, voiceText] = await Promise.all([
     supabase
-      ? loadContext(supabase, orgId)
+      ? loadContext(supabase, orgId, {
+          activeTasksOnly: true,
+          taskLimit: 20,
+          contactLimit: 15,
+        })
       : Promise.resolve({ goals: [], tasks: [], contacts: [], recentActivity: [], columns: [] }),
     getChannelSummary(),
     getTodayEvents(),
     getDueReminders(),
-    loadPolicies(deploymentSlug),
-    loadVoiceProfile(deploymentSlug),
+    loadPolicies(deploymentSlug, supabase, orgId),
+    loadVoiceProfile(deploymentSlug, undefined, supabase, orgId),
   ])
 
   const now = new Date()
@@ -132,7 +136,7 @@ export async function buildSystemPrompt(supabase: SupabaseClient, orgId: string,
 
   const columnMap = new Map(ctx.columns.map(c => [c.id, c.title]))
   const tasksSummary = ctx.tasks.length > 0
-    ? ctx.tasks.slice(0, 30).map(t => {
+    ? ctx.tasks.slice(0, 20).map(t => {
       const col = t.column_id ? columnMap.get(t.column_id) ?? 'Unknown' : 'Unassigned'
       return `- [${t.priority}] ${t.title} (${col}, ${t.status})`
     }).join('\n')
@@ -245,10 +249,19 @@ export async function buildEntityAwarePrompt(
     return basePrompt
   }
 
+  // Token-aware budget: ~4 chars per token, budget 1000 tokens for entity context
+  const TOKEN_BUDGET = 1000
+  const CHARS_PER_TOKEN = 4
+  const maxChars = TOKEN_BUDGET * CHARS_PER_TOKEN
+
   let entitySection = contextBriefing.summary
-  const maxEntityContext = 4000
-  if (entitySection.length > maxEntityContext) {
-    entitySection = entitySection.slice(0, maxEntityContext - 3) + '...'
+  if (entitySection.length > maxChars) {
+    // Truncate at last complete sentence within budget
+    const truncated = entitySection.slice(0, maxChars)
+    const lastSentence = truncated.lastIndexOf('. ')
+    entitySection = lastSentence > maxChars * 0.5
+      ? truncated.slice(0, lastSentence + 1)
+      : truncated + '...'
   }
 
   return `${basePrompt}
