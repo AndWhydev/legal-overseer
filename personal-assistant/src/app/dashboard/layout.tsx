@@ -35,9 +35,25 @@ export default async function DashboardLayout({
     // Check onboarding state from profile preferences
     const { data: profile } = await supabase!
       .from('profiles')
-      .select('preferences')
+      .select('org_id, display_name, preferences')
       .eq('id', user.id)
-      .single()
+      .maybeSingle()
+
+    // No profile means no org — send to workspace setup
+    if (!profile?.org_id) {
+      redirect('/onboard')
+    }
+
+    // Prefer the stored display_name over auth metadata
+    if (profile?.display_name) {
+      displayName = profile.display_name
+      initials = displayName
+        .split(' ')
+        .map((n: string) => n[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2)
+    }
 
     const preferences = (profile?.preferences as Record<string, unknown>) ?? {}
     isNewUser = !preferences.onboarding_completed

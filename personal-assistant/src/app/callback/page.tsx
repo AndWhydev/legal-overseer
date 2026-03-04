@@ -26,10 +26,30 @@ export default function CallbackPage() {
     supabase.auth.setSession({
       access_token: accessToken,
       refresh_token: refreshToken,
-    }).then(({ error }) => {
-      if (error) {
+    }).then(async ({ error, data }) => {
+      if (error || !data.user) {
         console.error('setSession error:', error)
         router.replace('/login?error=auth')
+        return
+      }
+
+      // Check if user already has an org profile.
+      // New users have no profile row → send to onboarding.
+      const { data: profile, error: profileErr } = await supabase
+        .from('profiles')
+        .select('id, org_id')
+        .eq('id', data.user.id)
+        .maybeSingle()
+
+      if (profileErr) {
+        console.warn('Profile check failed, going to dashboard anyway:', profileErr.message)
+        router.replace('/dashboard')
+        return
+      }
+
+      if (!profile?.org_id) {
+        // No org — first-time user, kick off workspace setup
+        router.replace('/onboard')
       } else {
         router.replace('/dashboard')
       }
@@ -38,7 +58,7 @@ export default function CallbackPage() {
 
   return (
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-      <p>Signing in...</p>
+      <p>Signing in…</p>
     </div>
   )
 }
