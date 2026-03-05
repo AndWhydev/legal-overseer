@@ -35,6 +35,8 @@ const envSchema = z.object({
   RESEND_FROM_EMAIL: z.string().email().optional(),
   NOTIFICATION_FROM_EMAIL: z.string().email().optional(),
   NOTIFICATION_TO_EMAIL: z.string().email().optional(),
+  MONTHLY_REPORT_FROM_EMAIL: z.string().email().optional(),
+  MONTHLY_REPORT_RECIPIENTS: z.string().optional(),
 
   // WhatsApp
   WHATSAPP_PHONE_NUMBER_ID: z.string().optional(),

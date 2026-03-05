@@ -14,6 +14,7 @@ import { telegramAdapter } from './telegram'
 import { clickupAdapter } from './clickup'
 import { ga4Adapter } from './ga4'
 import { wordpressAdapter } from './wordpress'
+import { cluelyAdapter } from './cluely'
 import { waitForRateLimit } from './rate-limiter'
 import { checkAllChannelHealth, storeHealthReports } from './health'
 import type { ChannelHealthReport } from './health'
@@ -37,6 +38,7 @@ const adapters: Partial<Record<ChannelType, ChannelAdapter>> = {
   clickup: clickupAdapter,
   ga4: ga4Adapter,
   wordpress: wordpressAdapter,
+  cluely: cluelyAdapter,
 }
 
 export function getAdapter(type: ChannelType): ChannelAdapter | undefined {

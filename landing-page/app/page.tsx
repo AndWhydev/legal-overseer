@@ -476,8 +476,8 @@ function Footer() {
         </span>
 
         <div className="flex items-center gap-6 text-[13px] text-[#6b6560]">
-          <a href="#" className="transition-colors hover:text-[#1a1a1a]">Privacy</a>
-          <a href="#" className="transition-colors hover:text-[#1a1a1a]">Terms</a>
+          <a href="https://app.bitbit.chat/privacy" className="transition-colors hover:text-[#1a1a1a]">Privacy</a>
+          <a href="https://app.bitbit.chat/terms" className="transition-colors hover:text-[#1a1a1a]">Terms</a>
         </div>
 
         <p className="text-[12px] text-[#8b6f47]">

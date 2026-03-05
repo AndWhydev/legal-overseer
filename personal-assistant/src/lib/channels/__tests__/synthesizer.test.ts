@@ -32,6 +32,9 @@ vi.mock('../calendly', () => ({
 vi.mock('../stripe', () => ({
   stripeAdapter: { type: 'stripe', name: 'Stripe', description: 'Mock', icon: 'CreditCard', pull: vi.fn(async () => []), isAvailable: vi.fn(async () => false) },
 }))
+vi.mock('../cluely', () => ({
+  cluelyAdapter: { type: 'cluely', name: 'Cluely', description: 'Mock', icon: 'Mic', pull: vi.fn(async () => []), isAvailable: vi.fn(async () => false) },
+}))
 vi.mock('@/lib/context/timeline-writer', () => ({
   writeMessageEvent: vi.fn(),
 }))
@@ -66,6 +69,11 @@ describe('getAdapter', () => {
     expect(adapter?.type).toBe('stripe')
   })
 
+  it('returns cluely adapter', () => {
+    const adapter = getAdapter('cluely')
+    expect(adapter?.type).toBe('cluely')
+  })
+
   it('returns undefined for unknown type', () => {
     const adapter = getAdapter('unknown' as any)
     expect(adapter).toBeUndefined()
@@ -83,6 +91,7 @@ describe('getAllAdapters', () => {
     expect(types).toContain('calendly')
     expect(types).toContain('stripe')
     expect(types).toContain('whatsapp')
+    expect(types).toContain('cluely')
   })
 
   it('all adapters have required fields', () => {

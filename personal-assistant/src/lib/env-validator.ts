@@ -21,6 +21,7 @@ const ENV_VARS: EnvVarSpec[] = [
   { name: 'STRIPE_SECRET_KEY', required: false },
   { name: 'WHATSAPP_VERIFY_TOKEN', required: false },
   { name: 'WHATSAPP_APP_SECRET', required: false },
+  { name: 'MONTHLY_REPORT_RECIPIENTS', required: false },
 ]
 
 export function validateEnv(): { valid: boolean; missing: string[] } {

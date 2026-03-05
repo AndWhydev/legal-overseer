@@ -1,4 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { routeIncomingConversation } from '@/lib/conversation/interface'
+import { whatsappConversationAdapter } from '@/lib/conversation/whatsapp-adapter'
 import { handleIncomingMessage } from '@/lib/whatsapp/conversation-manager'
 
 /**
@@ -15,17 +17,14 @@ export async function processWhatsAppMessage(
   messageRow: Record<string, unknown>,
   text: string
 ): Promise<void> {
-  const phoneNumber = messageRow.sender_email as string // Phone stored in sender_email field
-
-  if (!phoneNumber) {
-    console.warn('[whatsapp-parser] No phone number found in message row')
-    return
-  }
-
-  // Voice note prefix for speech-origin messages
-  const metadata = messageRow.metadata as Record<string, unknown> | undefined
-  const isVoiceNote = metadata?.voice_note === true
-  const processedText = isVoiceNote ? `[Voice note] ${text}` : text
-
-  await handleIncomingMessage(supabase, orgId, phoneNumber, processedText)
+  await routeIncomingConversation(
+    whatsappConversationAdapter,
+    { orgId, messageRow, text },
+    async (request) => {
+      await handleIncomingMessage(supabase, request.orgId, request.participantId, request.text)
+    },
+    () => {
+      console.warn('[whatsapp-parser] No phone number found in message row')
+    }
+  )
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { Mail, MessageCircle, Calendar, Bell, Search, CheckSquare, CreditCard, CalendarClock, Send, BarChart3, Globe } from 'lucide-react'
+import { Mail, MessageCircle, Calendar, Bell, Search, CheckSquare, CreditCard, CalendarClock, Send, BarChart3, Globe, Mic } from 'lucide-react'
 import type { ChannelMessage, ChannelType } from '@/lib/channels/types'
 
 const channelIcons: Record<ChannelType, React.ComponentType<{ className?: string }>> = {
@@ -18,6 +18,7 @@ const channelIcons: Record<ChannelType, React.ComponentType<{ className?: string
   clickup: CheckSquare,
   ga4: BarChart3,
   wordpress: Globe,
+  cluely: Mic,
 }
 
 interface MessagePreviewProps {

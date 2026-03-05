@@ -1,6 +1,7 @@
 import { withCronGuard } from '@/lib/cron/cron-guard'
 import { generateMonthlyReport } from '@/lib/reports/generator'
 import { generateReportPDF } from '@/lib/reports/pdf-report'
+import { sendMonthlyRevenueReportEmail } from '@/lib/reports/monthly-revenue-email'
 
 export const maxDuration = 300
 export const dynamic = 'force-dynamic'
@@ -16,7 +17,19 @@ export async function GET(request: Request) {
       .select('id, name')
       .eq('status', 'active')
 
-    const results: { orgId: string; success: boolean; error?: string }[] = []
+    const results: Array<{
+      orgId: string
+      success: boolean
+      email?: {
+        success: boolean
+        skipped: boolean
+        recipients: string[]
+        sent: number
+        failed: number
+        errors: string[]
+      }
+      error?: string
+    }> = []
 
     for (const org of orgs ?? []) {
       try {
@@ -27,6 +40,10 @@ export async function GET(request: Request) {
         await supabase.storage
           .from('reports')
           .upload(fileName, pdfBuffer, { contentType: 'text/html', upsert: true })
+
+        const { data: signedUrlData } = await supabase.storage
+          .from('reports')
+          .createSignedUrl(fileName, 60 * 60 * 24 * 14)
 
         await supabase.from('generated_reports').insert({
           org_id: org.id,
@@ -46,7 +63,29 @@ export async function GET(request: Request) {
           created_at: new Date().toISOString(),
         })
 
-        results.push({ orgId: org.id, success: true })
+        const emailResult = await sendMonthlyRevenueReportEmail({
+          orgName: org.name ?? org.id,
+          month,
+          report: reportData,
+          reportUrl: signedUrlData?.signedUrl ?? null,
+        })
+
+        if (!emailResult.success) {
+          console.warn(`[cron/monthly-report] Email not fully delivered for org ${org.id}:`, emailResult)
+        }
+
+        results.push({
+          orgId: org.id,
+          success: true,
+          email: {
+            success: emailResult.success,
+            skipped: emailResult.skipped,
+            recipients: emailResult.recipients,
+            sent: emailResult.sent,
+            failed: emailResult.failed,
+            errors: emailResult.errors,
+          },
+        })
       } catch (err) {
         console.error(`[cron/monthly-report] Error for org ${org.id}:`, err)
         results.push({ orgId: org.id, success: false, error: String(err) })

@@ -30,6 +30,7 @@ const DEFAULT_LIMITS: Partial<Record<ChannelType, number>> = {
   clickup: 120,
   ga4: 60,
   wordpress: 60,
+  cluely: 60,
 }
 
 // In-memory fallback when Supabase is unavailable

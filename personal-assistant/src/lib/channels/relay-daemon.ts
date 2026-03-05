@@ -24,6 +24,7 @@ import { stripeAdapter } from './stripe'
 import { clickupAdapter } from './clickup'
 import { ga4Adapter } from './ga4'
 import { wordpressAdapter } from './wordpress'
+import { cluelyAdapter } from './cluely'
 import { isDuplicate, computeContentHash } from './dedup'
 import { getOrgCredential } from '@/lib/integrations/credentials'
 
@@ -45,6 +46,7 @@ const adapterMap = {
   clickup: clickupAdapter,
   ga4: ga4Adapter,
   wordpress: wordpressAdapter,
+  cluely: cluelyAdapter,
 } as const
 
 async function hydrateAdapterConfig(
@@ -113,6 +115,23 @@ async function hydrateAdapterConfig(
       }
       if (typeof applicationPassword === 'string' && applicationPassword) {
         baseConfig.application_password = applicationPassword
+      }
+      return baseConfig
+    }
+
+    if (channelType === 'cluely') {
+      const creds = await readCredential(['cluely'])
+      const apiKey = creds?.['api_key']
+      const workspaceId = creds?.['workspace_id']
+      const baseUrl = creds?.['base_url']
+      if (typeof apiKey === 'string' && apiKey) {
+        baseConfig.api_key = apiKey
+      }
+      if (typeof workspaceId === 'string' && workspaceId) {
+        baseConfig.workspace_id = workspaceId
+      }
+      if (typeof baseUrl === 'string' && baseUrl) {
+        baseConfig.base_url = baseUrl
       }
       return baseConfig
     }
