@@ -9,17 +9,38 @@ import {
 } from './helpers'
 
 async function openSearchPalette(page: import('@playwright/test').Page) {
-  await page.keyboard.press('Meta+k')
-  await page.waitForTimeout(250)
-
   const palette = page.locator(
     '[data-testid="search-palette"], [role="dialog"], [class*="command-palette"], [class*="search-modal"]',
   )
 
-  if (!(await palette.count()) || !(await palette.first().isVisible().catch(() => false))) {
-    await page.keyboard.press('Control+k')
-    await page.waitForTimeout(300)
-  }
+  const waitForVisible = async () =>
+    await palette
+      .first()
+      .waitFor({ state: 'visible', timeout: 4_000 })
+      .then(() => true)
+      .catch(() => false)
+
+  await page.keyboard.press('Meta+k')
+  if (await waitForVisible()) return
+
+  await page.keyboard.press('Control+k')
+  await waitForVisible()
+}
+
+async function waitForEitherVisible(
+  first: import('@playwright/test').Locator,
+  second: import('@playwright/test').Locator,
+  timeout = 10_000,
+) {
+  await expect
+    .poll(
+      async () => {
+        const [firstCount, secondCount] = await Promise.all([first.count(), second.count()])
+        return firstCount + secondCount
+      },
+      { timeout },
+    )
+    .toBeGreaterThan(0)
 }
 
 /**
@@ -27,12 +48,22 @@ async function openSearchPalette(page: import('@playwright/test').Page) {
  */
 
 test.describe('Login Flow', () => {
+  test.use({
+    storageState: { cookies: [], origins: [] },
+  })
+
   test('redirects unauthenticated user to login page', async ({ page }) => {
     await page.goto('/dashboard')
-    // Should redirect to login or show auth prompt
-    await page.waitForTimeout(2000)
+    await page
+      .waitForURL((url) => url.pathname.startsWith('/login') || url.pathname.startsWith('/auth'), {
+        timeout: 15_000,
+      })
+      .catch(() => {})
+
     const url = page.url()
-    const hasLoginForm = await page.locator('input[type="email"], input[type="password"], button:has-text("Sign in"), button:has-text("Log in")').count()
+    const hasLoginForm = await page
+      .locator('input[type="email"], input[type="password"], button:has-text("Sign in"), button:has-text("Log in")')
+      .count()
     // Either redirected to /login or shows inline auth
     expect(url.includes('/login') || hasLoginForm > 0).toBeTruthy()
   })
@@ -45,7 +76,15 @@ test.describe('Login Flow', () => {
       const isEnabled = await submitBtn.isEnabled().catch(() => false)
       if (isEnabled) {
         await submitBtn.click()
-        await page.waitForTimeout(500)
+        await expect
+          .poll(
+            async () =>
+              await emailInput.evaluate(
+                (el) => (el as HTMLInputElement).validationMessage.length,
+              ),
+            { timeout: 5_000 },
+          )
+          .toBeGreaterThan(0)
         const validationMessage = await emailInput.evaluate(
           (el) => (el as HTMLInputElement).validationMessage,
         )
@@ -67,7 +106,19 @@ test.describe('Login Flow', () => {
       await emailInput.fill('invalid@test.com')
       await passwordInput.fill('wrong-password')
       await page.locator('button[type="submit"]').click()
-      await page.waitForTimeout(2000)
+
+      await expect
+        .poll(
+          async () => {
+            const [errorCount, onDashboard] = await Promise.all([
+              page.locator('text=/Invalid|error|failed|incorrect/i').count(),
+              page.url().includes('/dashboard'),
+            ])
+            return errorCount > 0 || !onDashboard
+          },
+          { timeout: 12_000 },
+        )
+        .toBeTruthy()
 
       // Should show error message, not redirect to dashboard
       const errorVisible = await page.locator('text=/Invalid|error|failed|incorrect/i').count()
@@ -275,7 +326,10 @@ test.describe('Channel Sync', () => {
       ).catch(() => null)
 
       await syncBtn.first().click()
-      await page.waitForTimeout(2000)
+      const response = await apiPromise
+      if (response) {
+        expect([200, 202, 204, 401, 503]).toContain(response.status())
+      }
 
       // Should not crash
       const errorBoundary = page.locator('text=/Something went wrong|crashed/i')
@@ -372,7 +426,6 @@ test.describe('Global Search (Cmd+K)', () => {
 
   test('Cmd+K opens search palette', async ({ page }) => {
     await openSearchPalette(page)
-    await page.waitForTimeout(250)
 
     // Search palette should appear
     const palette = page.locator('[data-testid="search-palette"], [role="dialog"], [class*="command-palette"], [class*="search-modal"]')
@@ -383,34 +436,36 @@ test.describe('Global Search (Cmd+K)', () => {
 
   test('search palette returns results on input', async ({ page }) => {
     await openSearchPalette(page)
-    await page.waitForTimeout(250)
 
     const searchInput = page.locator('[data-testid="search-input"], [role="dialog"] input, [class*="command-palette"] input, [class*="search-modal"] input')
     if (await searchInput.count() > 0) {
       await searchInput.first().fill('test')
-      await page.waitForTimeout(1000)
 
       // Should show results or "no results" message
       const results = page.locator('[data-testid="search-result"], [role="dialog"] li, [class*="result"]')
       const noResults = page.locator('text=/No results|nothing found/i')
+      await waitForEitherVisible(results, noResults, 10_000)
       expect(await results.count() > 0 || await noResults.count() > 0).toBeTruthy()
     }
   })
 
   test('Escape closes search palette', async ({ page }) => {
     await openSearchPalette(page)
-    await page.waitForTimeout(250)
 
     const palette = page.locator('[data-testid="search-palette"], [role="dialog"], [class*="command-palette"], [class*="search-modal"]')
     if (await palette.count() > 0) {
       await page.keyboard.press('Escape')
-      await page.waitForTimeout(300)
+      await palette.first().waitFor({ state: 'hidden', timeout: 5_000 }).catch(() => {})
       expect(await palette.isVisible()).toBeFalsy()
     }
   })
 })
 
 test.describe('API Route Integration', () => {
+  test.use({
+    storageState: { cookies: [], origins: [] },
+  })
+
   test('approvals API returns 401 without auth', async ({ request }) => {
     const response = await request.get('/api/agent/approvals')
     expect([401, 503]).toContain(response.status())

@@ -48,7 +48,6 @@ test.describe('Page Render Verification', () => {
     })
 
     await page.goto('/dashboard', { waitUntil: 'domcontentloaded' })
-    await page.waitForTimeout(800)
 
     // Dashboard should render some content
     const body = await page.textContent('body')
@@ -91,19 +90,16 @@ test.describe('Page Render Verification', () => {
 
       // Load dashboard
       await page.goto('/dashboard', { waitUntil: 'domcontentloaded' })
-      await page.waitForTimeout(1000)
 
       // Navigate to tab via custom event
       await page.evaluate((tabId) => {
         window.dispatchEvent(new CustomEvent('bb-navigate', { detail: { tab: tabId } }))
       }, tab.id)
 
-      // Wait for tab panel to become active
-      await page.waitForTimeout(800)
-
       // Verify the tab panel exists and is active
       const panel = page.locator(`#tabpanel-${tab.id}`)
       if (await panel.count() > 0) {
+        await panel.first().waitFor({ state: 'visible', timeout: 10_000 }).catch(() => {})
         const isActive = await panel.getAttribute('data-active')
         expect(isActive).toBe('true')
 

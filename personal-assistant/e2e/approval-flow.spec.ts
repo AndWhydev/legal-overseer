@@ -23,9 +23,11 @@ test.describe('Approval Flow', () => {
     const approveBtn = page.locator('button:has-text("Approve")')
     if (await approveBtn.count() > 0) {
       await approveBtn.first().click()
-      // Should show confirmation or update status
-      await page.waitForTimeout(1000)
-      // Verify the UI updated (approval removed or status changed)
+      const statusChange = page.locator('text=/approved|success|updated/i').first()
+      await Promise.race([
+        statusChange.waitFor({ state: 'visible', timeout: 8_000 }),
+        approveBtn.first().waitFor({ state: 'detached', timeout: 8_000 }),
+      ]).catch(() => {})
     }
   })
 
@@ -36,7 +38,11 @@ test.describe('Approval Flow', () => {
     const rejectBtn = page.locator('button:has-text("Reject")')
     if (await rejectBtn.count() > 0) {
       await rejectBtn.first().click()
-      await page.waitForTimeout(1000)
+      const statusChange = page.locator('text=/rejected|updated|success/i').first()
+      await Promise.race([
+        statusChange.waitFor({ state: 'visible', timeout: 8_000 }),
+        rejectBtn.first().waitFor({ state: 'detached', timeout: 8_000 }),
+      ]).catch(() => {})
     }
   })
 })

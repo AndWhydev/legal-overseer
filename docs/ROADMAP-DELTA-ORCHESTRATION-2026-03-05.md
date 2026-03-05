@@ -59,6 +59,36 @@ Verification snapshot:
 3. Roadmap sequence shifted forward in practice:
    - E4.5 (Wave 3 reporting automation) was pulled earlier and is now code-complete to reduce launch delta risk.
 
+## Residual Swarm (Wave 2) — Completed
+
+Additional code-only deltas closed by the residual swarm:
+
+1. C1.5 Gmail migration hardening:
+   - Added API-first transport gating with explicit modes (`auto` / `api` / `imap`) and IMAP fallback preservation.
+   - Added adapter tests for token selection, API-only behavior, and fallback behavior.
+
+2. A1.11/A1.12 infra load-style integration coverage:
+   - Added deterministic integration suite for 50 relay cycles and 10 scheduled agent runs (no network).
+   - Kept runtime lightweight and CI-safe.
+
+3. D3 Playwright reliability hardening:
+   - Added auth bootstrap setup project + shared storage state.
+   - Hardened config timeouts/retries/workers via deterministic env controls.
+   - Replaced several brittle sleep waits with condition-based synchronization.
+
+Verification snapshot after residual swarm:
+- `npx tsc --noEmit` ✅
+- Targeted Vitest suites (gmail + infra load + multi-tenant + memory) ✅
+- `npx playwright test --list` ✅
+- Targeted ESLint on touched Playwright/channel/infra files ✅
+
+## Remaining Code Deltas (Non-Human)
+
+1. Optional further Playwright de-flake pass:
+   - `workflows.spec.ts` still has some legacy timeout-based waits outside the hardened paths.
+2. Optional broader load realism:
+   - Current infra tests simulate load deterministically; production-like stress profiling remains separate.
+
 ## Deferred (code, but lower priority or cross-system heavy)
 
 - C2.* P2 channels (FB/IG/Slack/accounting adapters)

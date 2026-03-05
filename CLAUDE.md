@@ -1,7 +1,7 @@
 <!-- gitnexus:start -->
 # GitNexus MCP
 
-This project is indexed by GitNexus as **bitbit** (5491 symbols, 13788 relationships, 300 execution flows).
+This project is indexed by GitNexus as **bitbit** (5541 symbols, 13906 relationships, 300 execution flows).
 
 ## Always Start Here
 

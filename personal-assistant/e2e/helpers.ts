@@ -23,6 +23,25 @@ function currentPath(page: Page) {
   return new URL(page.url()).pathname
 }
 
+async function waitForTabPanel(page: Page, tabId: string, timeout = 8_000) {
+  const panel = page.locator(`#tabpanel-${tabId}`).first()
+  if (!(await panel.count())) return false
+
+  const active = await expect(panel)
+    .toHaveAttribute('data-active', 'true', { timeout: Math.min(timeout, 2_500) })
+    .then(() => true)
+    .catch(() => false)
+
+  if (active) return true
+
+  await panel.waitFor({ state: 'visible', timeout }).catch(() => {})
+
+  return await panel
+    .isVisible()
+    .then(Boolean)
+    .catch(() => false)
+}
+
 async function trySessionCookieLogin(page: Page) {
   const sessionToken = process.env.E2E_SESSION_TOKEN
   if (!sessionToken) return false
@@ -164,10 +183,7 @@ export async function navigateToTab(page: Page, tabName: string) {
   await page.evaluate((tabId) => {
     window.dispatchEvent(new CustomEvent('bb-navigate', { detail: { tab: tabId } }))
   }, candidateId)
-  await page.waitForTimeout(350)
-
-  const panelById = page.locator(`#tabpanel-${candidateId}`)
-  if (await panelById.count()) {
+  if (await waitForTabPanel(page, candidateId)) {
     return
   }
 
@@ -181,7 +197,6 @@ export async function navigateToTab(page: Page, tabName: string) {
   }
   if (!(await tab.count()) && (await showAdvanced.count())) {
     await showAdvanced.first().click().catch(() => {})
-    await page.waitForTimeout(300)
     tab = page.getByRole('tab', { name: new RegExp(`^${normalized}$`, 'i') }).first()
     if (!(await tab.count())) {
       tab = page.locator(`[data-tab="${normalized}"], #tab-${normalized}`).first()
@@ -192,7 +207,12 @@ export async function navigateToTab(page: Page, tabName: string) {
   }
 
   await tab.click()
-  await page.waitForTimeout(500) // Allow tab transition
+  if (await waitForTabPanel(page, candidateId)) {
+    return
+  }
+
+  const activePanel = page.locator('[id^="tabpanel-"][data-active="true"]').first()
+  await activePanel.waitFor({ state: 'visible', timeout: 8_000 }).catch(() => {})
 }
 
 /**

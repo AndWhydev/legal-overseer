@@ -13,6 +13,10 @@ async function openDevPasswordLogin(page: Page) {
 }
 
 test.describe('Authentication', () => {
+  test.use({
+    storageState: { cookies: [], origins: [] },
+  })
+
   test('redirects unauthenticated user to login', async ({ page }) => {
     await page.goto('/dashboard')
     await page.waitForLoadState('domcontentloaded')

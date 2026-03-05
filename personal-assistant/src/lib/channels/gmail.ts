@@ -28,9 +28,88 @@ interface GmailMessageResponse {
   }
 }
 
+type GmailTransportMode = 'auto' | 'api' | 'imap'
+
+function readObjectConfig(
+  config: Record<string, unknown>,
+  key: string,
+): Record<string, unknown> | undefined {
+  const value = config[key]
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : undefined
+}
+
 function readStringConfig(config: Record<string, unknown>, key: string): string | undefined {
   const value = config[key]
   return typeof value === 'string' && value.trim().length > 0 ? value : undefined
+}
+
+function resolveMode(value: unknown): GmailTransportMode | undefined {
+  if (typeof value !== 'string') return undefined
+  const normalized = value.trim().toLowerCase()
+  if (normalized === 'auto' || normalized === 'api' || normalized === 'imap') {
+    return normalized
+  }
+  return undefined
+}
+
+function resolveGmailTransportMode(config: Record<string, unknown>): GmailTransportMode {
+  return (
+    resolveMode(config.mode) ||
+    resolveMode(config.transport) ||
+    resolveMode(config.gmailMode) ||
+    resolveMode(process.env.GMAIL_MODE) ||
+    'auto'
+  )
+}
+
+function getNestedConfig(config: Record<string, unknown>): Record<string, unknown> | undefined {
+  return (
+    readObjectConfig(config, 'oauth') ||
+    readObjectConfig(config, 'oauthCredentials') ||
+    readObjectConfig(config, 'oauth_credential') ||
+    readObjectConfig(config, 'credentials')
+  )
+}
+
+function resolveApiAccessToken(config: Record<string, unknown>): string | undefined {
+  const nested = getNestedConfig(config)
+  return (
+    readStringConfig(config, 'accessToken') ||
+    readStringConfig(config, 'access_token') ||
+    readStringConfig(config, 'oauthAccessToken') ||
+    readStringConfig(config, 'oauth_access_token') ||
+    (nested &&
+      (readStringConfig(nested, 'accessToken') ||
+        readStringConfig(nested, 'access_token') ||
+        readStringConfig(nested, 'token'))) ||
+    process.env.GMAIL_ACCESS_TOKEN
+  )
+}
+
+function resolveImapCredentials(config: Record<string, unknown>): { user?: string; pass?: string } {
+  const nested = getNestedConfig(config)
+  return {
+    user:
+      readStringConfig(config, 'user') ||
+      readStringConfig(config, 'username') ||
+      (nested &&
+        (readStringConfig(nested, 'user') ||
+          readStringConfig(nested, 'username') ||
+          readStringConfig(nested, 'email'))) ||
+      process.env.GMAIL_USER,
+    pass:
+      readStringConfig(config, 'appPassword') ||
+      readStringConfig(config, 'applicationPassword') ||
+      readStringConfig(config, 'password') ||
+      (nested &&
+        (readStringConfig(nested, 'appPassword') ||
+          readStringConfig(nested, 'applicationPassword') ||
+          readStringConfig(nested, 'app_password') ||
+          readStringConfig(nested, 'password'))) ||
+      process.env.GMAIL_APP_PASSWORD,
+  }
 }
 
 function getHeaderValue(
@@ -158,44 +237,45 @@ export async function refreshGmailToken(
 export const gmailAdapter: ChannelAdapter = {
   type: 'gmail',
   name: 'Gmail',
-  description: 'Pull emails from Gmail via API (OAuth) with IMAP fallback',
+  description: 'Pull emails from Gmail via API (OAuth) with configurable IMAP fallback',
   icon: 'Mail',
 
   async pull(config, since, options) {
     const sinceDate = since || new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
     const maxMessages = (options?.maxMessages as number) || 50
+    const mode = resolveGmailTransportMode(config)
+    const accessToken = resolveApiAccessToken(config)
 
-    const accessToken =
-      readStringConfig(config, 'accessToken') ||
-      readStringConfig(config, 'access_token') ||
-      process.env.GMAIL_ACCESS_TOKEN
-
-    if (accessToken) {
+    if ((mode === 'auto' || mode === 'api') && accessToken) {
       const messages = await gmailApiPullWithRetry(accessToken, sinceDate, maxMessages, 3)
       if (messages) return messages
+
+      if (mode === 'api') {
+        console.warn('[gmail] API-only mode enabled; skipping IMAP fallback after API failure')
+        return []
+      }
 
       console.warn('[gmail] API pull failed after retries; attempting IMAP fallback')
     }
 
-    const user =
-      readStringConfig(config, 'user') ||
-      readStringConfig(config, 'username') ||
-      process.env.GMAIL_USER
-    const pass =
-      readStringConfig(config, 'appPassword') ||
-      readStringConfig(config, 'applicationPassword') ||
-      readStringConfig(config, 'password') ||
-      process.env.GMAIL_APP_PASSWORD
+    if (mode === 'api') {
+      return []
+    }
+
+    const { user, pass } = resolveImapCredentials(config)
     if (!user || !pass) return []
 
     return gmailPullWithRetry(user, pass, sinceDate, maxMessages, 4)
   },
 
   async isAvailable() {
-    return Boolean(
-      process.env.GMAIL_ACCESS_TOKEN ||
-      (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD),
-    )
+    const mode = resolveMode(process.env.GMAIL_MODE) || 'auto'
+    const hasApiToken = Boolean(process.env.GMAIL_ACCESS_TOKEN)
+    const hasImapCreds = Boolean(process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD)
+
+    if (mode === 'api') return hasApiToken
+    if (mode === 'imap') return hasImapCreds
+    return hasApiToken || hasImapCreds
   },
 }
 
