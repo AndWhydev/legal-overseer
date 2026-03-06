@@ -21,6 +21,7 @@ const channelIcons: Record<ChannelType, React.ComponentType<{ className?: string
   cluely: Mic,
   facebook: MessageCircle,
   slack: MessageCircle,
+  xero: BarChart3,
 }
 
 interface MessagePreviewProps {
