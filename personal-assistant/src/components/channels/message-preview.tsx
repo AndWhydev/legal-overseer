@@ -20,6 +20,7 @@ const channelIcons: Record<ChannelType, React.ComponentType<{ className?: string
   wordpress: Globe,
   cluely: Mic,
   facebook: MessageCircle,
+  slack: MessageCircle,
 }
 
 interface MessagePreviewProps {

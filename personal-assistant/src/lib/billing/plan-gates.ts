@@ -115,3 +115,94 @@ export function isFeatureEnabled(
   if (Array.isArray(value)) return value.length > 0
   return false
 }
+
+// ---------------------------------------------------------------------------
+// Plan gate enforcement
+// ---------------------------------------------------------------------------
+
+export type GateAction =
+  | 'agent_runs'
+  | 'channels'
+  | 'storage'
+  | 'whatsapp'
+  | 'proposals'
+  | 'multi_user'
+
+/**
+ * Check if an organization can perform a gated action.
+ * Returns true (allow) on error to be lenient.
+ */
+export async function checkPlanGate(
+  client: SupabaseClient,
+  orgId: string,
+  action: GateAction,
+): Promise<boolean> {
+  try {
+    const plan = await getOrgPlan(client, orgId)
+
+    // Feature gates: check if feature is enabled for this plan
+    if (action === 'whatsapp') {
+      return isFeatureEnabled(plan, 'whatsapp')
+    }
+    if (action === 'proposals') {
+      return isFeatureEnabled(plan, 'proposals')
+    }
+    if (action === 'multi_user') {
+      return isFeatureEnabled(plan, 'multiUser')
+    }
+
+    // Usage-based gates: check current usage against limits
+    if (action === 'agent_runs') {
+      // No limit on agent runs for now
+      return true
+    }
+
+    if (action === 'channels') {
+      const features = getPlanFeatures(plan)
+      const { data: channels, error } = await client
+        .from('channel_configs')
+        .select('id')
+        .eq('org_id', orgId)
+
+      if (error) {
+        console.warn('[plan-gates] Failed to count channels:', error.message)
+        return true // Allow on error
+      }
+
+      const currentChannels = (channels ?? []).length
+      return currentChannels < features.maxChannels
+    }
+
+    if (action === 'storage') {
+      // Plan storage limits: free=100MB, starter=500MB, growth=2000MB, scale=unlimited
+      const storageLimits: Record<PlanName, number> = {
+        free: 100,
+        starter: 500,
+        growth: 2000,
+        scale: 99999,
+      }
+
+      const limit = storageLimits[plan]
+
+      // Query current storage usage (simplified: count attachments)
+      const { data: files, error } = await client
+        .from('attachments')
+        .select('size:sum')
+        .eq('org_id', orgId)
+
+      if (error) {
+        console.warn('[plan-gates] Failed to check storage:', error.message)
+        return true // Allow on error
+      }
+
+      const currentUsageMB = ((files?.[0]?.size as number) ?? 0) / (1024 * 1024)
+      return currentUsageMB < limit
+    }
+
+    // Unknown action: allow
+    return true
+  } catch (err) {
+    console.warn('[plan-gates] Error checking plan gate:', action, err)
+    return true // Allow on error
+  }
+}
