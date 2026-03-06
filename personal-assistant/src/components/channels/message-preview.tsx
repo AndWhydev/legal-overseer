@@ -1,6 +1,6 @@
 'use client'
 
-import { Mail, MessageCircle, Calendar, Bell, Search, CheckSquare, CreditCard, CalendarClock, Send } from 'lucide-react'
+import { Mail, MessageCircle, Calendar, Bell, Search, CheckSquare, CreditCard, CalendarClock, Send, BarChart3 } from 'lucide-react'
 import type { ChannelMessage, ChannelType } from '@/lib/channels/types'
 
 const channelIcons: Record<ChannelType, React.ComponentType<{ className?: string }>> = {
@@ -15,6 +15,7 @@ const channelIcons: Record<ChannelType, React.ComponentType<{ className?: string
   stripe: CreditCard,
   telegram: Send,
   gsc: Search,
+  xero: BarChart3,
 }
 
 interface MessagePreviewProps {
