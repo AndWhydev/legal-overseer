@@ -85,6 +85,15 @@ const CONNECTIONS: Connection[] = [
     color: '#25D366',
     auth: 'api_key',
   },
+  {
+    id: 'facebook-messenger',
+    name: 'Facebook Messenger',
+    description: 'Messaging via Meta',
+    category: 'communication',
+    icon: 'MessageCircle',
+    color: '#0A66C2',
+    auth: 'api_key',
+  },
 ];
 
 const ICON_MAP: Record<string, LucideIcon> = {

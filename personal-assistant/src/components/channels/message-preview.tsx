@@ -19,6 +19,7 @@ const channelIcons: Record<ChannelType, React.ComponentType<{ className?: string
   ga4: BarChart3,
   wordpress: Globe,
   cluely: Mic,
+  facebook: MessageCircle,
 }
 
 interface MessagePreviewProps {
