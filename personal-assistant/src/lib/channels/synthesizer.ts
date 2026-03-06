@@ -17,6 +17,7 @@ import { wordpressAdapter } from './wordpress'
 import { cluelyAdapter } from './cluely'
 import { facebookMessengerAdapter } from './facebook-messenger'
 import { xeroAdapter } from './xero'
+import { instagramAdapter } from './instagram'
 import { waitForRateLimit } from './rate-limiter'
 import { checkAllChannelHealth, storeHealthReports } from './health'
 import type { ChannelHealthReport } from './health'
@@ -43,6 +44,7 @@ const adapters: Partial<Record<ChannelType, ChannelAdapter>> = {
   cluely: cluelyAdapter,
   facebook: facebookMessengerAdapter,
   xero: xeroAdapter,
+  instagram: instagramAdapter,
 }
 
 export function getAdapter(type: ChannelType): ChannelAdapter | undefined {
