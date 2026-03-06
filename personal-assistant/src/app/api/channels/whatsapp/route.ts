@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server'
-import crypto from 'crypto'
 import { createClient } from '@supabase/supabase-js'
 import { processWhatsAppMessage } from '@/lib/channels/whatsapp-parser'
 import { transcribeVoiceNote, downloadWhatsAppMedia } from '@/lib/channels/whatsapp-voice'
+import { verifyHmacSignature } from '@/lib/security/webhook-verification'
 
 const VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN
 const APP_SECRET = process.env.WHATSAPP_APP_SECRET
@@ -58,12 +58,12 @@ export async function POST(request: Request) {
     const webhookStartMs = Date.now()
     const bodyText = await request.text()
 
-    // Verify Webhook Signature if secret exists
+    // Verify Webhook Signature if secret exists (timing-safe comparison)
     if (APP_SECRET) {
         const signature = request.headers.get('x-hub-signature-256')
         if (signature) {
-            const expected = 'sha256=' + crypto.createHmac('sha256', APP_SECRET).update(bodyText).digest('hex')
-            if (signature !== expected) {
+            const isValid = verifyHmacSignature(bodyText, signature, APP_SECRET, 'sha256=')
+            if (!isValid) {
                 console.warn('WhatsApp webhook signature mismatch')
                 return new NextResponse('Invalid signature', { status: 401 })
             }

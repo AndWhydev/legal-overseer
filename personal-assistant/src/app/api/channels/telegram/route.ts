@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { handleTelegramMessage } from '@/lib/channels/telegram-handler'
+import { timingSafeCompare } from '@/lib/security/webhook-verification'
 import { after } from 'next/server'
 
 const DEFAULT_ORG_ID = '289083e9-2143-44eb-9b6a-cfc615f1e81c'
@@ -22,8 +23,8 @@ export async function POST(request: NextRequest) {
   const expectedSecret = process.env.TELEGRAM_WEBHOOK_SECRET
   if (expectedSecret) {
     const secret = request.headers.get('x-telegram-bot-api-secret-token')
-    if (secret !== expectedSecret) {
-      console.warn('Telegram webhook: secret mismatch', { got: secret?.slice(0, 8), expected: expectedSecret.slice(0, 8) })
+    if (!secret || !timingSafeCompare(secret, expectedSecret)) {
+      console.warn('Telegram webhook: secret mismatch')
       return NextResponse.json({ ok: false }, { status: 403 })
     }
   }

@@ -31,7 +31,24 @@ function getClientIp(request: NextRequest): string {
 }
 
 function applySecurityHeaders(response: NextResponse): NextResponse {
+  // Content Security Policy — prevents inline script injection
   response.headers.set('Content-Security-Policy', CONTENT_SECURITY_POLICY)
+
+  // Prevent MIME type sniffing attacks (forces browser to respect Content-Type header)
+  response.headers.set('X-Content-Type-Options', 'nosniff')
+
+  // Control referrer information sent with requests (privacy + security)
+  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
+
+  // Prevent clickjacking by denying framing in iframes
+  response.headers.set('X-Frame-Options', 'DENY')
+
+  // Enable HTTP Strict Transport Security (HSTS) in production
+  // Forces HTTPS for 1 year, including subdomains
+  if (process.env.NODE_ENV === 'production') {
+    response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload')
+  }
+
   return response
 }
 

@@ -21,12 +21,34 @@ const ebGaramond = EB_Garamond({
 });
 
 export const metadata: Metadata = {
-  title: "BitBit",
+  title: "BitBit — Your AI Business Operations Assistant",
   description: "An AI that knows your world. BitBit integrates deeply with your life and business, modular, adaptive, and human-centered.",
   icons: {
     icon: "/bitbit-logo.svg",
     shortcut: "/bitbit-logo.svg",
     apple: "/bitbit-logo-192.png",
+  },
+  openGraph: {
+    title: "BitBit — Your AI Business Operations Assistant",
+    description: "An AI that knows your world. BitBit integrates deeply with your life and business.",
+    type: "website",
+    locale: "en_US",
+    url: "https://bitbit.chat",
+    siteName: "BitBit",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "BitBit — Your AI Business Operations Assistant",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "BitBit — Your AI Business Operations Assistant",
+    description: "An AI that knows your world.",
+    images: ["/og-image.png"],
   },
 };
 

@@ -10,18 +10,28 @@ interface WindowEntry {
 
 const windows = new Map<string, WindowEntry>()
 
-// Cleanup stale entries every 60s
-let cleanupScheduled = false
+// Cleanup stale entries every 60s to prevent unbounded memory growth
+let cleanupHandle: NodeJS.Timeout | null = null
 function scheduleCleanup() {
-  if (cleanupScheduled) return
-  cleanupScheduled = true
-  setInterval(() => {
+  if (cleanupHandle) return
+
+  cleanupHandle = setInterval(() => {
     const cutoff = Date.now() - 120_000
+    let deleted = 0
     for (const [key, entry] of windows) {
       entry.timestamps = entry.timestamps.filter(t => t > cutoff)
-      if (entry.timestamps.length === 0) windows.delete(key)
+      if (entry.timestamps.length === 0) {
+        windows.delete(key)
+        deleted++
+      }
+    }
+    if (deleted > 0) {
+      console.debug(`[rate-limiter] Cleaned up ${deleted} stale entries`)
     }
   }, 60_000)
+
+  // Allow process to exit even if cleanup interval is running
+  cleanupHandle.unref()
 }
 
 export interface RateLimitConfig {

@@ -120,7 +120,8 @@ function Nav() {
         </Link>
 
         <div className="hidden items-center gap-8 text-[13px] text-[#6b6560] md:flex">
-          <a href="#philosophy" className="transition-colors hover:text-[#1a1a1a]">About</a>
+          <Link href="/about" className="transition-colors hover:text-[#1a1a1a]">About</Link>
+          <Link href="/pricing" className="transition-colors hover:text-[#1a1a1a]">Pricing</Link>
           <a href="#how-it-works" className="transition-colors hover:text-[#1a1a1a]">How it works</a>
           <Link href="https://app.bitbit.chat/login" className="transition-colors hover:text-[#1a1a1a]">Sign in</Link>
         </div>
@@ -476,8 +477,8 @@ function Footer() {
         </span>
 
         <div className="flex items-center gap-6 text-[13px] text-[#6b6560]">
-          <a href="https://app.bitbit.chat/privacy" className="transition-colors hover:text-[#1a1a1a]">Privacy</a>
-          <a href="https://app.bitbit.chat/terms" className="transition-colors hover:text-[#1a1a1a]">Terms</a>
+          <a href="/privacy" className="transition-colors hover:text-[#1a1a1a]">Privacy</a>
+          <a href="/terms" className="transition-colors hover:text-[#1a1a1a]">Terms</a>
         </div>
 
         <p className="text-[12px] text-[#8b6f47]">
