@@ -2,18 +2,18 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { getOrgUsage, type OrgUsageSummary } from './usage'
 
 function createMockSupabase(args: {
-  agentActivity: Array<Record<string, unknown>>
+  agentRuns: Array<Record<string, unknown>>
 }) {
   const api = {
     from(table: string) {
-      if (table === 'agent_activity') {
+      if (table === 'agent_runs') {
         return {
           select: (fields: string) => ({
             eq: (key: string, value: unknown) => ({
               gte: (key: string, value: unknown) => ({
                 lte: (key: string, value: unknown) =>
                   Promise.resolve({
-                    data: args.agentActivity,
+                    data: args.agentRuns,
                     error: null,
                   })
               })
@@ -42,13 +42,13 @@ describe('getOrgUsage', () => {
 
   it('calculates token costs for input and output', async () => {
     const { supabase } = createMockSupabase({
-      agentActivity: [
+      agentRuns: [
         {
-          agent_type: 'lead_swarm',
-          input_tokens: 1_000_000,
-          output_tokens: 1_000_000,
-          metadata: { client_name: 'Acme Corp' },
+          tokens_in: 1_000_000,
+          tokens_out: 1_000_000,
+          trigger_payload: { client_name: 'Acme Corp' },
           created_at: '2026-03-10',
+          agent_configs: { agent_type: 'lead-swarm' },
         },
       ],
     })
@@ -62,38 +62,38 @@ describe('getOrgUsage', () => {
 
   it('aggregates usage by agent type', async () => {
     const { supabase } = createMockSupabase({
-      agentActivity: [
+      agentRuns: [
         {
-          agent_type: 'lead_swarm',
-          input_tokens: 500_000,
-          output_tokens: 500_000,
-          metadata: { client_name: 'Client A' },
+          tokens_in: 500_000,
+          tokens_out: 500_000,
+          trigger_payload: { client_name: 'Client A' },
           created_at: '2026-03-10',
+          agent_configs: { agent_type: 'lead-swarm' },
         },
         {
-          agent_type: 'lead_swarm',
-          input_tokens: 250_000,
-          output_tokens: 250_000,
-          metadata: { client_name: 'Client B' },
+          tokens_in: 250_000,
+          tokens_out: 250_000,
+          trigger_payload: { client_name: 'Client B' },
           created_at: '2026-03-11',
+          agent_configs: { agent_type: 'lead-swarm' },
         },
         {
-          agent_type: 'invoice_flow',
-          input_tokens: 100_000,
-          output_tokens: 200_000,
-          metadata: { client_name: 'Client A' },
+          tokens_in: 100_000,
+          tokens_out: 200_000,
+          trigger_payload: { client_name: 'Client A' },
           created_at: '2026-03-12',
+          agent_configs: { agent_type: 'invoice-flow' },
         },
       ],
     })
 
     const result = await getOrgUsage(supabase, 'org-1')
 
-    const leadSwarmUsage = result.byAgent.find((a) => a.agentType === 'lead_swarm')
-    const invoiceFlowUsage = result.byAgent.find((a) => a.agentType === 'invoice_flow')
+    const leadSwarmUsage = result.byAgent.find((a) => a.agentType === 'lead-swarm')
+    const invoiceFlowUsage = result.byAgent.find((a) => a.agentType === 'invoice-flow')
 
     expect(leadSwarmUsage).toEqual({
-      agentType: 'lead_swarm',
+      agentType: 'lead-swarm',
       inputTokens: 750_000,
       outputTokens: 750_000,
       invocations: 2,
@@ -101,7 +101,7 @@ describe('getOrgUsage', () => {
     })
 
     expect(invoiceFlowUsage).toEqual({
-      agentType: 'invoice_flow',
+      agentType: 'invoice-flow',
       inputTokens: 100_000,
       outputTokens: 200_000,
       invocations: 1,
@@ -109,29 +109,29 @@ describe('getOrgUsage', () => {
     })
   })
 
-  it('aggregates usage by client from metadata', async () => {
+  it('aggregates usage by client from trigger_payload', async () => {
     const { supabase } = createMockSupabase({
-      agentActivity: [
+      agentRuns: [
         {
-          agent_type: 'lead_swarm',
-          input_tokens: 500_000,
-          output_tokens: 500_000,
-          metadata: { client_name: 'Acme Corp' },
+          tokens_in: 500_000,
+          tokens_out: 500_000,
+          trigger_payload: { client_name: 'Acme Corp' },
           created_at: '2026-03-10',
+          agent_configs: { agent_type: 'lead-swarm' },
         },
         {
-          agent_type: 'invoice_flow',
-          input_tokens: 250_000,
-          output_tokens: 250_000,
-          metadata: { client_name: 'Acme Corp' },
+          tokens_in: 250_000,
+          tokens_out: 250_000,
+          trigger_payload: { client_name: 'Acme Corp' },
           created_at: '2026-03-11',
+          agent_configs: { agent_type: 'invoice-flow' },
         },
         {
-          agent_type: 'lead_swarm',
-          input_tokens: 100_000,
-          output_tokens: 200_000,
-          metadata: { client_name: 'TechStart Inc' },
+          tokens_in: 100_000,
+          tokens_out: 200_000,
+          trigger_payload: { client_name: 'TechStart Inc' },
           created_at: '2026-03-12',
+          agent_configs: { agent_type: 'lead-swarm' },
         },
       ],
     })
@@ -158,20 +158,20 @@ describe('getOrgUsage', () => {
 
   it('handles missing client_name as "Unattributed"', async () => {
     const { supabase } = createMockSupabase({
-      agentActivity: [
+      agentRuns: [
         {
-          agent_type: 'lead_swarm',
-          input_tokens: 100_000,
-          output_tokens: 100_000,
-          metadata: null,
+          tokens_in: 100_000,
+          tokens_out: 100_000,
+          trigger_payload: null,
           created_at: '2026-03-10',
+          agent_configs: { agent_type: 'lead-swarm' },
         },
         {
-          agent_type: 'invoice_flow',
-          input_tokens: 50_000,
-          output_tokens: 50_000,
-          metadata: {},
+          tokens_in: 50_000,
+          tokens_out: 50_000,
+          trigger_payload: {},
           created_at: '2026-03-11',
+          agent_configs: { agent_type: 'invoice-flow' },
         },
       ],
     })
@@ -187,13 +187,13 @@ describe('getOrgUsage', () => {
 
   it('rounds costs to 2 decimal places', async () => {
     const { supabase } = createMockSupabase({
-      agentActivity: [
+      agentRuns: [
         {
-          agent_type: 'lead_swarm',
-          input_tokens: 123_456,
-          output_tokens: 654_321,
-          metadata: { client_name: 'Client A' },
+          tokens_in: 123_456,
+          tokens_out: 654_321,
+          trigger_payload: { client_name: 'Client A' },
           created_at: '2026-03-10',
+          agent_configs: { agent_type: 'lead-swarm' },
         },
       ],
     })
@@ -216,20 +216,20 @@ describe('getOrgUsage', () => {
 
   it('handles null token counts as zero', async () => {
     const { supabase } = createMockSupabase({
-      agentActivity: [
+      agentRuns: [
         {
-          agent_type: 'lead_swarm',
-          input_tokens: null,
-          output_tokens: null,
-          metadata: { client_name: 'Client A' },
+          tokens_in: null,
+          tokens_out: null,
+          trigger_payload: { client_name: 'Client A' },
           created_at: '2026-03-10',
+          agent_configs: { agent_type: 'lead-swarm' },
         },
         {
-          agent_type: 'invoice_flow',
-          input_tokens: 100_000,
-          output_tokens: undefined,
-          metadata: { client_name: 'Client B' },
+          tokens_in: 100_000,
+          tokens_out: undefined,
+          trigger_payload: { client_name: 'Client B' },
           created_at: '2026-03-11',
+          agent_configs: { agent_type: 'invoice-flow' },
         },
       ],
     })
@@ -242,7 +242,7 @@ describe('getOrgUsage', () => {
 
   it('generates period string in ISO format', async () => {
     const { supabase } = createMockSupabase({
-      agentActivity: [],
+      agentRuns: [],
     })
 
     const customStart = new Date('2026-03-01T00:00:00.000Z')
@@ -255,7 +255,7 @@ describe('getOrgUsage', () => {
 
   it('uses current month by default', async () => {
     const { supabase } = createMockSupabase({
-      agentActivity: [],
+      agentRuns: [],
     })
 
     const result = await getOrgUsage(supabase, 'org-1')
@@ -267,41 +267,41 @@ describe('getOrgUsage', () => {
 
   it('counts invocations correctly per agent', async () => {
     const { supabase } = createMockSupabase({
-      agentActivity: [
+      agentRuns: [
         {
-          agent_type: 'lead_swarm',
-          input_tokens: 100_000,
-          output_tokens: 100_000,
-          metadata: { client_name: 'Client A' },
+          tokens_in: 100_000,
+          tokens_out: 100_000,
+          trigger_payload: { client_name: 'Client A' },
           created_at: '2026-03-10',
+          agent_configs: { agent_type: 'lead-swarm' },
         },
         {
-          agent_type: 'lead_swarm',
-          input_tokens: 100_000,
-          output_tokens: 100_000,
-          metadata: { client_name: 'Client A' },
+          tokens_in: 100_000,
+          tokens_out: 100_000,
+          trigger_payload: { client_name: 'Client A' },
           created_at: '2026-03-11',
+          agent_configs: { agent_type: 'lead-swarm' },
         },
         {
-          agent_type: 'lead_swarm',
-          input_tokens: 100_000,
-          output_tokens: 100_000,
-          metadata: { client_name: 'Client B' },
+          tokens_in: 100_000,
+          tokens_out: 100_000,
+          trigger_payload: { client_name: 'Client B' },
           created_at: '2026-03-12',
+          agent_configs: { agent_type: 'lead-swarm' },
         },
       ],
     })
 
     const result = await getOrgUsage(supabase, 'org-1')
 
-    const leadSwarmUsage = result.byAgent.find((a) => a.agentType === 'lead_swarm')
+    const leadSwarmUsage = result.byAgent.find((a) => a.agentType === 'lead-swarm')
 
     expect(leadSwarmUsage?.invocations).toBe(3)
   })
 
   it('returns empty structure for no activity', async () => {
     const { supabase } = createMockSupabase({
-      agentActivity: [],
+      agentRuns: [],
     })
 
     const result = await getOrgUsage(supabase, 'org-1')
@@ -315,20 +315,20 @@ describe('getOrgUsage', () => {
 
   it('handles unknown agent type gracefully', async () => {
     const { supabase } = createMockSupabase({
-      agentActivity: [
+      agentRuns: [
         {
-          agent_type: null,
-          input_tokens: 100_000,
-          output_tokens: 100_000,
-          metadata: { client_name: 'Client A' },
+          tokens_in: 100_000,
+          tokens_out: 100_000,
+          trigger_payload: { client_name: 'Client A' },
           created_at: '2026-03-10',
+          agent_configs: null,
         },
         {
-          agent_type: undefined,
-          input_tokens: 50_000,
-          output_tokens: 50_000,
-          metadata: { client_name: 'Client A' },
+          tokens_in: 50_000,
+          tokens_out: 50_000,
+          trigger_payload: { client_name: 'Client A' },
           created_at: '2026-03-11',
+          agent_configs: undefined,
         },
       ],
     })
@@ -343,13 +343,13 @@ describe('getOrgUsage', () => {
 
   it('applies correct pricing tiers (3.0 per M input, 15.0 per M output)', async () => {
     const { supabase } = createMockSupabase({
-      agentActivity: [
+      agentRuns: [
         {
-          agent_type: 'test_agent',
-          input_tokens: 2_000_000, // 2M * $3 = $6
-          output_tokens: 1_000_000, // 1M * $15 = $15
-          metadata: { client_name: 'Client A' },
+          tokens_in: 2_000_000, // 2M * $3 = $6
+          tokens_out: 1_000_000, // 1M * $15 = $15
+          trigger_payload: { client_name: 'Client A' },
           created_at: '2026-03-10',
+          agent_configs: { agent_type: 'test-agent' },
         },
       ],
     })
@@ -363,20 +363,20 @@ describe('getOrgUsage', () => {
 
   it('correctly aggregates multiple activities for same agent/client', async () => {
     const { supabase } = createMockSupabase({
-      agentActivity: [
+      agentRuns: [
         {
-          agent_type: 'lead_swarm',
-          input_tokens: 100_000,
-          output_tokens: 100_000,
-          metadata: { client_name: 'Acme Corp' },
+          tokens_in: 100_000,
+          tokens_out: 100_000,
+          trigger_payload: { client_name: 'Acme Corp' },
           created_at: '2026-03-10',
+          agent_configs: { agent_type: 'lead-swarm' },
         },
         {
-          agent_type: 'lead_swarm',
-          input_tokens: 100_000,
-          output_tokens: 100_000,
-          metadata: { client_name: 'Acme Corp' },
+          tokens_in: 100_000,
+          tokens_out: 100_000,
+          trigger_payload: { client_name: 'Acme Corp' },
           created_at: '2026-03-11',
+          agent_configs: { agent_type: 'lead-swarm' },
         },
       ],
     })

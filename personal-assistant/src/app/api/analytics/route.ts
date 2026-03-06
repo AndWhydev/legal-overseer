@@ -3,6 +3,7 @@ import { createClient, isSupabaseConfigured } from '@/lib/supabase/server'
 import { calculateMRR } from '@/lib/analytics/mrr'
 import { getOrgUsage } from '@/lib/analytics/usage'
 import { detectChurnRisk, generateRetentionActions } from '@/lib/analytics/churn'
+import { getActiveOrgId } from '@/lib/tenancy'
 
 export async function GET(req: NextRequest) {
   if (!isSupabaseConfigured()) {
@@ -31,9 +32,16 @@ export async function GET(req: NextRequest) {
       }
 
       // For 'all', include usage and churn too
-      const usage = orgId
-        ? await getOrgUsage(client, orgId)
-        : null
+      let usage = null
+      try {
+        const activeOrgId = orgId || (await getActiveOrgId(client, user.id))
+        if (activeOrgId) {
+          usage = await getOrgUsage(client, activeOrgId)
+        }
+      } catch (err) {
+        // Usage fetch is optional — don't fail the whole request
+        console.warn('[analytics] Failed to fetch usage:', err)
+      }
 
       const churnRisks = await detectChurnRisk(client)
       const retentionActions = generateRetentionActions(churnRisks)

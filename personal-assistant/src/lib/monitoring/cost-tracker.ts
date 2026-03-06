@@ -9,11 +9,16 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 
 // ─── Pricing per 1M tokens (USD) ─────────────────────────────────────────────
 const MODEL_PRICING: Record<string, { input: number; output: number }> = {
+  // Short names (as stored in agent_runs.model_used)
+  'haiku': { input: 0.25, output: 1.25 },
+  'sonnet': { input: 3.0, output: 15.0 },
+  'opus': { input: 15.0, output: 75.0 },
+  // Full model IDs (for compatibility)
   'claude-sonnet-4-20250514': { input: 3.0, output: 15.0 },
   'claude-haiku-3-20240307': { input: 0.25, output: 1.25 },
   'claude-opus-4-20250514': { input: 15.0, output: 75.0 },
   // Fallback for unknown models
-  default: { input: 3.0, output: 15.0 },
+  'default': { input: 3.0, output: 15.0 },
 };
 
 export interface CostEntry {
@@ -89,7 +94,9 @@ export async function getCostSummary(
 
   const { data: runs, error } = await supabase
     .from('agent_runs')
-    .select('id, agent_type, model, input_tokens, output_tokens, created_at')
+    .select(
+      'id, agent_config_id, model_used, tokens_in, tokens_out, created_at, agent_configs!inner(agent_type)'
+    )
     .gte('created_at', startDate.toISOString())
     .order('created_at', { ascending: true });
 
@@ -109,10 +116,10 @@ export async function getCostSummary(
   let totalOutput = 0;
 
   for (const run of entries) {
-    const model = run.model || 'unknown';
-    const agentType = run.agent_type || 'unknown';
-    const inputTokens = run.input_tokens || 0;
-    const outputTokens = run.output_tokens || 0;
+    const model = run.model_used || 'unknown';
+    const agentType = (run.agent_configs as { agent_type?: string } | null)?.agent_type || 'unknown';
+    const inputTokens = run.tokens_in || 0;
+    const outputTokens = run.tokens_out || 0;
     const cost = calculateCost(model, inputTokens, outputTokens);
     const dateKey = new Date(run.created_at).toISOString().slice(0, 10);
 

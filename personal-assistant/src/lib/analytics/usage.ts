@@ -58,15 +58,15 @@ export async function getOrgUsage(
 
   const period = `${start.toISOString().slice(0, 10)} to ${end.toISOString().slice(0, 10)}`
 
-  // Fetch agent activity logs with token counts
-  const { data: logs } = await client
-    .from('agent_activity')
-    .select('agent_type, input_tokens, output_tokens, metadata, created_at')
+  // Fetch agent runs with agent type via join
+  const { data: runs } = await client
+    .from('agent_runs')
+    .select('tokens_in, tokens_out, trigger_payload, agent_configs!inner(agent_type)')
     .eq('org_id', orgId)
     .gte('created_at', start.toISOString())
     .lte('created_at', end.toISOString())
 
-  const entries = logs ?? []
+  const entries = runs ?? []
 
   // Aggregate by agent
   const agentMap = new Map<string, AgentUsage>()
@@ -74,9 +74,9 @@ export async function getOrgUsage(
   let totalCost = 0
 
   for (const entry of entries) {
-    const agentType = (entry.agent_type as string) ?? 'unknown'
-    const inputT = (entry.input_tokens as number) ?? 0
-    const outputT = (entry.output_tokens as number) ?? 0
+    const agentType = (entry.agent_configs as { agent_type?: string } | null)?.agent_type ?? 'unknown'
+    const inputT = (entry.tokens_in as number) ?? 0
+    const outputT = (entry.tokens_out as number) ?? 0
     const cost = tokenCost(inputT, outputT)
 
     if (!agentMap.has(agentType)) {
@@ -99,14 +99,14 @@ export async function getOrgUsage(
     totalCost += cost
   }
 
-  // Aggregate by client (from metadata.client_name)
+  // Aggregate by client (from trigger_payload.client_name if available)
   const clientMap = new Map<string, ClientCost>()
 
   for (const entry of entries) {
-    const meta = entry.metadata as Record<string, unknown> | null
-    const clientName = (meta?.client_name as string) ?? 'Unattributed'
-    const inputT = (entry.input_tokens as number) ?? 0
-    const outputT = (entry.output_tokens as number) ?? 0
+    const payload = entry.trigger_payload as Record<string, unknown> | null
+    const clientName = (payload?.client_name as string) ?? 'Unattributed'
+    const inputT = (entry.tokens_in as number) ?? 0
+    const outputT = (entry.tokens_out as number) ?? 0
 
     if (!clientMap.has(clientName)) {
       clientMap.set(clientName, { clientName, tokens: 0, costUSD: 0, actions: 0 })
