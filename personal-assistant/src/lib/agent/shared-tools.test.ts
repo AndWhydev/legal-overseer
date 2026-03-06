@@ -19,6 +19,7 @@ vi.mock('@/lib/context/entity-resolver', () => ({
 
 vi.mock('@/lib/context/timeline-writer', () => ({
   writeTaskEvent: vi.fn(),
+  writeInvoiceEvent: vi.fn(),
 }))
 
 vi.mock('@/lib/context/relationship-linker', () => ({

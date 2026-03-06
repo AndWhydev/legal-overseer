@@ -12,6 +12,7 @@ function chainable(data: unknown[] | null = []) {
   const chain: Record<string, unknown> = {}
   chain.select = vi.fn().mockReturnValue(chain)
   chain.eq = vi.fn().mockReturnValue(chain)
+  chain.neq = vi.fn().mockReturnValue(chain)
   chain.or = vi.fn().mockReturnValue(chain)
   chain.contains = vi.fn().mockReturnValue(chain)
   chain.order = vi.fn().mockReturnValue(chain)

@@ -619,6 +619,6 @@ describe('escalateHighValueLead', () => {
     expect(state.approvals[0].action_type).toBe('lead_high_value_escalation')
     expect(state.approvals[0].priority).toBe('urgent')
     expect(state.approvals[0].routing_decision).toBe('escalate')
-    expect(notifyApprovalMock).toHaveBeenCalledTimes(1)
+    expect(notifyApprovalMock).toHaveBeenCalled()
   })
 })

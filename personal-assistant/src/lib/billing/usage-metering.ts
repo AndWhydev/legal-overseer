@@ -55,7 +55,7 @@ export async function getUsage(
   try {
     // Determine date range
     let startDate: Date
-    let endDate = new Date()
+    const endDate = new Date()
 
     if (period === 'current_month') {
       // First of current month to now
