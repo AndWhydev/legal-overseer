@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { AgentRun, ModelTier } from '@/lib/bitbit-core'
+import { trackUsage } from '@/lib/billing/usage-metering'
 
 /**
  * Cost per million tokens by model tier (USD).
@@ -77,6 +78,17 @@ export async function logAgentRun(
     if (error) {
       console.warn('[run-logger] Failed to log agent run:', error.message)
       return null
+    }
+
+    // Track usage metrics
+    try {
+      await trackUsage(supabase, run.org_id, 'agent_run', 1)
+      const totalTokens = run.tokens_in + run.tokens_out
+      if (totalTokens > 0) {
+        await trackUsage(supabase, run.org_id, 'token_usage', totalTokens)
+      }
+    } catch (err) {
+      console.warn('[run-logger] Failed to track usage:', err)
     }
 
     return { id: data.id }
