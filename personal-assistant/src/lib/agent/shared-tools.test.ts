@@ -24,6 +24,7 @@ vi.mock('@/lib/context/timeline-writer', () => ({
 
 vi.mock('@/lib/context/relationship-linker', () => ({
   linkTaskToContact: vi.fn(),
+  linkInvoiceToContact: vi.fn(),
 }))
 
 import {
