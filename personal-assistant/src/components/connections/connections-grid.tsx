@@ -19,6 +19,7 @@ interface Connection {
   icon: string;
   color: string;
   auth: 'oauth' | 'api_key';
+  comingSoon?: boolean;
 }
 
 const CONNECTIONS: Connection[] = [
@@ -91,8 +92,39 @@ const CONNECTIONS: Connection[] = [
     description: 'Messaging via Meta',
     category: 'communication',
     icon: 'MessageCircle',
-    color: '#0A66C2',
-    auth: 'api_key',
+    color: '#0084FF',
+    auth: 'oauth',
+    comingSoon: true,
+  },
+  {
+    id: 'instagram',
+    name: 'Instagram',
+    description: 'DMs and story mentions',
+    category: 'communication',
+    icon: 'MessageCircle',
+    color: '#E4405F',
+    auth: 'oauth',
+    comingSoon: true,
+  },
+  {
+    id: 'slack',
+    name: 'Slack',
+    description: 'Team messaging and channels',
+    category: 'communication',
+    icon: 'MessageCircle',
+    color: '#4A154B',
+    auth: 'oauth',
+    comingSoon: true,
+  },
+  {
+    id: 'xero',
+    name: 'Xero',
+    description: 'Accounting and invoicing',
+    category: 'finance',
+    icon: 'CreditCard',
+    color: '#13B5EA',
+    auth: 'oauth',
+    comingSoon: true,
   },
 ];
 
@@ -135,7 +167,7 @@ function ConnectionCard({
   const Icon = ICON_MAP[connection.icon];
 
   return (
-    <div className="bg-[#1A1A1A] border border-[#333] rounded-xl p-5 hover:border-[#D4A574]/30 transition-all">
+    <div className={`bg-[#1A1A1A] border border-[#333] rounded-xl p-5 transition-all ${connection.comingSoon ? 'opacity-60' : 'hover:border-[#D4A574]/30'}`}>
       {/* Icon + Header */}
       <div className="flex items-start gap-3 mb-3">
         <div
@@ -153,7 +185,9 @@ function ConnectionCard({
       {/* Status + Button Row */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          {status.connected ? (
+          {connection.comingSoon ? (
+            <span className="text-xs font-medium text-[#D4A574]/70">Coming Soon</span>
+          ) : status.connected ? (
             <>
               <div className="w-2 h-2 rounded-full bg-[#22C55E]" />
               <span className="text-xs font-medium text-[#22C55E]">Connected</span>
@@ -163,7 +197,11 @@ function ConnectionCard({
           )}
         </div>
 
-        {status.connected ? (
+        {connection.comingSoon ? (
+          <span className="text-xs font-medium px-3 py-1.5 rounded-lg bg-[#333]/50 text-[#94A3B8]/50 cursor-default">
+            Connect
+          </span>
+        ) : status.connected ? (
           <button
             onClick={() => onDisconnect(connection.id)}
             disabled={isLoading}

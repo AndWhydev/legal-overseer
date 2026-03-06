@@ -365,21 +365,33 @@ export class BaileysBridge {
         } else {
           const buffer = await baileys.downloadMediaMessage(msg, 'buffer', {})
           // Dynamic import to avoid circular dependency
-          const { transcribeVoiceNote } = await import('./whatsapp-voice')
-          const transcription = await transcribeVoiceNote(Buffer.from(buffer), mimeType)
+          const { transcribeVoiceNote, getFallbackMessage } = await import('./voice-transcription')
+          const result = await transcribeVoiceNote(Buffer.from(buffer), mimeType)
           transcribeMs = Date.now() - transcribeStartMs
 
-          if (transcription) {
-            body = transcription
-            metadata = { ...metadata, voice_note: true, original_mime_type: mimeType }
+          if (result.success && result.text) {
+            body = result.text
+            metadata = {
+              ...metadata,
+              voice_note: true,
+              original_mime_type: mimeType,
+              transcription_duration: result.duration,
+              transcription_language: result.language,
+            }
           } else {
-            body = '[Voice note - transcription unavailable]'
-            metadata = { ...metadata, voice_note: true, transcription_failed: true }
+            body = getFallbackMessage(true)
+            metadata = {
+              ...metadata,
+              voice_note: true,
+              transcription_failed: true,
+              transcription_error: result.error,
+            }
           }
         }
       } catch (err) {
         console.error('[baileys-bridge] Failed to process voice note:', err)
-        body = '[Voice note - transcription unavailable]'
+        const { getFallbackMessage } = await import('./voice-transcription')
+        body = getFallbackMessage(true)
         metadata = { ...metadata, voice_note: true, transcription_failed: true }
       }
     } else {

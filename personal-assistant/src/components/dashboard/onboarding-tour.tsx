@@ -17,39 +17,39 @@ interface TourStep {
 const TOUR_STEPS: TourStep[] = [
   {
     id: 'welcome',
-    title: 'Welcome to BitBit',
-    description: 'Your personal command center. Let me show you around in 30 seconds.',
+    title: 'Welcome back!',
+    description: 'BitBit is ready to help. Let me show you around in 30 seconds.',
     icon: Gauge,
     position: 'center',
   },
   {
     id: 'command-center',
-    title: 'Command Center',
-    description: 'This is your home base. See pending approvals, hot leads, overdue tasks, and quick actions all in one place.',
+    title: 'Dashboard',
+    description: 'Your command center. See pending approvals, hot leads, overdue tasks, and quick actions all in one place.',
     icon: Gauge,
     tabId: 'dashboard',
     position: 'center',
   },
   {
-    id: 'leads',
-    title: 'Leads Pipeline',
-    description: 'Track your sales pipeline from first contact to closed deal. BitBit automatically captures and scores new leads.',
+    id: 'chat',
+    title: 'Chat with BitBit',
+    description: 'Ask me anything. I can draft emails, manage tasks, look up information, and handle things on your behalf.',
     icon: Handshake,
-    tabId: 'leads',
+    tabId: 'chat',
     position: 'center',
   },
   {
     id: 'approvals',
-    title: 'Approve Agent Actions',
-    description: 'When BitBit agents want to send emails, create invoices, or take actions on your behalf, they ask for your approval here.',
+    title: 'Approvals',
+    description: 'When I want to send emails, create invoices, or take actions, I ask for your approval here. Stay in control.',
     icon: ShieldCheck,
     tabId: 'approvals',
     position: 'center',
   },
   {
     id: 'settings',
-    title: 'Settings & Integrations',
-    description: 'Connect your email, calendar, and other services. Configure how BitBit agents behave.',
+    title: 'Connections & Settings',
+    description: 'Connect your email, calendar, and other services here. Configure how I behave and what I can do.',
     icon: Settings,
     tabId: 'settings',
     position: 'center',
@@ -192,6 +192,13 @@ export function OnboardingTour({ onNavigate }: OnboardingTourProps) {
               color: 'var(--text-secondary)',
               cursor: 'pointer',
               padding: '4px',
+              transition: 'color 0.15s ease',
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLElement).style.color = 'var(--text-primary)';
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLElement).style.color = 'var(--text-secondary)';
             }}
             aria-label="Close tour"
           >
@@ -280,6 +287,13 @@ export function OnboardingTour({ onNavigate }: OnboardingTourProps) {
                     display: 'flex',
                     alignItems: 'center',
                     gap: '4px',
+                    transition: 'all 0.15s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLElement).style.background = 'rgba(255, 255, 255, 0.08)';
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLElement).style.background = 'transparent';
                   }}
                 >
                   <ArrowLeft size={14} /> Back
@@ -299,6 +313,13 @@ export function OnboardingTour({ onNavigate }: OnboardingTourProps) {
                   display: 'flex',
                   alignItems: 'center',
                   gap: '4px',
+                  transition: 'opacity 0.15s ease',
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLElement).style.opacity = '0.9';
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLElement).style.opacity = '1';
                 }}
               >
                 {isLast ? "Let's go!" : 'Next'} {!isLast && <ArrowRight size={14} />}
@@ -317,6 +338,13 @@ export function OnboardingTour({ onNavigate }: OnboardingTourProps) {
               color: 'var(--text-secondary)',
               cursor: 'pointer',
               fontSize: '12px',
+              transition: 'color 0.15s ease',
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLElement).style.color = 'var(--text-primary)';
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLElement).style.color = 'var(--text-secondary)';
             }}
           >
             Skip tour

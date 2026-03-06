@@ -12,6 +12,7 @@ import { startTransition } from 'react';
 import { Menu } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { SidebarNav } from './sidebar-nav';
+import { BottomNav } from './bottom-nav';
 import { BitBitOverlay } from './bitbit-overlay';
 import { SplashScreen } from './splash-screen';
 import { OnboardingTour } from './onboarding-tour';
@@ -370,6 +371,14 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
 
           <div className="bb-sidebar-area" data-open={sidebarOpen} id="bb-dashboard-sidebar">
             <SidebarNav
+              avatarFallback={initials}
+              displayName={displayName}
+              onSignOut={handleSignOut}
+              activeTabId={TABS[activeNavIndex].id}
+              onTabChange={handleTabChange}
+              tabs={visibleTabs}
+            />
+            <BottomNav
               avatarFallback={initials}
               displayName={displayName}
               onSignOut={handleSignOut}

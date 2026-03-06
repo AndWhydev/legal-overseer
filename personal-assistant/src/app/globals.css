@@ -511,62 +511,37 @@ body:has(main.landing-stack) main.landing-stack {
     grid-column: 1;
     grid-row: 2;
     z-index: 50;
+    width: 100%;
+    height: 56px;
+    display: flex;
+    align-items: stretch;
+    justify-content: flex-start;
+    background: #0A0F1A;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 0;
+    overflow: hidden;
+  }
+
+  html.light .bb-sidebar-area {
+    background: #FAFAFA;
+    border-top: 1px solid #E5E7EB;
   }
 
   .bb-spa-content {
     grid-column: 1;
     grid-row: 1;
+    padding-bottom: 56px;
   }
 
+  /* Hide SidebarNav on mobile — show BottomNav instead */
   .bb-sidebar {
-    position: relative;
-    flex-direction: row;
-    width: 100vw;
-    height: 56px;
-    border-right: none;
-    border-top: 1px solid var(--border-subtle);
-    padding: 0 4px;
-    align-items: center;
-    justify-content: space-around;
-    transform: none;
+    display: none !important;
   }
 
-  html.light .bb-sidebar {
-    border-top: 1px solid #E5E7EB;
-  }
-
-  .bb-sidebar__nav {
-    flex-direction: row;
-    width: 100%;
-    justify-content: space-around;
-    gap: 2px;
-    overflow-x: auto;
-    padding: 0 4px;
-    flex: initial;
-  }
-
-  .bb-sidebar__nav::-webkit-scrollbar {
-    display: none;
-  }
-
-  .bb-sidebar__item {
-    width: 40px;
-    height: 40px;
-    margin-bottom: 0;
-    flex-shrink: 0;
-  }
-
-  .bb-sidebar__indicator {
-    display: none;
-  }
-
-  .bb-sidebar__logo, .bb-sidebar__bottom, .bb-sidebar__avatar {
-    display: none;
-  }
-
-  /* Hide advanced tabs on mobile bottom bar */
-  .bb-sidebar__item[data-advanced="true"] {
-    display: none;
+  /* Show BottomNav on mobile */
+  .bb-bottom-nav {
+    display: flex;
+    flex: 1;
   }
 
   /* Hide tablet toggle on mobile */
@@ -575,8 +550,19 @@ body:has(main.landing-stack) main.landing-stack {
   }
 }
 
-/* ── Desktop: hide tablet toggle ─────────────────────────────────────── */
+/* ── Tablet (769–1024px): hide BottomNav ─────────────────────────────── */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .bb-bottom-nav {
+    display: none !important;
+  }
+}
+
+/* ── Desktop (>1024px): hide BottomNav, keep sidebar ─────────────────────── */
 @media (min-width: 1025px) {
+  .bb-bottom-nav {
+    display: none !important;
+  }
+
   .bb-sidebar-toggle {
     display: none;
   }
@@ -604,6 +590,15 @@ body:has(main.landing-stack) main.landing-stack {
 
 .bb-sidebar-toggle:hover {
   background: var(--bg-hover, rgba(255, 255, 255, 0.08));
+}
+
+/* ── Bottom nav item styling ────────────────────────────────────────────── */
+.bb-bottom-nav__item {
+  transition: color 0.15s ease;
+}
+
+.bb-bottom-nav__item:active {
+  opacity: 0.7;
 }
 
 /* ── Notification panel mobile positioning ────────────────────────────── */

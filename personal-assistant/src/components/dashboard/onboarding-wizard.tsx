@@ -8,7 +8,7 @@ import { BitBitLogoVideo } from '@/components/chat/bitbit-logo-video';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
-type WizardStep = 'connections' | 'crawling' | 'intro' | 'tour' | 'complete';
+type WizardStep = 'welcome' | 'connections' | 'crawling' | 'intro' | 'tour' | 'complete';
 
 interface SpotlightStop {
   selector: string;
@@ -21,35 +21,35 @@ const SPOTLIGHT_STOPS: SpotlightStop[] = [
   {
     selector: '.bb-sidebar-area',
     tabId: 'dashboard',
-    title: 'Navigation',
-    description: 'Everything lives in the sidebar. Jump between your dashboard, chat, inbox, and all your tools.',
+    title: 'Navigation Sidebar',
+    description: 'Jump between Dashboard, Chat, Inbox, and all your tools from here. Everything is just one click away.',
   },
   {
     selector: '#tabpanel-chat',
     tabId: 'chat',
     title: 'Chat with BitBit',
-    description: 'Ask me anything — draft emails, chase invoices, look up contacts. I work across all your connected services.',
+    description: 'Ask me anything — draft emails, chase invoices, look up contacts, manage tasks. I work across all your connected services.',
   },
   {
     selector: '#tabpanel-inbox',
     tabId: 'inbox',
     title: 'Unified Inbox',
-    description: "All your messages from every connected service in one place. I'll triage and prioritize them for you.",
+    description: "All your messages from every connected service in one place. I'll triage and prioritize them for you automatically.",
   },
   {
     selector: '#tabpanel-connections',
     tabId: 'connections',
     title: 'Connections',
-    description: "Add more services anytime. The more I'm connected to, the more I can help.",
+    description: "Add more services anytime. Connect Gmail, Calendar, WhatsApp, Slack, and more. The more I'm connected, the more I can help.",
   },
 ];
 
 const INTRO_MESSAGES = [
-  "Hey! I'm BitBit \u2014 your personal operations engine.",
+  "Hey! I'm BitBit — your personal operations engine.",
   "I just connected to your services and I'm already learning about your world.",
-  "I'll keep building context in the background \u2014 the more you use me, the smarter I get.",
+  "I'll keep building context in the background — the more you use me, the smarter I get.",
   "I can draft emails, chase invoices, manage your leads, and handle the boring stuff so you don't have to.",
-  "Let me show you around \u2014 it'll take 30 seconds.",
+  "Let me show you around — it'll take 60 seconds.",
 ];
 
 const STORAGE_KEY = 'bb-onboarding-complete';
@@ -64,11 +64,11 @@ interface OnboardingWizardProps {
 // ── Main Component ───────────────────────────────────────────────────────────
 
 export function OnboardingWizard({ onNavigate, onComplete }: OnboardingWizardProps) {
-  const [step, setStep] = useState<WizardStep>('connections');
+  const [step, setStep] = useState<WizardStep>('welcome');
   const [hasConnection, setHasConnection] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Poll for first connection
+  // Poll for first connection (only while on connections step)
   useEffect(() => {
     if (step !== 'connections') return;
 
@@ -84,14 +84,27 @@ export function OnboardingWizard({ onNavigate, onComplete }: OnboardingWizardPro
           if (pollRef.current) clearInterval(pollRef.current);
         }
       } catch {
-        // ignore
+        // ignore polling errors
       }
     };
 
     checkConnections();
     pollRef.current = setInterval(checkConnections, 3000);
-    return () => { if (pollRef.current) clearInterval(pollRef.current); };
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current);
+    };
   }, [step]);
+
+  // Cleanup polling on unmount
+  useEffect(() => {
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current);
+    };
+  }, []);
+
+  const advanceToConnections = useCallback(() => {
+    setStep('connections');
+  }, []);
 
   const advanceToCrawl = useCallback(() => {
     // Trigger 30-day backfill
@@ -99,10 +112,12 @@ export function OnboardingWizard({ onNavigate, onComplete }: OnboardingWizardPro
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ since: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString() }),
-    }).catch(() => { /* best effort */ });
+    }).catch(() => {
+      /* best effort */
+    });
 
     setStep('crawling');
-    // Auto-advance after a brief moment
+    // Auto-advance after crawl animation completes
     setTimeout(() => setStep('intro'), 2500);
   }, []);
 
@@ -133,6 +148,12 @@ export function OnboardingWizard({ onNavigate, onComplete }: OnboardingWizardPro
 
   return (
     <AnimatePresence mode="wait">
+      {step === 'welcome' && (
+        <StepWelcome
+          key="welcome"
+          onContinue={advanceToConnections}
+        />
+      )}
       {step === 'connections' && (
         <StepConnections
           key="connections"
@@ -160,7 +181,108 @@ export function OnboardingWizard({ onNavigate, onComplete }: OnboardingWizardPro
   );
 }
 
-// ── Step 1: Connections ──────────────────────────────────────────────────────
+// ── Step 1: Welcome ──────────────────────────────────────────────────────────
+
+function StepWelcome({
+  onContinue,
+}: {
+  onContinue: () => void;
+}) {
+  return (
+    <motion.div
+      className="bb-onboarding-wizard"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.3 }}
+    >
+      <div className="bb-onboarding-wizard__backdrop" />
+      <div className="bb-onboarding-wizard__content">
+        <div className="bb-onboarding-wizard__panel" style={{ maxWidth: 520 }}>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ marginBottom: 24 }}>
+              <div style={{ display: 'inline-block', marginBottom: 16 }}>
+                <BitBitLogoVideo size={64} variant="pulse" />
+              </div>
+            </div>
+            <h1 style={{
+              fontSize: 32,
+              fontWeight: 700,
+              color: 'var(--text-primary)',
+              margin: '0 0 12px',
+              lineHeight: 1.2,
+            }}>
+              Welcome to BitBit
+            </h1>
+            <p style={{
+              fontSize: 16,
+              color: 'var(--text-secondary)',
+              margin: '0 0 32px',
+              lineHeight: 1.6,
+              maxWidth: 440,
+            }}>
+              Your personal operations engine. Connect your tools, and let me help you work smarter.
+            </p>
+
+            {/* Value props */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+              gap: 16,
+              marginBottom: 32,
+              textAlign: 'left',
+            }}>
+              {[
+                { label: 'Draft emails', desc: 'In your voice' },
+                { label: 'Chase invoices', desc: 'Never miss one' },
+                { label: 'Manage leads', desc: 'Stay organized' },
+                { label: 'Handle details', desc: 'You focus on what matters' },
+              ].map((item, i) => (
+                <div
+                  key={i}
+                  style={{
+                    padding: '12px 16px',
+                    borderRadius: 12,
+                    background: 'rgba(255, 90, 31, 0.08)',
+                    border: '1px solid rgba(255, 90, 31, 0.15)',
+                  }}
+                >
+                  <div style={{
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: 'var(--text-primary)',
+                    marginBottom: 2,
+                  }}>
+                    {item.label}
+                  </div>
+                  <div style={{
+                    fontSize: 12,
+                    color: 'var(--text-secondary)',
+                  }}>
+                    {item.desc}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <motion.button
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="bb-onboarding-wizard__btn-primary"
+              onClick={onContinue}
+              style={{ marginTop: 8 }}
+            >
+              Let's get started <ArrowRight size={16} />
+            </motion.button>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+// ── Step 2: Connections ──────────────────────────────────────────────────────
 
 function StepConnections({
   hasConnection,
@@ -199,7 +321,7 @@ function StepConnections({
               color: 'var(--text-secondary)',
               margin: 0,
             }}>
-              Connect at least one service to get started. BitBit gets smarter with every connection.
+              Connect at least one service to get started. The more connections, the smarter BitBit becomes.
             </p>
           </div>
 
@@ -216,6 +338,7 @@ function StepConnections({
               <motion.button
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.25 }}
                 className="bb-onboarding-wizard__btn-primary"
                 onClick={onContinue}
               >
@@ -226,7 +349,7 @@ function StepConnections({
               className="bb-onboarding-wizard__btn-skip"
               onClick={onSkip}
             >
-              Skip for now
+              {hasConnection ? 'Skip for now' : 'Continue without connecting'}
             </button>
           </div>
         </div>
@@ -235,7 +358,7 @@ function StepConnections({
   );
 }
 
-// ── Step 2: Crawling ─────────────────────────────────────────────────────────
+// ── Step 3: Crawling ─────────────────────────────────────────────────────────
 
 function StepCrawling() {
   return (
@@ -258,12 +381,12 @@ function StepCrawling() {
             color: 'var(--text-primary)',
             margin: '0 0 8px',
           }}>
-            BitBit is learning about your world...
+            BitBit is learning your world...
           </h2>
           <p style={{
             fontSize: 14,
             color: 'var(--text-secondary)',
-            margin: 0,
+            margin: '0 0 24px',
           }}>
             Pulling in the last 30 days of context. This continues in the background.
           </p>
@@ -276,7 +399,7 @@ function StepCrawling() {
   );
 }
 
-// ── Step 3: BitBit Intro ─────────────────────────────────────────────────────
+// ── Step 4: BitBit Intro ─────────────────────────────────────────────────────
 
 function StepIntro({
   onContinue,
@@ -377,7 +500,7 @@ function StepIntro({
   );
 }
 
-// ── Step 4: Spotlight Tour ───────────────────────────────────────────────────
+// ── Step 5: Spotlight Tour ───────────────────────────────────────────────────
 
 function StepTour({
   onNavigate,
