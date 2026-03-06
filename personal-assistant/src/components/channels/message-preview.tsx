@@ -15,6 +15,7 @@ const channelIcons: Record<ChannelType, React.ComponentType<{ className?: string
   stripe: CreditCard,
   telegram: Send,
   gsc: Search,
+  instagram: MessageCircle,
 }
 
 interface MessagePreviewProps {
