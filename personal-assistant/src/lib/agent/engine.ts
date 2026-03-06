@@ -1,6 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk'
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { getAgentTools, executeAgentTool } from './tools'
+import { getAgentTools, executeAgentTool, type ExecuteToolOptions } from './tools'
 import { buildEntityAwarePrompt } from './prompt-builder'
 import { selectModel, getModel } from './model-router'
 import { logAgentRun, estimateRunCost } from './run-logger'
@@ -30,6 +30,10 @@ export interface EngineConfig {
   agentConfigId?: string
   /** Skip cost guard check (e.g. for interactive chat vs background agents). */
   skipCostGuard?: boolean
+  /** Agent type for confidence routing defaults (e.g. 'lead-swarm', 'invoice-flow'). */
+  agentType?: string
+  /** Organization settings for confidence thresholds. */
+  orgSettings?: { confidence_thresholds?: { act?: number; ask?: number } }
 }
 
 export type StageId = 'cost_check' | 'model_routing' | 'context_assembly' | 'api_streaming' | 'tool_execution'
@@ -41,7 +45,16 @@ export type AgentEvent =
   | { type: 'plan'; data: { stages: PlanStage[] } }
   | { type: 'plan_stage_update'; data: { stageId: string; status: 'active' | 'done' | 'error' } }
   | { type: 'tool_call'; data: { name: string; input: unknown } }
-  | { type: 'tool_result'; data: { name: string; result: unknown; success: boolean } }
+  | {
+      type: 'tool_result'
+      data: {
+        name: string
+        result: unknown
+        success: boolean
+        queued?: boolean
+        approvalId?: string
+      }
+    }
   | { type: 'content_delta'; data: string }
   | { type: 'message'; data: string }
   | { type: 'error'; data: string }
@@ -291,17 +304,49 @@ export async function* runAgentChat(
       yield { type: 'stage', data: { stage: 'tool_execution', status: 'start', meta: { toolName: tool.name, iteration: iterationCount } } }
       yield { type: 'tool_call', data: { name: tool.name, input: tool.input } }
       try {
+        // Build execution options for confidence routing
+        let execOptions: ExecuteToolOptions | undefined
+        if (config.agentConfigId) {
+          execOptions = {
+            agentConfigId: config.agentConfigId,
+            orgSettings: config.orgSettings,
+            agentType: config.agentType,
+            // Confidence score would be provided by tool caller (e.g., LLM classification)
+            // For now, tools execute unconditionally unless explicitly provided
+            confidenceScore: undefined,
+          }
+        }
+
         const result = await executeAgentTool(
           tool.name,
           tool.input as Record<string, unknown>,
           config.orgId,
-          config.supabase
+          config.supabase,
+          execOptions
         )
         yield {
           type: 'tool_result',
-          data: { name: tool.name, result: result.data, success: result.success },
+          data: {
+            name: tool.name,
+            result: result.data,
+            success: result.success,
+            queued: result.queued,
+            approvalId: result.approvalId,
+          },
         }
-        yield { type: 'stage', data: { stage: 'tool_execution', status: 'done', meta: { toolName: tool.name, success: result.success } } }
+        yield {
+          type: 'stage',
+          data: {
+            stage: 'tool_execution',
+            status: 'done',
+            meta: {
+              toolName: tool.name,
+              success: result.success,
+              queued: result.queued,
+              approvalId: result.approvalId,
+            },
+          },
+        }
 
         // Mark matched plan stage as done
         if (matchedStage) {
@@ -317,8 +362,12 @@ export async function* runAgentChat(
         toolResults.push({
           type: 'tool_result',
           tool_use_id: tool.id,
-          content: result.success ? JSON.stringify(result.data) : `Error: ${result.error}`,
-          is_error: !result.success,
+          content: result.queued
+            ? `Action queued for approval (ID: ${result.approvalId}). Confidence: ${((result.data as any)?.confidence * 100 || 0).toFixed(0)}%`
+            : result.success
+              ? JSON.stringify(result.data)
+              : `Error: ${result.error}`,
+          is_error: !result.success && !result.queued,
         })
       } catch (err) {
         const errorMsg = err instanceof Error ? err.message : String(err)

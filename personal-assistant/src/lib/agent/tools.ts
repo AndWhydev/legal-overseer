@@ -2,6 +2,9 @@ import Anthropic from '@anthropic-ai/sdk'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { channelToolDefinitions, channelToolHandlers } from './tools/channel-tools'
 import { composeCreatorStudioDeck } from '@/lib/creator-studio'
+import { routeAgentAction } from './confidence-router'
+import { queueAgentAction } from './approval-queue'
+import { notifyApproval } from './approval-notifier'
 import {
   createTask,
   updateTask,
@@ -15,6 +18,8 @@ export interface ToolResult {
   success: boolean
   data?: unknown
   error?: string
+  queued?: boolean
+  approvalId?: string
 }
 
 export type AgentToolHandler = (
@@ -350,16 +355,73 @@ export function getAgentTools(): Anthropic.Tool[] {
   return [...toolDefinitions, ...channelToolDefinitions]
 }
 
+export interface ExecuteToolOptions {
+  agentConfigId?: string
+  agentConfig?: { confidence_thresholds?: { act?: number; ask?: number } }
+  orgSettings?: { confidence_thresholds?: { act?: number; ask?: number } }
+  confidenceScore?: number
+  agentType?: string
+}
+
 export async function executeAgentTool(
   name: string,
   input: Record<string, unknown>,
   orgId: string,
-  supabase: SupabaseClient
+  supabase: SupabaseClient,
+  options?: ExecuteToolOptions
 ): Promise<ToolResult> {
   const handler = allHandlers[name]
   if (!handler) {
     return { success: false, error: `Unknown tool: ${name}` }
   }
+
+  // Apply confidence routing if confidence score is provided and approval infrastructure exists
+  if (
+    options?.confidenceScore !== undefined &&
+    options?.agentConfigId &&
+    options?.confidenceScore >= 0 &&
+    options?.confidenceScore <= 1
+  ) {
+    const routing = routeAgentAction(
+      options.confidenceScore,
+      options.agentConfig,
+      options.orgSettings,
+      options.agentType
+    )
+
+    // If routing decision is 'ask' or 'escalate', queue for approval instead of executing
+    if (routing.decision === 'ask' || routing.decision === 'escalate') {
+      try {
+        const approval = await queueAgentAction(supabase, {
+          org_id: orgId,
+          agent_config_id: options.agentConfigId,
+          action_type: name,
+          action_payload: input,
+          action_summary: `Tool: ${name}`,
+          confidence_score: options.confidenceScore,
+          agentConfig: options.agentConfig,
+          orgSettings: options.orgSettings,
+        })
+
+        if (approval) {
+          // Trigger notification for the approval
+          await notifyApproval(supabase, approval).catch(err => {
+            console.warn(`[tools] notifyApproval failed for approval ${approval.id}:`, err)
+          })
+          return {
+            success: true,
+            queued: true,
+            approvalId: approval.id,
+            data: { routing: routing.decision, confidence: options.confidenceScore },
+          }
+        }
+      } catch (err) {
+        console.warn(`[tools] queueAgentAction failed:`, err)
+        // Fall through to execution on approval queue failure (fail open)
+      }
+    }
+  }
+
   try {
     return await handler(input, orgId, supabase)
   } catch (err) {

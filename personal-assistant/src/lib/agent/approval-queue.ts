@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { routeAgentAction } from './confidence-router'
 import { dispatchNotification } from '../notifications/dispatcher'
+import { notifyApproval } from './approval-notifier'
 
 type ApprovalPriority = 'urgent' | 'normal' | 'low'
 type ApprovalStatus = 'pending' | 'approved' | 'rejected' | 'expired' | 'auto_expired'
@@ -117,6 +118,11 @@ export async function createApproval(
     },
   }).catch(err => {
     console.warn('[approval-queue] Notification dispatch failed:', err)
+  })
+
+  // Trigger notifyApproval for WhatsApp/email notifications
+  notifyApproval(supabase, record).catch(err => {
+    console.warn('[approval-queue] notifyApproval failed:', err)
   })
 
   return record
