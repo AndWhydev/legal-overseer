@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { logger } from '@/lib/core/logger'
+import { buildMagicLinkOtpRequest } from '@/lib/auth/magic-link'
 
 export async function POST(request: Request) {
   const { email, redirectTo } = await request.json()
@@ -39,16 +40,25 @@ export async function POST(request: Request) {
     )
   }
 
-  const { error } = await supabase.auth.signInWithOtp({
-    email: normalizedEmail,
-    options: {
-      shouldCreateUser: false,
-      ...(redirectTo ? { emailRedirectTo: redirectTo } : {}),
+  const otpRequest = buildMagicLinkOtpRequest(
+    supabaseUrl,
+    normalizedEmail,
+    typeof redirectTo === 'string' ? redirectTo : undefined,
+  )
+
+  const res = await fetch(otpRequest.url, {
+    method: 'POST',
+    headers: {
+      'apikey': serviceRoleKey,
+      'Authorization': `Bearer ${serviceRoleKey}`,
+      'Content-Type': 'application/json',
     },
+    body: JSON.stringify(otpRequest.body),
   })
 
-  if (error) {
-    logger.error('[magic-link] OTP send failed:', error.message)
+  if (!res.ok) {
+    const body = await res.text()
+    logger.error('[magic-link] OTP send failed:', body)
     return NextResponse.json({ error: 'Failed to send sign-in email' }, { status: 500 })
   }
 
