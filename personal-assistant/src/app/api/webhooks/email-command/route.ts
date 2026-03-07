@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { processEmailCommand } from '@/lib/channels/email-command'
 import type { ChannelMessage } from '@/lib/channels/types'
+import { logger } from '@/lib/core/logger';
 
 const DEFAULT_ORG_ID = process.env.DEFAULT_ORG_ID || '00000000-0000-0000-0000-000000000000'
 

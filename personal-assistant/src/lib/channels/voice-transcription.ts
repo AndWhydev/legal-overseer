@@ -1,3 +1,4 @@
+import { logger } from '@/lib/core/logger';
 /**
  * Voice Note Transcription Pipeline
  *

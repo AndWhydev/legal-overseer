@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
+import { logger } from '@/lib/core/logger';
 
 interface ErrorBoundaryProps {
   children: React.ReactNode;

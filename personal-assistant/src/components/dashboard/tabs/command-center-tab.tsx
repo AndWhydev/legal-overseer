@@ -10,6 +10,7 @@ import { TabShell } from '@/components/ui/tab-shell';
 import { TabHeader } from '@/components/ui/tab-header';
 import { SectionCard } from '@/components/ui/section-card';
 import { EmptyState } from '@/components/ui/empty-state';
+import { logger } from '@/lib/core/logger';
 
 interface AgentRun {
   id: string;

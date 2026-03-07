@@ -1,4 +1,5 @@
 import type { ConfidenceThresholds, ConfidenceDecision } from '@/lib/bitbit-core'
+import { logger } from '@/lib/core/logger';
 export type { ConfidenceThresholds, ConfidenceDecision }
 
 export const DEFAULT_THRESHOLDS: ConfidenceThresholds = {

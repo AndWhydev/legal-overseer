@@ -2,6 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { resolveEntityRanked, type RankedContact } from '../context/entity-resolver'
 import { assembleContext } from '../context/assembler'
 import Anthropic from '@anthropic-ai/sdk'
+import { logger } from '@/lib/core/logger';
 
 export type Intent =
   | 'invoice'

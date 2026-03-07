@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { EntityRef, RelationshipType } from './types'
+import { logger } from '@/lib/core/logger';
 
 /**
  * Upsert an entity relationship. On conflict (same org + entities + type),

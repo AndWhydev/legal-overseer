@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { logger } from '@/lib/core/logger';
 
 /**
  * Dead letter queue for permanently failed agent actions.

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { getServiceClient } from '@/lib/supabase/service-client'
+import { logger } from '@/lib/core/logger';
 
 /**
  * Structured result returned by cron handler functions.

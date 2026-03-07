@@ -11,6 +11,7 @@ import {
   type WeeklyReportData,
 } from './email-templates'
 import { sendMessage as sendWhatsAppMessage } from '../channels/whatsapp'
+import { logger } from '@/lib/core/logger';
 
 export type NotificationType =
   | 'approval_needed'

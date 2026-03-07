@@ -47,6 +47,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { logSessionHealth } from './whatsapp-monitor'
 import type { WhatsAppSessionStatus } from './whatsapp-monitor'
 import { processWhatsAppMessage } from './whatsapp-parser'
+import { logger } from '@/lib/core/logger';
 
 // ---------------------------------------------------------------------------
 // Dynamic Baileys import — module works even if @whiskeysockets/baileys is

@@ -1,4 +1,5 @@
 import type { ChannelAdapter } from './types'
+import { logger } from '@/lib/core/logger';
 
 /**
  * Send a text message via Telegram Bot API.

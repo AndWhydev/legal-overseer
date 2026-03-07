@@ -1,5 +1,6 @@
 import { Resend } from 'resend'
 import { getAppUrl } from '@/lib/core/app-url'
+import { logger } from '@/lib/core/logger';
 
 function getResend() {
   return new Resend(process.env.RESEND_API_KEY || '')

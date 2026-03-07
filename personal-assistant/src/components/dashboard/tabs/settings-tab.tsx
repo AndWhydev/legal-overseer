@@ -12,6 +12,7 @@ import { createClient } from '@/lib/supabase/client';
 import { BBTabTitle } from '@/components/ui/bb-components';
 import { TabShell } from '@/components/ui/tab-shell';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { logger } from '@/lib/core/logger';
 
 // ─── Agent types ─────────────────────────────────────────────────────────────
 

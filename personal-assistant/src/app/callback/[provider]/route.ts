@@ -9,6 +9,7 @@ import {
 } from '@/lib/integrations/oauth'
 import { storeOrgCredential } from '@/lib/integrations/credentials'
 import { getActiveOrgId } from '@/lib/tenancy'
+import { logger } from '@/lib/core/logger';
 
 export async function GET(
   request: Request,

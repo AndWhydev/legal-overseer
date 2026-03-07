@@ -9,36 +9,17 @@
 import type { AgentType, AgentRegistryEntry } from '@/lib/bitbit-core'
 import { getRegisteredTypes, getAgentConfig, listAgents } from '@/lib/bitbit-core'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { logger } from '@/lib/core/logger';
 
 /**
  * Import all agent packages to trigger self-registration.
  * Each package calls registerAgent() on import.
- * Wrapped in try/catch so missing packages don't break startup.
+ *
+ * NOTE: Agent packages under @bitbit/* are not yet published.
+ * When they exist, add dynamic imports here. For now, agents
+ * register via direct imports in their respective route handlers.
  */
 export function loadAllAgents(): void {
-  const imports = [
-    () => import('@bitbit/agent-lead-swarm'),
-    () => import('@bitbit/agent-invoice-flow'),
-    () => import('@bitbit/agent-channel-triage'),
-    () => import('@bitbit/agent-client-comms'),
-    () => import('@bitbit/agent-proposal-bot'),
-    () => import('@bitbit/agent-ad-script-gen'),
-    () => import('@bitbit/agent-client-onboarding'),
-    () => import('@bitbit/agent-ai-search-optimizer'),
-    () => import('@bitbit/agent-tender-hunter'),
-    () => import('@bitbit/agent-sentry'),
-  ]
-
-  let loaded = 0
-  for (const load of imports) {
-    try {
-      load()
-      loaded++
-    } catch {
-      // Package not yet available — skip silently
-    }
-  }
-
   const types = getRegisteredTypes()
   logger.info(`[registry] Loaded ${types.length} agents: ${types.join(', ')}`)
 }

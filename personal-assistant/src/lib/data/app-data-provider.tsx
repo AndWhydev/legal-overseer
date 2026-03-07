@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { logger } from '@/lib/core/logger';
 
 interface AppData {
   tasks: Record<string, unknown>[];

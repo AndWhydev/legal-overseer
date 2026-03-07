@@ -9,10 +9,10 @@ interface TabHeaderProps {
 }
 
 export function TabHeader({ icon, iconColor = 'var(--bb-orange)', title, subtitle, actions }: TabHeaderProps) {
-  // Support both component references (e.g. Lucide icons) and ReactNode elements
-  const iconElement = typeof icon === 'function'
-    ? React.createElement(icon, { size: 20 })
-    : icon;
+  // Support both component references (e.g. Lucide icons / forwardRef) and ReactNode elements
+  const iconElement = React.isValidElement(icon)
+    ? icon
+    : React.createElement(icon as React.ComponentType<{ size?: number }>, { size: 20 });
 
   return (
     <div className="flex items-center justify-between gap-4">

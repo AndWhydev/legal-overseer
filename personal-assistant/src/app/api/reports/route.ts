@@ -6,6 +6,7 @@ import {
   generatePipelineReport,
 } from '@/lib/reports/generator'
 import { generateReportPDF } from '@/lib/reports/pdf-report'
+import { logger } from '@/lib/core/logger';
 
 export const dynamic = 'force-dynamic'
 

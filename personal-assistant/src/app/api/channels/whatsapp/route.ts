@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { processWhatsAppMessage } from '@/lib/channels/whatsapp-parser'
 import { transcribeVoiceNote, downloadWhatsAppMedia } from '@/lib/channels/whatsapp-voice'
 import { verifyHmacSignature } from '@/lib/security/webhook-verification'
+import { logger } from '@/lib/core/logger';
 
 const VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN
 const APP_SECRET = process.env.WHATSAPP_APP_SECRET

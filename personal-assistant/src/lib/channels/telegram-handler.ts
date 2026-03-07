@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { runAgentChat } from '@/lib/agent/engine'
 import { sendTelegramMessage } from './telegram'
+import { logger } from '@/lib/core/logger';
 
 /**
  * Handle an inbound Telegram message: run it through the agent engine

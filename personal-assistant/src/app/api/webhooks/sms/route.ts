@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { verifyWebhookSignature, receiveSMS } from '@/lib/channels/sms'
 import type { TelnyxWebhookPayload } from '@/lib/channels/sms'
+import { logger } from '@/lib/core/logger';
 
 const DEFAULT_ORG_ID = process.env.DEFAULT_ORG_ID || '00000000-0000-0000-0000-000000000000'
 

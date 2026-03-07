@@ -17,8 +17,21 @@ const LOG_LEVELS: Record<LogLevel, number> = {
 const MIN_LEVEL = LOG_LEVELS[(process.env.LOG_LEVEL as LogLevel) || 'info'];
 const IS_PROD = process.env.NODE_ENV === 'production';
 
-function log(level: LogLevel, message: string, meta?: Record<string, unknown>) {
+function log(level: LogLevel, message: string, ...args: unknown[]) {
   if (LOG_LEVELS[level] < MIN_LEVEL) return;
+
+  // Normalise variadic args into a single meta object
+  let meta: Record<string, unknown> | undefined;
+  if (args.length === 1) {
+    const a = args[0];
+    if (a && typeof a === 'object' && !Array.isArray(a)) {
+      meta = a as Record<string, unknown>;
+    } else {
+      meta = { detail: a };
+    }
+  } else if (args.length > 1) {
+    meta = { details: args };
+  }
 
   const entry: LogEntry = {
     level,
@@ -59,8 +72,8 @@ function log(level: LogLevel, message: string, meta?: Record<string, unknown>) {
 }
 
 export const logger = {
-  debug: (message: string, meta?: Record<string, unknown>) => log('debug', message, meta),
-  info: (message: string, meta?: Record<string, unknown>) => log('info', message, meta),
-  warn: (message: string, meta?: Record<string, unknown>) => log('warn', message, meta),
-  error: (message: string, meta?: Record<string, unknown>) => log('error', message, meta),
+  debug: (message: string, ...args: unknown[]) => log('debug', message, ...args),
+  info: (message: string, ...args: unknown[]) => log('info', message, ...args),
+  warn: (message: string, ...args: unknown[]) => log('warn', message, ...args),
+  error: (message: string, ...args: unknown[]) => log('error', message, ...args),
 };

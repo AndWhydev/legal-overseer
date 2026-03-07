@@ -6,6 +6,7 @@
  */
 
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { logger } from '@/lib/core/logger';
 
 export interface UptimeMetric {
   service: string;

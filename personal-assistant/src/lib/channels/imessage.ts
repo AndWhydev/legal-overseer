@@ -1,4 +1,5 @@
 import type { ChannelAdapter, ChannelMessage } from './types'
+import { logger } from '@/lib/core/logger'
 
 function appleEpochToDate(appleNanoseconds: number): Date {
   const unixSeconds = appleNanoseconds / 1_000_000_000 + 978307200
@@ -22,6 +23,7 @@ export const imessageAdapter: ChannelAdapter = {
 
     const pythonScript = `
 import sqlite3, json, os
+import { logger } from '@/lib/core/logger';
 
 def extract_text(blob):
     if not blob:

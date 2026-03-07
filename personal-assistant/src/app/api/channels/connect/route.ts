@@ -5,6 +5,7 @@ import { logAuditEvent } from '@/lib/audit/logger'
 import { getActiveOrgId } from '@/lib/tenancy'
 import { checkPlanGate } from '@/lib/billing/plan-gates'
 import { getAppUrl } from '@/lib/core/app-url'
+import { logger } from '@/lib/core/logger';
 
 const OAUTH_PROVIDER_MAP: Record<string, string> = {
   gmail: 'gmail',

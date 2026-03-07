@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { logAgentRun } from './run-logger'
+import { logger } from '@/lib/core/logger';
 import {
   runVisibilityAudit,
   getPreviousAudits,

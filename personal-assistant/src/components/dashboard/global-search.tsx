@@ -137,20 +137,17 @@ export function GlobalSearch({ onNavigate }: GlobalSearchProps) {
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-start justify-center pt-[15vh]"
+      className="bb-search-backdrop"
       onClick={() => setOpen(false)}
     >
-      {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
-
       {/* Modal */}
       <div
-        className="relative w-full max-w-xl mx-4 bg-card border border-border rounded-2xl shadow-2xl overflow-hidden"
+        className="bb-search-panel"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Search input */}
-        <div className="flex items-center gap-3 px-5 py-4 border-b border-border">
-          <Search size={18} className="text-muted-foreground shrink-0" />
+        <div className="bb-search-input-row">
+          <Search size={18} />
           <input
             ref={inputRef}
             type="text"
@@ -158,43 +155,41 @@ export function GlobalSearch({ onNavigate }: GlobalSearchProps) {
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Search contacts, invoices, leads..."
-            className="flex-1 bg-transparent text-[15px] text-foreground placeholder:text-muted-foreground outline-none"
+            className="bb-search-input"
           />
           {query && (
-            <button onClick={() => setQuery('')} className="text-muted-foreground hover:text-foreground p-1">
+            <button onClick={() => setQuery('')} className="bb-search-clear">
               <X size={16} />
             </button>
           )}
-          <kbd className="hidden sm:inline-block text-[11px] text-muted-foreground bg-muted px-2 py-1 rounded-md border border-border">
-            ESC
-          </kbd>
+          <kbd className="bb-search-kbd-esc">ESC</kbd>
         </div>
 
         {/* Results */}
-        <div className="max-h-[50vh] overflow-y-auto">
+        <div className="bb-search-results">
           {loading && (
-            <div className="px-4 py-6 text-center text-sm text-muted-foreground">Searching...</div>
+            <div className="bb-search-empty">Searching...</div>
           )}
 
           {!loading && !query && recentSearches.length > 0 && (
-            <div className="p-3">
-              <div className="px-2 py-1.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+            <div className="bb-search-group">
+              <div className="bb-search-group-title">
                 Recent Searches
               </div>
               {recentSearches.map((s) => (
                 <button
                   key={s}
-                  className="w-full text-left px-3 py-2.5 text-[14px] text-foreground hover:bg-muted rounded-lg"
+                  className="bb-search-item"
                   onClick={() => setQuery(s)}
                 >
-                  {s}
+                  <span className="bb-search-item-title">{s}</span>
                 </button>
               ))}
             </div>
           )}
 
           {!loading && query && results.length === 0 && (
-            <div className="px-4 py-6 text-center text-sm text-muted-foreground">
+            <div className="bb-search-empty">
               No results for &ldquo;{query}&rdquo;
             </div>
           )}
@@ -202,8 +197,8 @@ export function GlobalSearch({ onNavigate }: GlobalSearchProps) {
           {!loading && Object.entries(grouped).map(([type, items]) => {
             const meta = TYPE_META[type];
             return (
-              <div key={type} className="p-3">
-                <div className="flex items-center gap-2 px-2 py-1.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+              <div key={type} className="bb-search-group">
+                <div className="bb-search-group-title">
                   {meta?.icon}
                   {meta?.label ?? type}
                 </div>
@@ -213,15 +208,13 @@ export function GlobalSearch({ onNavigate }: GlobalSearchProps) {
                   return (
                     <button
                       key={result.id}
-                      className={`w-full text-left px-3 py-2.5 text-[14px] rounded-lg flex items-center justify-between transition-colors ${
-                        isSelected ? 'bg-primary/10 text-foreground' : 'text-foreground hover:bg-muted'
-                      }`}
+                      className={`bb-search-item${isSelected ? ' bb-search-item--selected' : ''}`}
                       onClick={() => selectResult(result)}
                       onMouseEnter={() => setSelectedIndex(idx)}
                     >
-                      <span className="font-medium truncate">{result.title}</span>
+                      <span className="bb-search-item-title">{result.title}</span>
                       {result.subtitle && (
-                        <span className="text-xs text-muted-foreground ml-2 truncate">{result.subtitle}</span>
+                        <span className="bb-search-item-subtitle">{result.subtitle}</span>
                       )}
                     </button>
                   );
@@ -232,10 +225,10 @@ export function GlobalSearch({ onNavigate }: GlobalSearchProps) {
         </div>
 
         {/* Footer */}
-        <div className="px-5 py-3 border-t border-border flex items-center gap-4 text-[11px] text-muted-foreground">
-          <span><kbd className="bg-muted px-1.5 py-0.5 rounded-md border border-border text-[11px]">↑↓</kbd> navigate</span>
-          <span><kbd className="bg-muted px-1.5 py-0.5 rounded-md border border-border text-[11px]">↵</kbd> select</span>
-          <span><kbd className="bg-muted px-1.5 py-0.5 rounded-md border border-border text-[11px]">esc</kbd> close</span>
+        <div className="bb-search-footer">
+          <span><kbd>↑↓</kbd>navigate</span>
+          <span><kbd>↵</kbd>select</span>
+          <span><kbd>esc</kbd>close</span>
         </div>
       </div>
     </div>

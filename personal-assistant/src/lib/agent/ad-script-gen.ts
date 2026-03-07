@@ -2,6 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
 import { logAgentRun } from './run-logger'
 import { getOfferPackage, parseOfferForScripting, type ParsedOffer } from './offer-packages'
+import { logger } from '@/lib/core/logger';
 
 // ---------------------------------------------------------------------------
 // Types

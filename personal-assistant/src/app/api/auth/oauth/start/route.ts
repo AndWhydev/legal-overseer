@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { logger } from '@/lib/core/logger';
 import {
   getOAuthRedirectUrl,
   OAUTH_STATE_COOKIE,

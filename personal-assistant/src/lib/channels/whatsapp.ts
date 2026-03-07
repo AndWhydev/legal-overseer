@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { logger } from '@/lib/core/logger';
 
 interface WhatsAppMessageResponse {
   messages?: Array<{ id?: string }>

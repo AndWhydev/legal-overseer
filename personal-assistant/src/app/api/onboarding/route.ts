@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient, isSupabaseConfigured } from '@/lib/supabase/server'
 import { runBetaOnboarding } from '@/lib/onboarding/beta-flow'
 import { createOrg, setupChannels } from '@/lib/onboarding/multi-tenant'
+import { logger } from '@/lib/core/logger';
 
 // POST /api/onboarding — create org (self-serve or beta)
 export async function POST(req: NextRequest) {

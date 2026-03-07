@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { logger } from '@/lib/core/logger';
 
 /**
  * Cost per million tokens by model tier (USD).

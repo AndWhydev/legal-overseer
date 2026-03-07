@@ -1,5 +1,6 @@
 import type { ChannelAdapter, ChannelMessage } from './types'
 import { createHmac } from 'crypto'
+import { logger } from '@/lib/core/logger';
 
 // ---------------------------------------------------------------------------
 // Types

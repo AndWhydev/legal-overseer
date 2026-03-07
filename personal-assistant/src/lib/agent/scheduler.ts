@@ -19,6 +19,7 @@ import { logAuditEvent } from '@/lib/audit/logger'
 import { withCircuitBreaker } from './circuit-breaker'
 import { withRetry, isTransientError } from './retry'
 import { deadLetter } from './dead-letter'
+import { logger } from '@/lib/core/logger';
 
 // ---------------------------------------------------------------------------
 // Experimental agents — gated behind ENABLE_EXPERIMENTAL_AGENTS env var

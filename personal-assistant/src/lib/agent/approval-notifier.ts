@@ -3,6 +3,7 @@ import type { ApprovalRecord } from './approval-queue'
 import { getDigestApprovals } from './approval-queue'
 import { sendApprovalRequest, sendDigest } from '../channels/whatsapp'
 import { sendApprovalEmail, sendDigestEmail } from '../email/email-transport'
+import { logger } from '@/lib/core/logger';
 
 export async function notifyApproval(
   _supabase: SupabaseClient,

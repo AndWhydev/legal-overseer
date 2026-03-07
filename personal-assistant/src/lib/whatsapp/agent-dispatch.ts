@@ -4,6 +4,7 @@ import { executeAgentTool } from '../agent/tools'
 import { getPendingApprovals } from '../agent/approval-queue'
 import { formatResponse } from './response-formatter'
 import type { InvoiceDisplay, LeadDisplay, TaskDisplay } from './response-formatter'
+import { logger } from '@/lib/core/logger';
 
 export interface DispatchResult {
   success: boolean

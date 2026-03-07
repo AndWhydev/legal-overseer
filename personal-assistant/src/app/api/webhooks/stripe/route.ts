@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { verifyStripeWebhook } from '@/lib/channels/stripe'
+import { logger } from '@/lib/core/logger';
 
 /**
  * Stripe webhook endpoint.
@@ -40,7 +41,7 @@ async function updateInvoiceStatus(
       .select('id, invoice_number')
       .eq('org_id', orgId)
       .or(`stripe_payment_link.eq.${stripePaymentLinkOrId}`)
-      .single()
+      .single() as { data: { id: string; invoice_number: string } | null; error: { message: string } | null }
 
     if (findError || !invoice) {
       logger.warn(
@@ -52,7 +53,8 @@ async function updateInvoiceStatus(
     }
 
     // Update invoice status
-    const { error: updateError } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error: updateError } = await (supabase as any)
       .from('invoices')
       .update({
         status: newStatus,
@@ -68,7 +70,8 @@ async function updateInvoiceStatus(
 
     // Create timeline event
     const eventType = newStatus === 'paid' ? 'invoice_paid' : 'invoice_failed'
-    const { error: timelineError } = await supabase.from('entity_timeline').insert({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error: timelineError } = await (supabase as any).from('entity_timeline').insert({
       org_id: orgId,
       entity_type: 'invoice',
       entity_id: invoice.id,
@@ -79,7 +82,7 @@ async function updateInvoiceStatus(
         invoice_number: invoice.invoice_number,
       },
       occurred_at: new Date().toISOString(),
-    })
+    } as Record<string, unknown>)
 
     if (timelineError) {
       logger.warn('[webhook/stripe] Failed to create timeline event:', timelineError.message)

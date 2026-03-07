@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
+import { logger } from '@/lib/core/logger';
 
 interface MemoryRow {
   id: string

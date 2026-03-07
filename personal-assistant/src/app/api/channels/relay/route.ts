@@ -5,6 +5,7 @@ import { checkWhatsAppSession, logSessionHealth } from '@/lib/channels/whatsapp-
 import type { ChannelType } from '@/lib/channels/types'
 import type { PollResult } from '@/lib/channels/relay-daemon'
 import type { WhatsAppSessionStatus } from '@/lib/channels/whatsapp-monitor'
+import { logger } from '@/lib/core/logger';
 
 // Allow up to 60s for Vercel Pro plan
 export const maxDuration = 60

@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react'
 import { FileText, Download, Loader2, RefreshCw, FileBarChart } from 'lucide-react'
 import { TabShell } from '@/components/ui/tab-shell'
 import { TabHeader } from '@/components/ui/tab-header'
+import { logger } from '@/lib/core/logger';
 
 type ReportType = 'monthly' | 'agent-roi' | 'pipeline'
 

@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { SERVICE_COMPONENTS, type ServiceComponent } from './pricing-templates'
+import { logger } from '@/lib/core/logger';
 
 // ---------------------------------------------------------------------------
 // Types

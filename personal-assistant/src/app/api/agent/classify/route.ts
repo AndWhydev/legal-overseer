@@ -20,6 +20,7 @@ import type { ChannelMessage } from '@/lib/channels/types'
 
 // Module-level imports for warm start -- these are needed on every request
 import Anthropic from '@anthropic-ai/sdk'
+import { logger } from '@/lib/core/logger';
 
 export const maxDuration = 30
 export const dynamic = 'force-dynamic'

@@ -2,6 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import type { ChannelAdapter, ChannelMessage } from './types'
 import { getOrgCredential } from '@/lib/integrations/credentials'
 import crypto from 'crypto'
+import { logger } from '@/lib/core/logger';
 
 // ---------------------------------------------------------------------------
 // Types

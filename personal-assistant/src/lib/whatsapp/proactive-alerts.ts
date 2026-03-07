@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { sendMessage } from '../channels/whatsapp'
 import { formatResponse } from './response-formatter'
+import { logger } from '@/lib/core/logger';
 
 export type AlertType = 'high_value_lead' | 'invoice_overdue' | 'negative_sentiment' | 'approval_urgent'
 

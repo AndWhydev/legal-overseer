@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { deleteOrgCredential } from '@/lib/integrations/credentials'
 import { logAuditEvent } from '@/lib/audit/logger'
 import { getActiveOrgId } from '@/lib/tenancy'
+import { logger } from '@/lib/core/logger';
 
 export async function POST(request: Request) {
   const supabase = await createClient()

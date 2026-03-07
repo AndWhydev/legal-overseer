@@ -24,10 +24,14 @@ const PROFILES = ['essential', 'full'] as const;
 export function DevToolbar() {
   const [open, setOpen] = useState(false);
   const [showModules, setShowModules] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const overrides = useDevOverrides();
   const { modules, composition } = useEnabledModules();
 
+  useEffect(() => { setMounted(true); }, []);
+
   if (process.env.NODE_ENV !== 'development') return null;
+  if (!mounted) return null;
 
   const activeIndustry = overrides?.industry ?? null;
   const activePlan = overrides?.plan ?? null;

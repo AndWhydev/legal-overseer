@@ -4,6 +4,7 @@ import { dispatchCommand } from './agent-dispatch'
 import { formatResponse } from './response-formatter'
 import { sendMessage } from '../channels/whatsapp'
 import { resolveApproval, getPendingApprovals } from '../agent/approval-queue'
+import { logger } from '@/lib/core/logger';
 
 export interface ConversationState {
   userId: string

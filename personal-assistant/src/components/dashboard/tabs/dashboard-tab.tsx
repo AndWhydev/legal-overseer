@@ -6,6 +6,7 @@ import { DashboardRedesign } from '../dashboard-redesign';
 import { TabSkeleton } from './tab-skeleton';
 import { TabShell } from '@/components/ui/tab-shell';
 import type { KanbanColumn, Task } from '@/lib/types';
+import { logger } from '@/lib/core/logger';
 
 function DashboardTab() {
   const [columns, setColumns] = useState<KanbanColumn[]>([]);

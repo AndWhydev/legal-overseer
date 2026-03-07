@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { parseCalendlyWebhook, verifyCalendlyWebhookSignature } from '@/lib/channels/calendly'
 import type { CalendlyWebhookPayload } from '@/lib/channels/calendly'
+import { logger } from '@/lib/core/logger';
 
 const DEFAULT_ORG_ID = process.env.DEFAULT_ORG_ID || '00000000-0000-0000-0000-000000000000'
 

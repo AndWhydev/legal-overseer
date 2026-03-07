@@ -2,6 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { routeIncomingConversation } from '@/lib/conversation/interface'
 import { whatsappConversationAdapter } from '@/lib/conversation/whatsapp-adapter'
 import { handleIncomingMessage } from '@/lib/whatsapp/conversation-manager'
+import { logger } from '@/lib/core/logger';
 
 /**
  * Process an incoming WhatsApp message through the full conversational pipeline.

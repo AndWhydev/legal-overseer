@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getUsage } from '@/lib/billing/usage-metering'
 import { getOrgPlan, getPlanFeatures, type PlanName } from '@/lib/billing/plan-gates'
+import { logger } from '@/lib/core/logger';
 
 export async function GET() {
   const supabase = await createClient()

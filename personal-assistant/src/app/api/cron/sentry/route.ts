@@ -1,6 +1,7 @@
 import { withCronGuard } from '@/lib/cron/cron-guard'
 import { runSentryTick } from '@/lib/agent/sentry'
 import { processSentryEscalations } from '@/lib/agent/sentry-escalation'
+import { logger } from '@/lib/core/logger';
 
 export const maxDuration = 300
 export const dynamic = 'force-dynamic'

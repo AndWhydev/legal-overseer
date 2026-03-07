@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { inviteUser, listPendingInvitations, revokeInvitation } from '@/lib/org/invitations'
 import type { InvitationRole } from '@/lib/org/invitations'
+import { logger } from '@/lib/core/logger';
 
 /**
  * POST /api/org/invite — Create an invitation

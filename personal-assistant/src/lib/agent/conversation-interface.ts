@@ -3,6 +3,7 @@ import { runAgentChat, type AgentEvent, type EngineConfig } from './engine'
 import { sendSMS } from '@/lib/channels/sms'
 import { sendSlackMessage } from '@/lib/channels/slack'
 import { sendApprovalEmail } from '@/lib/email/email-transport'
+import { logger } from '@/lib/core/logger';
 
 /**
  * Attachment metadata for messages from channels that support file uploads

@@ -2,6 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { routeAgentAction } from './confidence-router'
 import { dispatchNotification } from '../notifications/dispatcher'
 import { notifyApproval } from './approval-notifier'
+import { logger } from '@/lib/core/logger';
 
 type ApprovalPriority = 'urgent' | 'normal' | 'low'
 type ApprovalStatus = 'pending' | 'approved' | 'rejected' | 'expired' | 'auto_expired'

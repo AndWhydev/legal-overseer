@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, isSupabaseConfigured } from '@/lib/supabase/server'
 import { createCheckoutSession } from '@/lib/billing/checkout'
+import { logger } from '@/lib/core/logger';
 
 export async function POST(req: NextRequest) {
   if (!isSupabaseConfigured()) {

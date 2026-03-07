@@ -1,4 +1,5 @@
 import type { ChannelAdapter, ChannelMessage } from './types'
+import { logger } from '@/lib/core/logger';
 
 export const calendarAdapter: ChannelAdapter = {
   type: 'calendar',

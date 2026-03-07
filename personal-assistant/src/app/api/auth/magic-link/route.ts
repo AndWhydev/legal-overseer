@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { logger } from '@/lib/core/logger';
 
 export async function POST(request: Request) {
   const { email, redirectTo } = await request.json()

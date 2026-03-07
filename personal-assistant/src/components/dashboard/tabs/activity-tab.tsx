@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { TabSkeleton } from './tab-skeleton';
 import { TabShell } from '@/components/ui/tab-shell';
+import { logger } from '@/lib/core/logger';
 
 // ---------------------------------------------------------------------------
 // Types

@@ -1,4 +1,5 @@
 import type { ChannelAdapter, ChannelMessage } from './types'
+import { logger } from '@/lib/core/logger';
 
 /**
  * Facebook Messenger Graph API response for sending a message

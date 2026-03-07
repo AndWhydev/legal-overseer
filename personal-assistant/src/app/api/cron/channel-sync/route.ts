@@ -1,6 +1,7 @@
 import { withCronGuard } from '@/lib/cron/cron-guard'
 import { pollChannel, type PollResult } from '@/lib/channels/relay-daemon'
 import type { ChannelType } from '@/lib/channels/types'
+import { logger } from '@/lib/core/logger';
 
 export const maxDuration = 300
 export const dynamic = 'force-dynamic'

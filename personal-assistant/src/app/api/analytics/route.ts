@@ -4,6 +4,7 @@ import { calculateMRR } from '@/lib/analytics/mrr'
 import { getOrgUsage } from '@/lib/analytics/usage'
 import { detectChurnRisk, generateRetentionActions } from '@/lib/analytics/churn'
 import { getActiveOrgId } from '@/lib/tenancy'
+import { logger } from '@/lib/core/logger';
 
 export async function GET(req: NextRequest) {
   if (!isSupabaseConfigured()) {

@@ -5,6 +5,7 @@
  */
 
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { logger } from '@/lib/core/logger';
 
 // ─── Required environment variables by category ──────────────────────────────
 

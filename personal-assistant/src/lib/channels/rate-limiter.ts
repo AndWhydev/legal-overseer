@@ -1,5 +1,6 @@
 import type { ChannelType } from './types'
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import { logger } from '@/lib/core/logger';
 
 // ---------------------------------------------------------------------------
 // Per-channel rate limiter using token bucket algorithm

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, isSupabaseConfigured } from '@/lib/supabase/server'
 import { verifyStripeWebhook } from '@/lib/channels/stripe'
+import { logger } from '@/lib/core/logger';
 import {
   parseSubscriptionEvent,
   handleSubscriptionEvent,

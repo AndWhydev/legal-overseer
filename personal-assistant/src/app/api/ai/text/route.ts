@@ -3,6 +3,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@/lib/supabase/server'
 import { assembleContext } from '@/lib/context/assembler'
 import { getPack, resolveIndustry } from '@/lib/industry/registry'
+import { logger } from '@/lib/core/logger';
 
 export async function POST(request: Request) {
   const supabase = await createClient()

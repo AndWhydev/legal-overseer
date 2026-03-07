@@ -3,6 +3,7 @@ import { createApproval } from './approval-queue'
 import { generateInvoicePdf } from './invoice-pdf'
 import { sendInvoiceEmail } from '@/lib/email/send-invoice'
 import type { InvoiceLineItem, InvoiceStatus } from './shared-tools'
+import { logger } from '@/lib/core/logger';
 
 interface InvoiceRow {
   id: string

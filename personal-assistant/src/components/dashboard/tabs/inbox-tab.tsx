@@ -6,6 +6,7 @@ import { useDevOverrides } from '@/lib/dev/dev-overrides';
 import { TabSkeleton } from './tab-skeleton';
 import { TabShell } from '@/components/ui/tab-shell';
 import { EmptyState } from '@/components/ui/empty-state';
+import { logger } from '@/lib/core/logger';
 import {
   Filter,
   CheckCircle2,

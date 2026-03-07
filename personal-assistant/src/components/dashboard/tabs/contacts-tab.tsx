@@ -6,6 +6,7 @@ import { SkeletonKanban } from '@/components/ui/skeleton'
 import { EmptyState } from '@/components/ui/empty-state'
 import { useDevOverrides } from '@/lib/dev/dev-overrides'
 import { StatusPill, type StatusVariant } from '@/components/ui/status-pill'
+import { logger } from '@/lib/core/logger';
 
 type ContactType = 'client' | 'partner' | 'lead' | 'vendor' | string
 

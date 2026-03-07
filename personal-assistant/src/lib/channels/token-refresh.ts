@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { getOrgCredential, storeOrgCredential } from '@/lib/integrations/credentials'
 import { dispatchNotification } from '@/lib/notifications/dispatcher'
+import { logger } from '@/lib/core/logger';
 
 /**
  * OAuth token endpoints per channel.

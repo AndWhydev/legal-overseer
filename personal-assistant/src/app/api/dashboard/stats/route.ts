@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getActiveOrgId } from '@/lib/tenancy'
+import { logger } from '@/lib/core/logger';
 
 export async function GET() {
   const supabase = await createClient()

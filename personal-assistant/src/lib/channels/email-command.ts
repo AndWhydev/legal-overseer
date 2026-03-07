@@ -3,6 +3,7 @@ import type { ChannelMessage } from './types'
 import { classifyMessage } from '@/lib/agent/classifier'
 import { routeMessage } from '@/lib/agent/action-router'
 import { runAgentChat, type EngineConfig } from '@/lib/agent/engine'
+import { logger } from '@/lib/core/logger';
 
 export interface ParsedCommand {
   commandText: string

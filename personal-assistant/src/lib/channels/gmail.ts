@@ -1,6 +1,7 @@
 import type { ChannelAdapter, ChannelMessage } from './types'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { storeChannelCredential } from '@/lib/integrations/credentials'
+import { logger } from '@/lib/core/logger';
 
 // ---------------------------------------------------------------------------
 // Gmail OAuth2 token refresh (for OAuth-based Gmail, alongside IMAP app-password)

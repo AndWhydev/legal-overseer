@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
 import { generateDigest, getActiveThreads, type ThreadInfo } from './channel-triage'
+import { logger } from '@/lib/core/logger';
 
 // ---------------------------------------------------------------------------
 // Types

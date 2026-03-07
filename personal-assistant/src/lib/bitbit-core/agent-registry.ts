@@ -8,6 +8,7 @@
 
 import type { AgentType, AgentConfig, ConfidenceThresholds, ModelTier } from './types'
 import type { AgentRegistryEntry } from './types'
+import { logger } from '@/lib/core/logger';
 
 export interface AgentDefinition {
   type: AgentType

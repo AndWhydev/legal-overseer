@@ -27,6 +27,7 @@ import { wordpressAdapter } from './wordpress'
 import { cluelyAdapter } from './cluely'
 import { isDuplicate, computeContentHash } from './dedup'
 import { getOrgCredential } from '@/lib/integrations/credentials'
+import { logger } from '@/lib/core/logger';
 
 export interface PollResult {
   messagesFound: number

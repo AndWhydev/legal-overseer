@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { EntityType, TimelineEventType, EntityRef } from './types'
+import { logger } from '@/lib/core/logger';
 
 /**
  * Write a timeline event to entity_timeline.

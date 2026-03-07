@@ -3,6 +3,7 @@
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createBrowserClient } from '@supabase/ssr'
+import { logger } from '@/lib/core/logger';
 
 export default function CallbackPage() {
   const router = useRouter()

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getTenancyContext, switchActiveOrg } from '@/lib/tenancy'
+import { logger } from '@/lib/core/logger';
 
 type SwitchOrgBody = {
   org_id?: unknown

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { IntegrationCard } from './integration-card'
+import { logger } from '@/lib/core/logger';
 import {
   AVAILABLE_INTEGRATIONS,
   CATEGORY_LABELS,

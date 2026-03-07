@@ -2,6 +2,7 @@ import { withCronGuard } from '@/lib/cron/cron-guard'
 import { generateMonthlyReport } from '@/lib/reports/generator'
 import { generateReportPDF } from '@/lib/reports/pdf-report'
 import { sendMonthlyRevenueReportEmail } from '@/lib/reports/monthly-revenue-email'
+import { logger } from '@/lib/core/logger';
 
 export const maxDuration = 300
 export const dynamic = 'force-dynamic'

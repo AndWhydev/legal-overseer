@@ -2,6 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import type { ChannelMessage } from '@/lib/channels/types'
 import Anthropic from '@anthropic-ai/sdk'
 import { assembleContext } from '@/lib/context/assembler'
+import { logger } from '@/lib/core/logger';
 
 export interface ClassificationResult {
   significance: number // 1-10

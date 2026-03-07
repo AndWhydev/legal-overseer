@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Bell, CheckCircle2, Zap, AlertTriangle, Check } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { logger } from '@/lib/core/logger';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 

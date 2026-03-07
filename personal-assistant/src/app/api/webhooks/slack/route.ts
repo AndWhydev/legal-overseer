@@ -6,6 +6,7 @@ import {
   parseSlackWebhookEvent,
 } from '@/lib/channels/slack'
 import type { SlackEventPayload } from '@/lib/channels/slack'
+import { logger } from '@/lib/core/logger';
 
 const DEFAULT_ORG_ID = process.env.DEFAULT_ORG_ID || '00000000-0000-0000-0000-000000000000'
 

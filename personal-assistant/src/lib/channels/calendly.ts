@@ -1,6 +1,7 @@
 import type { ChannelAdapter, ChannelMessage } from './types'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { getOrgCredential } from '@/lib/integrations/credentials'
+import { logger } from '@/lib/core/logger';
 
 // ---------------------------------------------------------------------------
 // Types

@@ -1,5 +1,6 @@
 import { withCronGuard } from '@/lib/cron/cron-guard'
 import { runTriage } from '@/lib/agent/channel-triage'
+import { logger } from '@/lib/core/logger';
 
 export const maxDuration = 300
 export const dynamic = 'force-dynamic'

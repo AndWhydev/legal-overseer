@@ -25,6 +25,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { classifyMessage as llmClassifyMessage, type ClassificationResult } from '@/lib/agent/classifier'
 import { routeMessage, type MessageRoute } from '@/lib/agent/action-router'
+import { logger } from '@/lib/core/logger';
 
 const adapters: Partial<Record<ChannelType, ChannelAdapter>> = {
   gmail: gmailAdapter,

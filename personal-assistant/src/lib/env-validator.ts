@@ -1,3 +1,4 @@
+import { logger } from '@/lib/core/logger';
 /**
  * Runtime environment variable validation.
  * Call once at app startup (e.g. from instrumentation.ts).
