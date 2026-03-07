@@ -3,43 +3,79 @@
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createBrowserClient } from '@supabase/ssr'
-import { logger } from '@/lib/core/logger';
+import { logger } from '@/lib/core/logger'
+import { extractAuthCallbackPayload } from '@/lib/auth/callback'
 
 export default function CallbackPage() {
   const router = useRouter()
 
   useEffect(() => {
-    const hash = window.location.hash.substring(1)
-    const params = new URLSearchParams(hash)
-    const accessToken = params.get('access_token')
-    const refreshToken = params.get('refresh_token')
-
-    if (!accessToken || !refreshToken) {
-      router.replace('/login?error=auth')
-      return
-    }
-
     const supabase = createBrowserClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     )
 
-    supabase.auth.setSession({
-      access_token: accessToken,
-      refresh_token: refreshToken,
-    }).then(async ({ error, data }) => {
-      if (error || !data.user) {
-        logger.error('setSession error:', error)
+    const payload = extractAuthCallbackPayload(window.location.href)
+
+    async function completeAuth() {
+      if (payload.kind === 'none') {
         router.replace('/login?error=auth')
         return
       }
 
-      // Check if user already has an org profile.
-      // New users have no profile row → send to onboarding.
+      let userId: string | null = null
+
+      if (payload.kind === 'session_tokens') {
+        const { error, data } = await supabase.auth.setSession({
+          access_token: payload.accessToken,
+          refresh_token: payload.refreshToken,
+        })
+
+        if (error || !data.user) {
+          logger.error('setSession error:', error)
+          router.replace('/login?error=auth')
+          return
+        }
+
+        userId = data.user.id
+      }
+
+      if (payload.kind === 'exchange_code') {
+        const { error, data } = await supabase.auth.exchangeCodeForSession(payload.code)
+
+        if (error || !data.user) {
+          logger.error('exchangeCodeForSession error:', error)
+          router.replace('/login?error=auth')
+          return
+        }
+
+        userId = data.user.id
+      }
+
+      if (payload.kind === 'verify_token_hash') {
+        const { error, data } = await supabase.auth.verifyOtp({
+          token_hash: payload.tokenHash,
+          type: payload.type,
+        })
+
+        if (error || !data.user) {
+          logger.error('verifyOtp error:', error)
+          router.replace('/login?error=auth')
+          return
+        }
+
+        userId = data.user.id
+      }
+
+      if (!userId) {
+        router.replace('/login?error=auth')
+        return
+      }
+
       const { data: profile, error: profileErr } = await supabase
         .from('profiles')
         .select('id, org_id')
-        .eq('id', data.user.id)
+        .eq('id', userId)
         .maybeSingle()
 
       if (profileErr) {
@@ -49,12 +85,14 @@ export default function CallbackPage() {
       }
 
       if (!profile?.org_id) {
-        // No org — first-time user, kick off workspace setup
         router.replace('/onboard')
-      } else {
-        router.replace('/dashboard')
+        return
       }
-    })
+
+      router.replace('/dashboard')
+    }
+
+    void completeAuth()
   }, [router])
 
   return (

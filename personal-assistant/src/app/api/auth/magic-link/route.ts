@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { logger } from '@/lib/core/logger';
+import { logger } from '@/lib/core/logger'
 
 export async function POST(request: Request) {
   const { email, redirectTo } = await request.json()
@@ -39,24 +39,16 @@ export async function POST(request: Request) {
     )
   }
 
-  // Send OTP via service role — bypasses the "signups disabled" restriction
-  // for existing users
-  const res = await fetch(`${supabaseUrl}/auth/v1/otp`, {
-    method: 'POST',
-    headers: {
-      'apikey': serviceRoleKey,
-      'Authorization': `Bearer ${serviceRoleKey}`,
-      'Content-Type': 'application/json',
+  const { error } = await supabase.auth.signInWithOtp({
+    email: normalizedEmail,
+    options: {
+      shouldCreateUser: false,
+      ...(redirectTo ? { emailRedirectTo: redirectTo } : {}),
     },
-    body: JSON.stringify({
-      email: normalizedEmail,
-      ...(redirectTo ? { gotrue_meta_security: {}, options: { emailRedirectTo: redirectTo } } : {}),
-    }),
   })
 
-  if (!res.ok) {
-    const body = await res.text()
-    logger.error('[magic-link] OTP send failed:', body)
+  if (error) {
+    logger.error('[magic-link] OTP send failed:', error.message)
     return NextResponse.json({ error: 'Failed to send sign-in email' }, { status: 500 })
   }
 
