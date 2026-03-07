@@ -1,10 +1,9 @@
 'use client';
 
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { Search, User, Briefcase, FileText, CheckSquare, ChevronRight, X, Brain } from 'lucide-react';
+import { Search, User, Briefcase, FileText, CheckSquare, ChevronRight, X } from 'lucide-react';
 import { TabSkeleton } from './tab-skeleton';
 import { TabShell } from '@/components/ui/tab-shell';
-import { TabHeader } from '@/components/ui/tab-header';
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -111,12 +110,6 @@ function KnowledgeTab() {
 
   return (
     <TabShell>
-      <TabHeader
-        icon={Brain}
-        iconColor="var(--bb-cyan)"
-        title="Knowledge"
-      />
-
       <div className="flex flex-col gap-6 p-6">
         {/* Search Bar */}
         <div className="relative">

@@ -1,9 +1,7 @@
 'use client'
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { FileText } from 'lucide-react'
 import { TabShell } from '@/components/ui/tab-shell'
-import { TabHeader } from '@/components/ui/tab-header'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -248,12 +246,6 @@ function ProposalsKanban() {
 function ProposalsTab() {
   return (
     <TabShell>
-      <TabHeader
-        icon={<FileText size={22} />}
-        iconColor="var(--bb-purple)"
-        title="Proposals"
-        subtitle="Track proposals across Draft, Sent, Viewed, and Accepted/Declined"
-      />
       <ProposalsKanban />
     </TabShell>
   )

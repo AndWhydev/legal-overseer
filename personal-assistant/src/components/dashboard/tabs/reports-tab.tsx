@@ -1,9 +1,8 @@
 'use client'
 
 import React, { useState, useEffect, useCallback } from 'react'
-import { FileText, Download, Loader2, RefreshCw, FileBarChart } from 'lucide-react'
+import { FileText, Download, Loader2, RefreshCw } from 'lucide-react'
 import { TabShell } from '@/components/ui/tab-shell'
-import { TabHeader } from '@/components/ui/tab-header'
 import { logger } from '@/lib/core/logger';
 
 type ReportType = 'monthly' | 'agent-roi' | 'pipeline'
@@ -122,12 +121,6 @@ export default function ReportsTab() {
 
   return (
     <TabShell>
-      <TabHeader
-        icon={FileBarChart}
-        iconColor="var(--bb-purple)"
-        title="Reports"
-      />
-
       <div style={{ padding: '24px', maxWidth: 960, margin: '0 auto' }}>
         {/* Controls */}
         <div style={{

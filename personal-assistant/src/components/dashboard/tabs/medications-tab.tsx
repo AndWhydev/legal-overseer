@@ -4,9 +4,8 @@
 // Re-exports the page component logic for use in SPA shell
 
 import React, { useState, useCallback, useMemo } from 'react';
-import { Pill, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { TabShell } from '@/components/ui/tab-shell';
-import { TabHeader } from '@/components/ui/tab-header';
 import { MonthlyGrid } from '@/components/medications/monthly-grid';
 import { PillIcon } from '@/components/medications/pill-icon';
 import { february2026, medications, medicationMap } from '@/lib/medications/seed-data';

@@ -3,7 +3,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { DollarSign, TrendingUp, AlertTriangle, BarChart3 } from 'lucide-react';
 import { TabShell } from '@/components/ui/tab-shell';
-import { TabHeader } from '@/components/ui/tab-header';
 import { AlertBanner } from '@/components/ui/alert-banner';
 
 interface CostEntry {
@@ -74,13 +73,6 @@ function CostsTab() {
 
   return (
     <TabShell>
-      <TabHeader
-        icon={DollarSign}
-        iconColor="var(--bb-status-warning)"
-        title="Costs"
-        subtitle="Monitor agent LLM spend across models and agents"
-      />
-
       <div className="flex flex-col gap-6 p-6">
         {/* Period selector */}
         <div className="flex gap-1 rounded-lg bg-[var(--bg-elevated)] p-1">

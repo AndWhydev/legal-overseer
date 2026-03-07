@@ -1,9 +1,8 @@
 'use client'
 
 import React, { useState, useCallback } from 'react'
-import { Search, TrendingUp, TrendingDown, Minus, Copy, Check, Play, Code, FileText, SearchCheck } from 'lucide-react'
+import { Search, TrendingUp, TrendingDown, Minus, Copy, Check, Play, Code, FileText } from 'lucide-react'
 import { TabShell } from '@/components/ui/tab-shell'
-import { TabHeader } from '@/components/ui/tab-header'
 
 // ---------------------------------------------------------------------------
 // Types (mirrors agent types without importing server code)
@@ -535,12 +534,6 @@ function AISearchTab() {
 
   return (
     <TabShell>
-      <TabHeader
-        icon={SearchCheck}
-        iconColor="var(--bb-orange)"
-        title="AI Search"
-      />
-
       <div style={{ padding: 24, maxWidth: 1200, display: 'flex', flexDirection: 'column', gap: 24 }}>
         {/* Score overview (shown when audit exists) */}
         {auditResult && (
