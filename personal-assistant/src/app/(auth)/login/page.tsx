@@ -5,7 +5,8 @@ import { Suspense, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { BitBitLogoVideo } from '@/components/chat/bitbit-logo-video'
-import { extractAuthCallbackPayload } from '@/lib/auth/callback'
+import { completeBrowserAuthFromUrl } from '@/lib/auth/browser-callback'
+import { logger } from '@/lib/core/logger'
 
 type LoginStatus = 'idle' | 'loading' | 'sent' | 'error'
 type LoginMethod = 'email' | 'google' | 'apple' | null
@@ -89,14 +90,22 @@ function LoginPageContent() {
   const canSubmit = email.trim().length > 3 && !isBusy
 
   useEffect(() => {
-    const payload = extractAuthCallbackPayload(window.location.href)
-
-    if (payload.kind === 'none') {
+    const supabaseClient = createClient()
+    if (!supabaseClient) {
       return
     }
 
-    const nextUrl = `/callback${window.location.search}${window.location.hash}`
-    window.location.replace(nextUrl)
+    void (async () => {
+      const result = await completeBrowserAuthFromUrl(
+        supabaseClient,
+        window.location.href,
+        logger,
+      )
+
+      if (result.kind === 'redirect') {
+        window.location.replace(result.destination)
+      }
+    })()
   }, [])
 
   const logoVariant = useMemo(() => {
