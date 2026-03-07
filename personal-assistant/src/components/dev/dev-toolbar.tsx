@@ -13,6 +13,7 @@ import { useEnabledModules } from '@/lib/modules/use-enabled-modules';
 import { TABS } from '@/components/dashboard/spa-shell';
 import { INDUSTRY_PACKS } from '@/lib/industry/registry';
 import { createClient } from '@/lib/supabase/client';
+import { isSeedActive, setSeedActive } from '@/lib/dev/seed-data';
 
 if (process.env.NODE_ENV !== 'development') {
   // This entire module is dead-code-eliminated in production
@@ -25,10 +26,14 @@ export function DevToolbar() {
   const [open, setOpen] = useState(false);
   const [showModules, setShowModules] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [seedOn, setSeedOn] = useState(false);
   const overrides = useDevOverrides();
   const { modules, composition } = useEnabledModules();
 
-  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => {
+    setMounted(true);
+    setSeedOn(isSeedActive());
+  }, []);
 
   if (process.env.NODE_ENV !== 'development') return null;
   if (!mounted) return null;
@@ -152,6 +157,26 @@ export function DevToolbar() {
               <X size={16} />
             </button>
           </div>
+
+          {/* Seed Data */}
+          <Section title="Seed Data">
+            <label style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              fontSize: 12, color: seedOn ? '#34d399' : '#94a3b8', cursor: 'pointer',
+            }}>
+              <input
+                type="checkbox"
+                checked={seedOn}
+                onChange={() => {
+                  const next = !seedOn;
+                  setSeedOn(next);
+                  setSeedActive(next);
+                }}
+                style={{ accentColor: '#34d399' }}
+              />
+              {seedOn ? 'Seed data active' : 'Enable seed data'}
+            </label>
+          </Section>
 
           {/* Industry */}
           <Section title="Industry">

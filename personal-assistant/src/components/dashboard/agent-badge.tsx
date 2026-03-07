@@ -1,5 +1,3 @@
-import { cn } from '@/lib/utils'
-
 interface AgentBadgeProps {
   agent: string
   status?: 'working' | 'done' | 'error'
@@ -8,21 +6,29 @@ interface AgentBadgeProps {
 export function AgentBadge({ agent, status = 'working' }: AgentBadgeProps) {
   return (
     <span
-      className={cn(
-        'inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium',
-        status === 'working' && 'bg-[#D4A574]/20 text-[#D4A574] animate-agent-pulse',
-        status === 'done' && 'bg-[#71717A]/15 text-[#71717A]',
-        status === 'error' && 'bg-[#EF4444]/20 text-[#EF4444]'
-      )}
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 4,
+        borderRadius: 99,
+        padding: '2px 8px',
+        fontSize: 10,
+        fontWeight: 500,
+        background: 'rgba(255, 255, 255, 0.05)',
+        color: status === 'error' ? '#94A3B8' : '#64748B',
+      }}
     >
-      <span
-        className={cn(
-          'h-1.5 w-1.5 rounded-full',
-          status === 'working' && 'bg-[#D4A574] animate-pulse',
-          status === 'done' && 'bg-[#71717A]',
-          status === 'error' && 'bg-[#EF4444]'
-        )}
-      />
+      {status === 'working' && (
+        <span
+          style={{
+            width: 4,
+            height: 4,
+            borderRadius: '50%',
+            background: '#64748B',
+            animation: 'pulse 2s ease-in-out infinite',
+          }}
+        />
+      )}
       {agent}
     </span>
   )

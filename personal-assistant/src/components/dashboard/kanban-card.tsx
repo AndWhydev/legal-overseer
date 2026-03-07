@@ -1,81 +1,16 @@
 'use client'
 
+import { useRef } from 'react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Pencil, X, Calendar, AlertTriangle, ArrowUp, ArrowDown, Minus } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
+import { X } from 'lucide-react'
 import { AgentBadge } from './agent-badge'
-import { cn } from '@/lib/utils'
 import type { Task } from '@/lib/types'
 
 interface KanbanCardProps {
   task: Task
   onEdit?: (task: Task) => void
   onArchive?: (task: Task) => void
-}
-
-function getTagColor(tag: string) {
-  if (tag === 'urgent') return 'bg-[#E5484D]/15 text-[#E5484D] border-[#E5484D]/30'
-  if (tag.startsWith('$')) return 'bg-[#4ADE80]/15 text-[#4ADE80] border-[#4ADE80]/30'
-  if (tag === 'credentials') return 'bg-[#A78BFA]/15 text-[#A78BFA] border-[#A78BFA]/30'
-  if (tag === 'awaiting') return 'bg-[#8A8A8E]/15 text-[#8A8A8E] border-[#8A8A8E]/30'
-  return 'bg-[#D4A574]/15 text-[#D4A574] border-[#D4A574]/30'
-}
-
-function getPriorityBorderColor(priority: string) {
-  switch (priority) {
-    case 'critical': return '#E5484D'
-    case 'high': return '#FBBF24'
-    case 'medium': return '#D4A574'
-    case 'low': return '#4ADE80'
-    default: return '#232326'
-  }
-}
-
-function getPriorityHoverGlow(priority: string) {
-  switch (priority) {
-    case 'critical': return 'hover:shadow-[0_0_12px_rgba(229,72,77,0.15)]'
-    case 'high': return 'hover:shadow-[0_0_12px_rgba(251,191,36,0.15)]'
-    case 'medium': return 'hover:shadow-[0_0_12px_rgba(212,165,116,0.1)]'
-    case 'low': return 'hover:shadow-[0_0_12px_rgba(74,222,128,0.1)]'
-    default: return ''
-  }
-}
-
-function PriorityIcon({ priority }: { priority: string }) {
-  switch (priority) {
-    case 'critical':
-      return <AlertTriangle className="h-3 w-3 text-[#E5484D]" />
-    case 'high':
-      return <ArrowUp className="h-3 w-3 text-[#FBBF24]" />
-    case 'medium':
-      return <Minus className="h-3 w-3 text-[#D4A574]" />
-    case 'low':
-      return <ArrowDown className="h-3 w-3 text-[#4ADE80]" />
-    default:
-      return null
-  }
-}
-
-const CHANNEL_ICONS: Record<string, string> = {
-  imessage: '\uD83D\uDCF1',
-  gmail: '\uD83D\uDCE7',
-  outlook: '\uD83D\uDCE7',
-  calendar: '\uD83D\uDCC5',
-  reminders: '\uD83D\uDD14',
-}
-
-function ChannelBadge({ channel }: { channel: string }) {
-  const icon = CHANNEL_ICONS[channel] ?? '\uD83D\uDCCB'
-  return (
-    <span
-      className="inline-flex items-center gap-0.5 rounded bg-secondary/60 px-1 py-0.5 text-[9px] text-muted-foreground"
-      title={channel}
-    >
-      <span className="text-[10px] leading-none">{icon}</span>
-      {channel}
-    </span>
-  )
 }
 
 function timeAgo(dateStr: string): string {
@@ -99,127 +34,162 @@ export function KanbanCard({ task, onEdit, onArchive }: KanbanCardProps) {
     isDragging,
   } = useSortable({ id: task.id })
 
-  const style = {
+  const dndStyle = {
     transform: CSS.Transform.toString(transform),
     transition,
   }
 
   const tags = (task.metadata?.tags as string[]) || []
-  const deadline = task.metadata?.deadline as string | undefined
   const agentStatus = task.metadata?.agentStatus as 'working' | 'done' | 'error' | undefined
-  const sourceChannel = task.metadata?.source_channel as string | undefined
-  const sender = task.metadata?.sender as string | undefined
 
-  const borderColor = getPriorityBorderColor(task.priority)
+  // Track pointer movement to distinguish click from drag
+  const pointerStart = useRef<{ x: number; y: number } | null>(null)
 
   return (
     <div
       ref={setNodeRef}
-      style={{
-        ...style,
-        borderLeftColor: borderColor,
-      }}
       {...attributes}
       {...listeners}
-      className={cn(
-        'group relative rounded-lg border border-border border-l-[3px] bg-card p-3 cursor-grab active:cursor-grabbing card-lift',
-        'transition-all duration-150 hover:border-[#484f58]',
-        getPriorityHoverGlow(task.priority),
-        isDragging && 'opacity-50 shadow-lg shadow-black/20'
-      )}
+      className="card-lift"
+      onPointerDown={(e) => { pointerStart.current = { x: e.clientX, y: e.clientY } }}
+      onPointerUp={(e) => {
+        if (!pointerStart.current || !onEdit) return
+        const dx = Math.abs(e.clientX - pointerStart.current.x)
+        const dy = Math.abs(e.clientY - pointerStart.current.y)
+        // Only open edit if pointer barely moved (not a drag)
+        if (dx < 4 && dy < 4) onEdit(task)
+        pointerStart.current = null
+      }}
+      style={{
+        borderRadius: 14,
+        padding: '14px 16px',
+        background: 'rgba(15, 20, 30, 0.3)',
+        backdropFilter: 'blur(12px) saturate(1.1)',
+        WebkitBackdropFilter: 'blur(12px) saturate(1.1)',
+        boxShadow: isDragging
+          ? '0 16px 48px rgba(0, 0, 0, 0.4)'
+          : '0 1px 2px rgba(0, 0, 0, 0.1)',
+        cursor: isDragging ? 'grabbing' : 'pointer',
+        position: 'relative',
+        opacity: isDragging ? 0.5 : 1,
+        ...dndStyle,
+        transition: [dndStyle.transition, 'box-shadow 0.2s ease, opacity 0.2s ease'].filter(Boolean).join(', '),
+      }}
     >
-      {/* Action buttons (top-right, show on hover) */}
-      <div className="absolute right-2 top-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
-        {onEdit && (
-          <button
-            onClick={(e) => { e.stopPropagation(); onEdit(task) }}
-            className="rounded p-1 text-muted-foreground hover:text-foreground hover:bg-secondary"
-          >
-            <Pencil className="h-3 w-3" />
-          </button>
-        )}
-        {onArchive && (
+      {/* Archive button (top-right, show on hover) */}
+      {onArchive && (
+        <div
+          className="kanban-card-actions"
+          style={{
+            position: 'absolute',
+            right: 10,
+            top: 10,
+            opacity: 0,
+            transition: 'opacity 0.15s',
+          }}
+        >
           <button
             onClick={(e) => { e.stopPropagation(); onArchive(task) }}
-            className="rounded p-1 text-muted-foreground hover:text-destructive hover:bg-secondary"
+            style={{
+              borderRadius: 8,
+              padding: 4,
+              border: 'none',
+              background: 'rgba(255, 255, 255, 0.06)',
+              color: '#475569',
+              cursor: 'pointer',
+              display: 'flex',
+              transition: 'color 0.15s',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = '#94A3B8' }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = '#475569' }}
           >
-            <X className="h-3 w-3" />
+            <X style={{ width: 12, height: 12 }} />
           </button>
-        )}
-      </div>
+        </div>
+      )}
 
-      {/* Channel badge + Title */}
-      <div className="flex items-start gap-1.5 pr-12">
-        <h4 className="text-sm font-semibold text-foreground leading-snug line-clamp-2">
-          {task.title}
-        </h4>
-      </div>
+      {/* Title */}
+      <h4 style={{
+        fontSize: 13,
+        fontWeight: 600,
+        color: '#F1F5F9',
+        lineHeight: 1.4,
+        display: '-webkit-box',
+        WebkitLineClamp: 2,
+        WebkitBoxOrient: 'vertical',
+        overflow: 'hidden',
+        margin: 0,
+        paddingRight: 40,
+      }}>
+        {task.title}
+      </h4>
 
       {task.description && (
-        <p className="mt-1 text-xs text-muted-foreground line-clamp-2">
+        <p style={{
+          margin: '4px 0 0',
+          fontSize: 12,
+          color: '#64748B',
+          display: '-webkit-box',
+          WebkitLineClamp: 2,
+          WebkitBoxOrient: 'vertical',
+          overflow: 'hidden',
+          lineHeight: 1.35,
+        }}>
           {task.description}
         </p>
       )}
 
-      {/* Tags */}
-      {tags.length > 0 && (
-        <div className="mt-2 flex flex-wrap gap-1">
-          {tags.map((tag) => (
-            <Badge
-              key={tag}
-              variant="outline"
-              className={`text-[10px] px-1.5 py-0 font-medium ${getTagColor(tag)}`}
-            >
-              {tag}
-            </Badge>
-          ))}
-        </div>
-      )}
+      {/* Tags and priority row */}
+      <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+        {/* Priority pill — matches chat suggestion chip material */}
+        <span style={{
+          fontSize: 10,
+          fontWeight: 500,
+          padding: '3px 10px',
+          borderRadius: 20,
+          background: 'rgba(10, 14, 23, 0.42)',
+          boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.06)',
+          color: '#94A3B8',
+          lineHeight: '16px',
+        }}>
+          {task.priority}
+        </span>
 
-      {/* Bottom row: priority, deadline, channel, sender, agent */}
-      <div className="mt-2 flex items-center gap-2">
-        <div className="flex items-center gap-1.5 flex-1 min-w-0 flex-wrap">
-          {/* Priority badge */}
-          <span className="inline-flex items-center gap-1 rounded-md bg-secondary/50 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
-            <PriorityIcon priority={task.priority} />
-            {task.priority}
+        {/* Tag pills — same glass chip material */}
+        {tags.map((tag) => (
+          <span
+            key={tag}
+            style={{
+              fontSize: 10,
+              fontWeight: 500,
+              padding: '3px 10px',
+              borderRadius: 20,
+              background: 'rgba(10, 14, 23, 0.42)',
+              boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.06)',
+              color: '#94A3B8',
+              lineHeight: '16px',
+            }}
+          >
+            {tag}
           </span>
-
-          {/* Deadline badge */}
-          {deadline && (
-            <span className={cn(
-              'inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-medium',
-              tags.includes('urgent')
-                ? 'bg-[#E5484D]/10 text-[#E5484D]'
-                : 'bg-[#FBBF24]/10 text-[#FBBF24]'
-            )}>
-              <Calendar className="h-2.5 w-2.5" />
-              {deadline}
-            </span>
-          )}
-
-          {/* Channel source badge */}
-          {sourceChannel && <ChannelBadge channel={sourceChannel} />}
-
-          {/* Sender + time ago */}
-          {sender && (
-            <span className="text-[10px] text-muted-foreground truncate max-w-[100px]" title={sender}>
-              {sender}
-            </span>
-          )}
-        </div>
-
-        <div className="flex items-center gap-1.5 shrink-0">
-          {/* Time ago */}
-          <span className="text-[9px] text-muted-foreground/60">
-            {timeAgo(task.updated_at)}
-          </span>
-
-          {task.assigned_to && (
-            <AgentBadge agent={task.assigned_to} status={agentStatus} />
-          )}
-        </div>
+        ))}
       </div>
+
+      {/* Bottom row: timeAgo + agent */}
+      <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+        <span style={{ fontSize: 9, color: 'rgba(148, 163, 184, 0.6)' }}>
+          {timeAgo(task.updated_at)}
+        </span>
+        {task.assigned_to && (
+          <AgentBadge agent={task.assigned_to} status={agentStatus} />
+        )}
+      </div>
+
+      {/* Hover action visibility via inline style tag */}
+      <style>{`
+        .card-lift:hover .kanban-card-actions { opacity: 1 !important; }
+        .card-lift:hover { transform: translateY(-2px); }
+      `}</style>
     </div>
   )
 }

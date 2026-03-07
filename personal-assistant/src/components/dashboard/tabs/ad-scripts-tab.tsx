@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useCallback, useEffect, useState } from 'react'
-import { Copy, Check, Loader2, ChevronDown, ChevronRight } from 'lucide-react'
+import { Copy, Check, Loader2, ChevronDown, ChevronRight, Film } from 'lucide-react'
 import { TabShell } from '@/components/ui/tab-shell'
 
 // ---------------------------------------------------------------------------

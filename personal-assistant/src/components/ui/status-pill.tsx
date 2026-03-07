@@ -1,5 +1,4 @@
 import React from 'react';
-import { cn } from '@/lib/utils';
 
 export type StatusVariant =
   | 'success' | 'warning' | 'error' | 'info'
@@ -13,33 +12,50 @@ interface StatusPillProps {
   className?: string;
 }
 
-const VARIANT_STYLES: Record<StatusVariant, string> = {
-  success: 'bg-[var(--bb-green)]/12 text-[var(--bb-green)] border-[var(--bb-green)]/20',
-  warning: 'bg-[var(--bb-amber)]/12 text-[var(--bb-amber)] border-[var(--bb-amber)]/20',
-  error: 'bg-[var(--bb-red)]/12 text-[var(--bb-red)] border-[var(--bb-red)]/20',
-  info: 'bg-[var(--bb-blue)]/12 text-[var(--bb-blue)] border-[var(--bb-blue)]/20',
-  neutral: 'bg-white/5 text-[var(--text-secondary)] border-white/10',
-  orange: 'bg-[var(--bb-orange)]/12 text-[var(--bb-orange)] border-[var(--bb-orange)]/20',
-  purple: 'bg-[var(--bb-purple)]/12 text-[var(--bb-purple)] border-[var(--bb-purple)]/20',
-  cyan: 'bg-[var(--bb-cyan)]/12 text-[var(--bb-cyan)] border-[var(--bb-cyan)]/20',
+const COLORS: Record<StatusVariant, { fg: string; bg: string; border: string }> = {
+  success: { fg: '#22C55E', bg: 'rgba(34, 197, 94, 0.12)', border: 'rgba(34, 197, 94, 0.15)' },
+  warning: { fg: '#F59E0B', bg: 'rgba(245, 158, 11, 0.12)', border: 'rgba(245, 158, 11, 0.15)' },
+  error:   { fg: '#EF4444', bg: 'rgba(239, 68, 68, 0.12)', border: 'rgba(239, 68, 68, 0.15)' },
+  info:    { fg: '#3B82F6', bg: 'rgba(59, 130, 246, 0.12)', border: 'rgba(59, 130, 246, 0.15)' },
+  neutral: { fg: '#94A3B8', bg: 'rgba(255, 255, 255, 0.05)', border: 'rgba(255, 255, 255, 0.08)' },
+  orange:  { fg: '#FF5A1F', bg: 'rgba(255, 90, 31, 0.12)', border: 'rgba(255, 90, 31, 0.15)' },
+  purple:  { fg: '#A855F7', bg: 'rgba(168, 85, 247, 0.12)', border: 'rgba(168, 85, 247, 0.15)' },
+  cyan:    { fg: '#06B6D4', bg: 'rgba(6, 182, 212, 0.12)', border: 'rgba(6, 182, 212, 0.15)' },
 };
 
 export function StatusPill({ variant, label, icon, dot = false, className }: StatusPillProps) {
+  const c = COLORS[variant];
   return (
     <span
-      className={cn(
-        'inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] font-medium leading-tight backdrop-blur-sm',
-        VARIANT_STYLES[variant],
-        className,
-      )}
+      className={className}
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 6,
+        borderRadius: 99,
+        border: `1px solid ${c.border}`,
+        padding: '5px 12px',
+        fontSize: 12,
+        fontWeight: 500,
+        lineHeight: 1.3,
+        color: c.fg,
+        background: c.bg,
+        whiteSpace: 'nowrap' as const,
+      }}
     >
       {dot && (
         <span
-          className="h-1.5 w-1.5 rounded-full bg-current"
           aria-hidden="true"
+          style={{
+            width: 6,
+            height: 6,
+            borderRadius: '50%',
+            background: c.fg,
+            flexShrink: 0,
+          }}
         />
       )}
-      {icon && <span className="[&>svg]:h-3 [&>svg]:w-3" aria-hidden="true">{icon}</span>}
+      {icon && <span style={{ display: 'flex' }} aria-hidden="true">{icon}</span>}
       {label}
     </span>
   );

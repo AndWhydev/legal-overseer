@@ -273,7 +273,7 @@ export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: Kanb
   }
 
   return (
-    <>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <DndContext
         sensors={sensors}
         collisionDetection={closestCorners}
@@ -281,7 +281,7 @@ export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: Kanb
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
       >
-        <div className="flex gap-4 overflow-x-auto pb-4">
+        <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 8, flex: 1, minHeight: 0, alignItems: 'stretch' }}>
           {columns
             .sort((a, b) => a.position - b.position)
             .map((column) => (
@@ -296,15 +296,43 @@ export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: Kanb
               />
             ))}
 
-          <button className="flex h-10 w-[300px] shrink-0 items-center justify-center gap-1.5 rounded-lg border border-dashed border-border text-sm text-muted-foreground transition-colors hover:border-[#484f58] hover:text-foreground">
-            <Plus className="h-4 w-4" />
+          <button
+            style={{
+              display: 'flex',
+              width: 280,
+              flexShrink: 0,
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 6,
+              borderRadius: 14,
+              border: 'none',
+              background: 'rgba(255, 255, 255, 0.02)',
+              fontSize: 13,
+              color: '#475569',
+              cursor: 'pointer',
+              transition: 'color 0.15s, background 0.15s',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)';
+              e.currentTarget.style.color = '#94A3B8';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.02)';
+              e.currentTarget.style.color = '#475569';
+            }}
+          >
+            <Plus style={{ width: 16, height: 16 }} />
             Add Column
           </button>
         </div>
 
         <DragOverlay>
           {activeTask ? (
-            <div className="w-[276px] rotate-2">
+            <div style={{
+              width: 268,
+              transform: 'rotate(2deg)',
+              filter: 'drop-shadow(0 16px 32px rgba(0,0,0,0.4))',
+            }}>
               <KanbanCard task={activeTask} />
             </div>
           ) : null}
@@ -328,6 +356,6 @@ export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: Kanb
         onSave={handleSaveTask}
         onDelete={handleDeleteTask}
       />
-    </>
+    </div>
   )
 }

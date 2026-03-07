@@ -5,6 +5,10 @@ const ALLOWED_STATUSES = new Set(['new', 'qualified', 'booked', 'converted', 'lo
 
 interface PatchBody {
   status?: string
+  notes?: string
+  next_action?: string
+  next_action_at?: string
+  estimated_value?: number
 }
 
 async function getAuthContext() {
@@ -53,14 +57,38 @@ export async function PATCH(
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
   }
 
-  const status = typeof body.status === 'string' ? body.status : ''
-  if (!ALLOWED_STATUSES.has(status)) {
-    return NextResponse.json({ error: 'Invalid status value' }, { status: 400 })
+  const now = new Date().toISOString()
+  const patch: Record<string, unknown> = { last_activity_at: now }
+
+  // Status change
+  if (body.status != null) {
+    if (!ALLOWED_STATUSES.has(body.status)) {
+      return NextResponse.json({ error: 'Invalid status value' }, { status: 400 })
+    }
+    patch.status = body.status
+    if (body.status === 'converted') {
+      patch.converted_at = now
+    }
   }
 
-  const patch: Record<string, unknown> = { status }
-  if (status === 'converted') {
-    patch.converted_at = new Date().toISOString()
+  // Optional fields
+  if (body.notes != null) patch.notes = body.notes
+  if (body.next_action != null) patch.next_action = body.next_action
+  if (body.next_action_at != null) patch.next_action_at = body.next_action_at
+  if (body.estimated_value != null) patch.estimated_value = body.estimated_value
+
+  // First ack detection: if changing from 'new' to anything else, set first_ack_at
+  if (body.status && body.status !== 'new') {
+    const { data: current } = await auth.supabase
+      .from('leads')
+      .select('status, first_ack_at')
+      .eq('id', leadId)
+      .eq('org_id', auth.orgId)
+      .maybeSingle()
+
+    if (current?.status === 'new' && !current.first_ack_at) {
+      patch.first_ack_at = now
+    }
   }
 
   const { data, error } = await auth.supabase
@@ -68,9 +96,7 @@ export async function PATCH(
     .update(patch)
     .eq('id', leadId)
     .eq('org_id', auth.orgId)
-    .select(
-      'id, status, score, notes, estimated_value, timeline_days, service_interest, source_channel, source_detail, metadata, created_at, updated_at',
-    )
+    .select('*')
     .maybeSingle()
 
   if (error) {

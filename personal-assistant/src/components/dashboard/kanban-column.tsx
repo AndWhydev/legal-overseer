@@ -3,7 +3,6 @@
 import { useDroppable } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { Plus } from 'lucide-react'
-import { ProgressRing } from '@/components/ui/progress-ring'
 import { KanbanCard } from './kanban-card'
 import type { Task, KanbanColumn as ColumnType } from '@/lib/types'
 
@@ -26,37 +25,30 @@ export function KanbanColumn({
 }: KanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id: column.id })
 
-  // Column progress: what % of all tasks are in this column
-  const columnPct = totalOrgTasks && totalOrgTasks > 0
-    ? Math.round((tasks.length / totalOrgTasks) * 100)
-    : 0
-
   return (
-    <div className="flex w-[300px] shrink-0 flex-col">
-      <div className="flex items-center gap-2 px-2 pb-3">
-        <span
-          className="h-2 w-2 rounded-full"
-          style={{ backgroundColor: column.color }}
-        />
-        <h3 className="text-sm font-semibold text-foreground">{column.title}</h3>
-        <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-secondary px-1.5 text-[10px] font-medium text-muted-foreground">
+    <div style={{ display: 'flex', width: 280, flexShrink: 0, flexDirection: 'column', height: '100%' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0 6px 10px' }}>
+        <h3 style={{ fontSize: 13, fontWeight: 600, color: '#94A3B8', margin: 0, letterSpacing: '0.01em' }}>
+          {column.title}
+        </h3>
+        <span style={{ fontSize: 12, fontWeight: 500, color: '#475569' }}>
           {tasks.length}
         </span>
-        <div className="ml-auto">
-          <ProgressRing
-            value={columnPct}
-            size={28}
-            strokeWidth={2.5}
-            showValue={false}
-          />
-        </div>
       </div>
 
       <div
         ref={setNodeRef}
-        className={`flex flex-1 flex-col gap-2 rounded-lg p-1.5 transition-colors ${
-          isOver ? 'bg-primary/10 ring-1 ring-primary/30' : 'bg-secondary/40'
-        }`}
+        style={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 6,
+          borderRadius: 14,
+          padding: 6,
+          background: isOver ? 'rgba(255, 255, 255, 0.03)' : 'rgba(255, 255, 255, 0.01)',
+          transition: 'background 0.2s ease',
+          minHeight: 0,
+        }}
       >
         <SortableContext
           items={tasks.map((t) => t.id)}
@@ -75,9 +67,30 @@ export function KanbanColumn({
         {onAddTask && (
           <button
             onClick={() => onAddTask(column.id)}
-            className="flex items-center gap-1.5 rounded-lg p-2 text-xs text-muted-foreground transition-colors duration-150 hover:bg-secondary hover:text-foreground"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              borderRadius: 10,
+              padding: '8px 10px',
+              border: 'none',
+              background: 'transparent',
+              fontSize: 12,
+              color: '#475569',
+              cursor: 'pointer',
+              transition: 'color 0.15s, background 0.15s',
+              marginTop: 'auto',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)';
+              e.currentTarget.style.color = '#94A3B8';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'transparent';
+              e.currentTarget.style.color = '#475569';
+            }}
           >
-            <Plus className="h-3.5 w-3.5" />
+            <Plus style={{ width: 14, height: 14 }} />
             Add task
           </button>
         )}

@@ -57,14 +57,16 @@ function DashboardTab() {
   const activeTasks = tasks.filter(t => t.status !== 'archived');
 
   return (
-    <TabShell>
-      <DashboardRedesign
-        columns={columns}
-        tasks={tasks}
-        messages={messages}
-        completedToday={completedToday}
-        totalActive={activeTasks.length}
-      />
+    <TabShell variant="fixed" padding="p-0">
+      <div style={{ height: '100%', overflowY: 'auto', padding: 24 }}>
+        <DashboardRedesign
+          columns={columns}
+          tasks={tasks}
+          messages={messages}
+          completedToday={completedToday}
+          totalActive={activeTasks.length}
+        />
+      </div>
     </TabShell>
   );
 }

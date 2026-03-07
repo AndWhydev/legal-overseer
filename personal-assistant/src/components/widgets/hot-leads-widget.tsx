@@ -13,7 +13,7 @@ export function HotLeadsWidget() {
     const supabase = createClient();
     if (!supabase) return;
     supabase.from('leads').select('*')
-      .in('status', ['new', 'contacted', 'qualified'])
+      .in('status', ['new', 'qualified', 'booked'])
       .order('created_at', { ascending: false }).limit(3)
       .then(({ data }) => { if (data) setLeads(data); });
   }, []);

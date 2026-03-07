@@ -113,11 +113,11 @@ export function InboxFeed() {
         flexDirection: 'column',
         height: '100%',
         borderRadius: 16,
-        background: 'var(--bg-card, rgba(15, 20, 30, 0.35))',
+        background: 'rgba(15, 20, 30, 0.6)',
         backdropFilter: 'blur(20px) saturate(1.2)',
         WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
         border: '1px solid rgba(255, 255, 255, 0.03)',
-        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+        boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
         overflow: 'hidden',
       }}
     >
@@ -194,8 +194,18 @@ export function InboxFeed() {
       {/* Message list */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '4px 0' }}>
         {displayMessages.length === 0 && (
-          <div style={{ padding: '40px 16px', textAlign: 'center', color: 'var(--text-secondary)', fontSize: 13 }}>
-            Inbox zero — all clear
+          <div style={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 8,
+            color: '#64748B',
+            minHeight: 200,
+          }}>
+            <CheckCircle2 size={24} style={{ opacity: 0.4 }} />
+            <span style={{ fontSize: 13 }}>Inbox zero — all clear</span>
           </div>
         )}
         {displayMessages.map((msg: InboxMessage) => (

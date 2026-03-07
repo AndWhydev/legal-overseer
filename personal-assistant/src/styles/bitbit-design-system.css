@@ -3303,6 +3303,21 @@ html.light .bb-leads-card__actions {
   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.7) 30%);
 }
 
+/* Deal Rotting */
+.bb-leads-card[data-rot="aging"]    { opacity: 0.85; }
+.bb-leads-card[data-rot="stale"]    { border-color: rgba(245, 158, 11, 0.4) !important; opacity: 0.7; }
+.bb-leads-card[data-rot="critical"] { border-color: rgba(239, 68, 68, 0.5) !important; opacity: 0.6; animation: bb-pulse-border 2s infinite; }
+
+@keyframes bb-pulse-border {
+  0%, 100% { border-color: rgba(239, 68, 68, 0.5); }
+  50% { border-color: rgba(239, 68, 68, 0.2); }
+}
+
+/* Speed-to-Lead */
+.bb-leads-speed[data-level="fast"] { color: var(--bb-green); }
+.bb-leads-speed[data-level="ok"]   { color: var(--bb-amber); }
+.bb-leads-speed[data-level="slow"] { color: var(--bb-red); }
+
 
 /* ==========================================================================
    18e. CONTACTS — CRM directory
