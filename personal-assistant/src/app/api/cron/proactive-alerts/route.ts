@@ -1,5 +1,6 @@
 import { withCronGuard } from '@/lib/cron/cron-guard'
 import { checkAndSendAlerts } from '@/lib/whatsapp/proactive-alerts'
+import { logger } from '@/lib/core/logger'
 
 export const maxDuration = 300
 export const dynamic = 'force-dynamic'
@@ -32,7 +33,7 @@ export async function GET(request: Request) {
         const recipientPhone = orgData?.settings?.notify_phone
 
         if (!recipientPhone) {
-          console.log(`[cron/proactive-alerts] Skipping org ${orgId}: notify_phone not configured`)
+          logger.info(`[cron/proactive-alerts] Skipping org ${orgId}: notify_phone not configured`)
           results.push({ orgId, alertsSent: 0, reason: 'notify_phone not configured' })
           continue
         }

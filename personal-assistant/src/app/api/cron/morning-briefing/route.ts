@@ -1,5 +1,6 @@
 import { withCronGuard } from '@/lib/cron/cron-guard'
 import { sendMorningBriefing } from '@/lib/whatsapp/morning-briefing'
+import { logger } from '@/lib/core/logger'
 
 export const maxDuration = 300
 export const dynamic = 'force-dynamic'
@@ -31,7 +32,7 @@ export async function GET(request: Request) {
         const recipientPhone = orgData?.settings?.notify_phone
 
         if (!recipientPhone) {
-          console.log(`[cron/morning-briefing] Skipping org ${orgId}: notify_phone not configured`)
+          logger.info(`[cron/morning-briefing] Skipping org ${orgId}: notify_phone not configured`)
           results.push({ orgId, sent: false, reason: 'notify_phone not configured' })
           continue
         }
