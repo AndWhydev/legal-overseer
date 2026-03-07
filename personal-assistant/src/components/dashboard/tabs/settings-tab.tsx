@@ -1,15 +1,10 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { IntegrationGrid } from '@/components/integrations/integration-grid';
 import { Sun, Moon, Plus, Trash2, Save, Loader2, Smartphone, LayoutGrid, Maximize2 } from 'lucide-react';
 import { QrAuthConnect } from '@/components/ui/qr-auth-connect';
 import { createClient } from '@/lib/supabase/client';
-import { BBTabTitle } from '@/components/ui/bb-components';
 import { TabShell } from '@/components/ui/tab-shell';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { logger } from '@/lib/core/logger';
@@ -54,21 +49,162 @@ interface UserProfile {
   organization: string;
 }
 
+// ─── Inline Styles ───────────────────────────────────────────────────────────
+
+const glassCard: React.CSSProperties = {
+  padding: '20px',
+  borderRadius: 16,
+  background: 'rgba(15, 20, 30, 0.6)',
+  backdropFilter: 'blur(20px) saturate(1.2)',
+  WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
+  border: '1px solid rgba(255, 255, 255, 0.03)',
+  boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+};
+
+const glassInput: React.CSSProperties = {
+  width: '100%',
+  padding: '10px 14px',
+  borderRadius: 10,
+  background: 'rgba(13, 17, 23, 0.6)',
+  border: '1px solid rgba(255, 255, 255, 0.05)',
+  color: 'var(--text-primary, #F1F5F9)',
+  fontSize: 14,
+  outline: 'none',
+  transition: 'border-color 200ms, box-shadow 200ms',
+};
+
+const glassInputFocus: React.CSSProperties = {
+  ...glassInput,
+  borderColor: 'rgba(255, 255, 255, 0.2)',
+  boxShadow: '0 0 0 2px rgba(255, 90, 31, 0.15)',
+};
+
+const pillBtn: React.CSSProperties = {
+  padding: '6px 14px',
+  borderRadius: 20,
+  background: 'rgba(10, 14, 23, 0.42)',
+  backdropFilter: 'blur(22px) saturate(1.2)',
+  WebkitBackdropFilter: 'blur(22px) saturate(1.2)',
+  boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.06)',
+  border: 'none',
+  fontSize: 12,
+  color: 'var(--text-secondary, #94A3B8)',
+  cursor: 'pointer',
+  transition: 'all 200ms',
+};
+
+const pillBtnActive: React.CSSProperties = {
+  ...pillBtn,
+  color: 'var(--text-primary)',
+  background: 'rgba(255, 90, 31, 0.15)',
+};
+
+const accentBtn: React.CSSProperties = {
+  padding: '8px 16px',
+  borderRadius: 10,
+  background: '#FF5A1F',
+  border: 'none',
+  color: '#000',
+  fontSize: 13,
+  fontWeight: 600,
+  cursor: 'pointer',
+  transition: 'all 200ms',
+};
+
+const ghostBtn: React.CSSProperties = {
+  padding: '8px 16px',
+  borderRadius: 10,
+  background: 'transparent',
+  border: '1px solid rgba(255, 255, 255, 0.06)',
+  color: 'var(--text-primary, #F1F5F9)',
+  fontSize: 13,
+  fontWeight: 500,
+  cursor: 'pointer',
+  transition: 'all 200ms',
+};
+
+const listRow: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  padding: '12px 18px',
+  borderRadius: 12,
+  background: 'rgba(10, 14, 23, 0.5)',
+  backdropFilter: 'blur(26px) saturate(1.15)',
+  WebkitBackdropFilter: 'blur(26px) saturate(1.15)',
+  boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+  border: 'none',
+  transition: 'background 200ms',
+};
+
+const badge: React.CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  padding: '3px 10px',
+  borderRadius: 8,
+  fontSize: 11,
+  fontWeight: 600,
+  letterSpacing: '0.02em',
+  background: 'rgba(255, 255, 255, 0.06)',
+  color: 'var(--text-secondary, #94A3B8)',
+};
+
+const sectionHeader: React.CSSProperties = {
+  fontSize: 11,
+  fontWeight: 600,
+  letterSpacing: '0.08em',
+  textTransform: 'uppercase' as const,
+  color: 'var(--text-dim, #475569)',
+  marginBottom: 12,
+};
+
+const cardTitle: React.CSSProperties = {
+  fontSize: 14,
+  fontWeight: 600,
+  color: 'var(--text-primary, #F1F5F9)',
+  marginBottom: 4,
+};
+
+const cardDescription: React.CSSProperties = {
+  fontSize: 13,
+  color: 'var(--text-secondary, #94A3B8)',
+  marginBottom: 16,
+};
+
 // ─── Toggle Switch ───────────────────────────────────────────────────────────
 
 function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label: string }) {
   return (
     <button
       onClick={() => onChange(!checked)}
-      className="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-      style={{ background: checked ? 'var(--bb-orange, #FF5A1F)' : 'rgba(255,255,255,0.12)' }}
+      style={{
+        position: 'relative',
+        display: 'inline-flex',
+        height: 24,
+        width: 44,
+        flexShrink: 0,
+        cursor: 'pointer',
+        borderRadius: 9999,
+        transition: 'background-color 200ms',
+        border: 'none',
+        background: checked ? 'var(--bb-orange, #FF5A1F)' : 'rgba(255,255,255,0.12)',
+      }}
       role="switch"
       aria-checked={checked}
       aria-label={label}
     >
       <span
-        className="pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-lg ring-0 transition-transform duration-200 ease-in-out"
-        style={{ transform: checked ? 'translateX(20px)' : 'translateX(2px)', marginTop: 2 }}
+        style={{
+          pointerEvents: 'none',
+          display: 'inline-block',
+          height: 20,
+          width: 20,
+          borderRadius: 9999,
+          background: 'white',
+          boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+          transition: 'transform 200ms',
+          transform: checked ? 'translateX(20px)' : 'translateX(2px)',
+          marginTop: 2,
+        }}
       />
     </button>
   );
@@ -78,17 +214,15 @@ function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: 
 
 function AgentTogglesSection({ enabledAgents, onToggle }: { enabledAgents: string[]; onToggle: (id: string) => void }) {
   return (
-    <Card className="border-border/50">
-      <CardHeader>
-        <CardTitle className="text-base">Agent Toggles</CardTitle>
-        <CardDescription>Enable or disable agents for your organization.</CardDescription>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-2">
+    <div style={glassCard}>
+      <h3 style={cardTitle}>Agent Toggles</h3>
+      <p style={cardDescription}>Enable or disable agents for your organization.</p>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {AGENT_TYPES.map(agent => (
-          <div key={agent.id} className="flex items-center justify-between rounded-md border border-border/30 bg-muted/20 px-4 py-3">
+          <div key={agent.id} style={{ ...listRow, justifyContent: 'space-between' }}>
             <div>
-              <p className="font-medium text-foreground text-sm">{agent.label}</p>
-              <p className="text-xs text-muted-foreground">{agent.description}</p>
+              <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)' }}>{agent.label}</p>
+              <p style={{ fontSize: 12, color: 'var(--text-secondary, #94A3B8)' }}>{agent.description}</p>
             </div>
             <Toggle
               checked={enabledAgents.includes(agent.id)}
@@ -97,8 +231,8 @@ function AgentTogglesSection({ enabledAgents, onToggle }: { enabledAgents: strin
             />
           </div>
         ))}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 
@@ -107,35 +241,46 @@ function AgentTogglesSection({ enabledAgents, onToggle }: { enabledAgents: strin
 function CostLimitsSection({
   dailyLimit, monthlyLimit, onDailyChange, onMonthlyChange,
 }: { dailyLimit: number; monthlyLimit: number; onDailyChange: (v: number) => void; onMonthlyChange: (v: number) => void }) {
+  const [dailyFocus, setDailyFocus] = useState(false);
+  const [monthlyFocus, setMonthlyFocus] = useState(false);
+
   return (
-    <Card className="border-border/50">
-      <CardHeader>
-        <CardTitle className="text-base">Cost Limits</CardTitle>
-        <CardDescription>Set spending limits for AI operations.</CardDescription>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-4">
+    <div style={glassCard}>
+      <h3 style={cardTitle}>Cost Limits</h3>
+      <p style={cardDescription}>Set spending limits for AI operations.</p>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         <div>
-          <label className="mb-1.5 block text-sm text-muted-foreground">Daily Cost Limit (USD)</label>
-          <Input
+          <label style={{ display: 'block', marginBottom: 8, fontSize: 13, color: 'var(--text-secondary, #94A3B8)' }}>
+            Daily Cost Limit (USD)
+          </label>
+          <input
             type="number"
             min={0}
             step={0.5}
             value={dailyLimit}
             onChange={e => onDailyChange(parseFloat(e.target.value) || 0)}
+            onFocus={() => setDailyFocus(true)}
+            onBlur={() => setDailyFocus(false)}
+            style={dailyFocus ? glassInputFocus : glassInput}
           />
         </div>
         <div>
-          <label className="mb-1.5 block text-sm text-muted-foreground">Monthly Cost Limit (USD)</label>
-          <Input
+          <label style={{ display: 'block', marginBottom: 8, fontSize: 13, color: 'var(--text-secondary, #94A3B8)' }}>
+            Monthly Cost Limit (USD)
+          </label>
+          <input
             type="number"
             min={0}
             step={5}
             value={monthlyLimit}
             onChange={e => onMonthlyChange(parseFloat(e.target.value) || 0)}
+            onFocus={() => setMonthlyFocus(true)}
+            onBlur={() => setMonthlyFocus(false)}
+            style={monthlyFocus ? glassInputFocus : glassInput}
           />
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 
@@ -225,53 +370,59 @@ function WhatsAppConnectCard() {
   };
 
   return (
-    <Card className="border-border/50">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-base">
-          <Smartphone size={16} />
-          WhatsApp (Baileys Bridge)
-        </CardTitle>
-        <CardDescription>
-          Connect your WhatsApp account via QR code. Messages are sent through a local bridge worker.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        {connected ? (
-          <div className="flex items-center justify-between rounded-md border border-border/30 bg-muted/20 px-4 py-3">
-            <div>
-              <p className="text-sm font-medium text-foreground">Connected</p>
-              {connectedPhone && (
-                <p className="text-xs text-muted-foreground font-mono">{connectedPhone}</p>
-              )}
-            </div>
-            <button
-              onClick={handleDisconnect}
-              className="rounded-md border border-destructive/50 px-3 py-1.5 text-xs text-destructive hover:bg-destructive/10 transition-colors"
-            >
-              Disconnect
-            </button>
+    <div style={glassCard}>
+      <h3 style={{ ...cardTitle, display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+        <Smartphone size={16} />
+        WhatsApp (Baileys Bridge)
+      </h3>
+      <p style={cardDescription}>
+        Connect your WhatsApp account via QR code. Messages are sent through a local bridge worker.
+      </p>
+      {connected ? (
+        <div style={{ ...listRow, justifyContent: 'space-between' }}>
+          <div>
+            <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)' }}>Connected</p>
+            {connectedPhone && (
+              <p style={{ fontSize: 12, color: 'var(--text-secondary, #94A3B8)', fontFamily: 'monospace' }}>{connectedPhone}</p>
+            )}
           </div>
-        ) : sessionId ? (
-          <QrAuthConnect
-            sessionId={sessionId}
-            serviceName="WhatsApp"
-            onConnected={(phone) => {
-              setConnected(true);
-              setConnectedPhone(phone);
-            }}
-          />
-        ) : (
           <button
-            onClick={handleConnect}
-            disabled={loading}
-            className="flex items-center gap-1.5 rounded-md bg-[var(--bb-orange,#FF5A1F)] px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+            onClick={handleDisconnect}
+            style={{
+              ...ghostBtn,
+              borderColor: 'rgba(239, 68, 68, 0.3)',
+              color: '#ef4444',
+            }}
           >
-            {loading ? <Loader2 size={14} className="animate-spin" /> : <Smartphone size={14} />}
-            Connect WhatsApp
+            Disconnect
           </button>
-        )}
-      </CardContent>
-    </Card>
+        </div>
+      ) : sessionId ? (
+        <QrAuthConnect
+          sessionId={sessionId}
+          serviceName="WhatsApp"
+          onConnected={(phone) => {
+            setConnected(true);
+            setConnectedPhone(phone);
+          }}
+        />
+      ) : (
+        <button
+          onClick={handleConnect}
+          disabled={loading}
+          style={{
+            ...accentBtn,
+            opacity: loading ? 0.5 : 1,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+          }}
+        >
+          {loading ? <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> : <Smartphone size={14} />}
+          Connect WhatsApp
+        </button>
+      )}
+    </div>
   );
 }
 
@@ -307,34 +458,38 @@ function ChannelConfigSection() {
   }, []);
 
   return (
-    <Card className="border-border/50">
-      <CardHeader>
-        <CardTitle className="text-base">Channel Configuration</CardTitle>
-        <CardDescription>Manage connected channels and API keys.</CardDescription>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-2">
+    <div style={glassCard}>
+      <h3 style={cardTitle}>Channel Configuration</h3>
+      <p style={cardDescription}>Manage connected channels and API keys.</p>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {CHANNELS.map(ch => {
           const state = channels[ch.id];
           return (
-            <div key={ch.id} className="flex items-center justify-between rounded-md border border-border/30 bg-muted/20 px-4 py-3">
-              <div className="flex items-center gap-3">
+            <div key={ch.id} style={{ ...listRow, justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <div>
-                  <p className="font-medium text-foreground text-sm">{ch.label}</p>
-                  <p className="text-xs text-muted-foreground font-mono">
+                  <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)' }}>{ch.label}</p>
+                  <p style={{ fontSize: 12, color: 'var(--text-secondary, #94A3B8)', fontFamily: 'monospace' }}>
                     {state?.maskedKey || 'Not configured'}
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <Badge variant={state?.connected ? 'default' : 'outline'} className="text-xs">
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span
+                  style={{
+                    ...badge,
+                    background: state?.connected ? 'rgba(34, 197, 94, 0.12)' : 'rgba(255, 255, 255, 0.06)',
+                    color: state?.connected ? '#22c55e' : 'var(--text-secondary, #94A3B8)',
+                  }}
+                >
                   {state?.connected ? 'Connected' : 'Disconnected'}
-                </Badge>
+                </span>
               </div>
             </div>
           );
         })}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 
@@ -344,6 +499,7 @@ function VoiceProfileEditor({ supabase }: { supabase: SupabaseClient | null }) {
   const [profiles, setProfiles] = useState<VoiceProfile[]>([]);
   const [editing, setEditing] = useState<VoiceProfile | null>(null);
   const [saving, setSaving] = useState(false);
+  const [inputFocus, setInputFocus] = useState<string | null>(null);
 
   const fetchProfiles = useCallback(async () => {
     if (!supabase) return;
@@ -386,28 +542,44 @@ function VoiceProfileEditor({ supabase }: { supabase: SupabaseClient | null }) {
   };
 
   return (
-    <Card className="border-border/50">
-      <CardHeader>
-        <CardTitle className="text-base">Voice Profiles</CardTitle>
-        <CardDescription>Define communication tone and style per client.</CardDescription>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-3">
+    <div style={glassCard}>
+      <h3 style={cardTitle}>Voice Profiles</h3>
+      <p style={cardDescription}>Define communication tone and style per client.</p>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         {profiles.map(p => (
-          <div key={p.id} className="flex items-center justify-between rounded-md border border-border/30 bg-muted/20 px-4 py-3">
+          <div key={p.id} style={{ ...listRow, justifyContent: 'space-between' }}>
             <div>
-              <p className="font-medium text-foreground text-sm">{p.name}</p>
-              <p className="text-xs text-muted-foreground">{p.tone} / {p.style}</p>
+              <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)' }}>{p.name}</p>
+              <p style={{ fontSize: 12, color: 'var(--text-secondary, #94A3B8)' }}>{p.tone} / {p.style}</p>
             </div>
-            <div className="flex gap-2">
+            <div style={{ display: 'flex', gap: 8 }}>
               <button
                 onClick={() => setEditing({ ...p })}
-                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                style={{
+                  fontSize: 12,
+                  color: 'var(--text-secondary, #94A3B8)',
+                  background: 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  transition: 'color 200ms',
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--text-primary, #F1F5F9)')}
+                onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-secondary, #94A3B8)')}
               >
                 Edit
               </button>
               <button
                 onClick={() => p.id && handleDelete(p.id)}
-                className="text-xs text-destructive hover:text-destructive/80 transition-colors"
+                style={{
+                  fontSize: 12,
+                  color: '#ef4444',
+                  background: 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  transition: 'color 200ms',
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = '#ef4444')}
+                onMouseLeave={(e) => (e.currentTarget.style.color = '#ef4444')}
               >
                 <Trash2 size={14} />
               </button>
@@ -416,27 +588,65 @@ function VoiceProfileEditor({ supabase }: { supabase: SupabaseClient | null }) {
         ))}
 
         {editing ? (
-          <div className="flex flex-col gap-3 rounded-md border border-border/50 bg-muted/10 p-4">
-            <Input placeholder="Profile name" value={editing.name} onChange={e => setEditing({ ...editing, name: e.target.value })} />
-            <Input placeholder="Tone (e.g. professional, friendly)" value={editing.tone} onChange={e => setEditing({ ...editing, tone: e.target.value })} />
-            <Input placeholder="Style (e.g. concise, detailed)" value={editing.style} onChange={e => setEditing({ ...editing, style: e.target.value })} />
-            <Input
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 12,
+            borderRadius: 12,
+            border: '1px solid rgba(255, 255, 255, 0.06)',
+            background: 'rgba(10, 14, 23, 0.3)',
+            padding: 16,
+          }}>
+            <input
+              placeholder="Profile name"
+              value={editing.name}
+              onChange={e => setEditing({ ...editing, name: e.target.value })}
+              onFocus={() => setInputFocus('name')}
+              onBlur={() => setInputFocus(null)}
+              style={inputFocus === 'name' ? glassInputFocus : glassInput}
+            />
+            <input
+              placeholder="Tone (e.g. professional, friendly)"
+              value={editing.tone}
+              onChange={e => setEditing({ ...editing, tone: e.target.value })}
+              onFocus={() => setInputFocus('tone')}
+              onBlur={() => setInputFocus(null)}
+              style={inputFocus === 'tone' ? glassInputFocus : glassInput}
+            />
+            <input
+              placeholder="Style (e.g. concise, detailed)"
+              value={editing.style}
+              onChange={e => setEditing({ ...editing, style: e.target.value })}
+              onFocus={() => setInputFocus('style')}
+              onBlur={() => setInputFocus(null)}
+              style={inputFocus === 'style' ? glassInputFocus : glassInput}
+            />
+            <input
               placeholder="Example phrases (comma-separated)"
               value={editing.example_phrases.join(', ')}
               onChange={e => setEditing({ ...editing, example_phrases: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })}
+              onFocus={() => setInputFocus('phrases')}
+              onBlur={() => setInputFocus(null)}
+              style={inputFocus === 'phrases' ? glassInputFocus : glassInput}
             />
-            <div className="flex gap-2">
+            <div style={{ display: 'flex', gap: 8 }}>
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="flex items-center gap-1.5 rounded-md bg-[var(--bb-orange,#FF5A1F)] px-3 py-1.5 text-xs font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+                style={{
+                  ...accentBtn,
+                  opacity: saving ? 0.5 : 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                }}
               >
-                {saving ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
+                {saving ? <Loader2 size={12} style={{ animation: 'spin 1s linear infinite' }} /> : <Save size={12} />}
                 Save
               </button>
               <button
                 onClick={() => setEditing(null)}
-                className="rounded-md border border-border/50 px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                style={ghostBtn}
               >
                 Cancel
               </button>
@@ -445,13 +655,20 @@ function VoiceProfileEditor({ supabase }: { supabase: SupabaseClient | null }) {
         ) : (
           <button
             onClick={() => setEditing({ name: '', tone: '', style: '', example_phrases: [] })}
-            className="flex items-center gap-1.5 self-start rounded-md border border-dashed border-border/50 px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+            style={{
+              ...ghostBtn,
+              borderStyle: 'dashed',
+              alignSelf: 'flex-start',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+            }}
           >
             <Plus size={12} /> Add Profile
           </button>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 
@@ -460,50 +677,59 @@ function VoiceProfileEditor({ supabase }: { supabase: SupabaseClient | null }) {
 function PolicyPackEditor({
   settings, onChange,
 }: { settings: OrgSettings; onChange: (s: Partial<OrgSettings>) => void }) {
+  const [inputFocus, setInputFocus] = useState<string | null>(null);
+
   return (
-    <Card className="border-border/50">
-      <CardHeader>
-        <CardTitle className="text-base">Approval Policy</CardTitle>
-        <CardDescription>Configure approval thresholds and escalation rules.</CardDescription>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-4">
+    <div style={glassCard}>
+      <h3 style={cardTitle}>Approval Policy</h3>
+      <p style={cardDescription}>Configure approval thresholds and escalation rules.</p>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         <div>
-          <label className="mb-1.5 block text-sm text-muted-foreground">
+          <label style={{ display: 'block', marginBottom: 8, fontSize: 13, color: 'var(--text-secondary, #94A3B8)' }}>
             Auto-approve threshold (confidence above this = auto-act)
           </label>
-          <Input
+          <input
             type="number"
             min={0}
             max={1}
             step={0.05}
             value={settings.approval_threshold_auto}
             onChange={e => onChange({ approval_threshold_auto: parseFloat(e.target.value) || 0.85 })}
+            onFocus={() => setInputFocus('auto')}
+            onBlur={() => setInputFocus(null)}
+            style={inputFocus === 'auto' ? glassInputFocus : glassInput}
           />
         </div>
         <div>
-          <label className="mb-1.5 block text-sm text-muted-foreground">
+          <label style={{ display: 'block', marginBottom: 8, fontSize: 13, color: 'var(--text-secondary, #94A3B8)' }}>
             Queue threshold (below this = escalate immediately)
           </label>
-          <Input
+          <input
             type="number"
             min={0}
             max={1}
             step={0.05}
             value={settings.approval_threshold_queue}
             onChange={e => onChange({ approval_threshold_queue: parseFloat(e.target.value) || 0.55 })}
+            onFocus={() => setInputFocus('queue')}
+            onBlur={() => setInputFocus(null)}
+            style={inputFocus === 'queue' ? glassInputFocus : glassInput}
           />
         </div>
         <div>
-          <label className="mb-1.5 block text-sm text-muted-foreground">Escalation Email</label>
-          <Input
+          <label style={{ display: 'block', marginBottom: 8, fontSize: 13, color: 'var(--text-secondary, #94A3B8)' }}>Escalation Email</label>
+          <input
             type="email"
             placeholder="escalation@company.com"
             value={settings.escalation_email}
             onChange={e => onChange({ escalation_email: e.target.value })}
+            onFocus={() => setInputFocus('email')}
+            onBlur={() => setInputFocus(null)}
+            style={inputFocus === 'email' ? glassInputFocus : glassInput}
           />
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 
@@ -513,6 +739,7 @@ function DashboardLayoutSection({ supabase }: { supabase: SupabaseClient | null 
   const [currentProfile, setCurrentProfile] = useState<string>('full');
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState<string>('member');
+  const [hovered, setHovered] = useState<string | null>(null);
 
   useEffect(() => {
     if (!supabase) return;
@@ -560,12 +787,10 @@ function DashboardLayoutSection({ supabase }: { supabase: SupabaseClient | null 
   ];
 
   return (
-    <Card className="border-border/50">
-      <CardHeader>
-        <CardTitle className="text-base">Dashboard Layout</CardTitle>
-        <CardDescription>Choose which tabs appear in the sidebar for your organization.</CardDescription>
-      </CardHeader>
-      <CardContent className="grid grid-cols-2 gap-3">
+    <div style={glassCard}>
+      <h3 style={cardTitle}>Dashboard Layout</h3>
+      <p style={cardDescription}>Choose which tabs appear in the sidebar for your organization.</p>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
         {profiles.map(p => {
           const active = p.id === currentProfile;
           const Icon = p.icon;
@@ -573,22 +798,32 @@ function DashboardLayoutSection({ supabase }: { supabase: SupabaseClient | null 
             <button
               key={p.id}
               onClick={() => handleSelect(p.id)}
-              className="flex flex-col items-start gap-2 rounded-lg border p-4 text-left transition-colors"
+              onMouseEnter={() => setHovered(p.id)}
+              onMouseLeave={() => setHovered(null)}
               style={{
-                borderColor: active ? 'var(--bb-orange, #FF5A1F)' : 'var(--border-subtle, rgba(255,255,255,0.1))',
-                background: active ? 'rgba(255, 90, 31, 0.08)' : 'var(--bg-muted, rgba(255,255,255,0.03))',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'flex-start',
+                gap: 8,
+                borderRadius: 12,
+                padding: 16,
+                textAlign: 'left',
+                transition: 'all 200ms',
+                border: '1px solid ' + (active ? '#FF5A1F' : 'rgba(255, 255, 255, 0.06)'),
+                background: active ? 'rgba(255, 90, 31, 0.08)' : (hovered === p.id ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.03)'),
+                cursor: 'pointer',
               }}
             >
-              <Icon size={20} style={{ color: active ? 'var(--bb-orange, #FF5A1F)' : 'var(--text-secondary)' }} />
+              <Icon size={20} style={{ color: active ? '#FF5A1F' : 'var(--text-secondary, #94A3B8)' }} />
               <div>
-                <p className="text-sm font-medium text-foreground">{p.label}</p>
-                <p className="text-xs text-muted-foreground">{p.description}</p>
+                <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)' }}>{p.label}</p>
+                <p style={{ fontSize: 12, color: 'var(--text-secondary, #94A3B8)' }}>{p.description}</p>
               </div>
             </button>
           );
         })}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 
@@ -599,6 +834,9 @@ function SettingsTab() {
   const [supabase, setSupabase] = useState<SupabaseClient | null>(null);
   const [saving, setSaving] = useState(false);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [activeSection, setActiveSection] = useState<string>('agents');
+  const [inputFocus, setInputFocus] = useState<string | null>(null);
+  const [preferencesHovered, setPreferencesHovered] = useState<string | null>(null);
   const [settings, setSettings] = useState<OrgSettings>({
     daily_cost_limit: 10,
     monthly_cost_limit: 200,
@@ -695,151 +933,193 @@ function SettingsTab() {
     }
   };
 
+  const SECTIONS = [
+    { id: 'agents', label: 'Agents' },
+    { id: 'costs', label: 'Costs' },
+    { id: 'channels', label: 'Channels' },
+    { id: 'voice', label: 'Voice Profiles' },
+    { id: 'policy', label: 'Policy' },
+    { id: 'integrations', label: 'Integrations' },
+    { id: 'organization', label: 'Organization' },
+    { id: 'profile', label: 'Profile' },
+    { id: 'preferences', label: 'Preferences' },
+  ];
+
   return (
     <TabShell>
-      <BBTabTitle title="Settings" />
-      <div className="flex flex-col gap-6 p-6">
-        <div className="flex items-center justify-end">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 24, padding: 24 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <h1 style={{ fontSize: 22, fontWeight: 700, color: 'var(--text-primary, #F1F5F9)', letterSpacing: '-0.02em' }}>Settings</h1>
+          </div>
           <button
             onClick={handleSaveSettings}
             disabled={saving}
-            className="flex items-center gap-1.5 rounded-md bg-[var(--bb-orange,#FF5A1F)] px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+            style={{
+              ...accentBtn,
+              opacity: saving ? 0.5 : 1,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+            }}
           >
-            {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+            {saving ? <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> : <Save size={14} />}
             Save All Settings
           </button>
         </div>
 
-      <Tabs defaultValue="agents">
-        <TabsList>
-          <TabsTrigger value="agents">Agents</TabsTrigger>
-          <TabsTrigger value="costs">Costs</TabsTrigger>
-          <TabsTrigger value="channels">Channels</TabsTrigger>
-          <TabsTrigger value="voice">Voice Profiles</TabsTrigger>
-          <TabsTrigger value="policy">Policy</TabsTrigger>
-          <TabsTrigger value="integrations">Integrations</TabsTrigger>
-          <TabsTrigger value="organization">Organization</TabsTrigger>
-          <TabsTrigger value="profile">Profile</TabsTrigger>
-          <TabsTrigger value="preferences">Preferences</TabsTrigger>
-        </TabsList>
+        {/* Tab Switcher */}
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+          {SECTIONS.map(s => (
+            <button
+              key={s.id}
+              onClick={() => setActiveSection(s.id)}
+              style={activeSection === s.id ? pillBtnActive : pillBtn}
+            >
+              {s.label}
+            </button>
+          ))}
+        </div>
 
-        <TabsContent value="agents" className="mt-4 max-w-2xl">
-          <AgentTogglesSection enabledAgents={settings.enabled_agents} onToggle={handleAgentToggle} />
-        </TabsContent>
+        {/* Content */}
+        <div style={{ maxWidth: activeSection === 'agents' || activeSection === 'channels' || activeSection === 'voice' ? '900px' : '600px' }}>
+          {activeSection === 'agents' && (
+            <AgentTogglesSection enabledAgents={settings.enabled_agents} onToggle={handleAgentToggle} />
+          )}
 
-        <TabsContent value="costs" className="mt-4 max-w-lg">
-          <CostLimitsSection
-            dailyLimit={settings.daily_cost_limit}
-            monthlyLimit={settings.monthly_cost_limit}
-            onDailyChange={v => setSettings(p => ({ ...p, daily_cost_limit: v }))}
-            onMonthlyChange={v => setSettings(p => ({ ...p, monthly_cost_limit: v }))}
-          />
-        </TabsContent>
+          {activeSection === 'costs' && (
+            <CostLimitsSection
+              dailyLimit={settings.daily_cost_limit}
+              monthlyLimit={settings.monthly_cost_limit}
+              onDailyChange={v => setSettings(p => ({ ...p, daily_cost_limit: v }))}
+              onMonthlyChange={v => setSettings(p => ({ ...p, monthly_cost_limit: v }))}
+            />
+          )}
 
-        <TabsContent value="channels" className="mt-4 max-w-2xl flex flex-col gap-4">
-          <WhatsAppConnectCard />
-          <ChannelConfigSection />
-        </TabsContent>
+          {activeSection === 'channels' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <WhatsAppConnectCard />
+              <ChannelConfigSection />
+            </div>
+          )}
 
-        <TabsContent value="voice" className="mt-4 max-w-2xl">
-          <VoiceProfileEditor supabase={supabase} />
-        </TabsContent>
+          {activeSection === 'voice' && (
+            <VoiceProfileEditor supabase={supabase} />
+          )}
 
-        <TabsContent value="policy" className="mt-4 max-w-lg">
-          <PolicyPackEditor settings={settings} onChange={partial => setSettings(p => ({ ...p, ...partial }))} />
-        </TabsContent>
+          {activeSection === 'policy' && (
+            <PolicyPackEditor settings={settings} onChange={partial => setSettings(p => ({ ...p, ...partial }))} />
+          )}
 
-        <TabsContent value="integrations" className="mt-4">
-          <IntegrationGrid />
-        </TabsContent>
+          {activeSection === 'integrations' && (
+            <IntegrationGrid />
+          )}
 
-        <TabsContent value="organization" className="mt-4 max-w-2xl">
-          <DashboardLayoutSection supabase={supabase} />
-        </TabsContent>
+          {activeSection === 'organization' && (
+            <DashboardLayoutSection supabase={supabase} />
+          )}
 
-        <TabsContent value="profile" className="mt-4">
-          <Card className="max-w-lg border-border/50">
-            <CardHeader>
-              <CardTitle className="text-base">Your Profile</CardTitle>
-              <CardDescription>Manage your account details.</CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-4">
-              <div>
-                <label className="mb-1.5 block text-sm text-muted-foreground">Display Name</label>
-                <Input defaultValue={userProfile?.display_name || 'User'} />
+          {activeSection === 'profile' && (
+            <div style={glassCard}>
+              <h3 style={cardTitle}>Your Profile</h3>
+              <p style={cardDescription}>Manage your account details.</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                <div>
+                  <label style={{ display: 'block', marginBottom: 8, fontSize: 13, color: 'var(--text-secondary, #94A3B8)' }}>Display Name</label>
+                  <input
+                    defaultValue={userProfile?.display_name || 'User'}
+                    onFocus={() => setInputFocus('displayName')}
+                    onBlur={() => setInputFocus(null)}
+                    style={inputFocus === 'displayName' ? glassInputFocus : glassInput}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', marginBottom: 8, fontSize: 13, color: 'var(--text-secondary, #94A3B8)' }}>Email</label>
+                  <input
+                    defaultValue={userProfile?.email || ''}
+                    disabled
+                    style={{ ...glassInput, opacity: 0.6 }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', marginBottom: 8, fontSize: 13, color: 'var(--text-secondary, #94A3B8)' }}>Organization</label>
+                  <input
+                    defaultValue={userProfile?.organization || ''}
+                    disabled
+                    style={{ ...glassInput, opacity: 0.6 }}
+                  />
+                </div>
               </div>
-              <div>
-                <label className="mb-1.5 block text-sm text-muted-foreground">Email</label>
-                <Input defaultValue={userProfile?.email || ''} disabled />
-              </div>
-              <div>
-                <label className="mb-1.5 block text-sm text-muted-foreground">Organization</label>
-                <Input defaultValue={userProfile?.organization || ''} disabled />
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+            </div>
+          )}
 
-        <TabsContent value="preferences" className="mt-4">
-          <div className="flex flex-col gap-4 max-w-lg">
-            <Card className="border-border/50">
-              <CardHeader>
-                <CardTitle className="text-base">Theme</CardTitle>
-                <CardDescription>Switch between dark and light mode.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-between rounded-md border border-border/30 bg-muted/20 px-4 py-3">
-                  <div className="flex items-center gap-3">
+          {activeSection === 'preferences' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: '600px' }}>
+              <div style={glassCard}>
+                <h3 style={cardTitle}>Theme</h3>
+                <p style={cardDescription}>Switch between dark and light mode.</p>
+                <div style={{ ...listRow, justifyContent: 'space-between' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                     {theme === 'dark' ? (
-                      <Moon className="h-4 w-4 text-muted-foreground" />
+                      <Moon size={16} style={{ color: 'var(--text-secondary, #94A3B8)' }} />
                     ) : (
-                      <Sun className="h-4 w-4 text-amber-500" />
+                      <Sun size={16} style={{ color: '#eab308' }} />
                     )}
                     <div>
-                      <p className="font-medium text-foreground">
+                      <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)' }}>
                         {theme === 'dark' ? 'Dark Mode' : 'Light Mode'}
                       </p>
-                      <p className="text-xs text-muted-foreground">
+                      <p style={{ fontSize: 12, color: 'var(--text-secondary, #94A3B8)' }}>
                         {theme === 'dark' ? 'Easy on the eyes' : 'Bright and clean'}
                       </p>
                     </div>
                   </div>
                   <Toggle checked={theme === 'light'} onChange={toggleTheme} label="Toggle theme" />
                 </div>
-              </CardContent>
-            </Card>
-            <Card className="border-border/50">
-              <CardHeader>
-                <CardTitle className="text-base">Preferences</CardTitle>
-                <CardDescription>Customize your assistant behavior.</CardDescription>
-              </CardHeader>
-              <CardContent className="flex flex-col gap-4 text-sm text-muted-foreground">
-                <div className="flex items-center justify-between rounded-md border border-border/30 bg-muted/20 px-4 py-3">
-                  <div>
-                    <p className="font-medium text-foreground">Autonomy Level</p>
-                    <p className="text-xs">How much the agent can do without asking</p>
+              </div>
+
+              <div style={glassCard}>
+                <h3 style={cardTitle}>Preferences</h3>
+                <p style={cardDescription}>Customize your assistant behavior.</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <div
+                    style={{ ...listRow, justifyContent: 'space-between' }}
+                    onMouseEnter={() => setPreferencesHovered('autonomy')}
+                    onMouseLeave={() => setPreferencesHovered(null)}
+                  >
+                    <div>
+                      <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)' }}>Autonomy Level</p>
+                      <p style={{ fontSize: 12, color: 'var(--text-secondary, #94A3B8)' }}>How much the agent can do without asking</p>
+                    </div>
+                    <span style={badge}>Medium</span>
                   </div>
-                  <Badge variant="outline">Medium</Badge>
-                </div>
-                <div className="flex items-center justify-between rounded-md border border-border/30 bg-muted/20 px-4 py-3">
-                  <div>
-                    <p className="font-medium text-foreground">Communication Style</p>
-                    <p className="text-xs">Agent response verbosity</p>
+                  <div
+                    style={{ ...listRow, justifyContent: 'space-between' }}
+                    onMouseEnter={() => setPreferencesHovered('communication')}
+                    onMouseLeave={() => setPreferencesHovered(null)}
+                  >
+                    <div>
+                      <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)' }}>Communication Style</p>
+                      <p style={{ fontSize: 12, color: 'var(--text-secondary, #94A3B8)' }}>Agent response verbosity</p>
+                    </div>
+                    <span style={badge}>Concise</span>
                   </div>
-                  <Badge variant="outline">Concise</Badge>
-                </div>
-                <div className="flex items-center justify-between rounded-md border border-border/30 bg-muted/20 px-4 py-3">
-                  <div>
-                    <p className="font-medium text-foreground">Default Email Action</p>
-                    <p className="text-xs">What to do with outgoing emails</p>
+                  <div
+                    style={{ ...listRow, justifyContent: 'space-between' }}
+                    onMouseEnter={() => setPreferencesHovered('email')}
+                    onMouseLeave={() => setPreferencesHovered(null)}
+                  >
+                    <div>
+                      <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)' }}>Default Email Action</p>
+                      <p style={{ fontSize: 12, color: 'var(--text-secondary, #94A3B8)' }}>What to do with outgoing emails</p>
+                    </div>
+                    <span style={badge}>Draft</span>
                   </div>
-                  <Badge variant="outline">Draft</Badge>
                 </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-      </Tabs>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </TabShell>
   );

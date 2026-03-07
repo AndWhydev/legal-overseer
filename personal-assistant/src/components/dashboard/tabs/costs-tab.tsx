@@ -71,20 +71,228 @@ function CostsTab() {
     fetchCosts(period);
   }, [period, fetchCosts]);
 
+  // Inline style definitions
+  const containerPadding: React.CSSProperties = {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 24,
+    padding: 24,
+  };
+
+  const periodSelectorContainer: React.CSSProperties = {
+    display: 'flex',
+    gap: 8,
+    padding: 8,
+    borderRadius: 12,
+    background: 'rgba(13, 17, 23, 0.6)',
+    backdropFilter: 'blur(20px) saturate(1.2)',
+    WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
+    width: 'fit-content',
+  };
+
+  const pillBtn = (isActive: boolean): React.CSSProperties => ({
+    padding: '6px 14px',
+    borderRadius: 20,
+    background: isActive ? 'rgba(255, 90, 31, 0.15)' : 'rgba(10, 14, 23, 0.42)',
+    backdropFilter: 'blur(22px) saturate(1.2)',
+    WebkitBackdropFilter: 'blur(22px) saturate(1.2)',
+    boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.06)',
+    border: 'none',
+    fontSize: 12,
+    color: isActive ? 'var(--text-primary, #F1F5F9)' : 'var(--text-secondary, #94A3B8)',
+    cursor: 'pointer',
+    transition: 'all 200ms',
+    fontWeight: isActive ? 600 : 500,
+  });
+
+  const budgetAlertStyle: React.CSSProperties = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 12,
+    padding: '16px 20px',
+    borderRadius: 12,
+    background: 'rgba(234, 179, 8, 0.12)',
+    backdropFilter: 'blur(20px) saturate(1.1)',
+    WebkitBackdropFilter: 'blur(20px) saturate(1.1)',
+    border: '1px solid rgba(234, 179, 8, 0.3)',
+    boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.04)',
+  };
+
+  const budgetAlertText: React.CSSProperties = {
+    fontSize: 13,
+    color: 'var(--text-primary, #F1F5F9)',
+  };
+
+  const glassCard: React.CSSProperties = {
+    padding: 20,
+    borderRadius: 16,
+    background: 'rgba(15, 20, 30, 0.6)',
+    backdropFilter: 'blur(20px) saturate(1.2)',
+    WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
+    border: '1px solid rgba(255, 255, 255, 0.03)',
+    boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+  };
+
+  const sectionHeader: React.CSSProperties = {
+    fontSize: 11,
+    fontWeight: 600,
+    letterSpacing: '0.08em',
+    textTransform: 'uppercase' as const,
+    color: 'var(--text-dim, #475569)',
+    marginBottom: 16,
+  };
+
+  const listRow: React.CSSProperties = {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '12px 18px',
+    borderRadius: 12,
+    background: 'rgba(10, 14, 23, 0.5)',
+    backdropFilter: 'blur(26px) saturate(1.15)',
+    WebkitBackdropFilter: 'blur(26px) saturate(1.15)',
+    boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+    border: 'none',
+    transition: 'background 200ms',
+  };
+
+  const bigNumber: React.CSSProperties = {
+    fontSize: 38,
+    fontWeight: 700,
+    color: 'var(--text-primary, #F1F5F9)',
+    fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
+    letterSpacing: '-0.03em',
+    lineHeight: 1,
+  };
+
+  const loadingContainer: React.CSSProperties = {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: 48,
+    paddingBottom: 48,
+  };
+
+  const loadingText: React.CSSProperties = {
+    fontSize: 13,
+    color: 'var(--text-secondary, #94A3B8)',
+    animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+  };
+
+  const summaryGrid: React.CSSProperties = {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+    gap: 16,
+  };
+
+  const dailyTrendContainer: React.CSSProperties = {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 12,
+  };
+
+  const dailyTrendRow: React.CSSProperties = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 16,
+    fontSize: 12,
+  };
+
+  const dailyTrendDate: React.CSSProperties = {
+    width: 80,
+    color: 'var(--text-secondary, #94A3B8)',
+    flexShrink: 0,
+  };
+
+  const dailyTrendBarContainer: React.CSSProperties = {
+    flex: 1,
+    height: 16,
+    borderRadius: 8,
+    background: 'rgba(10, 14, 23, 0.5)',
+    backdropFilter: 'blur(20px)',
+    WebkitBackdropFilter: 'blur(20px)',
+    overflow: 'hidden',
+    border: '1px solid rgba(255, 255, 255, 0.02)',
+  };
+
+  const dailyTrendBar = (pct: number): React.CSSProperties => ({
+    height: '100%',
+    width: `${pct}%`,
+    background: 'rgba(34, 197, 94, 0.4)',
+    borderRadius: 8,
+    transition: 'width 300ms ease-out',
+  });
+
+  const dailyTrendValue: React.CSSProperties = {
+    width: 64,
+    textAlign: 'right',
+    fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
+    fontWeight: 600,
+    color: 'var(--text-primary, #F1F5F9)',
+    flexShrink: 0,
+  };
+
+  const listRowLabel: React.CSSProperties = {
+    fontSize: 13,
+    color: 'var(--text-primary, #F1F5F9)',
+  };
+
+  const listRowMonoLabel: React.CSSProperties = {
+    fontSize: 12,
+    fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
+    fontWeight: 600,
+    color: 'var(--text-primary, #F1F5F9)',
+  };
+
+  const listRowMeta: React.CSSProperties = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 24,
+    fontSize: 12,
+  };
+
+  const listRowSecondary: React.CSSProperties = {
+    color: 'var(--text-secondary, #94A3B8)',
+  };
+
+  const listRowValue: React.CSSProperties = {
+    fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
+    fontWeight: 600,
+    color: 'var(--text-primary, #F1F5F9)',
+  };
+
+  const emptyState: React.CSSProperties = {
+    fontSize: 13,
+    color: 'var(--text-secondary, #94A3B8)',
+    padding: '12px 18px',
+  };
+
+  const summaryCardLabel: React.CSSProperties = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    color: 'var(--text-secondary, #94A3B8)',
+    marginBottom: 12,
+    fontSize: 11,
+    fontWeight: 600,
+  };
+
+  const summaryCardLabelText: React.CSSProperties = {
+    fontSize: 11,
+    fontWeight: 600,
+    letterSpacing: '0.02em',
+  };
+
   return (
     <TabShell>
-      <div className="flex flex-col gap-6 p-6">
+      <div style={containerPadding}>
         {/* Period selector */}
-        <div className="flex gap-1 rounded-lg bg-[var(--bg-elevated)] p-1">
+        <div style={periodSelectorContainer}>
           {(['today', '7d', '30d', 'month'] as Period[]).map((p) => (
             <button
               key={p}
               onClick={() => setPeriod(p)}
-              className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
-                period === p
-                  ? 'bg-[var(--bb-orange)] text-white'
-                  : 'text-muted-foreground hover:text-[var(--text-primary)]'
-              }`}
+              style={pillBtn(period === p)}
             >
               {p === 'today' ? 'Today' : p === 'month' ? 'This Month' : p}
             </button>
@@ -93,22 +301,26 @@ function CostsTab() {
 
         {/* Budget Alerts */}
         {alerts && (alerts.daily_exceeded || alerts.monthly_exceeded) && (
-          <div className="flex items-center gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 p-4">
-            <AlertTriangle className="h-5 w-5 text-amber-400 shrink-0" />
-            <div className="text-sm">
+          <div style={budgetAlertStyle}>
+            <AlertTriangle size={20} style={{ color: '#eab308', flexShrink: 0 }} />
+            <div style={budgetAlertText}>
               {alerts.daily_exceeded && (
-                <p>Daily spend at <strong>{alerts.daily_pct}%</strong> of budget</p>
+                <p style={{ margin: 0, marginBottom: alerts.monthly_exceeded ? 4 : 0 }}>
+                  Daily spend at <strong>{alerts.daily_pct}%</strong> of budget
+                </p>
               )}
               {alerts.monthly_exceeded && (
-                <p>Monthly spend at <strong>{alerts.monthly_pct}%</strong> of budget</p>
+                <p style={{ margin: 0 }}>
+                  Monthly spend at <strong>{alerts.monthly_pct}%</strong> of budget
+                </p>
               )}
             </div>
           </div>
         )}
 
         {loading && (
-          <div className="flex items-center justify-center py-12">
-            <div className="animate-pulse text-muted-foreground text-sm">Loading cost data...</div>
+          <div style={loadingContainer}>
+            <div style={loadingText}>Loading cost data...</div>
           </div>
         )}
 
@@ -119,86 +331,83 @@ function CostsTab() {
         {summary && !loading && (
           <>
             {/* Summary Cards */}
-            <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+            <div style={summaryGrid}>
               <SummaryCard
-                icon={<DollarSign className="h-4 w-4" />}
+                icon={<DollarSign size={16} />}
                 label="Total Cost"
                 value={formatUSD(summary.total_cost_usd)}
               />
               <SummaryCard
-                icon={<BarChart3 className="h-4 w-4" />}
+                icon={<BarChart3 size={16} />}
                 label="Total Runs"
                 value={String(summary.total_runs)}
               />
               <SummaryCard
-                icon={<TrendingUp className="h-4 w-4" />}
+                icon={<TrendingUp size={16} />}
                 label="Input Tokens"
                 value={formatTokens(summary.total_input_tokens)}
               />
               <SummaryCard
-                icon={<TrendingUp className="h-4 w-4" />}
+                icon={<TrendingUp size={16} />}
                 label="Output Tokens"
                 value={formatTokens(summary.total_output_tokens)}
               />
             </div>
 
             {/* Cost by Model */}
-            <div className="rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-elevated)] p-4">
-              <h2 className="mb-3 text-sm font-medium text-muted-foreground">Cost by Model</h2>
-              <div className="space-y-2">
+            <div style={glassCard}>
+              <h2 style={sectionHeader}>Cost by Model</h2>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {summary.by_model.map((entry) => (
-                  <div key={entry.model} className="flex items-center justify-between text-sm">
-                    <span className="font-mono text-xs">{entry.model}</span>
-                    <div className="flex items-center gap-4">
-                      <span className="text-muted-foreground">{entry.run_count} runs</span>
-                      <span className="font-medium">{formatUSD(entry.cost_usd)}</span>
+                  <div key={entry.model} style={listRow}>
+                    <span style={listRowMonoLabel}>{entry.model}</span>
+                    <div style={listRowMeta}>
+                      <span style={listRowSecondary}>{entry.run_count} runs</span>
+                      <span style={listRowValue}>{formatUSD(entry.cost_usd)}</span>
                     </div>
                   </div>
                 ))}
                 {summary.by_model.length === 0 && (
-                  <p className="text-sm text-muted-foreground">No data for this period</p>
+                  <p style={emptyState}>No data for this period</p>
                 )}
               </div>
             </div>
 
             {/* Cost by Agent */}
-            <div className="rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-elevated)] p-4">
-              <h2 className="mb-3 text-sm font-medium text-muted-foreground">Cost by Agent</h2>
-              <div className="space-y-2">
+            <div style={glassCard}>
+              <h2 style={sectionHeader}>Cost by Agent</h2>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {summary.by_agent.map((entry) => (
-                  <div key={entry.agent_type} className="flex items-center justify-between text-sm">
-                    <span>{entry.agent_type}</span>
-                    <div className="flex items-center gap-4">
-                      <span className="text-muted-foreground">{entry.run_count} runs</span>
-                      <span className="text-muted-foreground">{formatTokens(entry.input_tokens + entry.output_tokens)} tok</span>
-                      <span className="font-medium">{formatUSD(entry.cost_usd)}</span>
+                  <div key={entry.agent_type} style={listRow}>
+                    <span style={listRowLabel}>{entry.agent_type}</span>
+                    <div style={listRowMeta}>
+                      <span style={listRowSecondary}>{entry.run_count} runs</span>
+                      <span style={listRowSecondary}>{formatTokens(entry.input_tokens + entry.output_tokens)} tok</span>
+                      <span style={listRowValue}>{formatUSD(entry.cost_usd)}</span>
                     </div>
                   </div>
                 ))}
                 {summary.by_agent.length === 0 && (
-                  <p className="text-sm text-muted-foreground">No data for this period</p>
+                  <p style={emptyState}>No data for this period</p>
                 )}
               </div>
             </div>
 
             {/* Daily Trend */}
             {summary.daily_trend.length > 0 && (
-              <div className="rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-elevated)] p-4">
-                <h2 className="mb-3 text-sm font-medium text-muted-foreground">Daily Trend</h2>
-                <div className="space-y-1">
+              <div style={glassCard}>
+                <h2 style={sectionHeader}>Daily Trend</h2>
+                <div style={dailyTrendContainer}>
                   {summary.daily_trend.map((day) => {
                     const maxCost = Math.max(...summary.daily_trend.map((d) => d.cost_usd), 0.01);
                     const pct = (day.cost_usd / maxCost) * 100;
                     return (
-                      <div key={day.date} className="flex items-center gap-3 text-xs">
-                        <span className="w-20 text-muted-foreground">{day.date.slice(5)}</span>
-                        <div className="flex-1 h-4 rounded bg-[var(--bg-base)] overflow-hidden">
-                          <div
-                            className="h-full rounded bg-emerald-500/60"
-                            style={{ width: `${pct}%` }}
-                          />
+                      <div key={day.date} style={dailyTrendRow}>
+                        <span style={dailyTrendDate}>{day.date.slice(5)}</span>
+                        <div style={dailyTrendBarContainer}>
+                          <div style={dailyTrendBar(pct)} />
                         </div>
-                        <span className="w-16 text-right font-mono">{formatUSD(day.cost_usd)}</span>
+                        <span style={dailyTrendValue}>{formatUSD(day.cost_usd)}</span>
                       </div>
                     );
                   })}
@@ -213,13 +422,46 @@ function CostsTab() {
 }
 
 function SummaryCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+  const glassCard: React.CSSProperties = {
+    padding: 20,
+    borderRadius: 16,
+    background: 'rgba(15, 20, 30, 0.6)',
+    backdropFilter: 'blur(20px) saturate(1.2)',
+    WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
+    border: '1px solid rgba(255, 255, 255, 0.03)',
+    boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+  };
+
+  const labelContainer: React.CSSProperties = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    color: 'var(--text-secondary, #94A3B8)',
+    marginBottom: 12,
+    fontSize: 11,
+    fontWeight: 600,
+  };
+
+  const iconStyle: React.CSSProperties = {
+    color: 'var(--text-secondary, #94A3B8)',
+  };
+
+  const valueStyle: React.CSSProperties = {
+    fontSize: 38,
+    fontWeight: 700,
+    color: 'var(--text-primary, #F1F5F9)',
+    fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
+    letterSpacing: '-0.03em',
+    lineHeight: 1,
+  };
+
   return (
-    <div className="rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-elevated)] p-4">
-      <div className="flex items-center gap-2 text-muted-foreground mb-1">
-        {icon}
-        <span className="text-xs">{label}</span>
+    <div style={glassCard}>
+      <div style={labelContainer}>
+        <div style={iconStyle}>{icon}</div>
+        <span>{label}</span>
       </div>
-      <p className="text-xl font-semibold">{value}</p>
+      <p style={valueStyle}>{value}</p>
     </div>
   );
 }

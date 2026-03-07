@@ -103,6 +103,7 @@ const TabComponents: Record<string, React.LazyExoticComponent<React.ComponentTyp
   chat: lazy(() => tabImports.chat),
   inbox: lazy(() => tabImports.inbox),
   'creator-studio': lazy(() => tabImports['creator-studio']),
+  connections: lazy(() => tabImports.connections),
   medications: lazy(() => tabImports.medications),
   contacts: lazy(() => tabImports.contacts),
   leads: lazy(() => tabImports.leads),
