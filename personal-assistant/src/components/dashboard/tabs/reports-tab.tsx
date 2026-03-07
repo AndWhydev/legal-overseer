@@ -53,6 +53,7 @@ export default function ReportsTab() {
   const [previewHtml, setPreviewHtml] = useState<string | null>(null)
   const [reports, setReports] = useState<GeneratedReport[]>([])
   const [loading, setLoading] = useState(true)
+  const [hoveredRowId, setHoveredRowId] = useState<string | null>(null)
 
   const periods = getPeriodOptions()
 
@@ -119,84 +120,166 @@ export default function ReportsTab() {
     }
   }
 
+  const glassCard: React.CSSProperties = {
+    padding: '20px',
+    borderRadius: 16,
+    background: 'rgba(15, 20, 30, 0.6)',
+    backdropFilter: 'blur(20px) saturate(1.2)',
+    WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
+    border: '1px solid rgba(255, 255, 255, 0.03)',
+    boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+  }
+
+  const glassSelect: React.CSSProperties = {
+    padding: '10px 14px',
+    borderRadius: 10,
+    background: 'rgba(13, 17, 23, 0.6)',
+    border: '1px solid rgba(255, 255, 255, 0.05)',
+    color: 'var(--text-primary, #F1F5F9)',
+    fontSize: 14,
+    outline: 'none' as const,
+    appearance: 'none' as const,
+    cursor: 'pointer',
+    transition: 'border-color 200ms, box-shadow 200ms',
+  }
+
+  const accentBtn: React.CSSProperties = {
+    padding: '8px 16px',
+    borderRadius: 10,
+    background: '#FF5A1F',
+    border: 'none',
+    color: '#000',
+    fontSize: 13,
+    fontWeight: 600,
+    cursor: 'pointer',
+    transition: 'all 200ms',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+  }
+
+  const ghostBtn: React.CSSProperties = {
+    padding: '8px 16px',
+    borderRadius: 10,
+    background: 'transparent',
+    border: '1px solid rgba(255, 255, 255, 0.06)',
+    color: 'var(--text-primary, #F1F5F9)',
+    fontSize: 13,
+    fontWeight: 500,
+    cursor: 'pointer',
+    transition: 'all 200ms',
+  }
+
+  const sectionHeader: React.CSSProperties = {
+    fontSize: 11,
+    fontWeight: 600,
+    letterSpacing: '0.08em',
+    textTransform: 'uppercase' as const,
+    color: 'var(--text-dim, #475569)',
+    marginBottom: 12,
+  }
+
+  const listRow: React.CSSProperties = {
+    display: 'flex',
+    alignItems: 'center',
+    padding: '12px 18px',
+    borderRadius: 12,
+    background: 'rgba(10, 14, 23, 0.5)',
+    backdropFilter: 'blur(26px) saturate(1.15)',
+    WebkitBackdropFilter: 'blur(26px) saturate(1.15)',
+    boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+    border: 'none',
+    transition: 'background 200ms',
+  }
+
   return (
     <TabShell>
       <div style={{ padding: '24px', maxWidth: 960, margin: '0 auto' }}>
-        {/* Controls */}
-        <div style={{
-          display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'end',
-          marginBottom: '24px', padding: '20px', background: 'var(--bg-elevated)', borderRadius: '12px',
-        }}>
-          <div style={{ flex: 1, minWidth: 160 }}>
-            <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '6px', textTransform: 'uppercase' }}>
-              Report Type
-            </label>
-            <select
-              value={reportType}
-              onChange={e => setReportType(e.target.value as ReportType)}
+        {/* Controls Section */}
+        <div style={{ marginBottom: '28px' }}>
+          <div style={sectionHeader}>Report Configuration</div>
+          <div style={{
+            ...glassCard,
+            display: 'flex',
+            gap: '16px',
+            flexWrap: 'wrap',
+            alignItems: 'flex-end',
+          }}>
+            <div style={{ flex: 1, minWidth: 160 }}>
+              <label style={sectionHeader}>
+                Report Type
+              </label>
+              <select
+                value={reportType}
+                onChange={e => setReportType(e.target.value as ReportType)}
+                style={glassSelect}
+              >
+                {Object.entries(REPORT_LABELS).map(([k, v]) => (
+                  <option key={k} value={k}>{v}</option>
+                ))}
+              </select>
+            </div>
+
+            <div style={{ flex: 1, minWidth: 160 }}>
+              <label style={sectionHeader}>
+                Period
+              </label>
+              <select
+                value={periodIndex}
+                onChange={e => setPeriodIndex(Number(e.target.value))}
+                style={glassSelect}
+              >
+                {periods.map((p, i) => (
+                  <option key={i} value={i}>{p.label}</option>
+                ))}
+              </select>
+            </div>
+
+            <button
+              onClick={handleGenerate}
+              disabled={generating}
+              onMouseEnter={(e) => {
+                if (!generating) {
+                  (e.target as HTMLButtonElement).style.background = '#FF7A45'
+                  ;(e.target as HTMLButtonElement).style.transform = 'translateY(-1px)'
+                }
+              }}
+              onMouseLeave={(e) => {
+                (e.target as HTMLButtonElement).style.background = '#FF5A1F'
+                ;(e.target as HTMLButtonElement).style.transform = 'translateY(0)'
+              }}
               style={{
-                width: '100%', padding: '8px 12px', borderRadius: '8px',
-                background: 'var(--bg-primary)', color: 'var(--text-primary)',
-                border: '1px solid var(--border)', fontSize: '14px',
+                ...accentBtn,
+                opacity: generating ? 0.7 : 1,
+                cursor: generating ? 'wait' : 'pointer',
               }}
             >
-              {Object.entries(REPORT_LABELS).map(([k, v]) => (
-                <option key={k} value={k}>{v}</option>
-              ))}
-            </select>
+              {generating ? <Loader2 size={16} className="animate-spin" /> : <FileText size={16} />}
+              {generating ? 'Generating...' : 'Generate Report'}
+            </button>
           </div>
-
-          <div style={{ flex: 1, minWidth: 160 }}>
-            <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '6px', textTransform: 'uppercase' }}>
-              Period
-            </label>
-            <select
-              value={periodIndex}
-              onChange={e => setPeriodIndex(Number(e.target.value))}
-              style={{
-                width: '100%', padding: '8px 12px', borderRadius: '8px',
-                background: 'var(--bg-primary)', color: 'var(--text-primary)',
-                border: '1px solid var(--border)', fontSize: '14px',
-              }}
-            >
-              {periods.map((p, i) => (
-                <option key={i} value={i}>{p.label}</option>
-              ))}
-            </select>
-          </div>
-
-          <button
-            onClick={handleGenerate}
-            disabled={generating}
-            style={{
-              padding: '8px 20px', borderRadius: '8px', border: 'none',
-              background: '#ff6b35', color: '#fff', fontWeight: 600,
-              fontSize: '14px', cursor: generating ? 'wait' : 'pointer',
-              display: 'flex', alignItems: 'center', gap: '6px',
-              opacity: generating ? 0.7 : 1,
-            }}
-          >
-            {generating ? <Loader2 size={16} className="animate-spin" /> : <FileText size={16} />}
-            {generating ? 'Generating...' : 'Generate Report'}
-          </button>
         </div>
 
-        {/* Preview */}
+        {/* Preview Section */}
         {previewHtml && (
-          <div style={{ marginBottom: '24px' }}>
-            <div style={{
-              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-              marginBottom: '12px',
-            }}>
-              <h2 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)' }}>
-                Report Preview
-              </h2>
+          <div style={{ marginBottom: '28px' }}>
+            <div style={sectionHeader}>Report Preview</div>
+            <div style={{ marginBottom: '12px' }}>
               <button
                 onClick={handlePrintPreview}
+                onMouseEnter={(e) => {
+                  (e.target as HTMLButtonElement).style.background = 'rgba(255, 255, 255, 0.04)'
+                  ;(e.target as HTMLButtonElement).style.borderColor = 'rgba(255, 255, 255, 0.1)'
+                }}
+                onMouseLeave={(e) => {
+                  (e.target as HTMLButtonElement).style.background = 'transparent'
+                  ;(e.target as HTMLButtonElement).style.borderColor = 'rgba(255, 255, 255, 0.06)'
+                }}
                 style={{
-                  padding: '6px 14px', borderRadius: '6px', border: '1px solid var(--border)',
-                  background: 'var(--bg-elevated)', color: 'var(--text-primary)',
-                  fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px',
+                  ...ghostBtn,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
                 }}
               >
                 <Download size={14} /> Download PDF
@@ -204,8 +287,10 @@ export default function ReportsTab() {
             </div>
             <div
               style={{
-                border: '1px solid var(--border)', borderRadius: '12px', overflow: 'hidden',
-                background: '#fff', maxHeight: '600px', overflowY: 'auto',
+                ...glassCard,
+                overflow: 'hidden',
+                maxHeight: '600px',
+                overflowY: 'auto',
               }}
             >
               <iframe
@@ -217,20 +302,34 @@ export default function ReportsTab() {
           </div>
         )}
 
-        {/* History */}
+        {/* History Section */}
         <div>
           <div style={{
-            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-            marginBottom: '12px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '16px',
           }}>
-            <h2 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)' }}>
+            <div style={{ ...sectionHeader, marginBottom: 0 }}>
               Generated Reports
-            </h2>
+            </div>
             <button
               onClick={fetchReports}
+              onMouseEnter={(e) => {
+                (e.target as HTMLButtonElement).style.color = 'var(--text-primary, #F1F5F9)'
+                ;(e.target as HTMLButtonElement).style.opacity = '0.7'
+              }}
+              onMouseLeave={(e) => {
+                (e.target as HTMLButtonElement).style.color = 'var(--text-secondary, #94A3B8)'
+                ;(e.target as HTMLButtonElement).style.opacity = '1'
+              }}
               style={{
-                padding: '4px', background: 'none', border: 'none',
-                color: 'var(--text-secondary)', cursor: 'pointer',
+                padding: '6px',
+                background: 'none',
+                border: 'none',
+                color: 'var(--text-secondary, #94A3B8)',
+                cursor: 'pointer',
+                transition: 'color 200ms, opacity 200ms',
               }}
               aria-label="Refresh"
             >
@@ -239,57 +338,84 @@ export default function ReportsTab() {
           </div>
 
           {loading ? (
-            <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)' }}>
-              Loading...
+            <div style={{
+              ...glassCard,
+              display: 'flex',
+              flexDirection: 'column' as const,
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '60px 20px',
+              gap: 12,
+            }}>
+              <Loader2 size={32} style={{ color: 'var(--text-dim)' }} className="animate-spin" />
+              <span style={{ fontSize: 14, color: 'var(--text-secondary)' }}>Loading reports...</span>
             </div>
           ) : reports.length === 0 ? (
             <div style={{
-              textAlign: 'center', padding: '40px', color: 'var(--text-secondary)',
-              background: 'var(--bg-elevated)', borderRadius: '12px',
+              ...glassCard,
+              display: 'flex',
+              flexDirection: 'column' as const,
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '60px 20px',
+              gap: 12,
             }}>
-              No reports generated yet. Select a report type and period above to get started.
+              <FileText size={32} style={{ color: 'var(--text-dim)' }} />
+              <span style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
+                No reports generated yet. Select a report type and period above to get started.
+              </span>
             </div>
           ) : (
-            <div style={{
-              background: 'var(--bg-elevated)', borderRadius: '12px', overflow: 'hidden',
-            }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                    <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Type</th>
-                    <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Period</th>
-                    <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Generated</th>
-                    <th style={{ padding: '10px 16px', textAlign: 'right', fontSize: '12px', color: 'var(--text-secondary)' }}></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {reports.map(r => (
-                    <tr key={r.id} style={{ borderBottom: '1px solid var(--border)' }}>
-                      <td style={{ padding: '10px 16px', fontSize: '14px', color: 'var(--text-primary)' }}>
-                        {REPORT_LABELS[r.report_type as ReportType] ?? r.report_type}
-                      </td>
-                      <td style={{ padding: '10px 16px', fontSize: '14px', color: 'var(--text-secondary)' }}>
-                        {r.period_from ?? '-'}
-                      </td>
-                      <td style={{ padding: '10px 16px', fontSize: '13px', color: 'var(--text-secondary)' }}>
-                        {new Date(r.created_at).toLocaleDateString('en-AU')}
-                      </td>
-                      <td style={{ padding: '10px 16px', textAlign: 'right' }}>
-                        <button
-                          onClick={() => handleDownload(r.id)}
-                          style={{
-                            padding: '4px 10px', borderRadius: '6px', border: '1px solid var(--border)',
-                            background: 'none', color: 'var(--text-primary)',
-                            fontSize: '12px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px',
-                          }}
-                        >
-                          <Download size={12} /> View
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {reports.map(r => (
+                <div
+                  key={r.id}
+                  onMouseEnter={() => setHoveredRowId(r.id)}
+                  onMouseLeave={() => setHoveredRowId(null)}
+                  style={{
+                    ...listRow,
+                    background: hoveredRowId === r.id ? 'rgba(20, 28, 40, 0.7)' : 'rgba(10, 14, 23, 0.5)',
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  <div style={{ flex: 1 }}>
+                    <div style={{
+                      fontSize: 14,
+                      fontWeight: 500,
+                      color: 'var(--text-primary, #F1F5F9)',
+                      marginBottom: '4px',
+                    }}>
+                      {REPORT_LABELS[r.report_type as ReportType] ?? r.report_type}
+                    </div>
+                    <div style={{
+                      fontSize: 12,
+                      color: 'var(--text-secondary, #94A3B8)',
+                    }}>
+                      Period: {r.period_from ?? '-'} • Generated: {new Date(r.created_at).toLocaleDateString('en-AU')}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => handleDownload(r.id)}
+                    onMouseEnter={(e) => {
+                      (e.target as HTMLButtonElement).style.background = 'rgba(255, 255, 255, 0.04)'
+                      ;(e.target as HTMLButtonElement).style.borderColor = 'rgba(255, 255, 255, 0.1)'
+                    }}
+                    onMouseLeave={(e) => {
+                      (e.target as HTMLButtonElement).style.background = 'transparent'
+                      ;(e.target as HTMLButtonElement).style.borderColor = 'rgba(255, 255, 255, 0.06)'
+                    }}
+                    style={{
+                      ...ghostBtn,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    <Download size={14} /> View
+                  </button>
+                </div>
+              ))}
             </div>
           )}
         </div>

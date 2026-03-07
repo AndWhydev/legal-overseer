@@ -184,22 +184,10 @@ export function DashboardRedesign({ columns, tasks, messages, completedToday, to
       >
         {/* Kanban Board */}
         <div style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
-          <h2 style={{
-            fontSize: 16,
-            fontWeight: 700,
-            color: '#F1F5F9',
-            letterSpacing: '-0.01em',
-            marginBottom: 10,
-            flexShrink: 0,
-          }}>
-            Tasks
-          </h2>
-          <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
-            <KanbanBoard
-              initialColumns={displayColumns}
-              initialTasks={displayTasks}
-            />
-          </div>
+          <KanbanBoard
+            initialColumns={displayColumns}
+            initialTasks={displayTasks}
+          />
         </div>
 
         {/* Inbox Feed */}

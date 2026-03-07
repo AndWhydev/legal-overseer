@@ -17,12 +17,11 @@ import {
   SortableContext,
   useSortable,
   verticalListSortingStrategy,
-  arrayMove,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import {
   ReceiptText, Search, Download, ChevronDown, Send, CheckCircle2,
-  Ban, FileText, Users, LayoutList, Eye, EyeOff,
+  Ban, Users, LayoutList, Eye, EyeOff, Plus,
 } from 'lucide-react'
 import { EmptyState } from '@/components/ui/empty-state'
 import { useToast } from '@/components/ui/toast'
@@ -308,6 +307,15 @@ const AVATAR_PAIRS = [
   ['#14B8A6', '#3B82F6'],
 ]
 
+const STATUS_COLORS: Record<InvoiceStatus, { dot: string; bg: string; label: string }> = {
+  draft:     { dot: '#64748B', bg: 'rgba(100, 116, 139, 0.06)', label: 'Draft' },
+  sent:      { dot: '#38BDF8', bg: 'rgba(56, 189, 248, 0.06)',  label: 'Sent' },
+  viewed:    { dot: '#818CF8', bg: 'rgba(129, 140, 248, 0.06)', label: 'Viewed' },
+  overdue:   { dot: '#EF4444', bg: 'rgba(239, 68, 68, 0.08)',   label: 'Overdue' },
+  paid:      { dot: '#22C55E', bg: 'rgba(34, 197, 94, 0.06)',   label: 'Paid' },
+  cancelled: { dot: '#71717A', bg: 'rgba(113, 113, 122, 0.04)', label: 'Cancelled' },
+}
+
 // ─── Client-Side Invoice PDF Preview ────────────────────────────────────────
 
 function generateInvoicePreviewHtml(invoice: InvoiceRow): string {
@@ -490,12 +498,13 @@ function PdfPreviewPanel({ invoice }: { invoice: InvoiceRow }) {
 function InvoiceDetailPanel({
   invoice,
   onAction,
-  busy,
+  busyId,
 }: {
   invoice: InvoiceRow
   onAction: (id: string, status: InvoiceStatus) => void
-  busy: boolean
+  busyId: string | null
 }) {
+  const busy = busyId === invoice.id
   const [showPdf, setShowPdf] = useState(false)
   const progressIdx = getProgressIndex(invoice.status)
   const dueColor = getDueColor(invoice.due_date, invoice.status)
@@ -526,6 +535,8 @@ function InvoiceDetailPanel({
         opacity: busy ? 0.5 : 1,
         transition: `all 100ms ${SNAP}`,
       }}
+      onMouseEnter={e => { if (!busy) e.currentTarget.style.filter = 'brightness(1.3)' }}
+      onMouseLeave={e => { e.currentTarget.style.filter = 'brightness(1)' }}
     >
       {icon} {label}
     </button>
@@ -737,7 +748,7 @@ function InvoiceRowItem({
   expanded,
   onToggle,
   onAction,
-  busy,
+  busyId,
   delay,
   isDragOverlay,
 }: {
@@ -745,11 +756,12 @@ function InvoiceRowItem({
   expanded: boolean
   onToggle: () => void
   onAction: (id: string, status: InvoiceStatus) => void
-  busy: boolean
+  busyId: string | null
   delay: number
   isDragOverlay?: boolean
 }) {
   const [hovered, setHovered] = useState(false)
+  const busy = busyId === invoice.id
   const pointerStart = useRef<{ x: number; y: number } | null>(null)
 
   const {
@@ -780,6 +792,7 @@ function InvoiceRowItem({
 
   const urgency = getDueUrgency(invoice.due_date, invoice.status)
   const name = invoice.client_name || 'Unknown'
+  const sc = STATUS_COLORS[invoice.status]
 
   const handlePointerDown = (e: React.PointerEvent) => {
     pointerStart.current = { x: e.clientX, y: e.clientY }
@@ -804,6 +817,7 @@ function InvoiceRowItem({
       }}
     >
       <div
+        className="bb-inv-row"
         onPointerDown={handlePointerDown}
         onPointerUp={handlePointerUp}
         onMouseEnter={() => setHovered(true)}
@@ -818,9 +832,11 @@ function InvoiceRowItem({
           background: expanded
             ? 'rgba(255, 255, 255, 0.04)'
             : hovered
-              ? 'rgba(255, 255, 255, 0.03)'
+              ? sc.bg
               : 'transparent',
           borderBottom: expanded ? 'none' : '1px solid rgba(255, 255, 255, 0.02)',
+          borderLeft: expanded ? `2px solid ${sc.dot}` : '2px solid transparent',
+          position: 'relative',
         }}
       >
         <InvoiceAvatar name={name} email={invoice.client_email} />
@@ -832,15 +848,68 @@ function InvoiceRowItem({
             {name}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 2 }}>
+            {/* Status dot + label */}
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+              <span style={{
+                width: 6, height: 6, borderRadius: '50%', background: sc.dot, flexShrink: 0,
+              }} />
+              <span style={{ fontSize: 11, color: sc.dot, fontWeight: 500 }}>{sc.label}</span>
+            </span>
             <span style={{ fontSize: 12, color: 'var(--text-dim)' }}>{invoice.invoice_number}</span>
             {invoice.project_reference && (
               <span style={{ fontSize: 11, color: 'var(--text-dim)', opacity: 0.7 }}>{invoice.project_reference}</span>
             )}
             {urgency.text && (
-              <span style={{ fontSize: 12, color: urgency.color, fontWeight: 500 }}>{urgency.text}</span>
+              <span style={{ fontSize: 12, color: urgency.color, fontWeight: 600 }}>{urgency.text}</span>
             )}
           </div>
         </div>
+
+        {/* Hover quick-actions (visible on hover, hidden when expanded) */}
+        {!expanded && !isDragging && !isDragOverlay && (
+          <div
+            className="bb-inv-quick-actions"
+            style={{
+              display: 'flex', alignItems: 'center', gap: 4,
+              opacity: 0, transition: `opacity 80ms ${SNAP}`,
+              flexShrink: 0,
+            }}
+          >
+            {canSend(invoice.status) && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onAction(invoice.id, 'sent') }}
+                disabled={busy}
+                title="Send invoice"
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  width: 28, height: 28, borderRadius: 8, cursor: busy ? 'not-allowed' : 'pointer',
+                  background: 'rgba(56, 189, 248, 0.1)', border: 'none',
+                  color: '#7dd3fc', opacity: busy ? 0.4 : 1,
+                  transition: `all 80ms ${SNAP}`,
+                }}
+              >
+                <Send size={13} />
+              </button>
+            )}
+            {canMarkPaid(invoice.status) && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onAction(invoice.id, 'paid') }}
+                disabled={busy}
+                title="Mark as paid"
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  width: 28, height: 28, borderRadius: 8, cursor: busy ? 'not-allowed' : 'pointer',
+                  background: 'rgba(34, 197, 94, 0.1)', border: 'none',
+                  color: '#86efac', opacity: busy ? 0.4 : 1,
+                  transition: `all 80ms ${SNAP}`,
+                }}
+              >
+                <CheckCircle2 size={13} />
+              </button>
+            )}
+          </div>
+        )}
+
         <div style={{ textAlign: 'right', flexShrink: 0 }}>
           <div style={{
             fontSize: 14, fontWeight: 700, color: 'var(--text-primary)',
@@ -848,7 +917,11 @@ function InvoiceRowItem({
           }}>
             {formatMoney(invoice.total, invoice.currency)}
           </div>
-          <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 2 }}>
+          <div style={{
+            fontSize: 11, marginTop: 2, fontWeight: 500,
+            color: invoice.status === 'paid' ? '#22C55E'
+              : urgency.color || 'var(--text-secondary)',
+          }}>
             {invoice.status === 'paid' ? 'Paid' : formatDueDate(invoice.due_date)}
           </div>
         </div>
@@ -861,7 +934,7 @@ function InvoiceRowItem({
         transition: `grid-template-rows 180ms ${SPRING}`,
       }}>
         <div style={{ overflow: 'hidden' }}>
-          {expanded && <InvoiceDetailPanel invoice={invoice} onAction={onAction} busy={busy} />}
+          {expanded && <InvoiceDetailPanel invoice={invoice} onAction={onAction} busyId={busyId} />}
         </div>
       </div>
     </div>
@@ -881,7 +954,7 @@ function InvoiceSection({
   expandedId,
   onToggleExpand,
   onAction,
-  busy,
+  busyId,
 }: {
   sectionKey: SectionKey
   label: string
@@ -893,7 +966,7 @@ function InvoiceSection({
   expandedId: string | null
   onToggleExpand: (id: string) => void
   onAction: (id: string, status: InvoiceStatus) => void
-  busy: boolean
+  busyId: string | null
 }) {
   const [open, setOpen] = useState(defaultOpen)
   const { isOver, setNodeRef } = useDroppable({
@@ -968,7 +1041,7 @@ function InvoiceSection({
                 expanded={expandedId === inv.id}
                 onToggle={() => onToggleExpand(inv.id)}
                 onAction={onAction}
-                busy={busy}
+                busyId={busyId}
                 delay={open ? i * 20 : 0}
               />
             ))}
@@ -999,7 +1072,7 @@ function ClientGroupSection({
   expandedId,
   onToggleExpand,
   onAction,
-  busy,
+  busyId,
 }: {
   name: string
   invoices: InvoiceRow[]
@@ -1007,7 +1080,7 @@ function ClientGroupSection({
   expandedId: string | null
   onToggleExpand: (id: string) => void
   onAction: (id: string, status: InvoiceStatus) => void
-  busy: boolean
+  busyId: string | null
 }) {
   const [open, setOpen] = useState(true)
   const outstanding = invoices.filter(i => i.status !== 'paid' && i.status !== 'cancelled')
@@ -1066,7 +1139,7 @@ function ClientGroupSection({
               expanded={expandedId === inv.id}
               onToggle={() => onToggleExpand(inv.id)}
               onAction={onAction}
-              busy={busy}
+              busyId={busyId}
               delay={open ? i * 20 : 0}
             />
           ))}
@@ -1353,6 +1426,18 @@ export function InvoiceList() {
     setSectionOverrides(new Map())
   }
 
+  // Keyboard navigation
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape' && expandedId) {
+        e.preventDefault()
+        setExpandedId(null)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [expandedId])
+
   if (isLoading) return <InvoiceSkeleton />
 
   return (
@@ -1378,11 +1463,12 @@ export function InvoiceList() {
             from { opacity: 0; transform: translateY(-4px); }
             to { opacity: 1; transform: translateY(0); }
           }
+          .bb-inv-row:hover .bb-inv-quick-actions { opacity: 1 !important; }
         `}</style>
 
         <InvoiceSummaryBar {...stats} />
 
-        {/* Search + Group Toggle + Export */}
+        {/* Toolbar: Search + Stats + Actions */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <div style={{ position: 'relative', flex: 1 }}>
             <Search
@@ -1406,6 +1492,13 @@ export function InvoiceList() {
               onBlur={e => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)' }}
             />
           </div>
+
+          {/* Inline stats */}
+          {allInvoices.length > 0 && (
+            <span style={{ fontSize: 12, color: 'var(--text-dim)', whiteSpace: 'nowrap', flexShrink: 0 }}>
+              {allInvoices.length} invoice{allInvoices.length !== 1 ? 's' : ''}
+            </span>
+          )}
 
           {/* Group mode toggle */}
           <button
@@ -1443,6 +1536,27 @@ export function InvoiceList() {
           >
             <Download size={15} />
           </button>
+
+          {/* New Invoice CTA */}
+          <button
+            onClick={() => toast('info', 'New invoice creation coming soon. Use the chat agent: "Send invoice to X for $Y"')}
+            title="New invoice"
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+              height: 36, padding: '0 14px', borderRadius: 10, cursor: 'pointer',
+              border: 'none', background: 'rgba(59, 130, 246, 0.12)',
+              color: '#93c5fd', fontSize: 13, fontWeight: 600,
+              transition: `all 80ms ${SNAP}`, whiteSpace: 'nowrap',
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.background = 'rgba(59, 130, 246, 0.2)'
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.background = 'rgba(59, 130, 246, 0.12)'
+            }}
+          >
+            <Plus size={14} /> New
+          </button>
         </div>
 
         {/* Content */}
@@ -1450,10 +1564,10 @@ export function InvoiceList() {
           <EmptyState
             icon={<ReceiptText size={40} />}
             title={search ? 'No matching invoices' : 'No invoices yet'}
-            description={search ? 'Try a different search term.' : 'Create your first invoice to get started.'}
+            description={search ? 'Try a different search term.' : 'Create your first invoice via chat: "Send invoice to X for $Y"'}
           />
         ) : groupMode === 'status' ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {SECTIONS.map((s, i) => (
               <InvoiceSection
                 key={s.key}
@@ -1467,12 +1581,12 @@ export function InvoiceList() {
                 expandedId={expandedId}
                 onToggleExpand={handleToggleExpand}
                 onAction={(id, status) => void mutateStatus(id, status)}
-                busy={!!busyInvoiceId}
+                busyId={busyInvoiceId}
               />
             ))}
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {clientGroups.map((g, i) => (
               <ClientGroupSection
                 key={g.name}
@@ -1482,7 +1596,7 @@ export function InvoiceList() {
                 expandedId={expandedId}
                 onToggleExpand={handleToggleExpand}
                 onAction={(id, status) => void mutateStatus(id, status)}
-                busy={!!busyInvoiceId}
+                busyId={busyInvoiceId}
               />
             ))}
           </div>

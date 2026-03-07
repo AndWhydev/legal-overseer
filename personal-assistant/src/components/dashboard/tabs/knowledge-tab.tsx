@@ -2,7 +2,6 @@
 
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { Search, User, Briefcase, FileText, CheckSquare, ChevronRight, X } from 'lucide-react';
-import { TabSkeleton } from './tab-skeleton';
 import { TabShell } from '@/components/ui/tab-shell';
 
 // ─── Types ─────────────────────────────────────────────────────────────────
@@ -46,11 +45,90 @@ const TYPE_ICON: Record<EntityType, React.ElementType> = {
   task: CheckSquare,
 };
 
+// Muted color palette for entity types (desaturated versions)
 const TYPE_COLOR: Record<EntityType, string> = {
-  contact: '#60a5fa',
-  project: '#34d399',
-  invoice: '#f59e0b',
-  task: '#a78bfa',
+  contact: '#6b8fc9',    // muted blue
+  project: '#4ba383',    // muted green
+  invoice: '#c4934a',    // muted amber
+  task: '#9b88b8',       // muted purple
+};
+
+// ─── Style Constants ───────────────────────────────────────────────────────
+
+const glassCard: React.CSSProperties = {
+  padding: '20px',
+  borderRadius: 16,
+  background: 'rgba(15, 20, 30, 0.6)',
+  backdropFilter: 'blur(20px) saturate(1.2)',
+  WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
+  border: '1px solid rgba(255, 255, 255, 0.03)',
+  boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+};
+
+const glassInput: React.CSSProperties = {
+  width: '100%',
+  padding: '10px 14px',
+  paddingLeft: '40px',
+  borderRadius: 10,
+  background: 'rgba(13, 17, 23, 0.6)',
+  border: '1px solid rgba(255, 255, 255, 0.05)',
+  color: 'var(--text-primary, #F1F5F9)',
+  fontSize: 14,
+  outline: 'none',
+  transition: 'border-color 200ms, box-shadow 200ms',
+};
+
+const listRow: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  padding: '12px 18px',
+  borderRadius: 12,
+  background: 'rgba(10, 14, 23, 0.5)',
+  backdropFilter: 'blur(26px) saturate(1.15)',
+  WebkitBackdropFilter: 'blur(26px) saturate(1.15)',
+  boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+  border: 'none',
+  transition: 'background 200ms',
+  cursor: 'pointer',
+};
+
+const ghostBtn: React.CSSProperties = {
+  padding: '8px 8px',
+  borderRadius: 8,
+  background: 'transparent',
+  border: '1px solid rgba(255, 255, 255, 0.06)',
+  color: 'var(--text-primary, #F1F5F9)',
+  fontSize: 13,
+  fontWeight: 500,
+  cursor: 'pointer',
+  transition: 'all 200ms',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+};
+
+const pillBtn: React.CSSProperties = {
+  padding: '6px 14px',
+  borderRadius: 20,
+  background: 'rgba(10, 14, 23, 0.42)',
+  backdropFilter: 'blur(22px) saturate(1.2)',
+  WebkitBackdropFilter: 'blur(22px) saturate(1.2)',
+  boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.06)',
+  border: 'none',
+  fontSize: 12,
+  color: 'var(--text-secondary, #94A3B8)',
+  cursor: 'pointer',
+  transition: 'all 200ms',
+  fontWeight: 500,
+};
+
+const sectionHeader: React.CSSProperties = {
+  fontSize: 11,
+  fontWeight: 600,
+  letterSpacing: '0.08em',
+  textTransform: 'uppercase' as const,
+  color: 'var(--text-dim, #475569)',
+  marginBottom: 12,
 };
 
 // ─── Component ─────────────────────────────────────────────────────────────
@@ -62,6 +140,9 @@ function KnowledgeTab() {
   const [selectedEntity, setSelectedEntity] = useState<{ type: EntityType; id: string } | null>(null);
   const [graph, setGraph] = useState<EntityGraph | null>(null);
   const [loadingGraph, setLoadingGraph] = useState(false);
+  const [hoveredResult, setHoveredResult] = useState<string | null>(null);
+  const [hoveredNode, setHoveredNode] = useState<string | null>(null);
+  const [closeHovered, setCloseHovered] = useState(false);
   const debounceRef = useRef<NodeJS.Timeout>(undefined);
 
   // Search with debounce
@@ -110,35 +191,88 @@ function KnowledgeTab() {
 
   return (
     <TabShell>
-      <div className="flex flex-col gap-6 p-6">
-        {/* Search Bar */}
-        <div className="relative">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 24, padding: '24px' }}>
+        {/* ─── Search Bar ───────────────────────────────────────────────────────── */}
+        <div style={{ position: 'relative' }}>
           <Search
             size={18}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+            style={{
+              position: 'absolute',
+              left: 12,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              color: 'var(--text-secondary, #94A3B8)',
+              pointerEvents: 'none',
+            }}
           />
           <input
             type="text"
             value={query}
             onChange={(e) => handleSearch(e.target.value)}
             placeholder="Search contacts, projects, invoices, tasks..."
-            className="w-full rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-primary)] py-3 pl-10 pr-4 text-sm text-[var(--text-primary)] placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[var(--bb-cyan)]/40"
+            style={glassInput}
+            onFocus={(e) => {
+              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+              e.currentTarget.style.boxShadow = '0 0 0 2px rgba(255, 90, 31, 0.15)';
+            }}
+            onBlur={(e) => {
+              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.05)';
+              e.currentTarget.style.boxShadow = 'inset 0 1px 0 rgba(255, 255, 255, 0.05)';
+            }}
           />
           {searching && (
-            <div className="absolute right-3 top-1/2 -translate-y-1/2">
-              <div className="h-4 w-4 animate-spin rounded-full border-2 border-[var(--bb-cyan)] border-t-transparent" />
+            <div
+              style={{
+                position: 'absolute',
+                right: 12,
+                top: '50%',
+                transform: 'translateY(-50%)',
+              }}
+            >
+              <div
+                style={{
+                  width: 16,
+                  height: 16,
+                  border: '2px solid rgba(255, 90, 31, 0.3)',
+                  borderTopColor: '#FF5A1F',
+                  borderRadius: '50%',
+                  animation: 'spin 0.8s linear infinite',
+                }}
+              />
             </div>
           )}
         </div>
 
-        {/* Selected Entity Graph */}
+        {/* ─── Selected Entity Graph ─────────────────────────────────────────────── */}
         {selectedEntity && (
-          <div className="bb-glass-card rounded-xl p-5">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-medium">Relationship Graph</h2>
+          <div style={glassCard}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: 20,
+              }}
+            >
+              <h2
+                style={{
+                  fontSize: 16,
+                  fontWeight: 600,
+                  color: 'var(--text-primary, #F1F5F9)',
+                  margin: 0,
+                }}
+              >
+                Relationship Graph
+              </h2>
               <button
                 onClick={clearSelection}
-                className="p-1 rounded-lg hover:bg-[var(--bg-elevated)] transition-colors"
+                onMouseEnter={() => setCloseHovered(true)}
+                onMouseLeave={() => setCloseHovered(false)}
+                style={{
+                  ...ghostBtn,
+                  background: closeHovered ? 'rgba(255, 255, 255, 0.04)' : 'transparent',
+                  borderColor: closeHovered ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.06)',
+                }}
                 aria-label="Close graph"
               >
                 <X size={18} />
@@ -146,26 +280,80 @@ function KnowledgeTab() {
             </div>
 
             {loadingGraph ? (
-              <TabSkeleton />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {[1, 2, 3].map((i) => (
+                  <div
+                    key={i}
+                    style={{
+                      height: 60,
+                      borderRadius: 12,
+                      background:
+                        'linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.03) 75%)',
+                      backgroundSize: '200% 100%',
+                      animation: 'shimmer 1.5s ease infinite',
+                    }}
+                  />
+                ))}
+              </div>
             ) : graph ? (
-              <div className="space-y-4">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 {/* Root Entity */}
                 {graph.nodes.length > 0 && (
-                  <div className="flex items-center gap-3 p-3 rounded-lg bg-[var(--bg-elevated)] border border-[var(--bb-cyan)]/30">
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 12,
+                      padding: '12px 16px',
+                      borderRadius: 12,
+                      background: 'rgba(10, 14, 23, 0.5)',
+                      backdropFilter: 'blur(26px) saturate(1.15)',
+                      WebkitBackdropFilter: 'blur(26px) saturate(1.15)',
+                      border: '1px solid rgba(255, 255, 255, 0.08)',
+                      boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+                    }}
+                  >
                     {(() => {
                       const root = graph.nodes[0];
                       const Icon = TYPE_ICON[root.type] ?? Briefcase;
+                      const color = TYPE_COLOR[root.type] ?? '#888';
                       return (
                         <>
                           <div
-                            className="flex h-10 w-10 items-center justify-center rounded-lg"
-                            style={{ backgroundColor: `${TYPE_COLOR[root.type] ?? '#888'}20`, color: TYPE_COLOR[root.type] ?? '#888' }}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              width: 40,
+                              height: 40,
+                              borderRadius: 10,
+                              backgroundColor: `${color}20`,
+                              flexShrink: 0,
+                            }}
                           >
-                            <Icon size={20} />
+                            <Icon size={20} style={{ color }} />
                           </div>
-                          <div>
-                            <div className="font-medium">{root.label}</div>
-                            <div className="text-xs text-muted-foreground capitalize">{root.type}</div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div
+                              style={{
+                                fontSize: 14,
+                                fontWeight: 600,
+                                color: 'var(--text-primary, #F1F5F9)',
+                                margin: 0,
+                              }}
+                            >
+                              {root.label}
+                            </div>
+                            <div
+                              style={{
+                                fontSize: 11,
+                                color: 'var(--text-secondary, #94A3B8)',
+                                marginTop: 4,
+                                textTransform: 'capitalize',
+                              }}
+                            >
+                              {root.type}
+                            </div>
                           </div>
                         </>
                       );
@@ -173,90 +361,363 @@ function KnowledgeTab() {
                   </div>
                 )}
 
-                {/* Connected Entities */}
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                  {graph.nodes.slice(1).map((node) => {
-                    const Icon = TYPE_ICON[node.type] ?? Briefcase;
-                    const edge = graph.edges.find((e) => e.target === node.id || e.source === node.id);
-                    return (
-                      <button
-                        key={`${node.type}-${node.id}`}
-                        onClick={() => selectEntity(node.type, node.id)}
-                        className="flex items-center gap-3 p-3 rounded-lg bg-[var(--bg-elevated)] hover:bg-[var(--bg-surface)] transition-colors text-left"
-                      >
-                        <div
-                          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
-                          style={{ backgroundColor: `${TYPE_COLOR[node.type] ?? '#888'}20`, color: TYPE_COLOR[node.type] ?? '#888' }}
-                        >
-                          <Icon size={18} />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="font-medium text-sm truncate">{node.label}</div>
-                          <div className="text-xs text-muted-foreground capitalize">
-                            {edge?.relationshipType?.replace(/_/g, ' ') ?? node.type}
-                          </div>
-                        </div>
-                        <ChevronRight size={14} className="text-muted-foreground shrink-0" />
-                      </button>
-                    );
-                  })}
-                </div>
+                {/* Connected Entities Pills */}
+                {graph.nodes.length > 1 && (
+                  <div>
+                    <div style={sectionHeader}>Connected Entities</div>
+                    <div
+                      style={{
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                        gap: 8,
+                      }}
+                    >
+                      {graph.nodes.slice(1).map((node) => {
+                        const Icon = TYPE_ICON[node.type] ?? Briefcase;
+                        const color = TYPE_COLOR[node.type] ?? '#888';
+                        const edge = graph.edges.find(
+                          (e) => e.target === node.id || e.source === node.id
+                        );
+                        const isHovered = hoveredNode === `${node.type}-${node.id}`;
 
-                {graph.nodes.length <= 1 && (
-                  <p className="text-sm text-muted-foreground">No connected entities found.</p>
+                        return (
+                          <button
+                            key={`${node.type}-${node.id}`}
+                            onClick={() => selectEntity(node.type, node.id)}
+                            onMouseEnter={() => setHoveredNode(`${node.type}-${node.id}`)}
+                            onMouseLeave={() => setHoveredNode(null)}
+                            style={{
+                              ...pillBtn,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 8,
+                              color: isHovered ? 'var(--text-primary, #F1F5F9)' : 'var(--text-secondary, #94A3B8)',
+                              background: isHovered
+                                ? 'rgba(255, 90, 31, 0.15)'
+                                : 'rgba(10, 14, 23, 0.42)',
+                            }}
+                          >
+                            <div
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                width: 20,
+                                height: 20,
+                                borderRadius: 6,
+                                backgroundColor: `${color}20`,
+                                flexShrink: 0,
+                              }}
+                            >
+                              <Icon size={14} style={{ color }} />
+                            </div>
+                            <span style={{ whiteSpace: 'nowrap', fontSize: 12 }}>{node.label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Relationships List */}
+                {graph.edges.length > 0 && (
+                  <div>
+                    <div style={sectionHeader}>Relationships</div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      {graph.edges.map((edge, idx) => {
+                        const sourceNode = graph.nodes.find((n) => n.id === edge.source);
+                        const targetNode = graph.nodes.find((n) => n.id === edge.target);
+
+                        return (
+                          <div
+                            key={idx}
+                            style={{
+                              ...listRow,
+                              background: hoveredNode === `edge-${idx}` ? 'rgba(20, 28, 40, 0.7)' : 'rgba(10, 14, 23, 0.5)',
+                            }}
+                            onMouseEnter={() => setHoveredNode(`edge-${idx}`)}
+                            onMouseLeave={() => setHoveredNode(null)}
+                          >
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div
+                                style={{
+                                  fontSize: 13,
+                                  fontWeight: 500,
+                                  color: 'var(--text-primary, #F1F5F9)',
+                                  marginBottom: 4,
+                                }}
+                              >
+                                {sourceNode?.label ?? edge.source}
+                              </div>
+                              <div
+                                style={{
+                                  fontSize: 11,
+                                  color: 'var(--text-secondary, #94A3B8)',
+                                  textTransform: 'capitalize',
+                                }}
+                              >
+                                {edge.relationshipType?.replace(/_/g, ' ') ?? 'Related'} (strength:{' '}
+                                {(edge.strength * 100).toFixed(0)}%)
+                              </div>
+                            </div>
+                            <div
+                              style={{
+                                fontSize: 11,
+                                color: 'var(--text-dim, #475569)',
+                                flexShrink: 0,
+                                marginLeft: 12,
+                              }}
+                            >
+                              → {targetNode?.label ?? edge.target}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {graph.nodes.length <= 1 && graph.edges.length === 0 && (
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      padding: '40px 20px',
+                      gap: 12,
+                    }}
+                  >
+                    <ChevronRight size={32} style={{ color: 'var(--text-dim, #475569)' }} />
+                    <span style={{ fontSize: 14, color: 'var(--text-secondary, #94A3B8)' }}>
+                      No connected entities found.
+                    </span>
+                  </div>
                 )}
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">Could not load graph data.</p>
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '40px 20px',
+                  gap: 12,
+                }}
+              >
+                <FileText size={32} style={{ color: 'var(--text-dim, #475569)' }} />
+                <span style={{ fontSize: 14, color: 'var(--text-secondary, #94A3B8)' }}>
+                  Could not load graph data.
+                </span>
+              </div>
             )}
           </div>
         )}
 
-        {/* Search Results */}
+        {/* ─── Search Results ───────────────────────────────────────────────────── */}
         {!selectedEntity && results.length > 0 && (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {results.map((result) => {
-              const Icon = TYPE_ICON[result.type] ?? Briefcase;
-              return (
-                <button
-                  key={`${result.type}-${result.id}`}
-                  onClick={() => selectEntity(result.type, result.id)}
-                  className="bb-glass-card rounded-xl p-4 text-left hover:ring-1 hover:ring-[var(--bb-cyan)]/40 transition-all"
-                >
-                  <div className="flex items-center gap-3 mb-2">
+          <div>
+            <div style={sectionHeader}>Search Results</div>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+                gap: 12,
+              }}
+            >
+              {results.map((result) => {
+                const Icon = TYPE_ICON[result.type] ?? Briefcase;
+                const color = TYPE_COLOR[result.type] ?? '#888';
+                const isHovered = hoveredResult === `${result.type}-${result.id}`;
+
+                return (
+                  <button
+                    key={`${result.type}-${result.id}`}
+                    onClick={() => selectEntity(result.type, result.id)}
+                    onMouseEnter={() => setHoveredResult(`${result.type}-${result.id}`)}
+                    onMouseLeave={() => setHoveredResult(null)}
+                    style={{
+                      ...glassCard,
+                      textAlign: 'left',
+                      background: isHovered
+                        ? 'rgba(15, 20, 30, 0.75)'
+                        : 'rgba(15, 20, 30, 0.6)',
+                      border: isHovered
+                        ? '1px solid rgba(255, 255, 255, 0.08)'
+                        : '1px solid rgba(255, 255, 255, 0.03)',
+                      boxShadow: isHovered
+                        ? 'inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 0 0 1px rgba(255, 90, 31, 0.2)'
+                        : 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+                      cursor: 'pointer',
+                      transition: 'all 200ms',
+                    }}
+                  >
                     <div
-                      className="flex h-9 w-9 items-center justify-center rounded-lg"
-                      style={{ backgroundColor: `${TYPE_COLOR[result.type] ?? '#888'}20`, color: TYPE_COLOR[result.type] ?? '#888' }}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 12,
+                        marginBottom: 12,
+                      }}
                     >
-                      <Icon size={18} />
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          width: 36,
+                          height: 36,
+                          borderRadius: 10,
+                          backgroundColor: `${color}20`,
+                          flexShrink: 0,
+                        }}
+                      >
+                        <Icon size={18} style={{ color }} />
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div
+                          style={{
+                            fontSize: 14,
+                            fontWeight: 600,
+                            color: 'var(--text-primary, #F1F5F9)',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          {result.label}
+                        </div>
+                        <div
+                          style={{
+                            fontSize: 11,
+                            color: 'var(--text-secondary, #94A3B8)',
+                            marginTop: 3,
+                            textTransform: 'capitalize',
+                          }}
+                        >
+                          {result.type}
+                        </div>
+                      </div>
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="font-medium text-sm truncate">{result.label}</div>
-                      <div className="text-xs text-muted-foreground capitalize">{result.type}</div>
-                    </div>
-                  </div>
-                  {result.snippet && (
-                    <p className="text-xs text-muted-foreground truncate">{result.snippet}</p>
-                  )}
-                </button>
-              );
-            })}
+                    {result.snippet && (
+                      <p
+                        style={{
+                          fontSize: 12,
+                          color: 'var(--text-secondary, #94A3B8)',
+                          margin: 0,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {result.snippet}
+                      </p>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         )}
 
-        {/* Empty States */}
+        {/* ─── Empty States ──────────────────────────────────────────────────────── */}
         {!selectedEntity && !searching && query && results.length === 0 && (
-          <p className="text-muted-foreground text-center py-8">No results for &quot;{query}&quot;</p>
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '60px 20px',
+              gap: 12,
+            }}
+          >
+            <Search size={32} style={{ color: 'var(--text-dim, #475569)' }} />
+            <span
+              style={{
+                fontSize: 14,
+                color: 'var(--text-secondary, #94A3B8)',
+                textAlign: 'center',
+              }}
+            >
+              No results for &quot;{query}&quot;
+            </span>
+            <span
+              style={{
+                fontSize: 12,
+                color: 'var(--text-dim, #475569)',
+                textAlign: 'center',
+              }}
+            >
+              Try searching for contacts, projects, invoices, or tasks.
+            </span>
+          </div>
         )}
 
         {!selectedEntity && !query && (
-          <div className="text-center py-12 text-muted-foreground">
-            <Search size={48} className="mx-auto mb-4 opacity-30" />
-            <p className="text-lg font-medium mb-1">Search your knowledge base</p>
-            <p className="text-sm">Find contacts, projects, invoices, and see how they connect.</p>
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '60px 20px',
+              gap: 12,
+            }}
+          >
+            <Search
+              size={40}
+              style={{
+                color: 'var(--text-dim, #475569)',
+                opacity: 0.4,
+              }}
+            />
+            <div
+              style={{
+                fontSize: 16,
+                fontWeight: 600,
+                color: 'var(--text-primary, #F1F5F9)',
+                marginBottom: 4,
+              }}
+            >
+              Search your knowledge base
+            </div>
+            <p
+              style={{
+                fontSize: 13,
+                color: 'var(--text-secondary, #94A3B8)',
+                margin: 0,
+                textAlign: 'center',
+                maxWidth: 400,
+              }}
+            >
+              Find contacts, projects, invoices, and tasks to see how they connect across your
+              organization.
+            </p>
           </div>
         )}
       </div>
+
+      <style>{`
+        @keyframes spin {
+          from {
+            transform: rotate(0deg);
+          }
+          to {
+            transform: rotate(360deg);
+          }
+        }
+
+        @keyframes shimmer {
+          from {
+            background-position: 200% 0;
+          }
+          to {
+            background-position: -200% 0;
+          }
+        }
+      `}</style>
     </TabShell>
   );
 }

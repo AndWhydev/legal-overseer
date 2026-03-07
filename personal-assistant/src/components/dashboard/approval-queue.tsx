@@ -1,10 +1,8 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { AlertCircle, RefreshCw } from 'lucide-react';
+import { AlertCircle, RefreshCw, Loader2 } from 'lucide-react';
 import { ApprovalCard, type ApprovalItem } from './approval-card';
-import { Badge } from '../ui/badge';
-import { Button } from '../ui/button';
 import { AlertBanner } from '../ui/alert-banner';
 
 type FilterKey = 'all' | 'urgent' | 'normal';
@@ -26,6 +24,7 @@ export function ApprovalQueue() {
   const [error, setError] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState<FilterKey>('all');
   const [resolvingId, setResolvingId] = useState<string | null>(null);
+  const [hoveredFilter, setHoveredFilter] = useState<FilterKey | null>(null);
 
   const fetchApprovals = useCallback(async (silent = false) => {
     if (!silent) {
@@ -107,51 +106,171 @@ export function ApprovalQueue() {
     [approvals],
   );
 
+  const pageTitle: React.CSSProperties = {
+    fontSize: 22,
+    fontWeight: 700,
+    color: 'var(--text-primary, #F1F5F9)',
+    letterSpacing: '-0.02em',
+  };
+
+  const countBadge: React.CSSProperties = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    padding: '3px 10px',
+    borderRadius: 8,
+    fontSize: 11,
+    fontWeight: 600,
+    letterSpacing: '0.02em',
+    background: 'rgba(255, 255, 255, 0.06)',
+    color: 'var(--text-secondary, #94A3B8)',
+  };
+
+  const pillBtn: React.CSSProperties = {
+    padding: '6px 14px',
+    borderRadius: 20,
+    background: 'rgba(10, 14, 23, 0.42)',
+    backdropFilter: 'blur(22px) saturate(1.2)',
+    WebkitBackdropFilter: 'blur(22px) saturate(1.2)',
+    boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.06)',
+    border: 'none',
+    fontSize: 12,
+    color: 'var(--text-secondary, #94A3B8)',
+    cursor: 'pointer',
+    transition: 'all 200ms',
+  };
+
+  const pillBtnActive: React.CSSProperties = {
+    ...pillBtn,
+    color: 'var(--text-primary, #F1F5F9)',
+    background: 'rgba(255, 90, 31, 0.15)',
+    border: '1px solid rgba(255, 90, 31, 0.3)',
+  };
+
+  const emptyState: React.CSSProperties = {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '60px 20px',
+    gap: 12,
+    borderRadius: 16,
+    background: 'rgba(15, 20, 30, 0.6)',
+    backdropFilter: 'blur(20px) saturate(1.2)',
+    WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
+    border: '1px solid rgba(255, 255, 255, 0.03)',
+    boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+  };
+
+  const emptyStateIcon: React.CSSProperties = {
+    color: 'var(--text-dim, #475569)',
+  };
+
+  const emptyStateText: React.CSSProperties = {
+    fontSize: 14,
+    color: 'var(--text-secondary, #94A3B8)',
+  };
+
+  const loadingText: React.CSSProperties = {
+    fontSize: 13,
+    color: 'var(--text-secondary, #94A3B8)',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+  };
+
+  const headerContainer: React.CSSProperties = {
+    display: 'flex',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+  };
+
+  const titleContainer: React.CSSProperties = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+  };
+
+  const filtersContainer: React.CSSProperties = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+  };
+
+  const contentContainer: React.CSSProperties = {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 12,
+  };
+
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <h2 className="text-lg font-semibold">Pending Actions</h2>
-          <Badge variant="secondary">{approvals.length}</Badge>
+    <div style={contentContainer}>
+      <div style={headerContainer}>
+        <div style={titleContainer}>
+          <h2 style={pageTitle}>Pending Actions</h2>
+          <span style={countBadge}>{approvals.length}</span>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div style={filtersContainer}>
           {FILTERS.map((filter) => (
-            <Button
+            <button
               key={filter.key}
-              size="sm"
-              variant={activeFilter === filter.key ? 'default' : 'outline'}
+              style={activeFilter === filter.key ? pillBtnActive : pillBtn}
+              onMouseEnter={() => setHoveredFilter(filter.key)}
+              onMouseLeave={() => setHoveredFilter(null)}
               onClick={() => setActiveFilter(filter.key)}
             >
               {filter.label}
-            </Button>
+            </button>
           ))}
         </div>
       </div>
 
       {error ? (
         <AlertBanner variant="error">
-          <div className="space-y-2">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <p>{error}</p>
-            <Button size="sm" variant="outline" onClick={() => fetchApprovals()}>
-              <RefreshCw className="h-4 w-4" />
+            <button
+              style={{
+                padding: '8px 16px',
+                borderRadius: 10,
+                background: 'transparent',
+                border: '1px solid rgba(255, 255, 255, 0.06)',
+                color: 'var(--text-primary, #F1F5F9)',
+                fontSize: 13,
+                fontWeight: 500,
+                cursor: 'pointer',
+                transition: 'all 200ms',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                width: 'fit-content',
+              }}
+              onClick={() => fetchApprovals()}
+            >
+              <RefreshCw size={16} />
               Retry
-            </Button>
+            </button>
           </div>
         </AlertBanner>
       ) : null}
 
       {loading ? (
-        <p className="text-sm text-muted-foreground">Loading pending approvals...</p>
-      ) : null}
-
-      {!loading && visibleApprovals.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-border p-6 text-center">
-          <p className="text-sm text-muted-foreground">No pending approvals</p>
+        <div style={loadingText}>
+          <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} />
+          Loading pending approvals...
         </div>
       ) : null}
 
-      <div className="space-y-3">
+      {!loading && visibleApprovals.length === 0 ? (
+        <div style={emptyState}>
+          <AlertCircle size={32} style={emptyStateIcon} />
+          <span style={emptyStateText}>No pending approvals</span>
+        </div>
+      ) : null}
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         {visibleApprovals.map((approval) => (
           <ApprovalCard
             key={approval.id}

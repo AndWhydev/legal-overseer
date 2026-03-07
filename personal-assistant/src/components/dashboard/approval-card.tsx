@@ -1,9 +1,7 @@
 'use client';
 
 import { Loader2 } from 'lucide-react';
-import { Badge } from '../ui/badge';
-import { Button } from '../ui/button';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '../ui/card';
+import { useState } from 'react';
 
 export interface ApprovalItem {
   id: string;
@@ -43,16 +41,16 @@ function formatRelativeTime(timestamp: string): string {
   return relTime.format(deltaDay, 'day');
 }
 
-function confidenceClass(confidence: number): string {
-  if (confidence < 0.55) return 'bg-destructive/15 text-destructive border-destructive/20';
-  if (confidence <= 0.85) return 'bg-amber-500/15 text-amber-400 border-amber-500/30';
-  return 'bg-success/15 text-success border-success/20';
+function getConfidenceColor(confidence: number): string {
+  if (confidence < 0.55) return '#ef4444'; // error red
+  if (confidence <= 0.85) return '#eab308'; // warning yellow
+  return '#22c55e'; // success green
 }
 
-function priorityClass(priority: ApprovalItem['priority']): string {
-  if (priority === 'urgent') return 'bg-destructive/15 text-destructive border-destructive/20';
-  if (priority === 'normal') return 'bg-amber-500/15 text-amber-400 border-amber-500/30';
-  return 'bg-muted text-muted-foreground border-border';
+function getPriorityColor(priority: ApprovalItem['priority']): string {
+  if (priority === 'urgent') return '#ef4444'; // error red
+  if (priority === 'normal') return '#eab308'; // warning yellow
+  return '#94A3B8'; // neutral
 }
 
 function toPrettyLabel(value: string): string {
@@ -77,56 +75,207 @@ function extractContext(approval: ApprovalItem): Array<{ label: string; value: s
 }
 
 export function ApprovalCard({ approval, isResolving = false, onApprove, onReject }: ApprovalCardProps) {
+  const [hovered, setHovered] = useState(false);
   const contextRows = extractContext(approval);
   const confidencePct = Math.round(approval.confidence_score * 100);
+  const confidenceColor = getConfidenceColor(approval.confidence_score);
+  const priorityColor = getPriorityColor(approval.priority);
+
+  const glassCard: React.CSSProperties = {
+    padding: '20px',
+    borderRadius: 16,
+    background: hovered ? 'rgba(20, 28, 40, 0.7)' : 'rgba(15, 20, 30, 0.6)',
+    backdropFilter: 'blur(20px) saturate(1.2)',
+    WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
+    border: '1px solid rgba(255, 255, 255, 0.03)',
+    boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+    transition: 'all 200ms',
+  };
+
+  const badge: React.CSSProperties = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    padding: '3px 10px',
+    borderRadius: 8,
+    fontSize: 11,
+    fontWeight: 600,
+    letterSpacing: '0.02em',
+    background: 'rgba(255, 255, 255, 0.06)',
+    color: 'var(--text-secondary, #94A3B8)',
+  };
+
+  const coloredBadge = (color: string): React.CSSProperties => ({
+    display: 'inline-flex',
+    alignItems: 'center',
+    padding: '3px 10px',
+    borderRadius: 8,
+    fontSize: 11,
+    fontWeight: 600,
+    letterSpacing: '0.02em',
+    background: `${color}15`,
+    color: color,
+  });
+
+  const badgesContainer: React.CSSProperties = {
+    display: 'flex',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 12,
+  };
+
+  const titleContainer: React.CSSProperties = {
+    marginBottom: 4,
+  };
+
+  const cardTitle: React.CSSProperties = {
+    fontSize: 16,
+    fontWeight: 600,
+    color: 'var(--text-primary, #F1F5F9)',
+    lineHeight: 1.4,
+    margin: 0,
+  };
+
+  const subtitle: React.CSSProperties = {
+    fontSize: 13,
+    color: 'var(--text-secondary, #94A3B8)',
+    margin: '4px 0 0 0',
+  };
+
+  const contextSection: React.CSSProperties = {
+    marginTop: 16,
+    paddingTop: 16,
+    borderTop: '1px solid rgba(255, 255, 255, 0.05)',
+  };
+
+  const sectionLabel: React.CSSProperties = {
+    fontSize: 11,
+    fontWeight: 600,
+    letterSpacing: '0.08em',
+    textTransform: 'uppercase' as const,
+    color: 'var(--text-dim, #475569)',
+    marginBottom: 8,
+    display: 'block',
+  };
+
+  const definitionList: React.CSSProperties = {
+    display: 'grid',
+    gap: 8,
+  };
+
+  const definitionRow: React.CSSProperties = {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+  };
+
+  const definitionTerm: React.CSSProperties = {
+    fontSize: 13,
+    color: 'var(--text-secondary, #94A3B8)',
+  };
+
+  const definitionData: React.CSSProperties = {
+    fontSize: 13,
+    fontWeight: 500,
+    color: 'var(--text-primary, #F1F5F9)',
+    textAlign: 'right' as const,
+  };
+
+  const buttonContainer: React.CSSProperties = {
+    display: 'flex',
+    gap: 8,
+    marginTop: 16,
+  };
+
+  const approveBtn: React.CSSProperties = {
+    flex: 1,
+    padding: '8px 16px',
+    borderRadius: 10,
+    background: '#FF5A1F',
+    border: 'none',
+    color: '#000',
+    fontSize: 13,
+    fontWeight: 600,
+    cursor: isResolving ? 'not-allowed' : 'pointer',
+    transition: 'all 200ms',
+    opacity: isResolving ? 0.6 : 1,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  };
+
+  const rejectBtn: React.CSSProperties = {
+    flex: 1,
+    padding: '8px 16px',
+    borderRadius: 10,
+    background: 'transparent',
+    border: '1px solid rgba(239, 68, 68, 0.3)',
+    color: '#ef4444',
+    fontSize: 13,
+    fontWeight: 600,
+    cursor: isResolving ? 'not-allowed' : 'pointer',
+    transition: 'all 200ms',
+    opacity: isResolving ? 0.6 : 1,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  };
 
   return (
-    <Card className="gap-4 py-4">
-      <CardHeader className="gap-3 px-4">
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="secondary">{approval.agent_name ?? 'Agent'}</Badge>
-          <Badge className={confidenceClass(approval.confidence_score)}>{confidencePct}% confidence</Badge>
-          <Badge className={priorityClass(approval.priority)}>{toPrettyLabel(approval.priority)}</Badge>
-          <Badge variant="outline">{toPrettyLabel(approval.routing_decision)}</Badge>
-        </div>
+    <div
+      style={glassCard}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      <div style={badgesContainer}>
+        <span style={badge}>{approval.agent_name ?? 'Agent'}</span>
+        <span style={coloredBadge(confidenceColor)}>{confidencePct}% confidence</span>
+        <span style={coloredBadge(priorityColor)}>{toPrettyLabel(approval.priority)}</span>
+        <span style={badge}>{toPrettyLabel(approval.routing_decision)}</span>
+      </div>
 
-        <div className="space-y-1">
-          <CardTitle className="text-base leading-snug">{approval.action_summary}</CardTitle>
-          <p className="text-sm text-muted-foreground">
-            {toPrettyLabel(approval.action_type)} · {formatRelativeTime(approval.created_at)}
-          </p>
-        </div>
-      </CardHeader>
+      <div style={titleContainer}>
+        <p style={cardTitle}>{approval.action_summary}</p>
+        <p style={subtitle}>
+          {toPrettyLabel(approval.action_type)} · {formatRelativeTime(approval.created_at)}
+        </p>
+      </div>
 
       {contextRows.length > 0 ? (
-        <CardContent className="space-y-2 px-4">
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Context</p>
-          <dl className="grid gap-1 text-sm">
+        <div style={contextSection}>
+          <label style={sectionLabel}>Context</label>
+          <dl style={definitionList}>
             {contextRows.map((row) => (
-              <div key={row.label} className="flex items-center justify-between gap-2">
-                <dt className="text-muted-foreground">{row.label}</dt>
-                <dd className="font-medium text-right">{row.value}</dd>
+              <div key={row.label} style={definitionRow}>
+                <dt style={definitionTerm}>{row.label}</dt>
+                <dd style={definitionData}>{row.value}</dd>
               </div>
             ))}
           </dl>
-        </CardContent>
+        </div>
       ) : null}
 
-      <CardFooter className="gap-2 px-4 pt-0">
-        <Button className="flex-1" disabled={isResolving} onClick={() => onApprove(approval.id)}>
-          {isResolving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+      <div style={buttonContainer}>
+        <button
+          style={approveBtn}
+          disabled={isResolving}
+          onClick={() => onApprove(approval.id)}
+        >
+          {isResolving ? <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> : null}
           Approve
-        </Button>
-        <Button
-          className="flex-1 border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
-          variant="outline"
+        </button>
+        <button
+          style={rejectBtn}
           disabled={isResolving}
           onClick={() => onReject(approval.id)}
         >
-          {isResolving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+          {isResolving ? <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> : null}
           Reject
-        </Button>
-      </CardFooter>
-    </Card>
+        </button>
+      </div>
+    </div>
   );
 }

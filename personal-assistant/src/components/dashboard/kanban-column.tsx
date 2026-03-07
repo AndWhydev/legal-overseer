@@ -10,14 +10,24 @@ import type { Task, KanbanColumn as ColumnType } from '@/lib/types'
 interface KanbanColumnProps {
   column: ColumnType
   tasks: Task[]
-  onQuickAdd?: (columnId: string, title: string) => void
+  totalTaskCount: number
+  onQuickAdd?: (columnId: string, title: string, priority?: string) => void
   onEditTask?: (task: Task) => void
   onArchiveTask?: (task: Task) => void
+}
+
+const PRIORITY_CYCLE = ['medium', 'high', 'critical', 'low'] as const
+const PRIORITY_DOT_COLOR: Record<string, string> = {
+  critical: '#EF4444',
+  high: '#F59E0B',
+  medium: '#64748B',
+  low: '#475569',
 }
 
 export function KanbanColumn({
   column,
   tasks,
+  totalTaskCount,
   onQuickAdd,
   onEditTask,
   onArchiveTask,
@@ -25,7 +35,9 @@ export function KanbanColumn({
   const { setNodeRef, isOver } = useDroppable({ id: column.id })
   const [isAdding, setIsAdding] = useState(false)
   const [newTitle, setNewTitle] = useState('')
+  const [quickPriority, setQuickPriority] = useState<string>('medium')
   const [ghostHover, setGhostHover] = useState(false)
+  const [headerHover, setHeaderHover] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -34,28 +46,53 @@ export function KanbanColumn({
 
   function handleCreate() {
     if (!newTitle.trim() || !onQuickAdd) return
-    onQuickAdd(column.id, newTitle.trim())
+    onQuickAdd(column.id, newTitle.trim(), quickPriority)
     setNewTitle('')
-    // Input stays open for rapid entry
+    setQuickPriority('medium')
   }
 
+  const progressPct = totalTaskCount > 0 ? (tasks.length / totalTaskCount) * 100 : 0
+
   return (
-    <div style={{ display: 'flex', flex: 1, minWidth: 240, maxWidth: 340, flexDirection: 'column', height: '100%' }}>
+    <div
+      style={{ display: 'flex', flex: 1, minWidth: 240, maxWidth: 340, flexDirection: 'column', height: '100%' }}
+      onMouseEnter={() => setHeaderHover(true)}
+      onMouseLeave={() => setHeaderHover(false)}
+    >
       {/* Column header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0 6px 10px' }}>
-        <h3 style={{ fontSize: 13, fontWeight: 600, color: '#94A3B8', margin: 0, letterSpacing: '0.01em' }}>
-          {column.title}
-        </h3>
-        <span style={{
-          fontSize: 11,
-          fontWeight: 600,
-          color: '#475569',
+      <div style={{ padding: '0 6px 4px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingBottom: 6 }}>
+          <h3 style={{ fontSize: 13, fontWeight: 600, color: '#94A3B8', margin: 0, letterSpacing: '0.01em' }}>
+            {column.title}
+          </h3>
+          <span style={{
+            fontSize: 11,
+            fontWeight: 600,
+            color: '#475569',
+            background: 'rgba(255, 255, 255, 0.04)',
+            borderRadius: 99,
+            padding: '1px 7px',
+          }}>
+            {tasks.length}
+          </span>
+        </div>
+        {/* Progress bar — visible on hover */}
+        <div style={{
+          height: 2,
+          borderRadius: 1,
           background: 'rgba(255, 255, 255, 0.04)',
-          borderRadius: 99,
-          padding: '1px 7px',
+          overflow: 'hidden',
+          opacity: headerHover ? 1 : 0,
+          transition: 'opacity 0.2s ease',
         }}>
-          {tasks.length}
-        </span>
+          <div style={{
+            height: '100%',
+            borderRadius: 1,
+            width: `${progressPct}%`,
+            background: `${column.color || '#64748B'}4D`,
+            transition: 'width 0.3s ease',
+          }} />
+        </div>
       </div>
 
       {/* Droppable area */}
@@ -68,8 +105,10 @@ export function KanbanColumn({
           gap: 6,
           borderRadius: 14,
           padding: 6,
-          background: isOver ? 'rgba(255, 255, 255, 0.03)' : 'rgba(255, 255, 255, 0.01)',
-          transition: 'background 0.2s ease',
+          background: isOver ? 'transparent' : 'rgba(255, 255, 255, 0.01)',
+          outline: isOver ? '1.5px dashed rgba(148, 163, 184, 0.15)' : '1.5px dashed transparent',
+          animation: isOver ? 'bb-drop-pulse 1.5s ease-in-out infinite' : undefined,
+          transition: 'background 0.2s ease, outline-color 0.2s ease',
           minHeight: 0,
           overflowY: 'auto',
           scrollbarGutter: 'stable',
@@ -97,42 +136,59 @@ export function KanbanColumn({
             background: 'rgba(15, 20, 30, 0.35)',
             boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.04)',
           }}>
-            <input
-              ref={inputRef}
-              value={newTitle}
-              onChange={(e) => setNewTitle(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault()
-                  handleCreate()
-                }
-                if (e.key === 'Escape') {
-                  setIsAdding(false)
-                  setNewTitle('')
-                }
-              }}
-              onBlur={() => {
-                // Only close if empty — don't lose typed text
-                if (!newTitle.trim()) {
-                  setIsAdding(false)
-                  setNewTitle('')
-                }
-              }}
-              placeholder="Task title..."
-              style={{
-                width: '100%',
-                background: 'transparent',
-                border: 'none',
-                outline: 'none',
-                fontSize: 13,
-                fontWeight: 600,
-                color: '#F1F5F9',
-                padding: 0,
-                fontFamily: 'inherit',
-              }}
-            />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              {/* Priority dot indicator */}
+              <span style={{
+                width: 6,
+                height: 6,
+                borderRadius: '50%',
+                background: PRIORITY_DOT_COLOR[quickPriority] || '#64748B',
+                flexShrink: 0,
+                transition: 'background 0.15s',
+              }} />
+              <input
+                ref={inputRef}
+                value={newTitle}
+                onChange={(e) => setNewTitle(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    handleCreate()
+                  }
+                  if (e.key === 'Tab') {
+                    e.preventDefault()
+                    const idx = PRIORITY_CYCLE.indexOf(quickPriority as typeof PRIORITY_CYCLE[number])
+                    setQuickPriority(PRIORITY_CYCLE[(idx + 1) % PRIORITY_CYCLE.length])
+                  }
+                  if (e.key === 'Escape') {
+                    setIsAdding(false)
+                    setNewTitle('')
+                    setQuickPriority('medium')
+                  }
+                }}
+                onBlur={() => {
+                  if (!newTitle.trim()) {
+                    setIsAdding(false)
+                    setNewTitle('')
+                    setQuickPriority('medium')
+                  }
+                }}
+                placeholder="Task title..."
+                style={{
+                  width: '100%',
+                  background: 'transparent',
+                  border: 'none',
+                  outline: 'none',
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: '#F1F5F9',
+                  padding: 0,
+                  fontFamily: 'inherit',
+                }}
+              />
+            </div>
             <div style={{ marginTop: 5, fontSize: 9, color: '#475569', letterSpacing: '0.02em' }}>
-              ↵ create · esc cancel
+              ↵ create · tab priority · esc close
             </div>
           </div>
         ) : onQuickAdd ? (
@@ -162,6 +218,13 @@ export function KanbanColumn({
           </button>
         ) : null}
       </div>
+
+      <style>{`
+        @keyframes bb-drop-pulse {
+          0%, 100% { outline-color: rgba(148, 163, 184, 0.08); }
+          50% { outline-color: rgba(148, 163, 184, 0.2); }
+        }
+      `}</style>
     </div>
   )
 }

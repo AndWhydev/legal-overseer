@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useMemo, useEffect } from 'react'
 import {
   DndContext,
   DragEndEvent,
@@ -15,6 +15,8 @@ import {
 import { arrayMove } from '@dnd-kit/sortable'
 import { KanbanColumn } from './kanban-column'
 import { KanbanCard } from './kanban-card'
+import { KanbanToolbar, type FilterState } from './kanban-toolbar'
+import { KanbanAgentStrip } from './kanban-agent-strip'
 import { CompletionAnimation } from './completion-animation'
 import { TaskDialog } from './task-dialog'
 import type { Task, KanbanColumn as ColumnType } from '@/lib/types'
@@ -34,6 +36,11 @@ export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: Kanb
   const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [defaultColumnId, setDefaultColumnId] = useState<string | undefined>()
 
+  // Filter + search state
+  const [filters, setFilters] = useState<FilterState>({ priority: null, source: 'all' })
+  const [searchQuery, setSearchQuery] = useState('')
+  const searchInputRef = useRef<HTMLInputElement | null>(null)
+
   // Completion animation state
   const [completionAnim, setCompletionAnim] = useState<{
     trigger: boolean
@@ -48,6 +55,47 @@ export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: Kanb
   const resolvedDoneId = doneColumnId ?? columns.find(
     (c) => c.title.toLowerCase() === 'done'
   )?.id
+
+  // Cmd+K shortcut
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault()
+        searchInputRef.current?.focus()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
+
+  // Filtered tasks (display-only — DnD always uses full `tasks`)
+  const filteredTasks = useMemo(() => {
+    let result = tasks
+    if (filters.priority) {
+      result = result.filter((t) => t.priority === filters.priority)
+    }
+    if (filters.source === 'agent') {
+      result = result.filter((t) => {
+        const meta = t.metadata as Record<string, unknown>
+        return meta?.source === 'bitbit' || t.assigned_to
+      })
+    } else if (filters.source === 'manual') {
+      result = result.filter((t) => {
+        const meta = t.metadata as Record<string, unknown>
+        return meta?.source !== 'bitbit' && !t.assigned_to
+      })
+    }
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase()
+      result = result.filter((t) =>
+        t.title.toLowerCase().includes(q) ||
+        (t.description && t.description.toLowerCase().includes(q))
+      )
+    }
+    return result
+  }, [tasks, filters, searchQuery])
+
+  const isFiltered = filters.priority !== null || filters.source !== 'all' || searchQuery.trim() !== ''
 
   useRealtime({
     table: 'tasks',
@@ -89,11 +137,13 @@ export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: Kanb
   )
 
   const getColumnTasks = useCallback(
-    (columnId: string) =>
-      tasks
+    (columnId: string) => {
+      const source = isFiltered ? filteredTasks : tasks
+      return source
         .filter((t) => t.column_id === columnId)
-        .sort((a, b) => a.position - b.position),
-    [tasks]
+        .sort((a, b) => a.position - b.position)
+    },
+    [tasks, filteredTasks, isFiltered]
   )
 
   function handleDragStart(event: DragStartEvent) {
@@ -197,24 +247,23 @@ export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: Kanb
     }
   }
 
-  function handleQuickAddTask(columnId: string, title: string) {
+  function handleQuickAddTask(columnId: string, title: string, priority?: string) {
     const tempId = `temp-${Date.now()}`
     const position = getColumnTasks(columnId).length
     const now = new Date().toISOString()
+    const pri = priority || 'medium'
 
-    // Instantly add to state
     setTasks((prev) => [...prev, {
       id: tempId, title, description: null, column_id: columnId,
-      priority: 'medium', position, status: 'pending',
+      priority: pri, position, status: 'pending',
       assigned_to: null, metadata: {}, org_id: '',
       created_at: now, updated_at: now,
     } as Task])
 
-    // Fire API, reconcile
     fetch('/api/tasks', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title, column_id: columnId, priority: 'medium', position }),
+      body: JSON.stringify({ title, column_id: columnId, priority: pri, position }),
     })
       .then(r => r.ok ? r.json() : Promise.reject())
       .then(({ task }) => setTasks(prev => prev.map(t => t.id === tempId ? task : t)))
@@ -294,6 +343,12 @@ export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: Kanb
     }
   }
 
+  function handleCreateClick() {
+    setEditingTask(null)
+    setDefaultColumnId(columns[0]?.id)
+    setDialogOpen(true)
+  }
+
   function handleDeleteTask(taskId: string) {
     setTasks((prev) => prev.filter((t) => t.id !== taskId))
     fetch(`/api/tasks/${taskId}`, { method: 'DELETE' })
@@ -301,6 +356,18 @@ export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: Kanb
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <KanbanToolbar
+        totalCount={tasks.length}
+        filters={filters}
+        onFiltersChange={setFilters}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        onCreateClick={handleCreateClick}
+        searchInputRef={searchInputRef}
+      />
+
+      <KanbanAgentStrip tasks={tasks} />
+
       <DndContext
         sensors={sensors}
         collisionDetection={closestCorners}
@@ -316,6 +383,7 @@ export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: Kanb
                 key={column.id}
                 column={column}
                 tasks={getColumnTasks(column.id)}
+                totalTaskCount={isFiltered ? filteredTasks.length : tasks.length}
                 onQuickAdd={handleQuickAddTask}
                 onEditTask={handleEditTask}
                 onArchiveTask={handleArchiveTask}

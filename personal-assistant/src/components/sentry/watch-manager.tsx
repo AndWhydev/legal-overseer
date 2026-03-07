@@ -54,6 +54,107 @@ function toLocalDate(iso: string | null): string {
   return parsed.toLocaleString()
 }
 
+// Inline style definitions
+const glassCard: React.CSSProperties = {
+  padding: '20px',
+  borderRadius: 16,
+  background: 'rgba(15, 20, 30, 0.6)',
+  backdropFilter: 'blur(20px) saturate(1.2)',
+  WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
+  border: '1px solid rgba(255, 255, 255, 0.03)',
+  boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+}
+
+const lightCard: React.CSSProperties = {
+  padding: '16px',
+  borderRadius: 12,
+  background: 'rgba(10, 14, 23, 0.5)',
+  backdropFilter: 'blur(26px) saturate(1.15)',
+  WebkitBackdropFilter: 'blur(26px) saturate(1.15)',
+  border: 'none',
+  boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+}
+
+const glassInput: React.CSSProperties = {
+  width: '100%',
+  padding: '10px 14px',
+  borderRadius: 10,
+  background: 'rgba(13, 17, 23, 0.6)',
+  border: '1px solid rgba(255, 255, 255, 0.05)',
+  color: 'var(--text-primary, #F1F5F9)',
+  fontSize: 14,
+  outline: 'none',
+  transition: 'border-color 200ms, box-shadow 200ms',
+}
+
+const glassSelect: React.CSSProperties = {
+  padding: '10px 14px',
+  borderRadius: 10,
+  background: 'rgba(13, 17, 23, 0.6)',
+  border: '1px solid rgba(255, 255, 255, 0.05)',
+  color: 'var(--text-primary, #F1F5F9)',
+  fontSize: 14,
+  outline: 'none',
+  appearance: 'none' as const,
+  cursor: 'pointer',
+  transition: 'border-color 200ms',
+}
+
+const accentBtn: React.CSSProperties = {
+  padding: '8px 16px',
+  borderRadius: 10,
+  background: '#FF5A1F',
+  border: 'none',
+  color: '#000',
+  fontSize: 13,
+  fontWeight: 600,
+  cursor: 'pointer',
+  transition: 'all 200ms',
+}
+
+const ghostBtn: React.CSSProperties = {
+  padding: '8px 12px',
+  borderRadius: 10,
+  background: 'transparent',
+  border: '1px solid rgba(255, 255, 255, 0.06)',
+  color: 'var(--text-primary, #F1F5F9)',
+  fontSize: 12,
+  fontWeight: 500,
+  cursor: 'pointer',
+  transition: 'all 200ms',
+}
+
+const sectionHeader: React.CSSProperties = {
+  fontSize: 11,
+  fontWeight: 600,
+  letterSpacing: '0.08em',
+  textTransform: 'uppercase' as const,
+  color: 'var(--text-dim, #475569)',
+  marginBottom: 12,
+}
+
+const cardTitle: React.CSSProperties = {
+  fontSize: 14,
+  fontWeight: 600,
+  color: 'var(--text-primary, #F1F5F9)',
+}
+
+const bodyText: React.CSSProperties = {
+  fontSize: 14,
+  fontWeight: 400,
+  color: 'var(--text-primary, #F1F5F9)',
+}
+
+const secondaryText: React.CSSProperties = {
+  fontSize: 13,
+  color: 'var(--text-secondary, #94A3B8)',
+}
+
+const dimText: React.CSSProperties = {
+  fontSize: 12,
+  color: 'var(--text-dim, #475569)',
+}
+
 export function WatchManager() {
   const [watches, setWatches] = useState<SentryWatch[]>([])
   const [alerts, setAlerts] = useState<SentryAlert[]>([])
@@ -62,6 +163,8 @@ export function WatchManager() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [statusMessage, setStatusMessage] = useState<string | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [hoveredWatchId, setHoveredWatchId] = useState<string | null>(null)
+  const [hoveredAlertId, setHoveredAlertId] = useState<string | null>(null)
 
   const activeAlertCount = useMemo(
     () => alerts.filter((alert) => alert.status === 'pending' || alert.status === 'escalated').length,
@@ -242,35 +345,60 @@ export function WatchManager() {
 
   if (isLoading) {
     return (
-      <div className="rounded-xl border border-border bg-card p-5 text-sm text-muted-foreground">
-        Loading sentry watches and alerts...
+      <div style={glassCard}>
+        <div style={{ ...dimText }}>Loading sentry watches and alerts...</div>
       </div>
     )
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       {statusMessage ? (
-        <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-sm text-emerald-500">
+        <div
+          style={{
+            padding: '12px 16px',
+            borderRadius: 12,
+            background: 'rgba(34, 197, 94, 0.12)',
+            border: '1px solid rgba(34, 197, 94, 0.3)',
+            fontSize: 13,
+            color: '#22c55e',
+          }}
+        >
           {statusMessage}
         </div>
       ) : null}
       {errorMessage ? (
-        <div id="sentry-error" role="alert" className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-2 text-sm text-destructive">
+        <div
+          id="sentry-error"
+          role="alert"
+          style={{
+            padding: '12px 16px',
+            borderRadius: 12,
+            background: 'rgba(239, 68, 68, 0.12)',
+            border: '1px solid rgba(239, 68, 68, 0.3)',
+            fontSize: 13,
+            color: '#ef4444',
+          }}
+        >
           {errorMessage}
         </div>
       ) : null}
 
-      <section className="rounded-xl border border-border bg-card p-5">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Create watch</h2>
-          <p className="text-sm text-muted-foreground">{watches.length} watches configured</p>
+      {/* Create Watch Section */}
+      <section style={glassCard}>
+        <div style={{ marginBottom: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <h2 style={{ ...cardTitle, fontSize: 16, fontWeight: 600 }}>Create watch</h2>
+          <span style={secondaryText}>{watches.length} watches configured</span>
         </div>
-        <form className="grid gap-3 md:grid-cols-2" aria-describedby={errorMessage ? 'sentry-error' : undefined} onSubmit={handleCreateWatch}>
-          <label className="flex flex-col gap-1 text-sm">
-            Watch type
+        <form
+          style={{ display: 'grid', gap: 16, gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))' }}
+          aria-describedby={errorMessage ? 'sentry-error' : undefined}
+          onSubmit={handleCreateWatch}
+        >
+          <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <span style={dimText}>Watch type</span>
             <select
-              className="rounded-md border border-border bg-background px-3 py-2"
+              style={glassSelect}
               value={form.watch_type}
               onChange={(event) => setForm((prev) => ({ ...prev, watch_type: event.target.value as WatchType }))}
             >
@@ -281,28 +409,49 @@ export function WatchManager() {
               ))}
             </select>
           </label>
-          <label className="flex flex-col gap-1 text-sm">
-            Description
+          <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <span style={dimText}>Description</span>
             <input
-              className="rounded-md border border-border bg-background px-3 py-2"
+              style={glassInput}
               required
               value={form.description}
               onChange={(event) => setForm((prev) => ({ ...prev, description: event.target.value }))}
               placeholder="Example: monitor failed payment logs"
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)'
+                e.currentTarget.style.boxShadow = '0 0 0 2px rgba(255, 90, 31, 0.15)'
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.05)'
+                e.currentTarget.style.boxShadow = 'none'
+              }}
             />
           </label>
-          <label className="flex flex-col gap-1 text-sm md:col-span-2">
-            Conditions (JSON)
+          <label style={{ display: 'flex', flexDirection: 'column', gap: 6, gridColumn: 'span 2' }}>
+            <span style={dimText}>Conditions (JSON)</span>
             <textarea
-              className="min-h-20 rounded-md border border-border bg-background px-3 py-2 font-mono text-xs"
+              style={{
+                ...glassInput,
+                minHeight: 80,
+                fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
+                fontSize: 12,
+              }}
               value={form.conditions}
               onChange={(event) => setForm((prev) => ({ ...prev, conditions: event.target.value }))}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)'
+                e.currentTarget.style.boxShadow = '0 0 0 2px rgba(255, 90, 31, 0.15)'
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.05)'
+                e.currentTarget.style.boxShadow = 'none'
+              }}
             />
           </label>
-          <label className="flex flex-col gap-1 text-sm">
-            Interval seconds
+          <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <span style={dimText}>Interval seconds</span>
             <input
-              className="rounded-md border border-border bg-background px-3 py-2"
+              style={glassInput}
               type="number"
               min={60}
               max={86400}
@@ -310,12 +459,20 @@ export function WatchManager() {
               onChange={(event) =>
                 setForm((prev) => ({ ...prev, interval_seconds: Number(event.target.value) || 60 }))
               }
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)'
+                e.currentTarget.style.boxShadow = '0 0 0 2px rgba(255, 90, 31, 0.15)'
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.05)'
+                e.currentTarget.style.boxShadow = 'none'
+              }}
             />
           </label>
-          <label className="flex flex-col gap-1 text-sm">
-            Escalation minutes
+          <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <span style={dimText}>Escalation minutes</span>
             <input
-              className="rounded-md border border-border bg-background px-3 py-2"
+              style={glassInput}
               type="number"
               min={1}
               max={1440}
@@ -323,13 +480,35 @@ export function WatchManager() {
               onChange={(event) =>
                 setForm((prev) => ({ ...prev, escalation_minutes: Number(event.target.value) || 1 }))
               }
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)'
+                e.currentTarget.style.boxShadow = '0 0 0 2px rgba(255, 90, 31, 0.15)'
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.05)'
+                e.currentTarget.style.boxShadow = 'none'
+              }}
             />
           </label>
-          <div className="md:col-span-2">
+          <div style={{ gridColumn: 'span 2' }}>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="rounded-lg border border-border bg-secondary px-4 py-2 text-sm font-medium hover:bg-secondary/70 disabled:cursor-not-allowed disabled:opacity-60"
+              style={{
+                ...accentBtn,
+                opacity: isSubmitting ? 0.6 : 1,
+                cursor: isSubmitting ? 'not-allowed' : 'pointer',
+              }}
+              onMouseEnter={(e) => {
+                if (!isSubmitting) {
+                  e.currentTarget.style.background = '#FF7A45'
+                  e.currentTarget.style.transform = 'translateY(-1px)'
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = '#FF5A1F'
+                e.currentTarget.style.transform = 'translateY(0)'
+              }}
             >
               {isSubmitting ? 'Creating...' : 'Create watch'}
             </button>
@@ -337,48 +516,108 @@ export function WatchManager() {
         </form>
       </section>
 
-      <section className="rounded-xl border border-border bg-card p-5">
-        <h2 className="mb-4 text-lg font-semibold">Configured watches</h2>
+      {/* Configured Watches Section */}
+      <section style={glassCard}>
+        <h2 style={{ ...cardTitle, fontSize: 16, fontWeight: 600, marginBottom: 20 }}>Configured watches</h2>
         {watches.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No watches yet. Create your first watch above.</p>
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '40px 20px',
+              gap: 12,
+            }}
+          >
+            <span style={secondaryText}>No watches yet. Create your first watch above.</span>
+          </div>
         ) : (
-          <div className="grid gap-3 lg:grid-cols-2">
+          <div style={{ display: 'grid', gap: 12, gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))' }}>
             {watches.map((watch) => (
-              <article key={watch.id} className="rounded-lg border border-border bg-background p-4">
-                <div className="mb-2 flex items-center justify-between">
-                  <span className="text-xs uppercase tracking-wide text-muted-foreground">
-                    {WATCH_LABEL[watch.watch_type]}
-                  </span>
+              <article
+                key={watch.id}
+                style={{
+                  ...lightCard,
+                  background:
+                    hoveredWatchId === watch.id ? 'rgba(20, 28, 40, 0.7)' : 'rgba(10, 14, 23, 0.5)',
+                  transition: 'background 200ms',
+                }}
+                onMouseEnter={() => setHoveredWatchId(watch.id)}
+                onMouseLeave={() => setHoveredWatchId(null)}
+              >
+                <div style={{ marginBottom: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={sectionHeader}>{WATCH_LABEL[watch.watch_type]}</span>
                   <span
-                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                      watch.status === 'active'
-                        ? 'bg-emerald-500/10 text-emerald-500'
-                        : 'bg-secondary text-muted-foreground'
-                    }`}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      padding: '3px 10px',
+                      borderRadius: 8,
+                      fontSize: 10,
+                      fontWeight: 600,
+                      letterSpacing: '0.02em',
+                      background:
+                        watch.status === 'active' ? 'rgba(34, 197, 94, 0.12)' : 'rgba(255, 255, 255, 0.06)',
+                      color: watch.status === 'active' ? '#22c55e' : 'var(--text-secondary, #94A3B8)',
+                    }}
                   >
                     {watch.status}
                   </span>
                 </div>
-                <p className="text-sm font-medium">{watch.description}</p>
-                <p className="mt-1 text-xs text-muted-foreground">
+                <p style={bodyText}>{watch.description}</p>
+                <p style={{ ...dimText, marginTop: 8 }}>
                   Every {watch.interval_seconds}s, escalate after {watch.escalation_minutes}m, last checked{' '}
                   {toLocalDate(watch.last_checked_at)}
                 </p>
-                <pre className="mt-3 overflow-auto rounded border border-border bg-card p-2 text-xs text-muted-foreground">
+                <pre
+                  style={{
+                    marginTop: 12,
+                    padding: 12,
+                    borderRadius: 10,
+                    background: 'rgba(12, 16, 24, 0.85)',
+                    border: '1px solid rgba(255, 255, 255, 0.05)',
+                    overflowX: 'auto',
+                    fontSize: 11,
+                    color: 'var(--text-dim, #475569)',
+                    fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
+                    lineHeight: 1.4,
+                  }}
+                >
                   {JSON.stringify(watch.conditions, null, 2)}
                 </pre>
-                <div className="mt-3 flex gap-2">
+                <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
                   <button
                     aria-label={watch.status === 'active' ? 'Pause watch' : 'Resume watch'}
-                    className="rounded-md border border-border px-3 py-1.5 text-xs font-medium hover:bg-secondary"
+                    style={ghostBtn}
                     onClick={() => void handleToggleWatch(watch)}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)'
+                      e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)'
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'transparent'
+                      e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.06)'
+                    }}
                   >
                     {watch.status === 'active' ? 'Pause' : 'Resume'}
                   </button>
                   <button
                     aria-label={`Delete watch: ${watch.description}`}
-                    className="rounded-md border border-destructive/30 px-3 py-1.5 text-xs font-medium text-destructive hover:bg-destructive/10"
+                    style={{
+                      ...ghostBtn,
+                      color: '#ef4444',
+                      borderColor: 'rgba(239, 68, 68, 0.3)',
+                    }}
                     onClick={() => void handleDeleteWatch(watch.id)}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'
+                      e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.5)'
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'transparent'
+                      e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.3)'
+                    }}
                   >
                     Delete
                   </button>
@@ -389,31 +628,74 @@ export function WatchManager() {
         )}
       </section>
 
-      <section className="rounded-xl border border-border bg-card p-5">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Active alerts</h2>
-          <span className="text-sm text-muted-foreground">{activeAlertCount} pending/escalated</span>
+      {/* Active Alerts Section */}
+      <section style={glassCard}>
+        <div style={{ marginBottom: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <h2 style={{ ...cardTitle, fontSize: 16, fontWeight: 600 }}>Active alerts</h2>
+          <span style={secondaryText}>{activeAlertCount} pending/escalated</span>
         </div>
         {alerts.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No pending alerts. You are all clear.</p>
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '40px 20px',
+              gap: 12,
+            }}
+          >
+            <span style={secondaryText}>No pending alerts. You are all clear.</span>
+          </div>
         ) : (
-          <div className="space-y-3">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {alerts.map((alert) => (
-              <article key={alert.id} className="rounded-lg border border-border bg-background p-4">
-                <div className="mb-2 flex items-center justify-between">
-                  <span className="text-xs uppercase tracking-wide text-muted-foreground">Alert {alert.id.slice(0, 8)}</span>
-                  <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-500">
+              <article
+                key={alert.id}
+                style={{
+                  ...lightCard,
+                  background:
+                    hoveredAlertId === alert.id ? 'rgba(20, 28, 40, 0.7)' : 'rgba(10, 14, 23, 0.5)',
+                  transition: 'background 200ms',
+                }}
+                onMouseEnter={() => setHoveredAlertId(alert.id)}
+                onMouseLeave={() => setHoveredAlertId(null)}
+              >
+                <div style={{ marginBottom: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={sectionHeader}>Alert {alert.id.slice(0, 8)}</span>
+                  <span
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      padding: '3px 10px',
+                      borderRadius: 8,
+                      fontSize: 10,
+                      fontWeight: 600,
+                      letterSpacing: '0.02em',
+                      background: 'rgba(234, 179, 8, 0.12)',
+                      color: '#eab308',
+                    }}
+                  >
                     {alert.status}
                   </span>
                 </div>
-                <p className="text-sm text-foreground">{alert.evidence ?? 'No evidence text provided'}</p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Suggested fix: {alert.remediation_suggestion ?? 'None'}
-                </p>
-                <p className="mt-1 text-xs text-muted-foreground">Created {toLocalDate(alert.created_at)}</p>
+                <p style={bodyText}>{alert.evidence ?? 'No evidence text provided'}</p>
+                <p style={{ ...dimText, marginTop: 8 }}>Suggested fix: {alert.remediation_suggestion ?? 'None'}</p>
+                <p style={{ ...dimText, marginTop: 8 }}>Created {toLocalDate(alert.created_at)}</p>
                 <button
-                  className="mt-3 rounded-md border border-border px-3 py-1.5 text-xs font-medium hover:bg-secondary"
                   onClick={() => void handleAcknowledgeAlert(alert.id)}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)'
+                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'transparent'
+                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.06)'
+                  }}
+                  style={{
+                    ...ghostBtn,
+                    marginTop: 12,
+                  }}
                 >
                   Acknowledge
                 </button>

@@ -3,7 +3,6 @@
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { X } from 'lucide-react'
-import { AgentBadge } from './agent-badge'
 import type { Task } from '@/lib/types'
 
 interface KanbanCardProps {
@@ -19,6 +18,20 @@ const priorityGlass: Record<string, { bg: string; shadow: string }> = {
   low:      { bg: 'rgba(15, 20, 30, 0.22)', shadow: '0 1px 1px rgba(0, 0, 0, 0.05)' },
 }
 
+const priorityDot: Record<string, { color: string; label?: string }> = {
+  critical: { color: '#EF4444', label: 'critical' },
+  high:     { color: '#F59E0B', label: 'high' },
+  medium:   { color: '#64748B' },
+  low:      { color: '#475569' },
+}
+
+const sourceColors: Record<string, string> = {
+  email: '#3B82F6',
+  slack: '#E9A820',
+  sms: '#22C55E',
+  whatsapp: '#22C55E',
+}
+
 function timeAgo(dateStr: string): string {
   const seconds = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000)
   if (seconds < 60) return 'just now'
@@ -28,6 +41,19 @@ function timeAgo(dateStr: string): string {
   if (hours < 24) return `${hours}h ago`
   const days = Math.floor(hours / 24)
   return `${days}d ago`
+}
+
+function getDeadlineStyle(deadline: string): { bg: string; color: string; label: string } | null {
+  const now = Date.now()
+  const due = new Date(deadline).getTime()
+  const diffDays = (due - now) / 86_400_000
+
+  const d = new Date(deadline)
+  const label = d.toLocaleDateString('en-AU', { month: 'short', day: 'numeric' })
+
+  if (diffDays < 0) return { bg: 'rgba(239,68,68,0.1)', color: '#f87171', label }
+  if (diffDays <= 2) return { bg: 'rgba(245,158,11,0.08)', color: '#fbbf24', label }
+  return { bg: 'transparent', color: '#64748B', label }
 }
 
 export function KanbanCard({ task, onEdit, onArchive }: KanbanCardProps) {
@@ -45,14 +71,18 @@ export function KanbanCard({ task, onEdit, onArchive }: KanbanCardProps) {
     transition,
   }
 
-  const tags = (task.metadata?.tags as string[]) || []
-  const agentStatus = task.metadata?.agentStatus as 'working' | 'done' | 'error' | undefined
+  const meta = (task.metadata || {}) as Record<string, unknown>
+  const tags = (meta.tags as string[]) || []
+  const agentStatus = meta.agentStatus as 'working' | 'done' | 'error' | undefined
+  const source = meta.source as string | undefined
+  const deadline = meta.deadline as string | undefined
   const glass = priorityGlass[task.priority] || priorityGlass.medium
+  const pri = priorityDot[task.priority] || priorityDot.medium
   const isOptimistic = task.id.startsWith('temp-')
+  const isAgentCreated = source === 'bitbit'
+  const isAgentWorking = task.assigned_to && agentStatus === 'working'
 
-  const agentGlow = task.assigned_to && agentStatus === 'working'
-    ? ', 0 0 8px rgba(148, 163, 184, 0.1)'
-    : ''
+  const deadlineInfo = deadline ? getDeadlineStyle(deadline) : null
 
   return (
     <div
@@ -69,12 +99,13 @@ export function KanbanCard({ task, onEdit, onArchive }: KanbanCardProps) {
         WebkitBackdropFilter: 'blur(12px) saturate(1.1)',
         boxShadow: isDragging
           ? '0 16px 48px rgba(0, 0, 0, 0.4)'
-          : glass.shadow + agentGlow,
+          : glass.shadow,
         cursor: isDragging ? 'grabbing' : 'grab',
         position: 'relative',
         opacity: isDragging ? 0.5 : isOptimistic ? 0.7 : 1,
         userSelect: 'none',
         WebkitUserSelect: 'none' as const,
+        animation: isAgentWorking ? 'bb-card-breathe 3s ease-in-out infinite' : undefined,
         ...dndStyle,
         transition: [dndStyle.transition, 'box-shadow 0.2s ease, opacity 0.2s ease'].filter(Boolean).join(', '),
       } as React.CSSProperties}
@@ -111,7 +142,7 @@ export function KanbanCard({ task, onEdit, onArchive }: KanbanCardProps) {
         </div>
       )}
 
-      {/* Title */}
+      {/* Title row with source dot */}
       <h4 style={{
         fontSize: 13,
         fontWeight: 600,
@@ -124,6 +155,34 @@ export function KanbanCard({ task, onEdit, onArchive }: KanbanCardProps) {
         margin: 0,
         paddingRight: 20,
       }}>
+        {/* Source channel dot */}
+        {source && (
+          isAgentCreated ? (
+            <span style={{
+              display: 'inline-block',
+              width: 6,
+              height: 6,
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg, #4DAF6B, #9DC74D, #D4C24E, #E0A860, #D8908B)',
+              marginRight: 5,
+              verticalAlign: 'middle',
+              position: 'relative',
+              top: -1,
+            }} />
+          ) : sourceColors[source] ? (
+            <span style={{
+              display: 'inline-block',
+              width: 6,
+              height: 6,
+              borderRadius: '50%',
+              background: sourceColors[source],
+              marginRight: 5,
+              verticalAlign: 'middle',
+              position: 'relative',
+              top: -1,
+            }} />
+          ) : null
+        )}
         {task.title}
       </h4>
 
@@ -142,9 +201,13 @@ export function KanbanCard({ task, onEdit, onArchive }: KanbanCardProps) {
         </p>
       )}
 
-      {/* Unified bottom row: pills + time · agent */}
+      {/* Metadata row: priority dot + tags + deadline + time */}
       <div style={{ marginTop: 7, display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap' }}>
+        {/* Priority dot + optional label */}
         <span style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 4,
           fontSize: 10,
           fontWeight: 500,
           padding: '2px 8px',
@@ -154,8 +217,17 @@ export function KanbanCard({ task, onEdit, onArchive }: KanbanCardProps) {
           color: '#94A3B8',
           lineHeight: '15px',
         }}>
-          {task.priority}
+          <span style={{
+            width: 5,
+            height: 5,
+            borderRadius: '50%',
+            background: pri.color,
+            flexShrink: 0,
+          }} />
+          {pri.label || task.priority}
         </span>
+
+        {/* Tags — $client brighter */}
         {tags.map((tag) => (
           <span
             key={tag}
@@ -166,25 +238,99 @@ export function KanbanCard({ task, onEdit, onArchive }: KanbanCardProps) {
               borderRadius: 20,
               background: 'rgba(10, 14, 23, 0.42)',
               boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.06)',
-              color: '#94A3B8',
+              color: tag.startsWith('$') ? '#CBD5E1' : '#94A3B8',
               lineHeight: '15px',
             }}
           >
             {tag}
           </span>
         ))}
-        <span style={{ fontSize: 9, color: 'rgba(148, 163, 184, 0.5)', marginLeft: 2 }}>
-          · {timeAgo(task.updated_at)}
-        </span>
-        {task.assigned_to && (
-          <span style={{ marginLeft: 'auto' }}>
-            <AgentBadge agent={task.assigned_to} status={agentStatus} />
+
+        {/* Deadline pill */}
+        {deadlineInfo && (
+          <span style={{
+            fontSize: 10,
+            fontWeight: 500,
+            padding: '2px 8px',
+            borderRadius: 20,
+            background: deadlineInfo.bg,
+            color: deadlineInfo.color,
+            lineHeight: '15px',
+          }}>
+            {deadlineInfo.label}
           </span>
         )}
+
+        {/* Time ago */}
+        <span style={{ fontSize: 9, color: 'rgba(148, 163, 184, 0.5)', marginLeft: 'auto' }}>
+          {timeAgo(task.updated_at)}
+        </span>
       </div>
+
+      {/* Agent activity bar — conditional */}
+      {task.assigned_to && (
+        <div style={{
+          marginTop: 6,
+          paddingTop: 6,
+          borderTop: '1px solid rgba(255, 255, 255, 0.04)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 5,
+          fontSize: 10,
+          color: '#64748B',
+        }}>
+          {agentStatus === 'working' && (
+            <span style={{
+              width: 4,
+              height: 4,
+              borderRadius: '50%',
+              background: '#64748B',
+              animation: 'bb-agent-pulse 2s ease-in-out infinite',
+              flexShrink: 0,
+            }} />
+          )}
+          {agentStatus === 'done' && (
+            <span style={{ color: '#22C55E', fontSize: 11, lineHeight: 1 }}>&#10003;</span>
+          )}
+          {agentStatus === 'error' && (
+            <span style={{ color: '#EF4444', fontSize: 11, lineHeight: 1 }}>&#9888;</span>
+          )}
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10 }}>
+            {task.assigned_to}
+          </span>
+          <span style={{ color: '#475569' }}>
+            {agentStatus === 'working' && '·\u2009working...'}
+            {agentStatus === 'done' && '·\u2009done'}
+            {agentStatus === 'error' && '·\u2009error'}
+            {!agentStatus && '·\u2009assigned'}
+          </span>
+          {isAgentCreated && (
+            <span style={{
+              marginLeft: 'auto',
+              fontSize: 8,
+              fontWeight: 600,
+              padding: '1px 4px',
+              borderRadius: 4,
+              background: 'rgba(255, 255, 255, 0.04)',
+              color: '#475569',
+              letterSpacing: '0.04em',
+            }}>
+              AI
+            </span>
+          )}
+        </div>
+      )}
 
       <style>{`
         .card-lift:hover .kanban-card-actions { opacity: 1 !important; }
+        @keyframes bb-agent-pulse {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.4; transform: scale(0.85); }
+        }
+        @keyframes bb-card-breathe {
+          0%, 100% { box-shadow: var(--card-shadow, 0 1px 4px rgba(0,0,0,0.12)), 0 0 12px rgba(148, 163, 184, 0.03); }
+          50% { box-shadow: var(--card-shadow, 0 1px 4px rgba(0,0,0,0.12)), 0 0 12px rgba(148, 163, 184, 0.08); }
+        }
       `}</style>
     </div>
   )

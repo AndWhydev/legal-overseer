@@ -53,7 +53,7 @@ interface OfferOption {
 }
 
 // ---------------------------------------------------------------------------
-// Constants
+// Constants - Inline styles instead of Tailwind classes
 // ---------------------------------------------------------------------------
 
 const PLATFORM_LABELS: Record<Platform, string> = {
@@ -63,11 +63,28 @@ const PLATFORM_LABELS: Record<Platform, string> = {
   feed: 'Feed',
 }
 
-const PLATFORM_COLORS: Record<Platform, string> = {
-  reels: 'bg-pink-500/15 text-pink-400 border-pink-500/30',
-  tiktok: 'bg-cyan-500/15 text-cyan-400 border-cyan-500/30',
-  shorts: 'bg-red-500/15 text-red-400 border-red-500/30',
-  feed: 'bg-blue-500/15 text-blue-400 border-blue-500/30',
+// Platform colors as inline style objects (muted versions)
+const PLATFORM_COLORS: Record<Platform, React.CSSProperties> = {
+  reels: {
+    background: 'rgba(168, 85, 247, 0.12)',
+    color: '#a855f7',
+    border: '1px solid rgba(168, 85, 247, 0.3)',
+  },
+  tiktok: {
+    background: 'rgba(14, 165, 233, 0.12)',
+    color: '#0ea5e9',
+    border: '1px solid rgba(14, 165, 233, 0.3)',
+  },
+  shorts: {
+    background: 'rgba(239, 68, 68, 0.12)',
+    color: '#ef4444',
+    border: '1px solid rgba(239, 68, 68, 0.3)',
+  },
+  feed: {
+    background: 'rgba(59, 130, 246, 0.12)',
+    color: '#3b82f6',
+    border: '1px solid rgba(59, 130, 246, 0.3)',
+  },
 }
 
 const HOOK_LABELS: Record<HookType, string> = {
@@ -77,10 +94,117 @@ const HOOK_LABELS: Record<HookType, string> = {
   'direct-offer': 'Direct Offer',
 }
 
-const TONE_COLORS: Record<string, string> = {
-  urgent: 'text-red-400',
-  casual: 'text-green-400',
-  professional: 'text-blue-400',
+// Tone colors as inline style objects (muted)
+const TONE_COLORS: Record<string, React.CSSProperties> = {
+  urgent: {
+    color: '#ef4444',
+  },
+  casual: {
+    color: '#22c55e',
+  },
+  professional: {
+    color: '#3b82f6',
+  },
+}
+
+// ---------------------------------------------------------------------------
+// Inline styles - Glass patterns from STYLE_GUIDE
+// ---------------------------------------------------------------------------
+
+const glassCard: React.CSSProperties = {
+  padding: '20px',
+  borderRadius: 16,
+  background: 'rgba(15, 20, 30, 0.6)',
+  backdropFilter: 'blur(20px) saturate(1.2)',
+  WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
+  border: '1px solid rgba(255, 255, 255, 0.03)',
+  boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+}
+
+const ghostBtn: React.CSSProperties = {
+  padding: '8px 16px',
+  borderRadius: 10,
+  background: 'transparent',
+  border: '1px solid rgba(255, 255, 255, 0.06)',
+  color: 'var(--text-primary, #F1F5F9)',
+  fontSize: 13,
+  fontWeight: 500,
+  cursor: 'pointer',
+  transition: 'all 200ms',
+}
+
+const accentBtn: React.CSSProperties = {
+  padding: '8px 16px',
+  borderRadius: 10,
+  background: '#FF5A1F',
+  border: 'none',
+  color: '#000',
+  fontSize: 13,
+  fontWeight: 600,
+  cursor: 'pointer',
+  transition: 'all 200ms',
+}
+
+const pillBtn: React.CSSProperties = {
+  padding: '6px 14px',
+  borderRadius: 20,
+  background: 'rgba(10, 14, 23, 0.42)',
+  backdropFilter: 'blur(22px) saturate(1.2)',
+  WebkitBackdropFilter: 'blur(22px) saturate(1.2)',
+  boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.06)',
+  border: 'none',
+  fontSize: 12,
+  color: 'var(--text-secondary, #94A3B8)',
+  cursor: 'pointer',
+  transition: 'all 200ms',
+}
+
+const glassInput: React.CSSProperties = {
+  width: '100%',
+  padding: '10px 14px',
+  borderRadius: 10,
+  background: 'rgba(13, 17, 23, 0.6)',
+  border: '1px solid rgba(255, 255, 255, 0.05)',
+  color: 'var(--text-primary, #F1F5F9)',
+  fontSize: 14,
+  outline: 'none',
+  transition: 'border-color 200ms, box-shadow 200ms',
+}
+
+const glassSelect: React.CSSProperties = {
+  width: '100%',
+  padding: '10px 14px',
+  borderRadius: 10,
+  background: 'rgba(13, 17, 23, 0.6)',
+  border: '1px solid rgba(255, 255, 255, 0.05)',
+  color: 'var(--text-primary, #F1F5F9)',
+  fontSize: 14,
+  outline: 'none',
+  appearance: 'none' as const,
+  cursor: 'pointer',
+}
+
+const listRow: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  padding: '12px 18px',
+  borderRadius: 12,
+  background: 'rgba(10, 14, 23, 0.5)',
+  backdropFilter: 'blur(26px) saturate(1.15)',
+  WebkitBackdropFilter: 'blur(26px) saturate(1.15)',
+  boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+  border: 'none',
+  transition: 'background 200ms',
+  cursor: 'pointer',
+}
+
+const sectionHeader: React.CSSProperties = {
+  fontSize: 11,
+  fontWeight: 600,
+  letterSpacing: '0.08em',
+  textTransform: 'uppercase' as const,
+  color: 'var(--text-dim, #475569)',
+  marginBottom: 12,
 }
 
 // ---------------------------------------------------------------------------
@@ -89,6 +213,7 @@ const TONE_COLORS: Record<string, string> = {
 
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false)
+  const [hovered, setHovered] = useState(false)
 
   const handleCopy = useCallback(async () => {
     try {
@@ -103,11 +228,22 @@ function CopyButton({ text }: { text: string }) {
   return (
     <button
       onClick={handleCopy}
-      className="flex items-center gap-1 rounded px-2 py-1 text-xs bg-white/10 hover:bg-white/20 transition-colors"
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        ...ghostBtn,
+        background: hovered ? 'rgba(255, 255, 255, 0.04)' : 'transparent',
+        borderColor: hovered ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.06)',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 4,
+        paddingRight: 8,
+        paddingLeft: 8,
+      }}
       title="Copy to clipboard"
     >
-      {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-      {copied ? 'Copied' : 'Copy'}
+      {copied ? <Check size={12} /> : <Copy size={12} />}
+      <span style={{ fontSize: 11 }}>{copied ? 'Copied' : 'Copy'}</span>
     </button>
   )
 }
@@ -120,39 +256,64 @@ function StoryboardView({ shots }: { shots: StoryboardShot[] }) {
   const [expanded, setExpanded] = useState(false)
 
   return (
-    <div className="mt-3">
+    <div style={{ marginTop: 12 }}>
       <button
         onClick={() => setExpanded(!expanded)}
-        className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 4,
+          fontSize: 12,
+          color: 'var(--text-secondary, #94A3B8)',
+          background: 'transparent',
+          border: 'none',
+          cursor: 'pointer',
+          transition: 'color 200ms',
+          padding: 0,
+        }}
+        onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--text-primary, #F1F5F9)')}
+        onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-secondary, #94A3B8)')}
       >
-        {expanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+        {expanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
         Storyboard ({shots.length} shots)
       </button>
 
       {expanded && (
-        <div className="mt-2 space-y-2">
+        <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
           {shots.map((shot) => (
             <div
               key={shot.shotNumber}
-              className="rounded-lg border border-border/50 bg-card/30 p-3"
+              style={{
+                ...glassCard,
+                padding: 12,
+              }}
             >
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-xs font-semibold text-muted-foreground">
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: 8,
+                }}
+              >
+                <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-secondary, #94A3B8)' }}>
                   Shot {shot.shotNumber}
                 </span>
-                <span className="text-xs text-muted-foreground">
+                <span style={{ fontSize: 11, color: 'var(--text-secondary, #94A3B8)' }}>
                   {shot.startTime}s - {shot.endTime}s ({shot.duration}s)
                 </span>
               </div>
-              <p className="text-sm mb-1">{shot.visual}</p>
+              <p style={{ fontSize: 14, marginBottom: 6, color: 'var(--text-primary, #F1F5F9)' }}>
+                {shot.visual}
+              </p>
               {shot.textOverlay && (
-                <p className="text-xs text-muted-foreground">
-                  Text: <span className="text-foreground/80">{shot.textOverlay}</span>
+                <p style={{ fontSize: 12, color: 'var(--text-secondary, #94A3B8)' }}>
+                  Text: <span style={{ color: 'rgba(241, 245, 249, 0.8)' }}>{shot.textOverlay}</span>
                 </p>
               )}
               {shot.audio && (
-                <p className="text-xs text-muted-foreground">
-                  Audio: <span className="text-foreground/80">{shot.audio}</span>
+                <p style={{ fontSize: 12, color: 'var(--text-secondary, #94A3B8)' }}>
+                  Audio: <span style={{ color: 'rgba(241, 245, 249, 0.8)' }}>{shot.audio}</span>
                 </p>
               )}
             </div>
@@ -169,21 +330,52 @@ function StoryboardView({ shots }: { shots: StoryboardShot[] }) {
 
 function ScriptCard({ script }: { script: AdScript }) {
   return (
-    <div className="rounded-xl border border-border/50 bg-card/50 p-4">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <span className={`rounded-full border px-2 py-0.5 text-xs font-medium ${PLATFORM_COLORS[script.platform]}`}>
+    <div style={glassCard}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: 12,
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span
+            style={{
+              ...pillBtn,
+              ...PLATFORM_COLORS[script.platform],
+              padding: '6px 12px',
+              borderRadius: 16,
+            }}
+          >
             {PLATFORM_LABELS[script.platform]}
           </span>
-          <span className="rounded-full bg-white/5 px-2 py-0.5 text-xs text-muted-foreground">
+          <span
+            style={{
+              ...pillBtn,
+              padding: '6px 12px',
+              borderRadius: 16,
+            }}
+          >
             {HOOK_LABELS[script.hookType]}
           </span>
-          <span className="text-xs text-muted-foreground">{script.duration}s</span>
+          <span style={{ fontSize: 12, color: 'var(--text-secondary, #94A3B8)' }}>
+            {script.duration}s
+          </span>
         </div>
         <CopyButton text={script.script} />
       </div>
 
-      <pre className="whitespace-pre-wrap text-sm leading-relaxed text-foreground/90 font-sans">
+      <pre
+        style={{
+          whiteSpace: 'pre-wrap',
+          fontSize: 14,
+          lineHeight: 1.6,
+          color: 'rgba(241, 245, 249, 0.9)',
+          fontFamily: 'inherit',
+          margin: 0,
+        }}
+      >
         {script.script}
       </pre>
 
@@ -200,17 +392,35 @@ function ScriptCard({ script }: { script: AdScript }) {
 
 function VariationCard({ variation }: { variation: AdScriptVariation }) {
   return (
-    <div className="rounded-xl border border-border/50 bg-card/30 p-4">
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium">{variation.variantLabel}</span>
-          <span className={`text-xs ${TONE_COLORS[variation.tone] ?? 'text-muted-foreground'}`}>
+    <div style={glassCard}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: 8,
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)' }}>
+            {variation.variantLabel}
+          </span>
+          <span style={{ fontSize: 12, ...TONE_COLORS[variation.tone] }}>
             {variation.tone}
           </span>
         </div>
         <CopyButton text={variation.script} />
       </div>
-      <pre className="whitespace-pre-wrap text-sm leading-relaxed text-foreground/80 font-sans">
+      <pre
+        style={{
+          whiteSpace: 'pre-wrap',
+          fontSize: 14,
+          lineHeight: 1.6,
+          color: 'rgba(241, 245, 249, 0.8)',
+          fontFamily: 'inherit',
+          margin: 0,
+        }}
+      >
         {variation.script}
       </pre>
     </div>
@@ -263,13 +473,23 @@ function GenerateForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="rounded-xl border border-border/50 bg-card/50 p-4 space-y-4">
+    <form
+      onSubmit={handleSubmit}
+      style={{
+        ...glassCard,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 16,
+      }}
+    >
       <div>
-        <label className="block text-sm font-medium mb-1">Service / Offer Package</label>
+        <label style={{ display: 'block', fontSize: 14, fontWeight: 500, marginBottom: 6, color: 'var(--text-primary, #F1F5F9)' }}>
+          Service / Offer Package
+        </label>
         <select
           value={selectedOffer}
           onChange={(e) => setSelectedOffer(e.target.value)}
-          className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+          style={glassSelect}
         >
           {offers.length === 0 && <option value="">No offer packages found</option>}
           {offers.map((o) => (
@@ -279,58 +499,91 @@ function GenerateForm({
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-2">Platforms</label>
-        <div className="flex flex-wrap gap-2">
-          {(['reels', 'tiktok', 'shorts', 'feed'] as Platform[]).map((p) => (
-            <button
-              key={p}
-              type="button"
-              onClick={() => togglePlatform(p)}
-              className={`rounded-full border px-3 py-1 text-xs transition-colors ${
-                selectedPlatforms.includes(p)
-                  ? PLATFORM_COLORS[p]
-                  : 'border-border/50 text-muted-foreground hover:border-border'
-              }`}
-            >
-              {PLATFORM_LABELS[p]}
-            </button>
-          ))}
+        <label style={{ display: 'block', fontSize: 14, fontWeight: 500, marginBottom: 8, color: 'var(--text-primary, #F1F5F9)' }}>
+          Platforms
+        </label>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+          {(['reels', 'tiktok', 'shorts', 'feed'] as Platform[]).map((p) => {
+            const isSelected = selectedPlatforms.includes(p)
+            return (
+              <button
+                key={p}
+                type="button"
+                onClick={() => togglePlatform(p)}
+                style={{
+                  ...pillBtn,
+                  ...(isSelected ? PLATFORM_COLORS[p] : {}),
+                  borderColor: isSelected ? undefined : 'rgba(255, 255, 255, 0.06)',
+                  color: isSelected ? PLATFORM_COLORS[p].color : 'var(--text-secondary, #94A3B8)',
+                }}
+              >
+                {PLATFORM_LABELS[p]}
+              </button>
+            )
+          })}
         </div>
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-2">Hook Style</label>
-        <div className="flex flex-wrap gap-2">
-          {(['curiosity', 'problem-agitation', 'social-proof', 'direct-offer'] as HookType[]).map((h) => (
-            <button
-              key={h}
-              type="button"
-              onClick={() => toggleHook(h)}
-              className={`rounded-full border px-3 py-1 text-xs transition-colors ${
-                selectedHooks.includes(h)
-                  ? 'border-violet-500/30 bg-violet-500/15 text-violet-400'
-                  : 'border-border/50 text-muted-foreground hover:border-border'
-              }`}
-            >
-              {HOOK_LABELS[h]}
-            </button>
-          ))}
+        <label style={{ display: 'block', fontSize: 14, fontWeight: 500, marginBottom: 8, color: 'var(--text-primary, #F1F5F9)' }}>
+          Hook Style
+        </label>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+          {(['curiosity', 'problem-agitation', 'social-proof', 'direct-offer'] as HookType[]).map((h) => {
+            const isSelected = selectedHooks.includes(h)
+            return (
+              <button
+                key={h}
+                type="button"
+                onClick={() => toggleHook(h)}
+                style={{
+                  ...pillBtn,
+                  ...(isSelected
+                    ? {
+                        background: 'rgba(168, 85, 247, 0.15)',
+                        color: '#a855f7',
+                      }
+                    : {}),
+                }}
+              >
+                {HOOK_LABELS[h]}
+              </button>
+            )
+          })}
         </div>
       </div>
 
       <button
         type="submit"
         disabled={isGenerating || !selectedOffer || selectedPlatforms.length === 0 || selectedHooks.length === 0}
-        className="flex items-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        style={{
+          ...accentBtn,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          justifyContent: 'center',
+          opacity: isGenerating || !selectedOffer || selectedPlatforms.length === 0 || selectedHooks.length === 0 ? 0.5 : 1,
+          cursor: isGenerating || !selectedOffer || selectedPlatforms.length === 0 || selectedHooks.length === 0 ? 'not-allowed' : 'pointer',
+        }}
+        onMouseEnter={(e) => {
+          if (!isGenerating && selectedOffer && selectedPlatforms.length > 0 && selectedHooks.length > 0) {
+            (e.currentTarget as HTMLButtonElement).style.background = '#FF7A45'
+            ;(e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-1px)'
+          }
+        }}
+        onMouseLeave={(e) => {
+          (e.currentTarget as HTMLButtonElement).style.background = '#FF5A1F'
+          ;(e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0)'
+        }}
       >
         {isGenerating ? (
           <>
-            <Loader2 className="h-4 w-4 animate-spin" />
+            <Loader2 size={16} className="animate-spin" />
             Generating...
           </>
         ) : (
           <>
-            <Film className="h-4 w-4" />
+            <Film size={16} />
             Generate Scripts
           </>
         )}
@@ -344,27 +597,46 @@ function GenerateForm({
 // ---------------------------------------------------------------------------
 
 function HistorySection({ batches, onSelect }: { batches: SavedBatch[]; onSelect: (b: SavedBatch) => void }) {
+  const [hoveredId, setHoveredId] = useState<string | null>(null)
+
   if (batches.length === 0) return null
 
   return (
     <div>
-      <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-        History
-      </h2>
-      <div className="space-y-2">
+      <h2 style={sectionHeader}>History</h2>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {batches.map((b) => (
           <button
             key={b.id}
             onClick={() => onSelect(b)}
-            className="w-full text-left rounded-lg border border-border/50 bg-card/30 p-3 hover:bg-card/50 transition-colors"
+            onMouseEnter={() => setHoveredId(b.id)}
+            onMouseLeave={() => setHoveredId(null)}
+            style={{
+              ...listRow,
+              width: '100%',
+              textAlign: 'left',
+              background: hoveredId === b.id ? 'rgba(20, 28, 40, 0.7)' : 'rgba(10, 14, 23, 0.5)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'flex-start',
+            }}
           >
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">{b.offer_name}</span>
-              <span className="text-xs text-muted-foreground">
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                width: '100%',
+              }}
+            >
+              <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)' }}>
+                {b.offer_name}
+              </span>
+              <span style={{ fontSize: 12, color: 'var(--text-secondary, #94A3B8)' }}>
                 {new Date(b.created_at).toLocaleDateString()}
               </span>
             </div>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p style={{ fontSize: 12, color: 'var(--text-secondary, #94A3B8)', marginTop: 4 }}>
               {b.scripts.length} script{b.scripts.length !== 1 ? 's' : ''}
               {b.variations.length > 0 ? ` + ${b.variations.length} variations` : ''}
             </p>
@@ -456,9 +728,26 @@ function AdScriptsTab() {
   if (isLoading) {
     return (
       <TabShell>
-        <div className="flex flex-col gap-6 p-6">
-          <div className="h-8 w-48 rounded bg-muted animate-pulse" />
-          <div className="h-48 rounded-xl bg-muted animate-pulse" />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 24, padding: 24 }}>
+          <div
+            style={{
+              height: 32,
+              width: 192,
+              borderRadius: 8,
+              background: 'linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.03) 75%)',
+              backgroundSize: '200% 100%',
+              animation: 'shimmer 1.5s ease infinite',
+            }}
+          />
+          <div
+            style={{
+              height: 192,
+              borderRadius: 16,
+              background: 'linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.03) 75%)',
+              backgroundSize: '200% 100%',
+              animation: 'shimmer 1.5s ease infinite',
+            }}
+          />
         </div>
       </TabShell>
     )
@@ -466,7 +755,7 @@ function AdScriptsTab() {
 
   return (
     <TabShell>
-      <div className="flex flex-col gap-6 p-6">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 24, padding: 24 }}>
         {/* Generate Form */}
         <GenerateForm
           offers={offers}
@@ -476,12 +765,18 @@ function AdScriptsTab() {
 
         {/* Current result */}
         {currentResult && (
-          <div className="space-y-4">
-            <h2 className="text-lg font-semibold">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <h2 style={{ fontSize: 18, fontWeight: 600, color: 'var(--text-primary, #F1F5F9)' }}>
               Scripts for {currentResult.offerName}
             </h2>
 
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))',
+                gap: 16,
+              }}
+            >
               {currentResult.scripts.map((script, i) => (
                 <ScriptCard key={`${script.platform}-${script.hookType}-${i}`} script={script} />
               ))}
@@ -489,10 +784,16 @@ function AdScriptsTab() {
 
             {currentResult.variations.length > 0 && (
               <>
-                <h3 className="text-md font-semibold text-muted-foreground mt-4">
+                <h3 style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-secondary, #94A3B8)', marginTop: 8 }}>
                   A/B Variations
                 </h3>
-                <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+                    gap: 16,
+                  }}
+                >
                   {currentResult.variations.map((v, i) => (
                     <VariationCard key={`var-${i}`} variation={v} />
                   ))}
