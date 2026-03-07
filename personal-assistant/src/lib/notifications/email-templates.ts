@@ -27,7 +27,7 @@ function wrapHtml(content: string): string {
 async function sendEmail(to: string, subject: string, html: string): Promise<boolean> {
   try {
     if (!process.env.RESEND_API_KEY) {
-      console.warn('Email skipped: RESEND_API_KEY not configured')
+      logger.warn('Email skipped: RESEND_API_KEY not configured')
       return false
     }
 
@@ -39,13 +39,13 @@ async function sendEmail(to: string, subject: string, html: string): Promise<boo
     })
 
     if (error) {
-      console.warn('Email send failed:', error)
+      logger.warn('Email send failed:', error)
       return false
     }
 
     return true
   } catch (err) {
-    console.warn('Email send error:', err)
+    logger.warn('Email send error:', err)
     return false
   }
 }

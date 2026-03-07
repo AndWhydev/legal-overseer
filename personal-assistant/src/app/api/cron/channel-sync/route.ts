@@ -42,7 +42,7 @@ export async function GET(request: Request) {
         totalInserted += result.messagesInserted
 
         if (result.messagesInserted > 0) {
-          console.log(
+          logger.info(
             `[cron/channel-sync] org=${orgId} channel=${channelType}: ${result.messagesInserted} inserted (${result.messagesFound} found)`,
           )
 
@@ -55,7 +55,7 @@ export async function GET(request: Request) {
         }
 
         if (result.error) {
-          console.error(
+          logger.error(
             `[cron/channel-sync] org=${orgId} channel=${channelType} error: ${result.error}`,
           )
         }

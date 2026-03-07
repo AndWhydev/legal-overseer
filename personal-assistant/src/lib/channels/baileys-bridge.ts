@@ -68,7 +68,7 @@ async function loadBaileys(): Promise<BaileysModule | null> {
     _baileys = await import('@whiskeysockets/baileys')
     return _baileys
   } catch {
-    console.warn('[baileys-bridge] @whiskeysockets/baileys not installed — bridge unavailable')
+    logger.warn('[baileys-bridge] @whiskeysockets/baileys not installed — bridge unavailable')
     _baileys = null
     return null
   }
@@ -163,7 +163,7 @@ export class BaileysBridge {
           .update({ status: 'pairing', qr_code: qr })
           .eq('id', this.sessionId!)
 
-        console.log(JSON.stringify({
+        logger.info(JSON.stringify({
           level: 'info',
           module: 'baileys-bridge',
           event: 'qr_generated',
@@ -184,7 +184,7 @@ export class BaileysBridge {
         await this.logHealth(true)
         this.startOutboxDrain()
 
-        console.log(JSON.stringify({
+        logger.info(JSON.stringify({
           level: 'info',
           module: 'baileys-bridge',
           event: 'connected',
@@ -206,7 +206,7 @@ export class BaileysBridge {
         if (shouldReconnect && !this.disposed) {
           await this.attemptReconnect()
         } else {
-          console.log(JSON.stringify({
+          logger.info(JSON.stringify({
             level: 'warn',
             module: 'baileys-bridge',
             event: 'logged_out',
@@ -229,7 +229,7 @@ export class BaileysBridge {
           .update({ auth_state: credsJson })
           .eq('id', this.sessionId!)
       } catch (err) {
-        console.error('[baileys-bridge] Failed to persist auth state:', err)
+        logger.error('[baileys-bridge] Failed to persist auth state:', err)
       }
     })
 
@@ -242,7 +242,7 @@ export class BaileysBridge {
         try {
           await this.handleIncomingMessage(msg)
         } catch (err) {
-          console.error('[baileys-bridge] Error handling message:', err)
+          logger.error('[baileys-bridge] Error handling message:', err)
         }
       }
     })
@@ -389,14 +389,14 @@ export class BaileysBridge {
           }
         }
       } catch (err) {
-        console.error('[baileys-bridge] Failed to process voice note:', err)
+        logger.error('[baileys-bridge] Failed to process voice note:', err)
         const { getFallbackMessage } = await import('./voice-transcription')
         body = getFallbackMessage(true)
         metadata = { ...metadata, voice_note: true, transcription_failed: true }
       }
     } else {
       // Unsupported message type — log but skip processing
-      console.log(JSON.stringify({
+      logger.info(JSON.stringify({
         level: 'info',
         module: 'baileys-bridge',
         event: 'unsupported_message_type',
@@ -428,7 +428,7 @@ export class BaileysBridge {
       .single()
 
     if (error) {
-      console.error('[baileys-bridge] Failed to insert message:', error.message)
+      logger.error('[baileys-bridge] Failed to insert message:', error.message)
       return
     }
 
@@ -439,10 +439,10 @@ export class BaileysBridge {
       // Process through the same pipeline as webhook messages
       processWhatsAppMessage(this.supabase, this.orgId, insertedMsg, body)
         .catch(err => {
-          console.error('[baileys-bridge] Failed to process message:', err)
+          logger.error('[baileys-bridge] Failed to process message:', err)
         })
         .finally(() => {
-          console.log(JSON.stringify({
+          logger.info(JSON.stringify({
             event: 'whatsapp_bridge_latency',
             orgId: this.orgId,
             receiveMs,
@@ -487,7 +487,7 @@ export class BaileysBridge {
 
             this.lastActivity = new Date().toISOString()
           } catch (err) {
-            console.error('[baileys-bridge] Failed to send outbox message:', err)
+            logger.error('[baileys-bridge] Failed to send outbox message:', err)
             await this.supabase
               .from('whatsapp_outbox')
               .update({ status: 'failed', error: String(err) })
@@ -495,14 +495,14 @@ export class BaileysBridge {
           }
         }
       } catch (err) {
-        console.error('[baileys-bridge] Outbox drain error:', err)
+        logger.error('[baileys-bridge] Outbox drain error:', err)
       }
     }, OUTBOX_POLL_INTERVAL_MS)
   }
 
   private async attemptReconnect(): Promise<void> {
     if (this.reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
-      console.log(JSON.stringify({
+      logger.info(JSON.stringify({
         level: 'error',
         module: 'baileys-bridge',
         event: 'max_reconnect_reached',
@@ -516,7 +516,7 @@ export class BaileysBridge {
     this.reconnectAttempts++
     const delayMs = RECONNECT_BACKOFF_BASE_MS * Math.pow(3, this.reconnectAttempts - 1)
 
-    console.log(JSON.stringify({
+    logger.info(JSON.stringify({
       level: 'info',
       module: 'baileys-bridge',
       event: 'reconnecting',
@@ -531,7 +531,7 @@ export class BaileysBridge {
       try {
         await this.start()
       } catch (err) {
-        console.error('[baileys-bridge] Reconnect failed:', err)
+        logger.error('[baileys-bridge] Reconnect failed:', err)
         await this.attemptReconnect()
       }
     }
@@ -569,7 +569,7 @@ export class BaileysBridge {
     try {
       await logSessionHealth(this.supabase, this.orgId, status)
     } catch (err) {
-      console.error('[baileys-bridge] Failed to log health:', err)
+      logger.error('[baileys-bridge] Failed to log health:', err)
     }
   }
 }

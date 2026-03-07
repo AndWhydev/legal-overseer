@@ -132,7 +132,7 @@ export async function parseCommand(
       }
     }
   } catch (error) {
-    console.error('[command-parser] LLM parse failed:', error)
+    logger.error('[command-parser] LLM parse failed:', error)
   }
 
   const intentRaw = parsed.intent as string

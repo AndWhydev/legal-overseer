@@ -52,7 +52,7 @@ export async function GET() {
       activeContacts: activeContacts || 0,
     })
   } catch (error) {
-    console.error('Dashboard stats error:', error)
+    logger.error('Dashboard stats error:', error)
     return NextResponse.json(
       { error: 'Failed to fetch dashboard stats' },
       { status: 500 }

@@ -40,7 +40,7 @@ export function IntegrationGrid() {
       setError(null)
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown error'
-      console.error('Error fetching integrations:', err)
+      logger.error('Error fetching integrations:', err)
       setError(message)
     } finally {
       setIsLoading(false)

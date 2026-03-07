@@ -80,7 +80,7 @@ export class WebTransport implements ConversationTransport {
 
   async sendMessage(threadId: string, content: string, options?: SendOptions): Promise<void> {
     if (!this.controller) {
-      console.warn('[WebTransport] No controller available, message not sent')
+      logger.warn('[WebTransport] No controller available, message not sent')
       return
     }
     const encoder = new TextEncoder()
@@ -133,7 +133,7 @@ export class WhatsAppTransport implements ConversationTransport {
         })
       }
     } catch (err) {
-      console.warn('[WhatsAppTransport] Failed to send via bridge:', err)
+      logger.warn('[WhatsAppTransport] Failed to send via bridge:', err)
     }
   }
 
@@ -163,7 +163,7 @@ export class EmailTransport implements ConversationTransport {
 
   async sendMessage(threadId: string, content: string, options?: SendOptions): Promise<void> {
     if (!process.env.RESEND_API_KEY) {
-      console.warn('[EmailTransport] RESEND_API_KEY not configured, skipping send')
+      logger.warn('[EmailTransport] RESEND_API_KEY not configured, skipping send')
       return
     }
 
@@ -171,11 +171,11 @@ export class EmailTransport implements ConversationTransport {
       // threadId is the email address
       // Use sendApprovalEmail for structured email or implement generic send
       // For now, log that we would send via Resend
-      console.log(`[EmailTransport] Would send email to ${threadId}: ${content.substring(0, 50)}...`)
+      logger.info(`[EmailTransport] Would send email to ${threadId}: ${content.substring(0, 50)}...`)
       // In production, implement via Resend API directly if needed
       // For now, rely on sendApprovalEmail helper or create a generic sendEmail
     } catch (err) {
-      console.warn('[EmailTransport] Failed to send email:', err)
+      logger.warn('[EmailTransport] Failed to send email:', err)
     }
   }
 
@@ -192,7 +192,7 @@ export class SMSTransport implements ConversationTransport {
 
   async sendMessage(threadId: string, content: string, options?: SendOptions): Promise<void> {
     if (!process.env.TELNYX_API_KEY || !process.env.TELNYX_MESSAGING_PROFILE_ID) {
-      console.warn('[SMSTransport] TELNYX_API_KEY or TELNYX_MESSAGING_PROFILE_ID not configured, skipping send')
+      logger.warn('[SMSTransport] TELNYX_API_KEY or TELNYX_MESSAGING_PROFILE_ID not configured, skipping send')
       return
     }
 
@@ -202,10 +202,10 @@ export class SMSTransport implements ConversationTransport {
       const result = await sendSMS(threadId, formatted)
 
       if (!result.success) {
-        console.warn(`[SMSTransport] Failed to send SMS to ${threadId}:`, result.error)
+        logger.warn(`[SMSTransport] Failed to send SMS to ${threadId}:`, result.error)
       }
     } catch (err) {
-      console.warn('[SMSTransport] Failed to send SMS:', err)
+      logger.warn('[SMSTransport] Failed to send SMS:', err)
     }
   }
 
@@ -227,7 +227,7 @@ export class SlackTransport implements ConversationTransport {
 
   async sendMessage(threadId: string, content: string, options?: SendOptions): Promise<void> {
     if (!process.env.SLACK_BOT_TOKEN && !this.token) {
-      console.warn('[SlackTransport] SLACK_BOT_TOKEN not configured, skipping send')
+      logger.warn('[SlackTransport] SLACK_BOT_TOKEN not configured, skipping send')
       return
     }
 
@@ -237,10 +237,10 @@ export class SlackTransport implements ConversationTransport {
       const result = await sendSlackMessage(threadId, formatted, this.token)
 
       if (!result) {
-        console.warn(`[SlackTransport] Failed to send Slack message to ${threadId}`)
+        logger.warn(`[SlackTransport] Failed to send Slack message to ${threadId}`)
       }
     } catch (err) {
-      console.warn('[SlackTransport] Failed to send Slack message:', err)
+      logger.warn('[SlackTransport] Failed to send Slack message:', err)
     }
   }
 
@@ -283,7 +283,7 @@ export class ConversationRouter {
         .order('timestamp', { ascending: true })
 
       if (error) {
-        console.warn('[ConversationRouter] Failed to load history:', error.message)
+        logger.warn('[ConversationRouter] Failed to load history:', error.message)
         return []
       }
 
@@ -296,7 +296,7 @@ export class ConversationRouter {
         timestamp: new Date(row.timestamp),
       }))
     } catch (err) {
-      console.warn('[ConversationRouter] History load error:', err)
+      logger.warn('[ConversationRouter] History load error:', err)
       return []
     }
   }
@@ -310,7 +310,7 @@ export class ConversationRouter {
   ): Promise<void> {
     const transport = this.transports.get(message.channel)
     if (!transport) {
-      console.error(`[ConversationRouter] No transport registered for channel: ${message.channel}`)
+      logger.error(`[ConversationRouter] No transport registered for channel: ${message.channel}`)
       return
     }
 
@@ -399,7 +399,7 @@ export class ConversationRouter {
         org_id: message.metadata.orgId,
       })
     } catch (err) {
-      console.warn('[ConversationRouter] Failed to store message:', err)
+      logger.warn('[ConversationRouter] Failed to store message:', err)
     }
   }
 }

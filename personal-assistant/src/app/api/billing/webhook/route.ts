@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
 
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
   if (!webhookSecret) {
-    console.error('[billing/webhook] STRIPE_WEBHOOK_SECRET not set')
+    logger.error('[billing/webhook] STRIPE_WEBHOOK_SECRET not set')
     return NextResponse.json({ error: 'Webhook not configured' }, { status: 500 })
   }
 
@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
 
   const eventOrError = await verifyStripeWebhook(body, signature, webhookSecret)
   if ('error' in eventOrError) {
-    console.error('[billing/webhook] verification failed:', eventOrError.error)
+    logger.error('[billing/webhook] verification failed:', eventOrError.error)
     return NextResponse.json({ error: eventOrError.error }, { status: 400 })
   }
 
@@ -51,14 +51,14 @@ export async function POST(req: NextRequest) {
 
     await handleSubscriptionEvent(client, subEvent)
 
-    console.log(
+    logger.info(
       `[billing/webhook] processed ${subEvent.type} for subscription ${subEvent.subscriptionId}`,
     )
 
     return NextResponse.json({ received: true, type: subEvent.type })
   } catch (err) {
     // Always return 200 to Stripe to prevent retry storms — log and handle internally
-    console.error('[billing/webhook] handler error:', err)
+    logger.error('[billing/webhook] handler error:', err)
     return NextResponse.json({ received: true, error: 'handler_failed' })
   }
 }

@@ -28,7 +28,7 @@ export async function transcribeVoiceNote(
 ): Promise<string | null> {
   const openaiKey = process.env.OPENAI_API_KEY
   if (!openaiKey) {
-    console.warn('[whatsapp-voice] OPENAI_API_KEY not set — voice transcription unavailable')
+    logger.warn('[whatsapp-voice] OPENAI_API_KEY not set — voice transcription unavailable')
     return null
   }
 
@@ -55,7 +55,7 @@ export async function transcribeVoiceNote(
 
     if (!response.ok) {
       const errBody = await response.text()
-      console.error('[whatsapp-voice] Whisper API error:', response.status, errBody)
+      logger.error('[whatsapp-voice] Whisper API error:', response.status, errBody)
       return null
     }
 
@@ -63,13 +63,13 @@ export async function transcribeVoiceNote(
     const text = data.text?.trim()
 
     if (!text) {
-      console.warn('[whatsapp-voice] Whisper returned empty transcription')
+      logger.warn('[whatsapp-voice] Whisper returned empty transcription')
       return null
     }
 
     return text
   } catch (err) {
-    console.error('[whatsapp-voice] Transcription failed:', err)
+    logger.error('[whatsapp-voice] Transcription failed:', err)
     return null
   }
 }
@@ -100,13 +100,13 @@ export async function downloadWhatsAppMedia(
     )
 
     if (!metaRes.ok) {
-      console.error('[whatsapp-voice] Failed to get media URL:', metaRes.status)
+      logger.error('[whatsapp-voice] Failed to get media URL:', metaRes.status)
       return null
     }
 
     const metaData = await metaRes.json() as { url?: string }
     if (!metaData.url) {
-      console.error('[whatsapp-voice] No URL in media response')
+      logger.error('[whatsapp-voice] No URL in media response')
       return null
     }
 
@@ -116,14 +116,14 @@ export async function downloadWhatsAppMedia(
     })
 
     if (!mediaRes.ok) {
-      console.error('[whatsapp-voice] Failed to download media:', mediaRes.status)
+      logger.error('[whatsapp-voice] Failed to download media:', mediaRes.status)
       return null
     }
 
     const arrayBuffer = await mediaRes.arrayBuffer()
     return Buffer.from(arrayBuffer)
   } catch (err) {
-    console.error('[whatsapp-voice] Media download failed:', err)
+    logger.error('[whatsapp-voice] Media download failed:', err)
     return null
   }
 }

@@ -282,7 +282,7 @@ export async function processApprovedInvoiceSends(
     })
 
     if (!emailResult.success) {
-      console.error(`Failed to send invoice ${invoice.invoice_number} email:`, emailResult.error)
+      logger.error(`Failed to send invoice ${invoice.invoice_number} email:`, emailResult.error)
       // Still update status if RESEND_API_KEY isn't configured (dev mode)
       if (emailResult.error !== 'RESEND_API_KEY not configured') {
         result.failed += 1

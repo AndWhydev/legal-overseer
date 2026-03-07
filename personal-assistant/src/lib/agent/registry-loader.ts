@@ -40,7 +40,7 @@ export function loadAllAgents(): void {
   }
 
   const types = getRegisteredTypes()
-  console.log(`[registry] Loaded ${types.length} agents: ${types.join(', ')}`)
+  logger.info(`[registry] Loaded ${types.length} agents: ${types.join(', ')}`)
 }
 
 /**
@@ -65,7 +65,7 @@ export async function getAgentWithConfig(
     .limit(1)
 
   if (error) {
-    console.error(`[registry] Failed to fetch config for ${type}:`, error.message)
+    logger.error(`[registry] Failed to fetch config for ${type}:`, error.message)
     // Fall through to code defaults
   }
 
@@ -91,7 +91,7 @@ export async function listAgentsWithConfig(
       .eq('org_id', orgId)
 
     if (error) {
-      console.error('[registry] Failed to fetch agent configs:', error.message)
+      logger.error('[registry] Failed to fetch agent configs:', error.message)
     } else {
       dbConfigs = data ?? []
     }

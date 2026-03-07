@@ -97,7 +97,7 @@ export async function updateClientProfile(
     .eq('slug', contactSlug)
 
   if (error) {
-    console.warn('[client-profiles] Failed to update profile:', error.message)
+    logger.warn('[client-profiles] Failed to update profile:', error.message)
     return null
   }
 

@@ -42,7 +42,7 @@ export async function POST(request: Request) {
     const briefing = await assembleContext(supabase, orgId, query)
     contextSummary = briefing.summary
   } catch (err) {
-    console.warn('[ai/text] Context assembly failed, proceeding without context:', err)
+    logger.warn('[ai/text] Context assembly failed, proceeding without context:', err)
   }
 
   const systemParts: string[] = [
@@ -74,7 +74,7 @@ export async function POST(request: Request) {
       tokens: { input: response.usage.input_tokens, output: response.usage.output_tokens },
     })
   } catch (err) {
-    console.error('[ai/text] Anthropic API error:', err)
+    logger.error('[ai/text] Anthropic API error:', err)
     const message = err instanceof Error ? err.message : 'AI request failed'
     return NextResponse.json({ error: message }, { status: 502 })
   }

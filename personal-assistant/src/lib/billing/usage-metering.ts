@@ -39,7 +39,7 @@ export async function trackUsage(
       metadata: { amount },
     })
   } catch (err) {
-    console.warn('[usage-metering] Failed to track usage:', type, amount, err)
+    logger.warn('[usage-metering] Failed to track usage:', type, amount, err)
   }
 }
 
@@ -93,7 +93,7 @@ export async function getUsage(
       .lte('created_at', endIso)
 
     if (error) {
-      console.warn('[usage-metering] Failed to fetch usage events:', error.message)
+      logger.warn('[usage-metering] Failed to fetch usage events:', error.message)
       return {
         orgId,
         period: `${startDate.toISOString().split('T')[0]} to ${endDate.toISOString().split('T')[0]}`,
@@ -137,7 +137,7 @@ export async function getUsage(
       estimatedCostUSD,
     }
   } catch (err) {
-    console.warn('[usage-metering] Unexpected error fetching usage:', err)
+    logger.warn('[usage-metering] Unexpected error fetching usage:', err)
     return {
       orgId,
       period: 'unknown',

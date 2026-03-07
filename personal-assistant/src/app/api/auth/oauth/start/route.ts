@@ -41,7 +41,7 @@ export async function GET(request: Request) {
     return response
   } catch (err) {
     const message = err instanceof Error ? err.message : 'OAuth setup failed'
-    console.error('OAuth start error:', err)
+    logger.error('OAuth start error:', err)
     return NextResponse.json({ error: message }, { status: 500 })
   }
 }

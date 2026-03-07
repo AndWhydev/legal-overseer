@@ -37,7 +37,7 @@ export async function withCronGuard(
   // Validate authorization
   const cronSecret = process.env.CRON_SECRET
   if (cronSecret && request.headers.get('Authorization') !== `Bearer ${cronSecret}`) {
-    console.warn(`${tag} Unauthorized request rejected`)
+    logger.warn(`${tag} Unauthorized request rejected`)
     return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
   }
 
@@ -47,7 +47,7 @@ export async function withCronGuard(
     supabase = getServiceClient()
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : String(err)
-    console.error(`${tag} Service client initialization failed: ${errorMessage}`)
+    logger.error(`${tag} Service client initialization failed: ${errorMessage}`)
     return NextResponse.json(
       { success: false, error: 'Server configuration error' },
       { status: 500 },
@@ -55,13 +55,13 @@ export async function withCronGuard(
   }
 
   const startTime = Date.now()
-  console.log(`${tag} Starting execution`)
+  logger.info(`${tag} Starting execution`)
 
   try {
     const result = await handler(supabase)
     const durationMs = Date.now() - startTime
 
-    console.log(`${tag} Completed in ${durationMs}ms: ${result.message}`)
+    logger.info(`${tag} Completed in ${durationMs}ms: ${result.message}`)
 
     return NextResponse.json({
       success: true,
@@ -72,7 +72,7 @@ export async function withCronGuard(
     const durationMs = Date.now() - startTime
     const errorMessage = err instanceof Error ? err.message : String(err)
 
-    console.error(`${tag} Failed after ${durationMs}ms:`, err)
+    logger.error(`${tag} Failed after ${durationMs}ms:`, err)
 
     return NextResponse.json(
       {

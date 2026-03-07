@@ -224,7 +224,7 @@ function InboxTab() {
       setTotal(data.total || 0);
       setError(null);
     } catch (err) {
-      console.error('[inbox-tab] fetch error:', err);
+      logger.error('[inbox-tab] fetch error:', err);
       setError('Failed to load inbox');
     } finally {
       setLoading(false);

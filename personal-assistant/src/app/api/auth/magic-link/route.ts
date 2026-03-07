@@ -55,7 +55,7 @@ export async function POST(request: Request) {
 
   if (!res.ok) {
     const body = await res.text()
-    console.error('[magic-link] OTP send failed:', body)
+    logger.error('[magic-link] OTP send failed:', body)
     return NextResponse.json({ error: 'Failed to send sign-in email' }, { status: 500 })
   }
 

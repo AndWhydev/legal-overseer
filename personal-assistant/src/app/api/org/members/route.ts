@@ -37,7 +37,7 @@ export async function GET() {
     return NextResponse.json({ members: members ?? [] })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error'
-    console.error('GET members error:', error)
+    logger.error('GET members error:', error)
     return NextResponse.json({ error: message }, { status: 500 })
   }
 }
@@ -97,7 +97,7 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ success: true })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error'
-    console.error('PATCH member error:', error)
+    logger.error('PATCH member error:', error)
     return NextResponse.json({ error: message }, { status: 500 })
   }
 }
@@ -155,7 +155,7 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ success: true })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error'
-    console.error('DELETE member error:', error)
+    logger.error('DELETE member error:', error)
     return NextResponse.json({ error: message }, { status: 500 })
   }
 }

@@ -66,10 +66,10 @@ export function validateDefinition(def: AgentDefinition): string[] {
 export function registerAgent(definition: AgentDefinition): void {
   const errors = validateDefinition(definition)
   if (errors.length > 0) {
-    console.warn(`Agent "${definition.type}" has validation issues: ${errors.join(', ')}`)
+    logger.warn(`Agent "${definition.type}" has validation issues: ${errors.join(', ')}`)
   }
   if (registry.has(definition.type)) {
-    console.warn(`Agent "${definition.type}" already registered, overwriting.`)
+    logger.warn(`Agent "${definition.type}" already registered, overwriting.`)
   }
   registry.set(definition.type, { definition, registered_at: new Date() })
 }

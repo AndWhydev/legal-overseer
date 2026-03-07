@@ -71,7 +71,7 @@ export async function GET(request: Request) {
         })
 
         if (!emailResult.success) {
-          console.warn(`[cron/monthly-report] Email not fully delivered for org ${org.id}:`, emailResult)
+          logger.warn(`[cron/monthly-report] Email not fully delivered for org ${org.id}:`, emailResult)
         }
 
         results.push({
@@ -87,7 +87,7 @@ export async function GET(request: Request) {
           },
         })
       } catch (err) {
-        console.error(`[cron/monthly-report] Error for org ${org.id}:`, err)
+        logger.error(`[cron/monthly-report] Error for org ${org.id}:`, err)
         results.push({ orgId: org.id, success: false, error: String(err) })
       }
     }

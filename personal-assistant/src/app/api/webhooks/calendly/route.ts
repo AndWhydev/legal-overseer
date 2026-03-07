@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
   const signingKey = process.env.CALENDLY_WEBHOOK_SIGNING_KEY
 
   if (!webhookSignature || !signingKey) {
-    console.warn('[webhook/calendly] Rejected unsigned request')
+    logger.warn('[webhook/calendly] Rejected unsigned request')
     return NextResponse.json({ error: 'Missing webhook signature' }, { status: 401 })
   }
 
@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
 
   const verifyResult = await verifyCalendlyWebhookSignature(rawBody, webhookSignature, signingKey)
   if (!verifyResult.valid) {
-    console.warn('[webhook/calendly] Invalid webhook signature:', verifyResult.error)
+    logger.warn('[webhook/calendly] Invalid webhook signature:', verifyResult.error)
     return NextResponse.json({ error: verifyResult.error || 'Invalid webhook signature' }, { status: 401 })
   }
 
@@ -89,17 +89,17 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       if (error.code === '23505') {
-        console.log('[webhook/calendly] Duplicate event skipped:', invitee.uri)
+        logger.info('[webhook/calendly] Duplicate event skipped:', invitee.uri)
       } else {
-        console.error('[webhook/calendly] Failed to persist event:', error.message)
+        logger.error('[webhook/calendly] Failed to persist event:', error.message)
       }
     } else {
-      console.log('[webhook/calendly] Persisted event:', parsed.event, invitee.name)
+      logger.info('[webhook/calendly] Persisted event:', parsed.event, invitee.name)
     }
 
     return NextResponse.json({ received: true, event: parsed.event })
   } catch (err) {
-    console.error('[webhook/calendly] Error processing webhook:', err)
+    logger.error('[webhook/calendly] Error processing webhook:', err)
     return NextResponse.json({ error: 'Failed to process webhook' }, { status: 400 })
   }
 }

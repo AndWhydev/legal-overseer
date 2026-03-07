@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true, active_org_id: orgId })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error'
-    console.error('POST org switch error:', error)
+    logger.error('POST org switch error:', error)
 
     if (isAccessDeniedError(message)) {
       return NextResponse.json({ error: message }, { status: 403 })
@@ -95,7 +95,7 @@ export async function GET() {
     return NextResponse.json(tenancyContext)
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error'
-    console.error('GET org switch error:', error)
+    logger.error('GET org switch error:', error)
     return NextResponse.json({ error: message }, { status: 500 })
   }
 }

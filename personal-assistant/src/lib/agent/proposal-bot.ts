@@ -262,12 +262,12 @@ export async function generateProposalPdf(
 
   // Org branding
   const { data: org } = await supabase
-    .from('organizations')
+    .from('organisations')
     .select('name, slug')
     .eq('id', orgId)
     .single()
 
-  const orgName = org?.name || 'All Webbed Up'
+  const orgName = org?.name || 'BitBit User'
   const tiers = typeof proposal.pricing === 'string' ? JSON.parse(proposal.pricing) : proposal.pricing
   const subject = `Proposal: ${escapeHtml(proposal.title)}`
 

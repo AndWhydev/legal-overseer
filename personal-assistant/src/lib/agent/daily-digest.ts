@@ -240,7 +240,7 @@ export async function runDailyDigest(
         whatsappSent = true
       }
     } catch (err) {
-      console.warn('[daily-digest] Failed to send WhatsApp digest:', err)
+      logger.warn('[daily-digest] Failed to send WhatsApp digest:', err)
     }
   }
 

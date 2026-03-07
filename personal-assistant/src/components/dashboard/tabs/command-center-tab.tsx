@@ -123,10 +123,10 @@ function CommandCenterTab() {
       if (response.ok) {
         setApprovals(prev => prev.filter(app => app.id !== approvalId));
       } else {
-        console.error('Failed to approve:', await response.text());
+        logger.error('Failed to approve:', await response.text());
       }
     } catch (error) {
-      console.error('Error approving:', error);
+      logger.error('Error approving:', error);
     } finally {
       setProcessingIds(prev => {
         const next = new Set(prev);
@@ -148,10 +148,10 @@ function CommandCenterTab() {
       if (response.ok) {
         setApprovals(prev => prev.filter(app => app.id !== approvalId));
       } else {
-        console.error('Failed to dismiss:', await response.text());
+        logger.error('Failed to dismiss:', await response.text());
       }
     } catch (error) {
-      console.error('Error dismissing:', error);
+      logger.error('Error dismissing:', error);
     } finally {
       setProcessingIds(prev => {
         const next = new Set(prev);

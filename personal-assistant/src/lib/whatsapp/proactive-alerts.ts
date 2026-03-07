@@ -173,7 +173,7 @@ async function recordAlertSent(
     })
   } catch {
     // Non-critical, just log
-    console.warn('[proactive-alerts] Failed to record alert sent')
+    logger.warn('[proactive-alerts] Failed to record alert sent')
   }
 }
 

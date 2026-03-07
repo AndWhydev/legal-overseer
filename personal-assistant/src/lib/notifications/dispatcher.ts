@@ -87,10 +87,10 @@ export async function dispatchNotification(
       })
       result.dashboard = !error
       if (error) {
-        console.warn('[dispatcher] Dashboard notification insert failed:', error.message)
+        logger.warn('[dispatcher] Dashboard notification insert failed:', error.message)
       }
     } catch (err) {
-      console.warn('[dispatcher] Dashboard notification error:', err)
+      logger.warn('[dispatcher] Dashboard notification error:', err)
     }
   }
 
@@ -104,7 +104,7 @@ export async function dispatchNotification(
         result.whatsapp = !!messageId
       }
     } catch (err) {
-      console.warn('[dispatcher] WhatsApp notification error:', err)
+      logger.warn('[dispatcher] WhatsApp notification error:', err)
     }
   }
 
@@ -144,7 +144,7 @@ export async function dispatchNotification(
         }
       }
     } catch (err) {
-      console.warn('[dispatcher] Email notification error:', err)
+      logger.warn('[dispatcher] Email notification error:', err)
     }
   }
 

@@ -115,7 +115,7 @@ export async function classifyMessage(
 
     const textBlock = response.content.find((b) => b.type === 'text')
     if (!textBlock || textBlock.type !== 'text') {
-      console.warn('[classifier] No text block in response')
+      logger.warn('[classifier] No text block in response')
       return DEFAULT_RESULT
     }
 
@@ -137,7 +137,7 @@ export async function classifyMessage(
 
     return result
   } catch (err) {
-    console.warn('[classifier] Classification failed:', err)
+    logger.warn('[classifier] Classification failed:', err)
     return DEFAULT_RESULT
   }
 }

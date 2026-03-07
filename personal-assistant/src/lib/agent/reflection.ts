@@ -144,7 +144,7 @@ export async function reflectOnEvent(
 
     return stored
   } catch (err) {
-    console.warn('[reflection] Failed to reflect on event:', err)
+    logger.warn('[reflection] Failed to reflect on event:', err)
     return []
   }
 }

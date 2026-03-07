@@ -40,7 +40,7 @@ export async function GET(req: NextRequest) {
         }
       } catch (err) {
         // Usage fetch is optional — don't fail the whole request
-        console.warn('[analytics] Failed to fetch usage:', err)
+        logger.warn('[analytics] Failed to fetch usage:', err)
       }
 
       const churnRisks = await detectChurnRisk(client)
@@ -73,7 +73,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ error: 'Invalid type parameter' }, { status: 400 })
   } catch (err) {
-    console.error('[analytics] error:', err)
+    logger.error('[analytics] error:', err)
     return NextResponse.json(
       { error: 'Analytics query failed', details: String(err) },
       { status: 500 },

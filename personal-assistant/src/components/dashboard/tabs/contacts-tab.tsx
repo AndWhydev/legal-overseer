@@ -115,7 +115,7 @@ function ContactsTab() {
       try {
         await loadContacts()
       } catch (err) {
-        console.error('[contacts-tab] fetch error:', err)
+        logger.error('[contacts-tab] fetch error:', err)
         if (mounted) setError('Failed to load contacts')
       } finally {
         if (mounted) setLoading(false)

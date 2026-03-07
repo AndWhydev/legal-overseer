@@ -85,7 +85,7 @@ export async function POST(request: Request) {
       })
 
     if (uploadError) {
-      console.error('[reports] Upload error:', uploadError)
+      logger.error('[reports] Upload error:', uploadError)
       // Still return data even if storage fails
     }
 
@@ -117,7 +117,7 @@ export async function POST(request: Request) {
       data: reportData,
     })
   } catch (err) {
-    console.error('[reports] Error:', err)
+    logger.error('[reports] Error:', err)
     return NextResponse.json({ error: 'Failed to generate report' }, { status: 500 })
   }
 }

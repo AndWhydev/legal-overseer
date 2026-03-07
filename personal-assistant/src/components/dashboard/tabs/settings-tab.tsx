@@ -202,7 +202,7 @@ function WhatsAppConnectCard() {
         .single();
 
       if (error || !session) {
-        console.error('Failed to create WhatsApp session:', error?.message);
+        logger.error('Failed to create WhatsApp session:', error?.message);
         return;
       }
 

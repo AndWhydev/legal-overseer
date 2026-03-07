@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     try {
       payload = (await request.json()) as Record<string, unknown>
     } catch {
-      console.error('[webhook/email-command] Failed to parse JSON')
+      logger.error('[webhook/email-command] Failed to parse JSON')
       return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
     }
 
@@ -40,19 +40,19 @@ export async function POST(request: NextRequest) {
     const messageId = String(payload.messageId || `webhook-${Date.now()}`).trim()
 
     if (!senderEmail) {
-      console.warn('[webhook/email-command] Missing sender email')
+      logger.warn('[webhook/email-command] Missing sender email')
       return NextResponse.json({ error: 'Missing sender email' }, { status: 400 })
     }
 
     if (!subject && !body) {
-      console.warn('[webhook/email-command] Missing both subject and body')
+      logger.warn('[webhook/email-command] Missing both subject and body')
       return NextResponse.json({ error: 'Missing subject and body' }, { status: 400 })
     }
 
     // Extract orgId from payload or use default
     const orgId = String(payload.orgId || DEFAULT_ORG_ID).trim()
 
-    console.log('[webhook/email-command] Received command from', senderEmail, `(${subject.slice(0, 50)})`)
+    logger.info('[webhook/email-command] Received command from', senderEmail, `(${subject.slice(0, 50)})`)
 
     // Construct ChannelMessage
     const email: ChannelMessage = {
@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
     if (!supabaseUrl || !supabaseKey) {
-      console.error('[webhook/email-command] Supabase credentials not configured')
+      logger.error('[webhook/email-command] Supabase credentials not configured')
       return NextResponse.json({ error: 'Server not configured' }, { status: 500 })
     }
 
@@ -87,14 +87,14 @@ export async function POST(request: NextRequest) {
     const result = await processEmailCommand(supabase, orgId, email)
 
     if (!result.success) {
-      console.warn('[webhook/email-command] Command processing failed:', result.error)
+      logger.warn('[webhook/email-command] Command processing failed:', result.error)
       return NextResponse.json(
         { error: result.error, messageId },
         { status: result.error?.includes('does not appear') ? 400 : 500 }
       )
     }
 
-    console.log('[webhook/email-command] Command processed successfully')
+    logger.info('[webhook/email-command] Command processed successfully')
     return NextResponse.json({
       received: true,
       messageId,
@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
     })
   } catch (err) {
     const errorMsg = err instanceof Error ? err.message : String(err)
-    console.error('[webhook/email-command] Unexpected error:', errorMsg)
+    logger.error('[webhook/email-command] Unexpected error:', errorMsg)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

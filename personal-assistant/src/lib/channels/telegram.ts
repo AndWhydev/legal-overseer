@@ -6,7 +6,7 @@ import type { ChannelAdapter } from './types'
 export async function sendTelegramMessage(chatId: string, text: string): Promise<boolean> {
   const token = process.env.TELEGRAM_BOT_TOKEN
   if (!token) {
-    console.warn('Telegram: TELEGRAM_BOT_TOKEN not set')
+    logger.warn('Telegram: TELEGRAM_BOT_TOKEN not set')
     return false
   }
 
@@ -23,13 +23,13 @@ export async function sendTelegramMessage(chatId: string, text: string): Promise
 
     if (!response.ok) {
       const body = await response.text()
-      console.warn(`Telegram send failed (${response.status}):`, body)
+      logger.warn(`Telegram send failed (${response.status}):`, body)
       return false
     }
 
     return true
   } catch (error) {
-    console.warn('Telegram send failed:', error)
+    logger.warn('Telegram send failed:', error)
     return false
   }
 }

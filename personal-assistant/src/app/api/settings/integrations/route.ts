@@ -47,7 +47,7 @@ export async function GET() {
   } catch (error) {
     const message =
       error instanceof Error ? error.message : 'Unknown error occurred'
-    console.error('GET integrations error:', error)
+    logger.error('GET integrations error:', error)
     return NextResponse.json({ error: message }, { status: 500 })
   }
 }
@@ -129,7 +129,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     const message =
       error instanceof Error ? error.message : 'Unknown error occurred'
-    console.error('POST integrations error:', error)
+    logger.error('POST integrations error:', error)
     return NextResponse.json({ error: message }, { status: 500 })
   }
 }
@@ -190,7 +190,7 @@ export async function DELETE(request: NextRequest) {
   } catch (error) {
     const message =
       error instanceof Error ? error.message : 'Unknown error occurred'
-    console.error('DELETE integrations error:', error)
+    logger.error('DELETE integrations error:', error)
     return NextResponse.json({ error: message }, { status: 500 })
   }
 }

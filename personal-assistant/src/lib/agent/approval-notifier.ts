@@ -43,7 +43,7 @@ export async function notifyApproval(
 
     return emailSent
   } catch (error) {
-    console.warn('notifyApproval failed', error)
+    logger.warn('notifyApproval failed', error)
     // Attempt email fallback on error
     try {
       return await sendApprovalEmail(
@@ -88,7 +88,7 @@ export async function sendDailyDigest(
 
     return emailSent ? approvals.length : 0
   } catch (error) {
-    console.warn('sendDailyDigest failed', error)
+    logger.warn('sendDailyDigest failed', error)
     // Attempt email fallback on error
     try {
       const approvals = await getDigestApprovals(supabase, orgId)

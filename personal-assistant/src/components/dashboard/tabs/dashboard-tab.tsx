@@ -27,7 +27,7 @@ function DashboardTab() {
       setTasks((taskRes.data ?? []) as Task[]);
       setMessages(msgRes.data ?? []);
     }).catch((err) => {
-      console.error('[dashboard-tab] fetch error:', err);
+      logger.error('[dashboard-tab] fetch error:', err);
       setError('Failed to load dashboard data');
     }).finally(() => {
       setLoading(false);

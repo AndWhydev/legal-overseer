@@ -25,7 +25,7 @@ export async function sendApprovalEmail(
 ): Promise<boolean> {
   try {
     if (!process.env.RESEND_API_KEY) {
-      console.warn('sendApprovalEmail skipped: RESEND_API_KEY not configured')
+      logger.warn('sendApprovalEmail skipped: RESEND_API_KEY not configured')
       return false
     }
 
@@ -60,13 +60,13 @@ export async function sendApprovalEmail(
     })
 
     if (error) {
-      console.warn('sendApprovalEmail failed:', error)
+      logger.warn('sendApprovalEmail failed:', error)
       return false
     }
 
     return true
   } catch (err) {
-    console.warn('sendApprovalEmail error:', err)
+    logger.warn('sendApprovalEmail error:', err)
     return false
   }
 }
@@ -78,7 +78,7 @@ export async function sendEscalationEmail(
 ): Promise<boolean> {
   try {
     if (!process.env.RESEND_API_KEY) {
-      console.warn('sendEscalationEmail skipped: RESEND_API_KEY not configured')
+      logger.warn('sendEscalationEmail skipped: RESEND_API_KEY not configured')
       return false
     }
 
@@ -114,13 +114,13 @@ export async function sendEscalationEmail(
     })
 
     if (error) {
-      console.warn('sendEscalationEmail failed:', error)
+      logger.warn('sendEscalationEmail failed:', error)
       return false
     }
 
     return true
   } catch (err) {
-    console.warn('sendEscalationEmail error:', err)
+    logger.warn('sendEscalationEmail error:', err)
     return false
   }
 }
@@ -130,7 +130,7 @@ export async function sendDigestEmail(
 ): Promise<boolean> {
   try {
     if (!process.env.RESEND_API_KEY) {
-      console.warn('sendDigestEmail skipped: RESEND_API_KEY not configured')
+      logger.warn('sendDigestEmail skipped: RESEND_API_KEY not configured')
       return false
     }
 
@@ -190,13 +190,13 @@ export async function sendDigestEmail(
     })
 
     if (error) {
-      console.warn('sendDigestEmail failed:', error)
+      logger.warn('sendDigestEmail failed:', error)
       return false
     }
 
     return true
   } catch (err) {
-    console.warn('sendDigestEmail error:', err)
+    logger.warn('sendDigestEmail error:', err)
     return false
   }
 }
@@ -208,7 +208,7 @@ export async function sendLeadAckEmail(
 ): Promise<boolean> {
   try {
     if (!process.env.RESEND_API_KEY) {
-      console.warn('sendLeadAckEmail skipped: RESEND_API_KEY not configured')
+      logger.warn('sendLeadAckEmail skipped: RESEND_API_KEY not configured')
       return false
     }
 
@@ -246,13 +246,13 @@ export async function sendLeadAckEmail(
     })
 
     if (error) {
-      console.warn('sendLeadAckEmail failed:', error)
+      logger.warn('sendLeadAckEmail failed:', error)
       return false
     }
 
     return true
   } catch (err) {
-    console.warn('sendLeadAckEmail error:', err)
+    logger.warn('sendLeadAckEmail error:', err)
     return false
   }
 }

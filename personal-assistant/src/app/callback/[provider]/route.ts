@@ -41,7 +41,7 @@ export async function GET(
     const codeVerifier = cookieStore.get(OAUTH_VERIFIER_COOKIE)?.value
 
     if (!validateOAuthState(state ?? undefined, expectedState)) {
-      console.error('OAuth state mismatch — possible CSRF attack', {
+      logger.error('OAuth state mismatch — possible CSRF attack', {
         provider,
         hasState: !!state,
         hasExpected: !!expectedState,
@@ -121,7 +121,7 @@ export async function GET(
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : 'Unknown error occurred'
-    console.error('OAuth callback error:', error)
+    logger.error('OAuth callback error:', error)
     return NextResponse.redirect(
       `/dashboard/channels?error=${encodeURIComponent(errorMessage)}`
     )

@@ -107,7 +107,7 @@ async function auditRLSFallback(supabase: SupabaseClient): Promise<AuditSummary>
     .eq('table_type', 'BASE TABLE');
 
   if (error) {
-    console.warn('[rls-audit] Cannot query tables:', error.message);
+    logger.warn('[rls-audit] Cannot query tables:', error.message);
     return {
       total_tables: 0,
       tables_with_rls: 0,

@@ -1,6 +1,7 @@
 import type { ChannelAdapter, ChannelMessage } from './types'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { getOrgCredential } from '@/lib/integrations/credentials'
+import { logger } from '@/lib/core/logger'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -114,7 +115,7 @@ async function refreshGoogleToken(
   }
 
   if (!creds.refresh_token) {
-    console.warn('[google-calendar] No refresh token available')
+    logger.warn('[google-calendar] No refresh token available')
     return null
   }
 
@@ -131,7 +132,7 @@ async function refreshGoogleToken(
     })
 
     if (!res.ok) {
-      console.warn(`[google-calendar] Token refresh failed: ${res.status}`)
+      logger.warn(`[google-calendar] Token refresh failed: ${res.status}`)
       return null
     }
 
@@ -145,7 +146,7 @@ async function refreshGoogleToken(
     // This function returns the new token for immediate use
     return data.access_token
   } catch (err) {
-    console.warn('[google-calendar] Token refresh error:', err)
+    logger.warn('[google-calendar] Token refresh error:', err)
     return null
   }
 }
@@ -408,7 +409,7 @@ export const googleCalendarAdapter: ChannelAdapter = {
   async pull(config, since, options) {
     // This is called via the synthesizer
     // Real pull logic happens in external services that have org context
-    console.warn('[google-calendar] pull() called on adapter (should use org-aware functions instead)')
+    logger.warn('[google-calendar] pull() called on adapter (should use org-aware functions instead)')
     return []
   },
 
@@ -431,7 +432,7 @@ export async function pullGoogleCalendarEvents(
   try {
     const creds = await getGoogleCalendarCredentials(client, orgId)
     if (!creds) {
-      console.warn(`[google-calendar] No credentials for org ${orgId}`)
+      logger.warn(`[google-calendar] No credentials for org ${orgId}`)
       return []
     }
 
@@ -439,7 +440,7 @@ export async function pullGoogleCalendarEvents(
     if (!accessToken || isTokenExpired(creds.token_expires_at)) {
       const newToken = await refreshGoogleToken(client, orgId, creds)
       if (!newToken) {
-        console.warn(`[google-calendar] Failed to get valid token for org ${orgId}`)
+        logger.warn(`[google-calendar] Failed to get valid token for org ${orgId}`)
         return []
       }
       accessToken = newToken
@@ -450,7 +451,7 @@ export async function pullGoogleCalendarEvents(
     const calendars = calendarsResponse.items || []
 
     if (calendars.length === 0) {
-      console.info(`[google-calendar] No calendars found for org ${orgId}`)
+      logger.info(`[google-calendar] No calendars found for org ${orgId}`)
       return []
     }
 
@@ -496,14 +497,14 @@ export async function pullGoogleCalendarEvents(
           break
         }
       } catch (err) {
-        console.warn(`[google-calendar] Failed to pull events from calendar ${calendar.id}:`, err)
+        logger.warn(`[google-calendar] Failed to pull events from calendar ${calendar.id}:`, err)
         // Continue with next calendar
       }
     }
 
     return messages
   } catch (err) {
-    console.error('[google-calendar] Pull failed:', err)
+    logger.error('[google-calendar] Pull failed:', err)
     return []
   }
 }

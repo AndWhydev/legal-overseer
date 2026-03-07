@@ -91,7 +91,7 @@ export default function ReportsTab() {
 
       fetchReports()
     } catch (err) {
-      console.error('Report generation failed:', err)
+      logger.error('Report generation failed:', err)
     } finally {
       setGenerating(false)
     }

@@ -96,7 +96,7 @@ export async function upsertTemplate(
     .single()
 
   if (error) {
-    console.warn('[templates] Upsert failed:', error.message)
+    logger.warn('[templates] Upsert failed:', error.message)
     return null
   }
 

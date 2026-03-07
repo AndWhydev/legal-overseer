@@ -325,7 +325,7 @@ export const calendlyAdapter: ChannelAdapter = {
         }
       })
     } catch (err) {
-      console.error('[calendly] pull failed:', err)
+      logger.error('[calendly] pull failed:', err)
       return []
     }
   },

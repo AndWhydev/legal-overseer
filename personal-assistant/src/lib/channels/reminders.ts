@@ -47,7 +47,7 @@ export const remindersAdapter: ChannelAdapter = {
         metadata: { list: r.list, dueDate: r.dueDate || null, applePriority: r.priority },
       }))
     } catch (err) {
-      console.error('Reminders cache read failed:', err)
+      logger.error('Reminders cache read failed:', err)
       return []
     }
   },
@@ -142,7 +142,7 @@ return output`
 
     return items
   } catch (err) {
-    console.error('Reminders pull failed:', err)
+    logger.error('Reminders pull failed:', err)
     return []
   } finally {
     try { unlinkSync(scriptPath) } catch {}

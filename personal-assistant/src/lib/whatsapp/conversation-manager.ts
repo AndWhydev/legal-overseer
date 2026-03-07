@@ -103,7 +103,7 @@ async function resolveApprovalWithRetry(
       throw err
     }
     // Retry once after 1 second for transient errors
-    console.warn('[conversation-manager] Approval resolve failed, retrying in 1s:', errMsg)
+    logger.warn('[conversation-manager] Approval resolve failed, retrying in 1s:', errMsg)
     await new Promise(resolve => setTimeout(resolve, 1000))
     await resolveApproval(supabase, approvalId, decision, userId, 'whatsapp')
   }
@@ -150,7 +150,7 @@ export async function handleIncomingMessage(
         break
     }
   } catch (error) {
-    console.error('[conversation-manager] Error handling message:', error)
+    logger.error('[conversation-manager] Error handling message:', error)
     const errorMsg = formatResponse.error(
       "Something went wrong on my end. Could you try that again?",
       getSuggestions(state)
@@ -159,7 +159,7 @@ export async function handleIncomingMessage(
     resetState(state)
   } finally {
     // End-to-end latency instrumentation
-    console.log(JSON.stringify({
+    logger.info(JSON.stringify({
       event: 'whatsapp_e2e_latency',
       orgId,
       intentDetected,
@@ -372,7 +372,7 @@ async function handleApproveIntent(
     await reply(state, `${emoji} ${approval.action_summary} — *${decision}*`)
 
     // Audit log for approval resolution
-    console.log(JSON.stringify({
+    logger.info(JSON.stringify({
       event: 'whatsapp_approval',
       orgId: state.orgId,
       approvalId: approval.id,
@@ -410,7 +410,7 @@ async function resolveIndexedApproval(
     const emoji = decision === 'approved' ? '✅' : '❌'
     await reply(state, `${emoji} #${index} ${approval.action_summary} — *${decision}*`)
 
-    console.log(JSON.stringify({
+    logger.info(JSON.stringify({
       event: 'whatsapp_approval',
       orgId: state.orgId,
       approvalId: approval.id,
@@ -455,7 +455,7 @@ async function handleApprovalDecision(
     const emoji = decision === 'approved' ? '✅' : '❌'
     await reply(state, `${emoji} Action *${decision}*.`)
 
-    console.log(JSON.stringify({
+    logger.info(JSON.stringify({
       event: 'whatsapp_approval',
       orgId: state.orgId,
       approvalId: state.pendingApprovalId,

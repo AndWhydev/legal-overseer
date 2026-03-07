@@ -235,7 +235,7 @@ export async function enrichContact(
       .eq('id', contactId)
 
     if (error) {
-      console.warn('[contact-enrichment] Update failed:', error.message)
+      logger.warn('[contact-enrichment] Update failed:', error.message)
     } else {
       result.updated = true
     }

@@ -43,7 +43,7 @@ async function updateInvoiceStatus(
       .single()
 
     if (findError || !invoice) {
-      console.warn(
+      logger.warn(
         '[webhook/stripe] Could not find invoice for Stripe ID:',
         stripePaymentLinkOrId,
         findError?.message,
@@ -62,7 +62,7 @@ async function updateInvoiceStatus(
       .eq('id', invoice.id)
 
     if (updateError) {
-      console.error('[webhook/stripe] Failed to update invoice:', updateError.message)
+      logger.error('[webhook/stripe] Failed to update invoice:', updateError.message)
       return
     }
 
@@ -82,12 +82,12 @@ async function updateInvoiceStatus(
     })
 
     if (timelineError) {
-      console.warn('[webhook/stripe] Failed to create timeline event:', timelineError.message)
+      logger.warn('[webhook/stripe] Failed to create timeline event:', timelineError.message)
     } else {
-      console.log(`[webhook/stripe] Updated invoice ${invoice.invoice_number} to status: ${newStatus}`)
+      logger.info(`[webhook/stripe] Updated invoice ${invoice.invoice_number} to status: ${newStatus}`)
     }
   } catch (err) {
-    console.error('[webhook/stripe] Error updating invoice:', err)
+    logger.error('[webhook/stripe] Error updating invoice:', err)
   }
 }
 
@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
 
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
   if (!webhookSecret) {
-    console.error('[webhook/stripe] STRIPE_WEBHOOK_SECRET not configured')
+    logger.error('[webhook/stripe] STRIPE_WEBHOOK_SECRET not configured')
     return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 500 })
   }
 
@@ -108,11 +108,11 @@ export async function POST(request: NextRequest) {
     const event = await verifyStripeWebhook(rawBody, signature, webhookSecret)
 
     if ('error' in event) {
-      console.error('[webhook/stripe] Verification failed:', event.error)
+      logger.error('[webhook/stripe] Verification failed:', event.error)
       return NextResponse.json({ error: event.error }, { status: 400 })
     }
 
-    console.log('[webhook/stripe] Event:', event.type, event.id)
+    logger.info('[webhook/stripe] Event:', event.type, event.id)
 
     // For database operations, we need orgId from somewhere
     // In a real scenario, this would be passed in metadata or we'd look it up
@@ -122,20 +122,20 @@ export async function POST(request: NextRequest) {
     switch (event.type) {
       case 'payment_intent.succeeded': {
         const obj = event.data.object as Record<string, unknown>
-        console.log('[webhook/stripe] Payment succeeded:', obj.id, obj.amount, obj.currency)
+        logger.info('[webhook/stripe] Payment succeeded:', obj.id, obj.amount, obj.currency)
         // In production: extract orgId from metadata and update invoice
         // For now, log the event
         break
       }
       case 'payment_intent.payment_failed': {
         const obj = event.data.object as Record<string, unknown>
-        console.error('[webhook/stripe] Payment failed:', obj.id)
+        logger.error('[webhook/stripe] Payment failed:', obj.id)
         // In production: extract orgId from metadata and update invoice to 'failed'
         break
       }
       case 'invoice.paid': {
         const obj = event.data.object as Record<string, unknown>
-        console.log('[webhook/stripe] Invoice paid:', obj.id)
+        logger.info('[webhook/stripe] Invoice paid:', obj.id)
         // Update invoice status to 'paid' if we can determine the orgId
         // This would typically come from invoice metadata
         const invoiceId = obj.id as string
@@ -145,7 +145,7 @@ export async function POST(request: NextRequest) {
       }
       case 'invoice.payment_failed': {
         const obj = event.data.object as Record<string, unknown>
-        console.error('[webhook/stripe] Invoice payment failed:', obj.id)
+        logger.error('[webhook/stripe] Invoice payment failed:', obj.id)
         // Update invoice status to 'failed' if we can determine the orgId
         const invoiceId = obj.id as string
         // TODO: extract orgId from invoice metadata or look it up
@@ -153,12 +153,12 @@ export async function POST(request: NextRequest) {
         break
       }
       default:
-        console.log('[webhook/stripe] Unhandled event type:', event.type)
+        logger.info('[webhook/stripe] Unhandled event type:', event.type)
     }
 
     return NextResponse.json({ received: true, type: event.type })
   } catch (err) {
-    console.error('[webhook/stripe] Error processing webhook:', err)
+    logger.error('[webhook/stripe] Error processing webhook:', err)
     return NextResponse.json({ error: 'Failed to process webhook' }, { status: 400 })
   }
 }

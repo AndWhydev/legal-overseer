@@ -118,7 +118,7 @@ export async function POST() {
       status: 'pairing',
     })
   } catch (err) {
-    console.error('[bridge-route] Failed to start bridge:', err)
+    logger.error('[bridge-route] Failed to start bridge:', err)
     return NextResponse.json({
       error: err instanceof Error ? err.message : 'Failed to start bridge',
     }, { status: 500 })

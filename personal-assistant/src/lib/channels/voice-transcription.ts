@@ -80,7 +80,7 @@ export async function transcribeVoiceNote(
 
   if (!openaiKey) {
     const error = 'OPENAI_API_KEY not configured'
-    console.warn('[voice-transcription]', error)
+    logger.warn('[voice-transcription]', error)
     return {
       text: '',
       duration: null,
@@ -94,7 +94,7 @@ export async function transcribeVoiceNote(
   const bufferSize = audioBuffer.length
   if (bufferSize === 0) {
     const error = 'Empty audio buffer'
-    console.warn('[voice-transcription]', error)
+    logger.warn('[voice-transcription]', error)
     return {
       text: '',
       duration: null,
@@ -106,7 +106,7 @@ export async function transcribeVoiceNote(
 
   if (bufferSize > MAX_AUDIO_SIZE_BYTES) {
     const error = `Audio exceeds 25 MB limit: ${bufferSize} bytes`
-    console.warn('[voice-transcription]', error)
+    logger.warn('[voice-transcription]', error)
     return {
       text: '',
       duration: null,
@@ -159,7 +159,7 @@ export async function transcribeVoiceNote(
     if (!response.ok) {
       const errorText = await response.text()
       const error = `Whisper API error: ${response.status} ${errorText}`
-      console.error('[voice-transcription]', error)
+      logger.error('[voice-transcription]', error)
       return {
         text: '',
         duration: null,
@@ -175,7 +175,7 @@ export async function transcribeVoiceNote(
 
     if (!transcribedText) {
       const error = 'Whisper returned empty transcription'
-      console.warn('[voice-transcription]', error)
+      logger.warn('[voice-transcription]', error)
       return {
         text: '',
         duration: null,
@@ -199,7 +199,7 @@ export async function transcribeVoiceNote(
         error = 'Transcription timeout (30s)'
       }
     }
-    console.error('[voice-transcription] Transcription failed:', error)
+    logger.error('[voice-transcription] Transcription failed:', error)
     return {
       text: '',
       duration: null,
@@ -233,7 +233,7 @@ export async function transcribeFromUrl(
 ): Promise<TranscriptionResult> {
   if (!mediaUrl) {
     const error = 'Empty media URL'
-    console.warn('[voice-transcription]', error)
+    logger.warn('[voice-transcription]', error)
     return {
       text: '',
       duration: null,
@@ -264,7 +264,7 @@ export async function transcribeFromUrl(
 
     if (!response.ok) {
       const error = `Failed to download audio: HTTP ${response.status}`
-      console.error('[voice-transcription]', error)
+      logger.error('[voice-transcription]', error)
       return {
         text: '',
         duration: null,
@@ -287,7 +287,7 @@ export async function transcribeFromUrl(
         error = 'Download timeout (30s)'
       }
     }
-    console.error('[voice-transcription] Download failed:', error)
+    logger.error('[voice-transcription] Download failed:', error)
     return {
       text: '',
       duration: null,

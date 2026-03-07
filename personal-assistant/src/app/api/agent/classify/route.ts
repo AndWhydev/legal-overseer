@@ -126,7 +126,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     const durationMs = Date.now() - startTime
     const errorMessage = err instanceof Error ? err.message : String(err)
 
-    console.error('[classify] Classification failed:', err)
+    logger.error('[classify] Classification failed:', err)
 
     return NextResponse.json(
       {

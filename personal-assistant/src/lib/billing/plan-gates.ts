@@ -165,7 +165,7 @@ export async function checkPlanGate(
         .eq('org_id', orgId)
 
       if (error) {
-        console.warn('[plan-gates] Failed to count channels:', error.message)
+        logger.warn('[plan-gates] Failed to count channels:', error.message)
         return true // Allow on error
       }
 
@@ -191,7 +191,7 @@ export async function checkPlanGate(
         .eq('org_id', orgId)
 
       if (error) {
-        console.warn('[plan-gates] Failed to check storage:', error.message)
+        logger.warn('[plan-gates] Failed to check storage:', error.message)
         return true // Allow on error
       }
 
@@ -202,7 +202,7 @@ export async function checkPlanGate(
     // Unknown action: allow
     return true
   } catch (err) {
-    console.warn('[plan-gates] Error checking plan gate:', action, err)
+    logger.warn('[plan-gates] Error checking plan gate:', action, err)
     return true // Allow on error
   }
 }

@@ -23,7 +23,7 @@ const DEFAULT_ORG_ID = process.env.DEFAULT_ORG_ID || '00000000-0000-0000-0000-00
 export async function POST(request: NextRequest) {
   const signingSecret = process.env.SLACK_SIGNING_SECRET
   if (!signingSecret) {
-    console.warn('[webhook/slack] SLACK_SIGNING_SECRET not configured')
+    logger.warn('[webhook/slack] SLACK_SIGNING_SECRET not configured')
     return NextResponse.json({ error: 'Not configured' }, { status: 400 })
   }
 
@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
   const signature = request.headers.get('x-slack-signature')
 
   if (!timestamp || !signature) {
-    console.warn('[webhook/slack] Missing timestamp or signature headers')
+    logger.warn('[webhook/slack] Missing timestamp or signature headers')
     return NextResponse.json({ error: 'Missing headers' }, { status: 400 })
   }
 
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
   const requestTime = parseInt(timestamp)
   const currentTime = Math.floor(Date.now() / 1000)
   if (Math.abs(currentTime - requestTime) > 300) {
-    console.warn('[webhook/slack] Request timestamp too old:', timestamp)
+    logger.warn('[webhook/slack] Request timestamp too old:', timestamp)
     return NextResponse.json({ error: 'Timestamp too old' }, { status: 401 })
   }
 
@@ -59,11 +59,11 @@ export async function POST(request: NextRequest) {
     )
 
     if (!isValid) {
-      console.warn('[webhook/slack] Invalid signature')
+      logger.warn('[webhook/slack] Invalid signature')
       return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
     }
   } catch (err) {
-    console.error('[webhook/slack] Signature verification error:', err)
+    logger.error('[webhook/slack] Signature verification error:', err)
     return NextResponse.json({ error: 'Verification failed' }, { status: 401 })
   }
 
@@ -72,14 +72,14 @@ export async function POST(request: NextRequest) {
   try {
     payload = JSON.parse(rawBody) as SlackEventPayload
   } catch {
-    console.error('[webhook/slack] Invalid JSON')
+    logger.error('[webhook/slack] Invalid JSON')
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }
 
   // Handle URL verification challenge
   const challenge = handleSlackUrlChallenge(payload)
   if (challenge) {
-    console.log('[webhook/slack] Responding to url_verification challenge')
+    logger.info('[webhook/slack] Responding to url_verification challenge')
     return NextResponse.json(challenge)
   }
 
@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
     return await handleSlackEvent(payload)
   }
 
-  console.log('[webhook/slack] Ignoring non-event payload:', payload.type)
+  logger.info('[webhook/slack] Ignoring non-event payload:', payload.type)
   return NextResponse.json({ received: true })
 }
 
@@ -102,7 +102,7 @@ async function verifySlackSignatureWithTimestamp(
   try {
     const [version, hash] = signature.split('=')
     if (version !== 'v0') {
-      console.warn('[webhook/slack] Invalid signature version:', version)
+      logger.warn('[webhook/slack] Invalid signature version:', version)
       return false
     }
 
@@ -112,7 +112,7 @@ async function verifySlackSignatureWithTimestamp(
 
     return computedHash === hash
   } catch (err) {
-    console.warn('[webhook/slack] Signature verification error:', err)
+    logger.warn('[webhook/slack] Signature verification error:', err)
     return false
   }
 }
@@ -138,10 +138,10 @@ async function handleSlackEvent(payload: SlackEventPayload): Promise<NextRespons
       return await handleReactionEvent(supabase, event)
     }
 
-    console.log('[webhook/slack] Ignoring event type:', event.type)
+    logger.info('[webhook/slack] Ignoring event type:', event.type)
     return NextResponse.json({ received: true, event_type: event.type })
   } catch (err) {
-    console.error('[webhook/slack] Error processing event:', err)
+    logger.error('[webhook/slack] Error processing event:', err)
     return NextResponse.json({ error: 'Processing failed' }, { status: 400 })
   }
 }
@@ -151,7 +151,7 @@ async function handleMessageEvent(
   event: SlackEventPayload['event'],
 ): Promise<NextResponse> {
   if (!event || !event.text || !event.user || !event.ts || !event.channel) {
-    console.log('[webhook/slack] Skipping message event with missing fields')
+    logger.info('[webhook/slack] Skipping message event with missing fields')
     return NextResponse.json({ received: true })
   }
 
@@ -179,12 +179,12 @@ async function handleMessageEvent(
   if (error) {
     // Unique constraint violation means duplicate — skip silently
     if (error.code === '23505') {
-      console.log('[webhook/slack] Duplicate message event skipped:', event.ts)
+      logger.info('[webhook/slack] Duplicate message event skipped:', event.ts)
     } else {
-      console.error('[webhook/slack] Failed to persist message:', error.message)
+      logger.error('[webhook/slack] Failed to persist message:', error.message)
     }
   } else {
-    console.log('[webhook/slack] Message event persisted:', event.ts)
+    logger.info('[webhook/slack] Message event persisted:', event.ts)
   }
 
   return NextResponse.json({ received: true, event_type: 'message', persisted: !error })
@@ -195,7 +195,7 @@ async function handleReactionEvent(
   event: SlackEventPayload['event'],
 ): Promise<NextResponse> {
   if (!event || !event.reaction || !event.user || !event.item) {
-    console.log('[webhook/slack] Skipping reaction event with missing fields')
+    logger.info('[webhook/slack] Skipping reaction event with missing fields')
     return NextResponse.json({ received: true })
   }
 
@@ -223,12 +223,12 @@ async function handleReactionEvent(
 
   if (error) {
     if (error.code === '23505') {
-      console.log('[webhook/slack] Duplicate reaction event skipped:', event.reaction)
+      logger.info('[webhook/slack] Duplicate reaction event skipped:', event.reaction)
     } else {
-      console.error('[webhook/slack] Failed to persist reaction:', error.message)
+      logger.error('[webhook/slack] Failed to persist reaction:', error.message)
     }
   } else {
-    console.log('[webhook/slack] Reaction event persisted')
+    logger.info('[webhook/slack] Reaction event persisted')
   }
 
   return NextResponse.json({ received: true, event_type: 'reaction_added', persisted: !error })

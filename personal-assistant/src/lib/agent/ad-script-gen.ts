@@ -384,7 +384,7 @@ End with CTA: "${hook.callToAction}"`,
     const textBlock = response.content.find((b) => b.type === 'text')
     return textBlock?.type === 'text' ? textBlock.text : null
   } catch (err) {
-    console.warn('[ad-script-gen] LLM generation failed:', err)
+    logger.warn('[ad-script-gen] LLM generation failed:', err)
     return null
   }
 }
@@ -525,7 +525,7 @@ export async function saveScriptBatch(
     .single()
 
   if (error) {
-    console.warn('[ad-script-gen] Failed to save batch:', error.message)
+    logger.warn('[ad-script-gen] Failed to save batch:', error.message)
     // Non-fatal — return empty string
     return ''
   }
@@ -546,7 +546,7 @@ export async function listScriptBatches(
     .limit(limit)
 
   if (error) {
-    console.warn('[ad-script-gen] Failed to list batches:', error.message)
+    logger.warn('[ad-script-gen] Failed to list batches:', error.message)
     return []
   }
 

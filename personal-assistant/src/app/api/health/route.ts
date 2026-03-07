@@ -4,6 +4,7 @@ import {
   isServiceClientConfigured,
 } from '@/lib/supabase/service-client'
 import { poolConfig, POOL_RECOMMENDATIONS } from '@/lib/supabase/pool-config'
+import { logger } from '@/lib/core/logger'
 
 /**
  * Health check endpoint with cold start and pool diagnostics.
@@ -67,16 +68,16 @@ export async function GET(): Promise<NextResponse> {
         supabaseConnected = !error
         if (error) {
           status = 'degraded'
-          console.warn('[health] Supabase check failed:', error.message)
+          logger.warn('[health] Supabase check failed:', { message: error.message })
         }
       } finally {
         clearTimeout(timeout)
       }
     } catch (err) {
       status = 'degraded'
-      console.warn(
+      logger.warn(
         '[health] Supabase connectivity check failed:',
-        err instanceof Error ? err.message : err
+        { error: err instanceof Error ? err.message : String(err) }
       )
     }
   } else {

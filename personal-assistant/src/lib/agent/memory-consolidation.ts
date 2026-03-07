@@ -171,7 +171,7 @@ export async function consolidateMemories(
 
       result.kept += (decision.keep?.length ?? 0)
     } catch (err) {
-      console.warn('[consolidation] Failed to consolidate group:', err)
+      logger.warn('[consolidation] Failed to consolidate group:', err)
       result.kept += group.length
     }
   }

@@ -70,7 +70,7 @@ function getEnv() {
 export async function sendMessage(to: string, text: string): Promise<string | null> {
   const env = getEnv()
   if (!env.pageAccessToken) {
-    console.warn(
+    logger.warn(
       'Facebook Messenger not configured: missing FACEBOOK_MESSENGER_PAGE_ACCESS_TOKEN',
     )
     return null
@@ -91,19 +91,19 @@ export async function sendMessage(to: string, text: string): Promise<string | nu
     })
 
     if (!response.ok) {
-      console.warn(`Facebook Messenger send failed with status ${response.status}`)
+      logger.warn(`Facebook Messenger send failed with status ${response.status}`)
       return null
     }
 
     const payload = (await response.json()) as FacebookMessageResponse
     if (payload.error) {
-      console.warn(`Facebook Messenger API error: ${payload.error.message}`)
+      logger.warn(`Facebook Messenger API error: ${payload.error.message}`)
       return null
     }
 
     return payload.message_id ?? null
   } catch (error) {
-    console.warn('Facebook Messenger send failed', error)
+    logger.warn('Facebook Messenger send failed', error)
     return null
   }
 }
@@ -118,7 +118,7 @@ export async function sendMessageWithQuickReplies(
 ): Promise<string | null> {
   const env = getEnv()
   if (!env.pageAccessToken) {
-    console.warn('Facebook Messenger not configured: missing page access token')
+    logger.warn('Facebook Messenger not configured: missing page access token')
     return null
   }
 
@@ -144,14 +144,14 @@ export async function sendMessageWithQuickReplies(
     })
 
     if (!response.ok) {
-      console.warn(`Facebook Messenger send failed with status ${response.status}`)
+      logger.warn(`Facebook Messenger send failed with status ${response.status}`)
       return null
     }
 
     const payload = (await response.json()) as FacebookMessageResponse
     return payload.message_id ?? null
   } catch (error) {
-    console.warn('Facebook Messenger send with quick replies failed', error)
+    logger.warn('Facebook Messenger send with quick replies failed', error)
     return null
   }
 }
@@ -167,17 +167,17 @@ export function verifyWebhook(
 ): string | null {
   const env = getEnv()
   if (!env.verifyToken) {
-    console.warn('Facebook Messenger not configured: missing FACEBOOK_MESSENGER_VERIFY_TOKEN')
+    logger.warn('Facebook Messenger not configured: missing FACEBOOK_MESSENGER_VERIFY_TOKEN')
     return null
   }
 
   if (mode !== 'subscribe') {
-    console.warn('Facebook Messenger webhook: invalid mode', mode)
+    logger.warn('Facebook Messenger webhook: invalid mode', mode)
     return null
   }
 
   if (token !== env.verifyToken) {
-    console.warn('Facebook Messenger webhook: invalid verify token')
+    logger.warn('Facebook Messenger webhook: invalid verify token')
     return null
   }
 
@@ -192,7 +192,7 @@ export function parseWebhookEvent(payload: FacebookWebhookPayload): ChannelMessa
   const messages: ChannelMessage[] = []
 
   if (payload.object !== 'page') {
-    console.warn('Facebook Messenger webhook: not a page object')
+    logger.warn('Facebook Messenger webhook: not a page object')
     return []
   }
 
@@ -244,7 +244,7 @@ export function parseWebhookEvent(payload: FacebookWebhookPayload): ChannelMessa
 export async function getConversations(): Promise<FacebookConversation[]> {
   const env = getEnv()
   if (!env.pageAccessToken || !env.businessAccountId) {
-    console.warn(
+    logger.warn(
       'Facebook Messenger not configured: missing page access token or business account ID',
     )
     return []
@@ -262,14 +262,14 @@ export async function getConversations(): Promise<FacebookConversation[]> {
     )
 
     if (!response.ok) {
-      console.warn(`Facebook Messenger conversations fetch failed with status ${response.status}`)
+      logger.warn(`Facebook Messenger conversations fetch failed with status ${response.status}`)
       return []
     }
 
     const data = (await response.json()) as { data: FacebookConversation[] }
     return data.data || []
   } catch (error) {
-    console.warn('Facebook Messenger get conversations failed', error)
+    logger.warn('Facebook Messenger get conversations failed', error)
     return []
   }
 }

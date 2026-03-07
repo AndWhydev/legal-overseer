@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { withCronGuard } from '@/lib/cron/cron-guard'
 import { processPendingLeadAcks } from '@/lib/agent/lead-acknowledgment'
-
-const DEFAULT_ORG_ID = '289083e9-2143-44eb-9b6a-cfc615f1e81c'
 
 export const maxDuration = 60
 
@@ -13,14 +12,35 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-  if (!supabaseUrl || !supabaseKey) {
-    return NextResponse.json({ error: 'Missing Supabase configuration' }, { status: 500 })
-  }
+  return withCronGuard(request, async (supabase) => {
+    // Get all active organizations
+    const { data: orgs, error: orgError } = await supabase
+      .from('organisations')
+      .select('id')
 
-  const supabase = createClient(supabaseUrl, supabaseKey)
+    if (orgError) {
+      throw new Error(`Failed to fetch organizations: ${orgError.message}`)
+    }
 
-  const result = await processPendingLeadAcks(supabase, DEFAULT_ORG_ID)
-  return NextResponse.json(result)
+    const results: Record<string, unknown>[] = []
+
+    for (const org of orgs ?? []) {
+      const orgId = org.id
+      try {
+        const ackResult = await processPendingLeadAcks(supabase, orgId)
+        results.push({ orgId, ackResult })
+      } catch (orgErr) {
+        console.error(`[cron/leads/ack] Failed processing for org ${orgId}:`, orgErr)
+        results.push({
+          orgId,
+          error: orgErr instanceof Error ? orgErr.message : 'unknown_error',
+        })
+      }
+    }
+
+    return {
+      message: `Lead ack processing complete for ${orgs?.length ?? 0} orgs`,
+      details: { results },
+    }
+  })
 }

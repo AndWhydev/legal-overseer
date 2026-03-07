@@ -106,7 +106,7 @@ export function NotificationCenter({ onTabChange }: NotificationCenterProps) {
         .limit(10);
 
       if (approvalsError && approvalsError.code !== 'PGRST116') {
-        console.warn('Error fetching approvals:', approvalsError);
+        logger.warn('Error fetching approvals:', approvalsError);
       }
 
       if (approvals) {
@@ -131,7 +131,7 @@ export function NotificationCenter({ onTabChange }: NotificationCenterProps) {
         .limit(10);
 
       if (leadsError && leadsError.code !== 'PGRST116') {
-        console.warn('Error fetching leads:', leadsError);
+        logger.warn('Error fetching leads:', leadsError);
       }
 
       if (leads) {
@@ -157,7 +157,7 @@ export function NotificationCenter({ onTabChange }: NotificationCenterProps) {
         .limit(10);
 
       if (invoicesError && invoicesError.code !== 'PGRST116') {
-        console.warn('Error fetching invoices:', invoicesError);
+        logger.warn('Error fetching invoices:', invoicesError);
       }
 
       if (invoices) {
@@ -180,7 +180,7 @@ export function NotificationCenter({ onTabChange }: NotificationCenterProps) {
       setNotifications(notifications);
       setIsLoading(false);
     } catch (err) {
-      console.error('Error fetching notifications:', err);
+      logger.error('Error fetching notifications:', err);
       setError('Failed to load notifications');
       setIsLoading(false);
     }

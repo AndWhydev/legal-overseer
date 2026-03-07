@@ -302,7 +302,7 @@ export const stripeAdapter: ChannelAdapter = {
         }
       })
     } catch (err) {
-      console.error('[stripe] pull failed:', err)
+      logger.error('[stripe] pull failed:', err)
       return []
     }
   },

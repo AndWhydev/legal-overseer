@@ -163,7 +163,7 @@ export async function refreshXeroToken(
     })
 
     if (!res.ok) {
-      console.warn(`[xero] Token refresh failed with status ${res.status}`)
+      logger.warn(`[xero] Token refresh failed with status ${res.status}`)
       return null
     }
 
@@ -187,7 +187,7 @@ export async function refreshXeroToken(
 
     return data.access_token
   } catch (err) {
-    console.warn('[xero] Token refresh error:', err)
+    logger.warn('[xero] Token refresh error:', err)
     return null
   }
 }

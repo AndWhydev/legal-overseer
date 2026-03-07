@@ -309,7 +309,7 @@ export const wordpressAdapter: ChannelAdapter = {
         },
       }))
     } catch (err) {
-      console.error('[wordpress] pull failed:', err)
+      logger.error('[wordpress] pull failed:', err)
       return []
     }
   },

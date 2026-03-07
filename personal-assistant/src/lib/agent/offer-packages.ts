@@ -104,7 +104,7 @@ export async function listOfferPackages(
 
   const { data, error } = await query
   if (error) {
-    console.warn('[offer-packages] Failed to fetch:', error.message)
+    logger.warn('[offer-packages] Failed to fetch:', error.message)
     return []
   }
 

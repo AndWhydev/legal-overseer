@@ -54,7 +54,7 @@ export function useBadgeCounts(channelName = 'badge-counts'): BadgeCounts {
         invoices: invoicesRes.count || 0,
       });
     } catch (err) {
-      console.warn('Error fetching badge counts:', err);
+      logger.warn('Error fetching badge counts:', err);
     }
   }, []);
 

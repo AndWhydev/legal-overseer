@@ -59,7 +59,7 @@ export function getEffectiveThresholds(
 
   // Validate: act must be > ask
   if (clamped.act <= clamped.ask) {
-    console.warn(
+    logger.warn(
       `Invalid thresholds: act (${clamped.act}) <= ask (${clamped.ask}). Using defaults.`,
     )
     return { ...DEFAULT_THRESHOLDS }

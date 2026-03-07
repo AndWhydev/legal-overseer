@@ -26,7 +26,7 @@ export async function GET(request: Request) {
         const triageResult = await runTriage(supabase, orgId)
 
         const summary = `triage processed=${triageResult.processed} actionable=${triageResult.actionable} informational=${triageResult.informational} spam=${triageResult.spam} routed=${triageResult.routed.length}`
-        console.log(`[cron/triage] org=${orgId}: ${summary}`)
+        logger.info(`[cron/triage] org=${orgId}: ${summary}`)
 
         await supabase
           .from('activity_feed')
@@ -38,7 +38,7 @@ export async function GET(request: Request) {
           })
           .then(({ error: logErr }) => {
             if (logErr)
-              console.error(
+              logger.error(
                 `[cron/triage] Failed to log activity for org ${orgId}:`,
                 logErr.message,
               )
@@ -46,7 +46,7 @@ export async function GET(request: Request) {
 
         results.push({ orgId, triage: triageResult })
       } catch (orgErr) {
-        console.error(`[cron/triage] Failed processing triage for org ${orgId}:`, orgErr)
+        logger.error(`[cron/triage] Failed processing triage for org ${orgId}:`, orgErr)
         results.push({
           orgId,
           error: orgErr instanceof Error ? orgErr.message : 'unknown_error',

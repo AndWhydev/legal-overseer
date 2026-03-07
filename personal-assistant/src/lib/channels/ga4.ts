@@ -249,7 +249,7 @@ export const ga4Adapter: ChannelAdapter = {
         }
       })
     } catch (err) {
-      console.error('[ga4] pull failed:', err)
+      logger.error('[ga4] pull failed:', err)
       return []
     }
   },

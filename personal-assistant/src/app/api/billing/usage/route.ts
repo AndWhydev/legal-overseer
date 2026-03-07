@@ -43,7 +43,7 @@ export async function GET() {
       features,
     })
   } catch (err) {
-    console.error('[billing/usage] error:', err)
+    logger.error('[billing/usage] error:', err)
     return NextResponse.json(
       { error: 'Failed to fetch usage data', details: String(err) },
       { status: 500 },

@@ -56,7 +56,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ disconnected: true, channel: channelLower })
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Failed to disconnect channel'
-    console.error('[channels/disconnect]', message)
+    logger.error('[channels/disconnect]', message)
     return NextResponse.json({ error: message }, { status: 500 })
   }
 }

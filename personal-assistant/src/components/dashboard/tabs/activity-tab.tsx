@@ -191,7 +191,7 @@ function ActivityTab() {
         offsetRef.current = fetched.length;
       })
       .catch((err) => {
-        console.error('[activity-tab] fetch error:', err);
+        logger.error('[activity-tab] fetch error:', err);
         if (mounted) {
           setEntries([]);
           setError('Failed to load activity log');

@@ -797,7 +797,7 @@ export async function runAISearchTick(
     result.alertsSent = changes.filter((c) => c.severity !== 'info').length
   } catch (error) {
     result.failed = 1
-    console.error('[ai-search-optimizer] Tick error:', error)
+    logger.error('[ai-search-optimizer] Tick error:', error)
   }
 
   // Log run

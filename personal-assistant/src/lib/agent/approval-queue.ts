@@ -117,12 +117,12 @@ export async function createApproval(
       actionType: params.action_type,
     },
   }).catch(err => {
-    console.warn('[approval-queue] Notification dispatch failed:', err)
+    logger.warn('[approval-queue] Notification dispatch failed:', err)
   })
 
   // Trigger notifyApproval for WhatsApp/email notifications
   notifyApproval(supabase, record).catch(err => {
-    console.warn('[approval-queue] notifyApproval failed:', err)
+    logger.warn('[approval-queue] notifyApproval failed:', err)
   })
 
   return record

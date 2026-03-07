@@ -44,7 +44,7 @@ export async function sendMessageViaBridge(
     .single()
 
   if (!session) {
-    console.warn('WhatsApp: no connected session for org', orgId)
+    logger.warn('WhatsApp: no connected session for org', orgId)
     return null
   }
 
@@ -61,7 +61,7 @@ export async function sendMessageViaBridge(
     .single()
 
   if (error) {
-    console.warn('WhatsApp: failed to queue message', error.message)
+    logger.warn('WhatsApp: failed to queue message', error.message)
     return null
   }
 
@@ -85,7 +85,7 @@ function getEnv() {
 export async function sendMessage(to: string, text: string): Promise<string | null> {
   const env = getEnv()
   if (!env.phoneNumberId || !env.accessToken) {
-    console.warn('WhatsApp not configured: missing WHATSAPP_PHONE_NUMBER_ID or WHATSAPP_ACCESS_TOKEN')
+    logger.warn('WhatsApp not configured: missing WHATSAPP_PHONE_NUMBER_ID or WHATSAPP_ACCESS_TOKEN')
     return null
   }
 
@@ -108,14 +108,14 @@ export async function sendMessage(to: string, text: string): Promise<string | nu
     )
 
     if (!response.ok) {
-      console.warn(`WhatsApp send failed with status ${response.status}`)
+      logger.warn(`WhatsApp send failed with status ${response.status}`)
       return null
     }
 
     const payload = (await response.json()) as WhatsAppMessageResponse
     return payload.messages?.[0]?.id ?? null
   } catch (error) {
-    console.warn('WhatsApp send failed', error)
+    logger.warn('WhatsApp send failed', error)
     return null
   }
 }

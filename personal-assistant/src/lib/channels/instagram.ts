@@ -128,7 +128,7 @@ async function refreshAccessToken(creds: InstagramCredentials): Promise<Instagra
       token_expires_at: newExpiresAt,
     }
   } catch (err) {
-    console.warn('[instagram] Token refresh failed:', err)
+    logger.warn('[instagram] Token refresh failed:', err)
     throw new Error(`Failed to refresh Instagram token: ${err instanceof Error ? err.message : String(err)}`)
   }
 }
@@ -217,7 +217,7 @@ export async function sendMessageViaBridge(
     .single()
 
   if (!session) {
-    console.warn('Instagram: no connected session for org', orgId)
+    logger.warn('Instagram: no connected session for org', orgId)
     return null
   }
 
@@ -234,7 +234,7 @@ export async function sendMessageViaBridge(
     .single()
 
   if (error) {
-    console.warn('Instagram: failed to queue message', error.message)
+    logger.warn('Instagram: failed to queue message', error.message)
     return null
   }
 
@@ -244,7 +244,7 @@ export async function sendMessageViaBridge(
 export async function sendMessage(recipientId: string, text: string): Promise<string | null> {
   const env = getEnv()
   if (!env.businessAccountId || !env.accessToken) {
-    console.warn('Instagram not configured: missing INSTAGRAM_BUSINESS_ACCOUNT_ID or INSTAGRAM_ACCESS_TOKEN')
+    logger.warn('Instagram not configured: missing INSTAGRAM_BUSINESS_ACCOUNT_ID or INSTAGRAM_ACCESS_TOKEN')
     return null
   }
 
@@ -265,14 +265,14 @@ export async function sendMessage(recipientId: string, text: string): Promise<st
     )
 
     if (!response.ok) {
-      console.warn(`Instagram send failed with status ${response.status}`)
+      logger.warn(`Instagram send failed with status ${response.status}`)
       return null
     }
 
     const payload = (await response.json()) as InstagramMessageResponse
     return payload.messages?.[0]?.id ?? null
   } catch (error) {
-    console.warn('Instagram send failed', error)
+    logger.warn('Instagram send failed', error)
     return null
   }
 }
@@ -336,7 +336,7 @@ export async function fetchInstagramMessages(
           })
         }
       } catch (err) {
-        console.warn(`Failed to fetch messages for conversation ${conv.id}:`, err)
+        logger.warn(`Failed to fetch messages for conversation ${conv.id}:`, err)
         // Continue with next conversation
       }
     }

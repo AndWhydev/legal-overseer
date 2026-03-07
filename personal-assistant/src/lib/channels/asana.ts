@@ -281,7 +281,7 @@ export const asanaAdapter: ChannelAdapter = {
     const workspaceGid =
       (config.workspaceGid as string | undefined) || process.env.ASANA_WORKSPACE_GID
     if (!workspaceGid) {
-      console.error('[asana] No workspaceGid in config or ASANA_WORKSPACE_GID env')
+      logger.error('[asana] No workspaceGid in config or ASANA_WORKSPACE_GID env')
       return []
     }
 
@@ -328,7 +328,7 @@ export const asanaAdapter: ChannelAdapter = {
         }
       })
     } catch (err) {
-      console.error('[asana] pull failed:', err)
+      logger.error('[asana] pull failed:', err)
       return []
     }
   },

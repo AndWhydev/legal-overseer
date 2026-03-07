@@ -40,19 +40,19 @@ export function validateEnv(): { valid: boolean; missing: string[] } {
   }
 
   if (missing.length > 0) {
-    console.error(
+    logger.error(
       `[env-validator] Missing required environment variables:\n  ${missing.join('\n  ')}`
     )
   }
 
   if (warnings.length > 0) {
-    console.warn(
+    logger.warn(
       `[env-validator] Missing optional environment variables (degraded functionality):\n  ${warnings.join('\n  ')}`
     )
   }
 
   if (missing.length === 0 && warnings.length === 0) {
-    console.log('[env-validator] All environment variables present')
+    logger.info('[env-validator] All environment variables present')
   }
 
   return { valid: missing.length === 0, missing }

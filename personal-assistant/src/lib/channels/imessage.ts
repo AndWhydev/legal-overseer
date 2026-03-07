@@ -129,7 +129,7 @@ conn.close()
         },
       }))
     } catch (err) {
-      console.error('iMessage pull failed:', err)
+      logger.error('iMessage pull failed:', err)
       return []
     } finally {
       try { unlinkSync(scriptPath) } catch {}

@@ -145,7 +145,7 @@ export async function runScheduledAgents(
   const { data: configs, error: configError } = await query
 
   if (configError) {
-    console.error('[scheduler] Failed to fetch agent configs:', configError.message)
+    logger.error('[scheduler] Failed to fetch agent configs:', configError.message)
     return []
   }
 
@@ -251,7 +251,7 @@ export async function runScheduledAgents(
     // Cost guard: check daily budget before running agent
     const costCheck = await canProceed(supabase, config.org_id)
     if (!costCheck.allowed) {
-      console.warn(`[scheduler] Cost guard halted ${config.agent_type} for org ${config.org_id}: ${costCheck.reason}`)
+      logger.warn(`[scheduler] Cost guard halted ${config.agent_type} for org ${config.org_id}: ${costCheck.reason}`)
       results.push({
         agentType: config.agent_type,
         orgId: config.org_id,

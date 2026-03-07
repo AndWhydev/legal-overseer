@@ -33,7 +33,7 @@ export async function GET(request: Request) {
           .single()
 
         if (configError || !config) {
-          console.warn(`[cron/sentry] No enabled sentry config for org ${orgId}`)
+          logger.warn(`[cron/sentry] No enabled sentry config for org ${orgId}`)
           continue
         }
 
@@ -41,7 +41,7 @@ export async function GET(request: Request) {
         const escalationResult = await processSentryEscalations(supabase, orgId)
 
         const summary = `sentry processed=${sentryResult.processed} triggered=${sentryResult.triggered} alerts=${sentryResult.alertsCreated} escalated=${escalationResult.escalated} failed=${escalationResult.failed}`
-        console.log(`[cron/sentry] org=${orgId}: ${summary}`)
+        logger.info(`[cron/sentry] org=${orgId}: ${summary}`)
 
         await supabase
           .from('activity_feed')
@@ -53,7 +53,7 @@ export async function GET(request: Request) {
           })
           .then(({ error: logErr }) => {
             if (logErr)
-              console.error(
+              logger.error(
                 `[cron/sentry] Failed to log activity for org ${orgId}:`,
                 logErr.message,
               )
@@ -61,7 +61,7 @@ export async function GET(request: Request) {
 
         results.push({ orgId, sentry: sentryResult, escalation: escalationResult })
       } catch (orgErr) {
-        console.error(`[cron/sentry] Failed processing sentry for org ${orgId}:`, orgErr)
+        logger.error(`[cron/sentry] Failed processing sentry for org ${orgId}:`, orgErr)
         results.push({
           orgId,
           error: orgErr instanceof Error ? orgErr.message : 'unknown_error',

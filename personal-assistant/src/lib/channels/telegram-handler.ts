@@ -14,7 +14,7 @@ export async function handleTelegramMessage(
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
   if (!supabaseUrl || !supabaseKey) {
-    console.error('Telegram handler: missing Supabase env vars')
+    logger.error('Telegram handler: missing Supabase env vars')
     await sendTelegramMessage(chatId, 'Something went wrong, please try again.')
     return
   }
@@ -37,7 +37,7 @@ export async function handleTelegramMessage(
       await sendTelegramMessage(chatId, "I processed your message but didn't have a response.")
     }
   } catch (error) {
-    console.error('Telegram handler error:', error)
+    logger.error('Telegram handler error:', error)
     await sendTelegramMessage(chatId, 'Something went wrong, please try again.')
   }
 }

@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
     }, { status: 201 })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error'
-    console.error('POST invite error:', error)
+    logger.error('POST invite error:', error)
     return NextResponse.json({ error: message }, { status: 500 })
   }
 }
@@ -87,7 +87,7 @@ export async function GET() {
     return NextResponse.json({ invitations })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error'
-    console.error('GET invitations error:', error)
+    logger.error('GET invitations error:', error)
     return NextResponse.json({ error: message }, { status: 500 })
   }
 }
@@ -132,7 +132,7 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ success: true })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error'
-    console.error('DELETE invitation error:', error)
+    logger.error('DELETE invitation error:', error)
     return NextResponse.json({ error: message }, { status: 500 })
   }
 }

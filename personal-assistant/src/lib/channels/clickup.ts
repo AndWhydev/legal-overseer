@@ -275,7 +275,7 @@ export const clickupAdapter: ChannelAdapter = {
 
     const listId = readStringConfig(config, 'listId') || process.env.CLICKUP_LIST_ID
     if (!listId) {
-      console.error('[clickup] No listId in config or CLICKUP_LIST_ID env')
+      logger.error('[clickup] No listId in config or CLICKUP_LIST_ID env')
       return []
     }
 
@@ -313,7 +313,7 @@ export const clickupAdapter: ChannelAdapter = {
         }
       })
     } catch (err) {
-      console.error('[clickup] pull failed:', err)
+      logger.error('[clickup] pull failed:', err)
       return []
     }
   },

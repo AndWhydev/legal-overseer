@@ -171,7 +171,7 @@ export async function processEmailCommand(
       }
     }
 
-    console.log('[email-command] Processing command from', email.sender)
+    logger.info('[email-command] Processing command from', email.sender)
 
     // Parse command text
     const parsed = parseEmailCommand(email)
@@ -184,15 +184,15 @@ export async function processEmailCommand(
       }
     }
 
-    console.log('[email-command] Parsed command:', commandText.slice(0, 100))
+    logger.info('[email-command] Parsed command:', commandText.slice(0, 100))
 
     // Classify the message
     const classification = await classifyMessage(client, email, orgId)
-    console.log('[email-command] Classification:', classification.category, `(sig: ${classification.significance})`)
+    logger.info('[email-command] Classification:', classification.category, `(sig: ${classification.significance})`)
 
     // Route the message
     const route = routeMessage(classification)
-    console.log('[email-command] Route decision:', route.decision)
+    logger.info('[email-command] Route decision:', route.decision)
 
     // Execute via agent engine
     let agentResponse = ''
@@ -202,13 +202,13 @@ export async function processEmailCommand(
       skipCostGuard: true, // Email commands typically background agents
     }
 
-    console.log('[email-command] Running agent with command text')
+    logger.info('[email-command] Running agent with command text')
 
     for await (const event of runAgentChat(commandText, engineConfig)) {
       if (event.type === 'message') {
         agentResponse += event.data
       } else if (event.type === 'error') {
-        console.error('[email-command] Agent error:', event.data)
+        logger.error('[email-command] Agent error:', event.data)
         return {
           success: false,
           error: `Agent error: ${event.data}`,
@@ -225,14 +225,14 @@ export async function processEmailCommand(
       }
     }
 
-    console.log('[email-command] Agent response received, formatting email')
+    logger.info('[email-command] Agent response received, formatting email')
 
     // Format response as email
     formatEmailResponse(agentResponse, email.senderEmail || '')
 
     // Queue reply email (NOTE: actual sending would use Gmail/Outlook adapters)
     // For now, we just format and return success indicator
-    console.log('[email-command] Email formatted and ready to send')
+    logger.info('[email-command] Email formatted and ready to send')
 
     return {
       success: true,
@@ -241,7 +241,7 @@ export async function processEmailCommand(
     }
   } catch (err) {
     const errorMsg = err instanceof Error ? err.message : String(err)
-    console.error('[email-command] Error processing command:', errorMsg)
+    logger.error('[email-command] Error processing command:', errorMsg)
     return {
       success: false,
       error: `Error processing command: ${errorMsg}`,

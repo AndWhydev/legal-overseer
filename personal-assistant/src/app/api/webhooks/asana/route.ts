@@ -27,18 +27,18 @@ export async function POST(request: NextRequest) {
   const signature = request.headers.get('x-hook-signature')
   const webhookSecret = process.env.ASANA_WEBHOOK_SECRET
   if (!signature || !webhookSecret) {
-    console.warn('[webhook/asana] Rejected unsigned request')
+    logger.warn('[webhook/asana] Rejected unsigned request')
     return NextResponse.json({ error: 'Missing webhook signature' }, { status: 401 })
   }
 
   try {
     const valid = await verifyAsanaWebhookSignature(rawBody, signature, webhookSecret)
     if (!valid) {
-      console.warn('[webhook/asana] Invalid webhook signature')
+      logger.warn('[webhook/asana] Invalid webhook signature')
       return NextResponse.json({ error: 'Invalid webhook signature' }, { status: 401 })
     }
   } catch (err) {
-    console.error('[webhook/asana] Signature verification failed:', err)
+    logger.error('[webhook/asana] Signature verification failed:', err)
     return NextResponse.json({ error: 'Signature verification failed' }, { status: 401 })
   }
 
@@ -83,19 +83,19 @@ export async function POST(request: NextRequest) {
       if (error) {
         // Unique constraint violation means duplicate — skip silently
         if (error.code === '23505') {
-          console.log('[webhook/asana] Duplicate event skipped:', event.resource.gid, event.action)
+          logger.info('[webhook/asana] Duplicate event skipped:', event.resource.gid, event.action)
         } else {
-          console.error('[webhook/asana] Failed to persist event:', error.message)
+          logger.error('[webhook/asana] Failed to persist event:', error.message)
         }
       } else {
         persisted++
       }
     }
 
-    console.log(`[webhook/asana] Persisted ${persisted}/${events.length} events`)
+    logger.info(`[webhook/asana] Persisted ${persisted}/${events.length} events`)
     return NextResponse.json({ received: true, count: events.length, persisted })
   } catch (err) {
-    console.error('[webhook/asana] Error processing webhook:', err)
+    logger.error('[webhook/asana] Error processing webhook:', err)
     return NextResponse.json({ error: 'Failed to process webhook' }, { status: 400 })
   }
 }

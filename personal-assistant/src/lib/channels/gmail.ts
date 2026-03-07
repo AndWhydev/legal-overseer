@@ -251,11 +251,11 @@ export const gmailAdapter: ChannelAdapter = {
       if (messages) return messages
 
       if (mode === 'api') {
-        console.warn('[gmail] API-only mode enabled; skipping IMAP fallback after API failure')
+        logger.warn('[gmail] API-only mode enabled; skipping IMAP fallback after API failure')
         return []
       }
 
-      console.warn('[gmail] API pull failed after retries; attempting IMAP fallback')
+      logger.warn('[gmail] API pull failed after retries; attempting IMAP fallback')
     }
 
     if (mode === 'api') {
@@ -306,7 +306,7 @@ async function gmailApiPullWithRetry(
             `/gmail/v1/users/me/messages/${item.id}?format=metadata&metadataHeaders=From&metadataHeaders=Subject&metadataHeaders=Date&metadataHeaders=Message-ID`,
           )
         } catch (err) {
-          console.warn('[gmail] Failed to fetch message details:', err)
+          logger.warn('[gmail] Failed to fetch message details:', err)
           return null
         }
       }),
@@ -346,12 +346,12 @@ async function gmailApiPullWithRetry(
     if (retriesLeft > 1) {
       const attempt = 4 - retriesLeft
       const delay = Math.min(1000 * Math.pow(2, attempt - 1), 8000)
-      console.warn(`[gmail] API pull failed (attempt ${attempt}/3), retrying in ${delay}ms:`, err)
+      logger.warn(`[gmail] API pull failed (attempt ${attempt}/3), retrying in ${delay}ms:`, err)
       await new Promise((resolve) => setTimeout(resolve, delay))
       return gmailApiPullWithRetry(accessToken, sinceDate, maxMessages, retriesLeft - 1)
     }
 
-    console.error('[gmail] API pull failed after 3 attempts:', err)
+    logger.error('[gmail] API pull failed after 3 attempts:', err)
     return null
   }
 }
@@ -457,12 +457,12 @@ async function gmailPullWithRetry(
       const baseDelay = 1000 // 1s initial delay
       const delay = Math.min(baseDelay * Math.pow(2, attempt - 1), 30000) // cap at 30s
       const jitter = Math.random() * delay * 0.1 // 10% jitter
-      console.warn(`[gmail] IMAP pull failed (attempt ${attempt}/4), retrying in ${Math.round(delay + jitter)}ms:`, err)
+      logger.warn(`[gmail] IMAP pull failed (attempt ${attempt}/4), retrying in ${Math.round(delay + jitter)}ms:`, err)
       await new Promise(resolve => setTimeout(resolve, delay + jitter))
       return gmailPullWithRetry(user, pass, sinceDate, maxMessages, retriesLeft - 1)
     }
 
-    console.error('[gmail] IMAP pull failed after 4 attempts:', err)
+    logger.error('[gmail] IMAP pull failed after 4 attempts:', err)
     return []
   }
 }

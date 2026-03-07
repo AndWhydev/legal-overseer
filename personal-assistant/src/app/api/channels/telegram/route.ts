@@ -4,8 +4,6 @@ import { handleTelegramMessage } from '@/lib/channels/telegram-handler'
 import { timingSafeCompare } from '@/lib/security/webhook-verification'
 import { after } from 'next/server'
 
-const DEFAULT_ORG_ID = '289083e9-2143-44eb-9b6a-cfc615f1e81c'
-
 // Allow up to 60s for agent engine response
 export const maxDuration = 60
 
@@ -45,7 +43,7 @@ export async function POST(request: NextRequest) {
   const chatId = String(message.chat.id)
   const text = message.text
   const messageId = String(message.message_id)
-  const orgId = process.env.DEFAULT_ORG_ID || DEFAULT_ORG_ID
+  const orgId = process.env.DEFAULT_ORG_ID || '00000000-0000-0000-0000-000000000000'
 
   // Store in channel_messages
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL

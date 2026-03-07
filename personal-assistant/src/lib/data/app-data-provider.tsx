@@ -70,7 +70,7 @@ export function AppDataProvider({ children, onReady }: AppDataProviderProps) {
       setAgentRuns(runsRes.data || []);
       setKanbanColumns(columnsRes.data || []);
     } catch (err) {
-      console.error('[AppDataProvider] prefetch error:', err);
+      logger.error('[AppDataProvider] prefetch error:', err);
     } finally {
       setIsReady(true);
       onReadyRef.current?.();

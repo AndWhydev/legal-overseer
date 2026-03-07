@@ -118,7 +118,7 @@ export async function verifyWebhookSignature(
 
     return computedHash === providedHash
   } catch (err) {
-    console.warn('[sms] Webhook signature verification error:', err)
+    logger.warn('[sms] Webhook signature verification error:', err)
     return false
   }
 }
@@ -208,7 +208,7 @@ async function sendWithRetry(
       if (response.status === 429 || response.status === 503) {
         if (attempt < maxRetries - 1) {
           const waitMs = initialDelayMs * Math.pow(2, attempt)
-          console.warn(
+          logger.warn(
             `[sms] Rate limited (${response.status}), retrying in ${waitMs}ms (attempt ${attempt + 1}/${maxRetries})`,
           )
           await delayMs(waitMs)
@@ -221,7 +221,7 @@ async function sendWithRetry(
       lastError = err instanceof Error ? err : new Error(String(err))
       if (attempt < maxRetries - 1) {
         const waitMs = initialDelayMs * Math.pow(2, attempt)
-        console.warn(
+        logger.warn(
           `[sms] Send failed, retrying in ${waitMs}ms (attempt ${attempt + 1}/${maxRetries}):`,
           lastError.message,
         )
@@ -247,7 +247,7 @@ export async function sendSMS(
 ): Promise<SendResult> {
   const env = getEnv()
   if (!env.apiKey || !env.messagingProfileId) {
-    console.warn('[sms] SMS not configured: missing TELNYX_API_KEY or TELNYX_MESSAGING_PROFILE_ID')
+    logger.warn('[sms] SMS not configured: missing TELNYX_API_KEY or TELNYX_MESSAGING_PROFILE_ID')
     return {
       success: false,
       error: 'SMS not configured',
@@ -294,7 +294,7 @@ export async function sendSMS(
 
     if (!response.ok) {
       const errorText = await response.text()
-      console.warn(`[sms] Send failed with status ${response.status}: ${errorText}`)
+      logger.warn(`[sms] Send failed with status ${response.status}: ${errorText}`)
       return {
         success: false,
         error: `Telnyx API error: ${response.status}`,
@@ -305,7 +305,7 @@ export async function sendSMS(
     const messageId = data.data?.id
 
     if (!messageId) {
-      console.warn('[sms] No message ID in response')
+      logger.warn('[sms] No message ID in response')
       return {
         success: false,
         error: 'No message ID returned',
@@ -317,7 +317,7 @@ export async function sendSMS(
       messageId,
     }
   } catch (error) {
-    console.warn('[sms] Send failed:', error)
+    logger.warn('[sms] Send failed:', error)
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',

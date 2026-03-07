@@ -23,7 +23,7 @@ export const gscAdapter: ChannelAdapter = {
     const siteUrl = process.env.GSC_SITE_URL
 
     if (!serviceAccountJson || !siteUrl) {
-      console.warn('GSC adapter missing credentials (GSC_SERVICE_ACCOUNT, GSC_SITE_URL)')
+      logger.warn('GSC adapter missing credentials (GSC_SERVICE_ACCOUNT, GSC_SITE_URL)')
       return []
     }
 
@@ -53,7 +53,7 @@ export const gscAdapter: ChannelAdapter = {
       )
 
       if (!response.ok) {
-        console.error(`GSC API error: ${response.status} ${response.statusText}`)
+        logger.error(`GSC API error: ${response.status} ${response.statusText}`)
         return []
       }
 
@@ -80,7 +80,7 @@ export const gscAdapter: ChannelAdapter = {
         },
       }))
     } catch (err) {
-      console.error('GSC adapter pull error:', err)
+      logger.error('GSC adapter pull error:', err)
       return []
     }
   },

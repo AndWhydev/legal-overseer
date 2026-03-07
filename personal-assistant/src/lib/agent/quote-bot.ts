@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { createApproval } from './approval-queue'
+import { getOrgNotificationConfig } from '@/lib/org/notification-config'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -123,6 +124,7 @@ export async function runQuoteBotTick(
 
         if (contact?.email) {
           const { sendInvoiceEmail } = await import('@/lib/email/send-invoice')
+          const orgConfig = await getOrgNotificationConfig(orgId)
           await sendInvoiceEmail({
             to: contact.email,
             invoiceNumber: `quote-${quoteId}`,
@@ -131,7 +133,7 @@ export async function runQuoteBotTick(
 <p><strong>Total (inc. GST): $${(quote.grand_total as number).toFixed(2)}</strong></p>
 <p>This quote is valid for 14 days. Let me know if you'd like to proceed or have any questions.</p>
 <p>Cheers</p>`,
-            subject: `Your Quote from All Webbed Up`,
+            subject: `Your Quote from ${orgConfig.name}`,
           })
 
           await supabase

@@ -138,7 +138,7 @@ export async function verifySlackSignature(
   try {
     const [version, hash] = signature.split('=')
     if (version !== 'v0') {
-      console.warn('[slack] Invalid signature version:', version)
+      logger.warn('[slack] Invalid signature version:', version)
       return false
     }
 
@@ -155,7 +155,7 @@ export async function verifySlackSignature(
     // Note: In production, you should also verify timestamp is recent
     return computedHash === hash
   } catch (err) {
-    console.warn('[slack] Signature verification error:', err)
+    logger.warn('[slack] Signature verification error:', err)
     return false
   }
 }
@@ -184,7 +184,7 @@ export async function sendSlackMessage(
   const botToken = token || config.botToken
 
   if (!botToken) {
-    console.warn('[slack] No bot token configured')
+    logger.warn('[slack] No bot token configured')
     return null
   }
 
@@ -200,13 +200,13 @@ export async function sendSlackMessage(
     )
 
     if (!response.ok) {
-      console.warn('[slack] Failed to send message:', response.error)
+      logger.warn('[slack] Failed to send message:', response.error)
       return null
     }
 
     return response.ts ?? null
   } catch (err) {
-    console.warn('[slack] Send message failed:', err)
+    logger.warn('[slack] Send message failed:', err)
     return null
   }
 }
@@ -218,7 +218,7 @@ export async function fetchSlackMessages(
 ): Promise<ChannelMessage[]> {
   try {
     if (!channelId) {
-      console.warn('[slack] No channel ID provided')
+      logger.warn('[slack] No channel ID provided')
       return []
     }
 
@@ -230,7 +230,7 @@ export async function fetchSlackMessages(
     )
 
     if (!response.ok || !response.messages) {
-      console.warn('[slack] Failed to fetch messages:', response.error)
+      logger.warn('[slack] Failed to fetch messages:', response.error)
       return []
     }
 
@@ -286,7 +286,7 @@ export async function fetchSlackMessages(
 
     return messages
   } catch (err) {
-    console.error('[slack] Fetch messages failed:', err)
+    logger.error('[slack] Fetch messages failed:', err)
     return []
   }
 }
@@ -296,13 +296,13 @@ export async function fetchSlackChannels(token: string): Promise<Array<{ id: str
     const response = await slackFetch<SlackChannelList>(token, 'GET', 'conversations.list?limit=100')
 
     if (!response.ok) {
-      console.warn('[slack] Failed to fetch channels:', response.error)
+      logger.warn('[slack] Failed to fetch channels:', response.error)
       return []
     }
 
     return response.channels || []
   } catch (err) {
-    console.error('[slack] Fetch channels failed:', err)
+    logger.error('[slack] Fetch channels failed:', err)
     return []
   }
 }

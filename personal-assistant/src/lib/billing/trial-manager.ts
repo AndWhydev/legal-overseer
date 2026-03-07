@@ -35,7 +35,7 @@ export async function createTrial(
       updated_at: new Date().toISOString(),
     })
   } catch (err) {
-    console.warn('[trial-manager] Failed to create trial:', err)
+    logger.warn('[trial-manager] Failed to create trial:', err)
   }
 }
 
@@ -98,7 +98,7 @@ export async function checkTrialStatus(
       gracePeriodDays: GRACE_PERIOD_DAYS,
     }
   } catch (err) {
-    console.warn('[trial-manager] Failed to check trial status:', err)
+    logger.warn('[trial-manager] Failed to check trial status:', err)
     return {
       status: 'expired',
       trialEndsAt: null,
@@ -135,6 +135,6 @@ export async function convertTrial(
       .update({ plan: planId })
       .eq('id', orgId)
   } catch (err) {
-    console.warn('[trial-manager] Failed to convert trial:', err)
+    logger.warn('[trial-manager] Failed to convert trial:', err)
   }
 }

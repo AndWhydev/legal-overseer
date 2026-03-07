@@ -126,7 +126,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: `Unsupported channel: ${channel}` }, { status: 400 })
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Failed to connect channel'
-    console.error('[channels/connect]', message)
+    logger.error('[channels/connect]', message)
     return NextResponse.json({ error: message }, { status: 500 })
   }
 }

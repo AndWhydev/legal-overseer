@@ -47,14 +47,14 @@ export async function POST(request: Request) {
 
       if (!whisperRes.ok) {
         const errBody = await whisperRes.text()
-        console.error('[ai/voice] Whisper API error:', errBody)
+        logger.error('[ai/voice] Whisper API error:', errBody)
         return NextResponse.json({ error: 'Transcription failed' }, { status: 502 })
       }
 
       const whisperData = await whisperRes.json() as { text: string }
       transcript = whisperData.text
     } catch (err) {
-      console.error('[ai/voice] Whisper request failed:', err)
+      logger.error('[ai/voice] Whisper request failed:', err)
       return NextResponse.json({ error: 'Transcription service unavailable' }, { status: 502 })
     }
   } else {
@@ -95,7 +95,7 @@ export async function POST(request: Request) {
     const briefing = await assembleContext(supabase, orgId, transcript)
     contextSummary = briefing.summary
   } catch (err) {
-    console.warn('[ai/voice] Context assembly failed:', err)
+    logger.warn('[ai/voice] Context assembly failed:', err)
   }
 
   const systemParts: string[] = [
@@ -125,7 +125,7 @@ export async function POST(request: Request) {
       tokens: { input: aiResponse.usage.input_tokens, output: aiResponse.usage.output_tokens },
     })
   } catch (err) {
-    console.error('[ai/voice] Anthropic API error:', err)
+    logger.error('[ai/voice] Anthropic API error:', err)
     return NextResponse.json({ transcript, response: null, error: 'AI request failed' }, { status: 502 })
   }
 }

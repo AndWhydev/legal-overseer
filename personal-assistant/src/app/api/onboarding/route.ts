@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(result, { status: 201 })
   } catch (err) {
-    console.error('[onboarding] error:', err)
+    logger.error('[onboarding] error:', err)
     return NextResponse.json(
       { error: 'Onboarding failed', details: String(err) },
       { status: 500 },

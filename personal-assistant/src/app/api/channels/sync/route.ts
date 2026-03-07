@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { getActiveOrgId } from '@/lib/tenancy'
 import { synthesize } from '@/lib/channels/synthesizer'
 import type { ChannelType } from '@/lib/channels/types'
-// Default org for single-user setup. Override via POST body { orgId: "..." }
-const DEFAULT_ORG_ID = '289083e9-2143-44eb-9b6a-cfc615f1e81c'
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
@@ -16,7 +15,9 @@ export async function POST(request: NextRequest) {
     const channels = (body.channels || ['gmail', 'outlook', 'imessage', 'calendar', 'reminders']) as ChannelType[]
     const since = body.since ? new Date(body.since) : new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
 
-    const orgId = body.orgId || DEFAULT_ORG_ID
+    // Get active org from user session; allow override via POST body
+    const userOrgId = await getActiveOrgId(supabase, user.id)
+    const orgId = body.orgId || userOrgId
 
     const results = await synthesize({ channels, since, orgId })
 

@@ -119,7 +119,7 @@ export async function checkRateLimit(
       return await checkRateLimitDb(db, key, config)
     } catch (err) {
       // Mark Supabase as unavailable and fall back to in-memory
-      console.warn('[rate-limiter] Supabase unavailable, falling back to in-memory:', err)
+      logger.warn('[rate-limiter] Supabase unavailable, falling back to in-memory:', err)
       supabaseAvailable = false
     }
   }
@@ -219,7 +219,7 @@ export async function cleanupExpiredBuckets(): Promise<number> {
     .lt('updated_at', cutoff)
 
   if (error) {
-    console.error('[rate-limiter] Failed to cleanup expired buckets:', error.message)
+    logger.error('[rate-limiter] Failed to cleanup expired buckets:', error.message)
     return 0
   }
 

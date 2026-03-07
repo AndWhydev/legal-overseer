@@ -44,13 +44,13 @@ export async function deadLetter(
       .single()
 
     if (error) {
-      console.error('[dead-letter] Failed to insert:', error.message)
+      logger.error('[dead-letter] Failed to insert:', error.message)
       return null
     }
 
     return { id: data.id }
   } catch (err) {
-    console.error('[dead-letter] Unexpected error:', err)
+    logger.error('[dead-letter] Unexpected error:', err)
     return null
   }
 }
@@ -73,13 +73,13 @@ export async function getUnresolvedDeadLetters(
       .limit(limit)
 
     if (error) {
-      console.warn('[dead-letter] Failed to fetch:', error.message)
+      logger.warn('[dead-letter] Failed to fetch:', error.message)
       return []
     }
 
     return (data ?? []) as DeadLetterEntry[]
   } catch (err) {
-    console.warn('[dead-letter] Unexpected error fetching:', err)
+    logger.warn('[dead-letter] Unexpected error fetching:', err)
     return []
   }
 }
@@ -98,7 +98,7 @@ export async function resolveDeadLetter(
       .eq('id', id)
 
     if (error) {
-      console.warn('[dead-letter] Failed to resolve:', error.message)
+      logger.warn('[dead-letter] Failed to resolve:', error.message)
       return false
     }
 

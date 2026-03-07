@@ -343,7 +343,7 @@ export async function synthesize(options: SynthesisOptions): Promise<SyncResult[
               undefined
             )
           } catch (timelineErr) {
-            console.error('[synthesizer] Failed to write timeline event:', timelineErr)
+            logger.error('[synthesizer] Failed to write timeline event:', timelineErr)
           }
         }
       }

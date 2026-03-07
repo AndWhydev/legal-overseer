@@ -35,10 +35,10 @@ export async function linkRelationship(
       )
 
     if (error) {
-      console.error('[relationship-linker] Failed to link relationship:', error.message)
+      logger.error('[relationship-linker] Failed to link relationship:', error.message)
     }
   } catch (err) {
-    console.error('[relationship-linker] Unexpected error:', err)
+    logger.error('[relationship-linker] Unexpected error:', err)
   }
 }
 

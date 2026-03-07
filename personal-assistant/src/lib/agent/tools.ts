@@ -13,6 +13,7 @@ import {
   getContact,
   logActivity,
 } from './shared-tools'
+import { logger } from '@/lib/core/logger'
 
 export interface ToolResult {
   success: boolean
@@ -406,7 +407,7 @@ export async function executeAgentTool(
         if (approval) {
           // Trigger notification for the approval
           await notifyApproval(supabase, approval).catch(err => {
-            console.warn(`[tools] notifyApproval failed for approval ${approval.id}:`, err)
+            logger.warn(`[tools] notifyApproval failed for approval ${approval.id}:`, { error: err })
           })
           return {
             success: true,
@@ -416,7 +417,7 @@ export async function executeAgentTool(
           }
         }
       } catch (err) {
-        console.warn(`[tools] queueAgentAction failed:`, err)
+        logger.warn(`[tools] queueAgentAction failed:`, { error: err })
         // Fall through to execution on approval queue failure (fail open)
       }
     }

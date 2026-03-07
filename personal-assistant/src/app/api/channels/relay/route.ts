@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
         whatsappStatus = await checkWhatsAppSession(supabase, body.orgId)
         await logSessionHealth(supabase, body.orgId, whatsappStatus)
       } catch (err) {
-        console.error('[relay] WhatsApp health check failed:', err)
+        logger.error('[relay] WhatsApp health check failed:', err)
       }
     }
   } else {
@@ -112,7 +112,7 @@ export async function POST(request: NextRequest) {
         whatsappStatus = await checkWhatsAppSession(supabase, waOrgId)
         await logSessionHealth(supabase, waOrgId, whatsappStatus)
       } catch (err) {
-        console.error(`[relay] WhatsApp health check failed for org ${waOrgId}:`, err)
+        logger.error(`[relay] WhatsApp health check failed for org ${waOrgId}:`, err)
       }
     }
   }
@@ -128,7 +128,7 @@ export async function POST(request: NextRequest) {
 
   // Burst alert: if total messages across all channels > 50, log warning
   if (totalFound > 50) {
-    console.warn(
+    logger.warn(
       `[relay] Burst alert: ${totalFound} total messages across ${allResults.length} channels. All processed sequentially.`
     )
   }

@@ -42,7 +42,7 @@ export const calendarAdapter: ChannelAdapter = {
           metadata: { location: evt.location, notes: evt.notes, calendarName: evt.calendar },
         }))
     } catch (err) {
-      console.error('Calendar cache read failed:', err)
+      logger.error('Calendar cache read failed:', err)
       return []
     }
   },
@@ -137,7 +137,7 @@ return output`
 
     return events
   } catch (err) {
-    console.error('Calendar pull failed:', err)
+    logger.error('Calendar pull failed:', err)
     return []
   } finally {
     try { unlinkSync(scriptPath) } catch {}

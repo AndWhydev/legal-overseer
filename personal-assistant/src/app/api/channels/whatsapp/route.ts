@@ -41,7 +41,7 @@ async function resolveOrgId(
             return data.org_id
         }
 
-        console.warn(
+        logger.warn(
             `WhatsApp webhook: no channel_config found for phone_number_id=${phoneNumberId}, falling back to DEFAULT_ORG_ID`
         )
     }
@@ -50,7 +50,7 @@ async function resolveOrgId(
         return FALLBACK_ORG_ID
     }
 
-    console.error('WhatsApp webhook: no org_id resolved and no DEFAULT_ORG_ID set')
+    logger.error('WhatsApp webhook: no org_id resolved and no DEFAULT_ORG_ID set')
     return null
 }
 
@@ -64,7 +64,7 @@ export async function POST(request: Request) {
         if (signature) {
             const isValid = verifyHmacSignature(bodyText, signature, APP_SECRET, 'sha256=')
             if (!isValid) {
-                console.warn('WhatsApp webhook signature mismatch')
+                logger.warn('WhatsApp webhook signature mismatch')
                 return new NextResponse('Invalid signature', { status: 401 })
             }
         }
@@ -95,7 +95,7 @@ export async function POST(request: Request) {
 
                 const orgId = await resolveOrgId(supabase, phoneNumberId)
                 if (!orgId) {
-                    console.error('WhatsApp webhook: skipping messages — could not resolve org_id')
+                    logger.error('WhatsApp webhook: skipping messages — could not resolve org_id')
                     continue
                 }
 
@@ -125,7 +125,7 @@ export async function POST(request: Request) {
                         const mimeType = (msg.audio?.mime_type as string) || 'audio/ogg'
 
                         if (!mediaId) {
-                            console.warn('WhatsApp webhook: audio message missing media ID')
+                            logger.warn('WhatsApp webhook: audio message missing media ID')
                             continue
                         }
 
@@ -179,10 +179,10 @@ export async function POST(request: Request) {
                         // Do not await this, let Meta Webhook receive 200 OK fast
                         processWhatsAppMessage(supabase, orgId, insertedMsg, text)
                             .catch(e => {
-                                console.error('Failed processing WhatsApp Message:', e)
+                                logger.error('Failed processing WhatsApp Message:', e)
                             })
                             .finally(() => {
-                                console.log(JSON.stringify({
+                                logger.info(JSON.stringify({
                                     event: 'whatsapp_webhook_latency',
                                     orgId,
                                     messageType: msg.type,
@@ -193,7 +193,7 @@ export async function POST(request: Request) {
                                 }))
                             })
                     } else {
-                        console.error('Failed to log WhatsApp message to database:', error)
+                        logger.error('Failed to log WhatsApp message to database:', error)
                     }
                 }
             }

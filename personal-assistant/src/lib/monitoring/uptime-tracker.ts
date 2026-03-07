@@ -85,7 +85,7 @@ export async function getUptimeMetrics(
     .lt('created_at', now.toISOString());
 
   if (error) {
-    console.warn('[uptime] Failed to fetch metrics:', error.message);
+    logger.warn('[uptime] Failed to fetch metrics:', error.message);
     return {
       service,
       period,
@@ -213,7 +213,7 @@ export async function persistMetrics(supabase: SupabaseClient, service: string):
     await supabase.from('service_metrics').insert(records);
     return true;
   } catch (err) {
-    console.warn('[uptime] Failed to persist metrics:', err);
+    logger.warn('[uptime] Failed to persist metrics:', err);
     return false;
   }
 }

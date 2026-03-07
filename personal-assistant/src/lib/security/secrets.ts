@@ -154,7 +154,7 @@ export async function getOverdueRotations(
     .order('next_rotation', { ascending: true });
 
   if (error) {
-    console.warn('[secrets] Failed to check rotations:', error.message);
+    logger.warn('[secrets] Failed to check rotations:', error.message);
     return [];
   }
 

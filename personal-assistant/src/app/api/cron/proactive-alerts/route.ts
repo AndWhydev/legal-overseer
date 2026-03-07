@@ -6,17 +6,52 @@ export const dynamic = 'force-dynamic'
 
 export async function GET(request: Request) {
   return withCronGuard(request, async (supabase) => {
-    const recipientPhone = process.env.WHATSAPP_ANDY_PHONE
-    if (!recipientPhone) {
-      throw new Error('WHATSAPP_ANDY_PHONE not configured')
+    // Get all active organizations
+    const { data: orgs, error: orgError } = await supabase
+      .from('organisations')
+      .select('id')
+
+    if (orgError) {
+      throw new Error(`Failed to fetch organizations: ${orgError.message}`)
     }
 
-    const orgId = process.env.DEFAULT_ORG_ID ?? '00000000-0000-0000-0000-000000000000'
-    const alertsSent = await checkAndSendAlerts(supabase, orgId, recipientPhone)
+    const results: Record<string, unknown>[] = []
+    let totalAlertsSent = 0
+
+    for (const org of orgs ?? []) {
+      const orgId = org.id
+
+      try {
+        // Get notification config for this org
+        const { data: orgData } = await supabase
+          .from('organisations')
+          .select('settings')
+          .eq('id', orgId)
+          .single()
+
+        const recipientPhone = orgData?.settings?.notify_phone
+
+        if (!recipientPhone) {
+          console.log(`[cron/proactive-alerts] Skipping org ${orgId}: notify_phone not configured`)
+          results.push({ orgId, alertsSent: 0, reason: 'notify_phone not configured' })
+          continue
+        }
+
+        const alertsSent = await checkAndSendAlerts(supabase, orgId, recipientPhone as string)
+        totalAlertsSent += alertsSent
+        results.push({ orgId, alertsSent })
+      } catch (orgErr) {
+        console.error(`[cron/proactive-alerts] Failed processing for org ${orgId}:`, orgErr)
+        results.push({
+          orgId,
+          error: orgErr instanceof Error ? orgErr.message : 'unknown_error',
+        })
+      }
+    }
 
     return {
-      message: `Proactive alerts check complete, ${alertsSent} alerts sent`,
-      details: { alertsSent },
+      message: `Proactive alerts check complete for ${orgs?.length ?? 0} orgs (${totalAlertsSent} sent)`,
+      details: { results, totalAlertsSent },
     }
   })
 }

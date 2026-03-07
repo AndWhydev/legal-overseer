@@ -8,6 +8,8 @@
  * for production scale.
  */
 
+import { logger } from '@/lib/core/logger'
+
 interface WindowEntry {
   timestamps: number[]
 }
@@ -30,7 +32,7 @@ function scheduleCleanup() {
       }
     }
     if (deleted > 0) {
-      console.debug(`[rate-limiter] Cleaned up ${deleted} stale entries`)
+      logger.debug(`[rate-limiter] Cleaned up ${deleted} stale entries`)
     }
   }, 60_000)
 

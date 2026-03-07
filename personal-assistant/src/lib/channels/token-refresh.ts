@@ -215,7 +215,7 @@ export async function refreshChannelToken(
       'token-refresh-service',
     )
 
-    console.log(`[token-refresh] Refreshed ${channel} token for org ${orgId}`)
+    logger.info(`[token-refresh] Refreshed ${channel} token for org ${orgId}`)
     return { refreshed: true }
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
@@ -235,7 +235,7 @@ async function handleRefreshFailure(
 ): Promise<RefreshResult> {
   const retryCount = ((credentials.retry_count as number) || 0) + 1
 
-  console.warn(
+  logger.warn(
     `[token-refresh] ${channel} refresh failed for org ${orgId} (attempt ${retryCount}/${MAX_RETRY_COUNT}): ${errorMessage}`,
   )
 
@@ -259,7 +259,7 @@ async function handleRefreshFailure(
 
   // After grace period (24 retries at hourly checks = 24h), mark as error
   if (retryCount >= MAX_RETRY_COUNT) {
-    console.error(
+    logger.error(
       `[token-refresh] ${channel} for org ${orgId} exceeded retry limit, marking as error`,
     )
 
@@ -286,7 +286,7 @@ async function handleRefreshFailure(
         },
       })
     } catch (notifyErr) {
-      console.warn('[token-refresh] Failed to send error notification:', notifyErr)
+      logger.warn('[token-refresh] Failed to send error notification:', notifyErr)
     }
   }
 
@@ -306,7 +306,7 @@ export async function refreshAllTokens(
     .in('provider', OAUTH_CHANNELS)
 
   if (error) {
-    console.error('[token-refresh] Failed to query integrations:', error.message)
+    logger.error('[token-refresh] Failed to query integrations:', error.message)
     return { results: [] }
   }
 
@@ -329,7 +329,7 @@ export async function refreshAllTokens(
 
   const refreshedCount = results.filter(r => r.refreshed).length
   const errorCount = results.filter(r => r.error).length
-  console.log(
+  logger.info(
     `[token-refresh] Complete: ${refreshedCount} refreshed, ${errorCount} errors, ${results.length} total`,
   )
 

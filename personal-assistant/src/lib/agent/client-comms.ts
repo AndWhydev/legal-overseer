@@ -7,6 +7,7 @@ import { getTemplate, mergeTemplate } from './templates'
 import { getClientProfile, type ClientProfile } from './client-profiles'
 import { analyzeSentiment, type SentimentResult } from './sentiment'
 import { enrichContact } from './contact-enrichment'
+import { getOrgNotificationConfig } from '@/lib/org/notification-config'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -166,10 +167,11 @@ export async function draftReply(
   if (request.templateName) {
     const template = await getTemplate(supabase, orgId, request.templateName)
     if (template) {
+      const orgConfig = await getOrgNotificationConfig(orgId)
       const vars: Record<string, string> = {
         name: contactName,
         sign_off: voice.signOff,
-        org: 'All Webbed Up',
+        org: orgConfig.name,
         ...request.templateVars,
       }
       const body = mergeTemplate(template.body_template, vars)
@@ -189,9 +191,10 @@ export async function draftReply(
 
   // Built-in template shortcuts
   if (request.replyType && BUILT_IN_TEMPLATES[request.replyType]) {
+    const orgConfig = await getOrgNotificationConfig(orgId)
     const body = BUILT_IN_TEMPLATES[request.replyType]
       .replace(/{name}/g, contactName)
-      .replace(/{org}/g, 'All Webbed Up')
+      .replace(/{org}/g, orgConfig.name)
       .replace(/{sign_off}/g, voice.signOff)
 
     return maybeQueueForApproval(supabase, orgId, request, {
@@ -525,11 +528,12 @@ export async function runClientCommsTick(
 
       if (contact?.email && (channel === 'email' || channel === 'outlook' || channel === 'gmail')) {
         const { sendInvoiceEmail } = await import('@/lib/email/send-invoice')
+        const orgConfig = await getOrgNotificationConfig(orgId)
         await sendInvoiceEmail({
           to: contact.email,
           invoiceNumber: `reply-${approval.id}`,
           html: `<pre style="font-family:sans-serif;white-space:pre-wrap;">${draft}</pre>`,
-          subject: subject || `Message from All Webbed Up`,
+          subject: subject || `Message from ${orgConfig.name}`,
         })
         result.sent++
       } else if (channel === 'whatsapp' && contact?.id) {

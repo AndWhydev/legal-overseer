@@ -28,10 +28,10 @@ export async function writeTimelineEvent(
     })
 
     if (error) {
-      console.error('[timeline-writer] Failed to write event:', error.message)
+      logger.error('[timeline-writer] Failed to write event:', error.message)
     }
   } catch (err) {
-    console.error('[timeline-writer] Unexpected error:', err)
+    logger.error('[timeline-writer] Unexpected error:', err)
   }
 }
 

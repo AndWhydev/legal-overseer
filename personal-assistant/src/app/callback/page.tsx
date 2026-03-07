@@ -28,7 +28,7 @@ export default function CallbackPage() {
       refresh_token: refreshToken,
     }).then(async ({ error, data }) => {
       if (error || !data.user) {
-        console.error('setSession error:', error)
+        logger.error('setSession error:', error)
         router.replace('/login?error=auth')
         return
       }
@@ -42,7 +42,7 @@ export default function CallbackPage() {
         .maybeSingle()
 
       if (profileErr) {
-        console.warn('Profile check failed, going to dashboard anyway:', profileErr.message)
+        logger.warn('Profile check failed, going to dashboard anyway:', profileErr.message)
         router.replace('/dashboard')
         return
       }

@@ -136,7 +136,7 @@ async function hydrateAdapterConfig(
       return baseConfig
     }
   } catch (err) {
-    console.warn(`[relay] Failed to hydrate config for ${channelType}:`, err)
+    logger.warn(`[relay] Failed to hydrate config for ${channelType}:`, err)
   }
 
   return baseConfig
@@ -171,7 +171,7 @@ async function classifyWithRetry(
 
       return
     } catch (err) {
-      console.error(
+      logger.error(
         `[relay] Classification attempt ${attempt + 1}/${maxAttempts} failed for message ${messageId}:`,
         err instanceof Error ? err.message : String(err)
       )
@@ -187,12 +187,12 @@ async function classifyWithRetry(
           .eq('org_id', orgId)
 
         if (fallbackError) {
-          console.error(
+          logger.error(
             `[relay] Failed to mark message ${messageId} as unclassified: ${fallbackError.message}`
           )
         }
 
-        console.error(
+        logger.error(
           `[relay] Message ${messageId} marked as unclassified after ${maxAttempts} failed attempts`
         )
       }
@@ -248,7 +248,7 @@ export async function pollChannel(
 
     if (messages.length === 0) {
       const totalDurationMs = Date.now() - pollStartMs
-      console.log(JSON.stringify({
+      logger.info(JSON.stringify({
         event: 'relay_poll',
         channel: channelType,
         pollStartMs,
@@ -265,7 +265,7 @@ export async function pollChannel(
 
     // Burst detection
     if (messages.length > 20) {
-      console.warn(`[relay] Burst detected: ${messages.length} messages from ${channelType}`)
+      logger.warn(`[relay] Burst detected: ${messages.length} messages from ${channelType}`)
     }
 
     // Phase: Dedup
@@ -339,7 +339,7 @@ export async function pollChannel(
     const totalDurationMs = Date.now() - pollStartMs
 
     // Structured latency log
-    console.log(JSON.stringify({
+    logger.info(JSON.stringify({
       event: 'relay_poll',
       channel: channelType,
       pollStartMs,

@@ -27,7 +27,7 @@ const DEFAULT_ORG_ID = process.env.DEFAULT_ORG_ID || '00000000-0000-0000-0000-00
 export async function POST(request: NextRequest) {
   const webhookSecret = process.env.TELNYX_WEBHOOK_SECRET
   if (!webhookSecret) {
-    console.warn('[webhook/sms] TELNYX_WEBHOOK_SECRET not configured')
+    logger.warn('[webhook/sms] TELNYX_WEBHOOK_SECRET not configured')
     return NextResponse.json({ error: 'Not configured' }, { status: 400 })
   }
 
@@ -40,14 +40,14 @@ export async function POST(request: NextRequest) {
     const timestamp = request.headers.get('telnyx-timestamp')
 
     if (!timestamp || !signature) {
-      console.warn('[webhook/sms] Missing timestamp or signature headers')
+      logger.warn('[webhook/sms] Missing timestamp or signature headers')
       return NextResponse.json({ error: 'Missing headers' }, { status: 400 })
     }
 
     // Verify webhook signature
     const isValid = await verifyWebhookSignature(rawBody, signature, timestamp)
     if (!isValid) {
-      console.warn('[webhook/sms] Invalid signature')
+      logger.warn('[webhook/sms] Invalid signature')
       return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
     }
 
@@ -56,20 +56,20 @@ export async function POST(request: NextRequest) {
     try {
       payload = JSON.parse(rawBody) as TelnyxWebhookPayload
     } catch {
-      console.error('[webhook/sms] Invalid JSON')
+      logger.error('[webhook/sms] Invalid JSON')
       return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
     }
 
     // Check event type
     if (payload.data?.event_type !== 'message.received') {
-      console.log('[webhook/sms] Ignoring event type:', payload.data?.event_type)
+      logger.info('[webhook/sms] Ignoring event type:', payload.data?.event_type)
       return NextResponse.json({ received: true, event_type: payload.data?.event_type })
     }
 
     // Parse inbound SMS
     const sms = receiveSMS(payload)
     if (!sms) {
-      console.warn('[webhook/sms] Failed to parse SMS payload')
+      logger.warn('[webhook/sms] Failed to parse SMS payload')
       return NextResponse.json({ error: 'Failed to parse SMS' }, { status: 400 })
     }
 
@@ -101,17 +101,17 @@ export async function POST(request: NextRequest) {
     if (error) {
       // Unique constraint violation means duplicate — skip silently
       if (error.code === '23505') {
-        console.log('[webhook/sms] Duplicate SMS event skipped:', sms.id)
+        logger.info('[webhook/sms] Duplicate SMS event skipped:', sms.id)
       } else {
-        console.error('[webhook/sms] Failed to persist SMS:', error.message)
+        logger.error('[webhook/sms] Failed to persist SMS:', error.message)
       }
     } else {
-      console.log('[webhook/sms] SMS message persisted:', sms.id)
+      logger.info('[webhook/sms] SMS message persisted:', sms.id)
     }
 
     return NextResponse.json({ received: true, message_id: sms.id, persisted: !error })
   } catch (err) {
-    console.error('[webhook/sms] Unexpected error:', err)
+    logger.error('[webhook/sms] Unexpected error:', err)
     return NextResponse.json({ error: 'Processing failed' }, { status: 500 })
   }
 }

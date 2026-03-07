@@ -535,8 +535,8 @@ body.bitbit-dark {
 .bb-sidebar-area {
   grid-area: sidebar;
   grid-row: 1 / -1;
-  transform: translateX(0);
-  transition: transform 280ms var(--ease-snap);
+  position: relative;
+  z-index: var(--z-sticky);
 }
 .bb-topbar-area  { grid-area: topbar; }
 /* When topbar is hidden (chat), it becomes an overlay — let content span full height */
@@ -5201,9 +5201,11 @@ html.light .bb-tenders-drawer__close:hover {
 }
 
 .bb-layout[data-focus-mode] .bb-sidebar-area {
-  transform: translateX(-100%);
-  transition: transform 280ms var(--ease-snap);
+  opacity: 0;
+  visibility: hidden;
   pointer-events: none;
+  transition: opacity 280ms var(--ease-snap),
+              visibility 0s linear 280ms;
 }
 
 .bb-layout[data-focus-mode] .bb-sidebar-toggle {

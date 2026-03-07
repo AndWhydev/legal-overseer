@@ -231,7 +231,7 @@ export async function storeAPIKey(
     if (error) throw error;
     return data as { id: string };
   } catch (err) {
-    console.error('[api-key] Failed to store key:', err);
+    logger.error('[api-key] Failed to store key:', err);
     return null;
   }
 }
@@ -250,7 +250,7 @@ export async function getExpiredKeys(supabase: SupabaseClient): Promise<APIKeyMe
     if (error) throw error;
     return data as APIKeyMetadata[];
   } catch (err) {
-    console.warn('[api-key] Failed to fetch expired keys:', err);
+    logger.warn('[api-key] Failed to fetch expired keys:', err);
     return [];
   }
 }
@@ -267,7 +267,7 @@ export async function revokeAPIKey(supabase: SupabaseClient, keyId: string): Pro
 
     return !error;
   } catch (err) {
-    console.error('[api-key] Failed to revoke key:', err);
+    logger.error('[api-key] Failed to revoke key:', err);
     return false;
   }
 }
@@ -298,7 +298,7 @@ export async function rotateAPIKey(
 
     return { newKeyId: result.id };
   } catch (err) {
-    console.error('[api-key] Failed to rotate key:', err);
+    logger.error('[api-key] Failed to rotate key:', err);
     return null;
   }
 }

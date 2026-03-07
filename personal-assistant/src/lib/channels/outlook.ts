@@ -336,7 +336,7 @@ export const outlookAdapter: ChannelAdapter = {
         metadata: { messageId: msg.id, conversationId: msg.conversationId, isRead: msg.isRead },
       }))
     } catch (err) {
-      console.error('Outlook Graph API pull failed:', err)
+      logger.error('Outlook Graph API pull failed:', err)
       return []
     }
   },

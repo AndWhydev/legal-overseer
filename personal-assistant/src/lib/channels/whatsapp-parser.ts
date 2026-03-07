@@ -24,7 +24,7 @@ export async function processWhatsAppMessage(
       await handleIncomingMessage(supabase, request.orgId, request.participantId, request.text)
     },
     () => {
-      console.warn('[whatsapp-parser] No phone number found in message row')
+      logger.warn('[whatsapp-parser] No phone number found in message row')
     }
   )
 }

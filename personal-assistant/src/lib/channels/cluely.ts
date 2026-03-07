@@ -249,7 +249,7 @@ export const cluelyAdapter: ChannelAdapter = {
         mapTranscriptToMessage(transcript, index, workspaceId),
       )
     } catch (err) {
-      console.error('[cluely] pull failed:', err)
+      logger.error('[cluely] pull failed:', err)
       return []
     }
   },

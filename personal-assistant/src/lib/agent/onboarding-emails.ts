@@ -59,7 +59,7 @@ export async function sendWelcomeEmail(input: WelcomeEmailInput): Promise<EmailR
     return { success: false, error: 'RESEND_API_KEY not configured' }
   }
 
-  const orgName = input.orgName || 'All Webbed Up'
+  const orgName = input.orgName || 'BitBit User'
   const checklist = input.credentialChecklist || [
     'Hosting credentials (cPanel / SSH)',
     'Domain registrar access',
@@ -159,7 +159,7 @@ export async function sendCredentialRequestEmail(input: CredentialRequestInput):
     return { success: false, error: 'RESEND_API_KEY not configured' }
   }
 
-  const orgName = input.orgName || 'All Webbed Up'
+  const orgName = input.orgName || 'BitBit User'
   const isReminder = (input.reminderNumber ?? 0) > 0
   const pending = input.credentials.filter((c) => !c.received)
   const received = input.credentials.filter((c) => c.received)

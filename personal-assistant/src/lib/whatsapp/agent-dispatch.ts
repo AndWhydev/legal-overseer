@@ -58,7 +58,7 @@ export async function dispatchCommand(
         }
     }
   } catch (err) {
-    console.error('[agent-dispatch] Error:', err)
+    logger.error('[agent-dispatch] Error:', err)
     return {
       success: false,
       response: formatResponse.error(
