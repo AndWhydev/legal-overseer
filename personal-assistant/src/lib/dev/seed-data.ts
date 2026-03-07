@@ -344,8 +344,9 @@ export const SEED_DATA: SeedDataSet = {
     },
     {
       id: 'seed-inv-6', invoice_number: 'INV-006', client_contact_id: null, client_name: 'TechFlow Inc',
-      total: 15000, currency: 'AUD', status: 'draft', due_date: daysFromNow(30),
+      total: 16500, subtotal: 15000, tax: 1500, currency: 'AUD', status: 'draft', due_date: daysFromNow(30),
       issued_date: null, paid_date: null, created_at: daysAgo(1),
+      project_reference: 'TechFlow Full Rebrand',
       line_items: [
         { description: 'Brand Strategy Workshop', quantity: 2, unit_price: 3500, total: 7000 },
         { description: 'Logo Design Package', quantity: 1, unit_price: 5000, total: 5000 },
@@ -360,8 +361,9 @@ export const SEED_DATA: SeedDataSet = {
     // 2 sent (future due dates)
     {
       id: 'seed-inv-8', invoice_number: 'INV-008', client_contact_id: null, client_name: 'Summit Digital',
-      total: 22000, currency: 'AUD', status: 'sent', due_date: daysFromNow(21),
+      total: 24200, subtotal: 22000, tax: 2200, currency: 'AUD', status: 'sent', due_date: daysFromNow(21),
       issued_date: daysAgo(9), paid_date: null, created_at: daysAgo(10),
+      project_reference: 'Summit E-commerce Build',
       line_items: [
         { description: 'E-commerce Platform Build', quantity: 1, unit_price: 15000, total: 15000 },
         { description: 'Payment Integration', quantity: 1, unit_price: 4000, total: 4000 },
@@ -376,8 +378,9 @@ export const SEED_DATA: SeedDataSet = {
     // 3 paid
     {
       id: 'seed-inv-10', invoice_number: 'INV-010', client_contact_id: 'seed-c2', client_name: 'Marcus Webb', client_email: 'marcus@webbcorp.com',
-      total: 5000, currency: 'AUD', status: 'paid', due_date: daysAgo(10),
+      total: 5500, subtotal: 5000, tax: 500, currency: 'AUD', status: 'paid', due_date: daysAgo(10),
       issued_date: daysAgo(40), paid_date: daysAgo(3), created_at: daysAgo(41),
+      project_reference: 'Webb Corp Portal', payment_method: 'bank_transfer',
     },
     {
       id: 'seed-inv-11', invoice_number: 'INV-011', client_contact_id: 'seed-c3', client_name: 'Olivia Park', client_email: 'olivia@parkdesign.co',
