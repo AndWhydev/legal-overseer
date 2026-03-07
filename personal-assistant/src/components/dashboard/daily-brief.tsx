@@ -92,11 +92,11 @@ export function DailyBrief() {
     flexWrap: 'wrap',
     padding: '10px 16px',
     borderRadius: 12,
-    background: 'rgba(15, 20, 30, 0.6)',
-    backdropFilter: 'blur(20px) saturate(1.2)',
-    WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
-    border: '1px solid rgba(255, 255, 255, 0.03)',
-    boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+    background: 'var(--glass-card-bg)',
+    backdropFilter: 'var(--glass-card-blur)',
+    WebkitBackdropFilter: 'var(--glass-card-blur)',
+    border: '1px solid var(--glass-card-border)',
+    boxShadow: 'var(--card-inset)',
     borderLeft: '3px solid transparent',
     borderImage: 'linear-gradient(to bottom, #a78bfa, #3b82f6) 1',
   };
@@ -107,10 +107,10 @@ export function DailyBrief() {
     gap: 6,
     padding: '4px 10px',
     borderRadius: 99,
-    background: 'rgba(15, 20, 30, 0.4)',
-    border: '1px solid rgba(255, 255, 255, 0.06)',
+    background: 'var(--glass-card-bg-light)',
+    border: '1px solid var(--glass-interactive-border)',
     fontSize: 12,
-    color: '#94A3B8',
+    color: 'var(--text-secondary)',
     whiteSpace: 'nowrap',
   };
 
@@ -118,14 +118,14 @@ export function DailyBrief() {
     return (
       <div style={stripStyle}>
         <Sparkles size={14} style={{ color: '#a78bfa', flexShrink: 0 }} />
-        <span style={{ fontSize: 13, color: '#94A3B8', fontStyle: 'italic' }}>
+        <span style={{ fontSize: 13, color: 'var(--text-secondary)', fontStyle: 'italic' }}>
           Preparing your brief...
         </span>
         <div
           style={{
             width: 80,
             height: 8,
-            background: 'rgba(255,255,255,0.06)',
+            background: 'var(--glass-hover-bg)',
             borderRadius: 4,
             overflow: 'hidden',
           }}
@@ -151,19 +151,19 @@ export function DailyBrief() {
   return (
     <div style={stripStyle}>
       <Sparkles size={14} style={{ color: '#a78bfa', flexShrink: 0 }} />
-      <span style={{ fontSize: 13, fontWeight: 500, color: '#F1F5F9', whiteSpace: 'nowrap' }}>
+      <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>
         Good morning
       </span>
 
       {chips && chips.length > 0 ? (
         <>
-          <span style={{ width: 1, height: 16, background: 'rgba(255,255,255,0.08)', flexShrink: 0 }} />
+          <span style={{ width: 1, height: 16, background: 'var(--hover-bg-strong)', flexShrink: 0 }} />
           {chips.map((chip, i) => {
             const Icon = CHIP_ICONS[chip.icon] || ListTodo;
             return (
               <span key={i} style={chipStyle}>
-                <Icon size={12} style={{ color: chip.accent || '#94A3B8', flexShrink: 0 }} />
-                <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, color: '#F1F5F9' }}>
+                <Icon size={12} style={{ color: chip.accent || 'var(--text-secondary)', flexShrink: 0 }} />
+                <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, color: 'var(--text-primary)' }}>
                   {formatChipValue(chip)}
                 </span>
                 {chip.label}
@@ -172,7 +172,7 @@ export function DailyBrief() {
           })}
         </>
       ) : (
-        <span style={{ fontSize: 13, color: '#94A3B8', flex: 1 }}>
+        <span style={{ fontSize: 13, color: 'var(--text-secondary)', flex: 1 }}>
           {brief.summary}
         </span>
       )}
@@ -188,7 +188,7 @@ export function DailyBrief() {
             borderRadius: 8,
             border: '1px solid rgba(167, 139, 250, 0.3)',
             background: 'rgba(167, 139, 250, 0.1)',
-            color: '#c4b5fd',
+            color: 'var(--bb-purple)',
             fontSize: 12,
             fontWeight: 600,
             cursor: 'pointer',
@@ -218,16 +218,16 @@ export function DailyBrief() {
             borderRadius: 6,
             border: 'none',
             background: 'transparent',
-            color: '#64748B',
+            color: 'var(--text-dim)',
             cursor: 'pointer',
             transition: 'color 0.15s, background 0.15s',
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.color = '#94A3B8';
-            e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
+            e.currentTarget.style.color = 'var(--text-secondary)';
+            e.currentTarget.style.background = 'var(--glass-hover-bg)';
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.color = '#64748B';
+            e.currentTarget.style.color = 'var(--text-dim)';
             e.currentTarget.style.background = 'transparent';
           }}
           aria-label="Dismiss daily brief"

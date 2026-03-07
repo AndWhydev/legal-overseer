@@ -12,7 +12,7 @@ interface KanbanCardProps {
 }
 
 const priorityGlass: Record<string, { bg: string; shadow: string }> = {
-  critical: { bg: 'rgba(15, 20, 30, 0.45)', shadow: '0 2px 8px rgba(0, 0, 0, 0.15)' },
+  critical: { bg: 'var(--glass-card-bg-light)', shadow: '0 2px 8px rgba(0, 0, 0, 0.15)' },
   high:     { bg: 'rgba(15, 20, 30, 0.38)', shadow: '0 1px 4px rgba(0, 0, 0, 0.12)' },
   medium:   { bg: 'rgba(15, 20, 30, 0.3)',  shadow: '0 1px 2px rgba(0, 0, 0, 0.08)' },
   low:      { bg: 'rgba(15, 20, 30, 0.22)', shadow: '0 1px 1px rgba(0, 0, 0, 0.05)' },
@@ -21,8 +21,8 @@ const priorityGlass: Record<string, { bg: string; shadow: string }> = {
 const priorityDot: Record<string, { color: string; label?: string }> = {
   critical: { color: '#EF4444', label: 'critical' },
   high:     { color: '#F59E0B', label: 'high' },
-  medium:   { color: '#64748B' },
-  low:      { color: '#475569' },
+  medium:   { color: 'var(--text-dim)' },
+  low:      { color: 'var(--text-dim)' },
 }
 
 const sourceColors: Record<string, string> = {
@@ -53,7 +53,7 @@ function getDeadlineStyle(deadline: string): { bg: string; color: string; label:
 
   if (diffDays < 0) return { bg: 'rgba(239,68,68,0.1)', color: '#f87171', label }
   if (diffDays <= 2) return { bg: 'rgba(245,158,11,0.08)', color: '#fbbf24', label }
-  return { bg: 'transparent', color: '#64748B', label }
+  return { bg: 'transparent', color: 'var(--text-dim)', label }
 }
 
 export function KanbanCard({ task, onEdit, onArchive }: KanbanCardProps) {
@@ -95,8 +95,8 @@ export function KanbanCard({ task, onEdit, onArchive }: KanbanCardProps) {
         borderRadius: 14,
         padding: '10px 12px',
         background: glass.bg,
-        backdropFilter: 'blur(12px) saturate(1.1)',
-        WebkitBackdropFilter: 'blur(12px) saturate(1.1)',
+        backdropFilter: 'var(--glass-card-blur)',
+        WebkitBackdropFilter: 'var(--glass-card-blur)',
         boxShadow: isDragging
           ? '0 16px 48px rgba(0, 0, 0, 0.4)'
           : glass.shadow,
@@ -128,14 +128,14 @@ export function KanbanCard({ task, onEdit, onArchive }: KanbanCardProps) {
               borderRadius: 8,
               padding: 3,
               border: 'none',
-              background: 'rgba(255, 255, 255, 0.06)',
-              color: '#475569',
+              background: 'var(--glass-hover-bg)',
+              color: 'var(--text-dim)',
               cursor: 'pointer',
               display: 'flex',
               transition: 'color 0.15s',
             }}
-            onMouseEnter={(e) => { e.currentTarget.style.color = '#94A3B8' }}
-            onMouseLeave={(e) => { e.currentTarget.style.color = '#475569' }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--text-secondary)' }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-dim)' }}
           >
             <X style={{ width: 11, height: 11 }} />
           </button>
@@ -146,7 +146,7 @@ export function KanbanCard({ task, onEdit, onArchive }: KanbanCardProps) {
       <h4 style={{
         fontSize: 13,
         fontWeight: 600,
-        color: '#F1F5F9',
+        color: 'var(--text-primary)',
         lineHeight: 1.4,
         display: '-webkit-box',
         WebkitLineClamp: 2,
@@ -190,7 +190,7 @@ export function KanbanCard({ task, onEdit, onArchive }: KanbanCardProps) {
         <p style={{
           margin: '3px 0 0',
           fontSize: 11,
-          color: '#64748B',
+          color: 'var(--text-dim)',
           display: '-webkit-box',
           WebkitLineClamp: 1,
           WebkitBoxOrient: 'vertical',
@@ -212,9 +212,9 @@ export function KanbanCard({ task, onEdit, onArchive }: KanbanCardProps) {
           fontWeight: 500,
           padding: '2px 8px',
           borderRadius: 20,
-          background: 'rgba(10, 14, 23, 0.42)',
-          boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.06)',
-          color: '#94A3B8',
+          background: 'var(--glass-pill-bg)',
+          boxShadow: 'var(--glass-pill-inset)',
+          color: 'var(--text-secondary)',
           lineHeight: '15px',
         }}>
           <span style={{
@@ -236,9 +236,9 @@ export function KanbanCard({ task, onEdit, onArchive }: KanbanCardProps) {
               fontWeight: 500,
               padding: '2px 8px',
               borderRadius: 20,
-              background: 'rgba(10, 14, 23, 0.42)',
-              boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.06)',
-              color: tag.startsWith('$') ? '#CBD5E1' : '#94A3B8',
+              background: 'var(--glass-pill-bg)',
+              boxShadow: 'var(--glass-pill-inset)',
+              color: tag.startsWith('$') ? 'var(--text-secondary)' : 'var(--text-secondary)',
               lineHeight: '15px',
             }}
           >
@@ -272,12 +272,12 @@ export function KanbanCard({ task, onEdit, onArchive }: KanbanCardProps) {
         <div style={{
           marginTop: 6,
           paddingTop: 6,
-          borderTop: '1px solid rgba(255, 255, 255, 0.04)',
+          borderTop: '1px solid var(--glass-divider)',
           display: 'flex',
           alignItems: 'center',
           gap: 5,
           fontSize: 10,
-          color: '#64748B',
+          color: 'var(--text-dim)',
         }}>
           {agentStatus === 'working' && (
             <span style={{
@@ -298,7 +298,7 @@ export function KanbanCard({ task, onEdit, onArchive }: KanbanCardProps) {
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10 }}>
             {task.assigned_to}
           </span>
-          <span style={{ color: '#475569' }}>
+          <span style={{ color: 'var(--text-dim)' }}>
             {agentStatus === 'working' && '·\u2009working...'}
             {agentStatus === 'done' && '·\u2009done'}
             {agentStatus === 'error' && '·\u2009error'}
@@ -311,8 +311,8 @@ export function KanbanCard({ task, onEdit, onArchive }: KanbanCardProps) {
               fontWeight: 600,
               padding: '1px 4px',
               borderRadius: 4,
-              background: 'rgba(255, 255, 255, 0.04)',
-              color: '#475569',
+              background: 'var(--glass-interactive-bg)',
+              color: 'var(--text-dim)',
               letterSpacing: '0.04em',
             }}>
               AI

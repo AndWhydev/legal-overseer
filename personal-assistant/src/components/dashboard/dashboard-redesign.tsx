@@ -39,11 +39,11 @@ interface KpiCardProps {
 const kpiCardStyle: React.CSSProperties = {
   padding: '20px',
   borderRadius: 16,
-  background: 'rgba(15, 20, 30, 0.6)',
-  backdropFilter: 'blur(20px) saturate(1.2)',
-  WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
-  border: '1px solid rgba(255, 255, 255, 0.03)',
-  boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+  background: 'var(--glass-card-bg)',
+  backdropFilter: 'var(--glass-card-blur)',
+  WebkitBackdropFilter: 'var(--glass-card-blur)',
+  border: '1px solid var(--glass-card-border)',
+  boxShadow: 'var(--card-inset)',
   display: 'flex',
   flexDirection: 'column',
   gap: 12,
@@ -55,7 +55,7 @@ function KpiCard({ title, icon, accent, value, prefix, unit, subtitle }: KpiCard
     <article aria-label={`${title} — ${prefix || ''}${value}${unit ? ' ' + unit : ''}`} style={kpiCardStyle}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
         <span style={{ color: 'var(--text-secondary)', display: 'flex' }}>{icon}</span>
-        <span style={{ fontSize: 12, color: 'var(--text-secondary, #64748B)', fontWeight: 500, letterSpacing: '0.02em' }}>
+        <span style={{ fontSize: 12, color: 'var(--text-secondary)', fontWeight: 500, letterSpacing: '0.02em' }}>
           {title}
         </span>
       </div>
@@ -70,7 +70,7 @@ function KpiCard({ title, icon, accent, value, prefix, unit, subtitle }: KpiCard
           style={{
             fontSize: 38,
             fontWeight: 700,
-            color: 'var(--text-primary, #F1F5F9)',
+            color: 'var(--text-primary)',
             fontFamily: 'var(--font-mono)',
             letterSpacing: '-0.03em',
             lineHeight: 1,
@@ -86,7 +86,7 @@ function KpiCard({ title, icon, accent, value, prefix, unit, subtitle }: KpiCard
       </div>
 
       {subtitle && (
-        <span style={{ fontSize: 11, color: 'var(--text-dim, #475569)' }}>
+        <span style={{ fontSize: 11, color: 'var(--text-dim)' }}>
           {subtitle}
         </span>
       )}
@@ -109,9 +109,9 @@ export function DashboardRedesign({ columns, tasks, messages, completedToday, to
       ...kpiCardStyle,
       animation: 'pulse 2s ease-in-out infinite',
     }}>
-      <div style={{ height: 12, background: 'rgba(255,255,255,0.08)', borderRadius: 4, width: '50%' }} />
-      <div style={{ height: 38, background: 'rgba(255,255,255,0.08)', borderRadius: 4, width: '35%' }} />
-      <div style={{ height: 11, background: 'rgba(255,255,255,0.05)', borderRadius: 4, width: '60%' }} />
+      <div style={{ height: 12, background: 'var(--hover-bg-strong)', borderRadius: 4, width: '50%' }} />
+      <div style={{ height: 38, background: 'var(--hover-bg-strong)', borderRadius: 4, width: '35%' }} />
+      <div style={{ height: 11, background: 'var(--hover-bg)', borderRadius: 4, width: '60%' }} />
     </article>
   );
 

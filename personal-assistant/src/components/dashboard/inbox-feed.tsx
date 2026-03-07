@@ -113,11 +113,11 @@ export function InboxFeed() {
         flexDirection: 'column',
         height: '100%',
         borderRadius: 16,
-        background: 'rgba(15, 20, 30, 0.6)',
-        backdropFilter: 'blur(20px) saturate(1.2)',
-        WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
-        border: '1px solid rgba(255, 255, 255, 0.03)',
-        boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+        background: 'var(--glass-card-bg)',
+        backdropFilter: 'var(--glass-card-blur)',
+        WebkitBackdropFilter: 'var(--glass-card-blur)',
+        border: '1px solid var(--glass-card-border)',
+        boxShadow: 'var(--card-inset)',
         overflow: 'hidden',
       }}
     >
@@ -128,7 +128,7 @@ export function InboxFeed() {
           alignItems: 'center',
           gap: 8,
           padding: '14px 16px',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.04)',
+          borderBottom: '1px solid var(--glass-divider)',
         }}
       >
         <Inbox size={16} style={{ color: 'var(--text-secondary)' }} />
@@ -168,7 +168,7 @@ export function InboxFeed() {
               background: autopilotActive
                 ? 'linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(99, 102, 241, 0.1))'
                 : 'rgba(255, 255, 255, 0.04)',
-              color: autopilotActive ? '#c4b5fd' : 'var(--text-secondary)',
+              color: autopilotActive ? 'var(--bb-purple)' : 'var(--text-secondary)',
               fontSize: 11,
               fontWeight: 600,
               cursor: 'pointer',
@@ -201,7 +201,7 @@ export function InboxFeed() {
             alignItems: 'center',
             justifyContent: 'center',
             gap: 8,
-            color: '#64748B',
+            color: 'var(--text-dim)',
             minHeight: 200,
           }}>
             <CheckCircle2 size={24} style={{ opacity: 0.4 }} />

@@ -62,14 +62,14 @@ export function KanbanColumn({
       {/* Column header */}
       <div style={{ padding: '0 6px 4px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingBottom: 6 }}>
-          <h3 style={{ fontSize: 13, fontWeight: 600, color: '#94A3B8', margin: 0, letterSpacing: '0.01em' }}>
+          <h3 style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', margin: 0, letterSpacing: '0.01em' }}>
             {column.title}
           </h3>
           <span style={{
             fontSize: 11,
             fontWeight: 600,
-            color: '#475569',
-            background: 'rgba(255, 255, 255, 0.04)',
+            color: 'var(--text-dim)',
+            background: 'var(--glass-interactive-bg)',
             borderRadius: 99,
             padding: '1px 7px',
           }}>
@@ -80,7 +80,7 @@ export function KanbanColumn({
         <div style={{
           height: 2,
           borderRadius: 1,
-          background: 'rgba(255, 255, 255, 0.04)',
+          background: 'var(--glass-interactive-bg)',
           overflow: 'hidden',
           opacity: headerHover ? 1 : 0,
           transition: 'opacity 0.2s ease',
@@ -105,7 +105,7 @@ export function KanbanColumn({
           gap: 6,
           borderRadius: 14,
           padding: 6,
-          background: isOver ? 'transparent' : 'rgba(255, 255, 255, 0.01)',
+          background: isOver ? 'transparent' : 'var(--glass-card-border)',
           outline: isOver ? '1.5px dashed rgba(148, 163, 184, 0.15)' : '1.5px dashed transparent',
           animation: isOver ? 'bb-drop-pulse 1.5s ease-in-out infinite' : undefined,
           transition: 'background 0.2s ease, outline-color 0.2s ease',
@@ -133,8 +133,8 @@ export function KanbanColumn({
           <div style={{
             borderRadius: 14,
             padding: '10px 14px',
-            background: 'rgba(15, 20, 30, 0.35)',
-            boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.04)',
+            background: 'var(--bg-card)',
+            boxShadow: 'var(--card-inset)',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               {/* Priority dot indicator */}
@@ -181,13 +181,13 @@ export function KanbanColumn({
                   outline: 'none',
                   fontSize: 13,
                   fontWeight: 600,
-                  color: '#F1F5F9',
+                  color: 'var(--text-primary)',
                   padding: 0,
                   fontFamily: 'inherit',
                 }}
               />
             </div>
-            <div style={{ marginTop: 5, fontSize: 9, color: '#475569', letterSpacing: '0.02em' }}>
+            <div style={{ marginTop: 5, fontSize: 9, color: 'var(--text-dim)', letterSpacing: '0.02em' }}>
               ↵ create · tab priority · esc close
             </div>
           </div>
@@ -204,10 +204,10 @@ export function KanbanColumn({
               borderRadius: 14,
               padding: 12,
               border: `1.5px dashed ${ghostHover ? 'rgba(148, 163, 184, 0.25)' : 'rgba(148, 163, 184, 0.12)'}`,
-              background: ghostHover ? 'rgba(255, 255, 255, 0.02)' : 'transparent',
+              background: ghostHover ? 'var(--glass-card-border)' : 'transparent',
               width: '100%',
               fontSize: 12,
-              color: ghostHover ? '#64748B' : '#3E4C5E',
+              color: ghostHover ? 'var(--text-dim)' : 'var(--text-dim)',
               cursor: 'pointer',
               transition: 'color 0.15s, background 0.15s, border-color 0.15s',
               marginTop: 'auto',
