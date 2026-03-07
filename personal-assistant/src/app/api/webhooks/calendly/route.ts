@@ -2,9 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { parseCalendlyWebhook, verifyCalendlyWebhookSignature } from '@/lib/channels/calendly'
 import type { CalendlyWebhookPayload } from '@/lib/channels/calendly'
-import { logger } from '@/lib/core/logger';
-
-const DEFAULT_ORG_ID = process.env.DEFAULT_ORG_ID || '00000000-0000-0000-0000-000000000000'
+import { logger } from '@/lib/core/logger'
+import { resolveOrgFromWebhook } from '@/lib/core/resolve-org'
 
 /**
  * Calendly webhook endpoint.
@@ -33,6 +32,16 @@ export async function POST(request: NextRequest) {
   try {
     const body = JSON.parse(rawBody) as CalendlyWebhookPayload
     const parsed = parseCalendlyWebhook(body)
+
+    // Resolve org from Calendly webhook (use fixed Calendly identifier)
+    const orgId = await resolveOrgFromWebhook('calendly')
+    if (!orgId) {
+      logger.warn(
+        '[webhook/calendly] Could not resolve org from channel_credentials. Make sure Calendly channel is configured.'
+      )
+      // Return 200 to prevent Calendly from retrying, but don't process
+      return NextResponse.json({ received: true, event: parsed.event })
+    }
 
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL || '',
@@ -64,7 +73,7 @@ export async function POST(request: NextRequest) {
     }
 
     const { error } = await supabase.from('channel_messages').insert({
-      org_id: DEFAULT_ORG_ID,
+      org_id: orgId,
       channel: 'calendly',
       external_id: invitee.uri,
       sender: invitee.name || 'Calendly',

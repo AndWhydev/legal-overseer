@@ -6,9 +6,8 @@ import {
   parseSlackWebhookEvent,
 } from '@/lib/channels/slack'
 import type { SlackEventPayload } from '@/lib/channels/slack'
-import { logger } from '@/lib/core/logger';
-
-const DEFAULT_ORG_ID = process.env.DEFAULT_ORG_ID || '00000000-0000-0000-0000-000000000000'
+import { logger } from '@/lib/core/logger'
+import { resolveOrgFromWebhook } from '@/lib/core/resolve-org'
 
 /**
  * Slack webhook endpoint.
@@ -93,6 +92,17 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({ received: true })
 }
 
+async function getSlackOrgId(workspaceId?: string): Promise<string | null> {
+  // Try to resolve by workspace ID from channel_credentials
+  if (workspaceId) {
+    const orgId = await resolveOrgFromWebhook('slack', workspaceId)
+    if (orgId) return orgId
+  }
+
+  logger.warn('[webhook/slack] Could not resolve org for workspace_id=%s', workspaceId)
+  return null
+}
+
 async function verifySlackSignatureWithTimestamp(
   baseString: string,
   signature: string,
@@ -130,13 +140,16 @@ async function handleSlackEvent(payload: SlackEventPayload): Promise<NextRespons
       process.env.SUPABASE_SERVICE_ROLE_KEY || '',
     ) as any
 
+    // Extract workspace ID from payload (available in Slack event structure)
+    const workspaceId = payload.team_id
+
     // Process different event types
     if (event.type === 'message') {
-      return await handleMessageEvent(supabase, event)
+      return await handleMessageEvent(supabase, event, workspaceId)
     }
 
     if (event.type === 'reaction_added') {
-      return await handleReactionEvent(supabase, event)
+      return await handleReactionEvent(supabase, event, workspaceId)
     }
 
     logger.info('[webhook/slack] Ignoring event type:', event.type)
@@ -150,14 +163,22 @@ async function handleSlackEvent(payload: SlackEventPayload): Promise<NextRespons
 async function handleMessageEvent(
   supabase: any,
   event: SlackEventPayload['event'],
+  workspaceId?: string,
 ): Promise<NextResponse> {
   if (!event || !event.text || !event.user || !event.ts || !event.channel) {
     logger.info('[webhook/slack] Skipping message event with missing fields')
     return NextResponse.json({ received: true })
   }
 
+  // Resolve org for this Slack workspace
+  const orgId = await getSlackOrgId(workspaceId)
+  if (!orgId) {
+    logger.warn('[webhook/slack] Skipping message event: could not resolve org for workspace_id=%s', workspaceId)
+    return NextResponse.json({ received: true })
+  }
+
   const { error } = await supabase.from('channel_messages').insert({
-    org_id: DEFAULT_ORG_ID,
+    org_id: orgId,
     channel: 'slack',
     external_id: `slack-${event.channel}-${event.ts}`,
     sender: event.user,
@@ -194,14 +215,22 @@ async function handleMessageEvent(
 async function handleReactionEvent(
   supabase: any,
   event: SlackEventPayload['event'],
+  workspaceId?: string,
 ): Promise<NextResponse> {
   if (!event || !event.reaction || !event.user || !event.item) {
     logger.info('[webhook/slack] Skipping reaction event with missing fields')
     return NextResponse.json({ received: true })
   }
 
+  // Resolve org for this Slack workspace
+  const orgId = await getSlackOrgId(workspaceId)
+  if (!orgId) {
+    logger.warn('[webhook/slack] Skipping reaction event: could not resolve org for workspace_id=%s', workspaceId)
+    return NextResponse.json({ received: true })
+  }
+
   const { error } = await supabase.from('channel_messages').insert({
-    org_id: DEFAULT_ORG_ID,
+    org_id: orgId,
     channel: 'slack',
     external_id: `slack-reaction-${event.item.ts}-${event.reaction}`,
     sender: event.user,

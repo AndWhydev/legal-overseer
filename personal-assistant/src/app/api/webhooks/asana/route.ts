@@ -2,9 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { parseAsanaWebhookEvents, verifyAsanaWebhookSignature } from '@/lib/channels/asana'
 import type { AsanaWebhookEvent } from '@/lib/channels/asana'
-import { logger } from '@/lib/core/logger';
-
-const DEFAULT_ORG_ID = process.env.DEFAULT_ORG_ID || '00000000-0000-0000-0000-000000000000'
+import { logger } from '@/lib/core/logger'
+import { resolveOrgFromWebhook } from '@/lib/core/resolve-org'
 
 /**
  * Asana webhook endpoint.
@@ -51,6 +50,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ received: true, count: 0 })
     }
 
+    // Resolve org from Asana webhook (use 'resource.gid' as identifier since Asana doesn't provide workspace ID)
+    // In practice, you'd want to look this up from a fixed Asana workspace ID stored in channel_credentials
+    const orgId = await resolveOrgFromWebhook('asana')
+    if (!orgId) {
+      logger.warn(
+        '[webhook/asana] Could not resolve org from channel_credentials. Make sure Asana channel is configured.'
+      )
+      // Return 200 to prevent Asana from retrying, but don't process
+      return NextResponse.json({ received: true, count: events.length, persisted: 0 })
+    }
+
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL || '',
       process.env.SUPABASE_SERVICE_ROLE_KEY || '',
@@ -59,7 +69,7 @@ export async function POST(request: NextRequest) {
     let persisted = 0
     for (const event of events) {
       const { error } = await supabase.from('channel_messages').insert({
-        org_id: DEFAULT_ORG_ID,
+        org_id: orgId,
         channel: 'asana',
         external_id: `asana-${event.resource.gid}-${event.action}`,
         sender: 'Asana',

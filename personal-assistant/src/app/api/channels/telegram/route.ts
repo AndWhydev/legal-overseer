@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { handleTelegramMessage } from '@/lib/channels/telegram-handler'
 import { timingSafeCompare } from '@/lib/security/webhook-verification'
+import { resolveOrgFromWebhook } from '@/lib/core/resolve-org'
 import { after } from 'next/server'
+import { logger } from '@/lib/core/logger'
 
 // Allow up to 60s for agent engine response
 export const maxDuration = 60
@@ -22,7 +24,7 @@ export async function POST(request: NextRequest) {
   if (expectedSecret) {
     const secret = request.headers.get('x-telegram-bot-api-secret-token')
     if (!secret || !timingSafeCompare(secret, expectedSecret)) {
-      console.warn('Telegram webhook: secret mismatch')
+      logger.warn('[webhook/telegram] secret mismatch')
       return NextResponse.json({ ok: false }, { status: 403 })
     }
   }
@@ -31,6 +33,7 @@ export async function POST(request: NextRequest) {
   try {
     update = await request.json()
   } catch {
+    logger.error('[webhook/telegram] invalid JSON')
     return NextResponse.json({ ok: false }, { status: 400 })
   }
 
@@ -43,7 +46,16 @@ export async function POST(request: NextRequest) {
   const chatId = String(message.chat.id)
   const text = message.text
   const messageId = String(message.message_id)
-  const orgId = process.env.DEFAULT_ORG_ID || '00000000-0000-0000-0000-000000000000'
+
+  // Resolve org from Telegram webhook credentials
+  const orgId = await resolveOrgFromWebhook('telegram', chatId)
+  if (!orgId) {
+    logger.warn(
+      `[webhook/telegram] Could not resolve org for chat_id=${chatId}. Make sure Telegram channel is configured in channel_credentials.`
+    )
+    // Return 200 to prevent Telegram from retrying, but don't process
+    return NextResponse.json({ ok: true })
+  }
 
   // Store in channel_messages
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL

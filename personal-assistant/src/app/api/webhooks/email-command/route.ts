@@ -2,9 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { processEmailCommand } from '@/lib/channels/email-command'
 import type { ChannelMessage } from '@/lib/channels/types'
-import { logger } from '@/lib/core/logger';
-
-const DEFAULT_ORG_ID = process.env.DEFAULT_ORG_ID || '00000000-0000-0000-0000-000000000000'
+import { logger } from '@/lib/core/logger'
+import { resolveOrgFromWebhook } from '@/lib/core/resolve-org'
 
 /**
  * Email command webhook endpoint.
@@ -50,8 +49,24 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing subject and body' }, { status: 400 })
     }
 
-    // Extract orgId from payload or use default
-    const orgId = String(payload.orgId || DEFAULT_ORG_ID).trim()
+    // Extract orgId from payload, or resolve from email domain
+    let orgId = String(payload.orgId || '').trim()
+
+    if (!orgId) {
+      // Try to resolve org from email channel credentials using domain
+      const emailDomain = senderEmail.split('@')[1]
+      orgId = (await resolveOrgFromWebhook('email', emailDomain)) || ''
+    }
+
+    if (!orgId) {
+      logger.warn(
+        `[webhook/email-command] Could not resolve org for sender ${senderEmail}. Either pass orgId in payload or configure email channel in channel_credentials.`
+      )
+      return NextResponse.json(
+        { error: 'Could not resolve organization for this email address' },
+        { status: 400 }
+      )
+    }
 
     logger.info('[webhook/email-command] Received command from', senderEmail, `(${subject.slice(0, 50)})`)
 

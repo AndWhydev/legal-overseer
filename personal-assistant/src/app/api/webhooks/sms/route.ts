@@ -2,9 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { verifyWebhookSignature, receiveSMS } from '@/lib/channels/sms'
 import type { TelnyxWebhookPayload } from '@/lib/channels/sms'
-import { logger } from '@/lib/core/logger';
-
-const DEFAULT_ORG_ID = process.env.DEFAULT_ORG_ID || '00000000-0000-0000-0000-000000000000'
+import { logger } from '@/lib/core/logger'
+import { resolveOrgFromWebhook } from '@/lib/core/resolve-org'
 
 /**
  * Telnyx SMS webhook endpoint.
@@ -74,6 +73,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to parse SMS' }, { status: 400 })
     }
 
+    // Resolve org from Telnyx webhook (use 'to' number as external_id to look up channel config)
+    const orgId = await resolveOrgFromWebhook('sms', sms.to)
+    if (!orgId) {
+      logger.warn(
+        `[webhook/sms] Could not resolve org for SMS to_number=${sms.to}. Make sure SMS channel is configured in channel_credentials.`
+      )
+      // Return 200 to prevent Telnyx from retrying, but don't process
+      return NextResponse.json({ received: true, message_id: sms.id })
+    }
+
     // Persist to channel_messages
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL || '',
@@ -81,7 +90,7 @@ export async function POST(request: NextRequest) {
     ) as any
 
     const { error } = await supabase.from('channel_messages').insert({
-      org_id: DEFAULT_ORG_ID,
+      org_id: orgId,
       channel: 'sms',
       external_id: sms.id,
       sender: sms.from,
