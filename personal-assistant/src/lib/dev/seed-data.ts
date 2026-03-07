@@ -34,7 +34,10 @@ interface SeedInvoice {
   invoice_number: string
   client_contact_id: string | null
   client_name: string
+  client_email?: string | null
   total: number
+  subtotal?: number
+  tax?: number
   currency: string
   status: 'draft' | 'sent' | 'viewed' | 'overdue' | 'paid' | 'cancelled'
   due_date: string | null
@@ -42,6 +45,8 @@ interface SeedInvoice {
   paid_date: string | null
   created_at: string
   line_items?: SeedLineItem[]
+  project_reference?: string | null
+  payment_method?: string | null
 }
 
 export interface SeedDataSet {
@@ -305,33 +310,35 @@ export const SEED_DATA: SeedDataSet = {
   invoices: [
     // 2 overdue
     {
-      id: 'seed-inv-1', invoice_number: 'INV-001', client_contact_id: 'seed-c1', client_name: 'Sarah Chen',
-      total: 4500, currency: 'AUD', status: 'overdue', due_date: daysAgo(14),
+      id: 'seed-inv-1', invoice_number: 'INV-001', client_contact_id: 'seed-c1', client_name: 'Sarah Chen', client_email: 'sarah@acmecorp.com',
+      total: 4950, subtotal: 4500, tax: 450, currency: 'AUD', status: 'overdue', due_date: daysAgo(14),
       issued_date: daysAgo(44), paid_date: null, created_at: daysAgo(45),
+      project_reference: 'Acme Corp Rebrand',
       line_items: [
         { description: 'Website Redesign — Phase 1', quantity: 1, unit_price: 2500, total: 2500 },
         { description: 'SEO Audit & Report', quantity: 1, unit_price: 2000, total: 2000 },
       ],
     },
     {
-      id: 'seed-inv-2', invoice_number: 'INV-002', client_contact_id: 'seed-c4', client_name: 'James Liu',
-      total: 12000, currency: 'AUD', status: 'overdue', due_date: daysAgo(7),
+      id: 'seed-inv-2', invoice_number: 'INV-002', client_contact_id: 'seed-c4', client_name: 'James Liu', client_email: 'james@liuventures.com',
+      total: 13200, subtotal: 12000, tax: 1200, currency: 'AUD', status: 'overdue', due_date: daysAgo(7),
       issued_date: daysAgo(37), paid_date: null, created_at: daysAgo(38),
+      project_reference: 'Liu Ventures Website Launch',
     },
     // 2 due this week
     {
-      id: 'seed-inv-3', invoice_number: 'INV-003', client_contact_id: 'seed-c3', client_name: 'Olivia Park',
+      id: 'seed-inv-3', invoice_number: 'INV-003', client_contact_id: 'seed-c3', client_name: 'Olivia Park', client_email: 'olivia@parkdesign.co',
       total: 2800, currency: 'AUD', status: 'sent', due_date: daysFromNow(3),
       issued_date: daysAgo(27), paid_date: null, created_at: daysAgo(28),
     },
     {
-      id: 'seed-inv-4', invoice_number: 'INV-004', client_contact_id: 'seed-c2', client_name: 'Marcus Webb',
+      id: 'seed-inv-4', invoice_number: 'INV-004', client_contact_id: 'seed-c2', client_name: 'Marcus Webb', client_email: 'marcus@webbcorp.com',
       total: 6500, currency: 'AUD', status: 'sent', due_date: daysFromNow(5),
       issued_date: daysAgo(25), paid_date: null, created_at: daysAgo(26),
     },
     // 3 draft
     {
-      id: 'seed-inv-5', invoice_number: 'INV-005', client_contact_id: 'seed-c5', client_name: 'Emma Rodriguez',
+      id: 'seed-inv-5', invoice_number: 'INV-005', client_contact_id: 'seed-c5', client_name: 'Emma Rodriguez', client_email: 'emma@brightside.io',
       total: 3200, currency: 'AUD', status: 'draft', due_date: null,
       issued_date: null, paid_date: null, created_at: daysAgo(2),
     },
@@ -362,23 +369,23 @@ export const SEED_DATA: SeedDataSet = {
       ],
     },
     {
-      id: 'seed-inv-9', invoice_number: 'INV-009', client_contact_id: 'seed-c1', client_name: 'Sarah Chen',
+      id: 'seed-inv-9', invoice_number: 'INV-009', client_contact_id: 'seed-c1', client_name: 'Sarah Chen', client_email: 'sarah@acmecorp.com',
       total: 7200, currency: 'AUD', status: 'sent', due_date: daysFromNow(14),
       issued_date: daysAgo(16), paid_date: null, created_at: daysAgo(17),
     },
     // 3 paid
     {
-      id: 'seed-inv-10', invoice_number: 'INV-010', client_contact_id: 'seed-c2', client_name: 'Marcus Webb',
+      id: 'seed-inv-10', invoice_number: 'INV-010', client_contact_id: 'seed-c2', client_name: 'Marcus Webb', client_email: 'marcus@webbcorp.com',
       total: 5000, currency: 'AUD', status: 'paid', due_date: daysAgo(10),
       issued_date: daysAgo(40), paid_date: daysAgo(3), created_at: daysAgo(41),
     },
     {
-      id: 'seed-inv-11', invoice_number: 'INV-011', client_contact_id: 'seed-c3', client_name: 'Olivia Park',
+      id: 'seed-inv-11', invoice_number: 'INV-011', client_contact_id: 'seed-c3', client_name: 'Olivia Park', client_email: 'olivia@parkdesign.co',
       total: 9400, currency: 'AUD', status: 'paid', due_date: daysAgo(20),
       issued_date: daysAgo(50), paid_date: daysAgo(10), created_at: daysAgo(51),
     },
     {
-      id: 'seed-inv-12', invoice_number: 'INV-012', client_contact_id: 'seed-c4', client_name: 'James Liu',
+      id: 'seed-inv-12', invoice_number: 'INV-012', client_contact_id: 'seed-c4', client_name: 'James Liu', client_email: 'james@liuventures.com',
       total: 3600, currency: 'AUD', status: 'paid', due_date: daysAgo(30),
       issued_date: daysAgo(60), paid_date: daysAgo(20), created_at: daysAgo(61),
     },

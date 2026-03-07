@@ -29,7 +29,7 @@ function getSupabaseClient() {
  * Update invoice status and create timeline event
  */
 async function updateInvoiceStatus(
-  supabase: ReturnType<typeof createClient>,
+  supabase: ReturnType<typeof createClient> | any,
   orgId: string,
   stripePaymentLinkOrId: string,
   newStatus: 'paid' | 'failed' | 'overdue',
@@ -125,34 +125,46 @@ export async function POST(request: NextRequest) {
     switch (event.type) {
       case 'payment_intent.succeeded': {
         const obj = event.data.object as Record<string, unknown>
+        const metadata = (obj.metadata || {}) as Record<string, string>
+        const orgId = metadata.org_id
         logger.info('[webhook/stripe] Payment succeeded:', obj.id, obj.amount, obj.currency)
-        // In production: extract orgId from metadata and update invoice
-        // For now, log the event
+        if (orgId) {
+          await updateInvoiceStatus(supabase, orgId, obj.id as string, 'paid')
+        } else {
+          logger.warn('[webhook/stripe] No org_id in payment_intent metadata, skipping DB update')
+        }
         break
       }
       case 'payment_intent.payment_failed': {
         const obj = event.data.object as Record<string, unknown>
+        const metadata = (obj.metadata || {}) as Record<string, string>
+        const orgId = metadata.org_id
         logger.error('[webhook/stripe] Payment failed:', obj.id)
-        // In production: extract orgId from metadata and update invoice to 'failed'
+        if (orgId) {
+          await updateInvoiceStatus(supabase, orgId, obj.id as string, 'failed')
+        } else {
+          logger.warn('[webhook/stripe] No org_id in payment_intent metadata, skipping DB update')
+        }
         break
       }
       case 'invoice.paid': {
         const obj = event.data.object as Record<string, unknown>
+        const metadata = (obj.metadata || {}) as Record<string, string>
+        const orgId = metadata.org_id
         logger.info('[webhook/stripe] Invoice paid:', obj.id)
-        // Update invoice status to 'paid' if we can determine the orgId
-        // This would typically come from invoice metadata
-        const invoiceId = obj.id as string
-        // TODO: extract orgId from invoice metadata or look it up
-        // await updateInvoiceStatus(supabase, orgId, invoiceId, 'paid')
+        if (orgId) {
+          await updateInvoiceStatus(supabase, orgId, obj.id as string, 'paid')
+        }
         break
       }
       case 'invoice.payment_failed': {
         const obj = event.data.object as Record<string, unknown>
+        const metadata = (obj.metadata || {}) as Record<string, string>
+        const orgId = metadata.org_id
         logger.error('[webhook/stripe] Invoice payment failed:', obj.id)
-        // Update invoice status to 'failed' if we can determine the orgId
-        const invoiceId = obj.id as string
-        // TODO: extract orgId from invoice metadata or look it up
-        // await updateInvoiceStatus(supabase, orgId, invoiceId, 'failed')
+        if (orgId) {
+          await updateInvoiceStatus(supabase, orgId, obj.id as string, 'failed')
+        }
         break
       }
       default:

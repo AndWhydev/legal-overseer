@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useRef, useEffect } from 'react'
 import { useDroppable } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { Plus } from 'lucide-react'
@@ -9,8 +10,7 @@ import type { Task, KanbanColumn as ColumnType } from '@/lib/types'
 interface KanbanColumnProps {
   column: ColumnType
   tasks: Task[]
-  totalOrgTasks?: number
-  onAddTask?: (columnId: string) => void
+  onQuickAdd?: (columnId: string, title: string) => void
   onEditTask?: (task: Task) => void
   onArchiveTask?: (task: Task) => void
 }
@@ -18,24 +18,47 @@ interface KanbanColumnProps {
 export function KanbanColumn({
   column,
   tasks,
-  totalOrgTasks,
-  onAddTask,
+  onQuickAdd,
   onEditTask,
   onArchiveTask,
 }: KanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id: column.id })
+  const [isAdding, setIsAdding] = useState(false)
+  const [newTitle, setNewTitle] = useState('')
+  const [ghostHover, setGhostHover] = useState(false)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (isAdding) setTimeout(() => inputRef.current?.focus(), 30)
+  }, [isAdding])
+
+  function handleCreate() {
+    if (!newTitle.trim() || !onQuickAdd) return
+    onQuickAdd(column.id, newTitle.trim())
+    setNewTitle('')
+    // Input stays open for rapid entry
+  }
 
   return (
-    <div style={{ display: 'flex', width: 280, flexShrink: 0, flexDirection: 'column', height: '100%' }}>
+    <div style={{ display: 'flex', flex: 1, minWidth: 240, maxWidth: 340, flexDirection: 'column', height: '100%' }}>
+      {/* Column header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0 6px 10px' }}>
         <h3 style={{ fontSize: 13, fontWeight: 600, color: '#94A3B8', margin: 0, letterSpacing: '0.01em' }}>
           {column.title}
         </h3>
-        <span style={{ fontSize: 12, fontWeight: 500, color: '#475569' }}>
+        <span style={{
+          fontSize: 11,
+          fontWeight: 600,
+          color: '#475569',
+          background: 'rgba(255, 255, 255, 0.04)',
+          borderRadius: 99,
+          padding: '1px 7px',
+        }}>
           {tasks.length}
         </span>
       </div>
 
+      {/* Droppable area */}
       <div
         ref={setNodeRef}
         style={{
@@ -48,6 +71,8 @@ export function KanbanColumn({
           background: isOver ? 'rgba(255, 255, 255, 0.03)' : 'rgba(255, 255, 255, 0.01)',
           transition: 'background 0.2s ease',
           minHeight: 0,
+          overflowY: 'auto',
+          scrollbarGutter: 'stable',
         }}
       >
         <SortableContext
@@ -64,36 +89,78 @@ export function KanbanColumn({
           ))}
         </SortableContext>
 
-        {onAddTask && (
+        {/* Inline quick-add */}
+        {isAdding ? (
+          <div style={{
+            borderRadius: 14,
+            padding: '10px 14px',
+            background: 'rgba(15, 20, 30, 0.35)',
+            boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.04)',
+          }}>
+            <input
+              ref={inputRef}
+              value={newTitle}
+              onChange={(e) => setNewTitle(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  handleCreate()
+                }
+                if (e.key === 'Escape') {
+                  setIsAdding(false)
+                  setNewTitle('')
+                }
+              }}
+              onBlur={() => {
+                // Only close if empty — don't lose typed text
+                if (!newTitle.trim()) {
+                  setIsAdding(false)
+                  setNewTitle('')
+                }
+              }}
+              placeholder="Task title..."
+              style={{
+                width: '100%',
+                background: 'transparent',
+                border: 'none',
+                outline: 'none',
+                fontSize: 13,
+                fontWeight: 600,
+                color: '#F1F5F9',
+                padding: 0,
+                fontFamily: 'inherit',
+              }}
+            />
+            <div style={{ marginTop: 5, fontSize: 9, color: '#475569', letterSpacing: '0.02em' }}>
+              ↵ create · esc cancel
+            </div>
+          </div>
+        ) : onQuickAdd ? (
           <button
-            onClick={() => onAddTask(column.id)}
+            onClick={() => setIsAdding(true)}
+            onMouseEnter={() => setGhostHover(true)}
+            onMouseLeave={() => setGhostHover(false)}
             style={{
               display: 'flex',
               alignItems: 'center',
+              justifyContent: 'center',
               gap: 6,
-              borderRadius: 10,
-              padding: '8px 10px',
-              border: 'none',
-              background: 'transparent',
+              borderRadius: 14,
+              padding: 12,
+              border: `1.5px dashed ${ghostHover ? 'rgba(148, 163, 184, 0.25)' : 'rgba(148, 163, 184, 0.12)'}`,
+              background: ghostHover ? 'rgba(255, 255, 255, 0.02)' : 'transparent',
+              width: '100%',
               fontSize: 12,
-              color: '#475569',
+              color: ghostHover ? '#64748B' : '#3E4C5E',
               cursor: 'pointer',
-              transition: 'color 0.15s, background 0.15s',
+              transition: 'color 0.15s, background 0.15s, border-color 0.15s',
               marginTop: 'auto',
             }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)';
-              e.currentTarget.style.color = '#94A3B8';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'transparent';
-              e.currentTarget.style.color = '#475569';
-            }}
           >
-            <Plus style={{ width: 14, height: 14 }} />
+            <Plus style={{ width: 13, height: 13 }} />
             Add task
           </button>
-        )}
+        ) : null}
       </div>
     </div>
   )

@@ -1,18 +1,39 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { ReceiptText, Search, Download, ChevronDown } from 'lucide-react'
-import { SkeletonTable } from '@/components/ui/skeleton'
+import {
+  DndContext,
+  DragEndEvent,
+  DragOverEvent,
+  DragOverlay,
+  DragStartEvent,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  closestCorners,
+  useDroppable,
+} from '@dnd-kit/core'
+import {
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+  arrayMove,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
+import {
+  ReceiptText, Search, Download, ChevronDown, Send, CheckCircle2,
+  Ban, FileText, Users, LayoutList, Eye, EyeOff,
+} from 'lucide-react'
 import { EmptyState } from '@/components/ui/empty-state'
 import { useToast } from '@/components/ui/toast'
 import { useSeedData } from '@/hooks/use-seed-data'
 import { InvoiceSummaryBar } from './invoice-summary-bar'
-import { InvoiceDetailDrawer } from './invoice-detail-drawer'
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
 type InvoiceStatus = 'draft' | 'sent' | 'viewed' | 'overdue' | 'paid' | 'cancelled'
 type SectionKey = 'attention' | 'awaiting' | 'drafts' | 'completed'
+type GroupMode = 'status' | 'client'
 
 interface LineItem {
   description: string
@@ -26,7 +47,10 @@ export interface InvoiceRow {
   invoice_number: string
   client_contact_id: string | null
   client_name?: string | null
+  client_email?: string | null
   total: number
+  subtotal?: number
+  tax?: number
   currency: string
   status: InvoiceStatus
   due_date: string | null
@@ -34,18 +58,30 @@ export interface InvoiceRow {
   paid_date?: string | null
   created_at?: string
   line_items?: LineItem[]
+  project_reference?: string | null
+  payment_method?: string | null
 }
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
-const SECTIONS: { key: SectionKey; label: string; accent: string | null; defaultOpen: boolean }[] = [
-  { key: 'attention', label: 'Needs Attention', accent: '#EF4444', defaultOpen: true },
-  { key: 'awaiting', label: 'Awaiting Payment', accent: null, defaultOpen: true },
-  { key: 'drafts', label: 'Drafts', accent: null, defaultOpen: true },
-  { key: 'completed', label: 'Completed', accent: null, defaultOpen: false },
+const SECTIONS: { key: SectionKey; label: string; accent: string | null; defaultOpen: boolean; droppable: boolean }[] = [
+  { key: 'attention', label: 'Needs Attention', accent: '#EF4444', defaultOpen: true, droppable: false },
+  { key: 'awaiting', label: 'Awaiting Payment', accent: null, defaultOpen: true, droppable: true },
+  { key: 'drafts', label: 'Drafts', accent: null, defaultOpen: true, droppable: true },
+  { key: 'completed', label: 'Completed', accent: null, defaultOpen: false, droppable: true },
 ]
 
+const SECTION_STATUS_MAP: Partial<Record<SectionKey, InvoiceStatus>> = {
+  drafts: 'draft',
+  awaiting: 'sent',
+  completed: 'paid',
+}
+
+// Snappy spring easing — fast attack, soft settle
+const SPRING = 'cubic-bezier(0.175, 0.885, 0.32, 1.075)'
 const SNAP = 'cubic-bezier(0.2, 0.9, 0.3, 1)'
+
+const PROGRESS_STEPS = ['Draft', 'Sent', 'Paid'] as const
 
 // ─── Shared Styles ──────────────────────────────────────────────────────────
 
@@ -58,6 +94,63 @@ const glassCard: React.CSSProperties = {
   overflow: 'hidden',
 }
 
+// ─── MD5 (Gravatar) ─────────────────────────────────────────────────────────
+
+function md5(input: string): string {
+  function rotl(v: number, s: number) { return (v << s) | (v >>> (32 - s)) }
+  const K = [
+    0xd76aa478, 0xe8c7b756, 0x242070db, 0xc1bdceee, 0xf57c0faf, 0x4787c62a,
+    0xa8304613, 0xfd469501, 0x698098d8, 0x8b44f7af, 0xffff5bb1, 0x895cd7be,
+    0x6b901122, 0xfd987193, 0xa679438e, 0x49b40821, 0xf61e2562, 0xc040b340,
+    0x265e5a51, 0xe9b6c7aa, 0xd62f105d, 0x02441453, 0xd8a1e681, 0xe7d3fbc8,
+    0x21e1cde6, 0xc33707d6, 0xf4d50d87, 0x455a14ed, 0xa9e3e905, 0xfcefa3f8,
+    0x676f02d9, 0x8d2a4c8a, 0xfffa3942, 0x8771f681, 0x6d9d6122, 0xfde5380c,
+    0xa4beea44, 0x4bdecfa9, 0xf6bb4b60, 0xbebfbc70, 0x289b7ec6, 0xeaa127fa,
+    0xd4ef3085, 0x04881d05, 0xd9d4d039, 0xe6db99e5, 0x1fa27cf8, 0xc4ac5665,
+    0xf4292244, 0x432aff97, 0xab9423a7, 0xfc93a039, 0x655b59c3, 0x8f0ccc92,
+    0xffeff47d, 0x85845dd1, 0x6fa87e4f, 0xfe2ce6e0, 0xa3014314, 0x4e0811a1,
+    0xf7537e82, 0xbd3af235, 0x2ad7d2bb, 0xeb86d391,
+  ]
+  const S = [
+    7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22,
+    5, 9, 14, 20, 5, 9, 14, 20, 5, 9, 14, 20, 5, 9, 14, 20,
+    4, 11, 16, 23, 4, 11, 16, 23, 4, 11, 16, 23, 4, 11, 16, 23,
+    6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21,
+  ]
+  const bytes: number[] = []
+  for (let i = 0; i < input.length; i++) {
+    const c = input.charCodeAt(i)
+    if (c < 0x80) bytes.push(c)
+    else if (c < 0x800) { bytes.push(0xc0 | (c >> 6), 0x80 | (c & 0x3f)) }
+    else { bytes.push(0xe0 | (c >> 12), 0x80 | ((c >> 6) & 0x3f), 0x80 | (c & 0x3f)) }
+  }
+  const origLen = bytes.length * 8
+  bytes.push(0x80)
+  while (bytes.length % 64 !== 56) bytes.push(0)
+  for (let i = 0; i < 8; i++) bytes.push((origLen >>> (i * 8)) & 0xff)
+  let a0 = 0x67452301, b0 = 0xefcdab89, c0 = 0x98badcfe, d0 = 0x10325476
+  for (let i = 0; i < bytes.length; i += 64) {
+    const M: number[] = []
+    for (let j = 0; j < 16; j++)
+      M[j] = bytes[i + j * 4] | (bytes[i + j * 4 + 1] << 8) | (bytes[i + j * 4 + 2] << 16) | (bytes[i + j * 4 + 3] << 24)
+    let A = a0, B = b0, C = c0, D = d0
+    for (let j = 0; j < 64; j++) {
+      let F: number, g: number
+      if (j < 16) { F = (B & C) | (~B & D); g = j }
+      else if (j < 32) { F = (D & B) | (~D & C); g = (5 * j + 1) % 16 }
+      else if (j < 48) { F = B ^ C ^ D; g = (3 * j + 5) % 16 }
+      else { F = C ^ (B | ~D); g = (7 * j) % 16 }
+      F = (F + A + K[j] + M[g]) >>> 0
+      A = D; D = C; C = B; B = (B + rotl(F, S[j])) >>> 0
+    }
+    a0 = (a0 + A) >>> 0; b0 = (b0 + B) >>> 0; c0 = (c0 + C) >>> 0; d0 = (d0 + D) >>> 0
+  }
+  let hex = ''
+  for (const v of [a0, b0, c0, d0])
+    for (let i = 0; i < 4; i++) hex += ((v >>> (i * 8)) & 0xff).toString(16).padStart(2, '0')
+  return hex
+}
+
 // ─── Utility Functions ──────────────────────────────────────────────────────
 
 function formatMoney(total: number, currency: string): string {
@@ -67,6 +160,13 @@ function formatMoney(total: number, currency: string): string {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(total)
+}
+
+function formatDate(iso: string | null | undefined): string {
+  if (!iso) return '-'
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return '-'
+  return d.toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
 function formatDueDate(value: string | null): string {
@@ -87,6 +187,15 @@ function getDueUrgency(dueDate: string | null, status: InvoiceStatus): { text: s
   return { text: '', color: '' }
 }
 
+function getDueColor(dueDate: string | null, status: InvoiceStatus): string {
+  if (status === 'paid' || status === 'cancelled' || status === 'draft') return 'var(--text-secondary)'
+  if (!dueDate) return 'var(--text-secondary)'
+  const days = Math.ceil((new Date(dueDate).getTime() - Date.now()) / 86_400_000)
+  if (days < 0) return '#EF4444'
+  if (days <= 7) return '#F59E0B'
+  return 'var(--text-secondary)'
+}
+
 function isOverdue(inv: InvoiceRow): boolean {
   if (inv.status === 'overdue') return true
   if (inv.status === 'paid' || inv.status === 'cancelled' || inv.status === 'draft') return false
@@ -105,10 +214,34 @@ function getSection(invoice: InvoiceRow): SectionKey {
   return 'awaiting'
 }
 
-function groupBySection(invoices: InvoiceRow[]): Record<SectionKey, InvoiceRow[]> {
+function groupBySection(
+  invoices: InvoiceRow[],
+  overrides: Map<string, SectionKey>,
+): Record<SectionKey, InvoiceRow[]> {
   const groups: Record<SectionKey, InvoiceRow[]> = { attention: [], awaiting: [], drafts: [], completed: [] }
-  for (const inv of invoices) groups[getSection(inv)].push(inv)
+  for (const inv of invoices) {
+    const section = overrides.get(inv.id) ?? getSection(inv)
+    groups[section].push(inv)
+  }
   return groups
+}
+
+function groupByClient(invoices: InvoiceRow[]): { name: string; invoices: InvoiceRow[] }[] {
+  const map = new Map<string, InvoiceRow[]>()
+  for (const inv of invoices) {
+    const name = inv.client_name || 'Unknown'
+    const list = map.get(name) ?? []
+    list.push(inv)
+    map.set(name, list)
+  }
+  return Array.from(map.entries())
+    .map(([name, items]) => ({ name, invoices: items }))
+    .sort((a, b) => {
+      // Sort by total outstanding descending
+      const aSum = a.invoices.filter(i => i.status !== 'paid' && i.status !== 'cancelled').reduce((s, i) => s + i.total, 0)
+      const bSum = b.invoices.filter(i => i.status !== 'paid' && i.status !== 'cancelled').reduce((s, i) => s + i.total, 0)
+      return bSum - aSum
+    })
 }
 
 function getInitials(name: string | null | undefined): string {
@@ -116,12 +249,21 @@ function getInitials(name: string | null | undefined): string {
   return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
 }
 
-function getAvatarColor(name: string): string {
-  const colors = ['#3B82F6', '#22C55E', '#F59E0B', '#8B5CF6', '#FF5A1F']
-  let hash = 0
-  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash)
-  return colors[Math.abs(hash) % colors.length]
+function nameHash(name: string): number {
+  let h = 0
+  for (let i = 0; i < name.length; i++) h = name.charCodeAt(i) + ((h << 5) - h)
+  return Math.abs(h)
 }
+
+function getProgressIndex(status: InvoiceStatus): number {
+  if (status === 'paid') return 2
+  if (status === 'sent' || status === 'viewed' || status === 'overdue') return 1
+  return 0
+}
+
+function canSend(s: InvoiceStatus) { return s === 'draft' }
+function canMarkPaid(s: InvoiceStatus) { return s === 'sent' || s === 'viewed' || s === 'overdue' }
+function canCancel(s: InvoiceStatus) { return s !== 'paid' && s !== 'cancelled' }
 
 function exportCsv(invoices: InvoiceRow[]) {
   const header = 'Invoice,Client,Total,Status,Due Date,Created\n'
@@ -137,126 +279,648 @@ function exportCsv(invoices: InvoiceRow[]) {
   URL.revokeObjectURL(url)
 }
 
-// ─── InvoiceRowItem ─────────────────────────────────────────────────────────
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+}
 
-function InvoiceRowItem({
-  invoice,
-  onClick,
-  delay,
-}: {
-  invoice: InvoiceRow
-  onClick: () => void
-  delay: number
-}) {
-  const [hovered, setHovered] = useState(false)
-  const urgency = getDueUrgency(invoice.due_date, invoice.status)
-  const name = invoice.client_name || 'Unknown'
-  const avatarBg = getAvatarColor(name)
+/** Resolve target section from a DnD over ID (could be a section-* or an invoice ID) */
+function resolveTargetSection(
+  overId: string,
+  invoiceSections: Map<string, SectionKey>,
+): SectionKey | null {
+  if (overId.startsWith('section-')) {
+    return overId.replace('section-', '') as SectionKey
+  }
+  return invoiceSections.get(overId) ?? null
+}
+
+// ─── Avatar Colors ──────────────────────────────────────────────────────────
+
+const AVATAR_PAIRS = [
+  ['#3B82F6', '#8B5CF6'],
+  ['#22C55E', '#06B6D4'],
+  ['#F59E0B', '#FF5A1F'],
+  ['#EC4899', '#A855F7'],
+  ['#14B8A6', '#3B82F6'],
+]
+
+// ─── Client-Side Invoice PDF Preview ────────────────────────────────────────
+
+function generateInvoicePreviewHtml(invoice: InvoiceRow): string {
+  const items = invoice.line_items ?? [{
+    description: invoice.project_reference || 'Services rendered',
+    quantity: 1,
+    unit_price: invoice.total,
+    total: invoice.total,
+  }]
+  const subtotal = invoice.subtotal ?? items.reduce((s, i) => s + i.total, 0)
+  const tax = invoice.tax ?? Math.round(subtotal * 0.1 * 100) / 100
+  const total = invoice.total
+  const cur = invoice.currency || 'AUD'
+  const fmt = (n: number) => new Intl.NumberFormat('en-AU', { style: 'currency', currency: cur, minimumFractionDigits: 2 }).format(n)
+
+  const itemsHtml = items.map(item => `
+    <tr>
+      <td style="padding:8px 6px;border-bottom:1px solid #1e293b;">${escapeHtml(item.description)}</td>
+      <td style="padding:8px 6px;border-bottom:1px solid #1e293b;text-align:right;">${item.quantity}</td>
+      <td style="padding:8px 6px;border-bottom:1px solid #1e293b;text-align:right;">${fmt(item.unit_price)}</td>
+      <td style="padding:8px 6px;border-bottom:1px solid #1e293b;text-align:right;">${fmt(item.total)}</td>
+    </tr>
+  `).join('')
+
+  return `<!doctype html>
+<html><head><meta charset="utf-8"><style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0a0f1a; color: #e2e8f0; padding: 20px; font-size: 13px; }
+  .card { max-width: 600px; margin: 0 auto; background: #111827; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; overflow: hidden; }
+  .header { padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.06); border-left: 3px solid #3B82F6; display: flex; justify-content: space-between; }
+  .header h1 { font-size: 18px; color: #3B82F6; margin-bottom: 4px; }
+  .header .meta { text-align: right; font-size: 12px; color: #94a3b8; line-height: 1.8; }
+  .section { padding: 16px 20px; }
+  .bill-to { font-size: 12px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 4px; }
+  .client { font-size: 14px; color: #e2e8f0; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { padding: 8px 6px; text-align: left; color: #94a3b8; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 1px solid #1e293b; }
+  th:not(:first-child) { text-align: right; }
+  .totals { margin-top: 16px; display: flex; justify-content: flex-end; }
+  .totals table { width: 220px; }
+  .totals td { padding: 6px 0; color: #94a3b8; font-size: 13px; }
+  .totals td:last-child { text-align: right; color: #e2e8f0; }
+  .totals .grand { border-top: 1px solid #334155; font-weight: 700; font-size: 15px; padding-top: 10px; }
+  .totals .grand td { color: #e2e8f0; }
+  .footer { padding: 14px 20px; border-top: 1px solid rgba(255,255,255,0.06); font-size: 11px; color: #64748b; }
+</style></head><body>
+<div class="card">
+  <div class="header">
+    <div>
+      <p style="font-size:10px;text-transform:uppercase;letter-spacing:0.06em;color:#64748b;margin-bottom:2px;">Tax Invoice</p>
+      <h1>Invoice</h1>
+      <p style="font-size:13px;color:#94a3b8;margin-top:2px;">BitBit</p>
+    </div>
+    <div class="meta">
+      <div><strong style="color:#64748b;">Invoice #:</strong> ${escapeHtml(invoice.invoice_number)}</div>
+      ${invoice.issued_date ? `<div><strong style="color:#64748b;">Issued:</strong> ${escapeHtml(formatDate(invoice.issued_date))}</div>` : ''}
+      ${invoice.due_date ? `<div><strong style="color:#64748b;">Due:</strong> ${escapeHtml(formatDate(invoice.due_date))}</div>` : ''}
+    </div>
+  </div>
+  <div class="section" style="display:flex;justify-content:space-between;gap:20px;">
+    <div>
+      <div class="bill-to">Bill To</div>
+      <div class="client">${escapeHtml(invoice.client_name || 'Client')}</div>
+      ${invoice.client_email ? `<div style="font-size:12px;color:#64748b;margin-top:2px;">${escapeHtml(invoice.client_email)}</div>` : ''}
+    </div>
+    ${invoice.project_reference ? `<div><div class="bill-to">Project</div><div class="client">${escapeHtml(invoice.project_reference)}</div></div>` : ''}
+  </div>
+  <div class="section">
+    <table>
+      <thead><tr><th>Description</th><th>Qty</th><th>Unit</th><th>Total</th></tr></thead>
+      <tbody>${itemsHtml}</tbody>
+    </table>
+    <div class="totals">
+      <table>
+        <tr><td>Subtotal</td><td>${fmt(subtotal)}</td></tr>
+        <tr><td>GST (10%)</td><td>${fmt(tax)}</td></tr>
+        <tr class="grand"><td>Total</td><td>${fmt(total)}</td></tr>
+      </table>
+    </div>
+  </div>
+  <div class="footer">Generated by Invoice Flow &mdash; BitBit</div>
+</div>
+</body></html>`
+}
+
+// ─── InvoiceAvatar ──────────────────────────────────────────────────────────
+
+function InvoiceAvatar({ name, email, size = 36 }: { name: string; email?: string | null; size?: number }) {
+  const [imgError, setImgError] = useState(false)
+  const hash = nameHash(name)
+  const pair = AVATAR_PAIRS[hash % AVATAR_PAIRS.length]
+  const angle = (hash % 360)
+
+  const gravatarUrl = email
+    ? `https://www.gravatar.com/avatar/${md5(email.trim().toLowerCase())}?s=${size * 2}&d=404`
+    : null
+
+  const showImg = gravatarUrl && !imgError
 
   return (
-    <div
-      onClick={onClick}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+    <div style={{
+      width: size,
+      height: size,
+      borderRadius: 10,
+      flexShrink: 0,
+      position: 'relative',
+      overflow: 'hidden',
+    }}>
+      <div style={{
+        position: 'absolute',
+        inset: 0,
+        background: `conic-gradient(from ${angle}deg, ${pair[0]}, ${pair[1]}, ${pair[0]})`,
+        opacity: 0.85,
+      }} />
+      {!showImg && (
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: '#fff',
+          fontSize: size * 0.36,
+          fontWeight: 600,
+          letterSpacing: '0.02em',
+          textShadow: '0 1px 2px rgba(0,0,0,0.3)',
+        }}>
+          {getInitials(name)}
+        </div>
+      )}
+      {gravatarUrl && !imgError && (
+        <img
+          src={gravatarUrl}
+          alt=""
+          onError={() => setImgError(true)}
+          style={{
+            position: 'absolute',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            borderRadius: 10,
+          }}
+        />
+      )}
+    </div>
+  )
+}
+
+// ─── PDF Preview Panel ──────────────────────────────────────────────────────
+
+function PdfPreviewPanel({ invoice }: { invoice: InvoiceRow }) {
+  const html = useMemo(() => generateInvoicePreviewHtml(invoice), [invoice])
+
+  return (
+    <div style={{
+      marginTop: 8,
+      borderRadius: 10,
+      overflow: 'hidden',
+      border: '1px solid rgba(255, 255, 255, 0.04)',
+    }}>
+      <iframe
+        srcDoc={html}
+        title={`Preview ${invoice.invoice_number}`}
+        sandbox="allow-same-origin"
+        style={{
+          width: '100%',
+          height: 380,
+          border: 'none',
+          borderRadius: 10,
+          background: '#0a0f1a',
+        }}
+      />
+    </div>
+  )
+}
+
+// ─── Inline Detail Panel ────────────────────────────────────────────────────
+
+function InvoiceDetailPanel({
+  invoice,
+  onAction,
+  busy,
+}: {
+  invoice: InvoiceRow
+  onAction: (id: string, status: InvoiceStatus) => void
+  busy: boolean
+}) {
+  const [showPdf, setShowPdf] = useState(false)
+  const progressIdx = getProgressIndex(invoice.status)
+  const dueColor = getDueColor(invoice.due_date, invoice.status)
+
+  const actionBtn = (
+    label: string,
+    icon: React.ReactNode,
+    status: InvoiceStatus,
+    bg: string,
+    fg: string,
+  ) => (
+    <button
+      onClick={(e) => { e.stopPropagation(); onAction(invoice.id, status) }}
+      disabled={busy}
       style={{
         display: 'flex',
         alignItems: 'center',
-        gap: 14,
-        padding: '12px 16px',
-        cursor: 'pointer',
-        transition: 'background 80ms ease',
-        background: hovered ? 'rgba(255, 255, 255, 0.03)' : 'transparent',
-        borderBottom: '1px solid rgba(255, 255, 255, 0.02)',
-        animation: `bb-inv-row 150ms ${SNAP} both`,
-        animationDelay: `${delay}ms`,
-      }}
-    >
-      {/* Avatar */}
-      <div style={{
-        width: 36,
-        height: 36,
-        borderRadius: 10,
-        flexShrink: 0,
-        background: `${avatarBg}15`,
-        color: avatarBg,
-        display: 'flex',
-        alignItems: 'center',
         justifyContent: 'center',
+        gap: 6,
+        padding: '10px 16px',
+        borderRadius: 10,
+        cursor: busy ? 'not-allowed' : 'pointer',
+        background: bg,
+        border: 'none',
+        color: fg,
         fontSize: 13,
         fontWeight: 600,
-      }}>
-        {getInitials(name)}
-      </div>
+        opacity: busy ? 0.5 : 1,
+        transition: `all 100ms ${SNAP}`,
+      }}
+    >
+      {icon} {label}
+    </button>
+  )
 
-      {/* Info */}
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{
-          fontSize: 14,
-          fontWeight: 600,
-          color: 'var(--text-primary)',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap',
-        }}>
-          {name}
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 2 }}>
-          <span style={{ fontSize: 12, color: 'var(--text-dim)' }}>
-            {invoice.invoice_number}
-          </span>
-          {urgency.text && (
-            <span style={{ fontSize: 12, color: urgency.color, fontWeight: 500 }}>
-              {urgency.text}
-            </span>
+  return (
+    <div
+      onClick={(e) => e.stopPropagation()}
+      style={{
+        borderTop: '1px solid rgba(255, 255, 255, 0.04)',
+        background: 'rgba(255, 255, 255, 0.02)',
+        padding: '20px 16px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 16,
+        animation: `bb-inv-detail-enter 180ms ${SPRING} both`,
+      }}
+    >
+      {/* Amount hero + due date + progress */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div>
+          <div style={{
+            fontSize: 28,
+            fontWeight: 700,
+            color: 'var(--text-primary)',
+            fontFamily: 'var(--font-mono)',
+            letterSpacing: '-0.02em',
+            lineHeight: 1,
+          }}>
+            {formatMoney(invoice.total, invoice.currency)}
+          </div>
+          <div style={{ fontSize: 12, color: dueColor, marginTop: 6, fontWeight: 500 }}>
+            {invoice.status === 'paid'
+              ? `Paid ${formatDate(invoice.paid_date)}`
+              : invoice.due_date
+                ? `Due ${formatDate(invoice.due_date)}`
+                : 'No due date'}
+          </div>
+          {invoice.project_reference && (
+            <div style={{ fontSize: 12, color: 'var(--text-dim)', marginTop: 4 }}>
+              Project: {invoice.project_reference}
+            </div>
           )}
         </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 3, minWidth: 140 }}>
+          {PROGRESS_STEPS.map((step, i) => (
+            <div key={step} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+              <div style={{
+                height: 3,
+                width: '100%',
+                borderRadius: 99,
+                background: i <= progressIdx
+                  ? invoice.status === 'cancelled' ? '#71717a' : '#22C55E'
+                  : 'rgba(255, 255, 255, 0.06)',
+                transition: `background 200ms ${SNAP}`,
+              }} />
+              <span style={{
+                fontSize: 10,
+                fontWeight: 500,
+                color: i <= progressIdx ? 'var(--text-primary)' : 'var(--text-dim)',
+              }}>
+                {step}
+              </span>
+            </div>
+          ))}
+        </div>
       </div>
 
-      {/* Amount */}
-      <div style={{ textAlign: 'right', flexShrink: 0 }}>
-        <div style={{
-          fontSize: 14,
-          fontWeight: 700,
-          color: 'var(--text-primary)',
-          fontFamily: 'var(--font-mono)',
-          letterSpacing: '-0.01em',
-        }}>
-          {formatMoney(invoice.total, invoice.currency)}
+      {/* Line Items */}
+      {invoice.line_items && invoice.line_items.length > 0 && (
+        <div>
+          <div style={{
+            fontSize: 10,
+            fontWeight: 600,
+            textTransform: 'uppercase',
+            letterSpacing: '0.06em',
+            color: 'var(--text-dim)',
+            marginBottom: 6,
+          }}>
+            Line Items
+          </div>
+          <div style={{ borderRadius: 10, background: 'rgba(15, 20, 30, 0.3)', overflow: 'hidden' }}>
+            {invoice.line_items.map((item, i) => (
+              <div
+                key={i}
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '8px 12px',
+                  borderBottom: i < invoice.line_items!.length - 1
+                    ? '1px solid rgba(255, 255, 255, 0.03)' : 'none',
+                }}
+              >
+                <div>
+                  <div style={{ fontSize: 13, color: 'var(--text-primary)' }}>{item.description}</div>
+                  <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 1 }}>
+                    {item.quantity} &times; {formatMoney(item.unit_price, invoice.currency)}
+                  </div>
+                </div>
+                <span style={{
+                  fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-mono)',
+                }}>
+                  {formatMoney(item.total, invoice.currency)}
+                </span>
+              </div>
+            ))}
+            {/* Subtotal / Tax / Total */}
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 0,
+              borderTop: '1px solid rgba(255, 255, 255, 0.04)',
+              background: 'rgba(255, 255, 255, 0.02)',
+            }}>
+              {(invoice.subtotal != null || invoice.tax != null) && (
+                <>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 12px', fontSize: 12 }}>
+                    <span style={{ color: 'var(--text-dim)' }}>Subtotal</span>
+                    <span style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>
+                      {formatMoney(invoice.subtotal ?? invoice.line_items!.reduce((s, i) => s + i.total, 0), invoice.currency)}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 12px', fontSize: 12 }}>
+                    <span style={{ color: 'var(--text-dim)' }}>GST (10%)</span>
+                    <span style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>
+                      {formatMoney(invoice.tax ?? 0, invoice.currency)}
+                    </span>
+                  </div>
+                </>
+              )}
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 12px', fontSize: 14, fontWeight: 700, borderTop: (invoice.subtotal != null || invoice.tax != null) ? '1px solid rgba(255, 255, 255, 0.04)' : 'none' }}>
+                <span style={{ color: 'var(--text-dim)' }}>Total</span>
+                <span style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-mono)' }}>
+                  {formatMoney(invoice.total, invoice.currency)}
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
-        <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 2 }}>
-          {invoice.status === 'paid' ? 'Paid' : formatDueDate(invoice.due_date)}
+      )}
+
+      {/* Dates + Payment */}
+      <div style={{ display: 'flex', gap: 24, fontSize: 12, flexWrap: 'wrap' }}>
+        {invoice.issued_date && (
+          <div><span style={{ color: 'var(--text-dim)' }}>Issued </span><span style={{ color: 'var(--text-secondary)' }}>{formatDate(invoice.issued_date)}</span></div>
+        )}
+        {invoice.created_at && (
+          <div><span style={{ color: 'var(--text-dim)' }}>Created </span><span style={{ color: 'var(--text-secondary)' }}>{formatDate(invoice.created_at)}</span></div>
+        )}
+        {invoice.payment_method && (
+          <div><span style={{ color: 'var(--text-dim)' }}>Paid via </span><span style={{ color: 'var(--text-secondary)' }}>{invoice.payment_method}</span></div>
+        )}
+      </div>
+
+      {/* Actions row */}
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        {canSend(invoice.status) && actionBtn('Send', <Send size={14} />, 'sent', 'rgba(56, 189, 248, 0.1)', '#7dd3fc')}
+        {canMarkPaid(invoice.status) && actionBtn('Mark Paid', <CheckCircle2 size={14} />, 'paid', 'rgba(34, 197, 94, 0.1)', '#86efac')}
+        {canCancel(invoice.status) && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onAction(invoice.id, 'cancelled') }}
+            disabled={busy}
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+              padding: '10px 16px', borderRadius: 10, cursor: busy ? 'not-allowed' : 'pointer',
+              background: 'transparent', border: '1px solid rgba(255, 255, 255, 0.06)',
+              color: 'var(--text-dim)', fontSize: 13, fontWeight: 500,
+              opacity: busy ? 0.5 : 1, transition: `all 100ms ${SNAP}`,
+            }}
+          >
+            <Ban size={14} /> Cancel
+          </button>
+        )}
+        <button
+          onClick={(e) => { e.stopPropagation(); setShowPdf(v => !v) }}
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+            padding: '10px 16px', borderRadius: 10, cursor: 'pointer',
+            background: showPdf ? 'rgba(59, 130, 246, 0.15)' : 'rgba(255, 255, 255, 0.04)',
+            border: 'none',
+            color: showPdf ? '#93c5fd' : 'var(--text-dim)', fontSize: 13, fontWeight: 500,
+            transition: `all 100ms ${SNAP}`,
+          }}
+        >
+          {showPdf ? <EyeOff size={14} /> : <Eye size={14} />}
+          {showPdf ? 'Hide Preview' : 'Preview Invoice'}
+        </button>
+      </div>
+
+      {/* PDF Preview */}
+      <div style={{
+        display: 'grid',
+        gridTemplateRows: showPdf ? '1fr' : '0fr',
+        transition: `grid-template-rows 250ms ${SPRING}`,
+      }}>
+        <div style={{ overflow: 'hidden' }}>
+          {showPdf && <PdfPreviewPanel invoice={invoice} />}
         </div>
       </div>
     </div>
   )
 }
 
-// ─── InvoiceSection ─────────────────────────────────────────────────────────
+// ─── InvoiceRowItem (Sortable + Expandable) ─────────────────────────────────
+
+function InvoiceRowItem({
+  invoice,
+  expanded,
+  onToggle,
+  onAction,
+  busy,
+  delay,
+  isDragOverlay,
+}: {
+  invoice: InvoiceRow
+  expanded: boolean
+  onToggle: () => void
+  onAction: (id: string, status: InvoiceStatus) => void
+  busy: boolean
+  delay: number
+  isDragOverlay?: boolean
+}) {
+  const [hovered, setHovered] = useState(false)
+  const pointerStart = useRef<{ x: number; y: number } | null>(null)
+
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: invoice.id, disabled: expanded || isDragOverlay })
+
+  // Snappy DnD transitions — override dnd-kit defaults
+  const dndTransition = transition
+    ? transition.replace(/\d+ms/, '120ms').replace(/ease/, SNAP)
+    : undefined
+
+  const dndStyle: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition: [
+      dndTransition,
+      `opacity 80ms ${SNAP}`,
+      `box-shadow 80ms ${SNAP}`,
+    ].filter(Boolean).join(', '),
+    opacity: isDragging ? 0.35 : 1,
+    position: 'relative',
+    zIndex: isDragging ? 10 : expanded ? 5 : 1,
+  }
+
+  const urgency = getDueUrgency(invoice.due_date, invoice.status)
+  const name = invoice.client_name || 'Unknown'
+
+  const handlePointerDown = (e: React.PointerEvent) => {
+    pointerStart.current = { x: e.clientX, y: e.clientY }
+  }
+  const handlePointerUp = (e: React.PointerEvent) => {
+    if (!pointerStart.current) return
+    const dx = Math.abs(e.clientX - pointerStart.current.x)
+    const dy = Math.abs(e.clientY - pointerStart.current.y)
+    if (dx < 5 && dy < 5) onToggle()
+    pointerStart.current = null
+  }
+
+  return (
+    <div
+      ref={setNodeRef}
+      {...attributes}
+      {...listeners}
+      style={{
+        ...dndStyle,
+        animation: isDragOverlay ? 'none' : `bb-inv-row 120ms ${SPRING} both`,
+        animationDelay: isDragOverlay ? '0ms' : `${delay}ms`,
+      }}
+    >
+      <div
+        onPointerDown={handlePointerDown}
+        onPointerUp={handlePointerUp}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 14,
+          padding: '12px 16px',
+          cursor: isDragging ? 'grabbing' : expanded ? 'pointer' : 'grab',
+          transition: `background 60ms ${SNAP}`,
+          background: expanded
+            ? 'rgba(255, 255, 255, 0.04)'
+            : hovered
+              ? 'rgba(255, 255, 255, 0.03)'
+              : 'transparent',
+          borderBottom: expanded ? 'none' : '1px solid rgba(255, 255, 255, 0.02)',
+        }}
+      >
+        <InvoiceAvatar name={name} email={invoice.client_email} />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{
+            fontSize: 14, fontWeight: 600, color: 'var(--text-primary)',
+            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+          }}>
+            {name}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 2 }}>
+            <span style={{ fontSize: 12, color: 'var(--text-dim)' }}>{invoice.invoice_number}</span>
+            {invoice.project_reference && (
+              <span style={{ fontSize: 11, color: 'var(--text-dim)', opacity: 0.7 }}>{invoice.project_reference}</span>
+            )}
+            {urgency.text && (
+              <span style={{ fontSize: 12, color: urgency.color, fontWeight: 500 }}>{urgency.text}</span>
+            )}
+          </div>
+        </div>
+        <div style={{ textAlign: 'right', flexShrink: 0 }}>
+          <div style={{
+            fontSize: 14, fontWeight: 700, color: 'var(--text-primary)',
+            fontFamily: 'var(--font-mono)', letterSpacing: '-0.01em',
+          }}>
+            {formatMoney(invoice.total, invoice.currency)}
+          </div>
+          <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 2 }}>
+            {invoice.status === 'paid' ? 'Paid' : formatDueDate(invoice.due_date)}
+          </div>
+        </div>
+      </div>
+
+      {/* Expandable detail */}
+      <div style={{
+        display: 'grid',
+        gridTemplateRows: expanded ? '1fr' : '0fr',
+        transition: `grid-template-rows 180ms ${SPRING}`,
+      }}>
+        <div style={{ overflow: 'hidden' }}>
+          {expanded && <InvoiceDetailPanel invoice={invoice} onAction={onAction} busy={busy} />}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── InvoiceSection (Droppable) ─────────────────────────────────────────────
 
 function InvoiceSection({
+  sectionKey,
   label,
   accent,
   invoices,
   defaultOpen,
+  droppable,
   delay,
-  onRowClick,
+  expandedId,
+  onToggleExpand,
+  onAction,
+  busy,
 }: {
+  sectionKey: SectionKey
   label: string
   accent: string | null
   invoices: InvoiceRow[]
   defaultOpen: boolean
+  droppable: boolean
   delay: number
-  onRowClick: (inv: InvoiceRow) => void
+  expandedId: string | null
+  onToggleExpand: (id: string) => void
+  onAction: (id: string, status: InvoiceStatus) => void
+  busy: boolean
 }) {
   const [open, setOpen] = useState(defaultOpen)
-  if (invoices.length === 0) return null
+  const { isOver, setNodeRef } = useDroppable({
+    id: `section-${sectionKey}`,
+    disabled: !droppable,
+  })
+
+  if (invoices.length === 0 && !isOver) return null
+
+  const ids = invoices.map(inv => inv.id)
 
   return (
-    <div style={{
-      ...glassCard,
-      animation: `bb-inv-section 200ms ${SNAP} both`,
-      animationDelay: `${delay}ms`,
-    }}>
+    <div
+      ref={setNodeRef}
+      style={{
+        ...glassCard,
+        animation: `bb-inv-section 160ms ${SPRING} both`,
+        animationDelay: `${delay}ms`,
+        background: isOver
+          ? 'rgba(15, 20, 30, 0.55)'
+          : glassCard.background as string,
+        boxShadow: isOver
+          ? `inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 0 0 1px ${accent || 'rgba(99, 179, 237, 0.15)'}`
+          : glassCard.boxShadow as string,
+        transition: `background 80ms ${SNAP}, box-shadow 80ms ${SNAP}`,
+      }}
+    >
       <button
         onClick={() => setOpen(o => !o)}
         style={{
@@ -271,27 +935,12 @@ function InvoiceSection({
         }}
       >
         {accent && (
-          <div style={{
-            width: 3,
-            height: 16,
-            borderRadius: 2,
-            background: accent,
-            flexShrink: 0,
-          }} />
+          <div style={{ width: 3, height: 16, borderRadius: 2, background: accent, flexShrink: 0 }} />
         )}
-        <span style={{
-          fontSize: 13,
-          fontWeight: 600,
-          color: accent || 'var(--text-secondary)',
-          letterSpacing: '0.01em',
-        }}>
+        <span style={{ fontSize: 13, fontWeight: 600, color: accent || 'var(--text-secondary)', letterSpacing: '0.01em' }}>
           {label}
         </span>
-        <span style={{
-          fontSize: 12,
-          color: 'var(--text-dim)',
-          fontFamily: 'var(--font-mono)',
-        }}>
+        <span style={{ fontSize: 12, color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>
           {invoices.length}
         </span>
         <div style={{ flex: 1 }} />
@@ -300,28 +949,218 @@ function InvoiceSection({
           style={{
             color: 'var(--text-dim)',
             transform: open ? 'rotate(0deg)' : 'rotate(-90deg)',
-            transition: `transform 150ms ${SNAP}`,
+            transition: `transform 120ms ${SPRING}`,
           }}
         />
       </button>
 
-      {/* Animated expand/collapse */}
       <div style={{
         display: 'grid',
         gridTemplateRows: open ? '1fr' : '0fr',
-        transition: `grid-template-rows 200ms ${SNAP}`,
+        transition: `grid-template-rows 160ms ${SPRING}`,
+      }}>
+        <div style={{ overflow: 'hidden', minHeight: isOver && invoices.length === 0 ? 48 : 0 }}>
+          <SortableContext items={ids} strategy={verticalListSortingStrategy}>
+            {invoices.map((inv, i) => (
+              <InvoiceRowItem
+                key={inv.id}
+                invoice={inv}
+                expanded={expandedId === inv.id}
+                onToggle={() => onToggleExpand(inv.id)}
+                onAction={onAction}
+                busy={busy}
+                delay={open ? i * 20 : 0}
+              />
+            ))}
+          </SortableContext>
+          {isOver && invoices.length === 0 && (
+            <div style={{
+              padding: '12px 16px',
+              fontSize: 12,
+              color: 'var(--text-dim)',
+              textAlign: 'center',
+              opacity: 0.7,
+            }}>
+              Drop here
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Client Group Section (for "By Client" view) ───────────────────────────
+
+function ClientGroupSection({
+  name,
+  invoices,
+  delay,
+  expandedId,
+  onToggleExpand,
+  onAction,
+  busy,
+}: {
+  name: string
+  invoices: InvoiceRow[]
+  delay: number
+  expandedId: string | null
+  onToggleExpand: (id: string) => void
+  onAction: (id: string, status: InvoiceStatus) => void
+  busy: boolean
+}) {
+  const [open, setOpen] = useState(true)
+  const outstanding = invoices.filter(i => i.status !== 'paid' && i.status !== 'cancelled')
+  const outstandingTotal = outstanding.reduce((s, i) => s + i.total, 0)
+
+  return (
+    <div style={{
+      ...glassCard,
+      animation: `bb-inv-section 160ms ${SPRING} both`,
+      animationDelay: `${delay}ms`,
+    }}>
+      <button
+        onClick={() => setOpen(o => !o)}
+        style={{
+          width: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 12,
+          padding: '14px 16px',
+          background: 'transparent',
+          border: 'none',
+          cursor: 'pointer',
+        }}
+      >
+        <InvoiceAvatar name={name} email={invoices[0]?.client_email} size={28} />
+        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{name}</span>
+        <span style={{ fontSize: 12, color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>
+          {invoices.length}
+        </span>
+        <div style={{ flex: 1 }} />
+        {outstandingTotal > 0 && (
+          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-mono)' }}>
+            {formatMoney(outstandingTotal, invoices[0]?.currency || 'AUD')}
+          </span>
+        )}
+        <ChevronDown
+          size={14}
+          style={{
+            color: 'var(--text-dim)',
+            transform: open ? 'rotate(0deg)' : 'rotate(-90deg)',
+            transition: `transform 120ms ${SPRING}`,
+          }}
+        />
+      </button>
+
+      <div style={{
+        display: 'grid',
+        gridTemplateRows: open ? '1fr' : '0fr',
+        transition: `grid-template-rows 160ms ${SPRING}`,
       }}>
         <div style={{ overflow: 'hidden' }}>
           {invoices.map((inv, i) => (
             <InvoiceRowItem
               key={inv.id}
               invoice={inv}
-              onClick={() => onRowClick(inv)}
-              delay={open ? i * 25 : 0}
+              expanded={expandedId === inv.id}
+              onToggle={() => onToggleExpand(inv.id)}
+              onAction={onAction}
+              busy={busy}
+              delay={open ? i * 20 : 0}
             />
           ))}
         </div>
       </div>
+    </div>
+  )
+}
+
+// ─── Drag Overlay Ghost ─────────────────────────────────────────────────────
+
+function DragGhost({ invoice }: { invoice: InvoiceRow }) {
+  const name = invoice.client_name || 'Unknown'
+  return (
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: 12,
+      padding: '12px 16px',
+      borderRadius: 14,
+      background: 'rgba(15, 20, 30, 0.85)',
+      backdropFilter: 'blur(24px)',
+      WebkitBackdropFilter: 'blur(24px)',
+      boxShadow: '0 20px 60px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.06)',
+      transform: 'rotate(1.5deg) scale(1.02)',
+      maxWidth: 320,
+      pointerEvents: 'none',
+    }}>
+      <InvoiceAvatar name={name} email={invoice.client_email} size={32} />
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{
+          fontSize: 14, fontWeight: 600, color: 'var(--text-primary)',
+          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+        }}>
+          {name}
+        </div>
+      </div>
+      <div style={{
+        fontSize: 14, fontWeight: 700, color: 'var(--text-primary)',
+        fontFamily: 'var(--font-mono)', flexShrink: 0,
+      }}>
+        {formatMoney(invoice.total, invoice.currency)}
+      </div>
+    </div>
+  )
+}
+
+// ─── Invoice Skeleton ───────────────────────────────────────────────────────
+
+function InvoiceSkeleton() {
+  const shimmer: React.CSSProperties = {
+    background: 'rgba(255, 255, 255, 0.04)',
+    borderRadius: 8,
+    animation: `bb-inv-pulse 1.8s ease-in-out infinite`,
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <style>{`
+        @keyframes bb-inv-pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.4; }
+        }
+      `}</style>
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {[0, 1, 2, 3].map(i => (
+          <div key={i} style={{ ...glassCard, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div style={{ ...shimmer, width: 60, height: 10, animationDelay: `${i * 80}ms` }} />
+            <div style={{ ...shimmer, width: 100, height: 24, animationDelay: `${i * 80 + 40}ms` }} />
+          </div>
+        ))}
+      </div>
+      <div style={{ ...shimmer, height: 40, borderRadius: 10 }} />
+      {[0, 1, 2].map(s => (
+        <div key={s} style={{ ...glassCard, padding: 0 }}>
+          <div style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ ...shimmer, width: 80, height: 12, animationDelay: `${s * 60}ms` }} />
+            <div style={{ ...shimmer, width: 20, height: 12, animationDelay: `${s * 60 + 30}ms` }} />
+          </div>
+          {[0, 1].map(r => (
+            <div key={r} style={{
+              display: 'flex', alignItems: 'center', gap: 14, padding: '12px 16px',
+              borderTop: '1px solid rgba(255, 255, 255, 0.02)',
+            }}>
+              <div style={{ ...shimmer, width: 36, height: 36, borderRadius: 10, animationDelay: `${s * 60 + r * 40}ms` }} />
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <div style={{ ...shimmer, width: 120, height: 12, animationDelay: `${s * 60 + r * 40 + 20}ms` }} />
+                <div style={{ ...shimmer, width: 80, height: 10, animationDelay: `${s * 60 + r * 40 + 40}ms` }} />
+              </div>
+              <div style={{ ...shimmer, width: 70, height: 14, animationDelay: `${s * 60 + r * 40 + 60}ms` }} />
+            </div>
+          ))}
+        </div>
+      ))}
     </div>
   )
 }
@@ -333,10 +1172,18 @@ export function InvoiceList() {
   const [invoices, setInvoices] = useState<InvoiceRow[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [search, setSearch] = useState('')
-  const [selectedInvoice, setSelectedInvoice] = useState<InvoiceRow | null>(null)
+  const [expandedId, setExpandedId] = useState<string | null>(null)
   const [busyInvoiceId, setBusyInvoiceId] = useState<string | null>(null)
-  const searchRef = useRef<HTMLInputElement>(null)
+  const [activeInvoice, setActiveInvoice] = useState<InvoiceRow | null>(null)
+  const [groupMode, setGroupMode] = useState<GroupMode>('status')
+  // Track visual section overrides during drag operations
+  const [sectionOverrides, setSectionOverrides] = useState<Map<string, SectionKey>>(new Map())
+  const draggingRef = useRef(false)
   const seed = useSeedData()
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
+  )
 
   const loadInvoices = useCallback(async () => {
     try {
@@ -352,18 +1199,6 @@ export function InvoiceList() {
 
   useEffect(() => { void loadInvoices() }, [loadInvoices])
 
-  // / to focus search
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === '/' && document.activeElement?.tagName !== 'INPUT') {
-        e.preventDefault()
-        searchRef.current?.focus()
-      }
-    }
-    window.addEventListener('keydown', handler)
-    return () => window.removeEventListener('keydown', handler)
-  }, [])
-
   const allInvoices = useMemo(() => {
     if (seed.active && seed.data?.invoices) return seed.data.invoices as InvoiceRow[]
     return invoices
@@ -375,11 +1210,22 @@ export function InvoiceList() {
     return allInvoices.filter(inv =>
       inv.invoice_number.toLowerCase().includes(q) ||
       (inv.client_name || '').toLowerCase().includes(q) ||
-      inv.status.includes(q)
+      inv.status.includes(q) ||
+      (inv.project_reference || '').toLowerCase().includes(q)
     )
   }, [allInvoices, search])
 
-  const grouped = useMemo(() => groupBySection(filtered), [filtered])
+  const grouped = useMemo(() => groupBySection(filtered, sectionOverrides), [filtered, sectionOverrides])
+  const clientGroups = useMemo(() => groupByClient(filtered), [filtered])
+
+  // Build a lookup: invoiceId → current visual section (respecting overrides)
+  const invoiceSectionLookup = useMemo(() => {
+    const map = new Map<string, SectionKey>()
+    for (const [key, items] of Object.entries(grouped)) {
+      for (const inv of items) map.set(inv.id, key as SectionKey)
+    }
+    return map
+  }, [grouped])
 
   const stats = useMemo(() => {
     const unpaid = allInvoices.filter(i => i.status !== 'paid' && i.status !== 'cancelled')
@@ -423,7 +1269,7 @@ export function InvoiceList() {
       else if (status === 'cancelled') toast('success', 'Invoice cancelled.')
       else toast('success', 'Invoice updated.')
       await loadInvoices()
-      if (selectedInvoice?.id === invoiceId) setSelectedInvoice(null)
+      setExpandedId(null)
     } catch (err) {
       toast('error', err instanceof Error ? err.message : 'Failed to update')
     } finally {
@@ -431,133 +1277,224 @@ export function InvoiceList() {
     }
   }
 
-  if (isLoading) return <SkeletonTable rows={6} cols={4} />
+  function handleToggleExpand(id: string) {
+    setExpandedId(prev => prev === id ? null : id)
+  }
+
+  function handleDragStart(event: DragStartEvent) {
+    draggingRef.current = true
+    setExpandedId(null)
+    const inv = filtered.find(i => i.id === event.active.id)
+    if (inv) setActiveInvoice(inv)
+  }
+
+  function handleDragOver(event: DragOverEvent) {
+    const { active, over } = event
+    if (!over) return
+
+    const activeId = active.id as string
+    const overId = over.id as string
+
+    // Determine the target section
+    const targetSection = resolveTargetSection(overId, invoiceSectionLookup)
+    if (!targetSection) return
+
+    // Only allow drops on droppable sections
+    const sectionDef = SECTIONS.find(s => s.key === targetSection)
+    if (!sectionDef?.droppable) return
+
+    // Get current visual section of the active item
+    const currentSection = sectionOverrides.get(activeId) ?? (invoiceSectionLookup.get(activeId) || getSection(filtered.find(i => i.id === activeId)!))
+
+    if (currentSection !== targetSection) {
+      // Visually move the item to the target section
+      setSectionOverrides(prev => {
+        const next = new Map(prev)
+        next.set(activeId, targetSection)
+        return next
+      })
+    }
+  }
+
+  function handleDragEnd(event: DragEndEvent) {
+    draggingRef.current = false
+    setActiveInvoice(null)
+
+    const { active, over } = event
+    // Clear visual overrides
+    const overrideSection = sectionOverrides.get(active.id as string)
+    setSectionOverrides(new Map())
+
+    if (!over) return
+
+    const overId = over.id as string
+    const activeId = active.id as string
+
+    // Determine target section from override (drag-over) or from where we dropped
+    const targetSection = overrideSection ?? resolveTargetSection(overId, invoiceSectionLookup)
+    if (!targetSection) return
+
+    const targetStatus = SECTION_STATUS_MAP[targetSection]
+    if (!targetStatus) return
+
+    const invoice = filtered.find(i => i.id === activeId)
+    if (!invoice) return
+
+    // Don't mutate if already in this status
+    const currentSection = getSection(invoice)
+    if (currentSection === targetSection) return
+
+    void mutateStatus(invoice.id, targetStatus)
+  }
+
+  function handleDragCancel() {
+    draggingRef.current = false
+    setActiveInvoice(null)
+    setSectionOverrides(new Map())
+  }
+
+  if (isLoading) return <InvoiceSkeleton />
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      {/* Animation keyframes */}
-      <style>{`
-        @keyframes bb-inv-section {
-          from { opacity: 0; transform: translateY(8px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes bb-inv-row {
-          from { opacity: 0; transform: translateX(-6px); }
-          to { opacity: 1; transform: translateX(0); }
-        }
-      `}</style>
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCorners}
+      onDragStart={handleDragStart}
+      onDragOver={handleDragOver}
+      onDragEnd={handleDragEnd}
+      onDragCancel={handleDragCancel}
+    >
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <style>{`
+          @keyframes bb-inv-section {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+          @keyframes bb-inv-row {
+            from { opacity: 0; transform: translateX(-4px); }
+            to { opacity: 1; transform: translateX(0); }
+          }
+          @keyframes bb-inv-detail-enter {
+            from { opacity: 0; transform: translateY(-4px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+        `}</style>
 
-      {/* Summary */}
-      <InvoiceSummaryBar {...stats} />
+        <InvoiceSummaryBar {...stats} />
 
-      {/* Search + Export */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <div style={{ position: 'relative', flex: 1 }}>
-          <Search
-            size={14}
+        {/* Search + Group Toggle + Export */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ position: 'relative', flex: 1 }}>
+            <Search
+              size={14}
+              style={{
+                position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)',
+                color: 'var(--text-dim)', pointerEvents: 'none',
+              }}
+            />
+            <input
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search invoices..."
+              style={{
+                width: '100%', padding: '10px 16px 10px 34px', borderRadius: 10,
+                border: 'none', background: 'rgba(255, 255, 255, 0.04)',
+                color: 'var(--text-primary)', fontSize: 14, outline: 'none',
+                transition: `background 80ms ${SNAP}`,
+              }}
+              onFocus={e => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.06)' }}
+              onBlur={e => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)' }}
+            />
+          </div>
+
+          {/* Group mode toggle */}
+          <button
+            onClick={() => setGroupMode(m => m === 'status' ? 'client' : 'status')}
+            title={groupMode === 'status' ? 'Group by client' : 'Group by status'}
             style={{
-              position: 'absolute',
-              left: 12,
-              top: '50%',
-              transform: 'translateY(-50%)',
-              color: 'var(--text-dim)',
-              pointerEvents: 'none',
-            }}
-          />
-          <input
-            ref={searchRef}
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Search invoices..."
-            style={{
-              width: '100%',
-              padding: '10px 40px 10px 34px',
-              borderRadius: 10,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              width: 36, height: 36, borderRadius: 10, cursor: 'pointer',
               border: 'none',
-              background: 'rgba(255, 255, 255, 0.04)',
-              color: 'var(--text-primary)',
-              fontSize: 14,
-              outline: 'none',
-              transition: 'background 120ms ease',
+              background: groupMode === 'client' ? 'rgba(59, 130, 246, 0.12)' : 'rgba(255, 255, 255, 0.04)',
+              color: groupMode === 'client' ? '#93c5fd' : 'var(--text-dim)',
+              transition: `all 80ms ${SNAP}`,
             }}
-            onFocus={e => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.06)' }}
-            onBlur={e => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)' }}
-          />
-          <kbd style={{
-            position: 'absolute',
-            right: 10,
-            top: '50%',
-            transform: 'translateY(-50%)',
-            fontSize: 10,
-            color: 'var(--text-dim)',
-            background: 'rgba(255, 255, 255, 0.06)',
-            padding: '2px 6px',
-            borderRadius: 4,
-            fontFamily: 'var(--font-mono)',
-          }}>
-            /
-          </kbd>
+          >
+            {groupMode === 'status' ? <Users size={15} /> : <LayoutList size={15} />}
+          </button>
+
+          <button
+            onClick={() => exportCsv(filtered)}
+            title="Export CSV"
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              width: 36, height: 36, borderRadius: 10, cursor: 'pointer',
+              border: 'none', background: 'rgba(255, 255, 255, 0.04)',
+              color: 'var(--text-dim)', transition: `all 80ms ${SNAP}`,
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'
+              e.currentTarget.style.color = 'var(--text-secondary)'
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)'
+              e.currentTarget.style.color = 'var(--text-dim)'
+            }}
+          >
+            <Download size={15} />
+          </button>
         </div>
 
-        <button
-          onClick={() => exportCsv(filtered)}
-          title="Export CSV"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: 36,
-            height: 36,
-            borderRadius: 10,
-            cursor: 'pointer',
-            border: 'none',
-            background: 'rgba(255, 255, 255, 0.04)',
-            color: 'var(--text-dim)',
-            transition: 'all 80ms ease',
-          }}
-          onMouseEnter={e => {
-            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'
-            e.currentTarget.style.color = 'var(--text-secondary)'
-          }}
-          onMouseLeave={e => {
-            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)'
-            e.currentTarget.style.color = 'var(--text-dim)'
-          }}
-        >
-          <Download size={15} />
-        </button>
+        {/* Content */}
+        {filtered.length === 0 ? (
+          <EmptyState
+            icon={<ReceiptText size={40} />}
+            title={search ? 'No matching invoices' : 'No invoices yet'}
+            description={search ? 'Try a different search term.' : 'Create your first invoice to get started.'}
+          />
+        ) : groupMode === 'status' ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {SECTIONS.map((s, i) => (
+              <InvoiceSection
+                key={s.key}
+                sectionKey={s.key}
+                label={s.label}
+                accent={s.accent}
+                invoices={grouped[s.key]}
+                defaultOpen={s.defaultOpen}
+                droppable={s.droppable}
+                delay={i * 50}
+                expandedId={expandedId}
+                onToggleExpand={handleToggleExpand}
+                onAction={(id, status) => void mutateStatus(id, status)}
+                busy={!!busyInvoiceId}
+              />
+            ))}
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {clientGroups.map((g, i) => (
+              <ClientGroupSection
+                key={g.name}
+                name={g.name}
+                invoices={g.invoices}
+                delay={i * 50}
+                expandedId={expandedId}
+                onToggleExpand={handleToggleExpand}
+                onAction={(id, status) => void mutateStatus(id, status)}
+                busy={!!busyInvoiceId}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* Content */}
-      {filtered.length === 0 ? (
-        <EmptyState
-          icon={<ReceiptText size={40} />}
-          title={search ? 'No matching invoices' : 'No invoices yet'}
-          description={search ? 'Try a different search term.' : 'Create your first invoice to get started.'}
-        />
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          {SECTIONS.map((s, i) => (
-            <InvoiceSection
-              key={s.key}
-              label={s.label}
-              accent={s.accent}
-              invoices={grouped[s.key]}
-              defaultOpen={s.defaultOpen}
-              delay={i * 60}
-              onRowClick={setSelectedInvoice}
-            />
-          ))}
-        </div>
-      )}
-
-      {/* Detail Drawer */}
-      <InvoiceDetailDrawer
-        invoice={selectedInvoice}
-        onClose={() => setSelectedInvoice(null)}
-        onAction={(id, status) => void mutateStatus(id, status)}
-        busy={!!busyInvoiceId}
-      />
-    </div>
+      <DragOverlay dropAnimation={{
+        duration: 150,
+        easing: SPRING,
+      }}>
+        {activeInvoice ? <DragGhost invoice={activeInvoice} /> : null}
+      </DragOverlay>
+    </DndContext>
   )
 }

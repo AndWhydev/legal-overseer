@@ -169,12 +169,21 @@ export class EmailTransport implements ConversationTransport {
     }
 
     try {
-      // threadId is the email address
-      // Use sendApprovalEmail for structured email or implement generic send
-      // For now, log that we would send via Resend
-      logger.info(`[EmailTransport] Would send email to ${threadId}: ${content.substring(0, 50)}...`)
-      // In production, implement via Resend API directly if needed
-      // For now, rely on sendApprovalEmail helper or create a generic sendEmail
+      const { Resend } = await import('resend')
+      const resend = new Resend(process.env.RESEND_API_KEY)
+      const fromEmail = process.env.NOTIFICATION_FROM_EMAIL || 'noreply@bitbit.app'
+
+      const isHtml = options?.formatting === 'html' || content.includes('<')
+      const { error } = await resend.emails.send({
+        from: fromEmail,
+        to: [threadId],
+        subject: 'BitBit Response',
+        ...(isHtml ? { html: content } : { text: content }),
+      })
+
+      if (error) {
+        logger.warn('[EmailTransport] Resend error:', error)
+      }
     } catch (err) {
       logger.warn('[EmailTransport] Failed to send email:', err)
     }

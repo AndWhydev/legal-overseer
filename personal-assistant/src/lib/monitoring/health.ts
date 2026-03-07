@@ -27,7 +27,7 @@ async function checkDatabaseConnectivity(): Promise<HealthCheck> {
 
   try {
     const supabase = getServiceClient()
-    const { error } = await supabase.from('organizations').select('id').limit(1)
+    const { error } = await supabase.from('organisations').select('id').limit(1)
     const latencyMs = Date.now() - startedAt
 
     if (error) {

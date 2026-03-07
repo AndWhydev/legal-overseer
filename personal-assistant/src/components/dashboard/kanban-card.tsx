@@ -1,6 +1,5 @@
 'use client'
 
-import { useRef } from 'react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { X } from 'lucide-react'
@@ -11,6 +10,13 @@ interface KanbanCardProps {
   task: Task
   onEdit?: (task: Task) => void
   onArchive?: (task: Task) => void
+}
+
+const priorityGlass: Record<string, { bg: string; shadow: string }> = {
+  critical: { bg: 'rgba(15, 20, 30, 0.45)', shadow: '0 2px 8px rgba(0, 0, 0, 0.15)' },
+  high:     { bg: 'rgba(15, 20, 30, 0.38)', shadow: '0 1px 4px rgba(0, 0, 0, 0.12)' },
+  medium:   { bg: 'rgba(15, 20, 30, 0.3)',  shadow: '0 1px 2px rgba(0, 0, 0, 0.08)' },
+  low:      { bg: 'rgba(15, 20, 30, 0.22)', shadow: '0 1px 1px rgba(0, 0, 0, 0.05)' },
 }
 
 function timeAgo(dateStr: string): string {
@@ -41,9 +47,12 @@ export function KanbanCard({ task, onEdit, onArchive }: KanbanCardProps) {
 
   const tags = (task.metadata?.tags as string[]) || []
   const agentStatus = task.metadata?.agentStatus as 'working' | 'done' | 'error' | undefined
+  const glass = priorityGlass[task.priority] || priorityGlass.medium
+  const isOptimistic = task.id.startsWith('temp-')
 
-  // Track pointer movement to distinguish click from drag
-  const pointerStart = useRef<{ x: number; y: number } | null>(null)
+  const agentGlow = task.assigned_to && agentStatus === 'working'
+    ? ', 0 0 8px rgba(148, 163, 184, 0.1)'
+    : ''
 
   return (
     <div
@@ -51,39 +60,33 @@ export function KanbanCard({ task, onEdit, onArchive }: KanbanCardProps) {
       {...attributes}
       {...listeners}
       className="card-lift"
-      onPointerDown={(e) => { pointerStart.current = { x: e.clientX, y: e.clientY } }}
-      onPointerUp={(e) => {
-        if (!pointerStart.current || !onEdit) return
-        const dx = Math.abs(e.clientX - pointerStart.current.x)
-        const dy = Math.abs(e.clientY - pointerStart.current.y)
-        // Only open edit if pointer barely moved (not a drag)
-        if (dx < 4 && dy < 4) onEdit(task)
-        pointerStart.current = null
-      }}
+      onClick={() => onEdit?.(task)}
       style={{
         borderRadius: 14,
-        padding: '14px 16px',
-        background: 'rgba(15, 20, 30, 0.3)',
+        padding: '10px 12px',
+        background: glass.bg,
         backdropFilter: 'blur(12px) saturate(1.1)',
         WebkitBackdropFilter: 'blur(12px) saturate(1.1)',
         boxShadow: isDragging
           ? '0 16px 48px rgba(0, 0, 0, 0.4)'
-          : '0 1px 2px rgba(0, 0, 0, 0.1)',
-        cursor: isDragging ? 'grabbing' : 'pointer',
+          : glass.shadow + agentGlow,
+        cursor: isDragging ? 'grabbing' : 'grab',
         position: 'relative',
-        opacity: isDragging ? 0.5 : 1,
+        opacity: isDragging ? 0.5 : isOptimistic ? 0.7 : 1,
+        userSelect: 'none',
+        WebkitUserSelect: 'none' as const,
         ...dndStyle,
         transition: [dndStyle.transition, 'box-shadow 0.2s ease, opacity 0.2s ease'].filter(Boolean).join(', '),
-      }}
+      } as React.CSSProperties}
     >
-      {/* Archive button (top-right, show on hover) */}
+      {/* Archive (show on hover) */}
       {onArchive && (
         <div
           className="kanban-card-actions"
           style={{
             position: 'absolute',
-            right: 10,
-            top: 10,
+            right: 8,
+            top: 8,
             opacity: 0,
             transition: 'opacity 0.15s',
           }}
@@ -92,7 +95,7 @@ export function KanbanCard({ task, onEdit, onArchive }: KanbanCardProps) {
             onClick={(e) => { e.stopPropagation(); onArchive(task) }}
             style={{
               borderRadius: 8,
-              padding: 4,
+              padding: 3,
               border: 'none',
               background: 'rgba(255, 255, 255, 0.06)',
               color: '#475569',
@@ -103,7 +106,7 @@ export function KanbanCard({ task, onEdit, onArchive }: KanbanCardProps) {
             onMouseEnter={(e) => { e.currentTarget.style.color = '#94A3B8' }}
             onMouseLeave={(e) => { e.currentTarget.style.color = '#475569' }}
           >
-            <X style={{ width: 12, height: 12 }} />
+            <X style={{ width: 11, height: 11 }} />
           </button>
         </div>
       )}
@@ -119,18 +122,18 @@ export function KanbanCard({ task, onEdit, onArchive }: KanbanCardProps) {
         WebkitBoxOrient: 'vertical',
         overflow: 'hidden',
         margin: 0,
-        paddingRight: 40,
+        paddingRight: 20,
       }}>
         {task.title}
       </h4>
 
       {task.description && (
         <p style={{
-          margin: '4px 0 0',
-          fontSize: 12,
+          margin: '3px 0 0',
+          fontSize: 11,
           color: '#64748B',
           display: '-webkit-box',
-          WebkitLineClamp: 2,
+          WebkitLineClamp: 1,
           WebkitBoxOrient: 'vertical',
           overflow: 'hidden',
           lineHeight: 1.35,
@@ -139,56 +142,49 @@ export function KanbanCard({ task, onEdit, onArchive }: KanbanCardProps) {
         </p>
       )}
 
-      {/* Tags and priority row */}
-      <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-        {/* Priority pill — matches chat suggestion chip material */}
+      {/* Unified bottom row: pills + time · agent */}
+      <div style={{ marginTop: 7, display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap' }}>
         <span style={{
           fontSize: 10,
           fontWeight: 500,
-          padding: '3px 10px',
+          padding: '2px 8px',
           borderRadius: 20,
           background: 'rgba(10, 14, 23, 0.42)',
           boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.06)',
           color: '#94A3B8',
-          lineHeight: '16px',
+          lineHeight: '15px',
         }}>
           {task.priority}
         </span>
-
-        {/* Tag pills — same glass chip material */}
         {tags.map((tag) => (
           <span
             key={tag}
             style={{
               fontSize: 10,
               fontWeight: 500,
-              padding: '3px 10px',
+              padding: '2px 8px',
               borderRadius: 20,
               background: 'rgba(10, 14, 23, 0.42)',
               boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.06)',
               color: '#94A3B8',
-              lineHeight: '16px',
+              lineHeight: '15px',
             }}
           >
             {tag}
           </span>
         ))}
-      </div>
-
-      {/* Bottom row: timeAgo + agent */}
-      <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-        <span style={{ fontSize: 9, color: 'rgba(148, 163, 184, 0.6)' }}>
-          {timeAgo(task.updated_at)}
+        <span style={{ fontSize: 9, color: 'rgba(148, 163, 184, 0.5)', marginLeft: 2 }}>
+          · {timeAgo(task.updated_at)}
         </span>
         {task.assigned_to && (
-          <AgentBadge agent={task.assigned_to} status={agentStatus} />
+          <span style={{ marginLeft: 'auto' }}>
+            <AgentBadge agent={task.assigned_to} status={agentStatus} />
+          </span>
         )}
       </div>
 
-      {/* Hover action visibility via inline style tag */}
       <style>{`
         .card-lift:hover .kanban-card-actions { opacity: 1 !important; }
-        .card-lift:hover { transform: translateY(-2px); }
       `}</style>
     </div>
   )

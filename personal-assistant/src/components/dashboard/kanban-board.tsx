@@ -13,7 +13,6 @@ import {
   closestCorners,
 } from '@dnd-kit/core'
 import { arrayMove } from '@dnd-kit/sortable'
-import { Plus } from 'lucide-react'
 import { KanbanColumn } from './kanban-column'
 import { KanbanCard } from './kanban-card'
 import { CompletionAnimation } from './completion-animation'
@@ -56,9 +55,19 @@ export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: Kanb
       if (draggingRef.current) return
       if (payload.eventType === 'INSERT') {
         const newTask = payload.new as Task
-        setTasks((prev) =>
-          prev.some((t) => t.id === newTask.id) ? prev : [...prev, newTask]
-        )
+        setTasks((prev) => {
+          if (prev.some((t) => t.id === newTask.id)) return prev
+          // Replace temp task if matching title+column
+          const tempIdx = prev.findIndex(t =>
+            t.id.startsWith('temp-') && t.title === newTask.title && t.column_id === newTask.column_id
+          )
+          if (tempIdx >= 0) {
+            const next = [...prev]
+            next[tempIdx] = newTask
+            return next
+          }
+          return [...prev, newTask]
+        })
       } else if (payload.eventType === 'UPDATE') {
         const updated = payload.new as Task
         if (updated.status === 'archived') {
@@ -188,10 +197,28 @@ export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: Kanb
     }
   }
 
-  function handleAddTask(columnId: string) {
-    setEditingTask(null)
-    setDefaultColumnId(columnId)
-    setDialogOpen(true)
+  function handleQuickAddTask(columnId: string, title: string) {
+    const tempId = `temp-${Date.now()}`
+    const position = getColumnTasks(columnId).length
+    const now = new Date().toISOString()
+
+    // Instantly add to state
+    setTasks((prev) => [...prev, {
+      id: tempId, title, description: null, column_id: columnId,
+      priority: 'medium', position, status: 'pending',
+      assigned_to: null, metadata: {}, org_id: '',
+      created_at: now, updated_at: now,
+    } as Task])
+
+    // Fire API, reconcile
+    fetch('/api/tasks', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, column_id: columnId, priority: 'medium', position }),
+    })
+      .then(r => r.ok ? r.json() : Promise.reject())
+      .then(({ task }) => setTasks(prev => prev.map(t => t.id === tempId ? task : t)))
+      .catch(() => setTasks(prev => prev.filter(t => t.id !== tempId)))
   }
 
   function handleEditTask(task: Task) {
@@ -289,41 +316,12 @@ export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: Kanb
                 key={column.id}
                 column={column}
                 tasks={getColumnTasks(column.id)}
-                totalOrgTasks={tasks.length}
-                onAddTask={handleAddTask}
+                onQuickAdd={handleQuickAddTask}
                 onEditTask={handleEditTask}
                 onArchiveTask={handleArchiveTask}
               />
             ))}
 
-          <button
-            style={{
-              display: 'flex',
-              width: 280,
-              flexShrink: 0,
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 6,
-              borderRadius: 14,
-              border: 'none',
-              background: 'rgba(255, 255, 255, 0.02)',
-              fontSize: 13,
-              color: '#475569',
-              cursor: 'pointer',
-              transition: 'color 0.15s, background 0.15s',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)';
-              e.currentTarget.style.color = '#94A3B8';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.02)';
-              e.currentTarget.style.color = '#475569';
-            }}
-          >
-            <Plus style={{ width: 16, height: 16 }} />
-            Add Column
-          </button>
         </div>
 
         <DragOverlay>

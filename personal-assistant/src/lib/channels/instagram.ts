@@ -143,7 +143,29 @@ async function resolveAccessToken(
     return creds.access_token
   }
 
-  if (creds.access_token) return creds.access_token
+  // Token is expired or close to expiring — attempt refresh
+  if (creds.access_token) {
+    try {
+      const refreshed = await refreshAccessToken(creds)
+
+      // Persist refreshed token back to channel_credentials if we have a client
+      if (client && orgId && refreshed.access_token) {
+        await client
+          .from('channel_credentials')
+          .update({
+            credentials: refreshed,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('org_id', orgId)
+          .eq('channel', 'instagram')
+      }
+
+      return refreshed.access_token!
+    } catch (err) {
+      logger.warn('[instagram] Token refresh failed, using existing token:', err)
+      return creds.access_token
+    }
+  }
 
   throw new Error('No valid Instagram access token available')
 }
