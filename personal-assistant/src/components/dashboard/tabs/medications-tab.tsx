@@ -30,11 +30,6 @@ function MedicationsTab() {
   if (!isMedicationsEnabled()) {
     return (
       <TabShell>
-        <TabHeader
-          icon={Pill}
-          iconColor="var(--bb-status-warning)"
-          title="Medications"
-        />
         <div className="flex items-center justify-center h-full">
           <div className="text-center">
             <p className="text-sm text-muted-foreground mb-4">Medications feature is not available</p>
@@ -95,12 +90,6 @@ function MedicationsTab() {
 
   return (
     <TabShell>
-      <TabHeader
-        icon={Pill}
-        iconColor="var(--bb-status-success)"
-        title="Medications"
-      />
-
       <div className="flex flex-col h-full">
         <header className="flex items-center justify-between border-b border-border px-6 py-4">
           <div>

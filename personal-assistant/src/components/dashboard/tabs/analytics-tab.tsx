@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { TabSkeleton } from './tab-skeleton'
 import { TabShell } from '@/components/ui/tab-shell'
-import { TabHeader } from '@/components/ui/tab-header'
 import {
   DollarSign,
   Users,
@@ -105,7 +104,6 @@ function AnalyticsTab() {
   if (error || !data) {
     return (
       <TabShell>
-        <TabHeader icon={BarChart3} iconColor="var(--bb-blue)" title="Analytics" />
         <div className="p-6">
           <p style={{ color: 'var(--text-secondary)' }}>
             {error ?? 'No analytics data available. Connect your billing to see MRR metrics.'}
@@ -119,8 +117,6 @@ function AnalyticsTab() {
 
   return (
     <TabShell>
-      <TabHeader icon={BarChart3} iconColor="var(--bb-blue)" title="Analytics" />
-
       <div className="p-6 space-y-8" style={{ color: 'var(--text-primary)' }}>
 
         {/* MRR Stats */}

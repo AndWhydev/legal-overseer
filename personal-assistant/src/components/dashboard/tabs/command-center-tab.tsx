@@ -4,10 +4,9 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useRealtimeSubscription } from '@/lib/realtime/supabase-realtime';
 import { StatCard, StatusBadge, ProcessPipeline, TimelineBar } from '@/components/ui/data-viz';
-import { AlertCircle, Clock, ShieldCheck, Zap, Handshake, Users, CheckCircle2, Link as LinkIcon, TrendingUp, Calendar, ReceiptText, MessageSquare, BellOff, Inbox, Activity, LayoutDashboard } from 'lucide-react';
+import { AlertCircle, Clock, ShieldCheck, Zap, Handshake, Users, CheckCircle2, Link as LinkIcon, TrendingUp, Calendar, ReceiptText, MessageSquare, BellOff, Inbox, Activity } from 'lucide-react';
 import { TabSkeleton } from './tab-skeleton';
 import { TabShell } from '@/components/ui/tab-shell';
-import { TabHeader } from '@/components/ui/tab-header';
 import { SectionCard } from '@/components/ui/section-card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { logger } from '@/lib/core/logger';
@@ -166,14 +165,6 @@ function CommandCenterTab() {
 
   return (
     <TabShell variant="fixed">
-      {/* Header */}
-      <TabHeader
-        icon={<LayoutDashboard size={22} />}
-        iconColor="var(--bb-orange)"
-        title="Command Center"
-        subtitle="What needs attention NOW."
-      />
-
       {/* Quick Actions Bar */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <button

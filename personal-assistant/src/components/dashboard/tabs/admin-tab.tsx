@@ -1,10 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Shield } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { createClient } from '@/lib/supabase/client';
-import { TabHeader } from '@/components/ui/tab-header';
 import { TabShell } from '@/components/ui/tab-shell';
 import { TabSkeleton } from './tab-skeleton';
 import { AlertBanner } from '@/components/ui/alert-banner';
@@ -165,7 +163,6 @@ export default function AdminTab() {
   if (!isAdmin) {
     return (
       <TabShell>
-        <TabHeader icon={Shield} iconColor="var(--bb-status-error)" title="Admin" />
         <div style={{ padding: 32 }}>
           <AlertBanner variant="error">
             <div>
@@ -180,7 +177,6 @@ export default function AdminTab() {
 
   return (
     <TabShell>
-      <TabHeader icon={<Shield size={22} />} iconColor="var(--bb-status-error)" title="Admin" />
       <div style={{ padding: 24, maxWidth: 900, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 24 }}>
 
       {/* System Health */}

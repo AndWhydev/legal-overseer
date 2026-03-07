@@ -1,9 +1,8 @@
 'use client'
 
 import React, { useCallback, useEffect, useState } from 'react'
-import { Film, Copy, Check, Loader2, ChevronDown, ChevronRight } from 'lucide-react'
+import { Copy, Check, Loader2, ChevronDown, ChevronRight } from 'lucide-react'
 import { TabShell } from '@/components/ui/tab-shell'
-import { TabHeader } from '@/components/ui/tab-header'
 
 // ---------------------------------------------------------------------------
 // Types (mirrored from ad-script-gen)
@@ -457,7 +456,6 @@ function AdScriptsTab() {
   if (isLoading) {
     return (
       <TabShell>
-        <TabHeader icon={Film} iconColor="var(--bb-orange)" title="Ad Scripts" />
         <div className="flex flex-col gap-6 p-6">
           <div className="h-8 w-48 rounded bg-muted animate-pulse" />
           <div className="h-48 rounded-xl bg-muted animate-pulse" />
@@ -468,8 +466,6 @@ function AdScriptsTab() {
 
   return (
     <TabShell>
-      <TabHeader icon={Film} iconColor="var(--bb-orange)" title="Ad Scripts" />
-
       <div className="flex flex-col gap-6 p-6">
         {/* Generate Form */}
         <GenerateForm
