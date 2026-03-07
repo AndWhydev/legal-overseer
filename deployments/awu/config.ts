@@ -92,51 +92,12 @@ export const channels = {
 
 /**
  * AWU client roster — deployment targets for agent testing.
+ *
+ * Client contact details and demo credentials are stored in the contacts table in Supabase.
+ * See migration_054_contact_schema.sql for the full schema.
  */
 export const clients = [
-  {
-    name: 'White House RE',
-    contact: 'Sezer Yunus',
-    status: 'active',
-    project_type: 'website',
-    notes: 'WordPress + VaultRE. 6 changes completed, invoiced $200.',
-  },
-  {
-    name: 'Event Hero',
-    contact: 'Harun',
-    status: 'scoping',
-    project_type: 'marketplace',
-    budget: '$10-12k MVP',
-    notes: 'Scope doc stuck behind SharePoint access. Need .docx from Harun.',
-  },
-  {
-    name: 'BEPOP',
-    contact: 'Dima, Rawya',
-    status: 'proposal_sent',
-    project_type: 'marketplace',
-    budget: '$7-15k',
-    notes: '3 tiers quoted. NDA: Andy, Dima, Rawya.',
-  },
-  {
-    name: 'SexPay',
-    contact: undefined,
-    status: 'quote_pending',
-    project_type: 'platform',
-    budget: '$7k',
-    notes: 'Adult content platform. Supabase + Vercel + Bunny CDN. Need ABN.',
-  },
-  {
-    name: 'Ozy Homes',
-    contact: 'Ghazi',
-    status: 'active',
-    project_type: 'ads',
-    notes: 'Ad materials using Ghazi branding.',
-  },
-  {
-    name: 'Salken Engineering / Club Team Manager',
-    contact: 'Marquis Abela',
-    status: 'active',
-    project_type: 'mobile_app',
-    notes: 'Client frustrated at month 5. Demo: harry.thomas@pbfc.com / demo1234',
-  },
+  // Clients are loaded from the database contacts table at runtime.
+  // This configuration file is no longer used for production client data.
+  // Reference the contacts table for contact names, emails, phone numbers, and credentials.
 ]

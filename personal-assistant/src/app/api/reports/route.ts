@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createClient as createServerClient } from '@/lib/supabase/server'
 import {
   generateMonthlyReport,
   generateAgentROIReport,
@@ -9,25 +9,47 @@ import { generateReportPDF } from '@/lib/reports/pdf-report'
 
 export const dynamic = 'force-dynamic'
 
-function getSupabase() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL ?? '',
-    process.env.SUPABASE_SERVICE_ROLE_KEY ?? '',
-  )
-}
-
 // POST — generate a new report
 export async function POST(request: Request) {
   try {
-    const body = await request.json()
-    const { report_type, period, org_id } = body as {
-      report_type: 'monthly' | 'agent-roi' | 'pipeline'
-      period?: { from?: string; to?: string; month?: string }
-      org_id?: string
+    const supabase = await createServerClient()
+    if (!supabase) {
+      return NextResponse.json(
+        { error: 'Supabase not configured' },
+        { status: 503 }
+      )
     }
 
-    const orgId = org_id ?? process.env.DEFAULT_ORG_ID ?? '00000000-0000-0000-0000-000000000000'
-    const supabase = getSupabase()
+    // Verify user is authenticated
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
+    // Get user's org
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('org_id')
+      .eq('id', user.id)
+      .single()
+
+    if (!profile?.org_id) {
+      return NextResponse.json(
+        { error: 'User organization not found' },
+        { status: 400 }
+      )
+    }
+
+    const body = await request.json()
+    const { report_type, period } = body as {
+      report_type: 'monthly' | 'agent-roi' | 'pipeline'
+      period?: { from?: string; to?: string; month?: string }
+    }
+
+    const orgId = profile.org_id
 
     let reportData
     switch (report_type) {
@@ -102,10 +124,40 @@ export async function POST(request: Request) {
 
 // GET — list reports or download a specific one
 export async function GET(request: Request) {
+  const supabase = await createServerClient()
+  if (!supabase) {
+    return NextResponse.json(
+      { error: 'Supabase not configured' },
+      { status: 503 }
+    )
+  }
+
+  // Verify user is authenticated
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return NextResponse.json(
+      { error: 'Unauthorized' },
+      { status: 401 }
+    )
+  }
+
+  // Get user's org
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('org_id')
+    .eq('id', user.id)
+    .single()
+
+  if (!profile?.org_id) {
+    return NextResponse.json(
+      { error: 'User organization not found' },
+      { status: 400 }
+    )
+  }
+
   const { searchParams } = new URL(request.url)
   const id = searchParams.get('id')
-  const orgId = searchParams.get('org_id') ?? process.env.DEFAULT_ORG_ID ?? '00000000-0000-0000-0000-000000000000'
-  const supabase = getSupabase()
+  const orgId = profile.org_id
 
   if (id) {
     // Download specific report

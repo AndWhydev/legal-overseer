@@ -199,7 +199,9 @@ export async function middleware(request: NextRequest) {
   }
 
   // Skip auth redirect but keep Supabase wired (local dev with data)
-  if (process.env.DEV_BYPASS_AUTH === 'true') {
+  // Check both prefixed and unprefixed variants (edge runtime only sees NEXT_PUBLIC_*)
+  const bypassAuth = process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH ?? process.env.DEV_BYPASS_AUTH
+  if (bypassAuth === 'true') {
     if (process.env.NODE_ENV === 'production') {
       console.error('CRITICAL: DEV_BYPASS_AUTH is enabled in production! Auth bypass disabled.')
     } else {

@@ -37,13 +37,18 @@ export class WebhookVerificationError extends Error {
 }
 
 function getStripeClient(): StripeWebhookClient {
+  const stripeKey = process.env.STRIPE_SECRET_KEY
+  if (!stripeKey) {
+    throw new Error('STRIPE_SECRET_KEY environment variable is required')
+  }
+
   if (!stripeConstructor) {
     const stripeModule = require('stripe') as StripeConstructor | { default: StripeConstructor }
     stripeConstructor = typeof stripeModule === 'function' ? stripeModule : stripeModule.default
   }
 
   // constructEvent is local signature verification and does not require API calls.
-  return new stripeConstructor(process.env.STRIPE_SECRET_KEY || 'sk_test_webhook_verification')
+  return new stripeConstructor(stripeKey)
 }
 
 function normalizeHexSignature(signature: string): string {

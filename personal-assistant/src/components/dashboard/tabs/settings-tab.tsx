@@ -47,6 +47,12 @@ interface OrgSettings {
   escalation_email: string;
 }
 
+interface UserProfile {
+  display_name: string;
+  email: string;
+  organization: string;
+}
+
 // ─── Toggle Switch ───────────────────────────────────────────────────────────
 
 function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label: string }) {
@@ -591,6 +597,7 @@ function SettingsTab() {
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [supabase, setSupabase] = useState<SupabaseClient | null>(null);
   const [saving, setSaving] = useState(false);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [settings, setSettings] = useState<OrgSettings>({
     daily_cost_limit: 10,
     monthly_cost_limit: 200,
@@ -612,14 +619,26 @@ function SettingsTab() {
     if (client) setSupabase(client);
   }, []);
 
-  // Load org settings
+  // Load user profile and org settings
   useEffect(() => {
     if (!supabase) return;
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-      const { data: profile } = await supabase.from('profiles').select('org_id').eq('id', user.id).single();
+
+      // Load user profile
+      const { data: profile } = await supabase.from('profiles').select('org_id, display_name').eq('id', user.id).single();
+      if (profile) {
+        setUserProfile({
+          display_name: profile.display_name || user.user_metadata?.full_name || 'User',
+          email: user.email || '',
+          organization: profile.org_id || '',
+        });
+      }
+
       if (!profile?.org_id) return;
+
+      // Load org settings
       const { data: orgSettings } = await supabase.from('org_settings').select('*').eq('org_id', profile.org_id).single();
       if (orgSettings) {
         setSettings(prev => ({
@@ -746,15 +765,15 @@ function SettingsTab() {
             <CardContent className="flex flex-col gap-4">
               <div>
                 <label className="mb-1.5 block text-sm text-muted-foreground">Display Name</label>
-                <Input defaultValue="Tor Kay" />
+                <Input defaultValue={userProfile?.display_name || 'User'} />
               </div>
               <div>
                 <label className="mb-1.5 block text-sm text-muted-foreground">Email</label>
-                <Input defaultValue="contact@torkay.com" disabled />
+                <Input defaultValue={userProfile?.email || ''} disabled />
               </div>
               <div>
                 <label className="mb-1.5 block text-sm text-muted-foreground">Organization</label>
-                <Input defaultValue="Torkay Digital" disabled />
+                <Input defaultValue={userProfile?.organization || ''} disabled />
               </div>
             </CardContent>
           </Card>

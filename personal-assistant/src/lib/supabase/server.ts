@@ -2,6 +2,10 @@ import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
 export function isDevBypass() {
+  // Never allow dev bypass in production
+  if (process.env.NODE_ENV === 'production') {
+    return false
+  }
   return process.env.DEV_BYPASS_AUTH === 'true'
 }
 

@@ -1,6 +1,17 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
+// Allowlist of fields that can be updated on tasks
+const ALLOWED_TASK_FIELDS = [
+  'title',
+  'description',
+  'status',
+  'priority',
+  'due_date',
+  'assigned_to',
+  'completed_at',
+] as const
+
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -14,9 +25,14 @@ export async function PATCH(
   const { id } = await params
   const body = await request.json()
 
+  // Filter to only allowed fields
+  const filteredBody = Object.fromEntries(
+    Object.entries(body).filter(([key]) => ALLOWED_TASK_FIELDS.includes(key as any))
+  )
+
   const { data, error } = await supabase
     .from('tasks')
-    .update(body)
+    .update(filteredBody)
     .eq('id', id)
     .select()
     .single()
