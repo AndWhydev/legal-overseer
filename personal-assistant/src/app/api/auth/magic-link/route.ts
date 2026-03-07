@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { logger } from '@/lib/core/logger'
+import { normalizeMagicLinkError } from '@/lib/auth/magic-link-error'
 import { buildMagicLinkOtpRequest } from '@/lib/auth/magic-link'
 
 export async function POST(request: Request) {
@@ -59,7 +60,21 @@ export async function POST(request: Request) {
   if (!res.ok) {
     const body = await res.text()
     logger.error('[magic-link] OTP send failed:', body)
-    return NextResponse.json({ error: 'Failed to send sign-in email' }, { status: 500 })
+    const errorResponse = normalizeMagicLinkError(
+      res.status,
+      body,
+      res.headers.get('retry-after'),
+    )
+
+    return NextResponse.json(
+      {
+        error: errorResponse.error,
+        ...(errorResponse.retryAfterSeconds
+          ? { retryAfterSeconds: errorResponse.retryAfterSeconds }
+          : {}),
+      },
+      { status: errorResponse.status },
+    )
   }
 
   return NextResponse.json({ sent: true })
