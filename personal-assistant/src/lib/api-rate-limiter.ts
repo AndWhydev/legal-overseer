@@ -2,6 +2,10 @@
  * Request-level rate limiter for API endpoints.
  * Uses in-memory sliding window per IP. Suitable for single-instance deployments.
  * For multi-instance, migrate to Redis (see task #17).
+ *
+ * NOTE: This rate limiter uses an in-memory Map, which does not persist across
+ * Vercel serverless instances. Acceptable for MVP; migrate to Upstash Redis
+ * for production scale.
  */
 
 interface WindowEntry {
@@ -31,7 +35,9 @@ function scheduleCleanup() {
   }, 60_000)
 
   // Allow process to exit even if cleanup interval is running
-  cleanupHandle.unref()
+  if (typeof cleanupHandle.unref === 'function') {
+    cleanupHandle.unref()
+  }
 }
 
 export interface RateLimitConfig {

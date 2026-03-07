@@ -10,6 +10,8 @@ import {
   CalendarClock,
   type LucideIcon,
 } from 'lucide-react';
+import { useToast } from '@/components/ui/toast';
+import { logger } from '@/lib/core/logger';
 
 interface Connection {
   id: string;
@@ -224,23 +226,32 @@ function ConnectionCard({
 }
 
 export function ConnectionsGrid() {
+  const { toast } = useToast();
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [statuses, setStatuses] = useState<Record<string, ConnectionStatus>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [loadingId, setLoadingId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   // Fetch initial status from API
   useEffect(() => {
     const fetchStatuses = async () => {
       try {
         setIsLoading(true);
+        setError(null);
         const response = await fetch('/api/channels/status');
         if (!response.ok) throw new Error('Failed to fetch status');
 
         const data = (await response.json()) as Record<string, ConnectionStatus>;
         setStatuses(data);
       } catch (err) {
-        console.error('Error fetching connection statuses:', err);
+        const errorMsg = err instanceof Error ? err.message : 'Unknown error';
+        logger.error('Error fetching connection statuses:', { error: errorMsg });
+
+        // Show error toast
+        toast('error', 'Failed to load connection statuses');
+        setError('Failed to load connection statuses. Please refresh the page.');
+
         // Initialize all as disconnected on error
         const initial: Record<string, ConnectionStatus> = {};
         CONNECTIONS.forEach((conn) => {
@@ -253,7 +264,7 @@ export function ConnectionsGrid() {
     };
 
     fetchStatuses();
-  }, []);
+  }, [toast]);
 
   const handleConnect = useCallback(async (id: string) => {
     const connection = CONNECTIONS.find((c) => c.id === id);
@@ -276,15 +287,19 @@ export function ConnectionsGrid() {
         window.location.href = data.redirectUrl;
       } else {
         // For API key: show inline input (would require dialog state in real impl)
-        console.log(`Open API key dialog for ${id}`);
+        logger.info(`Opening API key dialog for ${id}`);
+        toast('info', `API key setup for ${connection.name} coming soon`);
       }
     } catch (err) {
-      console.error(`Error connecting ${id}:`, err);
+      const errorMsg = err instanceof Error ? err.message : 'Unknown error';
+      logger.error(`Error connecting ${id}:`, { error: errorMsg });
+      toast('error', `Failed to connect ${connection?.name || id}`);
       setLoadingId(null);
     }
-  }, []);
+  }, [toast]);
 
   const handleDisconnect = useCallback(async (id: string) => {
+    const connection = CONNECTIONS.find((c) => c.id === id);
     try {
       setLoadingId(id);
 
@@ -301,12 +316,16 @@ export function ConnectionsGrid() {
         ...prev,
         [id]: { connected: false },
       }));
+
+      toast('success', `${connection?.name || id} disconnected`);
     } catch (err) {
-      console.error(`Error disconnecting ${id}:`, err);
+      const errorMsg = err instanceof Error ? err.message : 'Unknown error';
+      logger.error(`Error disconnecting ${id}:`, { error: errorMsg });
+      toast('error', `Failed to disconnect ${connection?.name || id}`);
     } finally {
       setLoadingId(null);
     }
-  }, []);
+  }, [toast]);
 
   // Filter connections by category
   const filtered =
@@ -316,6 +335,21 @@ export function ConnectionsGrid() {
 
   return (
     <div className="space-y-6">
+      {/* Error Banner */}
+      {error && (
+        <div className="bg-red-950/30 border border-red-900/50 rounded-lg p-4 text-sm text-red-200">
+          <div className="flex items-center justify-between gap-2">
+            <span>{error}</span>
+            <button
+              onClick={() => setError(null)}
+              className="text-red-300 hover:text-red-100 transition-colors"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div>
         <h2 className="text-lg font-semibold text-[#F0F0F0]">Connections</h2>

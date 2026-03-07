@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { deleteOrgCredential } from '@/lib/integrations/credentials'
 import { logAuditEvent } from '@/lib/audit/logger'
+import { getActiveOrgId } from '@/lib/tenancy'
 
 export async function POST(request: Request) {
   const supabase = await createClient()
@@ -10,7 +11,7 @@ export async function POST(request: Request) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const orgId = (user.user_metadata?.org_id as string) ?? user.id
+  const orgId = await getActiveOrgId(supabase, user.id)
 
   let body: { channel: string }
   try {

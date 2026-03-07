@@ -91,10 +91,46 @@ function isTokenExpired(expiresAt?: string): boolean {
 }
 
 async function refreshAccessToken(creds: InstagramCredentials): Promise<InstagramCredentials> {
-  // Instagram long-lived tokens don't refresh like OAuth — they expire after 60 days
-  // For now, we assume tokens are manually refreshed via the Meta Business dashboard
-  // In production, implement re-authentication flow
-  throw new Error('Token refresh not implemented — use Meta Business dashboard to refresh')
+  if (!creds.access_token) {
+    throw new Error('No access token to refresh')
+  }
+
+  try {
+    // Meta's long-lived token refresh endpoint
+    const response = await fetch(
+      `https://graph.instagram.com/refresh_access_token?grant_type=ig_refresh_token&access_token=${encodeURIComponent(
+        creds.access_token,
+      )}`,
+    )
+
+    if (!response.ok) {
+      const text = await response.text()
+      throw new Error(`Instagram token refresh failed with status ${response.status}: ${text}`)
+    }
+
+    const data = (await response.json()) as {
+      access_token?: string
+      token_type?: string
+      expires_in?: number
+    }
+
+    if (!data.access_token) {
+      throw new Error('No new access token in refresh response')
+    }
+
+    // Calculate new expiration time (Meta returns expires_in in seconds)
+    const expiresInSeconds = data.expires_in || 5184000 // Default 60 days
+    const newExpiresAt = new Date(Date.now() + expiresInSeconds * 1000).toISOString()
+
+    return {
+      ...creds,
+      access_token: data.access_token,
+      token_expires_at: newExpiresAt,
+    }
+  } catch (err) {
+    console.warn('[instagram] Token refresh failed:', err)
+    throw new Error(`Failed to refresh Instagram token: ${err instanceof Error ? err.message : String(err)}`)
+  }
 }
 
 async function resolveAccessToken(

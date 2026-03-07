@@ -3,74 +3,16 @@
 import React, { useCallback, useRef, useEffect, useState } from 'react';
 import Image from 'next/image';
 import {
-  LayoutDashboard,
-  MessageSquare,
-  Inbox,
-  BellRing,
-  Plug,
-  Pill,
-  Users,
-  Handshake,
-  ReceiptText,
-  ShieldAlert,
-  ShieldCheck,
-  Activity,
-  Film,
-  SearchCheck,
-  FileSearch,
-  FileText,
-  Brain,
-  DollarSign,
-  BarChart3,
-  Wrench,
   Settings,
-  ChevronDown,
-  LogOut,
   User,
+  LogOut,
 } from 'lucide-react';
 import type { TabDef } from './spa-shell';
-import { createClient } from '@/lib/supabase/client';
+import { SidebarRail } from './sidebar-rail';
+import { SidebarPanel } from './sidebar-panel';
 import { useEnabledModules } from '@/lib/modules/use-enabled-modules';
-import type { SupabaseClient } from '@supabase/supabase-js';
-
-// ─── Nav icon mapping ───────────────────────────────────────────────────────
-
-const ICON_MAP: Record<string, React.ElementType> = {
-  dashboard:   LayoutDashboard,
-  chat:        MessageSquare,
-  inbox:       Inbox,
-  'creator-studio': BellRing,
-  connections: Plug,
-  medications: Pill,
-  contacts:    Users,
-  leads:       Handshake,
-  invoices:    ReceiptText,
-  tenders:     FileSearch,
-  sentry:      ShieldAlert,
-  approvals:   ShieldCheck,
-  'ad-scripts': Film,
-  'ai-search': SearchCheck,
-  reports:     FileText,
-  knowledge:   Brain,
-  costs:       DollarSign,
-  analytics:   BarChart3,
-  activity:    Activity,
-  admin:       Wrench,
-  settings:    Settings,
-};
-
-// Note: PRIMARY/ADVANCED tab lists are now driven by composition profiles via useEnabledModules()
-
-// ─── Constants ──────────────────────────────────────────────────────────────
-
-const NAV_ITEM_SIZE = 48;  // px — matches .bb-sidebar__item height
-const NAV_ITEM_GAP = 8;    // px — matches --gap-sm (0.5rem)
-const NAV_ITEM_STRIDE = NAV_ITEM_SIZE + NAV_ITEM_GAP;
-
-// ─── Wheel navigation tuning ─────────────────────────────────────────────
-
-const WHEEL_STEP_INTERVAL = 160; // ms — minimum time between tab switches
-const WHEEL_NOISE_GATE = 8;      // ignore tiny sub-pixel deltas
+import { getCategoryForTab, SIDEBAR_CATEGORIES } from '@/lib/modules/registry';
+import { useBadgeCounts } from '@/hooks/use-badge-counts';
 
 // ─── Props ──────────────────────────────────────────────────────────────────
 
@@ -96,272 +38,83 @@ export function SidebarNav({
   tabs = [],
 }: SidebarNavProps) {
   const sidebarRef = useRef<HTMLElement>(null);
-  const navRef = useRef<HTMLElement>(null);
-  const indicatorRef = useRef<HTMLDivElement>(null);
-  const chevronRef = useRef<HTMLButtonElement>(null);
   const profileMenuRef = useRef<HTMLDivElement>(null);
   const [profileOpen, setProfileOpen] = useState(false);
 
-  // Filter nav items through module gating + composition profile
+  // Module gating + composition profile
   const { modules: enabledModules, composition } = useEnabledModules();
-  const filteredPrimaryTabIds = composition.primaryModules.filter(id => enabledModules.includes(id));
-  const filteredAdvancedTabIds = composition.advancedModules.filter(id => enabledModules.includes(id));
-  const filteredMainTabIds = [...filteredPrimaryTabIds, ...filteredAdvancedTabIds];
 
-  // Progressive disclosure: show/hide advanced tabs
-  const [showAdvanced, setShowAdvanced] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    return localStorage.getItem('bb-show-advanced') === 'true';
-  });
+  // Badge counts via shared hook
+  const badgeCounts = useBadgeCounts('sidebar-badge-counts');
 
-  // State for badge counts
-  const [badgeCounts, setBadgeCounts] = useState({
-    approvals: 0,
-    leads: 0,
-    invoices: 0,
-  });
-  const clientRef = useRef<SupabaseClient | null>(null);
-  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  // Category state
+  const derivedCategory = getCategoryForTab(activeTabId) ?? 'home';
+  const [activeCategory, setActiveCategory] = useState<string>(derivedCategory);
+  const [panelOpen, setPanelOpen] = useState(false);
 
-  // Keep refs for imperative callbacks (avoids re-creating handlers on every state change)
-  const mainTabIdsRef = useRef(filteredMainTabIds);
-  mainTabIdsRef.current = filteredMainTabIds;
-  const activeTabIdRef = useRef(activeTabId);
-  activeTabIdRef.current = activeTabId;
-  const tabsRef = useRef(tabs);
-  tabsRef.current = tabs;
-  const showAdvancedRef = useRef(showAdvanced);
-  showAdvancedRef.current = showAdvanced;
-  const onTabChangeRef = useRef(onTabChange);
-  onTabChangeRef.current = onTabChange;
-
-  // ── Update nav indicator via actual button position (zero React re-renders)
-  const updateIndicator = useCallback((tabId: string) => {
-    const mainIds = mainTabIdsRef.current;
-    if (!indicatorRef.current || !navRef.current) return;
-
-    if (mainIds.includes(tabId)) {
-      // Read the actual button position — robust against pseudo-elements / padding
-      const btn = navRef.current.querySelector(`#tab-${tabId}`) as HTMLElement | null;
-      if (btn) {
-        indicatorRef.current.style.setProperty('--active-offset', `${btn.offsetTop}px`);
-      } else {
-        // Fallback to calculated position
-        const mainIdx = mainIds.indexOf(tabId);
-        indicatorRef.current.style.setProperty('--active-offset', `${mainIdx * NAV_ITEM_STRIDE}px`);
+  // Sync category when activeTabId changes externally (e.g. spacebar→home, global search, bb-navigate)
+  useEffect(() => {
+    const cat = getCategoryForTab(activeTabId);
+    if (cat && cat !== activeCategory) {
+      setActiveCategory(cat);
+      // Auto-close panel when navigating to a directNav category (Home)
+      const catDef = SIDEBAR_CATEGORIES.find(c => c.id === cat);
+      if (catDef?.directNav) {
+        setPanelOpen(false);
       }
-      indicatorRef.current.style.opacity = '1';
-      indicatorRef.current.dataset.section = 'main';
+    }
+  }, [activeTabId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Propagate panel state to layout for grid column sizing
+  useEffect(() => {
+    const layout = document.querySelector('.bb-layout');
+    if (!layout) return;
+    if (panelOpen) {
+      layout.setAttribute('data-sidebar-panel-open', '');
     } else {
-      indicatorRef.current.style.opacity = '0';
+      layout.removeAttribute('data-sidebar-panel-open');
     }
-  }, []);
+  }, [panelOpen]);
 
-  // Update indicator when activeTabId changes OR when the button layout changes
-  // (module gating, advanced toggle, dev toolbar overrides all shift button positions)
-  const layoutKey = `${filteredMainTabIds.join(',')}|${showAdvanced}`;
-  useEffect(() => {
-    updateIndicator(activeTabId);
-  }, [activeTabId, updateIndicator, layoutKey]);
+  // Filter categories by enabled modules — hide categories with no visible items
+  const visibleCategories = composition.categories.filter(cat =>
+    cat.items.some(id => enabledModules.includes(id))
+  );
 
-  // ── Position chevron toggle: collapsed = after last primary tab, expanded = natural bottom ──
-  const updateChevronPosition = useCallback(() => {
-    const chevron = chevronRef.current;
-    const nav = navRef.current;
-    if (!chevron || !nav) return;
+  // Get the active category definition
+  const activeCategoryDef = SIDEBAR_CATEGORIES.find(c => c.id === activeCategory) ?? null;
 
-    if (showAdvancedRef.current) {
-      // Expanded: chevron sits at its natural position (bottom of nav-wrapper)
-      chevron.style.transform = 'translateY(0)';
+  // Handle category click
+  const handleCategoryChange = useCallback((categoryId: string) => {
+    const cat = SIDEBAR_CATEGORIES.find(c => c.id === categoryId);
+    if (!cat) return;
+
+    // Direct navigation category (Home) — navigate directly, close panel
+    if (cat.directNav) {
+      setActiveCategory(categoryId);
+      setPanelOpen(false);
+      onTabChange?.(cat.directNav);
       return;
     }
 
-    // If nav overflows (primary tabs don't all fit), chevron stays at natural bottom
-    if (nav.scrollHeight > nav.clientHeight + 2) {
-      chevron.style.transform = 'translateY(0)';
+    // Same category clicked — toggle panel
+    if (categoryId === activeCategory) {
+      setPanelOpen(prev => !prev);
       return;
     }
 
-    // Nav doesn't overflow — position chevron right after last primary button
-    const lastPrimaryId = filteredPrimaryTabIds[filteredPrimaryTabIds.length - 1];
-    if (!lastPrimaryId) return;
+    // Different category — open panel
+    setActiveCategory(categoryId);
+    setPanelOpen(true);
+  }, [activeCategory, onTabChange]);
 
-    const lastBtn = nav.querySelector(`#tab-${lastPrimaryId}`) as HTMLElement | null;
-    if (!lastBtn) return;
+  // Handle tab selection from panel
+  const handleTabChange = useCallback((tabId: string) => {
+    onTabChange?.(tabId);
+    // Panel stays open — user may want to switch between sub-items
+  }, [onTabChange]);
 
-    // offsetTop is layout-based (unaffected by CSS transforms) — avoids feedback loops
-    const targetTop = nav.offsetTop + lastBtn.offsetTop + lastBtn.offsetHeight + 8; // 8px gap
-    const chevronNaturalTop = chevron.offsetTop; // layout position, stable
-    const offset = targetTop - chevronNaturalTop;
-
-    chevron.style.transform = `translateY(${offset}px)`;
-  }, [filteredPrimaryTabIds]);
-
-  // Re-run chevron positioning when layout changes
-  useEffect(() => {
-    updateChevronPosition();
-  }, [updateChevronPosition, layoutKey]);
-
-  // ── Scroll-aware fade hints on nav overflow ──────────────────────────────
-  const updateScrollFades = useCallback(() => {
-    const nav = navRef.current;
-    if (!nav) return;
-    const canScrollUp = nav.scrollTop > 2;
-    const canScrollDown = nav.scrollHeight - nav.scrollTop - nav.clientHeight > 2;
-    nav.dataset.scrollTop = String(canScrollUp);
-    nav.dataset.scrollBottom = String(canScrollDown);
-  }, []);
-
-  useEffect(() => {
-    const nav = navRef.current;
-    if (!nav) return;
-    updateScrollFades();
-    nav.addEventListener('scroll', updateScrollFades, { passive: true });
-    return () => nav.removeEventListener('scroll', updateScrollFades);
-  }, [updateScrollFades, layoutKey]); // re-run when tabs appear/disappear
-
-  // Progressive disclosure toggle — defined after updateScrollFades/updateIndicator
-  const toggleTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const toggleAdvanced = useCallback(() => {
-    setShowAdvanced(prev => {
-      const next = !prev;
-      localStorage.setItem('bb-show-advanced', String(next));
-      if (!next && filteredAdvancedTabIds.includes(activeTabIdRef.current)) {
-        const fallbackTabId = filteredPrimaryTabIds[0];
-        if (fallbackTabId && fallbackTabId !== activeTabIdRef.current) {
-          onTabChangeRef.current?.(fallbackTabId);
-        }
-      }
-      return next;
-    });
-    // Cancel any pending update from a previous rapid toggle
-    if (toggleTimerRef.current) clearTimeout(toggleTimerRef.current);
-    // After render: keep the currently active tab in view (don't scroll away)
-    requestAnimationFrame(() => {
-      const nav = navRef.current;
-      if (nav) {
-        const activeBtn = nav.querySelector(`#tab-${activeTabIdRef.current}`) as HTMLElement | null;
-        if (activeBtn) {
-          const btnTop = activeBtn.offsetTop;
-          const btnBottom = btnTop + activeBtn.offsetHeight;
-          const scrollTop = nav.scrollTop;
-          const viewHeight = nav.clientHeight;
-          const pad = 8;
-          if (btnTop - pad < scrollTop) {
-            nav.scrollTo({ top: Math.max(0, btnTop - pad), behavior: 'auto' });
-          } else if (btnBottom + pad > scrollTop + viewHeight) {
-            nav.scrollTo({ top: btnBottom - viewHeight + pad, behavior: 'auto' });
-          }
-        }
-      }
-      updateScrollFades();
-      updateIndicator(activeTabIdRef.current);
-      updateChevronPosition();
-    });
-    // Delayed update after stagger animation settles
-    toggleTimerRef.current = setTimeout(() => {
-      updateScrollFades();
-      updateIndicator(activeTabIdRef.current);
-      updateChevronPosition();
-      toggleTimerRef.current = null;
-    }, 350);
-  }, [filteredAdvancedTabIds, filteredPrimaryTabIds, updateScrollFades, updateIndicator, updateChevronPosition]);
-
-  // Scroll active item into view — smooth follow like a native desktop app
-  useEffect(() => {
-    if (!navRef.current) return;
-    const activeBtn = navRef.current.querySelector(`#tab-${activeTabId}`) as HTMLElement | null;
-    if (!activeBtn) return;
-
-    const nav = navRef.current;
-    const btnTop = activeBtn.offsetTop;
-    const btnBottom = btnTop + activeBtn.offsetHeight;
-    const scrollTop = nav.scrollTop;
-    const viewHeight = nav.clientHeight;
-    const pad = 8;
-
-    if (btnTop - pad < scrollTop) {
-      nav.scrollTo({ top: Math.max(0, btnTop - pad), behavior: 'smooth' });
-    } else if (btnBottom + pad > scrollTop + viewHeight) {
-      nav.scrollTo({ top: btnBottom - viewHeight + pad, behavior: 'smooth' });
-    }
-
-    // Update fade hints immediately + after smooth scroll animation settles
-    updateScrollFades();
-    const t = setTimeout(updateScrollFades, 300);
-    return () => clearTimeout(t);
-  }, [activeTabId, updateScrollFades]);
-
-  // ── RAF-batched wheel navigation — stable refs, no re-registration ─────
-  const wheelAccum = useRef(0);
-  const wheelRafId = useRef(0);
-  const lastStepTime = useRef(0);
-
-  // Stable callback — reads everything from refs / DOM, never recreated
-  const processWheelRef = useRef(() => {});
-  processWheelRef.current = () => {
-    wheelRafId.current = 0;
-    const cb = onTabChangeRef.current;
-    const nav = navRef.current;
-    if (!cb || !nav) return;
-
-    const now = performance.now();
-    if (now - lastStepTime.current < WHEEL_STEP_INTERVAL) {
-      wheelAccum.current = 0;
-      return;
-    }
-
-    const delta = wheelAccum.current;
-    wheelAccum.current = 0;
-
-    if (Math.abs(delta) < WHEEL_NOISE_GATE) return;
-
-    const direction = delta > 0 ? 1 : -1;
-
-    // Query the DOM for actually visible tab buttons — single source of truth.
-    // This avoids any mismatch between JS filter logic and what's rendered.
-    const buttons = nav.querySelectorAll<HTMLElement>('.bb-sidebar__item[role="tab"]');
-    const visibleIds: string[] = [];
-    buttons.forEach(btn => {
-      // Skip buttons hidden via display:none (advanced tabs when collapsed)
-      if (btn.offsetParent !== null) {
-        const id = btn.id.replace('tab-', '');
-        if (id) visibleIds.push(id);
-      }
-    });
-
-    const currentIdx = visibleIds.indexOf(activeTabIdRef.current);
-    if (currentIdx < 0) return;
-
-    let nextIdx = currentIdx + direction;
-    if (nextIdx >= visibleIds.length) nextIdx = 0;
-    if (nextIdx < 0) nextIdx = visibleIds.length - 1;
-
-    lastStepTime.current = now;
-    cb(visibleIds[nextIdx]);
-  };
-
-  // Mount once — never re-registers
-  useEffect(() => {
-    const el = sidebarRef.current;
-    if (!el) return;
-
-    const onWheel = (e: WheelEvent) => {
-      e.preventDefault();
-      wheelAccum.current += e.deltaY;
-      if (!wheelRafId.current) {
-        wheelRafId.current = requestAnimationFrame(() => processWheelRef.current());
-      }
-    };
-
-    el.addEventListener('wheel', onWheel, { passive: false });
-    return () => {
-      el.removeEventListener('wheel', onWheel);
-      if (wheelRafId.current) cancelAnimationFrame(wheelRafId.current);
-    };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // ── Close profile popover on click outside / Escape ──────────────────
+  // Close profile popover on click outside / Escape
   useEffect(() => {
     if (!profileOpen) return;
     const handleClick = (e: MouseEvent) => {
@@ -380,264 +133,67 @@ export function SidebarNav({
     };
   }, [profileOpen]);
 
-  // ── Initialize Supabase client ─────────────────────────────────────────
+  // Escape cascade: close panel → navigate home
   useEffect(() => {
-    const client = createClient();
-    if (!client) return;
-    clientRef.current = client;
-  }, []);
+    const handler = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      // Don't interfere if profile menu is handling its own Escape
+      if (profileOpen) return;
+      // Don't interfere if user is in an input
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
 
-  // ── Fetch badge counts ─────────────────────────────────────────────────
-  const fetchBadgeCounts = useCallback(async () => {
-    if (!clientRef.current) return;
-
-    try {
-      const [approvalsRes, leadsRes, invoicesRes] = await Promise.all([
-        clientRef.current
-          .from('approval_queue')
-          .select('id', { count: 'exact', head: true })
-          .eq('status', 'pending'),
-        clientRef.current
-          .from('leads')
-          .select('id', { count: 'exact', head: true })
-          .eq('status', 'new'),
-        clientRef.current
-          .from('invoices')
-          .select('id', { count: 'exact', head: true })
-          .eq('status', 'overdue'),
-      ]);
-
-      setBadgeCounts({
-        approvals: approvalsRes.count || 0,
-        leads: leadsRes.count || 0,
-        invoices: invoicesRes.count || 0,
-      });
-    } catch (err) {
-      console.warn('Error fetching badge counts:', err);
-    }
-  }, []);
-
-  // Initial fetch + realtime with polling fallback
-  useEffect(() => {
-    if (!clientRef.current) return;
-    const client = clientRef.current;
-
-    fetchBadgeCounts();
-
-    // Try realtime subscription
-    try {
-      const channel = client
-        .channel('sidebar-badge-counts')
-        .on('postgres_changes' as any, { event: '*', schema: 'public', table: 'approval_queue' }, () => fetchBadgeCounts())
-        .on('postgres_changes' as any, { event: '*', schema: 'public', table: 'leads' }, () => fetchBadgeCounts())
-        .on('postgres_changes' as any, { event: '*', schema: 'public', table: 'invoices' }, () => fetchBadgeCounts())
-        .subscribe((status: string) => {
-          if (status === 'SUBSCRIBED' && pollIntervalRef.current) {
-            clearInterval(pollIntervalRef.current);
-            pollIntervalRef.current = null;
-          }
-        });
-
-      // Fallback polling
-      pollIntervalRef.current = setInterval(() => fetchBadgeCounts(), 30000);
-
-      return () => {
-        client.removeChannel(channel);
-        if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
-      };
-    } catch {
-      pollIntervalRef.current = setInterval(() => fetchBadgeCounts(), 30000);
-      return () => {
-        if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
-      };
-    }
-  }, [fetchBadgeCounts]);
-
-  // ── Render nav item ─────────────────────────────────────────────────────
-
-  const renderNavItem = (tabId: string, label: string) => {
-    const Icon = ICON_MAP[tabId];
-    if (!Icon) return null;
-    const active = tabId === activeTabId;
-
-    // Determine badge color and count
-    let badgeColor: string | null = null;
-    let badgeCount = 0;
-
-    if (tabId === 'approvals' && badgeCounts.approvals > 0) {
-      badgeColor = 'var(--bb-orange)';
-      badgeCount = badgeCounts.approvals;
-    } else if (tabId === 'leads' && badgeCounts.leads > 0) {
-      badgeColor = 'var(--bb-blue)';
-      badgeCount = badgeCounts.leads;
-    } else if (tabId === 'invoices' && badgeCounts.invoices > 0) {
-      badgeColor = 'var(--bb-red)';
-      badgeCount = badgeCounts.invoices;
-    }
-
-    const isAdvanced = filteredAdvancedTabIds.includes(tabId);
-    const advIdx = isAdvanced ? filteredAdvancedTabIds.indexOf(tabId) : -1;
-
-    return (
-      <button
-        key={tabId}
-        onClick={() => onTabChange?.(tabId)}
-        className={[
-          'bb-sidebar__item',
-          active && 'bb-sidebar__item--active',
-          isAdvanced && showAdvanced && 'bb-sidebar__item--stagger-in',
-        ].filter(Boolean).join(' ')}
-        role="tab"
-        id={`tab-${tabId}`}
-        aria-selected={active}
-        aria-controls={`tabpanel-${tabId}`}
-        data-tooltip={label}
-        data-advanced={isAdvanced || undefined}
-        aria-label={label}
-        style={{
-          position: 'relative',
-          display: isAdvanced && !showAdvanced ? 'none' : undefined,
-          ...(isAdvanced && showAdvanced ? { '--stagger-index': advIdx, animationDelay: `${advIdx * 50}ms` } as React.CSSProperties : {}),
-        }}
-      >
-        <Icon size={20} strokeWidth={1.8} />
-        {badgeColor && badgeCount > 0 && (
-          <div
-            style={{
-              position: 'absolute',
-              top: '2px',
-              right: '2px',
-              minWidth: '16px',
-              height: '16px',
-              borderRadius: '8px',
-              backgroundColor: badgeColor,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '9px',
-              fontWeight: 700,
-              color: '#fff',
-              lineHeight: 1,
-              padding: '0 3px',
-            }}
-            aria-hidden="true"
-            title={`${badgeCount} pending`}
-          >
-            {badgeCount > 99 ? '99+' : badgeCount}
-          </div>
-        )}
-      </button>
-    );
-  };
+      if (panelOpen) {
+        e.stopPropagation();
+        setPanelOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [panelOpen, profileOpen]);
 
   // Build labels from tabs, applying composition overrides
   const tabLabels: Record<string, string> = {};
   tabs.forEach(t => { tabLabels[t.id] = composition.labelOverrides[t.id] ?? t.label; });
 
   return (
-    <aside className="bb-sidebar" role="navigation" aria-label="Main navigation" ref={sidebarRef}>
-      {/* Logo */}
-      <div className="bb-sidebar__logo" aria-label="BitBit">
-        <Image src="/bitbit-logo.svg" alt="BitBit" width={28} height={28} priority style={{ filter: 'brightness(0) invert(1)' }} />
-      </div>
-
-      {/* Main Nav Icons with sliding indicator */}
-      <div className="bb-sidebar__nav-wrapper">
-        <nav
-          className="bb-sidebar__nav bb-sidebar__nav--scrollable"
-          ref={navRef}
-          role="tablist"
-          aria-label="Dashboard sections"
-          aria-orientation="vertical"
-        >
-          {/* Sliding active indicator — CSS transform only, no re-renders */}
-          <div
-            ref={indicatorRef}
-            className="bb-sidebar__indicator"
-            aria-hidden="true"
-          />
-          {filteredMainTabIds.map(id => renderNavItem(id, tabLabels[id] || id))}
-        </nav>
-        {/* Fade overlays — absolutely positioned to avoid flex interference */}
-        <div className="bb-sidebar__fade bb-sidebar__fade--top" aria-hidden="true" />
-        <div className="bb-sidebar__fade bb-sidebar__fade--bottom" aria-hidden="true" />
-
-        {/* Chevron toggle — pinned at bottom of nav-wrapper, always visible */}
-        {filteredAdvancedTabIds.length > 0 && (
-          <button
-            ref={chevronRef}
-            onClick={toggleAdvanced}
-            className={[
-              'bb-sidebar__item',
-              'bb-sidebar__chevron-toggle',
-              showAdvanced && 'bb-sidebar__chevron-toggle--open',
-            ].filter(Boolean).join(' ')}
-            data-tooltip={showAdvanced ? 'Less' : 'More'}
-            aria-label={showAdvanced ? 'Hide advanced tabs' : 'Show advanced tabs'}
-            aria-pressed={showAdvanced}
-            aria-expanded={showAdvanced}
-          >
-            <ChevronDown
-              size={16}
-              strokeWidth={2}
-              className="bb-sidebar__chevron-icon"
-            />
-          </button>
-        )}
-      </div>
-
-      {/* Separator divider between nav and avatar */}
-      <div
-        style={{
-          width: '32px',
-          height: '1px',
-          background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent)',
-          margin: '8px auto',
-        }}
-        aria-hidden="true"
+    <aside
+      className="bb-sidebar"
+      role="navigation"
+      aria-label="Main navigation"
+      ref={sidebarRef}
+      data-panel-open={panelOpen || undefined}
+    >
+      <SidebarRail
+        categories={visibleCategories}
+        activeCategory={activeCategory}
+        badgeCounts={badgeCounts}
+        onCategoryChange={handleCategoryChange}
+        avatarUrl={avatarUrl}
+        avatarFallback={avatarFallback}
+        onAvatarClick={() => setProfileOpen(o => !o)}
+        profileOpen={profileOpen}
       />
 
-      {/* User Avatar + Profile Menu */}
-      <div style={{ position: 'relative' }} ref={profileMenuRef}>
-        <div
-          className="bb-sidebar__avatar"
-          data-tooltip={!profileOpen ? (displayName || 'Profile') : undefined}
-          role="button"
-          tabIndex={0}
-          onClick={() => setProfileOpen(o => !o)}
-          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setProfileOpen(o => !o); } }}
-          aria-expanded={profileOpen}
-          aria-haspopup="true"
-        >
-          {avatarUrl ? (
-            <Image src={avatarUrl} alt="User avatar" width={36} height={36} className="bb-sidebar__avatar-img" />
-          ) : (
-            <span
-              style={{
-                width: '100%',
-                height: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: 'var(--bg-elevated)',
-                color: 'var(--text-primary)',
-                fontSize: '13px',
-                fontWeight: 600,
-              }}
-            >
-              {avatarFallback}
-            </span>
-          )}
-        </div>
+      <SidebarPanel
+        category={activeCategoryDef}
+        open={panelOpen}
+        activeTabId={activeTabId}
+        enabledModules={enabledModules}
+        badgeCounts={badgeCounts}
+        labelOverrides={tabLabels}
+        onTabChange={handleTabChange}
+      />
 
-        {/* Profile popover menu */}
+      {/* Profile popover — positioned relative to sidebar */}
+      <div style={{ position: 'absolute', bottom: '16px', left: '8px' }} ref={profileMenuRef}>
         {profileOpen && (
           <div
             role="menu"
             style={{
               position: 'absolute',
               bottom: '0',
-              left: 'calc(100% + 12px)',
+              left: 'calc(var(--sidebar-rail-width, 56px) + 4px)',
               minWidth: '180px',
               background: 'rgba(15, 20, 30, 0.95)',
               backdropFilter: 'blur(24px) saturate(1.2)',
@@ -647,7 +203,7 @@ export function SidebarNav({
               boxShadow: '0 16px 48px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.04)',
               padding: '6px',
               zIndex: 'var(--z-dropdown)',
-              animation: 'bb-profile-pop 0.15s ease-out',
+              animation: 'bb-profile-pop 200ms cubic-bezier(0.2, 0.9, 0.3, 1)',
             }}
           >
             {/* User info */}
@@ -698,7 +254,7 @@ export function SidebarNav({
               Settings
             </button>
 
-            {/* Profile / Account */}
+            {/* Profile */}
             <button
               role="menuitem"
               onClick={() => { setProfileOpen(false); onTabChange?.('settings'); }}

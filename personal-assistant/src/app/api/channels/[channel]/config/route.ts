@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { getActiveOrgId } from '@/lib/tenancy'
 
 interface ChannelConfig {
   config: Record<string, unknown>
@@ -17,7 +18,7 @@ export async function GET(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const orgId = (user.user_metadata?.org_id as string) ?? user.id
+  const orgId = await getActiveOrgId(supabase, user.id)
   const { channel } = await params
 
   const { data, error } = await supabase
@@ -53,7 +54,7 @@ export async function PATCH(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const orgId = (user.user_metadata?.org_id as string) ?? user.id
+  const orgId = await getActiveOrgId(supabase, user.id)
   const { channel } = await params
 
   let body: Partial<ChannelConfig>

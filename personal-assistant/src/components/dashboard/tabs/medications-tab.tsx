@@ -17,7 +17,35 @@ const MONTH_NAMES = [
   'July', 'August', 'September', 'October', 'November', 'December',
 ];
 
+/**
+ * Check if medications feature is enabled.
+ * Gated behind a feature flag to prevent unauthorized access.
+ */
+function isMedicationsEnabled(): boolean {
+  // Feature gate: only enable if environment variable is set
+  return process.env.NEXT_PUBLIC_ENABLE_MEDICATIONS === 'true';
+}
+
 function MedicationsTab() {
+  // Feature gate check
+  if (!isMedicationsEnabled()) {
+    return (
+      <TabShell>
+        <TabHeader
+          icon={Pill}
+          iconColor="var(--bb-status-warning)"
+          title="Medications"
+        />
+        <div className="flex items-center justify-center h-full">
+          <div className="text-center">
+            <p className="text-sm text-muted-foreground mb-4">Medications feature is not available</p>
+            <p className="text-xs text-text-muted">Contact support to enable this feature</p>
+          </div>
+        </div>
+      </TabShell>
+    );
+  }
+
   const [year, setYear] = useState(2026);
   const [month, setMonth] = useState(1);
   const [monthData, setMonthData] = useState<MonthData>(february2026);

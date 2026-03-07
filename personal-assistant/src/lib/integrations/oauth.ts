@@ -1,5 +1,6 @@
 import { URLSearchParams } from 'url'
 import crypto from 'crypto'
+import { getAppUrl } from '@/lib/core/app-url'
 
 interface OAuthProvider {
   clientId: string
@@ -121,7 +122,7 @@ export function getOAuthRedirectUrl(provider: string): {
     throw new Error(`OAuth client ID not configured for ${provider}`)
   }
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+  const appUrl = getAppUrl()
   const redirectUri = `${appUrl}/callback/${provider}`
 
   const state = generateOAuthState()
@@ -173,7 +174,7 @@ export async function exchangeOAuthCode(
     throw new Error(`OAuth client secret not configured for ${provider}`)
   }
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+  const appUrl = getAppUrl()
   const redirectUri = `${appUrl}/callback/${provider}`
 
   const params = new URLSearchParams({

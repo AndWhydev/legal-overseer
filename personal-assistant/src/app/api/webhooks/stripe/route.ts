@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
 import { verifyStripeWebhook } from '@/lib/channels/stripe'
 
 /**
@@ -9,6 +10,87 @@ import { verifyStripeWebhook } from '@/lib/channels/stripe'
  *
  * Stripe signs every webhook with the endpoint's signing secret.
  */
+/**
+ * Initialize Supabase client for webhook handler
+ */
+function getSupabaseClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+  if (!supabaseUrl || !supabaseKey) {
+    throw new Error('Supabase credentials not configured')
+  }
+
+  return createClient(supabaseUrl, supabaseKey)
+}
+
+/**
+ * Update invoice status and create timeline event
+ */
+async function updateInvoiceStatus(
+  supabase: ReturnType<typeof createClient>,
+  orgId: string,
+  stripePaymentLinkOrId: string,
+  newStatus: 'paid' | 'failed' | 'overdue',
+) {
+  try {
+    // Find invoice by stripe_payment_link or look for match in metadata
+    const { data: invoice, error: findError } = await supabase
+      .from('invoices')
+      .select('id, invoice_number')
+      .eq('org_id', orgId)
+      .or(`stripe_payment_link.eq.${stripePaymentLinkOrId}`)
+      .single()
+
+    if (findError || !invoice) {
+      console.warn(
+        '[webhook/stripe] Could not find invoice for Stripe ID:',
+        stripePaymentLinkOrId,
+        findError?.message,
+      )
+      return
+    }
+
+    // Update invoice status
+    const { error: updateError } = await supabase
+      .from('invoices')
+      .update({
+        status: newStatus,
+        updated_at: new Date().toISOString(),
+        ...(newStatus === 'paid' && { paid_date: new Date().toISOString().split('T')[0] }),
+      })
+      .eq('id', invoice.id)
+
+    if (updateError) {
+      console.error('[webhook/stripe] Failed to update invoice:', updateError.message)
+      return
+    }
+
+    // Create timeline event
+    const eventType = newStatus === 'paid' ? 'invoice_paid' : 'invoice_failed'
+    const { error: timelineError } = await supabase.from('entity_timeline').insert({
+      org_id: orgId,
+      entity_type: 'invoice',
+      entity_id: invoice.id,
+      event_type: eventType,
+      event_data: {
+        stripe_event: true,
+        new_status: newStatus,
+        invoice_number: invoice.invoice_number,
+      },
+      occurred_at: new Date().toISOString(),
+    })
+
+    if (timelineError) {
+      console.warn('[webhook/stripe] Failed to create timeline event:', timelineError.message)
+    } else {
+      console.log(`[webhook/stripe] Updated invoice ${invoice.invoice_number} to status: ${newStatus}`)
+    }
+  } catch (err) {
+    console.error('[webhook/stripe] Error updating invoice:', err)
+  }
+}
+
 export async function POST(request: NextRequest) {
   const signature = request.headers.get('stripe-signature')
   if (!signature) {
@@ -32,26 +114,42 @@ export async function POST(request: NextRequest) {
 
     console.log('[webhook/stripe] Event:', event.type, event.id)
 
+    // For database operations, we need orgId from somewhere
+    // In a real scenario, this would be passed in metadata or we'd look it up
+    const supabase = getSupabaseClient()
+
     // Dispatch based on event type
     switch (event.type) {
       case 'payment_intent.succeeded': {
-        const obj = event.data.object
+        const obj = event.data.object as Record<string, unknown>
         console.log('[webhook/stripe] Payment succeeded:', obj.id, obj.amount, obj.currency)
+        // In production: extract orgId from metadata and update invoice
+        // For now, log the event
         break
       }
       case 'payment_intent.payment_failed': {
-        const obj = event.data.object
+        const obj = event.data.object as Record<string, unknown>
         console.error('[webhook/stripe] Payment failed:', obj.id)
+        // In production: extract orgId from metadata and update invoice to 'failed'
         break
       }
       case 'invoice.paid': {
-        const obj = event.data.object
+        const obj = event.data.object as Record<string, unknown>
         console.log('[webhook/stripe] Invoice paid:', obj.id)
+        // Update invoice status to 'paid' if we can determine the orgId
+        // This would typically come from invoice metadata
+        const invoiceId = obj.id as string
+        // TODO: extract orgId from invoice metadata or look it up
+        // await updateInvoiceStatus(supabase, orgId, invoiceId, 'paid')
         break
       }
       case 'invoice.payment_failed': {
-        const obj = event.data.object
+        const obj = event.data.object as Record<string, unknown>
         console.error('[webhook/stripe] Invoice payment failed:', obj.id)
+        // Update invoice status to 'failed' if we can determine the orgId
+        const invoiceId = obj.id as string
+        // TODO: extract orgId from invoice metadata or look it up
+        // await updateInvoiceStatus(supabase, orgId, invoiceId, 'failed')
         break
       }
       default:

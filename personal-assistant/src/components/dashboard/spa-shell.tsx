@@ -27,6 +27,9 @@ import { NotificationCenter } from './notification-center';
 import { AppDataProvider } from '@/lib/data/app-data-provider';
 import { useEnabledModulesFetch, EnabledModulesContext } from '@/lib/modules/use-enabled-modules';
 import { DevToolbar } from '@/components/dev/dev-toolbar';
+import { KeyboardShortcuts } from './keyboard-shortcuts';
+import { useHotkeys, getTabHistory } from '@/hooks/use-hotkeys';
+import { SIDEBAR_CATEGORIES } from '@/lib/modules/registry';
 
 // ─── Tab definitions ────────────────────────────────────────────────────────
 
@@ -298,6 +301,72 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
     setSidebarOpen(false);
   }, [navigateToId]);
 
+  // ── Power-user hotkeys ──────────────────────────────────────────────────
+  const [focusMode, setFocusMode] = useState(false);
+  const [cheatsheetOpen, setCheatsheetOpen] = useState(false);
+
+  // Propagate focus mode to layout DOM
+  useEffect(() => {
+    const layout = document.querySelector('.bb-layout');
+    if (!layout) return;
+    if (focusMode) {
+      layout.setAttribute('data-focus-mode', '');
+    } else {
+      layout.removeAttribute('data-focus-mode');
+    }
+  }, [focusMode]);
+
+  useHotkeys({
+    activeTabId: TABS[activeNavIndex]?.id ?? 'dashboard',
+    actions: {
+      navigateToTab: (tabId: string) => handleTabChange(tabId),
+
+      navigateToCategory: (index: number) => {
+        // Map 1-6 to visible sidebar categories
+        const cats = SIDEBAR_CATEGORIES;
+        const cat = cats[index - 1];
+        if (!cat) return;
+        if (cat.directNav) {
+          handleTabChange(cat.directNav);
+        } else {
+          // Navigate to first item in category
+          const firstItem = cat.items.find(id => enabledModulesState.modules.includes(id));
+          if (firstItem) handleTabChange(firstItem);
+        }
+      },
+
+      toggleFocusMode: () => setFocusMode(f => !f),
+
+      openSearch: () => {
+        window.dispatchEvent(new Event('bb-search-open'));
+      },
+
+      toggleCheatsheet: () => setCheatsheetOpen(o => !o),
+
+      goBack: () => {
+        const prev = getTabHistory().back();
+        if (prev) handleTabChange(prev);
+      },
+
+      goForward: () => {
+        const next = getTabHistory().forward();
+        if (next) handleTabChange(next);
+      },
+
+      escapeCascade: () => {
+        // Cascade: if cheatsheet open, close it. Otherwise sidebar-nav handles panel close.
+        if (cheatsheetOpen) {
+          setCheatsheetOpen(false);
+        }
+        // Sidebar panel close is handled by sidebar-nav's own Escape/category logic.
+        // If we're in focus mode, exit it.
+        if (focusMode) {
+          setFocusMode(false);
+        }
+      },
+    },
+  });
+
   // Keep first-login onboarding sticky across sessions if local completion exists.
   useEffect(() => {
     if (!isNewUser) {
@@ -464,8 +533,11 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
           </main>
         </div>
 
-        {/* Global search command palette (Cmd+K) */}
+        {/* Global search command palette (Cmd+K or /) */}
         <GlobalSearch onNavigate={handleTabChange} />
+
+        {/* Keyboard shortcuts cheatsheet (?) */}
+        <KeyboardShortcuts open={cheatsheetOpen} onClose={() => setCheatsheetOpen(false)} />
 
         {/* Onboarding: wizard for new users, tour fallback for returning users */}
         {showWizard ? (

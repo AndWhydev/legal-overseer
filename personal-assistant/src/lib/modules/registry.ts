@@ -137,6 +137,30 @@ export function isModuleEnabled(
   return getEnabledModules(plan, orgOverrides, industry).includes(moduleId);
 }
 
+// ─── Sidebar Category Mapping ─────────────────────────────────────────────────
+
+export interface SidebarCategory {
+  id: string;
+  label: string;
+  icon: string;       // lucide icon name used in sidebar-rail
+  items: string[];    // tab IDs
+  directNav?: string; // if set, clicking category navigates directly (no panel)
+}
+
+export const SIDEBAR_CATEGORIES: SidebarCategory[] = [
+  { id: 'home',         label: 'Home',         icon: 'LayoutDashboard', items: ['dashboard', 'command-center'], directNav: 'dashboard' },
+  { id: 'messages',     label: 'Messages',     icon: 'MessageSquare',   items: ['chat', 'inbox', 'creator-studio'] },
+  { id: 'business',     label: 'Business',     icon: 'Briefcase',       items: ['leads', 'invoices', 'tenders', 'contacts', 'approvals'] },
+  { id: 'intelligence', label: 'Intelligence', icon: 'Brain',           items: ['sentry', 'ad-scripts', 'ai-search', 'reports', 'knowledge', 'analytics'] },
+  { id: 'operations',   label: 'Operations',   icon: 'Wrench',          items: ['connections', 'activity', 'costs', 'admin'] },
+  { id: 'settings',     label: 'Settings',     icon: 'Settings',        items: ['settings', 'medications'] },
+];
+
+/** Map a tab ID to its parent category ID */
+export function getCategoryForTab(tabId: string): string | undefined {
+  return SIDEBAR_CATEGORIES.find(c => c.items.includes(tabId))?.id;
+}
+
 // ─── UI Composition Profiles ─────────────────────────────────────────────────
 
 export interface UIComposition {
@@ -144,6 +168,7 @@ export interface UIComposition {
   visibleModules: string[];
   primaryModules: string[];
   advancedModules: string[];
+  categories: SidebarCategory[];
   defaultTab: string;
   sidebarStyle: 'compact' | 'full';
   tourVariant: 'essential' | 'full';
@@ -155,6 +180,12 @@ export const ESSENTIAL_COMPOSITION: UIComposition = {
   visibleModules: ['command-center', 'inbox', 'approvals', 'contacts', 'settings', 'chat', 'leads', 'invoices', 'channels'],
   primaryModules: ['command-center', 'inbox', 'approvals', 'contacts'],
   advancedModules: ['chat', 'leads', 'invoices', 'channels'],
+  categories: [
+    SIDEBAR_CATEGORIES[0], // Home
+    SIDEBAR_CATEGORIES[1], // Messages
+    SIDEBAR_CATEGORIES[2], // Business
+    SIDEBAR_CATEGORIES[5], // Settings
+  ],
   defaultTab: 'chat',
   sidebarStyle: 'compact',
   tourVariant: 'essential',
@@ -166,6 +197,7 @@ export const FULL_COMPOSITION: UIComposition = {
   visibleModules: [...ALL_MODULES],
   primaryModules: ['command-center', 'dashboard', 'chat', 'inbox', 'leads', 'invoices', 'tenders', 'contacts', 'approvals'],
   advancedModules: ['creator-studio', 'connections', 'medications', 'sentry', 'costs', 'activity', 'admin', 'knowledge', 'analytics', 'ad-scripts', 'ai-search', 'reports'],
+  categories: [...SIDEBAR_CATEGORIES],
   defaultTab: 'chat',
   sidebarStyle: 'full',
   tourVariant: 'full',

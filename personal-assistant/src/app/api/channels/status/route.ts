@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getAllAdapters } from '@/lib/channels/synthesizer'
+import { getActiveOrgId } from '@/lib/tenancy'
 
 const CHANNEL_ALIASES: Record<string, string[]> = {
   ga4: ['ga4', 'google-analytics'],
@@ -22,36 +23,22 @@ export async function GET() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  // Get user's org_id
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('org_id')
-    .eq('id', user.id)
-    .single()
-
-  const orgId = profile?.org_id
+  const orgId = await getActiveOrgId(supabase, user.id)
 
   // Query org_integrations for real connection status
-  let integrations: Array<{ provider: string; status: string; connected_at: string | null }> = []
-  if (orgId) {
-    const { data } = await supabase
-      .from('org_integrations')
-      .select('provider, status, connected_at')
-      .eq('org_id', orgId)
+  const { data: intData } = await supabase
+    .from('org_integrations')
+    .select('provider, status, connected_at')
+    .eq('org_id', orgId)
 
-    integrations = data || []
-  }
+  const integrations = intData || []
 
-  // Query channel_connections for last_sync and message_count
-  let connections: Array<{ channel_type: string; last_sync: string | null; message_count: number; status: string }> = []
-  if (orgId) {
-    const { data } = await supabase
-      .from('channel_connections')
-      .select('channel_type, last_sync, message_count, status')
-      .eq('org_id', orgId)
+  const { data: connData } = await supabase
+    .from('channel_connections')
+    .select('channel_type, last_sync, message_count, status')
+    .eq('org_id', orgId)
 
-    connections = data || []
-  }
+  const connections = connData || []
 
   // Build lookup maps
   const integrationMap = new Map(integrations.map(i => [i.provider, i]))

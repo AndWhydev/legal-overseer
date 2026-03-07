@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { updateSession } from '@/lib/supabase/middleware'
 import { checkApiRateLimit, getTierForPath } from '@/lib/api-rate-limiter'
 import { validateCsrf } from '@/lib/security/csrf'
+import { logger } from '@/lib/core/logger'
 
 type InMemoryRateLimitState = {
   count: number
@@ -203,7 +204,7 @@ export async function middleware(request: NextRequest) {
   const bypassAuth = process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH ?? process.env.DEV_BYPASS_AUTH
   if (bypassAuth === 'true') {
     if (process.env.NODE_ENV === 'production') {
-      console.error('CRITICAL: DEV_BYPASS_AUTH is enabled in production! Auth bypass disabled.')
+      logger.error('CRITICAL: DEV_BYPASS_AUTH is enabled in production! Auth bypass disabled.')
     } else {
       return applySecurityHeaders(NextResponse.next())
     }

@@ -434,48 +434,44 @@ body:has(main.landing-stack) main.landing-stack {
    Responsive Overrides
    -------------------------------------------------------------------------- */
 
-/* ── Tablet (768–1024px): Collapsible sidebar overlay ───────────────────── */
+/* ── Tablet (768–1024px): Rail only, panel as overlay ───────────────────── */
 @media (max-width: 1024px) and (min-width: 769px) {
   .bb-layout {
-    grid-template-columns: 1fr;
-    grid-template-rows: 1fr;
-    grid-template-areas: "main";
+    grid-template-columns: var(--sidebar-rail-width) 1fr;
+    grid-template-rows: var(--topbar-height) 1fr;
+    grid-template-areas: "sidebar topbar" "sidebar main";
     height: 100dvh;
     min-height: 100dvh;
   }
 
   .bb-sidebar-area {
-    position: fixed;
-    top: 0;
-    left: 0;
-    z-index: 100;
-    height: 100dvh;
-    transform: translateX(-100%);
-    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .bb-sidebar-area[data-open="true"] {
-    transform: translateX(0);
+    grid-area: sidebar;
+    grid-row: 1 / -1;
   }
 
   .bb-sidebar {
-    position: relative;
-    width: 72px;
+    position: fixed;
+    width: var(--sidebar-rail-width);
     height: 100dvh;
-    border-right: 1px solid var(--border-subtle);
+  }
+
+  /* Panel becomes overlay on tablet */
+  .bb-sidebar-panel {
+    position: fixed;
+    left: var(--sidebar-rail-width);
+    top: 0;
+    height: 100dvh;
+    z-index: 100;
+    box-shadow: 8px 0 32px rgba(0, 0, 0, 0.3);
   }
 
   .bb-spa-content {
-    grid-column: 1;
-    grid-row: 1;
+    grid-column: 2;
+    grid-row: 2;
   }
 
-  /* Hamburger toggle — shown on tablet */
+  /* Hamburger toggle — hidden on tablet since rail is always visible */
   .bb-sidebar-toggle {
-    display: flex;
-  }
-
-  .bb-sidebar__indicator {
     display: none;
   }
 }

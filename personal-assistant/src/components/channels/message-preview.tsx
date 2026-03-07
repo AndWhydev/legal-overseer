@@ -23,6 +23,7 @@ const channelIcons: Record<ChannelType, React.ComponentType<{ className?: string
   slack: MessageCircle,
   xero: BarChart3,
   instagram: MessageCircle,
+  sms: MessageCircle,
 }
 
 interface MessagePreviewProps {

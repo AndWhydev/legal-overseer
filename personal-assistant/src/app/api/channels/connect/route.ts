@@ -3,6 +3,8 @@ import { createClient } from '@/lib/supabase/server'
 import { storeOrgCredential } from '@/lib/integrations/credentials'
 import { logAuditEvent } from '@/lib/audit/logger'
 import { getActiveOrgId } from '@/lib/tenancy'
+import { checkPlanGate } from '@/lib/billing/plan-gates'
+import { getAppUrl } from '@/lib/core/app-url'
 
 const OAUTH_PROVIDER_MAP: Record<string, string> = {
   gmail: 'gmail',
@@ -39,11 +41,20 @@ export async function POST(request: Request) {
 
   const channelLower = channel.toLowerCase()
 
+  // Enforce plan gate: check if org has remaining channel slots
+  const allowed = await checkPlanGate(supabase, orgId, 'channels')
+  if (!allowed) {
+    return NextResponse.json(
+      { error: 'Channel limit reached for your plan. Upgrade to connect more channels.' },
+      { status: 403 },
+    )
+  }
+
   try {
     // OAuth channels: redirect to OAuth start flow
     const oauthProvider = OAUTH_PROVIDER_MAP[channelLower]
     if (oauthProvider) {
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+      const appUrl = getAppUrl()
       const url = `${appUrl}/api/auth/oauth/start?provider=${oauthProvider}`
       return NextResponse.json({ redirect: true, url })
     }

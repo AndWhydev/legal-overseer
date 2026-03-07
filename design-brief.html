@@ -1,0 +1,2224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>BitBit Design Consultation Brief</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg-primary: #0A0A0B;
+    --bg-card: #111113;
+    --bg-elevated: #1A1A1D;
+    --bg-surface: #141416;
+    --bb-orange: #FF5A1F;
+    --bb-orange-light: #FF7A45;
+    --bb-orange-dim: rgba(255, 90, 31, 0.15);
+    --bb-orange-glow: rgba(255, 90, 31, 0.08);
+    --text-primary: #F5F0E8;
+    --text-secondary: #B8B0A0;
+    --text-muted: #8A8279;
+    --text-dim: #5C564E;
+    --border-subtle: #1F1F22;
+    --border-hover: #2A2A2E;
+    --green: #7CAA85;
+    --amber: #F59E0B;
+    --red: #C47070;
+    --purple: #A78BFA;
+    --blue: #60A5FA;
+    --teal: #5EEAD4;
+    --rust: #D4A574;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    line-height: 1.65;
+    letter-spacing: -0.01em;
+    overflow-x: hidden;
+  }
+
+  /* --- NAV --- */
+  .nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    background: rgba(10, 10, 11, 0.85);
+    backdrop-filter: blur(20px) saturate(1.3);
+    -webkit-backdrop-filter: blur(20px) saturate(1.3);
+    border-bottom: 1px solid var(--border-subtle);
+    padding: 0 2rem;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .nav-brand {
+    font-weight: 700;
+    font-size: 0.85rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--bb-orange);
+  }
+
+  .nav-meta {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .nav-meta .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    background: var(--bb-orange-dim);
+    color: var(--bb-orange);
+    border-radius: 4px;
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    margin-left: 8px;
+  }
+
+  /* --- HERO --- */
+  .hero {
+    padding: 140px 2rem 80px;
+    max-width: 900px;
+    margin: 0 auto;
+    position: relative;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(255, 90, 31, 0.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .hero-overline {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--bb-orange);
+    margin-bottom: 1.5rem;
+  }
+
+  .hero h1 {
+    font-family: 'EB Garamond', Georgia, serif;
+    font-size: clamp(2.4rem, 5vw, 3.8rem);
+    font-weight: 500;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+    margin-bottom: 1.5rem;
+  }
+
+  .hero h1 em {
+    font-style: italic;
+    color: var(--bb-orange);
+  }
+
+  .hero-subtitle {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    max-width: 640px;
+    line-height: 1.7;
+  }
+
+  /* --- TOC --- */
+  .toc {
+    max-width: 900px;
+    margin: 0 auto 4rem;
+    padding: 0 2rem;
+  }
+
+  .toc-inner {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    padding: 2rem 2.5rem;
+  }
+
+  .toc-title {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+  }
+
+  .toc-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 0.5rem;
+  }
+
+  .toc-link {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    text-decoration: none;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 150ms ease;
+  }
+
+  .toc-link:hover {
+    background: var(--bg-elevated);
+    color: var(--text-primary);
+  }
+
+  .toc-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--bb-orange);
+    min-width: 1.5rem;
+  }
+
+  /* --- SECTIONS --- */
+  .section {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 2rem 5rem;
+  }
+
+  .section-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--bb-orange);
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border-subtle);
+  }
+
+  .section h2 {
+    font-family: 'EB Garamond', Georgia, serif;
+    font-size: clamp(1.6rem, 3vw, 2.2rem);
+    font-weight: 500;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+    margin-bottom: 1.25rem;
+  }
+
+  .section-intro {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin-bottom: 2rem;
+    max-width: 700px;
+  }
+
+  /* --- CARDS --- */
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+    padding: 1.75rem;
+    margin-bottom: 1rem;
+    transition: border-color 200ms ease;
+  }
+
+  .card:hover {
+    border-color: var(--border-hover);
+  }
+
+  .card-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .card-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+  }
+
+  .card h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+  }
+
+  .card-subtitle {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+
+  .card p, .card li {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    line-height: 1.7;
+  }
+
+  .card ul {
+    list-style: none;
+    padding: 0;
+  }
+
+  .card li {
+    padding: 0.35rem 0;
+    padding-left: 1.25rem;
+    position: relative;
+  }
+
+  .card li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.85rem;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--bb-orange);
+    opacity: 0.5;
+  }
+
+  /* --- GRID LAYOUTS --- */
+  .grid-2 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+
+  .grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+  }
+
+  @media (max-width: 768px) {
+    .grid-2, .grid-3 {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* --- COLOR SWATCHES --- */
+  .swatch-row {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+  }
+
+  .swatch {
+    width: 80px;
+    text-align: center;
+  }
+
+  .swatch-color {
+    width: 80px;
+    height: 56px;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.06);
+    margin-bottom: 0.4rem;
+  }
+
+  .swatch-label {
+    font-size: 0.65rem;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text-muted);
+    line-height: 1.3;
+  }
+
+  .swatch-name {
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+  }
+
+  /* --- COMPARISON TABLE --- */
+  .comparison-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+    margin: 1.5rem 0;
+  }
+
+  .comparison-table th {
+    text-align: left;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border-subtle);
+    background: var(--bg-surface);
+  }
+
+  .comparison-table td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid rgba(31,31,34,0.5);
+    color: var(--text-secondary);
+    vertical-align: top;
+  }
+
+  .comparison-table tr:hover td {
+    background: rgba(255,255,255,0.015);
+  }
+
+  .comparison-table .highlight {
+    color: var(--bb-orange);
+    font-weight: 500;
+  }
+
+  /* --- QUOTE BLOCKS --- */
+  .quote {
+    border-left: 3px solid var(--bb-orange);
+    padding: 1.25rem 1.5rem;
+    margin: 1.5rem 0;
+    background: var(--bb-orange-glow);
+    border-radius: 0 8px 8px 0;
+  }
+
+  .quote p {
+    font-family: 'EB Garamond', Georgia, serif;
+    font-size: 1.15rem;
+    font-style: italic;
+    color: var(--text-primary);
+    line-height: 1.6;
+  }
+
+  .quote-attr {
+    font-family: 'Inter', sans-serif;
+    font-style: normal;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 0.5rem;
+  }
+
+  /* --- INSIGHT BLOCKS --- */
+  .insight {
+    background: linear-gradient(135deg, rgba(255, 90, 31, 0.06) 0%, rgba(255, 90, 31, 0.02) 100%);
+    border: 1px solid rgba(255, 90, 31, 0.15);
+    border-radius: 10px;
+    padding: 1.5rem 1.75rem;
+    margin: 1.5rem 0;
+  }
+
+  .insight-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--bb-orange);
+    margin-bottom: 0.5rem;
+  }
+
+  .insight p {
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    line-height: 1.7;
+  }
+
+  /* --- DECISION BLOCKS --- */
+  .decision {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+    padding: 1.75rem;
+    margin: 1.5rem 0;
+  }
+
+  .decision-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+
+  .decision-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    background: var(--bb-orange-dim);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+  }
+
+  .decision-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+
+  .decision-options {
+    display: grid;
+    gap: 0.75rem;
+    margin-top: 1rem;
+  }
+
+  .option {
+    padding: 1rem 1.25rem;
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    background: var(--bg-surface);
+  }
+
+  .option-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+  }
+
+  .option-desc {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    line-height: 1.6;
+  }
+
+  .option.preferred {
+    border-color: rgba(255, 90, 31, 0.3);
+    background: rgba(255, 90, 31, 0.04);
+  }
+
+  .option.preferred .option-label::after {
+    content: 'Preferred';
+    font-size: 0.6rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--bb-orange);
+    margin-left: 0.75rem;
+    padding: 1px 6px;
+    background: var(--bb-orange-dim);
+    border-radius: 3px;
+    vertical-align: middle;
+  }
+
+  /* --- MOOD BOARD --- */
+  .mood-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+    margin: 1.5rem 0;
+  }
+
+  .mood-item {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+    overflow: hidden;
+    transition: all 200ms ease;
+  }
+
+  .mood-item:hover {
+    border-color: var(--border-hover);
+    transform: translateY(-2px);
+  }
+
+  .mood-preview {
+    height: 140px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .mood-info {
+    padding: 1rem;
+    border-top: 1px solid var(--border-subtle);
+  }
+
+  .mood-name {
+    font-size: 0.82rem;
+    font-weight: 600;
+    margin-bottom: 0.2rem;
+  }
+
+  .mood-desc {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+
+  .mood-link {
+    display: inline-block;
+    margin-top: 0.4rem;
+    font-size: 0.7rem;
+    color: var(--bb-orange);
+    text-decoration: none;
+    font-weight: 500;
+  }
+
+  .mood-link:hover { text-decoration: underline; }
+
+  /* --- PERSONA BLOCK --- */
+  .persona-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1rem;
+    margin: 1.5rem 0;
+  }
+
+  .persona {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+    padding: 1.5rem;
+  }
+
+  .persona-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    margin-bottom: 1rem;
+  }
+
+  .persona h4 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 0.15rem;
+  }
+
+  .persona-role {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-bottom: 0.75rem;
+  }
+
+  .persona p {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+  }
+
+  /* --- SPECTRUM --- */
+  .spectrum {
+    margin: 2rem 0;
+    padding: 1.5rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+  }
+
+  .spectrum-bar {
+    height: 6px;
+    background: linear-gradient(to right, var(--text-dim), var(--bb-orange), var(--green));
+    border-radius: 3px;
+    margin: 1.5rem 0 0.5rem;
+    position: relative;
+  }
+
+  .spectrum-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .spectrum-marker {
+    position: absolute;
+    top: -6px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--bb-orange);
+    border: 3px solid var(--bg-card);
+    box-shadow: 0 0 12px rgba(255, 90, 31, 0.4);
+    transform: translateX(-50%);
+  }
+
+  .spectrum-marker-label {
+    position: absolute;
+    top: -28px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: var(--bb-orange);
+    white-space: nowrap;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* --- DIVIDER --- */
+  .divider {
+    height: 1px;
+    background: var(--border-subtle);
+    margin: 3rem 0;
+  }
+
+  /* --- TAGS --- */
+  .tag {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.03em;
+    margin: 2px;
+  }
+
+  .tag-orange { background: var(--bb-orange-dim); color: var(--bb-orange); }
+  .tag-green { background: rgba(124,170,133,0.15); color: var(--green); }
+  .tag-purple { background: rgba(167,139,250,0.15); color: var(--purple); }
+  .tag-blue { background: rgba(96,165,250,0.15); color: var(--blue); }
+  .tag-amber { background: rgba(245,158,11,0.15); color: var(--amber); }
+  .tag-red { background: rgba(196,112,112,0.15); color: var(--red); }
+
+  /* --- STATUS DOT --- */
+  .status-dot {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+
+  .status-done { background: var(--green); }
+  .status-partial { background: var(--amber); }
+  .status-missing { background: var(--red); }
+  .status-question { background: var(--purple); }
+
+  /* --- FOOTER --- */
+  .footer {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 3rem 2rem 4rem;
+    border-top: 1px solid var(--border-subtle);
+  }
+
+  .footer-inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .footer-left {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+  }
+
+  .footer-right {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--text-dim);
+  }
+
+  /* --- CHARACTER ANIMATION --- */
+  .character-demo {
+    width: 120px;
+    height: 120px;
+    margin: 2rem auto;
+    position: relative;
+  }
+
+  .character-body {
+    width: 80px;
+    height: 80px;
+    background: var(--bb-orange);
+    border-radius: 16px;
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    animation: character-breathe 3s ease-in-out infinite;
+    box-shadow: 0 0 40px rgba(255, 90, 31, 0.3);
+  }
+
+  .character-eye {
+    width: 8px;
+    height: 8px;
+    background: var(--bg-primary);
+    border-radius: 50%;
+    position: absolute;
+    top: 28px;
+    animation: character-blink 4s ease-in-out infinite;
+  }
+
+  .character-eye.left { left: 22px; }
+  .character-eye.right { right: 22px; }
+
+  .character-corner {
+    width: 16px;
+    height: 16px;
+    background: var(--bb-orange-light);
+    border-radius: 4px;
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    animation: corner-float 2.5s ease-in-out infinite;
+  }
+
+  @keyframes character-breathe {
+    0%, 100% { transform: scale(1); border-radius: 16px; }
+    50% { transform: scale(1.04); border-radius: 18px; }
+  }
+
+  @keyframes character-blink {
+    0%, 42%, 44%, 100% { transform: scaleY(1); }
+    43% { transform: scaleY(0.1); }
+  }
+
+  @keyframes corner-float {
+    0%, 100% { transform: translate(0, 0) rotate(0deg); }
+    50% { transform: translate(4px, -6px) rotate(15deg); }
+  }
+
+  /* --- ANIMATION STATES DEMO --- */
+  .states-row {
+    display: flex;
+    gap: 2rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin: 2rem 0;
+  }
+
+  .state-demo {
+    text-align: center;
+  }
+
+  .state-box {
+    width: 64px;
+    height: 64px;
+    background: var(--bb-orange);
+    border-radius: 14px;
+    margin: 0 auto 0.75rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .state-box.idle {
+    animation: character-breathe 3s ease-in-out infinite;
+  }
+
+  .state-box.thinking {
+    animation: thinking-pulse 1.2s ease-in-out infinite;
+  }
+
+  .state-box.working {
+    animation: working-spin 2s linear infinite;
+  }
+
+  .state-box.happy {
+    animation: happy-bounce 0.6s ease-in-out infinite;
+  }
+
+  .state-box.error {
+    animation: error-shake 0.5s ease-in-out infinite;
+    background: var(--red);
+  }
+
+  @keyframes thinking-pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(0.92); opacity: 0.7; }
+  }
+
+  @keyframes working-spin {
+    0% { border-radius: 14px; transform: rotate(0deg); }
+    25% { border-radius: 20px 14px; }
+    50% { border-radius: 14px; transform: rotate(180deg); }
+    75% { border-radius: 14px 20px; }
+    100% { border-radius: 14px; transform: rotate(360deg); }
+  }
+
+  @keyframes happy-bounce {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-8px) scale(1.05); }
+  }
+
+  @keyframes error-shake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-4px); }
+    40% { transform: translateX(4px); }
+    60% { transform: translateX(-3px); }
+    80% { transform: translateX(3px); }
+  }
+
+  .state-label {
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* --- REFERENCE LINKS --- */
+  .ref-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 0.75rem;
+    margin: 1rem 0;
+  }
+
+  .ref-link {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    text-decoration: none;
+    color: var(--text-secondary);
+    font-size: 0.82rem;
+    transition: all 150ms ease;
+  }
+
+  .ref-link:hover {
+    border-color: var(--border-hover);
+    color: var(--text-primary);
+    transform: translateY(-1px);
+  }
+
+  .ref-icon {
+    font-size: 1.1rem;
+    flex-shrink: 0;
+  }
+
+  .ref-text {
+    flex: 1;
+  }
+
+  .ref-domain {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--text-dim);
+  }
+
+  /* --- QUESTION BLOCK --- */
+  .questions {
+    counter-reset: question;
+  }
+
+  .question {
+    counter-increment: question;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 0.75rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    position: relative;
+    padding-left: 3.5rem;
+  }
+
+  .question::before {
+    content: counter(question, decimal-leading-zero);
+    position: absolute;
+    left: 1.25rem;
+    top: 1.3rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--bb-orange);
+    font-weight: 600;
+  }
+
+  .question p {
+    font-size: 0.88rem;
+    color: var(--text-primary);
+    line-height: 1.6;
+  }
+
+  .question .context {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-top: 0.4rem;
+    line-height: 1.5;
+  }
+
+  /* --- INLINE CODE --- */
+  code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82em;
+    padding: 2px 6px;
+    background: var(--bg-elevated);
+    border-radius: 4px;
+    color: var(--rust);
+  }
+
+  /* --- SUBTLE ANIM --- */
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .section {
+    animation: fade-up 0.5s ease-out both;
+  }
+
+  /* --- RESPONSIVE --- */
+  @media (max-width: 640px) {
+    .hero { padding: 120px 1.25rem 60px; }
+    .section { padding: 0 1.25rem 4rem; }
+    .toc { padding: 0 1.25rem; }
+    .toc-grid { grid-template-columns: 1fr; }
+    .card { padding: 1.25rem; }
+    .nav { padding: 0 1.25rem; }
+    .states-row { gap: 1rem; }
+    .swatch-row { justify-content: center; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-brand">BitBit</div>
+  <div class="nav-meta">
+    Design Consultation Brief
+    <span class="badge">Confidential</span>
+  </div>
+</nav>
+
+<!-- HERO -->
+<header class="hero" id="top">
+  <div class="hero-overline">Brand Identity &amp; Design System</div>
+  <h1>Making BitBit feel like <em>someone</em>, not something</h1>
+  <p class="hero-subtitle">
+    Preparation document for design consultation. This covers where we are, where we want to go,
+    and the open questions we need to solve together. BitBit is an agentic AI operations platform
+    that should feel like hiring a capable team member, not installing software.
+  </p>
+</header>
+
+<!-- TABLE OF CONTENTS -->
+<div class="toc">
+  <div class="toc-inner">
+    <div class="toc-title">Contents</div>
+    <div class="toc-grid">
+      <a href="#context" class="toc-link"><span class="toc-num">01</span> What BitBit Is</a>
+      <a href="#current-state" class="toc-link"><span class="toc-num">02</span> Current Design State</a>
+      <a href="#identity" class="toc-link"><span class="toc-num">03</span> Brand Identity Direction</a>
+      <a href="#character" class="toc-link"><span class="toc-num">04</span> Character / Entity Concept</a>
+      <a href="#palette" class="toc-link"><span class="toc-num">05</span> Color &amp; Visual System</a>
+      <a href="#typography-section" class="toc-link"><span class="toc-num">06</span> Typography</a>
+      <a href="#ui-patterns" class="toc-link"><span class="toc-num">07</span> UI/UX Patterns</a>
+      <a href="#competitive" class="toc-link"><span class="toc-num">08</span> Competitive Landscape</a>
+      <a href="#references" class="toc-link"><span class="toc-num">09</span> References &amp; Inspiration</a>
+      <a href="#decisions" class="toc-link"><span class="toc-num">10</span> Open Decisions</a>
+      <a href="#discussion" class="toc-link"><span class="toc-num">11</span> Discussion Questions</a>
+    </div>
+  </div>
+</div>
+
+<!-- SECTION 1: CONTEXT -->
+<section class="section" id="context">
+  <div class="section-label">01 &mdash; Context</div>
+  <h2>What BitBit Is</h2>
+  <p class="section-intro">
+    BitBit is not a platform. Not a tool. It's a thing that works for you. Think of it like hiring someone
+    who already knows your business.
+  </p>
+
+  <div class="quote">
+    <p>"These are like employees that work for them."</p>
+    <div class="quote-attr">&mdash; Andy Taleb, first deployment partner</div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h3>What It Does</h3>
+      <ul>
+        <li>Reads emails, triages messages, follows up with clients</li>
+        <li>Creates invoices, manages contacts, hunts for tenders</li>
+        <li>Connects to Gmail, WhatsApp, Calendar, Xero, Slack, and more</li>
+        <li>Builds a compiled understanding of your business at ingest time</li>
+        <li>Acts first, reports after. Handles routine autonomously</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Who It's For</h3>
+      <ul>
+        <li><strong>Marketing agencies</strong> &mdash; multi-client juggling, proposals, lead gen</li>
+        <li><strong>Trades &amp; service businesses</strong> &mdash; invoicing from the job site, follow-ups</li>
+        <li><strong>Tender hunters</strong> &mdash; $10K+ contract discovery and response</li>
+        <li><strong>High-touch services</strong> &mdash; dentists, physios, accountants</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="persona-grid" style="margin-top: 1.5rem;">
+    <div class="persona">
+      <div class="persona-avatar" style="background: var(--bb-orange-dim);">&#128736;</div>
+      <h4>The Tradie</h4>
+      <div class="persona-role">Electrician / Plumber / Builder</div>
+      <p>Hands dirty, on a job site. Messages BitBit from their phone: "Hey Bit, prepare an invoice for that kitchen job at Dave's." Needs something that just works. No time for apps.</p>
+    </div>
+    <div class="persona">
+      <div class="persona-avatar" style="background: rgba(167,139,250,0.15);">&#128188;</div>
+      <h4>The Agency Owner</h4>
+      <div class="persona-role">Marketing / Digital Agency</div>
+      <p>Running 15 client accounts. Burning hours on proposals and reporting. Losing leads because response time is too slow. BitBit handles the admin so they can do the work.</p>
+    </div>
+    <div class="persona">
+      <div class="persona-avatar" style="background: rgba(96,165,250,0.15);">&#128200;</div>
+      <h4>The Tender Hunter</h4>
+      <div class="persona-role">Enterprise / Contracts</div>
+      <p>Chasing $10K+ government and commercial contracts. Needs to find tenders, check eligibility, and respond fast. Premium tier, premium willingness to pay.</p>
+    </div>
+  </div>
+
+  <div class="insight">
+    <div class="insight-label">Core Tension</div>
+    <p>
+      These users share a frustration: they started a business to do the work they're good at. Instead they spend hours on admin.
+      BitBit must <strong>not feel like another tool to learn</strong>. It must feel like something that learns them.
+      The abstraction away from "AI product" toward "capable entity" is what will make this sell to tradies and agencies
+      who would otherwise dismiss AI software.
+    </p>
+  </div>
+</section>
+
+<!-- SECTION 2: CURRENT STATE -->
+<section class="section" id="current-state">
+  <div class="section-label">02 &mdash; Audit</div>
+  <h2>Current Design State</h2>
+  <p class="section-intro">
+    Honest assessment of where we are. The engineering is mature (1,224 tests, 10 specialist agents, full channel support).
+    The design system is functional but grew organically. It works, but it doesn't have a cohesive identity.
+  </p>
+
+  <div class="card" style="margin-bottom: 1.5rem;">
+    <h3>What We Have</h3>
+    <table class="comparison-table">
+      <tr>
+        <th>Element</th>
+        <th>Status</th>
+        <th>Notes</th>
+      </tr>
+      <tr>
+        <td>Logo</td>
+        <td><span class="status-dot status-done"></span>Exists</td>
+        <td>Pixelated dual "b" with detached corner piece. SVG + animated APNG + MP4 exports. Unique and memorable.</td>
+      </tr>
+      <tr>
+        <td>Color Palette</td>
+        <td><span class="status-dot status-done"></span>Defined</td>
+        <td>Dark primary (#0A0A0B), orange accent (#FF5A1F), warm cream foreground (#F5F0E8). Both dark and light themes.</td>
+      </tr>
+      <tr>
+        <td>Typography</td>
+        <td><span class="status-dot status-done"></span>Set</td>
+        <td>Inter (UI), JetBrains Mono (code), EB Garamond (marketing). Scale and hierarchy defined.</td>
+      </tr>
+      <tr>
+        <td>Component Library</td>
+        <td><span class="status-dot status-done"></span>Mature</td>
+        <td>Cards, buttons, inputs, badges, skeletons, empty states. Built on Radix UI primitives.</td>
+      </tr>
+      <tr>
+        <td>Animations</td>
+        <td><span class="status-dot status-done"></span>Comprehensive</td>
+        <td>Confetti, ripples, glow pulses, bounce-in, check draws. Reduced-motion support. Logo animations with floating corner.</td>
+      </tr>
+      <tr>
+        <td>Glassmorphism</td>
+        <td><span class="status-dot status-done"></span>Consistent</td>
+        <td>35% opacity cards + 24px backdrop blur throughout. Clean depth system.</td>
+      </tr>
+      <tr>
+        <td>Accessibility</td>
+        <td><span class="status-dot status-done"></span>AAA</td>
+        <td>15.4:1 contrast ratio on primary text. Focus indicators, skip links, semantic HTML.</td>
+      </tr>
+      <tr>
+        <td>Brand Guidelines</td>
+        <td><span class="status-dot status-partial"></span>Partial</td>
+        <td>Voice/tone documented (product-guidelines.md). No formal brand book, logo usage rules, or visual identity spec.</td>
+      </tr>
+      <tr>
+        <td>Character/Mascot</td>
+        <td><span class="status-dot status-missing"></span>None</td>
+        <td>Logo exists but no character or entity representation beyond it. No embodiment of "BitBit as a being."</td>
+      </tr>
+      <tr>
+        <td>Marketing Design</td>
+        <td><span class="status-dot status-partial"></span>Separate</td>
+        <td>Landing page uses different palette (cream #faf9f0) vs dashboard (dark #0A0A0B). Intentional split or drift?</td>
+      </tr>
+      <tr>
+        <td>Iconography</td>
+        <td><span class="status-dot status-partial"></span>Generic</td>
+        <td>Using Lucide React icons. No custom icon set that feels "BitBit."</td>
+      </tr>
+      <tr>
+        <td>Illustration Style</td>
+        <td><span class="status-dot status-missing"></span>None</td>
+        <td>No defined illustration language for marketing, onboarding, or empty states.</td>
+      </tr>
+      <tr>
+        <td>Onboarding UX</td>
+        <td><span class="status-dot status-partial"></span>Functional</td>
+        <td>Flow defined but visual design needs elevation. Currently generic modal-style.</td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h3>Current Dark Theme Palette</h3>
+      <div class="swatch-row" style="margin-top: 1rem;">
+        <div class="swatch">
+          <div class="swatch-color" style="background: #0A0A0B;"></div>
+          <div class="swatch-name">Background</div>
+          <div class="swatch-label">#0A0A0B</div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background: #111113;"></div>
+          <div class="swatch-name">Card</div>
+          <div class="swatch-label">#111113</div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background: #1A1A1D;"></div>
+          <div class="swatch-name">Elevated</div>
+          <div class="swatch-label">#1A1A1D</div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background: #FF5A1F;"></div>
+          <div class="swatch-name">Orange</div>
+          <div class="swatch-label">#FF5A1F</div>
+        </div>
+      </div>
+      <div class="swatch-row">
+        <div class="swatch">
+          <div class="swatch-color" style="background: #F5F0E8;"></div>
+          <div class="swatch-name">Text</div>
+          <div class="swatch-label">#F5F0E8</div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background: #B8B0A0;"></div>
+          <div class="swatch-name">Secondary</div>
+          <div class="swatch-label">#B8B0A0</div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background: #D4A574;"></div>
+          <div class="swatch-name">Warm</div>
+          <div class="swatch-label">#D4A574</div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background: #1F1F22;"></div>
+          <div class="swatch-name">Border</div>
+          <div class="swatch-label">#1F1F22</div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Current Semantic Colors</h3>
+      <div class="swatch-row" style="margin-top: 1rem;">
+        <div class="swatch">
+          <div class="swatch-color" style="background: #7CAA85;"></div>
+          <div class="swatch-name">Success</div>
+          <div class="swatch-label">#7CAA85</div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background: #F59E0B;"></div>
+          <div class="swatch-name">Warning</div>
+          <div class="swatch-label">#F59E0B</div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background: #C47070;"></div>
+          <div class="swatch-name">Error</div>
+          <div class="swatch-label">#C47070</div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background: #A78BFA;"></div>
+          <div class="swatch-name">Accent 2</div>
+          <div class="swatch-label">#A78BFA</div>
+        </div>
+      </div>
+      <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.75rem;">
+        Muted, desaturated variants. Warm-shifted tones that avoid clinical blue/green.
+        The success green (#7CAA85) has an earthy quality. The error red (#C47070) is dusty, not alarming.
+      </p>
+    </div>
+  </div>
+
+  <div class="insight">
+    <div class="insight-label">Assessment</div>
+    <p>
+      The technical design system is strong &mdash; glassmorphism, consistent tokens, good accessibility. What's missing is
+      <strong>personality</strong>. The dashboard looks like a competent SaaS app. It doesn't yet feel like interacting with an entity.
+      The logo's floating corner piece is the closest we get to "alive" &mdash; that instinct is right, it just needs to be amplified
+      across the entire experience.
+    </p>
+  </div>
+</section>
+
+<!-- SECTION 3: IDENTITY DIRECTION -->
+<section class="section" id="identity">
+  <div class="section-label">03 &mdash; Identity</div>
+  <h2>Brand Identity Direction</h2>
+  <p class="section-intro">
+    The fundamental positioning: BitBit is an entity, not a product. This has massive implications
+    for visual identity, interaction design, and how we talk about it.
+  </p>
+
+  <div class="spectrum">
+    <h3 style="font-size: 0.85rem; font-weight: 600; margin-bottom: 0.5rem;">The Entity Spectrum</h3>
+    <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1rem;">
+      Products exist on a continuum. We want BitBit positioned as a <strong>companion</strong> &mdash;
+      more than an assistant, less than a simulated being.
+    </p>
+    <div class="spectrum-bar">
+      <div class="spectrum-marker" style="left: 68%;">
+        <div class="spectrum-marker-label">BitBit</div>
+      </div>
+    </div>
+    <div class="spectrum-labels">
+      <span>Tool</span>
+      <span>Assistant</span>
+      <span>Companion</span>
+      <span>Being</span>
+    </div>
+    <div style="margin-top: 1rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+      <span style="font-size: 0.7rem; color: var(--text-dim);">Perplexity</span>
+      <span style="font-size: 0.7rem; color: var(--text-dim);">&bull;</span>
+      <span style="font-size: 0.7rem; color: var(--text-dim);">Linear</span>
+      <span style="font-size: 0.7rem; color: var(--text-muted);">&bull;</span>
+      <span style="font-size: 0.7rem; color: var(--text-muted);">ChatGPT</span>
+      <span style="font-size: 0.7rem; color: var(--text-muted);">&bull;</span>
+      <span style="font-size: 0.7rem; color: var(--text-muted);">Gemini</span>
+      <span style="font-size: 0.7rem; color: var(--bb-orange);">&bull;</span>
+      <span style="font-size: 0.7rem; color: var(--bb-orange);">Cleo</span>
+      <span style="font-size: 0.7rem; color: var(--bb-orange);">&bull;</span>
+      <span style="font-size: 0.7rem; color: var(--bb-orange);">Duo</span>
+      <span style="font-size: 0.7rem; color: var(--text-dim);">&bull;</span>
+      <span style="font-size: 0.7rem; color: var(--text-dim);">Replika</span>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top: 1.5rem;">
+    <h3>Five Levers of Aliveness</h3>
+    <p style="margin-bottom: 1rem;">
+      Research across successful entity-first products reveals five design levers that control how "alive" a product feels:
+    </p>
+    <div class="grid-2" style="gap: 0.75rem;">
+      <div class="option">
+        <div class="option-label">1. Animation &amp; Motion States</div>
+        <div class="option-desc">Movement should mirror the entity's "mental state," not just indicate loading. A breathing idle animation is fundamentally different from a spinner. Gemini leads here &mdash; inner activity during thinking conveys intelligence.</div>
+      </div>
+      <div class="option">
+        <div class="option-label">2. Voice &amp; Tone Consistency</div>
+        <div class="option-desc">The entity must have opinions, boundaries, and reactions. Cleo (fintech) employs 10 comedians to maintain voice. An entity that pushes back feels more real than one that's endlessly accommodating.</div>
+      </div>
+      <div class="option">
+        <div class="option-label">3. Emotional Range</div>
+        <div class="option-desc">An entity with one mood is not an entity. Minimum viable aliveness requires: neutral, positive, negative, and thinking states. Duolingo's Duo expresses guilt, pride, disappointment, excitement.</div>
+      </div>
+      <div class="option">
+        <div class="option-label">4. Temporal Presence</div>
+        <div class="option-desc">The Tamagotchi principle: the entity exists in time, notices your absence, remembers yesterday. If it has no sense of time passing, it's a tool. If it knows you were gone for three days, it's a being.</div>
+      </div>
+      <div class="option">
+        <div class="option-label">5. Visual Embodiment</div>
+        <div class="option-desc">From abstract (Gemini's sparkle) to figurative (Duo the owl) to humanoid (Replika). The level of visual embodiment should match the level of relational intimacy the product aims for.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-2" style="margin-top: 1.5rem;">
+    <div class="card">
+      <h3>What We Want BitBit to Feel Like</h3>
+      <ul>
+        <li>A capable new hire who already knows your business</li>
+        <li>Someone you can text from a job site and they just handle it</li>
+        <li>Direct, not chatty. Does the thing, reports the result</li>
+        <li>Has personality but not so much personality that it's annoying</li>
+        <li>Professional enough for agencies, approachable enough for tradies</li>
+        <li>Warm without being cutesy. Competent without being cold</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>What BitBit Must Never Feel Like</h3>
+      <ul>
+        <li>Another SaaS dashboard with a chatbot bolted on</li>
+        <li>A corporate AI assistant (no "How can I help you today?")</li>
+        <li>Clippy &mdash; interrupting without intelligence behind it</li>
+        <li>An AI product selling itself as AI (keep the machinery invisible)</li>
+        <li>A children's toy or game character (this is for businesses)</li>
+        <li>Overwhelming or feature-heavy on first impression</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 4: CHARACTER CONCEPT -->
+<section class="section" id="character">
+  <div class="section-label">04 &mdash; Character</div>
+  <h2>Character / Entity Concept</h2>
+  <p class="section-intro">
+    Rather than a traditional logo, we're exploring a character or visual entity that embodies BitBit &mdash;
+    something that can express states, react to context, and feel alive across the product.
+  </p>
+
+  <div class="insight">
+    <div class="insight-label">Current Direction</div>
+    <p>
+      The existing logo &mdash; dual pixelated "b" characters with a detached floating corner piece &mdash; already hints at entity.
+      The floating corner has its own animation cycle (breathe, rotate, float). The question is whether to evolve this geometric
+      form into a full character, or create a separate character alongside the wordmark.
+    </p>
+  </div>
+
+  <h3 style="margin-top: 2rem; font-size: 1rem;">Concept: The Animated Form</h3>
+  <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 1.5rem;">
+    Imagine a simple geometric shape &mdash; derived from the existing logo's pixel aesthetic &mdash; that breathes,
+    reacts, and expresses BitBit's current state. Not humanoid. Not an animal. An abstract form with just enough personality
+    to feel alive.
+  </p>
+
+  <!-- Live character demo -->
+  <div class="character-demo">
+    <div class="character-body">
+      <div class="character-eye left"></div>
+      <div class="character-eye right"></div>
+      <div class="character-corner"></div>
+    </div>
+  </div>
+  <p style="text-align: center; font-size: 0.72rem; color: var(--text-dim); margin-bottom: 2rem; font-family: 'JetBrains Mono', monospace;">
+    Rough CSS concept &mdash; breathing body, blinking eyes, floating corner
+  </p>
+
+  <h3 style="margin-top: 2rem; font-size: 1rem;">Animation States</h3>
+  <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 1.5rem;">
+    The character needs distinct states that map to what BitBit is doing. Each state should be instantly recognizable
+    even at small sizes (32px avatar in chat, 16px favicon).
+  </p>
+
+  <div class="states-row">
+    <div class="state-demo">
+      <div class="state-box idle"></div>
+      <div class="state-label">Idle</div>
+    </div>
+    <div class="state-demo">
+      <div class="state-box thinking"></div>
+      <div class="state-label">Thinking</div>
+    </div>
+    <div class="state-demo">
+      <div class="state-box working"></div>
+      <div class="state-label">Working</div>
+    </div>
+    <div class="state-demo">
+      <div class="state-box happy"></div>
+      <div class="state-label">Done</div>
+    </div>
+    <div class="state-demo">
+      <div class="state-box error"></div>
+      <div class="state-label">Error</div>
+    </div>
+  </div>
+
+  <div class="decision">
+    <div class="decision-header">
+      <div class="decision-icon">&#9733;</div>
+      <div class="decision-title">Character Approach Options</div>
+    </div>
+    <div class="decision-options">
+      <div class="option preferred">
+        <div class="option-label">A. Evolve the Existing Logo</div>
+        <div class="option-desc">
+          Take the dual-"b" pixel form with its floating corner and make it a full character system.
+          Add eyes, expression states, and a wider animation vocabulary. The corner piece becomes a defining
+          personality element &mdash; like an eyebrow or a thought bubble. Keep the geometric pixel aesthetic.
+          <br><br>
+          <strong>Pros:</strong> Builds on what exists, maintains brand continuity, unique aesthetic.<br>
+          <strong>Cons:</strong> May limit expressiveness. Pixel forms are harder to make "warm."
+        </div>
+      </div>
+      <div class="option">
+        <div class="option-label">B. New Abstract Character</div>
+        <div class="option-desc">
+          Design a new character form that's inspired by but separate from the logo. Think Duolingo's Duo or
+          Discord's Wumpus &mdash; a distinct character that becomes the embodiment of BitBit, while the wordmark
+          stays for formal branding.
+          <br><br>
+          <strong>Pros:</strong> More expressive freedom, can be very characterful.<br>
+          <strong>Cons:</strong> Two visual identities to maintain. Risk of feeling "tacked on."
+        </div>
+      </div>
+      <div class="option">
+        <div class="option-label">C. Interactive Virtual Character</div>
+        <div class="option-desc">
+          A more developed interactive entity (like the
+          <a href="https://app.superdesign.dev/library/interactive-virtual-character" target="_blank" style="color: var(--bb-orange);">SuperDesign virtual character concept</a>)
+          &mdash; something that lives in the interface, reacts to mouse proximity,
+          and has a fuller range of expression. Could be a 3D or 2.5D presence.
+          <br><br>
+          <strong>Pros:</strong> Maximum aliveness. Strong differentiation.<br>
+          <strong>Cons:</strong> Highest design/engineering investment. Risk of being distracting.
+        </div>
+      </div>
+      <div class="option">
+        <div class="option-label">D. Hybrid &mdash; States, Not a Face</div>
+        <div class="option-desc">
+          No literal character. Instead, the entire interface IS the entity. Colors shift based on BitBit's state.
+          The orange glow intensifies when it's working. Subtle particle effects when it's thinking. The UI itself
+          breathes. Like Gemini's sparkle &mdash; the brand is the animation system, not a mascot.
+          <br><br>
+          <strong>Pros:</strong> Sophisticated, avoids mascot cringe. Scales well.<br>
+          <strong>Cons:</strong> Harder to market. No avatar for social media or merch.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top: 1.5rem;">
+    <h3>Character Design Constraints</h3>
+    <ul>
+      <li><strong>Must work at 16px</strong> (favicon, notification badge), 32px (chat avatar), 120px (splash), and full-page hero</li>
+      <li><strong>Must not look "AI"</strong> &mdash; no neural network imagery, no brain icons, no circuit boards, no sparkles</li>
+      <li><strong>Must be animatable</strong> with CSS/SVG &mdash; no Lottie dependency, no heavy WebGL</li>
+      <li><strong>Must translate to merch</strong> &mdash; works on a mug, a hoodie, a sticker</li>
+      <li><strong>Must feel professional</strong> for agency presentations but approachable for a tradie's phone</li>
+      <li><strong>Orange (#FF5A1F) must remain the primary color</strong> &mdash; it's deeply embedded in the product</li>
+    </ul>
+  </div>
+</section>
+
+<!-- SECTION 5: PALETTE -->
+<section class="section" id="palette">
+  <div class="section-label">05 &mdash; Color</div>
+  <h2>Color &amp; Visual System</h2>
+  <p class="section-intro">
+    Our current palette is functional but could be more intentional. Dark + warm orange occupies a
+    specific and defensible position in the market.
+  </p>
+
+  <div class="card">
+    <h3>Competitive Color Positioning</h3>
+    <p style="margin-bottom: 1rem;">Most AI brands default to cool tones. We own the warm space.</p>
+    <table class="comparison-table">
+      <tr>
+        <th>Brand</th>
+        <th>Primary Color</th>
+        <th>Temperature</th>
+        <th>Feeling</th>
+      </tr>
+      <tr>
+        <td>Claude (Anthropic)</td>
+        <td><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:#C15F3C;vertical-align:middle;margin-right:6px;"></span>#C15F3C Rust</td>
+        <td>Warm</td>
+        <td>Thoughtful collaborator</td>
+      </tr>
+      <tr>
+        <td>ChatGPT (OpenAI)</td>
+        <td><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:#10A37F;vertical-align:middle;margin-right:6px;"></span>#10A37F Green</td>
+        <td>Neutral</td>
+        <td>Universal assistant</td>
+      </tr>
+      <tr>
+        <td>Linear</td>
+        <td><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:#5E6AD2;vertical-align:middle;margin-right:6px;"></span>#5E6AD2 Purple</td>
+        <td>Cool</td>
+        <td>Professional precision</td>
+      </tr>
+      <tr>
+        <td>Perplexity</td>
+        <td><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:#20808D;vertical-align:middle;margin-right:6px;"></span>#20808D Teal</td>
+        <td>Cool</td>
+        <td>Clean knowledge</td>
+      </tr>
+      <tr>
+        <td class="highlight">BitBit</td>
+        <td><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:#FF5A1F;vertical-align:middle;margin-right:6px;"></span><span class="highlight">#FF5A1F Orange</span></td>
+        <td class="highlight">Hot warm</td>
+        <td class="highlight">Energetic entity</td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="insight" style="margin-top: 1.5rem;">
+    <div class="insight-label">Design Principle</div>
+    <p>
+      <strong>Desaturate warm accents in dark mode.</strong> Vibrant orange pops aggressively against dark backgrounds
+      and needs restraint. Use warm tones for invitation, not information. The current glow effects
+      (rgba(255, 90, 31, 0.15)) are well-calibrated. Consider whether the full-strength #FF5A1F is
+      used too liberally or if it should be reserved for primary actions only.
+    </p>
+  </div>
+
+  <div class="decision" style="margin-top: 1.5rem;">
+    <div class="decision-header">
+      <div class="decision-icon">&#127912;</div>
+      <div class="decision-title">Palette Questions for Discussion</div>
+    </div>
+    <div class="decision-options">
+      <div class="option">
+        <div class="option-label">Landing vs Dashboard</div>
+        <div class="option-desc">
+          Landing page currently uses cream (#faf9f0) with warm browns. Dashboard uses pure dark (#0A0A0B) with electric orange.
+          Is this intentional dual identity (marketing warmth vs product darkness), or should they converge?
+        </div>
+      </div>
+      <div class="option">
+        <div class="option-label">Secondary Palette</div>
+        <div class="option-desc">
+          We have a warm secondary (#D4A574) that's barely used. Should there be a richer secondary palette &mdash;
+          maybe earth tones to reinforce the "human, not AI" position? Terracotta, sage, stone?
+        </div>
+      </div>
+      <div class="option">
+        <div class="option-label">Light Theme Priority</div>
+        <div class="option-desc">
+          Full light theme exists but dark is primary. Should we invest equally in light, or commit to dark as the
+          brand and treat light as a functional accessibility option?
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 6: TYPOGRAPHY -->
+<section class="section" id="typography-section">
+  <div class="section-label">06 &mdash; Typography</div>
+  <h2>Typography</h2>
+  <p class="section-intro">
+    Current stack is functional and well-chosen. The question is whether it needs refinement
+    for stronger personality.
+  </p>
+
+  <div class="grid-2">
+    <div class="card">
+      <h3>Current Stack</h3>
+      <div style="margin-top: 1rem;">
+        <div style="font-family: 'Inter', sans-serif; font-size: 1.8rem; font-weight: 700; margin-bottom: 0.5rem;">
+          Inter
+        </div>
+        <p style="font-family: 'Inter', sans-serif; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.25rem;">
+          UI body, labels, buttons &mdash; <span class="tag tag-green">Solid choice</span>
+        </p>
+
+        <div style="font-family: 'EB Garamond', serif; font-size: 1.8rem; font-weight: 500; font-style: italic; margin-bottom: 0.5rem;">
+          EB Garamond
+        </div>
+        <p style="font-family: 'Inter', sans-serif; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.25rem;">
+          Marketing headings &mdash; <span class="tag tag-amber">Review needed</span>
+        </p>
+
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 1.4rem; font-weight: 500; margin-bottom: 0.5rem;">
+          JetBrains Mono
+        </div>
+        <p style="font-family: 'Inter', sans-serif; font-size: 0.85rem; color: var(--text-muted);">
+          Code, labels, metadata &mdash; <span class="tag tag-green">Good accent</span>
+        </p>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Typography Questions</h3>
+      <ul>
+        <li><strong>Display font</strong> &mdash; Is EB Garamond the right serif for BitBit's personality? It reads elegant/literary. Should it be warmer, more grounded? Or should we use a display sans instead?</li>
+        <li><strong>Wordmark font</strong> &mdash; Should "BitBit" as a wordmark use a custom typeface or a modified version of one of our stack fonts?</li>
+        <li><strong>Hierarchy consistency</strong> &mdash; Marketing uses serif for display, dashboard uses sans. Same question as the color split: intentional dual voice or drift?</li>
+        <li><strong>Custom letterforms</strong> &mdash; Should any characters in "BitBit" be modified to reinforce the pixel/block aesthetic of the logo?</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 7: UI PATTERNS -->
+<section class="section" id="ui-patterns">
+  <div class="section-label">07 &mdash; Interface</div>
+  <h2>UI/UX Patterns</h2>
+  <p class="section-intro">
+    Key interaction patterns where brand identity and design system converge. These are the moments
+    where BitBit either feels like an entity or feels like a dashboard.
+  </p>
+
+  <div class="card">
+    <h3>Critical Touchpoints</h3>
+    <p style="margin-bottom: 1rem;">
+      These are the moments that define how BitBit feels. Each one is an opportunity to reinforce the entity positioning.
+    </p>
+
+    <div class="grid-2" style="gap: 0.75rem;">
+      <div class="option preferred">
+        <div class="option-label">First Impression (Onboarding)</div>
+        <div class="option-desc">
+          Current: Generic modal flow. Goal: BitBit introduces itself conversationally through the chat interface.
+          "Connect your world" grid appears. Background crawl starts immediately. Real data populates during tour.
+          No empty screens.
+        </div>
+      </div>
+      <div class="option">
+        <div class="option-label">Chat Interface</div>
+        <div class="option-desc">
+          Current: Streaming responses with pipeline visualization. Has skeleton loading and tool call summaries.
+          This is the primary interaction surface. BitBit's "face" is whatever appears next to its messages.
+        </div>
+      </div>
+      <div class="option">
+        <div class="option-label">Processing Pipeline</div>
+        <div class="option-desc">
+          Current: Skeleton &rarr; Plan &rarr; Active &rarr; Done &rarr; Fade. This is where "show the work" happens.
+          The pipeline should feel like watching BitBit think, not watching a progress bar.
+        </div>
+      </div>
+      <div class="option">
+        <div class="option-label">Empty States</div>
+        <div class="option-desc">
+          Current: Icon + title + description + button. Minimal. These moments are character opportunities &mdash;
+          Discord puts Wumpus in every empty state. BitBit should be present here with personality.
+        </div>
+      </div>
+      <div class="option">
+        <div class="option-label">Notifications &amp; Alerts</div>
+        <div class="option-desc">
+          "[Gmail] 3 new emails from client contacts." Currently text-only. Should these have BitBit's character
+          attached? Or stay neutral to avoid notification fatigue?
+        </div>
+      </div>
+      <div class="option">
+        <div class="option-label">Error States</div>
+        <div class="option-desc">
+          Current: Standard error messages. Entity opportunity: BitBit acknowledging something went wrong feels
+          different from a system error message. "Couldn't reach Gmail. I'll try again in a few minutes."
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top: 1.5rem;">
+    <h3>Current UI Strengths to Preserve</h3>
+    <ul>
+      <li><strong>Glassmorphism</strong> &mdash; The 35% opacity + backdrop blur creates a distinctive depth system. Keep this.</li>
+      <li><strong>Pipeline visualization</strong> &mdash; Showing BitBit's thinking stages is core to the brand. Amplify, don't remove.</li>
+      <li><strong>Orange glow effects</strong> &mdash; The warm glow on active/completed states is on-brand. Make it more intentional.</li>
+      <li><strong>Responsive layout</strong> &mdash; Desktop sidebar &rarr; tablet rail &rarr; mobile bottom nav is clean.</li>
+      <li><strong>Confetti/celebration</strong> &mdash; Task completion animations add dopamine. Expand this vocabulary.</li>
+    </ul>
+  </div>
+
+  <div class="card" style="margin-top: 1rem;">
+    <h3>UI Areas Needing Design Attention</h3>
+    <ul>
+      <li><strong>Connection grid</strong> &mdash; Uses channel-specific brand colors (Gmail red, Asana pink) which fragments the palette</li>
+      <li><strong>Iconography</strong> &mdash; Generic Lucide icons. Could benefit from a custom icon style or at least a more curated subset</li>
+      <li><strong>Illustration language</strong> &mdash; None defined. Needed for onboarding, empty states, error pages, marketing</li>
+      <li><strong>Data visualization</strong> &mdash; Charts use Recharts defaults. Could be more on-brand</li>
+      <li><strong>Mobile chat experience</strong> &mdash; The primary tradie interaction. Must feel fast, native, and unmistakably BitBit</li>
+    </ul>
+  </div>
+</section>
+
+<!-- SECTION 8: COMPETITIVE LANDSCAPE -->
+<section class="section" id="competitive">
+  <div class="section-label">08 &mdash; Landscape</div>
+  <h2>Competitive Landscape</h2>
+  <p class="section-intro">
+    How comparable products position themselves visually, and where the gaps are.
+  </p>
+
+  <div class="card">
+    <h3>Brand Identity Comparison</h3>
+    <table class="comparison-table">
+      <tr>
+        <th>Brand</th>
+        <th>Visual Metaphor</th>
+        <th>Character?</th>
+        <th>Lesson for BitBit</th>
+      </tr>
+      <tr>
+        <td><strong>Claude</strong> (Anthropic)</td>
+        <td>Radiating starburst (ideas outward)</td>
+        <td>No character. Warm identity.</td>
+        <td>Warm palette works for trust. Rust-orange on cream is their territory &mdash; we differentiate with dark bg.</td>
+      </tr>
+      <tr>
+        <td><strong>ChatGPT</strong> (OpenAI)</td>
+        <td>"Blossom" &mdash; growth, organic precision</td>
+        <td>No character. Geometric logo.</td>
+        <td>Rebrand focused on feeling more human. The blossom reads "organic math." Clinical.</td>
+      </tr>
+      <tr>
+        <td><strong>Gemini</strong> (Google)</td>
+        <td>Sparkle &mdash; guiding light</td>
+        <td>Animation IS the character.</td>
+        <td>Motion-first identity. The sparkle has states. Best "entity through animation" example.</td>
+      </tr>
+      <tr>
+        <td><strong>Duolingo</strong> (Duo)</td>
+        <td>Green owl with opinions</td>
+        <td>Full character. Cultural icon.</td>
+        <td>A mascot with opinions is more memorable than a friendly one. Duo has moods &mdash; guilt, pride, chaos.</td>
+      </tr>
+      <tr>
+        <td><strong>Cleo</strong> (Fintech)</td>
+        <td>"Big Sis Energy"</td>
+        <td>Personality is the character (no visual mascot).</td>
+        <td class="highlight">$150M ARR. Entity branding drives revenue. Cleo has boundaries &mdash; pushes back on users.</td>
+      </tr>
+      <tr>
+        <td><strong>Intercom Fin</strong></td>
+        <td>Converging arrows star</td>
+        <td>Configurable identity per brand.</td>
+        <td>Professional but no personality. "Fin Identities" let businesses customize &mdash; smart for B2B.</td>
+      </tr>
+      <tr>
+        <td><strong>Discord</strong></td>
+        <td>Wumpus (community) + Clyde (bot)</td>
+        <td>Dual mascot system.</td>
+        <td>Wumpus in empty states turns dead moments into character moments. Two mascots = confusion.</td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="insight" style="margin-top: 1.5rem;">
+    <div class="insight-label">Market Gap</div>
+    <p>
+      <strong>Dark + warm orange + entity character is unoccupied territory.</strong>
+      Linear owns dark+purple (professional-cold). Vercel owns dark+B&W (authority-cold).
+      Claude owns warm-orange on light backgrounds. Nobody is doing dark background + warm accent + characterful entity.
+      That's our space.
+    </p>
+  </div>
+
+  <div class="card" style="margin-top: 1.5rem;">
+    <h3>Key Takeaways from Research</h3>
+    <ul>
+      <li><strong>Animation is the new logo.</strong> Gemini's sparkle is more recognizable in motion than as a static mark. For entity-first products, the animation system IS the brand identity.</li>
+      <li><strong>Personality requires maintenance.</strong> A living character is an ongoing editorial commitment, not a one-time design deliverable.</li>
+      <li><strong>The Tamagotchi pattern is underused in SaaS.</strong> Temporal awareness (notices your absence, remembers yesterday) is the cheapest way to make something feel alive.</li>
+      <li><strong>Let the entity have limits.</strong> Clippy failed because it was always eager. Cleo succeeds because it pushes back. Boundaries = more real.</li>
+      <li><strong>The Clippy lesson:</strong> A character without intelligence behind it is worse than no character at all. BitBit has the intelligence &mdash; we just need the face.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- SECTION 9: REFERENCES -->
+<section class="section" id="references">
+  <div class="section-label">09 &mdash; Inspiration</div>
+  <h2>References &amp; Inspiration</h2>
+  <p class="section-intro">
+    Visual and conceptual references organized by what aspect of BitBit's identity they inform.
+  </p>
+
+  <h3 style="margin-top: 1.5rem; font-size: 0.95rem;">Character / Entity References</h3>
+  <div class="ref-grid">
+    <a href="https://app.superdesign.dev/library/interactive-virtual-character" target="_blank" class="ref-link">
+      <span class="ref-icon">&#9899;</span>
+      <div class="ref-text">
+        <div>SuperDesign Interactive Virtual Character</div>
+        <div class="ref-domain">app.superdesign.dev</div>
+      </div>
+    </a>
+    <a href="https://duolingo.com" target="_blank" class="ref-link">
+      <span class="ref-icon">&#129417;</span>
+      <div class="ref-text">
+        <div>Duolingo Duo &mdash; emotional range in a mascot</div>
+        <div class="ref-domain">duolingo.com</div>
+      </div>
+    </a>
+    <a href="https://discord.com" target="_blank" class="ref-link">
+      <span class="ref-icon">&#128126;</span>
+      <div class="ref-text">
+        <div>Discord Wumpus &mdash; character in empty states</div>
+        <div class="ref-domain">discord.com</div>
+      </div>
+    </a>
+    <a href="https://web.meetcleo.com" target="_blank" class="ref-link">
+      <span class="ref-icon">&#128171;</span>
+      <div class="ref-text">
+        <div>Cleo &mdash; entity personality without a mascot</div>
+        <div class="ref-domain">meetcleo.com</div>
+      </div>
+    </a>
+    <a href="https://octodex.github.com/" target="_blank" class="ref-link">
+      <span class="ref-icon">&#128049;</span>
+      <div class="ref-text">
+        <div>GitHub Octodex &mdash; community-owned character</div>
+        <div class="ref-domain">octodex.github.com</div>
+      </div>
+    </a>
+    <a href="https://replika.com" target="_blank" class="ref-link">
+      <span class="ref-icon">&#128100;</span>
+      <div class="ref-text">
+        <div>Replika &mdash; deep entity embodiment</div>
+        <div class="ref-domain">replika.com</div>
+      </div>
+    </a>
+  </div>
+
+  <h3 style="margin-top: 2rem; font-size: 0.95rem;">Dark UI / Design System References</h3>
+  <div class="ref-grid">
+    <a href="https://linear.app" target="_blank" class="ref-link">
+      <span class="ref-icon">&#9632;</span>
+      <div class="ref-text">
+        <div>Linear &mdash; dark UI archetype</div>
+        <div class="ref-domain">linear.app</div>
+      </div>
+    </a>
+    <a href="https://linear.style" target="_blank" class="ref-link">
+      <span class="ref-icon">&#127912;</span>
+      <div class="ref-text">
+        <div>linear.style &mdash; catalog of the Linear aesthetic</div>
+        <div class="ref-domain">linear.style</div>
+      </div>
+    </a>
+    <a href="https://vercel.com/geist" target="_blank" class="ref-link">
+      <span class="ref-icon">&#9650;</span>
+      <div class="ref-text">
+        <div>Vercel Geist &mdash; Swiss digital minimalism</div>
+        <div class="ref-domain">vercel.com/geist</div>
+      </div>
+    </a>
+    <a href="https://raycast.com" target="_blank" class="ref-link">
+      <span class="ref-icon">&#128269;</span>
+      <div class="ref-text">
+        <div>Raycast &mdash; keyboard-first dark UI</div>
+        <div class="ref-domain">raycast.com</div>
+      </div>
+    </a>
+    <a href="https://arc.net" target="_blank" class="ref-link">
+      <span class="ref-icon">&#127752;</span>
+      <div class="ref-text">
+        <div>Arc Browser &mdash; playful premium</div>
+        <div class="ref-domain">arc.net</div>
+      </div>
+    </a>
+  </div>
+
+  <h3 style="margin-top: 2rem; font-size: 0.95rem;">AI Brand Identity References</h3>
+  <div class="ref-grid">
+    <a href="https://geist.co/work/anthropic" target="_blank" class="ref-link">
+      <span class="ref-icon">&#10039;</span>
+      <div class="ref-text">
+        <div>Claude brand by Geist agency &mdash; warm humanism</div>
+        <div class="ref-domain">geist.co</div>
+      </div>
+    </a>
+    <a href="https://openai.com/brand/" target="_blank" class="ref-link">
+      <span class="ref-icon">&#127804;</span>
+      <div class="ref-text">
+        <div>OpenAI "Blossom" &mdash; organic geometry</div>
+        <div class="ref-domain">openai.com</div>
+      </div>
+    </a>
+    <a href="https://design.google/library/gemini-ai-visual-design" target="_blank" class="ref-link">
+      <span class="ref-icon">&#10024;</span>
+      <div class="ref-text">
+        <div>Gemini visual design &mdash; animation as identity</div>
+        <div class="ref-domain">design.google</div>
+      </div>
+    </a>
+    <a href="https://strohlsf.com/googlegemini/" target="_blank" class="ref-link">
+      <span class="ref-icon">&#10024;</span>
+      <div class="ref-text">
+        <div>Strohl Inc. &mdash; Gemini identity case study</div>
+        <div class="ref-domain">strohlsf.com</div>
+      </div>
+    </a>
+    <a href="https://jdreeves.com/Fin" target="_blank" class="ref-link">
+      <span class="ref-icon">&#11088;</span>
+      <div class="ref-text">
+        <div>Intercom Fin &mdash; professional AI agent identity</div>
+        <div class="ref-domain">jdreeves.com</div>
+      </div>
+    </a>
+    <a href="https://medium.com/smith-diction/branding-perplexity-ai-70eb2cb2ef48" target="_blank" class="ref-link">
+      <span class="ref-icon">&#42;</span>
+      <div class="ref-text">
+        <div>Perplexity brand &mdash; invisible, vessel-like</div>
+        <div class="ref-domain">medium.com</div>
+      </div>
+    </a>
+  </div>
+
+  <h3 style="margin-top: 2rem; font-size: 0.95rem;">Design Trend Research</h3>
+  <div class="ref-grid">
+    <a href="https://www.canva.com/newsroom/news/design-trends-2026/" target="_blank" class="ref-link">
+      <span class="ref-icon">&#128196;</span>
+      <div class="ref-text">
+        <div>Canva 2026 Trends &mdash; "Imperfect by Design"</div>
+        <div class="ref-domain">canva.com</div>
+      </div>
+    </a>
+    <a href="https://www.figma.com/blog/intercom-pioneer-ai-summit-branding/" target="_blank" class="ref-link">
+      <span class="ref-icon">&#128196;</span>
+      <div class="ref-text">
+        <div>Intercom Pioneer summit branding &mdash; event design</div>
+        <div class="ref-domain">figma.com</div>
+      </div>
+    </a>
+    <a href="https://www.focuslab.agency/blog/humanizing-technology-via-b2b-mascots" target="_blank" class="ref-link">
+      <span class="ref-icon">&#128196;</span>
+      <div class="ref-text">
+        <div>FocusLab &mdash; humanizing B2B tech with mascots</div>
+        <div class="ref-domain">focuslab.agency</div>
+      </div>
+    </a>
+    <a href="https://writer.com/blog/big-sis-energy/" target="_blank" class="ref-link">
+      <span class="ref-icon">&#128196;</span>
+      <div class="ref-text">
+        <div>Cleo "Big Sis Energy" &mdash; entity voice case study</div>
+        <div class="ref-domain">writer.com</div>
+      </div>
+    </a>
+  </div>
+</section>
+
+<!-- SECTION 10: OPEN DECISIONS -->
+<section class="section" id="decisions">
+  <div class="section-label">10 &mdash; Decisions</div>
+  <h2>Open Decisions</h2>
+  <p class="section-intro">
+    Key decisions that need to be made during or after the consultation. These shape
+    the scope and direction of the design work.
+  </p>
+
+  <div class="decision">
+    <div class="decision-header">
+      <div class="decision-icon">&#9312;</div>
+      <div class="decision-title">Character vs. Logo vs. Both</div>
+    </div>
+    <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1rem;">
+      Do we evolve the existing pixelated logo into a character, create a separate character alongside the wordmark,
+      or focus on making the UI itself feel alive (Gemini approach)?
+    </p>
+    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+      <span class="tag tag-orange">Brand Identity</span>
+      <span class="tag tag-purple">Character Design</span>
+      <span class="tag tag-blue">Animation</span>
+    </div>
+  </div>
+
+  <div class="decision">
+    <div class="decision-header">
+      <div class="decision-icon">&#9313;</div>
+      <div class="decision-title">Visual Unity: Marketing vs. Product</div>
+    </div>
+    <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1rem;">
+      Landing page is cream + serif. Dashboard is dark + sans. Should these converge into one visual language,
+      or is the intentional split between "welcoming marketing" and "focused product" correct?
+    </p>
+    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+      <span class="tag tag-orange">Brand Consistency</span>
+      <span class="tag tag-amber">Marketing</span>
+    </div>
+  </div>
+
+  <div class="decision">
+    <div class="decision-header">
+      <div class="decision-icon">&#9314;</div>
+      <div class="decision-title">Illustration Language</div>
+    </div>
+    <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1rem;">
+      We need illustrations for: onboarding flow, empty states, error pages, marketing pages, social media,
+      documentation. What style? Options range from geometric/abstract to warm/organic to pixel/retro.
+    </p>
+    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+      <span class="tag tag-purple">Illustration</span>
+      <span class="tag tag-green">Onboarding</span>
+    </div>
+  </div>
+
+  <div class="decision">
+    <div class="decision-header">
+      <div class="decision-icon">&#9315;</div>
+      <div class="decision-title">Scope of Design Work</div>
+    </div>
+    <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1rem;">
+      What deliverables make sense from this engagement? Some possibilities:
+    </p>
+    <div class="grid-2" style="gap: 0.5rem;">
+      <div class="option">
+        <div class="option-label">Brand Identity Package</div>
+        <div class="option-desc">Logo refinement, character design, color system, typography, brand guidelines document</div>
+      </div>
+      <div class="option">
+        <div class="option-label">UI/UX Design System</div>
+        <div class="option-desc">Component library, interaction patterns, animation specs, Figma/design tokens</div>
+      </div>
+      <div class="option">
+        <div class="option-label">Character &amp; Animation</div>
+        <div class="option-desc">Entity design, state animations, SVG/CSS specs, usage guidelines</div>
+      </div>
+      <div class="option">
+        <div class="option-label">Marketing Collateral</div>
+        <div class="option-desc">Landing page redesign, social templates, illustration set, pitch deck template</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="decision">
+    <div class="decision-header">
+      <div class="decision-icon">&#9316;</div>
+      <div class="decision-title">Abstraction Level</div>
+    </div>
+    <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1rem;">
+      How "AI" should BitBit look? The more abstract the character, the easier it is to sell to AI-skeptical
+      audiences (tradies). But too abstract and it doesn't register as an entity. Where's the sweet spot?
+    </p>
+    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+      <span class="tag tag-red">Critical</span>
+      <span class="tag tag-orange">Brand Positioning</span>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 11: DISCUSSION QUESTIONS -->
+<section class="section" id="discussion">
+  <div class="section-label">11 &mdash; Discussion</div>
+  <h2>Questions for the Consultation</h2>
+  <p class="section-intro">
+    Prioritized questions to guide the conversation. Start with the strategic ones,
+    drill into specifics as the discussion develops.
+  </p>
+
+  <h3 style="font-size: 0.9rem; margin-bottom: 1rem;">Strategic Direction</h3>
+  <div class="questions">
+    <div class="question">
+      <p>Given our positioning as an entity rather than a tool, what's the right level of visual embodiment?</p>
+      <div class="context">
+        We want something between Gemini's abstract sparkle and Duolingo's full character.
+        Professional enough for B2B but warm enough for a tradie messaging from a job site.
+      </div>
+    </div>
+    <div class="question">
+      <p>How do we make BitBit feel alive across the entire product without it becoming distracting or gimmicky?</p>
+      <div class="context">
+        This is a productivity tool for busy people. The "entity" feel should enhance, not interrupt.
+        Idle breathing animation in a chat avatar is fine. Random pop-ups are not.
+      </div>
+    </div>
+    <div class="question">
+      <p>Should our marketing and product share the same visual language, or is the intentional split appropriate?</p>
+      <div class="context">
+        Currently: cream + serif for landing, dark + sans for dashboard. Some brands do this deliberately
+        (warm welcome vs. focused workspace). Others unify everything.
+      </div>
+    </div>
+  </div>
+
+  <h3 style="font-size: 0.9rem; margin: 2rem 0 1rem;">Character &amp; Identity</h3>
+  <div class="questions">
+    <div class="question">
+      <p>Our existing logo has a floating detached corner piece that animates independently. Is there something here worth developing into a character element?</p>
+      <div class="context">
+        The corner piece already has: float, rotate, and scale animations. It behaves like a small
+        companion to the main form. Could this evolve into BitBit's "face" or personality indicator?
+      </div>
+    </div>
+    <div class="question">
+      <p>What visual signals separate "smart entity" from "AI chatbot" in a user's mind?</p>
+      <div class="context">
+        Our target users include people who would dismiss "AI software." The character/identity needs to
+        abstract away the AI and foreground the capability. "This works for me" not "this is AI."
+      </div>
+    </div>
+    <div class="question">
+      <p>How many expression states does a character need to feel alive without being over-designed?</p>
+      <div class="context">
+        Minimum: idle, thinking, working, done, error. But should there be: greeting, celebrating,
+        apologizing, waiting, sleeping? Where's the diminishing return?
+      </div>
+    </div>
+  </div>
+
+  <h3 style="font-size: 0.9rem; margin: 2rem 0 1rem;">Visual System</h3>
+  <div class="questions">
+    <div class="question">
+      <p>Is our orange (#FF5A1F) the right primary, or should it be refined? It's vibrant. Some contexts want it softer.</p>
+      <div class="context">
+        Claude uses a muted rust (#C15F3C). Our orange is more energetic. Does energetic fit
+        "capable entity" or should we pull toward warmer, more grounded tones?
+      </div>
+    </div>
+    <div class="question">
+      <p>What illustration style pairs well with our dark glassmorphic UI?</p>
+      <div class="context">
+        Need illustrations for: onboarding screens, empty states, error pages, marketing.
+        The glassmorphism creates depth. Flat illustrations might clash. Gradient/glow might work.
+      </div>
+    </div>
+    <div class="question">
+      <p>Should we develop a custom icon set, or is a curated Lucide subset sufficient?</p>
+      <div class="context">
+        Custom icons are expensive to maintain but create brand distinction. A middle ground
+        might be custom icons for core concepts (connections, agents, triage) and Lucide for standard UI.
+      </div>
+    </div>
+    <div class="question">
+      <p>What's the right approach to micro-interactions and celebration moments?</p>
+      <div class="context">
+        We have confetti, check-draws, and glow pulses. How far should we push the "delight"
+        axis? Task completion, first connection, milestones &mdash; what earns a celebration?
+      </div>
+    </div>
+  </div>
+
+  <h3 style="font-size: 0.9rem; margin: 2rem 0 1rem;">Practical</h3>
+  <div class="questions">
+    <div class="question">
+      <p>What's the most impactful deliverable we should prioritize from this engagement?</p>
+      <div class="context">
+        Options: brand identity package, character design, UI component polish, illustration set,
+        marketing redesign. We can't do everything at once. What moves the needle most?
+      </div>
+    </div>
+    <div class="question">
+      <p>What format should the brand guidelines take to be most useful for an AI-assisted development workflow?</p>
+      <div class="context">
+        Our development is heavily AI-assisted (Claude Code). Brand guidelines need to be machine-readable
+        and concise enough to fit in an AI context window. Figma tokens? CSS variables? Markdown document?
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="footer-left">
+      BitBit Design Consultation Brief &bull; Prepared March 2026
+    </div>
+    <div class="footer-right">
+      Confidential &bull; Not for distribution
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createBridge, getActiveBridge, isBaileysAvailable } from '@/lib/channels/baileys-bridge'
+import { getActiveOrgId } from '@/lib/tenancy'
 
 /**
  * GET /api/channels/whatsapp/bridge
@@ -19,7 +20,7 @@ export async function GET() {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const orgId = (user.user_metadata?.org_id as string) ?? user.id
+  const orgId = await getActiveOrgId(supabase, user.id)
 
   // Check if Baileys is available
   const available = await isBaileysAvailable()
@@ -85,7 +86,7 @@ export async function POST() {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const orgId = (user.user_metadata?.org_id as string) ?? user.id
+  const orgId = await getActiveOrgId(supabase, user.id)
 
   // Check if Baileys is available
   const available = await isBaileysAvailable()

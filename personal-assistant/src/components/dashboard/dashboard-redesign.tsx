@@ -20,6 +20,7 @@ import {
   BarChart, Bar, AreaChart, Area, XAxis, YAxis, CartesianGrid,
   ResponsiveContainer, Tooltip, Cell,
 } from 'recharts';
+import { useDashboardStats } from '@/hooks/use-dashboard-stats';
 // AIButton available at @/components/ui/ai-button when needed
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -244,8 +245,34 @@ function TaskCard({ task }: { task: Task }) {
 
 export function DashboardRedesign({ columns, tasks, messages, completedToday, totalActive }: DashboardRedesignProps) {
   const [autopilot, setAutopilot] = useState(false);
+  const { stats, loading } = useDashboardStats();
   // Filter for top priority actionable messages
   const actionableMessages = messages.filter(m => m.significance >= 5 || m.is_actionable);
+
+  // Skeleton loader component
+  const SkeletonKpiCard = () => (
+    <article aria-label="Loading" style={{
+      padding: '20px',
+      borderRadius: 16,
+      background: 'rgba(15, 20, 30, 0.6)',
+      backdropFilter: 'blur(20px) saturate(1.2)',
+      WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
+      border: '1px solid rgba(255, 255, 255, 0.03)',
+      boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 8,
+      minWidth: 180,
+      minHeight: 160,
+      overflow: 'visible',
+    }}>
+      <div style={{ height: 12, background: 'rgba(255,255,255,0.1)', borderRadius: 4, width: '60%' }} />
+      <div style={{ flex: 1, display: 'flex', gap: 20 }}>
+        <div style={{ height: 40, background: 'rgba(255,255,255,0.1)', borderRadius: 4, width: '40%' }} />
+        <div style={{ height: 80, background: 'rgba(255,255,255,0.1)', borderRadius: 4, flex: 1 }} />
+      </div>
+    </article>
+  );
 
   return (
     <>
@@ -259,114 +286,125 @@ export function DashboardRedesign({ columns, tasks, messages, completedToday, to
         <div
           className="bb-stagger grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 col-span-1 lg:col-span-full"
         >
-          <KpiCard
-            title="Active Projects"
-            icon={<FolderOpen size={14} />}
-            accent="var(--bb-blue)"
-            value="8"
-            unit="projects"
-            trendText="+2 this month"
-            trendType="positive"
-          >
-            <div style={{ width: 140, height: 80, flexShrink: 0, overflow: 'visible' }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={PROJECTS_BY_STATUS} margin={{ top: 2, right: 2, bottom: 0, left: 0 }}>
-                  <defs>
-                    <linearGradient id="blueBarGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#3B82F6" stopOpacity={0.5} />
-                      <stop offset="100%" stopColor="#3B82F6" stopOpacity={0.05} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} vertical={false} />
-                  <XAxis dataKey="name" tick={AXIS_TICK} axisLine={false} tickLine={false} />
-                  <YAxis tick={AXIS_TICK} axisLine={false} tickLine={false} width={18} />
-                  <Tooltip contentStyle={TOOLTIP_STYLE} cursor={BAR_CURSOR} wrapperStyle={{ zIndex: 50 }} />
-                  <Bar dataKey="value" fill="url(#blueBarGrad)" stroke="#3B82F6" strokeWidth={0.5} strokeOpacity={0.4} radius={[3, 3, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </KpiCard>
-          <KpiCard
-            title="Monthly Revenue"
-            icon={<DollarSign size={14} />}
-            accent="var(--bb-green)"
-            prefix="$"
-            value="24.8k"
-            trendText="+12%"
-            trendType="positive"
-          >
-            <div style={{ width: 140, height: 80, flexShrink: 0, overflow: 'visible' }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={REVENUE_TREND} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
-                  <defs>
-                    <linearGradient id="greenGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#22C55E" stopOpacity={0.4} />
-                      <stop offset="100%" stopColor="#22C55E" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} vertical={false} />
-                  <XAxis dataKey="month" tick={AXIS_TICK} axisLine={false} tickLine={false} />
-                  <YAxis tick={AXIS_TICK} axisLine={false} tickLine={false} width={22} tickFormatter={(v: any) => `$${v}`} />
-                  <Tooltip contentStyle={TOOLTIP_STYLE} cursor={AREA_CURSOR} wrapperStyle={{ zIndex: 50 }} formatter={(v: any) => [`$${v}k`, 'Revenue']} />
-                  <Area type="monotone" dataKey="value" stroke="#22C55E" fill="url(#greenGrad)" strokeWidth={1.5} />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </KpiCard>
-          <KpiCard
-            title="Tasks Due This Week"
-            icon={<ListTodo size={14} />}
-            accent="var(--bb-amber)"
-            value="14"
-            unit="tasks"
-            trendText="3 overdue"
-            trendType="negative"
-          >
-            <div style={{ width: 140, height: 80, flexShrink: 0, overflow: 'visible' }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={TASKS_PER_DAY} margin={{ top: 2, right: 2, bottom: 0, left: 0 }}>
-                  <defs>
-                    <linearGradient id="amberBarGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#F59E0B" stopOpacity={0.5} />
-                      <stop offset="100%" stopColor="#F59E0B" stopOpacity={0.05} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} vertical={false} />
-                  <XAxis dataKey="day" tick={AXIS_TICK} axisLine={false} tickLine={false} />
-                  <YAxis tick={AXIS_TICK} axisLine={false} tickLine={false} width={18} />
-                  <Tooltip contentStyle={TOOLTIP_STYLE} cursor={BAR_CURSOR} wrapperStyle={{ zIndex: 50 }} />
-                  <Bar dataKey="value" fill="url(#amberBarGrad)" stroke="#F59E0B" strokeWidth={0.5} strokeOpacity={0.4} radius={[3, 3, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </KpiCard>
-          <KpiCard
-            title="AI Agent Actions"
-            icon={<Bot size={14} />}
-            accent="var(--bb-purple)"
-            value="127"
-            unit="today"
-            trendText="+34%"
-            trendType="positive"
-          >
-            <div style={{ width: 140, height: 80, flexShrink: 0, overflow: 'visible' }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={AGENT_ACTIVITY_7D} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
-                  <defs>
-                    <linearGradient id="purpleGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#8B5CF6" stopOpacity={0.4} />
-                      <stop offset="100%" stopColor="#8B5CF6" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} vertical={false} />
-                  <XAxis dataKey="day" tick={AXIS_TICK} axisLine={false} tickLine={false} />
-                  <YAxis tick={AXIS_TICK} axisLine={false} tickLine={false} width={25} />
-                  <Tooltip contentStyle={TOOLTIP_STYLE} cursor={AREA_CURSOR} wrapperStyle={{ zIndex: 50 }} />
-                  <Area type="monotone" dataKey="value" stroke="#8B5CF6" fill="url(#purpleGrad)" strokeWidth={1.5} />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </KpiCard>
+          {loading ? (
+            <>
+              <SkeletonKpiCard />
+              <SkeletonKpiCard />
+              <SkeletonKpiCard />
+              <SkeletonKpiCard />
+            </>
+          ) : (
+            <>
+              <KpiCard
+                title="Active Tasks"
+                icon={<ListTodo size={14} />}
+                accent="var(--bb-blue)"
+                value={String(stats?.activeTasks || 0)}
+                unit="tasks"
+                trendText="In progress"
+                trendType="positive"
+              >
+                <div style={{ width: 140, height: 80, flexShrink: 0, overflow: 'visible' }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={TASKS_PER_DAY} margin={{ top: 2, right: 2, bottom: 0, left: 0 }}>
+                      <defs>
+                        <linearGradient id="blueBarGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#3B82F6" stopOpacity={0.5} />
+                          <stop offset="100%" stopColor="#3B82F6" stopOpacity={0.05} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} vertical={false} />
+                      <XAxis dataKey="day" tick={AXIS_TICK} axisLine={false} tickLine={false} />
+                      <YAxis tick={AXIS_TICK} axisLine={false} tickLine={false} width={18} />
+                      <Tooltip contentStyle={TOOLTIP_STYLE} cursor={BAR_CURSOR} wrapperStyle={{ zIndex: 50 }} />
+                      <Bar dataKey="value" fill="url(#blueBarGrad)" stroke="#3B82F6" strokeWidth={0.5} strokeOpacity={0.4} radius={[3, 3, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </KpiCard>
+              <KpiCard
+                title="Total Revenue"
+                icon={<DollarSign size={14} />}
+                accent="var(--bb-green)"
+                prefix="$"
+                value={String((stats?.totalRevenue || 0).toLocaleString('en-US', { maximumFractionDigits: 0 }))}
+                trendText="Paid invoices"
+                trendType="positive"
+              >
+                <div style={{ width: 140, height: 80, flexShrink: 0, overflow: 'visible' }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={REVENUE_TREND} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
+                      <defs>
+                        <linearGradient id="greenGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#22C55E" stopOpacity={0.4} />
+                          <stop offset="100%" stopColor="#22C55E" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} vertical={false} />
+                      <XAxis dataKey="month" tick={AXIS_TICK} axisLine={false} tickLine={false} />
+                      <YAxis tick={AXIS_TICK} axisLine={false} tickLine={false} width={22} tickFormatter={(v: any) => `$${v}`} />
+                      <Tooltip contentStyle={TOOLTIP_STYLE} cursor={AREA_CURSOR} wrapperStyle={{ zIndex: 50 }} formatter={(v: any) => [`$${v}k`, 'Revenue']} />
+                      <Area type="monotone" dataKey="value" stroke="#22C55E" fill="url(#greenGrad)" strokeWidth={1.5} />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </KpiCard>
+              <KpiCard
+                title="Agent Runs Today"
+                icon={<Bot size={14} />}
+                accent="var(--bb-amber)"
+                value={String(stats?.agentRunsToday || 0)}
+                unit="runs"
+                trendText="Today's activity"
+                trendType="positive"
+              >
+                <div style={{ width: 140, height: 80, flexShrink: 0, overflow: 'visible' }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={TASKS_PER_DAY} margin={{ top: 2, right: 2, bottom: 0, left: 0 }}>
+                      <defs>
+                        <linearGradient id="amberBarGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#F59E0B" stopOpacity={0.5} />
+                          <stop offset="100%" stopColor="#F59E0B" stopOpacity={0.05} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} vertical={false} />
+                      <XAxis dataKey="day" tick={AXIS_TICK} axisLine={false} tickLine={false} />
+                      <YAxis tick={AXIS_TICK} axisLine={false} tickLine={false} width={18} />
+                      <Tooltip contentStyle={TOOLTIP_STYLE} cursor={BAR_CURSOR} wrapperStyle={{ zIndex: 50 }} />
+                      <Bar dataKey="value" fill="url(#amberBarGrad)" stroke="#F59E0B" strokeWidth={0.5} strokeOpacity={0.4} radius={[3, 3, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </KpiCard>
+              <KpiCard
+                title="Active Contacts"
+                icon={<FolderOpen size={14} />}
+                accent="var(--bb-purple)"
+                value={String(stats?.activeContacts || 0)}
+                unit="contacts"
+                trendText="Network size"
+                trendType="positive"
+              >
+                <div style={{ width: 140, height: 80, flexShrink: 0, overflow: 'visible' }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={AGENT_ACTIVITY_7D} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
+                      <defs>
+                        <linearGradient id="purpleGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#8B5CF6" stopOpacity={0.4} />
+                          <stop offset="100%" stopColor="#8B5CF6" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} vertical={false} />
+                      <XAxis dataKey="day" tick={AXIS_TICK} axisLine={false} tickLine={false} />
+                      <YAxis tick={AXIS_TICK} axisLine={false} tickLine={false} width={25} />
+                      <Tooltip contentStyle={TOOLTIP_STYLE} cursor={AREA_CURSOR} wrapperStyle={{ zIndex: 50 }} />
+                      <Area type="monotone" dataKey="value" stroke="#8B5CF6" fill="url(#purpleGrad)" strokeWidth={1.5} />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </KpiCard>
+            </>
+          )}
         </div>
 
         {/* Command Center Inbox */}
@@ -375,12 +413,6 @@ export function DashboardRedesign({ columns, tasks, messages, completedToday, to
             <h2 style={{ fontSize: 16, fontWeight: 700, letterSpacing: 'var(--tracking-tight)' }}>
               Action Needed
             </h2>
-            <div className="bb-flex bb-gap-sm">
-              <button className="bb-btn bb-btn--ghost bb-btn--sm">
-                <Filter size={13} />
-                Filter
-              </button>
-            </div>
           </div>
 
           <div className="bb-flex-col bb-gap-md bb-stagger">
@@ -421,23 +453,7 @@ export function DashboardRedesign({ columns, tasks, messages, completedToday, to
                     </div>
 
                     <div className="bb-flex bb-gap-xs">
-                      {/* 1.5.15 Quick actions from command center */}
-                      <button className="bb-btn bb-btn--ghost bb-btn--sm" style={{ padding: '4px 8px', fontSize: 11 }}>
-                        Archive
-                      </button>
-                      {msg.recommended_actions?.includes('reply') && (
-                        <button className="bb-btn bb-btn--ghost bb-btn--sm" style={{ padding: '4px 8px', fontSize: 11 }}>
-                          Draft Reply
-                        </button>
-                      )}
-                      <button
-                        className={`bb-btn bb-btn--sm ${autopilot ? 'bb-btn--accent' : 'bb-btn--primary'}`}
-                        style={{ padding: '4px 8px', fontSize: 11 }}
-                        onClick={() => setAutopilot(prev => !prev)}
-                      >
-                        <Sparkles size={11} />
-                        Autopilot {autopilot ? 'On' : 'Off'}
-                      </button>
+                      {/* Quick actions available here when implemented */}
                     </div>
                   </div>
                 </div>
@@ -475,6 +491,10 @@ export function DashboardRedesign({ columns, tasks, messages, completedToday, to
             <button
               className="bb-btn bb-btn--ghost bb-btn--sm"
               style={{ width: '100%', marginTop: 'var(--gap-md)' }}
+              onClick={() => {
+                // Navigate to activity section or scroll
+                document.querySelector('[data-activity-section]')?.scrollIntoView({ behavior: 'smooth' });
+              }}
             >
               View all activity
               <ChevronRight size={13} />
@@ -490,17 +510,14 @@ export function DashboardRedesign({ columns, tasks, messages, completedToday, to
               </div>
             </div>
             <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-              You have <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>8 active projects</span> with{' '}
-              <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>14 tasks due this week</span>.
-              Revenue is <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>trending up 12%</span>.
+              You have <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{stats?.activeTasks || 0} active tasks</span> and{' '}
+              <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{stats?.activeContacts || 0} contacts</span> in your network.
+              Revenue is <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>${(stats?.totalRevenue || 0).toLocaleString('en-US', { maximumFractionDigits: 0 })}</span>.
             </p>
             <div className="bb-flex bb-gap-sm" style={{ marginTop: 'var(--gap-md)' }}>
-              <button className={`bb-btn bb-btn--sm ${autopilot ? 'bb-btn--accent' : 'bb-btn--primary'}`}>
+              <button className="bb-btn bb-btn--primary bb-btn--sm">
                 <Sparkles size={12} />
-                {autopilot ? 'Autopilot On' : 'Plan my day'}
-              </button>
-              <button className="bb-btn bb-btn--ghost bb-btn--sm">
-                Dismiss
+                Plan my day
               </button>
             </div>
           </div>

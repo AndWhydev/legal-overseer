@@ -1,4 +1,5 @@
 import { Resend } from 'resend'
+import { getAppUrl } from '@/lib/core/app-url'
 import type { MonthlyReportData } from './generator'
 
 export interface MonthlyRevenueReportEmailInput {
@@ -32,7 +33,7 @@ function getFromEmail(): string {
 }
 
 function getDashboardUrl(): string {
-  return `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard`
+  return `${getAppUrl()}/dashboard`
 }
 
 function formatCurrency(value: number): string {

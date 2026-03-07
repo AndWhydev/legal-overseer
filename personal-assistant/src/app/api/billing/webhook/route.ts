@@ -57,10 +57,8 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ received: true, type: subEvent.type })
   } catch (err) {
+    // Always return 200 to Stripe to prevent retry storms — log and handle internally
     console.error('[billing/webhook] handler error:', err)
-    return NextResponse.json(
-      { error: 'Webhook handler failed', details: String(err) },
-      { status: 500 },
-    )
+    return NextResponse.json({ received: true, error: 'handler_failed' })
   }
 }

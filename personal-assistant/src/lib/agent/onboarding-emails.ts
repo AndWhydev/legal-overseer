@@ -6,6 +6,7 @@
  */
 
 import { Resend } from 'resend'
+import { getAppUrl } from '@/lib/core/app-url'
 
 function getResend() {
   return new Resend(process.env.RESEND_API_KEY || '')
@@ -16,7 +17,7 @@ function getFromEmail(): string {
 }
 
 function getDashboardUrl(): string {
-  return `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard`
+  return `${getAppUrl()}/dashboard`
 }
 
 // ---------------------------------------------------------------------------

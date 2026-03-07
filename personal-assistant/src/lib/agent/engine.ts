@@ -7,6 +7,7 @@ import { logAgentRun, estimateRunCost } from './run-logger'
 import { canProceed } from './cost-guard'
 import { generatePlan, stageFromToolName, isTrivialMessage, type PlanStage } from './planner'
 import type { ModelTier } from '@/lib/bitbit-core'
+import { logger } from '@/lib/core/logger'
 
 export interface ChatMessage {
   role: 'user' | 'assistant'
@@ -107,7 +108,7 @@ export async function* runAgentChat(
       }
     } catch {
       // Cost guard failure should not block execution
-      console.warn('[engine] Cost guard check failed, proceeding anyway')
+      logger.warn('[engine] Cost guard check failed, proceeding anyway')
     }
     yield { type: 'stage', data: { stage: 'cost_check', status: 'done', meta: { allowed: true } } }
   }
@@ -133,7 +134,7 @@ export async function* runAgentChat(
   yield { type: 'stage', data: { stage: 'context_assembly', status: 'done', meta: { promptLength: systemPrompt.length } } }
 
   if (autoRouted && selection) {
-    console.log(`[model-router] ${selection.tier}: ${selection.reasoning}`)
+    logger.info(`[model-router] ${selection.tier}: ${selection.reasoning}`)
   }
 
   const tools = getAgentTools()

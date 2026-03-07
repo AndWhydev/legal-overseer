@@ -82,6 +82,34 @@ const envSchema = z.object({
   CALENDLY_ACCESS_TOKEN: z.string().optional(),
   CALENDLY_CLIENT_ID: z.string().optional(),
   CALENDLY_CLIENT_SECRET: z.string().optional(),
+
+  // Telnyx (SMS fallback)
+  TELNYX_API_KEY: z.string().optional(),
+  TELNYX_FROM_NUMBER: z.string().optional(),
+  TELNYX_MESSAGING_PROFILE_ID: z.string().optional(),
+  TELNYX_WEBHOOK_SECRET: z.string().optional(),
+
+  // Slack
+  SLACK_BOT_TOKEN: z.string().optional(),
+  SLACK_SIGNING_SECRET: z.string().optional(),
+
+  // Xero
+  XERO_CLIENT_ID: z.string().optional(),
+  XERO_CLIENT_SECRET: z.string().optional(),
+
+  // Instagram
+  INSTAGRAM_ACCESS_TOKEN: z.string().optional(),
+  INSTAGRAM_BUSINESS_ACCOUNT_ID: z.string().optional(),
+  INSTAGRAM_WEBHOOK_VERIFY_TOKEN: z.string().optional(),
+
+  // Facebook Messenger
+  FACEBOOK_MESSENGER_PAGE_ACCESS_TOKEN: z.string().optional(),
+  FACEBOOK_MESSENGER_VERIFY_TOKEN: z.string().optional(),
+  FACEBOOK_MESSENGER_BUSINESS_ACCOUNT_ID: z.string().optional(),
+
+  // Telegram
+  TELEGRAM_BOT_TOKEN: z.string().optional(),
+  TELEGRAM_WEBHOOK_SECRET: z.string().optional(),
 })
 
 export type EnvConfig = z.infer<typeof envSchema>
