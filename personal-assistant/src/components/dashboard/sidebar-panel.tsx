@@ -54,6 +54,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
 };
 
 const BADGE_CONFIG: Record<string, { key: keyof BadgeCounts; color: string }> = {
+  inbox:     { key: 'inbox',     color: 'var(--bb-purple)' },
   approvals: { key: 'approvals', color: 'var(--bb-orange)' },
   leads:     { key: 'leads',     color: 'var(--bb-blue)' },
   invoices:  { key: 'invoices',  color: 'var(--bb-red)' },

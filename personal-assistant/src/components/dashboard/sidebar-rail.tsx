@@ -44,7 +44,7 @@ export function SidebarRail({
   profileOpen,
 }: SidebarRailProps) {
   // Aggregate badge count for Business category
-  const businessBadge = badgeCounts.leads + badgeCounts.invoices + badgeCounts.approvals;
+  const businessBadge = badgeCounts.inbox + badgeCounts.leads + badgeCounts.invoices + badgeCounts.approvals;
 
   return (
     <div className="bb-sidebar-rail">

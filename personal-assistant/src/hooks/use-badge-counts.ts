@@ -6,6 +6,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { logger } from '@/lib/core/logger';
 
 export interface BadgeCounts {
+  inbox: number;
   approvals: number;
   leads: number;
   invoices: number;
@@ -17,6 +18,7 @@ export interface BadgeCounts {
  */
 export function useBadgeCounts(channelName = 'badge-counts'): BadgeCounts {
   const [badgeCounts, setBadgeCounts] = useState<BadgeCounts>({
+    inbox: 0,
     approvals: 0,
     leads: 0,
     invoices: 0,
@@ -34,7 +36,11 @@ export function useBadgeCounts(channelName = 'badge-counts'): BadgeCounts {
     if (!clientRef.current) return;
 
     try {
-      const [approvalsRes, leadsRes, invoicesRes] = await Promise.all([
+      const [inboxRes, approvalsRes, leadsRes, invoicesRes] = await Promise.all([
+        clientRef.current
+          .from('channel_messages')
+          .select('id', { count: 'exact', head: true })
+          .eq('processed', false),
         clientRef.current
           .from('approval_queue')
           .select('id', { count: 'exact', head: true })
@@ -50,6 +56,7 @@ export function useBadgeCounts(channelName = 'badge-counts'): BadgeCounts {
       ]);
 
       setBadgeCounts({
+        inbox: inboxRes.count || 0,
         approvals: approvalsRes.count || 0,
         leads: leadsRes.count || 0,
         invoices: invoicesRes.count || 0,
@@ -68,6 +75,7 @@ export function useBadgeCounts(channelName = 'badge-counts'): BadgeCounts {
     try {
       const channel = client
         .channel(channelName)
+        .on('postgres_changes' as any, { event: '*', schema: 'public', table: 'channel_messages' }, () => fetchBadgeCounts())
         .on('postgres_changes' as any, { event: '*', schema: 'public', table: 'approval_queue' }, () => fetchBadgeCounts())
         .on('postgres_changes' as any, { event: '*', schema: 'public', table: 'leads' }, () => fetchBadgeCounts())
         .on('postgres_changes' as any, { event: '*', schema: 'public', table: 'invoices' }, () => fetchBadgeCounts())

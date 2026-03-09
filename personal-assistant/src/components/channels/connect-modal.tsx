@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { CreditCard, Phone, Loader2, QrCode, Smartphone, CheckCircle2 } from 'lucide-react'
+import { CreditCard, Phone, Loader2, Smartphone, CheckCircle2 } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -43,7 +43,6 @@ export function ConnectModal({
           />
         ) : (
           <WhatsAppQRPanel
-            channel={channel}
             channelName={channelName}
             onSuccess={() => { onOpenChange(false); onSuccess(); }}
             onError={onError}
@@ -140,12 +139,10 @@ function ApiKeyForm({
 }
 
 function WhatsAppQRPanel({
-  channel,
   channelName,
   onSuccess,
   onError,
 }: {
-  channel: string
   channelName: string
   onSuccess: () => void
   onError: (msg: string) => void
@@ -201,21 +198,6 @@ function WhatsAppQRPanel({
   async function handleInitiate() {
     setBridgeStatus('starting')
     try {
-      // Step 1: Create pairing session via connect endpoint
-      const connectRes = await fetch('/api/channels/connect', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ channel }),
-      })
-      const connectData = await connectRes.json()
-
-      if (!connectRes.ok) {
-        setBridgeStatus('error')
-        onError(connectData.error || `Failed to start ${channelName} pairing`)
-        return
-      }
-
-      // Step 2: Start Baileys bridge
       const bridgeRes = await fetch('/api/channels/whatsapp/bridge', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
