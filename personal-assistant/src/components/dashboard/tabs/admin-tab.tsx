@@ -216,7 +216,7 @@ export default function AdminTab() {
                 <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
                   {h.status} &middot; {h.latency_ms}ms
                 </div>
-                {h.error && <div style={{ fontSize: 11, color: '#ef4444', marginTop: 4 }}>{h.error}</div>}
+                {h.error && <div style={{ fontSize: 11, color: 'var(--bb-red)', marginTop: 4 }}>{h.error}</div>}
               </div>
             ))}
             {health.length === 0 && !healthLoading && (
@@ -257,7 +257,7 @@ export default function AdminTab() {
               disabled={importing || !importText.trim()}
               style={{
                 padding: '8px 20px', borderRadius: 6, fontWeight: 600, fontSize: 14,
-                background: 'var(--bb-orange, #f97316)', color: '#fff', border: 'none', cursor: 'pointer',
+                background: 'var(--bb-orange)', color: '#fff', border: 'none', cursor: 'pointer',
                 opacity: importing || !importText.trim() ? 0.5 : 1,
               }}
             >
@@ -270,7 +270,7 @@ export default function AdminTab() {
             )}
           </div>
           {importResult && importResult.errors.length > 0 && (
-            <div style={{ marginTop: 8, fontSize: 12, color: '#ef4444', maxHeight: 120, overflow: 'auto' }}>
+            <div style={{ marginTop: 8, fontSize: 12, color: 'var(--bb-red)', maxHeight: 120, overflow: 'auto' }}>
               {importResult.errors.map((e, i) => <div key={i}>Row {e.row}: {e.message}</div>)}
             </div>
           )}
@@ -296,7 +296,7 @@ export default function AdminTab() {
                   onClick={() => setExportFormat(f)}
                   style={{
                     padding: '6px 14px', borderRadius: 6, fontSize: 13, cursor: 'pointer',
-                    background: exportFormat === f ? 'var(--bb-orange, #f97316)' : 'var(--bg-elevated)',
+                    background: exportFormat === f ? 'var(--bb-orange)' : 'var(--bg-elevated)',
                     color: exportFormat === f ? '#fff' : 'var(--text-primary)',
                     border: '1px solid var(--border)',
                   }}
@@ -310,7 +310,7 @@ export default function AdminTab() {
               disabled={exporting}
               style={{
                 padding: '8px 20px', borderRadius: 6, fontWeight: 600, fontSize: 14,
-                background: 'var(--bb-orange, #f97316)', color: '#fff', border: 'none', cursor: 'pointer',
+                background: 'var(--bb-orange)', color: '#fff', border: 'none', cursor: 'pointer',
                 opacity: exporting ? 0.5 : 1,
               }}
             >

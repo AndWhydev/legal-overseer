@@ -1,7 +1,9 @@
 'use client'
 
+import React, { useState } from 'react'
 import { Search, LayoutGrid, List } from 'lucide-react'
-import type { LeadFilter, SmartView, LeadViewMode } from '@/lib/leads/types'
+import type { LeadFilter, LeadViewMode, PipelineAnalytics } from '@/lib/leads/types'
+import { formatPipelineValue } from '@/lib/leads/utils'
 
 interface LeadsToolbarProps {
   filters: LeadFilter
@@ -9,34 +11,29 @@ interface LeadsToolbarProps {
   viewMode: LeadViewMode
   onViewModeChange: (mode: LeadViewMode) => void
   onDiscoverClick: () => void
+  searchQuery: string
+  onSearchChange: (query: string) => void
+  analytics: PipelineAnalytics | null
+  searchInputRef: React.RefObject<HTMLInputElement | null>
 }
-
-const SCORE_OPTIONS = ['all', 'hot', 'warm', 'cold'] as const
-const SOURCE_OPTIONS = ['all', 'email', 'whatsapp', 'web', 'slack', 'pcc_discovery'] as const
-const STALENESS_OPTIONS = ['all', 'fresh', 'aging', 'stale', 'critical'] as const
-
-const SMART_VIEWS: Array<{ value: SmartView; label: string }> = [
-  { value: 'all', label: 'All Leads' },
-  { value: 'hot_followup', label: 'Hot — Needs Follow-up' },
-  { value: 'stale', label: 'Stale Leads' },
-  { value: 'high_value', label: 'High-Value Pipeline' },
-  { value: 'pcc_discoveries', label: 'PCC Discoveries' },
-]
 
 const selectStyle: React.CSSProperties = {
   fontSize: 12,
   fontWeight: 500,
   padding: '6px 10px',
   borderRadius: 8,
-  border: '1px solid rgba(255, 255, 255, 0.06)',
-  background: 'rgba(10, 14, 23, 0.4)',
-  color: '#94A3B8',
+  border: '1px solid var(--glass-interactive-border)',
+  background: 'var(--glass-pill-bg)',
+  color: 'var(--text-secondary)',
   cursor: 'pointer',
   outline: 'none',
 }
 
-function capitalize(s: string): string {
-  return s.charAt(0).toUpperCase() + s.slice(1).replace('_', ' ')
+function getSpeedColor(minutes: number | null): string {
+  if (minutes === null) return 'var(--text-dim)'
+  if (minutes <= 5) return 'var(--bb-green)'
+  if (minutes <= 30) return 'var(--bb-amber)'
+  return 'var(--bb-red)'
 }
 
 export function LeadsToolbar({
@@ -45,28 +42,75 @@ export function LeadsToolbar({
   viewMode,
   onViewModeChange,
   onDiscoverClick,
+  searchQuery,
+  onSearchChange,
+  analytics,
+  searchInputRef,
 }: LeadsToolbarProps) {
+  const [searchFocused, setSearchFocused] = useState(false)
+
+  const speedMinutes = analytics?.avgSpeedToLeadMinutes ?? null
+  const speedColor = getSpeedColor(speedMinutes)
+  const speedLabel = speedMinutes !== null ? `⚡${speedMinutes}m` : '⚡—'
+
+  const pipelineValue = analytics ? formatPipelineValue(analytics.totalValue) : '—'
+  const conversionRate = analytics ? `${analytics.conversionRate}%` : '—'
+
   return (
     <div style={{
       display: 'flex',
       alignItems: 'center',
-      gap: 10,
-      flexWrap: 'wrap',
+      gap: 8,
       padding: '4px 0',
     }}>
-      {/* Smart View Dropdown */}
-      <select
-        value={filters.smartView ?? 'all'}
-        onChange={(e) => onFiltersChange({ ...filters, smartView: e.target.value as SmartView })}
-        style={{ ...selectStyle, fontWeight: 600 }}
-      >
-        {SMART_VIEWS.map((sv) => (
-          <option key={sv.value} value={sv.value}>{sv.label}</option>
-        ))}
-      </select>
 
-      {/* Separator */}
-      <div style={{ width: 1, height: 20, background: 'rgba(255, 255, 255, 0.06)' }} />
+      {/* Search Input */}
+      <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
+        <Search style={{
+          position: 'absolute',
+          left: 8,
+          width: 13,
+          height: 13,
+          color: 'var(--text-dim)',
+          pointerEvents: 'none',
+        }} />
+        <input
+          ref={searchInputRef}
+          type="text"
+          value={searchQuery}
+          onChange={(e) => onSearchChange(e.target.value)}
+          onFocus={() => setSearchFocused(true)}
+          onBlur={() => setSearchFocused(false)}
+          placeholder="Search leads..."
+          style={{
+            width: 200,
+            fontSize: 12,
+            padding: '6px 10px 6px 26px',
+            borderRadius: 8,
+            border: '1px solid var(--glass-interactive-border)',
+            background: 'var(--glass-pill-bg)',
+            color: 'var(--text-secondary)',
+            outline: 'none',
+            fontFamily: 'inherit',
+          }}
+        />
+        {!searchFocused && !searchQuery && (
+          <span style={{
+            position: 'absolute',
+            right: 8,
+            fontSize: 10,
+            color: 'var(--text-dim)',
+            background: 'var(--glass-pill-bg)',
+            borderRadius: 4,
+            padding: '1px 4px',
+            border: '1px solid var(--glass-interactive-border)',
+            pointerEvents: 'none',
+            lineHeight: 1.4,
+          }}>
+            ⌘K
+          </span>
+        )}
+      </div>
 
       {/* Score Filter */}
       <select
@@ -74,9 +118,10 @@ export function LeadsToolbar({
         onChange={(e) => onFiltersChange({ ...filters, score: e.target.value as LeadFilter['score'] })}
         style={selectStyle}
       >
-        {SCORE_OPTIONS.map((o) => (
-          <option key={o} value={o}>{o === 'all' ? 'Score' : capitalize(o)}</option>
-        ))}
+        <option value="all">Score</option>
+        <option value="hot">Hot</option>
+        <option value="warm">Warm</option>
+        <option value="cold">Cold</option>
       </select>
 
       {/* Source Filter */}
@@ -85,34 +130,51 @@ export function LeadsToolbar({
         onChange={(e) => onFiltersChange({ ...filters, source: e.target.value })}
         style={selectStyle}
       >
-        {SOURCE_OPTIONS.map((o) => (
-          <option key={o} value={o}>{o === 'all' ? 'Source' : capitalize(o)}</option>
-        ))}
+        <option value="all">Source</option>
+        <option value="email">Email</option>
+        <option value="whatsapp">WhatsApp</option>
+        <option value="web">Web</option>
+        <option value="slack">Slack</option>
+        <option value="pcc_discovery">PCC Discovery</option>
       </select>
 
-      {/* Staleness Filter */}
-      <select
-        value={filters.staleness ?? 'all'}
-        onChange={(e) => onFiltersChange({ ...filters, staleness: e.target.value as LeadFilter['staleness'] })}
-        style={selectStyle}
-      >
-        {STALENESS_OPTIONS.map((o) => (
-          <option key={o} value={o}>{o === 'all' ? 'Staleness' : capitalize(o)}</option>
-        ))}
-      </select>
+      {/* Separator */}
+      <div style={{ width: 1, height: 20, background: 'var(--glass-hover-bg)' }} />
+
+      {/* Inline Pipeline Metrics */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        fontSize: 12,
+        fontFamily: 'var(--font-mono)',
+        color: 'var(--text-dim)',
+        gap: 0,
+        whiteSpace: 'nowrap',
+      }}>
+        <span>{pipelineValue}</span>
+        <span style={{ margin: '0 4px', color: 'var(--text-dim)' }}>·</span>
+        <span>{conversionRate}</span>
+        <span style={{ margin: '0 4px', color: 'var(--text-dim)' }}>·</span>
+        <span style={{ color: speedColor }}>{speedLabel}</span>
+      </div>
 
       {/* Spacer */}
       <div style={{ flex: 1 }} />
 
       {/* View Toggle */}
-      <div style={{ display: 'flex', borderRadius: 8, border: '1px solid rgba(255, 255, 255, 0.06)', overflow: 'hidden' }}>
+      <div style={{
+        display: 'flex',
+        borderRadius: 8,
+        border: '1px solid var(--border-subtle)',
+        overflow: 'hidden',
+      }}>
         <button
           onClick={() => onViewModeChange('kanban')}
           style={{
             padding: '6px 10px',
             border: 'none',
-            background: viewMode === 'kanban' ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
-            color: viewMode === 'kanban' ? '#F1F5F9' : '#475569',
+            background: viewMode === 'kanban' ? 'var(--hover-bg-strong)' : 'transparent',
+            color: viewMode === 'kanban' ? 'var(--text-primary)' : 'var(--text-dim)',
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
@@ -125,8 +187,8 @@ export function LeadsToolbar({
           style={{
             padding: '6px 10px',
             border: 'none',
-            background: viewMode === 'list' ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
-            color: viewMode === 'list' ? '#F1F5F9' : '#475569',
+            background: viewMode === 'list' ? 'var(--hover-bg-strong)' : 'transparent',
+            color: viewMode === 'list' ? 'var(--text-primary)' : 'var(--text-dim)',
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
@@ -146,7 +208,7 @@ export function LeadsToolbar({
           padding: '8px 16px',
           borderRadius: 10,
           border: 'none',
-          background: 'linear-gradient(135deg, var(--bb-cyan, #06B6D4) 0%, var(--bb-blue, #3B82F6) 100%)',
+          background: 'linear-gradient(135deg, var(--bb-cyan) 0%, var(--bb-blue) 100%)',
           color: '#fff',
           fontSize: 12,
           fontWeight: 600,
@@ -155,7 +217,7 @@ export function LeadsToolbar({
         }}
       >
         <Search style={{ width: 14, height: 14 }} />
-        Discover Prospects
+        Discover
       </button>
     </div>
   )

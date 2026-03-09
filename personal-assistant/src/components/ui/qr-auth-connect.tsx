@@ -17,7 +17,7 @@ interface QrAuthConnectProps {
  * and shows connected state when pairing completes.
  */
 export function QrAuthConnect({ sessionId, serviceName, onConnected, onError }: QrAuthConnectProps) {
-  const [status, setStatus] = useState<'loading' | 'qr_pending' | 'connected' | 'error'>('loading');
+  const [status, setStatus] = useState<'loading' | 'pairing' | 'connected' | 'error'>('loading');
   const [qrData, setQrData] = useState<string | null>(null);
   const [phoneNumber, setPhoneNumber] = useState<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -34,7 +34,7 @@ export function QrAuthConnect({ sessionId, serviceName, onConnected, onError }: 
       .single()
       .then(({ data }) => {
         if (data) {
-          setStatus(data.status as typeof status);
+          setStatus((data.status === 'qr_pending' ? 'pairing' : data.status) as typeof status);
           setQrData(data.qr_data);
           setPhoneNumber(data.phone_number);
           if (data.status === 'connected' && data.phone_number) {
@@ -56,7 +56,7 @@ export function QrAuthConnect({ sessionId, serviceName, onConnected, onError }: 
         },
         (payload: any) => {
           const row = payload.new;
-          setStatus(row.status);
+          setStatus((row.status === 'qr_pending' ? 'pairing' : row.status) as typeof status);
           setQrData(row.qr_data);
           setPhoneNumber(row.phone_number);
 
@@ -107,7 +107,7 @@ export function QrAuthConnect({ sessionId, serviceName, onConnected, onError }: 
         </div>
       )}
 
-      {status === 'qr_pending' && qrData && (
+      {status === 'pairing' && qrData && (
         <div className="flex flex-col items-center gap-3">
           <div className="rounded-lg border border-border/50 bg-white p-2">
             <canvas ref={canvasRef} width={256} height={256} />
@@ -118,7 +118,7 @@ export function QrAuthConnect({ sessionId, serviceName, onConnected, onError }: 
         </div>
       )}
 
-      {status === 'qr_pending' && !qrData && (
+      {status === 'pairing' && !qrData && (
         <div className="flex flex-col items-center gap-2">
           <Loader2 size={32} className="animate-spin text-muted-foreground" />
           <p className="text-xs text-muted-foreground">Waiting for QR code from bridge...</p>

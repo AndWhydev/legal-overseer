@@ -12,8 +12,10 @@ import {
   ArrowRight,
   Plus,
   X,
+  Briefcase,
 } from 'lucide-react';
 import { TabShell } from '@/components/ui/tab-shell';
+import { EmptyState } from '@/components/ui/empty-state';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -88,7 +90,7 @@ function daysUntil(iso: string): number {
 }
 
 function fitScoreColor(score: number | null): string {
-  if (score === null) return '#94A3B8';
+  if (score === null) return 'var(--text-secondary)';
   if (score >= 60) return '#22c55e';
   if (score >= 35) return '#eab308';
   return '#ef4444';
@@ -135,33 +137,33 @@ const PIPELINE_STAGES: { key: PipelineStage; label: string }[] = [
 const pageTitle: React.CSSProperties = {
   fontSize: 22,
   fontWeight: 700,
-  color: 'var(--text-primary, #F1F5F9)',
+  color: 'var(--text-primary)',
   letterSpacing: '-0.02em',
 };
 
 const pageSubtitle: React.CSSProperties = {
   fontSize: 13,
-  color: 'var(--text-secondary, #94A3B8)',
+  color: 'var(--text-secondary)',
   marginTop: 4,
 };
 
 const glassCard: React.CSSProperties = {
   padding: '20px',
   borderRadius: 16,
-  background: 'rgba(15, 20, 30, 0.6)',
-  backdropFilter: 'blur(20px) saturate(1.2)',
-  WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
-  border: '1px solid rgba(255, 255, 255, 0.03)',
-  boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+  background: 'var(--glass-card-bg)',
+  backdropFilter: 'var(--glass-card-blur)',
+  WebkitBackdropFilter: 'var(--glass-card-blur)',
+  border: '1px solid var(--glass-card-border)',
+  boxShadow: 'var(--glass-card-inset)',
 };
 
 const glassInput: React.CSSProperties = {
   width: '100%',
   padding: '10px 14px',
   borderRadius: 10,
-  background: 'rgba(13, 17, 23, 0.6)',
-  border: '1px solid rgba(255, 255, 255, 0.05)',
-  color: 'var(--text-primary, #F1F5F9)',
+  background: 'var(--bg-card-solid)',
+  border: '1px solid var(--border-subtle)',
+  color: 'var(--text-primary)',
   fontSize: 14,
   outline: 'none',
   transition: 'border-color 200ms, box-shadow 200ms',
@@ -170,13 +172,13 @@ const glassInput: React.CSSProperties = {
 const pillBtn: React.CSSProperties = {
   padding: '6px 14px',
   borderRadius: 20,
-  background: 'rgba(10, 14, 23, 0.42)',
-  backdropFilter: 'blur(22px) saturate(1.2)',
-  WebkitBackdropFilter: 'blur(22px) saturate(1.2)',
-  boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.06)',
+  background: 'var(--glass-pill-bg)',
+  backdropFilter: 'var(--glass-card-blur)',
+  WebkitBackdropFilter: 'var(--glass-card-blur)',
+  boxShadow: 'var(--glass-card-inset)',
   border: 'none',
   fontSize: 12,
-  color: 'var(--text-secondary, #94A3B8)',
+  color: 'var(--text-secondary)',
   cursor: 'pointer',
   transition: 'all 200ms',
 };
@@ -197,8 +199,8 @@ const ghostBtn: React.CSSProperties = {
   padding: '8px 16px',
   borderRadius: 10,
   background: 'transparent',
-  border: '1px solid rgba(255, 255, 255, 0.06)',
-  color: 'var(--text-primary, #F1F5F9)',
+  border: '1px solid var(--glass-interactive-border)',
+  color: 'var(--text-primary)',
   fontSize: 13,
   fontWeight: 500,
   cursor: 'pointer',
@@ -210,10 +212,10 @@ const listRow: React.CSSProperties = {
   alignItems: 'center',
   padding: '12px 18px',
   borderRadius: 12,
-  background: 'rgba(10, 14, 23, 0.5)',
-  backdropFilter: 'blur(26px) saturate(1.15)',
-  WebkitBackdropFilter: 'blur(26px) saturate(1.15)',
-  boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+  background: 'var(--bb-surface)',
+  backdropFilter: 'var(--glass-blur)',
+  WebkitBackdropFilter: 'var(--glass-blur)',
+  boxShadow: 'var(--glass-card-inset)',
   border: 'none',
   transition: 'background 200ms',
   cursor: 'pointer',
@@ -224,7 +226,7 @@ const sectionHeader: React.CSSProperties = {
   fontWeight: 600,
   letterSpacing: '0.08em',
   textTransform: 'uppercase' as const,
-  color: 'var(--text-dim, #475569)',
+  color: 'var(--text-dim)',
   marginBottom: 12,
 };
 
@@ -236,8 +238,8 @@ const badge: React.CSSProperties = {
   fontSize: 11,
   fontWeight: 600,
   letterSpacing: '0.02em',
-  background: 'rgba(255, 255, 255, 0.06)',
-  color: 'var(--text-secondary, #94A3B8)',
+  background: 'var(--glass-hover-bg)',
+  color: 'var(--text-secondary)',
 };
 
 function coloredBadge(color: string): React.CSSProperties {
@@ -368,7 +370,7 @@ function TendersTab() {
       {/* Page Header */}
       <div style={{ marginBottom: 32 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-          <FileSearch size={28} style={{ color: 'var(--bb-purple, #A78BFA)' }} />
+          <FileSearch size={28} style={{ color: 'var(--bb-purple)' }} />
           <div>
             <h1 style={pageTitle}>Tender Hunter</h1>
             <p style={pageSubtitle}>Find, evaluate, and respond to government tenders</p>
@@ -377,7 +379,7 @@ function TendersTab() {
 
         {/* View Toggles + Actions */}
         <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-          <div style={{ display: 'flex', borderRadius: 10, border: '1px solid rgba(255, 255, 255, 0.06)', overflow: 'hidden' }}>
+          <div style={{ display: 'flex', borderRadius: 10, border: '1px solid var(--glass-interactive-border)', overflow: 'hidden' }}>
             {(['pipeline', 'list', 'profiles'] as const).map((v) => (
               <button
                 key={v}
@@ -386,8 +388,8 @@ function TendersTab() {
                   padding: '8px 16px',
                   fontSize: 12,
                   fontWeight: 500,
-                  background: view === v ? 'rgba(255, 255, 255, 0.06)' : 'transparent',
-                  color: view === v ? 'var(--text-primary, #F1F5F9)' : 'var(--text-secondary, #94A3B8)',
+                  background: view === v ? 'var(--glass-hover-bg)' : 'transparent',
+                  color: view === v ? 'var(--text-primary)' : 'var(--text-secondary)',
                   border: 'none',
                   cursor: 'pointer',
                   transition: 'all 200ms',
@@ -395,7 +397,7 @@ function TendersTab() {
                 }}
                 onMouseEnter={(e) => {
                   if (view !== v) {
-                    (e.target as HTMLElement).style.background = 'rgba(255, 255, 255, 0.04)';
+                    (e.target as HTMLElement).style.background = 'var(--glass-interactive-bg)';
                   }
                 }}
                 onMouseLeave={(e) => {
@@ -457,7 +459,7 @@ function TendersTab() {
                   justifyContent: 'space-between',
                   marginBottom: 16,
                   background: 'rgba(255, 90, 31, 0.15)',
-                  color: 'var(--text-primary, #F1F5F9)',
+                  color: 'var(--text-primary)',
                   fontWeight: 600,
                 }}
               >
@@ -476,13 +478,13 @@ function TendersTab() {
                       ...listRow,
                       flexDirection: 'column',
                       alignItems: 'flex-start',
-                      background: hoveredTender === tender.id ? 'rgba(20, 28, 40, 0.7)' : 'rgba(10, 14, 23, 0.5)',
+                      background: hoveredTender === tender.id ? 'var(--hover-bg-strong)' : 'var(--bb-surface)',
                     }}
                   >
-                    <p style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)', marginBottom: 8, lineHeight: 1.4 }}>
+                    <p style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', marginBottom: 8, lineHeight: 1.4 }}>
                       {tender.title}
                     </p>
-                    <div style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 11, color: 'var(--text-secondary, #94A3B8)', marginBottom: 8, width: '100%' }}>
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 11, color: 'var(--text-secondary)', marginBottom: 8, width: '100%' }}>
                       <span>{sourceLabel(tender.source)}</span>
                       {tender.value && <span style={{ fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)', fontWeight: 600 }}>{formatMoney(tender.value)}</span>}
                     </div>
@@ -499,10 +501,10 @@ function TendersTab() {
                     style={{
                       padding: '20px 16px',
                       borderRadius: 12,
-                      border: '1px dashed rgba(255, 255, 255, 0.1)',
+                      border: '1px dashed var(--border-active)',
                       textAlign: 'center',
                       fontSize: 12,
-                      color: 'var(--text-dim, #475569)',
+                      color: 'var(--text-dim)',
                     }}
                   >
                     No tenders
@@ -520,23 +522,23 @@ function TendersTab() {
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', fontSize: 13 }}>
               <thead>
-                <tr style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.06)', textAlign: 'left' }}>
-                  <th style={{ padding: '12px 16px', fontSize: 11, fontWeight: 600, color: 'var(--text-dim, #475569)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                <tr style={{ borderBottom: '1px solid var(--glass-interactive-border)', textAlign: 'left' }}>
+                  <th style={{ padding: '12px 16px', fontSize: 11, fontWeight: 600, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                     Tender
                   </th>
-                  <th style={{ padding: '12px 16px', fontSize: 11, fontWeight: 600, color: 'var(--text-dim, #475569)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  <th style={{ padding: '12px 16px', fontSize: 11, fontWeight: 600, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                     Source
                   </th>
-                  <th style={{ padding: '12px 16px', fontSize: 11, fontWeight: 600, color: 'var(--text-dim, #475569)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  <th style={{ padding: '12px 16px', fontSize: 11, fontWeight: 600, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                     Value
                   </th>
-                  <th style={{ padding: '12px 16px', fontSize: 11, fontWeight: 600, color: 'var(--text-dim, #475569)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  <th style={{ padding: '12px 16px', fontSize: 11, fontWeight: 600, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                     Closing
                   </th>
-                  <th style={{ padding: '12px 16px', fontSize: 11, fontWeight: 600, color: 'var(--text-dim, #475569)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  <th style={{ padding: '12px 16px', fontSize: 11, fontWeight: 600, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                     Fit
                   </th>
-                  <th style={{ padding: '12px 16px', fontSize: 11, fontWeight: 600, color: 'var(--text-dim, #475569)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  <th style={{ padding: '12px 16px', fontSize: 11, fontWeight: 600, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                     Actions
                   </th>
                 </tr>
@@ -547,7 +549,7 @@ function TendersTab() {
                     key={tender.id}
                     onClick={() => setSelectedTender(tender)}
                     style={{
-                      borderBottom: '1px solid rgba(255, 255, 255, 0.03)',
+                      borderBottom: '1px solid var(--glass-card-border)',
                       cursor: 'pointer',
                       transition: 'background 200ms',
                     }}
@@ -559,18 +561,18 @@ function TendersTab() {
                     }}
                   >
                     <td style={{ padding: '12px 16px' }}>
-                      <p style={{ fontWeight: 500, color: 'var(--text-primary, #F1F5F9)', marginBottom: 4 }}>{tender.title}</p>
-                      <p style={{ fontSize: 11, color: 'var(--text-secondary, #94A3B8)' }}>{tender.tender_number}</p>
+                      <p style={{ fontWeight: 500, color: 'var(--text-primary)', marginBottom: 4 }}>{tender.title}</p>
+                      <p style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{tender.tender_number}</p>
                     </td>
-                    <td style={{ padding: '12px 16px', fontSize: 12, color: 'var(--text-secondary, #94A3B8)' }}>
+                    <td style={{ padding: '12px 16px', fontSize: 12, color: 'var(--text-secondary)' }}>
                       {sourceLabel(tender.source)}
                     </td>
-                    <td style={{ padding: '12px 16px', fontSize: 12, color: 'var(--text-secondary, #94A3B8)', fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)', fontWeight: 600 }}>
+                    <td style={{ padding: '12px 16px', fontSize: 12, color: 'var(--text-secondary)', fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)', fontWeight: 600 }}>
                       {tender.value ? formatMoney(tender.value) : '--'}
                     </td>
-                    <td style={{ padding: '12px 16px', fontSize: 12, color: 'var(--text-secondary, #94A3B8)' }}>
+                    <td style={{ padding: '12px 16px', fontSize: 12, color: 'var(--text-secondary)' }}>
                       {tender.deadline ? (
-                        <span style={{ color: daysUntil(tender.deadline) < 7 ? '#ef4444' : 'inherit' }}>
+                        <span style={{ color: daysUntil(tender.deadline) < 7 ? 'var(--bb-red)' : 'inherit' }}>
                           {formatDate(tender.deadline)} ({daysUntil(tender.deadline)}d)
                         </span>
                       ) : '--'}
@@ -581,7 +583,7 @@ function TendersTab() {
                           {tender.fit_score}%
                         </span>
                       ) : (
-                        <span style={{ fontSize: 12, color: 'var(--text-dim, #475569)' }}>--</span>
+                        <span style={{ fontSize: 12, color: 'var(--text-dim)' }}>--</span>
                       )}
                     </td>
                     <td style={{ padding: '12px 16px' }}>
@@ -652,8 +654,8 @@ function TendersTab() {
                           gap: 12,
                         }}
                       >
-                        <FileSearch size={32} style={{ color: 'var(--text-dim, #475569)' }} />
-                        <span style={{ fontSize: 14, color: 'var(--text-secondary, #94A3B8)' }}>
+                        <FileSearch size={32} style={{ color: 'var(--text-dim)' }} />
+                        <span style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
                           No tenders found. Click "Scan Now" to search government tender portals.
                         </span>
                       </div>
@@ -668,72 +670,67 @@ function TendersTab() {
 
       {/* Capability Profiles View */}
       {view === 'profiles' && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 20 }}>
-          {profiles.map((profile) => (
-            <div
-              key={profile.id}
-              style={{
-                ...glassCard,
-              }}
-            >
-              <h3 style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary, #F1F5F9)', marginBottom: 8 }}>
-                {profile.name}
-              </h3>
-              <p style={{ fontSize: 12, color: 'var(--text-secondary, #94A3B8)', marginBottom: 12 }}>
-                {profile.service_category}
-              </p>
-
-              {profile.skills.length > 0 && (
-                <div style={{ marginBottom: 12 }}>
-                  <p style={sectionHeader}>Skills</p>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                    {profile.skills.map((skill) => (
-                      <span key={skill} style={coloredBadge('#A78BFA')}>
-                        {skill}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {profile.certifications.length > 0 && (
-                <div style={{ marginBottom: 12 }}>
-                  <p style={sectionHeader}>Certifications</p>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                    {profile.certifications.map((cert) => (
-                      <span key={cert} style={coloredBadge('#22c55e')}>
-                        {cert}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {profile.max_contract_value && (
-                <div style={{ paddingTop: 12, borderTop: '1px solid rgba(255, 255, 255, 0.05)' }}>
-                  <p style={{ fontSize: 12, color: 'var(--text-secondary, #94A3B8)' }}>
-                    Max contract:{' '}
-                    <span style={{ fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)', fontWeight: 600, color: 'var(--text-primary, #F1F5F9)' }}>
-                      {formatMoney(profile.max_contract_value)}
-                    </span>
+        <div>
+          {profiles.length === 0 ? (
+            <EmptyState
+              icon={<Briefcase size={40} />}
+              title="No capability profiles yet"
+              description="Create profiles to enable smart tender matching and automated evaluations."
+            />
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 20 }}>
+              {profiles.map((profile) => (
+                <div
+                  key={profile.id}
+                  style={{
+                    ...glassCard,
+                  }}
+                >
+                  <h3 style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 8 }}>
+                    {profile.name}
+                  </h3>
+                  <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 12 }}>
+                    {profile.service_category}
                   </p>
-                </div>
-              )}
-            </div>
-          ))}
 
-          {profiles.length === 0 && (
-            <div
-              style={{
-                gridColumn: '1 / -1',
-                ...glassCard,
-                textAlign: 'center',
-                borderStyle: 'dashed',
-              }}
-            >
-              <p style={{ fontSize: 14, color: 'var(--text-secondary, #94A3B8)' }}>
-                No capability profiles configured. Add profiles to enable smart tender matching.
-              </p>
+                  {profile.skills.length > 0 && (
+                    <div style={{ marginBottom: 12 }}>
+                      <p style={sectionHeader}>Skills</p>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                        {profile.skills.map((skill) => (
+                          <span key={skill} style={coloredBadge('#A78BFA')}>
+                            {skill}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {profile.certifications.length > 0 && (
+                    <div style={{ marginBottom: 12 }}>
+                      <p style={sectionHeader}>Certifications</p>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                        {profile.certifications.map((cert) => (
+                          <span key={cert} style={coloredBadge('#22c55e')}>
+                            {cert}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {profile.max_contract_value && (
+                    <div style={{ paddingTop: 12, borderTop: '1px solid var(--border-subtle)' }}>
+                      <p style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+                        Max contract:{' '}
+                        <span style={{ fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)', fontWeight: 600, color: 'var(--text-primary)' }}>
+                          {formatMoney(profile.max_contract_value)}
+                        </span>
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
           )}
         </div>
@@ -771,7 +768,7 @@ function TenderDetailDrawer({ tender, response, onClose, onAction, actionLoading
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', justifyContent: 'flex-end' }}>
       <div
-        style={{ position: 'absolute', inset: 0, background: 'rgba(0, 0, 0, 0.5)' }}
+        style={{ position: 'absolute', inset: 0, background: 'var(--bg-overlay)' }}
         onClick={onClose}
       />
       <div
@@ -779,23 +776,23 @@ function TenderDetailDrawer({ tender, response, onClose, onAction, actionLoading
           position: 'relative',
           width: '100%',
           maxWidth: '480px',
-          background: 'rgba(15, 20, 30, 0.95)',
-          backdropFilter: 'blur(20px) saturate(1.2)',
-          WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
-          borderLeft: '1px solid rgba(255, 255, 255, 0.06)',
+          background: 'var(--bg-card-solid)',
+          backdropFilter: 'var(--glass-card-blur)',
+          WebkitBackdropFilter: 'var(--glass-card-blur)',
+          borderLeft: '1px solid var(--glass-interactive-border)',
           overflowY: 'auto',
           display: 'flex',
           flexDirection: 'column',
         }}
       >
-        <div style={{ padding: '24px', borderBottom: '1px solid rgba(255, 255, 255, 0.03)', flexShrink: 0 }}>
+        <div style={{ padding: '24px', borderBottom: '1px solid var(--glass-card-border)', flexShrink: 0 }}>
           {/* Header */}
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 16 }}>
             <div style={{ flex: 1 }}>
-              <h2 style={{ fontSize: 18, fontWeight: 600, color: 'var(--text-primary, #F1F5F9)', marginBottom: 8 }}>
+              <h2 style={{ fontSize: 18, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 8 }}>
                 {tender.title}
               </h2>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--text-secondary, #94A3B8)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--text-secondary)' }}>
                 <span>{sourceLabel(tender.source)}</span>
                 {tender.tender_number && (
                   <>
@@ -810,7 +807,7 @@ function TenderDetailDrawer({ tender, response, onClose, onAction, actionLoading
               style={{
                 background: 'transparent',
                 border: 'none',
-                color: 'var(--text-secondary, #94A3B8)',
+                color: 'var(--text-secondary)',
                 cursor: 'pointer',
                 padding: 4,
                 display: 'flex',
@@ -818,10 +815,10 @@ function TenderDetailDrawer({ tender, response, onClose, onAction, actionLoading
                 justifyContent: 'center',
               }}
               onMouseEnter={(e) => {
-                (e.target as HTMLElement).style.color = 'var(--text-primary, #F1F5F9)';
+                (e.target as HTMLElement).style.color = 'var(--text-primary)';
               }}
               onMouseLeave={(e) => {
-                (e.target as HTMLElement).style.color = 'var(--text-secondary, #94A3B8)';
+                (e.target as HTMLElement).style.color = 'var(--text-secondary)';
               }}
             >
               <X size={20} />
@@ -831,23 +828,23 @@ function TenderDetailDrawer({ tender, response, onClose, onAction, actionLoading
           {/* Key metrics */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
             <div style={{ ...glassCard, padding: '12px', textAlign: 'center' }}>
-              <p style={{ fontSize: 10, color: 'var(--text-secondary, #94A3B8)', marginBottom: 4, textTransform: 'uppercase', fontWeight: 600 }}>
+              <p style={{ fontSize: 10, color: 'var(--text-secondary)', marginBottom: 4, textTransform: 'uppercase', fontWeight: 600 }}>
                 Value
               </p>
-              <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary, #F1F5F9)', fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)' }}>
+              <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)' }}>
                 {tender.value ? formatMoney(tender.value) : '--'}
               </p>
             </div>
             <div style={{ ...glassCard, padding: '12px', textAlign: 'center' }}>
-              <p style={{ fontSize: 10, color: 'var(--text-secondary, #94A3B8)', marginBottom: 4, textTransform: 'uppercase', fontWeight: 600 }}>
+              <p style={{ fontSize: 10, color: 'var(--text-secondary)', marginBottom: 4, textTransform: 'uppercase', fontWeight: 600 }}>
                 Closing
               </p>
-              <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary, #F1F5F9)' }}>
+              <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
                 {tender.deadline ? formatDate(tender.deadline) : '--'}
               </p>
             </div>
             <div style={{ ...glassCard, padding: '12px', textAlign: 'center' }}>
-              <p style={{ fontSize: 10, color: 'var(--text-secondary, #94A3B8)', marginBottom: 4, textTransform: 'uppercase', fontWeight: 600 }}>
+              <p style={{ fontSize: 10, color: 'var(--text-secondary)', marginBottom: 4, textTransform: 'uppercase', fontWeight: 600 }}>
                 Fit Score
               </p>
               {tender.fit_score !== null ? (
@@ -855,7 +852,7 @@ function TenderDetailDrawer({ tender, response, onClose, onAction, actionLoading
                   {tender.fit_score}%
                 </span>
               ) : (
-                <p style={{ fontSize: 13, color: 'var(--text-dim, #475569)' }}>--</p>
+                <p style={{ fontSize: 13, color: 'var(--text-dim)' }}>--</p>
               )}
             </div>
           </div>
@@ -941,15 +938,15 @@ function TenderDetailDrawer({ tender, response, onClose, onAction, actionLoading
                 alignItems: 'center',
                 gap: 6,
                 fontSize: 12,
-                color: '#a855f7',
+                color: 'var(--bb-purple)',
                 textDecoration: 'none',
                 marginBottom: 24,
               }}
               onMouseEnter={(e) => {
-                (e.target as HTMLElement).style.color = '#d8b4fe';
+                (e.target as HTMLElement).style.color = 'var(--bb-purple)';
               }}
               onMouseLeave={(e) => {
-                (e.target as HTMLElement).style.color = '#a855f7';
+                (e.target as HTMLElement).style.color = 'var(--bb-purple)';
               }}
             >
               View on {sourceLabel(tender.source)}
@@ -964,10 +961,10 @@ function TenderDetailDrawer({ tender, response, onClose, onAction, actionLoading
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {response.content.sections.map((section, i) => (
                   <div key={i} style={{ ...glassCard, padding: '16px' }}>
-                    <h4 style={{ fontSize: 12, fontWeight: 600, color: '#a855f7', marginBottom: 8 }}>
+                    <h4 style={{ fontSize: 12, fontWeight: 600, color: 'var(--bb-purple)', marginBottom: 8 }}>
                       {section.title}
                     </h4>
-                    <p style={{ fontSize: 12, color: 'var(--text-secondary, #94A3B8)', whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>
+                    <p style={{ fontSize: 12, color: 'var(--text-secondary)', whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>
                       {section.content}
                     </p>
                   </div>
@@ -980,9 +977,9 @@ function TenderDetailDrawer({ tender, response, onClose, onAction, actionLoading
           {response?.content?.compliance_matrix && response.content.compliance_matrix.length > 0 && (
             <div>
               <h3 style={sectionHeader}>Compliance Check</h3>
-              <div style={{ marginBottom: 12, fontSize: 12, color: 'var(--text-secondary, #94A3B8)' }}>
+              <div style={{ marginBottom: 12, fontSize: 12, color: 'var(--text-secondary)' }}>
                 Score:{' '}
-                <span style={{ fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)', fontWeight: 600, color: 'var(--text-primary, #F1F5F9)' }}>
+                <span style={{ fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)', fontWeight: 600, color: 'var(--text-primary)' }}>
                   {response.compliance_score ?? '--'}%
                 </span>
               </div>
@@ -1007,10 +1004,10 @@ function TenderDetailDrawer({ tender, response, onClose, onAction, actionLoading
                       <MinusCircle size={18} style={{ color: '#ef4444', flexShrink: 0, marginTop: 2 }} />
                     )}
                     <div style={{ flex: 1 }}>
-                      <p style={{ fontSize: 12, color: 'var(--text-primary, #F1F5F9)', marginBottom: 4 }}>
+                      <p style={{ fontSize: 12, color: 'var(--text-primary)', marginBottom: 4 }}>
                         {item.requirement}
                       </p>
-                      <p style={{ fontSize: 11, color: 'var(--text-secondary, #94A3B8)' }}>
+                      <p style={{ fontSize: 11, color: 'var(--text-secondary)' }}>
                         {item.evidence}
                       </p>
                     </div>

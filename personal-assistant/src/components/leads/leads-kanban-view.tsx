@@ -6,73 +6,98 @@ import {
   DragEndEvent,
   DragOverlay,
   DragStartEvent,
-  DragOverEvent,
   PointerSensor,
   useSensor,
   useSensors,
   closestCorners,
+  useDroppable,
 } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
-import { useDroppable } from '@dnd-kit/core'
 import type { EnhancedLeadData, LeadStatus } from '@/lib/leads/types'
 import { LeadCard } from './lead-card'
 
 const BOARD_COLUMNS: Array<{
-  id: string
+  id: LeadStatus
   label: string
-  statuses: LeadStatus[]
+  color: string
+  emptyText: string
 }> = [
-  { id: 'new', label: 'New', statuses: ['new'] },
-  { id: 'qualified', label: 'Qualified', statuses: ['qualified'] },
-  { id: 'booked', label: 'Booked', statuses: ['booked'] },
-  { id: 'won_lost', label: 'Won / Lost', statuses: ['converted', 'lost'] },
+  { id: 'new', label: 'New', color: 'var(--bb-blue)', emptyText: 'No new leads — run PCC or wait for inbound' },
+  { id: 'qualified', label: 'Qualified', color: 'var(--bb-amber)', emptyText: 'Move promising leads here' },
+  { id: 'booked', label: 'Booked', color: 'var(--bb-green)', emptyText: 'Leads with scheduled meetings' },
 ]
-
-const STATUS_FOR_COLUMN: Record<string, LeadStatus> = {
-  new: 'new',
-  qualified: 'qualified',
-  booked: 'booked',
-  won_lost: 'converted',
-}
 
 interface LeadsKanbanViewProps {
   grouped: Map<LeadStatus, EnhancedLeadData[]>
   onMoveLead: (leadId: string, newStatus: LeadStatus) => void
   onSelectLead: (lead: EnhancedLeadData) => void
+  onAdvanceStage: (leadId: string, event: React.MouseEvent) => void
   movingLeadId: string | null
 }
 
 function KanbanDropColumn({
   columnId,
   label,
+  color,
+  emptyText,
   leads,
+  totalLeads,
   onSelectLead,
 }: {
-  columnId: string
+  columnId: LeadStatus
   label: string
+  color: string
+  emptyText: string
   leads: EnhancedLeadData[]
+  totalLeads: number
   onSelectLead: (lead: EnhancedLeadData) => void
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: columnId })
 
+  const progressWidth = totalLeads > 0
+    ? Math.max(4, (leads.length / totalLeads) * 100)
+    : 0
+
   return (
-    <div style={{ display: 'flex', flex: 1, minWidth: 240, flexDirection: 'column', height: '100%' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0 6px 8px' }}>
-        <h3 style={{
-          fontSize: 11,
-          fontWeight: 600,
-          textTransform: 'uppercase',
-          letterSpacing: '0.06em',
-          color: '#94A3B8',
-          margin: 0,
-        }}>
-          {label}
-        </h3>
-        <span style={{ fontSize: 11, fontWeight: 500, fontFamily: 'var(--font-mono)', color: '#475569' }}>
-          {leads.length}
-        </span>
+    <div className="kanban-col" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      {/* Column header */}
+      <div style={{ padding: '0 6px 8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+          <h3 style={{
+            fontSize: 11,
+            fontWeight: 600,
+            textTransform: 'uppercase',
+            letterSpacing: '0.06em',
+            color: 'var(--text-secondary)',
+            margin: 0,
+          }}>
+            {label}
+          </h3>
+          <span style={{
+            fontSize: 11,
+            fontWeight: 500,
+            fontFamily: 'var(--font-mono)',
+            color: 'var(--text-dim)',
+          }}>
+            {leads.length}
+          </span>
+        </div>
+
+        {/* Progress bar — visible on column hover via CSS */}
+        <div style={{ height: 2, background: 'rgba(255,255,255,0.06)', borderRadius: 2, overflow: 'hidden' }}>
+          <div
+            className="col-progress"
+            style={{
+              height: '100%',
+              width: progressWidth + '%',
+              background: color,
+              borderRadius: 2,
+            }}
+          />
+        </div>
       </div>
 
+      {/* Drop zone */}
       <div
         ref={setNodeRef}
         style={{
@@ -82,17 +107,26 @@ function KanbanDropColumn({
           gap: 6,
           borderRadius: 14,
           padding: 6,
-          background: isOver ? 'rgba(255, 255, 255, 0.03)' : 'transparent',
-          transition: 'background 0.2s ease',
           minHeight: 120,
+          background: isOver ? 'rgba(255, 255, 255, 0.03)' : 'transparent',
+          border: isOver
+            ? '1px dashed rgba(255, 255, 255, 0.15)'
+            : '1px dashed transparent',
+          animation: isOver ? 'bb-drop-pulse 1s ease infinite' : 'none',
+          transition: 'background 0.2s ease',
         }}
       >
-        <SortableContext
-          items={leads.map((l) => l.id)}
-          strategy={verticalListSortingStrategy}
-        >
-          {leads.map((lead) => (
-            <LeadCard key={lead.id} lead={lead} onClick={onSelectLead} />
+        <SortableContext items={leads.map((l) => l.id)} strategy={verticalListSortingStrategy}>
+          {leads.map((lead, index) => (
+            <div
+              key={lead.id}
+              style={{
+                animation: 'bb-card-enter 200ms cubic-bezier(0.2, 0.9, 0.3, 1) both',
+                animationDelay: index * 30 + 'ms',
+              }}
+            >
+              <LeadCard lead={lead} onClick={onSelectLead} />
+            </div>
           ))}
         </SortableContext>
 
@@ -101,11 +135,11 @@ function KanbanDropColumn({
             padding: '24px 12px',
             textAlign: 'center',
             fontSize: 12,
-            color: '#475569',
+            color: 'var(--text-dim)',
             borderRadius: 12,
-            border: '1px dashed rgba(255, 255, 255, 0.06)',
+            border: '1px dashed var(--border-subtle)',
           }}>
-            No leads
+            {emptyText}
           </div>
         )}
       </div>
@@ -113,7 +147,13 @@ function KanbanDropColumn({
   )
 }
 
-export function LeadsKanbanView({ grouped, onMoveLead, onSelectLead, movingLeadId }: LeadsKanbanViewProps) {
+export function LeadsKanbanView({
+  grouped,
+  onMoveLead,
+  onSelectLead,
+  onAdvanceStage: _onAdvanceStage,
+  movingLeadId: _movingLeadId,
+}: LeadsKanbanViewProps) {
   const [activeLead, setActiveLead] = useState<EnhancedLeadData | null>(null)
 
   const sensors = useSensors(
@@ -121,18 +161,19 @@ export function LeadsKanbanView({ grouped, onMoveLead, onSelectLead, movingLeadI
   )
 
   const getColumnLeads = useCallback(
-    (statuses: LeadStatus[]) => statuses.flatMap((s) => grouped.get(s) ?? []),
+    (status: LeadStatus) => grouped.get(status) ?? [],
     [grouped],
+  )
+
+  const totalLeads = BOARD_COLUMNS.reduce(
+    (sum, col) => sum + (grouped.get(col.id)?.length ?? 0),
+    0,
   )
 
   function handleDragStart(event: DragStartEvent) {
     const allLeads = [...grouped.values()].flat()
     const lead = allLeads.find((l) => l.id === event.active.id)
     if (lead) setActiveLead(lead)
-  }
-
-  function handleDragOver(_event: DragOverEvent) {
-    // Visual feedback handled by useDroppable isOver state
   }
 
   function handleDragEnd(event: DragEndEvent) {
@@ -143,11 +184,9 @@ export function LeadsKanbanView({ grouped, onMoveLead, onSelectLead, movingLeadI
     const leadId = active.id as string
     const overId = over.id as string
 
-    // Find which column was dropped on
     const targetColumn = BOARD_COLUMNS.find((c) => c.id === overId)
     if (targetColumn) {
-      const newStatus = STATUS_FOR_COLUMN[targetColumn.id]
-      if (newStatus) onMoveLead(leadId, newStatus)
+      onMoveLead(leadId, targetColumn.id)
     }
   }
 
@@ -156,23 +195,28 @@ export function LeadsKanbanView({ grouped, onMoveLead, onSelectLead, movingLeadI
       sensors={sensors}
       collisionDetection={closestCorners}
       onDragStart={handleDragStart}
-      onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
     >
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(4, 1fr)',
-        gap: 12,
-        flex: 1,
-        minHeight: 0,
-        alignItems: 'stretch',
-      }}>
+      <div
+        className="leads-kanban-grid"
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(3, 1fr)',
+          gap: 12,
+          flex: 1,
+          minHeight: 0,
+          alignItems: 'stretch',
+        }}
+      >
         {BOARD_COLUMNS.map((column) => (
           <KanbanDropColumn
             key={column.id}
             columnId={column.id}
             label={column.label}
-            leads={getColumnLeads(column.statuses)}
+            color={column.color}
+            emptyText={column.emptyText}
+            leads={getColumnLeads(column.id)}
+            totalLeads={totalLeads}
             onSelectLead={onSelectLead}
           />
         ))}
@@ -191,13 +235,28 @@ export function LeadsKanbanView({ grouped, onMoveLead, onSelectLead, movingLeadI
       </DragOverlay>
 
       <style>{`
+        @keyframes bb-card-enter {
+          from { opacity: 0; transform: translateY(8px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes bb-drop-pulse {
+          0%, 100% { border-color: rgba(255, 255, 255, 0.15); }
+          50% { border-color: rgba(255, 255, 255, 0.3); }
+        }
+        .kanban-col .col-progress {
+          opacity: 0;
+          transition: opacity 0.2s ease;
+        }
+        .kanban-col:hover .col-progress {
+          opacity: 1;
+        }
         @media (max-width: 1024px) {
-          [style*="grid-template-columns: repeat(4"] {
+          .leads-kanban-grid {
             grid-template-columns: repeat(2, 1fr) !important;
           }
         }
         @media (max-width: 640px) {
-          [style*="grid-template-columns: repeat(4"] {
+          .leads-kanban-grid {
             grid-template-columns: 1fr !important;
           }
         }

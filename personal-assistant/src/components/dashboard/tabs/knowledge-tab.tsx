@@ -58,11 +58,11 @@ const TYPE_COLOR: Record<EntityType, string> = {
 const glassCard: React.CSSProperties = {
   padding: '20px',
   borderRadius: 16,
-  background: 'rgba(15, 20, 30, 0.6)',
-  backdropFilter: 'blur(20px) saturate(1.2)',
-  WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
-  border: '1px solid rgba(255, 255, 255, 0.03)',
-  boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+  background: 'var(--glass-card-bg)',
+  backdropFilter: 'var(--glass-card-blur)',
+  WebkitBackdropFilter: 'var(--glass-card-blur)',
+  border: '1px solid var(--glass-card-border)',
+  boxShadow: 'var(--glass-card-inset)',
 };
 
 const glassInput: React.CSSProperties = {
@@ -71,8 +71,8 @@ const glassInput: React.CSSProperties = {
   paddingLeft: '40px',
   borderRadius: 10,
   background: 'rgba(13, 17, 23, 0.6)',
-  border: '1px solid rgba(255, 255, 255, 0.05)',
-  color: 'var(--text-primary, #F1F5F9)',
+  border: '1px solid var(--glass-interactive-border)',
+  color: 'var(--text-primary)',
   fontSize: 14,
   outline: 'none',
   transition: 'border-color 200ms, box-shadow 200ms',
@@ -83,10 +83,10 @@ const listRow: React.CSSProperties = {
   alignItems: 'center',
   padding: '12px 18px',
   borderRadius: 12,
-  background: 'rgba(10, 14, 23, 0.5)',
-  backdropFilter: 'blur(26px) saturate(1.15)',
-  WebkitBackdropFilter: 'blur(26px) saturate(1.15)',
-  boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+  background: 'var(--glass-pill-bg)',
+  backdropFilter: 'var(--glass-blur)',
+  WebkitBackdropFilter: 'var(--glass-blur)',
+  boxShadow: 'var(--glass-card-inset)',
   border: 'none',
   transition: 'background 200ms',
   cursor: 'pointer',
@@ -96,8 +96,8 @@ const ghostBtn: React.CSSProperties = {
   padding: '8px 8px',
   borderRadius: 8,
   background: 'transparent',
-  border: '1px solid rgba(255, 255, 255, 0.06)',
-  color: 'var(--text-primary, #F1F5F9)',
+  border: '1px solid var(--glass-interactive-border)',
+  color: 'var(--text-primary)',
   fontSize: 13,
   fontWeight: 500,
   cursor: 'pointer',
@@ -110,13 +110,13 @@ const ghostBtn: React.CSSProperties = {
 const pillBtn: React.CSSProperties = {
   padding: '6px 14px',
   borderRadius: 20,
-  background: 'rgba(10, 14, 23, 0.42)',
-  backdropFilter: 'blur(22px) saturate(1.2)',
-  WebkitBackdropFilter: 'blur(22px) saturate(1.2)',
-  boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.06)',
+  background: 'var(--glass-pill-bg)',
+  backdropFilter: 'var(--glass-card-blur)',
+  WebkitBackdropFilter: 'var(--glass-card-blur)',
+  boxShadow: 'var(--glass-card-inset)',
   border: 'none',
   fontSize: 12,
-  color: 'var(--text-secondary, #94A3B8)',
+  color: 'var(--text-secondary)',
   cursor: 'pointer',
   transition: 'all 200ms',
   fontWeight: 500,
@@ -127,7 +127,7 @@ const sectionHeader: React.CSSProperties = {
   fontWeight: 600,
   letterSpacing: '0.08em',
   textTransform: 'uppercase' as const,
-  color: 'var(--text-dim, #475569)',
+  color: 'var(--text-dim)',
   marginBottom: 12,
 };
 
@@ -201,7 +201,7 @@ function KnowledgeTab() {
               left: 12,
               top: '50%',
               transform: 'translateY(-50%)',
-              color: 'var(--text-secondary, #94A3B8)',
+              color: 'var(--text-secondary)',
               pointerEvents: 'none',
             }}
           />
@@ -217,7 +217,7 @@ function KnowledgeTab() {
             }}
             onBlur={(e) => {
               e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.05)';
-              e.currentTarget.style.boxShadow = 'inset 0 1px 0 rgba(255, 255, 255, 0.05)';
+              e.currentTarget.style.boxShadow = 'var(--glass-card-inset)';
             }}
           />
           {searching && (
@@ -258,7 +258,7 @@ function KnowledgeTab() {
                 style={{
                   fontSize: 16,
                   fontWeight: 600,
-                  color: 'var(--text-primary, #F1F5F9)',
+                  color: 'var(--text-primary)',
                   margin: 0,
                 }}
               >
@@ -270,8 +270,8 @@ function KnowledgeTab() {
                 onMouseLeave={() => setCloseHovered(false)}
                 style={{
                   ...ghostBtn,
-                  background: closeHovered ? 'rgba(255, 255, 255, 0.04)' : 'transparent',
-                  borderColor: closeHovered ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.06)',
+                  background: closeHovered ? 'var(--glass-interactive-bg)' : 'transparent',
+                  borderColor: closeHovered ? 'rgba(255, 255, 255, 0.1)' : 'var(--glass-interactive-border)',
                 }}
                 aria-label="Close graph"
               >
@@ -306,11 +306,11 @@ function KnowledgeTab() {
                       gap: 12,
                       padding: '12px 16px',
                       borderRadius: 12,
-                      background: 'rgba(10, 14, 23, 0.5)',
-                      backdropFilter: 'blur(26px) saturate(1.15)',
-                      WebkitBackdropFilter: 'blur(26px) saturate(1.15)',
-                      border: '1px solid rgba(255, 255, 255, 0.08)',
-                      boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+                      background: 'var(--glass-pill-bg)',
+                      backdropFilter: 'var(--glass-blur)',
+                      WebkitBackdropFilter: 'var(--glass-blur)',
+                      border: '1px solid var(--glass-interactive-border)',
+                      boxShadow: 'var(--glass-card-inset)',
                     }}
                   >
                     {(() => {
@@ -338,7 +338,7 @@ function KnowledgeTab() {
                               style={{
                                 fontSize: 14,
                                 fontWeight: 600,
-                                color: 'var(--text-primary, #F1F5F9)',
+                                color: 'var(--text-primary)',
                                 margin: 0,
                               }}
                             >
@@ -347,7 +347,7 @@ function KnowledgeTab() {
                             <div
                               style={{
                                 fontSize: 11,
-                                color: 'var(--text-secondary, #94A3B8)',
+                                color: 'var(--text-secondary)',
                                 marginTop: 4,
                                 textTransform: 'capitalize',
                               }}
@@ -391,10 +391,10 @@ function KnowledgeTab() {
                               display: 'inline-flex',
                               alignItems: 'center',
                               gap: 8,
-                              color: isHovered ? 'var(--text-primary, #F1F5F9)' : 'var(--text-secondary, #94A3B8)',
+                              color: isHovered ? 'var(--text-primary)' : 'var(--text-secondary)',
                               background: isHovered
                                 ? 'rgba(255, 90, 31, 0.15)'
-                                : 'rgba(10, 14, 23, 0.42)',
+                                : 'var(--glass-pill-bg)',
                             }}
                           >
                             <div
@@ -433,7 +433,7 @@ function KnowledgeTab() {
                             key={idx}
                             style={{
                               ...listRow,
-                              background: hoveredNode === `edge-${idx}` ? 'rgba(20, 28, 40, 0.7)' : 'rgba(10, 14, 23, 0.5)',
+                              background: hoveredNode === `edge-${idx}` ? 'var(--bb-surface-hover)' : 'var(--glass-pill-bg)',
                             }}
                             onMouseEnter={() => setHoveredNode(`edge-${idx}`)}
                             onMouseLeave={() => setHoveredNode(null)}
@@ -443,7 +443,7 @@ function KnowledgeTab() {
                                 style={{
                                   fontSize: 13,
                                   fontWeight: 500,
-                                  color: 'var(--text-primary, #F1F5F9)',
+                                  color: 'var(--text-primary)',
                                   marginBottom: 4,
                                 }}
                               >
@@ -452,7 +452,7 @@ function KnowledgeTab() {
                               <div
                                 style={{
                                   fontSize: 11,
-                                  color: 'var(--text-secondary, #94A3B8)',
+                                  color: 'var(--text-secondary)',
                                   textTransform: 'capitalize',
                                 }}
                               >
@@ -463,7 +463,7 @@ function KnowledgeTab() {
                             <div
                               style={{
                                 fontSize: 11,
-                                color: 'var(--text-dim, #475569)',
+                                color: 'var(--text-dim)',
                                 flexShrink: 0,
                                 marginLeft: 12,
                               }}
@@ -488,8 +488,8 @@ function KnowledgeTab() {
                       gap: 12,
                     }}
                   >
-                    <ChevronRight size={32} style={{ color: 'var(--text-dim, #475569)' }} />
-                    <span style={{ fontSize: 14, color: 'var(--text-secondary, #94A3B8)' }}>
+                    <ChevronRight size={32} style={{ color: 'var(--text-dim)' }} />
+                    <span style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
                       No connected entities found.
                     </span>
                   </div>
@@ -506,8 +506,8 @@ function KnowledgeTab() {
                   gap: 12,
                 }}
               >
-                <FileText size={32} style={{ color: 'var(--text-dim, #475569)' }} />
-                <span style={{ fontSize: 14, color: 'var(--text-secondary, #94A3B8)' }}>
+                <FileText size={32} style={{ color: 'var(--text-dim)' }} />
+                <span style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
                   Could not load graph data.
                 </span>
               </div>
@@ -541,14 +541,14 @@ function KnowledgeTab() {
                       ...glassCard,
                       textAlign: 'left',
                       background: isHovered
-                        ? 'rgba(15, 20, 30, 0.75)'
-                        : 'rgba(15, 20, 30, 0.6)',
+                        ? 'var(--glass-card-bg)'
+                        : 'var(--glass-card-bg-light)',
                       border: isHovered
-                        ? '1px solid rgba(255, 255, 255, 0.08)'
-                        : '1px solid rgba(255, 255, 255, 0.03)',
+                        ? '1px solid var(--glass-interactive-border)'
+                        : '1px solid var(--glass-card-border)',
                       boxShadow: isHovered
                         ? 'inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 0 0 1px rgba(255, 90, 31, 0.2)'
-                        : 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+                        : 'var(--glass-card-inset)',
                       cursor: 'pointer',
                       transition: 'all 200ms',
                     }}
@@ -580,7 +580,7 @@ function KnowledgeTab() {
                           style={{
                             fontSize: 14,
                             fontWeight: 600,
-                            color: 'var(--text-primary, #F1F5F9)',
+                            color: 'var(--text-primary)',
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
                             whiteSpace: 'nowrap',
@@ -591,7 +591,7 @@ function KnowledgeTab() {
                         <div
                           style={{
                             fontSize: 11,
-                            color: 'var(--text-secondary, #94A3B8)',
+                            color: 'var(--text-secondary)',
                             marginTop: 3,
                             textTransform: 'capitalize',
                           }}
@@ -604,7 +604,7 @@ function KnowledgeTab() {
                       <p
                         style={{
                           fontSize: 12,
-                          color: 'var(--text-secondary, #94A3B8)',
+                          color: 'var(--text-secondary)',
                           margin: 0,
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
@@ -633,11 +633,11 @@ function KnowledgeTab() {
               gap: 12,
             }}
           >
-            <Search size={32} style={{ color: 'var(--text-dim, #475569)' }} />
+            <Search size={32} style={{ color: 'var(--text-dim)' }} />
             <span
               style={{
                 fontSize: 14,
-                color: 'var(--text-secondary, #94A3B8)',
+                color: 'var(--text-secondary)',
                 textAlign: 'center',
               }}
             >
@@ -646,7 +646,7 @@ function KnowledgeTab() {
             <span
               style={{
                 fontSize: 12,
-                color: 'var(--text-dim, #475569)',
+                color: 'var(--text-dim)',
                 textAlign: 'center',
               }}
             >
@@ -669,7 +669,7 @@ function KnowledgeTab() {
             <Search
               size={40}
               style={{
-                color: 'var(--text-dim, #475569)',
+                color: 'var(--text-dim)',
                 opacity: 0.4,
               }}
             />
@@ -677,7 +677,7 @@ function KnowledgeTab() {
               style={{
                 fontSize: 16,
                 fontWeight: 600,
-                color: 'var(--text-primary, #F1F5F9)',
+                color: 'var(--text-primary)',
                 marginBottom: 4,
               }}
             >
@@ -686,7 +686,7 @@ function KnowledgeTab() {
             <p
               style={{
                 fontSize: 13,
-                color: 'var(--text-secondary, #94A3B8)',
+                color: 'var(--text-secondary)',
                 margin: 0,
                 textAlign: 'center',
                 maxWidth: 400,

@@ -15,7 +15,8 @@ export async function GET(request: Request) {
   }
 
   try {
-    const { url, state, codeVerifier } = getOAuthRedirectUrl(provider)
+    const requestOrigin = new URL(request.url).origin
+    const { url, state, codeVerifier } = getOAuthRedirectUrl(provider, requestOrigin)
 
     const response = NextResponse.redirect(url)
 

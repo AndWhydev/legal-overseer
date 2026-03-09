@@ -10,6 +10,7 @@ const ALLOWED_TASK_FIELDS = [
   'due_date',
   'assigned_to',
   'completed_at',
+  'column_id',
 ] as const
 
 export async function PATCH(
@@ -26,9 +27,23 @@ export async function PATCH(
   const body = await request.json()
 
   // Filter to only allowed fields
-  const filteredBody = Object.fromEntries(
+  const filteredBody: Record<string, unknown> = Object.fromEntries(
     Object.entries(body).filter(([key]) => ALLOWED_TASK_FIELDS.includes(key as any))
   )
+
+  // Merge metadata (jsonb) — preserve agent-set fields while allowing user edits
+  if (body.metadata && typeof body.metadata === 'object') {
+    const { data: existing, error: fetchError } = await supabase
+      .from('tasks')
+      .select('metadata')
+      .eq('id', id)
+      .single()
+
+    if (fetchError) return NextResponse.json({ error: fetchError.message }, { status: 500 })
+
+    const existingMetadata = (existing?.metadata as Record<string, unknown>) ?? {}
+    filteredBody.metadata = { ...existingMetadata, ...body.metadata }
+  }
 
   const { data, error } = await supabase
     .from('tasks')

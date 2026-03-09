@@ -376,7 +376,7 @@ describe('email-templates', () => {
       await sendWeeklyReportEmail('user@example.com', data)
 
       const call = mockSend.mock.calls[0][0]
-      expect(call.html).toContain('Top Agents')
+      expect(call.html).toContain('Top Operations')
       expect(call.html).toContain('Agent A')
       expect(call.html).toContain('Agent B')
       expect(call.html).toContain('95%')

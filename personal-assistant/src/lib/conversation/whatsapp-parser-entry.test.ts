@@ -59,7 +59,10 @@ describe('processWhatsAppMessage entry behavior', () => {
         'hello'
       )
     } finally {
-      expect(warnSpy).toHaveBeenCalledWith('[whatsapp-parser] No phone number found in message row')
+      // The logger outputs formatted strings with color codes
+      expect(warnSpy).toHaveBeenCalled()
+      const calls = warnSpy.mock.calls as any[][]
+      expect(calls.some(call => typeof call[0] === 'string' && call[0].includes('[whatsapp-parser] No phone number found in message row'))).toBe(true)
       warnSpy.mockRestore()
     }
 

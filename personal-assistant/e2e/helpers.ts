@@ -11,9 +11,19 @@ export const TEST_USER = {
 
 const BASE_URL = process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000'
 const ONBOARDING_STORAGE_KEY = 'bb-onboarding-complete'
+const DEV_PASSWORD_RESET_PATH = '/api/auth/e2e/password'
+const DEV_ONBOARDING_RESET_PATH = '/api/auth/e2e/onboarding'
 
 export const AUTH_SKIP_REASON =
-  'Authentication unavailable in this environment (set E2E_SESSION_TOKEN or working E2E_USER_EMAIL/E2E_USER_PASSWORD)'
+  'Authentication unavailable in this environment (set E2E_SESSION_TOKEN or working E2E_USER_EMAIL/E2E_USER_PASSWORD, and ensure the dev password reset route can reach a registered user)'
+
+let seededPasswordLogin: Promise<boolean> | null = null
+let resetOnboardingState: Promise<boolean> | null = null
+
+interface AuthFlowOptions {
+  persistOnboardingComplete?: boolean
+  dismissOnboarding?: boolean
+}
 
 function isAuthPath(pathname: string) {
   return pathname.startsWith('/login') || pathname.startsWith('/auth')
@@ -57,6 +67,58 @@ async function trySessionCookieLogin(page: Page) {
   return true
 }
 
+async function seedPasswordLogin() {
+  if (seededPasswordLogin) {
+    return seededPasswordLogin
+  }
+
+  seededPasswordLogin = (async () => {
+    try {
+      const response = await fetch(`${BASE_URL}${DEV_PASSWORD_RESET_PATH}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(TEST_USER),
+      })
+
+      if (!response.ok) {
+        return false
+      }
+
+      return true
+    } catch {
+      return false
+    }
+  })()
+
+  return seededPasswordLogin
+}
+
+async function resetFirstRunOnboarding() {
+  if (resetOnboardingState) {
+    return resetOnboardingState
+  }
+
+  resetOnboardingState = (async () => {
+    try {
+      const response = await fetch(`${BASE_URL}${DEV_ONBOARDING_RESET_PATH}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: TEST_USER.email }),
+      })
+
+      if (!response.ok) {
+        return false
+      }
+
+      return true
+    } catch {
+      return false
+    }
+  })()
+
+  return resetOnboardingState
+}
+
 async function openDevPasswordLogin(page: Page) {
   const devToggle = page.getByRole('button', { name: /dev:\s*password login/i }).first()
   if (!(await devToggle.count())) return false
@@ -94,12 +156,31 @@ async function submitPasswordLogin(page: Page) {
   return !isAuthPath(currentPath(page))
 }
 
-export async function ensureAuthenticated(page: Page, targetPath = '/dashboard') {
-  await page.addInitScript((key) => {
-    window.localStorage.setItem(key, 'true')
-  }, ONBOARDING_STORAGE_KEY)
+export async function ensureAuthenticated(
+  page: Page,
+  targetPath = '/dashboard',
+  {
+    persistOnboardingComplete = true,
+    dismissOnboarding = true,
+  }: AuthFlowOptions = {},
+) {
+  await page.addInitScript(
+    ({ key, persist }) => {
+      if (persist) {
+        window.localStorage.setItem(key, 'true')
+        return
+      }
+
+      window.localStorage.removeItem(key)
+    },
+    { key: ONBOARDING_STORAGE_KEY, persist: persistOnboardingComplete },
+  )
 
   await trySessionCookieLogin(page)
+  await seedPasswordLogin()
+  if (!persistOnboardingComplete) {
+    await resetFirstRunOnboarding()
+  }
 
   await page.goto(targetPath, { waitUntil: 'domcontentloaded' })
   await page.waitForLoadState('domcontentloaded')
@@ -115,12 +196,18 @@ export async function ensureAuthenticated(page: Page, targetPath = '/dashboard')
     await page.waitForLoadState('domcontentloaded')
   }
 
-  await dismissOnboardingWizard(page)
+  if (dismissOnboarding) {
+    await dismissOnboardingWizard(page)
+  }
   return !isAuthPath(currentPath(page))
 }
 
-export async function openProtectedPath(page: Page, targetPath: string) {
-  const authenticated = await ensureAuthenticated(page, targetPath)
+export async function openProtectedPath(
+  page: Page,
+  targetPath: string,
+  options?: AuthFlowOptions,
+) {
+  const authenticated = await ensureAuthenticated(page, targetPath, options)
   if (!authenticated) return false
 
   if (currentPath(page) !== targetPath) {
@@ -128,7 +215,9 @@ export async function openProtectedPath(page: Page, targetPath: string) {
     await page.waitForLoadState('domcontentloaded')
   }
 
-  await dismissOnboardingWizard(page)
+  if (options?.dismissOnboarding !== false) {
+    await dismissOnboardingWizard(page)
+  }
   return !isAuthPath(currentPath(page))
 }
 

@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { DollarSign, TrendingUp, AlertTriangle, BarChart3 } from 'lucide-react';
+import { DollarSign, TrendingUp, AlertTriangle, BarChart3, Zap } from 'lucide-react';
 import { TabShell } from '@/components/ui/tab-shell';
 import { AlertBanner } from '@/components/ui/alert-banner';
+import { EmptyState } from '@/components/ui/empty-state';
 
 interface CostEntry {
   model: string;
@@ -85,21 +86,21 @@ function CostsTab() {
     padding: 8,
     borderRadius: 12,
     background: 'rgba(13, 17, 23, 0.6)',
-    backdropFilter: 'blur(20px) saturate(1.2)',
-    WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
+    backdropFilter: 'var(--glass-card-blur)',
+    WebkitBackdropFilter: 'var(--glass-card-blur)',
     width: 'fit-content',
   };
 
   const pillBtn = (isActive: boolean): React.CSSProperties => ({
     padding: '6px 14px',
     borderRadius: 20,
-    background: isActive ? 'rgba(255, 90, 31, 0.15)' : 'rgba(10, 14, 23, 0.42)',
-    backdropFilter: 'blur(22px) saturate(1.2)',
-    WebkitBackdropFilter: 'blur(22px) saturate(1.2)',
-    boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.06)',
+    background: isActive ? 'rgba(255, 90, 31, 0.15)' : 'var(--glass-pill-bg)',
+    backdropFilter: 'var(--glass-card-blur)',
+    WebkitBackdropFilter: 'var(--glass-card-blur)',
+    boxShadow: 'var(--glass-card-inset)',
     border: 'none',
     fontSize: 12,
-    color: isActive ? 'var(--text-primary, #F1F5F9)' : 'var(--text-secondary, #94A3B8)',
+    color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
     cursor: 'pointer',
     transition: 'all 200ms',
     fontWeight: isActive ? 600 : 500,
@@ -112,25 +113,25 @@ function CostsTab() {
     padding: '16px 20px',
     borderRadius: 12,
     background: 'rgba(234, 179, 8, 0.12)',
-    backdropFilter: 'blur(20px) saturate(1.1)',
-    WebkitBackdropFilter: 'blur(20px) saturate(1.1)',
+    backdropFilter: 'var(--glass-card-blur)',
+    WebkitBackdropFilter: 'var(--glass-card-blur)',
     border: '1px solid rgba(234, 179, 8, 0.3)',
-    boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.04)',
+    boxShadow: 'var(--glass-card-inset)',
   };
 
   const budgetAlertText: React.CSSProperties = {
     fontSize: 13,
-    color: 'var(--text-primary, #F1F5F9)',
+    color: 'var(--text-primary)',
   };
 
   const glassCard: React.CSSProperties = {
     padding: 20,
     borderRadius: 16,
-    background: 'rgba(15, 20, 30, 0.6)',
-    backdropFilter: 'blur(20px) saturate(1.2)',
-    WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
-    border: '1px solid rgba(255, 255, 255, 0.03)',
-    boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+    background: 'var(--glass-card-bg)',
+    backdropFilter: 'var(--glass-card-blur)',
+    WebkitBackdropFilter: 'var(--glass-card-blur)',
+    border: '1px solid var(--glass-card-border)',
+    boxShadow: 'var(--glass-card-inset)',
   };
 
   const sectionHeader: React.CSSProperties = {
@@ -138,7 +139,7 @@ function CostsTab() {
     fontWeight: 600,
     letterSpacing: '0.08em',
     textTransform: 'uppercase' as const,
-    color: 'var(--text-dim, #475569)',
+    color: 'var(--text-dim)',
     marginBottom: 16,
   };
 
@@ -148,10 +149,10 @@ function CostsTab() {
     justifyContent: 'space-between',
     padding: '12px 18px',
     borderRadius: 12,
-    background: 'rgba(10, 14, 23, 0.5)',
-    backdropFilter: 'blur(26px) saturate(1.15)',
-    WebkitBackdropFilter: 'blur(26px) saturate(1.15)',
-    boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+    background: 'var(--glass-pill-bg)',
+    backdropFilter: 'var(--glass-blur)',
+    WebkitBackdropFilter: 'var(--glass-blur)',
+    boxShadow: 'var(--glass-card-inset)',
     border: 'none',
     transition: 'background 200ms',
   };
@@ -159,7 +160,7 @@ function CostsTab() {
   const bigNumber: React.CSSProperties = {
     fontSize: 38,
     fontWeight: 700,
-    color: 'var(--text-primary, #F1F5F9)',
+    color: 'var(--text-primary)',
     fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
     letterSpacing: '-0.03em',
     lineHeight: 1,
@@ -175,7 +176,7 @@ function CostsTab() {
 
   const loadingText: React.CSSProperties = {
     fontSize: 13,
-    color: 'var(--text-secondary, #94A3B8)',
+    color: 'var(--text-secondary)',
     animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
   };
 
@@ -200,7 +201,7 @@ function CostsTab() {
 
   const dailyTrendDate: React.CSSProperties = {
     width: 80,
-    color: 'var(--text-secondary, #94A3B8)',
+    color: 'var(--text-secondary)',
     flexShrink: 0,
   };
 
@@ -208,11 +209,11 @@ function CostsTab() {
     flex: 1,
     height: 16,
     borderRadius: 8,
-    background: 'rgba(10, 14, 23, 0.5)',
-    backdropFilter: 'blur(20px)',
-    WebkitBackdropFilter: 'blur(20px)',
+    background: 'var(--glass-pill-bg)',
+    backdropFilter: 'var(--glass-card-blur)',
+    WebkitBackdropFilter: 'var(--glass-card-blur)',
     overflow: 'hidden',
-    border: '1px solid rgba(255, 255, 255, 0.02)',
+    border: '1px solid var(--glass-card-border)',
   };
 
   const dailyTrendBar = (pct: number): React.CSSProperties => ({
@@ -228,20 +229,20 @@ function CostsTab() {
     textAlign: 'right',
     fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
     fontWeight: 600,
-    color: 'var(--text-primary, #F1F5F9)',
+    color: 'var(--text-primary)',
     flexShrink: 0,
   };
 
   const listRowLabel: React.CSSProperties = {
     fontSize: 13,
-    color: 'var(--text-primary, #F1F5F9)',
+    color: 'var(--text-primary)',
   };
 
   const listRowMonoLabel: React.CSSProperties = {
     fontSize: 12,
     fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
     fontWeight: 600,
-    color: 'var(--text-primary, #F1F5F9)',
+    color: 'var(--text-primary)',
   };
 
   const listRowMeta: React.CSSProperties = {
@@ -252,18 +253,18 @@ function CostsTab() {
   };
 
   const listRowSecondary: React.CSSProperties = {
-    color: 'var(--text-secondary, #94A3B8)',
+    color: 'var(--text-secondary)',
   };
 
   const listRowValue: React.CSSProperties = {
     fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
     fontWeight: 600,
-    color: 'var(--text-primary, #F1F5F9)',
+    color: 'var(--text-primary)',
   };
 
   const emptyState: React.CSSProperties = {
     fontSize: 13,
-    color: 'var(--text-secondary, #94A3B8)',
+    color: 'var(--text-secondary)',
     padding: '12px 18px',
   };
 
@@ -271,7 +272,7 @@ function CostsTab() {
     display: 'flex',
     alignItems: 'center',
     gap: 8,
-    color: 'var(--text-secondary, #94A3B8)',
+    color: 'var(--text-secondary)',
     marginBottom: 12,
     fontSize: 11,
     fontWeight: 600,
@@ -326,6 +327,14 @@ function CostsTab() {
 
         {error && (
           <AlertBanner variant="error">{error}</AlertBanner>
+        )}
+
+        {!summary && !loading && !error && (
+          <EmptyState
+            icon={<Zap size={40} />}
+            title="No cost data available"
+            description="Cost tracking will appear here once you start using AI agents and models."
+          />
         )}
 
         {summary && !loading && (
@@ -425,31 +434,31 @@ function SummaryCard({ icon, label, value }: { icon: React.ReactNode; label: str
   const glassCard: React.CSSProperties = {
     padding: 20,
     borderRadius: 16,
-    background: 'rgba(15, 20, 30, 0.6)',
-    backdropFilter: 'blur(20px) saturate(1.2)',
-    WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
-    border: '1px solid rgba(255, 255, 255, 0.03)',
-    boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+    background: 'var(--glass-card-bg)',
+    backdropFilter: 'var(--glass-card-blur)',
+    WebkitBackdropFilter: 'var(--glass-card-blur)',
+    border: '1px solid var(--glass-card-border)',
+    boxShadow: 'var(--glass-card-inset)',
   };
 
   const labelContainer: React.CSSProperties = {
     display: 'flex',
     alignItems: 'center',
     gap: 8,
-    color: 'var(--text-secondary, #94A3B8)',
+    color: 'var(--text-secondary)',
     marginBottom: 12,
     fontSize: 11,
     fontWeight: 600,
   };
 
   const iconStyle: React.CSSProperties = {
-    color: 'var(--text-secondary, #94A3B8)',
+    color: 'var(--text-secondary)',
   };
 
   const valueStyle: React.CSSProperties = {
     fontSize: 38,
     fontWeight: 700,
-    color: 'var(--text-primary, #F1F5F9)',
+    color: 'var(--text-primary)',
     fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
     letterSpacing: '-0.03em',
     lineHeight: 1,

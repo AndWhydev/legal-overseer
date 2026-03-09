@@ -1,6 +1,8 @@
 import { redirect } from 'next/navigation'
 import { createClient, isSupabaseConfigured } from '@/lib/supabase/server'
 import { SPAShell } from '@/components/dashboard/spa-shell'
+import { getCanonicalOnboardingRedirect } from '@/lib/onboarding/state'
+import { loadOnboardingProfile } from '@/lib/onboarding/profile'
 
 export default async function DashboardLayout({
   children,
@@ -35,16 +37,9 @@ export default async function DashboardLayout({
       .slice(0, 2)
 
     // Check onboarding state from profile preferences
-    const { data: profile } = await supabase!
-      .from('profiles')
-      .select('org_id, display_name, preferences')
-      .eq('id', user.id)
-      .maybeSingle()
-
-    // No profile means no org — send to workspace setup
-    if (!profile?.org_id) {
-      redirect('/onboard')
-    }
+    const { data: profile } = await loadOnboardingProfile(supabase! as never, user.id)
+    const onboardingRedirect = getCanonicalOnboardingRedirect(profile)
+    if (onboardingRedirect !== '/dashboard') redirect(onboardingRedirect)
 
     // Prefer the stored display_name over auth metadata
     if (profile?.display_name) {

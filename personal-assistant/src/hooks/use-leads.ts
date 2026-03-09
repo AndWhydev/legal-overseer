@@ -1,11 +1,10 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type {
   EnhancedLeadData,
   LeadStatus,
   LeadFilter,
-  SmartView,
   LeadViewMode,
 } from '@/lib/leads/types'
 import { useToast } from '@/components/ui/toast'
@@ -18,7 +17,13 @@ const STATUS_LABEL: Record<LeadStatus, string> = {
   lost: 'Lost',
 }
 
-function buildQueryString(filters: LeadFilter): string {
+const NEXT_STATUS: Record<string, LeadStatus> = {
+  new: 'qualified',
+  qualified: 'booked',
+  booked: 'converted',
+}
+
+function buildQueryString(filters: LeadFilter, searchQuery?: string): string {
   const params = new URLSearchParams()
   if (filters.score && filters.score !== 'all') params.set('score', filters.score)
   if (filters.source && filters.source !== 'all') params.set('source', filters.source)
@@ -26,6 +31,7 @@ function buildQueryString(filters: LeadFilter): string {
   if (filters.minValue != null) params.set('min_value', String(filters.minValue))
   if (filters.maxValue != null) params.set('max_value', String(filters.maxValue))
   if (filters.smartView && filters.smartView !== 'all') params.set('smart_view', filters.smartView)
+  if (searchQuery && searchQuery.trim()) params.set('q', searchQuery.trim())
   const qs = params.toString()
   return qs ? `?${qs}` : ''
 }
@@ -39,38 +45,54 @@ export function useLeads() {
   const [viewMode, setViewMode] = useState<LeadViewMode>('kanban')
   const [filters, setFilters] = useState<LeadFilter>({ smartView: 'all' })
   const [movingLeadId, setMovingLeadId] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
+  const abortRef = useRef<AbortController | null>(null)
 
   const selectedLead = useMemo(
     () => leads.find((l) => l.id === selectedLeadId) ?? null,
     [leads, selectedLeadId],
   )
 
-  const loadLeads = useCallback(async (f?: LeadFilter) => {
-    const qs = buildQueryString(f ?? filters)
-    const response = await fetch(`/api/agent/leads${qs}`)
-    if (!response.ok) {
-      const body = (await response.json().catch(() => ({}))) as { error?: string }
-      throw new Error(body.error ?? 'Failed to load leads')
+  const loadLeads = useCallback(async (f?: LeadFilter, q?: string) => {
+    abortRef.current?.abort()
+    const controller = new AbortController()
+    abortRef.current = controller
+    const timeout = setTimeout(() => controller.abort(), 5000)
+
+    try {
+      const qs = buildQueryString(f ?? filters, q ?? searchQuery)
+      const response = await fetch(`/api/agent/leads${qs}`, { signal: controller.signal })
+      if (!response.ok) {
+        const body = (await response.json().catch(() => ({}))) as { error?: string }
+        throw new Error(body.error ?? 'Failed to load leads')
+      }
+      const body = (await response.json()) as { leads?: EnhancedLeadData[] }
+      setLeads(body.leads ?? [])
+    } finally {
+      clearTimeout(timeout)
     }
-    const body = (await response.json()) as { leads?: EnhancedLeadData[] }
-    setLeads(body.leads ?? [])
-  }, [filters])
+  }, [filters, searchQuery])
 
   useEffect(() => {
     let mounted = true
     setIsLoading(true)
     setError(null)
 
-    loadLeads(filters)
+    loadLeads(filters, searchQuery)
       .catch((err) => {
-        if (mounted) setError(err instanceof Error ? err.message : 'Failed to load leads')
+        if (mounted && err instanceof Error && err.name !== 'AbortError') {
+          setError(err.message)
+        }
       })
       .finally(() => {
         if (mounted) setIsLoading(false)
       })
 
-    return () => { mounted = false }
-  }, [loadLeads, filters])
+    return () => {
+      mounted = false
+      abortRef.current?.abort()
+    }
+  }, [loadLeads, filters, searchQuery])
 
   const moveLead = useCallback(async (leadId: string, newStatus: LeadStatus) => {
     const lead = leads.find((l) => l.id === leadId)
@@ -102,6 +124,17 @@ export function useLeads() {
       setMovingLeadId(null)
     }
   }, [leads, loadLeads, toast])
+
+  const advanceLead = useCallback(async (leadId: string) => {
+    const lead = leads.find((l) => l.id === leadId)
+    if (!lead) return
+    const next = NEXT_STATUS[lead.status]
+    if (!next) {
+      toast('error', 'Lead is already at a terminal stage')
+      return
+    }
+    return moveLead(leadId, next)
+  }, [leads, moveLead, toast])
 
   const updateLead = useCallback(async (leadId: string, patch: Record<string, unknown>) => {
     try {
@@ -145,8 +178,11 @@ export function useLeads() {
     filters,
     setFilters,
     moveLead,
+    advanceLead,
     updateLead,
     movingLeadId,
+    searchQuery,
+    setSearchQuery,
     refresh: () => loadLeads(),
   }
 }

@@ -41,13 +41,7 @@ const PROVIDERS: Record<string, OAuthProvider> = {
     clientSecret: process.env.ASANA_CLIENT_SECRET || '',
     authorizationUrl: 'https://app.asana.com/-/oauth_authorize',
     tokenUrl: 'https://app.asana.com/-/oauth_token',
-    scopes: [
-      'default',
-      'tasks:read',
-      'tasks:write',
-      'projects:read',
-      'projects:write',
-    ],
+    scopes: ['default'],
   },
   'google-calendar': {
     clientId: process.env.GOOGLE_CLIENT_ID || '',
@@ -84,6 +78,11 @@ const PROVIDERS: Record<string, OAuthProvider> = {
 export const OAUTH_STATE_COOKIE = 'oauth_state'
 export const OAUTH_VERIFIER_COOKIE = 'oauth_code_verifier'
 
+export function buildOAuthRedirectUri(provider: string, appUrlOverride?: string): string {
+  const baseUrl = (appUrlOverride || getAppUrl()).replace(/\/$/, '')
+  return `${baseUrl}/callback/${provider}`
+}
+
 /**
  * Generate a cryptographically secure state string
  */
@@ -108,7 +107,7 @@ export function generatePKCE(): { codeVerifier: string; codeChallenge: string } 
  * Returns the URL, the generated state, and optionally the PKCE code_verifier
  * (which the caller must persist in a cookie for validation on callback).
  */
-export function getOAuthRedirectUrl(provider: string): {
+export function getOAuthRedirectUrl(provider: string, appUrlOverride?: string): {
   url: string
   state: string
   codeVerifier?: string
@@ -122,8 +121,7 @@ export function getOAuthRedirectUrl(provider: string): {
     throw new Error(`OAuth client ID not configured for ${provider}`)
   }
 
-  const appUrl = getAppUrl()
-  const redirectUri = `${appUrl}/callback/${provider}`
+  const redirectUri = buildOAuthRedirectUri(provider, appUrlOverride)
 
   const state = generateOAuthState()
 
@@ -163,7 +161,8 @@ export function getOAuthRedirectUrl(provider: string): {
 export async function exchangeOAuthCode(
   provider: string,
   code: string,
-  codeVerifier?: string
+  codeVerifier?: string,
+  appUrlOverride?: string
 ): Promise<{ access_token: string; refresh_token?: string; expires_in?: number }> {
   const config = PROVIDERS[provider.toLowerCase()]
   if (!config) {
@@ -174,8 +173,7 @@ export async function exchangeOAuthCode(
     throw new Error(`OAuth client secret not configured for ${provider}`)
   }
 
-  const appUrl = getAppUrl()
-  const redirectUri = `${appUrl}/callback/${provider}`
+  const redirectUri = buildOAuthRedirectUri(provider, appUrlOverride)
 
   const params = new URLSearchParams({
     client_id: config.clientId,

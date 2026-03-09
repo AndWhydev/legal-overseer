@@ -8,22 +8,22 @@ interface WebsiteSignalsPanelProps {
 }
 
 function TriState({ value }: { value: boolean | null | undefined }) {
-  if (value === true) return <Check style={{ width: 14, height: 14, color: 'var(--bb-green, #22C55E)' }} />
-  if (value === false) return <X style={{ width: 14, height: 14, color: 'var(--bb-red, #EF4444)' }} />
-  return <HelpCircle style={{ width: 14, height: 14, color: '#475569' }} />
+  if (value === true) return <Check style={{ width: 14, height: 14, color: 'var(--bb-green)' }} />
+  if (value === false) return <X style={{ width: 14, height: 14, color: 'var(--bb-red)' }} />
+  return <HelpCircle style={{ width: 14, height: 14, color: 'var(--text-dim)' }} />
 }
 
 function LoadTimeColor(ms: number | null | undefined): string {
-  if (ms == null) return '#475569'
-  if (ms < 1500) return 'var(--bb-green, #22C55E)'
-  if (ms < 3000) return 'var(--bb-amber, #F59E0B)'
-  return 'var(--bb-red, #EF4444)'
+  if (ms == null) return 'var(--text-dim)'
+  if (ms < 1500) return 'var(--bb-green)'
+  if (ms < 3000) return 'var(--bb-amber)'
+  return 'var(--bb-red)'
 }
 
 const cellStyle: React.CSSProperties = {
   padding: '10px 12px',
   borderRadius: 10,
-  background: 'rgba(255, 255, 255, 0.02)',
+  background: 'var(--hover-bg)',
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
@@ -33,7 +33,7 @@ const cellStyle: React.CSSProperties = {
 const cellLabelStyle: React.CSSProperties = {
   fontSize: 10,
   fontWeight: 500,
-  color: '#475569',
+  color: 'var(--text-dim)',
 }
 
 const cellValueStyle: React.CSSProperties = {
@@ -45,7 +45,7 @@ const cellValueStyle: React.CSSProperties = {
 export function WebsiteSignalsPanel({ signals }: WebsiteSignalsPanelProps) {
   return (
     <div>
-      <h4 style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#64748B', margin: '0 0 12px' }}>
+      <h4 style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-dim)', margin: '0 0 12px' }}>
         Website Signals
       </h4>
 
@@ -53,7 +53,7 @@ export function WebsiteSignalsPanel({ signals }: WebsiteSignalsPanelProps) {
         {/* CMS */}
         <div style={cellStyle}>
           <span style={cellLabelStyle}>CMS</span>
-          <span style={{ ...cellValueStyle, color: signals.cms ? '#F1F5F9' : '#475569' }}>
+          <span style={{ ...cellValueStyle, color: signals.cms ? 'var(--text-primary)' : 'var(--text-dim)' }}>
             {signals.cms ?? 'Unknown'}
           </span>
         </div>

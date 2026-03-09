@@ -39,12 +39,12 @@ const BOARD_COLUMNS: Array<{
   { id: 'outcome', label: 'Accepted / Declined', statuses: ['accepted', 'declined'] },
 ]
 
-const STATUS_COLORS: Record<ProposalStatus, string> = {
-  draft: 'border-zinc-500/30 bg-zinc-500/10 text-zinc-300',
-  sent: 'border-blue-500/30 bg-blue-500/10 text-blue-300',
-  viewed: 'border-amber-500/30 bg-amber-500/10 text-amber-300',
-  accepted: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300',
-  declined: 'border-red-500/30 bg-red-500/10 text-red-300',
+const STATUS_COLORS: Record<ProposalStatus, React.CSSProperties> = {
+  draft: { borderColor: 'rgba(113,113,122,0.3)', background: 'rgba(113,113,122,0.1)', color: 'rgb(161,161,170)' },
+  sent: { borderColor: 'rgba(59,130,246,0.3)', background: 'rgba(59,130,246,0.1)', color: 'rgb(147,197,253)' },
+  viewed: { borderColor: 'rgba(245,158,11,0.3)', background: 'rgba(245,158,11,0.1)', color: 'rgb(252,211,77)' },
+  accepted: { borderColor: 'rgba(16,185,129,0.3)', background: 'rgba(16,185,129,0.1)', color: 'rgb(110,231,183)' },
+  declined: { borderColor: 'rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.1)', color: 'rgb(252,165,165)' },
 }
 
 // ---------------------------------------------------------------------------
@@ -150,7 +150,7 @@ function ProposalsKanban() {
     return (
       <div className="grid grid-cols-4 gap-4">
         {BOARD_COLUMNS.map((col) => (
-          <div key={col.id} className="rounded-xl bg-card/50 p-4 animate-pulse">
+          <div key={col.id} className="rounded-xl p-4 animate-pulse" style={{ background: 'var(--glass-card-bg)' }}>
             <div className="h-5 w-24 rounded bg-muted mb-4" />
             <div className="space-y-3">
               <div className="h-24 rounded-lg bg-muted" />
@@ -167,7 +167,7 @@ function ProposalsKanban() {
       {BOARD_COLUMNS.map((col) => {
         const items = grouped.get(col.id) || []
         return (
-          <div key={col.id} className="rounded-xl bg-card/50 border border-border/50 p-4">
+          <div key={col.id} className="rounded-xl p-4" style={{ background: 'var(--glass-card-bg)', border: '1px solid var(--glass-card-border)' }}>
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
                 {col.label}
@@ -186,7 +186,8 @@ function ProposalsKanban() {
                 return (
                   <div
                     key={p.id}
-                    className={`rounded-lg border p-3 transition-colors ${STATUS_COLORS[p.status]} ${isMoving ? 'opacity-50' : ''}`}
+                    className={`rounded-lg border p-3 transition-colors ${isMoving ? 'opacity-50' : ''}`}
+                    style={STATUS_COLORS[p.status]}
                   >
                     <p className="text-sm font-medium leading-tight mb-1 line-clamp-2">
                       {p.title}
@@ -213,7 +214,10 @@ function ProposalsKanban() {
                         {options.map((opt) => (
                           <button
                             key={opt}
-                            className="rounded px-2 py-0.5 text-xs bg-white/10 hover:bg-white/20 transition-colors"
+                            className="rounded px-2 py-0.5 text-xs transition-colors"
+                            style={{ background: 'var(--glass-interactive-border)', }}
+                            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.2)' }}
+                            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--glass-interactive-border)' }}
                             onClick={() => moveProposal(p.id, opt)}
                             disabled={isMoving}
                           >

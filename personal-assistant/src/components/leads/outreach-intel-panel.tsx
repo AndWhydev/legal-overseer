@@ -18,12 +18,12 @@ function parseNotesByCategory(notes: string): Array<{ category: string; note: st
 }
 
 const CATEGORY_COLOR: Record<string, string> = {
-  SEO: 'var(--bb-blue, #3B82F6)',
-  Tracking: 'var(--bb-purple, #A78BFA)',
-  Conversion: 'var(--bb-green, #22C55E)',
-  Technical: 'var(--bb-amber, #F59E0B)',
-  Note: 'var(--bb-cyan, #06B6D4)',
-  General: '#64748B',
+  SEO: 'var(--bb-blue)',
+  Tracking: 'var(--bb-purple)',
+  Conversion: 'var(--bb-green)',
+  Technical: 'var(--bb-amber)',
+  Note: 'var(--bb-cyan)',
+  General: 'var(--text-dim)',
 }
 
 export function OutreachIntelPanel({ opportunityNotes, outreachAngle, priorityServices }: OutreachIntelPanelProps) {
@@ -31,7 +31,7 @@ export function OutreachIntelPanel({ opportunityNotes, outreachAngle, prioritySe
 
   return (
     <div>
-      <h4 style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#64748B', margin: '0 0 12px' }}>
+      <h4 style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-dim)', margin: '0 0 12px' }}>
         Outreach Intelligence
       </h4>
 
@@ -44,10 +44,10 @@ export function OutreachIntelPanel({ opportunityNotes, outreachAngle, prioritySe
           border: '1px solid rgba(6, 182, 212, 0.15)',
           marginBottom: 16,
         }}>
-          <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--bb-cyan, #06B6D4)', marginBottom: 4 }}>
+          <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--bb-cyan)', marginBottom: 4 }}>
             SUGGESTED ANGLE
           </div>
-          <div style={{ fontSize: 13, fontWeight: 500, color: '#F1F5F9' }}>
+          <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>
             {outreachAngle}
           </div>
         </div>
@@ -63,14 +63,14 @@ export function OutreachIntelPanel({ opportunityNotes, outreachAngle, prioritySe
                 fontWeight: 600,
                 padding: '2px 6px',
                 borderRadius: 6,
-                background: `${CATEGORY_COLOR[n.category] ?? '#64748B'}15`,
-                color: CATEGORY_COLOR[n.category] ?? '#64748B',
+                background: `${CATEGORY_COLOR[n.category] ?? 'var(--text-dim)'}15`,
+                color: CATEGORY_COLOR[n.category] ?? 'var(--text-dim)',
                 whiteSpace: 'nowrap',
                 marginTop: 1,
               }}>
                 {n.category}
               </span>
-              <span style={{ fontSize: 12, color: '#94A3B8', lineHeight: 1.4 }}>
+              <span style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.4 }}>
                 {n.note}
               </span>
             </div>
@@ -81,7 +81,7 @@ export function OutreachIntelPanel({ opportunityNotes, outreachAngle, prioritySe
       {/* Priority services */}
       {priorityServices && priorityServices.length > 0 && (
         <div>
-          <div style={{ fontSize: 10, fontWeight: 600, color: '#475569', marginBottom: 6 }}>
+          <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-dim)', marginBottom: 6 }}>
             Priority Services
           </div>
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
@@ -91,9 +91,9 @@ export function OutreachIntelPanel({ opportunityNotes, outreachAngle, prioritySe
                 fontWeight: 500,
                 padding: '4px 12px',
                 borderRadius: 20,
-                background: 'rgba(255, 255, 255, 0.04)',
-                border: '1px solid rgba(255, 255, 255, 0.06)',
-                color: '#94A3B8',
+                background: 'var(--hover-bg)',
+                border: '1px solid var(--border-subtle)',
+                color: 'var(--text-secondary)',
               }}>
                 {s}
               </span>

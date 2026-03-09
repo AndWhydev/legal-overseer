@@ -66,7 +66,7 @@ export default defineConfig({
   ],
   webServer: shouldUseLocalWebServer
     ? {
-        command: 'npm run dev',
+        command: 'npm run dev:auth',
         url: baseURL,
         timeout: webServerTimeout,
         reuseExistingServer: !isCI,

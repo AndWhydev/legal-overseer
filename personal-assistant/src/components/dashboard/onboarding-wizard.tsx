@@ -21,35 +21,35 @@ const SPOTLIGHT_STOPS: SpotlightStop[] = [
   {
     selector: '.bb-sidebar-area',
     tabId: 'dashboard',
-    title: 'Navigation Sidebar',
-    description: 'Jump between Dashboard, Chat, Inbox, and all your tools from here. Everything is just one click away.',
+    title: 'Navigation',
+    description: 'Dashboard, Chat, Inbox, and everything else lives in here.',
   },
   {
     selector: '#tabpanel-chat',
     tabId: 'chat',
-    title: 'Chat with BitBit',
-    description: 'Ask me anything — draft emails, chase invoices, look up contacts, manage tasks. I work across all your connected services.',
+    title: 'Chat',
+    description: 'Ask me to draft emails, look up contacts, check your schedule — anything across your connected services.',
   },
   {
     selector: '#tabpanel-inbox',
     tabId: 'inbox',
-    title: 'Unified Inbox',
-    description: "All your messages from every connected service in one place. I'll triage and prioritize them for you automatically.",
+    title: 'Inbox',
+    description: 'Every message from every connected service, sorted by what needs attention first.',
   },
   {
     selector: '#tabpanel-connections',
     tabId: 'connections',
     title: 'Connections',
-    description: "Add more services anytime. Connect Gmail, Calendar, WhatsApp, Slack, and more. The more I'm connected, the more I can help.",
+    description: 'Add Gmail, Calendar, WhatsApp, Slack, or anything else. You can come back to this anytime.',
   },
 ];
 
 const INTRO_MESSAGES = [
-  "Hey! I'm BitBit — your personal operations engine.",
-  "I just connected to your services and I'm already learning about your world.",
-  "I'll keep building context in the background — the more you use me, the smarter I get.",
-  "I can draft emails, chase invoices, manage your leads, and handle the boring stuff so you don't have to.",
-  "Let me show you around — it'll take 60 seconds.",
+  "Hey — I'm BitBit.",
+  "I've pulled in the last 30 days from your connected services.",
+  "I'll keep learning in the background as you work.",
+  "I can draft emails, chase invoices, manage leads, and deal with the admin you don't want to.",
+  "Let me show you around — 60 seconds.",
 ];
 
 const STORAGE_KEY = 'bb-onboarding-complete';
@@ -221,7 +221,7 @@ function StepWelcome({
               lineHeight: 1.6,
               maxWidth: 440,
             }}>
-              Your personal operations engine. Connect your tools, and let me help you work smarter.
+              Connect your tools and BitBit handles the rest.
             </p>
 
             {/* Value props */}
@@ -235,8 +235,8 @@ function StepWelcome({
               {[
                 { label: 'Draft emails', desc: 'In your voice' },
                 { label: 'Chase invoices', desc: 'Never miss one' },
-                { label: 'Manage leads', desc: 'Stay organized' },
-                { label: 'Handle details', desc: 'You focus on what matters' },
+                { label: 'Track leads', desc: 'Pipeline to close' },
+                { label: 'Admin work', desc: 'Done in the background' },
               ].map((item, i) => (
                 <div
                   key={i}
@@ -273,7 +273,7 @@ function StepWelcome({
               onClick={onContinue}
               style={{ marginTop: 8 }}
             >
-              Let's get started <ArrowRight size={16} />
+              Get started <ArrowRight size={16} />
             </motion.button>
           </div>
         </div>
@@ -314,14 +314,14 @@ function StepConnections({
               color: 'var(--text-primary)',
               margin: '0 0 8px',
             }}>
-              Connect your world
+              Connect your tools
             </h2>
             <p style={{
               fontSize: 14,
               color: 'var(--text-secondary)',
               margin: 0,
             }}>
-              Connect at least one service to get started. The more connections, the smarter BitBit becomes.
+              Start with one. You can always add more later.
             </p>
           </div>
 
@@ -381,14 +381,14 @@ function StepCrawling() {
             color: 'var(--text-primary)',
             margin: '0 0 8px',
           }}>
-            BitBit is learning your world...
+            Reading your history...
           </h2>
           <p style={{
             fontSize: 14,
             color: 'var(--text-secondary)',
             margin: '0 0 24px',
           }}>
-            Pulling in the last 30 days of context. This continues in the background.
+            Scanning the last 30 days. This continues in the background.
           </p>
           <div className="bb-onboarding-wizard__crawl-bar">
             <div className="bb-onboarding-wizard__crawl-bar-fill" />

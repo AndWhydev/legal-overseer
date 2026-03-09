@@ -339,7 +339,7 @@ export function NotificationCenter({ onTabChange }: NotificationCenterProps) {
           cursor: 'pointer',
           transition: 'background 0.15s ease',
         }}
-        onMouseEnter={e => { (e.currentTarget).style.background = 'rgba(255,255,255,0.06)'; }}
+        onMouseEnter={e => { (e.currentTarget).style.background = 'var(--glass-hover-bg)'; }}
         onMouseLeave={e => { (e.currentTarget).style.background = 'transparent'; }}
       >
         <Bell size={18} strokeWidth={1.8} />
@@ -352,7 +352,7 @@ export function NotificationCenter({ onTabChange }: NotificationCenterProps) {
               width: 6,
               height: 6,
               borderRadius: '50%',
-              backgroundColor: '#ef4444',
+              backgroundColor: 'var(--bb-red)',
               animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
             }}
             aria-hidden="true"
@@ -462,7 +462,7 @@ export function NotificationCenter({ onTabChange }: NotificationCenterProps) {
                   background: 'rgba(239, 68, 68, 0.1)',
                   border: '1px solid rgba(239, 68, 68, 0.3)',
                   borderRadius: '8px',
-                  color: '#dc2626',
+                  color: 'var(--bb-red)',
                   fontSize: '12px',
                 }}
               >
@@ -637,7 +637,7 @@ function NotificationItemRow({
         alignItems: 'flex-start',
       }}
       onMouseEnter={e => {
-        (e.currentTarget).style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
+        (e.currentTarget).style.backgroundColor = 'var(--glass-hover-bg)';
       }}
       onMouseLeave={e => {
         (e.currentTarget).style.backgroundColor = 'transparent';

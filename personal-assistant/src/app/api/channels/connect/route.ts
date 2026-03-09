@@ -4,7 +4,6 @@ import { storeOrgCredential } from '@/lib/integrations/credentials'
 import { logAuditEvent } from '@/lib/audit/logger'
 import { getActiveOrgId } from '@/lib/tenancy'
 import { checkPlanGate } from '@/lib/billing/plan-gates'
-import { getAppUrl } from '@/lib/core/app-url'
 import { logger } from '@/lib/core/logger';
 
 const OAUTH_PROVIDER_MAP: Record<string, string> = {
@@ -16,6 +15,18 @@ const OAUTH_PROVIDER_MAP: Record<string, string> = {
   'google-calendar': 'google-calendar',
   ga4: 'google-analytics',
   'google-analytics': 'google-analytics',
+}
+
+function getConnectionChannelType(channel: string): string {
+  switch (channel) {
+    case 'google-calendar':
+      return 'calendar'
+    case 'google-analytics':
+    case 'ga4':
+      return 'gsc'
+    default:
+      return channel
+  }
 }
 
 export async function POST(request: Request) {
@@ -55,8 +66,7 @@ export async function POST(request: Request) {
     // OAuth channels: redirect to OAuth start flow
     const oauthProvider = OAUTH_PROVIDER_MAP[channelLower]
     if (oauthProvider) {
-      const appUrl = getAppUrl()
-      const url = `${appUrl}/api/auth/oauth/start?provider=${oauthProvider}`
+      const url = `/api/auth/oauth/start?provider=${encodeURIComponent(oauthProvider)}`
       return NextResponse.json({ redirect: true, url })
     }
 
@@ -68,16 +78,28 @@ export async function POST(request: Request) {
 
       await storeOrgCredential(supabase, orgId, channelLower, credentials, user.id)
 
-      // Upsert channel_connections row
+      const connectionChannelType = getConnectionChannelType(channelLower)
+      const { data: existingConnection } = await supabase
+        .from('channel_connections')
+        .select('config, last_sync, message_count')
+        .eq('org_id', orgId)
+        .eq('channel_type', connectionChannelType)
+        .maybeSingle<{
+          config?: Record<string, unknown> | null
+          last_sync?: string | null
+          message_count?: number | null
+        }>()
+
+      // Upsert channel_connections row and preserve any fallback credential config.
       await supabase.from('channel_connections').upsert(
         {
           org_id: orgId,
-          channel_type: channelLower,
+          channel_type: connectionChannelType,
           status: 'connected',
           relay_enabled: false,
-          config: {},
-          connected_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
+          config: existingConnection?.config ?? {},
+          last_sync: existingConnection?.last_sync ?? null,
+          message_count: existingConnection?.message_count ?? 0,
         },
         { onConflict: 'org_id,channel_type' },
       )
@@ -95,33 +117,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ connected: true, channel: channelLower })
     }
 
-    // WhatsApp: create pairing session
+    // WhatsApp: pairing is owned by the bridge route so session creation stays single-source-of-truth.
     if (channelLower === 'whatsapp') {
-      const { data: session, error: sessionError } = await supabase
-        .from('whatsapp_sessions')
-        .insert({
-          org_id: orgId,
-          status: 'pairing',
-          created_by: user.id,
-        })
-        .select('id')
-        .single()
-
-      if (sessionError) {
-        throw new Error(`Failed to create WhatsApp session: ${sessionError.message}`)
-      }
-
-      await logAuditEvent(supabase, {
-        orgId,
-        actorType: 'user',
-        actorId: user.id,
-        action: 'created',
-        entityType: 'channel_connection',
-        entityId: channelLower,
-        metadata: { channel: channelLower, method: 'qr_pairing', sessionId: session.id },
-      })
-
-      return NextResponse.json({ pairing: true, sessionId: session.id })
+      return NextResponse.json({ pairing: true, channel: channelLower })
     }
 
     return NextResponse.json({ error: `Unsupported channel: ${channel}` }, { status: 400 })

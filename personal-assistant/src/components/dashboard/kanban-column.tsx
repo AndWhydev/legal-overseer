@@ -20,8 +20,8 @@ const PRIORITY_CYCLE = ['medium', 'high', 'critical', 'low'] as const
 const PRIORITY_DOT_COLOR: Record<string, string> = {
   critical: '#EF4444',
   high: '#F59E0B',
-  medium: '#64748B',
-  low: '#475569',
+  medium: 'var(--text-dim)',
+  low: 'var(--text-dim)',
 }
 
 export function KanbanColumn({
@@ -142,7 +142,7 @@ export function KanbanColumn({
                 width: 6,
                 height: 6,
                 borderRadius: '50%',
-                background: PRIORITY_DOT_COLOR[quickPriority] || '#64748B',
+                background: PRIORITY_DOT_COLOR[quickPriority] || 'var(--text-dim)',
                 flexShrink: 0,
                 transition: 'background 0.15s',
               }} />

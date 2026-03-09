@@ -6,6 +6,12 @@ const ALGORITHM = 'aes-256-gcm'
 const SALT = 'bitbit-integration-salt' // In production, use a random salt from env
 const ENCODING = 'utf8'
 
+type PostgrestLikeError = {
+  message?: string
+  details?: string
+  hint?: string
+} | null
+
 /**
  * Get the encryption key from environment variables or generate one
  */
@@ -17,6 +23,194 @@ function getEncryptionKey(): Buffer {
 
   // Use scrypt to derive a consistent key from the environment variable
   return scryptSync(keyEnv, SALT, 32)
+}
+
+function getCredentialChannelType(provider: string): string {
+  switch (provider) {
+    case 'google-calendar':
+      return 'calendar'
+    case 'google-analytics':
+    case 'ga4':
+      return 'gsc'
+    default:
+      return provider
+  }
+}
+
+function isMissingTableError(error: PostgrestLikeError, tableName: string): boolean {
+  if (!error) return false
+
+  const message = [error.message, error.details, error.hint]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase()
+
+  return (
+    message.includes(`could not find the table 'public.${tableName}' in the schema cache`) ||
+    message.includes(`relation "${tableName}" does not exist`) ||
+    message.includes(`relation public.${tableName} does not exist`)
+  )
+}
+
+async function upsertCredentialIntoChannelConnections(
+  supabase: SupabaseClient,
+  orgId: string,
+  provider: string,
+  encrypted: string,
+): Promise<void> {
+  const channelType = getCredentialChannelType(provider)
+  const { data: existing, error: existingError } = await supabase
+    .from('channel_connections')
+    .select('config, last_sync, message_count')
+    .eq('org_id', orgId)
+    .eq('channel_type', channelType)
+    .maybeSingle<{
+      config?: Record<string, unknown> | null
+      last_sync?: string | null
+      message_count?: number | null
+    }>()
+
+  if (existingError) {
+    throw new Error(`Failed to load channel connection fallback: ${existingError.message}`)
+  }
+
+  const existingConfig =
+    existing?.config && typeof existing.config === 'object' && !Array.isArray(existing.config)
+      ? existing.config
+      : {}
+
+  const { error } = await supabase.from('channel_connections').upsert(
+    {
+      org_id: orgId,
+      channel_type: channelType,
+      status: 'connected',
+      last_sync: existing?.last_sync ?? null,
+      message_count: existing?.message_count ?? 0,
+      config: {
+        ...existingConfig,
+        credential_provider: provider,
+        credentials_encrypted: encrypted,
+      },
+    },
+    {
+      onConflict: 'org_id,channel_type',
+    }
+  )
+
+  if (error) {
+    throw new Error(`Failed to store credential fallback: ${error.message}`)
+  }
+}
+
+async function getCredentialFromChannelConnections(
+  supabase: SupabaseClient,
+  orgId: string,
+  provider: string,
+): Promise<Record<string, unknown> | null> {
+  const channelType = getCredentialChannelType(provider)
+  const { data, error } = await supabase
+    .from('channel_connections')
+    .select('config')
+    .eq('org_id', orgId)
+    .eq('channel_type', channelType)
+    .maybeSingle<{ config?: Record<string, unknown> | null }>()
+
+  if (error || !data?.config) {
+    return null
+  }
+
+  const encrypted =
+    typeof data.config.credentials_encrypted === 'string'
+      ? data.config.credentials_encrypted
+      : null
+
+  if (!encrypted) {
+    return null
+  }
+
+  try {
+    const decrypted = decryptCredential(encrypted)
+    return JSON.parse(decrypted) as Record<string, unknown>
+  } catch {
+    const decrypted = decryptCredential(encrypted)
+    return { token: decrypted } as Record<string, unknown>
+  }
+}
+
+async function deleteCredentialFromChannelConnections(
+  supabase: SupabaseClient,
+  orgId: string,
+  provider: string,
+): Promise<void> {
+  const channelType = getCredentialChannelType(provider)
+  const { data: existing, error: existingError } = await supabase
+    .from('channel_connections')
+    .select('config')
+    .eq('org_id', orgId)
+    .eq('channel_type', channelType)
+    .maybeSingle<{ config?: Record<string, unknown> | null }>()
+
+  if (existingError) {
+    throw new Error(`Failed to load credential fallback: ${existingError.message}`)
+  }
+
+  const existingConfig =
+    existing?.config && typeof existing.config === 'object' && !Array.isArray(existing.config)
+      ? existing.config
+      : {}
+
+  const { credentials_encrypted: _encrypted, credential_provider: _provider, ...rest } = existingConfig
+
+  const { error } = await supabase
+    .from('channel_connections')
+    .update({
+      config: rest,
+    })
+    .eq('org_id', orgId)
+    .eq('channel_type', channelType)
+
+  if (error) {
+    throw new Error(`Failed to clear credential fallback: ${error.message}`)
+  }
+}
+
+async function getIntegrationsFromChannelConnections(
+  supabase: SupabaseClient,
+  orgId: string,
+): Promise<
+  Array<{
+    id: string
+    provider: string
+    status: string
+    connected_at: string | null
+    metadata: Record<string, unknown>
+  }>
+> {
+  const { data, error } = await supabase
+    .from('channel_connections')
+    .select('id, channel_type, status, created_at, config')
+    .eq('org_id', orgId)
+
+  if (error) {
+    throw new Error(`Failed to fetch integrations fallback: ${error.message}`)
+  }
+
+  return (data ?? []).map((row: {
+    id: string
+    channel_type: string
+    status?: string | null
+    created_at?: string | null
+    config?: Record<string, unknown> | null
+  }) => ({
+    id: row.id,
+    provider: row.channel_type === 'calendar' ? 'google-calendar' : row.channel_type,
+    status: row.status || 'disconnected',
+    connected_at: row.created_at || null,
+    metadata:
+      row.config && typeof row.config === 'object' && !Array.isArray(row.config)
+        ? row.config
+        : {},
+  }))
 }
 
 /**
@@ -102,7 +296,11 @@ export async function storeOrgCredential(
   )
 
   if (error) {
-    throw new Error(`Failed to store credential: ${error.message}`)
+    if (isMissingTableError(error, 'org_integrations')) {
+      await upsertCredentialIntoChannelConnections(supabase, orgId, provider, encrypted)
+    } else {
+      throw new Error(`Failed to store credential: ${error.message}`)
+    }
   }
 
   await logAuditEvent(supabase, {
@@ -132,6 +330,9 @@ export async function getOrgCredential(
     .single()
 
   if (error || !data) {
+    if (isMissingTableError(error, 'org_integrations')) {
+      return await getCredentialFromChannelConnections(supabase, orgId, provider)
+    }
     return null
   }
 
@@ -220,7 +421,11 @@ export async function deleteOrgCredential(
     .eq('provider', provider)
 
   if (error) {
-    throw new Error(`Failed to delete credential: ${error.message}`)
+    if (isMissingTableError(error, 'org_integrations')) {
+      await deleteCredentialFromChannelConnections(supabase, orgId, provider)
+    } else {
+      throw new Error(`Failed to delete credential: ${error.message}`)
+    }
   }
 
   await logAuditEvent(supabase, {
@@ -255,6 +460,9 @@ export async function getOrgIntegrations(
     .eq('org_id', orgId)
 
   if (error) {
+    if (isMissingTableError(error, 'org_integrations')) {
+      return await getIntegrationsFromChannelConnections(supabase, orgId)
+    }
     throw new Error(`Failed to fetch integrations: ${error.message}`)
   }
 

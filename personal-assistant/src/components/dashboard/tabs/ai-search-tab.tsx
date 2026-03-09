@@ -1,8 +1,9 @@
 'use client'
 
 import React, { useState, useCallback } from 'react'
-import { Search, TrendingUp, TrendingDown, Minus, Copy, Check, Play, Code, FileText } from 'lucide-react'
+import { Search, TrendingUp, TrendingDown, Minus, Copy, Check, Play, Code, FileText, Compass } from 'lucide-react'
 import { TabShell } from '@/components/ui/tab-shell'
+import { EmptyState } from '@/components/ui/empty-state'
 
 // ---------------------------------------------------------------------------
 // Types (mirrors agent types without importing server code)
@@ -39,11 +40,11 @@ type ActivePanel = 'overview' | 'content' | 'schema'
 const glassCard: React.CSSProperties = {
   padding: '20px',
   borderRadius: 16,
-  background: 'rgba(15, 20, 30, 0.6)',
-  backdropFilter: 'blur(20px) saturate(1.2)',
-  WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
-  border: '1px solid rgba(255, 255, 255, 0.03)',
-  boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+  background: 'var(--glass-card-bg)',
+  backdropFilter: 'var(--glass-card-blur)',
+  WebkitBackdropFilter: 'var(--glass-card-blur)',
+  border: '1px solid var(--glass-card-border)',
+  boxShadow: 'var(--glass-card-inset)',
 }
 
 const glassInput: React.CSSProperties = {
@@ -51,8 +52,8 @@ const glassInput: React.CSSProperties = {
   padding: '10px 14px',
   borderRadius: 10,
   background: 'rgba(13, 17, 23, 0.6)',
-  border: '1px solid rgba(255, 255, 255, 0.05)',
-  color: 'var(--text-primary, #F1F5F9)',
+  border: '1px solid var(--glass-interactive-border)',
+  color: 'var(--text-primary)',
   fontSize: 14,
   outline: 'none',
   transition: 'border-color 200ms, box-shadow 200ms',
@@ -61,13 +62,13 @@ const glassInput: React.CSSProperties = {
 const pillBtn: React.CSSProperties = {
   padding: '6px 14px',
   borderRadius: 20,
-  background: 'rgba(10, 14, 23, 0.42)',
-  backdropFilter: 'blur(22px) saturate(1.2)',
-  WebkitBackdropFilter: 'blur(22px) saturate(1.2)',
-  boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.06)',
+  background: 'var(--glass-pill-bg)',
+  backdropFilter: 'var(--glass-card-blur)',
+  WebkitBackdropFilter: 'var(--glass-card-blur)',
+  boxShadow: 'var(--glass-card-inset)',
   border: 'none',
   fontSize: 12,
-  color: 'var(--text-secondary, #94A3B8)',
+  color: 'var(--text-secondary)',
   cursor: 'pointer',
   transition: 'all 200ms',
 }
@@ -88,8 +89,8 @@ const ghostBtn: React.CSSProperties = {
   padding: '8px 16px',
   borderRadius: 10,
   background: 'transparent',
-  border: '1px solid rgba(255, 255, 255, 0.06)',
-  color: 'var(--text-primary, #F1F5F9)',
+  border: '1px solid var(--glass-interactive-border)',
+  color: 'var(--text-primary)',
   fontSize: 13,
   fontWeight: 500,
   cursor: 'pointer',
@@ -101,10 +102,10 @@ const listRow: React.CSSProperties = {
   alignItems: 'center',
   padding: '12px 18px',
   borderRadius: 12,
-  background: 'rgba(10, 14, 23, 0.5)',
-  backdropFilter: 'blur(26px) saturate(1.15)',
-  WebkitBackdropFilter: 'blur(26px) saturate(1.15)',
-  boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+  background: 'var(--glass-pill-bg)',
+  backdropFilter: 'var(--glass-blur)',
+  WebkitBackdropFilter: 'var(--glass-blur)',
+  boxShadow: 'var(--glass-card-inset)',
   border: 'none',
   transition: 'background 200ms',
   cursor: 'pointer',
@@ -115,7 +116,7 @@ const smallText: React.CSSProperties = {
   fontWeight: 600,
   letterSpacing: '0.08em',
   textTransform: 'uppercase' as const,
-  color: 'var(--text-dim, #475569)',
+  color: 'var(--text-dim)',
 }
 
 // ---------------------------------------------------------------------------
@@ -193,21 +194,21 @@ function CopyButton({ text }: { text: string }) {
         gap: 6,
         padding: '6px 12px',
         borderRadius: 8,
-        border: '1px solid rgba(255,255,255,0.06)',
-        background: 'rgba(255,255,255,0.04)',
-        color: copied ? '#22c55e' : 'var(--text-secondary, #94A3B8)',
+        border: '1px solid var(--glass-interactive-border)',
+        background: 'var(--glass-interactive-bg)',
+        color: copied ? '#22c55e' : 'var(--text-secondary)',
         cursor: 'pointer',
         fontSize: 12,
         fontWeight: 500,
         transition: 'all 200ms',
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.background = 'rgba(255,255,255,0.08)'
+        e.currentTarget.style.background = 'var(--glass-interactive-border)'
         e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.background = 'rgba(255,255,255,0.04)'
-        e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)'
+        e.currentTarget.style.background = 'var(--glass-interactive-bg)'
+        e.currentTarget.style.borderColor = 'var(--glass-interactive-border)'
       }}
     >
       {copied ? <Check size={14} /> : <Copy size={14} />}
@@ -397,10 +398,10 @@ function QueryBreakdown({ results }: { results: QueryResult[] }) {
           gridTemplateColumns: '2fr repeat(4, 1fr)',
           padding: '10px 16px',
           fontSize: 11,
-          color: 'var(--text-dim, #475569)',
+          color: 'var(--text-dim)',
           textTransform: 'uppercase',
           letterSpacing: 1,
-          borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
+          borderBottom: '1px solid var(--glass-interactive-border)',
           fontWeight: 600,
         }}
       >
@@ -418,7 +419,7 @@ function QueryBreakdown({ results }: { results: QueryResult[] }) {
             gridTemplateColumns: '2fr repeat(4, 1fr)',
             padding: '12px 16px',
             alignItems: 'center',
-            borderBottom: '1px solid rgba(255, 255, 255, 0.04)',
+            borderBottom: '1px solid var(--glass-divider)',
             transition: 'background 200ms',
           }}
           onMouseEnter={(e) => {
@@ -428,7 +429,7 @@ function QueryBreakdown({ results }: { results: QueryResult[] }) {
             e.currentTarget.style.background = 'transparent'
           }}
         >
-          <span style={{ fontSize: 13, color: 'var(--text-primary, #F1F5F9)' }}>{query}</span>
+          <span style={{ fontSize: 13, color: 'var(--text-primary)' }}>{query}</span>
           {['perplexity', 'chatgpt-search', 'gemini', 'copilot'].map((src) => {
             const match = sources.find((s) => s.source === src)
             const pos = match?.position ?? 'absent'
@@ -475,10 +476,10 @@ function CompetitorTable({
           gridTemplateColumns: '2fr 1fr 1fr',
           padding: '10px 16px',
           fontSize: 11,
-          color: 'var(--text-dim, #475569)',
+          color: 'var(--text-dim)',
           textTransform: 'uppercase',
           letterSpacing: 1,
-          borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
+          borderBottom: '1px solid var(--glass-interactive-border)',
           fontWeight: 600,
         }}
       >
@@ -496,7 +497,7 @@ function CompetitorTable({
               gridTemplateColumns: '2fr 1fr 1fr',
               padding: '12px 16px',
               alignItems: 'center',
-              borderBottom: '1px solid rgba(255, 255, 255, 0.04)',
+              borderBottom: '1px solid var(--glass-divider)',
               transition: 'background 200ms',
             }}
             onMouseEnter={(e) => {
@@ -506,11 +507,11 @@ function CompetitorTable({
               e.currentTarget.style.background = 'transparent'
             }}
           >
-            <span style={{ fontSize: 13, color: 'var(--text-primary, #F1F5F9)' }}>{name}</span>
+            <span style={{ fontSize: 13, color: 'var(--text-primary)' }}>{name}</span>
             <span
               style={{
                 fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
-                color: 'var(--text-secondary, #94A3B8)',
+                color: 'var(--text-secondary)',
                 fontSize: 13,
               }}
             >
@@ -594,12 +595,12 @@ function SchemaGenerator() {
               ...pillBtn,
               color:
                 schemaType === t
-                  ? 'var(--text-primary, #F1F5F9)'
-                  : 'var(--text-secondary, #94A3B8)',
+                  ? 'var(--text-primary)'
+                  : 'var(--text-secondary)',
               background:
                 schemaType === t
                   ? 'rgba(255, 90, 31, 0.15)'
-                  : 'rgba(10, 14, 23, 0.42)',
+                  : 'var(--glass-pill-bg)',
               borderBottom:
                 schemaType === t
                   ? '1px solid rgba(255, 90, 31, 0.3)'
@@ -607,12 +608,12 @@ function SchemaGenerator() {
             }}
             onMouseEnter={(e) => {
               if (schemaType !== t) {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.06)'
+                e.currentTarget.style.background = 'var(--glass-hover-bg)'
               }
             }}
             onMouseLeave={(e) => {
               if (schemaType !== t) {
-                e.currentTarget.style.background = 'rgba(10, 14, 23, 0.42)'
+                e.currentTarget.style.background = 'var(--glass-pill-bg)'
               }
             }}
           >
@@ -721,7 +722,7 @@ function SchemaGenerator() {
               style={{
                 fontSize: 14,
                 fontWeight: 600,
-                color: 'var(--text-primary, #F1F5F9)',
+                color: 'var(--text-primary)',
               }}
             >
               {result.schemaType} JSON-LD
@@ -744,7 +745,7 @@ function SchemaGenerator() {
             {result.htmlSnippet}
           </pre>
           {result.validationNotes.length > 0 && (
-            <div style={{ fontSize: 12, color: 'var(--text-secondary, #94A3B8)' }}>
+            <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
               {result.validationNotes.map((note, i) => (
                 <div key={i}>- {note}</div>
               ))}
@@ -799,6 +800,15 @@ function AISearchTab() {
   return (
     <TabShell>
       <div style={{ padding: 24, maxWidth: 1200, display: 'flex', flexDirection: 'column', gap: 24 }}>
+        {/* Empty state when no audit has run yet */}
+        {!auditResult && activePanel === 'overview' && (
+          <EmptyState
+            icon={<Compass size={40} />}
+            title="Run your first visibility audit"
+            description="Discover how your website ranks in AI search engines like Perplexity, ChatGPT, and Gemini."
+          />
+        )}
+
         {/* Score overview (shown when audit exists) */}
         {auditResult && (
           <div
@@ -814,7 +824,7 @@ function AISearchTab() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 8 }}>
                 <ScoreBadge score={auditResult.overallScore} />
                 <TrendArrow current={auditResult.overallScore} previous={previousScore} />
-                <span style={{ fontSize: 12, color: 'var(--text-dim, #475569)' }}>/100</span>
+                <span style={{ fontSize: 12, color: 'var(--text-dim)' }}>/100</span>
               </div>
             </div>
 
@@ -825,7 +835,7 @@ function AISearchTab() {
                 style={{
                   fontSize: 28,
                   fontWeight: 700,
-                  color: 'var(--text-primary, #F1F5F9)',
+                  color: 'var(--text-primary)',
                   fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
                   marginTop: 8,
                 }}
@@ -884,14 +894,14 @@ function AISearchTab() {
                 padding: '6px 14px',
                 color:
                   activePanel === btn.id
-                    ? 'var(--text-primary, #F1F5F9)'
-                    : 'var(--text-secondary, #94A3B8)',
+                    ? 'var(--text-primary)'
+                    : 'var(--text-secondary)',
                 background:
                   activePanel === btn.id
                     ? 'rgba(255, 90, 31, 0.15)'
                     : hoverPanel === btn.id
-                      ? 'rgba(255, 255, 255, 0.06)'
-                      : 'rgba(10, 14, 23, 0.42)',
+                      ? 'var(--glass-hover-bg)'
+                      : 'var(--glass-pill-bg)',
                 borderBottom:
                   activePanel === btn.id ? '1px solid rgba(255, 90, 31, 0.3)' : 'none',
               }}
@@ -911,7 +921,7 @@ function AISearchTab() {
                 style={{
                   fontSize: 14,
                   fontWeight: 600,
-                  color: 'var(--text-primary, #F1F5F9)',
+                  color: 'var(--text-primary)',
                   marginTop: 0,
                   marginBottom: 16,
                 }}
@@ -929,7 +939,7 @@ function AISearchTab() {
                     style={{
                       fontSize: 14,
                       fontWeight: 600,
-                      color: 'var(--text-primary, #F1F5F9)',
+                      color: 'var(--text-primary)',
                       marginBottom: 12,
                       marginTop: 0,
                     }}
@@ -946,7 +956,7 @@ function AISearchTab() {
                       style={{
                         fontSize: 14,
                         fontWeight: 600,
-                        color: 'var(--text-primary, #F1F5F9)',
+                        color: 'var(--text-primary)',
                         marginBottom: 12,
                         marginTop: 0,
                       }}
@@ -966,7 +976,7 @@ function AISearchTab() {
                     style={{
                       fontSize: 14,
                       fontWeight: 600,
-                      color: 'var(--text-primary, #F1F5F9)',
+                      color: 'var(--text-primary)',
                       marginBottom: 12,
                       marginTop: 0,
                     }}
@@ -984,17 +994,17 @@ function AISearchTab() {
                         }}
                         onMouseEnter={(e) => {
                           e.currentTarget.style.borderLeftColor = '#FF5A1F'
-                          e.currentTarget.style.background = 'rgba(15, 20, 30, 0.8)'
+                          e.currentTarget.style.background = 'var(--glass-bg-heavy)'
                         }}
                         onMouseLeave={(e) => {
                           e.currentTarget.style.borderLeftColor = 'rgba(255, 90, 31, 0.5)'
-                          e.currentTarget.style.background = 'rgba(15, 20, 30, 0.6)'
+                          e.currentTarget.style.background = 'var(--glass-card-bg)'
                         }}
                       >
                         <span
                           style={{
                             fontSize: 13,
-                            color: 'var(--text-secondary, #94A3B8)',
+                            color: 'var(--text-secondary)',
                             lineHeight: 1.6,
                           }}
                         >
@@ -1015,7 +1025,7 @@ function AISearchTab() {
               style={{
                 fontSize: 14,
                 fontWeight: 600,
-                color: 'var(--text-primary, #F1F5F9)',
+                color: 'var(--text-primary)',
                 marginTop: 0,
                 marginBottom: 12,
               }}
@@ -1025,7 +1035,7 @@ function AISearchTab() {
             <p
               style={{
                 fontSize: 13,
-                color: 'var(--text-secondary, #94A3B8)',
+                color: 'var(--text-secondary)',
                 marginBottom: 16,
                 lineHeight: 1.6,
               }}
@@ -1036,7 +1046,7 @@ function AISearchTab() {
             </p>
             {auditResult ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <p style={{ fontSize: 13, color: 'var(--text-secondary, #94A3B8)' }}>
+                <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
                   Based on your audit, focus content on these absent/partial queries:
                 </p>
                 {auditResult.queryResults
@@ -1051,13 +1061,13 @@ function AISearchTab() {
                       key={query}
                       style={listRow}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.background = 'rgba(20, 28, 40, 0.7)'
+                        e.currentTarget.style.background = 'var(--bb-surface-hover)'
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'rgba(10, 14, 23, 0.5)'
+                        e.currentTarget.style.background = 'var(--glass-pill-bg)'
                       }}
                     >
-                      <span style={{ fontSize: 13, color: 'var(--text-secondary, #94A3B8)' }}>
+                      <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
                         Create a dedicated FAQ page for: <strong>&quot;{query}&quot;</strong>
                       </span>
                     </div>
@@ -1067,7 +1077,7 @@ function AISearchTab() {
               <p
                 style={{
                   fontSize: 13,
-                  color: 'var(--text-dim, #475569)',
+                  color: 'var(--text-dim)',
                   fontStyle: 'italic',
                 }}
               >
@@ -1083,7 +1093,7 @@ function AISearchTab() {
               style={{
                 fontSize: 14,
                 fontWeight: 600,
-                color: 'var(--text-primary, #F1F5F9)',
+                color: 'var(--text-primary)',
                 marginTop: 0,
                 marginBottom: 12,
               }}
@@ -1093,7 +1103,7 @@ function AISearchTab() {
             <p
               style={{
                 fontSize: 13,
-                color: 'var(--text-secondary, #94A3B8)',
+                color: 'var(--text-secondary)',
                 marginBottom: 16,
                 lineHeight: 1.6,
               }}

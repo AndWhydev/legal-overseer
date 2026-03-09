@@ -3,8 +3,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useRealtimeSubscription } from '@/lib/realtime/supabase-realtime';
-import { StatCard, StatusBadge, ProcessPipeline, TimelineBar } from '@/components/ui/data-viz';
-import { AlertCircle, Clock, ShieldCheck, Zap, Handshake, Users, CheckCircle2, Link as LinkIcon, TrendingUp, Calendar, ReceiptText, MessageSquare, BellOff, Inbox, Activity } from 'lucide-react';
+import { StatCard, StatusBadge, ProcessPipeline, TimelineBar, MiniSparkline, MiniBarChart } from '@/components/ui/data-viz';
+import { AlertCircle, Clock, ShieldCheck, Zap, Users, CheckCircle2, Link as LinkIcon, TrendingUp, Calendar, ReceiptText, MessageSquare, BellOff, Inbox, Activity } from 'lucide-react';
+import { useDashboardStats } from '@/hooks/use-dashboard-stats';
+import { useEnabledModules } from '@/lib/modules/use-enabled-modules';
+import { getPack } from '@/lib/industry/registry';
+import type { KPIConfig } from '@/lib/industry/types';
 import { TabSkeleton } from './tab-skeleton';
 import { TabShell } from '@/components/ui/tab-shell';
 import { SectionCard } from '@/components/ui/section-card';
@@ -35,6 +39,10 @@ function CommandCenterTab() {
   const [todaysPriorities, setTodaysPriorities] = useState<PriorityTask[]>([]);
   const [inboxCount, setInboxCount] = useState(0);
   const [processingIds, setProcessingIds] = useState<Set<string>>(new Set());
+  const { stats } = useDashboardStats();
+  const { industry } = useEnabledModules();
+  const pack = getPack(industry ?? 'agency');
+  const kpis: KPIConfig[] = pack.kpis ?? [];
 
   useEffect(() => {
     const supabase = createClient();
@@ -234,34 +242,52 @@ function CommandCenterTab() {
         </button>
       </div>
 
-      {/* KPI Widgets */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-        <StatCard
-          label="Pending Approvals"
-          value={approvals.length}
-          icon={<ShieldCheck style={{ color: 'var(--bb-status-warning)' }} />}
-        />
-        <StatCard
-          label="Active Leads"
-          value={leads.length}
-          icon={<Handshake style={{ color: 'var(--bb-status-info)' }} />}
-        />
-        <StatCard
-          label="Overdue Tasks"
-          value={tasks.length}
-          icon={<AlertCircle style={{ color: 'var(--bb-status-error)' }} />}
-        />
-        <StatCard
-          label="Unread Messages"
-          value={inboxCount}
-          icon={<Inbox style={{ color: 'var(--bb-purple)' }} />}
-        />
-        <StatCard
-          label="System Status"
-          value="Nominal"
-          icon={<CheckCircle2 style={{ color: 'var(--bb-status-success)' }} />}
-        />
-      </div>
+      {/* KPI Widgets — driven by industry pack */}
+      {kpis.length > 0 && (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {kpis.map((kpi) => {
+            const liveValue = kpi.dataKey && stats ? stats[kpi.dataKey] : undefined;
+            const displayValue = liveValue !== undefined
+              ? (typeof liveValue === 'number' ? liveValue.toLocaleString() : liveValue)
+              : kpi.fallback;
+
+            const chartNode = kpi.chart === 'sparkline' ? (
+              <MiniSparkline
+                data={kpi.chartData}
+                color={kpi.color}
+                height={32}
+                width={180}
+              />
+            ) : (
+              <MiniBarChart
+                data={kpi.chartData.map((v, i) => ({
+                  value: v,
+                  label: kpi.chartLabels?.[i],
+                  color: kpi.chartColors?.[i],
+                }))}
+                color={kpi.color}
+                height={40}
+                width={180}
+                showLabels={!!kpi.chartLabels}
+              />
+            );
+
+            return (
+              <StatCard
+                key={kpi.key}
+                label={kpi.label}
+                value={displayValue}
+                unit={kpi.unit}
+                trend={kpi.trend}
+                trendValue={kpi.trendValue}
+                color={kpi.color}
+                chart={chartNode}
+                subtitle={kpi.subtitle}
+              />
+            );
+          })}
+        </div>
+      )}
 
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -349,7 +375,7 @@ function CommandCenterTab() {
             ) : (
               agentRuns.map((run) => (
                 <div key={run.id} className="flex items-start gap-3 pb-3 border-b border-[var(--border-subtle)] last:border-0">
-                  <div className="w-2 h-2 rounded-full bg-cyan-400 mt-2 flex-shrink-0" />
+                  <div className="w-2 h-2 rounded-full mt-2 flex-shrink-0" style={{ background: 'var(--bb-cyan)' }} />
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-medium truncate">
                       {run.agent_configs?.name || run.agent_configs?.agent_type || 'Agent'}
@@ -371,7 +397,7 @@ function CommandCenterTab() {
         <div className="bb-card">
           <div className="p-4 border-b border-[var(--border-subtle)]">
             <h2 className="text-lg font-medium flex items-center gap-2">
-              <TrendingUp size={20} style={{ color: 'var(--bb-pink, #EC4899)' }} /> Hot Leads
+              <TrendingUp size={20} style={{ color: 'var(--bb-pink)' }} /> Hot Leads
             </h2>
             <p className="text-xs text-muted-foreground mt-1">Top opportunities this week</p>
           </div>
@@ -389,7 +415,7 @@ function CommandCenterTab() {
                       {lead.status === 'qualified' && 'Qualified'}
                     </p>
                   </div>
-                  <div className="text-xs font-medium text-amber-500">{(lead.metadata as Record<string, unknown>)?.value ? `$${(lead.metadata as Record<string, unknown>).value}` : (lead.budget_range as string) || '--'}</div>
+                  <div className="text-xs font-medium" style={{ color: 'var(--bb-amber)' }}>{(lead.metadata as Record<string, unknown>)?.value ? `$${(lead.metadata as Record<string, unknown>).value}` : (lead.budget_range as string) || '--'}</div>
                 </div>
               ))
             )}

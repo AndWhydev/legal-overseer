@@ -46,10 +46,12 @@ export async function GET() {
       .select('*', { count: 'exact', head: true })
       .eq('org_id', orgId)
 
+    const agentRunsCount = agentRunsToday || 0
     return NextResponse.json({
       activeTasks: activeTasks || 0,
       totalRevenue,
-      agentRunsToday: agentRunsToday || 0,
+      agentRunsToday: agentRunsCount,
+      actionsToday: agentRunsCount,
       activeContacts: activeContacts || 0,
     })
   } catch (error) {

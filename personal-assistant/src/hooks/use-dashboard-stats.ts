@@ -6,6 +6,7 @@ interface DashboardStats {
   activeTasks: number
   totalRevenue: number
   agentRunsToday: number
+  actionsToday?: number
   activeContacts: number
 }
 
@@ -20,7 +21,10 @@ export function useDashboardStats() {
         const res = await fetch('/api/dashboard/stats')
         if (!res.ok) throw new Error('Failed to fetch stats')
         const data = await res.json()
-        setStats(data)
+        setStats({
+          ...data,
+          actionsToday: data.actionsToday ?? data.agentRunsToday,
+        })
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unknown error')
       } finally {

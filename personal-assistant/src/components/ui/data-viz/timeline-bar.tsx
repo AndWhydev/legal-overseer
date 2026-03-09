@@ -48,7 +48,7 @@ export function TimelineBar({
         backdropFilter: 'var(--glass-blur)',
         WebkitBackdropFilter: 'var(--glass-blur)',
         border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
-        boxShadow: 'var(--card-shadow, 0 8px 32px rgba(0, 0, 0, 0.3)), var(--card-inset, inset 0 1px 0 rgba(255, 255, 255, 0.05))',
+        boxShadow: 'var(--card-shadow), var(--card-inset)',
       }}
     >
       {ticks.length > 0 && (

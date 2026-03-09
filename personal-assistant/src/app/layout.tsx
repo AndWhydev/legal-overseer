@@ -3,6 +3,11 @@ import { Inter, Geist_Mono, JetBrains_Mono, EB_Garamond } from "next/font/google
 import "./globals.css";
 import "@/styles/animations.css";
 import "@/styles/splash.css";
+import {
+  DEFAULT_COLOR_MODE,
+  DEFAULT_THEME_NAME,
+  resolveThemeColor,
+} from "@/lib/theme/defaults";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -65,8 +70,10 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const defaultThemeColor = resolveThemeColor(DEFAULT_COLOR_MODE, DEFAULT_THEME_NAME);
+
   return (
-    <html lang="en" className="dark" suppressHydrationWarning>
+    <html lang="en" className={DEFAULT_COLOR_MODE} data-theme={DEFAULT_THEME_NAME} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: `
           try {
@@ -77,15 +84,24 @@ export default function RootLayout({
                 document.body.classList.remove('bitbit-dark');
               });
             } else {
-              var t = localStorage.getItem('bitbit-theme') || 'dark';
-              document.documentElement.className = t;
+              var colorMode = localStorage.getItem('bitbit-theme') || '${DEFAULT_COLOR_MODE}';
+              var palette = localStorage.getItem('bb-theme') || '${DEFAULT_THEME_NAME}';
+              var cls = colorMode === 'light' ? 'light' : 'dark';
+              document.documentElement.className = cls;
+              document.documentElement.setAttribute('data-theme', palette);
+              document.documentElement.style.colorScheme = cls;
+              var meta = document.querySelector('meta[name="theme-color"]');
+              if (meta) {
+                var nextColor = cls === 'dark' ? '#0a0f1a' : palette === 'aurora' ? '#f5efe7' : '#fafaf9';
+                meta.setAttribute('content', nextColor);
+              }
             }
           } catch(e) {}
         `}} />
         <link rel="manifest" href="/manifest.json" />
-        <meta name="theme-color" content="#0a0f1a" />
+        <meta name="theme-color" content={defaultThemeColor} />
         <meta name="mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <link rel="apple-touch-icon" href="/bitbit-logo-192.png" />
       </head>
       <body

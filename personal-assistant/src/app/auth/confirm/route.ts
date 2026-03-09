@@ -1,26 +1,48 @@
-import { NextResponse } from 'next/server'
+import { type NextRequest, NextResponse } from 'next/server'
+import { createServerClient } from '@supabase/ssr'
 
 import { isSupportedEmailOtpType, resolveSafeAuthRedirect } from '@/lib/auth/callback'
-import { createClient } from '@/lib/supabase/server'
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   const url = new URL(request.url)
   const tokenHash = url.searchParams.get('token_hash')
   const type = url.searchParams.get('type')
   const next = resolveSafeAuthRedirect(url.searchParams.get('next'), url.origin)
 
-  if (tokenHash && isSupportedEmailOtpType(type)) {
-    const supabase = await createClient()
+  if (
+    tokenHash &&
+    isSupportedEmailOtpType(type) &&
+    process.env.NEXT_PUBLIC_SUPABASE_URL &&
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  ) {
+    const redirectUrl = `${url.origin}${next}`
+    const response = NextResponse.redirect(redirectUrl)
 
-    if (supabase) {
-      const { error } = await supabase.auth.verifyOtp({
-        token_hash: tokenHash,
-        type,
-      })
-
-      if (!error) {
-        return NextResponse.redirect(`${url.origin}${next}`)
+    // Create a Supabase client that writes auth cookies directly onto the redirect response
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      {
+        cookies: {
+          getAll() {
+            return request.cookies.getAll()
+          },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(({ name, value, options }) =>
+              response.cookies.set(name, value, options)
+            )
+          },
+        },
       }
+    )
+
+    const { error } = await supabase.auth.verifyOtp({
+      token_hash: tokenHash,
+      type,
+    })
+
+    if (!error) {
+      return response
     }
   }
 

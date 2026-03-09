@@ -44,6 +44,7 @@
  */
 
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { randomUUID } from 'crypto'
 import { logSessionHealth } from './whatsapp-monitor'
 import type { WhatsAppSessionStatus } from './whatsapp-monitor'
 import { processWhatsAppMessage } from './whatsapp-parser'
@@ -59,6 +60,12 @@ type BaileysModule = any
 type WASocket = any
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
+type PostgrestLikeError = {
+  message?: string
+  details?: string
+  hint?: string
+} | null
+
 let _baileys: BaileysModule | null = null
 let _baileysChecked = false
 
@@ -73,6 +80,21 @@ async function loadBaileys(): Promise<BaileysModule | null> {
     _baileys = null
     return null
   }
+}
+
+function isMissingTableError(error: PostgrestLikeError, tableName: string): boolean {
+  if (!error) return false
+
+  const message = [error.message, error.details, error.hint]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase()
+
+  return (
+    message.includes(`could not find the table 'public.${tableName}' in the schema cache`) ||
+    message.includes(`relation "${tableName}" does not exist`) ||
+    message.includes(`relation public.${tableName} does not exist`)
+  )
 }
 
 /**
@@ -100,6 +122,10 @@ export class BaileysBridge {
   private reconnectAttempts = 0
   private disposed = false
   private lastActivity: string | null = null
+  private status: 'connected' | 'disconnected' | 'pairing' = 'disconnected'
+  private qrCode: string | null = null
+  private createdAt: string | null = null
+  private persistenceMode: 'database' | 'memory' = 'database'
 
   constructor(supabase: SupabaseClient, orgId: string) {
     this.supabase = supabase
@@ -127,24 +153,45 @@ export class BaileysBridge {
       .insert({
         org_id: this.orgId,
         status: 'pairing',
-        auth_state: authState?.creds ? JSON.stringify(authState) : null,
+        session_data: authState?.creds ? authState : null,
       })
       .select('id')
       .single()
 
-    if (error || !session) {
+    if (error && isMissingTableError(error, 'whatsapp_sessions')) {
+      this.persistenceMode = 'memory'
+      this.sessionId = `memory:${this.orgId}:${randomUUID()}`
+      this.createdAt = new Date().toISOString()
+      this.status = 'pairing'
+      this.qrCode = null
+      logger.warn('[baileys-bridge] whatsapp_sessions missing; falling back to in-memory session state')
+    } else if (error || !session) {
       throw new Error(`Failed to create session: ${error?.message ?? 'unknown'}`)
+    } else {
+      this.persistenceMode = 'database'
+      this.sessionId = session.id as string
+      this.createdAt = new Date().toISOString()
+      this.status = 'pairing'
+      this.qrCode = null
     }
-
-    this.sessionId = session.id as string
 
     // Create socket
     const { state, saveCreds } = authState ??
       (await baileys.useMultiFileAuthState(`./auth_state_${this.orgId}`))
 
+    let version: [number, number, number] | undefined
+    try {
+      const latest = await baileys.fetchLatestBaileysVersion()
+      version = latest.version as [number, number, number]
+    } catch (err) {
+      logger.warn('[baileys-bridge] Failed to fetch latest Baileys version, using package default', err)
+    }
+
     this.sock = baileys.makeWASocket({
       auth: state,
       printQRInTerminal: false,
+      ...(version ? { version } : {}),
+      ...(baileys.Browsers?.macOS ? { browser: baileys.Browsers.macOS('Desktop') } : {}),
     })
 
     // ── Connection lifecycle events ───────────────────────────────────
@@ -158,11 +205,15 @@ export class BaileysBridge {
       }
 
       if (qr) {
+        this.status = 'pairing'
+        this.qrCode = qr
         // Store QR for frontend retrieval
-        await this.supabase
-          .from('whatsapp_sessions')
-          .update({ status: 'pairing', qr_code: qr })
-          .eq('id', this.sessionId!)
+        if (this.persistenceMode === 'database') {
+          await this.supabase
+            .from('whatsapp_sessions')
+            .update({ status: 'pairing', qr_data: qr })
+            .eq('id', this.sessionId!)
+        }
 
         logger.info(JSON.stringify({
           level: 'info',
@@ -176,12 +227,21 @@ export class BaileysBridge {
       if (connection === 'open') {
         this.reconnectAttempts = 0
         this.lastActivity = new Date().toISOString()
+        this.status = 'connected'
+        this.qrCode = null
 
-        await this.supabase
-          .from('whatsapp_sessions')
-          .update({ status: 'connected', qr_code: null })
-          .eq('id', this.sessionId!)
+        if (this.persistenceMode === 'database') {
+          await this.supabase
+            .from('whatsapp_sessions')
+            .update({
+              status: 'connected',
+              qr_data: null,
+              phone_number: this.getPhoneNumber(),
+            })
+            .eq('id', this.sessionId!)
+        }
 
+        await this.syncChannelConnection('connected')
         await this.logHealth(true)
         this.startOutboxDrain()
 
@@ -196,12 +256,17 @@ export class BaileysBridge {
       if (connection === 'close') {
         const statusCode = lastDisconnect?.error?.output?.statusCode
         const shouldReconnect = statusCode !== 401 // 401 = logged out
+        this.status = 'disconnected'
+        this.qrCode = null
 
-        await this.supabase
-          .from('whatsapp_sessions')
-          .update({ status: 'disconnected' })
-          .eq('id', this.sessionId!)
+        if (this.persistenceMode === 'database') {
+          await this.supabase
+            .from('whatsapp_sessions')
+            .update({ status: 'disconnected' })
+            .eq('id', this.sessionId!)
+        }
 
+        await this.syncChannelConnection('disconnected')
         await this.logHealth(false, `Disconnected (status ${statusCode})`)
 
         if (shouldReconnect && !this.disposed) {
@@ -223,14 +288,15 @@ export class BaileysBridge {
       if (this.disposed) return
       await saveCreds()
       // Also persist to Supabase for cross-restart recovery
-      try {
-        const credsJson = JSON.stringify(state)
-        await this.supabase
-          .from('whatsapp_sessions')
-          .update({ auth_state: credsJson })
-          .eq('id', this.sessionId!)
-      } catch (err) {
-        logger.error('[baileys-bridge] Failed to persist auth state:', err)
+      if (this.persistenceMode === 'database') {
+        try {
+          await this.supabase
+            .from('whatsapp_sessions')
+            .update({ session_data: state })
+            .eq('id', this.sessionId!)
+        } catch (err) {
+          logger.error('[baileys-bridge] Failed to persist auth state:', err)
+        }
       }
     })
 
@@ -265,10 +331,14 @@ export class BaileysBridge {
       this.sock = null
     }
     if (this.sessionId) {
-      await this.supabase
-        .from('whatsapp_sessions')
-        .update({ status: 'disconnected' })
-        .eq('id', this.sessionId)
+      if (this.persistenceMode === 'database') {
+        await this.supabase
+          .from('whatsapp_sessions')
+          .update({ status: 'disconnected' })
+          .eq('id', this.sessionId)
+      }
+
+      await this.syncChannelConnection('disconnected')
     }
   }
 
@@ -286,11 +356,31 @@ export class BaileysBridge {
       return { status: 'disconnected', sessionId: null, qrCode: null, sessionAge: null, lastActivity: null }
     }
 
-    const { data } = await this.supabase
+    if (this.persistenceMode === 'memory') {
+      const createdAt = this.createdAt ? new Date(this.createdAt) : null
+      const ageHours = createdAt
+        ? Math.round(((Date.now() - createdAt.getTime()) / (1000 * 60 * 60)) * 10) / 10
+        : null
+
+      return {
+        status: this.status,
+        sessionId: this.sessionId,
+        qrCode: this.qrCode,
+        sessionAge: ageHours,
+        lastActivity: this.lastActivity,
+      }
+    }
+
+    const { data, error } = await this.supabase
       .from('whatsapp_sessions')
-      .select('status, qr_code, created_at')
+      .select('status, qr_data, created_at')
       .eq('id', this.sessionId)
       .single()
+
+    if (error && isMissingTableError(error, 'whatsapp_sessions')) {
+      this.persistenceMode = 'memory'
+      return this.getStatus()
+    }
 
     if (!data) {
       return { status: 'disconnected', sessionId: this.sessionId, qrCode: null, sessionAge: null, lastActivity: null }
@@ -302,7 +392,7 @@ export class BaileysBridge {
     return {
       status: data.status as 'connected' | 'disconnected' | 'pairing',
       sessionId: this.sessionId,
-      qrCode: (data.qr_code as string) ?? null,
+      qrCode: (data.qr_data as string) ?? null,
       sessionAge: ageHours,
       lastActivity: this.lastActivity,
     }
@@ -539,25 +629,38 @@ export class BaileysBridge {
   }
 
   private async loadAuthState(): Promise<Record<string, unknown> | null> {
-    const { data } = await this.supabase
+    const { data, error } = await this.supabase
       .from('whatsapp_sessions')
-      .select('auth_state')
+      .select('session_data')
       .eq('org_id', this.orgId)
       .eq('status', 'connected')
       .order('created_at', { ascending: false })
       .limit(1)
       .single()
 
-    if (data?.auth_state) {
+    if (error && isMissingTableError(error, 'whatsapp_sessions')) {
+      this.persistenceMode = 'memory'
+      return null
+    }
+
+    if (data?.session_data) {
       try {
-        return typeof data.auth_state === 'string'
-          ? JSON.parse(data.auth_state as string)
-          : (data.auth_state as Record<string, unknown>)
+        return typeof data.session_data === 'string'
+          ? JSON.parse(data.session_data as string)
+          : (data.session_data as Record<string, unknown>)
       } catch {
         return null
       }
     }
     return null
+  }
+
+  private getPhoneNumber(): string | null {
+    const userId = this.sock?.user?.id as string | undefined
+    if (!userId) return null
+
+    const [jid] = userId.split(':')
+    return jid?.replace(/@s\.whatsapp\.net$/, '') || null
   }
 
   private async logHealth(connected: boolean, error?: string): Promise<void> {
@@ -571,6 +674,25 @@ export class BaileysBridge {
       await logSessionHealth(this.supabase, this.orgId, status)
     } catch (err) {
       logger.error('[baileys-bridge] Failed to log health:', err)
+    }
+  }
+
+  private async syncChannelConnection(status: 'connected' | 'disconnected'): Promise<void> {
+    try {
+      await this.supabase.from('channel_connections').upsert(
+        {
+          org_id: this.orgId,
+          channel_type: 'whatsapp',
+          status,
+          relay_enabled: false,
+          config: {},
+          connected_at: status === 'connected' ? new Date().toISOString() : null,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'org_id,channel_type' },
+      )
+    } catch (err) {
+      logger.error('[baileys-bridge] Failed to sync channel connection:', err)
     }
   }
 }

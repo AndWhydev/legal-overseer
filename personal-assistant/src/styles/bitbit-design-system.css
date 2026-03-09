@@ -48,9 +48,7 @@
   --bb-surface-active: rgba(25, 35, 50, 0.8);
 
   /* ── Text ── */
-  --text-primary: #F1F5F9;          /* 15.4:1 on dark bg — AAA */
-  --text-secondary: #94A3B8;        /* 6.4:1 on dark bg — passes AA */
-  --text-dim: #64748B;              /* 3.9:1 — large text/labels only */
+  /* --text-primary/secondary/dim: defined in globals.css */
   --text-on-accent: #000000;
 
   /* ── Typography ── */
@@ -92,6 +90,12 @@
   --glass-bg: rgba(15, 20, 30, 0.35);
   --glass-bg-heavy: rgba(12, 16, 24, 0.85);
 
+  /* ── Hover overlays ── */
+  --hover-bg: rgba(255, 255, 255, 0.04);
+  --hover-bg-strong: rgba(255, 255, 255, 0.08);
+
+  /* ── Card variant (more opaque) ── */
+  --bg-card-solid: rgba(15, 20, 30, 0.6);
 
   /* ── Z-index scale ── */
   --z-base: 0;
@@ -146,10 +150,8 @@ html.light {
   --bg-input: #F5F5F5;
   --bg-overlay: rgba(255, 255, 255, 0.8);
 
-  /* ── Text (near-black hierarchy) ── */
-  --text-primary: #111827;
-  --text-secondary: #6B7280;
-  --text-dim: #9CA3AF;
+  /* ── Text ── */
+  /* --text-primary/secondary/dim: defined in globals.css */
   --text-on-accent: #FFFFFF;
 
   /* ── Surfaces ── */
@@ -167,6 +169,17 @@ html.light {
   --border-active: #D1D5DB;
   --border-focus-ring: rgba(59, 130, 246, 0.15);
   --glass-border: #E5E7EB;
+
+  /* ── Hover overlays (light) ── */
+  --hover-bg: rgba(0, 0, 0, 0.04);
+  --hover-bg-strong: rgba(0, 0, 0, 0.06);
+
+  /* ── Glassmorphism (disabled in light) ── */
+  --glass-blur: none;
+  --glass-blur-heavy: none;
+
+  /* ── Card solid (light) ── */
+  --bg-card-solid: rgba(255, 255, 255, 0.95);
 
   /* ── Card shadows (very subtle, almost flat) ── */
   --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
@@ -419,8 +432,6 @@ html.light .bb-overlay__shortcut {
 *::before,
 *::after {
   box-sizing: border-box;
-  margin: 0;
-  padding: 0;
 }
 
 html {
@@ -1208,6 +1219,15 @@ body.bitbit-dark {
 
 .bb-sidebar__logo::after {
   display: none;
+}
+
+/* Logo filter: white in dark, black in light */
+.bb-sidebar__logo-img {
+  filter: brightness(0) invert(1);
+}
+
+html.light .bb-sidebar__logo-img {
+  filter: brightness(0);
 }
 
 /* Logo as invisible button — adopts chevron-toggle style on hover */
@@ -5838,7 +5858,7 @@ html.light .bb-shortcuts-footer kbd {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--glass-hover-bg);
   color: var(--text-secondary);
   border: none;
   cursor: pointer;
@@ -5847,7 +5867,7 @@ html.light .bb-shortcuts-footer kbd {
 }
 
 .bb-pill__send:hover {
-  background: rgba(255, 255, 255, 0.12);
+  background: var(--hover-bg-strong);
   color: var(--text-primary);
 }
 
@@ -5875,17 +5895,17 @@ html.light .bb-shortcuts-footer kbd {
 }
 
 .bb-pill--docked .bb-pill__send {
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--text-dim);
 }
 
 .bb-pill--docked .bb-pill__send:not(:disabled) {
   background: transparent;
-  color: rgba(255, 255, 255, 0.88);
+  color: var(--text-primary);
 }
 
 .bb-pill--docked .bb-pill__send:not(:disabled):hover,
 .bb-pill--docked .bb-pill__attach:hover {
-  background: rgba(255, 255, 255, 0.14);
+  background: var(--hover-bg-strong);
   color: var(--text-primary);
 }
 
@@ -6098,6 +6118,23 @@ html.light .bb-pill__send {
 
 html.light .bb-pill__send:hover {
   background: rgba(0, 0, 0, 0.09);
+}
+
+html.light .bb-pill--docked .bb-pill__send {
+  color: var(--text-dim);
+}
+
+html.light .bb-pill--docked .bb-pill__send:not(:disabled) {
+  color: var(--text-primary);
+}
+
+html.light .bb-pill--docked .bb-pill__send:not(:disabled):hover,
+html.light .bb-pill--docked .bb-pill__attach:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+html.light .bb-pill--docked .bb-pill__attach {
+  color: var(--text-dim);
 }
 
 html.light .bb-pill__shimmer-dots span {
@@ -6368,10 +6405,10 @@ html.light .bb-pill__shimmer-dots span {
 }
 
 .bb-chat__chip {
-  background: rgba(10, 14, 23, 0.42);
-  backdrop-filter: blur(22px) saturate(1.2);
-  -webkit-backdrop-filter: blur(22px) saturate(1.2);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  background: var(--glass-pill-bg);
+  backdrop-filter: var(--glass-card-blur);
+  -webkit-backdrop-filter: var(--glass-card-blur);
+  box-shadow: var(--glass-pill-inset);
   border: none;
   border-radius: 20px;
   padding: 6px 14px;
@@ -6417,8 +6454,9 @@ html.light .bb-pill__shimmer-dots span {
 
 .bb-chat__bubble--user {
   background: var(--bg-card);
-  backdrop-filter: blur(20px) saturate(1.2);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  backdrop-filter: var(--glass-card-blur);
+  -webkit-backdrop-filter: var(--glass-card-blur);
+  box-shadow: var(--card-inset);
   border-radius: 18px 18px 4px 18px;
   padding: 10px 14px;
   color: var(--text-primary);
@@ -6586,6 +6624,11 @@ html.light .bb-pill__shimmer-dots span {
 @keyframes pipeline-shimmer {
   0%, 100% { opacity: 0.7; }
   50% { opacity: 1; }
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 
 /* Done phase: brief green pulse then fade */
@@ -6804,7 +6847,15 @@ html.light .bb-pill__shimmer-dots span {
 /* ── Light mode overrides ── */
 
 html.light .bb-chat__chip {
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  background: rgba(0, 0, 0, 0.05);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+html.light .bb-chat__chip:hover {
+  background: rgba(0, 0, 0, 0.08);
 }
 
 html.light .bb-chat__bubble--user {

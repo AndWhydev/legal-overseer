@@ -76,12 +76,18 @@ export async function GET(request: NextRequest) {
   const minValue = params.get('min_value')
   const maxValue = params.get('max_value')
   const smartView = params.get('smart_view')
+  const searchQuery = params.get('q')
   const sortBy = params.get('sort_by') ?? 'updated_at'
 
   let query = auth.supabase
     .from('leads')
     .select(ALL_COLUMNS)
     .eq('org_id', auth.orgId)
+
+  if (searchQuery && searchQuery.trim()) {
+    const q = `%${searchQuery.trim()}%`
+    query = query.or(`prospect_name.ilike.${q},source_detail.ilike.${q},notes.ilike.${q}`)
+  }
 
   if (statuses && statuses.length > 0) {
     query = query.in('status', statuses)

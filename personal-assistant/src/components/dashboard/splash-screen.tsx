@@ -271,7 +271,7 @@ export function SplashScreen({
                           fontSize: 28,
                           fontWeight: 600,
                           letterSpacing: '0.08em',
-                          color: 'var(--text-primary, #F1F5F9)',
+                          color: 'var(--text-primary)',
                           display: 'inline-block',
                         }}
                         initial={{ opacity: 0, y: 12 }}

@@ -13,10 +13,10 @@ export interface DataConnectorProps {
 }
 
 const statusColors: Record<string, string> = {
-  active: 'var(--bb-green, #22C55E)',
-  warning: 'var(--bb-amber, #F59E0B)',
-  error: 'var(--bb-red, #EF4444)',
-  idle: 'var(--text-dim, #475569)',
+  active: 'var(--bb-green)',
+  warning: 'var(--bb-amber)',
+  error: 'var(--bb-red)',
+  idle: 'var(--text-dim)',
 }
 
 export function DataConnector({

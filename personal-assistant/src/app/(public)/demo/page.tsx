@@ -30,7 +30,7 @@ const SAMPLE_MESSAGES = [
     subject: 'Q2 campaign budget approval',
     priority: 'high' as const,
     time: '9 min ago',
-    status: 'AI Draft Ready',
+    status: 'Draft Ready',
   },
   {
     id: 2,
@@ -148,9 +148,9 @@ export default function DemoPage() {
           </div>
         </section>
 
-        {/* Agent Status */}
+        {/* BitBit Activity */}
         <section>
-          <h2 className="text-lg font-semibold mb-3">Agent Status</h2>
+          <h2 className="text-lg font-semibold mb-3">BitBit</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {SAMPLE_AGENTS.map((a) => (
               <div

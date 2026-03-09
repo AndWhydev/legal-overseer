@@ -10,7 +10,12 @@ import { getOrgCredential } from '@/lib/integrations/credentials'
 
 const mockGetCreds = vi.mocked(getOrgCredential)
 
-afterEach(() => vi.restoreAllMocks())
+const originalEnv = { ...process.env }
+
+afterEach(() => {
+  vi.restoreAllMocks()
+  process.env = { ...originalEnv }
+})
 
 const MOCK_CREDS = {
   tenant_id: 'tenant-1',
@@ -68,6 +73,56 @@ describe('fetchOutlookMessages', () => {
 
     const result = await fetchOutlookMessages({} as any, 'org-1')
     expect(result).toHaveProperty('error')
+  })
+
+  it('refreshes expired tokens using env-backed outlook oauth config', async () => {
+    mockGetCreds.mockResolvedValue({
+      access_token: 'expired-token',
+      refresh_token: 'refresh-token',
+      token_expires_at: '2025-01-01T00:00:00.000Z',
+    })
+
+    process.env.OUTLOOK_TENANT_ID = 'env-tenant'
+    process.env.OUTLOOK_CLIENT_ID = 'env-client'
+    process.env.OUTLOOK_CLIENT_SECRET = 'env-secret'
+
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          access_token: 'fresh-token',
+          refresh_token: 'refresh-token-2',
+          expires_in: 3600,
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          value: [],
+        }),
+      })
+
+    vi.stubGlobal('fetch', fetchMock)
+
+    const eqMock = vi.fn().mockResolvedValue({ error: null })
+    const updateMock = vi.fn(() => ({
+      eq: vi.fn(() => ({
+        eq: eqMock,
+      })),
+    }))
+    const supabase = {
+      from: vi.fn(() => ({
+        update: updateMock,
+      })),
+    } as any
+
+    const result = await fetchOutlookMessages(supabase, 'org-1')
+
+    expect(result).toEqual([])
+    expect(fetchMock.mock.calls[0][0]).toContain('login.microsoftonline.com/env-tenant')
+    expect(fetchMock.mock.calls[0][1].body.toString()).toContain('client_id=env-client')
+    expect(updateMock).toHaveBeenCalled()
+    expect(eqMock).toHaveBeenCalled()
   })
 })
 

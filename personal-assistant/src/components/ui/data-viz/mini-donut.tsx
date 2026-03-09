@@ -90,7 +90,7 @@ export function MiniDonut({
             justifyContent: 'center',
             fontSize: size * 0.22,
             fontWeight: 600,
-            color: 'var(--text-primary, #F1F5F9)',
+            color: 'var(--text-primary)',
             fontFamily: 'var(--font-mono)',
           }}
         >

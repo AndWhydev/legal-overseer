@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRealtimeSubscription } from '@/lib/realtime/supabase-realtime';
 import { useDevOverrides } from '@/lib/dev/dev-overrides';
-import { TabSkeleton } from './tab-skeleton';
 import { TabShell } from '@/components/ui/tab-shell';
 import { EmptyState } from '@/components/ui/empty-state';
 import { logger } from '@/lib/core/logger';
@@ -282,7 +281,7 @@ function InboxTab() {
     return true;
   });
 
-  if (loading && !useSeeded) return <TabSkeleton />;
+  if (loading && !useSeeded) return <InboxSkeleton />;
 
   if (error && messages.length === 0) {
     return (
@@ -424,6 +423,72 @@ function InboxTab() {
             <MessageRow key={msg.id} message={msg} />
           ))
         )}
+      </div>
+    </TabShell>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Inbox Skeleton — mirrors toolbar + message row layout
+// ---------------------------------------------------------------------------
+
+const shimmer: React.CSSProperties = {
+  background: 'linear-gradient(90deg, var(--border-subtle) 25%, var(--hover-bg) 50%, var(--border-subtle) 75%)',
+  backgroundSize: '200% 100%',
+  animation: 'shimmer 1.5s ease-in-out infinite',
+  borderRadius: 6,
+};
+
+function InboxSkeleton() {
+  return (
+    <TabShell>
+      <div aria-busy="true" role="status" style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+        {/* Toolbar skeleton: stat pills left, buttons right */}
+        <div className="bb-inbox-toolbar">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            {[80, 100, 90, 60].map((w, i) => (
+              <React.Fragment key={i}>
+                {i > 0 && <span className="bb-inbox-stats__sep" />}
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+                  <div style={{ ...shimmer, width: 24, height: 20 }} />
+                  <div style={{ ...shimmer, width: w - 24, height: 12 }} />
+                </div>
+              </React.Fragment>
+            ))}
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <div style={{ ...shimmer, width: 72, height: 32, borderRadius: 8 }} />
+            <div style={{ ...shimmer, width: 96, height: 32, borderRadius: 8 }} />
+          </div>
+        </div>
+
+        {/* Message row skeletons */}
+        <div className="bb-inbox-list">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div
+              key={i}
+              className="bb-inbox-row"
+              style={{ opacity: 1 - i * 0.1 }}
+            >
+              {/* Col 1: icon + sender */}
+              <div className="bb-inbox-row__col1">
+                <div style={{ ...shimmer, width: 28, height: 28, borderRadius: 8 }} />
+                <div style={{ ...shimmer, width: 80 + (i % 3) * 20, height: 13 }} />
+              </div>
+              {/* Col 2: tag + subject + preview */}
+              <div className="bb-inbox-row__col2" style={{ gap: 8 }}>
+                <div style={{ ...shimmer, width: 56, height: 18, borderRadius: 10 }} />
+                <div style={{ ...shimmer, width: 140 + (i % 4) * 30, height: 13 }} />
+                <div style={{ ...shimmer, width: 200 + (i % 3) * 40, height: 11 }} />
+              </div>
+              {/* Time */}
+              <div className="bb-inbox-row__meta">
+                <div style={{ ...shimmer, width: 24, height: 12 }} />
+              </div>
+            </div>
+          ))}
+        </div>
+        <span className="sr-only">Loading inbox...</span>
       </div>
     </TabShell>
   );

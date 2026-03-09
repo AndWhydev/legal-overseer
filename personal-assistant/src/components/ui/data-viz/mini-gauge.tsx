@@ -66,7 +66,7 @@ export function MiniGauge({
             marginTop: -size * 0.18,
             fontSize: size * 0.22,
             fontWeight: 700,
-            color: 'var(--text-primary, #F1F5F9)',
+            color: 'var(--text-primary)',
             fontFamily: 'var(--font-mono)',
           }}
         >
@@ -77,7 +77,7 @@ export function MiniGauge({
         <div
           style={{
             fontSize: 10,
-            color: 'var(--text-secondary, #64748B)',
+            color: 'var(--text-secondary)',
             marginTop: 2,
           }}
         >

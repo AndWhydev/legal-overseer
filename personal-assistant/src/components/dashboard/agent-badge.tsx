@@ -15,8 +15,8 @@ export function AgentBadge({ agent, status = 'working' }: AgentBadgeProps) {
           padding: '2px 8px',
           fontSize: 10,
           fontWeight: 500,
-          background: 'rgba(255, 255, 255, 0.05)',
-          color: status === 'error' ? '#94A3B8' : '#64748B',
+          background: 'var(--border-subtle)',
+          color: status === 'error' ? 'var(--text-secondary)' : 'var(--text-dim)',
         }}
       >
         {status === 'working' && (
@@ -25,7 +25,7 @@ export function AgentBadge({ agent, status = 'working' }: AgentBadgeProps) {
               width: 4,
               height: 4,
               borderRadius: '50%',
-              background: '#64748B',
+              background: 'var(--text-dim)',
               animation: 'bb-agent-pulse 2s ease-in-out infinite',
             }}
           />

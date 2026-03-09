@@ -20,14 +20,14 @@ interface Quote {
   lead: { title: string } | null
 }
 
-function statusBadge(s: string): { label: string; cls: string } {
+function statusBadge(s: string): { label: string; style: React.CSSProperties } {
   switch (s) {
-    case 'draft': return { label: 'Draft', cls: 'bg-slate-500/15 text-slate-300' }
-    case 'sent': return { label: 'Sent', cls: 'bg-blue-500/15 text-blue-300' }
-    case 'accepted': return { label: 'Accepted', cls: 'bg-emerald-500/15 text-emerald-300' }
-    case 'declined': return { label: 'Declined', cls: 'bg-red-500/15 text-red-300' }
-    case 'expired': return { label: 'Expired', cls: 'bg-white/5 text-muted-foreground' }
-    default: return { label: s, cls: 'bg-white/5 text-muted-foreground' }
+    case 'draft': return { label: 'Draft', style: { background: 'rgba(100,116,139,0.15)', color: 'rgb(203,213,225)' } }
+    case 'sent': return { label: 'Sent', style: { background: 'rgba(59,130,246,0.15)', color: 'rgb(147,197,253)' } }
+    case 'accepted': return { label: 'Accepted', style: { background: 'rgba(16,185,129,0.15)', color: 'rgb(110,231,183)' } }
+    case 'declined': return { label: 'Declined', style: { background: 'rgba(239,68,68,0.15)', color: 'rgb(252,165,165)' } }
+    case 'expired': return { label: 'Expired', style: { background: 'var(--glass-interactive-bg)', color: 'var(--text-secondary)' } }
+    default: return { label: s, style: { background: 'var(--glass-interactive-bg)', color: 'var(--text-secondary)' } }
   }
 }
 
@@ -84,7 +84,7 @@ function QuotesTab() {
           <button onClick={() => setSelected(null)} className="text-sm text-primary hover:underline mb-4">
             ← Back to list
           </button>
-          <div className="rounded-xl border border-border/50 bg-card/50 p-6 backdrop-blur-sm">
+          <div className="rounded-xl p-6 backdrop-blur-sm" style={{ border: '1px solid var(--glass-card-border)', background: 'var(--glass-card-bg)' }}>
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h3 className="text-lg font-semibold">
@@ -94,7 +94,7 @@ function QuotesTab() {
                   <p className="text-sm text-muted-foreground">{selected.lead.title}</p>
                 )}
               </div>
-              <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${badge.cls}`}>
+              <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={badge.style}>
                 {badge.label}
               </span>
             </div>
@@ -111,7 +111,7 @@ function QuotesTab() {
               </thead>
               <tbody>
                 {(selected.line_items ?? []).map((item, i) => (
-                  <tr key={i} className="border-b border-border/50">
+                  <tr key={i} className="border-b" style={{ borderColor: 'var(--glass-divider)' }}>
                     <td className="py-2">{item.description}</td>
                     <td className="py-2 text-right">{item.qty}</td>
                     <td className="py-2 text-right">${Number(item.unit).toLocaleString('en-AU')}</td>
@@ -150,7 +150,8 @@ function QuotesTab() {
             <button
               key={q.id}
               onClick={() => setSelected(q)}
-              className="w-full flex items-center justify-between rounded-lg border border-border/50 bg-card/50 p-4 hover:bg-accent/50 transition-colors text-left bb-card-hover"
+              className="w-full flex items-center justify-between rounded-lg p-4 transition-colors text-left bb-card-hover"
+              style={{ border: '1px solid var(--glass-card-border)', background: 'var(--glass-card-bg)' }}
             >
               <div>
                 <p className="font-medium text-sm">{q.contact?.name ?? 'Unknown Customer'}</p>
@@ -160,7 +161,7 @@ function QuotesTab() {
               </div>
               <div className="flex items-center gap-3">
                 <span className="text-sm font-medium">${Number(q.grand_total).toLocaleString('en-AU')}</span>
-                <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${badge.cls}`}>
+                <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={badge.style}>
                   {badge.label}
                 </span>
               </div>

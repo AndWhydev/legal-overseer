@@ -26,7 +26,7 @@ export function NextActionPanel({ nextAction, nextActionAt, onSave }: NextAction
 
   return (
     <div>
-      <h4 style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#64748B', margin: '0 0 12px' }}>
+      <h4 style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-dim)', margin: '0 0 12px' }}>
         Next Action
       </h4>
 
@@ -40,9 +40,9 @@ export function NextActionPanel({ nextAction, nextActionAt, onSave }: NextAction
             width: '100%',
             padding: '10px 12px',
             borderRadius: 10,
-            border: '1px solid rgba(255, 255, 255, 0.06)',
-            background: 'rgba(10, 14, 23, 0.4)',
-            color: '#F1F5F9',
+            border: '1px solid var(--border-subtle)',
+            background: 'var(--bb-surface)',
+            color: 'var(--text-primary)',
             fontSize: 13,
             outline: 'none',
           }}
@@ -57,9 +57,9 @@ export function NextActionPanel({ nextAction, nextActionAt, onSave }: NextAction
               flex: 1,
               padding: '8px 12px',
               borderRadius: 10,
-              border: '1px solid rgba(255, 255, 255, 0.06)',
-              background: 'rgba(10, 14, 23, 0.4)',
-              color: '#94A3B8',
+              border: '1px solid var(--border-subtle)',
+              background: 'var(--bb-surface)',
+              color: 'var(--text-secondary)',
               fontSize: 12,
               outline: 'none',
             }}
@@ -72,8 +72,8 @@ export function NextActionPanel({ nextAction, nextActionAt, onSave }: NextAction
               padding: '8px 16px',
               borderRadius: 10,
               border: 'none',
-              background: hasChanged ? 'var(--bb-cyan, #06B6D4)' : 'rgba(255, 255, 255, 0.04)',
-              color: hasChanged ? '#fff' : '#475569',
+              background: hasChanged ? 'var(--bb-cyan)' : 'var(--hover-bg)',
+              color: hasChanged ? '#fff' : 'var(--text-dim)',
               fontSize: 12,
               fontWeight: 600,
               cursor: hasChanged ? 'pointer' : 'not-allowed',

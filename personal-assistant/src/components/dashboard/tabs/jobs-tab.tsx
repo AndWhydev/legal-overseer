@@ -29,20 +29,20 @@ function statusLabel(s: string): string {
   }
 }
 
-function statusColor(s: string): string {
+function statusColor(s: string): React.CSSProperties {
   switch (s) {
-    case 'quoted': return 'bg-slate-500/15 text-slate-300'
-    case 'booked': return 'bg-blue-500/15 text-blue-300'
-    case 'in-progress': return 'bg-amber-500/15 text-amber-300'
-    case 'complete': return 'bg-emerald-500/15 text-emerald-300'
-    case 'invoiced': return 'bg-purple-500/15 text-purple-300'
-    default: return 'bg-white/5 text-muted-foreground'
+    case 'quoted': return { background: 'rgba(100,116,139,0.15)', color: 'rgb(203,213,225)' }
+    case 'booked': return { background: 'rgba(59,130,246,0.15)', color: 'rgb(147,197,253)' }
+    case 'in-progress': return { background: 'rgba(245,158,11,0.15)', color: 'rgb(252,211,77)' }
+    case 'complete': return { background: 'rgba(16,185,129,0.15)', color: 'rgb(110,231,183)' }
+    case 'invoiced': return { background: 'rgba(168,85,247,0.15)', color: 'rgb(216,180,254)' }
+    default: return { background: 'var(--glass-interactive-bg)', color: 'var(--text-secondary)' }
   }
 }
 
 function JobCard({ job }: { job: Job }) {
   return (
-    <div className="rounded-lg border border-border/50 bg-card/50 p-3 bb-card-hover">
+    <div className="rounded-lg p-3 bb-card-hover" style={{ border: '1px solid var(--glass-card-border)', background: 'var(--glass-card-bg)' }}>
       <p className="font-medium text-sm truncate">{job.title}</p>
       {job.contact?.name && (
         <p className="text-xs text-muted-foreground mt-1">{job.contact.name}</p>
@@ -124,7 +124,7 @@ function JobsTab() {
           return (
             <div key={status}>
               <div className="flex items-center gap-2 mb-3">
-                <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${statusColor(status)}`}>
+                <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={statusColor(status)}>
                   {statusLabel(status)}
                 </span>
                 <span className="text-xs text-muted-foreground">{col.length}</span>

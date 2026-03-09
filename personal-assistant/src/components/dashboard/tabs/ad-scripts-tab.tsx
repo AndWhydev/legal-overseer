@@ -1,8 +1,9 @@
 'use client'
 
 import React, { useCallback, useEffect, useState } from 'react'
-import { Copy, Check, Loader2, ChevronDown, ChevronRight, Film } from 'lucide-react'
+import { Copy, Check, Loader2, ChevronDown, ChevronRight, Film, Sparkles } from 'lucide-react'
 import { TabShell } from '@/components/ui/tab-shell'
+import { EmptyState } from '@/components/ui/empty-state'
 
 // ---------------------------------------------------------------------------
 // Types (mirrored from ad-script-gen)
@@ -114,19 +115,19 @@ const TONE_COLORS: Record<string, React.CSSProperties> = {
 const glassCard: React.CSSProperties = {
   padding: '20px',
   borderRadius: 16,
-  background: 'rgba(15, 20, 30, 0.6)',
-  backdropFilter: 'blur(20px) saturate(1.2)',
-  WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
-  border: '1px solid rgba(255, 255, 255, 0.03)',
-  boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+  background: 'var(--glass-card-bg)',
+  backdropFilter: 'var(--glass-card-blur)',
+  WebkitBackdropFilter: 'var(--glass-card-blur)',
+  border: '1px solid var(--glass-card-border)',
+  boxShadow: 'var(--glass-card-inset)',
 }
 
 const ghostBtn: React.CSSProperties = {
   padding: '8px 16px',
   borderRadius: 10,
   background: 'transparent',
-  border: '1px solid rgba(255, 255, 255, 0.06)',
-  color: 'var(--text-primary, #F1F5F9)',
+  border: '1px solid var(--glass-interactive-border)',
+  color: 'var(--text-primary)',
   fontSize: 13,
   fontWeight: 500,
   cursor: 'pointer',
@@ -148,13 +149,13 @@ const accentBtn: React.CSSProperties = {
 const pillBtn: React.CSSProperties = {
   padding: '6px 14px',
   borderRadius: 20,
-  background: 'rgba(10, 14, 23, 0.42)',
-  backdropFilter: 'blur(22px) saturate(1.2)',
-  WebkitBackdropFilter: 'blur(22px) saturate(1.2)',
-  boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.06)',
+  background: 'var(--glass-pill-bg)',
+  backdropFilter: 'var(--glass-card-blur)',
+  WebkitBackdropFilter: 'var(--glass-card-blur)',
+  boxShadow: 'var(--glass-card-inset)',
   border: 'none',
   fontSize: 12,
-  color: 'var(--text-secondary, #94A3B8)',
+  color: 'var(--text-secondary)',
   cursor: 'pointer',
   transition: 'all 200ms',
 }
@@ -165,7 +166,7 @@ const glassInput: React.CSSProperties = {
   borderRadius: 10,
   background: 'rgba(13, 17, 23, 0.6)',
   border: '1px solid rgba(255, 255, 255, 0.05)',
-  color: 'var(--text-primary, #F1F5F9)',
+  color: 'var(--text-primary)',
   fontSize: 14,
   outline: 'none',
   transition: 'border-color 200ms, box-shadow 200ms',
@@ -177,7 +178,7 @@ const glassSelect: React.CSSProperties = {
   borderRadius: 10,
   background: 'rgba(13, 17, 23, 0.6)',
   border: '1px solid rgba(255, 255, 255, 0.05)',
-  color: 'var(--text-primary, #F1F5F9)',
+  color: 'var(--text-primary)',
   fontSize: 14,
   outline: 'none',
   appearance: 'none' as const,
@@ -189,10 +190,10 @@ const listRow: React.CSSProperties = {
   alignItems: 'center',
   padding: '12px 18px',
   borderRadius: 12,
-  background: 'rgba(10, 14, 23, 0.5)',
-  backdropFilter: 'blur(26px) saturate(1.15)',
-  WebkitBackdropFilter: 'blur(26px) saturate(1.15)',
-  boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+  background: 'var(--glass-pill-bg)',
+  backdropFilter: 'var(--glass-blur)',
+  WebkitBackdropFilter: 'var(--glass-blur)',
+  boxShadow: 'var(--glass-card-inset)',
   border: 'none',
   transition: 'background 200ms',
   cursor: 'pointer',
@@ -203,7 +204,7 @@ const sectionHeader: React.CSSProperties = {
   fontWeight: 600,
   letterSpacing: '0.08em',
   textTransform: 'uppercase' as const,
-  color: 'var(--text-dim, #475569)',
+  color: 'var(--text-dim)',
   marginBottom: 12,
 }
 
@@ -232,8 +233,8 @@ function CopyButton({ text }: { text: string }) {
       onMouseLeave={() => setHovered(false)}
       style={{
         ...ghostBtn,
-        background: hovered ? 'rgba(255, 255, 255, 0.04)' : 'transparent',
-        borderColor: hovered ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.06)',
+        background: hovered ? 'var(--glass-interactive-bg)' : 'transparent',
+        borderColor: hovered ? 'rgba(255, 255, 255, 0.1)' : 'var(--glass-interactive-border)',
         display: 'flex',
         alignItems: 'center',
         gap: 4,
@@ -264,15 +265,15 @@ function StoryboardView({ shots }: { shots: StoryboardShot[] }) {
           alignItems: 'center',
           gap: 4,
           fontSize: 12,
-          color: 'var(--text-secondary, #94A3B8)',
+          color: 'var(--text-secondary)',
           background: 'transparent',
           border: 'none',
           cursor: 'pointer',
           transition: 'color 200ms',
           padding: 0,
         }}
-        onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--text-primary, #F1F5F9)')}
-        onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-secondary, #94A3B8)')}
+        onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--text-primary)')}
+        onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-secondary)')}
       >
         {expanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
         Storyboard ({shots.length} shots)
@@ -296,23 +297,23 @@ function StoryboardView({ shots }: { shots: StoryboardShot[] }) {
                   marginBottom: 8,
                 }}
               >
-                <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-secondary, #94A3B8)' }}>
+                <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)' }}>
                   Shot {shot.shotNumber}
                 </span>
-                <span style={{ fontSize: 11, color: 'var(--text-secondary, #94A3B8)' }}>
+                <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>
                   {shot.startTime}s - {shot.endTime}s ({shot.duration}s)
                 </span>
               </div>
-              <p style={{ fontSize: 14, marginBottom: 6, color: 'var(--text-primary, #F1F5F9)' }}>
+              <p style={{ fontSize: 14, marginBottom: 6, color: 'var(--text-primary)' }}>
                 {shot.visual}
               </p>
               {shot.textOverlay && (
-                <p style={{ fontSize: 12, color: 'var(--text-secondary, #94A3B8)' }}>
+                <p style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
                   Text: <span style={{ color: 'rgba(241, 245, 249, 0.8)' }}>{shot.textOverlay}</span>
                 </p>
               )}
               {shot.audio && (
-                <p style={{ fontSize: 12, color: 'var(--text-secondary, #94A3B8)' }}>
+                <p style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
                   Audio: <span style={{ color: 'rgba(241, 245, 249, 0.8)' }}>{shot.audio}</span>
                 </p>
               )}
@@ -359,7 +360,7 @@ function ScriptCard({ script }: { script: AdScript }) {
           >
             {HOOK_LABELS[script.hookType]}
           </span>
-          <span style={{ fontSize: 12, color: 'var(--text-secondary, #94A3B8)' }}>
+          <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
             {script.duration}s
           </span>
         </div>
@@ -402,7 +403,7 @@ function VariationCard({ variation }: { variation: AdScriptVariation }) {
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)' }}>
+          <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>
             {variation.variantLabel}
           </span>
           <span style={{ fontSize: 12, ...TONE_COLORS[variation.tone] }}>
@@ -483,7 +484,7 @@ function GenerateForm({
       }}
     >
       <div>
-        <label style={{ display: 'block', fontSize: 14, fontWeight: 500, marginBottom: 6, color: 'var(--text-primary, #F1F5F9)' }}>
+        <label style={{ display: 'block', fontSize: 14, fontWeight: 500, marginBottom: 6, color: 'var(--text-primary)' }}>
           Service / Offer Package
         </label>
         <select
@@ -499,7 +500,7 @@ function GenerateForm({
       </div>
 
       <div>
-        <label style={{ display: 'block', fontSize: 14, fontWeight: 500, marginBottom: 8, color: 'var(--text-primary, #F1F5F9)' }}>
+        <label style={{ display: 'block', fontSize: 14, fontWeight: 500, marginBottom: 8, color: 'var(--text-primary)' }}>
           Platforms
         </label>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
@@ -513,8 +514,8 @@ function GenerateForm({
                 style={{
                   ...pillBtn,
                   ...(isSelected ? PLATFORM_COLORS[p] : {}),
-                  borderColor: isSelected ? undefined : 'rgba(255, 255, 255, 0.06)',
-                  color: isSelected ? PLATFORM_COLORS[p].color : 'var(--text-secondary, #94A3B8)',
+                  borderColor: isSelected ? undefined : 'var(--glass-interactive-border)',
+                  color: isSelected ? PLATFORM_COLORS[p].color : 'var(--text-secondary)',
                 }}
               >
                 {PLATFORM_LABELS[p]}
@@ -525,7 +526,7 @@ function GenerateForm({
       </div>
 
       <div>
-        <label style={{ display: 'block', fontSize: 14, fontWeight: 500, marginBottom: 8, color: 'var(--text-primary, #F1F5F9)' }}>
+        <label style={{ display: 'block', fontSize: 14, fontWeight: 500, marginBottom: 8, color: 'var(--text-primary)' }}>
           Hook Style
         </label>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
@@ -615,7 +616,7 @@ function HistorySection({ batches, onSelect }: { batches: SavedBatch[]; onSelect
               ...listRow,
               width: '100%',
               textAlign: 'left',
-              background: hoveredId === b.id ? 'rgba(20, 28, 40, 0.7)' : 'rgba(10, 14, 23, 0.5)',
+              background: hoveredId === b.id ? 'var(--bb-surface-hover)' : 'var(--glass-pill-bg)',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'flex-start',
@@ -629,14 +630,14 @@ function HistorySection({ batches, onSelect }: { batches: SavedBatch[]; onSelect
                 width: '100%',
               }}
             >
-              <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)' }}>
+              <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>
                 {b.offer_name}
               </span>
-              <span style={{ fontSize: 12, color: 'var(--text-secondary, #94A3B8)' }}>
+              <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
                 {new Date(b.created_at).toLocaleDateString()}
               </span>
             </div>
-            <p style={{ fontSize: 12, color: 'var(--text-secondary, #94A3B8)', marginTop: 4 }}>
+            <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 4 }}>
               {b.scripts.length} script{b.scripts.length !== 1 ? 's' : ''}
               {b.variations.length > 0 ? ` + ${b.variations.length} variations` : ''}
             </p>
@@ -756,55 +757,66 @@ function AdScriptsTab() {
   return (
     <TabShell>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 24, padding: 24 }}>
-        {/* Generate Form */}
-        <GenerateForm
-          offers={offers}
-          onGenerate={handleGenerate}
-          isGenerating={isGenerating}
-        />
+        {/* No offers state */}
+        {offers.length === 0 && !currentResult ? (
+          <EmptyState
+            icon={<Sparkles size={40} />}
+            title="No offer packages found"
+            description="Create offer packages or service tiers in your system to generate ad scripts."
+          />
+        ) : (
+          <>
+            {/* Generate Form */}
+            <GenerateForm
+              offers={offers}
+              onGenerate={handleGenerate}
+              isGenerating={isGenerating}
+            />
 
-        {/* Current result */}
-        {currentResult && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <h2 style={{ fontSize: 18, fontWeight: 600, color: 'var(--text-primary, #F1F5F9)' }}>
-              Scripts for {currentResult.offerName}
-            </h2>
+            {/* Current result */}
+            {currentResult && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                <h2 style={{ fontSize: 18, fontWeight: 600, color: 'var(--text-primary)' }}>
+                  Scripts for {currentResult.offerName}
+                </h2>
 
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))',
-                gap: 16,
-              }}
-            >
-              {currentResult.scripts.map((script, i) => (
-                <ScriptCard key={`${script.platform}-${script.hookType}-${i}`} script={script} />
-              ))}
-            </div>
-
-            {currentResult.variations.length > 0 && (
-              <>
-                <h3 style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-secondary, #94A3B8)', marginTop: 8 }}>
-                  A/B Variations
-                </h3>
                 <div
                   style={{
                     display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))',
                     gap: 16,
                   }}
                 >
-                  {currentResult.variations.map((v, i) => (
-                    <VariationCard key={`var-${i}`} variation={v} />
+                  {currentResult.scripts.map((script, i) => (
+                    <ScriptCard key={`${script.platform}-${script.hookType}-${i}`} script={script} />
                   ))}
                 </div>
-              </>
-            )}
-          </div>
-        )}
 
-        {/* History */}
-        <HistorySection batches={batches} onSelect={handleSelectBatch} />
+                {currentResult.variations.length > 0 && (
+                  <>
+                    <h3 style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-secondary)', marginTop: 8 }}>
+                      A/B Variations
+                    </h3>
+                    <div
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+                        gap: 16,
+                      }}
+                    >
+                      {currentResult.variations.map((v, i) => (
+                        <VariationCard key={`var-${i}`} variation={v} />
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* History */}
+            <HistorySection batches={batches} onSelect={handleSelectBatch} />
+          </>
+        )}
       </div>
     </TabShell>
   )

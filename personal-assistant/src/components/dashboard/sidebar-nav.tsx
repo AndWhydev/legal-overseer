@@ -6,6 +6,8 @@ import {
   Settings,
   User,
   LogOut,
+  ToggleRight,
+  ToggleLeft,
 } from 'lucide-react';
 import type { TabDef } from './spa-shell';
 import { SidebarRail } from './sidebar-rail';
@@ -41,6 +43,24 @@ export function SidebarNav({
   const profileMenuRef = useRef<HTMLDivElement>(null);
   const [profileOpen, setProfileOpen] = useState(false);
 
+  // Advanced mode toggle with localStorage persistence
+  const [advancedMode, setAdvancedMode] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  // Initialize advanced mode from localStorage on mount
+  useEffect(() => {
+    const stored = localStorage.getItem('bb-advanced-mode');
+    setAdvancedMode(stored === 'true');
+    setMounted(true);
+  }, []);
+
+  // Persist advanced mode to localStorage
+  useEffect(() => {
+    if (mounted) {
+      localStorage.setItem('bb-advanced-mode', String(advancedMode));
+    }
+  }, [advancedMode, mounted]);
+
   // Module gating + composition profile
   const { modules: enabledModules, composition } = useEnabledModules();
 
@@ -51,6 +71,23 @@ export function SidebarNav({
   const derivedCategory = getCategoryForTab(activeTabId) ?? 'home';
   const [activeCategory, setActiveCategory] = useState<string>(derivedCategory);
   const [panelOpen, setPanelOpen] = useState(false);
+
+  // Advanced tabs to hide when not in advanced mode
+  const ADVANCED_TABS = ['analytics', 'costs', 'knowledge', 'admin', 'sentry'];
+
+  // Filter categories by enabled modules and advanced mode
+  const filterCategoriesByAdvanced = (categories: typeof SIDEBAR_CATEGORIES) => {
+    return categories
+      .map(cat => {
+        // Filter items based on advanced mode and enabled modules
+        let visibleItems = cat.items.filter(id => enabledModules.includes(id));
+        if (!advancedMode) {
+          visibleItems = visibleItems.filter(id => !ADVANCED_TABS.includes(id));
+        }
+        return { ...cat, items: visibleItems };
+      })
+      .filter(cat => cat.items.length > 0); // Remove empty categories
+  };
 
   // Sync category when activeTabId changes externally (e.g. spacebar→home, global search, bb-navigate)
   useEffect(() => {
@@ -76,10 +113,8 @@ export function SidebarNav({
     }
   }, [panelOpen]);
 
-  // Filter categories by enabled modules — hide categories with no visible items
-  const visibleCategories = composition.categories.filter(cat =>
-    cat.items.some(id => enabledModules.includes(id))
-  );
+  // Filter categories by enabled modules and advanced mode
+  const visibleCategories = filterCategoriesByAdvanced(composition.categories);
 
   // Get the active category definition
   const activeCategoryDef = SIDEBAR_CATEGORIES.find(c => c.id === activeCategory) ?? null;
@@ -103,10 +138,14 @@ export function SidebarNav({
       return;
     }
 
-    // Different category — open panel
+    // Different category — navigate to first enabled item + open panel
     setActiveCategory(categoryId);
     setPanelOpen(true);
-  }, [activeCategory, onTabChange]);
+    const firstEnabledItem = cat.items.find(id => enabledModules.includes(id));
+    if (firstEnabledItem) {
+      onTabChange?.(firstEnabledItem);
+    }
+  }, [activeCategory, onTabChange, enabledModules]);
 
   // Handle tab selection from panel
   const handleTabChange = useCallback((tabId: string) => {
@@ -185,6 +224,55 @@ export function SidebarNav({
         onTabChange={handleTabChange}
       />
 
+      {/* Advanced mode toggle */}
+      {mounted && (
+        <div
+          style={{
+            position: 'absolute',
+            bottom: '64px',
+            left: '8px',
+            right: '8px',
+            padding: '8px 12px',
+            background: 'var(--glass-interactive-bg)',
+            backdropFilter: 'var(--glass-card-blur)',
+            WebkitBackdropFilter: 'var(--glass-card-blur)',
+            border: '1px solid var(--glass-interactive-border)',
+            borderRadius: '10px',
+            transition: 'all 0.2s ease',
+          }}
+        >
+          <button
+            onClick={() => setAdvancedMode(!advancedMode)}
+            style={{
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              padding: '6px 0',
+              background: 'transparent',
+              border: 'none',
+              color: 'var(--text-secondary)',
+              fontSize: '13px',
+              cursor: 'pointer',
+              transition: 'color 0.12s ease',
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.color = 'var(--text-primary)';
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.color = 'var(--text-secondary)';
+            }}
+          >
+            {advancedMode ? (
+              <ToggleRight size={16} strokeWidth={1.8} />
+            ) : (
+              <ToggleLeft size={16} strokeWidth={1.8} />
+            )}
+            <span>Advanced</span>
+          </button>
+        </div>
+      )}
+
       {/* Profile popover — positioned relative to sidebar */}
       <div style={{ position: 'absolute', bottom: '16px', left: '8px' }} ref={profileMenuRef}>
         {profileOpen && (
@@ -195,12 +283,12 @@ export function SidebarNav({
               bottom: '0',
               left: 'calc(var(--sidebar-rail-width, 56px) + 4px)',
               minWidth: '180px',
-              background: 'rgba(15, 20, 30, 0.95)',
-              backdropFilter: 'blur(24px) saturate(1.2)',
-              WebkitBackdropFilter: 'blur(24px) saturate(1.2)',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
+              background: 'var(--glass-bg-heavy)',
+              backdropFilter: 'var(--glass-card-blur)',
+              WebkitBackdropFilter: 'var(--glass-card-blur)',
+              border: '1px solid var(--glass-interactive-border)',
               borderRadius: '12px',
-              boxShadow: '0 16px 48px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.04)',
+              boxShadow: 'var(--card-shadow-hover), 0 0 0 1px var(--glass-card-border)',
               padding: '6px',
               zIndex: 'var(--z-dropdown)',
               animation: 'bb-profile-pop 200ms cubic-bezier(0.2, 0.9, 0.3, 1)',
@@ -210,7 +298,7 @@ export function SidebarNav({
             <div
               style={{
                 padding: '10px 12px 8px',
-                borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
+                borderBottom: '1px solid var(--glass-divider)',
                 marginBottom: '4px',
               }}
             >
@@ -242,7 +330,7 @@ export function SidebarNav({
                 textAlign: 'left',
               }}
               onMouseEnter={e => {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.06)';
+                e.currentTarget.style.background = 'var(--glass-hover-bg)';
                 e.currentTarget.style.color = 'var(--text-primary)';
               }}
               onMouseLeave={e => {
@@ -274,7 +362,7 @@ export function SidebarNav({
                 textAlign: 'left',
               }}
               onMouseEnter={e => {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.06)';
+                e.currentTarget.style.background = 'var(--glass-hover-bg)';
                 e.currentTarget.style.color = 'var(--text-primary)';
               }}
               onMouseLeave={e => {
@@ -287,7 +375,7 @@ export function SidebarNav({
             </button>
 
             {/* Divider */}
-            <div style={{ height: '1px', background: 'rgba(255, 255, 255, 0.06)', margin: '4px 0' }} />
+            <div style={{ height: '1px', background: 'var(--glass-divider)', margin: '4px 0' }} />
 
             {/* Sign Out */}
             <button

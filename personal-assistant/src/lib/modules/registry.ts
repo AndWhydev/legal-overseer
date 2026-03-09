@@ -186,7 +186,7 @@ export const ESSENTIAL_COMPOSITION: UIComposition = {
     SIDEBAR_CATEGORIES[2], // Business
     SIDEBAR_CATEGORIES[5], // Settings
   ],
-  defaultTab: 'chat',
+  defaultTab: 'dashboard',
   sidebarStyle: 'compact',
   tourVariant: 'essential',
   labelOverrides: { 'command-center': 'Home' },
@@ -198,7 +198,7 @@ export const FULL_COMPOSITION: UIComposition = {
   primaryModules: ['command-center', 'dashboard', 'chat', 'inbox', 'leads', 'invoices', 'tenders', 'contacts', 'approvals'],
   advancedModules: ['creator-studio', 'connections', 'medications', 'sentry', 'costs', 'activity', 'admin', 'knowledge', 'analytics', 'ad-scripts', 'ai-search', 'reports'],
   categories: [...SIDEBAR_CATEGORIES],
-  defaultTab: 'chat',
+  defaultTab: 'dashboard',
   sidebarStyle: 'full',
   tourVariant: 'full',
   labelOverrides: {},

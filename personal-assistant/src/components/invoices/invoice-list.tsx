@@ -64,7 +64,7 @@ export interface InvoiceRow {
 // ─── Constants ──────────────────────────────────────────────────────────────
 
 const SECTIONS: { key: SectionKey; label: string; accent: string | null; defaultOpen: boolean; droppable: boolean }[] = [
-  { key: 'attention', label: 'Needs Attention', accent: '#EF4444', defaultOpen: true, droppable: false },
+  { key: 'attention', label: 'Needs Attention', accent: 'var(--bb-red)', defaultOpen: true, droppable: false },
   { key: 'awaiting', label: 'Awaiting Payment', accent: null, defaultOpen: true, droppable: true },
   { key: 'drafts', label: 'Drafts', accent: null, defaultOpen: true, droppable: true },
   { key: 'completed', label: 'Completed', accent: null, defaultOpen: false, droppable: true },
@@ -86,10 +86,10 @@ const PROGRESS_STEPS = ['Draft', 'Sent', 'Paid'] as const
 
 const glassCard: React.CSSProperties = {
   borderRadius: 14,
-  background: 'rgba(15, 20, 30, 0.45)',
-  backdropFilter: 'blur(24px) saturate(1.3)',
-  WebkitBackdropFilter: 'blur(24px) saturate(1.3)',
-  boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.06)',
+  background: 'var(--glass-card-bg-light)',
+  backdropFilter: 'var(--glass-card-blur)',
+  WebkitBackdropFilter: 'var(--glass-card-blur)',
+  boxShadow: 'var(--glass-card-inset)',
   overflow: 'hidden',
 }
 
@@ -179,9 +179,9 @@ function getDueUrgency(dueDate: string | null, status: InvoiceStatus): { text: s
   if (status === 'paid' || status === 'cancelled' || status === 'draft') return { text: '', color: '' }
   if (!dueDate) return { text: '', color: '' }
   const days = Math.ceil((new Date(dueDate).getTime() - Date.now()) / 86_400_000)
-  if (days < 0) return { text: `${Math.abs(days)}d overdue`, color: '#EF4444' }
-  if (days === 0) return { text: 'Due today', color: '#F59E0B' }
-  if (days <= 3) return { text: `Due in ${days}d`, color: '#F59E0B' }
+  if (days < 0) return { text: `${Math.abs(days)}d overdue`, color: 'var(--bb-red)' }
+  if (days === 0) return { text: 'Due today', color: 'var(--bb-amber)' }
+  if (days <= 3) return { text: `Due in ${days}d`, color: 'var(--bb-amber)' }
   if (days <= 7) return { text: `Due in ${days}d`, color: 'var(--text-secondary)' }
   return { text: '', color: '' }
 }
@@ -190,8 +190,8 @@ function getDueColor(dueDate: string | null, status: InvoiceStatus): string {
   if (status === 'paid' || status === 'cancelled' || status === 'draft') return 'var(--text-secondary)'
   if (!dueDate) return 'var(--text-secondary)'
   const days = Math.ceil((new Date(dueDate).getTime() - Date.now()) / 86_400_000)
-  if (days < 0) return '#EF4444'
-  if (days <= 7) return '#F59E0B'
+  if (days < 0) return 'var(--bb-red)'
+  if (days <= 7) return 'var(--bb-amber)'
   return 'var(--text-secondary)'
 }
 
@@ -308,7 +308,7 @@ const AVATAR_PAIRS = [
 ]
 
 const STATUS_COLORS: Record<InvoiceStatus, { dot: string; bg: string; label: string }> = {
-  draft:     { dot: '#64748B', bg: 'rgba(100, 116, 139, 0.06)', label: 'Draft' },
+  draft:     { dot: 'var(--text-dim)', bg: 'var(--status-neutral-bg)', label: 'Draft' },
   sent:      { dot: '#38BDF8', bg: 'rgba(56, 189, 248, 0.06)',  label: 'Sent' },
   viewed:    { dot: '#818CF8', bg: 'rgba(129, 140, 248, 0.06)', label: 'Viewed' },
   overdue:   { dot: '#EF4444', bg: 'rgba(239, 68, 68, 0.08)',   label: 'Overdue' },
@@ -475,7 +475,7 @@ function PdfPreviewPanel({ invoice }: { invoice: InvoiceRow }) {
       marginTop: 8,
       borderRadius: 10,
       overflow: 'hidden',
-      border: '1px solid rgba(255, 255, 255, 0.04)',
+      border: '1px solid var(--glass-divider)',
     }}>
       <iframe
         srcDoc={html}
@@ -486,7 +486,7 @@ function PdfPreviewPanel({ invoice }: { invoice: InvoiceRow }) {
           height: 380,
           border: 'none',
           borderRadius: 10,
-          background: '#0a0f1a',
+          background: 'var(--bg-primary)',
         }}
       />
     </div>
@@ -546,8 +546,8 @@ function InvoiceDetailPanel({
     <div
       onClick={(e) => e.stopPropagation()}
       style={{
-        borderTop: '1px solid rgba(255, 255, 255, 0.04)',
-        background: 'rgba(255, 255, 255, 0.02)',
+        borderTop: '1px solid var(--glass-divider)',
+        background: 'var(--glass-card-border)',
         padding: '20px 16px',
         display: 'flex',
         flexDirection: 'column',
@@ -590,7 +590,7 @@ function InvoiceDetailPanel({
                 borderRadius: 99,
                 background: i <= progressIdx
                   ? invoice.status === 'cancelled' ? '#71717a' : '#22C55E'
-                  : 'rgba(255, 255, 255, 0.06)',
+                  : 'var(--glass-hover-bg)',
                 transition: `background 200ms ${SNAP}`,
               }} />
               <span style={{
@@ -618,7 +618,7 @@ function InvoiceDetailPanel({
           }}>
             Line Items
           </div>
-          <div style={{ borderRadius: 10, background: 'rgba(15, 20, 30, 0.3)', overflow: 'hidden' }}>
+          <div style={{ borderRadius: 10, background: 'var(--bg-card)', overflow: 'hidden' }}>
             {invoice.line_items.map((item, i) => (
               <div
                 key={i}
@@ -628,7 +628,7 @@ function InvoiceDetailPanel({
                   alignItems: 'center',
                   padding: '8px 12px',
                   borderBottom: i < invoice.line_items!.length - 1
-                    ? '1px solid rgba(255, 255, 255, 0.03)' : 'none',
+                    ? '1px solid var(--glass-card-border)' : 'none',
                 }}
               >
                 <div>
@@ -649,8 +649,8 @@ function InvoiceDetailPanel({
               display: 'flex',
               flexDirection: 'column',
               gap: 0,
-              borderTop: '1px solid rgba(255, 255, 255, 0.04)',
-              background: 'rgba(255, 255, 255, 0.02)',
+              borderTop: '1px solid var(--glass-divider)',
+              background: 'var(--glass-card-border)',
             }}>
               {(invoice.subtotal != null || invoice.tax != null) && (
                 <>
@@ -668,7 +668,7 @@ function InvoiceDetailPanel({
                   </div>
                 </>
               )}
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 12px', fontSize: 14, fontWeight: 700, borderTop: (invoice.subtotal != null || invoice.tax != null) ? '1px solid rgba(255, 255, 255, 0.04)' : 'none' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 12px', fontSize: 14, fontWeight: 700, borderTop: (invoice.subtotal != null || invoice.tax != null) ? '1px solid var(--glass-divider)' : 'none' }}>
                 <span style={{ color: 'var(--text-dim)' }}>Total</span>
                 <span style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-mono)' }}>
                   {formatMoney(invoice.total, invoice.currency)}
@@ -703,7 +703,7 @@ function InvoiceDetailPanel({
             style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
               padding: '10px 16px', borderRadius: 10, cursor: busy ? 'not-allowed' : 'pointer',
-              background: 'transparent', border: '1px solid rgba(255, 255, 255, 0.06)',
+              background: 'transparent', border: '1px solid var(--glass-interactive-border)',
               color: 'var(--text-dim)', fontSize: 13, fontWeight: 500,
               opacity: busy ? 0.5 : 1, transition: `all 100ms ${SNAP}`,
             }}
@@ -716,9 +716,9 @@ function InvoiceDetailPanel({
           style={{
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
             padding: '10px 16px', borderRadius: 10, cursor: 'pointer',
-            background: showPdf ? 'rgba(59, 130, 246, 0.15)' : 'rgba(255, 255, 255, 0.04)',
+            background: showPdf ? 'rgba(59, 130, 246, 0.15)' : 'var(--glass-interactive-bg)',
             border: 'none',
-            color: showPdf ? '#93c5fd' : 'var(--text-dim)', fontSize: 13, fontWeight: 500,
+            color: showPdf ? 'var(--bb-blue)' : 'var(--text-dim)', fontSize: 13, fontWeight: 500,
             transition: `all 100ms ${SNAP}`,
           }}
         >
@@ -830,11 +830,11 @@ function InvoiceRowItem({
           cursor: isDragging ? 'grabbing' : expanded ? 'pointer' : 'grab',
           transition: `background 60ms ${SNAP}`,
           background: expanded
-            ? 'rgba(255, 255, 255, 0.04)'
+            ? 'var(--glass-interactive-bg)'
             : hovered
               ? sc.bg
               : 'transparent',
-          borderBottom: expanded ? 'none' : '1px solid rgba(255, 255, 255, 0.02)',
+          borderBottom: expanded ? 'none' : '1px solid var(--glass-card-border)',
           borderLeft: expanded ? `2px solid ${sc.dot}` : '2px solid transparent',
           position: 'relative',
         }}
@@ -884,7 +884,7 @@ function InvoiceRowItem({
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   width: 28, height: 28, borderRadius: 8, cursor: busy ? 'not-allowed' : 'pointer',
                   background: 'rgba(56, 189, 248, 0.1)', border: 'none',
-                  color: '#7dd3fc', opacity: busy ? 0.4 : 1,
+                  color: 'var(--bb-cyan)', opacity: busy ? 0.4 : 1,
                   transition: `all 80ms ${SNAP}`,
                 }}
               >
@@ -900,7 +900,7 @@ function InvoiceRowItem({
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   width: 28, height: 28, borderRadius: 8, cursor: busy ? 'not-allowed' : 'pointer',
                   background: 'rgba(34, 197, 94, 0.1)', border: 'none',
-                  color: '#86efac', opacity: busy ? 0.4 : 1,
+                  color: 'var(--bb-green)', opacity: busy ? 0.4 : 1,
                   transition: `all 80ms ${SNAP}`,
                 }}
               >
@@ -919,7 +919,7 @@ function InvoiceRowItem({
           </div>
           <div style={{
             fontSize: 11, marginTop: 2, fontWeight: 500,
-            color: invoice.status === 'paid' ? '#22C55E'
+            color: invoice.status === 'paid' ? 'var(--bb-green)'
               : urgency.color || 'var(--text-secondary)',
           }}>
             {invoice.status === 'paid' ? 'Paid' : formatDueDate(invoice.due_date)}
@@ -986,10 +986,10 @@ function InvoiceSection({
         animation: `bb-inv-section 160ms ${SPRING} both`,
         animationDelay: `${delay}ms`,
         background: isOver
-          ? 'rgba(15, 20, 30, 0.55)'
+          ? 'var(--glass-card-bg)'
           : glassCard.background as string,
         boxShadow: isOver
-          ? `inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 0 0 1px ${accent || 'rgba(99, 179, 237, 0.15)'}`
+          ? `inset 0 1px 0 var(--hover-bg-strong), 0 0 0 1px ${accent || 'rgba(99, 179, 237, 0.15)'}`
           : glassCard.boxShadow as string,
         transition: `background 80ms ${SNAP}, box-shadow 80ms ${SNAP}`,
       }}
@@ -1160,10 +1160,10 @@ function DragGhost({ invoice }: { invoice: InvoiceRow }) {
       gap: 12,
       padding: '12px 16px',
       borderRadius: 14,
-      background: 'rgba(15, 20, 30, 0.85)',
-      backdropFilter: 'blur(24px)',
-      WebkitBackdropFilter: 'blur(24px)',
-      boxShadow: '0 20px 60px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.06)',
+      background: 'var(--glass-bg-heavy)',
+      backdropFilter: 'var(--glass-blur)',
+      WebkitBackdropFilter: 'var(--glass-blur)',
+      boxShadow: 'var(--card-shadow-hover), 0 0 0 1px var(--glass-card-border)',
       transform: 'rotate(1.5deg) scale(1.02)',
       maxWidth: 320,
       pointerEvents: 'none',
@@ -1191,7 +1191,7 @@ function DragGhost({ invoice }: { invoice: InvoiceRow }) {
 
 function InvoiceSkeleton() {
   const shimmer: React.CSSProperties = {
-    background: 'rgba(255, 255, 255, 0.04)',
+    background: 'var(--glass-interactive-bg)',
     borderRadius: 8,
     animation: `bb-inv-pulse 1.8s ease-in-out infinite`,
   }
@@ -1222,7 +1222,7 @@ function InvoiceSkeleton() {
           {[0, 1].map(r => (
             <div key={r} style={{
               display: 'flex', alignItems: 'center', gap: 14, padding: '12px 16px',
-              borderTop: '1px solid rgba(255, 255, 255, 0.02)',
+              borderTop: '1px solid var(--glass-card-border)',
             }}>
               <div style={{ ...shimmer, width: 36, height: 36, borderRadius: 10, animationDelay: `${s * 60 + r * 40}ms` }} />
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -1484,12 +1484,12 @@ export function InvoiceList() {
               placeholder="Search invoices..."
               style={{
                 width: '100%', padding: '10px 16px 10px 34px', borderRadius: 10,
-                border: 'none', background: 'rgba(255, 255, 255, 0.04)',
+                border: 'none', background: 'var(--glass-interactive-bg)',
                 color: 'var(--text-primary)', fontSize: 14, outline: 'none',
                 transition: `background 80ms ${SNAP}`,
               }}
-              onFocus={e => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.06)' }}
-              onBlur={e => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)' }}
+              onFocus={e => { e.currentTarget.style.background = 'var(--glass-hover-bg)' }}
+              onBlur={e => { e.currentTarget.style.background = 'var(--glass-interactive-bg)' }}
             />
           </div>
 
@@ -1508,8 +1508,8 @@ export function InvoiceList() {
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               width: 36, height: 36, borderRadius: 10, cursor: 'pointer',
               border: 'none',
-              background: groupMode === 'client' ? 'rgba(59, 130, 246, 0.12)' : 'rgba(255, 255, 255, 0.04)',
-              color: groupMode === 'client' ? '#93c5fd' : 'var(--text-dim)',
+              background: groupMode === 'client' ? 'rgba(59, 130, 246, 0.12)' : 'var(--glass-interactive-bg)',
+              color: groupMode === 'client' ? 'var(--bb-blue)' : 'var(--text-dim)',
               transition: `all 80ms ${SNAP}`,
             }}
           >
@@ -1522,15 +1522,15 @@ export function InvoiceList() {
             style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               width: 36, height: 36, borderRadius: 10, cursor: 'pointer',
-              border: 'none', background: 'rgba(255, 255, 255, 0.04)',
+              border: 'none', background: 'var(--glass-interactive-bg)',
               color: 'var(--text-dim)', transition: `all 80ms ${SNAP}`,
             }}
             onMouseEnter={e => {
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'
+              e.currentTarget.style.background = 'var(--glass-hover-bg)'
               e.currentTarget.style.color = 'var(--text-secondary)'
             }}
             onMouseLeave={e => {
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)'
+              e.currentTarget.style.background = 'var(--glass-interactive-bg)'
               e.currentTarget.style.color = 'var(--text-dim)'
             }}
           >
@@ -1545,7 +1545,7 @@ export function InvoiceList() {
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
               height: 36, padding: '0 14px', borderRadius: 10, cursor: 'pointer',
               border: 'none', background: 'rgba(59, 130, 246, 0.12)',
-              color: '#93c5fd', fontSize: 13, fontWeight: 600,
+              color: 'var(--bb-blue)', fontSize: 13, fontWeight: 600,
               transition: `all 80ms ${SNAP}`, whiteSpace: 'nowrap',
             }}
             onMouseEnter={e => {

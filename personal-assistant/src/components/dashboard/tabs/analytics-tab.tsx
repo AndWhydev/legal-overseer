@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { TabShell } from '@/components/ui/tab-shell'
+import { EmptyState } from '@/components/ui/empty-state'
 import {
   DollarSign,
   Users,
@@ -73,11 +74,11 @@ interface AnalyticsData {
 const glassCard: React.CSSProperties = {
   padding: '20px',
   borderRadius: 16,
-  background: 'rgba(15, 20, 30, 0.6)',
-  backdropFilter: 'blur(20px) saturate(1.2)',
-  WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
-  border: '1px solid rgba(255, 255, 255, 0.03)',
-  boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+  background: 'var(--glass-card-bg)',
+  backdropFilter: 'var(--glass-card-blur)',
+  WebkitBackdropFilter: 'var(--glass-card-blur)',
+  border: '1px solid var(--glass-card-border)',
+  boxShadow: 'var(--glass-card-inset)',
 }
 
 const listRow: React.CSSProperties = {
@@ -85,10 +86,10 @@ const listRow: React.CSSProperties = {
   alignItems: 'center',
   padding: '12px 18px',
   borderRadius: 12,
-  background: 'rgba(10, 14, 23, 0.5)',
-  backdropFilter: 'blur(26px) saturate(1.15)',
-  WebkitBackdropFilter: 'blur(26px) saturate(1.15)',
-  boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+  background: 'var(--glass-pill-bg)',
+  backdropFilter: 'var(--glass-blur)',
+  WebkitBackdropFilter: 'var(--glass-blur)',
+  boxShadow: 'var(--glass-card-inset)',
   border: 'none',
   transition: 'background 200ms',
 }
@@ -98,14 +99,14 @@ const sectionHeader: React.CSSProperties = {
   fontWeight: 600,
   letterSpacing: '0.08em',
   textTransform: 'uppercase' as const,
-  color: 'var(--text-dim, #475569)',
+  color: 'var(--text-dim)',
   marginBottom: 12,
 }
 
 const bigNumber: React.CSSProperties = {
   fontSize: 38,
   fontWeight: 700,
-  color: 'var(--text-primary, #F1F5F9)',
+  color: 'var(--text-primary)',
   fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
   letterSpacing: '-0.03em',
   lineHeight: 1,
@@ -167,24 +168,11 @@ function AnalyticsTab() {
   if (error || !data) {
     return (
       <TabShell>
-        <div style={{ padding: '24px' }}>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 12,
-              padding: '16px',
-              borderRadius: 12,
-              background: 'rgba(239, 68, 68, 0.08)',
-              border: '1px solid rgba(239, 68, 68, 0.2)',
-            }}
-          >
-            <AlertTriangle size={18} style={{ color: '#ef4444', flexShrink: 0 }} />
-            <span style={{ fontSize: 14, color: 'var(--text-secondary, #94A3B8)' }}>
-              {error ?? 'No analytics data available. Connect your billing to see MRR metrics.'}
-            </span>
-          </div>
-        </div>
+        <EmptyState
+          icon={<BarChart3 size={40} />}
+          title="No analytics data available"
+          description={error ? error : 'Connect your billing system to see MRR metrics, token usage, and churn analysis.'}
+        />
       </TabShell>
     )
   }
@@ -207,7 +195,7 @@ function AnalyticsTab() {
 
           {/* MRR by Tier */}
           <div style={{ ...glassCard, position: 'relative' }}>
-            <h4 style={{ fontSize: 14, fontWeight: 600, marginBottom: 16, color: 'var(--text-primary, #F1F5F9)' }}>
+            <h4 style={{ fontSize: 14, fontWeight: 600, marginBottom: 16, color: 'var(--text-primary)' }}>
               Revenue by Tier
             </h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -215,7 +203,7 @@ function AnalyticsTab() {
                 const pct = mrr.totalMRR > 0 ? (info.mrr / mrr.totalMRR) * 100 : 0
                 return (
                   <div key={tier} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <span style={{ fontSize: 13, minWidth: 80, textTransform: 'capitalize', color: 'var(--text-primary, #F1F5F9)' }}>
+                    <span style={{ fontSize: 13, minWidth: 80, textTransform: 'capitalize', color: 'var(--text-primary)' }}>
                       {tier}
                     </span>
                     <div style={{ flex: 1, height: 8, borderRadius: 4, background: 'rgba(255, 255, 255, 0.08)', overflow: 'hidden' }}>
@@ -229,7 +217,7 @@ function AnalyticsTab() {
                         }}
                       />
                     </div>
-                    <span style={{ fontSize: 12, minWidth: 100, textAlign: 'right', color: 'var(--text-secondary, #94A3B8)' }}>
+                    <span style={{ fontSize: 12, minWidth: 100, textAlign: 'right', color: 'var(--text-secondary)' }}>
                       ${info.mrr} ({info.count})
                     </span>
                   </div>
@@ -257,19 +245,19 @@ function AnalyticsTab() {
                     gridTemplateColumns: '1fr 1fr 1fr 1fr',
                     gap: 16,
                     padding: '12px 0',
-                    borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
+                    borderBottom: '1px solid var(--glass-interactive-border)',
                   }}
                 >
-                  <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-dim, #475569)' }}>
+                  <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-dim)' }}>
                     Agent
                   </div>
-                  <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-dim, #475569)', textAlign: 'right' }}>
+                  <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-dim)', textAlign: 'right' }}>
                     Invocations
                   </div>
-                  <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-dim, #475569)', textAlign: 'right' }}>
+                  <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-dim)', textAlign: 'right' }}>
                     Tokens
                   </div>
-                  <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-dim, #475569)', textAlign: 'right' }}>
+                  <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-dim)', textAlign: 'right' }}>
                     Cost
                   </div>
                 </div>
@@ -281,9 +269,9 @@ function AnalyticsTab() {
                       gridTemplateColumns: '1fr 1fr 1fr 1fr',
                       gap: 16,
                       padding: '12px 0',
-                      borderBottom: '1px solid rgba(255, 255, 255, 0.03)',
+                      borderBottom: '1px solid var(--glass-card-border)',
                       fontSize: 13,
-                      color: 'var(--text-primary, #F1F5F9)',
+                      color: 'var(--text-primary)',
                     }}
                   >
                     <div style={{ textTransform: 'capitalize' }}>{a.agentType.replace(/-/g, ' ')}</div>
@@ -302,7 +290,7 @@ function AnalyticsTab() {
             {/* By Client */}
             {usage.byClient.length > 0 && (
               <div style={{ marginTop: 16 }}>
-                <h4 style={{ fontSize: 13, fontWeight: 600, marginBottom: 12, color: 'var(--text-primary, #F1F5F9)' }}>
+                <h4 style={{ fontSize: 13, fontWeight: 600, marginBottom: 12, color: 'var(--text-primary)' }}>
                   Cost per Client
                 </h4>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -317,13 +305,13 @@ function AnalyticsTab() {
                           justifyContent: 'space-between',
                         }}
                       >
-                        <span style={{ fontSize: 13, color: 'var(--text-primary, #F1F5F9)' }}>
+                        <span style={{ fontSize: 13, color: 'var(--text-primary)' }}>
                           {c.clientName}
                         </span>
                         <span
                           style={{
                             fontSize: 13,
-                            color: 'var(--text-secondary, #94A3B8)',
+                            color: 'var(--text-secondary)',
                             fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
                           }}
                         >
@@ -343,7 +331,7 @@ function AnalyticsTab() {
             <h3 style={sectionHeader}>Churn Risk ({churn.atRiskOrgs} orgs)</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {churn.risks.map((r) => {
-                const riskColor = r.riskScore >= 70 ? '#ef4444' : r.riskScore >= 50 ? '#eab308' : '#22c55e'
+                const riskColor = r.riskScore >= 70 ? 'var(--bb-red)' : r.riskScore >= 50 ? 'var(--bb-amber)' : 'var(--bb-green)'
                 return (
                   <div
                     key={r.orgId}
@@ -366,7 +354,7 @@ function AnalyticsTab() {
                       />
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 8 }}>
-                          <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary, #F1F5F9)' }}>
+                          <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>
                             {r.orgName}
                           </span>
                           <span style={badge(riskColor)}>
@@ -380,7 +368,7 @@ function AnalyticsTab() {
                                 key={idx}
                                 style={{
                                   fontSize: 12,
-                                  color: 'var(--text-secondary, #94A3B8)',
+                                  color: 'var(--text-secondary)',
                                   display: 'flex',
                                   alignItems: 'center',
                                   gap: 6,
@@ -544,16 +532,16 @@ function StatCard({
           alignItems: 'center',
           gap: 6,
           fontSize: 12,
-          color: 'var(--text-secondary, #94A3B8)',
+          color: 'var(--text-secondary)',
         }}
       >
-        <Icon size={14} style={{ color: 'var(--text-dim, #475569)' }} />
+        <Icon size={14} style={{ color: 'var(--text-dim)' }} />
         {label}
       </div>
       <div
         style={{
           ...bigNumber,
-          color: alert ? '#ef4444' : 'var(--text-primary, #F1F5F9)',
+          color: alert ? 'var(--bb-red)' : 'var(--text-primary)',
         }}
       >
         {value}
@@ -574,14 +562,14 @@ function MetricCard({ label, value }: { label: string; value: string }) {
         textAlign: 'center',
       }}
     >
-      <div style={{ fontSize: 12, color: 'var(--text-secondary, #94A3B8)' }}>
+      <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
         {label}
       </div>
       <div
         style={{
           fontSize: 28,
           fontWeight: 600,
-          color: 'var(--text-primary, #F1F5F9)',
+          color: 'var(--text-primary)',
           fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
         }}
       >

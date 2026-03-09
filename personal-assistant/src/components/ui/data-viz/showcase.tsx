@@ -6,8 +6,6 @@ import {
   CheckCircle,
   AlertTriangle,
   Package,
-  Settings,
-  AlertCircle,
   Timer,
   Tag,
   Wrench,
@@ -48,7 +46,7 @@ export function DataVizShowcase() {
     <div
       style={{
         padding: 40,
-        background: 'var(--bg-primary, #0a0f1a)',
+        background: 'var(--bg-primary)',
         minHeight: '100vh',
         display: 'flex',
         flexDirection: 'column',
@@ -64,9 +62,9 @@ export function DataVizShowcase() {
       <Section title="ProgressRingIcon">
         <div style={{ display: 'flex', gap: 20, alignItems: 'center' }}>
           <ProgressRingIcon value={75} icon={<Zap size={18} />} color="var(--bb-orange)" />
-          <ProgressRingIcon value={45} icon={<BarChart3 size={18} />} color="var(--bb-blue, #3B82F6)" />
-          <ProgressRingIcon value={90} icon={<CheckCircle size={18} />} color="var(--bb-green, #22C55E)" />
-          <ProgressRingIcon value={20} icon={<AlertTriangle size={18} />} color="var(--bb-red, #EF4444)" />
+          <ProgressRingIcon value={45} icon={<BarChart3 size={18} />} color="var(--bb-blue)" />
+          <ProgressRingIcon value={90} icon={<CheckCircle size={18} />} color="var(--bb-green)" />
+          <ProgressRingIcon value={20} icon={<AlertTriangle size={18} />} color="var(--bb-red)" />
         </div>
       </Section>
 
@@ -76,52 +74,42 @@ export function DataVizShowcase() {
           <StatCard
             label="Units Produced"
             value="1,247"
-            icon={<Package size={18} />}
-            ringValue={82}
-            color="var(--bb-teal, #14B8A6)"
-          >
-            <MiniBarChart data={sampleBars} showLabels color="var(--bb-teal, #14B8A6)" />
-          </StatCard>
+            color="var(--bb-teal)"
+            chart={<MiniBarChart data={sampleBars} showLabels color="var(--bb-teal)" />}
+          />
 
           <StatCard
             label="Efficiency Rate"
             value="94.2"
             unit="%"
-            icon={<Settings size={18} />}
-            ringValue={94}
-            color="var(--bb-green, #22C55E)"
-          >
-            <MiniSparkline data={sampleSparkline} color="var(--bb-green, #22C55E)" />
-          </StatCard>
+            color="var(--bb-green)"
+            chart={<MiniSparkline data={sampleSparkline} color="var(--bb-green)" />}
+          />
 
           <StatCard
             label="Error Rate"
             value="3.1"
             unit="%"
-            icon={<AlertCircle size={18} />}
-            ringValue={31}
-            color="var(--bb-red, #EF4444)"
-          >
-            <MiniDonut
-              segments={[
-                { value: 3.1, color: 'var(--bb-red, #EF4444)' },
-                { value: 96.9, color: 'rgba(255,255,255,0.06)' },
-              ]}
-              size={56}
-              centerLabel="3.1%"
-            />
-          </StatCard>
+            color="var(--bb-red)"
+            chart={
+              <MiniDonut
+                segments={[
+                  { value: 3.1, color: 'var(--bb-red)' },
+                  { value: 96.9, color: 'rgba(255,255,255,0.06)' },
+                ]}
+                size={56}
+                centerLabel="3.1%"
+              />
+            }
+          />
 
           <StatCard
             label="Cycle Time"
             value="42"
             unit="sec"
-            icon={<Timer size={18} />}
-            ringValue={70}
-            color="var(--bb-amber, #F59E0B)"
-          >
-            <MiniGauge value={70} color="var(--bb-amber, #F59E0B)" label="Target: 60s" />
-          </StatCard>
+            color="var(--bb-amber)"
+            chart={<MiniGauge value={70} color="var(--bb-amber)" label="Target: 60s" />}
+          />
         </div>
       </Section>
 
@@ -141,8 +129,8 @@ export function DataVizShowcase() {
             <MiniDonut
               segments={[
                 { value: 60, color: 'var(--bb-orange)' },
-                { value: 25, color: 'var(--bb-blue, #3B82F6)' },
-                { value: 15, color: 'var(--bb-purple, #8B5CF6)' },
+                { value: 25, color: 'var(--bb-blue)' },
+                { value: 15, color: 'var(--bb-purple)' },
               ]}
               size={56}
               centerLabel="60%"
@@ -165,14 +153,14 @@ export function DataVizShowcase() {
       {/* Section: Status & Glow */}
       <Section title="StatusBadge & GlowIndicator">
         <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
-          <StatusBadge label="Active" color="var(--bb-green, #22C55E)" glow />
-          <StatusBadge label="Warning" color="var(--bb-amber, #F59E0B)" glow />
-          <StatusBadge label="Error" color="var(--bb-red, #EF4444)" glow />
-          <StatusBadge label="Idle" color="var(--text-dim, #475569)" />
+          <StatusBadge label="Active" color="var(--bb-green)" glow />
+          <StatusBadge label="Warning" color="var(--bb-amber)" glow />
+          <StatusBadge label="Error" color="var(--bb-red)" glow />
+          <StatusBadge label="Idle" color="var(--text-dim)" />
           <div style={{ display: 'flex', gap: 8, marginLeft: 16, alignItems: 'center' }}>
-            <GlowIndicator color="var(--bb-green, #22C55E)" />
+            <GlowIndicator color="var(--bb-green)" />
             <GlowIndicator color="var(--bb-orange)" />
-            <GlowIndicator color="var(--bb-red, #EF4444)" pulse={false} />
+            <GlowIndicator color="var(--bb-red)" pulse={false} />
           </div>
         </div>
       </Section>
@@ -209,9 +197,9 @@ export function DataVizShowcase() {
           endLabel="11:00"
           selection={[0.33, 0.72]}
           events={[
-            { position: 0.05, color: 'var(--bb-red, #EF4444)', label: 'Alert' },
-            { position: 0.45, color: 'var(--bb-amber, #F59E0B)', label: 'Warning' },
-            { position: 0.8, color: 'var(--bb-red, #EF4444)', label: 'Alert' },
+            { position: 0.05, color: 'var(--bb-red)', label: 'Alert' },
+            { position: 0.45, color: 'var(--bb-amber)', label: 'Warning' },
+            { position: 0.8, color: 'var(--bb-red)', label: 'Alert' },
           ]}
           ticks={[
             { position: 0, label: '10:00' },
@@ -233,7 +221,7 @@ export function DataVizShowcase() {
             trend="up"
             trendValue="+12%"
             sparklineData={sampleSparkline}
-            color="var(--bb-teal, #14B8A6)"
+            color="var(--bb-teal)"
             icon={<Clock size={16} />}
           />
           <KPIWidget
@@ -242,7 +230,7 @@ export function DataVizShowcase() {
             trend="up"
             trendValue="+8.3%"
             sparklineData={[20, 25, 22, 30, 28, 35, 40, 38, 42]}
-            color="var(--bb-green, #22C55E)"
+            color="var(--bb-green)"
             icon={<DollarSign size={16} />}
           />
           <KPIWidget

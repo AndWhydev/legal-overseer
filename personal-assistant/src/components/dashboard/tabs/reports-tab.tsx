@@ -123,19 +123,19 @@ export default function ReportsTab() {
   const glassCard: React.CSSProperties = {
     padding: '20px',
     borderRadius: 16,
-    background: 'rgba(15, 20, 30, 0.6)',
-    backdropFilter: 'blur(20px) saturate(1.2)',
-    WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
-    border: '1px solid rgba(255, 255, 255, 0.03)',
-    boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+    background: 'var(--glass-card-bg)',
+    backdropFilter: 'var(--glass-card-blur)',
+    WebkitBackdropFilter: 'var(--glass-card-blur)',
+    border: '1px solid var(--glass-card-border)',
+    boxShadow: 'var(--glass-card-inset)',
   }
 
   const glassSelect: React.CSSProperties = {
     padding: '10px 14px',
     borderRadius: 10,
     background: 'rgba(13, 17, 23, 0.6)',
-    border: '1px solid rgba(255, 255, 255, 0.05)',
-    color: 'var(--text-primary, #F1F5F9)',
+    border: '1px solid var(--glass-interactive-border)',
+    color: 'var(--text-primary)',
     fontSize: 14,
     outline: 'none' as const,
     appearance: 'none' as const,
@@ -162,8 +162,8 @@ export default function ReportsTab() {
     padding: '8px 16px',
     borderRadius: 10,
     background: 'transparent',
-    border: '1px solid rgba(255, 255, 255, 0.06)',
-    color: 'var(--text-primary, #F1F5F9)',
+    border: '1px solid var(--glass-interactive-border)',
+    color: 'var(--text-primary)',
     fontSize: 13,
     fontWeight: 500,
     cursor: 'pointer',
@@ -175,7 +175,7 @@ export default function ReportsTab() {
     fontWeight: 600,
     letterSpacing: '0.08em',
     textTransform: 'uppercase' as const,
-    color: 'var(--text-dim, #475569)',
+    color: 'var(--text-dim)',
     marginBottom: 12,
   }
 
@@ -184,10 +184,10 @@ export default function ReportsTab() {
     alignItems: 'center',
     padding: '12px 18px',
     borderRadius: 12,
-    background: 'rgba(10, 14, 23, 0.5)',
-    backdropFilter: 'blur(26px) saturate(1.15)',
-    WebkitBackdropFilter: 'blur(26px) saturate(1.15)',
-    boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+    background: 'var(--glass-pill-bg)',
+    backdropFilter: 'var(--glass-blur)',
+    WebkitBackdropFilter: 'var(--glass-blur)',
+    boxShadow: 'var(--card-inset)',
     border: 'none',
     transition: 'background 200ms',
   }
@@ -316,18 +316,18 @@ export default function ReportsTab() {
             <button
               onClick={fetchReports}
               onMouseEnter={(e) => {
-                (e.target as HTMLButtonElement).style.color = 'var(--text-primary, #F1F5F9)'
+                (e.target as HTMLButtonElement).style.color = 'var(--text-primary)'
                 ;(e.target as HTMLButtonElement).style.opacity = '0.7'
               }}
               onMouseLeave={(e) => {
-                (e.target as HTMLButtonElement).style.color = 'var(--text-secondary, #94A3B8)'
+                (e.target as HTMLButtonElement).style.color = 'var(--text-secondary)'
                 ;(e.target as HTMLButtonElement).style.opacity = '1'
               }}
               style={{
                 padding: '6px',
                 background: 'none',
                 border: 'none',
-                color: 'var(--text-secondary, #94A3B8)',
+                color: 'var(--text-secondary)',
                 cursor: 'pointer',
                 transition: 'color 200ms, opacity 200ms',
               }}
@@ -374,7 +374,7 @@ export default function ReportsTab() {
                   onMouseLeave={() => setHoveredRowId(null)}
                   style={{
                     ...listRow,
-                    background: hoveredRowId === r.id ? 'rgba(20, 28, 40, 0.7)' : 'rgba(10, 14, 23, 0.5)',
+                    background: hoveredRowId === r.id ? 'var(--bb-surface-hover)' : 'var(--glass-pill-bg)',
                     justifyContent: 'space-between',
                   }}
                 >
@@ -382,14 +382,14 @@ export default function ReportsTab() {
                     <div style={{
                       fontSize: 14,
                       fontWeight: 500,
-                      color: 'var(--text-primary, #F1F5F9)',
+                      color: 'var(--text-primary)',
                       marginBottom: '4px',
                     }}>
                       {REPORT_LABELS[r.report_type as ReportType] ?? r.report_type}
                     </div>
                     <div style={{
                       fontSize: 12,
-                      color: 'var(--text-secondary, #94A3B8)',
+                      color: 'var(--text-secondary)',
                     }}>
                       Period: {r.period_from ?? '-'} • Generated: {new Date(r.created_at).toLocaleDateString('en-AU')}
                     </div>

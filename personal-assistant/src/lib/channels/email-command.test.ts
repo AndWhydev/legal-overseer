@@ -242,10 +242,10 @@ describe('processEmailCommand', () => {
     const supabase = mockSupabase()
     const email = makeEmail({ subject: '[BitBit] Task' })
     await processEmailCommand(supabase, 'org-1', email)
-    expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining('[email-command]'),
-      expect.any(String)
-    )
+    // The logger outputs formatted strings with color codes and metadata JSON
+    expect(consoleSpy).toHaveBeenCalled()
+    const calls = consoleSpy.mock.calls as any[][]
+    expect(calls.some(call => typeof call[0] === 'string' && call[0].includes('[email-command]'))).toBe(true)
     consoleSpy.mockRestore()
   })
 

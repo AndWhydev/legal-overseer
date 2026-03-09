@@ -58,30 +58,30 @@ function toLocalDate(iso: string | null): string {
 const glassCard: React.CSSProperties = {
   padding: '20px',
   borderRadius: 16,
-  background: 'rgba(15, 20, 30, 0.6)',
-  backdropFilter: 'blur(20px) saturate(1.2)',
-  WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
-  border: '1px solid rgba(255, 255, 255, 0.03)',
-  boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+  background: 'var(--glass-card-bg)',
+  backdropFilter: 'var(--glass-card-blur)',
+  WebkitBackdropFilter: 'var(--glass-card-blur)',
+  border: '1px solid var(--glass-card-border)',
+  boxShadow: 'var(--glass-card-inset)',
 }
 
 const lightCard: React.CSSProperties = {
   padding: '16px',
   borderRadius: 12,
-  background: 'rgba(10, 14, 23, 0.5)',
-  backdropFilter: 'blur(26px) saturate(1.15)',
-  WebkitBackdropFilter: 'blur(26px) saturate(1.15)',
+  background: 'var(--glass-pill-bg)',
+  backdropFilter: 'var(--glass-card-blur)',
+  WebkitBackdropFilter: 'var(--glass-card-blur)',
   border: 'none',
-  boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+  boxShadow: 'var(--glass-card-inset)',
 }
 
 const glassInput: React.CSSProperties = {
   width: '100%',
   padding: '10px 14px',
   borderRadius: 10,
-  background: 'rgba(13, 17, 23, 0.6)',
-  border: '1px solid rgba(255, 255, 255, 0.05)',
-  color: 'var(--text-primary, #F1F5F9)',
+  background: 'var(--glass-card-bg)',
+  border: '1px solid var(--glass-interactive-border)',
+  color: 'var(--text-primary)',
   fontSize: 14,
   outline: 'none',
   transition: 'border-color 200ms, box-shadow 200ms',
@@ -90,9 +90,9 @@ const glassInput: React.CSSProperties = {
 const glassSelect: React.CSSProperties = {
   padding: '10px 14px',
   borderRadius: 10,
-  background: 'rgba(13, 17, 23, 0.6)',
-  border: '1px solid rgba(255, 255, 255, 0.05)',
-  color: 'var(--text-primary, #F1F5F9)',
+  background: 'var(--glass-card-bg)',
+  border: '1px solid var(--glass-interactive-border)',
+  color: 'var(--text-primary)',
   fontSize: 14,
   outline: 'none',
   appearance: 'none' as const,
@@ -116,8 +116,8 @@ const ghostBtn: React.CSSProperties = {
   padding: '8px 12px',
   borderRadius: 10,
   background: 'transparent',
-  border: '1px solid rgba(255, 255, 255, 0.06)',
-  color: 'var(--text-primary, #F1F5F9)',
+  border: '1px solid var(--glass-hover-bg)',
+  color: 'var(--text-primary)',
   fontSize: 12,
   fontWeight: 500,
   cursor: 'pointer',
@@ -129,30 +129,30 @@ const sectionHeader: React.CSSProperties = {
   fontWeight: 600,
   letterSpacing: '0.08em',
   textTransform: 'uppercase' as const,
-  color: 'var(--text-dim, #475569)',
+  color: 'var(--text-dim)',
   marginBottom: 12,
 }
 
 const cardTitle: React.CSSProperties = {
   fontSize: 14,
   fontWeight: 600,
-  color: 'var(--text-primary, #F1F5F9)',
+  color: 'var(--text-primary)',
 }
 
 const bodyText: React.CSSProperties = {
   fontSize: 14,
   fontWeight: 400,
-  color: 'var(--text-primary, #F1F5F9)',
+  color: 'var(--text-primary)',
 }
 
 const secondaryText: React.CSSProperties = {
   fontSize: 13,
-  color: 'var(--text-secondary, #94A3B8)',
+  color: 'var(--text-secondary)',
 }
 
 const dimText: React.CSSProperties = {
   fontSize: 12,
-  color: 'var(--text-dim, #475569)',
+  color: 'var(--text-dim)',
 }
 
 export function WatchManager() {
@@ -359,9 +359,9 @@ export function WatchManager() {
             padding: '12px 16px',
             borderRadius: 12,
             background: 'rgba(34, 197, 94, 0.12)',
-            border: '1px solid rgba(34, 197, 94, 0.3)',
+            border: '1px solid var(--status-success-border)',
             fontSize: 13,
-            color: '#22c55e',
+            color: 'var(--bb-green)',
           }}
         >
           {statusMessage}
@@ -375,9 +375,9 @@ export function WatchManager() {
             padding: '12px 16px',
             borderRadius: 12,
             background: 'rgba(239, 68, 68, 0.12)',
-            border: '1px solid rgba(239, 68, 68, 0.3)',
+            border: '1px solid var(--status-error-border)',
             fontSize: 13,
-            color: '#ef4444',
+            color: 'var(--bb-red)',
           }}
         >
           {errorMessage}
@@ -422,7 +422,7 @@ export function WatchManager() {
                 e.currentTarget.style.boxShadow = '0 0 0 2px rgba(255, 90, 31, 0.15)'
               }}
               onBlur={(e) => {
-                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.05)'
+                e.currentTarget.style.borderColor = 'var(--glass-interactive-border)'
                 e.currentTarget.style.boxShadow = 'none'
               }}
             />
@@ -443,7 +443,7 @@ export function WatchManager() {
                 e.currentTarget.style.boxShadow = '0 0 0 2px rgba(255, 90, 31, 0.15)'
               }}
               onBlur={(e) => {
-                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.05)'
+                e.currentTarget.style.borderColor = 'var(--glass-interactive-border)'
                 e.currentTarget.style.boxShadow = 'none'
               }}
             />
@@ -464,7 +464,7 @@ export function WatchManager() {
                 e.currentTarget.style.boxShadow = '0 0 0 2px rgba(255, 90, 31, 0.15)'
               }}
               onBlur={(e) => {
-                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.05)'
+                e.currentTarget.style.borderColor = 'var(--glass-interactive-border)'
                 e.currentTarget.style.boxShadow = 'none'
               }}
             />
@@ -485,7 +485,7 @@ export function WatchManager() {
                 e.currentTarget.style.boxShadow = '0 0 0 2px rgba(255, 90, 31, 0.15)'
               }}
               onBlur={(e) => {
-                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.05)'
+                e.currentTarget.style.borderColor = 'var(--glass-interactive-border)'
                 e.currentTarget.style.boxShadow = 'none'
               }}
             />
@@ -540,7 +540,7 @@ export function WatchManager() {
                 style={{
                   ...lightCard,
                   background:
-                    hoveredWatchId === watch.id ? 'rgba(20, 28, 40, 0.7)' : 'rgba(10, 14, 23, 0.5)',
+                    hoveredWatchId === watch.id ? 'var(--glass-hover-bg)' : 'var(--glass-pill-bg)',
                   transition: 'background 200ms',
                 }}
                 onMouseEnter={() => setHoveredWatchId(watch.id)}
@@ -558,8 +558,8 @@ export function WatchManager() {
                       fontWeight: 600,
                       letterSpacing: '0.02em',
                       background:
-                        watch.status === 'active' ? 'rgba(34, 197, 94, 0.12)' : 'rgba(255, 255, 255, 0.06)',
-                      color: watch.status === 'active' ? '#22c55e' : 'var(--text-secondary, #94A3B8)',
+                        watch.status === 'active' ? 'rgba(34, 197, 94, 0.12)' : 'var(--glass-hover-bg)',
+                      color: watch.status === 'active' ? 'var(--bb-green)' : 'var(--text-secondary)',
                     }}
                   >
                     {watch.status}
@@ -575,11 +575,11 @@ export function WatchManager() {
                     marginTop: 12,
                     padding: 12,
                     borderRadius: 10,
-                    background: 'rgba(12, 16, 24, 0.85)',
-                    border: '1px solid rgba(255, 255, 255, 0.05)',
+                    background: 'var(--bg-card)',
+                    border: '1px solid var(--glass-interactive-border)',
                     overflowX: 'auto',
                     fontSize: 11,
-                    color: 'var(--text-dim, #475569)',
+                    color: 'var(--text-dim)',
                     fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
                     lineHeight: 1.4,
                   }}
@@ -592,12 +592,12 @@ export function WatchManager() {
                     style={ghostBtn}
                     onClick={() => void handleToggleWatch(watch)}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)'
+                      e.currentTarget.style.background = 'var(--glass-interactive-bg)'
                       e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)'
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.background = 'transparent'
-                      e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.06)'
+                      e.currentTarget.style.borderColor = 'var(--glass-hover-bg)'
                     }}
                   >
                     {watch.status === 'active' ? 'Pause' : 'Resume'}
@@ -606,7 +606,7 @@ export function WatchManager() {
                     aria-label={`Delete watch: ${watch.description}`}
                     style={{
                       ...ghostBtn,
-                      color: '#ef4444',
+                      color: 'var(--bb-red)',
                       borderColor: 'rgba(239, 68, 68, 0.3)',
                     }}
                     onClick={() => void handleDeleteWatch(watch.id)}
@@ -655,7 +655,7 @@ export function WatchManager() {
                 style={{
                   ...lightCard,
                   background:
-                    hoveredAlertId === alert.id ? 'rgba(20, 28, 40, 0.7)' : 'rgba(10, 14, 23, 0.5)',
+                    hoveredAlertId === alert.id ? 'var(--glass-hover-bg)' : 'var(--glass-pill-bg)',
                   transition: 'background 200ms',
                 }}
                 onMouseEnter={() => setHoveredAlertId(alert.id)}
@@ -673,7 +673,7 @@ export function WatchManager() {
                       fontWeight: 600,
                       letterSpacing: '0.02em',
                       background: 'rgba(234, 179, 8, 0.12)',
-                      color: '#eab308',
+                      color: 'var(--bb-amber)',
                     }}
                   >
                     {alert.status}
@@ -685,12 +685,12 @@ export function WatchManager() {
                 <button
                   onClick={() => void handleAcknowledgeAlert(alert.id)}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)'
+                    e.currentTarget.style.background = 'var(--glass-interactive-bg)'
                     e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)'
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.background = 'transparent'
-                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.06)'
+                    e.currentTarget.style.borderColor = 'var(--glass-hover-bg)'
                   }}
                   style={{
                     ...ghostBtn,

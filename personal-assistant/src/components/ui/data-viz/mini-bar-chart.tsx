@@ -109,7 +109,7 @@ export function MiniBarChart({
                 x={x + barW / 2}
                 y={height - 1}
                 textAnchor="middle"
-                fill="var(--text-secondary, #64748B)"
+                fill="var(--text-secondary)"
                 fontSize={10}
                 fontFamily="var(--font-sans)"
               >

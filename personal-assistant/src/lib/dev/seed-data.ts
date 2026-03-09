@@ -49,6 +49,30 @@ interface SeedInvoice {
   payment_method?: string | null
 }
 
+interface SeedTender {
+  id: string
+  title: string
+  source: string
+  tender_number: string | null
+  url: string
+  value: number | null
+  deadline: string | null
+  status: string
+  fit_score: number | null
+  category: string
+  created_at: string
+}
+
+interface SeedCapabilityProfile {
+  id: string
+  name: string
+  service_category: string
+  skills: string[]
+  certifications: string[]
+  location_coverage: string[]
+  max_contract_value: number | null
+}
+
 export interface SeedDataSet {
   inboxMessages: SeedInboxMessage[]
   kanbanTasks: SeedKanbanTask[]
@@ -58,6 +82,8 @@ export interface SeedDataSet {
   leads: SeedLead[]
   dailyBrief: BriefData
   invoices: SeedInvoice[]
+  tenders: SeedTender[]
+  capabilityProfiles: SeedCapabilityProfile[]
 }
 
 interface SeedInboxMessage {
@@ -96,7 +122,7 @@ interface SeedKpiOverrides {
   activeProjects: number
   monthlyRevenue: number
   tasksDueThisWeek: number
-  agentActionsToday: number
+  actionsToday: number
   overdueTaskCount: number
   pendingApprovalCount: number
 }
@@ -171,20 +197,20 @@ export const SEED_DATA: SeedDataSet = {
   ],
 
   kanbanTasks: [
-    { id: 'seed-t1', title: 'Design hero section for Acme rebrand', description: 'Full-width hero with animated gradient', column_id: 'seed-todo', position: 0, priority: 'high', metadata: { tags: ['design', '$acme'] }, assigned_to: null, created_at: ago(480), updated_at: ago(60), status: 'active' },
-    { id: 'seed-t2', title: 'Write copy for Q2 email campaign', description: '3 email sequences targeting re-engagement', column_id: 'seed-todo', position: 1, priority: 'medium', metadata: { tags: ['content'] }, assigned_to: null, created_at: ago(360), updated_at: ago(120), status: 'active' },
-    { id: 'seed-t3', title: 'Implement Stripe checkout flow', description: 'Subscription billing with proration', column_id: 'seed-progress', position: 0, priority: 'critical', metadata: { tags: ['dev', '$greenfield'], source: 'bitbit' }, assigned_to: 'dev-agent', created_at: ago(720), updated_at: ago(15), status: 'active' },
-    { id: 'seed-t4', title: 'SEO audit for client portal', description: 'Core Web Vitals + schema markup review', column_id: 'seed-progress', position: 1, priority: 'medium', metadata: { tags: ['seo'] }, assigned_to: null, created_at: ago(600), updated_at: ago(180), status: 'active' },
-    { id: 'seed-t5', title: 'Review brand guidelines PDF', description: 'Feedback on typography and colour palette', column_id: 'seed-review', position: 0, priority: 'low', metadata: { tags: ['design', 'awaiting'] }, assigned_to: null, created_at: ago(960), updated_at: ago(30), status: 'active' },
-    { id: 'seed-t6', title: 'Deploy analytics dashboard', description: 'Vercel production deploy with env vars', column_id: 'seed-done', position: 0, priority: 'high', metadata: { tags: ['dev', 'credentials'] }, assigned_to: null, created_at: ago(1440), updated_at: ago(240), status: 'active' },
-    { id: 'seed-t7', title: 'Client onboarding call — Webb Corp', description: 'Intro call, gather requirements, set timeline', column_id: 'seed-todo', position: 2, priority: 'high', metadata: { tags: ['$webb-corp', 'urgent'] }, assigned_to: null, created_at: ago(120), updated_at: ago(60), status: 'active' },
+    { id: 'seed-t1', title: 'Design hero section for Acme rebrand', description: 'Full-width hero with animated gradient', column_id: 'seed-todo', position: 0, priority: 'high', metadata: { tags: ['design', '$acme'], source: 'email', deadline: daysFromNow(3) }, assigned_to: null, created_at: ago(480), updated_at: ago(60), status: 'active' },
+    { id: 'seed-t2', title: 'Write copy for Q2 email campaign', description: '3 email sequences targeting re-engagement', column_id: 'seed-todo', position: 1, priority: 'medium', metadata: { tags: ['content'], source: 'slack' }, assigned_to: 'BitBit', created_at: ago(360), updated_at: ago(120), status: 'active' },
+    { id: 'seed-t3', title: 'Implement Stripe checkout flow', description: 'Subscription billing with proration', column_id: 'seed-progress', position: 0, priority: 'critical', metadata: { tags: ['dev', '$greenfield'], source: 'bitbit', agentStatus: 'working' }, assigned_to: 'BitBit', created_at: ago(720), updated_at: ago(15), status: 'active' },
+    { id: 'seed-t4', title: 'SEO audit for client portal', description: 'Core Web Vitals + schema markup review', column_id: 'seed-progress', position: 1, priority: 'medium', metadata: { tags: ['seo'], source: 'bitbit', agentStatus: 'done' }, assigned_to: 'BitBit', created_at: ago(600), updated_at: ago(180), status: 'active' },
+    { id: 'seed-t5', title: 'Review brand guidelines PDF', description: 'Feedback on typography and colour palette', column_id: 'seed-review', position: 0, priority: 'low', metadata: { tags: ['design', 'awaiting'], source: 'whatsapp', deadline: daysAgo(2) }, assigned_to: null, created_at: ago(960), updated_at: ago(30), status: 'active' },
+    { id: 'seed-t6', title: 'Deploy analytics dashboard', description: 'Vercel production deploy with env vars', column_id: 'seed-done', position: 0, priority: 'high', metadata: { tags: ['dev', 'credentials'], source: 'bitbit' }, assigned_to: null, created_at: ago(1440), updated_at: ago(240), status: 'active' },
+    { id: 'seed-t7', title: 'Client onboarding call — Webb Corp', description: 'Intro call, gather requirements, set timeline', column_id: 'seed-todo', position: 2, priority: 'high', metadata: { tags: ['$webb-corp', 'urgent'], source: 'email', deadline: daysFromNow(1) }, assigned_to: null, created_at: ago(120), updated_at: ago(60), status: 'active' },
   ],
 
   kpiOverrides: {
     activeProjects: 8,
     monthlyRevenue: 24800,
     tasksDueThisWeek: 14,
-    agentActionsToday: 127,
+    actionsToday: 127,
     overdueTaskCount: 3,
     pendingApprovalCount: 5,
   },
@@ -391,6 +417,107 @@ export const SEED_DATA: SeedDataSet = {
       id: 'seed-inv-12', invoice_number: 'INV-012', client_contact_id: 'seed-c4', client_name: 'James Liu', client_email: 'james@liuventures.com',
       total: 3600, currency: 'AUD', status: 'paid', due_date: daysAgo(30),
       issued_date: daysAgo(60), paid_date: daysAgo(20), created_at: daysAgo(61),
+    },
+  ],
+
+  tenders: [
+    // 5 × found (no fit_score)
+    {
+      id: 'seed-tend-1', title: 'Digital Transformation Advisory Services — Dept of Finance',
+      source: 'austender', tender_number: 'ATM-2026-1234', url: 'https://austender.gov.au/ATM-2026-1234',
+      value: 2500000, deadline: daysFromNow(45), status: 'open', fit_score: null,
+      category: 'IT Consulting', created_at: daysAgo(2),
+    },
+    {
+      id: 'seed-tend-2', title: 'Cloud Migration & Infrastructure Modernisation — QLD Health',
+      source: 'qtenders', tender_number: 'QT-2026-5678', url: 'https://qtenders.qld.gov.au/QT-2026-5678',
+      value: 1200000, deadline: daysFromNow(30), status: 'open', fit_score: null,
+      category: 'Cloud Services', created_at: daysAgo(3),
+    },
+    {
+      id: 'seed-tend-3', title: 'Cybersecurity Assessment & Remediation — NSW Transport',
+      source: 'nsw', tender_number: 'NSW-ET-9012', url: 'https://tenders.nsw.gov.au/NSW-ET-9012',
+      value: 480000, deadline: daysFromNow(21), status: 'open', fit_score: null,
+      category: 'Cybersecurity', created_at: daysAgo(1),
+    },
+    {
+      id: 'seed-tend-4', title: 'Data Analytics Platform Development — ABS',
+      source: 'austender', tender_number: 'ATM-2026-3456', url: 'https://austender.gov.au/ATM-2026-3456',
+      value: 850000, deadline: daysFromNow(14), status: 'open', fit_score: null,
+      category: 'Data Analytics', created_at: daysAgo(5),
+    },
+    {
+      id: 'seed-tend-5', title: 'Website Redesign & Accessibility Compliance — Dept of Education',
+      source: 'austender', tender_number: 'ATM-2026-7890', url: 'https://austender.gov.au/ATM-2026-7890',
+      value: 340000, deadline: daysFromNow(10), status: 'open', fit_score: null,
+      category: 'Web Development', created_at: daysAgo(4),
+    },
+    // 3 × evaluating (have fit_score)
+    {
+      id: 'seed-tend-6', title: 'Enterprise Resource Planning Implementation — Dept of Defence',
+      source: 'austender', tender_number: 'ATM-2026-2345', url: 'https://austender.gov.au/ATM-2026-2345',
+      value: 1800000, deadline: daysFromNow(35), status: 'open', fit_score: 78,
+      category: 'ERP', created_at: daysAgo(8),
+    },
+    {
+      id: 'seed-tend-7', title: 'AI/ML Model Development for Fraud Detection — ASIC',
+      source: 'austender', tender_number: 'ATM-2026-6789', url: 'https://austender.gov.au/ATM-2026-6789',
+      value: 650000, deadline: daysFromNow(25), status: 'open', fit_score: 62,
+      category: 'AI/ML', created_at: daysAgo(6),
+    },
+    {
+      id: 'seed-tend-8', title: 'Managed IT Services — QLD Dept of Communities',
+      source: 'qtenders', tender_number: 'QT-2026-1011', url: 'https://qtenders.qld.gov.au/QT-2026-1011',
+      value: 420000, deadline: daysFromNow(18), status: 'open', fit_score: 45,
+      category: 'IT Services', created_at: daysAgo(7),
+    },
+    // 2 × drafting (have responses in draft)
+    {
+      id: 'seed-tend-9', title: 'Software Testing & QA Services — Services Australia',
+      source: 'austender', tender_number: 'ATM-2026-4567', url: 'https://austender.gov.au/ATM-2026-4567',
+      value: 280000, deadline: daysFromNow(12), status: 'open', fit_score: 72,
+      category: 'QA Testing', created_at: daysAgo(12),
+    },
+    {
+      id: 'seed-tend-10', title: 'Network Infrastructure Upgrade — ATO',
+      source: 'austender', tender_number: 'ATM-2026-8901', url: 'https://austender.gov.au/ATM-2026-8901',
+      value: 560000, deadline: daysFromNow(8), status: 'open', fit_score: 65,
+      category: 'Networking', created_at: daysAgo(15),
+    },
+    // 1 × submitted
+    {
+      id: 'seed-tend-11', title: 'UX Research & Service Design — DTA',
+      source: 'austender', tender_number: 'ATM-2026-5432', url: 'https://austender.gov.au/ATM-2026-5432',
+      value: 180000, deadline: daysFromNow(3), status: 'drafted', fit_score: 82,
+      category: 'UX Design', created_at: daysAgo(20),
+    },
+    // 1 × won
+    {
+      id: 'seed-tend-12', title: 'IT Strategy Consulting — Dept of Home Affairs',
+      source: 'austender', tender_number: 'ATM-2026-9876', url: 'https://austender.gov.au/ATM-2026-9876',
+      value: 95000, deadline: daysAgo(10), status: 'open', fit_score: 88,
+      category: 'IT Consulting', created_at: daysAgo(30),
+    },
+  ],
+
+  capabilityProfiles: [
+    {
+      id: 'seed-cap-1',
+      name: 'Digital Transformation',
+      service_category: 'IT Consulting',
+      skills: ['Cloud Architecture', 'Agile Delivery', 'Change Management', 'Enterprise Integration', 'Data Migration'],
+      certifications: ['AWS Solutions Architect', 'PRINCE2', 'ITIL v4', 'Certified Scrum Master'],
+      location_coverage: ['National', 'QLD', 'NSW', 'VIC'],
+      max_contract_value: 3000000,
+    },
+    {
+      id: 'seed-cap-2',
+      name: 'IT Consulting & Advisory',
+      service_category: 'Technology Advisory',
+      skills: ['IT Strategy', 'Cybersecurity', 'Software Development', 'UX Design', 'Data Analytics'],
+      certifications: ['CISSP', 'PMP', 'ISO 27001 Lead Auditor'],
+      location_coverage: ['National', 'ACT'],
+      max_contract_value: 2000000,
     },
   ],
 }

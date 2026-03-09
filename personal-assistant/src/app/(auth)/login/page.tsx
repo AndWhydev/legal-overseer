@@ -5,8 +5,7 @@ import { Suspense, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { BitBitLogoVideo } from '@/components/chat/bitbit-logo-video'
-import { completeBrowserAuthFromUrl } from '@/lib/auth/browser-callback'
-import { logger } from '@/lib/core/logger'
+import { extractAuthCallbackPayload } from '@/lib/auth/callback'
 
 type LoginStatus = 'idle' | 'loading' | 'sent' | 'error'
 type LoginMethod = 'email' | 'google' | 'apple' | null
@@ -81,7 +80,7 @@ function LoginPageContent() {
   const [activeMethod, setActiveMethod] = useState<LoginMethod>(null)
   const [errorMessage, setErrorMessage] = useState(
     queryError
-      ? 'Your previous sign-in attempt could not be completed. Please try again.'
+      ? 'Couldn\'t complete sign-in. Use the email linked to your BitBit invite.'
       : ''
   )
   const [sentTo, setSentTo] = useState('')
@@ -90,22 +89,14 @@ function LoginPageContent() {
   const canSubmit = email.trim().length > 3 && !isBusy
 
   useEffect(() => {
-    const supabaseClient = createClient()
-    if (!supabaseClient) {
+    const payload = extractAuthCallbackPayload(window.location.href)
+
+    if (payload.kind === 'none') {
       return
     }
 
-    void (async () => {
-      const result = await completeBrowserAuthFromUrl(
-        supabaseClient,
-        window.location.href,
-        logger,
-      )
-
-      if (result.kind === 'redirect') {
-        window.location.replace(result.destination)
-      }
-    })()
+    const nextUrl = `/callback${window.location.search}${window.location.hash}`
+    window.location.replace(nextUrl)
   }, [])
 
   const logoVariant = useMemo(() => {
@@ -122,7 +113,7 @@ function LoginPageContent() {
     const supabase = createClient()
     if (!supabase) {
       setStatus('error')
-      setErrorMessage('Supabase is not configured for this environment.')
+      setErrorMessage('Supabase is not configured for this environment')
       setActiveMethod(null)
       return
     }
@@ -169,15 +160,15 @@ function LoginPageContent() {
         setStatus('error')
         setErrorMessage(
           data.error === 'not_registered'
-            ? 'This email isn\u2019t registered. BitBit is invite-only \u2014 contact your administrator to get access.'
-            : data.error || 'Failed to send sign-in email',
+            ? 'No invite found for this email. Try the address you were invited with, or ask your admin.'
+            : data.error || 'Couldn\'t send the sign-in link. Try again.',
         )
         setActiveMethod(null)
         return
       }
     } catch {
       setStatus('error')
-      setErrorMessage('Network error. Please try again.')
+      setErrorMessage('Network issue. Try again.')
       setActiveMethod(null)
       return
     }
@@ -199,7 +190,10 @@ function LoginPageContent() {
 
       <main className="bb-auth-page__content bb-stagger">
         <section className="bb-auth-page__hero" aria-label="BitBit sign in">
-          <h1 className="bb-auth-page__title">Sign in to BitBit</h1>
+          <h1 className="bb-auth-page__title">Meet BitBit</h1>
+          <p className="bb-auth-card__privacy">
+            Sign in with your invited email
+          </p>
         </section>
 
         <section className="bb-card bb-auth-card" aria-live="polite">
@@ -207,7 +201,7 @@ function LoginPageContent() {
             <div className="bb-auth-card__sent">
               <p className="bb-auth-card__sent-title">Check your inbox</p>
               <p className="bb-auth-card__sent-copy">
-                We sent a sign-in link to <span>{sentTo}</span>. Open your email and continue from that link.
+                We sent a sign-in link to <span>{sentTo}</span>. Open that inbox to continue.
               </p>
               <button
                 type="button"
@@ -222,6 +216,9 @@ function LoginPageContent() {
             </div>
           ) : (
             <form className="bb-auth-card__form" onSubmit={handleEmailSignIn}>
+              <p className="bb-auth-card__privacy">
+                Use the sign-in method linked to your invite
+              </p>
               <div className="bb-auth-card__providers" role="group" aria-label="Social sign in">
                 <button
                   type="button"
@@ -245,17 +242,17 @@ function LoginPageContent() {
               </div>
 
               <div className="bb-auth-card__divider" aria-hidden="true">
-                <span>or continue with email</span>
+                <span>or use email</span>
               </div>
 
               <label htmlFor="email" className="bb-auth-card__label">
-                Email address
+                Invited email address
               </label>
               <input
                 id="email"
                 type="email"
                 className="bb-input bb-input--lg bb-auth-card__input"
-                placeholder="you@app.bitbit.chat"
+                placeholder="name@yourcompany.com"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 required
@@ -273,11 +270,11 @@ function LoginPageContent() {
                 className="bb-auth-card__submit"
                 disabled={!canSubmit}
               >
-                {activeMethod === 'email' ? 'Sending sign-in email...' : 'Continue with email'}
+                {activeMethod === 'email' ? 'Sending sign-in link...' : 'Send sign-in link'}
               </button>
 
               <p className="bb-auth-card__privacy">
-                By continuing, you agree to our <Link href="/privacy">Privacy Policy</Link> and <Link href="/terms">Terms</Link>.
+                By continuing you agree to our <Link href="/privacy">Privacy Policy</Link> and <Link href="/terms">Terms</Link>
               </p>
             </form>
           )}
@@ -303,10 +300,13 @@ function LoginPageFallback() {
 
       <main className="bb-auth-page__content bb-stagger">
         <section className="bb-auth-page__hero" aria-label="BitBit sign in">
-          <h1 className="bb-auth-page__title">Sign in to BitBit</h1>
+          <h1 className="bb-auth-page__title">Meet BitBit</h1>
+          <p className="bb-auth-card__privacy">
+            Sign in with your invited email
+          </p>
         </section>
         <section className="bb-card bb-auth-card" aria-live="polite">
-          <p className="bb-auth-card__privacy">Loading sign-in...</p>
+          <p className="bb-auth-card__privacy">Loading...</p>
         </section>
       </main>
     </div>

@@ -23,7 +23,7 @@ ALTER TABLE dead_letter_queue ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can view own org dead letters"
   ON dead_letter_queue FOR SELECT
   USING (org_id IN (
-    SELECT org_id FROM org_members WHERE user_id = auth.uid()
+    SELECT p.org_id FROM profiles p WHERE p.id = auth.uid()
   ));
 
 CREATE POLICY "Service role can manage dead letters"

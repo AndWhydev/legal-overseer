@@ -2,6 +2,14 @@ import { getServiceClient } from '@/lib/supabase/service-client'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { logger } from './logger'
 
+function isLegacyProfileSchemaError(error: { message?: string } | null): boolean {
+  const message = error?.message ?? ''
+  return (
+    message.includes('column profiles.personal_org_id does not exist') ||
+    message.includes('column profiles.active_org_id does not exist')
+  )
+}
+
 /**
  * Resolve org_id from webhook channel credentials.
  *
@@ -55,6 +63,23 @@ export async function resolveOrgFromSession(supabase: SupabaseClient): Promise<s
     .select('personal_org_id, active_org_id')
     .eq('id', user.id)
     .single()
+
+  if (isLegacyProfileSchemaError(profileError)) {
+    const { data: legacyProfile, error: legacyError } = await supabase
+      .from('profiles')
+      .select('org_id')
+      .eq('id', user.id)
+      .single()
+
+    if (legacyError || !legacyProfile) {
+      logger.warn(
+        `[resolve-org] Failed to get legacy profile for user ${user.id}: ${legacyError?.message ?? 'profile not found'}`
+      )
+      return null
+    }
+
+    return legacyProfile.org_id ?? null
+  }
 
   if (profileError || !profile) {
     logger.warn(

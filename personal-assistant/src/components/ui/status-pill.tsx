@@ -13,14 +13,14 @@ interface StatusPillProps {
 }
 
 const COLORS: Record<StatusVariant, { fg: string; bg: string; border: string }> = {
-  success: { fg: '#22C55E', bg: 'rgba(34, 197, 94, 0.12)', border: 'rgba(34, 197, 94, 0.15)' },
-  warning: { fg: '#F59E0B', bg: 'rgba(245, 158, 11, 0.12)', border: 'rgba(245, 158, 11, 0.15)' },
-  error:   { fg: '#EF4444', bg: 'rgba(239, 68, 68, 0.12)', border: 'rgba(239, 68, 68, 0.15)' },
-  info:    { fg: '#3B82F6', bg: 'rgba(59, 130, 246, 0.12)', border: 'rgba(59, 130, 246, 0.15)' },
-  neutral: { fg: '#94A3B8', bg: 'rgba(255, 255, 255, 0.05)', border: 'rgba(255, 255, 255, 0.08)' },
-  orange:  { fg: '#FF5A1F', bg: 'rgba(255, 90, 31, 0.12)', border: 'rgba(255, 90, 31, 0.15)' },
-  purple:  { fg: '#A855F7', bg: 'rgba(168, 85, 247, 0.12)', border: 'rgba(168, 85, 247, 0.15)' },
-  cyan:    { fg: '#06B6D4', bg: 'rgba(6, 182, 212, 0.12)', border: 'rgba(6, 182, 212, 0.15)' },
+  success: { fg: 'var(--status-success-fg)', bg: 'var(--status-success-bg)', border: 'var(--status-success-border)' },
+  warning: { fg: 'var(--status-warning-fg)', bg: 'var(--status-warning-bg)', border: 'var(--status-warning-border)' },
+  error: { fg: 'var(--status-error-fg)', bg: 'var(--status-error-bg)', border: 'var(--status-error-border)' },
+  info: { fg: 'var(--status-info-fg)', bg: 'var(--status-info-bg)', border: 'var(--status-info-border)' },
+  neutral: { fg: 'var(--status-neutral-fg)', bg: 'var(--status-neutral-bg)', border: 'var(--status-neutral-border)' },
+  orange: { fg: 'var(--status-orange-fg)', bg: 'var(--status-orange-bg)', border: 'var(--status-orange-border)' },
+  purple: { fg: 'var(--status-purple-fg)', bg: 'var(--status-purple-bg)', border: 'var(--status-purple-border)' },
+  cyan: { fg: 'var(--status-cyan-fg)', bg: 'var(--status-cyan-bg)', border: 'var(--status-cyan-border)' },
 };
 
 export function StatusPill({ variant, label, icon, dot = false, className }: StatusPillProps) {

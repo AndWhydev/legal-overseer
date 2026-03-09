@@ -42,7 +42,7 @@ export async function GET() {
   // Check for session in database
   const { data: session } = await supabase
     .from('whatsapp_sessions')
-    .select('id, status, qr_code, created_at')
+    .select('id, status, qr_data, created_at')
     .eq('org_id', orgId)
     .order('created_at', { ascending: false })
     .limit(1)
@@ -64,7 +64,7 @@ export async function GET() {
   return NextResponse.json({
     status: session.status,
     sessionId: session.id,
-    qrCode: (session.qr_code as string) ?? null,
+    qrCode: (session.qr_data as string) ?? null,
     sessionAge: ageHours,
     lastActivity: null,
   })

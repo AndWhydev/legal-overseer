@@ -33,7 +33,7 @@ const rawStatusColors: Record<string, string> = {
   active: '#22C55E',
   warning: '#F59E0B',
   error: '#EF4444',
-  idle: '#475569',
+  idle: 'var(--text-dim)',
 }
 
 export function ProcessPipeline({
@@ -60,7 +60,7 @@ export function ProcessPipeline({
                 backdropFilter: 'var(--glass-blur)',
                 WebkitBackdropFilter: 'var(--glass-blur)',
                 border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
-                boxShadow: `var(--card-shadow, 0 8px 32px rgba(0, 0, 0, 0.3)), var(--card-inset, inset 0 1px 0 rgba(255, 255, 255, 0.05)), 0 0 20px ${rawColor}10`,
+                boxShadow: `var(--card-shadow), var(--card-inset), 0 0 20px ${rawColor}10`,
                 backgroundImage: `linear-gradient(135deg, ${rawColor}08 0%, transparent 60%)`,
                 minWidth: 110,
                 display: 'flex',

@@ -42,15 +42,15 @@ function formatRelativeTime(timestamp: string): string {
 }
 
 function getConfidenceColor(confidence: number): string {
-  if (confidence < 0.55) return '#ef4444'; // error red
-  if (confidence <= 0.85) return '#eab308'; // warning yellow
-  return '#22c55e'; // success green
+  if (confidence < 0.55) return 'var(--bb-red)'; // error red
+  if (confidence <= 0.85) return 'var(--bb-amber)'; // warning yellow
+  return 'var(--bb-green)'; // success green
 }
 
 function getPriorityColor(priority: ApprovalItem['priority']): string {
-  if (priority === 'urgent') return '#ef4444'; // error red
-  if (priority === 'normal') return '#eab308'; // warning yellow
-  return '#94A3B8'; // neutral
+  if (priority === 'urgent') return 'var(--bb-red)'; // error red
+  if (priority === 'normal') return 'var(--bb-amber)'; // warning yellow
+  return 'var(--text-secondary)'; // neutral
 }
 
 function toPrettyLabel(value: string): string {
@@ -84,11 +84,11 @@ export function ApprovalCard({ approval, isResolving = false, onApprove, onRejec
   const glassCard: React.CSSProperties = {
     padding: '20px',
     borderRadius: 16,
-    background: hovered ? 'rgba(20, 28, 40, 0.7)' : 'rgba(15, 20, 30, 0.6)',
-    backdropFilter: 'blur(20px) saturate(1.2)',
-    WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
-    border: '1px solid rgba(255, 255, 255, 0.03)',
-    boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+    background: hovered ? 'var(--bb-surface-hover)' : 'var(--glass-card-bg)',
+    backdropFilter: 'var(--glass-card-blur)',
+    WebkitBackdropFilter: 'var(--glass-card-blur)',
+    border: '1px solid var(--glass-card-border)',
+    boxShadow: 'var(--glass-card-inset)',
     transition: 'all 200ms',
   };
 
@@ -100,8 +100,8 @@ export function ApprovalCard({ approval, isResolving = false, onApprove, onRejec
     fontSize: 11,
     fontWeight: 600,
     letterSpacing: '0.02em',
-    background: 'rgba(255, 255, 255, 0.06)',
-    color: 'var(--text-secondary, #94A3B8)',
+    background: 'var(--glass-hover-bg)',
+    color: 'var(--text-secondary)',
   };
 
   const coloredBadge = (color: string): React.CSSProperties => ({
@@ -131,21 +131,21 @@ export function ApprovalCard({ approval, isResolving = false, onApprove, onRejec
   const cardTitle: React.CSSProperties = {
     fontSize: 16,
     fontWeight: 600,
-    color: 'var(--text-primary, #F1F5F9)',
+    color: 'var(--text-primary)',
     lineHeight: 1.4,
     margin: 0,
   };
 
   const subtitle: React.CSSProperties = {
     fontSize: 13,
-    color: 'var(--text-secondary, #94A3B8)',
+    color: 'var(--text-secondary)',
     margin: '4px 0 0 0',
   };
 
   const contextSection: React.CSSProperties = {
     marginTop: 16,
     paddingTop: 16,
-    borderTop: '1px solid rgba(255, 255, 255, 0.05)',
+    borderTop: '1px solid var(--glass-divider)',
   };
 
   const sectionLabel: React.CSSProperties = {
@@ -153,7 +153,7 @@ export function ApprovalCard({ approval, isResolving = false, onApprove, onRejec
     fontWeight: 600,
     letterSpacing: '0.08em',
     textTransform: 'uppercase' as const,
-    color: 'var(--text-dim, #475569)',
+    color: 'var(--text-dim)',
     marginBottom: 8,
     display: 'block',
   };
@@ -172,13 +172,13 @@ export function ApprovalCard({ approval, isResolving = false, onApprove, onRejec
 
   const definitionTerm: React.CSSProperties = {
     fontSize: 13,
-    color: 'var(--text-secondary, #94A3B8)',
+    color: 'var(--text-secondary)',
   };
 
   const definitionData: React.CSSProperties = {
     fontSize: 13,
     fontWeight: 500,
-    color: 'var(--text-primary, #F1F5F9)',
+    color: 'var(--text-primary)',
     textAlign: 'right' as const,
   };
 
@@ -211,8 +211,8 @@ export function ApprovalCard({ approval, isResolving = false, onApprove, onRejec
     padding: '8px 16px',
     borderRadius: 10,
     background: 'transparent',
-    border: '1px solid rgba(239, 68, 68, 0.3)',
-    color: '#ef4444',
+    border: '1px solid var(--status-error-border)',
+    color: 'var(--bb-red)',
     fontSize: 13,
     fontWeight: 600,
     cursor: isResolving ? 'not-allowed' : 'pointer',

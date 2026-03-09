@@ -17,23 +17,23 @@ interface TourStep {
 const TOUR_STEPS: TourStep[] = [
   {
     id: 'welcome',
-    title: 'Welcome back!',
-    description: 'BitBit is ready to help. Let me show you around in 30 seconds.',
+    title: 'Welcome to BitBit',
+    description: 'Quick tour — 30 seconds and you\'ll know where everything is.',
     icon: Gauge,
     position: 'center',
   },
   {
     id: 'command-center',
     title: 'Dashboard',
-    description: 'Your command center. See pending approvals, hot leads, overdue tasks, and quick actions all in one place.',
+    description: 'Approvals, tasks, leads, and anything that needs attention — all here.',
     icon: Gauge,
     tabId: 'dashboard',
     position: 'center',
   },
   {
     id: 'chat',
-    title: 'Chat with BitBit',
-    description: 'Ask me anything. I can draft emails, manage tasks, look up information, and handle things on your behalf.',
+    title: 'Chat',
+    description: 'Ask me to draft an email, check on an invoice, or look something up. I work across all your connected tools.',
     icon: Handshake,
     tabId: 'chat',
     position: 'center',
@@ -41,7 +41,7 @@ const TOUR_STEPS: TourStep[] = [
   {
     id: 'approvals',
     title: 'Approvals',
-    description: 'When I want to send emails, create invoices, or take actions, I ask for your approval here. Stay in control.',
+    description: 'Before I send anything or take action, I check with you here first.',
     icon: ShieldCheck,
     tabId: 'approvals',
     position: 'center',
@@ -49,7 +49,7 @@ const TOUR_STEPS: TourStep[] = [
   {
     id: 'settings',
     title: 'Connections & Settings',
-    description: 'Connect your email, calendar, and other services here. Configure how I behave and what I can do.',
+    description: 'Add or remove connected services, and adjust how BitBit works.',
     icon: Settings,
     tabId: 'settings',
     position: 'center',
@@ -148,7 +148,7 @@ export function OnboardingTour({ onNavigate }: OnboardingTourProps) {
           position: 'fixed',
           inset: 0,
           zIndex: 9998,
-          background: 'rgba(0, 0, 0, 0.6)',
+          background: 'var(--bg-overlay)',
           backdropFilter: 'blur(4px)',
           WebkitBackdropFilter: 'blur(4px)',
         }}
@@ -171,7 +171,7 @@ export function OnboardingTour({ onNavigate }: OnboardingTourProps) {
       >
         <div
           style={{
-            background: 'var(--bg-card, rgba(15, 20, 30, 0.95))',
+            background: 'var(--bg-card)',
             backdropFilter: 'blur(24px)',
             WebkitBackdropFilter: 'blur(24px)',
             border: '1px solid var(--border-subtle)',
@@ -218,7 +218,7 @@ export function OnboardingTour({ onNavigate }: OnboardingTourProps) {
               marginBottom: '20px',
             }}
           >
-            <Icon size={24} style={{ color: 'var(--bb-orange, #ff6b35)' }} />
+            <Icon size={24} style={{ color: 'var(--bb-orange)' }} />
           </div>
 
           {/* Content */}
@@ -262,7 +262,7 @@ export function OnboardingTour({ onNavigate }: OnboardingTourProps) {
                     borderRadius: '3px',
                     background:
                       i === stepIndex
-                        ? 'var(--bb-orange, #ff6b35)'
+                        ? 'var(--bb-orange)'
                         : 'rgba(255, 255, 255, 0.2)',
                     transition: 'all 0.2s ease',
                   }}
@@ -290,7 +290,7 @@ export function OnboardingTour({ onNavigate }: OnboardingTourProps) {
                     transition: 'all 0.15s ease',
                   }}
                   onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLElement).style.background = 'rgba(255, 255, 255, 0.08)';
+                    (e.currentTarget as HTMLElement).style.background = 'var(--glass-hover-bg)';
                   }}
                   onMouseLeave={(e) => {
                     (e.currentTarget as HTMLElement).style.background = 'transparent';
@@ -305,7 +305,7 @@ export function OnboardingTour({ onNavigate }: OnboardingTourProps) {
                   padding: '8px 20px',
                   borderRadius: '8px',
                   border: 'none',
-                  background: 'var(--bb-orange, #ff6b35)',
+                  background: 'var(--bb-orange)',
                   color: 'white',
                   cursor: 'pointer',
                   fontSize: '13px',

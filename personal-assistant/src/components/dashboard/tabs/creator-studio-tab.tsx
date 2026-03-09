@@ -163,7 +163,7 @@ function IOSPreview({ deck }: { deck: ReturnType<typeof composeCreatorStudioDeck
             className="rounded-[52px] border p-2.5 shadow-2xl"
             style={{
               borderColor: 'rgba(255,255,255,0.14)',
-              background: 'linear-gradient(170deg, rgba(10,10,11,0.95), rgba(20,20,24,0.9))',
+              background: 'linear-gradient(170deg, var(--bg-primary), var(--bg-card))',
             }}
           >
             <div
@@ -538,7 +538,7 @@ export default function CreatorStudioTab() {
                         className="rounded-xl border p-3.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-primary/30"
                         style={{
                           borderColor: active ? 'var(--bb-orange)' : 'var(--border-subtle)',
-                          background: active ? 'rgba(255,90,31,0.1)' : 'rgba(255,255,255,0.02)',
+                          background: active ? 'rgba(255,90,31,0.1)' : 'var(--glass-interactive-bg)',
                         }}
                         onClick={() => setField('wallpaper', wallpaper.value)}
                         role="radio"
@@ -602,7 +602,7 @@ export default function CreatorStudioTab() {
                       <div className="flex items-center gap-3">
                         <span
                           className="inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold"
-                          style={{ background: 'rgba(255,255,255,0.08)', color: 'var(--text-secondary)' }}
+                          style={{ background: 'var(--glass-interactive-border)', color: 'var(--text-secondary)' }}
                         >
                           {index + 1}
                         </span>

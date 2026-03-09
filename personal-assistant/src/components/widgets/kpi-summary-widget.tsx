@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { StatCard } from '@/components/ui/data-viz';
-import { ShieldCheck, Handshake, AlertCircle, Inbox, CheckCircle2 } from 'lucide-react';
 
 export function KpiSummaryWidget() {
   const [approvalCount, setApprovalCount] = useState(0);
@@ -33,27 +32,32 @@ export function KpiSummaryWidget() {
       <StatCard
         label="Pending Approvals"
         value={approvalCount}
-        icon={<ShieldCheck style={{ color: 'var(--bb-status-warning)' }} />}
+        subtitle="Awaiting review"
+        color="var(--bb-status-warning)"
       />
       <StatCard
         label="Active Leads"
         value={leadCount}
-        icon={<Handshake style={{ color: 'var(--bb-status-info)' }} />}
+        subtitle="In pipeline"
+        color="var(--bb-status-info)"
       />
       <StatCard
         label="Overdue Tasks"
         value={overdueCount}
-        icon={<AlertCircle style={{ color: 'var(--bb-status-error)' }} />}
+        subtitle="Past due date"
+        color="var(--bb-status-error)"
       />
       <StatCard
         label="Unread Messages"
         value={inboxCount}
-        icon={<Inbox style={{ color: 'var(--bb-purple)' }} />}
+        subtitle="Inbox"
+        color="var(--bb-purple)"
       />
       <StatCard
         label="System Status"
         value="Nominal"
-        icon={<CheckCircle2 style={{ color: 'var(--bb-status-success)' }} />}
+        subtitle="All systems go"
+        color="var(--bb-status-success)"
       />
     </div>
   );

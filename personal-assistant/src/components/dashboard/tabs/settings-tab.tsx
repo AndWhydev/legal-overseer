@@ -8,6 +8,8 @@ import { createClient } from '@/lib/supabase/client';
 import { TabShell } from '@/components/ui/tab-shell';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { logger } from '@/lib/core/logger';
+import { useTheme, type ThemeName } from '@/lib/theme/theme-provider';
+import { DEFAULT_COLOR_MODE, resolveStoredColorMode, resolveThemeColor } from '@/lib/theme/defaults';
 
 // ─── Agent types ─────────────────────────────────────────────────────────────
 
@@ -54,11 +56,11 @@ interface UserProfile {
 const glassCard: React.CSSProperties = {
   padding: '20px',
   borderRadius: 16,
-  background: 'rgba(15, 20, 30, 0.6)',
-  backdropFilter: 'blur(20px) saturate(1.2)',
-  WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
-  border: '1px solid rgba(255, 255, 255, 0.03)',
-  boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+  background: 'var(--glass-card-bg)',
+  backdropFilter: 'var(--glass-card-blur)',
+  WebkitBackdropFilter: 'var(--glass-card-blur)',
+  border: '1px solid var(--glass-card-border)',
+  boxShadow: 'var(--glass-card-inset)',
 };
 
 const glassInput: React.CSSProperties = {
@@ -66,8 +68,8 @@ const glassInput: React.CSSProperties = {
   padding: '10px 14px',
   borderRadius: 10,
   background: 'rgba(13, 17, 23, 0.6)',
-  border: '1px solid rgba(255, 255, 255, 0.05)',
-  color: 'var(--text-primary, #F1F5F9)',
+  border: '1px solid var(--glass-interactive-border)',
+  color: 'var(--text-primary)',
   fontSize: 14,
   outline: 'none',
   transition: 'border-color 200ms, box-shadow 200ms',
@@ -76,19 +78,19 @@ const glassInput: React.CSSProperties = {
 const glassInputFocus: React.CSSProperties = {
   ...glassInput,
   borderColor: 'rgba(255, 255, 255, 0.2)',
-  boxShadow: '0 0 0 2px rgba(255, 90, 31, 0.15)',
+  boxShadow: 'var(--border-focus-ring)',
 };
 
 const pillBtn: React.CSSProperties = {
   padding: '6px 14px',
   borderRadius: 20,
-  background: 'rgba(10, 14, 23, 0.42)',
-  backdropFilter: 'blur(22px) saturate(1.2)',
-  WebkitBackdropFilter: 'blur(22px) saturate(1.2)',
-  boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.06)',
+  background: 'var(--glass-pill-bg)',
+  backdropFilter: 'var(--glass-blur)',
+  WebkitBackdropFilter: 'var(--glass-blur)',
+  boxShadow: 'var(--glass-card-inset)',
   border: 'none',
   fontSize: 12,
-  color: 'var(--text-secondary, #94A3B8)',
+  color: 'var(--text-secondary)',
   cursor: 'pointer',
   transition: 'all 200ms',
 };
@@ -115,8 +117,8 @@ const ghostBtn: React.CSSProperties = {
   padding: '8px 16px',
   borderRadius: 10,
   background: 'transparent',
-  border: '1px solid rgba(255, 255, 255, 0.06)',
-  color: 'var(--text-primary, #F1F5F9)',
+  border: '1px solid var(--glass-interactive-border)',
+  color: 'var(--text-primary)',
   fontSize: 13,
   fontWeight: 500,
   cursor: 'pointer',
@@ -128,10 +130,10 @@ const listRow: React.CSSProperties = {
   alignItems: 'center',
   padding: '12px 18px',
   borderRadius: 12,
-  background: 'rgba(10, 14, 23, 0.5)',
-  backdropFilter: 'blur(26px) saturate(1.15)',
-  WebkitBackdropFilter: 'blur(26px) saturate(1.15)',
-  boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+  background: 'var(--glass-pill-bg)',
+  backdropFilter: 'var(--glass-blur)',
+  WebkitBackdropFilter: 'var(--glass-blur)',
+  boxShadow: 'var(--glass-card-inset)',
   border: 'none',
   transition: 'background 200ms',
 };
@@ -144,8 +146,8 @@ const badge: React.CSSProperties = {
   fontSize: 11,
   fontWeight: 600,
   letterSpacing: '0.02em',
-  background: 'rgba(255, 255, 255, 0.06)',
-  color: 'var(--text-secondary, #94A3B8)',
+  background: 'var(--glass-hover-bg)',
+  color: 'var(--text-secondary)',
 };
 
 const sectionHeader: React.CSSProperties = {
@@ -153,20 +155,20 @@ const sectionHeader: React.CSSProperties = {
   fontWeight: 600,
   letterSpacing: '0.08em',
   textTransform: 'uppercase' as const,
-  color: 'var(--text-dim, #475569)',
+  color: 'var(--text-dim)',
   marginBottom: 12,
 };
 
 const cardTitle: React.CSSProperties = {
   fontSize: 14,
   fontWeight: 600,
-  color: 'var(--text-primary, #F1F5F9)',
+  color: 'var(--text-primary)',
   marginBottom: 4,
 };
 
 const cardDescription: React.CSSProperties = {
   fontSize: 13,
-  color: 'var(--text-secondary, #94A3B8)',
+  color: 'var(--text-secondary)',
   marginBottom: 16,
 };
 
@@ -186,7 +188,7 @@ function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: 
         borderRadius: 9999,
         transition: 'background-color 200ms',
         border: 'none',
-        background: checked ? 'var(--bb-orange, #FF5A1F)' : 'rgba(255,255,255,0.12)',
+        background: checked ? 'var(--bb-orange)' : 'var(--glass-interactive-border)',
       }}
       role="switch"
       aria-checked={checked}
@@ -221,8 +223,8 @@ function AgentTogglesSection({ enabledAgents, onToggle }: { enabledAgents: strin
         {AGENT_TYPES.map(agent => (
           <div key={agent.id} style={{ ...listRow, justifyContent: 'space-between' }}>
             <div>
-              <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)' }}>{agent.label}</p>
-              <p style={{ fontSize: 12, color: 'var(--text-secondary, #94A3B8)' }}>{agent.description}</p>
+              <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>{agent.label}</p>
+              <p style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{agent.description}</p>
             </div>
             <Toggle
               checked={enabledAgents.includes(agent.id)}
@@ -250,7 +252,7 @@ function CostLimitsSection({
       <p style={cardDescription}>Set spending limits for AI operations.</p>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         <div>
-          <label style={{ display: 'block', marginBottom: 8, fontSize: 13, color: 'var(--text-secondary, #94A3B8)' }}>
+          <label style={{ display: 'block', marginBottom: 8, fontSize: 13, color: 'var(--text-secondary)' }}>
             Daily Cost Limit (USD)
           </label>
           <input
@@ -265,7 +267,7 @@ function CostLimitsSection({
           />
         </div>
         <div>
-          <label style={{ display: 'block', marginBottom: 8, fontSize: 13, color: 'var(--text-secondary, #94A3B8)' }}>
+          <label style={{ display: 'block', marginBottom: 8, fontSize: 13, color: 'var(--text-secondary)' }}>
             Monthly Cost Limit (USD)
           </label>
           <input
@@ -326,7 +328,7 @@ function WhatsAppConnectCard() {
       if (session?.status === 'connected') {
         setConnected(true);
         setConnectedPhone(session.phone_number);
-      } else if (session?.status === 'qr_pending') {
+      } else if (session?.status === 'pairing') {
         setSessionId(session.id);
       }
     })();
@@ -343,7 +345,7 @@ function WhatsAppConnectCard() {
 
       const { data: session, error } = await supabase
         .from('whatsapp_sessions')
-        .insert({ org_id: profile.org_id, status: 'qr_pending' })
+        .insert({ org_id: profile.org_id, status: 'pairing' })
         .select('id')
         .single();
 
@@ -381,9 +383,9 @@ function WhatsAppConnectCard() {
       {connected ? (
         <div style={{ ...listRow, justifyContent: 'space-between' }}>
           <div>
-            <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)' }}>Connected</p>
+            <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>Connected</p>
             {connectedPhone && (
-              <p style={{ fontSize: 12, color: 'var(--text-secondary, #94A3B8)', fontFamily: 'monospace' }}>{connectedPhone}</p>
+              <p style={{ fontSize: 12, color: 'var(--text-secondary)', fontFamily: 'monospace' }}>{connectedPhone}</p>
             )}
           </div>
           <button
@@ -468,8 +470,8 @@ function ChannelConfigSection() {
             <div key={ch.id} style={{ ...listRow, justifyContent: 'space-between' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <div>
-                  <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)' }}>{ch.label}</p>
-                  <p style={{ fontSize: 12, color: 'var(--text-secondary, #94A3B8)', fontFamily: 'monospace' }}>
+                  <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>{ch.label}</p>
+                  <p style={{ fontSize: 12, color: 'var(--text-secondary)', fontFamily: 'monospace' }}>
                     {state?.maskedKey || 'Not configured'}
                   </p>
                 </div>
@@ -478,8 +480,8 @@ function ChannelConfigSection() {
                 <span
                   style={{
                     ...badge,
-                    background: state?.connected ? 'rgba(34, 197, 94, 0.12)' : 'rgba(255, 255, 255, 0.06)',
-                    color: state?.connected ? '#22c55e' : 'var(--text-secondary, #94A3B8)',
+                    background: state?.connected ? 'rgba(34, 197, 94, 0.12)' : 'var(--glass-hover-bg)',
+                    color: state?.connected ? '#22c55e' : 'var(--text-secondary)',
                   }}
                 >
                   {state?.connected ? 'Connected' : 'Disconnected'}
@@ -549,22 +551,22 @@ function VoiceProfileEditor({ supabase }: { supabase: SupabaseClient | null }) {
         {profiles.map(p => (
           <div key={p.id} style={{ ...listRow, justifyContent: 'space-between' }}>
             <div>
-              <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)' }}>{p.name}</p>
-              <p style={{ fontSize: 12, color: 'var(--text-secondary, #94A3B8)' }}>{p.tone} / {p.style}</p>
+              <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>{p.name}</p>
+              <p style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{p.tone} / {p.style}</p>
             </div>
             <div style={{ display: 'flex', gap: 8 }}>
               <button
                 onClick={() => setEditing({ ...p })}
                 style={{
                   fontSize: 12,
-                  color: 'var(--text-secondary, #94A3B8)',
+                  color: 'var(--text-secondary)',
                   background: 'transparent',
                   border: 'none',
                   cursor: 'pointer',
                   transition: 'color 200ms',
                 }}
-                onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--text-primary, #F1F5F9)')}
-                onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-secondary, #94A3B8)')}
+                onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--text-primary)')}
+                onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-secondary)')}
               >
                 Edit
               </button>
@@ -593,8 +595,8 @@ function VoiceProfileEditor({ supabase }: { supabase: SupabaseClient | null }) {
             flexDirection: 'column',
             gap: 12,
             borderRadius: 12,
-            border: '1px solid rgba(255, 255, 255, 0.06)',
-            background: 'rgba(10, 14, 23, 0.3)',
+            border: '1px solid var(--glass-interactive-border)',
+            background: 'var(--bg-card)',
             padding: 16,
           }}>
             <input
@@ -685,7 +687,7 @@ function PolicyPackEditor({
       <p style={cardDescription}>Configure approval thresholds and escalation rules.</p>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         <div>
-          <label style={{ display: 'block', marginBottom: 8, fontSize: 13, color: 'var(--text-secondary, #94A3B8)' }}>
+          <label style={{ display: 'block', marginBottom: 8, fontSize: 13, color: 'var(--text-secondary)' }}>
             Auto-approve threshold (confidence above this = auto-act)
           </label>
           <input
@@ -701,7 +703,7 @@ function PolicyPackEditor({
           />
         </div>
         <div>
-          <label style={{ display: 'block', marginBottom: 8, fontSize: 13, color: 'var(--text-secondary, #94A3B8)' }}>
+          <label style={{ display: 'block', marginBottom: 8, fontSize: 13, color: 'var(--text-secondary)' }}>
             Queue threshold (below this = escalate immediately)
           </label>
           <input
@@ -717,7 +719,7 @@ function PolicyPackEditor({
           />
         </div>
         <div>
-          <label style={{ display: 'block', marginBottom: 8, fontSize: 13, color: 'var(--text-secondary, #94A3B8)' }}>Escalation Email</label>
+          <label style={{ display: 'block', marginBottom: 8, fontSize: 13, color: 'var(--text-secondary)' }}>Escalation Email</label>
           <input
             type="email"
             placeholder="escalation@company.com"
@@ -809,15 +811,15 @@ function DashboardLayoutSection({ supabase }: { supabase: SupabaseClient | null 
                 padding: 16,
                 textAlign: 'left',
                 transition: 'all 200ms',
-                border: '1px solid ' + (active ? '#FF5A1F' : 'rgba(255, 255, 255, 0.06)'),
+                border: '1px solid ' + (active ? '#FF5A1F' : 'var(--glass-interactive-border)'),
                 background: active ? 'rgba(255, 90, 31, 0.08)' : (hovered === p.id ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.03)'),
                 cursor: 'pointer',
               }}
             >
-              <Icon size={20} style={{ color: active ? '#FF5A1F' : 'var(--text-secondary, #94A3B8)' }} />
+              <Icon size={20} style={{ color: active ? '#FF5A1F' : 'var(--text-secondary)' }} />
               <div>
-                <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)' }}>{p.label}</p>
-                <p style={{ fontSize: 12, color: 'var(--text-secondary, #94A3B8)' }}>{p.description}</p>
+                <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>{p.label}</p>
+                <p style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{p.description}</p>
               </div>
             </button>
           );
@@ -830,7 +832,8 @@ function DashboardLayoutSection({ supabase }: { supabase: SupabaseClient | null 
 // ─── Main Settings Tab ───────────────────────────────────────────────────────
 
 function SettingsTab() {
-  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+  const { theme: currentPalette, setTheme: setPalette } = useTheme();
+  const [theme, setTheme] = useState<'dark' | 'light'>(DEFAULT_COLOR_MODE);
   const [supabase, setSupabase] = useState<SupabaseClient | null>(null);
   const [saving, setSaving] = useState(false);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
@@ -848,9 +851,9 @@ function SettingsTab() {
 
   useEffect(() => {
     try {
-      const saved = localStorage.getItem('bitbit-theme') as 'dark' | 'light' | null;
-      if (saved) setTheme(saved);
-      else setTheme(document.documentElement.classList.contains('light') ? 'light' : 'dark');
+      const saved = localStorage.getItem('bitbit-theme');
+      if (saved) setTheme(resolveStoredColorMode(saved));
+      else setTheme(document.documentElement.classList.contains('dark') ? 'dark' : 'light');
     } catch {
       // ignore
     }
@@ -897,8 +900,11 @@ function SettingsTab() {
     const next = theme === 'dark' ? 'light' : 'dark';
     setTheme(next);
     document.documentElement.className = next;
+    document.documentElement.style.colorScheme = next;
     try { localStorage.setItem('bitbit-theme', next); } catch { /* ignore */ }
-  }, [theme]);
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', resolveThemeColor(next, currentPalette));
+  }, [currentPalette, theme]);
 
   const handleAgentToggle = (agentId: string) => {
     setSettings(prev => ({
@@ -950,7 +956,7 @@ function SettingsTab() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 24, padding: 24 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
-            <h1 style={{ fontSize: 22, fontWeight: 700, color: 'var(--text-primary, #F1F5F9)', letterSpacing: '-0.02em' }}>Settings</h1>
+            <h1 style={{ fontSize: 22, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>Settings</h1>
           </div>
           <button
             onClick={handleSaveSettings}
@@ -1025,7 +1031,7 @@ function SettingsTab() {
               <p style={cardDescription}>Manage your account details.</p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 <div>
-                  <label style={{ display: 'block', marginBottom: 8, fontSize: 13, color: 'var(--text-secondary, #94A3B8)' }}>Display Name</label>
+                  <label style={{ display: 'block', marginBottom: 8, fontSize: 13, color: 'var(--text-secondary)' }}>Display Name</label>
                   <input
                     defaultValue={userProfile?.display_name || 'User'}
                     onFocus={() => setInputFocus('displayName')}
@@ -1034,7 +1040,7 @@ function SettingsTab() {
                   />
                 </div>
                 <div>
-                  <label style={{ display: 'block', marginBottom: 8, fontSize: 13, color: 'var(--text-secondary, #94A3B8)' }}>Email</label>
+                  <label style={{ display: 'block', marginBottom: 8, fontSize: 13, color: 'var(--text-secondary)' }}>Email</label>
                   <input
                     defaultValue={userProfile?.email || ''}
                     disabled
@@ -1042,7 +1048,7 @@ function SettingsTab() {
                   />
                 </div>
                 <div>
-                  <label style={{ display: 'block', marginBottom: 8, fontSize: 13, color: 'var(--text-secondary, #94A3B8)' }}>Organization</label>
+                  <label style={{ display: 'block', marginBottom: 8, fontSize: 13, color: 'var(--text-secondary)' }}>Organization</label>
                   <input
                     defaultValue={userProfile?.organization || ''}
                     disabled
@@ -1057,24 +1063,62 @@ function SettingsTab() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: '600px' }}>
               <div style={glassCard}>
                 <h3 style={cardTitle}>Theme</h3>
-                <p style={cardDescription}>Switch between dark and light mode.</p>
-                <div style={{ ...listRow, justifyContent: 'space-between' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    {theme === 'dark' ? (
-                      <Moon size={16} style={{ color: 'var(--text-secondary, #94A3B8)' }} />
-                    ) : (
-                      <Sun size={16} style={{ color: '#eab308' }} />
-                    )}
-                    <div>
-                      <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)' }}>
-                        {theme === 'dark' ? 'Dark Mode' : 'Light Mode'}
-                      </p>
-                      <p style={{ fontSize: 12, color: 'var(--text-secondary, #94A3B8)' }}>
-                        {theme === 'dark' ? 'Easy on the eyes' : 'Bright and clean'}
-                      </p>
-                    </div>
-                  </div>
-                  <Toggle checked={theme === 'light'} onChange={toggleTheme} label="Toggle theme" />
+                <p style={cardDescription}>Choose your visual style.</p>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  {([
+                    { id: 'midnight' as ThemeName, label: 'Midnight', desc: 'Dark glassmorphic', bg: 'linear-gradient(135deg, #0a0f1a 0%, #141b2d 100%)', border: 'rgba(255,255,255,0.08)', icon: <Moon size={18} /> },
+                    { id: 'aurora' as ThemeName, label: 'Aurora', desc: 'Light glassmorphic', bg: 'linear-gradient(135deg, #F5E6D8 0%, #AFCADF 100%)', border: 'rgba(0,0,0,0.08)', icon: <Sun size={18} /> },
+                  ]).map(t => {
+                    const active = currentPalette === t.id;
+                    return (
+                      <button
+                        key={t.id}
+                        onClick={() => setPalette(t.id)}
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          gap: 10,
+                          padding: 16,
+                          borderRadius: 14,
+                          border: active ? '2px solid var(--accent)' : `1px solid ${t.border}`,
+                          background: 'var(--bg-card)',
+                          cursor: 'pointer',
+                          transition: 'all 200ms',
+                          position: 'relative',
+                          overflow: 'hidden',
+                        }}
+                      >
+                        <div style={{
+                          width: '100%',
+                          height: 60,
+                          borderRadius: 8,
+                          background: t.bg,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: t.id === 'midnight' ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.5)',
+                        }}>
+                          {t.icon}
+                        </div>
+                        <div style={{ textAlign: 'center' }}>
+                          <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>{t.label}</p>
+                          <p style={{ fontSize: 11, color: 'var(--text-secondary)', margin: '2px 0 0' }}>{t.desc}</p>
+                        </div>
+                        {active && (
+                          <div style={{
+                            position: 'absolute',
+                            top: 8,
+                            right: 8,
+                            width: 8,
+                            height: 8,
+                            borderRadius: '50%',
+                            background: 'var(--accent)',
+                          }} />
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -1088,8 +1132,8 @@ function SettingsTab() {
                     onMouseLeave={() => setPreferencesHovered(null)}
                   >
                     <div>
-                      <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)' }}>Autonomy Level</p>
-                      <p style={{ fontSize: 12, color: 'var(--text-secondary, #94A3B8)' }}>How much the agent can do without asking</p>
+                      <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>Autonomy Level</p>
+                      <p style={{ fontSize: 12, color: 'var(--text-secondary)' }}>How much the agent can do without asking</p>
                     </div>
                     <span style={badge}>Medium</span>
                   </div>
@@ -1099,8 +1143,8 @@ function SettingsTab() {
                     onMouseLeave={() => setPreferencesHovered(null)}
                   >
                     <div>
-                      <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)' }}>Communication Style</p>
-                      <p style={{ fontSize: 12, color: 'var(--text-secondary, #94A3B8)' }}>Agent response verbosity</p>
+                      <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>Communication Style</p>
+                      <p style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Agent response verbosity</p>
                     </div>
                     <span style={badge}>Concise</span>
                   </div>
@@ -1110,8 +1154,8 @@ function SettingsTab() {
                     onMouseLeave={() => setPreferencesHovered(null)}
                   >
                     <div>
-                      <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)' }}>Default Email Action</p>
-                      <p style={{ fontSize: 12, color: 'var(--text-secondary, #94A3B8)' }}>What to do with outgoing emails</p>
+                      <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>Default Email Action</p>
+                      <p style={{ fontSize: 12, color: 'var(--text-secondary)' }}>What to do with outgoing emails</p>
                     </div>
                     <span style={badge}>Draft</span>
                   </div>

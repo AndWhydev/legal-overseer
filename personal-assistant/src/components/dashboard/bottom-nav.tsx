@@ -65,8 +65,8 @@ export function BottomNav({
         justifyContent: 'space-around',
         width: '100%',
         height: '100%',
-        background: '#0A0F1A',
-        borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+        background: 'var(--bg-primary)',
+        borderTop: '1px solid var(--glass-interactive-border)',
         padding: '0 4px',
         paddingBottom: 'env(safe-area-inset-bottom)',
         gap: '2px',
@@ -75,7 +75,7 @@ export function BottomNav({
       {visibleItems.map(item => {
         const Icon = item.icon;
         const active = item.id === activeTabId;
-        const activeColor = active ? '#FF5A1F' : '#94A3B8';
+        const activeColor = active ? '#FF5A1F' : 'var(--text-secondary)';
         const label = composition.labelOverrides[item.id] ?? item.label;
 
         const badgeDef = BADGE_CONFIG[item.id];

@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "../styles/bitbit-design-system.css";
+@import "../styles/theme-aurora.css";
 @import "../styles/temp-settings.css";
 @import "../styles/temp-approvals.css";
 @import "../styles/temp-channels.css";
@@ -66,13 +67,13 @@
   --radius-xl: calc(var(--radius) + 4px);
   --radius-2xl: calc(var(--radius) + 8px);
 
-  /* ── BitBit Design System Tokens ── */
-  --color-bb-bg-primary: #0A0E1A;
+  /* ── BitBit Design System Tokens (reference semantic vars) ── */
+  --color-bb-bg-primary: var(--bg-primary, #0A0E1A);
   --color-bb-bg-secondary: #0D1117;
-  --color-bb-bg-card: #131B26;
-  --color-bb-bg-sidebar: #0A0F16;
-  --color-bb-bg-elevated: #1A2332;
-  --color-bb-border-subtle: #1E2D3D;
+  --color-bb-bg-card: var(--bg-card, #131B26);
+  --color-bb-bg-sidebar: var(--bg-sidebar, #0A0F16);
+  --color-bb-bg-elevated: var(--bg-elevated, #1A2332);
+  --color-bb-border-subtle: var(--border-subtle, #1E2D3D);
   --color-bb-border-active: #FF5A1F;
   --color-bb-orange: #FF5A1F;
   --color-bb-orange-light: #FF7A45;
@@ -82,9 +83,9 @@
   --color-bb-red: #EF4444;
   --color-bb-purple: #A855F7;
   --color-bb-cyan: #06B6D4;
-  --color-bb-text-primary: #F0F0F0;
-  --color-bb-text-secondary: #94A3B8;  /* was #6B7280 */
-  --color-bb-text-dim: #64748B;        /* was #4B5563 */
+  --color-bb-text-primary: var(--text-primary);
+  --color-bb-text-secondary: var(--text-secondary);
+  --color-bb-text-dim: var(--text-dim);
   --spacing-sidebar: 64px;
   --spacing-topbar: 56px;
   --font-bb-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -109,8 +110,9 @@ body {
   letter-spacing: -0.01em;
 }
 
-/* BitBit — Anthropic-inspired dark */
+/* BitBit base tokens */
 :root {
+  color-scheme: light;
   --radius: 0.625rem;
 
   /* Backgrounds */
@@ -158,6 +160,63 @@ body {
   --text-primary: #F5F0E8;
   --text-secondary: #B8B0A0;
   --text-muted: #8A8279;            /* upgraded from #7A7468 — 4.5:1, passes AA */
+  --text-dim: #8A8279;              /* 5.1:1 on #0A0A0B — AA pass */
+
+  /* Background colors */
+  --bg-primary: #0A0F1A;
+  --bg-card: rgba(15, 20, 30, 0.3);
+  --bg-overlay: rgba(0, 0, 0, 0.55);
+
+  /* Glass tokens */
+  --glass-card-bg: rgba(15, 20, 30, 0.6);
+  --glass-card-bg-light: rgba(15, 20, 30, 0.45);
+  --glass-card-border: rgba(255, 255, 255, 0.03);
+  --glass-card-inset: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  --glass-card-blur: blur(20px) saturate(1.2);
+  --glass-bg-heavy: rgba(15, 20, 30, 0.85);
+  --glass-blur: blur(24px);
+  --glass-pill-bg: rgba(10, 14, 23, 0.42);
+  --glass-pill-inset: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --glass-hover-bg: rgba(255, 255, 255, 0.06);
+  --glass-divider: rgba(255, 255, 255, 0.04);
+  --glass-interactive-bg: rgba(255, 255, 255, 0.04);
+  --glass-interactive-border: rgba(255, 255, 255, 0.08);
+
+  /* Shadow tokens */
+  --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --card-shadow-hover: 0 20px 60px rgba(0, 0, 0, 0.6);
+
+  /* Status pill tokens */
+  --status-success-fg: #22C55E;
+  --status-success-bg: rgba(34, 197, 94, 0.12);
+  --status-success-border: rgba(34, 197, 94, 0.25);
+  --status-warning-fg: #F59E0B;
+  --status-warning-bg: rgba(245, 158, 11, 0.12);
+  --status-warning-border: rgba(245, 158, 11, 0.25);
+  --status-error-fg: #EF4444;
+  --status-error-bg: rgba(239, 68, 68, 0.12);
+  --status-error-border: rgba(239, 68, 68, 0.25);
+  --status-info-fg: #3B82F6;
+  --status-info-bg: rgba(59, 130, 246, 0.12);
+  --status-info-border: rgba(59, 130, 246, 0.25);
+  --status-pending-fg: #F59E0B;
+  --status-pending-bg: rgba(245, 158, 11, 0.12);
+  --status-pending-border: rgba(245, 158, 11, 0.25);
+  --status-active-fg: #22C55E;
+  --status-active-bg: rgba(34, 197, 94, 0.12);
+  --status-active-border: rgba(34, 197, 94, 0.25);
+  --status-neutral-fg: #94A3B8;
+  --status-neutral-bg: rgba(148, 163, 184, 0.12);
+  --status-neutral-border: rgba(148, 163, 184, 0.25);
+  --status-purple-fg: #A855F7;
+  --status-purple-bg: rgba(168, 85, 247, 0.12);
+  --status-purple-border: rgba(168, 85, 247, 0.25);
+  --status-orange-fg: #FF5A1F;
+  --status-orange-bg: rgba(255, 90, 31, 0.12);
+  --status-orange-border: rgba(255, 90, 31, 0.25);
+  --status-cyan-fg: #06B6D4;
+  --status-cyan-bg: rgba(6, 182, 212, 0.12);
+  --status-cyan-border: rgba(6, 182, 212, 0.25);
 
   /* Charts */
   --chart-1: #FF5A1F;
@@ -212,6 +271,63 @@ html.light {
   --text-primary: #1A1A1B;
   --text-secondary: #5C5750;
   --text-muted: #78736A;
+  --text-dim: #78736A;              /* 4.7:1 on #FAFAF9 — AA pass */
+
+  /* Background colors (light) */
+  --bg-primary: #FAFAF9;
+  --bg-card: rgba(255, 255, 255, 0.9);
+  --bg-overlay: rgba(0, 0, 0, 0.3);
+
+  /* Glass tokens (light) */
+  --glass-card-bg: rgba(255, 255, 255, 0.95);
+  --glass-card-bg-light: rgba(255, 255, 255, 0.9);
+  --glass-card-border: rgba(0, 0, 0, 0.06);
+  --glass-card-inset: none;
+  --glass-card-blur: none;
+  --glass-bg-heavy: rgba(255, 255, 255, 0.95);
+  --glass-blur: none;
+  --glass-pill-bg: rgba(0, 0, 0, 0.04);
+  --glass-pill-inset: none;
+  --glass-hover-bg: rgba(0, 0, 0, 0.04);
+  --glass-divider: rgba(0, 0, 0, 0.06);
+  --glass-interactive-bg: rgba(0, 0, 0, 0.03);
+  --glass-interactive-border: rgba(0, 0, 0, 0.08);
+
+  /* Shadow tokens (light) */
+  --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --card-shadow-hover: 0 16px 48px rgba(0, 0, 0, 0.15);
+
+  /* Status pill tokens (light) */
+  --status-success-fg: #15803D;
+  --status-success-bg: rgba(21, 128, 61, 0.08);
+  --status-success-border: rgba(21, 128, 61, 0.2);
+  --status-warning-fg: #B45309;
+  --status-warning-bg: rgba(180, 83, 9, 0.08);
+  --status-warning-border: rgba(180, 83, 9, 0.2);
+  --status-error-fg: #DC2626;
+  --status-error-bg: rgba(220, 38, 38, 0.08);
+  --status-error-border: rgba(220, 38, 38, 0.2);
+  --status-info-fg: #2563EB;
+  --status-info-bg: rgba(37, 99, 235, 0.08);
+  --status-info-border: rgba(37, 99, 235, 0.2);
+  --status-pending-fg: #B45309;
+  --status-pending-bg: rgba(180, 83, 9, 0.08);
+  --status-pending-border: rgba(180, 83, 9, 0.2);
+  --status-active-fg: #15803D;
+  --status-active-bg: rgba(21, 128, 61, 0.08);
+  --status-active-border: rgba(21, 128, 61, 0.2);
+  --status-neutral-fg: #64748B;
+  --status-neutral-bg: rgba(100, 116, 139, 0.08);
+  --status-neutral-border: rgba(100, 116, 139, 0.2);
+  --status-purple-fg: #7C3AED;
+  --status-purple-bg: rgba(124, 58, 237, 0.08);
+  --status-purple-border: rgba(124, 58, 237, 0.2);
+  --status-orange-fg: #C2410C;
+  --status-orange-bg: rgba(194, 65, 12, 0.08);
+  --status-orange-border: rgba(194, 65, 12, 0.2);
+  --status-cyan-fg: #0E7490;
+  --status-cyan-bg: rgba(14, 116, 144, 0.08);
+  --status-cyan-border: rgba(14, 116, 144, 0.2);
 
   --chart-1: #E04E1A;
   --chart-2: #5A9B6B;
@@ -385,11 +501,11 @@ html.light ::-webkit-scrollbar-thumb:hover {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #1F1F22;
+  background: var(--border);
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #2A2A2E;
+  background: var(--border-hover);
 }
 
 

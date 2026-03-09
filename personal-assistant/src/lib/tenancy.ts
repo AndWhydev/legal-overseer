@@ -6,12 +6,24 @@ interface ProfileTenancyRow {
   active_org_id: string | null
 }
 
+interface LegacyProfileRow {
+  org_id: string | null
+}
+
 interface OrganizationRow {
   id: string
   name: string
   slug: string
   plan: string
   tier: 'personal' | 'shared'
+  settings: Record<string, unknown> | null
+}
+
+interface LegacyOrganizationRow {
+  id: string
+  name: string
+  slug: string
+  plan: string
   settings: Record<string, unknown> | null
 }
 
@@ -28,6 +40,65 @@ function toOrganization(row: OrganizationRow): Organization {
 
 function getSupabaseErrorMessage(error: { message?: string } | null): string {
   return error?.message ?? 'unknown error'
+}
+
+function isLegacySchemaError(error: { message?: string } | null): boolean {
+  const message = error?.message ?? ''
+  return (
+    message.includes('column profiles.personal_org_id does not exist') ||
+    message.includes('column profiles.active_org_id does not exist') ||
+    message.includes("Could not find the table 'public.org_members' in the schema cache") ||
+    message.includes('column organizations.tier does not exist')
+  )
+}
+
+async function loadLegacyOrgId(
+  supabase: SupabaseClient,
+  userId: string
+): Promise<string> {
+  const { data: profile, error } = await supabase
+    .from('profiles')
+    .select('org_id')
+    .eq('id', userId)
+    .single<LegacyProfileRow>()
+
+  if (error || !profile) {
+    throw new Error(`Failed to load legacy profile: ${getSupabaseErrorMessage(error)}`)
+  }
+
+  if (!profile.org_id) {
+    throw new Error('User has no org_id in legacy profile')
+  }
+
+  return profile.org_id
+}
+
+async function loadLegacyOrganization(
+  supabase: SupabaseClient,
+  orgId: string
+): Promise<Organization | null> {
+  const { data, error } = await supabase
+    .from('organizations')
+    .select('id, name, slug, plan, settings')
+    .eq('id', orgId)
+    .maybeSingle<LegacyOrganizationRow>()
+
+  if (error) {
+    throw new Error(`Failed to load legacy organization: ${getSupabaseErrorMessage(error)}`)
+  }
+
+  if (!data) {
+    return null
+  }
+
+  return {
+    id: data.id,
+    name: data.name,
+    slug: data.slug,
+    plan: data.plan,
+    tier: 'personal',
+    settings: data.settings ?? {},
+  }
 }
 
 function buildAccessibleOrgIds(
@@ -58,6 +129,20 @@ export async function getTenancyContext(
         .eq('user_id', userId)
         .returns<OrgMembership[]>(),
     ])
+
+  if (isLegacySchemaError(profileError) || isLegacySchemaError(membershipsError)) {
+    const orgId = await loadLegacyOrgId(supabase, userId)
+    const activeOrg = await loadLegacyOrganization(supabase, orgId)
+
+    return {
+      userId,
+      personalOrgId: orgId,
+      activeOrgId: orgId,
+      accessibleOrgIds: [orgId],
+      activeOrg,
+      memberships: [],
+    }
+  }
 
   if (profileError || !profile) {
     throw new Error(`Failed to load profile tenancy context: ${getSupabaseErrorMessage(profileError)}`)
@@ -107,6 +192,25 @@ export async function switchActiveOrg(
     .eq('org_id', targetOrgId)
     .maybeSingle()
 
+  if (isLegacySchemaError(membershipError)) {
+    const { data: updatedProfile, error: updateError } = await supabase
+      .from('profiles')
+      .update({ org_id: targetOrgId })
+      .eq('id', userId)
+      .select('id')
+      .maybeSingle()
+
+    if (updateError) {
+      throw new Error(`Failed to switch legacy org: ${getSupabaseErrorMessage(updateError)}`)
+    }
+
+    if (!updatedProfile) {
+      throw new Error('Profile not found while switching active organization')
+    }
+
+    return
+  }
+
   if (membershipError) {
     throw new Error(`Failed to verify organization access: ${getSupabaseErrorMessage(membershipError)}`)
   }
@@ -140,6 +244,10 @@ export async function getActiveOrgId(
     .select('personal_org_id, active_org_id')
     .eq('id', userId)
     .single<ProfileTenancyRow>()
+
+  if (isLegacySchemaError(profileError)) {
+    return loadLegacyOrgId(supabase, userId)
+  }
 
   if (profileError || !profile) {
     throw new Error(`Failed to load profile: ${getSupabaseErrorMessage(profileError)}`)

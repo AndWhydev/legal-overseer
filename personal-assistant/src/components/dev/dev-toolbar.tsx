@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Settings, X, ChevronDown, ChevronRight, RotateCcw, LogIn, LogOut, User } from 'lucide-react';
+import { Settings, X, ChevronDown, ChevronRight, RotateCcw, LogIn, LogOut, User, Sun, Moon } from 'lucide-react';
 import { ALL_MODULES } from '@/lib/modules/registry';
 import {
   useDevOverrides,
@@ -14,6 +14,7 @@ import { TABS } from '@/components/dashboard/spa-shell';
 import { INDUSTRY_PACKS } from '@/lib/industry/registry';
 import { createClient } from '@/lib/supabase/client';
 import { isSeedActive, setSeedActive } from '@/lib/dev/seed-data';
+import { DEFAULT_COLOR_MODE, resolveThemeColor, resolveStoredColorMode } from '@/lib/theme/defaults';
 
 if (process.env.NODE_ENV !== 'development') {
   // This entire module is dead-code-eliminated in production
@@ -27,13 +28,25 @@ export function DevToolbar() {
   const [showModules, setShowModules] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [seedOn, setSeedOn] = useState(false);
+  const [currentTheme, setCurrentTheme] = useState<'dark' | 'light'>(DEFAULT_COLOR_MODE);
   const overrides = useDevOverrides();
   const { modules, composition } = useEnabledModules();
 
   useEffect(() => {
     setMounted(true);
     setSeedOn(isSeedActive());
+    setCurrentTheme(resolveStoredColorMode(localStorage.getItem('bitbit-theme')));
   }, []);
+
+  const handleThemeToggle = (mode: 'dark' | 'light') => {
+    setCurrentTheme(mode);
+    localStorage.setItem('bitbit-theme', mode);
+    const html = document.documentElement;
+    html.className = mode;
+    html.style.colorScheme = mode;
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', resolveThemeColor(mode));
+  };
 
   if (process.env.NODE_ENV !== 'development') return null;
   if (!mounted) return null;
@@ -178,6 +191,32 @@ export function DevToolbar() {
             </label>
           </Section>
 
+          {/* Theme */}
+          <Section title="Theme">
+            <div style={{ display: 'flex', gap: 4 }}>
+              {(['dark', 'light'] as const).map(mode => {
+                const active = currentTheme === mode;
+                return (
+                  <button
+                    key={mode}
+                    onClick={() => handleThemeToggle(mode)}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 5,
+                      padding: '4px 10px', borderRadius: 6,
+                      border: active ? '1px solid #7c3aed' : '1px solid rgba(255,255,255,0.1)',
+                      background: active ? 'rgba(124,58,237,0.2)' : 'rgba(255,255,255,0.05)',
+                      color: active ? '#c4b5fd' : '#94a3b8',
+                      fontSize: 12, fontWeight: active ? 600 : 400, cursor: 'pointer',
+                    }}
+                  >
+                    {mode === 'dark' ? <Moon size={12} /> : <Sun size={12} />}
+                    {mode}
+                  </button>
+                );
+              })}
+            </div>
+          </Section>
+
           {/* Industry */}
           <Section title="Industry">
             <ChipGroup
@@ -217,7 +256,7 @@ export function DevToolbar() {
                     borderRadius: 6,
                     border: '1px solid rgba(255,255,255,0.1)',
                     background: 'rgba(255,255,255,0.05)',
-                    color: modules.includes(tab.id) ? '#e2e8f0' : '#475569',
+                    color: modules.includes(tab.id) ? 'var(--text-primary)' : 'var(--text-dim)',
                     fontSize: 11,
                     cursor: 'pointer',
                     textDecoration: modules.includes(tab.id) ? 'none' : 'line-through',
@@ -288,7 +327,7 @@ export function DevToolbar() {
                 padding: '4px 10px', borderRadius: 6,
                 border: '1px solid rgba(255,255,255,0.1)',
                 background: isOverriding ? 'rgba(239,68,68,0.15)' : 'transparent',
-                color: isOverriding ? '#f87171' : '#475569',
+                color: isOverriding ? 'var(--bb-red)' : 'var(--text-dim)',
                 fontSize: 11, fontWeight: 600, cursor: isOverriding ? 'pointer' : 'default',
               }}
             >

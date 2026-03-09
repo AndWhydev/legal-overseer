@@ -48,7 +48,7 @@ export function ProspectDiscoveryPanel({ open, onClose }: ProspectDiscoveryPanel
         style={{
           position: 'fixed',
           inset: 0,
-          background: 'rgba(0, 0, 0, 0.4)',
+          background: 'var(--bg-overlay)',
           zIndex: 52,
           backdropFilter: 'blur(2px)',
         }}
@@ -63,8 +63,8 @@ export function ProspectDiscoveryPanel({ open, onClose }: ProspectDiscoveryPanel
         width: '100%',
         maxWidth: 560,
         zIndex: 53,
-        background: 'var(--bg-primary, #0A0E17)',
-        borderLeft: '1px solid rgba(255, 255, 255, 0.06)',
+        background: 'var(--bg-primary)',
+        borderLeft: '1px solid var(--border-subtle)',
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
@@ -73,12 +73,12 @@ export function ProspectDiscoveryPanel({ open, onClose }: ProspectDiscoveryPanel
         {/* Header */}
         <div style={{
           padding: '20px 24px',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.04)',
+          borderBottom: '1px solid var(--border-subtle)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
         }}>
-          <h2 style={{ fontSize: 16, fontWeight: 700, color: '#F1F5F9', margin: 0 }}>
+          <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
             Discover Prospects
           </h2>
           <button
@@ -87,8 +87,8 @@ export function ProspectDiscoveryPanel({ open, onClose }: ProspectDiscoveryPanel
               padding: 6,
               borderRadius: 8,
               border: 'none',
-              background: 'rgba(255, 255, 255, 0.04)',
-              color: '#64748B',
+              background: 'var(--hover-bg)',
+              color: 'var(--text-dim)',
               cursor: 'pointer',
             }}
           >
@@ -102,7 +102,7 @@ export function ProspectDiscoveryPanel({ open, onClose }: ProspectDiscoveryPanel
           {!job && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div>
-                <label style={{ fontSize: 11, fontWeight: 600, color: '#64748B', display: 'block', marginBottom: 6 }}>
+                <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-dim)', display: 'block', marginBottom: 6 }}>
                   Business Type
                 </label>
                 <input
@@ -114,9 +114,9 @@ export function ProspectDiscoveryPanel({ open, onClose }: ProspectDiscoveryPanel
                     width: '100%',
                     padding: '10px 14px',
                     borderRadius: 10,
-                    border: '1px solid rgba(255, 255, 255, 0.06)',
-                    background: 'rgba(10, 14, 23, 0.4)',
-                    color: '#F1F5F9',
+                    border: '1px solid var(--border-subtle)',
+                    background: 'var(--bb-surface)',
+                    color: 'var(--text-primary)',
                     fontSize: 13,
                     outline: 'none',
                   }}
@@ -124,7 +124,7 @@ export function ProspectDiscoveryPanel({ open, onClose }: ProspectDiscoveryPanel
               </div>
 
               <div>
-                <label style={{ fontSize: 11, fontWeight: 600, color: '#64748B', display: 'block', marginBottom: 6 }}>
+                <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-dim)', display: 'block', marginBottom: 6 }}>
                   Location
                 </label>
                 <input
@@ -136,9 +136,9 @@ export function ProspectDiscoveryPanel({ open, onClose }: ProspectDiscoveryPanel
                     width: '100%',
                     padding: '10px 14px',
                     borderRadius: 10,
-                    border: '1px solid rgba(255, 255, 255, 0.06)',
-                    background: 'rgba(10, 14, 23, 0.4)',
-                    color: '#F1F5F9',
+                    border: '1px solid var(--border-subtle)',
+                    background: 'var(--bb-surface)',
+                    color: 'var(--text-primary)',
                     fontSize: 13,
                     outline: 'none',
                   }}
@@ -146,7 +146,7 @@ export function ProspectDiscoveryPanel({ open, onClose }: ProspectDiscoveryPanel
               </div>
 
               <div>
-                <label style={{ fontSize: 11, fontWeight: 600, color: '#64748B', display: 'block', marginBottom: 6 }}>
+                <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-dim)', display: 'block', marginBottom: 6 }}>
                   Limit
                 </label>
                 <input
@@ -159,9 +159,9 @@ export function ProspectDiscoveryPanel({ open, onClose }: ProspectDiscoveryPanel
                     width: 80,
                     padding: '10px 14px',
                     borderRadius: 10,
-                    border: '1px solid rgba(255, 255, 255, 0.06)',
-                    background: 'rgba(10, 14, 23, 0.4)',
-                    color: '#F1F5F9',
+                    border: '1px solid var(--border-subtle)',
+                    background: 'var(--bb-surface)',
+                    color: 'var(--text-primary)',
                     fontSize: 13,
                     outline: 'none',
                   }}
@@ -180,9 +180,9 @@ export function ProspectDiscoveryPanel({ open, onClose }: ProspectDiscoveryPanel
                   borderRadius: 12,
                   border: 'none',
                   background: businessType.trim() && location.trim()
-                    ? 'linear-gradient(135deg, var(--bb-cyan, #06B6D4) 0%, var(--bb-blue, #3B82F6) 100%)'
-                    : 'rgba(255, 255, 255, 0.04)',
-                  color: businessType.trim() && location.trim() ? '#fff' : '#475569',
+                    ? 'linear-gradient(135deg, var(--bb-cyan) 0%, var(--bb-blue) 100%)'
+                    : 'var(--hover-bg)',
+                  color: businessType.trim() && location.trim() ? '#fff' : 'var(--text-dim)',
                   fontSize: 14,
                   fontWeight: 600,
                   cursor: businessType.trim() && location.trim() ? 'pointer' : 'not-allowed',
@@ -200,24 +200,24 @@ export function ProspectDiscoveryPanel({ open, onClose }: ProspectDiscoveryPanel
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, padding: '40px 0' }}>
               <Loader2 style={{ width: 32, height: 32, color: 'var(--bb-cyan)', animation: 'spin 1s linear infinite' }} />
               <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: '#F1F5F9', marginBottom: 4 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 4 }}>
                   {job.status === 'searching' ? 'Searching...' : job.status === 'enriching' ? 'Enriching...' : 'Scoring...'}
                 </div>
-                <div style={{ fontSize: 12, color: '#64748B' }}>{job.message}</div>
+                <div style={{ fontSize: 12, color: 'var(--text-dim)' }}>{job.message}</div>
               </div>
               <div style={{
                 width: '100%',
                 maxWidth: 300,
                 height: 4,
                 borderRadius: 2,
-                background: 'rgba(255, 255, 255, 0.04)',
+                background: 'var(--hover-bg)',
                 overflow: 'hidden',
               }}>
                 <div style={{
                   width: `${job.progress}%`,
                   height: '100%',
                   borderRadius: 2,
-                  background: 'var(--bb-cyan, #06B6D4)',
+                  background: 'var(--bb-cyan)',
                   transition: 'width 0.3s ease',
                 }} />
               </div>
@@ -235,9 +235,9 @@ export function ProspectDiscoveryPanel({ open, onClose }: ProspectDiscoveryPanel
                 style={{
                   padding: '8px 16px',
                   borderRadius: 8,
-                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  border: '1px solid var(--border-active)',
                   background: 'transparent',
-                  color: '#94A3B8',
+                  color: 'var(--text-secondary)',
                   fontSize: 12,
                   cursor: 'pointer',
                 }}
@@ -251,7 +251,7 @@ export function ProspectDiscoveryPanel({ open, onClose }: ProspectDiscoveryPanel
           {job?.status === 'complete' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                <span style={{ fontSize: 13, fontWeight: 600, color: '#F1F5F9' }}>
+                <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
                   {job.results.length} prospects found
                 </span>
                 <button
@@ -259,9 +259,9 @@ export function ProspectDiscoveryPanel({ open, onClose }: ProspectDiscoveryPanel
                   style={{
                     padding: '6px 12px',
                     borderRadius: 8,
-                    border: '1px solid rgba(255, 255, 255, 0.06)',
+                    border: '1px solid var(--border-subtle)',
                     background: 'transparent',
-                    color: '#64748B',
+                    color: 'var(--text-dim)',
                     fontSize: 11,
                     cursor: 'pointer',
                   }}

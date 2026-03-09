@@ -12,18 +12,18 @@ const STATUS_CONFIG: Record<RealtimeConnectionStatus, {
 }> = {
   connected: {
     icon: Wifi,
-    color: 'var(--bb-green, #22c55e)',
+    color: 'var(--bb-green)',
     label: 'Live',
   },
   connecting: {
     icon: Loader2,
-    color: 'var(--bb-yellow, #eab308)',
+    color: 'var(--bb-amber)',
     label: 'Reconnecting',
     animate: true,
   },
   disconnected: {
     icon: WifiOff,
-    color: 'var(--bb-red, #ef4444)',
+    color: 'var(--bb-red)',
     label: 'Offline',
   },
 }

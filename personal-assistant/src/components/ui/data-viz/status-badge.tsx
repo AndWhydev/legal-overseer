@@ -12,7 +12,7 @@ export interface StatusBadgeProps {
 
 export function StatusBadge({
   label,
-  color = 'var(--bb-green, #22C55E)',
+  color = 'var(--bb-green)',
   glow = false,
   size = 'sm',
   className,

@@ -36,12 +36,12 @@ const chipBase: React.CSSProperties = {
   gap: 5,
   padding: '5px 12px',
   borderRadius: 20,
-  background: 'rgba(10, 14, 23, 0.42)',
-  boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.06)',
+  background: 'var(--glass-pill-bg)',
+  boxShadow: 'var(--glass-card-inset)',
   border: 'none',
   fontSize: 12,
   fontWeight: 500,
-  color: '#94A3B8',
+  color: 'var(--text-secondary)',
   cursor: 'pointer',
   fontFamily: 'inherit',
   transition: 'background 0.15s, color 0.15s',
@@ -49,8 +49,8 @@ const chipBase: React.CSSProperties = {
 }
 
 const chipHover: React.CSSProperties = {
-  background: 'rgba(10, 14, 23, 0.6)',
-  color: '#CBD5E1',
+  background: 'var(--glass-card-bg)',
+  color: 'var(--text-secondary)',
 }
 
 // Dropdown menu style
@@ -59,11 +59,11 @@ const menuStyle: React.CSSProperties = {
   top: 'calc(100% + 6px)',
   left: 0,
   minWidth: 160,
-  background: 'rgba(15, 20, 30, 0.95)',
-  backdropFilter: 'blur(20px) saturate(1.2)',
-  WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
+  background: 'var(--glass-card-bg)',
+  backdropFilter: 'var(--glass-card-blur)',
+  WebkitBackdropFilter: 'var(--glass-card-blur)',
   borderRadius: 14,
-  boxShadow: '0 16px 48px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.04)',
+  boxShadow: 'var(--card-shadow-hover), var(--glass-card-inset)',
   padding: '6px',
   zIndex: 10,
   overflow: 'hidden',
@@ -174,9 +174,9 @@ export function TaskDialog({
           from { opacity: 0; }
           to { opacity: 1; }
         }
-        .td-title::placeholder { color: #475569; }
-        .td-desc::placeholder { color: #3E4C5E; }
-        .td-inline-input::placeholder { color: #475569; }
+        .td-title::placeholder { color: var(--text-dim); }
+        .td-desc::placeholder { color: var(--text-dim); }
+        .td-inline-input::placeholder { color: var(--text-dim); }
       `}</style>
 
       {/* Backdrop */}
@@ -192,7 +192,7 @@ export function TaskDialog({
           alignItems: 'flex-start',
           justifyContent: 'center',
           paddingTop: '18vh',
-          background: 'rgba(0, 0, 0, 0.55)',
+          background: 'var(--bg-overlay)',
           backdropFilter: 'blur(6px)',
           WebkitBackdropFilter: 'blur(6px)',
           animation: 'td-bg-in 120ms ease-out both',
@@ -204,11 +204,11 @@ export function TaskDialog({
           style={{
             width: 440,
             maxWidth: 'calc(100vw - 32px)',
-            background: 'rgba(15, 20, 30, 0.95)',
-            backdropFilter: 'blur(24px) saturate(1.3)',
-            WebkitBackdropFilter: 'blur(24px) saturate(1.3)',
+            background: 'var(--glass-card-bg)',
+            backdropFilter: 'var(--glass-card-blur)',
+            WebkitBackdropFilter: 'var(--glass-card-blur)',
             borderRadius: 18,
-            boxShadow: '0 32px 80px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+            boxShadow: 'var(--card-shadow-hover), var(--glass-card-inset)',
             overflow: 'visible',
             animation: 'td-in 180ms cubic-bezier(0.16, 1, 0.3, 1) both',
           }}
@@ -234,7 +234,7 @@ export function TaskDialog({
                 outline: 'none',
                 fontSize: 16,
                 fontWeight: 600,
-                color: '#F1F5F9',
+                color: 'var(--text-primary)',
                 padding: 0,
                 fontFamily: 'inherit',
                 letterSpacing: '-0.01em',
@@ -257,7 +257,7 @@ export function TaskDialog({
                   border: 'none',
                   outline: 'none',
                   fontSize: 13,
-                  color: '#94A3B8',
+                  color: 'var(--text-secondary)',
                   padding: '8px 0 0',
                   fontFamily: 'inherit',
                   resize: 'none',
@@ -271,7 +271,7 @@ export function TaskDialog({
                   background: 'transparent',
                   border: 'none',
                   fontSize: 12,
-                  color: '#3E4C5E',
+                  color: 'var(--text-dim)',
                   cursor: 'pointer',
                   padding: '8px 0 0',
                   fontFamily: 'inherit',
@@ -335,11 +335,11 @@ export function TaskDialog({
                           borderRadius: 8,
                           border: 'none',
                           background: isActive
-                            ? 'rgba(255, 255, 255, 0.08)'
+                            ? 'var(--glass-interactive-border)'
                             : isHov
-                              ? 'rgba(255, 255, 255, 0.04)'
+                              ? 'var(--glass-interactive-bg)'
                               : 'transparent',
-                          color: isActive ? '#F1F5F9' : '#94A3B8',
+                          color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
                           fontSize: 12,
                           fontWeight: isActive ? 600 : 400,
                           cursor: 'pointer',
@@ -401,11 +401,11 @@ export function TaskDialog({
                           borderRadius: 8,
                           border: 'none',
                           background: isActive
-                            ? 'rgba(255, 255, 255, 0.08)'
+                            ? 'var(--glass-interactive-border)'
                             : isHov
-                              ? 'rgba(255, 255, 255, 0.04)'
+                              ? 'var(--glass-interactive-bg)'
                               : 'transparent',
-                          color: isActive ? '#F1F5F9' : '#94A3B8',
+                          color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
                           fontSize: 12,
                           fontWeight: isActive ? 600 : 400,
                           cursor: 'pointer',
@@ -439,7 +439,7 @@ export function TaskDialog({
                   style={{
                     background: 'transparent',
                     border: 'none',
-                    color: '#64748B',
+                    color: 'var(--text-dim)',
                     cursor: 'pointer',
                     padding: 0,
                     display: 'flex',
@@ -497,7 +497,7 @@ export function TaskDialog({
                       border: 'none',
                       outline: 'none',
                       fontSize: 12,
-                      color: '#F1F5F9',
+                      color: 'var(--text-primary)',
                       padding: 0,
                       fontFamily: 'inherit',
                     }}
@@ -512,7 +512,7 @@ export function TaskDialog({
                 style={{
                   ...chipBase,
                   ...(activeMenu === 'deadline' ? chipHover : {}),
-                  ...(deadline ? { color: '#CBD5E1' } : {}),
+                  ...(deadline ? { color: 'var(--text-secondary)' } : {}),
                 }}
                 onMouseEnter={(e) => {
                   if (activeMenu !== 'deadline') Object.assign(e.currentTarget.style, chipHover)
@@ -520,7 +520,7 @@ export function TaskDialog({
                 onMouseLeave={(e) => {
                   if (activeMenu !== 'deadline') {
                     e.currentTarget.style.background = chipBase.background as string
-                    e.currentTarget.style.color = deadline ? '#CBD5E1' : chipBase.color as string
+                    e.currentTarget.style.color = deadline ? 'var(--text-secondary)' : chipBase.color as string
                   }
                 }}
                 onClick={() => setActiveMenu(activeMenu === 'deadline' ? null : 'deadline')}
@@ -552,7 +552,7 @@ export function TaskDialog({
                       border: 'none',
                       outline: 'none',
                       fontSize: 12,
-                      color: '#F1F5F9',
+                      color: 'var(--text-primary)',
                       padding: 0,
                       fontFamily: 'inherit',
                     }}
@@ -568,7 +568,7 @@ export function TaskDialog({
             alignItems: 'center',
             justifyContent: 'space-between',
             padding: '12px 22px',
-            borderTop: '1px solid rgba(255, 255, 255, 0.04)',
+            borderTop: '1px solid var(--glass-divider)',
           }}>
             <div>
               {task && onDelete && (
@@ -580,7 +580,7 @@ export function TaskDialog({
                     gap: 5,
                     background: 'transparent',
                     border: 'none',
-                    color: '#64748B',
+                    color: 'var(--text-dim)',
                     fontSize: 12,
                     cursor: 'pointer',
                     padding: '4px 0',
@@ -588,7 +588,7 @@ export function TaskDialog({
                     transition: 'color 0.15s',
                   }}
                   onMouseEnter={(e) => { e.currentTarget.style.color = '#f87171' }}
-                  onMouseLeave={(e) => { e.currentTarget.style.color = '#64748B' }}
+                  onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-dim)' }}
                 >
                   <Trash2 size={13} />
                   Delete
@@ -600,12 +600,12 @@ export function TaskDialog({
                 onClick={() => onOpenChange(false)}
                 style={{
                   ...chipBase,
-                  color: '#64748B',
+                  color: 'var(--text-dim)',
                 }}
                 onMouseEnter={(e) => Object.assign(e.currentTarget.style, chipHover)}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.background = chipBase.background as string
-                  e.currentTarget.style.color = '#64748B'
+                  e.currentTarget.style.color = 'var(--text-dim)'
                 }}
               >
                 Cancel
@@ -614,21 +614,21 @@ export function TaskDialog({
                 onClick={handleSubmit}
                 style={{
                   ...chipBase,
-                  background: 'rgba(255, 255, 255, 0.08)',
-                  color: '#F1F5F9',
+                  background: 'var(--glass-interactive-border)',
+                  color: 'var(--text-primary)',
                   fontWeight: 600,
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.background = 'rgba(255, 255, 255, 0.12)'
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'
+                  e.currentTarget.style.background = 'var(--glass-interactive-border)'
                 }}
               >
                 {task ? 'Update' : 'Create'}
                 <kbd style={{
                   fontSize: 9,
-                  color: '#64748B',
+                  color: 'var(--text-dim)',
                   fontFamily: 'inherit',
                   marginLeft: 2,
                 }}>↵</kbd>

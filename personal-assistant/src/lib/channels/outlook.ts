@@ -37,9 +37,9 @@ export interface OutlookConfig {
 }
 
 interface OutlookCredentials {
-  tenant_id: string
-  client_id: string
-  client_secret: string
+  tenant_id?: string
+  client_id?: string
+  client_secret?: string
   access_token?: string
   refresh_token?: string
   token_expires_at?: string
@@ -60,11 +60,24 @@ interface WebhookSubscription {
 // Token helpers
 // ---------------------------------------------------------------------------
 
+function resolveOAuthConfig(creds: OutlookCredentials) {
+  const tenantId = creds.tenant_id || process.env.OUTLOOK_TENANT_ID || 'common'
+  const clientId = creds.client_id || process.env.OUTLOOK_CLIENT_ID || ''
+  const clientSecret = creds.client_secret || process.env.OUTLOOK_CLIENT_SECRET || ''
+
+  if (!clientId || !clientSecret) {
+    throw new Error('Missing Outlook OAuth client configuration')
+  }
+
+  return { tenantId, clientId, clientSecret }
+}
+
 async function getClientCredentialsToken(creds: OutlookCredentials): Promise<string> {
-  const url = `https://login.microsoftonline.com/${creds.tenant_id}/oauth2/v2.0/token`
+  const { tenantId, clientId, clientSecret } = resolveOAuthConfig(creds)
+  const url = `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`
   const params = new URLSearchParams({
-    client_id: creds.client_id,
-    client_secret: creds.client_secret,
+    client_id: clientId,
+    client_secret: clientSecret,
     scope: 'https://graph.microsoft.com/.default',
     grant_type: 'client_credentials',
   })
@@ -87,10 +100,11 @@ async function getClientCredentialsToken(creds: OutlookCredentials): Promise<str
 async function refreshAccessToken(creds: OutlookCredentials): Promise<OutlookTokenResponse> {
   if (!creds.refresh_token) throw new Error('No refresh token available')
 
-  const url = `https://login.microsoftonline.com/${creds.tenant_id}/oauth2/v2.0/token`
+  const { tenantId, clientId, clientSecret } = resolveOAuthConfig(creds)
+  const url = `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`
   const params = new URLSearchParams({
-    client_id: creds.client_id,
-    client_secret: creds.client_secret,
+    client_id: clientId,
+    client_secret: clientSecret,
     refresh_token: creds.refresh_token,
     grant_type: 'refresh_token',
     scope: 'https://graph.microsoft.com/Mail.Read https://graph.microsoft.com/Mail.Send',
@@ -124,8 +138,14 @@ async function resolveAccessToken(
   client?: SupabaseClient,
   orgId?: string,
 ): Promise<string> {
+  const accessTokenLooksUsable = Boolean(creds.access_token) && !creds.token_expires_at
+
   // If we have a non-expired access token, use it directly
   if (creds.access_token && !isTokenExpired(creds.token_expires_at)) {
+    return creds.access_token
+  }
+
+  if (accessTokenLooksUsable && creds.access_token) {
     return creds.access_token
   }
 
@@ -152,12 +172,15 @@ async function resolveAccessToken(
       }
 
       return tokens.access_token
-    } catch {
-      // fall through to other methods
+    } catch (err) {
+      logger.warn('Outlook token refresh failed:', err)
     }
   }
 
-  if (creds.access_token) return creds.access_token
+  if (creds.access_token && !isTokenExpired(creds.token_expires_at)) {
+    return creds.access_token
+  }
+
   return getClientCredentialsToken(creds)
 }
 

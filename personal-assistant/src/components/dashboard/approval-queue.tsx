@@ -109,7 +109,7 @@ export function ApprovalQueue() {
   const pageTitle: React.CSSProperties = {
     fontSize: 22,
     fontWeight: 700,
-    color: 'var(--text-primary, #F1F5F9)',
+    color: 'var(--text-primary)',
     letterSpacing: '-0.02em',
   };
 
@@ -121,29 +121,29 @@ export function ApprovalQueue() {
     fontSize: 11,
     fontWeight: 600,
     letterSpacing: '0.02em',
-    background: 'rgba(255, 255, 255, 0.06)',
-    color: 'var(--text-secondary, #94A3B8)',
+    background: 'var(--glass-hover-bg)',
+    color: 'var(--text-secondary)',
   };
 
   const pillBtn: React.CSSProperties = {
     padding: '6px 14px',
     borderRadius: 20,
-    background: 'rgba(10, 14, 23, 0.42)',
-    backdropFilter: 'blur(22px) saturate(1.2)',
-    WebkitBackdropFilter: 'blur(22px) saturate(1.2)',
-    boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.06)',
+    background: 'var(--glass-pill-bg)',
+    backdropFilter: 'var(--glass-card-blur)',
+    WebkitBackdropFilter: 'var(--glass-card-blur)',
+    boxShadow: 'var(--glass-pill-inset)',
     border: 'none',
     fontSize: 12,
-    color: 'var(--text-secondary, #94A3B8)',
+    color: 'var(--text-secondary)',
     cursor: 'pointer',
     transition: 'all 200ms',
   };
 
   const pillBtnActive: React.CSSProperties = {
     ...pillBtn,
-    color: 'var(--text-primary, #F1F5F9)',
+    color: 'var(--text-primary)',
     background: 'rgba(255, 90, 31, 0.15)',
-    border: '1px solid rgba(255, 90, 31, 0.3)',
+    border: '1px solid var(--status-orange-border)',
   };
 
   const emptyState: React.CSSProperties = {
@@ -154,25 +154,25 @@ export function ApprovalQueue() {
     padding: '60px 20px',
     gap: 12,
     borderRadius: 16,
-    background: 'rgba(15, 20, 30, 0.6)',
-    backdropFilter: 'blur(20px) saturate(1.2)',
-    WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
-    border: '1px solid rgba(255, 255, 255, 0.03)',
-    boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+    background: 'var(--glass-card-bg)',
+    backdropFilter: 'var(--glass-card-blur)',
+    WebkitBackdropFilter: 'var(--glass-card-blur)',
+    border: '1px solid var(--glass-card-border)',
+    boxShadow: 'var(--glass-card-inset)',
   };
 
   const emptyStateIcon: React.CSSProperties = {
-    color: 'var(--text-dim, #475569)',
+    color: 'var(--text-dim)',
   };
 
   const emptyStateText: React.CSSProperties = {
     fontSize: 14,
-    color: 'var(--text-secondary, #94A3B8)',
+    color: 'var(--text-secondary)',
   };
 
   const loadingText: React.CSSProperties = {
     fontSize: 13,
-    color: 'var(--text-secondary, #94A3B8)',
+    color: 'var(--text-secondary)',
     display: 'flex',
     alignItems: 'center',
     gap: 8,
@@ -236,8 +236,8 @@ export function ApprovalQueue() {
                 padding: '8px 16px',
                 borderRadius: 10,
                 background: 'transparent',
-                border: '1px solid rgba(255, 255, 255, 0.06)',
-                color: 'var(--text-primary, #F1F5F9)',
+                border: '1px solid var(--glass-hover-bg)',
+                color: 'var(--text-primary)',
                 fontSize: 13,
                 fontWeight: 500,
                 cursor: 'pointer',

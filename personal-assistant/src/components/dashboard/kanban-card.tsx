@@ -13,9 +13,9 @@ interface KanbanCardProps {
 
 const priorityGlass: Record<string, { bg: string; shadow: string }> = {
   critical: { bg: 'var(--glass-card-bg-light)', shadow: '0 2px 8px rgba(0, 0, 0, 0.15)' },
-  high:     { bg: 'rgba(15, 20, 30, 0.38)', shadow: '0 1px 4px rgba(0, 0, 0, 0.12)' },
-  medium:   { bg: 'rgba(15, 20, 30, 0.3)',  shadow: '0 1px 2px rgba(0, 0, 0, 0.08)' },
-  low:      { bg: 'rgba(15, 20, 30, 0.22)', shadow: '0 1px 1px rgba(0, 0, 0, 0.05)' },
+  high:     { bg: 'var(--glass-card-bg-light)', shadow: '0 1px 4px rgba(0, 0, 0, 0.12)' },
+  medium:   { bg: 'var(--bg-card)',  shadow: '0 1px 2px rgba(0, 0, 0, 0.08)' },
+  low:      { bg: 'var(--bg-card)', shadow: '0 1px 1px rgba(0, 0, 0, 0.05)' },
 }
 
 const priorityDot: Record<string, { color: string; label?: string }> = {
@@ -284,7 +284,7 @@ export function KanbanCard({ task, onEdit, onArchive }: KanbanCardProps) {
               width: 4,
               height: 4,
               borderRadius: '50%',
-              background: '#64748B',
+              background: 'var(--text-dim)',
               animation: 'bb-agent-pulse 2s ease-in-out infinite',
               flexShrink: 0,
             }} />

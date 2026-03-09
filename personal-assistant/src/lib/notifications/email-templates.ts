@@ -67,7 +67,7 @@ export async function sendApprovalNeededEmail(
   const html = wrapHtml(`
     <h2 style="color: #1a1a1a; margin-bottom: 20px;">Approval Needed</h2>
     <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-      <p style="margin: 0 0 10px 0;"><strong>Agent:</strong> ${details.agentName}</p>
+      <p style="margin: 0 0 10px 0;"><strong>BitBit:</strong> ${details.agentName}</p>
       <p style="margin: 0 0 10px 0;"><strong>Action:</strong> ${details.actionType}</p>
       <p style="margin: 0 0 10px 0;"><strong>Summary:</strong> ${details.summary}</p>
       <p style="margin: 0;"><strong>Confidence:</strong> ${(details.confidence * 100).toFixed(0)}%</p>
@@ -114,7 +114,7 @@ export async function sendDailyDigestEmail(
     <h2 style="color: #1a1a1a; margin-bottom: 20px;">Daily Digest - ${data.date}</h2>
     <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
       <tr style="background: #f5f5f5;">
-        <td style="padding: 12px; font-weight: 600;">Agent Runs</td>
+        <td style="padding: 12px; font-weight: 600;">Activity</td>
         <td style="padding: 12px; text-align: right; font-size: 18px; font-weight: bold;">${data.agentRuns}</td>
       </tr>
       <tr>
@@ -207,12 +207,12 @@ export async function sendWeeklyReportEmail(
         <td style="padding: 12px; text-align: right; font-weight: 600;">WoW</td>
       </tr>
       <tr>
-        <td style="padding: 12px;">Agent Runs</td>
+        <td style="padding: 12px;">Activity</td>
         <td style="padding: 12px; text-align: right;">${data.totalAgentRuns}</td>
         <td style="padding: 12px; text-align: right; color: ${deltaColor(data.totalAgentRuns, data.previousWeekRuns)};">${delta(data.totalAgentRuns, data.previousWeekRuns)}</td>
       </tr>
       <tr style="background: #f5f5f5;">
-        <td style="padding: 12px;">AI Cost</td>
+        <td style="padding: 12px;">Operations Cost</td>
         <td style="padding: 12px; text-align: right;">$${data.totalCost.toFixed(2)}</td>
         <td style="padding: 12px; text-align: right; color: ${deltaColor(data.totalCost, data.previousWeekCost, true)};">${delta(data.totalCost, data.previousWeekCost)}</td>
       </tr>
@@ -229,10 +229,10 @@ export async function sendWeeklyReportEmail(
     </table>
 
     ${data.topAgents.length > 0 ? `
-    <h3 style="margin-bottom: 10px;">Top Agents</h3>
+    <h3 style="margin-bottom: 10px;">Top Operations</h3>
     <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
       <tr style="background: #f5f5f5;">
-        <th style="padding: 8px; text-align: left;">Agent</th>
+        <th style="padding: 8px; text-align: left;">Operation</th>
         <th style="padding: 8px; text-align: right;">Runs</th>
         <th style="padding: 8px; text-align: right;">Success</th>
       </tr>

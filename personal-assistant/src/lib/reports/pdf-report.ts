@@ -46,7 +46,7 @@ function renderMonthlyReport(data: MonthlyReportData): string {
     <div class="kpi-row">
       <div class="kpi"><div class="value">${formatCurrency(data.revenue.totalPaid)}</div><div class="label">Revenue Collected</div></div>
       <div class="kpi"><div class="value">${formatCurrency(data.revenue.totalOutstanding)}</div><div class="label">Outstanding</div></div>
-      <div class="kpi"><div class="value">${data.agentActivity.totalRuns}</div><div class="label">Agent Runs</div></div>
+      <div class="kpi"><div class="value">${data.agentActivity.totalRuns}</div><div class="label">Activity</div></div>
       <div class="kpi"><div class="value">${formatPercent(data.agentActivity.successRate)}</div><div class="label">Success Rate</div></div>
     </div>
 
@@ -58,8 +58,8 @@ function renderMonthlyReport(data: MonthlyReportData): string {
     </div>
 
     <div class="section">
-      <h2>Agent Activity</h2>
-      <table><tr><th>Agent</th><th>Runs</th><th>Cost</th><th>Success Rate</th></tr>
+      <h2>Activity</h2>
+      <table><tr><th>Operation</th><th>Runs</th><th>Cost</th><th>Success Rate</th></tr>
       ${data.agentActivity.byAgent.map(a => `<tr><td>${escapeHtml(a.agent)}</td><td>${a.runs}</td><td>${formatCurrency(a.cost)}</td><td>${formatPercent(a.successRate)}</td></tr>`).join('')}
       </table>
     </div>
@@ -83,14 +83,14 @@ function renderMonthlyReport(data: MonthlyReportData): string {
 function renderAgentROIReport(data: AgentROIReportData): string {
   return `
     <div class="kpi-row">
-      <div class="kpi"><div class="value">${formatCurrency(data.totals.totalCost)}</div><div class="label">Total Agent Cost</div></div>
+      <div class="kpi"><div class="value">${formatCurrency(data.totals.totalCost)}</div><div class="label">Total Cost</div></div>
       <div class="kpi"><div class="value">${Math.round(data.totals.totalTimeSavedMinutes / 60)}h</div><div class="label">Time Saved</div></div>
       <div class="kpi"><div class="value">${formatPercent(data.totals.overallROI)}</div><div class="label">Overall ROI</div></div>
     </div>
 
     <div class="section">
-      <h2>Per-Agent Breakdown</h2>
-      <table><tr><th>Agent</th><th>Runs</th><th>Cost</th><th>Actions</th><th>Time Saved</th><th>ROI</th></tr>
+      <h2>Breakdown by Operation</h2>
+      <table><tr><th>Operation</th><th>Runs</th><th>Cost</th><th>Actions</th><th>Time Saved</th><th>ROI</th></tr>
       ${data.agents.map(a => `<tr><td>${escapeHtml(a.name)}</td><td>${a.runs}</td><td>${formatCurrency(a.cost)}</td><td>${a.actionsTaken}</td><td>${Math.round(a.estimatedTimeSavedMinutes)}m</td><td>${formatPercent(a.roi)}</td></tr>`).join('')}
       </table>
     </div>
@@ -125,7 +125,7 @@ function renderPipelineReport(data: PipelineReportData): string {
 
 const TITLES: Record<string, string> = {
   monthly: 'Monthly Summary Report',
-  'agent-roi': 'Agent ROI Report',
+  'agent-roi': 'ROI Report',
   pipeline: 'Pipeline Report',
 }
 

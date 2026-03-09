@@ -28,6 +28,7 @@ import { AppDataProvider } from '@/lib/data/app-data-provider';
 import { useEnabledModulesFetch, EnabledModulesContext } from '@/lib/modules/use-enabled-modules';
 import { DevToolbar } from '@/components/dev/dev-toolbar';
 import { KeyboardShortcuts } from './keyboard-shortcuts';
+import { ThemeProvider } from '@/lib/theme/theme-provider';
 import { useHotkeys, getTabHistory } from '@/hooks/use-hotkeys';
 import { SIDEBAR_CATEGORIES } from '@/lib/modules/registry';
 
@@ -407,6 +408,7 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
   }, [sidebarOpen]);
 
   return (
+    <ThemeProvider>
     <ToastProvider>
     <EnabledModulesContext.Provider value={enabledModulesState}>
     <SplashScreen codeReady={tabsReady} dataReady={dataReady} minDisplayMs={1200}>
@@ -557,6 +559,7 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
     </SplashScreen>
     </EnabledModulesContext.Provider>
     </ToastProvider>
+    </ThemeProvider>
   );
 }
 

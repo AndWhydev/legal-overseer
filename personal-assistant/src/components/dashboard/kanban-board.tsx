@@ -16,7 +16,7 @@ import { arrayMove } from '@dnd-kit/sortable'
 import { KanbanColumn } from './kanban-column'
 import { KanbanCard } from './kanban-card'
 import { KanbanToolbar, type FilterState } from './kanban-toolbar'
-import { KanbanAgentStrip } from './kanban-agent-strip'
+import { KanbanActivityStrip } from './kanban-activity-strip'
 import { CompletionAnimation } from './completion-animation'
 import { TaskDialog } from './task-dialog'
 import type { Task, KanbanColumn as ColumnType } from '@/lib/types'
@@ -74,12 +74,12 @@ export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: Kanb
     if (filters.priority) {
       result = result.filter((t) => t.priority === filters.priority)
     }
-    if (filters.source === 'agent') {
+    if (filters.source === 'bitbit') {
       result = result.filter((t) => {
         const meta = t.metadata as Record<string, unknown>
         return meta?.source === 'bitbit' || t.assigned_to
       })
-    } else if (filters.source === 'manual') {
+    } else if (filters.source === 'you') {
       result = result.filter((t) => {
         const meta = t.metadata as Record<string, unknown>
         return meta?.source !== 'bitbit' && !t.assigned_to
@@ -96,6 +96,23 @@ export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: Kanb
   }, [tasks, filters, searchQuery])
 
   const isFiltered = filters.priority !== null || filters.source !== 'all' || searchQuery.trim() !== ''
+
+  const overdueCount = useMemo(() => {
+    const now = Date.now()
+    return tasks.filter((t) => {
+      const meta = t.metadata as Record<string, unknown>
+      const dl = meta?.deadline as string | undefined
+      return dl && new Date(dl).getTime() < now
+    }).length
+  }, [tasks])
+
+  const priorityCounts = useMemo(() => {
+    const counts: Record<string, number> = {}
+    for (const t of tasks) {
+      if (t.priority) counts[t.priority] = (counts[t.priority] || 0) + 1
+    }
+    return counts
+  }, [tasks])
 
   useRealtime({
     table: 'tasks',
@@ -358,15 +375,18 @@ export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: Kanb
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <KanbanToolbar
         totalCount={tasks.length}
+        overdueCount={overdueCount}
+        priorityCounts={priorityCounts}
         filters={filters}
         onFiltersChange={setFilters}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         onCreateClick={handleCreateClick}
+        onOverdueClick={() => setFilters({ priority: null, source: 'all' })}
         searchInputRef={searchInputRef}
       />
 
-      <KanbanAgentStrip tasks={tasks} />
+      <KanbanActivityStrip tasks={tasks} />
 
       <DndContext
         sensors={sensors}

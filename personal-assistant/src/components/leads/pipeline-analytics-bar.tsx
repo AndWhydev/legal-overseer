@@ -10,13 +10,13 @@ interface PipelineAnalyticsBarProps {
 }
 
 const SPEED_COLOR: Record<string, string> = {
-  fast: 'var(--bb-green, #22C55E)',
-  ok: 'var(--bb-amber, #F59E0B)',
-  slow: 'var(--bb-red, #EF4444)',
+  fast: 'var(--bb-green)',
+  ok: 'var(--bb-amber)',
+  slow: 'var(--bb-red)',
 }
 
 function getSpeedColor(minutes: number | null): string {
-  if (minutes == null) return '#64748B'
+  if (minutes == null) return 'var(--text-dim)'
   if (minutes <= 5) return SPEED_COLOR.fast
   if (minutes <= 30) return SPEED_COLOR.ok
   return SPEED_COLOR.slow
@@ -25,10 +25,10 @@ function getSpeedColor(minutes: number | null): string {
 const cardStyle: React.CSSProperties = {
   padding: '16px 20px',
   borderRadius: 'var(--radius-xl, 16px)',
-  background: 'var(--bg-card, rgba(15, 20, 30, 0.4))',
-  backdropFilter: 'var(--glass-blur, blur(20px))',
-  WebkitBackdropFilter: 'var(--glass-blur, blur(20px))',
-  border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
+  background: 'var(--bg-card)',
+  backdropFilter: 'var(--glass-blur)',
+  WebkitBackdropFilter: 'var(--glass-blur)',
+  border: '1px solid var(--border-subtle)',
   display: 'flex',
   flexDirection: 'column',
   gap: 6,
@@ -37,7 +37,7 @@ const cardStyle: React.CSSProperties = {
 const labelStyle: React.CSSProperties = {
   fontSize: 11,
   fontWeight: 500,
-  color: 'var(--text-secondary, #64748B)',
+  color: 'var(--text-secondary)',
   display: 'flex',
   alignItems: 'center',
   gap: 6,
@@ -48,7 +48,7 @@ const valueStyle: React.CSSProperties = {
   fontWeight: 700,
   fontFamily: 'var(--font-mono)',
   letterSpacing: '-0.02em',
-  color: 'var(--text-primary, #F1F5F9)',
+  color: 'var(--text-primary)',
 }
 
 export function PipelineAnalyticsBar({ analytics, isLoading }: PipelineAnalyticsBarProps) {
@@ -114,7 +114,7 @@ export function PipelineAnalyticsBar({ analytics, isLoading }: PipelineAnalytics
           </div>
           <div style={{
             ...valueStyle,
-            color: analytics.staleCount > 0 ? 'var(--bb-amber, #F59E0B)' : 'var(--text-primary, #F1F5F9)',
+            color: analytics.staleCount > 0 ? 'var(--bb-amber)' : 'var(--text-primary)',
           }}>
             {analytics.staleCount}
           </div>

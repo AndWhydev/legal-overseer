@@ -402,18 +402,18 @@ DROP POLICY IF EXISTS "channel_connections_update" ON channel_connections;
 DROP POLICY IF EXISTS "channel_connections_delete" ON channel_connections;
 
 CREATE POLICY "channel_connections_select" ON channel_connections
-  FOR SELECT USING (org_id IN (SELECT get_user_accessible_org_ids()));
+  FOR SELECT USING (org_id::uuid IN (SELECT get_user_accessible_org_ids()));
 
 CREATE POLICY "channel_connections_insert" ON channel_connections
-  FOR INSERT WITH CHECK (org_id = get_user_active_org_id());
+  FOR INSERT WITH CHECK (org_id::uuid = get_user_active_org_id());
 
 CREATE POLICY "channel_connections_update" ON channel_connections
   FOR UPDATE
-  USING (org_id IN (SELECT get_user_accessible_org_ids()))
-  WITH CHECK (org_id IN (SELECT get_user_accessible_org_ids()));
+  USING (org_id::uuid IN (SELECT get_user_accessible_org_ids()))
+  WITH CHECK (org_id::uuid IN (SELECT get_user_accessible_org_ids()));
 
 CREATE POLICY "channel_connections_delete" ON channel_connections
-  FOR DELETE USING (org_id IN (SELECT get_user_accessible_org_ids()));
+  FOR DELETE USING (org_id::uuid IN (SELECT get_user_accessible_org_ids()));
 
 -- channel_messages
 DROP POLICY IF EXISTS "channel_messages_select" ON channel_messages;
@@ -422,18 +422,18 @@ DROP POLICY IF EXISTS "channel_messages_update" ON channel_messages;
 DROP POLICY IF EXISTS "channel_messages_delete" ON channel_messages;
 
 CREATE POLICY "channel_messages_select" ON channel_messages
-  FOR SELECT USING (org_id IN (SELECT get_user_accessible_org_ids()));
+  FOR SELECT USING (org_id::uuid IN (SELECT get_user_accessible_org_ids()));
 
 CREATE POLICY "channel_messages_insert" ON channel_messages
-  FOR INSERT WITH CHECK (org_id = get_user_active_org_id());
+  FOR INSERT WITH CHECK (org_id::uuid = get_user_active_org_id());
 
 CREATE POLICY "channel_messages_update" ON channel_messages
   FOR UPDATE
-  USING (org_id IN (SELECT get_user_accessible_org_ids()))
-  WITH CHECK (org_id IN (SELECT get_user_accessible_org_ids()));
+  USING (org_id::uuid IN (SELECT get_user_accessible_org_ids()))
+  WITH CHECK (org_id::uuid IN (SELECT get_user_accessible_org_ids()));
 
 CREATE POLICY "channel_messages_delete" ON channel_messages
-  FOR DELETE USING (org_id IN (SELECT get_user_accessible_org_ids()));
+  FOR DELETE USING (org_id::uuid IN (SELECT get_user_accessible_org_ids()));
 
 -- channel_configs
 DROP POLICY IF EXISTS "channel_configs_select" ON channel_configs;
@@ -575,25 +575,28 @@ CREATE POLICY "user_integrations_update" ON user_integrations
 CREATE POLICY "user_integrations_delete" ON user_integrations
   FOR DELETE USING (org_id IN (SELECT get_user_accessible_org_ids()));
 
--- org_integrations
-DROP POLICY IF EXISTS "org_integrations_select" ON org_integrations;
-DROP POLICY IF EXISTS "org_integrations_insert" ON org_integrations;
-DROP POLICY IF EXISTS "org_integrations_update" ON org_integrations;
-DROP POLICY IF EXISTS "org_integrations_delete" ON org_integrations;
+-- org_integrations (deferred to 056 where table is created)
+-- DO $$ BEGIN
+-- IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'org_integrations' AND table_schema = 'public') THEN
+-- DROP POLICY IF EXISTS "org_integrations_insert" ON org_integrations;
+-- DROP POLICY IF EXISTS "org_integrations_update" ON org_integrations;
+-- DROP POLICY IF EXISTS "org_integrations_delete" ON org_integrations;
 
-CREATE POLICY "org_integrations_select" ON org_integrations
-  FOR SELECT USING (org_id IN (SELECT get_user_accessible_org_ids()));
+-- CREATE POLICY "org_integrations_select" ON org_integrations
+--   FOR SELECT USING (org_id IN (SELECT get_user_accessible_org_ids()));
 
-CREATE POLICY "org_integrations_insert" ON org_integrations
-  FOR INSERT WITH CHECK (org_id = get_user_active_org_id());
+-- CREATE POLICY "org_integrations_insert" ON org_integrations
+--   FOR INSERT WITH CHECK (org_id = get_user_active_org_id());
 
-CREATE POLICY "org_integrations_update" ON org_integrations
-  FOR UPDATE
-  USING (org_id IN (SELECT get_user_accessible_org_ids()))
-  WITH CHECK (org_id IN (SELECT get_user_accessible_org_ids()));
+-- CREATE POLICY "org_integrations_update" ON org_integrations
+--   FOR UPDATE
+--   USING (org_id IN (SELECT get_user_accessible_org_ids()))
+--   WITH CHECK (org_id IN (SELECT get_user_accessible_org_ids()));
 
-CREATE POLICY "org_integrations_delete" ON org_integrations
-  FOR DELETE USING (org_id IN (SELECT get_user_accessible_org_ids()));
+-- CREATE POLICY "org_integrations_delete" ON org_integrations
+--   FOR DELETE USING (org_id IN (SELECT get_user_accessible_org_ids()));
+
+-- END IF; END $$;
 
 -- =============================================================================
 -- LEGACY POLICY CLEANUP (NON-STANDARD NAMES)
@@ -603,7 +606,7 @@ DROP POLICY IF EXISTS "channel_connections_all" ON channel_connections;
 DROP POLICY IF EXISTS "channel_messages_all" ON channel_messages;
 DROP POLICY IF EXISTS "audit_log_org_isolation" ON audit_log;
 DROP POLICY IF EXISTS "Users can view own org dead letters" ON dead_letter_queue;
-DROP POLICY IF EXISTS "org_members_manage_integrations" ON org_integrations;
+-- DROP POLICY IF EXISTS "org_members_manage_integrations" ON org_integrations;
 DROP POLICY IF EXISTS "Users can see own org members" ON org_members;
 DROP POLICY IF EXISTS "Admins can manage members" ON org_members;
 DROP POLICY IF EXISTS "org_admins_manage_invitations" ON invitations;

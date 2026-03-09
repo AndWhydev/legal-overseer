@@ -1,7 +1,7 @@
 -- WhatsApp Baileys session management
 CREATE TABLE IF NOT EXISTS whatsapp_sessions (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  org_id uuid REFERENCES organisations(id) ON DELETE CASCADE,
+  org_id uuid REFERENCES organizations(id) ON DELETE CASCADE,
   phone_number text,
   status text NOT NULL DEFAULT 'disconnected',
   qr_data text,
@@ -24,7 +24,7 @@ CREATE POLICY "org_whatsapp_sessions" ON whatsapp_sessions
 -- Outbox for messages the worker picks up
 CREATE TABLE IF NOT EXISTS whatsapp_outbox (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  org_id uuid REFERENCES organisations(id) ON DELETE CASCADE,
+  org_id uuid REFERENCES organizations(id) ON DELETE CASCADE,
   session_id uuid REFERENCES whatsapp_sessions(id) ON DELETE CASCADE,
   recipient text NOT NULL,
   body text NOT NULL,

@@ -37,8 +37,8 @@ CREATE INDEX IF NOT EXISTS idx_leads_search ON leads USING GIN (search_vector);
 CREATE OR REPLACE FUNCTION leads_search_vector_update() RETURNS trigger AS $$
 BEGIN
   NEW.search_vector :=
-    setweight(to_tsvector('english', coalesce(NEW.contact_name, '')), 'A') ||
-    setweight(to_tsvector('english', coalesce(NEW.company, '')), 'A') ||
+    setweight(to_tsvector('english', coalesce(NEW.source_channel, '')), 'A') ||
+    setweight(to_tsvector('english', coalesce(NEW.source_detail, '')), 'A') ||
     setweight(to_tsvector('english', coalesce(NEW.notes, '')), 'B');
   RETURN NEW;
 END;
@@ -50,8 +50,8 @@ CREATE TRIGGER trg_leads_search_vector
   FOR EACH ROW EXECUTE FUNCTION leads_search_vector_update();
 
 UPDATE leads SET search_vector =
-  setweight(to_tsvector('english', coalesce(contact_name, '')), 'A') ||
-  setweight(to_tsvector('english', coalesce(company, '')), 'A') ||
+  setweight(to_tsvector('english', coalesce(source_channel, '')), 'A') ||
+  setweight(to_tsvector('english', coalesce(source_detail, '')), 'A') ||
   setweight(to_tsvector('english', coalesce(notes, '')), 'B');
 
 -- ─── Invoices ───────────────────────────────────────────────────────────────
@@ -64,8 +64,8 @@ CREATE OR REPLACE FUNCTION invoices_search_vector_update() RETURNS trigger AS $$
 BEGIN
   NEW.search_vector :=
     setweight(to_tsvector('english', coalesce(NEW.invoice_number, '')), 'A') ||
-    setweight(to_tsvector('english', coalesce(NEW.contact_name, '')), 'B') ||
-    setweight(to_tsvector('english', coalesce(NEW.description, '')), 'C');
+    setweight(to_tsvector('english', coalesce(NEW.currency, '')), 'B') ||
+    setweight(to_tsvector('english', coalesce(NEW.payment_method, '')), 'C');
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -77,8 +77,8 @@ CREATE TRIGGER trg_invoices_search_vector
 
 UPDATE invoices SET search_vector =
   setweight(to_tsvector('english', coalesce(invoice_number, '')), 'A') ||
-  setweight(to_tsvector('english', coalesce(contact_name, '')), 'B') ||
-  setweight(to_tsvector('english', coalesce(description, '')), 'C');
+  setweight(to_tsvector('english', coalesce(currency, '')), 'B') ||
+  setweight(to_tsvector('english', coalesce(payment_method, '')), 'C');
 
 -- ─── Proposals ──────────────────────────────────────────────────────────────
 
@@ -90,8 +90,8 @@ CREATE OR REPLACE FUNCTION proposals_search_vector_update() RETURNS trigger AS $
 BEGIN
   NEW.search_vector :=
     setweight(to_tsvector('english', coalesce(NEW.title, '')), 'A') ||
-    setweight(to_tsvector('english', coalesce(NEW.client_name, '')), 'B') ||
-    setweight(to_tsvector('english', coalesce(NEW.scope, '')), 'C');
+    setweight(to_tsvector('english', coalesce(NEW.notes, '')), 'B') ||
+    setweight(to_tsvector('english', coalesce(NEW.selected_tier, '')), 'C');
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -103,8 +103,8 @@ CREATE TRIGGER trg_proposals_search_vector
 
 UPDATE proposals SET search_vector =
   setweight(to_tsvector('english', coalesce(title, '')), 'A') ||
-  setweight(to_tsvector('english', coalesce(client_name, '')), 'B') ||
-  setweight(to_tsvector('english', coalesce(scope, '')), 'C');
+  setweight(to_tsvector('english', coalesce(notes, '')), 'B') ||
+  setweight(to_tsvector('english', coalesce(selected_tier, '')), 'C');
 
 -- ─── Tenders ────────────────────────────────────────────────────────────────
 
@@ -116,8 +116,8 @@ CREATE OR REPLACE FUNCTION tenders_search_vector_update() RETURNS trigger AS $$
 BEGIN
   NEW.search_vector :=
     setweight(to_tsvector('english', coalesce(NEW.title, '')), 'A') ||
-    setweight(to_tsvector('english', coalesce(NEW.agency, '')), 'B') ||
-    setweight(to_tsvector('english', coalesce(NEW.description, '')), 'C');
+    setweight(to_tsvector('english', coalesce(NEW.source, '')), 'B') ||
+    setweight(to_tsvector('english', coalesce(NEW.url, '')), 'C');
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -129,5 +129,5 @@ CREATE TRIGGER trg_tenders_search_vector
 
 UPDATE tenders SET search_vector =
   setweight(to_tsvector('english', coalesce(title, '')), 'A') ||
-  setweight(to_tsvector('english', coalesce(agency, '')), 'B') ||
-  setweight(to_tsvector('english', coalesce(description, '')), 'C');
+  setweight(to_tsvector('english', coalesce(source, '')), 'B') ||
+  setweight(to_tsvector('english', coalesce(url, '')), 'C');
