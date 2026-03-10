@@ -69,7 +69,7 @@ export async function sendMessageViaBridge(
   return data?.id ?? null
 }
 
-// ─── Legacy Meta Graph API transport (fallback) ─────────────────────────────
+// ─── Meta Cloud API transport (primary) ─────────────────────────────────────
 
 function getEnv() {
   return {
@@ -81,7 +81,7 @@ function getEnv() {
 }
 
 /**
- * Send via Meta Graph API (legacy fallback, also the default export for backward compat).
+ * Send via Meta Cloud API (primary transport).
  */
 export async function sendMessage(to: string, text: string): Promise<string | null> {
   const env = getEnv()
@@ -189,29 +189,35 @@ export function getWhatsAppConfig() {
 }
 
 /**
- * Check if WhatsApp is available — either via Baileys bridge or Meta API.
+ * Check if WhatsApp is available — Meta Cloud API first, Baileys bridge fallback.
  */
 export async function isAvailable(client?: SupabaseClient, orgId?: string): Promise<boolean> {
-  // Check Baileys bridge first
-  if (client && orgId) {
-    const { count } = await client
-      .from('whatsapp_sessions')
-      .select('id', { count: 'exact', head: true })
-      .eq('org_id', orgId)
-      .eq('status', 'connected')
+  // Meta Cloud API is primary — check env vars first
+  const env = getEnv()
+  if (env.phoneNumberId && env.accessToken) return true
 
-    if (count && count > 0) return true
+  // Baileys bridge is secondary — check for connected sessions
+  if (client && orgId) {
+    try {
+      const { count } = await client
+        .from('whatsapp_sessions')
+        .select('id', { count: 'exact', head: true })
+        .eq('org_id', orgId)
+        .eq('status', 'connected')
+
+      return (count ?? 0) > 0
+    } catch {
+      return false
+    }
   }
 
-  // Fallback to Meta API config
-  const env = getEnv()
-  return Boolean(env.phoneNumberId && env.accessToken)
+  return false
 }
 
 export const whatsappAdapter: import('./types').ChannelAdapter = {
   type: 'whatsapp',
   name: 'WhatsApp',
-  description: 'Messaging via WhatsApp (Baileys bridge or Meta Business API)',
+  description: 'Messaging via WhatsApp (Meta Cloud API primary, Baileys bridge fallback)',
   icon: 'MessageCircle',
 
   async pull() {
@@ -220,7 +226,12 @@ export const whatsappAdapter: import('./types').ChannelAdapter = {
   },
 
   async isAvailable() {
+    // Meta Cloud API is primary
     const env = getEnv()
-    return Boolean(env.phoneNumberId && env.accessToken)
+    if (env.phoneNumberId && env.accessToken) return true
+
+    // Baileys bridge is secondary — but we can't check sessions without a client
+    // The adapter interface doesn't pass supabase, so we can only check env here.
+    return false
   },
 }

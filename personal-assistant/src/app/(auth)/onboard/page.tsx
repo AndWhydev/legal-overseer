@@ -152,6 +152,9 @@ export default function OnboardPage() {
   const [connectedIds, setConnectedIds] = useState<string[]>([])
   const [syncStep, setSyncStep] = useState(0)
   const [finishing, setFinishing] = useState(false)
+  const [firstValue, setFirstValue] = useState<{
+    type: string; headline: string; detail: string; source: string
+  } | null>(null)
 
   const connectedNames = useMemo(
     () => connectedIds.map((id) => getConnectionDisplayName(id)),
@@ -255,7 +258,17 @@ export default function OnboardPage() {
       })
     }, 1000)
 
-    const exitTimer = window.setTimeout(() => {
+    const exitTimer = window.setTimeout(async () => {
+      // Before transitioning to value, try to fetch real data
+      try {
+        const res = await fetch('/api/onboarding/first-value')
+        if (res.ok) {
+          const { value } = await res.json()
+          if (value) setFirstValue(value)
+        }
+      } catch {
+        // best effort
+      }
       setStage('value')
     }, 3600)
 
@@ -581,6 +594,26 @@ export default function OnboardPage() {
                     </motion.div>
                   </div>
                 </div>
+
+                {firstValue && (
+                  <div style={{
+                    background: 'rgba(127, 178, 140, 0.08)',
+                    border: '1px solid rgba(127, 178, 140, 0.2)',
+                    borderRadius: 12,
+                    padding: '14px 18px',
+                    marginTop: 16,
+                  }}>
+                    <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#7fb28c', marginBottom: 6 }}>
+                      BitBit already found
+                    </div>
+                    <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>
+                      {firstValue.headline}
+                    </div>
+                    <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 2 }}>
+                      {firstValue.detail} — via {firstValue.source}
+                    </div>
+                  </div>
+                )}
 
                 <div className="grid gap-3 sm:grid-cols-3">
                   {[
