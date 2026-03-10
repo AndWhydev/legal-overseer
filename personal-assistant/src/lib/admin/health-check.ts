@@ -87,7 +87,7 @@ async function checkResend(): Promise<ServiceHealth> {
 }
 
 async function checkWhatsApp(): Promise<ServiceHealth> {
-  const token = process.env.WHATSAPP_TOKEN;
+  const token = process.env.WHATSAPP_ACCESS_TOKEN;
   const phoneId = process.env.WHATSAPP_PHONE_NUMBER_ID;
   if (!token || !phoneId) {
     return { service: 'whatsapp', status: 'down', latency_ms: 0, error: 'WhatsApp env vars not set' };
