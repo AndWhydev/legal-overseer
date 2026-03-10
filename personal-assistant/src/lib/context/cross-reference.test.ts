@@ -63,6 +63,20 @@ function createMockSupabase(args: {
         }
       }
 
+      if (table === 'cross_reference_cache') {
+        return {
+          select: () => ({
+            eq: function() { return this },
+            single: () => Promise.resolve({ data: null, error: { message: 'not found' } }),
+          }),
+          upsert: () => Promise.resolve({ error: null }),
+          delete: () => ({
+            eq: function() { return this },
+            then: (resolve: (v: unknown) => void) => resolve({ error: null }),
+          }),
+        }
+      }
+
       throw new Error(`Unsupported table ${table}`)
     },
   }

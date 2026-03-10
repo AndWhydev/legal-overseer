@@ -72,7 +72,7 @@ function createLegacySchemaSupabase() {
         }
       }
 
-      if (table === 'organizations') {
+      if (table === 'organisations') {
         return {
           select(selection: string) {
             if (selection === 'id, name, slug, plan, settings') {

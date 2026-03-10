@@ -228,7 +228,7 @@ function createInvoiceSupabase(seed?: {
         }
       }
 
-      if (table === 'organizations') {
+      if (table === 'organisations') {
         return {
           select() {
             const filters: Record<string, unknown> = {}

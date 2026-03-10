@@ -137,7 +137,7 @@ function createMockSupabase(input?: {
         }
       }
 
-      if (table === 'organizations') {
+      if (table === 'organisations') {
         return {
           select() {
             const filters: Record<string, unknown> = {}

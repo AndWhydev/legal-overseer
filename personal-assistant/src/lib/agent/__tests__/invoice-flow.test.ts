@@ -128,7 +128,7 @@ describe('generateInvoiceNumber', () => {
   it('generates sequential numbers with org prefix', async () => {
     const supabase = {
       from(table: string) {
-        if (table === 'organizations') {
+        if (table === 'organisations') {
           return {
             select: () => ({
               eq: () => ({
@@ -158,7 +158,7 @@ describe('generateInvoiceNumber', () => {
   it('starts at 001 when no existing invoices', async () => {
     const supabase = {
       from(table: string) {
-        if (table === 'organizations') {
+        if (table === 'organisations') {
           return {
             select: () => ({
               eq: () => ({
