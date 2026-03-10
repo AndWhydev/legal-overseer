@@ -8,7 +8,8 @@ import { logger } from '@/lib/core/logger';
  * GET /api/channels/whatsapp/bridge
  *
  * Returns bridge status for the authenticated user's org.
- * Includes QR code if in pairing state, session age, and last activity.
+ * Proxies to standalone Fly.io bridge when WHATSAPP_BRIDGE_URL is configured.
+ * Falls back to in-process Baileys for local dev.
  */
 export async function GET() {
   const supabase = await createClient()
@@ -23,7 +24,33 @@ export async function GET() {
 
   const orgId = await getActiveOrgId(supabase, user.id)
 
-  // Check if Baileys is available
+  const bridgeUrl = process.env.WHATSAPP_BRIDGE_URL
+  const bridgeSecret = process.env.WHATSAPP_BRIDGE_SECRET
+
+  // Proxy to standalone Fly.io bridge when configured
+  if (bridgeUrl && bridgeSecret) {
+    try {
+      const res = await fetch(`${bridgeUrl}/bridge/status`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${bridgeSecret}`,
+          'X-Org-Id': orgId,
+        },
+      })
+
+      const data = await res.json()
+      if (!res.ok) {
+        return NextResponse.json({ error: data.error || 'Bridge status check failed' }, { status: res.status })
+      }
+
+      return NextResponse.json(data)
+    } catch (err) {
+      logger.error('[whatsapp-bridge] Failed to reach bridge service for status', { error: String(err) })
+      return NextResponse.json({ error: 'Bridge service unreachable' }, { status: 502 })
+    }
+  }
+
+  // Fallback to in-process bridge for local dev
   const available = await isBaileysAvailable()
   if (!available) {
     return NextResponse.json({
@@ -74,7 +101,8 @@ export async function GET() {
  * POST /api/channels/whatsapp/bridge
  *
  * Start the Baileys bridge for the authenticated user's org.
- * If already connected, returns current status instead.
+ * Proxies to standalone Fly.io bridge when WHATSAPP_BRIDGE_URL is configured.
+ * Falls back to in-process Baileys for local dev.
  */
 export async function POST() {
   const supabase = await createClient()
@@ -89,7 +117,34 @@ export async function POST() {
 
   const orgId = await getActiveOrgId(supabase, user.id)
 
-  // Check if Baileys is available
+  const bridgeUrl = process.env.WHATSAPP_BRIDGE_URL
+  const bridgeSecret = process.env.WHATSAPP_BRIDGE_SECRET
+
+  // Proxy to standalone Fly.io bridge when configured
+  if (bridgeUrl && bridgeSecret) {
+    try {
+      const res = await fetch(`${bridgeUrl}/bridge/start`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${bridgeSecret}`,
+        },
+        body: JSON.stringify({ org_id: orgId }),
+      })
+
+      const data = await res.json()
+      if (!res.ok) {
+        return NextResponse.json({ error: data.error || 'Bridge start failed' }, { status: res.status })
+      }
+
+      return NextResponse.json({ message: 'Bridge started', ...data })
+    } catch (err) {
+      logger.error('[whatsapp-bridge] Failed to reach bridge service', { error: String(err) })
+      return NextResponse.json({ error: 'Bridge service unreachable' }, { status: 502 })
+    }
+  }
+
+  // Fallback to in-process bridge for local dev
   const available = await isBaileysAvailable()
   if (!available) {
     return NextResponse.json({

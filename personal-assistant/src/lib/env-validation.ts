@@ -38,12 +38,16 @@ const envSchema = z.object({
   MONTHLY_REPORT_FROM_EMAIL: z.string().email().optional(),
   MONTHLY_REPORT_RECIPIENTS: z.string().optional(),
 
-  // WhatsApp
+  // WhatsApp (Meta Cloud API)
   WHATSAPP_PHONE_NUMBER_ID: z.string().optional(),
   WHATSAPP_ACCESS_TOKEN: z.string().optional(),
   WHATSAPP_VERIFY_TOKEN: z.string().optional(),
   WHATSAPP_APP_SECRET: z.string().optional(),
   WHATSAPP_ANDY_PHONE: z.string().optional(),
+
+  // WhatsApp (Baileys bridge — standalone Fly.io service)
+  WHATSAPP_BRIDGE_URL: z.string().url().optional(),
+  WHATSAPP_BRIDGE_SECRET: z.string().min(16).optional(),
 
   // Stripe
   STRIPE_SECRET_KEY: z.string().optional(),
