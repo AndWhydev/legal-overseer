@@ -107,5 +107,5 @@ export async function upsertPattern(
     },
     { onConflict: 'org_id,entity_type,entity_id,pattern_type' }
   )
-  if (error) logger.error({ err: error }, 'Failed to upsert entity pattern')
+  if (error) logger.error('Failed to upsert entity pattern', { err: error.message })
 }
