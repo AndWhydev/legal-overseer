@@ -25,6 +25,7 @@ import {
   hasCompletedFirstRunOnboarding,
   requiresWorkspaceConfirmation,
 } from '@/lib/onboarding/state'
+import { trackOnboardingEvent } from '@/lib/onboarding/analytics'
 
 const INDUSTRIES = [
   { value: 'digital-agency', label: 'Digital agency' },
@@ -212,6 +213,7 @@ export default function OnboardPage() {
 
         setWorkspaceReady(!needsWorkspace)
         setStage(needsWorkspace ? 'workspace' : 'connections')
+        trackOnboardingEvent('onboarding_started', { industry })
 
         const params = new URLSearchParams(window.location.search)
         const justConnected = params.get('connected')
@@ -234,6 +236,7 @@ export default function OnboardPage() {
   useEffect(() => {
     if (stage === 'connections') {
       document.cookie = 'bb-onboarding-active=1; path=/; max-age=3600; SameSite=Lax'
+      trackOnboardingEvent('connections_entered')
     }
   }, [stage])
 
@@ -260,16 +263,21 @@ export default function OnboardPage() {
 
     const exitTimer = window.setTimeout(async () => {
       // Before transitioning to value, try to fetch real data
+      let hasFirstValueData = false
       try {
         const res = await fetch('/api/onboarding/first-value')
         if (res.ok) {
           const { value } = await res.json()
-          if (value) setFirstValue(value)
+          if (value) {
+            setFirstValue(value)
+            hasFirstValueData = true
+          }
         }
       } catch {
         // best effort
       }
       setStage('value')
+      trackOnboardingEvent('value_viewed', { hasFirstValue: hasFirstValueData })
     }, 3600)
 
     void syncRequest
@@ -306,6 +314,7 @@ export default function OnboardPage() {
       setWorkspaceReady(true)
       setEnteredConnectionsFromWorkspace(true)
       setStatus('ready')
+      trackOnboardingEvent('workspace_completed', { orgName: orgName.trim(), industry })
       setStage('connections')
     } catch (error) {
       setStatus('error')
@@ -315,6 +324,7 @@ export default function OnboardPage() {
 
   async function completeOnboarding() {
     setFinishing(true)
+    trackOnboardingEvent('onboarding_completed')
     try {
       await fetch('/api/profile/preferences', {
         method: 'PATCH',
@@ -482,6 +492,7 @@ export default function OnboardPage() {
                     type="button"
                     onClick={() => {
                       setSyncStep(0)
+                      trackOnboardingEvent('sync_started', { connectedCount: connectedIds.length })
                       setStage('sync')
                     }}
                     disabled={!hasConnection}
