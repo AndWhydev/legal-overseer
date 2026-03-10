@@ -15,6 +15,7 @@ interface Env {
   SUPABASE_URL: string;
   SUPABASE_SERVICE_ROLE_KEY: string;
   WORKER_CALLBACK_URL: string;
+  WORKER_AUTH_TOKEN: string;
   ENVIRONMENT: string;
 }
 
@@ -42,6 +43,48 @@ interface StatusResponse {
 
 // Module-level state (reset per isolate, useful for debugging)
 let lastPollTime: string | null = null;
+
+// ─── Rate limiting for /trigger endpoint ──────────────────────────────
+// In-memory rate limit map: IP → { count: number, resetTime: number }
+// Cloudflare Workers don't have persistent KV storage by default in this tier,
+// so we use in-memory tracking per isolate. This provides basic DDoS protection.
+const rateLimitMap = new Map<
+  string,
+  { count: number; resetTime: number }
+>();
+const RATE_LIMIT_WINDOW_MS = 60_000; // 1 minute
+const RATE_LIMIT_MAX_REQUESTS = 10; // max 10 requests per minute per IP
+
+/**
+ * Check if request from IP is rate limited.
+ * Returns true if request should be blocked.
+ */
+function isRateLimited(clientIp: string): boolean {
+  const now = Date.now();
+  const entry = rateLimitMap.get(clientIp);
+
+  if (!entry) {
+    // First request from this IP
+    rateLimitMap.set(clientIp, {
+      count: 1,
+      resetTime: now + RATE_LIMIT_WINDOW_MS,
+    });
+    return false;
+  }
+
+  if (now >= entry.resetTime) {
+    // Window expired, reset counter
+    rateLimitMap.set(clientIp, {
+      count: 1,
+      resetTime: now + RATE_LIMIT_WINDOW_MS,
+    });
+    return false;
+  }
+
+  // Within window, increment counter
+  entry.count++;
+  return entry.count > RATE_LIMIT_MAX_REQUESTS;
+}
 
 // ─── JSON response helper ─────────────────────────────────────────
 
@@ -80,6 +123,15 @@ export default {
 
     // Manual trigger endpoint (POST /trigger)
     if (url.pathname === "/trigger" && request.method === "POST") {
+      // ─── Rate limiting: max 10 requests per minute per IP ──────────
+      const clientIp = request.headers.get("CF-Connecting-IP") || "unknown";
+      if (isRateLimited(clientIp)) {
+        return jsonResponse(
+          { error: "Rate limit exceeded: max 10 requests per minute" },
+          429
+        );
+      }
+
       ctx.waitUntil(pollAndDispatch(env));
       return jsonResponse({ dispatched: true });
     }
@@ -259,7 +311,12 @@ async function dispatchToWorker(
   try {
     const response = await fetch(`${env.WORKER_CALLBACK_URL}/api/agent/run`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        // SECURITY: Include auth token to authenticate with Fly worker
+        // (must match WORKER_AUTH_TOKEN env var on Fly machine)
+        "Authorization": `Bearer ${env.WORKER_AUTH_TOKEN}`,
+      },
       body: JSON.stringify({
         task_id: task.id,
         agent_type: task.agent_type,

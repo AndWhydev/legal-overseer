@@ -97,6 +97,25 @@ async function handleAgentRun(
   req: IncomingMessage,
   res: ServerResponse
 ): Promise<void> {
+  // ─── SECURITY: Verify request authentication ───────────────────────
+  // The WORKER_AUTH_TOKEN must be set by Cloudflare Worker dispatch
+  // (see deployments/cloudflare/src/index.ts dispatchToWorker())
+  const authHeader = req.headers.authorization;
+  const expectedToken = process.env.WORKER_AUTH_TOKEN;
+
+  if (!expectedToken) {
+    json(res, 500, { error: "Server misconfigured: missing WORKER_AUTH_TOKEN" });
+    return;
+  }
+
+  if (!authHeader || authHeader !== `Bearer ${expectedToken}`) {
+    console.warn(
+      `[worker] Unauthorized agent/run request: expected Bearer token, got "${authHeader || "none"}"`
+    );
+    json(res, 401, { error: "Unauthorized" });
+    return;
+  }
+
   let body: Record<string, unknown>;
 
   try {
