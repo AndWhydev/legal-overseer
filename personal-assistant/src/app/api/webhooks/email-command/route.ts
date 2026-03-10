@@ -4,6 +4,7 @@ import { processEmailCommand } from '@/lib/channels/email-command'
 import type { ChannelMessage } from '@/lib/channels/types'
 import { logger } from '@/lib/core/logger'
 import { resolveOrgFromWebhook } from '@/lib/core/resolve-org'
+import { verifyEmailWebhookSignature } from '@/lib/channels/email-command-verify'
 
 /**
  * Email command webhook endpoint.
@@ -23,10 +24,23 @@ import { resolveOrgFromWebhook } from '@/lib/core/resolve-org'
  */
 export async function POST(request: NextRequest) {
   try {
-    // Parse request body
+    // Read raw body text for signature verification before parsing
+    const rawBody = await request.text()
+
+    // Verify webhook signature if secret is configured
+    const webhookSecret = process.env.EMAIL_WEBHOOK_SECRET
+    if (webhookSecret) {
+      const signature = request.headers.get('x-webhook-signature') || ''
+      if (!verifyEmailWebhookSignature(rawBody, signature, webhookSecret)) {
+        logger.warn('[webhook/email-command] Invalid webhook signature')
+        return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
+      }
+    }
+
+    // Parse request body from raw text
     let payload: Record<string, unknown>
     try {
-      payload = (await request.json()) as Record<string, unknown>
+      payload = JSON.parse(rawBody) as Record<string, unknown>
     } catch {
       logger.error('[webhook/email-command] Failed to parse JSON')
       return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })

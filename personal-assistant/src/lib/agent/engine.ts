@@ -6,6 +6,8 @@ import { selectModel, getModel } from './model-router'
 import { logAgentRun, estimateRunCost } from './run-logger'
 import { canProceed } from './cost-guard'
 import { generatePlan, stageFromToolName, isTrivialMessage, type PlanStage } from './planner'
+import { withCircuitBreaker, CircuitOpenError } from './circuit-breaker'
+import { writeToDeadLetterQueue } from './dlq'
 import type { ModelTier } from '@/lib/bitbit-core'
 import { logger } from '@/lib/core/logger'
 
@@ -180,24 +182,41 @@ export async function* runAgentChat(
   for (let i = 0; i < maxIterations; i++) {
     iterationCount++
     let response: Anthropic.Message
+    // Collect streamed deltas inside the circuit breaker so they can be yielded after
+    const streamedDeltas: string[] = []
     try {
       yield { type: 'stage', data: { stage: 'api_streaming', status: 'start', meta: { model, iteration: iterationCount } } }
-      const stream = client.messages.stream({
-        model,
-        max_tokens: maxTokens,
-        system: fullSystemPrompt,
-        tools,
-        messages,
-      })
 
-      // Stream text deltas to the client in real-time
-      for await (const event of stream) {
-        if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
-          yield { type: 'content_delta', data: event.delta.text }
-        }
+      const agentType = config.agentType || 'default'
+
+      response = await withCircuitBreaker(
+        `anthropic:${agentType}`,
+        async () => {
+          const stream = client.messages.stream({
+            model,
+            max_tokens: maxTokens,
+            system: fullSystemPrompt,
+            tools,
+            messages,
+          })
+
+          // Collect text deltas for streaming after circuit breaker resolves
+          for await (const event of stream) {
+            if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
+              streamedDeltas.push(event.delta.text)
+            }
+          }
+
+          return stream.finalMessage()
+        },
+        { threshold: 5, cooldownMs: 60_000 }
+      )
+
+      // Yield collected deltas to the client
+      for (const delta of streamedDeltas) {
+        yield { type: 'content_delta', data: delta }
       }
 
-      response = await stream.finalMessage()
       yield { type: 'stage', data: { stage: 'api_streaming', status: 'done', meta: { tokens: response.usage } } }
 
       // Check if late Haiku plan arrived during Sonnet streaming
@@ -212,9 +231,45 @@ export async function* runAgentChat(
         planPromise = null
       }
     } catch (err) {
+      // Circuit breaker OPEN -- temporary condition, do not write to DLQ
+      if (err instanceof CircuitOpenError) {
+        logger.warn(`[engine] Circuit breaker open for ${err.circuitKey}, skipping LLM call`)
+        yield { type: 'error', data: `Service temporarily unavailable (circuit open for ${err.circuitKey}). Please retry shortly.` }
+
+        if (config.agentConfigId) {
+          await logAgentRun(config.supabase, {
+            org_id: config.orgId,
+            agent_config_id: config.agentConfigId,
+            trigger_type: 'chat',
+            trigger_payload: { message },
+            status: 'error',
+            tokens_in: totalInputTokens,
+            tokens_out: totalOutputTokens,
+            cost_estimate: estimateRunCost(totalInputTokens, totalOutputTokens, tier),
+            duration_ms: Date.now() - startTime,
+            tool_calls: toolCallCount,
+            iterations: iterationCount,
+            error_message: `Circuit breaker open: ${err.circuitKey}`,
+          })
+        }
+        yield { type: 'done', data: {} }
+        return
+      }
+
       const errorMsg = err instanceof Error ? err.message : String(err)
+      const errorStack = err instanceof Error ? err.stack : undefined
       yield { type: 'error', data: `API error: ${errorMsg}` }
       outcome = 'error'
+
+      // Write to dead letter queue for post-mortem analysis
+      await writeToDeadLetterQueue(config.supabase, {
+        orgId: config.orgId,
+        agentType: config.agentType || 'unknown',
+        agentConfigId: config.agentConfigId,
+        errorMessage: errorMsg,
+        errorStack,
+        payload: { message, model, iteration: iterationCount },
+      })
 
       if (config.agentConfigId) {
         await logAgentRun(config.supabase, {

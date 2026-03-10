@@ -40,6 +40,13 @@ export type { AppContext } from './loader'
 export { getEntityGraph, searchEntities } from './graph-query'
 export type { GraphNode, GraphEdge, EntityGraph, SearchResult } from './graph-query'
 
+// Entity profile builder (Baseplate Phase 2)
+export { computeEntityProfile } from './entity-profile-builder'
+
+// Baseplate snapshot (fast read path)
+export { getBaseplateSnapshot } from './baseplate-snapshot'
+export type { BaseplateSnapshot } from './baseplate-snapshot'
+
 // Types
 export type {
   EntityType,

@@ -57,6 +57,11 @@ export function captureChannelError(
   })
 }
 
+export function setSentryUserContext(userId: string, orgId: string, email?: string) {
+  Sentry.setUser({ id: userId, email })
+  Sentry.setTag('org_id', orgId)
+}
+
 export async function withMonitoring<T>(name: string, fn: () => Promise<T>): Promise<T> {
   initSentry()
 

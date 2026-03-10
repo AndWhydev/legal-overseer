@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { FileText, Download, Loader2, RefreshCw } from 'lucide-react'
 import { TabShell } from '@/components/ui/tab-shell'
+import { EmptyState } from '@/components/ui/empty-state'
 import { logger } from '@/lib/core/logger';
 
 type ReportType = 'monthly' | 'agent-roi' | 'pipeline'
@@ -351,20 +352,11 @@ export default function ReportsTab() {
               <span style={{ fontSize: 14, color: 'var(--text-secondary)' }}>Loading reports...</span>
             </div>
           ) : reports.length === 0 ? (
-            <div style={{
-              ...glassCard,
-              display: 'flex',
-              flexDirection: 'column' as const,
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '60px 20px',
-              gap: 12,
-            }}>
-              <FileText size={32} style={{ color: 'var(--text-dim)' }} />
-              <span style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
-                No reports generated yet. Select a report type and period above to get started.
-              </span>
-            </div>
+            <EmptyState
+              icon={<FileText size={48} />}
+              title="No reports generated"
+              description="Monthly and weekly reports will appear here after your first full week"
+            />
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {reports.map(r => (

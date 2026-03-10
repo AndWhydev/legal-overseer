@@ -1,6 +1,8 @@
 'use client'
 
 import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react'
+import { AlertTriangle } from 'lucide-react'
+import { EmptyState } from '@/components/ui/empty-state'
 
 type WatchStatus = 'active' | 'paused'
 type WatchType = 'error_keyword' | 'uptime' | 'negative_sentiment'
@@ -635,18 +637,11 @@ export function WatchManager() {
           <span style={secondaryText}>{activeAlertCount} pending/escalated</span>
         </div>
         {alerts.length === 0 ? (
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '40px 20px',
-              gap: 12,
-            }}
-          >
-            <span style={secondaryText}>No pending alerts. You are all clear.</span>
-          </div>
+          <EmptyState
+            icon={<AlertTriangle size={48} />}
+            title="All clear"
+            description="No errors or alerts to report. Your systems are running smoothly"
+          />
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {alerts.map((alert) => (

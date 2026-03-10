@@ -1,8 +1,10 @@
 'use client';
 
 import React, { useEffect, useState, useCallback, useRef } from 'react';
+import { Activity } from 'lucide-react';
 import { TabSkeleton } from './tab-skeleton';
 import { TabShell } from '@/components/ui/tab-shell';
+import { EmptyState } from '@/components/ui/empty-state';
 import { logger } from '@/lib/core/logger';
 
 // ---------------------------------------------------------------------------
@@ -279,9 +281,11 @@ function ActivityTab() {
           ))}
 
           {entries.length === 0 && (
-            <p className="bb-activity-empty">
-              No audit events found. Agent actions will appear here.
-            </p>
+            <EmptyState
+              icon={<Activity size={48} />}
+              title="No activity yet"
+              description="Activity will appear here as you and your agents get to work"
+            />
           )}
 
           {/* Infinite scroll sentinel */}

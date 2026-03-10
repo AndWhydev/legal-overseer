@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { AlertCircle, RefreshCw, Loader2 } from 'lucide-react';
+import { AlertCircle, CheckCircle2, RefreshCw, Loader2 } from 'lucide-react';
 import { ApprovalCard, type ApprovalItem } from './approval-card';
 import { AlertBanner } from '../ui/alert-banner';
+import { EmptyState } from '../ui/empty-state';
 
 type FilterKey = 'all' | 'urgent' | 'normal';
 
@@ -264,10 +265,11 @@ export function ApprovalQueue() {
       ) : null}
 
       {!loading && visibleApprovals.length === 0 ? (
-        <div style={emptyState}>
-          <AlertCircle size={32} style={emptyStateIcon} />
-          <span style={emptyStateText}>No pending approvals</span>
-        </div>
+        <EmptyState
+          icon={<CheckCircle2 size={48} />}
+          title="No approvals pending"
+          description="When agents need your sign-off, requests will appear here"
+        />
       ) : null}
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>

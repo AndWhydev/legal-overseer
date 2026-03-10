@@ -1,5 +1,5 @@
 import type { NextConfig } from "next";
-import { withSentryConfig } from '@sentry/nextjs';
+import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
   async redirects() {
@@ -42,9 +42,9 @@ const nextConfig: NextConfig = {
 };
 
 export default withSentryConfig(nextConfig, {
-  org: process.env.SENTRY_ORG || 'bitbit',
-  project: process.env.SENTRY_PROJECT || 'personal-assistant',
-  authToken: process.env.SENTRY_AUTH_TOKEN,
-  silent: true,
+  org: process.env.SENTRY_ORG || 'bitbit-d1',
+  project: process.env.SENTRY_PROJECT || 'bitbit-dashboard',
+  silent: !process.env.CI,
   widenClientFileUpload: true,
+  disableLogger: true,
 });

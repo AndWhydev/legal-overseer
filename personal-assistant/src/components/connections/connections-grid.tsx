@@ -1,8 +1,10 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import { Plug } from 'lucide-react'
 import { useSearchParams } from 'next/navigation'
 import { ConnectModal, type ConnectModalMode } from '@/components/channels/connect-modal'
+import { EmptyState } from '@/components/ui/empty-state'
 import { useToast } from '@/components/ui/toast'
 import { logger } from '@/lib/core/logger'
 
@@ -666,9 +668,11 @@ export function ConnectionsGrid({
       />
 
       {filteredConnections.length === 0 ? (
-        <div className="rounded-[24px] border border-black/[0.05] bg-white/66 px-5 py-6 text-center text-sm text-[#7b7065]">
-          No connections in this view yet
-        </div>
+        <EmptyState
+          icon={<Plug size={48} />}
+          title="No connections configured"
+          description="Connect your services to let BitBit start working for you"
+        />
       ) : null}
     </section>
   )
