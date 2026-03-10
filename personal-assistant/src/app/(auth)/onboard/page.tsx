@@ -657,6 +657,33 @@ export default function OnboardPage() {
           )}
         </AnimatePresence>
       </div>
+
+      <div style={{
+        position: 'fixed',
+        bottom: 20,
+        right: 20,
+        zIndex: 50,
+      }}>
+        <a
+          href="mailto:hi@bitbit.chat?subject=Onboarding help"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            padding: '8px 14px',
+            borderRadius: 20,
+            background: 'rgba(255,255,255,0.06)',
+            backdropFilter: 'blur(8px)',
+            border: '1px solid rgba(255,255,255,0.1)',
+            color: 'var(--text-secondary)',
+            fontSize: 13,
+            textDecoration: 'none',
+            transition: 'background 0.2s',
+          }}
+        >
+          Need help?
+        </a>
+      </div>
     </div>
   )
 }
