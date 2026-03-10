@@ -160,8 +160,6 @@ export async function handleSubscriptionEvent(
   client: SupabaseClient,
   event: SubscriptionEvent,
 ): Promise<void> {
-  const orgId = event.tier !== 'unknown' ? undefined : undefined // resolved from metadata
-
   // Look up org by subscription metadata
   const { data: sub } = await client
     .from('subscriptions')
