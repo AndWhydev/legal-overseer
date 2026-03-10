@@ -16,7 +16,6 @@ import { BottomNav } from './bottom-nav';
 import { BitBitOverlay } from './bitbit-overlay';
 import { SplashScreen } from './splash-screen';
 import { OnboardingTour } from './onboarding-tour';
-import { OnboardingWizard } from './onboarding-wizard';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { ToastProvider } from '@/components/ui/toast';
 import { GlobalSearch } from './global-search';
@@ -65,8 +64,6 @@ export const TABS: TabDef[] = [
   { id: 'admin', label: 'Admin', path: '/dashboard/admin' },
   { id: 'settings', label: 'Settings', path: '/dashboard/settings' },
 ];
-
-const ONBOARDING_STORAGE_KEY = 'bb-onboarding-complete';
 
 // ─── Pre-warm all tab imports immediately ───────────────────────────────────
 // Trigger dynamic imports eagerly so chunks are fetched in the background.
@@ -145,11 +142,6 @@ interface SPAShellProps {
 }
 
 export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellProps) {
-  const [showWizard, setShowWizard] = useState(() => {
-    if (!isNewUser) return false;
-    if (typeof window === 'undefined') return true;
-    return localStorage.getItem(ONBOARDING_STORAGE_KEY) !== 'true';
-  });
   const router = useRouter();
 
   const handleSignOut = useCallback(async () => {
@@ -369,19 +361,6 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
     },
   });
 
-  // Keep first-login onboarding sticky across sessions if local completion exists.
-  useEffect(() => {
-    if (!isNewUser) {
-      setShowWizard(false);
-      return;
-    }
-    if (typeof window !== 'undefined' && localStorage.getItem(ONBOARDING_STORAGE_KEY) === 'true') {
-      setShowWizard(false);
-      return;
-    }
-    setShowWizard(true);
-  }, [isNewUser]);
-
   // Any tab navigation path (shortcuts, custom events, browser history) should close tablet drawer.
   useEffect(() => {
     setSidebarOpen(false);
@@ -542,15 +521,8 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
         {/* Keyboard shortcuts cheatsheet (?) */}
         <KeyboardShortcuts open={cheatsheetOpen} onClose={() => setCheatsheetOpen(false)} />
 
-        {/* Onboarding: wizard for new users, tour fallback for returning users */}
-        {showWizard ? (
-          <OnboardingWizard
-            onNavigate={handleTabChange}
-            onComplete={() => setShowWizard(false)}
-          />
-        ) : (
-          <OnboardingTour onNavigate={handleTabChange} tourVariant={composition.tourVariant} />
-        )}
+        {/* Onboarding tour for returning users */}
+        <OnboardingTour onNavigate={handleTabChange} tourVariant={composition.tourVariant} />
 
         {/* Dev toolbar — tree-shaken from production builds */}
         {process.env.NODE_ENV === 'development' && <DevToolbar />}
