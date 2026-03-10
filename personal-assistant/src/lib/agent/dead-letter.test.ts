@@ -1,4 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+
+vi.mock('@sentry/nextjs', () => ({
+  captureMessage: vi.fn(),
+}))
+
+import * as Sentry from '@sentry/nextjs'
 import { deadLetter, getUnresolvedDeadLetters, resolveDeadLetter, type DeadLetterEntry } from './dead-letter'
 
 function createMockSupabase() {

@@ -4,6 +4,8 @@ import { classifyMessage } from '@/lib/agent/classifier'
 import { routeMessage } from '@/lib/agent/action-router'
 import { runAgentChat, type EngineConfig } from '@/lib/agent/engine'
 import { logger } from '@/lib/core/logger';
+import { emailConversationAdapter } from '@/lib/conversation/email-adapter'
+import { routeIncomingConversation } from '@/lib/conversation/interface'
 
 export interface ParsedCommand {
   commandText: string
@@ -152,7 +154,7 @@ export function formatEmailResponse(agentMessage: string, _senderEmail: string):
 /**
  * Full pipeline: process an email command through the agent.
  * - Validates it's a command email
- * - Parses the command
+ * - Normalizes via emailConversationAdapter (strips signatures, reply prefixes)
  * - Classifies and routes it
  * - Executes via agent engine
  * - Formats response as email
@@ -174,9 +176,27 @@ export async function processEmailCommand(
 
     logger.info('[email-command] Processing command from', email.sender)
 
-    // Parse command text
-    const parsed = parseEmailCommand(email)
-    const commandText = parsed.commandText
+    // Use the conversation adapter to normalize the email into a command request
+    let commandText = ''
+    let normalizationError: string | undefined
+
+    await routeIncomingConversation(
+      emailConversationAdapter,
+      { orgId, email },
+      async (request) => {
+        commandText = request.text
+      },
+      (error) => {
+        normalizationError = error.message
+      },
+    )
+
+    if (normalizationError) {
+      return {
+        success: false,
+        error: `Email normalization failed: ${normalizationError}`,
+      }
+    }
 
     if (!commandText || commandText.length === 0) {
       return {

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { verifyWebhookSignature, receiveSMS } from '@/lib/channels/sms'
+import { verifyWebhookSignature, receiveSMS, processInboundSMS } from '@/lib/channels/sms'
 import type { TelnyxWebhookPayload } from '@/lib/channels/sms'
 import { logger } from '@/lib/core/logger'
 import { resolveOrgFromWebhook } from '@/lib/core/resolve-org'
@@ -83,43 +83,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ received: true, message_id: sms.id })
     }
 
-    // Persist to channel_messages
+    // Process inbound SMS through conversation adapter pipeline
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL || '',
       process.env.SUPABASE_SERVICE_ROLE_KEY || '',
-    ) as any
+    )
 
-    const { error } = await supabase.from('channel_messages').insert({
-      org_id: orgId,
-      channel: 'sms',
-      external_id: sms.id,
-      sender: sms.from,
-      subject: `SMS from ${sms.from}`,
-      body: sms.text.slice(0, 2000).trim(),
-      received_at: sms.timestamp.toISOString(),
-      is_actionable: false,
-      priority: 'medium',
-      processed: false,
-      metadata: {
-        webhook_event: true,
-        event_type: 'message.received',
-        from_number: sms.from,
-        to_number: sms.to,
-      },
-    })
+    const result = await processInboundSMS(supabase, orgId, sms)
 
-    if (error) {
-      // Unique constraint violation means duplicate — skip silently
-      if (error.code === '23505') {
-        logger.info('[webhook/sms] Duplicate SMS event skipped:', sms.id)
-      } else {
-        logger.error('[webhook/sms] Failed to persist SMS:', error.message)
-      }
-    } else {
-      logger.info('[webhook/sms] SMS message persisted:', sms.id)
-    }
-
-    return NextResponse.json({ received: true, message_id: sms.id, persisted: !error })
+    return NextResponse.json({ received: true, message_id: sms.id, persisted: result.persisted })
   } catch (err) {
     logger.error('[webhook/sms] Unexpected error:', err)
     return NextResponse.json({ error: 'Processing failed' }, { status: 500 })

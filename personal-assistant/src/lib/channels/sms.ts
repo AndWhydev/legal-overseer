@@ -1,5 +1,8 @@
+import type { SupabaseClient } from '@supabase/supabase-js'
 import type { ChannelAdapter } from './types'
 import { logger } from '@/lib/core/logger';
+import { smsConversationAdapter } from '@/lib/conversation/sms-adapter'
+import { routeIncomingConversation } from '@/lib/conversation/interface'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -324,6 +327,78 @@ export async function sendSMS(
       error: error instanceof Error ? error.message : 'Unknown error',
     }
   }
+}
+
+// ---------------------------------------------------------------------------
+// Inbound SMS processing via conversation adapter
+// ---------------------------------------------------------------------------
+
+export interface SMSProcessResult {
+  success: boolean
+  persisted: boolean
+  messageId?: string
+  error?: string
+}
+
+/**
+ * Process an inbound SMS through the conversation adapter pipeline.
+ * Normalizes via smsConversationAdapter, then persists to channel_messages.
+ */
+export async function processInboundSMS(
+  supabase: SupabaseClient,
+  orgId: string,
+  sms: InboundSMS,
+): Promise<SMSProcessResult> {
+  let result: SMSProcessResult = {
+    success: false,
+    persisted: false,
+  }
+
+  await routeIncomingConversation(
+    smsConversationAdapter,
+    { orgId, sms },
+    async (request) => {
+      const { error } = await supabase.from('channel_messages').insert({
+        org_id: request.orgId,
+        channel: 'sms',
+        external_id: sms.id,
+        sender: request.participantId,
+        subject: `SMS from ${request.participantId}`,
+        body: request.text.slice(0, 2000).trim(),
+        received_at: sms.timestamp.toISOString(),
+        is_actionable: false,
+        priority: 'medium',
+        processed: false,
+        metadata: {
+          webhook_event: true,
+          event_type: 'message.received',
+          from_number: sms.from,
+          to_number: sms.to,
+          ...request.metadata,
+        },
+      })
+
+      if (error) {
+        // Unique constraint violation means duplicate — skip silently
+        if (error.code === '23505') {
+          logger.info('[sms] Duplicate SMS event skipped:', sms.id)
+          result = { success: true, persisted: false, messageId: sms.id }
+        } else {
+          logger.error('[sms] Failed to persist SMS:', error.message)
+          result = { success: false, persisted: false, error: error.message }
+        }
+      } else {
+        logger.info('[sms] SMS message persisted:', sms.id)
+        result = { success: true, persisted: true, messageId: sms.id }
+      }
+    },
+    (error) => {
+      logger.warn('[sms] SMS normalization failed:', error.message)
+      result = { success: false, persisted: false, error: error.message }
+    },
+  )
+
+  return result
 }
 
 // ---------------------------------------------------------------------------

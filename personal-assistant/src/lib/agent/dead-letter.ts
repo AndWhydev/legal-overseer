@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import * as Sentry from '@sentry/nextjs'
 import { logger } from '@/lib/core/logger';
 
 /**
@@ -43,6 +44,18 @@ export async function deadLetter(
       })
       .select('id')
       .single()
+
+    Sentry.captureMessage(`Agent failure: ${entry.agent_type}`, {
+      level: 'warning',
+      tags: {
+        agent_type: entry.agent_type,
+        org_id: entry.org_id,
+      },
+      extra: {
+        error_message: entry.error_message.slice(0, 500),
+        agent_run_id: entry.agent_run_id,
+      },
+    })
 
     if (error) {
       logger.error('[dead-letter] Failed to insert:', error.message)
