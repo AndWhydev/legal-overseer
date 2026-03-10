@@ -1,10 +1,12 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { EntityType, TimelineEventType, EntityRef } from './types'
-import { logger } from '@/lib/core/logger';
+import { logger } from '@/lib/core/logger'
+import { extractAndStoreMentions } from './mention-extractor'
 
 /**
  * Write a timeline event to entity_timeline.
  * Fire-and-forget: logs errors but never throws.
+ * Extracts and stores mentions for text-containing events.
  */
 export async function writeTimelineEvent(
   supabase: SupabaseClient,
@@ -30,6 +32,19 @@ export async function writeTimelineEvent(
 
     if (error) {
       logger.error('[timeline-writer] Failed to write event:', error.message)
+      return
+    }
+
+    // Extract mentions from text-containing events
+    const textContentEvents: TimelineEventType[] = ['message_received', 'message_sent', 'note_added']
+    if (textContentEvents.includes(eventType)) {
+      const text = (eventData.text as string) ?? (eventData.content as string) ?? (eventData.message as string)
+      if (text) {
+        // Fire-and-forget mention extraction
+        extractAndStoreMentions(supabase, orgId, entityType, entityId, text).catch(err => {
+          logger.error('[timeline-writer] Error extracting mentions:', { error: err instanceof Error ? err.message : String(err) })
+        })
+      }
     }
   } catch (err) {
     logger.error('[timeline-writer] Unexpected error:', err)

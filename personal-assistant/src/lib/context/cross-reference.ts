@@ -7,6 +7,7 @@ import type {
   FinancialSignal,
   WaitingFor,
 } from './types'
+import { getCachedCrossRefs, setCachedCrossRefs } from './xref-cache'
 
 /**
  * Get tasks related to a contact via entity_relationships.
@@ -16,6 +17,12 @@ export async function getRelatedTasks(
   orgId: string,
   contactId: string
 ): Promise<TaskRef[]> {
+  // Check cache first
+  const cached = await getCachedCrossRefs(supabase, orgId, 'contact', contactId, 'tasks')
+  if (cached) {
+    return (cached.tasks as TaskRef[]) || []
+  }
+
   // Find task IDs linked to this contact
   const { data: rels, error: relError } = await supabase
     .from('entity_relationships')
@@ -40,13 +47,18 @@ export async function getRelatedTasks(
 
   if (taskError || !tasks) return []
 
-  return tasks.map((t: Record<string, unknown>) => ({
+  const result = tasks.map((t: Record<string, unknown>) => ({
     id: t.id as string,
     title: t.title as string,
     status: t.status as string,
     priority: t.priority as string,
     targetDate: ((t.metadata as Record<string, unknown>)?.target_date as string) ?? null,
   }))
+
+  // Write to cache
+  await setCachedCrossRefs(supabase, orgId, 'contact', contactId, 'tasks', { tasks: result })
+
+  return result
 }
 
 /**
@@ -58,6 +70,12 @@ export async function getFinancialSignals(
   contactId: string
 ): Promise<FinancialSignal> {
   const empty: FinancialSignal = { totalOutstanding: 0, overdueCount: 0, lastPaymentDate: null, invoiceCount: 0 }
+
+  // Check cache first
+  const cached = await getCachedCrossRefs(supabase, orgId, 'contact', contactId, 'financial')
+  if (cached) {
+    return cached as unknown as FinancialSignal
+  }
 
   // Find invoice IDs linked to this contact
   const { data: rels, error: relError } = await supabase
@@ -101,12 +119,17 @@ export async function getFinancialSignals(
     }
   }
 
-  return {
+  const result = {
     totalOutstanding,
     overdueCount,
     lastPaymentDate,
     invoiceCount: invoices.length,
   }
+
+  // Write to cache
+  await setCachedCrossRefs(supabase, orgId, 'contact', contactId, 'financial', result)
+
+  return result
 }
 
 /**
@@ -117,6 +140,12 @@ export async function getDeadlines(
   orgId: string,
   entityId: string
 ): Promise<Deadline[]> {
+  // Check cache first
+  const cached = await getCachedCrossRefs(supabase, orgId, 'contact', entityId, 'deadlines')
+  if (cached) {
+    return (cached.deadlines as Deadline[]) || []
+  }
+
   // Find task IDs related to this entity
   const { data: rels, error: relError } = await supabase
     .from('entity_relationships')
@@ -162,7 +191,12 @@ export async function getDeadlines(
     }
   }
 
-  return deadlines.sort((a, b) => a.daysUntil - b.daysUntil)
+  const sorted = deadlines.sort((a, b) => a.daysUntil - b.daysUntil)
+
+  // Write to cache
+  await setCachedCrossRefs(supabase, orgId, 'contact', entityId, 'deadlines', { deadlines: sorted })
+
+  return sorted
 }
 
 /**
