@@ -186,7 +186,7 @@ export async function startBridge(orgId: string): Promise<{
 
       await supabase
         .from('whatsapp_sessions')
-        .update({ status: 'pairing', qr_code: qr })
+        .update({ status: 'pairing', qr_data: qr })
         .eq('id', state.sessionId!)
 
       console.log(JSON.stringify({
@@ -206,7 +206,7 @@ export async function startBridge(orgId: string): Promise<{
 
       await supabase
         .from('whatsapp_sessions')
-        .update({ status: 'connected', qr_code: null })
+        .update({ status: 'connected', qr_data: null })
         .eq('id', state.sessionId!)
 
       await logHealth(supabase, orgId, true)
