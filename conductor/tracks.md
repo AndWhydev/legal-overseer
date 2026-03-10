@@ -91,9 +91,10 @@ Production-grade operational infrastructure. Includes:
 - Circuit breaker threshold tuning
 
 ### T023 — Dashboard UX Polish
-Remaining UX improvements for non-technical users. Includes:
-- Progressive disclosure ("Advanced" toggle to hide power-user tabs)
-- Command Center quick-action buttons
-- Notification badges on sidebar items (real data)
-- Empty state illustrations for tabs with no data
-- Abstract conversation interface unification (WhatsApp/SMS/email share one parser)
+Remaining UX improvements for non-technical users. Partially complete:
+- [x] Dynamic KPI cards per industry pack (agency/content-creator/tradie) with charts and trends
+- [x] Notification badges on sidebar items with real unread counts
+- [x] CSS variable migration for light/dark mode support
+- [ ] Progressive disclosure ("Advanced" toggle to hide power-user tabs)
+- [ ] Empty state illustrations for tabs with no data
+- [ ] Conversation interface unification (WhatsApp/SMS/email share one parser)

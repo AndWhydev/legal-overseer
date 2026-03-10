@@ -13,7 +13,7 @@ export interface KPIConfig {
   /** Optional unit displayed before the value (e.g. "$", "%", "min"). */
   unit?: string
   /** Chart type to render below the value. */
-  chart: 'sparkline' | 'bar'
+  chart: 'sparkline' | 'bar' | 'donut' | 'gauge'
   /** CSS color variable for the chart and accents. */
   color: string
   /** Trend direction indicator. */
@@ -28,6 +28,10 @@ export interface KPIConfig {
   chartLabels?: string[]
   /** Optional per-bar colors (for chart: 'bar'). */
   chartColors?: string[]
+  /** Optional donut segments (for chart: 'donut'). If not provided, chartData is mapped to segments. */
+  chartSegments?: Array<{ value: number; color?: string; label?: string }>
+  /** Optional gauge value (for chart: 'gauge'). If not provided, uses the last value from chartData. */
+  gaugeValue?: number
 }
 
 export interface IndustryPack {

@@ -1,11 +1,14 @@
 'use client'
 
+import { useState } from 'react'
 import { motion } from 'motion/react'
 import { HatchPattern } from './hatch-pattern'
+import { ChartTooltip } from './chart-tooltip'
 
 /**
  * Compact sparkline chart with animated path drawing and optional
- * hatch-pattern fill area beneath the line.
+ * hatch-pattern fill area beneath the line. Supports interactive
+ * hover with tooltip and guideline.
  */
 export interface MiniSparklineProps {
   data: number[]
@@ -16,6 +19,9 @@ export interface MiniSparklineProps {
   strokeWidth?: number
   animate?: boolean
   className?: string
+  interactive?: boolean
+  onHover?: (index: number | null) => void
+  formatValue?: (v: number) => string
 }
 
 export function MiniSparkline({
@@ -27,7 +33,12 @@ export function MiniSparkline({
   strokeWidth = 1.5,
   animate = true,
   className,
+  interactive = false,
+  onHover,
+  formatValue,
 }: MiniSparklineProps) {
+  const [activeIndex, setActiveIndex] = useState<number | null>(null)
+
   if (data.length < 2) return null
 
   const max = Math.max(...data)
@@ -44,7 +55,12 @@ export function MiniSparkline({
   const areaPath = `${linePath} L${points[points.length - 1].x},${height} L${points[0].x},${height} Z`
   const hatchId = `sparkline-hatch-${Math.random().toString(36).slice(2, 8)}`
 
-  return (
+  const handleHoverChange = (index: number | null) => {
+    setActiveIndex(index)
+    onHover?.(index)
+  }
+
+  const svgContent = (
     <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} className={className}>
       {filled && (
         <>
@@ -98,6 +114,72 @@ export function MiniSparkline({
         r={2.5}
         fill={color}
       />
+      {interactive && (
+        <>
+          {/* Vertical guideline at active point */}
+          {activeIndex !== null && (
+            <line
+              x1={points[activeIndex].x}
+              y1={0}
+              x2={points[activeIndex].x}
+              y2={height}
+              stroke={color}
+              strokeWidth={1}
+              strokeDasharray="3,3"
+              opacity={0.4}
+            />
+          )}
+          {/* Active dot enlarged */}
+          {activeIndex !== null && (
+            <circle
+              cx={points[activeIndex].x}
+              cy={points[activeIndex].y}
+              r={4}
+              fill={color}
+            />
+          )}
+          {/* Hover zones over each point */}
+          {points.map((p, i) => {
+            const stepLeft = i > 0 ? (p.x - points[i - 1].x) / 2 : pad
+            const stepRight = i < points.length - 1 ? (points[i + 1].x - p.x) / 2 : width - p.x
+            const zoneX = p.x - stepLeft
+            const zoneWidth = stepLeft + stepRight
+
+            return (
+              <rect
+                key={`zone-${i}`}
+                x={zoneX}
+                y={0}
+                width={zoneWidth}
+                height={height}
+                fill="transparent"
+                onMouseEnter={() => handleHoverChange(i)}
+                onMouseLeave={() => handleHoverChange(null)}
+                style={{ cursor: 'pointer' }}
+              />
+            )
+          })}
+        </>
+      )}
     </svg>
   )
+
+  if (interactive) {
+    return (
+      <div style={{ position: 'relative', display: 'inline-block' }}>
+        {svgContent}
+        {activeIndex !== null && (
+          <ChartTooltip
+            visible
+            x={points[activeIndex].x}
+            y={points[activeIndex].y}
+            value={formatValue ? formatValue(data[activeIndex]) : String(data[activeIndex])}
+            color={color}
+          />
+        )}
+      </div>
+    )
+  }
+
+  return svgContent
 }

@@ -74,7 +74,7 @@ Chat interface with streaming responses and a visible processing pipeline. Multi
 
 **Security and monitoring (T022).** RLS audit, webhook signature verification, Sentry.io error tracking, uptime monitoring.
 
-**Dashboard polish (T023).** Progressive disclosure toggle, Command Center quick actions, notification badges, conversation interface unification.
+**Dashboard polish (T023).** Progressive disclosure toggle, dynamic industry-pack KPIs, conversation interface unification.
 
 ## Pricing direction
 

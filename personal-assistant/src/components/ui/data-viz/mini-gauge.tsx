@@ -1,10 +1,12 @@
 'use client'
 
+import { useState } from 'react'
 import { motion } from 'motion/react'
 
 /**
  * Semi-circular gauge visualization showing a percentage value.
  * Renders as an animated SVG half-circle with value and optional label.
+ * When interactive, supports hover to highlight the arc and apply glow effects.
  */
 export interface MiniGaugeProps {
   value: number
@@ -14,6 +16,8 @@ export interface MiniGaugeProps {
   label?: string
   showValue?: boolean
   animate?: boolean
+  interactive?: boolean
+  formatValue?: (v: number) => string
   className?: string
 }
 
@@ -25,8 +29,11 @@ export function MiniGauge({
   label,
   showValue = true,
   animate = true,
+  interactive = false,
+  formatValue = (v) => `${v}%`,
   className,
 }: MiniGaugeProps) {
+  const [hovered, setHovered] = useState(false)
   const clamped = Math.min(100, Math.max(0, value))
   const radius = (size - strokeWidth) / 2
   const halfCircumference = Math.PI * radius
@@ -57,21 +64,45 @@ export function MiniGauge({
             initial={animate ? { strokeDashoffset: halfCircumference } : { strokeDashoffset: offset }}
             animate={{ strokeDashoffset: offset }}
             transition={{ duration: 0.8, ease: 'easeOut' }}
+            style={
+              interactive && hovered
+                ? { filter: `drop-shadow(0 0 6px ${color})` }
+                : undefined
+            }
           />
+          {/* Invisible hit target for hover */}
+          {interactive && (
+            <path
+              d={`M ${-radius} 0 A ${radius} ${radius} 0 0 1 ${radius} 0`}
+              fill="none"
+              stroke="transparent"
+              strokeWidth={strokeWidth + 10}
+              strokeLinecap="round"
+              onMouseEnter={() => setHovered(true)}
+              onMouseLeave={() => setHovered(false)}
+              style={{ cursor: 'pointer' }}
+            />
+          )}
         </g>
       </svg>
       {showValue && (
-        <div
+        <motion.div
           style={{
             marginTop: -size * 0.18,
-            fontSize: size * 0.22,
+            fontSize: interactive && hovered ? size * 0.25 : size * 0.22,
             fontWeight: 700,
-            color: 'var(--text-primary)',
+            color: interactive && hovered ? color : 'var(--text-primary)',
             fontFamily: 'var(--font-mono)',
+            transition: 'all 0.2s ease-out',
           }}
+          animate={{
+            fontSize: interactive && hovered ? size * 0.25 : size * 0.22,
+            color: interactive && hovered ? color : 'var(--text-primary)',
+          }}
+          transition={{ duration: 0.2 }}
         >
-          {clamped}%
-        </div>
+          {formatValue(clamped)}
+        </motion.div>
       )}
       {label && (
         <div

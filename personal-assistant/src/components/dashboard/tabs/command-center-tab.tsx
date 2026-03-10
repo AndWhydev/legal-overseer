@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useRealtimeSubscription } from '@/lib/realtime/supabase-realtime';
-import { StatCard, StatusBadge, ProcessPipeline, TimelineBar, MiniSparkline, MiniBarChart } from '@/components/ui/data-viz';
+import { StatCard, StatusBadge, ProcessPipeline, TimelineBar, MiniSparkline, MiniBarChart, MiniDonut, MiniGauge } from '@/components/ui/data-viz';
 import { AlertCircle, Clock, ShieldCheck, Zap, Users, CheckCircle2, Link as LinkIcon, TrendingUp, Calendar, ReceiptText, MessageSquare, BellOff, Inbox, Activity } from 'lucide-react';
 import { useDashboardStats } from '@/hooks/use-dashboard-stats';
 import { useEnabledModules } from '@/lib/modules/use-enabled-modules';
@@ -169,6 +169,56 @@ function CommandCenterTab() {
     }
   };
 
+  const getChartNode = (kpi: KPIConfig): React.ReactNode => {
+    switch (kpi.chart) {
+      case 'sparkline':
+        return (
+          <MiniSparkline
+            data={kpi.chartData}
+            color={kpi.color}
+            height={32}
+            interactive
+          />
+        );
+      case 'bar':
+        return (
+          <MiniBarChart
+            data={kpi.chartData.map((v, i) => ({
+              value: v,
+              label: kpi.chartLabels?.[i],
+              color: kpi.chartColors?.[i],
+            }))}
+            color={kpi.color}
+            height={40}
+            showLabels={!!kpi.chartLabels}
+            interactive
+          />
+        );
+      case 'donut':
+        const donutSegments = kpi.chartSegments ?? kpi.chartData.map((v) => ({ value: v }));
+        return (
+          <MiniDonut
+            segments={donutSegments}
+            size={48}
+            color={kpi.color}
+            interactive
+          />
+        );
+      case 'gauge':
+        const gaugeValue = kpi.gaugeValue ?? kpi.chartData[kpi.chartData.length - 1] ?? 0;
+        return (
+          <MiniGauge
+            value={gaugeValue}
+            size={64}
+            color={kpi.color}
+            interactive
+          />
+        );
+      default:
+        return null;
+    }
+  };
+
   if (loading) return <TabSkeleton />;
 
   return (
@@ -251,26 +301,7 @@ function CommandCenterTab() {
               ? (typeof liveValue === 'number' ? liveValue.toLocaleString() : liveValue)
               : kpi.fallback;
 
-            const chartNode = kpi.chart === 'sparkline' ? (
-              <MiniSparkline
-                data={kpi.chartData}
-                color={kpi.color}
-                height={32}
-                width={180}
-              />
-            ) : (
-              <MiniBarChart
-                data={kpi.chartData.map((v, i) => ({
-                  value: v,
-                  label: kpi.chartLabels?.[i],
-                  color: kpi.chartColors?.[i],
-                }))}
-                color={kpi.color}
-                height={40}
-                width={180}
-                showLabels={!!kpi.chartLabels}
-              />
-            );
+            const chartNode = getChartNode(kpi);
 
             return (
               <StatCard

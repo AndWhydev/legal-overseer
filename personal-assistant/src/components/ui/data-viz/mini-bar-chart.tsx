@@ -1,11 +1,13 @@
 'use client'
 
+import { useState } from 'react'
 import { motion } from 'motion/react'
 import { HatchPattern } from './hatch-pattern'
+import { ChartTooltip } from './chart-tooltip'
 
 /**
  * Compact animated bar chart with hatch-pattern fills.
- * Supports per-bar colors, labels, and entrance animations.
+ * Supports per-bar colors, labels, entrance animations, and interactive hover.
  */
 export interface BarDatum {
   label?: string
@@ -22,6 +24,9 @@ export interface MiniBarChartProps {
   showLabels?: boolean
   animate?: boolean
   className?: string
+  interactive?: boolean
+  onHover?: (index: number | null) => void
+  formatValue?: (v: number) => string
 }
 
 export function MiniBarChart({
@@ -33,7 +38,12 @@ export function MiniBarChart({
   showLabels = false,
   animate = true,
   className,
+  interactive = false,
+  onHover,
+  formatValue,
 }: MiniBarChartProps) {
+  const [activeIndex, setActiveIndex] = useState<number | null>(null)
+
   const rawMax = Math.max(...data.map((d) => d.value), 1)
   const rawMin = Math.min(...data.map((d) => d.value), 0)
   // Exaggerate differences: raise baseline so small bars are shorter relative to tall ones
@@ -44,7 +54,22 @@ export function MiniBarChart({
   const barW = (width - gap * (data.length - 1)) / data.length
   const hatchId = `bar-hatch-${Math.random().toString(36).slice(2, 8)}`
 
-  return (
+  const handleHoverChange = (index: number | null) => {
+    setActiveIndex(index)
+    onHover?.(index)
+  }
+
+  const barHeights = data.map((d) => {
+    const normalised = Math.max(0, (d.value - exaggeratedMin) / (max - exaggeratedMin))
+    return Math.max(chartH * 0.08, (normalised * 0.85 + 0.15) * chartH)
+  })
+
+  const barPositions = data.map((_, i) => ({
+    x: i * (barW + gap),
+    y: chartH - barHeights[i],
+  }))
+
+  const svgContent = (
     <svg
       width={width}
       height={height}
@@ -72,15 +97,21 @@ export function MiniBarChart({
         </mask>
       </defs>
       {data.map((d, i) => {
-        // Exaggerated height: map from exaggeratedMin..max to 15%..100% of chartH
-        const normalised = Math.max(0, (d.value - exaggeratedMin) / (max - exaggeratedMin))
-        const barH = Math.max(chartH * 0.08, (normalised * 0.85 + 0.15) * chartH)
+        const barH = barHeights[i]
         const x = i * (barW + gap)
         const y = chartH - barH
         const fill = d.color || color
+        const isActive = activeIndex === i
+        const isInactive = activeIndex !== null && activeIndex !== i
+        const barOpacity = isInactive ? 0.4 : 1
 
         return (
-          <g key={i}>
+          <g
+            key={i}
+            onMouseEnter={() => handleHoverChange(i)}
+            onMouseLeave={() => handleHoverChange(null)}
+            style={{ cursor: interactive ? 'pointer' : 'default' }}
+          >
             {/* Gradient background fill */}
             <motion.rect
               x={x}
@@ -89,7 +120,7 @@ export function MiniBarChart({
               rx={2}
               fill={`url(#${hatchId}-bar-grad-${i})`}
               initial={animate ? { height: 0, y: chartH } : undefined}
-              animate={{ height: barH, y }}
+              animate={{ height: barH, y, opacity: interactive ? barOpacity : 1 }}
               transition={{ duration: 0.6, delay: i * 0.05, ease: 'easeOut' }}
             />
             {/* Hatch overlay with gradient fade */}
@@ -101,7 +132,7 @@ export function MiniBarChart({
               fill={`url(#${hatchId})`}
               mask={`url(#${hatchId}-fade-mask)`}
               initial={animate ? { height: 0, y: chartH } : undefined}
-              animate={{ height: barH, y }}
+              animate={{ height: barH, y, opacity: interactive ? barOpacity : 1 }}
               transition={{ duration: 0.6, delay: i * 0.05, ease: 'easeOut' }}
             />
             {showLabels && d.label && (
@@ -121,4 +152,32 @@ export function MiniBarChart({
       })}
     </svg>
   )
+
+  if (interactive && activeIndex !== null) {
+    const activeBar = data[activeIndex]
+    const pos = barPositions[activeIndex]
+    return (
+      <div style={{ position: 'relative', display: 'inline-block' }}>
+        {svgContent}
+        <ChartTooltip
+          visible
+          x={pos.x + barW / 2}
+          y={pos.y}
+          label={activeBar.label}
+          value={formatValue ? formatValue(activeBar.value) : String(activeBar.value)}
+          color={activeBar.color || color}
+        />
+      </div>
+    )
+  }
+
+  if (interactive) {
+    return (
+      <div style={{ position: 'relative', display: 'inline-block' }}>
+        {svgContent}
+      </div>
+    )
+  }
+
+  return svgContent
 }

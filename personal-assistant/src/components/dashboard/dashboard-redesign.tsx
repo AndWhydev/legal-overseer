@@ -1,15 +1,13 @@
 'use client';
 
 import React from 'react';
-import {
-  FolderOpen,
-  DollarSign,
-  ListTodo,
-  Bot,
-} from 'lucide-react';
 import type { KanbanColumn, Task } from '@/lib/types';
 import { useDashboardStats } from '@/hooks/use-dashboard-stats';
 import { useSeedData } from '@/hooks/use-seed-data';
+import { useEnabledModules } from '@/lib/modules/use-enabled-modules';
+import { getPack } from '@/lib/industry/registry';
+import type { KPIConfig } from '@/lib/industry/types';
+import { StatCard, MiniSparkline, MiniBarChart, MiniDonut, MiniGauge } from '@/components/ui/data-viz';
 import { DailyBrief } from './daily-brief';
 import { KanbanBoard } from './kanban-board';
 import { InboxFeed } from './inbox-feed';
@@ -24,147 +22,127 @@ interface DashboardRedesignProps {
   totalActive: number;
 }
 
-// ─── KPI Card Component ────────────────────────────────────────────────────
-
-interface KpiCardProps {
-  title: string;
-  icon: React.ReactNode;
-  accent: string;
-  value: string;
-  prefix?: string;
-  unit?: string;
-  subtitle?: string;
-}
-
-const kpiCardStyle: React.CSSProperties = {
-  padding: '20px',
-  borderRadius: 16,
-  background: 'var(--glass-card-bg)',
-  backdropFilter: 'var(--glass-card-blur)',
-  WebkitBackdropFilter: 'var(--glass-card-blur)',
-  border: '1px solid var(--glass-card-border)',
-  boxShadow: 'var(--card-inset)',
-  display: 'flex',
-  flexDirection: 'column',
-  gap: 12,
-  minWidth: 180,
-};
-
-function KpiCard({ title, icon, accent, value, prefix, unit, subtitle }: KpiCardProps) {
-  return (
-    <article aria-label={`${title} — ${prefix || ''}${value}${unit ? ' ' + unit : ''}`} style={kpiCardStyle}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-        <span style={{ color: 'var(--text-secondary)', display: 'flex' }}>{icon}</span>
-        <span style={{ fontSize: 12, color: 'var(--text-secondary)', fontWeight: 500, letterSpacing: '0.02em' }}>
-          {title}
-        </span>
-      </div>
-
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
-        {prefix && (
-          <span style={{ fontSize: 22, fontWeight: 600, color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>
-            {prefix}
-          </span>
-        )}
-        <span
-          style={{
-            fontSize: 38,
-            fontWeight: 700,
-            color: 'var(--text-primary)',
-            fontFamily: 'var(--font-mono)',
-            letterSpacing: '-0.03em',
-            lineHeight: 1,
-          }}
-        >
-          {value}
-        </span>
-        {unit && (
-          <span style={{ fontSize: 11, color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)', marginLeft: 2 }}>
-            {unit}
-          </span>
-        )}
-      </div>
-
-      {subtitle && (
-        <span style={{ fontSize: 11, color: 'var(--text-dim)' }}>
-          {subtitle}
-        </span>
-      )}
-    </article>
-  );
-}
-
 // ─── Main Dashboard ─────────────────────────────────────────────────────────
 
 export function DashboardRedesign({ columns, tasks, messages, completedToday, totalActive }: DashboardRedesignProps) {
   const { stats, loading } = useDashboardStats();
   const seed = useSeedData();
+  const { industry } = useEnabledModules();
+  const pack = getPack(industry ?? 'agency');
+  const kpis: KPIConfig[] = pack.kpis ?? [];
 
   // Use seed kanban data when active, otherwise use props
   const displayColumns = seed.active && seed.data?.kanbanColumns ? seed.data.kanbanColumns : columns;
   const displayTasks = seed.active && seed.data?.kanbanTasks ? seed.data.kanbanTasks : tasks;
 
-  const SkeletonKpiCard = () => (
-    <article aria-label="Loading" style={{
-      ...kpiCardStyle,
-      animation: 'pulse 2s ease-in-out infinite',
-    }}>
-      <div style={{ height: 12, background: 'var(--hover-bg-strong)', borderRadius: 4, width: '50%' }} />
-      <div style={{ height: 38, background: 'var(--hover-bg-strong)', borderRadius: 4, width: '35%' }} />
-      <div style={{ height: 11, background: 'var(--hover-bg)', borderRadius: 4, width: '60%' }} />
-    </article>
-  );
+  const skeletonStyle: React.CSSProperties = {
+    padding: '16px 20px',
+    borderRadius: 'var(--radius-xl)',
+    background: 'var(--bg-card)',
+    backdropFilter: 'var(--glass-blur)',
+    WebkitBackdropFilter: 'var(--glass-blur)',
+    border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
+    boxShadow: 'var(--card-shadow), var(--card-inset)',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 12,
+    minWidth: 200,
+    animation: 'pulse 2s ease-in-out infinite',
+  };
+
+  const getChartNode = (kpi: KPIConfig): React.ReactNode => {
+    switch (kpi.chart) {
+      case 'sparkline':
+        return (
+          <MiniSparkline
+            data={kpi.chartData}
+            color={kpi.color}
+            height={32}
+            interactive
+          />
+        );
+      case 'bar':
+        return (
+          <MiniBarChart
+            data={kpi.chartData.map((v, i) => ({
+              value: v,
+              label: kpi.chartLabels?.[i],
+              color: kpi.chartColors?.[i],
+            }))}
+            color={kpi.color}
+            height={40}
+            showLabels={!!kpi.chartLabels}
+            interactive
+          />
+        );
+      case 'donut':
+        const donutSegments = kpi.chartSegments ?? kpi.chartData.map((v) => ({ value: v }));
+        return (
+          <MiniDonut
+            segments={donutSegments}
+            size={48}
+            color={kpi.color}
+            interactive
+          />
+        );
+      case 'gauge':
+        const gaugeValue = kpi.gaugeValue ?? kpi.chartData[kpi.chartData.length - 1] ?? 0;
+        return (
+          <MiniGauge
+            value={gaugeValue}
+            size={64}
+            color={kpi.color}
+            interactive
+          />
+        );
+      default:
+        return null;
+    }
+  };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20, height: '100%', minHeight: 0 }}>
-      {/* KPI Row */}
+      {/* KPI Row — driven by industry pack */}
       <div
         className="bb-stagger"
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
           gap: 16,
         }}
       >
         {loading ? (
-          <>
-            <SkeletonKpiCard />
-            <SkeletonKpiCard />
-            <SkeletonKpiCard />
-            <SkeletonKpiCard />
-          </>
+          Array.from({ length: 4 }, (_, i) => (
+            <article key={i} aria-label="Loading" style={skeletonStyle}>
+              <div style={{ height: 12, background: 'var(--hover-bg-strong)', borderRadius: 4, width: '50%' }} />
+              <div style={{ height: 36, background: 'var(--hover-bg-strong)', borderRadius: 4, width: '35%' }} />
+              <div style={{ height: 32, background: 'var(--hover-bg)', borderRadius: 4, width: '100%' }} />
+              <div style={{ height: 10, background: 'var(--hover-bg)', borderRadius: 4, width: '60%' }} />
+            </article>
+          ))
         ) : (
-          <>
-            <KpiCard
-              title="Active Tasks"
-              icon={<ListTodo size={14} />}
-              accent="var(--bb-blue)"
-              value={String(stats?.activeTasks || 0)}
-              subtitle={`${completedToday} completed today`}
-            />
-            <KpiCard
-              title="Revenue"
-              icon={<DollarSign size={14} />}
-              accent="var(--bb-green)"
-              prefix="$"
-              value={(stats?.totalRevenue || 0).toLocaleString('en-US', { maximumFractionDigits: 0 })}
-              subtitle="from paid invoices"
-            />
-            <KpiCard
-              title="Agent Runs"
-              icon={<Bot size={14} />}
-              accent="var(--bb-amber)"
-              value={String(stats?.agentRunsToday || 0)}
-              subtitle="today"
-            />
-            <KpiCard
-              title="Contacts"
-              icon={<FolderOpen size={14} />}
-              accent="var(--bb-purple)"
-              value={String(stats?.activeContacts || 0)}
-              subtitle="in your network"
-            />
-          </>
+          kpis.map((kpi) => {
+            const liveValue = kpi.dataKey && stats ? stats[kpi.dataKey] : undefined;
+            const displayValue = liveValue !== undefined
+              ? (typeof liveValue === 'number' ? liveValue.toLocaleString() : liveValue)
+              : kpi.fallback;
+
+            const chartNode = getChartNode(kpi);
+
+            return (
+              <StatCard
+                key={kpi.key}
+                label={kpi.label}
+                value={displayValue}
+                unit={kpi.unit}
+                trend={kpi.trend}
+                trendValue={kpi.trendValue}
+                color={kpi.color}
+                chart={chartNode}
+                subtitle={kpi.subtitle}
+              />
+            );
+          })
         )}
       </div>
 
