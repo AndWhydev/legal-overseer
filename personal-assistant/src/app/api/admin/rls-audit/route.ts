@@ -13,8 +13,7 @@ export const dynamic = 'force-dynamic'
  * Runs a comprehensive RLS audit on all tables in the public schema.
  * Returns audit results as JSON with table status, policies, and issues.
  *
- * Auth: Requires admin user (Tor hardcoded for now)
- * TODO: Implement proper admin role checking via org_members.role
+ * Auth: Requires admin user (owner or admin role in org_members)
  */
 export async function GET(request: NextRequest) {
   // --- Auth Check ---
@@ -43,9 +42,16 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  // TODO: Replace hardcoded admin check with org_members.role = 'admin' check
-  const ADMIN_USER_ID = '02ce2616-c01b-45a5-a2ad-16ebe936a6b2' // Tor
-  if (user.id !== ADMIN_USER_ID) {
+  // Role-based admin check via org_members
+  const { data: membership } = await supabase
+    .from('org_members')
+    .select('role')
+    .eq('user_id', user.id)
+    .in('role', ['owner', 'admin'])
+    .limit(1)
+    .single()
+  const isAdmin = !!membership
+  if (!isAdmin) {
     logger.warn(`[rls-audit] Non-admin user ${user.id} attempted access`)
     return NextResponse.json({ error: 'Forbidden: admin access required' }, { status: 403 })
   }
