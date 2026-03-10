@@ -22,20 +22,21 @@
 
 ## Active Tracks
 
-_None currently active_
+| ID | Track | Type | Status | Notes |
+|----|-------|------|--------|-------|
+| T009 | Context Baseplate | architecture | Phase 1 done | Foundation tables (059), xref-cache, mention-extractor, timeline integration |
+| T011 | Production Validation & Deployment | infrastructure | Review done | Production review complete, Fly/CF security fixes applied, deployment pending |
+| T022 | Security Verification & Monitoring | infrastructure | Partial | Worker auth, rate limiting, auth forwarding, Sentry configs created |
+| T023 | Dashboard UX Polish | feature | Partial | Interactive data-viz + KPI layout done; progressive disclosure + conv. unification remain |
 
 ## Planned Tracks
 
 | ID | Track | Type | Priority | Blocked By |
 |----|-------|------|----------|------------|
 | T008 | Platform OAuth App Registrations | infrastructure | P0 | Human-gated (Stripe, Meta, Google, Xero, Slack) |
-| T009 | Context Baseplate | architecture | P0 | T008 |
 | T010 | Onboarding Flow | feature | P1 | T008, T009 |
-| T011 | Production Validation & Deployment | infrastructure | P1 | T008 |
 | T012 | Legal & Revenue Operations | business | P0 | Human-gated |
 | T013 | Beta Launch Program | business | P1 | T008, T011, T012 |
-| T022 | Security Verification & Monitoring | infrastructure | P1 | T011 |
-| T023 | Dashboard UX Polish | feature | P2 | - |
 | T024 | Creator Studio | feature | P3 | - |
 | T025 | Knowledge Base | feature | P3 | - |
 
@@ -95,6 +96,8 @@ Remaining UX improvements for non-technical users. Partially complete:
 - [x] Dynamic KPI cards per industry pack (agency/content-creator/tradie) with charts and trends
 - [x] Notification badges on sidebar items with real unread counts
 - [x] CSS variable migration for light/dark mode support
+- [x] Interactive data-viz library (sparkline, bar, donut, gauge with hover tooltips)
+- [x] KPI card horizontal layout (value-left, chart-right)
 - [ ] Progressive disclosure ("Advanced" toggle to hide power-user tabs)
 - [ ] Empty state illustrations for tabs with no data
 - [ ] Conversation interface unification (WhatsApp/SMS/email share one parser)

@@ -22,6 +22,9 @@ Remaining UX improvements for non-technical agency owners. Progressive disclosur
 | 3 | Dynamic KPI cards per industry pack (StatCard redesign, no icons, charts, trends) | Done |
 | 4 | KPIConfig type in IndustryPack, per-industry KPI definitions | Done |
 | 5 | Wire dashboard-redesign.tsx to use industry-pack KPIs | Done |
+| 6 | Interactive data-viz library (sparkline, bar, donut, gauge with hover tooltips) | Done (commit 9f34996f) |
+| 7 | KPI card horizontal layout (value-left, chart-right) | Done (commit 9f34996f) |
+| 8 | ChartTooltip shared component for all chart types | Done (commit 9f34996f) |
 
 ## Remaining Tasks
 

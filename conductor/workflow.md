@@ -19,7 +19,7 @@
 
 | Type | Tool | Location | Count |
 |------|------|----------|-------|
-| Unit/Integration | Vitest 4 | `**/*.test.ts` colocated | 1224 |
+| Unit/Integration | Vitest 4 | `**/*.test.ts` colocated | 1444 |
 | E2E | Playwright | `e2e/` (excluded from vitest) | Scaffolded |
 
 **Run tests**: `npm run test` (from personal-assistant/)
@@ -29,7 +29,7 @@
 ### Test Expectations
 - New features should include tests
 - Test files colocated with source (e.g., `foo.ts` + `foo.test.ts`)
-- Target: maintain 1200+ test count, no regressions
+- Target: maintain 1400+ test count, no regressions
 
 ## Code Quality
 

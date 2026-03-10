@@ -74,7 +74,7 @@ bitbit/                      # npm workspaces root
 ## Database
 
 - **Engine**: PostgreSQL via Supabase
-- **Migrations**: 54 SQL migration files in `personal-assistant/supabase/migrations/`
+- **Migrations**: 57 SQL migration files in `personal-assistant/supabase/migrations/`
 - **Auth**: Supabase Auth with RLS policies
 - **Tenancy**: Dual-tier — personal orgs (auto-created) + shared orgs
 - **Key patterns**: RLS on all tables, `org_id` scoping, `created_by` tracking
@@ -91,7 +91,7 @@ bitbit/                      # npm workspaces root
 - **Shell**: zsh
 - **IDE tools**: Claude Code CLI, GitNexus (codebase indexing)
 - **Dev server**: `npm run dev` (Next.js dev with turbopack)
-- **Testing**: `vitest run` (1433 tests across 120 test files)
+- **Testing**: `vitest run` (1444 tests across 122 test files)
 - **E2E**: `npx playwright test` (8 spec files)
 - **CI/CD**: 5 GitHub Actions workflows (ci, e2e, deploy, migrate, preview)
 
