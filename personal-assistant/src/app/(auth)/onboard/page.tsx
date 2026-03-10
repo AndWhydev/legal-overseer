@@ -209,6 +209,15 @@ export default function OnboardPage() {
 
         setWorkspaceReady(!needsWorkspace)
         setStage(needsWorkspace ? 'workspace' : 'connections')
+
+        const params = new URLSearchParams(window.location.search)
+        const justConnected = params.get('connected')
+        if (justConnected) {
+          setHasConnection(true)
+          setConnectedIds(prev => [...new Set([...prev, justConnected])])
+          window.history.replaceState({}, '', '/onboard')
+        }
+
         setStatus('ready')
       } catch {
         setErrorMsg('Something went wrong loading your setup. Try refreshing.')
@@ -218,6 +227,12 @@ export default function OnboardPage() {
 
     void bootstrap()
   }, [router])
+
+  useEffect(() => {
+    if (stage === 'connections') {
+      document.cookie = 'bb-onboarding-active=1; path=/; max-age=3600; SameSite=Lax'
+    }
+  }, [stage])
 
   useEffect(() => {
     if (stage !== 'sync') return

@@ -168,15 +168,25 @@ export async function GET(
       { onConflict: 'org_id,channel_type' }
     )
 
+    // Check if user was mid-onboarding and should return there
+    const onboardingActive = cookieStore.get('bb-onboarding-active')?.value === '1'
+
+    const redirectPath = onboardingActive
+      ? `/onboard?connected=${encodeURIComponent(provider)}`
+      : `/dashboard/connections?connected=${encodeURIComponent(provider)}`
+
     // Clear OAuth cookies
     const response = NextResponse.redirect(
-      buildRedirectUrl(
-        request,
-        `/dashboard/connections?connected=${encodeURIComponent(provider)}`,
-      ),
+      buildRedirectUrl(request, redirectPath),
     )
     response.cookies.delete(OAUTH_STATE_COOKIE)
     response.cookies.delete(OAUTH_VERIFIER_COOKIE)
+
+    // Clear the onboarding cookie if it was set
+    if (onboardingActive) {
+      response.cookies.delete('bb-onboarding-active')
+    }
+
     return response
   } catch (error) {
     const errorMessage =
