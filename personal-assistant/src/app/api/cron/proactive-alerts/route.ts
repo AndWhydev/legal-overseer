@@ -42,7 +42,7 @@ export async function GET(request: Request) {
         totalAlertsSent += alertsSent
         results.push({ orgId, alertsSent })
       } catch (orgErr) {
-        console.error(`[cron/proactive-alerts] Failed processing for org ${orgId}:`, orgErr)
+        logger.error(`[cron/proactive-alerts] Failed processing for org ${orgId}`, { error: orgErr instanceof Error ? orgErr.message : String(orgErr) })
         results.push({
           orgId,
           error: orgErr instanceof Error ? orgErr.message : 'unknown_error',

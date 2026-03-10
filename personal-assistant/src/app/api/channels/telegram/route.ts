@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
     try {
       await handleTelegramMessage(orgId, chatId, text)
     } catch (err) {
-      console.error('Telegram handler background error:', err)
+      logger.error('[telegram] Handler background error', { error: err instanceof Error ? err.message : String(err) })
     }
   })
 

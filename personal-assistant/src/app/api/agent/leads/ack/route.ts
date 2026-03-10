@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { withCronGuard } from '@/lib/cron/cron-guard'
 import { processPendingLeadAcks } from '@/lib/agent/lead-acknowledgment'
+import { logger } from '@/lib/core/logger'
 
 export const maxDuration = 60
 
@@ -30,7 +31,7 @@ export async function POST(request: NextRequest) {
         const ackResult = await processPendingLeadAcks(supabase, orgId)
         results.push({ orgId, ackResult })
       } catch (orgErr) {
-        console.error(`[cron/leads/ack] Failed processing for org ${orgId}:`, orgErr)
+        logger.error(`[cron/leads/ack] Failed processing for org ${orgId}`, { error: orgErr instanceof Error ? orgErr.message : String(orgErr) })
         results.push({
           orgId,
           error: orgErr instanceof Error ? orgErr.message : 'unknown_error',

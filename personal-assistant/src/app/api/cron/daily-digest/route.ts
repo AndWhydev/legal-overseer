@@ -1,6 +1,7 @@
 import { withCronGuard } from '@/lib/cron/cron-guard'
 import { dispatchNotification } from '@/lib/notifications/dispatcher'
 import type { DigestData } from '@/lib/notifications/email-templates'
+import { logger } from '@/lib/core/logger'
 
 export const maxDuration = 300
 export const dynamic = 'force-dynamic'
@@ -96,7 +97,7 @@ export async function GET(request: Request) {
 
         results.push({ orgId, digest: digestData, dispatch: dispatchResult })
       } catch (orgErr) {
-        console.error(`[cron/daily-digest] Failed processing for org ${orgId}:`, orgErr)
+        logger.error(`[cron/daily-digest] Failed processing for org ${orgId}`, { error: orgErr instanceof Error ? orgErr.message : String(orgErr) })
         results.push({
           orgId,
           error: orgErr instanceof Error ? orgErr.message : 'unknown_error',

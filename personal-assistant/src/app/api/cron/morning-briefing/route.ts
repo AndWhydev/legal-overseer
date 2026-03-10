@@ -40,7 +40,7 @@ export async function GET(request: Request) {
         const result = await sendMorningBriefing(supabase, orgId, recipientPhone as string)
         results.push({ orgId, sent: result.sent, sections: result.sections })
       } catch (orgErr) {
-        console.error(`[cron/morning-briefing] Failed processing for org ${orgId}:`, orgErr)
+        logger.error(`[cron/morning-briefing] Failed processing for org ${orgId}`, { error: orgErr instanceof Error ? orgErr.message : String(orgErr) })
         results.push({
           orgId,
           error: orgErr instanceof Error ? orgErr.message : 'unknown_error',

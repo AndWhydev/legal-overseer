@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { withCronGuard } from '@/lib/cron/cron-guard'
 import { expireStaleApprovals } from '../../../../../lib/agent/approval-queue'
 import { sendDailyDigest } from '../../../../../lib/agent/approval-notifier'
+import { logger } from '@/lib/core/logger'
 
 export const maxDuration = 60
 
@@ -31,7 +32,7 @@ export async function POST(request: NextRequest) {
         const expired = await expireStaleApprovals(supabase, orgId)
         results.push({ orgId, digestSent, expired })
       } catch (orgErr) {
-        console.error(`[cron/approvals/digest] Failed processing for org ${orgId}:`, orgErr)
+        logger.error(`[cron/approvals/digest] Failed processing for org ${orgId}`, { error: orgErr instanceof Error ? orgErr.message : String(orgErr) })
         results.push({
           orgId,
           error: orgErr instanceof Error ? orgErr.message : 'unknown_error',

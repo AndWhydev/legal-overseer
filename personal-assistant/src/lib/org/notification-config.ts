@@ -1,4 +1,5 @@
 import { getServiceClient } from '@/lib/supabase/service-client'
+import { logger } from '@/lib/core/logger'
 
 interface OrgNotificationConfig {
   name: string
@@ -17,7 +18,7 @@ export async function getOrgNotificationConfig(orgId: string): Promise<OrgNotifi
     .single()
 
   if (error) {
-    console.warn(`[notification-config] Failed to load org ${orgId}:`, error.message)
+    logger.warn(`[notification-config] Failed to load org ${orgId}`, { error: error.message })
   }
 
   return {
