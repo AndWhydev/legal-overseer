@@ -454,7 +454,7 @@ export async function generateInvoiceNumber(
   const month = now.toISOString().slice(0, 7).replace('-', '')
 
   const { data: org } = await supabase
-    .from('organizations')
+    .from('organisations')
     .select('name, slug')
     .eq('id', orgId)
     .single<InvoiceNumberOrgRow>()

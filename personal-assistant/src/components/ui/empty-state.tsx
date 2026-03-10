@@ -1,5 +1,6 @@
+'use client';
+
 import React from 'react';
-import { cn } from '@/lib/utils';
 
 interface EmptyStateProps {
   icon?: React.ReactNode;
@@ -9,29 +10,84 @@ interface EmptyStateProps {
     label: string;
     onClick: () => void;
   };
-  className?: string;
 }
 
-export function EmptyState({ icon, title, description, action, className }: EmptyStateProps) {
+export function EmptyState({ icon, title, description, action }: EmptyStateProps) {
+  const [actionHovered, setActionHovered] = React.useState(false);
+
   return (
     <div
-      className={cn('flex flex-col items-center justify-center py-16 text-center', className)}
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '64px 24px',
+        gap: 16,
+        textAlign: 'center',
+      }}
       role="status"
     >
       {icon && (
-        <div className="mb-4 text-muted-foreground opacity-40 [&>svg]:h-10 [&>svg]:w-10" aria-hidden="true">
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: 48,
+            height: 48,
+            color: 'var(--text-dim)',
+            opacity: 0.5,
+          }}
+          aria-hidden="true"
+        >
           {icon}
         </div>
       )}
-      <h3 className="text-sm font-medium text-foreground">{title}</h3>
+
+      <h3
+        style={{
+          fontSize: 18,
+          fontWeight: 600,
+          color: 'var(--text-primary)',
+          margin: 0,
+        }}
+      >
+        {title}
+      </h3>
+
       {description && (
-        <p className="mt-1.5 max-w-sm text-xs text-text-secondary leading-relaxed">{description}</p>
+        <p
+          style={{
+            fontSize: 14,
+            color: 'var(--text-secondary)',
+            margin: 0,
+            maxWidth: 360,
+            lineHeight: 1.5,
+          }}
+        >
+          {description}
+        </p>
       )}
+
       {action && (
         <button
           type="button"
           onClick={action.onClick}
-          className="mt-5 inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary-hover focus-visible:ring-2 focus-visible:ring-primary/50"
+          onMouseEnter={() => setActionHovered(true)}
+          onMouseLeave={() => setActionHovered(false)}
+          style={{
+            marginTop: 16,
+            padding: '8px 16px',
+            borderRadius: 10,
+            background: actionHovered ? 'var(--accent)' : 'transparent',
+            border: `1px solid ${actionHovered ? 'var(--accent)' : 'var(--glass-interactive-border)'}`,
+            color: actionHovered ? '#FFFFFF' : 'var(--text-secondary)',
+            fontSize: 13,
+            fontWeight: 500,
+            cursor: 'pointer',
+            transition: 'all 200ms ease',
+          }}
         >
           {action.label}
         </button>

@@ -8,13 +8,13 @@ export const dynamic = 'force-dynamic'
 
 export async function GET(request: Request) {
   return withCronGuard(request, async (supabase) => {
-    // Get all active organizations
+    // Get all active organisations
     const { data: orgs, error: orgError } = await supabase
-      .from('organizations')
+      .from('organisations')
       .select('id')
 
     if (orgError) {
-      throw new Error(`Failed to fetch organizations: ${orgError.message}`)
+      throw new Error(`Failed to fetch organisations: ${orgError.message}`)
     }
 
     let totalMessages = 0

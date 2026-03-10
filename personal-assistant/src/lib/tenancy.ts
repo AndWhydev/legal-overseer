@@ -78,7 +78,7 @@ async function loadLegacyOrganization(
   orgId: string
 ): Promise<Organization | null> {
   const { data, error } = await supabase
-    .from('organizations')
+    .from('organisations')
     .select('id, name, slug, plan, settings')
     .eq('id', orgId)
     .maybeSingle<LegacyOrganizationRow>()
@@ -161,7 +161,7 @@ export async function getTenancyContext(
   const memberships = membershipsData ?? []
 
   const { data: activeOrgData, error: activeOrgError } = await supabase
-    .from('organizations')
+    .from('organisations')
     .select('id, name, slug, plan, tier, settings')
     .eq('id', activeOrgId)
     .maybeSingle<OrganizationRow>()

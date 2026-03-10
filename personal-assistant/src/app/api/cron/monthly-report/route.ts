@@ -14,7 +14,7 @@ export async function GET(request: Request) {
     const month = `${prevMonth.getFullYear()}-${String(prevMonth.getMonth() + 1).padStart(2, '0')}`
 
     const { data: orgs } = await supabase
-      .from('organizations')
+      .from('organisations')
       .select('id, name')
       .eq('status', 'active')
 

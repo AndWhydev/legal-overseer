@@ -228,7 +228,7 @@ export async function runDailyDigest(
     try {
       // Look up the org owner's WhatsApp number
       const { data: orgData } = await supabase
-        .from('organizations')
+        .from('organisations')
         .select('metadata')
         .eq('id', orgId)
         .single()

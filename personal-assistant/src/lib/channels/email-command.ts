@@ -229,11 +229,13 @@ export async function processEmailCommand(
     logger.info('[email-command] Agent response received, formatting email')
 
     // Format response as email
-    formatEmailResponse(agentResponse, email.senderEmail || '')
+    const emailResponse = formatEmailResponse(agentResponse, email.senderEmail || '')
 
     // Queue reply email (NOTE: actual sending would use Gmail/Outlook adapters)
-    // For now, we just format and return success indicator
-    logger.info('[email-command] Email formatted and ready to send')
+    // TODO: Use the emailResponse object to send the formatted email via Gmail/Outlook adapters
+    // The formatted email has: emailResponse.subject and emailResponse.htmlBody
+    // This should be queued to a channel outbound queue or sent directly to the sender
+    logger.info('[email-command] Email formatted and ready to send', { subject: emailResponse.subject })
 
     return {
       success: true,

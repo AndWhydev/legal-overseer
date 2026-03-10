@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { Search, User, Briefcase, FileText, CheckSquare, ChevronRight, X } from 'lucide-react';
+import { Search, User, Briefcase, FileText, CheckSquare, ChevronRight, X, Book } from 'lucide-react';
 import { TabShell } from '@/components/ui/tab-shell';
+import { EmptyState } from '@/components/ui/empty-state';
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -623,79 +624,19 @@ function KnowledgeTab() {
 
         {/* ─── Empty States ──────────────────────────────────────────────────────── */}
         {!selectedEntity && !searching && query && results.length === 0 && (
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '60px 20px',
-              gap: 12,
-            }}
-          >
-            <Search size={32} style={{ color: 'var(--text-dim)' }} />
-            <span
-              style={{
-                fontSize: 14,
-                color: 'var(--text-secondary)',
-                textAlign: 'center',
-              }}
-            >
-              No results for &quot;{query}&quot;
-            </span>
-            <span
-              style={{
-                fontSize: 12,
-                color: 'var(--text-dim)',
-                textAlign: 'center',
-              }}
-            >
-              Try searching for contacts, projects, invoices, or tasks.
-            </span>
-          </div>
+          <EmptyState
+            icon={<Search size={32} />}
+            title={`No results for "${query}"`}
+            description="Try searching for contacts, projects, invoices, or tasks."
+          />
         )}
 
         {!selectedEntity && !query && (
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '60px 20px',
-              gap: 12,
-            }}
-          >
-            <Search
-              size={40}
-              style={{
-                color: 'var(--text-dim)',
-                opacity: 0.4,
-              }}
-            />
-            <div
-              style={{
-                fontSize: 16,
-                fontWeight: 600,
-                color: 'var(--text-primary)',
-                marginBottom: 4,
-              }}
-            >
-              Search your knowledge base
-            </div>
-            <p
-              style={{
-                fontSize: 13,
-                color: 'var(--text-secondary)',
-                margin: 0,
-                textAlign: 'center',
-                maxWidth: 400,
-              }}
-            >
-              Find contacts, projects, invoices, and tasks to see how they connect across your
-              organization.
-            </p>
-          </div>
+          <EmptyState
+            icon={<Book size={40} />}
+            title="Search your knowledge base"
+            description="Find contacts, projects, invoices, and tasks to see how they connect across your organization."
+          />
         )}
       </div>
 

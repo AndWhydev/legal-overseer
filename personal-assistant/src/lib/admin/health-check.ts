@@ -18,7 +18,7 @@ export interface ServiceHealth {
 async function checkSupabase(supabase: SupabaseClient): Promise<ServiceHealth> {
   const start = Date.now();
   try {
-    const { error } = await supabase.from('organizations').select('id').limit(1);
+    const { error } = await supabase.from('organisations').select('id').limit(1);
     const latency_ms = Date.now() - start;
     if (error) {
       return { service: 'supabase', status: 'degraded', latency_ms, error: error.message };

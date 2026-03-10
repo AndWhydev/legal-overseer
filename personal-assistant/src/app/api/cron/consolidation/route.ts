@@ -8,7 +8,7 @@ export async function GET(request: Request) {
   return withCronGuard(request, async (supabase) => {
     // Get all active organizations
     const { data: orgs, error: orgError } = await supabase
-      .from('organizations')
+      .from('organisations')
       .select('id')
 
     if (orgError) {

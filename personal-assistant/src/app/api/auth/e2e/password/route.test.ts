@@ -9,15 +9,13 @@ vi.mock('@/lib/supabase/service-client', () => ({
 }))
 
 describe('/api/auth/e2e/password POST', () => {
-  const originalNodeEnv = process.env.NODE_ENV
-
   beforeEach(() => {
     vi.clearAllMocks()
-    process.env.NODE_ENV = 'development'
+    vi.stubEnv('NODE_ENV', 'development')
   })
 
   afterEach(() => {
-    process.env.NODE_ENV = originalNodeEnv
+    vi.unstubAllEnvs()
   })
 
   it('resets the password for an existing registered user in development', async () => {
@@ -66,7 +64,7 @@ describe('/api/auth/e2e/password POST', () => {
   })
 
   it('rejects the endpoint outside development', async () => {
-    process.env.NODE_ENV = 'production'
+    vi.stubEnv('NODE_ENV', 'production')
 
     const { POST } = await import('./route')
 

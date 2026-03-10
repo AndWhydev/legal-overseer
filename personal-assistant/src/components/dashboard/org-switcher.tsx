@@ -41,7 +41,7 @@ export function OrgSwitcher({ onOrgChange }: OrgSwitcherProps) {
 
     // Get all orgs the user belongs to (via profiles or org_members if exists)
     const { data: userOrgs } = await supabase
-      .from('organizations')
+      .from('organisations')
       .select('id, name, plan_tier')
       .order('name');
 

@@ -69,7 +69,7 @@ async function seedBenchmarkData(supabase: SupabaseClient): Promise<SeedIds> {
   const agentConfigId = crypto.randomUUID()
 
   // Create org
-  await supabase.from('organizations').insert({
+  await supabase.from('organisations').insert({
     id: orgId,
     name: 'Benchmark Test Org',
     slug: 'benchmark-test',
@@ -196,7 +196,7 @@ async function cleanupBenchmarkData(supabase: SupabaseClient, seed: SeedIds): Pr
   await supabase.from('channel_messages').delete().eq('org_id', orgId)
   await supabase.from('contacts').delete().eq('org_id', orgId)
   await supabase.from('agent_configs').delete().eq('org_id', orgId)
-  await supabase.from('organizations').delete().eq('id', orgId)
+  await supabase.from('organisations').delete().eq('id', orgId)
 }
 
 async function benchmarkLeadSwarm(

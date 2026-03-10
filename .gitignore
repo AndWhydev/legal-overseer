@@ -44,6 +44,9 @@ Thumbs.db
 # Temp / agent artifacts
 temp-*/
 *.log
+supabase/.temp/
+tmp_baileys_probe*/
+auth_state_*/
 
 # Generated HTML reports
 docs/*.html

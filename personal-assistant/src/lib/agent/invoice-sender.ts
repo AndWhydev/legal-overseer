@@ -142,7 +142,7 @@ async function fetchOrganization(
   orgId: string,
 ): Promise<OrganizationRow | null> {
   const { data, error } = await supabase
-    .from('organizations')
+    .from('organisations')
     .select('name, settings')
     .eq('id', orgId)
     .single<OrganizationRow>()
