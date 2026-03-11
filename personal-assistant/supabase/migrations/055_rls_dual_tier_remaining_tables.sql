@@ -109,173 +109,40 @@ CREATE POLICY "sentry_alerts_update" ON sentry_alerts
   WITH CHECK (org_id IN (SELECT get_user_accessible_org_ids()));
 
 -- =============================================================================
--- rate_limit_buckets
+-- rate_limit_buckets — system table, no org_id column. Keep existing
+-- "rate_limit_buckets_service_only" policy from migration 042.
 -- =============================================================================
+
+-- =============================================================================
+-- Helper: apply org-scoped RLS only if table exists AND has org_id column.
+-- Tables without org_id (system tables) keep their existing policies.
+-- =============================================================================
+
 DO $$
+DECLARE
+  tbl TEXT;
+  tbls TEXT[] := ARRAY[
+    'usage_events', 'capability_profiles',
+    'whatsapp_sessions', 'whatsapp_outbox',
+    'contact_emails', 'invoice_line_items', 'agent_run_tools'
+  ];
 BEGIN
-  IF EXISTS (
-    SELECT 1 FROM information_schema.tables
-    WHERE table_schema = 'public' AND table_name = 'rate_limit_buckets'
-  ) THEN
-    EXECUTE 'DROP POLICY IF EXISTS "rate_limit_buckets_select" ON rate_limit_buckets';
-    EXECUTE 'DROP POLICY IF EXISTS "rate_limit_buckets_insert" ON rate_limit_buckets';
-    EXECUTE 'DROP POLICY IF EXISTS "rate_limit_buckets_update" ON rate_limit_buckets';
-    EXECUTE 'DROP POLICY IF EXISTS "rate_limit_buckets_delete" ON rate_limit_buckets';
+  FOREACH tbl IN ARRAY tbls LOOP
+    -- Only apply if table exists AND has org_id column
+    IF EXISTS (
+      SELECT 1 FROM information_schema.columns
+      WHERE table_schema = 'public' AND table_name = tbl AND column_name = 'org_id'
+    ) THEN
+      EXECUTE format('DROP POLICY IF EXISTS "%s_select" ON %I', tbl, tbl);
+      EXECUTE format('DROP POLICY IF EXISTS "%s_insert" ON %I', tbl, tbl);
+      EXECUTE format('DROP POLICY IF EXISTS "%s_update" ON %I', tbl, tbl);
+      EXECUTE format('DROP POLICY IF EXISTS "%s_delete" ON %I', tbl, tbl);
 
-    EXECUTE 'CREATE POLICY "rate_limit_buckets_select" ON rate_limit_buckets FOR SELECT USING (org_id IN (SELECT get_user_accessible_org_ids()))';
-    EXECUTE 'CREATE POLICY "rate_limit_buckets_insert" ON rate_limit_buckets FOR INSERT WITH CHECK (org_id = get_user_active_org_id())';
-    EXECUTE 'CREATE POLICY "rate_limit_buckets_update" ON rate_limit_buckets FOR UPDATE USING (org_id IN (SELECT get_user_accessible_org_ids())) WITH CHECK (org_id IN (SELECT get_user_accessible_org_ids()))';
-    EXECUTE 'CREATE POLICY "rate_limit_buckets_delete" ON rate_limit_buckets FOR DELETE USING (org_id IN (SELECT get_user_accessible_org_ids()))';
-  END IF;
-END;
-$$;
-
--- =============================================================================
--- usage_events
--- =============================================================================
-DO $$
-BEGIN
-  IF EXISTS (
-    SELECT 1 FROM information_schema.tables
-    WHERE table_schema = 'public' AND table_name = 'usage_events'
-  ) THEN
-    EXECUTE 'DROP POLICY IF EXISTS "usage_events_select" ON usage_events';
-    EXECUTE 'DROP POLICY IF EXISTS "usage_events_insert" ON usage_events';
-
-    EXECUTE 'CREATE POLICY "usage_events_select" ON usage_events FOR SELECT USING (org_id IN (SELECT get_user_accessible_org_ids()))';
-    EXECUTE 'CREATE POLICY "usage_events_insert" ON usage_events FOR INSERT WITH CHECK (org_id = get_user_active_org_id())';
-  END IF;
-END;
-$$;
-
--- =============================================================================
--- capability_profiles
--- =============================================================================
-DO $$
-BEGIN
-  IF EXISTS (
-    SELECT 1 FROM information_schema.tables
-    WHERE table_schema = 'public' AND table_name = 'capability_profiles'
-  ) THEN
-    EXECUTE 'DROP POLICY IF EXISTS "capability_profiles_select" ON capability_profiles';
-    EXECUTE 'DROP POLICY IF EXISTS "capability_profiles_insert" ON capability_profiles';
-    EXECUTE 'DROP POLICY IF EXISTS "capability_profiles_update" ON capability_profiles';
-    EXECUTE 'DROP POLICY IF EXISTS "capability_profiles_delete" ON capability_profiles';
-
-    EXECUTE 'CREATE POLICY "capability_profiles_select" ON capability_profiles FOR SELECT USING (org_id IN (SELECT get_user_accessible_org_ids()))';
-    EXECUTE 'CREATE POLICY "capability_profiles_insert" ON capability_profiles FOR INSERT WITH CHECK (org_id = get_user_active_org_id())';
-    EXECUTE 'CREATE POLICY "capability_profiles_update" ON capability_profiles FOR UPDATE USING (org_id IN (SELECT get_user_accessible_org_ids())) WITH CHECK (org_id IN (SELECT get_user_accessible_org_ids()))';
-    EXECUTE 'CREATE POLICY "capability_profiles_delete" ON capability_profiles FOR DELETE USING (org_id IN (SELECT get_user_accessible_org_ids()))';
-  END IF;
-END;
-$$;
-
--- =============================================================================
--- whatsapp_sessions
--- =============================================================================
-DO $$
-BEGIN
-  IF EXISTS (
-    SELECT 1 FROM information_schema.tables
-    WHERE table_schema = 'public' AND table_name = 'whatsapp_sessions'
-  ) THEN
-    EXECUTE 'DROP POLICY IF EXISTS "whatsapp_sessions_select" ON whatsapp_sessions';
-    EXECUTE 'DROP POLICY IF EXISTS "whatsapp_sessions_insert" ON whatsapp_sessions';
-    EXECUTE 'DROP POLICY IF EXISTS "whatsapp_sessions_update" ON whatsapp_sessions';
-    EXECUTE 'DROP POLICY IF EXISTS "whatsapp_sessions_delete" ON whatsapp_sessions';
-
-    EXECUTE 'CREATE POLICY "whatsapp_sessions_select" ON whatsapp_sessions FOR SELECT USING (org_id IN (SELECT get_user_accessible_org_ids()))';
-    EXECUTE 'CREATE POLICY "whatsapp_sessions_insert" ON whatsapp_sessions FOR INSERT WITH CHECK (org_id = get_user_active_org_id())';
-    EXECUTE 'CREATE POLICY "whatsapp_sessions_update" ON whatsapp_sessions FOR UPDATE USING (org_id IN (SELECT get_user_accessible_org_ids())) WITH CHECK (org_id IN (SELECT get_user_accessible_org_ids()))';
-    EXECUTE 'CREATE POLICY "whatsapp_sessions_delete" ON whatsapp_sessions FOR DELETE USING (org_id IN (SELECT get_user_accessible_org_ids()))';
-  END IF;
-END;
-$$;
-
--- =============================================================================
--- whatsapp_outbox
--- =============================================================================
-DO $$
-BEGIN
-  IF EXISTS (
-    SELECT 1 FROM information_schema.tables
-    WHERE table_schema = 'public' AND table_name = 'whatsapp_outbox'
-  ) THEN
-    EXECUTE 'DROP POLICY IF EXISTS "whatsapp_outbox_select" ON whatsapp_outbox';
-    EXECUTE 'DROP POLICY IF EXISTS "whatsapp_outbox_insert" ON whatsapp_outbox';
-    EXECUTE 'DROP POLICY IF EXISTS "whatsapp_outbox_update" ON whatsapp_outbox';
-    EXECUTE 'DROP POLICY IF EXISTS "whatsapp_outbox_delete" ON whatsapp_outbox';
-
-    EXECUTE 'CREATE POLICY "whatsapp_outbox_select" ON whatsapp_outbox FOR SELECT USING (org_id IN (SELECT get_user_accessible_org_ids()))';
-    EXECUTE 'CREATE POLICY "whatsapp_outbox_insert" ON whatsapp_outbox FOR INSERT WITH CHECK (org_id = get_user_active_org_id())';
-    EXECUTE 'CREATE POLICY "whatsapp_outbox_update" ON whatsapp_outbox FOR UPDATE USING (org_id IN (SELECT get_user_accessible_org_ids())) WITH CHECK (org_id IN (SELECT get_user_accessible_org_ids()))';
-    EXECUTE 'CREATE POLICY "whatsapp_outbox_delete" ON whatsapp_outbox FOR DELETE USING (org_id IN (SELECT get_user_accessible_org_ids()))';
-  END IF;
-END;
-$$;
-
--- =============================================================================
--- contact_emails
--- =============================================================================
-DO $$
-BEGIN
-  IF EXISTS (
-    SELECT 1 FROM information_schema.tables
-    WHERE table_schema = 'public' AND table_name = 'contact_emails'
-  ) THEN
-    EXECUTE 'DROP POLICY IF EXISTS "contact_emails_select" ON contact_emails';
-    EXECUTE 'DROP POLICY IF EXISTS "contact_emails_insert" ON contact_emails';
-    EXECUTE 'DROP POLICY IF EXISTS "contact_emails_update" ON contact_emails';
-    EXECUTE 'DROP POLICY IF EXISTS "contact_emails_delete" ON contact_emails';
-
-    EXECUTE 'CREATE POLICY "contact_emails_select" ON contact_emails FOR SELECT USING (org_id IN (SELECT get_user_accessible_org_ids()))';
-    EXECUTE 'CREATE POLICY "contact_emails_insert" ON contact_emails FOR INSERT WITH CHECK (org_id = get_user_active_org_id())';
-    EXECUTE 'CREATE POLICY "contact_emails_update" ON contact_emails FOR UPDATE USING (org_id IN (SELECT get_user_accessible_org_ids())) WITH CHECK (org_id IN (SELECT get_user_accessible_org_ids()))';
-    EXECUTE 'CREATE POLICY "contact_emails_delete" ON contact_emails FOR DELETE USING (org_id IN (SELECT get_user_accessible_org_ids()))';
-  END IF;
-END;
-$$;
-
--- =============================================================================
--- invoice_line_items
--- =============================================================================
-DO $$
-BEGIN
-  IF EXISTS (
-    SELECT 1 FROM information_schema.tables
-    WHERE table_schema = 'public' AND table_name = 'invoice_line_items'
-  ) THEN
-    EXECUTE 'DROP POLICY IF EXISTS "invoice_line_items_select" ON invoice_line_items';
-    EXECUTE 'DROP POLICY IF EXISTS "invoice_line_items_insert" ON invoice_line_items';
-    EXECUTE 'DROP POLICY IF EXISTS "invoice_line_items_update" ON invoice_line_items';
-    EXECUTE 'DROP POLICY IF EXISTS "invoice_line_items_delete" ON invoice_line_items';
-
-    EXECUTE 'CREATE POLICY "invoice_line_items_select" ON invoice_line_items FOR SELECT USING (org_id IN (SELECT get_user_accessible_org_ids()))';
-    EXECUTE 'CREATE POLICY "invoice_line_items_insert" ON invoice_line_items FOR INSERT WITH CHECK (org_id = get_user_active_org_id())';
-    EXECUTE 'CREATE POLICY "invoice_line_items_update" ON invoice_line_items FOR UPDATE USING (org_id IN (SELECT get_user_accessible_org_ids())) WITH CHECK (org_id IN (SELECT get_user_accessible_org_ids()))';
-    EXECUTE 'CREATE POLICY "invoice_line_items_delete" ON invoice_line_items FOR DELETE USING (org_id IN (SELECT get_user_accessible_org_ids()))';
-  END IF;
-END;
-$$;
-
--- =============================================================================
--- agent_run_tools
--- =============================================================================
-DO $$
-BEGIN
-  IF EXISTS (
-    SELECT 1 FROM information_schema.tables
-    WHERE table_schema = 'public' AND table_name = 'agent_run_tools'
-  ) THEN
-    EXECUTE 'DROP POLICY IF EXISTS "agent_run_tools_select" ON agent_run_tools';
-    EXECUTE 'DROP POLICY IF EXISTS "agent_run_tools_insert" ON agent_run_tools';
-    EXECUTE 'DROP POLICY IF EXISTS "agent_run_tools_update" ON agent_run_tools';
-    EXECUTE 'DROP POLICY IF EXISTS "agent_run_tools_delete" ON agent_run_tools';
-
-    EXECUTE 'CREATE POLICY "agent_run_tools_select" ON agent_run_tools FOR SELECT USING (org_id IN (SELECT get_user_accessible_org_ids()))';
-    EXECUTE 'CREATE POLICY "agent_run_tools_insert" ON agent_run_tools FOR INSERT WITH CHECK (org_id = get_user_active_org_id())';
-    EXECUTE 'CREATE POLICY "agent_run_tools_update" ON agent_run_tools FOR UPDATE USING (org_id IN (SELECT get_user_accessible_org_ids())) WITH CHECK (org_id IN (SELECT get_user_accessible_org_ids()))';
-    EXECUTE 'CREATE POLICY "agent_run_tools_delete" ON agent_run_tools FOR DELETE USING (org_id IN (SELECT get_user_accessible_org_ids()))';
-  END IF;
+      EXECUTE format('CREATE POLICY "%s_select" ON %I FOR SELECT USING (org_id IN (SELECT get_user_accessible_org_ids()))', tbl, tbl);
+      EXECUTE format('CREATE POLICY "%s_insert" ON %I FOR INSERT WITH CHECK (org_id = get_user_active_org_id())', tbl, tbl);
+      EXECUTE format('CREATE POLICY "%s_update" ON %I FOR UPDATE USING (org_id IN (SELECT get_user_accessible_org_ids())) WITH CHECK (org_id IN (SELECT get_user_accessible_org_ids()))', tbl, tbl);
+      EXECUTE format('CREATE POLICY "%s_delete" ON %I FOR DELETE USING (org_id IN (SELECT get_user_accessible_org_ids()))', tbl, tbl);
+    END IF;
+  END LOOP;
 END;
 $$;

@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS entity_profiles (
 );
 
 CREATE INDEX idx_entity_profiles_lookup ON entity_profiles(org_id, entity_type, entity_id);
-CREATE INDEX idx_entity_profiles_stale ON entity_profiles(valid_until) WHERE valid_until < now();
+CREATE INDEX idx_entity_profiles_stale ON entity_profiles(valid_until);
 
 ALTER TABLE entity_profiles ENABLE ROW LEVEL SECURITY;
 

@@ -4,7 +4,7 @@
 -- Entity mentions: extracted references from messages/events
 CREATE TABLE IF NOT EXISTS entity_mentions (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  org_id uuid NOT NULL REFERENCES organisations(id) ON DELETE CASCADE,
+  org_id uuid NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
   source_entity_type text NOT NULL,
   source_entity_id uuid NOT NULL,
   mentioned_entity_type text NOT NULL,
@@ -29,7 +29,7 @@ CREATE POLICY "Users can view own org mentions" ON entity_mentions
 -- Entity threads: conversation linkage
 CREATE TABLE IF NOT EXISTS entity_threads (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  org_id uuid NOT NULL REFERENCES organisations(id) ON DELETE CASCADE,
+  org_id uuid NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
   thread_id text NOT NULL,
   channel_source text NOT NULL,
   subject text,
@@ -53,7 +53,7 @@ CREATE POLICY "Users can view own org threads" ON entity_threads
 -- Cross-reference cache: pre-computed entity relationships
 CREATE TABLE IF NOT EXISTS cross_reference_cache (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  org_id uuid NOT NULL REFERENCES organisations(id) ON DELETE CASCADE,
+  org_id uuid NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
   entity_type text NOT NULL,
   entity_id uuid NOT NULL,
   cache_type text NOT NULL,

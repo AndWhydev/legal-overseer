@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS entity_patterns (
 );
 
 CREATE INDEX idx_entity_patterns_lookup ON entity_patterns(org_id, entity_type, entity_id);
-CREATE INDEX idx_entity_patterns_stale ON entity_patterns(valid_until) WHERE valid_until < now();
+CREATE INDEX idx_entity_patterns_stale ON entity_patterns(valid_until);
 
 ALTER TABLE entity_patterns ENABLE ROW LEVEL SECURITY;
 
