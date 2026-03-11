@@ -139,6 +139,10 @@ See PROJECT.md Key Decisions table.
 - [Q5] Token refresh cron test: GET first, POST fallback on 405 (Vercel cron convention)
 - [Q5] Onboarding route is /onboard (not /onboarding), OAuth callback is /callback/google (not /api/auth/callback/google)
 - [Q5] browse_website returns full screenshot_base64 — caller decides truncation for token efficiency
+- [Q11] Calibrated thresholds stored in agent_configs.calibrated_thresholds JSONB — no new table
+- [Q11] routeAgentAction stays synchronous; calibrated thresholds passed by caller (no async lookup inside router)
+- [Q11] Safety rails: act floor 0.70, ask floor 0.45, min 20 samples/band, min 50 total before activating
+- [Q11] Fire-and-forget outcome tracking via async IIFE to never block approval resolution
 - [Q9] v2.0 agent_action_outcomes named separately from 064 action_outcomes (different schema, different purpose)
 - [Q9] Monday briefing uses AEST (UTC+10) for year-round scheduling stability (7am during AEDT)
 - [Q7] Email channels (gmail, email, outlook, mail) routed to Resend sendLeadAckEmailToRecipient; WhatsApp to Meta Cloud API
@@ -167,9 +171,10 @@ See PROJECT.md Key Decisions table.
 | 7 | INT-02: Wire lead auto-approve ack to outbound email sender (Resend) | 2026-03-12 | 4b2f0673 | [7-int-02-wire-lead-ack-to-outbound-sender](./quick/7-int-02-wire-lead-ack-to-outbound-sender/) |
 | 8 | INT-03: RELAY_SECRET env validation + Fly.io invoice handler wired to Vercel dispatch | 2026-03-12 | 27e232c3 | [8-int-03-relay-secret-env-validation](./quick/8-int-03-relay-secret-env-validation/) |
 | 9 | v2.0 shared schema (3 tables + 7 entity_profiles cols) + Monday Morning Briefing (WhatsApp + email + API) | 2026-03-12 | 1f6a0650 | [9-v2-schema-monday-briefing](./quick/9-v2-schema-monday-briefing/) |
+| 11 | v2.0 Confidence auto-calibration: band analysis, safety rails, daily cron, outcome tracking, trust API | 2026-03-12 | 4c225460 | [11-v2-confidence-auto-calibration](./quick/11-v2-confidence-auto-calibration/) |
 
 ## Session Continuity
 
 Last session: 2026-03-12
-Stopped at: Completed quick task 9 (v2.0 Shared Schema + Monday Morning Briefing)
+Stopped at: Completed quick task 11 (v2.0 Confidence Auto-Calibration)
 Resume file: None
