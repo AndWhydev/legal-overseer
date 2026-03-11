@@ -139,6 +139,7 @@ See PROJECT.md Key Decisions table.
 - [Q5] Token refresh cron test: GET first, POST fallback on 405 (Vercel cron convention)
 - [Q5] Onboarding route is /onboard (not /onboarding), OAuth callback is /callback/google (not /api/auth/callback/google)
 - [Q5] browse_website returns full screenshot_base64 — caller decides truncation for token efficiency
+- [Q7] Email channels (gmail, email, outlook, mail) routed to Resend sendLeadAckEmailToRecipient; WhatsApp to Meta Cloud API
 
 ### Pending Todos
 
@@ -160,9 +161,10 @@ See PROJECT.md Key Decisions table.
 | 3 | ADR-001 Phase 1: planner-compiled tool group filtering (20 tools -> 5-12 per session) | 2026-03-11 | 080cf0cc | [3-implement-phase-1-from-adr-001-planner-c](./quick/3-implement-phase-1-from-adr-001-planner-c/) |
 | 4 | Fix 7 Tier 1 beta blockers: org_id scoping, agent kill switch, approval-gated comms, send limits, AI disclosure | 2026-03-11 | 95fa7194 | [4-fix-9-tier-1-beta-blockers-from-quality-](./quick/4-fix-9-tier-1-beta-blockers-from-quality-/) |
 | 5 | Channel smoke tests (12 tests), onboarding E2E (6 tests), browse_website agent tool | 2026-03-11 | 781252fc | [5-channel-smoke-tests-onboarding-verificat](./quick/5-channel-smoke-tests-onboarding-verificat/) |
+| 7 | INT-02: Wire lead auto-approve ack to outbound email sender (Resend) | 2026-03-12 | 4b2f0673 | [7-int-02-wire-lead-ack-to-outbound-sender](./quick/7-int-02-wire-lead-ack-to-outbound-sender/) |
 
 ## Session Continuity
 
-Last session: 2026-03-11
-Stopped at: Completed quick task 5 (Channel smoke tests, onboarding E2E, browse_website tool)
+Last session: 2026-03-12
+Stopped at: Completed quick task 7 (INT-02: Wire lead ack to outbound email sender)
 Resume file: None
