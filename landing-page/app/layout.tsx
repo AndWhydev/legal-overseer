@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { EB_Garamond } from "next/font/google";
 import "./globals.css";
-import DemoNav from "./components/DemoNav";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -14,23 +12,24 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const ebGaramond = EB_Garamond({
-  variable: "--font-serif",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-});
-
 export const metadata: Metadata = {
-  title: "BitBit — Your AI Business Operations Assistant",
-  description: "An AI that knows your world. BitBit integrates deeply with your life and business, modular, adaptive, and human-centered.",
+  title: "Meet BitBit 👋",
+  description: "BitBit integrates with the tools you already use and acts on your behalf. Join the waitlist.",
+  verification: {
+    google: "aJ7xOpmke3WS7wZjRIn6qQmzmvWeFzsvqVhF6SldGII",
+  },
   icons: {
-    icon: "/bitbit-logo.svg",
-    shortcut: "/bitbit-logo.svg",
-    apple: "/bitbit-logo-192.png",
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/favicon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/bitbit-app-icon-192.png", sizes: "192x192", type: "image/png" },
+    ],
+    shortcut: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
   },
   openGraph: {
-    title: "BitBit — Your AI Business Operations Assistant",
-    description: "An AI that knows your world. BitBit integrates deeply with your life and business.",
+    title: "BitBit — AI That Connects to Everything",
+    description: "BitBit integrates with the tools you already use and acts on your behalf. Join the waitlist.",
     type: "website",
     locale: "en_US",
     url: "https://bitbit.chat",
@@ -40,14 +39,14 @@ export const metadata: Metadata = {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "BitBit — Your AI Business Operations Assistant",
+        alt: "BitBit — AI That Connects to Everything",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "BitBit — Your AI Business Operations Assistant",
-    description: "An AI that knows your world.",
+    title: "BitBit — AI That Connects to Everything",
+    description: "Join the waitlist.",
     images: ["/og-image.png"],
   },
 };
@@ -60,9 +59,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${ebGaramond.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        style={{ backgroundColor: "#09090b" }}
       >
-        <DemoNav />
         {children}
       </body>
     </html>
