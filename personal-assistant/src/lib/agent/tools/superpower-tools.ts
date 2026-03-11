@@ -48,6 +48,33 @@ export const superpowerToolDefinitions: Anthropic.Tool[] = [
     },
   },
   {
+    name: 'browse_website',
+    description:
+      'Navigate a website using a headless browser. Unlike fetch_url (which only does HTTP GET), this tool renders JavaScript, handles SPAs, and can interact with dynamic content. Use when fetch_url returns empty/broken content (JS-rendered pages), when you need to see what a page looks like after JavaScript execution, or when dealing with sites that block simple HTTP fetches. Returns extracted page text and optionally a base64 screenshot.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        url: {
+          type: 'string',
+          description: 'The full URL to browse (must start with http:// or https://)',
+        },
+        wait_for: {
+          type: 'string',
+          description: 'Optional CSS selector to wait for before extracting content (e.g. "#main-content", ".article-body")',
+        },
+        screenshot: {
+          type: 'boolean',
+          description: 'Whether to capture a screenshot (default: false). Returns base64 PNG.',
+        },
+        max_chars: {
+          type: 'number',
+          description: 'Maximum characters of text to return (default: 8000)',
+        },
+      },
+      required: ['url'],
+    },
+  },
+  {
     name: 'send_email',
     description:
       'Send an email via Resend on behalf of the user. IMPORTANT: Always confirm the recipient, subject, and body with the user before sending. Supports plain text and HTML. Do NOT send without explicit user approval.',
@@ -232,6 +259,100 @@ export const superpowerToolHandlers: Record<string, AgentToolHandler> = {
       }
       logger.error('[fetch_url] Error:', err)
       return { success: false, error: `Fetch error: ${String(err)}` }
+    }
+  },
+
+  async browse_website(input) {
+    const url = input.url as string
+    const waitFor = input.wait_for as string | undefined
+    const takeScreenshot = (input.screenshot as boolean) || false
+    const maxChars = (input.max_chars as number) || 8000
+
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      return { success: false, error: 'URL must start with http:// or https://' }
+    }
+
+    try {
+      // Dynamic import — Playwright only available where installed
+      const { chromium } = await import('playwright')
+
+      const browser = await chromium.launch({
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+      })
+
+      try {
+        const context = await browser.newContext({
+          userAgent: 'BitBit-Agent/1.0 (https://bitbit.chat)',
+          viewport: { width: 1280, height: 720 },
+        })
+        const page = await context.newPage()
+
+        // Navigate with timeout
+        await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 20000 })
+
+        // Wait for optional selector
+        if (waitFor) {
+          await page.waitForSelector(waitFor, { timeout: 10000 }).catch(() => {
+            // Don't fail if selector not found — still return what we have
+            logger.warn('[browse_website] Selector not found, proceeding:', waitFor)
+          })
+        } else {
+          // Brief settle for JS rendering
+          await page.waitForTimeout(2000)
+        }
+
+        // Extract title
+        const title = await page.title()
+
+        // Extract text content
+        const text = await page.evaluate(() => {
+          // Remove script, style, nav, footer
+          const remove = document.querySelectorAll('script, style, noscript, nav, footer, header')
+          remove.forEach(el => el.remove())
+          return document.body?.innerText || ''
+        })
+
+        // Optional screenshot
+        let screenshotBase64: string | undefined
+        if (takeScreenshot) {
+          const buffer = await page.screenshot({ type: 'png', fullPage: false })
+          screenshotBase64 = buffer.toString('base64')
+        }
+
+        // Get final URL (after redirects)
+        const finalUrl = page.url()
+
+        await browser.close()
+
+        const content = text.replace(/\n{3,}/g, '\n\n').trim()
+
+        return {
+          success: true,
+          data: {
+            url: finalUrl,
+            title,
+            content: content.slice(0, maxChars),
+            truncated: content.length > maxChars,
+            char_count: content.length,
+            screenshot_base64: screenshotBase64,
+            has_screenshot: !!screenshotBase64,
+          },
+        }
+      } catch (pageErr) {
+        await browser.close()
+        throw pageErr
+      }
+    } catch (err) {
+      // Graceful fallback if Playwright not installed
+      if (String(err).includes('Cannot find module') || String(err).includes('ERR_MODULE_NOT_FOUND')) {
+        return {
+          success: false,
+          error: 'browse_website requires Playwright (not installed in this environment). Use fetch_url instead for simple HTTP fetches.',
+        }
+      }
+      logger.error('[browse_website] Error:', err)
+      return { success: false, error: `Browse error: ${String(err)}` }
     }
   },
 

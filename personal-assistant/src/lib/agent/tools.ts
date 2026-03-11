@@ -52,7 +52,7 @@ export const TOOL_GROUPS: Record<ToolGroup, ToolGroupMeta> = {
     id: 'web',
     label: 'Web & Research',
     description: 'Search the web and fetch URL content for research',
-    tools: ['web_search', 'fetch_url'],
+    tools: ['web_search', 'fetch_url', 'browse_website'],
   },
   comms: {
     id: 'comms',
@@ -81,6 +81,7 @@ export const JIT_INSTRUCTIONS: Record<string, string> = {
   // Web & Research
   web_search: 'Use these search results to answer the user\'s question. Cite sources with URLs when relevant. If results are insufficient, refine your search query and try again.',
   fetch_url: 'Use the extracted page content to answer the user\'s question. Summarize key points rather than dumping raw text. Note if the content was truncated.',
+  browse_website: 'Use the extracted page content to answer the user\'s question. This content was rendered by a real browser, so JavaScript-generated content is included. If a screenshot was captured, describe what you see. Summarize key points rather than dumping raw text.',
 
   // Contacts
   search_contacts: 'Use the matched contact(s) to proceed with the user\'s request. If multiple matches exist, ask the user to clarify which one. Use the contact ID for subsequent tool calls.',
