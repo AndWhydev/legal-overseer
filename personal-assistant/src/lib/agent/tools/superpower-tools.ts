@@ -1,5 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk'
 import type { AgentToolHandler } from '../tools'
+import { createApproval } from '../approval-queue'
+import { checkSendLimit } from '../send-limits'
 import { logger } from '@/lib/core/logger'
 
 // ---------------------------------------------------------------------------
@@ -233,48 +235,42 @@ export const superpowerToolHandlers: Record<string, AgentToolHandler> = {
     }
   },
 
-  async send_email(input, orgId) {
+  async send_email(input, orgId, supabase) {
     const to = input.to as string
     const subject = input.subject as string
     const body = input.body as string
     const replyTo = input.reply_to as string | undefined
 
-    const apiKey = process.env.RESEND_API_KEY
-    if (!apiKey) {
-      return { success: false, error: 'Email not configured: RESEND_API_KEY not set' }
-    }
-
-    const from = process.env.NOTIFICATION_FROM_EMAIL || 'bitbit@bitbit.chat'
-
     try {
-      const { Resend } = await import('resend')
-      const resend = new Resend(apiKey)
-
-      // Determine if body is HTML or plain text
-      const isHtml = body.includes('<') && body.includes('>')
-
-      const { data, error } = await resend.emails.send({
-        from,
-        to: [to],
-        subject,
-        ...(isHtml ? { html: body } : { text: body }),
-        ...(replyTo ? { replyTo } : {}),
-      })
-
-      if (error) {
-        logger.warn('[send_email] Resend error:', error)
-        return { success: false, error: `Email send failed: ${error.message}` }
+      // Check daily send limit
+      const limit = await checkSendLimit(supabase, orgId, 'email')
+      if (!limit.allowed) {
+        return { success: false, error: `Daily email limit reached (${limit.limit}/day). Try again tomorrow.` }
       }
 
-      logger.info('[send_email] Sent email', { to, subject, org: orgId, id: data?.id })
+      // Queue for human approval instead of sending directly
+      const approval = await createApproval(supabase, {
+        org_id: orgId,
+        agent_config_id: 'system',
+        action_type: 'send_email',
+        action_payload: { to, subject, body, reply_to: replyTo },
+        action_summary: `Send email to ${to}: ${subject}`,
+        confidence_score: 1.0,
+        routing_decision: 'ask',
+        priority: 'normal',
+      })
+
+      logger.info('[send_email] Queued for approval', { to, subject, org: orgId, approvalId: approval.id })
 
       return {
         success: true,
+        queued: true,
+        approvalId: approval.id,
         data: {
-          message_id: data?.id,
+          message: 'Email queued for your approval',
           to,
           subject,
-          from,
+          approvalId: approval.id,
         },
       }
     } catch (err) {
@@ -283,25 +279,39 @@ export const superpowerToolHandlers: Record<string, AgentToolHandler> = {
     }
   },
 
-  async send_sms(input, orgId) {
+  async send_sms(input, orgId, supabase) {
     const to = input.to as string
     const message = input.message as string
 
     try {
-      const { sendSMS } = await import('@/lib/channels/sms')
-      const result = await sendSMS(to, message)
-
-      if (!result.success) {
-        return { success: false, error: result.error || 'SMS send failed' }
+      // Check daily send limit
+      const limit = await checkSendLimit(supabase, orgId, 'sms')
+      if (!limit.allowed) {
+        return { success: false, error: `Daily SMS limit reached (${limit.limit}/day). Try again tomorrow.` }
       }
 
-      logger.info('[send_sms] Sent SMS', { to, org: orgId, id: result.messageId })
+      // Queue for human approval instead of sending directly
+      const approval = await createApproval(supabase, {
+        org_id: orgId,
+        agent_config_id: 'system',
+        action_type: 'send_sms',
+        action_payload: { to, message },
+        action_summary: `Send SMS to ${to}: ${message.slice(0, 60)}${message.length > 60 ? '...' : ''}`,
+        confidence_score: 1.0,
+        routing_decision: 'ask',
+        priority: 'normal',
+      })
+
+      logger.info('[send_sms] Queued for approval', { to, org: orgId, approvalId: approval.id })
 
       return {
         success: true,
+        queued: true,
+        approvalId: approval.id,
         data: {
-          message_id: result.messageId,
+          message: 'SMS queued for your approval',
           to,
+          approvalId: approval.id,
         },
       }
     } catch (err) {
