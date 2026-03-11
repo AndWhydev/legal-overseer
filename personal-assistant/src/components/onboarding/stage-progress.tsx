@@ -2,12 +2,13 @@
 
 import { motion } from 'motion/react'
 
-export type OnboardingStage = 'workspace' | 'connections' | 'sync' | 'value'
+export type OnboardingStage = 'workspace' | 'connections' | 'sync' | 'agents' | 'value'
 
 const STAGE_LABELS: Record<OnboardingStage, string> = {
   workspace: 'Workspace',
   connections: 'Connections',
   sync: 'Sync',
+  agents: 'Agents',
   value: 'Ready',
 }
 
@@ -15,8 +16,8 @@ const BACKTRACKABLE_STAGES = new Set<OnboardingStage>(['workspace', 'connections
 
 export function getStageSequence(showWorkspaceStep: boolean): OnboardingStage[] {
   return showWorkspaceStep
-    ? ['workspace', 'connections', 'sync', 'value']
-    : ['connections', 'sync', 'value']
+    ? ['workspace', 'connections', 'sync', 'agents', 'value']
+    : ['connections', 'sync', 'agents', 'value']
 }
 
 export function canBacktrackToStage(

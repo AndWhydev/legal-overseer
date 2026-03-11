@@ -42,6 +42,51 @@ const SYNC_LINES = [
   'Building your operational picture',
 ]
 
+interface AgentRecommendation {
+  title: string
+  description: string
+  emoji: string
+}
+
+const AGENT_RECOMMENDATIONS: Record<string, AgentRecommendation[]> = {
+  'digital-agency': [
+    { title: 'Lead Swarm', emoji: '🎯', description: 'Automatically identify and prioritize new leads from your channels' },
+    { title: 'Client Comms', emoji: '💬', description: 'Manage client conversations and follow-ups across email, chat, and calendar' },
+    { title: 'Proposal Bot', emoji: '📝', description: 'Generate and track proposals based on client requirements' },
+    { title: 'Ad Script Gen', emoji: '🎬', description: 'Create compelling ad copy and scripts from your brand voice' },
+  ],
+  'ecommerce': [
+    { title: 'Lead Swarm', emoji: '🎯', description: 'Track and respond to customer inquiries from all channels' },
+    { title: 'Invoice Flow', emoji: '💳', description: 'Automate invoice generation and payment reminders' },
+    { title: 'Client Comms', emoji: '💬', description: 'Send personalized follow-ups and order updates' },
+    { title: 'Tender Hunter', emoji: '🔍', description: 'Monitor for new market opportunities and competitions' },
+  ],
+  'consulting': [
+    { title: 'Proposal Bot', emoji: '📝', description: 'Create professional proposals that close deals faster' },
+    { title: 'Client Comms', emoji: '💬', description: 'Maintain consistent communication with clients across touchpoints' },
+    { title: 'Lead Swarm', emoji: '🎯', description: 'Qualify and nurture inbound consulting leads' },
+    { title: 'Invoice Flow', emoji: '💳', description: 'Streamline billing and payment collection processes' },
+  ],
+  'real-estate': [
+    { title: 'Lead Swarm', emoji: '🎯', description: 'Capture and qualify property inquiries automatically' },
+    { title: 'Client Comms', emoji: '💬', description: 'Schedule showings and send property updates' },
+    { title: 'Invoice Flow', emoji: '💳', description: 'Track commissions and generate invoices' },
+    { title: 'Client Onboarding', emoji: '🚀', description: 'Welcome new clients with automated processes' },
+  ],
+  'professional-services': [
+    { title: 'Proposal Bot', emoji: '📝', description: 'Generate scope of work and pricing proposals' },
+    { title: 'Invoice Flow', emoji: '💳', description: 'Automate time tracking and invoice billing' },
+    { title: 'Client Comms', emoji: '💬', description: 'Keep clients updated on project progress' },
+    { title: 'Lead Swarm', emoji: '🎯', description: 'Identify high-value service opportunities' },
+  ],
+  'other': [
+    { title: 'Lead Swarm', emoji: '🎯', description: 'Automatically identify and prioritize new opportunities' },
+    { title: 'Client Comms', emoji: '💬', description: 'Maintain consistent client communication' },
+    { title: 'Invoice Flow', emoji: '💳', description: 'Automate billing and payment management' },
+    { title: 'Channel Triage', emoji: '📥', description: 'Route and prioritize messages intelligently' },
+  ],
+}
+
 function StageShell({
   title,
   subtitle,
@@ -262,22 +307,8 @@ export default function OnboardPage() {
     }, 1000)
 
     const exitTimer = window.setTimeout(async () => {
-      // Before transitioning to value, try to fetch real data
-      let hasFirstValueData = false
-      try {
-        const res = await fetch('/api/onboarding/first-value')
-        if (res.ok) {
-          const { value } = await res.json()
-          if (value) {
-            setFirstValue(value)
-            hasFirstValueData = true
-          }
-        }
-      } catch {
-        // best effort
-      }
-      setStage('value')
-      trackOnboardingEvent('value_viewed', { hasFirstValue: hasFirstValueData })
+      setStage('agents')
+      trackOnboardingEvent('agents_viewed')
     }, 3600)
 
     void syncRequest
@@ -479,28 +510,59 @@ export default function OnboardPage() {
                   onConnectedIdsChange={setConnectedIds}
                 />
 
-                <div className="flex flex-wrap items-center gap-4 rounded-[22px] border border-white/45 bg-[linear-gradient(180deg,rgba(255,255,255,0.4),rgba(255,255,255,0.14))] px-4 py-3 shadow-[0_18px_56px_rgba(45,71,117,0.12),inset_0_1px_0_rgba(255,255,255,0.68)] backdrop-blur-[28px]">
-                  <div className="flex items-center gap-3 text-sm text-[#24415f]">
-                    <div className={`h-2.5 w-2.5 rounded-full ${hasConnection ? 'bg-[#7fb28c]' : 'bg-[#b6c8de]'}`} />
-                    <span>
-                      {hasConnection
-                        ? `${connectedNames.join(' and ')} connected`
-                        : 'Connect at least one to continue'}
-                    </span>
+                <div className="grid gap-4">
+                  <div className="flex flex-wrap items-center gap-4 rounded-[22px] border border-white/45 bg-[linear-gradient(180deg,rgba(255,255,255,0.4),rgba(255,255,255,0.14))] px-4 py-3 shadow-[0_18px_56px_rgba(45,71,117,0.12),inset_0_1px_0_rgba(255,255,255,0.68)] backdrop-blur-[28px]">
+                    <div className="flex items-center gap-3 text-sm text-[#24415f]">
+                      <div className={`h-2.5 w-2.5 rounded-full ${hasConnection ? 'bg-[#7fb28c]' : 'bg-[#b6c8de]'}`} />
+                      <span>
+                        {hasConnection
+                          ? `${connectedNames.join(' and ')} connected`
+                          : 'Connect at least one to continue'}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSyncStep(0)
+                        trackOnboardingEvent('sync_started', { connectedCount: connectedIds.length })
+                        setStage('sync')
+                      }}
+                      disabled={!hasConnection}
+                      className="ml-auto inline-flex items-center gap-2 rounded-full bg-[#163357] px-5 py-3 text-sm font-medium text-white shadow-[0_18px_48px_rgba(29,65,114,0.28)] transition duration-200 hover:translate-y-[-1px] hover:bg-[#214674] disabled:cursor-not-allowed disabled:opacity-35"
+                    >
+                      Continue
+                      <ArrowRight size={16} />
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSyncStep(0)
-                      trackOnboardingEvent('sync_started', { connectedCount: connectedIds.length })
-                      setStage('sync')
-                    }}
-                    disabled={!hasConnection}
-                    className="ml-auto inline-flex items-center gap-2 rounded-full bg-[#163357] px-5 py-3 text-sm font-medium text-white shadow-[0_18px_48px_rgba(29,65,114,0.28)] transition duration-200 hover:translate-y-[-1px] hover:bg-[#214674] disabled:cursor-not-allowed disabled:opacity-35"
-                  >
-                    Continue
-                    <ArrowRight size={16} />
-                  </button>
+
+                  <div style={{ display: 'flex', justifyContent: 'center' }}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSyncStep(0)
+                        trackOnboardingEvent('connections_skipped')
+                        setStage('sync')
+                      }}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#47627f',
+                        fontSize: 14,
+                        cursor: 'pointer',
+                        padding: '4px 8px',
+                        textDecoration: 'none',
+                        transition: 'color 0.2s',
+                      }}
+                      onMouseEnter={(e) => {
+                        (e.target as HTMLButtonElement).style.color = '#24415f'
+                      }}
+                      onMouseLeave={(e) => {
+                        (e.target as HTMLButtonElement).style.color = '#47627f'
+                      }}
+                    >
+                      Skip for now →
+                    </button>
+                  </div>
                 </div>
               </div>
             </StageShell>
@@ -558,6 +620,88 @@ export default function OnboardPage() {
                       </motion.div>
                     )
                   })}
+                </div>
+              </div>
+            </StageShell>
+          )}
+
+          {stage === 'agents' && (
+            <StageShell
+              title="Recommended agents"
+              subtitle="BitBit can automate these tasks based on your business type. You can enable, disable, or customize them anytime."
+              mascotSide="right"
+              progress={progress}
+              mascot={<AmbientAvatar side="right" />}
+            >
+              <div className="grid gap-5">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {(AGENT_RECOMMENDATIONS[industry] || AGENT_RECOMMENDATIONS['other']).map((agent, index) => (
+                    <motion.div
+                      key={agent.title}
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.08 }}
+                      style={{
+                        borderRadius: 24,
+                        border: '1px solid rgba(255, 255, 255, 0.42)',
+                        background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.38), rgba(255, 255, 255, 0.14))',
+                        padding: '20px',
+                        backdropFilter: 'blur(24px)',
+                        boxShadow: '0 14px 38px rgba(45, 71, 117, 0.09), inset 0 1px 0 rgba(255, 255, 255, 0.62)',
+                        cursor: 'default',
+                        transition: 'all 0.2s',
+                      }}
+                      onMouseEnter={(e) => {
+                        const el = e.currentTarget as HTMLDivElement
+                        el.style.borderColor = 'rgba(255, 255, 255, 0.56)'
+                        el.style.background = 'linear-gradient(180deg, rgba(255, 255, 255, 0.48), rgba(255, 255, 255, 0.22))'
+                      }}
+                      onMouseLeave={(e) => {
+                        const el = e.currentTarget as HTMLDivElement
+                        el.style.borderColor = 'rgba(255, 255, 255, 0.42)'
+                        el.style.background = 'linear-gradient(180deg, rgba(255, 255, 255, 0.38), rgba(255, 255, 255, 0.14))'
+                      }}
+                    >
+                      <div style={{ fontSize: 24, marginBottom: 8 }}>
+                        {agent.emoji}
+                      </div>
+                      <div style={{ fontSize: 15, fontWeight: 600, color: '#173357', marginBottom: 6 }}>
+                        {agent.title}
+                      </div>
+                      <div style={{ fontSize: 13, color: '#24415f', lineHeight: 1.5 }}>
+                        {agent.description}
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+
+                <div className="flex flex-wrap items-center gap-4 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      trackOnboardingEvent('agents_completed')
+                      // Fetch first value data before transitioning to value stage
+                      const fetchFirstValue = async () => {
+                        try {
+                          const res = await fetch('/api/onboarding/first-value')
+                          if (res.ok) {
+                            const { value } = await res.json()
+                            if (value) {
+                              setFirstValue(value)
+                            }
+                          }
+                        } catch {
+                          // best effort
+                        }
+                        setStage('value')
+                      }
+                      void fetchFirstValue()
+                    }}
+                    className="inline-flex items-center gap-2 rounded-full bg-[#163357] px-5 py-3 text-sm font-medium text-white shadow-[0_18px_48px_rgba(29,65,114,0.28)] transition duration-200 hover:translate-y-[-1px] hover:bg-[#214674]"
+                  >
+                    Continue
+                    <ArrowRight size={16} />
+                  </button>
                 </div>
               </div>
             </StageShell>
