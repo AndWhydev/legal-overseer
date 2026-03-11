@@ -2,8 +2,7 @@ app = "bitbit-workers"
 primary_region = "syd"
 
 [build]
-  dockerfile = "deployments/fly/Dockerfile"
-  dockerfile_entrypoint = ""
+  dockerfile = "Dockerfile"
 
 [env]
   NODE_ENV = "production"

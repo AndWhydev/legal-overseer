@@ -1,4 +1,4 @@
-app = "bitbit-whatsapp-bridge"
+app = "bitbit-wa-bridge"
 primary_region = "syd"
 
 [build]

@@ -47,22 +47,65 @@
 
 ## Infrastructure
 
-| Service | Purpose | Region |
-|---------|---------|--------|
-| Vercel | Dashboard hosting & serverless functions | Auto |
-| Supabase | Database, auth, realtime, storage | ap-southeast-2 |
-| Telnyx | SMS channel | - |
-| Resend | Transactional email | - |
-| Stripe | Billing (scaffolded) | - |
+| Service | Purpose | Region | Status |
+|---------|---------|--------|--------|
+| Vercel | Dashboard hosting & serverless functions | Auto | Deployed |
+| Supabase | Database, auth, realtime, storage | ap-south-1 (Mumbai) | Deployed |
+| Fly.io | Agent worker processes (Firecracker MicroVMs) | syd (Sydney) | Deployed |
+| Fly.io | WhatsApp Baileys bridge (`bitbit-wa-bridge.fly.dev`) | syd (Sydney) | Deployed |
+| Cloudflare Workers | Edge cron (task polling), rate limiting | Edge (global) | Deployed |
+| Sentry | Error tracking & monitoring | us (bitbit-d1 org) | Deployed |
+| Stripe | Billing, webhook endpoint | - | Keys set, webhook configured |
+| Telnyx | SMS channel | - | Keys set, webhook configured |
+| Resend | Transactional email | - | Key set, DNS verified |
+
+### Fly.io Worker
+- **App**: `bitbit-workers` → `https://bitbit-workers.fly.dev`
+- **VM**: `shared-cpu-1x`, 1024MB RAM, 2 machines
+- **Auto-scaling**: suspend on idle, auto-start on request, min 1 running
+- **Health**: `/api/monitoring/health` every 30s
+- **Auth**: Bearer token (`WORKER_AUTH_TOKEN`)
+- **Secrets**: WORKER_AUTH_TOKEN, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, ANTHROPIC_API_KEY
+
+### Cloudflare Edge Cron
+- **Worker**: `bitbit-edge-cron` → `https://bitbit-edge-cron.bitbit-edge.workers.dev`
+- **Cron**: `*/5 * * * *` (polls Supabase for pending agent tasks, dispatches to Fly.io)
+- **Rate limiting**: 10 req/min/IP on `/trigger` endpoint
+- **Secrets**: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, WORKER_AUTH_TOKEN, WORKER_CALLBACK_URL
+
+### Fly.io WhatsApp Bridge
+- **App**: `bitbit-wa-bridge` → `https://bitbit-wa-bridge.fly.dev`
+- **Purpose**: Baileys-based WhatsApp bridge (fallback transport when Meta Cloud API unavailable)
+- **Auth**: Bearer token (`BRIDGE_SECRET`)
+- **Proxy**: Dashboard proxies `/api/whatsapp/bridge/*` to this service
+
+### Sentry
+- **Org**: `bitbit-d1`, **Project**: `bitbit-dashboard`
+- **Platform**: javascript-nextjs (`@sentry/nextjs`)
+- **DSN**: Configured via `SENTRY_DSN` / `NEXT_PUBLIC_SENTRY_DSN` env vars
+- **Features**: Context enrichment, PII filtering, Vercel env vars set
+
+### Request Flow
+```
+Vercel (Next.js dashboard) → Cloudflare Workers (edge cron / webhooks) → Fly.io Sydney (agent execution) → Supabase Mumbai (database)
+```
+Fly.io Sydney → Supabase Mumbai latency: ~1-2ms (APAC co-location)
 
 ## Monorepo Structure
 
 ```
 bitbit/                      # npm workspaces root
-  personal-assistant/        # Main Next.js app (deployed)
+  personal-assistant/        # Main Next.js app (deployed to Vercel)
   packages/core/             # Shared types and utilities
   packages/agents/           # 10 specialist agent packages
-  deployments/               # Per-client deployment configs (awu, torkay, demo, etc.)
+  deployments/
+    fly/                     # Fly.io worker (Dockerfile, fly.toml, src/)
+    cloudflare/              # Cloudflare edge cron (wrangler.toml, src/)
+    whatsapp-bridge/         # Fly.io WhatsApp Baileys bridge
+    vps/                     # VPS relay daemon config
+    awu/                     # AWU client deployment
+    torkay/                  # Torkay client deployment
+    demo/                    # Demo deployment
   landing-page/              # Marketing site
   demo-1/                    # Demo app
 ```
@@ -74,7 +117,7 @@ bitbit/                      # npm workspaces root
 ## Database
 
 - **Engine**: PostgreSQL via Supabase
-- **Migrations**: 57 SQL migration files in `personal-assistant/supabase/migrations/`
+- **Migrations**: 61 SQL migration files in `personal-assistant/supabase/migrations/`
 - **Auth**: Supabase Auth with RLS policies
 - **Tenancy**: Dual-tier — personal orgs (auto-created) + shared orgs
 - **Key patterns**: RLS on all tables, `org_id` scoping, `created_by` tracking
@@ -91,8 +134,8 @@ bitbit/                      # npm workspaces root
 - **Shell**: zsh
 - **IDE tools**: Claude Code CLI, GitNexus (codebase indexing)
 - **Dev server**: `npm run dev` (Next.js dev with turbopack)
-- **Testing**: `vitest run` (1444 tests across 122 test files)
-- **E2E**: `npx playwright test` (8 spec files)
+- **Testing**: `vitest run` (1462 tests across 122+ test files)
+- **E2E**: `npx playwright test` (12 spec files, ~49 tests)
 - **CI/CD**: 5 GitHub Actions workflows (ci, e2e, deploy, migrate, preview)
 
 ## Conventions

@@ -19,8 +19,8 @@
 
 | Type | Tool | Location | Count |
 |------|------|----------|-------|
-| Unit/Integration | Vitest 4 | `**/*.test.ts` colocated | 1444 |
-| E2E | Playwright | `e2e/` (excluded from vitest) | Scaffolded |
+| Unit/Integration | Vitest 4 | `**/*.test.ts` colocated | 1462 |
+| E2E | Playwright | `e2e/` (12 spec files) | ~49 tests |
 
 **Run tests**: `npm run test` (from personal-assistant/)
 **Config**: `vitest.config.ts` — globals enabled, `@/` alias, excludes e2e/node_modules/.next
@@ -77,7 +77,7 @@
 
 ## Background Processing
 
-- **Cron routes**: 11 routes in `/api/cron/`
+- **Cron routes**: 12 routes in `/api/cron/`
 - **Reflection**: Haiku extracts facts from significant messages
 - **Memory consolidation**: Dedup/merge/supersede cycle
 - **Scheduler**: Built-in cron infrastructure

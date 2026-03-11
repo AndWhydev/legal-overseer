@@ -19,24 +19,25 @@
 | T019 | Glassmorphic UI Redesign | feature | 2026-03-08 |
 | T020 | Leads Pipeline Redesign | feature | 2026-03-08 |
 | T021 | Production Security Hardening (WS1-WS7) | infrastructure | 2026-03-08 |
+| T022 | Security Verification & Monitoring | infrastructure | 2026-03-10 |
+| T023 | Dashboard UX Polish | feature | 2026-03-10 |
+| T026 | E2E Test Expansion (4 spec files, ~49 tests) | testing | 2026-03-11 |
 
 ## Active Tracks
 
 | ID | Track | Type | Status | Notes |
 |----|-------|------|--------|-------|
-| T009 | Context Baseplate | architecture | Phase 2 done | Foundation tables, xref-cache, mention-extractor, entity profiles, baseplate snapshot, refresh cron, entity patterns |
-| T011 | Production Validation & Deployment | infrastructure | Mostly complete | Fly.io + Cloudflare + VPS worker deployed. Blocked: channel smoke tests + load test need T008 credentials |
-| T022 | Security Verification & Monitoring | infrastructure | Complete | Webhook HMAC, DLQ wiring + Sentry alerts, circuit breaker, security headers, Sentry enrichment, DLQ API |
-| T023 | Dashboard UX Polish | feature | Complete | Data-viz, KPI layout, empty states, progressive disclosure, email + SMS adapter unification |
+| T008 | Platform OAuth App Registrations | infrastructure | ~80% complete | Stripe webhook done (API bypass), Meta webhook done (Graph API), Google OAuth + APIs done, Telnyx webhook done (API), Resend DNS verified. Microsoft/Xero/Slack deferred (no accounts) |
+| T009 | Context Baseplate | architecture | Phase 2 complete | Foundation tables, xref-cache, mention-extractor, entity profiles, baseplate snapshot, refresh cron, entity patterns. All migrations applied (053-061) |
+| T011 | Production Validation & Deployment | infrastructure | Mostly complete | Fly.io + Cloudflare + VPS worker deployed. 12 cron routes. Channel smoke tests now unblocked — all 5 key platform credentials configured. Load test deferred until channels verified |
 
 ## Planned Tracks
 
 | ID | Track | Type | Priority | Blocked By |
 |----|-------|------|----------|------------|
-| T008 | Platform OAuth App Registrations | infrastructure | P0 | Human-gated (Stripe, Meta, Google, Xero, Slack) |
-| T010 | Onboarding Flow | feature | P1 | T008, T009 |
-| T012 | Legal & Revenue Operations | business | P0 | Human-gated |
-| T013 | Beta Launch Program | business | P1 | T008, T011, T012 |
+| T010 | Onboarding Flow | feature | P1 | T008, T009. FR-6, FR-8, FR-11, FR-12 already committed |
+| T012 | Legal & Revenue Operations | business | P0 | Human-gated. Deferred — Andy's responsibility, Meta Business Verification already complete |
+| T013 | Beta Launch Program | business | P1 | T008 mostly unblocked, T012 still blocking |
 | T024 | Creator Studio | feature | P3 | - |
 | T025 | Knowledge Base | feature | P3 | - |
 
@@ -44,12 +45,14 @@
 
 ### T008 — Platform OAuth App Registrations
 Register production OAuth apps with external platforms. Human-gated: requires browser login, CAPTCHA solving, and credential management.
-- Stripe: API keys + webhook endpoint + identity verification
-- Meta/WhatsApp: Business verification (3-14 day wait) + WhatsApp Business App
-- Google: OAuth consent screen (Gmail, Calendar, GSC, GA4)
-- Microsoft: Azure AD app registration (Outlook Graph API)
-- Xero: OAuth app for accounting adapter
-- Slack: Bot token + Events API app
+- [x] Stripe: API keys set, webhook endpoint configured (API bypass)
+- [x] Meta/WhatsApp: Webhook configured (Graph API), WhatsApp Business App live, Meta Business Verification complete
+- [x] Google: OAuth consent screen + redirect URIs + API enablement (Gmail, Calendar, GSC, GA4)
+- [x] Telnyx: API key + webhook URL configured (API)
+- [x] Resend: API key set, DNS verified (DKIM, SPF, DMARC)
+- [ ] Microsoft: Azure AD app registration (Outlook Graph API) — deferred, no account
+- [ ] Xero: OAuth app for accounting adapter — deferred, no account
+- [ ] Slack: Bot token + Events API app — deferred, no account
 
 ### T009 — Context Baseplate
 The compiled world model. Entity graph built at ingest time, not at query time. This is what separates BitBit from reactive RAG-based assistants. Phase 1 semantic engine exists but the Context Baseplate pattern (pre-computed understanding) is the next evolution.
@@ -66,8 +69,8 @@ Take code-complete agents and channels from "compiles with mocked tests" to "run
 - [x] Deploy VPS relay daemon (worker.ts + health server)
 - [x] Configure Vercel cron jobs (12 cron routes including entity-profile-refresh)
 - [x] Fix failing tests (1460 tests passing)
-- [ ] Smoke test each channel adapter against real credentials (BLOCKED by T008)
-- [ ] Load test relay daemon + concurrent agent runs (deferred until channels connected)
+- [ ] Smoke test each channel adapter against real credentials (now unblocked — 5 key platform credentials configured)
+- [ ] Load test relay daemon + concurrent agent runs (deferred until channels verified)
 
 ### T012 — Legal & Revenue Operations
 Business formation and first revenue. Includes:
@@ -88,7 +91,7 @@ First external users beyond Andy. Includes:
 
 ### T022 — Security Verification & Monitoring ✅
 Production-grade operational infrastructure. All code items complete:
-- [x] RLS policy audit across all 59 migrations (dual-tier policies)
+- [x] RLS policy audit across all 61 migrations (dual-tier policies)
 - [x] Webhook signature verification (all 6 webhooks: Stripe, Asana, Calendly, Slack, SMS, email-command)
 - [x] Sentry.io error tracking (DSN, org, project, Vercel env vars, context enrichment, PII filtering)
 - [x] Dead letter queue wiring + Sentry alerts on DLQ writes + admin API endpoint

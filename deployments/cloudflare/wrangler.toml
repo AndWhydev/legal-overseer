@@ -9,9 +9,6 @@ crons = ["*/5 * * * *"]
 [vars]
 ENVIRONMENT = "production"
 
-[limits]
-cpu_ms = 10000
-
 # Secrets configured via `wrangler secret put`:
 # SUPABASE_URL
 # SUPABASE_SERVICE_ROLE_KEY
