@@ -6,6 +6,7 @@
     { "path": "/api/cron/triage", "schedule": "*/5 * * * *" },
     { "path": "/api/cron/sentry", "schedule": "*/5 * * * *" },
     { "path": "/api/cron/morning-briefing", "schedule": "0 21 * * *" },
+    { "path": "/api/cron/monday-briefing", "schedule": "0 20 * * 0" },
     { "path": "/api/cron/proactive-alerts", "schedule": "*/15 * * * *" },
     { "path": "/api/cron/daily-digest", "schedule": "0 7 * * *" },
     { "path": "/api/cron/weekly-report", "schedule": "0 8 * * 1" },
