@@ -1,11 +1,11 @@
 import Anthropic from '@anthropic-ai/sdk'
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { getAgentTools, executeAgentTool, getJITInstruction, type ExecuteToolOptions } from './tools'
+import { getAgentTools, executeAgentTool, getJITInstruction, type ExecuteToolOptions, type ToolGroup } from './tools'
 import { buildEntityAwarePrompt } from './prompt-builder'
 import { selectModel, getModel } from './model-router'
 import { logAgentRun, estimateRunCost } from './run-logger'
 import { canProceed } from './cost-guard'
-import { generatePlan, stageFromToolName, isTrivialMessage, type PlanStage } from './planner'
+import { generatePlan, stageFromToolName, isTrivialMessage, type PlanStage, type PlanOutput } from './planner'
 import { withCircuitBreaker, CircuitOpenError } from './circuit-breaker'
 import { writeToDeadLetterQueue } from './dlq'
 import type { ModelTier } from '@/lib/bitbit-core'
@@ -139,8 +139,9 @@ export async function* runAgentChat(
     logger.info(`[model-router] ${selection.tier}: ${selection.reasoning}`)
   }
 
-  const tools = getAgentTools()
-  const toolNames = tools.map(t => t.name)
+  let tools = getAgentTools()
+  let toolNames = tools.map(t => t.name)
+  const totalToolCount = tools.length
 
   // Two-pass planning: Haiku generates user-meaningful stages (non-blocking)
   const entityCtxMatch = systemPrompt.match(/## Entity Context\n\n([\s\S]*?)(?:\n## |$)/)
@@ -148,22 +149,36 @@ export async function* runAgentChat(
 
   let planStages: PlanStage[] = []
   const activatedStages = new Set<string>()
+  let toolGroupsApplied = false
 
   // Fire Haiku planner in parallel for non-trivial messages
-  let planPromise: Promise<PlanStage[]> | null = null
+  let planPromise: Promise<PlanOutput> | null = null
   if (!isTrivialMessage(message)) {
-    planPromise = generatePlan(message, entityContext, toolNames).catch(() => [] as PlanStage[])
+    planPromise = generatePlan(message, entityContext, toolNames).catch(() => ({ stages: [], toolGroups: [] }) as PlanOutput)
   }
 
   // Give Haiku a brief race window (500ms) before starting Sonnet
   if (planPromise) {
     const raceResult = await Promise.race([
-      planPromise.then(stages => ({ ready: true as const, stages })),
+      planPromise.then(plan => ({ ready: true as const, plan })),
       new Promise<{ ready: false }>(resolve => setTimeout(() => resolve({ ready: false }), 500)),
     ])
-    if (raceResult.ready && raceResult.stages.length > 0) {
-      planStages = raceResult.stages
+    if (raceResult.ready && raceResult.plan.stages.length > 0) {
+      planStages = raceResult.plan.stages
       yield { type: 'plan', data: { stages: planStages } }
+
+      // Apply tool group filtering from planner output
+      if (raceResult.plan.toolGroups.length > 0) {
+        tools = getAgentTools(raceResult.plan.toolGroups)
+        toolNames = tools.map(t => t.name)
+        toolGroupsApplied = true
+        logger.info('[engine] Tool groups selected', {
+          toolGroups: raceResult.plan.toolGroups,
+          toolCount: tools.length,
+          totalAvailable: totalToolCount,
+        })
+      }
+
       planPromise = null
     }
   }
@@ -222,10 +237,19 @@ export async function* runAgentChat(
       // Check if late Haiku plan arrived during Sonnet streaming
       if (planPromise) {
         try {
-          const lateStages = await planPromise
-          if (lateStages.length > 0 && planStages.length === 0) {
-            planStages = lateStages
+          const latePlan = await planPromise
+          if (latePlan.stages.length > 0 && planStages.length === 0) {
+            planStages = latePlan.stages
             yield { type: 'plan', data: { stages: planStages } }
+
+            // Do NOT re-filter tools mid-conversation — KV cache is already primed
+            // with the full tool list. Log the late plan for observability only.
+            if (latePlan.toolGroups.length > 0 && !toolGroupsApplied) {
+              logger.info('[engine] Late plan arrived with tool groups (not applied — KV cache preservation)', {
+                toolGroups: latePlan.toolGroups,
+                reason: 'tools already locked for this turn',
+              })
+            }
           }
         } catch {}
         planPromise = null
