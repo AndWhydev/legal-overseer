@@ -23,6 +23,11 @@ const TOOL_LABEL_MAP: Record<string, { label: string; sublabel: string; icon: st
   send_email: { label: 'Sending email', sublabel: 'SENDING', icon: '✉️' },
   send_sms: { label: 'Sending SMS', sublabel: 'SENDING', icon: '📱' },
   compose_creator_notification_mockup: { label: 'Building mockup', sublabel: 'COMPOSING', icon: '🎨' },
+  web_search: { label: 'Searching web', sublabel: 'RESEARCHING', icon: '🌐' },
+  fetch_url: { label: 'Reading page', sublabel: 'FETCHING', icon: '📄' },
+  get_upcoming: { label: 'Checking schedule', sublabel: 'LOADING', icon: '📅' },
+  create_reminder: { label: 'Setting reminder', sublabel: 'CREATING', icon: '⏰' },
+  schedule_event: { label: 'Scheduling event', sublabel: 'CREATING', icon: '📅' },
 }
 
 /** Quick heuristic: skip Haiku planner for trivial messages (greetings, single words, etc.) */

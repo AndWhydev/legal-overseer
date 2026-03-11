@@ -16,6 +16,110 @@ import {
 } from './shared-tools'
 import { logger } from '@/lib/core/logger'
 
+// ---------------------------------------------------------------------------
+// Tool Group metadata (for future Tool RAG via pgvector)
+// ---------------------------------------------------------------------------
+
+export type ToolGroup = 'core' | 'memory' | 'channel' | 'web' | 'comms'
+
+export interface ToolGroupMeta {
+  id: ToolGroup
+  label: string
+  description: string
+  tools: string[]
+}
+
+export const TOOL_GROUPS: Record<ToolGroup, ToolGroupMeta> = {
+  core: {
+    id: 'core',
+    label: 'Core Operations',
+    description: 'Task management, contacts, activity logging, and creator tools',
+    tools: ['create_task', 'update_task', 'search_tasks', 'search_contacts', 'get_contact', 'log_activity', 'compose_creator_notification_mockup'],
+  },
+  memory: {
+    id: 'memory',
+    label: 'Memory & Knowledge',
+    description: 'Store and recall learned preferences, patterns, and context',
+    tools: ['search_memory', 'add_memory'],
+  },
+  channel: {
+    id: 'channel',
+    label: 'Channel Integration',
+    description: 'Sync, search, and interact with communication channels (Gmail, Calendar, etc.)',
+    tools: ['sync_channels', 'search_messages', 'get_upcoming', 'create_reminder', 'schedule_event'],
+  },
+  web: {
+    id: 'web',
+    label: 'Web & Research',
+    description: 'Search the web and fetch URL content for research',
+    tools: ['web_search', 'fetch_url'],
+  },
+  comms: {
+    id: 'comms',
+    label: 'Outbound Communications',
+    description: 'Send emails and SMS messages on behalf of the user',
+    tools: ['send_email', 'send_sms'],
+  },
+}
+
+/** Quick lookup: tool name → group. Derived from TOOL_GROUPS. */
+export const TOOL_GROUP_MAP: Record<string, ToolGroup> = Object.fromEntries(
+  Object.values(TOOL_GROUPS).flatMap(g => g.tools.map(t => [t, g.id]))
+) as Record<string, ToolGroup>
+
+/** Filter getAgentTools() by group. */
+export function getToolsByGroup(group: ToolGroup): Anthropic.Tool[] {
+  const toolNames = new Set(TOOL_GROUPS[group].tools)
+  return getAgentTools().filter(t => toolNames.has(t.name))
+}
+
+// ---------------------------------------------------------------------------
+// JIT Instructions (injected into tool_result content for point-of-use guidance)
+// ---------------------------------------------------------------------------
+
+export const JIT_INSTRUCTIONS: Record<string, string> = {
+  // Web & Research
+  web_search: 'Use these search results to answer the user\'s question. Cite sources with URLs when relevant. If results are insufficient, refine your search query and try again.',
+  fetch_url: 'Use the extracted page content to answer the user\'s question. Summarize key points rather than dumping raw text. Note if the content was truncated.',
+
+  // Contacts
+  search_contacts: 'Use the matched contact(s) to proceed with the user\'s request. If multiple matches exist, ask the user to clarify which one. Use the contact ID for subsequent tool calls.',
+  get_contact: 'Use this contact profile to provide informed, contextual responses. Reference their recent activity, relationships, and financial signals when relevant. Do not recite the entire profile back.',
+
+  // Tasks
+  create_task: 'Task created successfully. Confirm the task title and column to the user. If they mentioned a deadline or contact, remind them if those weren\'t included.',
+  update_task: 'Task updated. Briefly confirm what changed. If the task was moved to Done, ask if there are follow-up actions.',
+  search_tasks: 'Present the matching tasks concisely. If the user is looking for a specific task to update, confirm which one before proceeding.',
+
+  // Memory
+  search_memory: 'Use recalled memories to inform your response. Do not quote memory entries verbatim — integrate the knowledge naturally.',
+  add_memory: 'Memory stored. Do not announce this to the user unless they explicitly asked you to remember something.',
+
+  // Channels
+  sync_channels: 'Summarize what was found across channels. Highlight actionable items (emails needing replies, overdue reminders). Don\'t list every message.',
+  search_messages: 'Present the most relevant messages first. Include sender, date, and a brief snippet. If the user is looking for something specific, highlight the best match.',
+  get_upcoming: 'Present the schedule in chronological order. Highlight overdue items and conflicts. Group by day if spanning multiple days.',
+  create_reminder: 'Reminder created. Confirm the title, list, and due date to the user.',
+  schedule_event: 'Event scheduled. Confirm the title, date/time, and location to the user.',
+
+  // Comms
+  send_email: 'Email sent successfully. Confirm the recipient and subject to the user. Suggest logging this action if it\'s business-relevant.',
+  send_sms: 'SMS sent successfully. Confirm the recipient to the user. Note if the message was split into multiple segments.',
+
+  // Activity & Creative
+  log_activity: 'Activity logged. Continue with the user\'s request — do not announce that you logged an action.',
+  compose_creator_notification_mockup: 'Mockup generated. Present the key details and ask if the user wants to adjust any parameters.',
+}
+
+/** Get JIT instruction for a tool, if one exists. */
+export function getJITInstruction(toolName: string): string | undefined {
+  return JIT_INSTRUCTIONS[toolName]
+}
+
+// ---------------------------------------------------------------------------
+// Core types
+// ---------------------------------------------------------------------------
+
 export interface ToolResult {
   success: boolean
   data?: unknown
@@ -34,7 +138,7 @@ const toolDefinitions: Anthropic.Tool[] = [
   {
     name: 'create_task',
     description:
-      'Create a new task on the kanban board. Use this when the user asks to add a task, todo, or action item. If a contact is relevant, include their ID.',
+      'Create a new task on the kanban board. Use when the user wants to add a task, todo, or action item. Always include priority based on context. If a specific contact is mentioned, resolve them with search_contacts first to get their ID. Do NOT use this for reminders or calendar events — use create_reminder or schedule_event instead.',
     input_schema: {
       type: 'object' as const,
       properties: {
@@ -59,7 +163,7 @@ const toolDefinitions: Anthropic.Tool[] = [
   },
   {
     name: 'update_task',
-    description: 'Update an existing task. Use this to change status, priority, description, or move between columns.',
+    description: 'Update an existing task\'s title, description, status, priority, or column. Use when the user wants to change, move, complete, or archive a task. Requires the task_id — use search_tasks first if you don\'t have it.',
     input_schema: {
       type: 'object' as const,
       properties: {
@@ -78,7 +182,7 @@ const toolDefinitions: Anthropic.Tool[] = [
   },
   {
     name: 'search_tasks',
-    description: 'Search tasks by keyword, status, or priority. Returns matching tasks from the kanban board.',
+    description: 'Search tasks on the kanban board by keyword, status, or priority. Returns matching tasks with their IDs. Use this to find tasks before updating them, or to answer questions about what\'s on the board.',
     input_schema: {
       type: 'object' as const,
       properties: {
@@ -91,7 +195,7 @@ const toolDefinitions: Anthropic.Tool[] = [
   {
     name: 'search_contacts',
     description:
-      'Search contacts by name, alias, email, or phone number. Uses entity resolution across all known aliases.',
+      'Find contacts by name, alias, email, or phone number. Uses fuzzy entity resolution across all known aliases. Always use this before referencing a contact in other tools to get their correct ID.',
     input_schema: {
       type: 'object' as const,
       properties: {
@@ -102,7 +206,7 @@ const toolDefinitions: Anthropic.Tool[] = [
   },
   {
     name: 'get_contact',
-    description: 'Get full contact profile including communication patterns and all stored data.',
+    description: 'Load a contact\'s full profile including communication history, relationships, financial signals, active tasks, and deadlines. Use after search_contacts when you need deep context about a specific person. Do NOT use this for simple lookups — search_contacts is faster.',
     input_schema: {
       type: 'object' as const,
       properties: {
@@ -113,7 +217,7 @@ const toolDefinitions: Anthropic.Tool[] = [
   },
   {
     name: 'log_activity',
-    description: 'Log an action to the activity feed for transparency and auditability.',
+    description: 'Record an action to the activity feed for transparency. Log significant actions like emails sent, tasks created from channel messages, or research completed. Do NOT log routine tool calls — only meaningful business actions.',
     input_schema: {
       type: 'object' as const,
       properties: {
@@ -167,7 +271,7 @@ const toolDefinitions: Anthropic.Tool[] = [
   },
   {
     name: 'search_memory',
-    description: 'Search stored memory/knowledge entries for learned patterns and preferences.',
+    description: 'Search stored knowledge entries for previously learned patterns, preferences, and context. Use when the user references a past preference or when you need to recall how something was handled before.',
     input_schema: {
       type: 'object' as const,
       properties: {
@@ -179,7 +283,7 @@ const toolDefinitions: Anthropic.Tool[] = [
   },
   {
     name: 'add_memory',
-    description: 'Store a new memory/knowledge entry. Use to remember user preferences, patterns, and important context.',
+    description: 'Store a new knowledge entry to remember across sessions. Use for user preferences, recurring patterns, domain knowledge, and important context. Choose the most specific category. Do NOT store ephemeral information like today\'s weather or one-time requests.',
     input_schema: {
       type: 'object' as const,
       properties: {

@@ -10,7 +10,7 @@ export const superpowerToolDefinitions: Anthropic.Tool[] = [
   {
     name: 'web_search',
     description:
-      'Search the web for current information. Use this when the user asks about recent events, needs research, wants to look something up, or you need external knowledge to complete a task.',
+      'Search the web for current, real-time information using Brave Search. Use when the user asks about recent events, needs research, or when your training data may be outdated. Write specific search queries — include names, dates, and context for better results. Do NOT use for information you already have from memory or context.',
     input_schema: {
       type: 'object' as const,
       properties: {
@@ -29,7 +29,7 @@ export const superpowerToolDefinitions: Anthropic.Tool[] = [
   {
     name: 'fetch_url',
     description:
-      'Fetch and extract readable text content from a URL. Use when the user shares a link or you need to read a webpage, article, or document.',
+      'Fetch and extract readable text from a URL. Use when the user shares a link or when web_search returns a result that needs deeper reading. Handles HTML (extracts article text), JSON (returns raw), and plain text. Do NOT use for private/authenticated URLs — they will fail.',
     input_schema: {
       type: 'object' as const,
       properties: {
@@ -48,7 +48,7 @@ export const superpowerToolDefinitions: Anthropic.Tool[] = [
   {
     name: 'send_email',
     description:
-      'Send an email on behalf of the user. IMPORTANT: Always confirm with the user before sending. Provide recipient, subject, and body.',
+      'Send an email via Resend on behalf of the user. IMPORTANT: Always confirm the recipient, subject, and body with the user before sending. Supports plain text and HTML. Do NOT send without explicit user approval.',
     input_schema: {
       type: 'object' as const,
       properties: {
@@ -75,7 +75,7 @@ export const superpowerToolDefinitions: Anthropic.Tool[] = [
   {
     name: 'send_sms',
     description:
-      'Send an SMS text message on behalf of the user. IMPORTANT: Always confirm with the user before sending. Provide recipient phone number and message.',
+      'Send an SMS text message via Telnyx. IMPORTANT: Always confirm the recipient and message with the user before sending. Use E.164 phone format (e.g. +61400123456). Messages over 160 chars are split into segments. Do NOT send without explicit user approval.',
     input_schema: {
       type: 'object' as const,
       properties: {

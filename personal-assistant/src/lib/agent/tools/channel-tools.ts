@@ -10,7 +10,7 @@ import type { AgentToolHandler } from '../tools'
 export const channelToolDefinitions: Anthropic.Tool[] = [
   {
     name: 'sync_channels',
-    description: 'Sync all connected communication channels (Gmail, Outlook, iMessage, Calendar, Reminders) and create tasks from actionable messages.',
+    description: 'Pull new messages from all connected channels (Gmail, Outlook, iMessage, Calendar, Reminders) and create tasks from actionable items. Use when the user says \'check my messages\', \'sync channels\', or \'what\'s new\'. Defaults to last 24 hours.',
     input_schema: {
       type: 'object' as const,
       properties: {
@@ -23,7 +23,7 @@ export const channelToolDefinitions: Anthropic.Tool[] = [
   },
   {
     name: 'search_messages',
-    description: 'Search across all channel messages by keyword, sender, or channel type.',
+    description: 'Search across all channel messages by keyword, sender, or channel type. Searches subject and body text. Use when the user asks about a specific email, message, or conversation. Only searches the last 7 days of cached messages.',
     input_schema: {
       type: 'object' as const,
       properties: {
@@ -40,7 +40,7 @@ export const channelToolDefinitions: Anthropic.Tool[] = [
   },
   {
     name: 'get_upcoming',
-    description: 'List upcoming calendar events and due reminders within a specified number of days.',
+    description: 'List upcoming calendar events and due reminders within a specified number of days. Use when the user asks about their schedule, upcoming meetings, or what\'s due. Includes overdue items. Default: 7 days ahead.',
     input_schema: {
       type: 'object' as const,
       properties: {
@@ -53,7 +53,7 @@ export const channelToolDefinitions: Anthropic.Tool[] = [
   },
   {
     name: 'create_reminder',
-    description: 'Create an Apple Reminder item. Only works on macOS.',
+    description: 'Create an Apple Reminder item. Use when the user explicitly asks to set a reminder. Requires macOS. Do NOT use for tasks — use create_task for work items on the kanban board.',
     input_schema: {
       type: 'object' as const,
       properties: {
@@ -67,7 +67,7 @@ export const channelToolDefinitions: Anthropic.Tool[] = [
   },
   {
     name: 'schedule_event',
-    description: 'Create a calendar event. Only works on macOS.',
+    description: 'Create a calendar event on Apple Calendar. Use when the user wants to schedule a meeting, appointment, or block time. Requires macOS. Requires at least a title and start time.',
     input_schema: {
       type: 'object' as const,
       properties: {
