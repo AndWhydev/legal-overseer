@@ -155,5 +155,5 @@ See PROJECT.md Key Decisions table.
 ## Session Continuity
 
 Last session: 2026-03-11
-Stopped at: Completed quick/3-PLAN.md (ADR-001 Phase 1 -- Planner-compiled tool group filtering)
+Stopped at: Completed quick task 3 (ADR-001 Phase 1 — Planner-compiled tool group filtering)
 Resume file: None
