@@ -21,10 +21,15 @@ const envSchema = z.object({
   BITBIT_DEPLOYMENT: z.string().optional(),
   NODE_ENV: z.enum(['development', 'production', 'test']).optional(),
 
-  // Auth secrets
+  // Auth secrets (inter-service communication)
   CRON_SECRET: z.string().min(16, 'CRON_SECRET must be at least 16 characters'),
   SCHEDULER_SECRET: z.string().min(16, 'SCHEDULER_SECRET must be at least 16 characters'),
+  // RELAY_SECRET: Required when external relay callers (e.g., Hetzner VPS, Cloudflare cron)
+  // invoke POST /api/channels/relay. Without this, the endpoint rejects all requests.
   RELAY_SECRET: z.string().min(16).optional(),
+  // WORKER_AUTH_TOKEN: Shared secret between Cloudflare dispatcher, Fly.io worker,
+  // and Vercel dispatch endpoints (e.g., /api/agent/invoices/dispatch).
+  WORKER_AUTH_TOKEN: z.string().min(16).optional(),
   CREDENTIALS_KEY: z.string().min(16).optional(),
 
   // OpenAI (optional)

@@ -221,7 +221,8 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/api/auth/') ||
     pathname.startsWith('/api/monitoring/') ||
     pathname.startsWith('/api/health') ||
-    pathname.startsWith('/api/webhooks/')
+    pathname.startsWith('/api/webhooks/') ||
+    pathname === '/api/agent/invoices/dispatch' // Fly.io worker callback (WORKER_AUTH_TOKEN)
   ) {
     return applySecurityHeaders(NextResponse.next())
   }

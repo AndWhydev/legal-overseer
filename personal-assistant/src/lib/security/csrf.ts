@@ -20,6 +20,7 @@ const EXEMPT_PREFIXES = [
   '/api/cron/',       // Server-side crons — use CRON_SECRET header
   '/api/channels/',   // Incoming webhooks (WhatsApp, etc.) — use platform verification
   '/api/auth/',       // Auth endpoints — same-origin login forms + OAuth callbacks
+  '/api/agent/invoices/dispatch', // Fly.io worker callback — uses WORKER_AUTH_TOKEN
 ]
 
 /**

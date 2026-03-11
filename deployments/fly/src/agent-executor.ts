@@ -11,6 +11,8 @@
 const SUPABASE_URL = process.env.SUPABASE_URL || "";
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY || "";
+const VERCEL_APP_URL = process.env.VERCEL_APP_URL || "";
+const WORKER_AUTH_TOKEN = process.env.WORKER_AUTH_TOKEN || "";
 
 // ─── Supabase REST helper ────────────────────────────────────────
 
@@ -174,21 +176,148 @@ async function handleInvoiceFlow(
   taskId: string,
   payload: Record<string, unknown>
 ): Promise<AgentResult> {
-  // Extract invoice details from task payload
-  const contact = payload.contact_name || payload.contact || "unknown";
-  const project = payload.project_name || payload.project || "unknown";
-  const amount = payload.amount || 0;
+  // Resolve org_id from the task queue entry (not in the dispatch payload)
+  const orgId = await resolveTaskOrgId(taskId, payload);
+  if (!orgId) {
+    return {
+      success: false,
+      error: "Could not resolve org_id for invoice-flow task",
+    };
+  }
 
-  return {
-    success: true,
-    result: {
-      task_id: taskId,
-      contact,
-      project,
-      amount,
-      status: "extracted",
-    },
+  // Delegate to Vercel dispatch endpoint where the full invoice pipeline lives.
+  // The Fly.io worker cannot import Next.js modules, so we call back to Vercel
+  // via HTTP to run createInvoiceFromIntent / runInvoiceFlowTick.
+  if (!VERCEL_APP_URL) {
+    console.error(
+      "[agent-executor] VERCEL_APP_URL not configured, cannot dispatch invoice-flow"
+    );
+    return {
+      success: false,
+      error: "VERCEL_APP_URL not configured on Fly.io worker",
+    };
+  }
+
+  if (!WORKER_AUTH_TOKEN) {
+    return {
+      success: false,
+      error: "WORKER_AUTH_TOKEN not configured on Fly.io worker",
+    };
+  }
+
+  // Determine dispatch mode: if payload has intent/contact_name, create single invoice;
+  // otherwise run the full invoice flow tick for the org
+  const hasIntent =
+    payload.contact_name || payload.intent || payload.source_intent;
+
+  const dispatchBody: Record<string, unknown> = {
+    org_id: orgId,
+    task_id: taskId,
   };
+
+  if (hasIntent) {
+    dispatchBody.mode = "create";
+    dispatchBody.intent = {
+      source_intent:
+        payload.source_intent || payload.command || "Create invoice",
+      contact_name: payload.contact_name || payload.contact || null,
+      project_reference:
+        payload.project_reference ||
+        payload.project_name ||
+        payload.project ||
+        null,
+      amount: typeof payload.amount === "number" ? payload.amount : null,
+      currency:
+        typeof payload.currency === "string" ? payload.currency : "AUD",
+      terms_days:
+        typeof payload.terms_days === "number" ? payload.terms_days : 14,
+    };
+  } else {
+    dispatchBody.mode = "tick";
+  }
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 30_000);
+
+  try {
+    const response = await fetch(
+      `${VERCEL_APP_URL}/api/agent/invoices/dispatch`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${WORKER_AUTH_TOKEN}`,
+        },
+        body: JSON.stringify(dispatchBody),
+        signal: controller.signal,
+      }
+    );
+
+    if (!response.ok) {
+      const text = await response.text().catch(() => "(unreadable)");
+      console.error(
+        `[agent-executor] Invoice dispatch failed (${response.status}): ${text}`
+      );
+      return {
+        success: false,
+        error: `Invoice dispatch failed: ${response.status} ${text}`,
+      };
+    }
+
+    const data = (await response.json()) as {
+      success: boolean;
+      result?: unknown;
+      error?: string;
+    };
+
+    return {
+      success: data.success !== false,
+      result: data.result ?? data,
+    };
+  } catch (err) {
+    if (err instanceof DOMException && err.name === "AbortError") {
+      return {
+        success: false,
+        error: "Invoice dispatch timed out (30s)",
+      };
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+/**
+ * Resolve the org_id for a task. Checks payload first, then queries
+ * the agent_task_queue table via Supabase REST.
+ */
+async function resolveTaskOrgId(
+  taskId: string,
+  payload: Record<string, unknown>
+): Promise<string | null> {
+  // Check payload first (most task payloads include org_id)
+  if (typeof payload.org_id === "string" && payload.org_id.length > 0) {
+    return payload.org_id;
+  }
+
+  // Fall back to querying the task queue entry
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+    return null;
+  }
+
+  try {
+    const rows = (await supabaseRest(
+      "GET",
+      `agent_task_queue?id=eq.${taskId}&select=org_id`
+    )) as Array<{ org_id?: string }>;
+
+    return rows?.[0]?.org_id ?? null;
+  } catch (err) {
+    console.error(
+      `[agent-executor] Failed to resolve org_id for task ${taskId}: ${err}`
+    );
+    return null;
+  }
 }
 
 async function handleSentry(
