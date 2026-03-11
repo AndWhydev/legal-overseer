@@ -2,6 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { createApproval, type ApprovalRecord } from './approval-queue'
 import { notifyApproval } from './approval-notifier'
 import { sendMessage } from '../channels/whatsapp'
+import { sendLeadAckEmailToRecipient } from '../email/email-transport'
 
 const TWO_MINUTES_MS = 2 * 60 * 1000
 
@@ -294,6 +295,12 @@ type DeliveryAttemptResult =
   | { success: true; channel: string; providerMessageId: string }
   | { success: false; channel: string; reason: string }
 
+const EMAIL_CHANNELS = new Set(['email', 'gmail', 'outlook', 'mail'])
+
+function isEmailChannel(channel: string): boolean {
+  return EMAIL_CHANNELS.has(channel)
+}
+
 async function attemptAckDelivery(
   payload: Record<string, unknown>,
 ): Promise<DeliveryAttemptResult> {
@@ -317,35 +324,62 @@ async function attemptAckDelivery(
     }
   }
 
-  if (channel !== 'whatsapp') {
-    return {
-      success: false,
-      channel,
-      reason: `unsupported_channel:${channel}`,
-    }
-  }
+  // Email channel delivery via Resend
+  if (isEmailChannel(channel)) {
+    try {
+      const providerMessageId = await sendLeadAckEmailToRecipient(recipient, draftBody)
+      if (!providerMessageId) {
+        return {
+          success: false,
+          channel,
+          reason: 'provider_send_failed',
+        }
+      }
 
-  try {
-    const providerMessageId = await sendMessage(recipient, draftBody)
-    if (!providerMessageId) {
+      return {
+        success: true,
+        channel,
+        providerMessageId,
+      }
+    } catch {
       return {
         success: false,
         channel,
-        reason: 'provider_send_failed',
+        reason: 'provider_send_exception',
       }
     }
+  }
 
-    return {
-      success: true,
-      channel,
-      providerMessageId,
+  // WhatsApp channel delivery via Meta Cloud API
+  if (channel === 'whatsapp') {
+    try {
+      const providerMessageId = await sendMessage(recipient, draftBody)
+      if (!providerMessageId) {
+        return {
+          success: false,
+          channel,
+          reason: 'provider_send_failed',
+        }
+      }
+
+      return {
+        success: true,
+        channel,
+        providerMessageId,
+      }
+    } catch {
+      return {
+        success: false,
+        channel,
+        reason: 'provider_send_exception',
+      }
     }
-  } catch {
-    return {
-      success: false,
-      channel,
-      reason: 'provider_send_exception',
-    }
+  }
+
+  return {
+    success: false,
+    channel,
+    reason: `unsupported_channel:${channel}`,
   }
 }
 

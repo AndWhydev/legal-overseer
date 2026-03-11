@@ -2,8 +2,10 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import type { ParsedCommand } from './command-parser'
 import { executeAgentTool } from '../agent/tools'
 import { getPendingApprovals } from '../agent/approval-queue'
+import { createInvoiceFromIntent, type InvoiceIntent, type CreateInvoiceFromIntentResult } from '../agent/invoice-flow'
+import { searchInvoices } from '../agent/shared-tools'
 import { formatResponse } from './response-formatter'
-import type { InvoiceDisplay, LeadDisplay, TaskDisplay } from './response-formatter'
+import type { InvoiceDisplay, LeadDisplay } from './response-formatter'
 import { logger } from '@/lib/core/logger';
 
 export interface DispatchResult {
@@ -70,6 +72,84 @@ export async function dispatchCommand(
   }
 }
 
+/**
+ * Resolve the invoice-flow agent_config_id for an org.
+ * Looks up the first agent_configs row with agent_type='invoice-flow'.
+ * Returns null if no config exists (invoice agent not provisioned for this org).
+ */
+async function resolveInvoiceAgentConfigId(
+  supabase: SupabaseClient,
+  orgId: string,
+): Promise<string | null> {
+  const { data } = await supabase
+    .from('agent_configs')
+    .select('id')
+    .eq('org_id', orgId)
+    .eq('agent_type', 'invoice-flow')
+    .limit(1)
+
+  const first = (data ?? [])[0] as { id: string } | undefined
+  return first?.id ?? null
+}
+
+/**
+ * Build a WhatsApp-friendly response from a createInvoiceFromIntent result.
+ */
+function formatInvoiceOutcome(
+  outcome: CreateInvoiceFromIntentResult,
+  contactName: string,
+  amount: number | null,
+): DispatchResult {
+  switch (outcome.status) {
+    case 'queued':
+      return {
+        success: true,
+        response: `Queued invoice for *${contactName}*${amount ? ` — $${amount.toLocaleString()}` : ''}. Awaiting your approval.`,
+        data: { approvalId: outcome.approvalId },
+      }
+
+    case 'created':
+      return {
+        success: true,
+        response: `Invoice *${outcome.invoiceNumber}* created for *${contactName}*${amount ? ` — $${amount.toLocaleString()}` : ''}.`,
+        data: { invoiceId: outcome.invoiceId, invoiceNumber: outcome.invoiceNumber },
+      }
+
+    case 'duplicate': {
+      const existingNum = outcome.existingInvoiceNumber ?? outcome.existingInvoiceId
+      return {
+        success: true,
+        response: `Duplicate detected — invoice *${existingNum}* already exists for this contact/project. An override request has been queued for your approval.`,
+        data: { existingInvoiceId: outcome.existingInvoiceId, overrideApprovalId: outcome.overrideApprovalId },
+      }
+    }
+
+    case 'error':
+      return {
+        success: false,
+        response: formatInvoiceError(outcome.error),
+      }
+  }
+}
+
+/**
+ * Map invoice-flow error codes to user-friendly WhatsApp messages.
+ */
+function formatInvoiceError(error: string): string {
+  switch (error) {
+    case 'missing_contact':
+      return 'I need a contact name to create an invoice. Try: "Invoice [name] for $[amount]"'
+    case 'unknown_contact':
+      return 'I couldn\'t find that contact in your database. Check the name and try again.'
+    case 'ambiguous_contact':
+      return 'Multiple contacts match that name. Could you be more specific?'
+    case 'amount_required':
+      return 'I need an amount for the invoice. Try: "Invoice [name] for $[amount]"'
+    default:
+      return `Failed to create invoice: ${error}. Please try again.`
+  }
+}
+
 async function handleInvoice(
   supabase: SupabaseClient,
   orgId: string,
@@ -78,60 +158,69 @@ async function handleInvoice(
   const contactName = command.resolvedContacts?.[0]?.contact?.name
     ?? command.entities.contactNames?.[0]
     ?? ''
-  const amount = command.entities.amounts?.[0]
+  const amount = command.entities.amounts?.[0] ?? null
 
-  // If we have a contact and amount, create the invoice
-  if (contactName && amount && command.resolvedContacts?.[0]) {
-    const contact = command.resolvedContacts[0].contact
-    const result = await executeAgentTool(
-      'create_task', // Using task as proxy until invoice creation tool is wired
-      {
-        title: `Invoice: ${contact.name} - $${amount}`,
-        description: `Invoice for ${contact.name}, amount: $${amount}${command.entities.projectReference ? `, project: ${command.entities.projectReference}` : ''}`,
-        priority: 'high',
-      },
-      orgId,
-      supabase
-    )
-
-    if (result.success) {
+  // If we have a contact name, route to the real invoice pipeline
+  if (contactName) {
+    const agentConfigId = await resolveInvoiceAgentConfigId(supabase, orgId)
+    if (!agentConfigId) {
+      logger.warn(`[agent-dispatch] No invoice-flow agent config found for org ${orgId}`)
       return {
-        success: true,
-        response: `✅ Invoice created for *${contact.name}* — $${amount.toLocaleString()}`,
-        data: result.data,
+        success: false,
+        response: 'Invoice agent is not configured for your organisation. Please contact support.',
       }
     }
-    return { success: false, response: 'Failed to create invoice. Please try again.' }
+
+    const intent: InvoiceIntent = {
+      source_intent: command.entities.rawQuery ?? `Invoice ${contactName}`,
+      contact_name: contactName,
+      project_reference: command.entities.projectReference ?? null,
+      amount,
+      currency: 'AUD',
+      terms_days: 14,
+    }
+
+    const outcome = await createInvoiceFromIntent(
+      supabase,
+      orgId,
+      intent,
+      agentConfigId,
+      { requireApproval: true },
+    )
+
+    logger.info(JSON.stringify({
+      event: 'whatsapp_invoice_dispatch',
+      orgId,
+      contactName,
+      amount,
+      outcomeStatus: outcome.status,
+    }))
+
+    return formatInvoiceOutcome(outcome, contactName, amount)
   }
 
-  // Otherwise, search existing invoices
-  const query = contactName || command.entities.rawQuery || ''
-  const result = await executeAgentTool(
-    'search_tasks',
-    { query: query || 'invoice', status: 'pending' },
-    orgId,
-    supabase
-  )
+  // No contact specified — search existing invoices using the real invoice table
+  const searchResult = await searchInvoices(supabase, orgId, {})
 
-  if (!result.success) {
+  if (!searchResult.success) {
     return { success: false, response: 'Could not fetch invoices. Try again later.' }
   }
 
-  const tasks = result.data as Array<Record<string, unknown>> | undefined
-  if (!tasks?.length) {
-    return { success: true, response: 'No invoices found matching your query.' }
+  const rows = (searchResult.data?.results ?? []) as Array<Record<string, unknown>>
+  if (!rows.length) {
+    return { success: true, response: 'No invoices found.' }
   }
 
-  const invoices: InvoiceDisplay[] = tasks.slice(0, 5).map((t) => ({
-    title: (t.title as string) || 'Untitled',
-    total: (t.total as number) || 0,
-    status: (t.status as string) || 'unknown',
+  const invoices: InvoiceDisplay[] = rows.slice(0, 5).map((inv) => ({
+    title: (inv.invoice_number as string) || (inv.project_reference as string) || 'Untitled',
+    total: (inv.total as number) || 0,
+    status: (inv.status as string) || 'unknown',
   }))
 
   return {
     success: true,
     response: formatResponse.invoiceList(invoices),
-    data: tasks,
+    data: rows,
   }
 }
 

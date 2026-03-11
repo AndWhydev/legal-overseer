@@ -14,12 +14,20 @@ const { sendMessageMock } = vi.hoisted(() => ({
   sendMessageMock: vi.fn(),
 }))
 
+const { sendLeadAckEmailToRecipientMock } = vi.hoisted(() => ({
+  sendLeadAckEmailToRecipientMock: vi.fn(),
+}))
+
 vi.mock('./approval-notifier', () => ({
   notifyApproval: notifyApprovalMock,
 }))
 
 vi.mock('../channels/whatsapp', () => ({
   sendMessage: sendMessageMock,
+}))
+
+vi.mock('../email/email-transport', () => ({
+  sendLeadAckEmailToRecipient: sendLeadAckEmailToRecipientMock,
 }))
 
 interface LeadRow {
@@ -450,6 +458,114 @@ describe('processPendingLeadAcks', () => {
     })
     expect(sendMessageMock).not.toHaveBeenCalled()
   })
+
+  it('delivers email ack via Resend when approved gmail lead has valid recipient', async () => {
+    sendMessageMock.mockReset()
+    sendLeadAckEmailToRecipientMock.mockReset()
+    sendLeadAckEmailToRecipientMock.mockResolvedValue('resend-msg-001')
+
+    const { supabase, state } = createMockSupabase({
+      agentConfigs: [{ id: 'cfg-1', org_id: 'org-1', agent_type: 'lead-swarm' }],
+      leads: [
+        {
+          id: 'lead-email-success',
+          org_id: 'org-1',
+          source_channel: 'gmail',
+          source_detail: 'prospect@example.com',
+          status: 'qualified',
+          ack_status: 'draft_queued',
+          created_at: new Date(Date.now() - 30_000).toISOString(),
+          estimated_value: 5000,
+          service_interest: ['seo'],
+          timeline_days: 14,
+          metadata: {},
+        },
+      ],
+      approvals: [
+        createApprovedAck({
+          id: 'approval-email-success',
+          orgId: 'org-1',
+          leadId: 'lead-email-success',
+          payload: {
+            message_channel: 'gmail',
+            recipient: 'prospect@example.com',
+            draft_body: 'Thanks for reaching out around seo.',
+          },
+        }),
+      ],
+    })
+
+    const result = await processPendingLeadAcks(supabase, 'org-1')
+
+    expect(result.sent).toBe(1)
+    expect(result.failed).toBe(0)
+    expect(state.leads[0].ack_status).toBe('sent')
+    expect(state.leads[0].metadata?.ackDelivery).toMatchObject({
+      status: 'sent',
+      providerMessageId: 'resend-msg-001',
+      channel: 'gmail',
+      approvalId: 'approval-email-success',
+    })
+    expect(sendLeadAckEmailToRecipientMock).toHaveBeenCalledWith(
+      'prospect@example.com',
+      'Thanks for reaching out around seo.',
+    )
+    expect(sendMessageMock).not.toHaveBeenCalled()
+  })
+
+  it('records failed email delivery when Resend returns null', async () => {
+    sendMessageMock.mockReset()
+    sendLeadAckEmailToRecipientMock.mockReset()
+    sendLeadAckEmailToRecipientMock.mockResolvedValue(null)
+
+    const { supabase, state } = createMockSupabase({
+      agentConfigs: [{ id: 'cfg-1', org_id: 'org-1', agent_type: 'lead-swarm' }],
+      leads: [
+        {
+          id: 'lead-email-failure',
+          org_id: 'org-1',
+          source_channel: 'email',
+          source_detail: 'badaddr@example.com',
+          status: 'qualified',
+          ack_status: 'draft_queued',
+          created_at: new Date(Date.now() - 30_000).toISOString(),
+          estimated_value: 3000,
+          service_interest: ['web-development'],
+          timeline_days: 20,
+          metadata: {},
+        },
+      ],
+      approvals: [
+        createApprovedAck({
+          id: 'approval-email-failure',
+          orgId: 'org-1',
+          leadId: 'lead-email-failure',
+          payload: {
+            message_channel: 'email',
+            recipient: 'badaddr@example.com',
+            draft_body: 'Thanks for reaching out.',
+          },
+        }),
+      ],
+    })
+
+    const result = await processPendingLeadAcks(supabase, 'org-1')
+
+    expect(result.sent).toBe(0)
+    expect(result.failed).toBe(1)
+    expect(state.leads[0].ack_status).toBe('draft_queued')
+    expect(state.leads[0].metadata?.ackDelivery).toMatchObject({
+      status: 'failed',
+      channel: 'email',
+      reason: 'provider_send_failed',
+      approvalId: 'approval-email-failure',
+    })
+    expect(sendLeadAckEmailToRecipientMock).toHaveBeenCalledWith(
+      'badaddr@example.com',
+      'Thanks for reaching out.',
+    )
+    expect(sendMessageMock).not.toHaveBeenCalled()
+  })
 })
 
 describe('autoApproveLeadAcknowledgment', () => {
@@ -587,6 +703,93 @@ describe('autoApproveLeadAcknowledgment', () => {
 
     expect(result).toEqual({ sent: false, error: 'already_sent' })
     expect(sendMessageMock).not.toHaveBeenCalled()
+  })
+
+  it('auto-approves gmail lead within SLA and delivers via email transport', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-02-22T14:00:30.000Z'))
+    sendMessageMock.mockReset()
+    sendLeadAckEmailToRecipientMock.mockReset()
+    sendLeadAckEmailToRecipientMock.mockResolvedValue('resend-auto-001')
+
+    const { supabase, state } = createMockSupabase({
+      leads: [
+        {
+          id: 'lead-auto-email-1',
+          org_id: 'org-1',
+          source_channel: 'gmail',
+          source_detail: 'newyork@example.com',
+          status: 'qualified',
+          ack_status: 'pending',
+          created_at: '2026-02-22T14:00:00.000Z',
+          estimated_value: 8000,
+          service_interest: ['web-development', 'seo'],
+          timeline_days: 14,
+          metadata: {},
+        },
+      ],
+    })
+
+    const result = await autoApproveLeadAcknowledgment(supabase, {
+      lead: state.leads[0],
+      agentConfigId: 'cfg-1',
+    })
+
+    expect(result).toEqual({ sent: true })
+    expect(state.leads[0].ack_status).toBe('sent')
+    expect(state.leads[0].metadata?.autoApproved).toBe(true)
+    expect(state.leads[0].metadata?.ackDelivery).toMatchObject({
+      status: 'sent',
+      providerMessageId: 'resend-auto-001',
+      channel: 'gmail',
+    })
+    expect(sendLeadAckEmailToRecipientMock).toHaveBeenCalledTimes(1)
+    expect(sendMessageMock).not.toHaveBeenCalled()
+
+    vi.useRealTimers()
+  })
+
+  it('records email delivery failure in metadata when Resend fails', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-02-22T14:00:30.000Z'))
+    sendMessageMock.mockReset()
+    sendLeadAckEmailToRecipientMock.mockReset()
+    sendLeadAckEmailToRecipientMock.mockResolvedValue(null)
+
+    const { supabase, state } = createMockSupabase({
+      leads: [
+        {
+          id: 'lead-auto-email-fail',
+          org_id: 'org-1',
+          source_channel: 'email',
+          source_detail: 'bounce@example.com',
+          status: 'qualified',
+          ack_status: 'pending',
+          created_at: '2026-02-22T14:00:00.000Z',
+          estimated_value: 5000,
+          service_interest: ['ads'],
+          timeline_days: 7,
+          metadata: {},
+        },
+      ],
+    })
+
+    const result = await autoApproveLeadAcknowledgment(supabase, {
+      lead: state.leads[0],
+      agentConfigId: 'cfg-1',
+    })
+
+    expect(result).toEqual({ sent: false, error: 'provider_send_failed' })
+    expect(state.leads[0].metadata?.autoApproved).toBe(true)
+    expect(state.leads[0].metadata?.ackDelivery).toMatchObject({
+      status: 'failed',
+      channel: 'email',
+      reason: 'provider_send_failed',
+    })
+    expect(sendLeadAckEmailToRecipientMock).toHaveBeenCalledTimes(1)
+    expect(sendMessageMock).not.toHaveBeenCalled()
+
+    vi.useRealTimers()
   })
 })
 
