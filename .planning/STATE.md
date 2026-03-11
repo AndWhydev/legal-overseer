@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-03-01)
 Phase: 19 of 19 (Credential Provisioning & Live Verification)
 Plan: 2 of 3 in current phase
 Status: Executing Phase 19
-Last activity: 2026-03-11 - Completed quick task 3: ADR-001 Phase 1 planner-compiled tool group filtering
+Last activity: 2026-03-11 - Completed quick task 4: Fix 7 Tier 1 beta blockers (security, safety, compliance)
 
 Progress: [####################..........] 100% v1.0+v1.1 | Phase 19 (2/3)
 
@@ -132,6 +132,9 @@ See PROJECT.md Key Decisions table.
 - [Q3] Late-arriving plans never re-filter tools mid-conversation (KV cache coherence preservation)
 - [Q3] Core tool group always included server-side; planner instructed to exclude from selections
 - [Q3] Invalid tool group names from Haiku silently filtered (robustness against LLM hallucination)
+- [Q4] All outbound comms (email, SMS) always queue for approval during beta -- no auto-execute path
+- [Q4] Kill switch check runs outside cost guard block so it applies to all agent execution modes
+- [Q4] Send limits use existing rate_limit_buckets table with daily key pattern send:{channel}:{orgId}:{date}
 
 ### Pending Todos
 
@@ -151,9 +154,10 @@ See PROJECT.md Key Decisions table.
 | 1 | SOTA tool engine optimizations — JIT instructions, tool group metadata, description optimization | 2026-03-11 | d25c85d0 | [1-sota-tool-engine-optimizations-jit-instr](./quick/1-sota-tool-engine-optimizations-jit-instr/) |
 | 2 | SOTA agent tool architecture research update + ADR-001 (hybrid Pattern D) | 2026-03-11 | fdfa637f | [2-research-sota-agent-tool-architecture-pa](./quick/2-research-sota-agent-tool-architecture-pa/) |
 | 3 | ADR-001 Phase 1: planner-compiled tool group filtering (20 tools -> 5-12 per session) | 2026-03-11 | 080cf0cc | [3-implement-phase-1-from-adr-001-planner-c](./quick/3-implement-phase-1-from-adr-001-planner-c/) |
+| 4 | Fix 7 Tier 1 beta blockers: org_id scoping, agent kill switch, approval-gated comms, send limits, AI disclosure | 2026-03-11 | 95fa7194 | [4-fix-9-tier-1-beta-blockers-from-quality-](./quick/4-fix-9-tier-1-beta-blockers-from-quality-/) |
 
 ## Session Continuity
 
 Last session: 2026-03-11
-Stopped at: Completed quick task 3 (ADR-001 Phase 1 — Planner-compiled tool group filtering)
+Stopped at: Completed quick task 4 (Fix 7 Tier 1 beta blockers — security, safety, compliance)
 Resume file: None
