@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-03-01)
 Phase: 19 of 19 (Credential Provisioning & Live Verification)
 Plan: 2 of 3 in current phase
 Status: Executing Phase 19
-Last activity: 2026-03-11 - Completed quick task 2: SOTA agent tool architecture research update + ADR-001
+Last activity: 2026-03-11 - Completed quick task 3: ADR-001 Phase 1 planner-compiled tool group filtering
 
 Progress: [####################..........] 100% v1.0+v1.1 | Phase 19 (2/3)
 
@@ -128,6 +128,10 @@ See PROJECT.md Key Decisions table.
 - [19-02] Inline env parsing (no dotenv) for standalone verification script portability
 - [19-02] 10s timeout per HTTP request in smoke tests consistent with Phase 13 conventions
 - [19-02] JSON report output alongside console for CI/automation consumption
+- [Q3] PlanOutput dual-format parsing: object {stages,toolGroups} + legacy array fallback for Haiku robustness
+- [Q3] Late-arriving plans never re-filter tools mid-conversation (KV cache coherence preservation)
+- [Q3] Core tool group always included server-side; planner instructed to exclude from selections
+- [Q3] Invalid tool group names from Haiku silently filtered (robustness against LLM hallucination)
 
 ### Pending Todos
 
@@ -146,9 +150,10 @@ See PROJECT.md Key Decisions table.
 |---|-------------|------|--------|-----------|
 | 1 | SOTA tool engine optimizations — JIT instructions, tool group metadata, description optimization | 2026-03-11 | d25c85d0 | [1-sota-tool-engine-optimizations-jit-instr](./quick/1-sota-tool-engine-optimizations-jit-instr/) |
 | 2 | SOTA agent tool architecture research update + ADR-001 (hybrid Pattern D) | 2026-03-11 | fdfa637f | [2-research-sota-agent-tool-architecture-pa](./quick/2-research-sota-agent-tool-architecture-pa/) |
+| 3 | ADR-001 Phase 1: planner-compiled tool group filtering (20 tools -> 5-12 per session) | 2026-03-11 | 080cf0cc | [3-implement-phase-1-from-adr-001-planner-c](./quick/3-implement-phase-1-from-adr-001-planner-c/) |
 
 ## Session Continuity
 
 Last session: 2026-03-11
-Stopped at: Completed quick/2-PLAN.md (SOTA Agent Tool Architecture Research + ADR-001)
+Stopped at: Completed quick/3-PLAN.md (ADR-001 Phase 1 -- Planner-compiled tool group filtering)
 Resume file: None
