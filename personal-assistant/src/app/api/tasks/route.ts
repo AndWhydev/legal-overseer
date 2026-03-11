@@ -8,9 +8,19 @@ export async function GET() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+  // Scope tasks to user's organization
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('org_id')
+    .eq('id', user.id)
+    .single()
+
+  if (!profile) return NextResponse.json({ error: 'No profile found' }, { status: 400 })
+
   const { data, error } = await supabase
     .from('tasks')
     .select('*')
+    .eq('org_id', profile.org_id)
     .order('position')
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

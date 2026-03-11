@@ -115,6 +115,19 @@ export async function* runAgentChat(
     yield { type: 'stage', data: { stage: 'cost_check', status: 'done', meta: { allowed: true } } }
   }
 
+  // Agent kill switch: check if org has agents enabled
+  const { data: orgRow } = await config.supabase
+    .from('organizations')
+    .select('agents_enabled')
+    .eq('id', config.orgId)
+    .single()
+
+  if (orgRow && orgRow.agents_enabled === false) {
+    yield { type: 'error', data: 'Agent execution is disabled for this organization. Contact your admin to re-enable.' }
+    yield { type: 'done', data: {} }
+    return
+  }
+
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
   const maxIterations = config.maxIterations || 8
 
