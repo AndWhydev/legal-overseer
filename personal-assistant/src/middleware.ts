@@ -19,7 +19,8 @@ const CONTENT_SECURITY_POLICY = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
   "font-src 'self'",
-  "connect-src 'self' https://*.supabase.co https://api.anthropic.com https://api.stripe.com wss://*.supabase.co",
+  "connect-src 'self' https://*.supabase.co https://api.anthropic.com https://api.stripe.com wss://*.supabase.co https://*.ingest.us.sentry.io",
+  "worker-src 'self' blob:",
   "frame-ancestors 'none'",
   "base-uri 'self'",
   "form-action 'self'",
@@ -219,6 +220,7 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/api/cron/') ||
     pathname.startsWith('/api/auth/') ||
     pathname.startsWith('/api/monitoring/') ||
+    pathname.startsWith('/api/health') ||
     pathname.startsWith('/api/webhooks/')
   ) {
     return applySecurityHeaders(NextResponse.next())

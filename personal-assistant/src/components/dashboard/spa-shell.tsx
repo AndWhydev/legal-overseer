@@ -25,7 +25,7 @@ import { TOPBAR_CONFIGS } from './topbar-configs';
 import { NotificationCenter } from './notification-center';
 import { AppDataProvider } from '@/lib/data/app-data-provider';
 import { useEnabledModulesFetch, EnabledModulesContext } from '@/lib/modules/use-enabled-modules';
-import { DevToolbar } from '@/components/dev/dev-toolbar';
+const DevToolbar = lazy(() => import('@/components/dev/dev-toolbar').then(m => ({ default: m.DevToolbar })));
 import { KeyboardShortcuts } from './keyboard-shortcuts';
 import { ThemeProvider } from '@/lib/theme/theme-provider';
 import { useHotkeys, getTabHistory } from '@/hooks/use-hotkeys';
@@ -524,8 +524,10 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
         {/* Onboarding tour for returning users */}
         <OnboardingTour onNavigate={handleTabChange} tourVariant={composition.tourVariant} />
 
-        {/* Dev toolbar — tree-shaken from production builds */}
-        {process.env.NODE_ENV === 'development' && <DevToolbar />}
+        {/* Dev toolbar — lazy-loaded, never bundled in production */}
+        {process.env.NODE_ENV === 'development' && (
+          <Suspense fallback={null}><DevToolbar /></Suspense>
+        )}
       </BitBitOverlay>
       </AppDataProvider>
     </SplashScreen>
