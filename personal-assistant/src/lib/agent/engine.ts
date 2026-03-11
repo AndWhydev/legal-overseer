@@ -1,6 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk'
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { getAgentTools, executeAgentTool, type ExecuteToolOptions } from './tools'
+import { getAgentTools, executeAgentTool, getJITInstruction, type ExecuteToolOptions } from './tools'
 import { buildEntityAwarePrompt } from './prompt-builder'
 import { selectModel, getModel } from './model-router'
 import { logAgentRun, estimateRunCost } from './run-logger'
@@ -421,7 +421,11 @@ export async function* runAgentChat(
           content: result.queued
             ? `Action queued for approval (ID: ${result.approvalId}). Confidence: ${((result.data as any)?.confidence * 100 || 0).toFixed(0)}%`
             : result.success
-              ? JSON.stringify(result.data)
+              ? (() => {
+                  const data = JSON.stringify(result.data)
+                  const jit = getJITInstruction(tool.name)
+                  return jit ? `${data}\n\n---\n${jit}` : data
+                })()
               : `Error: ${result.error}`,
           is_error: !result.success && !result.queued,
         })
