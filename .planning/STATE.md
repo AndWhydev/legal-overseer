@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-03-01)
 Phase: 19 of 19 (Credential Provisioning & Live Verification)
 Plan: 2 of 3 in current phase
 Status: Executing Phase 19
-Last activity: 2026-03-11 - Completed quick task 4: Fix 7 Tier 1 beta blockers (security, safety, compliance)
+Last activity: 2026-03-11 - Completed quick task 5: Channel smoke tests, onboarding E2E, browse_website tool
 
 Progress: [####################..........] 100% v1.0+v1.1 | Phase 19 (2/3)
 
@@ -135,6 +135,10 @@ See PROJECT.md Key Decisions table.
 - [Q4] All outbound comms (email, SMS) always queue for approval during beta -- no auto-execute path
 - [Q4] Kill switch check runs outside cost guard block so it applies to all agent execution modes
 - [Q4] Send limits use existing rate_limit_buckets table with daily key pattern send:{channel}:{orgId}:{date}
+- [Q5] Dynamic import for Playwright in browse_website — graceful fallback when not installed
+- [Q5] Token refresh cron test: GET first, POST fallback on 405 (Vercel cron convention)
+- [Q5] Onboarding route is /onboard (not /onboarding), OAuth callback is /callback/google (not /api/auth/callback/google)
+- [Q5] browse_website returns full screenshot_base64 — caller decides truncation for token efficiency
 
 ### Pending Todos
 
@@ -155,9 +159,10 @@ See PROJECT.md Key Decisions table.
 | 2 | SOTA agent tool architecture research update + ADR-001 (hybrid Pattern D) | 2026-03-11 | fdfa637f | [2-research-sota-agent-tool-architecture-pa](./quick/2-research-sota-agent-tool-architecture-pa/) |
 | 3 | ADR-001 Phase 1: planner-compiled tool group filtering (20 tools -> 5-12 per session) | 2026-03-11 | 080cf0cc | [3-implement-phase-1-from-adr-001-planner-c](./quick/3-implement-phase-1-from-adr-001-planner-c/) |
 | 4 | Fix 7 Tier 1 beta blockers: org_id scoping, agent kill switch, approval-gated comms, send limits, AI disclosure | 2026-03-11 | 95fa7194 | [4-fix-9-tier-1-beta-blockers-from-quality-](./quick/4-fix-9-tier-1-beta-blockers-from-quality-/) |
+| 5 | Channel smoke tests (12 tests), onboarding E2E (6 tests), browse_website agent tool | 2026-03-11 | 781252fc | [5-channel-smoke-tests-onboarding-verificat](./quick/5-channel-smoke-tests-onboarding-verificat/) |
 
 ## Session Continuity
 
 Last session: 2026-03-11
-Stopped at: Completed quick task 4 (Fix 7 Tier 1 beta blockers — security, safety, compliance)
+Stopped at: Completed quick task 5 (Channel smoke tests, onboarding E2E, browse_website tool)
 Resume file: None
