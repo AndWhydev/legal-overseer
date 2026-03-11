@@ -202,6 +202,54 @@ export async function sendDigestEmail(
   }
 }
 
+/**
+ * Send the lead acknowledgment message TO the lead's email address (outbound).
+ * This is the actual delivery to the prospective client, not a notification to the org owner.
+ * Returns the Resend message ID on success, or null on failure.
+ */
+export async function sendLeadAckEmailToRecipient(
+  recipientEmail: string,
+  draftBody: string,
+  orgName?: string,
+): Promise<string | null> {
+  try {
+    if (!process.env.RESEND_API_KEY) {
+      logger.warn('sendLeadAckEmailToRecipient skipped: RESEND_API_KEY not configured')
+      return null
+    }
+
+    const senderName = orgName ?? 'BitBit'
+    const html = `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333;">
+        <p style="font-size: 16px; line-height: 1.6; margin: 0;">
+          ${draftBody.replace(/\n/g, '<br/>')}
+        </p>
+
+        <p style="color: #999; font-size: 12px; margin-top: 30px; border-top: 1px solid #eee; padding-top: 15px;">
+          Sent by ${senderName}
+        </p>
+      </div>
+    `
+
+    const { data, error } = await getResend().emails.send({
+      from: getFromEmail(),
+      to: [recipientEmail],
+      subject: `Re: Your enquiry`,
+      html,
+    })
+
+    if (error) {
+      logger.warn('sendLeadAckEmailToRecipient failed:', error)
+      return null
+    }
+
+    return data?.id ?? null
+  } catch (err) {
+    logger.warn('sendLeadAckEmailToRecipient error:', err)
+    return null
+  }
+}
+
 export async function sendLeadAckEmail(
   leadId: string,
   leadName: string,
