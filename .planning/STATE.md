@@ -146,6 +146,9 @@ See PROJECT.md Key Decisions table.
 - [Q9] v2.0 agent_action_outcomes named separately from 064 action_outcomes (different schema, different purpose)
 - [Q9] Monday briefing uses AEST (UTC+10) for year-round scheduling stability (7am during AEDT)
 - [Q7] Email channels (gmail, email, outlook, mail) routed to Resend sendLeadAckEmailToRecipient; WhatsApp to Meta Cloud API
+- [Q10] Greedy pairing for response latency: each sent pairs with next received (measures "how quickly does ANY response come")
+- [Q10] Dual storage: entity_patterns (7-day cache) + contacts.communication_patterns (fast dashboard reads)
+- [Q10] AEST bucketing (UTC+10) for Australian business context; 5 min samples per window, 10 events per contact
 
 ### Pending Todos
 
@@ -171,11 +174,12 @@ See PROJECT.md Key Decisions table.
 | 7 | INT-02: Wire lead auto-approve ack to outbound email sender (Resend) | 2026-03-12 | 4b2f0673 | [7-int-02-wire-lead-ack-to-outbound-sender](./quick/7-int-02-wire-lead-ack-to-outbound-sender/) |
 | 8 | INT-03: RELAY_SECRET env validation + Fly.io invoice handler wired to Vercel dispatch | 2026-03-12 | 27e232c3 | [8-int-03-relay-secret-env-validation](./quick/8-int-03-relay-secret-env-validation/) |
 | 9 | v2.0 shared schema (3 tables + 7 entity_profiles cols) + Monday Morning Briefing (WhatsApp + email + API) | 2026-03-12 | 1f6a0650 | [9-v2-schema-monday-briefing](./quick/9-v2-schema-monday-briefing/) |
+| 10 | v2.0 Optimal contact timing: response latency analysis, AEST bucketing, weekly cron, timing API, scheduling helper | 2026-03-12 | 2e59df16 | [10-v2-optimal-contact-timing](./quick/10-v2-optimal-contact-timing/) |
 | 11 | v2.0 Confidence auto-calibration: band analysis, safety rails, daily cron, outcome tracking, trust API | 2026-03-12 | 4c225460 | [11-v2-confidence-auto-calibration](./quick/11-v2-confidence-auto-calibration/) |
 | 12 | v2.0 Relationship graph with strength decay: 5-dimension scorer, cold detection, nudge generation, cron + API | 2026-03-12 | 2eb26763 | [12-v2-relationship-graph-decay](./quick/12-v2-relationship-graph-decay/) |
 
 ## Session Continuity
 
 Last session: 2026-03-12
-Stopped at: Completed quick task 12 (v2.0 Relationship graph with strength decay)
+Stopped at: Completed quick task 10 (v2.0 Optimal contact timing)
 Resume file: None
