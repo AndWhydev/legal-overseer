@@ -162,9 +162,10 @@ See PROJECT.md Key Decisions table.
 | 4 | Fix 7 Tier 1 beta blockers: org_id scoping, agent kill switch, approval-gated comms, send limits, AI disclosure | 2026-03-11 | 95fa7194 | [4-fix-9-tier-1-beta-blockers-from-quality-](./quick/4-fix-9-tier-1-beta-blockers-from-quality-/) |
 | 5 | Channel smoke tests (12 tests), onboarding E2E (6 tests), browse_website agent tool | 2026-03-11 | 781252fc | [5-channel-smoke-tests-onboarding-verificat](./quick/5-channel-smoke-tests-onboarding-verificat/) |
 | 7 | INT-02: Wire lead auto-approve ack to outbound email sender (Resend) | 2026-03-12 | 4b2f0673 | [7-int-02-wire-lead-ack-to-outbound-sender](./quick/7-int-02-wire-lead-ack-to-outbound-sender/) |
+| 8 | INT-03: RELAY_SECRET env validation + Fly.io invoice handler wired to Vercel dispatch | 2026-03-12 | 27e232c3 | [8-int-03-relay-secret-env-validation](./quick/8-int-03-relay-secret-env-validation/) |
 
 ## Session Continuity
 
 Last session: 2026-03-12
-Stopped at: Completed quick task 7 (INT-02: Wire lead ack to outbound email sender)
+Stopped at: Completed quick task 8 (INT-03: RELAY_SECRET env validation + Fly.io invoice handler)
 Resume file: None
