@@ -22,6 +22,10 @@
 | T022 | Security Verification & Monitoring | infrastructure | 2026-03-10 |
 | T023 | Dashboard UX Polish | feature | 2026-03-10 |
 | T026 | E2E Test Expansion (4 spec files, ~49 tests) | testing | 2026-03-11 |
+| T027 | Agent Superpower Toolkit — Phase 1 (4 tools) | feature | 2026-03-11 |
+| T028 | Agent Tool Orchestration — Phase 1 (ADR-001) | architecture | 2026-03-11 |
+| T029 | Beta Blockers — Security, Safety, Compliance | infrastructure | 2026-03-11 |
+| T030 | Landing Page Waitlist & Brand Refresh | marketing | 2026-03-11 |
 
 ## Active Tracks
 
@@ -40,7 +44,8 @@
 | T013 | Beta Launch Program | business | P1 | T008 mostly unblocked, T012 still blocking |
 | T024 | Creator Studio | feature | P3 | - |
 | T025 | Knowledge Base | feature | P3 | - |
-| T027 | Agent Superpower Toolkit | feature | P0 | Phase 1 (web search, URL fetch, send email/SMS) blocks live test. Spec: `conductor/tracks/T027/spec.md` |
+| T027 | Agent Superpower Toolkit | feature | P1 | Phase 1 shipped (web_search, fetch_url, send_email, send_sms). Phase 2 (browse_website via Playwright on Fly) planned. Spec: `conductor/tracks/T027/spec.md` |
+| T028 | Agent Tool Orchestration (ADR-001) | architecture | P2 | Phase 1 shipped. Phase 2 (complexity routing + sub-agents) when quality complaints emerge. Phase 3 (multi-orchestrator) when tools > 100. Decision: `.claude/docs/research/tool-architecture-decision.md` |
 
 ## Track Descriptions
 
@@ -122,3 +127,42 @@ Transform agents from chatbot to autonomous assistant. Full spec: `conductor/tra
 - **Phase 3 (P2)**: 1Password Connect Server on Fly + generic credential tool + skill extensibility framework
 - **Phase 4 (P3)**: Per-user Fly Sprites (sleep-to-zero VMs with persistent credentials/browser/filesystem)
 - Reference: OpenClaw (68K stars, 13,700+ community skills), Stagehand v3, Composio (1000+ integrations)
+
+### T028 — Agent Tool Orchestration (ADR-001)
+Scalable tool orchestration architecture based on SOTA research (Manus AI, Anthropic, Google-MIT 2026, Shopify). Hybrid Pattern D: planner-compiled tool groups as default, selective sub-agents for complex multi-domain queries.
+
+**Phase 1 (Shipped)**: Haiku planner selects tool groups → Sonnet receives filtered tools (5-12 instead of 20). KV cache preservation via stable tool sets. Context tokens reduced from ~6,000 to ~2,000-3,500 per session.
+- `planner.ts`: `PlanOutput` with `toolGroups` field, Haiku prompt with group selection examples
+- `tools.ts`: `getAgentTools(groups?)` with Set-based filtering, core always included
+- `engine.ts`: wiring, logging, KV-safe late plan handling, backward-compatible fallback
+
+**Phase 2 (Planned — trigger: quality complaints on complex queries)**: Complexity routing. Haiku determines `executionMode: 'single' | 'specialist' | 'orchestrator'`. Sub-agent candidates: Research, Communication, Business Operations, Automation. Spawned on demand, not always running.
+
+**Phase 3 (Planned — trigger: tool count > 100)**: Multiple orchestrators with top-level intent classifier. Google-MIT multi-orchestrator pattern for 150+ tool tier.
+
+**Key metrics**: $0.017/session (P2 only) → $0.032 blended (hybrid). 90-95% KV cache hit rate. 94-96% accuracy target.
+**Decision record**: `.claude/docs/research/tool-architecture-decision.md`
+**Research**: `.claude/docs/research/multi-agent-tool-orchestration-research.md`
+
+### T029 — Beta Blockers: Security, Safety, Compliance ✅
+7 tier-1 blockers fixed before beta launch:
+- [x] GET /api/tasks scoped to user's org_id (was returning all tasks across orgs)
+- [x] Agent kill switch — `agents_enabled` column on organisations table, checked in engine.ts before execution. Migration 063
+- [x] Outbound comms (send_email, send_sms) always routed through approval queue during beta — no auto-execute path
+- [x] Daily send limits using rate_limit_buckets table (key pattern: `send:{channel}:{orgId}:{date}`)
+- [x] AI disclosure in privacy policy (Section 7 expanded: model providers, data handling, opt-out)
+- [x] AI disclosure banner in chat interface ("Responses are AI-generated")
+- [x] Commitment-prevention prompt injected into agent system prompt (no promises, no guarantees, no legal/financial advice)
+
+### T030 — Landing Page Waitlist & Brand Refresh ✅
+Replaced full marketing site with waitlist landing page at `bitbit.chat`:
+- [x] Waitlist page with orbiting app icons (3 rings, 36 real App Store icons, 3D perspective, CSS keyframe rotation)
+- [x] Spotlight beam background effect (diagonal animated gradients)
+- [x] Email capture form → Supabase `waitlist_signups` table (server-side API route with service_role key)
+- [x] Supabase migration 062: waitlist_signups table with RLS
+- [x] New app icon: white background, black BitBit logo, iOS-style rounded corners
+- [x] Favicon refresh site-wide (bitbit.chat + app.bitbit.chat): favicon.ico, apple-touch-icon, manifest.json, all metadata
+- [x] Google Search Console verification
+- [x] Privacy Policy and Terms of Service pages (live at /privacy, /terms)
+- [x] Tab title: "Meet BitBit 👋"
+- **Vercel project**: `bitbit-landing-page` (separate from dashboard)

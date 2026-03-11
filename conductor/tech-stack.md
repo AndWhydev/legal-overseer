@@ -58,6 +58,8 @@
 | Stripe | Billing, webhook endpoint | - | Keys set, webhook configured |
 | Telnyx | SMS channel | - | Keys set, webhook configured |
 | Resend | Transactional email | - | Key set, DNS verified |
+| Brave Search | Agent web search tool | - | API key configured |
+| Vercel (landing) | Landing page / waitlist (`bitbit.chat`) | Auto | Deployed (separate project: `bitbit-landing-page`) |
 
 ### Fly.io Worker
 - **App**: `bitbit-workers` → `https://bitbit-workers.fly.dev`
@@ -106,7 +108,7 @@ bitbit/                      # npm workspaces root
     awu/                     # AWU client deployment
     torkay/                  # Torkay client deployment
     demo/                    # Demo deployment
-  landing-page/              # Marketing site
+  landing-page/              # Waitlist / marketing site (bitbit.chat, separate Vercel project)
   demo-1/                    # Demo app
 ```
 
@@ -117,7 +119,7 @@ bitbit/                      # npm workspaces root
 ## Database
 
 - **Engine**: PostgreSQL via Supabase
-- **Migrations**: 61 SQL migration files in `personal-assistant/supabase/migrations/`
+- **Migrations**: 63 SQL migration files in `personal-assistant/supabase/migrations/`
 - **Auth**: Supabase Auth with RLS policies
 - **Tenancy**: Dual-tier — personal orgs (auto-created) + shared orgs
 - **Key patterns**: RLS on all tables, `org_id` scoping, `created_by` tracking
@@ -126,7 +128,36 @@ bitbit/                      # npm workspaces root
 
 - **Primary**: Claude (via @anthropic-ai/sdk)
 - **Agent routing**: Confidence-based — high confidence = auto-act, low = ask user
-- **Background**: Haiku for fact extraction (reflection), larger models for synthesis
+- **Background**: Haiku for fact extraction (reflection) and tool group planning, larger models for synthesis
+- **Agent tools**: 24 tools across 5 groups (core, memory, channel, web, comms)
+- **Safety**: Kill switch per org, approval queue for outbound comms, daily send limits, commitment-prevention prompt
+
+### Tool Orchestration (ADR-001)
+
+**Architecture**: Hybrid Pattern D — Planner-compiled tool groups (default) with selective sub-agents (future).
+
+**Phase 1 (Shipped)**: Haiku planner selects 1-3 tool groups per conversation. Sonnet receives 5-12 filtered tools instead of all 20. Core group always included.
+- `PlanOutput` type: planner returns both `stages` (UI pipeline) and `toolGroups` (tool filtering)
+- `getAgentTools(groups?)`: optional group filter, backward compatible (no args = all tools)
+- KV cache preservation: tools locked at first Sonnet call, never changed mid-turn (90-95% hit rate)
+- Fallback: trivial messages, planner timeouts, and empty groups all use full tool set
+
+**Tool Groups** (5 groups, 24 tools):
+| Group | Tools | When Selected |
+|-------|-------|---------------|
+| core | create_task, update_task, search_tasks, search_contacts, get_contact, log_activity, compose_creator_notification_mockup | Always included |
+| memory | search_memory, add_memory | "Remember...", preference recall |
+| channel | sync_channels, search_messages, get_upcoming, create_reminder, schedule_event | Calendar, email, messaging |
+| web | web_search, fetch_url | Research, URL reading |
+| comms | send_email, send_sms | Outbound communications |
+
+**Phase 2 (Planned, not built)**: Complexity routing — Haiku also selects `executionMode: 'single' | 'specialist' | 'orchestrator'`. Specialist sub-agents for single-domain deep queries. Orchestrator for multi-domain parallel queries. Trigger: quality complaints on complex queries.
+
+**Phase 3 (Planned, not built)**: Multiple orchestrators for 100+ tools. Top-level intent classifier routes between domain orchestrators. Trigger: tool count exceeds 100.
+
+**Key files**: `planner.ts` (Haiku planning), `tools.ts` (tool definitions + group filtering), `engine.ts` (orchestration loop)
+**Decision record**: `.claude/docs/research/tool-architecture-decision.md` (ADR-001)
+**Research**: `.claude/docs/research/multi-agent-tool-orchestration-research.md`
 
 ## Development Environment
 
@@ -134,8 +165,9 @@ bitbit/                      # npm workspaces root
 - **Shell**: zsh
 - **IDE tools**: Claude Code CLI, GitNexus (codebase indexing)
 - **Dev server**: `npm run dev` (Next.js dev with turbopack)
-- **Testing**: `vitest run` (1462 tests across 122+ test files)
+- **Testing**: `vitest run` (1,462 tests across 122+ test files)
 - **E2E**: `npx playwright test` (12 spec files, ~49 tests)
+- **Landing page dev**: `cd landing-page && npm run dev`
 - **CI/CD**: 5 GitHub Actions workflows (ci, e2e, deploy, migrate, preview)
 
 ## Conventions

@@ -22,6 +22,8 @@ Most "AI assistants" wait for instructions. They react. BitBit is different beca
 
 **Specialist agents.** BitBit has a team of agents, each with a specific job. Invoice Flow handles your invoicing. Lead Swarm finds and qualifies prospects. Channel Triage reads everything coming in and escalates what matters. You pick which agents you need. They're like lego bricks.
 
+**Tool orchestration.** When you ask BitBit something, it doesn't load every tool it has. A fast planner (Haiku) reads your intent and selects only the relevant tool groups — contacts and comms for "send Sezer a WhatsApp", web tools for "search for plumbers in Sydney", memory for "remember his rate". This keeps the AI focused, fast, and cheap. As tool count grows beyond 50, complex multi-domain queries can escalate to specialist sub-agents that run in parallel.
+
 **Personal first, org optional.** Every user gets their own BitBit with their own connections. If you're part of a team, you can share an org where some data surfaces to the group level. But the personal experience comes first.
 
 ## Who BitBit is for
@@ -58,19 +60,23 @@ All of these people share the same frustration. They started a business to do th
 
 Chat interface with streaming responses and a visible processing pipeline. Multi channel messaging across WhatsApp, SMS, email, iMessage, Facebook Messenger, Instagram, Slack, and Telegram. WhatsApp dual-path transport: Meta Cloud API (primary) with Baileys bridge fallback on Fly.io (`bitbit-wa-bridge.fly.dev`). Meta WhatsApp webhook with signature verification. Channel adapter wiring across all transports. Contact management with an entity graph that tracks relationships. Invoice creation with timeline events. Task management with goals. Dual tier tenancy supporting personal and org modes. Unified connections grid with 15+ service types including ClickUp, GA4, WordPress, Xero, Google Calendar. OAuth infrastructure with token refresh lifecycle. Background intelligence that extracts facts from conversations and consolidates memory over time. Analytics dashboard wired to real agent_runs data with interactive data-viz library (sparkline, bar, donut, gauge charts with hover tooltips). Activity feed. Error monitoring. 12 cron routes for background processing. Confidence based action routing where BitBit decides whether to act autonomously or ask the user. Glassmorphic UI across all dashboard pages. Mobile responsive with bottom navigation. Self-serve onboarding with 3-step wizard. CI/CD pipeline with 5 GitHub Actions workflows. 12 Playwright E2E specs covering auth, dashboard, API routes, kanban, leads, invoices, and KPI rendering. Leads pipeline with kanban and list views, prospect discovery, and outreach intelligence. Context Baseplate with entity profiles, entity patterns (payment timing, response latency, activity frequency, channel preference), mention extraction, active threads, and cross-reference caching. Production deployment on Fly.io (worker with bearer auth), Fly.io WhatsApp bridge (`bitbit-wa-bridge.fly.dev`), Cloudflare Workers (edge cron with rate limiting), and VPS relay. Sentry error tracking with context enrichment and PII filtering. Security hardened with webhook HMAC verification, circuit breaker on LLM calls, DLQ with admin API, rate limiting, and security response headers. RLS policies audited across all 61 migrations.
 
+Agent superpower tools: web_search (Brave API), fetch_url (readability extraction), send_email (Resend with approval routing), send_sms (Telnyx with approval routing). Tool orchestration via Haiku planner that selects tool groups per conversation (5-12 filtered tools from 24 total, 90-95% KV cache hit rate). Agent kill switch per organisation. Daily outbound send limits. Approval queue for all outbound comms during beta. AI disclosure in privacy policy, chat banner, and agent system prompt. Waitlist landing page at bitbit.chat with email capture backed by Supabase. New brand icon (white background, black logo) deployed site-wide. Google Search Console verified. Privacy Policy and Terms of Service live.
+
 1,462 tests. All passing.
 
 ## What's next
 
-**Platform registrations (T008).** 5 of 8 platforms done: Stripe (webhook via API bypass), Meta/WhatsApp (Graph API webhook, Business Verification complete), Google (OAuth + APIs), Telnyx (API), Resend (DNS verified). Microsoft, Xero, and Slack deferred (no accounts). Channel smoke tests now unblocked.
+**Channel smoke tests (T011).** All 5 key platform credentials are configured. Remaining: smoke test each channel adapter against real credentials, load test under concurrent access. Ed25519 SMS webhook verification fixed.
 
-**Onboarding flow (T010).** Core routing and wizard implemented, but full spec delivery (FR-1 through FR-12) needs verification and completion. Depends on T008 for connection setup steps.
+**Onboarding flow (T010).** Core routing and wizard implemented. FR-6 (OAuth callback), FR-7 (skip for now), FR-8 (first-value API), FR-9 (agent recommendations), FR-11 (help affordance), FR-12 (funnel instrumentation) all committed. Needs end-to-end verification.
 
-**Production validation (T011).** Fly.io worker, Cloudflare edge cron, WhatsApp bridge, and VPS relay deployed and verified. 12 cron routes configured. Remaining: smoke test each channel adapter against real credentials (now unblocked), load test under concurrent access.
+**Legal and revenue (T012).** Entity formation, equity agreement, Stripe identity verification, Andy's first subscription. Revenue cannot flow until this is resolved. Terms and privacy policy are live.
 
-**Legal and revenue (T012).** Entity formation, equity agreement, Stripe identity verification, Andy's first subscription. Revenue cannot flow until this is resolved.
+**Beta launch (T013).** Waitlist page live at bitbit.chat collecting signups. AWU case study still needed. Pricing page needs Stripe checkout wiring. Beta outreach to 5-10 agencies from Andy's network.
 
-**Beta launch (T013).** AWU case study, landing page completion, outreach to 5-10 agencies. First external users beyond Andy. Depends on T008, T011, T012.
+**Agent superpowers Phase 2 (T027).** browse_website tool via Playwright headless on Fly.io — navigate, extract, screenshot.
+
+**WhatsApp production (T008/T012).** WABA phone registration requires real mobile SIM (Meta blocks VoIP). Cheap prepaid AU SIM sufficient. Also: permanent System User token needed (current one expired).
 
 ## Pricing direction
 
@@ -89,7 +95,7 @@ personal-assistant/          Next.js 16 app (Vercel deployed dashboard)
   src/app/api/               22 API route groups
   src/components/            15 component groups
   src/lib/                   Core logic (agent, channels, context, billing)
-  supabase/migrations/       61 migrations
+  supabase/migrations/       63 migrations
 
 packages/core/               Shared types and utilities
 packages/agents/             10 specialist agent packages

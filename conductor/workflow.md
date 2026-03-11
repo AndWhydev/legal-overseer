@@ -42,7 +42,8 @@
 
 | Target | Method | Trigger |
 |--------|--------|---------|
-| Dashboard | Vercel | Push to main |
+| Dashboard (app.bitbit.chat) | Vercel | Push to main |
+| Landing page (bitbit.chat) | Vercel | `cd landing-page && npx vercel --prod` |
 | Database | Supabase migrations | Manual apply |
 | WhatsApp bridge | Fly.io / VPS | Manual deploy |
 
