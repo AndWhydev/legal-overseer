@@ -213,12 +213,13 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Routes that handle their own auth (Bearer tokens, cron secrets, OAuth flows)
+  // Routes that handle their own auth (Bearer tokens, cron secrets, OAuth flows, webhooks)
   if (
     pathname.startsWith('/api/channels/') ||
     pathname.startsWith('/api/cron/') ||
     pathname.startsWith('/api/auth/') ||
-    pathname.startsWith('/api/monitoring/')
+    pathname.startsWith('/api/monitoring/') ||
+    pathname.startsWith('/api/webhooks/')
   ) {
     return applySecurityHeaders(NextResponse.next())
   }

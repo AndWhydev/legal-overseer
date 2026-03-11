@@ -46,3 +46,4 @@ yarn-error.log*
 # test artifacts
 /test-results/
 /playwright-report/
+.env*.local

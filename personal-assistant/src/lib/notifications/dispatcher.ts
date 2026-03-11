@@ -131,7 +131,7 @@ export async function dispatchNotification(
         const { Resend } = await import('resend')
         if (process.env.RESEND_API_KEY) {
           const resend = new Resend(process.env.RESEND_API_KEY)
-          const fromEmail = process.env.NOTIFICATION_FROM_EMAIL || 'bitbit@allwebbedup.com.au'
+          const fromEmail = process.env.NOTIFICATION_FROM_EMAIL || 'bitbit@bitbit.chat'
           const { error } = await resend.emails.send({
             from: fromEmail,
             to: [toEmail],

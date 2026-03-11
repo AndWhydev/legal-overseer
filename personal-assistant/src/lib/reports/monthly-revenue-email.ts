@@ -28,7 +28,7 @@ function getFromEmail(): string {
     process.env.MONTHLY_REPORT_FROM_EMAIL
     || process.env.NOTIFICATION_FROM_EMAIL
     || process.env.RESEND_FROM_EMAIL
-    || 'bitbit@allwebbedup.com.au'
+    || 'bitbit@bitbit.chat'
   )
 }
 

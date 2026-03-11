@@ -7,7 +7,7 @@ function getResend() {
 }
 
 function getFromEmail(): string {
-  return process.env.NOTIFICATION_FROM_EMAIL || 'bitbit@allwebbedup.com.au'
+  return process.env.NOTIFICATION_FROM_EMAIL || 'bitbit@bitbit.chat'
 }
 
 function getToEmail(): string {

@@ -602,7 +602,7 @@ describe('dispatcher', () => {
       await dispatchNotification(mockSupabase, params)
 
       const call = mockSend.mock.calls[0]?.[0]
-      expect(call?.from).toBe('bitbit@allwebbedup.com.au')
+      expect(call?.from).toBe('bitbit@bitbit.chat')
     })
   })
 })
