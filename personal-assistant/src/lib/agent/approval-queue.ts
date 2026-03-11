@@ -2,6 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { routeAgentAction } from './confidence-router'
 import { dispatchNotification } from '../notifications/dispatcher'
 import { notifyApproval } from './approval-notifier'
+import { recordActionOutcome } from '@/lib/intelligence/confidence-calibrator'
 import { logger } from '@/lib/core/logger';
 
 type ApprovalPriority = 'urgent' | 'normal' | 'low'
@@ -138,9 +139,16 @@ export async function resolveApproval(
 ): Promise<ApprovalRecord> {
   const { data: existing, error: existingError } = await supabase
     .from('approval_queue')
-    .select('id, status')
+    .select('id, status, org_id, action_type, confidence_score, agent_config_id')
     .eq('id', approvalId)
-    .single<{ id: string; status: ApprovalStatus }>()
+    .single<{
+      id: string
+      status: ApprovalStatus
+      org_id: string
+      action_type: string
+      confidence_score: number
+      agent_config_id: string
+    }>()
 
   if (existingError || !existing) {
     throw new Error('APPROVAL_NOT_FOUND')
@@ -165,6 +173,32 @@ export async function resolveApproval(
   if (error || !data) {
     throw new Error(error?.message ?? 'Failed to resolve approval')
   }
+
+  // Record outcome for confidence calibration (fire-and-forget)
+  // Look up agent_type from agent_configs to log the outcome
+  ;(async () => {
+    try {
+      const { data: config } = await supabase
+        .from('agent_configs')
+        .select('agent_type')
+        .eq('id', existing.agent_config_id)
+        .single()
+
+      if (config?.agent_type) {
+        await recordActionOutcome(
+          supabase,
+          existing.org_id,
+          config.agent_type,
+          existing.action_type,
+          existing.confidence_score,
+          decision === 'approved',
+          null, // wasCorrect: unknown at resolution time
+        )
+      }
+    } catch (err) {
+      logger.warn('[approval-queue] Failed to record action outcome:', err)
+    }
+  })()
 
   return normalizeApprovalRow(data)
 }

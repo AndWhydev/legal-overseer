@@ -6,6 +6,7 @@ import { composeCreatorStudioDeck } from '@/lib/creator-studio'
 import { routeAgentAction } from './confidence-router'
 import { queueAgentAction } from './approval-queue'
 import { notifyApproval } from './approval-notifier'
+import { recordActionOutcome } from '@/lib/intelligence/confidence-calibrator'
 import {
   createTask,
   updateTask,
@@ -506,6 +507,20 @@ export async function executeAgentTool(
       options.orgSettings,
       options.agentType
     )
+
+    // Record auto-act outcomes for calibration (fire-and-forget)
+    if (routing.decision === 'act' && options.agentType) {
+      recordActionOutcome(
+        supabase,
+        orgId,
+        options.agentType,
+        name,
+        options.confidenceScore,
+        true, // auto-acted = implicitly approved
+        null, // correctness unknown at execution time
+        routing.thresholdSource ?? 'static',
+      ).catch(() => { /* swallow */ })
+    }
 
     // If routing decision is 'ask' or 'escalate', queue for approval instead of executing
     if (routing.decision === 'ask' || routing.decision === 'escalate') {

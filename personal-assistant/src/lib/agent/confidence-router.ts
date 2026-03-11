@@ -37,6 +37,8 @@ export interface ConfidenceRoutingResult {
   confidence: number
   thresholds: ConfidenceThresholds
   reasoning: string
+  /** Which threshold source was used for routing */
+  thresholdSource?: 'calibrated' | 'agent_config' | 'agent_type' | 'org_settings' | 'defaults'
 }
 
 /**
@@ -108,39 +110,59 @@ export function routeByConfidence(
  * Convenience function: resolve thresholds from agent config, agent type, and org settings, then route.
  *
  * Cascade order (most specific wins):
- *   1. Explicit agentConfig.confidence_thresholds
- *   2. AGENT_THRESHOLDS[agentType] (per-agent-type defaults)
- *   3. orgSettings.confidence_thresholds
- *   4. DEFAULT_THRESHOLDS
+ *   1. Calibrated thresholds (if sufficient samples, passed by caller)
+ *   2. Explicit agentConfig.confidence_thresholds
+ *   3. AGENT_THRESHOLDS[agentType] (per-agent-type defaults)
+ *   4. orgSettings.confidence_thresholds
+ *   5. DEFAULT_THRESHOLDS
  */
 export function routeAgentAction(
   confidence: number,
   agentConfig?: { confidence_thresholds?: Partial<ConfidenceThresholds> },
   orgSettings?: { confidence_thresholds?: Partial<ConfidenceThresholds> },
   agentType?: string,
+  calibratedThresholds?: { act: number; ask: number; sampleSize: number } | null,
 ): ConfidenceRoutingResult {
-  // If explicit agent config thresholds exist, use them (original behavior)
+  // 1. If calibrated thresholds exist with sufficient sample size, use them
+  if (calibratedThresholds && calibratedThresholds.sampleSize >= 50) {
+    const thresholds = getEffectiveThresholds(
+      { act: calibratedThresholds.act, ask: calibratedThresholds.ask },
+      undefined,
+    )
+    const result = routeByConfidence(confidence, thresholds)
+    result.thresholdSource = 'calibrated'
+    result.reasoning = `[calibrated, n=${calibratedThresholds.sampleSize}] ${result.reasoning}`
+    return result
+  }
+
+  // 2. If explicit agent config thresholds exist, use them (original behavior)
   if (agentConfig?.confidence_thresholds) {
     const thresholds = getEffectiveThresholds(
       agentConfig.confidence_thresholds,
       orgSettings?.confidence_thresholds,
     )
-    return routeByConfidence(confidence, thresholds)
+    const result = routeByConfidence(confidence, thresholds)
+    result.thresholdSource = 'agent_config'
+    return result
   }
 
-  // If agentType provided and has per-type thresholds, use those as agent-level overrides
+  // 3. If agentType provided and has per-type thresholds, use those as agent-level overrides
   if (agentType && AGENT_THRESHOLDS[agentType]) {
     const thresholds = getEffectiveThresholds(
       AGENT_THRESHOLDS[agentType],
       orgSettings?.confidence_thresholds,
     )
-    return routeByConfidence(confidence, thresholds)
+    const result = routeByConfidence(confidence, thresholds)
+    result.thresholdSource = 'agent_type'
+    return result
   }
 
-  // Fall back to org settings > defaults
+  // 4. Fall back to org settings > defaults
   const thresholds = getEffectiveThresholds(
     undefined,
     orgSettings?.confidence_thresholds,
   )
-  return routeByConfidence(confidence, thresholds)
+  const result = routeByConfidence(confidence, thresholds)
+  result.thresholdSource = orgSettings?.confidence_thresholds ? 'org_settings' : 'defaults'
+  return result
 }
