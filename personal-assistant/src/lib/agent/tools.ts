@@ -458,8 +458,18 @@ const allHandlers: Record<string, AgentToolHandler> = {
   ...superpowerToolHandlers,
 }
 
-export function getAgentTools(): Anthropic.Tool[] {
-  return [...toolDefinitions, ...channelToolDefinitions, ...superpowerToolDefinitions]
+export function getAgentTools(groups?: ToolGroup[]): Anthropic.Tool[] {
+  const allTools = [...toolDefinitions, ...channelToolDefinitions, ...superpowerToolDefinitions]
+  if (!groups || groups.length === 0) return allTools
+
+  const selectedGroups = new Set<ToolGroup>(['core', ...groups])
+  const allowedTools = new Set<string>()
+  for (const g of selectedGroups) {
+    if (TOOL_GROUPS[g]) {
+      for (const t of TOOL_GROUPS[g].tools) allowedTools.add(t)
+    }
+  }
+  return allTools.filter(t => allowedTools.has(t.name))
 }
 
 export interface ExecuteToolOptions {
