@@ -1,6 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { channelToolDefinitions, channelToolHandlers } from './tools/channel-tools'
+import { superpowerToolDefinitions, superpowerToolHandlers } from './tools/superpower-tools'
 import { composeCreatorStudioDeck } from '@/lib/creator-studio'
 import { routeAgentAction } from './confidence-router'
 import { queueAgentAction } from './approval-queue'
@@ -350,10 +351,11 @@ const handlers: Record<string, AgentToolHandler> = {
 const allHandlers: Record<string, AgentToolHandler> = {
   ...handlers,
   ...channelToolHandlers,
+  ...superpowerToolHandlers,
 }
 
 export function getAgentTools(): Anthropic.Tool[] {
-  return [...toolDefinitions, ...channelToolDefinitions]
+  return [...toolDefinitions, ...channelToolDefinitions, ...superpowerToolDefinitions]
 }
 
 export interface ExecuteToolOptions {

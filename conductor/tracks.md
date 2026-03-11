@@ -40,6 +40,7 @@
 | T013 | Beta Launch Program | business | P1 | T008 mostly unblocked, T012 still blocking |
 | T024 | Creator Studio | feature | P3 | - |
 | T025 | Knowledge Base | feature | P3 | - |
+| T027 | Agent Superpower Toolkit | feature | P0 | Phase 1 (web search, URL fetch, send email/SMS) blocks live test. Spec: `conductor/tracks/T027/spec.md` |
 
 ## Track Descriptions
 
@@ -113,3 +114,11 @@ UX improvements for non-technical users. All items complete:
 - [x] Progressive disclosure (localStorage `bb-advanced-mode` toggle in sidebar)
 - [x] Empty states for all data-dependent tabs
 - [x] Conversation interface unification (email + SMS wired through conversation adapters)
+
+### T027 — Agent Superpower Toolkit
+Transform agents from chatbot to autonomous assistant. Full spec: `conductor/tracks/T027/spec.md`
+- **Phase 1 (P0)**: `web_search` (Brave API), `fetch_url` (readability extract), `send_email` (Resend), `send_sms` (Telnyx) — 4 new agent tools, ~2-3 hours
+- **Phase 2 (P1)**: `browse_website` (Playwright headless in Fly) — navigate, extract, screenshot
+- **Phase 3 (P2)**: 1Password Connect Server on Fly + generic credential tool + skill extensibility framework
+- **Phase 4 (P3)**: Per-user Fly Sprites (sleep-to-zero VMs with persistent credentials/browser/filesystem)
+- Reference: OpenClaw (68K stars, 13,700+ community skills), Stagehand v3, Composio (1000+ integrations)
