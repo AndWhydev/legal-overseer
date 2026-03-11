@@ -95,8 +95,10 @@ export function normalizePhoneNumber(phone: string, defaultCountryCode = '61'): 
 // ---------------------------------------------------------------------------
 
 /**
- * Verify Telnyx webhook signature using HMAC-SHA256.
- * Signature format: "v1=<hex_hash>"
+ * Verify Telnyx webhook signature using Ed25519.
+ * Telnyx sends: telnyx-signature-ed25519 (base64-encoded signature) and telnyx-timestamp (unix timestamp)
+ * The signed message is: timestamp|payload (pipe-separated)
+ * The webhook secret is the Ed25519 public key (base64-encoded)
  */
 export async function verifyWebhookSignature(
   payload: string,
@@ -107,20 +109,20 @@ export async function verifyWebhookSignature(
   if (!env.webhookSecret) return false
 
   try {
-    const { createHmac } = await import('crypto')
+    const { verify, createPublicKey } = await import('crypto')
 
-    // Telnyx signs: timestamp.payload
-    const baseString = `${timestamp}.${payload}`
+    // Telnyx signs: timestamp|payload (pipe-separated)
+    const signedPayload = `${timestamp}|${payload}`
+    const signatureBuffer = Buffer.from(signature, 'base64')
 
-    const hmac = createHmac('sha256', env.webhookSecret)
-    hmac.update(baseString)
-    const computedHash = hmac.digest('hex')
+    // The webhook secret is the Ed25519 public key (base64-encoded)
+    const publicKey = createPublicKey({
+      key: Buffer.from(env.webhookSecret, 'base64'),
+      format: 'der',
+      type: 'spki',
+    })
 
-    // Parse signature (v1=<hash>)
-    const [version, providedHash] = signature.split('=')
-    if (version !== 'v1') return false
-
-    return computedHash === providedHash
+    return verify(null, Buffer.from(signedPayload), publicKey, signatureBuffer)
   } catch (err) {
     logger.warn('[sms] Webhook signature verification error:', err)
     return false

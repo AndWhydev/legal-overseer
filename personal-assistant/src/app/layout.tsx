@@ -43,9 +43,12 @@ export const metadata: Metadata = {
   keywords: ["AI operations", "digital agency", "automation", "agents", "leads", "invoices"],
   authors: [{ name: "BitBit" }],
   icons: {
-    icon: "/bitbit-logo.svg",
-    shortcut: "/bitbit-logo.svg",
-    apple: "/bitbit-logo-192.png",
+    icon: [
+      { url: "/favicon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/bitbit-app-icon-192.png", sizes: "192x192", type: "image/png" },
+    ],
+    shortcut: "/favicon-32.png",
+    apple: "/apple-touch-icon.png",
   },
   openGraph: {
     type: "website",
@@ -102,7 +105,7 @@ export default function RootLayout({
         <meta name="theme-color" content={defaultThemeColor} />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <link rel="apple-touch-icon" href="/bitbit-logo-192.png" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
       </head>
       <body
         className={`${inter.variable} ${geistMono.variable} ${jetbrainsMono.variable} ${ebGaramond.variable} antialiased bitbit-dark`}

@@ -46,8 +46,8 @@
 ### T008 — Platform OAuth App Registrations
 Register production OAuth apps with external platforms. Human-gated: requires browser login, CAPTCHA solving, and credential management.
 - [x] Stripe: API keys set, webhook endpoint configured (API bypass)
-- [x] Meta/WhatsApp: Webhook configured (Graph API), WhatsApp Business App live, Meta Business Verification complete
-- [x] Google: OAuth consent screen + redirect URIs + API enablement (Gmail, Calendar, GSC, GA4)
+- [x] Meta/WhatsApp: Webhook configured (Graph API), WhatsApp Business App live, Meta Business Verification complete (8 Mar 2026). Permanent System User token generated. WABA phone registration BLOCKED — Meta rejects VoIP numbers (Telnyx/Twilio/etc) for WhatsApp verification ("not supported on VoIP numbers due to fraud prevention"). Requires real mobile SIM number to complete registration
+- [x] Google: OAuth consent screen published, redirect URIs added (/callback/gmail, /google-calendar, /google-analytics). Branding configured with privacy/terms links. Search Console verified. BUG: Gmail API returns FAILED_PRECONDITION — OAuth client is on GCP project 913966386681 but APIs may have been enabled on project 163710351496. Fix: enable Gmail/Calendar/Analytics APIs on project 913966386681. Also: Tor's refresh token invalidated by consent screen publish (re-auth needed). Pending: YouTube demo video for restricted scope verification (gmail.readonly)
 - [x] Telnyx: API key + webhook URL configured (API)
 - [x] Resend: API key set, DNS verified (DKIM, SPF, DMARC)
 - [ ] Microsoft: Azure AD app registration (Outlook Graph API) — deferred, no account
@@ -77,10 +77,14 @@ Business formation and first revenue. Includes:
 - Entity decision (new company vs under Torkay/AWU)
 - 50/50 equity agreement
 - ABN/ACN registration
-- Terms of service + privacy policy
+- [x] Terms of service (21 sections, Australian law, ACL, AI liability) — live at bitbit.chat/terms
+- [x] Privacy policy (20 sections, APP/GDPR, Google Limited Use) — live at bitbit.chat/privacy
 - Stripe checkout wiring to live environment
 - Andy's $200/mo founder subscription
 - Banking setup
+- [ ] WABA phone registration — requires real mobile SIM number (Meta blocks VoIP numbers for WhatsApp verification). Cheap prepaid AU SIM ($2 Boost/Amaysim) sufficient — only needs one verification SMS, then WhatsApp runs via Cloud API
+- [ ] WABA payment method (credit/debit card) — required for business-initiated WhatsApp conversations at scale. Not blocking inbound/reply flows (1,000 free service conversations/month)
+- [ ] Google OAuth verification — submit YouTube demo video (~2-3 min screen recording showing OAuth flow + how Gmail/Calendar data is used by AI agents). Required to remove "unverified app" warning and lift 100-user cap on restricted scopes
 
 ### T013 — Beta Launch Program
 First external users beyond Andy. Includes:
