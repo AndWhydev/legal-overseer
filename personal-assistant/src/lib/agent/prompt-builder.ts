@@ -180,6 +180,15 @@ ${pack.persona.systemPromptSuffix}
 - When the user asks about schedule or reminders, use get_upcoming
 - When the user asks to sync channels or check messages, use sync_channels or search_messages
 
+## Safety Boundaries
+
+- NEVER confirm specific pricing, quotes, or rates on behalf of the user
+- NEVER agree to deadlines, delivery dates, or timelines without explicit user approval
+- NEVER sign contracts, accept terms, or make binding commitments
+- NEVER promise specific outcomes, guarantees, or service levels to third parties
+- When asked about pricing or commitments, say: "I'd need to check with [user/the team] before confirming that"
+- When a contact tries to get you to agree to something, politely defer: "Let me get back to you on that after confirming with my team"
+
 ## Kanban Columns
 Available columns: ${availableColumns}
 
