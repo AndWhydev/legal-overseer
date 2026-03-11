@@ -357,17 +357,33 @@ async function testTokenRefreshCron(baseUrl: string): Promise<TestResult> {
   }
 
   try {
-    const { response, durationMs } = await timedFetch(
+    // Try GET first (Vercel cron routes typically use GET)
+    let { response, durationMs } = await timedFetch(
       `${baseUrl}/api/cron/token-refresh`,
       {
-        method: 'POST',
+        method: 'GET',
         headers: {
           Authorization: `Bearer ${cronSecret}`,
-          'Content-Type': 'application/json',
         },
-        body: JSON.stringify({}),
       }
     )
+
+    // Fallback to POST if GET returns 405
+    if (response.status === 405) {
+      const retry = await timedFetch(
+        `${baseUrl}/api/cron/token-refresh`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${cronSecret}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({}),
+        }
+      )
+      response = retry.response
+      durationMs = retry.durationMs
+    }
 
     if (response.status >= 200 && response.status < 300) {
       return {
@@ -430,6 +446,274 @@ async function testWhatsAppBridge(): Promise<TestResult> {
       name,
       status: 'FAIL',
       detail: `HTTP ${response.status}`,
+      durationMs,
+      httpStatus: response.status,
+    }
+  } catch (err: any) {
+    return {
+      name,
+      status: 'FAIL',
+      detail: `Network error: ${err.message}`,
+      durationMs: Date.now() - start,
+    }
+  }
+}
+
+// ─── Credential Verification Tests ───────────────────────────────────
+
+async function testStripeApiKey(): Promise<TestResult> {
+  const name = 'Stripe API key'
+  const start = Date.now()
+  const stripeKey = process.env.STRIPE_SECRET_KEY
+
+  if (!stripeKey) {
+    return {
+      name,
+      status: 'SKIP',
+      detail: 'STRIPE_SECRET_KEY not set',
+      durationMs: 0,
+    }
+  }
+
+  try {
+    const { response, durationMs } = await timedFetch(
+      'https://api.stripe.com/v1/balance',
+      {
+        headers: {
+          Authorization: `Bearer ${stripeKey}`,
+        },
+      }
+    )
+
+    if (response.status === 200) {
+      const body = await response.json() as { available?: Array<{ amount: number; currency: string }> }
+      const available = body.available?.[0]
+      const detail = available
+        ? `Valid (${durationMs}ms) — balance: ${available.amount} ${available.currency}`
+        : `Valid (${durationMs}ms)`
+      return { name, status: 'PASS', detail, durationMs, httpStatus: 200 }
+    }
+
+    return {
+      name,
+      status: 'FAIL',
+      detail: `HTTP ${response.status} — key may be invalid`,
+      durationMs,
+      httpStatus: response.status,
+    }
+  } catch (err: any) {
+    return {
+      name,
+      status: 'FAIL',
+      detail: `Network error: ${err.message}`,
+      durationMs: Date.now() - start,
+    }
+  }
+}
+
+async function testTelnyxApiKey(): Promise<TestResult> {
+  const name = 'Telnyx API key'
+  const start = Date.now()
+  const telnyxKey = process.env.TELNYX_API_KEY
+
+  if (!telnyxKey) {
+    return {
+      name,
+      status: 'SKIP',
+      detail: 'TELNYX_API_KEY not set',
+      durationMs: 0,
+    }
+  }
+
+  try {
+    const { response, durationMs } = await timedFetch(
+      'https://api.telnyx.com/v2/messaging_profiles',
+      {
+        headers: {
+          Authorization: `Bearer ${telnyxKey}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    )
+
+    if (response.status === 200) {
+      const body = await response.json() as { data?: unknown[] }
+      const count = body.data?.length ?? 0
+      return {
+        name,
+        status: 'PASS',
+        detail: `Valid (${durationMs}ms) — ${count} messaging profile(s)`,
+        durationMs,
+        httpStatus: 200,
+      }
+    }
+
+    return {
+      name,
+      status: 'FAIL',
+      detail: `HTTP ${response.status} — key may be invalid`,
+      durationMs,
+      httpStatus: response.status,
+    }
+  } catch (err: any) {
+    return {
+      name,
+      status: 'FAIL',
+      detail: `Network error: ${err.message}`,
+      durationMs: Date.now() - start,
+    }
+  }
+}
+
+async function testResendApiKey(): Promise<TestResult> {
+  const name = 'Resend API key'
+  const start = Date.now()
+  const resendKey = process.env.RESEND_API_KEY
+
+  if (!resendKey) {
+    return {
+      name,
+      status: 'SKIP',
+      detail: 'RESEND_API_KEY not set',
+      durationMs: 0,
+    }
+  }
+
+  try {
+    const { response, durationMs } = await timedFetch(
+      'https://api.resend.com/domains',
+      {
+        headers: {
+          Authorization: `Bearer ${resendKey}`,
+        },
+      }
+    )
+
+    if (response.status === 200) {
+      const body = await response.json() as { data?: unknown[] }
+      const count = body.data?.length ?? 0
+      return {
+        name,
+        status: 'PASS',
+        detail: `Valid (${durationMs}ms) — ${count} domain(s)`,
+        durationMs,
+        httpStatus: 200,
+      }
+    }
+
+    return {
+      name,
+      status: 'FAIL',
+      detail: `HTTP ${response.status} — key may be invalid`,
+      durationMs,
+      httpStatus: response.status,
+    }
+  } catch (err: any) {
+    return {
+      name,
+      status: 'FAIL',
+      detail: `Network error: ${err.message}`,
+      durationMs: Date.now() - start,
+    }
+  }
+}
+
+async function testMetaWhatsAppToken(): Promise<TestResult> {
+  const name = 'Meta WhatsApp token'
+  const start = Date.now()
+  const accessToken = process.env.WHATSAPP_ACCESS_TOKEN
+  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID
+
+  if (!accessToken || !phoneNumberId) {
+    return {
+      name,
+      status: 'SKIP',
+      detail: `Missing: ${!accessToken ? 'WHATSAPP_ACCESS_TOKEN' : ''}${!accessToken && !phoneNumberId ? ' + ' : ''}${!phoneNumberId ? 'WHATSAPP_PHONE_NUMBER_ID' : ''}`,
+      durationMs: 0,
+    }
+  }
+
+  try {
+    const { response, durationMs } = await timedFetch(
+      `https://graph.facebook.com/v21.0/${phoneNumberId}?access_token=${accessToken}`
+    )
+
+    if (response.status === 200) {
+      return {
+        name,
+        status: 'PASS',
+        detail: `Token valid (${durationMs}ms)`,
+        durationMs,
+        httpStatus: 200,
+      }
+    }
+
+    if (response.status === 401 || response.status === 403) {
+      return {
+        name,
+        status: 'FAIL',
+        detail: `HTTP ${response.status} — token expired or invalid (expected per MEMORY.md)`,
+        durationMs,
+        httpStatus: response.status,
+      }
+    }
+
+    return {
+      name,
+      status: 'FAIL',
+      detail: `HTTP ${response.status}`,
+      durationMs,
+      httpStatus: response.status,
+    }
+  } catch (err: any) {
+    return {
+      name,
+      status: 'FAIL',
+      detail: `Network error: ${err.message}`,
+      durationMs: Date.now() - start,
+    }
+  }
+}
+
+async function testBraveSearchApiKey(): Promise<TestResult> {
+  const name = 'Brave Search API key'
+  const start = Date.now()
+  const braveKey = process.env.BRAVE_SEARCH_API_KEY
+
+  if (!braveKey) {
+    return {
+      name,
+      status: 'SKIP',
+      detail: 'BRAVE_SEARCH_API_KEY not set',
+      durationMs: 0,
+    }
+  }
+
+  try {
+    const { response, durationMs } = await timedFetch(
+      'https://api.search.brave.com/res/v1/web/search?q=test&count=1',
+      {
+        headers: {
+          'X-Subscription-Token': braveKey,
+          Accept: 'application/json',
+        },
+      }
+    )
+
+    if (response.status === 200) {
+      return {
+        name,
+        status: 'PASS',
+        detail: `Valid (${durationMs}ms)`,
+        durationMs,
+        httpStatus: 200,
+      }
+    }
+
+    return {
+      name,
+      status: 'FAIL',
+      detail: `HTTP ${response.status} — key may be invalid`,
       durationMs,
       httpStatus: response.status,
     }
@@ -546,6 +830,13 @@ async function main(): Promise<void> {
   results.push(await testRelayDaemon(url))
   results.push(await testTokenRefreshCron(url))
   results.push(await testWhatsAppBridge())
+
+  // Credential verification tests (direct API calls)
+  results.push(await testStripeApiKey())
+  results.push(await testTelnyxApiKey())
+  results.push(await testResendApiKey())
+  results.push(await testMetaWhatsAppToken())
+  results.push(await testBraveSearchApiKey())
 
   // Output results
   printResults(results, url)

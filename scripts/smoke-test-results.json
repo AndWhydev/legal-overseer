@@ -1,48 +1,48 @@
 {
-  "timestamp": "2026-03-02T07:30:38.726Z",
+  "timestamp": "2026-03-11T12:24:01.344Z",
   "target": "https://app.bitbit.chat",
   "results": [
     {
       "name": "Health check",
       "status": "PASS",
-      "detail": "App is running (2966ms)",
-      "durationMs": 2966,
+      "detail": "App is running (2917ms)",
+      "durationMs": 2917,
       "httpStatus": 200
     },
     {
       "name": "Channel status API",
-      "status": "FAIL",
-      "detail": "HTTP 401",
-      "durationMs": 991,
-      "httpStatus": 401
+      "status": "SKIP",
+      "detail": "SUPABASE_SERVICE_ROLE_KEY not set",
+      "durationMs": 0,
+      "httpStatus": null
     },
     {
       "name": "Gmail OAuth redirect",
       "status": "PASS",
-      "detail": "Redirect to accounts.google.com (765ms)",
-      "durationMs": 765,
+      "detail": "Redirect to accounts.google.com (898ms)",
+      "durationMs": 898,
       "httpStatus": 307
     },
     {
       "name": "Outlook OAuth redirect",
       "status": "PASS",
-      "detail": "Redirect to login.microsoftonline.com (590ms)",
-      "durationMs": 590,
+      "detail": "Redirect to login.microsoftonline.com (527ms)",
+      "durationMs": 527,
       "httpStatus": 307
     },
     {
       "name": "Relay daemon trigger",
-      "status": "FAIL",
-      "detail": "HTTP 401",
-      "durationMs": 726,
-      "httpStatus": 401
+      "status": "SKIP",
+      "detail": "RELAY_SECRET not set",
+      "durationMs": 0,
+      "httpStatus": null
     },
     {
       "name": "Token refresh cron",
-      "status": "FAIL",
-      "detail": "HTTP 405",
-      "durationMs": 891,
-      "httpStatus": 405
+      "status": "SKIP",
+      "detail": "CRON_SECRET not set",
+      "durationMs": 0,
+      "httpStatus": null
     },
     {
       "name": "WhatsApp bridge health",
@@ -50,12 +50,47 @@
       "detail": "WHATSAPP_BRIDGE_URL not set",
       "durationMs": 0,
       "httpStatus": null
+    },
+    {
+      "name": "Stripe API key",
+      "status": "SKIP",
+      "detail": "STRIPE_SECRET_KEY not set",
+      "durationMs": 0,
+      "httpStatus": null
+    },
+    {
+      "name": "Telnyx API key",
+      "status": "SKIP",
+      "detail": "TELNYX_API_KEY not set",
+      "durationMs": 0,
+      "httpStatus": null
+    },
+    {
+      "name": "Resend API key",
+      "status": "SKIP",
+      "detail": "RESEND_API_KEY not set",
+      "durationMs": 0,
+      "httpStatus": null
+    },
+    {
+      "name": "Meta WhatsApp token",
+      "status": "SKIP",
+      "detail": "Missing: WHATSAPP_ACCESS_TOKEN + WHATSAPP_PHONE_NUMBER_ID",
+      "durationMs": 0,
+      "httpStatus": null
+    },
+    {
+      "name": "Brave Search API key",
+      "status": "SKIP",
+      "detail": "BRAVE_SEARCH_API_KEY not set",
+      "durationMs": 0,
+      "httpStatus": null
     }
   ],
   "summary": {
-    "total": 7,
+    "total": 12,
     "passed": 3,
-    "failed": 3,
-    "skipped": 1
+    "failed": 0,
+    "skipped": 9
   }
 }
