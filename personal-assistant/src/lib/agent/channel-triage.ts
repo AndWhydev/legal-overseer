@@ -7,9 +7,11 @@ import {
   type SenderType,
   analyzeContentSignals,
   scoreActionability,
+  shouldCreateContact,
   toNewCategory,
   type ActionabilitySignals,
   type InboxCategory,
+  type ShouldCreateContactInput,
 } from './classifier'
 import { routeMessage } from './action-router'
 import { resolveEntityRanked } from '@/lib/context/entity-resolver'
@@ -38,6 +40,7 @@ export interface DigestEntry {
   highlights: string[]
 }
 
+// Legacy category type (still used in some parts) maps to new taxonomy
 export type MessageCategory = 'actionable' | 'informational' | 'spam' | 'personal'
 
 export type PriorityLevel = 'critical' | 'high' | 'medium' | 'low'
@@ -478,15 +481,29 @@ export async function runTriage(
     // 3. Entity resolution on inbound
     let contactId: string | null = null
     let contactName: string | null = null
-    {
-      const resolved = await resolveMessageSender(
-        supabase, orgId, msg.sender_email, msg.sender as string | null,
-      )
-      if (resolved) {
-        contactId = resolved.contactId
-        contactName = resolved.contactName
-        result.entitiesLinked++
-      }
+    let isTransientSender = false
+
+    // Determine if we should create a contact for this sender
+    const messageCount = (msg.metadata as any)?.message_count as number | undefined
+    const shouldCreate = shouldCreateContact({
+      senderType,
+      senderEmail: msg.sender_email as string | null,
+      messageCount,
+      userReplied: (msg.metadata as any)?.user_initiated as boolean | undefined,
+      isNoReplyAddress: (msg.metadata as any)?.is_noreply as boolean | undefined,
+    })
+
+    // Only resolve to existing contacts; don't create new ones
+    const resolved = await resolveMessageSender(
+      supabase, orgId, msg.sender_email, msg.sender as string | null,
+    )
+    if (resolved) {
+      contactId = resolved.contactId
+      contactName = resolved.contactName
+      result.entitiesLinked++
+    } else if (senderType === 'human' && !shouldCreate) {
+      // Mark as transient sender (human but doesn't meet contact creation criteria)
+      isTransientSender = true
     }
 
     // 4. Priority scoring with entity context
@@ -638,6 +655,13 @@ export async function runTriage(
           ...(msg.metadata || {}),
           sender_type: senderType,
           actionability_signals: actionabilitySignals || undefined,
+          is_transient_sender: isTransientSender,
+          // Store transient sender info even if not creating contact
+          transient_sender_info: isTransientSender ? {
+            name: msg.sender,
+            email: msg.sender_email,
+            channel: msg.channel,
+          } : undefined,
           category: msgCategory,
           contact_id: contactId,
           contact_name: contactName,

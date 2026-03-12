@@ -25,7 +25,12 @@ import { checkAllChannelHealth, storeHealthReports } from './health'
 import type { ChannelHealthReport } from './health'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
-import { classifyMessage as llmClassifyMessage, type ClassificationResult } from '@/lib/agent/classifier'
+import {
+  classifyMessage as llmClassifyMessage,
+  type ClassificationResult,
+  classifyByHeaders,
+  shouldCreateContact,
+} from '@/lib/agent/classifier'
 import { routeMessage, type MessageRoute } from '@/lib/agent/action-router'
 import { logger } from '@/lib/core/logger';
 
@@ -278,11 +283,26 @@ async function reflectInboundMessage(
 
     let contacts = await resolveEntity(supabase, query, orgId)
 
-    // Auto-create contact for unknown senders (skip service/automated addresses)
+    // Auto-create contact for unknown senders (with smart contact creation rules)
     if (contacts.length === 0) {
       const senderEmail = msg.senderEmail?.toLowerCase()
       if (senderEmail && !isHumanSender(senderEmail)) {
         return // Skip service domains and automated senders entirely
+      }
+
+      // Use new smart contact creation rules
+      const headers = (msg.metadata?.headers || {}) as Record<string, string>
+      const senderType = classifyByHeaders(headers)
+      const shouldCreate = shouldCreateContact({
+        senderType,
+        senderEmail: msg.senderEmail ?? null,
+        messageCount: undefined, // Synthesizer doesn't have message count yet
+        userReplied: false, // Synthesizer doesn't know conversation history yet
+        isNoReplyAddress: isNoReplyAddress(senderEmail ?? ''),
+      })
+
+      if (!shouldCreate) {
+        return // Don't create contact — will hold as transient sender in triage
       }
 
       const newId = await autoCreateContact(supabase, orgId, msg)

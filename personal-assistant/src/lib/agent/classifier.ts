@@ -251,6 +251,57 @@ export function toNewCategory(
   return 'updates'
 }
 
+// ---------------------------------------------------------------------------
+// Smart Contact Creation Rules
+// ---------------------------------------------------------------------------
+
+export interface ShouldCreateContactInput {
+  senderType: SenderType
+  senderEmail: string | null
+  messageCount?: number // total messages from this sender
+  userReplied?: boolean // did user email them first?
+  isNoReplyAddress?: boolean
+}
+
+/**
+ * Determine if a contact should be created for this sender.
+ * Implements rules to stop auto-creating contacts for every sender.
+ *
+ * CREATE if:
+ * 1. User emailed them first AND they replied
+ * 2. 2+ inbound messages from this sender
+ *
+ * NEVER create for:
+ * - Automated senders (senderType !== 'human')
+ * - No-reply addresses
+ *
+ * Otherwise: HOLD as transient sender in metadata
+ */
+export function shouldCreateContact(input: ShouldCreateContactInput): boolean {
+  // Rule: NEVER create for non-human senders
+  if (input.senderType !== 'human') {
+    return false
+  }
+
+  // Rule: NEVER create for no-reply addresses
+  if (input.isNoReplyAddress) {
+    return false
+  }
+
+  // Rule: CREATE if user initiated AND got reply
+  if (input.userReplied) {
+    return true
+  }
+
+  // Rule: CREATE if 2+ inbound messages
+  if ((input.messageCount ?? 0) >= 2) {
+    return true
+  }
+
+  // Otherwise: don't create (hold as transient)
+  return false
+}
+
 const DEFAULT_RESULT: ClassificationResult = {
   significance: 2,
   timeSensitivity: 'none',
