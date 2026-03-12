@@ -5,6 +5,7 @@ import {
   getOrgIntegrations,
   storeOrgCredential,
   deleteOrgCredential,
+  getCredentialChannelType,
 } from '@/lib/integrations/credentials'
 
 /**
@@ -183,6 +184,18 @@ export async function DELETE(request: NextRequest) {
     }
 
     await deleteOrgCredential(supabase, profile.org_id, body.provider)
+
+    // Also mark channel_connections as disconnected (matches /api/channels/disconnect behavior)
+    const channelType = getCredentialChannelType(body.provider)
+    await supabase
+      .from('channel_connections')
+      .update({
+        status: 'disconnected',
+        relay_enabled: false,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('org_id', profile.org_id)
+      .eq('channel_type', channelType)
 
     return NextResponse.json({
       success: true,

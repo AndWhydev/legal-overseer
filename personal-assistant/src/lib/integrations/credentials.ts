@@ -25,7 +25,7 @@ function getEncryptionKey(): Buffer {
   return scryptSync(keyEnv, SALT, 32)
 }
 
-function getCredentialChannelType(provider: string): string {
+export function getCredentialChannelType(provider: string): string {
   switch (provider) {
     case 'google-calendar':
       return 'calendar'
@@ -165,6 +165,9 @@ async function deleteCredentialFromChannelConnections(
     .from('channel_connections')
     .update({
       config: rest,
+      status: 'disconnected',
+      relay_enabled: false,
+      updated_at: new Date().toISOString(),
     })
     .eq('org_id', orgId)
     .eq('channel_type', channelType)
