@@ -30,7 +30,7 @@ export interface UseInboxKeyboardReturn {
   selectedIndex: number;
   setSelectedIndex: (index: number) => void;
   selectedIds: Set<string>;
-  setSelectedIds: (ids: Set<string>) => void;
+  setSelectedIds: (ids: Set<string> | ((prev: Set<string>) => Set<string>)) => void;
   showShortcuts: boolean;
   setShowShortcuts: (show: boolean) => void;
 }
@@ -53,7 +53,7 @@ const CHORD_TIMEOUT = 500; // ms to wait for second key in chord
 
 export function useInboxKeyboard(options: UseInboxKeyboardOptions): UseInboxKeyboardReturn {
   const [selectedIndex, setSelectedIndex] = useState(-1);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [selectedIds, setSelectedIdsState] = useState<Set<string>>(new Set());
   const [showShortcuts, setShowShortcuts] = useState(false);
 
   const lastKeyRef = useRef<string | null>(null);
@@ -62,6 +62,15 @@ export function useInboxKeyboard(options: UseInboxKeyboardOptions): UseInboxKeyb
 
   // Keep options ref up to date
   optionsRef.current = options;
+
+  // Wrapper for setSelectedIds to support both direct value and updater function
+  const setSelectedIds = useCallback((ids: Set<string> | ((prev: Set<string>) => Set<string>)) => {
+    if (typeof ids === 'function') {
+      setSelectedIdsState(ids);
+    } else {
+      setSelectedIdsState(ids);
+    }
+  }, []);
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     if (!optionsRef.current.enabled || optionsRef.current.isDrawerOpen) return;
@@ -276,7 +285,7 @@ export function useInboxKeyboard(options: UseInboxKeyboardOptions): UseInboxKeyb
   return {
     selectedIndex,
     setSelectedIndex,
-    selectedIds,
+    selectedIds: selectedIdsState,
     setSelectedIds,
     showShortcuts,
     setShowShortcuts,

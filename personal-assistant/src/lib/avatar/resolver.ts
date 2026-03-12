@@ -9,8 +9,8 @@
 // ---------------------------------------------------------------------------
 
 export interface AvatarResult {
-  url: string
-  type: 'gravatar' | 'clearbit' | 'initials'
+  url: string | null
+  type: 'contact' | 'gravatar' | 'clearbit' | 'initials'
   initials: string
   color: string
 }
@@ -42,6 +42,29 @@ function setCache(email: string, result: AvatarResult): void {
     result,
     expiresAt: Date.now() + CACHE_TTL_MS,
   })
+}
+
+// ---------------------------------------------------------------------------
+// Personal email domain detection
+// ---------------------------------------------------------------------------
+
+const PERSONAL_EMAIL_DOMAINS = new Set([
+  'gmail.com',
+  'yahoo.com',
+  'hotmail.com',
+  'outlook.com',
+  'icloud.com',
+  'me.com',
+  'live.com',
+  'aol.com',
+  'protonmail.com',
+  'fastmail.com',
+])
+
+function isPersonalEmailDomain(email: string | null): boolean {
+  if (!email) return false
+  const domain = email.split('@')[1]?.toLowerCase()
+  return PERSONAL_EMAIL_DOMAINS.has(domain || '')
 }
 
 // ---------------------------------------------------------------------------
@@ -157,7 +180,7 @@ const AVATAR_COLORS = [
   '#0EA5E9', '#3B82F6', '#2563EB',
 ]
 
-function getInitials(name?: string, email?: string): string {
+function getInitials(name: string | null | undefined, email: string | null | undefined): string {
   if (name) {
     const parts = name.trim().split(/\s+/)
     if (parts.length >= 2) {
@@ -172,11 +195,11 @@ function getInitials(name?: string, email?: string): string {
   return '?'
 }
 
-function getDeterministicColor(email: string): string {
+function getDeterministicColor(email: string | null): string {
+  const text = email?.toLowerCase() || 'default'
   let hash = 0
-  const lower = email.toLowerCase()
-  for (let i = 0; i < lower.length; i++) {
-    hash = ((hash << 5) - hash + lower.charCodeAt(i)) | 0
+  for (let i = 0; i < text.length; i++) {
+    hash = ((hash << 5) - hash + text.charCodeAt(i)) | 0
   }
   return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length]
 }
@@ -201,69 +224,100 @@ function initialsDataUrl(initials: string, color: string): string {
 
 /**
  * Resolve an avatar for a given email address.
- * Priority: Gravatar → Clearbit Logo → Generated initials.
+ * Priority: Contact DB → Gravatar → Clearbit Logo (non-personal domains only) → Generated initials.
  * Results are cached in-memory for 24 hours.
  */
 export async function resolveAvatar(
-  email: string,
-  name?: string
+  senderEmail: string | null,
+  senderName: string | null,
+  contactAvatarUrl: string | null
 ): Promise<AvatarResult> {
-  const normalizedEmail = email.toLowerCase().trim()
-  const initials = getInitials(name, normalizedEmail)
+  // Handle null cases
+  if (!senderEmail && !senderName) {
+    const initials = getInitials(senderName, senderEmail)
+    const color = getDeterministicColor(senderEmail)
+    return {
+      url: initialsDataUrl(initials, color),
+      type: 'initials',
+      initials,
+      color,
+    }
+  }
+
+  const normalizedEmail = senderEmail ? senderEmail.toLowerCase().trim() : ''
+  const initials = getInitials(senderName, normalizedEmail)
   const color = getDeterministicColor(normalizedEmail)
 
   // Check cache first
-  const cached = getCached(normalizedEmail)
-  if (cached) return cached
-
-  // Try Gravatar
-  try {
-    const hash = md5(normalizedEmail)
-    const gravatarUrl = `https://secure.gravatar.com/avatar/${hash}?s=40&d=404`
-    const res = await fetch(gravatarUrl, { method: 'HEAD' })
-    if (res.ok) {
-      const result: AvatarResult = {
-        url: gravatarUrl,
-        type: 'gravatar',
-        initials,
-        color,
-      }
-      setCache(normalizedEmail, result)
-      return result
-    }
-  } catch {
-    // Gravatar unavailable — continue
+  if (normalizedEmail) {
+    const cached = getCached(normalizedEmail)
+    if (cached) return cached
   }
 
-  // Try Clearbit Logo (domain-based)
-  try {
-    const domain = normalizedEmail.split('@')[1]
-    if (domain) {
-      const clearbitUrl = `https://logo.clearbit.com/${domain}?size=40`
-      const res = await fetch(clearbitUrl, { method: 'HEAD' })
+  // Tier 1: Contact DB avatar
+  if (contactAvatarUrl) {
+    const result: AvatarResult = {
+      url: contactAvatarUrl,
+      type: 'contact',
+      initials,
+      color,
+    }
+    if (normalizedEmail) setCache(normalizedEmail, result)
+    return result
+  }
+
+  // Tier 2: Try Gravatar
+  if (normalizedEmail) {
+    try {
+      const hash = md5(normalizedEmail)
+      const gravatarUrl = `https://secure.gravatar.com/avatar/${hash}?s=40&d=404`
+      const res = await fetch(gravatarUrl, { method: 'HEAD' })
       if (res.ok) {
         const result: AvatarResult = {
-          url: clearbitUrl,
-          type: 'clearbit',
+          url: gravatarUrl,
+          type: 'gravatar',
           initials,
           color,
         }
         setCache(normalizedEmail, result)
         return result
       }
+    } catch {
+      // Gravatar unavailable — continue
     }
-  } catch {
-    // Clearbit unavailable — continue
+
+    // Tier 3: Try Clearbit Logo (only for non-personal email domains)
+    if (!isPersonalEmailDomain(normalizedEmail)) {
+      try {
+        const domain = normalizedEmail.split('@')[1]
+        if (domain) {
+          const clearbitUrl = `https://logo.clearbit.com/${domain}?size=40`
+          const res = await fetch(clearbitUrl, { method: 'HEAD' })
+          if (res.ok) {
+            const result: AvatarResult = {
+              url: clearbitUrl,
+              type: 'clearbit',
+              initials,
+              color,
+            }
+            setCache(normalizedEmail, result)
+            return result
+          }
+        }
+      } catch {
+        // Clearbit unavailable — continue
+      }
+    }
   }
 
-  // Fallback: generated initials
+  // Tier 4: Fallback to generated initials
   const result: AvatarResult = {
     url: initialsDataUrl(initials, color),
     type: 'initials',
     initials,
     color,
   }
-  setCache(normalizedEmail, result)
+  if (normalizedEmail) setCache(normalizedEmail, result)
   return result
 }
 
@@ -272,16 +326,18 @@ export async function resolveAvatar(
  * Use this for initial render before async resolution completes.
  */
 export function resolveAvatarSync(
-  email: string,
-  name?: string
+  senderName: string | null,
+  senderEmail: string | null
 ): AvatarResult {
-  const normalizedEmail = email.toLowerCase().trim()
+  const normalizedEmail = senderEmail ? senderEmail.toLowerCase().trim() : ''
 
   // Check cache first
-  const cached = getCached(normalizedEmail)
-  if (cached) return cached
+  if (normalizedEmail) {
+    const cached = getCached(normalizedEmail)
+    if (cached) return cached
+  }
 
-  const initials = getInitials(name, normalizedEmail)
+  const initials = getInitials(senderName, normalizedEmail)
   const color = getDeterministicColor(normalizedEmail)
 
   return {
