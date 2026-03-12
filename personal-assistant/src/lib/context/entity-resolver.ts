@@ -32,7 +32,8 @@ async function stepAlias(
   query: string,
   orgId: string
 ): Promise<Contact[]> {
-  const q = query.toLowerCase().trim()
+  const q = (query ?? '').toLowerCase().trim()
+  if (!q) return []
   const { data, error } = await supabase
     .from('contacts')
     .select('*')
@@ -48,7 +49,8 @@ async function stepEmail(
   query: string,
   orgId: string
 ): Promise<Contact[]> {
-  const q = query.toLowerCase().trim()
+  const q = (query ?? '').toLowerCase().trim()
+  if (!q) return []
   const { data, error } = await supabase
     .from('contacts')
     .select('*')
@@ -80,7 +82,8 @@ async function stepName(
   query: string,
   orgId: string
 ): Promise<Contact[]> {
-  const q = query.toLowerCase().trim()
+  const q = (query ?? '').toLowerCase().trim()
+  if (!q) return []
   const { data, error } = await supabase
     .from('contacts')
     .select('*')

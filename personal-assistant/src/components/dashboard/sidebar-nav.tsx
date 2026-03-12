@@ -4,10 +4,7 @@ import React, { useCallback, useRef, useEffect, useState } from 'react';
 import Image from 'next/image';
 import {
   Settings,
-  User,
   LogOut,
-  ToggleRight,
-  ToggleLeft,
 } from 'lucide-react';
 import type { TabDef } from './spa-shell';
 import { SidebarRail } from './sidebar-rail';
@@ -43,24 +40,6 @@ export function SidebarNav({
   const profileMenuRef = useRef<HTMLDivElement>(null);
   const [profileOpen, setProfileOpen] = useState(false);
 
-  // Advanced mode toggle with localStorage persistence
-  const [advancedMode, setAdvancedMode] = useState(false);
-  const [mounted, setMounted] = useState(false);
-
-  // Initialize advanced mode from localStorage on mount
-  useEffect(() => {
-    const stored = localStorage.getItem('bb-advanced-mode');
-    setAdvancedMode(stored === 'true');
-    setMounted(true);
-  }, []);
-
-  // Persist advanced mode to localStorage
-  useEffect(() => {
-    if (mounted) {
-      localStorage.setItem('bb-advanced-mode', String(advancedMode));
-    }
-  }, [advancedMode, mounted]);
-
   // Module gating + composition profile
   const { modules: enabledModules, composition } = useEnabledModules();
 
@@ -72,21 +51,14 @@ export function SidebarNav({
   const [activeCategory, setActiveCategory] = useState<string>(derivedCategory);
   const [panelOpen, setPanelOpen] = useState(false);
 
-  // Advanced tabs to hide when not in advanced mode
-  const ADVANCED_TABS = ['analytics', 'costs', 'knowledge', 'admin', 'sentry'];
-
-  // Filter categories by enabled modules and advanced mode
-  const filterCategoriesByAdvanced = (categories: typeof SIDEBAR_CATEGORIES) => {
+  // Filter categories by enabled modules
+  const filterByModules = (categories: typeof SIDEBAR_CATEGORIES) => {
     return categories
-      .map(cat => {
-        // Filter items based on advanced mode and enabled modules
-        let visibleItems = cat.items.filter(id => enabledModules.includes(id));
-        if (!advancedMode) {
-          visibleItems = visibleItems.filter(id => !ADVANCED_TABS.includes(id));
-        }
-        return { ...cat, items: visibleItems };
-      })
-      .filter(cat => cat.items.length > 0); // Remove empty categories
+      .map(cat => ({
+        ...cat,
+        items: cat.items.filter(id => enabledModules.includes(id)),
+      }))
+      .filter(cat => cat.items.length > 0);
   };
 
   // Sync category when activeTabId changes externally (e.g. spacebar→home, global search, bb-navigate)
@@ -113,8 +85,8 @@ export function SidebarNav({
     }
   }, [panelOpen]);
 
-  // Filter categories by enabled modules and advanced mode
-  const visibleCategories = filterCategoriesByAdvanced(composition.categories);
+  // Filter categories by enabled modules
+  const visibleCategories = filterByModules(composition.categories);
 
   // Get the active category definition
   const activeCategoryDef = SIDEBAR_CATEGORIES.find(c => c.id === activeCategory) ?? null;
@@ -224,55 +196,6 @@ export function SidebarNav({
         onTabChange={handleTabChange}
       />
 
-      {/* Advanced mode toggle */}
-      {mounted && (
-        <div
-          style={{
-            position: 'absolute',
-            bottom: '64px',
-            left: '8px',
-            right: '8px',
-            padding: '8px 12px',
-            background: 'var(--glass-interactive-bg)',
-            backdropFilter: 'var(--glass-card-blur)',
-            WebkitBackdropFilter: 'var(--glass-card-blur)',
-            border: '1px solid var(--glass-interactive-border)',
-            borderRadius: '10px',
-            transition: 'all 0.2s ease',
-          }}
-        >
-          <button
-            onClick={() => setAdvancedMode(!advancedMode)}
-            style={{
-              width: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px',
-              padding: '6px 0',
-              background: 'transparent',
-              border: 'none',
-              color: 'var(--text-secondary)',
-              fontSize: '13px',
-              cursor: 'pointer',
-              transition: 'color 0.12s ease',
-            }}
-            onMouseEnter={e => {
-              e.currentTarget.style.color = 'var(--text-primary)';
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.color = 'var(--text-secondary)';
-            }}
-          >
-            {advancedMode ? (
-              <ToggleRight size={16} strokeWidth={1.8} />
-            ) : (
-              <ToggleLeft size={16} strokeWidth={1.8} />
-            )}
-            <span>Advanced</span>
-          </button>
-        </div>
-      )}
-
       {/* Profile popover — positioned relative to sidebar */}
       <div style={{ position: 'absolute', bottom: '16px', left: '8px' }} ref={profileMenuRef}>
         {profileOpen && (
@@ -340,38 +263,6 @@ export function SidebarNav({
             >
               <Settings size={16} strokeWidth={1.8} />
               Settings
-            </button>
-
-            {/* Profile */}
-            <button
-              role="menuitem"
-              onClick={() => { setProfileOpen(false); onTabChange?.('settings'); }}
-              style={{
-                width: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-                padding: '8px 12px',
-                background: 'transparent',
-                border: 'none',
-                borderRadius: '8px',
-                color: 'var(--text-secondary)',
-                fontSize: '13px',
-                cursor: 'pointer',
-                transition: 'all 0.12s ease',
-                textAlign: 'left',
-              }}
-              onMouseEnter={e => {
-                e.currentTarget.style.background = 'var(--glass-hover-bg)';
-                e.currentTarget.style.color = 'var(--text-primary)';
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.background = 'transparent';
-                e.currentTarget.style.color = 'var(--text-secondary)';
-              }}
-            >
-              <User size={16} strokeWidth={1.8} />
-              Profile
             </button>
 
             {/* Divider */}

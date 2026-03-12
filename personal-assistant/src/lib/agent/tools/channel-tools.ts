@@ -80,6 +80,41 @@ export const channelToolDefinitions: Anthropic.Tool[] = [
       required: ['title', 'start'],
     },
   },
+  {
+    name: 'read_recent_emails',
+    description: 'Read recent emails from connected Gmail/Outlook channels. Queries the channel_messages database. Use when the user asks to check emails, find messages, or review their inbox. Returns subject, sender, body preview, timestamp, and category.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        limit: { type: 'number', description: 'Max emails to return (default: 20, max: 50)' },
+        sender: { type: 'string', description: 'Filter by sender email or name' },
+        category: { type: 'string', description: 'Filter by category (actionable, informational, personal, spam)' },
+        date_from: { type: 'string', description: 'Only emails after this ISO date' },
+        date_to: { type: 'string', description: 'Only emails before this ISO date' },
+      },
+    },
+  },
+  {
+    name: 'search_emails',
+    description: 'Full-text search across email subjects and bodies in the channel_messages database. Use when the user asks to find a specific email, search for a topic, or look up correspondence with someone.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        query: { type: 'string', description: 'Search text (matches subject and body)' },
+        channel: { type: 'string', enum: ['gmail', 'outlook'], description: 'Filter by email channel' },
+        limit: { type: 'number', description: 'Max results (default: 20)' },
+      },
+      required: ['query'],
+    },
+  },
+  {
+    name: 'get_connected_channels',
+    description: 'Check which communication channels are connected and their sync status. Use when the user asks about their integrations, channel status, or when you need to verify email access before reading messages.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {},
+    },
+  },
 ]
 
 async function readJsonCache<T>(filename: string): Promise<T[]> {
@@ -239,6 +274,121 @@ export const channelToolHandlers: Record<string, AgentToolHandler> = {
       }
     } catch (err) {
       return { success: false, error: `Failed to create reminder: ${String(err)}` }
+    }
+  },
+
+  async read_recent_emails(input, orgId, supabase) {
+    const limit = Math.min((input.limit as number) || 20, 50)
+    const sender = input.sender as string | undefined
+    const category = input.category as string | undefined
+    const dateFrom = input.date_from as string | undefined
+    const dateTo = input.date_to as string | undefined
+
+    let query = supabase
+      .from('channel_messages')
+      .select('id, channel, sender, subject, body, metadata, created_at')
+      .eq('org_id', orgId)
+      .in('channel', ['gmail', 'outlook'])
+      .order('created_at', { ascending: false })
+      .limit(limit)
+
+    if (sender) {
+      query = query.or(`sender.ilike.%${sender}%,metadata->>sender_email.ilike.%${sender}%`)
+    }
+    if (category) {
+      query = query.eq('metadata->>category', category)
+    }
+    if (dateFrom) {
+      query = query.gte('created_at', dateFrom)
+    }
+    if (dateTo) {
+      query = query.lte('created_at', dateTo)
+    }
+
+    const { data, error } = await query
+
+    if (error) {
+      return { success: false, error: `Failed to read emails: ${error.message}` }
+    }
+
+    const emails = (data ?? []).map((m: Record<string, unknown>) => ({
+      id: m.id,
+      channel: m.channel,
+      sender: m.sender,
+      sender_email: (m.metadata as Record<string, unknown>)?.sender_email ?? null,
+      subject: m.subject,
+      body_preview: typeof m.body === 'string' ? m.body.slice(0, 300) : '',
+      category: (m.metadata as Record<string, unknown>)?.category ?? 'unknown',
+      timestamp: m.created_at,
+    }))
+
+    return {
+      success: true,
+      data: { emails, total: emails.length },
+    }
+  },
+
+  async search_emails(input, orgId, supabase) {
+    const searchQuery = input.query as string
+    const channel = input.channel as string | undefined
+    const limit = Math.min((input.limit as number) || 20, 50)
+
+    let query = supabase
+      .from('channel_messages')
+      .select('id, channel, sender, subject, body, metadata, created_at')
+      .eq('org_id', orgId)
+      .in('channel', ['gmail', 'outlook'])
+      .or(`subject.ilike.%${searchQuery}%,body.ilike.%${searchQuery}%`)
+      .order('created_at', { ascending: false })
+      .limit(limit)
+
+    if (channel) {
+      query = query.eq('channel', channel)
+    }
+
+    const { data, error } = await query
+
+    if (error) {
+      return { success: false, error: `Search failed: ${error.message}` }
+    }
+
+    const results = (data ?? []).map((m: Record<string, unknown>) => ({
+      id: m.id,
+      channel: m.channel,
+      sender: m.sender,
+      subject: m.subject,
+      body_preview: typeof m.body === 'string' ? m.body.slice(0, 300) : '',
+      category: (m.metadata as Record<string, unknown>)?.category ?? 'unknown',
+      timestamp: m.created_at,
+    }))
+
+    return {
+      success: true,
+      data: { results, total: results.length, query: searchQuery },
+    }
+  },
+
+  async get_connected_channels(_input, orgId, supabase) {
+    const { data, error } = await supabase
+      .from('channel_connections')
+      .select('channel_type, status, relay_enabled, last_sync_at, created_at')
+      .eq('org_id', orgId)
+
+    if (error) {
+      return { success: false, error: `Failed to get channels: ${error.message}` }
+    }
+
+    const channels = (data ?? []).map((c: Record<string, unknown>) => ({
+      channel: c.channel_type,
+      status: c.status,
+      relay_enabled: c.relay_enabled,
+      last_sync: c.last_sync_at,
+      connected_at: c.created_at,
+    }))
+
+    return {
+      success: true,
+      data: { channels, connected_count: channels.length },
     }
   },
 

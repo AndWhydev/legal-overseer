@@ -48,7 +48,7 @@ export const TOOL_GROUPS: Record<ToolGroup, ToolGroupMeta> = {
     id: 'channel',
     label: 'Channel Integration',
     description: 'Sync, search, and interact with communication channels (Gmail, Calendar, etc.)',
-    tools: ['sync_channels', 'search_messages', 'get_upcoming', 'create_reminder', 'schedule_event'],
+    tools: ['sync_channels', 'search_messages', 'get_upcoming', 'create_reminder', 'schedule_event', 'read_recent_emails', 'search_emails', 'get_connected_channels'],
   },
   web: {
     id: 'web',
