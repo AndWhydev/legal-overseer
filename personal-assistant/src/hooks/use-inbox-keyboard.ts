@@ -285,7 +285,7 @@ export function useInboxKeyboard(options: UseInboxKeyboardOptions): UseInboxKeyb
   return {
     selectedIndex,
     setSelectedIndex,
-    selectedIds: selectedIdsState,
+    selectedIds,
     setSelectedIds,
     showShortcuts,
     setShowShortcuts,

@@ -9,6 +9,9 @@ import {
   CheckCircle2,
   AlertTriangle,
   Sparkles,
+  ChevronDown,
+  ChevronRight,
+  ListTodo,
 } from 'lucide-react';
 import { resolveAvatarSync, resolveAvatar, type AvatarResult } from '@/lib/avatar/resolver';
 
@@ -32,10 +35,20 @@ export interface InboxMessage {
   contactId: string | null;
   contactName: string | null;
   threadStatus: ThreadStatus | null;
+  threadCount?: number;
   deduplicatedWith: string | null;
   receivedAt: string;
   processedAt: string | null;
   status: string;
+}
+
+export interface ThreadMessageItem {
+  id: string;
+  senderName: string;
+  receivedAt: string;
+  bodyPreview: string;
+  isLatest?: boolean;
+  isSelf?: boolean;
 }
 
 export interface InboxDrawerProps {
@@ -46,6 +59,7 @@ export interface InboxDrawerProps {
   onDone: (id: string) => void;
   onReply: (id: string, body: string) => void;
   onNavigate: (direction: 'prev' | 'next') => void;
+  threadMessages?: ThreadMessageItem[];
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -100,7 +114,7 @@ function StripeIcon({ size = 15 }: { size?: number }) {
   );
 }
 
-function CalendarIcon({ size = 15 }: { size?: number }) {
+function CalendarIconSvg({ size = 15 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
@@ -117,7 +131,7 @@ const CHANNEL_ICONS: Record<string, React.FC<{ size?: number }>> = {
   whatsapp: WhatsAppIcon,
   imessage: IMessageIcon,
   asana: AsanaIcon,
-  calendly: CalendarIcon,
+  calendly: CalendarIconSvg,
   stripe: StripeIcon,
 };
 
@@ -156,6 +170,346 @@ function formatDate(dateStr: string): string {
   });
 }
 
+function formatTimeAgo(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'now';
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d ago`;
+  return new Date(dateStr).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AI Summary — Task #13
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface AiSummaryResult {
+  summary: string;
+  actionItems: string[];
+  draftReply: string;
+}
+
+function extractSummary(message: InboxMessage): AiSummaryResult {
+  const text = (message.subject || '') + ' ' + message.bodyPreview;
+  const actionItems: string[] = [];
+
+  // Detect action requests
+  const actionMatch = text.match(/want[s]?\s+(?:the\s+)?([^,.!?]{10,60})/i);
+  if (actionMatch) actionItems.push(actionMatch[0].trim());
+
+  // Detect deadlines
+  const deadlineMatch = text.match(/(due|deadline|by|end of)\s+([^,.!?]{3,40})/i);
+  if (deadlineMatch) actionItems.push(`Deadline mentioned: ${deadlineMatch[0].trim()}`);
+
+  // Detect urgency
+  if (text.match(/urgent|asap|immediately|critical|error|crash|spike|500/i)) {
+    actionItems.push('Urgent — requires immediate attention');
+  }
+
+  // Detect assignments
+  if (text.match(/assigned|you have been|please review|please confirm/i)) {
+    actionItems.push('Action assigned to you');
+  }
+
+  const summary = message.bodyPreview.length > 120
+    ? message.bodyPreview.slice(0, 120).trim() + '…'
+    : message.bodyPreview;
+
+  const senderFirstName = (message.contactName || message.senderName || 'there').split(' ')[0];
+  const draftReply = message.category === 'actionable'
+    ? `Hi ${senderFirstName},\n\nThanks for reaching out. I'll look into this and get back to you shortly.\n\nBest regards`
+    : `Hi ${senderFirstName},\n\nThank you for the update. I'll review and let you know if I have any questions.\n\nBest regards`;
+
+  return { summary, actionItems: actionItems.slice(0, 3), draftReply };
+}
+
+function AiSummaryPanel({
+  message,
+  onCreateTask,
+  onDraftReply,
+}: {
+  message: InboxMessage;
+  onCreateTask: (data: { subject: string; description: string }) => void;
+  onDraftReply: (text: string) => void;
+}) {
+  const [loading, setLoading] = useState(true);
+  const [result, setResult] = useState<AiSummaryResult | null>(null);
+
+  useEffect(() => {
+    setLoading(true);
+    setResult(null);
+    // Simulate async generation (would be real LLM call in production)
+    const timer = setTimeout(() => {
+      setResult(extractSummary(message));
+      setLoading(false);
+    }, 700);
+    return () => clearTimeout(timer);
+  }, [message.id]);
+
+  const shimmer: React.CSSProperties = {
+    background: 'linear-gradient(90deg, rgba(139,92,246,0.08) 25%, rgba(139,92,246,0.14) 50%, rgba(139,92,246,0.08) 75%)',
+    backgroundSize: '200% 100%',
+    animation: 'shimmer 1.5s ease-in-out infinite',
+    borderRadius: 4,
+  };
+
+  return (
+    <div
+      style={{
+        padding: 16,
+        borderRadius: 12,
+        border: '1px solid rgba(99, 102, 241, 0.3)',
+        background: 'rgba(99, 102, 241, 0.05)',
+      }}
+    >
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+        <Sparkles size={14} style={{ color: '#A78BFA', flexShrink: 0 }} />
+        <span style={{ fontSize: 12, fontWeight: 600, color: '#A78BFA', letterSpacing: '0.02em' }}>
+          AI Summary
+        </span>
+      </div>
+
+      {loading ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ ...shimmer, height: 12, width: '90%' }} />
+          <div style={{ ...shimmer, height: 12, width: '75%' }} />
+          <div style={{ ...shimmer, height: 12, width: '55%', marginTop: 4 }} />
+        </div>
+      ) : result ? (
+        <>
+          {/* Summary text */}
+          <p style={{
+            fontSize: 13,
+            color: 'rgba(255,255,255,0.75)',
+            margin: '0 0 10px',
+            lineHeight: 1.5,
+          }}>
+            {result.summary}
+          </p>
+
+          {/* Action items */}
+          {result.actionItems.length > 0 && (
+            <ul style={{ margin: '0 0 12px', padding: '0 0 0 2px', listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 4 }}>
+              {result.actionItems.map((item, i) => (
+                <li key={i} style={{ fontSize: 12, color: 'rgba(167,139,250,0.9)', display: 'flex', alignItems: 'flex-start', gap: 6 }}>
+                  <span style={{ color: '#6366f1', marginTop: 1, flexShrink: 0 }}>›</span>
+                  {item}
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {/* Action buttons */}
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button
+              onClick={() => onCreateTask({
+                subject: message.subject || message.bodyPreview.slice(0, 60),
+                description: message.bodyPreview,
+              })}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 5,
+                padding: '5px 10px',
+                borderRadius: 6,
+                border: '1px solid rgba(99,102,241,0.3)',
+                background: 'rgba(99,102,241,0.1)',
+                color: '#A78BFA',
+                fontSize: 11,
+                fontWeight: 500,
+                cursor: 'pointer',
+                transition: 'all 150ms ease',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(99,102,241,0.2)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(99,102,241,0.1)'; }}
+            >
+              <ListTodo size={11} /> Create Task
+            </button>
+            <button
+              onClick={() => onDraftReply(result.draftReply)}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 5,
+                padding: '5px 10px',
+                borderRadius: 6,
+                border: '1px solid rgba(255,255,255,0.08)',
+                background: 'rgba(255,255,255,0.04)',
+                color: 'rgba(255,255,255,0.6)',
+                fontSize: 11,
+                fontWeight: 500,
+                cursor: 'pointer',
+                transition: 'all 150ms ease',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
+            >
+              <Reply size={11} /> Draft Reply
+            </button>
+          </div>
+        </>
+      ) : null}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Thread View — Task #11
+// ─────────────────────────────────────────────────────────────────────────────
+
+function ThreadView({
+  messages,
+  onFocusReply,
+}: {
+  messages: ThreadMessageItem[];
+  onFocusReply: () => void;
+}) {
+  const latestId = messages[messages.length - 1]?.id;
+  const [expanded, setExpanded] = useState<Set<string>>(new Set([latestId]));
+
+  const toggle = (id: string) => {
+    setExpanded(prev => {
+      const s = new Set(prev);
+      if (s.has(id)) s.delete(id); else s.add(id);
+      return s;
+    });
+  };
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      {/* Thread count header */}
+      <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', marginBottom: 4, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+        {messages.length} messages in thread
+      </div>
+
+      {messages.map((msg) => {
+        const isExpanded = expanded.has(msg.id);
+        const isLatest = msg.id === latestId;
+
+        return (
+          <div
+            key={msg.id}
+            style={{
+              borderRadius: 8,
+              border: `1px solid ${isLatest ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.04)'}`,
+              background: isLatest ? 'rgba(255,255,255,0.03)' : 'transparent',
+              overflow: 'hidden',
+              transition: 'border-color 150ms ease',
+            }}
+          >
+            {/* Message header row */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '10px 12px',
+                cursor: isLatest ? 'default' : 'pointer',
+                userSelect: 'none',
+              }}
+              onClick={() => !isLatest && toggle(msg.id)}
+            >
+              {/* Avatar */}
+              <div style={{
+                width: 24,
+                height: 24,
+                borderRadius: '50%',
+                background: msg.isSelf ? 'rgba(255,90,31,0.2)' : 'rgba(255,255,255,0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 10,
+                fontWeight: 700,
+                color: msg.isSelf ? '#FF7A45' : 'rgba(255,255,255,0.7)',
+                flexShrink: 0,
+              }}>
+                {msg.senderName[0]?.toUpperCase()}
+              </div>
+
+              {/* Sender */}
+              <span style={{ fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.85)', flexShrink: 0 }}>
+                {msg.isSelf ? 'You' : msg.senderName}
+              </span>
+
+              {/* Collapsed preview */}
+              {!isExpanded && !isLatest && (
+                <span style={{
+                  fontSize: 12,
+                  color: 'rgba(255,255,255,0.3)',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  flex: 1,
+                }}>
+                  {msg.bodyPreview.slice(0, 70)}
+                </span>
+              )}
+
+              <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', flexShrink: 0, marginLeft: 'auto' }}>
+                {formatTimeAgo(msg.receivedAt)}
+              </span>
+
+              {!isLatest && (
+                <span style={{ color: 'rgba(255,255,255,0.2)', flexShrink: 0 }}>
+                  {isExpanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+                </span>
+              )}
+            </div>
+
+            {/* Message body */}
+            {(isExpanded || isLatest) && (
+              <div style={{
+                padding: '0 12px 12px 44px',
+                fontSize: 13,
+                color: 'rgba(255,255,255,0.75)',
+                lineHeight: 1.6,
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-word',
+              }}>
+                {msg.bodyPreview}
+              </div>
+            )}
+          </div>
+        );
+      })}
+
+      {/* Reply prompt */}
+      <button
+        onClick={onFocusReply}
+        style={{
+          marginTop: 4,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          padding: '10px 12px',
+          borderRadius: 8,
+          border: '1px dashed rgba(255,255,255,0.08)',
+          background: 'transparent',
+          color: 'rgba(255,255,255,0.3)',
+          fontSize: 12,
+          cursor: 'pointer',
+          transition: 'all 150ms ease',
+          textAlign: 'left',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)';
+          e.currentTarget.style.color = 'rgba(255,255,255,0.5)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)';
+          e.currentTarget.style.color = 'rgba(255,255,255,0.3)';
+        }}
+      >
+        <Reply size={13} /> Reply to thread…
+      </button>
+    </div>
+  );
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Main Component
 // ─────────────────────────────────────────────────────────────────────────────
@@ -168,35 +522,36 @@ export default function InboxDrawer({
   onDone,
   onReply,
   onNavigate,
+  threadMessages,
 }: InboxDrawerProps) {
-  const [drawerWidth, setDrawerWidth] = useState(55); // percentage
+  const [drawerWidth, setDrawerWidth] = useState(55);
   const [isResizing, setIsResizing] = useState(false);
   const [replyText, setReplyText] = useState('');
   const [replyFocused, setReplyFocused] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const drawerRef = useRef<HTMLDivElement>(null);
-  const resizeHandleRef = useRef<HTMLDivElement>(null);
 
-  // Load drawer width from localStorage on mount
+  // Load drawer width from localStorage
   useEffect(() => {
     const saved = localStorage.getItem('bb-inbox-drawer-width');
     if (saved) {
       const width = parseFloat(saved);
-      if (width >= 40 && width <= 70) {
-        setDrawerWidth(width);
-      }
+      if (width >= 40 && width <= 70) setDrawerWidth(width);
     }
   }, []);
 
-  // Lock body scroll when drawer open
+  // Lock body scroll when open
   useEffect(() => {
     if (open) {
       document.body.style.overflow = 'hidden';
-      return () => {
-        document.body.style.overflow = '';
-      };
+      return () => { document.body.style.overflow = ''; };
     }
   }, [open]);
+
+  // Reset reply text when message changes
+  useEffect(() => {
+    setReplyText('');
+  }, [message?.id]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -205,37 +560,15 @@ export default function InboxDrawer({
     const handleKeyDown = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement)?.tagName;
       if (tag === 'INPUT' || tag === 'SELECT') return;
-
-      // Allow text input in reply textarea
-      if (tag === 'TEXTAREA' && e.key !== 'Escape' && !(e.metaKey || e.ctrlKey)) {
-        return;
-      }
+      if (tag === 'TEXTAREA' && e.key !== 'Escape' && !(e.metaKey || e.ctrlKey)) return;
 
       switch (e.key) {
-        case 'Escape':
-          e.preventDefault();
-          onClose();
-          break;
-        case 'j':
-          e.preventDefault();
-          onNavigate('next');
-          break;
-        case 'k':
-          e.preventDefault();
-          onNavigate('prev');
-          break;
-        case 'e':
-          e.preventDefault();
-          onArchive(message.id);
-          break;
-        case 'd':
-          e.preventDefault();
-          onDone(message.id);
-          break;
-        case 'r':
-          e.preventDefault();
-          textareaRef.current?.focus();
-          break;
+        case 'Escape': e.preventDefault(); onClose(); break;
+        case 'j': e.preventDefault(); onNavigate('next'); break;
+        case 'k': e.preventDefault(); onNavigate('prev'); break;
+        case 'e': e.preventDefault(); onArchive(message.id); break;
+        case 'd': e.preventDefault(); onDone(message.id); break;
+        case 'r': e.preventDefault(); textareaRef.current?.focus(); break;
         case 'Enter':
           if ((e.metaKey || e.ctrlKey) && tag === 'TEXTAREA') {
             e.preventDefault();
@@ -249,29 +582,21 @@ export default function InboxDrawer({
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [open, message, onClose, onNavigate, onArchive, onDone]);
 
-  // Resizing logic
+  // Resize logic
   useEffect(() => {
     if (!isResizing) return;
 
     const handleMouseMove = (e: MouseEvent) => {
-      if (!drawerRef.current) return;
-
-      const viewportWidth = window.innerWidth;
-      const newWidth = (viewportWidth - e.clientX) / viewportWidth * 100;
-
+      const newWidth = (window.innerWidth - e.clientX) / window.innerWidth * 100;
       if (newWidth >= 40 && newWidth <= 70) {
         setDrawerWidth(newWidth);
         localStorage.setItem('bb-inbox-drawer-width', newWidth.toString());
       }
     };
-
-    const handleMouseUp = () => {
-      setIsResizing(false);
-    };
+    const handleMouseUp = () => setIsResizing(false);
 
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
-
     return () => {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
@@ -287,12 +612,14 @@ export default function InboxDrawer({
 
   const handleAutoExpand = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setReplyText(e.target.value);
-    // Auto-expand textarea
-    if (e.target) {
-      e.target.style.height = 'auto';
-      e.target.style.height = Math.min(e.target.scrollHeight, 200) + 'px';
-    }
+    e.target.style.height = 'auto';
+    e.target.style.height = Math.min(e.target.scrollHeight, 200) + 'px';
   };
+
+  const focusReply = useCallback(() => {
+    textareaRef.current?.focus();
+    textareaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, []);
 
   if (!open || !message) return null;
 
@@ -302,21 +629,37 @@ export default function InboxDrawer({
 
   // Avatar resolution
   const email = message.senderEmail;
-  const syncAvatar = email ? resolveAvatarSync(email, sender) : null;
-  const [avatar, setAvatar] = React.useState<AvatarResult | null>(syncAvatar);
+  const syncAvatar = resolveAvatarSync(sender, email);
+  const [avatar, setAvatar] = React.useState<AvatarResult>(syncAvatar);
 
   React.useEffect(() => {
-    if (!email) return;
     let cancelled = false;
-    resolveAvatar(email, sender).then((result) => {
+    resolveAvatar(email, sender, null).then((result) => {
       if (!cancelled) setAvatar(result);
     });
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [email, sender]);
 
   const showSummary = message.significance >= 5;
+  const hasThread = threadMessages && threadMessages.length > 1;
+
+  // Thread count badge (shown in header)
+  const threadCount = threadMessages?.length ?? message.threadCount;
+
+  const btnStyle: React.CSSProperties = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 6,
+    padding: '6px 12px',
+    borderRadius: 8,
+    border: '1px solid rgba(255, 255, 255, 0.08)',
+    background: 'rgba(255, 255, 255, 0.04)',
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontSize: 12,
+    fontWeight: 500,
+    cursor: 'pointer',
+    transition: 'all 150ms ease',
+  };
 
   return (
     <>
@@ -328,7 +671,6 @@ export default function InboxDrawer({
           zIndex: 50,
           background: 'rgba(0, 0, 0, 0.5)',
           backdropFilter: 'blur(4px)',
-          transition: 'opacity 250ms cubic-bezier(0.4, 0, 0.2, 1)',
         }}
         onClick={onClose}
         aria-hidden="true"
@@ -347,7 +689,7 @@ export default function InboxDrawer({
           bottom: 0,
           width: `${drawerWidth}%`,
           zIndex: 51,
-          background: 'var(--glass-bg-heavy, rgba(12, 16, 24, 0.85))',
+          background: 'var(--glass-bg-heavy, rgba(12, 16, 24, 0.92))',
           backdropFilter: 'blur(28px) saturate(1.4)',
           WebkitBackdropFilter: 'blur(28px) saturate(1.4)',
           borderLeft: '1px solid rgba(255, 255, 255, 0.06)',
@@ -360,7 +702,6 @@ export default function InboxDrawer({
       >
         {/* Resize Handle */}
         <div
-          ref={resizeHandleRef}
           onMouseDown={() => setIsResizing(true)}
           style={{
             position: 'absolute',
@@ -370,328 +711,156 @@ export default function InboxDrawer({
             width: 8,
             cursor: 'col-resize',
             zIndex: 100,
-            transition: 'background 150ms ease',
             background: isResizing ? 'rgba(255, 90, 31, 0.2)' : 'transparent',
+            transition: 'background 150ms ease',
           }}
         />
 
         {/* Header: Actions + Close */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '16px 24px',
-            borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
-            flexShrink: 0,
-            gap: 12,
-          }}
-        >
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            <button
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-                padding: '6px 12px',
-                borderRadius: 8,
-                border: '1px solid rgba(255, 255, 255, 0.08)',
-                background: 'rgba(255, 255, 255, 0.04)',
-                color: 'rgba(255, 255, 255, 0.7)',
-                fontSize: 12,
-                fontWeight: 500,
-                cursor: 'pointer',
-                transition: 'all 150ms ease',
-              }}
-              onClick={() => textareaRef.current?.focus()}
-              title="Reply (R)"
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)';
-              }}
-            >
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '14px 20px',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
+          flexShrink: 0,
+          gap: 12,
+        }}>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            <button style={btnStyle} onClick={() => focusReply()} title="Reply (R)"
+              onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}>
               <Reply size={13} /> Reply
             </button>
-            <button
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-                padding: '6px 12px',
-                borderRadius: 8,
-                border: '1px solid rgba(255, 255, 255, 0.08)',
-                background: 'rgba(255, 255, 255, 0.04)',
-                color: 'rgba(255, 255, 255, 0.7)',
-                fontSize: 12,
-                fontWeight: 500,
-                cursor: 'pointer',
-                transition: 'all 150ms ease',
-              }}
-              onClick={() => {/* TODO: forward */}}
-              title="Forward (F)"
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)';
-              }}
-            >
+            <button style={btnStyle} onClick={() => {}} title="Forward (F)"
+              onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}>
               <Forward size={13} /> Forward
             </button>
-            <button
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-                padding: '6px 12px',
-                borderRadius: 8,
-                border: '1px solid rgba(255, 255, 255, 0.08)',
-                background: 'rgba(255, 255, 255, 0.04)',
-                color: 'rgba(255, 255, 255, 0.7)',
-                fontSize: 12,
-                fontWeight: 500,
-                cursor: 'pointer',
-                transition: 'all 150ms ease',
-              }}
-              onClick={() => onArchive(message.id)}
-              title="Archive (E)"
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)';
-              }}
-            >
+            <button style={btnStyle} onClick={() => onArchive(message.id)} title="Archive (E)"
+              onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}>
               <Archive size={13} /> Archive
             </button>
-            <button
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-                padding: '6px 12px',
-                borderRadius: 8,
-                border: '1px solid rgba(255, 255, 255, 0.08)',
-                background: 'rgba(255, 255, 255, 0.04)',
-                color: 'rgba(255, 255, 255, 0.7)',
-                fontSize: 12,
-                fontWeight: 500,
-                cursor: 'pointer',
-                transition: 'all 150ms ease',
-              }}
-              onClick={() => onDone(message.id)}
-              title="Done (D)"
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)';
-              }}
-            >
+            <button style={btnStyle} onClick={() => onDone(message.id)} title="Done (D)"
+              onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}>
               <CheckCircle2 size={13} /> Done
             </button>
             <button
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-                padding: '6px 12px',
-                borderRadius: 8,
-                border: '1px solid rgba(255, 255, 255, 0.08)',
-                background: 'rgba(239, 68, 68, 0.08)',
-                color: 'rgba(239, 68, 68, 0.8)',
-                fontSize: 12,
-                fontWeight: 500,
-                cursor: 'pointer',
-                transition: 'all 150ms ease',
-              }}
-              onClick={() => {/* TODO: spam */}}
-              title="Spam (!)"
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(239, 68, 68, 0.15)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'rgba(239, 68, 68, 0.08)';
-              }}
-            >
+              style={{ ...btnStyle, background: 'rgba(239,68,68,0.08)', color: 'rgba(239,68,68,0.8)' }}
+              onClick={() => {}} title="Spam (!)"
+              onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(239,68,68,0.15)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(239,68,68,0.08)'; }}>
               <AlertTriangle size={13} /> Spam
             </button>
           </div>
 
-          <button
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: 32,
-              height: 32,
-              borderRadius: 8,
-              border: 'none',
-              background: 'rgba(255, 255, 255, 0.06)',
-              color: 'rgba(255, 255, 255, 0.6)',
-              cursor: 'pointer',
-              transition: 'all 150ms ease',
-              flexShrink: 0,
-            }}
-            onClick={onClose}
-            title="Close (Esc)"
-            aria-label="Close drawer"
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.12)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.06)';
-            }}
-          >
-            <X size={16} />
-          </button>
+          {/* Thread count + close */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+            {threadCount && threadCount > 1 && (
+              <span style={{
+                fontSize: 11,
+                fontWeight: 600,
+                color: 'rgba(255,255,255,0.4)',
+                background: 'rgba(255,255,255,0.06)',
+                padding: '2px 8px',
+                borderRadius: 10,
+              }}>
+                {threadCount} messages
+              </span>
+            )}
+            <button
+              style={{
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                width: 32, height: 32, borderRadius: 8, border: 'none',
+                background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.6)',
+                cursor: 'pointer', transition: 'all 150ms ease', flexShrink: 0,
+              }}
+              onClick={onClose} title="Close (Esc)" aria-label="Close drawer"
+              onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.12)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; }}
+            >
+              <X size={16} />
+            </button>
+          </div>
         </div>
 
-        {/* Meta: Sender, Subject, Time, Status Badges */}
-        <div
-          style={{
-            padding: '20px 24px',
-            borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
-            flexShrink: 0,
-          }}
-        >
+        {/* Meta: Sender, Subject, Badges */}
+        <div style={{
+          padding: '20px 24px',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
+          flexShrink: 0,
+        }}>
           {/* Sender row */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
             <div style={{ position: 'relative', width: 36, height: 36, flexShrink: 0 }}>
-              {avatar ? (
-                <img
-                  src={avatar.url}
-                  alt={sender}
-                  width={36}
-                  height={36}
-                  style={{
-                    borderRadius: '50%',
-                    objectFit: 'cover',
-                    display: 'block',
-                  }}
-                />
+              {avatar?.url ? (
+                <img src={avatar.url} alt={sender} width={36} height={36}
+                  style={{ borderRadius: '50%', objectFit: 'cover', display: 'block' }} />
               ) : (
-                <div
-                  style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: '50%',
-                    background: `${brandColor}20`,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: 13,
-                    fontWeight: 600,
-                    color: brandColor,
-                  }}
-                >
+                <div style={{
+                  width: 36, height: 36, borderRadius: '50%',
+                  background: `${brandColor}20`, display: 'flex',
+                  alignItems: 'center', justifyContent: 'center',
+                  fontSize: 13, fontWeight: 600, color: brandColor,
+                }}>
                   {sender[0]?.toUpperCase() || '?'}
                 </div>
               )}
-              {/* Channel badge */}
-              <div
-                style={{
-                  position: 'absolute',
-                  bottom: -2,
-                  right: -2,
-                  width: 14,
-                  height: 14,
-                  borderRadius: '50%',
-                  background: 'var(--bg-primary, #0a0f1a)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: brandColor,
-                  fontSize: 9,
-                }}
-              >
+              <div style={{
+                position: 'absolute', bottom: -2, right: -2,
+                width: 14, height: 14, borderRadius: '50%',
+                background: 'var(--bg-primary, #0a0f1a)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: brandColor,
+              }}>
                 <ChannelIcon size={9} />
               </div>
             </div>
 
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div
-                style={{
-                  fontSize: 15,
-                  fontWeight: 600,
-                  color: 'rgba(255, 255, 255, 0.95)',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                }}
-              >
+              <div style={{ fontSize: 15, fontWeight: 600, color: 'rgba(255,255,255,0.95)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {sender}
               </div>
               {message.senderEmail && (
-                <div style={{ fontSize: 12, color: 'rgba(255, 255, 255, 0.4)', marginTop: 1 }}>
+                <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginTop: 1 }}>
                   {message.senderEmail}
                 </div>
               )}
             </div>
 
-            <div style={{ fontSize: 12, color: 'rgba(255, 255, 255, 0.35)', flexShrink: 0, textAlign: 'right' }}>
+            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', flexShrink: 0, textAlign: 'right' }}>
               {formatDate(message.receivedAt)}
             </div>
           </div>
 
           {/* Subject */}
           {message.subject && (
-            <h2
-              style={{
-                fontSize: 18,
-                fontWeight: 600,
-                color: 'rgba(255, 255, 255, 0.95)',
-                margin: 0,
-                lineHeight: 1.3,
-                marginBottom: 10,
-              }}
-            >
+            <h2 style={{ fontSize: 18, fontWeight: 600, color: 'rgba(255,255,255,0.95)', margin: '0 0 10px', lineHeight: 1.3 }}>
               {message.subject}
             </h2>
           )}
 
-          {/* Status Badges */}
+          {/* Badges */}
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            <span
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                padding: '3px 10px',
-                borderRadius: 10,
-                fontSize: 11,
-                fontWeight: 600,
-                textTransform: 'uppercase',
-                letterSpacing: '0.04em',
-                background:
-                  message.category === 'actionable' ? 'rgba(255, 90, 31, 0.15)' :
-                  message.category === 'personal' ? 'rgba(139, 92, 246, 0.15)' :
-                  message.category === 'spam' ? 'rgba(239, 68, 68, 0.15)' :
-                  'rgba(255, 255, 255, 0.06)',
-                color:
-                  message.category === 'actionable' ? '#FF7A45' :
-                  message.category === 'personal' ? '#A78BFA' :
-                  message.category === 'spam' ? '#F87171' :
-                  'rgba(255, 255, 255, 0.5)',
-              }}
-            >
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', padding: '3px 10px',
+              borderRadius: 10, fontSize: 11, fontWeight: 600,
+              textTransform: 'uppercase', letterSpacing: '0.04em',
+              background: message.category === 'actionable' ? 'rgba(255,90,31,0.15)' : message.category === 'personal' ? 'rgba(139,92,246,0.15)' : message.category === 'spam' ? 'rgba(239,68,68,0.15)' : 'rgba(255,255,255,0.06)',
+              color: message.category === 'actionable' ? '#FF7A45' : message.category === 'personal' ? '#A78BFA' : message.category === 'spam' ? '#F87171' : 'rgba(255,255,255,0.5)',
+            }}>
               {getCategoryLabel(message.category)}
             </span>
 
             {message.threadStatus && (
-              <span
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  padding: '3px 10px',
-                  borderRadius: 10,
-                  fontSize: 11,
-                  fontWeight: 500,
-                  background: message.threadStatus === 'waiting_on_you' ? 'rgba(59, 130, 246, 0.12)' : 'rgba(255, 255, 255, 0.06)',
-                  color: message.threadStatus === 'waiting_on_you' ? '#60A5FA' : 'rgba(255, 255, 255, 0.4)',
-                }}
-              >
+              <span style={{
+                display: 'inline-flex', alignItems: 'center', padding: '3px 10px',
+                borderRadius: 10, fontSize: 11, fontWeight: 500,
+                background: message.threadStatus === 'waiting_on_you' ? 'rgba(59,130,246,0.12)' : 'rgba(255,255,255,0.06)',
+                color: message.threadStatus === 'waiting_on_you' ? '#60A5FA' : 'rgba(255,255,255,0.4)',
+              }}>
                 {message.threadStatus === 'waiting_on_you' ? 'Waiting on you' :
                  message.threadStatus === 'waiting_on_them' ? 'Waiting on them' :
                  message.threadStatus === 'new' ? 'New' : 'Resolved'}
@@ -701,64 +870,38 @@ export default function InboxDrawer({
         </div>
 
         {/* Body Content */}
-        <div
-          style={{
-            flex: 1,
-            overflowY: 'auto',
-            padding: '24px',
-            color: 'rgba(255, 255, 255, 0.85)',
-            fontSize: 14,
-            lineHeight: 1.7,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 20,
-          }}
-        >
-          {/* AI Summary Placeholder */}
+        <div style={{
+          flex: 1, overflowY: 'auto', padding: '20px 24px',
+          color: 'rgba(255,255,255,0.85)', fontSize: 14, lineHeight: 1.7,
+          display: 'flex', flexDirection: 'column', gap: 16,
+        }}>
+          {/* AI Summary — Task #13 */}
           {showSummary && (
-            <div
-              style={{
-                padding: '16px',
-                borderRadius: 12,
-                border: '1px solid rgba(139, 92, 246, 0.2)',
-                background: 'rgba(139, 92, 246, 0.05)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 12,
+            <AiSummaryPanel
+              message={message}
+              onCreateTask={(data) => {
+                // Navigate to kanban with pre-filled task
+                window.dispatchEvent(new CustomEvent('bb:create-task', { detail: data }));
               }}
-            >
-              <Sparkles size={16} style={{ color: '#A78BFA', flexShrink: 0 }} />
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: '#A78BFA', marginBottom: 4 }}>
-                  AI Summary (Task #13)
-                </div>
-                <div style={{ fontSize: 12, color: 'rgba(255, 255, 255, 0.5)' }}>
-                  Summary generation coming soon — will appear here
-                </div>
-              </div>
-            </div>
+              onDraftReply={(text) => {
+                setReplyText(text);
+                setTimeout(() => textareaRef.current?.focus(), 50);
+              }}
+            />
           )}
 
-          {/* Body Text */}
-          <div
-            style={{
-              whiteSpace: 'pre-wrap',
-              wordBreak: 'break-word',
-              fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-            }}
-          >
-            {message.bodyPreview}
-          </div>
+          {/* Thread View or Single Message — Task #11 */}
+          {hasThread ? (
+            <ThreadView messages={threadMessages!} onFocusReply={focusReply} />
+          ) : (
+            <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
+              {message.bodyPreview}
+            </div>
+          )}
         </div>
 
         {/* Reply Composer */}
-        <div
-          style={{
-            padding: '16px 24px',
-            borderTop: '1px solid rgba(255, 255, 255, 0.06)',
-            flexShrink: 0,
-          }}
-        >
+        <div style={{ padding: '14px 20px', borderTop: '1px solid rgba(255,255,255,0.06)', flexShrink: 0 }}>
           <div style={{ display: 'flex', gap: 8 }}>
             <textarea
               ref={textareaRef}
@@ -766,66 +909,35 @@ export default function InboxDrawer({
               onChange={handleAutoExpand}
               onFocus={() => setReplyFocused(true)}
               onBlur={() => setReplyFocused(false)}
-              placeholder="Type your reply... (Cmd+Enter to send)"
+              placeholder="Type your reply… (⌘↵ to send)"
               style={{
-                flex: 1,
-                padding: '10px 12px',
-                borderRadius: 8,
-                border: replyFocused ? '1px solid rgba(255, 255, 255, 0.15)' : '1px solid rgba(255, 255, 255, 0.06)',
-                background: 'rgba(13, 17, 23, 0.6)',
-                color: 'var(--text-primary, #F1F5F9)',
-                fontSize: 13,
-                fontFamily: 'inherit',
-                outline: 'none',
-                transition: 'all 150ms ease',
-                resize: 'none',
-                minHeight: 40,
-                maxHeight: 200,
-                boxShadow: replyFocused ? '0 0 0 2px rgba(255, 90, 31, 0.15)' : 'none',
+                flex: 1, padding: '10px 12px', borderRadius: 8,
+                border: replyFocused ? '1px solid rgba(255,255,255,0.15)' : '1px solid rgba(255,255,255,0.06)',
+                background: 'rgba(13,17,23,0.6)', color: 'var(--text-primary, #F1F5F9)',
+                fontSize: 13, fontFamily: 'inherit', outline: 'none',
+                transition: 'all 150ms ease', resize: 'none', minHeight: 40, maxHeight: 200,
+                boxShadow: replyFocused ? '0 0 0 2px rgba(255,90,31,0.15)' : 'none',
               }}
             />
             <button
               onClick={handleSendReply}
               disabled={!replyText.trim()}
               style={{
-                padding: '10px 16px',
-                borderRadius: 8,
-                border: 'none',
-                background: replyText.trim() ? '#FF5A1F' : 'rgba(255, 90, 31, 0.3)',
-                color: replyText.trim() ? '#000' : 'rgba(0, 0, 0, 0.3)',
-                fontSize: 12,
-                fontWeight: 600,
+                padding: '10px 16px', borderRadius: 8, border: 'none',
+                background: replyText.trim() ? '#FF5A1F' : 'rgba(255,90,31,0.3)',
+                color: replyText.trim() ? '#fff' : 'rgba(255,255,255,0.3)',
+                fontSize: 12, fontWeight: 600,
                 cursor: replyText.trim() ? 'pointer' : 'default',
-                transition: 'all 150ms ease',
-                flexShrink: 0,
+                transition: 'all 150ms ease', flexShrink: 0,
               }}
-              onMouseEnter={(e) => {
-                if (replyText.trim()) {
-                  e.currentTarget.style.background = '#FF7A45';
-                  e.currentTarget.style.transform = 'translateY(-1px)';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (replyText.trim()) {
-                  e.currentTarget.style.background = '#FF5A1F';
-                  e.currentTarget.style.transform = 'translateY(0)';
-                }
-              }}
+              onMouseEnter={(e) => { if (replyText.trim()) { e.currentTarget.style.background = '#FF7A45'; } }}
+              onMouseLeave={(e) => { if (replyText.trim()) { e.currentTarget.style.background = '#FF5A1F'; } }}
             >
               Send
             </button>
           </div>
-
-          {/* Keyboard hint */}
-          <div style={{ fontSize: 11, color: 'rgba(255, 255, 255, 0.25)', marginTop: 8 }}>
-            <kbd style={{
-              padding: '2px 5px',
-              borderRadius: 4,
-              background: 'rgba(255, 255, 255, 0.06)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              fontSize: 10,
-              fontFamily: 'inherit',
-            }}>⌘⏎</kbd> to send
+          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', marginTop: 6 }}>
+            <kbd style={{ padding: '2px 5px', borderRadius: 4, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', fontSize: 10, fontFamily: 'inherit' }}>⌘⏎</kbd> to send
           </div>
         </div>
       </div>
