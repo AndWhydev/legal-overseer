@@ -150,6 +150,42 @@ export function isNoReplyAddress(email: string): boolean {
   return NOREPLY_PATTERNS.some(p => p.test(email))
 }
 
+/** Known service/automated domain blocklist — prevents auto-creating contacts for bots/services */
+const SERVICE_DOMAINS = new Set([
+  '1password.com', 'amazon.com', 'amazonaws.com', 'apple.com', 'asana.com',
+  'atlassian.com', 'calendly.com', 'cloudflare.com', 'digitalocean.com',
+  'dropbox.com', 'facebook.com', 'figma.com', 'fly.io', 'github.com',
+  'gitlab.com', 'google.com', 'googlemail.com', 'heroku.com', 'hubspot.com',
+  'intercom.com', 'jira.com', 'linear.app', 'linkedin.com', 'mailchimp.com',
+  'meta.com', 'microsoft.com', 'netlify.com', 'notion.so', 'npm.com',
+  'paypal.com', 'postmark.com', 'quickbooks.com', 'resend.com', 'salesforce.com',
+  'sendgrid.com', 'sentry.io', 'shopify.com', 'slack.com', 'spotify.com',
+  'stripe.com', 'supabase.com', 'trello.com', 'twilio.com', 'twitter.com',
+  'vercel.com', 'xero.com', 'zendesk.com', 'zoom.us', 'okta.com', 'auth0.com',
+  'firebase.google.com', 'circleci.com', 'travis-ci.org', 'jenkins.io',
+  'datadog.com', 'newrelic.com', 'elastic.co', 'mongodb.com', 'postgresql.org',
+])
+
+/**
+ * Determine if an email sender is likely a human.
+ * Returns false for no-reply patterns and known service domains.
+ */
+export function isHumanSender(email: string): boolean {
+  if (!email) return false
+
+  // Check no-reply patterns
+  if (isNoReplyAddress(email)) return false
+
+  // Extract domain
+  const domain = email.split('@')[1]?.toLowerCase()
+  if (!domain) return false
+
+  // Check service domains blocklist
+  if (SERVICE_DOMAINS.has(domain)) return false
+
+  return true
+}
+
 /**
  * Extract a human-readable name from sender string or email.
  * Handles formats: "John Doe <john@x.com>", "john.doe@x.com", "John Doe"
@@ -242,11 +278,11 @@ async function reflectInboundMessage(
 
     let contacts = await resolveEntity(supabase, query, orgId)
 
-    // Auto-create contact for unknown senders (skip no-reply/automated addresses)
+    // Auto-create contact for unknown senders (skip service/automated addresses)
     if (contacts.length === 0) {
       const senderEmail = msg.senderEmail?.toLowerCase()
-      if (senderEmail && isNoReplyAddress(senderEmail)) {
-        return // Skip automated senders entirely
+      if (senderEmail && !isHumanSender(senderEmail)) {
+        return // Skip service domains and automated senders entirely
       }
 
       const newId = await autoCreateContact(supabase, orgId, msg)
