@@ -105,12 +105,23 @@ export function scorePriority(
 
 /**
  * Map classification category to triage category.
+ * Lower thresholds to catch more actionable items:
+ * - 'spam', 'newsletter' → 'spam'
+ * - 'personal' → 'personal'
+ * - 'lead', 'client', 'vendor' with significance >= 1 → 'actionable'
+ * - Any category with significance >= 2 → 'actionable'
+ * - Everything else → 'informational'
  */
 function toMessageCategory(classification: ClassificationResult): MessageCategory {
   const { category, significance } = classification
   if (category === 'spam' || category === 'newsletter') return 'spam'
   if (category === 'personal') return 'personal'
-  if (significance >= 4 && (category === 'lead' || category === 'client' || category === 'vendor')) {
+  // Lower threshold for business-critical categories
+  if ((category === 'lead' || category === 'client' || category === 'vendor') && significance >= 1) {
+    return 'actionable'
+  }
+  // General actionable threshold: significance >= 2
+  if (significance >= 2) {
     return 'actionable'
   }
   return 'informational'

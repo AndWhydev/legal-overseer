@@ -17,7 +17,11 @@ import {
   Sparkles,
   Archive,
   Clock,
+  Reply,
+  Forward,
+  AlertTriangle,
 } from 'lucide-react';
+import { resolveAvatar, resolveAvatarSync, type AvatarResult } from '@/lib/avatar/resolver';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -250,6 +254,20 @@ function InboxTab() {
     if (!useSeeded) fetchInbox(true);
   });
 
+  const [selectedMessage, setSelectedMessage] = useState<InboxMessage | null>(null);
+  const [focusedIndex, setFocusedIndex] = useState(-1);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  const toggleSelect = useCallback((id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const clearSelection = useCallback(() => setSelectedIds(new Set()), []);
+
   const [autoTriage, setAutoTriage] = useState(false);
 
   const handleRunTriage = async () => {
@@ -282,6 +300,17 @@ function InboxTab() {
     setMessages(prev => prev.map(m => m.id === id ? { ...m, status: 'processed' } : m));
   }, []);
 
+  // Bulk actions on selected messages
+  const handleBulkArchive = useCallback(() => {
+    selectedIds.forEach(id => handleArchive(id));
+    clearSelection();
+  }, [selectedIds, handleArchive, clearSelection]);
+
+  const handleBulkDone = useCallback(() => {
+    selectedIds.forEach(id => handleDone(id));
+    clearSelection();
+  }, [selectedIds, handleDone, clearSelection]);
+
   const hasActiveFilters = channelFilter || priorityFilter || statusFilter;
 
   const clearFilters = () => {
@@ -296,6 +325,53 @@ function InboxTab() {
     if (statusFilter && m.status !== statusFilter) return false;
     return true;
   });
+
+  // ── Global keyboard shortcuts (j/k navigate, Enter opens, e archive, d done, x select) ──
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      // Skip when drawer is open (drawer has its own handlers) or typing in an input
+      if (selectedMessage) return;
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+
+      switch (e.key) {
+        case 'j': // Next message
+          e.preventDefault();
+          setFocusedIndex(prev => Math.min(prev + 1, displayed.length - 1));
+          break;
+        case 'k': // Previous message
+          e.preventDefault();
+          setFocusedIndex(prev => Math.max(prev - 1, 0));
+          break;
+        case 'Enter': // Open focused message
+          e.preventDefault();
+          if (focusedIndex >= 0 && focusedIndex < displayed.length) {
+            setSelectedMessage(displayed[focusedIndex]);
+          }
+          break;
+        case 'e': // Archive focused message
+          if (focusedIndex >= 0 && focusedIndex < displayed.length) {
+            e.preventDefault();
+            handleArchive(displayed[focusedIndex].id);
+          }
+          break;
+        case 'd': // Done focused message
+          if (focusedIndex >= 0 && focusedIndex < displayed.length) {
+            e.preventDefault();
+            handleDone(displayed[focusedIndex].id);
+          }
+          break;
+        case 'x': // Toggle select focused message
+          if (focusedIndex >= 0 && focusedIndex < displayed.length) {
+            e.preventDefault();
+            toggleSelect(displayed[focusedIndex].id);
+          }
+          break;
+      }
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [selectedMessage, displayed, focusedIndex, handleArchive, handleDone, toggleSelect]);
 
   if (loading && !useSeeded) return <InboxSkeleton />;
 
@@ -426,6 +502,32 @@ function InboxTab() {
         </div>
       )}
 
+      {/* ── Bulk Action Bar ── */}
+      {selectedIds.size > 0 && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 12,
+          padding: '8px 16px',
+          background: 'rgba(255, 90, 31, 0.08)',
+          borderRadius: 8,
+          margin: '0 0 4px',
+        }}>
+          <span style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255, 255, 255, 0.8)' }}>
+            {selectedIds.size} selected
+          </span>
+          <button className="bb-btn bb-btn--ghost bb-btn--sm" onClick={handleBulkArchive}>
+            <Archive size={13} /> Archive
+          </button>
+          <button className="bb-btn bb-btn--ghost bb-btn--sm" onClick={handleBulkDone}>
+            <CheckCircle2 size={13} /> Done
+          </button>
+          <button className="bb-btn bb-btn--ghost bb-btn--sm" onClick={clearSelection}>
+            <X size={12} /> Clear
+          </button>
+        </div>
+      )}
+
       {/* ── Message List — flat, borderless ── */}
       <div className="bb-inbox-list">
         {displayed.length === 0 ? (
@@ -435,12 +537,359 @@ function InboxTab() {
             description="No messages to show. Adjust your filters or wait for new messages."
           />
         ) : (
-          displayed.map((msg) => (
-            <MessageRow key={msg.id} message={msg} onArchive={handleArchive} onDone={handleDone} />
+          displayed.map((msg, idx) => (
+            <MessageRow
+              key={msg.id}
+              message={msg}
+              onArchive={handleArchive}
+              onDone={handleDone}
+              onClick={() => setSelectedMessage(msg)}
+              focused={idx === focusedIndex}
+              selected={selectedIds.has(msg.id)}
+              onToggleSelect={() => toggleSelect(msg.id)}
+            />
           ))
         )}
       </div>
+
+      {/* ── Email Reading Drawer ── */}
+      <EmailDrawer
+        message={selectedMessage}
+        onClose={() => setSelectedMessage(null)}
+        onArchive={(id) => { handleArchive(id); setSelectedMessage(null); }}
+        onDone={(id) => { handleDone(id); setSelectedMessage(null); }}
+      />
     </TabShell>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Email Reading Drawer — slide-in panel from right
+// ---------------------------------------------------------------------------
+
+const drawerOverlayStyle: React.CSSProperties = {
+  position: 'fixed',
+  inset: 0,
+  zIndex: 50,
+  background: 'rgba(0, 0, 0, 0.5)',
+  backdropFilter: 'blur(4px)',
+  transition: 'opacity 0.25s ease',
+};
+
+const drawerPanelStyle: React.CSSProperties = {
+  position: 'fixed',
+  top: 0,
+  right: 0,
+  bottom: 0,
+  width: '60vw',
+  maxWidth: 800,
+  minWidth: 400,
+  zIndex: 51,
+  background: 'rgba(20, 20, 22, 0.95)',
+  backdropFilter: 'blur(20px)',
+  borderLeft: '1px solid rgba(255, 255, 255, 0.08)',
+  display: 'flex',
+  flexDirection: 'column',
+  transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+  boxShadow: '-8px 0 40px rgba(0, 0, 0, 0.4)',
+};
+
+const drawerHeaderStyle: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  padding: '16px 24px',
+  borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
+  flexShrink: 0,
+};
+
+const drawerActionBtnStyle: React.CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 6,
+  padding: '6px 12px',
+  borderRadius: 8,
+  border: '1px solid rgba(255, 255, 255, 0.08)',
+  background: 'rgba(255, 255, 255, 0.04)',
+  color: 'rgba(255, 255, 255, 0.7)',
+  fontSize: 12,
+  fontWeight: 500,
+  cursor: 'pointer',
+  transition: 'all 0.15s ease',
+};
+
+const drawerCloseBtnStyle: React.CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  width: 32,
+  height: 32,
+  borderRadius: 8,
+  border: 'none',
+  background: 'rgba(255, 255, 255, 0.06)',
+  color: 'rgba(255, 255, 255, 0.6)',
+  cursor: 'pointer',
+  transition: 'all 0.15s ease',
+  flexShrink: 0,
+};
+
+const drawerMetaStyle: React.CSSProperties = {
+  padding: '20px 24px',
+  borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
+  flexShrink: 0,
+};
+
+const drawerBodyStyle: React.CSSProperties = {
+  flex: 1,
+  overflowY: 'auto',
+  padding: '24px',
+  color: 'rgba(255, 255, 255, 0.85)',
+  fontSize: 14,
+  lineHeight: 1.7,
+};
+
+function EmailDrawer({
+  message,
+  onClose,
+  onArchive,
+  onDone,
+}: {
+  message: InboxMessage | null;
+  onClose: () => void;
+  onArchive: (id: string) => void;
+  onDone: (id: string) => void;
+}) {
+  const isOpen = message !== null;
+
+  useEffect(() => {
+    if (!isOpen || !message) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+      switch (e.key) {
+        case 'Escape': onClose(); break;
+        case 'e': e.preventDefault(); onArchive(message.id); break;
+        case 'd': e.preventDefault(); onDone(message.id); break;
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, message, onClose, onArchive, onDone]);
+
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+      return () => { document.body.style.overflow = ''; };
+    }
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
+  const sender = message.contactName || message.senderName || message.senderEmail || 'Unknown';
+  const ChannelIcon = CHANNEL_ICONS[message.channelType] || GmailIcon;
+  const brandColor = CHANNEL_BRAND_COLORS[message.channelType] || 'var(--text-dim)';
+  const formattedDate = new Date(message.receivedAt).toLocaleString('en-AU', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+
+  return (
+    <>
+      {/* Overlay */}
+      <div
+        style={drawerOverlayStyle}
+        onClick={onClose}
+        aria-hidden="true"
+      />
+
+      {/* Panel */}
+      <div
+        role="dialog"
+        aria-label={`Reading: ${message.subject || 'Message'}`}
+        aria-modal="true"
+        style={drawerPanelStyle}
+      >
+        {/* Header: actions + close */}
+        <div style={drawerHeaderStyle}>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <button
+              style={drawerActionBtnStyle}
+              onClick={() => {/* TODO: reply */}}
+              onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)'; }}
+              title="Reply (R)"
+            >
+              <Reply size={13} /> Reply
+            </button>
+            <button
+              style={drawerActionBtnStyle}
+              onClick={() => {/* TODO: forward */}}
+              onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)'; }}
+              title="Forward (F)"
+            >
+              <Forward size={13} /> Forward
+            </button>
+            <button
+              style={drawerActionBtnStyle}
+              onClick={() => onArchive(message.id)}
+              onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)'; }}
+              title="Archive (E)"
+            >
+              <Archive size={13} /> Archive
+            </button>
+            <button
+              style={drawerActionBtnStyle}
+              onClick={() => onDone(message.id)}
+              onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)'; }}
+              title="Done (D)"
+            >
+              <CheckCircle2 size={13} /> Done
+            </button>
+            <button
+              style={{ ...drawerActionBtnStyle, color: 'rgba(239, 68, 68, 0.8)' }}
+              onClick={() => {/* TODO: spam */}}
+              onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)'; }}
+              title="Spam (!)"
+            >
+              <AlertTriangle size={13} /> Spam
+            </button>
+          </div>
+          <button
+            style={drawerCloseBtnStyle}
+            onClick={onClose}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.12)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.06)'; }}
+            aria-label="Close drawer"
+            title="Close (Esc)"
+          >
+            <X size={16} />
+          </button>
+        </div>
+
+        {/* Meta: sender, subject, time */}
+        <div style={drawerMetaStyle}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+            <div style={{
+              width: 36,
+              height: 36,
+              borderRadius: 10,
+              background: `${brandColor}18`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: brandColor,
+              flexShrink: 0,
+            }}>
+              <ChannelIcon size={18} />
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{
+                fontSize: 15,
+                fontWeight: 600,
+                color: 'rgba(255, 255, 255, 0.95)',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}>
+                {sender}
+              </div>
+              {message.senderEmail && (
+                <div style={{ fontSize: 12, color: 'rgba(255, 255, 255, 0.4)', marginTop: 1 }}>
+                  {message.senderEmail}
+                </div>
+              )}
+            </div>
+            <div style={{ fontSize: 12, color: 'rgba(255, 255, 255, 0.35)', flexShrink: 0, textAlign: 'right' }}>
+              {formattedDate}
+            </div>
+          </div>
+
+          {message.subject && (
+            <h2 style={{ fontSize: 18, fontWeight: 600, color: 'rgba(255, 255, 255, 0.95)', margin: 0, lineHeight: 1.3 }}>
+              {message.subject}
+            </h2>
+          )}
+
+          <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+            <span style={{
+              display: 'inline-block',
+              padding: '3px 10px',
+              borderRadius: 10,
+              fontSize: 11,
+              fontWeight: 600,
+              textTransform: 'uppercase',
+              letterSpacing: '0.04em',
+              background: message.category === 'actionable' ? 'rgba(255, 90, 31, 0.15)' :
+                          message.category === 'personal' ? 'rgba(139, 92, 246, 0.15)' :
+                          message.category === 'spam' ? 'rgba(239, 68, 68, 0.15)' :
+                          'rgba(255, 255, 255, 0.06)',
+              color: message.category === 'actionable' ? '#FF7A45' :
+                     message.category === 'personal' ? '#A78BFA' :
+                     message.category === 'spam' ? '#F87171' :
+                     'rgba(255, 255, 255, 0.5)',
+            }}>
+              {getCategoryLabel(message.category)}
+            </span>
+            {message.threadStatus && (
+              <span style={{
+                display: 'inline-block',
+                padding: '3px 10px',
+                borderRadius: 10,
+                fontSize: 11,
+                fontWeight: 500,
+                background: message.threadStatus === 'waiting_on_you' ? 'rgba(59, 130, 246, 0.12)' : 'rgba(255, 255, 255, 0.06)',
+                color: message.threadStatus === 'waiting_on_you' ? '#60A5FA' : 'rgba(255, 255, 255, 0.4)',
+              }}>
+                {message.threadStatus === 'waiting_on_you' ? 'Waiting on you' :
+                 message.threadStatus === 'waiting_on_them' ? 'Waiting on them' :
+                 message.threadStatus === 'new' ? 'New' : 'Resolved'}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Body */}
+        <div style={drawerBodyStyle}>
+          <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
+            {message.bodyPreview}
+          </div>
+        </div>
+
+        {/* Footer keyboard hints */}
+        <div style={{
+          padding: '12px 24px',
+          borderTop: '1px solid rgba(255, 255, 255, 0.06)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 16,
+          flexShrink: 0,
+        }}>
+          {['Esc close', 'R reply', 'E archive', 'D done'].map((hint) => {
+            const [key, ...rest] = hint.split(' ');
+            return (
+              <span key={key} style={{ fontSize: 11, color: 'rgba(255, 255, 255, 0.25)' }}>
+                <kbd style={{
+                  padding: '2px 5px',
+                  borderRadius: 4,
+                  background: 'rgba(255, 255, 255, 0.06)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  fontSize: 10,
+                  fontFamily: 'inherit',
+                }}>{key}</kbd>{' '}{rest.join(' ')}
+              </span>
+            );
+          })}
+        </div>
+      </div>
+    </>
   );
 }
 
@@ -556,7 +1005,7 @@ function InboxSelect({
 // Message Row — Superhuman-inspired: flat, no border, spacing-based
 // ---------------------------------------------------------------------------
 
-function MessageRow({ message, onArchive, onDone }: { message: InboxMessage; onArchive?: (id: string) => void; onDone?: (id: string) => void }) {
+function MessageRow({ message, onArchive, onDone, onClick, focused, selected, onToggleSelect }: { message: InboxMessage; onArchive?: (id: string) => void; onDone?: (id: string) => void; onClick?: () => void; focused?: boolean; selected?: boolean; onToggleSelect?: () => void }) {
   const ChannelIcon = CHANNEL_ICONS[message.channelType] || GmailIcon;
   const brandColor = CHANNEL_BRAND_COLORS[message.channelType] || 'var(--text-dim)';
   const isUnread = message.status === 'unread';
@@ -568,18 +1017,110 @@ function MessageRow({ message, onArchive, onDone }: { message: InboxMessage; onA
     message.significance >= 6 ? 'high' :
     message.significance >= 5 ? 'medium' : undefined;
 
+  // Avatar resolution — sync initial render, async upgrade
+  const email = message.senderEmail;
+  const syncAvatar = email ? resolveAvatarSync(email, sender) : null;
+  const [avatar, setAvatar] = useState<AvatarResult | null>(syncAvatar);
+
+  useEffect(() => {
+    if (!email) return;
+    let cancelled = false;
+    resolveAvatar(email, sender).then((result) => {
+      if (!cancelled) setAvatar(result);
+    });
+    return () => { cancelled = true; };
+  }, [email, sender]);
+
   return (
     <div
       className="bb-inbox-row"
       data-unread={isUnread || undefined}
       data-important={isImportant || undefined}
       data-level={level}
-      style={{ '--channel-color': brandColor } as React.CSSProperties}
+      data-focused={focused || undefined}
+      data-selected={selected || undefined}
+      onClick={onClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick?.(); } }}
+      style={{
+        '--channel-color': brandColor,
+        cursor: 'pointer',
+        ...(focused ? { background: 'rgba(255, 255, 255, 0.04)', outline: '1px solid rgba(255, 255, 255, 0.1)' } : {}),
+        ...(selected ? { background: 'rgba(255, 90, 31, 0.06)' } : {}),
+      } as React.CSSProperties}
     >
-      {/* Col 1: Channel icon + sender name */}
+      {/* Selection checkbox */}
+      <div
+        onClick={(e) => { e.stopPropagation(); onToggleSelect?.(); }}
+        style={{
+          width: 18,
+          height: 18,
+          borderRadius: 4,
+          border: `1.5px solid ${selected ? '#FF5A1F' : 'rgba(255, 255, 255, 0.15)'}`,
+          background: selected ? 'rgba(255, 90, 31, 0.2)' : 'transparent',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0,
+          cursor: 'pointer',
+          transition: 'all 0.15s ease',
+        }}
+      >
+        {selected && <CheckCircle2 size={12} style={{ color: '#FF5A1F' }} />}
+      </div>
+
+      {/* Col 1: Avatar (with channel badge) + sender name */}
       <div className="bb-inbox-row__col1">
-        <div className="bb-inbox-row__icon">
-          <ChannelIcon size={15} />
+        <div style={{ position: 'relative', width: 32, height: 32, flexShrink: 0 }}>
+          {avatar ? (
+            <img
+              src={avatar.url}
+              alt={sender}
+              width={32}
+              height={32}
+              style={{
+                borderRadius: '50%',
+                objectFit: 'cover',
+                display: 'block',
+              }}
+            />
+          ) : (
+            <div
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: '50%',
+                background: 'var(--border-subtle)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 13,
+                fontWeight: 600,
+                color: 'var(--text-secondary)',
+              }}
+            >
+              {sender[0]?.toUpperCase() || '?'}
+            </div>
+          )}
+          {/* Channel badge — small icon overlaid bottom-right */}
+          <div
+            style={{
+              position: 'absolute',
+              bottom: -2,
+              right: -2,
+              width: 14,
+              height: 14,
+              borderRadius: '50%',
+              background: 'var(--card-bg, #1a1a2e)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: brandColor,
+            }}
+          >
+            <ChannelIcon size={9} />
+          </div>
         </div>
         <span className="bb-inbox-row__sender">{sender}</span>
       </div>
@@ -587,7 +1128,7 @@ function MessageRow({ message, onArchive, onDone }: { message: InboxMessage; onA
       {/* Col 2: Tag + subject + preview, all aligned */}
       <div className="bb-inbox-row__col2">
         <span className={`bb-inbox-row__tag bb-inbox-row__tag--${message.category}`}>
-          {message.category}
+          {getCategoryLabel(message.category)}
         </span>
         {message.subject && (
           <span className="bb-inbox-row__subject">{message.subject}</span>
@@ -626,6 +1167,19 @@ function formatTimeAgo(dateStr: string): string {
   if (hours < 24) return `${hours}h`;
   const days = Math.floor(hours / 24);
   return `${days}d`;
+}
+
+/**
+ * Map raw category to user-friendly label
+ */
+function getCategoryLabel(category: MessageCategory): string {
+  const labels: Record<MessageCategory, string> = {
+    actionable: 'Priority',
+    personal: 'Personal',
+    informational: 'Updates',
+    spam: 'Spam',
+  };
+  return labels[category] || category;
 }
 
 export default React.memo(InboxTab);

@@ -2461,6 +2461,7 @@ html.light .bb-chip--accent {
   gap: 10px;
   width: 160px;
   min-width: 120px;
+  margin-right: 12px;
 }
 
 .bb-inbox-row__icon {
@@ -2520,24 +2521,26 @@ html.light .bb-chip--accent {
   line-height: 1.4;
 }
 
+/* Category badge colors — distinct and subtle */
+
 .bb-inbox-row__tag--actionable {
-  color: var(--bb-orange);
-  background: rgba(255, 90, 31, 0.08);
+  color: #FF6B35;
+  background: rgba(255, 107, 53, 0.12);
 }
 
 .bb-inbox-row__tag--informational {
-  color: var(--bb-blue);
-  background: rgba(59, 130, 246, 0.08);
+  color: #4F46E5;
+  background: rgba(79, 70, 229, 0.12);
 }
 
 .bb-inbox-row__tag--personal {
-  color: var(--bb-purple);
-  background: rgba(139, 92, 246, 0.08);
+  color: #EC4899;
+  background: rgba(236, 72, 153, 0.12);
 }
 
 .bb-inbox-row__tag--spam {
-  color: var(--text-dim);
-  background: rgba(255, 255, 255, 0.04);
+  color: #6B7280;
+  background: rgba(107, 114, 128, 0.08);
 }
 
 .bb-inbox-row__subject {
