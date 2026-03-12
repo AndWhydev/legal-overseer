@@ -465,6 +465,16 @@ export async function runTriage(
       classification = await classifyMessage(supabase, channelMsg, orgId)
     }
 
+    // 2c. Score actionability for human messages
+    let actionabilitySignals: ActionabilitySignals | null = null
+    if (senderType === 'human') {
+      actionabilitySignals = scoreActionability(msg.body as string | null, {
+        isClient: classification.category === 'client',
+        isReply: false, // would need to be determined from thread state
+        userName: undefined, // would need user's name for mention detection
+      })
+    }
+
     // 3. Entity resolution on inbound
     let contactId: string | null = null
     let contactName: string | null = null
@@ -627,6 +637,7 @@ export async function runTriage(
         metadata: {
           ...(msg.metadata || {}),
           sender_type: senderType,
+          actionability_signals: actionabilitySignals || undefined,
           category: msgCategory,
           contact_id: contactId,
           contact_name: contactName,
