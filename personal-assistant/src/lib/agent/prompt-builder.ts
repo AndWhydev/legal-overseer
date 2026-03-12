@@ -4,6 +4,7 @@ import { loadVoiceProfile } from './voice-loader'
 import { getPack, resolveIndustry } from '@/lib/industry/registry'
 import { scanForEntityMentions, type ScanContact } from '@/lib/context/entity-mention-scanner'
 import { getBaseplateSnapshot, type BaseplateSnapshot } from '@/lib/context/baseplate-snapshot'
+import { getPendingApprovals } from './approval-queue'
 import { logger } from '@/lib/core/logger'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
@@ -102,11 +103,28 @@ async function getDueReminders(): Promise<string> {
   return lines.length > 0 ? lines.join('\n') : 'No reminders.'
 }
 
+function formatPendingApprovals(approvals: import('./approval-queue').ApprovalRecord[]): string {
+  if (approvals.length === 0) return 'No pending actions.'
+
+  const now = Date.now()
+  const lines = approvals.map(a => {
+    const ageMs = now - new Date(a.created_at).getTime()
+    const ageHours = Math.floor(ageMs / (1000 * 60 * 60))
+    const ageMinutes = Math.floor(ageMs / (1000 * 60))
+    const ago = ageHours > 0 ? `${ageHours}h ago` : `${ageMinutes}m ago`
+    return `- [ID: ${a.id.slice(0, 8)}] ${a.action_summary} (${a.action_type}, queued ${ago})`
+  })
+
+  lines.push('')
+  lines.push('Use the approve_action tool to approve any of these when the user confirms.')
+  return lines.join('\n')
+}
+
 export async function buildSystemPrompt(supabase: SupabaseClient, orgId: string, industry?: string): Promise<string> {
   const deploymentSlug = process.env.BITBIT_DEPLOYMENT || 'awu'
   const pack = getPack(resolveIndustry(industry))
 
-  const [ctx, channelSummary, todayEvents, dueReminders, policyText, voiceText] = await Promise.all([
+  const [ctx, channelSummary, todayEvents, dueReminders, policyText, voiceText, pendingApprovals] = await Promise.all([
     supabase
       ? loadContext(supabase, orgId, {
           activeTasksOnly: true,
@@ -119,6 +137,9 @@ export async function buildSystemPrompt(supabase: SupabaseClient, orgId: string,
     getDueReminders(),
     loadPolicies(deploymentSlug, supabase, orgId),
     loadVoiceProfile(deploymentSlug, undefined, supabase, orgId),
+    supabase
+      ? getPendingApprovals(supabase, orgId, { limit: 5 }).catch(() => [])
+      : Promise.resolve([]),
   ])
 
   const now = new Date()
@@ -218,6 +239,9 @@ ${contactsSummary}
 
 ### Recent Activity
 ${recentActivitySummary}
+
+### Pending Actions Awaiting Approval
+${formatPendingApprovals(pendingApprovals)}
 `
 
   if (policyText) {

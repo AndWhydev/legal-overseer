@@ -4,7 +4,8 @@ import { channelToolDefinitions, channelToolHandlers } from './tools/channel-too
 import { superpowerToolDefinitions, superpowerToolHandlers } from './tools/superpower-tools'
 import { composeCreatorStudioDeck } from '@/lib/creator-studio'
 import { routeAgentAction } from './confidence-router'
-import { queueAgentAction } from './approval-queue'
+import { queueAgentAction, getPendingApprovals, resolveApproval } from './approval-queue'
+import { executeApprovedAction, requeueExpiredAction } from './action-executor'
 import { notifyApproval } from './approval-notifier'
 import { recordActionOutcome } from '@/lib/intelligence/confidence-calibrator'
 import {
@@ -58,8 +59,8 @@ export const TOOL_GROUPS: Record<ToolGroup, ToolGroupMeta> = {
   comms: {
     id: 'comms',
     label: 'Outbound Communications',
-    description: 'Send emails and SMS messages on behalf of the user',
-    tools: ['send_email', 'send_sms'],
+    description: 'Send emails, SMS messages, and manage pending action approvals',
+    tools: ['send_email', 'send_sms', 'approve_action'],
   },
 }
 
@@ -111,6 +112,9 @@ export const JIT_INSTRUCTIONS: Record<string, string> = {
   // Activity & Creative
   log_activity: 'Activity logged. Continue with the user\'s request — do not announce that you logged an action.',
   compose_creator_notification_mockup: 'Mockup generated. Present the key details and ask if the user wants to adjust any parameters.',
+
+  // Approvals
+  approve_action: 'Action has been approved and executed. Report the result to the user. If execution failed, explain the error and suggest next steps.',
 }
 
 /** Get JIT instruction for a tool, if one exists. */
@@ -272,6 +276,24 @@ const toolDefinitions: Anthropic.Tool[] = [
     },
   },
   {
+    name: 'approve_action',
+    description: 'Approve and execute a pending action from the approval queue. Use when the user confirms they want to proceed with a queued action (e.g. "yes send that email", "approve it", "go ahead"). You can reference the action by its short ID (shown in Pending Actions) or describe it. Also handles re-queuing expired actions from the last 7 days.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        approval_id: {
+          type: 'string',
+          description: 'The approval ID (full UUID or short 8-char prefix from the pending actions list)',
+        },
+        action_description: {
+          type: 'string',
+          description: 'Description of the action to approve (used for fuzzy matching if approval_id is not provided)',
+        },
+      },
+      required: [] as string[],
+    },
+  },
+  {
     name: 'search_memory',
     description: 'Search stored knowledge entries for previously learned patterns, preferences, and context. Use when the user references a past preference or when you need to recall how something was handled before.',
     input_schema: {
@@ -423,6 +445,136 @@ const handlers: Record<string, AgentToolHandler> = {
     })
 
     return { success: true, data: deck }
+  },
+
+  async approve_action(input, orgId, supabase) {
+    const approvalId = input.approval_id as string | undefined
+    const actionDescription = input.action_description as string | undefined
+
+    if (!approvalId && !actionDescription) {
+      return { success: false, error: 'Provide either approval_id or action_description to identify the action' }
+    }
+
+    try {
+      let matchedApproval: import('./approval-queue').ApprovalRecord | undefined
+
+      if (approvalId) {
+        // Direct lookup — support both full UUID and 8-char prefix
+        const pending = await getPendingApprovals(supabase, orgId, { limit: 50 })
+        matchedApproval = pending.find(a =>
+          a.id === approvalId || a.id.startsWith(approvalId)
+        )
+
+        // Check expired approvals (last 7 days) if not found in pending
+        if (!matchedApproval) {
+          const { data: expired } = await supabase
+            .from('approval_queue')
+            .select('*, agent_configs(name)')
+            .eq('org_id', orgId)
+            .in('status', ['expired', 'auto_expired'])
+            .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
+            .or(`id.eq.${approvalId},id.like.${approvalId}%`)
+            .limit(1)
+
+          if (expired && expired.length > 0) {
+            const expiredRecord = expired[0] as import('./approval-queue').ApprovalRecord
+            const requeued = await requeueExpiredAction(supabase, expiredRecord)
+            matchedApproval = requeued
+          }
+        }
+      } else if (actionDescription) {
+        // Fuzzy match on action_summary
+        const pending = await getPendingApprovals(supabase, orgId, { limit: 50 })
+        const descLower = actionDescription.toLowerCase()
+
+        // Score each approval by how well it matches the description
+        matchedApproval = pending.find(a =>
+          a.action_summary.toLowerCase().includes(descLower) ||
+          descLower.includes(a.action_summary.toLowerCase()) ||
+          a.action_type.toLowerCase().includes(descLower)
+        )
+
+        // Broader fallback: word overlap scoring
+        if (!matchedApproval && pending.length > 0) {
+          const descWords = descLower.split(/\s+/).filter(w => w.length > 2)
+          let bestScore = 0
+          for (const a of pending) {
+            const summaryLower = a.action_summary.toLowerCase()
+            const score = descWords.filter(w => summaryLower.includes(w)).length
+            if (score > bestScore) {
+              bestScore = score
+              matchedApproval = a
+            }
+          }
+          // Require at least 1 word match
+          if (bestScore === 0) matchedApproval = undefined
+        }
+
+        // Check expired approvals if nothing pending matches
+        if (!matchedApproval) {
+          const { data: expired } = await supabase
+            .from('approval_queue')
+            .select('*, agent_configs(name)')
+            .eq('org_id', orgId)
+            .in('status', ['expired', 'auto_expired'])
+            .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
+            .ilike('action_summary', `%${actionDescription}%`)
+            .order('created_at', { ascending: false })
+            .limit(1)
+
+          if (expired && expired.length > 0) {
+            const expiredRecord = expired[0] as import('./approval-queue').ApprovalRecord
+            const requeued = await requeueExpiredAction(supabase, expiredRecord)
+            matchedApproval = requeued
+          }
+        }
+      }
+
+      if (!matchedApproval) {
+        return {
+          success: false,
+          error: approvalId
+            ? `No pending or recently expired action found with ID "${approvalId}"`
+            : `No pending action matching "${actionDescription}" found`,
+        }
+      }
+
+      // Resolve the approval as approved via chat
+      const resolved = await resolveApproval(
+        supabase,
+        matchedApproval.id,
+        'approved',
+        'chat-agent',
+        'chat',
+      )
+
+      // Execute the approved action
+      const result = await executeApprovedAction(supabase, resolved)
+
+      return {
+        success: result.success,
+        data: {
+          approvalId: resolved.id,
+          actionType: resolved.action_type,
+          actionSummary: resolved.action_summary,
+          executionResult: result,
+        },
+        error: result.error,
+      }
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : String(err)
+
+      // Handle specific error codes from resolveApproval
+      if (errorMsg === 'APPROVAL_NOT_FOUND') {
+        return { success: false, error: 'Approval not found — it may have been deleted' }
+      }
+      if (errorMsg === 'APPROVAL_ALREADY_RESOLVED') {
+        return { success: false, error: 'This action has already been resolved (approved, rejected, or expired)' }
+      }
+
+      logger.error('[approve_action] Error:', err)
+      return { success: false, error: `Failed to approve action: ${errorMsg}` }
+    }
   },
 
   // Memory tools stay in tools.ts (not shared — chat-specific)

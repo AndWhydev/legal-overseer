@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getPendingApprovals, resolveApproval } from '@/lib/agent/approval-queue'
+import { executeApprovedAction } from '@/lib/agent/action-executor'
 import { logAuditEvent } from '@/lib/audit/logger'
 
 type Decision = 'approved' | 'rejected'
@@ -107,6 +108,15 @@ export async function PATCH(request: NextRequest) {
       entityId: body.approvalId,
       metadata: { decision: body.decision, source: 'dashboard' },
     })
+
+    // Fire-and-forget execution for approved actions
+    // resolveApproval also triggers this, but the idempotency guard in
+    // executeApprovedAction prevents double-execution.
+    if (body.decision === 'approved') {
+      executeApprovedAction(auth.supabase, approval).catch(() => {
+        // Errors handled inside executeApprovedAction
+      })
+    }
 
     return NextResponse.json({ approval })
   } catch (error) {

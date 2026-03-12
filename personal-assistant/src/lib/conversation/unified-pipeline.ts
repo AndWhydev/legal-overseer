@@ -1,0 +1,258 @@
+/**
+ * Total Recall — Unified Conversation Pipeline
+ *
+ * Orchestrates: identity resolution → thread resolution → store inbound →
+ * load history → engine call → store response → async post-processing.
+ *
+ * Yields AgentEvent from engine.ts, allowing the chat route to stream
+ * events directly to the client.
+ */
+
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type Anthropic from '@anthropic-ai/sdk'
+import { resolveChannelIdentity } from './identity-resolver'
+import { resolveActiveThread, storeMessage, loadRecentMessages } from './thread-resolver'
+import { runAgentChat, type AgentEvent, type EngineConfig } from '@/lib/agent/engine'
+import { logger } from '@/lib/core/logger'
+import type {
+  Channel,
+  InboundMessage,
+  PipelineResult,
+  ResolvedIdentity,
+  ConversationMessageRecord,
+} from './types'
+
+/** Pipeline-specific event emitted before engine events */
+export type PipelineEvent =
+  | AgentEvent
+  | { type: 'thread'; data: { threadId: string; isNew: boolean } }
+
+// Re-export for consumers
+export type { InboundMessage, PipelineResult }
+
+interface PipelineConfig {
+  supabase: SupabaseClient
+  /** Pre-resolved identity (web chat provides userId/orgId directly from auth) */
+  identity?: { userId: string; orgId: string }
+  /** Explicit thread to continue */
+  threadId?: string
+  /** Engine overrides */
+  engineOverrides?: Partial<EngineConfig>
+}
+
+/**
+ * Convert stored conversation messages to Anthropic MessageParam format
+ * for injection into engine history.
+ */
+function messagesToHistory(messages: ConversationMessageRecord[]): Anthropic.MessageParam[] {
+  const history: Anthropic.MessageParam[] = []
+
+  for (const msg of messages) {
+    if (msg.role === 'user') {
+      history.push({ role: 'user', content: msg.content })
+    } else if (msg.role === 'assistant') {
+      history.push({ role: 'assistant', content: msg.content })
+    }
+    // tool_call and tool_result roles are skipped — the engine replays
+    // tool interactions within its own loop; including partial tool state
+    // in history would confuse the model.
+  }
+
+  return history
+}
+
+/**
+ * UnifiedConversationPipeline — single entry point for all channels.
+ *
+ * Web chat, WhatsApp, SMS, Email, Slack, and iMessage all funnel through
+ * handleMessage(), which resolves identity, finds or creates a thread,
+ * persists inbound/outbound messages, and streams AgentEvents from the engine.
+ */
+export class UnifiedConversationPipeline {
+  private supabase: SupabaseClient
+
+  constructor(supabase: SupabaseClient) {
+    this.supabase = supabase
+  }
+
+  /**
+   * Main entry point. Async generator that yields AgentEvent objects
+   * for streaming to the client.
+   */
+  async *handleMessage(
+    inbound: InboundMessage,
+    config: PipelineConfig
+  ): AsyncGenerator<PipelineEvent> {
+    const startTime = Date.now()
+
+    // ── Step 1: Identity Resolution ────────────────────────────────────
+    let identity: ResolvedIdentity
+
+    if (config.identity) {
+      // Web chat: identity already resolved from Supabase Auth session
+      identity = {
+        userId: config.identity.userId,
+        orgId: config.identity.orgId,
+        isAuthenticated: true,
+      }
+    } else if (inbound.userId && inbound.orgId) {
+      // Pre-resolved from webhook handler
+      identity = {
+        userId: inbound.userId,
+        orgId: inbound.orgId,
+        isAuthenticated: false,
+      }
+    } else if (inbound.channelIdentifier) {
+      // External channel: resolve via identity lookup
+      try {
+        const resolved = await resolveChannelIdentity(
+          this.supabase,
+          inbound.channelIdentifier
+        )
+        if (!resolved) {
+          yield { type: 'error', data: 'Could not resolve sender identity' }
+          yield { type: 'done', data: {} }
+          return
+        }
+        identity = resolved
+      } catch (err) {
+        logger.error('[pipeline] Identity resolution failed', { err, channel: inbound.channel })
+        yield { type: 'error', data: 'Could not resolve sender identity' }
+        yield { type: 'done', data: {} }
+        return
+      }
+    } else {
+      yield { type: 'error', data: 'No identity information provided' }
+      yield { type: 'done', data: {} }
+      return
+    }
+
+    // ── Step 2: Thread Resolution ──────────────────────────────────────
+    let threadId: string
+    let isNewThread = false
+    try {
+      if (config.threadId) {
+        // Explicit thread (e.g., frontend sent threadId from prior session)
+        threadId = config.threadId
+      } else {
+        const threadResult = await resolveActiveThread(
+          this.supabase,
+          identity.userId,
+          identity.orgId,
+          inbound.channel
+        )
+        threadId = threadResult.thread.id
+        isNewThread = threadResult.isNew
+      }
+    } catch (err) {
+      logger.error('[pipeline] Thread resolution failed', { err, userId: identity.userId })
+      yield { type: 'error', data: 'Could not resolve conversation thread' }
+      yield { type: 'done', data: {} }
+      return
+    }
+
+    // Emit thread info so frontends can track the active thread
+    yield { type: 'thread', data: { threadId, isNew: isNewThread } }
+
+    // ── Step 3: Store Inbound Message ──────────────────────────────────
+    try {
+      await storeMessage(this.supabase, {
+        threadId,
+        userId: identity.userId,
+        orgId: identity.orgId,
+        role: 'user',
+        channel: inbound.channel,
+        content: inbound.content,
+        channelMetadata: inbound.channelMetadata,
+      })
+    } catch (err) {
+      // Non-fatal: log but continue — we still want to process the message
+      logger.error('[pipeline] Failed to store inbound message', { err, threadId })
+    }
+
+    // ── Step 4: Load History ───────────────────────────────────────────
+    let history: Anthropic.MessageParam[] = []
+    try {
+      const recentMessages = await loadRecentMessages(this.supabase, threadId, 20)
+      // Exclude the message we just stored (it will be the current user turn)
+      const priorMessages = recentMessages.filter(
+        m => !(m.role === 'user' && m.content === inbound.content && m.thread_id === threadId)
+      )
+      history = messagesToHistory(priorMessages)
+    } catch (err) {
+      // Non-fatal: proceed without history
+      logger.warn('[pipeline] Failed to load history, proceeding without', { err, threadId })
+    }
+
+    // ── Step 5: Run Engine ─────────────────────────────────────────────
+    const engineConfig: EngineConfig = {
+      orgId: identity.orgId,
+      supabase: this.supabase,
+      skipCostGuard: true, // Web chat doesn't use cost guard
+      history,
+      ...config.engineOverrides,
+    }
+
+    let responseContent = ''
+
+    try {
+      const events = runAgentChat(inbound.content, engineConfig)
+      for await (const event of events) {
+        // Capture the final message text for storage
+        if (event.type === 'message') {
+          responseContent = event.data
+        }
+
+        yield event
+      }
+    } catch (err) {
+      logger.error('[pipeline] Engine execution failed', { err, threadId })
+      yield { type: 'error', data: 'Agent engine failed' }
+      yield { type: 'done', data: {} }
+      return
+    }
+
+    // ── Step 6: Store Assistant Response ────────────────────────────────
+    if (responseContent) {
+      try {
+        await storeMessage(this.supabase, {
+          threadId,
+          userId: identity.userId,
+          orgId: identity.orgId,
+          role: 'assistant',
+          channel: inbound.channel,
+          content: responseContent,
+        })
+      } catch (err) {
+        logger.error('[pipeline] Failed to store assistant response', { err, threadId })
+      }
+    }
+
+    // ── Step 7: Async Post-Processing (fire-and-forget) ────────────────
+    this.postProcess(threadId, identity.orgId, inbound.channel).catch(err => {
+      logger.error('[pipeline] Post-processing failed', { err, threadId })
+    })
+
+    logger.info('[pipeline] Message handled', {
+      threadId,
+      channel: inbound.channel,
+      durationMs: Date.now() - startTime,
+      hasHistory: history.length > 0,
+    })
+  }
+
+  /**
+   * Fire-and-forget post-processing: update thread activity timestamp,
+   * trigger compression checks, etc.
+   */
+  private async postProcess(threadId: string, orgId: string, channel: Channel): Promise<void> {
+    // Update thread last_activity_at and last_channel
+    await this.supabase
+      .from('conversation_threads')
+      .update({
+        last_activity_at: new Date().toISOString(),
+        last_channel: channel,
+      })
+      .eq('id', threadId)
+  }
+}

@@ -1,12 +1,12 @@
 import { NextRequest } from 'next/server'
-import { runAgentChat } from '@/lib/agent/engine'
 import { loadAllAgents } from '@/lib/agent/registry-loader'
 import { createClient } from '@/lib/supabase/server'
+import { UnifiedConversationPipeline } from '@/lib/conversation/unified-pipeline'
 
 let registryInitialized = false
 
 export async function POST(request: NextRequest) {
-  const { message } = await request.json()
+  const { message, threadId } = await request.json()
   if (!message) {
     return new Response('Message required', { status: 400 })
   }
@@ -37,11 +37,20 @@ export async function POST(request: NextRequest) {
     return new Response('No profile found', { status: 400 })
   }
 
+  const pipeline = new UnifiedConversationPipeline(supabase)
+
   const encoder = new TextEncoder()
   const stream = new ReadableStream({
     async start(controller) {
       try {
-        const events = runAgentChat(message, { orgId: profile.org_id, supabase })
+        const events = pipeline.handleMessage(
+          { content: message, channel: 'web' },
+          {
+            supabase,
+            identity: { userId: user.id, orgId: profile.org_id },
+            threadId: threadId || undefined,
+          }
+        )
         for await (const event of events) {
           controller.enqueue(
             encoder.encode(`data: ${JSON.stringify(event)}\n\n`)

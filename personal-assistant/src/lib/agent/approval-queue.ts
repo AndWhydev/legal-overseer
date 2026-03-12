@@ -6,7 +6,7 @@ import { recordActionOutcome } from '@/lib/intelligence/confidence-calibrator'
 import { logger } from '@/lib/core/logger';
 
 type ApprovalPriority = 'urgent' | 'normal' | 'low'
-type ApprovalStatus = 'pending' | 'approved' | 'rejected' | 'expired' | 'auto_expired'
+type ApprovalStatus = 'pending' | 'approved' | 'executing' | 'completed' | 'rejected' | 'failed' | 'expired' | 'auto_expired'
 type ApprovalRoutingDecision = 'ask' | 'escalate'
 
 export interface ApprovalRecord {
@@ -25,9 +25,14 @@ export interface ApprovalRecord {
   context_snapshot: Record<string, unknown>
   resolved_by: string | null
   resolved_at: string | null
-  resolved_via: 'dashboard' | 'whatsapp' | 'auto_expire' | null
+  resolved_via: 'dashboard' | 'whatsapp' | 'chat' | 'auto_expire' | null
   expires_at: string
   created_at: string
+  execution_started_at?: string | null
+  execution_completed_at?: string | null
+  execution_result?: Record<string, unknown> | null
+  execution_error?: string | null
+  retry_count?: number | null
   agent_configs?: { name: string | null } | null
   agent_name?: string | null
 }
@@ -135,7 +140,7 @@ export async function resolveApproval(
   approvalId: string,
   decision: 'approved' | 'rejected',
   resolvedBy: string,
-  resolvedVia: 'dashboard' | 'whatsapp',
+  resolvedVia: 'dashboard' | 'whatsapp' | 'chat',
 ): Promise<ApprovalRecord> {
   const { data: existing, error: existingError } = await supabase
     .from('approval_queue')
@@ -200,7 +205,22 @@ export async function resolveApproval(
     }
   })()
 
-  return normalizeApprovalRow(data)
+  const record = normalizeApprovalRow(data)
+
+  // Fire-and-forget execution for approved actions.
+  // The executeApprovedAction has an atomic idempotency guard, so concurrent
+  // callers (e.g. approve_action tool also calling it) won't double-execute.
+  if (decision === 'approved') {
+    import('./action-executor').then(({ executeApprovedAction }) => {
+      executeApprovedAction(supabase, record).catch(err => {
+        logger.warn('[approval-queue] Fire-and-forget execution failed:', err)
+      })
+    }).catch(err => {
+      logger.warn('[approval-queue] Failed to import action-executor:', err)
+    })
+  }
+
+  return record
 }
 
 export async function getPendingApprovals(

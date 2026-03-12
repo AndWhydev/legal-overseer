@@ -2,6 +2,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { getAgentTools, executeAgentTool, getJITInstruction, type ExecuteToolOptions, type ToolGroup } from './tools'
 import { buildEntityAwarePrompt } from './prompt-builder'
+import { ContextAssembler } from '@/lib/context-assembly/context-assembler'
 import { selectModel, getModel } from './model-router'
 import { logAgentRun, estimateRunCost } from './run-logger'
 import { canProceed } from './cost-guard'
@@ -38,6 +39,12 @@ export interface EngineConfig {
   agentType?: string
   /** Organization settings for confidence thresholds. */
   orgSettings?: { confidence_thresholds?: { act?: number; ask?: number } }
+  /** Pre-loaded conversation history to prepend to the messages array. */
+  history?: Anthropic.MessageParam[]
+  /** User ID for thread ownership and context assembly. */
+  userId?: string
+  /** Thread ID for conversation history loading via ContextAssembler. */
+  threadId?: string
 }
 
 export type StageId = 'cost_check' | 'model_routing' | 'context_assembly' | 'api_streaming' | 'tool_execution'
@@ -144,10 +151,19 @@ export async function* runAgentChat(
   // Emit thinking_start so frontend knows engine is active
   yield { type: 'thinking_start', data: {} }
 
-  // Context assembly: build entity-aware system prompt
+  // Context assembly: build entity-aware system prompt (with full history when threadId is available)
   yield { type: 'stage', data: { stage: 'context_assembly', status: 'start' } }
-  const systemPrompt = await buildEntityAwarePrompt(config.supabase, config.orgId, message)
-  yield { type: 'stage', data: { stage: 'context_assembly', status: 'done', meta: { promptLength: systemPrompt.length } } }
+  let systemPrompt: string
+  if (config.threadId && config.userId) {
+    const assembler = new ContextAssembler()
+    const ctx = await assembler.assemble(config.supabase, config.userId, config.orgId, config.threadId, message)
+    systemPrompt = ctx.systemPrompt
+    config.history = ctx.messageHistory
+    yield { type: 'stage', data: { stage: 'context_assembly', status: 'done', meta: { promptLength: systemPrompt.length, assemblyMs: ctx.metadata.assemblyMs, tiersLoaded: ctx.metadata.tiersLoaded.length } } }
+  } else {
+    systemPrompt = await buildEntityAwarePrompt(config.supabase, config.orgId, message)
+    yield { type: 'stage', data: { stage: 'context_assembly', status: 'done', meta: { promptLength: systemPrompt.length } } }
+  }
 
   if (autoRouted && selection) {
     logger.info(`[model-router] ${selection.tier}: ${selection.reasoning}`)
@@ -206,7 +222,10 @@ export async function* runAgentChat(
     fullSystemPrompt += `\n\n## Execution Plan\nFollow this plan to fulfill the user's request:\n${planDescription}\n`
   }
 
-  let messages: Anthropic.MessageParam[] = [{ role: 'user', content: message }]
+  // When ContextAssembler was used, history already includes the current message
+  let messages: Anthropic.MessageParam[] = config.threadId
+    ? [...(config.history || [])]
+    : [...(config.history || []), { role: 'user', content: message }]
 
   for (let i = 0; i < maxIterations; i++) {
     iterationCount++

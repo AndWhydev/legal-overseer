@@ -50,6 +50,8 @@ const SKELETON_STAGE: ChatPipelineStage = {
   status: 'active',
 }
 
+const THREAD_STORAGE_KEY = 'bitbit-thread-id'
+
 export function ChatInterface({ userName }: { userName?: string }) {
   const [messages, setMessages] = useState<Message[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -57,6 +59,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
   const [planStages, setPlanStages] = useState<ChatPipelineStage[]>([])
   const [pipelineVisible, setPipelineVisible] = useState(false)
   const [pipelinePhase, setPipelinePhase] = useState<'skeleton' | 'plan' | 'done'>('skeleton')
+  const [threadId, setThreadId] = useState<string | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   const rafPending = useRef(false)
   const pipelineFadeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -76,6 +79,36 @@ export function ChatInterface({ userName }: { userName?: string }) {
     return () => {
       if (pipelineFadeTimer.current) clearTimeout(pipelineFadeTimer.current)
     }
+  }, [])
+
+  // Load thread history on mount
+  useEffect(() => {
+    const savedThreadId = localStorage.getItem(THREAD_STORAGE_KEY)
+    if (!savedThreadId) return
+
+    setThreadId(savedThreadId)
+
+    fetch(`/api/agent/chat/history?threadId=${savedThreadId}`)
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (!data?.messages?.length) return
+        const restored: Message[] = data.messages
+          .filter((m: { role: string }) => m.role === 'user' || m.role === 'assistant')
+          .map((m: { id: string; role: string; content: string; created_at: string }) => ({
+            id: m.id,
+            role: m.role as 'user' | 'assistant',
+            content: m.content,
+            timestamp: new Date(m.created_at),
+          }))
+        if (restored.length > 0) {
+          setMessages(restored)
+        }
+      })
+      .catch(() => {
+        // History load failed — start fresh
+        localStorage.removeItem(THREAD_STORAGE_KEY)
+        setThreadId(null)
+      })
   }, [])
 
   const handleSend = useCallback(async (text: string) => {
@@ -107,7 +140,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
       const res = await fetch('/api/agent/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: trimmed }),
+        body: JSON.stringify({ message: trimmed, threadId }),
       })
 
       if (!res.ok || !res.body) throw new Error('Failed to connect')
@@ -133,6 +166,14 @@ export function ChatInterface({ userName }: { userName?: string }) {
             const event = JSON.parse(raw)
 
             switch (event.type) {
+              case 'thread': {
+                // Pipeline resolved/created a thread — persist for session continuity
+                const tid = event.data.threadId
+                setThreadId(tid)
+                localStorage.setItem(THREAD_STORAGE_KEY, tid)
+                break
+              }
+
               case 'thinking':
               case 'thinking_start':
                 // Engine is active — skeleton already showing
@@ -352,7 +393,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
         setPipelineVisible(false)
       }
     }
-  }, [isLoading])
+  }, [isLoading, threadId])
 
   // Listen for custom events from the docked pill
   useEffect(() => {
