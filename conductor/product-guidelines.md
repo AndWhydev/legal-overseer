@@ -39,6 +39,8 @@ When a tradie messages BitBit from a job site saying "hey Bit, send Dave that in
 | Agent | A specialist on BitBit's team with a specific job |
 | Triage | When BitBit reads and sorts incoming messages by priority |
 | Reflection | When BitBit extracts facts from conversations in the background |
+| Thread | A continuous conversation with a user across all channels |
+| Total Recall | BitBit's persistent memory — it remembers every conversation |
 
 ## Words we never use in front of users
 

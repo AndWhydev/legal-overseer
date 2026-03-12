@@ -78,7 +78,7 @@
 
 ## Background Processing
 
-- **Cron routes**: 12 routes in `/api/cron/`
+- **Cron routes**: 16 routes in `/api/cron/` (including archive-threads */15 for Total Recall)
 - **Reflection**: Haiku extracts facts from significant messages
 - **Memory consolidation**: Dedup/merge/supersede cycle
 - **Scheduler**: Built-in cron infrastructure

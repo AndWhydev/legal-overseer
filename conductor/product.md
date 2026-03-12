@@ -58,11 +58,13 @@ All of these people share the same frustration. They started a business to do th
 
 ## What's built
 
-Chat interface with streaming responses and a visible processing pipeline. Multi channel messaging across WhatsApp, SMS, email, iMessage, Facebook Messenger, Instagram, Slack, and Telegram. WhatsApp dual-path transport: Meta Cloud API (primary) with Baileys bridge fallback on Fly.io (`bitbit-wa-bridge.fly.dev`). Meta WhatsApp webhook with signature verification. Channel adapter wiring across all transports. Contact management with an entity graph that tracks relationships. Invoice creation with timeline events. Task management with goals. Dual tier tenancy supporting personal and org modes. Unified connections grid with 15+ service types including ClickUp, GA4, WordPress, Xero, Google Calendar. OAuth infrastructure with token refresh lifecycle. Background intelligence that extracts facts from conversations and consolidates memory over time. Analytics dashboard wired to real agent_runs data with interactive data-viz library (sparkline, bar, donut, gauge charts with hover tooltips). Activity feed. Error monitoring. 12 cron routes for background processing. Confidence based action routing where BitBit decides whether to act autonomously or ask the user. Glassmorphic UI across all dashboard pages. Mobile responsive with bottom navigation. Self-serve onboarding with 3-step wizard. CI/CD pipeline with 5 GitHub Actions workflows. 12 Playwright E2E specs covering auth, dashboard, API routes, kanban, leads, invoices, and KPI rendering. Leads pipeline with kanban and list views, prospect discovery, and outreach intelligence. Context Baseplate with entity profiles, entity patterns (payment timing, response latency, activity frequency, channel preference), mention extraction, active threads, and cross-reference caching. Production deployment on Fly.io (worker with bearer auth), Fly.io WhatsApp bridge (`bitbit-wa-bridge.fly.dev`), Cloudflare Workers (edge cron with rate limiting), and VPS relay. Sentry error tracking with context enrichment and PII filtering. Security hardened with webhook HMAC verification, circuit breaker on LLM calls, DLQ with admin API, rate limiting, and security response headers. RLS policies audited across all 61 migrations.
+Chat interface with streaming responses and a visible processing pipeline. Multi channel messaging across WhatsApp, SMS, email, iMessage, Facebook Messenger, Instagram, Slack, and Telegram. WhatsApp dual-path transport: Meta Cloud API (primary) with Baileys bridge fallback on Fly.io (`bitbit-wa-bridge.fly.dev`). Meta WhatsApp webhook with signature verification. Channel adapter wiring across all transports. Contact management with an entity graph that tracks relationships. Invoice creation with timeline events. Task management with goals. Dual tier tenancy supporting personal and org modes. Unified connections grid with 15+ service types including ClickUp, GA4, WordPress, Xero, Google Calendar. OAuth infrastructure with token refresh lifecycle. Background intelligence that extracts facts from conversations and consolidates memory over time. Analytics dashboard wired to real agent_runs data with interactive data-viz library (sparkline, bar, donut, gauge charts with hover tooltips). Activity feed. Error monitoring. 16 cron routes for background processing. Confidence based action routing where BitBit decides whether to act autonomously or ask the user. Glassmorphic UI across all dashboard pages. Mobile responsive with bottom navigation. Self-serve onboarding with 3-step wizard. CI/CD pipeline with 5 GitHub Actions workflows. 12 Playwright E2E specs covering auth, dashboard, API routes, kanban, leads, invoices, and KPI rendering. Leads pipeline with kanban and list views, prospect discovery, and outreach intelligence. Context Baseplate with entity profiles, entity patterns (payment timing, response latency, activity frequency, channel preference), mention extraction, active threads, and cross-reference caching. Production deployment on Fly.io (worker with bearer auth), Fly.io WhatsApp bridge (`bitbit-wa-bridge.fly.dev`), Cloudflare Workers (edge cron with rate limiting), and VPS relay. Sentry error tracking with context enrichment and PII filtering. Security hardened with webhook HMAC verification, circuit breaker on LLM calls, DLQ with admin API, rate limiting, and security response headers. RLS policies audited across all 67 migrations.
 
-Agent superpower tools: web_search (Brave API), fetch_url (readability extraction), send_email (Resend with approval routing), send_sms (Telnyx with approval routing). Tool orchestration via Haiku planner that selects tool groups per conversation (5-12 filtered tools from 24 total, 90-95% KV cache hit rate). Agent kill switch per organisation. Daily outbound send limits. Approval queue for all outbound comms during beta. AI disclosure in privacy policy, chat banner, and agent system prompt. Waitlist landing page at bitbit.chat with email capture backed by Supabase. New brand icon (white background, black logo) deployed site-wide. Google Search Console verified. Privacy Policy and Terms of Service live.
+Agent superpower tools: web_search (Brave API), fetch_url (readability extraction), send_email (Resend with approval routing), send_sms (Telnyx with approval routing). Tool orchestration via Haiku planner that selects tool groups per conversation (5-12 filtered tools from 25 total, 90-95% KV cache hit rate). Agent kill switch per organisation. Daily outbound send limits. Approval queue for all outbound comms during beta. AI disclosure in privacy policy, chat banner, and agent system prompt. Waitlist landing page at bitbit.chat with email capture backed by Supabase. New brand icon (white background, black logo) deployed site-wide. Google Search Console verified. Privacy Policy and Terms of Service live.
 
-1,462 tests. All passing.
+Total Recall: persistent conversational memory with cross-channel continuity. One active thread per user per org — all channels (web, WhatsApp, SMS, email, Slack) write to the same conversation thread. Cross-channel identity resolution maps phone numbers, email addresses, and Slack IDs to authenticated users. Three-tier conversation compression: last 10 turns verbatim, turns 11-30 compressed via Haiku, turns 31+ distilled to key facts (commitments, decisions, deadlines, financial amounts). Context assembly pipeline with priority-based token budgeting across 6 tiers within an 8K token budget. Action execution dispatcher with 7 transport handlers (email/SMS/WhatsApp/task/invoice create/invoice send/reminder), idempotency guard, and retry with exponential backoff. `approve_action` LLM tool lets users approve pending actions conversationally ("yep, send it") with fuzzy matching and expired action re-queue. Pending approvals surfaced in system prompt so the LLM can match "send it" to the right action. Unified pipeline routes web chat through identity resolution → thread management → context assembly → engine → storage → post-processing. Thread archival cron (*/15) archives stale threads after 24h inactivity. 4 new database tables, 3 PL/pgSQL helper functions, full RLS policies.
+
+16 cron routes. 67 database migrations. 1,462+ tests. All passing.
 
 ## What's next
 
@@ -76,7 +78,11 @@ Agent superpower tools: web_search (Brave API), fetch_url (readability extractio
 
 **Agent superpowers Phase 2 (T027).** browse_website tool via Playwright headless on Fly.io — navigate, extract, screenshot.
 
-**WhatsApp production (T008/T012).** WABA phone registration requires real mobile SIM (Meta blocks VoIP). Cheap prepaid AU SIM sufficient. Also: permanent System User token needed (current one expired).
+**WhatsApp production (T008/T012).** WABA phone registration requires real mobile SIM (Meta blocks VoIP). Cheap prepaid AU SIM sufficient. Permanent System User token generated (2026-03-11).
+
+**Total Recall remaining (T031).** Apply migration 067 to Supabase remote. Phase 5: migrate WhatsApp/SMS/email channel adapters through the unified conversation pipeline (currently only web chat uses it). Phase 7: deprecate legacy ConversationRouter string-packing, add message cleanup cron for compiled threads, identity backfill for new signups.
+
+**Context Baseplate remaining (T009).** End-to-end verification with real data. Relationship and memory data seeding. No-reply contact cleanup. Apply migration 066 to remote.
 
 ## Pricing direction
 
@@ -92,10 +98,15 @@ The retention model: once BitBit handles everything, it becomes very difficult t
 
 ```
 personal-assistant/          Next.js 16 app (Vercel deployed dashboard)
-  src/app/api/               22 API route groups
+  src/app/api/               22 API route groups, 16 cron routes
   src/components/            15 component groups
-  src/lib/                   Core logic (agent, channels, context, billing)
-  supabase/migrations/       63 migrations
+  src/lib/agent/             Engine, tools, planner, prompt-builder, approval-queue, action-executor
+  src/lib/channels/          Channel adapters, synthesizer, transport
+  src/lib/context/           Entity profiles, baseplate, mention scanner, xref cache
+  src/lib/context-assembly/  ContextAssembler, TokenBudgetManager (Total Recall)
+  src/lib/conversation/      Identity resolver, thread resolver, unified pipeline (Total Recall)
+  src/lib/memory/            Compressor, consolidator, thread archiver (Total Recall)
+  supabase/migrations/       67 migrations
 
 packages/core/               Shared types and utilities
 packages/agents/             10 specialist agent packages

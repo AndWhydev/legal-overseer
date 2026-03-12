@@ -26,14 +26,15 @@
 | T028 | Agent Tool Orchestration — Phase 1 (ADR-001) | architecture | 2026-03-11 |
 | T029 | Beta Blockers — Security, Safety, Compliance | infrastructure | 2026-03-11 |
 | T030 | Landing Page Waitlist & Brand Refresh | marketing | 2026-03-11 |
+| T031 | Total Recall — Conversational Memory & Cross-Channel Continuity | architecture | 2026-03-13 |
 
 ## Active Tracks
 
 | ID | Track | Type | Status | Notes |
 |----|-------|------|--------|-------|
 | T008 | Platform OAuth App Registrations | infrastructure | ~80% complete | Stripe webhook done (API bypass), Meta webhook done (Graph API), Google OAuth + APIs done, Telnyx webhook done (API), Resend DNS verified. Microsoft/Xero/Slack deferred (no accounts) |
-| T009 | Context Baseplate | architecture | Phase 3 ~80% | Bidirectional context loop wired: inbound→timeline→profile refresh→chat injection→outbound write-back. Entity-mention-scanner, baseplate-to-prompt wiring, auto-contact creation from inbound messages. Migrations 053-061 applied, 066 pending. Remaining: e2e verification with real data, outbound write-back testing, relationship/memory seeding. BUG: no-reply contacts in DB from pre-filter import need cleanup. BUG: entity_profiles.relationships and memories empty (no seed data) |
-| T011 | Production Validation & Deployment | infrastructure | Mostly complete | Fly.io + Cloudflare + VPS worker deployed. 12 cron routes. Channel smoke tests now unblocked — all 5 key platform credentials configured. Load test deferred until channels verified |
+| T009 | Context Baseplate | architecture | Phase 3 ~90% | Bidirectional context loop wired: inbound→timeline→profile refresh→chat injection→outbound write-back. Entity-mention-scanner, baseplate-to-prompt wiring, auto-contact creation from inbound messages. Migrations 053-061 applied, 066 pending remote. Remaining: e2e verification with real data, relationship/memory seeding. BUG: no-reply contacts in DB from pre-filter import need cleanup. BUG: entity_profiles.relationships and memories empty (no seed data) |
+| T011 | Production Validation & Deployment | infrastructure | Mostly complete | Fly.io + Cloudflare + VPS worker deployed. 16 cron routes. Channel smoke tests now unblocked — all 5 key platform credentials configured. Load test deferred until channels verified |
 
 ## Planned Tracks
 
@@ -73,7 +74,7 @@ Take code-complete agents and channels from "compiles with mocked tests" to "run
 - [x] Configure secrets on both services (Supabase, Anthropic, worker auth token)
 - [x] Verify end-to-end chain: Cloudflare → Fly.io → Supabase all healthy
 - [x] Deploy VPS relay daemon (worker.ts + health server)
-- [x] Configure Vercel cron jobs (12 cron routes including entity-profile-refresh)
+- [x] Configure Vercel cron jobs (16 cron routes including entity-profile-refresh)
 - [x] Fix failing tests (1460 tests passing)
 - [ ] Smoke test each channel adapter against real credentials (now unblocked — 5 key platform credentials configured)
 - [ ] Load test relay daemon + concurrent agent runs (deferred until channels verified)
@@ -166,3 +167,31 @@ Replaced full marketing site with waitlist landing page at `bitbit.chat`:
 - [x] Privacy Policy and Terms of Service pages (live at /privacy, /terms)
 - [x] Tab title: "Meet BitBit 👋"
 - **Vercel project**: `bitbit-landing-page` (separate from dashboard)
+
+### T031 — Total Recall: Conversational Memory & Cross-Channel Continuity ✅
+Persistent conversation threads with cross-channel identity resolution, tiered compression, action execution, and a unified pipeline. 33 files changed, +9,138/-366 lines. Committed `2c8e081b`, pushed to origin/main 2026-03-13.
+
+**New tables** (migration 067): `conversation_threads`, `conversation_messages`, `thread_summaries`, `channel_identities`. Plus execution columns on `approval_queue` (execution_started_at, execution_completed_at, execution_result, execution_error, retry_count) and `approve_action` tool.
+
+**New modules**:
+- `src/lib/conversation/identity-resolver.ts` — Cross-channel identity resolution: web auth, WhatsApp/SMS channel_identities → contacts fallback, email → contact_emails, Slack/iMessage channel_identities
+- `src/lib/conversation/thread-resolver.ts` — One active thread per user per org, inherits compiled_summary from archived threads
+- `src/lib/conversation/unified-pipeline.ts` — 7-step async generator: identity → thread → store inbound → load history → engine → store response → post-processing
+- `src/lib/context-assembly/context-assembler.ts` — 4-tier context assembly with parallel fetch, Anthropic message format conversion, pending actions formatting
+- `src/lib/context-assembly/token-budget-manager.ts` — Priority-based token allocation across 6 tiers within 8K budget
+- `src/lib/memory/conversation-compressor.ts` — 3-tier compression: verbatim (last 10), compressed (11-30), key facts (31+) via Haiku
+- `src/lib/memory/memory-consolidator.ts` — Per-turn pipeline with high-value signal gating, contradiction detection against semantic_memories
+- `src/lib/memory/thread-archiver.ts` — Compiled summary generation, stale thread archival via RPC
+- `src/lib/agent/action-executor.ts` — TRANSPORT_MAP dispatcher (7 action types), idempotency guard, retry with exponential backoff
+
+**Modified files**: engine.ts (history + ContextAssembler integration), prompt-builder.ts (pending approvals section), tools.ts (approve_action tool), approval-queue.ts (fire-and-forget execution), approvals/route.ts (belt-and-suspenders execution), chat/route.ts (threadId support), chat-interface.tsx (history loading, threadId persistence)
+
+**New cron**: `/api/cron/archive-threads` (*/15, stale thread archival)
+
+**Architecture docs**: `.planning/total-recall/` (5 architecture docs + unified synthesis in 06-synthesis.md)
+
+**Remaining**:
+- [ ] Apply migration 067 to Supabase remote (`supabase db push`)
+- [ ] Phase 5: Channel adapter migration (WhatsApp/SMS/email through unified pipeline — currently only web chat routes through it)
+- [ ] Phase 7: Deprecate ConversationRouter string-packing, message cleanup cron, identity backfill
+- [ ] Channel badges and Realtime subscription in chat-interface.tsx (nice-to-have)
