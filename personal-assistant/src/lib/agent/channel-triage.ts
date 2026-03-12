@@ -1,6 +1,16 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { ChannelMessage } from '@/lib/channels/types'
-import { classifyMessage, type ClassificationResult } from './classifier'
+import {
+  classifyMessage,
+  type ClassificationResult,
+  classifyByHeaders,
+  type SenderType,
+  analyzeContentSignals,
+  scoreActionability,
+  toNewCategory,
+  type ActionabilitySignals,
+  type InboxCategory,
+} from './classifier'
 import { routeMessage } from './action-router'
 import { resolveEntityRanked } from '@/lib/context/entity-resolver'
 import { writeMessageEvent } from '@/lib/context/timeline-writer'
@@ -167,6 +177,29 @@ function findDuplicates(messages: Record<string, unknown>[]): Map<string, string
   }
 
   return duplicates
+}
+
+// ---------------------------------------------------------------------------
+// Pre-Classification: Header Analysis
+// ---------------------------------------------------------------------------
+
+/**
+ * Extract email headers from message metadata.
+ * Expects headers to be stored in metadata.headers or metadata.email_headers.
+ */
+function extractHeadersFromMessage(msg: Record<string, unknown>): Record<string, string> {
+  const meta = (msg.metadata || {}) as Record<string, unknown>
+  const headers = (meta.headers || meta.email_headers || {}) as Record<string, string>
+  return headers
+}
+
+/**
+ * Pre-classify message using deterministic header rules.
+ * Returns sender type to be stored in metadata.
+ */
+function preClassifyByHeaders(msg: Record<string, unknown>): SenderType {
+  const headers = extractHeadersFromMessage(msg)
+  return classifyByHeaders(headers)
 }
 
 // ---------------------------------------------------------------------------
@@ -408,7 +441,10 @@ export async function runTriage(
   for (const msg of messages) {
     const isDuplicate = duplicates.has(msg.id)
 
-    // 2. Classify (use LLM classifier or existing classification)
+    // 2a. Pre-classify by headers (deterministic, fast)
+    const senderType = preClassifyByHeaders(msg)
+
+    // 2b. Classify (use LLM classifier or existing classification)
     let classification: ClassificationResult
     if (msg.classification && msg.significance) {
       classification = msg.classification as ClassificationResult
@@ -590,6 +626,7 @@ export async function runTriage(
         priority,
         metadata: {
           ...(msg.metadata || {}),
+          sender_type: senderType,
           category: msgCategory,
           contact_id: contactId,
           contact_name: contactName,

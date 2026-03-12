@@ -44,6 +44,213 @@ export interface ClassificationResult {
   category: 'lead' | 'client' | 'vendor' | 'personal' | 'spam' | 'notification' | 'newsletter'
 }
 
+// ---------------------------------------------------------------------------
+// Header-Based Classification Functions
+// ---------------------------------------------------------------------------
+
+/**
+ * Classify sender type based on email headers.
+ * Returns deterministic sender classification BEFORE LLM analysis.
+ */
+export function classifyByHeaders(headers: Record<string, string>): SenderType {
+  const normalizedHeaders = normalizeHeaders(headers)
+
+  // Marketing signals
+  if (normalizedHeaders['list-unsubscribe'] || normalizedHeaders['list-unsubscribe-post']) {
+    return 'marketing'
+  }
+  const precedence = normalizedHeaders['precedence']
+  if (precedence === 'bulk' || precedence === 'list') {
+    return 'marketing'
+  }
+
+  // Transactional signals (sent by services/automated systems)
+  const xMailer = normalizedHeaders['x-mailer'] || ''
+  if (xMailer.includes('postmark') || xMailer.includes('sendgrid') || xMailer.includes('ses')) {
+    return 'transactional'
+  }
+  if (normalizedHeaders['x-ses-outgoing']) {
+    return 'transactional'
+  }
+
+  // Marketing (specialized ESPs)
+  if (xMailer.includes('mailchimp')) {
+    return 'marketing'
+  }
+  if (normalizedHeaders['feedback-id']) {
+    return 'marketing'
+  }
+
+  // Auto-submitted (out of office, vacation, auto-responses)
+  const autoSubmitted = normalizedHeaders['auto-submitted']
+  if (autoSubmitted && autoSubmitted !== 'no') {
+    return 'automated'
+  }
+  if (normalizedHeaders['x-autoreply'] || normalizedHeaders['x-autorespond']) {
+    return 'automated'
+  }
+
+  // No-reply addresses
+  const from = normalizedHeaders['from'] || ''
+  if (/no-?reply|donotreply|notifications?@|mailer-daemon|bounces?@|postmaster@/i.test(from)) {
+    return 'automated'
+  }
+
+  return 'human'
+}
+
+/**
+ * Normalize headers to lowercase, with safe access.
+ */
+function normalizeHeaders(headers: Record<string, string>): Record<string, string> {
+  const normalized: Record<string, string> = {}
+  for (const [key, value] of Object.entries(headers)) {
+    if (typeof key === 'string' && typeof value === 'string') {
+      normalized[key.toLowerCase().trim()] = value.toLowerCase().trim()
+    }
+  }
+  return normalized
+}
+
+/**
+ * Analyze content for marketing/spam signals.
+ */
+export function analyzeContentSignals(
+  html: string | null | undefined,
+  text: string | null | undefined,
+  recipientName?: string | null,
+): ContentSignals {
+  const htmlContent = html || ''
+  const textContent = text || ''
+  const totalLength = htmlContent.length + textContent.length
+
+  // HTML ratio
+  const htmlRatio = totalLength > 0 ? htmlContent.length / totalLength : 0
+
+  // Track pixel detection (1x1 images are typically tracking pixels)
+  const trackingPixelRegex = /<img[^>]*width\s*=\s*["']?1["']?[^>]*height\s*=\s*["']?1["']?[^>]*>/gi
+  const hasTrackingPixels = trackingPixelRegex.test(htmlContent)
+
+  // Unsubscribe link
+  const hasUnsubscribeLink = /unsubscribe/i.test(htmlContent + textContent)
+
+  // Image count
+  const imgRegex = /<img/gi
+  const imageCount = (htmlContent.match(imgRegex) || []).length
+
+  // Link density
+  const linkRegex = /href=["'][^"']+["']/gi
+  const linkCount = (htmlContent.match(linkRegex) || []).length
+  const linkDensity = totalLength > 100 ? linkCount / (totalLength / 100) : 0
+
+  // Personal greeting detection
+  let personalGreeting = false
+  if (recipientName) {
+    const nameRegex = new RegExp(`\\b${recipientName.split(' ')[0]}\\b`, 'i')
+    personalGreeting = nameRegex.test(textContent)
+  }
+  if (!personalGreeting) {
+    personalGreeting = /^(Hi|Hello|Dear|Hey)\s+\w+/im.test(textContent)
+  }
+
+  return {
+    htmlRatio,
+    linkDensity: Math.min(linkDensity, 1), // cap at 1
+    hasUnsubscribeLink,
+    hasTrackingPixels,
+    imageCount,
+    personalGreeting,
+  }
+}
+
+/**
+ * Score actionability of human-sent messages.
+ * Used for priority vs updates categorization.
+ */
+export function scoreActionability(
+  text: string | null | undefined,
+  metadata?: {
+    isClient?: boolean
+    isReply?: boolean
+    userName?: string
+  },
+): ActionabilitySignals {
+  const content = text || ''
+  let score = 0
+
+  // Question detection (+2)
+  const hasQuestion = /\?$|^(who|what|when|where|why|how|can|could|would|should)\s+/im.test(content)
+  if (hasQuestion) score += 2
+
+  // Deadline detection (+3)
+  const deadlinePatterns = /\b(by\s+(?:end of\s)?(?:friday|monday|tuesday|wednesday|thursday|saturday|sunday|next\s+week|eow|eom|EOD|ASAP|tonight|tomorrow|today)|due\s+(?:by|on)|deadline|until\s+\d{1,2}\/\d{1,2}|\b(?:january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{1,2})/i
+  const hasDeadline = deadlinePatterns.test(content)
+  if (hasDeadline) score += 3
+
+  // Directive detection (+2) - imperative mood
+  const directivePatterns = /\b(please\s+(?:review|check|send|update|let|provide|confirm|approve)|send\s+me|update\s+the|let\s+me\s+know|can\s+you|will\s+you|need\s+to|must\s+)/i
+  const hasDirective = directivePatterns.test(content)
+  if (hasDirective) score += 2
+
+  // Urgency language (+2)
+  const urgencyPatterns = /\b(urgent|ASAP|asap|time[- ]?sensitive|critical|immediately|right\s+away|URGENT)\b/
+  const hasUrgency = urgencyPatterns.test(content)
+  if (hasUrgency) score += 2
+
+  // @mention of user (+3)
+  const hasMention = metadata?.userName
+    ? new RegExp(`@${metadata.userName}|@\w+`, 'i').test(content)
+    : /@\w+/.test(content)
+  if (hasMention) score += 3
+
+  // Is reply to user (+1)
+  const isReplyToUser = metadata?.isReply ?? false
+  if (isReplyToUser) score += 1
+
+  // Known client (+2)
+  const isKnownClient = metadata?.isClient ?? false
+  if (isKnownClient) score += 2
+
+  // Outstanding invoice (+1) — would need to be passed via metadata
+  const hasOutstandingInvoice = false // always false here, caller must set this
+
+  // Determine category based on score
+  let category: 'priority' | 'updates' | 'low'
+  if (score >= 4) category = 'priority'
+  else if (score >= 2) category = 'updates'
+  else category = 'low'
+
+  return {
+    hasQuestion,
+    hasDeadline,
+    hasDirective,
+    hasUrgency,
+    hasMention,
+    isReplyToUser,
+    isKnownClient,
+    hasOutstandingInvoice,
+    score,
+    category,
+  }
+}
+
+/**
+ * Map old classification category + sender type to new inbox category.
+ */
+export function toNewCategory(
+  classification: { category: string; significance: number },
+  senderType: SenderType,
+): InboxCategory {
+  if (classification.category === 'spam') return 'spam'
+  if (senderType === 'marketing') return 'feed'
+  if (senderType === 'transactional') return 'receipts'
+  if (senderType === 'automated') return 'updates'
+  // Human sender: use significance/category to determine priority
+  if (classification.significance >= 4) return 'priority'
+  if (classification.category === 'client' || classification.category === 'lead') return 'priority'
+  return 'updates'
+}
+
 const DEFAULT_RESULT: ClassificationResult = {
   significance: 2,
   timeSensitivity: 'none',
