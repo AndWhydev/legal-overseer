@@ -32,7 +32,7 @@
 | ID | Track | Type | Status | Notes |
 |----|-------|------|--------|-------|
 | T008 | Platform OAuth App Registrations | infrastructure | ~80% complete | Stripe webhook done (API bypass), Meta webhook done (Graph API), Google OAuth + APIs done, Telnyx webhook done (API), Resend DNS verified. Microsoft/Xero/Slack deferred (no accounts) |
-| T009 | Context Baseplate | architecture | Phase 2 complete | Foundation tables, xref-cache, mention-extractor, entity profiles, baseplate snapshot, refresh cron, entity patterns. All migrations applied (053-061) |
+| T009 | Context Baseplate | architecture | Phase 3 ~80% | Bidirectional context loop wired: inbound→timeline→profile refresh→chat injection→outbound write-back. Entity-mention-scanner, baseplate-to-prompt wiring, auto-contact creation from inbound messages. Migrations 053-061 applied, 066 pending. Remaining: e2e verification with real data, outbound write-back testing, relationship/memory seeding. BUG: no-reply contacts in DB from pre-filter import need cleanup. BUG: entity_profiles.relationships and memories empty (no seed data) |
 | T011 | Production Validation & Deployment | infrastructure | Mostly complete | Fly.io + Cloudflare + VPS worker deployed. 12 cron routes. Channel smoke tests now unblocked — all 5 key platform credentials configured. Load test deferred until channels verified |
 
 ## Planned Tracks
