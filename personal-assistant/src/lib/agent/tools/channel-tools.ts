@@ -39,6 +39,56 @@ export const channelToolDefinitions: Anthropic.Tool[] = [
     },
   },
   {
+    name: 'search_inbox',
+    description: 'Search the unified inbox for messages matching a query. Can filter by sender, channel, category, date range, and keywords. Use when the user searches their inbox.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        query: { type: 'string', description: 'Search query (matches subject, body, sender)' },
+        channel: { type: 'string', enum: ['gmail', 'outlook', 'whatsapp', 'sms', 'slack'], description: 'Filter by channel' },
+        category: { type: 'string', description: 'Filter by category: priority, updates, feed, receipts' },
+        from: { type: 'string', description: 'Filter by sender name or email' },
+        since: { type: 'string', description: 'ISO date, only messages after this' },
+        limit: { type: 'number', description: 'Max results, default 10' },
+      },
+      required: ['query'],
+    },
+  },
+  {
+    name: 'read_email',
+    description: 'Read the full content of a specific email message by ID. Use when the user wants to read a complete email. Retrieves from database or Gmail API if needed.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        message_id: { type: 'string', description: 'The message ID to read (from search results)' },
+      },
+      required: ['message_id'],
+    },
+  },
+  {
+    name: 'draft_reply',
+    description: 'Create a draft email reply to a message. The draft is saved for user review and approval before sending. Use when the user wants to compose a reply.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        message_id: { type: 'string', description: 'The message ID to reply to' },
+        body: { type: 'string', description: 'Reply message body' },
+        tone: { type: 'string', enum: ['professional', 'casual', 'friendly', 'formal'], description: 'Suggested tone (optional)' },
+      },
+      required: ['message_id', 'body'],
+    },
+  },
+  {
+    name: 'summarize_inbox',
+    description: 'Generate a natural-language summary of recent inbox messages grouped by category. Use when the user asks for an inbox summary or digest.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        hours: { type: 'number', description: 'Look back this many hours (default: 24)' },
+      },
+    },
+  },
+  {
     name: 'get_upcoming',
     description: 'List upcoming calendar events and due reminders within a specified number of days. Use when the user asks about their schedule, upcoming meetings, or what\'s due. Includes overdue items. Default: 7 days ahead.',
     input_schema: {
@@ -422,6 +472,213 @@ export const channelToolHandlers: Record<string, AgentToolHandler> = {
       }
     } catch (err) {
       return { success: false, error: `Failed to create event: ${String(err)}` }
+    }
+  },
+
+  async search_inbox(input, orgId, supabase) {
+    const query = input.query as string
+    const channel = input.channel as string | undefined
+    const category = input.category as string | undefined
+    const from = input.from as string | undefined
+    const since = input.since as string | undefined
+    const limit = Math.min((input.limit as number) || 10, 50)
+
+    let q = supabase
+      .from('channel_messages')
+      .select('id, channel, sender, subject, body, metadata, created_at')
+      .eq('org_id', orgId)
+      .or(`subject.ilike.%${query}%,body.ilike.%${query}%,sender.ilike.%${query}%`)
+      .order('created_at', { ascending: false })
+      .limit(limit)
+
+    if (channel) {
+      q = q.eq('channel', channel)
+    }
+    if (category) {
+      q = q.eq('metadata->>category', category)
+    }
+    if (from) {
+      q = q.or(`sender.ilike.%${from}%,metadata->>sender_email.ilike.%${from}%`)
+    }
+    if (since) {
+      q = q.gte('created_at', since)
+    }
+
+    const { data, error } = await q
+
+    if (error) {
+      return { success: false, error: `Search failed: ${error.message}` }
+    }
+
+    const results = (data ?? []).map((m: Record<string, unknown>) => ({
+      id: m.id,
+      channel: m.channel,
+      sender: m.sender,
+      subject: m.subject,
+      preview: typeof m.body === 'string' ? m.body.slice(0, 300) : '',
+      category: (m.metadata as Record<string, unknown>)?.category ?? 'unknown',
+      receivedAt: m.created_at,
+    }))
+
+    return {
+      success: true,
+      data: { results, total: results.length },
+    }
+  },
+
+  async read_email(input, orgId, supabase) {
+    const messageId = input.message_id as string
+
+    const { data, error } = await supabase
+      .from('channel_messages')
+      .select('id, channel, sender, subject, body, metadata, created_at')
+      .eq('id', messageId)
+      .eq('org_id', orgId)
+      .single()
+
+    if (error || !data) {
+      return { success: false, error: `Message not found: ${error?.message || 'Unknown error'}` }
+    }
+
+    const metadata = (data.metadata as Record<string, unknown>) || {}
+    const senderEmail = (metadata.sender_email as string) || ''
+
+    return {
+      success: true,
+      data: {
+        id: data.id,
+        sender: data.sender,
+        senderEmail,
+        subject: data.subject,
+        body: data.body,
+        channel: data.channel,
+        category: metadata.category ?? 'unknown',
+        receivedAt: data.created_at,
+      },
+    }
+  },
+
+  async draft_reply(input, orgId, supabase) {
+    const messageId = input.message_id as string
+    const body = input.body as string
+    const tone = (input.tone as string) || 'professional'
+
+    // Fetch original message
+    const { data: original, error: fetchError } = await supabase
+      .from('channel_messages')
+      .select('id, channel, sender, subject, metadata')
+      .eq('id', messageId)
+      .eq('org_id', orgId)
+      .single()
+
+    if (fetchError || !original) {
+      return { success: false, error: `Cannot find message to reply to: ${fetchError?.message || 'Unknown'}` }
+    }
+
+    // Create draft record
+    const draftId = `draft-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
+    const metadata = (original.metadata as Record<string, unknown>) || {}
+
+    // For Gmail, we could call Gmail API to create a draft
+    // For now, we'll store in metadata as draft_pending
+    const { data: updated, error: updateError } = await supabase
+      .from('channel_messages')
+      .update({
+        metadata: {
+          ...metadata,
+          draft_id: draftId,
+          draft_body: body,
+          draft_tone: tone,
+          draft_created_at: new Date().toISOString(),
+          draft_status: 'pending',
+        },
+      })
+      .eq('id', messageId)
+      .select()
+      .single()
+
+    if (updateError) {
+      return { success: false, error: `Failed to create draft: ${updateError.message}` }
+    }
+
+    return {
+      success: true,
+      data: {
+        draft_id: draftId,
+        message_id: messageId,
+        original_sender: original.sender,
+        original_subject: `Re: ${original.subject}`,
+        preview: body.slice(0, 200),
+        status: 'draft_saved',
+        warning: 'This draft requires user approval before sending',
+      },
+    }
+  },
+
+  async summarize_inbox(input, orgId, supabase) {
+    const hours = (input.hours as number) || 24
+    const since = new Date(Date.now() - hours * 60 * 60 * 1000).toISOString()
+
+    const { data, error } = await supabase
+      .from('channel_messages')
+      .select('id, sender, subject, metadata, created_at')
+      .eq('org_id', orgId)
+      .gte('created_at', since)
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      return { success: false, error: `Failed to summarize inbox: ${error.message}` }
+    }
+
+    const messages = data ?? []
+
+    // Group by category
+    const categories: Record<string, Array<{ sender: string; subject: string }>> = {
+      priority: [],
+      updates: [],
+      feed: [],
+      receipts: [],
+      other: [],
+    }
+
+    for (const msg of messages) {
+      const meta = (msg.metadata as Record<string, unknown>) || {}
+      const category = (meta.category as string) || 'other'
+      const key = ['priority', 'updates', 'feed', 'receipts'].includes(category) ? category : 'other'
+
+      if (categories[key].length < 5) {
+        categories[key].push({
+          sender: msg.sender as string,
+          subject: msg.subject as string,
+        })
+      }
+    }
+
+    const highlights = []
+    for (const [cat, items] of Object.entries(categories)) {
+      if (items.length > 0) {
+        for (const item of items.slice(0, 2)) {
+          highlights.push(`${item.sender}: ${item.subject} (${cat})`)
+        }
+      }
+    }
+
+    const actionItems = categories.priority.map(item => `Reply to ${item.sender} about "${item.subject}"`)
+
+    return {
+      success: true,
+      data: {
+        period: `${hours} hours`,
+        total: messages.length,
+        categories: {
+          priority: { count: categories.priority.length, items: categories.priority },
+          updates: { count: categories.updates.length, items: categories.updates },
+          feed: { count: categories.feed.length, items: categories.feed },
+          receipts: { count: categories.receipts.length, items: categories.receipts },
+        },
+        highlights,
+        actionItems,
+      },
     }
   },
 }

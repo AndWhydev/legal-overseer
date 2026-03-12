@@ -4,6 +4,36 @@ import Anthropic from '@anthropic-ai/sdk'
 import { assembleContext } from '@/lib/context/assembler'
 import { logger } from '@/lib/core/logger';
 
+// ---------------------------------------------------------------------------
+// Types — Header-Based Classification
+// ---------------------------------------------------------------------------
+
+export type SenderType = 'human' | 'automated' | 'transactional' | 'marketing'
+
+export interface ContentSignals {
+  htmlRatio: number // 0-1, fraction of message that is HTML
+  linkDensity: number // 0-1, fraction of content that is links
+  hasUnsubscribeLink: boolean
+  hasTrackingPixels: boolean
+  imageCount: number
+  personalGreeting: boolean // starts with name-based greeting
+}
+
+export interface ActionabilitySignals {
+  hasQuestion: boolean // +2
+  hasDeadline: boolean // +3
+  hasDirective: boolean // +2
+  hasUrgency: boolean // +2
+  hasMention: boolean // +3 (user mentioned)
+  isReplyToUser: boolean // +1
+  isKnownClient: boolean // +2
+  hasOutstandingInvoice: boolean // +1
+  score: number
+  category: 'priority' | 'updates' | 'low' // score >= 4 → priority, 2-3 → updates, 0-1 → low
+}
+
+export type InboxCategory = 'priority' | 'updates' | 'feed' | 'receipts' | 'spam'
+
 export interface ClassificationResult {
   significance: number // 1-10
   timeSensitivity: 'immediate' | 'today' | 'this_week' | 'whenever' | 'none'
