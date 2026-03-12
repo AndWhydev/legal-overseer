@@ -1,8 +1,23 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { computeEntityProfile } from './entity-profile-builder'
 
+/** Build a deeply chainable mock where every method returns itself, and resolves to `value` when awaited */
+function chain(value: any): any {
+  const obj: any = {}
+  const p = Promise.resolve(value)
+  obj.then = (a: any, b: any) => p.then(a, b)
+  return new Proxy(obj, {
+    get(target, prop) {
+      if (prop === 'then') return target.then
+      return vi.fn().mockReturnValue(chain(value))
+    },
+  })
+}
+
 function createMockSupabase(overrides: any = {}) {
   const mockUpsert = vi.fn().mockReturnValue({ error: null })
+  let profilesCallCount = 0
+  let timelineCallCount = 0
 
   const defaultEvents = {
     data: [
@@ -14,43 +29,43 @@ function createMockSupabase(overrides: any = {}) {
   }
 
   const defaultRelationships = {
-    data: [{ from_type: 'contact', from_id: 'contact-1', to_type: 'task', to_id: 't1', relationship_type: 'assigned_to', strength: 1.0 }],
+    data: [{ entity_a_type: 'contact', entity_a_id: 'contact-1', entity_b_type: 'task', entity_b_id: 't1', relationship_type: 'assigned_to', strength: 1.0 }],
     error: null,
   }
 
   const defaultMemories = {
-    data: [{ fact: 'Prefers email', confidence: 0.9, category: 'preference', created_at: '2026-03-01T00:00:00Z' }],
+    data: [{ content: 'Prefers email', confidence: 0.9, category: 'preference', created_at: '2026-03-01T00:00:00Z' }],
     error: null,
   }
+
+  // Staleness check: no existing profile by default → always recompute
+  const stalenessResult = overrides.existingProfile ?? { data: null, error: null }
+  // Event count for staleness check
+  const countResult = overrides.eventCount ?? { count: 5, error: null }
 
   return {
     supabase: {
       from: vi.fn((table: string) => {
-        if (table === 'entity_profiles') return { upsert: mockUpsert }
-        if (table === 'entity_timeline') return {
-          select: vi.fn().mockReturnValue({
-            eq: vi.fn().mockReturnValue({
-              eq: vi.fn().mockReturnValue({
-                order: vi.fn().mockReturnValue({
-                  limit: vi.fn().mockResolvedValue(overrides.events ?? defaultEvents)
-                })
-              })
-            })
-          })
+        if (table === 'entity_profiles') {
+          profilesCallCount++
+          if (profilesCallCount === 1) {
+            // Staleness check: .select().eq().eq().eq().maybeSingle()
+            return chain(stalenessResult)
+          }
+          return { upsert: mockUpsert }
         }
-        if (table === 'entity_relationships') return {
-          select: vi.fn().mockReturnValue({
-            or: vi.fn().mockResolvedValue(overrides.relationships ?? defaultRelationships)
-          })
+        if (table === 'entity_timeline') {
+          timelineCallCount++
+          if (timelineCallCount === 1) {
+            // Staleness count: .select('id', { count, head }).eq().eq()
+            return chain(countResult)
+          }
+          // Data fetch: .select(..., { count }).eq().eq().order().limit()
+          return chain(overrides.events ?? defaultEvents)
         }
-        if (table === 'semantic_memories') return {
-          select: vi.fn().mockReturnValue({
-            contains: vi.fn().mockReturnValue({
-              eq: vi.fn().mockResolvedValue(overrides.memories ?? defaultMemories)
-            })
-          })
-        }
-        return {}
+        if (table === 'entity_relationships') return chain(overrides.relationships ?? defaultRelationships)
+        if (table === 'semantic_memories') return chain(overrides.memories ?? defaultMemories)
+        return chain({ data: null, error: null })
       }),
     } as any,
     mockUpsert,
@@ -111,6 +126,37 @@ describe('computeEntityProfile', () => {
       }),
       expect.anything()
     )
+  })
+
+  it('skips recomputation when no new events since last compute', async () => {
+    const { supabase, mockUpsert } = createMockSupabase({
+      existingProfile: { data: { event_count_at_compute: 5 }, error: null },
+      eventCount: { count: 5, error: null },
+    })
+
+    await computeEntityProfile(supabase, {
+      orgId: 'org-1',
+      entityType: 'contact',
+      entityId: 'contact-1',
+    })
+
+    // Profile should NOT be recomputed — upsert should not be called
+    expect(mockUpsert).not.toHaveBeenCalled()
+  })
+
+  it('recomputes when new events exist since last compute', async () => {
+    const { supabase, mockUpsert } = createMockSupabase({
+      existingProfile: { data: { event_count_at_compute: 2 }, error: null },
+      eventCount: { count: 5, error: null },  // 5 > 2, so stale
+    })
+
+    await computeEntityProfile(supabase, {
+      orgId: 'org-1',
+      entityType: 'contact',
+      entityId: 'contact-1',
+    })
+
+    expect(mockUpsert).toHaveBeenCalled()
   })
 
   it('does not throw when upsert fails', async () => {

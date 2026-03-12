@@ -36,12 +36,29 @@ export {
 export { loadContext } from './loader'
 export type { AppContext } from './loader'
 
+// Entity mention scanner
+export { scanForEntityMentions } from './entity-mention-scanner'
+export type { ScanContact, MentionMatch } from './entity-mention-scanner'
+
+// Baseplate snapshots
+export { getBaseplateSnapshot } from './baseplate-snapshot'
+export type { BaseplateSnapshot } from './baseplate-snapshot'
+
 // Graph queries
 export { getEntityGraph, searchEntities } from './graph-query'
 export type { GraphNode, GraphEdge, EntityGraph, SearchResult } from './graph-query'
 
+// Action reflection (post-tool write-back)
+export { reflectAction } from './action-reflector'
+
 // Pattern extraction
-export { extractPaymentPattern, extractResponseLatency, upsertPattern } from './pattern-extractor'
+export {
+  extractPaymentPattern,
+  extractResponseLatency,
+  extractActivityFrequency,
+  extractChannelPreference,
+  upsertPattern,
+} from './pattern-extractor'
 
 // Types
 export type {

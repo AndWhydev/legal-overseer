@@ -1,8 +1,10 @@
 import { loadContext } from '@/lib/context/loader'
-import { assembleContext } from '@/lib/context/assembler'
 import { loadPolicies } from './policy-loader'
 import { loadVoiceProfile } from './voice-loader'
 import { getPack, resolveIndustry } from '@/lib/industry/registry'
+import { scanForEntityMentions, type ScanContact } from '@/lib/context/entity-mention-scanner'
+import { getBaseplateSnapshot, type BaseplateSnapshot } from '@/lib/context/baseplate-snapshot'
+import { logger } from '@/lib/core/logger'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 interface CachedEvent {
@@ -238,44 +240,149 @@ ${voiceText}
 }
 
 /**
- * Build a system prompt enriched with entity context from the semantic engine.
- * If the user message mentions known contacts/entities, appends a briefing section.
- * Falls back to the base prompt if no entities are detected.
+ * Load contacts with fields needed for entity mention scanning.
+ */
+async function loadContactsForScanning(supabase: SupabaseClient, orgId: string): Promise<ScanContact[]> {
+  const { data, error } = await supabase
+    .from('contacts')
+    .select('id, name, emails, phones, aliases')
+    .eq('org_id', orgId)
+
+  if (error || !data) return []
+  return data.map(c => ({
+    id: c.id,
+    name: c.name,
+    emails: c.emails ?? [],
+    phones: c.phones ?? [],
+    aliases: c.aliases ?? [],
+  }))
+}
+
+/**
+ * Format a baseplate snapshot into a concise context line (~500 tokens max).
+ */
+function formatSnapshotContext(
+  contactName: string,
+  contact: ScanContact,
+  snapshot: BaseplateSnapshot
+): string {
+  const parts: string[] = []
+
+  // Contact identifier
+  const primaryEmail = contact.emails[0]
+  const identifier = primaryEmail ? `${contactName} (${primaryEmail})` : contactName
+
+  // Event summary
+  const { event_summary } = snapshot.profile
+  if (event_summary.total > 0) {
+    const channelList = event_summary.channels.length > 0
+      ? ` via ${event_summary.channels.join(', ')}`
+      : ''
+    parts.push(`${event_summary.total} events${channelList}`)
+  }
+
+  // Last contact date
+  if (event_summary.last_event_at) {
+    const lastDate = new Date(event_summary.last_event_at).toISOString().split('T')[0]
+    parts.push(`Last contact: ${lastDate}`)
+  }
+
+  // Recent thread subjects from events (extract from event_data)
+  const subjects = snapshot.profile.recent_events
+    .map(e => {
+      const data = e.data as Record<string, unknown> | undefined
+      return data?.subject as string | undefined
+        ?? data?.thread as string | undefined
+        ?? data?.title as string | undefined
+    })
+    .filter((s): s is string => Boolean(s))
+  const uniqueSubjects = [...new Set(subjects)].slice(0, 3)
+  if (uniqueSubjects.length > 0) {
+    parts.push(`Recent threads: ${uniqueSubjects.map(s => `"${s}"`).join(', ')}`)
+  }
+
+  // Key memories (high-confidence facts)
+  const topMemories = snapshot.profile.memories
+    .filter(m => m.confidence >= 0.6)
+    .slice(0, 3)
+    .map(m => m.fact)
+  if (topMemories.length > 0) {
+    parts.push(`Notes: ${topMemories.join('; ')}`)
+  }
+
+  // Relationships summary
+  const relCount = snapshot.profile.relationships.length
+  if (relCount > 0) {
+    const relTypes = [...new Set(snapshot.profile.relationships.map(r => r.type))].slice(0, 3)
+    parts.push(`Relationships: ${relTypes.join(', ')}`)
+  }
+
+  const line = `${identifier}: ${parts.join('. ')}${parts.length > 0 ? '.' : 'No profile data yet.'}`
+
+  // Hard limit per entity: ~2000 chars ≈ 500 tokens
+  return line.length > 2000 ? line.slice(0, 1997) + '...' : line
+}
+
+/**
+ * Build a system prompt enriched with baseplate context for mentioned entities.
+ * Scans the user message for contact name/email/phone matches, then loads
+ * pre-computed baseplate snapshots for each match. No extra LLM calls.
  */
 export async function buildEntityAwarePrompt(
   supabase: SupabaseClient,
   orgId: string,
   userMessage: string
 ): Promise<string> {
-  const [basePrompt, contextBriefing] = await Promise.all([
+  const [basePrompt, scanContacts] = await Promise.all([
     buildSystemPrompt(supabase, orgId),
-    supabase
-      ? assembleContext(supabase, orgId, userMessage)
-      : Promise.resolve({ resolvedEntities: [], briefings: [], summary: '' }),
+    supabase ? loadContactsForScanning(supabase, orgId) : Promise.resolve([]),
   ])
 
-  if (contextBriefing.resolvedEntities.length === 0) {
+  // Fast string-match scan — no DB calls
+  const mentions = scanForEntityMentions(userMessage, scanContacts, 5)
+
+  if (mentions.length === 0) {
     return basePrompt
   }
 
-  // Token-aware budget: ~4 chars per token, budget 1000 tokens for entity context
-  const TOKEN_BUDGET = 1000
-  const CHARS_PER_TOKEN = 4
-  const maxChars = TOKEN_BUDGET * CHARS_PER_TOKEN
+  logger.info('[prompt-builder] Entity mentions detected', {
+    count: mentions.length,
+    entities: mentions.map(m => ({ name: m.contactName, matchedOn: m.matchedOn })),
+  })
 
-  let entitySection = contextBriefing.summary
-  if (entitySection.length > maxChars) {
-    // Truncate at last complete sentence within budget
-    const truncated = entitySection.slice(0, maxChars)
-    const lastSentence = truncated.lastIndexOf('. ')
-    entitySection = lastSentence > maxChars * 0.5
-      ? truncated.slice(0, lastSentence + 1)
-      : truncated + '...'
+  // Fetch baseplate snapshots in parallel for all matched contacts
+  const snapshotResults = await Promise.all(
+    mentions.map(m => getBaseplateSnapshot(supabase, orgId, 'contact', m.contactId))
+  )
+
+  // Build context lines for contacts that have snapshots
+  const contextLines: string[] = []
+  const contactMap = new Map(scanContacts.map(c => [c.id, c]))
+
+  for (let i = 0; i < mentions.length; i++) {
+    const snapshot = snapshotResults[i]
+    const contact = contactMap.get(mentions[i].contactId)
+    if (!snapshot || !contact) continue
+
+    contextLines.push(formatSnapshotContext(mentions[i].contactName, contact, snapshot))
+  }
+
+  if (contextLines.length === 0) {
+    return basePrompt
+  }
+
+  // Token-aware budget: ~500 tokens per entity, max 2500 total
+  const MAX_CHARS = 10000
+  let entitySection = contextLines.join('\n\n')
+  if (entitySection.length > MAX_CHARS) {
+    entitySection = entitySection.slice(0, MAX_CHARS) + '...'
   }
 
   return `${basePrompt}
 
 ## Entity Context
+
+The following contacts were mentioned in the user's message. Use this pre-compiled context to inform your response. You can use tools to get more detail if needed.
 
 ${entitySection}
 `

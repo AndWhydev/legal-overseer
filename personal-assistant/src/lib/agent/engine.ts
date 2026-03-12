@@ -8,6 +8,7 @@ import { canProceed } from './cost-guard'
 import { generatePlan, stageFromToolName, isTrivialMessage, type PlanStage, type PlanOutput } from './planner'
 import { withCircuitBreaker, CircuitOpenError } from './circuit-breaker'
 import { writeToDeadLetterQueue } from './dlq'
+import { reflectAction } from '@/lib/context/action-reflector'
 import type { ModelTier } from '@/lib/bitbit-core'
 import { logger } from '@/lib/core/logger'
 
@@ -439,6 +440,12 @@ export async function* runAgentChat(
               approvalId: result.approvalId,
             },
           },
+        }
+
+        // Fire-and-forget context write-back
+        if (result.success && !result.queued) {
+          reflectAction(config.supabase, config.orgId, tool.name, tool.input as Record<string, unknown>, result.data)
+            .catch(err => logger.error('[engine] action reflect failed', { err, tool: tool.name }))
         }
 
         // Mark matched plan stage as done

@@ -13,6 +13,26 @@ export async function computeEntityProfile(
 ): Promise<void> {
   const { orgId, entityType, entityId } = input
 
+  // Staleness check: skip if no new events since last computation
+  const { data: existing } = await supabase
+    .from('entity_profiles')
+    .select('event_count_at_compute')
+    .eq('org_id', orgId)
+    .eq('entity_type', entityType)
+    .eq('entity_id', entityId)
+    .maybeSingle()
+
+  const { count: currentEventCount } = await supabase
+    .from('entity_timeline')
+    .select('id', { count: 'exact', head: true })
+    .eq('org_id', orgId)
+    .eq('entity_id', entityId)
+
+  if (existing && currentEventCount !== null && existing.event_count_at_compute >= currentEventCount) {
+    logger.debug('[entity-profile-builder] Skipping recomputation — no new events', { entityType, entityId })
+    return
+  }
+
   // Fetch recent timeline events (last 50)
   const { data: events, count: eventCount } = await supabase
     .from('entity_timeline')
@@ -25,13 +45,13 @@ export async function computeEntityProfile(
   // Fetch relationships
   const { data: relationships } = await supabase
     .from('entity_relationships')
-    .select('from_type, from_id, to_type, to_id, relationship_type, strength')
-    .or(`and(from_id.eq.${entityId},from_type.eq.${entityType}),and(to_id.eq.${entityId},to_type.eq.${entityType})`)
+    .select('entity_a_type, entity_a_id, entity_b_type, entity_b_id, relationship_type, strength')
+    .or(`and(entity_a_id.eq.${entityId},entity_a_type.eq.${entityType}),and(entity_b_id.eq.${entityId},entity_b_type.eq.${entityType})`)
 
   // Fetch active memories
   const { data: memories } = await supabase
     .from('semantic_memories')
-    .select('fact, confidence, category, created_at')
+    .select('content, confidence, category, created_at')
     .contains('entity_ids', [entityId])
     .eq('is_active', true)
 
@@ -44,12 +64,12 @@ export async function computeEntityProfile(
     })),
     relationships: (relationships ?? []).map(r => ({
       type: r.relationship_type,
-      target_type: r.from_id === entityId ? r.to_type : r.from_type,
-      target_id: r.from_id === entityId ? r.to_id : r.from_id,
+      target_type: r.entity_a_id === entityId ? r.entity_b_type : r.entity_a_type,
+      target_id: r.entity_a_id === entityId ? r.entity_b_id : r.entity_a_id,
       strength: r.strength,
     })),
     memories: (memories ?? []).map(m => ({
-      fact: m.fact,
+      fact: m.content,
       confidence: m.confidence,
       category: m.category,
     })),

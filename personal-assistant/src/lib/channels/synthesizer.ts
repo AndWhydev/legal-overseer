@@ -1,5 +1,7 @@
 import type { ChannelMessage, ChannelType, SyncResult, ChannelAdapter } from './types'
-import { writeMessageEvent } from '@/lib/context/timeline-writer'
+import { writeMessageEvent, writeTimelineEvent } from '@/lib/context/timeline-writer'
+import { resolveEntity } from '@/lib/context/entity-resolver'
+import { invalidateCrossRefs } from '@/lib/context/xref-cache'
 import { gmailAdapter } from './gmail'
 import { outlookAdapter } from './outlook'
 import { imessageAdapter } from './imessage'
@@ -131,6 +133,159 @@ function deduplicateMessages(messages: ChannelMessage[]): ChannelMessage[] {
   }
 
   return Array.from(seen.values())
+}
+
+/** Patterns that indicate automated/no-reply senders — skip contact creation for these */
+const NOREPLY_PATTERNS = [
+  /^noreply@/i, /^no-reply@/i, /^no_reply@/i,
+  /^notifications?@/i, /^mailer-daemon@/i, /^postmaster@/i,
+  /^bounce[s]?@/i, /^donotreply@/i, /^do-not-reply@/i,
+  /^auto(mated)?[-_]?notify@/i, /^alerts?@/i,
+  /^feedback@.*\.amazonses\.com$/i, /^daemon@/i,
+  /^support@.*\.zendesk\.com$/i,
+  /^newsletter@/i, /^marketing@/i, /^digest@/i,
+]
+
+export function isNoReplyAddress(email: string): boolean {
+  return NOREPLY_PATTERNS.some(p => p.test(email))
+}
+
+/**
+ * Extract a human-readable name from sender string or email.
+ * Handles formats: "John Doe <john@x.com>", "john.doe@x.com", "John Doe"
+ */
+export function extractNameFromSender(sender: string, email?: string): string {
+  // If sender looks like "Name <email>", extract the name part
+  const angleMatch = sender.match(/^(.+?)\s*<[^>]+>$/)
+  if (angleMatch) return angleMatch[1].trim()
+
+  // If sender doesn't contain @ it's probably already a name
+  if (!sender.includes('@')) return sender.trim()
+
+  // Fall back to email local part: "john.doe@x.com" → "John Doe"
+  const raw = email ?? sender
+  const local = raw.split('@')[0]
+  return local
+    .replace(/[._-]/g, ' ')
+    .replace(/\b\w/g, c => c.toUpperCase())
+    .trim()
+}
+
+/**
+ * Create a contact from an inbound message sender.
+ * Returns the new contact ID, or null if creation failed.
+ */
+async function autoCreateContact(
+  supabase: SupabaseClient,
+  orgId: string,
+  msg: ChannelMessage
+): Promise<string | null> {
+  const email = msg.senderEmail
+  const name = extractNameFromSender(msg.sender, email)
+  const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+
+  const emails = email ? [email.toLowerCase()] : []
+  const phones: string[] = []
+
+  // For phone-based channels, treat the sender as a phone number
+  if (!email && msg.sender && /^\+?\d[\d\s\-()]{5,}$/.test(msg.sender.trim())) {
+    phones.push(msg.sender.trim())
+  }
+
+  const { data, error } = await supabase
+    .from('contacts')
+    .insert({
+      org_id: orgId,
+      slug,
+      name,
+      type: 'contact',
+      emails,
+      phones,
+      aliases: [],
+      profile_data: {
+        source: 'auto_ingest',
+        first_seen_channel: msg.channel,
+        first_seen_at: new Date().toISOString(),
+      },
+      communication_patterns: {},
+    })
+    .select('id')
+    .single()
+
+  if (error) {
+    logger.warn('[synthesizer] autoCreateContact failed', {
+      name, email, channel: msg.channel, error: error.message,
+    })
+    return null
+  }
+
+  logger.info('[synthesizer] Auto-created contact from inbound message', {
+    contactId: data.id, name, email, channel: msg.channel,
+  })
+  return data.id
+}
+
+/**
+ * Fire-and-forget: resolve sender → contact, write to contact's timeline, invalidate cache.
+ * Auto-creates contacts for unknown senders (skipping no-reply addresses).
+ * Runs after writeMessageEvent so ALL channels benefit from a single integration point.
+ */
+async function reflectInboundMessage(
+  supabase: SupabaseClient,
+  orgId: string,
+  msg: ChannelMessage
+): Promise<void> {
+  try {
+    // Resolve sender: email for email channels, phone for SMS/WhatsApp, sender name as fallback
+    const query = msg.senderEmail ?? msg.sender
+    if (!query) return
+
+    let contacts = await resolveEntity(supabase, query, orgId)
+
+    // Auto-create contact for unknown senders (skip no-reply/automated addresses)
+    if (contacts.length === 0) {
+      const senderEmail = msg.senderEmail?.toLowerCase()
+      if (senderEmail && isNoReplyAddress(senderEmail)) {
+        return // Skip automated senders entirely
+      }
+
+      const newId = await autoCreateContact(supabase, orgId, msg)
+      if (!newId) return // Creation failed — bail
+
+      // Re-resolve to get the full contact object
+      contacts = await resolveEntity(supabase, query, orgId)
+      if (contacts.length === 0) return
+    }
+
+    const contact = contacts[0]
+    const snippet = msg.body.length > 200 ? msg.body.slice(0, 197) + '...' : msg.body
+
+    // Write event on the CONTACT's timeline (not just the channel_message timeline)
+    await writeTimelineEvent(
+      supabase,
+      orgId,
+      'contact',
+      contact.id,
+      'message_received',
+      {
+        channel: msg.channel,
+        subject: msg.subject ?? null,
+        snippet,
+        sender: msg.sender,
+        message_id: msg.externalId,
+      },
+      msg.channel,
+      undefined
+    )
+
+    await invalidateCrossRefs(supabase, orgId, 'contact', contact.id)
+  } catch (err) {
+    logger.error('[synthesizer] reflectInboundMessage failed', {
+      channel: msg.channel,
+      sender: msg.sender,
+      error: err instanceof Error ? err.message : String(err),
+    })
+  }
 }
 
 async function resolveColumnId(supabase: SupabaseClient, orgId: string, columnName: string): Promise<string | null> {
@@ -333,16 +488,20 @@ export async function synthesize(options: SynthesisOptions): Promise<SyncResult[
             writeMessageEvent(
               supabase,
               options.orgId,
-              msg.externalId || crypto.randomUUID(),
+              crypto.randomUUID(),
               'inbound',
               msg.channel,
               {
                 sender: msg.sender,
                 subject: msg.subject,
                 bodyPreview: msg.body.slice(0, 200),
+                externalId: msg.externalId || null,
               },
               undefined
             )
+            // Fire-and-forget: write to sender's contact timeline + invalidate cache
+            reflectInboundMessage(supabase, options.orgId, msg)
+              .catch(err => logger.error('[synthesizer] inbound reflect failed', { err }))
           } catch (timelineErr) {
             logger.error('[synthesizer] Failed to write timeline event:', timelineErr)
           }
