@@ -14,7 +14,7 @@ import { TABS } from '@/components/dashboard/spa-shell';
 import { INDUSTRY_PACKS } from '@/lib/industry/registry';
 import { createClient } from '@/lib/supabase/client';
 import { isSeedActive, setSeedActive } from '@/lib/dev/seed-data';
-import { DEFAULT_COLOR_MODE, resolveThemeColor, resolveStoredColorMode } from '@/lib/theme/defaults';
+import { DEFAULT_THEME_NAME, resolveThemeColor, resolveStoredThemeName, themeToColorMode, type ThemeName } from '@/lib/theme/defaults';
 
 if (process.env.NODE_ENV !== 'development') {
   // This entire module is dead-code-eliminated in production
@@ -28,24 +28,27 @@ export function DevToolbar() {
   const [showModules, setShowModules] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [seedOn, setSeedOn] = useState(false);
-  const [currentTheme, setCurrentTheme] = useState<'dark' | 'light'>(DEFAULT_COLOR_MODE);
+  const [currentTheme, setCurrentTheme] = useState<ThemeName>(DEFAULT_THEME_NAME);
   const overrides = useDevOverrides();
   const { modules, composition } = useEnabledModules();
 
   useEffect(() => {
     setMounted(true);
     setSeedOn(isSeedActive());
-    setCurrentTheme(resolveStoredColorMode(localStorage.getItem('bitbit-theme')));
+    setCurrentTheme(resolveStoredThemeName(localStorage.getItem('bb-theme')));
   }, []);
 
-  const handleThemeToggle = (mode: 'dark' | 'light') => {
-    setCurrentTheme(mode);
-    localStorage.setItem('bitbit-theme', mode);
+  const handleThemeToggle = (theme: ThemeName) => {
+    setCurrentTheme(theme);
+    const colorMode = themeToColorMode(theme);
+    localStorage.setItem('bb-theme', theme);
+    localStorage.setItem('bitbit-theme', colorMode);
     const html = document.documentElement;
-    html.className = mode;
-    html.style.colorScheme = mode;
+    html.className = colorMode;
+    html.setAttribute('data-theme', theme);
+    html.style.colorScheme = colorMode;
     const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.setAttribute('content', resolveThemeColor(mode));
+    if (meta) meta.setAttribute('content', resolveThemeColor(colorMode, theme));
   };
 
   if (process.env.NODE_ENV !== 'development') return null;
@@ -194,12 +197,12 @@ export function DevToolbar() {
           {/* Theme */}
           <Section title="Theme">
             <div style={{ display: 'flex', gap: 4 }}>
-              {(['dark', 'light'] as const).map(mode => {
-                const active = currentTheme === mode;
+              {(['midnight', 'aurora', 'light'] as const).map(t => {
+                const active = currentTheme === t;
                 return (
                   <button
-                    key={mode}
-                    onClick={() => handleThemeToggle(mode)}
+                    key={t}
+                    onClick={() => handleThemeToggle(t)}
                     style={{
                       display: 'flex', alignItems: 'center', gap: 5,
                       padding: '4px 10px', borderRadius: 6,
@@ -209,8 +212,8 @@ export function DevToolbar() {
                       fontSize: 12, fontWeight: active ? 600 : 400, cursor: 'pointer',
                     }}
                   >
-                    {mode === 'dark' ? <Moon size={12} /> : <Sun size={12} />}
-                    {mode}
+                    {t === 'midnight' ? <Moon size={12} /> : <Sun size={12} />}
+                    {t}
                   </button>
                 );
               })}

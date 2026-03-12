@@ -1,0 +1,475 @@
+/* ============================================================================
+   BitBit Light Theme — Clean & Minimal
+   White/light gray backgrounds, dark text, no glassmorphism
+   ============================================================================ */
+
+[data-theme="light"] {
+  /* ── Core Backgrounds ── */
+  --bg-primary: #FAFAF9;
+  --bg-secondary: #F5F5F4;
+  --bg-card: #FFFFFF;
+  --bg-card-alpha: rgba(255, 255, 255, 0.95);
+  --bg-sidebar: #FAFAF9;
+  --bg-elevated: #F0F0EE;
+  --bg-input: #F5F5F4;
+  --bg-overlay: rgba(0, 0, 0, 0.3);
+
+  /* ── Surfaces ── */
+  --bb-surface: #F5F5F4;
+  --bb-surface-hover: #EEEEEC;
+  --bb-surface-active: #E8E8E5;
+
+  /* ── Text ── */
+  --text-primary: #1A1A1B;
+  --text-secondary: #5C5750;
+  --text-dim: #78736A;
+  --text-on-accent: #FFFFFF;
+
+  /* ── Glassmorphism (disabled — solid surfaces) ── */
+  --glass-bg: #FFFFFF;
+  --glass-bg-heavy: #FFFFFF;
+  --glass-blur: none;
+  --glass-blur-heavy: none;
+  --glass-card-bg: #FFFFFF;
+  --glass-card-bg-light: #FFFFFF;
+  --glass-card-border: #E4E2DD;
+  --glass-card-inset: none;
+  --glass-card-blur: none;
+  --glass-pill-bg: #F5F5F4;
+  --glass-pill-inset: none;
+  --glass-hover-bg: #F0F0EE;
+  --glass-divider: #E4E2DD;
+  --glass-interactive-bg: #F5F5F4;
+  --glass-interactive-border: #E4E2DD;
+
+  /* ── Borders ── */
+  --border-subtle: #E4E2DD;
+  --border-subtle-alpha: rgba(0, 0, 0, 0.08);
+  --border-active: #D4D1CC;
+  --glass-border: #E4E2DD;
+  --border-focus-ring: rgba(0, 0, 0, 0.15);
+
+  /* ── Card Shadows ── */
+  --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --card-inset: none;
+  --card-shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --card-inset-hover: none;
+
+  /* ── Hover States ── */
+  --hover-bg: rgba(0, 0, 0, 0.04);
+  --hover-bg-strong: rgba(0, 0, 0, 0.06);
+
+  /* ── Card variant ── */
+  --bg-card-solid: #FFFFFF;
+
+  /* ── Accent ── */
+  --bb-orange: #1A1A1B;
+  --bb-orange-light: #333333;
+  --bb-orange-glow: none;
+  --bb-orange-glow-sm: none;
+  --bb-orange-glow-md: none;
+  --bb-orange-glow-lg: none;
+
+  /* ── Status Colors ── */
+  --bb-green: #15803D;
+  --bb-blue: #2563EB;
+  --bb-purple: #7C3AED;
+  --bb-amber: #B45309;
+  --bb-red: #DC2626;
+  --bb-teal: #0D9488;
+  --bb-pink: #DB2777;
+  --bb-cyan: #0891B2;
+
+  /* ── Semantic Aliases ── */
+  --bb-status-success: var(--bb-green);
+  --bb-status-warning: var(--bb-amber);
+  --bb-status-error: var(--bb-red);
+  --bb-status-info: var(--bb-blue);
+
+  /* ── Legacy compat ── */
+  --green-primary: #1A1A1B;
+  --green-neon: #5C5750;
+  --green-muted: #78736A;
+  --green-glow-sm: none;
+  --green-glow-md: none;
+  --green-glow-lg: none;
+
+  /* ── AI Gradient ── */
+  --ai-gradient: linear-gradient(90deg, #1A1A1B, #3B3B3C, #5C5C5D);
+  --ai-gradient-glow: none;
+
+  /* ── Tailwind/shadcn token overrides ── */
+  --background: #FAFAF9;
+  --foreground: #1A1A1B;
+  --card: #FFFFFF;
+  --card-foreground: #1A1A1B;
+  --popover: #FFFFFF;
+  --popover-foreground: #1A1A1B;
+  --elevated: #F0F0EE;
+  --primary: #1A1A1B;
+  --primary-foreground: #FFFFFF;
+  --primary-hover: #333333;
+  --primary-light: #4A4A4B;
+  --secondary: #F0F0EE;
+  --secondary-foreground: #1A1A1B;
+  --muted: #F0F0EE;
+  --muted-foreground: #78736A;
+  --accent: #1A1A1B;
+  --accent-foreground: #FFFFFF;
+  --destructive: #DC2626;
+  --success: #15803D;
+  --warning: #B45309;
+  --border: #E4E2DD;
+  --border-hover: #D4D1CC;
+  --input: #F5F5F4;
+  --ring: #1A1A1B;
+  --text-muted: #78736A;
+
+  /* Charts */
+  --chart-1: #1A1A1B;
+  --chart-2: #15803D;
+  --chart-3: #B45309;
+  --chart-4: #7C3AED;
+  --chart-5: #DC2626;
+
+  /* Sidebar */
+  --sidebar: #FAFAF9;
+  --sidebar-foreground: #1A1A1B;
+  --sidebar-primary: #1A1A1B;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #F0F0EE;
+  --sidebar-accent-foreground: #1A1A1B;
+  --sidebar-border: #E4E2DD;
+  --sidebar-ring: #1A1A1B;
+
+  color-scheme: light;
+}
+
+
+/* --------------------------------------------------------------------------
+   Light: Body Background
+   -------------------------------------------------------------------------- */
+
+[data-theme="light"] body {
+  background: #FAFAF9 !important;
+  background-attachment: fixed !important;
+  min-height: 100vh;
+}
+
+
+/* --------------------------------------------------------------------------
+   Light: Glass Card Overrides (solid cards, no blur)
+   -------------------------------------------------------------------------- */
+
+[data-theme="light"] .bb-card {
+  background: #FFFFFF !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 1px solid #E4E2DD !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+  background-image: none !important;
+}
+
+[data-theme="light"] .bb-card:hover {
+  background: #FFFFFF !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+}
+
+[data-theme="light"] .glass-card {
+  background: #FFFFFF !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 1px solid #E4E2DD !important;
+}
+
+
+/* --------------------------------------------------------------------------
+   Light: Sidebar
+   -------------------------------------------------------------------------- */
+
+[data-theme="light"] .bb-sidebar-rail {
+  background: #FAFAF9 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border-right: 1px solid #E4E2DD !important;
+}
+
+[data-theme="light"] .bb-sidebar-panel {
+  background: #FFFFFF !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border-right: 1px solid #E4E2DD !important;
+}
+
+[data-theme="light"] .bb-sidebar-rail__icon {
+  color: #5C5750 !important;
+}
+
+[data-theme="light"] .bb-sidebar-rail__icon--active {
+  color: #1A1A1B !important;
+  background: #F0F0EE !important;
+}
+
+[data-theme="light"] .bb-sidebar-rail__icon:hover {
+  background: #F0F0EE !important;
+  color: #1A1A1B !important;
+}
+
+[data-theme="light"] .bb-sidebar-panel__item {
+  color: #5C5750 !important;
+}
+
+[data-theme="light"] .bb-sidebar-panel__item:hover {
+  background: #F0F0EE !important;
+  color: #1A1A1B !important;
+}
+
+[data-theme="light"] .bb-sidebar-panel__item--active {
+  color: #1A1A1B !important;
+  background: #F0F0EE !important;
+  font-weight: 600;
+}
+
+[data-theme="light"] .glass-sidebar {
+  background: #FAFAF9 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+
+/* --------------------------------------------------------------------------
+   Light: Topbar
+   -------------------------------------------------------------------------- */
+
+[data-theme="light"] .bb-topbar {
+  background: #FAFAF9 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border-bottom: 1px solid #E4E2DD !important;
+  color: #1A1A1B !important;
+}
+
+[data-theme="light"] .bb-topbar__title {
+  color: #1A1A1B !important;
+}
+
+
+/* --------------------------------------------------------------------------
+   Light: Buttons
+   -------------------------------------------------------------------------- */
+
+[data-theme="light"] .bb-btn--ghost {
+  background: #FFFFFF !important;
+  border: 1px solid #E4E2DD !important;
+  color: #1A1A1B !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+[data-theme="light"] .bb-btn--ghost:hover {
+  background: #F0F0EE !important;
+  border-color: #D4D1CC !important;
+}
+
+[data-theme="light"] .bb-btn--accent {
+  background: #1A1A1B !important;
+  color: #FFFFFF !important;
+}
+
+[data-theme="light"] .bb-btn--icon {
+  color: #5C5750 !important;
+}
+
+[data-theme="light"] .bb-btn--icon:hover {
+  background: #F0F0EE !important;
+  color: #1A1A1B !important;
+}
+
+
+/* --------------------------------------------------------------------------
+   Light: Backdrop / Background Pattern
+   -------------------------------------------------------------------------- */
+
+[data-theme="light"] .bb-backdrop,
+[data-theme="light"] .bb-dot-grid {
+  background-color: transparent !important;
+  background-image: none !important;
+}
+
+[data-theme="light"] .bb-backdrop::after,
+[data-theme="light"] .bb-dot-grid::after {
+  background: none !important;
+}
+
+
+/* --------------------------------------------------------------------------
+   Light: Tab Shell + Panels
+   -------------------------------------------------------------------------- */
+
+[data-theme="light"] .bb-tab-panel {
+  background: transparent !important;
+}
+
+
+/* --------------------------------------------------------------------------
+   Light: Scrollbar
+   -------------------------------------------------------------------------- */
+
+[data-theme="light"] ::-webkit-scrollbar-thumb {
+  background: #D4D1CC;
+}
+
+[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
+  background: #B8B5B0;
+}
+
+
+/* --------------------------------------------------------------------------
+   Light: Selection
+   -------------------------------------------------------------------------- */
+
+[data-theme="light"] ::selection {
+  background: rgba(26, 26, 27, 0.15);
+  color: #1A1A1B;
+}
+
+
+/* --------------------------------------------------------------------------
+   Light: Bottom Nav (Mobile)
+   -------------------------------------------------------------------------- */
+
+[data-theme="light"] .bb-sidebar-area {
+  background: #FAFAF9 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border-top: 1px solid #E4E2DD !important;
+}
+
+
+/* --------------------------------------------------------------------------
+   Light: Inputs / Select
+   -------------------------------------------------------------------------- */
+
+[data-theme="light"] select,
+[data-theme="light"] input[type="text"],
+[data-theme="light"] input[type="email"],
+[data-theme="light"] input[type="url"],
+[data-theme="light"] input[type="number"],
+[data-theme="light"] input[type="search"],
+[data-theme="light"] textarea {
+  background: #FFFFFF !important;
+  border: 1px solid #E4E2DD !important;
+  color: #1A1A1B !important;
+}
+
+[data-theme="light"] select option {
+  background: #FFFFFF;
+  color: #1A1A1B;
+}
+
+
+/* --------------------------------------------------------------------------
+   Light: Notification Center
+   -------------------------------------------------------------------------- */
+
+[data-theme="light"] .bb-notification-panel {
+  background: #FFFFFF !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 1px solid #E4E2DD !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1) !important;
+}
+
+
+/* --------------------------------------------------------------------------
+   Light: Kanban-specific
+   -------------------------------------------------------------------------- */
+
+[data-theme="light"] .bb-kanban-column {
+  background: #F5F5F4 !important;
+  border: 1px solid #E4E2DD !important;
+}
+
+[data-theme="light"] .bb-kanban-card {
+  background: #FFFFFF !important;
+  border: 1px solid #E4E2DD !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06) !important;
+}
+
+[data-theme="light"] .bb-kanban-card:hover {
+  background: #FFFFFF !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+}
+
+
+/* --------------------------------------------------------------------------
+   Light: No particle effect
+   -------------------------------------------------------------------------- */
+
+[data-theme="light"]::before {
+  content: none !important;
+}
+
+
+/* --------------------------------------------------------------------------
+   Light: Override inline-style dark RGBA
+   -------------------------------------------------------------------------- */
+
+[data-theme="light"] [style*="rgba(15, 20, 30"] {
+  background: #FFFFFF !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+[data-theme="light"] [style*="rgba(10, 14, 23"] {
+  background: #F5F5F4 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+[data-theme="light"] [style*="rgba(13, 17, 23"] {
+  background: #FFFFFF !important;
+}
+
+[data-theme="light"] [style*="rgba(10, 15, 22"] {
+  background: #F5F5F4 !important;
+}
+
+[data-theme="light"] [style*="rgba(20, 28, 40"] {
+  background: #F0F0EE !important;
+}
+
+[data-theme="light"] [style*="rgba(25, 35, 50"] {
+  background: #E8E8E5 !important;
+}
+
+
+/* --------------------------------------------------------------------------
+   Light: Global Search
+   -------------------------------------------------------------------------- */
+
+[data-theme="light"] .bb-global-search-overlay {
+  background: rgba(0, 0, 0, 0.3) !important;
+}
+
+[data-theme="light"] .bb-global-search-dialog {
+  background: #FFFFFF !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 1px solid #E4E2DD !important;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.15) !important;
+}
+
+
+/* --------------------------------------------------------------------------
+   Light: Dev Toolbar
+   -------------------------------------------------------------------------- */
+
+[data-theme="light"] .bb-dev-toolbar {
+  background: #FFFFFF !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 1px solid #E4E2DD !important;
+  color: #1A1A1B !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+}

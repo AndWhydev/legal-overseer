@@ -31,11 +31,27 @@ export async function GET(request: NextRequest) {
   }
 
   // Verify the user owns this thread
-  const { data: thread } = await supabase
-    .from('conversation_threads')
-    .select('id, user_id')
-    .eq('id', threadId)
-    .single()
+  let thread: { id: string; user_id: string } | null = null
+  try {
+    const { data, error } = await supabase
+      .from('conversation_threads')
+      .select('id, user_id')
+      .eq('id', threadId)
+      .single()
+
+    if (error) {
+      // Table may not exist yet (migration 067 not applied)
+      const msg = error.message || ''
+      if (msg.includes('does not exist') || msg.includes('relation') || error.code === '42P01') {
+        return NextResponse.json({ threadId, messages: [] })
+      }
+      return NextResponse.json({ error: 'Thread not found' }, { status: 404 })
+    }
+    thread = data
+  } catch {
+    // Total Recall tables not available — return empty history
+    return NextResponse.json({ threadId, messages: [] })
+  }
 
   if (!thread) {
     return NextResponse.json({ error: 'Thread not found' }, { status: 404 })

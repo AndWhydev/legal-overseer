@@ -105,9 +105,9 @@ const glassSelect: React.CSSProperties = {
 const accentBtn: React.CSSProperties = {
   padding: '8px 16px',
   borderRadius: 10,
-  background: '#FF5A1F',
+  background: '#1A1A1B',
   border: 'none',
-  color: '#000',
+  color: '#FFFFFF',
   fontSize: 13,
   fontWeight: 600,
   cursor: 'pointer',
@@ -508,7 +508,7 @@ export function WatchManager() {
                 }
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = '#FF5A1F'
+                e.currentTarget.style.background = '#1A1A1B'
                 e.currentTarget.style.transform = 'translateY(0)'
               }}
             >

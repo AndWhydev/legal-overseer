@@ -38,6 +38,31 @@ vi.mock('@/lib/agent/engine', () => ({
   }),
 }))
 
+// Mock email transport
+vi.mock('@/lib/email/email-transport', () => ({
+  sendCommandReplyEmail: vi.fn().mockResolvedValue(true),
+}))
+
+// Mock conversation interface — call the success callback with normalized text
+vi.mock('@/lib/conversation/interface', () => ({
+  routeIncomingConversation: vi.fn().mockImplementation(
+    async (_adapter: any, ctx: any, onSuccess: any, _onError: any) => {
+      // Extract command text the same way parseEmailCommand does
+      const subject = ctx.email?.subject || ''
+      const cleaned = subject.replace(/^\[(?:bit)?bit\]\s*/i, '').replace(/^!(?:bitbit)?\s*/i, '')
+      await onSuccess({ text: cleaned || 'Create task' })
+    },
+  ),
+}))
+
+// Mock email adapter
+vi.mock('@/lib/conversation/email-adapter', () => ({
+  emailConversationAdapter: vi.fn().mockReturnValue({
+    threadId: 'thread-1',
+    messages: [],
+  }),
+}))
+
 function makeEmail(overrides: Partial<ChannelMessage> = {}): ChannelMessage {
   return {
     id: 'email-1',

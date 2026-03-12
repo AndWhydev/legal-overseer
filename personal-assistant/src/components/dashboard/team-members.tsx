@@ -179,7 +179,7 @@ export function TeamMembers() {
             <button
               onClick={handleInvite}
               disabled={sending || !inviteEmail}
-              className="flex items-center gap-1.5 rounded-md bg-[var(--bb-orange,#FF5A1F)] px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+              className="flex items-center gap-1.5 rounded-md bg-[#1A1A1B] px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
             >
               {sending ? <Loader2 size={14} className="animate-spin" /> : <Mail size={14} />}
               Invite

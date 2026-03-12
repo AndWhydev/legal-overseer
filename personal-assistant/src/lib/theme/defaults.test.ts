@@ -25,5 +25,6 @@ describe('theme defaults', () => {
     expect(resolveStoredColorMode('light')).toBe('light')
     expect(resolveStoredThemeName('midnight')).toBe('midnight')
     expect(resolveStoredThemeName('aurora')).toBe('aurora')
+    expect(resolveStoredThemeName('light')).toBe('light')
   })
 })

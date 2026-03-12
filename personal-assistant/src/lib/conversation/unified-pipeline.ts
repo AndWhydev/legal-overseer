@@ -128,8 +128,9 @@ export class UnifiedConversationPipeline {
     }
 
     // ── Step 2: Thread Resolution ──────────────────────────────────────
-    let threadId: string
+    let threadId: string | null = null
     let isNewThread = false
+    let totalRecallAvailable = true
     try {
       if (config.threadId) {
         // Explicit thread (e.g., frontend sent threadId from prior session)
@@ -145,43 +146,65 @@ export class UnifiedConversationPipeline {
         isNewThread = threadResult.isNew
       }
     } catch (err) {
-      logger.error('[pipeline] Thread resolution failed', { err, userId: identity.userId })
-      yield { type: 'error', data: 'Could not resolve conversation thread' }
-      yield { type: 'done', data: {} }
-      return
+      // Total Recall tables may not exist yet (migration 067 not applied).
+      // Fall back to threadless mode — the engine still works without persistence.
+      const errMsg = err instanceof Error ? err.message : String(err)
+      const isSchemaError =
+        errMsg.includes('does not exist') ||
+        errMsg.includes('could not find') ||
+        errMsg.includes('relation') ||
+        errMsg.includes('function') ||
+        errMsg.includes('42P01') || // PostgreSQL: undefined_table
+        errMsg.includes('42883')    // PostgreSQL: undefined_function
+      if (isSchemaError) {
+        logger.warn('[pipeline] Total Recall tables not available, falling back to threadless mode', {
+          error: errMsg,
+          userId: identity.userId,
+        })
+        totalRecallAvailable = false
+      } else {
+        logger.error('[pipeline] Thread resolution failed', { err, userId: identity.userId })
+        totalRecallAvailable = false
+      }
     }
 
     // Emit thread info so frontends can track the active thread
-    yield { type: 'thread', data: { threadId, isNew: isNewThread } }
+    if (threadId) {
+      yield { type: 'thread', data: { threadId, isNew: isNewThread } }
+    }
 
     // ── Step 3: Store Inbound Message ──────────────────────────────────
-    try {
-      await storeMessage(this.supabase, {
-        threadId,
-        userId: identity.userId,
-        orgId: identity.orgId,
-        role: 'user',
-        channel: inbound.channel,
-        content: inbound.content,
-        channelMetadata: inbound.channelMetadata,
-      })
-    } catch (err) {
-      // Non-fatal: log but continue — we still want to process the message
-      logger.error('[pipeline] Failed to store inbound message', { err, threadId })
+    if (threadId && totalRecallAvailable) {
+      try {
+        await storeMessage(this.supabase, {
+          threadId,
+          userId: identity.userId,
+          orgId: identity.orgId,
+          role: 'user',
+          channel: inbound.channel,
+          content: inbound.content,
+          channelMetadata: inbound.channelMetadata,
+        })
+      } catch (err) {
+        // Non-fatal: log but continue — we still want to process the message
+        logger.error('[pipeline] Failed to store inbound message', { err, threadId })
+      }
     }
 
     // ── Step 4: Load History ───────────────────────────────────────────
     let history: Anthropic.MessageParam[] = []
-    try {
-      const recentMessages = await loadRecentMessages(this.supabase, threadId, 20)
-      // Exclude the message we just stored (it will be the current user turn)
-      const priorMessages = recentMessages.filter(
-        m => !(m.role === 'user' && m.content === inbound.content && m.thread_id === threadId)
-      )
-      history = messagesToHistory(priorMessages)
-    } catch (err) {
-      // Non-fatal: proceed without history
-      logger.warn('[pipeline] Failed to load history, proceeding without', { err, threadId })
+    if (threadId && totalRecallAvailable) {
+      try {
+        const recentMessages = await loadRecentMessages(this.supabase, threadId, 20)
+        // Exclude the message we just stored (it will be the current user turn)
+        const priorMessages = recentMessages.filter(
+          m => !(m.role === 'user' && m.content === inbound.content && m.thread_id === threadId)
+        )
+        history = messagesToHistory(priorMessages)
+      } catch (err) {
+        // Non-fatal: proceed without history
+        logger.warn('[pipeline] Failed to load history, proceeding without', { err, threadId })
+      }
     }
 
     // ── Step 5: Run Engine ─────────────────────────────────────────────
@@ -213,7 +236,7 @@ export class UnifiedConversationPipeline {
     }
 
     // ── Step 6: Store Assistant Response ────────────────────────────────
-    if (responseContent) {
+    if (responseContent && threadId && totalRecallAvailable) {
       try {
         await storeMessage(this.supabase, {
           threadId,
@@ -229,9 +252,11 @@ export class UnifiedConversationPipeline {
     }
 
     // ── Step 7: Async Post-Processing (fire-and-forget) ────────────────
-    this.postProcess(threadId, identity.orgId, inbound.channel).catch(err => {
-      logger.error('[pipeline] Post-processing failed', { err, threadId })
-    })
+    if (threadId && totalRecallAvailable) {
+      this.postProcess(threadId, identity.orgId, inbound.channel).catch(err => {
+        logger.error('[pipeline] Post-processing failed', { err, threadId })
+      })
+    }
 
     logger.info('[pipeline] Message handled', {
       threadId,

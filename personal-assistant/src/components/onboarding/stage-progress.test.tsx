@@ -9,8 +9,8 @@ import {
 
 describe('stage progress helpers', () => {
   it('builds the right stage sequence when workspace is part of onboarding', () => {
-    expect(getStageSequence(true)).toEqual(['workspace', 'connections', 'sync', 'value'])
-    expect(getStageSequence(false)).toEqual(['connections', 'sync', 'value'])
+    expect(getStageSequence(true)).toEqual(['workspace', 'connections', 'sync', 'agents', 'value'])
+    expect(getStageSequence(false)).toEqual(['connections', 'sync', 'agents', 'value'])
   })
 
   it('only allows backtracking to editable earlier stages', () => {
@@ -27,10 +27,11 @@ describe('OnboardingStageProgress', () => {
       <OnboardingStageProgress currentStage="connections" showWorkspaceStep={true} />,
     )
 
-    expect(html).toContain('2 / 4')
+    expect(html).toContain('2 / 5')
     expect(html).toContain('Workspace')
     expect(html).toContain('Connections')
     expect(html).toContain('Sync')
+    expect(html).toContain('Agents')
     expect(html).toContain('Ready')
   })
 })

@@ -6,6 +6,7 @@ import { runAgentChat, type EngineConfig } from '@/lib/agent/engine'
 import { logger } from '@/lib/core/logger';
 import { emailConversationAdapter } from '@/lib/conversation/email-adapter'
 import { routeIncomingConversation } from '@/lib/conversation/interface'
+import { sendCommandReplyEmail } from '@/lib/email/email-transport'
 
 export interface ParsedCommand {
   commandText: string
@@ -251,16 +252,21 @@ export async function processEmailCommand(
     // Format response as email
     const emailResponse = formatEmailResponse(agentResponse, email.senderEmail || '')
 
-    // Queue reply email (NOTE: actual sending would use Gmail/Outlook adapters)
-    // TODO: Use the emailResponse object to send the formatted email via Gmail/Outlook adapters
-    // The formatted email has: emailResponse.subject and emailResponse.htmlBody
-    // This should be queued to a channel outbound queue or sent directly to the sender
-    logger.info('[email-command] Email formatted and ready to send', { subject: emailResponse.subject })
+    // Send reply email via Resend
+    const sent = await sendCommandReplyEmail(
+      email.senderEmail || '',
+      emailResponse.subject,
+      emailResponse.htmlBody,
+    )
+
+    if (!sent) {
+      logger.warn('[email-command] Email send failed, response was generated but not delivered')
+    }
 
     return {
       success: true,
       agentResponse,
-      emailQueued: true,
+      emailQueued: sent,
     }
   } catch (err) {
     const errorMsg = err instanceof Error ? err.message : String(err)

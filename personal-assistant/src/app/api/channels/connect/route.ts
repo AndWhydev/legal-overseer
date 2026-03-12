@@ -5,6 +5,8 @@ import { logAuditEvent } from '@/lib/audit/logger'
 import { getActiveOrgId } from '@/lib/tenancy'
 import { checkPlanGate } from '@/lib/billing/plan-gates'
 import { logger } from '@/lib/core/logger';
+import { pollChannel } from '@/lib/channels/relay-daemon';
+import type { ChannelType } from '@/lib/channels/types';
 
 const OAUTH_PROVIDER_MAP: Record<string, string> = {
   gmail: 'gmail',
@@ -96,7 +98,7 @@ export async function POST(request: Request) {
           org_id: orgId,
           channel_type: connectionChannelType,
           status: 'connected',
-          relay_enabled: false,
+          relay_enabled: true,
           config: existingConnection?.config ?? {},
           last_sync: existingConnection?.last_sync ?? null,
           message_count: existingConnection?.message_count ?? 0,
@@ -112,6 +114,11 @@ export async function POST(request: Request) {
         entityType: 'channel_connection',
         entityId: channelLower,
         metadata: { channel: channelLower, method: 'api_key' },
+      })
+
+      // Trigger immediate sync so messages appear without waiting for 5-min cron
+      pollChannel(supabase, orgId, connectionChannelType as ChannelType).catch((err) => {
+        logger.error('[channels/connect] immediate sync failed:', err)
       })
 
       return NextResponse.json({ connected: true, channel: channelLower })

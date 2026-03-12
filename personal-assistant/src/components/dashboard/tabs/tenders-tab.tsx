@@ -186,9 +186,9 @@ const pillBtn: React.CSSProperties = {
 const accentBtn: React.CSSProperties = {
   padding: '8px 16px',
   borderRadius: 10,
-  background: '#FF5A1F',
+  background: '#1A1A1B',
   border: 'none',
-  color: '#000',
+  color: '#FFFFFF',
   fontSize: 13,
   fontWeight: 600,
   cursor: 'pointer',
@@ -429,7 +429,7 @@ function TendersTab() {
             }}
             onMouseLeave={(e) => {
               if (!scanning) {
-                (e.target as HTMLElement).style.background = '#FF5A1F';
+                (e.target as HTMLElement).style.background = '#1A1A1B';
                 (e.target as HTMLElement).style.transform = 'translateY(0)';
               }
             }}
@@ -876,7 +876,7 @@ function TenderDetailDrawer({ tender, response, onClose, onAction, actionLoading
                 width: '100%',
                 padding: '10px 16px',
                 opacity: actionLoading === tender.id ? 0.5 : 1,
-                background: hoveredBtn === 'evaluate' && actionLoading !== tender.id ? '#FF7A45' : '#FF5A1F',
+                background: hoveredBtn === 'evaluate' && actionLoading !== tender.id ? '#333333' : '#1A1A1B',
                 transform: hoveredBtn === 'evaluate' && actionLoading !== tender.id ? 'translateY(-1px)' : 'translateY(0)',
               }}
             >

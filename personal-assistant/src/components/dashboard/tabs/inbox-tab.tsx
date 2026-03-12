@@ -6,6 +6,7 @@ import { useDevOverrides } from '@/lib/dev/dev-overrides';
 import { TabShell } from '@/components/ui/tab-shell';
 import { EmptyState } from '@/components/ui/empty-state';
 import { logger } from '@/lib/core/logger';
+import { createClient } from '@/lib/supabase/client';
 import {
   Filter,
   CheckCircle2,
@@ -266,6 +267,21 @@ function InboxTab() {
     }
   };
 
+  const handleArchive = useCallback(async (id: string) => {
+    const supabase = createClient();
+    if (!supabase) return;
+    await supabase.from('channel_messages').delete().eq('id', id);
+    setMessages(prev => prev.filter(m => m.id !== id));
+    setTotal(prev => prev - 1);
+  }, []);
+
+  const handleDone = useCallback(async (id: string) => {
+    const supabase = createClient();
+    if (!supabase) return;
+    await supabase.from('channel_messages').update({ processed: true }).eq('id', id);
+    setMessages(prev => prev.map(m => m.id === id ? { ...m, status: 'processed' } : m));
+  }, []);
+
   const hasActiveFilters = channelFilter || priorityFilter || statusFilter;
 
   const clearFilters = () => {
@@ -420,7 +436,7 @@ function InboxTab() {
           />
         ) : (
           displayed.map((msg) => (
-            <MessageRow key={msg.id} message={msg} />
+            <MessageRow key={msg.id} message={msg} onArchive={handleArchive} onDone={handleDone} />
           ))
         )}
       </div>
@@ -540,7 +556,7 @@ function InboxSelect({
 // Message Row — Superhuman-inspired: flat, no border, spacing-based
 // ---------------------------------------------------------------------------
 
-function MessageRow({ message }: { message: InboxMessage }) {
+function MessageRow({ message, onArchive, onDone }: { message: InboxMessage; onArchive?: (id: string) => void; onDone?: (id: string) => void }) {
   const ChannelIcon = CHANNEL_ICONS[message.channelType] || GmailIcon;
   const brandColor = CHANNEL_BRAND_COLORS[message.channelType] || 'var(--text-dim)';
   const isUnread = message.status === 'unread';
@@ -585,10 +601,10 @@ function MessageRow({ message }: { message: InboxMessage }) {
           <span className="bb-inbox-row__time">{timeAgo}</span>
         </div>
         <div className="bb-inbox-row__hover-actions">
-          <button className="bb-inbox-row__action" title="Archive" aria-label="Archive message">
+          <button className="bb-inbox-row__action" title="Archive" aria-label="Archive message" onClick={(e) => { e.stopPropagation(); onArchive?.(message.id); }}>
             <Archive size={14} />
           </button>
-          <button className="bb-inbox-row__action" title="Done" aria-label="Mark as done">
+          <button className="bb-inbox-row__action" title="Done" aria-label="Mark as done" onClick={(e) => { e.stopPropagation(); onDone?.(message.id); }}>
             <CheckCircle2 size={14} />
           </button>
         </div>

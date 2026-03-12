@@ -115,27 +115,39 @@ describe('SMS Adapter', () => {
 
   describe('verifyWebhookSignature', () => {
     it('should verify valid signature', async () => {
-      const { createHmac } = await import('crypto')
+      const { generateKeyPairSync, sign } = await import('crypto')
+
+      // Generate an Ed25519 key pair for testing
+      const { publicKey, privateKey } = generateKeyPairSync('ed25519')
+
+      // Export public key as base64 DER (SPKI) — this is what Telnyx provides
+      const publicKeyDer = publicKey.export({ format: 'der', type: 'spki' })
+      const publicKeyBase64 = publicKeyDer.toString('base64')
+
+      // Set the webhook secret to our test public key
+      process.env.TELNYX_WEBHOOK_SECRET = publicKeyBase64
+
       const payload = 'test-payload'
       const timestamp = '1234567890'
-      const baseString = `${timestamp}.${payload}`
+      const signedPayload = `${timestamp}|${payload}`
 
-      const hmac = createHmac('sha256', 'test-webhook-secret')
-      hmac.update(baseString)
-      const hash = hmac.digest('hex')
-      const signature = `v1=${hash}`
+      // Sign with the private key (Ed25519)
+      const signature = sign(null, Buffer.from(signedPayload), privateKey)
+      const signatureBase64 = signature.toString('base64')
 
-      const result = await verifyWebhookSignature(payload, signature, timestamp)
+      const result = await verifyWebhookSignature(payload, signatureBase64, timestamp)
       expect(result).toBe(true)
     })
 
     it('should reject invalid signature', async () => {
-      const result = await verifyWebhookSignature('payload', 'v1=invalid-hash', '1234567890')
-      expect(result).toBe(false)
-    })
+      // Set a valid-looking base64 public key so it doesn't bail on missing secret
+      const { generateKeyPairSync } = await import('crypto')
+      const { publicKey } = generateKeyPairSync('ed25519')
+      const publicKeyDer = publicKey.export({ format: 'der', type: 'spki' })
+      process.env.TELNYX_WEBHOOK_SECRET = publicKeyDer.toString('base64')
 
-    it('should reject wrong version', async () => {
-      const result = await verifyWebhookSignature('payload', 'v2=somehash', '1234567890')
+      // Provide a random base64 string as signature — should fail verification
+      const result = await verifyWebhookSignature('payload', Buffer.from('invalid').toString('base64'), '1234567890')
       expect(result).toBe(false)
     })
 

@@ -250,6 +250,44 @@ export async function sendLeadAckEmailToRecipient(
   }
 }
 
+/**
+ * Send a reply to an email command back to the sender via Resend.
+ */
+export async function sendCommandReplyEmail(
+  recipientEmail: string,
+  subject: string,
+  htmlBody: string,
+): Promise<boolean> {
+  try {
+    if (!process.env.RESEND_API_KEY) {
+      logger.warn('sendCommandReplyEmail skipped: RESEND_API_KEY not configured')
+      return false
+    }
+
+    if (!recipientEmail) {
+      logger.warn('sendCommandReplyEmail skipped: no recipient email')
+      return false
+    }
+
+    const { error } = await getResend().emails.send({
+      from: getFromEmail(),
+      to: [recipientEmail],
+      subject,
+      html: htmlBody,
+    })
+
+    if (error) {
+      logger.warn('sendCommandReplyEmail failed:', error)
+      return false
+    }
+
+    return true
+  } catch (err) {
+    logger.warn('sendCommandReplyEmail error:', err)
+    return false
+  }
+}
+
 export async function sendLeadAckEmail(
   leadId: string,
   leadName: string,

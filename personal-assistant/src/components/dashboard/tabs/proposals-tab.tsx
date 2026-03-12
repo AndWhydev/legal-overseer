@@ -96,7 +96,7 @@ function ProposalsKanban() {
 
   const fetchProposals = useCallback(async () => {
     try {
-      const res = await fetch('/api/proposals')
+      const res = await fetch('/api/agent/proposals')
       if (!res.ok) return
       const data = await res.json()
       setProposals(data.proposals ?? data ?? [])
@@ -115,7 +115,7 @@ function ProposalsKanban() {
     async (id: string, newStatus: ProposalStatus) => {
       setMovingId(id)
       try {
-        const res = await fetch('/api/proposals/status', {
+        const res = await fetch('/api/agent/proposals/status', {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ id, status: newStatus }),

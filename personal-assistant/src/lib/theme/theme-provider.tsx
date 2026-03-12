@@ -5,6 +5,7 @@ import {
   DEFAULT_THEME_NAME,
   resolveStoredThemeName,
   resolveThemeColor,
+  themeToColorMode,
   type ThemeName,
 } from '@/lib/theme/defaults';
 
@@ -33,11 +34,16 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem('bb-theme', newTheme);
     document.documentElement.setAttribute('data-theme', newTheme);
 
+    // Sync color-mode class (dark/light) based on theme
+    const colorMode = themeToColorMode(newTheme);
+    document.documentElement.className = colorMode;
+    document.documentElement.style.colorScheme = colorMode;
+    localStorage.setItem('bitbit-theme', colorMode);
+
     // Update meta theme-color for mobile browsers
     const meta = document.querySelector('meta[name="theme-color"]');
     if (meta) {
-      const mode = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
-      meta.setAttribute('content', resolveThemeColor(mode, newTheme));
+      meta.setAttribute('content', resolveThemeColor(colorMode, newTheme));
     }
   }, []);
 

@@ -126,7 +126,7 @@ interface DedupeKey {
 }
 
 function buildDedupeKey(msg: Record<string, unknown>): DedupeKey {
-  const sender = String(msg.sender_email || msg.sender_name || '').toLowerCase().trim()
+  const sender = String(msg.sender_email || msg.sender || '').toLowerCase().trim()
   const topic = String(msg.subject || (msg.body as string || '').slice(0, 60)).toLowerCase().trim()
     .replace(/^(re|fw|fwd):\s*/gi, '')
     .replace(/\s+/g, ' ')
@@ -203,8 +203,8 @@ async function createTaskForMessage(
   contactId: string | null,
 ): Promise<boolean> {
   const title = msg.subject
-    ? `[${msg.channel_type}] ${msg.subject}`
-    : `[${msg.channel_type}] ${msg.sender_name || 'Unknown'}: ${String(msg.body || '').slice(0, 80)}`
+    ? `[${msg.channel}] ${msg.subject}`
+    : `[${msg.channel}] ${msg.sender || 'Unknown'}: ${String(msg.body || '').slice(0, 80)}`
 
   // Check for existing task with same title to avoid duplicates
   const { count } = await supabase
@@ -232,8 +232,8 @@ async function createTaskForMessage(
       org_id: orgId,
       title,
       description: [
-        `From: ${msg.sender_name || 'Unknown'}${msg.sender_email ? ` <${msg.sender_email}>` : ''}`,
-        `Channel: ${msg.channel_type}`,
+        `From: ${msg.sender || 'Unknown'}${msg.sender_email ? ` <${msg.sender_email}>` : ''}`,
+        `Channel: ${msg.channel}`,
         `Priority: ${priority}`,
         `Classification: ${classification.category} (significance ${classification.significance})`,
         '',
@@ -244,9 +244,9 @@ async function createTaskForMessage(
       position: 0,
       status: 'pending',
       metadata: {
-        source_channel: msg.channel_type,
+        source_channel: msg.channel,
         source_message_id: msg.id,
-        sender: msg.sender_name,
+        sender: msg.sender,
         sender_email: msg.sender_email,
         contact_id: contactId,
         classification_category: classification.category,
@@ -303,15 +303,14 @@ export async function getActiveThreads(
 
   const { data: recentMessages } = await supabase
     .from('channel_messages')
-    .select('sender_email, sender_name, subject, received_at, contact_id')
+    .select('sender_email, sender, subject, received_at, metadata')
     .eq('org_id', orgId)
     .gte('received_at', since)
-    .not('contact_id', 'is', null)
     .order('received_at', { ascending: false })
 
   if (!recentMessages || recentMessages.length === 0) return []
 
-  // Group by contact
+  // Group by contact (contact_id lives in metadata)
   const contactThreads = new Map<string, {
     contactId: string
     contactName: string
@@ -321,12 +320,14 @@ export async function getActiveThreads(
   }>()
 
   for (const msg of recentMessages) {
-    if (!msg.contact_id) continue
-    const existing = contactThreads.get(msg.contact_id)
+    const meta = (msg.metadata || {}) as Record<string, unknown>
+    const cId = meta.contact_id as string | undefined
+    if (!cId) continue
+    const existing = contactThreads.get(cId)
     if (!existing) {
-      contactThreads.set(msg.contact_id, {
-        contactId: msg.contact_id,
-        contactName: msg.sender_name || 'Unknown',
+      contactThreads.set(cId, {
+        contactId: cId,
+        contactName: (meta.contact_name as string) || (msg.sender as string) || 'Unknown',
         topic: msg.subject || 'General conversation',
         lastMessageAt: msg.received_at,
         messageCount: 1,
@@ -403,9 +404,9 @@ export async function runTriage(
     } else {
       const channelMsg: ChannelMessage = {
         id: msg.id,
-        channel: msg.channel_type,
+        channel: msg.channel as ChannelMessage['channel'],
         externalId: msg.external_id || msg.id,
-        sender: msg.sender_name || 'Unknown',
+        sender: (msg.sender as string) || 'Unknown',
         senderEmail: msg.sender_email,
         subject: msg.subject,
         body: msg.body || '',
@@ -418,11 +419,11 @@ export async function runTriage(
     }
 
     // 3. Entity resolution on inbound
-    let contactId: string | null = msg.contact_id || null
+    let contactId: string | null = null
     let contactName: string | null = null
-    if (!contactId) {
+    {
       const resolved = await resolveMessageSender(
-        supabase, orgId, msg.sender_email, msg.sender_name,
+        supabase, orgId, msg.sender_email, msg.sender as string | null,
       )
       if (resolved) {
         contactId = resolved.contactId
@@ -534,8 +535,8 @@ export async function runTriage(
 
     // 9. Write timeline event for this message
     await writeMessageEvent(
-      supabase, orgId, msg.id, 'inbound', msg.channel_type as string,
-      { sender: msg.sender_name, subject: msg.subject, priority, category: msgCategory },
+      supabase, orgId, msg.id, 'inbound', msg.channel as string,
+      { sender: msg.sender, subject: msg.subject, priority, category: msgCategory },
       contactId ?? undefined,
     )
 
@@ -546,7 +547,7 @@ export async function runTriage(
         { type: 'channel_message', id: msg.id },
         { type: 'contact', id: contactId },
         'related_to',
-        { channel: msg.channel_type, sender_email: msg.sender_email },
+        { channel: msg.channel, sender_email: msg.sender_email },
       )
     }
 
@@ -555,8 +556,8 @@ export async function runTriage(
       reflectOnEvent(supabase, orgId, {
         eventType: 'channel_message',
         eventData: {
-          channel: msg.channel_type,
-          sender: msg.sender_name,
+          channel: msg.channel,
+          sender: msg.sender,
           subject: msg.subject,
           body: String(msg.body || '').slice(0, 500),
           category: classification.category,
@@ -568,20 +569,23 @@ export async function runTriage(
       }).catch(() => {}) // fire-and-forget, never block triage
     }
 
-    // 12. Update message with full triage data
+    // 12. Update message with full triage data (only columns that exist in DB)
     await supabase
       .from('channel_messages')
       .update({
         processed: true,
-        classification,
+        classification: JSON.stringify(classification),
         significance: classification.significance,
-        category: msgCategory,
         priority,
-        contact_id: contactId,
-        contact_name: contactName,
-        thread_status: threadStatus,
-        deduplicated_with: isDuplicate ? duplicates.get(msg.id) : null,
-        processed_at: new Date().toISOString(),
+        metadata: {
+          ...(msg.metadata || {}),
+          category: msgCategory,
+          contact_id: contactId,
+          contact_name: contactName,
+          thread_status: threadStatus,
+          deduplicated_with: isDuplicate ? duplicates.get(msg.id) : null,
+          processed_at: new Date().toISOString(),
+        },
       })
       .eq('id', msg.id)
   }
@@ -637,27 +641,19 @@ export async function queryInbox(
     .from('channel_messages')
     .select('*', { count: 'exact' })
     .eq('org_id', orgId)
-    .is('deduplicated_with', null) // hide duplicates
     .order('received_at', { ascending: false })
 
   if (filters.channel) {
-    query = query.eq('channel_type', filters.channel)
+    query = query.eq('channel', filters.channel)
   }
   if (filters.priority) {
     query = query.eq('priority', filters.priority)
   }
-  if (filters.category) {
-    query = query.eq('category', filters.category)
-  }
-  if (filters.threadStatus) {
-    query = query.eq('thread_status', filters.threadStatus)
-  }
+  // category, threadStatus, and archived live in metadata — filter in JS after fetch
   if (filters.status === 'unread') {
     query = query.eq('processed', false)
   } else if (filters.status === 'actioned') {
-    query = query.eq('processed', true).not('category', 'eq', 'spam')
-  } else if (filters.status === 'archived') {
-    query = query.eq('archived', true)
+    query = query.eq('processed', true)
   }
 
   query = query.range(offset, offset + limit - 1)
@@ -668,26 +664,42 @@ export async function queryInbox(
     return { messages: [], total: 0 }
   }
 
-  const messages: InboxMessage[] = data.map((msg: Record<string, unknown>) => ({
-    id: msg.id as string,
-    channelType: msg.channel_type as string,
-    senderName: (msg.sender_name as string) || null,
-    senderEmail: (msg.sender_email as string) || null,
-    subject: (msg.subject as string) || null,
-    bodyPreview: String(msg.body || '').slice(0, 200),
-    category: (msg.category as MessageCategory) || 'informational',
-    priority: (msg.priority as PriorityLevel) || 'medium',
-    significance: (msg.significance as number) || 0,
-    contactId: (msg.contact_id as string) || null,
-    contactName: (msg.contact_name as string) || null,
-    threadStatus: (msg.thread_status as ThreadStatus) || null,
-    deduplicatedWith: (msg.deduplicated_with as string) || null,
-    receivedAt: msg.received_at as string,
-    processedAt: (msg.processed_at as string) || null,
-    status: msg.processed ? 'processed' : 'unread',
-  }))
+  let mapped: InboxMessage[] = data.map((msg: Record<string, unknown>) => {
+    const meta = (msg.metadata || {}) as Record<string, unknown>
+    return {
+      id: msg.id as string,
+      channelType: msg.channel as string,
+      senderName: (msg.sender as string) || null,
+      senderEmail: (msg.sender_email as string) || null,
+      subject: (msg.subject as string) || null,
+      bodyPreview: String(msg.body || '').slice(0, 200),
+      category: (meta.category as MessageCategory) || 'informational',
+      priority: (msg.priority as PriorityLevel) || 'medium',
+      significance: (msg.significance as number) || 0,
+      contactId: (meta.contact_id as string) || null,
+      contactName: (meta.contact_name as string) || null,
+      threadStatus: (meta.thread_status as ThreadStatus) || null,
+      deduplicatedWith: (meta.deduplicated_with as string) || null,
+      receivedAt: msg.received_at as string,
+      processedAt: (meta.processed_at as string) || null,
+      status: msg.processed ? 'processed' : 'unread',
+    }
+  })
 
-  return { messages, total: count ?? 0 }
+  // Filter out duplicates and apply metadata-based filters in JS
+  mapped = mapped.filter(m => !m.deduplicatedWith)
+  if (filters.category) {
+    mapped = mapped.filter(m => m.category === filters.category)
+  }
+  if (filters.threadStatus) {
+    mapped = mapped.filter(m => m.threadStatus === filters.threadStatus)
+  }
+  if (filters.status === 'archived') {
+    // archived messages have category 'spam' or explicit archived flag in metadata
+    mapped = mapped.filter(m => m.category === 'spam')
+  }
+
+  return { messages: mapped, total: count ?? 0 }
 }
 
 // ---------------------------------------------------------------------------
@@ -706,7 +718,7 @@ export async function generateDigest(
 
   const { data: messages } = await supabase
     .from('channel_messages')
-    .select('channel_type, classification, body, sender_name, category, priority, significance')
+    .select('channel, classification, body, sender, metadata, priority, significance')
     .eq('org_id', orgId)
     .gte('received_at', since)
     .order('received_at', { ascending: false })
@@ -718,12 +730,16 @@ export async function generateDigest(
   const categories: Record<string, { count: number; highlights: string[] }> = {}
 
   for (const msg of messages) {
-    const cat = (msg.category as string) || msg.classification?.category || 'uncategorized'
+    const meta = (msg.metadata || {}) as Record<string, unknown>
+    const classObj = typeof msg.classification === 'string'
+      ? (() => { try { return JSON.parse(msg.classification) } catch { return null } })()
+      : msg.classification
+    const cat = (meta.category as string) || classObj?.category || 'uncategorized'
     if (!categories[cat]) categories[cat] = { count: 0, highlights: [] }
     categories[cat].count++
     if (categories[cat].highlights.length < 3) {
       const preview = (msg.body || '').slice(0, 80)
-      categories[cat].highlights.push(`${msg.sender_name || 'Unknown'}: ${preview}`)
+      categories[cat].highlights.push(`${msg.sender || 'Unknown'}: ${preview}`)
     }
   }
 

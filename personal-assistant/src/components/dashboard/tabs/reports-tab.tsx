@@ -147,9 +147,9 @@ export default function ReportsTab() {
   const accentBtn: React.CSSProperties = {
     padding: '8px 16px',
     borderRadius: 10,
-    background: '#FF5A1F',
+    background: '#1A1A1B',
     border: 'none',
-    color: '#000',
+    color: '#FFFFFF',
     fontSize: 13,
     fontWeight: 600,
     cursor: 'pointer',
@@ -246,7 +246,7 @@ export default function ReportsTab() {
                 }
               }}
               onMouseLeave={(e) => {
-                (e.target as HTMLButtonElement).style.background = '#FF5A1F'
+                (e.target as HTMLButtonElement).style.background = '#1A1A1B'
                 ;(e.target as HTMLButtonElement).style.transform = 'translateY(0)'
               }}
               style={{

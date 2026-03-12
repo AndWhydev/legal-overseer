@@ -143,7 +143,7 @@ export default function AdminTab() {
     setHealthLoading(true);
     try {
       const token = await getToken(client);
-      const res = await fetch('/api/admin/health', {
+      const res = await fetch('/api/health', {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
@@ -257,7 +257,7 @@ export default function AdminTab() {
               disabled={importing || !importText.trim()}
               style={{
                 padding: '8px 20px', borderRadius: 6, fontWeight: 600, fontSize: 14,
-                background: 'var(--bb-orange)', color: '#fff', border: 'none', cursor: 'pointer',
+                background: '#1A1A1B', color: '#fff', border: 'none', cursor: 'pointer',
                 opacity: importing || !importText.trim() ? 0.5 : 1,
               }}
             >
@@ -296,7 +296,7 @@ export default function AdminTab() {
                   onClick={() => setExportFormat(f)}
                   style={{
                     padding: '6px 14px', borderRadius: 6, fontSize: 13, cursor: 'pointer',
-                    background: exportFormat === f ? 'var(--bb-orange)' : 'var(--bg-elevated)',
+                    background: exportFormat === f ? '#1A1A1B' : 'var(--bg-elevated)',
                     color: exportFormat === f ? '#fff' : 'var(--text-primary)',
                     border: '1px solid var(--border)',
                   }}
@@ -310,7 +310,7 @@ export default function AdminTab() {
               disabled={exporting}
               style={{
                 padding: '8px 20px', borderRadius: 6, fontWeight: 600, fontSize: 14,
-                background: 'var(--bb-orange)', color: '#fff', border: 'none', cursor: 'pointer',
+                background: '#1A1A1B', color: '#fff', border: 'none', cursor: 'pointer',
                 opacity: exporting ? 0.5 : 1,
               }}
             >

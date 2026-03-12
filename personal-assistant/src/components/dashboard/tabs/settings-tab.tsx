@@ -2,14 +2,14 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { IntegrationGrid } from '@/components/integrations/integration-grid';
-import { Sun, Moon, Plus, Trash2, Save, Loader2, Smartphone, LayoutGrid, Maximize2 } from 'lucide-react';
+import { Sun, Moon, Monitor, Plus, Trash2, Save, Loader2, Smartphone, LayoutGrid, Maximize2 } from 'lucide-react';
 import { QrAuthConnect } from '@/components/ui/qr-auth-connect';
 import { createClient } from '@/lib/supabase/client';
 import { TabShell } from '@/components/ui/tab-shell';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { logger } from '@/lib/core/logger';
 import { useTheme, type ThemeName } from '@/lib/theme/theme-provider';
-import { DEFAULT_COLOR_MODE, resolveStoredColorMode, resolveThemeColor } from '@/lib/theme/defaults';
+// Theme defaults used by layout.tsx blocking script; theme-provider handles runtime
 
 // ─── Agent types ─────────────────────────────────────────────────────────────
 
@@ -104,9 +104,9 @@ const pillBtnActive: React.CSSProperties = {
 const accentBtn: React.CSSProperties = {
   padding: '8px 16px',
   borderRadius: 10,
-  background: '#FF5A1F',
+  background: '#1A1A1B',
   border: 'none',
-  color: '#000',
+  color: '#FFFFFF',
   fontSize: 13,
   fontWeight: 600,
   cursor: 'pointer',
@@ -833,7 +833,6 @@ function DashboardLayoutSection({ supabase }: { supabase: SupabaseClient | null 
 
 function SettingsTab() {
   const { theme: currentPalette, setTheme: setPalette } = useTheme();
-  const [theme, setTheme] = useState<'dark' | 'light'>(DEFAULT_COLOR_MODE);
   const [supabase, setSupabase] = useState<SupabaseClient | null>(null);
   const [saving, setSaving] = useState(false);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
@@ -850,13 +849,6 @@ function SettingsTab() {
   });
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem('bitbit-theme');
-      if (saved) setTheme(resolveStoredColorMode(saved));
-      else setTheme(document.documentElement.classList.contains('dark') ? 'dark' : 'light');
-    } catch {
-      // ignore
-    }
     const client = createClient();
     if (client) setSupabase(client);
   }, []);
@@ -895,16 +887,6 @@ function SettingsTab() {
       }
     })();
   }, [supabase]);
-
-  const toggleTheme = useCallback(() => {
-    const next = theme === 'dark' ? 'light' : 'dark';
-    setTheme(next);
-    document.documentElement.className = next;
-    document.documentElement.style.colorScheme = next;
-    try { localStorage.setItem('bitbit-theme', next); } catch { /* ignore */ }
-    const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.setAttribute('content', resolveThemeColor(next, currentPalette));
-  }, [currentPalette, theme]);
 
   const handleAgentToggle = (agentId: string) => {
     setSettings(prev => ({
@@ -1064,10 +1046,11 @@ function SettingsTab() {
               <div style={glassCard}>
                 <h3 style={cardTitle}>Theme</h3>
                 <p style={cardDescription}>Choose your visual style.</p>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
                   {([
-                    { id: 'midnight' as ThemeName, label: 'Midnight', desc: 'Dark glassmorphic', bg: 'linear-gradient(135deg, #0a0f1a 0%, #141b2d 100%)', border: 'rgba(255,255,255,0.08)', icon: <Moon size={18} /> },
-                    { id: 'aurora' as ThemeName, label: 'Aurora', desc: 'Light glassmorphic', bg: 'linear-gradient(135deg, #F5E6D8 0%, #AFCADF 100%)', border: 'rgba(0,0,0,0.08)', icon: <Sun size={18} /> },
+                    { id: 'midnight' as ThemeName, label: 'Midnight', desc: 'Deep dark', bg: 'linear-gradient(135deg, #0a0f1a 0%, #141b2d 100%)', border: 'rgba(255,255,255,0.08)', icon: <Moon size={18} />, previewText: 'rgba(255,255,255,0.6)' },
+                    { id: 'aurora' as ThemeName, label: 'Aurora', desc: 'Glassmorphic', bg: 'linear-gradient(135deg, #F5E6D8 0%, #AFCADF 100%)', border: 'rgba(0,0,0,0.08)', icon: <Sun size={18} />, previewText: 'rgba(0,0,0,0.5)' },
+                    { id: 'light' as ThemeName, label: 'Light', desc: 'Clean & minimal', bg: 'linear-gradient(135deg, #FAFAF9 0%, #F0F0EE 100%)', border: 'rgba(0,0,0,0.08)', icon: <Monitor size={18} />, previewText: 'rgba(0,0,0,0.5)' },
                   ]).map(t => {
                     const active = currentPalette === t.id;
                     return (
@@ -1097,7 +1080,7 @@ function SettingsTab() {
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          color: t.id === 'midnight' ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.5)',
+                          color: t.previewText,
                         }}>
                           {t.icon}
                         </div>
