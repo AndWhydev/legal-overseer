@@ -6110,11 +6110,11 @@ html.light .bb-shortcuts-footer kbd {
   border-radius: 26px;
   flex-direction: column;
   align-items: stretch;
-  background: transparent;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  box-shadow: none;
-  border: none;
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(20px) saturate(1.2);
+  -webkit-backdrop-filter: blur(20px) saturate(1.2);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   transition:
     min-height 200ms cubic-bezier(0.22, 1, 0.36, 1),
     padding 200ms cubic-bezier(0.22, 1, 0.36, 1);
@@ -6323,7 +6323,7 @@ html.light .bb-pill--docked {
 }
 
 .bb-gooey-bg__blobs {
-  filter: url(#goo) blur(30px);
+  filter: url(#goo);
   width: 100%;
   height: 100%;
   position: relative;
@@ -6348,7 +6348,7 @@ html.light .bb-pill--docked {
   top: calc(50% - var(--goo-size) / 2);
   left: calc(50% - var(--goo-size) / 2);
   transform-origin: center center;
-  animation: bb-goo-vertical 30s ease infinite;
+  animation: bb-goo-vertical 120s ease infinite;
 }
 
 .bb-gooey-bg__g2 {
@@ -6358,7 +6358,7 @@ html.light .bb-pill--docked {
   top: calc(50% - var(--goo-size) / 2);
   left: calc(50% - var(--goo-size) / 2);
   transform-origin: calc(50% - 400px);
-  animation: bb-goo-circle 20s reverse infinite;
+  animation: bb-goo-circle 90s reverse infinite;
 }
 
 .bb-gooey-bg__g3 {
@@ -6368,7 +6368,7 @@ html.light .bb-pill--docked {
   top: calc(50% - var(--goo-size) / 2 + 200px);
   left: calc(50% - var(--goo-size) / 2 - 500px);
   transform-origin: calc(50% + 400px);
-  animation: bb-goo-circle 40s linear infinite;
+  animation: bb-goo-circle 160s linear infinite;
 }
 
 .bb-gooey-bg__g4 {
@@ -6378,7 +6378,7 @@ html.light .bb-pill--docked {
   top: calc(50% - var(--goo-size) / 2);
   left: calc(50% - var(--goo-size) / 2);
   transform-origin: calc(50% - 200px);
-  animation: bb-goo-horizontal 40s ease infinite;
+  animation: bb-goo-horizontal 160s ease infinite;
   opacity: 0.7;
 }
 
@@ -6389,7 +6389,7 @@ html.light .bb-pill--docked {
   top: calc(50% - var(--goo-size));
   left: calc(50% - var(--goo-size));
   transform-origin: calc(50% - 800px) calc(50% + 200px);
-  animation: bb-goo-circle 20s ease infinite;
+  animation: bb-goo-circle 90s ease infinite;
 }
 
 .bb-gooey-bg__interactive {
@@ -6405,9 +6405,9 @@ html.light .bb-pill--docked {
 .bb-gooey-bg__noise {
   position: absolute;
   inset: 0;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='250' height='250'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.45' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='250' height='250' filter='url(%23n)'/%3E%3C/svg%3E");
   background-repeat: repeat;
-  opacity: 0.06;
+  opacity: 0.18;
   pointer-events: none;
   mix-blend-mode: overlay;
   z-index: 1;

@@ -31,8 +31,8 @@ export function GooeyChatBg() {
     }
 
     const tick = () => {
-      curX += (tgX - curX) / 20
-      curY += (tgY - curY) / 20
+      curX += (tgX - curX) / 100
+      curY += (tgY - curY) / 100
       if (interactiveRef.current) {
         interactiveRef.current.style.transform = `translate(${Math.round(curX)}px, ${Math.round(curY)}px)`
       }

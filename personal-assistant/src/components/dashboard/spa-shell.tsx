@@ -478,9 +478,11 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
                 }}
               >
                 <Topbar config={topbarConfig} />
-                <div style={{ flexShrink: 0, paddingRight: '16px', pointerEvents: 'auto' }}>
-                  <NotificationCenter onTabChange={handleTabChange} />
-                </div>
+                {!isHidden && (
+                  <div style={{ flexShrink: 0, paddingRight: '16px', pointerEvents: 'auto' }}>
+                    <NotificationCenter onTabChange={handleTabChange} />
+                  </div>
+                )}
               </div>
             );
           })()}
