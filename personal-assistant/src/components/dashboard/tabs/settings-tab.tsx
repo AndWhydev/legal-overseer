@@ -82,23 +82,34 @@ const glassInputFocus: React.CSSProperties = {
 };
 
 const pillBtn: React.CSSProperties = {
-  padding: '6px 14px',
-  borderRadius: 20,
-  background: 'var(--glass-pill-bg)',
-  backdropFilter: 'var(--glass-blur)',
-  WebkitBackdropFilter: 'var(--glass-blur)',
-  boxShadow: 'var(--glass-card-inset)',
+  padding: '10px 20px',
+  borderRadius: 0,
+  background: 'transparent',
+  backdropFilter: 'none',
+  WebkitBackdropFilter: 'none',
+  boxShadow: 'none',
   border: 'none',
-  fontSize: 12,
+  borderBottom: '2px solid transparent',
+  fontSize: 13,
+  fontWeight: 500,
   color: 'var(--text-secondary)',
   cursor: 'pointer',
-  transition: 'all 200ms',
+  transition: 'all 150ms ease',
 };
 
 const pillBtnActive: React.CSSProperties = {
-  ...pillBtn,
-  color: 'var(--text-primary)',
-  background: 'rgba(255, 90, 31, 0.15)',
+  padding: '10px 20px',
+  borderRadius: 8,
+  background: 'rgba(255, 255, 255, 0.95)',
+  backdropFilter: 'none',
+  WebkitBackdropFilter: 'none',
+  boxShadow: 'none',
+  border: 'none',
+  fontSize: 13,
+  fontWeight: 600,
+  color: '#0A0A0B',
+  cursor: 'pointer',
+  transition: 'all 150ms ease',
 };
 
 const accentBtn: React.CSSProperties = {
@@ -185,14 +196,21 @@ function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: 
         width: 44,
         flexShrink: 0,
         cursor: 'pointer',
-        borderRadius: 9999,
-        transition: 'background-color 200ms',
+        borderRadius: 12,
+        transition: 'background-color 200ms ease',
         border: 'none',
-        background: checked ? 'var(--bb-orange)' : 'var(--glass-interactive-border)',
+        background: checked ? '#22C55E' : 'rgba(255, 255, 255, 0.1)',
+        outline: 'none',
       }}
       role="switch"
       aria-checked={checked}
       aria-label={label}
+      onFocus={e => {
+        e.currentTarget.style.boxShadow = '0 0 0 2px rgba(34, 197, 94, 0.3)';
+      }}
+      onBlur={e => {
+        e.currentTarget.style.boxShadow = 'none';
+      }}
     >
       <span
         style={{
@@ -201,9 +219,9 @@ function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: 
           height: 20,
           width: 20,
           borderRadius: 9999,
-          background: 'white',
-          boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-          transition: 'transform 200ms',
+          background: '#FFFFFF',
+          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.3)',
+          transition: 'transform 200ms ease',
           transform: checked ? 'translateX(20px)' : 'translateX(2px)',
           marginTop: 2,
         }}
@@ -957,12 +975,24 @@ function SettingsTab() {
         </div>
 
         {/* Tab Switcher */}
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: 0, flexWrap: 'wrap' }}>
           {SECTIONS.map(s => (
             <button
               key={s.id}
               onClick={() => setActiveSection(s.id)}
               style={activeSection === s.id ? pillBtnActive : pillBtn}
+              onMouseEnter={e => {
+                if (activeSection !== s.id) {
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)';
+                  e.currentTarget.style.color = 'var(--text-primary)';
+                }
+              }}
+              onMouseLeave={e => {
+                if (activeSection !== s.id) {
+                  e.currentTarget.style.background = 'transparent';
+                  e.currentTarget.style.color = 'var(--text-secondary)';
+                }
+              }}
             >
               {s.label}
             </button>
