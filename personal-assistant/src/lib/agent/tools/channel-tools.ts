@@ -6,6 +6,9 @@ import {
 } from '@/lib/channels'
 import type { ChannelAdapter, ChannelMessage, ChannelType } from '@/lib/channels'
 import type { AgentToolHandler } from '../tools'
+import { getOrgCredential } from '@/lib/integrations/credentials'
+import { refreshGmailToken } from '@/lib/channels/gmail'
+import { logger } from '@/lib/core/logger'
 
 export const channelToolDefinitions: Anthropic.Tool[] = [
   {
@@ -163,6 +166,60 @@ export const channelToolDefinitions: Anthropic.Tool[] = [
     input_schema: {
       type: 'object' as const,
       properties: {},
+    },
+  },
+  {
+    name: 'send_gmail',
+    description:
+      'Send an email from the user\'s connected Gmail account via Gmail API (OAuth). Unlike send_email (which uses Resend), this sends directly from the user\'s own Gmail address. IMPORTANT: Always confirm the recipient, subject, and body with the user before sending. Requires a connected Gmail OAuth integration.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        to: {
+          type: 'string',
+          description: 'Recipient email address',
+        },
+        subject: {
+          type: 'string',
+          description: 'Email subject line',
+        },
+        body: {
+          type: 'string',
+          description: 'Email body (plain text)',
+        },
+        cc: {
+          type: 'string',
+          description: 'CC recipients (comma-separated email addresses)',
+        },
+        bcc: {
+          type: 'string',
+          description: 'BCC recipients (comma-separated email addresses)',
+        },
+      },
+      required: ['to', 'subject', 'body'],
+    },
+  },
+  {
+    name: 'send_whatsapp',
+    description:
+      'Send a WhatsApp message via the connected Baileys bridge. The message is queued in the outbox and picked up by the bridge for delivery. The recipient should be a phone number with country code and no + prefix (e.g. 61400123456). Use when the user asks to send a WhatsApp message to someone.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        recipient: {
+          type: 'string',
+          description: 'Recipient phone number with country code, no + prefix (e.g. 61400123456)',
+        },
+        message: {
+          type: 'string',
+          description: 'The text message body to send',
+        },
+        recipient_name: {
+          type: 'string',
+          description: 'Display name of the recipient (for reference only, not sent)',
+        },
+      },
+      required: ['recipient', 'message'],
     },
   },
 ]
@@ -526,6 +583,132 @@ export const channelToolHandlers: Record<string, AgentToolHandler> = {
     }
   },
 
+  async send_gmail(input, orgId, supabase) {
+    const to = input.to as string
+    const subject = input.subject as string
+    const body = input.body as string
+    const cc = input.cc as string | undefined
+    const bcc = input.bcc as string | undefined
+
+    try {
+      // Retrieve Gmail OAuth credentials from the org's stored integrations
+      const creds = await getOrgCredential(supabase, orgId, 'gmail')
+      if (!creds) {
+        return {
+          success: false,
+          error: 'Gmail not connected. The user needs to connect their Gmail account via OAuth in Settings > Integrations.',
+        }
+      }
+
+      const clientId = (creds.client_id as string) || process.env.GOOGLE_CLIENT_ID || ''
+      const clientSecret = (creds.client_secret as string) || process.env.GOOGLE_CLIENT_SECRET || ''
+      const refreshToken = creds.refresh_token as string | undefined
+      let accessToken = creds.access_token as string | undefined
+      const tokenExpiresAt = creds.token_expires_at as string | undefined
+
+      if (!accessToken && !refreshToken) {
+        return {
+          success: false,
+          error: 'Gmail OAuth token not available. The user needs to re-connect their Gmail account.',
+        }
+      }
+
+      // Refresh the token if expired or about to expire
+      if (!accessToken || (tokenExpiresAt && new Date(tokenExpiresAt).getTime() - 5 * 60 * 1000 <= Date.now())) {
+        if (!refreshToken) {
+          return {
+            success: false,
+            error: 'Gmail access token expired and no refresh token available. The user needs to re-connect Gmail.',
+          }
+        }
+        const refreshed = await refreshGmailToken(supabase, orgId, {
+          client_id: clientId,
+          client_secret: clientSecret,
+          access_token: accessToken,
+          refresh_token: refreshToken,
+          token_expires_at: tokenExpiresAt,
+        })
+        if (!refreshed) {
+          return {
+            success: false,
+            error: 'Failed to refresh Gmail OAuth token. The user may need to re-connect their Gmail account.',
+          }
+        }
+        accessToken = refreshed
+      }
+
+      // Build RFC 2822 message
+      const messageParts: string[] = []
+      messageParts.push(`To: ${to}`)
+      if (cc) {
+        messageParts.push(`Cc: ${cc}`)
+      }
+      if (bcc) {
+        messageParts.push(`Bcc: ${bcc}`)
+      }
+      messageParts.push(`Subject: ${subject}`)
+      messageParts.push('MIME-Version: 1.0')
+      messageParts.push('Content-Type: text/plain; charset="UTF-8"')
+      messageParts.push('')
+      messageParts.push(body)
+
+      const rawMessage = messageParts.join('\r\n')
+
+      // Base64url encode the message (Gmail API requirement)
+      const encoded = Buffer.from(rawMessage)
+        .toString('base64')
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '')
+
+      // Send via Gmail API
+      const response = await fetch(
+        'https://gmail.googleapis.com/gmail/v1/users/me/messages/send',
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ raw: encoded }),
+        },
+      )
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        logger.error('[send_gmail] Gmail API error:', { status: response.status, body: errorText })
+        return {
+          success: false,
+          error: `Gmail API error (${response.status}): ${errorText}`,
+        }
+      }
+
+      const result = (await response.json()) as { id: string; threadId: string; labelIds?: string[] }
+
+      logger.info('[send_gmail] Email sent successfully', {
+        to,
+        subject,
+        messageId: result.id,
+        org: orgId,
+      })
+
+      return {
+        success: true,
+        data: {
+          message_id: result.id,
+          thread_id: result.threadId,
+          to,
+          cc: cc || null,
+          bcc: bcc || null,
+          subject,
+        },
+      }
+    } catch (err) {
+      logger.error('[send_gmail] Error:', err)
+      return { success: false, error: `Gmail send error: ${String(err)}` }
+    }
+  },
+
   async read_email(input, orgId, supabase) {
     const messageId = input.message_id as string
 
@@ -679,6 +862,65 @@ export const channelToolHandlers: Record<string, AgentToolHandler> = {
         highlights,
         actionItems,
       },
+    }
+  },
+
+  async send_whatsapp(input, orgId, supabase) {
+    const recipient = input.recipient as string
+    const message = input.message as string
+    const recipientName = input.recipient_name as string | undefined
+
+    // Strip + prefix if provided (normalise to digits-only with country code)
+    const normalised = recipient.replace(/^\+/, '').replace(/[\s\-()]/g, '')
+
+    if (!/^\d{7,15}$/.test(normalised)) {
+      return {
+        success: false,
+        error: `Invalid phone number "${recipient}". Provide digits only with country code (e.g. 61400123456).`,
+      }
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('whatsapp_outbox')
+        .insert({
+          org_id: orgId,
+          recipient: normalised,
+          body: message,
+          status: 'pending',
+        })
+        .select('id, created_at')
+        .single()
+
+      if (error) {
+        logger.error('[send_whatsapp] Insert failed:', error)
+        return { success: false, error: `Failed to queue WhatsApp message: ${error.message}` }
+      }
+
+      const displayRecipient = recipientName
+        ? `${recipientName} (${normalised})`
+        : normalised
+
+      logger.info('[send_whatsapp] Queued message', {
+        org: orgId,
+        recipient: normalised,
+        outboxId: data.id,
+      })
+
+      return {
+        success: true,
+        data: {
+          outbox_id: data.id,
+          recipient: displayRecipient,
+          message_preview: message.slice(0, 100) + (message.length > 100 ? '...' : ''),
+          status: 'pending',
+          queued_at: data.created_at,
+          note: 'Message queued for delivery via the WhatsApp bridge.',
+        },
+      }
+    } catch (err) {
+      logger.error('[send_whatsapp] Error:', err)
+      return { success: false, error: `WhatsApp send error: ${String(err)}` }
     }
   },
 }

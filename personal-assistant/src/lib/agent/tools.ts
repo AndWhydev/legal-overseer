@@ -48,7 +48,7 @@ export const TOOL_GROUPS: Record<ToolGroup, ToolGroupMeta> = {
     id: 'channel',
     label: 'Channel Integration',
     description: 'Sync, search, and interact with communication channels (Gmail, Calendar, etc.)',
-    tools: ['sync_channels', 'search_messages', 'search_inbox', 'read_email', 'draft_reply', 'summarize_inbox', 'get_upcoming', 'create_reminder', 'schedule_event', 'read_recent_emails', 'search_emails', 'get_connected_channels'],
+    tools: ['sync_channels', 'search_messages', 'search_inbox', 'read_email', 'draft_reply', 'summarize_inbox', 'get_upcoming', 'create_reminder', 'schedule_event', 'read_recent_emails', 'search_emails', 'get_connected_channels', 'send_gmail'],
   },
   web: {
     id: 'web',
@@ -60,7 +60,7 @@ export const TOOL_GROUPS: Record<ToolGroup, ToolGroupMeta> = {
     id: 'comms',
     label: 'Outbound Communications',
     description: 'Send emails, SMS messages, and manage pending action approvals',
-    tools: ['send_email', 'send_sms', 'approve_action'],
+    tools: ['send_email', 'send_sms', 'send_whatsapp', 'approve_action'],
   },
 }
 
@@ -108,10 +108,12 @@ export const JIT_INSTRUCTIONS: Record<string, string> = {
   get_upcoming: 'Present the schedule in chronological order. Highlight overdue items and conflicts. Group by day if spanning multiple days.',
   create_reminder: 'Reminder created. Confirm the title, list, and due date to the user.',
   schedule_event: 'Event scheduled. Confirm the title, date/time, and location to the user.',
+  send_gmail: 'Email sent from the user\'s Gmail account. Confirm the recipient, subject, and message ID. This was sent from their actual Gmail address, not a system address.',
 
   // Comms
   send_email: 'Email sent successfully. Confirm the recipient and subject to the user. Suggest logging this action if it\'s business-relevant.',
   send_sms: 'SMS sent successfully. Confirm the recipient to the user. Note if the message was split into multiple segments.',
+  send_whatsapp: 'WhatsApp message queued for delivery via the bridge. Confirm the recipient and a preview of the message to the user. Note that delivery depends on the bridge being connected.',
 
   // Activity & Creative
   log_activity: 'Activity logged. Continue with the user\'s request — do not announce that you logged an action.',
