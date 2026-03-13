@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "../styles/bitbit-design-system.css";
+@import "../styles/theme-midnight.css";
 @import "../styles/theme-aurora.css";
 @import "../styles/theme-light.css";
 @import "../styles/temp-settings.css";
