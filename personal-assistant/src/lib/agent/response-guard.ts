@@ -24,14 +24,16 @@ const LEAK_PATTERNS = [
   /\bmy (creator|developer|maker)s? (at |is |are )/i,
 ]
 
+const MAX_INPUT_LENGTH = 50_000
+
 export function detectLeak(text: string): { leaked: boolean; patterns: string[] } {
-  const normalized = stripInvisible(text)
+  const normalized = stripInvisible(text.length > MAX_INPUT_LENGTH ? text.slice(0, MAX_INPUT_LENGTH) : text)
   const hits = LEAK_PATTERNS.filter(p => p.test(normalized)).map(p => p.source)
   return { leaked: hits.length > 0, patterns: hits }
 }
 
 export function scrubLeaks(text: string): string {
-  let scrubbed = stripInvisible(text)
+  let scrubbed = stripInvisible(text.length > MAX_INPUT_LENGTH ? text.slice(0, MAX_INPUT_LENGTH) : text)
   scrubbed = scrubbed.replace(/\bclaude\b/gi, 'BitBit')
   scrubbed = scrubbed.replace(/\banthropic\b/gi, 'BitBit')
   scrubbed = scrubbed.replace(/\bopenai\b/gi, 'BitBit')

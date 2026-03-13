@@ -22,8 +22,10 @@ const INJECTION_SIGNALS = [
   /jailbreak/gi,
 ]
 
+const MAX_INPUT_LENGTH = 50_000
+
 export function detectInjection(input: string): { detected: boolean; patterns: string[] } {
-  const normalized = stripInvisible(input)
+  const normalized = stripInvisible(input.length > MAX_INPUT_LENGTH ? input.slice(0, MAX_INPUT_LENGTH) : input)
   const hits = INJECTION_SIGNALS.filter(p => {
     p.lastIndex = 0 // reset stateful regex
     return p.test(normalized)
@@ -32,7 +34,7 @@ export function detectInjection(input: string): { detected: boolean; patterns: s
 }
 
 export function neutralizeInjection(input: string): string {
-  let cleaned = stripInvisible(input)
+  let cleaned = stripInvisible(input.length > MAX_INPUT_LENGTH ? input.slice(0, MAX_INPUT_LENGTH) : input)
   for (const pattern of INJECTION_SIGNALS) {
     cleaned = cleaned.replaceAll(pattern, '')
   }

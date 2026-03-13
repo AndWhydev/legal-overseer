@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { resolveModel } from '@/lib/agent/model-registry'
 import type { ChannelMessage } from '@/lib/channels/types'
 
 // Mock context assembler
@@ -153,7 +154,7 @@ describe('classifyMessage', () => {
       expect.objectContaining({
         significance: 7,
         time_sensitivity: 'today',
-        classification_model: 'claude-3-5-haiku-latest',
+        classification_model: resolveModel('classification'),
       }),
     )
   })
