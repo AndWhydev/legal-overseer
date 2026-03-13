@@ -457,32 +457,39 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
               if (isHidden) layoutEl.setAttribute('data-topbar-hidden', '');
               else layoutEl.removeAttribute('data-topbar-hidden');
             }
+
+            if (isHidden) {
+              // No topbar at all — just float the notification center
+              return (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    right: 16,
+                    height: 'var(--topbar-height)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    zIndex: 10,
+                    pointerEvents: 'auto',
+                  }}
+                >
+                  <NotificationCenter onTabChange={handleTabChange} />
+                </div>
+              );
+            }
+
             return (
               <div
                 className="bb-topbar-area"
-                data-topbar-hidden={isHidden || undefined}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: isHidden ? 'flex-end' : undefined,
-                  ...(isHidden ? {
-                    position: 'absolute',
-                    top: 0,
-                    right: 0,
-                    left: 'var(--sidebar-width)',
-                    height: 'var(--topbar-height)',
-                    zIndex: 10,
-                    pointerEvents: 'none',
-                    background: 'transparent',
-                  } : {}),
                 }}
               >
                 <Topbar config={topbarConfig} />
-                {!isHidden && (
-                  <div style={{ flexShrink: 0, paddingRight: '16px', pointerEvents: 'auto' }}>
-                    <NotificationCenter onTabChange={handleTabChange} />
-                  </div>
-                )}
+                <div style={{ flexShrink: 0, paddingRight: '16px', pointerEvents: 'auto' }}>
+                  <NotificationCenter onTabChange={handleTabChange} />
+                </div>
               </div>
             );
           })()}

@@ -238,6 +238,13 @@ export function VoicePill({
                 autoComplete="off"
                 spellCheck={false}
                 rows={1}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  outline: 'none',
+                  boxShadow: 'none',
+                  WebkitAppearance: 'none',
+                }}
               />
               <div className="bb-pill__actions">
                 <button
