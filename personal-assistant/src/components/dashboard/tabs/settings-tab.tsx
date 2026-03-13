@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Sun, Moon, Monitor, Loader2, Smartphone, Check, X, Link2, Zap, Palette } from 'lucide-react';
+import { Sun, Moon, Monitor, Loader2, Smartphone, Check, X } from 'lucide-react';
 import { QrAuthConnect } from '@/components/ui/qr-auth-connect';
 import { ConnectionsGrid } from '@/components/integrations/integration-grid';
 import { createClient } from '@/lib/supabase/client';
@@ -24,12 +24,6 @@ const AUTOMATION_TYPES = [
   { id: 'tender_hunter', label: 'Tenders', description: 'Find and respond to government tenders' },
 ] as const;
 
-const SECTIONS = [
-  { id: 'connections', label: 'Connections', icon: Link2 },
-  { id: 'automations', label: 'Automations', icon: Zap },
-  { id: 'appearance', label: 'Appearance', icon: Palette },
-];
-
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 interface OrgSettings {
@@ -45,6 +39,12 @@ interface OrgIntegration {
 }
 
 // ─── Inline Styles ───────────────────────────────────────────────────────────
+
+const sectionWrapper: React.CSSProperties = {
+  overflow: 'auto',
+  padding: 24,
+  height: '100%',
+};
 
 const listRow: React.CSSProperties = {
   display: 'flex',
@@ -99,128 +99,6 @@ function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: 
         }}
       />
     </button>
-  );
-}
-
-// ─── Settings Rail (reuses bb-sidebar-panel CSS classes) ─────────────────────
-
-function SettingsRail({ activeSection, onSectionChange }: { activeSection: string; onSectionChange: (id: string) => void }) {
-  return (
-    <nav className="bb-sidebar-panel__nav" aria-label="Settings sections">
-      {SECTIONS.map(s => {
-        const active = activeSection === s.id;
-        const Icon = s.icon;
-        return (
-          <button
-            key={s.id}
-            onClick={() => onSectionChange(s.id)}
-            className={`bb-sidebar-panel__item${active ? ' bb-sidebar-panel__item--active' : ''}`}
-          >
-            <Icon size={16} strokeWidth={1.8} />
-            <span className="bb-sidebar-panel__label">{s.label}</span>
-          </button>
-        );
-      })}
-    </nav>
-  );
-}
-
-// ─── Automations Section (full-width) ────────────────────────────────────────
-
-function AutomationsSection({ enabledAutomations, onToggle }: { enabledAutomations: string[]; onToggle: (id: string) => void }) {
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-      <div>
-        <h3 style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Automations</h3>
-        <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '4px 0 0' }}>Choose what BitBit handles for you.</p>
-      </div>
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-        gap: 8,
-      }}>
-        {AUTOMATION_TYPES.map(a => (
-          <div key={a.id} style={{ ...listRow, justifyContent: 'space-between', gap: 12 }}>
-            <div style={{ minWidth: 0 }}>
-              <p style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', margin: 0 }}>{a.label}</p>
-              <p style={{ fontSize: 11, color: 'var(--text-secondary)', margin: '1px 0 0' }}>{a.description}</p>
-            </div>
-            <Toggle checked={enabledAutomations.includes(a.id)} onChange={() => onToggle(a.id)} label={a.label} />
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ─── Appearance Section (full-width) ─────────────────────────────────────────
-
-function AppearanceSection({ currentPalette, setPalette }: { currentPalette: ThemeName; setPalette: (t: ThemeName) => void }) {
-  const themes = [
-    { id: 'midnight' as ThemeName, label: 'Midnight', desc: 'Deep dark', bg: 'linear-gradient(135deg, #0a0f1a 0%, #141b2d 100%)', border: 'rgba(255,255,255,0.08)', icon: <Moon size={20} />, previewText: 'rgba(255,255,255,0.6)' },
-    { id: 'aurora' as ThemeName, label: 'Aurora', desc: 'Glassmorphic', bg: 'linear-gradient(135deg, #F5E6D8 0%, #AFCADF 100%)', border: 'rgba(0,0,0,0.08)', icon: <Sun size={20} />, previewText: 'rgba(0,0,0,0.5)' },
-    { id: 'light' as ThemeName, label: 'Light', desc: 'Clean & minimal', bg: 'linear-gradient(135deg, #FAFAF9 0%, #F0F0EE 100%)', border: 'rgba(0,0,0,0.08)', icon: <Monitor size={20} />, previewText: 'rgba(0,0,0,0.5)' },
-  ];
-
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-      <div>
-        <h3 style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Theme</h3>
-        <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '4px 0 0' }}>Choose your visual style.</p>
-      </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 12 }}>
-        {themes.map(t => {
-          const active = currentPalette === t.id;
-          return (
-            <button
-              key={t.id}
-              onClick={() => setPalette(t.id)}
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: 10,
-                padding: 16,
-                borderRadius: 14,
-                border: active ? '2px solid var(--accent)' : `1px solid ${t.border}`,
-                background: 'var(--bg-card)',
-                cursor: 'pointer',
-                transition: 'all 200ms',
-                position: 'relative',
-                overflow: 'hidden',
-              }}
-              onMouseEnter={e => {
-                if (!active) e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)';
-              }}
-              onMouseLeave={e => {
-                if (!active) e.currentTarget.style.borderColor = t.border;
-              }}
-            >
-              <div style={{
-                width: '100%', height: 72, borderRadius: 10, background: t.bg,
-                display: 'flex', alignItems: 'center', justifyContent: 'center', color: t.previewText,
-              }}>
-                {t.icon}
-              </div>
-              <div style={{ textAlign: 'center' }}>
-                <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>{t.label}</p>
-                <p style={{ fontSize: 11, color: 'var(--text-secondary)', margin: '2px 0 0' }}>{t.desc}</p>
-              </div>
-              {active && (
-                <div style={{
-                  position: 'absolute', top: 10, right: 10,
-                  width: 20, height: 20, borderRadius: '50%',
-                  background: 'var(--accent)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}>
-                  <Check size={12} color="#fff" strokeWidth={2.5} />
-                </div>
-              )}
-            </button>
-          );
-        })}
-      </div>
-    </div>
   );
 }
 
@@ -370,19 +248,61 @@ function SaveIndicator({ visible }: { visible: boolean }) {
   );
 }
 
-// ─── Main Settings Tab ───────────────────────────────────────────────────────
+// ─── Connections Tab ──────────────────────────────────────────────────────────
 
-function SettingsTab() {
-  const { theme: currentPalette, setTheme: setPalette } = useTheme();
+export function SettingsConnectionsTab() {
+  const [integrations, setIntegrations] = useState<OrgIntegration[]>([]);
+  const [integrationsLoading, setIntegrationsLoading] = useState(true);
+  const [whatsappModalOpen, setWhatsappModalOpen] = useState(false);
+
+  const fetchIntegrations = useCallback(async () => {
+    try {
+      setIntegrationsLoading(true);
+      const response = await fetch('/api/settings/integrations');
+      if (!response.ok) throw new Error('Failed to fetch integrations');
+      const data = await response.json() as { integrations: OrgIntegration[] };
+      setIntegrations(data.integrations);
+    } catch (err) {
+      logger.error('Error fetching integrations:', err);
+    } finally {
+      setIntegrationsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchIntegrations();
+  }, [fetchIntegrations]);
+
+  return (
+    <div style={sectionWrapper}>
+      <ConnectionsGrid
+        integrations={integrations}
+        isLoading={integrationsLoading}
+        onStatusChange={fetchIntegrations}
+        onWhatsAppConnect={() => setWhatsappModalOpen(true)}
+      />
+
+      {whatsappModalOpen && (
+        <WhatsAppWizardModal
+          onClose={() => setWhatsappModalOpen(false)}
+          onConnected={() => {
+            setWhatsappModalOpen(false);
+            fetchIntegrations();
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+// ─── Automations Tab ──────────────────────────────────────────────────────────
+
+export function SettingsAutomationsTab() {
   const [supabase, setSupabase] = useState<SupabaseClient | null>(null);
-  const [activeSection, setActiveSection] = useState<string>('connections');
   const [settings, setSettings] = useState<OrgSettings>({
     enabled_agents: AUTOMATION_TYPES.map(a => a.id),
   });
   const [orgId, setOrgId] = useState<string | null>(null);
-  const [integrations, setIntegrations] = useState<OrgIntegration[]>([]);
-  const [integrationsLoading, setIntegrationsLoading] = useState(true);
-  const [whatsappModalOpen, setWhatsappModalOpen] = useState(false);
   const [saveIndicatorVisible, setSaveIndicatorVisible] = useState(false);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -391,7 +311,6 @@ function SettingsTab() {
     if (client) setSupabase(client);
   }, []);
 
-  // Load org settings
   useEffect(() => {
     if (!supabase) return;
     (async () => {
@@ -411,26 +330,6 @@ function SettingsTab() {
     })();
   }, [supabase]);
 
-  // Fetch integrations
-  const fetchIntegrations = useCallback(async () => {
-    try {
-      setIntegrationsLoading(true);
-      const response = await fetch('/api/settings/integrations');
-      if (!response.ok) throw new Error('Failed to fetch integrations');
-      const data = await response.json() as { integrations: OrgIntegration[] };
-      setIntegrations(data.integrations);
-    } catch (err) {
-      logger.error('Error fetching integrations:', err);
-    } finally {
-      setIntegrationsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchIntegrations();
-  }, [fetchIntegrations]);
-
-  // Auto-save with debounce
   const autoSave = useCallback((newSettings: OrgSettings) => {
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(async () => {
@@ -449,7 +348,7 @@ function SettingsTab() {
     }, 600);
   }, [supabase, orgId]);
 
-  const handleAutomationToggle = (automationId: string) => {
+  const handleToggle = (automationId: string) => {
     const newSettings: OrgSettings = {
       ...settings,
       enabled_agents: settings.enabled_agents.includes(automationId)
@@ -461,69 +360,104 @@ function SettingsTab() {
   };
 
   return (
-    <div style={{
-      display: 'flex',
-      height: '100%',
-      overflow: 'hidden',
-    }}>
+    <div style={sectionWrapper}>
       <SaveIndicator visible={saveIndicatorVisible} />
-
-      {/* Settings Rail — uses same CSS as sidebar panel */}
-      <div style={{
-        width: 'var(--sidebar-panel-width, 180px)',
-        flexShrink: 0,
-        borderRight: '1px solid rgba(255, 255, 255, 0.06)',
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden',
-      }}>
-        <div className="bb-sidebar-panel__header">Settings</div>
-        <SettingsRail activeSection={activeSection} onSectionChange={setActiveSection} />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <div>
+          <h3 style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Automations</h3>
+          <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '4px 0 0' }}>Choose what BitBit handles for you.</p>
+        </div>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+          gap: 8,
+        }}>
+          {AUTOMATION_TYPES.map(a => (
+            <div key={a.id} style={{ ...listRow, justifyContent: 'space-between', gap: 12 }}>
+              <div style={{ minWidth: 0 }}>
+                <p style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', margin: 0 }}>{a.label}</p>
+                <p style={{ fontSize: 11, color: 'var(--text-secondary)', margin: '1px 0 0' }}>{a.description}</p>
+              </div>
+              <Toggle checked={settings.enabled_agents.includes(a.id)} onChange={() => handleToggle(a.id)} label={a.label} />
+            </div>
+          ))}
+        </div>
       </div>
-
-      {/* Content Area */}
-      <div style={{
-        flex: 1,
-        overflow: 'auto',
-        padding: 24,
-        minWidth: 0,
-      }}>
-        {activeSection === 'connections' && (
-          <ConnectionsGrid
-            integrations={integrations}
-            isLoading={integrationsLoading}
-            onStatusChange={fetchIntegrations}
-            onWhatsAppConnect={() => setWhatsappModalOpen(true)}
-          />
-        )}
-
-        {activeSection === 'automations' && (
-          <AutomationsSection
-            enabledAutomations={settings.enabled_agents}
-            onToggle={handleAutomationToggle}
-          />
-        )}
-
-        {activeSection === 'appearance' && (
-          <AppearanceSection
-            currentPalette={currentPalette}
-            setPalette={setPalette}
-          />
-        )}
-      </div>
-
-      {/* WhatsApp Wizard Modal */}
-      {whatsappModalOpen && (
-        <WhatsAppWizardModal
-          onClose={() => setWhatsappModalOpen(false)}
-          onConnected={() => {
-            setWhatsappModalOpen(false);
-            fetchIntegrations();
-          }}
-        />
-      )}
     </div>
   );
 }
 
-export default React.memo(SettingsTab);
+// ─── Appearance Tab ───────────────────────────────────────────────────────────
+
+export function SettingsAppearanceTab() {
+  const { theme: currentPalette, setTheme: setPalette } = useTheme();
+
+  const themes = [
+    { id: 'midnight' as ThemeName, label: 'Midnight', desc: 'Deep dark', bg: 'linear-gradient(135deg, #0a0f1a 0%, #141b2d 100%)', border: 'rgba(255,255,255,0.08)', icon: <Moon size={20} />, previewText: 'rgba(255,255,255,0.6)' },
+    { id: 'aurora' as ThemeName, label: 'Aurora', desc: 'Glassmorphic', bg: 'linear-gradient(135deg, #F5E6D8 0%, #AFCADF 100%)', border: 'rgba(0,0,0,0.08)', icon: <Sun size={20} />, previewText: 'rgba(0,0,0,0.5)' },
+    { id: 'light' as ThemeName, label: 'Light', desc: 'Clean & minimal', bg: 'linear-gradient(135deg, #FAFAF9 0%, #F0F0EE 100%)', border: 'rgba(0,0,0,0.08)', icon: <Monitor size={20} />, previewText: 'rgba(0,0,0,0.5)' },
+  ];
+
+  return (
+    <div style={sectionWrapper}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <div>
+          <h3 style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Theme</h3>
+          <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '4px 0 0' }}>Choose your visual style.</p>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 12 }}>
+          {themes.map(t => {
+            const active = currentPalette === t.id;
+            return (
+              <button
+                key={t.id}
+                onClick={() => setPalette(t.id)}
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: 10,
+                  padding: 16,
+                  borderRadius: 14,
+                  border: active ? '2px solid var(--accent)' : `1px solid ${t.border}`,
+                  background: 'var(--bg-card)',
+                  cursor: 'pointer',
+                  transition: 'all 200ms',
+                  position: 'relative',
+                  overflow: 'hidden',
+                }}
+                onMouseEnter={e => {
+                  if (!active) e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+                }}
+                onMouseLeave={e => {
+                  if (!active) e.currentTarget.style.borderColor = t.border;
+                }}
+              >
+                <div style={{
+                  width: '100%', height: 72, borderRadius: 10, background: t.bg,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', color: t.previewText,
+                }}>
+                  {t.icon}
+                </div>
+                <div style={{ textAlign: 'center' }}>
+                  <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>{t.label}</p>
+                  <p style={{ fontSize: 11, color: 'var(--text-secondary)', margin: '2px 0 0' }}>{t.desc}</p>
+                </div>
+                {active && (
+                  <div style={{
+                    position: 'absolute', top: 10, right: 10,
+                    width: 20, height: 20, borderRadius: '50%',
+                    background: 'var(--accent)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    <Check size={12} color="#fff" strokeWidth={2.5} />
+                  </div>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}

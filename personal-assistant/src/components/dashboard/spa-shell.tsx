@@ -62,7 +62,9 @@ export const TABS: TabDef[] = [
   { id: 'analytics', label: 'Analytics', path: '/dashboard/analytics' },
   { id: 'activity', label: 'Activity', path: '/dashboard/activity' },
   { id: 'admin', label: 'Admin', path: '/dashboard/admin' },
-  { id: 'settings', label: 'Settings', path: '/dashboard/settings' },
+  { id: 'settings-connections', label: 'Connections', path: '/dashboard/settings/connections' },
+  { id: 'settings-automations', label: 'Automations', path: '/dashboard/settings/automations' },
+  { id: 'settings-appearance', label: 'Appearance', path: '/dashboard/settings/appearance' },
 ];
 
 // ─── Pre-warm all tab imports immediately ───────────────────────────────────
@@ -92,7 +94,9 @@ const tabImports: Record<string, Promise<{ default: React.ComponentType }>> = {
   analytics: import('./tabs/analytics-tab'),
   activity: import('./tabs/activity-tab'),
   admin: import('./tabs/admin-tab'),
-  settings: import('./tabs/settings-tab'),
+  'settings-connections': import('./tabs/settings-tab').then(m => ({ default: m.SettingsConnectionsTab })),
+  'settings-automations': import('./tabs/settings-tab').then(m => ({ default: m.SettingsAutomationsTab })),
+  'settings-appearance': import('./tabs/settings-tab').then(m => ({ default: m.SettingsAppearanceTab })),
 };
 
 // Lazy wrappers that resolve from the already-triggered promises
@@ -119,7 +123,9 @@ const TabComponents: Record<string, React.LazyExoticComponent<React.ComponentTyp
   analytics: lazy(() => tabImports.analytics),
   activity: lazy(() => tabImports.activity),
   admin: lazy(() => tabImports.admin),
-  settings: lazy(() => tabImports.settings),
+  'settings-connections': lazy(() => tabImports['settings-connections']),
+  'settings-automations': lazy(() => tabImports['settings-automations']),
+  'settings-appearance': lazy(() => tabImports['settings-appearance']),
 };
 
 // ─── Helpers ────────────────────────────────────────────────────────────────

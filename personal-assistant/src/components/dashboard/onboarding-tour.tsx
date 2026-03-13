@@ -51,7 +51,7 @@ const TOUR_STEPS: TourStep[] = [
     title: 'Connections & Settings',
     description: 'Add or remove connected services, and adjust how BitBit works.',
     icon: Settings,
-    tabId: 'settings',
+    tabId: 'settings-connections',
     position: 'center',
   },
 ];

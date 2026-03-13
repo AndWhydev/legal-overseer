@@ -23,6 +23,9 @@ import {
   Clock,
   Shield,
   Settings,
+  Link2,
+  Zap,
+  Palette,
 } from 'lucide-react';
 import type { TopbarConfig } from './topbar';
 
@@ -189,8 +192,16 @@ export const TOPBAR_CONFIGS: Record<string, TopbarConfig> = {
     title: 'Admin',
     breadcrumb: <IconBreadcrumb icon={Shield} text="System tools" />,
   },
-  settings: {
+  'settings-connections': {
     title: 'Settings',
-    breadcrumb: <IconBreadcrumb icon={Settings} text="Preferences" />,
+    breadcrumb: <IconBreadcrumb icon={Link2} text="Connections" />,
+  },
+  'settings-automations': {
+    title: 'Settings',
+    breadcrumb: <IconBreadcrumb icon={Zap} text="Automations" />,
+  },
+  'settings-appearance': {
+    title: 'Settings',
+    breadcrumb: <IconBreadcrumb icon={Palette} text="Appearance" />,
   },
 };

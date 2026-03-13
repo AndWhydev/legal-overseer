@@ -11,7 +11,9 @@ const CORE_MODULES = [
   'dashboard',
   'chat',
   'inbox',
-  'settings',
+  'settings-connections',
+  'settings-automations',
+  'settings-appearance',
 ] as const;
 
 // All possible module IDs (matches tab IDs in spa-shell.tsx)
@@ -152,7 +154,7 @@ export const SIDEBAR_CATEGORIES: SidebarCategory[] = [
   { id: 'business',     label: 'Business',     icon: 'Briefcase',       items: ['leads', 'invoices', 'tenders', 'contacts', 'approvals'] },
   { id: 'intelligence', label: 'Intelligence', icon: 'Brain',           items: ['sentry', 'ad-scripts', 'ai-search', 'reports', 'knowledge', 'analytics'] },
   { id: 'operations',   label: 'Operations',   icon: 'Wrench',          items: ['activity', 'costs', 'admin', 'medications'] },
-  // Settings removed from sidebar — accessed via profile popover only
+  { id: 'settings',      label: 'Settings',     icon: 'Settings',        items: ['settings-connections', 'settings-automations', 'settings-appearance'] },
 ];
 
 /** Map a tab ID to its parent category ID */
@@ -176,7 +178,7 @@ export interface UIComposition {
 
 export const ESSENTIAL_COMPOSITION: UIComposition = {
   profileId: 'essential',
-  visibleModules: ['command-center', 'inbox', 'approvals', 'contacts', 'settings', 'chat', 'leads', 'invoices', 'channels'],
+  visibleModules: ['command-center', 'inbox', 'approvals', 'contacts', 'settings-connections', 'settings-automations', 'settings-appearance', 'chat', 'leads', 'invoices', 'channels'],
   primaryModules: ['command-center', 'inbox', 'approvals', 'contacts'],
   advancedModules: ['chat', 'leads', 'invoices', 'channels'],
   categories: [

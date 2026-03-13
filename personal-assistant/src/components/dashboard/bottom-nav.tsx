@@ -21,7 +21,7 @@ const BOTTOM_NAV_ITEMS: { id: string; label: string; icon: React.ElementType }[]
   { id: 'inbox',     label: 'Inbox',     icon: Inbox },
   { id: 'leads',     label: 'Leads',     icon: Handshake },
   { id: 'approvals', label: 'Approvals', icon: ShieldCheck },
-  { id: 'settings',  label: 'Settings',  icon: Settings },
+  { id: 'settings-connections', label: 'Settings', icon: Settings },
 ];
 
 const BADGE_CONFIG: Record<string, { key: keyof BadgeCounts; color: string }> = {
