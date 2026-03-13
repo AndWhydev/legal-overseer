@@ -164,11 +164,25 @@ export async function* runAgentChat(
   yield { type: 'stage', data: { stage: 'context_assembly', status: 'start' } }
   let systemPrompt: string
   if (config.threadId && config.userId) {
-    const assembler = new ContextAssembler()
-    const ctx = await assembler.assemble(config.supabase, config.userId, config.orgId, config.threadId, message)
-    systemPrompt = ctx.systemPrompt
-    config.history = ctx.messageHistory
-    yield { type: 'stage', data: { stage: 'context_assembly', status: 'done', meta: { promptLength: systemPrompt.length, assemblyMs: ctx.metadata.assemblyMs, tiersLoaded: ctx.metadata.tiersLoaded.length } } }
+    // ContextAssembler provides rich context: key facts, compressed history,
+    // pending actions, and proper message ordering with the current message.
+    try {
+      const assembler = new ContextAssembler()
+      const ctx = await assembler.assemble(config.supabase, config.userId, config.orgId, config.threadId, message)
+      systemPrompt = ctx.systemPrompt
+      config.history = ctx.messageHistory
+      yield { type: 'stage', data: { stage: 'context_assembly', status: 'done', meta: { promptLength: systemPrompt.length, assemblyMs: ctx.metadata.assemblyMs, tiersLoaded: ctx.metadata.tiersLoaded.length, assembler: true } } }
+    } catch (assemblerErr) {
+      // ContextAssembler failed (e.g., Total Recall tables missing) — fall
+      // back to basic prompt. Pipeline-loaded history (config.history) is
+      // still available from the pipeline's own loadRecentMessages call.
+      logger.warn('[engine] ContextAssembler failed, falling back to basic prompt', {
+        error: assemblerErr instanceof Error ? assemblerErr.message : String(assemblerErr),
+        threadId: config.threadId,
+      })
+      systemPrompt = await buildEntityAwarePrompt(config.supabase, config.orgId, message)
+      yield { type: 'stage', data: { stage: 'context_assembly', status: 'done', meta: { promptLength: systemPrompt.length, assemblerFallback: true } } }
+    }
   } else {
     systemPrompt = await buildEntityAwarePrompt(config.supabase, config.orgId, message)
     yield { type: 'stage', data: { stage: 'context_assembly', status: 'done', meta: { promptLength: systemPrompt.length } } }

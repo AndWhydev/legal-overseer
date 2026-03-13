@@ -174,9 +174,10 @@ export class UnifiedConversationPipeline {
     }
 
     // ── Step 3: Store Inbound Message ──────────────────────────────────
+    let storedMessageId: string | undefined
     if (threadId && totalRecallAvailable) {
       try {
-        await storeMessage(this.supabase, {
+        const stored = await storeMessage(this.supabase, {
           threadId,
           userId: identity.userId,
           orgId: identity.orgId,
@@ -185,6 +186,7 @@ export class UnifiedConversationPipeline {
           content: inbound.content,
           channelMetadata: inbound.channelMetadata,
         })
+        storedMessageId = stored.id
       } catch (err) {
         // Non-fatal: log but continue — we still want to process the message
         logger.error('[pipeline] Failed to store inbound message', { err, threadId })
@@ -192,14 +194,17 @@ export class UnifiedConversationPipeline {
     }
 
     // ── Step 4: Load History ───────────────────────────────────────────
+    // This serves as a fallback if ContextAssembler (used by the engine
+    // when threadId+userId are provided) is unavailable or fails.
     let history: Anthropic.MessageParam[] = []
     if (threadId && totalRecallAvailable) {
       try {
         const recentMessages = await loadRecentMessages(this.supabase, threadId, 20)
-        // Exclude the message we just stored (it will be the current user turn)
-        const priorMessages = recentMessages.filter(
-          m => !(m.role === 'user' && m.content === inbound.content && m.thread_id === threadId)
-        )
+        // Exclude the message we just stored by ID (not content — content
+        // matching would also remove older messages with the same text)
+        const priorMessages = storedMessageId
+          ? recentMessages.filter(m => m.id !== storedMessageId)
+          : recentMessages
         history = messagesToHistory(priorMessages)
       } catch (err) {
         // Non-fatal: proceed without history
@@ -213,6 +218,10 @@ export class UnifiedConversationPipeline {
       supabase: this.supabase,
       skipCostGuard: true, // Web chat doesn't use cost guard
       history,
+      // Wire up thread context so the engine activates ContextAssembler
+      // for rich history (key facts, compressed summaries, pending actions)
+      threadId: threadId || undefined,
+      userId: identity.userId,
       ...config.engineOverrides,
     }
 
