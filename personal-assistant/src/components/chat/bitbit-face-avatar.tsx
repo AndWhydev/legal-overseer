@@ -10,153 +10,155 @@ interface BitBitFaceAvatarProps {
   className?: string
 }
 
-// Full emotion config for each facial feature
+// Emotion config — eyes use only scale (no cy displacement) to avoid
+// transform-origin conflicts with cursor tracking and blink scaleY.
+// Expression comes from eye shape (scaleX/Y) + eyebrow position + nose.
 const EMOTION_CONFIG: Record<
   AvatarEmotion,
   {
-    leftEye: { cx: number; cy: number; scaleX: number; scaleY: number }
-    rightEye: { cx: number; cy: number; scaleX: number; scaleY: number }
+    leftEye: { cx: number; scaleX: number; scaleY: number }
+    rightEye: { cx: number; scaleX: number; scaleY: number }
     leftBrow: { dy: number; rotate: number }
     rightBrow: { dy: number; rotate: number }
     nose: { dy: number; rotate: number }
   }
 > = {
   neutral: {
-    leftEye: { cx: 0, cy: 0, scaleX: 1, scaleY: 1 },
-    rightEye: { cx: 0, cy: 0, scaleX: 1, scaleY: 1 },
+    leftEye: { cx: 0, scaleX: 1, scaleY: 1 },
+    rightEye: { cx: 0, scaleX: 1, scaleY: 1 },
     leftBrow: { dy: 0, rotate: 0 },
     rightBrow: { dy: 0, rotate: 0 },
     nose: { dy: 0, rotate: 0 },
   },
   thinking: {
-    leftEye: { cx: -1.5, cy: -1.5, scaleX: 1, scaleY: 1 },
-    rightEye: { cx: -1.5, cy: -1.5, scaleX: 1, scaleY: 1 },
-    leftBrow: { dy: -2.5, rotate: 0 },
-    rightBrow: { dy: -2.5, rotate: 0 },
+    leftEye: { cx: -1, scaleX: 1, scaleY: 1 },
+    rightEye: { cx: -1, scaleX: 1, scaleY: 1 },
+    leftBrow: { dy: -2, rotate: 0 },
+    rightBrow: { dy: -2, rotate: 0 },
     nose: { dy: 0, rotate: 0 },
   },
   curious: {
-    leftEye: { cx: 0.5, cy: 0, scaleX: 1.15, scaleY: 1.15 },
-    rightEye: { cx: 0.5, cy: 0, scaleX: 1.15, scaleY: 1.15 },
-    leftBrow: { dy: -3.5, rotate: -6 },
+    leftEye: { cx: 0.5, scaleX: 1.15, scaleY: 1.15 },
+    rightEye: { cx: 0.5, scaleX: 1.15, scaleY: 1.15 },
+    leftBrow: { dy: -3, rotate: -6 },
     rightBrow: { dy: -1, rotate: 4 },
     nose: { dy: 0, rotate: 2 },
   },
   happy: {
-    leftEye: { cx: 0, cy: 0, scaleX: 1.05, scaleY: 0.6 },
-    rightEye: { cx: 0, cy: 0, scaleX: 1.05, scaleY: 0.6 },
-    leftBrow: { dy: 1.5, rotate: -3 },
-    rightBrow: { dy: 1.5, rotate: 3 },
-    nose: { dy: 0.5, rotate: 0 },
+    leftEye: { cx: 0, scaleX: 1.05, scaleY: 0.6 },
+    rightEye: { cx: 0, scaleX: 1.05, scaleY: 0.6 },
+    leftBrow: { dy: 1, rotate: -3 },
+    rightBrow: { dy: 1, rotate: 3 },
+    nose: { dy: 0.3, rotate: 0 },
   },
   concerned: {
-    leftEye: { cx: 0, cy: 0.5, scaleX: 0.9, scaleY: 0.9 },
-    rightEye: { cx: 0, cy: 0.5, scaleX: 0.9, scaleY: 0.9 },
+    leftEye: { cx: 0, scaleX: 0.9, scaleY: 0.9 },
+    rightEye: { cx: 0, scaleX: 0.9, scaleY: 0.9 },
     leftBrow: { dy: -1, rotate: 10 },
     rightBrow: { dy: -1, rotate: -10 },
     nose: { dy: 0, rotate: -2 },
   },
   focused: {
-    leftEye: { cx: 0, cy: 0, scaleX: 1, scaleY: 0.75 },
-    rightEye: { cx: 0, cy: 0, scaleX: 1, scaleY: 0.75 },
+    leftEye: { cx: 0, scaleX: 1, scaleY: 0.75 },
+    rightEye: { cx: 0, scaleX: 1, scaleY: 0.75 },
     leftBrow: { dy: 2, rotate: 2 },
     rightBrow: { dy: 2, rotate: -2 },
     nose: { dy: 0, rotate: 0 },
   },
   surprised: {
-    leftEye: { cx: 0, cy: -0.5, scaleX: 1.4, scaleY: 1.4 },
-    rightEye: { cx: 0, cy: -0.5, scaleX: 1.4, scaleY: 1.4 },
-    leftBrow: { dy: -5, rotate: 0 },
-    rightBrow: { dy: -5, rotate: 0 },
-    nose: { dy: 1, rotate: 0 },
+    leftEye: { cx: 0, scaleX: 1.35, scaleY: 1.35 },
+    rightEye: { cx: 0, scaleX: 1.35, scaleY: 1.35 },
+    leftBrow: { dy: -4, rotate: 0 },
+    rightBrow: { dy: -4, rotate: 0 },
+    nose: { dy: 0.5, rotate: 0 },
   },
   processing: {
-    leftEye: { cx: 0, cy: 0, scaleX: 1, scaleY: 1 },
-    rightEye: { cx: 0, cy: 0, scaleX: 1, scaleY: 1 },
+    leftEye: { cx: 0, scaleX: 1, scaleY: 1 },
+    rightEye: { cx: 0, scaleX: 1, scaleY: 1 },
     leftBrow: { dy: -1, rotate: 0 },
     rightBrow: { dy: -1, rotate: 0 },
     nose: { dy: 0, rotate: 0 },
   },
   contemplating: {
-    leftEye: { cx: 2, cy: -1, scaleX: 1, scaleY: 0.9 },
-    rightEye: { cx: 2, cy: -1, scaleX: 1, scaleY: 1.05 },
+    leftEye: { cx: 1.5, scaleX: 1, scaleY: 0.9 },
+    rightEye: { cx: 1.5, scaleX: 1, scaleY: 1.05 },
     leftBrow: { dy: -1, rotate: 3 },
-    rightBrow: { dy: -2.5, rotate: -2 },
+    rightBrow: { dy: -2, rotate: -2 },
     nose: { dy: 0, rotate: 3 },
   },
   amused: {
-    leftEye: { cx: 0, cy: 0, scaleX: 1.1, scaleY: 0.55 },
-    rightEye: { cx: 0, cy: 0, scaleX: 1.1, scaleY: 0.7 },
+    leftEye: { cx: 0, scaleX: 1.1, scaleY: 0.55 },
+    rightEye: { cx: 0, scaleX: 1.1, scaleY: 0.7 },
     leftBrow: { dy: 0, rotate: -5 },
     rightBrow: { dy: -1, rotate: 5 },
-    nose: { dy: 0.5, rotate: 0 },
+    nose: { dy: 0.3, rotate: 0 },
   },
   determined: {
-    leftEye: { cx: 0, cy: 0.5, scaleX: 1.05, scaleY: 0.7 },
-    rightEye: { cx: 0, cy: 0.5, scaleX: 1.05, scaleY: 0.7 },
-    leftBrow: { dy: 2.5, rotate: 6 },
-    rightBrow: { dy: 2.5, rotate: -6 },
+    leftEye: { cx: 0, scaleX: 1.05, scaleY: 0.7 },
+    rightEye: { cx: 0, scaleX: 1.05, scaleY: 0.7 },
+    leftBrow: { dy: 2, rotate: 6 },
+    rightBrow: { dy: 2, rotate: -6 },
     nose: { dy: 0, rotate: 0 },
   },
   skeptical: {
-    leftEye: { cx: 0, cy: 0, scaleX: 1, scaleY: 1.1 },
-    rightEye: { cx: 0, cy: 0, scaleX: 0.95, scaleY: 0.75 },
+    leftEye: { cx: 0, scaleX: 1, scaleY: 1.1 },
+    rightEye: { cx: 0, scaleX: 0.95, scaleY: 0.75 },
     leftBrow: { dy: -2, rotate: -8 },
     rightBrow: { dy: 1, rotate: 5 },
     nose: { dy: 0, rotate: -3 },
   },
   excited: {
-    leftEye: { cx: 0, cy: -1, scaleX: 1.25, scaleY: 1.25 },
-    rightEye: { cx: 0, cy: -1, scaleX: 1.25, scaleY: 1.25 },
-    leftBrow: { dy: -4, rotate: -4 },
-    rightBrow: { dy: -4, rotate: 4 },
+    leftEye: { cx: 0, scaleX: 1.25, scaleY: 1.25 },
+    rightEye: { cx: 0, scaleX: 1.25, scaleY: 1.25 },
+    leftBrow: { dy: -3.5, rotate: -4 },
+    rightBrow: { dy: -3.5, rotate: 4 },
     nose: { dy: 0, rotate: 0 },
   },
   drowsy: {
-    leftEye: { cx: 0, cy: 1, scaleX: 1, scaleY: 0.35 },
-    rightEye: { cx: 0, cy: 1, scaleX: 1, scaleY: 0.4 },
-    leftBrow: { dy: 3, rotate: 3 },
-    rightBrow: { dy: 3, rotate: -3 },
-    nose: { dy: 1, rotate: 0 },
+    leftEye: { cx: 0, scaleX: 1, scaleY: 0.35 },
+    rightEye: { cx: 0, scaleX: 1, scaleY: 0.4 },
+    leftBrow: { dy: 2.5, rotate: 3 },
+    rightBrow: { dy: 2.5, rotate: -3 },
+    nose: { dy: 0.5, rotate: 0 },
   },
   alert: {
-    leftEye: { cx: 0, cy: 0, scaleX: 1.2, scaleY: 1.2 },
-    rightEye: { cx: 0, cy: 0, scaleX: 1.2, scaleY: 1.2 },
-    leftBrow: { dy: -3, rotate: 0 },
-    rightBrow: { dy: -3, rotate: 0 },
+    leftEye: { cx: 0, scaleX: 1.2, scaleY: 1.2 },
+    rightEye: { cx: 0, scaleX: 1.2, scaleY: 1.2 },
+    leftBrow: { dy: -2.5, rotate: 0 },
+    rightBrow: { dy: -2.5, rotate: 0 },
     nose: { dy: 0, rotate: 0 },
   },
   mischievous: {
-    leftEye: { cx: 1, cy: 0, scaleX: 1, scaleY: 0.65 },
-    rightEye: { cx: 1, cy: -0.5, scaleX: 1.1, scaleY: 1 },
+    leftEye: { cx: 0.5, scaleX: 1, scaleY: 0.65 },
+    rightEye: { cx: 0.5, scaleX: 1.1, scaleY: 1 },
     leftBrow: { dy: 1, rotate: 8 },
-    rightBrow: { dy: -3, rotate: -3 },
-    nose: { dy: 0, rotate: 4 },
+    rightBrow: { dy: -2.5, rotate: -3 },
+    nose: { dy: 0, rotate: 3 },
   },
   serene: {
-    leftEye: { cx: 0, cy: 0.5, scaleX: 1, scaleY: 0.5 },
-    rightEye: { cx: 0, cy: 0.5, scaleX: 1, scaleY: 0.5 },
+    leftEye: { cx: 0, scaleX: 1, scaleY: 0.5 },
+    rightEye: { cx: 0, scaleX: 1, scaleY: 0.5 },
     leftBrow: { dy: 1, rotate: -2 },
     rightBrow: { dy: 1, rotate: 2 },
-    nose: { dy: 0.3, rotate: 0 },
+    nose: { dy: 0.2, rotate: 0 },
   },
   confused: {
-    leftEye: { cx: -0.5, cy: 0, scaleX: 1.15, scaleY: 1.15 },
-    rightEye: { cx: 0.5, cy: 0, scaleX: 0.9, scaleY: 0.9 },
-    leftBrow: { dy: -3, rotate: -10 },
+    leftEye: { cx: -0.5, scaleX: 1.15, scaleY: 1.15 },
+    rightEye: { cx: 0.5, scaleX: 0.9, scaleY: 0.9 },
+    leftBrow: { dy: -2.5, rotate: -10 },
     rightBrow: { dy: 0, rotate: 8 },
-    nose: { dy: 0, rotate: -4 },
+    nose: { dy: 0, rotate: -3 },
   },
   proud: {
-    leftEye: { cx: 0, cy: 0, scaleX: 1, scaleY: 0.65 },
-    rightEye: { cx: 0, cy: 0, scaleX: 1, scaleY: 0.65 },
-    leftBrow: { dy: -2, rotate: -5 },
-    rightBrow: { dy: -2, rotate: 5 },
-    nose: { dy: -0.5, rotate: 0 },
+    leftEye: { cx: 0, scaleX: 1, scaleY: 0.65 },
+    rightEye: { cx: 0, scaleX: 1, scaleY: 0.65 },
+    leftBrow: { dy: -1.5, rotate: -5 },
+    rightBrow: { dy: -1.5, rotate: 5 },
+    nose: { dy: -0.3, rotate: 0 },
   },
   attentive: {
-    leftEye: { cx: 0, cy: -0.5, scaleX: 1.1, scaleY: 1.1 },
-    rightEye: { cx: 0, cy: -0.5, scaleX: 1.1, scaleY: 1.1 },
+    leftEye: { cx: 0, scaleX: 1.1, scaleY: 1.1 },
+    rightEye: { cx: 0, scaleX: 1.1, scaleY: 1.1 },
     leftBrow: { dy: -1.5, rotate: 0 },
     rightBrow: { dy: -1.5, rotate: 0 },
     nose: { dy: 0, rotate: 0 },
@@ -199,16 +201,16 @@ export function BitBitFaceAvatar({
       const dy = e.clientY - centerY
       const distance = Math.sqrt(dx * dx + dy * dy)
 
-      const maxDisplace = 2.5
-      const factor = Math.min(distance / 250, 1)
+      const maxDisplace = 1.5
+      const factor = Math.min(distance / 300, 1)
       const angle = Math.atan2(dy, dx)
 
       setEyeOffset({
         x: Math.cos(angle) * factor * maxDisplace,
-        y: Math.sin(angle) * factor * maxDisplace,
+        y: Math.sin(angle) * factor * maxDisplace * 0.6, // less vertical range
       })
 
-      setHeadTilt((dx / window.innerWidth) * 4)
+      setHeadTilt((dx / window.innerWidth) * 3)
     })
   }, [])
 
@@ -245,8 +247,8 @@ export function BitBitFaceAvatar({
 
   const isProcessing = emotion === 'processing'
 
-  // Blink overrides eye scaleY
-  const blinkScaleY = isBlinking ? 0.05 : undefined
+  // Blink overrides eye scaleY — 0.15 keeps eyes visually anchored
+  const blinkScaleY = isBlinking ? 0.15 : undefined
 
   return (
     <svg
@@ -307,15 +309,15 @@ export function BitBitFaceAvatar({
             style={{ originX: '31.5px', originY: '12px' }}
           />
 
-          {/* Left eye */}
+          {/* Left eye — cursor offset baked into cx/cy, scale animates around fixed origin */}
           <motion.circle
-            cx={16 + eyeOffset.x}
-            cy={20 + eyeOffset.y}
+            cx={16}
+            cy={20}
             r="2.5"
             fill={color}
             animate={{
-              translateX: isProcessing ? [0, 3, -3, 0] : config.leftEye.cx,
-              translateY: config.leftEye.cy,
+              translateX: isProcessing ? [0, 2, -2, 0] : config.leftEye.cx + eyeOffset.x,
+              translateY: eyeOffset.y,
               scaleX: config.leftEye.scaleX,
               scaleY: blinkScaleY ?? config.leftEye.scaleY,
             }}
@@ -331,13 +333,13 @@ export function BitBitFaceAvatar({
 
           {/* Right eye */}
           <motion.circle
-            cx={32 + eyeOffset.x}
-            cy={20 + eyeOffset.y}
+            cx={32}
+            cy={20}
             r="2.5"
             fill={color}
             animate={{
-              translateX: isProcessing ? [0, 3, -3, 0] : config.rightEye.cx,
-              translateY: config.rightEye.cy,
+              translateX: isProcessing ? [0, 2, -2, 0] : config.rightEye.cx + eyeOffset.x,
+              translateY: eyeOffset.y,
               scaleX: config.rightEye.scaleX,
               scaleY: blinkScaleY ?? config.rightEye.scaleY,
             }}
