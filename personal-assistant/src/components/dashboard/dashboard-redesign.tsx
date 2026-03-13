@@ -168,7 +168,7 @@ export function DashboardRedesign({ columns, tasks, messages, completedToday, to
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: inboxCollapsed ? '1fr 0px' : '1fr 320px',
+          gridTemplateColumns: inboxCollapsed ? '1fr 40px' : '1fr 320px',
           gap: 20,
           flex: 1,
           minHeight: 0,
@@ -184,21 +184,58 @@ export function DashboardRedesign({ columns, tasks, messages, completedToday, to
           />
         </div>
 
-        {/* Inbox Feed */}
-        <aside
-          style={{
-            display: inboxCollapsed ? 'none' : 'flex',
-            flexDirection: 'column',
-            minHeight: 0,
-            opacity: inboxCollapsed ? 0 : 1,
-            transition: 'opacity 0.3s ease',
-          }}
-        >
-          <InboxFeed
-            isCollapsed={inboxCollapsed}
-            onCollapsedChange={handleInboxCollapse}
-          />
-        </aside>
+        {/* Inbox Feed or Expand Button */}
+        {inboxCollapsed ? (
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: 8 }}>
+            <button
+              onClick={() => handleInboxCollapse(false)}
+              aria-label="Expand inbox"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: 32,
+                height: 32,
+                borderRadius: 8,
+                background: 'var(--bg-card, rgba(15,20,30,0.6))',
+                backdropFilter: 'blur(12px)',
+                WebkitBackdropFilter: 'blur(12px)',
+                border: '1px solid var(--border-subtle, rgba(255,255,255,0.06))',
+                color: 'var(--text-secondary)',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                padding: 0,
+              }}
+              onMouseEnter={e => {
+                (e.currentTarget as HTMLElement).style.color = 'var(--text-primary)';
+                (e.currentTarget as HTMLElement).style.background = 'var(--hover-bg-strong, rgba(255,255,255,0.08))';
+              }}
+              onMouseLeave={e => {
+                (e.currentTarget as HTMLElement).style.color = 'var(--text-secondary)';
+                (e.currentTarget as HTMLElement).style.background = 'var(--bg-card, rgba(15,20,30,0.6))';
+              }}
+            >
+              <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="15 18 9 12 15 6" />
+              </svg>
+            </button>
+          </div>
+        ) : (
+          <aside
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              minHeight: 0,
+              opacity: 1,
+              transition: 'opacity 0.3s ease',
+            }}
+          >
+            <InboxFeed
+              isCollapsed={inboxCollapsed}
+              onCollapsedChange={handleInboxCollapse}
+            />
+          </aside>
+        )}
       </div>
 
       {/* Responsive: stack on mobile */}

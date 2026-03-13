@@ -73,7 +73,7 @@ export function ProtocolManager({
 
               <div className="flex items-center gap-2 shrink-0">
                 <Badge
-                  variant={protocol.active ? 'success' : 'secondary'}
+                  variant={protocol.active ? 'default' : 'secondary'}
                   className="text-[10px]"
                 >
                   {protocol.active ? 'Active' : 'Draft'}

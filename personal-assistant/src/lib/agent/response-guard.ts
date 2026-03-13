@@ -43,3 +43,25 @@ export function scrubLeaks(text: string): string {
   scrubbed = scrubbed.replace(/\bopus\b/gi, 'BitBit')
   return scrubbed
 }
+
+/**
+ * Polish response formatting — removes em-dashes and en-dashes,
+ * replacing them with natural alternatives (commas, " to ", periods).
+ * Run as post-processing on all assistant output.
+ */
+export function polishResponse(text: string): string {
+  // Replace em-dashes (—) with comma-space
+  let polished = text.replace(/—/g, ', ')
+  // Replace en-dashes (–) between words with " to " (for ranges) or ", "
+  // Context: if surrounded by digits, likely a range; otherwise list/separator
+  polished = polished.replace(/\s+–\s+/g, (match, offset) => {
+    // Check if this is a numeric range (e.g., "2020 – 2025" or "10 – 20")
+    const before = polished[offset - 1]
+    const after = polished[offset + 1]
+    if (/\d/.test(before) && /\d/.test(after)) {
+      return ' to '
+    }
+    return ', '
+  })
+  return polished
+}

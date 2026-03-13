@@ -9,8 +9,9 @@ interface CheckpointRequest {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { threadId: string } }
+  { params }: { params: Promise<{ threadId: string }> }
 ) {
+  const { threadId } = await params
   try {
     const supabase = await createClient()
     if (!supabase) {
@@ -26,7 +27,7 @@ export async function GET(
     const { data: thread } = await supabase
       .from('conversation_threads')
       .select('id')
-      .eq('id', params.threadId)
+      .eq('id', threadId)
       .eq('user_id', user.id)
       .single()
 
@@ -38,7 +39,7 @@ export async function GET(
     const { data: checkpoints, error } = await supabase
       .from('conversation_checkpoints')
       .select('*')
-      .eq('thread_id', params.threadId)
+      .eq('thread_id', threadId)
       .order('message_index', { ascending: true })
 
     if (error) {
@@ -61,8 +62,9 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { threadId: string } }
+  { params }: { params: Promise<{ threadId: string }> }
 ) {
+  const { threadId } = await params
   try {
     const supabase = await createClient()
     if (!supabase) {
@@ -86,7 +88,7 @@ export async function POST(
     const { data: thread } = await supabase
       .from('conversation_threads')
       .select('id')
-      .eq('id', params.threadId)
+      .eq('id', threadId)
       .eq('user_id', user.id)
       .single()
 
@@ -98,7 +100,7 @@ export async function POST(
     const { data: checkpoint, error } = await supabase
       .from('conversation_checkpoints')
       .insert({
-        thread_id: params.threadId,
+        thread_id: threadId,
         user_id: user.id,
         message_index: body.message_index,
         label: body.label || 'Checkpoint',

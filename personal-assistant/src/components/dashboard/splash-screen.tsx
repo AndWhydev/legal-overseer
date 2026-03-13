@@ -333,7 +333,7 @@ export function SplashScreen({
                     style={{
                       position: 'relative',
                       zIndex: 1,
-                      filter: 'drop-shadow(0 0 24px var(--glow-color))',
+                      filter: 'var(--splash-logo-filter, brightness(0) invert(1)) drop-shadow(0 0 24px var(--glow-color))',
                     }}
                     initial={{ scale: 0.3, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}

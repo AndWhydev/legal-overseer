@@ -7,6 +7,15 @@ import { ToolCallSummary } from './tool-call-card'
 import { BitBitLogoVideo } from './bitbit-logo-video'
 import { BitBitLogoAnimated } from './bitbit-logo-animated'
 import { ThoughtPipeline, type ChatPipelineStage } from './thought-pipeline'
+import { Reasoning, ReasoningTrigger, ReasoningContent } from '@/components/ai-elements/reasoning'
+import { Checkpoint, CheckpointIcon } from '@/components/ai-elements/checkpoint'
+import {
+  Confirmation,
+  ConfirmationTitle,
+  ConfirmationActions,
+  ConfirmationAction,
+  ConfirmationRequest,
+} from '@/components/ai-elements/confirmation'
 
 interface ToolCall {
   name: string
@@ -16,11 +25,32 @@ interface ToolCall {
   status: 'running' | 'done' | 'error'
 }
 
+export interface Citation {
+  index: number
+  url: string
+  title: string
+  description?: string
+}
+
+interface PendingApproval {
+  id: string
+  toolName: string
+  input: unknown
+  status: 'pending' | 'approved' | 'rejected'
+}
+
+interface CheckpointMarker {
+  messageIndex: number
+  label: string
+  afterMessageId: string
+}
+
 interface Message {
   id: string
   role: 'user' | 'assistant'
   content: string
   toolCalls?: ToolCall[]
+  citations?: Citation[]
   timestamp: Date
 }
 
@@ -60,6 +90,13 @@ export function ChatInterface({ userName }: { userName?: string }) {
   const [pipelineVisible, setPipelineVisible] = useState(false)
   const [pipelinePhase, setPipelinePhase] = useState<'skeleton' | 'plan' | 'done'>('skeleton')
   const [threadId, setThreadId] = useState<string | null>(null)
+  // AI Elements state
+  const [thinkingContent, setThinkingContent] = useState('')
+  const [isThinkingStreaming, setIsThinkingStreaming] = useState(false)
+  const [thinkingDuration, setThinkingDuration] = useState<number | undefined>()
+  const [activeCitations, setActiveCitations] = useState<Citation[]>([])
+  const [checkpoints, setCheckpoints] = useState<CheckpointMarker[]>([])
+  const [pendingApprovals, setPendingApprovals] = useState<PendingApproval[]>([])
   const scrollRef = useRef<HTMLDivElement>(null)
   const rafPending = useRef(false)
   const pipelineFadeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -125,6 +162,12 @@ export function ChatInterface({ userName }: { userName?: string }) {
     setMessages(prev => [...prev, userMsg])
     setIsLoading(true)
     setThinkingText(null)
+    // Reset AI element state for new response
+    setThinkingContent('')
+    setIsThinkingStreaming(false)
+    setThinkingDuration(undefined)
+    setActiveCitations([])
+    setPendingApprovals([])
 
     // WS1: Instant skeleton pipeline — zero dead time
     setPlanStages([{ ...SKELETON_STAGE }])
@@ -134,6 +177,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
     const assistantId = `msg-${Date.now() + 1}`
     let assistantContent = ''
     const toolCalls: ToolCall[] = []
+    const responseCitations: Citation[] = []
     let hasPlan = false
 
     try {
@@ -176,8 +220,45 @@ export function ChatInterface({ userName }: { userName?: string }) {
 
               case 'thinking':
               case 'thinking_start':
-                // Engine is active — skeleton already showing
+                // Engine is active — skeleton already showing, prepare for thinking content
+                setIsThinkingStreaming(true)
                 break
+
+              case 'thinking_delta':
+                // Extended thinking content streaming from synthesis tier
+                setThinkingContent(prev => prev + event.data)
+                setIsThinkingStreaming(true)
+                break
+
+              case 'thinking_complete': {
+                // Thinking finished — record duration, stop streaming
+                setIsThinkingStreaming(false)
+                const durationMs = event.data?.duration_ms
+                if (durationMs) {
+                  setThinkingDuration(Math.ceil(durationMs / 1000))
+                }
+                break
+              }
+
+              case 'citation': {
+                // Citations extracted from tool results or response
+                const newCitations = event.data?.citations || []
+                if (newCitations.length > 0) {
+                  responseCitations.push(...newCitations)
+                  setActiveCitations(prev => [...prev, ...newCitations])
+                }
+                break
+              }
+
+              case 'checkpoint': {
+                // Conversation checkpoint — insert visual divider
+                setCheckpoints(prev => [...prev, {
+                  messageIndex: event.data.message_index,
+                  label: event.data.label,
+                  afterMessageId: assistantId,
+                }])
+                break
+              }
 
               case 'stage':
                 // Internal engine stages — no longer shown in UI
@@ -264,6 +345,16 @@ export function ChatInterface({ userName }: { userName?: string }) {
                   }
                 }
 
+                // Track queued tool approvals for Confirmation UI
+                if (event.data.queued && event.data.approvalId) {
+                  setPendingApprovals(prev => [...prev, {
+                    id: event.data.approvalId,
+                    toolName: event.data.name,
+                    input: toolCalls.find(tc => tc.name === event.data.name)?.input,
+                    status: 'pending',
+                  }])
+                }
+
                 // Mark matching pipeline stage as done
                 setPlanStages(prev =>
                   prev.map(s => {
@@ -286,6 +377,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
 
               case 'content_delta':
                 setThinkingText(null)
+                setIsThinkingStreaming(false)
                 assistantContent += event.data
                 // Pipeline stays visible during streaming — do NOT hide
                 if (!rafPending.current) {
@@ -357,6 +449,17 @@ export function ChatInterface({ userName }: { userName?: string }) {
 
               case 'done':
                 setThinkingText(null)
+                setIsThinkingStreaming(false)
+                // Attach accumulated citations to the assistant message
+                if (responseCitations.length > 0) {
+                  setMessages(prev =>
+                    prev.map(m =>
+                      m.id === assistantId
+                        ? { ...m, citations: [...responseCitations] }
+                        : m
+                    )
+                  )
+                }
                 // WS4: Mark all remaining stages as done, then fade after 1s
                 setPlanStages(prev =>
                   prev.map(s => s.status !== 'done' && s.status !== 'error'
@@ -471,17 +574,38 @@ export function ChatInterface({ userName }: { userName?: string }) {
                 const isGroupChange = prev && prev.role !== msg.role
                 const isLastAssistant = msg.role === 'assistant' && (i === messages.length - 1 || messages[i + 1]?.role === 'user')
                 const hasCompletedTools = msg.toolCalls && msg.toolCalls.length > 0 && msg.toolCalls.every(tc => tc.status !== 'running')
+                const checkpoint = checkpoints.find(cp => cp.afterMessageId === msg.id)
 
                 return (
                   <div
                     key={msg.id}
                     className={isGroupChange ? 'bb-chat__msg-group-gap' : ''}
                   >
-                    <MessageBubble message={msg} />
+                    <MessageBubble
+                      message={msg}
+                      citations={msg.citations || (isLastAssistant && isLoading ? activeCitations : undefined)}
+                    />
                     {/* WS3: Show collapsed tool summary after response completes (not during) */}
                     {isLastAssistant && hasCompletedTools && !isLoading && (
                       <div className="bb-chat__tc-summary-wrap">
                         <ToolCallSummary toolCalls={msg.toolCalls!} />
+                      </div>
+                    )}
+                    {/* WS2: Checkpoint dividers at session boundaries / topic shifts */}
+                    {checkpoint && (
+                      <div style={{ margin: '16px 0', opacity: 0.6 }}>
+                        <Checkpoint>
+                          <CheckpointIcon />
+                          <span style={{
+                            fontSize: 12,
+                            fontFamily: 'var(--font-mono)',
+                            color: 'var(--text-secondary)',
+                            whiteSpace: 'nowrap',
+                            padding: '0 8px',
+                          }}>
+                            {checkpoint.label}
+                          </span>
+                        </Checkpoint>
                       </div>
                     )}
                   </div>
@@ -502,8 +626,85 @@ export function ChatInterface({ userName }: { userName?: string }) {
                 </div>
               )}
 
-              {/* Loading dots — only when no pipeline and no content yet */}
-              {isLoading && !pipelineVisible && !(messages.length > 0 && messages[messages.length - 1].role === 'assistant' && messages[messages.length - 1].content) && (
+              {/* WS2: Extended thinking — collapsible reasoning panel */}
+              {thinkingContent && (
+                <div className="bb-chat__msg bb-chat__msg--assistant">
+                  <div className="bb-chat__assistant-icon">
+                    <BitBitLogoAnimated size={24} />
+                  </div>
+                  <div style={{
+                    flex: 1,
+                    minWidth: 0,
+                    background: 'var(--glass-bg, rgba(255,255,255,0.04))',
+                    borderRadius: 12,
+                    border: '1px solid var(--glass-border, rgba(255,255,255,0.08))',
+                    padding: '8px 12px',
+                    backdropFilter: 'blur(12px)',
+                  }}>
+                    <Reasoning isStreaming={isThinkingStreaming} duration={thinkingDuration}>
+                      <ReasoningTrigger />
+                      <ReasoningContent>{thinkingContent}</ReasoningContent>
+                    </Reasoning>
+                  </div>
+                </div>
+              )}
+
+              {/* WS2: Pending approval confirmations */}
+              {pendingApprovals.filter(a => a.status === 'pending').map(approval => (
+                <div key={approval.id} className="bb-chat__msg bb-chat__msg--assistant" style={{ marginTop: 8 }}>
+                  <div className="bb-chat__assistant-icon">
+                    <BitBitLogoAnimated size={24} />
+                  </div>
+                  <div style={{
+                    flex: 1,
+                    minWidth: 0,
+                    background: 'var(--glass-bg, rgba(255,255,255,0.04))',
+                    borderRadius: 12,
+                    border: '1px solid var(--accent-amber, rgba(255,180,60,0.3))',
+                    padding: '12px 16px',
+                    backdropFilter: 'blur(12px)',
+                  }}>
+                    <Confirmation state="approval-requested" approval={{ id: approval.id }}>
+                      <ConfirmationTitle>
+                        <span style={{ fontWeight: 500, color: 'var(--text-primary)' }}>
+                          Approve action: {approval.toolName}
+                        </span>
+                      </ConfirmationTitle>
+                      <ConfirmationRequest>
+                        <div style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '8px 0' }}>
+                          {typeof approval.input === 'object'
+                            ? JSON.stringify(approval.input, null, 2).slice(0, 200)
+                            : String(approval.input)}
+                        </div>
+                      </ConfirmationRequest>
+                      <ConfirmationActions>
+                        <ConfirmationAction
+                          variant="outline"
+                          onClick={() => {
+                            setPendingApprovals(prev =>
+                              prev.map(a => a.id === approval.id ? { ...a, status: 'rejected' } : a)
+                            )
+                          }}
+                        >
+                          Reject
+                        </ConfirmationAction>
+                        <ConfirmationAction
+                          onClick={() => {
+                            setPendingApprovals(prev =>
+                              prev.map(a => a.id === approval.id ? { ...a, status: 'approved' } : a)
+                            )
+                          }}
+                        >
+                          Approve
+                        </ConfirmationAction>
+                      </ConfirmationActions>
+                    </Confirmation>
+                  </div>
+                </div>
+              ))}
+
+              {/* Loading dots — only when no pipeline and no thinking content yet */}
+              {isLoading && !pipelineVisible && !thinkingContent && !(messages.length > 0 && messages[messages.length - 1].role === 'assistant' && messages[messages.length - 1].content) && (
                 <div className="bb-chat__msg bb-chat__msg--assistant">
                   <div className="bb-chat__assistant-icon">
                     <BitBitLogoAnimated size={24} />

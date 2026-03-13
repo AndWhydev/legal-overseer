@@ -29,12 +29,14 @@ interface KanbanBoardProps {
 }
 
 export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: KanbanBoardProps) {
-  // Deduplicate columns by id to prevent duplicates from being rendered
+  // Deduplicate columns by title (case-insensitive) to prevent duplicates from being rendered
+  // Database may contain duplicate columns with different IDs but same title
   const deduplicatedColumns = useMemo(() => {
     const seen = new Set<string>()
     return initialColumns.filter(col => {
-      if (seen.has(col.id)) return false
-      seen.add(col.id)
+      const key = (col.title ?? col.id).toLowerCase().trim()
+      if (seen.has(key)) return false
+      seen.add(key)
       return true
     })
   }, [initialColumns])
@@ -65,18 +67,6 @@ export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: Kanb
   const resolvedDoneId = doneColumnId ?? columns.find(
     (c) => c.title?.toLowerCase() === 'done'
   )?.id
-
-  // Cmd+K shortcut
-  useEffect(() => {
-    function handleKeyDown(e: KeyboardEvent) {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-        e.preventDefault()
-        searchInputRef.current?.focus()
-      }
-    }
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [])
 
   // Filtered tasks (display-only — DnD always uses full `tasks`)
   const filteredTasks = useMemo(() => {

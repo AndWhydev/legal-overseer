@@ -297,7 +297,8 @@ export function KanbanToolbar({
         WebkitBackdropFilter: searchExpanded ? 'blur(12px)' : 'none',
         boxShadow: 'var(--card-inset)',
         transition: 'background 0.2s ease, width 0.2s ease-out, backdrop-filter 0.2s ease',
-        width: searchExpanded ? 240 : 40,
+        width: searchExpanded ? 240 : 36,
+        overflow: 'hidden',
         cursor: searchExpanded ? 'text' : 'pointer',
       }}
         onClick={() => {
@@ -336,16 +337,7 @@ export function KanbanToolbar({
               transition: 'opacity 0.15s ease 0.05s',
             }}
           />
-        ) : (
-          <span style={{
-            fontSize: 11,
-            color: 'var(--text-dim)',
-            opacity: 1,
-            transition: 'opacity 0.15s ease',
-          }}>
-            <kbd style={{ fontFamily: 'inherit', fontSize: 10 }}>⌘K</kbd>
-          </span>
-        )}
+        ) : null}
       </div>
 
       {/* Create button */}

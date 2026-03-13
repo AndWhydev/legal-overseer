@@ -152,8 +152,8 @@ export const SIDEBAR_CATEGORIES: SidebarCategory[] = [
   { id: 'messages',     label: 'Messages',     icon: 'MessageSquare',   items: ['chat', 'inbox', 'creator-studio'] },
   { id: 'business',     label: 'Business',     icon: 'Briefcase',       items: ['leads', 'invoices', 'tenders', 'contacts', 'approvals'] },
   { id: 'intelligence', label: 'Intelligence', icon: 'Brain',           items: ['sentry', 'ad-scripts', 'ai-search', 'reports', 'knowledge', 'analytics'] },
-  { id: 'operations',   label: 'Operations',   icon: 'Wrench',          items: ['connections', 'activity', 'costs', 'admin'] },
-  { id: 'settings',     label: 'Settings',     icon: 'Settings',        items: ['settings', 'medications'] },
+  { id: 'operations',   label: 'Operations',   icon: 'Wrench',          items: ['connections', 'activity', 'costs', 'admin', 'medications'] },
+  // Settings removed from sidebar — accessed via profile popover only
 ];
 
 /** Map a tab ID to its parent category ID */

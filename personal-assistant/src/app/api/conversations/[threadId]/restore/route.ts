@@ -8,8 +8,9 @@ interface RestoreRequest {
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { threadId: string } }
+  { params }: { params: Promise<{ threadId: string }> }
 ) {
+  const { threadId } = await params
   try {
     const supabase = await createClient()
     if (!supabase) {
@@ -33,7 +34,7 @@ export async function POST(
     const { data: thread } = await supabase
       .from('conversation_threads')
       .select('id')
-      .eq('id', params.threadId)
+      .eq('id', threadId)
       .eq('user_id', user.id)
       .single()
 
@@ -46,7 +47,7 @@ export async function POST(
       .from('conversation_checkpoints')
       .select('*')
       .eq('id', body.checkpoint_id)
-      .eq('thread_id', params.threadId)
+      .eq('thread_id', threadId)
       .single()
 
     if (checkpointError || !checkpoint) {
@@ -58,7 +59,7 @@ export async function POST(
     const { data: messagesAfterCheckpoint, error: fetchError } = await supabase
       .from('conversation_messages')
       .select('id')
-      .eq('thread_id', params.threadId)
+      .eq('thread_id', threadId)
       .gt('turn_number', checkpoint.message_index)
       .order('turn_number', { ascending: false })
 
@@ -93,7 +94,7 @@ export async function POST(
       .update({
         last_activity_at: new Date().toISOString(),
       })
-      .eq('id', params.threadId)
+      .eq('id', threadId)
 
     if (updateThreadError) {
       logger.error('Failed to update thread:', updateThreadError)
@@ -107,7 +108,7 @@ export async function POST(
     const { data: restoredMessages, error: fetchRestoredError } = await supabase
       .from('conversation_messages')
       .select('*')
-      .eq('thread_id', params.threadId)
+      .eq('thread_id', threadId)
       .order('turn_number', { ascending: true })
 
     if (fetchRestoredError) {

@@ -633,24 +633,25 @@ export default function InboxDrawer({
     textareaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }, []);
 
-  if (!open || !message) return null;
-
-  const sender = message.contactName || message.senderName || message.senderEmail || 'Unknown';
-  const ChannelIcon = CHANNEL_ICONS[message.channelType] || GmailIcon;
-  const brandColor = CHANNEL_BRAND_COLORS[message.channelType] || 'var(--text-dim)';
-
-  // Avatar resolution
-  const email = message.senderEmail;
-  const syncAvatar = resolveAvatarSync(sender, email);
+  // Avatar resolution (must be before conditional return for hooks rules)
+  const sender = message ? (message.contactName || message.senderName || message.senderEmail || 'Unknown') : '';
+  const email = message?.senderEmail ?? null;
+  const syncAvatar: AvatarResult = sender ? resolveAvatarSync(sender, email) : { url: null, type: 'initials', initials: '?', color: '#666' };
   const [avatar, setAvatar] = React.useState<AvatarResult>(syncAvatar);
 
   React.useEffect(() => {
+    if (!email && !sender) return;
     let cancelled = false;
     resolveAvatar(email, sender, null).then((result) => {
       if (!cancelled) setAvatar(result);
     });
     return () => { cancelled = true; };
   }, [email, sender]);
+
+  if (!open || !message) return null;
+
+  const ChannelIcon = CHANNEL_ICONS[message.channelType] || GmailIcon;
+  const brandColor = CHANNEL_BRAND_COLORS[message.channelType] || 'var(--text-dim)';
 
   const showSummary = message.significance >= 5;
   const hasThread = threadMessages && threadMessages.length > 1;

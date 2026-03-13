@@ -19,6 +19,7 @@
   --shimmer-color: rgba(255, 255, 255, 0.12);
   --glow-color: rgba(255, 255, 255, 0.15);
   --sparkle-dot-color: rgba(255, 255, 255, 0.04);
+  --splash-logo-filter: brightness(0) invert(1);
 }
 
 /* Light theme overrides */
@@ -28,6 +29,7 @@
     --shimmer-color: rgba(0, 0, 0, 0.08);
     --glow-color: rgba(0, 0, 0, 0.1);
     --sparkle-dot-color: rgba(0, 0, 0, 0.04);
+    --splash-logo-filter: brightness(0);
   }
 }
 
@@ -38,6 +40,16 @@
   --shimmer-color: rgba(0, 0, 0, 0.08);
   --glow-color: rgba(0, 0, 0, 0.1);
   --sparkle-dot-color: rgba(0, 0, 0, 0.04);
+  --splash-logo-filter: brightness(0);
+}
+
+/* Aurora theme override */
+[data-theme="aurora"] .bb-splash {
+  --sparkle-color: rgba(0, 0, 0, 0.7);
+  --shimmer-color: rgba(0, 0, 0, 0.08);
+  --glow-color: rgba(0, 0, 0, 0.1);
+  --sparkle-dot-color: rgba(0, 0, 0, 0.04);
+  --splash-logo-filter: brightness(0);
 }
 
 .bb-splash--exit {

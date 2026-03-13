@@ -837,7 +837,7 @@ function CategoryPillsBar({
         const shouldPulse = isPriority && hasUnreadPriority && !isActive;
 
         // Determine if light mode
-        const isLightMode = typeof window !== 'undefined' && document.documentElement.classList.contains('light');
+        const isLightMode = typeof document !== 'undefined' && document.documentElement.classList.contains('light');
 
         const pillStyle: React.CSSProperties = isActive
           ? {
@@ -846,7 +846,7 @@ function CategoryPillsBar({
               gap: 6,
               padding: '6px 14px',
               borderRadius: 20,
-              border: 'none',
+              border: '1px solid transparent',
               background: isLightMode ? '#1A1A1B' : 'rgba(255,255,255,0.95)',
               color: isLightMode ? '#FFFFFF' : '#0A0A0B',
               fontSize: 12,
@@ -907,7 +907,7 @@ function CategoryPillsBar({
                 height: 16,
                 borderRadius: 8,
                 background: isActive ? (isLightMode ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.2)') : 'transparent',
-                color: isActive ? (isLightMode ? '#1A1A1B' : 'rgba(255,255,255,0.95)') : (isLightMode ? '#6B7280' : 'var(--text-secondary, #94A3B8)'),
+                color: isActive ? (isLightMode ? '#FFFFFF' : 'rgba(255,255,255,0.95)') : (isLightMode ? '#6B7280' : 'var(--text-secondary, #94A3B8)'),
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
