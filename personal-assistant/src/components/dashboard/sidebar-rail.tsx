@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import Image from 'next/image';
 import {
   LayoutDashboard,
@@ -27,6 +27,7 @@ interface SidebarRailProps {
   categories: SidebarCategory[];
   activeCategory: string | null;
   badgeCounts: BadgeCounts;
+  panelOpen: boolean;
   onCategoryChange: (categoryId: string) => void;
   avatarUrl?: string;
   avatarFallback?: string;
@@ -38,12 +39,40 @@ export function SidebarRail({
   categories,
   activeCategory,
   badgeCounts,
+  panelOpen,
   onCategoryChange,
   avatarUrl,
   avatarFallback = 'U',
   onAvatarClick,
   profileOpen,
 }: SidebarRailProps) {
+  // Track previous panelOpen to determine migration direction
+  const prevPanelOpenRef = useRef(false);
+  const hasMountedRef = useRef(false);
+
+  useEffect(() => {
+    hasMountedRef.current = true;
+  }, []);
+
+  // Determine badge migration class based on panel state transitions
+  const getMigrationClass = (isActive: boolean, hasBadge: boolean): string | undefined => {
+    if (!hasBadge) return undefined;
+    if (!hasMountedRef.current) return undefined; // No animation on initial mount
+
+    if (isActive && panelOpen) {
+      return 'bb-badge--migrate-out';
+    }
+    if (isActive && !panelOpen && prevPanelOpenRef.current) {
+      return 'bb-badge--migrate-in';
+    }
+    return undefined;
+  };
+
+  // Update ref after render for next cycle
+  useEffect(() => {
+    prevPanelOpenRef.current = panelOpen;
+  });
+
   // Aggregate badge count for Business category
   const businessBadge = badgeCounts.inbox + badgeCounts.leads + badgeCounts.invoices + badgeCounts.approvals;
 
@@ -63,6 +92,7 @@ export function SidebarRail({
 
           // Badge for business category
           const badge = cat.id === 'business' && businessBadge > 0 ? businessBadge : 0;
+          const migrationClass = getMigrationClass(isActive, badge > 0);
 
           return (
             <button
@@ -81,6 +111,7 @@ export function SidebarRail({
                   count={badge}
                   color="var(--bb-red)"
                   size="sm"
+                  className={migrationClass}
                   ariaLabel={`${cat.label}: ${badge} notifications`}
                 />
               )}

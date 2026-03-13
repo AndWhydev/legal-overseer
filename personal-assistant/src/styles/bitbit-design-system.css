@@ -1015,7 +1015,7 @@ body.bitbit-dark {
   min-width: 16px;
   height: 16px;
   border-radius: 8px;
-  background-color: var(--bb-blue, #3B82F6);
+  background-color: var(--bb-red, #EF4444);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1037,6 +1037,40 @@ body.bitbit-dark {
     transform: scale(1);
   }
 }
+
+/* Badge migration: category badge shrinks out when panel opens */
+@keyframes bb-badge-migrate-out {
+  0% { transform: scale(1); opacity: 1; }
+  30% { transform: scale(1.1); opacity: 0.9; }
+  100% { transform: scale(0); opacity: 0; }
+}
+
+/* Badge migration: page badges pop in when panel opens / category badge returns */
+@keyframes bb-badge-migrate-in {
+  0% { transform: scale(0); opacity: 0; }
+  65% { transform: scale(1.12); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.bb-badge--migrate-out {
+  animation: bb-badge-migrate-out 110ms cubic-bezier(0.4, 0, 1, 1) forwards !important;
+  pointer-events: none;
+}
+
+.bb-badge--migrate-in {
+  animation: bb-badge-migrate-in 130ms cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
+/* Panel page badges: staggered migration arrival */
+.bb-sidebar-panel--open .bb-badge--migrate-in {
+  animation: bb-badge-migrate-in 130ms cubic-bezier(0.34, 1.56, 0.64, 1) backwards !important;
+  animation-delay: 140ms !important;
+}
+
+.bb-sidebar-panel--open .bb-sidebar-panel__item:nth-child(2) .bb-badge--migrate-in { animation-delay: 160ms !important; }
+.bb-sidebar-panel--open .bb-sidebar-panel__item:nth-child(3) .bb-badge--migrate-in { animation-delay: 175ms !important; }
+.bb-sidebar-panel--open .bb-sidebar-panel__item:nth-child(4) .bb-badge--migrate-in { animation-delay: 185ms !important; }
+.bb-sidebar-panel--open .bb-sidebar-panel__item:nth-child(5) .bb-badge--migrate-in { animation-delay: 195ms !important; }
 
 /* Rail tooltip */
 .bb-sidebar-rail__item[data-tooltip] {

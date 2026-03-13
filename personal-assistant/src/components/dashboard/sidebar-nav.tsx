@@ -64,7 +64,7 @@ export function SidebarNav({
   // Sync category when activeTabId changes externally (e.g. spacebar→home, global search, bb-navigate)
   useEffect(() => {
     const cat = getCategoryForTab(activeTabId);
-    // Tabs with no sidebar category (e.g. settings) → auto-collapse panel
+    // Tabs with no sidebar category → auto-collapse panel
     if (!cat) {
       setPanelOpen(false);
       return;
@@ -184,6 +184,7 @@ export function SidebarNav({
         categories={visibleCategories}
         activeCategory={activeCategory}
         badgeCounts={badgeCounts}
+        panelOpen={panelOpen}
         onCategoryChange={handleCategoryChange}
         avatarUrl={avatarUrl}
         avatarFallback={avatarFallback}
@@ -241,7 +242,7 @@ export function SidebarNav({
             {/* Settings */}
             <button
               role="menuitem"
-              onClick={() => { setProfileOpen(false); onTabChange?.('settings'); }}
+              onClick={() => { setProfileOpen(false); onTabChange?.('settings-connections'); }}
               style={{
                 width: '100%',
                 display: 'flex',

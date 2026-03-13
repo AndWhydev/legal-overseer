@@ -9,6 +9,7 @@ export interface NotificationBadgeProps {
   animate?: boolean;
   maxDisplay?: number;
   ariaLabel?: string;
+  className?: string;
 }
 
 /**
@@ -26,9 +27,10 @@ export function NotificationBadge({
   count,
   color = 'var(--bb-red)',
   size = 'md',
-  animate = true,
+  animate = false,
   maxDisplay = 99,
   ariaLabel,
+  className,
 }: NotificationBadgeProps) {
   // Don't render if count is 0
   if (count <= 0) return null;
@@ -45,6 +47,7 @@ export function NotificationBadge({
 
   return (
     <span
+      className={className}
       style={{
         position: 'absolute',
         top: '-4px',
@@ -72,12 +75,8 @@ export function NotificationBadge({
 
       <style>{`
         @keyframes bb-badge-pulse {
-          0%, 100% {
-            opacity: 1;
-          }
-          50% {
-            opacity: 0.65;
-          }
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.65; }
         }
       `}</style>
     </span>

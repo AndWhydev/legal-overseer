@@ -24,6 +24,9 @@ import {
   Wrench,
   Settings,
   Monitor,
+  Link2,
+  Zap,
+  Palette,
 } from 'lucide-react';
 import type { SidebarCategory } from '@/lib/modules/registry';
 import type { BadgeCounts } from '@/hooks/use-badge-counts';
@@ -52,13 +55,16 @@ const ICON_MAP: Record<string, React.ElementType> = {
   activity:        Activity,
   admin:           Wrench,
   settings:        Settings,
+  'settings-connections':  Link2,
+  'settings-automations':  Zap,
+  'settings-appearance':   Palette,
 };
 
 const BADGE_CONFIG: Record<string, { key: keyof BadgeCounts; color: string }> = {
   dashboard: { key: 'overdueTaskCount', color: 'var(--bb-red)' },
-  inbox:     { key: 'inbox',           color: 'var(--bb-purple)' },
-  approvals: { key: 'approvals',       color: 'var(--bb-orange)' },
-  leads:     { key: 'leads',           color: 'var(--bb-blue)' },
+  inbox:     { key: 'inbox',           color: 'var(--bb-red)' },
+  approvals: { key: 'approvals',       color: 'var(--bb-red)' },
+  leads:     { key: 'leads',           color: 'var(--bb-red)' },
   invoices:  { key: 'invoices',        color: 'var(--bb-red)' },
 };
 
@@ -120,6 +126,7 @@ export function SidebarPanel({
                   count={badgeCount}
                   color={badgeDef!.color}
                   size="md"
+                  className={open ? 'bb-badge--migrate-in' : undefined}
                   ariaLabel={`${label}: ${badgeCount} notifications`}
                 />
               )}
