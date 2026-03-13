@@ -18,7 +18,7 @@ export const AVAILABLE_INTEGRATIONS: Integration[] = [
   {
     id: 'gmail',
     name: 'Gmail',
-    description: 'Triage, draft, and send emails automatically',
+    description: 'Read, draft, and send emails',
     icon: 'Mail',
     category: 'communication',
     status: 'available',
@@ -28,7 +28,7 @@ export const AVAILABLE_INTEGRATIONS: Integration[] = [
   {
     id: 'resend',
     name: 'Resend',
-    description: 'Transactional email delivery',
+    description: 'Send automated emails',
     icon: 'Send',
     category: 'communication',
     status: 'available',
@@ -38,7 +38,7 @@ export const AVAILABLE_INTEGRATIONS: Integration[] = [
   {
     id: 'slack',
     name: 'Slack',
-    description: 'Send and receive messages across channels',
+    description: 'Message your team on Slack',
     icon: 'MessageSquare',
     category: 'communication',
     status: 'coming_soon',
@@ -48,7 +48,7 @@ export const AVAILABLE_INTEGRATIONS: Integration[] = [
   {
     id: 'outlook',
     name: 'Outlook',
-    description: 'Read and send emails via Microsoft Outlook',
+    description: 'Read and send Outlook emails',
     icon: 'Mail',
     category: 'communication',
     status: 'available',
@@ -57,18 +57,18 @@ export const AVAILABLE_INTEGRATIONS: Integration[] = [
   },
   {
     id: 'whatsapp',
-    name: 'WhatsApp Business',
-    description: 'Business messaging via WhatsApp API',
+    name: 'WhatsApp',
+    description: 'Message clients on WhatsApp',
     icon: 'Phone',
     category: 'communication',
     status: 'available',
     color: '#25D366',
-    authMethod: 'api_key',
+    authMethod: 'guided',
   },
   {
     id: 'imessage',
     name: 'iMessage',
-    description: 'Read and send iMessages (macOS only)',
+    description: 'Send and receive iMessages',
     icon: 'MessageCircle',
     category: 'communication',
     status: 'coming_soon',
@@ -80,7 +80,7 @@ export const AVAILABLE_INTEGRATIONS: Integration[] = [
   {
     id: 'asana',
     name: 'Asana',
-    description: 'Sync tasks, projects, and workflows',
+    description: 'Sync tasks and projects',
     icon: 'CheckSquare',
     category: 'productivity',
     status: 'available',
@@ -90,7 +90,7 @@ export const AVAILABLE_INTEGRATIONS: Integration[] = [
   {
     id: 'calendly',
     name: 'Calendly',
-    description: 'Manage scheduling and appointments',
+    description: 'Manage scheduling and bookings',
     icon: 'CalendarClock',
     category: 'productivity',
     status: 'available',
@@ -100,7 +100,7 @@ export const AVAILABLE_INTEGRATIONS: Integration[] = [
   {
     id: 'google-calendar',
     name: 'Google Calendar',
-    description: 'Schedule and manage events seamlessly',
+    description: 'Manage your calendar',
     icon: 'Calendar',
     category: 'productivity',
     status: 'available',
@@ -110,7 +110,7 @@ export const AVAILABLE_INTEGRATIONS: Integration[] = [
   {
     id: 'notion',
     name: 'Notion',
-    description: 'Connect docs, wikis, and databases',
+    description: 'Connect your docs and notes',
     icon: 'FileText',
     category: 'productivity',
     status: 'coming_soon',
@@ -120,7 +120,7 @@ export const AVAILABLE_INTEGRATIONS: Integration[] = [
   {
     id: 'hubspot',
     name: 'HubSpot',
-    description: 'Manage contacts, deals, and CRM data',
+    description: 'Manage contacts and deals',
     icon: 'Users',
     category: 'productivity',
     status: 'coming_soon',
@@ -132,7 +132,7 @@ export const AVAILABLE_INTEGRATIONS: Integration[] = [
   {
     id: 'google-analytics',
     name: 'Google Analytics',
-    description: 'Track website traffic and user behavior',
+    description: 'Track your website traffic',
     icon: 'BarChart3',
     category: 'analytics',
     status: 'coming_soon',
@@ -144,7 +144,7 @@ export const AVAILABLE_INTEGRATIONS: Integration[] = [
   {
     id: 'stripe',
     name: 'Stripe',
-    description: 'Monitor payments, invoices, and revenue',
+    description: 'Track payments and invoices',
     icon: 'CreditCard',
     category: 'finance',
     status: 'available',

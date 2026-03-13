@@ -10,39 +10,12 @@
   gap: 24px;
 }
 
-/* ── Header with save button ── */
+/* ── Header ── */
 
 .bb-settings-header {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-}
-
-.bb-settings-save-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 20px;
-  border-radius: 14px;
-  background: var(--bb-orange, #FF5A1F);
-  border: none;
-  color: white;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition:
-    opacity var(--duration-fast) var(--ease-default),
-    transform var(--duration-fast) var(--ease-default);
-}
-
-.bb-settings-save-btn:hover:not(:disabled) {
-  opacity: 0.9;
-  transform: translateY(-1px);
-}
-
-.bb-settings-save-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
 }
 
 /* ── Tabs ── */

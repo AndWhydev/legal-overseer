@@ -1,118 +1,131 @@
-'use client'
+'use client';
 
-import { useState, useEffect } from 'react'
-import { IntegrationCard } from './integration-card'
-import { logger } from '@/lib/core/logger';
+import React, { useState, useMemo } from 'react';
+import { IntegrationCard } from './integration-card';
 import {
   AVAILABLE_INTEGRATIONS,
   CATEGORY_LABELS,
   type IntegrationCategory,
-  type Integration,
-} from '@/lib/integrations/types'
+} from '@/lib/integrations/types';
 
 interface OrgIntegration {
-  id: string
-  provider: string
-  status: string
-  connected_at: string | null
-  metadata: Record<string, unknown>
+  id: string;
+  provider: string;
+  status: string;
+  connected_at: string | null;
+  metadata: Record<string, unknown>;
 }
 
-export function IntegrationGrid() {
-  const [activeCategory, setActiveCategory] = useState<IntegrationCategory | 'all'>('all')
-  const [orgIntegrations, setOrgIntegrations] = useState<OrgIntegration[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+interface ConnectionsGridProps {
+  integrations: OrgIntegration[];
+  isLoading: boolean;
+  onStatusChange: () => void;
+  onWhatsAppConnect: () => void;
+}
 
-  // Fetch integrations on mount
-  useEffect(() => {
-    fetchIntegrations()
-  }, [])
+// ─── Styles ──────────────────────────────────────────────────────────────────
 
-  const fetchIntegrations = async () => {
-    try {
-      setIsLoading(true)
-      const response = await fetch('/api/settings/integrations')
-      if (!response.ok) {
-        throw new Error('Failed to fetch integrations')
-      }
-      const data = (await response.json()) as { integrations: OrgIntegration[] }
-      setOrgIntegrations(data.integrations)
-      setError(null)
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unknown error'
-      logger.error('Error fetching integrations:', err)
-      setError(message)
-    } finally {
-      setIsLoading(false)
-    }
-  }
+const filterPill: React.CSSProperties = {
+  padding: '6px 14px',
+  borderRadius: 20,
+  background: 'transparent',
+  border: '1px solid var(--glass-interactive-border)',
+  color: 'var(--text-secondary)',
+  fontSize: 12,
+  fontWeight: 500,
+  cursor: 'pointer',
+  transition: 'all 150ms ease',
+  whiteSpace: 'nowrap',
+};
 
-  const isIntegrationConnected = (providerId: string): boolean => {
-    return orgIntegrations.some(
-      (int) => int.provider === providerId && int.status === 'connected'
-    )
-  }
+const filterPillActive: React.CSSProperties = {
+  ...filterPill,
+  background: 'rgba(255, 255, 255, 0.1)',
+  borderColor: 'rgba(255, 255, 255, 0.2)',
+  color: 'var(--text-primary)',
+};
 
-  const mergedIntegrations = AVAILABLE_INTEGRATIONS.map((integration) => ({
-    ...integration,
-    status: isIntegrationConnected(integration.id)
-      ? ('connected' as const)
-      : integration.status,
-  }))
+const shimmerStyle: React.CSSProperties = {
+  borderRadius: 16,
+  background: 'linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.03) 75%)',
+  backgroundSize: '200% 100%',
+  animation: 'shimmer 1.5s ease infinite',
+  height: 76,
+};
 
-  const categories = Object.keys(CATEGORY_LABELS) as (IntegrationCategory | 'all')[]
+// ─── Component ───────────────────────────────────────────────────────────────
 
-  const filteredIntegrations =
-    activeCategory === 'all'
-      ? mergedIntegrations
-      : mergedIntegrations.filter((i) => i.category === activeCategory)
+export function ConnectionsGrid({ integrations, isLoading, onStatusChange, onWhatsAppConnect }: ConnectionsGridProps) {
+  const [activeCategory, setActiveCategory] = useState<IntegrationCategory | 'all'>('all');
+
+  const isConnected = (providerId: string): boolean => {
+    return integrations.some(int => int.provider === providerId && int.status === 'connected');
+  };
+
+  const mergedIntegrations = useMemo(() =>
+    AVAILABLE_INTEGRATIONS.map(integration => ({
+      ...integration,
+      status: isConnected(integration.id) ? 'connected' as const : integration.status,
+    })),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [integrations],
+  );
+
+  const categories = Object.keys(CATEGORY_LABELS) as (IntegrationCategory | 'all')[];
+
+  const filtered = activeCategory === 'all'
+    ? mergedIntegrations
+    : mergedIntegrations.filter(i => i.category === activeCategory);
 
   return (
-    <div className="flex flex-col gap-4">
-      <div>
-        <h2 className="text-base font-medium">Integration Hub</h2>
-        <p className="text-sm text-muted-foreground">
-          Connect your tools to let BitBit work across your stack.
-        </p>
-      </div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0 }}>
+        Connect your tools and services to let BitBit work across everything.
+      </p>
 
-      {error && (
-        <div className="rounded-md bg-amber-50 p-3 text-sm text-amber-700">
-          Unable to load integrations: {error}
-        </div>
-      )}
-
-      <div className="flex gap-2">
-        {categories.map((cat) => (
+      {/* Category filters */}
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        {categories.map(cat => (
           <button
             key={cat}
             onClick={() => setActiveCategory(cat)}
-            className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-              activeCategory === cat
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
-            }`}
+            style={activeCategory === cat ? filterPillActive : filterPill}
+            onMouseEnter={e => {
+              if (activeCategory !== cat) {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)';
+                e.currentTarget.style.color = 'var(--text-primary)';
+              }
+            }}
+            onMouseLeave={e => {
+              if (activeCategory !== cat) {
+                e.currentTarget.style.background = 'transparent';
+                e.currentTarget.style.color = 'var(--text-secondary)';
+              }
+            }}
           >
             {CATEGORY_LABELS[cat]}
           </button>
         ))}
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      {/* Grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }}>
         {isLoading ? (
-          <div className="text-sm text-muted-foreground">Loading integrations...</div>
+          Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} style={shimmerStyle} />
+          ))
         ) : (
-          filteredIntegrations.map((integration) => (
+          filtered.map(integration => (
             <IntegrationCard
               key={integration.id}
               integration={integration}
-              isConnected={isIntegrationConnected(integration.id)}
-              onStatusChange={fetchIntegrations}
+              isConnected={isConnected(integration.id)}
+              onStatusChange={onStatusChange}
+              onWhatsAppConnect={onWhatsAppConnect}
             />
           ))
         )}
       </div>
     </div>
-  )
+  );
 }
