@@ -810,7 +810,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
                     )}
                     <MessageBubble
                       message={msg}
-                      showAvatar={isLastAssistant && !showThinkingIndicator}
+                      showAvatar={isLastAssistant && !isReasoningActive}
                       citations={msg.citations || (isLastAssistant && isLoading ? activeCitations : undefined)}
                     />
                     {checkpoint && (
