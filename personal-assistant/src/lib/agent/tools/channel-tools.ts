@@ -10,7 +10,7 @@ import type { AgentToolHandler } from '../tools'
 export const channelToolDefinitions: Anthropic.Tool[] = [
   {
     name: 'sync_channels',
-    description: 'Pull new messages from all connected channels (Gmail, Outlook, iMessage, Calendar, Reminders) and create tasks from actionable items. Use when the user says \'check my messages\', \'sync channels\', or \'what\'s new\'. Defaults to last 24 hours.',
+    description: 'Pull new messages from all connected channels (Gmail, Outlook, WhatsApp, iMessage, Calendar, Reminders) and create tasks from actionable items. Use when the user says \'check my messages\', \'sync channels\', or \'what\'s new\'. Defaults to last 24 hours.',
     input_schema: {
       type: 'object' as const,
       properties: {
@@ -30,7 +30,7 @@ export const channelToolDefinitions: Anthropic.Tool[] = [
         query: { type: 'string', description: 'Search keyword (matches subject and body)' },
         channel: {
           type: 'string',
-          enum: ['gmail', 'outlook', 'imessage', 'calendar', 'reminders'],
+          enum: ['gmail', 'outlook', 'whatsapp', 'imessage', 'calendar', 'reminders'],
           description: 'Filter by channel type',
         },
         sender: { type: 'string', description: 'Filter by sender name' },
@@ -242,7 +242,7 @@ export const channelToolHandlers: Record<string, AgentToolHandler> = {
     const hoursBack = (input.hours_back as number) || 24
     const since = new Date(Date.now() - hoursBack * 60 * 60 * 1000)
 
-    const channels: ChannelType[] = ['gmail', 'outlook', 'imessage', 'calendar', 'reminders']
+    const channels: ChannelType[] = ['gmail', 'outlook', 'whatsapp', 'imessage', 'calendar', 'reminders']
     const results = await synthesize({ channels, since, orgId })
 
     const totalMessages = results.reduce((sum, r) => sum + r.messagesFound, 0)
