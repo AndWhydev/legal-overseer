@@ -51,19 +51,11 @@ function CitationBadge({ citation }: { citation: Citation }) {
       <InlineCitationCard>
         <InlineCitationCardTrigger sources={[citation.url]} />
         <InlineCitationCardBody>
-          <div style={{
-            padding: 12,
-            background: 'var(--glass-bg, rgba(255,255,255,0.06))',
-            backdropFilter: 'blur(16px)',
-            borderRadius: 8,
-            border: '1px solid var(--glass-border, rgba(255,255,255,0.1))',
-          }}>
-            <InlineCitationSource
-              title={citation.title}
-              url={citation.url}
-              description={citation.description}
-            />
-          </div>
+          <InlineCitationSource
+            title={citation.title}
+            url={citation.url}
+            description={citation.description}
+          />
         </InlineCitationCardBody>
       </InlineCitationCard>
     </InlineCitation>

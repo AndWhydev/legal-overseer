@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import type { SidebarCategory } from '@/lib/modules/registry';
 import type { BadgeCounts } from '@/hooks/use-badge-counts';
+import { NotificationBadge } from '@/components/ui/notification-badge';
 
 const CATEGORY_ICON_MAP: Record<string, React.ElementType> = {
   LayoutDashboard,
@@ -50,7 +51,7 @@ export function SidebarRail({
     <div className="bb-sidebar-rail">
       {/* Logo */}
       <div className="bb-sidebar__logo" aria-label="BitBit">
-        <Image src="/bitbit-logo.svg" alt="BitBit" width={28} height={28} priority style={{ filter: 'brightness(0) invert(1)' }} />
+        <Image src="/bitbit-logo.svg" alt="BitBit" width={28} height={28} priority className="bb-sidebar__logo-img" />
       </div>
 
       {/* Category icons */}
@@ -72,12 +73,16 @@ export function SidebarRail({
               aria-pressed={isActive}
               data-tooltip={cat.label}
               data-category={cat.id}
+              style={{ position: 'relative' }}
             >
               <Icon size={20} strokeWidth={1.8} />
               {badge > 0 && (
-                <span className="bb-sidebar-rail__badge" aria-hidden="true">
-                  {badge > 99 ? '99+' : badge}
-                </span>
+                <NotificationBadge
+                  count={badge}
+                  color="var(--bb-red)"
+                  size="sm"
+                  ariaLabel={`${cat.label}: ${badge} notifications`}
+                />
               )}
             </button>
           );

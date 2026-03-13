@@ -6,7 +6,6 @@ import { MessageBubble } from './message-bubble'
 import { ToolCallSummary } from './tool-call-card'
 import { BitBitLogoVideo } from './bitbit-logo-video'
 import { BitBitLogoAnimated } from './bitbit-logo-animated'
-import { ThoughtPipeline, type ChatPipelineStage } from './thought-pipeline'
 import { Reasoning, ReasoningTrigger, ReasoningContent } from '@/components/ai-elements/reasoning'
 import { Checkpoint, CheckpointIcon } from '@/components/ai-elements/checkpoint'
 import {
@@ -70,36 +69,22 @@ const SUGGESTIONS = [
 
 const CHAT_SEND_EVENT = 'bitbit-chat-send'
 const CHAT_LAYOUT_EVENT = 'bitbit-chat-layout'
-
-/** Skeleton stage shown instantly on send */
-const SKELETON_STAGE: ChatPipelineStage = {
-  id: 'thinking',
-  label: 'Understanding',
-  sublabel: 'PROCESSING',
-  icon: '🧠',
-  status: 'active',
-}
-
 const THREAD_STORAGE_KEY = 'bitbit-thread-id'
 
 export function ChatInterface({ userName }: { userName?: string }) {
   const [messages, setMessages] = useState<Message[]>([])
   const [isLoading, setIsLoading] = useState(false)
-  const [thinkingText, setThinkingText] = useState<string | null>(null)
-  const [planStages, setPlanStages] = useState<ChatPipelineStage[]>([])
-  const [pipelineVisible, setPipelineVisible] = useState(false)
-  const [pipelinePhase, setPipelinePhase] = useState<'skeleton' | 'plan' | 'done'>('skeleton')
   const [threadId, setThreadId] = useState<string | null>(null)
-  // AI Elements state
+  // Reasoning state
   const [thinkingContent, setThinkingContent] = useState('')
   const [isThinkingStreaming, setIsThinkingStreaming] = useState(false)
   const [thinkingDuration, setThinkingDuration] = useState<number | undefined>()
+  const [showReasoning, setShowReasoning] = useState(false)
   const [activeCitations, setActiveCitations] = useState<Citation[]>([])
   const [checkpoints, setCheckpoints] = useState<CheckpointMarker[]>([])
   const [pendingApprovals, setPendingApprovals] = useState<PendingApproval[]>([])
   const scrollRef = useRef<HTMLDivElement>(null)
   const rafPending = useRef(false)
-  const pipelineFadeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const scrollToBottom = useCallback(() => {
     if (scrollRef.current) {
@@ -109,14 +94,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
 
   useEffect(() => {
     scrollToBottom()
-  }, [messages, thinkingText, planStages, scrollToBottom])
-
-  // Cleanup fade timer
-  useEffect(() => {
-    return () => {
-      if (pipelineFadeTimer.current) clearTimeout(pipelineFadeTimer.current)
-    }
-  }, [])
+  }, [messages, thinkingContent, isThinkingStreaming, scrollToBottom])
 
   // Load thread history on mount
   useEffect(() => {
@@ -142,7 +120,6 @@ export function ChatInterface({ userName }: { userName?: string }) {
         }
       })
       .catch(() => {
-        // History load failed — start fresh
         localStorage.removeItem(THREAD_STORAGE_KEY)
         setThreadId(null)
       })
@@ -161,24 +138,18 @@ export function ChatInterface({ userName }: { userName?: string }) {
 
     setMessages(prev => [...prev, userMsg])
     setIsLoading(true)
-    setThinkingText(null)
-    // Reset AI element state for new response
+    // Reset reasoning state
     setThinkingContent('')
-    setIsThinkingStreaming(false)
+    setIsThinkingStreaming(true)
     setThinkingDuration(undefined)
+    setShowReasoning(true)
     setActiveCitations([])
     setPendingApprovals([])
-
-    // WS1: Instant skeleton pipeline — zero dead time
-    setPlanStages([{ ...SKELETON_STAGE }])
-    setPipelineVisible(true)
-    setPipelinePhase('skeleton')
 
     const assistantId = `msg-${Date.now() + 1}`
     let assistantContent = ''
     const toolCalls: ToolCall[] = []
     const responseCitations: Citation[] = []
-    let hasPlan = false
 
     try {
       const res = await fetch('/api/agent/chat', {
@@ -211,7 +182,6 @@ export function ChatInterface({ userName }: { userName?: string }) {
 
             switch (event.type) {
               case 'thread': {
-                // Pipeline resolved/created a thread — persist for session continuity
                 const tid = event.data.threadId
                 setThreadId(tid)
                 localStorage.setItem(THREAD_STORAGE_KEY, tid)
@@ -220,18 +190,15 @@ export function ChatInterface({ userName }: { userName?: string }) {
 
               case 'thinking':
               case 'thinking_start':
-                // Engine is active — skeleton already showing, prepare for thinking content
                 setIsThinkingStreaming(true)
                 break
 
               case 'thinking_delta':
-                // Extended thinking content streaming from synthesis tier
                 setThinkingContent(prev => prev + event.data)
                 setIsThinkingStreaming(true)
                 break
 
               case 'thinking_complete': {
-                // Thinking finished — record duration, stop streaming
                 setIsThinkingStreaming(false)
                 const durationMs = event.data?.duration_ms
                 if (durationMs) {
@@ -241,7 +208,6 @@ export function ChatInterface({ userName }: { userName?: string }) {
               }
 
               case 'citation': {
-                // Citations extracted from tool results or response
                 const newCitations = event.data?.citations || []
                 if (newCitations.length > 0) {
                   responseCitations.push(...newCitations)
@@ -251,7 +217,6 @@ export function ChatInterface({ userName }: { userName?: string }) {
               }
 
               case 'checkpoint': {
-                // Conversation checkpoint — insert visual divider
                 setCheckpoints(prev => [...prev, {
                   messageIndex: event.data.message_index,
                   label: event.data.label,
@@ -260,33 +225,11 @@ export function ChatInterface({ userName }: { userName?: string }) {
                 break
               }
 
+              // Plan/stage events still processed for tool matching
               case 'stage':
-                // Internal engine stages — no longer shown in UI
+              case 'plan':
+              case 'plan_stage_update':
                 break
-
-              case 'plan': {
-                // Planner sent execution plan — crossfade from skeleton
-                const stages = (event.data.stages || []).map((s: { id: string; label: string; sublabel?: string; icon: string; toolHint?: string }) => ({
-                  ...s,
-                  status: 'idle' as const,
-                }))
-                if (stages.length > 0) {
-                  setPlanStages(stages)
-                  setPipelinePhase('plan')
-                  hasPlan = true
-                }
-                break
-              }
-
-              case 'plan_stage_update': {
-                const { stageId, status } = event.data as { stageId: string; status: 'active' | 'done' | 'error' }
-                setPlanStages(prev =>
-                  prev.map(s =>
-                    s.id === stageId ? { ...s, status } : s
-                  )
-                )
-                break
-              }
 
               case 'tool_call': {
                 const tc: ToolCall = {
@@ -296,19 +239,6 @@ export function ChatInterface({ userName }: { userName?: string }) {
                 }
                 toolCalls.push(tc)
 
-                // WS3: Tool calls activate pipeline stages instead of showing separate cards
-                // Only update message if tool has no matching pipeline stage
-                setPlanStages(prev => {
-                  const matched = prev.find(s => s.toolHint === event.data.name && s.status === 'idle')
-                  if (matched) {
-                    return prev.map(s =>
-                      s.id === matched.id ? { ...s, status: 'active' as const } : s
-                    )
-                  }
-                  return prev
-                })
-
-                // Still track tool calls on the message for the summary
                 setMessages(prev => {
                   const existing = prev.find(m => m.id === assistantId)
                   if (existing) {
@@ -345,7 +275,6 @@ export function ChatInterface({ userName }: { userName?: string }) {
                   }
                 }
 
-                // Track queued tool approvals for Confirmation UI
                 if (event.data.queued && event.data.approvalId) {
                   setPendingApprovals(prev => [...prev, {
                     id: event.data.approvalId,
@@ -354,16 +283,6 @@ export function ChatInterface({ userName }: { userName?: string }) {
                     status: 'pending',
                   }])
                 }
-
-                // Mark matching pipeline stage as done
-                setPlanStages(prev =>
-                  prev.map(s => {
-                    if (s.toolHint === event.data.name && s.status === 'active') {
-                      return { ...s, status: event.data.success ? 'done' as const : 'error' as const }
-                    }
-                    return s
-                  })
-                )
 
                 setMessages(prev =>
                   prev.map(m =>
@@ -376,10 +295,8 @@ export function ChatInterface({ userName }: { userName?: string }) {
               }
 
               case 'content_delta':
-                setThinkingText(null)
                 setIsThinkingStreaming(false)
                 assistantContent += event.data
-                // Pipeline stays visible during streaming — do NOT hide
                 if (!rafPending.current) {
                   rafPending.current = true
                   requestAnimationFrame(() => {
@@ -410,7 +327,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
                 break
 
               case 'message':
-                setThinkingText(null)
+                setIsThinkingStreaming(false)
                 assistantContent = event.data
                 setMessages(prev => {
                   const existing = prev.find(m => m.id === assistantId)
@@ -435,7 +352,8 @@ export function ChatInterface({ userName }: { userName?: string }) {
                 break
 
               case 'error':
-                setThinkingText(null)
+                setIsThinkingStreaming(false)
+                setShowReasoning(false)
                 setMessages(prev => [
                   ...prev.filter(m => m.id !== assistantId),
                   {
@@ -448,9 +366,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
                 break
 
               case 'done':
-                setThinkingText(null)
                 setIsThinkingStreaming(false)
-                // Attach accumulated citations to the assistant message
                 if (responseCitations.length > 0) {
                   setMessages(prev =>
                     prev.map(m =>
@@ -460,17 +376,6 @@ export function ChatInterface({ userName }: { userName?: string }) {
                     )
                   )
                 }
-                // WS4: Mark all remaining stages as done, then fade after 1s
-                setPlanStages(prev =>
-                  prev.map(s => s.status !== 'done' && s.status !== 'error'
-                    ? { ...s, status: 'done' as const }
-                    : s
-                  )
-                )
-                setPipelinePhase('done')
-                pipelineFadeTimer.current = setTimeout(() => {
-                  setPipelineVisible(false)
-                }, 1000)
                 break
             }
           } catch {
@@ -479,6 +384,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
         }
       }
     } catch (err) {
+      setShowReasoning(false)
       setMessages(prev => [
         ...prev,
         {
@@ -490,11 +396,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
       ])
     } finally {
       setIsLoading(false)
-      setThinkingText(null)
-      // If pipeline didn't get a 'done' event, fade it now
-      if (pipelineFadeTimer.current === null) {
-        setPipelineVisible(false)
-      }
+      setIsThinkingStreaming(false)
     }
   }, [isLoading, threadId])
 
@@ -513,7 +415,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
   }, [handleSend])
 
   const hasMessages = messages.length > 0
-  const chatStarted = hasMessages || isLoading || Boolean(thinkingText)
+  const chatStarted = hasMessages || isLoading
 
   useEffect(() => {
     window.dispatchEvent(new CustomEvent(CHAT_LAYOUT_EVENT, { detail: { started: chatStarted } }))
@@ -525,10 +427,13 @@ export function ChatInterface({ userName }: { userName?: string }) {
     }
   }, [])
 
+  // Determine if the reasoning indicator should display
+  const lastMsg = messages[messages.length - 1]
+  const assistantHasContent = lastMsg?.role === 'assistant' && lastMsg.content.length > 0
+  const showThinkingIndicator = showReasoning && (isThinkingStreaming || thinkingContent || thinkingDuration !== undefined) && !assistantHasContent
+
   return (
     <div className={`bb-chat ${chatStarted ? 'bb-chat--active' : 'bb-chat--pre-session'}`}>
-      {/* AI disclosure moved to input footer */}
-
       {/* Messages or empty state */}
       <div
         className={`bb-chat__messages ${!hasMessages ? 'bb-chat__messages--empty' : ''}`}
@@ -585,13 +490,11 @@ export function ChatInterface({ userName }: { userName?: string }) {
                       message={msg}
                       citations={msg.citations || (isLastAssistant && isLoading ? activeCitations : undefined)}
                     />
-                    {/* WS3: Show collapsed tool summary after response completes (not during) */}
                     {isLastAssistant && hasCompletedTools && !isLoading && (
                       <div className="bb-chat__tc-summary-wrap">
                         <ToolCallSummary toolCalls={msg.toolCalls!} />
                       </div>
                     )}
-                    {/* WS2: Checkpoint dividers at session boundaries / topic shifts */}
                     {checkpoint && (
                       <div style={{ margin: '16px 0', opacity: 0.6 }}>
                         <Checkpoint>
@@ -612,44 +515,24 @@ export function ChatInterface({ userName }: { userName?: string }) {
                 )
               })}
 
-              {/* WS4: Pipeline visible throughout entire execution lifecycle */}
-              {pipelineVisible && planStages.length > 0 && (
+              {/* Thinking indicator — clean shimmer, ChatGPT-style */}
+              {showThinkingIndicator && (
                 <div className="bb-chat__msg bb-chat__msg--assistant">
                   <div className="bb-chat__assistant-icon">
                     <BitBitLogoAnimated size={24} />
                   </div>
-                  <ThoughtPipeline
-                    stages={planStages}
-                    visible={true}
-                    phase={pipelinePhase}
-                  />
-                </div>
-              )}
-
-              {/* WS2: Extended thinking — collapsible reasoning panel */}
-              {thinkingContent && (
-                <div className="bb-chat__msg bb-chat__msg--assistant">
-                  <div className="bb-chat__assistant-icon">
-                    <BitBitLogoAnimated size={24} />
-                  </div>
-                  <div style={{
-                    flex: 1,
-                    minWidth: 0,
-                    background: 'var(--glass-bg, rgba(255,255,255,0.04))',
-                    borderRadius: 12,
-                    border: '1px solid var(--glass-border, rgba(255,255,255,0.08))',
-                    padding: '8px 12px',
-                    backdropFilter: 'blur(12px)',
-                  }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
                     <Reasoning isStreaming={isThinkingStreaming} duration={thinkingDuration}>
                       <ReasoningTrigger />
-                      <ReasoningContent>{thinkingContent}</ReasoningContent>
+                      {thinkingContent && (
+                        <ReasoningContent>{thinkingContent}</ReasoningContent>
+                      )}
                     </Reasoning>
                   </div>
                 </div>
               )}
 
-              {/* WS2: Pending approval confirmations */}
+              {/* Pending approval confirmations */}
               {pendingApprovals.filter(a => a.status === 'pending').map(approval => (
                 <div key={approval.id} className="bb-chat__msg bb-chat__msg--assistant" style={{ marginTop: 8 }}>
                   <div className="bb-chat__assistant-icon">
@@ -702,27 +585,6 @@ export function ChatInterface({ userName }: { userName?: string }) {
                   </div>
                 </div>
               ))}
-
-              {/* Loading dots — only when no pipeline and no thinking content yet */}
-              {isLoading && !pipelineVisible && !thinkingContent && !(messages.length > 0 && messages[messages.length - 1].role === 'assistant' && messages[messages.length - 1].content) && (
-                <div className="bb-chat__msg bb-chat__msg--assistant">
-                  <div className="bb-chat__assistant-icon">
-                    <BitBitLogoAnimated size={24} />
-                  </div>
-                  <div className="bb-chat__dots">
-                    <span /><span /><span />
-                  </div>
-                </div>
-              )}
-
-              {thinkingText && (
-                <div className="bb-chat__msg bb-chat__msg--assistant">
-                  <div className="bb-chat__assistant-icon">
-                    <BitBitLogoAnimated size={24} />
-                  </div>
-                  <span className="bb-chat__thinking">{thinkingText}</span>
-                </div>
-              )}
             </motion.div>
           )}
         </AnimatePresence>
