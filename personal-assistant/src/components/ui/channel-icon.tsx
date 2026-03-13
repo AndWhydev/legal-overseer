@@ -24,14 +24,21 @@ const CHANNEL_MAP: Record<string, { path: string; title: string }> = {
 };
 
 interface ChannelIconProps {
-  channel: string;
+  channel?: string | null;
   size?: number;
   className?: string;
   color?: string;
 }
 
+export function resolveChannelIcon(channel?: string | null) {
+  const normalized =
+    typeof channel === 'string' ? channel.trim().toLowerCase() : '';
+
+  return CHANNEL_MAP[normalized] ?? null;
+}
+
 export function ChannelIcon({ channel, size = 16, className, color }: ChannelIconProps) {
-  const icon = CHANNEL_MAP[channel.toLowerCase()];
+  const icon = resolveChannelIcon(channel);
 
   if (!icon) {
     return <Mail size={size} className={className} style={color ? { color } : undefined} />;

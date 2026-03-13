@@ -501,6 +501,8 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
                   data-active={isActive}
                   data-dir={isActive && transitionDir ? transitionDir : undefined}
                   aria-hidden={!isActive}
+                  hidden={!isActive}
+                  style={!isActive ? { display: 'none', pointerEvents: 'none' } : undefined}
                 >
                   {(isActive || visitedTabs.has(tab.id)) ? (
                     <ErrorBoundary>

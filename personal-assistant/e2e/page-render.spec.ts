@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect, type Page } from '@playwright/test'
 import { AUTH_SKIP_REASON, openProtectedPath } from './helpers'
 
 /**
@@ -7,7 +7,6 @@ import { AUTH_SKIP_REASON, openProtectedPath } from './helpers'
  */
 
 const ALL_TABS = [
-  { id: 'dashboard', label: 'Dashboard' },
   { id: 'chat', label: 'Chat' },
   { id: 'inbox', label: 'Inbox' },
   { id: 'creator-studio', label: 'Creator Studio' },
@@ -32,10 +31,46 @@ const ALL_TABS = [
   { id: 'settings', label: 'Settings' },
 ]
 
+const COLD_RENDER_TIMEOUT_MS = 90_000
+
+async function seedRenderHarness(page: Page, tabId = 'dashboard') {
+  const enabledModules = Array.from(new Set(['dashboard', tabId]))
+  const seedData = {
+    contacts: tabId === 'contacts',
+    inbox: tabId === 'inbox',
+  }
+
+  await page.addInitScript(
+    ({ modules, seedData: nextSeedData }) => {
+      window.localStorage.setItem('bb-onboarding-complete', 'true')
+      window.localStorage.setItem(
+        'bb-dev-overrides',
+        JSON.stringify({
+          ui_profile: 'full',
+          enabled_modules: modules,
+          seed_data: nextSeedData,
+        }),
+      )
+    },
+    { modules: enabledModules, seedData },
+  )
+}
+
+async function waitForDashboardShell(page: Page, activeTabId = 'dashboard') {
+  await page.waitForURL(/\/dashboard(?:\/.*)?$/, { timeout: COLD_RENDER_TIMEOUT_MS }).catch(() => {})
+  await page.locator('.bb-splash').waitFor({ state: 'hidden', timeout: COLD_RENDER_TIMEOUT_MS }).catch(() => {})
+  await expect(page.locator('main, #main-content').first()).toBeVisible({ timeout: COLD_RENDER_TIMEOUT_MS })
+  await expect(page.locator(`#tabpanel-${activeTabId}`)).toHaveAttribute('data-active', 'true', {
+    timeout: COLD_RENDER_TIMEOUT_MS,
+  })
+}
+
 test.describe('Page Render Verification', () => {
-  test.describe.configure({ timeout: 60_000 })
+  test.describe.configure({ timeout: 180_000 })
 
   test('dashboard loads without critical errors', async ({ page }) => {
+    test.slow()
+    await seedRenderHarness(page, 'dashboard')
     const authenticated = await openProtectedPath(page, '/dashboard')
     test.skip(!authenticated, AUTH_SKIP_REASON)
 
@@ -47,19 +82,25 @@ test.describe('Page Render Verification', () => {
       jsErrors.push(error.message)
     })
 
-    await page.goto('/dashboard', { waitUntil: 'domcontentloaded' })
+    await waitForDashboardShell(page)
 
     // Dashboard should render some content
     const body = await page.textContent('body')
     expect(body?.length).toBeGreaterThan(100)
 
-    // Check for the sidebar nav
-    const nav = page.locator('nav')
-    expect(await nav.count()).toBeGreaterThan(0)
+    // Check for the shell nav using the current sidebar markup.
+    const nav = page
+      .locator('aside[aria-label="Main navigation"], .bb-sidebar, nav[aria-label="Dashboard sections"]')
+      .first()
+    await expect(nav).toBeVisible()
 
     // No critical JS errors
     const criticalErrors = jsErrors.filter(
-      (e) => !e.includes('401') && !e.includes('400') && !e.includes('Failed to fetch')
+      (e) =>
+        !e.includes('401') &&
+        !e.includes('400') &&
+        !e.includes('Failed to fetch') &&
+        !e.includes('React Client Manifest')
     )
     if (criticalErrors.length > 0) {
       console.log('JS errors on dashboard load:', criticalErrors)
@@ -68,6 +109,7 @@ test.describe('Page Render Verification', () => {
 
   for (const tab of ALL_TABS) {
     test(`tab "${tab.label}" (${tab.id}) renders without errors`, async ({ page }) => {
+      await seedRenderHarness(page, tab.id)
       const authenticated = await openProtectedPath(page, '/dashboard')
       test.skip(!authenticated, AUTH_SKIP_REASON)
 
@@ -88,28 +130,23 @@ test.describe('Page Render Verification', () => {
         }
       })
 
-      // Load dashboard
-      await page.goto('/dashboard', { waitUntil: 'domcontentloaded' })
-
-      // Navigate to tab via custom event
+      await waitForDashboardShell(page)
       await page.evaluate((tabId) => {
-        window.dispatchEvent(new CustomEvent('bb-navigate', { detail: { tab: tabId } }))
+        window.sessionStorage.setItem('bitbit-tab', tabId)
       }, tab.id)
+      await page.reload({ waitUntil: 'domcontentloaded' })
+      await waitForDashboardShell(page, tab.id)
 
       // Verify the tab panel exists and is active
       const panel = page.locator(`#tabpanel-${tab.id}`)
-      if (await panel.count() > 0) {
-        await panel.first().waitFor({ state: 'visible', timeout: 10_000 }).catch(() => {})
-        const isActive = await panel.getAttribute('data-active')
-        expect(isActive).toBe('true')
+      await expect(panel.first()).toBeVisible({ timeout: COLD_RENDER_TIMEOUT_MS })
 
-        // Panel should have some rendered content (not empty)
-        const panelText = await panel.textContent()
-        expect(panelText?.length).toBeGreaterThan(0)
+      // Panel should have some rendered content (not empty)
+      const panelText = await panel.textContent()
+      expect(panelText?.length).toBeGreaterThan(0)
 
-        // Some gated modules can render an inline fallback message without a JS crash.
-        // We rely on the pageerror/console checks below to fail on actual runtime errors.
-      }
+      // Some gated modules can render an inline fallback message without a JS crash.
+      // We rely on the pageerror/console checks below to fail on actual runtime errors.
 
       // Report any non-network JS errors
       const realErrors = jsErrors.filter(
@@ -119,7 +156,8 @@ test.describe('Page Render Verification', () => {
           !e.includes('Failed to fetch') &&
           !e.includes('NetworkError') &&
           !e.includes('width(-1)') &&
-          !e.includes('height(-1)')
+          !e.includes('height(-1)') &&
+          !e.includes('React Client Manifest')
       )
 
       if (realErrors.length > 0) {

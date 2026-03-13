@@ -5,6 +5,7 @@ import { Bell, CheckCircle2, Zap, AlertTriangle, Check } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { logger } from '@/lib/core/logger';
+import { buildDashboardNotifications } from '@/lib/notifications/build-dashboard-notifications';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -97,7 +98,6 @@ export function NotificationCenter({ onTabChange }: NotificationCenterProps) {
 
     try {
       setError(null);
-      const notifications: NotificationItem[] = [];
 
       // Fetch pending approvals
       const { data: approvals, error: approvalsError } = await clientRef.current
@@ -108,20 +108,6 @@ export function NotificationCenter({ onTabChange }: NotificationCenterProps) {
 
       if (approvalsError && approvalsError.code !== 'PGRST116') {
         logger.warn('Error fetching approvals:', approvalsError);
-      }
-
-      if (approvals) {
-        approvals.forEach((approval: { id: string; created_at: string }) => {
-          notifications.push({
-            id: `approval-${approval.id}`,
-            type: 'approval',
-            title: 'Approval Pending',
-            description: 'A document requires your approval',
-            timestamp: new Date(approval.created_at),
-            read: false,
-            tabId: 'approvals',
-          });
-        });
       }
 
       // Fetch new leads
@@ -135,21 +121,6 @@ export function NotificationCenter({ onTabChange }: NotificationCenterProps) {
         logger.warn('Error fetching leads:', leadsError);
       }
 
-      if (leads) {
-        leads.forEach((lead: { id: string; source_channel: string; metadata: Record<string, unknown>; created_at: string }) => {
-          const leadName = (lead.metadata?.name || lead.metadata?.company || lead.source_channel || 'Unknown') as string;
-          notifications.push({
-            id: `lead-${lead.id}`,
-            type: 'lead',
-            title: 'New Lead',
-            description: `${leadName} signed up`,
-            timestamp: new Date(lead.created_at),
-            read: false,
-            tabId: 'leads',
-          });
-        });
-      }
-
       // Fetch overdue invoices
       const { data: invoices, error: invoicesError } = await clientRef.current
         .from('invoices')
@@ -161,24 +132,11 @@ export function NotificationCenter({ onTabChange }: NotificationCenterProps) {
         logger.warn('Error fetching invoices:', invoicesError);
       }
 
-      if (invoices) {
-        invoices.forEach((invoice: { id: string; invoice_number: string; created_at: string }) => {
-          notifications.push({
-            id: `invoice-${invoice.id}`,
-            type: 'invoice',
-            title: 'Overdue Invoice',
-            description: `Invoice ${invoice.invoice_number} is overdue`,
-            timestamp: new Date(invoice.created_at),
-            read: false,
-            tabId: 'invoices',
-          });
-        });
-      }
-
-      // Sort by timestamp descending (newest first)
-      notifications.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
-
-      setNotifications(notifications);
+      setNotifications(buildDashboardNotifications({
+        approvals: (approvals ?? []) as Array<{ id: string; created_at: string }>,
+        leads: (leads ?? []) as Array<{ id: string; source_channel: string; metadata: Record<string, unknown>; created_at: string }>,
+        invoices: (invoices ?? []) as Array<{ id: string; invoice_number: string; created_at: string }>,
+      }));
       setIsLoading(false);
     } catch (err) {
       logger.error('Error fetching notifications:', err);
