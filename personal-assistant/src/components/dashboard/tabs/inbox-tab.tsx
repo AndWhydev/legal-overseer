@@ -9,11 +9,12 @@ import { TabShell } from '@/components/ui/tab-shell';
 import { EmptyState } from '@/components/ui/empty-state';
 import { logger } from '@/lib/core/logger';
 import { createClient } from '@/lib/supabase/client';
-import InboxDrawer, { type ThreadMessageItem } from '@/components/dashboard/inbox-drawer';
+import { type ThreadMessageItem } from '@/components/dashboard/inbox-drawer';
 import {
   Filter,
   CheckCircle2,
   ChevronDown,
+  ChevronRight,
   RefreshCw,
   Calendar as CalendarIcon,
   X,
@@ -21,8 +22,11 @@ import {
   Archive,
   Clock,
   Reply,
+  Forward,
   AlertTriangle,
   Star,
+  ListTodo,
+  Send,
 } from 'lucide-react';
 import { resolveAvatar, resolveAvatarSync, type AvatarResult } from '@/lib/avatar/resolver';
 
@@ -329,6 +333,7 @@ function InboxTab() {
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [showFilters, setShowFilters] = useState(false);
   const [selectedMessage, setSelectedMessage] = useState<InboxMessage | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
   const [newMessageAlert, setNewMessageAlert] = useState(false);
 
   // New state for P2-5, P2-2, P4-5
@@ -535,20 +540,23 @@ function InboxTab() {
   }, []);
 
   const handleNavigate = useCallback((direction: 'prev' | 'next') => {
-    if (!selectedMessage) return;
-    const currentIndex = displayed.findIndex(m => m.id === selectedMessage.id);
+    const currentId = expandedId;
+    if (!currentId) return;
+    const currentIndex = displayed.findIndex(m => m.id === currentId);
     const nextIndex = direction === 'next' ? currentIndex + 1 : currentIndex - 1;
     if (nextIndex >= 0 && nextIndex < displayed.length) {
-      setSelectedMessage(displayed[nextIndex]);
+      setExpandedId(displayed[nextIndex].id);
     }
-  }, [selectedMessage, displayed]);
+  }, [expandedId, displayed]);
 
   // ── Keyboard hook ──
   const keyboard = useInboxKeyboard({
     enabled: true,
     messageCount: displayed.length,
     onOpen: (index) => {
-      if (index >= 0 && index < displayed.length) setSelectedMessage(displayed[index]);
+      if (index >= 0 && index < displayed.length) {
+        setExpandedId(prev => prev === displayed[index].id ? null : displayed[index].id);
+      }
     },
     onArchive: (index) => {
       if (index >= 0 && index < displayed.length) handleArchive(displayed[index].id);
@@ -574,6 +582,7 @@ function InboxTab() {
     onCategorySwitch: () => {},
     onSearch: () => {},
     onClose: () => {
+      setExpandedId(null);
       setSelectedMessage(null);
       keyboard.setSelectedIndex(-1);
     },
@@ -611,9 +620,9 @@ function InboxTab() {
       });
       lastClickedIndexRef.current = index;
     } else {
-      // Plain click — expand/collapse (handled in Task 2, just set selectedMessage for now)
+      // Plain click — toggle inline expansion
       lastClickedIndexRef.current = index;
-      setSelectedMessage(displayed[index] || null);
+      setExpandedId(prev => prev === id ? null : id);
     }
   }, [displayed, keyboard]);
 
@@ -822,24 +831,36 @@ function InboxTab() {
           />
         ) : (
           displayed.map((msg, idx) => (
-            <MessageRow
-              key={msg.id}
-              message={msg}
-              index={idx}
-              onArchive={handleArchive}
-              onDone={handleDone}
-              onSnooze={(id, e) => {
-                const rect = (e.currentTarget as HTMLButtonElement).getBoundingClientRect();
-                setSnoozeTargetId(id);
-                setSnoozeAnchor({ top: rect.bottom + 8, right: window.innerWidth - rect.right });
-              }}
-              onReply={() => setSelectedMessage(msg)}
-              onStar={handleStar}
-              onRowClick={handleRowClick}
-              focused={idx === keyboard.selectedIndex}
-              selected={keyboard.selectedIds.has(msg.id)}
-              starred={starredIds.has(msg.id)}
-            />
+            <React.Fragment key={msg.id}>
+              <MessageRow
+                message={msg}
+                index={idx}
+                onArchive={handleArchive}
+                onDone={handleDone}
+                onSnooze={(id, e) => {
+                  const rect = (e.currentTarget as HTMLButtonElement).getBoundingClientRect();
+                  setSnoozeTargetId(id);
+                  setSnoozeAnchor({ top: rect.bottom + 8, right: window.innerWidth - rect.right });
+                }}
+                onReply={() => setExpandedId(msg.id)}
+                onStar={handleStar}
+                onRowClick={handleRowClick}
+                focused={idx === keyboard.selectedIndex}
+                selected={keyboard.selectedIds.has(msg.id)}
+                starred={starredIds.has(msg.id)}
+              />
+              {expandedId === msg.id && (
+                <ExpandedMessageRow
+                  message={msg}
+                  threadMessages={SEED_THREAD_MESSAGES[msg.id]}
+                  onArchive={(id) => { handleArchive(id); setExpandedId(null); }}
+                  onDone={(id) => { handleDone(id); setExpandedId(null); }}
+                  onSpam={(id) => { handleSpam(id); setExpandedId(null); }}
+                  onReply={handleReply}
+                  onClose={() => setExpandedId(null)}
+                />
+              )}
+            </React.Fragment>
           ))
         )}
       </div>
@@ -852,18 +873,6 @@ function InboxTab() {
           onClose={() => { setSnoozeTargetId(null); setSnoozeAnchor(null); }}
         />
       )}
-
-      {/* ── Email Reading Drawer ── */}
-      <InboxDrawer
-        message={selectedMessage}
-        open={selectedMessage !== null}
-        onClose={() => setSelectedMessage(null)}
-        onArchive={(id) => { handleArchive(id); setSelectedMessage(null); }}
-        onDone={(id) => { handleDone(id); setSelectedMessage(null); }}
-        onReply={handleReply}
-        onNavigate={handleNavigate}
-        threadMessages={selectedMessage ? SEED_THREAD_MESSAGES[selectedMessage.id] : undefined}
-      />
 
       {/* ── Undo Toast Stack — Task #7 ── */}
       <UndoToastStack
@@ -1351,6 +1360,453 @@ function InboxSelect({ value, onChange, label, options }: {
         <option key={opt.value} value={opt.value}>{opt.label}</option>
       ))}
     </select>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Expanded Message Row — inline content panel (replaces drawer)
+// ---------------------------------------------------------------------------
+
+function extractSummaryInline(message: InboxMessage): { summary: string; actionItems: string[]; draftReply: string } {
+  const text = (message.subject || '') + ' ' + message.bodyPreview;
+  const actionItems: string[] = [];
+  const actionMatch = text.match(/want[s]?\s+(?:the\s+)?([^,.!?]{10,60})/i);
+  if (actionMatch) actionItems.push(actionMatch[0].trim());
+  const deadlineMatch = text.match(/(due|deadline|by|end of)\s+([^,.!?]{3,40})/i);
+  if (deadlineMatch) actionItems.push(`Deadline mentioned: ${deadlineMatch[0].trim()}`);
+  if (text.match(/urgent|asap|immediately|critical|error|crash|spike|500/i)) {
+    actionItems.push('Urgent -- requires immediate attention');
+  }
+  if (text.match(/assigned|you have been|please review|please confirm/i)) {
+    actionItems.push('Action assigned to you');
+  }
+  const summary = message.bodyPreview.length > 120
+    ? message.bodyPreview.slice(0, 120).trim() + '...'
+    : message.bodyPreview;
+  const senderFirstName = (message.contactName || message.senderName || 'there').split(' ')[0];
+  const draftReply = message.category === 'actionable'
+    ? `Hi ${senderFirstName},\n\nThanks for reaching out. I'll look into this and get back to you shortly.\n\nBest regards`
+    : `Hi ${senderFirstName},\n\nThank you for the update. I'll review and let you know if I have any questions.\n\nBest regards`;
+  return { summary, actionItems: actionItems.slice(0, 3), draftReply };
+}
+
+function ExpandedMessageRow({
+  message,
+  threadMessages,
+  onArchive,
+  onDone,
+  onSpam,
+  onReply,
+  onClose,
+}: {
+  message: InboxMessage;
+  threadMessages?: ThreadMessageItem[];
+  onArchive: (id: string) => void;
+  onDone: (id: string) => void;
+  onSpam: (id: string) => void;
+  onReply: (id: string, body: string) => void;
+  onClose: () => void;
+}) {
+  const [replyText, setReplyText] = useState('');
+  const [replyFocused, setReplyFocused] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const expandedRef = useRef<HTMLDivElement>(null);
+  const [aiResult, setAiResult] = useState<{ summary: string; actionItems: string[]; draftReply: string } | null>(null);
+  const [aiLoading, setAiLoading] = useState(true);
+
+  // Thread view state
+  const latestThreadId = threadMessages?.[threadMessages.length - 1]?.id;
+  const [expandedThreadIds, setExpandedThreadIds] = useState<Set<string>>(new Set(latestThreadId ? [latestThreadId] : []));
+
+  const showSummary = message.significance >= 5;
+  const hasThread = threadMessages && threadMessages.length > 1;
+
+  // Scroll into view on mount
+  useEffect(() => {
+    setTimeout(() => {
+      expandedRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 50);
+  }, []);
+
+  // AI summary simulation
+  useEffect(() => {
+    if (!showSummary) { setAiLoading(false); return; }
+    setAiLoading(true);
+    setAiResult(null);
+    const timer = setTimeout(() => {
+      setAiResult(extractSummaryInline(message));
+      setAiLoading(false);
+    }, 700);
+    return () => clearTimeout(timer);
+  }, [message.id, showSummary]);
+
+  // Escape to close
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        const tag = (e.target as HTMLElement)?.tagName;
+        if (tag === 'TEXTAREA' && replyFocused) {
+          textareaRef.current?.blur();
+          return;
+        }
+        e.preventDefault();
+        onClose();
+      }
+    };
+    document.addEventListener('keydown', handleKey);
+    return () => document.removeEventListener('keydown', handleKey);
+  }, [onClose, replyFocused]);
+
+  const handleAutoExpand = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setReplyText(e.target.value);
+    e.target.style.height = 'auto';
+    e.target.style.height = Math.min(e.target.scrollHeight, 200) + 'px';
+  };
+
+  const handleSendReply = () => {
+    if (replyText.trim()) {
+      onReply(message.id, replyText);
+      setReplyText('');
+    }
+  };
+
+  const sender = message.contactName || message.senderName || message.senderEmail || 'Unknown';
+  const ChannelIcon = CHANNEL_ICONS[message.channelType] || GmailIcon;
+  const brandColor = CHANNEL_BRAND_COLORS[message.channelType] || 'var(--text-dim)';
+  const fullDate = new Date(message.receivedAt).toLocaleString('en-AU', {
+    weekday: 'short', day: 'numeric', month: 'short', year: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+  });
+
+  const actionPillStyle: React.CSSProperties = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 5,
+    padding: '5px 12px',
+    borderRadius: 8,
+    border: '1px solid rgba(255, 255, 255, 0.08)',
+    background: 'rgba(255, 255, 255, 0.04)',
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontSize: 12,
+    fontWeight: 500,
+    cursor: 'pointer',
+    transition: 'all 150ms ease',
+  };
+
+  const shimmerStyle: React.CSSProperties = {
+    background: 'linear-gradient(90deg, rgba(139,92,246,0.08) 25%, rgba(139,92,246,0.14) 50%, rgba(139,92,246,0.08) 75%)',
+    backgroundSize: '200% 100%',
+    animation: 'shimmer 1.5s ease-in-out infinite',
+    borderRadius: 4,
+  };
+
+  const toggleThread = (id: string) => {
+    setExpandedThreadIds(prev => {
+      const s = new Set(prev);
+      if (s.has(id)) s.delete(id); else s.add(id);
+      return s;
+    });
+  };
+
+  return (
+    <div
+      ref={expandedRef}
+      style={{
+        borderRadius: '0 0 12px 12px',
+        marginTop: -4,
+        marginBottom: 4,
+        background: 'rgba(8, 12, 20, 0.7)',
+        backdropFilter: 'blur(20px) saturate(1.2)',
+        WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
+        borderTop: '1px solid rgba(255, 255, 255, 0.06)',
+        border: '1px solid rgba(255, 255, 255, 0.05)',
+        borderTopColor: 'rgba(255, 255, 255, 0.03)',
+        overflow: 'hidden',
+        animation: 'expandIn 200ms ease',
+      }}
+    >
+      <style>{`@keyframes expandIn { from { opacity: 0; max-height: 0; } to { opacity: 1; max-height: 2000px; } }`}</style>
+
+      {/* Header bar */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '14px 20px',
+        borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+        gap: 12,
+        flexWrap: 'wrap',
+      }}>
+        {/* Sender info */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
+          <div style={{
+            width: 14, height: 14, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: brandColor, flexShrink: 0,
+          }}>
+            <ChannelIcon size={13} />
+          </div>
+          <span style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.9)' }}>
+            {String(sender)}
+          </span>
+          {message.senderEmail && (
+            <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)' }}>
+              {String(message.senderEmail)}
+            </span>
+          )}
+          <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', marginLeft: 'auto', flexShrink: 0 }}>
+            {fullDate}
+          </span>
+        </div>
+
+        {/* Action pills */}
+        <div style={{ display: 'flex', gap: 6, flexShrink: 0, flexWrap: 'wrap' }}>
+          <button
+            style={actionPillStyle}
+            onClick={() => textareaRef.current?.focus()}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
+          >
+            <Reply size={12} /> Reply
+          </button>
+          <button
+            style={actionPillStyle}
+            onClick={() => onArchive(message.id)}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
+          >
+            <Archive size={12} /> Archive
+          </button>
+          <button
+            style={actionPillStyle}
+            onClick={() => onDone(message.id)}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
+          >
+            <CheckCircle2 size={12} /> Done
+          </button>
+          <button
+            style={{ ...actionPillStyle, background: 'rgba(239,68,68,0.08)', color: 'rgba(239,68,68,0.8)', borderColor: 'rgba(239,68,68,0.15)' }}
+            onClick={() => onSpam(message.id)}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(239,68,68,0.15)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(239,68,68,0.08)'; }}
+          >
+            <AlertTriangle size={12} /> Spam
+          </button>
+        </div>
+      </div>
+
+      {/* Content area */}
+      <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+        {/* Subject */}
+        {message.subject && (
+          <h3 style={{
+            fontSize: 16, fontWeight: 600, color: 'rgba(255,255,255,0.93)',
+            margin: 0, lineHeight: 1.3,
+          }}>
+            {String(message.subject)}
+          </h3>
+        )}
+
+        {/* AI Summary panel */}
+        {showSummary && (
+          <div style={{
+            padding: 14,
+            borderRadius: 10,
+            border: '1px solid rgba(99, 102, 241, 0.25)',
+            background: 'rgba(99, 102, 241, 0.05)',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+              <Sparkles size={13} style={{ color: '#A78BFA', flexShrink: 0 }} />
+              <span style={{ fontSize: 11, fontWeight: 600, color: '#A78BFA', letterSpacing: '0.02em' }}>
+                AI Summary
+              </span>
+            </div>
+
+            {aiLoading ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <div style={{ ...shimmerStyle, height: 11, width: '90%' }} />
+                <div style={{ ...shimmerStyle, height: 11, width: '72%' }} />
+                <div style={{ ...shimmerStyle, height: 11, width: '50%', marginTop: 2 }} />
+              </div>
+            ) : aiResult ? (
+              <>
+                <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.72)', margin: '0 0 8px', lineHeight: 1.5 }}>
+                  {aiResult.summary}
+                </p>
+                {aiResult.actionItems.length > 0 && (
+                  <ul style={{ margin: '0 0 10px', padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 3 }}>
+                    {aiResult.actionItems.map((item, i) => (
+                      <li key={i} style={{ fontSize: 12, color: 'rgba(167,139,250,0.85)', display: 'flex', alignItems: 'flex-start', gap: 6 }}>
+                        <span style={{ color: '#6366f1', marginTop: 1, flexShrink: 0 }}>{'>'}</span>
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button
+                    onClick={() => window.dispatchEvent(new CustomEvent('bb:create-task', { detail: { subject: message.subject || message.bodyPreview.slice(0, 60), description: message.bodyPreview } }))}
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 5,
+                      padding: '4px 10px', borderRadius: 6,
+                      border: '1px solid rgba(99,102,241,0.3)',
+                      background: 'rgba(99,102,241,0.1)', color: '#A78BFA',
+                      fontSize: 11, fontWeight: 500, cursor: 'pointer', transition: 'all 150ms ease',
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(99,102,241,0.2)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(99,102,241,0.1)'; }}
+                  >
+                    <ListTodo size={11} /> Create Task
+                  </button>
+                  <button
+                    onClick={() => {
+                      setReplyText(aiResult.draftReply);
+                      setTimeout(() => textareaRef.current?.focus(), 50);
+                    }}
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 5,
+                      padding: '4px 10px', borderRadius: 6,
+                      border: '1px solid rgba(255,255,255,0.08)',
+                      background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.6)',
+                      fontSize: 11, fontWeight: 500, cursor: 'pointer', transition: 'all 150ms ease',
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
+                  >
+                    <Reply size={11} /> Draft Reply
+                  </button>
+                </div>
+              </>
+            ) : null}
+          </div>
+        )}
+
+        {/* Thread view */}
+        {hasThread && threadMessages ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', marginBottom: 2, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+              {threadMessages.length} messages in thread
+            </div>
+            {threadMessages.map((tm) => {
+              if (!tm || !tm.id) return null;
+              const isExpTh = expandedThreadIds.has(tm.id);
+              const isLatest = tm.id === latestThreadId;
+              const tmSender = tm.senderName || 'Unknown';
+              return (
+                <div key={tm.id} style={{
+                  borderRadius: 8,
+                  border: `1px solid ${isLatest ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.04)'}`,
+                  background: isLatest ? 'rgba(255,255,255,0.03)' : 'transparent',
+                  overflow: 'hidden',
+                }}>
+                  <div
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px',
+                      cursor: isLatest ? 'default' : 'pointer', userSelect: 'none',
+                    }}
+                    onClick={() => !isLatest && toggleThread(tm.id)}
+                  >
+                    <div style={{
+                      width: 22, height: 22, borderRadius: '50%',
+                      background: tm.isSelf ? 'rgba(255,90,31,0.2)' : 'rgba(255,255,255,0.1)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: 9, fontWeight: 700,
+                      color: tm.isSelf ? '#FF7A45' : 'rgba(255,255,255,0.7)', flexShrink: 0,
+                    }}>
+                      {String(tmSender[0] || '?').toUpperCase()}
+                    </div>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.85)', flexShrink: 0 }}>
+                      {tm.isSelf ? 'You' : tmSender}
+                    </span>
+                    {!isExpTh && !isLatest && (
+                      <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
+                        {String(tm.bodyPreview || '').slice(0, 70)}
+                      </span>
+                    )}
+                    <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', flexShrink: 0, marginLeft: 'auto' }}>
+                      {formatTimeAgo(tm.receivedAt)}
+                    </span>
+                    {!isLatest && (
+                      <span style={{ color: 'rgba(255,255,255,0.2)', flexShrink: 0 }}>
+                        {isExpTh ? <ChevronDown size={11} /> : <ChevronRight size={11} />}
+                      </span>
+                    )}
+                  </div>
+                  {(isExpTh || isLatest) && (
+                    <div style={{
+                      padding: '0 12px 10px 42px', fontSize: 13, color: 'rgba(255,255,255,0.72)',
+                      lineHeight: 1.6, whiteSpace: 'pre-wrap', wordBreak: 'break-word',
+                    }}>
+                      {String(tm.bodyPreview || '')}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          /* Full body text */
+          <div style={{
+            fontSize: 14, color: 'rgba(255,255,255,0.82)', lineHeight: 1.7,
+            whiteSpace: 'pre-wrap', wordBreak: 'break-word',
+            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+          }}>
+            {String(message.bodyPreview || '(No message body)')}
+          </div>
+        )}
+      </div>
+
+      {/* Reply composer */}
+      <div style={{
+        padding: '12px 20px 16px',
+        borderTop: '1px solid rgba(255,255,255,0.05)',
+      }}>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <textarea
+            ref={textareaRef}
+            value={replyText}
+            onChange={handleAutoExpand}
+            onFocus={() => setReplyFocused(true)}
+            onBlur={() => setReplyFocused(false)}
+            onKeyDown={(e) => {
+              if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+                e.preventDefault();
+                handleSendReply();
+              }
+            }}
+            placeholder="Reply... (Cmd+Enter to send)"
+            style={{
+              flex: 1, padding: '9px 12px', borderRadius: 8,
+              border: replyFocused ? '1px solid rgba(255,255,255,0.15)' : '1px solid rgba(255,255,255,0.06)',
+              background: 'rgba(13,17,23,0.6)', color: 'var(--text-primary, #F1F5F9)',
+              fontSize: 13, fontFamily: 'inherit', outline: 'none',
+              transition: 'all 150ms ease', resize: 'none', minHeight: 38, maxHeight: 200,
+              boxShadow: replyFocused ? '0 0 0 2px rgba(255,90,31,0.12)' : 'none',
+            }}
+          />
+          <button
+            onClick={handleSendReply}
+            disabled={!replyText.trim()}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 5,
+              padding: '9px 14px', borderRadius: 8, border: 'none',
+              background: replyText.trim() ? '#FF5A1F' : 'rgba(255,90,31,0.3)',
+              color: replyText.trim() ? '#fff' : 'rgba(255,255,255,0.3)',
+              fontSize: 12, fontWeight: 600,
+              cursor: replyText.trim() ? 'pointer' : 'default',
+              transition: 'all 150ms ease', flexShrink: 0,
+            }}
+            onMouseEnter={(e) => { if (replyText.trim()) e.currentTarget.style.background = '#FF7A45'; }}
+            onMouseLeave={(e) => { if (replyText.trim()) e.currentTarget.style.background = '#FF5A1F'; }}
+          >
+            <Send size={12} /> Send
+          </button>
+        </div>
+        <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)', marginTop: 5 }}>
+          <kbd style={{ padding: '1px 4px', borderRadius: 3, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', fontSize: 9, fontFamily: 'inherit' }}>Cmd+Enter</kbd> to send
+        </div>
+      </div>
+    </div>
   );
 }
 
