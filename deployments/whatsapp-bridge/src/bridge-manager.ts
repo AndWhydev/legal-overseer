@@ -574,7 +574,8 @@ async function syncChannelConnection(
   status: 'connected' | 'disconnected'
 ): Promise<void> {
   try {
-    const { error } = await supabase.from('channel_connections').upsert(
+    // Sync to channel_connections
+    const { error: ccErr } = await supabase.from('channel_connections').upsert(
       {
         org_id: orgId,
         channel_type: 'whatsapp',
@@ -585,11 +586,26 @@ async function syncChannelConnection(
       },
       { onConflict: 'org_id,channel_type' },
     )
-    if (error) {
-      console.error('[bridge-manager] syncChannelConnection upsert failed:', error.message)
-    } else {
-      console.log(`[bridge-manager] channel_connections synced: whatsapp=${status} for org ${orgId}`)
+    if (ccErr) {
+      console.error('[bridge-manager] channel_connections sync failed:', ccErr.message)
     }
+
+    // Sync to org_integrations (read by settings page)
+    const { error: oiErr } = await supabase.from('org_integrations').upsert(
+      {
+        org_id: orgId,
+        provider: 'whatsapp',
+        status,
+        metadata: { source: 'baileys-bridge' },
+        ...(status === 'connected' ? { connected_at: new Date().toISOString() } : {}),
+      },
+      { onConflict: 'org_id,provider' },
+    )
+    if (oiErr) {
+      console.error('[bridge-manager] org_integrations sync failed:', oiErr.message)
+    }
+
+    console.log(`[bridge-manager] connection synced: whatsapp=${status} for org ${orgId}`)
   } catch (err) {
     console.error('[bridge-manager] Failed to sync channel connection:', err)
   }
