@@ -107,15 +107,32 @@ function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: 
 function WhatsAppWizardModal({ onClose, onConnected }: { onClose: () => void; onConnected: () => void }) {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [starting, setStarting] = useState(true);
+  const [alreadyConnected, setAlreadyConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
 
-    const startPairing = async () => {
+    const checkAndStart = async () => {
       setStarting(true);
       setError(null);
       try {
+        // First check if already connected
+        const statusRes = await fetch('/api/channels/whatsapp/bridge');
+        if (statusRes.ok) {
+          const statusData = await statusRes.json() as { status?: string; running?: boolean };
+          if (statusData.status === 'connected' || (statusData.running && statusData.status === 'connected')) {
+            if (!cancelled) {
+              setAlreadyConnected(true);
+              setStarting(false);
+              // Brief delay then close and update parent
+              setTimeout(() => { if (!cancelled) onConnected(); }, 1200);
+            }
+            return;
+          }
+        }
+
+        // Not connected — start pairing
         const response = await fetch('/api/channels/whatsapp/bridge', { method: 'POST' });
         if (!response.ok) throw new Error('Failed to start WhatsApp bridge');
         const data = await response.json() as { sessionId?: string; message?: string };
@@ -132,8 +149,9 @@ function WhatsAppWizardModal({ onClose, onConnected }: { onClose: () => void; on
       }
     };
 
-    startPairing();
+    checkAndStart();
     return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const glassCard: React.CSSProperties = {
@@ -200,13 +218,24 @@ function WhatsAppWizardModal({ onClose, onConnected }: { onClose: () => void; on
           </div>
         )}
 
-        {starting && !error && (
+        {alreadyConnected && (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, padding: '24px 0' }}>
+            <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+              <circle cx="18" cy="18" r="18" fill="rgba(34, 197, 94, 0.15)" />
+              <path d="M12 18.5L16 22.5L24 14.5" stroke="#22C55E" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Already connected</p>
+            <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: 0 }}>WhatsApp is active and receiving messages</p>
+          </div>
+        )}
+
+        {starting && !error && !alreadyConnected && (
           <div style={{ display: 'flex', justifyContent: 'center', padding: 32 }}>
             <Loader2 size={24} style={{ animation: 'bb-spin 1s linear infinite', color: 'var(--text-secondary)' }} />
           </div>
         )}
 
-        {sessionId && !error && (
+        {sessionId && !error && !alreadyConnected && (
           <QrAuthConnect
             sessionId={sessionId}
             serviceName="WhatsApp"
