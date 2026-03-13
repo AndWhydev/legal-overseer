@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { logger } from '@/lib/core/logger';
 import { buildDashboardNotifications } from '@/lib/notifications/build-dashboard-notifications';
+import { NotificationBadge } from '@/components/ui/notification-badge';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -302,18 +303,11 @@ export function NotificationCenter({ onTabChange }: NotificationCenterProps) {
       >
         <Bell size={18} strokeWidth={1.8} />
         {unreadCount > 0 && (
-          <div
-            style={{
-              position: 'absolute',
-              top: 6,
-              right: 6,
-              width: 6,
-              height: 6,
-              borderRadius: '50%',
-              backgroundColor: 'var(--bb-red)',
-              animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-            }}
-            aria-hidden="true"
+          <NotificationBadge
+            count={unreadCount}
+            color="var(--bb-red)"
+            size="sm"
+            ariaLabel={`${unreadCount} unread notifications`}
           />
         )}
       </button>
@@ -547,14 +541,6 @@ export function NotificationCenter({ onTabChange }: NotificationCenterProps) {
           to {
             opacity: 1;
             transform: translateY(0);
-          }
-        }
-        @keyframes pulse {
-          0%, 100% {
-            opacity: 1;
-          }
-          50% {
-            opacity: 0.5;
           }
         }
       `}</style>

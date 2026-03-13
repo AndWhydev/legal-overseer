@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import type { SidebarCategory } from '@/lib/modules/registry';
 import type { BadgeCounts } from '@/hooks/use-badge-counts';
+import { NotificationBadge } from '@/components/ui/notification-badge';
 
 const ICON_MAP: Record<string, React.ElementType> = {
   dashboard:       LayoutDashboard,
@@ -54,10 +55,11 @@ const ICON_MAP: Record<string, React.ElementType> = {
 };
 
 const BADGE_CONFIG: Record<string, { key: keyof BadgeCounts; color: string }> = {
-  inbox:     { key: 'inbox',     color: 'var(--bb-purple)' },
-  approvals: { key: 'approvals', color: 'var(--bb-orange)' },
-  leads:     { key: 'leads',     color: 'var(--bb-blue)' },
-  invoices:  { key: 'invoices',  color: 'var(--bb-red)' },
+  dashboard: { key: 'overdueTaskCount', color: 'var(--bb-red)' },
+  inbox:     { key: 'inbox',           color: 'var(--bb-purple)' },
+  approvals: { key: 'approvals',       color: 'var(--bb-orange)' },
+  leads:     { key: 'leads',           color: 'var(--bb-blue)' },
+  invoices:  { key: 'invoices',        color: 'var(--bb-red)' },
 };
 
 interface SidebarPanelProps {
@@ -98,7 +100,7 @@ export function SidebarPanel({
 
           // Badge
           const badgeDef = BADGE_CONFIG[tabId];
-          const badgeCount = badgeDef ? badgeCounts[badgeDef.key] : 0;
+          const badgeCount = badgeDef ? (badgeCounts[badgeDef.key] ?? 0) : 0;
 
           return (
             <button
@@ -109,17 +111,17 @@ export function SidebarPanel({
               id={`tab-${tabId}`}
               aria-selected={isActive}
               aria-controls={`tabpanel-${tabId}`}
+              style={{ position: 'relative' }}
             >
               <Icon size={16} strokeWidth={1.8} />
               <span className="bb-sidebar-panel__label">{label}</span>
               {badgeCount > 0 && (
-                <span
-                  className="bb-sidebar-panel__badge"
-                  style={{ backgroundColor: badgeDef!.color }}
-                  aria-hidden="true"
-                >
-                  {badgeCount > 99 ? '99+' : badgeCount}
-                </span>
+                <NotificationBadge
+                  count={badgeCount}
+                  color={badgeDef!.color}
+                  size="md"
+                  ariaLabel={`${label}: ${badgeCount} notifications`}
+                />
               )}
             </button>
           );

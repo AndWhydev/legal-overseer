@@ -11,6 +11,7 @@ export interface BadgeCounts {
   approvals: number;
   leads: number;
   invoices: number;
+  overdueTaskCount: number;
 }
 
 /**
@@ -24,6 +25,7 @@ export function useBadgeCounts(channelName = 'badge-counts'): BadgeCounts {
     approvals: 0,
     leads: 0,
     invoices: 0,
+    overdueTaskCount: 0,
   });
   const clientRef = useRef<SupabaseClient | null>(null);
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -38,7 +40,7 @@ export function useBadgeCounts(channelName = 'badge-counts'): BadgeCounts {
     if (!clientRef.current) return;
 
     try {
-      const [inboxRes, inboxPriorityRes, approvalsRes, leadsRes, invoicesRes] = await Promise.all([
+      const [inboxRes, inboxPriorityRes, approvalsRes, leadsRes, invoicesRes, tasksRes] = await Promise.all([
         clientRef.current
           .from('channel_messages')
           .select('id', { count: 'exact', head: true })
@@ -60,7 +62,23 @@ export function useBadgeCounts(channelName = 'badge-counts'): BadgeCounts {
           .from('invoices')
           .select('id', { count: 'exact', head: true })
           .eq('status', 'overdue'),
+        clientRef.current
+          .from('tasks')
+          .select('id, metadata', { count: 'exact' })
+          .neq('status', 'archived')
+          .is('deleted_at', null),
       ]);
+
+      // Count overdue tasks (deadline in the past)
+      let overdueCount = 0;
+      if (tasksRes.data) {
+        const now = Date.now();
+        overdueCount = tasksRes.data.filter(task => {
+          const meta = task.metadata as Record<string, unknown> | null;
+          const deadline = meta?.deadline as string | undefined;
+          return deadline && new Date(deadline).getTime() < now;
+        }).length;
+      }
 
       setBadgeCounts({
         inbox: inboxRes.count || 0,
@@ -68,6 +86,7 @@ export function useBadgeCounts(channelName = 'badge-counts'): BadgeCounts {
         approvals: approvalsRes.count || 0,
         leads: leadsRes.count || 0,
         invoices: invoicesRes.count || 0,
+        overdueTaskCount: overdueCount,
       });
     } catch (err) {
       logger.warn('Error fetching badge counts:', err);
@@ -87,6 +106,7 @@ export function useBadgeCounts(channelName = 'badge-counts'): BadgeCounts {
         .on('postgres_changes' as any, { event: '*', schema: 'public', table: 'approval_queue' }, () => fetchBadgeCounts())
         .on('postgres_changes' as any, { event: '*', schema: 'public', table: 'leads' }, () => fetchBadgeCounts())
         .on('postgres_changes' as any, { event: '*', schema: 'public', table: 'invoices' }, () => fetchBadgeCounts())
+        .on('postgres_changes' as any, { event: '*', schema: 'public', table: 'tasks' }, () => fetchBadgeCounts())
         .subscribe((status: string) => {
           if (status === 'SUBSCRIBED' && pollIntervalRef.current) {
             clearInterval(pollIntervalRef.current);
