@@ -11,21 +11,18 @@ import { logger } from '@/lib/core/logger';
 import { createClient } from '@/lib/supabase/client';
 import { type ThreadMessageItem } from '@/components/dashboard/inbox-drawer';
 import {
-  Filter,
   CheckCircle2,
   ChevronDown,
   ChevronRight,
   RefreshCw,
   Calendar as CalendarIcon,
   X,
-  Sparkles,
   Archive,
   Clock,
   Reply,
   Forward,
   AlertTriangle,
   Star,
-  ListTodo,
   Send,
 } from 'lucide-react';
 import { resolveAvatar, resolveAvatarSync, type AvatarResult } from '@/lib/avatar/resolver';
@@ -364,8 +361,6 @@ function InboxTab() {
   const [error, setError] = useState<string | null>(null);
   const [channelFilter, setChannelFilter] = useState<string>('');
   const [priorityFilter, setPriorityFilter] = useState<string>('');
-  const [statusFilter, setStatusFilter] = useState<string>('');
-  const [showFilters, setShowFilters] = useState(false);
   const [selectedMessage, setSelectedMessage] = useState<InboxMessage | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [newMessageAlert, setNewMessageAlert] = useState(false);
@@ -377,8 +372,6 @@ function InboxTab() {
   const [snoozeAnchor, setSnoozeAnchor] = useState<{ top: number; right: number } | null>(null);
   const [starredIds, setStarredIds] = useState<Set<string>>(new Set());
   const [snoozedIds, setSnoozedIds] = useState<Set<string>>(new Set());
-  const [showAiBrief, setShowAiBrief] = useState(false);
-  const aiBriefRef = useRef<HTMLDivElement>(null);
   const lastClickedIndexRef = useRef<number>(-1);
 
   const devOverrides = useDevOverrides();
@@ -390,12 +383,11 @@ function InboxTab() {
       if (snoozedIds.has(m.id)) return false;
       if (channelFilter && m.channelType !== channelFilter) return false;
       if (priorityFilter && m.priority !== priorityFilter) return false;
-      if (statusFilter && m.status !== statusFilter) return false;
       const pillFilter = PILL_CONFIG[activePill]?.filter;
       if (pillFilter && !pillFilter(m)) return false;
       return true;
     });
-  }, [messages, channelFilter, priorityFilter, statusFilter, activePill, snoozedIds]);
+  }, [messages, channelFilter, priorityFilter, activePill, snoozedIds]);
 
   const pillCounts = useMemo(() => {
     const counts: Record<CategoryPillType, number> = { all: 0, priority: 0, updates: 0, feed: 0, receipts: 0 };
@@ -423,7 +415,6 @@ function InboxTab() {
       const params = new URLSearchParams();
       if (channelFilter) params.set('channel', channelFilter);
       if (priorityFilter) params.set('priority', priorityFilter);
-      if (statusFilter) params.set('status', statusFilter);
       params.set('limit', '50');
 
       const response = await fetch(`/api/agent/inbox?${params.toString()}`);
@@ -439,7 +430,7 @@ function InboxTab() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [channelFilter, priorityFilter, statusFilter, useSeeded]);
+  }, [channelFilter, priorityFilter, useSeeded]);
 
   useEffect(() => {
     if (useSeeded) {
@@ -469,17 +460,6 @@ function InboxTab() {
     return () => document.removeEventListener('mousedown', handler);
   }, [snoozeTargetId, snoozeAnchor]);
 
-  // Close AI brief when clicking outside
-  useEffect(() => {
-    if (!showAiBrief) return;
-    const handler = (e: MouseEvent) => {
-      if (!aiBriefRef.current?.contains(e.target as Node)) {
-        setShowAiBrief(false);
-      }
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [showAiBrief]);
 
   // ── Toast system ──
   const addToast = useCallback((message: string, undo: () => void) => {
@@ -677,8 +657,8 @@ function InboxTab() {
     clearSelection();
   }, [keyboard.selectedIds, handleSpam, clearSelection]);
 
-  const hasActiveFilters = channelFilter || priorityFilter || statusFilter;
-  const clearFilters = () => { setChannelFilter(''); setPriorityFilter(''); setStatusFilter(''); };
+  const hasActiveFilters = channelFilter || priorityFilter;
+  const clearFilters = () => { setChannelFilter(''); setPriorityFilter(''); };
 
   if (loading && !useSeeded) return <InboxSkeleton />;
 
@@ -719,47 +699,6 @@ function InboxTab() {
               New messages
             </button>
           )}
-          {hasActiveFilters && (
-            <button onClick={clearFilters} className="bb-btn bb-btn--ghost bb-btn--sm">
-              <X size={12} /> Clear
-            </button>
-          )}
-
-          {/* AI Brief button — Task #18 */}
-          <div ref={aiBriefRef} style={{ position: 'relative' }}>
-            <button
-              onClick={() => setShowAiBrief(v => !v)}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-                padding: '6px 12px',
-                borderRadius: 8,
-                border: showAiBrief ? '1px solid rgba(99,102,241,0.4)' : '1px solid rgba(255,255,255,0.08)',
-                background: showAiBrief ? 'rgba(99,102,241,0.12)' : 'rgba(255,255,255,0.04)',
-                color: showAiBrief ? '#A78BFA' : 'rgba(255,255,255,0.7)',
-                fontSize: 12,
-                fontWeight: 500,
-                cursor: 'pointer',
-                transition: 'all 150ms ease',
-              }}
-            >
-              <Sparkles size={13} /> AI Brief
-            </button>
-
-            {showAiBrief && (
-              <AiBriefPanel
-                messages={displayed}
-                onArchiveAll={(category) => {
-                  const targets = displayed.filter(PILL_CONFIG[category].filter);
-                  targets.forEach(m => handleArchive(m.id));
-                  setShowAiBrief(false);
-                }}
-                onFilterTo={(pill) => { setActivePill(pill); setShowAiBrief(false); }}
-              />
-            )}
-          </div>
-
           <button
             onClick={async () => {
               setRefreshing(true);
@@ -774,33 +713,43 @@ function InboxTab() {
               } catch { /* ignore */ }
               setRefreshing(false);
             }}
-            className="bb-btn bb-btn--ghost bb-btn--sm"
             disabled={refreshing}
             title="Pull latest messages"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '6px 14px',
+              borderRadius: 20,
+              border: 'none',
+              background: 'var(--glass-pill-bg)',
+              backdropFilter: 'var(--glass-card-blur)',
+              WebkitBackdropFilter: 'var(--glass-card-blur)',
+              boxShadow: 'var(--glass-pill-inset)',
+              color: 'rgba(255,255,255,0.5)',
+              fontSize: 12,
+              cursor: refreshing ? 'default' : 'pointer',
+              transition: 'all 150ms ease',
+              whiteSpace: 'nowrap',
+            }}
+            onMouseEnter={(e) => {
+              if (!refreshing) {
+                e.currentTarget.style.transform = 'scale(1.02)';
+                e.currentTarget.style.color = 'var(--text-primary, #F1F5F9)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'scale(1)';
+              if (!refreshing) e.currentTarget.style.color = 'rgba(255,255,255,0.5)';
+            }}
           >
             <RefreshCw size={13} style={{ animation: refreshing ? 'spin 1s linear infinite' : 'none' }} />
             {refreshing ? 'Syncing...' : 'Refresh'}
           </button>
-
-          <button
-            onClick={() => setShowFilters(f => !f)}
-            className="bb-btn bb-btn--ghost"
-            data-active={showFilters || undefined}
-          >
-            <Filter size={14} />
-            Filters
-            <ChevronDown
-              size={11}
-              style={{
-                transform: showFilters ? 'rotate(180deg)' : 'none',
-                transition: 'transform var(--duration-fast) var(--ease-default)',
-              }}
-            />
-          </button>
         </div>
       </div>
 
-      {/* ── Category Pills Bar — Task #10 ── */}
+      {/* ── Category Pills Bar ── */}
       <CategoryPillsBar
         activePill={activePill}
         onSelect={setActivePill}
@@ -808,42 +757,13 @@ function InboxTab() {
         hasUnreadPriority={hasUnreadPriority}
       />
 
-      {/* ── Filter Drawer ── */}
-      {showFilters && (
-        <div className="bb-inbox-filters">
-          <InboxSelect value={channelFilter} onChange={setChannelFilter} label="Channel"
-            options={[
-              { value: '', label: 'All Channels' },
-              { value: 'gmail', label: 'Gmail' },
-              { value: 'outlook', label: 'Outlook' },
-              { value: 'whatsapp', label: 'WhatsApp' },
-              { value: 'asana', label: 'Asana' },
-              { value: 'calendly', label: 'Calendly' },
-              { value: 'stripe', label: 'Stripe' },
-            ]}
-          />
-          <InboxSelect value={priorityFilter} onChange={setPriorityFilter} label="Priority"
-            options={[
-              { value: '', label: 'All Priorities' },
-              { value: 'critical', label: 'Critical' },
-              { value: 'high', label: 'High' },
-              { value: 'medium', label: 'Medium' },
-              { value: 'low', label: 'Low' },
-            ]}
-          />
-          <InboxSelect value={statusFilter} onChange={setStatusFilter} label="Status"
-            options={[
-              { value: '', label: 'All Status' },
-              { value: 'unread', label: 'Unread' },
-              { value: 'actioned', label: 'Actioned' },
-              { value: 'archived', label: 'Archived' },
-            ]}
-          />
-          {hasActiveFilters && (
-            <button onClick={clearFilters} className="bb-btn bb-btn--ghost bb-btn--sm">Clear</button>
-          )}
-        </div>
-      )}
+      {/* ── Inline Filter Chips ── */}
+      <FilterChipsBar
+        channelFilter={channelFilter}
+        onChannelChange={setChannelFilter}
+        priorityFilter={priorityFilter}
+        onPriorityChange={setPriorityFilter}
+      />
 
       {/* ── Message List ── */}
       <div className="bb-inbox-list">
@@ -859,6 +779,7 @@ function InboxTab() {
               <MessageRow
                 message={msg}
                 index={idx}
+                expanded={expandedId === msg.id}
                 onArchive={handleArchive}
                 onDone={handleDone}
                 onSnooze={(id, e) => {
@@ -1070,6 +991,128 @@ function CategoryPillsBar({
 }
 
 // ---------------------------------------------------------------------------
+// Filter Chips Bar — inline channel + priority chips
+// ---------------------------------------------------------------------------
+
+const CHANNEL_CHIPS = [
+  { value: '', label: 'All' },
+  { value: 'gmail', label: 'Gmail' },
+  { value: 'outlook', label: 'Outlook' },
+  { value: 'whatsapp', label: 'WhatsApp' },
+  { value: 'asana', label: 'Asana' },
+  { value: 'calendly', label: 'Calendly' },
+  { value: 'stripe', label: 'Stripe' },
+];
+
+const PRIORITY_CHIPS = [
+  { value: '', label: 'All' },
+  { value: 'critical', label: 'Critical' },
+  { value: 'high', label: 'High' },
+  { value: 'medium', label: 'Medium' },
+  { value: 'low', label: 'Low' },
+];
+
+const chipInactiveStyle: React.CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  padding: '6px 14px',
+  borderRadius: 20,
+  border: 'none',
+  background: 'var(--glass-pill-bg)',
+  backdropFilter: 'var(--glass-card-blur)',
+  WebkitBackdropFilter: 'var(--glass-card-blur)',
+  boxShadow: 'var(--glass-pill-inset)',
+  fontSize: 12,
+  color: 'rgba(255,255,255,0.5)',
+  cursor: 'pointer',
+  whiteSpace: 'nowrap',
+  transition: 'all 150ms ease',
+};
+
+const chipActiveStyle: React.CSSProperties = {
+  ...chipInactiveStyle,
+  background: 'rgba(255,255,255,0.92)',
+  color: '#0A0A0B',
+  fontWeight: 600,
+};
+
+function FilterChipsBar({
+  channelFilter,
+  onChannelChange,
+  priorityFilter,
+  onPriorityChange,
+}: {
+  channelFilter: string;
+  onChannelChange: (v: string) => void;
+  priorityFilter: string;
+  onPriorityChange: (v: string) => void;
+}) {
+  return (
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: 6,
+      padding: '4px 0 8px',
+      overflowX: 'auto',
+      scrollbarWidth: 'none',
+    }}>
+      {CHANNEL_CHIPS.map((chip) => (
+        <button
+          key={`ch-${chip.value}`}
+          onClick={() => onChannelChange(chip.value)}
+          style={channelFilter === chip.value ? chipActiveStyle : chipInactiveStyle}
+          onMouseEnter={(e) => {
+            if (channelFilter !== chip.value) {
+              e.currentTarget.style.transform = 'scale(1.02)';
+              e.currentTarget.style.color = 'var(--text-primary, #F1F5F9)';
+            }
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'scale(1)';
+            if (channelFilter !== chip.value) {
+              e.currentTarget.style.color = 'rgba(255,255,255,0.5)';
+            }
+          }}
+        >
+          {chip.label}
+        </button>
+      ))}
+
+      {/* Separator */}
+      <div style={{
+        width: 1,
+        height: 16,
+        background: 'rgba(255,255,255,0.08)',
+        margin: '0 8px',
+        flexShrink: 0,
+      }} />
+
+      {PRIORITY_CHIPS.map((chip) => (
+        <button
+          key={`pr-${chip.value}`}
+          onClick={() => onPriorityChange(chip.value)}
+          style={priorityFilter === chip.value ? chipActiveStyle : chipInactiveStyle}
+          onMouseEnter={(e) => {
+            if (priorityFilter !== chip.value) {
+              e.currentTarget.style.transform = 'scale(1.02)';
+              e.currentTarget.style.color = 'var(--text-primary, #F1F5F9)';
+            }
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'scale(1)';
+            if (priorityFilter !== chip.value) {
+              e.currentTarget.style.color = 'rgba(255,255,255,0.5)';
+            }
+          }}
+        >
+          {chip.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Undo Toast Stack — Task #7
 // ---------------------------------------------------------------------------
 
@@ -1227,105 +1270,6 @@ function SnoozePickerPopover({
   );
 }
 
-// ---------------------------------------------------------------------------
-// AI Brief Panel — Task #18
-// ---------------------------------------------------------------------------
-
-function AiBriefPanel({
-  messages,
-  onArchiveAll,
-  onFilterTo,
-}: {
-  messages: InboxMessage[];
-  onArchiveAll: (category: CategoryPillType) => void;
-  onFilterTo: (pill: CategoryPillType) => void;
-}) {
-  const priorityMsgs = messages.filter(PILL_CONFIG.priority.filter);
-  const updatesMsgs = messages.filter(PILL_CONFIG.updates.filter);
-  const feedMsgs = messages.filter(PILL_CONFIG.feed.filter);
-
-  const briefLines: string[] = [];
-  if (priorityMsgs.length > 0) {
-    const topSenders = priorityMsgs.slice(0, 3).map(m => m.contactName || m.senderName || 'Unknown');
-    briefLines.push(`${priorityMsgs.length} priority message${priorityMsgs.length > 1 ? 's' : ''} from ${topSenders.join(', ')}.`);
-  }
-  if (updatesMsgs.length > 0) {
-    briefLines.push(`${updatesMsgs.length} update${updatesMsgs.length > 1 ? 's' : ''} ready to review.`);
-  }
-  if (feedMsgs.length > 0) {
-    briefLines.push(`${feedMsgs.length} personal message${feedMsgs.length > 1 ? 's' : ''} in Feed.`);
-  }
-  if (briefLines.length === 0) briefLines.push('Your inbox looks clear.');
-
-  return (
-    <div style={{
-      position: 'absolute',
-      top: 'calc(100% + 8px)',
-      right: 0,
-      zIndex: 100,
-      background: 'rgba(12, 16, 24, 0.96)',
-      backdropFilter: 'blur(24px) saturate(1.3)',
-      WebkitBackdropFilter: 'blur(24px) saturate(1.3)',
-      border: '1px solid rgba(99,102,241,0.3)',
-      borderRadius: 12,
-      padding: 16,
-      width: 320,
-      boxShadow: '0 8px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(99,102,241,0.1)',
-      animation: 'fadeSlideUp 150ms ease',
-    }}>
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-        <Sparkles size={13} style={{ color: '#A78BFA' }} />
-        <span style={{ fontSize: 12, fontWeight: 600, color: '#A78BFA', letterSpacing: '0.02em' }}>AI Brief</span>
-      </div>
-
-      {/* Brief text */}
-      <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.75)', margin: '0 0 14px', lineHeight: 1.6 }}>
-        {briefLines.join(' ')}
-      </p>
-
-      {/* Action buttons */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-        {priorityMsgs.length > 0 && (
-          <button
-            onClick={() => onFilterTo('priority')}
-            style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              padding: '8px 12px', borderRadius: 8,
-              border: '1px solid rgba(99,102,241,0.2)',
-              background: 'rgba(99,102,241,0.08)',
-              color: '#A78BFA', fontSize: 12, fontWeight: 500, cursor: 'pointer',
-              transition: 'all 150ms ease',
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(99,102,241,0.15)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(99,102,241,0.08)'; }}
-          >
-            <span>Show Priority only</span>
-            <span style={{ fontSize: 11, opacity: 0.6 }}>{priorityMsgs.length}</span>
-          </button>
-        )}
-        {feedMsgs.length > 0 && (
-          <button
-            onClick={() => onArchiveAll('feed')}
-            style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              padding: '8px 12px', borderRadius: 8,
-              border: '1px solid rgba(255,255,255,0.06)',
-              background: 'rgba(255,255,255,0.03)',
-              color: 'rgba(255,255,255,0.5)', fontSize: 12, fontWeight: 500, cursor: 'pointer',
-              transition: 'all 150ms ease',
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; e.currentTarget.style.color = 'rgba(255,255,255,0.7)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; e.currentTarget.style.color = 'rgba(255,255,255,0.5)'; }}
-          >
-            <span>Archive all Feed</span>
-            <span style={{ fontSize: 11, opacity: 0.6 }}>{feedMsgs.length}</span>
-          </button>
-        )}
-      </div>
-    </div>
-  );
-}
 
 // ---------------------------------------------------------------------------
 // Inbox Skeleton
@@ -1396,22 +1340,6 @@ function StatPill({ value, label, active }: { value: number; label: string; acti
   );
 }
 
-// ---------------------------------------------------------------------------
-// Select
-// ---------------------------------------------------------------------------
-
-function InboxSelect({ value, onChange, label, options }: {
-  value: string; onChange: (v: string) => void; label: string;
-  options: { value: string; label: string }[];
-}) {
-  return (
-    <select value={value} onChange={(e) => onChange(e.target.value)} className="bb-inbox-select" aria-label={label}>
-      {options.map((opt) => (
-        <option key={opt.value} value={opt.value}>{opt.label}</option>
-      ))}
-    </select>
-  );
-}
 
 // ---------------------------------------------------------------------------
 // Expanded Message Row — inline content panel (replaces drawer)
@@ -1867,14 +1795,6 @@ function ExpandedMessageRow({
           onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}>
           <Forward size={12} /> Forward
         </button>
-        {aiResult && aiResult.actionItems.length > 0 && (
-          <button style={actionPillStyle}
-            onClick={() => window.dispatchEvent(new CustomEvent('bb:create-task', { detail: { subject: message.subject || message.bodyPreview.slice(0, 60), description: message.bodyPreview } }))}
-            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}>
-            <ListTodo size={12} /> Create Task
-          </button>
-        )}
         <div style={{ flex: 1 }} />
         <button style={{ ...actionPillStyle, background: 'rgba(239,68,68,0.08)', color: 'rgba(239,68,68,0.8)', borderColor: 'rgba(239,68,68,0.15)' }}
           onClick={() => onSpam(message.id)}
@@ -1925,7 +1845,7 @@ function AttachmentPills({ attachments }: { attachments?: { name: string; size: 
 // ---------------------------------------------------------------------------
 
 function MessageRow({
-  message, onArchive, onDone, onSnooze, onReply, onStar, onRowClick, index, focused, selected, starred,
+  message, onArchive, onDone, onSnooze, onReply, onStar, onRowClick, index, focused, selected, starred, expanded,
 }: {
   message: InboxMessage;
   onArchive?: (id: string) => void;
@@ -1938,6 +1858,7 @@ function MessageRow({
   focused?: boolean;
   selected?: boolean;
   starred?: boolean;
+  expanded?: boolean;
 }) {
   const ChannelIcon = CHANNEL_ICONS[message.channelType] || GmailIcon;
   const brandColor = CHANNEL_BRAND_COLORS[message.channelType] || 'var(--text-dim)';
@@ -1960,28 +1881,6 @@ function MessageRow({
     return () => { cancelled = true; };
   }, [email, sender]);
 
-  const actionBtnStyle: React.CSSProperties = {
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: 28,
-    height: 28,
-    minWidth: 28,
-    borderRadius: 8,
-    border: 'none',
-    background: 'rgba(15, 20, 30, 0.9)',
-    backdropFilter: 'blur(8px)',
-    WebkitBackdropFilter: 'blur(8px)',
-    color: 'rgba(255,255,255,0.6)',
-    fontSize: 14,
-    fontWeight: 500,
-    cursor: 'pointer',
-    gap: 0,
-    padding: 0,
-    transition: 'all 150ms ease',
-    whiteSpace: 'nowrap',
-  };
-
   return (
     <div
       className="bb-inbox-row"
@@ -1997,6 +1896,7 @@ function MessageRow({
       style={{
         '--channel-color': brandColor,
         cursor: 'pointer',
+        ...(expanded ? { borderRadius: '12px 12px 0 0' } : {}),
         ...(focused ? { background: 'rgba(255,255,255,0.04)', outline: '1px solid rgba(255,255,255,0.1)' } : {}),
       } as React.CSSProperties}
     >
@@ -2052,84 +1952,11 @@ function MessageRow({
         </span>
       </div>
 
-      {/* Right: time + hover actions crossfade */}
-      <div className="bb-inbox-row__meta" style={{
-        position: 'relative',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'flex-end',
-        flexShrink: 0,
-        minWidth: 60,
-      }}>
+      {/* Right: time always visible */}
+      <div className="bb-inbox-row__meta">
         <div className="bb-inbox-row__meta-default">
           {starred && <Star size={11} style={{ color: '#f59e0b', fill: '#f59e0b', marginRight: 4 }} />}
           <span className="bb-inbox-row__time">{timeAgo}</span>
-        </div>
-        <div className="bb-inbox-row__hover-actions" style={{
-          position: 'absolute',
-          right: 0,
-          top: '50%',
-          transform: 'translateY(-50%)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 4,
-          opacity: 0,
-          pointerEvents: 'none',
-          transition: 'opacity 150ms ease',
-          background: 'linear-gradient(to right, transparent, rgba(15, 20, 30, 0.9) 20%)',
-          paddingLeft: 20,
-          paddingRight: 0,
-        }}>
-          <button
-            className="bb-inbox-row__action"
-            style={actionBtnStyle}
-            title="Archive (E)"
-            onClick={(e) => { e.stopPropagation(); onArchive?.(message.id); }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(15, 20, 30, 0.95)'; e.currentTarget.style.color = 'rgba(255,255,255,0.85)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(15, 20, 30, 0.9)'; e.currentTarget.style.color = 'rgba(255,255,255,0.6)'; }}
-          >
-            <Archive size={14} />
-          </button>
-          <button
-            className="bb-inbox-row__action"
-            style={actionBtnStyle}
-            title="Done (D)"
-            onClick={(e) => { e.stopPropagation(); onDone?.(message.id); }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(15, 20, 30, 0.95)'; e.currentTarget.style.color = 'rgba(255,255,255,0.85)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(15, 20, 30, 0.9)'; e.currentTarget.style.color = 'rgba(255,255,255,0.6)'; }}
-          >
-            <CheckCircle2 size={14} />
-          </button>
-          <button
-            className="bb-inbox-row__action"
-            style={actionBtnStyle}
-            title="Snooze (S)"
-            onClick={(e) => { e.stopPropagation(); onSnooze?.(message.id, e); }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(15, 20, 30, 0.95)'; e.currentTarget.style.color = 'rgba(255,255,255,0.85)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(15, 20, 30, 0.9)'; e.currentTarget.style.color = 'rgba(255,255,255,0.6)'; }}
-          >
-            <Clock size={14} />
-          </button>
-          <button
-            className="bb-inbox-row__action"
-            style={actionBtnStyle}
-            title="Reply (R)"
-            onClick={(e) => { e.stopPropagation(); onReply?.(message.id); }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(15, 20, 30, 0.95)'; e.currentTarget.style.color = 'rgba(255,255,255,0.85)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(15, 20, 30, 0.9)'; e.currentTarget.style.color = 'rgba(255,255,255,0.6)'; }}
-          >
-            <Reply size={14} />
-          </button>
-          <button
-            className="bb-inbox-row__action"
-            style={{ ...actionBtnStyle, color: starred ? '#f59e0b' : 'rgba(255,255,255,0.6)' }}
-            title="Star (*)"
-            onClick={(e) => { e.stopPropagation(); onStar?.(message.id); }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(15, 20, 30, 0.95)'; e.currentTarget.style.color = starred ? '#fbbf24' : 'rgba(255,255,255,0.85)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(15, 20, 30, 0.9)'; e.currentTarget.style.color = starred ? '#f59e0b' : 'rgba(255,255,255,0.6)'; }}
-          >
-            <Star size={14} style={{ fill: starred ? '#f59e0b' : 'none' }} />
-          </button>
         </div>
       </div>
     </div>
