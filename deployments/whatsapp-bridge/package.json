@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.1",
-    "@whiskeysockets/baileys": "^6.7.16",
+    "@whiskeysockets/baileys": "github:WhiskeySockets/Baileys#master",
     "pino": "^9.6.0"
   },
   "devDependencies": {

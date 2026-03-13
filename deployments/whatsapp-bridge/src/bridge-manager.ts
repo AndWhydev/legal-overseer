@@ -167,7 +167,7 @@ export async function startBridge(orgId: string): Promise<{
   // Create Baileys socket
   state.sock = baileys.makeWASocket({
     auth: authState,
-    printQRInTerminal: true, // Also print to terminal for fly logs
+    printQRInTerminal: false,
   })
 
   // ── Connection lifecycle events ─────────────────────────────────────
