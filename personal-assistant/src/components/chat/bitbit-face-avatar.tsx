@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef, useEffect, useState, useCallback } from 'react'
-import { motion } from 'motion/react'
+import { motion, AnimatePresence } from 'motion/react'
 import type { AvatarEmotion } from './use-avatar-emotion'
 
 interface BitBitFaceAvatarProps {
@@ -11,9 +11,16 @@ interface BitBitFaceAvatarProps {
   className?: string
 }
 
-// Emotion config — eyes use only scale (no cy displacement) to avoid
-// transform-origin conflicts with cursor tracking and blink scaleY.
-// Expression comes from eye shape (scaleX/Y) + eyebrow position + nose.
+// ─── Face geometry ───
+// Eyes wider apart (cx 13/35 vs old 16/32), smaller (r=2 vs 2.5)
+// Nose lower (y=24-30 vs old 22-28) for more space between eyes and nose
+const LEFT_EYE_CX = 13
+const RIGHT_EYE_CX = 35
+const EYE_CY = 20
+const EYE_R = 2
+const NOSE_PATH = 'M24 24 L24 30 L27 30'
+
+// Emotion config
 const EMOTION_CONFIG: Record<
   AvatarEmotion,
   {
@@ -243,11 +250,10 @@ const EMOTION_CONFIG: Record<
   },
 }
 
-// Longer duration for smooth, graceful transitions between emotions
 const TRANSITION = { duration: 0.7, ease: [0.25, 0.1, 0.25, 1] as const }
 const BLINK_TRANSITION = { duration: 0.15, ease: 'easeInOut' as const }
 
-// Thinking eye scanning — contemplative left-right-up gaze pattern
+// Thinking eye scanning
 const THINKING_EYE_SCAN_X = [-1.5, 0.5, 2, 1, -0.5, -1.5]
 const THINKING_EYE_SCAN_Y = [-0.8, -0.3, -0.7, 0.2, -0.4, -0.8]
 const THINKING_EYE_TRANSITION = {
@@ -255,7 +261,6 @@ const THINKING_EYE_TRANSITION = {
   translateY: { duration: 5, repeat: Infinity, ease: 'easeInOut' as const },
 }
 
-// Thinking eyebrow rhythm — subtle contemplative movement
 const THINKING_BROW_LEFT = {
   dy: [-2, -3, -1.5, -2.5, -2],
   rotate: [0, -3, 2, -1, 0],
@@ -279,11 +284,13 @@ export function BitBitFaceAvatar({
   const [eyeOffset, setEyeOffset] = useState({ x: 0, y: 0 })
   const [headTilt, setHeadTilt] = useState(0)
   const [isBlinking, setIsBlinking] = useState(false)
+  const [isSniffling, setIsSniffling] = useState(false)
   const rafRef = useRef<number | null>(null)
   const lastUpdateRef = useRef(0)
   const blinkTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const sniffleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // Cursor tracking for eyes + subtle head tilt
+  // Cursor tracking
   const handleMouseMove = useCallback((e: MouseEvent) => {
     const now = Date.now()
     if (now - lastUpdateRef.current < 50) return
@@ -309,7 +316,7 @@ export function BitBitFaceAvatar({
 
       setEyeOffset({
         x: Math.cos(angle) * factor * maxDisplace,
-        y: Math.sin(angle) * factor * maxDisplace * 0.6, // less vertical range
+        y: Math.sin(angle) * factor * maxDisplace * 0.6,
       })
 
       setHeadTilt((dx / window.innerWidth) * 3)
@@ -324,13 +331,12 @@ export function BitBitFaceAvatar({
     }
   }, [handleMouseMove])
 
-  // Periodic blinking — natural interval with randomness
+  // Periodic blinking
   useEffect(() => {
     const scheduleBlink = () => {
-      const delay = 2500 + Math.random() * 4000 // 2.5-6.5s between blinks
+      const delay = 2500 + Math.random() * 4000
       blinkTimerRef.current = setTimeout(() => {
         setIsBlinking(true)
-        // Blink lasts ~150ms
         setTimeout(() => {
           setIsBlinking(false)
           scheduleBlink()
@@ -344,16 +350,61 @@ export function BitBitFaceAvatar({
     }
   }, [])
 
+  // Idle nose sniffle — occasional quick nose twitch
+  useEffect(() => {
+    const scheduleSniffle = () => {
+      // Random interval: 12-25s between sniffles
+      const delay = 12000 + Math.random() * 13000
+      sniffleTimerRef.current = setTimeout(() => {
+        // Only sniffle in calm states
+        const calmEmotions: AvatarEmotion[] = ['neutral', 'serene', 'patient', 'bored', 'contemplating', 'attentive']
+        if (calmEmotions.includes(emotion)) {
+          setIsSniffling(true)
+          setTimeout(() => {
+            setIsSniffling(false)
+            scheduleSniffle()
+          }, 300)
+        } else {
+          scheduleSniffle()
+        }
+      }, delay)
+    }
+
+    scheduleSniffle()
+    return () => {
+      if (sniffleTimerRef.current) clearTimeout(sniffleTimerRef.current)
+    }
+  }, [emotion])
+
   const config = EMOTION_CONFIG[emotion]
   const color = 'var(--text-primary, #fff)'
 
   const isProcessing = emotion === 'processing'
+  const isSleeping = emotion === 'sleeping'
 
-  // When thinking, override cursor tracking — eyes scan autonomously
   const effectiveEyeOffset = isThinking ? { x: 0, y: 0 } : eyeOffset
-
-  // Blink overrides eye scaleY — 0.15 keeps eyes visually anchored
   const blinkScaleY = isBlinking ? 0.15 : undefined
+
+  // Nose sniffle animation values
+  const noseTranslateY = isSniffling
+    ? [0, -0.8, 0.3, -0.4, 0]
+    : isThinking
+      ? [0, 0.2, -0.1, 0.1, 0]
+      : config.nose.dy
+  const noseRotate = isSniffling
+    ? [0, 3, -2, 1, 0]
+    : isThinking
+      ? [0, 2, -1, 1.5, 0]
+      : config.nose.rotate
+  const noseTransition = isSniffling
+    ? { translateY: { duration: 0.3, ease: 'easeInOut' as const }, rotate: { duration: 0.3, ease: 'easeInOut' as const } }
+    : isThinking
+      ? {
+          translateY: { duration: 6, repeat: Infinity, ease: 'easeInOut' as const },
+          rotate: { duration: 6, repeat: Infinity, ease: 'easeInOut' as const },
+          ...TRANSITION,
+        }
+      : TRANSITION
 
   return (
     <svg
@@ -371,7 +422,7 @@ export function BitBitFaceAvatar({
         transition={{ duration: 0.15, ease: 'linear' }}
         style={{ transformOrigin: '50% 50%' }}
       >
-        {/* Ambient breathing — subtle scale pulse on the whole face */}
+        {/* Ambient breathing */}
         <motion.g
           animate={{
             scale: [1, 1.015, 1],
@@ -384,9 +435,9 @@ export function BitBitFaceAvatar({
           }}
           style={{ transformOrigin: '50% 50%' }}
         >
-          {/* Left eyebrow */}
+          {/* Left eyebrow — wider to match new eye positions */}
           <motion.path
-            d="M13 14 Q16.5 10 20 14"
+            d="M10 14 Q13.5 10 17 14"
             stroke={color}
             strokeWidth="1.5"
             strokeLinecap="round"
@@ -401,7 +452,7 @@ export function BitBitFaceAvatar({
 
           {/* Right eyebrow */}
           <motion.path
-            d="M28 14 Q31.5 10 35 14"
+            d="M31 14 Q34.5 10 38 14"
             stroke={color}
             strokeWidth="1.5"
             strokeLinecap="round"
@@ -414,11 +465,11 @@ export function BitBitFaceAvatar({
             style={{ transformOrigin: '50% 50%' }}
           />
 
-          {/* Left eye — scale from element center (50% 50%), translate for cursor */}
+          {/* Left eye */}
           <motion.circle
-            cx={16}
-            cy={20}
-            r="2.5"
+            cx={LEFT_EYE_CX}
+            cy={EYE_CY}
+            r={EYE_R}
             fill={color}
             animate={{
               translateX: isThinking
@@ -446,9 +497,9 @@ export function BitBitFaceAvatar({
 
           {/* Right eye */}
           <motion.circle
-            cx={32}
-            cy={20}
-            r="2.5"
+            cx={RIGHT_EYE_CX}
+            cy={EYE_CY}
+            r={EYE_R}
             fill={color}
             animate={{
               translateX: isThinking
@@ -478,29 +529,105 @@ export function BitBitFaceAvatar({
             style={{ transformOrigin: '50% 50%' }}
           />
 
-          {/* L-shaped nose */}
+          {/* L-shaped nose — lower, with sniffle support */}
           <motion.path
-            d="M24 22 L24 28 L27 28"
+            d={NOSE_PATH}
             stroke={color}
             strokeWidth="1.2"
             strokeLinecap="round"
             strokeLinejoin="round"
             fill="none"
             animate={{
-              translateY: isThinking ? [0, 0.2, -0.1, 0.1, 0] : config.nose.dy,
-              rotate: isThinking ? [0, 2, -1, 1.5, 0] : config.nose.rotate,
+              translateY: noseTranslateY,
+              rotate: noseRotate,
             }}
-            transition={
-              isThinking
-                ? {
-                    translateY: { duration: 6, repeat: Infinity, ease: 'easeInOut' },
-                    rotate: { duration: 6, repeat: Infinity, ease: 'easeInOut' },
-                    ...TRANSITION,
-                  }
-                : TRANSITION
-            }
+            transition={noseTransition}
             style={{ transformOrigin: '50% 50%' }}
           />
+
+          {/* ─── Sleep Z's ─── */}
+          <AnimatePresence>
+            {isSleeping && (
+              <>
+                {/* Z 1 — small, close */}
+                <motion.text
+                  key="z1"
+                  x={38}
+                  y={12}
+                  fill={color}
+                  fontSize="5"
+                  fontWeight="bold"
+                  fontFamily="sans-serif"
+                  initial={{ opacity: 0, y: 0, x: 0 }}
+                  animate={{
+                    opacity: [0, 0.6, 0.5, 0],
+                    y: [0, -6, -12, -18],
+                    x: [0, 2, 4, 5],
+                  }}
+                  exit={{ opacity: 0 }}
+                  transition={{
+                    duration: 3,
+                    repeat: Infinity,
+                    ease: 'easeOut',
+                  }}
+                >
+                  z
+                </motion.text>
+
+                {/* Z 2 — medium, staggered */}
+                <motion.text
+                  key="z2"
+                  x={40}
+                  y={10}
+                  fill={color}
+                  fontSize="7"
+                  fontWeight="bold"
+                  fontFamily="sans-serif"
+                  initial={{ opacity: 0, y: 0, x: 0 }}
+                  animate={{
+                    opacity: [0, 0.45, 0.4, 0],
+                    y: [0, -8, -16, -24],
+                    x: [0, 3, 5, 7],
+                  }}
+                  exit={{ opacity: 0 }}
+                  transition={{
+                    duration: 3.5,
+                    repeat: Infinity,
+                    ease: 'easeOut',
+                    delay: 1,
+                  }}
+                >
+                  z
+                </motion.text>
+
+                {/* Z 3 — large, furthest */}
+                <motion.text
+                  key="z3"
+                  x={42}
+                  y={8}
+                  fill={color}
+                  fontSize="9"
+                  fontWeight="bold"
+                  fontFamily="sans-serif"
+                  initial={{ opacity: 0, y: 0, x: 0 }}
+                  animate={{
+                    opacity: [0, 0.35, 0.3, 0],
+                    y: [0, -10, -20, -30],
+                    x: [0, 4, 7, 9],
+                  }}
+                  exit={{ opacity: 0 }}
+                  transition={{
+                    duration: 4,
+                    repeat: Infinity,
+                    ease: 'easeOut',
+                    delay: 2,
+                  }}
+                >
+                  Z
+                </motion.text>
+              </>
+            )}
+          </AnimatePresence>
 
         </motion.g>
       </motion.g>
