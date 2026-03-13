@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { Loader2, CheckCircle, XCircle, Smartphone, Wifi, ShieldCheck, Link } from 'lucide-react';
+import { Loader2, RotateCcw } from 'lucide-react';
 
 interface QrAuthConnectProps {
   sessionId: string;
@@ -12,40 +12,61 @@ interface QrAuthConnectProps {
 }
 
 type PairingPhase =
-  | 'loading'        // Waiting for session
-  | 'qr_waiting'     // Bridge started, waiting for QR
-  | 'qr_ready'       // QR visible, waiting for scan
-  | 'scanned'        // QR scanned, handshake in progress
-  | 'syncing'        // Connected, syncing history
-  | 'connected'      // Fully connected
+  | 'loading'
+  | 'qr_waiting'
+  | 'qr_ready'
+  | 'scanned'
+  | 'syncing'
+  | 'connected'
   | 'error';
 
-const PHASE_LABELS: Record<PairingPhase, string> = {
-  loading: 'Starting bridge...',
-  qr_waiting: 'Generating QR code...',
-  qr_ready: 'Scan the QR code with your phone',
-  scanned: 'QR scanned — establishing secure connection...',
-  syncing: 'Connected — syncing message history...',
+const STATUS_COPY: Record<PairingPhase, string> = {
+  loading: 'Preparing...',
+  qr_waiting: 'Preparing...',
+  qr_ready: 'Open WhatsApp, go to Linked Devices, and scan this code.',
+  scanned: 'Connecting...',
+  syncing: 'Almost there...',
   connected: 'Connected',
-  error: 'Connection failed',
+  error: 'Something went wrong',
 };
 
+/* ─── Keyframe styles injected once ─── */
+const KEYFRAMES = `
+@keyframes qr-fade-out {
+  from { opacity: 1; transform: scale(1); }
+  to   { opacity: 0; transform: scale(0.92); }
+}
+@keyframes qr-success-in {
+  0%   { opacity: 0; transform: scale(0.8); }
+  60%  { transform: scale(1.04); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes qr-checkmark-draw {
+  from { stroke-dashoffset: 20; }
+  to   { stroke-dashoffset: 0; }
+}
+@keyframes qr-pulse-ring {
+  0%   { transform: scale(1); opacity: 0.5; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+@keyframes qr-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+`;
+
 /**
- * Reusable QR code pairing component with streaming status updates.
+ * QR code pairing component — Apple-minimal design.
  * Subscribes to a session row via Supabase realtime, renders QR when available,
- * and shows animated progress through the pairing flow.
+ * and shows smooth transitions through the pairing flow.
  */
 export function QrAuthConnect({ sessionId, serviceName, onConnected, onError }: QrAuthConnectProps) {
   const [phase, setPhase] = useState<PairingPhase>('loading');
   const [qrData, setQrData] = useState<string | null>(null);
   const [phoneNumber, setPhoneNumber] = useState<string | null>(null);
-  const [statusLog, setStatusLog] = useState<string[]>([]);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const prevStatusRef = useRef<string | null>(null);
-
-  const addLog = useCallback((msg: string) => {
-    setStatusLog(prev => [...prev.slice(-4), msg]);
-  }, []);
 
   const handleRowUpdate = useCallback((dbStatus: string, qr: string | null, phone: string | null) => {
     const prev = prevStatusRef.current;
@@ -57,43 +78,33 @@ export function QrAuthConnect({ sessionId, serviceName, onConnected, onError }: 
     if (dbStatus === 'pairing' && qr) {
       if (prev !== 'pairing' || phase === 'loading' || phase === 'qr_waiting') {
         setPhase('qr_ready');
-        addLog('QR code ready — scan with your phone');
       }
     } else if (dbStatus === 'pairing' && !qr && prev === 'pairing') {
-      // QR was cleared after scan — handshake in progress
       setPhase('scanned');
-      addLog('QR scanned — negotiating encryption...');
     } else if (dbStatus === 'pairing' && !qr) {
       setPhase('qr_waiting');
-      addLog('Waiting for QR from bridge...');
     } else if (dbStatus === 'connected') {
       if (phase !== 'connected') {
-        // Brief syncing phase before final connected
         setPhase('syncing');
-        addLog('Secure connection established');
-        if (phone) addLog(`Phone: ${phone}`);
         setTimeout(() => {
           setPhase('connected');
           if (phone) onConnected?.(phone);
-        }, 1500);
+        }, 1200);
       }
     } else if (dbStatus === 'disconnected' && prev === 'pairing') {
-      // Transient reconnect during pairing — don't show error
-      addLog('Reconnecting...');
+      // Transient reconnect — don't surface
     } else if (dbStatus === 'error') {
       setPhase('error');
-      addLog('Connection failed');
+      setErrorMsg('Connection failed. Please try again.');
       onError?.('Connection failed. Please try again.');
     }
-  }, [phase, addLog, onConnected, onError]);
+  }, [phase, onConnected, onError]);
 
+  /* ─── Supabase realtime subscription ─── */
   useEffect(() => {
     const client = createClient();
     if (!client) return;
 
-    addLog('Connecting to bridge...');
-
-    // Initial fetch
     client
       .from('whatsapp_sessions')
       .select('status, qr_data, phone_number')
@@ -105,7 +116,6 @@ export function QrAuthConnect({ sessionId, serviceName, onConnected, onError }: 
         }
       });
 
-    // Realtime subscription
     const channel = client
       .channel(`whatsapp-session-${sessionId}`)
       .on(
@@ -129,7 +139,7 @@ export function QrAuthConnect({ sessionId, serviceName, onConnected, onError }: 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId]);
 
-  // Render QR code on canvas when qrData changes
+  /* ─── QR code canvas rendering ─── */
   useEffect(() => {
     if (!qrData || !canvasRef.current) return;
 
@@ -137,7 +147,7 @@ export function QrAuthConnect({ sessionId, serviceName, onConnected, onError }: 
       const canvas = canvasRef.current;
       if (!canvas) return;
       QRCode.toCanvas(canvas, qrData, {
-        width: 256,
+        width: 220,
         margin: 2,
         color: { dark: '#000000', light: '#ffffff' },
       }).catch(() => {
@@ -145,140 +155,303 @@ export function QrAuthConnect({ sessionId, serviceName, onConnected, onError }: 
         img.onload = () => {
           const ctx = canvas.getContext('2d');
           if (!ctx) return;
-          canvas.width = 256;
-          canvas.height = 256;
-          ctx.drawImage(img, 0, 0, 256, 256);
+          canvas.width = 220;
+          canvas.height = 220;
+          ctx.drawImage(img, 0, 0, 220, 220);
         };
         img.src = qrData;
       });
     });
   }, [qrData]);
 
-  const phaseIcon = {
-    loading: <Loader2 size={20} style={{ animation: 'bb-spin 1s linear infinite', color: 'var(--text-secondary)' }} />,
-    qr_waiting: <Loader2 size={20} style={{ animation: 'bb-spin 1s linear infinite', color: 'var(--text-secondary)' }} />,
-    qr_ready: <Smartphone size={20} style={{ color: '#25D366' }} />,
-    scanned: <ShieldCheck size={20} style={{ animation: 'bb-spin 1s linear infinite', color: '#25D366' }} />,
-    syncing: <Wifi size={20} style={{ animation: 'pulse 1.5s ease-in-out infinite', color: '#25D366' }} />,
-    connected: <CheckCircle size={20} style={{ color: '#22C55E' }} />,
-    error: <XCircle size={20} style={{ color: '#EF4444' }} />,
-  };
+  const isPreQr = phase === 'loading' || phase === 'qr_waiting';
+  const isPostQr = phase === 'scanned' || phase === 'syncing' || phase === 'connected';
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, padding: 24 }}>
+    <>
+      {/* Inject keyframes */}
+      <style>{KEYFRAMES}</style>
 
-      {/* QR Code area */}
-      {(phase === 'qr_ready' || phase === 'qr_waiting') && (
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
-          {qrData ? (
-            <div style={{
-              borderRadius: 12,
-              border: '1px solid rgba(255,255,255,0.1)',
-              background: '#ffffff',
-              padding: 8,
-              transition: 'opacity 300ms',
-            }}>
-              <canvas ref={canvasRef} width={256} height={256} />
-            </div>
-          ) : (
-            <div style={{
-              width: 272, height: 272, borderRadius: 12,
-              background: 'rgba(255,255,255,0.04)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
-              <Loader2 size={32} style={{ animation: 'bb-spin 1s linear infinite', color: 'var(--text-secondary)' }} />
-            </div>
-          )}
-          {qrData && (
-            <p style={{ maxWidth: 280, textAlign: 'center', fontSize: 12, color: 'var(--text-secondary)' }}>
-              Open {serviceName} → Linked Devices → Link a Device → Scan this code
-            </p>
-          )}
-        </div>
-      )}
-
-      {/* Scanned / syncing / connected animation */}
-      {(phase === 'scanned' || phase === 'syncing' || phase === 'connected') && (
-        <div style={{
-          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12,
-          padding: '24px 0',
-        }}>
-          <div style={{
-            width: 64, height: 64, borderRadius: '50%',
-            background: phase === 'connected'
-              ? 'rgba(34, 197, 94, 0.15)'
-              : 'rgba(37, 211, 102, 0.1)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            transition: 'all 500ms ease',
-            transform: phase === 'connected' ? 'scale(1.1)' : 'scale(1)',
-          }}>
-            {phase === 'connected'
-              ? <CheckCircle size={32} style={{ color: '#22C55E' }} />
-              : phase === 'syncing'
-                ? <Wifi size={28} style={{ color: '#25D366' }} />
-                : <Link size={28} style={{ animation: 'bb-spin 2s linear infinite', color: '#25D366' }} />
-            }
-          </div>
-          <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>
-            {PHASE_LABELS[phase]}
-          </p>
-          {phoneNumber && phase === 'connected' && (
-            <p style={{ fontSize: 12, fontFamily: 'monospace', color: 'var(--text-secondary)' }}>
-              +{phoneNumber}
-            </p>
-          )}
-        </div>
-      )}
-
-      {/* Error state */}
-      {phase === 'error' && (
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, padding: '24px 0' }}>
-          <XCircle size={32} style={{ color: '#EF4444' }} />
-          <p style={{ fontSize: 14, color: '#EF4444' }}>Connection failed</p>
-          <p style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Please try again</p>
-        </div>
-      )}
-
-      {/* Streaming status log */}
       <div style={{
-        width: '100%',
-        borderTop: '1px solid rgba(255,255,255,0.06)',
-        paddingTop: 12,
-        display: 'flex', flexDirection: 'column', gap: 4,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: 20,
+        padding: '32px 24px',
+        minHeight: 320,
+        justifyContent: 'center',
       }}>
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 6,
-          marginBottom: 4,
-        }}>
-          {phaseIcon[phase]}
-          <span style={{
-            fontSize: 11,
-            fontWeight: 500,
-            color: phase === 'error' ? '#EF4444'
-              : phase === 'connected' ? '#22C55E'
-              : 'var(--text-secondary)',
-            transition: 'color 300ms',
+
+        {/* ─── WhatsApp icon (always visible in loading / post-QR states) ─── */}
+        {(isPreQr || isPostQr) && (
+          <div style={{
+            position: 'relative',
+            width: 56,
+            height: 56,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
           }}>
-            {PHASE_LABELS[phase]}
-          </span>
-        </div>
-        {statusLog.map((msg, i) => (
-          <div
-            key={`${msg}-${i}`}
-            style={{
-              fontSize: 10,
-              fontFamily: 'monospace',
-              color: 'var(--text-tertiary, rgba(255,255,255,0.35))',
-              paddingLeft: 26,
-              opacity: i === statusLog.length - 1 ? 0.8 : 0.4,
-              transition: 'opacity 300ms',
-            }}
-          >
-            {msg}
+            <img
+              src="/icons/integrations/whatsapp.png"
+              alt="WhatsApp"
+              width={48}
+              height={48}
+              style={{
+                borderRadius: 12,
+                opacity: phase === 'connected' ? 1 : 0.9,
+                transition: 'opacity 400ms ease',
+              }}
+            />
+            {/* Spinner ring around icon for loading states */}
+            {(isPreQr || phase === 'scanned' || phase === 'syncing') && (
+              <div style={{
+                position: 'absolute',
+                inset: -4,
+                borderRadius: '50%',
+                border: '2px solid transparent',
+                borderTopColor: 'var(--text-secondary)',
+                animation: 'qr-spin 1s linear infinite',
+              }} />
+            )}
+            {/* Success ring pulse for connected */}
+            {phase === 'connected' && (
+              <div style={{
+                position: 'absolute',
+                inset: -4,
+                borderRadius: '50%',
+                border: '2px solid var(--status-success-fg)',
+                animation: 'qr-pulse-ring 1s ease-out forwards',
+              }} />
+            )}
           </div>
-        ))}
+        )}
+
+        {/* ─── QR Code ─── */}
+        {(phase === 'qr_ready' || phase === 'qr_waiting') && (
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 16,
+            animation: qrData ? undefined : undefined,
+          }}>
+            {qrData ? (
+              <div style={{
+                borderRadius: 16,
+                background: '#ffffff',
+                padding: 12,
+                boxShadow: '0 2px 16px rgba(0, 0, 0, 0.15)',
+                transition: 'opacity 400ms ease, transform 400ms ease',
+              }}>
+                <canvas ref={canvasRef} width={220} height={220} style={{ display: 'block' }} />
+              </div>
+            ) : (
+              <div style={{
+                width: 244,
+                height: 244,
+                borderRadius: 16,
+                background: 'var(--glass-interactive-bg)',
+                border: '1px solid var(--glass-interactive-border)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+                <Loader2
+                  size={24}
+                  style={{
+                    color: 'var(--text-secondary)',
+                    animation: 'qr-spin 1s linear infinite',
+                  }}
+                />
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ─── Scanned / Connecting transition ─── */}
+        {phase === 'scanned' && (
+          <div style={{
+            width: 244,
+            height: 244,
+            borderRadius: 16,
+            background: 'var(--glass-interactive-bg)',
+            border: '1px solid var(--glass-interactive-border)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            animation: 'qr-success-in 500ms ease-out',
+          }}>
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 8,
+            }}>
+              <Loader2
+                size={28}
+                style={{
+                  color: 'var(--text-secondary)',
+                  animation: 'qr-spin 1s linear infinite',
+                }}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* ─── Connected success state ─── */}
+        {phase === 'connected' && (
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 4,
+            animation: 'qr-success-in 500ms ease-out',
+          }}>
+            {/* SF Symbol-style checkmark circle */}
+            <div style={{
+              width: 40,
+              height: 40,
+              borderRadius: '50%',
+              background: 'var(--status-success-bg)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBottom: 4,
+            }}>
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path
+                  d="M5 10.5L8.5 14L15 7"
+                  stroke="var(--status-success-fg)"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  style={{
+                    strokeDasharray: 20,
+                    strokeDashoffset: 0,
+                    animation: 'qr-checkmark-draw 400ms ease-out',
+                  }}
+                />
+              </svg>
+            </div>
+            {phoneNumber && (
+              <span style={{
+                fontSize: 13,
+                fontWeight: 400,
+                color: 'var(--text-secondary)',
+                letterSpacing: '0.02em',
+              }}>
+                {phoneNumber.startsWith('+') ? phoneNumber : `+${phoneNumber}`}
+              </span>
+            )}
+          </div>
+        )}
+
+        {/* ─── Error state ─── */}
+        {phase === 'error' && (
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 16,
+          }}>
+            <img
+              src="/icons/integrations/whatsapp.png"
+              alt="WhatsApp"
+              width={48}
+              height={48}
+              style={{
+                borderRadius: 12,
+                opacity: 0.4,
+                filter: 'grayscale(0.6)',
+              }}
+            />
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 4,
+            }}>
+              <span style={{
+                fontSize: 14,
+                fontWeight: 500,
+                color: 'var(--text-primary)',
+              }}>
+                {errorMsg || 'Something went wrong'}
+              </span>
+              <span style={{
+                fontSize: 13,
+                color: 'var(--text-secondary)',
+              }}>
+                Check your connection and try again.
+              </span>
+            </div>
+            <button
+              onClick={() => {
+                setPhase('loading');
+                setErrorMsg(null);
+                prevStatusRef.current = null;
+                // Re-fetch triggers via sessionId effect
+                const client = createClient();
+                if (!client) return;
+                client
+                  .from('whatsapp_sessions')
+                  .select('status, qr_data, phone_number')
+                  .eq('id', sessionId)
+                  .single()
+                  .then(({ data }) => {
+                    if (data) {
+                      handleRowUpdate(data.status, data.qr_data, data.phone_number);
+                    }
+                  });
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '8px 18px',
+                borderRadius: 20,
+                border: '1px solid var(--glass-interactive-border)',
+                background: 'var(--glass-interactive-bg)',
+                color: 'var(--text-primary)',
+                fontSize: 13,
+                fontWeight: 500,
+                cursor: 'pointer',
+                transition: 'background 200ms ease, border-color 200ms ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'var(--glass-hover-bg)';
+                e.currentTarget.style.borderColor = 'var(--border-hover)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'var(--glass-interactive-bg)';
+                e.currentTarget.style.borderColor = 'var(--glass-interactive-border)';
+              }}
+            >
+              <RotateCcw size={14} />
+              Try Again
+            </button>
+          </div>
+        )}
+
+        {/* ─── Single status line ─── */}
+        <span style={{
+          fontSize: 13,
+          fontWeight: phase === 'connected' ? 500 : 400,
+          color: phase === 'connected'
+            ? 'var(--status-success-fg)'
+            : phase === 'error'
+              ? 'transparent' // hidden — error has its own copy above
+              : 'var(--text-secondary)',
+          textAlign: 'center',
+          maxWidth: 280,
+          lineHeight: 1.45,
+          transition: 'color 300ms ease',
+        }}>
+          {STATUS_COPY[phase]}
+        </span>
       </div>
-    </div>
+    </>
   );
 }
 

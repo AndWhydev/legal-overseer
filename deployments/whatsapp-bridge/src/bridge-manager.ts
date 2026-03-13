@@ -209,6 +209,7 @@ export async function startBridge(orgId: string): Promise<{
         .update({ status: 'connected', qr_data: null })
         .eq('id', state.sessionId!)
 
+      await syncChannelConnection(supabase, orgId, 'connected')
       await logHealth(supabase, orgId, true)
       startOutboxDrain(state)
       startHealthReporting(state)
@@ -233,6 +234,7 @@ export async function startBridge(orgId: string): Promise<{
         .update({ status: 'disconnected' })
         .eq('id', state.sessionId!)
 
+      await syncChannelConnection(supabase, orgId, 'disconnected')
       await logHealth(supabase, orgId, false, `Disconnected (status ${statusCode})`)
 
       if (shouldReconnect && !state.disposed) {
@@ -564,6 +566,29 @@ async function logHealth(
     }, {
       onConflict: 'org_id,channel',
     })
+}
+
+async function syncChannelConnection(
+  supabase: SupabaseClient,
+  orgId: string,
+  status: 'connected' | 'disconnected'
+): Promise<void> {
+  try {
+    await supabase.from('channel_connections').upsert(
+      {
+        org_id: orgId,
+        channel_type: 'whatsapp',
+        status,
+        relay_enabled: false,
+        config: {},
+        connected_at: status === 'connected' ? new Date().toISOString() : null,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'org_id,channel_type' },
+    )
+  } catch (err) {
+    console.error('[bridge-manager] Failed to sync channel connection:', err)
+  }
 }
 
 async function attemptReconnect(state: BridgeState): Promise<void> {
