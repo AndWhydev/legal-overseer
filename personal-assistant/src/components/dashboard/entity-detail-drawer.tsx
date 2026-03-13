@@ -211,125 +211,328 @@ function EntityDetailDrawer({ open, onClose, entityType, entityId }: EntityDetai
       {/* Backdrop */}
       {open && (
         <div
-          className="fixed inset-0 z-40 bg-black/40 transition-opacity"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 40,
+            background: 'rgba(0, 0, 0, 0.5)',
+            backdropFilter: 'blur(4px)',
+            WebkitBackdropFilter: 'blur(4px)',
+            transition: 'opacity 200ms ease-out',
+            opacity: open ? 1 : 0,
+          }}
           onClick={onClose}
           aria-hidden="true"
         />
       )}
 
-      {/* Drawer */}
-      <aside
-        className="fixed right-0 top-0 z-50 h-full w-full max-w-md overflow-y-auto bg-[var(--bg-primary)] border-l border-[var(--border-primary)] shadow-2xl transition-transform duration-300 ease-out"
-        style={{ transform: open ? 'translateX(0)' : 'translateX(100%)' }}
+      {/* Modal */}
+      <div
+        style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 50,
+          display: open ? 'flex' : 'none',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '20px',
+        }}
         role="dialog"
         aria-modal="true"
         aria-label="Entity details"
       >
-        {/* Header */}
-        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-[var(--border-primary)] bg-[var(--bg-primary)] px-5 py-4">
-          <div className="flex items-center gap-3">
-            <div
-              className="flex h-9 w-9 items-center justify-center rounded-lg"
-              style={{ backgroundColor: `${TYPE_COLOR[entityType]}20`, color: TYPE_COLOR[entityType] }}
+        <div
+          style={{
+            position: 'relative',
+            width: '100%',
+            maxWidth: 560,
+            maxHeight: '80vh',
+            borderRadius: 20,
+            background: 'rgba(15, 20, 30, 0.8)',
+            backdropFilter: 'blur(20px) saturate(1.2)',
+            WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
+            border: '1px solid rgba(255, 255, 255, 0.03)',
+            boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+            display: 'flex',
+            flexDirection: 'column' as const,
+            animation: open ? 'modalEnter 200ms ease-out' : 'modalExit 200ms ease-out',
+          }}
+        >
+          {/* Header */}
+          <div style={{
+            position: 'sticky',
+            top: 0,
+            zIndex: 10,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            borderBottom: '1px solid rgba(255, 255, 255, 0.03)',
+            background: 'rgba(15, 20, 30, 0.8)',
+            padding: '20px',
+            borderTopLeftRadius: 20,
+            borderTopRightRadius: 20,
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: 36,
+                  height: 36,
+                  borderRadius: 10,
+                  backgroundColor: `${TYPE_COLOR[entityType]}20`,
+                  color: TYPE_COLOR[entityType],
+                }}
+              >
+                <Icon size={20} />
+              </div>
+              <span style={{
+                fontSize: 14,
+                fontWeight: 500,
+                textTransform: 'capitalize',
+                color: 'var(--text-primary)',
+              }}>
+                {entityType} Details
+              </span>
+            </div>
+            <button
+              onClick={onClose}
+              style={{
+                padding: '8px',
+                borderRadius: 10,
+                background: 'transparent',
+                border: '1px solid rgba(255, 255, 255, 0.03)',
+                color: 'var(--text-primary)',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'background 200ms',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent';
+              }}
+              aria-label="Close modal"
             >
-              <Icon size={20} />
-            </div>
-            <span className="text-sm font-medium capitalize">{entityType} Details</span>
+              <X size={18} />
+            </button>
           </div>
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-[var(--bg-elevated)] transition-colors"
-            aria-label="Close drawer"
-          >
-            <X size={18} />
-          </button>
-        </div>
 
-        {loading ? (
-          <div className="p-5">
-            <div className="animate-pulse space-y-4">
-              <div className="h-6 w-48 rounded bg-[var(--bg-elevated)]" />
-              <div className="h-4 w-32 rounded bg-[var(--bg-elevated)]" />
-              <div className="h-4 w-64 rounded bg-[var(--bg-elevated)]" />
-            </div>
-          </div>
-        ) : (
-          <div className="p-5 space-y-6">
-            {/* Entity-specific detail */}
-            {entity && (
+          {/* Content */}
+          <div style={{
+            flex: 1,
+            overflowY: 'auto' as const,
+            padding: '20px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '24px',
+          }}>
+            {loading ? (
+              <div style={{ animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' }}>
+                <div style={{
+                  height: 24,
+                  width: 192,
+                  borderRadius: 8,
+                  background: 'rgba(255, 255, 255, 0.06)',
+                  marginBottom: '16px',
+                }} />
+                <div style={{
+                  height: 16,
+                  width: 128,
+                  borderRadius: 8,
+                  background: 'rgba(255, 255, 255, 0.06)',
+                  marginBottom: '16px',
+                }} />
+                <div style={{
+                  height: 16,
+                  width: 256,
+                  borderRadius: 8,
+                  background: 'rgba(255, 255, 255, 0.06)',
+                }} />
+              </div>
+            ) : (
               <>
-                {entityType === 'contact' && <ContactDetail meta={entity.metadata} />}
-                {entityType === 'project' && <ProjectDetail meta={entity.metadata} />}
-                {entityType === 'invoice' && <InvoiceDetail meta={entity.metadata} />}
-                {entityType === 'task' && <TaskDetail meta={entity.metadata} />}
-              </>
-            )}
+                {/* Entity-specific detail */}
+                {entity && (
+                  <>
+                    {entityType === 'contact' && <ContactDetail meta={entity.metadata} />}
+                    {entityType === 'project' && <ProjectDetail meta={entity.metadata} />}
+                    {entityType === 'invoice' && <InvoiceDetail meta={entity.metadata} />}
+                    {entityType === 'task' && <TaskDetail meta={entity.metadata} />}
+                  </>
+                )}
 
-            {/* Related Entities */}
-            {related.length > 0 && (
-              <div className="space-y-3">
-                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-                  Related ({related.length})
-                </h3>
-                <div className="space-y-2">
-                  {related.map(({ node, edge }) => {
-                    const RelIcon = TYPE_ICON[node.type] ?? Briefcase;
-                    return (
-                      <div
-                        key={`${node.type}-${node.id}`}
-                        className="flex items-center gap-3 rounded-lg p-2.5 bg-[var(--bg-elevated)]"
-                      >
+                {/* Related Entities */}
+                {related.length > 0 && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <h3 style={{
+                      fontSize: 11,
+                      fontWeight: 600,
+                      letterSpacing: '0.08em',
+                      textTransform: 'uppercase',
+                      color: 'var(--text-dim)',
+                      marginBottom: 0,
+                    }}>
+                      Related ({related.length})
+                    </h3>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      {related.map(({ node, edge }) => {
+                        const RelIcon = TYPE_ICON[node.type] ?? Briefcase;
+                        return (
+                          <div
+                            key={`${node.type}-${node.id}`}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '12px',
+                              borderRadius: 12,
+                              padding: '12px 16px',
+                              background: 'rgba(20, 28, 40, 0.5)',
+                              backdropFilter: 'blur(12px)',
+                              WebkitBackdropFilter: 'blur(12px)',
+                              border: '1px solid rgba(255, 255, 255, 0.03)',
+                            }}
+                          >
+                            <div
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                width: 32,
+                                height: 32,
+                                borderRadius: 8,
+                                backgroundColor: `${TYPE_COLOR[node.type] ?? '#888'}20`,
+                                color: TYPE_COLOR[node.type] ?? '#888',
+                                flexShrink: 0,
+                              }}
+                            >
+                              <RelIcon size={16} />
+                            </div>
+                            <div style={{ minWidth: 0, flex: 1 }}>
+                              <div style={{
+                                fontSize: 14,
+                                fontWeight: 500,
+                                color: 'var(--text-primary)',
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                              }}>
+                                {node.label}
+                              </div>
+                              <div style={{
+                                fontSize: 12,
+                                color: 'var(--text-secondary)',
+                                textTransform: 'capitalize',
+                              }}>
+                                {edge?.relationshipType?.replace(/_/g, ' ') ?? node.type}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Timeline */}
+                {timeline.length > 0 && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <h3 style={{
+                      fontSize: 11,
+                      fontWeight: 600,
+                      letterSpacing: '0.08em',
+                      textTransform: 'uppercase',
+                      color: 'var(--text-dim)',
+                      marginBottom: 0,
+                    }}>
+                      Timeline
+                    </h3>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      {timeline.map((event) => (
                         <div
-                          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md"
-                          style={{ backgroundColor: `${TYPE_COLOR[node.type] ?? '#888'}20`, color: TYPE_COLOR[node.type] ?? '#888' }}
+                          key={event.id}
+                          style={{
+                            display: 'flex',
+                            gap: '12px',
+                            borderRadius: 12,
+                            padding: '12px 16px',
+                            background: 'rgba(20, 28, 40, 0.5)',
+                            backdropFilter: 'blur(12px)',
+                            WebkitBackdropFilter: 'blur(12px)',
+                            border: '1px solid rgba(255, 255, 255, 0.03)',
+                          }}
                         >
-                          <RelIcon size={16} />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="text-sm font-medium truncate">{node.label}</div>
-                          <div className="text-xs text-muted-foreground capitalize">
-                            {edge?.relationshipType?.replace(/_/g, ' ') ?? node.type}
+                          <div style={{
+                            marginTop: 4,
+                            width: 8,
+                            height: 8,
+                            borderRadius: '50%',
+                            background: 'var(--bb-cyan)',
+                            flexShrink: 0,
+                          }} />
+                          <div style={{ minWidth: 0, flex: 1 }}>
+                            <div style={{
+                              fontSize: 14,
+                              color: 'var(--text-primary)',
+                            }}>
+                              {formatEventType(event.eventType)}
+                            </div>
+                            <div style={{
+                              fontSize: 12,
+                              color: 'var(--text-secondary)',
+                            }}>
+                              {formatDate(event.occurredAt)}
+                              {event.channelSource && ` via ${event.channelSource}`}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Timeline */}
-            {timeline.length > 0 && (
-              <div className="space-y-3">
-                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-                  Timeline
-                </h3>
-                <div className="space-y-2">
-                  {timeline.map((event) => (
-                    <div
-                      key={event.id}
-                      className="flex items-start gap-3 rounded-lg p-2.5 bg-[var(--bg-elevated)]"
-                    >
-                      <div className="mt-0.5 h-2 w-2 rounded-full bg-[var(--bb-cyan)] shrink-0" />
-                      <div className="min-w-0 flex-1">
-                        <div className="text-sm">{formatEventType(event.eventType)}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {formatDate(event.occurredAt)}
-                          {event.channelSource && ` via ${event.channelSource}`}
-                        </div>
-                      </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              </div>
-            )}
+                  </div>
+                )}
 
-            {!entity && !loading && (
-              <p className="text-sm text-muted-foreground text-center py-8">Entity not found.</p>
+                {!entity && !loading && (
+                  <p style={{
+                    fontSize: 14,
+                    color: 'var(--text-secondary)',
+                    textAlign: 'center',
+                    padding: '32px 0',
+                  }}>
+                    Entity not found.
+                  </p>
+                )}
+              </>
             )}
           </div>
-        )}
-      </aside>
+        </div>
+      </div>
+
+      <style>{`
+        @keyframes modalEnter {
+          from {
+            opacity: 0;
+            transform: scale(0.95);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+        @keyframes modalExit {
+          from {
+            opacity: 1;
+            transform: scale(1);
+          }
+          to {
+            opacity: 0;
+            transform: scale(0.95);
+          }
+        }
+      `}</style>
     </>
   );
 }

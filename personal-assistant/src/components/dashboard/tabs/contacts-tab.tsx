@@ -259,6 +259,7 @@ function StatPill({ value, label, active }: { value: number | string; label: str
 // ---------------------------------------------------------------------------
 
 function ContactCard({ contact, onOpen }: { contact: Contact; onOpen: () => void }) {
+  const [hovered, setHovered] = useState(false)
   const email = contact.email ?? contact.emails?.[0]
   const phone = contact.phone ?? contact.phones?.[0]
   const contactType = contact.type ?? 'client'
@@ -273,63 +274,169 @@ function ContactCard({ contact, onOpen }: { contact: Contact; onOpen: () => void
     .toUpperCase()
     .slice(0, 2)
 
+  const typeColorMap: Record<string, string> = {
+    client: '#3B82F6',
+    lead: '#F59E0B',
+    partner: '#A855F7',
+    vendor: '#10B981',
+  }
+
+  const typeColor = typeColorMap[contactType] || '#6B7280'
+
   return (
     <button
       type="button"
-      className="bb-contacts-card"
       data-type={contactType}
       onClick={onOpen}
       disabled={!canOpen}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       aria-label={canOpen ? `Open details for ${contact.name ?? 'contact'}` : `${contact.name ?? 'Contact'} has no detail view`}
       aria-haspopup={canOpen ? 'dialog' : undefined}
       style={{
         width: '100%',
-        border: 0,
-        padding: 0,
-        background: 'none',
-        textAlign: 'left',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '14px',
+        padding: '16px 20px',
+        borderRadius: 16,
+        background: 'rgba(15, 20, 30, 0.6)',
+        backdropFilter: 'blur(20px) saturate(1.2)',
+        WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
+        border: '1px solid rgba(255, 255, 255, 0.03)',
+        boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
         cursor: canOpen ? 'pointer' : 'default',
+        textAlign: 'left' as const,
+        transition: 'all 200ms ease-out',
+        transform: hovered ? 'translateY(-1px)' : 'translateY(0)',
+        backgroundColor: hovered ? 'rgba(20, 28, 40, 0.7)' : 'rgba(15, 20, 30, 0.6)',
       }}
     >
-      <div className="bb-contacts-card__avatar">{initials}</div>
+      <div style={{
+        width: 40,
+        height: 40,
+        borderRadius: '50%',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: 13,
+        fontWeight: 600,
+        flexShrink: 0,
+        background: `rgba(15, 20, 30, 0.4)`,
+        color: 'var(--text-secondary)',
+      }}>
+        {initials}
+      </div>
 
-      <div className="bb-contacts-card__body">
-        <div>
-          <span className="bb-contacts-card__name">{contact.name ?? 'Unnamed contact'}</span>
-          <StatusPill
-            variant={CONTACT_TYPE_VARIANT[contactType] ?? 'neutral'}
-            label={contactType.charAt(0).toUpperCase() + contactType.slice(1)}
-          />
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+          <span style={{
+            fontSize: 14,
+            fontWeight: 500,
+            color: 'var(--text-primary)',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+          }}>
+            {contact.name ?? 'Unnamed contact'}
+          </span>
+          <span style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            padding: '2px 8px',
+            borderRadius: 6,
+            fontSize: 10,
+            fontWeight: 600,
+            textTransform: 'uppercase',
+            background: `${typeColor}1F`,
+            color: typeColor,
+            whiteSpace: 'nowrap',
+            flexShrink: 0,
+          }}>
+            {contactType.charAt(0).toUpperCase() + contactType.slice(1)}
+          </span>
         </div>
 
-        <div className="bb-contacts-card__meta">
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          marginTop: '4px',
+          flexWrap: 'wrap',
+        }}>
           {email && (
-            <span className="bb-contacts-card__meta-item">
-              <Mail size={11} />
+            <span style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              fontSize: 11,
+              color: 'var(--text-dim)',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}>
+              <Mail size={16} style={{ color: 'var(--text-dim)', flexShrink: 0 }} />
               {email}
             </span>
           )}
           {phone && (
-            <span className="bb-contacts-card__meta-item">
-              <Phone size={11} />
+            <span style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              fontSize: 11,
+              color: 'var(--text-dim)',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}>
+              <Phone size={16} style={{ color: 'var(--text-dim)', flexShrink: 0 }} />
               {phone}
             </span>
           )}
         </div>
 
         {tags.length > 0 && (
-          <div className="bb-contacts-card__tags">
+          <div style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: '4px',
+            marginTop: '6px',
+          }}>
             {tags.slice(0, 3).map(tag => (
-              <span key={tag} className="bb-contacts-card__tag">{tag}</span>
+              <span key={tag} style={{
+                fontSize: 10,
+                fontWeight: 500,
+                padding: '2px 8px',
+                borderRadius: 6,
+                background: 'rgba(255, 255, 255, 0.04)',
+                color: 'var(--text-dim)',
+              }}>
+                {tag}
+              </span>
             ))}
             {tags.length > 3 && (
-              <span className="bb-contacts-card__tag">+{tags.length - 3}</span>
+              <span style={{
+                fontSize: 10,
+                fontWeight: 500,
+                padding: '2px 8px',
+                borderRadius: 6,
+                background: 'rgba(255, 255, 255, 0.04)',
+                color: 'var(--text-dim)',
+              }}>
+                +{tags.length - 3}
+              </span>
             )}
           </div>
         )}
       </div>
 
-      <ChevronRight size={16} className="bb-contacts-card__chevron" />
+      <ChevronRight size={16} style={{
+        color: 'var(--text-dim)',
+        opacity: hovered ? 0.5 : 0,
+        transition: 'opacity 200ms ease-out',
+        flexShrink: 0,
+      }} />
     </button>
   )
 }
