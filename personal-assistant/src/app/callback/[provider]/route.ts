@@ -161,6 +161,7 @@ export async function GET(
         org_id: orgId,
         channel_type: connectionChannelType,
         status: 'connected',
+        relay_enabled: true,
         last_sync: existingConnection?.last_sync ?? null,
         config: existingConnection?.config ?? {},
         message_count: existingConnection?.message_count ?? 0,
