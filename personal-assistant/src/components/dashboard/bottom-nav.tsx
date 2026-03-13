@@ -12,6 +12,7 @@ import type { TabDef } from './spa-shell';
 import { useEnabledModules } from '@/lib/modules/use-enabled-modules';
 import { useBadgeCounts } from '@/hooks/use-badge-counts';
 import type { BadgeCounts } from '@/hooks/use-badge-counts';
+import { NotificationBadge } from '@/components/ui/notification-badge';
 
 // ─── Fixed bottom nav items (5 most-used) ────────────────────────────────────
 
@@ -124,29 +125,13 @@ export function BottomNav({
               {label}
             </span>
             {badgeCount > 0 && (
-              <div
-                style={{
-                  position: 'absolute',
-                  top: '2px',
-                  right: '2px',
-                  minWidth: '16px',
-                  height: '16px',
-                  borderRadius: '8px',
-                  backgroundColor: badgeDef!.color,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '9px',
-                  fontWeight: 700,
-                  color: '#fff',
-                  lineHeight: 1,
-                  padding: '0 3px',
-                }}
-                aria-hidden="true"
-                title={`${badgeCount} pending`}
-              >
-                {badgeCount > 99 ? '99+' : badgeCount}
-              </div>
+              <NotificationBadge
+                count={badgeCount}
+                color={badgeDef!.color}
+                size="sm"
+                maxDisplay={99}
+                ariaLabel={`${label}: ${badgeCount} notifications`}
+              />
             )}
           </button>
         );
