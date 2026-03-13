@@ -158,6 +158,40 @@ const CHANNEL_BRAND_COLORS: Record<string, string> = {
 };
 
 // ---------------------------------------------------------------------------
+// Text sanitization
+// ---------------------------------------------------------------------------
+
+function sanitizeText(text: string): string {
+  if (!text) return '';
+  // SSR-safe: decode common HTML entities manually
+  let result = text
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&#x27;/g, "'")
+    .replace(/&#9;/g, '\t')
+    .replace(/&#10;/g, '\n')
+    .replace(/&#13;/g, '\r')
+    .replace(/&deg;/g, '\u00B0')
+    .replace(/&rsquo;/g, '\u2019')
+    .replace(/&lsquo;/g, '\u2018')
+    .replace(/&rdquo;/g, '\u201D')
+    .replace(/&ldquo;/g, '\u201C')
+    .replace(/&ndash;/g, '\u2013')
+    .replace(/&mdash;/g, '\u2014')
+    .replace(/&nbsp;/g, '\u00A0')
+    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(parseInt(n, 10)))
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, h) => String.fromCharCode(parseInt(h, 16)));
+  // Strip remaining HTML tags
+  result = result.replace(/<[^>]*>/g, '');
+  // Normalize whitespace
+  result = result.replace(/[\t ]+/g, ' ').trim();
+  return result;
+}
+
+// ---------------------------------------------------------------------------
 // Seed data
 // ---------------------------------------------------------------------------
 
@@ -1430,6 +1464,11 @@ function ExpandedMessageRow({
   const [aiResult, setAiResult] = useState<{ summary: string; actionItems: string[]; draftReply: string } | null>(null);
   const [aiLoading, setAiLoading] = useState(true);
 
+  // Ghost draft state
+  const [ghostVisible, setGhostVisible] = useState(true);
+  const [ghostDismissed, setGhostDismissed] = useState(false);
+  const ghostTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+
   // Thread view state
   const latestThreadId = threadMessages?.[threadMessages.length - 1]?.id;
   const [expandedThreadIds, setExpandedThreadIds] = useState<Set<string>>(new Set(latestThreadId ? [latestThreadId] : []));
@@ -1473,8 +1512,23 @@ function ExpandedMessageRow({
     return () => document.removeEventListener('keydown', handleKey);
   }, [onClose, replyFocused]);
 
+  // Ghost draft reappear after clearing textarea
+  useEffect(() => {
+    if (replyText === '' && ghostDismissed) {
+      ghostTimerRef.current = setTimeout(() => {
+        setGhostVisible(true);
+        setGhostDismissed(false);
+      }, 500);
+      return () => clearTimeout(ghostTimerRef.current);
+    }
+  }, [replyText, ghostDismissed]);
+
   const handleAutoExpand = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setReplyText(e.target.value);
+    if (e.target.value) {
+      setGhostVisible(false);
+      setGhostDismissed(true);
+    }
     e.target.style.height = 'auto';
     e.target.style.height = Math.min(e.target.scrollHeight, 200) + 'px';
   };
@@ -1483,6 +1537,14 @@ function ExpandedMessageRow({
     if (replyText.trim()) {
       onReply(message.id, replyText);
       setReplyText('');
+    }
+  };
+
+  const handleNavigateLocal = (action: string) => {
+    if (action === 'snooze') {
+      // Dispatch snooze event for parent to handle
+      const btn = expandedRef.current?.querySelector('[data-snooze-trigger]') as HTMLButtonElement | null;
+      if (btn) btn.click();
     }
   };
 
@@ -1509,13 +1571,6 @@ function ExpandedMessageRow({
     transition: 'all 150ms ease',
   };
 
-  const shimmerStyle: React.CSSProperties = {
-    background: 'linear-gradient(90deg, rgba(139,92,246,0.08) 25%, rgba(139,92,246,0.14) 50%, rgba(139,92,246,0.08) 75%)',
-    backgroundSize: '200% 100%',
-    animation: 'shimmer 1.5s ease-in-out infinite',
-    borderRadius: 4,
-  };
-
   const toggleThread = (id: string) => {
     setExpandedThreadIds(prev => {
       const s = new Set(prev);
@@ -1534,171 +1589,98 @@ function ExpandedMessageRow({
         background: 'rgba(8, 12, 20, 0.7)',
         backdropFilter: 'blur(20px) saturate(1.2)',
         WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
-        borderTop: '1px solid rgba(255, 255, 255, 0.06)',
         border: '1px solid rgba(255, 255, 255, 0.05)',
         borderTopColor: 'rgba(255, 255, 255, 0.03)',
         overflow: 'hidden',
         animation: 'expandIn 200ms ease',
       }}
     >
-      <style>{`@keyframes expandIn { from { opacity: 0; max-height: 0; } to { opacity: 1; max-height: 2000px; } }`}</style>
+      <style>{`
+        @keyframes expandIn { from { opacity: 0; max-height: 0; } to { opacity: 1; max-height: 2000px; } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+      `}</style>
 
-      {/* Header bar */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '14px 20px',
-        borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
-        gap: 12,
-        flexWrap: 'wrap',
-      }}>
-        {/* Sender info */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
-          <div style={{
-            width: 14, height: 14, display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: brandColor, flexShrink: 0,
-          }}>
+      {/* Header -- decluttered */}
+      <div style={{ padding: '16px 20px 0', display: 'flex', flexDirection: 'column', gap: 4 }}>
+        {/* Row 1: channel icon + sender name ... date */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ width: 14, height: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', color: brandColor, flexShrink: 0 }}>
             <ChannelIcon size={13} />
           </div>
           <span style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.9)' }}>
-            {String(sender)}
+            {sanitizeText(String(sender))}
           </span>
-          {message.senderEmail && (
-            <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)' }}>
-              {String(message.senderEmail)}
-            </span>
-          )}
           <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', marginLeft: 'auto', flexShrink: 0 }}>
             {fullDate}
           </span>
         </div>
-
-        {/* Action pills */}
-        <div style={{ display: 'flex', gap: 6, flexShrink: 0, flexWrap: 'wrap' }}>
-          <button
-            style={actionPillStyle}
-            onClick={() => textareaRef.current?.focus()}
-            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
-          >
-            <Reply size={12} /> Reply
-          </button>
-          <button
-            style={actionPillStyle}
-            onClick={() => onArchive(message.id)}
-            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
-          >
-            <Archive size={12} /> Archive
-          </button>
-          <button
-            style={actionPillStyle}
-            onClick={() => onDone(message.id)}
-            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
-          >
-            <CheckCircle2 size={12} /> Done
-          </button>
-          <button
-            style={{ ...actionPillStyle, background: 'rgba(239,68,68,0.08)', color: 'rgba(239,68,68,0.8)', borderColor: 'rgba(239,68,68,0.15)' }}
-            onClick={() => onSpam(message.id)}
-            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(239,68,68,0.15)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(239,68,68,0.08)'; }}
-          >
-            <AlertTriangle size={12} /> Spam
-          </button>
-        </div>
+        {/* Row 2: email (dim) */}
+        {message.senderEmail && (
+          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', paddingLeft: 22 }}>
+            {String(message.senderEmail)}
+          </div>
+        )}
       </div>
 
-      {/* Content area */}
-      <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+      {/* Content area with max-height scroll */}
+      <div style={{
+        padding: '16px 20px',
+        display: 'flex', flexDirection: 'column', gap: 16,
+        maxHeight: '60vh',
+        overflowY: 'auto',
+        scrollbarWidth: 'thin',
+        scrollbarColor: 'rgba(255,255,255,0.1) transparent',
+      }}>
         {/* Subject */}
         {message.subject && (
           <h3 style={{
             fontSize: 16, fontWeight: 600, color: 'rgba(255,255,255,0.93)',
             margin: 0, lineHeight: 1.3,
           }}>
-            {String(message.subject)}
+            {sanitizeText(String(message.subject))}
           </h3>
         )}
 
-        {/* AI Summary panel */}
-        {showSummary && (
-          <div style={{
-            padding: 14,
-            borderRadius: 10,
-            border: '1px solid rgba(99, 102, 241, 0.25)',
-            background: 'rgba(99, 102, 241, 0.05)',
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-              <Sparkles size={13} style={{ color: '#A78BFA', flexShrink: 0 }} />
-              <span style={{ fontSize: 11, fontWeight: 600, color: '#A78BFA', letterSpacing: '0.02em' }}>
-                AI Summary
-              </span>
-            </div>
-
-            {aiLoading ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <div style={{ ...shimmerStyle, height: 11, width: '90%' }} />
-                <div style={{ ...shimmerStyle, height: 11, width: '72%' }} />
-                <div style={{ ...shimmerStyle, height: 11, width: '50%', marginTop: 2 }} />
-              </div>
-            ) : aiResult ? (
-              <>
-                <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.72)', margin: '0 0 8px', lineHeight: 1.5 }}>
-                  {aiResult.summary}
-                </p>
-                {aiResult.actionItems.length > 0 && (
-                  <ul style={{ margin: '0 0 10px', padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 3 }}>
-                    {aiResult.actionItems.map((item, i) => (
-                      <li key={i} style={{ fontSize: 12, color: 'rgba(167,139,250,0.85)', display: 'flex', alignItems: 'flex-start', gap: 6 }}>
-                        <span style={{ color: '#6366f1', marginTop: 1, flexShrink: 0 }}>{'>'}</span>
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <button
-                    onClick={() => window.dispatchEvent(new CustomEvent('bb:create-task', { detail: { subject: message.subject || message.bodyPreview.slice(0, 60), description: message.bodyPreview } }))}
-                    style={{
-                      display: 'inline-flex', alignItems: 'center', gap: 5,
-                      padding: '4px 10px', borderRadius: 6,
-                      border: '1px solid rgba(99,102,241,0.3)',
-                      background: 'rgba(99,102,241,0.1)', color: '#A78BFA',
-                      fontSize: 11, fontWeight: 500, cursor: 'pointer', transition: 'all 150ms ease',
-                    }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(99,102,241,0.2)'; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(99,102,241,0.1)'; }}
-                  >
-                    <ListTodo size={11} /> Create Task
-                  </button>
-                  <button
-                    onClick={() => {
-                      setReplyText(aiResult.draftReply);
-                      setTimeout(() => textareaRef.current?.focus(), 50);
-                    }}
-                    style={{
-                      display: 'inline-flex', alignItems: 'center', gap: 5,
-                      padding: '4px 10px', borderRadius: 6,
-                      border: '1px solid rgba(255,255,255,0.08)',
-                      background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.6)',
-                      fontSize: 11, fontWeight: 500, cursor: 'pointer', transition: 'all 150ms ease',
-                    }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
-                  >
-                    <Reply size={11} /> Draft Reply
-                  </button>
-                </div>
-              </>
-            ) : null}
-          </div>
+        {/* Invisible AI summary -- rendered as seamless first paragraph */}
+        {showSummary && aiResult && !aiLoading && (
+          <>
+            <p style={{
+              fontSize: 14, color: 'rgba(255,255,255,0.82)', lineHeight: 1.6,
+              margin: 0, opacity: 1,
+              animation: 'fadeIn 300ms ease',
+            }}>
+              {sanitizeText(aiResult.summary)}
+            </p>
+            <div style={{ height: 1, background: 'rgba(255,255,255,0.04)' }} />
+          </>
         )}
 
+        {/* Body text */}
+        <div style={{
+          fontSize: 14, color: 'rgba(255,255,255,0.82)', lineHeight: 1.7,
+          whiteSpace: 'pre-wrap', wordBreak: 'break-word',
+          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+        }}>
+          {sanitizeText(String(message.bodyPreview || '(No message body)'))}
+        </div>
+
+        {/* Action items -- neutral colors */}
+        {aiResult && aiResult.actionItems.length > 0 && (
+          <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 4 }}>
+            {aiResult.actionItems.map((item, i) => (
+              <li key={i} style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', display: 'flex', alignItems: 'flex-start', gap: 6 }}>
+                <span style={{ color: 'rgba(255,255,255,0.3)', marginTop: 1, flexShrink: 0 }}>{'>'}</span>
+                {sanitizeText(item)}
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {/* Attachment pills stub */}
+        <AttachmentPills attachments={undefined} />
+
         {/* Thread view */}
-        {hasThread && threadMessages ? (
+        {hasThread && threadMessages && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
             <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', marginBottom: 2, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
               {threadMessages.length} messages in thread
@@ -1736,7 +1718,7 @@ function ExpandedMessageRow({
                     </span>
                     {!isExpTh && !isLatest && (
                       <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
-                        {String(tm.bodyPreview || '').slice(0, 70)}
+                        {sanitizeText(String(tm.bodyPreview || '').slice(0, 70))}
                       </span>
                     )}
                     <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', flexShrink: 0, marginLeft: 'auto' }}>
@@ -1753,75 +1735,187 @@ function ExpandedMessageRow({
                       padding: '0 12px 10px 42px', fontSize: 13, color: 'rgba(255,255,255,0.72)',
                       lineHeight: 1.6, whiteSpace: 'pre-wrap', wordBreak: 'break-word',
                     }}>
-                      {String(tm.bodyPreview || '')}
+                      {sanitizeText(String(tm.bodyPreview || ''))}
                     </div>
                   )}
                 </div>
               );
             })}
           </div>
-        ) : (
-          /* Full body text */
-          <div style={{
-            fontSize: 14, color: 'rgba(255,255,255,0.82)', lineHeight: 1.7,
-            whiteSpace: 'pre-wrap', wordBreak: 'break-word',
-            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-          }}>
-            {String(message.bodyPreview || '(No message body)')}
+        )}
+      </div>
+
+      {/* Ghost draft reply composer */}
+      <div style={{ padding: '12px 20px 16px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+        <div style={{ position: 'relative' }}>
+          {/* Ghost text overlay */}
+          {ghostVisible && !replyText && aiResult?.draftReply && (
+            <div style={{
+              position: 'absolute',
+              top: 0, left: 0, right: 48,
+              padding: '9px 12px',
+              color: 'rgba(255, 255, 255, 0.25)',
+              fontStyle: 'italic',
+              fontSize: 13,
+              fontFamily: 'inherit',
+              lineHeight: 1.5,
+              pointerEvents: 'none',
+              whiteSpace: 'pre-wrap',
+              zIndex: 1,
+            }}>
+              {sanitizeText(aiResult.draftReply)}
+            </div>
+          )}
+          <div style={{ display: 'flex', gap: 8 }}>
+            <textarea
+              ref={textareaRef}
+              value={replyText}
+              onChange={handleAutoExpand}
+              onFocus={() => setReplyFocused(true)}
+              onBlur={() => setReplyFocused(false)}
+              onKeyDown={(e) => {
+                if (e.key === 'Tab' && ghostVisible && !replyText && aiResult?.draftReply) {
+                  e.preventDefault();
+                  setReplyText(aiResult.draftReply);
+                  setGhostVisible(false);
+                  setGhostDismissed(true);
+                  setTimeout(() => {
+                    if (textareaRef.current) {
+                      textareaRef.current.style.height = 'auto';
+                      textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, 200) + 'px';
+                      textareaRef.current.setSelectionRange(aiResult.draftReply.length, aiResult.draftReply.length);
+                    }
+                  }, 0);
+                }
+                if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+                  e.preventDefault();
+                  handleSendReply();
+                }
+              }}
+              placeholder={ghostVisible && aiResult?.draftReply ? '' : 'Reply... (Cmd+Enter to send)'}
+              style={{
+                flex: 1, padding: '9px 12px', borderRadius: 8,
+                border: replyFocused ? '1px solid rgba(255,255,255,0.15)' : '1px solid rgba(255,255,255,0.06)',
+                background: 'rgba(13,17,23,0.6)', color: 'var(--text-primary, #F1F5F9)',
+                fontSize: 13, fontFamily: 'inherit', outline: 'none',
+                transition: 'all 150ms ease', resize: 'none', minHeight: 38, maxHeight: 200,
+                boxShadow: replyFocused ? '0 0 0 2px rgba(255,90,31,0.12)' : 'none',
+                position: 'relative', zIndex: 2,
+              }}
+            />
+            <button
+              onClick={handleSendReply}
+              disabled={!replyText.trim()}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 5,
+                padding: '9px 14px', borderRadius: 8, border: 'none',
+                background: replyText.trim() ? '#FF5A1F' : 'rgba(255,90,31,0.3)',
+                color: replyText.trim() ? '#fff' : 'rgba(255,255,255,0.3)',
+                fontSize: 12, fontWeight: 600,
+                cursor: replyText.trim() ? 'pointer' : 'default',
+                transition: 'all 150ms ease', flexShrink: 0,
+              }}
+              onMouseEnter={(e) => { if (replyText.trim()) e.currentTarget.style.background = '#FF7A45'; }}
+              onMouseLeave={(e) => { if (replyText.trim()) e.currentTarget.style.background = '#FF5A1F'; }}
+            >
+              <Send size={12} /> Send
+            </button>
+          </div>
+        </div>
+        {/* Ghost hint */}
+        {ghostVisible && !replyText && aiResult?.draftReply && (
+          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.2)', marginTop: 5 }}>
+            Tab to use suggested reply
+          </div>
+        )}
+        {replyText && (
+          <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)', marginTop: 5 }}>
+            <kbd style={{ padding: '1px 4px', borderRadius: 3, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', fontSize: 9, fontFamily: 'inherit' }}>Cmd+Enter</kbd> to send
           </div>
         )}
       </div>
 
-      {/* Reply composer */}
+      {/* Bottom action bar */}
       <div style={{
-        padding: '12px 20px 16px',
-        borderTop: '1px solid rgba(255,255,255,0.05)',
+        display: 'flex', alignItems: 'center', gap: 6,
+        padding: '10px 20px 14px',
+        borderTop: '1px solid rgba(255,255,255,0.04)',
+        flexWrap: 'wrap',
       }}>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <textarea
-            ref={textareaRef}
-            value={replyText}
-            onChange={handleAutoExpand}
-            onFocus={() => setReplyFocused(true)}
-            onBlur={() => setReplyFocused(false)}
-            onKeyDown={(e) => {
-              if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
-                e.preventDefault();
-                handleSendReply();
-              }
-            }}
-            placeholder="Reply... (Cmd+Enter to send)"
-            style={{
-              flex: 1, padding: '9px 12px', borderRadius: 8,
-              border: replyFocused ? '1px solid rgba(255,255,255,0.15)' : '1px solid rgba(255,255,255,0.06)',
-              background: 'rgba(13,17,23,0.6)', color: 'var(--text-primary, #F1F5F9)',
-              fontSize: 13, fontFamily: 'inherit', outline: 'none',
-              transition: 'all 150ms ease', resize: 'none', minHeight: 38, maxHeight: 200,
-              boxShadow: replyFocused ? '0 0 0 2px rgba(255,90,31,0.12)' : 'none',
-            }}
-          />
-          <button
-            onClick={handleSendReply}
-            disabled={!replyText.trim()}
-            style={{
-              display: 'inline-flex', alignItems: 'center', gap: 5,
-              padding: '9px 14px', borderRadius: 8, border: 'none',
-              background: replyText.trim() ? '#FF5A1F' : 'rgba(255,90,31,0.3)',
-              color: replyText.trim() ? '#fff' : 'rgba(255,255,255,0.3)',
-              fontSize: 12, fontWeight: 600,
-              cursor: replyText.trim() ? 'pointer' : 'default',
-              transition: 'all 150ms ease', flexShrink: 0,
-            }}
-            onMouseEnter={(e) => { if (replyText.trim()) e.currentTarget.style.background = '#FF7A45'; }}
-            onMouseLeave={(e) => { if (replyText.trim()) e.currentTarget.style.background = '#FF5A1F'; }}
-          >
-            <Send size={12} /> Send
+        <button style={actionPillStyle} onClick={() => textareaRef.current?.focus()}
+          onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}>
+          <Reply size={12} /> Reply
+        </button>
+        <button style={actionPillStyle} onClick={() => onArchive(message.id)}
+          onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}>
+          <Archive size={12} /> Archive
+        </button>
+        <button style={actionPillStyle} onClick={() => onDone(message.id)}
+          onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}>
+          <CheckCircle2 size={12} /> Done
+        </button>
+        <button style={actionPillStyle} onClick={() => handleNavigateLocal('snooze')} data-snooze-trigger
+          onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}>
+          <Clock size={12} /> Snooze
+        </button>
+        <button style={actionPillStyle} onClick={() => {/* forward placeholder */}}
+          onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}>
+          <Forward size={12} /> Forward
+        </button>
+        {aiResult && aiResult.actionItems.length > 0 && (
+          <button style={actionPillStyle}
+            onClick={() => window.dispatchEvent(new CustomEvent('bb:create-task', { detail: { subject: message.subject || message.bodyPreview.slice(0, 60), description: message.bodyPreview } }))}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}>
+            <ListTodo size={12} /> Create Task
           </button>
-        </div>
-        <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)', marginTop: 5 }}>
-          <kbd style={{ padding: '1px 4px', borderRadius: 3, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', fontSize: 9, fontFamily: 'inherit' }}>Cmd+Enter</kbd> to send
-        </div>
+        )}
+        <div style={{ flex: 1 }} />
+        <button style={{ ...actionPillStyle, background: 'rgba(239,68,68,0.08)', color: 'rgba(239,68,68,0.8)', borderColor: 'rgba(239,68,68,0.15)' }}
+          onClick={() => onSpam(message.id)}
+          onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(239,68,68,0.15)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(239,68,68,0.08)'; }}>
+          <AlertTriangle size={12} /> Spam
+        </button>
+        <button style={{ ...actionPillStyle, borderColor: 'transparent', background: 'transparent' }}
+          onClick={onClose}
+          onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}>
+          <X size={12} />
+        </button>
       </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Attachment Pills (structural stub — renders nothing when no data)
+// ---------------------------------------------------------------------------
+
+function AttachmentPills({ attachments }: { attachments?: { name: string; size: string; type: string }[] }) {
+  if (!attachments || attachments.length === 0) return null;
+  return (
+    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+      {attachments.map((att, i) => (
+        <div key={i} style={{
+          display: 'inline-flex', alignItems: 'center', gap: 8,
+          height: 32, padding: '0 10px', borderRadius: 8,
+          background: 'rgba(255,255,255,0.04)',
+          border: '1px solid rgba(255,255,255,0.06)',
+          fontSize: 12, color: 'rgba(255,255,255,0.7)',
+          cursor: 'pointer', transition: 'all 150ms ease',
+        }}>
+          <span style={{ maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {att.name}
+          </span>
+          <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>{att.size}</span>
+        </div>
+      ))}
     </div>
   );
 }
@@ -1951,9 +2045,9 @@ function MessageRow({
         )}
         <span className="bb-inbox-row__preview">
           {message.aiSummary ? (
-            <>{String(message.aiSummary || '')}</>
+            <>{sanitizeText(String(message.aiSummary || ''))}</>
           ) : (
-            String(message.bodyPreview || '')
+            sanitizeText(String(message.bodyPreview || ''))
           )}
         </span>
       </div>

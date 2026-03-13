@@ -267,8 +267,8 @@ export function useInboxKeyboard(options: UseInboxKeyboardOptions): UseInboxKeyb
       return;
     }
 
-    // 1-4 → Switch category
-    if (e.key >= '1' && e.key <= '4' && !meta && !shift && !alt) {
+    // 1-5 → Switch category
+    if (e.key >= '1' && e.key <= '5' && !meta && !shift && !alt) {
       e.preventDefault();
       const category = parseInt(e.key, 10);
       opts.onCategorySwitch(category);
