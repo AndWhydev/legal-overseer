@@ -6,7 +6,7 @@ import {
   MessageSquare,
   Inbox,
   BellRing,
-  Plug,
+
   Pill,
   Users,
   Handshake,
@@ -35,7 +35,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
   chat:            MessageSquare,
   inbox:           Inbox,
   'creator-studio': BellRing,
-  connections:     Plug,
+
   medications:     Pill,
   contacts:        Users,
   leads:           Handshake,

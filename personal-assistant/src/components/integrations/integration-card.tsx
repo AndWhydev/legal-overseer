@@ -1,9 +1,56 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Loader2, X } from 'lucide-react';
 import { BRAND_ICONS } from './integration-icons';
 import type { Integration } from '@/lib/integrations/types';
+
+// ─── Apple Pay-style success tick ────────────────────────────────────────────
+
+function SuccessTick({ visible }: { visible: boolean }) {
+  if (!visible) return null;
+  return (
+    <svg
+      width={18}
+      height={18}
+      viewBox="0 0 24 24"
+      fill="none"
+      style={{ flexShrink: 0 }}
+    >
+      <style>{`
+        @keyframes bb-tick-circle {
+          from { stroke-dashoffset: 62.83; }
+          to { stroke-dashoffset: 0; }
+        }
+        @keyframes bb-tick-check {
+          from { stroke-dashoffset: 16; }
+          to { stroke-dashoffset: 0; }
+        }
+        @keyframes bb-tick-fade {
+          0%, 70% { opacity: 1; }
+          100% { opacity: 0; }
+        }
+        .bb-tick-group {
+          animation: bb-tick-fade 2s ease forwards;
+        }
+        .bb-tick-circle {
+          stroke-dasharray: 62.83;
+          stroke-dashoffset: 62.83;
+          animation: bb-tick-circle 400ms cubic-bezier(0.65, 0, 0.35, 1) 100ms forwards;
+        }
+        .bb-tick-check {
+          stroke-dasharray: 16;
+          stroke-dashoffset: 16;
+          animation: bb-tick-check 300ms cubic-bezier(0.65, 0, 0.35, 1) 400ms forwards;
+        }
+      `}</style>
+      <g className="bb-tick-group">
+        <circle className="bb-tick-circle" cx="12" cy="12" r="10" stroke="#22C55E" strokeWidth="2" />
+        <path className="bb-tick-check" d="M8 12.5l2.5 2.5 5.5-5.5" stroke="#22C55E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      </g>
+    </svg>
+  );
+}
 
 interface IntegrationCardProps {
   integration: Integration;
@@ -42,8 +89,20 @@ export function IntegrationCard({ integration, isConnected = false, onStatusChan
   const [hovered, setHovered] = useState(false);
   const [inputFocused, setInputFocused] = useState(false);
   const [connectingFeedback, setConnectingFeedback] = useState(false);
+  const [showTick, setShowTick] = useState(false);
+  const prevConnectedRef = useRef(isConnected);
 
   const connected = isConnected || integration.status === 'connected';
+
+  // Detect transition from disconnected → connected and show success tick
+  useEffect(() => {
+    if (isConnected && !prevConnectedRef.current) {
+      setShowTick(true);
+      const timer = setTimeout(() => setShowTick(false), 2000);
+      return () => clearTimeout(timer);
+    }
+    prevConnectedRef.current = isConnected;
+  }, [isConnected]);
 
   const handleConnect = () => {
     if (integration.id === 'whatsapp') {
@@ -151,6 +210,7 @@ export function IntegrationCard({ integration, isConnected = false, onStatusChan
             <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>
               {integration.name}
             </span>
+            <SuccessTick visible={showTick} />
             {isComingSoon && (
               <span style={{
                 display: 'inline-flex',

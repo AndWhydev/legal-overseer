@@ -102,20 +102,11 @@ function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: 
   );
 }
 
-// ─── Settings Rail ───────────────────────────────────────────────────────────
+// ─── Settings Rail (reuses bb-sidebar-panel CSS classes) ─────────────────────
 
 function SettingsRail({ activeSection, onSectionChange }: { activeSection: string; onSectionChange: (id: string) => void }) {
   return (
-    <nav
-      style={{
-        width: 200,
-        flexShrink: 0,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 2,
-        padding: '4px 0',
-      }}
-    >
+    <nav className="bb-sidebar-panel__nav" aria-label="Settings sections">
       {SECTIONS.map(s => {
         const active = activeSection === s.id;
         const Icon = s.icon;
@@ -123,37 +114,10 @@ function SettingsRail({ activeSection, onSectionChange }: { activeSection: strin
           <button
             key={s.id}
             onClick={() => onSectionChange(s.id)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 10,
-              padding: '10px 14px',
-              borderRadius: 10,
-              border: 'none',
-              background: active ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
-              color: active ? 'var(--text-primary)' : 'var(--text-secondary)',
-              fontSize: 13,
-              fontWeight: active ? 600 : 400,
-              cursor: 'pointer',
-              transition: 'all 150ms ease',
-              textAlign: 'left',
-              width: '100%',
-            }}
-            onMouseEnter={e => {
-              if (!active) {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)';
-                e.currentTarget.style.color = 'var(--text-primary)';
-              }
-            }}
-            onMouseLeave={e => {
-              if (!active) {
-                e.currentTarget.style.background = 'transparent';
-                e.currentTarget.style.color = 'var(--text-secondary)';
-              }
-            }}
+            className={`bb-sidebar-panel__item${active ? ' bb-sidebar-panel__item--active' : ''}`}
           >
-            <Icon size={16} strokeWidth={active ? 2 : 1.5} />
-            {s.label}
+            <Icon size={16} strokeWidth={1.8} />
+            <span className="bb-sidebar-panel__label">{s.label}</span>
           </button>
         );
       })}
@@ -504,22 +468,16 @@ function SettingsTab() {
     }}>
       <SaveIndicator visible={saveIndicatorVisible} />
 
-      {/* Settings Rail */}
+      {/* Settings Rail — uses same CSS as sidebar panel */}
       <div style={{
-        padding: '20px 12px 20px 20px',
-        borderRight: '1px solid var(--glass-divider, rgba(255, 255, 255, 0.06))',
+        width: 'var(--sidebar-panel-width, 180px)',
         flexShrink: 0,
+        borderRight: '1px solid rgba(255, 255, 255, 0.06)',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
       }}>
-        <p style={{
-          fontSize: 11,
-          fontWeight: 600,
-          color: 'var(--text-dim)',
-          textTransform: 'uppercase',
-          letterSpacing: '0.05em',
-          margin: '0 0 12px 14px',
-        }}>
-          Settings
-        </p>
+        <div className="bb-sidebar-panel__header">Settings</div>
         <SettingsRail activeSection={activeSection} onSectionChange={setActiveSection} />
       </div>
 

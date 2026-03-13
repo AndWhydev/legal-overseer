@@ -44,7 +44,7 @@ export const TABS: TabDef[] = [
   { id: 'chat', label: 'Chat', path: '/dashboard/chat' },
   { id: 'inbox', label: 'Inbox', path: '/dashboard/inbox' },
   { id: 'creator-studio', label: 'Creator Studio', path: '/dashboard/creator-studio' },
-  { id: 'connections', label: 'Connections', path: '/dashboard/connections' },
+
   { id: 'medications', label: 'Medications', path: '/dashboard/medications' },
   { id: 'contacts', label: 'Contacts', path: '/dashboard/contacts' },
   { id: 'leads', label: 'Leads', path: '/dashboard/leads' },
@@ -74,7 +74,7 @@ const tabImports: Record<string, Promise<{ default: React.ComponentType }>> = {
   chat: import('./tabs/chat-tab'),
   inbox: import('./tabs/inbox-tab'),
   'creator-studio': import('./tabs/creator-studio-tab'),
-  connections: import('./tabs/connections-tab'),
+
   medications: import('./tabs/medications-tab'),
   contacts: import('./tabs/contacts-tab'),
   leads: import('./tabs/leads-tab'),
@@ -101,7 +101,7 @@ const TabComponents: Record<string, React.LazyExoticComponent<React.ComponentTyp
   chat: lazy(() => tabImports.chat),
   inbox: lazy(() => tabImports.inbox),
   'creator-studio': lazy(() => tabImports['creator-studio']),
-  connections: lazy(() => tabImports.connections),
+
   medications: lazy(() => tabImports.medications),
   contacts: lazy(() => tabImports.contacts),
   leads: lazy(() => tabImports.leads),
