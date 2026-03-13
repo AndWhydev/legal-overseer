@@ -48,7 +48,7 @@ export const TOOL_GROUPS: Record<ToolGroup, ToolGroupMeta> = {
     id: 'channel',
     label: 'Channel Integration',
     description: 'Sync, search, and interact with communication channels (Gmail, Calendar, etc.)',
-    tools: ['sync_channels', 'search_messages', 'search_inbox', 'read_email', 'draft_reply', 'summarize_inbox', 'get_upcoming', 'create_reminder', 'schedule_event', 'read_recent_emails', 'search_emails', 'get_connected_channels', 'send_gmail'],
+    tools: ['sync_channels', 'search_messages', 'search_inbox', 'read_email', 'draft_reply', 'summarize_inbox', 'get_upcoming', 'create_reminder', 'schedule_event', 'read_recent_emails', 'search_emails', 'get_connected_channels', 'send_gmail', 'send_outlook'],
   },
   web: {
     id: 'web',
@@ -109,6 +109,7 @@ export const JIT_INSTRUCTIONS: Record<string, string> = {
   create_reminder: 'Reminder created. Confirm the title, list, and due date to the user.',
   schedule_event: 'Event scheduled. Confirm the title, date/time, and location to the user.',
   send_gmail: 'Email sent from the user\'s Gmail account. Confirm the recipient, subject, and message ID. This was sent from their actual Gmail address, not a system address.',
+  send_outlook: 'Email sent from the user\'s Outlook account. Confirm the recipient and subject. This was sent from their actual Outlook/Microsoft 365 address, not a system address.',
 
   // Comms
   send_email: 'Email sent successfully. Confirm the recipient and subject to the user. Suggest logging this action if it\'s business-relevant.',

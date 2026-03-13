@@ -133,7 +133,7 @@ function isTokenExpired(expiresAt?: string): boolean {
  * Resolve a valid access token, refreshing if expired and persisting new tokens
  * back to Supabase channel_configs.
  */
-async function resolveAccessToken(
+export async function resolveAccessToken(
   creds: OutlookCredentials,
   client?: SupabaseClient,
   orgId?: string,

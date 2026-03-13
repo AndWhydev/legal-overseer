@@ -222,6 +222,37 @@ export const channelToolDefinitions: Anthropic.Tool[] = [
       required: ['recipient', 'message'],
     },
   },
+  {
+    name: 'send_outlook',
+    description:
+      'Send an email from the user\'s connected Outlook account via Microsoft Graph API (OAuth). Sends directly from the user\'s own Outlook/Microsoft 365 address. IMPORTANT: Always confirm the recipient, subject, and body with the user before sending. Requires a connected Outlook OAuth integration.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        to: {
+          type: 'string',
+          description: 'Recipient email address',
+        },
+        subject: {
+          type: 'string',
+          description: 'Email subject line',
+        },
+        body: {
+          type: 'string',
+          description: 'Email body (plain text)',
+        },
+        cc: {
+          type: 'string',
+          description: 'CC recipients (comma-separated email addresses)',
+        },
+        bcc: {
+          type: 'string',
+          description: 'BCC recipients (comma-separated email addresses)',
+        },
+      },
+      required: ['to', 'subject', 'body'],
+    },
+  },
 ]
 
 async function readJsonCache<T>(filename: string): Promise<T[]> {
@@ -921,6 +952,63 @@ export const channelToolHandlers: Record<string, AgentToolHandler> = {
     } catch (err) {
       logger.error('[send_whatsapp] Error:', err)
       return { success: false, error: `WhatsApp send error: ${String(err)}` }
+    }
+  },
+
+  async send_outlook(input, orgId, supabase) {
+    const to = input.to as string
+    const subject = input.subject as string
+    const body = input.body as string
+    const cc = input.cc as string | undefined
+    const bcc = input.bcc as string | undefined
+
+    try {
+      const creds = await getOrgCredential(supabase, orgId, 'outlook')
+      if (!creds) {
+        return {
+          success: false,
+          error: 'Outlook not connected. The user needs to connect their Outlook account via OAuth in Settings > Integrations.',
+        }
+      }
+
+      // Resolve access token (handles refresh internally)
+      const { resolveAccessToken } = await import('@/lib/channels/outlook')
+      const accessToken = await resolveAccessToken(creds, supabase, orgId)
+
+      // Build Graph API message payload with CC/BCC
+      const message: Record<string, unknown> = {
+        subject,
+        body: { contentType: 'Text', content: body },
+        toRecipients: [{ emailAddress: { address: to } }],
+      }
+      if (cc) {
+        message.ccRecipients = cc.split(',').map(e => ({ emailAddress: { address: e.trim() } }))
+      }
+      if (bcc) {
+        message.bccRecipients = bcc.split(',').map(e => ({ emailAddress: { address: e.trim() } }))
+      }
+
+      const res = await fetch('https://graph.microsoft.com/v1.0/me/sendMail', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message }),
+      })
+
+      if (!res.ok) {
+        const errorText = await res.text()
+        logger.error('[send_outlook] Graph API error:', { status: res.status, body: errorText })
+        return { success: false, error: `Outlook API error (${res.status}): ${errorText}` }
+      }
+
+      logger.info('[send_outlook] Email sent successfully', { to, subject, org: orgId })
+
+      return {
+        success: true,
+        data: { to, cc: cc || null, bcc: bcc || null, subject },
+      }
+    } catch (err) {
+      logger.error('[send_outlook] Error:', err)
+      return { success: false, error: `Outlook send error: ${String(err)}` }
     }
   },
 }
