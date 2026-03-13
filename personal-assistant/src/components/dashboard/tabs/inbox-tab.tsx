@@ -340,6 +340,7 @@ function InboxTab() {
   const [snoozedIds, setSnoozedIds] = useState<Set<string>>(new Set());
   const [showAiBrief, setShowAiBrief] = useState(false);
   const aiBriefRef = useRef<HTMLDivElement>(null);
+  const lastClickedIndexRef = useRef<number>(-1);
 
   const devOverrides = useDevOverrides();
   const useSeeded = devOverrides?.seed_data?.inbox ?? false;
@@ -544,9 +545,8 @@ function InboxTab() {
 
   // ── Keyboard hook ──
   const keyboard = useInboxKeyboard({
-    enabled: !selectedMessage,
+    enabled: true,
     messageCount: displayed.length,
-    isDrawerOpen: selectedMessage !== null,
     onOpen: (index) => {
       if (index >= 0 && index < displayed.length) setSelectedMessage(displayed[index]);
     },
@@ -586,6 +586,36 @@ function InboxTab() {
       return next;
     });
   }, [keyboard]);
+
+  const handleRowClick = useCallback((id: string, index: number, e: React.MouseEvent) => {
+    if (e.shiftKey) {
+      // Range select from lastClickedIndex to current
+      e.preventDefault();
+      const start = Math.min(lastClickedIndexRef.current >= 0 ? lastClickedIndexRef.current : index, index);
+      const end = Math.max(lastClickedIndexRef.current >= 0 ? lastClickedIndexRef.current : index, index);
+      keyboard.setSelectedIds((prev: Set<string>) => {
+        const next = new Set(prev);
+        for (let i = start; i <= end; i++) {
+          if (displayed[i]) next.add(displayed[i].id);
+        }
+        return next;
+      });
+      lastClickedIndexRef.current = index;
+    } else if (e.metaKey || e.ctrlKey) {
+      // Toggle individual selection
+      e.preventDefault();
+      keyboard.setSelectedIds((prev: Set<string>) => {
+        const next = new Set(prev);
+        if (next.has(id)) next.delete(id); else next.add(id);
+        return next;
+      });
+      lastClickedIndexRef.current = index;
+    } else {
+      // Plain click — expand/collapse (handled in Task 2, just set selectedMessage for now)
+      lastClickedIndexRef.current = index;
+      setSelectedMessage(displayed[index] || null);
+    }
+  }, [displayed, keyboard]);
 
   const clearSelection = useCallback(() => keyboard.setSelectedIds(new Set()), [keyboard]);
 
@@ -795,6 +825,7 @@ function InboxTab() {
             <MessageRow
               key={msg.id}
               message={msg}
+              index={idx}
               onArchive={handleArchive}
               onDone={handleDone}
               onSnooze={(id, e) => {
@@ -804,10 +835,9 @@ function InboxTab() {
               }}
               onReply={() => setSelectedMessage(msg)}
               onStar={handleStar}
-              onClick={() => setSelectedMessage(msg)}
+              onRowClick={handleRowClick}
               focused={idx === keyboard.selectedIndex}
               selected={keyboard.selectedIds.has(msg.id)}
-              onToggleSelect={() => toggleSelect(msg.id)}
               starred={starredIds.has(msg.id)}
             />
           ))
@@ -1329,7 +1359,7 @@ function InboxSelect({ value, onChange, label, options }: {
 // ---------------------------------------------------------------------------
 
 function MessageRow({
-  message, onArchive, onDone, onSnooze, onReply, onStar, onClick, focused, selected, onToggleSelect, starred,
+  message, onArchive, onDone, onSnooze, onReply, onStar, onRowClick, index, focused, selected, starred,
 }: {
   message: InboxMessage;
   onArchive?: (id: string) => void;
@@ -1337,10 +1367,10 @@ function MessageRow({
   onSnooze?: (id: string, e: React.MouseEvent<HTMLButtonElement>) => void;
   onReply?: (id: string) => void;
   onStar?: (id: string) => void;
-  onClick?: () => void;
+  onRowClick?: (id: string, index: number, e: React.MouseEvent) => void;
+  index: number;
   focused?: boolean;
   selected?: boolean;
-  onToggleSelect?: () => void;
   starred?: boolean;
 }) {
   const ChannelIcon = CHANNEL_ICONS[message.channelType] || GmailIcon;
@@ -1394,31 +1424,16 @@ function MessageRow({
       data-level={level}
       data-focused={focused || undefined}
       data-selected={selected || undefined}
-      onClick={onClick}
+      onClick={(e) => onRowClick?.(message.id, index, e)}
       role="button"
       tabIndex={0}
-      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick?.(); } }}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onRowClick?.(message.id, index, e as unknown as React.MouseEvent); } }}
       style={{
         '--channel-color': brandColor,
         cursor: 'pointer',
         ...(focused ? { background: 'rgba(255,255,255,0.04)', outline: '1px solid rgba(255,255,255,0.1)' } : {}),
-        ...(selected ? { background: 'rgba(255, 90, 31, 0.06)' } : {}),
       } as React.CSSProperties}
     >
-      {/* Checkbox */}
-      <div
-        onClick={(e) => { e.stopPropagation(); onToggleSelect?.(); }}
-        style={{
-          width: 18, height: 18, borderRadius: 4,
-          border: `1.5px solid ${selected ? '#FF5A1F' : 'rgba(255,255,255,0.15)'}`,
-          background: selected ? 'rgba(255,90,31,0.2)' : 'transparent',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          flexShrink: 0, cursor: 'pointer', transition: 'all 0.15s ease',
-        }}
-      >
-        {selected && <CheckCircle2 size={12} style={{ color: '#FF5A1F' }} />}
-      </div>
-
       {/* Col 1: Avatar + sender */}
       <div className="bb-inbox-row__col1">
         <div style={{ position: 'relative', width: 32, height: 32, flexShrink: 0 }}>

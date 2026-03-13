@@ -27,7 +27,8 @@ const SHORTCUTS: ShortcutItem[] = [
   { keys: ['Shift', '!'], description: 'Mark as spam', category: 'Actions' },
 
   // Selection
-  { keys: ['x'], description: 'Toggle select', category: 'Selection' },
+  { keys: ['Shift', 'Click'], description: 'Range select', category: 'Selection' },
+  { keys: ['Cmd/Ctrl', 'Click'], description: 'Toggle select', category: 'Selection' },
   { keys: ['Cmd', 'a'], description: 'Select all', category: 'Selection' },
   { keys: ['Cmd', 'Shift', 'a'], description: 'Deselect all', category: 'Selection' },
 

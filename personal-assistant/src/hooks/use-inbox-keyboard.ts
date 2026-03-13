@@ -7,7 +7,6 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 export interface UseInboxKeyboardOptions {
   enabled: boolean;
   messageCount: number;
-  isDrawerOpen: boolean;
   onOpen: (index: number) => void;
   onArchive: (index: number) => void;
   onDone: (index: number) => void;
@@ -73,7 +72,7 @@ export function useInboxKeyboard(options: UseInboxKeyboardOptions): UseInboxKeyb
   }, []);
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    if (!optionsRef.current.enabled || optionsRef.current.isDrawerOpen) return;
+    if (!optionsRef.current.enabled) return;
 
     const isEditing = isEditableTarget(e);
     const meta = e.metaKey || e.ctrlKey;

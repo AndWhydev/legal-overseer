@@ -1,12 +1,13 @@
 'use client'
 
 import { useRef, useEffect, useState, useCallback } from 'react'
-import { motion } from 'motion/react'
+import { motion, AnimatePresence } from 'motion/react'
 import type { AvatarEmotion } from './use-avatar-emotion'
 
 interface BitBitFaceAvatarProps {
   size?: number
   emotion?: AvatarEmotion
+  isThinking?: boolean
   className?: string
 }
 
@@ -168,9 +169,36 @@ const EMOTION_CONFIG: Record<
 const TRANSITION = { duration: 0.5, ease: [0.4, 0, 0.2, 1] as const }
 const BLINK_TRANSITION = { duration: 0.15, ease: 'easeInOut' as const }
 
+// Thinking eye scanning — contemplative left-right-up gaze pattern
+const THINKING_EYE_SCAN_X = [-1.5, 0.5, 2, 1, -0.5, -1.5]
+const THINKING_EYE_SCAN_Y = [-0.8, -0.3, -0.7, 0.2, -0.4, -0.8]
+const THINKING_EYE_TRANSITION = {
+  translateX: { duration: 5, repeat: Infinity, ease: 'easeInOut' as const },
+  translateY: { duration: 5, repeat: Infinity, ease: 'easeInOut' as const },
+}
+
+// Thinking eyebrow rhythm — subtle contemplative movement
+const THINKING_BROW_LEFT = {
+  dy: [-2, -3, -1.5, -2.5, -2],
+  rotate: [0, -3, 2, -1, 0],
+}
+const THINKING_BROW_RIGHT = {
+  dy: [-2, -1.5, -3, -2, -2],
+  rotate: [0, 2, -2, 3, 0],
+}
+const THINKING_BROW_TRANSITION = {
+  translateY: { duration: 4, repeat: Infinity, ease: 'easeInOut' as const },
+  rotate: { duration: 4, repeat: Infinity, ease: 'easeInOut' as const },
+}
+
+// Face center for orbiting effects (between eyes and nose)
+const FACE_CX = 24
+const FACE_CY = 22
+
 export function BitBitFaceAvatar({
   size = 48,
   emotion = 'neutral',
+  isThinking = false,
   className = '',
 }: BitBitFaceAvatarProps) {
   const svgRef = useRef<SVGSVGElement>(null)
@@ -247,6 +275,9 @@ export function BitBitFaceAvatar({
 
   const isProcessing = emotion === 'processing'
 
+  // When thinking, override cursor tracking — eyes scan autonomously
+  const effectiveEyeOffset = isThinking ? { x: 0, y: 0 } : eyeOffset
+
   // Blink overrides eye scaleY — 0.15 keeps eyes visually anchored
   const blinkScaleY = isBlinking ? 0.15 : undefined
 
@@ -261,6 +292,14 @@ export function BitBitFaceAvatar({
       className={`bb-chat__face-avatar ${size > 48 ? 'bb-chat__face-avatar--large' : ''} ${className}`}
       style={{ overflow: 'visible' }}
     >
+      {/* SVG defs for thinking glow effects */}
+      <defs>
+        <radialGradient id="thinking-glow" cx="50%" cy="46%" r="50%">
+          <stop offset="0%" stopColor="#10b981" stopOpacity="0.15" />
+          <stop offset="100%" stopColor="#10b981" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+
       <motion.g
         animate={{ rotate: headTilt }}
         transition={{ duration: 0.15, ease: 'linear' }}
@@ -279,6 +318,56 @@ export function BitBitFaceAvatar({
           }}
           style={{ transformOrigin: '50% 50%' }}
         >
+          {/* === THINKING BACKGROUND EFFECTS === */}
+          <AnimatePresence>
+            {isThinking && (
+              <motion.g
+                key="thinking-bg"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ opacity: { duration: 0.5 } }}
+              >
+                {/* Ambient glow behind face */}
+                <motion.circle
+                  cx={FACE_CX}
+                  cy={FACE_CY}
+                  r={16}
+                  fill="url(#thinking-glow)"
+                  animate={{ scale: [1, 1.1, 1], opacity: [0.6, 1, 0.6] }}
+                  transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+                  style={{ transformOrigin: `${FACE_CX}px ${FACE_CY}px` }}
+                />
+
+                {/* Pulse ring 1 — emerald */}
+                <motion.circle
+                  cx={FACE_CX}
+                  cy={FACE_CY}
+                  r={12}
+                  stroke="#10b981"
+                  strokeWidth={0.6}
+                  fill="none"
+                  animate={{ scale: [0.8, 2], opacity: [0.5, 0] }}
+                  transition={{ duration: 2.5, repeat: Infinity, ease: 'easeOut' }}
+                  style={{ transformOrigin: `${FACE_CX}px ${FACE_CY}px` }}
+                />
+
+                {/* Pulse ring 2 — cyan, staggered */}
+                <motion.circle
+                  cx={FACE_CX}
+                  cy={FACE_CY}
+                  r={12}
+                  stroke="#06b6d4"
+                  strokeWidth={0.4}
+                  fill="none"
+                  animate={{ scale: [0.8, 2.2], opacity: [0.35, 0] }}
+                  transition={{ duration: 2.5, repeat: Infinity, ease: 'easeOut', delay: 1.25 }}
+                  style={{ transformOrigin: `${FACE_CX}px ${FACE_CY}px` }}
+                />
+              </motion.g>
+            )}
+          </AnimatePresence>
+
           {/* Left eyebrow */}
           <motion.path
             d="M13 14 Q16.5 10 20 14"
@@ -287,10 +376,10 @@ export function BitBitFaceAvatar({
             strokeLinecap="round"
             fill="none"
             animate={{
-              translateY: config.leftBrow.dy,
-              rotate: config.leftBrow.rotate,
+              translateY: isThinking ? THINKING_BROW_LEFT.dy : config.leftBrow.dy,
+              rotate: isThinking ? THINKING_BROW_LEFT.rotate : config.leftBrow.rotate,
             }}
-            transition={TRANSITION}
+            transition={isThinking ? { ...THINKING_BROW_TRANSITION, ...TRANSITION } : TRANSITION}
             style={{ transformOrigin: '50% 50%' }}
           />
 
@@ -302,10 +391,10 @@ export function BitBitFaceAvatar({
             strokeLinecap="round"
             fill="none"
             animate={{
-              translateY: config.rightBrow.dy,
-              rotate: config.rightBrow.rotate,
+              translateY: isThinking ? THINKING_BROW_RIGHT.dy : config.rightBrow.dy,
+              rotate: isThinking ? THINKING_BROW_RIGHT.rotate : config.rightBrow.rotate,
             }}
-            transition={TRANSITION}
+            transition={isThinking ? { ...THINKING_BROW_TRANSITION, ...TRANSITION } : TRANSITION}
             style={{ transformOrigin: '50% 50%' }}
           />
 
@@ -316,17 +405,25 @@ export function BitBitFaceAvatar({
             r="2.5"
             fill={color}
             animate={{
-              translateX: isProcessing ? [0, 2, -2, 0] : config.leftEye.cx + eyeOffset.x,
-              translateY: eyeOffset.y,
+              translateX: isThinking
+                ? THINKING_EYE_SCAN_X
+                : isProcessing
+                  ? [0, 2, -2, 0]
+                  : config.leftEye.cx + effectiveEyeOffset.x,
+              translateY: isThinking
+                ? THINKING_EYE_SCAN_Y
+                : effectiveEyeOffset.y,
               scaleX: config.leftEye.scaleX,
               scaleY: blinkScaleY ?? config.leftEye.scaleY,
             }}
             transition={
               isBlinking
                 ? BLINK_TRANSITION
-                : isProcessing
-                  ? { translateX: { duration: 1.5, repeat: Infinity, ease: 'easeInOut' }, ...TRANSITION }
-                  : TRANSITION
+                : isThinking
+                  ? { ...THINKING_EYE_TRANSITION, ...TRANSITION }
+                  : isProcessing
+                    ? { translateX: { duration: 1.5, repeat: Infinity, ease: 'easeInOut' }, ...TRANSITION }
+                    : TRANSITION
             }
             style={{ transformOrigin: '50% 50%' }}
           />
@@ -338,17 +435,29 @@ export function BitBitFaceAvatar({
             r="2.5"
             fill={color}
             animate={{
-              translateX: isProcessing ? [0, 2, -2, 0] : config.rightEye.cx + eyeOffset.x,
-              translateY: eyeOffset.y,
+              translateX: isThinking
+                ? THINKING_EYE_SCAN_X
+                : isProcessing
+                  ? [0, 2, -2, 0]
+                  : config.rightEye.cx + effectiveEyeOffset.x,
+              translateY: isThinking
+                ? THINKING_EYE_SCAN_Y
+                : effectiveEyeOffset.y,
               scaleX: config.rightEye.scaleX,
               scaleY: blinkScaleY ?? config.rightEye.scaleY,
             }}
             transition={
               isBlinking
                 ? BLINK_TRANSITION
-                : isProcessing
-                  ? { translateX: { duration: 1.5, repeat: Infinity, ease: 'easeInOut', delay: 0.1 }, ...TRANSITION }
-                  : TRANSITION
+                : isThinking
+                  ? {
+                      ...THINKING_EYE_TRANSITION,
+                      translateX: { ...THINKING_EYE_TRANSITION.translateX, delay: 0.15 },
+                      ...TRANSITION,
+                    }
+                  : isProcessing
+                    ? { translateX: { duration: 1.5, repeat: Infinity, ease: 'easeInOut', delay: 0.1 }, ...TRANSITION }
+                    : TRANSITION
             }
             style={{ transformOrigin: '50% 50%' }}
           />
@@ -362,12 +471,134 @@ export function BitBitFaceAvatar({
             strokeLinejoin="round"
             fill="none"
             animate={{
-              translateY: config.nose.dy,
-              rotate: config.nose.rotate,
+              translateY: isThinking ? [0, 0.2, -0.1, 0.1, 0] : config.nose.dy,
+              rotate: isThinking ? [0, 2, -1, 1.5, 0] : config.nose.rotate,
             }}
-            transition={TRANSITION}
+            transition={
+              isThinking
+                ? {
+                    translateY: { duration: 6, repeat: Infinity, ease: 'easeInOut' },
+                    rotate: { duration: 6, repeat: Infinity, ease: 'easeInOut' },
+                    ...TRANSITION,
+                  }
+                : TRANSITION
+            }
             style={{ transformOrigin: '50% 50%' }}
           />
+
+          {/* === THINKING FOREGROUND EFFECTS === */}
+          <AnimatePresence>
+            {isThinking && (
+              <motion.g
+                key="thinking-fg"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ opacity: { duration: 0.5 } }}
+              >
+                {/* Orbit 1 — emerald dot, fast clockwise */}
+                <motion.g
+                  animate={{ rotate: 360 }}
+                  transition={{ rotate: { duration: 3, repeat: Infinity, ease: 'linear' } }}
+                  style={{ transformOrigin: `${FACE_CX}px ${FACE_CY}px` }}
+                >
+                  <motion.circle
+                    cx={FACE_CX}
+                    cy={FACE_CY - 16}
+                    r={1.3}
+                    fill="#10b981"
+                    animate={{ opacity: [0.4, 0.9, 0.4] }}
+                    transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+                  />
+                  {/* Faint trail dot */}
+                  <motion.circle
+                    cx={FACE_CX}
+                    cy={FACE_CY - 16}
+                    r={0.7}
+                    fill="#10b981"
+                    animate={{ opacity: [0.1, 0.3, 0.1] }}
+                    transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut', delay: 0.3 }}
+                    style={{ transform: 'rotate(-15deg)', transformOrigin: `${FACE_CX}px ${FACE_CY}px` }}
+                  />
+                </motion.g>
+
+                {/* Orbit 2 — cyan dot, medium counter-clockwise */}
+                <motion.g
+                  animate={{ rotate: -360 }}
+                  transition={{ rotate: { duration: 4.5, repeat: Infinity, ease: 'linear' } }}
+                  style={{ transformOrigin: `${FACE_CX}px ${FACE_CY}px` }}
+                >
+                  <motion.circle
+                    cx={FACE_CX}
+                    cy={FACE_CY - 14}
+                    r={1}
+                    fill="#06b6d4"
+                    animate={{ opacity: [0.3, 0.7, 0.3] }}
+                    transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+                  />
+                </motion.g>
+
+                {/* Orbit 3 — amber dot, slow clockwise, wider radius */}
+                <motion.g
+                  animate={{ rotate: 360 }}
+                  transition={{ rotate: { duration: 6, repeat: Infinity, ease: 'linear' } }}
+                  style={{ transformOrigin: `${FACE_CX}px ${FACE_CY}px` }}
+                >
+                  <motion.circle
+                    cx={FACE_CX}
+                    cy={FACE_CY - 19}
+                    r={0.8}
+                    fill="#f59e0b"
+                    animate={{ opacity: [0.25, 0.6, 0.25] }}
+                    transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
+                  />
+                </motion.g>
+
+                {/* Floating sparkles — tiny dots drifting upward */}
+                {[0, 1, 2, 3].map(i => (
+                  <motion.circle
+                    key={`sparkle-${i}`}
+                    cx={16 + i * 5.5}
+                    cy={FACE_CY + 4}
+                    r={0.5}
+                    fill={['#10b981', '#06b6d4', '#f59e0b', '#10b981'][i]}
+                    animate={{
+                      translateY: [0, -18],
+                      opacity: [0, 0.7, 0],
+                    }}
+                    transition={{
+                      duration: 2.8,
+                      repeat: Infinity,
+                      delay: i * 0.7,
+                      ease: 'easeOut',
+                    }}
+                  />
+                ))}
+
+                {/* Neural connection lines — faint lines between orbiting dots */}
+                <motion.line
+                  x1={FACE_CX - 8}
+                  y1={FACE_CY - 8}
+                  x2={FACE_CX + 8}
+                  y2={FACE_CY - 12}
+                  stroke="#10b981"
+                  strokeWidth={0.3}
+                  animate={{ opacity: [0, 0.25, 0], x1: [-8, -4, -8], x2: [8, 12, 8] }}
+                  transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+                />
+                <motion.line
+                  x1={FACE_CX + 6}
+                  y1={FACE_CY - 6}
+                  x2={FACE_CX - 4}
+                  y2={FACE_CY - 14}
+                  stroke="#06b6d4"
+                  strokeWidth={0.25}
+                  animate={{ opacity: [0, 0.2, 0] }}
+                  transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
+                />
+              </motion.g>
+            )}
+          </AnimatePresence>
         </motion.g>
       </motion.g>
     </svg>
