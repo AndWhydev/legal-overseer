@@ -129,6 +129,24 @@ function ContactsTab() {
     return () => { mounted = false }
   }, [loadContacts, useSeeded])
 
+  // Resolve avatars for contacts that don't have one yet (fire-and-forget)
+  useEffect(() => {
+    if (useSeeded || loading || contacts.length === 0) return
+    const missing = contacts.filter(c => !c.avatar_url && c.id)
+    if (missing.length === 0) return
+
+    fetch('/api/contacts/resolve-avatars', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contact_ids: missing.map(c => String(c.id)) }),
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (data.resolved > 0) loadContacts()
+      })
+      .catch(() => {})
+  }, [contacts, loading, useSeeded, loadContacts])
+
   const filtered = useMemo(() => {
     let result = contacts
     if (search) {
