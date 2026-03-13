@@ -26,7 +26,7 @@ import { ga4Adapter } from './ga4'
 import { wordpressAdapter } from './wordpress'
 import { cluelyAdapter } from './cluely'
 import { isDuplicate, computeContentHash } from './dedup'
-import { getOrgCredential, storeChannelCredential, encryptCredential } from '@/lib/integrations/credentials'
+import { getOrgCredential, storeOrgCredential, storeChannelCredential, encryptCredential } from '@/lib/integrations/credentials'
 import { logger } from '@/lib/core/logger';
 import { fetchGoogleProfilePhotos, storeGoogleAvatarForContact } from '@/lib/avatar/google-photos'
 
@@ -111,15 +111,9 @@ async function hydrateAdapterConfig(
                 token_expires_at: newExpiresAt,
               }
               try {
-                await storeChannelCredential(supabase, orgId, 'gmail', updatedCreds as Record<string, unknown>)
-              } catch {
-                // channel_configs may not have a row — update channel_connections config directly
-                const encrypted = encryptCredential(JSON.stringify(updatedCreds))
-                await supabase
-                  .from('channel_connections')
-                  .update({ config: { credential_provider: 'gmail', credentials_encrypted: encrypted } })
-                  .eq('org_id', orgId)
-                  .eq('channel_type', 'gmail')
+                await storeOrgCredential(supabase, orgId, 'gmail', updatedCreds as Record<string, unknown>, 'relay-daemon')
+              } catch (storeErr) {
+                logger.warn('[relay] Failed to persist refreshed Gmail token:', storeErr)
               }
               logger.info('[relay] Gmail token refreshed successfully')
             } else {

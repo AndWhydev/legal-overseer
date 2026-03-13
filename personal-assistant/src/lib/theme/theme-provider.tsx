@@ -23,29 +23,31 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<ThemeName>(DEFAULT_THEME_NAME);
   const [mounted, setMounted] = useState(false);
 
-  // Sync with initial DOM state (set by blocking script in layout)
-  useEffect(() => {
-    setThemeState(resolveStoredThemeName(localStorage.getItem('bb-theme')));
-    setMounted(true);
-  }, []);
-
-  const setTheme = useCallback((newTheme: ThemeName) => {
-    setThemeState(newTheme);
-    localStorage.setItem('bb-theme', newTheme);
+  const applyThemeToDOM = useCallback((newTheme: ThemeName) => {
     document.documentElement.setAttribute('data-theme', newTheme);
-
-    // Sync color-mode class (dark/light) based on theme
     const colorMode = themeToColorMode(newTheme);
     document.documentElement.className = colorMode;
     document.documentElement.style.colorScheme = colorMode;
-    localStorage.setItem('bitbit-theme', colorMode);
-
-    // Update meta theme-color for mobile browsers
     const meta = document.querySelector('meta[name="theme-color"]');
     if (meta) {
       meta.setAttribute('content', resolveThemeColor(colorMode, newTheme));
     }
   }, []);
+
+  // Re-apply DOM attributes after hydration (hydration may reset them to server defaults)
+  useEffect(() => {
+    const stored = resolveStoredThemeName(localStorage.getItem('bb-theme'));
+    setThemeState(stored);
+    applyThemeToDOM(stored);
+    setMounted(true);
+  }, [applyThemeToDOM]);
+
+  const setTheme = useCallback((newTheme: ThemeName) => {
+    setThemeState(newTheme);
+    localStorage.setItem('bb-theme', newTheme);
+    localStorage.setItem('bitbit-theme', themeToColorMode(newTheme));
+    applyThemeToDOM(newTheme);
+  }, [applyThemeToDOM]);
 
   return (
     <ThemeContext.Provider value={{ theme, setTheme }}>
