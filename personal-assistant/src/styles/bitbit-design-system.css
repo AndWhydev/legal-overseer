@@ -2502,7 +2502,7 @@ html.light .bb-chip--accent {
   min-width: 0;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   overflow: hidden;
   white-space: nowrap;
 }

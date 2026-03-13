@@ -67,14 +67,13 @@ interface ToastEntry {
 
 const PILL_CONFIG: Record<CategoryPillType, {
   label: string;
-  color: string;
   filter: (m: InboxMessage) => boolean;
 }> = {
-  all:      { label: 'All',      color: 'rgba(255,255,255,0.85)', filter: (m) => m.category !== 'spam' },
-  priority: { label: 'Priority', color: '#6366f1',               filter: (m) => m.category === 'actionable' },
-  updates:  { label: 'Updates',  color: '#3b82f6',               filter: (m) => m.category === 'informational' },
-  feed:     { label: 'Feed',     color: '#22c55e',               filter: (m) => m.category === 'personal' },
-  receipts: { label: 'Receipts', color: '#f59e0b',               filter: (m) => m.channelType === 'stripe' || m.channelType === 'xero' },
+  all:      { label: 'All',      filter: (m) => m.category !== 'spam' },
+  priority: { label: 'Priority', filter: (m) => m.category === 'actionable' },
+  updates:  { label: 'Updates',  filter: (m) => m.category === 'informational' },
+  feed:     { label: 'Feed',     filter: (m) => m.category === 'personal' },
+  receipts: { label: 'Receipts', filter: (m) => m.channelType === 'stripe' || m.channelType === 'xero' },
 };
 
 // ---------------------------------------------------------------------------
@@ -289,7 +288,6 @@ function InboxTab() {
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [showFilters, setShowFilters] = useState(false);
   const [selectedMessage, setSelectedMessage] = useState<InboxMessage | null>(null);
-  const [autoTriage, setAutoTriage] = useState(false);
   const [newMessageAlert, setNewMessageAlert] = useState(false);
 
   // New state for P2-5, P2-2, P4-5
@@ -560,18 +558,6 @@ function InboxTab() {
     clearSelection();
   }, [keyboard.selectedIds, handleDone, clearSelection]);
 
-  const handleRunTriage = async () => {
-    if (autoTriage) { setAutoTriage(false); return; }
-    setAutoTriage(true);
-    setRefreshing(true);
-    try {
-      await fetch('/api/agent/triage', { method: 'POST' });
-      await fetchInbox(true);
-    } catch {
-      setRefreshing(false);
-    }
-  };
-
   const hasActiveFilters = channelFilter || priorityFilter || statusFilter;
   const clearFilters = () => { setChannelFilter(''); setPriorityFilter(''); setStatusFilter(''); };
 
@@ -669,18 +655,6 @@ function InboxTab() {
                 transition: 'transform var(--duration-fast) var(--ease-default)',
               }}
             />
-          </button>
-          <button
-            onClick={handleRunTriage}
-            disabled={refreshing && !autoTriage}
-            className={`bb-btn ${autoTriage ? 'bb-btn--accent' : 'bb-btn--ghost'}`}
-            aria-pressed={autoTriage}
-          >
-            {refreshing && !autoTriage ? (
-              <><RefreshCw size={14} className="animate-spin" /> Triaging...</>
-            ) : (
-              <><Sparkles size={14} /> Auto-triage {autoTriage ? 'On' : ''}</>
-            )}
           </button>
         </div>
       </div>
@@ -842,8 +816,8 @@ function CategoryPillsBar({
     }}>
       <style>{`
         @keyframes bb-pill-pulse {
-          0%, 100% { box-shadow: 0 0 0 0 rgba(99,102,241,0.4); }
-          50% { box-shadow: 0 0 0 4px rgba(99,102,241,0); }
+          0%, 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0.3); }
+          50% { box-shadow: 0 0 0 4px rgba(255,255,255,0); }
         }
       `}</style>
       {PILL_ORDER.map((pill) => {
@@ -864,12 +838,12 @@ function CategoryPillsBar({
               padding: '5px 12px',
               borderRadius: 20,
               border: isActive
-                ? `1px solid ${cfg.color}`
-                : '1px solid rgba(255,255,255,0.1)',
+                ? '1px solid rgba(255,255,255,0.25)'
+                : '1px solid rgba(255,255,255,0.08)',
               background: isActive
-                ? cfg.color + (pill === 'all' ? '' : '22')
-                : 'rgba(255,255,255,0.04)',
-              color: isActive ? (pill === 'all' ? '#0a0f1a' : cfg.color) : 'rgba(255,255,255,0.55)',
+                ? 'rgba(255,255,255,0.1)'
+                : 'rgba(255,255,255,0.03)',
+              color: isActive ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.45)',
               fontSize: 12,
               fontWeight: isActive ? 600 : 400,
               cursor: 'pointer',
@@ -877,21 +851,6 @@ function CategoryPillsBar({
               whiteSpace: 'nowrap',
               flexShrink: 0,
               animation: shouldPulse ? 'bb-pill-pulse 2s ease-in-out infinite' : 'none',
-              ...(isActive && pill === 'all' ? { background: cfg.color, color: '#0a0f1a' } : {}),
-            }}
-            onMouseEnter={(e) => {
-              if (!isActive) {
-                e.currentTarget.style.background = 'rgba(255,255,255,0.08)';
-                e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)';
-                e.currentTarget.style.color = 'rgba(255,255,255,0.8)';
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (!isActive) {
-                e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
-                e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)';
-                e.currentTarget.style.color = 'rgba(255,255,255,0.55)';
-              }
             }}
           >
             {cfg.label}
@@ -902,7 +861,8 @@ function CategoryPillsBar({
                 minWidth: 16,
                 height: 16,
                 borderRadius: 8,
-                background: isActive ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.1)',
+                background: isActive ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.08)',
+                color: isActive ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.4)',
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',

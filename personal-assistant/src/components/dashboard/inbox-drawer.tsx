@@ -668,9 +668,9 @@ export default function InboxDrawer({
         style={{
           position: 'fixed',
           inset: 0,
-          zIndex: 50,
-          background: 'rgba(0, 0, 0, 0.5)',
-          backdropFilter: 'blur(4px)',
+          zIndex: 100,
+          background: 'rgba(0, 0, 0, 0.6)',
+          backdropFilter: 'blur(6px)',
         }}
         onClick={onClose}
         aria-hidden="true"
@@ -688,16 +688,14 @@ export default function InboxDrawer({
           right: 0,
           bottom: 0,
           width: `${drawerWidth}%`,
-          zIndex: 51,
-          background: 'var(--glass-bg-heavy, rgba(12, 16, 24, 0.92))',
-          backdropFilter: 'blur(28px) saturate(1.4)',
-          WebkitBackdropFilter: 'blur(28px) saturate(1.4)',
+          zIndex: 101,
+          background: 'var(--bg-primary, #0a0f1a)',
           borderLeft: '1px solid rgba(255, 255, 255, 0.06)',
           display: 'flex',
           flexDirection: 'column',
           transform: open ? 'translateX(0)' : 'translateX(100%)',
           transition: 'transform 300ms cubic-bezier(0.4, 0, 0.2, 1)',
-          boxShadow: '-8px 0 40px rgba(0, 0, 0, 0.4)',
+          boxShadow: '-8px 0 40px rgba(0, 0, 0, 0.5)',
         }}
       >
         {/* Resize Handle */}

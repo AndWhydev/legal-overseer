@@ -53,7 +53,7 @@ export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: Kanb
 
   // Resolve the "done" column — explicit prop, or guess by title
   const resolvedDoneId = doneColumnId ?? columns.find(
-    (c) => c.title.toLowerCase() === 'done'
+    (c) => c.title?.toLowerCase() === 'done'
   )?.id
 
   // Cmd+K shortcut
@@ -88,7 +88,7 @@ export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: Kanb
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase()
       result = result.filter((t) =>
-        t.title.toLowerCase().includes(q) ||
+        (t.title ?? '').toLowerCase().includes(q) ||
         (t.description && t.description.toLowerCase().includes(q))
       )
     }
