@@ -14,6 +14,7 @@ import { writeToDeadLetterQueue } from './dlq'
 import { reflectAction } from '@/lib/context/action-reflector'
 import { detectLeak, scrubLeaks } from './response-guard'
 import { logger } from '@/lib/core/logger'
+import { extractCitationsFromToolResult, extractCitationsFromText, detectTopicShift, type Citation } from './citation-extractor'
 
 export interface ChatMessage {
   role: 'user' | 'assistant'
@@ -54,6 +55,8 @@ export type StageId = 'cost_check' | 'model_routing' | 'context_assembly' | 'api
 export type AgentEvent =
   | { type: 'thinking'; data: string }
   | { type: 'thinking_start'; data: Record<string, never> }
+  | { type: 'thinking_delta'; data: string }
+  | { type: 'thinking_complete'; data: { duration_ms: number } }
   | { type: 'stage'; data: { stage: StageId; status: 'start' | 'done'; meta?: Record<string, unknown> } }
   | { type: 'plan'; data: { stages: PlanStage[] } }
   | { type: 'plan_stage_update'; data: { stageId: string; status: 'active' | 'done' | 'error' } }
@@ -72,6 +75,8 @@ export type AgentEvent =
   | { type: 'message'; data: string }
   | { type: 'error'; data: string }
   | { type: 'cost_blocked'; data: { spentToday: number; dailyLimit: number } }
+  | { type: 'citation'; data: { citations: Array<{ index: number; url: string; title: string; description?: string }> } }
+  | { type: 'checkpoint'; data: { message_index: number; label: string } }
   | { type: 'done'; data: unknown }
 
 export async function* runAgentChat(
@@ -85,6 +90,8 @@ export async function* runAgentChat(
   let toolCallCount = 0
   let outcome: 'success' | 'error' | 'max_iterations' | 'cost_blocked' = 'success'
   let finalMessage = ''
+  const userMessages: string[] = []
+  let lastCheckpointAtMessageCount = 0
 
   // Cost guard: check daily budget before running (background agents)
   if (!config.skipCostGuard) {
@@ -229,11 +236,17 @@ export async function* runAgentChat(
     ? [...(config.history || [])]
     : [...(config.history || []), { role: 'user', content: message }]
 
+  // Track initial message count for checkpoints
+  userMessages.push(message)
+
   for (let i = 0; i < maxIterations; i++) {
     iterationCount++
     let response: Anthropic.Message
     // Collect streamed deltas inside the circuit breaker so they can be yielded after
     const streamedDeltas: string[] = []
+    const streamedThinkingDeltas: string[] = []
+    let thinkingActive = false
+    let thinkingStartTime: number | null = null
     try {
       yield { type: 'stage', data: { stage: 'api_streaming', status: 'start', meta: { iteration: iterationCount } } }
 
@@ -242,18 +255,41 @@ export async function* runAgentChat(
       response = await withCircuitBreaker(
         `anthropic:${agentType}`,
         async () => {
-          const stream = client.messages.stream({
+          const streamConfig: any = {
             model,
             max_tokens: maxTokens,
             system: fullSystemPrompt,
             tools,
             messages,
-          })
+          }
 
-          // Collect text deltas for streaming after circuit breaker resolves
+          // Add thinking config for synthesis tier requests
+          if (purpose === 'synthesis') {
+            streamConfig.thinking = {
+              type: 'enabled',
+              budget_tokens: 8192,
+            }
+          }
+
+          const stream = client.messages.stream(streamConfig)
+
+          // Collect text and thinking deltas for streaming after circuit breaker resolves
           for await (const event of stream) {
             if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
               streamedDeltas.push(event.delta.text)
+            } else if (event.type === 'content_block_delta' && (event.delta as any).type === 'thinking_delta') {
+              // Collect thinking deltas for streaming
+              const thinkingDelta = (event.delta as any)['thinking']
+              if (thinkingDelta) {
+                streamedThinkingDeltas.push(thinkingDelta)
+              }
+            } else if (event.type === 'content_block_start' && (event.content_block as any).type === 'thinking') {
+              // Track thinking start
+              thinkingActive = true
+              thinkingStartTime = Date.now()
+            } else if (event.type === 'content_block_stop' && thinkingActive) {
+              // Thinking block ended
+              thinkingActive = false
             }
           }
 
@@ -262,7 +298,18 @@ export async function* runAgentChat(
         { threshold: 5, cooldownMs: 60_000 }
       )
 
-      // Yield collected deltas to the client (scrub any model/provider leaks)
+      // Yield thinking deltas if any
+      for (const delta of streamedThinkingDeltas) {
+        yield { type: 'thinking_delta', data: delta }
+      }
+
+      // Emit thinking_complete if thinking was active
+      if (thinkingStartTime !== null && streamedThinkingDeltas.length > 0) {
+        const duration = Date.now() - thinkingStartTime
+        yield { type: 'thinking_complete', data: { duration_ms: duration } }
+      }
+
+      // Yield collected text deltas to the client (scrub any model/provider leaks)
       for (const delta of streamedDeltas) {
         const scrubbed = scrubLeaks(delta)
         const leak = detectLeak(delta)
@@ -450,6 +497,21 @@ export async function* runAgentChat(
           config.supabase,
           execOptions
         )
+
+        // Extract citations from tool result
+        try {
+          const citations = extractCitationsFromToolResult(tool.name, result.data)
+          if (citations && citations.length > 0) {
+            yield {
+              type: 'citation',
+              data: { citations },
+            }
+          }
+        } catch {
+          // Citation extraction failure should not block tool result processing
+          logger.debug('[engine] Citation extraction failed for tool', { tool: tool.name })
+        }
+
         yield {
           type: 'tool_result',
           data: {
@@ -532,6 +594,46 @@ export async function* runAgentChat(
       { role: 'assistant', content: response.content },
       { role: 'user', content: toolResults },
     ]
+
+    // Emit checkpoint events every 10 turns or when topic shifts
+    const messageCount = messages.length
+    if (messageCount - lastCheckpointAtMessageCount >= 20) {
+      yield {
+        type: 'checkpoint',
+        data: {
+          message_index: messageCount,
+          label: `Checkpoint at turn ${iterationCount}`,
+        },
+      }
+      lastCheckpointAtMessageCount = messageCount
+    }
+
+    // Detect topic shift from last 2 user messages
+    if (userMessages.length >= 2) {
+      try {
+        const lastTwoMessages = userMessages.slice(-2)
+        const topicShifted = detectTopicShift(lastTwoMessages)
+        if (topicShifted) {
+          yield {
+            type: 'checkpoint',
+            data: {
+              message_index: messageCount,
+              label: 'Topic shift detected',
+            },
+          }
+          lastCheckpointAtMessageCount = messageCount
+        }
+      } catch {
+        // Topic shift detection failure should not block execution
+        logger.debug('[engine] Topic shift detection failed')
+      }
+    }
+
+    // Track new user messages for checkpoint detection
+    if (toolResults.length > 0) {
+      // After tool execution, model will respond with new content
+      // Track user's acknowledgment in next iteration if they provide feedback
+    }
   }
 
   outcome = 'max_iterations'
