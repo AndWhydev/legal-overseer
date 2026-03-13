@@ -64,7 +64,12 @@ export function SidebarNav({
   // Sync category when activeTabId changes externally (e.g. spacebar→home, global search, bb-navigate)
   useEffect(() => {
     const cat = getCategoryForTab(activeTabId);
-    if (cat && cat !== activeCategory) {
+    // Tabs with no sidebar category (e.g. settings) → auto-collapse panel
+    if (!cat) {
+      setPanelOpen(false);
+      return;
+    }
+    if (cat !== activeCategory) {
       setActiveCategory(cat);
       // Auto-close panel when navigating to a directNav category (Home)
       const catDef = SIDEBAR_CATEGORIES.find(c => c.id === cat);

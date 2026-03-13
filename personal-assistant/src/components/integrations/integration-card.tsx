@@ -1,29 +1,20 @@
 'use client';
 
 import React, { useState } from 'react';
-import {
-  Mail, Calendar, CheckSquare, Hash, FileText, Users,
-  BarChart3, CreditCard, MessageSquare, Phone, MessageCircle,
-  CalendarClock, Send, Loader2, X,
-  type LucideIcon,
-} from 'lucide-react';
+import { Loader2, X } from 'lucide-react';
+import { BRAND_ICONS } from './integration-icons';
 import type { Integration } from '@/lib/integrations/types';
-
-const ICON_MAP: Record<string, LucideIcon> = {
-  Mail, Calendar, CheckSquare, Hash, FileText, Users,
-  BarChart3, CreditCard, MessageSquare, Phone, MessageCircle,
-  CalendarClock, Send,
-};
 
 interface IntegrationCardProps {
   integration: Integration;
   isConnected?: boolean;
   onStatusChange?: () => void;
   onWhatsAppConnect?: () => void;
+  style?: React.CSSProperties;
 }
 
-export function IntegrationCard({ integration, isConnected = false, onStatusChange, onWhatsAppConnect }: IntegrationCardProps) {
-  const Icon = ICON_MAP[integration.icon];
+export function IntegrationCard({ integration, isConnected = false, onStatusChange, onWhatsAppConnect, style: externalStyle }: IntegrationCardProps) {
+  const BrandIcon = BRAND_ICONS[integration.id];
   const isComingSoon = integration.status === 'coming_soon';
   const [apiKeyDialogOpen, setApiKeyDialogOpen] = useState(false);
   const [apiKey, setApiKey] = useState('');
@@ -31,6 +22,7 @@ export function IntegrationCard({ integration, isConnected = false, onStatusChan
   const [error, setError] = useState('');
   const [hovered, setHovered] = useState(false);
   const [inputFocused, setInputFocused] = useState(false);
+  const [connectingFeedback, setConnectingFeedback] = useState(false);
 
   const connected = isConnected || integration.status === 'connected';
 
@@ -40,7 +32,11 @@ export function IntegrationCard({ integration, isConnected = false, onStatusChan
       return;
     }
     if (integration.authMethod === 'oauth') {
-      window.location.href = `/api/auth/oauth/start?provider=${encodeURIComponent(integration.id)}`;
+      setConnectingFeedback(true);
+      // Brief delay for visual feedback before redirect
+      setTimeout(() => {
+        window.location.href = `/api/auth/oauth/start?provider=${encodeURIComponent(integration.id)}`;
+      }, 400);
     } else if (integration.authMethod === 'api_key') {
       setApiKeyDialogOpen(true);
     }
@@ -108,14 +104,17 @@ export function IntegrationCard({ integration, isConnected = false, onStatusChan
           backdropFilter: 'var(--glass-blur)',
           WebkitBackdropFilter: 'var(--glass-blur)',
           border: connected
-            ? '1px solid rgba(34, 197, 94, 0.2)'
+            ? '1.5px solid rgba(34, 197, 94, 0.35)'
             : '1px solid var(--glass-card-border)',
-          boxShadow: 'var(--glass-card-inset)',
-          transition: 'all 200ms ease',
+          boxShadow: connected
+            ? '0 0 12px rgba(34, 197, 94, 0.08), var(--glass-card-inset)'
+            : 'var(--glass-card-inset)',
+          transition: 'all 350ms cubic-bezier(0.2, 0.9, 0.3, 1)',
           opacity: isComingSoon ? 0.5 : 1,
+          ...externalStyle,
         }}
       >
-        {/* Icon */}
+        {/* Brand Icon */}
         <div style={{
           width: 40,
           height: 40,
@@ -126,7 +125,10 @@ export function IntegrationCard({ integration, isConnected = false, onStatusChan
           justifyContent: 'center',
           flexShrink: 0,
         }}>
-          {Icon && <Icon size={20} style={{ color: integration.color }} />}
+          {BrandIcon
+            ? <BrandIcon size={20} color={integration.color} />
+            : <div style={{ width: 20, height: 20, borderRadius: 4, background: `${integration.color}30` }} />
+          }
         </div>
 
         {/* Info */}
@@ -195,6 +197,9 @@ export function IntegrationCard({ integration, isConnected = false, onStatusChan
                 opacity: isLoading ? 0.5 : 1,
                 transition: 'all 150ms',
                 flexShrink: 0,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
               }}
             >
               {isLoading ? <Loader2 size={12} style={{ animation: 'bb-spin 1s linear infinite' }} /> : 'Disconnect'}
@@ -202,22 +207,28 @@ export function IntegrationCard({ integration, isConnected = false, onStatusChan
           ) : (
             <button
               onClick={(e) => { e.stopPropagation(); handleConnect(); }}
-              disabled={isLoading}
+              disabled={isLoading || connectingFeedback}
               style={{
                 padding: '6px 14px',
                 borderRadius: 8,
-                background: 'rgba(255, 255, 255, 0.08)',
-                border: '1px solid var(--glass-interactive-border)',
-                color: 'var(--text-primary)',
+                background: connectingFeedback ? 'rgba(34, 197, 94, 0.12)' : 'rgba(255, 255, 255, 0.08)',
+                border: connectingFeedback ? '1px solid rgba(34, 197, 94, 0.3)' : '1px solid var(--glass-interactive-border)',
+                color: connectingFeedback ? '#22C55E' : 'var(--text-primary)',
                 fontSize: 12,
                 fontWeight: 500,
-                cursor: isLoading ? 'not-allowed' : 'pointer',
-                opacity: isLoading ? 0.5 : 1,
-                transition: 'all 150ms',
+                cursor: (isLoading || connectingFeedback) ? 'not-allowed' : 'pointer',
+                opacity: (isLoading || connectingFeedback) ? 0.7 : 1,
+                transition: 'all 200ms ease',
                 flexShrink: 0,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
               }}
             >
-              Connect
+              {connectingFeedback
+                ? <><Loader2 size={12} style={{ animation: 'bb-spin 1s linear infinite' }} /> Connecting...</>
+                : 'Connect'
+              }
             </button>
           )
         )}
@@ -255,7 +266,7 @@ export function IntegrationCard({ integration, isConnected = false, onStatusChan
                 background: `${integration.color}15`,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}>
-                {Icon && <Icon size={18} style={{ color: integration.color }} />}
+                {BrandIcon && <BrandIcon size={18} color={integration.color} />}
               </div>
               <div>
                 <h3 style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
@@ -335,9 +346,12 @@ export function IntegrationCard({ integration, isConnected = false, onStatusChan
                   cursor: isLoading || !apiKey.trim() ? 'not-allowed' : 'pointer',
                   opacity: isLoading || !apiKey.trim() ? 0.5 : 1,
                   transition: 'all 150ms',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
                 }}
               >
-                {isLoading ? 'Connecting...' : 'Connect'}
+                {isLoading ? <><Loader2 size={12} style={{ animation: 'bb-spin 1s linear infinite' }} /> Connecting...</> : 'Connect'}
               </button>
             </div>
           </div>

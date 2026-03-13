@@ -58,34 +58,41 @@ const glassCard: React.CSSProperties = {
 };
 
 const pillBtn: React.CSSProperties = {
-  padding: '10px 20px',
-  borderRadius: 0,
-  background: 'transparent',
-  backdropFilter: 'none',
-  WebkitBackdropFilter: 'none',
-  boxShadow: 'none',
+  display: 'inline-flex',
+  alignItems: 'center',
+  padding: '8px 18px',
+  borderRadius: 24,
   border: 'none',
-  borderBottom: '2px solid transparent',
+  background: 'rgba(10, 14, 23, 0.42)',
+  backdropFilter: 'blur(20px) saturate(1.2)',
+  WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
+  boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.06)',
+  color: 'var(--text-secondary)',
   fontSize: 13,
   fontWeight: 500,
-  color: 'var(--text-secondary)',
   cursor: 'pointer',
-  transition: 'all 150ms ease',
+  transition: 'background 150ms ease, color 150ms ease, transform 150ms ease',
+  whiteSpace: 'nowrap',
+  flexShrink: 0,
 };
 
 const pillBtnActive: React.CSSProperties = {
-  padding: '10px 20px',
-  borderRadius: 8,
+  display: 'inline-flex',
+  alignItems: 'center',
+  padding: '8px 18px',
+  borderRadius: 24,
+  border: '1px solid transparent',
   background: 'rgba(255, 255, 255, 0.95)',
   backdropFilter: 'none',
   WebkitBackdropFilter: 'none',
   boxShadow: 'none',
-  border: 'none',
+  color: '#0A0A0B',
   fontSize: 13,
   fontWeight: 600,
-  color: '#0A0A0B',
   cursor: 'pointer',
-  transition: 'all 150ms ease',
+  transition: 'background 150ms ease, color 150ms ease, transform 150ms ease',
+  whiteSpace: 'nowrap',
+  flexShrink: 0,
 };
 
 const listRow: React.CSSProperties = {
@@ -410,8 +417,8 @@ function SettingsTab() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 24, padding: 24 }}>
         <SaveIndicator visible={saveIndicatorVisible} />
 
-        {/* Tab Switcher */}
-        <div style={{ display: 'flex', gap: 0, flexWrap: 'wrap' }}>
+        {/* Tab Switcher — inbox-style pills */}
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
           {SECTIONS.map(s => (
             <button
               key={s.id}
@@ -419,13 +426,13 @@ function SettingsTab() {
               style={activeSection === s.id ? pillBtnActive : pillBtn}
               onMouseEnter={e => {
                 if (activeSection !== s.id) {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)';
+                  e.currentTarget.style.transform = 'scale(1.02)';
                   e.currentTarget.style.color = 'var(--text-primary)';
                 }
               }}
               onMouseLeave={e => {
+                e.currentTarget.style.transform = 'scale(1)';
                 if (activeSection !== s.id) {
-                  e.currentTarget.style.background = 'transparent';
                   e.currentTarget.style.color = 'var(--text-secondary)';
                 }
               }}
