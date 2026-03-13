@@ -12,13 +12,11 @@ interface BitBitFaceAvatarProps {
 }
 
 // ─── Face geometry ───
-// Eyes wider apart (cx 13/35 vs old 16/32), smaller (r=2 vs 2.5)
-// Nose lower (y=24-30 vs old 22-28) for more space between eyes and nose
-const LEFT_EYE_CX = 13
-const RIGHT_EYE_CX = 35
+const LEFT_EYE_CX = 15
+const RIGHT_EYE_CX = 33
 const EYE_CY = 20
 const EYE_R = 2
-const NOSE_PATH = 'M24 24 L24 30 L27 30'
+const NOSE_PATH = 'M24 25 L24 31 L27 31'
 
 // Emotion config
 const EMOTION_CONFIG: Record<
@@ -435,9 +433,9 @@ export function BitBitFaceAvatar({
           }}
           style={{ transformOrigin: '50% 50%' }}
         >
-          {/* Left eyebrow — wider to match new eye positions */}
+          {/* Left eyebrow */}
           <motion.path
-            d="M10 14 Q13.5 10 17 14"
+            d="M12 15 Q15 11.5 18 15"
             stroke={color}
             strokeWidth="1.5"
             strokeLinecap="round"
@@ -452,7 +450,7 @@ export function BitBitFaceAvatar({
 
           {/* Right eyebrow */}
           <motion.path
-            d="M31 14 Q34.5 10 38 14"
+            d="M30 15 Q33 11.5 36 15"
             stroke={color}
             strokeWidth="1.5"
             strokeLinecap="round"
