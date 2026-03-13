@@ -1484,21 +1484,6 @@ function ExpandedMessageRow({
     hour: '2-digit', minute: '2-digit',
   });
 
-  const actionPillStyle: React.CSSProperties = {
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: 5,
-    padding: '5px 12px',
-    borderRadius: 8,
-    border: '1px solid rgba(255, 255, 255, 0.08)',
-    background: 'rgba(255, 255, 255, 0.04)',
-    color: 'rgba(255, 255, 255, 0.7)',
-    fontSize: 12,
-    fontWeight: 500,
-    cursor: 'pointer',
-    transition: 'all 150ms ease',
-  };
-
   const toggleThread = (id: string) => {
     setExpandedThreadIds(prev => {
       const s = new Set(prev);
@@ -1512,13 +1497,12 @@ function ExpandedMessageRow({
       ref={expandedRef}
       style={{
         borderRadius: '0 0 12px 12px',
-        marginTop: -4,
-        marginBottom: 4,
-        background: 'rgba(8, 12, 20, 0.7)',
+        marginTop: 0,
+        background: 'rgba(10, 14, 23, 0.5)',
         backdropFilter: 'blur(20px) saturate(1.2)',
         WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
-        border: '1px solid rgba(255, 255, 255, 0.05)',
-        borderTopColor: 'rgba(255, 255, 255, 0.03)',
+        borderTop: '1px solid rgba(255, 255, 255, 0.04)',
+        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05)',
         overflow: 'hidden',
         animation: 'expandIn 200ms ease',
       }}
@@ -1528,9 +1512,8 @@ function ExpandedMessageRow({
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
       `}</style>
 
-      {/* Header -- decluttered */}
-      <div style={{ padding: '16px 20px 0', display: 'flex', flexDirection: 'column', gap: 4 }}>
-        {/* Row 1: channel icon + sender name ... date */}
+      {/* Header -- sender + email on one line */}
+      <div style={{ padding: '16px 20px 0' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <div style={{ width: 14, height: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', color: brandColor, flexShrink: 0 }}>
             <ChannelIcon size={13} />
@@ -1538,16 +1521,18 @@ function ExpandedMessageRow({
           <span style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.9)' }}>
             {sanitizeText(String(sender))}
           </span>
+          {message.senderEmail && (
+            <>
+              <span style={{ color: 'rgba(255,255,255,0.25)', margin: '0 2px' }}>&middot;</span>
+              <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', fontWeight: 400 }}>
+                {String(message.senderEmail)}
+              </span>
+            </>
+          )}
           <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', marginLeft: 'auto', flexShrink: 0 }}>
             {fullDate}
           </span>
         </div>
-        {/* Row 2: email (dim) */}
-        {message.senderEmail && (
-          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', paddingLeft: 22 }}>
-            {String(message.senderEmail)}
-          </div>
-        )}
       </div>
 
       {/* Content area with max-height scroll */}
@@ -1569,28 +1554,24 @@ function ExpandedMessageRow({
           </h3>
         )}
 
-        {/* Invisible AI summary -- rendered as seamless first paragraph */}
-        {showSummary && aiResult && !aiLoading && (
-          <>
-            <p style={{
-              fontSize: 14, color: 'rgba(255,255,255,0.82)', lineHeight: 1.6,
-              margin: 0, opacity: 1,
-              animation: 'fadeIn 300ms ease',
-            }}>
-              {sanitizeText(aiResult.summary)}
-            </p>
-            <div style={{ height: 1, background: 'rgba(255,255,255,0.04)' }} />
-          </>
+        {/* AI summary or body text -- show one, never both */}
+        {showSummary && aiResult && !aiLoading ? (
+          <p style={{
+            fontSize: 14, color: 'rgba(255,255,255,0.82)', lineHeight: 1.6,
+            margin: 0, opacity: 1,
+            animation: 'fadeIn 300ms ease',
+          }}>
+            {sanitizeText(aiResult.summary)}
+          </p>
+        ) : (
+          <div style={{
+            fontSize: 14, color: 'rgba(255,255,255,0.82)', lineHeight: 1.7,
+            whiteSpace: 'pre-wrap', wordBreak: 'break-word',
+            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+          }}>
+            {sanitizeText(String(message.bodyPreview || '(No message body)'))}
+          </div>
         )}
-
-        {/* Body text */}
-        <div style={{
-          fontSize: 14, color: 'rgba(255,255,255,0.82)', lineHeight: 1.7,
-          whiteSpace: 'pre-wrap', wordBreak: 'break-word',
-          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-        }}>
-          {sanitizeText(String(message.bodyPreview || '(No message body)'))}
-        </div>
 
         {/* Action items -- neutral colors */}
         {aiResult && aiResult.actionItems.length > 0 && (
@@ -1673,28 +1654,38 @@ function ExpandedMessageRow({
         )}
       </div>
 
-      {/* Ghost draft reply composer */}
-      <div style={{ padding: '12px 20px 16px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-        <div style={{ position: 'relative' }}>
-          {/* Ghost text overlay */}
-          {ghostVisible && !replyText && aiResult?.draftReply && (
-            <div style={{
-              position: 'absolute',
-              top: 0, left: 0, right: 48,
-              padding: '9px 12px',
-              color: 'rgba(255, 255, 255, 0.25)',
-              fontStyle: 'italic',
-              fontSize: 13,
-              fontFamily: 'inherit',
-              lineHeight: 1.5,
-              pointerEvents: 'none',
-              whiteSpace: 'pre-wrap',
-              zIndex: 1,
-            }}>
-              {sanitizeText(aiResult.draftReply)}
-            </div>
-          )}
-          <div style={{ display: 'flex', gap: 8 }}>
+      {/* Chat-style reply composer */}
+      <div style={{ padding: '12px 20px 16px', borderTop: '1px solid rgba(255,255,255,0.04)' }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'flex-end',
+          gap: 0,
+          background: 'var(--glass-pill-bg)',
+          backdropFilter: 'var(--glass-card-blur)',
+          WebkitBackdropFilter: 'var(--glass-card-blur)',
+          borderRadius: 20,
+          padding: '4px 4px 4px 16px',
+          boxShadow: 'var(--glass-pill-inset)',
+        }}>
+          <div style={{ position: 'relative', flex: 1 }}>
+            {/* Ghost text overlay — aligned with textarea */}
+            {ghostVisible && !replyText && aiResult?.draftReply && (
+              <div style={{
+                position: 'absolute',
+                top: 0, left: 0, right: 0,
+                padding: '8px 0',
+                color: 'rgba(255, 255, 255, 0.25)',
+                fontStyle: 'italic',
+                fontSize: 13,
+                fontFamily: 'inherit',
+                lineHeight: 1.5,
+                pointerEvents: 'none',
+                whiteSpace: 'pre-wrap',
+                zIndex: 1,
+              }}>
+                {sanitizeText(aiResult.draftReply)}
+              </div>
+            )}
             <textarea
               ref={textareaRef}
               value={replyText}
@@ -1722,92 +1713,60 @@ function ExpandedMessageRow({
               }}
               placeholder={ghostVisible && aiResult?.draftReply ? '' : 'Reply... (Cmd+Enter to send)'}
               style={{
-                flex: 1, padding: '9px 12px', borderRadius: 8,
-                border: replyFocused ? '1px solid rgba(255,255,255,0.15)' : '1px solid rgba(255,255,255,0.06)',
-                background: 'rgba(13,17,23,0.6)', color: 'var(--text-primary, #F1F5F9)',
-                fontSize: 13, fontFamily: 'inherit', outline: 'none',
-                transition: 'all 150ms ease', resize: 'none', minHeight: 38, maxHeight: 200,
-                boxShadow: replyFocused ? '0 0 0 2px rgba(255,90,31,0.12)' : 'none',
+                flex: 1, padding: '8px 0',
+                background: 'transparent', border: 'none', outline: 'none',
+                color: 'var(--text-primary, #F1F5F9)',
+                fontSize: 13, fontFamily: 'inherit', lineHeight: 1.5,
+                resize: 'none', minHeight: 32, maxHeight: 200,
                 position: 'relative', zIndex: 2,
+                width: '100%',
               }}
             />
-            <button
-              onClick={handleSendReply}
-              disabled={!replyText.trim()}
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: 5,
-                padding: '9px 14px', borderRadius: 8, border: 'none',
-                background: replyText.trim() ? '#FF5A1F' : 'rgba(255,90,31,0.3)',
-                color: replyText.trim() ? '#fff' : 'rgba(255,255,255,0.3)',
-                fontSize: 12, fontWeight: 600,
-                cursor: replyText.trim() ? 'pointer' : 'default',
-                transition: 'all 150ms ease', flexShrink: 0,
-              }}
-              onMouseEnter={(e) => { if (replyText.trim()) e.currentTarget.style.background = '#FF7A45'; }}
-              onMouseLeave={(e) => { if (replyText.trim()) e.currentTarget.style.background = '#FF5A1F'; }}
-            >
-              <Send size={12} /> Send
-            </button>
           </div>
+          <button
+            onClick={handleSendReply}
+            disabled={!replyText.trim()}
+            style={{
+              width: 32, height: 32, borderRadius: '50%',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              border: 'none', cursor: replyText.trim() ? 'pointer' : 'default',
+              flexShrink: 0,
+              transition: 'all 150ms ease',
+              background: replyText.trim() ? '#FF5A1F' : 'transparent',
+              color: replyText.trim() ? '#fff' : 'rgba(255,255,255,0.25)',
+            }}
+            onMouseEnter={(e) => { if (replyText.trim()) e.currentTarget.style.background = '#FF7A45'; }}
+            onMouseLeave={(e) => { if (replyText.trim()) e.currentTarget.style.background = '#FF5A1F'; }}
+          >
+            <Send size={14} />
+          </button>
         </div>
-        {/* Ghost hint */}
+        {/* Ghost hint and Cmd+Enter hint below the pill */}
         {ghostVisible && !replyText && aiResult?.draftReply && (
-          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.2)', marginTop: 5 }}>
+          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.2)', marginTop: 5, paddingLeft: 16 }}>
             Tab to use suggested reply
           </div>
         )}
         {replyText && (
-          <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)', marginTop: 5 }}>
+          <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)', marginTop: 5, paddingLeft: 16 }}>
             <kbd style={{ padding: '1px 4px', borderRadius: 3, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', fontSize: 9, fontFamily: 'inherit' }}>Cmd+Enter</kbd> to send
           </div>
         )}
       </div>
 
-      {/* Bottom action bar */}
+      {/* Icon-only action bar */}
       <div style={{
-        display: 'flex', alignItems: 'center', gap: 6,
-        padding: '10px 20px 14px',
-        borderTop: '1px solid rgba(255,255,255,0.04)',
-        flexWrap: 'wrap',
+        display: 'flex', alignItems: 'center', gap: 4,
+        padding: '8px 20px 12px',
       }}>
-        <button style={actionPillStyle} onClick={() => textareaRef.current?.focus()}
-          onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}>
-          <Reply size={12} /> Reply
-        </button>
-        <button style={actionPillStyle} onClick={() => onArchive(message.id)}
-          onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}>
-          <Archive size={12} /> Archive
-        </button>
-        <button style={actionPillStyle} onClick={() => onDone(message.id)}
-          onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}>
-          <CheckCircle2 size={12} /> Done
-        </button>
-        <button style={actionPillStyle} onClick={() => handleNavigateLocal('snooze')} data-snooze-trigger
-          onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}>
-          <Clock size={12} /> Snooze
-        </button>
-        <button style={actionPillStyle} onClick={() => {/* forward placeholder */}}
-          onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}>
-          <Forward size={12} /> Forward
-        </button>
+        <IconActionBtn icon={<Reply size={16} />} title="Reply" onClick={() => textareaRef.current?.focus()} />
+        <IconActionBtn icon={<Archive size={16} />} title="Archive" onClick={() => onArchive(message.id)} />
+        <IconActionBtn icon={<CheckCircle2 size={16} />} title="Done" onClick={() => onDone(message.id)} />
+        <IconActionBtn icon={<Clock size={16} />} title="Snooze" onClick={() => handleNavigateLocal('snooze')} data-snooze-trigger />
+        <IconActionBtn icon={<Forward size={16} />} title="Forward" onClick={() => {/* placeholder */}} />
+        <IconActionBtn icon={<AlertTriangle size={16} />} title="Spam" onClick={() => onSpam(message.id)} isSpam />
         <div style={{ flex: 1 }} />
-        <button style={{ ...actionPillStyle, background: 'rgba(239,68,68,0.08)', color: 'rgba(239,68,68,0.8)', borderColor: 'rgba(239,68,68,0.15)' }}
-          onClick={() => onSpam(message.id)}
-          onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(239,68,68,0.15)'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(239,68,68,0.08)'; }}>
-          <AlertTriangle size={12} /> Spam
-        </button>
-        <button style={{ ...actionPillStyle, borderColor: 'transparent', background: 'transparent' }}
-          onClick={onClose}
-          onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}>
-          <X size={12} />
-        </button>
+        <IconActionBtn icon={<X size={16} />} title="Close" onClick={onClose} />
       </div>
     </div>
   );
@@ -1841,7 +1800,42 @@ function AttachmentPills({ attachments }: { attachments?: { name: string; size: 
 }
 
 // ---------------------------------------------------------------------------
-// Message Row — with hover actions including Snooze + Reply (Task #7)
+// Icon Action Button — minimal icon-only for expanded row
+// ---------------------------------------------------------------------------
+
+function IconActionBtn({
+  icon, title, onClick, isSpam, ...rest
+}: {
+  icon: React.ReactNode;
+  title: string;
+  onClick: () => void;
+  isSpam?: boolean;
+  'data-snooze-trigger'?: boolean;
+}) {
+  const baseColor = isSpam ? 'rgba(239,68,68,0.5)' : 'rgba(255,255,255,0.4)';
+  const hoverColor = isSpam ? 'rgba(239,68,68,0.8)' : 'rgba(255,255,255,0.8)';
+  return (
+    <button
+      title={title}
+      onClick={onClick}
+      style={{
+        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+        width: 32, height: 32, borderRadius: 8,
+        background: 'transparent', border: 'none',
+        color: baseColor, cursor: 'pointer',
+        transition: 'color 150ms ease',
+      }}
+      onMouseEnter={(e) => { e.currentTarget.style.color = hoverColor; }}
+      onMouseLeave={(e) => { e.currentTarget.style.color = baseColor; }}
+      {...rest}
+    >
+      {icon}
+    </button>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Message Row — time always visible, no hover actions
 // ---------------------------------------------------------------------------
 
 function MessageRow({

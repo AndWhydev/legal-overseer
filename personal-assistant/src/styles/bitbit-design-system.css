@@ -6110,11 +6110,10 @@ html.light .bb-shortcuts-footer kbd {
   border-radius: 26px;
   flex-direction: column;
   align-items: stretch;
-  background: transparent;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  box-shadow: none;
-  border: none;
+  background: rgba(10, 14, 23, 0.42);
+  backdrop-filter: blur(22px) saturate(1.2);
+  -webkit-backdrop-filter: blur(22px) saturate(1.2);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
   transition:
     min-height 200ms cubic-bezier(0.22, 1, 0.36, 1),
     padding 200ms cubic-bezier(0.22, 1, 0.36, 1);
@@ -6184,6 +6183,12 @@ html.light .bb-shortcuts-footer kbd {
   max-height: 188px;
   padding-right: 2px;
   transition: min-height 200ms cubic-bezier(0.22, 1, 0.36, 1);
+  /* Invisible input — only text and placeholder visible */
+  background: transparent;
+  border: none;
+  outline: none;
+  box-shadow: none;
+  -webkit-appearance: none;
 }
 
 @keyframes pill-dock-enter {
@@ -6275,12 +6280,6 @@ html.light .bb-pill--docked .bb-pill__attach {
 
 html.light .bb-pill__shimmer-dots span {
   background: rgba(0, 0, 0, 0.35);
-}
-
-html.light .bb-pill--docked {
-  background: transparent;
-  box-shadow: none;
-  border: none;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
