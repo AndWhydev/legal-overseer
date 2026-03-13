@@ -42,6 +42,7 @@ interface InboxMessage {
   senderEmail: string | null;
   subject: string | null;
   bodyPreview: string;
+  aiSummary: string | null;
   category: MessageCategory;
   priority: PriorityLevel;
   significance: number;
@@ -160,6 +161,7 @@ const SEED_MESSAGES: InboxMessage[] = [
   {
     id: 's1', channelType: 'gmail', senderName: 'Sarah Chen', senderEmail: 'sarah@designstudio.co',
     subject: 'Website revision — final round feedback', bodyPreview: 'Hey, the client loved the new hero section but wants the CTA button colour changed to match their brand guide...',
+    aiSummary: 'Client approved hero section but wants CTA button colour updated to match brand guide. Action needed before presentation.',
     category: 'actionable', priority: 'high', significance: 8, contactId: 'c1', contactName: 'Sarah Chen',
     threadStatus: 'waiting_on_you', deduplicatedWith: null, threadCount: 3,
     receivedAt: new Date(Date.now() - 12 * 60000).toISOString(),
@@ -168,6 +170,7 @@ const SEED_MESSAGES: InboxMessage[] = [
   {
     id: 's2', channelType: 'whatsapp', senderName: 'Andy Wu', senderEmail: null,
     subject: null, bodyPreview: 'Can you check the Sentry dashboard? Getting a spike in 500s on the checkout flow since the last deploy',
+    aiSummary: 'Checkout flow seeing 500 error spike post-deploy. Needs immediate Sentry investigation.',
     category: 'actionable', priority: 'critical', significance: 9, contactId: 'c2', contactName: 'Andy Wu',
     threadStatus: 'waiting_on_you', deduplicatedWith: null, threadCount: 2,
     receivedAt: new Date(Date.now() - 5 * 60000).toISOString(),
@@ -176,6 +179,7 @@ const SEED_MESSAGES: InboxMessage[] = [
   {
     id: 's3', channelType: 'asana', senderName: 'Asana', senderEmail: 'notifications@asana.com',
     subject: 'Task assigned: Q1 brand refresh deliverables', bodyPreview: 'You have been assigned to "Q1 brand refresh deliverables" in project Brand & Identity. Due: Mar 7',
+    aiSummary: 'Assigned to Q1 brand refresh deliverables in Brand & Identity project. Due March 7.',
     category: 'actionable', priority: 'medium', significance: 6, contactId: null, contactName: null,
     threadStatus: 'new', deduplicatedWith: null,
     receivedAt: new Date(Date.now() - 45 * 60000).toISOString(),
@@ -184,6 +188,7 @@ const SEED_MESSAGES: InboxMessage[] = [
   {
     id: 's4', channelType: 'stripe', senderName: 'Stripe', senderEmail: 'notifications@stripe.com',
     subject: 'Payment received — $4,200.00', bodyPreview: 'Invoice INV-2024-0089 for DesignStudio Co has been paid. Amount: $4,200.00 AUD',
+    aiSummary: 'DesignStudio Co paid $4,200 AUD for invoice INV-2024-0089.',
     category: 'informational', priority: 'low', significance: 4, contactId: 'c1', contactName: 'Sarah Chen',
     threadStatus: null, deduplicatedWith: null,
     receivedAt: new Date(Date.now() - 2 * 3600000).toISOString(),
@@ -192,6 +197,7 @@ const SEED_MESSAGES: InboxMessage[] = [
   {
     id: 's5', channelType: 'gmail', senderName: 'Tom Bradley', senderEmail: 'tom@acmecorp.com',
     subject: 'Re: Proposal for Q2 retainer', bodyPreview: "Thanks for sending that through. I've shared it with our CFO. Expecting a decision by end of week.",
+    aiSummary: 'Q2 retainer proposal shared with CFO. Decision expected by end of week. No action needed yet.',
     category: 'informational', priority: 'medium', significance: 5, contactId: 'c3', contactName: 'Tom Bradley',
     threadStatus: 'waiting_on_them', deduplicatedWith: null, threadCount: 4,
     receivedAt: new Date(Date.now() - 4 * 3600000).toISOString(),
@@ -200,6 +206,7 @@ const SEED_MESSAGES: InboxMessage[] = [
   {
     id: 's6', channelType: 'calendly', senderName: 'Calendly', senderEmail: 'notifications@calendly.com',
     subject: 'New booking: Discovery call with Mira Patel', bodyPreview: 'Mira Patel booked a 30-min discovery call for tomorrow at 10:00 AM AEST',
+    aiSummary: 'Mira Patel booked a 30-min discovery call for tomorrow at 10 AM AEST.',
     category: 'informational', priority: 'medium', significance: 5, contactId: null, contactName: 'Mira Patel',
     threadStatus: 'new', deduplicatedWith: null,
     receivedAt: new Date(Date.now() - 6 * 3600000).toISOString(),
@@ -208,6 +215,7 @@ const SEED_MESSAGES: InboxMessage[] = [
   {
     id: 's7', channelType: 'gmail', senderName: 'LinkedIn', senderEmail: 'notifications@linkedin.com',
     subject: '3 people viewed your profile', bodyPreview: 'Your profile was viewed by a Product Manager at Canva, a Design Lead at Atlassian, and 1 other',
+    aiSummary: 'LinkedIn notification — 3 profile views including Canva PM and Atlassian Design Lead.',
     category: 'spam', priority: 'low', significance: 1, contactId: null, contactName: null,
     threadStatus: null, deduplicatedWith: null,
     receivedAt: new Date(Date.now() - 12 * 3600000).toISOString(),
@@ -216,6 +224,7 @@ const SEED_MESSAGES: InboxMessage[] = [
   {
     id: 's8', channelType: 'whatsapp', senderName: 'Jess Reilly', senderEmail: null,
     subject: null, bodyPreview: 'Lunch tomorrow? That new ramen place on Crown St just opened',
+    aiSummary: 'Lunch invite for tomorrow at new ramen place on Crown St.',
     category: 'personal', priority: 'low', significance: 3, contactId: 'c4', contactName: 'Jess Reilly',
     threadStatus: 'waiting_on_you', deduplicatedWith: null,
     receivedAt: new Date(Date.now() - 8 * 3600000).toISOString(),
@@ -1356,7 +1365,13 @@ function MessageRow({
             )}
           </span>
         )}
-        <span className="bb-inbox-row__preview">{message.bodyPreview}</span>
+        <span className="bb-inbox-row__preview">
+          {message.aiSummary ? (
+            <>{message.aiSummary}</>
+          ) : (
+            message.bodyPreview
+          )}
+        </span>
       </div>
 
       {/* Right: time + hover actions crossfade */}

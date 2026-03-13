@@ -20,6 +20,7 @@ function makeClassification(overrides: Partial<ClassificationResult> = {}): Clas
     recommendedActions: [],
     reasoning: 'test classification',
     category: 'client',
+    summary: '',
     ...overrides,
   }
 }

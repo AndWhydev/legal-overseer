@@ -17,6 +17,7 @@ vi.mock('@/lib/agent/classifier', () => ({
     recommendedActions: ['create_task'],
     reasoning: 'User is requesting task creation',
     category: 'personal',
+    summary: '',
   }),
 }))
 

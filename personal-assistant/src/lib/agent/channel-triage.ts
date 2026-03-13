@@ -663,6 +663,7 @@ export async function runTriage(
             channel: msg.channel,
           } : undefined,
           category: msgCategory,
+          ai_summary: classification.summary || null,
           contact_id: contactId,
           contact_name: contactName,
           thread_status: threadStatus,
@@ -697,6 +698,7 @@ export interface InboxMessage {
   senderEmail: string | null
   subject: string | null
   bodyPreview: string
+  aiSummary: string | null
   category: MessageCategory
   priority: PriorityLevel
   significance: number
@@ -756,6 +758,7 @@ export async function queryInbox(
       senderEmail: (msg.sender_email as string) || null,
       subject: (msg.subject as string) || null,
       bodyPreview: String(msg.body || '').slice(0, 200),
+      aiSummary: (meta.ai_summary as string) || null,
       category: (meta.category as MessageCategory) || 'informational',
       priority: (msg.priority as PriorityLevel) || 'medium',
       significance: (msg.significance as number) || 0,

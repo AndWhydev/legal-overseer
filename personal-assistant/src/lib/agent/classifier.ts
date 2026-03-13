@@ -42,6 +42,7 @@ export interface ClassificationResult {
   recommendedActions: string[] // e.g., ["reply", "create_task", "forward_to_lead_swarm"]
   reasoning: string
   category: 'lead' | 'client' | 'vendor' | 'personal' | 'spam' | 'notification' | 'newsletter'
+  summary: string // 1-2 sentence plain-English summary of the message content
 }
 
 // ---------------------------------------------------------------------------
@@ -310,6 +311,7 @@ const DEFAULT_RESULT: ClassificationResult = {
   recommendedActions: [],
   reasoning: 'Classification failed -- defaulting to low significance',
   category: 'notification',
+  summary: '',
 }
 
 const MAX_BODY_LENGTH = 2000
@@ -334,7 +336,8 @@ Return JSON:
   "unblocks": ["<task_id>", ...],
   "recommendedActions": ["<action1>", ...],
   "reasoning": "<brief explanation>",
-  "category": "<lead|client|vendor|personal|spam|notification|newsletter>"
+  "category": "<lead|client|vendor|personal|spam|notification|newsletter>",
+  "summary": "<1-2 sentence plain-English summary of what this message says and any action needed>"
 }
 
 Background Context for Sender:
@@ -375,6 +378,7 @@ function parseClassificationResponse(text: string): ClassificationResult {
     recommendedActions: Array.isArray(parsed.recommendedActions) ? parsed.recommendedActions : [],
     reasoning: String(parsed.reasoning ?? ''),
     category,
+    summary: String(parsed.summary ?? ''),
   }
 }
 

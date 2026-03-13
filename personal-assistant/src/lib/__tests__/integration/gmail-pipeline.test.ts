@@ -69,6 +69,7 @@ function createClassification(overrides: Partial<ClassificationResult> = {}): Cl
     recommendedActions: ['create_task', 'reply'],
     reasoning: 'Client inquiry about services',
     category: 'client',
+    summary: '',
     ...overrides,
   }
 }

@@ -66,6 +66,7 @@ function createClassification(overrides: Partial<ClassificationResult> = {}): Cl
     recommendedActions: [],
     reasoning: 'Standard message',
     category: 'client',
+    summary: '',
     ...overrides,
   }
 }
@@ -407,6 +408,7 @@ describe('Message to Action Pipeline Integration', () => {
       unblocks: [],
       recommendedActions: [],
       reasoning: 'Classification failed - using safe fallback',
+      summary: '',
     })
 
     expect(fallbackRoute.decision).toBe('skip')
