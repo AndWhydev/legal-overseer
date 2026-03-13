@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-03-01)
 Phase: 19 of 19 (Credential Provisioning & Live Verification)
 Plan: 2 of 3 in current phase
 Status: Executing Phase 19
-Last activity: 2026-03-14 - Completed quick task 17: Inbox toolbar pills, floating bulk bar, invisible AI, ghost draft, sanitizeText
+Last activity: 2026-03-14 - Completed quick task 18: Inbox polish -- 12 fixes applied (time, filter chips, chat reply, icon actions, continuous card)
 
 Progress: [####################..........] 100% v1.0+v1.1 | Phase 19 (2/3)
 
@@ -182,9 +182,10 @@ See PROJECT.md Key Decisions table.
 | 15 | Redesign inbox: neutral channel icons, time placement fix, edge-knock panel with proximity detection | 2026-03-14 | 2ad5e21d | [14-redesign-inbox-component-neutral-channel](./quick/14-redesign-inbox-component-neutral-channel/) |
 | 16 | Inbox: remove checkboxes, modifier-key multi-select, inline expandable rows replace drawer | 2026-03-14 | 5ea67e91 | [15-inbox-redesign-remove-checkboxes-add-mod](./quick/15-inbox-redesign-remove-checkboxes-add-mod/) |
 | 17 | Inbox toolbar + expanded row redesign: invisible AI, ghost draft, floating bulk bar, sanitization | 2026-03-14 | aba9723d | [17-inbox-toolbar-and-expanded-row-redesign-](./quick/17-inbox-toolbar-and-expanded-row-redesign-/) |
+| 18 | Inbox polish: fix hover time, inline filter chips, chat-style reply, icon actions, continuous card | 2026-03-14 | 04e22afb | [18-inbox-polish-fix-hover-time-disappear-re](./quick/18-inbox-polish-fix-hover-time-disappear-re/) |
 
 ## Session Continuity
 
 Last session: 2026-03-14
-Stopped at: Completed quick task 17 (Inbox toolbar pills, floating bulk bar, invisible AI, ghost draft, sanitizeText)
+Stopped at: Completed quick task 18 (Inbox polish -- 12 fixes: time visibility, filter chips, chat-style reply, icon actions, continuous card)
 Resume file: None
