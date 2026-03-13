@@ -4,11 +4,12 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { MessageBubble } from './message-bubble'
 import { ToolCallSummary } from './tool-call-card'
-import { ChevronDown } from 'lucide-react'
+import { ChevronDown, MessageSquare } from 'lucide-react'
 import { BitBitFaceAvatar } from './bitbit-face-avatar'
 import { useAvatarEmotion } from './use-avatar-emotion'
 import { useSmoothStream } from './use-smooth-stream'
 import { useSmartScroll } from './use-smart-scroll'
+import { ConversationDrawer, type Thread } from './conversation-drawer'
 import { Reasoning, ReasoningTrigger, ReasoningContent } from '@/components/ai-elements/reasoning'
 import { Checkpoint, CheckpointIcon } from '@/components/ai-elements/checkpoint'
 import {
@@ -86,6 +87,10 @@ export function ChatInterface({ userName }: { userName?: string }) {
   const [activeCitations, setActiveCitations] = useState<Citation[]>([])
   const [checkpoints, setCheckpoints] = useState<CheckpointMarker[]>([])
   const [pendingApprovals, setPendingApprovals] = useState<PendingApproval[]>([])
+  // Conversation history drawer state
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  const [conversationThreads, setConversationThreads] = useState<Thread[]>([])
+  const [threadsLoading, setThreadsLoading] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
   const currentAssistantIdRef = useRef<string | null>(null)
 
@@ -442,6 +447,76 @@ export function ChatInterface({ userName }: { userName?: string }) {
     handleSend(text)
   }, [handleSend])
 
+  // Conversation drawer functions
+  const fetchThreads = useCallback(async () => {
+    setThreadsLoading(true)
+    try {
+      const res = await fetch('/api/conversations/list')
+      if (res.ok) {
+        const data = await res.json()
+        setConversationThreads(data.threads || [])
+      }
+    } catch {
+      // Silently fail -- drawer shows empty state
+    } finally {
+      setThreadsLoading(false)
+    }
+  }, [])
+
+  const handleNewConversation = useCallback(() => {
+    setMessages([])
+    setThreadId(null)
+    localStorage.removeItem(THREAD_STORAGE_KEY)
+    setThinkingContent('')
+    setIsThinkingStreaming(false)
+    setThinkingDuration(undefined)
+    setShowReasoning(false)
+    setActiveCitations([])
+    setCheckpoints([])
+    setPendingApprovals([])
+    smoothStream.reset()
+    setDrawerOpen(false)
+  }, [smoothStream])
+
+  const handleSelectThread = useCallback(async (selectedThreadId: string) => {
+    setThreadId(selectedThreadId)
+    localStorage.setItem(THREAD_STORAGE_KEY, selectedThreadId)
+
+    // Reset state
+    setThinkingContent('')
+    setIsThinkingStreaming(false)
+    setThinkingDuration(undefined)
+    setShowReasoning(false)
+    setActiveCitations([])
+    setCheckpoints([])
+    setPendingApprovals([])
+    smoothStream.reset()
+
+    try {
+      const res = await fetch(`/api/agent/chat/history?threadId=${selectedThreadId}`)
+      if (!res.ok) return
+
+      const data = await res.json()
+      if (!data?.messages?.length) {
+        setMessages([])
+        return
+      }
+
+      const restored: Message[] = data.messages
+        .filter((m: { role: string }) => m.role === 'user' || m.role === 'assistant')
+        .map((m: { id: string; role: string; content: string; created_at: string }) => ({
+          id: m.id,
+          role: m.role as 'user' | 'assistant',
+          content: m.content,
+          timestamp: new Date(m.created_at),
+        }))
+      setMessages(restored)
+    } catch {
+      // Failed to load thread -- keep empty
+      setMessages([])
+    }
+  }, [smoothStream])
+
   const hasMessages = messages.length > 0
   const chatStarted = hasMessages || isLoading
 
@@ -462,6 +537,35 @@ export function ChatInterface({ userName }: { userName?: string }) {
 
   return (
     <div className={`bb-chat ${chatStarted ? 'bb-chat--active' : 'bb-chat--pre-session'}`}>
+      {/* History toggle button */}
+      {chatStarted && (
+        <button
+          className="bb-chat__history-btn"
+          onClick={() => {
+            setDrawerOpen(true)
+            fetchThreads()
+          }}
+          aria-label="Conversation history"
+        >
+          <MessageSquare size={16} />
+        </button>
+      )}
+
+      {/* Conversation history drawer */}
+      <AnimatePresence>
+        {drawerOpen && (
+          <ConversationDrawer
+            isOpen={drawerOpen}
+            onClose={() => setDrawerOpen(false)}
+            threads={conversationThreads}
+            activeThreadId={threadId}
+            onSelectThread={handleSelectThread}
+            onNewConversation={handleNewConversation}
+            isLoading={threadsLoading}
+          />
+        )}
+      </AnimatePresence>
+
       {/* Messages or empty state */}
       <div
         className={`bb-chat__messages ${!hasMessages ? 'bb-chat__messages--empty' : ''}`}

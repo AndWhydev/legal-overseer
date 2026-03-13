@@ -6517,6 +6517,190 @@ html.light .bb-chat__scroll-btn {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
+/* ── History Toggle Button ── */
+
+.bb-chat__history-btn {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 20;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--glass-pill-bg, rgba(255, 255, 255, 0.06));
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  transition: all 0.15s ease;
+  opacity: 0.7;
+}
+
+.bb-chat__history-btn:hover {
+  opacity: 1;
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+html.light .bb-chat__history-btn {
+  background: rgba(255, 255, 255, 0.7);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+html.light .bb-chat__history-btn:hover {
+  background: rgba(255, 255, 255, 0.9);
+}
+
+/* ── Conversation Drawer ── */
+
+.bb-chat__drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 50;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.bb-chat__drawer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 320px;
+  z-index: 51;
+  background: var(--bg-primary, rgba(12, 14, 20, 0.95));
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.bb-chat__drawer-header {
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.bb-chat__drawer-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.bb-chat__drawer-new-btn {
+  background: var(--glass-pill-bg, rgba(255, 255, 255, 0.06));
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s;
+}
+
+.bb-chat__drawer-new-btn:hover {
+  color: var(--text-primary);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.bb-chat__drawer-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.bb-chat__drawer-thread {
+  padding: 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+  border-left: 2px solid transparent;
+  margin-bottom: 2px;
+}
+
+.bb-chat__drawer-thread:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.bb-chat__drawer-thread--active {
+  border-left-color: var(--accent-primary, #6366f1);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.bb-chat__drawer-thread-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bb-chat__drawer-thread-preview {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bb-chat__drawer-thread-time {
+  font-size: 11px;
+  color: var(--text-muted, rgba(255, 255, 255, 0.35));
+  margin-top: 2px;
+}
+
+.bb-chat__drawer-empty {
+  padding: 40px 16px;
+  text-align: center;
+  color: var(--text-muted, rgba(255, 255, 255, 0.35));
+  font-size: 13px;
+}
+
+/* Light theme overrides for drawer */
+html.light .bb-chat__drawer-backdrop {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+html.light .bb-chat__drawer {
+  background: rgba(255, 255, 255, 0.95);
+  border-right-color: rgba(0, 0, 0, 0.08);
+}
+
+html.light .bb-chat__drawer-header {
+  border-bottom-color: rgba(0, 0, 0, 0.06);
+}
+
+html.light .bb-chat__drawer-new-btn {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+html.light .bb-chat__drawer-new-btn:hover {
+  border-color: rgba(0, 0, 0, 0.2);
+}
+
+html.light .bb-chat__drawer-thread:hover {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+html.light .bb-chat__drawer-thread--active {
+  background: rgba(0, 0, 0, 0.02);
+}
+
 .bb-chat__bubble--user {
   background: var(--bg-card);
   backdrop-filter: var(--glass-card-blur);
