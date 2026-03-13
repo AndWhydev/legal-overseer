@@ -28,6 +28,7 @@ import { cluelyAdapter } from './cluely'
 import { isDuplicate, computeContentHash } from './dedup'
 import { getOrgCredential, storeChannelCredential, encryptCredential } from '@/lib/integrations/credentials'
 import { logger } from '@/lib/core/logger';
+import { fetchGoogleProfilePhotos, storeGoogleAvatarForContact } from '@/lib/avatar/google-photos'
 
 export interface PollResult {
   messagesFound: number
@@ -376,6 +377,29 @@ export async function pollChannel(
       }
     }
     const insertDurationMs = Date.now() - insertStartMs
+
+    // Phase: Avatar fetch (Gmail only, non-blocking)
+    if (channelType === 'gmail' && inserted > 0) {
+      const accessToken = adapterConfig.accessToken as string | undefined
+      if (accessToken) {
+        const senderEmails = messagesToInsert
+          .map(({ msg }) => msg.senderEmail)
+          .filter((e): e is string => Boolean(e))
+        // Fire-and-forget — don't block the relay cycle
+        fetchGoogleProfilePhotos(accessToken, senderEmails)
+          .then(async (photos) => {
+            for (const [email, photoUrl] of photos) {
+              await storeGoogleAvatarForContact(supabase, email, photoUrl)
+            }
+            if (photos.size > 0) {
+              logger.info(`[relay] Fetched ${photos.size} Google profile photo(s)`)
+            }
+          })
+          .catch((err) => {
+            logger.debug('[relay] Avatar fetch failed (non-critical):', err)
+          })
+      }
+    }
 
     // Update poll_cursor to latest message receivedAt
     const latestDate = messages.reduce(

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { X, User, Briefcase, FileText, CheckSquare, DollarSign } from 'lucide-react';
 
 // ─── Types ─────────────────────────────────────────────────────────────────
@@ -62,7 +62,7 @@ function formatEventType(type: string): string {
   return type.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-// ─── Detail Sections ───────────────────────────────────────────────────────
+// ─── Avatar ───────────────────────────────────────────────────────────────
 
 function ContactAvatar({ meta, size = 40 }: { meta: Record<string, unknown>; size?: number }) {
   const avatarUrl = meta.avatar_url as string | undefined;
@@ -110,6 +110,8 @@ function ContactAvatar({ meta, size = 40 }: { meta: Record<string, unknown>; siz
     </div>
   );
 }
+
+// ─── Detail Sections ───────────────────────────────────────────────────────
 
 function ProjectDetail({ meta }: { meta: Record<string, unknown> }) {
   return (
@@ -177,13 +179,13 @@ function EntityDetailDrawer({ open, onClose, entityType, entityId }: EntityDetai
   const [related, setRelated] = useState<{ node: GraphNode; edge: GraphEdge }[]>([]);
   const [timeline, setTimeline] = useState<TimelineEvent[]>([]);
   const [loading, setLoading] = useState(false);
+  const dialogRef = useRef<HTMLDivElement>(null);
 
   const fetchData = useCallback(async () => {
     if (!entityId || !entityType) return;
     setLoading(true);
 
     try {
-      // Fetch graph + timeline in parallel
       const [graphRes, timelineRes] = await Promise.all([
         fetch(`/api/knowledge/graph?entity_type=${entityType}&entity_id=${entityId}`).then((r) => r.json()),
         fetch(`/api/activity?entity_type=${entityType}&entity_id=${entityId}`).then((r) => r.json()).catch(() => ({ events: [] })),
@@ -213,6 +215,14 @@ function EntityDetailDrawer({ open, onClose, entityType, entityId }: EntityDetai
     if (open) fetchData();
   }, [open, fetchData]);
 
+  // Lock body scroll when open
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = prev; };
+  }, [open]);
+
   // Close on Escape
   useEffect(() => {
     if (!open) return;
@@ -221,41 +231,67 @@ function EntityDetailDrawer({ open, onClose, entityType, entityId }: EntityDetai
     return () => window.removeEventListener('keydown', handleKey);
   }, [open, onClose]);
 
+  // Trap scroll inside the modal — prevent scroll from leaking to body
+  useEffect(() => {
+    if (!open) return;
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      const scrollContainer = dialog.querySelector('[data-scroll-content]') as HTMLElement | null;
+      if (!scrollContainer) return;
+
+      const { scrollTop, scrollHeight, clientHeight } = scrollContainer;
+      const atTop = scrollTop <= 0 && e.deltaY < 0;
+      const atBottom = scrollTop + clientHeight >= scrollHeight - 1 && e.deltaY > 0;
+
+      // Only prevent default when scroll would leak outside the container
+      if (atTop || atBottom) {
+        e.preventDefault();
+      }
+    };
+
+    dialog.addEventListener('wheel', handleWheel, { passive: false });
+    return () => dialog.removeEventListener('wheel', handleWheel);
+  }, [open]);
+
   const Icon = TYPE_ICON[entityType] ?? Briefcase;
   const isContact = entityType === 'contact';
   const contactName = entity?.metadata?.name ? String(entity.metadata.name) : null;
   const contactType = entity?.metadata?.type ? String(entity.metadata.type) : null;
 
+  if (!open) return null;
+
   return (
     <>
-      {/* Backdrop */}
-      {open && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 40,
-            background: 'rgba(0, 0, 0, 0.5)',
-            backdropFilter: 'blur(4px)',
-            WebkitBackdropFilter: 'blur(4px)',
-            transition: 'opacity 200ms ease-out',
-            opacity: open ? 1 : 0,
-          }}
-          onClick={onClose}
-          aria-hidden="true"
-        />
-      )}
-
-      {/* Modal */}
+      {/* Backdrop — fixed overlay, click to dismiss */}
       <div
         style={{
           position: 'fixed',
           inset: 0,
-          zIndex: 50,
-          display: open ? 'flex' : 'none',
+          zIndex: 9998,
+          background: 'rgba(0, 0, 0, 0.5)',
+          backdropFilter: 'blur(4px)',
+          WebkitBackdropFilter: 'blur(4px)',
+          animation: 'modalFadeIn 200ms ease-out',
+        }}
+        onClick={onClose}
+        aria-hidden="true"
+      />
+
+      {/* Modal container — fixed, centered, scroll-isolated */}
+      <div
+        ref={dialogRef}
+        style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 9999,
+          display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           padding: '20px',
+          pointerEvents: 'none',
+          overflow: 'hidden',
         }}
         role="dialog"
         aria-modal="true"
@@ -266,31 +302,28 @@ function EntityDetailDrawer({ open, onClose, entityType, entityId }: EntityDetai
             position: 'relative',
             width: '100%',
             maxWidth: 560,
-            maxHeight: '80vh',
+            maxHeight: 'min(80vh, 640px)',
             borderRadius: 20,
-            background: 'rgba(15, 20, 30, 0.8)',
-            backdropFilter: 'blur(20px) saturate(1.2)',
-            WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
-            border: '1px solid rgba(255, 255, 255, 0.03)',
-            boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+            background: 'rgba(15, 20, 30, 0.92)',
+            backdropFilter: 'blur(24px) saturate(1.3)',
+            WebkitBackdropFilter: 'blur(24px) saturate(1.3)',
+            border: '1px solid rgba(255, 255, 255, 0.06)',
+            boxShadow: '0 24px 80px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
             display: 'flex',
             flexDirection: 'column' as const,
-            animation: open ? 'modalEnter 200ms ease-out' : 'modalExit 200ms ease-out',
+            overflow: 'hidden',
+            pointerEvents: 'auto',
+            animation: 'modalEnter 200ms ease-out',
           }}
         >
-          {/* Header */}
+          {/* Header — non-scrollable */}
           <div style={{
-            position: 'sticky',
-            top: 0,
-            zIndex: 10,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            borderBottom: '1px solid rgba(255, 255, 255, 0.03)',
-            background: 'rgba(15, 20, 30, 0.8)',
+            borderBottom: '1px solid rgba(255, 255, 255, 0.04)',
             padding: '16px 20px',
-            borderTopLeftRadius: 20,
-            borderTopRightRadius: 20,
+            flexShrink: 0,
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
               {isContact && entity ? (
@@ -341,16 +374,17 @@ function EntityDetailDrawer({ open, onClose, entityType, entityId }: EntityDetai
                 padding: '8px',
                 borderRadius: 10,
                 background: 'transparent',
-                border: '1px solid rgba(255, 255, 255, 0.03)',
+                border: '1px solid rgba(255, 255, 255, 0.04)',
                 color: 'var(--text-primary)',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 transition: 'background 200ms',
+                flexShrink: 0,
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)';
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.06)';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.background = 'transparent';
@@ -361,15 +395,21 @@ function EntityDetailDrawer({ open, onClose, entityType, entityId }: EntityDetai
             </button>
           </div>
 
-          {/* Content */}
-          <div style={{
-            flex: 1,
-            overflowY: 'auto' as const,
-            padding: '16px 20px 20px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '20px',
-          }}>
+          {/* Scrollable content — isolated scroll container */}
+          <div
+            data-scroll-content
+            style={{
+              flex: 1,
+              overflowY: 'auto',
+              overflowX: 'hidden',
+              overscrollBehavior: 'contain',
+              WebkitOverflowScrolling: 'touch',
+              padding: '16px 20px 20px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '20px',
+            }}
+          >
             {loading ? (
               <div style={{ animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' }}>
                 <div style={{
@@ -406,130 +446,122 @@ function EntityDetailDrawer({ open, onClose, entityType, entityId }: EntityDetai
 
                 {/* Related Entities */}
                 {related.length > 0 && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                     <h3 style={{
                       fontSize: 11,
                       fontWeight: 600,
                       letterSpacing: '0.08em',
                       textTransform: 'uppercase',
                       color: 'var(--text-dim)',
-                      marginBottom: 0,
+                      margin: 0,
                     }}>
                       Related ({related.length})
                     </h3>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      {related.map(({ node, edge }) => {
-                        const RelIcon = TYPE_ICON[node.type] ?? Briefcase;
-                        return (
+                    {related.map(({ node, edge }) => {
+                      const RelIcon = TYPE_ICON[node.type] ?? Briefcase;
+                      return (
+                        <div
+                          key={`${node.type}-${node.id}`}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '12px',
+                            borderRadius: 12,
+                            padding: '10px 14px',
+                            background: 'rgba(20, 28, 40, 0.5)',
+                            border: '1px solid rgba(255, 255, 255, 0.03)',
+                          }}
+                        >
                           <div
-                            key={`${node.type}-${node.id}`}
                             style={{
                               display: 'flex',
                               alignItems: 'center',
-                              gap: '12px',
-                              borderRadius: 12,
-                              padding: '12px 16px',
-                              background: 'rgba(20, 28, 40, 0.5)',
-                              backdropFilter: 'blur(12px)',
-                              WebkitBackdropFilter: 'blur(12px)',
-                              border: '1px solid rgba(255, 255, 255, 0.03)',
+                              justifyContent: 'center',
+                              width: 28,
+                              height: 28,
+                              borderRadius: 8,
+                              backgroundColor: `${TYPE_COLOR[node.type] ?? '#888'}20`,
+                              color: TYPE_COLOR[node.type] ?? '#888',
+                              flexShrink: 0,
                             }}
                           >
-                            <div
-                              style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                width: 32,
-                                height: 32,
-                                borderRadius: 8,
-                                backgroundColor: `${TYPE_COLOR[node.type] ?? '#888'}20`,
-                                color: TYPE_COLOR[node.type] ?? '#888',
-                                flexShrink: 0,
-                              }}
-                            >
-                              <RelIcon size={16} />
+                            <RelIcon size={14} />
+                          </div>
+                          <div style={{ minWidth: 0, flex: 1 }}>
+                            <div style={{
+                              fontSize: 13,
+                              fontWeight: 500,
+                              color: 'var(--text-primary)',
+                              whiteSpace: 'nowrap',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                            }}>
+                              {node.label}
                             </div>
-                            <div style={{ minWidth: 0, flex: 1 }}>
-                              <div style={{
-                                fontSize: 14,
-                                fontWeight: 500,
-                                color: 'var(--text-primary)',
-                                whiteSpace: 'nowrap',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                              }}>
-                                {node.label}
-                              </div>
-                              <div style={{
-                                fontSize: 12,
-                                color: 'var(--text-secondary)',
-                                textTransform: 'capitalize',
-                              }}>
-                                {edge?.relationshipType?.replace(/_/g, ' ') ?? node.type}
-                              </div>
+                            <div style={{
+                              fontSize: 11,
+                              color: 'var(--text-secondary)',
+                              textTransform: 'capitalize',
+                            }}>
+                              {edge?.relationshipType?.replace(/_/g, ' ') ?? node.type}
                             </div>
                           </div>
-                        );
-                      })}
-                    </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
 
                 {/* Timeline */}
                 {timeline.length > 0 && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                     <h3 style={{
                       fontSize: 11,
                       fontWeight: 600,
                       letterSpacing: '0.08em',
                       textTransform: 'uppercase',
                       color: 'var(--text-dim)',
-                      marginBottom: 0,
+                      margin: 0,
                     }}>
                       Timeline
                     </h3>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      {timeline.map((event) => (
-                        <div
-                          key={event.id}
-                          style={{
-                            display: 'flex',
-                            gap: '12px',
-                            borderRadius: 12,
-                            padding: '12px 16px',
-                            background: 'rgba(20, 28, 40, 0.5)',
-                            backdropFilter: 'blur(12px)',
-                            WebkitBackdropFilter: 'blur(12px)',
-                            border: '1px solid rgba(255, 255, 255, 0.03)',
-                          }}
-                        >
+                    {timeline.map((event) => (
+                      <div
+                        key={event.id}
+                        style={{
+                          display: 'flex',
+                          gap: '10px',
+                          borderRadius: 12,
+                          padding: '10px 14px',
+                          background: 'rgba(20, 28, 40, 0.5)',
+                          border: '1px solid rgba(255, 255, 255, 0.03)',
+                        }}
+                      >
+                        <div style={{
+                          marginTop: 5,
+                          width: 6,
+                          height: 6,
+                          borderRadius: '50%',
+                          background: 'var(--bb-cyan)',
+                          flexShrink: 0,
+                        }} />
+                        <div style={{ minWidth: 0, flex: 1 }}>
                           <div style={{
-                            marginTop: 4,
-                            width: 8,
-                            height: 8,
-                            borderRadius: '50%',
-                            background: 'var(--bb-cyan)',
-                            flexShrink: 0,
-                          }} />
-                          <div style={{ minWidth: 0, flex: 1 }}>
-                            <div style={{
-                              fontSize: 14,
-                              color: 'var(--text-primary)',
-                            }}>
-                              {formatEventType(event.eventType)}
-                            </div>
-                            <div style={{
-                              fontSize: 12,
-                              color: 'var(--text-secondary)',
-                            }}>
-                              {formatDate(event.occurredAt)}
-                              {event.channelSource && ` via ${event.channelSource}`}
-                            </div>
+                            fontSize: 13,
+                            color: 'var(--text-primary)',
+                          }}>
+                            {formatEventType(event.eventType)}
+                          </div>
+                          <div style={{
+                            fontSize: 11,
+                            color: 'var(--text-secondary)',
+                          }}>
+                            {formatDate(event.occurredAt)}
+                            {event.channelSource && ` via ${event.channelSource}`}
                           </div>
                         </div>
-                      ))}
-                    </div>
+                      </div>
+                    ))}
                   </div>
                 )}
 
@@ -550,24 +582,18 @@ function EntityDetailDrawer({ open, onClose, entityType, entityId }: EntityDetai
       </div>
 
       <style>{`
+        @keyframes modalFadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
         @keyframes modalEnter {
           from {
             opacity: 0;
-            transform: scale(0.95);
+            transform: scale(0.95) translateY(8px);
           }
           to {
             opacity: 1;
-            transform: scale(1);
-          }
-        }
-        @keyframes modalExit {
-          from {
-            opacity: 1;
-            transform: scale(1);
-          }
-          to {
-            opacity: 0;
-            transform: scale(0.95);
+            transform: scale(1) translateY(0);
           }
         }
       `}</style>
