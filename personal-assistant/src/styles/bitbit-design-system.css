@@ -6107,12 +6107,12 @@ html.light .bb-shortcuts-footer kbd {
   max-height: 188px;
   padding-right: 2px;
   transition: min-height 200ms cubic-bezier(0.22, 1, 0.36, 1);
-  /* Invisible input — only text and placeholder visible */
-  background: transparent;
-  border: none;
-  outline: none;
-  box-shadow: none;
-  -webkit-appearance: none;
+  /* Invisible input — override theme !important rules */
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  -webkit-appearance: none !important;
 }
 
 @keyframes pill-dock-enter {
@@ -6144,13 +6144,14 @@ html.light .bb-shortcuts-footer kbd {
   }
 }
 
-/* Textarea in docked pill */
+/* Textarea in docked pill — !important to beat theme global textarea rules */
 .bb-pill__textarea {
   flex: 1;
   min-width: 0;
-  background: transparent;
-  border: none;
-  outline: none;
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
   color: var(--text-primary);
   font-size: 14px;
   font-family: 'Inter', sans-serif;
