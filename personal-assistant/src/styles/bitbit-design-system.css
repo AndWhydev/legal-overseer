@@ -2430,17 +2430,7 @@ html.light .bb-chip--accent {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07);
 }
 
-.bb-inbox-row:hover .bb-inbox-row__meta-default {
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity var(--duration-fast) var(--ease-default);
-}
-
-.bb-inbox-row:hover .bb-inbox-row__hover-actions {
-  opacity: 1;
-  pointer-events: auto;
-  transition: opacity 150ms ease;
-}
+/* hover-actions crossfade removed — time always visible */
 
 /* Unread: slightly more opaque */
 .bb-inbox-row[data-unread] {
@@ -2637,40 +2627,7 @@ html.light .bb-chip--accent {
   white-space: nowrap;
 }
 
-/* ── Hover actions — crossfade in meta column ── */
-
-.bb-inbox-row__hover-actions {
-  position: absolute;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity var(--duration-fast) var(--ease-default);
-}
-
-.bb-inbox-row__action {
-  width: 30px;
-  height: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--radius-sm);
-  border: none;
-  background: transparent;
-  color: var(--text-dim);
-  cursor: pointer;
-  transition: color var(--duration-fast) var(--ease-default),
-              background var(--duration-fast) var(--ease-default);
-}
-
-.bb-inbox-row__action:hover {
-  color: var(--text-primary);
-  background: rgba(255, 255, 255, 0.06);
-}
+/* hover-actions and action buttons removed — actions live in expanded row only */
 
 /* ── Selected state: white-inverted (dark mode) ── */
 
@@ -2701,19 +2658,7 @@ html.light .bb-chip--accent {
   color: #374151;
 }
 
-.bb-inbox-row[data-selected] .bb-inbox-row__action {
-  color: #374151;
-  background: rgba(0, 0, 0, 0.06);
-}
-
-.bb-inbox-row[data-selected] .bb-inbox-row__action:hover {
-  color: #0A0F1A;
-  background: rgba(0, 0, 0, 0.12);
-}
-
-.bb-inbox-row[data-selected]:hover .bb-inbox-row__hover-actions {
-  background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.95) 20%);
-}
+/* selected hover-actions removed */
 
 /* ── Light theme overrides ── */
 
@@ -2779,14 +2724,7 @@ html.light .bb-inbox-row[data-level="medium"] {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 
-html.light .bb-inbox-row__hover-actions {
-  background: none;
-}
-
-html.light .bb-inbox-row__action:hover {
-  color: #111827;
-  background: rgba(0, 0, 0, 0.04);
-}
+/* light-mode hover-actions removed */
 
 /* ── Selected state: dark-inverted (light mode) ── */
 
@@ -2817,19 +2755,7 @@ html.light .bb-inbox-row[data-selected] .bb-inbox-row__icon {
   color: #CBD5E1;
 }
 
-html.light .bb-inbox-row[data-selected] .bb-inbox-row__action {
-  color: #CBD5E1;
-  background: rgba(255, 255, 255, 0.08);
-}
-
-html.light .bb-inbox-row[data-selected] .bb-inbox-row__action:hover {
-  color: #F1F5F9;
-  background: rgba(255, 255, 255, 0.15);
-}
-
-html.light .bb-inbox-row[data-selected]:hover .bb-inbox-row__hover-actions {
-  background: linear-gradient(to right, transparent, #1A1A1B 20%);
-}
+/* light-mode selected hover-actions removed */
 
 /* ── Inbox mobile responsive ── */
 
@@ -2874,9 +2800,7 @@ html.light .bb-inbox-row[data-selected]:hover .bb-inbox-row__hover-actions {
     display: none;
   }
 
-  .bb-inbox-row__hover-actions {
-    display: none;
-  }
+  /* hover-actions responsive rule removed */
 }
 
 
