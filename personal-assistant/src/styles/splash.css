@@ -11,8 +11,33 @@
   justify-content: center;
   background: var(--bg-primary, #0a0f1a);
   background-image:
-    radial-gradient(circle, rgba(255, 90, 31, 0.06) 1px, transparent 1px);
+    radial-gradient(circle, var(--sparkle-dot-color, rgba(255, 255, 255, 0.04)) 1px, transparent 1px);
   background-size: 24px 24px;
+
+  /* Theme-aware sparkle tokens (dark mode defaults) */
+  --sparkle-color: rgba(255, 255, 255, 0.9);
+  --shimmer-color: rgba(255, 255, 255, 0.12);
+  --glow-color: rgba(255, 255, 255, 0.15);
+  --sparkle-dot-color: rgba(255, 255, 255, 0.04);
+}
+
+/* Light theme overrides */
+@media (prefers-color-scheme: light) {
+  .bb-splash {
+    --sparkle-color: rgba(0, 0, 0, 0.7);
+    --shimmer-color: rgba(0, 0, 0, 0.08);
+    --glow-color: rgba(0, 0, 0, 0.1);
+    --sparkle-dot-color: rgba(0, 0, 0, 0.04);
+  }
+}
+
+/* Data-attribute overrides for app-level theme control */
+[data-theme="light"] .bb-splash,
+.bb-splash[data-theme="light"] {
+  --sparkle-color: rgba(0, 0, 0, 0.7);
+  --shimmer-color: rgba(0, 0, 0, 0.08);
+  --glow-color: rgba(0, 0, 0, 0.1);
+  --sparkle-dot-color: rgba(0, 0, 0, 0.04);
 }
 
 .bb-splash--exit {
