@@ -29,7 +29,17 @@ interface KanbanBoardProps {
 }
 
 export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: KanbanBoardProps) {
-  const [columns] = useState(initialColumns)
+  // Deduplicate columns by id to prevent duplicates from being rendered
+  const deduplicatedColumns = useMemo(() => {
+    const seen = new Set<string>()
+    return initialColumns.filter(col => {
+      if (seen.has(col.id)) return false
+      seen.add(col.id)
+      return true
+    })
+  }, [initialColumns])
+
+  const [columns] = useState(deduplicatedColumns)
   const [tasks, setTasks] = useState(initialTasks)
   const [activeTask, setActiveTask] = useState<Task | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)

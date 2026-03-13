@@ -129,7 +129,7 @@ export function KanbanToolbar({
         {totalCount}
       </span>
 
-      {/* Overdue badge */}
+      {/* Overdue badge — B3 redesign: solid red, pill shape, no transparency */}
       {overdueCount > 0 && (
         <button
           onClick={onOverdueClick}
@@ -137,21 +137,19 @@ export function KanbanToolbar({
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
-            minWidth: 18,
-            height: 18,
-            padding: '0 5px',
-            borderRadius: 99,
-            background: 'rgba(239, 68, 68, 0.15)',
+            padding: '2px 8px',
+            borderRadius: 10,
+            background: '#EF4444',
             border: 'none',
-            fontSize: 10,
+            fontSize: 11,
             fontWeight: 700,
-            color: '#f87171',
+            color: '#FFFFFF',
             cursor: 'pointer',
             fontFamily: 'inherit',
-            transition: 'background 0.15s',
+            transition: 'background 0.15s, transform 0.15s',
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.25)' }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.15)' }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = '#DC2626'; e.currentTarget.style.transform = 'scale(1.05)' }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = '#EF4444'; e.currentTarget.style.transform = 'scale(1)' }}
           title="Overdue tasks"
         >
           {overdueCount}
@@ -287,23 +285,25 @@ export function KanbanToolbar({
       {/* Spacer */}
       <div style={{ flex: 1 }} />
 
-      {/* Search */}
+      {/* Search with animation — B2: smooth expand/collapse with blur effect */}
       <div style={{
         display: 'flex',
         alignItems: 'center',
         gap: 5,
         padding: '4px 10px',
         borderRadius: 20,
-        background: searchExpanded ? 'var(--bg-secondary)' : 'var(--bb-surface)',
+        background: searchExpanded ? 'var(--glass-bg-heavy)' : 'var(--bb-surface)',
+        backdropFilter: searchExpanded ? 'blur(12px)' : 'none',
+        WebkitBackdropFilter: searchExpanded ? 'blur(12px)' : 'none',
         boxShadow: 'var(--card-inset)',
-        transition: 'background 0.15s, width 0.2s ease',
-        width: searchExpanded ? 180 : 'auto',
+        transition: 'background 0.2s ease, width 0.2s ease-out, backdrop-filter 0.2s ease',
+        width: searchExpanded ? 240 : 40,
         cursor: searchExpanded ? 'text' : 'pointer',
       }}
         onClick={() => {
           if (!searchExpanded) {
             setSearchExpanded(true)
-            setTimeout(() => searchInputRef.current?.focus(), 30)
+            setTimeout(() => searchInputRef.current?.focus(), 50)
           }
         }}
       >
@@ -332,10 +332,17 @@ export function KanbanToolbar({
               padding: 0,
               fontFamily: 'inherit',
               minWidth: 0,
+              opacity: 1,
+              transition: 'opacity 0.15s ease 0.05s',
             }}
           />
         ) : (
-          <span style={{ fontSize: 11, color: 'var(--text-dim)' }}>
+          <span style={{
+            fontSize: 11,
+            color: 'var(--text-dim)',
+            opacity: 1,
+            transition: 'opacity 0.15s ease',
+          }}>
             <kbd style={{ fontFamily: 'inherit', fontSize: 10 }}>⌘K</kbd>
           </span>
         )}
