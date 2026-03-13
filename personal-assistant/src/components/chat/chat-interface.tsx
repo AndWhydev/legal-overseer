@@ -683,11 +683,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
             }}>
               {currentToolCalls.map((tc, idx) => {
                 const ToolIcon = getToolIcon(tc.name)
-                const iconColor = tc.status === 'error'
-                  ? 'var(--bb-red)'
-                  : tc.status === 'done'
-                    ? 'var(--bb-green)'
-                    : 'var(--text-secondary)'
+                const iconColor = 'var(--text-secondary)'
                 return (
                   <div
                     key={idx}
@@ -696,7 +692,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
                       alignItems: 'center',
                       gap: 8,
                       fontSize: 12,
-                      color: tc.status === 'error' ? 'var(--bb-red)' : 'var(--text-dim)',
+                      color: 'var(--text-dim)',
                       lineHeight: 1.5,
                     }}
                   >
@@ -814,7 +810,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
                     )}
                     <MessageBubble
                       message={msg}
-                      showAvatar={isLastAssistant}
+                      showAvatar={isLastAssistant && !showThinkingIndicator}
                       citations={msg.citations || (isLastAssistant && isLoading ? activeCitations : undefined)}
                     />
                     {checkpoint && (

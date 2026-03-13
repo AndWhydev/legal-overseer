@@ -94,9 +94,9 @@ export function ToolCallSummary({ toolCalls }: { toolCalls: ToolCall[] }) {
                     }}
                   >
                     {tc.status === 'done' ? (
-                      <Check size={11} style={{ color: 'var(--bb-green)', flexShrink: 0 }} />
+                      <Check size={11} style={{ color: 'var(--text-secondary)', flexShrink: 0 }} />
                     ) : tc.status === 'error' ? (
-                      <X size={11} style={{ color: 'var(--bb-red)', flexShrink: 0 }} />
+                      <X size={11} style={{ color: 'var(--text-secondary)', flexShrink: 0 }} />
                     ) : (
                       <span style={{ width: 11, height: 11, flexShrink: 0 }} />
                     )}
