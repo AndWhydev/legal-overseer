@@ -6,6 +6,7 @@ import { SkeletonKanban } from '@/components/ui/skeleton'
 import { EmptyState } from '@/components/ui/empty-state'
 import { useDevOverrides } from '@/lib/dev/dev-overrides'
 import { StatusPill, type StatusVariant } from '@/components/ui/status-pill'
+import { EntityDetailDrawer } from '@/components/dashboard/entity-detail-drawer'
 import { logger } from '@/lib/core/logger';
 
 type ContactType = 'client' | 'partner' | 'lead' | 'vendor' | string
@@ -91,6 +92,7 @@ function ContactsTab() {
   const [error, setError] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState<'az' | 'za' | 'recent'>('az')
+  const [selectedContactId, setSelectedContactId] = useState<string | null>(null)
 
   const devOverrides = useDevOverrides()
   const useSeeded = devOverrides?.seed_data?.contacts ?? false
@@ -171,56 +173,71 @@ function ContactsTab() {
   }
 
   return (
-    <div className="flex flex-col gap-5">
-      {/* ── Inline Stats ── */}
-      <div className="bb-contacts-stats">
-        <StatPill value={contacts.length} label="total" active={contacts.length > 0} />
-        <span className="bb-contacts-stats__sep" />
-        <StatPill value={clientCount} label="clients" active={clientCount > 0} />
-        <span className="bb-contacts-stats__sep" />
-        <StatPill value={leadCount} label="leads" active={leadCount > 0} />
-        <span className="bb-contacts-stats__sep" />
-        <StatPill value={partnerCount} label="partners" />
-      </div>
+    <>
+      <div className="flex flex-col gap-5">
+        {/* ── Inline Stats ── */}
+        <div className="bb-contacts-stats">
+          <StatPill value={contacts.length} label="total" active={contacts.length > 0} />
+          <span className="bb-contacts-stats__sep" />
+          <StatPill value={clientCount} label="clients" active={clientCount > 0} />
+          <span className="bb-contacts-stats__sep" />
+          <StatPill value={leadCount} label="leads" active={leadCount > 0} />
+          <span className="bb-contacts-stats__sep" />
+          <StatPill value={partnerCount} label="partners" />
+        </div>
 
-      {/* ── Search + Sort ── */}
-      <div className="flex items-center gap-3">
-        <div className="bb-contacts-search">
-          <Search size={14} className="bb-contacts-search__icon" />
-          <input
-            type="text"
-            placeholder="Search contacts..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="bb-contacts-search__input"
+        {/* ── Search + Sort ── */}
+        <div className="flex items-center gap-3">
+          <div className="bb-contacts-search">
+            <Search size={14} className="bb-contacts-search__icon" />
+            <input
+              type="text"
+              placeholder="Search contacts..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="bb-contacts-search__input"
+            />
+          </div>
+          <select
+            value={sort}
+            onChange={e => setSort(e.target.value as 'az' | 'za' | 'recent')}
+            className="bb-contacts-sort"
+          >
+            <option value="az">A → Z</option>
+            <option value="za">Z → A</option>
+            <option value="recent">Recent</option>
+          </select>
+        </div>
+
+        {/* ── Contact Grid ── */}
+        {filtered.length === 0 ? (
+          <EmptyState
+            icon={<UserPlus size={40} />}
+            title="No matches"
+            description={`No contacts matching "${search}"`}
           />
-        </div>
-        <select
-          value={sort}
-          onChange={e => setSort(e.target.value as 'az' | 'za' | 'recent')}
-          className="bb-contacts-sort"
-        >
-          <option value="az">A → Z</option>
-          <option value="za">Z → A</option>
-          <option value="recent">Recent</option>
-        </select>
+        ) : (
+          <div className="bb-contacts-grid">
+            {filtered.map((contact, index) => (
+              <ContactCard
+                key={String(contact.id ?? `${contact.name ?? 'contact'}-${index}`)}
+                contact={contact}
+                onOpen={() => {
+                  if (contact.id != null) setSelectedContactId(String(contact.id))
+                }}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* ── Contact Grid ── */}
-      {filtered.length === 0 ? (
-        <EmptyState
-          icon={<UserPlus size={40} />}
-          title="No matches"
-          description={`No contacts matching "${search}"`}
-        />
-      ) : (
-        <div className="bb-contacts-grid">
-          {filtered.map((contact, index) => (
-            <ContactCard key={String(contact.id ?? `${contact.name ?? 'contact'}-${index}`)} contact={contact} />
-          ))}
-        </div>
-      )}
-    </div>
+      <EntityDetailDrawer
+        open={selectedContactId !== null}
+        onClose={() => setSelectedContactId(null)}
+        entityType="contact"
+        entityId={selectedContactId ?? ''}
+      />
+    </>
   )
 }
 
@@ -241,12 +258,13 @@ function StatPill({ value, label, active }: { value: number | string; label: str
 // Contact Card
 // ---------------------------------------------------------------------------
 
-function ContactCard({ contact }: { contact: Contact }) {
+function ContactCard({ contact, onOpen }: { contact: Contact; onOpen: () => void }) {
   const email = contact.email ?? contact.emails?.[0]
   const phone = contact.phone ?? contact.phones?.[0]
   const contactType = contact.type ?? 'client'
   const tags: string[] = contact.tags ??
     ((contact.profile_data as Record<string, unknown>)?.tags as string[] ?? [])
+  const canOpen = contact.id != null
 
   const initials = (contact.name || 'U')
     .split(' ')
@@ -256,7 +274,23 @@ function ContactCard({ contact }: { contact: Contact }) {
     .slice(0, 2)
 
   return (
-    <article className="bb-contacts-card" data-type={contactType}>
+    <button
+      type="button"
+      className="bb-contacts-card"
+      data-type={contactType}
+      onClick={onOpen}
+      disabled={!canOpen}
+      aria-label={canOpen ? `Open details for ${contact.name ?? 'contact'}` : `${contact.name ?? 'Contact'} has no detail view`}
+      aria-haspopup={canOpen ? 'dialog' : undefined}
+      style={{
+        width: '100%',
+        border: 0,
+        padding: 0,
+        background: 'none',
+        textAlign: 'left',
+        cursor: canOpen ? 'pointer' : 'default',
+      }}
+    >
       <div className="bb-contacts-card__avatar">{initials}</div>
 
       <div className="bb-contacts-card__body">
@@ -296,7 +330,7 @@ function ContactCard({ contact }: { contact: Contact }) {
       </div>
 
       <ChevronRight size={16} className="bb-contacts-card__chevron" />
-    </article>
+    </button>
   )
 }
 

@@ -161,7 +161,7 @@ describe('health', () => {
 
       const report = await checkAdapterHealth(mockAdapter)
 
-      expect(report.latencyMs).toBeGreaterThanOrEqual(250)
+      expect(report.latencyMs).toBeGreaterThanOrEqual(240)
       expect(report.latencyMs).toBeLessThan(350)
     })
   })

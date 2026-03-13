@@ -11,7 +11,7 @@ interface InboxMessage {
   id: string;
   sender: string;
   subject: string | null;
-  channel: string;
+  channel?: string | null;
   received_at: string;
   significance: number;
   processed: boolean;

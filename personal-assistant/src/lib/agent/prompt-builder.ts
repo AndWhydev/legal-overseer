@@ -167,7 +167,7 @@ export async function buildSystemPrompt(supabase: SupabaseClient, orgId: string,
 
   const contactsSummary = ctx.contacts.length > 0
     ? ctx.contacts.map(c => `- ${c.name} (${c.type})`).join('\n')
-    : 'No contacts stored.'
+    : 'No contacts in the current working set.'
 
   const recentActivitySummary = ctx.recentActivity.length > 0
     ? ctx.recentActivity.slice(0, 10).map(a =>
@@ -234,8 +234,10 @@ ${goalsSummary}
 ### Current Tasks (${ctx.tasks.length} total)
 ${tasksSummary}
 
-### Known Contacts (${ctx.contacts.length})
+### Contact Working Set (${ctx.contacts.length})
 ${contactsSummary}
+
+This list may be truncated for token budget. Use search_contacts when you need the full directory.
 
 ### Recent Activity
 ${recentActivitySummary}

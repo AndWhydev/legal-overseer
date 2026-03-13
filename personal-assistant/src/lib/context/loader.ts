@@ -18,6 +18,13 @@ export interface LoadContextOptions {
   contactLimit?: number
 }
 
+interface ContextContact {
+  id?: string
+  name: string
+  slug: string
+  type: string
+}
+
 export async function loadContext(
   supabase: SupabaseClient,
   orgId: string,
@@ -61,7 +68,7 @@ export async function loadContext(
     const activeColumnTitles = ['to do', 'in progress', 'review']
     const activeColumnIds = new Set(
       columns
-        .filter(c => activeColumnTitles.includes(c.title.toLowerCase()))
+        .filter(c => activeColumnTitles.includes((c.title ?? '').toLowerCase()))
         .map(c => c.id),
     )
     tasks = tasks.filter(t => t.column_id && activeColumnIds.has(t.column_id))
@@ -83,16 +90,18 @@ export async function loadContext(
 
     const contactsRes = await supabase
       .from('contacts')
-      .select('name, slug, type')
+      .select('id, name, slug, type')
       .eq('org_id', orgId)
       .order('name')
 
-    const allContacts = (contactsRes.data ?? []) as { name: string; slug: string; type: string }[]
+    const allContacts = (contactsRes.data ?? []) as ContextContact[]
 
     // Prioritize contacts with active relationships, then fill remaining slots
-    const active = allContacts.filter(c => activeIds.has((c as Record<string, unknown>).id as string))
-    const rest = allContacts.filter(c => !activeIds.has((c as Record<string, unknown>).id as string))
-    contacts = [...active, ...rest].slice(0, contactLimit)
+    const active = allContacts.filter(c => activeIds.has(String(c.id ?? '')))
+    const rest = allContacts.filter(c => !activeIds.has(String(c.id ?? '')))
+    contacts = [...active, ...rest]
+      .slice(0, contactLimit)
+      .map(({ id: _id, ...contact }) => contact)
   } else {
     const contactsRes = await supabase
       .from('contacts')
