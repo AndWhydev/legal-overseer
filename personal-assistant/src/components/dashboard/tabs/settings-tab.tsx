@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Sun, Moon, Monitor, Loader2, Smartphone, Check, X } from 'lucide-react';
+import { Sun, Moon, Monitor, Loader2, Check, X } from 'lucide-react';
 import { QrAuthConnect } from '@/components/ui/qr-auth-connect';
 import { ConnectionsGrid } from '@/components/integrations/integration-grid';
 import { createClient } from '@/lib/supabase/client';
@@ -168,14 +168,14 @@ function WhatsAppWizardModal({ onClose, onConnected }: { onClose: () => void; on
         </button>
 
         <div style={{ textAlign: 'center', marginBottom: 20 }}>
-          <div style={{
-            width: 48, height: 48, borderRadius: 12,
-            background: 'rgba(37, 211, 102, 0.12)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            margin: '0 auto 12px',
-          }}>
-            <Smartphone size={24} style={{ color: '#25D366' }} />
-          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/icons/integrations/whatsapp.png"
+            alt="WhatsApp"
+            width={48}
+            height={48}
+            style={{ borderRadius: 12, objectFit: 'cover', display: 'block', margin: '0 auto 12px' }}
+          />
           <h3 style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Connect WhatsApp</h3>
           <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>Link your WhatsApp account to BitBit</p>
         </div>
