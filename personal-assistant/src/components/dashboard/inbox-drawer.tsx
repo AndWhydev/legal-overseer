@@ -832,11 +832,11 @@ export default function InboxDrawer({
 
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 15, fontWeight: 600, color: 'rgba(255,255,255,0.95)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {sender}
+                {String(sender || '')}
               </div>
               {message.senderEmail && (
                 <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginTop: 1 }}>
-                  {message.senderEmail}
+                  {String(message.senderEmail || '')}
                 </div>
               )}
             </div>
@@ -849,7 +849,7 @@ export default function InboxDrawer({
           {/* Subject */}
           {message.subject && (
             <h2 style={{ fontSize: 18, fontWeight: 600, color: 'rgba(255,255,255,0.95)', margin: '0 0 10px', lineHeight: 1.3 }}>
-              {message.subject}
+              {String(message.subject || '')}
             </h2>
           )}
 
@@ -906,7 +906,7 @@ export default function InboxDrawer({
             <ThreadView messages={threadMessages} onFocusReply={focusReply} />
           ) : (
             <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
-              {message.bodyPreview || '(No message body)'}
+              {String(message.bodyPreview || '(No message body)')}
             </div>
           )}
         </div>

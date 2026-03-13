@@ -290,15 +290,24 @@
    Light: Backdrop / Background Pattern
    -------------------------------------------------------------------------- */
 
-[data-theme="light"] .bb-backdrop,
-[data-theme="light"] .bb-dot-grid {
+[data-theme="light"] .bb-backdrop {
   background-color: transparent !important;
   background-image: none !important;
 }
 
-[data-theme="light"] .bb-backdrop::after,
-[data-theme="light"] .bb-dot-grid::after {
+[data-theme="light"] .bb-dot-grid {
+  background-color: #FAFAFA;
+  background-image:
+    radial-gradient(circle at 1px 1px, rgba(0, 0, 0, 0.06) 1px, transparent 0);
+  background-size: 24px 24px;
+}
+
+[data-theme="light"] .bb-backdrop::after {
   background: none !important;
+}
+
+[data-theme="light"] .bb-dot-grid::after {
+  background: none;
 }
 
 

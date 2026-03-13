@@ -366,7 +366,7 @@ export function InboxFeed({ isCollapsed = false, onCollapsedChange }: InboxFeedP
                     whiteSpace: 'nowrap',
                   }}
                 >
-                  {msg.subject || '(no subject)'}
+                  {String(msg.subject || '(no subject)')}
                 </span>
 
                 {/* Line 2: Sender + Time */}
@@ -380,7 +380,7 @@ export function InboxFeed({ isCollapsed = false, onCollapsedChange }: InboxFeedP
                       flex: 1,
                     }}
                   >
-                    {msg.sender || msg.senderName || 'Unknown'}
+                    {String(msg.sender || msg.senderName || 'Unknown')}
                   </span>
                   <span style={{ color: 'var(--text-secondary)', flexShrink: 0 }}>
                     · {timeAgo(messageTime)}
@@ -406,7 +406,7 @@ export function InboxFeed({ isCollapsed = false, onCollapsedChange }: InboxFeedP
                         opacity: msg.aiSummary ? 0.85 : 1,
                       }}
                     >
-                      {preview}
+                      {String(preview || '')}
                     </span>
                   </div>
                 )}

@@ -1388,7 +1388,7 @@ function MessageRow({
             <ChannelIcon size={9} />
           </div>
         </div>
-        <span className="bb-inbox-row__sender">{sender}</span>
+        <span className="bb-inbox-row__sender">{String(sender || '')}</span>
       </div>
 
       {/* Col 2: Tag + subject + preview */}
@@ -1398,7 +1398,7 @@ function MessageRow({
         </span>
         {message.subject && (
           <span className="bb-inbox-row__subject">
-            {message.subject}
+            {String(message.subject || '')}
             {message.threadCount && message.threadCount > 1 && (
               <span style={{ marginLeft: 6, fontSize: 11, color: 'rgba(255,255,255,0.3)', fontWeight: 400 }}>
                 ({message.threadCount})
@@ -1408,9 +1408,9 @@ function MessageRow({
         )}
         <span className="bb-inbox-row__preview">
           {message.aiSummary ? (
-            <>{message.aiSummary}</>
+            <>{String(message.aiSummary || '')}</>
           ) : (
-            message.bodyPreview
+            String(message.bodyPreview || '')
           )}
         </span>
       </div>
