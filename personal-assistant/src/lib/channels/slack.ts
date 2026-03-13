@@ -278,6 +278,7 @@ export async function fetchSlackMessages(
         metadata: {
           messageId: msg.ts,
           channelId,
+          userId: msg.user,
           threadTs: msg.thread_ts,
           botId: msg.bot_id,
           subtype: msg.subtype,

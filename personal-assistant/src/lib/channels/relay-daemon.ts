@@ -28,7 +28,7 @@ import { cluelyAdapter } from './cluely'
 import { isDuplicate, computeContentHash } from './dedup'
 import { getOrgCredential, storeOrgCredential, storeChannelCredential, encryptCredential } from '@/lib/integrations/credentials'
 import { logger } from '@/lib/core/logger';
-import { fetchGoogleProfilePhotos, storeGoogleAvatarForContact } from '@/lib/avatar/google-photos'
+import { fetchGooglePhotos, fetchOutlookPhotos, fetchSlackPhotos, fetchAsanaPhotos } from '@/lib/avatar/channel-photos'
 
 export interface PollResult {
   messagesFound: number
@@ -372,27 +372,45 @@ export async function pollChannel(
     }
     const insertDurationMs = Date.now() - insertStartMs
 
-    // Phase: Avatar fetch (Gmail only, non-blocking)
-    if (channelType === 'gmail' && inserted > 0) {
+    // Phase: Avatar fetch (all channels, fire-and-forget)
+    if (inserted > 0) {
       const accessToken = adapterConfig.accessToken as string | undefined
-      if (accessToken) {
-        const senderEmails = messagesToInsert
-          .map(({ msg }) => msg.senderEmail)
-          .filter((e): e is string => Boolean(e))
-        // Fire-and-forget — don't block the relay cycle
-        fetchGoogleProfilePhotos(accessToken, senderEmails)
-          .then(async (photos) => {
-            for (const [email, photoUrl] of photos) {
-              await storeGoogleAvatarForContact(supabase, email, photoUrl)
+      const senderEmails = messagesToInsert
+        .map(({ msg }) => msg.senderEmail)
+        .filter((e): e is string => Boolean(e))
+
+      const avatarPromise = (async () => {
+        let stored = 0
+        try {
+          if (channelType === 'gmail' && accessToken) {
+            stored = await fetchGooglePhotos(supabase, accessToken, senderEmails)
+          } else if (channelType === 'outlook' && accessToken) {
+            stored = await fetchOutlookPhotos(supabase, accessToken, senderEmails)
+          } else if (channelType === 'slack') {
+            const botToken = adapterConfig.botToken as string | undefined
+            const userIds = messagesToInsert
+              .map(({ msg }) => (msg.metadata as Record<string, unknown>)?.userId as string)
+              .filter((id): id is string => Boolean(id))
+            if (botToken && userIds.length > 0) {
+              stored = await fetchSlackPhotos(supabase, botToken, userIds)
             }
-            if (photos.size > 0) {
-              logger.info(`[relay] Fetched ${photos.size} Google profile photo(s)`)
+          } else if (channelType === 'asana' && accessToken) {
+            const gids = messagesToInsert
+              .map(({ msg }) => (msg.metadata as Record<string, unknown>)?.assigneeGid as string)
+              .filter((g): g is string => Boolean(g))
+            if (gids.length > 0) {
+              stored = await fetchAsanaPhotos(supabase, accessToken, gids)
             }
-          })
-          .catch((err) => {
-            logger.debug('[relay] Avatar fetch failed (non-critical):', err)
-          })
-      }
+          }
+          if (stored > 0) {
+            logger.info(`[relay] Fetched ${stored} ${channelType} profile photo(s)`)
+          }
+        } catch (err) {
+          logger.debug('[relay] Avatar fetch failed (non-critical):', err)
+        }
+      })()
+      // Don't await — fire-and-forget
+      void avatarPromise
     }
 
     // Update poll_cursor to latest message receivedAt

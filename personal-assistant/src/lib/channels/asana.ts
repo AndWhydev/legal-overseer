@@ -320,6 +320,7 @@ export const asanaAdapter: ChannelAdapter = {
               : 'medium',
           metadata: {
             gid: task.gid,
+            assigneeGid: assignee?.gid,
             completed: task.completed,
             due_on: task.due_on,
             projectGid: project?.gid,
