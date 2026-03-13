@@ -9,8 +9,13 @@ import { useAvatarEmotion } from './use-avatar-emotion'
 import { useSmoothStream } from './use-smooth-stream'
 import { useSmartScroll } from './use-smart-scroll'
 import { ConversationDrawer, type Thread } from './conversation-drawer'
-import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible'
 import { Shimmer } from '@/components/ai-elements/shimmer'
+import {
+  ChainOfThought,
+  ChainOfThoughtHeader,
+  ChainOfThoughtContent,
+  ChainOfThoughtStep,
+} from '@/components/ai-elements/chain-of-thought'
 import { Checkpoint, CheckpointIcon } from '@/components/ai-elements/checkpoint'
 import {
   Confirmation,
@@ -122,6 +127,8 @@ export function ChatInterface({ userName }: { userName?: string }) {
   const [isThinkingStreaming, setIsThinkingStreaming] = useState(false)
   const [thinkingDuration, setThinkingDuration] = useState<number | undefined>()
   const [showReasoning, setShowReasoning] = useState(false)
+  const [narration, setNarration] = useState('')
+  const narrationLockedRef = useRef(false) // Once actual content starts, stop capturing narration
   const [activeCitations, setActiveCitations] = useState<Citation[]>([])
   const [checkpoints, setCheckpoints] = useState<CheckpointMarker[]>([])
   const [pendingApprovals, setPendingApprovals] = useState<PendingApproval[]>([])
@@ -231,6 +238,8 @@ export function ChatInterface({ userName }: { userName?: string }) {
     setReasoningOpen(false)
     prevReasoningActiveRef.current = false
     autoOpenedRef.current = false
+    setNarration('')
+    narrationLockedRef.current = false
     setActiveCitations([])
     setPendingApprovals([])
     smoothStream.reset()
@@ -323,6 +332,8 @@ export function ChatInterface({ userName }: { userName?: string }) {
                 break
 
               case 'tool_call': {
+                // Lock narration — any content after this is the real response
+                narrationLockedRef.current = true
                 const tc: ToolCall = {
                   name: event.data.name,
                   input: event.data.input,
@@ -385,11 +396,23 @@ export function ChatInterface({ userName }: { userName?: string }) {
                 break
               }
 
-              case 'content_delta':
+              case 'content_delta': {
                 setIsThinkingStreaming(false)
                 assistantContent += event.data
-                smoothStream.feedContent(event.data)
+
+                // Capture pre-tool narration: if content arrives before any tool_call,
+                // treat it as narration ("I'll search for..."). Once tools start or
+                // narration is locked, stream to main message.
+                if (!narrationLockedRef.current && toolCalls.length === 0) {
+                  setNarration(assistantContent)
+                } else {
+                  if (!narrationLockedRef.current) {
+                    narrationLockedRef.current = true
+                  }
+                  smoothStream.feedContent(event.data)
+                }
                 break
+              }
 
               case 'message':
                 setIsThinkingStreaming(false)
@@ -605,118 +628,56 @@ export function ChatInterface({ userName }: { userName?: string }) {
     }
   }, [isReasoningActive])
 
-  // Build the reasoning chain JSX (shared between inline + standalone)
+  // Build the reasoning chain JSX using chain-of-thought component
+  const headerText = isReasoningActive ? (
+    <Shimmer duration={1}>Reasoning...</Shimmer>
+  ) : (() => {
+    const parts: string[] = []
+    if (thinkingDuration !== undefined && thinkingDuration > 0) {
+      parts.push(`Reasoned for ${thinkingDuration}s`)
+    } else {
+      parts.push('Reasoned for a few seconds')
+    }
+    if (currentToolCalls.length > 0) {
+      parts.push(`${currentToolCalls.length} tool${currentToolCalls.length !== 1 ? 's' : ''} used`)
+    }
+    return parts.join(' · ')
+  })()
+
   const reasoningChainJSX = showReasoningChain ? (
-    <Collapsible open={reasoningOpen} onOpenChange={setReasoningOpen}>
-      <CollapsibleTrigger
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: 6,
-          color: 'var(--text-dim)',
-          fontSize: 13,
-          background: 'none',
-          border: 'none',
-          cursor: 'pointer',
-          padding: '4px 0',
-          fontFamily: 'inherit',
-          transition: 'color 0.15s ease',
-        }}
-      >
-        <span>
-          {isReasoningActive ? (
-            <Shimmer duration={1}>Thinking...</Shimmer>
-          ) : (() => {
-            const parts: string[] = []
-            if (thinkingDuration !== undefined && thinkingDuration > 0) {
-              parts.push(`Thought for ${thinkingDuration}s`)
-            } else {
-              parts.push('Thought for a few seconds')
-            }
-            if (currentToolCalls.length > 0) {
-              const failed = currentToolCalls.filter(tc => tc.status === 'error').length
-              let toolText = `${currentToolCalls.length} tool${currentToolCalls.length !== 1 ? 's' : ''} used`
-              if (failed > 0) toolText += ` · ${failed} failed`
-              parts.push(toolText)
-            }
-            return parts.join(' · ')
-          })()}
-        </span>
-        <ChevronDown
-          size={14}
-          style={{
-            transition: 'transform 0.2s ease',
-            transform: reasoningOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-          }}
-        />
-      </CollapsibleTrigger>
-      <CollapsibleContent>
-        <div style={{
-          marginTop: 8,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 8,
-        }}>
-          {thinkingContent && (
-            <div style={{
-              fontSize: 13,
-              color: 'var(--text-secondary)',
-              lineHeight: 1.6,
-              whiteSpace: 'pre-wrap',
-              wordBreak: 'break-word',
-              maxHeight: 200,
-              overflowY: 'auto',
-              padding: '8px 12px',
-              borderRadius: 8,
-              background: 'rgba(255, 255, 255, 0.03)',
-              border: '1px solid rgba(255, 255, 255, 0.06)',
-            }}>
-              {thinkingContent}
-            </div>
-          )}
-          {currentToolCalls.length > 0 && (
-            <div style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 6,
-              paddingLeft: 4,
-            }}>
-              {currentToolCalls.map((tc, idx) => {
-                const ToolIcon = getToolIcon(tc.name)
-                const iconColor = 'var(--text-secondary)'
-                return (
-                  <div
-                    key={idx}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 8,
-                      fontSize: 12,
-                      color: 'var(--text-dim)',
-                      lineHeight: 1.5,
-                    }}
-                  >
-                    {tc.status === 'error' ? (
-                      <AlertCircle size={13} style={{ color: iconColor, flexShrink: 0 }} />
-                    ) : (
-                      <ToolIcon
-                        size={13}
-                        style={{
-                          color: iconColor,
-                          flexShrink: 0,
-                          ...(tc.status === 'running' ? { animation: 'pulse 1.5s ease-in-out infinite' } : {}),
-                        }}
-                      />
-                    )}
-                    <span>{formatToolName(tc.name)}</span>
-                  </div>
-                )
-              })}
-            </div>
-          )}
-        </div>
-      </CollapsibleContent>
-    </Collapsible>
+    <ChainOfThought open={reasoningOpen} onOpenChange={setReasoningOpen}>
+      <ChainOfThoughtHeader>{headerText}</ChainOfThoughtHeader>
+      <ChainOfThoughtContent>
+        {/* Narration step — "I'll search for..." captured before tool calls */}
+        {narration && (
+          <ChainOfThoughtStep
+            label={narration.trim()}
+            status={isReasoningActive ? 'active' : 'complete'}
+          />
+        )}
+
+        {/* Tool call steps */}
+        {currentToolCalls.map((tc, idx) => {
+          const ToolIcon = getToolIcon(tc.name)
+          return (
+            <ChainOfThoughtStep
+              key={idx}
+              icon={ToolIcon}
+              label={formatToolName(tc.name)}
+              status={tc.status === 'running' ? 'active' : tc.status === 'error' ? 'complete' : 'complete'}
+            />
+          )
+        })}
+
+        {/* Thinking step — if we have thinking content and no narration/tools yet */}
+        {isThinkingStreaming && !narration && currentToolCalls.length === 0 && (
+          <ChainOfThoughtStep
+            label="Thinking..."
+            status="active"
+          />
+        )}
+      </ChainOfThoughtContent>
+    </ChainOfThought>
   ) : null
 
   return (
