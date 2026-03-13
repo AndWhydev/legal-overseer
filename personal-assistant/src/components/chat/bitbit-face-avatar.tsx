@@ -264,7 +264,7 @@ export function BitBitFaceAvatar({
       <motion.g
         animate={{ rotate: headTilt }}
         transition={{ duration: 0.15, ease: 'linear' }}
-        style={{ originX: '24px', originY: '24px' }}
+        style={{ transformOrigin: '50% 50%' }}
       >
         {/* Ambient breathing — subtle scale pulse on the whole face */}
         <motion.g
@@ -277,7 +277,7 @@ export function BitBitFaceAvatar({
             repeat: Infinity,
             ease: 'easeInOut',
           }}
-          style={{ originX: '24px', originY: '22px' }}
+          style={{ transformOrigin: '50% 50%' }}
         >
           {/* Left eyebrow */}
           <motion.path
@@ -291,7 +291,7 @@ export function BitBitFaceAvatar({
               rotate: config.leftBrow.rotate,
             }}
             transition={TRANSITION}
-            style={{ originX: '16.5px', originY: '12px' }}
+            style={{ transformOrigin: '50% 50%' }}
           />
 
           {/* Right eyebrow */}
@@ -306,10 +306,10 @@ export function BitBitFaceAvatar({
               rotate: config.rightBrow.rotate,
             }}
             transition={TRANSITION}
-            style={{ originX: '31.5px', originY: '12px' }}
+            style={{ transformOrigin: '50% 50%' }}
           />
 
-          {/* Left eye — cursor offset baked into cx/cy, scale animates around fixed origin */}
+          {/* Left eye — scale from element center (50% 50%), translate for cursor */}
           <motion.circle
             cx={16}
             cy={20}
@@ -328,7 +328,7 @@ export function BitBitFaceAvatar({
                   ? { translateX: { duration: 1.5, repeat: Infinity, ease: 'easeInOut' }, ...TRANSITION }
                   : TRANSITION
             }
-            style={{ originX: '16px', originY: '20px' }}
+            style={{ transformOrigin: '50% 50%' }}
           />
 
           {/* Right eye */}
@@ -350,7 +350,7 @@ export function BitBitFaceAvatar({
                   ? { translateX: { duration: 1.5, repeat: Infinity, ease: 'easeInOut', delay: 0.1 }, ...TRANSITION }
                   : TRANSITION
             }
-            style={{ originX: '32px', originY: '20px' }}
+            style={{ transformOrigin: '50% 50%' }}
           />
 
           {/* L-shaped nose */}
@@ -366,7 +366,7 @@ export function BitBitFaceAvatar({
               rotate: config.nose.rotate,
             }}
             transition={TRANSITION}
-            style={{ originX: '25.5px', originY: '25px' }}
+            style={{ transformOrigin: '50% 50%' }}
           />
         </motion.g>
       </motion.g>
