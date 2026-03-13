@@ -2,7 +2,7 @@
  * WhatsApp Bridge Manager — Baileys connection lifecycle for standalone Fly.io deployment.
  *
  * Manages bridge start/stop/reconnect, auth state persistence to both filesystem
- * (/data/auth_state/) and Supabase whatsapp_sessions table, outbox drain loop,
+ * (/data/auth_state/) and Supabase whatsapp_sessions.session_data column, outbox drain loop,
  * and health reporting.
  *
  * Environment variables:
@@ -152,7 +152,7 @@ export async function startBridge(orgId: string): Promise<{
     .insert({
       org_id: orgId,
       status: 'pairing',
-      auth_state: null,
+      session_data: null,
     })
     .select('id')
     .single()
@@ -261,7 +261,7 @@ export async function startBridge(orgId: string): Promise<{
         const credsJson = readFileSync(credsPath, 'utf-8')
         await supabase
           .from('whatsapp_sessions')
-          .update({ auth_state: credsJson })
+          .update({ session_data: credsJson })
           .eq('id', state.sessionId!)
       }
     } catch (err) {
@@ -382,18 +382,18 @@ async function loadAuthFromSupabase(
 ): Promise<Record<string, unknown> | null> {
   const { data } = await supabase
     .from('whatsapp_sessions')
-    .select('auth_state')
+    .select('session_data')
     .eq('org_id', orgId)
     .eq('status', 'connected')
     .order('created_at', { ascending: false })
     .limit(1)
     .single()
 
-  if (data?.auth_state) {
+  if (data?.session_data) {
     try {
-      return typeof data.auth_state === 'string'
-        ? JSON.parse(data.auth_state as string)
-        : (data.auth_state as Record<string, unknown>)
+      return typeof data.session_data === 'string'
+        ? JSON.parse(data.session_data as string)
+        : (data.session_data as Record<string, unknown>)
     } catch {
       return null
     }
