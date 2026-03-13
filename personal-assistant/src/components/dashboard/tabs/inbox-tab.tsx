@@ -230,6 +230,38 @@ const SEED_MESSAGES: InboxMessage[] = [
     receivedAt: new Date(Date.now() - 8 * 3600000).toISOString(),
     processedAt: new Date().toISOString(), status: 'unread',
   },
+  // Generate 42 more seed messages to reach 50 total for realistic testing
+  ...Array.from({ length: 42 }, (_, i) => {
+    const names = ['Alex Kim', 'Maria Lopez', 'James Wilson', 'Emma Davis', 'Raj Patel', 'Lisa Zhang', 'Ben O\'Brien', 'Natasha Roy'];
+    const channels: InboxMessage['channelType'][] = ['gmail', 'outlook', 'whatsapp', 'asana', 'stripe', 'slack', 'calendly'];
+    const categories: MessageCategory[] = ['actionable', 'informational', 'informational', 'personal'];
+    const priorities: PriorityLevel[] = ['critical', 'high', 'medium', 'low'];
+    const subjects = [
+      'Invoice follow-up', 'Meeting notes from sync', 'Design assets ready', 'Quick question about scope',
+      'Monthly report attached', 'New task assigned', 'Sprint retro action items', 'Domain renewal reminder',
+      'Client onboarding checklist', 'SEO audit results', 'Social media calendar draft', 'Bug report — login flow',
+    ];
+    return {
+      id: `sg-${i + 9}`,
+      channelType: channels[i % channels.length],
+      senderName: names[i % names.length],
+      senderEmail: `${names[i % names.length].toLowerCase().replace(/[^a-z]/g, '')}@example.com`,
+      subject: subjects[i % subjects.length],
+      bodyPreview: `Preview text for generated message ${i + 9}. This is a realistic inbox message body preview.`,
+      aiSummary: i % 3 === 0 ? `AI summary for message ${i + 9}` : null,
+      category: categories[i % categories.length],
+      priority: priorities[i % priorities.length],
+      significance: (i % 8) + 2,
+      contactId: null,
+      contactName: names[i % names.length],
+      threadStatus: i % 4 === 0 ? 'waiting_on_you' as const : i % 4 === 1 ? 'new' as const : null,
+      threadCount: (i % 3) + 1,
+      deduplicatedWith: null,
+      receivedAt: new Date(Date.now() - (i + 9) * 3600000).toISOString(),
+      processedAt: new Date().toISOString(),
+      status: i % 3 === 0 ? 'unread' : 'actioned',
+    } satisfies InboxMessage;
+  }),
 ];
 
 const SEED_THREAD_MESSAGES: Record<string, ThreadMessageItem[]> = {
@@ -822,6 +854,8 @@ function CategoryPillsBar({
       padding: '8px 0 4px',
       overflowX: 'auto',
       scrollbarWidth: 'none',
+      flexShrink: 0,
+      minHeight: 40,
     }}>
       <style>{`
         @keyframes bb-pill-pulse {

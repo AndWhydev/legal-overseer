@@ -2246,6 +2246,7 @@ html.light .bb-chip--accent {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  flex-shrink: 0;
 }
 
 .bb-inbox-toolbar__actions {
@@ -6476,12 +6477,67 @@ html.light .bb-pill__shimmer-dots span {
   color: var(--text-primary);
   font-size: 14px;
   line-height: 1.5;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .bb-chat__bubble--assistant {
   color: var(--text-primary);
   font-size: 14px;
   line-height: 1.5;
+  padding: 4px 0;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  min-width: 0;
+}
+
+/* Streaming cursor */
+.bb-chat__cursor {
+  display: inline;
+  margin-left: 1px;
+  color: var(--accent-primary, #3b82f6);
+  animation: bb-cursor-blink 1s step-end infinite;
+  font-weight: 300;
+}
+
+@keyframes bb-cursor-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* Reasoning toggle on completed messages */
+.bb-chat__reasoning-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-dim);
+  font-size: 12px;
+  font-family: inherit;
+  padding: 0;
+  transition: color 0.15s ease;
+}
+
+.bb-chat__reasoning-toggle:hover {
+  color: var(--text-secondary);
+}
+
+.bb-chat__reasoning-content {
+  padding: 8px 0 4px 18px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  white-space: pre-wrap;
+  max-height: 300px;
+  overflow-y: auto;
+  overflow-wrap: break-word;
+}
+
+/* Thinking shimmer inline */
+.bb-chat__thinking-shimmer {
+  font-size: 13px;
   padding: 4px 0;
 }
 
