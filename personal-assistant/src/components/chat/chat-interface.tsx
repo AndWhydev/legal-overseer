@@ -620,6 +620,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
                   >
                     <MessageBubble
                       message={msg}
+                      showAvatar={isLastAssistant && !showThinkingIndicator}
                       citations={msg.citations || (isLastAssistant && isLoading ? activeCitations : undefined)}
                     />
                     {isLastAssistant && hasCompletedTools && !isLoading && (
@@ -650,9 +651,13 @@ export function ChatInterface({ userName }: { userName?: string }) {
               {/* Thinking indicator — clean shimmer, ChatGPT-style */}
               {showThinkingIndicator && (
                 <div className="bb-chat__msg bb-chat__msg--assistant">
-                  <div className="bb-chat__assistant-icon">
+                  <motion.div
+                    className="bb-chat__assistant-icon"
+                    layoutId="bitbit-active-avatar"
+                    transition={{ type: 'spring', stiffness: 200, damping: 25, mass: 0.8 }}
+                  >
                     <BitBitFaceAvatar size={40} emotion={avatarEmotion} isThinking={isThinkingStreaming} />
-                  </div>
+                  </motion.div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <Reasoning isStreaming={isThinkingStreaming} duration={thinkingDuration}>
                       <ReasoningTrigger />
@@ -667,9 +672,13 @@ export function ChatInterface({ userName }: { userName?: string }) {
               {/* Pending approval confirmations */}
               {pendingApprovals.filter(a => a.status === 'pending').map(approval => (
                 <div key={approval.id} className="bb-chat__msg bb-chat__msg--assistant" style={{ marginTop: 8 }}>
-                  <div className="bb-chat__assistant-icon">
+                  <motion.div
+                    className="bb-chat__assistant-icon"
+                    layoutId="bitbit-active-avatar"
+                    transition={{ type: 'spring', stiffness: 200, damping: 25, mass: 0.8 }}
+                  >
                     <BitBitFaceAvatar size={40} emotion={avatarEmotion} isThinking={isThinkingStreaming} />
-                  </div>
+                  </motion.div>
                   <div style={{
                     flex: 1,
                     minWidth: 0,

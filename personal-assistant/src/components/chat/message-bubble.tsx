@@ -3,6 +3,7 @@
 import React from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import { motion } from 'motion/react'
 import { BitBitFaceAvatar } from './bitbit-face-avatar'
 import {
   InlineCitation,
@@ -95,7 +96,7 @@ function renderTextWithCitations(text: string, citations: Citation[]): React.Rea
   return parts
 }
 
-export function MessageBubble({ message, citations }: { message: Message; citations?: Citation[] }) {
+export function MessageBubble({ message, citations, showAvatar = false }: { message: Message; citations?: Citation[]; showAvatar?: boolean }) {
   const isUser = message.role === 'user'
   const msgCitations = citations || message.citations
 
@@ -130,10 +131,14 @@ export function MessageBubble({ message, citations }: { message: Message; citati
 
   return (
     <div className={`bb-chat__msg ${isUser ? 'bb-chat__msg--user' : 'bb-chat__msg--assistant'}`}>
-      {!isUser && (
-        <div className="bb-chat__assistant-icon">
+      {!isUser && showAvatar && (
+        <motion.div
+          className="bb-chat__assistant-icon"
+          layoutId="bitbit-active-avatar"
+          transition={{ type: 'spring', stiffness: 200, damping: 25, mass: 0.8 }}
+        >
           <BitBitFaceAvatar size={40} />
-        </div>
+        </motion.div>
       )}
       <div className={isUser ? 'bb-chat__bubble--user' : 'bb-chat__bubble--assistant bb-chat__markdown'}>
         {isUser ? (
