@@ -556,13 +556,13 @@ export function BitBitFaceAvatar({
                   fontSize="5"
                   fontWeight="bold"
                   fontFamily="sans-serif"
-                  initial={{ opacity: 0, y: 0, x: 0 }}
+                  initial={{ opacity: 0 }}
                   animate={{
                     opacity: [0, 0.6, 0.5, 0],
                     y: [0, -6, -12, -18],
                     x: [0, 2, 4, 5],
                   }}
-                  exit={{ opacity: 0 }}
+                  exit={{ opacity: 0, transition: { duration: 0.3 } }}
                   transition={{
                     duration: 3,
                     repeat: Infinity,
@@ -581,13 +581,13 @@ export function BitBitFaceAvatar({
                   fontSize="7"
                   fontWeight="bold"
                   fontFamily="sans-serif"
-                  initial={{ opacity: 0, y: 0, x: 0 }}
+                  initial={{ opacity: 0 }}
                   animate={{
                     opacity: [0, 0.45, 0.4, 0],
                     y: [0, -8, -16, -24],
                     x: [0, 3, 5, 7],
                   }}
-                  exit={{ opacity: 0 }}
+                  exit={{ opacity: 0, transition: { duration: 0.3 } }}
                   transition={{
                     duration: 3.5,
                     repeat: Infinity,
@@ -607,13 +607,13 @@ export function BitBitFaceAvatar({
                   fontSize="9"
                   fontWeight="bold"
                   fontFamily="sans-serif"
-                  initial={{ opacity: 0, y: 0, x: 0 }}
+                  initial={{ opacity: 0 }}
                   animate={{
                     opacity: [0, 0.35, 0.3, 0],
                     y: [0, -10, -20, -30],
                     x: [0, 4, 7, 9],
                   }}
-                  exit={{ opacity: 0 }}
+                  exit={{ opacity: 0, transition: { duration: 0.3 } }}
                   transition={{
                     duration: 4,
                     repeat: Infinity,
