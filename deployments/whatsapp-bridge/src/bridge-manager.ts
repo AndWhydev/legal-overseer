@@ -574,18 +574,22 @@ async function syncChannelConnection(
   status: 'connected' | 'disconnected'
 ): Promise<void> {
   try {
-    await supabase.from('channel_connections').upsert(
+    const { error } = await supabase.from('channel_connections').upsert(
       {
         org_id: orgId,
         channel_type: 'whatsapp',
         status,
         relay_enabled: false,
         config: {},
-        connected_at: status === 'connected' ? new Date().toISOString() : null,
         updated_at: new Date().toISOString(),
       },
       { onConflict: 'org_id,channel_type' },
     )
+    if (error) {
+      console.error('[bridge-manager] syncChannelConnection upsert failed:', error.message)
+    } else {
+      console.log(`[bridge-manager] channel_connections synced: whatsapp=${status} for org ${orgId}`)
+    }
   } catch (err) {
     console.error('[bridge-manager] Failed to sync channel connection:', err)
   }

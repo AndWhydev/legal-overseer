@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Sun, Moon, Monitor, Loader2, Check, X } from 'lucide-react';
+import { Sun, Moon, Monitor, Loader2, Smartphone, Check, X } from 'lucide-react';
 import { QrAuthConnect } from '@/components/ui/qr-auth-connect';
 import { ConnectionsGrid } from '@/components/integrations/integration-grid';
 import { createClient } from '@/lib/supabase/client';
@@ -117,21 +117,19 @@ function WhatsAppWizardModal({ onClose, onConnected }: { onClose: () => void; on
       setStarting(true);
       setError(null);
       try {
-        // First check if already connected
+        // Check if already connected
         const statusRes = await fetch('/api/channels/whatsapp/bridge');
         if (statusRes.ok) {
-          const statusData = await statusRes.json() as { status?: string; running?: boolean };
-          if (statusData.status === 'connected' || (statusData.running && statusData.status === 'connected')) {
+          const s = await statusRes.json() as { status?: string; running?: boolean };
+          if (s.status === 'connected') {
             if (!cancelled) {
               setAlreadyConnected(true);
               setStarting(false);
-              // Brief delay then close and update parent
-              setTimeout(() => { if (!cancelled) onConnected(); }, 1200);
+              setTimeout(() => { if (!cancelled) onConnected(); }, 1500);
             }
             return;
           }
         }
-
         // Not connected — start pairing
         const response = await fetch('/api/channels/whatsapp/bridge', { method: 'POST' });
         if (!response.ok) throw new Error('Failed to start WhatsApp bridge');
@@ -187,15 +185,14 @@ function WhatsAppWizardModal({ onClose, onConnected }: { onClose: () => void; on
 
         <div style={{ textAlign: 'center', marginBottom: 20 }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/icons/integrations/whatsapp.png"
-            alt="WhatsApp"
-            width={48}
-            height={48}
-            style={{ borderRadius: 12, objectFit: 'cover', display: 'block', margin: '0 auto 12px' }}
-          />
-          <h3 style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Connect WhatsApp</h3>
-          <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>Link your WhatsApp account to BitBit</p>
+          <img src="/icons/integrations/whatsapp.png" alt="" width={48} height={48}
+            style={{ borderRadius: 12, objectFit: 'cover', display: 'block', margin: '0 auto 12px' }} />
+          <h3 style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
+            {alreadyConnected ? 'WhatsApp Connected' : 'Connect WhatsApp'}
+          </h3>
+          <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>
+            {alreadyConnected ? 'Your account is active and receiving messages' : 'Link your WhatsApp account to BitBit'}
+          </p>
         </div>
 
         {error && (
@@ -219,13 +216,11 @@ function WhatsAppWizardModal({ onClose, onConnected }: { onClose: () => void; on
         )}
 
         {alreadyConnected && (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, padding: '24px 0' }}>
-            <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
-              <circle cx="18" cy="18" r="18" fill="rgba(34, 197, 94, 0.15)" />
-              <path d="M12 18.5L16 22.5L24 14.5" stroke="#22C55E" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+          <div style={{ display: 'flex', justifyContent: 'center', padding: '16px 0 8px' }}>
+            <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+              <circle cx="20" cy="20" r="20" fill="rgba(34, 197, 94, 0.12)" />
+              <path d="M13 20.5L18 25.5L27 16.5" stroke="#22C55E" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-            <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Already connected</p>
-            <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: 0 }}>WhatsApp is active and receiving messages</p>
           </div>
         )}
 
