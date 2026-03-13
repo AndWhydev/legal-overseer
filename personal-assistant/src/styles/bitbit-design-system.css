@@ -2398,11 +2398,13 @@ html.light .bb-chip--accent {
 .bb-inbox-row:hover .bb-inbox-row__meta-default {
   opacity: 0;
   pointer-events: none;
+  transition: opacity var(--duration-fast) var(--ease-default);
 }
 
 .bb-inbox-row:hover .bb-inbox-row__hover-actions {
   opacity: 1;
   pointer-events: auto;
+  transition: opacity 150ms ease;
 }
 
 /* Unread: slightly more opaque */
@@ -3454,7 +3456,7 @@ html.light .bb-leads-card__actions {
 .bb-contacts-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 6px;
+  gap: 12px;
 }
 
 /* ── Card — pill-dock glass ── */

@@ -368,6 +368,14 @@ function ThreadView({
   messages: ThreadMessageItem[];
   onFocusReply: () => void;
 }) {
+  if (!messages || messages.length === 0) {
+    return (
+      <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', fontStyle: 'italic' }}>
+        No thread messages available
+      </div>
+    );
+  }
+
   const latestId = messages[messages.length - 1]?.id;
   const [expanded, setExpanded] = useState<Set<string>>(new Set([latestId]));
 
@@ -387,8 +395,12 @@ function ThreadView({
       </div>
 
       {messages.map((msg) => {
+        if (!msg || !msg.id) return null;
+
         const isExpanded = expanded.has(msg.id);
         const isLatest = msg.id === latestId;
+        const senderName = msg.senderName || 'Unknown';
+        const bodyPreview = msg.bodyPreview || '';
 
         return (
           <div
@@ -427,12 +439,12 @@ function ThreadView({
                 color: msg.isSelf ? '#FF7A45' : 'rgba(255,255,255,0.7)',
                 flexShrink: 0,
               }}>
-                {msg.senderName[0]?.toUpperCase()}
+                {String(senderName[0] || '?').toUpperCase()}
               </div>
 
               {/* Sender */}
               <span style={{ fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.85)', flexShrink: 0 }}>
-                {msg.isSelf ? 'You' : msg.senderName}
+                {msg.isSelf ? 'You' : senderName}
               </span>
 
               {/* Collapsed preview */}
@@ -445,7 +457,7 @@ function ThreadView({
                   whiteSpace: 'nowrap',
                   flex: 1,
                 }}>
-                  {msg.bodyPreview.slice(0, 70)}
+                  {String(bodyPreview).slice(0, 70)}
                 </span>
               )}
 
@@ -470,7 +482,7 @@ function ThreadView({
                 whiteSpace: 'pre-wrap',
                 wordBreak: 'break-word',
               }}>
-                {msg.bodyPreview}
+                {String(bodyPreview)}
               </div>
             )}
           </div>
@@ -889,11 +901,11 @@ export default function InboxDrawer({
           )}
 
           {/* Thread View or Single Message — Task #11 */}
-          {hasThread ? (
-            <ThreadView messages={threadMessages!} onFocusReply={focusReply} />
+          {hasThread && threadMessages && threadMessages.length > 0 ? (
+            <ThreadView messages={threadMessages} onFocusReply={focusReply} />
           ) : (
             <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
-              {message.bodyPreview}
+              {message.bodyPreview || '(No message body)'}
             </div>
           )}
         </div>

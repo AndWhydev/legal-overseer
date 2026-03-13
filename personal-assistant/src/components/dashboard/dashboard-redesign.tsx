@@ -25,11 +25,26 @@ interface DashboardRedesignProps {
 // ─── Main Dashboard ─────────────────────────────────────────────────────────
 
 export function DashboardRedesign({ columns, tasks, messages, completedToday, totalActive }: DashboardRedesignProps) {
+  const [inboxCollapsed, setInboxCollapsed] = React.useState(false);
   const { stats, loading } = useDashboardStats();
   const seed = useSeedData();
   const { industry } = useEnabledModules();
   const pack = getPack(industry ?? 'agency');
   const kpis: KPIConfig[] = pack.kpis ?? [];
+
+  // Initialize collapse state from localStorage
+  React.useEffect(() => {
+    const stored = localStorage.getItem('bb-inbox-collapsed');
+    if (stored !== null) {
+      setInboxCollapsed(JSON.parse(stored));
+    }
+  }, []);
+
+  // Save collapse state to localStorage
+  const handleInboxCollapse = React.useCallback((collapsed: boolean) => {
+    setInboxCollapsed(collapsed);
+    localStorage.setItem('bb-inbox-collapsed', JSON.stringify(collapsed));
+  }, []);
 
   // Use seed kanban data when active, otherwise use props
   const displayColumns = seed.active && seed.data?.kanbanColumns ? seed.data.kanbanColumns : columns;
@@ -153,10 +168,11 @@ export function DashboardRedesign({ columns, tasks, messages, completedToday, to
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: '1fr 320px',
+          gridTemplateColumns: inboxCollapsed ? '1fr 0px' : '1fr 320px',
           gap: 20,
           flex: 1,
           minHeight: 0,
+          transition: 'grid-template-columns 0.3s ease',
         }}
         className="dashboard-main-grid"
       >
@@ -169,12 +185,19 @@ export function DashboardRedesign({ columns, tasks, messages, completedToday, to
         </div>
 
         {/* Inbox Feed */}
-        <aside style={{
-          display: 'flex',
-          flexDirection: 'column',
-          minHeight: 0,
-        }}>
-          <InboxFeed />
+        <aside
+          style={{
+            display: inboxCollapsed ? 'none' : 'flex',
+            flexDirection: 'column',
+            minHeight: 0,
+            opacity: inboxCollapsed ? 0 : 1,
+            transition: 'opacity 0.3s ease',
+          }}
+        >
+          <InboxFeed
+            isCollapsed={inboxCollapsed}
+            onCollapsedChange={handleInboxCollapse}
+          />
         </aside>
       </div>
 

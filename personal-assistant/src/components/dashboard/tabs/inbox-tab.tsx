@@ -836,30 +836,66 @@ function CategoryPillsBar({
         const isPriority = pill === 'priority';
         const shouldPulse = isPriority && hasUnreadPriority && !isActive;
 
+        // Determine if light mode
+        const isLightMode = typeof window !== 'undefined' && document.documentElement.classList.contains('light');
+
+        const pillStyle: React.CSSProperties = isActive
+          ? {
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '6px 14px',
+              borderRadius: 20,
+              border: 'none',
+              background: isLightMode ? '#1A1A1B' : 'rgba(255,255,255,0.95)',
+              color: isLightMode ? '#FFFFFF' : '#0A0A0B',
+              fontSize: 12,
+              fontWeight: 600,
+              cursor: 'pointer',
+              transition: 'background 150ms ease, color 150ms ease',
+              whiteSpace: 'nowrap',
+              flexShrink: 0,
+              animation: shouldPulse ? 'bb-pill-pulse 2s ease-in-out infinite' : 'none',
+            }
+          : {
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '6px 14px',
+              borderRadius: 20,
+              border: isLightMode ? '1px solid rgba(0,0,0,0.08)' : 'none',
+              background: isLightMode ? 'rgba(0,0,0,0.05)' : 'rgba(10, 14, 23, 0.42)',
+              backdropFilter: isLightMode ? 'none' : 'blur(20px) saturate(1.2)',
+              WebkitBackdropFilter: isLightMode ? 'none' : 'blur(20px) saturate(1.2)',
+              boxShadow: isLightMode ? 'none' : 'inset 0 1px 0 rgba(255, 255, 255, 0.06)',
+              color: isLightMode ? '#6B7280' : 'var(--text-secondary, #94A3B8)',
+              fontSize: 12,
+              fontWeight: 500,
+              cursor: 'pointer',
+              transition: 'transform 150ms ease, color 150ms ease, background 150ms ease',
+              whiteSpace: 'nowrap',
+              flexShrink: 0,
+              animation: shouldPulse ? 'bb-pill-pulse 2s ease-in-out infinite' : 'none',
+            };
+
         return (
           <button
             key={pill}
             onClick={() => onSelect(pill)}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-              padding: '5px 12px',
-              borderRadius: 20,
-              border: isActive
-                ? '1px solid rgba(255,255,255,0.25)'
-                : '1px solid rgba(255,255,255,0.08)',
-              background: isActive
-                ? 'rgba(255,255,255,0.1)'
-                : 'rgba(255,255,255,0.03)',
-              color: isActive ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.45)',
-              fontSize: 12,
-              fontWeight: isActive ? 600 : 400,
-              cursor: 'pointer',
-              transition: 'all 200ms cubic-bezier(0.4, 0, 0.2, 1)',
-              whiteSpace: 'nowrap',
-              flexShrink: 0,
-              animation: shouldPulse ? 'bb-pill-pulse 2s ease-in-out infinite' : 'none',
+            style={pillStyle}
+            onMouseEnter={(e) => {
+              if (!isActive && !isLightMode) {
+                e.currentTarget.style.transform = 'scale(1.02)';
+              }
+              if (!isActive) {
+                e.currentTarget.style.color = isLightMode ? '#111827' : 'var(--text-primary, #F1F5F9)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'scale(1)';
+              if (!isActive) {
+                e.currentTarget.style.color = isLightMode ? '#6B7280' : 'var(--text-secondary, #94A3B8)';
+              }
             }}
           >
             {cfg.label}
@@ -867,11 +903,11 @@ function CategoryPillsBar({
               <span style={{
                 fontSize: 10,
                 fontWeight: 600,
-                minWidth: 16,
+                minWidth: 20,
                 height: 16,
                 borderRadius: 8,
-                background: isActive ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.08)',
-                color: isActive ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.4)',
+                background: isActive ? (isLightMode ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.2)') : 'transparent',
+                color: isActive ? (isLightMode ? '#1A1A1B' : 'rgba(255,255,255,0.95)') : (isLightMode ? '#6B7280' : 'var(--text-secondary, #94A3B8)'),
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -1276,16 +1312,21 @@ function MessageRow({
     display: 'inline-flex',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: '4px 8px',
-    borderRadius: 6,
-    border: '1px solid rgba(255,255,255,0.08)',
-    background: 'rgba(255,255,255,0.04)',
-    color: 'rgba(255,255,255,0.5)',
-    fontSize: 11,
+    width: 28,
+    height: 28,
+    minWidth: 28,
+    borderRadius: 8,
+    border: 'none',
+    background: 'rgba(15, 20, 30, 0.9)',
+    backdropFilter: 'blur(8px)',
+    WebkitBackdropFilter: 'blur(8px)',
+    color: 'rgba(255,255,255,0.6)',
+    fontSize: 14,
     fontWeight: 500,
     cursor: 'pointer',
-    gap: 4,
-    transition: 'all 100ms ease',
+    gap: 0,
+    padding: 0,
+    transition: 'all 150ms ease',
     whiteSpace: 'nowrap',
   };
 
@@ -1375,61 +1416,82 @@ function MessageRow({
       </div>
 
       {/* Right: time + hover actions crossfade */}
-      <div className="bb-inbox-row__meta">
+      <div className="bb-inbox-row__meta" style={{
+        position: 'relative',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'flex-end',
+        flexShrink: 0,
+        minWidth: 60,
+      }}>
         <div className="bb-inbox-row__meta-default">
           {starred && <Star size={11} style={{ color: '#f59e0b', fill: '#f59e0b', marginRight: 4 }} />}
           <span className="bb-inbox-row__time">{timeAgo}</span>
         </div>
-        <div className="bb-inbox-row__hover-actions">
+        <div className="bb-inbox-row__hover-actions" style={{
+          position: 'absolute',
+          right: 0,
+          top: '50%',
+          transform: 'translateY(-50%)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 4,
+          opacity: 0,
+          pointerEvents: 'none',
+          transition: 'opacity 150ms ease',
+          background: 'linear-gradient(to right, transparent, rgba(15, 20, 30, 0.9) 20%)',
+          paddingLeft: 20,
+          paddingRight: 0,
+        }}>
           <button
             className="bb-inbox-row__action"
             style={actionBtnStyle}
             title="Archive (E)"
             onClick={(e) => { e.stopPropagation(); onArchive?.(message.id); }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(15, 20, 30, 0.95)'; e.currentTarget.style.color = 'rgba(255,255,255,0.85)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(15, 20, 30, 0.9)'; e.currentTarget.style.color = 'rgba(255,255,255,0.6)'; }}
           >
-            <Archive size={12} /> Archive
+            <Archive size={14} />
           </button>
           <button
             className="bb-inbox-row__action"
             style={actionBtnStyle}
             title="Done (D)"
             onClick={(e) => { e.stopPropagation(); onDone?.(message.id); }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(15, 20, 30, 0.95)'; e.currentTarget.style.color = 'rgba(255,255,255,0.85)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(15, 20, 30, 0.9)'; e.currentTarget.style.color = 'rgba(255,255,255,0.6)'; }}
           >
-            <CheckCircle2 size={12} /> Done
+            <CheckCircle2 size={14} />
           </button>
           <button
             className="bb-inbox-row__action"
             style={actionBtnStyle}
             title="Snooze (S)"
             onClick={(e) => { e.stopPropagation(); onSnooze?.(message.id, e); }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(15, 20, 30, 0.95)'; e.currentTarget.style.color = 'rgba(255,255,255,0.85)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(15, 20, 30, 0.9)'; e.currentTarget.style.color = 'rgba(255,255,255,0.6)'; }}
           >
-            <Clock size={12} /> Snooze
+            <Clock size={14} />
           </button>
           <button
             className="bb-inbox-row__action"
             style={actionBtnStyle}
             title="Reply (R)"
             onClick={(e) => { e.stopPropagation(); onReply?.(message.id); }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(15, 20, 30, 0.95)'; e.currentTarget.style.color = 'rgba(255,255,255,0.85)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(15, 20, 30, 0.9)'; e.currentTarget.style.color = 'rgba(255,255,255,0.6)'; }}
           >
-            <Reply size={12} /> Reply
+            <Reply size={14} />
           </button>
           <button
             className="bb-inbox-row__action"
-            style={{ ...actionBtnStyle, color: starred ? '#f59e0b' : 'rgba(255,255,255,0.5)' }}
+            style={{ ...actionBtnStyle, color: starred ? '#f59e0b' : 'rgba(255,255,255,0.6)' }}
             title="Star (*)"
             onClick={(e) => { e.stopPropagation(); onStar?.(message.id); }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(15, 20, 30, 0.95)'; e.currentTarget.style.color = starred ? '#fbbf24' : 'rgba(255,255,255,0.85)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(15, 20, 30, 0.9)'; e.currentTarget.style.color = starred ? '#f59e0b' : 'rgba(255,255,255,0.6)'; }}
           >
-            <Star size={12} style={{ fill: starred ? '#f59e0b' : 'none' }} />
+            <Star size={14} style={{ fill: starred ? '#f59e0b' : 'none' }} />
           </button>
         </div>
       </div>
