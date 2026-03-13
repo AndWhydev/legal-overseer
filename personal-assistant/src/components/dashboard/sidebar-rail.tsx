@@ -8,7 +8,6 @@ import {
   Briefcase,
   Brain,
   Wrench,
-  Settings,
 } from 'lucide-react';
 import type { SidebarCategory } from '@/lib/modules/registry';
 import type { BadgeCounts } from '@/hooks/use-badge-counts';
@@ -20,7 +19,6 @@ const CATEGORY_ICON_MAP: Record<string, React.ElementType> = {
   Briefcase,
   Brain,
   Wrench,
-  Settings,
 };
 
 interface SidebarRailProps {

@@ -71,10 +71,14 @@ export function SidebarNav({
     }
     if (cat !== activeCategory) {
       setActiveCategory(cat);
-      // Auto-close panel when navigating to a directNav category (Home)
       const catDef = SIDEBAR_CATEGORIES.find(c => c.id === cat);
+      // Auto-close panel when navigating to a directNav category (Home)
       if (catDef?.directNav) {
         setPanelOpen(false);
+      }
+      // Settings has no rail icon — always open panel when navigating to it
+      if (cat === 'settings') {
+        setPanelOpen(true);
       }
     }
   }, [activeTabId]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -242,7 +246,7 @@ export function SidebarNav({
             {/* Settings */}
             <button
               role="menuitem"
-              onClick={() => { setProfileOpen(false); onTabChange?.('settings-connections'); }}
+              onClick={() => { setProfileOpen(false); setActiveCategory('settings'); setPanelOpen(true); onTabChange?.('settings-connections'); }}
               style={{
                 width: '100%',
                 display: 'flex',
