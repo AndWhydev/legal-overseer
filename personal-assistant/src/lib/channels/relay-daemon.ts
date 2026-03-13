@@ -26,7 +26,7 @@ import { ga4Adapter } from './ga4'
 import { wordpressAdapter } from './wordpress'
 import { cluelyAdapter } from './cluely'
 import { isDuplicate, computeContentHash } from './dedup'
-import { getOrgCredential } from '@/lib/integrations/credentials'
+import { getOrgCredential, storeChannelCredential, encryptCredential } from '@/lib/integrations/credentials'
 import { logger } from '@/lib/core/logger';
 
 export interface PollResult {
@@ -74,7 +74,62 @@ async function hydrateAdapterConfig(
   try {
     if (channelType === 'gmail') {
       const creds = await readCredential(['gmail'])
-      const accessToken = creds?.['access_token']
+      let accessToken = creds?.['access_token'] as string | undefined
+      const tokenExpiresAt = creds?.['token_expires_at'] as string | undefined
+      const refreshToken = creds?.['refresh_token'] as string | undefined
+
+      // Refresh if expired or expiring within 5 minutes
+      const isExpired = tokenExpiresAt
+        ? new Date(tokenExpiresAt).getTime() - 5 * 60 * 1000 <= Date.now()
+        : !accessToken
+
+      if (isExpired && refreshToken) {
+        const clientId = process.env.GOOGLE_CLIENT_ID
+        const clientSecret = process.env.GOOGLE_CLIENT_SECRET
+        if (clientId && clientSecret) {
+          try {
+            const res = await fetch('https://oauth2.googleapis.com/token', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+              body: new URLSearchParams({
+                client_id: clientId,
+                client_secret: clientSecret,
+                refresh_token: refreshToken,
+                grant_type: 'refresh_token',
+              }),
+            })
+            if (res.ok) {
+              const data = await res.json() as { access_token: string; expires_in: number; refresh_token?: string }
+              accessToken = data.access_token
+              const newExpiresAt = new Date(Date.now() + data.expires_in * 1000).toISOString()
+              // Persist refreshed token back to credential store
+              const updatedCreds = {
+                ...creds,
+                access_token: data.access_token,
+                refresh_token: data.refresh_token || refreshToken,
+                token_expires_at: newExpiresAt,
+              }
+              try {
+                await storeChannelCredential(supabase, orgId, 'gmail', updatedCreds as Record<string, unknown>)
+              } catch {
+                // channel_configs may not have a row — update channel_connections config directly
+                const encrypted = encryptCredential(JSON.stringify(updatedCreds))
+                await supabase
+                  .from('channel_connections')
+                  .update({ config: { credential_provider: 'gmail', credentials_encrypted: encrypted } })
+                  .eq('org_id', orgId)
+                  .eq('channel_type', 'gmail')
+              }
+              logger.info('[relay] Gmail token refreshed successfully')
+            } else {
+              logger.warn('[relay] Gmail token refresh failed:', await res.text())
+            }
+          } catch (err) {
+            logger.warn('[relay] Gmail token refresh error:', err)
+          }
+        }
+      }
+
       if (typeof accessToken === 'string' && accessToken) {
         baseConfig.accessToken = accessToken
       }
