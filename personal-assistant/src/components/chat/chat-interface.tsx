@@ -651,7 +651,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
               {showThinkingIndicator && (
                 <div className="bb-chat__msg bb-chat__msg--assistant">
                   <div className="bb-chat__assistant-icon">
-                    <BitBitFaceAvatar size={24} emotion={avatarEmotion} isThinking={isThinkingStreaming} />
+                    <BitBitFaceAvatar size={40} emotion={avatarEmotion} isThinking={isThinkingStreaming} />
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <Reasoning isStreaming={isThinkingStreaming} duration={thinkingDuration}>
@@ -668,7 +668,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
               {pendingApprovals.filter(a => a.status === 'pending').map(approval => (
                 <div key={approval.id} className="bb-chat__msg bb-chat__msg--assistant" style={{ marginTop: 8 }}>
                   <div className="bb-chat__assistant-icon">
-                    <BitBitFaceAvatar size={24} emotion={avatarEmotion} isThinking={isThinkingStreaming} />
+                    <BitBitFaceAvatar size={40} emotion={avatarEmotion} isThinking={isThinkingStreaming} />
                   </div>
                   <div style={{
                     flex: 1,

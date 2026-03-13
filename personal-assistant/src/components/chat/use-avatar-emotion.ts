@@ -11,7 +11,6 @@ export type AvatarEmotion =
   | 'focused'
   | 'surprised'
   | 'processing'
-  // Expanded library
   | 'contemplating'
   | 'amused'
   | 'determined'
@@ -24,6 +23,7 @@ export type AvatarEmotion =
   | 'confused'
   | 'proud'
   | 'attentive'
+  | 'annoyed'
 
 interface UseAvatarEmotionInput {
   isThinking: boolean
@@ -32,33 +32,42 @@ interface UseAvatarEmotionInput {
   hasError: boolean
 }
 
-// Ambient emotions that cycle when idle (no active SSE phase)
+// Ambient emotions — slow, peaceful idle cycling
 const AMBIENT_EMOTIONS: AvatarEmotion[] = [
   'neutral',
   'serene',
+  'neutral',
   'contemplating',
-  'curious',
+  'neutral',
   'attentive',
   'neutral',
   'serene',
   'neutral',
-  'mischievous',
-  'neutral',
-  'alert',
+  'curious',
   'neutral',
 ]
 
-// Emotions to cycle through while thinking (adds variety)
+// Thinking — expressive, varied, shows the "gears turning"
 const THINKING_EMOTIONS: AvatarEmotion[] = [
   'thinking',
   'contemplating',
   'curious',
   'thinking',
   'focused',
+  'determined',
   'thinking',
+  'skeptical',
+  'contemplating',
+  'thinking',
+  'alert',
+  'curious',
+  'thinking',
+  'confused',
+  'thinking',
+  'focused',
 ]
 
-// Emotions during streaming (content flowing)
+// Streaming — content flowing, pleased
 const STREAMING_EMOTIONS: AvatarEmotion[] = [
   'happy',
   'amused',
@@ -66,11 +75,14 @@ const STREAMING_EMOTIONS: AvatarEmotion[] = [
   'happy',
   'serene',
   'happy',
+  'attentive',
+  'happy',
 ]
 
 /**
- * Maps SSE event phases to face emotion states with debounce
- * and ambient cycling for lifelike behavior.
+ * Maps SSE event phases to face emotion states with smooth debounced
+ * transitions and ambient cycling. Includes cursor harassment detection
+ * for an irritation Easter egg.
  */
 export function useAvatarEmotion({
   isThinking,
@@ -83,9 +95,12 @@ export function useAvatarEmotion({
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const ambientTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const ambientIndexRef = useRef(0)
-  const phaseRef = useRef<'idle' | 'thinking' | 'tools' | 'streaming' | 'error'>('idle')
 
-  // Determine current phase
+  // Cursor harassment tracking for irritation Easter egg
+  const cursorEventsRef = useRef<number[]>([])
+  const isIrritatedRef = useRef(false)
+  const irritationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
   const currentPhase = hasError
     ? 'error'
     : isThinking
@@ -96,7 +111,8 @@ export function useAvatarEmotion({
           ? 'streaming'
           : 'idle'
 
-  const setEmotionDebounced = useCallback((target: AvatarEmotion, delay = 300) => {
+  // Smooth debounced emotion setter — longer delay for gentler transitions
+  const setEmotionSmooth = useCallback((target: AvatarEmotion, delay = 400) => {
     if (target === prevEmotionRef.current) return
     if (timerRef.current) clearTimeout(timerRef.current)
     timerRef.current = setTimeout(() => {
@@ -106,26 +122,89 @@ export function useAvatarEmotion({
     }, delay)
   }, [])
 
-  // Phase-driven emotion selection
+  // Track rapid cursor movements over the avatar for irritation
   useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      // Only track when idle (not thinking/streaming)
+      if (currentPhase !== 'idle') {
+        cursorEventsRef.current = []
+        return
+      }
+
+      // Check if cursor is near any face avatar element
+      const target = e.target as Element
+      const avatar = target.closest?.('.bb-chat__face-avatar')
+      if (!avatar) {
+        // Cursor left the avatar — decay harassment counter
+        if (cursorEventsRef.current.length > 0) {
+          cursorEventsRef.current = cursorEventsRef.current.filter(
+            t => Date.now() - t < 3000
+          )
+        }
+        return
+      }
+
+      const now = Date.now()
+      cursorEventsRef.current.push(now)
+      // Keep only last 3 seconds of events
+      cursorEventsRef.current = cursorEventsRef.current.filter(t => now - t < 3000)
+
+      // Escalating irritation: 15+ rapid movements in 3s over the avatar
+      if (cursorEventsRef.current.length > 15 && !isIrritatedRef.current) {
+        isIrritatedRef.current = true
+        prevEmotionRef.current = 'annoyed'
+        setEmotion('annoyed')
+
+        // Clear any ambient cycling
+        if (ambientTimerRef.current) {
+          clearTimeout(ambientTimerRef.current)
+          ambientTimerRef.current = null
+        }
+
+        // Cool down after 3s — transition through skeptical back to neutral
+        if (irritationTimerRef.current) clearTimeout(irritationTimerRef.current)
+        irritationTimerRef.current = setTimeout(() => {
+          prevEmotionRef.current = 'skeptical'
+          setEmotion('skeptical')
+
+          irritationTimerRef.current = setTimeout(() => {
+            isIrritatedRef.current = false
+            cursorEventsRef.current = []
+            prevEmotionRef.current = 'neutral'
+            setEmotion('neutral')
+            irritationTimerRef.current = null
+          }, 1500)
+        }, 2500)
+      }
+    }
+
+    document.addEventListener('mousemove', handleMouseMove)
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove)
+      if (irritationTimerRef.current) clearTimeout(irritationTimerRef.current)
+    }
+  }, [currentPhase])
+
+  // Phase-driven emotion cycling
+  useEffect(() => {
+    // Don't override irritation
+    if (isIrritatedRef.current) return
+
     if (ambientTimerRef.current) {
       clearTimeout(ambientTimerRef.current)
       ambientTimerRef.current = null
     }
 
-    phaseRef.current = currentPhase
-
     if (currentPhase === 'error') {
-      setEmotionDebounced('concerned', 150)
+      setEmotionSmooth('concerned', 200)
       return
     }
 
     if (currentPhase === 'tools') {
-      setEmotionDebounced('processing', 200)
+      setEmotionSmooth('processing', 300)
       return
     }
 
-    // For thinking, streaming, and idle — start ambient cycling
     const pool =
       currentPhase === 'thinking'
         ? THINKING_EMOTIONS
@@ -135,36 +214,36 @@ export function useAvatarEmotion({
 
     const interval =
       currentPhase === 'thinking'
-        ? 2500  // Cycle faster while thinking
+        ? 2000  // Faster cycling while thinking — more expressive
         : currentPhase === 'streaming'
-          ? 3500  // Moderate during streaming
-          : 5000  // Slow ambient when idle
+          ? 3500
+          : 6000  // Slower ambient for calm idle
 
-    // Set initial emotion for this phase
+    // Set initial emotion with a gentle transition
     ambientIndexRef.current = 0
-    setEmotionDebounced(pool[0], currentPhase === 'idle' ? 300 : 150)
+    setEmotionSmooth(pool[0], currentPhase === 'idle' ? 500 : 250)
 
-    // Start cycling
     const cycle = () => {
+      if (isIrritatedRef.current) return
       ambientIndexRef.current = (ambientIndexRef.current + 1) % pool.length
       const next = pool[ambientIndexRef.current]
       prevEmotionRef.current = next
       setEmotion(next)
-      ambientTimerRef.current = setTimeout(cycle, interval + Math.random() * 1500)
+      ambientTimerRef.current = setTimeout(cycle, interval + Math.random() * 2000)
     }
 
-    ambientTimerRef.current = setTimeout(cycle, interval + Math.random() * 1000)
+    ambientTimerRef.current = setTimeout(cycle, interval + Math.random() * 1500)
 
     return () => {
       if (ambientTimerRef.current) clearTimeout(ambientTimerRef.current)
     }
-  }, [currentPhase, setEmotionDebounced])
+  }, [currentPhase, setEmotionSmooth])
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current)
       if (ambientTimerRef.current) clearTimeout(ambientTimerRef.current)
+      if (irritationTimerRef.current) clearTimeout(irritationTimerRef.current)
     }
   }, [])
 

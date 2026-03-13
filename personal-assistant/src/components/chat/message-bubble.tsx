@@ -132,7 +132,7 @@ export function MessageBubble({ message, citations }: { message: Message; citati
     <div className={`bb-chat__msg ${isUser ? 'bb-chat__msg--user' : 'bb-chat__msg--assistant'}`}>
       {!isUser && (
         <div className="bb-chat__assistant-icon">
-          <BitBitFaceAvatar size={24} />
+          <BitBitFaceAvatar size={40} />
         </div>
       )}
       <div className={isUser ? 'bb-chat__bubble--user' : 'bb-chat__bubble--assistant bb-chat__markdown'}>

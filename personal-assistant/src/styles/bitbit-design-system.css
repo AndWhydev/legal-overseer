@@ -6579,19 +6579,18 @@ html.light .bb-pill__shimmer-dots span {
 
 .bb-chat__assistant-icon {
   flex-shrink: 0;
-  width: 24px;
-  height: 24px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-top: 2px;
+  margin-top: 0;
 }
 
 /* ── Face Avatar ── */
 
 .bb-chat__face-avatar {
-  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.12));
-  transition: filter 0.3s ease;
+  transition: transform 0.3s ease;
 }
 
 .bb-chat__face-avatar--large {
@@ -6599,7 +6598,7 @@ html.light .bb-pill__shimmer-dots span {
 }
 
 html.light .bb-chat__face-avatar {
-  filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.08));
+  /* No filter — keep minimal and clean */
 }
 
 /* ── Scroll-to-Bottom Button ── */
