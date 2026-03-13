@@ -6110,10 +6110,11 @@ html.light .bb-shortcuts-footer kbd {
   border-radius: 26px;
   flex-direction: column;
   align-items: stretch;
-  background: rgba(10, 14, 23, 0.42);
-  backdrop-filter: blur(22px) saturate(1.2);
-  -webkit-backdrop-filter: blur(22px) saturate(1.2);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: none;
+  border: none;
   transition:
     min-height 200ms cubic-bezier(0.22, 1, 0.36, 1),
     padding 200ms cubic-bezier(0.22, 1, 0.36, 1);
@@ -6276,6 +6277,12 @@ html.light .bb-pill__shimmer-dots span {
   background: rgba(0, 0, 0, 0.35);
 }
 
+html.light .bb-pill--docked {
+  background: transparent;
+  box-shadow: none;
+  border: none;
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════
    24. CHAT PAGE
    ═══════════════════════════════════════════════════════════════════════════ */
@@ -6288,31 +6295,133 @@ html.light .bb-pill__shimmer-dots span {
   position: relative;
 }
 
-/* Ambient aura glow that fills the upper chat area without overflowing containers */
-.bb-chat::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%) translateY(-20%);
-  width: min(800px, 100%);
-  height: 60%;
-  border-radius: 50%;
-  background: radial-gradient(
-    ellipse at center,
-    rgba(255, 140, 60, 0.18) 0%,
-    rgba(255, 108, 43, 0.1) 25%,
-    rgba(255, 90, 31, 0.04) 50%,
-    rgba(255, 72, 24, 0) 75%
-  );
-  filter: blur(80px);
-  pointer-events: none;
-  z-index: 0;
-  transition: opacity 0.15s ease;
+/* ── Gooey gradient background ────────────────────────────────────────────── */
+
+@keyframes bb-goo-vertical {
+  0%   { transform: translateY(-50%); }
+  50%  { transform: translateY(50%); }
+  100% { transform: translateY(-50%); }
+}
+@keyframes bb-goo-circle {
+  0%   { transform: rotate(0deg); }
+  50%  { transform: rotate(180deg); }
+  100% { transform: rotate(360deg); }
+}
+@keyframes bb-goo-horizontal {
+  0%   { transform: translateX(-50%) translateY(-10%); }
+  50%  { transform: translateX(50%) translateY(10%); }
+  100% { transform: translateX(-50%) translateY(-10%); }
 }
 
-.bb-chat--active::before {
-  opacity: 0;
+.bb-gooey-bg {
+  --goo-size: 80%;
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: #000;
+  z-index: 0;
+}
+
+.bb-gooey-bg__blobs {
+  filter: url(#goo) blur(30px);
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+/* Shared blob base */
+.bb-gooey-bg__g1,
+.bb-gooey-bg__g2,
+.bb-gooey-bg__g3,
+.bb-gooey-bg__g4,
+.bb-gooey-bg__g5,
+.bb-gooey-bg__interactive {
+  position: absolute;
+  mix-blend-mode: screen;
+  will-change: transform;
+}
+
+.bb-gooey-bg__g1 {
+  background: radial-gradient(circle at center, rgba(255, 90, 31, 0.28) 0, rgba(255, 90, 31, 0) 50%) no-repeat;
+  width: var(--goo-size);
+  height: var(--goo-size);
+  top: calc(50% - var(--goo-size) / 2);
+  left: calc(50% - var(--goo-size) / 2);
+  transform-origin: center center;
+  animation: bb-goo-vertical 30s ease infinite;
+}
+
+.bb-gooey-bg__g2 {
+  background: radial-gradient(circle at center, rgba(200, 50, 20, 0.22) 0, rgba(200, 50, 20, 0) 50%) no-repeat;
+  width: var(--goo-size);
+  height: var(--goo-size);
+  top: calc(50% - var(--goo-size) / 2);
+  left: calc(50% - var(--goo-size) / 2);
+  transform-origin: calc(50% - 400px);
+  animation: bb-goo-circle 20s reverse infinite;
+}
+
+.bb-gooey-bg__g3 {
+  background: radial-gradient(circle at center, rgba(100, 50, 180, 0.18) 0, rgba(100, 50, 180, 0) 50%) no-repeat;
+  width: var(--goo-size);
+  height: var(--goo-size);
+  top: calc(50% - var(--goo-size) / 2 + 200px);
+  left: calc(50% - var(--goo-size) / 2 - 500px);
+  transform-origin: calc(50% + 400px);
+  animation: bb-goo-circle 40s linear infinite;
+}
+
+.bb-gooey-bg__g4 {
+  background: radial-gradient(circle at center, rgba(255, 130, 50, 0.16) 0, rgba(255, 130, 50, 0) 50%) no-repeat;
+  width: var(--goo-size);
+  height: var(--goo-size);
+  top: calc(50% - var(--goo-size) / 2);
+  left: calc(50% - var(--goo-size) / 2);
+  transform-origin: calc(50% - 200px);
+  animation: bb-goo-horizontal 40s ease infinite;
+  opacity: 0.7;
+}
+
+.bb-gooey-bg__g5 {
+  background: radial-gradient(circle at center, rgba(60, 30, 100, 0.22) 0, rgba(60, 30, 100, 0) 50%) no-repeat;
+  width: calc(var(--goo-size) * 2);
+  height: calc(var(--goo-size) * 2);
+  top: calc(50% - var(--goo-size));
+  left: calc(50% - var(--goo-size));
+  transform-origin: calc(50% - 800px) calc(50% + 200px);
+  animation: bb-goo-circle 20s ease infinite;
+}
+
+.bb-gooey-bg__interactive {
+  background: radial-gradient(circle at center, rgba(180, 80, 30, 0.18) 0, rgba(180, 80, 30, 0) 50%) no-repeat;
+  width: 100%;
+  height: 100%;
+  top: -50%;
+  left: -50%;
+  opacity: 0.7;
+}
+
+/* Grain noise — static tiled SVG feTurbulence */
+.bb-gooey-bg__noise {
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  opacity: 0.06;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+  z-index: 1;
+}
+
+/* Reduced motion: freeze blob animations */
+@media (prefers-reduced-motion: reduce) {
+  .bb-gooey-bg__g1,
+  .bb-gooey-bg__g2,
+  .bb-gooey-bg__g3,
+  .bb-gooey-bg__g4,
+  .bb-gooey-bg__g5 {
+    animation: none;
+  }
 }
 
 .bb-chat__messages {
@@ -6647,7 +6756,7 @@ html.light .bb-chat__scroll-btn {
 
 .bb-chat__history-btn {
   position: absolute;
-  top: 12px;
+  bottom: 200px;
   left: 12px;
   z-index: 20;
   width: 32px;

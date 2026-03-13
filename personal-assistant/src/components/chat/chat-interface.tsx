@@ -3,14 +3,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { MessageBubble } from './message-bubble'
-import { ToolCallSummary } from './tool-call-card'
-import { ChevronDown, MessageSquare } from 'lucide-react'
+import { ChevronDown, Archive, Check, X } from 'lucide-react'
 import { BitBitFaceAvatar } from './bitbit-face-avatar'
 import { useAvatarEmotion } from './use-avatar-emotion'
 import { useSmoothStream } from './use-smooth-stream'
 import { useSmartScroll } from './use-smart-scroll'
 import { ConversationDrawer, type Thread } from './conversation-drawer'
-import { Reasoning, ReasoningTrigger, ReasoningContent } from '@/components/ai-elements/reasoning'
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible'
+import { Shimmer } from '@/components/ai-elements/shimmer'
 import { Checkpoint, CheckpointIcon } from '@/components/ai-elements/checkpoint'
 import {
   Confirmation,
@@ -19,6 +19,7 @@ import {
   ConfirmationAction,
   ConfirmationRequest,
 } from '@/components/ai-elements/confirmation'
+import { GooeyChatBg } from './gooey-chat-bg'
 
 interface ToolCall {
   name: string
@@ -71,6 +72,18 @@ const SUGGESTIONS = [
   "What's on my schedule?",
 ]
 
+const TOOL_DISPLAY_NAMES: Record<string, string> = {
+  create_task: 'Created task',
+  update_task: 'Updated task',
+  search_tasks: 'Searched tasks',
+  search_contacts: 'Searched contacts',
+  get_contact: 'Looked up contact',
+  log_activity: 'Logged activity',
+  compose_creator_notification_mockup: 'Composed notification',
+  search_memory: 'Searched memory',
+  add_memory: 'Saved to memory',
+}
+
 const CHAT_SEND_EVENT = 'bitbit-chat-send'
 const CHAT_LAYOUT_EVENT = 'bitbit-chat-layout'
 const THREAD_STORAGE_KEY = 'bitbit-thread-id'
@@ -93,6 +106,9 @@ export function ChatInterface({ userName }: { userName?: string }) {
   const [threadsLoading, setThreadsLoading] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
   const currentAssistantIdRef = useRef<string | null>(null)
+  // Reasoning chain state (controlled collapsible)
+  const [reasoningOpen, setReasoningOpen] = useState(false)
+  const prevReasoningActiveRef = useRef(false)
 
   // Smooth streaming and smart scroll hooks
   const smoothStream = useSmoothStream()
@@ -186,6 +202,8 @@ export function ChatInterface({ userName }: { userName?: string }) {
     setIsThinkingStreaming(true)
     setThinkingDuration(undefined)
     setShowReasoning(true)
+    setReasoningOpen(true)
+    prevReasoningActiveRef.current = false
     setActiveCitations([])
     setPendingApprovals([])
     smoothStream.reset()
@@ -530,14 +548,145 @@ export function ChatInterface({ userName }: { userName?: string }) {
     }
   }, [])
 
-  // Determine if the reasoning indicator should display
-  const lastMsg = messages[messages.length - 1]
-  const assistantHasContent = lastMsg?.role === 'assistant' && lastMsg.content.length > 0
-  const showThinkingIndicator = showReasoning && (isThinkingStreaming || thinkingContent || thinkingDuration !== undefined) && !assistantHasContent
+  // Reasoning chain: unified thinking + tool calls display
+  const currentResponseMsg = messages.find(m => m.id === currentAssistantIdRef.current) ?? null
+  const currentToolCalls = currentResponseMsg?.toolCalls || []
+  const isReasoningActive = isThinkingStreaming || currentToolCalls.some(tc => tc.status === 'running')
+  const showReasoningChain = showReasoning && (
+    isThinkingStreaming ||
+    thinkingContent.length > 0 ||
+    thinkingDuration !== undefined ||
+    currentToolCalls.length > 0
+  )
+
+  // Auto-open/close reasoning collapsible on activity transitions
+  useEffect(() => {
+    const wasActive = prevReasoningActiveRef.current
+    prevReasoningActiveRef.current = isReasoningActive
+    if (isReasoningActive && !wasActive) setReasoningOpen(true)
+    if (!isReasoningActive && wasActive) {
+      const timer = setTimeout(() => setReasoningOpen(false), 1000)
+      return () => clearTimeout(timer)
+    }
+  }, [isReasoningActive])
+
+  // Build the reasoning chain JSX (shared between inline + standalone)
+  const reasoningChainJSX = showReasoningChain ? (
+    <Collapsible open={reasoningOpen} onOpenChange={setReasoningOpen}>
+      <CollapsibleTrigger
+        style={{
+          display: 'flex',
+          width: '100%',
+          alignItems: 'center',
+          gap: 8,
+          color: 'var(--text-dim)',
+          fontSize: 13,
+          background: 'none',
+          border: 'none',
+          cursor: 'pointer',
+          padding: '4px 0',
+          fontFamily: 'inherit',
+          transition: 'color 0.15s ease',
+        }}
+      >
+        <span style={{ flex: 1, textAlign: 'left' }}>
+          {isReasoningActive ? (
+            <Shimmer duration={1}>Thinking...</Shimmer>
+          ) : (() => {
+            const parts: string[] = []
+            if (thinkingDuration !== undefined && thinkingDuration > 0) {
+              parts.push(`Thought for ${thinkingDuration}s`)
+            } else {
+              parts.push('Thought for a few seconds')
+            }
+            if (currentToolCalls.length > 0) {
+              const failed = currentToolCalls.filter(tc => tc.status === 'error').length
+              let toolText = `${currentToolCalls.length} tool${currentToolCalls.length !== 1 ? 's' : ''} used`
+              if (failed > 0) toolText += ` · ${failed} failed`
+              parts.push(toolText)
+            }
+            return parts.join(' · ')
+          })()}
+        </span>
+        <ChevronDown
+          size={14}
+          style={{
+            transition: 'transform 0.2s ease',
+            transform: reasoningOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+          }}
+        />
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        <div style={{
+          marginTop: 8,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 8,
+        }}>
+          {thinkingContent && (
+            <div style={{
+              fontSize: 13,
+              color: 'var(--text-secondary)',
+              lineHeight: 1.6,
+              whiteSpace: 'pre-wrap',
+              wordBreak: 'break-word',
+              maxHeight: 200,
+              overflowY: 'auto',
+              padding: '8px 12px',
+              borderRadius: 8,
+              background: 'rgba(255, 255, 255, 0.03)',
+              border: '1px solid rgba(255, 255, 255, 0.06)',
+            }}>
+              {thinkingContent}
+            </div>
+          )}
+          {currentToolCalls.length > 0 && (
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 4,
+              paddingLeft: 4,
+            }}>
+              {currentToolCalls.map((tc, idx) => (
+                <div
+                  key={idx}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    fontSize: 12,
+                    color: tc.status === 'error' ? 'var(--bb-red)' : 'var(--text-dim)',
+                    lineHeight: 1.5,
+                  }}
+                >
+                  {tc.status === 'done' ? (
+                    <Check size={12} style={{ color: 'var(--bb-green)', flexShrink: 0 }} />
+                  ) : tc.status === 'error' ? (
+                    <X size={12} style={{ color: 'var(--bb-red)', flexShrink: 0 }} />
+                  ) : (
+                    <div style={{
+                      width: 12,
+                      height: 12,
+                      borderRadius: '50%',
+                      border: '2px solid var(--text-dim)',
+                      borderTopColor: 'transparent',
+                      animation: 'spin 0.8s linear infinite',
+                      flexShrink: 0,
+                    }} />
+                  )}
+                  <span>{TOOL_DISPLAY_NAMES[tc.name] || tc.name}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
+  ) : null
 
   return (
     <div className={`bb-chat ${chatStarted ? 'bb-chat--active' : 'bb-chat--pre-session'}`}>
-      {/* History toggle button */}
+      {/* Archive / history toggle — bottom-left, low priority */}
       {chatStarted && (
         <button
           className="bb-chat__history-btn"
@@ -547,7 +696,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
           }}
           aria-label="Conversation history"
         >
-          <MessageSquare size={16} />
+          <Archive size={16} />
         </button>
       )}
 
@@ -610,7 +759,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
                 const prev = messages[i - 1]
                 const isGroupChange = prev && prev.role !== msg.role
                 const isLastAssistant = msg.role === 'assistant' && (i === messages.length - 1 || messages[i + 1]?.role === 'user')
-                const hasCompletedTools = msg.toolCalls && msg.toolCalls.length > 0 && msg.toolCalls.every(tc => tc.status !== 'running')
+                const isCurrentResponse = msg.id === currentAssistantIdRef.current
                 const checkpoint = checkpoints.find(cp => cp.afterMessageId === msg.id)
 
                 return (
@@ -618,16 +767,18 @@ export function ChatInterface({ userName }: { userName?: string }) {
                     key={msg.id}
                     className={isGroupChange ? 'bb-chat__msg-group-gap' : ''}
                   >
-                    <MessageBubble
-                      message={msg}
-                      showAvatar={isLastAssistant && !showThinkingIndicator}
-                      citations={msg.citations || (isLastAssistant && isLoading ? activeCitations : undefined)}
-                    />
-                    {isLastAssistant && hasCompletedTools && !isLoading && (
-                      <div className="bb-chat__tc-summary-wrap">
-                        <ToolCallSummary toolCalls={msg.toolCalls!} />
+                    {/* Reasoning chain above the current response */}
+                    {isCurrentResponse && reasoningChainJSX && (
+                      <div className="bb-chat__msg bb-chat__msg--assistant" style={{ marginBottom: 4 }}>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          {reasoningChainJSX}
+                        </div>
                       </div>
                     )}
+                    <MessageBubble
+                      message={msg}
+                      citations={msg.citations || (isLastAssistant && isLoading ? activeCitations : undefined)}
+                    />
                     {checkpoint && (
                       <div style={{ margin: '16px 0', opacity: 0.6 }}>
                         <Checkpoint>
@@ -648,23 +799,14 @@ export function ChatInterface({ userName }: { userName?: string }) {
                 )
               })}
 
-              {/* Thinking indicator — clean shimmer, ChatGPT-style */}
-              {showThinkingIndicator && (
+              {/* Standalone reasoning chain (before assistant message exists) */}
+              {showReasoningChain && !currentResponseMsg && (
                 <div className="bb-chat__msg bb-chat__msg--assistant">
-                  <motion.div
-                    className="bb-chat__assistant-icon"
-                    layoutId="bitbit-active-avatar"
-                    transition={{ type: 'spring', stiffness: 200, damping: 25, mass: 0.8 }}
-                  >
+                  <div className="bb-chat__assistant-icon">
                     <BitBitFaceAvatar size={40} emotion={avatarEmotion} isThinking={isThinkingStreaming} />
-                  </motion.div>
+                  </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <Reasoning isStreaming={isThinkingStreaming} duration={thinkingDuration}>
-                      <ReasoningTrigger />
-                      {thinkingContent && (
-                        <ReasoningContent>{thinkingContent}</ReasoningContent>
-                      )}
-                    </Reasoning>
+                    {reasoningChainJSX}
                   </div>
                 </div>
               )}
