@@ -26,6 +26,8 @@ interface DashboardRedesignProps {
 
 export function DashboardRedesign({ columns, tasks, messages, completedToday, totalActive }: DashboardRedesignProps) {
   const [inboxCollapsed, setInboxCollapsed] = React.useState(false);
+  const [edgeGlow, setEdgeGlow] = React.useState(0);
+  const edgeRef = React.useRef<HTMLDivElement>(null);
   const { stats, loading } = useDashboardStats();
   const seed = useSeedData();
   const { industry } = useEnabledModules();
@@ -45,6 +47,31 @@ export function DashboardRedesign({ columns, tasks, messages, completedToday, to
     setInboxCollapsed(collapsed);
     localStorage.setItem('bb-inbox-collapsed', JSON.stringify(collapsed));
   }, []);
+
+  // Edge-knock proximity detection for collapsed inbox
+  React.useEffect(() => {
+    if (!inboxCollapsed) {
+      setEdgeGlow(0);
+      return;
+    }
+    let rafId: number;
+    const handleMouseMove = (e: MouseEvent) => {
+      cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(() => {
+        const distFromRight = window.innerWidth - e.clientX;
+        if (distFromRight < 60) {
+          setEdgeGlow(Math.min(1, (60 - distFromRight) / 60));
+        } else {
+          setEdgeGlow(0);
+        }
+      });
+    };
+    document.addEventListener('mousemove', handleMouseMove, { passive: true });
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      cancelAnimationFrame(rafId);
+    };
+  }, [inboxCollapsed]);
 
   // Use seed kanban data when active, otherwise use props
   const displayColumns = seed.active && seed.data?.kanbanColumns ? seed.data.kanbanColumns : columns;
@@ -168,11 +195,11 @@ export function DashboardRedesign({ columns, tasks, messages, completedToday, to
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: inboxCollapsed ? '1fr 40px' : '1fr 320px',
+          gridTemplateColumns: inboxCollapsed ? '1fr 36px' : '1fr 320px',
           gap: 20,
           flex: 1,
           minHeight: 0,
-          transition: 'grid-template-columns 0.3s ease',
+          transition: 'grid-template-columns 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
         }}
         className="dashboard-main-grid"
       >
@@ -184,41 +211,49 @@ export function DashboardRedesign({ columns, tasks, messages, completedToday, to
           />
         </div>
 
-        {/* Inbox Feed or Expand Button */}
+        {/* Inbox Feed or Edge Knock Strip */}
         {inboxCollapsed ? (
-          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: 8 }}>
-            <button
-              onClick={() => handleInboxCollapse(false)}
-              aria-label="Expand inbox"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: 32,
-                height: 32,
-                borderRadius: 8,
-                background: 'var(--bg-card, rgba(15,20,30,0.6))',
-                backdropFilter: 'blur(12px)',
-                WebkitBackdropFilter: 'blur(12px)',
-                border: '1px solid var(--border-subtle, rgba(255,255,255,0.06))',
-                color: 'var(--text-secondary)',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                padding: 0,
-              }}
-              onMouseEnter={e => {
-                (e.currentTarget as HTMLElement).style.color = 'var(--text-primary)';
-                (e.currentTarget as HTMLElement).style.background = 'var(--hover-bg-strong, rgba(255,255,255,0.08))';
-              }}
-              onMouseLeave={e => {
-                (e.currentTarget as HTMLElement).style.color = 'var(--text-secondary)';
-                (e.currentTarget as HTMLElement).style.background = 'var(--bg-card, rgba(15,20,30,0.6))';
-              }}
-            >
-              <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+          <div
+            ref={edgeRef}
+            onClick={() => handleInboxCollapse(false)}
+            aria-label="Expand inbox"
+            role="button"
+            tabIndex={0}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              position: 'relative',
+              borderRadius: 12,
+              transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+            }}
+          >
+            {/* Luminous edge strip */}
+            <div style={{
+              position: 'absolute',
+              top: 16,
+              bottom: 16,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              width: 3,
+              borderRadius: 3,
+              background: `rgba(255, 255, 255, ${0.06 + edgeGlow * 0.14})`,
+              boxShadow: edgeGlow > 0.3
+                ? `0 0 ${8 * edgeGlow}px rgba(255, 255, 255, ${0.05 * edgeGlow}), 0 0 ${20 * edgeGlow}px rgba(255, 255, 255, ${0.03 * edgeGlow})`
+                : 'none',
+              transition: 'all 0.3s ease',
+            }} />
+            {/* Inbox icon hint -- appears on hover */}
+            <div style={{
+              opacity: edgeGlow > 0.5 ? edgeGlow : 0,
+              transition: 'opacity 0.2s ease',
+              color: `rgba(255, 255, 255, ${0.3 + edgeGlow * 0.3})`,
+            }}>
+              <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="15 18 9 12 15 6" />
               </svg>
-            </button>
+            </div>
           </div>
         ) : (
           <aside
