@@ -168,6 +168,9 @@ body {
   --bg-card: rgba(15, 20, 30, 0.3);
   --bg-overlay: rgba(0, 0, 0, 0.55);
 
+  /* Error mascot — invert black fill to white for dark theme */
+  --error-mascot-filter: brightness(0) invert(1);
+
   /* Glass tokens */
   --glass-card-bg: rgba(15, 20, 30, 0.6);
   --glass-card-bg-light: rgba(15, 20, 30, 0.45);
@@ -278,6 +281,9 @@ html.light {
   --bg-primary: #FAFAF9;
   --bg-card: rgba(255, 255, 255, 0.9);
   --bg-overlay: rgba(0, 0, 0, 0.3);
+
+  /* Error mascot — keep black fill for light theme */
+  --error-mascot-filter: brightness(0);
 
   /* Glass tokens (light) */
   --glass-card-bg: rgba(255, 255, 255, 0.95);
