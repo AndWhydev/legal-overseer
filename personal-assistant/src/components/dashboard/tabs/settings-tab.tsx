@@ -1,16 +1,15 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Sun, Moon, Monitor, Loader2, Smartphone, Check, X } from 'lucide-react';
+import { Sun, Moon, Monitor, Loader2, Smartphone, Check, X, Link2, Zap, Palette } from 'lucide-react';
 import { QrAuthConnect } from '@/components/ui/qr-auth-connect';
 import { ConnectionsGrid } from '@/components/integrations/integration-grid';
 import { createClient } from '@/lib/supabase/client';
-import { TabShell } from '@/components/ui/tab-shell';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { logger } from '@/lib/core/logger';
 import { useTheme, type ThemeName } from '@/lib/theme/theme-provider';
 
-// ─── Automation types (user-friendly names) ─────────────────────────────────
+// ─── Automation types ─────────────────────────────────────────────────────────
 
 const AUTOMATION_TYPES = [
   { id: 'lead_swarm', label: 'Lead Generation', description: 'Automatically find and score new leads' },
@@ -26,9 +25,9 @@ const AUTOMATION_TYPES = [
 ] as const;
 
 const SECTIONS = [
-  { id: 'connections', label: 'Connections' },
-  { id: 'automations', label: 'Automations' },
-  { id: 'appearance', label: 'Appearance' },
+  { id: 'connections', label: 'Connections', icon: Link2 },
+  { id: 'automations', label: 'Automations', icon: Zap },
+  { id: 'appearance', label: 'Appearance', icon: Palette },
 ];
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -47,58 +46,10 @@ interface OrgIntegration {
 
 // ─── Inline Styles ───────────────────────────────────────────────────────────
 
-const glassCard: React.CSSProperties = {
-  padding: '20px',
-  borderRadius: 16,
-  background: 'var(--glass-card-bg)',
-  backdropFilter: 'var(--glass-card-blur)',
-  WebkitBackdropFilter: 'var(--glass-card-blur)',
-  border: '1px solid var(--glass-card-border)',
-  boxShadow: 'var(--glass-card-inset)',
-};
-
-const pillBtn: React.CSSProperties = {
-  display: 'inline-flex',
-  alignItems: 'center',
-  padding: '8px 18px',
-  borderRadius: 24,
-  border: 'none',
-  background: 'rgba(10, 14, 23, 0.42)',
-  backdropFilter: 'blur(20px) saturate(1.2)',
-  WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
-  boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.06)',
-  color: 'var(--text-secondary)',
-  fontSize: 13,
-  fontWeight: 500,
-  cursor: 'pointer',
-  transition: 'background 150ms ease, color 150ms ease, transform 150ms ease',
-  whiteSpace: 'nowrap',
-  flexShrink: 0,
-};
-
-const pillBtnActive: React.CSSProperties = {
-  display: 'inline-flex',
-  alignItems: 'center',
-  padding: '8px 18px',
-  borderRadius: 24,
-  border: '1px solid transparent',
-  background: 'rgba(255, 255, 255, 0.95)',
-  backdropFilter: 'none',
-  WebkitBackdropFilter: 'none',
-  boxShadow: 'none',
-  color: '#0A0A0B',
-  fontSize: 13,
-  fontWeight: 600,
-  cursor: 'pointer',
-  transition: 'background 150ms ease, color 150ms ease, transform 150ms ease',
-  whiteSpace: 'nowrap',
-  flexShrink: 0,
-};
-
 const listRow: React.CSSProperties = {
   display: 'flex',
   alignItems: 'center',
-  padding: '12px 18px',
+  padding: '14px 16px',
   borderRadius: 12,
   background: 'var(--glass-pill-bg)',
   backdropFilter: 'var(--glass-blur)',
@@ -106,19 +57,6 @@ const listRow: React.CSSProperties = {
   boxShadow: 'var(--glass-card-inset)',
   border: 'none',
   transition: 'background 200ms',
-};
-
-const cardTitle: React.CSSProperties = {
-  fontSize: 14,
-  fontWeight: 600,
-  color: 'var(--text-primary)',
-  marginBottom: 4,
-};
-
-const cardDescription: React.CSSProperties = {
-  fontSize: 13,
-  color: 'var(--text-secondary)',
-  marginBottom: 16,
 };
 
 // ─── Toggle Switch ───────────────────────────────────────────────────────────
@@ -164,23 +102,159 @@ function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: 
   );
 }
 
-// ─── Automation Toggles Section ──────────────────────────────────────────────
+// ─── Settings Rail ───────────────────────────────────────────────────────────
 
-function AutomationTogglesSection({ enabledAutomations, onToggle }: { enabledAutomations: string[]; onToggle: (id: string) => void }) {
+function SettingsRail({ activeSection, onSectionChange }: { activeSection: string; onSectionChange: (id: string) => void }) {
   return (
-    <div style={glassCard}>
-      <h3 style={cardTitle}>Automations</h3>
-      <p style={cardDescription}>Choose what BitBit handles for you.</p>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+    <nav
+      style={{
+        width: 200,
+        flexShrink: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 2,
+        padding: '4px 0',
+      }}
+    >
+      {SECTIONS.map(s => {
+        const active = activeSection === s.id;
+        const Icon = s.icon;
+        return (
+          <button
+            key={s.id}
+            onClick={() => onSectionChange(s.id)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              padding: '10px 14px',
+              borderRadius: 10,
+              border: 'none',
+              background: active ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
+              color: active ? 'var(--text-primary)' : 'var(--text-secondary)',
+              fontSize: 13,
+              fontWeight: active ? 600 : 400,
+              cursor: 'pointer',
+              transition: 'all 150ms ease',
+              textAlign: 'left',
+              width: '100%',
+            }}
+            onMouseEnter={e => {
+              if (!active) {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)';
+                e.currentTarget.style.color = 'var(--text-primary)';
+              }
+            }}
+            onMouseLeave={e => {
+              if (!active) {
+                e.currentTarget.style.background = 'transparent';
+                e.currentTarget.style.color = 'var(--text-secondary)';
+              }
+            }}
+          >
+            <Icon size={16} strokeWidth={active ? 2 : 1.5} />
+            {s.label}
+          </button>
+        );
+      })}
+    </nav>
+  );
+}
+
+// ─── Automations Section (full-width) ────────────────────────────────────────
+
+function AutomationsSection({ enabledAutomations, onToggle }: { enabledAutomations: string[]; onToggle: (id: string) => void }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <div>
+        <h3 style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Automations</h3>
+        <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '4px 0 0' }}>Choose what BitBit handles for you.</p>
+      </div>
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+        gap: 8,
+      }}>
         {AUTOMATION_TYPES.map(a => (
-          <div key={a.id} style={{ ...listRow, justifyContent: 'space-between' }}>
-            <div>
-              <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)', margin: 0 }}>{a.label}</p>
-              <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: 0 }}>{a.description}</p>
+          <div key={a.id} style={{ ...listRow, justifyContent: 'space-between', gap: 12 }}>
+            <div style={{ minWidth: 0 }}>
+              <p style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', margin: 0 }}>{a.label}</p>
+              <p style={{ fontSize: 11, color: 'var(--text-secondary)', margin: '1px 0 0' }}>{a.description}</p>
             </div>
             <Toggle checked={enabledAutomations.includes(a.id)} onChange={() => onToggle(a.id)} label={a.label} />
           </div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Appearance Section (full-width) ─────────────────────────────────────────
+
+function AppearanceSection({ currentPalette, setPalette }: { currentPalette: ThemeName; setPalette: (t: ThemeName) => void }) {
+  const themes = [
+    { id: 'midnight' as ThemeName, label: 'Midnight', desc: 'Deep dark', bg: 'linear-gradient(135deg, #0a0f1a 0%, #141b2d 100%)', border: 'rgba(255,255,255,0.08)', icon: <Moon size={20} />, previewText: 'rgba(255,255,255,0.6)' },
+    { id: 'aurora' as ThemeName, label: 'Aurora', desc: 'Glassmorphic', bg: 'linear-gradient(135deg, #F5E6D8 0%, #AFCADF 100%)', border: 'rgba(0,0,0,0.08)', icon: <Sun size={20} />, previewText: 'rgba(0,0,0,0.5)' },
+    { id: 'light' as ThemeName, label: 'Light', desc: 'Clean & minimal', bg: 'linear-gradient(135deg, #FAFAF9 0%, #F0F0EE 100%)', border: 'rgba(0,0,0,0.08)', icon: <Monitor size={20} />, previewText: 'rgba(0,0,0,0.5)' },
+  ];
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <div>
+        <h3 style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Theme</h3>
+        <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '4px 0 0' }}>Choose your visual style.</p>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 12 }}>
+        {themes.map(t => {
+          const active = currentPalette === t.id;
+          return (
+            <button
+              key={t.id}
+              onClick={() => setPalette(t.id)}
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 10,
+                padding: 16,
+                borderRadius: 14,
+                border: active ? '2px solid var(--accent)' : `1px solid ${t.border}`,
+                background: 'var(--bg-card)',
+                cursor: 'pointer',
+                transition: 'all 200ms',
+                position: 'relative',
+                overflow: 'hidden',
+              }}
+              onMouseEnter={e => {
+                if (!active) e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+              }}
+              onMouseLeave={e => {
+                if (!active) e.currentTarget.style.borderColor = t.border;
+              }}
+            >
+              <div style={{
+                width: '100%', height: 72, borderRadius: 10, background: t.bg,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', color: t.previewText,
+              }}>
+                {t.icon}
+              </div>
+              <div style={{ textAlign: 'center' }}>
+                <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>{t.label}</p>
+                <p style={{ fontSize: 11, color: 'var(--text-secondary)', margin: '2px 0 0' }}>{t.desc}</p>
+              </div>
+              {active && (
+                <div style={{
+                  position: 'absolute', top: 10, right: 10,
+                  width: 20, height: 20, borderRadius: '50%',
+                  background: 'var(--accent)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <Check size={12} color="#fff" strokeWidth={2.5} />
+                </div>
+              )}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
@@ -219,6 +293,16 @@ function WhatsAppWizardModal({ onClose, onConnected }: { onClose: () => void; on
     startPairing();
     return () => { cancelled = true; };
   }, []);
+
+  const glassCard: React.CSSProperties = {
+    padding: '20px',
+    borderRadius: 16,
+    background: 'var(--glass-card-bg)',
+    backdropFilter: 'var(--glass-card-blur)',
+    WebkitBackdropFilter: 'var(--glass-card-blur)',
+    border: '1px solid var(--glass-card-border)',
+    boxShadow: 'var(--glass-card-inset)',
+  };
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -363,7 +447,7 @@ function SettingsTab() {
     })();
   }, [supabase]);
 
-  // Fetch integrations once (lifted from IntegrationGrid to prevent reload on tab switch)
+  // Fetch integrations
   const fetchIntegrations = useCallback(async () => {
     try {
       setIntegrationsLoading(true);
@@ -382,7 +466,7 @@ function SettingsTab() {
     fetchIntegrations();
   }, [fetchIntegrations]);
 
-  // Auto-save with debounce for automation toggles
+  // Auto-save with debounce
   const autoSave = useCallback((newSettings: OrgSettings) => {
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(async () => {
@@ -413,116 +497,74 @@ function SettingsTab() {
   };
 
   return (
-    <TabShell>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 24, padding: 24 }}>
-        <SaveIndicator visible={saveIndicatorVisible} />
+    <div style={{
+      display: 'flex',
+      height: '100%',
+      overflow: 'hidden',
+    }}>
+      <SaveIndicator visible={saveIndicatorVisible} />
 
-        {/* Tab Switcher — inbox-style pills */}
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-          {SECTIONS.map(s => (
-            <button
-              key={s.id}
-              onClick={() => setActiveSection(s.id)}
-              style={activeSection === s.id ? pillBtnActive : pillBtn}
-              onMouseEnter={e => {
-                if (activeSection !== s.id) {
-                  e.currentTarget.style.transform = 'scale(1.02)';
-                  e.currentTarget.style.color = 'var(--text-primary)';
-                }
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.transform = 'scale(1)';
-                if (activeSection !== s.id) {
-                  e.currentTarget.style.color = 'var(--text-secondary)';
-                }
-              }}
-            >
-              {s.label}
-            </button>
-          ))}
-        </div>
+      {/* Settings Rail */}
+      <div style={{
+        padding: '20px 12px 20px 20px',
+        borderRight: '1px solid var(--glass-divider, rgba(255, 255, 255, 0.06))',
+        flexShrink: 0,
+      }}>
+        <p style={{
+          fontSize: 11,
+          fontWeight: 600,
+          color: 'var(--text-dim)',
+          textTransform: 'uppercase',
+          letterSpacing: '0.05em',
+          margin: '0 0 12px 14px',
+        }}>
+          Settings
+        </p>
+        <SettingsRail activeSection={activeSection} onSectionChange={setActiveSection} />
+      </div>
 
-        {/* Content */}
-        <div style={{ maxWidth: activeSection === 'connections' ? '900px' : '640px' }}>
-          {activeSection === 'connections' && (
-            <ConnectionsGrid
-              integrations={integrations}
-              isLoading={integrationsLoading}
-              onStatusChange={fetchIntegrations}
-              onWhatsAppConnect={() => setWhatsappModalOpen(true)}
-            />
-          )}
+      {/* Content Area */}
+      <div style={{
+        flex: 1,
+        overflow: 'auto',
+        padding: 24,
+        minWidth: 0,
+      }}>
+        {activeSection === 'connections' && (
+          <ConnectionsGrid
+            integrations={integrations}
+            isLoading={integrationsLoading}
+            onStatusChange={fetchIntegrations}
+            onWhatsAppConnect={() => setWhatsappModalOpen(true)}
+          />
+        )}
 
-          {activeSection === 'automations' && (
-            <AutomationTogglesSection
-              enabledAutomations={settings.enabled_agents}
-              onToggle={handleAutomationToggle}
-            />
-          )}
+        {activeSection === 'automations' && (
+          <AutomationsSection
+            enabledAutomations={settings.enabled_agents}
+            onToggle={handleAutomationToggle}
+          />
+        )}
 
-          {activeSection === 'appearance' && (
-            <div style={glassCard}>
-              <h3 style={cardTitle}>Theme</h3>
-              <p style={cardDescription}>Choose your visual style.</p>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
-                {([
-                  { id: 'midnight' as ThemeName, label: 'Midnight', desc: 'Deep dark', bg: 'linear-gradient(135deg, #0a0f1a 0%, #141b2d 100%)', border: 'rgba(255,255,255,0.08)', icon: <Moon size={18} />, previewText: 'rgba(255,255,255,0.6)' },
-                  { id: 'aurora' as ThemeName, label: 'Aurora', desc: 'Glassmorphic', bg: 'linear-gradient(135deg, #F5E6D8 0%, #AFCADF 100%)', border: 'rgba(0,0,0,0.08)', icon: <Sun size={18} />, previewText: 'rgba(0,0,0,0.5)' },
-                  { id: 'light' as ThemeName, label: 'Light', desc: 'Clean & minimal', bg: 'linear-gradient(135deg, #FAFAF9 0%, #F0F0EE 100%)', border: 'rgba(0,0,0,0.08)', icon: <Monitor size={18} />, previewText: 'rgba(0,0,0,0.5)' },
-                ]).map(t => {
-                  const active = currentPalette === t.id;
-                  return (
-                    <button
-                      key={t.id}
-                      onClick={() => setPalette(t.id)}
-                      style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        gap: 10,
-                        padding: 16,
-                        borderRadius: 14,
-                        border: active ? '2px solid var(--accent)' : `1px solid ${t.border}`,
-                        background: 'var(--bg-card)',
-                        cursor: 'pointer',
-                        transition: 'all 200ms',
-                        position: 'relative',
-                        overflow: 'hidden',
-                      }}
-                    >
-                      <div style={{
-                        width: '100%', height: 60, borderRadius: 8, background: t.bg,
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', color: t.previewText,
-                      }}>
-                        {t.icon}
-                      </div>
-                      <div style={{ textAlign: 'center' }}>
-                        <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>{t.label}</p>
-                        <p style={{ fontSize: 11, color: 'var(--text-secondary)', margin: '2px 0 0' }}>{t.desc}</p>
-                      </div>
-                      {active && (
-                        <div style={{ position: 'absolute', top: 8, right: 8, width: 8, height: 8, borderRadius: '50%', background: 'var(--accent)' }} />
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* WhatsApp Wizard Modal */}
-        {whatsappModalOpen && (
-          <WhatsAppWizardModal
-            onClose={() => setWhatsappModalOpen(false)}
-            onConnected={() => {
-              setWhatsappModalOpen(false);
-              fetchIntegrations();
-            }}
+        {activeSection === 'appearance' && (
+          <AppearanceSection
+            currentPalette={currentPalette}
+            setPalette={setPalette}
           />
         )}
       </div>
-    </TabShell>
+
+      {/* WhatsApp Wizard Modal */}
+      {whatsappModalOpen && (
+        <WhatsAppWizardModal
+          onClose={() => setWhatsappModalOpen(false)}
+          onConnected={() => {
+            setWhatsappModalOpen(false);
+            fetchIntegrations();
+          }}
+        />
+      )}
+    </div>
   );
 }
 

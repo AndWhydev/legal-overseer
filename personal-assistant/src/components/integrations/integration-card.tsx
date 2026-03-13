@@ -13,6 +13,25 @@ interface IntegrationCardProps {
   style?: React.CSSProperties;
 }
 
+// Shared glass button base
+const glassBtn: React.CSSProperties = {
+  padding: '5px 12px',
+  borderRadius: 10,
+  background: 'rgba(255, 255, 255, 0.06)',
+  backdropFilter: 'blur(12px)',
+  WebkitBackdropFilter: 'blur(12px)',
+  border: '1px solid rgba(255, 255, 255, 0.08)',
+  fontSize: 11,
+  fontWeight: 500,
+  cursor: 'pointer',
+  transition: 'all 180ms ease',
+  flexShrink: 0,
+  display: 'flex',
+  alignItems: 'center',
+  gap: 5,
+  lineHeight: 1.4,
+};
+
 export function IntegrationCard({ integration, isConnected = false, onStatusChange, onWhatsAppConnect, style: externalStyle }: IntegrationCardProps) {
   const BrandIcon = BRAND_ICONS[integration.id];
   const isComingSoon = integration.status === 'coming_soon';
@@ -33,7 +52,6 @@ export function IntegrationCard({ integration, isConnected = false, onStatusChan
     }
     if (integration.authMethod === 'oauth') {
       setConnectingFeedback(true);
-      // Brief delay for visual feedback before redirect
       setTimeout(() => {
         window.location.href = `/api/auth/oauth/start?provider=${encodeURIComponent(integration.id)}`;
       }, 400);
@@ -95,138 +113,116 @@ export function IntegrationCard({ integration, isConnected = false, onStatusChan
         style={{
           display: 'flex',
           alignItems: 'center',
-          gap: 14,
-          padding: 16,
-          borderRadius: 16,
+          gap: 12,
+          padding: '12px 14px',
+          borderRadius: 14,
           background: hovered && !isComingSoon
             ? 'rgba(255, 255, 255, 0.04)'
             : 'var(--glass-pill-bg)',
           backdropFilter: 'var(--glass-blur)',
           WebkitBackdropFilter: 'var(--glass-blur)',
-          border: connected
-            ? '1.5px solid rgba(34, 197, 94, 0.35)'
-            : '1px solid var(--glass-card-border)',
-          boxShadow: connected
-            ? '0 0 12px rgba(34, 197, 94, 0.08), var(--glass-card-inset)'
-            : 'var(--glass-card-inset)',
-          transition: 'all 350ms cubic-bezier(0.2, 0.9, 0.3, 1)',
+          border: '1px solid var(--glass-card-border)',
+          boxShadow: 'var(--glass-card-inset)',
+          transition: 'all 300ms cubic-bezier(0.2, 0.9, 0.3, 1)',
           opacity: isComingSoon ? 0.5 : 1,
           ...externalStyle,
         }}
       >
-        {/* Brand Icon */}
+        {/* App Icon */}
         <div style={{
-          width: 40,
-          height: 40,
-          borderRadius: 10,
-          background: `${integration.color}15`,
+          width: 36,
+          height: 36,
+          borderRadius: 8,
+          overflow: 'hidden',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           flexShrink: 0,
         }}>
           {BrandIcon
-            ? <BrandIcon size={20} color={integration.color} />
-            : <div style={{ width: 20, height: 20, borderRadius: 4, background: `${integration.color}30` }} />
+            ? <BrandIcon size={36} />
+            : <div style={{ width: 36, height: 36, borderRadius: 8, background: `${integration.color}20` }} />
           }
         </div>
 
         {/* Info */}
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>
               {integration.name}
             </span>
-            {connected && (
-              <span style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                padding: '2px 8px',
-                borderRadius: 6,
-                fontSize: 10,
-                fontWeight: 600,
-                letterSpacing: '0.02em',
-                background: 'rgba(34, 197, 94, 0.12)',
-                color: '#22C55E',
-              }}>
-                Connected
-              </span>
-            )}
             {isComingSoon && (
               <span style={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                padding: '2px 8px',
-                borderRadius: 6,
-                fontSize: 10,
+                padding: '1px 6px',
+                borderRadius: 5,
+                fontSize: 9,
                 fontWeight: 500,
                 background: 'var(--glass-hover-bg)',
                 color: 'var(--text-dim)',
               }}>
-                Coming Soon
+                Soon
               </span>
             )}
           </div>
           <p style={{
-            fontSize: 12,
+            fontSize: 11,
             color: 'var(--text-secondary)',
-            margin: '2px 0 0',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
+            margin: '1px 0 0',
+            lineHeight: 1.35,
           }}>
             {integration.description}
           </p>
         </div>
 
-        {/* Action button */}
+        {/* Action button — glass style for all states */}
         {!isComingSoon && (
           connected ? (
             <button
               onClick={(e) => { e.stopPropagation(); handleDisconnect(); }}
               disabled={isLoading}
+              onMouseEnter={e => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.06)';
+              }}
               style={{
-                padding: '6px 14px',
-                borderRadius: 8,
-                background: 'transparent',
-                border: '1px solid rgba(239, 68, 68, 0.3)',
-                color: '#EF4444',
-                fontSize: 12,
-                fontWeight: 500,
+                ...glassBtn,
+                color: 'var(--text-secondary)',
                 cursor: isLoading ? 'not-allowed' : 'pointer',
                 opacity: isLoading ? 0.5 : 1,
-                transition: 'all 150ms',
-                flexShrink: 0,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
               }}
             >
-              {isLoading ? <Loader2 size={12} style={{ animation: 'bb-spin 1s linear infinite' }} /> : 'Disconnect'}
+              {isLoading
+                ? <Loader2 size={11} style={{ animation: 'bb-spin 1s linear infinite' }} />
+                : 'Disconnect'
+              }
             </button>
           ) : (
             <button
               onClick={(e) => { e.stopPropagation(); handleConnect(); }}
               disabled={isLoading || connectingFeedback}
+              onMouseEnter={e => {
+                if (!connectingFeedback) {
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.12)';
+                }
+              }}
+              onMouseLeave={e => {
+                if (!connectingFeedback) {
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.06)';
+                }
+              }}
               style={{
-                padding: '6px 14px',
-                borderRadius: 8,
-                background: connectingFeedback ? 'rgba(34, 197, 94, 0.12)' : 'rgba(255, 255, 255, 0.08)',
-                border: connectingFeedback ? '1px solid rgba(34, 197, 94, 0.3)' : '1px solid var(--glass-interactive-border)',
-                color: connectingFeedback ? '#22C55E' : 'var(--text-primary)',
-                fontSize: 12,
-                fontWeight: 500,
+                ...glassBtn,
+                color: connectingFeedback ? 'var(--text-secondary)' : 'var(--text-primary)',
                 cursor: (isLoading || connectingFeedback) ? 'not-allowed' : 'pointer',
                 opacity: (isLoading || connectingFeedback) ? 0.7 : 1,
-                transition: 'all 200ms ease',
-                flexShrink: 0,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
               }}
             >
               {connectingFeedback
-                ? <><Loader2 size={12} style={{ animation: 'bb-spin 1s linear infinite' }} /> Connecting...</>
+                ? <><Loader2 size={11} style={{ animation: 'bb-spin 1s linear infinite' }} /> Connecting</>
                 : 'Connect'
               }
             </button>
@@ -262,11 +258,10 @@ export function IntegrationCard({ integration, isConnected = false, onStatusChan
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
               <div style={{
-                width: 36, height: 36, borderRadius: 8,
-                background: `${integration.color}15`,
+                width: 36, height: 36, borderRadius: 8, overflow: 'hidden',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}>
-                {BrandIcon && <BrandIcon size={18} color={integration.color} />}
+                {BrandIcon && <BrandIcon size={36} />}
               </div>
               <div>
                 <h3 style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
@@ -319,15 +314,10 @@ export function IntegrationCard({ integration, isConnected = false, onStatusChan
                 onClick={() => { setApiKeyDialogOpen(false); setError(''); }}
                 disabled={isLoading}
                 style={{
+                  ...glassBtn,
                   padding: '8px 16px',
-                  borderRadius: 10,
-                  background: 'transparent',
-                  border: '1px solid var(--glass-interactive-border)',
-                  color: 'var(--text-primary)',
                   fontSize: 13,
-                  fontWeight: 500,
-                  cursor: 'pointer',
-                  transition: 'all 150ms',
+                  color: 'var(--text-primary)',
                 }}
               >
                 Cancel
@@ -336,22 +326,17 @@ export function IntegrationCard({ integration, isConnected = false, onStatusChan
                 onClick={handleApiKeySubmit}
                 disabled={isLoading || !apiKey.trim()}
                 style={{
+                  ...glassBtn,
                   padding: '8px 16px',
-                  borderRadius: 10,
-                  background: '#1A1A1B',
-                  border: 'none',
-                  color: '#FFFFFF',
                   fontSize: 13,
                   fontWeight: 600,
+                  background: 'rgba(255, 255, 255, 0.12)',
+                  color: 'var(--text-primary)',
                   cursor: isLoading || !apiKey.trim() ? 'not-allowed' : 'pointer',
                   opacity: isLoading || !apiKey.trim() ? 0.5 : 1,
-                  transition: 'all 150ms',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
                 }}
               >
-                {isLoading ? <><Loader2 size={12} style={{ animation: 'bb-spin 1s linear infinite' }} /> Connecting...</> : 'Connect'}
+                {isLoading ? <><Loader2 size={12} style={{ animation: 'bb-spin 1s linear infinite' }} /> Connecting</> : 'Connect'}
               </button>
             </div>
           </div>
