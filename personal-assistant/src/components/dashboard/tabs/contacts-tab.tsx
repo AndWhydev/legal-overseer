@@ -20,6 +20,7 @@ interface Contact {
   phones?: string[]
   type?: ContactType
   tags?: string[]
+  avatar_url?: string | null
   profile_data?: Record<string, unknown>
 }
 
@@ -312,21 +313,35 @@ function ContactCard({ contact, onOpen }: { contact: Contact; onOpen: () => void
         backgroundColor: hovered ? 'rgba(20, 28, 40, 0.7)' : 'rgba(15, 20, 30, 0.6)',
       }}
     >
-      <div style={{
-        width: 40,
-        height: 40,
-        borderRadius: '50%',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontSize: 13,
-        fontWeight: 600,
-        flexShrink: 0,
-        background: `rgba(15, 20, 30, 0.4)`,
-        color: 'var(--text-secondary)',
-      }}>
-        {initials}
-      </div>
+      {contact.avatar_url ? (
+        <img
+          src={contact.avatar_url}
+          alt={contact.name ?? 'Contact'}
+          style={{
+            width: 40,
+            height: 40,
+            borderRadius: '50%',
+            objectFit: 'cover',
+            flexShrink: 0,
+          }}
+        />
+      ) : (
+        <div style={{
+          width: 40,
+          height: 40,
+          borderRadius: '50%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: 13,
+          fontWeight: 600,
+          flexShrink: 0,
+          background: `rgba(15, 20, 30, 0.4)`,
+          color: 'var(--text-secondary)',
+        }}>
+          {initials}
+        </div>
+      )}
 
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>

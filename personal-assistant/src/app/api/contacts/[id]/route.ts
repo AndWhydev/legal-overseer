@@ -10,6 +10,7 @@ const ALLOWED_CONTACT_FIELDS = [
   'notes',
   'type',
   'tags',
+  'avatar_url',
 ] as const
 
 export async function PATCH(

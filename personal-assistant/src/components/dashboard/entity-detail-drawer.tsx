@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { X, User, Briefcase, FileText, CheckSquare, Mail, Phone, Calendar, DollarSign } from 'lucide-react';
+import { X, User, Briefcase, FileText, CheckSquare, DollarSign } from 'lucide-react';
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -64,32 +64,49 @@ function formatEventType(type: string): string {
 
 // ─── Detail Sections ───────────────────────────────────────────────────────
 
-function ContactDetail({ meta }: { meta: Record<string, unknown> }) {
-  const emails = (meta.emails as string[] | undefined) ?? [];
-  const phones = (meta.phones as string[] | undefined) ?? [];
+function ContactAvatar({ meta, size = 40 }: { meta: Record<string, unknown>; size?: number }) {
+  const avatarUrl = meta.avatar_url as string | undefined;
+  const name = String(meta.name ?? 'U');
+  const initials = name
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+
+  if (avatarUrl) {
+    return (
+      <img
+        src={avatarUrl}
+        alt={name}
+        style={{
+          width: size,
+          height: size,
+          borderRadius: '50%',
+          objectFit: 'cover',
+          flexShrink: 0,
+        }}
+      />
+    );
+  }
+
   return (
-    <div className="space-y-3">
-      <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Contact Info</h3>
-      {meta.name ? <div className="text-lg font-medium">{String(meta.name)}</div> : null}
-      {meta.type ? <div className="text-sm text-muted-foreground capitalize">{String(meta.type)}</div> : null}
-      {emails.length > 0 && (
-        <div className="flex items-center gap-2 text-sm">
-          <Mail size={14} className="text-muted-foreground" />
-          <span>{emails.join(', ')}</span>
-        </div>
-      )}
-      {phones.length > 0 && (
-        <div className="flex items-center gap-2 text-sm">
-          <Phone size={14} className="text-muted-foreground" />
-          <span>{phones.join(', ')}</span>
-        </div>
-      )}
-      {meta.created_at ? (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Calendar size={14} />
-          <span>Added {formatDate(String(meta.created_at))}</span>
-        </div>
-      ) : null}
+    <div
+      style={{
+        width: size,
+        height: size,
+        borderRadius: '50%',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: size * 0.35,
+        fontWeight: 600,
+        flexShrink: 0,
+        background: 'rgba(96, 165, 250, 0.15)',
+        color: '#60a5fa',
+      }}
+    >
+      {initials}
     </div>
   );
 }
@@ -205,6 +222,9 @@ function EntityDetailDrawer({ open, onClose, entityType, entityId }: EntityDetai
   }, [open, onClose]);
 
   const Icon = TYPE_ICON[entityType] ?? Briefcase;
+  const isContact = entityType === 'contact';
+  const contactName = entity?.metadata?.name ? String(entity.metadata.name) : null;
+  const contactType = entity?.metadata?.type ? String(entity.metadata.type) : null;
 
   return (
     <>
@@ -239,7 +259,7 @@ function EntityDetailDrawer({ open, onClose, entityType, entityId }: EntityDetai
         }}
         role="dialog"
         aria-modal="true"
-        aria-label="Entity details"
+        aria-label={isContact && contactName ? `${contactName} details` : 'Entity details'}
       >
         <div
           style={{
@@ -268,33 +288,52 @@ function EntityDetailDrawer({ open, onClose, entityType, entityId }: EntityDetai
             justifyContent: 'space-between',
             borderBottom: '1px solid rgba(255, 255, 255, 0.03)',
             background: 'rgba(15, 20, 30, 0.8)',
-            padding: '20px',
+            padding: '16px 20px',
             borderTopLeftRadius: 20,
             borderTopRightRadius: 20,
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: 36,
-                  height: 36,
-                  borderRadius: 10,
-                  backgroundColor: `${TYPE_COLOR[entityType]}20`,
-                  color: TYPE_COLOR[entityType],
-                }}
-              >
-                <Icon size={20} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
+              {isContact && entity ? (
+                <ContactAvatar meta={entity.metadata} size={36} />
+              ) : (
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: 36,
+                    height: 36,
+                    borderRadius: 10,
+                    backgroundColor: `${TYPE_COLOR[entityType]}20`,
+                    color: TYPE_COLOR[entityType],
+                  }}
+                >
+                  <Icon size={20} />
+                </div>
+              )}
+              <div style={{ minWidth: 0 }}>
+                <span style={{
+                  fontSize: 14,
+                  fontWeight: 500,
+                  color: 'var(--text-primary)',
+                  display: 'block',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}>
+                  {isContact && contactName ? contactName : `${entityType.charAt(0).toUpperCase() + entityType.slice(1)} Details`}
+                </span>
+                {isContact && contactType && (
+                  <span style={{
+                    fontSize: 11,
+                    fontWeight: 500,
+                    color: TYPE_COLOR[entityType],
+                    textTransform: 'capitalize',
+                  }}>
+                    {contactType}
+                  </span>
+                )}
               </div>
-              <span style={{
-                fontSize: 14,
-                fontWeight: 500,
-                textTransform: 'capitalize',
-                color: 'var(--text-primary)',
-              }}>
-                {entityType} Details
-              </span>
             </div>
             <button
               onClick={onClose}
@@ -326,10 +365,10 @@ function EntityDetailDrawer({ open, onClose, entityType, entityId }: EntityDetai
           <div style={{
             flex: 1,
             overflowY: 'auto' as const,
-            padding: '20px',
+            padding: '16px 20px 20px',
             display: 'flex',
             flexDirection: 'column',
-            gap: '24px',
+            gap: '20px',
           }}>
             {loading ? (
               <div style={{ animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' }}>
@@ -356,10 +395,9 @@ function EntityDetailDrawer({ open, onClose, entityType, entityId }: EntityDetai
               </div>
             ) : (
               <>
-                {/* Entity-specific detail */}
-                {entity && (
+                {/* Entity-specific detail (contacts show name/type in header) */}
+                {entity && !isContact && (
                   <>
-                    {entityType === 'contact' && <ContactDetail meta={entity.metadata} />}
                     {entityType === 'project' && <ProjectDetail meta={entity.metadata} />}
                     {entityType === 'invoice' && <InvoiceDetail meta={entity.metadata} />}
                     {entityType === 'task' && <TaskDetail meta={entity.metadata} />}
