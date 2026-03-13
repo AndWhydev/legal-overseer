@@ -18,9 +18,10 @@ export async function GET(request: Request) {
       checkBudgetAlerts(supabase),
     ]);
 
-    return NextResponse.json({ summary, alerts });
+    // Strip per-model breakdown to prevent model fingerprinting
+    const { by_model, ...sanitizedSummary } = summary as unknown as Record<string, unknown>;
+    return NextResponse.json({ summary: sanitizedSummary, alerts });
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Unknown error';
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 });
   }
 }

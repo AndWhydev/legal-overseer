@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk'
+import { resolveModel } from '@/lib/agent/model-registry'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -100,7 +101,7 @@ export async function analyzeSentiment(text: string): Promise<SentimentResult> {
     const truncated = text.length > 1000 ? text.slice(0, 1000) + '...' : text
 
     const response = await client.messages.create({
-      model: 'claude-3-5-haiku-latest',
+      model: resolveModel('classification'),
       max_tokens: 200,
       messages: [{
         role: 'user',

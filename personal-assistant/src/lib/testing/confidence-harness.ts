@@ -1,19 +1,20 @@
 import type { ConfidenceScenario } from './confidence-scenarios'
 import { AWU_SCENARIOS } from './confidence-scenarios'
 import { routeByConfidence, getAgentThresholds } from '../agent/confidence-router'
-import type { ConfidenceDecision, ModelTier } from '@/lib/bitbit-core'
+import type { ConfidenceDecision } from '@/lib/bitbit-core'
+import type { ModelPurpose } from '@/lib/agent/model-registry'
 
 // --- Model Tier Analysis ---
 
-export interface ModelTierStats {
+export interface ModelPurposeStats {
   accuracy: number
   falsePositives: number
   falsePositiveRate: number
   decisionChanges: number
 }
 
-export interface ModelTierAnalysis {
-  byTier: Record<ModelTier, ModelTierStats>
+export interface ModelPurposeAnalysis {
+  byTier: Record<ModelPurpose, ModelPurposeStats>
   stabilityScore: number
   riskyCases: Array<{
     scenarioId: string
@@ -29,13 +30,13 @@ export interface ModelTierAnalysis {
  * Tier-specific jitter adjustments simulating model precision differences.
  * Haiku: less precise (wider variance), Sonnet: baseline, Opus: most precise.
  */
-const TIER_JITTERS: Record<ModelTier, { min: number; max: number }> = {
-  haiku: { min: -0.05, max: 0.05 },
-  sonnet: { min: 0, max: 0 },
-  opus: { min: -0.02, max: 0.02 },
+const TIER_JITTERS: Record<ModelPurpose, { min: number; max: number }> = {
+  classification: { min: -0.05, max: 0.05 },
+  conversation: { min: 0, max: 0 },
+  synthesis: { min: -0.02, max: 0.02 },
 }
 
-function applyTierJitter(confidence: number, tier: ModelTier, scenarioIndex: number): number {
+function applyTierJitter(confidence: number, tier: ModelPurpose, scenarioIndex: number): number {
   const jitter = TIER_JITTERS[tier]
   // Deterministic jitter based on scenario index for reproducibility
   // Use a simple spread across the jitter range
@@ -47,18 +48,18 @@ function applyTierJitter(confidence: number, tier: ModelTier, scenarioIndex: num
  * Simulate how different model tiers affect confidence scoring.
  * Haiku has wider variance, Sonnet is baseline, Opus is most precise.
  */
-export function analyzeModelTierBehavior(scenarios: ConfidenceScenario[]): ModelTierAnalysis {
-  const tiers: ModelTier[] = ['haiku', 'sonnet', 'opus']
-  const tierDecisions: Record<ModelTier, ConfidenceDecision[]> = {
-    haiku: [],
-    sonnet: [],
-    opus: [],
+export function analyzeModelPurposeBehavior(scenarios: ConfidenceScenario[]): ModelPurposeAnalysis {
+  const tiers: ModelPurpose[] = ['classification', 'conversation', 'synthesis']
+  const tierDecisions: Record<ModelPurpose, ConfidenceDecision[]> = {
+    classification: [],
+    conversation: [],
+    synthesis: [],
   }
 
-  const byTier: Record<ModelTier, ModelTierStats> = {
-    haiku: { accuracy: 0, falsePositives: 0, falsePositiveRate: 0, decisionChanges: 0 },
-    sonnet: { accuracy: 0, falsePositives: 0, falsePositiveRate: 0, decisionChanges: 0 },
-    opus: { accuracy: 0, falsePositives: 0, falsePositiveRate: 0, decisionChanges: 0 },
+  const byTier: Record<ModelPurpose, ModelPurposeStats> = {
+    classification: { accuracy: 0, falsePositives: 0, falsePositiveRate: 0, decisionChanges: 0 },
+    conversation: { accuracy: 0, falsePositives: 0, falsePositiveRate: 0, decisionChanges: 0 },
+    synthesis: { accuracy: 0, falsePositives: 0, falsePositiveRate: 0, decisionChanges: 0 },
   }
 
   // Run each tier
@@ -92,27 +93,27 @@ export function analyzeModelTierBehavior(scenarios: ConfidenceScenario[]): Model
   let agreeCount = 0
   for (let i = 0; i < scenarios.length; i++) {
     if (
-      tierDecisions.haiku[i] === tierDecisions.sonnet[i] &&
-      tierDecisions.sonnet[i] === tierDecisions.opus[i]
+      tierDecisions.classification[i] === tierDecisions.conversation[i] &&
+      tierDecisions.conversation[i] === tierDecisions.synthesis[i]
     ) {
       agreeCount++
     }
   }
   const stabilityScore = scenarios.length > 0 ? agreeCount / scenarios.length : 0
 
-  // Risky cases: Haiku says 'act' but Sonnet or Opus say 'ask' or 'escalate'
-  const riskyCases: ModelTierAnalysis['riskyCases'] = []
+  // Risky cases: classification says 'act' but conversation or synthesis say 'ask' or 'escalate'
+  const riskyCases: ModelPurposeAnalysis['riskyCases'] = []
   for (let i = 0; i < scenarios.length; i++) {
     if (
-      tierDecisions.haiku[i] === 'act' &&
-      (tierDecisions.sonnet[i] !== 'act' || tierDecisions.opus[i] !== 'act')
+      tierDecisions.classification[i] === 'act' &&
+      (tierDecisions.conversation[i] !== 'act' || tierDecisions.synthesis[i] !== 'act')
     ) {
       riskyCases.push({
         scenarioId: scenarios[i].id,
         description: scenarios[i].description,
-        haikuDecision: tierDecisions.haiku[i],
-        sonnetDecision: tierDecisions.sonnet[i],
-        opusDecision: tierDecisions.opus[i],
+        haikuDecision: tierDecisions.classification[i],
+        sonnetDecision: tierDecisions.conversation[i],
+        opusDecision: tierDecisions.synthesis[i],
         baseConfidence: scenarios[i].confidenceScore,
       })
     }

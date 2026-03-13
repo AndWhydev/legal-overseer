@@ -3,6 +3,7 @@
  * Shared across identity resolution, thread management, context assembly,
  * action execution, and compression/memory modules.
  */
+import { resolveModel } from '@/lib/agent/model-registry'
 
 // ─── Channel & Identity ─────────────────────────────────────────────────────
 
@@ -174,7 +175,7 @@ export const DEFAULT_COMPRESSION_CONFIG: CompressionConfig = {
   keyFactsBudget: 200,
   compressionThreshold: 10,
   keyFactsThreshold: 30,
-  summarizationModel: 'claude-haiku-4-5-20251001',
+  summarizationModel: resolveModel('classification'),
 }
 
 export interface TokenAllocation {

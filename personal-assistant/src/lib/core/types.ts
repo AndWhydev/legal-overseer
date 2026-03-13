@@ -16,7 +16,6 @@ export interface Organization {
 }
 
 export interface OrgSettings {
-  default_model_tier?: ModelTier
   confidence_thresholds?: ConfidenceThresholds
   notification_channels?: string[]
   timezone?: string
@@ -28,8 +27,6 @@ export interface OrgSettings {
 }
 
 // --- Model Routing ---
-
-export type ModelTier = 'haiku' | 'sonnet' | 'opus'
 
 export interface ConfidenceThresholds {
   act: number    // >= this → auto-execute (default: 0.80)
@@ -185,7 +182,7 @@ export interface AgentConfig {
   enabled: boolean
   policy_rules: Record<string, unknown>
   channel_access: string[]
-  model_tier_override?: ModelTier
+  model_purpose_override?: string
   confidence_thresholds?: ConfidenceThresholds
   notification_config: NotificationConfig
   schedule?: AgentSchedule
@@ -215,7 +212,7 @@ export interface AgentRun {
   output_summary: string
   actions_taken: AgentAction[]
   tools_called: string[]
-  model_used: ModelTier
+  model_used: string
   tokens_in: number
   tokens_out: number
   confidence_score: number

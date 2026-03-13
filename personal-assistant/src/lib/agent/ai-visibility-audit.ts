@@ -236,7 +236,7 @@ export async function runVisibilityAudit(
       output_summary: `Score: ${overallScore}/100, ${queryResults.filter((r) => r.position === 'mentioned').length} mentioned, ${queryResults.filter((r) => r.position === 'absent').length} absent`,
       actions_taken: [],
       tools_called: ['ai-visibility-audit'],
-      model_used: 'haiku',
+      model_used: 'classification',
       tokens_in: 0,
       tokens_out: 0,
       confidence_score: 0.9,

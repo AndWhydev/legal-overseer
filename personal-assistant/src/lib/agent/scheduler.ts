@@ -340,7 +340,7 @@ export async function runScheduledAgents(
       duration_ms: durationMs,
       tool_calls: 0,
       iterations: 1,
-      model_used: 'haiku',
+      model_purpose: 'classification',
       error_message: runStatus === 'failed' ? outputSummary : undefined,
     })
 

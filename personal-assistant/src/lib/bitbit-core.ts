@@ -14,7 +14,6 @@ export type {
   AgentSchedule,
   ConfidenceThresholds,
   ConfidenceDecision,
-  ModelTier,
   Organization,
   Contact,
   Lead,

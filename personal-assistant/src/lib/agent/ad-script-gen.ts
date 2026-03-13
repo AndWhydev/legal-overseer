@@ -2,6 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
 import { logAgentRun } from './run-logger'
 import { getOfferPackage, parseOfferForScripting, type ParsedOffer } from './offer-packages'
+import { resolveModel } from '@/lib/agent/model-registry'
 import { logger } from '@/lib/core/logger';
 
 // ---------------------------------------------------------------------------
@@ -352,7 +353,7 @@ async function generateScriptWithLLM(
     const client = new Anthropic({ apiKey })
 
     const response = await client.messages.create({
-      model: 'claude-opus-4-20250514',
+      model: resolveModel('synthesis'),
       max_tokens: 600,
       system: `You are an expert video ad scriptwriter for short-form social media content.
 Write scripts that are punchy, engaging, and optimized for ${config.label}.
@@ -406,7 +407,7 @@ export async function generateVariations(
     const client = new Anthropic({ apiKey })
 
     const response = await client.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: resolveModel('conversation'),
       max_tokens: 1000,
       system: `You generate A/B test variations of video ad scripts.
 Return a JSON array of ${count} variations. Each object has:
@@ -677,7 +678,7 @@ export async function runAdScriptGenTick(
     trigger_type: 'scheduled',
     status: 'success',
     result_summary: `processed=${result.processed} generated=${result.generated} failed=${result.failed}`,
-    model_used: 'opus',
+    model_purpose: 'synthesis',
     tokens_in: 0,
     tokens_out: 0,
     cost_estimate: 0,

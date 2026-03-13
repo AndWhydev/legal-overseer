@@ -6,7 +6,8 @@
  * and default configurations. Deployments can override configs per-org.
  */
 
-import type { AgentType, AgentConfig, ConfidenceThresholds, ModelTier } from './types'
+import type { AgentType, AgentConfig, ConfidenceThresholds } from './types'
+import type { ModelPurpose } from '@/lib/agent/model-registry'
 import type { AgentRegistryEntry } from './types'
 import { logger } from '@/lib/core/logger';
 
@@ -23,7 +24,7 @@ export interface AgentDefinition {
   required_tools: string[]
 
   // Defaults (overridable per-org)
-  default_model_tier: ModelTier
+  default_purpose: ModelPurpose
   default_confidence_thresholds: ConfidenceThresholds
   default_schedule: {
     type: 'continuous' | 'interval' | 'cron'
@@ -124,7 +125,7 @@ export function getAgentConfig(
     enabled: true,
     policy_rules: {},
     channel_access: [...definition.required_channels, ...definition.optional_channels],
-    model_tier_override: definition.default_model_tier,
+    model_purpose_override: definition.default_purpose,
     confidence_thresholds: { ...definition.default_confidence_thresholds },
     notification_config: { channels: [], targets: [], escalation_delay_minutes: 15 },
     schedule: {

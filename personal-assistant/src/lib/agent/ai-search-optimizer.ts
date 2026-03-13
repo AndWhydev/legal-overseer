@@ -808,7 +808,7 @@ export async function runAISearchTick(
     trigger_type: 'scheduled',
     status: 'success',
     result_summary: `audits=${result.auditsRun} changes=${result.changesDetected} alerts=${result.alertsSent} failed=${result.failed}`,
-    model_used: 'haiku',
+    model_purpose: 'classification',
     tokens_in: 0,
     tokens_out: 0,
     cost_estimate: 0,

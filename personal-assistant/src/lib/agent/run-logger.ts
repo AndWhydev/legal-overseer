@@ -1,27 +1,17 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { AgentRun, ModelTier } from '@/lib/bitbit-core'
+import type { AgentRun } from '@/lib/bitbit-core'
+import { computeCost, type ModelPurpose } from './model-registry'
 import { trackUsage } from '@/lib/billing/usage-metering'
 
 /**
- * Cost per million tokens by model tier (USD).
- */
-const MODEL_COSTS: Record<ModelTier, { input: number; output: number }> = {
-  haiku: { input: 0.25, output: 1.25 },
-  sonnet: { input: 3, output: 15 },
-  opus: { input: 15, output: 75 },
-}
-
-/**
- * Estimate USD cost for a run based on token counts and model tier.
+ * Estimate USD cost for a run based on token counts and model purpose.
  */
 export function estimateRunCost(
   tokensIn: number,
   tokensOut: number,
-  model: ModelTier,
+  purpose: ModelPurpose,
 ): number {
-  const costs = MODEL_COSTS[model]
-  if (!costs) return 0
-  return (tokensIn * costs.input + tokensOut * costs.output) / 1_000_000
+  return computeCost(purpose, tokensIn, tokensOut)
 }
 
 /**
@@ -42,7 +32,7 @@ export interface RunLogPayload {
   tool_calls: number
   iterations: number
   error_message?: string
-  model_used?: ModelTier
+  model_purpose?: ModelPurpose
 }
 
 /**
@@ -70,7 +60,7 @@ export async function logAgentRun(
         tool_calls: run.tool_calls,
         iterations: run.iterations,
         error_message: run.error_message ?? null,
-        model_used: run.model_used ?? 'sonnet',
+        model_used: run.model_purpose ?? 'conversation',
       })
       .select('id')
       .single()

@@ -3,14 +3,16 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { getAgentTools, executeAgentTool, getJITInstruction, type ExecuteToolOptions, type ToolGroup } from './tools'
 import { buildEntityAwarePrompt } from './prompt-builder'
 import { ContextAssembler } from '@/lib/context-assembly/context-assembler'
-import { selectModel, getModel } from './model-router'
+import { selectModel } from './model-router'
+import { resolveModel, resolveTokenLimit } from './model-registry'
+import type { ModelPurpose } from './model-registry'
 import { logAgentRun, estimateRunCost } from './run-logger'
 import { canProceed } from './cost-guard'
 import { generatePlan, stageFromToolName, isTrivialMessage, type PlanStage, type PlanOutput } from './planner'
 import { withCircuitBreaker, CircuitOpenError } from './circuit-breaker'
 import { writeToDeadLetterQueue } from './dlq'
 import { reflectAction } from '@/lib/context/action-reflector'
-import type { ModelTier } from '@/lib/bitbit-core'
+import { detectLeak, scrubLeaks } from './response-guard'
 import { logger } from '@/lib/core/logger'
 
 export interface ChatMessage {
@@ -143,10 +145,10 @@ export async function* runAgentChat(
   yield { type: 'stage', data: { stage: 'model_routing', status: 'start' } }
   const autoRouted = !config.model
   const selection = autoRouted ? selectModel(message) : null
-  const model = config.model || selection?.model || 'claude-sonnet-4-5-20250929'
-  const maxTokens = selection ? getModel(selection.tier).maxTokens : 4096
-  const tier: ModelTier = (selection?.tier as ModelTier) || 'sonnet'
-  yield { type: 'stage', data: { stage: 'model_routing', status: 'done', meta: { tier, model: autoRouted ? selection?.tier : 'manual' } } }
+  const model = config.model || selection?.model || resolveModel('conversation')
+  const purpose: ModelPurpose = selection?.purpose || 'conversation'
+  const maxTokens = selection ? resolveTokenLimit(selection.purpose) : resolveTokenLimit('conversation')
+  yield { type: 'stage', data: { stage: 'model_routing', status: 'done' } }
 
   // Emit thinking_start so frontend knows engine is active
   yield { type: 'thinking_start', data: {} }
@@ -166,7 +168,7 @@ export async function* runAgentChat(
   }
 
   if (autoRouted && selection) {
-    logger.info(`[model-router] ${selection.tier}: ${selection.reasoning}`)
+    logger.info(`[model-router] ${selection.purpose}: ${selection.reasoning}`)
   }
 
   let tools = getAgentTools()
@@ -233,7 +235,7 @@ export async function* runAgentChat(
     // Collect streamed deltas inside the circuit breaker so they can be yielded after
     const streamedDeltas: string[] = []
     try {
-      yield { type: 'stage', data: { stage: 'api_streaming', status: 'start', meta: { model, iteration: iterationCount } } }
+      yield { type: 'stage', data: { stage: 'api_streaming', status: 'start', meta: { iteration: iterationCount } } }
 
       const agentType = config.agentType || 'default'
 
@@ -260,9 +262,14 @@ export async function* runAgentChat(
         { threshold: 5, cooldownMs: 60_000 }
       )
 
-      // Yield collected deltas to the client
+      // Yield collected deltas to the client (scrub any model/provider leaks)
       for (const delta of streamedDeltas) {
-        yield { type: 'content_delta', data: delta }
+        const scrubbed = scrubLeaks(delta)
+        const leak = detectLeak(delta)
+        if (leak.leaked) {
+          logger.warn('response_leak_detected', { patterns: leak.patterns })
+        }
+        yield { type: 'content_delta', data: scrubbed }
       }
 
       yield { type: 'stage', data: { stage: 'api_streaming', status: 'done', meta: { tokens: response.usage } } }
@@ -302,7 +309,7 @@ export async function* runAgentChat(
             status: 'error',
             tokens_in: totalInputTokens,
             tokens_out: totalOutputTokens,
-            cost_estimate: estimateRunCost(totalInputTokens, totalOutputTokens, tier),
+            cost_estimate: estimateRunCost(totalInputTokens, totalOutputTokens, purpose),
             duration_ms: Date.now() - startTime,
             tool_calls: toolCallCount,
             iterations: iterationCount,
@@ -337,7 +344,7 @@ export async function* runAgentChat(
           status: 'error',
           tokens_in: totalInputTokens,
           tokens_out: totalOutputTokens,
-          cost_estimate: estimateRunCost(totalInputTokens, totalOutputTokens, tier),
+          cost_estimate: estimateRunCost(totalInputTokens, totalOutputTokens, purpose),
           duration_ms: Date.now() - startTime,
           tool_calls: toolCallCount,
           iterations: iterationCount,
@@ -357,8 +364,13 @@ export async function* runAgentChat(
         .filter((b): b is Anthropic.TextBlock => b.type === 'text')
         .map(b => b.text)
         .join('\n')
-      finalMessage = text
-      yield { type: 'message', data: text }
+      const scrubbedText = scrubLeaks(text)
+      const leak = detectLeak(text)
+      if (leak.leaked) {
+        logger.warn('response_leak_detected', { patterns: leak.patterns })
+      }
+      finalMessage = scrubbedText
+      yield { type: 'message', data: scrubbedText }
 
       // Mark remaining plan stages as done
       for (const stage of planStages) {
@@ -379,14 +391,15 @@ export async function* runAgentChat(
           result_summary: text.slice(0, 500),
           tokens_in: totalInputTokens,
           tokens_out: totalOutputTokens,
-          cost_estimate: estimateRunCost(totalInputTokens, totalOutputTokens, tier),
+          cost_estimate: estimateRunCost(totalInputTokens, totalOutputTokens, purpose),
           duration_ms: Date.now() - startTime,
           tool_calls: toolCallCount,
           iterations: iterationCount,
         })
       }
 
-      yield { type: 'done', data: { tokens: response.usage, model, tier: selection?.tier } }
+      logger.info('ai_response_complete', { model, purpose, tokens: response.usage })
+      yield { type: 'done', data: { tokens: response.usage } }
       return
     }
 
@@ -533,7 +546,7 @@ export async function* runAgentChat(
       status: 'max_iterations',
       tokens_in: totalInputTokens,
       tokens_out: totalOutputTokens,
-      cost_estimate: estimateRunCost(totalInputTokens, totalOutputTokens, tier),
+      cost_estimate: estimateRunCost(totalInputTokens, totalOutputTokens, purpose),
       duration_ms: Date.now() - startTime,
       tool_calls: toolCallCount,
       iterations: iterationCount,

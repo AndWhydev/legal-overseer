@@ -157,15 +157,6 @@ function CostsTab() {
     transition: 'background 200ms',
   };
 
-  const bigNumber: React.CSSProperties = {
-    fontSize: 38,
-    fontWeight: 700,
-    color: 'var(--text-primary)',
-    fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
-    letterSpacing: '-0.03em',
-    lineHeight: 1,
-  };
-
   const loadingContainer: React.CSSProperties = {
     display: 'flex',
     alignItems: 'center',
@@ -238,13 +229,6 @@ function CostsTab() {
     color: 'var(--text-primary)',
   };
 
-  const listRowMonoLabel: React.CSSProperties = {
-    fontSize: 12,
-    fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
-    fontWeight: 600,
-    color: 'var(--text-primary)',
-  };
-
   const listRowMeta: React.CSSProperties = {
     display: 'flex',
     alignItems: 'center',
@@ -266,22 +250,6 @@ function CostsTab() {
     fontSize: 13,
     color: 'var(--text-secondary)',
     padding: '12px 18px',
-  };
-
-  const summaryCardLabel: React.CSSProperties = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 8,
-    color: 'var(--text-secondary)',
-    marginBottom: 12,
-    fontSize: 11,
-    fontWeight: 600,
-  };
-
-  const summaryCardLabelText: React.CSSProperties = {
-    fontSize: 11,
-    fontWeight: 600,
-    letterSpacing: '0.02em',
   };
 
   return (
@@ -361,25 +329,6 @@ function CostsTab() {
                 label="Output Tokens"
                 value={formatTokens(summary.total_output_tokens)}
               />
-            </div>
-
-            {/* Cost by Model */}
-            <div style={glassCard}>
-              <h2 style={sectionHeader}>Cost by Model</h2>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {summary.by_model.map((entry) => (
-                  <div key={entry.model} style={listRow}>
-                    <span style={listRowMonoLabel}>{entry.model}</span>
-                    <div style={listRowMeta}>
-                      <span style={listRowSecondary}>{entry.run_count} runs</span>
-                      <span style={listRowValue}>{formatUSD(entry.cost_usd)}</span>
-                    </div>
-                  </div>
-                ))}
-                {summary.by_model.length === 0 && (
-                  <p style={emptyState}>No data for this period</p>
-                )}
-              </div>
             </div>
 
             {/* Cost by Agent */}

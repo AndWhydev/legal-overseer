@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
+import { resolveModel } from '@/lib/agent/model-registry'
 import { logger } from '@/lib/core/logger';
 
 interface MemoryRow {
@@ -103,7 +104,7 @@ export async function consolidateMemories(
       const prompt = CONSOLIDATION_PROMPT.replace('{MEMORIES_JSON}', memoriesJson)
 
       const response = await client.messages.create({
-        model: 'claude-haiku-4-5-20251001',
+        model: resolveModel('classification'),
         max_tokens: 500,
         messages: [{ role: 'user', content: prompt }],
       })

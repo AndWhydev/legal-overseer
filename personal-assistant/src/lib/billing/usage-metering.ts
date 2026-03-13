@@ -2,16 +2,6 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { logger } from '@/lib/core/logger';
 
 /**
- * Cost per million tokens by model tier (USD).
- * Must match run-logger.ts MODEL_COSTS.
- */
-const MODEL_COSTS: Record<string, { input: number; output: number }> = {
-  haiku: { input: 0.25, output: 1.25 },
-  sonnet: { input: 3, output: 15 },
-  opus: { input: 15, output: 75 },
-}
-
-/**
  * Usage metrics for an organization in a billing period.
  */
 export interface UsageMetrics {
@@ -123,10 +113,11 @@ export async function getUsage(
       }
     }
 
-    // Estimate cost based on token usage
-    // For simplicity, assume average model cost (sonnet)
+    // Estimate cost based on token usage using registry
+    const { computeCost } = await import('@/lib/agent/model-registry')
+    // Assume average (conversation) cost for aggregate estimate
     const estimatedCostUSD = parseFloat(
-      ((totalTokens * (3 + 15)) / 1_000_000).toFixed(2),
+      computeCost('conversation', totalTokens, 0).toFixed(2),
     )
 
     return {

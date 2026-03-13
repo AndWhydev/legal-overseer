@@ -330,7 +330,7 @@ export default function DemoPage() {
       <div className="border-t border-white/10 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <p className="text-purple-200/50 text-sm">
-            Built by <span className="text-white">BitBit</span> · Powered by Claude AI
+            Built by <span className="text-white">BitBit</span>
           </p>
         </div>
       </div>

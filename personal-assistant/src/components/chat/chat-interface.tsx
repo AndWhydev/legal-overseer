@@ -184,7 +184,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
                 break
 
               case 'plan': {
-                // Haiku planner sent execution plan — crossfade from skeleton
+                // Planner sent execution plan — crossfade from skeleton
                 const stages = (event.data.stages || []).map((s: { id: string; label: string; sublabel?: string; icon: string; toolHint?: string }) => ({
                   ...s,
                   status: 'idle' as const,

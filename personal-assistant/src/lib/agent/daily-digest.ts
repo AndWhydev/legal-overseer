@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
+import { resolveModel } from '@/lib/agent/model-registry'
 import { generateDigest, getActiveThreads, type ThreadInfo } from './channel-triage'
 import { logger } from '@/lib/core/logger';
 
@@ -174,7 +175,7 @@ async function generateAISummary(sections: DigestSection[]): Promise<string> {
     ).join('\n\n')
 
     const response = await client.messages.create({
-      model: 'claude-3-5-haiku-latest',
+      model: resolveModel('classification'),
       max_tokens: 300,
       messages: [{
         role: 'user',
@@ -255,7 +256,7 @@ export async function runDailyDigest(
       output_summary: `Generated ${sections.length} sections, WhatsApp: ${whatsappSent}`,
       actions_taken: ['generate_digest', ...(whatsappSent ? ['send_whatsapp'] : [])],
       tools_called: [],
-      model_used: 'haiku',
+      model_used: 'classification',
       tokens_in: 0,
       tokens_out: 0,
       confidence_score: 1,

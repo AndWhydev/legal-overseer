@@ -125,13 +125,12 @@ export async function POST(request: Request): Promise<NextResponse> {
     return NextResponse.json(response)
   } catch (err) {
     const durationMs = Date.now() - startTime
-    const errorMessage = err instanceof Error ? err.message : String(err)
 
     logger.error('[classify] Classification failed:', err)
 
     return NextResponse.json(
       {
-        error: errorMessage,
+        error: 'Something went wrong. Try again in a moment.',
         duration_ms: durationMs,
       },
       { status: 500 }

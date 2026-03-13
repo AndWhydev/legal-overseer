@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { resolveModel } from '@/lib/agent/model-registry';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -32,7 +33,7 @@ async function checkSupabase(supabase: SupabaseClient): Promise<ServiceHealth> {
 async function checkAnthropic(): Promise<ServiceHealth> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
-    return { service: 'anthropic', status: 'down', latency_ms: 0, error: 'ANTHROPIC_API_KEY not set' };
+    return { service: 'ai', status: 'down', latency_ms: 0, error: 'AI API key not set' };
   }
 
   const start = Date.now();
@@ -45,7 +46,7 @@ async function checkAnthropic(): Promise<ServiceHealth> {
         'content-type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: resolveModel('conversation'),
         max_tokens: 1,
         messages: [{ role: 'user', content: 'ping' }],
       }),
@@ -54,11 +55,11 @@ async function checkAnthropic(): Promise<ServiceHealth> {
     const latency_ms = Date.now() - start;
     if (res.ok || res.status === 400) {
       // 400 is fine — means API is reachable, might just be a param issue
-      return { service: 'anthropic', status: 'healthy', latency_ms };
+      return { service: 'ai', status: 'healthy', latency_ms };
     }
-    return { service: 'anthropic', status: 'degraded', latency_ms, error: `HTTP ${res.status}` };
+    return { service: 'ai', status: 'degraded', latency_ms, error: `HTTP ${res.status}` };
   } catch (err) {
-    return { service: 'anthropic', status: 'down', latency_ms: Date.now() - start, error: String(err) };
+    return { service: 'ai', status: 'down', latency_ms: Date.now() - start, error: 'AI service unreachable' };
   }
 }
 

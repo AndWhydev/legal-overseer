@@ -8,6 +8,7 @@
  */
 import type { SupabaseClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
+import { resolveModel } from '@/lib/agent/model-registry'
 import { logger } from '@/lib/core/logger'
 import type { ConversationMessageRecord, ThreadSummaryRecord } from '@/lib/conversation/types'
 import { scanForEntityMentions, type ScanContact } from '@/lib/context/entity-mention-scanner'
@@ -75,7 +76,7 @@ export class ThreadArchiver {
         .join('\n')
 
       const response = await this.anthropic.messages.create({
-        model: 'claude-haiku-4-5-20251001',
+        model: resolveModel('classification'),
         max_tokens: 500,
         messages: [{
           role: 'user',
@@ -105,7 +106,7 @@ export class ThreadArchiver {
           token_count: tokenCount,
           entity_ids: entityIds,
           key_facts: [],
-          model_used: 'claude-haiku-4-5-20251001',
+          model_used: resolveModel('classification'),
         })
         .select('id')
         .single()
