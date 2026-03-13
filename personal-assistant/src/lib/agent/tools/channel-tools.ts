@@ -421,7 +421,7 @@ export const channelToolHandlers: Record<string, AgentToolHandler> = {
   async get_connected_channels(_input, orgId, supabase) {
     const { data, error } = await supabase
       .from('channel_connections')
-      .select('channel_type, status, relay_enabled, last_sync_at, created_at')
+      .select('channel_type, status, relay_enabled, last_sync, created_at')
       .eq('org_id', orgId)
 
     if (error) {
@@ -432,7 +432,7 @@ export const channelToolHandlers: Record<string, AgentToolHandler> = {
       channel: c.channel_type,
       status: c.status,
       relay_enabled: c.relay_enabled,
-      last_sync: c.last_sync_at,
+      last_sync: c.last_sync,
       connected_at: c.created_at,
     }))
 
