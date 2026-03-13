@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-03-01)
 Phase: 19 of 19 (Credential Provisioning & Live Verification)
 Plan: 2 of 3 in current phase
 Status: Executing Phase 19
-Last activity: 2026-03-14 - Completed quick task 15: Inbox redesign — neutral icons, edge-knock panel with proximity detection
+Last activity: 2026-03-14 - Completed quick task 16: Inbox checkboxes removed, modifier-key multi-select, inline expandable rows
 
 Progress: [####################..........] 100% v1.0+v1.1 | Phase 19 (2/3)
 
@@ -180,9 +180,10 @@ See PROJECT.md Key Decisions table.
 | 13 | Wire Gmail relay pipeline and fix connection flow | 2026-03-14 | 13285155 | [13-wire-gmail-relay-pipeline-and-fix-connec](./quick/13-wire-gmail-relay-pipeline-and-fix-connec/) |
 | 14 | Chat UX overhaul: animated face avatar with cursor tracking, smooth streaming, smart scroll, conversation history | 2026-03-14 | e393ba44 | [14-chat-ux-overhaul-animated-face-avatar-wi](./quick/13-chat-ux-overhaul-animated-face-avatar-wi/) |
 | 15 | Redesign inbox: neutral channel icons, time placement fix, edge-knock panel with proximity detection | 2026-03-14 | 2ad5e21d | [14-redesign-inbox-component-neutral-channel](./quick/14-redesign-inbox-component-neutral-channel/) |
+| 16 | Inbox: remove checkboxes, modifier-key multi-select, inline expandable rows replace drawer | 2026-03-14 | 5ea67e91 | [15-inbox-redesign-remove-checkboxes-add-mod](./quick/15-inbox-redesign-remove-checkboxes-add-mod/) |
 
 ## Session Continuity
 
 Last session: 2026-03-14
-Stopped at: Completed quick task 15 (Inbox redesign with edge-knock panel)
+Stopped at: Completed quick task 16 (Inbox checkboxes removed, modifier-key select, inline expansion)
 Resume file: None
