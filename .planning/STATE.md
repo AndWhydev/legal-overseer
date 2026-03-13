@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-03-01)
 Phase: 19 of 19 (Credential Provisioning & Live Verification)
 Plan: 2 of 3 in current phase
 Status: Executing Phase 19
-Last activity: 2026-03-11 - Completed quick task 5: Channel smoke tests, onboarding E2E, browse_website tool
+Last activity: 2026-03-14 - Completed quick task 13: Wire Gmail relay pipeline and fix connection flow
 
 Progress: [####################..........] 100% v1.0+v1.1 | Phase 19 (2/3)
 
@@ -177,6 +177,7 @@ See PROJECT.md Key Decisions table.
 | 10 | v2.0 Optimal contact timing: response latency analysis, AEST bucketing, weekly cron, timing API, scheduling helper | 2026-03-12 | 2e59df16 | [10-v2-optimal-contact-timing](./quick/10-v2-optimal-contact-timing/) |
 | 11 | v2.0 Confidence auto-calibration: band analysis, safety rails, daily cron, outcome tracking, trust API | 2026-03-12 | 4c225460 | [11-v2-confidence-auto-calibration](./quick/11-v2-confidence-auto-calibration/) |
 | 12 | v2.0 Relationship graph with strength decay: 5-dimension scorer, cold detection, nudge generation, cron + API | 2026-03-12 | 2eb26763 | [12-v2-relationship-graph-decay](./quick/12-v2-relationship-graph-decay/) |
+| 13 | Wire Gmail relay pipeline and fix connection flow | 2026-03-14 | 13285155 | [13-wire-gmail-relay-pipeline-and-fix-connec](./quick/13-wire-gmail-relay-pipeline-and-fix-connec/) |
 
 ## Session Continuity
 
