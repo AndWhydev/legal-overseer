@@ -683,6 +683,28 @@ function InboxTab() {
           </div>
 
           <button
+            onClick={async () => {
+              setRefreshing(true);
+              try {
+                const res = await fetch('/api/inbox/refresh', { method: 'POST' });
+                if (res.ok) {
+                  const data = await res.json();
+                  if (data.results?.some((r: { result: { messagesInserted: number } }) => r.result.messagesInserted > 0)) {
+                    await fetchInbox(true);
+                  }
+                }
+              } catch { /* ignore */ }
+              setRefreshing(false);
+            }}
+            className="bb-btn bb-btn--ghost bb-btn--sm"
+            disabled={refreshing}
+            title="Pull latest messages"
+          >
+            <RefreshCw size={13} style={{ animation: refreshing ? 'spin 1s linear infinite' : 'none' }} />
+            {refreshing ? 'Syncing...' : 'Refresh'}
+          </button>
+
+          <button
             onClick={() => setShowFilters(f => !f)}
             className="bb-btn bb-btn--ghost"
             data-active={showFilters || undefined}
