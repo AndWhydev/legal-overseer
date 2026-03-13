@@ -32,6 +32,7 @@ const PROVIDERS: Record<string, OAuthProvider> = {
     scopes: [
       'https://graph.microsoft.com/Mail.Read',
       'https://graph.microsoft.com/Mail.Send',
+      'https://graph.microsoft.com/User.Read',
       'offline_access',
     ],
     supportsPKCE: true,
@@ -137,6 +138,8 @@ export function getOAuthRedirectUrl(provider: string, appUrlOverride?: string): 
   const providerKey = provider.toLowerCase()
   if (providerKey === 'gmail') {
     params.set('access_type', 'offline')
+    params.set('prompt', 'consent')
+  } else if (providerKey === 'outlook') {
     params.set('prompt', 'consent')
   }
 

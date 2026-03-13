@@ -33,7 +33,7 @@ function buildCredentialPayload(
   }
 
   if (provider === 'outlook') {
-    payload.tenant_id = process.env.OUTLOOK_TENANT_ID || 'common'
+    payload.tenant_id = (process.env.OUTLOOK_TENANT_ID || 'common').trim()
   }
 
   return payload
