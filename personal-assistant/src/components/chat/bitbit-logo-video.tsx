@@ -21,10 +21,6 @@ export function BitBitLogoVideo({ size = 140, variant = 'idle' }: BitBitLogoVide
       className="bb-chat__logo-wrap"
       style={{ width: frameSize, height: frameSize }}
     >
-      {/* Animated orange aura */}
-      <div className="bb-chat__logo-aura" />
-
-      {/* Logo itself (now under the noise layer) */}
       <div
         className="bb-chat__logo-video"
         style={{ width: size, height: size }}
@@ -43,9 +39,6 @@ export function BitBitLogoVideo({ size = 140, variant = 'idle' }: BitBitLogoVide
           }}
         />
       </div>
-
-      {/* Noise texture over aura + logo */}
-      <div className="bb-chat__logo-noise" />
     </div>
   )
 }

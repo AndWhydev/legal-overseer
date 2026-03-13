@@ -57,10 +57,6 @@ export default function ResetFirstRunPage() {
 
   return (
     <main className="bb-auth-page bb-backdrop">
-      <div className="bb-auth-page__aura bb-auth-page__aura--one" aria-hidden="true" />
-      <div className="bb-auth-page__aura bb-auth-page__aura--two" aria-hidden="true" />
-      <div className="bb-auth-page__noise" aria-hidden="true" />
-
       <section className="bb-auth-page__content">
         <div className="bb-card bb-auth-card">
           <p className="bb-auth-card__sent-title">Preparing a fresh first run</p>

@@ -6331,118 +6331,15 @@ html.light .bb-pill__shimmer-dots span {
   isolation: isolate;
 }
 
-.bb-chat__logo-aura {
-  position: absolute;
-  inset: -130%;
-  z-index: 1;
-  border-radius: 50%;
-  background: radial-gradient(
-    ellipse at center,
-    rgba(255, 166, 86, 0.8) 0%,
-    rgba(255, 132, 58, 0.55) 14%,
-    rgba(255, 108, 43, 0.35) 30%,
-    rgba(255, 90, 31, 0.2) 46%,
-    rgba(255, 82, 28, 0.08) 62%,
-    rgba(255, 72, 24, 0) 80%
-  );
-  filter: blur(48px);
-  opacity: 1;
-  animation:
-    aura-morph 8s ease-in-out infinite,
-    aura-drift 6s ease-in-out infinite,
-    aura-pulse 3s ease-in-out infinite;
-}
-
-.bb-chat__logo-noise {
-  position: absolute;
-  inset: -116%;
-  z-index: 4;
-  border-radius: 50%;
-  overflow: hidden;
-  pointer-events: none;
-  -webkit-mask-image: radial-gradient(
-    circle at 50% 50%,
-    rgba(0, 0, 0, 0.9) 0%,
-    rgba(0, 0, 0, 0.72) 30%,
-    rgba(0, 0, 0, 0.44) 50%,
-    rgba(0, 0, 0, 0.22) 64%,
-    rgba(0, 0, 0, 0.09) 76%,
-    rgba(0, 0, 0, 0.028) 88%,
-    rgba(0, 0, 0, 0.008) 95%,
-    rgba(0, 0, 0, 0) 100%
-  );
-  mask-image: radial-gradient(
-    circle at 50% 50%,
-    rgba(0, 0, 0, 0.9) 0%,
-    rgba(0, 0, 0, 0.72) 30%,
-    rgba(0, 0, 0, 0.44) 50%,
-    rgba(0, 0, 0, 0.22) 64%,
-    rgba(0, 0, 0, 0.09) 76%,
-    rgba(0, 0, 0, 0.028) 88%,
-    rgba(0, 0, 0, 0.008) 95%,
-    rgba(0, 0, 0, 0) 100%
-  );
-}
-
-.bb-chat__logo-noise::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(
-    circle at 50% 44%,
-    rgba(255, 255, 255, 0.01) 0%,
-    rgba(16, 18, 24, 0.03) 52%,
-    rgba(10, 12, 20, 0.07) 74%,
-    rgba(8, 10, 16, 0) 100%
-  );
-  opacity: 0.22;
-}
-
-.bb-chat__logo-noise::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.11' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
-  background-size: 400px 400px;
-  mix-blend-mode: soft-light;
-  opacity: 0.2;
-  animation: noise-shift 22s linear infinite;
-}
-
 .bb-chat__logo-video {
   position: relative;
   z-index: 5;
   animation: logo-float 5s ease-in-out infinite;
 }
 
-@keyframes aura-morph {
-  0%, 100% { border-radius: 50%; }
-  25% { border-radius: 45% 55% 50% 50%; }
-  50% { border-radius: 55% 45% 45% 55%; }
-  75% { border-radius: 50% 50% 55% 45%; }
-}
-
-@keyframes aura-drift {
-  0%, 100% { transform: translate(0, 0) scale(1) rotate(0deg); }
-  25% { transform: translate(10px, -8px) scale(1.08) rotate(3deg); }
-  50% { transform: translate(-8px, 10px) scale(0.94) rotate(-2deg); }
-  75% { transform: translate(-10px, -6px) scale(1.06) rotate(2deg); }
-}
-
-@keyframes aura-pulse {
-  0%, 100% { opacity: 0.75; }
-  50% { opacity: 1; }
-}
-
 @keyframes logo-float {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-4px); }
-}
-
-@keyframes noise-shift {
-  0% { transform: translate3d(0, 0, 0); }
-  50% { transform: translate3d(-8px, 6px, 0); }
-  100% { transform: translate3d(4px, -4px, 0); }
 }
 
 .bb-chat__greeting {
@@ -7343,33 +7240,6 @@ html.light .bb-chat__tc-pre {
   width: 100%;
 }
 
-.bb-auth-page__aura {
-  position: absolute;
-  border-radius: 999px;
-  filter: blur(60px);
-  pointer-events: none;
-  opacity: 0.5;
-  z-index: 1;
-}
-
-.bb-auth-page__aura--one {
-  width: 360px;
-  height: 360px;
-  top: -130px;
-  right: -90px;
-  background: radial-gradient(circle at 30% 30%, rgba(255, 90, 31, 0.9), rgba(6, 182, 212, 0.45) 60%, transparent 90%);
-  animation: aura-drift 8s ease-in-out infinite, aura-pulse 3s ease-in-out infinite;
-}
-
-.bb-auth-page__aura--two {
-  width: 300px;
-  height: 300px;
-  bottom: -140px;
-  left: -90px;
-  background: radial-gradient(circle at 65% 65%, rgba(255, 90, 31, 0.85), rgba(139, 92, 246, 0.4) 58%, transparent 90%);
-  animation: aura-drift 9s ease-in-out infinite reverse, aura-morph 10s ease-in-out infinite;
-}
-
 @media (max-width: 540px) {
   .bb-auth-page__content {
     width: min(100%, 420px);
@@ -7397,35 +7267,6 @@ html.light .bb-chat__tc-pre {
   z-index: 1;
   pointer-events: none;
   opacity: 0.92;
-}
-
-.bb-auth-page__noise {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  pointer-events: none;
-  overflow: hidden;
-}
-
-.bb-auth-page__noise::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(circle at 16% 18%, rgba(255, 255, 255, 0.06), transparent 44%),
-    radial-gradient(circle at 84% 84%, rgba(255, 90, 31, 0.08), transparent 52%);
-  opacity: 0.36;
-}
-
-.bb-auth-page__noise::after {
-  content: '';
-  position: absolute;
-  inset: -18%;
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.11' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
-  background-size: 400px 400px;
-  mix-blend-mode: soft-light;
-  opacity: 0.22;
-  animation: noise-shift 24s linear infinite;
 }
 
 .bb-auth-page__content {

@@ -180,13 +180,9 @@ function LoginPageContent() {
 
   return (
     <div className="bb-auth-page bb-backdrop">
-      <div className="bb-auth-page__aura bb-auth-page__aura--one" aria-hidden="true" />
-      <div className="bb-auth-page__aura bb-auth-page__aura--two" aria-hidden="true" />
-
       <div className="bb-auth-page__ambient-logo" aria-hidden="true">
         <BitBitLogoVideo size={108} variant={logoVariant} />
       </div>
-      <div className="bb-auth-page__noise" aria-hidden="true" />
 
       <main className="bb-auth-page__content bb-stagger">
         <section className="bb-auth-page__hero" aria-label="BitBit sign in">
@@ -291,12 +287,9 @@ function LoginPageContent() {
 function LoginPageFallback() {
   return (
     <div className="bb-auth-page bb-backdrop">
-      <div className="bb-auth-page__aura bb-auth-page__aura--one" aria-hidden="true" />
-      <div className="bb-auth-page__aura bb-auth-page__aura--two" aria-hidden="true" />
       <div className="bb-auth-page__ambient-logo" aria-hidden="true">
         <BitBitLogoVideo size={108} variant="idle" />
       </div>
-      <div className="bb-auth-page__noise" aria-hidden="true" />
 
       <main className="bb-auth-page__content bb-stagger">
         <section className="bb-auth-page__hero" aria-label="BitBit sign in">
