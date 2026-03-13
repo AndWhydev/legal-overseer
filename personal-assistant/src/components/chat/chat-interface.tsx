@@ -686,6 +686,8 @@ export function ChatInterface({ userName }: { userName?: string }) {
 
   return (
     <div className={`bb-chat ${chatStarted ? 'bb-chat--active' : 'bb-chat--pre-session'}`}>
+      <GooeyChatBg />
+
       {/* Archive / history toggle — bottom-left, low priority */}
       {chatStarted && (
         <button
