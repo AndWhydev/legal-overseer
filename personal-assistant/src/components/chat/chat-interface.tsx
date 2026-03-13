@@ -4,8 +4,11 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { MessageBubble } from './message-bubble'
 import { ToolCallSummary } from './tool-call-card'
+import { ChevronDown } from 'lucide-react'
 import { BitBitFaceAvatar } from './bitbit-face-avatar'
 import { useAvatarEmotion } from './use-avatar-emotion'
+import { useSmoothStream } from './use-smooth-stream'
+import { useSmartScroll } from './use-smart-scroll'
 import { Reasoning, ReasoningTrigger, ReasoningContent } from '@/components/ai-elements/reasoning'
 import { Checkpoint, CheckpointIcon } from '@/components/ai-elements/checkpoint'
 import {
@@ -84,7 +87,11 @@ export function ChatInterface({ userName }: { userName?: string }) {
   const [checkpoints, setCheckpoints] = useState<CheckpointMarker[]>([])
   const [pendingApprovals, setPendingApprovals] = useState<PendingApproval[]>([])
   const scrollRef = useRef<HTMLDivElement>(null)
-  const rafPending = useRef(false)
+  const currentAssistantIdRef = useRef<string | null>(null)
+
+  // Smooth streaming and smart scroll hooks
+  const smoothStream = useSmoothStream()
+  const smartScroll = useSmartScroll(scrollRef)
 
   // Compute emotion state for face avatar
   const lastMsgForEmotion = messages[messages.length - 1]
@@ -98,15 +105,34 @@ export function ChatInterface({ userName }: { userName?: string }) {
     hasError: hasResponseError,
   })
 
-  const scrollToBottom = useCallback(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight
-    }
-  }, [])
-
+  // Update messages from smooth stream and auto-scroll
   useEffect(() => {
-    scrollToBottom()
-  }, [messages, thinkingContent, isThinkingStreaming, scrollToBottom])
+    if (!smoothStream.displayedContent || !currentAssistantIdRef.current) return
+    const aid = currentAssistantIdRef.current
+    setMessages(prev => {
+      const existing = prev.find(m => m.id === aid)
+      if (existing) {
+        return prev.map(m =>
+          m.id === aid ? { ...m, content: smoothStream.displayedContent } : m
+        )
+      }
+      return [
+        ...prev,
+        {
+          id: aid,
+          role: 'assistant' as const,
+          content: smoothStream.displayedContent,
+          timestamp: new Date(),
+        },
+      ]
+    })
+    smartScroll.onContentUpdate()
+  }, [smoothStream.displayedContent, smartScroll])
+
+  // Auto-scroll on thinking content changes
+  useEffect(() => {
+    smartScroll.onContentUpdate()
+  }, [thinkingContent, isThinkingStreaming, smartScroll])
 
   // Load thread history on mount
   useEffect(() => {
@@ -157,8 +183,11 @@ export function ChatInterface({ userName }: { userName?: string }) {
     setShowReasoning(true)
     setActiveCitations([])
     setPendingApprovals([])
+    smoothStream.reset()
+    smartScroll.scrollToBottom()
 
     const assistantId = `msg-${Date.now() + 1}`
+    currentAssistantIdRef.current = assistantId
     let assistantContent = ''
     const toolCalls: ToolCall[] = []
     const responseCitations: Citation[] = []
@@ -309,33 +338,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
               case 'content_delta':
                 setIsThinkingStreaming(false)
                 assistantContent += event.data
-                if (!rafPending.current) {
-                  rafPending.current = true
-                  requestAnimationFrame(() => {
-                    rafPending.current = false
-                    const content = assistantContent
-                    setMessages(prev => {
-                      const existing = prev.find(m => m.id === assistantId)
-                      if (existing) {
-                        return prev.map(m =>
-                          m.id === assistantId
-                            ? { ...m, content }
-                            : m
-                        )
-                      }
-                      return [
-                        ...prev,
-                        {
-                          id: assistantId,
-                          role: 'assistant' as const,
-                          content,
-                          toolCalls: toolCalls.length > 0 ? [...toolCalls] : undefined,
-                          timestamp: new Date(),
-                        },
-                      ]
-                    })
-                  })
-                }
+                smoothStream.feedContent(event.data)
                 break
 
               case 'message':
@@ -379,7 +382,20 @@ export function ChatInterface({ userName }: { userName?: string }) {
 
               case 'done':
                 setIsThinkingStreaming(false)
-                if (responseCitations.length > 0) {
+                // Ensure full content is set (in case smooth stream is still buffering)
+                if (assistantContent) {
+                  setMessages(prev =>
+                    prev.map(m =>
+                      m.id === assistantId
+                        ? {
+                            ...m,
+                            content: assistantContent,
+                            ...(responseCitations.length > 0 ? { citations: [...responseCitations] } : {}),
+                          }
+                        : m
+                    )
+                  )
+                } else if (responseCitations.length > 0) {
                   setMessages(prev =>
                     prev.map(m =>
                       m.id === assistantId
@@ -410,7 +426,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
       setIsLoading(false)
       setIsThinkingStreaming(false)
     }
-  }, [isLoading, threadId])
+  }, [isLoading, threadId, smoothStream, smartScroll])
 
   // Listen for custom events from the docked pill
   useEffect(() => {
@@ -601,6 +617,23 @@ export function ChatInterface({ userName }: { userName?: string }) {
           )}
         </AnimatePresence>
       </div>
+
+      {/* Scroll-to-bottom button */}
+      <AnimatePresence>
+        {smartScroll.shouldShowScrollButton && (
+          <motion.button
+            className="bb-chat__scroll-btn"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            transition={{ duration: 0.2 }}
+            onClick={smartScroll.scrollToBottom}
+            aria-label="Scroll to bottom"
+          >
+            <ChevronDown size={18} />
+          </motion.button>
+        )}
+      </AnimatePresence>
 
       {/* Docked pill input */}
       <div

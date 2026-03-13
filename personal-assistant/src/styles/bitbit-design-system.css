@@ -6482,6 +6482,41 @@ html.light .bb-chat__face-avatar {
   filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.08));
 }
 
+/* ── Scroll-to-Bottom Button ── */
+
+.bb-chat__scroll-btn {
+  position: absolute;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--glass-pill-bg, rgba(255, 255, 255, 0.06));
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  transition: opacity 0.2s, color 0.2s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.bb-chat__scroll-btn:hover {
+  color: var(--text-primary);
+  transform: translateX(-50%) scale(1.05);
+}
+
+html.light .bb-chat__scroll-btn {
+  background: rgba(255, 255, 255, 0.8);
+  border-color: rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
 .bb-chat__bubble--user {
   background: var(--bg-card);
   backdrop-filter: var(--glass-card-blur);
