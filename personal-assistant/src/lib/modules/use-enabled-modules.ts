@@ -85,19 +85,38 @@ export function useEnabledModulesFetch(): EnabledModulesState {
         return;
       }
 
-      const { data: org } = await client
+      // Query plan first (always exists), then try optional columns separately
+      // to avoid PostgREST errors when columns haven't been migrated yet
+      let plan = 'starter';
+      let overrides: string[] | null = null;
+      let uiProfile = 'full';
+      let industry: string | undefined;
+
+      const { data: org, error: orgErr } = await client
         .from('organisations')
         .select('plan, enabled_modules, ui_profile, industry')
         .eq('id', profile.org_id)
         .single();
 
+      if (org && !orgErr) {
+        plan = (org.plan as string) ?? 'starter';
+        overrides = (org.enabled_modules as string[] | null) ?? null;
+        uiProfile = (org.ui_profile as string) ?? 'full';
+        industry = (org.industry as string) ?? undefined;
+      } else {
+        // Fallback: query only the plan column (always exists)
+        const { data: orgBasic } = await client
+          .from('organisations')
+          .select('plan')
+          .eq('id', profile.org_id)
+          .single();
+        plan = (orgBasic?.plan as string) ?? 'starter';
+      }
+
       if (cancelled) return;
 
-      const plan = (org?.plan as string) ?? 'starter';
-      const overrides = (org?.enabled_modules as string[] | null) ?? null;
-      const industry = (org?.industry as string) ?? undefined;
       const modules = getEnabledModules(plan, overrides, industry);
-      const composition = getComposition((org?.ui_profile as string) ?? 'full', industry);
+      const composition = getComposition(uiProfile, industry);
 
       setState({ modules, composition, industry, loading: false });
     } catch {
