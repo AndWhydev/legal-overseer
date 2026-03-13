@@ -75,7 +75,7 @@ const PILL_CONFIG: Record<CategoryPillType, {
   filter: (m: InboxMessage) => boolean;
 }> = {
   all:      { label: 'All',      filter: (m) => m.category !== 'spam' },
-  priority: { label: 'Priority', filter: (m) => m.category === 'actionable' },
+  priority: { label: 'Focus', filter: (m) => m.category === 'actionable' },
   updates:  { label: 'Updates',  filter: (m) => m.category === 'informational' },
   feed:     { label: 'Feed',     filter: (m) => m.category === 'personal' },
   receipts: { label: 'Receipts', filter: (m) => m.channelType === 'stripe' || m.channelType === 'xero' },
@@ -337,7 +337,7 @@ function InboxTab() {
   const [newMessageAlert, setNewMessageAlert] = useState(false);
 
   // New state for P2-5, P2-2, P4-5
-  const [activePill, setActivePill] = useState<CategoryPillType>('all');
+  const [activePill, setActivePill] = useState<CategoryPillType>('priority');
   const [undoToasts, setUndoToasts] = useState<ToastEntry[]>([]);
   const [snoozeTargetId, setSnoozeTargetId] = useState<string | null>(null);
   const [snoozeAnchor, setSnoozeAnchor] = useState<{ top: number; right: number } | null>(null);
@@ -638,6 +638,11 @@ function InboxTab() {
     clearSelection();
   }, [keyboard.selectedIds, handleDone, clearSelection]);
 
+  const handleBulkSpam = useCallback(() => {
+    keyboard.selectedIds.forEach(id => handleSpam(id));
+    clearSelection();
+  }, [keyboard.selectedIds, handleSpam, clearSelection]);
+
   const hasActiveFilters = channelFilter || priorityFilter || statusFilter;
   const clearFilters = () => { setChannelFilter(''); setPriorityFilter(''); setStatusFilter(''); };
 
@@ -806,21 +811,6 @@ function InboxTab() {
         </div>
       )}
 
-      {/* ── Bulk Action Bar ── */}
-      {keyboard.selectedIds.size > 0 && (
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 12, padding: '8px 16px',
-          background: 'rgba(255, 90, 31, 0.08)', borderRadius: 8, margin: '0 0 4px',
-        }}>
-          <span style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.8)' }}>
-            {keyboard.selectedIds.size} selected
-          </span>
-          <button className="bb-btn bb-btn--ghost bb-btn--sm" onClick={handleBulkArchive}><Archive size={13} /> Archive</button>
-          <button className="bb-btn bb-btn--ghost bb-btn--sm" onClick={handleBulkDone}><CheckCircle2 size={13} /> Done</button>
-          <button className="bb-btn bb-btn--ghost bb-btn--sm" onClick={clearSelection}><X size={12} /> Clear</button>
-        </div>
-      )}
-
       {/* ── Message List ── */}
       <div className="bb-inbox-list">
         {displayed.length === 0 ? (
@@ -865,6 +855,61 @@ function InboxTab() {
         )}
       </div>
 
+      {/* ── Floating Bulk Action Bar ── */}
+      {keyboard.selectedIds.size > 0 && (
+        <div style={{
+          position: 'fixed',
+          bottom: 80,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 12,
+          padding: '10px 16px',
+          background: 'rgba(15, 20, 30, 0.95)',
+          backdropFilter: 'blur(20px) saturate(1.2)',
+          WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          borderRadius: 12,
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.3)',
+          zIndex: 50,
+          animation: 'fadeSlideUp 200ms ease',
+        }}>
+          <span style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.8)' }}>
+            {keyboard.selectedIds.size} selected
+          </span>
+          <button style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 10px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.7)', fontSize: 12, fontWeight: 500, cursor: 'pointer', transition: 'all 150ms ease' }}
+            onClick={handleBulkArchive}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
+          ><Archive size={13} /> Archive</button>
+          <button style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 10px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.7)', fontSize: 12, fontWeight: 500, cursor: 'pointer', transition: 'all 150ms ease' }}
+            onClick={handleBulkDone}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
+          ><CheckCircle2 size={13} /> Done</button>
+          <button style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 10px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.7)', fontSize: 12, fontWeight: 500, cursor: 'pointer', transition: 'all 150ms ease' }}
+            onClick={(e) => {
+              const rect = e.currentTarget.getBoundingClientRect();
+              setSnoozeTargetId(Array.from(keyboard.selectedIds)[0]);
+              setSnoozeAnchor({ top: rect.top - 200, right: window.innerWidth - rect.right });
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
+          ><Clock size={13} /> Snooze</button>
+          <button style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 10px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.7)', fontSize: 12, fontWeight: 500, cursor: 'pointer', transition: 'all 150ms ease' }}
+            onClick={handleBulkSpam}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
+          ><AlertTriangle size={13} /> Spam</button>
+          <button style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 24, height: 24, borderRadius: 6, border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.5)', fontSize: 12, cursor: 'pointer', padding: 0, transition: 'all 150ms ease' }}
+            onClick={clearSelection}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
+          ><X size={12} /></button>
+        </div>
+      )}
+
       {/* ── Snooze Picker — Task #7 ── */}
       {snoozeTargetId && snoozeAnchor && (
         <SnoozePickerPopover
@@ -899,7 +944,6 @@ const PILL_ORDER: CategoryPillType[] = ['all', 'priority', 'updates', 'feed', 'r
 function CategoryPillsBar({
   activePill,
   onSelect,
-  counts,
   hasUnreadPriority,
 }: {
   activePill: CategoryPillType;
@@ -918,21 +962,10 @@ function CategoryPillsBar({
       flexShrink: 0,
       minHeight: 40,
     }}>
-      <style>{`
-        @keyframes bb-pill-pulse {
-          0%, 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0.3); }
-          50% { box-shadow: 0 0 0 4px rgba(255,255,255,0); }
-        }
-      `}</style>
-      {PILL_ORDER.map((pill) => {
+      {PILL_ORDER.map((pill, pillIndex) => {
         const cfg = PILL_CONFIG[pill];
         const isActive = activePill === pill;
-        const count = counts[pill];
         const isPriority = pill === 'priority';
-        const shouldPulse = isPriority && hasUnreadPriority && !isActive;
-
-        // Determine if light mode
-        const isLightMode = typeof document !== 'undefined' && document.documentElement.classList.contains('light');
 
         const pillStyle: React.CSSProperties = isActive
           ? {
@@ -942,15 +975,14 @@ function CategoryPillsBar({
               padding: '6px 14px',
               borderRadius: 20,
               border: '1px solid transparent',
-              background: isLightMode ? '#1A1A1B' : 'rgba(255,255,255,0.95)',
-              color: isLightMode ? '#FFFFFF' : '#0A0A0B',
+              background: 'rgba(255,255,255,0.95)',
+              color: '#0A0A0B',
               fontSize: 12,
               fontWeight: 600,
               cursor: 'pointer',
               transition: 'background 150ms ease, color 150ms ease',
               whiteSpace: 'nowrap',
               flexShrink: 0,
-              animation: shouldPulse ? 'bb-pill-pulse 2s ease-in-out infinite' : 'none',
             }
           : {
               display: 'inline-flex',
@@ -958,19 +990,15 @@ function CategoryPillsBar({
               gap: 6,
               padding: '6px 14px',
               borderRadius: 20,
-              border: isLightMode ? '1px solid rgba(0,0,0,0.08)' : 'none',
-              background: isLightMode ? 'rgba(0,0,0,0.05)' : 'rgba(10, 14, 23, 0.42)',
-              backdropFilter: isLightMode ? 'none' : 'blur(20px) saturate(1.2)',
-              WebkitBackdropFilter: isLightMode ? 'none' : 'blur(20px) saturate(1.2)',
-              boxShadow: isLightMode ? 'none' : 'inset 0 1px 0 rgba(255, 255, 255, 0.06)',
-              color: isLightMode ? '#6B7280' : 'var(--text-secondary, #94A3B8)',
+              border: 'none',
+              background: 'transparent',
+              color: 'rgba(255,255,255,0.45)',
               fontSize: 12,
               fontWeight: 500,
               cursor: 'pointer',
               transition: 'transform 150ms ease, color 150ms ease, background 150ms ease',
               whiteSpace: 'nowrap',
               flexShrink: 0,
-              animation: shouldPulse ? 'bb-pill-pulse 2s ease-in-out infinite' : 'none',
             };
 
         return (
@@ -978,40 +1006,28 @@ function CategoryPillsBar({
             key={pill}
             onClick={() => onSelect(pill)}
             style={pillStyle}
+            title={`${cfg.label} (${pillIndex + 1})`}
             onMouseEnter={(e) => {
-              if (!isActive && !isLightMode) {
-                e.currentTarget.style.transform = 'scale(1.02)';
-              }
               if (!isActive) {
-                e.currentTarget.style.color = isLightMode ? '#111827' : 'var(--text-primary, #F1F5F9)';
+                e.currentTarget.style.transform = 'scale(1.02)';
+                e.currentTarget.style.color = 'var(--text-primary, #F1F5F9)';
               }
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.transform = 'scale(1)';
               if (!isActive) {
-                e.currentTarget.style.color = isLightMode ? '#6B7280' : 'var(--text-secondary, #94A3B8)';
+                e.currentTarget.style.color = 'rgba(255,255,255,0.45)';
               }
             }}
           >
-            {cfg.label}
-            {count > 0 && (
+            {isPriority && hasUnreadPriority && !isActive && (
               <span style={{
-                fontSize: 10,
-                fontWeight: 600,
-                minWidth: 20,
-                height: 16,
-                borderRadius: 8,
-                background: isActive ? (isLightMode ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.2)') : 'transparent',
-                color: isActive ? (isLightMode ? '#FFFFFF' : 'rgba(255,255,255,0.95)') : (isLightMode ? '#6B7280' : 'var(--text-secondary, #94A3B8)'),
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: '0 4px',
-                lineHeight: 1,
-              }}>
-                {count}
-              </span>
+                width: 6, height: 6, borderRadius: '50%',
+                background: 'var(--bb-orange, #FF5A1F)',
+                flexShrink: 0,
+              }} />
             )}
+            {cfg.label}
           </button>
         );
       })}
