@@ -25,7 +25,7 @@ const cardStyle: React.CSSProperties = {
   background: 'var(--bg-card)',
   backdropFilter: 'var(--glass-blur)',
   WebkitBackdropFilter: 'var(--glass-blur)',
-  border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
+  border: 'none',
   boxShadow: 'var(--card-shadow), var(--card-inset)',
   display: 'flex',
   flexDirection: 'column',

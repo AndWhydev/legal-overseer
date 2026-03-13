@@ -44,31 +44,38 @@ export function SidebarRail({
   onAvatarClick,
   profileOpen,
 }: SidebarRailProps) {
-  // Track previous panelOpen to determine migration direction
+  // Track previous state to determine migration direction
   const prevPanelOpenRef = useRef(false);
+  const prevActiveCategoryRef = useRef<string | null>(activeCategory);
   const hasMountedRef = useRef(false);
 
   useEffect(() => {
     hasMountedRef.current = true;
   }, []);
 
-  // Determine badge migration class based on panel state transitions
-  const getMigrationClass = (isActive: boolean, hasBadge: boolean): string | undefined => {
+  // Determine badge migration class based on panel/category transitions
+  const getMigrationClass = (catId: string, hasBadge: boolean): string | undefined => {
     if (!hasBadge) return undefined;
     if (!hasMountedRef.current) return undefined; // No animation on initial mount
 
+    const isActive = activeCategory === catId;
+    const wasActive = prevActiveCategoryRef.current === catId;
+
+    // Badge leaves rail → panel items are showing them
     if (isActive && panelOpen) {
       return 'bb-badge--migrate-out';
     }
-    if (isActive && !panelOpen && prevPanelOpenRef.current) {
+    // Badge returns to rail: panel closed while active, OR switched away from this category
+    if (wasActive && prevPanelOpenRef.current && (!isActive || !panelOpen)) {
       return 'bb-badge--migrate-in';
     }
     return undefined;
   };
 
-  // Update ref after render for next cycle
+  // Update refs after render for next cycle
   useEffect(() => {
     prevPanelOpenRef.current = panelOpen;
+    prevActiveCategoryRef.current = activeCategory;
   });
 
   // Aggregate badge count for Business category
@@ -90,7 +97,7 @@ export function SidebarRail({
 
           // Badge for business category
           const badge = cat.id === 'business' && businessBadge > 0 ? businessBadge : 0;
-          const migrationClass = getMigrationClass(isActive, badge > 0);
+          const migrationClass = getMigrationClass(cat.id, badge > 0);
 
           return (
             <button
