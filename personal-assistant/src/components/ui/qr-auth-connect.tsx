@@ -79,18 +79,27 @@ export function QrAuthConnect({ sessionId, serviceName, onConnected, onError }: 
   useEffect(() => {
     if (!qrData || !canvasRef.current) return;
 
-    // Simple QR rendering: qrData is a base64 data URL from the worker
-    const img = new Image();
-    img.onload = () => {
+    // Baileys emits QR data as a text string — encode it into a QR image
+    import('qrcode').then((QRCode) => {
       const canvas = canvasRef.current;
       if (!canvas) return;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
-      canvas.width = 256;
-      canvas.height = 256;
-      ctx.drawImage(img, 0, 0, 256, 256);
-    };
-    img.src = qrData;
+      QRCode.toCanvas(canvas, qrData, {
+        width: 256,
+        margin: 2,
+        color: { dark: '#000000', light: '#ffffff' },
+      }).catch(() => {
+        // Fallback: try treating it as a data URL (in case format changes)
+        const img = new Image();
+        img.onload = () => {
+          const ctx = canvas.getContext('2d');
+          if (!ctx) return;
+          canvas.width = 256;
+          canvas.height = 256;
+          ctx.drawImage(img, 0, 0, 256, 256);
+        };
+        img.src = qrData;
+      });
+    });
   }, [qrData]);
 
   return (
