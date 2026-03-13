@@ -16,7 +16,7 @@ const LEFT_EYE_CX = 15
 const RIGHT_EYE_CX = 33
 const EYE_CY = 20
 const EYE_R = 2
-const NOSE_PATH = 'M24 25 L24 31 L27 31'
+const NOSE_PATH = 'M24 23 L24 29 L27 29'
 
 // Emotion config
 const EMOTION_CONFIG: Record<
