@@ -4,8 +4,8 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { MessageBubble } from './message-bubble'
 import { ToolCallSummary } from './tool-call-card'
-import { BitBitLogoVideo } from './bitbit-logo-video'
-import { BitBitLogoAnimated } from './bitbit-logo-animated'
+import { BitBitFaceAvatar } from './bitbit-face-avatar'
+import { useAvatarEmotion } from './use-avatar-emotion'
 import { Reasoning, ReasoningTrigger, ReasoningContent } from '@/components/ai-elements/reasoning'
 import { Checkpoint, CheckpointIcon } from '@/components/ai-elements/checkpoint'
 import {
@@ -85,6 +85,18 @@ export function ChatInterface({ userName }: { userName?: string }) {
   const [pendingApprovals, setPendingApprovals] = useState<PendingApproval[]>([])
   const scrollRef = useRef<HTMLDivElement>(null)
   const rafPending = useRef(false)
+
+  // Compute emotion state for face avatar
+  const lastMsgForEmotion = messages[messages.length - 1]
+  const isToolRunning = lastMsgForEmotion?.toolCalls?.some(tc => tc.status === 'running') ?? false
+  const isContentStreaming = isLoading && !isThinkingStreaming && messages.some(m => m.role === 'assistant' && m.content.length > 0)
+  const hasResponseError = lastMsgForEmotion?.role === 'assistant' && lastMsgForEmotion.content.startsWith('Something went wrong:')
+  const avatarEmotion = useAvatarEmotion({
+    isThinking: isThinkingStreaming,
+    isToolRunning,
+    isStreaming: isContentStreaming,
+    hasError: hasResponseError,
+  })
 
   const scrollToBottom = useCallback(() => {
     if (scrollRef.current) {
@@ -450,7 +462,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
               transition={{ duration: 0.3 }}
             >
               <div className="bb-chat__center-cluster">
-                <BitBitLogoVideo size={140} />
+                <BitBitFaceAvatar size={120} emotion={avatarEmotion} />
                 <h2 className="bb-chat__greeting">
                   {getGreeting()}{userName ? `, ${userName}` : ''}
                 </h2>
@@ -519,7 +531,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
               {showThinkingIndicator && (
                 <div className="bb-chat__msg bb-chat__msg--assistant">
                   <div className="bb-chat__assistant-icon">
-                    <BitBitLogoAnimated size={24} />
+                    <BitBitFaceAvatar size={24} emotion={avatarEmotion} />
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <Reasoning isStreaming={isThinkingStreaming} duration={thinkingDuration}>
@@ -536,7 +548,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
               {pendingApprovals.filter(a => a.status === 'pending').map(approval => (
                 <div key={approval.id} className="bb-chat__msg bb-chat__msg--assistant" style={{ marginTop: 8 }}>
                   <div className="bb-chat__assistant-icon">
-                    <BitBitLogoAnimated size={24} />
+                    <BitBitFaceAvatar size={24} emotion={avatarEmotion} />
                   </div>
                   <div style={{
                     flex: 1,

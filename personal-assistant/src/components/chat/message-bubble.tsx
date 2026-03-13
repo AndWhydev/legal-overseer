@@ -3,7 +3,7 @@
 import React from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { BitBitLogoAnimated } from './bitbit-logo-animated'
+import { BitBitFaceAvatar } from './bitbit-face-avatar'
 import {
   InlineCitation,
   InlineCitationCard,
@@ -132,7 +132,7 @@ export function MessageBubble({ message, citations }: { message: Message; citati
     <div className={`bb-chat__msg ${isUser ? 'bb-chat__msg--user' : 'bb-chat__msg--assistant'}`}>
       {!isUser && (
         <div className="bb-chat__assistant-icon">
-          <BitBitLogoAnimated size={24} />
+          <BitBitFaceAvatar size={24} />
         </div>
       )}
       <div className={isUser ? 'bb-chat__bubble--user' : 'bb-chat__bubble--assistant bb-chat__markdown'}>

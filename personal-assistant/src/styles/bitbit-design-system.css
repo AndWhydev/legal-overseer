@@ -6467,6 +6467,21 @@ html.light .bb-pill__shimmer-dots span {
   margin-top: 2px;
 }
 
+/* ── Face Avatar ── */
+
+.bb-chat__face-avatar {
+  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.12));
+  transition: filter 0.3s ease;
+}
+
+.bb-chat__face-avatar--large {
+  animation: logo-float 5s ease-in-out infinite;
+}
+
+html.light .bb-chat__face-avatar {
+  filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.08));
+}
+
 .bb-chat__bubble--user {
   background: var(--bg-card);
   backdrop-filter: var(--glass-card-blur);
