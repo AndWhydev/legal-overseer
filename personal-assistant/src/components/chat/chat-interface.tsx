@@ -1,9 +1,9 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { MessageBubble } from './message-bubble'
-import { ChevronDown, Archive, Check, X } from 'lucide-react'
+import { ChevronDown, Archive, Search, PlusCircle, Pencil, Eye, FileText, Mail, Brain, Zap, AlertCircle } from 'lucide-react'
 import { BitBitFaceAvatar } from './bitbit-face-avatar'
 import { useAvatarEmotion } from './use-avatar-emotion'
 import { useSmoothStream } from './use-smooth-stream'
@@ -19,7 +19,6 @@ import {
   ConfirmationAction,
   ConfirmationRequest,
 } from '@/components/ai-elements/confirmation'
-import { GooeyChatBg } from './gooey-chat-bg'
 
 interface ToolCall {
   name: string
@@ -73,15 +72,41 @@ const SUGGESTIONS = [
 ]
 
 const TOOL_DISPLAY_NAMES: Record<string, string> = {
-  create_task: 'Created task',
-  update_task: 'Updated task',
-  search_tasks: 'Searched tasks',
-  search_contacts: 'Searched contacts',
-  get_contact: 'Looked up contact',
-  log_activity: 'Logged activity',
-  compose_creator_notification_mockup: 'Composed notification',
-  search_memory: 'Searched memory',
-  add_memory: 'Saved to memory',
+  create_task: 'Creating task',
+  update_task: 'Updating task',
+  search_tasks: 'Searching tasks',
+  search_contacts: 'Searching contacts',
+  get_contact: 'Looking up contact',
+  get_connected_channels: 'Checking connections',
+  log_activity: 'Logging activity',
+  compose_creator_notification_mockup: 'Composing notification',
+  search_memory: 'Searching memory',
+  add_memory: 'Saving to memory',
+  send_email: 'Sending email',
+  search_leads: 'Searching leads',
+  get_calendar: 'Checking calendar',
+  create_invoice: 'Creating invoice',
+  update_lead: 'Updating lead',
+}
+
+/** snake_case → Title Case fallback for unknown tools */
+function formatToolName(name: string): string {
+  if (TOOL_DISPLAY_NAMES[name]) return TOOL_DISPLAY_NAMES[name]
+  return name
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, c => c.toUpperCase())
+}
+
+/** Tool-specific icon based on name pattern */
+function getToolIcon(name: string): React.ElementType {
+  if (name.startsWith('search')) return Search
+  if (name.startsWith('create')) return PlusCircle
+  if (name.startsWith('update')) return Pencil
+  if (name.startsWith('get') || name.startsWith('look')) return Eye
+  if (name.startsWith('log')) return FileText
+  if (name.startsWith('compose') || name.startsWith('send')) return Mail
+  if (name.includes('memory')) return Brain
+  return Zap
 }
 
 const CHAT_SEND_EVENT = 'bitbit-chat-send'
@@ -109,6 +134,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
   // Reasoning chain state (controlled collapsible)
   const [reasoningOpen, setReasoningOpen] = useState(false)
   const prevReasoningActiveRef = useRef(false)
+  const autoOpenedRef = useRef(false)
 
   // Smooth streaming and smart scroll hooks
   const smoothStream = useSmoothStream()
@@ -202,8 +228,9 @@ export function ChatInterface({ userName }: { userName?: string }) {
     setIsThinkingStreaming(true)
     setThinkingDuration(undefined)
     setShowReasoning(true)
-    setReasoningOpen(true)
+    setReasoningOpen(false)
     prevReasoningActiveRef.current = false
+    autoOpenedRef.current = false
     setActiveCitations([])
     setPendingApprovals([])
     smoothStream.reset()
@@ -559,11 +586,19 @@ export function ChatInterface({ userName }: { userName?: string }) {
     currentToolCalls.length > 0
   )
 
-  // Auto-open/close reasoning collapsible on activity transitions
+  // Auto-open when actual reasoning content arrives (thinking text or tool calls)
+  useEffect(() => {
+    if (!autoOpenedRef.current && showReasoningChain &&
+        (thinkingContent.length > 0 || currentToolCalls.length > 0)) {
+      autoOpenedRef.current = true
+      setReasoningOpen(true)
+    }
+  }, [showReasoningChain, thinkingContent, currentToolCalls.length])
+
+  // Auto-close when reasoning activity finishes (content starts streaming)
   useEffect(() => {
     const wasActive = prevReasoningActiveRef.current
     prevReasoningActiveRef.current = isReasoningActive
-    if (isReasoningActive && !wasActive) setReasoningOpen(true)
     if (!isReasoningActive && wasActive) {
       const timer = setTimeout(() => setReasoningOpen(false), 1000)
       return () => clearTimeout(timer)
@@ -575,10 +610,9 @@ export function ChatInterface({ userName }: { userName?: string }) {
     <Collapsible open={reasoningOpen} onOpenChange={setReasoningOpen}>
       <CollapsibleTrigger
         style={{
-          display: 'flex',
-          width: '100%',
+          display: 'inline-flex',
           alignItems: 'center',
-          gap: 8,
+          gap: 6,
           color: 'var(--text-dim)',
           fontSize: 13,
           background: 'none',
@@ -589,7 +623,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
           transition: 'color 0.15s ease',
         }}
       >
-        <span style={{ flex: 1, textAlign: 'left' }}>
+        <span>
           {isReasoningActive ? (
             <Shimmer duration={1}>Thinking...</Shimmer>
           ) : (() => {
@@ -644,39 +678,44 @@ export function ChatInterface({ userName }: { userName?: string }) {
             <div style={{
               display: 'flex',
               flexDirection: 'column',
-              gap: 4,
+              gap: 6,
               paddingLeft: 4,
             }}>
-              {currentToolCalls.map((tc, idx) => (
-                <div
-                  key={idx}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 8,
-                    fontSize: 12,
-                    color: tc.status === 'error' ? 'var(--bb-red)' : 'var(--text-dim)',
-                    lineHeight: 1.5,
-                  }}
-                >
-                  {tc.status === 'done' ? (
-                    <Check size={12} style={{ color: 'var(--bb-green)', flexShrink: 0 }} />
-                  ) : tc.status === 'error' ? (
-                    <X size={12} style={{ color: 'var(--bb-red)', flexShrink: 0 }} />
-                  ) : (
-                    <div style={{
-                      width: 12,
-                      height: 12,
-                      borderRadius: '50%',
-                      border: '2px solid var(--text-dim)',
-                      borderTopColor: 'transparent',
-                      animation: 'spin 0.8s linear infinite',
-                      flexShrink: 0,
-                    }} />
-                  )}
-                  <span>{TOOL_DISPLAY_NAMES[tc.name] || tc.name}</span>
-                </div>
-              ))}
+              {currentToolCalls.map((tc, idx) => {
+                const ToolIcon = getToolIcon(tc.name)
+                const iconColor = tc.status === 'error'
+                  ? 'var(--bb-red)'
+                  : tc.status === 'done'
+                    ? 'var(--bb-green)'
+                    : 'var(--text-secondary)'
+                return (
+                  <div
+                    key={idx}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      fontSize: 12,
+                      color: tc.status === 'error' ? 'var(--bb-red)' : 'var(--text-dim)',
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    {tc.status === 'error' ? (
+                      <AlertCircle size={13} style={{ color: iconColor, flexShrink: 0 }} />
+                    ) : (
+                      <ToolIcon
+                        size={13}
+                        style={{
+                          color: iconColor,
+                          flexShrink: 0,
+                          ...(tc.status === 'running' ? { animation: 'pulse 1.5s ease-in-out infinite' } : {}),
+                        }}
+                      />
+                    )}
+                    <span>{formatToolName(tc.name)}</span>
+                  </div>
+                )
+              })}
             </div>
           )}
         </div>
@@ -686,21 +725,17 @@ export function ChatInterface({ userName }: { userName?: string }) {
 
   return (
     <div className={`bb-chat ${chatStarted ? 'bb-chat--active' : 'bb-chat--pre-session'}`}>
-      <GooeyChatBg />
-
-      {/* Archive / history toggle — bottom-left, low priority */}
-      {chatStarted && (
-        <button
-          className="bb-chat__history-btn"
-          onClick={() => {
-            setDrawerOpen(true)
-            fetchThreads()
-          }}
-          aria-label="Conversation history"
-        >
-          <Archive size={16} />
-        </button>
-      )}
+      {/* Archive / history toggle — bottom-left, always visible */}
+      <button
+        className="bb-chat__history-btn"
+        onClick={() => {
+          setDrawerOpen(true)
+          fetchThreads()
+        }}
+        aria-label="Conversation history"
+      >
+        <Archive size={16} />
+      </button>
 
       {/* Conversation history drawer */}
       <AnimatePresence>
@@ -779,6 +814,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
                     )}
                     <MessageBubble
                       message={msg}
+                      showAvatar={isLastAssistant}
                       citations={msg.citations || (isLastAssistant && isLoading ? activeCitations : undefined)}
                     />
                     {checkpoint && (
