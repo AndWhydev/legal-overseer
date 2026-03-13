@@ -2,6 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import type { ChannelMessage } from '@/lib/channels/types'
 import Anthropic from '@anthropic-ai/sdk'
 import { assembleContext } from '@/lib/context/assembler'
+import { resolveModel } from '@/lib/agent/model-registry'
 import { logger } from '@/lib/core/logger';
 
 // ---------------------------------------------------------------------------
@@ -401,7 +402,7 @@ export async function classifyMessage(
     const prompt = buildClassificationPrompt(message, context.summary)
 
     const response = await client.messages.create({
-      model: 'claude-3-5-haiku-latest',
+      model: resolveModel('classification'),
       max_tokens: 500,
       messages: [{ role: 'user', content: prompt }],
     })
@@ -423,7 +424,7 @@ export async function classifyMessage(
         resolves: result.resolves,
         unblocks: result.unblocks,
         recommended_actions: result.recommendedActions,
-        classification_model: 'claude-3-5-haiku-latest',
+        classification_model: resolveModel('classification'),
         classified_at: new Date().toISOString(),
       })
       .eq('id', message.id)

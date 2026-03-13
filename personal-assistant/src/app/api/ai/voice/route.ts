@@ -3,6 +3,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@/lib/supabase/server'
 import { assembleContext } from '@/lib/context/assembler'
 import { getPack, resolveIndustry } from '@/lib/industry/registry'
+import { resolveModel } from '@/lib/agent/model-registry'
 import { logger } from '@/lib/core/logger';
 
 /**
@@ -61,7 +62,7 @@ export async function POST(request: Request) {
   } else {
     // No OpenAI key -- return a structured stub so the client knows transcription is not configured
     return NextResponse.json({
-      error: 'Voice transcription not configured (OPENAI_API_KEY missing)',
+      error: 'Voice transcription not available',
       transcript: null,
       response: null,
     }, { status: 503 })
@@ -109,7 +110,7 @@ export async function POST(request: Request) {
   try {
     const client = new Anthropic({ apiKey: anthropicKey })
     const aiResponse = await client.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: resolveModel('conversation'),
       max_tokens: 1024,
       system: systemParts.join('\n'),
       messages: [{ role: 'user', content: transcript }],
@@ -127,6 +128,6 @@ export async function POST(request: Request) {
     })
   } catch (err) {
     logger.error('[ai/voice] Anthropic API error:', err)
-    return NextResponse.json({ transcript, response: null, error: 'AI request failed' }, { status: 502 })
+    return NextResponse.json({ transcript, response: null, error: 'Something went wrong. Try again in a moment.' }, { status: 502 })
   }
 }

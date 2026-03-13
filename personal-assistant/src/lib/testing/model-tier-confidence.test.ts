@@ -1,13 +1,13 @@
 import { describe, it, expect } from 'vitest'
 import {
-  analyzeModelTierBehavior,
+  analyzeModelPurposeBehavior,
   measureFalsePositives,
   runConfidenceHarness,
 } from './confidence-harness'
 import { AWU_SCENARIOS } from './confidence-scenarios'
 
 describe('Model tier confidence behavior', () => {
-  const analysis = analyzeModelTierBehavior(AWU_SCENARIOS)
+  const analysis = analyzeModelPurposeBehavior(AWU_SCENARIOS)
 
   it('model tier analysis runs without error', () => {
     expect(analysis).toBeDefined()
@@ -17,15 +17,15 @@ describe('Model tier confidence behavior', () => {
   })
 
   it('all three tiers are represented', () => {
-    expect(analysis.byTier).toHaveProperty('haiku')
-    expect(analysis.byTier).toHaveProperty('sonnet')
-    expect(analysis.byTier).toHaveProperty('opus')
+    expect(analysis.byTier).toHaveProperty('classification')
+    expect(analysis.byTier).toHaveProperty('conversation')
+    expect(analysis.byTier).toHaveProperty('synthesis')
   })
 
   it('Sonnet and Opus have equal or higher accuracy than Haiku', () => {
-    const { haiku, sonnet, opus } = analysis.byTier
-    expect(sonnet.accuracy).toBeGreaterThanOrEqual(haiku.accuracy)
-    expect(opus.accuracy).toBeGreaterThanOrEqual(haiku.accuracy)
+    const { classification, conversation, synthesis } = analysis.byTier
+    expect(conversation.accuracy).toBeGreaterThanOrEqual(classification.accuracy)
+    expect(synthesis.accuracy).toBeGreaterThanOrEqual(classification.accuracy)
   })
 
   it('stability score is above 70%', () => {

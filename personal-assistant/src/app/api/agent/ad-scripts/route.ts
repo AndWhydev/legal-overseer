@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { logger } from '@/lib/core/logger'
 
 async function getOrgContext() {
   const supabase = await createClient()
@@ -21,8 +22,8 @@ export async function POST(request: NextRequest) {
     const scripts = await generateScripts(ctx.supabase, ctx.orgId, body)
     return NextResponse.json(scripts)
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Script generation failed'
-    return NextResponse.json({ error: message }, { status: 500 })
+    logger.error('[ad-scripts] Script generation failed:', err)
+    return NextResponse.json({ error: 'Something went wrong. Try again in a moment.' }, { status: 500 })
   }
 }
 
@@ -35,7 +36,7 @@ export async function GET() {
     const batches = await listScriptBatches(ctx.supabase, ctx.orgId)
     return NextResponse.json({ batches })
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Failed to list scripts'
-    return NextResponse.json({ error: message }, { status: 500 })
+    logger.error('[ad-scripts] Failed to list scripts:', err)
+    return NextResponse.json({ error: 'Something went wrong. Try again in a moment.' }, { status: 500 })
   }
 }

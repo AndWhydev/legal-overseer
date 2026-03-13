@@ -3,6 +3,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@/lib/supabase/server'
 import { assembleContext } from '@/lib/context/assembler'
 import { getPack, resolveIndustry } from '@/lib/industry/registry'
+import { resolveModel } from '@/lib/agent/model-registry'
 import { logger } from '@/lib/core/logger';
 
 export async function POST(request: Request) {
@@ -59,7 +60,7 @@ export async function POST(request: Request) {
   try {
     const client = new Anthropic({ apiKey })
     const response = await client.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: resolveModel('conversation'),
       max_tokens: 1024,
       system: systemParts.join('\n'),
       messages: [{ role: 'user', content: query }],
@@ -76,7 +77,6 @@ export async function POST(request: Request) {
     })
   } catch (err) {
     logger.error('[ai/text] Anthropic API error:', err)
-    const message = err instanceof Error ? err.message : 'AI request failed'
-    return NextResponse.json({ error: message }, { status: 502 })
+    return NextResponse.json({ error: 'Something went wrong. Try again in a moment.' }, { status: 502 })
   }
 }

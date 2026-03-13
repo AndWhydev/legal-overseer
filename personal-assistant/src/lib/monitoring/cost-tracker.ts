@@ -7,18 +7,17 @@
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 
-// ─── Pricing per 1M tokens (USD) ─────────────────────────────────────────────
-const MODEL_PRICING: Record<string, { input: number; output: number }> = {
-  // Short names (as stored in agent_runs.model_used)
-  'haiku': { input: 0.25, output: 1.25 },
-  'sonnet': { input: 3.0, output: 15.0 },
-  'opus': { input: 15.0, output: 75.0 },
-  // Full model IDs (for compatibility)
-  'claude-sonnet-4-20250514': { input: 3.0, output: 15.0 },
-  'claude-haiku-3-20240307': { input: 0.25, output: 1.25 },
-  'claude-opus-4-20250514': { input: 15.0, output: 75.0 },
-  // Fallback for unknown models
-  'default': { input: 3.0, output: 15.0 },
+import { computeCost, type ModelPurpose } from '@/lib/agent/model-registry';
+
+// Map legacy model_used DB values to purposes for cost calculation
+const PURPOSE_MAP: Record<string, ModelPurpose> = {
+  'classification': 'classification',
+  'conversation': 'conversation',
+  'synthesis': 'synthesis',
+  // Legacy tier names stored in DB
+  'haiku': 'classification',
+  'sonnet': 'conversation',
+  'opus': 'synthesis',
 };
 
 export interface CostEntry {
@@ -61,10 +60,8 @@ export function calculateCost(
   inputTokens: number,
   outputTokens: number
 ): number {
-  const pricing = MODEL_PRICING[model] || MODEL_PRICING.default;
-  const inputCost = (inputTokens / 1_000_000) * pricing.input;
-  const outputCost = (outputTokens / 1_000_000) * pricing.output;
-  return Math.round((inputCost + outputCost) * 10000) / 10000;
+  const purpose = PURPOSE_MAP[model] || 'conversation';
+  return Math.round(computeCost(purpose, inputTokens, outputTokens) * 10000) / 10000;
 }
 
 /**

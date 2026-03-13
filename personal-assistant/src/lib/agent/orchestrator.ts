@@ -25,7 +25,7 @@ export interface OrchestratorResult {
 export interface AgentResponse {
   message: string
   model: string
-  tier: string
+  purpose: string
   tokensUsed: number
   toolCalls: { name: string; success: boolean }[]
 }
@@ -76,7 +76,7 @@ export async function orchestrate(
   return {
     message,
     model: selection.model,
-    tier: selection.tier,
+    purpose: selection.purpose,
     tokensUsed,
     toolCalls,
   }

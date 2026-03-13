@@ -7,6 +7,7 @@ import { getTemplate, mergeTemplate } from './templates'
 import { getClientProfile, type ClientProfile } from './client-profiles'
 import { analyzeSentiment, type SentimentResult } from './sentiment'
 import { enrichContact } from './contact-enrichment'
+import { resolveModel } from '@/lib/agent/model-registry'
 import { getOrgNotificationConfig } from '@/lib/org/notification-config'
 
 // ---------------------------------------------------------------------------
@@ -325,7 +326,7 @@ Draft a natural reply. End with "${signOff}" where appropriate.
 Return ONLY the message body, no metadata.`
 
     const message = await client.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: resolveModel('conversation'),
       max_tokens: 400,
       messages: [
         {
@@ -447,7 +448,7 @@ export async function generateWeeklyStatus(
       const client = new Anthropic({ apiKey })
 
       const response = await client.messages.create({
-        model: 'claude-sonnet-4-20250514',
+        model: resolveModel('conversation'),
         max_tokens: 600,
         system: `You are drafting a weekly project status update email for a client.
 Tone: ${voice.tone}
@@ -641,7 +642,7 @@ export async function runClientCommsTick(
     trigger_type: 'scheduled',
     status: 'success',
     result_summary: `processed=${result.processed} drafted=${result.drafted} sent=${result.sent} queued=${result.queued} failed=${result.failed}`,
-    model_used: 'sonnet',
+    model_purpose: 'conversation',
     tokens_in: 0,
     tokens_out: 0,
     cost_estimate: 0,

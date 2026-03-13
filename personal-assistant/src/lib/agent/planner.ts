@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk'
+import { resolveModel } from '@/lib/agent/model-registry'
 import type { ToolGroup } from './tools'
 
 export interface PlanOutput {
@@ -100,7 +101,7 @@ export async function generatePlan(
   try {
     const response = await client.messages.create(
       {
-        model: 'claude-haiku-4-5-20251001',
+        model: resolveModel('classification'),
         max_tokens: 512,
         system: systemPrompt,
         messages: [{ role: 'user', content: userPrompt }],

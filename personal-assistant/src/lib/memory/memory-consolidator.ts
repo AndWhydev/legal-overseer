@@ -10,6 +10,7 @@
  */
 import type { SupabaseClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
+import { resolveModel } from '@/lib/agent/model-registry'
 import { logger } from '@/lib/core/logger'
 import type { ConversationMessageRecord, KeyFact } from '@/lib/conversation/types'
 import {
@@ -220,7 +221,7 @@ export class MemoryConsolidator {
 
     try {
       const response = await this.anthropic.messages.create({
-        model: 'claude-haiku-4-5-20251001',
+        model: resolveModel('classification'),
         max_tokens: 400,
         messages: [{ role: 'user', content: prompt }],
       })
@@ -323,7 +324,7 @@ export class MemoryConsolidator {
         .replace('{NEW_FACT}', newFact)
 
       const response = await this.anthropic.messages.create({
-        model: 'claude-haiku-4-5-20251001',
+        model: resolveModel('classification'),
         max_tokens: 10,
         messages: [{ role: 'user', content: prompt }],
       })

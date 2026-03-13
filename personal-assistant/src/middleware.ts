@@ -19,7 +19,7 @@ const CONTENT_SECURITY_POLICY = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
   "font-src 'self'",
-  "connect-src 'self' https://*.supabase.co https://api.anthropic.com https://api.stripe.com wss://*.supabase.co https://*.ingest.us.sentry.io",
+  "connect-src 'self' https://*.supabase.co https://api.stripe.com wss://*.supabase.co https://*.ingest.us.sentry.io",
   "worker-src 'self' blob:",
   "frame-ancestors 'none'",
   "base-uri 'self'",
@@ -33,6 +33,11 @@ function getClientIp(request: NextRequest): string {
 }
 
 function applySecurityHeaders(response: NextResponse): NextResponse {
+  // Strip provider-identifying headers, set our own
+  response.headers.delete('x-powered-by')
+  response.headers.delete('server')
+  response.headers.set('x-powered-by', 'BitBit')
+
   // Content Security Policy — prevents inline script injection
   response.headers.set('Content-Security-Policy', CONTENT_SECURITY_POLICY)
 

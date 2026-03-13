@@ -33,7 +33,6 @@ export type {
   OfferPackage,
   ConfidenceThresholds,
   ConfidenceDecision,
-  ModelTier,
   OrgSettings,
   NotificationConfig,
   AgentSchedule,
