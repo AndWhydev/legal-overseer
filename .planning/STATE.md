@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-03-01)
 Phase: 19 of 19 (Credential Provisioning & Live Verification)
 Plan: 2 of 3 in current phase
 Status: Executing Phase 19
-Last activity: 2026-03-14 - Completed quick task 16: Inbox checkboxes removed, modifier-key multi-select, inline expandable rows
+Last activity: 2026-03-14 - Completed quick task 17: Inbox toolbar pills, floating bulk bar, invisible AI, ghost draft, sanitizeText
 
 Progress: [####################..........] 100% v1.0+v1.1 | Phase 19 (2/3)
 
@@ -181,9 +181,10 @@ See PROJECT.md Key Decisions table.
 | 14 | Chat UX overhaul: animated face avatar with cursor tracking, smooth streaming, smart scroll, conversation history | 2026-03-14 | e393ba44 | [14-chat-ux-overhaul-animated-face-avatar-wi](./quick/13-chat-ux-overhaul-animated-face-avatar-wi/) |
 | 15 | Redesign inbox: neutral channel icons, time placement fix, edge-knock panel with proximity detection | 2026-03-14 | 2ad5e21d | [14-redesign-inbox-component-neutral-channel](./quick/14-redesign-inbox-component-neutral-channel/) |
 | 16 | Inbox: remove checkboxes, modifier-key multi-select, inline expandable rows replace drawer | 2026-03-14 | 5ea67e91 | [15-inbox-redesign-remove-checkboxes-add-mod](./quick/15-inbox-redesign-remove-checkboxes-add-mod/) |
+| 17 | Inbox toolbar + expanded row redesign: invisible AI, ghost draft, floating bulk bar, sanitization | 2026-03-14 | aba9723d | [17-inbox-toolbar-and-expanded-row-redesign-](./quick/17-inbox-toolbar-and-expanded-row-redesign-/) |
 
 ## Session Continuity
 
 Last session: 2026-03-14
-Stopped at: Completed quick task 16 (Inbox checkboxes removed, modifier-key select, inline expansion)
+Stopped at: Completed quick task 17 (Inbox toolbar pills, floating bulk bar, invisible AI, ghost draft, sanitizeText)
 Resume file: None
