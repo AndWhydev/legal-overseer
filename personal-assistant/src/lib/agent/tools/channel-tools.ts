@@ -1,9 +1,4 @@
 import Anthropic from '@anthropic-ai/sdk'
-import {
-  getAllAdapters,
-  getAdapter,
-} from '@/lib/channels'
-import type { ChannelAdapter, ChannelMessage, ChannelType } from '@/lib/channels'
 import type { AgentToolHandler } from '../tools'
 import { getOrgCredential } from '@/lib/integrations/credentials'
 import { refreshGmailToken } from '@/lib/channels/gmail'
@@ -13,58 +8,27 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 
 export const channelToolDefinitions: Anthropic.Tool[] = [
   {
-    name: 'sync_channels',
-    description: 'Pull new messages from all connected channels (Gmail, Outlook, WhatsApp, iMessage, Calendar, Reminders) and create tasks from actionable items. Use when the user says \'check my messages\', \'sync channels\', or \'what\'s new\'. Defaults to last 24 hours.',
+    name: 'find_messages',
+    description: 'Find messages across all connected channels (email, WhatsApp, Slack, SMS). Use when the user asks about any message, email, or conversation — whether checking for new messages, searching for something specific, or asking about recent correspondence.',
     input_schema: {
       type: 'object' as const,
       properties: {
-        hours_back: {
-          type: 'number',
-          description: 'How many hours back to sync (default: 24)',
-        },
-      },
-    },
-  },
-  {
-    name: 'search_messages',
-    description: 'Search across all channel messages by keyword, sender, or channel type. Searches subject and body text. Use when the user asks about a specific email, message, or conversation. Only searches the last 7 days of cached messages.',
-    input_schema: {
-      type: 'object' as const,
-      properties: {
-        query: { type: 'string', description: 'Search keyword (matches subject and body)' },
-        channel: {
-          type: 'string',
-          enum: ['gmail', 'outlook', 'whatsapp', 'imessage', 'calendar', 'reminders'],
-          description: 'Filter by channel type',
-        },
-        sender: { type: 'string', description: 'Filter by sender name' },
-      },
-      required: ['query'],
-    },
-  },
-  {
-    name: 'search_inbox',
-    description: 'Search the unified inbox for messages matching a query. Can filter by sender, channel, category, date range, and keywords. Use when the user searches their inbox.',
-    input_schema: {
-      type: 'object' as const,
-      properties: {
-        query: { type: 'string', description: 'Search query (matches subject, body, sender)' },
-        channel: { type: 'string', enum: ['gmail', 'outlook', 'whatsapp', 'sms', 'slack'], description: 'Filter by channel' },
-        category: { type: 'string', description: 'Filter by category: priority, updates, feed, receipts' },
+        query: { type: 'string', description: 'What to search for (sender name, subject keywords, content)' },
+        channel: { type: 'string', enum: ['gmail', 'outlook', 'whatsapp', 'sms', 'slack'], description: 'Limit to a specific channel' },
         from: { type: 'string', description: 'Filter by sender name or email' },
-        since: { type: 'string', description: 'ISO date, only messages after this' },
-        limit: { type: 'number', description: 'Max results, default 10' },
+        since: { type: 'string', description: 'ISO date — how far back to look (default: 7 days)' },
+        limit: { type: 'number', description: 'Max results (default: 10)' },
+        unread_only: { type: 'boolean', description: 'Only return unprocessed/unread messages' },
       },
-      required: ['query'],
     },
   },
   {
-    name: 'read_email',
-    description: 'Read the full content of a specific email message by ID. Use when the user wants to read a complete email. Retrieves from database or Gmail API if needed.',
+    name: 'read_message',
+    description: 'Read the full content of a specific message by ID. Use when the user wants to see the complete text of an email or message.',
     input_schema: {
       type: 'object' as const,
       properties: {
-        message_id: { type: 'string', description: 'The message ID to read (from search results)' },
+        message_id: { type: 'string', description: 'The message ID' },
       },
       required: ['message_id'],
     },
@@ -132,41 +96,6 @@ export const channelToolDefinitions: Anthropic.Tool[] = [
         notes: { type: 'string', description: 'Event notes' },
       },
       required: ['title', 'start'],
-    },
-  },
-  {
-    name: 'read_recent_emails',
-    description: 'Read recent emails from connected Gmail/Outlook channels. Queries the channel_messages database. Use when the user asks to check emails, find messages, or review their inbox. Returns subject, sender, body preview, timestamp, and category.',
-    input_schema: {
-      type: 'object' as const,
-      properties: {
-        limit: { type: 'number', description: 'Max emails to return (default: 20, max: 50)' },
-        sender: { type: 'string', description: 'Filter by sender email or name' },
-        category: { type: 'string', description: 'Filter by category (actionable, informational, personal, spam)' },
-        date_from: { type: 'string', description: 'Only emails after this ISO date' },
-        date_to: { type: 'string', description: 'Only emails before this ISO date' },
-      },
-    },
-  },
-  {
-    name: 'search_emails',
-    description: 'Full-text search across email subjects and bodies in the channel_messages database. Use when the user asks to find a specific email, search for a topic, or look up correspondence with someone.',
-    input_schema: {
-      type: 'object' as const,
-      properties: {
-        query: { type: 'string', description: 'Search text (matches subject and body)' },
-        channel: { type: 'string', enum: ['gmail', 'outlook'], description: 'Filter by email channel' },
-        limit: { type: 'number', description: 'Max results (default: 20)' },
-      },
-      required: ['query'],
-    },
-  },
-  {
-    name: 'get_connected_channels',
-    description: 'Check which communication channels are connected and their sync status. Use when the user asks about their integrations, channel status, or when you need to verify email access before reading messages.',
-    input_schema: {
-      type: 'object' as const,
-      properties: {},
     },
   },
   {
@@ -540,6 +469,186 @@ async function insertChannelMessages(
   return newMessages.length
 }
 
+// ---------------------------------------------------------------------------
+// Live search: Gmail API with server-side `q` parameter
+// ---------------------------------------------------------------------------
+
+async function searchGmailLive(
+  supabase: SupabaseClient,
+  orgId: string,
+  filters: { query?: string; from?: string; since?: Date; limit?: number },
+): Promise<SyncedMessage[] | null> {
+  const creds = await getOrgCredential(supabase, orgId, 'gmail')
+  if (!creds) return null
+
+  const clientId = (creds.client_id as string) || process.env.GOOGLE_CLIENT_ID || ''
+  const clientSecret = (creds.client_secret as string) || process.env.GOOGLE_CLIENT_SECRET || ''
+  const refreshToken = creds.refresh_token as string | undefined
+  let accessToken = creds.access_token as string | undefined
+  const tokenExpiresAt = creds.token_expires_at as string | undefined
+
+  if (!accessToken && !refreshToken) return null
+
+  if (!accessToken || (tokenExpiresAt && new Date(tokenExpiresAt).getTime() - 5 * 60 * 1000 <= Date.now())) {
+    if (!refreshToken) return null
+    const refreshed = await refreshGmailToken(supabase, orgId, {
+      client_id: clientId,
+      client_secret: clientSecret,
+      access_token: accessToken,
+      refresh_token: refreshToken,
+      token_expires_at: tokenExpiresAt,
+    })
+    if (!refreshed) return null
+    accessToken = refreshed
+  }
+
+  const queryParts: string[] = ['in:inbox']
+  if (filters.query) queryParts.push(filters.query)
+  if (filters.from) queryParts.push(`from:${filters.from}`)
+  if (filters.since) {
+    const y = filters.since.getUTCFullYear()
+    const m = String(filters.since.getUTCMonth() + 1).padStart(2, '0')
+    const d = String(filters.since.getUTCDate()).padStart(2, '0')
+    queryParts.push(`after:${y}/${m}/${d}`)
+  }
+
+  const gmailQuery = encodeURIComponent(queryParts.join(' '))
+  const maxResults = Math.min(filters.limit || 10, 50)
+
+  const listRes = await fetch(
+    `https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=${maxResults}&q=${gmailQuery}`,
+    { headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' } },
+  )
+
+  if (!listRes.ok) return null
+
+  const listData = (await listRes.json()) as { messages?: Array<{ id: string; threadId: string }> }
+  const items = listData.messages || []
+  if (items.length === 0) return []
+
+  const details = await Promise.all(
+    items.slice(0, maxResults).map(async (item) => {
+      try {
+        const res = await fetch(
+          `https://gmail.googleapis.com/gmail/v1/users/me/messages/${item.id}?format=metadata&metadataHeaders=From&metadataHeaders=Subject&metadataHeaders=Date&metadataHeaders=Message-ID`,
+          { headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' } },
+        )
+        if (!res.ok) return null
+        return (await res.json()) as GmailMessageDetail
+      } catch {
+        return null
+      }
+    }),
+  )
+
+  return details
+    .filter((msg): msg is GmailMessageDetail => msg !== null)
+    .map((msg): SyncedMessage => {
+      const headers = msg.payload?.headers
+      const fromHeader = getGmailHeader(headers, 'From')
+      const { sender, senderEmail } = parseGmailFrom(fromHeader)
+      const subject = getGmailHeader(headers, 'Subject') || '(no subject)'
+      const messageIdHeader = getGmailHeader(headers, 'Message-ID')
+      const dateHeader = getGmailHeader(headers, 'Date')
+
+      let receivedAt: Date
+      const internal = Number(msg.internalDate)
+      if (Number.isFinite(internal) && internal > 0) {
+        receivedAt = new Date(internal)
+      } else if (dateHeader) {
+        receivedAt = new Date(dateHeader)
+        if (isNaN(receivedAt.getTime())) receivedAt = new Date()
+      } else {
+        receivedAt = new Date()
+      }
+
+      return {
+        external_id: messageIdHeader || msg.id,
+        channel: 'gmail',
+        sender,
+        subject,
+        body: (msg.snippet || subject).slice(0, 2000),
+        metadata: {
+          gmail_id: msg.id,
+          thread_id: msg.threadId,
+          message_id: messageIdHeader || msg.id,
+          sender_email: senderEmail,
+          source: 'gmail-api-search',
+        },
+        received_at: receivedAt.toISOString(),
+      }
+    })
+}
+
+// ---------------------------------------------------------------------------
+// Live search: Outlook Graph API with $search / $filter
+// ---------------------------------------------------------------------------
+
+async function searchOutlookLive(
+  supabase: SupabaseClient,
+  orgId: string,
+  filters: { query?: string; from?: string; since?: Date; limit?: number },
+): Promise<SyncedMessage[] | null> {
+  const creds = await getOrgCredential(supabase, orgId, 'outlook')
+  if (!creds) return null
+
+  const accessToken = await resolveAccessToken(
+    creds as { tenant_id?: string; client_id?: string; client_secret?: string; access_token?: string; refresh_token?: string; token_expires_at?: string },
+    supabase,
+    orgId,
+  )
+
+  const sinceDate = filters.since || new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+  const maxResults = Math.min(filters.limit || 10, 50)
+
+  const filterParts: string[] = [`receivedDateTime ge ${sinceDate.toISOString()}`]
+  if (filters.from) {
+    filterParts.push(`contains(from/emailAddress/address, '${filters.from}') or contains(from/emailAddress/name, '${filters.from}')`)
+  }
+
+  const select = 'id,conversationId,sender,subject,bodyPreview,body,receivedDateTime,isRead'
+  let url = `https://graph.microsoft.com/v1.0/me/messages?$select=${select}&$top=${maxResults}&$orderby=receivedDateTime desc`
+
+  if (filters.query) {
+    url += `&$search="${encodeURIComponent(filters.query)}"`
+  } else {
+    url += `&$filter=${encodeURIComponent(filterParts.join(' and '))}`
+  }
+
+  const res = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      Accept: 'application/json',
+      Prefer: 'outlook.body-content-type="text"',
+    },
+  })
+
+  if (!res.ok) return null
+
+  const data = (await res.json()) as { value: Array<{ id: string; conversationId?: string; sender?: { emailAddress?: { name?: string; address?: string } }; subject?: string; bodyPreview?: string; body?: { content?: string }; receivedDateTime?: string; isRead?: boolean }> }
+
+  return (data.value || []).map((msg): SyncedMessage => {
+    const senderName = msg.sender?.emailAddress?.name || msg.sender?.emailAddress?.address || 'Unknown'
+    const senderEmail = msg.sender?.emailAddress?.address || ''
+
+    return {
+      external_id: msg.conversationId || `outlook-${msg.id}`,
+      channel: 'outlook',
+      sender: senderName,
+      subject: msg.subject || '(no subject)',
+      body: (msg.body?.content || msg.bodyPreview || '').slice(0, 2000).trim(),
+      metadata: {
+        outlook_message_id: msg.id,
+        conversation_id: msg.conversationId,
+        sender_email: senderEmail,
+        is_read: msg.isRead,
+        source: 'outlook-graph-search',
+      },
+      received_at: msg.receivedDateTime || new Date().toISOString(),
+    }
+  })
+}
+
 export const channelToolHandlers: Record<string, AgentToolHandler> = {
   async get_upcoming(input, _orgId) {
     const days = (input.days as number) || 7
@@ -599,114 +708,6 @@ export const channelToolHandlers: Record<string, AgentToolHandler> = {
     }
   },
 
-  async sync_channels(input, orgId, supabase) {
-    const hoursBack = (input.hours_back as number) || 24
-    const since = new Date(Date.now() - hoursBack * 60 * 60 * 1000)
-
-    const channelResults: Array<{ channel: string; fetched: number; inserted: number; error?: string }> = []
-
-    // --- Gmail: fetch via API using Supabase OAuth credentials ---
-    try {
-      const gmailMessages = await syncGmailViaSupabase(supabase, orgId, since)
-      if (gmailMessages === null) {
-        channelResults.push({ channel: 'gmail', fetched: 0, inserted: 0, error: 'Gmail not connected' })
-      } else {
-        const inserted = await insertChannelMessages(supabase, orgId, 'gmail', gmailMessages)
-        channelResults.push({ channel: 'gmail', fetched: gmailMessages.length, inserted })
-      }
-    } catch (err) {
-      logger.error('[sync_channels] Gmail sync error:', err)
-      channelResults.push({ channel: 'gmail', fetched: 0, inserted: 0, error: String(err) })
-    }
-
-    // --- Outlook: fetch via Graph API using Supabase OAuth credentials ---
-    try {
-      const outlookMessages = await syncOutlookViaSupabase(supabase, orgId, since)
-      if (outlookMessages === null) {
-        channelResults.push({ channel: 'outlook', fetched: 0, inserted: 0, error: 'Outlook not connected' })
-      } else {
-        const inserted = await insertChannelMessages(supabase, orgId, 'outlook', outlookMessages)
-        channelResults.push({ channel: 'outlook', fetched: outlookMessages.length, inserted })
-      }
-    } catch (err) {
-      logger.error('[sync_channels] Outlook sync error:', err)
-      channelResults.push({ channel: 'outlook', fetched: 0, inserted: 0, error: String(err) })
-    }
-
-    // --- WhatsApp: bridge inserts messages, just report recent count ---
-    try {
-      const { count, error } = await supabase
-        .from('channel_messages')
-        .select('*', { count: 'exact', head: true })
-        .eq('org_id', orgId)
-        .eq('channel', 'whatsapp')
-        .gte('created_at', since.toISOString())
-
-      if (error) {
-        channelResults.push({ channel: 'whatsapp', fetched: 0, inserted: 0, error: error.message })
-      } else {
-        channelResults.push({ channel: 'whatsapp', fetched: count ?? 0, inserted: 0 })
-      }
-    } catch (err) {
-      channelResults.push({ channel: 'whatsapp', fetched: 0, inserted: 0, error: String(err) })
-    }
-
-    // --- iMessage, Calendar, Reminders: macOS-only, skip on server ---
-    for (const ch of ['imessage', 'calendar', 'reminders'] as const) {
-      channelResults.push({ channel: ch, fetched: 0, inserted: 0, error: 'Requires macOS (not available on server)' })
-    }
-
-    const totalFetched = channelResults.reduce((s, r) => s + r.fetched, 0)
-    const totalInserted = channelResults.reduce((s, r) => s + r.inserted, 0)
-    const errors = channelResults.filter(r => r.error).map(r => `${r.channel}: ${r.error}`)
-
-    return {
-      success: true,
-      data: {
-        results: channelResults,
-        summary: `Synced ${totalFetched} messages across channels. Inserted ${totalInserted} new messages.${errors.length > 0 ? ` Notes: ${errors.join('; ')}` : ''}`,
-      },
-    }
-  },
-
-  async search_messages(input, _orgId) {
-    const query = ((input.query as string) || '').toLowerCase()
-    const channelFilter = input.channel as ChannelType | undefined
-    const senderFilter = ((input.sender as string) || '').toLowerCase()
-
-    const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
-    const allMessages: ChannelMessage[] = []
-
-    const targetAdapters: ChannelAdapter[] = channelFilter
-      ? [getAdapter(channelFilter)].filter((a): a is ChannelAdapter => !!a)
-      : getAllAdapters()
-
-    for (const adapter of targetAdapters) {
-      try {
-        const available = await adapter.isAvailable()
-        if (!available) continue
-        const messages = await adapter.pull({}, since)
-        allMessages.push(...messages)
-      } catch {
-        // Skip failed adapters
-      }
-    }
-
-    const filtered = allMessages.filter(m => {
-      const subject = (m.subject || '').toLowerCase()
-      const matchesQuery = subject.includes(query) || m.body.toLowerCase().includes(query)
-      const matchesSender = !senderFilter || m.sender.toLowerCase().includes(senderFilter)
-      return matchesQuery && matchesSender
-    })
-
-    return {
-      success: true,
-      data: {
-        results: filtered.slice(0, 20),
-        total: filtered.length,
-      },
-    }
-  },
 
   async create_reminder(input, _orgId) {
     const title = input.title as string
@@ -737,120 +738,6 @@ export const channelToolHandlers: Record<string, AgentToolHandler> = {
     }
   },
 
-  async read_recent_emails(input, orgId, supabase) {
-    const limit = Math.min((input.limit as number) || 20, 50)
-    const sender = input.sender as string | undefined
-    const category = input.category as string | undefined
-    const dateFrom = input.date_from as string | undefined
-    const dateTo = input.date_to as string | undefined
-
-    let query = supabase
-      .from('channel_messages')
-      .select('id, channel, sender, subject, body, metadata, created_at')
-      .eq('org_id', orgId)
-      .in('channel', ['gmail', 'outlook'])
-      .order('created_at', { ascending: false })
-      .limit(limit)
-
-    if (sender) {
-      query = query.or(`sender.ilike.%${sender}%,metadata->>sender_email.ilike.%${sender}%`)
-    }
-    if (category) {
-      query = query.eq('metadata->>category', category)
-    }
-    if (dateFrom) {
-      query = query.gte('created_at', dateFrom)
-    }
-    if (dateTo) {
-      query = query.lte('created_at', dateTo)
-    }
-
-    const { data, error } = await query
-
-    if (error) {
-      return { success: false, error: `Failed to read emails: ${error.message}` }
-    }
-
-    const emails = (data ?? []).map((m: Record<string, unknown>) => ({
-      id: m.id,
-      channel: m.channel,
-      sender: m.sender,
-      sender_email: (m.metadata as Record<string, unknown>)?.sender_email ?? null,
-      subject: m.subject,
-      body_preview: typeof m.body === 'string' ? m.body.slice(0, 300) : '',
-      category: (m.metadata as Record<string, unknown>)?.category ?? 'unknown',
-      timestamp: m.created_at,
-    }))
-
-    return {
-      success: true,
-      data: { emails, total: emails.length },
-    }
-  },
-
-  async search_emails(input, orgId, supabase) {
-    const searchQuery = input.query as string
-    const channel = input.channel as string | undefined
-    const limit = Math.min((input.limit as number) || 20, 50)
-
-    let query = supabase
-      .from('channel_messages')
-      .select('id, channel, sender, subject, body, metadata, created_at')
-      .eq('org_id', orgId)
-      .in('channel', ['gmail', 'outlook'])
-      .or(`subject.ilike.%${searchQuery}%,body.ilike.%${searchQuery}%`)
-      .order('created_at', { ascending: false })
-      .limit(limit)
-
-    if (channel) {
-      query = query.eq('channel', channel)
-    }
-
-    const { data, error } = await query
-
-    if (error) {
-      return { success: false, error: `Search failed: ${error.message}` }
-    }
-
-    const results = (data ?? []).map((m: Record<string, unknown>) => ({
-      id: m.id,
-      channel: m.channel,
-      sender: m.sender,
-      subject: m.subject,
-      body_preview: typeof m.body === 'string' ? m.body.slice(0, 300) : '',
-      category: (m.metadata as Record<string, unknown>)?.category ?? 'unknown',
-      timestamp: m.created_at,
-    }))
-
-    return {
-      success: true,
-      data: { results, total: results.length, query: searchQuery },
-    }
-  },
-
-  async get_connected_channels(_input, orgId, supabase) {
-    const { data, error } = await supabase
-      .from('channel_connections')
-      .select('channel_type, status, relay_enabled, last_sync, created_at')
-      .eq('org_id', orgId)
-
-    if (error) {
-      return { success: false, error: `Failed to get channels: ${error.message}` }
-    }
-
-    const channels = (data ?? []).map((c: Record<string, unknown>) => ({
-      channel: c.channel_type,
-      status: c.status,
-      relay_enabled: c.relay_enabled,
-      last_sync: c.last_sync,
-      connected_at: c.created_at,
-    }))
-
-    return {
-      success: true,
-      data: { channels, connected_count: channels.length },
-    }
-  },
 
   async schedule_event(input, _orgId) {
     const title = input.title as string
@@ -885,56 +772,6 @@ export const channelToolHandlers: Record<string, AgentToolHandler> = {
     }
   },
 
-  async search_inbox(input, orgId, supabase) {
-    const query = input.query as string
-    const channel = input.channel as string | undefined
-    const category = input.category as string | undefined
-    const from = input.from as string | undefined
-    const since = input.since as string | undefined
-    const limit = Math.min((input.limit as number) || 10, 50)
-
-    let q = supabase
-      .from('channel_messages')
-      .select('id, channel, sender, subject, body, metadata, created_at')
-      .eq('org_id', orgId)
-      .or(`subject.ilike.%${query}%,body.ilike.%${query}%,sender.ilike.%${query}%`)
-      .order('created_at', { ascending: false })
-      .limit(limit)
-
-    if (channel) {
-      q = q.eq('channel', channel)
-    }
-    if (category) {
-      q = q.eq('metadata->>category', category)
-    }
-    if (from) {
-      q = q.or(`sender.ilike.%${from}%,metadata->>sender_email.ilike.%${from}%`)
-    }
-    if (since) {
-      q = q.gte('created_at', since)
-    }
-
-    const { data, error } = await q
-
-    if (error) {
-      return { success: false, error: `Search failed: ${error.message}` }
-    }
-
-    const results = (data ?? []).map((m: Record<string, unknown>) => ({
-      id: m.id,
-      channel: m.channel,
-      sender: m.sender,
-      subject: m.subject,
-      preview: typeof m.body === 'string' ? m.body.slice(0, 300) : '',
-      category: (m.metadata as Record<string, unknown>)?.category ?? 'unknown',
-      receivedAt: m.created_at,
-    }))
-
-    return {
-      success: true,
-      data: { results, total: results.length },
-    }
-  },
 
   async send_gmail(input, orgId, supabase) {
     const to = input.to as string
@@ -1062,7 +899,122 @@ export const channelToolHandlers: Record<string, AgentToolHandler> = {
     }
   },
 
-  async read_email(input, orgId, supabase) {
+  async find_messages(input, orgId, supabase) {
+    const query = (input.query as string) || ''
+    const channel = input.channel as string | undefined
+    const from = input.from as string | undefined
+    const since = input.since ? new Date(input.since as string) : new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+    const limit = Math.min((input.limit as number) || 10, 50)
+    const unreadOnly = input.unread_only as boolean | undefined
+
+    // --- Tier 1: Hot cache (channel_messages table) ---
+    let dbQuery = supabase
+      .from('channel_messages')
+      .select('id, channel, sender, subject, body, metadata, created_at, processed')
+      .eq('org_id', orgId)
+      .gte('created_at', since.toISOString())
+      .order('created_at', { ascending: false })
+      .limit(limit)
+
+    if (channel) dbQuery = dbQuery.eq('channel', channel)
+    if (query) dbQuery = dbQuery.or(`subject.ilike.%${query}%,body.ilike.%${query}%,sender.ilike.%${query}%`)
+    if (from) dbQuery = dbQuery.or(`sender.ilike.%${from}%,metadata->>sender_email.ilike.%${from}%`)
+    if (unreadOnly) dbQuery = dbQuery.eq('processed', false)
+
+    const { data: cached } = await dbQuery
+
+    const lastSyncQuery = await supabase
+      .from('channel_connections')
+      .select('last_sync, channel_type')
+      .eq('org_id', orgId)
+      .order('last_sync', { ascending: false })
+      .limit(1)
+
+    const lastSync = lastSyncQuery.data?.[0]?.last_sync
+    const cacheAgeMs = lastSync ? Date.now() - new Date(lastSync).getTime() : Infinity
+    const isFresh = cacheAgeMs < 5 * 60 * 1000
+
+    const cachedResults = (cached ?? []).map((m: Record<string, unknown>) => ({
+      id: m.id as string,
+      channel: m.channel as string,
+      sender: m.sender as string,
+      sender_email: (m.metadata as Record<string, unknown>)?.sender_email as string ?? null,
+      subject: m.subject as string,
+      preview: typeof m.body === 'string' ? (m.body as string).slice(0, 300) : '',
+      received_at: m.created_at as string,
+      is_read: (m.processed as boolean) ?? false,
+    }))
+
+    if ((cachedResults.length > 0 && isFresh) || (!query && !from && cachedResults.length > 0)) {
+      return {
+        success: true,
+        data: { messages: cachedResults, total: cachedResults.length },
+      }
+    }
+
+    // --- Tier 2: Live API search (targeted, not bulk sync) ---
+    const liveResults: typeof cachedResults = []
+
+    if (!channel || channel === 'gmail') {
+      try {
+        const gmailMessages = await searchGmailLive(supabase, orgId, { query, from, since, limit })
+        if (gmailMessages) {
+          await insertChannelMessages(supabase, orgId, 'gmail', gmailMessages)
+          liveResults.push(...gmailMessages.map(m => ({
+            id: m.external_id,
+            channel: 'gmail' as string,
+            sender: m.sender,
+            sender_email: (m.metadata as Record<string, unknown>)?.sender_email as string ?? null,
+            subject: m.subject,
+            preview: m.body.slice(0, 300),
+            received_at: m.received_at,
+            is_read: false,
+          })))
+        }
+      } catch (err) {
+        logger.warn('[find_messages] Gmail live search failed, using cache:', err)
+      }
+    }
+
+    if (!channel || channel === 'outlook') {
+      try {
+        const outlookMessages = await searchOutlookLive(supabase, orgId, { query, from, since, limit })
+        if (outlookMessages) {
+          await insertChannelMessages(supabase, orgId, 'outlook', outlookMessages)
+          liveResults.push(...outlookMessages.map(m => ({
+            id: m.external_id,
+            channel: 'outlook' as string,
+            sender: m.sender,
+            sender_email: (m.metadata as Record<string, unknown>)?.sender_email as string ?? null,
+            subject: m.subject,
+            preview: m.body.slice(0, 300),
+            received_at: m.received_at,
+            is_read: false,
+          })))
+        }
+      } catch (err) {
+        logger.warn('[find_messages] Outlook live search failed, using cache:', err)
+      }
+    }
+
+    const seenIds = new Set<string>()
+    const merged = [...liveResults, ...cachedResults].filter(m => {
+      const key = `${m.channel}:${m.sender}:${m.subject}`
+      if (seenIds.has(key)) return false
+      seenIds.add(key)
+      return true
+    })
+
+    merged.sort((a, b) => new Date(b.received_at).getTime() - new Date(a.received_at).getTime())
+
+    // --- Tier 3: Graceful degrade (if both tiers returned nothing) ---
+    return {
+      success: true,
+      data: { messages: merged.slice(0, limit), total: merged.length },
+    }
+  },
+
+  async read_message(input, orgId, supabase) {
     const messageId = input.message_id as string
 
     const { data, error } = await supabase
@@ -1077,19 +1029,17 @@ export const channelToolHandlers: Record<string, AgentToolHandler> = {
     }
 
     const metadata = (data.metadata as Record<string, unknown>) || {}
-    const senderEmail = (metadata.sender_email as string) || ''
 
     return {
       success: true,
       data: {
         id: data.id,
         sender: data.sender,
-        senderEmail,
+        sender_email: (metadata.sender_email as string) || '',
         subject: data.subject,
         body: data.body,
         channel: data.channel,
-        category: metadata.category ?? 'unknown',
-        receivedAt: data.created_at,
+        received_at: data.created_at,
       },
     }
   },

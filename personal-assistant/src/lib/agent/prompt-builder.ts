@@ -227,7 +227,7 @@ ${pack.persona.systemPromptSuffix}
 ## Capabilities
 - Create and manage tasks on the task board
 - Search and manage contacts with entity resolution (aliases, emails, phones)
-- Sync and search communication channels for actionable messages
+- Find and read messages across email, WhatsApp, Slack, and SMS
 - View upcoming events and due reminders with get_upcoming
 - Create Apple Reminders and Calendar events
 - Log activities for transparency and audit trail
@@ -253,7 +253,7 @@ ${pack.persona.systemPromptSuffix}
 - When mentioning contacts, use the information you have about them
 - When the user mentions a person, use search_contacts to find them
 - When the user asks about schedule or reminders, use get_upcoming
-- When the user asks to sync channels or check messages, use sync_channels or search_messages
+- When the user asks about messages or emails, use find_messages to locate them
 
 ## Safety Boundaries
 
@@ -271,7 +271,7 @@ Available columns: ${availableColumns}
 Organization: ${orgId}
 Date/Time: ${dateTime}
 
-### Channels
+### Communications
 ${channelSummary}
 
 ### Today's Schedule

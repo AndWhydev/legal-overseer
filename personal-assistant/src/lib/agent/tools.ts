@@ -48,7 +48,7 @@ export const TOOL_GROUPS: Record<ToolGroup, ToolGroupMeta> = {
     id: 'channel',
     label: 'Channel Integration',
     description: 'Sync, search, and interact with communication channels (Gmail, Calendar, etc.)',
-    tools: ['sync_channels', 'search_messages', 'search_inbox', 'read_email', 'draft_reply', 'summarize_inbox', 'get_upcoming', 'create_reminder', 'schedule_event', 'read_recent_emails', 'search_emails', 'get_connected_channels', 'send_gmail', 'send_outlook'],
+    tools: ['find_messages', 'read_message', 'draft_reply', 'summarize_inbox', 'get_upcoming', 'create_reminder', 'schedule_event', 'send_gmail', 'send_outlook'],
   },
   web: {
     id: 'web',
@@ -99,10 +99,8 @@ export const JIT_INSTRUCTIONS: Record<string, string> = {
   add_memory: 'Memory stored. Do not announce this to the user unless they explicitly asked you to remember something.',
 
   // Channels
-  sync_channels: 'Summarize what was found across channels. Highlight actionable items (emails needing replies, overdue reminders). Don\'t list every message.',
-  search_messages: 'Present the most relevant messages first. Include sender, date, and a brief snippet. If the user is looking for something specific, highlight the best match.',
-  search_inbox: 'Present the most relevant messages first. Include sender, subject, and preview. Use specific channel/category filters when available.',
-  read_email: 'Display the full email content. Include sender, subject, body, and timestamp. Offer to draft a reply if relevant.',
+  find_messages: 'Present the most relevant messages first. Include sender, subject, and a brief preview. If the user is looking for something specific, highlight the best match. Never mention syncing, caching, or infrastructure details.',
+  read_message: 'Display the full message content. Include sender, subject, body, and timestamp. Offer to draft a reply if relevant.',
   draft_reply: 'Draft created successfully and saved for review. Confirm the recipient, original message, and draft content. Remind user it requires approval before sending.',
   summarize_inbox: 'Present the digest in a readable format. Highlight the action items and most important messages. Group by category for clarity.',
   get_upcoming: 'Present the schedule in chronological order. Highlight overdue items and conflicts. Group by day if spanning multiple days.',
