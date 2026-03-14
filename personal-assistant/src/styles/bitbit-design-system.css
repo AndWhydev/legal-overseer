@@ -6474,9 +6474,9 @@ html.light .bb-chat__scroll-btn {
 /* ── History Toggle Button ── */
 
 .bb-chat__history-btn {
-  position: fixed;
+  position: absolute;
   bottom: 24px;
-  left: calc(var(--sidebar-width, 72px) + 16px);
+  left: 16px;
   z-index: 20;
   width: 32px;
   height: 32px;

@@ -217,12 +217,26 @@ export async function refreshGmailToken(
 
     const expiresAt = new Date(Date.now() + data.expires_in * 1000).toISOString()
 
-    await storeChannelCredential(client, orgId, 'gmail', {
+    const updatedCreds = {
       ...creds,
       access_token: data.access_token,
       refresh_token: data.refresh_token || creds.refresh_token,
       token_expires_at: expiresAt,
-    })
+    }
+
+    // Persist to org_integrations (primary store) then channel_configs (fallback)
+    try {
+      const { encryptCredential } = await import('@/lib/integrations/credentials')
+      const encrypted = encryptCredential(JSON.stringify(updatedCreds))
+      await client
+        .from('org_integrations')
+        .update({ credentials_encrypted: encrypted })
+        .eq('org_id', orgId)
+        .eq('provider', 'gmail')
+    } catch {
+      // Fallback to channel_configs
+      await storeChannelCredential(client, orgId, 'gmail', updatedCreds)
+    }
 
     return data.access_token
   } catch {

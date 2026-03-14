@@ -154,21 +154,36 @@ export async function resolveAccessToken(
     try {
       const tokens = await refreshAccessToken(creds)
 
-      // Persist refreshed tokens to Supabase
+      // Persist refreshed tokens to Supabase (both tables for compatibility)
       if (client && orgId) {
         const expiresAt = new Date(Date.now() + tokens.expires_in * 1000).toISOString()
-        await client
-          .from('channel_configs')
-          .update({
-            credentials: {
-              ...creds,
-              access_token: tokens.access_token,
-              refresh_token: tokens.refresh_token || creds.refresh_token,
-              token_expires_at: expiresAt,
-            },
-          })
-          .eq('org_id', orgId)
-          .eq('channel_type', 'outlook')
+        const updatedCreds = {
+          ...creds,
+          access_token: tokens.access_token,
+          refresh_token: tokens.refresh_token || creds.refresh_token,
+          token_expires_at: expiresAt,
+        }
+
+        // Update org_integrations (primary credential store)
+        try {
+          const { encryptCredential } = await import('@/lib/integrations/credentials')
+          const encrypted = encryptCredential(JSON.stringify(updatedCreds))
+          await client
+            .from('org_integrations')
+            .update({
+              credentials_encrypted: encrypted,
+              metadata: { connected_at: creds.connected_at || new Date().toISOString() },
+            })
+            .eq('org_id', orgId)
+            .eq('provider', 'outlook')
+        } catch {
+          // Fallback to channel_configs if org_integrations not available
+          await client
+            .from('channel_configs')
+            .update({ credentials: updatedCreds })
+            .eq('org_id', orgId)
+            .eq('channel_type', 'outlook')
+        }
       }
 
       return tokens.access_token
