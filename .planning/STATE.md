@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-03-01)
 Phase: 19 of 19 (Credential Provisioning & Live Verification)
 Plan: 2 of 3 in current phase
 Status: Executing Phase 19
-Last activity: 2026-03-14 - Completed quick task 19: Fix chain-of-thought timeline stacking — steps append correctly
+Last activity: 2026-03-14 - Completed quick task 20: Inbox collapse/expand UX design specification
 
 Progress: [####################..........] 100% v1.0+v1.1 | Phase 19 (2/3)
 
@@ -184,9 +184,10 @@ See PROJECT.md Key Decisions table.
 | 17 | Inbox toolbar + expanded row redesign: invisible AI, ghost draft, floating bulk bar, sanitization | 2026-03-14 | aba9723d | [17-inbox-toolbar-and-expanded-row-redesign-](./quick/17-inbox-toolbar-and-expanded-row-redesign-/) |
 | 18 | Inbox polish: fix hover time, inline filter chips, chat-style reply, icon actions, continuous card | 2026-03-14 | 04e22afb | [18-inbox-polish-fix-hover-time-disappear-re](./quick/18-inbox-polish-fix-hover-time-disappear-re/) |
 | 19 | Fix chain-of-thought timeline stacking: narration isolation + controlled component sync | 2026-03-14 | 77baf941 | [19-fix-chain-of-thought-timeline-stacking-s](./quick/19-fix-chain-of-thought-timeline-stacking-s/) |
+| 20 | Inbox collapse/expand UX design: missing collapse button fix, competitive analysis, 3-phase roadmap | 2026-03-14 | 71eeaeac | [20-inbox-component-ux-redesign-make-collaps](./quick/20-inbox-component-ux-redesign-make-collaps/) |
 
 ## Session Continuity
 
 Last session: 2026-03-14
-Stopped at: Completed quick task 19 (Fix chain-of-thought timeline stacking -- narration ref isolation + controlled component fix)
+Stopped at: Completed quick task 20 (Inbox collapse/expand UX design specification -- 1205-line design document)
 Resume file: None
