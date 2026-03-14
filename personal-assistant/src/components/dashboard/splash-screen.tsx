@@ -16,71 +16,6 @@ interface SplashScreenProps {
   children: React.ReactNode;
 }
 
-/* ── Orbital ring — thin SVG circle that draws itself ── */
-function OrbitalRing() {
-  const radius = 52;
-  const circumference = 2 * Math.PI * radius;
-
-  return (
-    <motion.div
-      style={{
-        position: 'absolute',
-        inset: -16,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-      initial={{ rotate: 0 }}
-      animate={{ rotate: 360 }}
-      transition={{
-        duration: 8,
-        repeat: Infinity,
-        ease: 'linear',
-      }}
-    >
-      <svg
-        width="100%"
-        height="100%"
-        viewBox="0 0 112 112"
-        fill="none"
-        style={{ overflow: 'visible' }}
-      >
-        {/* Track — faint full circle */}
-        <circle
-          cx="56"
-          cy="56"
-          r={radius}
-          stroke="var(--ring-track-color)"
-          strokeWidth="1"
-          fill="none"
-        />
-        {/* Arc — animated dash that chases around the ring */}
-        <motion.circle
-          cx="56"
-          cy="56"
-          r={radius}
-          stroke="var(--ring-arc-color)"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-          fill="none"
-          initial={{
-            strokeDasharray: `${circumference * 0.3} ${circumference * 0.7}`,
-            strokeDashoffset: 0,
-          }}
-          animate={{
-            strokeDashoffset: -circumference,
-          }}
-          transition={{
-            duration: 3,
-            repeat: Infinity,
-            ease: 'linear',
-          }}
-        />
-      </svg>
-    </motion.div>
-  );
-}
-
 /* ── Floating particle — a single gentle orbiting dot ── */
 function FloatingParticle({ index }: { index: number }) {
   const seed = (i: number, m: number) => ((i * 7919 + 104729) % m) / m;
@@ -169,39 +104,33 @@ function AmbientGlow() {
   );
 }
 
-/* ── Progress line — thin bar that fills smoothly ── */
-function ProgressLine() {
+/* ── Loading shimmer — bouncing dots ── */
+function LoadingShimmer() {
   return (
-    <div
-      style={{
-        width: 48,
-        height: 2,
-        borderRadius: 1,
-        background: 'var(--ring-track-color)',
-        overflow: 'hidden',
-        position: 'relative',
-      }}
-    >
-      <motion.div
-        style={{
-          height: '100%',
-          borderRadius: 1,
-          background: 'var(--progress-color)',
-          position: 'absolute',
-          top: 0,
-          left: 0,
-        }}
-        initial={{ width: '0%', x: 0 }}
-        animate={{
-          width: ['0%', '40%', '40%', '0%'],
-          x: ['0%', '30%', '100%', '100%'],
-        }}
-        transition={{
-          duration: 1.6,
-          repeat: Infinity,
-          ease: 'easeInOut',
-        }}
-      />
+    <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
+      {[0, 1, 2, 3, 4].map((i) => (
+        <motion.div
+          key={i}
+          style={{
+            width: 3,
+            height: 3,
+            borderRadius: '50%',
+            background: 'var(--text-primary)',
+          }}
+          initial={{ opacity: 0.2, y: 0, scale: 0.8 }}
+          animate={{
+            opacity: [0.2, 1, 0.2],
+            y: [0, -6, 0],
+            scale: [0.8, 1.3, 0.8],
+          }}
+          transition={{
+            duration: 0.9,
+            delay: i * 0.12,
+            repeat: Infinity,
+            ease: [0.25, 1, 0.5, 1],
+          }}
+        />
+      ))}
     </div>
   );
 }
@@ -309,9 +238,6 @@ export function SplashScreen({
                   {/* Ambient glow — soft pulse */}
                   <AmbientGlow />
 
-                  {/* Orbital ring — draws itself */}
-                  <OrbitalRing />
-
                   {/* Floating particles — gentle orbit */}
                   {particles.map((_, i) => (
                     <FloatingParticle key={`p-${i}`} index={i} />
@@ -390,13 +316,13 @@ export function SplashScreen({
                 </div>
               </div>
 
-              {/* Progress line — appears after text */}
+              {/* Loading dots — appears after text */}
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: phase >= 1 ? 1 : 0 }}
                 transition={{ delay: phase >= 1 ? 0.35 : 0, duration: 0.4 }}
               >
-                <ProgressLine />
+                <LoadingShimmer />
               </motion.div>
             </motion.div>
           </motion.div>
