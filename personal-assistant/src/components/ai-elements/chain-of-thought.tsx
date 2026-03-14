@@ -41,16 +41,21 @@ export const ChainOfThought = memo(
     onOpenChange,
     children,
   }: ChainOfThoughtProps) => {
-    const [isOpen, setIsOpen] = useState(open ?? defaultOpen);
-
-    const handleOpenChange = (newOpen: boolean) => {
-      setIsOpen(newOpen);
-      onOpenChange?.(newOpen);
-    };
+    const isControlled = open !== undefined
+    const [internalOpen, setInternalOpen] = useState(defaultOpen)
+    const isOpen = isControlled ? open! : internalOpen
 
     const chainOfThoughtContext = useMemo(
-      () => ({ isOpen, setIsOpen: handleOpenChange }),
-      [isOpen]
+      () => ({
+        isOpen,
+        setIsOpen: (newOpen: boolean) => {
+          if (!isControlled) {
+            setInternalOpen(newOpen)
+          }
+          onOpenChange?.(newOpen)
+        },
+      }),
+      [isOpen, isControlled, onOpenChange]
     );
 
     return (
