@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'motion/react'
-import { SFPlus, SFXmark } from 'sf-symbols-lib'
+import { Plus, X } from 'lucide-react'
 
 export interface Thread {
   id: string
@@ -87,7 +87,7 @@ export function ConversationDrawer({
                 onClose()
               }}
             >
-              <SFPlus size={14} />
+              <Plus size={14} />
               New chat
             </button>
             <button
@@ -104,7 +104,7 @@ export function ConversationDrawer({
                 alignItems: 'center',
               }}
             >
-              <SFXmark size={16} />
+              <X size={16} />
             </button>
           </div>
         </div>

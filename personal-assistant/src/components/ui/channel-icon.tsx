@@ -10,7 +10,7 @@ import {
   siApple,
   siProtonmail,
 } from 'simple-icons';
-import { SFEnvelope } from 'sf-symbols-lib';
+import { Mail } from 'lucide-react';
 
 const CHANNEL_MAP: Record<string, { path: string; title: string }> = {
   gmail: siGmail,
@@ -41,7 +41,7 @@ export function ChannelIcon({ channel, size = 16, className, color }: ChannelIco
   const icon = resolveChannelIcon(channel);
 
   if (!icon) {
-    return <SFEnvelope size={size} className={className} style={color ? { color } : undefined} />;
+    return <Mail size={size} className={className} style={color ? { color } : undefined} />;
   }
 
   return (

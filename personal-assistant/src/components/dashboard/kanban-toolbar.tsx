@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { SFMagnifyingglass, SFPlus, SFXmark, SFChevronDown } from 'sf-symbols-lib'
+import { Search, Plus, X, ChevronDown } from 'lucide-react'
 
 export interface FilterState {
   priority: string | null
@@ -177,10 +177,10 @@ export function KanbanToolbar({
               }}
               style={{ display: 'flex', cursor: 'pointer' }}
             >
-              <SFXmark size={10} />
+              <X size={10} />
             </span>
           ) : (
-            <SFChevronDown size={10} style={{ opacity: 0.6 }} />
+            <ChevronDown size={10} style={{ opacity: 0.6 }} />
           )}
         </button>
         {openMenu === 'priority' && (
@@ -241,10 +241,10 @@ export function KanbanToolbar({
               }}
               style={{ display: 'flex', cursor: 'pointer' }}
             >
-              <SFXmark size={10} />
+              <X size={10} />
             </span>
           ) : (
-            <SFChevronDown size={10} style={{ opacity: 0.6 }} />
+            <ChevronDown size={10} style={{ opacity: 0.6 }} />
           )}
         </button>
         {openMenu === 'source' && (
@@ -285,7 +285,7 @@ export function KanbanToolbar({
       {/* Spacer */}
       <div style={{ flex: 1 }} />
 
-      {/* SFMagnifyingglass with animation — B2: smooth expand/collapse with blur effect */}
+      {/* Search with animation — B2: smooth expand/collapse with blur effect */}
       <div style={{
         display: 'flex',
         alignItems: 'center',
@@ -308,7 +308,7 @@ export function KanbanToolbar({
           }
         }}
       >
-        <SFMagnifyingglass size={12} style={{ color: 'var(--text-dim)', flexShrink: 0 }} />
+        <Search size={12} style={{ color: 'var(--text-dim)', flexShrink: 0 }} />
         {searchExpanded ? (
           <input
             ref={searchInputRef}
@@ -358,7 +358,7 @@ export function KanbanToolbar({
           e.currentTarget.style.color = 'var(--text-secondary)'
         }}
       >
-        <SFPlus size={13} />
+        <Plus size={13} />
         New
       </button>
     </div>

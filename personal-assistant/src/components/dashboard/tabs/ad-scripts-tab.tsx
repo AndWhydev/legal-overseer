@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useCallback, useEffect, useState } from 'react'
-import { SFDocumentOnDocument, SFCheckmark, SFArrowClockwise, SFChevronDown, SFChevronRight, SFFilm, SFSparkles } from 'sf-symbols-lib'
+import { Copy, Check, Loader2, ChevronDown, ChevronRight, Film, Sparkles } from 'lucide-react'
 import { TabShell } from '@/components/ui/tab-shell'
 import { EmptyState } from '@/components/ui/empty-state'
 
@@ -209,7 +209,7 @@ const sectionHeader: React.CSSProperties = {
 }
 
 // ---------------------------------------------------------------------------
-// SFDocumentOnDocument button
+// Copy button
 // ---------------------------------------------------------------------------
 
 function CopyButton({ text }: { text: string }) {
@@ -243,7 +243,7 @@ function CopyButton({ text }: { text: string }) {
       }}
       title="Copy to clipboard"
     >
-      {copied ? <SFCheckmark size={12} /> : <SFDocumentOnDocument size={12} />}
+      {copied ? <Check size={12} /> : <Copy size={12} />}
       <span style={{ fontSize: 11 }}>{copied ? 'Copied' : 'Copy'}</span>
     </button>
   )
@@ -275,7 +275,7 @@ function StoryboardView({ shots }: { shots: StoryboardShot[] }) {
         onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--text-primary)')}
         onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-secondary)')}
       >
-        {expanded ? <SFChevronDown size={12} /> : <SFChevronRight size={12} />}
+        {expanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
         Storyboard ({shots.length} shots)
       </button>
 
@@ -579,12 +579,12 @@ function GenerateForm({
       >
         {isGenerating ? (
           <>
-            <SFArrowClockwise size={16} className="animate-spin" />
+            <Loader2 size={16} className="animate-spin" />
             Generating...
           </>
         ) : (
           <>
-            <SFFilm size={16} />
+            <Film size={16} />
             Generate Scripts
           </>
         )}
@@ -760,7 +760,7 @@ function AdScriptsTab() {
         {/* No offers state */}
         {offers.length === 0 && !currentResult ? (
           <EmptyState
-            icon={<SFSparkles size={40} />}
+            icon={<Sparkles size={40} />}
             title="No offer packages found"
             description="Create offer packages or service tiers in your system to generate ad scripts."
           />

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { SFDollarsignCircle, SFArrowUpRight, SFExclamationmarkTriangle, SFChartBar, SFBolt } from 'sf-symbols-lib';
+import { DollarSign, TrendingUp, AlertTriangle, BarChart3, Zap } from 'lucide-react';
 import { TabShell } from '@/components/ui/tab-shell';
 import { AlertBanner } from '@/components/ui/alert-banner';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -271,7 +271,7 @@ function CostsTab() {
         {/* Budget Alerts */}
         {alerts && (alerts.daily_exceeded || alerts.monthly_exceeded) && (
           <div style={budgetAlertStyle}>
-            <SFExclamationmarkTriangle size={20} style={{ color: '#eab308', flexShrink: 0 }} />
+            <AlertTriangle size={20} style={{ color: '#eab308', flexShrink: 0 }} />
             <div style={budgetAlertText}>
               {alerts.daily_exceeded && (
                 <p style={{ margin: 0, marginBottom: alerts.monthly_exceeded ? 4 : 0 }}>
@@ -299,7 +299,7 @@ function CostsTab() {
 
         {!summary && !loading && !error && (
           <EmptyState
-            icon={<SFBolt size={40} />}
+            icon={<Zap size={40} />}
             title="No cost data available"
             description="Cost tracking will appear here once you start using AI agents and models."
           />
@@ -310,22 +310,22 @@ function CostsTab() {
             {/* Summary Cards */}
             <div style={summaryGrid}>
               <SummaryCard
-                icon={<SFDollarsignCircle size={16} />}
+                icon={<DollarSign size={16} />}
                 label="Total Cost"
                 value={formatUSD(summary.total_cost_usd)}
               />
               <SummaryCard
-                icon={<SFChartBar size={16} />}
+                icon={<BarChart3 size={16} />}
                 label="Total Runs"
                 value={String(summary.total_runs)}
               />
               <SummaryCard
-                icon={<SFArrowUpRight size={16} />}
+                icon={<TrendingUp size={16} />}
                 label="Input Tokens"
                 value={formatTokens(summary.total_input_tokens)}
               />
               <SummaryCard
-                icon={<SFArrowUpRight size={16} />}
+                icon={<TrendingUp size={16} />}
                 label="Output Tokens"
                 value={formatTokens(summary.total_output_tokens)}
               />

@@ -1,6 +1,19 @@
 'use client'
 
-import { SFBolt, SFChartBar, SFCheckmarkCircle, SFExclamationmarkTriangle, SFShippingbox, SFTimer, SFTag, SFWrenchAndScrewdriver, SFScissors, SFClock, SFDollarsignCircle, SFPerson2 } from 'sf-symbols-lib'
+import {
+  Zap,
+  BarChart3,
+  CheckCircle,
+  AlertTriangle,
+  Package,
+  Timer,
+  Tag,
+  Wrench,
+  Scissors,
+  Clock,
+  DollarSign,
+  Users,
+} from 'lucide-react'
 import { AIButton } from '../ai-button'
 import {
   ProgressRingIcon,
@@ -48,10 +61,10 @@ export function DataVizShowcase() {
       {/* Section: Progress Ring Icons */}
       <Section title="ProgressRingIcon">
         <div style={{ display: 'flex', gap: 20, alignItems: 'center' }}>
-          <ProgressRingIcon value={75} icon={<SFBolt size={18} />} color="var(--bb-orange)" />
-          <ProgressRingIcon value={45} icon={<SFChartBar size={18} />} color="var(--bb-blue)" />
-          <ProgressRingIcon value={90} icon={<SFCheckmarkCircle size={18} />} color="var(--bb-green)" />
-          <ProgressRingIcon value={20} icon={<SFExclamationmarkTriangle size={18} />} color="var(--bb-red)" />
+          <ProgressRingIcon value={75} icon={<Zap size={18} />} color="var(--bb-orange)" />
+          <ProgressRingIcon value={45} icon={<BarChart3 size={18} />} color="var(--bb-blue)" />
+          <ProgressRingIcon value={90} icon={<CheckCircle size={18} />} color="var(--bb-green)" />
+          <ProgressRingIcon value={20} icon={<AlertTriangle size={18} />} color="var(--bb-red)" />
         </div>
       </Section>
 
@@ -169,10 +182,10 @@ export function DataVizShowcase() {
       <Section title="ProcessPipeline">
         <ProcessPipeline
           stages={[
-            { label: 'Packing', sublabel: 'Line 03', status: 'active', icon: <SFShippingbox size={16} /> },
-            { label: 'Labelling', sublabel: 'Line 03', status: 'active', icon: <SFTag size={16} /> },
-            { label: 'Riveting', sublabel: 'Line 03', status: 'warning', icon: <SFWrenchAndScrewdriver size={16} /> },
-            { label: 'Cutting', sublabel: 'Line 03', status: 'error', icon: <SFScissors size={16} /> },
+            { label: 'Packing', sublabel: 'Line 03', status: 'active', icon: <Package size={16} /> },
+            { label: 'Labelling', sublabel: 'Line 03', status: 'active', icon: <Tag size={16} /> },
+            { label: 'Riveting', sublabel: 'Line 03', status: 'warning', icon: <Wrench size={16} /> },
+            { label: 'Cutting', sublabel: 'Line 03', status: 'error', icon: <Scissors size={16} /> },
           ]}
         />
       </Section>
@@ -209,7 +222,7 @@ export function DataVizShowcase() {
             trendValue="+12%"
             sparklineData={sampleSparkline}
             color="var(--bb-teal)"
-            icon={<SFClock size={16} />}
+            icon={<Clock size={16} />}
           />
           <KPIWidget
             label="Revenue"
@@ -218,7 +231,7 @@ export function DataVizShowcase() {
             trendValue="+8.3%"
             sparklineData={[20, 25, 22, 30, 28, 35, 40, 38, 42]}
             color="var(--bb-green)"
-            icon={<SFDollarsignCircle size={16} />}
+            icon={<DollarSign size={16} />}
           />
           <KPIWidget
             label="Active Users"
@@ -227,7 +240,7 @@ export function DataVizShowcase() {
             trendValue="-2.1%"
             sparklineData={[50, 48, 45, 42, 44, 40, 38]}
             color="var(--bb-orange)"
-            icon={<SFPerson2 size={16} />}
+            icon={<Users size={16} />}
           />
         </div>
       </Section>

@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useRealtimeSubscription } from '@/lib/realtime/supabase-realtime';
-import { SFCheckmarkShield } from 'sf-symbols-lib';
+import { ShieldCheck } from 'lucide-react';
 import { WidgetCard } from './widget-card';
 import { EmptyState } from '@/components/ui/empty-state';
 
@@ -41,11 +41,11 @@ export function PendingApprovalsWidget() {
     <WidgetCard
       title="Action Required"
       subtitle={`${approvals.length} pending approvals`}
-      icon={<SFCheckmarkShield size={20} style={{ color: 'var(--bb-status-warning)' }} />}
+      icon={<ShieldCheck size={20} style={{ color: 'var(--bb-status-warning)' }} />}
     >
       <div className="space-y-4">
         {approvals.length === 0 ? (
-          <EmptyState icon={<SFCheckmarkShield size={32} />} title="No pending approvals" description="All actions have been reviewed." />
+          <EmptyState icon={<ShieldCheck size={32} />} title="No pending approvals" description="All actions have been reviewed." />
         ) : (
           approvals.map(app => (
             <div key={app.id as string} className="flex items-center justify-between p-3 rounded-md bg-[var(--bg-elevated)] border border-[var(--border-subtle)]">

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect } from 'react';
-import { SFXmark } from 'sf-symbols-lib';
+import { X } from 'lucide-react';
 
 interface ShortcutItem {
   keys: string[];
@@ -15,7 +15,6 @@ const SHORTCUTS: ShortcutItem[] = [
   { keys: ['k', '↑'], description: 'Previous message', category: 'Navigation' },
   { keys: ['Enter', 'o'], description: 'Open message', category: 'Navigation' },
   { keys: ['g', 'i'], description: 'Go to inbox', category: 'Navigation' },
-  { keys: [']'], description: 'Toggle inbox panel', category: 'Navigation' },
 
   // Actions
   { keys: ['e'], description: 'Archive', category: 'Actions' },
@@ -219,7 +218,7 @@ export function InboxShortcutsOverlay({ isOpen, onClose }: InboxShortcutsOverlay
             }}
             aria-label="Close shortcuts overlay"
           >
-            <SFXmark size={18} />
+            <X size={18} />
           </button>
         </div>
 

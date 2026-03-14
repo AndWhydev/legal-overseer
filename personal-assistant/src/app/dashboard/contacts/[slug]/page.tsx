@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
-import { SFArrowLeft, SFEnvelope, SFPhone, SFTag, SFClock, SFCheckmarkCircle } from 'sf-symbols-lib'
+import { ArrowLeft, Mail, Phone, Tag, Clock, CheckCircle2 } from 'lucide-react'
 import Link from 'next/link'
 import { createClient, isSupabaseConfigured } from '@/lib/supabase/server'
 import type { Contact, Task, ActivityEntry } from '@/lib/types'
@@ -40,7 +40,7 @@ export default async function ContactDetailPage({
           href="/dashboard/contacts"
           className="flex items-center gap-1 text-sm text-primary hover:underline"
         >
-          <SFArrowLeft className="size-3" />
+          <ArrowLeft className="size-3" />
           Back to contacts
         </Link>
       </div>
@@ -79,7 +79,7 @@ export default async function ContactDetailPage({
         href="/dashboard/contacts"
         className="flex w-fit items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
       >
-        <SFArrowLeft className="size-3" />
+        <ArrowLeft className="size-3" />
         Back to contacts
       </Link>
 
@@ -99,12 +99,12 @@ export default async function ContactDetailPage({
           <div className="mt-1 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
             {profile.emails.map((e: string) => (
               <span key={e} className="flex items-center gap-1">
-                <SFEnvelope className="size-3" /> {e}
+                <Mail className="size-3" /> {e}
               </span>
             ))}
             {profile.phones.map((p: string) => (
               <span key={p} className="flex items-center gap-1">
-                <SFPhone className="size-3" /> {p}
+                <Phone className="size-3" /> {p}
               </span>
             ))}
           </div>
@@ -152,7 +152,7 @@ export default async function ContactDetailPage({
                       key={t}
                       className="flex items-center gap-1 rounded-md bg-muted px-2 py-0.5 text-xs"
                     >
-                      <SFTag className="size-2.5" /> {t}
+                      <Tag className="size-2.5" /> {t}
                     </span>
                   ))}
                 </div>
@@ -173,7 +173,7 @@ export default async function ContactDetailPage({
                     key={task.id}
                     className="flex items-center gap-2 rounded-md border border-border/30 bg-muted/20 px-3 py-2 text-sm"
                   >
-                    <SFCheckmarkCircle
+                    <CheckCircle2
                       className={`size-4 ${
                         task.status === 'completed'
                           ? 'text-green-400'
@@ -207,7 +207,7 @@ export default async function ContactDetailPage({
                     key={act.id}
                     className="flex items-center gap-3 text-sm"
                   >
-                    <SFClock className="size-3.5 text-muted-foreground" />
+                    <Clock className="size-3.5 text-muted-foreground" />
                     <span className="flex-1">{act.action}</span>
                     <span className="text-xs text-muted-foreground">
                       {new Date(act.created_at).toLocaleDateString()}

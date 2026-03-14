@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { SFMagnifyingglass, SFPerson, SFBriefcase, SFDocument, SFCheckmarkSquare, SFChevronRight, SFXmark, SFBook } from 'sf-symbols-lib';
+import { Search, User, Briefcase, FileText, CheckSquare, ChevronRight, X, Book } from 'lucide-react';
 import { TabShell } from '@/components/ui/tab-shell';
 import { EmptyState } from '@/components/ui/empty-state';
 
@@ -40,10 +40,10 @@ interface EntityGraph {
 // ─── Icon Map ──────────────────────────────────────────────────────────────
 
 const TYPE_ICON: Record<EntityType, React.ElementType> = {
-  contact: SFPerson,
-  project: SFBriefcase,
-  invoice: SFDocument,
-  task: SFCheckmarkSquare,
+  contact: User,
+  project: Briefcase,
+  invoice: FileText,
+  task: CheckSquare,
 };
 
 // Muted color palette for entity types (desaturated versions)
@@ -146,7 +146,7 @@ function KnowledgeTab() {
   const [closeHovered, setCloseHovered] = useState(false);
   const debounceRef = useRef<NodeJS.Timeout>(undefined);
 
-  // SFMagnifyingglass with debounce
+  // Search with debounce
   const handleSearch = useCallback((value: string) => {
     setQuery(value);
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -193,9 +193,9 @@ function KnowledgeTab() {
   return (
     <TabShell>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 24, padding: '24px' }}>
-        {/* ─── SFMagnifyingglass Bar ───────────────────────────────────────────────────────── */}
+        {/* ─── Search Bar ───────────────────────────────────────────────────────── */}
         <div style={{ position: 'relative' }}>
-          <SFMagnifyingglass
+          <Search
             size={18}
             style={{
               position: 'absolute',
@@ -276,7 +276,7 @@ function KnowledgeTab() {
                 }}
                 aria-label="Close graph"
               >
-                <SFXmark size={18} />
+                <X size={18} />
               </button>
             </div>
 
@@ -316,7 +316,7 @@ function KnowledgeTab() {
                   >
                     {(() => {
                       const root = graph.nodes[0];
-                      const Icon = TYPE_ICON[root.type] ?? SFBriefcase;
+                      const Icon = TYPE_ICON[root.type] ?? Briefcase;
                       const color = TYPE_COLOR[root.type] ?? '#888';
                       return (
                         <>
@@ -374,7 +374,7 @@ function KnowledgeTab() {
                       }}
                     >
                       {graph.nodes.slice(1).map((node) => {
-                        const Icon = TYPE_ICON[node.type] ?? SFBriefcase;
+                        const Icon = TYPE_ICON[node.type] ?? Briefcase;
                         const color = TYPE_COLOR[node.type] ?? '#888';
                         const edge = graph.edges.find(
                           (e) => e.target === node.id || e.source === node.id
@@ -489,7 +489,7 @@ function KnowledgeTab() {
                       gap: 12,
                     }}
                   >
-                    <SFChevronRight size={32} style={{ color: 'var(--text-dim)' }} />
+                    <ChevronRight size={32} style={{ color: 'var(--text-dim)' }} />
                     <span style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
                       No connected entities found.
                     </span>
@@ -507,7 +507,7 @@ function KnowledgeTab() {
                   gap: 12,
                 }}
               >
-                <SFDocument size={32} style={{ color: 'var(--text-dim)' }} />
+                <FileText size={32} style={{ color: 'var(--text-dim)' }} />
                 <span style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
                   Could not load graph data.
                 </span>
@@ -516,7 +516,7 @@ function KnowledgeTab() {
           </div>
         )}
 
-        {/* ─── SFMagnifyingglass Results ───────────────────────────────────────────────────── */}
+        {/* ─── Search Results ───────────────────────────────────────────────────── */}
         {!selectedEntity && results.length > 0 && (
           <div>
             <div style={sectionHeader}>Search Results</div>
@@ -528,7 +528,7 @@ function KnowledgeTab() {
               }}
             >
               {results.map((result) => {
-                const Icon = TYPE_ICON[result.type] ?? SFBriefcase;
+                const Icon = TYPE_ICON[result.type] ?? Briefcase;
                 const color = TYPE_COLOR[result.type] ?? '#888';
                 const isHovered = hoveredResult === `${result.type}-${result.id}`;
 
@@ -625,7 +625,7 @@ function KnowledgeTab() {
         {/* ─── Empty States ──────────────────────────────────────────────────────── */}
         {!selectedEntity && !searching && query && results.length === 0 && (
           <EmptyState
-            icon={<SFMagnifyingglass size={32} />}
+            icon={<Search size={32} />}
             title={`No results for "${query}"`}
             description="Try searching for contacts, projects, invoices, or tasks."
           />
@@ -633,7 +633,7 @@ function KnowledgeTab() {
 
         {!selectedEntity && !query && (
           <EmptyState
-            icon={<SFBook size={40} />}
+            icon={<Book size={40} />}
             title="Search your knowledge base"
             description="Find contacts, projects, invoices, and tasks to see how they connect across your organization."
           />

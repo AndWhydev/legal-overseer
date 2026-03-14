@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { SFArrowUpRight } from 'sf-symbols-lib';
+import { TrendingUp } from 'lucide-react';
 import { WidgetCard } from './widget-card';
 import { EmptyState } from '@/components/ui/empty-state';
 
@@ -41,11 +41,11 @@ export function HotLeadsWidget() {
     <WidgetCard
       title="Hot Leads"
       subtitle="Top opportunities this week"
-      icon={<SFArrowUpRight size={20} style={{ color: 'var(--bb-pink)' }} />}
+      icon={<TrendingUp size={20} style={{ color: 'var(--bb-pink)' }} />}
     >
       <div className="space-y-3">
         {leads.length === 0 ? (
-          <EmptyState icon={<SFArrowUpRight size={32} />} title="No active leads" description="New leads will appear here as they come in." />
+          <EmptyState icon={<TrendingUp size={32} />} title="No active leads" description="New leads will appear here as they come in." />
         ) : (
           leads.map(lead => (
             <div key={lead.id} className="flex items-center justify-between p-3 rounded-md bg-[var(--bg-elevated)] border border-[var(--border-subtle)]">

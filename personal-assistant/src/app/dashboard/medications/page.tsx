@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback, useMemo } from 'react'
-import { SFPill, SFChevronLeft, SFChevronRight } from 'sf-symbols-lib'
+import { Pill, ChevronLeft, ChevronRight } from 'lucide-react'
 import { MonthlyGrid } from '@/components/medications/monthly-grid'
 import { PillIcon } from '@/components/medications/pill-icon'
 import { february2026, medications, medicationMap } from '@/lib/medications/seed-data'
@@ -87,7 +87,7 @@ export default function MedicationsPage() {
       <header className="flex items-center justify-between border-b border-border px-6 py-4">
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/15 text-primary">
-            <SFPill className="h-5 w-5" />
+            <Pill className="h-5 w-5" />
           </div>
           <div>
             <h1 className="text-2xl font-semibold">Medications</h1>
@@ -103,7 +103,7 @@ export default function MedicationsPage() {
             onClick={prevMonth}
             className="rounded-lg p-1.5 text-text-secondary transition-colors hover:bg-elevated hover:text-foreground"
           >
-            <SFChevronLeft className="h-4 w-4" />
+            <ChevronLeft className="h-4 w-4" />
           </button>
           <span className="min-w-[140px] text-center text-sm font-medium">
             {MONTH_NAMES[month]} {year}
@@ -112,7 +112,7 @@ export default function MedicationsPage() {
             onClick={nextMonth}
             className="rounded-lg p-1.5 text-text-secondary transition-colors hover:bg-elevated hover:text-foreground"
           >
-            <SFChevronRight className="h-4 w-4" />
+            <ChevronRight className="h-4 w-4" />
           </button>
         </div>
       </header>

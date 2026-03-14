@@ -1,17 +1,30 @@
 'use client'
 
 import { useState } from 'react'
-import { SFEnvelope, SFBubbleLeft, SFCalendar, SFPhone, SFCheckmarkSquare, SFCalendarBadgeClock, SFCreditcard, SFArrowClockwise, SFClock, SFExclamationmarkTriangle, SFPowerplug, SFGearshape } from 'sf-symbols-lib'
+import {
+  Mail,
+  MessageCircle,
+  CalendarDays,
+  Phone,
+  CheckSquare,
+  CalendarClock,
+  CreditCard,
+  RefreshCw,
+  Clock,
+  AlertTriangle,
+  Unplug,
+  Settings2,
+} from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const iconMap: Record<string, React.ElementType> = {
-  SFEnvelope,
-  SFBubbleLeft,
-  SFCalendar,
-  SFPhone,
-  SFCheckmarkSquare,
-  SFCalendarBadgeClock,
-  SFCreditcard,
+  Mail,
+  MessageCircle,
+  CalendarDays,
+  Phone,
+  CheckSquare,
+  CalendarClock,
+  CreditCard,
 }
 
 /** Channel connection type determines how the Connect flow works */
@@ -65,7 +78,7 @@ export function ChannelCard({
   onSync,
 }: ChannelCardProps) {
   const [disconnecting, setDisconnecting] = useState(false)
-  const Icon = iconMap[icon] || SFEnvelope
+  const Icon = iconMap[icon] || Mail
 
   const isConnected = status === 'connected' || status === 'syncing'
   const isError = status === 'error'
@@ -125,12 +138,12 @@ export function ChannelCard({
         <div className="flex items-center gap-1.5">
           {isSyncing ? (
             <span className="flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-400">
-              <SFArrowClockwise className="h-2.5 w-2.5 animate-spin" />
+              <RefreshCw className="h-2.5 w-2.5 animate-spin" />
               Syncing
             </span>
           ) : isError ? (
             <span className="flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-400">
-              <SFExclamationmarkTriangle className="h-2.5 w-2.5" />
+              <AlertTriangle className="h-2.5 w-2.5" />
               Needs attention
             </span>
           ) : isConnected ? (
@@ -153,12 +166,12 @@ export function ChannelCard({
       {isActive && (messageCount !== undefined && messageCount > 0) && (
         <div className="mt-3 flex items-center gap-4 rounded-lg bg-secondary/50 px-3 py-2">
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <SFEnvelope className="h-3 w-3" />
+            <Mail className="h-3 w-3" />
             <span className="font-medium text-foreground">{messageCount}</span> messages
           </div>
           {lastSync && (
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <SFClock className="h-3 w-3" />
+              <Clock className="h-3 w-3" />
               {relativeTime(lastSync)}
             </div>
           )}
@@ -174,7 +187,7 @@ export function ChannelCard({
               disabled={disconnecting}
               className="flex items-center gap-1 text-xs text-muted-foreground hover:text-destructive transition-colors disabled:opacity-50"
             >
-              <SFPowerplug className="h-3 w-3" />
+              <Unplug className="h-3 w-3" />
               {disconnecting ? 'Disconnecting...' : 'Disconnect'}
             </button>
             <div className="flex items-center gap-2">
@@ -188,7 +201,7 @@ export function ChannelCard({
                     'disabled:opacity-40 disabled:cursor-not-allowed'
                   )}
                 >
-                  <SFArrowClockwise className={cn('h-3 w-3', isSyncing && 'animate-spin')} />
+                  <RefreshCw className={cn('h-3 w-3', isSyncing && 'animate-spin')} />
                   Sync
                 </button>
               )}
@@ -196,7 +209,7 @@ export function ChannelCard({
                 onClick={(e) => { e.stopPropagation(); onCardClick?.(); }}
                 className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
               >
-                <SFGearshape className="h-3 w-3" />
+                <Settings2 className="h-3 w-3" />
                 Config
               </button>
             </div>
@@ -205,7 +218,7 @@ export function ChannelCard({
           <>
             {lastSync ? (
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <SFClock className="h-3 w-3" />
+                <Clock className="h-3 w-3" />
                 {relativeTime(lastSync)}
               </div>
             ) : (

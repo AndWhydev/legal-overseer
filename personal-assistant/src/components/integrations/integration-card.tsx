@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { SFArrowClockwise, SFXmark } from 'sf-symbols-lib';
+import { Loader2, X } from 'lucide-react';
 import { BRAND_ICONS } from './integration-icons';
 import type { Integration } from '@/lib/integrations/types';
 
@@ -256,7 +256,7 @@ export function IntegrationCard({ integration, isConnected = false, onStatusChan
               }}
             >
               {isLoading
-                ? <SFArrowClockwise size={11} style={{ animation: 'bb-spin 1s linear infinite' }} />
+                ? <Loader2 size={11} style={{ animation: 'bb-spin 1s linear infinite' }} />
                 : 'Disconnect'
               }
             </button>
@@ -282,7 +282,7 @@ export function IntegrationCard({ integration, isConnected = false, onStatusChan
               }}
             >
               {connectingFeedback
-                ? <><SFArrowClockwise size={11} style={{ animation: 'bb-spin 1s linear infinite' }} /> Connecting</>
+                ? <><Loader2 size={11} style={{ animation: 'bb-spin 1s linear infinite' }} /> Connecting</>
                 : 'Connect'
               }
             </button>
@@ -313,7 +313,7 @@ export function IntegrationCard({ integration, isConnected = false, onStatusChan
               onClick={() => { setApiKeyDialogOpen(false); setError(''); }}
               style={{ position: 'absolute', top: 16, right: 16, background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: 4 }}
             >
-              <SFXmark size={16} />
+              <X size={16} />
             </button>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
@@ -396,7 +396,7 @@ export function IntegrationCard({ integration, isConnected = false, onStatusChan
                   opacity: isLoading || !apiKey.trim() ? 0.5 : 1,
                 }}
               >
-                {isLoading ? <><SFArrowClockwise size={12} style={{ animation: 'bb-spin 1s linear infinite' }} /> Connecting</> : 'Connect'}
+                {isLoading ? <><Loader2 size={12} style={{ animation: 'bb-spin 1s linear infinite' }} /> Connecting</> : 'Connect'}
               </button>
             </div>
           </div>

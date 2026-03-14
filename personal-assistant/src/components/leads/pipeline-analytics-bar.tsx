@@ -1,6 +1,6 @@
 'use client'
 
-import { SFDollarsignCircle, SFTarget, SFClock, SFBolt, SFExclamationmarkTriangle } from 'sf-symbols-lib'
+import { DollarSign, Target, Clock, Zap, AlertTriangle } from 'lucide-react'
 import type { PipelineAnalytics } from '@/lib/leads/types'
 import { formatPipelineValue } from '@/lib/leads/utils'
 
@@ -77,7 +77,7 @@ export function PipelineAnalyticsBar({ analytics, isLoading }: PipelineAnalytics
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 12 }}>
         <div style={cardStyle}>
           <div style={labelStyle}>
-            <SFDollarsignCircle style={{ width: 14, height: 14 }} />
+            <DollarSign style={{ width: 14, height: 14 }} />
             Pipeline Value
           </div>
           <div style={valueStyle}>{formatPipelineValue(analytics.totalValue)}</div>
@@ -85,7 +85,7 @@ export function PipelineAnalyticsBar({ analytics, isLoading }: PipelineAnalytics
 
         <div style={cardStyle}>
           <div style={labelStyle}>
-            <SFTarget style={{ width: 14, height: 14 }} />
+            <Target style={{ width: 14, height: 14 }} />
             Conversion Rate
           </div>
           <div style={valueStyle}>{analytics.conversionRate}%</div>
@@ -93,7 +93,7 @@ export function PipelineAnalyticsBar({ analytics, isLoading }: PipelineAnalytics
 
         <div style={cardStyle}>
           <div style={labelStyle}>
-            <SFClock style={{ width: 14, height: 14 }} />
+            <Clock style={{ width: 14, height: 14 }} />
             Avg Days in Stage
           </div>
           <div style={valueStyle}>{analytics.avgDaysInStage}d</div>
@@ -101,7 +101,7 @@ export function PipelineAnalyticsBar({ analytics, isLoading }: PipelineAnalytics
 
         <div style={cardStyle}>
           <div style={labelStyle}>
-            <SFBolt style={{ width: 14, height: 14 }} />
+            <Zap style={{ width: 14, height: 14 }} />
             Speed-to-Lead
           </div>
           <div style={{ ...valueStyle, color: getSpeedColor(speedMinutes) }}>{speedDisplay}</div>
@@ -109,7 +109,7 @@ export function PipelineAnalyticsBar({ analytics, isLoading }: PipelineAnalytics
 
         <div style={cardStyle}>
           <div style={labelStyle}>
-            <SFExclamationmarkTriangle style={{ width: 14, height: 14 }} />
+            <AlertTriangle style={{ width: 14, height: 14 }} />
             Stale Leads
           </div>
           <div style={{

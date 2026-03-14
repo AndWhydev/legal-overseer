@@ -2,7 +2,7 @@
 
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { SFArrowRight, SFEnvelope, SFCalendar } from 'sf-symbols-lib'
+import { ArrowRight, Mail, Calendar } from 'lucide-react'
 import type { EnhancedLeadData } from '@/lib/leads/types'
 import { getDealRotLevel, getSpeedToLeadLevel, formatCurrency, relativeTime } from '@/lib/leads/utils'
 import { StatusPill, type StatusVariant } from '@/components/ui/status-pill'
@@ -265,19 +265,19 @@ export function LeadCard({ lead, onClick, onAdvanceStage }: LeadCardProps) {
             onClick={(e) => { e.stopPropagation(); onAdvanceStage?.(lead.id, e) }}
             style={ACTION_BTN}
           >
-            <SFArrowRight size={11} /> Next
+            <ArrowRight size={11} /> Next
           </button>
           <button
             onClick={(e) => e.stopPropagation()}
             style={ACTION_BTN}
           >
-            <SFEnvelope size={11} /> Email
+            <Mail size={11} /> Email
           </button>
           <button
             onClick={(e) => e.stopPropagation()}
             style={ACTION_BTN}
           >
-            <SFCalendar size={11} /> Book
+            <Calendar size={11} /> Book
           </button>
         </div>
       </div>

@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
-import { SFCalendar, SFExclamationmarkTriangle } from 'sf-symbols-lib'
+import { Calendar, AlertTriangle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { getScriptRoadmap, type ScriptRoadmap as ScriptRoadmapType } from '@/lib/medications/inventory'
 import { inventoryItems } from '@/lib/medications/inventory-seed'
@@ -59,7 +59,7 @@ function TimelineBar({
         <div className="flex items-center gap-2">
           <span className="text-sm text-foreground">{roadmap.name}</span>
           {hasWarning && (
-            <SFExclamationmarkTriangle className="h-3 w-3 text-warning" />
+            <AlertTriangle className="h-3 w-3 text-warning" />
           )}
         </div>
         <span className="text-[11px] text-muted-foreground tabular-nums">
@@ -128,7 +128,7 @@ export function ScriptRoadmapPanel({ className }: { className?: string }) {
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <SFCalendar className="h-4 w-4 text-primary" />
+          <Calendar className="h-4 w-4 text-primary" />
           <h3 className="text-sm font-semibold text-foreground">Script Roadmap</h3>
         </div>
         {warnings.length > 0 && (

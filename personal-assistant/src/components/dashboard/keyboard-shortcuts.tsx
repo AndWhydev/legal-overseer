@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
-import { SFXmark } from 'sf-symbols-lib';
+import { X } from 'lucide-react';
 
 interface KeyboardShortcutsProps {
   open: boolean;
@@ -95,7 +95,7 @@ export function KeyboardShortcuts({ open, onClose }: KeyboardShortcutsProps) {
             onClick={onClose}
             aria-label="Close"
           >
-            <SFXmark size={16} />
+            <X size={16} />
           </button>
         </div>
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { SFArrowClockwise } from 'sf-symbols-lib';
+import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
 
 export interface ApprovalItem {
@@ -264,7 +264,7 @@ export function ApprovalCard({ approval, isResolving = false, onApprove, onRejec
           disabled={isResolving}
           onClick={() => onApprove(approval.id)}
         >
-          {isResolving ? <SFArrowClockwise size={16} style={{ animation: 'spin 1s linear infinite' }} /> : null}
+          {isResolving ? <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> : null}
           Approve
         </button>
         <button
@@ -272,7 +272,7 @@ export function ApprovalCard({ approval, isResolving = false, onApprove, onRejec
           disabled={isResolving}
           onClick={() => onReject(approval.id)}
         >
-          {isResolving ? <SFArrowClockwise size={16} style={{ animation: 'spin 1s linear infinite' }} /> : null}
+          {isResolving ? <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> : null}
           Reject
         </button>
       </div>

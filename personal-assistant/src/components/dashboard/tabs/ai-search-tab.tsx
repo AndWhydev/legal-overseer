@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useCallback } from 'react'
-import { SFMagnifyingglass, SFArrowUpRight, SFArrowDownRight, SFMinus, SFDocumentOnDocument, SFCheckmark, SFPlay, SFChevronLeftForwardslashChevronRight, SFDocument, SFSafari } from 'sf-symbols-lib'
+import { Search, TrendingUp, TrendingDown, Minus, Copy, Check, Play, Code, FileText, Compass } from 'lucide-react'
 import { TabShell } from '@/components/ui/tab-shell'
 import { EmptyState } from '@/components/ui/empty-state'
 
@@ -169,11 +169,11 @@ function ScoreBadge({ score }: { score: number }) {
 }
 
 function TrendArrow({ current, previous }: { current: number; previous: number | null }) {
-  if (previous === null) return <SFMinus size={16} style={{ color: 'rgba(255,255,255,0.4)' }} />
+  if (previous === null) return <Minus size={16} style={{ color: 'rgba(255,255,255,0.4)' }} />
   const diff = current - previous
-  if (diff > 5) return <SFArrowUpRight size={16} style={{ color: '#22c55e' }} />
-  if (diff < -5) return <SFArrowDownRight size={16} style={{ color: '#ef4444' }} />
-  return <SFMinus size={16} style={{ color: 'rgba(255,255,255,0.4)' }} />
+  if (diff > 5) return <TrendingUp size={16} style={{ color: '#22c55e' }} />
+  if (diff < -5) return <TrendingDown size={16} style={{ color: '#ef4444' }} />
+  return <Minus size={16} style={{ color: 'rgba(255,255,255,0.4)' }} />
 }
 
 function CopyButton({ text }: { text: string }) {
@@ -211,7 +211,7 @@ function CopyButton({ text }: { text: string }) {
         e.currentTarget.style.borderColor = 'var(--glass-interactive-border)'
       }}
     >
-      {copied ? <SFCheckmark size={14} /> : <SFDocumentOnDocument size={14} />}
+      {copied ? <Check size={14} /> : <Copy size={14} />}
       {copied ? 'Copied' : 'Copy'}
     </button>
   )
@@ -370,7 +370,7 @@ function AuditForm({
           e.currentTarget.style.transform = 'translateY(0)'
         }}
       >
-        <SFPlay size={16} />
+        <Play size={16} />
         {loading ? 'Running Audit...' : 'Run Audit'}
       </button>
     </form>
@@ -705,7 +705,7 @@ function SchemaGenerator() {
           e.currentTarget.style.transform = 'translateY(0)'
         }}
       >
-        <SFChevronLeftForwardslashChevronRight size={16} />
+        <Code size={16} />
         {loading ? 'Generating...' : 'Generate Schema'}
       </button>
 
@@ -792,9 +792,9 @@ function AISearchTab() {
   )
 
   const panelButtons: Array<{ id: ActivePanel; label: string; icon: React.ReactNode }> = [
-    { id: 'overview', label: 'Visibility Audit', icon: <SFMagnifyingglass size={16} /> },
-    { id: 'content', label: 'Content Suggestions', icon: <SFDocument size={16} /> },
-    { id: 'schema', label: 'Schema Markup', icon: <SFChevronLeftForwardslashChevronRight size={16} /> },
+    { id: 'overview', label: 'Visibility Audit', icon: <Search size={16} /> },
+    { id: 'content', label: 'Content Suggestions', icon: <FileText size={16} /> },
+    { id: 'schema', label: 'Schema Markup', icon: <Code size={16} /> },
   ]
 
   return (
@@ -803,7 +803,7 @@ function AISearchTab() {
         {/* Empty state when no audit has run yet */}
         {!auditResult && activePanel === 'overview' && (
           <EmptyState
-            icon={<SFSafari size={40} />}
+            icon={<Compass size={40} />}
             title="Run your first visibility audit"
             description="Discover how your website ranks in AI search engines like Perplexity, ChatGPT, and Gemini."
           />
@@ -1108,7 +1108,7 @@ function AISearchTab() {
                 lineHeight: 1.6,
               }}
             >
-              Generate JSON-LD structured data for your client websites. SFDocumentOnDocument and paste the output
+              Generate JSON-LD structured data for your client websites. Copy and paste the output
               into the page &lt;head&gt;.
             </p>
             <SchemaGenerator />

@@ -1,7 +1,13 @@
 'use client';
 
 import React from 'react';
-import { SFBubbleRight, SFTray, SFHandRaised, SFCheckmarkShield, SFGear } from 'sf-symbols-lib';
+import {
+  MessageSquare,
+  Inbox,
+  Handshake,
+  ShieldCheck,
+  Settings,
+} from 'lucide-react';
 import type { TabDef } from './spa-shell';
 import { useEnabledModules } from '@/lib/modules/use-enabled-modules';
 import { useBadgeCounts } from '@/hooks/use-badge-counts';
@@ -11,11 +17,11 @@ import { NotificationBadge } from '@/components/ui/notification-badge';
 // ─── Fixed bottom nav items (5 most-used) ────────────────────────────────────
 
 const BOTTOM_NAV_ITEMS: { id: string; label: string; icon: React.ElementType }[] = [
-  { id: 'chat',      label: 'Chat',      icon: SFBubbleRight },
-  { id: 'inbox',     label: 'Inbox',     icon: SFTray },
-  { id: 'leads',     label: 'Leads',     icon: SFHandRaised },
-  { id: 'approvals', label: 'Approvals', icon: SFCheckmarkShield },
-  { id: 'settings-connections', label: 'Settings', icon: SFGear },
+  { id: 'chat',      label: 'Chat',      icon: MessageSquare },
+  { id: 'inbox',     label: 'Inbox',     icon: Inbox },
+  { id: 'leads',     label: 'Leads',     icon: Handshake },
+  { id: 'approvals', label: 'Approvals', icon: ShieldCheck },
+  { id: 'settings-connections', label: 'Settings', icon: Settings },
 ];
 
 const BADGE_CONFIG: Record<string, { key: keyof BadgeCounts; color: string }> = {
@@ -103,7 +109,7 @@ export function BottomNav({
               transition: 'color 0.15s ease',
             }}
           >
-            <Icon size={20} style={{ color: activeColor }} />
+            <Icon size={20} strokeWidth={1.8} style={{ color: activeColor }} />
             <span
               style={{
                 fontSize: '10px',

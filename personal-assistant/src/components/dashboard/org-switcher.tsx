@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { SFChevronDown, SFBuilding2, SFCheckmark } from 'sf-symbols-lib';
+import { ChevronDown, Building2, Check } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
@@ -91,14 +91,14 @@ export function OrgSwitcher({ onOrgChange }: OrgSwitcherProps) {
         onClick={() => setOpen(!open)}
         className="flex w-full items-center gap-2 rounded-md border border-border/30 bg-muted/20 px-3 py-2 text-left transition-colors hover:bg-muted/40"
       >
-        <SFBuilding2 size={16} className="shrink-0 text-muted-foreground" />
+        <Building2 size={16} className="shrink-0 text-muted-foreground" />
         <div className="flex-1 min-w-0">
           <p className="truncate text-sm font-medium text-foreground">{activeOrg.name}</p>
           <p className={`text-xs capitalize ${tierColors[activeOrg.plan_tier] ?? 'text-muted-foreground'}`}>
             {activeOrg.plan_tier || 'Free'} plan
           </p>
         </div>
-        <SFChevronDown
+        <ChevronDown
           size={14}
           className="shrink-0 text-muted-foreground transition-transform"
           style={{ transform: open ? 'rotate(180deg)' : 'rotate(0deg)' }}
@@ -120,7 +120,7 @@ export function OrgSwitcher({ onOrgChange }: OrgSwitcherProps) {
                 </p>
               </div>
               {org.id === activeOrg.id && (
-                <SFCheckmark size={14} className="shrink-0 text-[var(--bb-orange,#FF5A1F)]" />
+                <Check size={14} className="shrink-0 text-[var(--bb-orange,#FF5A1F)]" />
               )}
             </button>
           ))}

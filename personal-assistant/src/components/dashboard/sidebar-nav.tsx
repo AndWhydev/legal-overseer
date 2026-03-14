@@ -2,7 +2,10 @@
 
 import React, { useCallback, useRef, useEffect, useState } from 'react';
 import Image from 'next/image';
-import { SFGear, SFRectanglePortraitAndArrowForward } from 'sf-symbols-lib';
+import {
+  Settings,
+  LogOut,
+} from 'lucide-react';
 import type { TabDef } from './spa-shell';
 import { SidebarRail } from './sidebar-rail';
 import { SidebarPanel } from './sidebar-panel';
@@ -73,7 +76,7 @@ export function SidebarNav({
       if (catDef?.directNav) {
         setPanelOpen(false);
       }
-      // SFGear has no rail icon — always open panel when navigating to it
+      // Settings has no rail icon — always open panel when navigating to it
       if (cat === 'settings') {
         setPanelOpen(true);
       }
@@ -240,7 +243,7 @@ export function SidebarNav({
               </div>
             </div>
 
-            {/* SFGear */}
+            {/* Settings */}
             <button
               role="menuitem"
               onClick={() => { setProfileOpen(false); setActiveCategory('settings'); setPanelOpen(true); onTabChange?.('settings-connections'); }}
@@ -268,8 +271,8 @@ export function SidebarNav({
                 e.currentTarget.style.color = 'var(--text-secondary)';
               }}
             >
-              <SFGear size={16} />
-              SFGear
+              <Settings size={16} strokeWidth={1.8} />
+              Settings
             </button>
 
             {/* Divider */}
@@ -301,7 +304,7 @@ export function SidebarNav({
                 e.currentTarget.style.background = 'transparent';
               }}
             >
-              <SFRectanglePortraitAndArrowForward size={16} />
+              <LogOut size={16} strokeWidth={1.8} />
               Sign out
             </button>
           </div>

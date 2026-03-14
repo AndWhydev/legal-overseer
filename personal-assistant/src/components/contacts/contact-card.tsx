@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { SFEnvelope, SFPhone, SFTag } from 'sf-symbols-lib'
+import { Mail, Phone, Tag } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import type { Contact } from '@/lib/types'
 
@@ -32,13 +32,13 @@ export function ContactCard({ contact }: { contact: Contact }) {
               <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
                 {contact.emails[0] && (
                   <span className="flex items-center gap-1 truncate">
-                    <SFEnvelope className="size-3" />
+                    <Mail className="size-3" />
                     {contact.emails[0]}
                   </span>
                 )}
                 {contact.phones[0] && (
                   <span className="flex items-center gap-1">
-                    <SFPhone className="size-3" />
+                    <Phone className="size-3" />
                     {contact.phones[0]}
                   </span>
                 )}
@@ -53,7 +53,7 @@ export function ContactCard({ contact }: { contact: Contact }) {
                   key={tag}
                   className="flex items-center gap-1 rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground"
                 >
-                  <SFTag className="size-2" />
+                  <Tag className="size-2" />
                   {tag}
                 </span>
               ))}

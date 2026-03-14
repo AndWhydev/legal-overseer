@@ -1,7 +1,7 @@
 'use client'
 
 import { motion, AnimatePresence } from 'motion/react'
-import { SFCheckmark, SFExclamationmarkCircle } from 'sf-symbols-lib'
+import { Check, AlertCircle } from 'lucide-react'
 import type { PlanStage } from '@/lib/agent/planner'
 
 export interface ChatPipelineStage extends PlanStage {
@@ -185,14 +185,14 @@ function PipelineStage({
             animate={{ scale: 1 }}
             transition={{ duration: 0.3, ease: [0.34, 1.56, 0.64, 1] }}
           >
-            <SFCheckmark size={16} style={{ color: 'var(--bb-green)' }} />
+            <Check size={16} color="var(--bb-green)" />
           </motion.div>
         ) : stage.status === 'error' ? (
           <motion.div
             animate={{ rotate: [0, -2, 2, -2, 0] }}
             transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 2 }}
           >
-            <SFExclamationmarkCircle size={16} style={{ color: 'var(--bb-red)' }} />
+            <AlertCircle size={16} color="var(--bb-red)" />
           </motion.div>
         ) : (
           <motion.div

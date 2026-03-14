@@ -1,6 +1,6 @@
 'use client'
 
-import { SFArrowDownDocument, SFPrinter, SFXmark, SFArrowClockwise } from 'sf-symbols-lib'
+import { Download, Printer, X, Loader2 } from 'lucide-react'
 import { useToast } from '@/components/ui/toast'
 
 interface ReportPreviewProps {
@@ -50,8 +50,8 @@ export function ReportPreview({ html, isLoading = false, onClose, onDownload }: 
                 disabled={!html || isLoading}
                 className="inline-flex items-center gap-1.5 rounded-lg border border-sky-500/40 px-3 py-1.5 text-xs font-medium text-sky-300 hover:bg-sky-500/20 disabled:opacity-60"
               >
-                <SFArrowDownDocument className="h-3.5 w-3.5" />
-                SFArrowDownDocument
+                <Download className="h-3.5 w-3.5" />
+                Download
               </button>
             )}
             <button
@@ -60,7 +60,7 @@ export function ReportPreview({ html, isLoading = false, onClose, onDownload }: 
               disabled={!html || isLoading}
               className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-secondary px-3 py-1.5 text-xs font-medium text-foreground hover:bg-secondary/80 disabled:opacity-60"
             >
-              <SFPrinter className="h-3.5 w-3.5" />
+              <Printer className="h-3.5 w-3.5" />
               Print
             </button>
             <button
@@ -68,7 +68,7 @@ export function ReportPreview({ html, isLoading = false, onClose, onDownload }: 
               onClick={onClose}
               className="rounded-lg border border-border bg-secondary px-2 py-1.5 text-foreground hover:bg-secondary/80"
             >
-              <SFXmark className="h-4 w-4" />
+              <X className="h-4 w-4" />
             </button>
           </div>
         </div>
@@ -78,7 +78,7 @@ export function ReportPreview({ html, isLoading = false, onClose, onDownload }: 
           {isLoading ? (
             <div className="flex items-center justify-center h-full">
               <div className="text-center">
-                <SFArrowClockwise className="mx-auto h-8 w-8 animate-spin text-foreground mb-2" />
+                <Loader2 className="mx-auto h-8 w-8 animate-spin text-foreground mb-2" />
                 <p className="text-sm text-muted-foreground">Loading report preview...</p>
               </div>
             </div>

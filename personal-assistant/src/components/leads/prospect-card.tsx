@@ -1,6 +1,6 @@
 'use client'
 
-import { SFArrowUpRightSquare, SFMappin, SFPhone, SFEnvelope, SFStar } from 'sf-symbols-lib'
+import { ExternalLink, MapPin, Phone, Mail, Star } from 'lucide-react'
 import type { ProspectResult } from '@/lib/leads/types'
 
 interface ProspectCardProps {
@@ -62,7 +62,7 @@ export function ProspectCard({ prospect, onImport }: ProspectCardProps) {
               rel="noopener noreferrer"
               style={{ fontSize: 11, color: 'var(--bb-cyan)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}
             >
-              <SFArrowUpRightSquare style={{ width: 10, height: 10 }} />
+              <ExternalLink style={{ width: 10, height: 10 }} />
               {prospect.domain}
             </a>
           )}
@@ -93,25 +93,25 @@ export function ProspectCard({ prospect, onImport }: ProspectCardProps) {
       <div style={{ display: 'flex', gap: 12, fontSize: 11, color: 'var(--text-dim)', flexWrap: 'wrap' }}>
         {prospect.rating != null && (
           <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-            <SFStar style={{ width: 11, height: 11, fill: 'var(--bb-amber)', color: 'var(--bb-amber)' }} />
+            <Star style={{ width: 11, height: 11, fill: 'var(--bb-amber)', color: 'var(--bb-amber)' }} />
             {prospect.rating} ({prospect.review_count ?? 0})
           </span>
         )}
         {prospect.phone && (
           <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-            <SFPhone style={{ width: 11, height: 11 }} />
+            <Phone style={{ width: 11, height: 11 }} />
             {prospect.phone}
           </span>
         )}
         {prospect.emails.length > 0 && (
           <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-            <SFEnvelope style={{ width: 11, height: 11 }} />
+            <Mail style={{ width: 11, height: 11 }} />
             {prospect.emails[0]}
           </span>
         )}
         {prospect.address && (
           <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-            <SFMappin style={{ width: 11, height: 11 }} />
+            <MapPin style={{ width: 11, height: 11 }} />
             {prospect.address}
           </span>
         )}

@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { SFMagnifyingglass, SFSquareGrid2x2, SFListBullet } from 'sf-symbols-lib'
+import { Search, LayoutGrid, List } from 'lucide-react'
 import type { LeadFilter, LeadViewMode, PipelineAnalytics } from '@/lib/leads/types'
 import { formatPipelineValue } from '@/lib/leads/utils'
 
@@ -64,9 +64,9 @@ export function LeadsToolbar({
       padding: '4px 0',
     }}>
 
-      {/* SFMagnifyingglass Input */}
+      {/* Search Input */}
       <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
-        <SFMagnifyingglass style={{
+        <Search style={{
           position: 'absolute',
           left: 8,
           width: 13,
@@ -180,7 +180,7 @@ export function LeadsToolbar({
             alignItems: 'center',
           }}
         >
-          <SFSquareGrid2x2 style={{ width: 14, height: 14 }} />
+          <LayoutGrid style={{ width: 14, height: 14 }} />
         </button>
         <button
           onClick={() => onViewModeChange('list')}
@@ -194,7 +194,7 @@ export function LeadsToolbar({
             alignItems: 'center',
           }}
         >
-          <SFListBullet style={{ width: 14, height: 14 }} />
+          <List style={{ width: 14, height: 14 }} />
         </button>
       </div>
 
@@ -216,7 +216,7 @@ export function LeadsToolbar({
           transition: 'opacity 0.15s',
         }}
       >
-        <SFMagnifyingglass style={{ width: 14, height: 14 }} />
+        <Search style={{ width: 14, height: 14 }} />
         Discover
       </button>
     </div>

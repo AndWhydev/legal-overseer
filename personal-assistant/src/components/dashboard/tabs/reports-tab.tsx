@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useCallback } from 'react'
-import { SFDocument, SFArrowDownDocument, SFArrowClockwise } from 'sf-symbols-lib'
+import { FileText, Download, Loader2, RefreshCw } from 'lucide-react'
 import { TabShell } from '@/components/ui/tab-shell'
 import { EmptyState } from '@/components/ui/empty-state'
 import { logger } from '@/lib/core/logger';
@@ -255,7 +255,7 @@ export default function ReportsTab() {
                 cursor: generating ? 'wait' : 'pointer',
               }}
             >
-              {generating ? <SFArrowClockwise size={16} className="animate-spin" /> : <SFDocument size={16} />}
+              {generating ? <Loader2 size={16} className="animate-spin" /> : <FileText size={16} />}
               {generating ? 'Generating...' : 'Generate Report'}
             </button>
           </div>
@@ -283,7 +283,7 @@ export default function ReportsTab() {
                   gap: '4px',
                 }}
               >
-                <SFArrowDownDocument size={14} /> SFArrowDownDocument PDF
+                <Download size={14} /> Download PDF
               </button>
             </div>
             <div
@@ -334,7 +334,7 @@ export default function ReportsTab() {
               }}
               aria-label="Refresh"
             >
-              <SFArrowClockwise size={16} />
+              <RefreshCw size={16} />
             </button>
           </div>
 
@@ -348,12 +348,12 @@ export default function ReportsTab() {
               padding: '60px 20px',
               gap: 12,
             }}>
-              <SFArrowClockwise size={32} style={{ color: 'var(--text-dim)' }} className="animate-spin" />
+              <Loader2 size={32} style={{ color: 'var(--text-dim)' }} className="animate-spin" />
               <span style={{ fontSize: 14, color: 'var(--text-secondary)' }}>Loading reports...</span>
             </div>
           ) : reports.length === 0 ? (
             <EmptyState
-              icon={<SFDocument size={48} />}
+              icon={<FileText size={48} />}
               title="No reports generated"
               description="Monthly and weekly reports will appear here after your first full week"
             />
@@ -404,7 +404,7 @@ export default function ReportsTab() {
                       whiteSpace: 'nowrap',
                     }}
                   >
-                    <SFArrowDownDocument size={14} /> View
+                    <Download size={14} /> View
                   </button>
                 </div>
               ))}

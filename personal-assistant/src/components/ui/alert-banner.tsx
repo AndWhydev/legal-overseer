@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { SFExclamationmarkCircle, SFCheckmarkCircle, SFInfoCircle, SFExclamationmarkTriangle, SFXmark } from 'sf-symbols-lib';
+import { AlertCircle, CheckCircle2, Info, AlertTriangle, X } from 'lucide-react';
 
 type AlertVariant = 'info' | 'success' | 'warning' | 'error';
 
@@ -29,10 +29,10 @@ const VARIANT_ICON_STYLES: Record<AlertVariant, string> = {
 };
 
 const VARIANT_ICONS: Record<AlertVariant, React.ElementType> = {
-  info: SFInfoCircle,
-  success: SFCheckmarkCircle,
-  warning: SFExclamationmarkTriangle,
-  error: SFExclamationmarkCircle,
+  info: Info,
+  success: CheckCircle2,
+  warning: AlertTriangle,
+  error: AlertCircle,
 };
 
 export function AlertBanner({
@@ -63,7 +63,7 @@ export function AlertBanner({
           className="shrink-0 rounded-md p-1 text-muted-foreground hover:text-foreground hover:bg-white/10 min-h-[44px] min-w-[44px] -m-1 flex items-center justify-center"
           aria-label="Dismiss alert"
         >
-          <SFXmark className="h-4 w-4" />
+          <X className="h-4 w-4" />
         </button>
       )}
     </div>

@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { SFCheckmark } from 'sf-symbols-lib'
+import { Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { PillIcon } from './pill-icon'
 import type { DaySchedule, Medication } from '@/lib/medications/types'
@@ -69,7 +69,7 @@ export const DayCell = React.memo(function DayCell({
         {/* Complete checkmark */}
         {isComplete && (
           <div className="flex h-4 w-4 items-center justify-center rounded-full bg-success/20">
-            <SFCheckmark className="h-2.5 w-2.5 text-success" />
+            <Check className="h-2.5 w-2.5 text-success" />
           </div>
         )}
 
@@ -129,7 +129,7 @@ export const DayCell = React.memo(function DayCell({
             'animate-fade-in',
           )}
         >
-          <SFCheckmark className="h-2.5 w-2.5" />
+          <Check className="h-2.5 w-2.5" />
           Take All
         </button>
       )}

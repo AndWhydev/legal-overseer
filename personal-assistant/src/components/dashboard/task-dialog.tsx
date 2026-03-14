@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
-import { SFXmark, SFChevronDown, SFCalendar, SFTag, SFTrash } from 'sf-symbols-lib'
+import { X, ChevronDown, Calendar, Tag, Trash2 } from 'lucide-react'
 import type { Task, KanbanColumn } from '@/lib/types'
 
 interface TaskDialogProps {
@@ -311,7 +311,7 @@ export function TaskDialog({
                 onClick={() => setActiveMenu(activeMenu === 'column' ? null : 'column')}
               >
                 {selectedColumn?.title || 'Column'}
-                <SFChevronDown size={11} style={{
+                <ChevronDown size={11} style={{
                   transition: 'transform 150ms',
                   transform: activeMenu === 'column' ? 'rotate(180deg)' : 'none',
                   opacity: 0.6,
@@ -377,7 +377,7 @@ export function TaskDialog({
                 onClick={() => setActiveMenu(activeMenu === 'priority' ? null : 'priority')}
               >
                 {selectedPriority?.label || 'Priority'}
-                <SFChevronDown size={11} style={{
+                <ChevronDown size={11} style={{
                   transition: 'transform 150ms',
                   transform: activeMenu === 'priority' ? 'rotate(180deg)' : 'none',
                   opacity: 0.6,
@@ -422,7 +422,7 @@ export function TaskDialog({
               )}
             </div>
 
-            {/* SFTag chips + add button */}
+            {/* Tag chips + add button */}
             {tagList.map((tag) => (
               <span key={tag} style={{
                 ...chipBase,
@@ -446,7 +446,7 @@ export function TaskDialog({
                     alignItems: 'center',
                   }}
                 >
-                  <SFXmark size={10} />
+                  <X size={10} />
                 </button>
               </span>
             ))}
@@ -468,8 +468,8 @@ export function TaskDialog({
                 }}
                 onClick={() => setActiveMenu(activeMenu === 'tags' ? null : 'tags')}
               >
-                <SFTag size={11} style={{ opacity: 0.6 }} />
-                SFTag
+                <Tag size={11} style={{ opacity: 0.6 }} />
+                Tag
               </button>
               {activeMenu === 'tags' && (
                 <div style={{ ...menuStyle, minWidth: 180, padding: '8px 10px' }}>
@@ -525,7 +525,7 @@ export function TaskDialog({
                 }}
                 onClick={() => setActiveMenu(activeMenu === 'deadline' ? null : 'deadline')}
               >
-                <SFCalendar size={11} style={{ opacity: 0.6 }} />
+                <Calendar size={11} style={{ opacity: 0.6 }} />
                 {deadline || 'Date'}
               </button>
               {activeMenu === 'deadline' && (
@@ -590,7 +590,7 @@ export function TaskDialog({
                   onMouseEnter={(e) => { e.currentTarget.style.color = '#f87171' }}
                   onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-dim)' }}
                 >
-                  <SFTrash size={13} />
+                  <Trash2 size={13} />
                   Delete
                 </button>
               )}

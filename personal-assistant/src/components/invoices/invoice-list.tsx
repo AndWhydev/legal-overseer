@@ -19,7 +19,10 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { SFReceipt, SFMagnifyingglass, SFArrowDownDocument, SFChevronDown, SFPaperplane, SFCheckmarkCircle, SFNosign, SFPerson2, SFRectangleSplit1x2, SFEye, SFEyeSlash, SFPlus } from 'sf-symbols-lib'
+import {
+  ReceiptText, Search, Download, ChevronDown, Send, CheckCircle2,
+  Ban, Users, LayoutList, Eye, EyeOff, Plus,
+} from 'lucide-react'
 import { EmptyState } from '@/components/ui/empty-state'
 import { useToast } from '@/components/ui/toast'
 import { useSeedData } from '@/hooks/use-seed-data'
@@ -691,8 +694,8 @@ function InvoiceDetailPanel({
 
       {/* Actions row */}
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-        {canSend(invoice.status) && actionBtn('Send', <SFPaperplane size={14} />, 'sent', 'rgba(56, 189, 248, 0.1)', '#7dd3fc')}
-        {canMarkPaid(invoice.status) && actionBtn('Mark Paid', <SFCheckmarkCircle size={14} />, 'paid', 'rgba(34, 197, 94, 0.1)', '#86efac')}
+        {canSend(invoice.status) && actionBtn('Send', <Send size={14} />, 'sent', 'rgba(56, 189, 248, 0.1)', '#7dd3fc')}
+        {canMarkPaid(invoice.status) && actionBtn('Mark Paid', <CheckCircle2 size={14} />, 'paid', 'rgba(34, 197, 94, 0.1)', '#86efac')}
         {canCancel(invoice.status) && (
           <button
             onClick={(e) => { e.stopPropagation(); onAction(invoice.id, 'cancelled') }}
@@ -705,7 +708,7 @@ function InvoiceDetailPanel({
               opacity: busy ? 0.5 : 1, transition: `all 100ms ${SNAP}`,
             }}
           >
-            <SFNosign size={14} /> Cancel
+            <Ban size={14} /> Cancel
           </button>
         )}
         <button
@@ -719,7 +722,7 @@ function InvoiceDetailPanel({
             transition: `all 100ms ${SNAP}`,
           }}
         >
-          {showPdf ? <SFEyeSlash size={14} /> : <SFEye size={14} />}
+          {showPdf ? <EyeOff size={14} /> : <Eye size={14} />}
           {showPdf ? 'Hide Preview' : 'Preview Invoice'}
         </button>
       </div>
@@ -885,7 +888,7 @@ function InvoiceRowItem({
                   transition: `all 80ms ${SNAP}`,
                 }}
               >
-                <SFPaperplane size={13} />
+                <Send size={13} />
               </button>
             )}
             {canMarkPaid(invoice.status) && (
@@ -901,7 +904,7 @@ function InvoiceRowItem({
                   transition: `all 80ms ${SNAP}`,
                 }}
               >
-                <SFCheckmarkCircle size={13} />
+                <CheckCircle2 size={13} />
               </button>
             )}
           </div>
@@ -1014,7 +1017,7 @@ function InvoiceSection({
           {invoices.length}
         </span>
         <div style={{ flex: 1 }} />
-        <SFChevronDown
+        <ChevronDown
           size={14}
           style={{
             color: 'var(--text-dim)',
@@ -1113,7 +1116,7 @@ function ClientGroupSection({
             {formatMoney(outstandingTotal, invoices[0]?.currency || 'AUD')}
           </span>
         )}
-        <SFChevronDown
+        <ChevronDown
           size={14}
           style={{
             color: 'var(--text-dim)',
@@ -1465,10 +1468,10 @@ export function InvoiceList() {
 
         <InvoiceSummaryBar {...stats} />
 
-        {/* Toolbar: SFMagnifyingglass + Stats + Actions */}
+        {/* Toolbar: Search + Stats + Actions */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <div style={{ position: 'relative', flex: 1 }}>
-            <SFMagnifyingglass
+            <Search
               size={14}
               style={{
                 position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)',
@@ -1510,7 +1513,7 @@ export function InvoiceList() {
               transition: `all 80ms ${SNAP}`,
             }}
           >
-            {groupMode === 'status' ? <SFPerson2 size={15} /> : <SFRectangleSplit1x2 size={15} />}
+            {groupMode === 'status' ? <Users size={15} /> : <LayoutList size={15} />}
           </button>
 
           <button
@@ -1531,7 +1534,7 @@ export function InvoiceList() {
               e.currentTarget.style.color = 'var(--text-dim)'
             }}
           >
-            <SFArrowDownDocument size={15} />
+            <Download size={15} />
           </button>
 
           {/* New Invoice CTA */}
@@ -1552,14 +1555,14 @@ export function InvoiceList() {
               e.currentTarget.style.background = 'rgba(59, 130, 246, 0.12)'
             }}
           >
-            <SFPlus size={14} /> New
+            <Plus size={14} /> New
           </button>
         </div>
 
         {/* Content */}
         {filtered.length === 0 ? (
           <EmptyState
-            icon={<SFReceipt size={40} />}
+            icon={<ReceiptText size={40} />}
             title={search ? 'No matching invoices' : 'No invoices yet'}
             description={search ? 'Try a different search term.' : 'Create your first invoice via chat: "Send invoice to X for $Y"'}
           />

@@ -2,7 +2,7 @@
 
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { SFCheckmark } from 'sf-symbols-lib'
+import { Check } from 'lucide-react'
 
 interface Tier {
   name: string
@@ -141,7 +141,7 @@ export default function PricingPage() {
               <ul className="mt-6 space-y-2 flex-1">
                 {tier.features.map((f) => (
                   <li key={f} className="flex items-start gap-2 text-sm">
-                    <SFCheckmark size={16} className="text-green-500 mt-0.5 shrink-0" />
+                    <Check size={16} className="text-green-500 mt-0.5 shrink-0" />
                     <span>{f}</span>
                   </li>
                 ))}

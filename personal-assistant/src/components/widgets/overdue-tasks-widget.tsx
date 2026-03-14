@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { SFExclamationmarkCircle } from 'sf-symbols-lib';
+import { AlertCircle } from 'lucide-react';
 import { WidgetCard } from './widget-card';
 import { EmptyState } from '@/components/ui/empty-state';
 
@@ -23,11 +23,11 @@ export function OverdueTasksWidget() {
     <WidgetCard
       title="Overdue Tasks"
       subtitle={`${tasks.length} overdue`}
-      icon={<SFExclamationmarkCircle size={20} style={{ color: 'var(--bb-status-error)' }} />}
+      icon={<AlertCircle size={20} style={{ color: 'var(--bb-status-error)' }} />}
     >
       <div className="space-y-3">
         {tasks.length === 0 ? (
-          <EmptyState icon={<SFExclamationmarkCircle size={32} />} title="No overdue tasks" description="You're all caught up." />
+          <EmptyState icon={<AlertCircle size={32} />} title="No overdue tasks" description="You're all caught up." />
         ) : (
           tasks.map(task => (
             <div key={task.id as string} className="flex items-center justify-between p-3 rounded-md bg-[var(--bg-elevated)] border border-[var(--border-subtle)]">

@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useDroppable } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
-import { SFPlus } from 'sf-symbols-lib'
+import { Plus } from 'lucide-react'
 import { KanbanCard } from './kanban-card'
 import type { Task, KanbanColumn as ColumnType } from '@/lib/types'
 
@@ -213,7 +213,7 @@ export function KanbanColumn({
               marginTop: 'auto',
             }}
           >
-            <SFPlus style={{ width: 13, height: 13 }} />
+            <Plus style={{ width: 13, height: 13 }} />
             Add task
           </button>
         ) : null}

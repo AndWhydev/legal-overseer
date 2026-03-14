@@ -2,7 +2,7 @@
 
 import React from 'react'
 import { useRealtimeStatus, type RealtimeConnectionStatus } from '@/hooks/use-realtime-status'
-import { SFWifi, SFWifiSlash, SFArrowClockwise } from 'sf-symbols-lib'
+import { Wifi, WifiOff, Loader2 } from 'lucide-react'
 
 const STATUS_CONFIG: Record<RealtimeConnectionStatus, {
   icon: React.ElementType
@@ -11,18 +11,18 @@ const STATUS_CONFIG: Record<RealtimeConnectionStatus, {
   animate?: boolean
 }> = {
   connected: {
-    icon: SFWifi,
+    icon: Wifi,
     color: 'var(--bb-green)',
     label: 'Live',
   },
   connecting: {
-    icon: SFArrowClockwise,
+    icon: Loader2,
     color: 'var(--bb-amber)',
     label: 'Reconnecting',
     animate: true,
   },
   disconnected: {
-    icon: SFWifiSlash,
+    icon: WifiOff,
     color: 'var(--bb-red)',
     label: 'Offline',
   },
@@ -52,6 +52,7 @@ export function ConnectionStatus() {
     >
       <Icon
         size={12}
+        strokeWidth={2}
         style={config.animate ? { animation: 'spin 1s linear infinite' } : undefined}
       />
       <span>{config.label}</span>

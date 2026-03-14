@@ -13,7 +13,7 @@ import {
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
 import { cn } from "@/lib/utils";
-import { SFArrowLeft, SFArrowRight } from 'sf-symbols-lib';
+import { ArrowLeftIcon, ArrowRightIcon } from "lucide-react";
 import type { ComponentProps } from "react";
 import {
   createContext,
@@ -215,7 +215,7 @@ export const InlineCitationCarouselPrev = ({
       type="button"
       {...props}
     >
-      <SFArrowLeft className="size-4 text-muted-foreground" />
+      <ArrowLeftIcon className="size-4 text-muted-foreground" />
     </button>
   );
 };
@@ -242,7 +242,7 @@ export const InlineCitationCarouselNext = ({
       type="button"
       {...props}
     >
-      <SFArrowRight className="size-4 text-muted-foreground" />
+      <ArrowRightIcon className="size-4 text-muted-foreground" />
     </button>
   );
 };

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { SFPerson2 } from 'sf-symbols-lib';
+import { Users } from 'lucide-react';
 import { WidgetCard } from './widget-card';
 import { EmptyState } from '@/components/ui/empty-state';
 
@@ -21,11 +21,11 @@ export function ChannelActivityWidget() {
     <WidgetCard
       title="Recent Channel Activity"
       subtitle="Latest messages across all channels"
-      icon={<SFPerson2 size={20} style={{ color: 'var(--bb-cyan)' }} />}
+      icon={<Users size={20} style={{ color: 'var(--bb-cyan)' }} />}
     >
       <div className="space-y-3 max-h-64 overflow-y-auto">
         {activity.length === 0 ? (
-          <EmptyState icon={<SFPerson2 size={32} />} title="No recent activity" description="Channel messages will appear here." />
+          <EmptyState icon={<Users size={32} />} title="No recent activity" description="Channel messages will appear here." />
         ) : (
           activity.map((item, idx) => (
             <div key={(item.id as string) || idx} className="flex items-start gap-3 pb-3 border-b border-[var(--border-subtle)] last:border-0">

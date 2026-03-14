@@ -2,17 +2,23 @@
 
 import React, { useRef, useEffect } from 'react';
 import Image from 'next/image';
-import { SFRectangleSplit2x2, SFBubbleRight, SFBriefcase, SFBrain, SFWrenchAndScrewdriver } from 'sf-symbols-lib';
+import {
+  LayoutDashboard,
+  MessageSquare,
+  Briefcase,
+  Brain,
+  Wrench,
+} from 'lucide-react';
 import type { SidebarCategory } from '@/lib/modules/registry';
 import type { BadgeCounts } from '@/hooks/use-badge-counts';
 import { NotificationBadge } from '@/components/ui/notification-badge';
 
 const CATEGORY_ICON_MAP: Record<string, React.ElementType> = {
-  SFRectangleSplit2x2,
-  SFBubbleRight,
-  SFBriefcase,
-  SFBrain,
-  SFWrenchAndScrewdriver,
+  LayoutDashboard,
+  MessageSquare,
+  Briefcase,
+  Brain,
+  Wrench,
 };
 
 interface SidebarRailProps {
@@ -104,7 +110,7 @@ export function SidebarRail({
               data-category={cat.id}
               style={{ position: 'relative' }}
             >
-              <Icon size={20} />
+              <Icon size={20} strokeWidth={1.8} />
               {badge > 0 && (
                 <NotificationBadge
                   count={badge}

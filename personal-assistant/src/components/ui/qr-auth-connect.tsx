@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { SFArrowClockwise, SFArrowCounterclockwise } from 'sf-symbols-lib';
+import { Loader2, RotateCcw } from 'lucide-react';
 
 interface QrAuthConnectProps {
   sessionId: string;
@@ -257,7 +257,7 @@ export function QrAuthConnect({ sessionId, serviceName, onConnected, onError }: 
                 alignItems: 'center',
                 justifyContent: 'center',
               }}>
-                <SFArrowClockwise
+                <Loader2
                   size={24}
                   style={{
                     color: 'var(--text-secondary)',
@@ -288,7 +288,7 @@ export function QrAuthConnect({ sessionId, serviceName, onConnected, onError }: 
               alignItems: 'center',
               gap: 8,
             }}>
-              <SFArrowClockwise
+              <Loader2
                 size={28}
                 style={{
                   color: 'var(--text-secondary)',
@@ -428,7 +428,7 @@ export function QrAuthConnect({ sessionId, serviceName, onConnected, onError }: 
                 e.currentTarget.style.borderColor = 'var(--glass-interactive-border)';
               }}
             >
-              <SFArrowCounterclockwise size={14} />
+              <RotateCcw size={14} />
               Try Again
             </button>
           </div>

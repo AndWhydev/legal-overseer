@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { SFCalendar } from 'sf-symbols-lib';
+import { Calendar } from 'lucide-react';
 import { WidgetCard } from './widget-card';
 import { EmptyState } from '@/components/ui/empty-state';
 
@@ -31,11 +31,11 @@ export function TodaysJobsWidget() {
     <WidgetCard
       title="Today's Jobs"
       subtitle={`${jobs.length} job${jobs.length !== 1 ? 's' : ''} scheduled`}
-      icon={<SFCalendar size={20} style={{ color: 'var(--bb-status-info)' }} />}
+      icon={<Calendar size={20} style={{ color: 'var(--bb-status-info)' }} />}
     >
       <div className="space-y-3">
         {jobs.length === 0 ? (
-          <EmptyState icon={<SFCalendar size={32} />} title="No jobs today" description="Scheduled jobs will appear here." />
+          <EmptyState icon={<Calendar size={32} />} title="No jobs today" description="Scheduled jobs will appear here." />
         ) : (
           jobs.map(job => (
             <div key={job.id as string} className="flex items-center justify-between p-3 rounded-md bg-[var(--bg-elevated)] border border-[var(--border-subtle)]">

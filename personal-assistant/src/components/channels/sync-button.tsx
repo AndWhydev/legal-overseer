@@ -1,6 +1,6 @@
 'use client'
 
-import { SFArrowClockwise } from 'sf-symbols-lib'
+import { RefreshCw } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface SyncButtonProps {
@@ -19,7 +19,7 @@ export function SyncButton({ onClick, syncing }: SyncButtonProps) {
         'disabled:opacity-50 disabled:cursor-not-allowed'
       )}
     >
-      <SFArrowClockwise className={cn('h-4 w-4', syncing && 'animate-spin')} />
+      <RefreshCw className={cn('h-4 w-4', syncing && 'animate-spin')} />
       {syncing ? 'Syncing...' : 'Sync All Channels'}
     </button>
   )

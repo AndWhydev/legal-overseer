@@ -2,7 +2,7 @@
 
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { SFXmark } from 'sf-symbols-lib'
+import { X } from 'lucide-react'
 import type { Task } from '@/lib/types'
 
 interface KanbanCardProps {
@@ -137,7 +137,7 @@ export function KanbanCard({ task, onEdit, onArchive }: KanbanCardProps) {
             onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--text-secondary)' }}
             onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-dim)' }}
           >
-            <SFXmark style={{ width: 11, height: 11 }} />
+            <X style={{ width: 11, height: 11 }} />
           </button>
         </div>
       )}
