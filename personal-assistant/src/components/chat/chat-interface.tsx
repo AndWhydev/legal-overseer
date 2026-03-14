@@ -129,6 +129,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
   const [showReasoning, setShowReasoning] = useState(false)
   const [narration, setNarration] = useState('')
   const narrationLockedRef = useRef(false) // Once actual content starts, stop capturing narration
+  const narrationContentRef = useRef('') // Tracks ONLY pre-tool narration text, separate from assistantContent
   const [activeCitations, setActiveCitations] = useState<Citation[]>([])
   const [checkpoints, setCheckpoints] = useState<CheckpointMarker[]>([])
   const [pendingApprovals, setPendingApprovals] = useState<PendingApproval[]>([])
@@ -240,6 +241,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
     autoOpenedRef.current = false
     setNarration('')
     narrationLockedRef.current = false
+    narrationContentRef.current = ''
     setActiveCitations([])
     setPendingApprovals([])
     smoothStream.reset()
@@ -400,11 +402,12 @@ export function ChatInterface({ userName }: { userName?: string }) {
                 setIsThinkingStreaming(false)
                 assistantContent += event.data
 
-                // Capture pre-tool narration: if content arrives before any tool_call,
-                // treat it as narration ("I'll search for..."). Once tools start or
-                // narration is locked, stream to main message.
+                // Pre-tool narration: content before any tool_call is narration text.
+                // Once narration is locked (first tool_call arrived), all content
+                // goes to smoothStream for the final answer display.
                 if (!narrationLockedRef.current && toolCalls.length === 0) {
-                  setNarration(assistantContent)
+                  narrationContentRef.current += event.data
+                  setNarration(narrationContentRef.current)
                 } else {
                   if (!narrationLockedRef.current) {
                     narrationLockedRef.current = true
@@ -651,7 +654,12 @@ export function ChatInterface({ userName }: { userName?: string }) {
         {/* Narration step — "I'll search for..." captured before tool calls */}
         {narration && (
           <ChainOfThoughtStep
-            label={narration.trim()}
+            label={(() => {
+              const trimmed = narration.trim()
+              // Show first sentence only for a clean timeline step
+              const firstSentence = trimmed.match(/^[^.!?\n]+[.!?]?/)?.[0] || trimmed
+              return firstSentence.length > 120 ? firstSentence.slice(0, 117) + '...' : firstSentence
+            })()}
             status={isReasoningActive ? 'active' : 'complete'}
           />
         )}
