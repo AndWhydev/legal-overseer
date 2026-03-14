@@ -43,6 +43,7 @@ interface OutlookCredentials {
   access_token?: string
   refresh_token?: string
   token_expires_at?: string
+  connected_at?: string
 }
 
 export interface OutlookError {
