@@ -12,6 +12,7 @@ import {
   ChevronDown,
   ChevronRight,
   ListTodo,
+  Send,
 } from 'lucide-react';
 import { resolveAvatarSync, resolveAvatar, type AvatarResult } from '@/lib/avatar/resolver';
 
@@ -913,43 +914,63 @@ export default function InboxDrawer({
 
         {/* Reply Composer */}
         <div style={{ padding: '14px 20px', borderTop: '1px solid rgba(255,255,255,0.06)', flexShrink: 0 }}>
-          <div style={{ display: 'flex', gap: 8 }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'flex-end',
+            gap: 0,
+            background: 'var(--glass-pill-bg, rgba(255,255,255,0.04))',
+            backdropFilter: 'var(--glass-card-blur, blur(20px))',
+            WebkitBackdropFilter: 'var(--glass-card-blur, blur(20px))',
+            borderRadius: 20,
+            padding: '4px 4px 4px 16px',
+            boxShadow: 'var(--glass-pill-inset, inset 0 1px 0 rgba(255,255,255,0.05))',
+          }}>
             <textarea
               ref={textareaRef}
               value={replyText}
               onChange={handleAutoExpand}
               onFocus={() => setReplyFocused(true)}
               onBlur={() => setReplyFocused(false)}
-              placeholder="Type your reply… (⌘↵ to send)"
+              onKeyDown={(e) => {
+                if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+                  e.preventDefault();
+                  handleSendReply();
+                }
+              }}
+              placeholder="Reply... (Cmd+Enter to send)"
               style={{
-                flex: 1, padding: '10px 12px', borderRadius: 8,
-                border: replyFocused ? '1px solid rgba(255,255,255,0.15)' : '1px solid rgba(255,255,255,0.06)',
-                background: 'rgba(13,17,23,0.6)', color: 'var(--text-primary, #F1F5F9)',
-                fontSize: 13, fontFamily: 'inherit', outline: 'none',
-                transition: 'all 150ms ease', resize: 'none', minHeight: 40, maxHeight: 200,
-                boxShadow: replyFocused ? '0 0 0 2px rgba(255,90,31,0.15)' : 'none',
+                flex: 1, padding: '8px 0',
+                background: 'transparent', border: 'none', outline: 'none',
+                color: 'var(--text-primary, #F1F5F9)',
+                fontSize: 13, fontFamily: 'inherit', lineHeight: 1.5,
+                resize: 'none', minHeight: 32, maxHeight: 200,
+                width: '100%',
               }}
             />
             <button
               onClick={handleSendReply}
               disabled={!replyText.trim()}
               style={{
-                padding: '10px 16px', borderRadius: 8, border: 'none',
-                background: replyText.trim() ? '#FF5A1F' : 'rgba(255,90,31,0.3)',
-                color: replyText.trim() ? '#fff' : 'rgba(255,255,255,0.3)',
-                fontSize: 12, fontWeight: 600,
+                width: 32, height: 32, borderRadius: '50%',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                border: 'none', flexShrink: 0,
                 cursor: replyText.trim() ? 'pointer' : 'default',
-                transition: 'all 150ms ease', flexShrink: 0,
+                transition: 'background 150ms cubic-bezier(0.16, 1, 0.3, 1), color 150ms cubic-bezier(0.16, 1, 0.3, 1), opacity 150ms cubic-bezier(0.16, 1, 0.3, 1)',
+                background: 'transparent',
+                color: replyText.trim() ? 'var(--text-primary, #F1F5F9)' : 'var(--text-dim, rgba(255,255,255,0.25))',
+                opacity: replyText.trim() ? 1 : 0.4,
               }}
-              onMouseEnter={(e) => { if (replyText.trim()) { e.currentTarget.style.background = '#FF7A45'; } }}
-              onMouseLeave={(e) => { if (replyText.trim()) { e.currentTarget.style.background = '#FF5A1F'; } }}
+              onMouseEnter={(e) => { if (replyText.trim()) e.currentTarget.style.background = 'var(--hover-bg-strong, rgba(255,255,255,0.1))'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
             >
-              Send
+              <Send size={14} />
             </button>
           </div>
-          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', marginTop: 6 }}>
-            <kbd style={{ padding: '2px 5px', borderRadius: 4, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', fontSize: 10, fontFamily: 'inherit' }}>⌘⏎</kbd> to send
-          </div>
+          {replyText && (
+            <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)', marginTop: 5, paddingLeft: 16 }}>
+              <kbd style={{ padding: '1px 4px', borderRadius: 3, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', fontSize: 9, fontFamily: 'inherit' }}>Cmd+Enter</kbd> to send
+            </div>
+          )}
         </div>
       </div>
     </>

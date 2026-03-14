@@ -34,7 +34,7 @@ import { resolveAvatar, resolveAvatarSync, type AvatarResult } from '@/lib/avata
 type MessageCategory = 'actionable' | 'informational' | 'spam' | 'personal';
 type PriorityLevel = 'critical' | 'high' | 'medium' | 'low';
 type ThreadStatus = 'waiting_on_you' | 'waiting_on_them' | 'resolved' | 'new';
-type CategoryPillType = 'all' | 'priority' | 'updates' | 'feed' | 'receipts';
+type CategoryPillType = 'all' | 'focus' | 'waiting' | 'direct' | 'email' | 'notifications' | 'billing';
 
 interface InboxMessage {
   id: string;
@@ -71,11 +71,13 @@ const PILL_CONFIG: Record<CategoryPillType, {
   label: string;
   filter: (m: InboxMessage) => boolean;
 }> = {
-  all:      { label: 'All',      filter: (m) => m.category !== 'spam' },
-  priority: { label: 'Focus', filter: (m) => m.category === 'actionable' },
-  updates:  { label: 'Updates',  filter: (m) => m.category === 'informational' },
-  feed:     { label: 'Feed',     filter: (m) => m.category === 'personal' },
-  receipts: { label: 'Receipts', filter: (m) => m.channelType === 'stripe' || m.channelType === 'xero' },
+  all:           { label: 'All',           filter: (m) => m.category !== 'spam' },
+  focus:         { label: 'Focus',         filter: (m) => m.category === 'actionable' },
+  waiting:       { label: 'Waiting',       filter: (m) => m.threadStatus === 'waiting_on_you' },
+  direct:        { label: 'Direct',        filter: (m) => ['whatsapp', 'imessage', 'sms', 'slack'].includes(m.channelType) },
+  email:         { label: 'Email',         filter: (m) => ['gmail', 'outlook'].includes(m.channelType) && m.category !== 'spam' },
+  notifications: { label: 'Notifications', filter: (m) => ['asana', 'calendly', 'jira'].includes(m.channelType) },
+  billing:       { label: 'Billing',       filter: (m) => ['stripe', 'xero'].includes(m.channelType) },
 };
 
 // ---------------------------------------------------------------------------
@@ -366,7 +368,7 @@ function InboxTab() {
   const [newMessageAlert, setNewMessageAlert] = useState(false);
 
   // New state for P2-5, P2-2, P4-5
-  const [activePill, setActivePill] = useState<CategoryPillType>('priority');
+  const [activePill, setActivePill] = useState<CategoryPillType>('all');
   const [undoToasts, setUndoToasts] = useState<ToastEntry[]>([]);
   const [snoozeTargetId, setSnoozeTargetId] = useState<string | null>(null);
   const [snoozeAnchor, setSnoozeAnchor] = useState<{ top: number; right: number } | null>(null);
@@ -374,8 +376,35 @@ function InboxTab() {
   const [snoozedIds, setSnoozedIds] = useState<Set<string>>(new Set());
   const lastClickedIndexRef = useRef<number>(-1);
 
+  // Collapse animation
+  const [collapsingId, setCollapsingId] = useState<string | null>(null);
+  const collapseTimeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const expandedIdRef = useRef<string | null>(null);
+  expandedIdRef.current = expandedId;
+
+  const COLLAPSE_DURATION = 180;
+
+  const closeExpanded = useCallback(() => {
+    const currentExpanded = expandedIdRef.current;
+    if (currentExpanded) {
+      setCollapsingId(currentExpanded);
+      setExpandedId(null);
+      if (collapseTimeoutRef.current) clearTimeout(collapseTimeoutRef.current);
+      collapseTimeoutRef.current = setTimeout(() => {
+        setCollapsingId(null);
+      }, COLLAPSE_DURATION);
+    }
+  }, []);
+
+  // Pagination
+  const [page, setPage] = useState(1);
+  const ITEMS_PER_PAGE = 25;
+
   const devOverrides = useDevOverrides();
   const useSeeded = devOverrides?.seed_data?.inbox ?? false;
+
+  // Reset pagination when filters change
+  useEffect(() => { setPage(1); }, [activePill, channelFilter, priorityFilter]);
 
   // ── Computed: displayed — defined early so callbacks can reference it ──
   const displayed = useMemo(() => {
@@ -390,7 +419,7 @@ function InboxTab() {
   }, [messages, channelFilter, priorityFilter, activePill, snoozedIds]);
 
   const pillCounts = useMemo(() => {
-    const counts: Record<CategoryPillType, number> = { all: 0, priority: 0, updates: 0, feed: 0, receipts: 0 };
+    const counts: Record<CategoryPillType, number> = { all: 0, focus: 0, waiting: 0, direct: 0, email: 0, notifications: 0, billing: 0 };
     const nonSnooze = messages.filter(m => !snoozedIds.has(m.id));
     for (const m of nonSnooze) {
       for (const [key, cfg] of Object.entries(PILL_CONFIG) as [CategoryPillType, typeof PILL_CONFIG[CategoryPillType]][]) {
@@ -596,7 +625,7 @@ function InboxTab() {
     onCategorySwitch: () => {},
     onSearch: () => {},
     onClose: () => {
-      setExpandedId(null);
+      closeExpanded();
       setSelectedMessage(null);
       keyboard.setSelectedIndex(-1);
     },
@@ -634,11 +663,20 @@ function InboxTab() {
       });
       lastClickedIndexRef.current = index;
     } else {
-      // Plain click — toggle inline expansion
+      // Plain click — toggle inline expansion with collapse animation
       lastClickedIndexRef.current = index;
-      setExpandedId(prev => prev === id ? null : id);
+      if (expandedId === id) {
+        closeExpanded();
+      } else {
+        // Cancel any in-progress collapse
+        if (collapsingId) {
+          clearTimeout(collapseTimeoutRef.current);
+          setCollapsingId(null);
+        }
+        setExpandedId(id);
+      }
     }
-  }, [displayed, keyboard]);
+  }, [displayed, keyboard, expandedId, closeExpanded, collapsingId]);
 
   const clearSelection = useCallback(() => keyboard.setSelectedIds(new Set()), [keyboard]);
 
@@ -774,39 +812,75 @@ function InboxTab() {
             description="No messages to show. Adjust your filters or wait for new messages."
           />
         ) : (
-          displayed.map((msg, idx) => (
-            <React.Fragment key={msg.id}>
-              <MessageRow
-                message={msg}
-                index={idx}
-                expanded={expandedId === msg.id}
-                onArchive={handleArchive}
-                onDone={handleDone}
-                onSnooze={(id, e) => {
-                  const rect = (e.currentTarget as HTMLButtonElement).getBoundingClientRect();
-                  setSnoozeTargetId(id);
-                  setSnoozeAnchor({ top: rect.bottom + 8, right: window.innerWidth - rect.right });
-                }}
-                onReply={() => setExpandedId(msg.id)}
-                onStar={handleStar}
-                onRowClick={handleRowClick}
-                focused={idx === keyboard.selectedIndex}
-                selected={keyboard.selectedIds.has(msg.id)}
-                starred={starredIds.has(msg.id)}
-              />
-              {expandedId === msg.id && (
-                <ExpandedMessageRow
+          <>
+            {displayed.slice(0, page * ITEMS_PER_PAGE).map((msg, idx) => (
+              <React.Fragment key={msg.id}>
+                <MessageRow
                   message={msg}
-                  threadMessages={SEED_THREAD_MESSAGES[msg.id]}
-                  onArchive={(id) => { handleArchive(id); setExpandedId(null); }}
-                  onDone={(id) => { handleDone(id); setExpandedId(null); }}
-                  onSpam={(id) => { handleSpam(id); setExpandedId(null); }}
-                  onReply={handleReply}
-                  onClose={() => setExpandedId(null)}
+                  index={idx}
+                  expanded={expandedId === msg.id || collapsingId === msg.id}
+                  onArchive={handleArchive}
+                  onDone={handleDone}
+                  onSnooze={(id, e) => {
+                    const rect = (e.currentTarget as HTMLButtonElement).getBoundingClientRect();
+                    setSnoozeTargetId(id);
+                    setSnoozeAnchor({ top: rect.bottom + 8, right: window.innerWidth - rect.right });
+                  }}
+                  onReply={() => setExpandedId(msg.id)}
+                  onStar={handleStar}
+                  onRowClick={handleRowClick}
+                  focused={idx === keyboard.selectedIndex}
+                  selected={keyboard.selectedIds.has(msg.id)}
+                  starred={starredIds.has(msg.id)}
                 />
-              )}
-            </React.Fragment>
-          ))
+                {(expandedId === msg.id || collapsingId === msg.id) && (
+                  <ExpandedMessageRow
+                    message={msg}
+                    threadMessages={SEED_THREAD_MESSAGES[msg.id]}
+                    onArchive={(id) => { handleArchive(id); setExpandedId(null); }}
+                    onDone={(id) => { handleDone(id); setExpandedId(null); }}
+                    onSpam={(id) => { handleSpam(id); setExpandedId(null); }}
+                    onReply={handleReply}
+                    onClose={closeExpanded}
+                    isCollapsing={collapsingId === msg.id}
+                  />
+                )}
+              </React.Fragment>
+            ))}
+            {/* Pagination: Load more */}
+            {displayed.length > page * ITEMS_PER_PAGE && (
+              <button
+                onClick={() => setPage(p => p + 1)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8,
+                  width: '100%',
+                  padding: '12px 0',
+                  marginTop: 4,
+                  borderRadius: 12,
+                  border: 'none',
+                  background: 'rgba(255,255,255,0.03)',
+                  color: 'rgba(255,255,255,0.45)',
+                  fontSize: 13,
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  transition: 'all 150ms cubic-bezier(0.16, 1, 0.3, 1)',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
+                  e.currentTarget.style.color = 'rgba(255,255,255,0.7)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(255,255,255,0.03)';
+                  e.currentTarget.style.color = 'rgba(255,255,255,0.45)';
+                }}
+              >
+                Load more ({displayed.length - page * ITEMS_PER_PAGE} remaining)
+              </button>
+            )}
+          </>
         )}
       </div>
 
@@ -828,7 +902,7 @@ function InboxTab() {
           borderRadius: 12,
           boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.3)',
           zIndex: 50,
-          animation: 'fadeSlideUp 200ms ease',
+          animation: 'fadeSlideUp 160ms cubic-bezier(0.16, 1, 0.3, 1)',
         }}>
           <span style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.8)' }}>
             {keyboard.selectedIds.size} selected
@@ -894,11 +968,12 @@ function InboxTab() {
 // Category Pills Bar — Task #10
 // ---------------------------------------------------------------------------
 
-const PILL_ORDER: CategoryPillType[] = ['all', 'priority', 'updates', 'feed', 'receipts'];
+const PILL_ORDER: CategoryPillType[] = ['all', 'focus', 'waiting', 'direct', 'email', 'notifications', 'billing'];
 
 function CategoryPillsBar({
   activePill,
   onSelect,
+  counts,
   hasUnreadPriority,
 }: {
   activePill: CategoryPillType;
@@ -920,7 +995,7 @@ function CategoryPillsBar({
       {PILL_ORDER.map((pill, pillIndex) => {
         const cfg = PILL_CONFIG[pill];
         const isActive = activePill === pill;
-        const isPriority = pill === 'priority';
+        const isPriority = pill === 'focus';
 
         const pillStyle: React.CSSProperties = isActive
           ? {
@@ -983,6 +1058,16 @@ function CategoryPillsBar({
               }} />
             )}
             {cfg.label}
+            {pill !== 'all' && counts[pill] > 0 && (
+              <span style={{
+                fontSize: 10,
+                fontWeight: 500,
+                opacity: isActive ? 0.6 : 0.5,
+                marginLeft: -2,
+              }}>
+                {counts[pill]}
+              </span>
+            )}
           </button>
         );
       })}
@@ -1155,10 +1240,10 @@ function UndoToastStack({
             border: '1px solid rgba(255,255,255,0.1)',
             boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
             pointerEvents: 'auto',
-            animation: 'fadeSlideUp 200ms ease',
+            animation: 'fadeSlideUp 160ms cubic-bezier(0.16, 1, 0.3, 1)',
           }}
         >
-          <style>{`@keyframes fadeSlideUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }`}</style>
+          <style>{`@keyframes fadeSlideUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }`}</style>
           <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.8)', fontWeight: 400 }}>
             {toast.message}
           </span>
@@ -1228,7 +1313,7 @@ function SnoozePickerPopover({
         padding: 6,
         boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
         minWidth: 200,
-        animation: 'fadeSlideUp 150ms ease',
+        animation: 'fadeSlideUp 140ms cubic-bezier(0.16, 1, 0.3, 1)',
       }}
     >
       <div style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '6px 10px 4px' }}>
@@ -1376,6 +1461,7 @@ function ExpandedMessageRow({
   onSpam,
   onReply,
   onClose,
+  isCollapsing = false,
 }: {
   message: InboxMessage;
   threadMessages?: ThreadMessageItem[];
@@ -1384,6 +1470,7 @@ function ExpandedMessageRow({
   onSpam: (id: string) => void;
   onReply: (id: string, body: string) => void;
   onClose: () => void;
+  isCollapsing?: boolean;
 }) {
   const [replyText, setReplyText] = useState('');
   const [replyFocused, setReplyFocused] = useState(false);
@@ -1504,11 +1591,21 @@ function ExpandedMessageRow({
         borderTop: '1px solid rgba(255, 255, 255, 0.04)',
         boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05)',
         overflow: 'hidden',
-        animation: 'expandIn 200ms ease',
+        animation: isCollapsing
+          ? 'collapseOut 180ms cubic-bezier(0.4, 0, 1, 1) forwards'
+          : 'expandIn 200ms cubic-bezier(0.16, 1, 0.3, 1)',
+        pointerEvents: isCollapsing ? 'none' : 'auto',
       }}
     >
       <style>{`
-        @keyframes expandIn { from { opacity: 0; max-height: 0; } to { opacity: 1; max-height: 2000px; } }
+        @keyframes expandIn {
+          from { opacity: 0; max-height: 0; transform: translateY(-4px); }
+          to { opacity: 1; max-height: 2000px; transform: translateY(0); }
+        }
+        @keyframes collapseOut {
+          from { opacity: 1; max-height: 2000px; transform: translateY(0); }
+          to { opacity: 0; max-height: 0; transform: translateY(-4px); }
+        }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
       `}</style>
 
@@ -1559,7 +1656,7 @@ function ExpandedMessageRow({
           <p style={{
             fontSize: 14, color: 'rgba(255,255,255,0.82)', lineHeight: 1.6,
             margin: 0, opacity: 1,
-            animation: 'fadeIn 300ms ease',
+            animation: 'fadeIn 200ms cubic-bezier(0.16, 1, 0.3, 1)',
           }}>
             {sanitizeText(aiResult.summary)}
           </p>
@@ -1731,12 +1828,13 @@ function ExpandedMessageRow({
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               border: 'none', cursor: replyText.trim() ? 'pointer' : 'default',
               flexShrink: 0,
-              transition: 'all 150ms ease',
-              background: replyText.trim() ? '#FF5A1F' : 'transparent',
-              color: replyText.trim() ? '#fff' : 'rgba(255,255,255,0.25)',
+              transition: 'background 150ms cubic-bezier(0.16, 1, 0.3, 1), color 150ms cubic-bezier(0.16, 1, 0.3, 1), opacity 150ms cubic-bezier(0.16, 1, 0.3, 1)',
+              background: 'transparent',
+              color: replyText.trim() ? 'var(--text-primary, #F1F5F9)' : 'var(--text-dim, rgba(255,255,255,0.25))',
+              opacity: replyText.trim() ? 1 : 0.4,
             }}
-            onMouseEnter={(e) => { if (replyText.trim()) e.currentTarget.style.background = '#FF7A45'; }}
-            onMouseLeave={(e) => { if (replyText.trim()) e.currentTarget.style.background = '#FF5A1F'; }}
+            onMouseEnter={(e) => { if (replyText.trim()) e.currentTarget.style.background = 'var(--hover-bg-strong, rgba(255,255,255,0.1))'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
           >
             <Send size={14} />
           </button>

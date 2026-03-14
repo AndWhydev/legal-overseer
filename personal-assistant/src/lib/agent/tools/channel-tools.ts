@@ -2,13 +2,14 @@ import Anthropic from '@anthropic-ai/sdk'
 import {
   getAllAdapters,
   getAdapter,
-  synthesize,
 } from '@/lib/channels'
 import type { ChannelAdapter, ChannelMessage, ChannelType } from '@/lib/channels'
 import type { AgentToolHandler } from '../tools'
 import { getOrgCredential } from '@/lib/integrations/credentials'
 import { refreshGmailToken } from '@/lib/channels/gmail'
+import { resolveAccessToken } from '@/lib/channels/outlook'
 import { logger } from '@/lib/core/logger'
+import type { SupabaseClient } from '@supabase/supabase-js'
 
 export const channelToolDefinitions: Anthropic.Tool[] = [
   {
@@ -267,6 +268,278 @@ async function readJsonCache<T>(filename: string): Promise<T[]> {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Gmail sync via Supabase credentials (bypasses env-var-based adapter)
+// ---------------------------------------------------------------------------
+
+interface GmailListResponse {
+  messages?: Array<{ id: string; threadId: string }>
+}
+
+interface GmailMessageDetail {
+  id: string
+  threadId: string
+  snippet?: string
+  internalDate?: string
+  payload?: {
+    headers?: Array<{ name: string; value: string }>
+  }
+}
+
+interface SyncedMessage {
+  external_id: string
+  channel: string
+  sender: string
+  subject: string
+  body: string
+  metadata: Record<string, unknown>
+  received_at: string
+}
+
+function getGmailHeader(
+  headers: Array<{ name: string; value: string }> | undefined,
+  name: string,
+): string | undefined {
+  return headers?.find(h => h.name.toLowerCase() === name.toLowerCase())?.value
+}
+
+function parseGmailFrom(value: string | undefined): { sender: string; senderEmail: string } {
+  if (!value) return { sender: 'Unknown', senderEmail: '' }
+  const match = value.match(/<([^>]+)>/)
+  const senderEmail = (match?.[1] || value).trim()
+  const sender = value.replace(/<[^>]+>/g, '').replace(/"/g, '').trim()
+  return { sender: sender || senderEmail || 'Unknown', senderEmail }
+}
+
+async function syncGmailViaSupabase(
+  supabase: SupabaseClient,
+  orgId: string,
+  since: Date,
+): Promise<SyncedMessage[] | null> {
+  const creds = await getOrgCredential(supabase, orgId, 'gmail')
+  if (!creds) return null
+
+  const clientId = (creds.client_id as string) || process.env.GOOGLE_CLIENT_ID || ''
+  const clientSecret = (creds.client_secret as string) || process.env.GOOGLE_CLIENT_SECRET || ''
+  const refreshToken = creds.refresh_token as string | undefined
+  let accessToken = creds.access_token as string | undefined
+  const tokenExpiresAt = creds.token_expires_at as string | undefined
+
+  if (!accessToken && !refreshToken) return null
+
+  // Refresh token if expired or about to expire
+  if (!accessToken || (tokenExpiresAt && new Date(tokenExpiresAt).getTime() - 5 * 60 * 1000 <= Date.now())) {
+    if (!refreshToken) return null
+    const refreshed = await refreshGmailToken(supabase, orgId, {
+      client_id: clientId,
+      client_secret: clientSecret,
+      access_token: accessToken,
+      refresh_token: refreshToken,
+      token_expires_at: tokenExpiresAt,
+    })
+    if (!refreshed) return null
+    accessToken = refreshed
+  }
+
+  // Format date for Gmail query: YYYY/MM/DD
+  const y = since.getUTCFullYear()
+  const m = String(since.getUTCMonth() + 1).padStart(2, '0')
+  const d = String(since.getUTCDate()).padStart(2, '0')
+  const afterDate = `${y}/${m}/${d}`
+
+  const query = encodeURIComponent(`in:inbox after:${afterDate}`)
+  const listRes = await fetch(
+    `https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=50&q=${query}`,
+    { headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' } },
+  )
+
+  if (!listRes.ok) {
+    const errText = await listRes.text()
+    throw new Error(`Gmail API list failed (${listRes.status}): ${errText}`)
+  }
+
+  const listData = (await listRes.json()) as GmailListResponse
+  const items = listData.messages || []
+  if (items.length === 0) return []
+
+  // Fetch message details in parallel (metadata only for efficiency)
+  const details = await Promise.all(
+    items.slice(0, 50).map(async (item) => {
+      try {
+        const res = await fetch(
+          `https://gmail.googleapis.com/gmail/v1/users/me/messages/${item.id}?format=metadata&metadataHeaders=From&metadataHeaders=Subject&metadataHeaders=Date&metadataHeaders=Message-ID`,
+          { headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' } },
+        )
+        if (!res.ok) return null
+        return (await res.json()) as GmailMessageDetail
+      } catch {
+        return null
+      }
+    }),
+  )
+
+  return details
+    .filter((msg): msg is GmailMessageDetail => msg !== null)
+    .map((msg): SyncedMessage => {
+      const headers = msg.payload?.headers
+      const fromHeader = getGmailHeader(headers, 'From')
+      const { sender, senderEmail } = parseGmailFrom(fromHeader)
+      const subject = getGmailHeader(headers, 'Subject') || '(no subject)'
+      const messageIdHeader = getGmailHeader(headers, 'Message-ID')
+      const dateHeader = getGmailHeader(headers, 'Date')
+
+      // Parse received time
+      let receivedAt: Date
+      const internal = Number(msg.internalDate)
+      if (Number.isFinite(internal) && internal > 0) {
+        receivedAt = new Date(internal)
+      } else if (dateHeader) {
+        receivedAt = new Date(dateHeader)
+        if (isNaN(receivedAt.getTime())) receivedAt = new Date()
+      } else {
+        receivedAt = new Date()
+      }
+
+      return {
+        external_id: messageIdHeader || msg.id,
+        channel: 'gmail',
+        sender,
+        subject,
+        body: (msg.snippet || subject).slice(0, 2000),
+        metadata: {
+          gmail_id: msg.id,
+          thread_id: msg.threadId,
+          message_id: messageIdHeader || msg.id,
+          sender_email: senderEmail,
+          source: 'gmail-api-sync',
+        },
+        received_at: receivedAt.toISOString(),
+      }
+    })
+}
+
+// ---------------------------------------------------------------------------
+// Outlook sync via Supabase credentials (bypasses env-var-based adapter)
+// ---------------------------------------------------------------------------
+
+interface GraphMessage {
+  id: string
+  conversationId?: string
+  sender?: { emailAddress?: { name?: string; address?: string } }
+  subject?: string
+  bodyPreview?: string
+  body?: { content?: string; contentType?: string }
+  receivedDateTime?: string
+  isRead?: boolean
+}
+
+interface GraphMessagesResponse {
+  value: GraphMessage[]
+}
+
+async function syncOutlookViaSupabase(
+  supabase: SupabaseClient,
+  orgId: string,
+  since: Date,
+): Promise<SyncedMessage[] | null> {
+  const creds = await getOrgCredential(supabase, orgId, 'outlook')
+  if (!creds) return null
+
+  const accessToken = await resolveAccessToken(
+    creds as { tenant_id?: string; client_id?: string; client_secret?: string; access_token?: string; refresh_token?: string; token_expires_at?: string },
+    supabase,
+    orgId,
+  )
+
+  const filter = `receivedDateTime ge ${since.toISOString()}`
+  const select = 'id,conversationId,sender,subject,bodyPreview,body,receivedDateTime,isRead'
+  const url = `https://graph.microsoft.com/v1.0/me/messages?$filter=${encodeURIComponent(filter)}&$select=${select}&$top=50&$orderby=receivedDateTime desc`
+
+  const res = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      Accept: 'application/json',
+      Prefer: 'outlook.body-content-type="text"',
+    },
+  })
+
+  if (!res.ok) {
+    const errText = await res.text()
+    throw new Error(`Graph API list failed (${res.status}): ${errText}`)
+  }
+
+  const data = (await res.json()) as GraphMessagesResponse
+
+  return (data.value || []).map((msg): SyncedMessage => {
+    const senderName = msg.sender?.emailAddress?.name || msg.sender?.emailAddress?.address || 'Unknown'
+    const senderEmail = msg.sender?.emailAddress?.address || ''
+
+    return {
+      external_id: msg.conversationId || `outlook-${msg.id}`,
+      channel: 'outlook',
+      sender: senderName,
+      subject: msg.subject || '(no subject)',
+      body: (msg.body?.content || msg.bodyPreview || '').slice(0, 2000).trim(),
+      metadata: {
+        outlook_message_id: msg.id,
+        conversation_id: msg.conversationId,
+        sender_email: senderEmail,
+        is_read: msg.isRead,
+        source: 'outlook-graph-sync',
+      },
+      received_at: msg.receivedDateTime || new Date().toISOString(),
+    }
+  })
+}
+
+// ---------------------------------------------------------------------------
+// Insert messages into channel_messages with dedup on external_id
+// ---------------------------------------------------------------------------
+
+async function insertChannelMessages(
+  supabase: SupabaseClient,
+  orgId: string,
+  channel: string,
+  messages: SyncedMessage[],
+): Promise<number> {
+  if (messages.length === 0) return 0
+
+  // Fetch existing external_ids for this channel+org to dedup
+  const externalIds = messages.map(m => m.external_id)
+  const { data: existing } = await supabase
+    .from('channel_messages')
+    .select('external_id')
+    .eq('org_id', orgId)
+    .eq('channel', channel)
+    .in('external_id', externalIds)
+
+  const existingSet = new Set((existing ?? []).map((r: { external_id: string }) => r.external_id))
+  const newMessages = messages.filter(m => !existingSet.has(m.external_id))
+
+  if (newMessages.length === 0) return 0
+
+  const rows = newMessages.map(m => ({
+    org_id: orgId,
+    channel: m.channel,
+    external_id: m.external_id,
+    sender: m.sender,
+    subject: m.subject,
+    body: m.body,
+    metadata: m.metadata,
+    created_at: m.received_at,
+  }))
+
+  const { error } = await supabase.from('channel_messages').insert(rows)
+
+  if (error) {
+    logger.error(`[sync_channels] Failed to insert ${channel} messages:`, error)
+    return 0
+  }
+
+  logger.info(`[sync_channels] Inserted ${newMessages.length} new ${channel} messages`, { orgId })
+  return newMessages.length
+}
+
 export const channelToolHandlers: Record<string, AgentToolHandler> = {
   async get_upcoming(input, _orgId) {
     const days = (input.days as number) || 7
@@ -326,23 +599,72 @@ export const channelToolHandlers: Record<string, AgentToolHandler> = {
     }
   },
 
-  async sync_channels(input, orgId) {
+  async sync_channels(input, orgId, supabase) {
     const hoursBack = (input.hours_back as number) || 24
     const since = new Date(Date.now() - hoursBack * 60 * 60 * 1000)
 
-    const channels: ChannelType[] = ['gmail', 'outlook', 'whatsapp', 'imessage', 'calendar', 'reminders']
-    const results = await synthesize({ channels, since, orgId })
+    const channelResults: Array<{ channel: string; fetched: number; inserted: number; error?: string }> = []
 
-    const totalMessages = results.reduce((sum, r) => sum + r.messagesFound, 0)
-    const totalTasks = results.reduce((sum, r) => sum + r.tasksCreated, 0)
-    const totalUpdated = results.reduce((sum, r) => sum + r.tasksUpdated, 0)
-    const allErrors = results.flatMap(r => r.errors)
+    // --- Gmail: fetch via API using Supabase OAuth credentials ---
+    try {
+      const gmailMessages = await syncGmailViaSupabase(supabase, orgId, since)
+      if (gmailMessages === null) {
+        channelResults.push({ channel: 'gmail', fetched: 0, inserted: 0, error: 'Gmail not connected' })
+      } else {
+        const inserted = await insertChannelMessages(supabase, orgId, 'gmail', gmailMessages)
+        channelResults.push({ channel: 'gmail', fetched: gmailMessages.length, inserted })
+      }
+    } catch (err) {
+      logger.error('[sync_channels] Gmail sync error:', err)
+      channelResults.push({ channel: 'gmail', fetched: 0, inserted: 0, error: String(err) })
+    }
+
+    // --- Outlook: fetch via Graph API using Supabase OAuth credentials ---
+    try {
+      const outlookMessages = await syncOutlookViaSupabase(supabase, orgId, since)
+      if (outlookMessages === null) {
+        channelResults.push({ channel: 'outlook', fetched: 0, inserted: 0, error: 'Outlook not connected' })
+      } else {
+        const inserted = await insertChannelMessages(supabase, orgId, 'outlook', outlookMessages)
+        channelResults.push({ channel: 'outlook', fetched: outlookMessages.length, inserted })
+      }
+    } catch (err) {
+      logger.error('[sync_channels] Outlook sync error:', err)
+      channelResults.push({ channel: 'outlook', fetched: 0, inserted: 0, error: String(err) })
+    }
+
+    // --- WhatsApp: bridge inserts messages, just report recent count ---
+    try {
+      const { count, error } = await supabase
+        .from('channel_messages')
+        .select('*', { count: 'exact', head: true })
+        .eq('org_id', orgId)
+        .eq('channel', 'whatsapp')
+        .gte('created_at', since.toISOString())
+
+      if (error) {
+        channelResults.push({ channel: 'whatsapp', fetched: 0, inserted: 0, error: error.message })
+      } else {
+        channelResults.push({ channel: 'whatsapp', fetched: count ?? 0, inserted: 0 })
+      }
+    } catch (err) {
+      channelResults.push({ channel: 'whatsapp', fetched: 0, inserted: 0, error: String(err) })
+    }
+
+    // --- iMessage, Calendar, Reminders: macOS-only, skip on server ---
+    for (const ch of ['imessage', 'calendar', 'reminders'] as const) {
+      channelResults.push({ channel: ch, fetched: 0, inserted: 0, error: 'Requires macOS (not available on server)' })
+    }
+
+    const totalFetched = channelResults.reduce((s, r) => s + r.fetched, 0)
+    const totalInserted = channelResults.reduce((s, r) => s + r.inserted, 0)
+    const errors = channelResults.filter(r => r.error).map(r => `${r.channel}: ${r.error}`)
 
     return {
       success: true,
       data: {
-        results,
-        summary: `Processed ${totalMessages} messages across ${channels.length} channels. Created ${totalTasks} new tasks, updated ${totalUpdated} existing tasks.${allErrors.length > 0 ? ` Errors: ${allErrors.join(', ')}` : ''}`,
+        results: channelResults,
+        summary: `Synced ${totalFetched} messages across channels. Inserted ${totalInserted} new messages.${errors.length > 0 ? ` Notes: ${errors.join('; ')}` : ''}`,
       },
     }
   },
