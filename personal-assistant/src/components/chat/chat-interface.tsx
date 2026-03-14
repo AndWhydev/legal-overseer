@@ -633,13 +633,13 @@ export function ChatInterface({ userName }: { userName?: string }) {
 
   // Build the reasoning chain JSX using chain-of-thought component
   const headerText = isReasoningActive ? (
-    <Shimmer duration={1}>Reasoning...</Shimmer>
+    <Shimmer duration={1}>Thinking...</Shimmer>
   ) : (() => {
     const parts: string[] = []
     if (thinkingDuration !== undefined && thinkingDuration > 0) {
-      parts.push(`Reasoned for ${thinkingDuration}s`)
+      parts.push(`Thought for ${thinkingDuration}s`)
     } else {
-      parts.push('Reasoned for a few seconds')
+      parts.push('Thought for a few seconds')
     }
     if (currentToolCalls.length > 0) {
       parts.push(`${currentToolCalls.length} tool${currentToolCalls.length !== 1 ? 's' : ''} used`)
@@ -772,6 +772,9 @@ export function ChatInterface({ userName }: { userName?: string }) {
                     {/* Reasoning chain above the current response */}
                     {isCurrentResponse && reasoningChainJSX && (
                       <div className="bb-chat__msg bb-chat__msg--assistant" style={{ marginBottom: 4 }}>
+                        <div className="bb-chat__assistant-icon">
+                          <BitBitFaceAvatar size={40} emotion={avatarEmotion} isThinking={isThinkingStreaming} />
+                        </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           {reasoningChainJSX}
                         </div>
