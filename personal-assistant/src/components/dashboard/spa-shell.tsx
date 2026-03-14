@@ -6,9 +6,8 @@ import React, {
   useState,
   useCallback,
   useEffect,
-  useRef,
 } from 'react';
-import { startTransition } from 'react';
+
 import { Menu } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { SidebarNav } from './sidebar-nav';
@@ -172,11 +171,16 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
     Promise.all(Object.values(tabImports)).then(() => setTabsReady(true));
   }, []);
 
-  // State: nav indicator (instant) and rendered page (with transition)
+  // Once code + data are ready, pre-mount ALL tabs behind the splash screen
+  // so every tab is fully rendered before the user sees the app.
+  useEffect(() => {
+    if (!tabsReady || !dataReady) return;
+    setVisitedTabs(new Set(TABS.map(t => t.id)));
+  }, [tabsReady, dataReady]);
+
+  // State: active tab and slide-animation direction
   const [activeNavIndex, setActiveNavIndex] = useState(0);
-  const [renderedPage, setRenderedPage] = useState(0);
   const [transitionDir, setTransitionDir] = useState<'up' | 'down' | null>(null);
-  const prevPageRef = useRef(0);
 
   // Resolve preferred tab after mount to avoid hydration mismatch
   useEffect(() => {
@@ -198,23 +202,25 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
 
     const nextIndex = idx >= 0 ? idx : 0;
     setActiveNavIndex(nextIndex);
-    setRenderedPage(nextIndex);
-    prevPageRef.current = nextIndex;
   }, []);
 
-  // Navigate to a tab — instant nav, smooth content slide
+  // Navigate to a tab — immediate switch with CSS slide animation
   const navigateTo = useCallback((index: number) => {
     if (index === activeNavIndex) return;
     const tab = TABS[index];
     if (!tab) return;
 
-    // 1. Nav moves INSTANTLY
+    // 1. Set transition direction for CSS animation (before index changes)
+    const dir = index > activeNavIndex ? 'down' : 'up';
+    setTransitionDir(dir);
+
+    // 2. Switch tab immediately
     setActiveNavIndex(index);
 
-    // 2. Persist tab choice without touching URL bar
+    // 3. Persist tab choice without touching URL bar
     sessionStorage.setItem('bitbit-tab', tab.id);
 
-    // 3. Mark tab as visited for keep-alive
+    // 4. Mark tab as visited for keep-alive
     setVisitedTabs(prev => {
       if (prev.has(tab.id)) return prev;
       const next = new Set(prev);
@@ -222,19 +228,9 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
       return next;
     });
 
-    // 4. Set transition direction for CSS animation
-    const dir = index > renderedPage ? 'down' : 'up';
-    setTransitionDir(dir);
-    prevPageRef.current = renderedPage;
-
-    // 5. Content switches via startTransition
-    startTransition(() => {
-      setRenderedPage(index);
-    });
-
     // Clear transition class after animation completes
     setTimeout(() => setTransitionDir(null), 250);
-  }, [activeNavIndex, renderedPage]);
+  }, [activeNavIndex]);
 
   // Navigate by tab ID (used by sidebar)
   const navigateToId = useCallback((tabId: string) => {
@@ -247,14 +243,10 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
     const handlePopState = () => {
       const idx = pathToTabIndex(window.location.pathname);
       setActiveNavIndex(idx);
-      prevPageRef.current = renderedPage;
-      startTransition(() => {
-        setRenderedPage(idx);
-      });
     };
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
-  }, [renderedPage]);
+  }, []);
 
   // Listen for bb-navigate custom events (dispatched by Quick Actions, etc.)
   useEffect(() => {
@@ -287,7 +279,7 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
   // Keep the viewport locked to the shell so docked chat input never falls below the fold.
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
-  }, [activeNavIndex, renderedPage]);
+  }, [activeNavIndex]);
 
   const currentPage = TABS[activeNavIndex]?.label || 'Dashboard';
 
@@ -502,7 +494,7 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
             tabIndex={-1}
           >
             {TABS.map((tab, index) => {
-              const isActive = index === renderedPage;
+              const isActive = index === activeNavIndex;
               const Comp = TabComponents[tab.id];
 
               return (
