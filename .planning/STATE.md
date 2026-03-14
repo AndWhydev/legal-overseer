@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-03-01)
 Phase: 19 of 19 (Credential Provisioning & Live Verification)
 Plan: 2 of 3 in current phase
 Status: Executing Phase 19
-Last activity: 2026-03-14 - Completed quick task 18: Inbox polish -- 12 fixes applied (time, filter chips, chat reply, icon actions, continuous card)
+Last activity: 2026-03-14 - Completed quick task 19: Fix chain-of-thought timeline stacking — steps append correctly
 
 Progress: [####################..........] 100% v1.0+v1.1 | Phase 19 (2/3)
 
