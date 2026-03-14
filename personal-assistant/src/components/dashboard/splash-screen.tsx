@@ -16,48 +16,83 @@ interface SplashScreenProps {
   children: React.ReactNode;
 }
 
-/* ── Sparkle shape (4-point star) ── */
-function SparkleShape({ size, color }: { size: number; color: string }) {
+/* ── Orbital ring — thin SVG circle that draws itself ── */
+function OrbitalRing() {
+  const radius = 52;
+  const circumference = 2 * Math.PI * radius;
+
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <path
-        d="M12 0C12 0 13.5 8.5 12 12C10.5 8.5 12 0 12 0Z"
-        fill={color}
-      />
-      <path
-        d="M12 24C12 24 10.5 15.5 12 12C13.5 15.5 12 24 12 24Z"
-        fill={color}
-      />
-      <path
-        d="M0 12C0 12 8.5 10.5 12 12C8.5 13.5 0 12 0 12Z"
-        fill={color}
-      />
-      <path
-        d="M24 12C24 12 15.5 13.5 12 12C15.5 10.5 24 12 24 12Z"
-        fill={color}
-      />
-    </svg>
+    <motion.div
+      style={{
+        position: 'absolute',
+        inset: -16,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+      initial={{ rotate: 0 }}
+      animate={{ rotate: 360 }}
+      transition={{
+        duration: 8,
+        repeat: Infinity,
+        ease: 'linear',
+      }}
+    >
+      <svg
+        width="100%"
+        height="100%"
+        viewBox="0 0 112 112"
+        fill="none"
+        style={{ overflow: 'visible' }}
+      >
+        {/* Track — faint full circle */}
+        <circle
+          cx="56"
+          cy="56"
+          r={radius}
+          stroke="var(--ring-track-color)"
+          strokeWidth="1"
+          fill="none"
+        />
+        {/* Arc — animated dash that chases around the ring */}
+        <motion.circle
+          cx="56"
+          cy="56"
+          r={radius}
+          stroke="var(--ring-arc-color)"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          fill="none"
+          initial={{
+            strokeDasharray: `${circumference * 0.3} ${circumference * 0.7}`,
+            strokeDashoffset: 0,
+          }}
+          animate={{
+            strokeDashoffset: -circumference,
+          }}
+          transition={{
+            duration: 3,
+            repeat: Infinity,
+            ease: 'linear',
+          }}
+        />
+      </svg>
+    </motion.div>
   );
 }
 
-/* ── Individual sparkle with random position and twinkle ── */
-function Sparkle({
-  index,
-  total,
-}: {
-  index: number;
-  total: number;
-}) {
-  // Deterministic pseudo-random based on index
+/* ── Floating particle — a single gentle orbiting dot ── */
+function FloatingParticle({ index }: { index: number }) {
   const seed = (i: number, m: number) => ((i * 7919 + 104729) % m) / m;
-  const angle = seed(index, 360) * Math.PI * 2;
-  const dist = 44 + seed(index + 1, 100) * 52;
-  const x = Math.cos(angle) * dist;
-  const y = Math.sin(angle) * dist;
-  const size = 6 + seed(index + 2, 100) * 12;
-  const duration = 1.2 + seed(index + 3, 100) * 2.0;
-  const delay = seed(index + 4, 100) * 2.5;
-  const drift = -8 - seed(index + 5, 100) * 16;
+
+  const orbitRadius = 58 + seed(index, 100) * 24;
+  const startAngle = seed(index + 1, 360) * 360;
+  const duration = 6 + seed(index + 2, 100) * 6;
+  const size = 2 + seed(index + 3, 100) * 2;
+  const delay = seed(index + 4, 100) * 2;
+  const opacity = 0.3 + seed(index + 5, 100) * 0.5;
+  // Alternate direction
+  const direction = index % 2 === 0 ? 1 : -1;
 
   return (
     <motion.div
@@ -69,80 +104,34 @@ function Sparkle({
         height: size,
         marginLeft: -size / 2,
         marginTop: -size / 2,
+        borderRadius: '50%',
+        background: 'var(--particle-color)',
       }}
-      initial={{ opacity: 0, x, y, scale: 0, rotate: 0 }}
+      initial={{
+        opacity: 0,
+        x: Math.cos((startAngle * Math.PI) / 180) * orbitRadius,
+        y: Math.sin((startAngle * Math.PI) / 180) * orbitRadius,
+      }}
       animate={{
-        opacity: [0, 1, 0.6, 1, 0],
-        x: [x, x + seed(index + 6, 100) * 8 - 4],
-        y: [y, y + drift],
-        scale: [0, 1.2, 0.7, 1, 0],
-        rotate: [0, 90 + seed(index + 7, 180) * 90],
+        opacity: [0, opacity, opacity, 0],
+        x: [
+          Math.cos((startAngle * Math.PI) / 180) * orbitRadius,
+          Math.cos(((startAngle + 90 * direction) * Math.PI) / 180) * orbitRadius,
+          Math.cos(((startAngle + 180 * direction) * Math.PI) / 180) * orbitRadius,
+          Math.cos(((startAngle + 270 * direction) * Math.PI) / 180) * orbitRadius,
+          Math.cos(((startAngle + 360 * direction) * Math.PI) / 180) * orbitRadius,
+        ],
+        y: [
+          Math.sin((startAngle * Math.PI) / 180) * orbitRadius,
+          Math.sin(((startAngle + 90 * direction) * Math.PI) / 180) * orbitRadius,
+          Math.sin(((startAngle + 180 * direction) * Math.PI) / 180) * orbitRadius,
+          Math.sin(((startAngle + 270 * direction) * Math.PI) / 180) * orbitRadius,
+          Math.sin(((startAngle + 360 * direction) * Math.PI) / 180) * orbitRadius,
+        ],
       }}
       transition={{
         duration,
         delay,
-        repeat: Infinity,
-        ease: 'easeInOut',
-      }}
-    >
-      <SparkleShape size={size} color="var(--sparkle-color)" />
-    </motion.div>
-  );
-}
-
-/* ── Micro-sparkle: tiny twinkle dots ── */
-function MicroSparkle({ index }: { index: number }) {
-  const seed = (i: number, m: number) => ((i * 6841 + 83497) % m) / m;
-  const angle = seed(index, 628) * Math.PI * 2;
-  const dist = 30 + seed(index + 1, 100) * 80;
-  const x = Math.cos(angle) * dist;
-  const y = Math.sin(angle) * dist;
-  const size = 1.5 + seed(index + 2, 100) * 2.5;
-  const duration = 0.6 + seed(index + 3, 100) * 1.4;
-  const delay = seed(index + 4, 100) * 3;
-
-  return (
-    <motion.div
-      style={{
-        position: 'absolute',
-        width: size,
-        height: size,
-        borderRadius: '50%',
-        background: 'var(--sparkle-color)',
-        top: '50%',
-        left: '50%',
-      }}
-      initial={{ opacity: 0, x, y, scale: 0 }}
-      animate={{
-        opacity: [0, 0.9, 0],
-        x,
-        y,
-        scale: [0, 1, 0],
-      }}
-      transition={{
-        duration,
-        delay,
-        repeat: Infinity,
-        ease: 'easeInOut',
-      }}
-    />
-  );
-}
-
-/* ── Shimmer ring — rotating arc of light ── */
-function ShimmerRing() {
-  return (
-    <motion.div
-      style={{
-        position: 'absolute',
-        inset: -24,
-        borderRadius: '50%',
-        background: 'conic-gradient(from 0deg, transparent 0%, var(--shimmer-color) 10%, transparent 20%, transparent 50%, var(--shimmer-color) 60%, transparent 70%)',
-        opacity: 0.5,
-      }}
-      animate={{ rotate: 360 }}
-      transition={{
-        duration: 4,
         repeat: Infinity,
         ease: 'linear',
       }}
@@ -150,25 +139,29 @@ function ShimmerRing() {
   );
 }
 
-/* ── Breathing glow ── */
-function BreathingGlow() {
+/* ── Subtle ambient glow — single soft pulse behind logo ── */
+function AmbientGlow() {
   return (
     <motion.div
       style={{
         position: 'absolute',
-        inset: -28,
+        width: 120,
+        height: 120,
         borderRadius: '50%',
-        background:
-          'radial-gradient(circle, var(--glow-color) 0%, transparent 70%)',
+        background: 'radial-gradient(circle, var(--glow-color) 0%, transparent 70%)',
+        top: '50%',
+        left: '50%',
+        marginLeft: -60,
+        marginTop: -60,
+        pointerEvents: 'none',
       }}
-      initial={{ scale: 0.5, opacity: 0 }}
+      initial={{ scale: 0.8, opacity: 0 }}
       animate={{
-        scale: [0.6, 1, 1.3, 1],
-        opacity: [0, 0.3, 0.6, 0.3],
+        scale: [0.8, 1.1, 0.8],
+        opacity: [0.15, 0.35, 0.15],
       }}
       transition={{
-        duration: 3,
-        delay: 0.3,
+        duration: 4,
         repeat: Infinity,
         ease: 'easeInOut',
       }}
@@ -176,33 +169,39 @@ function BreathingGlow() {
   );
 }
 
-/* ── Loading shimmer bar ── */
-function LoadingShimmer() {
+/* ── Progress line — thin bar that fills smoothly ── */
+function ProgressLine() {
   return (
-    <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
-      {[0, 1, 2, 3, 4].map((i) => (
-        <motion.div
-          key={i}
-          style={{
-            width: 3,
-            height: 3,
-            borderRadius: '50%',
-            background: 'var(--text-primary)',
-          }}
-          initial={{ opacity: 0.2, y: 0, scale: 0.8 }}
-          animate={{
-            opacity: [0.2, 1, 0.2],
-            y: [0, -6, 0],
-            scale: [0.8, 1.3, 0.8],
-          }}
-          transition={{
-            duration: 0.9,
-            delay: i * 0.12,
-            repeat: Infinity,
-            ease: [0.25, 1, 0.5, 1],
-          }}
-        />
-      ))}
+    <div
+      style={{
+        width: 48,
+        height: 2,
+        borderRadius: 1,
+        background: 'var(--ring-track-color)',
+        overflow: 'hidden',
+        position: 'relative',
+      }}
+    >
+      <motion.div
+        style={{
+          height: '100%',
+          borderRadius: 1,
+          background: 'var(--progress-color)',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+        }}
+        initial={{ width: '0%', x: 0 }}
+        animate={{
+          width: ['0%', '40%', '40%', '0%'],
+          x: ['0%', '30%', '100%', '100%'],
+        }}
+        transition={{
+          duration: 1.6,
+          repeat: Infinity,
+          ease: 'easeInOut',
+        }}
+      />
     </div>
   );
 }
@@ -245,9 +244,8 @@ export function SplashScreen({
     return () => clearTimeout(timer);
   }, [exiting]);
 
-  // Stable sparkle arrays
-  const sparkles = useMemo(() => Array.from({ length: 12 }), []);
-  const microSparkles = useMemo(() => Array.from({ length: 20 }), []);
+  // Stable particle array
+  const particles = useMemo(() => Array.from({ length: 6 }), []);
 
   return (
     <>
@@ -265,11 +263,11 @@ export function SplashScreen({
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                gap: 32,
+                gap: 28,
               }}
               animate={
                 exiting
-                  ? { scale: 0.85, opacity: 0, y: -16 }
+                  ? { scale: 0.9, opacity: 0, y: -12 }
                   : { scale: 1, opacity: 1, y: 0 }
               }
               transition={{
@@ -308,23 +306,18 @@ export function SplashScreen({
                     damping: 22,
                   }}
                 >
-                  {/* Shimmer ring */}
-                  <ShimmerRing />
+                  {/* Ambient glow — soft pulse */}
+                  <AmbientGlow />
 
-                  {/* Breathing glow */}
-                  <BreathingGlow />
+                  {/* Orbital ring — draws itself */}
+                  <OrbitalRing />
 
-                  {/* 4-point star sparkles */}
-                  {sparkles.map((_, i) => (
-                    <Sparkle key={`s-${i}`} index={i} total={12} />
+                  {/* Floating particles — gentle orbit */}
+                  {particles.map((_, i) => (
+                    <FloatingParticle key={`p-${i}`} index={i} />
                   ))}
 
-                  {/* Micro twinkle dots */}
-                  {microSparkles.map((_, i) => (
-                    <MicroSparkle key={`m-${i}`} index={i} />
-                  ))}
-
-                  {/* Logo */}
+                  {/* Logo — blur-to-sharp reveal */}
                   <motion.img
                     src="/bitbit-logo.svg"
                     alt="BitBit"
@@ -333,15 +326,14 @@ export function SplashScreen({
                     style={{
                       position: 'relative',
                       zIndex: 1,
-                      filter: 'var(--splash-logo-filter, brightness(0) invert(1)) drop-shadow(0 0 24px var(--glow-color))',
+                      filter: 'var(--splash-logo-filter, brightness(0) invert(1))',
                     }}
-                    initial={{ scale: 0.3, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
+                    initial={{ scale: 0.6, opacity: 0, filter: 'var(--splash-logo-filter, brightness(0) invert(1)) blur(8px)' }}
+                    animate={{ scale: 1, opacity: 1, filter: 'var(--splash-logo-filter, brightness(0) invert(1)) blur(0px)' }}
                     transition={{
-                      type: 'spring',
-                      stiffness: 260,
-                      damping: 18,
-                      delay: 0.1,
+                      duration: 0.7,
+                      ease: [0.25, 1, 0.5, 1],
+                      delay: 0.05,
                     }}
                   />
                 </motion.div>
@@ -354,16 +346,16 @@ export function SplashScreen({
                       alignItems: 'center',
                       whiteSpace: 'nowrap',
                     }}
-                    initial={{ x: 60, opacity: 0 }}
+                    initial={{ x: 40, opacity: 0 }}
                     animate={
                       phase >= 1
                         ? { x: 0, opacity: 1 }
-                        : { x: 60, opacity: 0 }
+                        : { x: 40, opacity: 0 }
                     }
                     transition={{
                       type: 'spring',
                       stiffness: 240,
-                      damping: 20,
+                      damping: 22,
                       delay: phase >= 1 ? 0.05 : 0,
                     }}
                   >
@@ -378,17 +370,17 @@ export function SplashScreen({
                           color: 'var(--text-primary)',
                           display: 'inline-block',
                         }}
-                        initial={{ opacity: 0, y: 12 }}
+                        initial={{ opacity: 0, y: 8 }}
                         animate={
                           phase >= 1
                             ? { opacity: 1, y: 0 }
-                            : { opacity: 0, y: 12 }
+                            : { opacity: 0, y: 8 }
                         }
                         transition={{
                           type: 'spring',
                           stiffness: 300,
-                          damping: 20,
-                          delay: phase >= 1 ? 0.1 + i * 0.05 : 0,
+                          damping: 22,
+                          delay: phase >= 1 ? 0.08 + i * 0.04 : 0,
                         }}
                       >
                         {letter}
@@ -398,13 +390,13 @@ export function SplashScreen({
                 </div>
               </div>
 
-              {/* Loading shimmer — appears after text */}
+              {/* Progress line — appears after text */}
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: phase >= 1 ? 1 : 0 }}
-                transition={{ delay: phase >= 1 ? 0.4 : 0, duration: 0.3 }}
+                transition={{ delay: phase >= 1 ? 0.35 : 0, duration: 0.4 }}
               >
-                <LoadingShimmer />
+                <ProgressLine />
               </motion.div>
             </motion.div>
           </motion.div>
