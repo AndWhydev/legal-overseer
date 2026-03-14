@@ -411,16 +411,14 @@ async function handleIncomingMessage(
   const key = msg.key as Record<string, unknown> | undefined
   if (!key) return
 
-  // Skip messages sent by us
-  if (key.fromMe) return
-
+  const fromMe = !!key.fromMe
   const jid = key.remoteJid as string
   if (!jid) return
 
   // Skip group messages and status broadcasts
   if (jid.endsWith('@g.us') || jid === 'status@broadcast') return
 
-  const pushName = (msg.pushName as string) || jid
+  const pushName = fromMe ? 'Me' : ((msg.pushName as string) || jid)
   const messageId = key.id as string
   const messageContent = msg.message as Record<string, unknown> | undefined
   if (!messageContent) return
@@ -438,7 +436,12 @@ async function handleIncomingMessage(
 
   // Determine message type and extract content
   let body: string
-  const metadata: Record<string, unknown> = { source: 'baileys-bridge', jid }
+  const metadata: Record<string, unknown> = {
+    source: 'baileys-bridge',
+    jid,
+    from_me: fromMe,
+    direction: fromMe ? 'outbound' : 'inbound',
+  }
 
   if (messageContent.conversation) {
     body = messageContent.conversation as string
@@ -471,7 +474,7 @@ async function handleIncomingMessage(
       subject: 'WhatsApp Message',
       body,
       received_at: new Date().toISOString(),
-      is_actionable: true,
+      is_actionable: !fromMe,
       priority: 'medium',
       metadata,
     })
