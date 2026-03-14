@@ -185,6 +185,7 @@ export interface TokenAllocation {
   compressedHistory: number
   keyFacts: number
   pendingActions: number
+  retrievedContext: number
   total: number
   budget: number
   overBudget: boolean

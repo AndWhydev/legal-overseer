@@ -238,7 +238,8 @@ export async function fetchOutlookMessages(
     const userId = config.userId || 'me'
     const maxMessages = config.maxMessages || 50
 
-    const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+    const windowDays = Number(process.env.RELAY_DEFAULT_WINDOW_DAYS) || 30
+    const since = new Date(Date.now() - windowDays * 24 * 60 * 60 * 1000).toISOString()
     const filter = `receivedDateTime ge ${since}`
     const select = 'id,conversationId,sender,subject,bodyPreview,body,receivedDateTime,isRead'
     const userPath = userId === 'me' ? 'me' : `users/${encodeURIComponent(userId)}`
@@ -248,19 +249,23 @@ export async function fetchOutlookMessages(
       headers: { Prefer: 'outlook.body-content-type="text"' },
     })
 
-    return (data.value || []).map((msg): ChannelMessage => ({
-      id: `outlook-${msg.id}`,
-      channel: 'outlook',
-      externalId: msg.conversationId || `outlook-${msg.id}`,
-      sender: msg.sender?.emailAddress?.name || msg.sender?.emailAddress?.address || 'Unknown',
-      senderEmail: msg.sender?.emailAddress?.address || '',
-      subject: msg.subject || '(no subject)',
-      body: (msg.body?.content || msg.bodyPreview || '').slice(0, 2000).trim(),
-      receivedAt: msg.receivedDateTime ? new Date(msg.receivedDateTime) : new Date(),
-      isActionable: false,
-      priority: 'medium',
-      metadata: { messageId: msg.id, conversationId: msg.conversationId, isRead: msg.isRead },
-    }))
+    return (data.value || []).map((msg): ChannelMessage => {
+      const fullBody = (msg.body?.content || msg.bodyPreview || '').trim()
+      return {
+        id: `outlook-${msg.id}`,
+        channel: 'outlook',
+        externalId: msg.conversationId || `outlook-${msg.id}`,
+        sender: msg.sender?.emailAddress?.name || msg.sender?.emailAddress?.address || 'Unknown',
+        senderEmail: msg.sender?.emailAddress?.address || '',
+        subject: msg.subject || '(no subject)',
+        body: fullBody.slice(0, 2000),
+        bodyFull: fullBody || undefined,
+        receivedAt: msg.receivedDateTime ? new Date(msg.receivedDateTime) : new Date(),
+        isActionable: false,
+        priority: 'medium',
+        metadata: { messageId: msg.id, conversationId: msg.conversationId, isRead: msg.isRead },
+      }
+    })
   } catch (err) {
     return { error: 'Failed to fetch Outlook messages', details: String(err) }
   }
@@ -353,7 +358,8 @@ export const outlookAdapter: ChannelAdapter = {
         client_id: clientId,
         client_secret: clientSecret,
       })
-      const sinceDate = since || new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+      const windowDays = Number(process.env.RELAY_DEFAULT_WINDOW_DAYS) || 30
+      const sinceDate = since || new Date(Date.now() - windowDays * 24 * 60 * 60 * 1000)
       const filter = `receivedDateTime ge ${sinceDate.toISOString()}`
       const select = 'id,conversationId,sender,subject,bodyPreview,body,receivedDateTime,isRead'
       const url = `https://graph.microsoft.com/v1.0/users/${encodeURIComponent(userId)}/messages?$filter=${encodeURIComponent(filter)}&$select=${select}&$top=50&$orderby=receivedDateTime desc`
@@ -362,19 +368,23 @@ export const outlookAdapter: ChannelAdapter = {
         headers: { Prefer: 'outlook.body-content-type="text"' },
       })
 
-      return (data.value || []).map((msg): ChannelMessage => ({
-        id: `outlook-${msg.id}`,
-        channel: 'outlook',
-        externalId: msg.conversationId || `outlook-${msg.id}`,
-        sender: msg.sender?.emailAddress?.name || msg.sender?.emailAddress?.address || 'Unknown',
-        senderEmail: msg.sender?.emailAddress?.address || '',
-        subject: msg.subject || '(no subject)',
-        body: (msg.body?.content || msg.bodyPreview || '').slice(0, 2000).trim(),
-        receivedAt: msg.receivedDateTime ? new Date(msg.receivedDateTime) : new Date(),
-        isActionable: false,
-        priority: 'medium',
-        metadata: { messageId: msg.id, conversationId: msg.conversationId, isRead: msg.isRead },
-      }))
+      return (data.value || []).map((msg): ChannelMessage => {
+        const fullBody = (msg.body?.content || msg.bodyPreview || '').trim()
+        return {
+          id: `outlook-${msg.id}`,
+          channel: 'outlook',
+          externalId: msg.conversationId || `outlook-${msg.id}`,
+          sender: msg.sender?.emailAddress?.name || msg.sender?.emailAddress?.address || 'Unknown',
+          senderEmail: msg.sender?.emailAddress?.address || '',
+          subject: msg.subject || '(no subject)',
+          body: fullBody.slice(0, 2000),
+          bodyFull: fullBody || undefined,
+          receivedAt: msg.receivedDateTime ? new Date(msg.receivedDateTime) : new Date(),
+          isActionable: false,
+          priority: 'medium',
+          metadata: { messageId: msg.id, conversationId: msg.conversationId, isRead: msg.isRead },
+        }
+      })
     } catch (err) {
       logger.error('Outlook Graph API pull failed:', err)
       return []

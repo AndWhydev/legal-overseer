@@ -521,6 +521,23 @@ export async function* runAgentChat(
               data: { citations },
             }
           }
+
+          // Also check for RAG citations from search_memory
+          if ((!citations || citations.length === 0) && tool.name === 'search_memory') {
+            try {
+              const { extractRAGCitations } = await import('./citation-extractor')
+              const ragCitations = extractRAGCitations(tool.name, result.data)
+              if (ragCitations.length > 0) {
+                yield {
+                  type: 'citation',
+                  data: { citations: ragCitations },
+                }
+              }
+            } catch {
+              // Non-critical RAG citation extraction failure
+              logger.debug('[engine] RAG citation extraction failed', { tool: tool.name })
+            }
+          }
         } catch {
           // Citation extraction failure should not block tool result processing
           logger.debug('[engine] Citation extraction failed for tool', { tool: tool.name })

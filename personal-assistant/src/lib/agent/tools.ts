@@ -95,7 +95,7 @@ export const JIT_INSTRUCTIONS: Record<string, string> = {
   search_tasks: 'Present the matching tasks concisely. If the user is looking for a specific task to update, confirm which one before proceeding.',
 
   // Memory
-  search_memory: 'Use recalled memories to inform your response. Do not quote memory entries verbatim — integrate the knowledge naturally.',
+  search_memory: 'Reference specific senders, dates, and subjects when citing results. Do not quote raw chunks verbatim — synthesize the information naturally into your response. When referencing past communications, mention the sender and approximate date.',
   add_memory: 'Memory stored. Do not announce this to the user unless they explicitly asked you to remember something.',
 
   // Channels
@@ -300,12 +300,16 @@ const toolDefinitions: Anthropic.Tool[] = [
   },
   {
     name: 'search_memory',
-    description: 'Search stored knowledge entries for previously learned patterns, preferences, and context. Use when the user references a past preference or when you need to recall how something was handled before.',
+    description: 'Search across all past communications, emails, messages, and stored knowledge using semantic similarity. Use when the user asks about past conversations, emails, messages, or anything that happened before. Also searches stored preferences and patterns.',
     input_schema: {
       type: 'object' as const,
       properties: {
-        query: { type: 'string', description: 'Search query' },
-        category: { type: 'string', description: 'Filter by category' },
+        query: { type: 'string', description: 'Natural language search query — be specific about what you\'re looking for' },
+        channel: { type: 'string', description: 'Filter by channel: gmail, outlook, whatsapp, sms, slack' },
+        sender: { type: 'string', description: 'Filter by sender name or email' },
+        date_from: { type: 'string', description: 'Start date filter (ISO 8601 or natural language like "last week")' },
+        date_to: { type: 'string', description: 'End date filter (ISO 8601)' },
+        category: { type: 'string', description: 'Filter by memory category (for stored knowledge only)' },
       },
       required: ['query'],
     },
@@ -584,14 +588,52 @@ const handlers: Record<string, AgentToolHandler> = {
 
   // Memory tools stay in tools.ts (not shared — chat-specific)
   async search_memory(input, orgId, supabase) {
-    let query = supabase.from('memory_entries').select('*').eq('org_id', orgId)
+    const results: { source: string; entries: unknown[] }[] = []
 
-    if (input.category) query = query.eq('category', input.category as string)
-    if (input.query) query = query.ilike('content', `%${input.query}%`)
+    // 1. Vector search (Pinecone) — primary path
+    try {
+      const { searchVectors } = await import('@/lib/rag/retriever')
+      const chunks = await searchVectors({
+        query: input.query as string,
+        orgId,
+        topK: 10,
+        channel: input.channel as string | undefined,
+        sender: input.sender as string | undefined,
+        dateFrom: input.date_from as string | undefined,
+        dateTo: input.date_to as string | undefined,
+      })
+      if (chunks.length > 0) {
+        results.push({
+          source: 'communications',
+          entries: chunks.map(c => ({
+            content: c.content,
+            score: c.score,
+            channel: c.metadata.channel,
+            sender: c.metadata.sender,
+            date: c.metadata.received_at,
+            subject: c.metadata.subject,
+            citation: c.citationRef,
+          })),
+        })
+      }
+    } catch (err) {
+      logger.warn('[search_memory] Vector search failed, falling back to DB:', err)
+    }
 
-    const { data, error } = await query.order('created_at', { ascending: false }).limit(20)
-    if (error) return { success: false, error: error.message }
-    return { success: true, data: { results: data, total: data?.length ?? 0 } }
+    // 2. Memory entries (DB) — fallback / supplement
+    let dbQuery = supabase.from('memory_entries').select('*').eq('org_id', orgId)
+    if (input.category) dbQuery = dbQuery.eq('category', input.category as string)
+    if (input.query) dbQuery = dbQuery.ilike('content', `%${input.query}%`)
+    const { data: memories } = await dbQuery.order('created_at', { ascending: false }).limit(10)
+    if (memories && memories.length > 0) {
+      results.push({ source: 'stored_knowledge', entries: memories })
+    }
+
+    const totalResults = results.reduce((sum, r) => sum + r.entries.length, 0)
+    if (totalResults === 0) {
+      return { success: true, data: { results: [], total: 0, message: 'No matching memories or communications found.' } }
+    }
+    return { success: true, data: { results, total: totalResults } }
   },
 
   async add_memory(input, orgId, supabase) {

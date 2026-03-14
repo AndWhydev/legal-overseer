@@ -43,7 +43,7 @@ export interface AssemblerConfig {
 }
 
 export const DEFAULT_ASSEMBLER_CONFIG: AssemblerConfig = {
-  tokenBudget: 8000,
+  tokenBudget: 10000,
   maxRecentTurns: 10,
   maxCompressedTurns: 20,
   maxEntities: 5,
@@ -53,7 +53,7 @@ export const DEFAULT_ASSEMBLER_CONFIG: AssemblerConfig = {
 }
 
 export interface TierStatus {
-  tier: 'working' | 'session_history' | 'compiled_memory' | 'action_state'
+  tier: 'working' | 'session_history' | 'compiled_memory' | 'action_state' | 'retrieved_context'
   loaded: boolean
   latencyMs: number
   tokenCount: number
@@ -462,6 +462,37 @@ export class ContextAssembler {
     const approvals = approvalsResult.data ?? []
     const summaries = summariesResult.data ?? []
 
+    // ── Phase 1b: Retrieved context (RAG) ─────────────────────────────
+    let retrievedContextText = ''
+    if (process.env.PINECONE_API_KEY) {
+      const ragResult = await timedFetch('retrieved_context', async () => {
+        const { searchVectors, formatChunksForContext } = await import('@/lib/rag/retriever')
+        const chunks = await searchVectors({
+          query: currentMessage,
+          orgId,
+          topK: 5,
+        })
+        return formatChunksForContext(chunks)
+      })
+      if (ragResult.loaded && ragResult.data) {
+        retrievedContextText = ragResult.data
+      }
+      tierStatuses.push({
+        tier: 'retrieved_context',
+        loaded: ragResult.loaded,
+        latencyMs: ragResult.latencyMs,
+        tokenCount: this.budgetManager.estimateTokens(retrievedContextText),
+        error: ragResult.error,
+      })
+    } else {
+      tierStatuses.push({
+        tier: 'retrieved_context',
+        loaded: false,
+        latencyMs: 0,
+        tokenCount: 0,
+      })
+    }
+
     // ── Phase 2: Entity mention scan (for metadata, <1ms) ───────────────
 
     // Quick scan to populate metadata — entity context is already in systemPrompt
@@ -524,9 +555,17 @@ export class ContextAssembler {
         compressible: true,
       },
       {
+        name: 'retrievedContext',
+        content: retrievedContextText,
+        priority: 4,
+        minTokens: 0,
+        maxTokens: 1500,
+        compressible: true,
+      },
+      {
         name: 'entityContext',
         content: '', // Already embedded in systemPrompt by buildEntityAwarePrompt
-        priority: 4,
+        priority: 5,
         minTokens: 0,
         maxTokens: 0,
         compressible: false,
@@ -576,6 +615,18 @@ export class ContextAssembler {
       )
       if (trimmedActions) {
         finalSystemPrompt = `${finalSystemPrompt}\n\n${trimmedActions}`
+      }
+    }
+
+    // Append retrieved context (RAG)
+    if (retrievedContextText) {
+      const trimmedRetrieved = this.budgetManager.trimToFit(
+        retrievedContextText,
+        allocation.retrievedContext,
+        'reduce_items',
+      )
+      if (trimmedRetrieved) {
+        finalSystemPrompt = `${finalSystemPrompt}\n\n## Retrieved Context\n${trimmedRetrieved}`
       }
     }
 

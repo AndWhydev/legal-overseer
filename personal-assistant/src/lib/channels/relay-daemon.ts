@@ -352,6 +352,7 @@ export async function pollChannel(
             sender_email: msg.senderEmail || null,
             subject: msg.subject || null,
             body: msg.body,
+            body_full: msg.bodyFull || null,
             received_at: msg.receivedAt.toISOString(),
             is_actionable: msg.isActionable,
             priority: msg.priority,
@@ -371,6 +372,45 @@ export async function pollChannel(
       }
     }
     const insertDurationMs = Date.now() - insertStartMs
+
+    // Phase: RAG embedding (fire-and-forget, non-blocking)
+    if (inserted > 0 && process.env.PINECONE_API_KEY) {
+      const embeddingPromise = (async () => {
+        try {
+          const { embedAndUpsert } = await import('@/lib/rag/embedding-service')
+          const docs = messagesToInsert
+            .filter(({ msg: m }) => m.body && m.body.length > 0)
+            .map(({ msg: m }) => ({
+              messageId: m.externalId,
+              orgId,
+              content: (m as unknown as { bodyFull?: string }).bodyFull ?? m.body,
+              metadata: {
+                message_id: m.externalId,
+                org_id: orgId,
+                channel: m.channel,
+                sender: m.sender,
+                sender_email: m.senderEmail,
+                subject: m.subject,
+                received_at: m.receivedAt.toISOString(),
+                chunk_index: 0,
+                total_chunks: 1,
+                is_full_body: Boolean((m as unknown as { bodyFull?: string }).bodyFull),
+              },
+            }))
+          if (docs.length > 0) {
+            const result = await embedAndUpsert(docs)
+            logger.info('[relay] RAG embedding complete', {
+              channel: channelType,
+              embedded: result.embedded,
+              failed: result.failed,
+            })
+          }
+        } catch (err) {
+          logger.debug('[relay] RAG embedding failed (non-critical):', err)
+        }
+      })()
+      void embeddingPromise
+    }
 
     // Phase: Avatar fetch (all channels, fire-and-forget)
     if (inserted > 0) {

@@ -253,6 +253,65 @@ function computeSimilarity(text1: string, text2: string): number {
 }
 
 /**
+ * Extracts citations from RAG search_memory tool results.
+ *
+ * Parses communications search results and converts them to Citation objects
+ * with formatted descriptions including sender, channel, and date.
+ *
+ * @param toolName - Name of the tool (checked against 'search_memory')
+ * @param result - The tool result object from search_memory
+ * @returns Array of Citation objects with sequential indices
+ *
+ * @example
+ * const citations = extractRAGCitations("search_memory", {
+ *   results: [
+ *     {
+ *       source: "communications",
+ *       entries: [
+ *         { sender: "Dave", channel: "gmail", date: "2024-03-15", subject: "Invoice" }
+ *       ]
+ *     }
+ *   ]
+ * });
+ */
+export function extractRAGCitations(toolName: string, result: unknown): Citation[] {
+  if (toolName !== 'search_memory' || !result || typeof result !== 'object') {
+    return []
+  }
+
+  const data = result as Record<string, unknown>
+  const results = data.results as Array<{ source: string; entries: unknown[] }> | undefined
+  if (!Array.isArray(results)) return []
+
+  const citations: Citation[] = []
+  let index = 1
+
+  for (const group of results) {
+    if (group.source !== 'communications') continue
+    const entries = group.entries as Array<Record<string, unknown>>
+
+    for (const entry of entries) {
+      const channel = (entry.channel as string) || ''
+      const sender = (entry.sender as string) || ''
+      const date = (entry.date as string) || ''
+      const subject = (entry.subject as string) || ''
+
+      if (sender || subject) {
+        citations.push({
+          index,
+          url: '', // No URL for internal communications
+          title: subject || `${channel} message from ${sender}`,
+          description: `${sender} via ${channel}${date ? ` on ${new Date(date).toLocaleDateString()}` : ''}`,
+        })
+        index++
+      }
+    }
+  }
+
+  return citations
+}
+
+/**
  * Detects if a topic shift occurred between the last two messages.
  *
  * Compares the last two messages in the history for semantic similarity

@@ -8,6 +8,7 @@ export interface ChannelMessage {
   senderEmail?: string
   subject?: string
   body: string
+  bodyFull?: string
   receivedAt: Date
   isActionable: boolean
   priority: 'critical' | 'high' | 'medium' | 'low'

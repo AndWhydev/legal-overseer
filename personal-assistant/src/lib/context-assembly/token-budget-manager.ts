@@ -127,6 +127,7 @@ export class TokenBudgetManager {
       compressedHistory: allocations.get('compressedHistory') ?? 0,
       keyFacts: allocations.get('keyFacts') ?? 0,
       pendingActions: allocations.get('pendingActions') ?? 0,
+      retrievedContext: allocations.get('retrievedContext') ?? 0,
       total: 0,
       budget: this.budget,
       overBudget: false,
@@ -138,7 +139,8 @@ export class TokenBudgetManager {
       result.recentTurns +
       result.compressedHistory +
       result.keyFacts +
-      result.pendingActions
+      result.pendingActions +
+      result.retrievedContext
     result.overBudget = result.total > this.budget
 
     if (result.overBudget) {

@@ -19,14 +19,22 @@ interface GmailListResponse {
   messages?: Array<{ id: string; threadId: string }>
 }
 
+interface GmailPart {
+  mimeType?: string
+  body?: { data?: string; size?: number }
+  parts?: GmailPart[]
+}
+
+interface GmailPayload extends GmailPart {
+  headers?: Array<{ name: string; value: string }>
+}
+
 interface GmailMessageResponse {
   id: string
   threadId: string
   snippet?: string
   internalDate?: string
-  payload?: {
-    headers?: Array<{ name: string; value: string }>
-  }
+  payload?: GmailPayload
 }
 
 type GmailTransportMode = 'auto' | 'api' | 'imap'
@@ -160,6 +168,41 @@ function parseMessageDate(internalDate?: string, headerDate?: string): Date {
   return new Date()
 }
 
+function findMimePart(parts: GmailPart[], mimeType: string): GmailPart | undefined {
+  for (const part of parts) {
+    if (part.mimeType === mimeType) return part
+    if (part.parts) {
+      const found = findMimePart(part.parts, mimeType)
+      if (found) return found
+    }
+  }
+  return undefined
+}
+
+function extractFullBody(payload: GmailPayload): string {
+  // Direct body data (simple messages)
+  if (payload.body?.data) {
+    return Buffer.from(payload.body.data, 'base64url').toString('utf-8')
+  }
+
+  // Walk parts tree (multipart messages)
+  if (payload.parts) {
+    // Prefer text/plain over text/html
+    const plainPart = findMimePart(payload.parts, 'text/plain')
+    if (plainPart?.body?.data) {
+      return Buffer.from(plainPart.body.data, 'base64url').toString('utf-8')
+    }
+
+    const htmlPart = findMimePart(payload.parts, 'text/html')
+    if (htmlPart?.body?.data) {
+      const html = Buffer.from(htmlPart.body.data, 'base64url').toString('utf-8')
+      return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
+    }
+  }
+
+  return ''
+}
+
 async function gmailApiFetch<T>(accessToken: string, path: string): Promise<T> {
   const response = await fetch(`https://gmail.googleapis.com${path}`, {
     headers: {
@@ -256,7 +299,8 @@ export const gmailAdapter: ChannelAdapter = {
   icon: 'Mail',
 
   async pull(config, since, options) {
-    const sinceDate = since || new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+    const windowDays = Number(process.env.RELAY_DEFAULT_WINDOW_DAYS) || 30
+    const sinceDate = since || new Date(Date.now() - windowDays * 24 * 60 * 60 * 1000)
     const maxMessages = (options?.maxMessages as number) || 50
     const mode = resolveGmailTransportMode(config)
     const accessToken = resolveApiAccessToken(config)
@@ -318,7 +362,7 @@ async function gmailApiPullWithRetry(
         try {
           return await gmailApiFetch<GmailMessageResponse>(
             accessToken,
-            `/gmail/v1/users/me/messages/${item.id}?format=metadata&metadataHeaders=From&metadataHeaders=Subject&metadataHeaders=Date&metadataHeaders=Message-ID`,
+            `/gmail/v1/users/me/messages/${item.id}?format=full`,
           )
         } catch (err) {
           logger.warn('[gmail] Failed to fetch message details:', err)
@@ -337,6 +381,7 @@ async function gmailApiPullWithRetry(
         const messageIdHeader = getHeaderValue(headers, 'Message-ID')
         const { sender, senderEmail } = parseFromHeader(fromHeader)
         const receivedAt = parseMessageDate(message.internalDate, dateHeader)
+        const fullBody = message.payload ? extractFullBody(message.payload) : ''
 
         return {
           id: `gmail-api-${message.id}`,
@@ -346,6 +391,7 @@ async function gmailApiPullWithRetry(
           senderEmail,
           subject,
           body: (message.snippet || subject).slice(0, 2000),
+          bodyFull: fullBody || undefined,
           receivedAt,
           isActionable: false,
           priority: 'medium',
@@ -403,7 +449,7 @@ async function gmailPullWithRetry(
 
       for await (const msg of client.fetch(
         { since: new Date(searchDate) },
-        { envelope: true, source: { maxLength: 10000 } },
+        { envelope: true, source: { maxLength: 50000 } },
       )) {
         // Check message limit
         if (messageCount >= maxMessages) {
@@ -427,16 +473,19 @@ async function gmailPullWithRetry(
         const date = envelope.date ? new Date(envelope.date) : new Date()
 
         let body = ''
+        let bodyFull = ''
         if (msg.source) {
           const raw = msg.source.toString()
           const bodyStart = raw.indexOf('\r\n\r\n')
           if (bodyStart !== -1) {
-            body = raw
-              .slice(bodyStart + 4, bodyStart + 2000)
+            const fullRawBody = raw
+              .slice(bodyStart + 4)
               .replace(/<[^>]*>/g, '')
               .replace(/=\r?\n/g, '')
               .replace(/=([0-9A-F]{2})/gi, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
               .trim()
+            bodyFull = fullRawBody
+            body = fullRawBody.slice(0, 2000)
           }
         }
 
@@ -447,7 +496,8 @@ async function gmailPullWithRetry(
           sender,
           senderEmail,
           subject,
-          body: body.slice(0, 2000) || subject,
+          body: body || subject,
+          bodyFull: bodyFull || undefined,
           receivedAt: date,
           isActionable: false,
           priority: 'medium',
