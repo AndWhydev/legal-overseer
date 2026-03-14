@@ -8,18 +8,7 @@ import {
   SheetTitle,
   SheetDescription,
 } from '@/components/ui/sheet'
-import {
-  RefreshCw,
-  Save,
-  Unplug,
-  Loader2,
-  Clock,
-  Mail,
-  CheckSquare,
-  CalendarClock,
-  CreditCard,
-  Phone,
-} from 'lucide-react'
+import { SFArrowClockwise, SFSquareAndArrowDown, SFPowerplug, SFClock, SFEnvelope, SFCheckmarkSquare, SFCalendarBadgeClock, SFCreditcard, SFPhone } from 'sf-symbols-lib'
 import { cn } from '@/lib/utils'
 
 const SYNC_FREQUENCY_OPTIONS = [
@@ -42,12 +31,12 @@ const STRIPE_EVENT_TYPES = [
 ]
 
 const channelIcons: Record<string, React.ElementType> = {
-  gmail: Mail,
-  outlook: Mail,
-  asana: CheckSquare,
-  calendly: CalendarClock,
-  stripe: CreditCard,
-  whatsapp: Phone,
+  gmail: SFEnvelope,
+  outlook: SFEnvelope,
+  asana: SFCheckmarkSquare,
+  calendly: SFCalendarBadgeClock,
+  stripe: SFCreditcard,
+  whatsapp: SFPhone,
 }
 
 interface ChannelConfig {
@@ -161,7 +150,7 @@ export function ChannelConfigDrawer({
     onClose()
   }
 
-  const Icon = channel ? channelIcons[channel] || Mail : Mail
+  const Icon = channel ? channelIcons[channel] || SFEnvelope : SFEnvelope
 
   return (
     <Sheet open={isOpen} onOpenChange={open => { if (!open) onClose() }}>
@@ -178,14 +167,14 @@ export function ChannelConfigDrawer({
 
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            <SFArrowClockwise className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
         ) : config ? (
           <div className="space-y-6 px-4 py-4">
             {/* Last sync info */}
             {config.last_sync && (
               <div className="flex items-center gap-2 rounded-lg bg-secondary/50 px-3 py-2 text-xs text-muted-foreground">
-                <Clock className="h-3 w-3" />
+                <SFClock className="h-3 w-3" />
                 Last synced: {new Date(config.last_sync).toLocaleString()}
               </div>
             )}
@@ -346,13 +335,13 @@ export function ChannelConfigDrawer({
                   onClick={() => onToast?.('Reconnect initiated (Phase 15)', 'success')}
                   className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-secondary transition-colors"
                 >
-                  <RefreshCw className="h-3 w-3" />
+                  <SFArrowClockwise className="h-3 w-3" />
                   Reconnect Session
                 </button>
               </div>
             )}
 
-            {/* Save button */}
+            {/* SFSquareAndArrowDown button */}
             <div className="pt-4 border-t border-border">
               <button
                 onClick={handleSave}
@@ -364,7 +353,7 @@ export function ChannelConfigDrawer({
                     : 'bg-secondary text-muted-foreground cursor-not-allowed'
                 )}
               >
-                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                {saving ? <SFArrowClockwise className="h-4 w-4 animate-spin" /> : <SFSquareAndArrowDown className="h-4 w-4" />}
                 {saving ? 'Saving...' : dirty ? 'Save Changes' : 'No Changes'}
               </button>
             </div>
@@ -375,7 +364,7 @@ export function ChannelConfigDrawer({
                 onClick={handleDisconnect}
                 className="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-destructive/30 px-4 py-2 text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors"
               >
-                <Unplug className="h-4 w-4" />
+                <SFPowerplug className="h-4 w-4" />
                 Disconnect Channel
               </button>
               <p className="mt-1.5 text-center text-xs text-muted-foreground">

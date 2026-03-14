@@ -1,29 +1,29 @@
 'use client'
 
-import { Mail, MessageCircle, Calendar, Bell, Search, CheckSquare, CreditCard, CalendarClock, Send, BarChart3, Globe, Mic } from 'lucide-react'
+import { SFEnvelope, SFBubbleLeft, SFCalendar, SFBell, SFMagnifyingglass, SFCheckmarkSquare, SFCreditcard, SFCalendarBadgeClock, SFPaperplane, SFChartBar, SFGlobe, SFMicrophone } from 'sf-symbols-lib'
 import type { ChannelMessage, ChannelType } from '@/lib/channels/types'
 
 const channelIcons: Record<ChannelType, React.ComponentType<{ className?: string }>> = {
-  gmail: Mail,
-  outlook: Mail,
-  imessage: MessageCircle,
-  calendar: Calendar,
-  reminders: Bell,
-  whatsapp: MessageCircle,
-  asana: CheckSquare,
-  calendly: CalendarClock,
-  stripe: CreditCard,
-  telegram: Send,
-  gsc: Search,
-  clickup: CheckSquare,
-  ga4: BarChart3,
-  wordpress: Globe,
-  cluely: Mic,
-  facebook: MessageCircle,
-  slack: MessageCircle,
-  xero: BarChart3,
-  instagram: MessageCircle,
-  sms: MessageCircle,
+  gmail: SFEnvelope,
+  outlook: SFEnvelope,
+  imessage: SFBubbleLeft,
+  calendar: SFCalendar,
+  reminders: SFBell,
+  whatsapp: SFBubbleLeft,
+  asana: SFCheckmarkSquare,
+  calendly: SFCalendarBadgeClock,
+  stripe: SFCreditcard,
+  telegram: SFPaperplane,
+  gsc: SFMagnifyingglass,
+  clickup: SFCheckmarkSquare,
+  ga4: SFChartBar,
+  wordpress: SFGlobe,
+  cluely: SFMicrophone,
+  facebook: SFBubbleLeft,
+  slack: SFBubbleLeft,
+  xero: SFChartBar,
+  instagram: SFBubbleLeft,
+  sms: SFBubbleLeft,
 }
 
 interface MessagePreviewProps {

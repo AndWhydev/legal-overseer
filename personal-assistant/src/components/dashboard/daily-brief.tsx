@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Sparkles, ListTodo, Mail, DollarSign, Calendar, X } from 'lucide-react';
+import { SFSparkles, SFChecklist, SFEnvelope, SFDollarsignCircle, SFCalendar, SFXmark } from 'sf-symbols-lib';
 import { useSeedData } from '@/hooks/use-seed-data';
 
 interface GlanceChip {
@@ -27,11 +27,11 @@ function isDismissedToday(): boolean {
   return val === new Date().toISOString().split('T')[0];
 }
 
-const CHIP_ICONS: Record<GlanceChip['icon'], typeof ListTodo> = {
-  'list-todo': ListTodo,
-  mail: Mail,
-  'dollar-sign': DollarSign,
-  calendar: Calendar,
+const CHIP_ICONS: Record<GlanceChip['icon'], typeof SFChecklist> = {
+  'list-todo': SFChecklist,
+  mail: SFEnvelope,
+  'dollar-sign': SFDollarsignCircle,
+  calendar: SFCalendar,
 };
 
 function formatChipValue(chip: GlanceChip): string {
@@ -117,7 +117,7 @@ export function DailyBrief() {
   if (loading) {
     return (
       <div style={stripStyle}>
-        <Sparkles size={14} style={{ color: '#a78bfa', flexShrink: 0 }} />
+        <SFSparkles size={14} style={{ color: '#a78bfa', flexShrink: 0 }} />
         <span style={{ fontSize: 13, color: 'var(--text-secondary)', fontStyle: 'italic' }}>
           Preparing your brief...
         </span>
@@ -150,7 +150,7 @@ export function DailyBrief() {
 
   return (
     <div style={stripStyle}>
-      <Sparkles size={14} style={{ color: '#a78bfa', flexShrink: 0 }} />
+      <SFSparkles size={14} style={{ color: '#a78bfa', flexShrink: 0 }} />
       <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>
         Good morning
       </span>
@@ -159,7 +159,7 @@ export function DailyBrief() {
         <>
           <span style={{ width: 1, height: 16, background: 'var(--hover-bg-strong)', flexShrink: 0 }} />
           {chips.map((chip, i) => {
-            const Icon = CHIP_ICONS[chip.icon] || ListTodo;
+            const Icon = CHIP_ICONS[chip.icon] || SFChecklist;
             return (
               <span key={i} style={chipStyle}>
                 <Icon size={12} style={{ color: chip.accent || 'var(--text-secondary)', flexShrink: 0 }} />
@@ -204,7 +204,7 @@ export function DailyBrief() {
             e.currentTarget.style.borderColor = 'rgba(167, 139, 250, 0.3)';
           }}
         >
-          <Sparkles size={11} />
+          <SFSparkles size={11} />
           Plan my day
         </button>
         <button
@@ -232,7 +232,7 @@ export function DailyBrief() {
           }}
           aria-label="Dismiss daily brief"
         >
-          <X size={14} />
+          <SFXmark size={14} />
         </button>
       </div>
     </div>

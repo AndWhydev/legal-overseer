@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { ReceiptText } from 'lucide-react';
+import { SFReceipt } from 'sf-symbols-lib';
 import { WidgetCard } from './widget-card';
 import { EmptyState } from '@/components/ui/empty-state';
 
@@ -23,11 +23,11 @@ export function OutstandingQuotesWidget() {
     <WidgetCard
       title="Outstanding Quotes"
       subtitle={`${quotes.length} quote${quotes.length !== 1 ? 's' : ''} pending`}
-      icon={<ReceiptText size={20} style={{ color: 'var(--bb-status-warning)' }} />}
+      icon={<SFReceipt size={20} style={{ color: 'var(--bb-status-warning)' }} />}
     >
       <div className="space-y-3">
         {quotes.length === 0 ? (
-          <EmptyState icon={<ReceiptText size={32} />} title="No outstanding quotes" description="Draft and sent quotes will appear here." />
+          <EmptyState icon={<SFReceipt size={32} />} title="No outstanding quotes" description="Draft and sent quotes will appear here." />
         ) : (
           quotes.map(quote => (
             <div key={quote.id as string} className="flex items-center justify-between p-3 rounded-md bg-[var(--bg-elevated)] border border-[var(--border-subtle)]">

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { ChevronDown } from 'lucide-react';
+import { SFChevronDown } from 'sf-symbols-lib';
 import { IntegrationCard } from './integration-card';
 import {
   AVAILABLE_INTEGRATIONS,
@@ -116,7 +116,7 @@ export function ConnectionsGrid({ integrations, isLoading, onStatusChange, onWha
           }}
         >
           {CATEGORY_LABELS[activeCategory]}
-          <ChevronDown
+          <SFChevronDown
             size={14}
             style={{
               transition: 'transform 200ms ease',

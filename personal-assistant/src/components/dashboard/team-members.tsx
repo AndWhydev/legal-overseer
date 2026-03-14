@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Users, Mail, Trash2, Loader2, UserPlus, Shield } from 'lucide-react';
+import { SFPerson2, SFEnvelope, SFTrash, SFArrowClockwise, SFPersonBadgePlus, SFShield } from 'sf-symbols-lib';
 
 interface Member {
   id: string;
@@ -147,7 +147,7 @@ export function TeamMembers() {
       <Card className="border-border/50">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <UserPlus size={16} />
+            <SFPersonBadgePlus size={16} />
             Invite Team Member
           </CardTitle>
           <CardDescription>Send an invitation to join your organization.</CardDescription>
@@ -181,7 +181,7 @@ export function TeamMembers() {
               disabled={sending || !inviteEmail}
               className="flex items-center gap-1.5 rounded-md bg-[#1A1A1B] px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
             >
-              {sending ? <Loader2 size={14} className="animate-spin" /> : <Mail size={14} />}
+              {sending ? <SFArrowClockwise size={14} className="animate-spin" /> : <SFEnvelope size={14} />}
               Invite
             </button>
           </div>
@@ -192,7 +192,7 @@ export function TeamMembers() {
       <Card className="border-border/50">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <Users size={16} />
+            <SFPerson2 size={16} />
             Team Members
             <Badge variant="outline" className="ml-auto text-xs">{members.length}</Badge>
           </CardTitle>
@@ -200,7 +200,7 @@ export function TeamMembers() {
         <CardContent className="flex flex-col gap-2">
           {loading ? (
             <div className="flex items-center justify-center py-8 text-muted-foreground">
-              <Loader2 size={20} className="animate-spin" />
+              <SFArrowClockwise size={20} className="animate-spin" />
             </div>
           ) : members.length === 0 ? (
             <p className="py-4 text-center text-sm text-muted-foreground">No team members yet.</p>
@@ -223,7 +223,7 @@ export function TeamMembers() {
                 <div className="flex items-center gap-2">
                   {member.role === 'owner' ? (
                     <Badge className={`text-xs ${roleBadgeColor.owner}`}>
-                      <Shield size={10} className="mr-1" /> Owner
+                      <SFShield size={10} className="mr-1" /> Owner
                     </Badge>
                   ) : (
                     <select
@@ -242,7 +242,7 @@ export function TeamMembers() {
                       className="text-muted-foreground transition-colors hover:text-destructive"
                       title="Remove member"
                     >
-                      <Trash2 size={14} />
+                      <SFTrash size={14} />
                     </button>
                   )}
                 </div>
@@ -257,7 +257,7 @@ export function TeamMembers() {
         <Card className="border-border/50">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
-              <Mail size={16} />
+              <SFEnvelope size={16} />
               Pending Invitations
               <Badge variant="outline" className="ml-auto text-xs">{invites.length}</Badge>
             </CardTitle>

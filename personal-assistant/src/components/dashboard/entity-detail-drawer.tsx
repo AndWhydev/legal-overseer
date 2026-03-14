@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { X, User, Briefcase, FileText, CheckSquare, DollarSign } from 'lucide-react';
+import { SFXmark, SFPerson, SFBriefcase, SFDocument, SFCheckmarkSquare, SFDollarsignCircle } from 'sf-symbols-lib';
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -38,10 +38,10 @@ interface GraphEdge {
 // ─── Helpers ───────────────────────────────────────────────────────────────
 
 const TYPE_ICON: Record<EntityType, React.ElementType> = {
-  contact: User,
-  project: Briefcase,
-  invoice: FileText,
-  task: CheckSquare,
+  contact: SFPerson,
+  project: SFBriefcase,
+  invoice: SFDocument,
+  task: SFCheckmarkSquare,
 };
 
 const TYPE_COLOR: Record<EntityType, string> = {
@@ -141,7 +141,7 @@ function InvoiceDetail({ meta }: { meta: Record<string, unknown> }) {
         ) : null}
         {meta.amount != null ? (
           <div className="flex items-center gap-1 text-sm">
-            <DollarSign size={14} className="text-muted-foreground" />
+            <SFDollarsignCircle size={14} className="text-muted-foreground" />
             <span>{Number(meta.amount).toLocaleString('en-AU', { minimumFractionDigits: 2 })}</span>
           </div>
         ) : null}
@@ -255,7 +255,7 @@ function EntityDetailDrawer({ open, onClose, entityType, entityId }: EntityDetai
     return () => dialog.removeEventListener('wheel', handleWheel);
   }, [open]);
 
-  const Icon = TYPE_ICON[entityType] ?? Briefcase;
+  const Icon = TYPE_ICON[entityType] ?? SFBriefcase;
   const isContact = entityType === 'contact';
   const contactName = entity?.metadata?.name ? String(entity.metadata.name) : null;
   const contactType = entity?.metadata?.type ? String(entity.metadata.type) : null;
@@ -391,7 +391,7 @@ function EntityDetailDrawer({ open, onClose, entityType, entityId }: EntityDetai
               }}
               aria-label="Close modal"
             >
-              <X size={18} />
+              <SFXmark size={18} />
             </button>
           </div>
 
@@ -458,7 +458,7 @@ function EntityDetailDrawer({ open, onClose, entityType, entityId }: EntityDetai
                       Related ({related.length})
                     </h3>
                     {related.map(({ node, edge }) => {
-                      const RelIcon = TYPE_ICON[node.type] ?? Briefcase;
+                      const RelIcon = TYPE_ICON[node.type] ?? SFBriefcase;
                       return (
                         <div
                           key={`${node.type}-${node.id}`}

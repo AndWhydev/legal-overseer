@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import { ContactCard } from '@/components/contacts/contact-card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Plus, Search } from 'lucide-react'
+import { SFPlus, SFMagnifyingglass } from 'sf-symbols-lib'
 import { createClient, isSupabaseConfigured } from '@/lib/supabase/server'
 import type { Contact } from '@/lib/types'
 
@@ -50,13 +50,13 @@ export default async function ContactsPage({ searchParams }: ContactsPageProps) 
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Contacts</h1>
         <Button size="sm">
-          <Plus className="size-4" />
+          <SFPlus className="size-4" />
           Add Contact
         </Button>
       </div>
 
       <form className="relative max-w-sm" method="GET">
-        <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+        <SFMagnifyingglass className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
         <Input name="q" defaultValue={query} placeholder="Search contacts..." className="pl-9" />
       </form>
 

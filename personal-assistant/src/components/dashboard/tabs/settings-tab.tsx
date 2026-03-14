@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Sun, Moon, Monitor, Loader2, Smartphone, Check, X } from 'lucide-react';
+import { SFSunMax, SFMoon, SFDesktopcomputer, SFArrowClockwise, SFIphone, SFCheckmark, SFXmark } from 'sf-symbols-lib';
 import { QrAuthConnect } from '@/components/ui/qr-auth-connect';
 import { ConnectionsGrid } from '@/components/integrations/integration-grid';
 import { createClient } from '@/lib/supabase/client';
@@ -117,7 +117,7 @@ function WhatsAppWizardModal({ onClose, onConnected }: { onClose: () => void; on
       setStarting(true);
       setError(null);
       try {
-        // Check if already connected
+        // SFCheckmark if already connected
         const statusRes = await fetch('/api/channels/whatsapp/bridge');
         if (statusRes.ok) {
           const s = await statusRes.json() as { status?: string; running?: boolean };
@@ -180,7 +180,7 @@ function WhatsAppWizardModal({ onClose, onConnected }: { onClose: () => void; on
           onClick={onClose}
           style={{ position: 'absolute', top: 16, right: 16, background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: 4 }}
         >
-          <X size={18} />
+          <SFXmark size={18} />
         </button>
 
         <div style={{ textAlign: 'center', marginBottom: 20 }}>
@@ -226,7 +226,7 @@ function WhatsAppWizardModal({ onClose, onConnected }: { onClose: () => void; on
 
         {starting && !error && !alreadyConnected && (
           <div style={{ display: 'flex', justifyContent: 'center', padding: 32 }}>
-            <Loader2 size={24} style={{ animation: 'bb-spin 1s linear infinite', color: 'var(--text-secondary)' }} />
+            <SFArrowClockwise size={24} style={{ animation: 'bb-spin 1s linear infinite', color: 'var(--text-secondary)' }} />
           </div>
         )}
 
@@ -266,7 +266,7 @@ function SaveIndicator({ visible }: { visible: boolean }) {
       pointerEvents: 'none',
       zIndex: 50,
     }}>
-      <Check size={14} />
+      <SFCheckmark size={14} />
       Saved
     </div>
   );
@@ -417,9 +417,9 @@ export function SettingsAppearanceTab() {
   const { theme: currentPalette, setTheme: setPalette } = useTheme();
 
   const themes = [
-    { id: 'midnight' as ThemeName, label: 'Midnight', desc: 'Deep dark', bg: 'linear-gradient(135deg, #0a0f1a 0%, #141b2d 100%)', border: 'rgba(255,255,255,0.08)', icon: <Moon size={20} />, previewText: 'rgba(255,255,255,0.6)' },
-    { id: 'aurora' as ThemeName, label: 'Aurora', desc: 'Glassmorphic', bg: 'linear-gradient(135deg, #F5E6D8 0%, #AFCADF 100%)', border: 'rgba(0,0,0,0.08)', icon: <Sun size={20} />, previewText: 'rgba(0,0,0,0.5)' },
-    { id: 'light' as ThemeName, label: 'Light', desc: 'Clean & minimal', bg: 'linear-gradient(135deg, #FAFAF9 0%, #F0F0EE 100%)', border: 'rgba(0,0,0,0.08)', icon: <Monitor size={20} />, previewText: 'rgba(0,0,0,0.5)' },
+    { id: 'midnight' as ThemeName, label: 'Midnight', desc: 'Deep dark', bg: 'linear-gradient(135deg, #0a0f1a 0%, #141b2d 100%)', border: 'rgba(255,255,255,0.08)', icon: <SFMoon size={20} />, previewText: 'rgba(255,255,255,0.6)' },
+    { id: 'aurora' as ThemeName, label: 'Aurora', desc: 'Glassmorphic', bg: 'linear-gradient(135deg, #F5E6D8 0%, #AFCADF 100%)', border: 'rgba(0,0,0,0.08)', icon: <SFSunMax size={20} />, previewText: 'rgba(0,0,0,0.5)' },
+    { id: 'light' as ThemeName, label: 'Light', desc: 'Clean & minimal', bg: 'linear-gradient(135deg, #FAFAF9 0%, #F0F0EE 100%)', border: 'rgba(0,0,0,0.08)', icon: <SFDesktopcomputer size={20} />, previewText: 'rgba(0,0,0,0.5)' },
   ];
 
   return (
@@ -474,7 +474,7 @@ export function SettingsAppearanceTab() {
                     background: 'var(--accent)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                   }}>
-                    <Check size={12} color="#fff" strokeWidth={2.5} />
+                    <SFCheckmark size={12} style={{ color: '#fff' }} />
                   </div>
                 )}
               </button>

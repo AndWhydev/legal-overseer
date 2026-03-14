@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { Zap } from 'lucide-react';
+import { SFBolt } from 'sf-symbols-lib';
 import { WidgetCard } from './widget-card';
 import { EmptyState } from '@/components/ui/empty-state';
 
@@ -23,11 +23,11 @@ export function TodaysPrioritiesWidget() {
   return (
     <WidgetCard
       title="Today's Priorities"
-      icon={<Zap size={20} style={{ color: 'var(--bb-status-warning)' }} />}
+      icon={<SFBolt size={20} style={{ color: 'var(--bb-status-warning)' }} />}
     >
       <div className="space-y-3">
         {priorities.length === 0 ? (
-          <EmptyState icon={<Zap size={32} />} title="No high-priority tasks" description="Enjoy the calm — nothing urgent right now." />
+          <EmptyState icon={<SFBolt size={32} />} title="No high-priority tasks" description="Enjoy the calm — nothing urgent right now." />
         ) : (
           priorities.map(task => (
             <div key={task.id} className="flex items-center gap-3 p-2 rounded-md bg-[var(--bg-elevated)] border border-[var(--border-subtle)]">

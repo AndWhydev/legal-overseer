@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { ArrowRight, Mail, ChevronDown } from 'lucide-react'
+import { SFArrowRight, SFEnvelope, SFChevronDown } from 'sf-symbols-lib'
 import type { EnhancedLeadData, LeadStatus } from '@/lib/leads/types'
 import { getDealRotLevel, formatCurrency, relativeTime } from '@/lib/leads/utils'
 import { StatusPill, type StatusVariant } from '@/components/ui/status-pill'
@@ -93,7 +93,7 @@ function LeadDetailPanel({ lead, onAdvanceStage }: { lead: EnhancedLeadData; onA
             onMouseEnter={e => { e.currentTarget.style.filter = 'brightness(1.3)' }}
             onMouseLeave={e => { e.currentTarget.style.filter = 'brightness(1)' }}
           >
-            <ArrowRight size={14} /> Advance Stage
+            <SFArrowRight size={14} /> Advance Stage
           </button>
         )}
       </div>
@@ -192,7 +192,7 @@ export function LeadsListView({ leads, onSelectLead, onAdvanceStage }: LeadsList
                 {lead.last_activity_at ? relativeTime(lead.last_activity_at) : '—'}
               </span>
 
-              <ChevronDown style={{
+              <SFChevronDown style={{
                 width: 14, height: 14, color: 'var(--text-dim)', flexShrink: 0,
                 transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
                 transition: `transform 200ms ${SPRING}`,
@@ -207,11 +207,11 @@ export function LeadsListView({ leads, onSelectLead, onAdvanceStage }: LeadsList
                     onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.12)' }}
                     onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.06)' }}
                   >
-                    <ArrowRight size={12} />
+                    <SFArrowRight size={12} />
                   </button>
                 )}
                 <button onClick={(e) => e.stopPropagation()} style={quickBtnStyle}>
-                  <Mail size={12} />
+                  <SFEnvelope size={12} />
                 </button>
               </div>
             </div>

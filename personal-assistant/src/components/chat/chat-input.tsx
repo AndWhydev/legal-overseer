@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef, useCallback, useEffect } from 'react'
-import { Send } from 'lucide-react'
+import { SFPaperplane } from 'sf-symbols-lib'
 
 interface ChatInputProps {
   onSend: (text: string) => void
@@ -62,7 +62,7 @@ export function ChatInput({
           disabled={disabled}
           aria-label="Send message"
         >
-          <Send size={18} />
+          <SFPaperplane size={18} />
         </button>
       </div>
     </div>

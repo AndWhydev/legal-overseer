@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
-import { Handshake } from 'lucide-react'
+import { SFHandRaised } from 'sf-symbols-lib'
 import { useLeads } from '@/hooks/use-leads'
 import { useLeadsAnalytics } from '@/hooks/use-leads-analytics'
 import { LeadsToolbar } from './leads-toolbar'
@@ -166,7 +166,7 @@ export function LeadsPage() {
         ) : (
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16, padding: 48 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 64, height: 64, borderRadius: 20, background: 'rgba(255, 255, 255, 0.04)', border: '1px solid rgba(255, 255, 255, 0.08)', color: 'var(--text-dim)' }}>
-              <Handshake size={28} />
+              <SFHandRaised size={28} />
             </div>
             <p style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Your pipeline is empty</p>
             <p style={{ fontSize: 13, color: 'var(--text-dim)', margin: 0, textAlign: 'center' }}>Discover prospects or connect your channels.</p>

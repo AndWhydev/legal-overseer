@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import { ChevronDown, Check, X, Activity } from 'lucide-react'
+import { SFChevronDown, SFCheckmark, SFXmark, SFWaveformPathEcg } from 'sf-symbols-lib'
 
 interface ToolCall {
   name: string
@@ -51,7 +51,7 @@ export function ToolCallSummary({ toolCalls }: { toolCalls: ToolCall[] }) {
         onMouseEnter={e => (e.currentTarget.style.color = 'var(--text-secondary)')}
         onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-dim)')}
       >
-        <Activity size={12} />
+        <SFWaveformPathEcg size={12} />
         <span>
           {toolCalls.length} tool{toolCalls.length !== 1 ? 's' : ''} used
           {failed.length > 0 && <span style={{ color: 'var(--bb-red)' }}> · {failed.length} failed</span>}
@@ -60,7 +60,7 @@ export function ToolCallSummary({ toolCalls }: { toolCalls: ToolCall[] }) {
           animate={{ rotate: expanded ? 180 : 0 }}
           transition={{ duration: 0.15 }}
         >
-          <ChevronDown size={12} />
+          <SFChevronDown size={12} />
         </motion.div>
       </button>
 
@@ -94,9 +94,9 @@ export function ToolCallSummary({ toolCalls }: { toolCalls: ToolCall[] }) {
                     }}
                   >
                     {tc.status === 'done' ? (
-                      <Check size={11} style={{ color: 'var(--text-secondary)', flexShrink: 0 }} />
+                      <SFCheckmark size={11} style={{ color: 'var(--text-secondary)', flexShrink: 0 }} />
                     ) : tc.status === 'error' ? (
-                      <X size={11} style={{ color: 'var(--text-secondary)', flexShrink: 0 }} />
+                      <SFXmark size={11} style={{ color: 'var(--text-secondary)', flexShrink: 0 }} />
                     ) : (
                       <span style={{ width: 11, height: 11, flexShrink: 0 }} />
                     )}
@@ -117,8 +117,8 @@ export function ToolCallCard({ toolCall }: { toolCall: ToolCall }) {
   const display = toolDisplayNames[toolCall.name]
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--text-dim)' }}>
-      {toolCall.status === 'done' && <Check size={11} color="var(--bb-green)" />}
-      {toolCall.status === 'error' && <X size={11} color="var(--bb-red)" />}
+      {toolCall.status === 'done' && <SFCheckmark size={11} style={{ color: 'var(--bb-green)' }} />}
+      {toolCall.status === 'error' && <SFXmark size={11} style={{ color: 'var(--bb-red)' }} />}
       <span>{display?.label || toolCall.name}</span>
     </div>
   )

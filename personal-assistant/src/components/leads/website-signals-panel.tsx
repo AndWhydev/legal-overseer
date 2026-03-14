@@ -1,6 +1,6 @@
 'use client'
 
-import { Check, X, HelpCircle } from 'lucide-react'
+import { SFCheckmark, SFXmark, SFQuestionmarkCircle } from 'sf-symbols-lib'
 import type { WebsiteSignals } from '@/lib/leads/types'
 
 interface WebsiteSignalsPanelProps {
@@ -8,9 +8,9 @@ interface WebsiteSignalsPanelProps {
 }
 
 function TriState({ value }: { value: boolean | null | undefined }) {
-  if (value === true) return <Check style={{ width: 14, height: 14, color: 'var(--bb-green)' }} />
-  if (value === false) return <X style={{ width: 14, height: 14, color: 'var(--bb-red)' }} />
-  return <HelpCircle style={{ width: 14, height: 14, color: 'var(--text-dim)' }} />
+  if (value === true) return <SFCheckmark style={{ width: 14, height: 14, color: 'var(--bb-green)' }} />
+  if (value === false) return <SFXmark style={{ width: 14, height: 14, color: 'var(--bb-red)' }} />
+  return <SFQuestionmarkCircle style={{ width: 14, height: 14, color: 'var(--text-dim)' }} />
 }
 
 function LoadTimeColor(ms: number | null | undefined): string {

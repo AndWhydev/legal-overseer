@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useRealtimeSubscription } from '@/lib/realtime/supabase-realtime';
-import { Inbox } from 'lucide-react';
+import { SFTray } from 'sf-symbols-lib';
 import { WidgetCard } from './widget-card';
 import { EmptyState } from '@/components/ui/empty-state';
 
@@ -27,11 +27,11 @@ export function UnreadMessagesWidget() {
     <WidgetCard
       title="Unread Messages"
       subtitle={`${messages.length} unread`}
-      icon={<Inbox size={20} style={{ color: 'var(--bb-purple)' }} />}
+      icon={<SFTray size={20} style={{ color: 'var(--bb-purple)' }} />}
     >
       <div className="space-y-3 max-h-64 overflow-y-auto">
         {messages.length === 0 ? (
-          <EmptyState icon={<Inbox size={32} />} title="All caught up" description="No unread messages." />
+          <EmptyState icon={<SFTray size={32} />} title="All caught up" description="No unread messages." />
         ) : (
           messages.map((msg, idx) => (
             <div key={(msg.id as string) || idx} className="flex items-start gap-3 pb-3 border-b border-[var(--border-subtle)] last:border-0">

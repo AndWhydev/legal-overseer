@@ -8,7 +8,7 @@ import React, {
   useEffect,
 } from 'react';
 
-import { Menu } from 'lucide-react';
+import { SFLine3Horizontal } from 'sf-symbols-lib';
 import { useRouter } from 'next/navigation';
 import { SidebarNav } from './sidebar-nav';
 import { BottomNav } from './bottom-nav';
@@ -407,7 +407,7 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
             aria-controls="bb-dashboard-sidebar"
             title={sidebarOpen ? 'Close navigation' : 'Open navigation'}
           >
-            <Menu size={20} />
+            <SFLine3Horizontal size={20} />
           </button>
 
           {/* Tablet backdrop */}

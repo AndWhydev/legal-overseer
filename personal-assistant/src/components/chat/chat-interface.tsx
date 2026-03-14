@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { MessageBubble } from './message-bubble'
-import { ChevronDown, Archive, Search, PlusCircle, Pencil, Eye, FileText, Mail, Brain, Zap, AlertCircle } from 'lucide-react'
+import { SFChevronDown, SFArchivebox, SFMagnifyingglass, SFPlusCircle, SFPencil, SFEye, SFDocument, SFEnvelope, SFBrain, SFBolt, SFExclamationmarkCircle } from 'sf-symbols-lib'
 import { BitBitFaceAvatar } from './bitbit-face-avatar'
 import { useAvatarEmotion } from './use-avatar-emotion'
 import { useSmoothStream } from './use-smooth-stream'
@@ -105,14 +105,14 @@ function formatToolName(name: string): string {
 
 /** Tool-specific icon based on name pattern */
 function getToolIcon(name: string): React.ElementType {
-  if (name.startsWith('search')) return Search
-  if (name.startsWith('create')) return PlusCircle
-  if (name.startsWith('update')) return Pencil
-  if (name.startsWith('get') || name.startsWith('look')) return Eye
-  if (name.startsWith('log')) return FileText
-  if (name.startsWith('compose') || name.startsWith('send')) return Mail
-  if (name.includes('memory')) return Brain
-  return Zap
+  if (name.startsWith('search')) return SFMagnifyingglass
+  if (name.startsWith('create')) return SFPlusCircle
+  if (name.startsWith('update')) return SFPencil
+  if (name.startsWith('get') || name.startsWith('look')) return SFEye
+  if (name.startsWith('log')) return SFDocument
+  if (name.startsWith('compose') || name.startsWith('send')) return SFEnvelope
+  if (name.includes('memory')) return SFBrain
+  return SFBolt
 }
 
 const CHAT_SEND_EVENT = 'bitbit-chat-send'
@@ -691,7 +691,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
 
   return (
     <div className={`bb-chat ${chatStarted ? 'bb-chat--active' : 'bb-chat--pre-session'}`}>
-      {/* Archive / history toggle — bottom-left, always visible */}
+      {/* SFArchivebox / history toggle — bottom-left, always visible */}
       <button
         className="bb-chat__history-btn"
         onClick={() => {
@@ -700,7 +700,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
         }}
         aria-label="Conversation history"
       >
-        <Archive size={16} />
+        <SFArchivebox size={16} />
       </button>
 
       {/* Conversation history drawer */}
@@ -892,7 +892,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
             onClick={smartScroll.scrollToBottom}
             aria-label="Scroll to bottom"
           >
-            <ChevronDown size={18} />
+            <SFChevronDown size={18} />
           </motion.button>
         )}
       </AnimatePresence>

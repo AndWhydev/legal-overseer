@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useRealtimeSubscription } from '@/lib/realtime/supabase-realtime';
 import { StatCard, StatusBadge, ProcessPipeline, TimelineBar, MiniSparkline, MiniBarChart, MiniDonut, MiniGauge } from '@/components/ui/data-viz';
-import { AlertCircle, Clock, ShieldCheck, Zap, Users, CheckCircle2, Link as LinkIcon, TrendingUp, Calendar, ReceiptText, MessageSquare, BellOff, Inbox, Activity } from 'lucide-react';
+import { SFExclamationmarkCircle, SFClock, SFCheckmarkShield, SFBolt, SFPerson2, SFCheckmarkCircle, SFLink as LinkIcon, SFArrowUpRight, SFCalendar, SFReceipt, SFBubbleRight, SFBellSlash, SFTray, SFWaveformPathEcg } from 'sf-symbols-lib';
 import { useDashboardStats } from '@/hooks/use-dashboard-stats';
 import { useEnabledModules } from '@/lib/modules/use-enabled-modules';
 import { getPack } from '@/lib/industry/registry';
@@ -233,7 +233,7 @@ function CommandCenterTab() {
           className="flex items-center gap-3 p-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-elevated)] hover:bg-[var(--bg-hover)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-left"
         >
           <div className="w-9 h-9 rounded-lg bg-amber-500/15 flex items-center justify-center flex-shrink-0">
-            <ShieldCheck size={18} style={{ color: 'var(--bb-status-warning)' }} />
+            <SFCheckmarkShield size={18} style={{ color: 'var(--bb-status-warning)' }} />
           </div>
           <div className="min-w-0">
             <p className="text-xs font-medium truncate">Approve Next</p>
@@ -250,7 +250,7 @@ function CommandCenterTab() {
           className="flex items-center gap-3 p-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-elevated)] hover:bg-[var(--bg-hover)] transition-colors text-left"
         >
           <div className="w-9 h-9 rounded-lg bg-emerald-500/15 flex items-center justify-center flex-shrink-0">
-            <ReceiptText size={18} style={{ color: 'var(--bb-status-success)' }} />
+            <SFReceipt size={18} style={{ color: 'var(--bb-status-success)' }} />
           </div>
           <div className="min-w-0">
             <p className="text-xs font-medium truncate">New Invoice</p>
@@ -265,7 +265,7 @@ function CommandCenterTab() {
           className="flex items-center gap-3 p-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-elevated)] hover:bg-[var(--bg-hover)] transition-colors text-left"
         >
           <div className="w-9 h-9 rounded-lg bg-violet-500/15 flex items-center justify-center flex-shrink-0">
-            <Inbox size={18} style={{ color: 'var(--bb-purple)' }} />
+            <SFTray size={18} style={{ color: 'var(--bb-purple)' }} />
           </div>
           <div className="min-w-0">
             <p className="text-xs font-medium truncate">Inbox</p>
@@ -281,7 +281,7 @@ function CommandCenterTab() {
           className="flex items-center gap-3 p-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-elevated)] hover:bg-[var(--bg-hover)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-left"
         >
           <div className="w-9 h-9 rounded-lg bg-red-500/15 flex items-center justify-center flex-shrink-0">
-            <BellOff size={18} style={{ color: 'var(--bb-status-error)' }} />
+            <SFBellSlash size={18} style={{ color: 'var(--bb-status-error)' }} />
           </div>
           <div className="min-w-0">
             <p className="text-xs font-medium truncate">Dismiss Top</p>
@@ -326,13 +326,13 @@ function CommandCenterTab() {
         <div className="bb-card col-span-1 lg:col-span-2">
           <div className="p-4 border-b border-[var(--border-subtle)]">
             <h2 className="text-lg font-medium flex items-center gap-2">
-              <ShieldCheck size={20} style={{ color: 'var(--bb-status-warning)' }} /> Action Required
+              <SFCheckmarkShield size={20} style={{ color: 'var(--bb-status-warning)' }} /> Action Required
             </h2>
             <p className="text-xs text-muted-foreground mt-1">{approvals.length} pending approvals</p>
           </div>
           <div className="p-4 space-y-4">
             {approvals.length === 0 ? (
-              <EmptyState icon={<ShieldCheck size={32} />} title="No pending approvals" description="Great work! All actions have been reviewed." />
+              <EmptyState icon={<SFCheckmarkShield size={32} />} title="No pending approvals" description="Great work! All actions have been reviewed." />
             ) : (
               approvals.map(app => (
                 <div key={app.id as string} className="flex items-center justify-between p-3 rounded-md bg-[var(--bg-elevated)] border border-[var(--border-subtle)]">
@@ -366,12 +366,12 @@ function CommandCenterTab() {
         <div className="bb-card col-span-1">
           <div className="p-4 border-b border-[var(--border-subtle)]">
             <h2 className="text-lg font-medium flex items-center gap-2">
-              <Zap size={20} style={{ color: 'var(--bb-status-warning)' }} /> Today&apos;s Priorities
+              <SFBolt size={20} style={{ color: 'var(--bb-status-warning)' }} /> Today&apos;s Priorities
             </h2>
           </div>
           <div className="p-4 space-y-3">
             {todaysPriorities.length === 0 ? (
-              <EmptyState icon={<Zap size={32} />} title="No high-priority tasks" description="Enjoy the calm — nothing urgent right now." />
+              <EmptyState icon={<SFBolt size={32} />} title="No high-priority tasks" description="Enjoy the calm — nothing urgent right now." />
             ) : (
               todaysPriorities.map(task => (
                 <div key={task.id} className="flex items-center gap-3 p-2 rounded-md bg-[var(--bg-elevated)] border border-[var(--border-subtle)]">
@@ -390,19 +390,19 @@ function CommandCenterTab() {
         </div>
       </div>
 
-      {/* Agent Activity Feed + Hot Leads + Schedule */}
+      {/* Agent SFWaveformPathEcg Feed + Hot Leads + Schedule */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Agent Activity Feed */}
+        {/* Agent SFWaveformPathEcg Feed */}
         <div className="bb-card">
           <div className="p-4 border-b border-[var(--border-subtle)]">
             <h2 className="text-lg font-medium flex items-center gap-2">
-              <Activity size={20} style={{ color: 'var(--bb-cyan)' }} /> Agent Activity
+              <SFWaveformPathEcg size={20} style={{ color: 'var(--bb-cyan)' }} /> Agent SFWaveformPathEcg
             </h2>
             <p className="text-xs text-muted-foreground mt-1">Recent agent runs</p>
           </div>
           <div className="p-4 space-y-3 max-h-64 overflow-y-auto">
             {agentRuns.length === 0 ? (
-              <EmptyState icon={<Activity size={32} />} title="No recent agent activity" description="Agents will appear here when they run." />
+              <EmptyState icon={<SFWaveformPathEcg size={32} />} title="No recent agent activity" description="Agents will appear here when they run." />
             ) : (
               agentRuns.map((run) => (
                 <div key={run.id} className="flex items-start gap-3 pb-3 border-b border-[var(--border-subtle)] last:border-0">
@@ -428,13 +428,13 @@ function CommandCenterTab() {
         <div className="bb-card">
           <div className="p-4 border-b border-[var(--border-subtle)]">
             <h2 className="text-lg font-medium flex items-center gap-2">
-              <TrendingUp size={20} style={{ color: 'var(--bb-pink)' }} /> Hot Leads
+              <SFArrowUpRight size={20} style={{ color: 'var(--bb-pink)' }} /> Hot Leads
             </h2>
             <p className="text-xs text-muted-foreground mt-1">Top opportunities this week</p>
           </div>
           <div className="p-4 space-y-3">
             {leads.length === 0 ? (
-              <EmptyState icon={<TrendingUp size={32} />} title="No active leads" description="New leads will appear here as they come in." />
+              <EmptyState icon={<SFArrowUpRight size={32} />} title="No active leads" description="New leads will appear here as they come in." />
             ) : (
               leads.map(lead => (
                 <div key={lead.id as string} className="flex items-center justify-between p-3 rounded-md bg-[var(--bg-elevated)] border border-[var(--border-subtle)]">
@@ -457,13 +457,13 @@ function CommandCenterTab() {
         <div className="bb-card col-span-1">
           <div className="p-4 border-b border-[var(--border-subtle)]">
             <h2 className="text-lg font-medium flex items-center gap-2">
-              <Clock size={20} style={{ color: 'var(--bb-status-info)' }} /> Today&apos;s Schedule
+              <SFClock size={20} style={{ color: 'var(--bb-status-info)' }} /> Today&apos;s Schedule
             </h2>
           </div>
           <div className="p-4">
             <div className="text-xs text-muted-foreground mb-4 flex items-center gap-2">
-              <Calendar size={14} />
-              <span>Connect Google Calendar to see your schedule</span>
+              <SFCalendar size={14} />
+              <span>Connect Google SFCalendar to see your schedule</span>
             </div>
             <TimelineBar
               startLabel="09:00"
@@ -475,17 +475,17 @@ function CommandCenterTab() {
         </div>
       </div>
 
-      {/* Recent Channel Activity */}
+      {/* Recent Channel SFWaveformPathEcg */}
       <div className="bb-card">
         <div className="p-4 border-b border-[var(--border-subtle)]">
           <h2 className="text-lg font-medium flex items-center gap-2">
-            <Users size={20} style={{ color: 'var(--bb-cyan)' }} /> Recent Channel Activity
+            <SFPerson2 size={20} style={{ color: 'var(--bb-cyan)' }} /> Recent Channel SFWaveformPathEcg
           </h2>
           <p className="text-xs text-muted-foreground mt-1">Latest messages across all channels</p>
         </div>
         <div className="p-4 space-y-3 max-h-64 overflow-y-auto">
           {recentActivity.length === 0 ? (
-            <EmptyState icon={<Users size={32} />} title="No recent activity" description="Channel messages will appear here." />
+            <EmptyState icon={<SFPerson2 size={32} />} title="No recent activity" description="Channel messages will appear here." />
           ) : (
             recentActivity.map((activity, idx) => (
               <div key={(activity.id as string) || idx} className="flex items-start gap-3 pb-3 border-b border-[var(--border-subtle)] last:border-0">

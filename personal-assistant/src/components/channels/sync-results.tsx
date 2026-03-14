@@ -1,15 +1,15 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { X, CheckCircle2, AlertCircle, Mail, MessageCircle, CalendarDays, Bell } from 'lucide-react'
+import { SFXmark, SFCheckmarkCircle, SFExclamationmarkCircle, SFEnvelope, SFBubbleLeft, SFCalendar, SFBell } from 'sf-symbols-lib'
 import { cn } from '@/lib/utils'
 
 const channelIcons: Record<string, React.ElementType> = {
-  gmail: Mail,
-  outlook: Mail,
-  imessage: MessageCircle,
-  calendar: CalendarDays,
-  reminders: Bell,
+  gmail: SFEnvelope,
+  outlook: SFEnvelope,
+  imessage: SFBubbleLeft,
+  calendar: SFCalendar,
+  reminders: SFBell,
 }
 
 const channelLabels: Record<string, string> = {
@@ -75,9 +75,9 @@ export function SyncResults({ results, onDismiss, autoDismissMs = 10000 }: SyncR
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           {hasErrors ? (
-            <AlertCircle className="h-4 w-4 text-amber-400" />
+            <SFExclamationmarkCircle className="h-4 w-4 text-amber-400" />
           ) : (
-            <CheckCircle2 className="h-4 w-4 text-[#4ADE80]" />
+            <SFCheckmarkCircle className="h-4 w-4 text-[#4ADE80]" />
           )}
           <h3 className="text-sm font-semibold text-foreground">
             Sync Complete
@@ -90,7 +90,7 @@ export function SyncResults({ results, onDismiss, autoDismissMs = 10000 }: SyncR
           onClick={handleDismiss}
           className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
         >
-          <X className="h-3.5 w-3.5" />
+          <SFXmark className="h-3.5 w-3.5" />
         </button>
       </div>
 
@@ -113,7 +113,7 @@ export function SyncResults({ results, onDismiss, autoDismissMs = 10000 }: SyncR
       {/* Per-channel breakdown */}
       <div className="mt-3 space-y-1.5">
         {results.map((r) => {
-          const Icon = channelIcons[r.channel] || Mail
+          const Icon = channelIcons[r.channel] || SFEnvelope
           const label = channelLabels[r.channel] || r.channel
           const hasChannelErrors = r.errors.length > 0
 

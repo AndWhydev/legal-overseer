@@ -1,19 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import {
-  X,
-  Reply,
-  Forward,
-  Archive,
-  CheckCircle2,
-  AlertTriangle,
-  Sparkles,
-  ChevronDown,
-  ChevronRight,
-  ListTodo,
-  Send,
-} from 'lucide-react';
+import { SFXmark, SFArrowshapeTurnUpLeft, SFForward, SFArchivebox, SFCheckmarkCircle, SFExclamationmarkTriangle, SFSparkles, SFChevronDown, SFChevronRight, SFChecklist, SFPaperplane } from 'sf-symbols-lib';
 import { resolveAvatarSync, resolveAvatar, type AvatarResult } from '@/lib/avatar/resolver';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -268,7 +256,7 @@ function AiSummaryPanel({
     >
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-        <Sparkles size={14} style={{ color: '#A78BFA', flexShrink: 0 }} />
+        <SFSparkles size={14} style={{ color: '#A78BFA', flexShrink: 0 }} />
         <span style={{ fontSize: 12, fontWeight: 600, color: '#A78BFA', letterSpacing: '0.02em' }}>
           AI Summary
         </span>
@@ -328,7 +316,7 @@ function AiSummaryPanel({
               onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(99,102,241,0.2)'; }}
               onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(99,102,241,0.1)'; }}
             >
-              <ListTodo size={11} /> Create Task
+              <SFChecklist size={11} /> Create Task
             </button>
             <button
               onClick={() => onDraftReply(result.draftReply)}
@@ -349,7 +337,7 @@ function AiSummaryPanel({
               onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
               onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
             >
-              <Reply size={11} /> Draft Reply
+              <SFArrowshapeTurnUpLeft size={11} /> Draft SFArrowshapeTurnUpLeft
             </button>
           </div>
         </>
@@ -468,7 +456,7 @@ function ThreadView({
 
               {!isLatest && (
                 <span style={{ color: 'rgba(255,255,255,0.2)', flexShrink: 0 }}>
-                  {isExpanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+                  {isExpanded ? <SFChevronDown size={12} /> : <SFChevronRight size={12} />}
                 </span>
               )}
             </div>
@@ -490,7 +478,7 @@ function ThreadView({
         );
       })}
 
-      {/* Reply prompt */}
+      {/* SFArrowshapeTurnUpLeft prompt */}
       <button
         onClick={onFocusReply}
         style={{
@@ -517,7 +505,7 @@ function ThreadView({
           e.currentTarget.style.color = 'rgba(255,255,255,0.3)';
         }}
       >
-        <Reply size={13} /> Reply to thread…
+        <SFArrowshapeTurnUpLeft size={13} /> SFArrowshapeTurnUpLeft to thread…
       </button>
     </div>
   );
@@ -742,29 +730,29 @@ export default function InboxDrawer({
             <button style={btnStyle} onClick={() => focusReply()} title="Reply (R)"
               onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
               onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}>
-              <Reply size={13} /> Reply
+              <SFArrowshapeTurnUpLeft size={13} /> SFArrowshapeTurnUpLeft
             </button>
             <button style={btnStyle} onClick={() => {}} title="Forward (F)"
               onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
               onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}>
-              <Forward size={13} /> Forward
+              <SFForward size={13} /> SFForward
             </button>
             <button style={btnStyle} onClick={() => onArchive(message.id)} title="Archive (E)"
               onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
               onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}>
-              <Archive size={13} /> Archive
+              <SFArchivebox size={13} /> SFArchivebox
             </button>
             <button style={btnStyle} onClick={() => onDone(message.id)} title="Done (D)"
               onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
               onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}>
-              <CheckCircle2 size={13} /> Done
+              <SFCheckmarkCircle size={13} /> Done
             </button>
             <button
               style={{ ...btnStyle, background: 'rgba(239,68,68,0.08)', color: 'rgba(239,68,68,0.8)' }}
               onClick={() => {}} title="Spam (!)"
               onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(239,68,68,0.15)'; }}
               onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(239,68,68,0.08)'; }}>
-              <AlertTriangle size={13} /> Spam
+              <SFExclamationmarkTriangle size={13} /> Spam
             </button>
           </div>
 
@@ -793,7 +781,7 @@ export default function InboxDrawer({
               onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.12)'; }}
               onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; }}
             >
-              <X size={16} />
+              <SFXmark size={16} />
             </button>
           </div>
         </div>
@@ -912,7 +900,7 @@ export default function InboxDrawer({
           )}
         </div>
 
-        {/* Reply Composer */}
+        {/* SFArrowshapeTurnUpLeft Composer */}
         <div style={{ padding: '14px 20px', borderTop: '1px solid rgba(255,255,255,0.06)', flexShrink: 0 }}>
           <div style={{
             display: 'flex',
@@ -963,7 +951,7 @@ export default function InboxDrawer({
               onMouseEnter={(e) => { if (replyText.trim()) e.currentTarget.style.background = 'var(--hover-bg-strong, rgba(255,255,255,0.1))'; }}
               onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
             >
-              <Send size={14} />
+              <SFPaperplane size={14} />
             </button>
           </div>
           {replyText && (

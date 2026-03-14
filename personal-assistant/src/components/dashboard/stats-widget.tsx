@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { CheckCircle2, Flame, Radio, AlertCircle } from 'lucide-react'
+import { SFCheckmarkCircle, SFFlame, SFRadio, SFExclamationmarkCircle } from 'sf-symbols-lib'
 import { createClient } from '@/lib/supabase/client'
 import { logger } from '@/lib/core/logger'
 
@@ -127,19 +127,19 @@ export function StatsWidget({ className }: StatsWidgetProps) {
 
   const items = [
     {
-      icon: CheckCircle2,
+      icon: SFCheckmarkCircle,
       value: stats.completedToday,
       label: 'Done today',
       color: '#7CAA85',
     },
     {
-      icon: Flame,
+      icon: SFFlame,
       value: stats.weeklyStreak,
       label: 'Day streak',
       color: '#D4A574',
     },
     {
-      icon: Radio,
+      icon: SFRadio,
       value: stats.channelsSynced,
       label: 'Channels',
       color: '#A78BFA',
@@ -149,7 +149,7 @@ export function StatsWidget({ className }: StatsWidgetProps) {
   if (error) {
     return (
       <div className={`flex items-center gap-2 px-3 py-2 rounded-lg bg-red-950/20 border border-red-900/30 ${className ?? ''}`}>
-        <AlertCircle className="h-4 w-4 text-red-400 flex-shrink-0" />
+        <SFExclamationmarkCircle className="h-4 w-4 text-red-400 flex-shrink-0" />
         <span className="text-xs text-red-300">{error}</span>
       </div>
     )

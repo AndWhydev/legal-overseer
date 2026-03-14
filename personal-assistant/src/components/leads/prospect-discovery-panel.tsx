@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback, useEffect } from 'react'
-import { X, Search, Loader2 } from 'lucide-react'
+import { SFXmark, SFMagnifyingglass, SFArrowClockwise } from 'sf-symbols-lib'
 import type { DiscoveryJob } from '@/lib/leads/types'
 import { useProspectDiscovery } from '@/hooks/use-prospect-discovery'
 import { ProspectCard } from './prospect-card'
@@ -92,13 +92,13 @@ export function ProspectDiscoveryPanel({ open, onClose }: ProspectDiscoveryPanel
               cursor: 'pointer',
             }}
           >
-            <X style={{ width: 16, height: 16 }} />
+            <SFXmark style={{ width: 16, height: 16 }} />
           </button>
         </div>
 
         {/* Body */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>
-          {/* Search Form */}
+          {/* SFMagnifyingglass Form */}
           {!job && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div>
@@ -189,8 +189,8 @@ export function ProspectDiscoveryPanel({ open, onClose }: ProspectDiscoveryPanel
                   marginTop: 8,
                 }}
               >
-                <Search style={{ width: 16, height: 16 }} />
-                Search
+                <SFMagnifyingglass style={{ width: 16, height: 16 }} />
+                SFMagnifyingglass
               </button>
             </div>
           )}
@@ -198,7 +198,7 @@ export function ProspectDiscoveryPanel({ open, onClose }: ProspectDiscoveryPanel
           {/* Progress State */}
           {job && job.status !== 'complete' && job.status !== 'error' && (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, padding: '40px 0' }}>
-              <Loader2 style={{ width: 32, height: 32, color: 'var(--bb-cyan)', animation: 'spin 1s linear infinite' }} />
+              <SFArrowClockwise style={{ width: 32, height: 32, color: 'var(--bb-cyan)', animation: 'spin 1s linear infinite' }} />
               <div style={{ textAlign: 'center' }}>
                 <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 4 }}>
                   {job.status === 'searching' ? 'Searching...' : job.status === 'enriching' ? 'Enriching...' : 'Scoring...'}
@@ -266,7 +266,7 @@ export function ProspectDiscoveryPanel({ open, onClose }: ProspectDiscoveryPanel
                     cursor: 'pointer',
                   }}
                 >
-                  New Search
+                  New SFMagnifyingglass
                 </button>
               </div>
 

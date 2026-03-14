@@ -1,19 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import {
-  Search,
-  FileSearch,
-  RefreshCw,
-  ChevronRight,
-  CheckCircle2,
-  AlertCircle,
-  MinusCircle,
-  ArrowRight,
-  Plus,
-  X,
-  Briefcase,
-} from 'lucide-react';
+import { SFMagnifyingglass, SFDocument, SFArrowClockwise, SFChevronRight, SFCheckmarkCircle, SFExclamationmarkCircle, SFMinusCircle, SFArrowRight, SFPlus, SFXmark, SFBriefcase } from 'sf-symbols-lib';
 import { TabShell } from '@/components/ui/tab-shell';
 import { EmptyState } from '@/components/ui/empty-state';
 
@@ -370,7 +358,7 @@ function TendersTab() {
       {/* Page Header */}
       <div style={{ marginBottom: 32 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-          <FileSearch size={28} style={{ color: 'var(--bb-purple)' }} />
+          <SFDocument size={28} style={{ color: 'var(--bb-purple)' }} />
           <div>
             <h1 style={pageTitle}>Tender Hunter</h1>
             <p style={pageSubtitle}>Find, evaluate, and respond to government tenders</p>
@@ -434,7 +422,7 @@ function TendersTab() {
               }
             }}
           >
-            <RefreshCw
+            <SFArrowClockwise
               size={16}
               style={{
                 animation: scanning ? 'spin 1s linear infinite' : 'none',
@@ -654,7 +642,7 @@ function TendersTab() {
                           gap: 12,
                         }}
                       >
-                        <FileSearch size={32} style={{ color: 'var(--text-dim)' }} />
+                        <SFDocument size={32} style={{ color: 'var(--text-dim)' }} />
                         <span style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
                           No tenders found. Click "Scan Now" to search government tender portals.
                         </span>
@@ -673,7 +661,7 @@ function TendersTab() {
         <div>
           {profiles.length === 0 ? (
             <EmptyState
-              icon={<Briefcase size={40} />}
+              icon={<SFBriefcase size={40} />}
               title="No capability profiles yet"
               description="Create profiles to enable smart tender matching and automated evaluations."
             />
@@ -821,7 +809,7 @@ function TenderDetailDrawer({ tender, response, onClose, onAction, actionLoading
                 (e.target as HTMLElement).style.color = 'var(--text-secondary)';
               }}
             >
-              <X size={20} />
+              <SFXmark size={20} />
             </button>
           </div>
 
@@ -880,7 +868,7 @@ function TenderDetailDrawer({ tender, response, onClose, onAction, actionLoading
                 transform: hoveredBtn === 'evaluate' && actionLoading !== tender.id ? 'translateY(-1px)' : 'translateY(0)',
               }}
             >
-              <Search size={16} />
+              <SFMagnifyingglass size={16} />
               Evaluate Fit
             </button>
             <button
@@ -901,7 +889,7 @@ function TenderDetailDrawer({ tender, response, onClose, onAction, actionLoading
                 transform: hoveredBtn === 'compliance' && actionLoading !== tender.id ? 'translateY(-1px)' : 'translateY(0)',
               }}
             >
-              <CheckCircle2 size={16} />
+              <SFCheckmarkCircle size={16} />
               Compliance
             </button>
             <button
@@ -922,7 +910,7 @@ function TenderDetailDrawer({ tender, response, onClose, onAction, actionLoading
                 transform: hoveredBtn === 'response' && actionLoading !== tender.id ? 'translateY(-1px)' : 'translateY(0)',
               }}
             >
-              <ArrowRight size={16} />
+              <SFArrowRight size={16} />
               Draft Response
             </button>
           </div>
@@ -950,7 +938,7 @@ function TenderDetailDrawer({ tender, response, onClose, onAction, actionLoading
               }}
             >
               View on {sourceLabel(tender.source)}
-              <ChevronRight size={14} />
+              <SFChevronRight size={14} />
             </a>
           )}
 
@@ -995,13 +983,13 @@ function TenderDetailDrawer({ tender, response, onClose, onAction, actionLoading
                     }}
                   >
                     {item.status === 'met' && (
-                      <CheckCircle2 size={18} style={{ color: '#22c55e', flexShrink: 0, marginTop: 2 }} />
+                      <SFCheckmarkCircle size={18} style={{ color: '#22c55e', flexShrink: 0, marginTop: 2 }} />
                     )}
                     {item.status === 'partially_met' && (
-                      <AlertCircle size={18} style={{ color: '#eab308', flexShrink: 0, marginTop: 2 }} />
+                      <SFExclamationmarkCircle size={18} style={{ color: '#eab308', flexShrink: 0, marginTop: 2 }} />
                     )}
                     {item.status === 'not_met' && (
-                      <MinusCircle size={18} style={{ color: '#ef4444', flexShrink: 0, marginTop: 2 }} />
+                      <SFMinusCircle size={18} style={{ color: '#ef4444', flexShrink: 0, marginTop: 2 }} />
                     )}
                     <div style={{ flex: 1 }}>
                       <p style={{ fontSize: 12, color: 'var(--text-primary)', marginBottom: 4 }}>

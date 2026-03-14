@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useCallback, useContext, useState, useRef, useEffect } from 'react';
-import { CheckCircle2, AlertCircle, Info, X } from 'lucide-react';
+import { SFCheckmarkCircle, SFExclamationmarkCircle, SFInfoCircle, SFXmark } from 'sf-symbols-lib';
 import { cn } from '@/lib/utils';
 
 type ToastType = 'success' | 'error' | 'info';
@@ -27,9 +27,9 @@ export function useToast() {
 }
 
 const ICONS: Record<ToastType, React.ReactNode> = {
-  success: <CheckCircle2 className="h-4 w-4 text-[var(--bb-green)]" aria-hidden="true" />,
-  error: <AlertCircle className="h-4 w-4 text-[var(--bb-red)]" aria-hidden="true" />,
-  info: <Info className="h-4 w-4 text-[var(--bb-blue)]" aria-hidden="true" />,
+  success: <SFCheckmarkCircle className="h-4 w-4 text-[var(--bb-green)]" aria-hidden="true" />,
+  error: <SFExclamationmarkCircle className="h-4 w-4 text-[var(--bb-red)]" aria-hidden="true" />,
+  info: <SFInfoCircle className="h-4 w-4 text-[var(--bb-blue)]" aria-hidden="true" />,
 };
 
 const BORDER_COLORS: Record<ToastType, string> = {
@@ -107,7 +107,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               className="ml-2 rounded-md p-1 text-muted-foreground hover:text-foreground hover:bg-white/10 min-h-[44px] min-w-[44px] flex items-center justify-center -mr-2"
               aria-label="Dismiss notification"
             >
-              <X className="h-3.5 w-3.5" />
+              <SFXmark className="h-3.5 w-3.5" />
             </button>
           </div>
         ))}
@@ -134,7 +134,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               className="ml-2 rounded-md p-1 text-muted-foreground hover:text-foreground hover:bg-white/10 min-h-[44px] min-w-[44px] flex items-center justify-center -mr-2"
               aria-label="Dismiss error"
             >
-              <X className="h-3.5 w-3.5" />
+              <SFXmark className="h-3.5 w-3.5" />
             </button>
           </div>
         ))}

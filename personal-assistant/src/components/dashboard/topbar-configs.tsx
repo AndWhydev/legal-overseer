@@ -1,32 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import {
-  CalendarDays,
-  Inbox,
-  BellRing,
-  Radio,
-  Pill,
-  Users,
-  Target,
-  FileText,
-  Briefcase,
-  Wrench,
-  AlertTriangle,
-  CheckSquare,
-  Megaphone,
-  Search,
-  BarChart3,
-  BookOpen,
-  DollarSign,
-  TrendingUp,
-  Clock,
-  Shield,
-  Settings,
-  Link2,
-  Zap,
-  Palette,
-} from 'lucide-react';
+import { SFCalendar, SFTray, SFBellBadge, SFRadio, SFPill, SFPerson2, SFTarget, SFDocument, SFBriefcase, SFWrenchAndScrewdriver, SFExclamationmarkTriangle, SFCheckmarkSquare, SFMegaphone, SFMagnifyingglass, SFChartBar, SFBookPages, SFDollarsignCircle, SFArrowUpRight, SFClock, SFShield, SFGear, SFLink, SFBolt, SFPaintpalette } from 'sf-symbols-lib';
 import type { TopbarConfig } from './topbar';
 
 function DashboardBreadcrumb() {
@@ -38,7 +13,7 @@ function DashboardBreadcrumb() {
   });
   return (
     <>
-      <CalendarDays size={14} />
+      <SFCalendar size={14} />
       <span>{dateStr}</span>
     </>
   );
@@ -114,94 +89,94 @@ export const TOPBAR_CONFIGS: Record<string, TopbarConfig> = {
   },
   inbox: {
     title: 'Inbox',
-    breadcrumb: <IconBreadcrumb icon={Inbox} text="All channels" />,
+    breadcrumb: <IconBreadcrumb icon={SFTray} text="All channels" />,
   },
   'creator-studio': {
     title: 'Creator Studio',
-    breadcrumb: <IconBreadcrumb icon={BellRing} text="Content proof assets" />,
+    breadcrumb: <IconBreadcrumb icon={SFBellBadge} text="Content proof assets" />,
   },
   connections: {
     title: 'Connections',
-    breadcrumb: <IconBreadcrumb icon={Radio} text="Your integrations" />,
+    breadcrumb: <IconBreadcrumb icon={SFRadio} text="Your integrations" />,
   },
   medications: {
     title: 'Medications',
-    breadcrumb: <IconBreadcrumb icon={Pill} text="Health tracking" />,
+    breadcrumb: <IconBreadcrumb icon={SFPill} text="Health tracking" />,
   },
   contacts: {
     title: 'Contacts',
-    breadcrumb: <IconBreadcrumb icon={Users} text="CRM" />,
+    breadcrumb: <IconBreadcrumb icon={SFPerson2} text="CRM" />,
   },
   leads: {
     title: 'Leads',
-    breadcrumb: <IconBreadcrumb icon={Target} text="Pipeline" />,
+    breadcrumb: <IconBreadcrumb icon={SFTarget} text="Pipeline" />,
   },
   invoices: {
     title: 'Invoices',
-    breadcrumb: <IconBreadcrumb icon={FileText} text="Billing" />,
+    breadcrumb: <IconBreadcrumb icon={SFDocument} text="Billing" />,
   },
   tenders: {
     title: 'Tenders',
-    breadcrumb: <IconBreadcrumb icon={Briefcase} text="Opportunities" />,
+    breadcrumb: <IconBreadcrumb icon={SFBriefcase} text="Opportunities" />,
   },
   jobs: {
     title: 'Jobs',
-    breadcrumb: <IconBreadcrumb icon={Wrench} text="Job board" />,
+    breadcrumb: <IconBreadcrumb icon={SFWrenchAndScrewdriver} text="Job board" />,
   },
   quotes: {
     title: 'Quotes',
-    breadcrumb: <IconBreadcrumb icon={FileText} text="Estimates" />,
+    breadcrumb: <IconBreadcrumb icon={SFDocument} text="Estimates" />,
   },
   sentry: {
     title: 'Sentry',
-    breadcrumb: <IconBreadcrumb icon={AlertTriangle} text="Monitoring" />,
+    breadcrumb: <IconBreadcrumb icon={SFExclamationmarkTriangle} text="Monitoring" />,
   },
   approvals: {
     title: 'Approvals',
-    breadcrumb: <IconBreadcrumb icon={CheckSquare} text="Agent decisions" />,
+    breadcrumb: <IconBreadcrumb icon={SFCheckmarkSquare} text="Agent decisions" />,
   },
   'ad-scripts': {
     title: 'Ad Scripts',
-    breadcrumb: <IconBreadcrumb icon={Megaphone} text="Campaign copy" />,
+    breadcrumb: <IconBreadcrumb icon={SFMegaphone} text="Campaign copy" />,
   },
   'ai-search': {
     title: 'AI Search',
-    breadcrumb: <IconBreadcrumb icon={Search} text="Semantic search" />,
+    breadcrumb: <IconBreadcrumb icon={SFMagnifyingglass} text="Semantic search" />,
   },
   reports: {
     title: 'Reports',
-    breadcrumb: <IconBreadcrumb icon={BarChart3} text="Analytics & exports" />,
+    breadcrumb: <IconBreadcrumb icon={SFChartBar} text="Analytics & exports" />,
   },
   knowledge: {
     title: 'Knowledge',
-    breadcrumb: <IconBreadcrumb icon={BookOpen} text="Entity graph" />,
+    breadcrumb: <IconBreadcrumb icon={SFBookPages} text="Entity graph" />,
   },
   costs: {
     title: 'Costs',
-    breadcrumb: <IconBreadcrumb icon={DollarSign} text="AI spend" />,
+    breadcrumb: <IconBreadcrumb icon={SFDollarsignCircle} text="AI spend" />,
   },
   analytics: {
     title: 'Analytics',
-    breadcrumb: <IconBreadcrumb icon={TrendingUp} text="MRR & usage" />,
+    breadcrumb: <IconBreadcrumb icon={SFArrowUpRight} text="MRR & usage" />,
   },
   activity: {
     title: 'Activity',
-    breadcrumb: <IconBreadcrumb icon={Clock} text="Audit log" />,
+    breadcrumb: <IconBreadcrumb icon={SFClock} text="Audit log" />,
   },
   admin: {
     title: 'Admin',
-    breadcrumb: <IconBreadcrumb icon={Shield} text="System tools" />,
+    breadcrumb: <IconBreadcrumb icon={SFShield} text="System tools" />,
   },
   'settings-connections': {
     title: 'Settings',
-    breadcrumb: <IconBreadcrumb icon={Link2} text="Connections" />,
+    breadcrumb: <IconBreadcrumb icon={SFLink} text="Connections" />,
   },
   'settings-automations': {
     title: 'Settings',
-    breadcrumb: <IconBreadcrumb icon={Zap} text="Automations" />,
+    breadcrumb: <IconBreadcrumb icon={SFBolt} text="Automations" />,
   },
   'settings-appearance': {
     title: 'Settings',
-    breadcrumb: <IconBreadcrumb icon={Palette} text="Appearance" />,
+    breadcrumb: <IconBreadcrumb icon={SFPaintpalette} text="Appearance" />,
   },
 };

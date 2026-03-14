@@ -4,7 +4,7 @@
 // Re-exports the page component logic for use in SPA shell
 
 import React, { useState, useCallback, useMemo } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { SFChevronLeft, SFChevronRight } from 'sf-symbols-lib';
 import { TabShell } from '@/components/ui/tab-shell';
 import { MonthlyGrid } from '@/components/medications/monthly-grid';
 import { PillIcon } from '@/components/medications/pill-icon';
@@ -99,11 +99,11 @@ function MedicationsTab() {
           </div>
           <div className="flex items-center gap-2">
             <button onClick={prevMonth} className="rounded-lg p-1.5 text-text-secondary transition-colors hover:bg-elevated hover:text-foreground">
-              <ChevronLeft className="h-4 w-4" />
+              <SFChevronLeft className="h-4 w-4" />
             </button>
             <span className="min-w-[140px] text-center text-sm font-medium">{MONTH_NAMES[month]} {year}</span>
             <button onClick={nextMonth} className="rounded-lg p-1.5 text-text-secondary transition-colors hover:bg-elevated hover:text-foreground">
-              <ChevronRight className="h-4 w-4" />
+              <SFChevronRight className="h-4 w-4" />
             </button>
           </div>
         </header>

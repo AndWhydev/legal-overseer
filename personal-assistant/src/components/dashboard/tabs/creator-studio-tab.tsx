@@ -1,24 +1,7 @@
 'use client'
 
 import React, { useMemo, useState, useEffect, useCallback } from 'react'
-import {
-  Plus,
-  Trash2,
-  ArrowUp,
-  ArrowDown,
-  RefreshCw,
-  Copy,
-  Check,
-  Download,
-  EyeOff,
-  Eye,
-  BatteryFull,
-  Wifi,
-  SignalHigh,
-  Flashlight,
-  Camera,
-  Lock,
-} from 'lucide-react'
+import { SFPlus, SFTrash, SFArrowUp, SFArrowDown, SFArrowClockwise, SFDocumentOnDocument, SFCheckmark, SFArrowDownDocument, SFEyeSlash, SFEye, SFBattery100percent, SFWifi, SFCellularbars, SFFlashlightOnFill, SFCamera, SFLock } from 'sf-symbols-lib'
 import { TabShell } from '@/components/ui/tab-shell'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -180,17 +163,17 @@ function IOSPreview({ deck }: { deck: ReturnType<typeof composeCreatorStudioDeck
               <div className={`absolute inset-x-6 top-6 z-20 flex items-center justify-between text-[13px] font-semibold ${statusTone}`}>
                 <span>{deck.scene.carrier}</span>
                 <div className="flex items-center gap-1.5">
-                  <SignalHigh size={14} strokeWidth={2.4} />
-                  <Wifi size={14} strokeWidth={2.4} />
-                  <BatteryFull size={17} strokeWidth={2.4} />
+                  <SFCellularbars size={14} />
+                  <SFWifi size={14} />
+                  <SFBattery100percent size={17} />
                   <span className="text-[11px] font-bold">58%</span>
                 </div>
               </div>
 
               <div className={`absolute inset-x-0 top-[106px] z-10 text-center ${statusTone}`}>
                 <div className="mb-2 inline-flex items-center gap-1 rounded-full bg-black/24 px-3 py-1 text-[11px] font-medium backdrop-blur-sm">
-                  <Lock size={11} />
-                  Lock Screen
+                  <SFLock size={11} />
+                  SFLock Screen
                 </div>
                 <p className="text-[19px] font-medium tracking-tight opacity-90">{deck.scene.dateLabel}</p>
                 <p className="mt-1 text-[70px] font-semibold leading-none tracking-[-0.045em]">{deck.scene.clock}</p>
@@ -227,14 +210,14 @@ function IOSPreview({ deck }: { deck: ReturnType<typeof composeCreatorStudioDeck
                   className={`flex h-12 w-12 items-center justify-center rounded-full border border-white/20 backdrop-blur-xl ${glassTone}`}
                   aria-label="Flashlight"
                 >
-                  <Flashlight size={20} />
+                  <SFFlashlightOnFill size={20} />
                 </button>
                 <button
                   type="button"
                   className={`flex h-12 w-12 items-center justify-center rounded-full border border-white/20 backdrop-blur-xl ${glassTone}`}
                   aria-label="Camera"
                 >
-                  <Camera size={20} />
+                  <SFCamera size={20} />
                 </button>
               </div>
             </div>
@@ -375,7 +358,7 @@ export default function CreatorStudioTab() {
               className="h-11 px-5"
               onClick={() => setRequest(createDefaultCreatorStudioRequest(industry))}
             >
-              <RefreshCw size={14} />
+              <SFArrowClockwise size={14} />
               Reset
             </Button>
           </div>
@@ -441,7 +424,7 @@ export default function CreatorStudioTab() {
                         onClick={addNotification}
                         disabled={deck.notifications.length >= deck.meta.maxNotifications}
                       >
-                        <Plus size={14} />
+                        <SFPlus size={14} />
                         Add Notification
                       </Button>
                     </>
@@ -468,7 +451,7 @@ export default function CreatorStudioTab() {
                           disabled={deck.notifications.length <= 1}
                           aria-label={`Remove notification ${index + 1}`}
                         >
-                          <Trash2 size={14} />
+                          <SFTrash size={14} />
                         </Button>
                       </div>
 
@@ -566,7 +549,7 @@ export default function CreatorStudioTab() {
                     aria-label="Toggle sensitive content masking"
                   >
                     <span className="flex items-center gap-2 text-[var(--text-primary)]">
-                      {request.hideSensitive ? <EyeOff size={16} /> : <Eye size={16} />}
+                      {request.hideSensitive ? <SFEyeSlash size={16} /> : <SFEye size={16} />}
                       Hide sensitive content in rendered preview
                     </span>
                     <span className="text-xs text-[var(--text-secondary)]">
@@ -576,16 +559,16 @@ export default function CreatorStudioTab() {
 
                   <div className="grid gap-3 sm:grid-cols-3">
                     <Button onClick={copyJson} variant="outline" className="h-12 px-4">
-                      {copyState === 'copied' ? <Check size={14} /> : <Copy size={14} />}
+                      {copyState === 'copied' ? <SFCheckmark size={14} /> : <SFDocumentOnDocument size={14} />}
                       {copyState === 'copied' ? 'Copied' : 'Copy JSON'}
                     </Button>
                     <Button onClick={downloadManifest} variant="outline" className="h-12 px-4">
-                      <Download size={14} />
-                      Download Manifest
+                      <SFArrowDownDocument size={14} />
+                      SFArrowDownDocument Manifest
                     </Button>
                     <Button onClick={copyToolPayload} className="h-12 px-4">
-                      <Copy size={14} />
-                      Copy AI Payload
+                      <SFDocumentOnDocument size={14} />
+                      SFDocumentOnDocument AI Payload
                     </Button>
                   </div>
                 </div>
@@ -615,7 +598,7 @@ export default function CreatorStudioTab() {
                           onClick={() => moveModule(index, -1)}
                           aria-label={`Move ${labelForModule(moduleId)} up`}
                         >
-                          <ArrowUp size={14} />
+                          <SFArrowUp size={14} />
                         </Button>
                         <Button
                           size="icon-sm"
@@ -623,7 +606,7 @@ export default function CreatorStudioTab() {
                           onClick={() => moveModule(index, 1)}
                           aria-label={`Move ${labelForModule(moduleId)} down`}
                         >
-                          <ArrowDown size={14} />
+                          <SFArrowDown size={14} />
                         </Button>
                       </div>
                     </li>

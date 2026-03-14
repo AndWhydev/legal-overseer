@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Handshake } from 'lucide-react'
+import { SFHandRaised } from 'sf-symbols-lib'
 import { SkeletonKanban } from '@/components/ui/skeleton'
 import { EmptyState } from '@/components/ui/empty-state'
 import { useToast } from '@/components/ui/toast'
@@ -170,7 +170,7 @@ export function LeadsKanban() {
   if (leads.length === 0 && !errorMessage) {
     return (
       <EmptyState
-        icon={<Handshake size={40} />}
+        icon={<SFHandRaised size={40} />}
         title="No leads yet"
         description="Leads will appear here as they come in from your channels."
       />

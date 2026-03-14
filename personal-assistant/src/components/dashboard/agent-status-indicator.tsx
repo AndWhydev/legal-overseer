@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Activity } from 'lucide-react';
+import { SFWaveformPathEcg } from 'sf-symbols-lib';
 import { createClient } from '@/lib/supabase/client';
 import { useRealtimeSubscription } from '@/lib/realtime/supabase-realtime';
 
@@ -60,7 +60,7 @@ export function AgentStatusIndicator() {
             <div className="w-2 h-2 rounded-full bg-emerald-400" />
             <div className="absolute inset-0 w-2 h-2 rounded-full bg-emerald-400 animate-ping opacity-75" />
           </div>
-          <Activity size={14} className="text-cyan-400 flex-shrink-0" />
+          <SFWaveformPathEcg size={14} className="text-cyan-400 flex-shrink-0" />
           <span className="font-medium truncate">
             {agent.agent_configs?.name || agent.agent_type}
           </span>

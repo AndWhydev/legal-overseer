@@ -1,25 +1,17 @@
 'use client'
 
 import Link from 'next/link'
-import {
-  ArrowRight,
-  MessageSquare,
-  CheckCircle2,
-  Clock,
-  TrendingUp,
-  Inbox,
-  AlertTriangle,
-} from 'lucide-react'
+import { SFArrowRight, SFBubbleRight, SFCheckmarkCircle, SFClock, SFArrowUpRight, SFTray, SFExclamationmarkTriangle } from 'sf-symbols-lib'
 
 // ---------------------------------------------------------------------------
 // Sample data for read-only dashboard preview
 // ---------------------------------------------------------------------------
 
 const SAMPLE_STATS = [
-  { label: 'Messages Triaged', value: '1,247', change: '+12%', icon: Inbox },
-  { label: 'Avg Response Time', value: '11 min', change: '-38%', icon: Clock },
-  { label: 'Proposals Sent', value: '23', change: '+5', icon: TrendingUp },
-  { label: 'Pending Approvals', value: '3', change: '', icon: AlertTriangle },
+  { label: 'Messages Triaged', value: '1,247', change: '+12%', icon: SFTray },
+  { label: 'Avg Response Time', value: '11 min', change: '-38%', icon: SFClock },
+  { label: 'Proposals Sent', value: '23', change: '+5', icon: SFArrowUpRight },
+  { label: 'Pending Approvals', value: '3', change: '', icon: SFExclamationmarkTriangle },
 ]
 
 const SAMPLE_MESSAGES = [
@@ -92,7 +84,7 @@ export default function DemoPage() {
           href="/pricing"
           className="bg-gray-900 text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-800 transition inline-flex items-center gap-1"
         >
-          Get Started <ArrowRight size={14} />
+          Get Started <SFArrowRight size={14} />
         </Link>
       </nav>
 
@@ -116,10 +108,10 @@ export default function DemoPage() {
           })}
         </div>
 
-        {/* Unified Inbox Preview */}
+        {/* Unified SFTray Preview */}
         <section>
           <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
-            <MessageSquare size={18} /> Unified Inbox
+            <SFBubbleRight size={18} /> Unified SFTray
           </h2>
           <div className="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100">
             {SAMPLE_MESSAGES.map((m) => (
@@ -140,7 +132,7 @@ export default function DemoPage() {
                   </div>
                 </div>
                 <span className="text-xs text-gray-500 shrink-0 flex items-center gap-1">
-                  <CheckCircle2 size={12} className="text-green-500" />
+                  <SFCheckmarkCircle size={12} className="text-green-500" />
                   {m.status}
                 </span>
               </div>

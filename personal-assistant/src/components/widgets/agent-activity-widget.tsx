@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useRealtimeSubscription } from '@/lib/realtime/supabase-realtime';
-import { Activity } from 'lucide-react';
+import { SFWaveformPathEcg } from 'sf-symbols-lib';
 import { WidgetCard } from './widget-card';
 import { EmptyState } from '@/components/ui/empty-state';
 
@@ -33,11 +33,11 @@ export function AgentActivityWidget() {
     <WidgetCard
       title="Agent Activity"
       subtitle="Recent agent runs"
-      icon={<Activity size={20} style={{ color: 'var(--bb-cyan)' }} />}
+      icon={<SFWaveformPathEcg size={20} style={{ color: 'var(--bb-cyan)' }} />}
     >
       <div className="space-y-3 max-h-64 overflow-y-auto">
         {runs.length === 0 ? (
-          <EmptyState icon={<Activity size={32} />} title="No recent agent activity" description="Agents will appear here when they run." />
+          <EmptyState icon={<SFWaveformPathEcg size={32} />} title="No recent agent activity" description="Agents will appear here when they run." />
         ) : (
           runs.map(run => (
             <div key={run.id} className="flex items-start gap-3 pb-3 border-b border-[var(--border-subtle)] last:border-0">

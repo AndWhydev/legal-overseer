@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Bell, CheckCircle2, Zap, AlertTriangle, Check } from 'lucide-react';
+import { SFBell, SFCheckmarkCircle, SFBolt, SFExclamationmarkTriangle, SFCheckmark } from 'sf-symbols-lib';
 import { createClient } from '@/lib/supabase/client';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { logger } from '@/lib/core/logger';
@@ -43,13 +43,13 @@ function formatTimeAgo(date: Date): string {
 function getNotificationIcon(type: 'approval' | 'lead' | 'invoice' | 'task') {
   switch (type) {
     case 'approval':
-      return CheckCircle2;
+      return SFCheckmarkCircle;
     case 'lead':
-      return Zap;
+      return SFBolt;
     case 'invoice':
-      return AlertTriangle;
+      return SFExclamationmarkTriangle;
     default:
-      return Bell;
+      return SFBell;
   }
 }
 
@@ -277,7 +277,7 @@ export function NotificationCenter({ onTabChange }: NotificationCenterProps) {
 
   return (
     <div style={{ position: 'relative' }}>
-      {/* Bell Button */}
+      {/* SFBell Button */}
       <button
         ref={buttonRef}
         onClick={() => setIsOpen(!isOpen)}
@@ -301,7 +301,7 @@ export function NotificationCenter({ onTabChange }: NotificationCenterProps) {
         onMouseEnter={e => { (e.currentTarget).style.background = 'var(--glass-hover-bg)'; }}
         onMouseLeave={e => { (e.currentTarget).style.background = 'transparent'; }}
       >
-        <Bell size={18} strokeWidth={1.8} />
+        <SFBell size={18} />
         {unreadCount > 0 && (
           <NotificationBadge
             count={unreadCount}
@@ -589,7 +589,6 @@ function NotificationItemRow({
     >
       <Icon
         size={16}
-        strokeWidth={2}
         style={{
           color: iconColor,
           flexShrink: 0,

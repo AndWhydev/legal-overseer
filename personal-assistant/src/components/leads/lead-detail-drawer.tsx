@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useCallback } from 'react'
-import { X, ExternalLink, ArrowRight, Mail, Calendar, XCircle } from 'lucide-react'
+import { SFXmark, SFArrowUpRightSquare, SFArrowRight, SFEnvelope, SFCalendar, SFXmarkCircle } from 'sf-symbols-lib'
 import type { EnhancedLeadData, LeadStatus } from '@/lib/leads/types'
 import { getDealRotLevel, getSpeedToLeadLevel, formatCurrency, formatSpeedToLead, relativeTime } from '@/lib/leads/utils'
 import { StatusPill, type StatusVariant } from '@/components/ui/status-pill'
@@ -105,7 +105,7 @@ export function LeadDetailDrawer({ lead, open, onClose, onUpdate, onAdvanceStage
                 cursor: 'pointer',
               }}
             >
-              <X style={{ width: 16, height: 16 }} />
+              <SFXmark style={{ width: 16, height: 16 }} />
             </button>
           </div>
 
@@ -148,7 +148,7 @@ export function LeadDetailDrawer({ lead, open, onClose, onUpdate, onAdvanceStage
                 rel="noopener noreferrer"
                 style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--bb-cyan)', fontSize: 11, textDecoration: 'none' }}
               >
-                <ExternalLink style={{ width: 12, height: 12 }} />
+                <SFArrowUpRightSquare style={{ width: 12, height: 12 }} />
                 {lead.prospect_domain ?? 'Website'}
               </a>
             )}
@@ -184,7 +184,7 @@ export function LeadDetailDrawer({ lead, open, onClose, onUpdate, onAdvanceStage
                 onMouseEnter={e => (e.currentTarget.style.filter = 'brightness(1.3)')}
                 onMouseLeave={e => (e.currentTarget.style.filter = 'brightness(1)')}
               >
-                <ArrowRight size={14} /> Advance Stage
+                <SFArrowRight size={14} /> Advance Stage
               </button>
             )}
             <button
@@ -192,14 +192,14 @@ export function LeadDetailDrawer({ lead, open, onClose, onUpdate, onAdvanceStage
               onMouseEnter={e => (e.currentTarget.style.filter = 'brightness(1.3)')}
               onMouseLeave={e => (e.currentTarget.style.filter = 'brightness(1)')}
             >
-              <Mail size={14} /> Email
+              <SFEnvelope size={14} /> Email
             </button>
             <button
               style={{ background: 'rgba(168, 85, 247, 0.1)', color: '#c4b5fd', padding: '10px 16px', borderRadius: 10, border: 'none', fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
               onMouseEnter={e => (e.currentTarget.style.filter = 'brightness(1.3)')}
               onMouseLeave={e => (e.currentTarget.style.filter = 'brightness(1)')}
             >
-              <Calendar size={14} /> Schedule
+              <SFCalendar size={14} /> Schedule
             </button>
             {lead.status !== 'converted' && lead.status !== 'lost' && (
               <button
@@ -208,7 +208,7 @@ export function LeadDetailDrawer({ lead, open, onClose, onUpdate, onAdvanceStage
                 onMouseEnter={e => (e.currentTarget.style.filter = 'brightness(1.3)')}
                 onMouseLeave={e => (e.currentTarget.style.filter = 'brightness(1)')}
               >
-                <XCircle size={14} /> Mark Lost
+                <SFXmarkCircle size={14} /> Mark Lost
               </button>
             )}
           </div>

@@ -10,21 +10,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { logger } from '@/lib/core/logger';
 import { createClient } from '@/lib/supabase/client';
 import { type ThreadMessageItem } from '@/components/dashboard/inbox-drawer';
-import {
-  CheckCircle2,
-  ChevronDown,
-  ChevronRight,
-  RefreshCw,
-  Calendar as CalendarIcon,
-  X,
-  Archive,
-  Clock,
-  Reply,
-  Forward,
-  AlertTriangle,
-  Star,
-  Send,
-} from 'lucide-react';
+import { SFCheckmarkCircle, SFChevronDown, SFChevronRight, SFArrowClockwise, SFCalendar as CalendarIcon, SFXmark, SFArchivebox, SFClock, SFArrowshapeTurnUpLeft, SFForward, SFExclamationmarkTriangle, SFStar, SFPaperplane } from 'sf-symbols-lib';
 import { resolveAvatar, resolveAvatarSync, type AvatarResult } from '@/lib/avatar/resolver';
 
 // ---------------------------------------------------------------------------
@@ -781,7 +767,7 @@ function InboxTab() {
               if (!refreshing) e.currentTarget.style.color = 'rgba(255,255,255,0.5)';
             }}
           >
-            <RefreshCw size={13} style={{ animation: refreshing ? 'spin 1s linear infinite' : 'none' }} />
+            <SFArrowClockwise size={13} style={{ animation: refreshing ? 'spin 1s linear infinite' : 'none' }} />
             {refreshing ? 'Syncing...' : 'Refresh'}
           </button>
         </div>
@@ -807,7 +793,7 @@ function InboxTab() {
       <div className="bb-inbox-list">
         {displayed.length === 0 ? (
           <EmptyState
-            icon={<CheckCircle2 size={40} />}
+            icon={<SFCheckmarkCircle size={40} />}
             title="All caught up"
             description="No messages to show. Adjust your filters or wait for new messages."
           />
@@ -911,12 +897,12 @@ function InboxTab() {
             onClick={handleBulkArchive}
             onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
             onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
-          ><Archive size={13} /> Archive</button>
+          ><SFArchivebox size={13} /> Archive</button>
           <button style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 10px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.7)', fontSize: 12, fontWeight: 500, cursor: 'pointer', transition: 'all 150ms ease' }}
             onClick={handleBulkDone}
             onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
             onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
-          ><CheckCircle2 size={13} /> Done</button>
+          ><SFCheckmarkCircle size={13} /> Done</button>
           <button style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 10px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.7)', fontSize: 12, fontWeight: 500, cursor: 'pointer', transition: 'all 150ms ease' }}
             onClick={(e) => {
               const rect = e.currentTarget.getBoundingClientRect();
@@ -925,17 +911,17 @@ function InboxTab() {
             }}
             onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
             onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
-          ><Clock size={13} /> Snooze</button>
+          ><SFClock size={13} /> Snooze</button>
           <button style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 10px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.7)', fontSize: 12, fontWeight: 500, cursor: 'pointer', transition: 'all 150ms ease' }}
             onClick={handleBulkSpam}
             onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
             onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
-          ><AlertTriangle size={13} /> Spam</button>
+          ><SFExclamationmarkTriangle size={13} /> Spam</button>
           <button style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 24, height: 24, borderRadius: 6, border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.5)', fontSize: 12, cursor: 'pointer', padding: 0, transition: 'all 150ms ease' }}
             onClick={clearSelection}
             onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
             onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
-          ><X size={12} /></button>
+          ><SFXmark size={12} /></button>
         </div>
       )}
 
@@ -1274,7 +1260,7 @@ function UndoToastStack({
               cursor: 'pointer', padding: 0,
             }}
           >
-            <X size={12} />
+            <SFXmark size={12} />
           </button>
         </div>
       ))}
@@ -1343,7 +1329,7 @@ function SnoozePickerPopover({
           onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
         >
           <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Clock size={13} style={{ color: 'rgba(255,255,255,0.35)', flexShrink: 0 }} />
+            <SFClock size={13} style={{ color: 'rgba(255,255,255,0.35)', flexShrink: 0 }} />
             {opt.label}
           </span>
           <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', flexShrink: 0 }}>
@@ -1732,7 +1718,7 @@ function ExpandedMessageRow({
                     </span>
                     {!isLatest && (
                       <span style={{ color: 'rgba(255,255,255,0.2)', flexShrink: 0 }}>
-                        {isExpTh ? <ChevronDown size={11} /> : <ChevronRight size={11} />}
+                        {isExpTh ? <SFChevronDown size={11} /> : <SFChevronRight size={11} />}
                       </span>
                     )}
                   </div>
@@ -1836,7 +1822,7 @@ function ExpandedMessageRow({
             onMouseEnter={(e) => { if (replyText.trim()) e.currentTarget.style.background = 'var(--hover-bg-strong, rgba(255,255,255,0.1))'; }}
             onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
           >
-            <Send size={14} />
+            <SFPaperplane size={14} />
           </button>
         </div>
         {/* Ghost hint and Cmd+Enter hint below the pill */}
@@ -1857,14 +1843,14 @@ function ExpandedMessageRow({
         display: 'flex', alignItems: 'center', gap: 4,
         padding: '8px 20px 12px',
       }}>
-        <IconActionBtn icon={<Reply size={16} />} title="Reply" onClick={() => textareaRef.current?.focus()} />
-        <IconActionBtn icon={<Archive size={16} />} title="Archive" onClick={() => onArchive(message.id)} />
-        <IconActionBtn icon={<CheckCircle2 size={16} />} title="Done" onClick={() => onDone(message.id)} />
-        <IconActionBtn icon={<Clock size={16} />} title="Snooze" onClick={() => handleNavigateLocal('snooze')} data-snooze-trigger />
-        <IconActionBtn icon={<Forward size={16} />} title="Forward" onClick={() => {/* placeholder */}} />
-        <IconActionBtn icon={<AlertTriangle size={16} />} title="Spam" onClick={() => onSpam(message.id)} isSpam />
+        <IconActionBtn icon={<SFArrowshapeTurnUpLeft size={16} />} title="Reply" onClick={() => textareaRef.current?.focus()} />
+        <IconActionBtn icon={<SFArchivebox size={16} />} title="Archive" onClick={() => onArchive(message.id)} />
+        <IconActionBtn icon={<SFCheckmarkCircle size={16} />} title="Done" onClick={() => onDone(message.id)} />
+        <IconActionBtn icon={<SFClock size={16} />} title="Snooze" onClick={() => handleNavigateLocal('snooze')} data-snooze-trigger />
+        <IconActionBtn icon={<SFForward size={16} />} title="Forward" onClick={() => {/* placeholder */}} />
+        <IconActionBtn icon={<SFExclamationmarkTriangle size={16} />} title="Spam" onClick={() => onSpam(message.id)} isSpam />
         <div style={{ flex: 1 }} />
-        <IconActionBtn icon={<X size={16} />} title="Close" onClick={onClose} />
+        <IconActionBtn icon={<SFXmark size={16} />} title="Close" onClick={onClose} />
       </div>
     </div>
   );
@@ -2047,7 +2033,7 @@ function MessageRow({
       {/* Right: time always visible */}
       <div className="bb-inbox-row__meta">
         <div className="bb-inbox-row__meta-default">
-          {starred && <Star size={11} style={{ color: '#f59e0b', fill: '#f59e0b', marginRight: 4 }} />}
+          {starred && <SFStar size={11} style={{ color: '#f59e0b', fill: '#f59e0b', marginRight: 4 }} />}
           <span className="bb-inbox-row__time">{timeAgo}</span>
         </div>
       </div>

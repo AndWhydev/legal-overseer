@@ -1,6 +1,6 @@
 'use client'
 
-import { Flame } from 'lucide-react'
+import { SFFlame } from 'sf-symbols-lib'
 import { cn } from '@/lib/utils'
 
 interface StreakCounterProps {
@@ -22,7 +22,7 @@ export function StreakCounter({
   if (currentStreak <= 0) {
     return (
       <div className={cn('flex flex-col items-center gap-0.5', className)}>
-        <Flame className="h-4 w-4 text-muted-foreground" />
+        <SFFlame className="h-4 w-4 text-muted-foreground" />
         <span className="text-[10px] text-muted-foreground">No streak</span>
         {todayCompleted > 0 && (
           <span className="text-[10px] text-muted-foreground">
@@ -42,7 +42,7 @@ export function StreakCounter({
           hasGlow && 'animate-glow'
         )}
       >
-        <Flame className={cn('h-4 w-4', hasGlow && 'animate-streak')} />
+        <SFFlame className={cn('h-4 w-4', hasGlow && 'animate-streak')} />
         <span className="text-sm font-bold tabular-nums">{currentStreak}</span>
       </div>
       <span className="text-[10px] font-medium text-muted-foreground">

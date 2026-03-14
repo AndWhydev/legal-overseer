@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { UserPlus, Search, ChevronRight, Mail, Phone } from 'lucide-react'
+import { SFPersonBadgePlus, SFMagnifyingglass, SFChevronRight, SFEnvelope, SFPhone } from 'sf-symbols-lib'
 import { SkeletonKanban } from '@/components/ui/skeleton'
 import { EmptyState } from '@/components/ui/empty-state'
 import { useDevOverrides } from '@/lib/dev/dev-overrides'
@@ -184,7 +184,7 @@ function ContactsTab() {
   if (contacts.length === 0) {
     return (
       <EmptyState
-        icon={<UserPlus size={40} />}
+        icon={<SFPersonBadgePlus size={40} />}
         title="No contacts yet"
         description="Import or add your first contact to get started."
       />
@@ -205,10 +205,10 @@ function ContactsTab() {
           <StatPill value={partnerCount} label="partners" />
         </div>
 
-        {/* ── Search + Sort ── */}
+        {/* ── SFMagnifyingglass + Sort ── */}
         <div className="flex items-center gap-3">
           <div className="bb-contacts-search">
-            <Search size={14} className="bb-contacts-search__icon" />
+            <SFMagnifyingglass size={14} className="bb-contacts-search__icon" />
             <input
               type="text"
               placeholder="Search contacts..."
@@ -231,7 +231,7 @@ function ContactsTab() {
         {/* ── Contact Grid ── */}
         {filtered.length === 0 ? (
           <EmptyState
-            icon={<UserPlus size={40} />}
+            icon={<SFPersonBadgePlus size={40} />}
             title="No matches"
             description={`No contacts matching "${search}"`}
           />
@@ -408,7 +408,7 @@ function ContactCard({ contact, onOpen }: { contact: Contact; onOpen: () => void
               overflow: 'hidden',
               textOverflow: 'ellipsis',
             }}>
-              <Mail size={16} style={{ color: 'var(--text-dim)', flexShrink: 0 }} />
+              <SFEnvelope size={16} style={{ color: 'var(--text-dim)', flexShrink: 0 }} />
               {email}
             </span>
           )}
@@ -423,7 +423,7 @@ function ContactCard({ contact, onOpen }: { contact: Contact; onOpen: () => void
               overflow: 'hidden',
               textOverflow: 'ellipsis',
             }}>
-              <Phone size={16} style={{ color: 'var(--text-dim)', flexShrink: 0 }} />
+              <SFPhone size={16} style={{ color: 'var(--text-dim)', flexShrink: 0 }} />
               {phone}
             </span>
           )}
@@ -464,7 +464,7 @@ function ContactCard({ contact, onOpen }: { contact: Contact; onOpen: () => void
         )}
       </div>
 
-      <ChevronRight size={16} style={{
+      <SFChevronRight size={16} style={{
         color: 'var(--text-dim)',
         opacity: hovered ? 0.5 : 0,
         transition: 'opacity 200ms ease-out',

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Settings, X, ChevronDown, ChevronRight, RotateCcw, LogIn, LogOut, User, Sun, Moon } from 'lucide-react';
+import { SFGear, SFXmark, SFChevronDown, SFChevronRight, SFArrowCounterclockwise, SFArrowRightToLine, SFRectanglePortraitAndArrowForward, SFPerson, SFSunMax, SFMoon } from 'sf-symbols-lib';
 import { ALL_MODULES } from '@/lib/modules/registry';
 import {
   useDevOverrides,
@@ -129,7 +129,7 @@ export function DevToolbar() {
             boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
           }}
         >
-          <Settings size={14} />
+          <SFGear size={14} />
           Dev
           {isOverriding && (
             <span style={{
@@ -170,7 +170,7 @@ export function DevToolbar() {
             <button onClick={() => setOpen(false)} style={{
               background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: 2,
             }}>
-              <X size={16} />
+              <SFXmark size={16} />
             </button>
           </div>
 
@@ -212,7 +212,7 @@ export function DevToolbar() {
                       fontSize: 12, fontWeight: active ? 600 : 400, cursor: 'pointer',
                     }}
                   >
-                    {t === 'midnight' ? <Moon size={12} /> : <Sun size={12} />}
+                    {t === 'midnight' ? <SFMoon size={12} /> : <SFSunMax size={12} />}
                     {t}
                   </button>
                 );
@@ -282,7 +282,7 @@ export function DevToolbar() {
                 textTransform: 'uppercase', letterSpacing: '0.05em',
               }}
             >
-              {showModules ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+              {showModules ? <SFChevronDown size={12} /> : <SFChevronRight size={12} />}
               Module Overrides
             </button>
             {showModules && (
@@ -334,7 +334,7 @@ export function DevToolbar() {
                 fontSize: 11, fontWeight: 600, cursor: isOverriding ? 'pointer' : 'default',
               }}
             >
-              <RotateCcw size={12} />
+              <SFArrowCounterclockwise size={12} />
               Reset to DB
             </button>
           </div>
@@ -465,7 +465,7 @@ function DevAuthSection() {
       {userEmail ? (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
-            <User size={12} style={{ flexShrink: 0, color: '#34d399' }} />
+            <SFPerson size={12} style={{ flexShrink: 0, color: '#34d399' }} />
             <span style={{ fontSize: 11, color: '#34d399', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {userEmail}
             </span>
@@ -480,7 +480,7 @@ function DevAuthSection() {
               color: '#f87171', fontSize: 11, fontWeight: 600, cursor: 'pointer',
             }}
           >
-            <LogOut size={11} />
+            <SFRectanglePortraitAndArrowForward size={11} />
             Sign out
           </button>
         </div>
@@ -518,7 +518,7 @@ function DevAuthSection() {
               opacity: (!email.trim() || !password) ? 0.4 : 1,
             }}
           >
-            <LogIn size={13} />
+            <SFArrowRightToLine size={13} />
             {status === 'loading' ? 'Signing in...' : 'Sign in with password'}
           </button>
         </form>

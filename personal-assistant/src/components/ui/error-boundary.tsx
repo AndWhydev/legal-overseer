@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { AlertTriangle, RefreshCw } from 'lucide-react';
+import { SFExclamationmarkTriangle, SFArrowClockwise } from 'sf-symbols-lib';
 import { logger } from '@/lib/core/logger';
 
 interface ErrorBoundaryProps {
@@ -39,7 +39,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
       return (
         <div className="flex flex-col items-center justify-center gap-4 p-8 text-center" role="alert">
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-destructive/15">
-            <AlertTriangle className="h-6 w-6 text-destructive" />
+            <SFExclamationmarkTriangle className="h-6 w-6 text-destructive" />
           </div>
           <div>
             <h2 className="text-lg font-semibold text-foreground">Something went wrong</h2>
@@ -52,7 +52,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
             onClick={this.handleRetry}
             className="inline-flex items-center gap-2 rounded-lg border border-border bg-secondary px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-secondary/80"
           >
-            <RefreshCw className="h-4 w-4" />
+            <SFArrowClockwise className="h-4 w-4" />
             Try again
           </button>
         </div>

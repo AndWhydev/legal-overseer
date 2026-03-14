@@ -1,63 +1,37 @@
 'use client';
 
 import React from 'react';
-import {
-  LayoutDashboard,
-  MessageSquare,
-  Inbox,
-  BellRing,
-
-  Pill,
-  Users,
-  Handshake,
-  ReceiptText,
-  ShieldAlert,
-  ShieldCheck,
-  Activity,
-  Film,
-  SearchCheck,
-  FileSearch,
-  FileText,
-  Brain,
-  DollarSign,
-  BarChart3,
-  Wrench,
-  Settings,
-  Monitor,
-  Link2,
-  Zap,
-  Palette,
-} from 'lucide-react';
+import { SFRectangleSplit2x2, SFBubbleRight, SFTray, SFBellBadge, SFPill, SFPerson2, SFHandRaised, SFReceipt, SFExclamationmarkShield, SFCheckmarkShield, SFWaveformPathEcg, SFFilm, SFMagnifyingglassCircle, SFDocument, SFBrain, SFDollarsignCircle, SFChartBar, SFWrenchAndScrewdriver, SFGear, SFDesktopcomputer, SFLink, SFBolt, SFPaintpalette } from 'sf-symbols-lib';
 import type { SidebarCategory } from '@/lib/modules/registry';
 import type { BadgeCounts } from '@/hooks/use-badge-counts';
 import { NotificationBadge } from '@/components/ui/notification-badge';
 
 const ICON_MAP: Record<string, React.ElementType> = {
-  dashboard:       LayoutDashboard,
-  'command-center': Monitor,
-  chat:            MessageSquare,
-  inbox:           Inbox,
-  'creator-studio': BellRing,
+  dashboard:       SFRectangleSplit2x2,
+  'command-center': SFDesktopcomputer,
+  chat:            SFBubbleRight,
+  inbox:           SFTray,
+  'creator-studio': SFBellBadge,
 
-  medications:     Pill,
-  contacts:        Users,
-  leads:           Handshake,
-  invoices:        ReceiptText,
-  tenders:         FileSearch,
-  sentry:          ShieldAlert,
-  approvals:       ShieldCheck,
-  'ad-scripts':    Film,
-  'ai-search':     SearchCheck,
-  reports:         FileText,
-  knowledge:       Brain,
-  costs:           DollarSign,
-  analytics:       BarChart3,
-  activity:        Activity,
-  admin:           Wrench,
-  settings:        Settings,
-  'settings-connections':  Link2,
-  'settings-automations':  Zap,
-  'settings-appearance':   Palette,
+  medications:     SFPill,
+  contacts:        SFPerson2,
+  leads:           SFHandRaised,
+  invoices:        SFReceipt,
+  tenders:         SFDocument,
+  sentry:          SFExclamationmarkShield,
+  approvals:       SFCheckmarkShield,
+  'ad-scripts':    SFFilm,
+  'ai-search':     SFMagnifyingglassCircle,
+  reports:         SFDocument,
+  knowledge:       SFBrain,
+  costs:           SFDollarsignCircle,
+  analytics:       SFChartBar,
+  activity:        SFWaveformPathEcg,
+  admin:           SFWrenchAndScrewdriver,
+  settings:        SFGear,
+  'settings-connections':  SFLink,
+  'settings-automations':  SFBolt,
+  'settings-appearance':   SFPaintpalette,
 };
 
 const BADGE_CONFIG: Record<string, { key: keyof BadgeCounts; color: string }> = {
@@ -119,7 +93,7 @@ export function SidebarPanel({
               aria-controls={`tabpanel-${tabId}`}
               style={{ position: 'relative' }}
             >
-              <Icon size={16} strokeWidth={1.8} />
+              <Icon size={16} />
               <span className="bb-sidebar-panel__label">{label}</span>
               {badgeCount > 0 && (
                 <NotificationBadge

@@ -4,13 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createBrowserClient } from '@supabase/ssr'
 import { AnimatePresence, motion } from 'motion/react'
-import {
-  ArrowRight,
-  CheckCircle2,
-  Link2,
-  Sparkles,
-  Waves,
-} from 'lucide-react'
+import { SFArrowRight, SFCheckmarkCircle, SFLink, SFSparkles, SFWaterWaves } from 'sf-symbols-lib'
 import { ConnectionsGrid, getConnectionDisplayName } from '@/components/connections/connections-grid'
 import { AuroraCharacter } from '@/components/onboarding/aurora-character'
 import { SkyVideoBackdrop } from '@/components/onboarding/sky-video-backdrop'
@@ -482,7 +476,7 @@ export default function OnboardPage() {
                     className="inline-flex items-center gap-2 rounded-full bg-[#163357] px-5 py-3 text-sm font-medium text-white shadow-[0_18px_48px_rgba(29,65,114,0.28)] transition duration-200 hover:translate-y-[-1px] hover:bg-[#214674] disabled:opacity-50"
                   >
                     {status === 'saving' ? 'Saving your workspace' : 'Continue to connections'}
-                    <ArrowRight size={16} />
+                    <SFArrowRight size={16} />
                   </button>
                 </div>
               </form>
@@ -531,7 +525,7 @@ export default function OnboardPage() {
                       className="ml-auto inline-flex items-center gap-2 rounded-full bg-[#163357] px-5 py-3 text-sm font-medium text-white shadow-[0_18px_48px_rgba(29,65,114,0.28)] transition duration-200 hover:translate-y-[-1px] hover:bg-[#214674] disabled:cursor-not-allowed disabled:opacity-35"
                     >
                       Continue
-                      <ArrowRight size={16} />
+                      <SFArrowRight size={16} />
                     </button>
                   </div>
 
@@ -614,7 +608,7 @@ export default function OnboardPage() {
                         className="flex items-center gap-3 rounded-[24px] border border-white/42 bg-[linear-gradient(180deg,rgba(255,255,255,0.38),rgba(255,255,255,0.14))] px-4 py-4 shadow-[0_14px_38px_rgba(45,71,117,0.09),inset_0_1px_0_rgba(255,255,255,0.62)] backdrop-blur-[24px]"
                       >
                         <div className={`flex h-9 w-9 items-center justify-center rounded-full ${active ? 'bg-white/70 text-[#49698f]' : 'bg-white/38 text-[#9db0c5]'}`}>
-                          {active ? <CheckCircle2 size={16} /> : <Waves size={16} />}
+                          {active ? <SFCheckmarkCircle size={16} /> : <SFWaterWaves size={16} />}
                         </div>
                         <p className="text-sm text-[#24415f]">{line}</p>
                       </motion.div>
@@ -700,7 +694,7 @@ export default function OnboardPage() {
                     className="inline-flex items-center gap-2 rounded-full bg-[#163357] px-5 py-3 text-sm font-medium text-white shadow-[0_18px_48px_rgba(29,65,114,0.28)] transition duration-200 hover:translate-y-[-1px] hover:bg-[#214674]"
                   >
                     Continue
-                    <ArrowRight size={16} />
+                    <SFArrowRight size={16} />
                   </button>
                 </div>
               </div>
@@ -718,7 +712,7 @@ export default function OnboardPage() {
               <div className="grid gap-5">
                 <div className="rounded-[30px] border border-white/45 bg-[linear-gradient(180deg,rgba(255,255,255,0.42),rgba(255,255,255,0.16))] p-6 shadow-[0_18px_56px_rgba(45,71,117,0.12),inset_0_1px_0_rgba(255,255,255,0.68)] backdrop-blur-[28px]">
                   <div className="flex items-center gap-2 text-[#49698f]">
-                    <Sparkles size={16} />
+                    <SFSparkles size={16} />
                     <span className="text-sm font-medium">What BitBit knows</span>
                   </div>
                   <div className="mt-4 grid gap-3">
@@ -800,10 +794,10 @@ export default function OnboardPage() {
                     className="inline-flex items-center gap-2 rounded-full bg-[#163357] px-5 py-3 text-sm font-medium text-white shadow-[0_18px_48px_rgba(29,65,114,0.28)] transition duration-200 hover:translate-y-[-1px] hover:bg-[#214674] disabled:opacity-50"
                   >
                     Open chat
-                    <ArrowRight size={16} />
+                    <SFArrowRight size={16} />
                   </button>
                   <div className="flex items-center gap-2 text-sm text-[#47627f]">
-                    <Link2 size={14} />
+                    <SFLink size={14} />
                     <span>Progress saved to your account</span>
                   </div>
                 </div>

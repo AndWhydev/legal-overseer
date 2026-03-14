@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { Activity } from 'lucide-react';
+import { SFWaveformPathEcg } from 'sf-symbols-lib';
 import { TabSkeleton } from './tab-skeleton';
 import { TabShell } from '@/components/ui/tab-shell';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -282,7 +282,7 @@ function ActivityTab() {
 
           {entries.length === 0 && (
             <EmptyState
-              icon={<Activity size={48} />}
+              icon={<SFWaveformPathEcg size={48} />}
               title="No activity yet"
               description="Activity will appear here as you and your agents get to work"
             />

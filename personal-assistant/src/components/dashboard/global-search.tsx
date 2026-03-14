@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Search, X, User, FileText, DollarSign, Briefcase, Building2 } from 'lucide-react';
+import { SFMagnifyingglass, SFXmark, SFPerson, SFDocument, SFDollarsignCircle, SFBriefcase, SFBuilding2 } from 'sf-symbols-lib';
 
 interface SearchResult {
   type: string;
@@ -16,11 +16,11 @@ interface GlobalSearchProps {
 }
 
 const TYPE_META: Record<string, { label: string; icon: React.ReactNode; tab: string }> = {
-  contact:  { label: 'Contacts',  icon: <User size={14} />,       tab: 'contacts' },
-  lead:     { label: 'Leads',     icon: <Briefcase size={14} />,   tab: 'leads' },
-  invoice:  { label: 'Invoices',  icon: <DollarSign size={14} />,  tab: 'invoices' },
-  proposal: { label: 'Proposals', icon: <FileText size={14} />,    tab: 'approvals' },
-  tender:   { label: 'Tenders',   icon: <Building2 size={14} />,   tab: 'tenders' },
+  contact:  { label: 'Contacts',  icon: <SFPerson size={14} />,       tab: 'contacts' },
+  lead:     { label: 'Leads',     icon: <SFBriefcase size={14} />,   tab: 'leads' },
+  invoice:  { label: 'Invoices',  icon: <SFDollarsignCircle size={14} />,  tab: 'invoices' },
+  proposal: { label: 'Proposals', icon: <SFDocument size={14} />,    tab: 'approvals' },
+  tender:   { label: 'Tenders',   icon: <SFBuilding2 size={14} />,   tab: 'tenders' },
 };
 
 const RECENT_KEY = 'bitbit-recent-searches';
@@ -145,9 +145,9 @@ export function GlobalSearch({ onNavigate }: GlobalSearchProps) {
         className="bb-search-panel"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Search input */}
+        {/* SFMagnifyingglass input */}
         <div className="bb-search-input-row">
-          <Search size={18} />
+          <SFMagnifyingglass size={18} />
           <input
             ref={inputRef}
             type="text"
@@ -159,7 +159,7 @@ export function GlobalSearch({ onNavigate }: GlobalSearchProps) {
           />
           {query && (
             <button onClick={() => setQuery('')} className="bb-search-clear">
-              <X size={16} />
+              <SFXmark size={16} />
             </button>
           )}
           <kbd className="bb-search-kbd-esc">ESC</kbd>

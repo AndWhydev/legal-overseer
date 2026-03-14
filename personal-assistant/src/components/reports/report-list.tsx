@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Download, RefreshCw, FileText } from 'lucide-react'
+import { SFArrowDownDocument, SFArrowClockwise, SFDocument } from 'sf-symbols-lib'
 import { SkeletonTable } from '@/components/ui/skeleton'
 import { EmptyState } from '@/components/ui/empty-state'
 import { useToast } from '@/components/ui/toast'
@@ -130,7 +130,7 @@ export function ReportList({ onRefresh }: { onRefresh?: () => void }) {
   if (reports.length === 0) {
     return (
       <EmptyState
-        icon={<FileText size={40} />}
+        icon={<SFDocument size={40} />}
         title="No reports generated"
         description="Generate your first report to see it listed here."
       />
@@ -147,7 +147,7 @@ export function ReportList({ onRefresh }: { onRefresh?: () => void }) {
           disabled={isRefreshing}
           className="rounded-md border border-border bg-secondary px-2 py-1.5 text-xs font-medium text-foreground hover:bg-secondary/80 disabled:opacity-60"
         >
-          <RefreshCw className={`inline-block h-3 w-3 ${isRefreshing ? 'animate-spin' : ''}`} />
+          <SFArrowClockwise className={`inline-block h-3 w-3 ${isRefreshing ? 'animate-spin' : ''}`} />
         </button>
       </div>
 
@@ -184,8 +184,8 @@ export function ReportList({ onRefresh }: { onRefresh?: () => void }) {
                       onClick={() => void handleDownload(report.id)}
                       className="inline-flex items-center gap-1.5 rounded-md border border-sky-500/40 px-2 py-1 text-xs font-medium text-sky-300 hover:bg-sky-500/20"
                     >
-                      <Download className="h-3 w-3" />
-                      Download
+                      <SFArrowDownDocument className="h-3 w-3" />
+                      SFArrowDownDocument
                     </button>
                   </td>
                 </tr>

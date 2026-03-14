@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { FileText, Loader2 } from 'lucide-react'
+import { SFDocument, SFArrowClockwise } from 'sf-symbols-lib'
 import { useToast } from '@/components/ui/toast'
 
 type ReportType = 'monthly' | 'agent-roi' | 'pipeline'
@@ -147,12 +147,12 @@ export function ReportGenerator({ onGenerateStart, onGenerateComplete }: ReportG
             >
               {isGenerating ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <SFArrowClockwise className="h-4 w-4 animate-spin" />
                   Generating...
                 </>
               ) : (
                 <>
-                  <FileText className="h-4 w-4" />
+                  <SFDocument className="h-4 w-4" />
                   Generate Report
                 </>
               )}

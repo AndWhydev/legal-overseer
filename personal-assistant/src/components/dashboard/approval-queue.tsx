@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { AlertCircle, CheckCircle2, RefreshCw, Loader2 } from 'lucide-react';
+import { SFExclamationmarkCircle, SFCheckmarkCircle, SFArrowClockwise } from 'sf-symbols-lib';
 import { ApprovalCard, type ApprovalItem } from './approval-card';
 import { AlertBanner } from '../ui/alert-banner';
 import { EmptyState } from '../ui/empty-state';
@@ -250,7 +250,7 @@ export function ApprovalQueue() {
               }}
               onClick={() => fetchApprovals()}
             >
-              <RefreshCw size={16} />
+              <SFArrowClockwise size={16} />
               Retry
             </button>
           </div>
@@ -259,14 +259,14 @@ export function ApprovalQueue() {
 
       {loading ? (
         <div style={loadingText}>
-          <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} />
+          <SFArrowClockwise size={16} style={{ animation: 'spin 1s linear infinite' }} />
           Loading pending approvals...
         </div>
       ) : null}
 
       {!loading && visibleApprovals.length === 0 ? (
         <EmptyState
-          icon={<CheckCircle2 size={48} />}
+          icon={<SFCheckmarkCircle size={48} />}
           title="No approvals pending"
           description="When agents need your sign-off, requests will appear here"
         />

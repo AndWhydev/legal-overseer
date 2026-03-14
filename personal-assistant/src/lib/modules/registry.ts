@@ -143,7 +143,7 @@ export function isModuleEnabled(
 export interface SidebarCategory {
   id: string;
   label: string;
-  icon: string;       // lucide icon name used in sidebar-rail
+  icon: string;       // SF Symbol icon name used in sidebar-rail
   items: string[];    // tab IDs
   directNav?: string; // if set, clicking category navigates directly (no panel)
 }

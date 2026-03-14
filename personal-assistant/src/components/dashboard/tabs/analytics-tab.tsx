@@ -4,15 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { TabShell } from '@/components/ui/tab-shell'
 import { EmptyState } from '@/components/ui/empty-state'
-import {
-  DollarSign,
-  Users,
-  TrendingDown,
-  TrendingUp,
-  Cpu,
-  AlertTriangle,
-  BarChart3,
-} from 'lucide-react'
+import { SFDollarsignCircle, SFPerson2, SFArrowDownRight, SFArrowUpRight, SFCpu, SFExclamationmarkTriangle, SFChartBar } from 'sf-symbols-lib'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -169,7 +161,7 @@ function AnalyticsTab() {
     return (
       <TabShell>
         <EmptyState
-          icon={<BarChart3 size={40} />}
+          icon={<SFChartBar size={40} />}
           title="No analytics data available"
           description={error ? error : 'Connect your billing system to see MRR metrics, token usage, and churn analysis.'}
         />
@@ -187,10 +179,10 @@ function AnalyticsTab() {
         <section>
           <h3 style={sectionHeader}>Monthly Recurring Revenue</h3>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 16 }}>
-            <StatCard icon={DollarSign} label="Total MRR" value={`$${mrr.totalMRR.toLocaleString()}`} />
-            <StatCard icon={Users} label="Active Subs" value={String(mrr.activeSubscriptions)} />
-            <StatCard icon={TrendingDown} label="Churn Rate" value={`${mrr.churnRate}%`} alert={mrr.churnRate > 5} />
-            <StatCard icon={TrendingUp} label="Net New MRR" value={`$${mrr.netNewMRR.toLocaleString()}`} />
+            <StatCard icon={SFDollarsignCircle} label="Total MRR" value={`$${mrr.totalMRR.toLocaleString()}`} />
+            <StatCard icon={SFPerson2} label="Active Subs" value={String(mrr.activeSubscriptions)} />
+            <StatCard icon={SFArrowDownRight} label="Churn Rate" value={`${mrr.churnRate}%`} alert={mrr.churnRate > 5} />
+            <StatCard icon={SFArrowUpRight} label="Net New MRR" value={`$${mrr.netNewMRR.toLocaleString()}`} />
           </div>
 
           {/* MRR by Tier */}
@@ -232,8 +224,8 @@ function AnalyticsTab() {
           <section>
             <h3 style={sectionHeader}>Token Usage &amp; Costs</h3>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 16 }}>
-              <StatCard icon={Cpu} label="Total Tokens" value={formatTokens(usage.totalTokens)} />
-              <StatCard icon={DollarSign} label="Total Cost" value={`$${usage.totalCostUSD.toFixed(2)}`} />
+              <StatCard icon={SFCpu} label="Total Tokens" value={formatTokens(usage.totalTokens)} />
+              <StatCard icon={SFDollarsignCircle} label="Total Cost" value={`$${usage.totalCostUSD.toFixed(2)}`} />
             </div>
 
             {/* By Agent */}
@@ -344,7 +336,7 @@ function AnalyticsTab() {
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-                      <AlertTriangle
+                      <SFExclamationmarkTriangle
                         size={18}
                         style={{
                           color: riskColor,

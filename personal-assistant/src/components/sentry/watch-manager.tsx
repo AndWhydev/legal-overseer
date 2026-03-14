@@ -1,7 +1,7 @@
 'use client'
 
 import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react'
-import { AlertTriangle } from 'lucide-react'
+import { SFExclamationmarkTriangle } from 'sf-symbols-lib'
 import { EmptyState } from '@/components/ui/empty-state'
 
 type WatchStatus = 'active' | 'paused'
@@ -638,7 +638,7 @@ export function WatchManager() {
         </div>
         {alerts.length === 0 ? (
           <EmptyState
-            icon={<AlertTriangle size={48} />}
+            icon={<SFExclamationmarkTriangle size={48} />}
             title="All clear"
             description="No errors or alerts to report. Your systems are running smoothly"
           />

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { ChevronDown, ChevronRight } from 'lucide-react'
+import { SFChevronDown, SFChevronRight } from 'sf-symbols-lib'
 import { cn } from '@/lib/utils'
 
 interface Activity {
@@ -52,9 +52,9 @@ export function ActivityItem({ activity }: { activity: Activity }) {
       >
         <span className="mt-0.5 text-muted-foreground">
           {expanded ? (
-            <ChevronDown className="size-3.5" />
+            <SFChevronDown className="size-3.5" />
           ) : (
-            <ChevronRight className="size-3.5" />
+            <SFChevronRight className="size-3.5" />
           )}
         </span>
 

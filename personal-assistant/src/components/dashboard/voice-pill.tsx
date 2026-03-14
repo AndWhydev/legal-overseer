@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { ArrowUp, Paperclip } from 'lucide-react';
+import { SFArrowUp, SFPaperclip } from 'sf-symbols-lib';
 import { MiniWaveform } from '../ui/mini-waveform';
 
 export type PillMode = 'hidden' | 'voice' | 'text' | 'processing' | 'response';
@@ -252,7 +252,7 @@ export function VoicePill({
                   aria-label="Attach file"
                   type="button"
                 >
-                  <Paperclip size={18} />
+                  <SFPaperclip size={18} />
                 </button>
                 <button
                   className="bb-pill__send"
@@ -260,7 +260,7 @@ export function VoicePill({
                   aria-label="Send"
                   disabled={!textValue.trim()}
                 >
-                  <ArrowUp size={18} />
+                  <SFArrowUp size={18} />
                 </button>
               </div>
             </>
@@ -283,7 +283,7 @@ export function VoicePill({
                 aria-label="Send"
                 disabled={!textValue.trim()}
               >
-                <ArrowUp size={14} />
+                <SFArrowUp size={14} />
               </button>
             </>
           )}
