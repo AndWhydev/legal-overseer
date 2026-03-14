@@ -183,9 +183,10 @@ See PROJECT.md Key Decisions table.
 | 16 | Inbox: remove checkboxes, modifier-key multi-select, inline expandable rows replace drawer | 2026-03-14 | 5ea67e91 | [15-inbox-redesign-remove-checkboxes-add-mod](./quick/15-inbox-redesign-remove-checkboxes-add-mod/) |
 | 17 | Inbox toolbar + expanded row redesign: invisible AI, ghost draft, floating bulk bar, sanitization | 2026-03-14 | aba9723d | [17-inbox-toolbar-and-expanded-row-redesign-](./quick/17-inbox-toolbar-and-expanded-row-redesign-/) |
 | 18 | Inbox polish: fix hover time, inline filter chips, chat-style reply, icon actions, continuous card | 2026-03-14 | 04e22afb | [18-inbox-polish-fix-hover-time-disappear-re](./quick/18-inbox-polish-fix-hover-time-disappear-re/) |
+| 19 | Fix chain-of-thought timeline stacking: narration isolation + controlled component sync | 2026-03-14 | 77baf941 | [19-fix-chain-of-thought-timeline-stacking-s](./quick/19-fix-chain-of-thought-timeline-stacking-s/) |
 
 ## Session Continuity
 
 Last session: 2026-03-14
-Stopped at: Completed quick task 18 (Inbox polish -- 12 fixes: time visibility, filter chips, chat-style reply, icon actions, continuous card)
+Stopped at: Completed quick task 19 (Fix chain-of-thought timeline stacking -- narration ref isolation + controlled component fix)
 Resume file: None
