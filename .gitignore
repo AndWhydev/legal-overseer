@@ -52,3 +52,5 @@ auth_state_*/
 docs/*.html
 .vercel
 .env*.local
+.claude/worktrees/
+._*
