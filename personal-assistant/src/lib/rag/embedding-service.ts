@@ -9,6 +9,8 @@ import { logger } from '@/lib/core/logger'
 import { chunkText } from './chunker'
 import { embedDocuments } from './voyage-client'
 import { upsertVectors, deletePineconeVectorsByFilter } from './pinecone-client'
+import { encodeSparseVector } from './sparse-encoder'
+import { processAttachment } from './attachment-processor'
 import type { VectorDocument, EmbedUpsertResult, PineconeMetadata } from './types'
 
 /**
@@ -34,8 +36,50 @@ export async function embedAndUpsert(docs: VectorDocument[]): Promise<EmbedUpser
   }
 
   try {
-    // Phase 1: Chunk all documents
-    const allChunks = docs.flatMap(doc => chunkText(doc.content, doc.metadata))
+    // Phase 1a: Process attachments and collect attachment chunks
+    const attachmentChunks: Array<{ text: string; metadata: PineconeMetadata; chunkId: string }> = []
+
+    for (const doc of docs) {
+      if (doc.attachments && doc.attachments.length > 0) {
+        for (let attachIdx = 0; attachIdx < doc.attachments.length; attachIdx++) {
+          const attachment = doc.attachments[attachIdx]
+          try {
+            const extractedText = await processAttachment(attachment.buffer, attachment.mimeType)
+
+            if (extractedText.length > 0) {
+              // Chunk the attachment text with metadata prepend
+              const attachmentMetadata: PineconeMetadata = {
+                ...doc.metadata,
+                attachment_name: attachment.filename,
+                is_full_body: true,
+              }
+
+              const chunks = chunkText(extractedText, attachmentMetadata)
+              attachmentChunks.push(...chunks)
+
+              logger.debug('[embedding-service] Processed attachment', {
+                messageId: doc.messageId,
+                filename: attachment.filename,
+                mimeType: attachment.mimeType,
+                chunks: chunks.length,
+              })
+            }
+          } catch (attachErr) {
+            logger.warn('[embedding-service] Attachment processing failed', {
+              messageId: doc.messageId,
+              filename: attachment.filename,
+              error: attachErr instanceof Error ? attachErr.message : String(attachErr),
+            })
+          }
+        }
+      }
+    }
+
+    // Phase 1: Chunk all documents (message content + attachments)
+    const allChunks = [
+      ...docs.flatMap(doc => chunkText(doc.content, doc.metadata)),
+      ...attachmentChunks,
+    ]
 
     if (allChunks.length === 0) {
       result.failed = docs.length
@@ -59,12 +103,20 @@ export async function embedAndUpsert(docs: VectorDocument[]): Promise<EmbedUpser
       return result
     }
 
-    // Phase 3: Build vectors with metadata (include content for retrieval)
-    const vectors: Array<{ id: string; values: number[]; metadata: PineconeMetadata }> = []
+    // Phase 3: Build vectors with metadata + sparse vectors for hybrid search
+    const vectors: Array<{
+      id: string
+      values: number[]
+      metadata: PineconeMetadata
+      sparseValues?: { indices: number[]; values: number[] }
+    }> = []
 
     for (let i = 0; i < embeddings.length; i++) {
       const embedding = embeddings[i]
       const chunk = allChunks[i]
+
+      // Generate sparse vector for BM25-style hybrid search
+      const sparseVector = encodeSparseVector(chunk.text)
 
       vectors.push({
         id: chunk.chunkId,
@@ -73,6 +125,7 @@ export async function embedAndUpsert(docs: VectorDocument[]): Promise<EmbedUpser
           ...chunk.metadata,
           content: chunk.text, // Store content in metadata for retrieval
         },
+        sparseValues: sparseVector.indices.length > 0 ? sparseVector : undefined,
       })
     }
 

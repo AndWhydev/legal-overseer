@@ -6,7 +6,7 @@
  */
 
 import { Pinecone } from '@pinecone-database/pinecone'
-import type { PineconeMetadata } from './types'
+import type { PineconeMetadata, SparseVector } from './types'
 import { logger } from '@/lib/core/logger'
 
 let pineconeClient: Pinecone | null = null
@@ -70,6 +70,12 @@ export function buildMetadataFilter(options: {
 
 /**
  * Query Pinecone for vectors matching the embedding and metadata filters.
+ * Supports hybrid search with optional sparse vectors.
+ *
+ * Hybrid search combines:
+ * - Dense vectors (semantic similarity via embeddings)
+ * - Sparse vectors (keyword/BM25 matching)
+ * - Uses alpha parameter to weight: alpha * dense + (1 - alpha) * sparse
  */
 export async function queryPinecone(
   embedding: number[],
@@ -80,6 +86,8 @@ export async function queryPinecone(
     sender?: string
     dateFrom?: string
     dateTo?: string
+    sparseVector?: SparseVector
+    alpha?: number // Weight for dense vs sparse (0.7 = 70% dense, 30% sparse)
   }
 ): Promise<Array<{ id: string; score: number; metadata: Record<string, unknown> }>> {
   const index = getIndex()
@@ -93,12 +101,21 @@ export async function queryPinecone(
   })
 
   try {
-    const response = await index.namespace(namespace).query({
+    const queryConfig: Record<string, unknown> = {
       vector: embedding,
       topK: options.topK ?? 30,
       includeMetadata: true,
       ...(filter ? { filter } : {}),
-    })
+    }
+
+    // Add sparse vector for hybrid search if available
+    if (options.sparseVector && options.sparseVector.indices.length > 0) {
+      queryConfig.sparseVector = options.sparseVector
+      // alpha: 0.7 = 70% weight on dense, 30% on sparse (default)
+      queryConfig.alpha = options.alpha ?? 0.7
+    }
+
+    const response = await index.namespace(namespace).query(queryConfig)
 
     return (response.matches || []).map((match) => ({
       id: match.id,
@@ -114,11 +131,18 @@ export async function queryPinecone(
 }
 
 /**
- * Upsert vectors into Pinecone with metadata.
+ * Upsert vectors into Pinecone with metadata and optional sparse vectors.
  * Batches in groups of 100 per Pinecone recommendation.
+ *
+ * Supports hybrid search: dense vectors + sparse vectors for keyword matching.
  */
 export async function upsertVectors(
-  vectors: Array<{ id: string; values: number[]; metadata: PineconeMetadata }>,
+  vectors: Array<{
+    id: string
+    values: number[]
+    metadata: PineconeMetadata
+    sparseValues?: SparseVector
+  }>,
   namespace: string
 ): Promise<{ upserted: number; failed: number; errors: string[] }> {
   const index = getIndex()
@@ -135,16 +159,26 @@ export async function upsertVectors(
     const batch = vectors.slice(i, i + batchSize)
     try {
       await index.namespace(namespace).upsert({
-        records: batch.map((v) => ({
-          id: v.id,
-          values: v.values,
-          metadata: v.metadata as unknown as Record<string, string | number | boolean>,
-        })),
+        records: batch.map((v) => {
+          const record: Record<string, unknown> = {
+            id: v.id,
+            values: v.values,
+            metadata: v.metadata as unknown as Record<string, string | number | boolean>,
+          }
+
+          // Add sparse vector if available (for hybrid search)
+          if (v.sparseValues && v.sparseValues.indices.length > 0) {
+            record.sparseValues = v.sparseValues
+          }
+
+          return record
+        }),
       })
       upserted += batch.length
       logger.debug('Upserted vector batch', {
         batchIndex: Math.floor(i / batchSize) + 1,
         batchSize: batch.length,
+        hasSparseVectors: batch.some(v => v.sparseValues && v.sparseValues.indices.length > 0),
       })
     } catch (err) {
       const errMsg = err instanceof Error ? err.message : String(err)

@@ -28,6 +28,13 @@ interface KanbanBoardProps {
   doneColumnId?: string
 }
 
+interface UndoToastState {
+  visible: boolean
+  message: string
+  task: Task | null
+  timeoutId: NodeJS.Timeout | null
+}
+
 export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: KanbanBoardProps) {
   // Deduplicate columns by title (case-insensitive) to prevent duplicates from being rendered
   // Database may contain duplicate columns with different IDs but same title
@@ -60,6 +67,14 @@ export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: Kanb
     y: number
     variant: 'checkmark' | 'confetti' | 'ripple'
   }>({ trigger: false, x: 0, y: 0, variant: 'checkmark' })
+
+  // Undo toast state
+  const [undoToast, setUndoToast] = useState<UndoToastState>({
+    visible: false,
+    message: '',
+    task: null,
+    timeoutId: null,
+  })
 
   const draggingRef = useRef(false)
 
@@ -294,11 +309,53 @@ export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: Kanb
   }
 
   function handleArchiveTask(task: Task) {
+    // Clear any existing timeout
+    if (undoToast.timeoutId) clearTimeout(undoToast.timeoutId)
+
+    // Remove from UI immediately
     setTasks((prev) => prev.filter((t) => t.id !== task.id))
+
+    // Show undo toast with 5-second auto-dismiss
+    const timeoutId = setTimeout(() => {
+      setUndoToast({ visible: false, message: '', task: null, timeoutId: null })
+    }, 5000)
+
+    setUndoToast({
+      visible: true,
+      message: `Task archived`,
+      task,
+      timeoutId,
+    })
+
+    // Persist archive to backend
     fetch(`/api/tasks/${task.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status: 'archived' }),
+    })
+  }
+
+  function handleUndoArchive() {
+    const { task } = undoToast
+    if (!task) return
+
+    // Clear timeout
+    if (undoToast.timeoutId) clearTimeout(undoToast.timeoutId)
+
+    // Restore task to board
+    setTasks((prev) => {
+      if (prev.some((t) => t.id === task.id)) return prev
+      return [...prev, task]
+    })
+
+    // Hide toast
+    setUndoToast({ visible: false, message: '', task: null, timeoutId: null })
+
+    // Restore in backend
+    fetch(`/api/tasks/${task.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'pending' }),
     })
   }
 
@@ -432,6 +489,73 @@ export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: Kanb
         variant={completionAnim.variant}
         onComplete={() => setCompletionAnim((prev) => ({ ...prev, trigger: false }))}
       />
+
+      {/* Undo Archive Toast */}
+      {undoToast.visible && (
+        <div
+          style={{
+            position: 'fixed',
+            bottom: 24,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+            padding: '12px 16px',
+            borderRadius: 12,
+            background: 'var(--glass-bg-heavy)',
+            backdropFilter: 'var(--glass-blur)',
+            WebkitBackdropFilter: 'var(--glass-blur)',
+            boxShadow: 'var(--card-shadow-hover), var(--card-inset)',
+            zIndex: 1000,
+            animation: 'slide-up 0.3s ease-out',
+            minWidth: 280,
+            justifyContent: 'space-between',
+          }}
+        >
+          <span style={{
+            fontSize: 13,
+            fontWeight: 500,
+            color: 'var(--text-secondary)',
+            flex: 1,
+          }}>
+            {undoToast.message}
+          </span>
+          <button
+            onClick={handleUndoArchive}
+            style={{
+              background: 'var(--hover-bg-strong)',
+              border: 'none',
+              borderRadius: 8,
+              padding: '6px 12px',
+              fontSize: 12,
+              fontWeight: 600,
+              color: 'var(--text-primary)',
+              cursor: 'pointer',
+              flexShrink: 0,
+              transition: 'background 0.15s ease',
+              fontFamily: 'inherit',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--border-active)' }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--hover-bg-strong)' }}
+          >
+            Undo
+          </button>
+        </div>
+      )}
+
+      <style>{`
+        @keyframes slide-up {
+          from {
+            opacity: 0;
+            transform: translateX(-50%) translateY(16px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+          }
+        }
+      `}</style>
 
       <TaskDialog
         open={dialogOpen}

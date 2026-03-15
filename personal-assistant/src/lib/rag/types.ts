@@ -7,6 +7,16 @@
 
 // ─── Document Types ──────────────────────────────────────────────────────────
 
+/** Attachment file for processing */
+export interface AttachmentFile {
+  /** File buffer content */
+  buffer: Buffer
+  /** MIME type (e.g., application/pdf, text/plain) */
+  mimeType: string
+  /** Original filename */
+  filename: string
+}
+
 /** A document to be chunked, embedded, and stored in Pinecone. */
 export interface VectorDocument {
   /** Source message ID from channel_messages table */
@@ -17,6 +27,8 @@ export interface VectorDocument {
   content: string
   /** Metadata to store alongside the vector */
   metadata: PineconeMetadata
+  /** Optional attachments to extract and embed */
+  attachments?: AttachmentFile[]
 }
 
 /** Metadata stored with each vector in Pinecone. */
@@ -43,6 +55,8 @@ export interface PineconeMetadata {
   is_full_body: boolean
   /** Original chunk text content (stored in metadata for retrieval) */
   content?: string
+  /** Attachment filename if this chunk is from an attachment */
+  attachment_name?: string
 }
 
 // ─── Search & Retrieval Types ────────────────────────────────────────────────
@@ -98,5 +112,41 @@ export interface TextChunk {
   /** Parent document metadata */
   metadata: PineconeMetadata
   /** Deterministic chunk ID: {message_id}#chunk{N} */
+  chunkId: string
+}
+
+// ─── Sparse Vector Types ─────────────────────────────────────────────────────
+
+/** Sparse vector for BM25-style hybrid search: token indices + TF-IDF weights. */
+export interface SparseVector {
+  /** Token indices (hashed token strings mapped to 0-20000) */
+  indices: number[]
+  /** TF-IDF weights corresponding to indices (0-1 normalized) */
+  values: number[]
+}
+
+// ─── Conversation Grouping Types ─────────────────────────────────────────────
+
+/** A message in a conversation group (for WhatsApp/SMS/Slack grouping). */
+export interface ConversationMessage {
+  /** Message content */
+  content: string
+  /** Sender name/identifier */
+  sender: string
+  /** Timestamp of message (ISO 8601) */
+  timestamp: string
+  /** Message ID (for deduplication) */
+  messageId: string
+}
+
+/** A grouped conversation chunk ready for embedding. */
+export interface ConversationChunk {
+  /** Formatted conversation text with sender prefixes */
+  text: string
+  /** Message IDs included in this chunk (for citation) */
+  messageIds: string[]
+  /** Metadata (from first message in group) */
+  metadata: PineconeMetadata
+  /** Deterministic chunk ID based on first message */
   chunkId: string
 }

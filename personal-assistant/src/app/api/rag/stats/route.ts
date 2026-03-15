@@ -79,7 +79,7 @@ export async function GET(request: NextRequest) {
     const indexStats = await index.describeIndexStats()
 
     // Extract total vector count
-    const totalVectors = indexStats.totalVectorCount ?? 0
+    const totalVectors = (indexStats as Record<string, unknown>).totalRecordCount as number ?? 0
 
     // Extract per-namespace stats (we use org_id as namespace)
     const namespaceVectors: Record<string, number> = {}
