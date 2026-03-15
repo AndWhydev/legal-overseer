@@ -202,7 +202,7 @@ export function RagStatsWidget({ className = '', showDetails = true }: RagStatsW
   const warningAlerts = alerts.filter(a => a.level === 'warning')
 
   return (
-    <div style={{ ...glassCard, className }} className={className}>
+    <div style={glassCard} className={className}>
       <div style={headerStyle}>
         <Database size={16} style={{ color: '#FF5A1F' }} />
         <h3 style={titleStyle}>Vector Index</h3>

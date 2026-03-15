@@ -11,7 +11,7 @@
  * 4. Updates status to 'completed' or 'failed' with error details
  */
 
-import { createClient } from '@supabase/supabase-js'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { logger } from '@/lib/core/logger'
 import { embedAndUpsert, deleteMessageVectors } from './embedding-service'
 import type { VectorDocument, PineconeMetadata } from './types'
@@ -44,7 +44,7 @@ interface QueueStats {
  * Inserts or updates a row in embedding_jobs table.
  */
 export async function enqueueEmbedding(
-  supabase: ReturnType<typeof createClient>,
+  supabase: SupabaseClient,
   orgId: string,
   messageId: string,
   content: string,
@@ -98,7 +98,7 @@ export async function enqueueEmbedding(
  * - Retry up to max_retries times
  */
 export async function processEmbeddingQueue(
-  supabase: ReturnType<typeof createClient>,
+  supabase: SupabaseClient,
   batchSize: number = 10
 ): Promise<{ processed: number; completed: number; failed: number; errors: string[] }> {
   const result = { processed: 0, completed: 0, failed: 0, errors: [] as string[] }
@@ -293,7 +293,7 @@ export async function processEmbeddingQueue(
  * Get current queue statistics for monitoring.
  */
 export async function getQueueStats(
-  supabase: ReturnType<typeof createClient>,
+  supabase: SupabaseClient,
   orgId?: string
 ): Promise<QueueStats> {
   const defaultStats: QueueStats = {
@@ -373,7 +373,7 @@ export async function getQueueStats(
  * Resets them to 'pending' for retry.
  */
 export async function clearStaleJobs(
-  supabase: ReturnType<typeof createClient>,
+  supabase: SupabaseClient,
   staleThresholdMs: number = 3600000 // 1 hour
 ): Promise<{ clearedCount: number }> {
   try {

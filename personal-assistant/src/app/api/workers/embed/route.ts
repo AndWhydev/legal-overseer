@@ -69,7 +69,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       auth: {
         persistSession: false,
       },
-    })
+    }) as any // eslint-disable-line @typescript-eslint/no-explicit-any
 
     // Clear any stale jobs before processing
     await clearStaleJobs(supabase, STALE_THRESHOLD_MS)
@@ -143,7 +143,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       auth: {
         persistSession: false,
       },
-    })
+    }) as any // eslint-disable-line @typescript-eslint/no-explicit-any
 
     // Get queue statistics
     const stats = await getQueueStats(supabase)

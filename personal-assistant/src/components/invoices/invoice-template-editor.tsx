@@ -221,7 +221,7 @@ export function InvoiceTemplateEditor() {
       setTemplate((prev) => ({ ...prev, logo_base64: base64 }))
     }
     reader.readAsDataURL(file)
-  }, [showToast])
+  }, [toast])
 
   const removeLogo = useCallback(() => {
     setLogoPreview(null)
@@ -247,11 +247,11 @@ export function InvoiceTemplateEditor() {
       }
       toast('success', 'Invoice template saved')
     } catch (err) {
-      showToast(err instanceof Error ? err.message : 'Failed to save template', 'error')
+      toast('error', err instanceof Error ? err.message : 'Failed to save template')
     } finally {
       setSaving(false)
     }
-  }, [template, showToast])
+  }, [template, toast])
 
   const cardStyle: React.CSSProperties = {
     background: 'rgba(15, 20, 30, 0.5)',

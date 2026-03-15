@@ -71,6 +71,7 @@ export default function BlogIndexPage() {
                 style={{ textDecoration: 'none' }}
               >
                 <article
+                  className="bb-blog-card"
                   style={{
                     background: 'rgba(15, 20, 30, 0.35)',
                     border: '1px solid rgba(255,255,255,0.06)',
@@ -78,16 +79,6 @@ export default function BlogIndexPage() {
                     padding: '28px 32px',
                     marginBottom: 12,
                     transition: 'border-color 0.15s, background 0.15s',
-                  }}
-                  onMouseEnter={(e) => {
-                    const el = e.currentTarget
-                    el.style.borderColor = 'rgba(255,90,31,0.3)'
-                    el.style.background = 'rgba(15, 20, 30, 0.6)'
-                  }}
-                  onMouseLeave={(e) => {
-                    const el = e.currentTarget
-                    el.style.borderColor = 'rgba(255,255,255,0.06)'
-                    el.style.background = 'rgba(15, 20, 30, 0.35)'
                   }}
                 >
                   {/* Tags */}

@@ -457,7 +457,7 @@ export async function pollChannel(
               is_full_body: Boolean((m as unknown as { bodyFull?: string }).bodyFull),
             }
 
-            const result = await enqueueEmbedding(supabase, orgId, m.externalId, content, metadata)
+            const result = await enqueueEmbedding(supabase as any, orgId, m.externalId, content, metadata) // eslint-disable-line @typescript-eslint/no-explicit-any
             if (result.success) enqueued++
           }
 

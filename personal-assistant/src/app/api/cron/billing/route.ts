@@ -1,10 +1,10 @@
 import type { NextRequest } from 'next/server'
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { withCronGuard, cronDynamic, cronMaxDuration, type CronResult } from '@/lib/cron/cron-guard'
+import { withCronGuard, type CronResult } from '@/lib/cron/cron-guard'
 import { processDunningSequence } from '@/lib/billing/dunning'
 
-export const dynamic = cronDynamic
-export const maxDuration = cronMaxDuration
+export const dynamic = 'force-dynamic'
+export const maxDuration = 300
 
 /**
  * Cron handler for billing operations

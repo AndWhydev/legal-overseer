@@ -40,8 +40,15 @@ const nextConfig: NextConfig = {
     ],
   },
   turbopack: {},
-  webpack: (config) => {
-    // Agent packages have been removed — no webpack aliases needed
+  webpack: (config, { isServer }) => {
+    // Force voyageai to use CJS build (ESM has broken directory imports)
+    if (isServer) {
+      config.resolve = config.resolve || {};
+      config.resolve.alias = {
+        ...config.resolve.alias,
+        voyageai: require.resolve('voyageai'),
+      };
+    }
     return config;
   },
 };

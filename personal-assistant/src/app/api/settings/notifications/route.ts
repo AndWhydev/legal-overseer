@@ -50,25 +50,28 @@ function normalizePreferences(input: unknown): NotificationPreferences {
   if (!input || typeof input !== 'object') return DEFAULT_PREFERENCES;
 
   const source = input as Record<string, unknown>;
+  const events = (source.events ?? {}) as Record<string, unknown>;
+  const channels = (source.channels ?? {}) as Record<string, unknown>;
+  const quietHours = (source.quiet_hours ?? {}) as Record<string, unknown>;
 
   return {
     events: {
-      new_message: Boolean(source.events?.['new_message']) ?? DEFAULT_PREFERENCES.events.new_message,
-      task_assigned: Boolean(source.events?.['task_assigned']) ?? DEFAULT_PREFERENCES.events.task_assigned,
-      task_due: Boolean(source.events?.['task_due']) ?? DEFAULT_PREFERENCES.events.task_due,
-      invoice_paid: Boolean(source.events?.['invoice_paid']) ?? DEFAULT_PREFERENCES.events.invoice_paid,
-      agent_action: Boolean(source.events?.['agent_action']) ?? DEFAULT_PREFERENCES.events.agent_action,
-      weekly_digest: Boolean(source.events?.['weekly_digest']) ?? DEFAULT_PREFERENCES.events.weekly_digest,
+      new_message: Boolean(events['new_message'] ?? DEFAULT_PREFERENCES.events.new_message),
+      task_assigned: Boolean(events['task_assigned'] ?? DEFAULT_PREFERENCES.events.task_assigned),
+      task_due: Boolean(events['task_due'] ?? DEFAULT_PREFERENCES.events.task_due),
+      invoice_paid: Boolean(events['invoice_paid'] ?? DEFAULT_PREFERENCES.events.invoice_paid),
+      agent_action: Boolean(events['agent_action'] ?? DEFAULT_PREFERENCES.events.agent_action),
+      weekly_digest: Boolean(events['weekly_digest'] ?? DEFAULT_PREFERENCES.events.weekly_digest),
     },
     channels: {
-      email: Boolean(source.channels?.['email']) ?? DEFAULT_PREFERENCES.channels.email,
-      in_app: Boolean(source.channels?.['in_app']) ?? DEFAULT_PREFERENCES.channels.in_app,
-      push: Boolean(source.channels?.['push']) ?? DEFAULT_PREFERENCES.channels.push,
+      email: Boolean(channels['email'] ?? DEFAULT_PREFERENCES.channels.email),
+      in_app: Boolean(channels['in_app'] ?? DEFAULT_PREFERENCES.channels.in_app),
+      push: Boolean(channels['push'] ?? DEFAULT_PREFERENCES.channels.push),
     },
     quiet_hours: {
-      enabled: Boolean(source.quiet_hours?.['enabled']) ?? DEFAULT_PREFERENCES.quiet_hours.enabled,
-      start_time: String(source.quiet_hours?.['start_time']) ?? DEFAULT_PREFERENCES.quiet_hours.start_time,
-      end_time: String(source.quiet_hours?.['end_time']) ?? DEFAULT_PREFERENCES.quiet_hours.end_time,
+      enabled: Boolean(quietHours['enabled'] ?? DEFAULT_PREFERENCES.quiet_hours.enabled),
+      start_time: String(quietHours['start_time'] ?? DEFAULT_PREFERENCES.quiet_hours.start_time),
+      end_time: String(quietHours['end_time'] ?? DEFAULT_PREFERENCES.quiet_hours.end_time),
     },
     digest_mode: (
       source.digest_mode === 'immediate' ||

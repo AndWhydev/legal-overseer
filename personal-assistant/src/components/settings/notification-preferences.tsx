@@ -40,10 +40,10 @@ const EVENT_TYPES = [
 ] as const;
 
 const CHANNELS = [
-  { id: 'email', label: 'Email', desc: 'Receive notifications via email' },
-  { id: 'in_app', label: 'In-App', desc: 'Receive notifications in the app' },
-  { id: 'push', label: 'Push', desc: 'Receive push notifications (coming soon)', disabled: true },
-] as const;
+  { id: 'email' as const, label: 'Email', desc: 'Receive notifications via email', disabled: false },
+  { id: 'in_app' as const, label: 'In-App', desc: 'Receive notifications in the app', disabled: false },
+  { id: 'push' as const, label: 'Push', desc: 'Receive push notifications (coming soon)', disabled: true },
+];
 
 const DIGEST_MODES = [
   { id: 'immediate', label: 'Immediate', desc: 'Get notifications right away' },

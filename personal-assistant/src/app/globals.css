@@ -731,3 +731,9 @@ body:has(main.landing-stack) main.landing-stack {
     width: auto !important;
   }
 }
+
+/* Blog card hover */
+.bb-blog-card:hover {
+  border-color: rgba(255, 90, 31, 0.3) !important;
+  background: rgba(15, 20, 30, 0.6) !important;
+}
