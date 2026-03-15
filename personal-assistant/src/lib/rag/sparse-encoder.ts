@@ -38,10 +38,10 @@ function tokenize(text: string): string[] {
     'i', 'you', 'he', 'she', 'it', 'we', 'they', 'what', 'which', 'who',
   ])
 
-  // Split by whitespace and punctuation, lowercase
+  // Split by whitespace and common punctuation, lowercase
   const tokens = text
     .toLowerCase()
-    .split(/[\s\p{P}]+/gu) // Split by whitespace or punctuation (Unicode-aware)
+    .split(/[\s!"#$%&'()*+,-./:;<=>?@[\\\]^_`{|}~]+/) // Split by whitespace or punctuation
     .filter(token => token.length > 0 && token.length < 50) // Filter empty, too long
     .filter(token => !stopwords.has(token)) // Remove stopwords
 
@@ -90,12 +90,15 @@ function calculateTfIdfWeights(
   }
 
   // Normalize weights to 0-1 range for better Pinecone compatibility
-  const maxWeight = Math.max(...weights.values(), 1)
-  for (const [token, weight] of weights) {
-    weights.set(token, weight / maxWeight)
-  }
+  const weightsArray = Array.from(weights.values())
+  const maxWeight = weightsArray.length > 0 ? Math.max(...weightsArray) : 1
 
-  return weights
+  const normalized = new Map<string, number>()
+  weights.forEach((weight, token) => {
+    normalized.set(token, weight / maxWeight)
+  })
+
+  return normalized
 }
 
 /**
@@ -132,16 +135,19 @@ export function encodeSparseVector(text: string): { indices: number[]; values: n
   // Step 4: Map tokens to indices and build sparse vector
   const indexToWeight = new Map<number, number>()
 
-  for (const [token, weight] of weights) {
+  weights.forEach((weight, token) => {
     const index = tokenHash(token)
     // If multiple tokens hash to same index, take max weight (collision handling)
     const currentWeight = indexToWeight.get(index) ?? 0
     indexToWeight.set(index, Math.max(currentWeight, weight))
-  }
+  })
 
   // Step 5: Build final sparse vector
   const indices = Array.from(indexToWeight.keys()).sort((a, b) => a - b)
-  const values = indices.map(idx => indexToWeight.get(idx) ?? 0)
+  const values = indices.map(idx => {
+    const val = indexToWeight.get(idx)
+    return val ?? 0
+  })
 
   return { indices, values }
 }

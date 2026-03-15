@@ -11,7 +11,10 @@ import { embedDocuments } from './voyage-client'
 import { upsertVectors, deletePineconeVectorsByFilter } from './pinecone-client'
 import { encodeSparseVector } from './sparse-encoder'
 import { processAttachment } from './attachment-processor'
+import { extractEntities } from './entity-extractor'
+import { computeContentHash, checkExistingHashesBatch } from './content-hasher'
 import type { VectorDocument, EmbedUpsertResult, PineconeMetadata } from './types'
+import type { SupabaseClient } from '@supabase/supabase-js'
 
 /**
  * Embed and upsert documents to Pinecone.
@@ -20,10 +23,18 @@ import type { VectorDocument, EmbedUpsertResult, PineconeMetadata } from './type
  * 1. Chunk all documents (message-as-atomic-unit or paragraph-boundary)
  * 2. Embed all chunks via Voyage-3.5
  * 3. Upsert vectors to Pinecone (namespace = orgId, batched)
+ * 4. Fire-and-forget entity extraction for knowledge graph enrichment
  *
  * Graceful degradation: if Voyage or Pinecone unavailable, returns all failed.
+ * Entity extraction failures never block the embedding pipeline.
+ *
+ * @param docs Documents to embed and upsert
+ * @param supabase Optional Supabase client for entity extraction context
  */
-export async function embedAndUpsert(docs: VectorDocument[]): Promise<EmbedUpsertResult> {
+export async function embedAndUpsert(
+  docs: VectorDocument[],
+  supabase?: SupabaseClient
+): Promise<EmbedUpsertResult> {
   const result: EmbedUpsertResult = { embedded: 0, failed: 0, errors: [] }
 
   if (docs.length === 0) return result
@@ -92,15 +103,64 @@ export async function embedAndUpsert(docs: VectorDocument[]): Promise<EmbedUpser
       chunks: allChunks.length,
     })
 
-    // Phase 2: Embed via Voyage-3.5
-    const texts = allChunks.map(c => c.text)
-    const embeddings = await embedDocuments(texts)
+    // Phase 2a: Compute content hashes and check for duplicates
+    const chunkHashes = allChunks.map(c => ({
+      index: allChunks.indexOf(c),
+      hash: computeContentHash(c.text),
+    }))
 
-    // Check for failures
-    if (!embeddings || embeddings.length === 0) {
-      result.failed = docs.length
-      result.errors.push('All embeddings failed')
-      return result
+    // Group by org and check for existing hashes
+    const hashChecksByOrg = new Map<string, { index: number; hash: string }[]>()
+    for (const ch of chunkHashes) {
+      const orgId = allChunks[ch.index].metadata.org_id
+      const existing = hashChecksByOrg.get(orgId) ?? []
+      existing.push(ch)
+      hashChecksByOrg.set(orgId, existing)
+    }
+
+    const existingHashesByOrg = new Map<string, Map<string, boolean>>()
+    for (const [orgId, checks] of hashChecksByOrg) {
+      const hashes = checks.map(c => c.hash)
+      const existing = await checkExistingHashesBatch(orgId, hashes)
+      existingHashesByOrg.set(orgId, existing)
+    }
+
+    // Separate chunks into: skip (already exists) and embed (new or changed)
+    const chunksToEmbed: Array<{ chunk: (typeof allChunks)[0]; originalIndex: number }> = []
+    const chunksToSkip: Array<{ originalIndex: number; hash: string }> = []
+
+    for (let i = 0; i < allChunks.length; i++) {
+      const chunk = allChunks[i]
+      const hash = chunkHashes[i].hash
+      const orgId = chunk.metadata.org_id
+      const exists = existingHashesByOrg.get(orgId)?.get(hash) ?? false
+
+      if (exists) {
+        chunksToSkip.push({ originalIndex: i, hash })
+      } else {
+        chunksToEmbed.push({ chunk, originalIndex: i })
+      }
+    }
+
+    logger.info('[embedding-service] Deduplication analysis', {
+      total: allChunks.length,
+      willEmbed: chunksToEmbed.length,
+      willSkip: chunksToSkip.length,
+      skipPercentage: chunksToSkip.length > 0 ? Math.round((chunksToSkip.length / allChunks.length) * 100) : 0,
+    })
+
+    // Phase 2: Embed via Voyage-3.5 (only new/changed chunks)
+    let embeddings: number[][] | null = []
+    if (chunksToEmbed.length > 0) {
+      const texts = chunksToEmbed.map(c => c.chunk.text)
+      embeddings = await embedDocuments(texts)
+
+      // Check for failures
+      if (!embeddings || embeddings.length === 0) {
+        result.failed = docs.length
+        result.errors.push('All embeddings failed')
+        return result
+      }
     }
 
     // Phase 3: Build vectors with metadata + sparse vectors for hybrid search
@@ -111,9 +171,11 @@ export async function embedAndUpsert(docs: VectorDocument[]): Promise<EmbedUpser
       sparseValues?: { indices: number[]; values: number[] }
     }> = []
 
-    for (let i = 0; i < embeddings.length; i++) {
+    // Map embedded chunks back to original positions with their embeddings
+    for (let i = 0; i < chunksToEmbed.length; i++) {
       const embedding = embeddings[i]
-      const chunk = allChunks[i]
+      const { chunk } = chunksToEmbed[i]
+      const hash = chunkHashes[chunksToEmbed[i].originalIndex].hash
 
       // Generate sparse vector for BM25-style hybrid search
       const sparseVector = encodeSparseVector(chunk.text)
@@ -124,8 +186,17 @@ export async function embedAndUpsert(docs: VectorDocument[]): Promise<EmbedUpser
         metadata: {
           ...chunk.metadata,
           content: chunk.text, // Store content in metadata for retrieval
+          content_hash: hash, // Store hash for future deduplication
         },
         sparseValues: sparseVector.indices.length > 0 ? sparseVector : undefined,
+      })
+    }
+
+    // Log stats on skipped chunks
+    if (chunksToSkip.length > 0) {
+      logger.debug('[embedding-service] Skipped re-embedding unchanged chunks', {
+        count: chunksToSkip.length,
+        estimatedCostSavings: `${Math.round((chunksToSkip.length / allChunks.length) * 100)}%`,
       })
     }
 
@@ -143,6 +214,18 @@ export async function embedAndUpsert(docs: VectorDocument[]): Promise<EmbedUpser
       result.embedded += upsertResult.upserted
       result.failed += upsertResult.failed
       result.errors.push(...upsertResult.errors)
+
+      // Fire-and-forget entity extraction — never block embedding pipeline
+      if (supabase && result.embedded > 0) {
+        for (const doc of docs.filter((d) => d.orgId === orgId)) {
+          extractEntities(doc.content, orgId, supabase).catch((err) =>
+            logger.debug('[embedding-service] Entity extraction failed (non-critical):', {
+              error: err instanceof Error ? err.message : String(err),
+              orgId,
+            })
+          )
+        }
+      }
     }
 
     logger.info('[embedding-service] Pipeline complete', {

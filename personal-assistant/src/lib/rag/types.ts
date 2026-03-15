@@ -57,6 +57,8 @@ export interface PineconeMetadata {
   content?: string
   /** Attachment filename if this chunk is from an attachment */
   attachment_name?: string
+  /** SHA256 hash of chunk text (first 16 chars) for deduplication */
+  content_hash?: string
 }
 
 // ─── Search & Retrieval Types ────────────────────────────────────────────────

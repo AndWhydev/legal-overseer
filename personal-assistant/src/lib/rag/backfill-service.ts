@@ -105,9 +105,9 @@ export async function runBackfill(
           },
         }))
 
-      // 6. Embed and upsert
+      // 6. Embed and upsert (pass Supabase for entity extraction context)
       if (docs.length > 0) {
-        const result = await embedAndUpsert(docs)
+        const result = await embedAndUpsert(docs, supabase)
         totalEmbedded += result.embedded
         totalFailed += result.failed
       }

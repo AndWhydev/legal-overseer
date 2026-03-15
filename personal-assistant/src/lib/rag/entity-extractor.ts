@@ -12,6 +12,7 @@
  * @module rag/entity-extractor
  */
 
+import { logger } from '@/lib/core/logger'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Contact } from '@/lib/bitbit-core/types'
 
@@ -78,7 +79,10 @@ async function loadContactsForOrg(
     .eq('org_id', orgId)
 
   if (error) {
-    console.error(`Failed to load contacts for org ${orgId}:`, error)
+    logger.debug('[entity-extractor] Failed to load contacts for org', {
+      orgId,
+      error: error.message,
+    })
     return []
   }
 

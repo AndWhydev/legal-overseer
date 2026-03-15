@@ -101,7 +101,7 @@ export async function queryPinecone(
   })
 
   try {
-    const queryConfig: Record<string, unknown> = {
+    const queryOptions: Record<string, unknown> = {
       vector: embedding,
       topK: options.topK ?? 30,
       includeMetadata: true,
@@ -110,12 +110,12 @@ export async function queryPinecone(
 
     // Add sparse vector for hybrid search if available
     if (options.sparseVector && options.sparseVector.indices.length > 0) {
-      queryConfig.sparseVector = options.sparseVector
+      queryOptions.sparseVector = options.sparseVector
       // alpha: 0.7 = 70% weight on dense, 30% on sparse (default)
-      queryConfig.alpha = options.alpha ?? 0.7
+      queryOptions.alpha = options.alpha ?? 0.7
     }
 
-    const response = await index.namespace(namespace).query(queryConfig)
+    const response = await index.namespace(namespace).query(queryOptions as any)
 
     return (response.matches || []).map((match) => ({
       id: match.id,
@@ -160,7 +160,7 @@ export async function upsertVectors(
     try {
       await index.namespace(namespace).upsert({
         records: batch.map((v) => {
-          const record: Record<string, unknown> = {
+          const record: any = {
             id: v.id,
             values: v.values,
             metadata: v.metadata as unknown as Record<string, string | number | boolean>,

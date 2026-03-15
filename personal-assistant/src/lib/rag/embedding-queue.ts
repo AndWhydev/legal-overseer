@@ -158,8 +158,8 @@ export async function processEmbeddingQueue(
             },
           }
 
-          // Embed and upsert
-          const embedResult = await embedAndUpsert([doc])
+          // Embed and upsert (pass Supabase for entity extraction context)
+          const embedResult = await embedAndUpsert([doc], supabase)
 
           if (embedResult.failed > 0 && embedResult.embedded === 0) {
             // All embeddings failed

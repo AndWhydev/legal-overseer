@@ -1,3 +1,4 @@
+import { logger } from '@/lib/core/logger'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { getKnowledgeGraph } from '@/lib/rag/knowledge-graph'
 
@@ -75,7 +76,9 @@ export async function getBaseplateSnapshot(
   } catch (graphErr) {
     // Graph unavailability should not break baseplate
     // Log but continue with base profile
-    console.debug('[baseplate-snapshot] Graph enrichment failed (non-critical):', graphErr)
+    logger.debug('[baseplate-snapshot] Graph enrichment failed (non-critical):', {
+      error: graphErr instanceof Error ? graphErr.message : String(graphErr),
+    })
   }
 
   return {

@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Database, AlertCircle, Loader2 } from 'lucide-react'
+import { Database, AlertCircle, Loader2, DollarSign, AlertTriangle } from 'lucide-react'
 import { logger } from '@/lib/core/logger'
 
 interface RagStats {
@@ -9,6 +9,28 @@ interface RagStats {
   namespaceVectors: Record<string, number>
   indexFullness: number
   lastUpdated: string
+}
+
+interface CostEstimate {
+  monthlyCost: number
+  storageCost: number
+  queryCost: number
+  metadataCost: number
+  costPer1MVectors: number
+}
+
+interface MonitoringAlert {
+  level: 'info' | 'warning' | 'critical'
+  message: string
+  metric: string
+  currentValue: number
+  threshold?: number
+}
+
+interface MonitoringReport {
+  stats: RagStats | null
+  costs: CostEstimate | null
+  alerts: MonitoringAlert[]
 }
 
 interface RagStatsWidgetProps {
@@ -49,28 +71,43 @@ function CountUp({ target, suffix = '' }: { target: number; suffix?: string }) {
 
 export function RagStatsWidget({ className = '', showDetails = true }: RagStatsWidgetProps) {
   const [stats, setStats] = useState<RagStats | null>(null)
+  const [costs, setCosts] = useState<CostEstimate | null>(null)
+  const [alerts, setAlerts] = useState<MonitoringAlert[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    async function fetchStats() {
+    async function fetchMonitoringData() {
       try {
         setError(null)
         setLoading(true)
-        const res = await fetch('/api/rag/stats')
-        if (!res.ok) throw new Error('Failed to fetch RAG stats')
-        const data = (await res.json()) as RagStats
-        setStats(data)
+        const res = await fetch('/api/rag/monitor')
+        if (!res.ok) throw new Error('Failed to fetch monitoring data')
+        const data = (await res.json()) as MonitoringReport
+
+        // Fallback to legacy stats endpoint if monitoring data is empty
+        if (!data.stats) {
+          const legacyRes = await fetch('/api/rag/stats')
+          if (legacyRes.ok) {
+            const legacyData = (await legacyRes.json()) as RagStats
+            setStats(legacyData)
+          }
+        } else {
+          setStats(data.stats)
+        }
+
+        setCosts(data.costs)
+        setAlerts(data.alerts)
       } catch (err) {
         const errorMsg = err instanceof Error ? err.message : 'Unknown error'
-        logger.error('Failed to fetch RAG stats:', { error: errorMsg })
+        logger.error('Failed to fetch RAG monitoring data:', { error: errorMsg })
         setError('Failed to load vector stats')
       } finally {
         setLoading(false)
       }
     }
 
-    fetchStats()
+    fetchMonitoringData()
   }, [])
 
   const glassCard: React.CSSProperties = {
