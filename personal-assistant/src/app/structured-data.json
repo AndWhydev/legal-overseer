@@ -1,0 +1,67 @@
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://bitbit.chat/#organization",
+      "name": "BitBit",
+      "url": "https://bitbit.chat",
+      "logo": "https://bitbit.chat/logo.png",
+      "description": "Agentic AI operations platform for digital agencies",
+      "sameAs": [
+        "https://twitter.com/bitbitchat",
+        "https://github.com/bitbit",
+        "https://linkedin.com/company/bitbit"
+      ],
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "contactType": "Customer Service",
+        "email": "support@bitbit.chat"
+      }
+    },
+    {
+      "@type": "SoftwareApplication",
+      "@id": "https://bitbit.chat/#software",
+      "name": "BitBit",
+      "applicationCategory": "BusinessApplication",
+      "operatingSystem": "Web",
+      "url": "https://bitbit.chat",
+      "description": "AI operations platform that automates leads, invoices, communications, and tenders with intelligent agents",
+      "offers": {
+        "@type": "AggregateOffer",
+        "priceCurrency": "USD",
+        "lowPrice": "29",
+        "highPrice": "299",
+        "offerCount": 3
+      },
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.8",
+        "ratingCount": "150",
+        "bestRating": "5",
+        "worstRating": "1"
+      },
+      "featureList": [
+        "Semantic Memory",
+        "Smart Triage",
+        "Approval Queue",
+        "Kanban + CRM"
+      ]
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://bitbit.chat/#website",
+      "url": "https://bitbit.chat",
+      "name": "BitBit",
+      "description": "AI Operations Platform",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": {
+          "@type": "EntryPoint",
+          "urlTemplate": "https://bitbit.chat?q={search_term_string}"
+        },
+        "query-input": "required name=search_term_string"
+      }
+    }
+  ]
+}

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import TestimonialsSection from '@/components/marketing/testimonials-section'
 
 const INTEGRATION_LOGOS = [
   { name: 'Gmail', icon: '📧' },
@@ -427,6 +428,9 @@ export default function MarketingPage() {
         </div>
       </section>
 
+      {/* Testimonials Section */}
+      <TestimonialsSection />
+
       {/* Pricing Section */}
       <section style={{ padding: '100px 20px', background: 'rgba(5, 5, 10, 0.5)' }} id="pricing">
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
@@ -740,4 +744,3 @@ export default function MarketingPage() {
     </div>
   )
 }
-

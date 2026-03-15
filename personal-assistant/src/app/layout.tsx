@@ -8,6 +8,7 @@ import {
   DEFAULT_THEME_NAME,
   resolveThemeColor,
 } from "@/lib/theme/defaults";
+import { NavBar } from "@/components/marketing/nav-bar";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -110,6 +111,7 @@ export default function RootLayout({
       <body
         className={`${inter.variable} ${geistMono.variable} ${jetbrainsMono.variable} ${ebGaramond.variable} antialiased bitbit-dark`}
       >
+        <NavBar />
         {children}
       </body>
     </html>

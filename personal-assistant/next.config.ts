@@ -1,5 +1,10 @@
 import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
+import withBundleAnalyzer from "@next/bundle-analyzer";
+
+const withAnalyzer = withBundleAnalyzer({
+  enabled: process.env.ANALYZE === 'true',
+});
 
 const nextConfig: NextConfig = {
   async redirects() {
@@ -41,14 +46,16 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withSentryConfig(nextConfig, {
-  org: process.env.SENTRY_ORG?.trim() || 'bitbit-d1',
-  project: process.env.SENTRY_PROJECT?.trim() || 'bitbit-dashboard',
-  silent: true,
-  widenClientFileUpload: true,
-  disableLogger: true,
-  // Prevent Sentry source map upload failures from crashing production builds
-  errorHandler: (err) => {
-    console.warn('Sentry source map upload warning:', err.message);
-  },
-});
+export default withAnalyzer(
+  withSentryConfig(nextConfig, {
+    org: process.env.SENTRY_ORG?.trim() || 'bitbit-d1',
+    project: process.env.SENTRY_PROJECT?.trim() || 'bitbit-dashboard',
+    silent: true,
+    widenClientFileUpload: true,
+    disableLogger: true,
+    // Prevent Sentry source map upload failures from crashing production builds
+    errorHandler: (err) => {
+      console.warn('Sentry source map upload warning:', err.message);
+    },
+  })
+);
