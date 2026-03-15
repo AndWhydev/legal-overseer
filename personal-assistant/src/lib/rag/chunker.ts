@@ -6,7 +6,7 @@
  * messages under 500 tokens.
  */
 
-import type { PineconeMetadata, TextChunk } from './types'
+import type { PineconeMetadata, TextChunk, ConversationMessage, ConversationChunk } from './types'
 
 /**
  * Estimates token count using character length approximation.
@@ -189,4 +189,129 @@ export function chunkText(
       chunkId: `${metadata.message_id}#chunk${index}`,
     }
   })
+}
+
+/**
+ * Groups conversation messages into chunks within a time window.
+ *
+ * Strategy for WhatsApp/SMS/Slack:
+ * - Groups sequential messages from same thread within a 30-minute window
+ * - Preserves back-and-forth dialogue structure with sender prefixes
+ * - Each group becomes one chunk for better semantic cohesion
+ *
+ * Format: "[Sender, HH:MM]: message content"
+ *
+ * @param messages Array of messages in chronological order
+ * @param timeWindowMinutes Time window for grouping (default 30 min)
+ * @returns Array of conversation chunks
+ */
+export function chunkConversation(
+  messages: ConversationMessage[],
+  timeWindowMinutes: number = 30
+): ConversationChunk[] {
+  if (messages.length === 0) {
+    return []
+  }
+
+  const chunks: ConversationChunk[] = []
+  let currentGroup: ConversationMessage[] = []
+  let currentMessageIds: string[] = []
+
+  for (const message of messages) {
+    if (currentGroup.length === 0) {
+      // Start new group
+      currentGroup.push(message)
+      currentMessageIds.push(message.messageId)
+    } else {
+      // Check if message is within time window of the last message in group
+      const lastMessage = currentGroup[currentGroup.length - 1]
+      const lastTime = new Date(lastMessage.timestamp).getTime()
+      const currentTime = new Date(message.timestamp).getTime()
+      const diffMinutes = (currentTime - lastTime) / (1000 * 60)
+
+      if (diffMinutes <= timeWindowMinutes) {
+        // Add to current group
+        currentGroup.push(message)
+        currentMessageIds.push(message.messageId)
+      } else {
+        // Time window exceeded, start new chunk
+        chunks.push(
+          formatConversationGroup(currentGroup, currentMessageIds)
+        )
+        currentGroup = [message]
+        currentMessageIds = [message.messageId]
+      }
+    }
+  }
+
+  // Push final group
+  if (currentGroup.length > 0) {
+    chunks.push(
+      formatConversationGroup(currentGroup, currentMessageIds)
+    )
+  }
+
+  return chunks
+}
+
+/**
+ * Formats a group of conversation messages into a single chunk.
+ * Extracts metadata from the first message and formats text with sender prefixes.
+ */
+function formatConversationGroup(
+  messages: ConversationMessage[],
+  messageIds: string[]
+): ConversationChunk {
+  const firstMessage = messages[0]
+
+  // Extract timestamp for formatted display (HH:MM)
+  const formatTime = (isoDate: string): string => {
+    try {
+      const date = new Date(isoDate)
+      return date.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+      })
+    } catch {
+      return isoDate
+    }
+  }
+
+  // Format each message: [Sender, HH:MM]: content
+  const formattedLines = messages.map(msg => {
+    const time = formatTime(msg.timestamp)
+    return `[${msg.sender}, ${time}]: ${msg.content}`
+  })
+
+  const conversationText = formattedLines.join('\n')
+
+  // Build metadata from first message
+  const metadata: PineconeMetadata = {
+    message_id: firstMessage.messageId,
+    org_id: 'unknown', // Will be overridden by caller
+    channel: 'unknown', // Will be overridden by caller
+    sender: firstMessage.sender,
+    received_at: firstMessage.timestamp,
+    chunk_index: 0,
+    total_chunks: 1,
+    is_full_body: true,
+    subject: `Conversation (${messages.length} messages)`,
+  }
+
+  return {
+    text: conversationText,
+    messageIds,
+    metadata,
+    chunkId: `${firstMessage.messageId}#conv0`,
+  }
+}
+
+/**
+ * Determines if a channel should use conversation-aware chunking.
+ * Conversation chunking applies to interactive message channels.
+ */
+function isConversationChannel(channel: string): boolean {
+  const conversationChannels = ['whatsapp', 'sms', 'slack', 'telegram', 'messenger']
+  return conversationChannels.includes(channel.toLowerCase())
 }
