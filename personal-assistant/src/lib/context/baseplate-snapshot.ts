@@ -35,7 +35,7 @@ export async function getBaseplateSnapshot(
 
   if (error || !data) return null
 
-  const profile = data.profile_data as Awaited<ReturnType<typeof getBaseplateSnapshot>>['profile']
+  const profile = { ...data.profile_data } as BaseplateSnapshot['profile']
 
   // Enrich profile with knowledge graph relationships
   try {
