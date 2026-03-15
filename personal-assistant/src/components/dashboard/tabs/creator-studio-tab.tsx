@@ -1,643 +1,1263 @@
 'use client'
 
-import React, { useMemo, useState, useEffect, useCallback } from 'react'
-import {
-  Plus,
-  Trash2,
-  ArrowUp,
-  ArrowDown,
-  RefreshCw,
-  Copy,
-  Check,
-  Download,
-  EyeOff,
-  Eye,
-  BatteryFull,
-  Wifi,
-  SignalHigh,
-  Flashlight,
-  Camera,
-  Lock,
-} from 'lucide-react'
+import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { TabShell } from '@/components/ui/tab-shell'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { cn } from '@/lib/utils'
-import { useEnabledModules } from '@/lib/modules/use-enabled-modules'
-import {
-  composeCreatorStudioDeck,
-  createDefaultCreatorStudioRequest,
-  type CreatorStudioApp,
-  type CreatorStudioModuleId,
-  type CreatorStudioRequest,
-} from '@/lib/creator-studio'
 
-const APP_OPTIONS: Array<{ value: CreatorStudioApp; label: string }> = [
-  { value: 'stripe', label: 'Stripe' },
-  { value: 'paypal', label: 'PayPal' },
-  { value: 'x', label: 'X' },
-  { value: 'youtube', label: 'YouTube' },
-  { value: 'shopify', label: 'Shopify' },
-  { value: 'custom', label: 'Custom' },
+// ─────────────────────────────────────────────────────────────────────────────
+// Types
+// ─────────────────────────────────────────────────────────────────────────────
+
+type TemplateType = 'ad_scripts' | 'social_posts' | 'email_campaigns' | 'blog_posts'
+type Tone = 'professional' | 'casual' | 'playful'
+type Length = 'short' | 'medium' | 'long'
+type ContentStatus = 'draft' | 'scheduled' | 'published'
+type View = 'generate' | 'history' | 'calendar'
+
+interface GeneratedItem {
+  id: string
+  template_type: TemplateType
+  inputs: {
+    product_name: string
+    target_audience: string
+    tone: Tone
+    length: Length
+  }
+  output: string
+  status: ContentStatus
+  scheduled_for: string | null
+  created_at: string
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Constants
+// ─────────────────────────────────────────────────────────────────────────────
+
+const TEMPLATES: Array<{
+  id: TemplateType
+  label: string
+  description: string
+  icon: string
+}> = [
+  {
+    id: 'ad_scripts',
+    label: 'Ad Scripts',
+    description: 'Compelling video and ad copy for social, YouTube, and display',
+    icon: '🎬',
+  },
+  {
+    id: 'social_posts',
+    label: 'Social Posts',
+    description: 'Engaging posts optimised for Instagram, X, LinkedIn, and TikTok',
+    icon: '📣',
+  },
+  {
+    id: 'email_campaigns',
+    label: 'Email Campaigns',
+    description: 'Subject lines, email body, and sequences that convert',
+    icon: '📧',
+  },
+  {
+    id: 'blog_posts',
+    label: 'Blog Posts',
+    description: 'Full articles, outlines, and introductions for your audience',
+    icon: '✍️',
+  },
 ]
 
-const WALLPAPERS = [
-  { value: 'sunset-grid', label: 'Sunset Grid' },
-  { value: 'night-wave', label: 'Night Wave' },
-  { value: 'paper-grain', label: 'Paper Grain' },
-  { value: 'neon-city', label: 'Neon City' },
-] as const
+const TONE_OPTIONS: Array<{ value: Tone; label: string }> = [
+  { value: 'professional', label: 'Professional' },
+  { value: 'casual', label: 'Casual' },
+  { value: 'playful', label: 'Playful' },
+]
 
-const MODULE_LABELS: Record<CreatorStudioModuleId, string> = {
-  scene: 'Scene',
-  'notification-stack': 'Notification Stack',
-  appearance: 'Appearance',
-  privacy: 'Privacy',
-  export: 'Export',
+const LENGTH_OPTIONS: Array<{ value: Length; label: string; hint: string }> = [
+  { value: 'short', label: 'Short', hint: '~100 words' },
+  { value: 'medium', label: 'Medium', hint: '~300 words' },
+  { value: 'long', label: 'Long', hint: '~600+ words' },
+]
+
+const STATUS_COLORS: Record<ContentStatus, string> = {
+  draft: '#94A3B8',
+  scheduled: '#eab308',
+  published: '#22c55e',
 }
 
-const SELECT_CLASS =
-  'h-12 w-full rounded-md border border-border bg-background pl-4 pr-10 text-sm text-foreground outline-none transition-[border-color,box-shadow] focus-visible:border-primary focus-visible:ring-[3px] focus-visible:ring-primary/25'
-const INPUT_CLASS = 'h-12 !px-4 !py-3 text-sm leading-[1.35]'
-
-function wallpaperBgClass(wallpaper: string): string {
-  if (wallpaper === 'night-wave') {
-    return 'bg-[radial-gradient(circle_at_20%_15%,rgba(59,130,246,.35),transparent_38%),radial-gradient(circle_at_80%_0%,rgba(15,23,42,.6),transparent_45%),linear-gradient(165deg,#060b1a_0%,#13223a_45%,#090f1f_100%)]'
-  }
-  if (wallpaper === 'paper-grain') {
-    return 'bg-[radial-gradient(circle_at_15%_20%,rgba(255,255,255,.65),transparent_42%),radial-gradient(circle_at_88%_80%,rgba(217,219,223,.6),transparent_45%),linear-gradient(165deg,#eceff3_0%,#d9dde3_55%,#c8d0d9_100%)]'
-  }
-  if (wallpaper === 'neon-city') {
-    return 'bg-[radial-gradient(circle_at_15%_18%,rgba(236,72,153,.4),transparent_40%),radial-gradient(circle_at_82%_10%,rgba(34,211,238,.35),transparent_42%),linear-gradient(160deg,#23093b_0%,#42156a_50%,#0f1a4c_100%)]'
-  }
-  return 'bg-[radial-gradient(circle_at_18%_16%,rgba(255,245,157,.35),transparent_38%),radial-gradient(circle_at_84%_10%,rgba(244,114,182,.35),transparent_45%),linear-gradient(160deg,#f97316_0%,#ec4899_55%,#4f46e5_100%)]'
+const STATUS_BG: Record<ContentStatus, string> = {
+  draft: 'rgba(148, 163, 184, 0.12)',
+  scheduled: 'rgba(234, 179, 8, 0.12)',
+  published: 'rgba(34, 197, 94, 0.12)',
 }
 
-function isLightWallpaper(wallpaper: string): boolean {
-  return wallpaper === 'paper-grain'
+const TEMPLATE_LABELS: Record<TemplateType, string> = {
+  ad_scripts: 'Ad Script',
+  social_posts: 'Social Post',
+  email_campaigns: 'Email Campaign',
+  blog_posts: 'Blog Post',
 }
 
-function labelForModule(moduleId: CreatorStudioModuleId): string {
-  return MODULE_LABELS[moduleId] ?? moduleId
+// ─────────────────────────────────────────────────────────────────────────────
+// Inline styles
+// ─────────────────────────────────────────────────────────────────────────────
+
+const glassCard: React.CSSProperties = {
+  borderRadius: 16,
+  background: 'rgba(15, 20, 30, 0.6)',
+  backdropFilter: 'blur(20px) saturate(1.2)',
+  WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
+  border: '1px solid rgba(255, 255, 255, 0.03)',
+  boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
 }
 
-function StudioCard({
-  children,
-  className = '',
+const glassInput: React.CSSProperties = {
+  width: '100%',
+  padding: '10px 14px',
+  borderRadius: 10,
+  background: 'rgba(13, 17, 23, 0.6)',
+  border: '1px solid rgba(255, 255, 255, 0.05)',
+  color: 'var(--text-primary, #F1F5F9)',
+  fontSize: 14,
+  outline: 'none',
+  transition: 'border-color 200ms, box-shadow 200ms',
+  boxSizing: 'border-box',
+}
+
+const glassSelect: React.CSSProperties = {
+  width: '100%',
+  padding: '10px 14px',
+  borderRadius: 10,
+  background: 'rgba(13, 17, 23, 0.6)',
+  border: '1px solid rgba(255, 255, 255, 0.05)',
+  color: 'var(--text-primary, #F1F5F9)',
+  fontSize: 14,
+  outline: 'none',
+  cursor: 'pointer',
+  boxSizing: 'border-box',
+}
+
+const accentBtn: React.CSSProperties = {
+  padding: '10px 20px',
+  borderRadius: 10,
+  background: '#FF5A1F',
+  border: 'none',
+  color: '#000',
+  fontSize: 14,
+  fontWeight: 600,
+  cursor: 'pointer',
+  transition: 'all 200ms',
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 8,
+}
+
+const ghostBtn: React.CSSProperties = {
+  padding: '8px 16px',
+  borderRadius: 10,
+  background: 'transparent',
+  border: '1px solid rgba(255, 255, 255, 0.06)',
+  color: 'var(--text-primary, #F1F5F9)',
+  fontSize: 13,
+  fontWeight: 500,
+  cursor: 'pointer',
+  transition: 'all 200ms',
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 6,
+}
+
+const labelStyle: React.CSSProperties = {
+  display: 'block',
+  fontSize: 12,
+  fontWeight: 600,
+  letterSpacing: '0.04em',
+  textTransform: 'uppercase',
+  color: 'var(--text-secondary, #94A3B8)',
+  marginBottom: 8,
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Sub-components
+// ─────────────────────────────────────────────────────────────────────────────
+
+function TemplateCard({
+  template,
+  selected,
+  onClick,
 }: {
-  children: React.ReactNode
-  className?: string
+  template: (typeof TEMPLATES)[0]
+  selected: boolean
+  onClick: () => void
 }) {
   return (
-    <section className={cn('bb-card rounded-2xl p-6 md:p-7', className)}>
-      {children}
-    </section>
-  )
-}
-
-function StudioCardHeader({
-  title,
-  description,
-  actions,
-}: {
-  title: string
-  description?: string
-  actions?: React.ReactNode
-}) {
-  return (
-    <header className="mb-6 flex flex-wrap items-start justify-between gap-3">
-      <div className="space-y-1.5 pr-2">
-        <h2 className="text-lg font-semibold tracking-tight text-[var(--text-primary)]">{title}</h2>
-        {description ? <p className="max-w-[72ch] text-sm leading-relaxed text-[var(--text-secondary)]">{description}</p> : null}
+    <button
+      onClick={onClick}
+      style={{
+        padding: 16,
+        borderRadius: 12,
+        background: selected ? 'rgba(255, 90, 31, 0.1)' : 'rgba(13, 17, 23, 0.5)',
+        border: selected
+          ? '1px solid rgba(255, 90, 31, 0.4)'
+          : '1px solid rgba(255, 255, 255, 0.04)',
+        cursor: 'pointer',
+        textAlign: 'left',
+        transition: 'all 200ms',
+        outline: 'none',
+      }}
+    >
+      <div style={{ fontSize: 24, marginBottom: 8 }}>{template.icon}</div>
+      <div
+        style={{
+          fontSize: 14,
+          fontWeight: 600,
+          color: selected ? '#FF5A1F' : 'var(--text-primary, #F1F5F9)',
+          marginBottom: 4,
+        }}
+      >
+        {template.label}
       </div>
-      {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
-    </header>
+      <div style={{ fontSize: 12, color: 'var(--text-secondary, #94A3B8)', lineHeight: 1.5 }}>
+        {template.description}
+      </div>
+    </button>
   )
 }
 
-function Field({
-  id,
-  label,
-  hint,
-  children,
-}: {
-  id: string
-  label: string
-  hint?: string
-  children: React.ReactNode
-}) {
+function StatusBadge({ status }: { status: ContentStatus }) {
   return (
-    <div className="space-y-2.5">
-      <label htmlFor={id} className="block text-sm font-medium text-[var(--text-primary)]">
-        {label}
-      </label>
-      {hint ? <p id={`${id}-hint`} className="text-xs text-[var(--text-secondary)]">{hint}</p> : null}
-      {children}
+    <span
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        padding: '3px 10px',
+        borderRadius: 8,
+        fontSize: 11,
+        fontWeight: 600,
+        letterSpacing: '0.03em',
+        background: STATUS_BG[status],
+        color: STATUS_COLORS[status],
+        textTransform: 'capitalize',
+      }}
+    >
+      {status}
+    </span>
+  )
+}
+
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false)
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1500)
+    } catch {
+      // ignore
+    }
+  }
+
+  return (
+    <button onClick={copy} style={ghostBtn}>
+      {copied ? '✓ Copied' : '⎘ Copy'}
+    </button>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Calendar View
+// ─────────────────────────────────────────────────────────────────────────────
+
+function CalendarView({
+  items,
+  onStatusChange,
+}: {
+  items: GeneratedItem[]
+  onStatusChange: (id: string, status: ContentStatus) => void
+}) {
+  const now = new Date()
+  const [currentMonth, setCurrentMonth] = useState(now)
+
+  const year = currentMonth.getFullYear()
+  const month = currentMonth.getMonth()
+
+  const firstDay = new Date(year, month, 1).getDay()
+  const daysInMonth = new Date(year, month + 1, 0).getDate()
+
+  const scheduledByDate = useMemo(() => {
+    const map: Record<string, GeneratedItem[]> = {}
+    for (const item of items) {
+      if (!item.scheduled_for) continue
+      const d = new Date(item.scheduled_for)
+      if (d.getFullYear() === year && d.getMonth() === month) {
+        const key = d.getDate().toString()
+        map[key] = [...(map[key] || []), item]
+      }
+    }
+    return map
+  }, [items, year, month])
+
+  const monthLabel = currentMonth.toLocaleString('en', { month: 'long', year: 'numeric' })
+  const todayDate = now.getDate()
+  const isCurrentMonth = now.getFullYear() === year && now.getMonth() === month
+
+  return (
+    <div>
+      {/* Month nav */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: 20,
+        }}
+      >
+        <button
+          onClick={() => setCurrentMonth(new Date(year, month - 1, 1))}
+          style={{ ...ghostBtn, padding: '6px 12px' }}
+        >
+          ← Prev
+        </button>
+        <span style={{ fontWeight: 600, color: 'var(--text-primary, #F1F5F9)', fontSize: 15 }}>
+          {monthLabel}
+        </span>
+        <button
+          onClick={() => setCurrentMonth(new Date(year, month + 1, 1))}
+          style={{ ...ghostBtn, padding: '6px 12px' }}
+        >
+          Next →
+        </button>
+      </div>
+
+      {/* Day headers */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2, marginBottom: 2 }}>
+        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
+          <div
+            key={d}
+            style={{
+              textAlign: 'center',
+              fontSize: 11,
+              fontWeight: 600,
+              letterSpacing: '0.04em',
+              color: 'var(--text-dim, #475569)',
+              padding: '6px 0',
+            }}
+          >
+            {d}
+          </div>
+        ))}
+      </div>
+
+      {/* Calendar grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2 }}>
+        {/* Empty cells before first day */}
+        {Array.from({ length: firstDay }).map((_, i) => (
+          <div key={`empty-${i}`} style={{ minHeight: 80 }} />
+        ))}
+
+        {/* Day cells */}
+        {Array.from({ length: daysInMonth }).map((_, i) => {
+          const day = i + 1
+          const dayItems = scheduledByDate[day.toString()] || []
+          const isToday = isCurrentMonth && day === todayDate
+
+          return (
+            <div
+              key={day}
+              style={{
+                minHeight: 80,
+                padding: 6,
+                borderRadius: 8,
+                background: isToday
+                  ? 'rgba(255, 90, 31, 0.08)'
+                  : 'rgba(13, 17, 23, 0.4)',
+                border: isToday
+                  ? '1px solid rgba(255, 90, 31, 0.25)'
+                  : '1px solid rgba(255, 255, 255, 0.03)',
+              }}
+            >
+              <div
+                style={{
+                  fontSize: 12,
+                  fontWeight: isToday ? 700 : 500,
+                  color: isToday ? '#FF5A1F' : 'var(--text-secondary, #94A3B8)',
+                  marginBottom: 4,
+                }}
+              >
+                {day}
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                {dayItems.slice(0, 3).map((item) => (
+                  <div
+                    key={item.id}
+                    title={`${TEMPLATE_LABELS[item.template_type]}: ${item.inputs.product_name}`}
+                    style={{
+                      fontSize: 10,
+                      padding: '2px 6px',
+                      borderRadius: 4,
+                      background: STATUS_BG[item.status],
+                      color: STATUS_COLORS[item.status],
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      cursor: 'pointer',
+                    }}
+                    onClick={() => {
+                      const next: ContentStatus =
+                        item.status === 'scheduled' ? 'published' : item.status === 'draft' ? 'scheduled' : 'draft'
+                      onStatusChange(item.id, next)
+                    }}
+                  >
+                    {item.inputs.product_name || TEMPLATE_LABELS[item.template_type]}
+                  </div>
+                ))}
+                {dayItems.length > 3 && (
+                  <div style={{ fontSize: 10, color: 'var(--text-dim, #475569)' }}>
+                    +{dayItems.length - 3} more
+                  </div>
+                )}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Legend */}
+      <div
+        style={{
+          marginTop: 16,
+          display: 'flex',
+          gap: 16,
+          justifyContent: 'flex-end',
+        }}
+      >
+        {(['draft', 'scheduled', 'published'] as ContentStatus[]).map((s) => (
+          <div key={s} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11 }}>
+            <div
+              style={{
+                width: 8,
+                height: 8,
+                borderRadius: 2,
+                background: STATUS_COLORS[s],
+              }}
+            />
+            <span style={{ color: 'var(--text-secondary, #94A3B8)', textTransform: 'capitalize' }}>
+              {s}
+            </span>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
 
-function IOSPreview({ deck }: { deck: ReturnType<typeof composeCreatorStudioDeck> }) {
-  const lightWallpaper = isLightWallpaper(deck.scene.wallpaper)
-  const statusTone = lightWallpaper ? 'text-zinc-900' : 'text-white'
-  const cardTone = lightWallpaper
-    ? 'bg-white/84 text-zinc-900 border-zinc-200/70'
-    : 'bg-white/16 text-white border-white/30'
-  const glassTone = lightWallpaper ? 'bg-zinc-900/14 text-zinc-900' : 'bg-black/38 text-white'
+// ─────────────────────────────────────────────────────────────────────────────
+// History list
+// ─────────────────────────────────────────────────────────────────────────────
+
+function HistoryItem({
+  item,
+  onSchedule,
+  onStatusChange,
+}: {
+  item: GeneratedItem
+  onSchedule: (id: string, scheduledFor: string) => void
+  onStatusChange: (id: string, status: ContentStatus) => void
+}) {
+  const [expanded, setExpanded] = useState(false)
+  const [scheduling, setScheduling] = useState(false)
+  const [dateValue, setDateValue] = useState(
+    item.scheduled_for ? item.scheduled_for.split('T')[0] : ''
+  )
+
+  const template = TEMPLATES.find((t) => t.id === item.template_type)
+  const created = new Date(item.created_at).toLocaleDateString('en', {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
 
   return (
-    <StudioCard className="sticky top-4">
-      <StudioCardHeader
-        title="iPhone Preview"
-        actions={<p className="text-xs text-[var(--text-secondary)]">{deck.meta.watermark}</p>}
-      />
-
-      <div className="space-y-4">
-        <div className="rounded-xl border border-border/70 bg-background/45 px-4 py-3">
-          <p className="text-sm font-medium text-[var(--text-primary)]">{deck.caption}</p>
-          <p className="mt-1 text-sm text-[var(--text-secondary)]">{deck.shareHook}</p>
-        </div>
-
-        <div className="mx-auto w-full max-w-[410px]" aria-label="iOS lock-screen output">
+    <div
+      style={{
+        borderRadius: 12,
+        background: 'rgba(13, 17, 23, 0.5)',
+        border: '1px solid rgba(255, 255, 255, 0.04)',
+        overflow: 'hidden',
+      }}
+    >
+      {/* Header row */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 12,
+          padding: '14px 16px',
+          cursor: 'pointer',
+        }}
+        onClick={() => setExpanded((e) => !e)}
+      >
+        <span style={{ fontSize: 20 }}>{template?.icon ?? '📄'}</span>
+        <div style={{ flex: 1, minWidth: 0 }}>
           <div
-            className="rounded-[52px] border p-2.5 shadow-2xl"
             style={{
-              borderColor: 'rgba(255,255,255,0.14)',
-              background: 'linear-gradient(170deg, var(--bg-primary), var(--bg-card))',
+              fontSize: 13,
+              fontWeight: 600,
+              color: 'var(--text-primary, #F1F5F9)',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
             }}
           >
-            <div
-              className={`relative h-[812px] overflow-hidden rounded-[42px] ${wallpaperBgClass(deck.scene.wallpaper)}`}
-              style={{
-                fontFamily:
-                  '"SF Pro Display","SF Pro Text",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif',
-              }}
-            >
-              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_24%_12%,rgba(255,255,255,.2),transparent_40%),radial-gradient(circle_at_72%_88%,rgba(255,255,255,.16),transparent_45%)]" />
-
-              <div className="absolute left-1/2 top-3.5 z-20 h-7.5 w-[126px] -translate-x-1/2 rounded-full bg-black/82" />
-
-              <div className={`absolute inset-x-6 top-6 z-20 flex items-center justify-between text-[13px] font-semibold ${statusTone}`}>
-                <span>{deck.scene.carrier}</span>
-                <div className="flex items-center gap-1.5">
-                  <SignalHigh size={14} strokeWidth={2.4} />
-                  <Wifi size={14} strokeWidth={2.4} />
-                  <BatteryFull size={17} strokeWidth={2.4} />
-                  <span className="text-[11px] font-bold">58%</span>
-                </div>
-              </div>
-
-              <div className={`absolute inset-x-0 top-[106px] z-10 text-center ${statusTone}`}>
-                <div className="mb-2 inline-flex items-center gap-1 rounded-full bg-black/24 px-3 py-1 text-[11px] font-medium backdrop-blur-sm">
-                  <Lock size={11} />
-                  Lock Screen
-                </div>
-                <p className="text-[19px] font-medium tracking-tight opacity-90">{deck.scene.dateLabel}</p>
-                <p className="mt-1 text-[70px] font-semibold leading-none tracking-[-0.045em]">{deck.scene.clock}</p>
-              </div>
-
-              <div className="absolute inset-x-4 bottom-[118px] top-[330px] z-10 overflow-y-auto px-2 pr-3">
-                <div className="space-y-3 pb-4">
-                  {deck.notifications.map((notification) => (
-                    <article
-                      key={notification.id}
-                      className={`rounded-[18px] border px-5 py-4 backdrop-blur-xl shadow-[0_8px_24px_rgba(0,0,0,0.18)] ${cardTone}`}
-                    >
-                      <div className="mb-2 flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <div className={`flex h-6 w-6 items-center justify-center rounded-full ${glassTone}`}>
-                            <span className="text-[12px]">{notification.icon}</span>
-                          </div>
-                          <span className="text-[11px] font-semibold uppercase tracking-[0.12em] opacity-80">
-                            {notification.appLabel}
-                          </span>
-                        </div>
-                        <span className="text-[11px] font-medium opacity-70">{notification.timeAgo}</span>
-                      </div>
-                      <p className="text-[13px] font-semibold leading-tight">{notification.headline}</p>
-                      <p className="mt-1 text-[13px] leading-[1.35] opacity-90">{notification.body}</p>
-                    </article>
-                  ))}
-                </div>
-              </div>
-
-              <div className="absolute inset-x-6 bottom-8 z-20 flex items-center justify-between">
-                <button
-                  type="button"
-                  className={`flex h-12 w-12 items-center justify-center rounded-full border border-white/20 backdrop-blur-xl ${glassTone}`}
-                  aria-label="Flashlight"
-                >
-                  <Flashlight size={20} />
-                </button>
-                <button
-                  type="button"
-                  className={`flex h-12 w-12 items-center justify-center rounded-full border border-white/20 backdrop-blur-xl ${glassTone}`}
-                  aria-label="Camera"
-                >
-                  <Camera size={20} />
-                </button>
-              </div>
-            </div>
+            {TEMPLATE_LABELS[item.template_type]} — {item.inputs.product_name}
+          </div>
+          <div style={{ fontSize: 11, color: 'var(--text-dim, #475569)', marginTop: 2 }}>
+            {created} · {item.inputs.tone} · {item.inputs.length}
           </div>
         </div>
+        <StatusBadge status={item.status} />
+        <span
+          style={{
+            color: 'var(--text-dim, #475569)',
+            fontSize: 12,
+            transition: 'transform 200ms',
+            transform: expanded ? 'rotate(180deg)' : 'none',
+          }}
+        >
+          ▾
+        </span>
       </div>
-    </StudioCard>
+
+      {/* Expanded content */}
+      {expanded && (
+        <div
+          style={{
+            padding: '0 16px 16px',
+            borderTop: '1px solid rgba(255, 255, 255, 0.03)',
+          }}
+        >
+          <pre
+            style={{
+              marginTop: 12,
+              padding: 14,
+              borderRadius: 10,
+              background: 'rgba(0, 0, 0, 0.3)',
+              fontSize: 13,
+              color: 'var(--text-secondary, #94A3B8)',
+              whiteSpace: 'pre-wrap',
+              wordBreak: 'break-word',
+              lineHeight: 1.6,
+              fontFamily: 'inherit',
+            }}
+          >
+            {item.output}
+          </pre>
+
+          <div
+            style={{
+              marginTop: 12,
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: 8,
+              alignItems: 'center',
+            }}
+          >
+            <CopyButton text={item.output} />
+
+            {item.status !== 'published' && (
+              <button
+                onClick={() =>
+                  onStatusChange(
+                    item.id,
+                    item.status === 'draft' ? 'scheduled' : 'published'
+                  )
+                }
+                style={ghostBtn}
+              >
+                {item.status === 'draft' ? '📅 Schedule' : '✓ Mark Published'}
+              </button>
+            )}
+
+            {item.status === 'scheduled' && (
+              <button
+                onClick={() => onStatusChange(item.id, 'draft')}
+                style={{ ...ghostBtn, color: '#ef4444' }}
+              >
+                ✕ Unschedule
+              </button>
+            )}
+
+            {!scheduling && item.status !== 'published' && (
+              <button
+                onClick={() => setScheduling(true)}
+                style={{ ...ghostBtn, fontSize: 12 }}
+              >
+                📅 Set date
+              </button>
+            )}
+
+            {scheduling && (
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <input
+                  type="datetime-local"
+                  value={dateValue}
+                  onChange={(e) => setDateValue(e.target.value)}
+                  style={{ ...glassInput, width: 'auto', fontSize: 12, padding: '6px 10px' }}
+                />
+                <button
+                  onClick={() => {
+                    if (dateValue) {
+                      onSchedule(item.id, new Date(dateValue).toISOString())
+                    }
+                    setScheduling(false)
+                  }}
+                  style={{ ...accentBtn, padding: '6px 12px', fontSize: 12 }}
+                >
+                  Save
+                </button>
+                <button
+                  onClick={() => setScheduling(false)}
+                  style={{ ...ghostBtn, padding: '6px 12px', fontSize: 12 }}
+                >
+                  Cancel
+                </button>
+              </div>
+            )}
+          </div>
+
+          {item.scheduled_for && (
+            <div
+              style={{
+                marginTop: 10,
+                fontSize: 12,
+                color: STATUS_COLORS.scheduled,
+              }}
+            >
+              📅 Scheduled for{' '}
+              {new Date(item.scheduled_for).toLocaleString('en', {
+                weekday: 'short',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+              })}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   )
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Main tab
+// ─────────────────────────────────────────────────────────────────────────────
+
 export default function CreatorStudioTab() {
-  const { industry } = useEnabledModules()
-  const [request, setRequest] = useState<CreatorStudioRequest>(() =>
-    createDefaultCreatorStudioRequest(industry)
-  )
-  const [copyState, setCopyState] = useState<'idle' | 'copied'>('idle')
+  const [view, setView] = useState<View>('generate')
+
+  // Form state
+  const [selectedTemplate, setSelectedTemplate] = useState<TemplateType>('ad_scripts')
+  const [productName, setProductName] = useState('')
+  const [targetAudience, setTargetAudience] = useState('')
+  const [tone, setTone] = useState<Tone>('professional')
+  const [length, setLength] = useState<Length>('medium')
+  const [generating, setGenerating] = useState(false)
+  const [generatedOutput, setGeneratedOutput] = useState<GeneratedItem | null>(null)
+  const [generateError, setGenerateError] = useState('')
+
+  // History state
+  const [history, setHistory] = useState<GeneratedItem[]>([])
+  const [historyLoading, setHistoryLoading] = useState(false)
+  const [historyFilter, setHistoryFilter] = useState<TemplateType | 'all'>('all')
+
+  const loadHistory = useCallback(async () => {
+    setHistoryLoading(true)
+    try {
+      const url =
+        historyFilter === 'all'
+          ? '/api/creator-studio/history'
+          : `/api/creator-studio/history?template_type=${historyFilter}`
+      const res = await fetch(url)
+      if (!res.ok) throw new Error('Failed to load history')
+      const data = await res.json()
+      setHistory(data.items || [])
+    } catch {
+      // silently fail
+    } finally {
+      setHistoryLoading(false)
+    }
+  }, [historyFilter])
 
   useEffect(() => {
-    setRequest(createDefaultCreatorStudioRequest(industry))
-  }, [industry])
+    if (view === 'history' || view === 'calendar') {
+      loadHistory()
+    }
+  }, [view, loadHistory])
 
-  const deck = useMemo(
-    () => composeCreatorStudioDeck({ ...request, industry }),
-    [request, industry]
-  )
+  const handleGenerate = async () => {
+    if (!productName.trim() || !targetAudience.trim()) {
+      setGenerateError('Product name and target audience are required.')
+      return
+    }
+    setGenerateError('')
+    setGenerating(true)
+    setGeneratedOutput(null)
 
-  const allowedAppOptions = useMemo(
-    () => APP_OPTIONS.filter((option) => deck.meta.allowedApps.includes(option.value)),
-    [deck.meta.allowedApps]
-  )
-
-  const defaultApp = allowedAppOptions[0]?.value ?? 'custom'
-  const modules = request.moduleOrder ?? deck.meta.moduleOrder
-
-  const setField = useCallback(
-    <K extends keyof CreatorStudioRequest>(key: K, value: CreatorStudioRequest[K]) => {
-      setRequest((prev) => ({ ...prev, [key]: value }))
-    },
-    []
-  )
-
-  const updateNotification = useCallback(
-    (
-      index: number,
-      patch: Partial<{
-        app: CreatorStudioApp
-        amount: string
-        from: string
-        timeAgo: string
-        message: string
-      }>
-    ) => {
-      setRequest((prev) => {
-        const current = [...(prev.notifications ?? [])]
-        const base = current[index] ?? { app: defaultApp }
-        current[index] = { ...base, ...patch }
-        return { ...prev, notifications: current }
+    try {
+      const res = await fetch('/api/creator-studio/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          template_type: selectedTemplate,
+          inputs: { product_name: productName, target_audience: targetAudience, tone, length },
+        }),
       })
-    },
-    [defaultApp]
-  )
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err.error || 'Generation failed')
+      }
+      const data = await res.json()
+      setGeneratedOutput(data)
+    } catch (err) {
+      setGenerateError(err instanceof Error ? err.message : 'Something went wrong.')
+    } finally {
+      setGenerating(false)
+    }
+  }
 
-  const addNotification = useCallback(() => {
-    setRequest((prev) => {
-      const current = [...(prev.notifications ?? [])]
-      if (current.length >= deck.meta.maxNotifications) return prev
-      current.push({
-        app: defaultApp,
-        amount: '$59',
-        from: 'new@subscriber.com',
-        timeAgo: '1m ago',
+  const handleSchedule = async (id: string, scheduledFor: string) => {
+    try {
+      const res = await fetch('/api/creator-studio/schedule', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, scheduled_for: scheduledFor, status: 'scheduled' }),
       })
-      return { ...prev, notifications: current }
-    })
-  }, [deck.meta.maxNotifications, defaultApp])
+      if (!res.ok) return
+      setHistory((prev) =>
+        prev.map((item) =>
+          item.id === id ? { ...item, scheduled_for: scheduledFor, status: 'scheduled' } : item
+        )
+      )
+      if (generatedOutput?.id === id) {
+        setGeneratedOutput((prev) =>
+          prev ? { ...prev, scheduled_for: scheduledFor, status: 'scheduled' } : prev
+        )
+      }
+    } catch {
+      // silently fail
+    }
+  }
 
-  const removeNotification = useCallback((index: number) => {
-    setRequest((prev) => {
-      const current = [...(prev.notifications ?? [])]
-      current.splice(index, 1)
-      return { ...prev, notifications: current }
-    })
-  }, [])
-
-  const moveModule = useCallback(
-    (index: number, direction: -1 | 1) => {
-      setRequest((prev) => {
-        const order = [...(prev.moduleOrder ?? deck.meta.moduleOrder)]
-        const next = index + direction
-        if (next < 0 || next >= order.length) return prev
-        const temp = order[index]
-        order[index] = order[next]
-        order[next] = temp
-        return { ...prev, moduleOrder: order }
+  const handleStatusChange = async (id: string, status: ContentStatus) => {
+    try {
+      const res = await fetch('/api/creator-studio/schedule', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, status }),
       })
-    },
-    [deck.meta.moduleOrder]
-  )
+      if (!res.ok) return
+      setHistory((prev) =>
+        prev.map((item) => (item.id === id ? { ...item, status } : item))
+      )
+      if (generatedOutput?.id === id) {
+        setGeneratedOutput((prev) => (prev ? { ...prev, status } : prev))
+      }
+    } catch {
+      // silently fail
+    }
+  }
 
-  const copyJson = useCallback(async () => {
-    await navigator.clipboard.writeText(JSON.stringify(deck, null, 2))
-    setCopyState('copied')
-    window.setTimeout(() => setCopyState('idle'), 1500)
-  }, [deck])
+  const filteredHistory = useMemo(() => {
+    if (historyFilter === 'all') return history
+    return history.filter((item) => item.template_type === historyFilter)
+  }, [history, historyFilter])
 
-  const copyToolPayload = useCallback(async () => {
-    const payload = JSON.stringify(
-      { name: 'compose_creator_notification_mockup', input: request },
-      null,
-      2
-    )
-    await navigator.clipboard.writeText(payload)
-    setCopyState('copied')
-    window.setTimeout(() => setCopyState('idle'), 1500)
-  }, [request])
-
-  const downloadManifest = useCallback(() => {
-    const payload = JSON.stringify(deck, null, 2)
-    const blob = new Blob([payload], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `creator-studio-${deck.meta.industry}.json`
-    link.click()
-    URL.revokeObjectURL(url)
-  }, [deck])
+  const VIEW_TABS: Array<{ id: View; label: string }> = [
+    { id: 'generate', label: 'Generate' },
+    { id: 'history', label: 'History' },
+    { id: 'calendar', label: 'Calendar' },
+  ]
 
   return (
     <TabShell variant="fixed" padding="p-0" className="min-h-0 gap-0">
-      <div className="h-full overflow-y-auto p-6 lg:p-8">
-        <div className="space-y-8">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="inline-flex items-center rounded-full border border-border/70 bg-background/45 px-3.5 py-1.5 text-xs font-medium text-[var(--text-secondary)]">
-              {deck.notifications.length} Notifications
-            </div>
-            <Button
-              variant="outline"
-              className="h-11 px-5"
-              onClick={() => setRequest(createDefaultCreatorStudioRequest(industry))}
+      <div style={{ height: '100%', overflowY: 'auto', padding: 28 }}>
+        <div style={{ maxWidth: 960, margin: '0 auto' }}>
+
+          {/* Header */}
+          <div style={{ marginBottom: 28 }}>
+            <h1
+              style={{
+                fontSize: 22,
+                fontWeight: 700,
+                color: 'var(--text-primary, #F1F5F9)',
+                margin: 0,
+                marginBottom: 6,
+              }}
             >
-              <RefreshCw size={14} />
-              Reset
-            </Button>
+              Creator Studio
+            </h1>
+            <p style={{ fontSize: 14, color: 'var(--text-secondary, #94A3B8)', margin: 0 }}>
+              Generate marketing content using AI — ad scripts, social posts, emails, and blogs.
+            </p>
           </div>
 
-          <div className="grid gap-8 2xl:grid-cols-[minmax(0,1.2fr)_440px]">
-            <div className="space-y-7" role="form" aria-label="Creator studio dashboard controls">
-              <StudioCard>
-                <StudioCardHeader title="Lock Screen" />
-                <div className="space-y-4">
-                  <p className="text-sm font-medium text-[var(--text-secondary)]">Time · Device Make · Carrier</p>
-                  <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
-                    <Field id="cs-time" label="Time" hint="Example: 8:42">
-                      <Input
-                        id="cs-time"
-                        className={INPUT_CLASS}
-                        value={request.clock ?? ''}
-                        onChange={(e) => setField('clock', e.target.value)}
-                        aria-describedby="cs-time-hint"
+          {/* View tabs */}
+          <div
+            style={{
+              display: 'flex',
+              gap: 4,
+              padding: 4,
+              borderRadius: 12,
+              background: 'rgba(13, 17, 23, 0.6)',
+              border: '1px solid rgba(255, 255, 255, 0.04)',
+              width: 'fit-content',
+              marginBottom: 28,
+            }}
+          >
+            {VIEW_TABS.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setView(tab.id)}
+                style={{
+                  padding: '8px 18px',
+                  borderRadius: 9,
+                  border: 'none',
+                  fontSize: 13,
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  transition: 'all 200ms',
+                  background:
+                    view === tab.id ? 'rgba(255, 90, 31, 0.15)' : 'transparent',
+                  color:
+                    view === tab.id
+                      ? '#FF5A1F'
+                      : 'var(--text-secondary, #94A3B8)',
+                }}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {/* ── GENERATE VIEW ─────────────────────────────────────────── */}
+          {view === 'generate' && (
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: generatedOutput ? '1fr 1fr' : '1fr',
+                gap: 24,
+              }}
+            >
+              {/* Left: form */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+
+                {/* Template selector */}
+                <div style={{ ...glassCard, padding: 24 }}>
+                  <div style={{ ...labelStyle, marginBottom: 16 }}>Content Type</div>
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(2, 1fr)',
+                      gap: 10,
+                    }}
+                  >
+                    {TEMPLATES.map((t) => (
+                      <TemplateCard
+                        key={t.id}
+                        template={t}
+                        selected={selectedTemplate === t.id}
+                        onClick={() => setSelectedTemplate(t.id)}
                       />
-                    </Field>
-                    <Field id="cs-device" label="Device Make">
-                      <select
-                        id="cs-device"
-                        className={SELECT_CLASS}
-                        value={request.device ?? 'iphone'}
-                        onChange={(e) => setField('device', e.target.value as 'iphone' | 'android')}
-                      >
-                        <option value="iphone">iPhone</option>
-                        <option value="android">Android</option>
-                      </select>
-                    </Field>
-                    <Field id="cs-carrier" label="Carrier">
-                      <Input
-                        id="cs-carrier"
-                        className={INPUT_CLASS}
-                        value={request.carrier ?? ''}
-                        onChange={(e) => setField('carrier', e.target.value)}
-                      />
-                    </Field>
-                    <Field id="cs-date" label="Date">
-                      <Input
-                        id="cs-date"
-                        className={INPUT_CLASS}
-                        value={request.dateLabel ?? ''}
-                        onChange={(e) => setField('dateLabel', e.target.value)}
-                      />
-                    </Field>
+                    ))}
                   </div>
                 </div>
-              </StudioCard>
 
-              <StudioCard>
-                <StudioCardHeader
-                  title="Notification Stack"
-                  actions={
-                    <>
-                      <span className="inline-flex items-center rounded-full border border-border/70 bg-background/45 px-3 py-1 text-xs font-medium text-[var(--text-secondary)]">
-                        {deck.notifications.length} Notifications
-                      </span>
-                      <Button
-                        variant="outline"
-                        className="h-11 px-5"
-                        onClick={addNotification}
-                        disabled={deck.notifications.length >= deck.meta.maxNotifications}
-                      >
-                        <Plus size={14} />
-                        Add Notification
-                      </Button>
-                    </>
-                  }
-                />
-                <div className="space-y-5">
-                  {deck.notifications.map((notification, index) => (
-                    <div
-                      key={notification.id}
-                      className="rounded-2xl border border-border/70 bg-background/45 p-5 md:p-6"
-                      role="group"
-                      aria-label={`Notification ${index + 1}`}
-                    >
-                      <div className="mb-5 flex items-start gap-3">
-                        <div className="space-y-1">
-                          <p className="text-sm font-semibold text-[var(--text-primary)]">Notification</p>
-                          <p className="text-xs text-[var(--text-secondary)]">{notification.appLabel}</p>
-                        </div>
-                        <Button
-                          size="icon-sm"
-                          variant="ghost"
-                          className="ml-auto"
-                          onClick={() => removeNotification(index)}
-                          disabled={deck.notifications.length <= 1}
-                          aria-label={`Remove notification ${index + 1}`}
-                        >
-                          <Trash2 size={14} />
-                        </Button>
-                      </div>
+                {/* Generation form */}
+                <div style={{ ...glassCard, padding: 24 }}>
+                  <div style={{ ...labelStyle, marginBottom: 20 }}>Content Details</div>
 
-                      <div className="grid gap-4 md:grid-cols-2">
-                        <Field id={`cs-app-${index}`} label="App">
-                          <select
-                            id={`cs-app-${index}`}
-                            className={SELECT_CLASS}
-                            value={notification.app}
-                            onChange={(e) => updateNotification(index, { app: e.target.value as CreatorStudioApp })}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                    <div>
+                      <label style={labelStyle} htmlFor="cs-product">
+                        Product / Service Name
+                      </label>
+                      <input
+                        id="cs-product"
+                        type="text"
+                        placeholder="e.g. BitBit AI Platform"
+                        value={productName}
+                        onChange={(e) => setProductName(e.target.value)}
+                        style={glassInput}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={labelStyle} htmlFor="cs-audience">
+                        Target Audience
+                      </label>
+                      <input
+                        id="cs-audience"
+                        type="text"
+                        placeholder="e.g. Small business owners aged 30-50"
+                        value={targetAudience}
+                        onChange={(e) => setTargetAudience(e.target.value)}
+                        style={glassInput}
+                      />
+                    </div>
+
+                    {/* Tone */}
+                    <div>
+                      <div style={labelStyle}>Tone</div>
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        {TONE_OPTIONS.map((t) => (
+                          <button
+                            key={t.value}
+                            onClick={() => setTone(t.value)}
+                            style={{
+                              padding: '8px 16px',
+                              borderRadius: 10,
+                              border: tone === t.value
+                                ? '1px solid rgba(255, 90, 31, 0.4)'
+                                : '1px solid rgba(255, 255, 255, 0.05)',
+                              background: tone === t.value
+                                ? 'rgba(255, 90, 31, 0.1)'
+                                : 'rgba(13, 17, 23, 0.5)',
+                              color: tone === t.value
+                                ? '#FF5A1F'
+                                : 'var(--text-secondary, #94A3B8)',
+                              fontSize: 13,
+                              fontWeight: 500,
+                              cursor: 'pointer',
+                              transition: 'all 200ms',
+                            }}
                           >
-                            {allowedAppOptions.map((app) => (
-                              <option key={app.value} value={app.value}>
-                                {app.label}
-                              </option>
-                            ))}
-                          </select>
-                        </Field>
-                        <Field id={`cs-amount-${index}`} label="Amount">
-                          <Input
-                            id={`cs-amount-${index}`}
-                            className={INPUT_CLASS}
-                            value={request.notifications?.[index]?.amount ?? ''}
-                            onChange={(e) => updateNotification(index, { amount: e.target.value })}
-                          />
-                        </Field>
-                        <Field id={`cs-from-${index}`} label="From">
-                          <Input
-                            id={`cs-from-${index}`}
-                            className={INPUT_CLASS}
-                            value={request.notifications?.[index]?.from ?? ''}
-                            onChange={(e) => updateNotification(index, { from: e.target.value })}
-                          />
-                        </Field>
-                        <Field id={`cs-timeago-${index}`} label="Time Ago">
-                          <Input
-                            id={`cs-timeago-${index}`}
-                            className={INPUT_CLASS}
-                            value={request.notifications?.[index]?.timeAgo ?? ''}
-                            onChange={(e) => updateNotification(index, { timeAgo: e.target.value })}
-                          />
-                        </Field>
-                        <div className="md:col-span-2">
-                          <Field id={`cs-message-${index}`} label="Custom Message (optional)">
-                            <Input
-                              id={`cs-message-${index}`}
-                              className={INPUT_CLASS}
-                              value={request.notifications?.[index]?.message ?? ''}
-                              onChange={(e) => updateNotification(index, { message: e.target.value })}
-                            />
-                          </Field>
-                        </div>
+                            {t.label}
+                          </button>
+                        ))}
                       </div>
                     </div>
-                  ))}
-                </div>
-              </StudioCard>
 
-              <StudioCard>
-                <StudioCardHeader title="Appearance" />
-                <div className="grid gap-4 sm:grid-cols-2" role="radiogroup" aria-label="Wallpaper selection">
-                  {WALLPAPERS.map((wallpaper) => {
-                    const active = request.wallpaper === wallpaper.value
-                    return (
-                      <button
-                        key={wallpaper.value}
-                        className="rounded-xl border p-3.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-primary/30"
+                    {/* Length */}
+                    <div>
+                      <div style={labelStyle}>Length</div>
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        {LENGTH_OPTIONS.map((l) => (
+                          <button
+                            key={l.value}
+                            onClick={() => setLength(l.value)}
+                            style={{
+                              padding: '8px 16px',
+                              borderRadius: 10,
+                              border: length === l.value
+                                ? '1px solid rgba(255, 90, 31, 0.4)'
+                                : '1px solid rgba(255, 255, 255, 0.05)',
+                              background: length === l.value
+                                ? 'rgba(255, 90, 31, 0.1)'
+                                : 'rgba(13, 17, 23, 0.5)',
+                              color: length === l.value
+                                ? '#FF5A1F'
+                                : 'var(--text-secondary, #94A3B8)',
+                              fontSize: 13,
+                              cursor: 'pointer',
+                              transition: 'all 200ms',
+                            }}
+                          >
+                            <span style={{ fontWeight: 500 }}>{l.label}</span>
+                            <span
+                              style={{
+                                marginLeft: 6,
+                                fontSize: 11,
+                                opacity: 0.6,
+                              }}
+                            >
+                              {l.hint}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {generateError && (
+                      <div
                         style={{
-                          borderColor: active ? 'var(--bb-orange)' : 'var(--border-subtle)',
-                          background: active ? 'rgba(255,90,31,0.1)' : 'var(--glass-interactive-bg)',
+                          padding: '10px 14px',
+                          borderRadius: 10,
+                          background: 'rgba(239, 68, 68, 0.1)',
+                          border: '1px solid rgba(239, 68, 68, 0.2)',
+                          color: '#ef4444',
+                          fontSize: 13,
                         }}
-                        onClick={() => setField('wallpaper', wallpaper.value)}
-                        role="radio"
-                        aria-checked={active}
-                        aria-label={`${wallpaper.label} wallpaper`}
                       >
-                        <div className={`mb-3 h-16 rounded-lg ${wallpaperBgClass(wallpaper.value)}`} />
-                        <p className="text-sm font-semibold text-[var(--text-primary)]">{wallpaper.label}</p>
-                        <p className="mt-1 text-xs text-[var(--text-secondary)]">
-                          {active ? 'Selected' : 'Tap to apply'}
-                        </p>
-                      </button>
-                    )
-                  })}
-                </div>
-              </StudioCard>
+                        {generateError}
+                      </div>
+                    )}
 
-              <StudioCard>
-                <StudioCardHeader title="Privacy & Export" />
-                <div className="space-y-4">
-                  <button
-                    className="flex w-full items-center justify-between rounded-xl border border-border/70 bg-background/45 px-5 py-4 text-sm"
-                    onClick={() => setField('hideSensitive', !request.hideSensitive)}
-                    aria-pressed={Boolean(request.hideSensitive)}
-                    aria-label="Toggle sensitive content masking"
-                  >
-                    <span className="flex items-center gap-2 text-[var(--text-primary)]">
-                      {request.hideSensitive ? <EyeOff size={16} /> : <Eye size={16} />}
-                      Hide sensitive content in rendered preview
-                    </span>
-                    <span className="text-xs text-[var(--text-secondary)]">
-                      {request.hideSensitive ? 'Enabled' : 'Disabled'}
-                    </span>
-                  </button>
-
-                  <div className="grid gap-3 sm:grid-cols-3">
-                    <Button onClick={copyJson} variant="outline" className="h-12 px-4">
-                      {copyState === 'copied' ? <Check size={14} /> : <Copy size={14} />}
-                      {copyState === 'copied' ? 'Copied' : 'Copy JSON'}
-                    </Button>
-                    <Button onClick={downloadManifest} variant="outline" className="h-12 px-4">
-                      <Download size={14} />
-                      Download Manifest
-                    </Button>
-                    <Button onClick={copyToolPayload} className="h-12 px-4">
-                      <Copy size={14} />
-                      Copy AI Payload
-                    </Button>
+                    <button
+                      onClick={handleGenerate}
+                      disabled={generating}
+                      style={{
+                        ...accentBtn,
+                        justifyContent: 'center',
+                        opacity: generating ? 0.7 : 1,
+                        cursor: generating ? 'not-allowed' : 'pointer',
+                      }}
+                    >
+                      {generating ? (
+                        <>
+                          <span
+                            style={{
+                              display: 'inline-block',
+                              width: 14,
+                              height: 14,
+                              borderRadius: '50%',
+                              border: '2px solid rgba(0,0,0,0.3)',
+                              borderTopColor: '#000',
+                              animation: 'spin 0.7s linear infinite',
+                            }}
+                          />
+                          Generating…
+                        </>
+                      ) : (
+                        <>✦ Generate Content</>
+                      )}
+                    </button>
                   </div>
                 </div>
-              </StudioCard>
+              </div>
 
-              <StudioCard>
-                <StudioCardHeader title="Module Order" />
-                <ol className="grid gap-3 sm:grid-cols-2" aria-label="Module order">
-                  {modules.map((moduleId, index) => (
-                    <li
-                      key={`${moduleId}-${index}`}
-                      className="flex items-center justify-between rounded-xl border border-border/70 bg-background/45 px-4 py-3"
+              {/* Right: preview panel */}
+              {generatedOutput && (
+                <div style={{ ...glassCard, padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      marginBottom: 4,
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary, #F1F5F9)' }}>
+                        {TEMPLATE_LABELS[generatedOutput.template_type]}
+                      </div>
+                      <div style={{ fontSize: 12, color: 'var(--text-dim, #475569)', marginTop: 2 }}>
+                        {generatedOutput.inputs.product_name} · {generatedOutput.inputs.tone} ·{' '}
+                        {generatedOutput.inputs.length}
+                      </div>
+                    </div>
+                    <StatusBadge status={generatedOutput.status} />
+                  </div>
+
+                  <pre
+                    style={{
+                      flex: 1,
+                      margin: 0,
+                      padding: 16,
+                      borderRadius: 10,
+                      background: 'rgba(0, 0, 0, 0.35)',
+                      border: '1px solid rgba(255, 255, 255, 0.04)',
+                      fontSize: 13,
+                      color: 'var(--text-secondary, #94A3B8)',
+                      whiteSpace: 'pre-wrap',
+                      wordBreak: 'break-word',
+                      lineHeight: 1.65,
+                      fontFamily: 'inherit',
+                      overflowY: 'auto',
+                      maxHeight: 420,
+                    }}
+                  >
+                    {generatedOutput.output}
+                  </pre>
+
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                    <CopyButton text={generatedOutput.output} />
+                    <button
+                      onClick={() => {
+                        setView('history')
+                        loadHistory()
+                      }}
+                      style={ghostBtn}
                     >
-                      <div className="flex items-center gap-3">
-                        <span
-                          className="inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold"
-                          style={{ background: 'var(--glass-interactive-border)', color: 'var(--text-secondary)' }}
-                        >
-                          {index + 1}
-                        </span>
-                        <span className="text-sm text-[var(--text-primary)]">{labelForModule(moduleId)}</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <Button
-                          size="icon-sm"
-                          variant="ghost"
-                          onClick={() => moveModule(index, -1)}
-                          aria-label={`Move ${labelForModule(moduleId)} up`}
-                        >
-                          <ArrowUp size={14} />
-                        </Button>
-                        <Button
-                          size="icon-sm"
-                          variant="ghost"
-                          onClick={() => moveModule(index, 1)}
-                          aria-label={`Move ${labelForModule(moduleId)} down`}
-                        >
-                          <ArrowDown size={14} />
-                        </Button>
-                      </div>
-                    </li>
-                  ))}
-                </ol>
-              </StudioCard>
+                      View History
+                    </button>
+                    {generatedOutput.status === 'draft' && (
+                      <button
+                        onClick={() => handleStatusChange(generatedOutput.id, 'scheduled')}
+                        style={ghostBtn}
+                      >
+                        📅 Schedule
+                      </button>
+                    )}
+                    <button
+                      onClick={() => {
+                        setGeneratedOutput(null)
+                        setProductName('')
+                        setTargetAudience('')
+                      }}
+                      style={{ ...ghostBtn, marginLeft: 'auto' }}
+                    >
+                      + New
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
+          )}
 
-            <div className="space-y-4">
-              <IOSPreview deck={deck} />
+          {/* ── HISTORY VIEW ──────────────────────────────────────────── */}
+          {view === 'history' && (
+            <div>
+              {/* Filter tabs */}
+              <div
+                style={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: 8,
+                  marginBottom: 20,
+                }}
+              >
+                <button
+                  onClick={() => setHistoryFilter('all')}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: 20,
+                    border: 'none',
+                    fontSize: 12,
+                    fontWeight: 500,
+                    cursor: 'pointer',
+                    background:
+                      historyFilter === 'all'
+                        ? 'rgba(255, 90, 31, 0.15)'
+                        : 'rgba(13, 17, 23, 0.5)',
+                    color:
+                      historyFilter === 'all'
+                        ? '#FF5A1F'
+                        : 'var(--text-secondary, #94A3B8)',
+                  }}
+                >
+                  All
+                </button>
+                {TEMPLATES.map((t) => (
+                  <button
+                    key={t.id}
+                    onClick={() => setHistoryFilter(t.id)}
+                    style={{
+                      padding: '6px 14px',
+                      borderRadius: 20,
+                      border: 'none',
+                      fontSize: 12,
+                      fontWeight: 500,
+                      cursor: 'pointer',
+                      background:
+                        historyFilter === t.id
+                          ? 'rgba(255, 90, 31, 0.15)'
+                          : 'rgba(13, 17, 23, 0.5)',
+                      color:
+                        historyFilter === t.id
+                          ? '#FF5A1F'
+                          : 'var(--text-secondary, #94A3B8)',
+                    }}
+                  >
+                    {t.icon} {t.label}
+                  </button>
+                ))}
+              </div>
+
+              {historyLoading ? (
+                <div
+                  style={{
+                    textAlign: 'center',
+                    padding: 60,
+                    color: 'var(--text-dim, #475569)',
+                    fontSize: 14,
+                  }}
+                >
+                  Loading history…
+                </div>
+              ) : filteredHistory.length === 0 ? (
+                <div
+                  style={{
+                    ...glassCard,
+                    padding: 48,
+                    textAlign: 'center',
+                  }}
+                >
+                  <div style={{ fontSize: 32, marginBottom: 12 }}>✦</div>
+                  <div
+                    style={{
+                      fontSize: 15,
+                      fontWeight: 600,
+                      color: 'var(--text-primary, #F1F5F9)',
+                      marginBottom: 8,
+                    }}
+                  >
+                    No content yet
+                  </div>
+                  <div style={{ fontSize: 13, color: 'var(--text-secondary, #94A3B8)', marginBottom: 20 }}>
+                    Generate your first piece of content to see it here.
+                  </div>
+                  <button onClick={() => setView('generate')} style={accentBtn}>
+                    Start generating
+                  </button>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {filteredHistory.map((item) => (
+                    <HistoryItem
+                      key={item.id}
+                      item={item}
+                      onSchedule={handleSchedule}
+                      onStatusChange={handleStatusChange}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
-          </div>
+          )}
+
+          {/* ── CALENDAR VIEW ─────────────────────────────────────────── */}
+          {view === 'calendar' && (
+            <div style={{ ...glassCard, padding: 24 }}>
+              <div style={{ marginBottom: 20 }}>
+                <div
+                  style={{
+                    fontSize: 14,
+                    fontWeight: 600,
+                    color: 'var(--text-primary, #F1F5F9)',
+                    marginBottom: 4,
+                  }}
+                >
+                  Content Calendar
+                </div>
+                <div style={{ fontSize: 12, color: 'var(--text-secondary, #94A3B8)' }}>
+                  Scheduled and published content across the month. Click a dot to cycle its status.
+                </div>
+              </div>
+
+              {historyLoading ? (
+                <div
+                  style={{
+                    textAlign: 'center',
+                    padding: 40,
+                    color: 'var(--text-dim, #475569)',
+                    fontSize: 14,
+                  }}
+                >
+                  Loading…
+                </div>
+              ) : (
+                <CalendarView
+                  items={history}
+                  onStatusChange={handleStatusChange}
+                />
+              )}
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Spinning animation */}
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </TabShell>
   )
 }

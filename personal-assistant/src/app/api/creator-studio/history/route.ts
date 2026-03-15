@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
 
     let query = ctx.supabase
       .from('generated_content')
-      .select('id, template_type, inputs, output, created_at', { count: 'exact' })
+      .select('id, template_type, inputs, output, status, scheduled_for, created_at', { count: 'exact' })
       .eq('org_id', ctx.orgId)
 
     if (templateType) {
@@ -37,10 +37,7 @@ export async function GET(request: NextRequest) {
 
     if (error) {
       logger.error('[creator-studio] Failed to fetch history:', error)
-      return NextResponse.json(
-        { error: 'Failed to fetch history' },
-        { status: 500 }
-      )
+      return NextResponse.json({ error: 'Failed to fetch history' }, { status: 500 })
     }
 
     return NextResponse.json({
@@ -52,9 +49,6 @@ export async function GET(request: NextRequest) {
     })
   } catch (err) {
     logger.error('[creator-studio] History fetch failed:', err)
-    return NextResponse.json(
-      { error: 'Something went wrong. Try again in a moment.' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Something went wrong. Try again in a moment.' }, { status: 500 })
   }
 }
