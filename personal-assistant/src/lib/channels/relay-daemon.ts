@@ -131,6 +131,66 @@ async function hydrateAdapterConfig(
       return baseConfig
     }
 
+    if (channelType === 'outlook') {
+      const creds = await readCredential(['outlook'])
+      let accessToken = creds?.['access_token'] as string | undefined
+      const tokenExpiresAt = creds?.['token_expires_at'] as string | undefined
+      const refreshToken = creds?.['refresh_token'] as string | undefined
+
+      // Refresh if expired or expiring within 5 minutes
+      const isExpired = tokenExpiresAt
+        ? new Date(tokenExpiresAt).getTime() - 5 * 60 * 1000 <= Date.now()
+        : !accessToken
+
+      if (isExpired && refreshToken) {
+        const clientId = creds?.['client_id'] as string | undefined || process.env.OUTLOOK_CLIENT_ID
+        const clientSecret = creds?.['client_secret'] as string | undefined || process.env.OUTLOOK_CLIENT_SECRET
+        const tenantId = creds?.['tenant_id'] as string | undefined || process.env.OUTLOOK_TENANT_ID || 'common'
+        if (clientId && clientSecret) {
+          try {
+            const url = `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`
+            const res = await fetch(url, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+              body: new URLSearchParams({
+                client_id: clientId,
+                client_secret: clientSecret,
+                refresh_token: refreshToken,
+                grant_type: 'refresh_token',
+                scope: 'https://graph.microsoft.com/Mail.Read https://graph.microsoft.com/Mail.Send',
+              }),
+            })
+            if (res.ok) {
+              const data = await res.json() as { access_token: string; expires_in: number; refresh_token?: string }
+              accessToken = data.access_token
+              const newExpiresAt = new Date(Date.now() + data.expires_in * 1000).toISOString()
+              const updatedCreds = {
+                ...creds,
+                access_token: data.access_token,
+                refresh_token: data.refresh_token || refreshToken,
+                token_expires_at: newExpiresAt,
+              }
+              try {
+                await storeOrgCredential(supabase, orgId, 'outlook', updatedCreds as Record<string, unknown>, 'relay-daemon')
+              } catch (storeErr) {
+                logger.warn('[relay] Failed to persist refreshed Outlook token:', storeErr)
+              }
+              logger.info('[relay] Outlook token refreshed successfully')
+            } else {
+              logger.warn('[relay] Outlook token refresh failed:', await res.text())
+            }
+          } catch (err) {
+            logger.warn('[relay] Outlook token refresh error:', err)
+          }
+        }
+      }
+
+      if (typeof accessToken === 'string' && accessToken) {
+        baseConfig.accessToken = accessToken
+      }
+      return baseConfig
+    }
+
     if (channelType === 'clickup') {
       const creds = await readCredential(['clickup'])
       const accessToken = creds?.['access_token']

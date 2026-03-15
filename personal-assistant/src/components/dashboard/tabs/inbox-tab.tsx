@@ -396,15 +396,16 @@ function InboxTab() {
     }
   }, []);
 
-  // Pagination
-  const [page, setPage] = useState(1);
-  const ITEMS_PER_PAGE = 25;
+  // Pagination — server-side cursor
+  const PAGE_SIZE = 25;
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   const devOverrides = useDevOverrides();
   const useSeeded = devOverrides?.seed_data?.inbox ?? false;
 
   // Reset pagination when filters change
-  useEffect(() => { setPage(1); }, [activePill, channelFilter, priorityFilter]);
+  useEffect(() => { setHasMore(true); }, [activePill, channelFilter, priorityFilter]);
 
   // ── Computed: displayed — defined early so callbacks can reference it ──
   const displayed = useMemo(() => {
@@ -435,31 +436,45 @@ function InboxTab() {
   );
 
   // ── Fetch ──
-  const fetchInbox = useCallback(async (isRefresh = false) => {
+  const fetchInbox = useCallback(async (opts: { isRefresh?: boolean; loadMore?: boolean } = {}) => {
     if (useSeeded) return;
-    if (isRefresh) setRefreshing(true);
+    const { isRefresh = false, loadMore = false } = opts;
+
+    if (loadMore) setLoadingMore(true);
+    else if (isRefresh) setRefreshing(true);
     else setLoading(true);
 
     try {
       const params = new URLSearchParams();
       if (channelFilter) params.set('channel', channelFilter);
       if (priorityFilter) params.set('priority', priorityFilter);
-      params.set('limit', '50');
+      params.set('limit', String(PAGE_SIZE));
+      if (loadMore) params.set('offset', String(messages.length));
 
       const response = await fetch(`/api/agent/inbox?${params.toString()}`);
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const data = await response.json();
-      setMessages(data.messages || []);
+      const newMessages = data.messages || [];
+
+      if (loadMore) {
+        setMessages(prev => [...prev, ...newMessages]);
+      } else {
+        setMessages(newMessages);
+      }
       setTotal(data.total || 0);
+      setHasMore(loadMore
+        ? newMessages.length >= PAGE_SIZE
+        : newMessages.length < (data.total || 0));
       setError(null);
     } catch (err) {
       logger.error('[inbox-tab] fetch error:', err);
-      setError('Failed to load inbox');
+      if (!loadMore) setError('Failed to load inbox');
     } finally {
       setLoading(false);
       setRefreshing(false);
+      setLoadingMore(false);
     }
-  }, [channelFilter, priorityFilter, useSeeded]);
+  }, [channelFilter, priorityFilter, useSeeded, messages.length]);
 
   useEffect(() => {
     if (useSeeded) {
@@ -473,7 +488,7 @@ function InboxTab() {
 
   useRealtimeSubscription('channel_messages', { event: 'INSERT' }, () => {
     setNewMessageAlert(true);
-    if (!useSeeded) fetchInbox(true);
+    if (!useSeeded) fetchInbox({ isRefresh: true });
   });
 
   // Close snooze picker when clicking outside
@@ -695,9 +710,6 @@ function InboxTab() {
     clearSelection();
   }, [keyboard.selectedIds, handleSpam, clearSelection]);
 
-  const hasActiveFilters = channelFilter || priorityFilter;
-  const clearFilters = () => { setChannelFilter(''); setPriorityFilter(''); };
-
   if (loading && !useSeeded) return <InboxSkeleton />;
 
   if (error && messages.length === 0) {
@@ -745,7 +757,7 @@ function InboxTab() {
                 if (res.ok) {
                   const data = await res.json();
                   if (data.results?.some((r: { result: { messagesInserted: number } }) => r.result.messagesInserted > 0)) {
-                    await fetchInbox(true);
+                    await fetchInbox({ isRefresh: true });
                   }
                 }
               } catch { /* ignore */ }
@@ -787,16 +799,12 @@ function InboxTab() {
         </div>
       </div>
 
-      {/* ── Category Pills Bar ── */}
-      <CategoryPillsBar
+      {/* ── Unified Filter Bar ── */}
+      <UnifiedFilterBar
         activePill={activePill}
-        onSelect={setActivePill}
-        counts={pillCounts}
+        onPillSelect={setActivePill}
+        pillCounts={pillCounts}
         hasUnreadPriority={hasUnreadPriority}
-      />
-
-      {/* ── Inline Filter Chips ── */}
-      <FilterChipsBar
         channelFilter={channelFilter}
         onChannelChange={setChannelFilter}
         priorityFilter={priorityFilter}
@@ -813,7 +821,7 @@ function InboxTab() {
           />
         ) : (
           <>
-            {displayed.slice(0, page * ITEMS_PER_PAGE).map((msg, idx) => (
+            {displayed.map((msg, idx) => (
               <React.Fragment key={msg.id}>
                 <MessageRow
                   message={msg}
@@ -847,10 +855,11 @@ function InboxTab() {
                 )}
               </React.Fragment>
             ))}
-            {/* Pagination: Load more */}
-            {displayed.length > page * ITEMS_PER_PAGE && (
+            {/* Pagination: Load more (server-side) */}
+            {hasMore && displayed.length > 0 && (
               <button
-                onClick={() => setPage(p => p + 1)}
+                onClick={() => fetchInbox({ loadMore: true })}
+                disabled={loadingMore}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -862,22 +871,31 @@ function InboxTab() {
                   borderRadius: 12,
                   border: 'none',
                   background: 'rgba(255,255,255,0.03)',
-                  color: 'rgba(255,255,255,0.45)',
+                  color: loadingMore ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.45)',
                   fontSize: 13,
                   fontWeight: 500,
-                  cursor: 'pointer',
+                  cursor: loadingMore ? 'default' : 'pointer',
                   transition: 'all 150ms cubic-bezier(0.16, 1, 0.3, 1)',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
-                  e.currentTarget.style.color = 'rgba(255,255,255,0.7)';
+                  if (!loadingMore) {
+                    e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
+                    e.currentTarget.style.color = 'rgba(255,255,255,0.7)';
+                  }
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.background = 'rgba(255,255,255,0.03)';
-                  e.currentTarget.style.color = 'rgba(255,255,255,0.45)';
+                  if (!loadingMore) e.currentTarget.style.color = 'rgba(255,255,255,0.45)';
                 }}
               >
-                Load more ({displayed.length - page * ITEMS_PER_PAGE} remaining)
+                {loadingMore ? (
+                  <>
+                    <RefreshCw size={13} style={{ animation: 'spin 1s linear infinite' }} />
+                    Loading...
+                  </>
+                ) : (
+                  <>Load more {total > messages.length ? `(${total - messages.length} remaining)` : ''}</>
+                )}
               </button>
             )}
           </>
@@ -965,234 +983,246 @@ function InboxTab() {
 }
 
 // ---------------------------------------------------------------------------
-// Category Pills Bar — Task #10
+// Unified Filter Bar — single row with smart categories + dropdowns
 // ---------------------------------------------------------------------------
 
 const PILL_ORDER: CategoryPillType[] = ['all', 'focus', 'waiting', 'direct', 'email', 'notifications', 'billing'];
 
-function CategoryPillsBar({
-  activePill,
-  onSelect,
-  counts,
-  hasUnreadPriority,
+const CHANNEL_OPTIONS = [
+  { value: '', label: 'All channels', icon: null },
+  { value: 'gmail', label: 'Gmail', color: '#EA4335' },
+  { value: 'outlook', label: 'Outlook', color: '#0078D4' },
+  { value: 'whatsapp', label: 'WhatsApp', color: '#25D366' },
+  { value: 'asana', label: 'Asana', color: '#F06A6A' },
+  { value: 'calendly', label: 'Calendly', color: '#006BFF' },
+  { value: 'stripe', label: 'Stripe', color: '#635BFF' },
+];
+
+const PRIORITY_OPTIONS = [
+  { value: '', label: 'Any priority' },
+  { value: 'critical', label: 'Critical', color: '#FF3B30' },
+  { value: 'high', label: 'High', color: '#FF9500' },
+  { value: 'medium', label: 'Medium', color: '#FFCC00' },
+  { value: 'low', label: 'Low', color: 'rgba(255,255,255,0.3)' },
+];
+
+function FilterDropdown({
+  options,
+  value,
+  onChange,
+  label,
 }: {
-  activePill: CategoryPillType;
-  onSelect: (pill: CategoryPillType) => void;
-  counts: Record<CategoryPillType, number>;
-  hasUnreadPriority: boolean;
+  options: { value: string; label: string; color?: string }[];
+  value: string;
+  onChange: (v: string) => void;
+  label: string;
 }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const selected = options.find(o => o.value === value);
+  const isFiltered = value !== '';
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
+
   return (
-    <div style={{
-      display: 'flex',
-      alignItems: 'center',
-      gap: 6,
-      padding: '8px 0 4px',
-      overflowX: 'auto',
-      scrollbarWidth: 'none',
-      flexShrink: 0,
-      minHeight: 40,
-    }}>
-      {PILL_ORDER.map((pill, pillIndex) => {
-        const cfg = PILL_CONFIG[pill];
-        const isActive = activePill === pill;
-        const isPriority = pill === 'focus';
+    <div ref={ref} style={{ position: 'relative', flexShrink: 0 }}>
+      <button
+        onClick={() => setOpen(!open)}
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 6,
+          padding: '5px 10px 5px 12px',
+          borderRadius: 8,
+          border: isFiltered ? '1px solid rgba(255,255,255,0.15)' : '1px solid rgba(255,255,255,0.06)',
+          background: isFiltered ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.03)',
+          color: isFiltered ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.4)',
+          fontSize: 12,
+          fontWeight: isFiltered ? 600 : 400,
+          cursor: 'pointer',
+          transition: 'all 150ms ease',
+          whiteSpace: 'nowrap',
+        }}
+        onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = 'rgba(255,255,255,0.8)'; }}
+        onMouseLeave={(e) => { e.currentTarget.style.background = isFiltered ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.03)'; e.currentTarget.style.color = isFiltered ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.4)'; }}
+      >
+        {selected?.color && <span style={{ width: 6, height: 6, borderRadius: '50%', background: selected.color, flexShrink: 0 }} />}
+        {selected?.label || label}
+        <ChevronDown size={11} style={{ opacity: 0.5, transition: 'transform 150ms', transform: open ? 'rotate(180deg)' : 'none' }} />
+      </button>
 
-        const pillStyle: React.CSSProperties = isActive
-          ? {
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-              padding: '6px 14px',
-              borderRadius: 20,
-              border: '1px solid transparent',
-              background: 'rgba(255,255,255,0.95)',
-              color: '#0A0A0B',
-              fontSize: 12,
-              fontWeight: 600,
-              cursor: 'pointer',
-              transition: 'background 150ms ease, color 150ms ease',
-              whiteSpace: 'nowrap',
-              flexShrink: 0,
-            }
-          : {
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-              padding: '6px 14px',
-              borderRadius: 20,
-              border: 'none',
-              background: 'transparent',
-              color: 'rgba(255,255,255,0.45)',
-              fontSize: 12,
-              fontWeight: 500,
-              cursor: 'pointer',
-              transition: 'transform 150ms ease, color 150ms ease, background 150ms ease',
-              whiteSpace: 'nowrap',
-              flexShrink: 0,
-            };
-
-        return (
-          <button
-            key={pill}
-            onClick={() => onSelect(pill)}
-            style={pillStyle}
-            title={`${cfg.label} (${pillIndex + 1})`}
-            onMouseEnter={(e) => {
-              if (!isActive) {
-                e.currentTarget.style.transform = 'scale(1.02)';
-                e.currentTarget.style.color = 'var(--text-primary, #F1F5F9)';
-              }
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'scale(1)';
-              if (!isActive) {
-                e.currentTarget.style.color = 'rgba(255,255,255,0.45)';
-              }
-            }}
-          >
-            {isPriority && hasUnreadPriority && !isActive && (
-              <span style={{
-                width: 6, height: 6, borderRadius: '50%',
-                background: 'var(--bb-orange, #FF5A1F)',
-                flexShrink: 0,
-              }} />
-            )}
-            {cfg.label}
-            {pill !== 'all' && counts[pill] > 0 && (
-              <span style={{
-                fontSize: 10,
-                fontWeight: 500,
-                opacity: isActive ? 0.6 : 0.5,
-                marginLeft: -2,
-              }}>
-                {counts[pill]}
-              </span>
-            )}
-          </button>
-        );
-      })}
+      {open && (
+        <div style={{
+          position: 'absolute',
+          top: 'calc(100% + 4px)',
+          left: 0,
+          zIndex: 100,
+          minWidth: 160,
+          padding: 4,
+          borderRadius: 10,
+          background: 'rgba(14, 18, 28, 0.96)',
+          backdropFilter: 'blur(20px) saturate(1.2)',
+          WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
+          border: '1px solid rgba(255,255,255,0.1)',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+          animation: 'fadeSlideUp 120ms cubic-bezier(0.16, 1, 0.3, 1)',
+        }}>
+          {options.map((opt) => {
+            const isSelected = opt.value === value;
+            return (
+              <button
+                key={opt.value}
+                onClick={() => { onChange(opt.value); setOpen(false); }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  width: '100%',
+                  padding: '7px 10px',
+                  borderRadius: 6,
+                  border: 'none',
+                  background: isSelected ? 'rgba(255,255,255,0.08)' : 'transparent',
+                  color: isSelected ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.6)',
+                  fontSize: 12,
+                  fontWeight: isSelected ? 600 : 400,
+                  cursor: 'pointer',
+                  transition: 'background 100ms ease',
+                  textAlign: 'left',
+                }}
+                onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; }}
+                onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.background = 'transparent'; }}
+              >
+                {opt.color && <span style={{ width: 6, height: 6, borderRadius: '50%', background: opt.color, flexShrink: 0 }} />}
+                {opt.label}
+                {isSelected && <CheckCircle2 size={11} style={{ marginLeft: 'auto', opacity: 0.6 }} />}
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
 
-// ---------------------------------------------------------------------------
-// Filter Chips Bar — inline channel + priority chips
-// ---------------------------------------------------------------------------
-
-const CHANNEL_CHIPS = [
-  { value: '', label: 'All' },
-  { value: 'gmail', label: 'Gmail' },
-  { value: 'outlook', label: 'Outlook' },
-  { value: 'whatsapp', label: 'WhatsApp' },
-  { value: 'asana', label: 'Asana' },
-  { value: 'calendly', label: 'Calendly' },
-  { value: 'stripe', label: 'Stripe' },
-];
-
-const PRIORITY_CHIPS = [
-  { value: '', label: 'All' },
-  { value: 'critical', label: 'Critical' },
-  { value: 'high', label: 'High' },
-  { value: 'medium', label: 'Medium' },
-  { value: 'low', label: 'Low' },
-];
-
-const chipInactiveStyle: React.CSSProperties = {
-  display: 'inline-flex',
-  alignItems: 'center',
-  padding: '6px 14px',
-  borderRadius: 20,
-  border: 'none',
-  background: 'var(--glass-pill-bg)',
-  backdropFilter: 'var(--glass-card-blur)',
-  WebkitBackdropFilter: 'var(--glass-card-blur)',
-  boxShadow: 'var(--glass-pill-inset)',
-  fontSize: 12,
-  color: 'rgba(255,255,255,0.5)',
-  cursor: 'pointer',
-  whiteSpace: 'nowrap',
-  transition: 'all 150ms ease',
-};
-
-const chipActiveStyle: React.CSSProperties = {
-  ...chipInactiveStyle,
-  background: 'rgba(255,255,255,0.92)',
-  color: '#0A0A0B',
-  fontWeight: 600,
-};
-
-function FilterChipsBar({
+function UnifiedFilterBar({
+  activePill,
+  onPillSelect,
+  pillCounts,
+  hasUnreadPriority,
   channelFilter,
   onChannelChange,
   priorityFilter,
   onPriorityChange,
 }: {
+  activePill: CategoryPillType;
+  onPillSelect: (pill: CategoryPillType) => void;
+  pillCounts: Record<CategoryPillType, number>;
+  hasUnreadPriority: boolean;
   channelFilter: string;
   onChannelChange: (v: string) => void;
   priorityFilter: string;
   onPriorityChange: (v: string) => void;
 }) {
+  const hasActiveFilters = channelFilter || priorityFilter;
+
   return (
     <div style={{
       display: 'flex',
       alignItems: 'center',
-      gap: 6,
-      padding: '4px 0 8px',
+      gap: 4,
+      padding: '6px 0 8px',
       overflowX: 'auto',
       scrollbarWidth: 'none',
+      flexShrink: 0,
+      minHeight: 40,
     }}>
-      {CHANNEL_CHIPS.map((chip) => (
-        <button
-          key={`ch-${chip.value}`}
-          onClick={() => onChannelChange(chip.value)}
-          style={channelFilter === chip.value ? chipActiveStyle : chipInactiveStyle}
-          onMouseEnter={(e) => {
-            if (channelFilter !== chip.value) {
-              e.currentTarget.style.transform = 'scale(1.02)';
-              e.currentTarget.style.color = 'var(--text-primary, #F1F5F9)';
-            }
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'scale(1)';
-            if (channelFilter !== chip.value) {
-              e.currentTarget.style.color = 'rgba(255,255,255,0.5)';
-            }
-          }}
-        >
-          {chip.label}
-        </button>
-      ))}
+      {/* Category pills — primary filter */}
+      {PILL_ORDER.map((pill) => {
+        const cfg = PILL_CONFIG[pill];
+        const isActive = activePill === pill;
+        const isPriority = pill === 'focus';
 
-      {/* Separator */}
-      <div style={{
-        width: 1,
-        height: 16,
-        background: 'rgba(255,255,255,0.08)',
-        margin: '0 8px',
-        flexShrink: 0,
-      }} />
+        return (
+          <button
+            key={pill}
+            onClick={() => onPillSelect(pill)}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 5,
+              padding: '6px 12px',
+              borderRadius: 20,
+              border: 'none',
+              background: isActive ? 'rgba(255,255,255,0.95)' : 'transparent',
+              color: isActive ? '#0A0A0B' : 'rgba(255,255,255,0.45)',
+              fontSize: 12,
+              fontWeight: isActive ? 600 : 500,
+              cursor: 'pointer',
+              transition: 'all 150ms ease',
+              whiteSpace: 'nowrap',
+              flexShrink: 0,
+            }}
+            onMouseEnter={(e) => {
+              if (!isActive) e.currentTarget.style.color = 'rgba(255,255,255,0.8)';
+            }}
+            onMouseLeave={(e) => {
+              if (!isActive) e.currentTarget.style.color = 'rgba(255,255,255,0.45)';
+            }}
+          >
+            {isPriority && hasUnreadPriority && !isActive && (
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--bb-orange, #FF5A1F)', flexShrink: 0 }} />
+            )}
+            {cfg.label}
+            {pill !== 'all' && pillCounts[pill] > 0 && (
+              <span style={{ fontSize: 10, fontWeight: 500, opacity: isActive ? 0.6 : 0.5, marginLeft: -2 }}>
+                {pillCounts[pill]}
+              </span>
+            )}
+          </button>
+        );
+      })}
 
-      {PRIORITY_CHIPS.map((chip) => (
+      {/* Separator between categories and filter dropdowns */}
+      <div style={{ width: 1, height: 16, background: 'rgba(255,255,255,0.06)', margin: '0 6px', flexShrink: 0 }} />
+
+      {/* Channel + Priority dropdowns */}
+      <FilterDropdown options={CHANNEL_OPTIONS} value={channelFilter} onChange={onChannelChange} label="Channel" />
+      <FilterDropdown options={PRIORITY_OPTIONS} value={priorityFilter} onChange={onPriorityChange} label="Priority" />
+
+      {/* Clear filters indicator */}
+      {hasActiveFilters && (
         <button
-          key={`pr-${chip.value}`}
-          onClick={() => onPriorityChange(chip.value)}
-          style={priorityFilter === chip.value ? chipActiveStyle : chipInactiveStyle}
-          onMouseEnter={(e) => {
-            if (priorityFilter !== chip.value) {
-              e.currentTarget.style.transform = 'scale(1.02)';
-              e.currentTarget.style.color = 'var(--text-primary, #F1F5F9)';
-            }
+          onClick={() => { onChannelChange(''); onPriorityChange(''); }}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 4,
+            padding: '4px 8px',
+            borderRadius: 6,
+            border: 'none',
+            background: 'rgba(255, 90, 31, 0.1)',
+            color: '#FF7A45',
+            fontSize: 11,
+            fontWeight: 500,
+            cursor: 'pointer',
+            transition: 'all 150ms ease',
+            whiteSpace: 'nowrap',
+            flexShrink: 0,
           }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'scale(1)';
-            if (priorityFilter !== chip.value) {
-              e.currentTarget.style.color = 'rgba(255,255,255,0.5)';
-            }
-          }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255, 90, 31, 0.18)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255, 90, 31, 0.1)'; }}
         >
-          {chip.label}
+          <X size={10} />
+          Clear
         </button>
-      ))}
+      )}
     </div>
   );
 }

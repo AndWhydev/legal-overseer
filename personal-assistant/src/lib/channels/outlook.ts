@@ -344,25 +344,34 @@ export const outlookAdapter: ChannelAdapter = {
   description: 'Pull emails from Outlook via Microsoft Graph API',
   icon: 'Mail',
 
-  async pull(_config, since) {
+  async pull(config, since) {
+    // Prefer hydrated OAuth token from relay daemon (user's delegated credentials)
+    const hydratedToken = (config as Record<string, unknown>)?.accessToken as string | undefined
+
+    // Fallback to env-var client credentials flow
     const tenantId = process.env.OUTLOOK_TENANT_ID
     const clientId = process.env.OUTLOOK_CLIENT_ID
     const clientSecret = process.env.OUTLOOK_CLIENT_SECRET
     const userId = process.env.OUTLOOK_USER_ID
 
-    if (!tenantId || !clientId || !clientSecret || !userId) return []
+    if (!hydratedToken && (!tenantId || !clientId || !clientSecret || !userId)) return []
 
     try {
-      const token = await getClientCredentialsToken({
-        tenant_id: tenantId,
-        client_id: clientId,
-        client_secret: clientSecret,
+      const token = hydratedToken || await getClientCredentialsToken({
+        tenant_id: tenantId!,
+        client_id: clientId!,
+        client_secret: clientSecret!,
       })
+
+      // When using delegated OAuth (hydrated token), use /me endpoint
+      // When using client credentials, use /users/{userId} endpoint
+      const userPath = hydratedToken ? 'me' : `users/${encodeURIComponent(userId!)}`
+
       const windowDays = Number(process.env.RELAY_DEFAULT_WINDOW_DAYS) || 30
       const sinceDate = since || new Date(Date.now() - windowDays * 24 * 60 * 60 * 1000)
       const filter = `receivedDateTime ge ${sinceDate.toISOString()}`
       const select = 'id,conversationId,sender,subject,bodyPreview,body,receivedDateTime,isRead'
-      const url = `https://graph.microsoft.com/v1.0/users/${encodeURIComponent(userId)}/messages?$filter=${encodeURIComponent(filter)}&$select=${select}&$top=50&$orderby=receivedDateTime desc`
+      const url = `https://graph.microsoft.com/v1.0/${userPath}/messages?$filter=${encodeURIComponent(filter)}&$select=${select}&$top=50&$orderby=receivedDateTime desc`
 
       const data = await graphFetch<GraphMessagesResponse>(token, url, {
         headers: { Prefer: 'outlook.body-content-type="text"' },
@@ -392,11 +401,9 @@ export const outlookAdapter: ChannelAdapter = {
   },
 
   async isAvailable() {
+    // Available via env-var client credentials OR via OAuth (relay daemon hydrates credentials)
     return Boolean(
-      process.env.OUTLOOK_TENANT_ID &&
-      process.env.OUTLOOK_CLIENT_ID &&
-      process.env.OUTLOOK_CLIENT_SECRET &&
-      process.env.OUTLOOK_USER_ID,
+      process.env.OUTLOOK_CLIENT_ID && process.env.OUTLOOK_CLIENT_SECRET
     )
   },
 }

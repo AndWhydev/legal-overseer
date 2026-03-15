@@ -48,7 +48,8 @@ describe('outlookAdapter', () => {
     })
 
     it('reports unavailable when missing credentials', async () => {
-        process.env.OUTLOOK_TENANT_ID = ''
+        process.env.OUTLOOK_CLIENT_ID = ''
+        process.env.OUTLOOK_CLIENT_SECRET = ''
         expect(await outlookAdapter.isAvailable()).toBe(false)
     })
 
