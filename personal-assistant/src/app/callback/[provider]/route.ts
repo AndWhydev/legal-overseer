@@ -34,6 +34,13 @@ function buildCredentialPayload(
 
   if (provider === 'outlook') {
     payload.tenant_id = (process.env.OUTLOOK_TENANT_ID || 'common').trim()
+    payload.client_id = (process.env.OUTLOOK_CLIENT_ID || '').trim()
+    payload.client_secret = (process.env.OUTLOOK_CLIENT_SECRET || '').trim()
+  }
+
+  if (provider === 'gmail') {
+    payload.client_id = (process.env.GOOGLE_CLIENT_ID || '').trim()
+    payload.client_secret = (process.env.GOOGLE_CLIENT_SECRET || '').trim()
   }
 
   return payload
@@ -168,6 +175,17 @@ export async function GET(
       },
       { onConflict: 'org_id,channel_type' }
     )
+
+    // Trigger immediate sync so messages appear without waiting for cron
+    try {
+      const { pollChannel } = await import('@/lib/channels/relay-daemon')
+      const channelType = connectionChannelType as import('@/lib/channels/types').ChannelType
+      pollChannel(supabase, orgId, channelType).catch((err: unknown) => {
+        logger.warn(`[oauth-callback] Initial sync failed for ${connectionChannelType}:`, err)
+      })
+    } catch {
+      // Non-blocking — cron will pick it up
+    }
 
     // Check if user was mid-onboarding and should return there
     const onboardingActive = cookieStore.get('bb-onboarding-active')?.value === '1'
