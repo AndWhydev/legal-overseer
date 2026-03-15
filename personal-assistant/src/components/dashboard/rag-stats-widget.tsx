@@ -191,9 +191,15 @@ export function RagStatsWidget({ className = '', showDetails = true }: RagStatsW
   }
 
   // Get top channels by vector count
-  const topChannels = Object.entries(stats.namespaceVectors)
-    .sort(([, a], [, b]) => (b ?? 0) - (a ?? 0))
-    .slice(0, 5)
+  const topChannels = stats
+    ? Object.entries(stats.namespaceVectors)
+        .sort(([, a], [, b]) => (b ?? 0) - (a ?? 0))
+        .slice(0, 5)
+    : []
+
+  // Get critical alerts
+  const criticalAlerts = alerts.filter(a => a.level === 'critical')
+  const warningAlerts = alerts.filter(a => a.level === 'warning')
 
   return (
     <div style={{ ...glassCard, className }} className={className}>
@@ -207,17 +213,76 @@ export function RagStatsWidget({ className = '', showDetails = true }: RagStatsW
         <div style={metricRow}>
           <span style={metricLabel}>Total Vectors</span>
           <span style={metricValue}>
-            {loading ? '–' : <CountUp target={stats.totalVectors} />}
+            {loading ? '–' : <CountUp target={stats?.totalVectors ?? 0} />}
           </span>
         </div>
 
         {/* Index fullness */}
         <div style={metricRow}>
           <span style={metricLabel}>Index Capacity</span>
-          <span style={metricValue}>
-            {loading ? '–' : <CountUp target={stats.indexFullness} suffix="%" />}
+          <span
+            style={{
+              ...metricValue,
+              color:
+                stats && stats.indexFullness >= 90
+                  ? '#EF4444'
+                  : stats && stats.indexFullness >= 70
+                    ? '#F59E0B'
+                    : 'var(--text-primary, #F1F5F9)',
+            }}
+          >
+            {loading ? '–' : <CountUp target={stats?.indexFullness ?? 0} suffix="%" />}
           </span>
         </div>
+
+        {/* Monthly cost estimate */}
+        {costs && (
+          <div style={metricRow}>
+            <span style={metricLabel}>Est. Monthly Cost</span>
+            <span style={{ ...metricValue, display: 'flex', alignItems: 'center', gap: 4 }}>
+              <DollarSign size={14} style={{ color: '#10B981' }} />
+              {costs.monthlyCost.toFixed(2)}
+            </span>
+          </div>
+        )}
+
+        {/* Critical alerts */}
+        {criticalAlerts.length > 0 && (
+          <div
+            style={{
+              padding: 8,
+              borderRadius: 6,
+              background: 'rgba(239, 68, 68, 0.1)',
+              border: '1px solid rgba(239, 68, 68, 0.3)',
+              display: 'flex',
+              gap: 6,
+            }}
+          >
+            <AlertTriangle size={14} style={{ color: '#EF4444', flexShrink: 0, marginTop: 1 }} />
+            <span style={{ fontSize: 11, color: '#FCA5A5', lineHeight: 1.4 }}>
+              {criticalAlerts[0].message}
+            </span>
+          </div>
+        )}
+
+        {/* Warning alerts */}
+        {!criticalAlerts.length && warningAlerts.length > 0 && (
+          <div
+            style={{
+              padding: 8,
+              borderRadius: 6,
+              background: 'rgba(245, 158, 11, 0.1)',
+              border: '1px solid rgba(245, 158, 11, 0.3)',
+              display: 'flex',
+              gap: 6,
+            }}
+          >
+            <AlertCircle size={14} style={{ color: '#F59E0B', flexShrink: 0, marginTop: 1 }} />
+            <span style={{ fontSize: 11, color: '#FECACA', lineHeight: 1.4 }}>
+              {warningAlerts[0].message}
+            </span>
+          </div>
+        )}
 
         {/* Show details if enabled and we have channel breakdown */}
         {showDetails && topChannels.length > 0 && (
@@ -262,7 +327,7 @@ export function RagStatsWidget({ className = '', showDetails = true }: RagStatsW
             textAlign: 'right',
           }}
         >
-          {new Date(stats.lastUpdated).toLocaleTimeString()}
+          {stats?.lastUpdated ? new Date(stats.lastUpdated).toLocaleTimeString() : 'Loading...'}
         </div>
       </div>
     </div>
