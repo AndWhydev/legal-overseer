@@ -4,9 +4,10 @@ import { logger } from '@/lib/core/logger';
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { memberId: string } }
+  { params }: { params: Promise<{ memberId: string }> }
 ) {
   try {
+    const { memberId } = await params;
     const supabase = await createClient();
     if (!supabase) {
       return NextResponse.json({ error: 'Service not configured' }, { status: 503 });
@@ -37,7 +38,7 @@ export async function PATCH(
     const { data: member, error: memberError } = await supabase
       .from('profiles')
       .select('org_id, role, id')
-      .eq('id', params.memberId)
+      .eq('id', memberId)
       .single();
 
     if (memberError || !member) {
@@ -71,7 +72,7 @@ export async function PATCH(
     const { error: updateError } = await supabase
       .from('profiles')
       .update({ role })
-      .eq('id', params.memberId);
+      .eq('id', memberId);
 
     if (updateError) {
       logger.error('Failed to update member role:', updateError);
@@ -80,7 +81,7 @@ export async function PATCH(
 
     logger.info('Member role updated', {
       orgId: userProfile.org_id,
-      memberId: params.memberId,
+      memberId,
       newRole: role,
       updatedBy: user.id,
     });
@@ -94,9 +95,10 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { memberId: string } }
+  { params }: { params: Promise<{ memberId: string }> }
 ) {
   try {
+    const { memberId } = await params;
     const supabase = await createClient();
     if (!supabase) {
       return NextResponse.json({ error: 'Service not configured' }, { status: 503 });
@@ -127,7 +129,7 @@ export async function DELETE(
     const { data: member, error: memberError } = await supabase
       .from('profiles')
       .select('org_id, role')
-      .eq('id', params.memberId)
+      .eq('id', memberId)
       .single();
 
     if (memberError || !member) {
@@ -146,7 +148,7 @@ export async function DELETE(
     }
 
     // Prevent self-removal
-    if (params.memberId === user.id) {
+    if (memberId === user.id) {
       return NextResponse.json({ error: 'Cannot remove yourself' }, { status: 403 });
     }
 
@@ -154,7 +156,7 @@ export async function DELETE(
     const { error: deleteError } = await supabase
       .from('profiles')
       .delete()
-      .eq('id', params.memberId);
+      .eq('id', memberId);
 
     if (deleteError) {
       logger.error('Failed to delete member:', deleteError);
@@ -163,7 +165,7 @@ export async function DELETE(
 
     logger.info('Team member removed', {
       orgId: userProfile.org_id,
-      memberId: params.memberId,
+      memberId,
       removedBy: user.id,
     });
 
