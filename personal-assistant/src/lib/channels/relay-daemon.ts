@@ -373,40 +373,41 @@ export async function pollChannel(
     }
     const insertDurationMs = Date.now() - insertStartMs
 
-    // Phase: RAG embedding (fire-and-forget, non-blocking)
+    // Phase: RAG embedding (enqueue to job queue, non-blocking)
     if (inserted > 0 && process.env.PINECONE_API_KEY) {
       const embeddingPromise = (async () => {
         try {
-          const { embedAndUpsert } = await import('@/lib/rag/embedding-service')
-          const docs = messagesToInsert
-            .filter(({ msg: m }) => m.body && m.body.length > 0)
-            .map(({ msg: m }) => ({
-              messageId: m.externalId,
-              orgId,
-              content: (m as unknown as { bodyFull?: string }).bodyFull ?? m.body,
-              metadata: {
-                message_id: m.externalId,
-                org_id: orgId,
-                channel: m.channel,
-                sender: m.sender,
-                sender_email: m.senderEmail,
-                subject: m.subject,
-                received_at: m.receivedAt.toISOString(),
-                chunk_index: 0,
-                total_chunks: 1,
-                is_full_body: Boolean((m as unknown as { bodyFull?: string }).bodyFull),
-              },
-            }))
-          if (docs.length > 0) {
-            const result = await embedAndUpsert(docs)
-            logger.info('[relay] RAG embedding complete', {
-              channel: channelType,
-              embedded: result.embedded,
-              failed: result.failed,
-            })
+          const { enqueueEmbedding } = await import('@/lib/rag/embedding-queue')
+          let enqueued = 0
+
+          for (const { msg: m } of messagesToInsert) {
+            if (!m.body || m.body.length === 0) continue
+
+            const content = (m as unknown as { bodyFull?: string }).bodyFull ?? m.body
+            const metadata = {
+              message_id: m.externalId,
+              org_id: orgId,
+              channel: m.channel,
+              sender: m.sender,
+              sender_email: m.senderEmail,
+              subject: m.subject,
+              received_at: m.receivedAt.toISOString(),
+              chunk_index: 0,
+              total_chunks: 1,
+              is_full_body: Boolean((m as unknown as { bodyFull?: string }).bodyFull),
+            }
+
+            const result = await enqueueEmbedding(supabase, orgId, m.externalId, content, metadata)
+            if (result.success) enqueued++
           }
+
+          logger.info('[relay] RAG embedding jobs enqueued', {
+            channel: channelType,
+            enqueued,
+            total: messagesToInsert.length,
+          })
         } catch (err) {
-          logger.debug('[relay] RAG embedding failed (non-critical):', err)
+          logger.debug('[relay] RAG embedding enqueue failed (non-critical):', err)
         }
       })()
       void embeddingPromise
