@@ -117,6 +117,8 @@ export interface GraphTraversalResult {
 interface StoredNode {
   type: NodeType
   id: string
+  /** Composite key in the nodes Map: e.g. "person:abc123" */
+  mapKey: string
   data: Record<string, unknown>
 }
 
@@ -139,6 +141,8 @@ interface StoredEdge {
  */
 export class KnowledgeGraphClient {
   private nodes: Map<string, StoredNode> = new Map()
+  /** Reverse index: entity ID -> map key, for O(1) lookups by entity ID */
+  private nodeIdIndex: Map<string, string> = new Map()
   private edges: StoredEdge[] = []
   private dbPath: string
   private initialized: boolean = false
@@ -186,8 +190,10 @@ export class KnowledgeGraphClient {
       this.nodes.set(nodeId, {
         type: 'Person',
         id: person.id,
+        mapKey: nodeId,
         data: person as unknown as Record<string, unknown>
       })
+      this.nodeIdIndex.set(person.id, nodeId)
       logger.debug('Person upserted', { personId: person.id, name: person.name })
     } catch (error) {
       logger.error('Failed to upsert person', { person, error })
@@ -206,8 +212,10 @@ export class KnowledgeGraphClient {
       this.nodes.set(nodeId, {
         type: 'Organization',
         id: org.id,
+        mapKey: nodeId,
         data: org as unknown as Record<string, unknown>
       })
+      this.nodeIdIndex.set(org.id, nodeId)
       logger.debug('Organization upserted', { orgId: org.id, name: org.name })
     } catch (error) {
       logger.error('Failed to upsert organization', { org, error })
@@ -226,8 +234,10 @@ export class KnowledgeGraphClient {
       this.nodes.set(nodeId, {
         type: 'Topic',
         id: topic.id,
+        mapKey: nodeId,
         data: topic as unknown as Record<string, unknown>
       })
+      this.nodeIdIndex.set(topic.id, nodeId)
       logger.debug('Topic upserted', { topicId: topic.id, name: topic.name })
     } catch (error) {
       logger.error('Failed to upsert topic', { topic, error })
@@ -263,7 +273,6 @@ export class KnowledgeGraphClient {
       }
 
       // Create or update edge
-      const edgeKey = `${entityNode.id}-MENTIONED_IN-${topicNode.id}`
       const existingEdge = this.edges.find(
         (e) => e.source === entityNode.id && e.target === topicNode.id && e.type === 'MENTIONED_IN'
       )
@@ -382,17 +391,13 @@ export class KnowledgeGraphClient {
   }
 
   /**
-   * Find a node in the graph by entity ID (without type prefix)
+   * Find a node in the graph by entity ID (without type prefix).
+   * Uses reverse index for O(1) lookup instead of O(n) scan.
    */
   private findNodeById(entityId: string): StoredNode | undefined {
-    const nodeArray = Array.from(this.nodes.values())
-    for (let i = 0; i < nodeArray.length; i++) {
-      const node = nodeArray[i]
-      if (node.id === entityId) {
-        return node
-      }
-    }
-    return undefined
+    const mapKey = this.nodeIdIndex.get(entityId)
+    if (!mapKey) return undefined
+    return this.nodes.get(mapKey)
   }
 
   /**
@@ -406,31 +411,24 @@ export class KnowledgeGraphClient {
     try {
       const results: RelatedEntity[] = []
       const visited: Record<string, boolean> = {}
-      const queue: Array<{ nodeId: string; currentDepth: number }> = [{ nodeId: entityId, currentDepth: 0 }]
+      const queue: Array<{ nodeId: string; currentDepth: number; viaEdgeType?: RelationshipType }> = [{ nodeId: entityId, currentDepth: 0 }]
 
       visited[entityId] = true
 
       while (queue.length > 0 && Object.keys(visited).length < 1000) {
-        // Limit to prevent infinite loops
-        const { nodeId, currentDepth } = queue.shift()!
+        // Limit to prevent runaway traversal
+        const { nodeId, currentDepth, viaEdgeType } = queue.shift()!
 
         if (currentDepth > 0 && currentDepth <= depth) {
           // Get the node
           const node = this.findNodeById(nodeId)
           if (node && nodeId !== entityId) {
-            // Find relationship type
-            const edge = this.edges.find(
-              (e) =>
-                (e.source === entityId && e.target === nodeId) ||
-                (e.source === nodeId && e.target === entityId)
-            )
-
             results.push({
               id: nodeId,
               type: node.type,
               name: (node.data.name as string) || 'Unknown',
               distance: currentDepth,
-              relationshipType: (edge?.type || 'MENTIONED_IN') as RelationshipType
+              relationshipType: viaEdgeType || 'MENTIONED_IN',
             })
           }
         }
@@ -440,10 +438,10 @@ export class KnowledgeGraphClient {
           for (const edge of this.edges) {
             if (edge.source === nodeId && !visited[edge.target]) {
               visited[edge.target] = true
-              queue.push({ nodeId: edge.target, currentDepth: currentDepth + 1 })
+              queue.push({ nodeId: edge.target, currentDepth: currentDepth + 1, viaEdgeType: edge.type })
             } else if (edge.target === nodeId && !visited[edge.source]) {
               visited[edge.source] = true
-              queue.push({ nodeId: edge.source, currentDepth: currentDepth + 1 })
+              queue.push({ nodeId: edge.source, currentDepth: currentDepth + 1, viaEdgeType: edge.type })
             }
           }
         }
@@ -518,6 +516,7 @@ export class KnowledgeGraphClient {
   async close(): Promise<void> {
     try {
       this.nodes.clear()
+      this.nodeIdIndex.clear()
       this.edges = []
       this.initialized = false
       logger.info('Knowledge graph connection closed')

@@ -95,12 +95,14 @@ export async function checkExistingHashesBatch(
   }
 
   try {
-    // Query with filter for any of the hashes (using $in operator)
+    // Query with filter for any of the hashes (using $in operator).
+    // Cap topK at 10000 (Pinecone maximum) to avoid API errors.
     const dummyVector = new Array(1024).fill(0)
+    const topK = Math.min(contentHashes.length, 10000)
 
     const response = await index.namespace(orgId).query({
       vector: dummyVector,
-      topK: contentHashes.length,
+      topK,
       includeMetadata: true,
       filter: {
         content_hash: { $in: contentHashes },

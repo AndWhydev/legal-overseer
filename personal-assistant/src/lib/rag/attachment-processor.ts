@@ -23,6 +23,16 @@ import { logger } from '@/lib/core/logger'
  */
 export async function processAttachment(buffer: Buffer, mimeType: string): Promise<string> {
   try {
+    // Guard against excessively large buffers (100MB cap to prevent OOM)
+    const maxBufferSize = 100 * 1024 * 1024
+    if (buffer.length > maxBufferSize) {
+      logger.warn('[attachment-processor] Buffer exceeds 100MB limit, skipping', {
+        mimeType,
+        bufferSize: buffer.length,
+      })
+      return ''
+    }
+
     // Skip images
     if (mimeType.startsWith('image/')) {
       logger.debug('[attachment-processor] Skipping image file', { mimeType })
@@ -51,14 +61,23 @@ export async function processAttachment(buffer: Buffer, mimeType: string): Promi
       return ''
     }
 
-    // Enforce 50KB limit
+    // Enforce 50KB limit (compare byte length, not character count,
+    // since multi-byte UTF-8 characters inflate actual size)
     const maxBytes = 50 * 1024
-    if (extractedText.length > maxBytes) {
+    const actualBytes = Buffer.byteLength(extractedText, 'utf-8')
+    if (actualBytes > maxBytes) {
       logger.warn('[attachment-processor] Text exceeds 50KB limit, truncating', {
         mimeType,
-        originalSize: extractedText.length,
+        originalBytes: actualBytes,
       })
-      extractedText = extractedText.substring(0, maxBytes)
+      // Truncate by encoding to buffer and slicing, then decode back
+      // to avoid splitting multi-byte characters
+      const buf = Buffer.from(extractedText, 'utf-8')
+      extractedText = buf.subarray(0, maxBytes).toString('utf-8')
+      // Remove potential trailing incomplete multi-byte character
+      // by re-encoding and checking — simplest approach: just trim to
+      // last valid codepoint boundary
+      extractedText = extractedText.replace(/[\uFFFD]$/, '')
     }
 
     return extractedText

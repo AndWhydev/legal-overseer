@@ -135,11 +135,23 @@ export async function processEmbeddingQueue(
     for (const [orgId, orgJobs] of jobsByOrg) {
       for (const job of orgJobs) {
         try {
-          // Mark as processing
-          await supabase
+          // Atomically claim the job: only update if still 'pending'.
+          // This prevents duplicate processing when multiple workers
+          // poll the queue concurrently.
+          const { data: claimed, error: claimErr } = await supabase
             .from('embedding_jobs')
             .update({ status: 'processing', started_at: new Date().toISOString() })
             .eq('id', job.id)
+            .eq('status', 'pending')
+            .select('id')
+
+          if (claimErr || !claimed || claimed.length === 0) {
+            // Another worker already claimed this job — skip it
+            logger.debug('[embedding-queue] Job already claimed by another worker', {
+              jobId: job.id,
+            })
+            continue
+          }
 
           // Prepare vector document
           const doc: VectorDocument = {
@@ -284,45 +296,65 @@ export async function getQueueStats(
   supabase: ReturnType<typeof createClient>,
   orgId?: string
 ): Promise<QueueStats> {
+  const defaultStats: QueueStats = {
+    queueDepth: 0,
+    processingCount: 0,
+    failedCount: 0,
+    completedToday: 0,
+    averageProcessingTimeMs: 0,
+  }
+
   try {
-    const baseQuery = orgId ? { org_id: orgId } : {}
-
-    // Fetch all stats
-    const { data, error } = await supabase
-      .from('embedding_jobs')
-      .select('*', { count: 'exact' })
-      .match(baseQuery)
-
-    if (error || !data) {
-      logger.warn('[embedding-queue] Failed to fetch queue stats:', error)
-      return {
-        queueDepth: 0,
-        processingCount: 0,
-        failedCount: 0,
-        completedToday: 0,
-        averageProcessingTimeMs: 0,
-      }
+    // Use server-side count queries instead of fetching all rows into memory.
+    // Each query returns only the count, not the row data.
+    const buildQuery = (status: string) => {
+      let q = supabase.from('embedding_jobs').select('*', { count: 'exact', head: true }).eq('status', status)
+      if (orgId) q = q.eq('org_id', orgId)
+      return q
     }
 
+    const [pendingRes, processingRes, failedRes] = await Promise.all([
+      buildQuery('pending'),
+      buildQuery('processing'),
+      buildQuery('failed'),
+    ])
+
     const stats: QueueStats = {
-      queueDepth: data.filter((j) => (j as EmbeddingJob).status === 'pending').length,
-      processingCount: data.filter((j) => (j as EmbeddingJob).status === 'processing').length,
-      failedCount: data.filter((j) => (j as EmbeddingJob).status === 'failed').length,
-      completedToday: data.filter((j) => {
-        const job = j as EmbeddingJob
-        const today = new Date().toDateString()
-        const completedDate = job.completed_at ? new Date(job.completed_at).toDateString() : null
-        return job.status === 'completed' && completedDate === today
-      }).length,
+      queueDepth: pendingRes.count ?? 0,
+      processingCount: processingRes.count ?? 0,
+      failedCount: failedRes.count ?? 0,
+      completedToday: 0,
       averageProcessingTimeMs: 0,
     }
 
-    // Calculate average processing time for completed jobs
-    const completedJobs = data.filter((j) => (j as EmbeddingJob).status === 'completed') as EmbeddingJob[]
-    if (completedJobs.length > 0) {
-      const processingTimes = completedJobs
-        .filter((j) => j.started_at && j.completed_at)
+    // Count completed today (server-side filter)
+    const todayStart = new Date()
+    todayStart.setHours(0, 0, 0, 0)
+    let completedTodayQuery = supabase
+      .from('embedding_jobs')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'completed')
+      .gte('completed_at', todayStart.toISOString())
+    if (orgId) completedTodayQuery = completedTodayQuery.eq('org_id', orgId)
+    const completedTodayRes = await completedTodayQuery
+    stats.completedToday = completedTodayRes.count ?? 0
+
+    // Calculate average processing time from a sample of recent completed jobs
+    let avgQuery = supabase
+      .from('embedding_jobs')
+      .select('started_at, completed_at')
+      .eq('status', 'completed')
+      .not('started_at', 'is', null)
+      .not('completed_at', 'is', null)
+      .order('completed_at', { ascending: false })
+      .limit(100)
+    if (orgId) avgQuery = avgQuery.eq('org_id', orgId)
+    const { data: recentCompleted } = await avgQuery
+
+    if (recentCompleted && recentCompleted.length > 0) {
+      const processingTimes = recentCompleted
         .map((j) => new Date(j.completed_at!).getTime() - new Date(j.started_at!).getTime())
+        .filter((t) => t >= 0)
 
       if (processingTimes.length > 0) {
         stats.averageProcessingTimeMs = processingTimes.reduce((a, b) => a + b, 0) / processingTimes.length
@@ -332,13 +364,7 @@ export async function getQueueStats(
     return stats
   } catch (err) {
     logger.error('[embedding-queue] Queue stats exception:', err)
-    return {
-      queueDepth: 0,
-      processingCount: 0,
-      failedCount: 0,
-      completedToday: 0,
-      averageProcessingTimeMs: 0,
-    }
+    return defaultStats
   }
 }
 

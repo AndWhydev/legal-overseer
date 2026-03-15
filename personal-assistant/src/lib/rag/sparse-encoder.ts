@@ -21,29 +21,31 @@ function tokenHash(token: string, indexSpace: number = 20000): number {
   for (let i = 0; i < token.length; i++) {
     const char = token.charCodeAt(i)
     hash = ((hash << 5) - hash) + char
-    hash = hash & hash // Convert to 32-bit integer
+    hash |= 0 // Convert to 32-bit integer
   }
   return Math.abs(hash) % indexSpace
 }
+
+/** Stopwords to filter from tokenized text (hoisted to module level to avoid re-allocation) */
+const STOPWORDS = new Set([
+  'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for',
+  'of', 'with', 'by', 'from', 'as', 'is', 'was', 'be', 'been', 'being',
+  'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could',
+  'should', 'may', 'might', 'can', 'this', 'that', 'these', 'those',
+  'i', 'you', 'he', 'she', 'it', 'we', 'they', 'what', 'which', 'who',
+])
 
 /**
  * Tokenize text: split by whitespace/punctuation, lowercase, filter stopwords.
  */
 function tokenize(text: string): string[] {
-  const stopwords = new Set([
-    'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for',
-    'of', 'with', 'by', 'from', 'as', 'is', 'was', 'be', 'been', 'being',
-    'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could',
-    'should', 'may', 'might', 'can', 'this', 'that', 'these', 'those',
-    'i', 'you', 'he', 'she', 'it', 'we', 'they', 'what', 'which', 'who',
-  ])
 
   // Split by whitespace and common punctuation, lowercase
   const tokens = text
     .toLowerCase()
     .split(/[\s!"#$%&'()*+,-./:;<=>?@[\\\]^_`{|}~]+/) // Split by whitespace or punctuation
     .filter(token => token.length > 0 && token.length < 50) // Filter empty, too long
-    .filter(token => !stopwords.has(token)) // Remove stopwords
+    .filter(token => !STOPWORDS.has(token)) // Remove stopwords
 
   return tokens
 }

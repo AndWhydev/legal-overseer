@@ -53,7 +53,10 @@ export interface ExtractionResult {
 // ─── Contact Cache ────────────────────────────────────────────────────────
 
 /** In-memory contact cache keyed by org_id for fast cross-referencing */
-const contactCacheByOrg = new Map<string, Contact[]>()
+const contactCacheByOrg = new Map<string, { contacts: Contact[]; loadedAt: number }>()
+
+/** Cache TTL: 5 minutes (contacts may change) */
+const CONTACT_CACHE_TTL_MS = 5 * 60 * 1000
 
 /**
  * Loads contacts for an org into the cache if not already cached.
@@ -67,9 +70,10 @@ async function loadContactsForOrg(
   orgId: string,
   supabase: SupabaseClient
 ): Promise<Contact[]> {
-  // Return cached contacts if available
-  if (contactCacheByOrg.has(orgId)) {
-    return contactCacheByOrg.get(orgId)!
+  // Return cached contacts if available and not expired
+  const cached = contactCacheByOrg.get(orgId)
+  if (cached && (Date.now() - cached.loadedAt) < CONTACT_CACHE_TTL_MS) {
+    return cached.contacts
   }
 
   // Query contacts from Supabase
@@ -87,7 +91,7 @@ async function loadContactsForOrg(
   }
 
   const contacts = (data || []) as Contact[]
-  contactCacheByOrg.set(orgId, contacts)
+  contactCacheByOrg.set(orgId, { contacts, loadedAt: Date.now() })
   return contacts
 }
 
@@ -198,6 +202,10 @@ function normalizePhone(phone: string): string | undefined {
   if (cleaned.startsWith('+61') || cleaned.startsWith('061')) {
     // Australian: +61 or 061 -> +61
     const numPart = cleaned.replace(/^(?:\+?61|0)/, '')
+    return `+61${numPart}`
+  } else if (cleaned.startsWith('0') && /^0[2-9]/.test(cleaned)) {
+    // Australian local format: 0400... or 02... -> +61
+    const numPart = cleaned.slice(1)
     return `+61${numPart}`
   } else if (cleaned.startsWith('+1') || cleaned.match(/^1[2-9]/)) {
     // US: +1 or 1NNN
@@ -331,6 +339,10 @@ function extractMatches(
   const matches: Array<{ value: string; start: number; end: number }> = []
 
   for (const pattern of patterns) {
+    // Reset lastIndex before each exec loop — global regexes retain state
+    // between calls, which causes subsequent extractEntities() invocations
+    // to miss matches if the regex was not fully consumed previously.
+    pattern.lastIndex = 0
     let match
     // eslint-disable-next-line no-cond-assign
     while ((match = pattern.exec(text)) !== null) {
@@ -371,9 +383,10 @@ function isInSkippableSection(text: string, position: number): boolean {
   if (lastLine.trim().startsWith('>')) return true
 
   // Check for legal disclaimer marker
-  if (beforePosition.match(/\n[-_]{20,}\s*DISCLAIMER|LEGAL|CONFIDENTIAL\s*[-_]{20,}/i)) {
-    const lastMarker = beforePosition.lastIndexOf('\n')
-    if (position > lastMarker) return true
+  const disclaimerMatch = beforePosition.match(/\n[-_]{20,}\s*(?:DISCLAIMER|LEGAL|CONFIDENTIAL)\s*[-_]*/i)
+  if (disclaimerMatch) {
+    const disclaimerStart = disclaimerMatch.index ?? 0
+    if (position > disclaimerStart) return true
   }
 
   return false
