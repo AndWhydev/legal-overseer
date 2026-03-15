@@ -83,7 +83,7 @@ export async function searchVectors(options: SearchOptions): Promise<RetrievedCh
   // Step 1: Embed the query (dense vector)
   const embedding = await embedQuery(query)
   if (!embedding) {
-    logger.warn('[retriever] Failed to embed query:', query)
+    logger.warn('[retriever] Failed to embed query', { query })
     return []
   }
 
@@ -103,7 +103,7 @@ export async function searchVectors(options: SearchOptions): Promise<RetrievedCh
   })
 
   if (results.length === 0) {
-    logger.debug('[retriever] No results from Pinecone for query:', query)
+    logger.debug('[retriever] No results from Pinecone for query', { query })
     return []
   }
 
