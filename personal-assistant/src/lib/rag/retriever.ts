@@ -7,6 +7,8 @@
 
 import { embedQuery, rerankDocuments } from './voyage-client'
 import { queryPinecone } from './pinecone-client'
+import { encodeQuerySparse } from './sparse-encoder'
+import { logger } from '@/lib/core/logger'
 import type { SearchOptions, RetrievedChunk } from './types'
 
 /**
@@ -65,26 +67,30 @@ function buildCitationRef(metadata: Record<string, unknown>): string {
 }
 
 /**
- * Search for relevant chunks using semantic similarity.
+ * Search for relevant chunks using hybrid search (dense + sparse vectors).
  *
  * Process:
- * 1. Embed the query using Voyage-3.5
- * 2. Query Pinecone with metadata filters (over-fetch 3x for reranking)
- * 3. Apply optional reranking
- * 4. Apply sandwich ranking
- * 5. Return top-K results with citations
+ * 1. Embed the query using Voyage-3.5 (dense)
+ * 2. Generate sparse vector from query (BM25-style keywords)
+ * 3. Query Pinecone with hybrid search (over-fetch 3x for reranking)
+ * 4. Apply optional reranking
+ * 5. Apply sandwich ranking
+ * 6. Return top-K results with citations
  */
 export async function searchVectors(options: SearchOptions): Promise<RetrievedChunk[]> {
   const { query, orgId, topK = 10, channel, sender, dateFrom, dateTo } = options
 
-  // Step 1: Embed the query
+  // Step 1: Embed the query (dense vector)
   const embedding = await embedQuery(query)
   if (!embedding) {
-    console.warn('[retriever] Failed to embed query:', query)
+    logger.warn('[retriever] Failed to embed query:', query)
     return []
   }
 
-  // Step 2: Query Pinecone (over-fetch 3x for reranking)
+  // Step 2: Generate sparse vector for hybrid search (keyword/BM25 matching)
+  const sparseVector = encodeQuerySparse(query)
+
+  // Step 3: Query Pinecone with hybrid search (over-fetch 3x for reranking)
   const fetchTopK = topK * 3
   const results = await queryPinecone(embedding, orgId, {
     topK: fetchTopK,
@@ -92,19 +98,21 @@ export async function searchVectors(options: SearchOptions): Promise<RetrievedCh
     sender,
     dateFrom,
     dateTo,
+    sparseVector: sparseVector.indices.length > 0 ? sparseVector : undefined,
+    alpha: 0.7, // 70% weight on dense/semantic, 30% on sparse/keyword
   })
 
   if (results.length === 0) {
-    console.debug('[retriever] No results from Pinecone for query:', query)
+    logger.debug('[retriever] No results from Pinecone for query:', query)
     return []
   }
 
-  // Step 3: Optional reranking (if Voyage API available)
+  // Step 4: Optional reranking (if Voyage API available)
   let ranked = results
   try {
     const documents = results.map((r) => ({
       id: r.id,
-      text: `${r.metadata.sender || ''} ${r.metadata.subject || ''} ${query}`,
+      text: (r.metadata.content as string) || `${r.metadata.sender || ''} ${r.metadata.subject || ''}`,
     }))
 
     const rerankResults = await rerankDocuments(query, documents, fetchTopK)
@@ -116,13 +124,13 @@ export async function searchVectors(options: SearchOptions): Promise<RetrievedCh
       }))
     }
   } catch (err) {
-    console.debug('[retriever] Reranking failed, using vector scores:', err)
+    logger.debug('[retriever] Reranking failed, using vector scores:', err)
   }
 
-  // Step 4: Apply sandwich ranking
+  // Step 5: Apply sandwich ranking
   const sandwiched = applySandwichRanking(ranked)
 
-  // Step 5: Format and trim to topK — content is stored in Pinecone metadata
+  // Step 6: Format and trim to topK — content is stored in Pinecone metadata
   const chunks: RetrievedChunk[] = sandwiched.slice(0, topK).map((result) => ({
     id: result.id,
     score: result.score,
