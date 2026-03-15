@@ -178,8 +178,8 @@ describe('getUsage', () => {
 
     const result = await getUsage(supabase, 'org-1', 'current_month')
 
-    // 2M tokens * (3 + 15) / 1M = 36 USD
-    expect(result.estimatedCostUSD).toBe(36)
+    // 2M tokens (as input) * 3 / 1M = 6 USD (conversation model input rate)
+    expect(result.estimatedCostUSD).toBe(6)
   })
 
   it('handles current_month period', async () => {

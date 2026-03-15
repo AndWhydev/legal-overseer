@@ -50,7 +50,7 @@ describe('Health Checks', () => {
     };
 
     const result = await runHealthChecks(mockSupabase as any);
-    const anthropic = result.find((s) => s.service === 'anthropic');
+    const anthropic = result.find((s) => s.service === 'ai');
     expect(anthropic?.status).toBe('down');
     expect(anthropic?.error).toContain('not set');
 
@@ -103,7 +103,7 @@ describe('Health Checks', () => {
     const result = await runHealthChecks(mockSupabase as any);
     const services = result.map((r) => r.service);
     expect(services).toContain('supabase');
-    expect(services).toContain('anthropic');
+    expect(services).toContain('ai');
     expect(services).toContain('resend');
     expect(services).toContain('whatsapp');
   });

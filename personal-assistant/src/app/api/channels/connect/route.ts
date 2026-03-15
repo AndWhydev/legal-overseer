@@ -6,6 +6,7 @@ import { getActiveOrgId } from '@/lib/tenancy'
 import { checkPlanGate } from '@/lib/billing/plan-gates'
 import { logger } from '@/lib/core/logger';
 import { pollChannel } from '@/lib/channels/relay-daemon';
+import { createBackfillJob } from '@/lib/rag/backfill-service'
 import type { ChannelType } from '@/lib/channels/types';
 
 const OAUTH_PROVIDER_MAP: Record<string, string> = {
@@ -115,6 +116,21 @@ export async function POST(request: Request) {
         entityId: channelLower,
         metadata: { channel: channelLower, method: 'api_key' },
       })
+
+      // Auto-trigger RAG backfill for new channels with relay_enabled=true (fire-and-forget)
+      const backfillPromise = (async () => {
+        try {
+          const jobId = await createBackfillJob(supabase, orgId, connectionChannelType)
+          logger.info('[channels/connect] Auto-triggered backfill job', {
+            orgId,
+            channel: connectionChannelType,
+            jobId,
+          })
+        } catch (err) {
+          logger.error('[channels/connect] Failed to trigger backfill job:', err)
+        }
+      })()
+      void backfillPromise
 
       // Trigger immediate sync so messages appear without waiting for 5-min cron
       pollChannel(supabase, orgId, connectionChannelType as ChannelType).catch((err) => {
