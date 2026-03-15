@@ -33,7 +33,7 @@ function getPineconeClient(): Pinecone | null {
   }
 }
 
-function getIndex() {
+export function getIndex() {
   const client = getPineconeClient()
   if (!client) return null
   return client.Index(process.env.PINECONE_INDEX_NAME || 'bitbit-rag')

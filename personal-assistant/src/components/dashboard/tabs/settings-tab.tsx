@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Sun, Moon, Monitor, Loader2, Smartphone, Check, X } from 'lucide-react';
 import { QrAuthConnect } from '@/components/ui/qr-auth-connect';
 import { ConnectionsGrid } from '@/components/integrations/integration-grid';
+import { RagStatsWidget } from '@/components/dashboard/rag-stats-widget';
 import { createClient } from '@/lib/supabase/client';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { logger } from '@/lib/core/logger';
@@ -299,12 +300,30 @@ export function SettingsConnectionsTab() {
 
   return (
     <div style={sectionWrapper}>
-      <ConnectionsGrid
-        integrations={integrations}
-        isLoading={integrationsLoading}
-        onStatusChange={fetchIntegrations}
-        onWhatsAppConnect={() => setWhatsappModalOpen(true)}
-      />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+        {/* RAG Stats Widget */}
+        <div>
+          <h3 style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Data & Synchronization</h3>
+          <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '4px 0 0' }}>Vector index and channel sync status</p>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 12 }}>
+          <RagStatsWidget showDetails={true} />
+        </div>
+
+        {/* Connections Grid */}
+        <div>
+          <h3 style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Integrations</h3>
+          <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '4px 0 0' }}>Connect your communication channels</p>
+        </div>
+        <div>
+          <ConnectionsGrid
+            integrations={integrations}
+            isLoading={integrationsLoading}
+            onStatusChange={fetchIntegrations}
+            onWhatsAppConnect={() => setWhatsappModalOpen(true)}
+          />
+        </div>
+      </div>
 
       {whatsappModalOpen && (
         <WhatsAppWizardModal
