@@ -7,6 +7,7 @@ import { EmptyState } from '@/components/ui/empty-state'
 import { useDevOverrides } from '@/lib/dev/dev-overrides'
 import { StatusPill, type StatusVariant } from '@/components/ui/status-pill'
 import { EntityDetailDrawer } from '@/components/dashboard/entity-detail-drawer'
+import { ContactsPageTooltip } from '@/components/onboarding/first-run-guide'
 import { logger } from '@/lib/core/logger';
 
 type ContactType = 'client' | 'partner' | 'lead' | 'vendor' | string
@@ -193,9 +194,10 @@ function ContactsTab() {
 
   return (
     <>
-      <div className="flex flex-col gap-5">
-        {/* ── Inline Stats ── */}
-        <div className="bb-contacts-stats">
+      <ContactsPageTooltip>
+        <div className="flex flex-col gap-5">
+          {/* ── Inline Stats ── */}
+          <div className="bb-contacts-stats">
           <StatPill value={contacts.length} label="total" active={contacts.length > 0} />
           <span className="bb-contacts-stats__sep" />
           <StatPill value={clientCount} label="clients" active={clientCount > 0} />
@@ -248,7 +250,8 @@ function ContactsTab() {
             ))}
           </div>
         )}
-      </div>
+        </div>
+      </ContactsPageTooltip>
 
       <EntityDetailDrawer
         open={selectedContactId !== null}

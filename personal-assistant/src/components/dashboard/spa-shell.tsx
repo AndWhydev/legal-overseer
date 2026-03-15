@@ -15,6 +15,7 @@ import { BottomNav } from './bottom-nav';
 import { BitBitOverlay } from './bitbit-overlay';
 import { SplashScreen } from './splash-screen';
 import { OnboardingTour } from './onboarding-tour';
+import { FirstRunGuideProvider } from '@/components/onboarding/first-run-guide';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { ToastProvider } from '@/components/ui/toast';
 import { GlobalSearch } from './global-search';
@@ -387,6 +388,7 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
   return (
     <ThemeProvider>
     <ToastProvider>
+    <FirstRunGuideProvider>
     <EnabledModulesContext.Provider value={enabledModulesState}>
     <SplashScreen codeReady={tabsReady} dataReady={dataReady} minDisplayMs={1200}>
       <AppDataProvider onReady={() => setDataReady(true)}>
@@ -541,6 +543,7 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
       </AppDataProvider>
     </SplashScreen>
     </EnabledModulesContext.Provider>
+    </FirstRunGuideProvider>
     </ToastProvider>
     </ThemeProvider>
   );

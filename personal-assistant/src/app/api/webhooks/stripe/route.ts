@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { verifyStripeWebhook } from '@/lib/channels/stripe'
-import { logger } from '@/lib/core/logger';
+import { logger } from '@/lib/core/logger'
+import { handlePaymentFailed, resetDunningState } from '@/lib/billing/dunning'
 
 /**
  * Stripe webhook endpoint.
@@ -23,6 +24,35 @@ function getSupabaseClient() {
   }
 
   return createClient(supabaseUrl, supabaseKey)
+}
+
+/**
+ * Log webhook event to webhook_events table
+ */
+async function logWebhookEvent(
+  supabase: ReturnType<typeof createClient> | any,
+  source: string,
+  eventType: string,
+  externalEventId: string | null,
+  payload: Record<string, unknown>,
+  status: string,
+  responseCode?: number,
+  errorMessage?: string,
+) {
+  try {
+    await supabase.from('webhook_events').insert({
+      source,
+      event_type: eventType,
+      external_event_id: externalEventId,
+      payload,
+      status,
+      response_code: responseCode,
+      error_message: errorMessage,
+      processed_at: status === 'success' || status === 'failed' ? new Date().toISOString() : null,
+    })
+  } catch (err) {
+    logger.warn('[webhook/stripe] Failed to log webhook event:', err)
+  }
 }
 
 /**
@@ -130,9 +160,21 @@ export async function POST(request: NextRequest) {
         logger.info('[webhook/stripe] Payment succeeded:', obj.id, obj.amount, obj.currency)
         if (orgId) {
           await updateInvoiceStatus(supabase, orgId, obj.id as string, 'paid')
+          // Reset dunning state if payment was recovered
+          await resetDunningState(supabase, orgId)
         } else {
           logger.warn('[webhook/stripe] No org_id in payment_intent metadata, skipping DB update')
         }
+        // Log webhook event
+        await logWebhookEvent(
+          supabase,
+          'stripe',
+          event.type,
+          obj.id as string,
+          event.data.object as Record<string, unknown>,
+          'success',
+          200,
+        )
         break
       }
       case 'payment_intent.payment_failed': {
@@ -142,9 +184,22 @@ export async function POST(request: NextRequest) {
         logger.error('[webhook/stripe] Payment failed:', obj.id)
         if (orgId) {
           await updateInvoiceStatus(supabase, orgId, obj.id as string, 'failed')
+          // Trigger dunning flow for failed payment
+          const lastError = (obj.last_payment_error as Record<string, unknown>)?.message || 'Unknown error'
+          await handlePaymentFailed(supabase, orgId, obj.id as string, lastError as string)
         } else {
           logger.warn('[webhook/stripe] No org_id in payment_intent metadata, skipping DB update')
         }
+        // Log webhook event
+        await logWebhookEvent(
+          supabase,
+          'stripe',
+          event.type,
+          obj.id as string,
+          event.data.object as Record<string, unknown>,
+          'success',
+          200,
+        )
         break
       }
       case 'invoice.paid': {
@@ -154,7 +209,19 @@ export async function POST(request: NextRequest) {
         logger.info('[webhook/stripe] Invoice paid:', obj.id)
         if (orgId) {
           await updateInvoiceStatus(supabase, orgId, obj.id as string, 'paid')
+          // Reset dunning state if payment was recovered
+          await resetDunningState(supabase, orgId)
         }
+        // Log webhook event
+        await logWebhookEvent(
+          supabase,
+          'stripe',
+          event.type,
+          obj.id as string,
+          event.data.object as Record<string, unknown>,
+          'success',
+          200,
+        )
         break
       }
       case 'invoice.payment_failed': {
@@ -164,16 +231,55 @@ export async function POST(request: NextRequest) {
         logger.error('[webhook/stripe] Invoice payment failed:', obj.id)
         if (orgId) {
           await updateInvoiceStatus(supabase, orgId, obj.id as string, 'failed')
+          // Trigger dunning flow for failed invoice payment
+          const lastAttempt = (obj.last_payment_attempt as Record<string, unknown>) || {}
+          const errorMsg = (lastAttempt.error as Record<string, unknown>)?.message || 'Invoice payment failed'
+          await handlePaymentFailed(supabase, orgId, obj.id as string, errorMsg as string)
         }
+        // Log webhook event
+        await logWebhookEvent(
+          supabase,
+          'stripe',
+          event.type,
+          obj.id as string,
+          event.data.object as Record<string, unknown>,
+          'success',
+          200,
+        )
         break
       }
       default:
         logger.info('[webhook/stripe] Unhandled event type:', event.type)
+        // Still log unhandled events
+        await logWebhookEvent(
+          supabase,
+          'stripe',
+          event.type,
+          (event.data.object as Record<string, unknown>)?.id as string,
+          event.data.object as Record<string, unknown>,
+          'processing',
+        )
     }
 
     return NextResponse.json({ received: true, type: event.type })
   } catch (err) {
     logger.error('[webhook/stripe] Error processing webhook:', err)
+    // Log failed webhook event
+    try {
+      const supabase = getSupabaseClient()
+      await logWebhookEvent(
+        supabase,
+        'stripe',
+        'unknown',
+        null,
+        {},
+        'failed',
+        400,
+        err instanceof Error ? err.message : 'Unknown error',
+      )
+    } catch (logErr) {
+      logger.warn('[webhook/stripe] Failed to log error event:', logErr)
+    }
     return NextResponse.json({ error: 'Failed to process webhook' }, { status: 400 })
   }
 }

@@ -11,6 +11,7 @@ import { StatCard, MiniSparkline, MiniBarChart, MiniDonut, MiniGauge } from '@/c
 import { DailyBrief } from './daily-brief';
 import { KanbanBoard } from './kanban-board';
 import { InboxFeed } from './inbox-feed';
+import { KanbanBoardTooltip } from '@/components/onboarding/first-run-guide';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -205,10 +206,12 @@ export function DashboardRedesign({ columns, tasks, messages, completedToday, to
       >
         {/* Kanban Board */}
         <div style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
-          <KanbanBoard
-            initialColumns={displayColumns}
-            initialTasks={displayTasks}
-          />
+          <KanbanBoardTooltip>
+            <KanbanBoard
+              initialColumns={displayColumns}
+              initialTasks={displayTasks}
+            />
+          </KanbanBoardTooltip>
         </div>
 
         {/* Inbox Feed or Edge Knock Strip */}

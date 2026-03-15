@@ -14,6 +14,7 @@ import {
 import { ConnectionsGrid, getConnectionDisplayName } from '@/components/connections/connections-grid'
 import { AuroraCharacter } from '@/components/onboarding/aurora-character'
 import { SkyVideoBackdrop } from '@/components/onboarding/sky-video-backdrop'
+import { AgentRecommendations } from '@/components/onboarding/agent-recommendations'
 import {
   canBacktrackToStage,
   OnboardingStageProgress,
@@ -201,6 +202,7 @@ export default function OnboardPage() {
   const [firstValue, setFirstValue] = useState<{
     type: string; headline: string; detail: string; source: string
   } | null>(null)
+  const [selectedAgents, setSelectedAgents] = useState<string[]>([])
 
   const connectedNames = useMemo(
     () => connectedIds.map((id) => getConnectionDisplayName(id)),
@@ -628,58 +630,22 @@ export default function OnboardPage() {
           {stage === 'agents' && (
             <StageShell
               title="Recommended agents"
-              subtitle="BitBit can automate these tasks based on your business type. You can enable, disable, or customize them anytime."
+              subtitle="Agents automate tasks based on your business type and connected sources. Enable, disable, or customize anytime."
               mascotSide="right"
               progress={progress}
               mascot={<AmbientAvatar side="right" />}
             >
               <div className="grid gap-5">
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {(AGENT_RECOMMENDATIONS[industry] || AGENT_RECOMMENDATIONS['other']).map((agent, index) => (
-                    <motion.div
-                      key={agent.title}
-                      initial={{ opacity: 0, y: 12 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.08 }}
-                      style={{
-                        borderRadius: 24,
-                        border: '1px solid rgba(255, 255, 255, 0.42)',
-                        background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.38), rgba(255, 255, 255, 0.14))',
-                        padding: '20px',
-                        backdropFilter: 'blur(24px)',
-                        boxShadow: '0 14px 38px rgba(45, 71, 117, 0.09), inset 0 1px 0 rgba(255, 255, 255, 0.62)',
-                        cursor: 'default',
-                        transition: 'all 0.2s',
-                      }}
-                      onMouseEnter={(e) => {
-                        const el = e.currentTarget as HTMLDivElement
-                        el.style.borderColor = 'rgba(255, 255, 255, 0.56)'
-                        el.style.background = 'linear-gradient(180deg, rgba(255, 255, 255, 0.48), rgba(255, 255, 255, 0.22))'
-                      }}
-                      onMouseLeave={(e) => {
-                        const el = e.currentTarget as HTMLDivElement
-                        el.style.borderColor = 'rgba(255, 255, 255, 0.42)'
-                        el.style.background = 'linear-gradient(180deg, rgba(255, 255, 255, 0.38), rgba(255, 255, 255, 0.14))'
-                      }}
-                    >
-                      <div style={{ fontSize: 24, marginBottom: 8 }}>
-                        {agent.emoji}
-                      </div>
-                      <div style={{ fontSize: 15, fontWeight: 600, color: '#173357', marginBottom: 6 }}>
-                        {agent.title}
-                      </div>
-                      <div style={{ fontSize: 13, color: '#24415f', lineHeight: 1.5 }}>
-                        {agent.description}
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
+                <AgentRecommendations
+                  connectedChannelIds={connectedIds}
+                  onAgentsSelected={setSelectedAgents}
+                />
 
                 <div className="flex flex-wrap items-center gap-4 pt-2">
                   <button
                     type="button"
                     onClick={() => {
-                      trackOnboardingEvent('agents_completed')
+                      trackOnboardingEvent('agents_completed', { agents: selectedAgents })
                       // Fetch first value data before transitioning to value stage
                       const fetchFirstValue = async () => {
                         try {
