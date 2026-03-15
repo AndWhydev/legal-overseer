@@ -4,7 +4,7 @@
  * POST /api/workers/embed
  *
  * Processes pending embedding jobs from the queue.
- * Called by Cloudflare Cron (*/5 minutes) or triggered by Fly.io worker.
+ * Called by Cloudflare Cron (every 5 minutes) or triggered by Fly.io worker.
  *
  * Authentication:
  * - Requires WORKER_AUTH_TOKEN header matching env variable
