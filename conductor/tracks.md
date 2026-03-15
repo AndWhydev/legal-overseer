@@ -27,6 +27,8 @@
 | T029 | Beta Blockers — Security, Safety, Compliance | infrastructure | 2026-03-11 |
 | T030 | Landing Page Waitlist & Brand Refresh | marketing | 2026-03-11 |
 | T031 | Total Recall — Conversational Memory & Cross-Channel Continuity | architecture | 2026-03-13 |
+| T033 | Inbox Redesign & Chat UX | feature | 2026-03-14 |
+| T034 | RAG Infrastructure & Launch Readiness (Council Sprint) | architecture+feature | 2026-03-15 |
 
 ## Active Tracks
 
@@ -144,6 +146,9 @@ Scalable tool orchestration architecture based on SOTA research (Manus AI, Anthr
 **Key metrics**: $0.017/session (P2 only) → $0.032 blended (hybrid). 90-95% KV cache hit rate. 94-96% accuracy target.
 **Decision record**: `.claude/docs/research/tool-architecture-decision.md`
 **Research**: `.claude/docs/research/multi-agent-tool-orchestration-research.md`
+
+### T034 — RAG Infrastructure & Launch Readiness (Council Sprint) ✅
+Comprehensive 9-sprint, 77-task execution covering RAG infrastructure (Pinecone + Voyage-3.5 + knowledge graph), production polish, marketing landing page, advanced features (GDPR, analytics, dunning, team management), testing (200+ new tests), performance (embedding queue, dedup, caching), and launch prep (E2E suite, beta gate, DR runbook, launch materials). 38 commits, 73/77 tasks complete. Full spec: `conductor/tracks/T034/spec.md`. Research: `.claude/docs/research/council/`. Remaining: WhatsApp token (manual) + 4 post-launch operational tasks.
 
 ### T029 — Beta Blockers: Security, Safety, Compliance ✅
 7 tier-1 blockers fixed before beta launch:
