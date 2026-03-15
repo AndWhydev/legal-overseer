@@ -13,6 +13,7 @@ import { encodeSparseVector } from './sparse-encoder'
 import { processAttachment } from './attachment-processor'
 import { extractEntities } from './entity-extractor'
 import { computeContentHash, checkExistingHashesBatch } from './content-hasher'
+import { invalidateOrg } from '@/lib/cache/search-cache'
 import type { VectorDocument, EmbedUpsertResult, PineconeMetadata } from './types'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
@@ -214,6 +215,12 @@ export async function embedAndUpsert(
       result.embedded += upsertResult.upserted
       result.failed += upsertResult.failed
       result.errors.push(...upsertResult.errors)
+
+      // Invalidate search cache for this org after successful upsert
+      if (upsertResult.upserted > 0) {
+        invalidateOrg(orgId)
+        logger.debug('[embedding-service] Invalidated search cache', { orgId })
+      }
 
       // Fire-and-forget entity extraction — never block embedding pipeline
       if (supabase && result.embedded > 0) {

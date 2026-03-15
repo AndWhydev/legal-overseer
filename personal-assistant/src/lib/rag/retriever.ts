@@ -9,6 +9,7 @@ import { embedQuery, rerankDocuments } from './voyage-client'
 import { queryPinecone } from './pinecone-client'
 import { encodeQuerySparse } from './sparse-encoder'
 import { logger } from '@/lib/core/logger'
+import { buildCacheKey, getCachedSearch, setCachedSearch } from '@/lib/cache/search-cache'
 import type { SearchOptions, RetrievedChunk } from './types'
 
 /**
@@ -80,6 +81,14 @@ function buildCitationRef(metadata: Record<string, unknown>): string {
 export async function searchVectors(options: SearchOptions): Promise<RetrievedChunk[]> {
   const { query, orgId, topK = 10, channel, sender, dateFrom, dateTo } = options
 
+  // Cache check — return early on hit
+  const cacheKey = buildCacheKey(options)
+  const cached = getCachedSearch(cacheKey)
+  if (cached !== null) {
+    logger.debug('[retriever] Cache hit', { query, orgId })
+    return cached
+  }
+
   // Step 1: Embed the query (dense vector)
   const embedding = await embedQuery(query)
   if (!embedding) {
@@ -138,6 +147,9 @@ export async function searchVectors(options: SearchOptions): Promise<RetrievedCh
     metadata: result.metadata as unknown as RetrievedChunk['metadata'],
     citationRef: buildCitationRef(result.metadata),
   }))
+
+  // Store in cache before returning
+  setCachedSearch(cacheKey, chunks, orgId)
 
   return chunks
 }
