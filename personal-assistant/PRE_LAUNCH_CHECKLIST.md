@@ -341,6 +341,121 @@ Additional in-memory rate limiting in `middleware.ts` itself:
 
 ---
 
+---
+
+## Task #70: Custom Domain Configuration (app.bitbit.chat)
+
+> DNS changes are manual. This section documents what to do and what order to do it.
+
+### Current State
+
+| Item | Status |
+|------|--------|
+| Domain `bitbit.chat` | Registered and active |
+| `app.bitbit.chat` on Vercel | **NEEDS_ACTION** — add domain in Vercel dashboard |
+| Webhook URLs | **NEEDS_ACTION** — some still point to `bitbit.vercel.app` |
+| SSL | Auto-provisioned by Vercel once CNAME is confirmed |
+
+---
+
+### Step 1: Add Domain to Vercel
+
+1. Go to [vercel.com/awu-team/bitbit/settings/domains](https://vercel.com/awu-team/bitbit/settings/domains)
+2. Enter `app.bitbit.chat` → click **Add**
+3. Vercel will display the required DNS record:
+   ```
+   Type:  CNAME
+   Name:  app
+   Value: cname.vercel-dns.com
+   TTL:   Auto (or 300)
+   ```
+
+---
+
+### Step 2: Add DNS Record
+
+At your DNS provider (wherever `bitbit.chat` is managed):
+
+| Type | Host | Value | TTL |
+|------|------|-------|-----|
+| `CNAME` | `app` | `cname.vercel-dns.com` | 300 |
+
+- If using Cloudflare for DNS: **disable the Cloudflare proxy (orange cloud → grey cloud)** for this record, or use Vercel's nameservers instead.
+- Propagation: typically 5–15 minutes; up to 48 hours in edge cases.
+- Verify with: `dig app.bitbit.chat CNAME`
+
+---
+
+### Step 3: SSL Certificate
+
+Vercel auto-provisions a Let's Encrypt certificate once the CNAME is confirmed. No manual action needed. It appears as "Valid Configuration" in the Vercel domains panel.
+
+---
+
+### Step 4: Update `NEXT_PUBLIC_APP_URL` on Vercel
+
+```bash
+vercel env rm NEXT_PUBLIC_APP_URL production
+vercel env add NEXT_PUBLIC_APP_URL production
+# Enter: https://app.bitbit.chat
+```
+
+Trigger a new deployment for this to take effect.
+
+---
+
+### Step 5: Update Webhook URLs
+
+After the domain is live, run `personal-assistant/scripts/update-webhook-urls.sh` which updates:
+
+| Service | Endpoint |
+|---------|----------|
+| Stripe | `https://app.bitbit.chat/api/webhooks/stripe` |
+| Telnyx | `https://app.bitbit.chat/api/webhooks/sms` |
+| Meta (WhatsApp) | `https://app.bitbit.chat/api/channels/whatsapp` |
+| Google OAuth | Redirect URI: `https://app.bitbit.chat/api/auth/callback/google` |
+| Google OAuth | JS Origin: `https://app.bitbit.chat` |
+
+---
+
+### Step 6: Update Google OAuth Console
+
+Manual browser step (Google requires it via console.cloud.google.com):
+
+1. Go to [console.cloud.google.com](https://console.cloud.google.com) → **APIs & Services → Credentials**
+2. Project: **ThorTech Computers** (163710351496)
+3. Edit the OAuth 2.0 Client ID
+4. **Authorised JavaScript origins** → add `https://app.bitbit.chat`
+5. **Authorised redirect URIs** → add:
+   - `https://app.bitbit.chat/api/auth/callback/google`
+   - `https://app.bitbit.chat/api/connections/google/callback`
+6. Save
+
+---
+
+### Step 7: CORS Configuration
+
+The Next.js app does not maintain an explicit CORS allowlist for the main domain — Next.js handles this at the framework level. However, check `src/middleware.ts` for any hardcoded origin checks.
+
+Current known hardcoded origins to update if found:
+- `bitbit.vercel.app` → `app.bitbit.chat`
+- `localhost:3000` (keep for dev)
+
+---
+
+### Domain Checklist
+
+- [ ] CNAME record added at DNS provider
+- [ ] Vercel shows "Valid Configuration" for `app.bitbit.chat`
+- [ ] SSL certificate issued (green padlock in browser)
+- [ ] `NEXT_PUBLIC_APP_URL=https://app.bitbit.chat` set on Vercel
+- [ ] New Vercel deployment triggered
+- [ ] `update-webhook-urls.sh` run successfully
+- [ ] Google OAuth console updated (manual browser step)
+- [ ] Smoke test: open `https://app.bitbit.chat` and log in
+
+---
+
 ## Overall Production Readiness Summary
 
 | Task | Verdict | Critical Issues |
@@ -349,6 +464,7 @@ Additional in-memory rate limiting in `middleware.ts` itself:
 | #66 Email | **MOSTLY PASS** | Resend integration solid, domains verified, 12 templates. Missing `List-Unsubscribe` header (FAIL), no bounce handling |
 | #67 Sentry | **PASS** | Well-configured client/server/edge. Minor: release tag not set in config files, profiling env var unused |
 | #68 Rate Limiting | **MOSTLY PASS** | All routes rate-limited via middleware. Gap: AI endpoints need per-user limits, in-memory only (no Redis) |
+| #70 Custom Domain | **NEEDS_ACTION** | CNAME not yet added; webhook URLs need updating after domain is live |
 
 ### Top 5 Action Items (Priority Order)
 
