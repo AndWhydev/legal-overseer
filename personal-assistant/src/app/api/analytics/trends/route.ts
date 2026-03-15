@@ -9,10 +9,19 @@ import { logger } from '@/lib/core/logger'
 // Types
 // ---------------------------------------------------------------------------
 
+export interface AnomalySummary {
+  metric: string
+  date: string
+  value: number
+  zScore: number
+  deviation: number
+}
+
 export interface TrendsResponse {
   messageVolume: TrendSeries
   taskCompletionRate: TrendSeries
   agentInvocations: TrendSeries
+  anomalies: AnomalySummary[]
   generatedAt: string
 }
 
@@ -126,10 +135,28 @@ export async function GET() {
       DAYS,
     )
 
+    const msgTrend = analyseTrend(msgSeries, 7)
+    const taskTrend = analyseTrend(taskSeries, 7)
+    const agentTrend = analyseTrend(agentSeries, 7)
+
+    // Collect anomalies across all metrics for a cross-metric digest
+    const anomalies: AnomalySummary[] = [
+      ...msgTrend.anomalies
+        .filter((p) => p.isAnomaly)
+        .map((p) => ({ metric: 'messageVolume', date: p.date, value: p.value, zScore: p.zScore, deviation: p.deviation })),
+      ...taskTrend.anomalies
+        .filter((p) => p.isAnomaly)
+        .map((p) => ({ metric: 'taskCompletionRate', date: p.date, value: p.value, zScore: p.zScore, deviation: p.deviation })),
+      ...agentTrend.anomalies
+        .filter((p) => p.isAnomaly)
+        .map((p) => ({ metric: 'agentInvocations', date: p.date, value: p.value, zScore: p.zScore, deviation: p.deviation })),
+    ].sort((a, b) => Math.abs(b.zScore) - Math.abs(a.zScore))
+
     const response: TrendsResponse = {
-      messageVolume: analyseTrend(msgSeries, 7),
-      taskCompletionRate: analyseTrend(taskSeries, 7),
-      agentInvocations: analyseTrend(agentSeries, 7),
+      messageVolume: msgTrend,
+      taskCompletionRate: taskTrend,
+      agentInvocations: agentTrend,
+      anomalies,
       generatedAt: new Date().toISOString(),
     }
 
