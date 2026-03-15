@@ -35,8 +35,51 @@ export async function getBaseplateSnapshot(
 
   if (error || !data) return null
 
+  const profile = data.profile_data as Awaited<ReturnType<typeof getBaseplateSnapshot>>['profile']
+
+  // Enrich profile with knowledge graph relationships
+  try {
+    const graph = await getKnowledgeGraph()
+
+    // Get relationships for this entity
+    const relationships = await graph.getRelationships(entityId, 2)
+
+    // Get topics associated with this entity
+    const topics = await graph.getTopicsForEntity(entityId)
+
+    // Filter relationships to get related people
+    const relatedPeople = relationships
+      .filter(rel => rel.type === 'Person')
+      .map(rel => ({
+        id: rel.id,
+        name: rel.name,
+        connection_type: rel.relationshipType,
+        communication_frequency: undefined, // Could be extracted from edge data if available
+      }))
+
+    if (relatedPeople.length > 0 || topics.length > 0) {
+      profile.relationship_context = {
+        related_people: relatedPeople,
+        topics: topics.map(t => ({
+          id: t.id,
+          name: t.name,
+          first_seen: t.first_seen,
+          last_seen: t.last_seen,
+        })),
+        graph_distance: Math.max(
+          ...relationships.map(r => r.distance),
+          0
+        ),
+      }
+    }
+  } catch (graphErr) {
+    // Graph unavailability should not break baseplate
+    // Log but continue with base profile
+    console.debug('[baseplate-snapshot] Graph enrichment failed (non-critical):', graphErr)
+  }
+
   return {
-    profile: data.profile_data,
+    profile,
     computedAt: data.computed_at,
     validUntil: data.valid_until,
     eventCount: data.event_count_at_compute,
