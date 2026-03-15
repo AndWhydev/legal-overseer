@@ -426,9 +426,9 @@ export class ContextAssembler {
     const assemblyStart = performance.now()
     const tierStatuses: TierStatus[] = []
 
-    // ── Phase 1: Parallel fetch ─────────────────────────────────────────
+    // ── Phase 1: Parallel fetch (including RAG) ────────────────────────
 
-    const [systemPromptResult, recentMsgsResult, approvalsResult, summariesResult] =
+    const [systemPromptResult, recentMsgsResult, approvalsResult, summariesResult, ragResult] =
       await Promise.all([
         timedFetch('system_prompt', () =>
           buildEntityAwarePrompt(supabase, orgId, currentMessage),
@@ -454,6 +454,22 @@ export class ContextAssembler {
               loaded: true,
               latencyMs: 0,
             }),
+        // RAG retrieval: runs in parallel with other context fetches
+        process.env.PINECONE_API_KEY
+          ? timedFetch('retrieved_context', async () => {
+              const { searchVectors, formatChunksForContext } = await import('@/lib/rag/retriever')
+              const chunks = await searchVectors({
+                query: currentMessage,
+                orgId,
+                topK: 5,
+              })
+              return formatChunksForContext(chunks)
+            })
+          : Promise.resolve<TierResult<string>>({
+              data: '',
+              loaded: false,
+              latencyMs: 0,
+            }),
       ])
 
     // Extract results with fallbacks
@@ -461,37 +477,16 @@ export class ContextAssembler {
     const recentMessages = recentMsgsResult.data ?? []
     const approvals = approvalsResult.data ?? []
     const summaries = summariesResult.data ?? []
+    const retrievedContextText = ragResult.data ?? ''
 
-    // ── Phase 1b: Retrieved context (RAG) ─────────────────────────────
-    let retrievedContextText = ''
-    if (process.env.PINECONE_API_KEY) {
-      const ragResult = await timedFetch('retrieved_context', async () => {
-        const { searchVectors, formatChunksForContext } = await import('@/lib/rag/retriever')
-        const chunks = await searchVectors({
-          query: currentMessage,
-          orgId,
-          topK: 5,
-        })
-        return formatChunksForContext(chunks)
-      })
-      if (ragResult.loaded && ragResult.data) {
-        retrievedContextText = ragResult.data
-      }
-      tierStatuses.push({
-        tier: 'retrieved_context',
-        loaded: ragResult.loaded,
-        latencyMs: ragResult.latencyMs,
-        tokenCount: this.budgetManager.estimateTokens(retrievedContextText),
-        error: ragResult.error,
-      })
-    } else {
-      tierStatuses.push({
-        tier: 'retrieved_context',
-        loaded: false,
-        latencyMs: 0,
-        tokenCount: 0,
-      })
-    }
+    // Track RAG retrieval status
+    tierStatuses.push({
+      tier: 'retrieved_context',
+      loaded: ragResult.loaded,
+      latencyMs: ragResult.latencyMs,
+      tokenCount: this.budgetManager.estimateTokens(retrievedContextText),
+      error: ragResult.error,
+    })
 
     // ── Phase 2: Entity mention scan (for metadata, <1ms) ───────────────
 
