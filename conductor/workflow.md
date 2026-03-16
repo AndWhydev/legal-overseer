@@ -13,23 +13,25 @@
 - **Feature work**: Worktree isolation via `.claude/worktrees/` when needed
 - **Commit style**: Conventional-ish — `feat:`, `fix:`, `test:`, `refactor:`, etc.
 - **Co-authorship**: AI commits tagged with `Co-Authored-By: Claude`
+- **Pre-push hook**: `.git/hooks/pre-push` runs full preflight (tests + tsc + build) before allowing push to main. Prevents burning Vercel credits on broken builds
 - **Hook workaround**: `git -c core.hooksPath=/dev/null commit` when hooks block
 
 ## Testing
 
 | Type | Tool | Location | Count |
 |------|------|----------|-------|
-| Unit/Integration | Vitest 4 | `**/*.test.ts` colocated | 1462 |
-| E2E | Playwright | `e2e/` (12 spec files) | ~49 tests |
+| Unit/Integration | Vitest 4 | `**/*.test.ts` colocated | 1862 |
+| E2E | Playwright | `e2e/` (21 spec files) | ~80+ tests |
 
 **Run tests**: `npm run test` (from personal-assistant/)
+**Preflight**: `npm run preflight` (tests + typecheck + build — same gate as pre-push hook)
 **Config**: `vitest.config.ts` — globals enabled, `@/` alias, excludes e2e/node_modules/.next
 **Noise suppression**: pino logger noise excluded in vitest config
 
 ### Test Expectations
 - New features should include tests
 - Test files colocated with source (e.g., `foo.ts` + `foo.test.ts`)
-- Target: maintain 1400+ test count, no regressions
+- Target: maintain 1800+ test count, no regressions
 
 ## Code Quality
 

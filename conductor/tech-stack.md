@@ -24,9 +24,12 @@
 |---------|---------|---------|
 | @supabase/supabase-js | 2.95.3 | Database client |
 | @supabase/ssr | 0.8.0 | Server-side Supabase auth |
+| @pinecone-database/pinecone | 7.1.0 | Vector database for RAG |
+| voyageai | 0.2.1 | Voyage-3.5 embeddings |
+| @kuzu/kuzu-wasm | 0.7.0 | In-process knowledge graph |
 | radix-ui | 1.4.3 | Accessible UI primitives |
 | lucide-react | 0.567.0 | Icons |
-| motion | 12.34.3 | Animation library |
+| motion | 12.36.0 | Animation library |
 | react-markdown | 10.1.0 | Markdown rendering in chat |
 | remark-gfm | 4.0.1 | GitHub-flavored markdown |
 | recharts | 3.7.0 | Charts/analytics |
@@ -59,6 +62,8 @@
 | Telnyx | SMS channel | - | Keys set, webhook configured |
 | Resend | Transactional email | - | Key set, DNS verified |
 | Brave Search | Agent web search tool | - | API key configured |
+| Pinecone | Vector database (RAG semantic search) | us-east-1 (Serverless) | Deployed |
+| Voyage AI | Embedding model (voyage-3.5-lite) | - | API key configured |
 | Vercel (landing) | Landing page / waitlist (`bitbit.chat`) | Auto | Deployed (separate project: `bitbit-landing-page`) |
 
 ### Fly.io Worker
@@ -119,10 +124,20 @@ bitbit/                      # npm workspaces root
 ## Database
 
 - **Engine**: PostgreSQL via Supabase
-- **Migrations**: 67 SQL migration files in `personal-assistant/supabase/migrations/`
+- **Migrations**: 90 SQL migration files in `personal-assistant/supabase/migrations/`
 - **Auth**: Supabase Auth with RLS policies
 - **Tenancy**: Dual-tier — personal orgs (auto-created) + shared orgs
 - **Key patterns**: RLS on all tables, `org_id` scoping, `created_by` tracking
+
+## RAG Infrastructure (ADR-002)
+
+- **Vector DB**: Pinecone Serverless (us-east-1, `bitbit-rag` index, 1024 dimensions, cosine metric)
+- **Embeddings**: Voyage-3.5-lite via `voyageai` SDK
+- **Knowledge Graph**: Kuzu WASM (in-process, entity relationships via Graphiti pattern)
+- **Chunker**: Semantic chunking with overlap for documents, emails, messages
+- **Retriever**: Hybrid search (vector similarity + metadata filtering + knowledge graph traversal)
+- **Queue**: `embedding_queue` table for async embedding generation
+- **Key files**: `src/lib/rag/pinecone-client.ts`, `src/lib/rag/embedding-service.ts`, `src/lib/rag/retriever.ts`, `src/lib/rag/chunker.ts`
 
 ## AI Models
 
@@ -165,9 +180,13 @@ bitbit/                      # npm workspaces root
 - **OS**: Linux
 - **Shell**: zsh
 - **IDE tools**: Claude Code CLI, GitNexus (codebase indexing)
-- **Dev server**: `npm run dev` (Next.js dev with turbopack)
-- **Testing**: `vitest run` (1,462+ tests across 122+ test files)
-- **E2E**: `npx playwright test` (12 spec files, ~49 tests)
+- **Dev server**: `npm run dev` (Next.js dev with turbopack, auth enforced via `DEV_BYPASS_AUTH=false`)
+- **Dev server (no auth)**: `npm run dev:noauth` (bypass auth redirect — limited, API routes still need real sessions)
+- **Remote access**: Dev server binds `--hostname 0.0.0.0`, accessible from MacBook via Tailscale IP (100.124.167.125:3000). LAN IP blocked by Docker iptables
+- **Testing**: `vitest run` (1,862 tests across 678 test suites)
+- **E2E**: `npx playwright test` (21 spec files)
+- **Preflight**: `npm run preflight` (tests + typecheck + build — same as pre-push hook)
+- **Pre-push hook**: `.git/hooks/pre-push` blocks pushes to main unless preflight passes (tests, tsc, build)
 - **Cron routes**: 16 routes in `/api/cron/` (including archive-threads */15)
 - **Landing page dev**: `cd landing-page && npm run dev`
 - **CI/CD**: 5 GitHub Actions workflows (ci, e2e, deploy, migrate, preview)

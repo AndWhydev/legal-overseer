@@ -1,7 +1,8 @@
 import { withCronGuard } from '@/lib/cron/cron-guard'
 import { pollChannel, type PollResult } from '@/lib/channels/relay-daemon'
+import { enqueueEmbedding } from '@/lib/rag/embedding-queue'
 import type { ChannelType } from '@/lib/channels/types'
-import { logger } from '@/lib/core/logger';
+import { logger } from '@/lib/core/logger'
 
 export const maxDuration = 300
 export const dynamic = 'force-dynamic'
@@ -53,6 +54,38 @@ export async function GET(request: Request) {
             action: 'channel_sync',
             result: `Processed ${result.messagesInserted} messages from ${channelType}`,
           })
+
+          // Enqueue newly inserted messages for RAG embedding
+          const { data: newMsgs } = await supabase
+            .from('channel_messages')
+            .select('id, body, sender, sender_email, subject, received_at')
+            .eq('org_id', orgId)
+            .eq('channel', channelType)
+            .order('received_at', { ascending: false })
+            .limit(result.messagesInserted)
+
+          for (const msg of newMsgs ?? []) {
+            const content = [msg.subject, msg.body].filter(Boolean).join('\n\n')
+            if (content.length > 10) {
+              enqueueEmbedding(supabase, orgId, msg.id, content, {
+                message_id: msg.id,
+                org_id: orgId,
+                channel: channelType,
+                sender: msg.sender ?? 'unknown',
+                sender_email: msg.sender_email ?? undefined,
+                subject: msg.subject ?? undefined,
+                received_at: msg.received_at ?? new Date().toISOString(),
+                chunk_index: 0,
+                total_chunks: 1,
+                is_full_body: true,
+              }).catch((err) => {
+                logger.warn('[cron/channel-sync] Embedding enqueue failed', {
+                  messageId: msg.id,
+                  error: err instanceof Error ? err.message : String(err),
+                })
+              })
+            }
+          }
         }
 
         if (result.error) {

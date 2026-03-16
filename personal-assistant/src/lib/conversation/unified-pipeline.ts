@@ -14,6 +14,8 @@ import { resolveChannelIdentity } from './identity-resolver'
 import { resolveActiveThread, storeMessage, loadRecentMessages } from './thread-resolver'
 import { runAgentChat, type AgentEvent, type EngineConfig } from '@/lib/agent/engine'
 import { logger } from '@/lib/core/logger'
+import { MemoryConsolidator } from '@/lib/memory/memory-consolidator'
+import { enqueueEmbedding } from '@/lib/rag/embedding-queue'
 import type {
   Channel,
   InboundMessage,
@@ -262,7 +264,14 @@ export class UnifiedConversationPipeline {
 
     // ── Step 7: Async Post-Processing (fire-and-forget) ────────────────
     if (threadId && totalRecallAvailable) {
-      this.postProcess(threadId, identity.orgId, inbound.channel).catch(err => {
+      this.postProcess(
+        threadId,
+        identity.orgId,
+        identity.userId,
+        inbound.channel,
+        inbound.content,
+        responseContent,
+      ).catch(err => {
         logger.error('[pipeline] Post-processing failed', { err, threadId })
       })
     }
@@ -276,10 +285,17 @@ export class UnifiedConversationPipeline {
   }
 
   /**
-   * Fire-and-forget post-processing: update thread activity timestamp,
-   * trigger compression checks, etc.
+   * Fire-and-forget post-processing: update thread activity, extract facts,
+   * enqueue embeddings. Runs after response is streamed to the client.
    */
-  private async postProcess(threadId: string, orgId: string, channel: Channel): Promise<void> {
+  private async postProcess(
+    threadId: string,
+    orgId: string,
+    userId: string,
+    channel: Channel,
+    userMessage: string,
+    assistantResponse: string,
+  ): Promise<void> {
     // Update thread last_activity_at and last_channel
     await this.supabase
       .from('conversation_threads')
@@ -288,5 +304,92 @@ export class UnifiedConversationPipeline {
         last_channel: channel,
       })
       .eq('id', threadId)
+
+    // ── Real-time fact extraction via MemoryConsolidator ──────────────
+    // Process the user message for entity mentions, high-value signals,
+    // and fact extraction. Only calls Haiku when signals are detected.
+    if (userMessage && userMessage.length > 5) {
+      try {
+        const consolidator = new MemoryConsolidator(this.supabase)
+        const result = await consolidator.processNewTurn(orgId, threadId, {
+          id: '',
+          thread_id: threadId,
+          user_id: userId,
+          org_id: orgId,
+          turn_number: 0,
+          role: 'user',
+          channel,
+          content: userMessage,
+          tool_data: null,
+          channel_metadata: null,
+          token_count: null,
+          metadata: {},
+          created_at: new Date().toISOString(),
+        })
+
+        if (result.facts.length > 0) {
+          logger.info('[pipeline] Extracted facts from user message', {
+            threadId,
+            facts: result.facts.length,
+            contradictions: result.contradictions.length,
+          })
+        }
+
+        // Also process the assistant response (may contain commitments, decisions)
+        if (assistantResponse && assistantResponse.length > 20) {
+          await consolidator.processNewTurn(orgId, threadId, {
+            id: '',
+            thread_id: threadId,
+            user_id: userId,
+            org_id: orgId,
+            turn_number: 1,
+            role: 'assistant',
+            channel,
+            content: assistantResponse,
+            tool_data: null,
+            channel_metadata: null,
+            token_count: null,
+            metadata: {},
+            created_at: new Date().toISOString(),
+          })
+        }
+      } catch (err) {
+        logger.warn('[pipeline] Memory consolidation failed (non-fatal)', {
+          threadId,
+          error: err instanceof Error ? err.message : String(err),
+        })
+      }
+    }
+
+    // ── Enqueue conversation messages for RAG embedding ──────────────
+    // Both user message and assistant response get embedded into Pinecone
+    // for future semantic retrieval via search_memory.
+    if (userMessage && userMessage.length > 10) {
+      const msgId = `conv-${threadId}-user-${Date.now()}`
+      enqueueEmbedding(this.supabase, orgId, msgId, userMessage, {
+        message_id: msgId,
+        org_id: orgId,
+        channel: channel,
+        sender: userId,
+        received_at: new Date().toISOString(),
+        chunk_index: 0,
+        total_chunks: 1,
+        is_full_body: true,
+      }).catch(() => {}) // fire-and-forget
+    }
+
+    if (assistantResponse && assistantResponse.length > 20) {
+      const msgId = `conv-${threadId}-asst-${Date.now()}`
+      enqueueEmbedding(this.supabase, orgId, msgId, assistantResponse, {
+        message_id: msgId,
+        org_id: orgId,
+        channel: channel,
+        sender: 'bitbit',
+        received_at: new Date().toISOString(),
+        chunk_index: 0,
+        total_chunks: 1,
+        is_full_body: true,
+      }).catch(() => {}) // fire-and-forget
+    }
   }
 }

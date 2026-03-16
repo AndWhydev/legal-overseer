@@ -21,6 +21,7 @@ const nextConfig: NextConfig = {
     'jimp',
     'sharp',
     'link-preview-js',
+    'voyageai',
   ],
   images: {
     formats: ['image/avif', 'image/webp'],

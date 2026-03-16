@@ -64,7 +64,9 @@ Agent superpower tools: web_search (Brave API), fetch_url (readability extractio
 
 Total Recall: persistent conversational memory with cross-channel continuity. One active thread per user per org — all channels (web, WhatsApp, SMS, email, Slack) write to the same conversation thread. Cross-channel identity resolution maps phone numbers, email addresses, and Slack IDs to authenticated users. Three-tier conversation compression: last 10 turns verbatim, turns 11-30 compressed via Haiku, turns 31+ distilled to key facts (commitments, decisions, deadlines, financial amounts). Context assembly pipeline with priority-based token budgeting across 6 tiers within an 8K token budget. Action execution dispatcher with 7 transport handlers (email/SMS/WhatsApp/task/invoice create/invoice send/reminder), idempotency guard, and retry with exponential backoff. `approve_action` LLM tool lets users approve pending actions conversationally ("yep, send it") with fuzzy matching and expired action re-queue. Pending approvals surfaced in system prompt so the LLM can match "send it" to the right action. Unified pipeline routes web chat through identity resolution → thread management → context assembly → engine → storage → post-processing. Thread archival cron (*/15) archives stale threads after 24h inactivity. 4 new database tables, 3 PL/pgSQL helper functions, full RLS policies.
 
-16 cron routes. 67 database migrations. 1,462+ tests. All passing.
+RAG infrastructure: Pinecone Serverless vector database with Voyage-3.5-lite embeddings for semantic search across all ingested content (emails, messages, documents). Kuzu WASM knowledge graph for entity relationship traversal. Embedding queue for async processing. Hybrid retrieval combining vector similarity, metadata filtering, and graph traversal. RAG stats monitoring widget in dashboard settings.
+
+16 cron routes. 90 database migrations. 1,862+ tests. 21 E2E spec files.
 
 ## What's next
 
@@ -80,7 +82,7 @@ Total Recall: persistent conversational memory with cross-channel continuity. On
 
 **WhatsApp production (T008/T012).** WABA phone registration requires real mobile SIM (Meta blocks VoIP). Cheap prepaid AU SIM sufficient. Permanent System User token generated (2026-03-11).
 
-**Total Recall remaining (T031).** Apply migration 067 to Supabase remote. Phase 5: migrate WhatsApp/SMS/email channel adapters through the unified conversation pipeline (currently only web chat uses it). Phase 7: deprecate legacy ConversationRouter string-packing, add message cleanup cron for compiled threads, identity backfill for new signups.
+**Total Recall remaining (T031).** Migration 067 applied to Supabase remote (2026-03-17). Phase 5: migrate WhatsApp/SMS/email channel adapters through the unified conversation pipeline (currently only web chat uses it). Phase 7: deprecate legacy ConversationRouter string-packing, add message cleanup cron for compiled threads, identity backfill for new signups.
 
 **Context Baseplate remaining (T009).** End-to-end verification with real data. Relationship and memory data seeding. No-reply contact cleanup. Apply migration 066 to remote.
 

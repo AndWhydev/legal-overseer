@@ -35,8 +35,8 @@
 | ID | Track | Type | Status | Notes |
 |----|-------|------|--------|-------|
 | T008 | Platform OAuth App Registrations | infrastructure | ~80% complete | Stripe webhook done (API bypass), Meta webhook done (Graph API), Google OAuth + APIs done, Telnyx webhook done (API), Resend DNS verified. Microsoft/Xero/Slack deferred (no accounts) |
-| T009 | Context Baseplate | architecture | Phase 3 ~90% | Bidirectional context loop wired: inbound→timeline→profile refresh→chat injection→outbound write-back. Entity-mention-scanner, baseplate-to-prompt wiring, auto-contact creation from inbound messages. Migrations 053-061 applied, 066 pending remote. Remaining: e2e verification with real data, relationship/memory seeding. BUG: no-reply contacts in DB from pre-filter import need cleanup. BUG: entity_profiles.relationships and memories empty (no seed data) |
-| T011 | Production Validation & Deployment | infrastructure | Mostly complete | Fly.io + Cloudflare + VPS worker deployed. 16 cron routes. Channel smoke tests now unblocked — all 5 key platform credentials configured. Load test deferred until channels verified |
+| T009 | Context Baseplate | architecture | ~95% complete | Bidirectional context loop fully wired and tested with real data (2026-03-17). Entity mention scanner matches first names (word-boundary). Baseplate snapshots inject into system prompt (Steve West: 4 emails, subjects, dates). Fact extraction fires per-turn via Haiku. Entity profiles refreshed (22/22). Context assembler budget: 16K tokens, systemPrompt 6K max. Remaining: knowledge graph persistence (in-memory only), no-reply contact cleanup |
+| T011 | Production Validation & Deployment | infrastructure | Mostly complete | Fly.io + Cloudflare + VPS worker deployed. 17 cron routes (added process-embeddings */5). Channel smoke tests now unblocked — all 5 key platform credentials configured. Gmail find_messages tested via chat (Steve West emails retrieved). Load test deferred until channels verified |
 
 ## Planned Tracks
 

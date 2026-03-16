@@ -5,18 +5,19 @@
  * Graceful degradation: returns null when VOYAGE_API_KEY is not set.
  */
 
-import { VoyageAIClient } from 'voyageai'
 import { logger } from '@/lib/core/logger'
 
 const VOYAGE_MODEL = 'voyage-3.5'
 const BATCH_SIZE = 128
 const MAX_RETRIES = 3
 
-let voyageClient: VoyageAIClient | null = null
+// Dynamic import to avoid Turbopack/ESM resolution issues with voyageai package
+let voyageClient: any | null = null
 let initialized = false
 
 /**
  * Initialize Voyage AI client (lazy, single-shot)
+ * Uses require() to avoid Turbopack ESM directory import issues at bundle time.
  */
 function initializeVoyage(): void {
   if (initialized) return
@@ -32,6 +33,12 @@ function initializeVoyage(): void {
   }
 
   try {
+    // Completely opaque require to prevent ANY bundler from analyzing voyageai.
+    // The package has broken ESM directory imports and optional deps (@huggingface/transformers)
+    // that crash Turbopack's resolver. This pattern is invisible to static analysis.
+    const voyageaiModule = 'voyageai'
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { VoyageAIClient } = require(voyageaiModule)
     voyageClient = new VoyageAIClient({
       apiKey,
     })
@@ -98,7 +105,7 @@ export async function embedDocuments(texts: string[]): Promise<number[][] | null
     const batch = texts.slice(i, i + BATCH_SIZE)
 
     try {
-      const result = await retryWithBackoff(() =>
+      const result: any = await retryWithBackoff(() =>
         voyageClient!.embed({
           input: batch,
           model: VOYAGE_MODEL,
@@ -146,7 +153,7 @@ export async function embedQuery(text: string): Promise<number[] | null> {
   }
 
   try {
-    const result = await retryWithBackoff(() =>
+    const result: any = await retryWithBackoff(() =>
       voyageClient!.embed({
         input: text,
         model: VOYAGE_MODEL,
@@ -195,7 +202,7 @@ export async function rerankDocuments(
   }
 
   try {
-    const result = await retryWithBackoff(() =>
+    const result: any = await retryWithBackoff(() =>
       voyageClient!.rerank({
         query,
         documents: documents.map((d) => d.text),

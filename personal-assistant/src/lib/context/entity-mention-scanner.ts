@@ -47,6 +47,20 @@ export function scanForEntityMentions(
         seenIds.add(contact.id)
         continue
       }
+
+      // Check individual name parts (first name, last name) — min 3 chars each
+      const nameParts = contact.name.split(/\s+/).filter(p => p.length >= 3)
+      for (const part of nameParts) {
+        const partLower = part.toLowerCase()
+        // Match as whole word to avoid false positives ("art" in "starting")
+        const wordBoundary = new RegExp(`\\b${partLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`)
+        if (wordBoundary.test(messageLower)) {
+          matches.push({ contactId: contact.id, contactName: contact.name, matchedOn: 'name', matchedValue: part })
+          seenIds.add(contact.id)
+          break
+        }
+      }
+      if (seenIds.has(contact.id)) continue
     }
 
     // Check aliases (min 3 chars)

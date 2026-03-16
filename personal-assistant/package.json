@@ -3,12 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "dev:auth": "DEV_BYPASS_AUTH=false next dev",
+    "dev": "DEV_BYPASS_AUTH=false next dev",
+    "dev:noauth": "next dev",
     "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
+    "preflight": "npm run test && npx tsc --noEmit && npm run build",
     "audit": "npm audit --audit-level=moderate"
   },
   "dependencies": {

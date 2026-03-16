@@ -910,7 +910,7 @@ export const channelToolHandlers: Record<string, AgentToolHandler> = {
     // --- Tier 1: Hot cache (channel_messages table) ---
     let dbQuery = supabase
       .from('channel_messages')
-      .select('id, channel, sender, subject, body, metadata, created_at, processed')
+      .select('id, channel, sender, subject, body, body_full, metadata, created_at, processed')
       .eq('org_id', orgId)
       .gte('created_at', since.toISOString())
       .order('created_at', { ascending: false })
@@ -941,6 +941,7 @@ export const channelToolHandlers: Record<string, AgentToolHandler> = {
       sender_email: (m.metadata as Record<string, unknown>)?.sender_email as string ?? null,
       subject: m.subject as string,
       preview: typeof m.body === 'string' ? (m.body as string).slice(0, 300) : '',
+      body_available: !!m.body_full || (typeof m.body === 'string' && (m.body as string).length > 50),
       received_at: m.created_at as string,
       is_read: (m.processed as boolean) ?? false,
     }))
@@ -1019,7 +1020,7 @@ export const channelToolHandlers: Record<string, AgentToolHandler> = {
 
     const { data, error } = await supabase
       .from('channel_messages')
-      .select('id, channel, sender, subject, body, metadata, created_at')
+      .select('id, channel, sender, subject, body, body_full, metadata, created_at')
       .eq('id', messageId)
       .eq('org_id', orgId)
       .single()
@@ -1029,6 +1030,8 @@ export const channelToolHandlers: Record<string, AgentToolHandler> = {
     }
 
     const metadata = (data.metadata as Record<string, unknown>) || {}
+    // Prefer body_full (complete email text) over body (truncated preview)
+    const fullBody = (data.body_full as string) || (data.body as string) || ''
 
     return {
       success: true,
@@ -1037,7 +1040,7 @@ export const channelToolHandlers: Record<string, AgentToolHandler> = {
         sender: data.sender,
         sender_email: (metadata.sender_email as string) || '',
         subject: data.subject,
-        body: data.body,
+        body: fullBody,
         channel: data.channel,
         received_at: data.created_at,
       },

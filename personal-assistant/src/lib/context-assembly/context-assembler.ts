@@ -43,7 +43,7 @@ export interface AssemblerConfig {
 }
 
 export const DEFAULT_ASSEMBLER_CONFIG: AssemblerConfig = {
-  tokenBudget: 10000,
+  tokenBudget: 16000,
   maxRecentTurns: 10,
   maxCompressedTurns: 20,
   maxEntities: 5,
@@ -529,8 +529,8 @@ export class ContextAssembler {
         name: 'systemPrompt',
         content: systemPrompt,
         priority: 1,
-        minTokens: 800,
-        maxTokens: 2000,
+        minTokens: 2000,
+        maxTokens: 6000,
         compressible: true,
       },
       {
