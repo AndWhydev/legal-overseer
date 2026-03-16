@@ -164,7 +164,7 @@ export async function runScheduledAgents(
     'sentry': async (sb, oid, cid) => {
       const r = await runSentryTick(sb, oid, cid)
       const e = await processSentryEscalations(sb, oid)
-      return `sentry processed=${r.processed} triggered=${r.triggered} alerts=${r.alertsCreated} escalated=${e.escalated} failed=${e.failed}`
+      return `sentry processed=${r.processed} triggered=${r.triggered} alerts=${r.alertsCreated} escalated=${e.escalated} silenced=${e.silenced} failed=${e.failed}`
     },
     'lead-swarm': async (sb, oid, cid) => {
       const r = await runLeadSwarmTick(sb, oid, cid)

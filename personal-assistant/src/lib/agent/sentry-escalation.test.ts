@@ -185,7 +185,7 @@ describe('processSentryEscalations', () => {
 
     const result = await processSentryEscalations(supabase, 'org-1')
 
-    expect(result).toEqual({ processed: 1, escalated: 1, failed: 0 })
+    expect(result).toEqual({ processed: 1, escalated: 1, silenced: 0, failed: 0 })
     expect(state.approvals).toHaveLength(1)
     expect(state.approvals[0].priority).toBe('urgent')
 
@@ -223,7 +223,41 @@ describe('processSentryEscalations', () => {
 
     expect(result.escalated).toBe(1)
     const updated = state.alerts.find((alert) => alert.id === 'alert-window')
-    expect(updated?.next_escalation_at).toBe('2026-02-22T13:07:00.000Z')
+    // Exponential backoff: 7 minutes * 2^2 (escalation_count=2) = 28 minutes
+    expect(updated?.next_escalation_at).toBe('2026-02-22T13:28:00.000Z')
+
+    vi.useRealTimers()
+  })
+
+  it('auto-silences alerts that hit the escalation cap', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-02-22T14:00:00.000Z'))
+
+    const { supabase, state } = createMockSupabase([
+      {
+        id: 'alert-capped',
+        org_id: 'org-1',
+        watch_id: 'watch-5',
+        agent_config_id: 'cfg-1',
+        issue_type: 'uptime',
+        severity: 'critical',
+        issue_summary: 'Ping failures',
+        evidence: { status: 500 },
+        remediation_suggestion: 'Scale service',
+        status: 'escalated',
+        escalation_count: 3,
+        next_escalation_at: '2026-02-22T13:59:00.000Z',
+        acknowledged_at: null,
+        watches: { escalation_minutes: 15 },
+      },
+    ])
+
+    const result = await processSentryEscalations(supabase, 'org-1')
+
+    expect(result).toEqual({ processed: 1, escalated: 0, silenced: 1, failed: 0 })
+    const silenced = state.alerts.find((alert) => alert.id === 'alert-capped')
+    expect(silenced?.status).toBe('resolved')
+    expect(silenced?.next_escalation_at).toBeNull()
 
     vi.useRealTimers()
   })

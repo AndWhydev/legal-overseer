@@ -18,6 +18,7 @@ const {
   processSentryEscalationsMock: vi.fn().mockResolvedValue({
     processed: 1,
     escalated: 1,
+    silenced: 0,
     failed: 0,
   }),
   runLeadSwarmTickMock: vi.fn().mockResolvedValue({
@@ -334,7 +335,7 @@ describe('runScheduledAgents', () => {
     runSentryTickMock.mockClear()
     processSentryEscalationsMock.mockClear()
     logAgentRunMock.mockClear()
-    processSentryEscalationsMock.mockResolvedValueOnce({ processed: 0, escalated: 0, failed: 0 })
+    processSentryEscalationsMock.mockResolvedValueOnce({ processed: 0, escalated: 0, silenced: 0, failed: 0 })
 
     const configs = [
       {

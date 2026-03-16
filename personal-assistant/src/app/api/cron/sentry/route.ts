@@ -41,7 +41,7 @@ export async function GET(request: Request) {
         const sentryResult = await runSentryTick(supabase, orgId, config.id)
         const escalationResult = await processSentryEscalations(supabase, orgId)
 
-        const summary = `sentry processed=${sentryResult.processed} triggered=${sentryResult.triggered} alerts=${sentryResult.alertsCreated} escalated=${escalationResult.escalated} failed=${escalationResult.failed}`
+        const summary = `sentry processed=${sentryResult.processed} triggered=${sentryResult.triggered} alerts=${sentryResult.alertsCreated} escalated=${escalationResult.escalated} silenced=${escalationResult.silenced} failed=${escalationResult.failed}`
         logger.info(`[cron/sentry] org=${orgId}: ${summary}`)
 
         await supabase

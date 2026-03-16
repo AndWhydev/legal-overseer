@@ -1,9 +1,27 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { sendEscalationEmail } from '../email/email-transport'
+import { logger } from '@/lib/core/logger'
+
+/**
+ * Maximum number of escalation emails per alert before auto-silencing.
+ * After this many escalations the alert stops re-escalating and is
+ * moved to "resolved" with a note that it was auto-silenced.
+ * This prevents runaway email spam when alerts stem from transient
+ * deploy/testing failures rather than real production issues.
+ */
+const MAX_ESCALATION_COUNT = 3
+
+/**
+ * Only send an actual email for the first N escalations.
+ * Subsequent escalations still create an approval-queue entry
+ * (visible in the dashboard) but do NOT email.
+ */
+const MAX_EMAIL_ESCALATIONS = 1
 
 export interface SentryEscalationResult {
   processed: number
   escalated: number
+  silenced: number
   failed: number
 }
 
@@ -99,7 +117,7 @@ export async function processSentryEscalations(
     .lte('next_escalation_at', nowIso)
 
   if (error) {
-    return { processed: 0, escalated: 0, failed: 1 }
+    return { processed: 0, escalated: 0, silenced: 0, failed: 1 }
   }
 
   const dueAlerts = ((data ?? []) as DueAlertRow[]).sort((a, b) => a.id.localeCompare(b.id))
@@ -107,21 +125,53 @@ export async function processSentryEscalations(
   const result: SentryEscalationResult = {
     processed: dueAlerts.length,
     escalated: 0,
+    silenced: 0,
     failed: 0,
   }
 
   for (const alert of dueAlerts) {
     try {
+      // ── Auto-silence alerts that have exceeded the escalation cap ──
+      if (alert.escalation_count >= MAX_ESCALATION_COUNT) {
+        logger.info(
+          `[sentry-escalation] Auto-silencing alert ${alert.id} after ${alert.escalation_count} escalations`,
+        )
+        await supabase
+          .from('sentry_alerts')
+          .update({
+            status: 'resolved',
+            next_escalation_at: null,
+            updated_at: nowIso,
+          })
+          .eq('id', alert.id)
+          .eq('org_id', orgId)
+          .is('acknowledged_at', null)
+
+        result.silenced += 1
+        continue
+      }
+
       const approvalResult = await createEscalationApproval(supabase, alert)
       if (approvalResult.error) {
         result.failed += 1
         continue
       }
 
-      // Send escalation email notification
-      await sendEscalationEmail(alert.id, alert.issue_summary, alert.severity)
+      // Only send an email for the first escalation(s); subsequent ones
+      // are visible in the dashboard but do NOT spam the inbox.
+      if (alert.escalation_count < MAX_EMAIL_ESCALATIONS) {
+        await sendEscalationEmail(alert.id, alert.issue_summary, alert.severity)
+      } else {
+        logger.info(
+          `[sentry-escalation] Skipping email for alert ${alert.id} (escalation #${alert.escalation_count + 1}, cap=${MAX_EMAIL_ESCALATIONS})`,
+        )
+      }
 
-      const escalationMinutes = resolveEscalationMinutes(alert)
+      // Exponential backoff: double the interval with each escalation
+      // e.g. 15 min → 30 min → 60 min (then silenced at cap)
+      const baseMinutes = resolveEscalationMinutes(alert)
+      const backoffMultiplier = Math.pow(2, alert.escalation_count)
+      const escalationMinutes = baseMinutes * backoffMultiplier
       const nextEscalationAt = new Date(now.getTime() + escalationMinutes * 60_000).toISOString()
 
       const { error: updateError } = await supabase
