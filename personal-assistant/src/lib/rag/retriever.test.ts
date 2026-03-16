@@ -12,12 +12,30 @@ vi.mock('./pinecone-client', () => ({
   queryPinecone: vi.fn(),
 }))
 
+// Mock search-cache to prevent cross-test contamination from the in-memory cache
+vi.mock('@/lib/cache/search-cache', () => ({
+  buildCacheKey: vi.fn().mockReturnValue('test-key'),
+  getCachedSearch: vi.fn().mockReturnValue(null),
+  setCachedSearch: vi.fn(),
+  invalidateOrg: vi.fn(),
+  clearCache: vi.fn(),
+}))
+
+// Mock sparse-encoder (used by retriever)
+vi.mock('./sparse-encoder', () => ({
+  encodeQuerySparse: vi.fn().mockReturnValue({ indices: [], values: [] }),
+  encodeSparseVector: vi.fn().mockReturnValue({ indices: [], values: [] }),
+}))
+
 import { embedQuery } from './voyage-client'
 import { queryPinecone } from './pinecone-client'
+import { getCachedSearch } from '@/lib/cache/search-cache'
 
 describe('retriever functions', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    // Ensure cache always misses so each test hits Pinecone fresh
+    vi.mocked(getCachedSearch).mockReturnValue(null)
   })
 
   describe('formatChunksForContext', () => {

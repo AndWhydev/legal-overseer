@@ -41,9 +41,9 @@ describe('scanForEntityMentions', () => {
   })
 
   it('matches contact by email', () => {
-    const result = scanForEntityMentions('Got an email from steve.west55@icloud.com', contacts)
+    const result = scanForEntityMentions('Got an email from jo@example.com', contacts)
     expect(result).toHaveLength(1)
-    expect(result[0].contactId).toBe('c1')
+    expect(result[0].contactId).toBe('c4')
     expect(result[0].matchedOn).toBe('email')
   })
 

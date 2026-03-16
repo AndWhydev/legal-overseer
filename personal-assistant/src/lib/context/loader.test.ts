@@ -24,12 +24,13 @@ describe('loadContext', () => {
           case 'kanban_columns':
           case 'activity_feed':
             return chain([])
-          case 'entity_relationships':
+          case 'entity_timeline':
+            // c-2 appears recently in timeline → higher priority
             return chain([{ entity_id: 'c-2' }])
           case 'contacts':
             return chain([
-              { id: 'c-1', name: 'Alpha', slug: 'alpha', type: 'client' },
-              { id: 'c-2', name: 'Zulu', slug: 'zulu', type: 'lead' },
+              { id: 'c-1', name: 'Alpha', slug: 'alpha', type: 'client', emails: [] },
+              { id: 'c-2', name: 'Zulu', slug: 'zulu', type: 'lead', emails: [] },
             ])
           default:
             throw new Error(`Unexpected table: ${table}`)

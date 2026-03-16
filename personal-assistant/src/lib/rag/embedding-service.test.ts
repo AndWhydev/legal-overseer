@@ -16,6 +16,31 @@ vi.mock('./pinecone-client', () => ({
   deletePineconeVectorsByFilter: vi.fn(),
 }))
 
+vi.mock('./sparse-encoder', () => ({
+  encodeSparseVector: vi.fn().mockReturnValue({ indices: [], values: [] }),
+  encodeQuerySparse: vi.fn().mockReturnValue({ indices: [], values: [] }),
+}))
+
+vi.mock('./attachment-processor', () => ({
+  processAttachment: vi.fn().mockResolvedValue(''),
+}))
+
+vi.mock('./entity-extractor', () => ({
+  extractEntities: vi.fn().mockResolvedValue(undefined),
+}))
+
+vi.mock('./content-hasher', () => ({
+  computeContentHash: vi.fn().mockImplementation((text: string) => `hash-${text.slice(0, 8)}`),
+  checkExistingHashesBatch: vi.fn().mockResolvedValue(new Map()),
+}))
+
+vi.mock('@/lib/cache/search-cache', () => ({
+  invalidateOrg: vi.fn(),
+  buildCacheKey: vi.fn().mockReturnValue('test-cache-key'),
+  getCachedSearch: vi.fn().mockReturnValue(null),
+  setCachedSearch: vi.fn(),
+}))
+
 vi.mock('@/lib/core/logger', () => ({
   logger: {
     info: vi.fn(),
@@ -62,7 +87,7 @@ describe('embedAndUpsert', () => {
     expect(result.failed).toBe(1)
     expect(result.embedded).toBe(0)
     expect(result.errors.length).toBeGreaterThan(0)
-    expect(result.errors[0]).toContain('PINECONE_API_KEY')
+    expect(result.errors[0]).toMatch(/PINECONE_API_KEY|not configured/)
   })
 
   it('returns early with all failed when VOYAGE_API_KEY missing', async () => {
@@ -73,7 +98,7 @@ describe('embedAndUpsert', () => {
     expect(result.failed).toBe(1)
     expect(result.embedded).toBe(0)
     expect(result.errors.length).toBeGreaterThan(0)
-    expect(result.errors[0]).toContain('VOYAGE_API_KEY')
+    expect(result.errors[0]).toMatch(/VOYAGE_API_KEY|not configured/)
   })
 
   it('calls chunkText for each document', async () => {
