@@ -74,42 +74,63 @@ export async function loadContext(
     tasks = tasks.filter(t => t.column_id && activeColumnIds.has(t.column_id))
   }
 
-  // Load contacts — with optional limit prioritizing recently active contacts
+  // Load contacts — prioritized by recent communication, not just entity_relationships.
+  // Strategy: score contacts by recency of timeline events, then fill remaining alphabetically.
+  // Excludes automated/no-reply senders that clutter the working set.
   let contacts: { name: string; slug: string; type: string }[]
-  if (contactLimit) {
-    // Get contacts that have recent entity_relationships or timeline events
-    const { data: activeContactIds } = await supabase
-      .from('entity_relationships')
+  const effectiveContactLimit = contactLimit ?? 20
+
+  // Get contacts with recent timeline activity (most relevant for context)
+  const [recentTimelineRes, allContactsRes] = await Promise.all([
+    supabase
+      .from('entity_timeline')
       .select('entity_id')
       .eq('org_id', orgId)
       .eq('entity_type', 'contact')
-      .order('updated_at', { ascending: false })
-      .limit(contactLimit)
-
-    const activeIds = new Set((activeContactIds ?? []).map(r => r.entity_id))
-
-    const contactsRes = await supabase
+      .order('created_at', { ascending: false })
+      .limit(100),
+    supabase
       .from('contacts')
-      .select('id, name, slug, type')
+      .select('id, name, slug, type, emails')
       .eq('org_id', orgId)
-      .order('name')
+      .order('name'),
+  ])
 
-    const allContacts = (contactsRes.data ?? []) as ContextContact[]
+  const allContacts = (allContactsRes.data ?? []) as (ContextContact & { emails?: string[] })[]
 
-    // Prioritize contacts with active relationships, then fill remaining slots
-    const active = allContacts.filter(c => activeIds.has(String(c.id ?? '')))
-    const rest = allContacts.filter(c => !activeIds.has(String(c.id ?? '')))
-    contacts = [...active, ...rest]
-      .slice(0, contactLimit)
-      .map(({ id: _id, ...contact }) => contact)
-  } else {
-    const contactsRes = await supabase
-      .from('contacts')
-      .select('name, slug, type')
-      .eq('org_id', orgId)
-      .order('name')
-    contacts = (contactsRes.data ?? []) as { name: string; slug: string; type: string }[]
+  // Filter out automated/no-reply contacts that add noise to the working set.
+  // Uses email patterns (no-reply, noreply, mailer-daemon) rather than hardcoded brand names.
+  // Contacts explicitly typed as 'person' or 'business' are always included.
+  const isAutomated = (c: typeof allContacts[0]) => {
+    // Never filter contacts the user has explicitly categorized
+    if (c.type === 'person' || c.type === 'business') return false
+    const emailLower = ((c.emails || [])[0] || '').toLowerCase()
+    return emailLower.includes('no-reply') ||
+           emailLower.includes('noreply') ||
+           emailLower.includes('donotreply') ||
+           emailLower.includes('mailer-daemon') ||
+           emailLower.includes('notifications@') ||
+           emailLower.includes('updates@')
   }
+
+  const humanContacts = allContacts.filter(c => !isAutomated(c))
+
+  // Score by recency: contacts appearing more recently in timeline get priority
+  const recentEntityIds = (recentTimelineRes.data ?? []).map(r => r.entity_id)
+  const recencyScore = new Map<string, number>()
+  recentEntityIds.forEach((id, index) => {
+    if (!recencyScore.has(id)) recencyScore.set(id, 100 - index) // higher = more recent
+  })
+
+  const scored = humanContacts.map(c => ({
+    ...c,
+    score: recencyScore.get(String(c.id ?? '')) ?? 0,
+  }))
+  scored.sort((a, b) => b.score - a.score)
+
+  contacts = scored
+    .slice(0, effectiveContactLimit)
+    .map(({ id: _id, emails: _emails, score: _score, ...contact }) => contact)
 
   return {
     goals: (goalsRes.data ?? []) as Goal[],

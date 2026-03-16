@@ -77,29 +77,52 @@ async function readCacheFile<T>(filename: string): Promise<T[]> {
 }
 
 async function getChannelSummary(): Promise<string> {
+  // First try local cache (Apple Calendar, Reminders synced from macOS)
   const { existsSync, readdirSync, readFileSync } = await import('fs')
   const { join } = await import('path')
   const cacheDir = join(process.env.HOME || '', '.agent', 'cache')
-  if (!existsSync(cacheDir)) return 'No channel data cached.'
-
   const channelCounts: string[] = []
-  const files = readdirSync(cacheDir).filter(f => f.endsWith('.json'))
 
-  for (const file of files) {
-    try {
-      const data = JSON.parse(readFileSync(join(cacheDir, file), 'utf-8'))
-      const count = Array.isArray(data) ? data.length : 0
-      const name = file.replace('.json', '').replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
-      if (count > 0) channelCounts.push(`${name}: ${count} items`)
-    } catch {
-      // skip
+  if (existsSync(cacheDir)) {
+    const files = readdirSync(cacheDir).filter(f => f.endsWith('.json'))
+    for (const file of files) {
+      try {
+        const data = JSON.parse(readFileSync(join(cacheDir, file), 'utf-8'))
+        const count = Array.isArray(data) ? data.length : 0
+        const name = file.replace('.json', '').replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+        if (count > 0) channelCounts.push(`${name}: ${count} items`)
+      } catch { /* skip */ }
     }
+  }
+
+  // Also query channel_connections for connected status (covers Gmail, Outlook, WhatsApp, etc.)
+  if (_channelSummarySupabase) {
+    try {
+      const { data: connections } = await _channelSummarySupabase
+        .from('channel_connections')
+        .select('channel_type, status, last_sync')
+        .eq('org_id', _channelSummaryOrgId)
+        .eq('status', 'connected')
+
+      if (connections && connections.length > 0) {
+        for (const conn of connections) {
+          const name = (conn.channel_type as string).replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())
+          const lastSync = conn.last_sync ? `synced ${new Date(conn.last_sync as string).toLocaleDateString()}` : 'connected'
+          channelCounts.push(`${name}: ${lastSync}`)
+        }
+      }
+    } catch { /* non-critical */ }
   }
 
   return channelCounts.length > 0
     ? `Connected channels: ${channelCounts.join(', ')}`
-    : 'No channel data cached.'
+    : 'No channels connected yet.'
 }
+
+// Temporary: pass supabase client to getChannelSummary via module-level vars
+// (cleaner approach would be to refactor getChannelSummary to accept params)
+let _channelSummarySupabase: import('@supabase/supabase-js').SupabaseClient | null = null
+let _channelSummaryOrgId: string = ''
 
 async function getTodayEvents(): Promise<string> {
   const events = await readCacheFile<CachedEvent>('calendar-events.json')
@@ -166,12 +189,18 @@ export async function buildSystemPrompt(supabase: SupabaseClient, orgId: string,
   const deploymentSlug = process.env.BITBIT_DEPLOYMENT || 'awu'
   const pack = getPack(resolveIndustry(industry))
 
+  // Pass supabase context for channel summary DB query
+  if (supabase) {
+    _channelSummarySupabase = supabase
+    _channelSummaryOrgId = orgId
+  }
+
   const [ctx, channelSummary, todayEvents, dueReminders, policyText, voiceText, pendingApprovals] = await Promise.all([
     supabase
       ? loadContext(supabase, orgId, {
           activeTasksOnly: true,
           taskLimit: 20,
-          contactLimit: 15,
+          contactLimit: 20,
         })
       : Promise.resolve({ goals: [], tasks: [], contacts: [], recentActivity: [], columns: [] }),
     getChannelSummary(),

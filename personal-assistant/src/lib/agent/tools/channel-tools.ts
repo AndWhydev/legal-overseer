@@ -903,7 +903,9 @@ export const channelToolHandlers: Record<string, AgentToolHandler> = {
     const query = (input.query as string) || ''
     const channel = input.channel as string | undefined
     const from = input.from as string | undefined
-    const since = input.since ? new Date(input.since as string) : new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+    // Default to 30 days instead of 7 — users often ask about contacts with older history.
+    // The baseplate may show "last contact: 2 weeks ago" but a 7-day default would miss them.
+    const since = input.since ? new Date(input.since as string) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
     const limit = Math.min((input.limit as number) || 10, 50)
     const unreadOnly = input.unread_only as boolean | undefined
 
