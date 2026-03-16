@@ -44,9 +44,6 @@ async function callSearchMemory(
   orgId: string,
   supabase: ReturnType<typeof createMockSupabase>
 ) {
-  // Re-import to get fresh handler with mocks
-  const { default: toolsModule } = await import('./tools')
-
   // The handler is accessible via the exported handlers
   // Since it's not directly exported, we test the behavior via the tool pattern
   const results: { source: string; entries: unknown[] }[] = []

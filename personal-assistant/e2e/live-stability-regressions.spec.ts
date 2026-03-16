@@ -1,7 +1,7 @@
-import { test, expect } from '@playwright/test'
+import { test, expect, type Page } from '@playwright/test'
 import { AUTH_SKIP_REASON, openProtectedPath } from './helpers'
 
-async function enableTestModules(page: Parameters<typeof test>[0]['page']) {
+async function enableTestModules(page: Page) {
   await page.evaluate(() => {
     window.localStorage.setItem(
       'bb-dev-overrides',
@@ -16,8 +16,8 @@ async function enableTestModules(page: Parameters<typeof test>[0]['page']) {
   await page.reload({ waitUntil: 'domcontentloaded' })
 }
 
-async function openTab(page: Parameters<typeof test>[0]['page'], tabId: string) {
-  await page.evaluate((id) => {
+async function openTab(page: Page, tabId: string) {
+  await page.evaluate((id: string) => {
     window.sessionStorage.setItem('bitbit-tab', id)
   }, tabId)
 
