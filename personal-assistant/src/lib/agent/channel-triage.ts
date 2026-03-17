@@ -620,10 +620,11 @@ export async function runTriage(
         .eq('id', msg.id)
     }
 
-    // 7. Auto-create tasks for actionable messages from human senders only.
-    // Skip duplicates, automated senders (security alerts, deploy notifications),
-    // and low-significance messages to prevent task overload.
-    if (msgCategory === 'actionable' && !isDuplicate && senderType === 'human' && classification.significance >= 5) {
+    // 7. Auto-create tasks for actionable EMAIL messages from human senders only.
+    // Individual WhatsApp/SMS messages are conversational — they don't become tasks.
+    // Only email (with subjects) gets auto-tasked. Significance >= 6 for high threshold.
+    const isEmailChannel = (msg.channel as string) === 'gmail' || (msg.channel as string) === 'outlook'
+    if (msgCategory === 'actionable' && !isDuplicate && senderType === 'human' && isEmailChannel && classification.significance >= 6) {
       const created = await createTaskForMessage(
         supabase, orgId, msg, classification, priority, contactId,
       )

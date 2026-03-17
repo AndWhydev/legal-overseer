@@ -142,7 +142,7 @@ async function importMessages(
         received_at: m.timestamp.toISOString(),
         is_actionable: false,
         priority: 'medium',
-        processed: false,
+        processed: true, // Mark as already processed so triage doesn't create tasks from historical messages
         metadata: {
           source: 'whatsapp_import',
           contact_name: effectiveContactName,
