@@ -373,15 +373,41 @@ export class MemoryConsolidator {
         ))
         .map(e => e.entityId!)
 
-      await this.supabase.from('semantic_memories').insert({
+      // Map extraction categories to DB-allowed values.
+      // Remote DB constraint allows: general, preference, relationship, financial.
+      // Prefix the original type in the content for filtering.
+      const categoryMap: Record<string, string> = {
+        financial: 'financial',
+        preference: 'preference',
+        relationship: 'relationship',
+        entity_state: 'general',
+        commitment: 'general',
+        decision: 'general',
+        action_item: 'general',
+        deadline: 'general',
+        pattern: 'general',
+        domain: 'general',
+        contact: 'general',
+        workflow: 'general',
+      }
+      const dbCategory = categoryMap[fact.type] || 'general'
+
+      const { error: insertErr } = await this.supabase.from('semantic_memories').insert({
         org_id: orgId,
-        content: fact.text,
-        category: fact.type,
+        content: `[${fact.type}] ${fact.text}`,
+        category: dbCategory,
         confidence: fact.importance,
         entity_ids: entityIds,
-        source: 'conversation_extraction',
         is_active: true,
       })
+
+      if (insertErr) {
+        logger.warn('[memory-consolidator] Failed to insert fact', {
+          error: insertErr.message,
+          category: dbCategory,
+          originalType: fact.type,
+        })
+      }
 
       // Invalidate xref cache for affected entities
       for (const entityId of entityIds) {

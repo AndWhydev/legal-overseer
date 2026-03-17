@@ -210,11 +210,13 @@ export async function* runAgentChat(
     planPromise = generatePlan(message, entityContext, toolNames).catch(() => ({ stages: [], toolGroups: [] }) as PlanOutput)
   }
 
-  // Give Haiku a brief race window (500ms) before starting Sonnet
+  // Give Haiku a race window before starting Sonnet.
+  // 1500ms is enough for Haiku to respond (typically 300-800ms) while
+  // keeping the user experience snappy. Tool group filtering saves tokens.
   if (planPromise) {
     const raceResult = await Promise.race([
       planPromise.then(plan => ({ ready: true as const, plan })),
-      new Promise<{ ready: false }>(resolve => setTimeout(() => resolve({ ready: false }), 500)),
+      new Promise<{ ready: false }>(resolve => setTimeout(() => resolve({ ready: false }), 1500)),
     ])
     if (raceResult.ready && raceResult.plan.stages.length > 0) {
       planStages = raceResult.plan.stages
