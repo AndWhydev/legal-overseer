@@ -970,6 +970,7 @@ export const channelToolHandlers: Record<string, AgentToolHandler> = {
             sender_email: (m.metadata as Record<string, unknown>)?.sender_email as string ?? null,
             subject: m.subject,
             preview: m.body.slice(0, 300),
+            body_available: m.body.length > 50,
             received_at: m.received_at,
             is_read: false,
           })))
@@ -991,6 +992,7 @@ export const channelToolHandlers: Record<string, AgentToolHandler> = {
             sender_email: (m.metadata as Record<string, unknown>)?.sender_email as string ?? null,
             subject: m.subject,
             preview: m.body.slice(0, 300),
+            body_available: m.body.length > 50,
             received_at: m.received_at,
             is_read: false,
           })))

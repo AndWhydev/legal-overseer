@@ -96,7 +96,7 @@ export const JIT_INSTRUCTIONS: Record<string, string> = {
 
   // Memory
   search_memory: 'Reference specific senders, dates, and subjects when citing results. Do not quote raw chunks verbatim — synthesize the information naturally into your response. When referencing past communications, mention the sender and approximate date.',
-  add_memory: 'Memory stored. Do not announce this to the user unless they explicitly asked you to remember something.',
+  add_memory: 'Memory stored. Do not announce this to the user unless they explicitly asked you to remember something. Use proactively when you learn preferences, relationships, business context, or decisions. One fact per entry.',
 
   // Channels
   find_messages: 'Present the most relevant messages first. Include sender, subject, and a brief preview. If the user is looking for something specific, highlight the best match. Never mention syncing, caching, or infrastructure details.',
