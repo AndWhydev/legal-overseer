@@ -188,7 +188,9 @@ function formatPendingApprovals(approvals: import('./approval-queue').ApprovalRe
 }
 
 export async function buildSystemPrompt(supabase: SupabaseClient, orgId: string, industry?: string): Promise<string> {
-  const deploymentSlug = process.env.BITBIT_DEPLOYMENT || 'awu'
+  // Only load deployment-specific policies for matching orgs.
+  // Don't hardcode 'awu' — personal orgs shouldn't get AWU policies.
+  const deploymentSlug = process.env.BITBIT_DEPLOYMENT || ''
   const pack = getPack(resolveIndustry(industry))
 
   // Pass supabase context for channel summary DB query
