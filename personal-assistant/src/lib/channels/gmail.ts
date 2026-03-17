@@ -299,7 +299,7 @@ export const gmailAdapter: ChannelAdapter = {
   icon: 'Mail',
 
   async pull(config, since, options) {
-    const windowDays = Number(process.env.RELAY_DEFAULT_WINDOW_DAYS) || 30
+    const windowDays = Number(process.env.RELAY_DEFAULT_WINDOW_DAYS) || 90
     const sinceDate = since || new Date(Date.now() - windowDays * 24 * 60 * 60 * 1000)
     const maxMessages = (options?.maxMessages as number) || 50
     const mode = resolveGmailTransportMode(config)
