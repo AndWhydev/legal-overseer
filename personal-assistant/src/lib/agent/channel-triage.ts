@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { ChannelMessage } from '@/lib/channels/types'
+import { logger } from '@/lib/core/logger'
 import {
   classifyMessage,
   type ClassificationResult,
@@ -493,7 +494,7 @@ export async function runTriage(
       isNoReplyAddress: (msg.metadata as any)?.is_noreply as boolean | undefined,
     })
 
-    // Only resolve to existing contacts; don't create new ones
+    // Resolve sender to existing contact, or auto-create if criteria met
     const resolved = await resolveMessageSender(
       supabase, orgId, msg.sender_email, msg.sender as string | null,
     )
@@ -501,8 +502,34 @@ export async function runTriage(
       contactId = resolved.contactId
       contactName = resolved.contactName
       result.entitiesLinked++
-    } else if (senderType === 'human' && !shouldCreate) {
-      // Mark as transient sender (human but doesn't meet contact creation criteria)
+    } else if (senderType === 'human' && shouldCreate) {
+      // Auto-create contact for human senders meeting criteria (2+ messages or user replied)
+      try {
+        const senderName = (msg.sender as string) || 'Unknown'
+        const senderEmail = msg.sender_email as string | null
+        const { data: newContact } = await supabase
+          .from('contacts')
+          .insert({
+            org_id: orgId,
+            name: senderName,
+            type: 'person',
+            emails: senderEmail ? [senderEmail] : [],
+            profile_data: { source: 'auto_triage' },
+          })
+          .select('id, name')
+          .single()
+
+        if (newContact) {
+          contactId = newContact.id
+          contactName = newContact.name
+          result.entitiesLinked++
+          logger.info('[triage] Auto-created contact', { name: senderName, email: senderEmail, orgId })
+        }
+      } catch {
+        // Contact creation failed (duplicate, etc.) — not critical
+      }
+    } else if (senderType === 'human') {
+      // Human but doesn't meet contact creation criteria yet
       isTransientSender = true
     }
 
