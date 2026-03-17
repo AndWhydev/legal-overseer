@@ -11,7 +11,7 @@ function getFromEmail(): string {
 }
 
 function getToEmail(): string {
-  return process.env.NOTIFICATION_TO_EMAIL || 'andy@allwebbedup.com.au'
+  return process.env.NOTIFICATION_TO_EMAIL || 'hi@torkay.com'
 }
 
 function getDashboardUrl(): string {

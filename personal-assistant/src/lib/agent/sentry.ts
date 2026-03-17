@@ -312,25 +312,39 @@ export async function runSentryTick(
       triggeredCount += 1
       watchPatch.last_triggered_at = now.toISOString()
 
-      const escalationMinutes = Math.max(1, watch.escalation_minutes ?? 15)
-      const nextEscalationAt = new Date(now.getTime() + escalationMinutes * 60 * 1000).toISOString()
+      // Dedup: skip creating a new alert if one already exists for this
+      // watch that is still pending or escalated (not yet acknowledged/resolved).
+      const { data: existingAlert } = await supabase
+        .from('sentry_alerts')
+        .select('id')
+        .eq('watch_id', watch.id)
+        .eq('org_id', watch.org_id)
+        .in('status', ['pending', 'escalated'])
+        .is('acknowledged_at', null)
+        .limit(1)
+        .maybeSingle()
 
-      const { error: alertError } = await supabase.from('sentry_alerts').insert({
-        org_id: watch.org_id,
-        watch_id: watch.id,
-        agent_config_id: agentConfigId,
-        issue_type: evaluation.issueType,
-        severity: evaluation.severity,
-        issue_summary: evaluation.summary,
-        evidence: evaluation.evidence,
-        remediation_suggestion: buildRemediationSuggestion(evaluation.issueType, evaluation.evidence),
-        status: 'pending',
-        escalation_count: 0,
-        next_escalation_at: nextEscalationAt,
-      })
+      if (!existingAlert) {
+        const escalationMinutes = Math.max(1, watch.escalation_minutes ?? 15)
+        const nextEscalationAt = new Date(now.getTime() + escalationMinutes * 60 * 1000).toISOString()
 
-      if (!alertError) {
-        alertsCreated += 1
+        const { error: alertError } = await supabase.from('sentry_alerts').insert({
+          org_id: watch.org_id,
+          watch_id: watch.id,
+          agent_config_id: agentConfigId,
+          issue_type: evaluation.issueType,
+          severity: evaluation.severity,
+          issue_summary: evaluation.summary,
+          evidence: evaluation.evidence,
+          remediation_suggestion: buildRemediationSuggestion(evaluation.issueType, evaluation.evidence),
+          status: 'pending',
+          escalation_count: 0,
+          next_escalation_at: nextEscalationAt,
+        })
+
+        if (!alertError) {
+          alertsCreated += 1
+        }
       }
     }
 

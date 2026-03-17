@@ -16,18 +16,30 @@ interface SplashScreenProps {
   children: React.ReactNode;
 }
 
-/* ── Floating particle — a single gentle orbiting dot ── */
+/* ── Floating particle — a single gentle drifting dot with organic motion ── */
 function FloatingParticle({ index }: { index: number }) {
   const seed = (i: number, m: number) => ((i * 7919 + 104729) % m) / m;
 
-  const orbitRadius = 58 + seed(index, 100) * 24;
+  const baseRadius = 54 + seed(index, 100) * 28;
   const startAngle = seed(index + 1, 360) * 360;
-  const duration = 6 + seed(index + 2, 100) * 6;
+  const duration = 8 + seed(index + 2, 100) * 8;
   const size = 2 + seed(index + 3, 100) * 2;
-  const delay = seed(index + 4, 100) * 2;
-  const opacity = 0.3 + seed(index + 5, 100) * 0.5;
-  // Alternate direction
+  const delay = seed(index + 4, 100) * 3;
+  const opacity = 0.25 + seed(index + 5, 100) * 0.45;
   const direction = index % 2 === 0 ? 1 : -1;
+
+  // Generate 8 waypoints with varying radii for a wobbly, organic path
+  const steps = 8;
+  const xPoints: number[] = [];
+  const yPoints: number[] = [];
+  for (let s = 0; s <= steps; s++) {
+    const angle = startAngle + (s * 360 * direction) / steps;
+    // Vary radius per waypoint — creates a soft, irregular loop
+    const wobble = baseRadius * (0.85 + seed(index * 13 + s * 7, 100) * 0.3);
+    const rad = (angle * Math.PI) / 180;
+    xPoints.push(Math.cos(rad) * wobble);
+    yPoints.push(Math.sin(rad) * wobble);
+  }
 
   return (
     <motion.div
@@ -44,31 +56,20 @@ function FloatingParticle({ index }: { index: number }) {
       }}
       initial={{
         opacity: 0,
-        x: Math.cos((startAngle * Math.PI) / 180) * orbitRadius,
-        y: Math.sin((startAngle * Math.PI) / 180) * orbitRadius,
+        x: xPoints[0],
+        y: yPoints[0],
       }}
       animate={{
-        opacity: [0, opacity, opacity, 0],
-        x: [
-          Math.cos((startAngle * Math.PI) / 180) * orbitRadius,
-          Math.cos(((startAngle + 90 * direction) * Math.PI) / 180) * orbitRadius,
-          Math.cos(((startAngle + 180 * direction) * Math.PI) / 180) * orbitRadius,
-          Math.cos(((startAngle + 270 * direction) * Math.PI) / 180) * orbitRadius,
-          Math.cos(((startAngle + 360 * direction) * Math.PI) / 180) * orbitRadius,
-        ],
-        y: [
-          Math.sin((startAngle * Math.PI) / 180) * orbitRadius,
-          Math.sin(((startAngle + 90 * direction) * Math.PI) / 180) * orbitRadius,
-          Math.sin(((startAngle + 180 * direction) * Math.PI) / 180) * orbitRadius,
-          Math.sin(((startAngle + 270 * direction) * Math.PI) / 180) * orbitRadius,
-          Math.sin(((startAngle + 360 * direction) * Math.PI) / 180) * orbitRadius,
-        ],
+        opacity: [0, opacity, opacity, opacity, opacity, opacity, opacity, 0, 0],
+        x: xPoints,
+        y: yPoints,
+        scale: [1, 1.15, 0.9, 1.1, 0.95, 1.05, 1, 0.9, 1],
       }}
       transition={{
         duration,
         delay,
         repeat: Infinity,
-        ease: 'linear',
+        ease: 'easeInOut',
       }}
     />
   );

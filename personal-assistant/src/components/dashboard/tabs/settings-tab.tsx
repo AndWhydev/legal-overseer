@@ -462,7 +462,7 @@ export function SettingsAppearanceTab() {
                   gap: 10,
                   padding: 16,
                   borderRadius: 14,
-                  border: active ? '2px solid var(--accent)' : `1px solid ${t.border}`,
+                  border: active ? '2px solid #22C55E' : `1px solid ${t.border}`,
                   background: 'var(--bg-card)',
                   cursor: 'pointer',
                   transition: 'all 200ms',
@@ -490,7 +490,7 @@ export function SettingsAppearanceTab() {
                   <div style={{
                     position: 'absolute', top: 10, right: 10,
                     width: 20, height: 20, borderRadius: '50%',
-                    background: 'var(--accent)',
+                    background: '#22C55E',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                   }}>
                     <Check size={12} color="#fff" strokeWidth={2.5} />

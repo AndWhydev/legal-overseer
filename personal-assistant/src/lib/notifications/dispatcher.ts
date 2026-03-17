@@ -112,7 +112,7 @@ export async function dispatchNotification(
   // Email
   if (channels.includes('email')) {
     try {
-      const toEmail = process.env.NOTIFICATION_TO_EMAIL || 'andy@allwebbedup.com.au'
+      const toEmail = process.env.NOTIFICATION_TO_EMAIL || 'hi@torkay.com'
       // Route to specific templates for typed notifications
       if (params.type === 'approval_needed' && params.metadata) {
         const details = params.metadata as unknown as ApprovalEmailDetails

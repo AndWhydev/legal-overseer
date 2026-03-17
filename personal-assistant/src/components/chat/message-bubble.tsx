@@ -96,7 +96,7 @@ function renderTextWithCitations(text: string, citations: Citation[]): React.Rea
   return parts
 }
 
-export function MessageBubble({ message, citations, showAvatar = false }: { message: Message; citations?: Citation[]; showAvatar?: boolean }) {
+export function MessageBubble({ message, citations, showAvatar = false, avatarEmotion, avatarThinking, avatarActivity }: { message: Message; citations?: Citation[]; showAvatar?: boolean; avatarEmotion?: string; avatarThinking?: boolean; avatarActivity?: string }) {
   const isUser = message.role === 'user'
   const msgCitations = citations || message.citations
 
@@ -134,10 +134,10 @@ export function MessageBubble({ message, citations, showAvatar = false }: { mess
       {!isUser && showAvatar && (
         <motion.div
           className="bb-chat__assistant-icon"
-          layoutId="bitbit-active-avatar"
-          transition={{ type: 'spring', stiffness: 200, damping: 25, mass: 0.8 }}
+          layoutId="bitbit-chat-avatar"
+          transition={{ type: 'spring', stiffness: 400, damping: 30, mass: 0.8 }}
         >
-          <BitBitFaceAvatar size={40} />
+          <BitBitFaceAvatar size={32} emotion={avatarEmotion as any} isThinking={avatarThinking} activity={avatarActivity as any} />
         </motion.div>
       )}
       <div className={isUser ? 'bb-chat__bubble--user' : 'bb-chat__bubble--assistant bb-chat__markdown'}>

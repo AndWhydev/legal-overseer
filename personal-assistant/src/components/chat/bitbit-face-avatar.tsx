@@ -4,11 +4,22 @@ import { useRef, useEffect, useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import type { AvatarEmotion } from './use-avatar-emotion'
 
+export type AvatarActivity =
+  | 'idle'
+  | 'thinking'
+  | 'searching'
+  | 'reading'
+  | 'creating'
+  | 'sending'
+  | 'browsing'
+
 interface BitBitFaceAvatarProps {
   size?: number
   emotion?: AvatarEmotion
   isThinking?: boolean
   className?: string
+  /** Current activity — drives animated prop overlays */
+  activity?: AvatarActivity
 }
 
 // ─── Face geometry ───
@@ -277,6 +288,7 @@ export function BitBitFaceAvatar({
   emotion = 'neutral',
   isThinking = false,
   className = '',
+  activity = 'idle',
 }: BitBitFaceAvatarProps) {
   const svgRef = useRef<SVGSVGElement>(null)
   const [eyeOffset, setEyeOffset] = useState({ x: 0, y: 0 })
@@ -377,6 +389,13 @@ export function BitBitFaceAvatar({
   const config = EMOTION_CONFIG[emotion]
   const color = 'var(--text-primary, #fff)'
 
+  // At small sizes, thicken strokes and enlarge features for visibility
+  // Scale factor: 1.0 at 48px, up to ~2.0 at 24px
+  const thicknessScale = Math.max(1, 48 / Math.max(size, 20))
+  const browStroke = 1.5 * thicknessScale
+  const noseStroke = 1.2 * thicknessScale
+  const eyeRadius = EYE_R * Math.max(1, thicknessScale * 0.85)
+
   const isProcessing = emotion === 'processing'
   const isSleeping = emotion === 'sleeping'
 
@@ -437,7 +456,7 @@ export function BitBitFaceAvatar({
           <motion.path
             d="M12 15 Q15 11.5 18 15"
             stroke={color}
-            strokeWidth="1.5"
+            strokeWidth={browStroke}
             strokeLinecap="round"
             fill="none"
             animate={{
@@ -452,7 +471,7 @@ export function BitBitFaceAvatar({
           <motion.path
             d="M30 15 Q33 11.5 36 15"
             stroke={color}
-            strokeWidth="1.5"
+            strokeWidth={browStroke}
             strokeLinecap="round"
             fill="none"
             animate={{
@@ -467,7 +486,7 @@ export function BitBitFaceAvatar({
           <motion.circle
             cx={LEFT_EYE_CX}
             cy={EYE_CY}
-            r={EYE_R}
+            r={eyeRadius}
             fill={color}
             animate={{
               translateX: isThinking
@@ -497,7 +516,7 @@ export function BitBitFaceAvatar({
           <motion.circle
             cx={RIGHT_EYE_CX}
             cy={EYE_CY}
-            r={EYE_R}
+            r={eyeRadius}
             fill={color}
             animate={{
               translateX: isThinking
@@ -531,7 +550,7 @@ export function BitBitFaceAvatar({
           <motion.path
             d={NOSE_PATH}
             stroke={color}
-            strokeWidth="1.2"
+            strokeWidth={noseStroke}
             strokeLinecap="round"
             strokeLinejoin="round"
             fill="none"
@@ -629,6 +648,166 @@ export function BitBitFaceAvatar({
 
         </motion.g>
       </motion.g>
+
+      {/* ─── Activity Props — animated overlays with crossfade ─── */}
+      <AnimatePresence>
+        {/* Magnifying glass — searching: swings in from bottom-right like picking it up */}
+        {activity === 'searching' && (
+          <motion.g
+            key="prop-search"
+            initial={{ opacity: 0, rotate: 30, x: 6, y: 6 }}
+            animate={{ opacity: 1, rotate: 0, x: 0, y: 0 }}
+            exit={{ opacity: 0, rotate: -20, x: -4, y: -4, transition: { duration: 0.2 } }}
+            transition={{ type: 'spring', stiffness: 500, damping: 25, mass: 0.6 }}
+            style={{ transformOrigin: '43px 16px' }}
+          >
+            <motion.circle
+              cx={39} cy={12} r={5}
+              stroke={color} strokeWidth={browStroke} fill="none"
+              animate={{ scale: [1, 1.1, 1], x: [-1, 1, -1] }}
+              transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
+              style={{ transformOrigin: '39px 12px' }}
+            />
+            <motion.line
+              x1={43} y1={16} x2={47} y2={20}
+              stroke={color} strokeWidth={browStroke} strokeLinecap="round"
+            />
+          </motion.g>
+        )}
+
+        {/* Glasses — reading: slide down from above like putting them on */}
+        {activity === 'reading' && (
+          <motion.g
+            key="prop-glasses"
+            initial={{ opacity: 0, y: -8, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -5, scale: 0.95, transition: { duration: 0.2 } }}
+            transition={{ type: 'spring', stiffness: 300, damping: 20, mass: 0.7 }}
+          >
+            <motion.circle cx={LEFT_EYE_CX} cy={EYE_CY} r={5} stroke={color} strokeWidth={noseStroke * 0.8} fill="none" opacity={0.5}
+              animate={{ opacity: [0.4, 0.6, 0.4] }}
+              transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+            />
+            <motion.circle cx={RIGHT_EYE_CX} cy={EYE_CY} r={5} stroke={color} strokeWidth={noseStroke * 0.8} fill="none" opacity={0.5}
+              animate={{ opacity: [0.4, 0.6, 0.4] }}
+              transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut', delay: 0.2 }}
+            />
+            <line x1={20} y1={EYE_CY} x2={28} y2={EYE_CY} stroke={color} strokeWidth={noseStroke * 0.7} opacity={0.5} />
+            <line x1={10} y1={EYE_CY} x2={7} y2={EYE_CY - 2} stroke={color} strokeWidth={noseStroke * 0.6} strokeLinecap="round" opacity={0.4} />
+            <line x1={38} y1={EYE_CY} x2={41} y2={EYE_CY - 2} stroke={color} strokeWidth={noseStroke * 0.6} strokeLinecap="round" opacity={0.4} />
+          </motion.g>
+        )}
+
+        {/* Thought bubbles — thinking: cascade upward one by one */}
+        {activity === 'thinking' && (
+          <motion.g key="prop-thought">
+            <motion.circle
+              cx={34} cy={8} r={1.5}
+              fill={color}
+              initial={{ opacity: 0, scale: 0 }}
+              animate={{ opacity: [0, 0.4, 0.3, 0], scale: [0, 1, 1, 0.5], y: [2, 0, -2, -4] }}
+              transition={{ duration: 2.5, repeat: Infinity, ease: 'easeOut' }}
+            />
+            <motion.circle
+              cx={38} cy={3} r={2}
+              fill={color}
+              initial={{ opacity: 0, scale: 0 }}
+              animate={{ opacity: [0, 0.35, 0.25, 0], scale: [0, 1, 1, 0.5], y: [3, 0, -2, -5] }}
+              transition={{ duration: 3, repeat: Infinity, ease: 'easeOut', delay: 0.4 }}
+            />
+            <motion.circle
+              cx={43} cy={-2} r={2.8}
+              fill={color}
+              initial={{ opacity: 0, scale: 0 }}
+              animate={{ opacity: [0, 0.3, 0.2, 0], scale: [0, 1, 1.05, 0.5], y: [4, 0, -1, -6] }}
+              transition={{ duration: 3.5, repeat: Infinity, ease: 'easeOut', delay: 0.8 }}
+            />
+          </motion.g>
+        )}
+
+        {/* Sparkle — creating: pop in with staggered twinkle */}
+        {activity === 'creating' && (
+          <motion.g key="prop-create">
+            {/* Main sparkle */}
+            <motion.path
+              d="M40 3 L40.8 6.5 L44 7 L40.8 7.5 L40 11 L39.2 7.5 L36 7 L39.2 6.5 Z"
+              fill={color}
+              initial={{ opacity: 0, scale: 0 }}
+              animate={{ opacity: [0, 0.5, 0.4, 0.5], scale: [0, 1, 1.15, 1], rotate: [0, 0, 20, 0] }}
+              exit={{ opacity: 0, scale: 0, transition: { duration: 0.15 } }}
+              transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
+              style={{ transformOrigin: '40px 7px' }}
+            />
+            {/* Secondary sparkle — offset timing */}
+            <motion.path
+              d="M45 2 L45.5 3.8 L47 4 L45.5 4.2 L45 6 L44.5 4.2 L43 4 L44.5 3.8 Z"
+              fill={color}
+              initial={{ opacity: 0, scale: 0 }}
+              animate={{ opacity: [0, 0.4, 0, 0.4], scale: [0.5, 1.2, 0.5, 1.2] }}
+              transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut', delay: 0.6 }}
+              style={{ transformOrigin: '45px 4px' }}
+            />
+            {/* Tiny dot sparkle */}
+            <motion.circle
+              cx={37} cy={2} r={0.8} fill={color}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: [0, 0.5, 0], scale: [0.5, 1.3, 0.5] }}
+              transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut', delay: 1.2 }}
+              style={{ transformOrigin: '37px 2px' }}
+            />
+          </motion.g>
+        )}
+
+        {/* Paper airplane — sending: launches, arcs, repeats */}
+        {activity === 'sending' && (
+          <motion.g key="prop-send">
+            <motion.g
+              initial={{ x: -6, y: 8, opacity: 0, rotate: 0 }}
+              animate={{
+                x: [-6, 0, 10, 18],
+                y: [8, 2, -2, -8],
+                opacity: [0, 0.7, 0.6, 0],
+                rotate: [10, -15, -25, -35],
+              }}
+              transition={{ duration: 1.8, repeat: Infinity, ease: [0.25, 1, 0.5, 1], repeatDelay: 0.4 }}
+              style={{ transformOrigin: '40px 10px' }}
+            >
+              <path
+                d="M36 12 L44 9 L38 11 L44 13 Z"
+                fill={color}
+              />
+            </motion.g>
+          </motion.g>
+        )}
+
+        {/* Globe — browsing: spins in like a coin flip */}
+        {activity === 'browsing' && (
+          <motion.g
+            key="prop-browse"
+            initial={{ opacity: 0, rotateY: 90, scale: 0.5 }}
+            animate={{ opacity: 1, rotateY: 0, scale: 1 }}
+            exit={{ opacity: 0, rotateY: -90, scale: 0.5, transition: { duration: 0.2 } }}
+            transition={{ type: 'spring', stiffness: 300, damping: 20, mass: 0.6 }}
+          >
+            <motion.circle
+              cx={40} cy={8} r={4.5}
+              stroke={color} strokeWidth={noseStroke * 0.7} fill="none" opacity={0.35}
+            />
+            <motion.ellipse
+              cx={40} cy={8} rx={4.5} ry={1.8}
+              stroke={color} strokeWidth={noseStroke * 0.5} fill="none" opacity={0.25}
+              animate={{ ry: [1.8, 0.5, 1.8] }}
+              transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+            />
+            <motion.ellipse
+              cx={40} cy={8} rx={2} ry={4.5}
+              stroke={color} strokeWidth={noseStroke * 0.5} fill="none" opacity={0.25}
+              animate={{ rx: [2, 4, 2, 0.5, 2] }}
+              transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+            />
+          </motion.g>
+        )}
+      </AnimatePresence>
     </svg>
   )
 }

@@ -41,6 +41,8 @@ interface UseAvatarEmotionInput {
   isToolRunning: boolean
   isStreaming: boolean
   hasError: boolean
+  /** Name of the currently active tool — drives tool-specific emotions */
+  activeToolName?: string | null
 }
 
 // ─── Emotion pools per scenario ───
@@ -144,6 +146,56 @@ const WAKE_SEQUENCE: AvatarEmotion[] = [
   'neutral',
 ]
 
+// ─── Tool-specific emotion pools ───
+// Each tool type gets a distinct personality during execution
+
+const TOOL_EMOTIONS: Record<string, AvatarEmotion[]> = {
+  // Searching — curious, scanning, investigative
+  search_memory: ['contemplating', 'curious', 'thinking', 'contemplating', 'focused'],
+  search_contacts: ['curious', 'attentive', 'curious', 'alert', 'curious'],
+  search_tasks: ['focused', 'attentive', 'focused', 'curious', 'focused'],
+  find_messages: ['curious', 'focused', 'alert', 'curious', 'attentive'],
+  search_leads: ['curious', 'determined', 'curious', 'attentive', 'curious'],
+
+  // Reading — focused, absorbing information
+  read_message: ['focused', 'attentive', 'focused', 'contemplating', 'focused'],
+
+  // Browsing — alert, exploring
+  browse_website: ['alert', 'curious', 'impressed', 'alert', 'curious'],
+
+  // Creating — determined, productive
+  create_task: ['determined', 'focused', 'determined', 'proud', 'determined'],
+  create_invoice: ['determined', 'focused', 'attentive', 'determined', 'proud'],
+
+  // Updating — careful, precise
+  update_task: ['attentive', 'focused', 'attentive', 'determined', 'attentive'],
+  update_lead: ['attentive', 'focused', 'attentive', 'contemplating', 'attentive'],
+
+  // Composing/sending — expressive, confident
+  send_email: ['determined', 'focused', 'proud', 'determined', 'happy'],
+  draft_reply: ['contemplating', 'focused', 'contemplating', 'determined', 'contemplating'],
+  compose_creator_notification_mockup: ['contemplating', 'focused', 'proud', 'contemplating'],
+
+  // Memory operations — deep thought
+  add_memory: ['zen', 'contemplating', 'serene', 'zen', 'contemplating'],
+
+  // Looking up — quick glance
+  get_contact: ['curious', 'attentive', 'curious'],
+  get_calendar: ['alert', 'attentive', 'alert', 'curious'],
+
+  // Logging — calm, routine
+  log_activity: ['serene', 'patient', 'serene', 'zen'],
+}
+
+// Fallback for unknown tools
+const TOOL_FALLBACK_EMOTIONS: AvatarEmotion[] = [
+  'processing', 'focused', 'attentive', 'processing', 'curious',
+]
+
+function getToolEmotionPool(toolName: string): AvatarEmotion[] {
+  return TOOL_EMOTIONS[toolName] ?? TOOL_FALLBACK_EMOTIONS
+}
+
 /**
  * Maps SSE event phases to face emotion states with smooth debounced
  * transitions, ambient cycling, sleep/wake detection, and cursor
@@ -154,6 +206,7 @@ export function useAvatarEmotion({
   isToolRunning,
   isStreaming,
   hasError,
+  activeToolName,
 }: UseAvatarEmotionInput): AvatarEmotion {
   const [emotion, setEmotion] = useState<AvatarEmotion>('neutral')
   const prevEmotionRef = useRef<AvatarEmotion>('neutral')
@@ -392,7 +445,21 @@ export function useAvatarEmotion({
     }
 
     if (currentPhase === 'tools') {
-      setEmotionSmooth('processing', 300)
+      // Tool-specific emotion cycling — BitBit's face reflects what it's doing
+      const pool = activeToolName ? getToolEmotionPool(activeToolName) : TOOL_FALLBACK_EMOTIONS
+      ambientIndexRef.current = 0
+      setEmotionSmooth(pool[0], 200)
+
+      const cycleTool = () => {
+        if (isIrritatedRef.current || wakeSequenceRef.current) return
+        ambientIndexRef.current = (ambientIndexRef.current + 1) % pool.length
+        const next = pool[ambientIndexRef.current]
+        prevEmotionRef.current = next
+        setEmotion(next)
+        ambientTimerRef.current = setTimeout(cycleTool, 1500 + Math.random() * 1000)
+      }
+
+      ambientTimerRef.current = setTimeout(cycleTool, 1200 + Math.random() * 800)
       return
     }
 
@@ -434,7 +501,7 @@ export function useAvatarEmotion({
     return () => {
       if (ambientTimerRef.current) clearTimeout(ambientTimerRef.current)
     }
-  }, [currentPhase, setEmotionSmooth])
+  }, [currentPhase, activeToolName, setEmotionSmooth])
 
   useEffect(() => {
     return () => {
