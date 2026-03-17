@@ -47,10 +47,13 @@ export async function GET(request: Request) {
 
         results.push({ orgId, triage: triageResult })
       } catch (orgErr) {
-        logger.error(`[cron/triage] Failed processing triage for org ${orgId}:`, orgErr)
+        const errMsg = orgErr instanceof Error ? orgErr.message : 'unknown_error'
+        const errStack = orgErr instanceof Error ? orgErr.stack : undefined
+        logger.error(`[cron/triage] Failed processing triage for org ${orgId}:`, { error: errMsg, stack: errStack })
         results.push({
           orgId,
-          error: orgErr instanceof Error ? orgErr.message : 'unknown_error',
+          error: errMsg,
+          stack: errStack?.split('\n').slice(0, 5).join(' | '),
         })
       }
     }

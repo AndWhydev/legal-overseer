@@ -96,15 +96,17 @@ export function routeMessage(classification: ClassificationResult): MessageRoute
 
 function resolveTargetAgent(
   category: ClassificationResult['category'],
-  recommendedActions: string[],
+  recommendedActions: string[] | undefined,
 ): string | undefined {
   if (category === 'lead') return 'lead-swarm'
 
-  if (category === 'client' && recommendedActions.some((a) => a.includes('invoice'))) {
+  const actions = recommendedActions ?? []
+
+  if (category === 'client' && actions.some((a) => a.includes('invoice'))) {
     return 'invoice-flow'
   }
 
-  if (recommendedActions.some((a) => /error|alert|incident/i.test(a))) {
+  if (actions.some((a) => /error|alert|incident/i.test(a))) {
     return 'sentry'
   }
 
