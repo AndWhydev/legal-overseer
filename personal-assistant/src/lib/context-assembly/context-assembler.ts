@@ -19,7 +19,7 @@ import type {
   ThreadSummaryRecord,
   KeyFact,
 } from '@/lib/conversation/types'
-import { buildEntityAwarePrompt } from '@/lib/agent/prompt-builder'
+import { buildEntityAwarePrompt, type UserProfile } from '@/lib/agent/prompt-builder'
 import { getPendingApprovals, type ApprovalRecord } from '@/lib/agent/approval-queue'
 import { loadRecentMessages, loadThreadSummaries } from '@/lib/conversation/thread-resolver'
 import { scanForEntityMentions } from '@/lib/context/entity-mention-scanner'
@@ -43,7 +43,7 @@ export interface AssemblerConfig {
 }
 
 export const DEFAULT_ASSEMBLER_CONFIG: AssemblerConfig = {
-  tokenBudget: 16000,
+  tokenBudget: 20000,
   maxRecentTurns: 10,
   maxCompressedTurns: 20,
   maxEntities: 5,
@@ -403,10 +403,13 @@ function ensureValidMessageSequence(
 export class ContextAssembler {
   private config: AssemblerConfig
   private budgetManager: TokenBudgetManager
+  private userProfile?: UserProfile
 
-  constructor(config?: Partial<AssemblerConfig>) {
-    this.config = { ...DEFAULT_ASSEMBLER_CONFIG, ...config }
+  constructor(config?: Partial<AssemblerConfig> & { userProfile?: UserProfile }) {
+    const { userProfile, ...assemblerConfig } = config ?? {}
+    this.config = { ...DEFAULT_ASSEMBLER_CONFIG, ...assemblerConfig }
     this.budgetManager = new TokenBudgetManager(this.config.tokenBudget)
+    this.userProfile = userProfile
   }
 
   /**
@@ -431,7 +434,7 @@ export class ContextAssembler {
     const [systemPromptResult, recentMsgsResult, approvalsResult, summariesResult, ragResult] =
       await Promise.all([
         timedFetch('system_prompt', () =>
-          buildEntityAwarePrompt(supabase, orgId, currentMessage),
+          buildEntityAwarePrompt(supabase, orgId, currentMessage, this.userProfile),
         ),
         timedFetch('recent_messages', () =>
           loadRecentMessages(supabase, threadId, this.config.maxRecentTurns),
@@ -529,8 +532,8 @@ export class ContextAssembler {
         name: 'systemPrompt',
         content: systemPrompt,
         priority: 1,
-        minTokens: 2000,
-        maxTokens: 6000,
+        minTokens: 3000,
+        maxTokens: 8000,
         compressible: true,
       },
       {

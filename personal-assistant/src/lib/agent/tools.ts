@@ -2,6 +2,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { channelToolDefinitions, channelToolHandlers } from './tools/channel-tools'
 import { superpowerToolDefinitions, superpowerToolHandlers } from './tools/superpower-tools'
+import { codeExecutionToolDefinitions, codeExecutionToolHandlers } from './tools/code-execution'
 import { composeCreatorStudioDeck } from '@/lib/creator-studio'
 import { routeAgentAction } from './confidence-router'
 import { queueAgentAction, getPendingApprovals, resolveApproval } from './approval-queue'
@@ -22,7 +23,7 @@ import { logger } from '@/lib/core/logger'
 // Tool Group metadata (for future Tool RAG via pgvector)
 // ---------------------------------------------------------------------------
 
-export type ToolGroup = 'core' | 'memory' | 'channel' | 'web' | 'comms'
+export type ToolGroup = 'core' | 'memory' | 'channel' | 'web' | 'comms' | 'agentic'
 
 export interface ToolGroupMeta {
   id: ToolGroup
@@ -61,6 +62,12 @@ export const TOOL_GROUPS: Record<ToolGroup, ToolGroupMeta> = {
     label: 'Outbound Communications',
     description: 'Send emails, SMS messages, and manage pending action approvals',
     tools: ['send_email', 'send_sms', 'send_whatsapp', 'approve_action'],
+  },
+  agentic: {
+    id: 'agentic',
+    label: 'Agentic Execution',
+    description: 'Run code against the BitBit SDK to solve complex problems, query data flexibly, and compose multi-step operations',
+    tools: ['execute_code'],
   },
 }
 
@@ -120,6 +127,9 @@ export const JIT_INSTRUCTIONS: Record<string, string> = {
 
   // Approvals
   approve_action: 'Action has been approved and executed. Report the result to the user. If execution failed, explain the error and suggest next steps.',
+
+  // Agentic execution
+  execute_code: 'Code execution complete. Use the output and result to continue the conversation. If there was an error, fix the code and try again. Do not show raw code to the user — summarize what you found or did. Reference specific data points from the result.',
 }
 
 /** Get JIT instruction for a tool, if one exists. */
@@ -657,10 +667,11 @@ const allHandlers: Record<string, AgentToolHandler> = {
   ...handlers,
   ...channelToolHandlers,
   ...superpowerToolHandlers,
+  ...codeExecutionToolHandlers,
 }
 
 export function getAgentTools(groups?: ToolGroup[]): Anthropic.Tool[] {
-  const allTools = [...toolDefinitions, ...channelToolDefinitions, ...superpowerToolDefinitions]
+  const allTools = [...toolDefinitions, ...channelToolDefinitions, ...superpowerToolDefinitions, ...codeExecutionToolDefinitions]
   if (!groups || groups.length === 0) return allTools
 
   const selectedGroups = new Set<ToolGroup>(['core', ...groups])

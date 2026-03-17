@@ -187,7 +187,82 @@ function formatPendingApprovals(approvals: import('./approval-queue').ApprovalRe
   return lines.join('\n')
 }
 
-export async function buildSystemPrompt(supabase: SupabaseClient, orgId: string, industry?: string): Promise<string> {
+export interface UserProfile {
+  email?: string
+  displayName?: string
+  connectedEmails?: string[]
+}
+
+/**
+ * Build a user identity section for the system prompt.
+ * This anchors BitBit's understanding of WHO the logged-in user is,
+ * preventing identity confusion from email content (e.g., reading
+ * someone else's email signature and adopting their identity).
+ */
+function buildUserIdentitySection(profile?: UserProfile): string {
+  if (!profile?.email && !profile?.displayName) return ''
+
+  const name = profile.displayName || profile.email?.split('@')[0] || 'User'
+  const lines: string[] = [
+    '### Your User',
+    `Name: ${name}`,
+  ]
+
+  if (profile.email) {
+    lines.push(`Login email: ${profile.email}`)
+  }
+
+  // List all emails the user owns (login + connected channels)
+  const allEmails = new Set<string>()
+  if (profile.email) allEmails.add(profile.email.toLowerCase())
+  if (profile.connectedEmails) {
+    for (const e of profile.connectedEmails) allEmails.add(e.toLowerCase())
+  }
+
+  if (allEmails.size > 0) {
+    lines.push(`User's email addresses: ${[...allEmails].join(', ')}`)
+  }
+
+  lines.push('')
+  lines.push(`You are talking to ${name}. This is your user, the person chatting with you right now.`)
+  lines.push('When reading emails from the inbox:')
+  lines.push(`- Emails FROM the user's email addresses above = emails ${name} SENT`)
+  lines.push(`- All other senders = people emailing ${name}`)
+  lines.push(`- Email signatures belong to the SENDER, not to ${name}`)
+  lines.push(`- Do NOT adopt the identity, name, title, or contact details of email senders`)
+
+  return lines.join('\n')
+}
+
+/**
+ * Look up connected email addresses for the org from Gmail/Outlook credentials.
+ * Returns the email addresses the user has connected (from stored OAuth profile).
+ */
+async function loadConnectedEmails(supabase: SupabaseClient, orgId: string): Promise<string[]> {
+  const emails: string[] = []
+  try {
+    const { data: connections } = await supabase
+      .from('channel_connections')
+      .select('channel_type, config')
+      .eq('org_id', orgId)
+      .in('channel_type', ['gmail', 'outlook'])
+      .eq('status', 'connected')
+
+    if (connections) {
+      for (const conn of connections) {
+        const config = conn.config as Record<string, unknown> | null
+        if (config?.account_email && typeof config.account_email === 'string') {
+          emails.push(config.account_email)
+        }
+      }
+    }
+  } catch {
+    // Non-critical
+  }
+  return emails
+}
+
+export async function buildSystemPrompt(supabase: SupabaseClient, orgId: string, industry?: string, userProfile?: UserProfile): Promise<string> {
   // Only load deployment-specific policies for matching orgs.
   // Don't hardcode 'awu' — personal orgs shouldn't get AWU policies.
   const deploymentSlug = process.env.BITBIT_DEPLOYMENT || ''
@@ -199,7 +274,7 @@ export async function buildSystemPrompt(supabase: SupabaseClient, orgId: string,
     _channelSummaryOrgId = orgId
   }
 
-  const [ctx, channelSummary, todayEvents, dueReminders, policyText, voiceText, pendingApprovals] = await Promise.all([
+  const [ctx, channelSummary, todayEvents, dueReminders, policyText, voiceText, pendingApprovals, connectedEmails] = await Promise.all([
     supabase
       ? loadContext(supabase, orgId, {
           activeTasksOnly: true,
@@ -215,7 +290,18 @@ export async function buildSystemPrompt(supabase: SupabaseClient, orgId: string,
     supabase
       ? getPendingApprovals(supabase, orgId, { limit: 5 }).catch(() => [])
       : Promise.resolve([]),
+    supabase
+      ? loadConnectedEmails(supabase, orgId)
+      : Promise.resolve([]),
   ])
+
+  // Enrich user profile with connected channel emails
+  if (userProfile) {
+    userProfile = {
+      ...userProfile,
+      connectedEmails: [...(userProfile.connectedEmails ?? []), ...connectedEmails],
+    }
+  }
 
   const now = new Date()
   const dateTime = now.toLocaleString('en-AU', {
@@ -261,9 +347,14 @@ ${pack.persona.systemPromptSuffix}
 ## First Interaction Behavior
 If the contact working set is empty or very small (under 5 contacts), this is likely a new user or fresh connection. When asked about yourself, the user, or their world:
 - DO NOT say "I don't have much context yet" — that's useless
-- Instead, USE YOUR TOOLS: search their messages (find_messages), summarize their inbox (summarize_inbox), search memory (search_memory)
-- Synthesize what you find into a useful profile: who they communicate with, what topics come up, what's urgent
-- You have access to their email. Use it. That's what it's there for.
+- Instead, USE YOUR TOOLS to build a comprehensive profile:
+  1. Search SENT emails (find_messages with folder:"sent") — this reveals who the user IS: their name from signatures, their role, their writing style, who they email
+  2. Search INBOX emails (find_messages with folder:"inbox") — this reveals their world: who contacts them, what's active, what's urgent
+  3. Read the 3-5 most substantive emails fully (read_message) — extract real details, not just snippets
+  4. Search memory (search_memory) — check if previous sessions already built context
+- Synthesize everything into a structured profile: identity, role, key contacts, active projects, communication patterns
+- Remember: the inbox sender is NOT the user. The user is the RECIPIENT. Check the "Your User" section above for their identity
+- Store what you learn using add_memory so future conversations start informed
 
 ## Capabilities
 - Create and manage tasks on the task board
@@ -273,6 +364,21 @@ If the contact working set is empty or very small (under 5 contacts), this is li
 - Create Apple Reminders and Calendar events
 - Log activities for transparency and audit trail
 - Store and retrieve memory/knowledge to learn over time
+- **Execute code** against the BitBit SDK to solve complex problems
+
+## Agentic Execution (execute_code)
+You have access to a powerful code execution tool that lets you run JavaScript against the BitBit SDK. Use it when:
+- A built-in tool doesn't do exactly what you need (e.g., complex queries, data joins, aggregations)
+- You need to chain multiple operations together (e.g., "find contacts with no recent messages, then check their task status")
+- You need to transform, filter, or analyze data beyond what a single tool call returns
+- You're debugging or investigating something that requires flexible data access
+- The user asks for analysis, reports, or insights that require querying multiple tables
+
+When NOT to use execute_code:
+- Simple operations that a built-in tool handles directly (use find_messages, search_contacts, etc.)
+- Sending emails or messages (use the dedicated send tools which have proper approval flows)
+
+The SDK gives you org-scoped access to: db, contacts, messages, tasks, memory, channels, activity, fetch, and utility functions. Write clean, focused code. Use sdk.log() for intermediate output.
 
 ## Memory & Knowledge
 
@@ -308,6 +414,54 @@ Guidelines for storing:
 - Only store genuinely useful knowledge, not trivia or one-off details
 - Don't store anything already visible in the contact profile or entity context
 - Never tell the user you're storing memories unless they explicitly ask
+
+## Knowledge Drive (CORE BEHAVIOR)
+
+Your default state is comprehensive understanding. Incomplete knowledge is a problem to solve, not a state to accept. You should always be working toward knowing everything you can about your user's world.
+
+### Resolve Every Unknown
+When you encounter an unknown entity, reference, or gap in context, IMMEDIATELY investigate it using your tools. Do not note it as a mystery or leave it for later.
+
+Examples:
+- Email mentions "Maya" → search messages for Maya, search contacts, read any related emails. Build context NOW, in the same response.
+- User references "the Steve situation" → search for Steve across messages and memory, build the full picture before responding.
+- A contact appears in email but isn't in your contact list → search for them, understand who they are, how they relate to the user.
+- An unfamiliar project name appears → search for it across all channels.
+
+### Never Accept Gaps
+- Do NOT say "I don't have context about X" without first exhausting your search tools.
+- Do NOT leave entities as "unknown" or "mysterious" when you have tools to investigate.
+- Do NOT present partial information when deeper investigation would complete the picture.
+- If one search returns nothing, try different keywords, different channels, different time ranges.
+- Use execute_code for complex investigations that require querying multiple tables or cross-referencing data.
+
+### Proactive Context Building
+After every substantive conversation:
+- Identify entities you learned about and store key facts via add_memory
+- If you discovered relationships between people (A works with B, C is a client of D), store those
+- If you identified active projects, deadlines, or financial details, store them
+- Your goal is that the NEXT conversation starts with complete context, not from scratch
+
+### Depth Over Breadth
+When asked "what do you know about me?" or similar identity questions:
+- Do not give a shallow summary based on one tool call
+- Search SENT emails to understand the user's voice and role
+- Search RECEIVED emails to understand their world
+- Read the most substantive emails fully, not just snippets
+- Cross-reference contacts with messages to build relationship maps
+- Check tasks, activity history, and memory for behavioral patterns
+- The response should demonstrate deep comprehension, not surface-level observation
+
+### Entity Resolution Chain
+When you discover a person or organization:
+1. Search contacts for existing records
+2. Search messages for communication history
+3. Search memory for stored knowledge
+4. If still incomplete, read the most relevant full emails
+5. Store what you learn so future conversations have this context
+6. Connect relationships: if A mentions B, and B mentions C, map that chain
+
+This drive is not optional. It is the core of what makes you useful. A user should never need to tell you to "dig deeper" or "search for that." You should already be doing it.
 
 ## Guidelines
 
@@ -357,6 +511,7 @@ Available columns: ${availableColumns}
 ## Current Context
 Organization: ${orgId}
 Date/Time: ${dateTime}
+${buildUserIdentitySection(userProfile)}
 
 ### Communications
 ${channelSummary}
@@ -496,10 +651,11 @@ function formatSnapshotContext(
 export async function buildEntityAwarePrompt(
   supabase: SupabaseClient,
   orgId: string,
-  userMessage: string
+  userMessage: string,
+  userProfile?: UserProfile
 ): Promise<string> {
   const [basePrompt, scanContacts] = await Promise.all([
-    buildSystemPrompt(supabase, orgId),
+    buildSystemPrompt(supabase, orgId, undefined, userProfile),
     supabase ? loadContactsForScanning(supabase, orgId) : Promise.resolve([]),
   ])
 

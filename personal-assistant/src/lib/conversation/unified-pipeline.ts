@@ -35,7 +35,7 @@ export type { InboundMessage, PipelineResult }
 interface PipelineConfig {
   supabase: SupabaseClient
   /** Pre-resolved identity (web chat provides userId/orgId directly from auth) */
-  identity?: { userId: string; orgId: string }
+  identity?: { userId: string; orgId: string; email?: string; displayName?: string }
   /** Explicit thread to continue */
   threadId?: string
   /** Engine overrides */
@@ -95,6 +95,8 @@ export class UnifiedConversationPipeline {
       identity = {
         userId: config.identity.userId,
         orgId: config.identity.orgId,
+        email: config.identity.email,
+        displayName: config.identity.displayName,
         isAuthenticated: true,
       }
     } else if (inbound.userId && inbound.orgId) {
@@ -224,6 +226,9 @@ export class UnifiedConversationPipeline {
       // for rich history (key facts, compressed summaries, pending actions)
       threadId: threadId || undefined,
       userId: identity.userId,
+      // User identity for system prompt anchoring
+      userEmail: identity.email,
+      userDisplayName: identity.displayName,
       ...config.engineOverrides,
     }
 

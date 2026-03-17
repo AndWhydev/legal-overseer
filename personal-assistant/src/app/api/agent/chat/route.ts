@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('org_id')
+    .select('org_id, display_name')
     .eq('id', user.id)
     .single()
 
@@ -60,7 +60,15 @@ export async function POST(request: NextRequest) {
           { content: processedMessage, channel: 'web' },
           {
             supabase,
-            identity: { userId: user.id, orgId: profile.org_id },
+            identity: {
+              userId: user.id,
+              orgId: profile.org_id,
+              email: user.email ?? undefined,
+              displayName: profile.display_name
+                || user.user_metadata?.display_name
+                || user.email?.split('@')[0]
+                || undefined,
+            },
             threadId: threadId || undefined,
           }
         )

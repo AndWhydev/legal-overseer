@@ -20,6 +20,7 @@ export interface ResolvedIdentity {
   orgId: string
   contactId?: string
   displayName?: string
+  email?: string
   isAuthenticated: boolean
 }
 

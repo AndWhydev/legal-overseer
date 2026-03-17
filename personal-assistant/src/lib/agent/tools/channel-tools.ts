@@ -9,7 +9,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 export const channelToolDefinitions: Anthropic.Tool[] = [
   {
     name: 'find_messages',
-    description: 'Find messages across all connected channels (email, WhatsApp, Slack, SMS). Use when the user asks about any message, email, or conversation — whether checking for new messages, searching for something specific, or asking about recent correspondence.',
+    description: 'Find messages across all connected channels (email, WhatsApp, Slack, SMS). Use when the user asks about any message, email, or conversation — whether checking for new messages, searching for something specific, or asking about recent correspondence. TIP: Use folder "sent" to see emails the user SENT (reveals their voice, role, and relationships).',
     input_schema: {
       type: 'object' as const,
       properties: {
@@ -19,6 +19,7 @@ export const channelToolDefinitions: Anthropic.Tool[] = [
         since: { type: 'string', description: 'ISO date — how far back to look (default: 7 days)' },
         limit: { type: 'number', description: 'Max results (default: 10)' },
         unread_only: { type: 'boolean', description: 'Only return unprocessed/unread messages' },
+        folder: { type: 'string', enum: ['inbox', 'sent', 'all'], description: 'Email folder to search (default: inbox). Use "sent" to find emails the user wrote.' },
       },
     },
   },
@@ -240,6 +241,53 @@ function parseGmailFrom(value: string | undefined): { sender: string; senderEmai
   return { sender: sender || senderEmail || 'Unknown', senderEmail }
 }
 
+/**
+ * Fetch the Gmail profile email and cache it in channel_connections.config.account_email.
+ * Only fetches once — skips if already stored.
+ */
+async function cacheGmailProfileEmail(
+  supabase: SupabaseClient,
+  orgId: string,
+  accessToken: string,
+): Promise<void> {
+  try {
+    // Check if already cached
+    const { data: conn } = await supabase
+      .from('channel_connections')
+      .select('config')
+      .eq('org_id', orgId)
+      .eq('channel_type', 'gmail')
+      .maybeSingle()
+
+    const config = (conn?.config as Record<string, unknown>) ?? {}
+    if (config.account_email) return // Already cached
+
+    // Fetch Gmail profile
+    const profileRes = await fetch(
+      'https://gmail.googleapis.com/gmail/v1/users/me/profile',
+      { headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' } },
+    )
+    if (!profileRes.ok) return
+
+    const profile = (await profileRes.json()) as { emailAddress?: string }
+    if (!profile.emailAddress) return
+
+    // Store in channel_connections config
+    await supabase
+      .from('channel_connections')
+      .update({
+        config: { ...config, account_email: profile.emailAddress },
+        updated_at: new Date().toISOString(),
+      })
+      .eq('org_id', orgId)
+      .eq('channel_type', 'gmail')
+
+    logger.info('[gmail] Cached profile email', { orgId, email: profile.emailAddress })
+  } catch {
+    // Non-critical — profile email caching is best-effort
+  }
+}
+
 async function syncGmailViaSupabase(
   supabase: SupabaseClient,
   orgId: string,
@@ -296,7 +344,7 @@ async function syncGmailViaSupabase(
     items.slice(0, 50).map(async (item) => {
       try {
         const res = await fetch(
-          `https://gmail.googleapis.com/gmail/v1/users/me/messages/${item.id}?format=metadata&metadataHeaders=From&metadataHeaders=Subject&metadataHeaders=Date&metadataHeaders=Message-ID`,
+          `https://gmail.googleapis.com/gmail/v1/users/me/messages/${item.id}?format=metadata&metadataHeaders=From&metadataHeaders=To&metadataHeaders=Subject&metadataHeaders=Date&metadataHeaders=Message-ID`,
           { headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' } },
         )
         if (!res.ok) return null
@@ -476,7 +524,7 @@ async function insertChannelMessages(
 async function searchGmailLive(
   supabase: SupabaseClient,
   orgId: string,
-  filters: { query?: string; from?: string; since?: Date; limit?: number },
+  filters: { query?: string; from?: string; since?: Date; limit?: number; folder?: string },
 ): Promise<SyncedMessage[] | null> {
   const creds = await getOrgCredential(supabase, orgId, 'gmail')
   if (!creds) return null
@@ -502,7 +550,15 @@ async function searchGmailLive(
     accessToken = refreshed
   }
 
-  const queryParts: string[] = ['in:inbox']
+  // Cache the Gmail profile email (fire-and-forget, first time only)
+  cacheGmailProfileEmail(supabase, orgId, accessToken!).catch(() => {})
+
+  // Folder filter: inbox (default), sent, or all
+  const folder = filters.folder || 'inbox'
+  const queryParts: string[] = []
+  if (folder === 'inbox') queryParts.push('in:inbox')
+  else if (folder === 'sent') queryParts.push('in:sent')
+  // 'all' = no folder filter
   if (filters.query) queryParts.push(filters.query)
   if (filters.from) queryParts.push(`from:${filters.from}`)
   if (filters.since) {
@@ -530,7 +586,7 @@ async function searchGmailLive(
     items.slice(0, maxResults).map(async (item) => {
       try {
         const res = await fetch(
-          `https://gmail.googleapis.com/gmail/v1/users/me/messages/${item.id}?format=metadata&metadataHeaders=From&metadataHeaders=Subject&metadataHeaders=Date&metadataHeaders=Message-ID`,
+          `https://gmail.googleapis.com/gmail/v1/users/me/messages/${item.id}?format=metadata&metadataHeaders=From&metadataHeaders=To&metadataHeaders=Subject&metadataHeaders=Date&metadataHeaders=Message-ID`,
           { headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' } },
         )
         if (!res.ok) return null
@@ -908,6 +964,7 @@ export const channelToolHandlers: Record<string, AgentToolHandler> = {
     const since = input.since ? new Date(input.since as string) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
     const limit = Math.min((input.limit as number) || 10, 50)
     const unreadOnly = input.unread_only as boolean | undefined
+    const folder = (input.folder as string) || 'inbox'
 
     // --- Tier 1: Hot cache (channel_messages table) ---
     let dbQuery = supabase
@@ -960,7 +1017,7 @@ export const channelToolHandlers: Record<string, AgentToolHandler> = {
 
     if (!channel || channel === 'gmail') {
       try {
-        const gmailMessages = await searchGmailLive(supabase, orgId, { query, from, since, limit })
+        const gmailMessages = await searchGmailLive(supabase, orgId, { query, from, since, limit, folder })
         if (gmailMessages) {
           await insertChannelMessages(supabase, orgId, 'gmail', gmailMessages)
           liveResults.push(...gmailMessages.map(m => ({

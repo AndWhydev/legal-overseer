@@ -48,6 +48,10 @@ export interface EngineConfig {
   userId?: string
   /** Thread ID for conversation history loading via ContextAssembler. */
   threadId?: string
+  /** User's email address for identity anchoring in the system prompt. */
+  userEmail?: string
+  /** User's display name for identity anchoring in the system prompt. */
+  userDisplayName?: string
 }
 
 export type StageId = 'cost_check' | 'model_routing' | 'context_assembly' | 'api_streaming' | 'tool_execution'
@@ -162,12 +166,18 @@ export async function* runAgentChat(
 
   // Context assembly: build entity-aware system prompt (with full history when threadId is available)
   yield { type: 'stage', data: { stage: 'context_assembly', status: 'start' } }
+
+  // Build user profile for identity anchoring in the system prompt
+  const userProfile = (config.userEmail || config.userDisplayName)
+    ? { email: config.userEmail, displayName: config.userDisplayName }
+    : undefined
+
   let systemPrompt: string
   if (config.threadId && config.userId) {
     // ContextAssembler provides rich context: key facts, compressed history,
     // pending actions, and proper message ordering with the current message.
     try {
-      const assembler = new ContextAssembler()
+      const assembler = new ContextAssembler({ userProfile })
       const ctx = await assembler.assemble(config.supabase, config.userId, config.orgId, config.threadId, message)
       systemPrompt = ctx.systemPrompt
       config.history = ctx.messageHistory
@@ -180,11 +190,11 @@ export async function* runAgentChat(
         error: assemblerErr instanceof Error ? assemblerErr.message : String(assemblerErr),
         threadId: config.threadId,
       })
-      systemPrompt = await buildEntityAwarePrompt(config.supabase, config.orgId, message)
+      systemPrompt = await buildEntityAwarePrompt(config.supabase, config.orgId, message, userProfile)
       yield { type: 'stage', data: { stage: 'context_assembly', status: 'done', meta: { promptLength: systemPrompt.length, assemblerFallback: true } } }
     }
   } else {
-    systemPrompt = await buildEntityAwarePrompt(config.supabase, config.orgId, message)
+    systemPrompt = await buildEntityAwarePrompt(config.supabase, config.orgId, message, userProfile)
     yield { type: 'stage', data: { stage: 'context_assembly', status: 'done', meta: { promptLength: systemPrompt.length } } }
   }
 
