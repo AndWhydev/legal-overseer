@@ -417,7 +417,7 @@ export async function runTriage(
     .eq('org_id', orgId)
     .eq('processed', false)
     .order('received_at', { ascending: true })
-    .limit(100)
+    .limit(25)
 
   if (error || !messages?.length) {
     return {
@@ -593,8 +593,10 @@ export async function runTriage(
         .eq('id', msg.id)
     }
 
-    // 7. Auto-create tasks for actionable messages (skip duplicates)
-    if (msgCategory === 'actionable' && !isDuplicate) {
+    // 7. Auto-create tasks for actionable messages from human senders only.
+    // Skip duplicates, automated senders (security alerts, deploy notifications),
+    // and low-significance messages to prevent task overload.
+    if (msgCategory === 'actionable' && !isDuplicate && senderType === 'human' && classification.significance >= 5) {
       const created = await createTaskForMessage(
         supabase, orgId, msg, classification, priority, contactId,
       )
