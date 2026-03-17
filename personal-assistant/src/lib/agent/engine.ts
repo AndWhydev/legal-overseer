@@ -584,6 +584,9 @@ export async function* runAgentChat(
           }
         }
 
+        // Truncate tool results to prevent token overflow (200K API limit).
+        // Large results from fetch_url/browse_website can blow the context window.
+        const MAX_TOOL_RESULT_CHARS = 12000
         toolResults.push({
           type: 'tool_result',
           tool_use_id: tool.id,
@@ -591,7 +594,10 @@ export async function* runAgentChat(
             ? `Action queued for approval (ID: ${result.approvalId}). Confidence: ${((result.data as any)?.confidence * 100 || 0).toFixed(0)}%`
             : result.success
               ? (() => {
-                  const data = JSON.stringify(result.data)
+                  let data = JSON.stringify(result.data)
+                  if (data.length > MAX_TOOL_RESULT_CHARS) {
+                    data = data.slice(0, MAX_TOOL_RESULT_CHARS) + '\n\n[Content truncated — ' + (data.length - MAX_TOOL_RESULT_CHARS).toLocaleString() + ' chars omitted]'
+                  }
                   const jit = getJITInstruction(tool.name)
                   return jit ? `${data}\n\n---\n${jit}` : data
                 })()
