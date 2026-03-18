@@ -121,10 +121,10 @@ Requirements for Media, Billing & Growth Roles. Closes the media gap, adds billi
 
 ### Growth Role: Content Creator
 
-- [ ] **CONT-01**: Content Creator tool group for social media post drafting via chat
-- [ ] **CONT-02**: User can request blog post drafts with SEO optimization and brand voice
-- [ ] **CONT-03**: User can request social media posts with platform-specific formatting (LinkedIn, Instagram, X)
-- [ ] **CONT-04**: Content tools are plan-gated (growth and scale tiers only)
+- [x] **CONT-01**: Content Creator tool group for social media post drafting via chat
+- [x] **CONT-02**: User can request blog post drafts with SEO optimization and brand voice
+- [x] **CONT-03**: User can request social media posts with platform-specific formatting (LinkedIn, Instagram, X)
+- [x] **CONT-04**: Content tools are plan-gated (growth and scale tiers only)
 
 ### Cost Controls
 
@@ -238,10 +238,10 @@ Requirements for Media, Billing & Growth Roles. Closes the media gap, adds billi
 | TNDR-03 | Phase 23 | Complete |
 | TNDR-04 | Phase 23 | Complete |
 | TNDR-05 | Phase 23 | Complete |
-| CONT-01 | Phase 24 | Pending |
-| CONT-02 | Phase 24 | Pending |
-| CONT-03 | Phase 24 | Pending |
-| CONT-04 | Phase 24 | Pending |
+| CONT-01 | Phase 24 | Complete |
+| CONT-02 | Phase 24 | Complete |
+| CONT-03 | Phase 24 | Complete |
+| CONT-04 | Phase 24 | Complete |
 
 **Coverage:**
 - v1.2 requirements: 37 satisfied
