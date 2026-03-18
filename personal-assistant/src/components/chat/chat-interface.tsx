@@ -18,6 +18,7 @@ import {
   ChainOfThoughtStep,
 } from '@/components/ai-elements/chain-of-thought'
 import { Checkpoint, CheckpointIcon } from '@/components/ai-elements/checkpoint'
+import { InvoiceArtifact } from './invoice-artifact'
 
 interface ToolCall {
   name: string
@@ -507,6 +508,11 @@ export function ChatInterface({ userName }: { userName?: string }) {
   const [activeCitations, setActiveCitations] = useState<Citation[]>([])
   const [checkpoints, setCheckpoints] = useState<CheckpointMarker[]>([])
   const [pendingApprovals, setPendingApprovals] = useState<PendingApproval[]>([])
+  const [invoiceArtifacts, setInvoiceArtifacts] = useState<Array<{
+    invoiceNumber: string; recipient: string; recipientEmail: string
+    total: string; dueDate: string; description: string
+    html: string; subject: string; afterMessageId: string
+  }>>([])
   // Whispers visible state (hides when typing or conversation starts)
   const [whispersVisible, setWhispersVisible] = useState(true)
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -796,6 +802,24 @@ export function ChatInterface({ userName }: { userName?: string }) {
                     result: event.data.result,
                     success: event.data.success,
                     status: event.data.success ? 'done' : 'error',
+                  }
+                }
+
+                // Capture invoice artifacts for inline rendering
+                if (event.data.name === 'generate_invoice' && event.data.success && event.data.result) {
+                  const r = event.data.result as Record<string, unknown>
+                  if (r.html && r.invoice_number) {
+                    setInvoiceArtifacts(prev => [...prev, {
+                      invoiceNumber: r.invoice_number as string,
+                      recipient: r.recipient as string,
+                      recipientEmail: r.recipient_email as string,
+                      total: r.total as string,
+                      dueDate: r.due_date as string,
+                      description: r.description as string,
+                      html: r.html as string,
+                      subject: r.subject as string,
+                      afterMessageId: assistantId,
+                    }])
                   }
                 }
 
@@ -1098,7 +1122,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
 
   const reasoningChainJSX = showReasoningChain ? (
     <ChainOfThought open={reasoningOpen} onOpenChange={setReasoningOpen}>
-      <ChainOfThoughtHeader>{headerText}</ChainOfThoughtHeader>
+      <ChainOfThoughtHeader hideChevron={!hasChainContent}>{headerText}</ChainOfThoughtHeader>
       {hasChainContent && <ChainOfThoughtContent>
         {/* Pre-tool narration is now rendered as visible text above the chain — see narrationJSX */}
 
@@ -1386,6 +1410,28 @@ export function ChatInterface({ userName }: { userName?: string }) {
               )}
 
               {/* Inline approval cards */}
+              {/* Invoice artifacts — embedded document preview */}
+              {invoiceArtifacts.map(inv => (
+                <motion.div
+                  key={inv.invoiceNumber}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+                  style={{ marginTop: 8 }}
+                >
+                  <InvoiceArtifact
+                    invoiceNumber={inv.invoiceNumber}
+                    recipient={inv.recipient}
+                    recipientEmail={inv.recipientEmail}
+                    total={inv.total}
+                    dueDate={inv.dueDate}
+                    description={inv.description}
+                    html={inv.html}
+                    subject={inv.subject}
+                  />
+                </motion.div>
+              ))}
+
               {pendingApprovals.map(approval => (
                 <motion.div
                   key={approval.id}
@@ -1432,4 +1478,3 @@ export function ChatInterface({ userName }: { userName?: string }) {
     </div>
   )
 }
- 

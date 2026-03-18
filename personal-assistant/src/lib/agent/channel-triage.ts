@@ -639,10 +639,12 @@ export async function runTriage(
     }
 
     // 7. Auto-create tasks for actionable EMAIL messages from human senders only.
-    // Individual WhatsApp/SMS messages are conversational — they don't become tasks.
-    // Only email (with subjects) gets auto-tasked. Significance >= 6 for high threshold.
+    // Filter out automated/transactional emails that shouldn't become tasks:
+    // password resets, login confirmations, shipping notifications, newsletters, test emails
     const isEmailChannel = (msg.channel as string) === 'gmail' || (msg.channel as string) === 'outlook'
-    if (msgCategory === 'actionable' && !isDuplicate && senderType === 'human' && isEmailChannel && classification.significance >= 6) {
+    const subjectLower = ((msg.subject as string) ?? '').toLowerCase()
+    const isTransactional = /(?:password|reset|confirm|verify|sign.?in|login|unsubscribe|no.?reply|delivery|shipped|tracking|newsletter|bridge test|test from)/i.test(subjectLower)
+    if (msgCategory === 'actionable' && !isDuplicate && senderType === 'human' && isEmailChannel && !isTransactional && classification.significance >= 6) {
       const created = await createTaskForMessage(
         supabase, orgId, msg, classification, priority, contactId,
       )

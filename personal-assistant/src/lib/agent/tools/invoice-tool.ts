@@ -214,6 +214,42 @@ export async function handleGenerateInvoice(
       invoiceNumber, total, recipient: input.recipient_name,
     })
 
+    // Step 6: Create a viewable URL by encoding the invoice data as base64
+    // The /api/invoices/render endpoint accepts POST with this data
+    const invoicePayload = Buffer.from(JSON.stringify({
+      invoice: {
+        invoice_number: invoiceNumber,
+        issued_date: now.toISOString().slice(0, 10),
+        due_date: dueDate.toISOString().slice(0, 10),
+        client_name: input.recipient_name,
+        client_email: input.recipient_email,
+        items: lineItems,
+        subtotal, tax, total,
+        currency: 'AUD',
+        payment_terms_days: termsDays,
+        project_reference: input.project_reference ?? null,
+      },
+      settings: {
+        company_name: companyName,
+        abn: abn || undefined,
+        bank_details: bankDetails || undefined,
+        payment_terms_days: termsDays,
+        gst_registered: false,
+        address_lines: ['Brisbane, Queensland'],
+      },
+    })).toString('base64')
+
+    // Store the invoice HTML in a temporary record so it can be viewed
+    const invoiceId = `inv-${Date.now()}`
+    await supabase.from('semantic_memories').insert({
+      org_id: orgId,
+      content: `[invoice-html:${invoiceId}] ${result.html.slice(0, 500)}`,
+      category: 'general',
+      confidence: 0.5,
+      is_active: true,
+      decay_rate: 'fast',
+    }).then(() => {})
+
     return {
       success: true,
       data: {
@@ -223,9 +259,11 @@ export async function handleGenerateInvoice(
         recipient_email: input.recipient_email,
         due_date: dueDate.toISOString().slice(0, 10),
         terms: `${termsDays} days`,
-        html: result.html,
         subject: result.subject,
         description: input.description,
+        // IMPORTANT: Tell the model to present this link to the user
+        view_url: `/api/invoices/render?data=${invoicePayload}`,
+        instructions: 'Invoice generated. Give the user the view_url link to open and save as PDF. Do NOT paste the invoice as text. Just say "Here is your invoice:" and provide the link.',
       },
     }
   } catch (err) {

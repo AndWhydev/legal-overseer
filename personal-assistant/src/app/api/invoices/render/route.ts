@@ -4,6 +4,24 @@ import { generateInvoicePdf, type InvoicePdfInput, type InvoicePdfSettings } fro
 export const dynamic = 'force-dynamic'
 
 /**
+ * GET /api/invoices/render?data=<base64-json>
+ * Opens a styled invoice page from base64-encoded invoice data.
+ */
+export async function GET(request: NextRequest) {
+  const dataParam = request.nextUrl.searchParams.get('data')
+  if (!dataParam) return NextResponse.json({ error: 'Missing data' }, { status: 400 })
+
+  try {
+    const { invoice, settings } = JSON.parse(Buffer.from(dataParam, 'base64').toString('utf-8'))
+    const result = generateInvoicePdf(invoice, settings)
+    const printableHtml = result.html.replace('</head>', `<style>@media print { body { padding: 0 !important; background: white !important; } @page { margin: 0.4in; size: A4; } } .print-controls { position: fixed; top: 16px; right: 16px; z-index: 100; } .print-controls button { padding: 8px 16px; border-radius: 8px; border: 1px solid #e2e8f0; background: white; font-size: 13px; cursor: pointer; } @media print { .print-controls { display: none !important; } }</style></head>`).replace('<body', '<body><div class="print-controls"><button onclick="window.print()">Save as PDF</button></div')
+    return new NextResponse(printableHtml, { headers: { 'Content-Type': 'text/html; charset=utf-8' } })
+  } catch {
+    return NextResponse.json({ error: 'Invalid data' }, { status: 400 })
+  }
+}
+
+/**
  * POST /api/invoices/render
  *
  * Renders a styled HTML invoice page. Returns full HTML document that can be:

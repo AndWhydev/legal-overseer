@@ -392,8 +392,8 @@ export function BitBitFaceAvatar({
   // At small sizes, thicken strokes and enlarge features for visibility
   // Scale factor: 1.0 at 48px, up to ~2.0 at 24px
   const thicknessScale = Math.max(1, 48 / Math.max(size, 20))
-  const browStroke = 1.5 * thicknessScale
-  const noseStroke = 1.2 * thicknessScale
+  const browStroke = 2.2 * thicknessScale
+  const noseStroke = 1.8 * thicknessScale
   const eyeRadius = EYE_R * Math.max(1, thicknessScale * 0.85)
 
   const isProcessing = emotion === 'processing'

@@ -74,10 +74,12 @@ export interface ChainOfThoughtHeaderProps {
   children?: ReactNode;
   className?: string;
   style?: CSSProperties;
+  /** Hide the expand/collapse chevron (e.g. when there's no content to expand) */
+  hideChevron?: boolean;
 }
 
 export const ChainOfThoughtHeader = memo(
-  ({ className, children, style }: ChainOfThoughtHeaderProps) => {
+  ({ className, children, style, hideChevron }: ChainOfThoughtHeaderProps) => {
     const { isOpen, setIsOpen } = useChainOfThought();
 
     const headerStyle: CSSProperties = {
@@ -123,7 +125,7 @@ export const ChainOfThoughtHeader = memo(
         <span style={{ textAlign: "left" }}>
           {children ?? "Reasoning..."}
         </span>
-        <svg
+        {!hideChevron && <svg
           style={chevronStyle}
           viewBox="0 0 24 24"
           fill="none"
@@ -133,7 +135,7 @@ export const ChainOfThoughtHeader = memo(
           strokeLinejoin="round"
         >
           <polyline points="6 9 12 15 18 9" />
-        </svg>
+        </svg>}
       </button>
     );
   }
@@ -153,7 +155,7 @@ export interface ChainOfThoughtStepProps {
 }
 
 // Consistent icon column width for alignment — all steps share the same axis
-const ICON_COL = 24;
+const ICON_COL = 18;
 
 export const ChainOfThoughtStep = memo(
   ({
@@ -173,11 +175,11 @@ export const ChainOfThoughtStep = memo(
       status === "active"
         ? "var(--text-secondary)"
         : status === "complete"
-          ? "var(--text-dim)"
+          ? "var(--text-muted)"
           : "var(--text-muted)";
 
     const iconElement = hasIcon ? (
-      <Icon size={16} style={{ color: iconColor, flexShrink: 0 }} />
+      <Icon size={13} style={{ color: iconColor, flexShrink: 0 }} />
     ) : (
       <div
         style={{
@@ -207,9 +209,10 @@ export const ChainOfThoughtStep = memo(
         transition={{ duration: 0.15 }}
         style={{
           display: "flex",
-          gap: 10,
-          fontSize: 13,
-          paddingBottom: 8,
+          alignItems: "center",
+          gap: 6,
+          fontSize: 12,
+          paddingBottom: 5,
           position: "relative",
           zIndex: 1,
           ...(expandable ? { cursor: "pointer" } : {}),
@@ -226,7 +229,6 @@ export const ChainOfThoughtStep = memo(
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            height: 20,
             flexShrink: 0,
           }}
         >
@@ -261,22 +263,21 @@ export const ChainOfThoughtStep = memo(
             flex: 1,
             display: "flex",
             flexDirection: "column",
-            gap: 2,
-            minHeight: 20,
-            justifyContent: "center",
+            gap: 1,
           }}
         >
           <div
             style={{
               display: "flex",
               alignItems: "center",
-              lineHeight: "20px",
+              gap: 6,
+              lineHeight: "18px",
             }}
           >
             <span
               style={{
-                color: status === "active" ? "var(--text-secondary)" : "var(--text-dim)",
-                fontSize: 13,
+                color: status === "active" ? "var(--text-dim)" : "var(--text-muted)",
+                fontSize: 12,
                 fontWeight: 400,
               }}
             >
@@ -286,14 +287,14 @@ export const ChainOfThoughtStep = memo(
               <span
                 style={{
                   display: "inline-flex",
-                  padding: "2px 8px",
-                  borderRadius: 6,
+                  padding: "1px 6px",
+                  borderRadius: 4,
                   background: "var(--hover-bg)",
-                  fontSize: 11,
-                  color: "var(--text-dim)",
+                  fontSize: 10,
+                  color: "var(--text-muted)",
                   fontStyle: "normal",
-                  marginLeft: 6,
                   fontWeight: 400,
+                  letterSpacing: "0.01em",
                 }}
               >
                 {detail}
@@ -392,10 +393,10 @@ export const ChainOfThoughtContent = memo(
             className="cot-thread-line"
             style={{
               position: "absolute",
-              left: ICON_COL / 2 - 0.75, // center of icon column minus half line width
-              top: 10, // first icon center (20px row height / 2)
-              bottom: 18, // last icon center (paddingBottom 8 + 10)
-              width: 1.5,
+              left: ICON_COL / 2 - 0.5, // center of icon column minus half line width
+              top: 8,
+              bottom: 14,
+              width: 1,
               backgroundColor: "var(--glass-divider)",
               pointerEvents: "none",
               zIndex: 0,
