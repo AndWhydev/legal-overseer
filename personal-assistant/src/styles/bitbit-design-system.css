@@ -7000,6 +7000,23 @@ html.light .bb-chat__tc-pre {
   background: rgba(0, 0, 0, 0.04);
 }
 
+/* Links in chat messages — blue, not orange */
+.bb-chat__markdown a {
+  color: #3B82F6;
+  text-decoration: none;
+  transition: color 0.15s;
+}
+.bb-chat__markdown a:hover {
+  color: #60A5FA;
+  text-decoration: underline;
+}
+html.light .bb-chat__markdown a {
+  color: #2563EB;
+}
+html.light .bb-chat__markdown a:hover {
+  color: #1D4ED8;
+}
+
 /* --------------------------------------------------------------------------
    24. AUTH PAGE (Chat-Aligned)
    -------------------------------------------------------------------------- */
