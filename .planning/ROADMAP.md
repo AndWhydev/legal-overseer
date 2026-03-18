@@ -349,7 +349,7 @@ Phase 20 first (no dependencies), then 21 (billing before growth roles), then 22
 | 19. Credential Provisioning & Live Verification | v1.2 | 3/3 | Complete | 2026-03-02 |
 | 20. File Attachments & Multimedia | 3/3 | Complete    | 2026-03-18 | - |
 | 21. Billing Infrastructure | 3/3 | Complete    | 2026-03-18 | - |
-| 22. Cost Controls & Ad Script Generator | v1.4 | 0/2 | Not started | - |
+| 22. Cost Controls & Ad Script Generator | 1/2 | In Progress|  | - |
 | 23. SEO Monitor & Tender Hunter | v1.4 | 0/2 | Not started | - |
 | 24. Content Creator | v1.4 | 0/1 | Not started | - |
 

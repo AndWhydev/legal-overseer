@@ -128,9 +128,9 @@ Requirements for Media, Billing & Growth Roles. Closes the media gap, adds billi
 
 ### Cost Controls
 
-- [ ] **COST-01**: Per-execution token budget cap prevents runaway growth role costs
-- [ ] **COST-02**: Per-role daily budget limit with alert when approaching threshold
-- [ ] **COST-03**: Circuit breaker halts role execution if daily budget exceeded
+- [x] **COST-01**: Per-execution token budget cap prevents runaway growth role costs
+- [x] **COST-02**: Per-role daily budget limit with alert when approaching threshold
+- [x] **COST-03**: Circuit breaker halts role execution if daily budget exceeded
 
 ## Future Requirements
 
@@ -221,9 +221,9 @@ Requirements for Media, Billing & Growth Roles. Closes the media gap, adds billi
 | BILL-08 | Phase 21 | Complete |
 | BILL-09 | Phase 21 | Complete |
 | BILL-10 | Phase 21 | Complete |
-| COST-01 | Phase 22 | Pending |
-| COST-02 | Phase 22 | Pending |
-| COST-03 | Phase 22 | Pending |
+| COST-01 | Phase 22 | Complete |
+| COST-02 | Phase 22 | Complete |
+| COST-03 | Phase 22 | Complete |
 | ADS-01 | Phase 22 | Pending |
 | ADS-02 | Phase 22 | Pending |
 | ADS-03 | Phase 22 | Pending |

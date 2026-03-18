@@ -10,8 +10,8 @@ progress:
   total_phases: 18
   completed_phases: 9
   total_plans: 28
-  completed_plans: 28
-  percent: 40
+  completed_plans: 29
+  percent: 43
 ---
 
 # Project State
@@ -26,16 +26,16 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 ## Current Position
 
 Phase: 22 of 24 (Cost Controls & Ad Script Generator)
-Plan: 0 of 2 in current phase
+Plan: 1 of 2 in current phase
 Status: In Progress
-Last activity: 2026-03-18 -- Completed Phase 21 (Billing Infrastructure) -- all 3 plans done
+Last activity: 2026-03-18 -- Completed 22-01-PLAN.md (Cost Controls -- per-role budget enforcement)
 
-Progress: v1.0 ======== | v1.1 ======== | v1.2 ======== | v1.4 [=====______] 40%
+Progress: v1.0 ======== | v1.1 ======== | v1.2 ======== | v1.4 [======_____] 43%
 
 ## Performance Metrics
 
 **Delivery totals:**
-- Total plans completed: 63 (v1.0: 19, v1.1: 16, v1.2: 22, v1.4: 6)
+- Total plans completed: 64 (v1.0: 19, v1.1: 16, v1.2: 22, v1.4: 7)
 - Milestones shipped: v1.0 (2026-02-21), v1.1 (2026-02-22), v1.2 (2026-03-02)
 
 **v1.4 Phases:**
@@ -44,7 +44,7 @@ Progress: v1.0 ======== | v1.1 ======== | v1.2 ======== | v1.4 [=====______] 40%
 |-------|-------|--------|
 | 20. File Attachments & Multimedia | 3 | COMPLETE |
 | 21. Billing Infrastructure | 3 | COMPLETE |
-| 22. Cost Controls & Ad Script Generator | 2 | Not started |
+| 22. Cost Controls & Ad Script Generator | 2 | 1/2 complete |
 | 23. SEO Monitor & Tender Hunter | 2 | Not started |
 | 24. Content Creator | 1 | Not started |
 
@@ -80,6 +80,9 @@ See PROJECT.md Key Decisions table.
 - [21-03] Stripe.js v8 URL redirect: redirectToCheckout removed, checkout API returns session URL for direct redirect
 - [21-03] Trial email dedup via Stripe subscription metadata (trial_end_notified flag)
 - [21-03] Portal endpoint fallback chain: organizations.stripe_customer_id -> subscriptions.stripe_customer_id
+- [22-01] TOOL_ROLE_MAP as static constant -- explicit control over budget categories vs deriving from TOOL_PLAN_REQUIREMENTS
+- [22-01] Budget-blocked tools return synthetic error, not engine halt -- graceful agent communication
+- [22-01] Execution cap injects convergence hint, not force-stop -- agent produces useful summary
 
 ### Pending Todos
 
@@ -91,10 +94,10 @@ See PROJECT.md Key Decisions table.
 - WhatsApp production setup requires Andy's Meta Business access (affects Phase 15, not v1.4)
 - Local Docker unavailable for supabase lint
 - ~~Fragmented Stripe webhook handling~~ RESOLVED in 21-01: consolidated into single /api/billing/webhook endpoint
-- Growth role token costs can spiral 10-50x vs classification tasks -- Phase 22 cost controls are critical path
+- ~~Growth role token costs can spiral 10-50x vs classification tasks~~ RESOLVED in 22-01: per-role budget enforcement with daily limits and per-execution caps
 
 ## Session Continuity
 
 Last session: 2026-03-18
-Stopped at: Completed 21-03-PLAN.md (Pricing, Billing Settings & Trial Email) -- Phase 21 complete, ready for Phase 22
+Stopped at: Completed 22-01-PLAN.md (Cost Controls -- per-role budget enforcement)
 Resume file: None
