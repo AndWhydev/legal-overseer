@@ -318,7 +318,7 @@ Phase 20 first (foundation), then 21/22/23 can partially parallel (all depend on
 | 7-12 | v1.1 | 16/16 | Complete | 2026-02-22 |
 | 13-19 | v1.2 | 24/24 | Complete | 2026-03-14 |
 | 20. Role Engine Foundation | v1.3 | 2/4 | In Progress | — |
-| 21. Finance Role | v1.3 | 0/3 | Pending | — |
+| 21. Finance Role | 1/3 | In Progress|  | — |
 | 22. Comms Role | v1.3 | 0/3 | Pending | — |
 | 23. Sales Role | v1.3 | 0/3 | Pending | — |
 | 24. Intelligence Layer | v1.3 | 0/3 | Pending | — |

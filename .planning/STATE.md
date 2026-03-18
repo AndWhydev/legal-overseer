@@ -1,3 +1,19 @@
+---
+gsd_state_version: 1.0
+milestone: v1.0
+milestone_name: milestone
+status: in_progress
+stopped_at: Completed 21-01-PLAN.md (Finance Role Implementation)
+last_updated: "2026-03-18T16:07:00.000Z"
+last_activity: 2026-03-18 — 21-01 Finance Role wraps invoice agent as domain role
+progress:
+  total_phases: 19
+  completed_phases: 8
+  total_plans: 29
+  completed_plans: 27
+  percent: 93
+---
+
 # Project State
 
 ## Project Reference
@@ -9,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 
 ## Current Position
 
-Phase: 20 of 25 (Role Engine Foundation)
-Plan: 3 of 4 (executing)
-Status: Phase 20 in progress
-Last activity: 2026-03-18 — 20-03 Autonomy Gate & Approval Integration complete
+Phase: 21 of 25 (Finance Role)
+Plan: 1 of 3
+Status: Phase 21 IN PROGRESS
+Last activity: 2026-03-18 — 21-01 Finance Role wraps invoice agent as domain role
 
-Progress: v1.0 ✓ | v1.1 ✓ | v1.2 ✓ | v1.3 Phase 20 [###.] 3/4
+Progress: [█████████░] 93%
 
 ## Performance Metrics
 
@@ -58,12 +74,15 @@ Progress: v1.0 ✓ | v1.1 ✓ | v1.2 ✓ | v1.3 Phase 20 [###.] 3/4
 
 | Phase | Plans | Status |
 |-------|-------|--------|
-| 20. Role Engine Foundation | 4 | 3/4 IN PROGRESS |
+| 20. Role Engine Foundation | 4 | 4/4 COMPLETE |
+| 21. Finance Role | 3 | 1/3 IN PROGRESS |
 
 | Phase | Plan | Duration | Tasks | Files |
 |-------|------|----------|-------|-------|
 | 20 | 01 | 5min | 3 | 3 |
 | 20 | 03 | 5min | 5 | 7 |
+| 20 | 04 | 11min | 5 | 7 |
+| 21 | 01 | 5min | 5 | 5 |
 
 ## Accumulated Context
 
@@ -172,6 +191,16 @@ See PROJECT.md Key Decisions table.
 - [20-02] Barrel fix: bitbit-core.ts file takes precedence over bitbit-core/index.ts in bundler resolution
 - [20-02] Lock key derivation: first 8 hex chars of UUID parsed as int32 for pg_advisory_lock
 - [20-02] Pre-screen skips still update last_tick_at/next_tick_at to avoid re-checking too soon
+- [20-04] Workflow steps use atomic pattern: execute -> save result -> advance current_step
+- [20-04] Time-delayed steps set next_step_at; next role tick resumes naturally
+- [20-04] Per-role cost guard queries agent_runs by role_config_id (reuses agent_runs table)
+- [20-04] Haiku pre-screen checks role-specific tables (invoices, inbox_items, leads, proposals)
+- [20-04] RoleImplementation gets optional getWorkflowStepDefs/getWorkflowStepDef methods
+- [20-04] Activity logger exported as logRoleActivityAudit to avoid name collision
+- [21-01] Wrap, don't rewrite: invoice-wrapper.ts calls runInvoiceFlowTick and translates results to RoleAction/RoleInsight
+- [21-01] Invoice flow tick already runs checkOverdueInvoices internally; wrapper captures overdue from tick result
+- [21-01] Finance chat handler resolves autonomy level from role_configs with copilot fallback
+- [21-01] Domain role auto-registration pattern: import side-effect triggers registerRole() at module scope
 
 ### Pending Todos
 
@@ -212,5 +241,5 @@ See PROJECT.md Key Decisions table.
 ## Session Continuity
 
 Last session: 2026-03-18
-Stopped at: Completed 20-03-PLAN.md (Autonomy Gate & Approval Integration)
+Stopped at: Completed 21-01-PLAN.md (Finance Role Implementation)
 Resume file: None
