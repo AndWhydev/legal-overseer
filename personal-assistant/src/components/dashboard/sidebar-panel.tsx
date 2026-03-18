@@ -27,6 +27,7 @@ import {
   Link2,
   Zap,
   Palette,
+  Mic,
 } from 'lucide-react';
 import type { SidebarCategory } from '@/lib/modules/registry';
 import type { BadgeCounts } from '@/hooks/use-badge-counts';
@@ -44,6 +45,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
   leads:           Handshake,
   invoices:        ReceiptText,
   tenders:         FileSearch,
+  meetings:        Mic,
   sentry:          ShieldAlert,
   approvals:       ShieldCheck,
   'ad-scripts':    Film,

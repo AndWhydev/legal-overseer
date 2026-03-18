@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { approveFollowUp } from '@/lib/meetings/meeting-service'
+import { sendFollowUpEmail } from '@/lib/meetings/follow-up-sender'
+import type { MeetingFollowUp } from '@/lib/meetings/types'
+import { logger } from '@/lib/core/logger'
 
 /**
  * GET /api/meetings/[id]/follow-ups — List follow-ups for a meeting.
@@ -63,6 +66,40 @@ export async function PATCH(
     if (!success) {
       return NextResponse.json({ error: 'Failed to approve follow-up' }, { status: 500 })
     }
+
+    // Auto-send the approved follow-up email
+    const { data: followUpRecord } = await supabase
+      .from('meeting_follow_ups')
+      .select('*')
+      .eq('id', followUpId)
+      .single()
+
+    if (followUpRecord?.recipient_email) {
+      const { id: meetingId } = await params
+      const { data: meeting } = await supabase
+        .from('meetings')
+        .select('title')
+        .eq('id', meetingId)
+        .single()
+
+      const sendResult = await sendFollowUpEmail(
+        supabase,
+        followUpRecord as MeetingFollowUp,
+        meeting?.title || 'Meeting'
+      )
+
+      if (!sendResult.success) {
+        logger.warn('[follow-ups] Email send failed after approval:', sendResult.error)
+      }
+
+      return NextResponse.json({
+        success: true,
+        status: 'approved',
+        email_sent: sendResult.success,
+        email_error: sendResult.error,
+      })
+    }
+
     return NextResponse.json({ success: true, status: 'approved' })
   }
 
