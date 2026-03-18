@@ -124,7 +124,7 @@ bitbit/                      # npm workspaces root
 ## Database
 
 - **Engine**: PostgreSQL via Supabase
-- **Migrations**: 91 SQL migration files in `personal-assistant/supabase/migrations/`
+- **Migrations**: 93 SQL migration files in `personal-assistant/supabase/migrations/`
 - **Auth**: Supabase Auth with RLS policies
 - **Tenancy**: Dual-tier — personal orgs (auto-created) + shared orgs
 - **Key patterns**: RLS on all tables, `org_id` scoping, `created_by` tracking
@@ -138,6 +138,17 @@ bitbit/                      # npm workspaces root
 - **Retriever**: Hybrid search (vector similarity + metadata filtering + knowledge graph traversal)
 - **Queue**: `embedding_queue` table for async embedding generation
 - **Key files**: `src/lib/rag/pinecone-client.ts`, `src/lib/rag/embedding-service.ts`, `src/lib/rag/retriever.ts`, `src/lib/rag/chunker.ts`
+
+## Role Engine (v1.3)
+
+- **Core**: `src/lib/roles/` — role-runtime, role-registry, role-scheduler, autonomy-gate, action-dispatcher, workflow-executor, role-cost-guard, role-activity-logger
+- **Roles**: `src/lib/roles/{finance,comms,sales}/` — domain-owning roles wrapping existing agents
+- **Intelligence**: `src/lib/intelligence/` — revenue-radar, client-health, cash-flow-prophet, capacity-oracle
+- **Dashboard**: `src/components/roles/` — activity feed, status cards, autonomy toggle, attention view, intelligence widgets
+- **API routes**: `/api/roles/` (enable, disable, autonomy, activity, status, attention), `/api/cron/role-tick`, `/api/cron/intelligence`, `/api/intelligence/[metric]`
+- **DB tables**: role_configs, role_states, role_workflows, role_activity, bi_snapshots (migrations 092-093)
+- **Patterns**: Advisory lock concurrency, optimistic versioning on state, Haiku pre-screen before Sonnet/Opus, durable workflows with time-delayed steps, per-role daily budget caps
+- **Autonomy**: Observer (insights only) / Co-pilot (draft + approve) / Autopilot (confidence-gated execution)
 
 ## AI Models
 

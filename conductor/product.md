@@ -20,7 +20,9 @@ Most "AI assistants" wait for instructions. They react. BitBit is different beca
 
 **Context Baseplate.** This is BitBit's compiled understanding of your world. Not the typical search and retrieve approach. BitBit does its thinking when new information arrives, not when you ask a question. It builds an entity graph with relationships, patterns, and active threads. Dave's email about Steve's invoice gets linked to Steve's contact record at crawl time.
 
-**Specialist agents.** BitBit has a team of agents, each with a specific job. Invoice Flow handles your invoicing. Lead Swarm finds and qualifies prospects. Channel Triage reads everything coming in and escalates what matters. You pick which agents you need. They're like lego bricks.
+**Autonomous roles.** BitBit has domain-owning roles, not just task-executing agents. Finance handles all money operations — invoicing, collections, cash flow, payment learning. Comms handles all communication — triage, response drafting, follow-ups, relationship health. Sales handles growth — proposals, lead nurture, onboarding, pipeline. Each role runs continuously, learns from outcomes, and adapts. You control how much autonomy each role gets: Observer (watch only), Co-pilot (draft and approve), or Autopilot (act and report).
+
+**Intelligence layer.** BitBit sees what you miss. Revenue Radar identifies upsell opportunities and flags stale clients. Client Health Score rates every relationship 0-100 from real signals. Cash Flow Prophet projects your finances forward. Capacity Oracle warns before you overcommit. All computed from real data, cached efficiently, with minimum data thresholds so it never shows unreliable predictions.
 
 **Tool orchestration.** When you ask BitBit something, it doesn't load every tool it has. A fast planner (Haiku) reads your intent and selects only the relevant tool groups — contacts and comms for "send Sezer a WhatsApp", web tools for "search for plumbers in Sydney", memory for "remember his rate". This keeps the AI focused, fast, and cheap. As tool count grows beyond 50, complex multi-domain queries can escalate to specialist sub-agents that run in parallel.
 
@@ -58,6 +60,8 @@ All of these people share the same frustration. They started a business to do th
 
 ## What's built
 
+**v1.3 Agent Roles & Autonomy Engine (shipped 2026-03-18).** BitBit now has domain-owning autonomous roles instead of task-executing agents. Three roles — Finance, Comms, Sales — each own their domain end-to-end. Users control autonomy per role: Observer (insights only), Co-pilot (draft + approve), Autopilot (act autonomously, escalate on low confidence). Intelligence layer computes Revenue Radar (upsell opportunities), Client Health Score (0-100 per client), Cash Flow Prophet (forward projections), and Capacity Oracle (workload modeling). Role engine features: persistent state across ticks, advisory lock concurrency control, durable multi-step workflows with time-delayed steps, per-role cost guards, Haiku pre-screening, full audit trail with reasoning chains. Dashboard integration: unified activity feed, per-role status cards, inline autonomy toggles, "What needs my attention" view, intelligence metric widgets. 5 new database tables (role_configs, role_states, role_workflows, role_activity, bi_snapshots), 2 new migrations (092, 093), ~16,200 lines of new code, 75 tests.
+
 Chat interface with streaming responses and a visible processing pipeline. Multi channel messaging across WhatsApp, SMS, email, iMessage, Facebook Messenger, Instagram, Slack, and Telegram. WhatsApp dual-path transport: Meta Cloud API (primary) with Baileys bridge fallback on Fly.io (`bitbit-wa-bridge.fly.dev`). WhatsApp chat history importer for bootstrapping context from existing conversations. Meta WhatsApp webhook with signature verification. Channel adapter wiring across all transports. Contact management with an entity graph that tracks relationships. Auto-create contacts from triage for human senders. Invoice creation with timeline events. Task management with goals. Dual tier tenancy supporting personal and org modes. Unified connections grid with 15+ service types including ClickUp, GA4, WordPress, Xero, Google Calendar. OAuth infrastructure with token refresh lifecycle. Background intelligence that extracts facts from conversations and consolidates memory over time. Proactive memory building — BitBit learns from every conversation turn, not just when explicitly told to remember. Analytics dashboard wired to real agent_runs data with interactive data-viz library (sparkline, bar, donut, gauge charts with hover tooltips). Activity feed. Error monitoring. 19 cron routes for background processing (including channel-sync, triage, process-embeddings). Confidence based action routing where BitBit decides whether to act autonomously or ask the user. Glassmorphic UI across all dashboard pages. Mobile responsive with bottom navigation. Self-serve onboarding with 3-step wizard. CI/CD pipeline with 5 GitHub Actions workflows. 12 Playwright E2E specs covering auth, dashboard, API routes, kanban, leads, invoices, and KPI rendering. Leads pipeline with kanban and list views, prospect discovery, and outreach intelligence. Context Baseplate with entity profiles, entity patterns (payment timing, response latency, activity frequency, channel preference), mention extraction, active threads, and cross-reference caching. First-contact intelligence — when BitBit doesn't know something, it scans connected channels to find the answer instead of saying "I don't know." Cross-channel search with deeper Gmail sync. Production deployment on Fly.io (worker with bearer auth), Fly.io WhatsApp bridge (`bitbit-wa-bridge.fly.dev`), Cloudflare Workers (edge cron with rate limiting), and VPS relay. Sentry error tracking with context enrichment and PII filtering. Security hardened with webhook HMAC verification, circuit breaker on LLM calls, DLQ with admin API, rate limiting, and security response headers. RLS policies audited across all 91 migrations.
 
 Whispers: proactive nudge system that surfaces contextual suggestions without being asked. Five whisper sources: stale contacts (people you haven't talked to), due items, unfinished momentum, anomalies, and proactive completions. API route + dashboard component + migration 085.
@@ -72,9 +76,11 @@ Total Recall: persistent conversational memory with cross-channel continuity. On
 
 RAG infrastructure: Pinecone Serverless vector database with Voyage-3.5-lite embeddings for semantic search across all ingested content (emails, messages, documents). Kuzu WASM knowledge graph for entity relationship traversal. Embedding queue for async processing. Hybrid retrieval combining vector similarity, metadata filtering, and graph traversal. RAG stats monitoring widget in dashboard settings.
 
-19 cron routes. 91 database migrations. 1,862+ tests. 21 E2E spec files.
+21 cron routes (added role-tick, intelligence). 93 database migrations. 1,937+ tests (75 new from v1.3 roles). 21 E2E spec files.
 
 ## What's next
+
+**v1.4 scope (not yet started).** Growth roles (SEO, Content, Builder for website/app construction via agentic coding), Stripe billing & trial infrastructure (deferred from v1.2), marketing website and public launch.
 
 **Channel smoke tests (T011).** All 5 key platform credentials are configured. Remaining: smoke test each channel adapter against real credentials, load test under concurrent access. Ed25519 SMS webhook verification fixed.
 
@@ -109,6 +115,11 @@ personal-assistant/          Next.js 16 app (Vercel deployed dashboard)
   src/app/api/               25+ API route groups, 19 cron routes
   src/components/            17 component groups (incl. medications, whispers)
   src/lib/agent/             Engine, tools (26 across 6 groups), planner, prompt-builder, approval-queue, action-executor
+  src/lib/roles/             Role engine (runtime, registry, scheduler, autonomy gate, workflows, cost guards)
+    finance/                 Finance role (invoicing, collections, cash flow, payment learning)
+    comms/                   Comms role (triage, drafting, follow-ups, relationship monitoring)
+    sales/                   Sales role (proposals, nurture, onboarding, pipeline)
+  src/lib/intelligence/      Intelligence layer (Revenue Radar, Client Health, Cash Flow Prophet, Capacity Oracle)
   src/lib/channels/          Channel adapters, synthesizer, transport
   src/lib/context/           Entity profiles, baseplate, mention scanner, xref cache
   src/lib/context-assembly/  ContextAssembler, TokenBudgetManager (Total Recall)

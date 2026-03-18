@@ -29,6 +29,7 @@
 | T031 | Total Recall — Conversational Memory & Cross-Channel Continuity | architecture | 2026-03-13 |
 | T033 | Inbox Redesign & Chat UX | feature | 2026-03-14 |
 | T034 | RAG Infrastructure & Launch Readiness (Council Sprint) | architecture+feature | 2026-03-15 |
+| T035 | v1.3 Agent Roles & Autonomy Engine (6 phases, 19 plans) | architecture+feature | 2026-03-18 |
 
 ## Active Tracks
 
