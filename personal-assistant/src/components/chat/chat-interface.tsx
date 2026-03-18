@@ -852,9 +852,14 @@ export function ChatInterface({ userName }: { userName?: string }) {
                 assistantContent += event.data
 
                 if (!narrationLockedRef.current && toolCalls.length === 0) {
-                  // Pre-tool narration: content before any tool_call
-                  narrationContentRef.current += event.data
-                  setNarration(narrationContentRef.current)
+                  // No tools yet — stream content directly into the message for smooth typing effect
+                  setMessages(prev => {
+                    const existing = prev.find(m => m.id === assistantId)
+                    if (existing) {
+                      return prev.map(m => m.id === assistantId ? { ...m, content: assistantContent } : m)
+                    }
+                    return [...prev, { id: assistantId, role: 'assistant' as const, content: assistantContent, timestamp: new Date() }]
+                  })
                 } else if (toolCalls.length > 0 && toolCalls.some(tc => tc.status === 'running')) {
                   // Content arriving while a tool is still running — inter-tool narration
                   interToolBufferRef.current += event.data
