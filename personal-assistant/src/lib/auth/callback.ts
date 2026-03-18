@@ -57,7 +57,10 @@ export function resolveSafeAuthRedirect(next: string | null | undefined, origin:
   }
 
   if (next.startsWith('/')) {
-    return next.startsWith('//') ? '/dashboard' : next
+    // Block path traversal via double-slash
+    if (next.startsWith('//')) return '/dashboard'
+    // Allow portal and dashboard paths
+    return next
   }
 
   try {

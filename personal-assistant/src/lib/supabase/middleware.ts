@@ -33,10 +33,17 @@ export async function updateSession(request: NextRequest) {
     !user &&
     !request.nextUrl.pathname.startsWith('/login') &&
     !request.nextUrl.pathname.startsWith('/auth') &&
-    !request.nextUrl.pathname.startsWith('/callback')
+    !request.nextUrl.pathname.startsWith('/callback') &&
+    !request.nextUrl.pathname.startsWith('/portal/login')
   ) {
     const url = request.nextUrl.clone()
-    url.pathname = '/login'
+    // Portal routes redirect to portal login instead of main login
+    if (request.nextUrl.pathname.startsWith('/portal')) {
+      url.pathname = '/portal/login'
+      url.searchParams.set('next', request.nextUrl.pathname)
+    } else {
+      url.pathname = '/login'
+    }
     return NextResponse.redirect(url)
   }
 
