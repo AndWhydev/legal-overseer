@@ -76,6 +76,11 @@ export const TOOL_AUTONOMY_MAP: Record<string, AutonomyLevel> = {
   generate_schema_markup: 'L4_silent',  // Pure generation, no DB write
   visibility_report: 'L4_silent',       // Read-only report from stored data
 
+  // Tender Hunter tools: search and scoring persist data, response is a draft
+  search_tenders: 'L3_notify',              // Scrapes sources, upserts tenders to DB
+  score_tender: 'L3_notify',                // Evaluates fit, persists score to DB
+  generate_tender_response: 'L3_notify',    // Generates draft, upserts to tender_responses table
+
   // L1: Financial / irreversible — always require approval
   // (future: invoice_send, payment_process, contract_sign)
 }
