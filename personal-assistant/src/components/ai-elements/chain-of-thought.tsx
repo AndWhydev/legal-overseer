@@ -3,7 +3,6 @@
 import type { CSSProperties, ElementType, ReactNode } from "react";
 import { createContext, memo, useContext, useMemo, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Check, Loader2 } from "lucide-react";
 
 interface ChainOfThoughtContextValue {
   isOpen: boolean;
@@ -84,30 +83,27 @@ export const ChainOfThoughtHeader = memo(
     const headerStyle: CSSProperties = {
       display: "inline-flex",
       alignItems: "center",
-      gap: "8px",
+      gap: "6px",
       cursor: "pointer",
       userSelect: "none",
-      padding: "6px 12px",
+      padding: "4px 0",
       color: "var(--text-dim)",
       fontSize: "13px",
-      fontWeight: 500,
+      fontWeight: 400,
       fontFamily: "inherit",
-      background: "rgba(255, 255, 255, 0.03)",
-      border: "1px solid rgba(255, 255, 255, 0.06)",
-      borderRadius: "10px",
-      transition: "all 0.2s ease",
-      backdropFilter: "blur(8px)",
+      background: "none",
+      border: "none",
+      transition: "color 0.2s ease",
       ...style,
     };
 
     const chevronStyle: CSSProperties = {
       display: "inline-block",
-      width: "14px",
-      height: "14px",
+      width: "12px",
+      height: "12px",
       transition: "transform 0.3s cubic-bezier(0.25, 1, 0.5, 1)",
       transform: isOpen ? "rotate(180deg)" : "rotate(0deg)",
       flexShrink: 0,
-      opacity: 0.6,
     };
 
     return (
@@ -118,30 +114,13 @@ export const ChainOfThoughtHeader = memo(
         onMouseEnter={(e) => {
           const element = e.currentTarget as HTMLElement;
           element.style.color = "var(--text-secondary)";
-          element.style.background = "rgba(255, 255, 255, 0.06)";
-          element.style.borderColor = "rgba(255, 255, 255, 0.1)";
         }}
         onMouseLeave={(e) => {
           const element = e.currentTarget as HTMLElement;
           element.style.color = "var(--text-dim)";
-          element.style.background = "rgba(255, 255, 255, 0.03)";
-          element.style.borderColor = "rgba(255, 255, 255, 0.06)";
         }}
       >
-        {/* Sparkle indicator */}
-        <span style={{
-          display: "inline-flex",
-          alignItems: "center",
-          justifyContent: "center",
-          width: 16,
-          height: 16,
-          opacity: 0.5,
-        }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 2L13.09 8.26L18 6L14.74 10.91L21 12L14.74 13.09L18 18L13.09 15.74L12 22L10.91 15.74L6 18L9.26 13.09L3 12L9.26 10.91L6 6L10.91 8.26L12 2Z" />
-          </svg>
-        </span>
-        <span style={{ textAlign: "left", letterSpacing: "-0.01em" }}>
+        <span style={{ textAlign: "left" }}>
           {children ?? "Reasoning..."}
         </span>
         <svg
@@ -149,7 +128,7 @@ export const ChainOfThoughtHeader = memo(
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
-          strokeWidth="2.5"
+          strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
         >
@@ -166,7 +145,6 @@ export interface ChainOfThoughtStepProps {
   icon?: ElementType;
   label: string;
   detail?: string;
-  resultSummary?: string;
   status?: "active" | "complete" | "pending";
   expandable?: boolean;
   children?: ReactNode;
@@ -175,40 +153,7 @@ export interface ChainOfThoughtStepProps {
 }
 
 // Consistent icon column width for alignment — all steps share the same axis
-const ICON_COL = 28;
-
-/** Spinning loader for active tool calls */
-const ActiveSpinner = memo(() => (
-  <motion.div
-    animate={{ rotate: 360 }}
-    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-    style={{
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-    }}
-  >
-    <Loader2 size={14} style={{ color: "var(--bb-orange-light)", flexShrink: 0 }} />
-  </motion.div>
-));
-ActiveSpinner.displayName = "ActiveSpinner";
-
-/** Checkmark for completed tool calls */
-const CompletedCheck = memo(() => (
-  <motion.div
-    initial={{ scale: 0, opacity: 0 }}
-    animate={{ scale: 1, opacity: 1 }}
-    transition={{ duration: 0.25, ease: [0.34, 1.56, 0.64, 1] }}
-    style={{
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-    }}
-  >
-    <Check size={12} style={{ color: "var(--bb-green)", flexShrink: 0 }} />
-  </motion.div>
-));
-CompletedCheck.displayName = "CompletedCheck";
+const ICON_COL = 24;
 
 export const ChainOfThoughtStep = memo(
   ({
@@ -217,7 +162,6 @@ export const ChainOfThoughtStep = memo(
     icon: Icon,
     label,
     detail,
-    resultSummary,
     status = "complete",
     expandable = false,
     children,
@@ -225,27 +169,15 @@ export const ChainOfThoughtStep = memo(
     const hasIcon = !!Icon;
     const [expanded, setExpanded] = useState(false);
 
-    const handleClick = useCallback(() => {
-      if (expandable) setExpanded(prev => !prev);
-    }, [expandable]);
-
-    // Icon container background based on status
-    const iconBg =
-      status === "active"
-        ? "rgba(255, 122, 69, 0.12)"
-        : status === "complete"
-          ? "rgba(34, 197, 94, 0.08)"
-          : "rgba(255, 255, 255, 0.04)";
-
     const iconColor =
       status === "active"
-        ? "var(--bb-orange-light)"
+        ? "var(--text-secondary)"
         : status === "complete"
           ? "var(--text-dim)"
           : "var(--text-muted)";
 
     const iconElement = hasIcon ? (
-      <Icon size={14} style={{ color: iconColor, flexShrink: 0 }} />
+      <Icon size={16} style={{ color: iconColor, flexShrink: 0 }} />
     ) : (
       <div
         style={{
@@ -263,18 +195,21 @@ export const ChainOfThoughtStep = memo(
       />
     );
 
+    const handleClick = useCallback(() => {
+      if (expandable) setExpanded(prev => !prev);
+    }, [expandable]);
+
     return (
       <motion.div
         layout
-        initial={{ opacity: 0, y: 4 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.2, ease: [0.25, 1, 0.5, 1] }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.15 }}
         style={{
           display: "flex",
           gap: 10,
           fontSize: 13,
-          paddingBottom: 6,
-          paddingTop: 2,
+          paddingBottom: 8,
           position: "relative",
           zIndex: 1,
           ...(expandable ? { cursor: "pointer" } : {}),
@@ -283,7 +218,7 @@ export const ChainOfThoughtStep = memo(
         className={`cot-step ${className ?? ""}`}
         onClick={handleClick}
       >
-        {/* Icon column — centered with subtle background */}
+        {/* Icon column — fixed width, centered */}
         <div
           style={{
             width: ICON_COL,
@@ -291,60 +226,33 @@ export const ChainOfThoughtStep = memo(
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            height: 24,
+            height: 20,
             flexShrink: 0,
           }}
         >
-          <div
-            style={{
-              width: 24,
-              height: 24,
-              borderRadius: 7,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              background: iconBg,
-              transition: "background 0.3s ease",
-            }}
-          >
-            {status === "active" ? (
-              hasIcon ? (
-                <motion.div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                  animate={{ opacity: [0.6, 1, 0.6] }}
-                  transition={{
-                    duration: 1.5,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                  }}
-                >
-                  {iconElement}
-                </motion.div>
-              ) : (
-                <motion.div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                  animate={{ scale: [1, 1.3, 1] }}
-                  transition={{
-                    duration: 2,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                  }}
-                >
-                  {iconElement}
-                </motion.div>
-              )
-            ) : (
-              iconElement
-            )}
-          </div>
+          {status === "active" ? (
+            <motion.div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+              animate={
+                hasIcon
+                  ? { opacity: [0.5, 1, 0.5] }
+                  : { scale: [1, 1.3, 1] }
+              }
+              transition={{
+                duration: hasIcon ? 1.5 : 2,
+                repeat: Infinity,
+                ease: "easeInOut",
+              }}
+            >
+              {iconElement}
+            </motion.div>
+          ) : (
+            iconElement
+          )}
         </div>
 
         {/* Content */}
@@ -353,8 +261,8 @@ export const ChainOfThoughtStep = memo(
             flex: 1,
             display: "flex",
             flexDirection: "column",
-            gap: 3,
-            minHeight: 24,
+            gap: 2,
+            minHeight: 20,
             justifyContent: "center",
           }}
         >
@@ -362,72 +270,50 @@ export const ChainOfThoughtStep = memo(
             style={{
               display: "flex",
               alignItems: "center",
-              flexWrap: "wrap",
-              gap: 6,
-              lineHeight: "24px",
+              lineHeight: "20px",
             }}
           >
-            {/* Label */}
             <span
               style={{
                 color: status === "active" ? "var(--text-secondary)" : "var(--text-dim)",
                 fontSize: 13,
-                fontWeight: status === "active" ? 500 : 400,
-                transition: "color 0.2s ease",
+                fontWeight: 400,
               }}
             >
               {label}
             </span>
-
-            {/* Detail pill — glassmorphic badge */}
             {detail && (
               <span
                 style={{
                   display: "inline-flex",
-                  alignItems: "center",
-                  padding: "2px 10px",
-                  borderRadius: 12,
-                  background: "rgba(255, 255, 255, 0.06)",
-                  border: "1px solid rgba(255, 255, 255, 0.08)",
+                  padding: "2px 8px",
+                  borderRadius: 6,
+                  background: "var(--hover-bg)",
                   fontSize: 11,
-                  color: "var(--text-secondary)",
+                  color: "var(--text-dim)",
                   fontStyle: "normal",
+                  marginLeft: 6,
                   fontWeight: 400,
-                  letterSpacing: "-0.01em",
-                  maxWidth: 220,
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
                 }}
               >
                 {detail}
               </span>
             )}
-
-            {/* Status indicator — spinner or checkmark */}
-            {status === "active" && (
-              <ActiveSpinner />
-            )}
-            {status === "complete" && hasIcon && (
-              <CompletedCheck />
-            )}
-
-            {/* Expandable chevron */}
             {expandable && (
               <svg
                 style={{
                   width: 12,
                   height: 12,
+                  marginLeft: 4,
                   color: "var(--text-muted)",
                   transition: "transform 0.2s ease",
                   transform: expanded ? "rotate(180deg)" : "rotate(0deg)",
                   flexShrink: 0,
-                  opacity: 0.6,
                 }}
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
-                strokeWidth="2.5"
+                strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
               >
@@ -435,25 +321,6 @@ export const ChainOfThoughtStep = memo(
               </svg>
             )}
           </div>
-
-          {/* Result summary — shown after tool completes */}
-          {resultSummary && status === "complete" && (
-            <motion.span
-              initial={{ opacity: 0, y: -2 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.2, delay: 0.1 }}
-              style={{
-                fontSize: 11,
-                color: "var(--text-muted)",
-                fontWeight: 400,
-                lineHeight: "16px",
-                paddingLeft: 1,
-              }}
-            >
-              {resultSummary}
-            </motion.span>
-          )}
-
           {/* Expandable children — sub-list */}
           {expandable && expanded && children && (
             <motion.div
@@ -515,7 +382,6 @@ export const ChainOfThoughtContent = memo(
             gap: 0,
             marginTop: 8,
             paddingBottom: 0,
-            paddingLeft: 4,
             position: "relative",
             ...style,
           }}
@@ -526,11 +392,11 @@ export const ChainOfThoughtContent = memo(
             className="cot-thread-line"
             style={{
               position: "absolute",
-              left: 4 + ICON_COL / 2 - 0.5, // paddingLeft + center of icon column minus half line width
-              top: 12, // first icon center
-              bottom: 16, // last icon center
-              width: 1,
-              background: "linear-gradient(to bottom, rgba(255,255,255,0.08), rgba(255,255,255,0.03))",
+              left: ICON_COL / 2 - 0.75, // center of icon column minus half line width
+              top: 10, // first icon center (20px row height / 2)
+              bottom: 18, // last icon center (paddingBottom 8 + 10)
+              width: 1.5,
+              backgroundColor: "var(--glass-divider)",
               pointerEvents: "none",
               zIndex: 0,
             }}
