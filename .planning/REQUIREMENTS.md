@@ -65,21 +65,84 @@ Requirements for battle-testing and sellability. Each maps to roadmap phases.
 - [x] **OAUTH-07**: Channel settings page shows connection status, last sync time, and disconnect option for each channel
 - [x] **OAUTH-08**: OAuth token refresh handles expiry automatically without user re-auth
 
+## v1.4 Requirements
+
+Requirements for Media, Billing & Growth Roles. Closes the media gap, adds billing for public launch, and ships growth agent tools.
+
+### File Attachments & Multimedia
+
+- [ ] **MEDIA-01**: User can upload files via Paperclip button in chat composer (images, PDFs, DOCX, CSV, TXT)
+- [ ] **MEDIA-02**: User can drag-and-drop files onto the chat area to upload
+- [ ] **MEDIA-03**: Upload uses Supabase Storage signed URLs (bypasses Vercel 4.5MB body limit)
+- [ ] **MEDIA-04**: Upload progress indicator shown during file transfer
+- [ ] **MEDIA-05**: Uploaded images render inline in chat messages as previews
+- [ ] **MEDIA-06**: Uploaded PDFs render with first-page thumbnail and download link
+- [ ] **MEDIA-07**: File size limit enforced (10MB per file) with clear error message
+- [ ] **MEDIA-08**: Accepted file types filtered (block executables, allow business formats)
+- [ ] **MEDIA-09**: BitBit can read and analyse uploaded files (images via Claude Vision, documents via text extraction)
+- [ ] **MEDIA-10**: Attachments table created with org-scoped storage paths and RLS policies
+- [ ] **MEDIA-11**: Storage paths scoped to org/thread for multi-tenant isolation ({org_id}/{thread_id}/{filename})
+
+### Stripe Billing & Trial
+
+- [ ] **BILL-01**: Stripe webhook routes consolidated into single handler with event routing and idempotency
+- [ ] **BILL-02**: Stripe Products and Prices pre-created (replace ad-hoc price creation per checkout)
+- [ ] **BILL-03**: Subscription lifecycle works end-to-end (create, upgrade, downgrade, cancel)
+- [ ] **BILL-04**: Plan gating enforced at tool execution layer (growth tools gated to growth/scale plans)
+- [ ] **BILL-05**: Usage metering wired into agent run logger (tokens, agent runs, storage tracked per org)
+- [ ] **BILL-06**: 30-day free trial with feature access matching growth plan (fix 14-day mismatch)
+- [ ] **BILL-07**: Trial conversion and expiry notifications via email
+- [ ] **BILL-08**: Pricing page with plan comparison and live Stripe Checkout integration
+- [ ] **BILL-09**: Stripe Customer Portal for self-service plan management
+- [ ] **BILL-10**: Dunning sequence handles failed payments with escalating notifications
+
+### Growth Role: Ad Script Generator
+
+- [ ] **ADS-01**: Ad Script Generator registered as agent tool group (wraps existing ad-script-gen.ts)
+- [ ] **ADS-02**: User can request ad scripts via chat with hook variations, tone control, and platform targeting
+- [ ] **ADS-03**: Generated scripts include video structure (hook, body, CTA) with timing guidance
+- [ ] **ADS-04**: Ad scripts are plan-gated (growth and scale tiers only)
+
+### Growth Role: SEO Monitor
+
+- [ ] **SEO-01**: SEO tools registered as agent tool group (wraps existing ai-search-optimizer.ts)
+- [ ] **SEO-02**: User can check keyword rankings via chat command
+- [ ] **SEO-03**: SEO monitor runs on scheduled tick to detect ranking changes
+- [ ] **SEO-04**: Ranking drops trigger alert with diagnosis and suggested fixes
+- [ ] **SEO-05**: SEO tools are plan-gated (growth and scale tiers only)
+
+### Growth Role: Tender Hunter
+
+- [ ] **TNDR-01**: Tender Hunter registered as agent tool group (wraps existing tender-hunter.ts)
+- [ ] **TNDR-02**: User can search government tenders by keyword, category, and location via chat
+- [ ] **TNDR-03**: Tender Hunter runs on scheduled tick to find new matching opportunities
+- [ ] **TNDR-04**: New tender matches trigger notification with qualification assessment
+- [ ] **TNDR-05**: Tender tools are plan-gated (scale tier only)
+
+### Growth Role: Content Creator
+
+- [ ] **CONT-01**: Content Creator tool group for social media post drafting via chat
+- [ ] **CONT-02**: User can request blog post drafts with SEO optimization and brand voice
+- [ ] **CONT-03**: User can request social media posts with platform-specific formatting (LinkedIn, Instagram, X)
+- [ ] **CONT-04**: Content tools are plan-gated (growth and scale tiers only)
+
+### Cost Controls
+
+- [ ] **COST-01**: Per-execution token budget cap prevents runaway growth role costs
+- [ ] **COST-02**: Per-role daily budget limit with alert when approaching threshold
+- [ ] **COST-03**: Circuit breaker halts role execution if daily budget exceeded
+
 ## Future Requirements
 
-### Billing & Trial (deferred from v1.2 scoping)
+### Builder Role (deferred from v1.4)
 
-- **BILL-01**: Stripe subscription lifecycle (create, upgrade, downgrade, cancel)
-- **BILL-02**: Usage metering per agent per org
-- **BILL-03**: Plan gating (feature access by subscription tier)
-- **BILL-04**: 30-day free trial with feature gating by tier
-- **BILL-05**: Trial conversion/expiry notifications
-- **BILL-06**: Pricing page connected to live Stripe checkout
+- **BUILD-01**: Builder Role for website/app construction via agentic coding
+- **BUILD-02**: Preview sandbox for generated code
+- **BUILD-03**: One-click deployment of generated sites
 
 ### Remaining Agents
 
 - **AGENT-01**: Proposal Generator -- auto-generate tiered proposals from briefs
-- **AGENT-02**: Ad Script Generator -- video/social ad scripts with hook variations
 - **AGENT-03**: Client Onboarding Agent -- auto-create Asana project, request credentials, book kick-off
 - **AGENT-04**: Voice Agent (Eleven Labs outbound) -- phone-based hands-free interaction
 
@@ -87,11 +150,14 @@ Requirements for battle-testing and sellability. Each maps to roadmap phases.
 
 | Feature | Reason |
 |---------|--------|
-| Tender Hunter validation (PT-6) | High-revenue but needs real tender data from Andy first -- deferred to v1.3 |
-| Model routing cost optimization (PT-8) | P2 priority -- cost efficiency, not launch blocker |
-| Demo video production (G7) | Requires stable deployment first -- produce after v1.2 ships |
-| CUA (computer-using agent) | Future phase -- browser/desktop automation layer |
-| Mobile app | Web-first, mobile later |
+| Builder Role | Highest risk, lowest validated demand -- defer to v1.5 per research |
+| Video file processing | Huge storage costs, slow processing, low ROI for agency use |
+| Real-time collaborative editing | Not a Google Docs competitor |
+| File versioning | Premature for launch -- store latest only |
+| Custom file type plugins | Over-engineering -- support standard formats |
+| CUA (computer-using agent) | Future -- browser/desktop automation layer |
+| Mobile app | Web-first |
+| Voice Agent (Eleven Labs) | Deferred -- needs validated demand |
 
 ## Traceability
 
@@ -136,12 +202,22 @@ Requirements for battle-testing and sellability. Each maps to roadmap phases.
 | OAUTH-08 | Phase 14 | Complete |
 
 **Coverage:**
-- v1.2 requirements: 37 total
-- Satisfied: 37
-- Pending: 0
-- Mapped to phases: 37
-- Unmapped: 0
+- v1.2 requirements: 37 satisfied
+- v1.4 requirements: 42 total, 0 satisfied
+- Mapped to phases: 0 (roadmap pending)
+
+### v1.4 (Pending)
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| MEDIA-01 through MEDIA-11 | TBD | Pending |
+| BILL-01 through BILL-10 | TBD | Pending |
+| ADS-01 through ADS-04 | TBD | Pending |
+| SEO-01 through SEO-05 | TBD | Pending |
+| TNDR-01 through TNDR-05 | TBD | Pending |
+| CONT-01 through CONT-04 | TBD | Pending |
+| COST-01 through COST-03 | TBD | Pending |
 
 ---
 *Requirements defined: 2026-03-01*
-*Last updated: 2026-03-12 — all 37 requirements satisfied (Phases 13-19 complete)*
+*v1.4 requirements added: 2026-03-18*
