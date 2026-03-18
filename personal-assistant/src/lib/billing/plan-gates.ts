@@ -185,18 +185,16 @@ export async function checkPlanGate(
 
       const limit = storageLimits[plan]
 
-      // Query current storage usage (simplified: count attachments)
-      const { data: files, error } = await client
-        .from('attachments')
-        .select('size:sum')
-        .eq('org_id', orgId)
+      // Query current storage usage via RPC (replaces broken .select('size:sum'))
+      const { data: totalBytes, error } = await client
+        .rpc('get_org_storage_bytes', { p_org_id: orgId })
 
       if (error) {
         logger.warn('[plan-gates] Failed to check storage:', error.message)
         return true // Allow on error
       }
 
-      const currentUsageMB = ((files?.[0]?.size as number) ?? 0) / (1024 * 1024)
+      const currentUsageMB = ((totalBytes as number) ?? 0) / (1024 * 1024)
       return currentUsageMB < limit
     }
 
