@@ -65,6 +65,7 @@ export const TABS: TabDef[] = [
   { id: 'settings-connections', label: 'Connections', path: '/dashboard/settings/connections' },
   { id: 'settings-automations', label: 'Automations', path: '/dashboard/settings/automations' },
   { id: 'settings-appearance', label: 'Appearance', path: '/dashboard/settings/appearance' },
+  { id: 'settings-billing', label: 'Billing', path: '/dashboard/settings/billing' },
 ];
 
 // ─── Pre-warm all tab imports immediately ───────────────────────────────────
@@ -97,6 +98,7 @@ const tabImports: Record<string, Promise<{ default: React.ComponentType }>> = {
   'settings-connections': import('./tabs/settings-tab').then(m => ({ default: m.SettingsConnectionsTab })),
   'settings-automations': import('./tabs/settings-tab').then(m => ({ default: m.SettingsAutomationsTab })),
   'settings-appearance': import('./tabs/settings-tab').then(m => ({ default: m.SettingsAppearanceTab })),
+  'settings-billing': import('./tabs/settings-tab').then(m => ({ default: m.SettingsBillingTab })),
 };
 
 // Lazy wrappers that resolve from the already-triggered promises
@@ -126,6 +128,7 @@ const TabComponents: Record<string, React.LazyExoticComponent<React.ComponentTyp
   'settings-connections': lazy(() => tabImports['settings-connections']),
   'settings-automations': lazy(() => tabImports['settings-automations']),
   'settings-appearance': lazy(() => tabImports['settings-appearance']),
+  'settings-billing': lazy(() => tabImports['settings-billing']),
 };
 
 // ─── Helpers ────────────────────────────────────────────────────────────────

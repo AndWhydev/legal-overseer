@@ -133,7 +133,7 @@ export async function convertTrial(
 
     // Update organisation
     await supabase
-      .from('organisations')
+      .from('organizations')
       .update({ plan: planId })
       .eq('id', orgId)
   } catch (err) {

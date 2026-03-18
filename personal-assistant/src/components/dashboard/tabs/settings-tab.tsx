@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Sun, Moon, Monitor, Loader2, Smartphone, Check, X } from 'lucide-react';
+import { BillingSettings } from '@/components/settings/billing-settings';
 import { QrAuthConnect } from '@/components/ui/qr-auth-connect';
 import { ConnectionsGrid } from '@/components/integrations/integration-grid';
 import { RagStatsWidget } from '@/components/dashboard/rag-stats-widget';
@@ -501,6 +502,14 @@ export function SettingsAppearanceTab() {
           })}
         </div>
       </div>
+    </div>
+  );
+}
+
+export function SettingsBillingTab() {
+  return (
+    <div style={sectionWrapper}>
+      <BillingSettings />
     </div>
   );
 }
