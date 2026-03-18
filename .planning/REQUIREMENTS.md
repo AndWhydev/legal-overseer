@@ -105,11 +105,11 @@ Requirements for Media, Billing & Growth Roles. Closes the media gap, adds billi
 
 ### Growth Role: SEO Monitor
 
-- [ ] **SEO-01**: SEO tools registered as agent tool group (wraps existing ai-search-optimizer.ts)
-- [ ] **SEO-02**: User can check keyword rankings via chat command
-- [ ] **SEO-03**: SEO monitor runs on scheduled tick to detect ranking changes
-- [ ] **SEO-04**: Ranking drops trigger alert with diagnosis and suggested fixes
-- [ ] **SEO-05**: SEO tools are plan-gated (growth and scale tiers only)
+- [x] **SEO-01**: SEO tools registered as agent tool group (wraps existing ai-search-optimizer.ts)
+- [x] **SEO-02**: User can check keyword rankings via chat command
+- [x] **SEO-03**: SEO monitor runs on scheduled tick to detect ranking changes
+- [x] **SEO-04**: Ranking drops trigger alert with diagnosis and suggested fixes
+- [x] **SEO-05**: SEO tools are plan-gated (growth and scale tiers only)
 
 ### Growth Role: Tender Hunter
 
@@ -228,11 +228,11 @@ Requirements for Media, Billing & Growth Roles. Closes the media gap, adds billi
 | ADS-02 | Phase 22 | Complete |
 | ADS-03 | Phase 22 | Complete |
 | ADS-04 | Phase 22 | Complete |
-| SEO-01 | Phase 23 | Pending |
-| SEO-02 | Phase 23 | Pending |
-| SEO-03 | Phase 23 | Pending |
-| SEO-04 | Phase 23 | Pending |
-| SEO-05 | Phase 23 | Pending |
+| SEO-01 | Phase 23 | Complete |
+| SEO-02 | Phase 23 | Complete |
+| SEO-03 | Phase 23 | Complete |
+| SEO-04 | Phase 23 | Complete |
+| SEO-05 | Phase 23 | Complete |
 | TNDR-01 | Phase 23 | Pending |
 | TNDR-02 | Phase 23 | Pending |
 | TNDR-03 | Phase 23 | Pending |
