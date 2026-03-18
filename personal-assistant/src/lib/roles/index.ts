@@ -86,3 +86,4 @@ export {
 // Domain Roles — auto-register on import
 import './finance/finance-role'
 import './comms/comms-role'
+import './sales/sales-role'
