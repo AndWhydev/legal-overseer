@@ -35,6 +35,39 @@ export async function trackUsage(
 }
 
 /**
+ * Get total token usage for a specific role today (UTC).
+ * Queries usage_events filtered by event_type='token_usage' and metadata.role.
+ * Never throws — returns 0 on error (consistent with trackUsage pattern).
+ */
+export async function getRoleUsageToday(
+  supabase: SupabaseClient,
+  orgId: string,
+  role: string,
+): Promise<number> {
+  try {
+    const todayStart = new Date()
+    todayStart.setUTCHours(0, 0, 0, 0)
+
+    const { data: events, error } = await supabase
+      .from('usage_events')
+      .select('metadata')
+      .eq('org_id', orgId)
+      .eq('event_type', 'token_usage')
+      .eq('metadata->>role', role)
+      .gte('created_at', todayStart.toISOString())
+
+    if (error || !events) return 0
+
+    return events.reduce((sum: number, event: { metadata: Record<string, unknown> | null }) => {
+      const amount = (event.metadata?.amount as number) ?? 0
+      return sum + amount
+    }, 0)
+  } catch {
+    return 0
+  }
+}
+
+/**
  * Get usage metrics for an organization in a billing period.
  * Returns zero metrics on error.
  */
