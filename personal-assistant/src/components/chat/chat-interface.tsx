@@ -810,6 +810,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
                 // Capture invoice artifacts for inline rendering
                 if (event.data.name === 'generate_invoice' && event.data.success && event.data.result) {
                   const r = event.data.result as Record<string, unknown>
+                  console.log('[chat] generate_invoice result keys:', Object.keys(r), 'has html:', !!r.html, 'has invoice_number:', !!r.invoice_number)
                   if (r.html && r.invoice_number) {
                     setInvoiceArtifacts(prev => [...prev, {
                       invoiceNumber: r.invoice_number as string,
