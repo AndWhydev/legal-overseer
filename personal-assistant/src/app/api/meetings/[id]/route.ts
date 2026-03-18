@@ -15,11 +15,16 @@ export async function GET(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+  const orgId = (user.user_metadata?.org_id as string) ?? user.id
   const { id } = await params
   const meeting = await getMeetingWithDetails(supabase, id)
 
   if (!meeting) {
     return NextResponse.json({ error: 'Meeting not found' }, { status: 404 })
+  }
+
+  if (meeting.org_id !== orgId) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
   return NextResponse.json({ meeting })
@@ -37,7 +42,24 @@ export async function PATCH(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+  const orgId = (user.user_metadata?.org_id as string) ?? user.id
   const { id } = await params
+
+  // Verify meeting belongs to user's org
+  const { data: existing } = await supabase
+    .from('meetings')
+    .select('org_id')
+    .eq('id', id)
+    .single()
+
+  if (!existing) {
+    return NextResponse.json({ error: 'Meeting not found' }, { status: 404 })
+  }
+
+  if (existing.org_id !== orgId) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
+
   let body: Record<string, unknown>
   try {
     body = await request.json()
@@ -84,14 +106,23 @@ export async function DELETE(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+  const orgId = (user.user_metadata?.org_id as string) ?? user.id
   const { id } = await params
 
-  // Get recording path for cleanup
+  // Get recording path for cleanup + verify org ownership
   const { data: meeting } = await supabase
     .from('meetings')
-    .select('recording_path')
+    .select('recording_path, org_id')
     .eq('id', id)
     .single()
+
+  if (!meeting) {
+    return NextResponse.json({ error: 'Meeting not found' }, { status: 404 })
+  }
+
+  if (meeting.org_id !== orgId) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
 
   // Delete meeting (cascades to participants, segments, action items, follow-ups)
   const { error } = await supabase
