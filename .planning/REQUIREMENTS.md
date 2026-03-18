@@ -71,15 +71,15 @@ Requirements for Media, Billing & Growth Roles. Closes the media gap, adds billi
 
 ### File Attachments & Multimedia
 
-- [ ] **MEDIA-01**: User can upload files via Paperclip button in chat composer (images, PDFs, DOCX, CSV, TXT)
-- [ ] **MEDIA-02**: User can drag-and-drop files onto the chat area to upload
+- [x] **MEDIA-01**: User can upload files via Paperclip button in chat composer (images, PDFs, DOCX, CSV, TXT)
+- [x] **MEDIA-02**: User can drag-and-drop files onto the chat area to upload
 - [x] **MEDIA-03**: Upload uses Supabase Storage signed URLs (bypasses Vercel 4.5MB body limit)
-- [ ] **MEDIA-04**: Upload progress indicator shown during file transfer
+- [x] **MEDIA-04**: Upload progress indicator shown during file transfer
 - [ ] **MEDIA-05**: Uploaded images render inline in chat messages as previews
 - [ ] **MEDIA-06**: Uploaded PDFs render with file icon, filename, size, and download link
 - [x] **MEDIA-07**: File size limit enforced (10MB per file) with clear error message
 - [x] **MEDIA-08**: Accepted file types filtered (block executables, allow business formats)
-- [ ] **MEDIA-09**: BitBit can read and analyse uploaded files (images via Claude Vision, documents via text extraction)
+- [x] **MEDIA-09**: BitBit can read and analyse uploaded files (images via Claude Vision, documents via text extraction)
 - [x] **MEDIA-10**: Attachments table created with org-scoped storage paths and RLS policies
 - [x] **MEDIA-11**: Storage paths scoped to org/thread for multi-tenant isolation ({org_id}/{thread_id}/{filename})
 
@@ -200,15 +200,15 @@ Requirements for Media, Billing & Growth Roles. Closes the media gap, adds billi
 | OAUTH-06 | Phase 14 | Complete |
 | OAUTH-07 | Phase 14 | Complete |
 | OAUTH-08 | Phase 14 | Complete |
-| MEDIA-01 | Phase 20 | Pending |
-| MEDIA-02 | Phase 20 | Pending |
+| MEDIA-01 | Phase 20 | Complete |
+| MEDIA-02 | Phase 20 | Complete |
 | MEDIA-03 | Phase 20 | Complete |
-| MEDIA-04 | Phase 20 | Pending |
+| MEDIA-04 | Phase 20 | Complete |
 | MEDIA-05 | Phase 20 | Pending |
 | MEDIA-06 | Phase 20 | Pending |
 | MEDIA-07 | Phase 20 | Complete |
 | MEDIA-08 | Phase 20 | Complete |
-| MEDIA-09 | Phase 20 | Pending |
+| MEDIA-09 | Phase 20 | Complete |
 | MEDIA-10 | Phase 20 | Complete |
 | MEDIA-11 | Phase 20 | Complete |
 | BILL-01 | Phase 21 | Pending |
