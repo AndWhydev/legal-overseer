@@ -150,7 +150,11 @@ export class SwarmCoordinator {
     ]
 
     // Use Haiku to classify
-    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+    const apiKey = process.env.ANTHROPIC_API_KEY
+    if (!apiKey) {
+      throw new Error('ANTHROPIC_API_KEY environment variable is not set')
+    }
+    const client = new Anthropic({ apiKey })
 
     const systemPrompt = `You are a swarm template classifier for BitBit, an AI operations platform for agencies.
 Given a user request, determine which swarm template (if any) should be triggered, and extract the parameters.
@@ -218,7 +222,11 @@ Return ONLY JSON, no markdown fences.`
     input: string,
     template: BuiltinTemplate,
   ): Promise<Record<string, unknown>> {
-    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+    const apiKey = process.env.ANTHROPIC_API_KEY
+    if (!apiKey) {
+      throw new Error('ANTHROPIC_API_KEY environment variable is not set')
+    }
+    const client = new Anthropic({ apiKey })
 
     const paramSchema = template.definition.inputSchema
     const paramList = Object.entries(paramSchema)

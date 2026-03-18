@@ -91,7 +91,7 @@ export class SwarmAgent implements SwarmParticipant {
         switch (event.type) {
           case 'message':
           case 'content_delta':
-            message += event.data
+            message += typeof event.data === 'string' ? event.data : String(event.data)
             break
           case 'tool_result': {
             const data = event.data as { name: string; success: boolean; result?: unknown }
@@ -245,8 +245,8 @@ End your response with a JSON block containing your structured findings:
       }
     }
 
-    // Try bare JSON object
-    const bareJson = message.match(/\{[\s\S]*\}/)
+    // Try bare JSON object (non-greedy match)
+    const bareJson = message.match(/\{[\s\S]*?\}/)
     if (bareJson) {
       try {
         const parsed = JSON.parse(bareJson[0])
@@ -254,7 +254,23 @@ End your response with a JSON block containing your structured findings:
           return parsed
         }
       } catch {
-        // Fall through
+        // Fall through to longest valid JSON parse attempt
+        // Try matching longest valid JSON from first brace
+        const firstBrace = message.indexOf('{')
+        if (firstBrace !== -1) {
+          for (let i = message.length - 1; i > firstBrace; i--) {
+            if (message[i] === '}') {
+              try {
+                const parsed = JSON.parse(message.substring(firstBrace, i + 1))
+                if (typeof parsed === 'object' && parsed !== null) {
+                  return parsed
+                }
+              } catch {
+                // Continue trying
+              }
+            }
+          }
+        }
       }
     }
 

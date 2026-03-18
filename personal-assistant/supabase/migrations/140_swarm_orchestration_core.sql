@@ -109,9 +109,9 @@ CREATE TABLE IF NOT EXISTS swarm_runs (
   rollback_log    jsonb,                          -- ordered list of reversible actions
   rolled_back_at  timestamptz,
 
-  -- Advisory lock key for preventing duplicate execution
+  -- Advisory lock key for preventing duplicate execution (proper 64-bit hash)
   lock_key        bigint GENERATED ALWAYS AS (
-    ('x' || left(replace(id::text, '-', ''), 15))::bit(60)::bigint
+    hashtext(id::text)::bigint
   ) STORED,
 
   created_at      timestamptz NOT NULL DEFAULT now(),

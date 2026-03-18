@@ -48,6 +48,7 @@ export class SwarmExecutor {
   private totalTokensIn = 0
   private totalTokensOut = 0
   private aborted = false
+  private startTime = 0
 
   constructor(config: ExecutorConfig) {
     this.config = config
@@ -59,6 +60,8 @@ export class SwarmExecutor {
    */
   async execute(): Promise<{ status: SwarmRunStatus; summary: string | null }> {
     const { supabase, runId, definition, orgId, params } = this.config
+    this.startTime = Date.now()
+    const startedAt = new Date().toISOString()
 
     // Acquire advisory lock to prevent duplicate execution
     const lockAcquired = await this.acquireLock()
@@ -70,7 +73,7 @@ export class SwarmExecutor {
 
     try {
       // Update run status to executing
-      await this.updateRunStatus('executing')
+      await this.updateRunStatus('executing', undefined, startedAt)
       this.emit({ type: 'swarm_started', data: { runId, templateSlug: '', params } })
 
       // Create step rows in DB
@@ -123,12 +126,13 @@ export class SwarmExecutor {
       }
 
       // Update run with results
+      const durationMs = Date.now() - this.startTime
       await supabase
         .from('swarm_runs')
         .update({
           status: finalStatus,
           completed_at: new Date().toISOString(),
-          duration_ms: Date.now() - Date.parse((await supabase.from('swarm_runs').select('started_at').eq('id', runId).single()).data?.started_at || new Date().toISOString()),
+          duration_ms: durationMs,
           total_cost: this.totalCost,
           total_tokens_in: this.totalTokensIn,
           total_tokens_out: this.totalTokensOut,
@@ -549,9 +553,9 @@ export class SwarmExecutor {
       .eq('step_key', stepKey)
   }
 
-  private async updateRunStatus(status: SwarmRunStatus, errorMessage?: string): Promise<void> {
+  private async updateRunStatus(status: SwarmRunStatus, errorMessage?: string, startedAt?: string): Promise<void> {
     const update: Record<string, unknown> = { status }
-    if (status === 'executing') update.started_at = new Date().toISOString()
+    if (status === 'executing') update.started_at = startedAt || new Date().toISOString()
     if (errorMessage) update.error_message = errorMessage
 
     await this.config.supabase
@@ -577,7 +581,7 @@ export class SwarmExecutor {
       // Running average for duration and cost
       const prevAvgDuration = template.avg_duration_ms || 0
       const prevAvgCost = template.avg_cost || 0
-      const runDuration = Date.now() // approximate
+      const runDuration = Date.now() - this.startTime
       const newAvgDuration = prevAvgDuration === 0
         ? runDuration
         : Math.round((prevAvgDuration * (newTotalRuns - 1) + runDuration) / newTotalRuns)
@@ -679,40 +683,71 @@ export async function rollbackSwarm(
     return { success: true, rolledBack: 0, errors: ['No reversible actions to roll back'] }
   }
 
+  // Whitelist of allowed tables for rollback operations
+  const ALLOWED_TABLES = new Set(['tasks', 'invoices', 'swarm_runs', 'swarm_steps'])
+
   // Execute rollbacks in reverse order
   for (let i = actions.length - 1; i >= 0; i--) {
     const action = actions[i]
     try {
       switch (action.undoStrategy) {
-        case 'delete':
-          if (action.undoPayload?.table && action.undoPayload?.id) {
-            await supabase
-              .from(action.undoPayload.table as string)
-              .delete()
-              .eq('id', action.undoPayload.id as string)
-              .eq('org_id', orgId)
+        case 'delete': {
+          const table = action.undoPayload?.table
+          const id = action.undoPayload?.id
+          if (!table || !id || typeof table !== 'string' || typeof id !== 'string') {
+            errors.push(`Invalid undo payload for delete action: ${action.actionType}`)
+            break
           }
+          if (!ALLOWED_TABLES.has(table)) {
+            errors.push(`Unauthorized table for rollback: ${table}`)
+            break
+          }
+          await supabase
+            .from(table)
+            .delete()
+            .eq('id', id)
+            .eq('org_id', orgId)
           break
+        }
 
-        case 'update':
-          if (action.undoPayload?.table && action.undoPayload?.id && action.undoPayload?.data) {
-            await supabase
-              .from(action.undoPayload.table as string)
-              .update(action.undoPayload.data as Record<string, unknown>)
-              .eq('id', action.undoPayload.id as string)
-              .eq('org_id', orgId)
+        case 'update': {
+          const table = action.undoPayload?.table
+          const id = action.undoPayload?.id
+          const data = action.undoPayload?.data
+          if (!table || !id || !data || typeof table !== 'string' || typeof id !== 'string') {
+            errors.push(`Invalid undo payload for update action: ${action.actionType}`)
+            break
           }
+          if (!ALLOWED_TABLES.has(table)) {
+            errors.push(`Unauthorized table for rollback: ${table}`)
+            break
+          }
+          await supabase
+            .from(table)
+            .update(data as Record<string, unknown>)
+            .eq('id', id)
+            .eq('org_id', orgId)
           break
+        }
 
-        case 'archive':
-          if (action.undoPayload?.table && action.undoPayload?.id) {
-            await supabase
-              .from(action.undoPayload.table as string)
-              .update({ status: 'archived' })
-              .eq('id', action.undoPayload.id as string)
-              .eq('org_id', orgId)
+        case 'archive': {
+          const table = action.undoPayload?.table
+          const id = action.undoPayload?.id
+          if (!table || !id || typeof table !== 'string' || typeof id !== 'string') {
+            errors.push(`Invalid undo payload for archive action: ${action.actionType}`)
+            break
           }
+          if (!ALLOWED_TABLES.has(table)) {
+            errors.push(`Unauthorized table for rollback: ${table}`)
+            break
+          }
+          await supabase
+            .from(table)
+            .update({ status: 'archived' })
+            .eq('id', id)
+            .eq('org_id', orgId)
           break
+        }
 
         case 'manual':
           errors.push(`Manual rollback required for: ${action.actionType} in step ${action.stepKey}`)
