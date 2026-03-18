@@ -85,9 +85,9 @@ Requirements for Media, Billing & Growth Roles. Closes the media gap, adds billi
 
 ### Stripe Billing & Trial
 
-- [ ] **BILL-01**: Stripe webhook routes consolidated into single handler with event routing and idempotency
-- [ ] **BILL-02**: Stripe Products and Prices pre-created (replace ad-hoc price creation per checkout)
-- [ ] **BILL-03**: Subscription lifecycle works end-to-end (create, upgrade, downgrade, cancel)
+- [x] **BILL-01**: Stripe webhook routes consolidated into single handler with event routing and idempotency
+- [x] **BILL-02**: Stripe Products and Prices pre-created (replace ad-hoc price creation per checkout)
+- [x] **BILL-03**: Subscription lifecycle works end-to-end (create, upgrade, downgrade, cancel)
 - [x] **BILL-04**: Plan gating enforced at tool execution layer (growth tools gated to growth/scale plans)
 - [x] **BILL-05**: Usage metering wired into agent run logger (tokens, agent runs, storage tracked per org)
 - [x] **BILL-06**: 30-day free trial with feature access matching growth plan (fix 14-day mismatch)
@@ -211,9 +211,9 @@ Requirements for Media, Billing & Growth Roles. Closes the media gap, adds billi
 | MEDIA-09 | Phase 20 | Complete |
 | MEDIA-10 | Phase 20 | Complete |
 | MEDIA-11 | Phase 20 | Complete |
-| BILL-01 | Phase 21 | Pending |
-| BILL-02 | Phase 21 | Pending |
-| BILL-03 | Phase 21 | Pending |
+| BILL-01 | Phase 21 | Complete |
+| BILL-02 | Phase 21 | Complete |
+| BILL-03 | Phase 21 | Complete |
 | BILL-04 | Phase 21 | Complete |
 | BILL-05 | Phase 21 | Complete |
 | BILL-06 | Phase 21 | Complete |

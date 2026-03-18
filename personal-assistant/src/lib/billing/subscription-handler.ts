@@ -161,7 +161,7 @@ export async function handleSubscriptionLifecycle(
   supabase: SupabaseClient,
   event: Stripe.Event,
 ): Promise<void> {
-  const sub = event.data.object as Record<string, unknown>
+  const sub = event.data.object as unknown as Record<string, unknown>
   const subscriptionId = sub.id as string
   const customerId = sub.customer as string
   const status = sub.status as string
@@ -254,7 +254,7 @@ export async function handleCheckoutComplete(
   supabase: SupabaseClient,
   event: Stripe.Event,
 ): Promise<void> {
-  const session = event.data.object as Record<string, unknown>
+  const session = event.data.object as unknown as Record<string, unknown>
   const subscriptionId = session.subscription as string
   const customerId = session.customer as string
   const metadata = (session.metadata ?? {}) as Record<string, string>
@@ -299,7 +299,7 @@ export async function handleTrialEnding(
   _supabase: SupabaseClient,
   event: Stripe.Event,
 ): Promise<void> {
-  const sub = event.data.object as Record<string, unknown>
+  const sub = event.data.object as unknown as Record<string, unknown>
   logger.info(
     `[subscription-handler] trial_will_end: ${sub.id} (placeholder -- see BILL-07 / plan 21-03)`,
   )
@@ -317,7 +317,7 @@ export async function handleInvoicePaid(
   supabase: SupabaseClient,
   event: Stripe.Event,
 ): Promise<void> {
-  const invoice = event.data.object as Record<string, unknown>
+  const invoice = event.data.object as unknown as Record<string, unknown>
   const metadata = (invoice.metadata ?? {}) as Record<string, string>
   const orgId = metadata.org_id
   const invoiceId = invoice.id as string
@@ -342,7 +342,7 @@ export async function handlePaymentFailed(
   supabase: SupabaseClient,
   event: Stripe.Event,
 ): Promise<void> {
-  const invoice = event.data.object as Record<string, unknown>
+  const invoice = event.data.object as unknown as Record<string, unknown>
   const metadata = (invoice.metadata ?? {}) as Record<string, string>
   const orgId = metadata.org_id
   const invoiceId = invoice.id as string

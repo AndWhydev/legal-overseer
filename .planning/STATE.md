@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Media, Billing & Growth Roles
 status: in_progress
-stopped_at: Completed 21-02-PLAN.md (Plan Gating & Metering)
-last_updated: "2026-03-18T18:06:42Z"
-last_activity: 2026-03-18 -- Completed 21-02 (Plan Gating & Metering)
+stopped_at: Completed 21-01-PLAN.md (Billing Infrastructure Hardening) -- 2/3 phase plans done, ready for 21-03
+last_updated: "2026-03-18T18:08:37Z"
+last_activity: 2026-03-18 -- Completed 21-01 (Billing Infrastructure Hardening)
 progress:
   total_phases: 18
   completed_phases: 8
@@ -26,9 +26,9 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 ## Current Position
 
 Phase: 21 of 24 (Billing Infrastructure)
-Plan: 2 of 3 in current phase
+Plan: 2 of 3 in current phase (21-01 and 21-02 done, 21-03 remaining)
 Status: In Progress
-Last activity: 2026-03-18 -- Completed 21-02 (Plan Gating & Metering)
+Last activity: 2026-03-18 -- Completed 21-01 (Billing Infrastructure Hardening)
 
 Progress: v1.0 ======== | v1.1 ======== | v1.2 ======== | v1.4 [====_______] 36%
 
@@ -69,6 +69,11 @@ See PROJECT.md Key Decisions table.
 - [20-03] On-demand signed URL fetch: thumbnails load via signed URL on mount, downloads fetch fresh URLs on click (no caching)
 - [20-03] CHAT_ATTACHMENTS_EVENT extended to carry metadata { ids, items } for immediate preview rendering
 - [20-03] PDF thumbnails deferred: static FileText icon with download link per research recommendation
+- [21-01] Lazy Stripe singleton via Proxy: avoids build/test failures when STRIPE_SECRET_KEY absent
+- [21-01] Consolidated webhook uses service-role Supabase client (no user auth context)
+- [21-01] Legacy /api/webhooks/stripe re-exports consolidated route for backwards compatibility
+- [21-01] All subscription upserts write to `plan` column (not `tier`) matching getOrgPlan() reader
+- [21-01] Trial period changed from 14 to 30 days (TRIAL_PERIOD_DAYS constant)
 - [21-02] Server-side plan gate in executeAgentTool: gate check before autonomy routing and handler call
 - [21-02] PLAN_ORDER array for tier comparison instead of numeric values
 - [21-02] TRIAL_PERIOD_DAYS constant (30) replacing hardcoded 14
@@ -82,11 +87,11 @@ See PROJECT.md Key Decisions table.
 
 - WhatsApp production setup requires Andy's Meta Business access (affects Phase 15, not v1.4)
 - Local Docker unavailable for supabase lint
-- Fragmented Stripe webhook handling (two routes) must be consolidated in Phase 21 before growth roles ship
+- ~~Fragmented Stripe webhook handling~~ RESOLVED in 21-01: consolidated into single /api/billing/webhook endpoint
 - Growth role token costs can spiral 10-50x vs classification tasks -- Phase 22 cost controls are critical path
 
 ## Session Continuity
 
 Last session: 2026-03-18
-Stopped at: Completed 21-02-PLAN.md (Plan Gating & Metering) -- ready for 21-03
+Stopped at: Completed 21-01-PLAN.md (Billing Infrastructure Hardening) -- 21-01 and 21-02 done, ready for 21-03
 Resume file: None
