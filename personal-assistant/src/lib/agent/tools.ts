@@ -4,6 +4,7 @@ import { channelToolDefinitions, channelToolHandlers } from './tools/channel-too
 import { superpowerToolDefinitions, superpowerToolHandlers } from './tools/superpower-tools'
 import { codeExecutionToolDefinitions, codeExecutionToolHandlers } from './tools/code-execution'
 import { invoiceToolDefinition, handleGenerateInvoice } from './tools/invoice-tool'
+import { meetingToolDefinitions, meetingToolHandlers } from './tools/meeting-tools'
 import { composeCreatorStudioDeck } from '@/lib/creator-studio'
 import { routeAgentAction } from './confidence-router'
 import { queueAgentAction, getPendingApprovals, resolveApproval } from './approval-queue'
@@ -26,7 +27,7 @@ import { logger } from '@/lib/core/logger'
 // Tool Group metadata (for future Tool RAG via pgvector)
 // ---------------------------------------------------------------------------
 
-export type ToolGroup = 'core' | 'memory' | 'channel' | 'web' | 'comms' | 'agentic'
+export type ToolGroup = 'core' | 'memory' | 'channel' | 'web' | 'comms' | 'agentic' | 'meetings'
 
 export interface ToolGroupMeta {
   id: ToolGroup
@@ -71,6 +72,12 @@ export const TOOL_GROUPS: Record<ToolGroup, ToolGroupMeta> = {
     label: 'Agentic Execution',
     description: 'Run code against the BitBit SDK to solve complex problems, query data flexibly, and compose multi-step operations',
     tools: ['execute_code'],
+  },
+  meetings: {
+    id: 'meetings',
+    label: 'Meeting Intelligence',
+    description: 'Search meeting transcripts, list meetings, and get meeting details including action items and summaries',
+    tools: ['search_meetings', 'list_meetings', 'get_meeting_details'],
   },
 }
 
@@ -136,6 +143,11 @@ export const JIT_INSTRUCTIONS: Record<string, string> = {
 
   // Agentic execution
   execute_code: 'Code execution complete. Use the output and result to continue the conversation. If there was an error, fix the code and try again. Do not show raw code to the user — summarize what you found or did. Reference specific data points from the result.',
+
+  // Meetings
+  search_meetings: 'Present transcript search results with meeting title, speaker, and relevant quote. Highlight the most relevant matches. Offer to show full meeting details if the user wants more context.',
+  list_meetings: 'Show the meeting list with title, type, date, and status. Highlight completed meetings with summaries available.',
+  get_meeting_details: 'Present the meeting summary, key decisions, and action items. Do not dump the entire transcript — summarize the key points. Mention pending action items and follow-ups that need attention.',
 }
 
 /** Get JIT instruction for a tool, if one exists. */
@@ -761,13 +773,14 @@ const allHandlers: Record<string, AgentToolHandler> = {
   ...channelToolHandlers,
   ...superpowerToolHandlers,
   ...codeExecutionToolHandlers,
+  ...meetingToolHandlers,
   async generate_invoice(input, orgId, supabase) {
     return handleGenerateInvoice(input as Parameters<typeof handleGenerateInvoice>[0], orgId, supabase)
   },
 }
 
 export function getAgentTools(groups?: ToolGroup[]): Anthropic.Tool[] {
-  const allTools = [...toolDefinitions, ...channelToolDefinitions, ...superpowerToolDefinitions, ...codeExecutionToolDefinitions, invoiceToolDefinition]
+  const allTools = [...toolDefinitions, ...channelToolDefinitions, ...superpowerToolDefinitions, ...codeExecutionToolDefinitions, invoiceToolDefinition, ...meetingToolDefinitions]
   if (!groups || groups.length === 0) return allTools
 
   const selectedGroups = new Set<ToolGroup>(['core', ...groups])
