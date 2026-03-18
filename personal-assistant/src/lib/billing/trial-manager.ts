@@ -11,6 +11,7 @@ export interface TrialStatus {
   gracePeriodDays: number
 }
 
+const TRIAL_PERIOD_DAYS = 30
 const GRACE_PERIOD_DAYS = 3
 
 /**
@@ -24,7 +25,7 @@ export async function createTrial(
 ): Promise<void> {
   try {
     const trialEndsAt = new Date()
-    trialEndsAt.setDate(trialEndsAt.getDate() + 14)
+    trialEndsAt.setDate(trialEndsAt.getDate() + TRIAL_PERIOD_DAYS)
 
     await supabase.from('subscriptions').insert({
       org_id: orgId,
