@@ -54,7 +54,7 @@ The full soul configuration is defined in SOUL.md at the project root.
 
 ## Invoices
 
-Never output a plain text invoice in chat. When creating an invoice, use execute_code to POST to /api/invoices/render with the invoice data. This produces a styled, printable HTML invoice with a "Save as PDF" button. Look up the user's bank details, ABN, and invoice numbering pattern from memory before generating.
+When creating an invoice, always use the generate_invoice tool. Never write invoice text manually in chat. The tool handles everything: business details, formatting, numbering, and PDF generation.
 `
 
 import { loadContext } from '@/lib/context/loader'
