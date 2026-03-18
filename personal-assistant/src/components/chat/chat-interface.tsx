@@ -19,6 +19,7 @@ import {
 } from '@/components/ai-elements/chain-of-thought'
 import { Checkpoint, CheckpointIcon } from '@/components/ai-elements/checkpoint'
 import { InvoiceArtifact } from './invoice-artifact'
+import { ChatAttachmentList } from './chat-attachment'
 import { CHAT_ATTACHMENTS_EVENT } from '@/components/dashboard/voice-pill'
 import { useFileUpload } from '@/hooks/use-file-upload'
 
@@ -52,12 +53,20 @@ interface CheckpointMarker {
   afterMessageId: string
 }
 
+interface MessageAttachment {
+  type: string       // MIME type
+  name: string       // filename
+  url: string        // storage_path
+  attachmentId?: string
+}
+
 interface Message {
   id: string
   role: 'user' | 'assistant'
   content: string
   toolCalls?: ToolCall[]
   citations?: Citation[]
+  attachments?: MessageAttachment[]
   timestamp: Date
 }
 
@@ -531,8 +540,9 @@ export function ChatInterface({ userName }: { userName?: string }) {
   const prevReasoningActiveRef = useRef(false)
   const autoOpenedRef = useRef(false)
 
-  // Attachment state: IDs dispatched from VoicePill via custom event
+  // Attachment state: IDs and metadata dispatched from VoicePill via custom event
   const pendingAttachmentIdsRef = useRef<string[]>([])
+  const pendingAttachmentItemsRef = useRef<MessageAttachment[]>([])
   // Drag-and-drop state
   const [isDragOver, setIsDragOver] = useState(false)
   const dragCounterRef = useRef(0)
@@ -622,10 +632,29 @@ export function ChatInterface({ userName }: { userName?: string }) {
     const trimmed = text.trim()
     if (!trimmed || isLoading) return
 
+    // Capture and consume pending attachment IDs and metadata BEFORE creating
+    // the user message so we can include them for inline preview rendering.
+    const attachmentIds = [
+      ...pendingAttachmentIdsRef.current,
+      ...dragUpload.readyAttachmentIds,
+    ]
+    const msgAttachments: MessageAttachment[] = [
+      ...pendingAttachmentItemsRef.current,
+      ...dragUpload.uploads
+        .filter(u => u.status === 'ready')
+        .map(u => ({ attachmentId: u.id, type: u.mimeType, name: u.filename, url: '' })),
+    ]
+    pendingAttachmentIdsRef.current = []
+    pendingAttachmentItemsRef.current = []
+    if (dragUpload.readyAttachmentIds.length > 0) {
+      dragUpload.clearUploads()
+    }
+
     const userMsg: Message = {
       id: `msg-${Date.now()}`,
       role: 'user',
       content: trimmed,
+      attachments: msgAttachments.length > 0 ? msgAttachments : undefined,
       timestamp: new Date(),
     }
 
@@ -674,17 +703,6 @@ export function ChatInterface({ userName }: { userName?: string }) {
     abortRef.current?.abort()
     const controller = new AbortController()
     abortRef.current = controller
-
-    // Capture and consume any pending attachment IDs (set by CHAT_ATTACHMENTS_EVENT
-    // or drag-and-drop upload). Also include drag-drop ready IDs if any.
-    const attachmentIds = [
-      ...pendingAttachmentIdsRef.current,
-      ...dragUpload.readyAttachmentIds,
-    ]
-    pendingAttachmentIdsRef.current = []
-    if (dragUpload.readyAttachmentIds.length > 0) {
-      dragUpload.clearUploads()
-    }
 
     try {
       const res = await fetch('/api/agent/chat', {
@@ -1032,12 +1050,13 @@ export function ChatInterface({ userName }: { userName?: string }) {
     }
   }, [isLoading, threadId, smoothStream, smartScroll])
 
-  // Listen for attachment IDs dispatched from VoicePill before text submit
+  // Listen for attachment metadata dispatched from VoicePill before text submit
   useEffect(() => {
     const attachHandler = (e: Event) => {
-      const ids = (e as CustomEvent<string[]>).detail
-      if (ids && ids.length > 0) {
-        pendingAttachmentIdsRef.current = ids
+      const detail = (e as CustomEvent<{ ids: string[]; items: MessageAttachment[] }>).detail
+      if (detail?.ids && detail.ids.length > 0) {
+        pendingAttachmentIdsRef.current = detail.ids
+        pendingAttachmentItemsRef.current = detail.items ?? []
       }
     }
     window.addEventListener(CHAT_ATTACHMENTS_EVENT, attachHandler)
@@ -1537,6 +1556,14 @@ export function ChatInterface({ userName }: { userName?: string }) {
                             })}
                           </ChainOfThoughtContent>
                         </ChainOfThought>
+                      </div>
+                    )}
+                    {/* Inline attachment previews — rendered above message text */}
+                    {msg.attachments && msg.attachments.length > 0 && (
+                      <div className={msg.role === 'user' ? 'bb-chat__msg bb-chat__msg--user' : 'bb-chat__msg bb-chat__msg--assistant'}>
+                        <div style={{ maxWidth: 480 }}>
+                          <ChatAttachmentList attachments={msg.attachments} />
+                        </div>
                       </div>
                     )}
                     <MessageBubble

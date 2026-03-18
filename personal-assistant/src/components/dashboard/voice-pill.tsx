@@ -166,12 +166,21 @@ export function VoicePill({
     if (!q && fileUpload.readyAttachmentIds.length === 0) return;
     if (fileUpload.isUploading) return; // Don't send while uploads in progress
 
-    // Dispatch attachment IDs via custom event before the text submit.
+    // Dispatch attachment metadata via custom event before the text submit.
     // The chat-interface listens for this event and includes the IDs in the request.
     if (fileUpload.readyAttachmentIds.length > 0) {
+      const readyUploads = fileUpload.uploads.filter(u => u.status === 'ready')
       window.dispatchEvent(
         new CustomEvent(CHAT_ATTACHMENTS_EVENT, {
-          detail: fileUpload.readyAttachmentIds,
+          detail: {
+            ids: fileUpload.readyAttachmentIds,
+            items: readyUploads.map(u => ({
+              attachmentId: u.id,
+              type: u.mimeType,
+              name: u.filename,
+              url: '',
+            })),
+          },
         })
       );
     }
