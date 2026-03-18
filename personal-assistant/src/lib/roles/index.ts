@@ -39,3 +39,20 @@ export {
   type InitializeRoleResult,
   type DisableRoleResult,
 } from './role-init'
+
+// Autonomy Gate
+export {
+  routeThroughAutonomyGate,
+  type GateDecision,
+  type GateResult,
+} from './autonomy-gate'
+
+// Action Dispatcher
+export {
+  dispatchRoleAction,
+  dispatchRoleActions,
+  type DispatchResult,
+} from './action-dispatcher'
+
+// Output Formatter
+export { formatActivityForAutonomy } from './output-formatter'

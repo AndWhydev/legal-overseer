@@ -48,6 +48,8 @@ export interface CreateApprovalParams {
   routing_decision: ApprovalRoutingDecision
   priority?: ApprovalPriority
   context_snapshot?: Record<string, unknown>
+  role_config_id?: string       // Link to role that generated this approval
+  autonomy_mode?: string        // Which autonomy level generated this ('observer' | 'copilot' | 'autopilot')
 }
 
 export interface QueueAgentActionParams {
@@ -85,9 +87,7 @@ export async function createApproval(
   const priority = params.priority ?? 'normal'
   const digestEligible = priority === 'low'
 
-  const { data, error } = await supabase
-    .from('approval_queue')
-    .insert({
+  const insertRow: Record<string, unknown> = {
       org_id: params.org_id,
       agent_config_id: params.agent_config_id,
       agent_run_id: params.agent_run_id ?? null,
@@ -99,7 +99,19 @@ export async function createApproval(
       priority,
       digest_eligible: digestEligible,
       context_snapshot: params.context_snapshot ?? {},
-    })
+    }
+
+  // Add role-engine fields when present (columns added in 093 migration)
+  if (params.role_config_id) {
+    insertRow.role_config_id = params.role_config_id
+  }
+  if (params.autonomy_mode) {
+    insertRow.autonomy_mode = params.autonomy_mode
+  }
+
+  const { data, error } = await supabase
+    .from('approval_queue')
+    .insert(insertRow)
     .select('*, agent_configs(name)')
     .single<ApprovalRecord>()
 

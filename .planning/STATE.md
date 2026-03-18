@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 ## Current Position
 
 Phase: 20 of 25 (Role Engine Foundation)
-Plan: 1 of 4 (executing)
+Plan: 2 of 4 (executing)
 Status: Phase 20 in progress
-Last activity: 2026-03-18 — 20-01 Role Schema & Type System complete
+Last activity: 2026-03-18 — 20-02 Role Runtime complete
 
-Progress: v1.0 ✓ | v1.1 ✓ | v1.2 ✓ | v1.3 Phase 20 [#...] 1/4
+Progress: v1.0 ✓ | v1.1 ✓ | v1.2 ✓ | v1.3 Phase 20 [##..] 2/4
 
 ## Performance Metrics
 
@@ -164,6 +164,10 @@ See PROJECT.md Key Decisions table.
 - [20-01] ON DELETE CASCADE on all role engine org_id FKs for clean org teardown
 - [20-01] Updated_at triggers on mutable role engine tables (configs, states, workflows)
 - [20-01] Partial index on role_states.next_tick_at for efficient tick scheduling
+- [20-02] Advisory lock fallback: if pg_try_advisory_lock RPC unavailable, proceed with optimistic concurrency only
+- [20-02] Barrel fix: bitbit-core.ts file takes precedence over bitbit-core/index.ts in bundler resolution
+- [20-02] Lock key derivation: first 8 hex chars of UUID parsed as int32 for pg_advisory_lock
+- [20-02] Pre-screen skips still update last_tick_at/next_tick_at to avoid re-checking too soon
 
 ### Pending Todos
 
@@ -204,5 +208,5 @@ See PROJECT.md Key Decisions table.
 ## Session Continuity
 
 Last session: 2026-03-18
-Stopped at: Completed 20-01-PLAN.md (Role Schema & Type System)
+Stopped at: Completed 20-02-PLAN.md (Role Runtime -- State, Ticks, Events, Concurrency)
 Resume file: None
