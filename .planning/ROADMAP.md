@@ -4,7 +4,8 @@
 
 - v1.0 MVP -- Phases 1-6 (shipped 2026-02-21)
 - v1.1 Agent Runtime + First Agents -- Phases 7-12 (shipped 2026-02-22)
-- v1.2 Battle-Testing & Sellability -- Phases 13-19 (in progress)
+- v1.2 Battle-Testing & Sellability -- Phases 13-19 (shipped 2026-03-14)
+- v1.3 Agent Roles & Autonomy Engine -- Phases 20-25 (in progress)
 
 ## Phases
 
@@ -224,31 +225,99 @@ Plans:
 - [x] 19-02-PLAN.md -- OAuth credential verification script + channel smoke test script
 - [x] 19-03-PLAN.md -- Credential provisioning checkpoints + live channel verification
 
+### Phase 20: Role Engine Foundation
+**Goal**: The infrastructure that makes autonomous roles possible — role definitions, persistent state, autonomy gating, workflow execution, cost guards, concurrency control, and audit logging
+**Depends on**: Phase 19 (v1.2 complete)
+**Requirements**: ROLE-01, ROLE-02, ROLE-03, ROLE-04, ROLE-05, ROLE-06, ROLE-07, AUTO-01, AUTO-02, AUTO-03, AUTO-04, AUTO-05, AUTO-06
+**Success Criteria** (what must be TRUE):
+  1. Roles can be defined, enabled/disabled, and configured with autonomy levels in `role_configs`
+  2. Role state persists across ticks/restarts via `role_states` JSONB
+  3. Roles activate from both scheduled ticks and database events (new message, invoice paid, etc.)
+  4. Concurrent activation of the same role is serialized (advisory locks prevent double-execution)
+  5. Multi-step workflows checkpoint progress in `role_workflows` and resume after interruption
+  6. Per-role daily budget caps prevent cost explosion; Haiku pre-screens before Sonnet/Opus calls
+  7. Every role action writes to `role_activity` with reasoning chain, confidence, autonomy mode, reversibility
+  8. Autonomy gate correctly routes: Observer → insight only, Co-pilot → approval queue, Autopilot → execute or queue based on confidence
+**Plans**: 4 plans
+
+### Phase 21: Finance Role
+**Goal**: Finance role owns all money operations — subsumes invoice agent, adds proactive invoicing, collections, cash flow monitoring, payment pattern learning, and weekly financial digest
+**Depends on**: Phase 20
+**Requirements**: FIN-01, FIN-02, FIN-03, FIN-04, FIN-05, FIN-06
+**Success Criteria** (what must be TRUE):
+  1. All existing invoice agent capabilities work through Finance role (NL commands, PDF, email, lifecycle)
+  2. Finance proactively identifies billable work and generates draft invoices without being asked
+  3. Overdue invoices trigger escalating reminder sequence (gentle → firm → escalation)
+  4. Cash flow tracking shows incoming/outgoing/pending with shortfall alerts
+  5. Per-client payment patterns are learned and stored (avg days, preferred method)
+  6. Weekly financial digest is generated and delivered (invoiced, received, overdue, projected)
+**Plans**: 3 plans
+
+### Phase 22: Comms Role
+**Goal**: Comms role owns all communication — subsumes channel triage, adds response drafting, follow-up tracking, relationship monitoring, tone adaptation, and overdue escalation
+**Depends on**: Phase 20
+**Requirements**: COMM-01, COMM-02, COMM-03, COMM-04, COMM-05, COMM-06
+**Success Criteria** (what must be TRUE):
+  1. All existing channel triage capabilities work through Comms role (classification, routing)
+  2. Comms drafts contextual replies using conversation history and entity context
+  3. Unanswered threads older than configurable threshold are surfaced with urgency scoring
+  4. Per-client communication frequency is monitored; engagement drops flagged
+  5. Tone/style adapts per client based on historical communication patterns
+  6. Threads exceeding SLA threshold auto-escalate with pre-drafted response
+**Plans**: 3 plans
+
+### Phase 23: Sales Role
+**Goal**: Sales role owns revenue growth — subsumes lead swarm, adds proposal generation from briefs, lead nurture sequences, client onboarding automation, win/loss learning, and pipeline visibility
+**Depends on**: Phase 20
+**Requirements**: SALE-01, SALE-02, SALE-03, SALE-04, SALE-05, SALE-06
+**Success Criteria** (what must be TRUE):
+  1. All existing lead swarm capabilities work through Sales role (intake, classification, qualification)
+  2. Sales generates branded proposals from verbal briefs using past project data for pricing
+  3. Stale proposals and cold leads receive automated follow-up on configurable cadence
+  4. Lead conversion triggers automated onboarding (project creation, welcome email, task setup)
+  5. Proposal outcomes tracked; pricing and approach adapt based on win/loss patterns
+  6. Pipeline view shows leads → proposals → active → closed with conversion metrics
+**Plans**: 3 plans
+
+### Phase 24: Intelligence Layer
+**Goal**: Business intelligence that sees what the user misses — Revenue Radar identifies upsell opportunities, Client Health scores relationships, Cash Flow Prophet projects finances, Capacity Oracle manages workload
+**Depends on**: Phase 21, Phase 22, Phase 23 (needs role data)
+**Requirements**: INTEL-01, INTEL-02, INTEL-03, INTEL-04, INTEL-05
+**Success Criteria** (what must be TRUE):
+  1. Revenue Radar identifies upsell opportunities from client history and flags stale clients
+  2. Client Health Score (0-100) computed from response times, payments, project progress, communication
+  3. Cash Flow Prophet projects forward from invoices, proposals, and recurring patterns with shortfall alerts
+  4. Capacity Oracle models workload from active projects/tasks and warns on overcommitment
+  5. Each metric shows "gathering data" below minimum data thresholds instead of unreliable predictions
+**Plans**: 3 plans
+
+### Phase 25: Role Dashboard & Integration Polish
+**Goal**: Unified dashboard experience for all roles — activity feed, status cards, autonomy controls, attention view, and end-to-end integration testing across all roles
+**Depends on**: Phase 24
+**Requirements**: DASH-01, DASH-02, DASH-03, DASH-04, DASH-05
+**Success Criteria** (what must be TRUE):
+  1. All role activity appears in single priority-sorted feed (not per-role silos)
+  2. Each role has status card showing state, active workflows, key metrics, and autonomy level
+  3. Autonomy level (Observer/Co-pilot/Autopilot) toggleable per role directly from dashboard
+  4. "What needs my attention" view shows all items requiring human input across all roles
+  5. Drill-down into any role shows full activity history with reasoning chains and outcomes
+**Plans**: 3 plans
+
 ## Progress
 
 **Execution Order:**
-Phases 13 first (foundation), then 14 -> 15 (channel chain) and 16 (can parallel), then 17 (needs 13+16), then 18 (integration fixes), then 19 (live verification, needs 18).
+Phase 20 first (foundation), then 21/22/23 can partially parallel (all depend on 20), then 24 (needs role data from 21-23), then 25 (dashboard, needs everything).
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 1. Platform Deploy | v1.0 | 4/4 | Complete | 2026-02-21 |
-| 2. Schema Expansion | v1.0 | 4/4 | Complete | 2026-02-21 |
-| 3. Semantic Context Engine | v1.0 | 3/3 | Complete | 2026-02-21 |
-| 4. Agent Infrastructure | v1.0 | 4/4 | Complete | 2026-02-21 |
-| 5. Wire Integration Points | v1.0 | 2/2 | Complete | 2026-02-21 |
-| 6. Verification Artifacts | v1.0 | 2/2 | Complete | 2026-02-21 |
-| 7. Infrastructure Foundation | v1.1 | 2/2 | Complete | 2026-02-22 |
-| 8. Agent Runtime | v1.1 | 3/3 | Complete | 2026-02-22 |
-| 9. Approval Flow | v1.1 | 3/3 | Complete | 2026-02-22 |
-| 10. Sentry Agent | v1.1 | 4/4 | Complete | 2026-02-22 |
-| 11. Lead Swarm Agent | v1.1 | 4/4 | Complete | 2026-02-22 |
-| 12. Invoice Flow Agent | v1.1 | 3/3 | Complete | 2026-02-22 |
-| 13. Deployment Stability | v1.2 | 4/4 | Complete | 2026-03-01 |
-| 14. Channel Relay & OAuth | v1.2 | 5/5 | Complete | 2026-03-02 |
-| 15. WhatsApp Pipeline | v1.2 | 2/2 | Complete | 2026-03-02 |
-| 16. Confidence Routing Validation | v1.2 | 2/2 | Complete | 2026-03-02 |
-| 17. Invoice & Lead Validation | v1.2 | 3/3 | Complete | 2026-03-02 |
-| 18. Integration Fixes & Tech Debt | v1.2 | 3/3 | Complete | 2026-03-02 |
-| 19. Credential Provisioning & Live Verification | v1.2 | 3/3 | Complete | 2026-03-02 |
+| 1-6 | v1.0 | 19/19 | Complete | 2026-02-21 |
+| 7-12 | v1.1 | 16/16 | Complete | 2026-02-22 |
+| 13-19 | v1.2 | 24/24 | Complete | 2026-03-14 |
+| 20. Role Engine Foundation | v1.3 | 0/4 | Pending | — |
+| 21. Finance Role | v1.3 | 0/3 | Pending | — |
+| 22. Comms Role | v1.3 | 0/3 | Pending | — |
+| 23. Sales Role | v1.3 | 0/3 | Pending | — |
+| 24. Intelligence Layer | v1.3 | 0/3 | Pending | — |
+| 25. Role Dashboard & Integration Polish | v1.3 | 0/3 | Pending | — |
 
-**Overall:** 35/35 plans complete for v1.0+v1.1 (100%). v1.2: 24/24 plans complete (Phases 13-19 all done).
+**Overall:** 59/59 plans complete for v1.0-v1.2 (100%). v1.3: 0/19 plans (Phases 20-25 pending).
