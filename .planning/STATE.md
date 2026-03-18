@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Media, Billing & Growth Roles
-status: completed
-stopped_at: Completed 20-03-PLAN.md (Inline Attachment Previews) -- Phase 20 complete, ready for Phase 21
-last_updated: "2026-03-18T17:21:28.893Z"
-last_activity: 2026-03-18 -- Completed 20-03 (Inline Attachment Previews)
+status: in_progress
+stopped_at: Completed 21-02-PLAN.md (Plan Gating & Metering)
+last_updated: "2026-03-18T18:06:42Z"
+last_activity: 2026-03-18 -- Completed 21-02 (Plan Gating & Metering)
 progress:
   total_phases: 18
   completed_phases: 8
   total_plans: 25
-  completed_plans: 25
-  percent: 27
+  completed_plans: 27
+  percent: 36
 ---
 
 # Project State
@@ -21,21 +21,21 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-18)
 
 **Core value:** BitBit understands the business better than the business owner -- when Andy says "Invoice Sezer for the White House RE work", BitBit knows who Sezer is, what the work was, the rate, and whether it's already been invoiced.
-**Current focus:** v1.4 Media, Billing & Growth Roles -- Phase 20 (File Attachments & Multimedia)
+**Current focus:** v1.4 Media, Billing & Growth Roles -- Phase 21 (Billing Infrastructure)
 
 ## Current Position
 
-Phase: 20 of 24 (File Attachments & Multimedia)
-Plan: 3 of 3 in current phase
-Status: Phase Complete
-Last activity: 2026-03-18 -- Completed 20-03 (Inline Attachment Previews)
+Phase: 21 of 24 (Billing Infrastructure)
+Plan: 2 of 3 in current phase
+Status: In Progress
+Last activity: 2026-03-18 -- Completed 21-02 (Plan Gating & Metering)
 
-Progress: v1.0 ======== | v1.1 ======== | v1.2 ======== | v1.4 [===________] 27%
+Progress: v1.0 ======== | v1.1 ======== | v1.2 ======== | v1.4 [====_______] 36%
 
 ## Performance Metrics
 
 **Delivery totals:**
-- Total plans completed: 60 (v1.0: 19, v1.1: 16, v1.2: 22, v1.4: 3)
+- Total plans completed: 62 (v1.0: 19, v1.1: 16, v1.2: 22, v1.4: 5)
 - Milestones shipped: v1.0 (2026-02-21), v1.1 (2026-02-22), v1.2 (2026-03-02)
 
 **v1.4 Phases:**
@@ -43,7 +43,7 @@ Progress: v1.0 ======== | v1.1 ======== | v1.2 ======== | v1.4 [===________] 27%
 | Phase | Plans | Status |
 |-------|-------|--------|
 | 20. File Attachments & Multimedia | 3 | COMPLETE |
-| 21. Billing Infrastructure | 3 | Not started |
+| 21. Billing Infrastructure | 3 | 2/3 plans complete |
 | 22. Cost Controls & Ad Script Generator | 2 | Not started |
 | 23. SEO Monitor & Tender Hunter | 2 | Not started |
 | 24. Content Creator | 1 | Not started |
@@ -69,6 +69,9 @@ See PROJECT.md Key Decisions table.
 - [20-03] On-demand signed URL fetch: thumbnails load via signed URL on mount, downloads fetch fresh URLs on click (no caching)
 - [20-03] CHAT_ATTACHMENTS_EVENT extended to carry metadata { ids, items } for immediate preview rendering
 - [20-03] PDF thumbnails deferred: static FileText icon with download link per research recommendation
+- [21-02] Server-side plan gate in executeAgentTool: gate check before autonomy routing and handler call
+- [21-02] PLAN_ORDER array for tier comparison instead of numeric values
+- [21-02] TRIAL_PERIOD_DAYS constant (30) replacing hardcoded 14
 
 ### Pending Todos
 
@@ -85,5 +88,5 @@ See PROJECT.md Key Decisions table.
 ## Session Continuity
 
 Last session: 2026-03-18
-Stopped at: Completed 20-03-PLAN.md (Inline Attachment Previews) -- Phase 20 complete, ready for Phase 21
+Stopped at: Completed 21-02-PLAN.md (Plan Gating & Metering) -- ready for 21-03
 Resume file: None
