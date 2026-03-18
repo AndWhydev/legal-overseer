@@ -676,17 +676,47 @@ const handlers: Record<string, AgentToolHandler> = {
     }
 
     // 3. Semantic memories (stored facts, preferences, relationships)
-    const { data: semanticMems } = await supabase
-      .from('semantic_memories')
-      .select('content, category, confidence')
-      .eq('org_id', orgId)
-      .eq('is_active', true)
-      .ilike('content', `%${query.split(/\s+/).filter(w => w.length > 3).slice(0, 2).join('%')}%`)
-      .order('confidence', { ascending: false })
-      .limit(5)
+    // Use multiple search strategies: combined keywords AND individual keywords
+    const searchKeywords = query.split(/\s+/).filter(w => w.length > 2 && !['the', 'and', 'for', 'that', 'this', 'can', 'you', 'hey'].includes(w.toLowerCase())).slice(0, 4)
+    const allSemanticMems: Array<{ content: string; category: string; confidence: number }> = []
 
-    if (semanticMems && semanticMems.length > 0) {
-      results.push({ source: 'stored_knowledge', entries: semanticMems })
+    // Strategy A: combined keywords (e.g., %Andy%invoice%)
+    if (searchKeywords.length >= 2) {
+      const { data } = await supabase
+        .from('semantic_memories')
+        .select('content, category, confidence')
+        .eq('org_id', orgId)
+        .eq('is_active', true)
+        .ilike('content', `%${searchKeywords.slice(0, 3).join('%')}%`)
+        .order('confidence', { ascending: false })
+        .limit(5)
+      if (data) allSemanticMems.push(...data)
+    }
+
+    // Strategy B: each keyword individually (catches partial matches)
+    for (const kw of searchKeywords.slice(0, 2)) {
+      const { data } = await supabase
+        .from('semantic_memories')
+        .select('content, category, confidence')
+        .eq('org_id', orgId)
+        .eq('is_active', true)
+        .ilike('content', `%${kw}%`)
+        .order('confidence', { ascending: false })
+        .limit(3)
+      if (data) allSemanticMems.push(...data)
+    }
+
+    // Deduplicate by content
+    const seenContent = new Set<string>()
+    const uniqueMems = allSemanticMems.filter(m => {
+      const key = m.content.slice(0, 80)
+      if (seenContent.has(key)) return false
+      seenContent.add(key)
+      return true
+    }).slice(0, 8)
+
+    if (uniqueMems.length > 0) {
+      results.push({ source: 'stored_knowledge', entries: uniqueMems })
     }
 
     // 4. Legacy memory_entries fallback

@@ -133,8 +133,8 @@ export function selectRelevantTools(
   for (const tool of allTools) {
     const group = TOOL_GROUP_MAP[tool.name]
 
-    // Core tools are always included — they're essential
-    if (group === 'core') {
+    // Core tools + memory search are always included — essential for every conversation
+    if (group === 'core' || tool.name === 'search_memory' || tool.name === 'find_messages') {
       coreTools.push(tool)
       scores[tool.name] = Infinity
       continue
