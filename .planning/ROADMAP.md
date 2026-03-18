@@ -252,12 +252,12 @@ Plans:
   3. User can say "summarize this document" after uploading a PDF and BitBit returns an accurate summary
   4. Uploading a 15MB file or an .exe is rejected with a clear error message explaining the limit
   5. Files are isolated per org -- one org cannot access another org's uploads
-**Plans**: TBD
+**Plans**: 3 plans (2 waves)
 
 Plans:
-- [ ] 20-01: Storage infrastructure (attachments table, Supabase Storage bucket, RLS policies, signed upload URL API)
-- [ ] 20-02: Chat integration (Paperclip button, drag-and-drop, upload progress, multimodal content blocks to engine)
-- [ ] 20-03: Preview rendering and agent analysis (inline image/PDF previews, text extraction, Claude Vision wiring)
+- [ ] 20-01-PLAN.md -- Storage infrastructure (attachments table, Supabase Storage bucket, RLS policies, signed upload URL API, plan-gates fix)
+- [ ] 20-02-PLAN.md -- Chat integration (Paperclip button, drag-and-drop, upload progress, multimodal content blocks to engine)
+- [ ] 20-03-PLAN.md -- Preview rendering and visual verification (inline image/PDF previews, chat message integration, end-to-end checkpoint)
 
 ### Phase 21: Billing Infrastructure
 **Goal**: BitBit has a working Stripe subscription system -- users can subscribe, manage plans, and growth tools are gated by plan tier
@@ -347,7 +347,7 @@ Phase 20 first (no dependencies), then 21 (billing before growth roles), then 22
 | 17. Invoice & Lead Validation | v1.2 | 3/3 | Complete | 2026-03-02 |
 | 18. Integration Fixes & Tech Debt | v1.2 | 3/3 | Complete | 2026-03-02 |
 | 19. Credential Provisioning & Live Verification | v1.2 | 3/3 | Complete | 2026-03-02 |
-| 20. File Attachments & Multimedia | v1.4 | 0/3 | Not started | - |
+| 20. File Attachments & Multimedia | v1.4 | 0/3 | Planned | - |
 | 21. Billing Infrastructure | v1.4 | 0/3 | Not started | - |
 | 22. Cost Controls & Ad Script Generator | v1.4 | 0/2 | Not started | - |
 | 23. SEO Monitor & Tender Hunter | v1.4 | 0/2 | Not started | - |
