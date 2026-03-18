@@ -2,19 +2,19 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-01)
+See: .planning/PROJECT.md (updated 2026-03-18)
 
-**Core value:** BitBit understands the business better than the business owner -- when Andy says "Invoice Sezer for the White House RE work", BitBit knows who Sezer is, what the work was, the rate, and whether it's already been invoiced.
-**Current focus:** Phase 19 - Credential Provisioning & Live Verification
+**Core value:** BitBit understands the business better than the business owner — when Andy says "Invoice Sezer for the White House RE work", BitBit knows who Sezer is, what the work was, the rate, and whether it's already been invoiced.
+**Current focus:** v1.3 Agent Roles & Autonomy Engine
 
 ## Current Position
 
-Phase: 19 of 19 (Credential Provisioning & Live Verification)
-Plan: 2 of 3 in current phase
-Status: Executing Phase 19
-Last activity: 2026-03-14 - Completed quick task 20: Inbox collapse/expand UX design specification
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-03-18 — Milestone v1.3 started
 
-Progress: [####################..........] 100% v1.0+v1.1 | Phase 19 (2/3)
+Progress: v1.0 ✓ | v1.1 ✓ | v1.2 ✓ | v1.3 ○
 
 ## Performance Metrics
 

@@ -34,35 +34,39 @@ BitBit understands the business better than the business owner — when Andy say
 - ✓ 12 new DB migrations with RLS policies for all new tables — v1.0
 - ✓ Fix @bitbit/core package (broken exports → only export what exists) — v1.0
 
+- ✓ Deployment stability: Vercel builds, cron system, cold starts, connection pooling, Fly.io workers, Cloudflare edge cron — v1.2
+- ✓ Channel relay: Gmail/Outlook live pull, OAuth for 6 channels, dedup, burst handling, token refresh — v1.2
+- ✓ WhatsApp pipeline: voice note transcription, multi-turn context, approval flow, Baileys bridge — v1.2
+- ✓ Confidence routing: 50-scenario calibration, per-agent thresholds, false positive measurement, adversarial testing — v1.2
+- ✓ Invoice flow validation: ambiguous entity resolution, duplicate detection, branded PDF, email delivery, lifecycle — v1.2
+- ✓ Lead response: auto-approve path, classification accuracy, qualification scoring — v1.2
+- ✓ Integration fixes: TypeScript errors resolved, ignoreBuildErrors removed, relay daemon wired, Fly.io worker live — v1.2
+- ✓ Credential provisioning: OAuth credentials, WhatsApp bridge deployment, smoke test verification — v1.2
+
 ### Active
 
-## Current Milestone: v1.2 Battle-Testing & Sellability
+## Current Milestone: v1.3 Agent Roles & Autonomy Engine
 
-**Goal:** Prove BitBit works under real operational conditions and make it sellable — validate P0 pressure tests (deployment, channel relay, confidence routing, WhatsApp pipeline), then wire billing/trial so Andy can onboard paying customers.
+**Goal:** Transform BitBit from task-executing agents into domain-owning autonomous roles. Users control how much leverage they opt into — from full visibility to full agency — per role, per domain.
 
 **Target features:**
-- Deployment stability (Vercel prod, cron reliability, cold starts, connection pooling)
-- Channel relay end-to-end validation (live Gmail/Outlook, dedup, classification pipeline)
-- Confidence routing validation (threshold tuning per agent, false positive testing)
-- WhatsApp production pipeline (voice note → transcription → agent, multi-turn, approval flow)
-- Invoice flow end-to-end validation (entity resolution, PDF quality, email delivery)
-- Lead response time validation (auto-approve path for high-confidence leads)
-- Stripe billing completion (subscription lifecycle, usage metering, plan gating)
-- Free trial infrastructure (30-day trial, feature gating by tier, conversion/expiry flow)
+- Role Engine — persistent agents that own domains, maintain state, run continuously, learn from outcomes
+- Autonomy Spectrum — Observer / Co-pilot / Autopilot per role, with gating and escalation rules
+- First Roles: Finance (invoicing, cash flow, collections), Comms (triage, drafting, follow-ups, relationship maintenance), Sales (proposals, onboarding, nurture)
+- Intelligence Layer — Revenue Radar, Client Health Score, Cash Flow Prophet, Capacity Oracle
+- Persistent Role Memory — per-role context that accumulates and informs every decision
 
 **Active requirements:** See REQUIREMENTS.md
 
 ### Out of Scope
 
-- WhatsApp full conversational bot — deferred (approval-only channel in v1.1)
-- Channel integrations (Outlook rebuild, Asana, Calendly, WhatsApp, Stripe adapters) — deferred
-- Communication agents (Channel Triage, Client Comms) — Milestone 3
-- Revenue agents (Proposal Bot, Client Onboarding) — Milestone 3
-- Growth agents (Ad Script Gen, AI Search Optimizer, Tender Hunter) — Milestone 4
-- Marketing website, public launch, self-serve signup — Milestone 5
+- Growth agents (Ad Script Gen, AI Search Optimizer, Tender Hunter) — v1.4
+- Builder Role (website/app construction via agentic coding) — v1.4
+- Marketing website, public launch, self-serve signup — v1.5
+- Stripe billing & trial infrastructure — v1.4 (deferred from v1.2)
+- CUA (computer-using agent) — future
 - Mobile app — not planned
 - Real-time chat — high complexity, not core value
-- Video posts — storage/bandwidth costs
 
 ## Context
 
@@ -95,4 +99,4 @@ Agent infrastructure built: registry, confidence routing, shared CRUD tools (nee
 | Entity context capped at 4000 chars | Stay within token budget while providing context | ⚠️ Revisit — may need dynamic budget |
 
 ---
-*Last updated: 2026-03-01 after v1.2 milestone start*
+*Last updated: 2026-03-18 after v1.3 milestone start*
