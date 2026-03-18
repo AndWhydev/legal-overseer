@@ -1,3 +1,19 @@
+---
+gsd_state_version: 1.0
+milestone: v1.4
+milestone_name: Media, Billing & Growth Roles
+status: completed
+stopped_at: Completed 20-03-PLAN.md (Inline Attachment Previews) -- Phase 20 complete, ready for Phase 21
+last_updated: "2026-03-18T17:21:28.893Z"
+last_activity: 2026-03-18 -- Completed 20-03 (Inline Attachment Previews)
+progress:
+  total_phases: 18
+  completed_phases: 8
+  total_plans: 25
+  completed_plans: 25
+  percent: 27
+---
+
 # Project State
 
 ## Project Reference
