@@ -167,11 +167,11 @@ Requirements for Media, Billing & Growth Roles. Closes the media gap, adds billi
 | DEPLOY-02 | Phase 13 | Complete |
 | DEPLOY-03 | Phase 13 | Complete |
 | DEPLOY-04 | Phase 13 | Complete |
-| DEPLOY-05 | Phase 13 → Phase 18 | Complete |
-| DEPLOY-06 | Phase 13 → Phase 18 | Complete |
-| CHAN-01 | Phase 14 → Phase 19 | Complete |
-| CHAN-02 | Phase 14 → Phase 19 | Complete |
-| CHAN-03 | Phase 15 → Phase 19 | Complete |
+| DEPLOY-05 | Phase 13 -> Phase 18 | Complete |
+| DEPLOY-06 | Phase 13 -> Phase 18 | Complete |
+| CHAN-01 | Phase 14 -> Phase 19 | Complete |
+| CHAN-02 | Phase 14 -> Phase 19 | Complete |
+| CHAN-03 | Phase 15 -> Phase 19 | Complete |
 | CHAN-04 | Phase 14 | Complete |
 | CHAN-05 | Phase 14 | Complete |
 | WHATS-01 | Phase 15 | Complete |
@@ -192,32 +192,63 @@ Requirements for Media, Billing & Growth Roles. Closes the media gap, adds billi
 | LEAD-01 | Phase 17 | Complete |
 | LEAD-02 | Phase 17 | Complete |
 | LEAD-03 | Phase 17 | Complete |
-| OAUTH-01 | Phase 14 → Phase 19 | Complete |
-| OAUTH-02 | Phase 14 → Phase 19 | Complete |
+| OAUTH-01 | Phase 14 -> Phase 19 | Complete |
+| OAUTH-02 | Phase 14 -> Phase 19 | Complete |
 | OAUTH-03 | Phase 14 | Complete |
-| OAUTH-04 | Phase 14 → Phase 19 | Complete |
-| OAUTH-05 | Phase 14 → Phase 19 | Complete |
+| OAUTH-04 | Phase 14 -> Phase 19 | Complete |
+| OAUTH-05 | Phase 14 -> Phase 19 | Complete |
 | OAUTH-06 | Phase 14 | Complete |
 | OAUTH-07 | Phase 14 | Complete |
 | OAUTH-08 | Phase 14 | Complete |
+| MEDIA-01 | Phase 20 | Pending |
+| MEDIA-02 | Phase 20 | Pending |
+| MEDIA-03 | Phase 20 | Pending |
+| MEDIA-04 | Phase 20 | Pending |
+| MEDIA-05 | Phase 20 | Pending |
+| MEDIA-06 | Phase 20 | Pending |
+| MEDIA-07 | Phase 20 | Pending |
+| MEDIA-08 | Phase 20 | Pending |
+| MEDIA-09 | Phase 20 | Pending |
+| MEDIA-10 | Phase 20 | Pending |
+| MEDIA-11 | Phase 20 | Pending |
+| BILL-01 | Phase 21 | Pending |
+| BILL-02 | Phase 21 | Pending |
+| BILL-03 | Phase 21 | Pending |
+| BILL-04 | Phase 21 | Pending |
+| BILL-05 | Phase 21 | Pending |
+| BILL-06 | Phase 21 | Pending |
+| BILL-07 | Phase 21 | Pending |
+| BILL-08 | Phase 21 | Pending |
+| BILL-09 | Phase 21 | Pending |
+| BILL-10 | Phase 21 | Pending |
+| COST-01 | Phase 22 | Pending |
+| COST-02 | Phase 22 | Pending |
+| COST-03 | Phase 22 | Pending |
+| ADS-01 | Phase 22 | Pending |
+| ADS-02 | Phase 22 | Pending |
+| ADS-03 | Phase 22 | Pending |
+| ADS-04 | Phase 22 | Pending |
+| SEO-01 | Phase 23 | Pending |
+| SEO-02 | Phase 23 | Pending |
+| SEO-03 | Phase 23 | Pending |
+| SEO-04 | Phase 23 | Pending |
+| SEO-05 | Phase 23 | Pending |
+| TNDR-01 | Phase 23 | Pending |
+| TNDR-02 | Phase 23 | Pending |
+| TNDR-03 | Phase 23 | Pending |
+| TNDR-04 | Phase 23 | Pending |
+| TNDR-05 | Phase 23 | Pending |
+| CONT-01 | Phase 24 | Pending |
+| CONT-02 | Phase 24 | Pending |
+| CONT-03 | Phase 24 | Pending |
+| CONT-04 | Phase 24 | Pending |
 
 **Coverage:**
 - v1.2 requirements: 37 satisfied
 - v1.4 requirements: 42 total, 0 satisfied
-- Mapped to phases: 0 (roadmap pending)
-
-### v1.4 (Pending)
-
-| Requirement | Phase | Status |
-|-------------|-------|--------|
-| MEDIA-01 through MEDIA-11 | TBD | Pending |
-| BILL-01 through BILL-10 | TBD | Pending |
-| ADS-01 through ADS-04 | TBD | Pending |
-| SEO-01 through SEO-05 | TBD | Pending |
-| TNDR-01 through TNDR-05 | TBD | Pending |
-| CONT-01 through CONT-04 | TBD | Pending |
-| COST-01 through COST-03 | TBD | Pending |
+- Mapped to phases: 42/42 (100%)
 
 ---
 *Requirements defined: 2026-03-01*
 *v1.4 requirements added: 2026-03-18*
+*v1.4 phase mappings added: 2026-03-18*

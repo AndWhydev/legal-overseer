@@ -4,7 +4,8 @@
 
 - v1.0 MVP -- Phases 1-6 (shipped 2026-02-21)
 - v1.1 Agent Runtime + First Agents -- Phases 7-12 (shipped 2026-02-22)
-- v1.2 Battle-Testing & Sellability -- Phases 13-19 (in progress)
+- v1.2 Battle-Testing & Sellability -- Phases 13-19 (shipped 2026-03-02)
+- v1.4 Media, Billing & Growth Roles -- Phases 20-24 (in progress)
 
 ## Phases
 
@@ -99,6 +100,9 @@ Plans:
 - [x] 12-01 through 12-03 -- NL resolution, PDF/send, APIs/dashboard
 
 </details>
+
+<details>
+<summary>v1.2 Battle-Testing & Sellability (Phases 13-19) -- SHIPPED 2026-03-02</summary>
 
 ### Phase 13: Deployment Stability
 **Goal**: Platform runs reliably in production with all infrastructure components operational
@@ -224,10 +228,103 @@ Plans:
 - [x] 19-02-PLAN.md -- OAuth credential verification script + channel smoke test script
 - [x] 19-03-PLAN.md -- Credential provisioning checkpoints + live channel verification
 
+</details>
+
+### v1.4 Media, Billing & Growth Roles
+
+**Milestone Goal:** Close the media gap (file attachments in chat), add Stripe billing infrastructure for public launch readiness, and ship Growth Roles that extend the agent engine into marketing/content/sales domains.
+
+- [ ] **Phase 20: File Attachments & Multimedia** - Users can upload, preview, and have BitBit analyse files in chat
+- [ ] **Phase 21: Billing Infrastructure** - Stripe subscription lifecycle, plan gating, usage metering, and pricing page
+- [ ] **Phase 22: Cost Controls & Ad Script Generator** - Per-execution budgets protect against token spirals; first growth role proves the pattern
+- [ ] **Phase 23: SEO Monitor & Tender Hunter** - Wrap existing 700+ LOC implementations as plan-gated agent tools with scheduled ticks
+- [ ] **Phase 24: Content Creator** - Social media post drafting and blog generation via chat with platform-specific formatting
+
+## Phase Details
+
+### Phase 20: File Attachments & Multimedia
+**Goal**: Users can share files with BitBit in chat and receive intelligent analysis -- images render inline, PDFs show thumbnails, and BitBit reads/understands all uploaded content
+**Depends on**: Phase 19 (v1.2 complete)
+**Requirements**: MEDIA-01, MEDIA-02, MEDIA-03, MEDIA-04, MEDIA-05, MEDIA-06, MEDIA-07, MEDIA-08, MEDIA-09, MEDIA-10, MEDIA-11
+**Success Criteria** (what must be TRUE):
+  1. User can click the Paperclip button or drag-and-drop a file onto chat and see it upload with a progress indicator
+  2. Uploaded images render as inline previews in the chat message; PDFs show a first-page thumbnail with download link
+  3. User can say "summarize this document" after uploading a PDF and BitBit returns an accurate summary
+  4. Uploading a 15MB file or an .exe is rejected with a clear error message explaining the limit
+  5. Files are isolated per org -- one org cannot access another org's uploads
+**Plans**: TBD
+
+Plans:
+- [ ] 20-01: Storage infrastructure (attachments table, Supabase Storage bucket, RLS policies, signed upload URL API)
+- [ ] 20-02: Chat integration (Paperclip button, drag-and-drop, upload progress, multimodal content blocks to engine)
+- [ ] 20-03: Preview rendering and agent analysis (inline image/PDF previews, text extraction, Claude Vision wiring)
+
+### Phase 21: Billing Infrastructure
+**Goal**: BitBit has a working Stripe subscription system -- users can subscribe, manage plans, and growth tools are gated by plan tier
+**Depends on**: Phase 20
+**Requirements**: BILL-01, BILL-02, BILL-03, BILL-04, BILL-05, BILL-06, BILL-07, BILL-08, BILL-09, BILL-10
+**Success Criteria** (what must be TRUE):
+  1. Stripe webhook handler processes all subscription lifecycle events (create, update, cancel, trial_will_end, payment_failed) idempotently through a single consolidated route
+  2. User can select a plan on the pricing page, complete Stripe Checkout, and see their plan reflected in the dashboard within 10 seconds
+  3. Growth tools return an upgrade prompt when invoked by a user on a plan that doesn't include them
+  4. Usage dashboard shows token consumption, agent runs, and storage usage for the current billing period
+  5. Trial users receive email notification 3 days before trial expires, and expired trials downgrade gracefully
+**Plans**: TBD
+
+Plans:
+- [ ] 21-01: Webhook consolidation and subscription lifecycle (single handler, event routing, idempotency, pre-created Products/Prices)
+- [ ] 21-02: Plan gating and usage metering (tool execution gate, run logger wiring, storage tracking, trial fix to 30 days)
+- [ ] 21-03: Pricing page, billing settings, and Customer Portal (plan comparison UI, Stripe Checkout, self-service management, dunning notifications)
+
+### Phase 22: Cost Controls & Ad Script Generator
+**Goal**: Per-execution token budgets prevent runaway costs, and the Ad Script Generator validates the growth role tool pattern end-to-end
+**Depends on**: Phase 21
+**Requirements**: COST-01, COST-02, COST-03, ADS-01, ADS-02, ADS-03, ADS-04
+**Success Criteria** (what must be TRUE):
+  1. A growth role execution that exceeds its token budget cap is halted mid-execution with a clear message to the user
+  2. When a role's daily budget is 80% consumed, the user sees a warning; at 100%, further executions are blocked until the next day
+  3. User can request ad scripts via chat and receive structured output with hook variations, body, CTA, and platform-specific timing guidance
+  4. Ad Script Generator is plan-gated -- free/starter users get an upgrade prompt, growth/scale users get results
+**Plans**: TBD
+
+Plans:
+- [ ] 22-01: Cost control infrastructure (per-execution token cap, per-role daily budget, circuit breaker, budget alerts)
+- [ ] 22-02: Ad Script Generator tool group (wrap ad-script-gen.ts as agent tools, register in tool system, plan gate, autonomy mapping)
+
+### Phase 23: SEO Monitor & Tender Hunter
+**Goal**: Users can monitor SEO rankings and discover government tenders via chat commands and scheduled monitoring ticks
+**Depends on**: Phase 22
+**Requirements**: SEO-01, SEO-02, SEO-03, SEO-04, SEO-05, TNDR-01, TNDR-02, TNDR-03, TNDR-04, TNDR-05
+**Success Criteria** (what must be TRUE):
+  1. User can say "check my keyword rankings" and receive a structured SEO visibility report
+  2. SEO monitor runs on a scheduled tick and alerts the user when rankings drop with diagnosis and suggested fixes
+  3. User can say "find web design tenders in Brisbane" and receive matching government tender results with qualification scores
+  4. Tender Hunter runs on a scheduled tick and notifies the user of new matching opportunities
+  5. SEO tools are gated to growth/scale plans; Tender tools are gated to scale plan only
+**Plans**: TBD
+
+Plans:
+- [ ] 23-01: SEO Monitor tool group (wrap ai-search-optimizer.ts, register tools, scheduled tick wiring, plan gate)
+- [ ] 23-02: Tender Hunter tool group (wrap tender-hunter.ts, register tools, scheduled tick wiring, plan gate)
+
+### Phase 24: Content Creator
+**Goal**: Users can generate social media posts and blog drafts via chat with platform-specific formatting and brand voice
+**Depends on**: Phase 22
+**Requirements**: CONT-01, CONT-02, CONT-03, CONT-04
+**Success Criteria** (what must be TRUE):
+  1. User can say "write a LinkedIn post about our new project" and receive a post formatted for LinkedIn's conventions
+  2. User can request blog post drafts with SEO keywords and brand voice applied
+  3. Content tools produce platform-specific output for LinkedIn, Instagram, and X (different formatting, hashtag usage, character limits)
+  4. Content tools are plan-gated to growth/scale tiers only
+**Plans**: TBD
+
+Plans:
+- [ ] 24-01: Content Creator tool group (tool definitions, blog generation handler, social post handler, plan gate, autonomy mapping)
+
 ## Progress
 
 **Execution Order:**
-Phases 13 first (foundation), then 14 -> 15 (channel chain) and 16 (can parallel), then 17 (needs 13+16), then 18 (integration fixes), then 19 (live verification, needs 18).
+Phase 20 first (no dependencies), then 21 (billing before growth roles), then 22 (cost controls + first growth role), then 23 and 24 can run in parallel (both depend on 22).
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
@@ -250,5 +347,10 @@ Phases 13 first (foundation), then 14 -> 15 (channel chain) and 16 (can parallel
 | 17. Invoice & Lead Validation | v1.2 | 3/3 | Complete | 2026-03-02 |
 | 18. Integration Fixes & Tech Debt | v1.2 | 3/3 | Complete | 2026-03-02 |
 | 19. Credential Provisioning & Live Verification | v1.2 | 3/3 | Complete | 2026-03-02 |
+| 20. File Attachments & Multimedia | v1.4 | 0/3 | Not started | - |
+| 21. Billing Infrastructure | v1.4 | 0/3 | Not started | - |
+| 22. Cost Controls & Ad Script Generator | v1.4 | 0/2 | Not started | - |
+| 23. SEO Monitor & Tender Hunter | v1.4 | 0/2 | Not started | - |
+| 24. Content Creator | v1.4 | 0/1 | Not started | - |
 
-**Overall:** 35/35 plans complete for v1.0+v1.1 (100%). v1.2: 24/24 plans complete (Phases 13-19 all done).
+**Overall:** 57/57 plans complete for v1.0+v1.1+v1.2 (100%). v1.4: 0/11 plans (Phases 20-24).
