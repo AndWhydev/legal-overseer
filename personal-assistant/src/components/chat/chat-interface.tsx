@@ -511,6 +511,9 @@ export function ChatInterface({ userName }: { userName?: string }) {
   const [whispersVisible, setWhispersVisible] = useState(true)
   const scrollRef = useRef<HTMLDivElement>(null)
   const currentAssistantIdRef = useRef<string | null>(null)
+  // Tracks which assistant message the smooth stream content belongs to.
+  // Prevents stale content from a previous response leaking into a new message.
+  const smoothStreamOwnerRef = useRef<string | null>(null)
   const requestGenRef = useRef(0) // Increments each handleSend to invalidate stale SSE processing
   const abortRef = useRef<AbortController | null>(null)
   // Reasoning chain state (controlled collapsible)
@@ -564,9 +567,13 @@ export function ChatInterface({ userName }: { userName?: string }) {
     return 'thinking' as const
   })()
 
-  // Update messages from smooth stream and auto-scroll
+  // Update messages from smooth stream and auto-scroll.
+  // Only apply content if it belongs to the current assistant message
+  // (smoothStreamOwnerRef gates cross-request content leaking).
   useEffect(() => {
     if (!smoothStream.displayedContent || !currentAssistantIdRef.current) return
+    // Reject stale smooth stream content from a previous request
+    if (smoothStreamOwnerRef.current !== currentAssistantIdRef.current) return
     const aid = currentAssistantIdRef.current
     setMessages(prev => {
       const existing = prev.find(m => m.id === aid)
@@ -633,6 +640,8 @@ export function ChatInterface({ userName }: { userName?: string }) {
         m.id === prevAid ? { ...m, content: pendingContent } : m
       ))
     }
+    // Invalidate smooth stream ownership so stale content can't leak
+    smoothStreamOwnerRef.current = null
     smoothStream.reset()
     smartScroll.scrollToBottom()
 
@@ -885,6 +894,8 @@ export function ChatInterface({ userName }: { userName?: string }) {
                 const responseContent = interToolBufferRef.current.trim()
 
                 if (toolCalls.length > 0) {
+                  // Tag smooth stream content as belonging to this assistant message
+                  smoothStreamOwnerRef.current = assistantId
                   // Tool-based response: smooth stream is the sole content writer.
                   // The useEffect syncs displayedContent → message. Avoids the
                   // dual-write race where setMessages + feedContent fight over
@@ -1296,9 +1307,9 @@ export function ChatInterface({ userName }: { userName?: string }) {
                         <motion.div
                           layoutId="bitbit-chat-avatar"
                           transition={{ type: 'spring', stiffness: 400, damping: 30, mass: 0.8 }}
-                          style={{ position: 'absolute', left: -44, top: 0, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                          style={{ position: 'absolute', left: -52, top: -4, width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                         >
-                          <BitBitFaceAvatar size={32} emotion={avatarEmotion} isThinking={false} activity={avatarActivity} />
+                          <BitBitFaceAvatar size={40} emotion={avatarEmotion} isThinking={false} activity={avatarActivity} />
                         </motion.div>
                         <p style={{
                           margin: 0,
@@ -1317,9 +1328,9 @@ export function ChatInterface({ userName }: { userName?: string }) {
                           <motion.div
                             layoutId="bitbit-chat-avatar"
                             transition={{ type: 'spring', stiffness: 400, damping: 30, mass: 0.8 }}
-                            style={{ position: 'absolute', left: -44, top: 0, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                            style={{ position: 'absolute', left: -52, top: -4, width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                           >
-                            <BitBitFaceAvatar size={32} emotion={avatarEmotion} isThinking={isThinkingStreaming} activity={avatarActivity} />
+                            <BitBitFaceAvatar size={40} emotion={avatarEmotion} isThinking={isThinkingStreaming} activity={avatarActivity} />
                           </motion.div>
                         )}
                         {reasoningChainJSX}
@@ -1370,9 +1381,9 @@ export function ChatInterface({ userName }: { userName?: string }) {
                   <motion.div
                     layoutId="bitbit-chat-avatar"
                     transition={{ type: 'spring', stiffness: 400, damping: 30, mass: 0.8 }}
-                    style={{ position: 'absolute', left: -44, top: 0, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    style={{ position: 'absolute', left: -52, top: -4, width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                   >
-                    <BitBitFaceAvatar size={32} emotion={avatarEmotion} isThinking={isThinkingStreaming} activity={avatarActivity} />
+                    <BitBitFaceAvatar size={40} emotion={avatarEmotion} isThinking={isThinkingStreaming} activity={avatarActivity} />
                   </motion.div>
                   {reasoningChainJSX}
                 </div>

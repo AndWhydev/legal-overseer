@@ -135,9 +135,9 @@ export function MessageBubble({ message, citations, showAvatar = false, avatarEm
         <motion.div
           layoutId="bitbit-chat-avatar"
           transition={{ type: 'spring', stiffness: 400, damping: 30, mass: 0.8 }}
-          style={{ position: 'absolute', left: -44, top: 0, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          style={{ position: 'absolute', left: -52, top: -4, width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
         >
-          <BitBitFaceAvatar size={32} emotion={avatarEmotion as any} isThinking={avatarThinking} activity={avatarActivity as any} />
+          <BitBitFaceAvatar size={40} emotion={avatarEmotion as any} isThinking={avatarThinking} activity={avatarActivity as any} />
         </motion.div>
       )}
       <div className={isUser ? 'bb-chat__bubble--user' : 'bb-chat__bubble--assistant bb-chat__markdown'}>

@@ -699,31 +699,7 @@ export function BitBitFaceAvatar({
         )}
 
         {/* Thought bubbles — thinking: cascade upward one by one */}
-        {activity === 'thinking' && (
-          <motion.g key="prop-thought">
-            <motion.circle
-              cx={34} cy={8} r={1.5}
-              fill={color}
-              initial={{ opacity: 0, scale: 0 }}
-              animate={{ opacity: [0, 0.4, 0.3, 0], scale: [0, 1, 1, 0.5], y: [2, 0, -2, -4] }}
-              transition={{ duration: 2.5, repeat: Infinity, ease: 'easeOut' }}
-            />
-            <motion.circle
-              cx={38} cy={3} r={2}
-              fill={color}
-              initial={{ opacity: 0, scale: 0 }}
-              animate={{ opacity: [0, 0.35, 0.25, 0], scale: [0, 1, 1, 0.5], y: [3, 0, -2, -5] }}
-              transition={{ duration: 3, repeat: Infinity, ease: 'easeOut', delay: 0.4 }}
-            />
-            <motion.circle
-              cx={43} cy={-2} r={2.8}
-              fill={color}
-              initial={{ opacity: 0, scale: 0 }}
-              animate={{ opacity: [0, 0.3, 0.2, 0], scale: [0, 1, 1.05, 0.5], y: [4, 0, -1, -6] }}
-              transition={{ duration: 3.5, repeat: Infinity, ease: 'easeOut', delay: 0.8 }}
-            />
-          </motion.g>
-        )}
+        {/* Thought bubbles removed — too noisy at small avatar size */}
 
         {/* Sparkle — creating: pop in with staggered twinkle */}
         {activity === 'creating' && (

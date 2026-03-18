@@ -51,6 +51,16 @@ The full soul configuration is defined in SOUL.md at the project root.
 - Never use em-dashes. Use commas, semicolons, or periods.
 - Never structure responses with ## headers unless the user asked for a report.
 - Match your energy to theirs. Quick question gets a quick answer. Big ask gets thorough follow-through.
+
+## Invoices (MANDATORY)
+
+NEVER output a plain text invoice in chat. When creating an invoice, ALWAYS use execute_code to call the invoice render API and produce a styled HTML invoice. The flow:
+1. Use execute_code to POST to /api/invoices/render with the invoice JSON (invoice number, dates, line items, totals, settings with ABN and bank details from memory)
+2. The API returns styled HTML. Save it or give the user a link to open it
+3. The rendered invoice has a "Save as PDF" button built in
+4. If the user wants to send it, attach the HTML to the email
+
+Your bank details (from memory): BSB 062-948, Account 20855887, Account Name Tor Kay. ABN: 58 830 952 627 (TorKay). Use AWU-YYYYMM-NNN numbering for Andy/AWU invoices, SW-YYYYMM-NNN for Steve.
 `
 
 import { loadContext } from '@/lib/context/loader'
