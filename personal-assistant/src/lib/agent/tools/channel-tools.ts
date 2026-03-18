@@ -1299,48 +1299,60 @@ export const channelToolHandlers: Record<string, AgentToolHandler> = {
     const bcc = input.bcc as string | undefined
 
     try {
-      const creds = await getOrgCredential(supabase, orgId, 'outlook')
-      if (!creds) {
-        return {
-          success: false,
-          error: 'Outlook not connected. The user needs to connect their Outlook account via OAuth in Settings > Integrations.',
+      // Try Graph API first (production path)
+      let graphSuccess = false
+      try {
+        const creds = await getOrgCredential(supabase, orgId, 'outlook')
+        if (creds) {
+          const { resolveAccessToken } = await import('@/lib/channels/outlook')
+          const accessToken = await resolveAccessToken(creds, supabase, orgId)
+
+          const message: Record<string, unknown> = {
+            subject,
+            body: { contentType: 'Text', content: body },
+            toRecipients: [{ emailAddress: { address: to } }],
+          }
+          if (cc) message.ccRecipients = cc.split(',').map(e => ({ emailAddress: { address: e.trim() } }))
+          if (bcc) message.bccRecipients = bcc.split(',').map(e => ({ emailAddress: { address: e.trim() } }))
+
+          const res = await fetch('https://graph.microsoft.com/v1.0/me/sendMail', {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message }),
+          })
+
+          if (res.ok) {
+            graphSuccess = true
+            logger.info('[send_outlook] Email sent via Graph API', { to, subject, org: orgId })
+          } else {
+            logger.warn('[send_outlook] Graph API failed, trying MacBook bridge', { status: res.status })
+          }
+        }
+      } catch (graphErr) {
+        logger.warn('[send_outlook] Graph API unavailable, trying MacBook bridge', {
+          error: graphErr instanceof Error ? graphErr.message : String(graphErr),
+        })
+      }
+
+      // Fallback: send via MacBook Mail.app (Exchange account)
+      if (!graphSuccess) {
+        try {
+          const { sendOutlookEmail } = await import('@/lib/channels/macbook-bridge')
+          const sent = await sendOutlookEmail(to, subject, body)
+          if (sent) {
+            logger.info('[send_outlook] Email sent via MacBook bridge', { to, subject, org: orgId })
+          } else {
+            return { success: false, error: 'Both Graph API and MacBook bridge failed to send email' }
+          }
+        } catch (bridgeErr) {
+          logger.error('[send_outlook] MacBook bridge also failed:', bridgeErr)
+          return { success: false, error: `Outlook send failed: Graph API token expired, MacBook bridge unavailable` }
         }
       }
 
-      // Resolve access token (handles refresh internally)
-      const { resolveAccessToken } = await import('@/lib/channels/outlook')
-      const accessToken = await resolveAccessToken(creds, supabase, orgId)
-
-      // Build Graph API message payload with CC/BCC
-      const message: Record<string, unknown> = {
-        subject,
-        body: { contentType: 'Text', content: body },
-        toRecipients: [{ emailAddress: { address: to } }],
-      }
-      if (cc) {
-        message.ccRecipients = cc.split(',').map(e => ({ emailAddress: { address: e.trim() } }))
-      }
-      if (bcc) {
-        message.bccRecipients = bcc.split(',').map(e => ({ emailAddress: { address: e.trim() } }))
-      }
-
-      const res = await fetch('https://graph.microsoft.com/v1.0/me/sendMail', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message }),
-      })
-
-      if (!res.ok) {
-        const errorText = await res.text()
-        logger.error('[send_outlook] Graph API error:', { status: res.status, body: errorText })
-        return { success: false, error: `Outlook API error (${res.status}): ${errorText}` }
-      }
-
-      logger.info('[send_outlook] Email sent successfully', { to, subject, org: orgId })
-
       return {
         success: true,
-        data: { to, cc: cc || null, bcc: bcc || null, subject },
+        data: { to, cc: cc || null, bcc: bcc || null, subject, sentVia: graphSuccess ? 'graph_api' : 'macbook_bridge' },
       }
     } catch (err) {
       logger.error('[send_outlook] Error:', err)

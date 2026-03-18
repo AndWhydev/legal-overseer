@@ -395,26 +395,17 @@ export function InboxFeed({ isCollapsed = false, onCollapsedChange }: InboxFeedP
 
                 {/* Line 3: Preview (Body or AI Summary) */}
                 {preview && (
-                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 4 }}>
-                    {msg.aiSummary && (
-                      <span style={{ color: 'var(--text-dim)', opacity: 0.7, flexShrink: 0, marginTop: 1 }}>
-                        ✨
-                      </span>
-                    )}
-                    <span
-                      style={{
-                        fontSize: 12,
-                        color: 'var(--text-dim)',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                        fontStyle: msg.aiSummary ? 'italic' : 'normal',
-                        opacity: msg.aiSummary ? 0.85 : 1,
-                      }}
-                    >
-                      {String(preview || '')}
-                    </span>
-                  </div>
+                  <span
+                    style={{
+                      fontSize: 12,
+                      color: 'var(--text-dim)',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {String(preview || '')}
+                  </span>
                 )}
               </div>
 

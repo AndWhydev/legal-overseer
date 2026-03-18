@@ -137,24 +137,26 @@ end tell`
 }
 
 /**
- * Send an email via MacBook's Mail.app (Outlook account).
+ * Send an email via MacBook's Outlook Graph Python tool.
+ * Uses the cached OAuth token at ~/.config/ms365-inbox/app-token.json.
+ * Sends from tor@allwebbedup.com.au via Microsoft Graph API.
  */
-export async function sendOutlookEmail(to: string, subject: string, body: string): Promise<boolean> {
-  const escapedBody = body.replace(/"/g, '\\"').replace(/\n/g, '\\n')
-  const escapedSubject = subject.replace(/"/g, '\\"')
-  const script = `
-tell application "Mail"
-  set newMessage to make new outgoing message with properties {subject:"${escapedSubject}", content:"${escapedBody}", visible:false}
-  tell newMessage
-    make new to recipient at end of to recipients with properties {address:"${to}"}
-    set sender to "tor@allwebbedup.com.au"
-  end tell
-  send newMessage
-end tell`
+export async function sendOutlookEmail(to: string, subject: string, body: string, html?: boolean): Promise<boolean> {
+  const escapedSubject = subject.replace(/'/g, "'\\''")
+  const escapedBody = body.replace(/'/g, "'\\''")
+  const htmlFlag = html ? ' --html' : ''
+
+  const cmd = `python3 /Users/torrinkay/Agent/.agent/tools/outlook_graph.py send --to '${to}' --subject '${escapedSubject}' --body '${escapedBody}'${htmlFlag}`
 
   try {
-    await sshExec(`osascript -e '${script.replace(/'/g, "'\\''")}'`, 15000)
-    return true
+    const result = await sshExec(cmd, 20000)
+    const success = result.toLowerCase().includes('sent')
+    if (success) {
+      logger.info('[macbook-bridge] Outlook email sent via Graph tool', { to, subject })
+    } else {
+      logger.warn('[macbook-bridge] Outlook send unclear result', { to, result })
+    }
+    return success
   } catch (err) {
     logger.error('[macbook-bridge] Outlook send failed', { to, error: err instanceof Error ? err.message : String(err) })
     return false

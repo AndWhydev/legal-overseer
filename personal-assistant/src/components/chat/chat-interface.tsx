@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { MessageBubble } from './message-bubble'
-import { ChevronDown, Search, PlusCircle, Pencil, Eye, FileText, Mail, Brain, Zap, AlertCircle, Globe, BookOpen, Calendar, Receipt, Users, MessageSquare } from 'lucide-react'
+import { ChevronDown, Search, PlusCircle, Pencil, Eye, FileText, Mail, Brain, Zap, AlertCircle, Globe, BookOpen, Calendar, Receipt, Users, MessageSquare, Loader2, Check, X } from 'lucide-react'
 import { BitBitFaceAvatar } from './bitbit-face-avatar'
 import { useAvatarEmotion } from './use-avatar-emotion'
 import { useSmoothStream } from './use-smooth-stream'
@@ -45,7 +45,9 @@ interface PendingApproval {
   id: string
   toolName: string
   input: unknown
+  actionSummary: string
   status: 'pending' | 'approved' | 'rejected'
+  resolving?: boolean
 }
 
 interface CheckpointMarker {
@@ -160,6 +162,63 @@ function extractToolDetail(name: string, input: unknown, result?: unknown): stri
   return null
 }
 
+/** Extract a brief result summary from a completed tool call for inline display */
+function extractResultSummary(name: string, result?: unknown, success?: boolean): string | null {
+  if (success === false) return 'Failed'
+  if (!result) return null
+
+  const res = (typeof result === 'object') ? result as Record<string, unknown> : {}
+
+  // Array results — show count
+  if (Array.isArray(result)) {
+    if (result.length === 0) return 'No results'
+    return `Found ${result.length} result${result.length !== 1 ? 's' : ''}`
+  }
+
+  // Results with a data array
+  if (Array.isArray(res.data)) {
+    const count = res.data.length
+    if (count === 0) return 'No results'
+    return `Found ${count} result${count !== 1 ? 's' : ''}`
+  }
+
+  // Results with a results array
+  if (Array.isArray(res.results)) {
+    const count = res.results.length
+    if (count === 0) return 'No results'
+    return `Found ${count} result${count !== 1 ? 's' : ''}`
+  }
+
+  // Results with a count field
+  if (typeof res.count === 'number') {
+    if (res.count === 0) return 'No results'
+    return `Found ${res.count} result${res.count !== 1 ? 's' : ''}`
+  }
+
+  // Specific tool result shapes
+  if (name === 'send_email' || name === 'send_outlook' || name === 'send_gmail') return 'Sent'
+  if (name === 'create_task') return 'Created'
+  if (name === 'update_task' || name === 'update_lead') return 'Updated'
+  if (name === 'add_memory') return 'Saved'
+  if (name === 'log_activity') return 'Logged'
+  if (name === 'create_invoice') return 'Invoice created'
+  if (name === 'draft_reply') return 'Draft ready'
+
+  // Read tools — generic success
+  if (name === 'read_message' || name === 'get_contact') return 'Done'
+
+  // Browse — generic
+  if (name === 'browse_website') return 'Page loaded'
+
+  // Calendar
+  if (name === 'get_calendar' || name === 'schedule_event' || name === 'get_upcoming') return 'Done'
+
+  // Generic success indicator for unknown tools with truthy result
+  if (success === true) return 'Done'
+
+  return null
+}
+
 /** Tool-specific icon based on name */
 function getToolIcon(name: string): React.ElementType {
   // Exact matches first
@@ -195,6 +254,243 @@ function getToolIcon(name: string): React.ElementType {
   if (name.includes('memory')) return Brain
   if (name.includes('message') || name.includes('email')) return MessageSquare
   return Zap
+}
+
+/** Build a human-readable action summary from a tool call for approval cards */
+function buildActionSummary(toolName: string, input: unknown): string {
+  const inp = (input && typeof input === 'object') ? input as Record<string, unknown> : {}
+
+  if (toolName === 'send_email' || toolName === 'send_outlook') {
+    const to = inp.to || inp.recipient || 'unknown'
+    const subject = inp.subject || ''
+    return subject ? `Send email to ${to}: ${subject}` : `Send email to ${to}`
+  }
+
+  if (toolName === 'send_sms' || toolName === 'send_whatsapp') {
+    const to = inp.to || inp.phone || inp.recipient || 'unknown'
+    const body = typeof inp.body === 'string' ? inp.body : typeof inp.message === 'string' ? inp.message : ''
+    const preview = body.length > 60 ? body.slice(0, 57) + '...' : body
+    const channel = toolName === 'send_sms' ? 'SMS' : 'WhatsApp'
+    return preview ? `Send ${channel} to ${to}: ${preview}` : `Send ${channel} to ${to}`
+  }
+
+  if (toolName === 'create_invoice') {
+    const contact = inp.contact_name || inp.client || ''
+    const amount = inp.amount_formatted || inp.total || inp.amount || ''
+    return contact ? `Create invoice for ${contact}${amount ? ` — ${amount}` : ''}` : 'Create invoice'
+  }
+
+  if (toolName === 'update_lead') {
+    const name = inp.name || inp.lead_name || ''
+    return name ? `Update lead: ${name}` : 'Update lead'
+  }
+
+  const label = formatToolName(toolName)
+  const detail = extractToolDetail(toolName, input)
+  return detail ? `${label}: ${detail}` : label
+}
+
+/** Inline approval card rendered inside chat message flow */
+function InlineApprovalCard({
+  approval,
+  onApprove,
+  onReject,
+}: {
+  approval: PendingApproval
+  onApprove: (id: string) => void
+  onReject: (id: string) => void
+}) {
+  const isPending = approval.status === 'pending' && !approval.resolving
+  const isResolving = approval.resolving === true
+  const isApproved = approval.status === 'approved'
+  const isRejected = approval.status === 'rejected'
+
+  const ToolIcon = getToolIcon(approval.toolName)
+
+  const cardStyle: React.CSSProperties = {
+    padding: '14px 16px',
+    borderRadius: 14,
+    background: 'var(--glass-bg, rgba(15, 20, 30, 0.35))',
+    backdropFilter: 'var(--glass-blur, blur(24px) saturate(1.3) brightness(1.05))',
+    WebkitBackdropFilter: 'var(--glass-blur, blur(24px) saturate(1.3) brightness(1.05))',
+    border: isApproved
+      ? '1px solid rgba(34, 197, 94, 0.3)'
+      : isRejected
+        ? '1px solid rgba(239, 68, 68, 0.25)'
+        : '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
+    boxShadow: 'var(--card-inset, inset 0 1px 0 rgba(255, 255, 255, 0.05))',
+    transition: 'all 200ms',
+    maxWidth: '100%',
+  }
+
+  const headerStyle: React.CSSProperties = {
+    display: 'flex',
+    alignItems: 'flex-start',
+    gap: 10,
+  }
+
+  const iconWrapStyle: React.CSSProperties = {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    background: isApproved
+      ? 'rgba(34, 197, 94, 0.12)'
+      : isRejected
+        ? 'rgba(239, 68, 68, 0.12)'
+        : 'var(--hover-bg, rgba(255, 255, 255, 0.04))',
+    flexShrink: 0,
+    marginTop: 1,
+  }
+
+  const iconColor = isApproved
+    ? 'var(--bb-green, #22C55E)'
+    : isRejected
+      ? 'var(--bb-red, #EF4444)'
+      : 'var(--text-secondary, #94A3B8)'
+
+  const summaryStyle: React.CSSProperties = {
+    fontSize: 14,
+    fontWeight: 500,
+    color: 'var(--text-primary, #F1F5F9)',
+    lineHeight: 1.4,
+    flex: 1,
+    minWidth: 0,
+  }
+
+  const toolLabelStyle: React.CSSProperties = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 4,
+    padding: '2px 8px',
+    borderRadius: 6,
+    background: 'var(--hover-bg, rgba(255, 255, 255, 0.04))',
+    fontSize: 11,
+    fontWeight: 600,
+    letterSpacing: '0.02em',
+    color: 'var(--text-secondary, #94A3B8)',
+    marginTop: 6,
+  }
+
+  const buttonContainerStyle: React.CSSProperties = {
+    display: 'flex',
+    gap: 8,
+    marginTop: 12,
+  }
+
+  const approveBtnStyle: React.CSSProperties = {
+    flex: 1,
+    padding: '7px 14px',
+    borderRadius: 10,
+    background: '#1A1A1B',
+    border: 'none',
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: 600,
+    cursor: isResolving ? 'not-allowed' : 'pointer',
+    transition: 'all 200ms',
+    opacity: isResolving ? 0.6 : 1,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  }
+
+  const rejectBtnStyle: React.CSSProperties = {
+    flex: 1,
+    padding: '7px 14px',
+    borderRadius: 10,
+    background: 'transparent',
+    border: '1px solid rgba(239, 68, 68, 0.35)',
+    color: 'var(--bb-red, #EF4444)',
+    fontSize: 13,
+    fontWeight: 600,
+    cursor: isResolving ? 'not-allowed' : 'pointer',
+    transition: 'all 200ms',
+    opacity: isResolving ? 0.6 : 1,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  }
+
+  const resolvedBadgeStyle: React.CSSProperties = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 5,
+    padding: '4px 10px',
+    borderRadius: 8,
+    fontSize: 12,
+    fontWeight: 600,
+    marginTop: 10,
+    background: isApproved ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+    color: isApproved ? 'var(--bb-green, #22C55E)' : 'var(--bb-red, #EF4444)',
+  }
+
+  return (
+    <div style={cardStyle}>
+      <div style={headerStyle}>
+        <div style={iconWrapStyle}>
+          {isApproved ? (
+            <Check size={14} color={iconColor} />
+          ) : isRejected ? (
+            <X size={14} color={iconColor} />
+          ) : (
+            <ToolIcon size={14} color={iconColor} />
+          )}
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={summaryStyle}>{approval.actionSummary}</div>
+          <div style={toolLabelStyle}>
+            <ToolIcon size={10} />
+            {formatToolName(approval.toolName)}
+          </div>
+        </div>
+      </div>
+
+      {isPending && (
+        <div style={buttonContainerStyle}>
+          <button
+            style={rejectBtnStyle}
+            disabled={isResolving}
+            onClick={() => onReject(approval.id)}
+          >
+            Reject
+          </button>
+          <button
+            style={approveBtnStyle}
+            disabled={isResolving}
+            onClick={() => onApprove(approval.id)}
+          >
+            Approve
+          </button>
+        </div>
+      )}
+
+      {isResolving && (
+        <div style={{ ...resolvedBadgeStyle, background: 'var(--hover-bg, rgba(255, 255, 255, 0.04))', color: 'var(--text-secondary, #94A3B8)' }}>
+          <Loader2 size={12} style={{ animation: 'spin 1s linear infinite' }} />
+          Resolving...
+        </div>
+      )}
+
+      {isApproved && !isResolving && (
+        <div style={resolvedBadgeStyle}>
+          <Check size={12} />
+          Approved. Sending...
+        </div>
+      )}
+
+      {isRejected && !isResolving && (
+        <div style={resolvedBadgeStyle}>
+          <X size={12} />
+          Rejected.
+        </div>
+      )}
+    </div>
+  )
 }
 
 const CHAT_SEND_EVENT = 'bitbit-chat-send'
@@ -502,10 +798,12 @@ export function ChatInterface({ userName }: { userName?: string }) {
                 }
 
                 if (event.data.queued && event.data.approvalId) {
+                  const matchedInput = toolCalls.find(tc => tc.name === event.data.name)?.input
                   setPendingApprovals(prev => [...prev, {
                     id: event.data.approvalId,
                     toolName: event.data.name,
-                    input: toolCalls.find(tc => tc.name === event.data.name)?.input,
+                    input: matchedInput,
+                    actionSummary: event.data.action_summary || buildActionSummary(event.data.name, matchedInput),
                     status: 'pending',
                   }])
                 }
@@ -548,6 +846,12 @@ export function ChatInterface({ userName }: { userName?: string }) {
               case 'message':
                 setIsThinkingStreaming(false)
                 assistantContent = event.data
+                // For tool-based responses, skip direct content write here —
+                // the 'done' handler feeds interToolBuffer to smooth stream
+                // which is the sole content writer (prevents dual-write race
+                // where this full-text write gets overwritten by partial
+                // smooth-stream content, causing stale text to leak).
+                if (toolCalls.length > 0) break
                 setMessages(prev => {
                   const existing = prev.find(m => m.id === assistantId)
                   if (existing) {
@@ -563,7 +867,6 @@ export function ChatInterface({ userName }: { userName?: string }) {
                       id: assistantId,
                       role: 'assistant' as const,
                       content: assistantContent,
-                      toolCalls: toolCalls.length > 0 ? [...toolCalls] : undefined,
                       timestamp: new Date(),
                     },
                   ]
@@ -683,6 +986,36 @@ export function ChatInterface({ userName }: { userName?: string }) {
     handleSend(whisper.text)
   }, [handleSend])
 
+  const handleApprovalDecision = useCallback(async (approvalId: string, decision: 'approved' | 'rejected') => {
+    // Mark as resolving
+    setPendingApprovals(prev =>
+      prev.map(a => a.id === approvalId ? { ...a, resolving: true } : a)
+    )
+
+    try {
+      const res = await fetch('/api/agent/approvals', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ approvalId, decision }),
+      })
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({ error: 'Request failed' }))
+        throw new Error(data.error || `HTTP ${res.status}`)
+      }
+
+      // Mark as resolved
+      setPendingApprovals(prev =>
+        prev.map(a => a.id === approvalId ? { ...a, status: decision, resolving: false } : a)
+      )
+    } catch {
+      // Revert to pending on error so the user can retry
+      setPendingApprovals(prev =>
+        prev.map(a => a.id === approvalId ? { ...a, resolving: false } : a)
+      )
+    }
+  }, [])
+
   const hasMessages = messages.length > 0
   const chatStarted = hasMessages || isLoading
 
@@ -798,15 +1131,20 @@ export function ChatInterface({ userName }: { userName?: string }) {
               : null
 
             if (count === 1) {
-              // Single call — show with inline detail pill
-              const detail = extractToolDetail(group.name, group.calls[0].input, group.calls[0].result)
+              // Single call — show with inline detail pill and result summary
+              const tc0 = group.calls[0]
+              const detail = extractToolDetail(group.name, tc0.input, tc0.result)
+              const summary = tc0.status !== 'running'
+                ? extractResultSummary(group.name, tc0.result, tc0.success)
+                : null
               elements.push(
                 <ChainOfThoughtStep
                   key={`tool-${gIdx}`}
                   icon={ToolIcon}
                   label={formatToolName(group.name)}
                   detail={detail ?? undefined}
-                  status={group.calls[0].status === 'running' ? 'active' : 'complete'}
+                  resultSummary={summary ?? undefined}
+                  status={tc0.status === 'running' ? 'active' : 'complete'}
                 >
                   {narrationAfter && (
                     <span style={{
@@ -967,8 +1305,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
                     key={msg.id}
                     className={isGroupChange ? 'bb-chat__msg-group-gap' : ''}
                   >
-                    {/* Reasoning chain above the current response */}
-                    {/* Live reasoning chain for current response */}
+                    {/* Live reasoning chain with avatar to the left */}
                     {isCurrentResponse && reasoningChainJSX && (
                       <div className="bb-chat__msg bb-chat__msg--assistant" style={{ marginBottom: 4 }}>
                         <motion.div className="bb-chat__assistant-icon" layoutId="bitbit-chat-avatar" transition={{ type: 'spring', stiffness: 400, damping: 30, mass: 0.8 }}>
@@ -981,21 +1318,23 @@ export function ChatInterface({ userName }: { userName?: string }) {
                     )}
                     {/* Past response — collapsed reasoning chain */}
                     {!isCurrentResponse && msg.role === 'assistant' && msg.toolCalls && msg.toolCalls.length > 0 && (
-                      <div style={{ marginBottom: 4, paddingLeft: 42 }}>
+                      <div style={{ marginBottom: 4 }}>
                         <ChainOfThought defaultOpen={false}>
                           <ChainOfThoughtHeader>
-                            {`${msg.toolCalls.length} tool${msg.toolCalls.length !== 1 ? 's' : ''} used`}
+                            {`Thought for a few seconds \u00B7 ${msg.toolCalls.length} tool${msg.toolCalls.length !== 1 ? 's' : ''} used`}
                           </ChainOfThoughtHeader>
                           <ChainOfThoughtContent>
                             {msg.toolCalls.map((tc, tcIdx) => {
                               const ToolIcon = getToolIcon(tc.name)
                               const detail = extractToolDetail(tc.name, tc.input, tc.result)
+                              const summary = extractResultSummary(tc.name, tc.result, tc.success)
                               return (
                                 <ChainOfThoughtStep
                                   key={tcIdx}
                                   icon={ToolIcon}
                                   label={formatToolName(tc.name)}
                                   detail={detail ?? undefined}
+                                  resultSummary={summary ?? undefined}
                                   status="complete"
                                 />
                               )
@@ -1029,62 +1368,21 @@ export function ChatInterface({ userName }: { userName?: string }) {
                 </div>
               )}
 
-              {/* Pending approval confirmations */}
-              {pendingApprovals.filter(a => a.status === 'pending').map(approval => (
-                <div key={approval.id} className="bb-chat__msg bb-chat__msg--assistant" style={{ marginTop: 8 }}>
-                  <motion.div
-                    className="bb-chat__assistant-icon"
-                    layoutId="bitbit-chat-avatar"
-                    transition={{ type: 'spring', stiffness: 400, damping: 30, mass: 0.8 }}
-                  >
-                    <BitBitFaceAvatar size={32} emotion={avatarEmotion} isThinking={isThinkingStreaming} activity={avatarActivity} />
-                  </motion.div>
-                  <div style={{
-                    flex: 1,
-                    minWidth: 0,
-                    background: 'var(--glass-bg, rgba(255,255,255,0.04))',
-                    borderRadius: 12,
-                    border: '1px solid var(--accent-amber, rgba(255,180,60,0.3))',
-                    padding: '12px 16px',
-                    backdropFilter: 'blur(12px)',
-                  }}>
-                    <Confirmation state="approval-requested" approval={{ id: approval.id }}>
-                      <ConfirmationTitle>
-                        <span style={{ fontWeight: 500, color: 'var(--text-primary)' }}>
-                          Approve action: {approval.toolName}
-                        </span>
-                      </ConfirmationTitle>
-                      <ConfirmationRequest>
-                        <div style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '8px 0' }}>
-                          {typeof approval.input === 'object'
-                            ? JSON.stringify(approval.input, null, 2).slice(0, 200)
-                            : String(approval.input)}
-                        </div>
-                      </ConfirmationRequest>
-                      <ConfirmationActions>
-                        <ConfirmationAction
-                          variant="outline"
-                          onClick={() => {
-                            setPendingApprovals(prev =>
-                              prev.map(a => a.id === approval.id ? { ...a, status: 'rejected' } : a)
-                            )
-                          }}
-                        >
-                          Reject
-                        </ConfirmationAction>
-                        <ConfirmationAction
-                          onClick={() => {
-                            setPendingApprovals(prev =>
-                              prev.map(a => a.id === approval.id ? { ...a, status: 'approved' } : a)
-                            )
-                          }}
-                        >
-                          Approve
-                        </ConfirmationAction>
-                      </ConfirmationActions>
-                    </Confirmation>
-                  </div>
-                </div>
+              {/* Inline approval cards */}
+              {pendingApprovals.map(approval => (
+                <motion.div
+                  key={approval.id}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+                  style={{ marginTop: 8, maxWidth: 480 }}
+                >
+                  <InlineApprovalCard
+                    approval={approval}
+                    onApprove={(id) => handleApprovalDecision(id, 'approved')}
+                    onReject={(id) => handleApprovalDecision(id, 'rejected')}
+                  />
+                </motion.div>
               ))}
             </motion.div>
           )}
@@ -1105,4 +1403,16 @@ export function ChatInterface({ userName }: { userName?: string }) {
           >
             <ChevronDown size={18} />
           </motion.button>
+        )}
+      </AnimatePresence>
+
+      {/* Docked pill input */}
+      <div
+        className={`bb-chat__input-area ${chatStarted ? 'bb-chat__input-area--bottom' : 'bb-chat__input-area--centered'}`}
+      >
+        <div id="pill-dock" />
+      </div>
+    </div>
+  )
+}
  
