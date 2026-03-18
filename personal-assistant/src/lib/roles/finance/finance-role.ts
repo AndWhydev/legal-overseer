@@ -11,6 +11,9 @@ import {
   getCollectionStepDef,
   type OverdueInvoice,
 } from './collection-workflow'
+import { computeCashFlow, type CashFlowSnapshot } from './cash-flow-monitor'
+import { learnPaymentPatterns, detectUnusualDelays, type PaymentPattern } from './payment-learner'
+import { generateWeeklyDigest, isMondayInAEST } from './weekly-digest'
 import { logger } from '@/lib/core/logger'
 
 // ---------------------------------------------------------------------------
@@ -33,6 +36,11 @@ export interface FinanceState {
   /** Item hashes already surfaced to avoid re-surfacing */
   billable_items_surfaced: string[]
 
+  // Cash flow & digest tracking (from 21-03)
+  last_cash_flow_check_at?: string
+  last_payment_pattern_update_at?: string
+  last_weekly_digest_at?: string
+
   // Cumulative stats (from 21-01)
   last_invoice_tick_at?: string
   total_invoices_created?: number
@@ -47,6 +55,9 @@ function getFinanceState(state: Record<string, unknown>): FinanceState {
     active_collection_workflows: (state.active_collection_workflows as string[]) ?? [],
     known_payment_patterns: (state.known_payment_patterns as Record<string, { avgDays: number; count: number }>) ?? {},
     billable_items_surfaced: (state.billable_items_surfaced as string[]) ?? [],
+    last_cash_flow_check_at: state.last_cash_flow_check_at as string | undefined,
+    last_payment_pattern_update_at: state.last_payment_pattern_update_at as string | undefined,
+    last_weekly_digest_at: state.last_weekly_digest_at as string | undefined,
     last_invoice_tick_at: state.last_invoice_tick_at as string | undefined,
     total_invoices_created: state.total_invoices_created as number | undefined,
     total_invoices_sent: state.total_invoices_sent as number | undefined,
@@ -197,12 +208,136 @@ const financeRole: RoleImplementation = {
     }
 
     // -----------------------------------------------------------------------
-    // 4. Build state updates
+    // 4. Cash flow check (daily, cached in bi_snapshots with 24h TTL)
+    // -----------------------------------------------------------------------
+    try {
+      const cashFlow = await computeCashFlow(ctx.supabase, ctx.orgId)
+      finState.last_cash_flow_check_at = now
+
+      // Surface cash flow alerts as role insights/actions
+      for (const alert of cashFlow.alerts) {
+        if (alert.severity === 'high') {
+          actions.push({
+            type: 'cash_flow_alert',
+            summary: alert.summary,
+            payload: { alertType: alert.type, amount: alert.amount, severity: alert.severity },
+            confidence: 0.9,
+            reversible: false,
+          })
+        } else {
+          insights.push({
+            summary: `Cash flow: ${alert.summary}`,
+            details: { alertType: alert.type, amount: alert.amount },
+            priority: alert.severity === 'medium' ? 'medium' : 'low',
+          })
+        }
+      }
+
+      if (cashFlow.alerts.length > 0) {
+        logger.info(`${tag} Cash flow: ${cashFlow.alerts.length} alerts generated`)
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      logger.warn(`${tag} Cash flow check failed: ${message}`)
+    }
+
+    // -----------------------------------------------------------------------
+    // 5. Payment pattern learning (weekly)
+    // -----------------------------------------------------------------------
+    const patternAge = finState.last_payment_pattern_update_at
+      ? Date.now() - new Date(finState.last_payment_pattern_update_at).getTime()
+      : Infinity
+    const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000
+
+    if (patternAge >= ONE_WEEK_MS) {
+      try {
+        const patterns = await learnPaymentPatterns(ctx.supabase, ctx.orgId)
+        finState.last_payment_pattern_update_at = now
+
+        // Update known_payment_patterns in state
+        const patternMap: Record<string, { avgDays: number; count: number }> = {}
+        for (const p of patterns) {
+          patternMap[p.contactId] = { avgDays: p.avgPaymentDays, count: p.totalInvoices }
+        }
+        finState.known_payment_patterns = patternMap
+
+        // Detect unusual delays and surface as alerts
+        const delays = await detectUnusualDelays(ctx.supabase, ctx.orgId, patterns)
+        for (const delay of delays) {
+          insights.push({
+            summary: `${delay.contactName} usually pays in ${delay.expectedDays} days, but invoice ${delay.invoiceNumber} is at ${delay.actualDays} days`,
+            details: {
+              contactId: delay.contactId,
+              invoiceId: delay.invoiceId,
+              expectedDays: delay.expectedDays,
+              actualDays: delay.actualDays,
+            },
+            priority: 'high',
+          })
+        }
+
+        if (patterns.length > 0) {
+          logger.info(`${tag} Payment patterns updated for ${patterns.length} contacts`)
+        }
+        if (delays.length > 0) {
+          logger.info(`${tag} Detected ${delays.length} unusual payment delays`)
+        }
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err)
+        logger.warn(`${tag} Payment pattern learning failed: ${message}`)
+      }
+    }
+
+    // -----------------------------------------------------------------------
+    // 6. Weekly financial digest (Monday ticks only, AEST)
+    // -----------------------------------------------------------------------
+    if (isMondayInAEST()) {
+      // Only generate once per Monday (check if already generated today)
+      const digestAge = finState.last_weekly_digest_at
+        ? Date.now() - new Date(finState.last_weekly_digest_at).getTime()
+        : Infinity
+      const SIX_DAYS_MS = 6 * 24 * 60 * 60 * 1000
+
+      if (digestAge >= SIX_DAYS_MS) {
+        try {
+          const digest = await generateWeeklyDigest(ctx.supabase, ctx.orgId)
+          finState.last_weekly_digest_at = now
+
+          // Surface digest as a high-priority insight (dashboard card)
+          insights.push({
+            summary: `Weekly Financial Digest: ${digest.cashFlowSummary}`,
+            details: {
+              period: digest.period,
+              invoiced: digest.invoiced,
+              received: digest.received,
+              overdue: digest.overdue,
+              upcoming: digest.upcoming,
+              insights: digest.insights,
+              actionItems: digest.actionItems,
+              type: 'weekly_digest',
+            },
+            priority: 'high',
+          })
+
+          logger.info(`${tag} Weekly digest generated for ${digest.period.start} to ${digest.period.end}`)
+        } catch (err) {
+          const message = err instanceof Error ? err.message : String(err)
+          logger.warn(`${tag} Weekly digest generation failed: ${message}`)
+        }
+      }
+    }
+
+    // -----------------------------------------------------------------------
+    // 7. Build state updates
     // -----------------------------------------------------------------------
     const stateUpdates: Record<string, unknown> = {
       last_invoice_tick_at: now,
       last_billable_scan_at: finState.last_billable_scan_at,
       last_overdue_check_at: finState.last_overdue_check_at,
+      last_cash_flow_check_at: finState.last_cash_flow_check_at,
+      last_payment_pattern_update_at: finState.last_payment_pattern_update_at,
+      last_weekly_digest_at: finState.last_weekly_digest_at,
+      known_payment_patterns: finState.known_payment_patterns,
       billable_items_surfaced: finState.billable_items_surfaced,
     }
 
