@@ -70,6 +70,12 @@ export const TOOL_AUTONOMY_MAP: Record<string, AutonomyLevel> = {
   list_ad_batches: 'L4_silent',       // Read-only query
   adapt_script: 'L4_silent',          // Pure transformation, no DB write
 
+  // SEO tools: visibility audits and content generation, no external side effects
+  audit_visibility: 'L3_notify',        // Runs audit, may persist results to DB
+  generate_seo_content: 'L3_notify',    // Generates content, may persist to DB
+  generate_schema_markup: 'L4_silent',  // Pure generation, no DB write
+  visibility_report: 'L4_silent',       // Read-only report from stored data
+
   // L1: Financial / irreversible — always require approval
   // (future: invoice_send, payment_process, contract_sign)
 }

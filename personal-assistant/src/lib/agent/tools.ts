@@ -5,6 +5,7 @@ import { superpowerToolDefinitions, superpowerToolHandlers } from './tools/super
 import { codeExecutionToolDefinitions, codeExecutionToolHandlers } from './tools/code-execution'
 import { invoiceToolDefinition, handleGenerateInvoice } from './tools/invoice-tool'
 import { adToolDefinitions, adToolHandlers } from './tools/ad-tools'
+import { seoToolDefinitions, seoToolHandlers } from './tools/seo-tools'
 import { composeCreatorStudioDeck } from '@/lib/creator-studio'
 import { routeAgentAction } from './confidence-router'
 import { queueAgentAction, getPendingApprovals, resolveApproval } from './approval-queue'
@@ -28,7 +29,7 @@ import { getOrgPlan, checkToolPlanGate, TOOL_PLAN_REQUIREMENTS } from '@/lib/bil
 // Tool Group metadata (for future Tool RAG via pgvector)
 // ---------------------------------------------------------------------------
 
-export type ToolGroup = 'core' | 'memory' | 'channel' | 'web' | 'comms' | 'agentic' | 'ads'
+export type ToolGroup = 'core' | 'memory' | 'channel' | 'web' | 'comms' | 'agentic' | 'ads' | 'seo'
 
 export interface ToolGroupMeta {
   id: ToolGroup
@@ -79,6 +80,12 @@ export const TOOL_GROUPS: Record<ToolGroup, ToolGroupMeta> = {
     label: 'Ad Scripts',
     description: 'Generate video ad scripts for social platforms with hook variations, storyboards, and platform-specific formatting',
     tools: ['generate_ad_scripts', 'list_ad_batches', 'adapt_script'],
+  },
+  seo: {
+    id: 'seo',
+    label: 'SEO & AI Visibility',
+    description: 'Audit AI search visibility, generate SEO-optimized content, create schema markup, and view visibility reports',
+    tools: ['audit_visibility', 'generate_seo_content', 'generate_schema_markup', 'visibility_report'],
   },
 }
 
@@ -149,6 +156,12 @@ export const JIT_INSTRUCTIONS: Record<string, string> = {
   generate_ad_scripts: 'Ad scripts generated. Present the scripts in a structured format showing each platform\'s hook, body, CTA, and duration. Highlight the hook variations for A/B testing. If storyboard data is included, present the shot-by-shot breakdown with timing. Ask if the user wants to adapt any script to a different platform.',
   list_ad_batches: 'Present the script batches as a list with batch ID, offer name, number of scripts, and date created. Ask if the user wants to view scripts from a specific batch.',
   adapt_script: 'Script adapted for the new platform. Present the adapted version highlighting what changed (duration, pacing, format). Compare key differences between the original and adapted versions.',
+
+  // SEO & AI Visibility
+  audit_visibility: 'Visibility audit complete. Present the overall score prominently (X/100), then show per-query breakdown by AI source (Perplexity, ChatGPT, Gemini, Copilot). Highlight queries where the brand is absent — these are the priority optimization targets. Present recommendations as actionable next steps, not generic advice. If competitors were included, show comparative positioning.',
+  generate_seo_content: 'SEO content generated. Present the title and meta description first, then the main body. Show the FAQ section as expandable Q&A pairs. Mention the targeted queries it is optimized for. If structured data was included, note it is ready for implementation. Offer to generate schema markup for the content.',
+  generate_schema_markup: 'Schema markup generated. Present the JSON-LD in a code block the user can copy directly. Show any validation notes. Remind the user to paste this into the <head> section of their page. If there are multiple schema types that would benefit the page, suggest additional markup.',
+  visibility_report: 'Visibility report generated. Lead with the trend (improving/declining/stable) and current vs previous score. Show the per-query breakdown highlighting changes. Present competitor comparison as a ranked table with score deltas. Prioritize the recommendations that address the biggest visibility gaps.',
 }
 
 /** Get JIT instruction for a tool, if one exists. */
@@ -775,13 +788,14 @@ const allHandlers: Record<string, AgentToolHandler> = {
   ...superpowerToolHandlers,
   ...codeExecutionToolHandlers,
   ...adToolHandlers,
+  ...seoToolHandlers,
   async generate_invoice(input, orgId, supabase) {
     return handleGenerateInvoice(input as Parameters<typeof handleGenerateInvoice>[0], orgId, supabase)
   },
 }
 
 export function getAgentTools(groups?: ToolGroup[]): Anthropic.Tool[] {
-  const allTools = [...toolDefinitions, ...channelToolDefinitions, ...superpowerToolDefinitions, ...codeExecutionToolDefinitions, ...adToolDefinitions, invoiceToolDefinition]
+  const allTools = [...toolDefinitions, ...channelToolDefinitions, ...superpowerToolDefinitions, ...codeExecutionToolDefinitions, ...adToolDefinitions, ...seoToolDefinitions, invoiceToolDefinition]
   if (!groups || groups.length === 0) return allTools
 
   const selectedGroups = new Set<ToolGroup>(['core', ...groups])
