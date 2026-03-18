@@ -19,6 +19,14 @@ import type {
   MemoryTimelineEvent,
 } from './types'
 
+/**
+ * Escape SQL LIKE/ILIKE wildcard characters from user input
+ * to prevent pattern injection (%, _, \ are special in LIKE).
+ */
+function escapeLikePattern(input: string): string {
+  return input.replace(/[\\%_]/g, (ch) => `\\${ch}`)
+}
+
 // ─── Memory Search Engine ────────────────────────────────────────────────────
 
 export class MemorySearch {
@@ -246,7 +254,7 @@ export class MemorySearch {
       .select('*')
       .eq('org_id', orgId)
       .eq('is_active', true)
-      .ilike('content', `%${query}%`)
+      .ilike('content', `%${escapeLikePattern(query)}%`)
       .order('confidence', { ascending: false })
       .limit(limit)
 
@@ -275,7 +283,7 @@ export class MemorySearch {
       .select('*')
       .eq('org_id', orgId)
       .eq('status', 'active')
-      .or(`title.ilike.%${query}%,decision.ilike.%${query}%,reasoning.ilike.%${query}%`)
+      .or(`title.ilike.%${escapeLikePattern(query)}%,decision.ilike.%${escapeLikePattern(query)}%,reasoning.ilike.%${escapeLikePattern(query)}%`)
       .order('decided_at', { ascending: false })
       .limit(limit)
 
@@ -301,7 +309,7 @@ export class MemorySearch {
       .select('*')
       .eq('org_id', orgId)
       .eq('status', 'active')
-      .ilike('description', `%${query}%`)
+      .ilike('description', `%${escapeLikePattern(query)}%`)
       .order('confidence', { ascending: false })
       .limit(limit)
 

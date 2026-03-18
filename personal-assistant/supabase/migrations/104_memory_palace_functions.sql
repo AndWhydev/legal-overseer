@@ -22,7 +22,19 @@ DECLARE
   v_patterns_deleted INTEGER := 0;
   v_timeline_deleted INTEGER := 0;
   v_semantic_deleted INTEGER := 0;
+  v_caller_has_access BOOLEAN := false;
 BEGIN
+  -- Verify caller belongs to the specified org
+  SELECT EXISTS(
+    SELECT 1 FROM profiles
+    WHERE user_id = auth.uid()
+      AND org_id = p_org_id
+  ) INTO v_caller_has_access;
+
+  IF NOT v_caller_has_access THEN
+    RAISE EXCEPTION 'Access denied: user does not belong to org %', p_org_id;
+  END IF;
+
   -- 1. Delete from memory_palace_entries
   WITH deleted AS (
     DELETE FROM memory_palace_entries
