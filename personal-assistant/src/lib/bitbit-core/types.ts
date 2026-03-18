@@ -336,3 +336,85 @@ export interface ChannelAdapter {
   send?: (message: Omit<ChannelMessage, 'id' | 'timestamp'>) => Promise<{ success: boolean; id?: string }>
   isAvailable: () => boolean
 }
+
+// --- Role System ---
+
+export type RoleType = 'finance' | 'comms' | 'sales'
+export type AutonomyLevel = 'observer' | 'copilot' | 'autopilot'
+
+export interface RoleConfig {
+  id: string
+  org_id: string
+  role_type: RoleType
+  enabled: boolean
+  autonomy_level: AutonomyLevel
+  config: Record<string, unknown>
+  tick_interval_seconds: number
+  daily_budget_cents: number
+  created_at: string
+  updated_at: string
+}
+
+export interface RoleState {
+  id: string
+  role_config_id: string
+  org_id: string
+  state: Record<string, unknown>
+  version: number
+  last_tick_at: string | null
+  next_tick_at: string | null
+  updated_at: string
+}
+
+export type WorkflowStatus = 'pending' | 'active' | 'paused' | 'completed' | 'failed' | 'cancelled'
+
+export interface WorkflowStep {
+  step_id: string
+  name: string
+  status: 'pending' | 'active' | 'completed' | 'failed' | 'skipped'
+  result?: unknown
+  started_at?: string
+  completed_at?: string
+}
+
+export interface RoleWorkflow {
+  id: string
+  role_config_id: string
+  org_id: string
+  workflow_type: string
+  status: WorkflowStatus
+  steps: WorkflowStep[]
+  current_step: number
+  context: Record<string, unknown>
+  error?: string
+  started_at: string | null
+  completed_at: string | null
+  next_step_at: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type ActivityType = 'insight' | 'action' | 'escalation' | 'learning' | 'error' | 'workflow_step'
+
+export interface RoleActivity {
+  id: string
+  role_config_id: string
+  org_id: string
+  activity_type: ActivityType
+  summary: string
+  details: Record<string, unknown>
+  confidence?: number
+  autonomy_mode?: AutonomyLevel
+  reasoning?: string
+  reversible?: boolean
+  created_at: string
+}
+
+export interface BISnapshot {
+  id: string
+  org_id: string
+  metric_type: string
+  data: Record<string, unknown>
+  computed_at: string
+  expires_at: string
+}
