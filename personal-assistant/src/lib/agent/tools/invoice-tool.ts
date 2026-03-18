@@ -101,6 +101,9 @@ export async function handleGenerateInvoice(
 
     for (const mem of memories ?? []) {
       const content = mem.content
+      // Skip invoice-html records (they contain rendered HTML, not extractable data)
+      if (content.startsWith('[invoice-html:')) continue
+
       // Extract ABN
       const abnMatch = content.match(/ABN[:\s]+(\d[\d\s]+\d)/i)
       if (abnMatch && !abn) abn = abnMatch[1].replace(/\s/g, ' ').trim()
@@ -113,9 +116,13 @@ export async function handleGenerateInvoice(
         bankDetails = `BSB: ${bsbMatch[1]}, Account: ${accMatch[1]}${nameMatch ? `, Name: ${nameMatch[1].trim()}` : ''}`
       }
 
-      // Extract company name
-      const companyMatch = content.match(/(?:FROM|Company|Business)[:\s]+([^\n,]+)/i)
-      if (companyMatch && companyMatch[1].length > 2) companyName = companyMatch[1].trim()
+      // Extract company name — only from "User's business" or "FROM" lines, not filenames
+      const businessMatch = content.match(/User's business[:\s]+([^\n]+)/i)
+      if (businessMatch) companyName = businessMatch[1].trim()
+      else {
+        const fromMatch = content.match(/^FROM[:\s]+([A-Z][a-z]+ [A-Z][a-z]+)/m)
+        if (fromMatch && !fromMatch[1].includes('.pdf')) companyName = fromMatch[1].trim()
+      }
 
       // Extract email
       const emailMatch = content.match(/(?:contact|tor)@[\w.]+\.com\.au/i)
@@ -261,9 +268,10 @@ export async function handleGenerateInvoice(
         terms: `${termsDays} days`,
         subject: result.subject,
         description: input.description,
-        // IMPORTANT: Tell the model to present this link to the user
         view_url: `/api/invoices/render?data=${invoicePayload}`,
-        instructions: 'Invoice generated. Give the user the view_url link to open and save as PDF. Do NOT paste the invoice as text. Just say "Here is your invoice:" and provide the link.',
+        // The frontend renders this as an embedded artifact card automatically.
+        // The model should just confirm briefly — no need to describe the invoice contents.
+        _render_hint: 'INVOICE_ARTIFACT_RENDERED_IN_UI',
       },
     }
   } catch (err) {

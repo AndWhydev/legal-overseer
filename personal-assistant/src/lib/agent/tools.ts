@@ -90,6 +90,9 @@ export function getToolsByGroup(group: ToolGroup): Anthropic.Tool[] {
 // ---------------------------------------------------------------------------
 
 export const JIT_INSTRUCTIONS: Record<string, string> = {
+  // Invoices
+  generate_invoice: 'Invoice generated and rendered as an embedded artifact in the chat UI. Do NOT repeat the invoice details as text. Just confirm briefly: "Invoice [number] generated for [recipient], [amount]. Ready to send when you approve." The user can see the full styled invoice in the artifact below your message.',
+
   // Web & Research
   web_search: 'Use these search results to answer the user\'s question. Cite sources with URLs when relevant. If results are insufficient, refine your search query and try again.',
   fetch_url: 'Use the extracted page content to answer the user\'s question. Summarize key points rather than dumping raw text. Note if the content was truncated.',

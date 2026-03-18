@@ -83,6 +83,7 @@ const TOOL_DISPLAY_NAMES: Record<string, string> = {
   search_leads: 'Searching leads',
   get_calendar: 'Checking calendar',
   create_invoice: 'Creating invoice',
+  generate_invoice: 'Generating invoice',
   update_lead: 'Updating lead',
   browse_website: 'Browsing website',
   draft_reply: 'Drafting reply',
@@ -233,6 +234,7 @@ function getToolIcon(name: string): React.ElementType {
     update_task: Pencil,
     get_calendar: Calendar,
     create_invoice: Receipt,
+    generate_invoice: Receipt,
     log_activity: BookOpen,
     draft_reply: Pencil,
   }
