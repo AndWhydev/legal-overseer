@@ -6,6 +6,7 @@ import { codeExecutionToolDefinitions, codeExecutionToolHandlers } from './tools
 import { invoiceToolDefinition, handleGenerateInvoice } from './tools/invoice-tool'
 import { meetingToolDefinitions, meetingToolHandlers } from './tools/meeting-tools'
 import { revenueToolDefinition, handleRevenueIntelligence } from './tools/revenue-tool'
+import { swarmToolDefinition, handleTriggerSwarm } from './tools/swarm-tool'
 import { composeCreatorStudioDeck } from '@/lib/creator-studio'
 import { routeAgentAction } from './confidence-router'
 import { queueAgentAction, getPendingApprovals, resolveApproval } from './approval-queue'
@@ -71,8 +72,8 @@ export const TOOL_GROUPS: Record<ToolGroup, ToolGroupMeta> = {
   agentic: {
     id: 'agentic',
     label: 'Agentic Execution',
-    description: 'Run code against the BitBit SDK to solve complex problems, query data flexibly, and compose multi-step operations',
-    tools: ['execute_code'],
+    description: 'Run code against the BitBit SDK, deploy multi-agent swarms for complex coordinated operations',
+    tools: ['execute_code', 'trigger_swarm'],
   },
   meetings: {
     id: 'meetings',
@@ -151,6 +152,9 @@ export const JIT_INSTRUCTIONS: Record<string, string> = {
   search_meetings: 'Present transcript search results with meeting title, speaker, and relevant quote. Highlight the most relevant matches. Offer to show full meeting details if the user wants more context.',
   list_meetings: 'Show the meeting list with title, type, date, and status. Highlight completed meetings with summaries available.',
   get_meeting_details: 'Present the meeting summary, key decisions, and action items. Do not dump the entire transcript — summarize the key points. Mention pending action items and follow-ups that need attention.',
+
+  // Swarm orchestration
+  trigger_swarm: 'Swarm deployed. Report the swarm status and summary to the user. If the swarm is still running, let them know they can check the Swarm dashboard for live progress. Reference specific findings from each agent when available.',
 }
 
 /** Get JIT instruction for a tool, if one exists. */
@@ -783,10 +787,13 @@ const allHandlers: Record<string, AgentToolHandler> = {
   async revenue_intelligence(input, orgId, supabase) {
     return handleRevenueIntelligence(input as unknown as Parameters<typeof handleRevenueIntelligence>[0], orgId, supabase)
   },
+  async trigger_swarm(input, orgId, supabase) {
+    return handleTriggerSwarm(input, orgId, supabase)
+  },
 }
 
 export function getAgentTools(groups?: ToolGroup[]): Anthropic.Tool[] {
-  const allTools = [...toolDefinitions, ...channelToolDefinitions, ...superpowerToolDefinitions, ...codeExecutionToolDefinitions, invoiceToolDefinition, ...meetingToolDefinitions, revenueToolDefinition]
+  const allTools = [...toolDefinitions, ...channelToolDefinitions, ...superpowerToolDefinitions, ...codeExecutionToolDefinitions, invoiceToolDefinition, ...meetingToolDefinitions, revenueToolDefinition, swarmToolDefinition]
   if (!groups || groups.length === 0) return allTools
 
   const selectedGroups = new Set<ToolGroup>(['core', ...groups])
