@@ -4,10 +4,16 @@ import { channelToolDefinitions, channelToolHandlers } from './tools/channel-too
 import { superpowerToolDefinitions, superpowerToolHandlers } from './tools/superpower-tools'
 import { codeExecutionToolDefinitions, codeExecutionToolHandlers } from './tools/code-execution'
 import { invoiceToolDefinition, handleGenerateInvoice } from './tools/invoice-tool'
+<<<<<<< HEAD
 import { templateToolDefinition, handleUpdateInvoiceTemplate } from './tools/template-tool'
 import { meetingToolDefinitions, meetingToolHandlers } from '@/lib/meetings/agent-tools'
 import { swarmToolDefinitions, swarmToolHandlers } from './tools/swarm-tool'
 import { MEMORY_PALACE_TOOLS, executeMemoryPalaceTool } from '@/lib/memory-palace'
+=======
+import { meetingToolDefinitions, meetingToolHandlers } from './tools/meeting-tools'
+import { revenueToolDefinition, handleRevenueIntelligence } from './tools/revenue-tool'
+import { swarmToolDefinition, handleTriggerSwarm } from './tools/swarm-tool'
+>>>>>>> v1.5-marketing-launch
 import { composeCreatorStudioDeck } from '@/lib/creator-studio'
 import { routeAgentAction } from './confidence-router'
 import { queueAgentAction, getPendingApprovals, resolveApproval } from './approval-queue'
@@ -30,7 +36,11 @@ import { logger } from '@/lib/core/logger'
 // Tool Group metadata (for future Tool RAG via pgvector)
 // ---------------------------------------------------------------------------
 
+<<<<<<< HEAD
 export type ToolGroup = 'core' | 'memory' | 'channel' | 'web' | 'comms' | 'agentic' | 'meetings' | 'swarm'
+=======
+export type ToolGroup = 'core' | 'memory' | 'channel' | 'web' | 'comms' | 'agentic' | 'meetings'
+>>>>>>> v1.5-marketing-launch
 
 export interface ToolGroupMeta {
   id: ToolGroup
@@ -44,7 +54,11 @@ export const TOOL_GROUPS: Record<ToolGroup, ToolGroupMeta> = {
     id: 'core',
     label: 'Core Operations',
     description: 'Task management, contacts, activity logging, and creator tools',
+<<<<<<< HEAD
     tools: ['create_task', 'update_task', 'search_tasks', 'search_contacts', 'get_contact', 'log_activity', 'compose_creator_notification_mockup', 'generate_invoice', 'update_invoice_template'],
+=======
+    tools: ['create_task', 'update_task', 'search_tasks', 'search_contacts', 'get_contact', 'log_activity', 'compose_creator_notification_mockup', 'generate_invoice', 'revenue_intelligence'],
+>>>>>>> v1.5-marketing-launch
   },
   memory: {
     id: 'memory',
@@ -73,8 +87,14 @@ export const TOOL_GROUPS: Record<ToolGroup, ToolGroupMeta> = {
   agentic: {
     id: 'agentic',
     label: 'Agentic Execution',
-    description: 'Run code against the BitBit SDK to solve complex problems, query data flexibly, and compose multi-step operations',
-    tools: ['execute_code'],
+    description: 'Run code against the BitBit SDK, deploy multi-agent swarms for complex coordinated operations',
+    tools: ['execute_code', 'trigger_swarm'],
+  },
+  meetings: {
+    id: 'meetings',
+    label: 'Meeting Intelligence',
+    description: 'Search meeting transcripts, list meetings, and get meeting details including action items and summaries',
+    tools: ['search_meetings', 'list_meetings', 'get_meeting_details'],
   },
   meetings: {
     id: 'meetings' as ToolGroup,
@@ -109,6 +129,8 @@ export const JIT_INSTRUCTIONS: Record<string, string> = {
   // Invoices
   generate_invoice: 'Invoice generated and rendered as an embedded artifact in the chat UI. Do NOT repeat the invoice details as text. Just confirm briefly: "Invoice [number] generated for [recipient], [amount]. Ready to send when you approve." The user can see the full styled invoice in the artifact below your message.',
   update_invoice_template: 'Template updated. Confirm what changed briefly. These settings apply to all future invoices. The user can also edit the template visually in the Invoices → Template tab.',
+
+  revenue_intelligence: 'Present the revenue data concisely. Use the summary field if available. Highlight the most actionable insight — recoverable revenue, at-risk clients, or overdue invoices. Format currency values naturally. Do not dump raw JSON.',
 
   // Web & Research
   web_search: 'Use these search results to answer the user\'s question. Cite sources with URLs when relevant. If results are insufficient, refine your search query and try again.',
@@ -159,6 +181,7 @@ export const JIT_INSTRUCTIONS: Record<string, string> = {
   execute_code: 'Code execution complete. Use the output and result to continue the conversation. If there was an error, fix the code and try again. Do not show raw code to the user — summarize what you found or did. Reference specific data points from the result.',
 
   // Meetings
+<<<<<<< HEAD
   search_meetings: 'Present the most relevant transcript matches. Include the meeting title, speaker, and timestamp for each result. Quote key phrases rather than full segments.',
   list_meetings: 'Present meetings in a concise list format. Highlight any with pending action items or recent dates. Offer to show details for any specific meeting.',
   get_meeting_details: 'Present the meeting summary and key decisions first, then action items. Do not dump the full transcript — highlight the most important points. Mention participants and sentiment naturally.',
@@ -168,6 +191,14 @@ export const JIT_INSTRUCTIONS: Record<string, string> = {
   trigger_swarm: 'A multi-agent swarm has been triggered. Report the swarm name and which agents are participating. The swarm is now running in the background — the user can check progress with get_swarm_status or on the Swarm dashboard.',
   list_swarm_templates: 'Present the available templates concisely with their names and what they do. Mention trigger phrases the user can try.',
   get_swarm_status: 'Present the swarm status clearly: which steps are complete, which are running, and any errors. Include cost and key outputs from completed steps.',
+=======
+  search_meetings: 'Present transcript search results with meeting title, speaker, and relevant quote. Highlight the most relevant matches. Offer to show full meeting details if the user wants more context.',
+  list_meetings: 'Show the meeting list with title, type, date, and status. Highlight completed meetings with summaries available.',
+  get_meeting_details: 'Present the meeting summary, key decisions, and action items. Do not dump the entire transcript — summarize the key points. Mention pending action items and follow-ups that need attention.',
+
+  // Swarm orchestration
+  trigger_swarm: 'Swarm deployed. Report the swarm status and summary to the user. If the swarm is still running, let them know they can check the Swarm dashboard for live progress. Reference specific findings from each agent when available.',
+>>>>>>> v1.5-marketing-launch
 }
 
 /** Get JIT instruction for a tool, if one exists. */
@@ -803,6 +834,7 @@ const allHandlers: Record<string, AgentToolHandler> = {
   ...superpowerToolHandlers,
   ...codeExecutionToolHandlers,
   ...meetingToolHandlers,
+<<<<<<< HEAD
   ...swarmToolHandlers,
   ...memoryPalaceHandlers,
   async generate_invoice(input, orgId, supabase) {
@@ -810,11 +842,25 @@ const allHandlers: Record<string, AgentToolHandler> = {
   },
   async update_invoice_template(input, orgId, supabase) {
     return handleUpdateInvoiceTemplate(input as unknown as Parameters<typeof handleUpdateInvoiceTemplate>[0], orgId, supabase)
+=======
+  async generate_invoice(input, orgId, supabase) {
+    return handleGenerateInvoice(input as unknown as Parameters<typeof handleGenerateInvoice>[0], orgId, supabase)
+  },
+  async revenue_intelligence(input, orgId, supabase) {
+    return handleRevenueIntelligence(input as unknown as Parameters<typeof handleRevenueIntelligence>[0], orgId, supabase)
+  },
+  async trigger_swarm(input, orgId, supabase) {
+    return handleTriggerSwarm(input, orgId, supabase)
+>>>>>>> v1.5-marketing-launch
   },
 }
 
 export function getAgentTools(groups?: ToolGroup[]): Anthropic.Tool[] {
+<<<<<<< HEAD
   const allTools = [...toolDefinitions, ...channelToolDefinitions, ...superpowerToolDefinitions, ...codeExecutionToolDefinitions, ...meetingToolDefinitions, ...swarmToolDefinitions, ...MEMORY_PALACE_TOOLS as unknown as Anthropic.Tool[], invoiceToolDefinition, templateToolDefinition]
+=======
+  const allTools = [...toolDefinitions, ...channelToolDefinitions, ...superpowerToolDefinitions, ...codeExecutionToolDefinitions, invoiceToolDefinition, ...meetingToolDefinitions, revenueToolDefinition, swarmToolDefinition]
+>>>>>>> v1.5-marketing-launch
   if (!groups || groups.length === 0) return allTools
 
   const selectedGroups = new Set<ToolGroup>(['core', ...groups])

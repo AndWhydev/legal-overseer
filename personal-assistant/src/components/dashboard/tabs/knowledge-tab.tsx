@@ -1,9 +1,13 @@
 'use client';
 
 import React, { useState, useCallback, useRef, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { Search, User, Briefcase, FileText, CheckSquare, ChevronRight, X, Book } from 'lucide-react';
 import { TabShell } from '@/components/ui/tab-shell';
 import { EmptyState } from '@/components/ui/empty-state';
+import type { GraphNode as ViewerNode, GraphEdge as ViewerEdge } from '@/components/knowledge/graph-viewer';
+
+const GraphViewer = dynamic(() => import('@/components/knowledge/graph-viewer'), { ssr: false });
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -146,6 +150,46 @@ function KnowledgeTab() {
   const [closeHovered, setCloseHovered] = useState(false);
   const debounceRef = useRef<NodeJS.Timeout>(undefined);
 
+  // Entity Graph — full org graph loaded on mount
+  const [graphNodes, setGraphNodes] = useState<ViewerNode[]>([]);
+  const [graphEdges, setGraphEdges] = useState<ViewerEdge[]>([]);
+  const [graphLoading, setGraphLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch('/api/knowledge/graph?format=nodes');
+        if (!res.ok) throw new Error();
+        const data = await res.json();
+        if (!cancelled) {
+          setGraphNodes(data.nodes ?? []);
+          setGraphEdges(data.edges ?? []);
+        }
+      } catch {
+        // non-critical
+      } finally {
+        if (!cancelled) setGraphLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  const handleGraphNodeClick = useCallback((node: ViewerNode) => {
+    // Extract entity type and id from node id format "type:uuid"
+    const [type, ...rest] = node.id.split(':');
+    const id = rest.join(':');
+    const entityType = type === 'person' ? 'contact' : type as EntityType;
+    if (!id) return;
+    setSelectedEntity({ type: entityType, id });
+    setLoadingGraph(true);
+    fetch(`/api/knowledge/graph?entity_type=${entityType}&entity_id=${id}`)
+      .then(r => r.ok ? r.json() : Promise.reject())
+      .then(data => setGraph(data.graph ?? null))
+      .catch(() => setGraph(null))
+      .finally(() => setLoadingGraph(false));
+  }, []);
+
   // Search with debounce
   const handleSearch = useCallback((value: string) => {
     setQuery(value);
@@ -193,6 +237,41 @@ function KnowledgeTab() {
   return (
     <TabShell>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 24, padding: '24px' }}>
+        {/* ─── Entity Graph ───────────────────────────────────────────────────── */}
+        <div style={glassCard}>
+          <div style={{ ...sectionHeader, marginBottom: 14 }}>Entity Graph</div>
+          {graphLoading ? (
+            <div style={{
+              height: 420,
+              borderRadius: 12,
+              background: 'linear-gradient(90deg, rgba(255,255,255,0.02) 25%, rgba(255,255,255,0.04) 50%, rgba(255,255,255,0.02) 75%)',
+              backgroundSize: '200% 100%',
+              animation: 'shimmer 1.5s ease infinite',
+            }} />
+          ) : graphNodes.length > 0 ? (
+            <GraphViewer
+              nodes={graphNodes}
+              edges={graphEdges}
+              onNodeClick={handleGraphNodeClick}
+              height={420}
+            />
+          ) : (
+            <div style={{
+              height: 200,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+              color: 'var(--text-dim)',
+              fontSize: 13,
+            }}>
+              <Book size={28} style={{ opacity: 0.4 }} />
+              No entities yet. Add contacts and relationships to see your knowledge graph.
+            </div>
+          )}
+        </div>
+
         {/* ─── Search Bar ───────────────────────────────────────────────────────── */}
         <div style={{ position: 'relative' }}>
           <Search

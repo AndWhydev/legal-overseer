@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useCallback } from 'react'
 
 export interface GraphNode {
   id: string
@@ -20,348 +20,471 @@ interface Props {
   edges: GraphEdge[]
   onNodeClick?: (node: GraphNode) => void
   height?: number
-  width?: number
 }
 
-interface SimulatedNode extends GraphNode {
+// Internal simulation node
+interface SimNode {
+  id: string
+  label: string
+  type: GraphNode['type']
+  data?: Record<string, unknown>
   x: number
   y: number
   vx: number
   vy: number
+  pinned: boolean
+  edges: number // connection count for sizing
 }
 
-interface SimulatedEdge extends GraphEdge {
-  sourceNode?: SimulatedNode
-  targetNode?: SimulatedNode
+const NODE_COLORS: Record<string, string> = {
+  Person: '#6b8fc9',
+  Organization: '#4ba383',
+  Topic: '#c4934a',
+  contact: '#6b8fc9',
+  project: '#4ba383',
+  invoice: '#c4934a',
+  task: '#9b88b8',
 }
 
-const GraphViewer: React.FC<Props> = ({
-  nodes,
-  edges,
-  onNodeClick,
-  height = 600,
-  width = 1000,
-}) => {
-  const canvasRef = useRef<SVGSVGElement>(null)
-  const [simulatedNodes, setSimulatedNodes] = useState<SimulatedNode[]>([])
-  const [simulatedEdges, setSimulatedEdges] = useState<SimulatedEdge[]>([])
-  const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null)
-  const [hoveredNode, setHoveredNode] = useState<string | null>(null)
-  const [hoveredEdge, setHoveredEdge] = useState<string | null>(null)
-  const [pan, setPan] = useState({ x: 0, y: 0 })
-  const [scale, setScale] = useState(1)
-  const animationRef = useRef<number | null>(null)
-  const dragRef = useRef<{ startX: number; startY: number } | null>(null)
+function getColor(type: string): string {
+  return NODE_COLORS[type] ?? '#6b8fc9'
+}
 
-  // Color mapping for node types
-  const getNodeColor = (type: 'Person' | 'Organization' | 'Topic'): string => {
-    switch (type) {
-      case 'Person':
-        return '#3b82f6' // blue
-      case 'Organization':
-        return '#10b981' // green
-      case 'Topic':
-        return '#f97316' // orange
-    }
-  }
+function truncate(s: string, max: number): string {
+  return s.length > max ? s.slice(0, max) + '…' : s
+}
 
-  // Initialize nodes with random positions
-  useEffect(() => {
-    const initialized = nodes.map((node) => ({
-      ...node,
-      x: Math.random() * width,
-      y: Math.random() * height,
-      vx: 0,
-      vy: 0,
-    }))
-    setSimulatedNodes(initialized)
-
-    // Map edges to include node references
-    const mapped = edges.map((edge) => ({
-      ...edge,
-      sourceNode: initialized.find((n) => n.id === edge.source),
-      targetNode: initialized.find((n) => n.id === edge.target),
-    }))
-    setSimulatedEdges(mapped)
-  }, [nodes, edges, width, height])
-
-  // Physics simulation
-  useEffect(() => {
-    const simulate = () => {
-      setSimulatedNodes((prevNodes) => {
-        const updated = prevNodes.map((node) => ({ ...node }))
-
-        // Apply forces
-        for (let i = 0; i < updated.length; i++) {
-          let fx = 0
-          let fy = 0
-
-          // Repulsion from other nodes (coulomb force)
-          for (let j = 0; j < updated.length; j++) {
-            if (i !== j) {
-              const dx = updated[j].x - updated[i].x
-              const dy = updated[j].y - updated[i].y
-              const distSq = dx * dx + dy * dy + 100
-              const distance = Math.sqrt(distSq)
-
-              // Repulsive force
-              const force = -50 / distSq
-              fx += (force * dx) / distance
-              fy += (force * dy) / distance
-            }
-          }
-
-          // Attraction to connected nodes (spring force)
-          simulatedEdges.forEach((edge) => {
-            let target: SimulatedNode | undefined
-            if (edge.source === updated[i].id) {
-              target = updated.find((n) => n.id === edge.target)
-            } else if (edge.target === updated[i].id) {
-              target = updated.find((n) => n.id === edge.source)
-            }
-
-            if (target) {
-              const dx = target.x - updated[i].x
-              const dy = target.y - updated[i].y
-              const distance = Math.sqrt(dx * dx + dy * dy) + 1
-              const force = distance * 0.1 // spring constant
-
-              fx += force * (dx / distance)
-              fy += force * (dy / distance)
-            }
-          })
-
-          // Damping and velocity update
-          updated[i].vx = (updated[i].vx + fx) * 0.85
-          updated[i].vy = (updated[i].vy + fy) * 0.85
-
-          // Position update with bounds checking
-          updated[i].x += updated[i].vx
-          updated[i].y += updated[i].vy
-
-          // Keep within bounds
-          updated[i].x = Math.max(20, Math.min(width - 20, updated[i].x))
-          updated[i].y = Math.max(20, Math.min(height - 20, updated[i].y))
-        }
-
-        return updated
-      })
-
-      animationRef.current = requestAnimationFrame(simulate)
-    }
-
-    animationRef.current = requestAnimationFrame(simulate)
-
-    return () => {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current)
-      }
-    }
-  }, [simulatedEdges, width, height])
-
-  // Handle mouse wheel for zoom
-  const handleWheel = (e: React.WheelEvent<SVGSVGElement>) => {
-    e.preventDefault()
-    const delta = e.deltaY > 0 ? 0.9 : 1.1
-    setScale((s) => Math.max(0.1, Math.min(5, s * delta)))
-  }
-
-  // Handle mouse down for pan
-  const handleMouseDown = (e: React.MouseEvent<SVGSVGElement>) => {
-    if (e.button === 1 || e.metaKey || e.ctrlKey) {
-      dragRef.current = { startX: e.clientX - pan.x, startY: e.clientY - pan.y }
-    }
-  }
-
-  // Handle mouse move for pan
-  const handleMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
-    if (dragRef.current) {
-      setPan({
-        x: e.clientX - dragRef.current.startX,
-        y: e.clientY - dragRef.current.startY,
-      })
-    }
-  }
-
-  // Handle mouse up
-  const handleMouseUp = () => {
-    dragRef.current = null
-  }
-
-  // Node click handler
-  const handleNodeClick = (node: GraphNode) => {
-    setSelectedNode(node)
-    onNodeClick?.(node)
-  }
-
-  const containerStyle: React.CSSProperties = {
-    position: 'relative',
-    width: '100%',
-    height: '100%',
-    backgroundColor: 'rgba(15, 23, 42, 0.8)',
-    backdropFilter: 'blur(10px)',
-    borderRadius: '12px',
-    border: '1px solid rgba(148, 163, 184, 0.2)',
-    overflow: 'hidden',
-  }
-
-  const svgStyle: React.CSSProperties = {
-    width: '100%',
-    height: '100%',
-    cursor: dragRef.current ? 'grabbing' : 'grab',
-    backgroundColor: 'transparent',
-  }
-
-  const legendStyle: React.CSSProperties = {
-    position: 'absolute',
-    top: '12px',
-    left: '12px',
-    backgroundColor: 'rgba(15, 23, 42, 0.9)',
-    border: '1px solid rgba(148, 163, 184, 0.2)',
-    borderRadius: '8px',
-    padding: '12px',
-    fontSize: '12px',
-    color: '#cbd5e1',
-    zIndex: 10,
-  }
-
-  const legendItemStyle: React.CSSProperties = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '6px',
-    marginBottom: '6px',
-  }
-
-  const legendColorStyle = (color: string): React.CSSProperties => ({
-    width: '12px',
-    height: '12px',
-    borderRadius: '50%',
-    backgroundColor: color,
+const GraphViewer: React.FC<Props> = ({ nodes, edges, onNodeClick, height = 420 }) => {
+  const svgRef = useRef<SVGSVGElement>(null)
+  const [renderKey, setRenderKey] = React.useState(0) // triggers re-render after buildSim
+  const simRef = useRef<{
+    nodes: SimNode[]
+    nodeMap: Map<string, SimNode>
+    alpha: number
+    running: boolean
+    rafId: number
+    width: number
+    height: number
+    pan: { x: number; y: number }
+    scale: number
+    drag: { node: SimNode; offsetX: number; offsetY: number } | null
+    panning: { startX: number; startY: number; panX: number; panY: number } | null
+    selected: string | null
+    hovered: string | null
+  }>({
+    nodes: [],
+    nodeMap: new Map(),
+    alpha: 1,
+    running: false,
+    rafId: 0,
+    width: 800,
+    height: 420,
+    pan: { x: 0, y: 0 },
+    scale: 1,
+    drag: null,
+    panning: null,
+    selected: null,
+    hovered: null,
   })
 
-  const detailsPanelStyle: React.CSSProperties = {
-    position: 'absolute',
-    bottom: '12px',
-    right: '12px',
-    backgroundColor: 'rgba(15, 23, 42, 0.95)',
-    border: '1px solid rgba(148, 163, 184, 0.2)',
-    borderRadius: '8px',
-    padding: '16px',
-    maxWidth: '300px',
-    color: '#e2e8f0',
-    fontSize: '12px',
-    zIndex: 10,
-  }
+  // Build simulation data from props
+  const buildSim = useCallback(() => {
+    const sim = simRef.current
+    const w = sim.width
+    const h = sim.height
 
-  const closeBtnStyle: React.CSSProperties = {
-    position: 'absolute',
-    top: '8px',
-    right: '8px',
-    background: 'none',
-    border: 'none',
-    color: '#94a3b8',
-    cursor: 'pointer',
-    fontSize: '16px',
-  }
+    // Count edges per node
+    const edgeCount = new Map<string, number>()
+    for (const e of edges) {
+      edgeCount.set(e.source, (edgeCount.get(e.source) ?? 0) + 1)
+      edgeCount.set(e.target, (edgeCount.get(e.target) ?? 0) + 1)
+    }
 
-  const tooltipStyle: React.CSSProperties = {
-    position: 'absolute',
-    backgroundColor: 'rgba(15, 23, 42, 0.95)',
-    border: '1px solid rgba(148, 163, 184, 0.3)',
-    borderRadius: '4px',
-    padding: '6px 10px',
-    fontSize: '11px',
-    color: '#cbd5e1',
-    pointerEvents: 'none',
-    zIndex: 5,
-  }
+    const cx = w / 2
+    const cy = h / 2
+
+    sim.nodes = nodes.map((n, i) => {
+      // Spread nodes in a circle initially
+      const angle = (i / Math.max(nodes.length, 1)) * Math.PI * 2
+      const radius = Math.min(w, h) * 0.3
+      return {
+        id: n.id,
+        label: n.label,
+        type: n.type,
+        data: n.data,
+        x: cx + Math.cos(angle) * radius + (Math.random() - 0.5) * 40,
+        y: cy + Math.sin(angle) * radius + (Math.random() - 0.5) * 40,
+        vx: 0,
+        vy: 0,
+        pinned: false,
+        edges: edgeCount.get(n.id) ?? 0,
+      }
+    })
+
+    sim.nodeMap = new Map(sim.nodes.map(n => [n.id, n]))
+    sim.alpha = 1
+    // Trigger React re-render so SVG elements get created
+    setRenderKey(k => k + 1)
+  }, [nodes, edges])
+
+  // Physics tick
+  const tick = useCallback(() => {
+    const sim = simRef.current
+    const { nodes: sNodes, nodeMap } = sim
+    const cx = sim.width / 2
+    const cy = sim.height / 2
+
+    for (let i = 0; i < sNodes.length; i++) {
+      if (sNodes[i].pinned) continue
+      let fx = 0
+      let fy = 0
+
+      // Repulsion (all pairs)
+      for (let j = 0; j < sNodes.length; j++) {
+        if (i === j) continue
+        const dx = sNodes[j].x - sNodes[i].x
+        const dy = sNodes[j].y - sNodes[i].y
+        const distSq = dx * dx + dy * dy + 200
+        const dist = Math.sqrt(distSq)
+        const force = -200 / distSq
+        fx += (force * dx) / dist
+        fy += (force * dy) / dist
+      }
+
+      // Spring attraction (connected edges)
+      for (const e of edges) {
+        let target: SimNode | undefined
+        if (e.source === sNodes[i].id) target = nodeMap.get(e.target)
+        else if (e.target === sNodes[i].id) target = nodeMap.get(e.source)
+        if (!target) continue
+
+        const dx = target.x - sNodes[i].x
+        const dy = target.y - sNodes[i].y
+        const dist = Math.sqrt(dx * dx + dy * dy) + 1
+        const idealDist = 120
+        const force = (dist - idealDist) * 0.05
+        fx += force * (dx / dist)
+        fy += force * (dy / dist)
+      }
+
+      // Center gravity
+      fx += (cx - sNodes[i].x) * 0.002
+      fy += (cy - sNodes[i].y) * 0.002
+
+      // Apply with alpha cooling
+      sNodes[i].vx = (sNodes[i].vx + fx * sim.alpha) * 0.88
+      sNodes[i].vy = (sNodes[i].vy + fy * sim.alpha) * 0.88
+      sNodes[i].x += sNodes[i].vx
+      sNodes[i].y += sNodes[i].vy
+    }
+
+    // Cool down
+    sim.alpha *= 0.995
+  }, [edges])
+
+  // Render to SVG DOM directly (no React re-render)
+  const render = useCallback(() => {
+    const svg = svgRef.current
+    if (!svg) return
+    const sim = simRef.current
+    const g = svg.querySelector('#graph-content') as SVGGElement | null
+    if (!g) return
+
+    // Update transform
+    g.setAttribute('transform', `translate(${sim.pan.x},${sim.pan.y}) scale(${sim.scale})`)
+
+    // Update edges
+    for (let i = 0; i < edges.length; i++) {
+      const path = g.querySelector(`#edge-${i}`) as SVGPathElement | null
+      if (!path) continue
+      const src = sim.nodeMap.get(edges[i].source)
+      const tgt = sim.nodeMap.get(edges[i].target)
+      if (!src || !tgt) continue
+
+      // Curved edge — offset perpendicular to midpoint
+      const mx = (src.x + tgt.x) / 2
+      const my = (src.y + tgt.y) / 2
+      const dx = tgt.x - src.x
+      const dy = tgt.y - src.y
+      const dist = Math.sqrt(dx * dx + dy * dy) + 1
+      const offset = Math.min(dist * 0.15, 25)
+      const nx = -dy / dist * offset
+      const ny = dx / dist * offset
+
+      path.setAttribute('d', `M${src.x},${src.y} Q${mx + nx},${my + ny} ${tgt.x},${tgt.y}`)
+
+      // Highlight if connected to selected
+      const sel = sim.selected
+      const connected = sel && (edges[i].source === sel || edges[i].target === sel)
+      path.setAttribute('stroke', connected ? getColor(src.type) : 'rgba(148, 163, 184, 0.15)')
+      path.setAttribute('stroke-width', connected ? '1.5' : '0.8')
+      path.setAttribute('opacity', sel && !connected ? '0.3' : '1')
+    }
+
+    // Update nodes
+    for (const node of sim.nodes) {
+      const group = g.querySelector(`[data-nid="${node.id}"]`) as SVGGElement | null
+      if (!group) continue
+
+      group.setAttribute('transform', `translate(${node.x},${node.y})`)
+
+      const circle = group.querySelector('circle')
+      const text = group.querySelector('text')
+      const sel = sim.selected
+      const isSelected = sel === node.id
+      const isConnected = sel ? edges.some(e => (e.source === sel && e.target === node.id) || (e.target === sel && e.source === node.id)) : false
+      const dimmed = sel && !isSelected && !isConnected
+
+      const radius = 4 + Math.min(node.edges * 1.5, 8)
+      if (circle) {
+        circle.setAttribute('r', String(isSelected ? radius + 2 : sim.hovered === node.id ? radius + 1 : radius))
+        circle.setAttribute('fill', getColor(node.type))
+        circle.setAttribute('opacity', dimmed ? '0.2' : '1')
+        circle.setAttribute('filter', isSelected ? 'url(#glow)' : '')
+      }
+      if (text) {
+        text.setAttribute('y', String(radius + 14))
+        text.setAttribute('opacity', dimmed ? '0.15' : '0.85')
+      }
+    }
+  }, [edges])
+
+  // Animation loop
+  const loop = useCallback(() => {
+    const sim = simRef.current
+    if (!sim.running) return
+
+    tick()
+    render()
+
+    if (sim.alpha > 0.001 || sim.drag) {
+      sim.rafId = requestAnimationFrame(loop)
+    } else {
+      sim.running = false
+    }
+  }, [tick, render])
+
+  const startSim = useCallback(() => {
+    const sim = simRef.current
+    if (sim.running) return
+    sim.running = true
+    sim.rafId = requestAnimationFrame(loop)
+  }, [loop])
+
+  // Initialize on data change
+  useEffect(() => {
+    if (nodes.length === 0) return
+
+    // Measure container FIRST so buildSim positions nodes correctly
+    const svg = svgRef.current
+    if (svg) {
+      const rect = svg.getBoundingClientRect()
+      simRef.current.width = rect.width || 800
+      simRef.current.height = rect.height || height
+    }
+
+    buildSim()
+
+    // buildSim triggers setRenderKey which creates SVG elements on next render.
+    // Start simulation after React re-renders to create the DOM nodes.
+    const timer = setTimeout(() => {
+      startSim()
+    }, 80)
+
+    return () => {
+      clearTimeout(timer)
+      cancelAnimationFrame(simRef.current.rafId)
+      simRef.current.running = false
+    }
+  }, [nodes, edges, height, buildSim, startSim])
+
+  // Mouse handlers — all work on the SVG coordinate space
+  const getPoint = useCallback((e: React.MouseEvent): { x: number; y: number } => {
+    const sim = simRef.current
+    const svg = svgRef.current
+    if (!svg) return { x: 0, y: 0 }
+    const rect = svg.getBoundingClientRect()
+    return {
+      x: (e.clientX - rect.left - sim.pan.x) / sim.scale,
+      y: (e.clientY - rect.top - sim.pan.y) / sim.scale,
+    }
+  }, [])
+
+  const findNode = useCallback((x: number, y: number): SimNode | null => {
+    const sim = simRef.current
+    for (let i = sim.nodes.length - 1; i >= 0; i--) {
+      const n = sim.nodes[i]
+      const r = 4 + Math.min(n.edges * 1.5, 8) + 4 // hit area padding
+      const dx = x - n.x
+      const dy = y - n.y
+      if (dx * dx + dy * dy < r * r) return n
+    }
+    return null
+  }, [])
+
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    const pt = getPoint(e)
+    const node = findNode(pt.x, pt.y)
+
+    if (node) {
+      // Start dragging node
+      simRef.current.drag = { node, offsetX: pt.x - node.x, offsetY: pt.y - node.y }
+      node.pinned = true
+      simRef.current.alpha = 0.3
+      startSim()
+    } else {
+      // Start panning
+      const sim = simRef.current
+      sim.panning = { startX: e.clientX, startY: e.clientY, panX: sim.pan.x, panY: sim.pan.y }
+    }
+  }, [getPoint, findNode, startSim])
+
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    const sim = simRef.current
+
+    if (sim.drag) {
+      const pt = getPoint(e)
+      sim.drag.node.x = pt.x - sim.drag.offsetX
+      sim.drag.node.y = pt.y - sim.drag.offsetY
+      sim.drag.node.vx = 0
+      sim.drag.node.vy = 0
+      render()
+    } else if (sim.panning) {
+      sim.pan.x = sim.panning.panX + (e.clientX - sim.panning.startX)
+      sim.pan.y = sim.panning.panY + (e.clientY - sim.panning.startY)
+      render()
+    } else {
+      // Hover detection
+      const pt = getPoint(e)
+      const node = findNode(pt.x, pt.y)
+      const newHovered = node?.id ?? null
+      if (newHovered !== sim.hovered) {
+        sim.hovered = newHovered
+        render()
+      }
+    }
+  }, [getPoint, findNode, render])
+
+  const handleMouseUp = useCallback(() => {
+    const sim = simRef.current
+    if (sim.drag) {
+      sim.drag.node.pinned = false
+      sim.drag = null
+      sim.alpha = 0.1
+      startSim()
+    }
+    sim.panning = null
+  }, [startSim])
+
+  const handleClick = useCallback((e: React.MouseEvent) => {
+    // Only fire on mouseup without drag
+    const sim = simRef.current
+    const pt = getPoint(e)
+    const node = findNode(pt.x, pt.y)
+
+    if (node) {
+      sim.selected = sim.selected === node.id ? null : node.id
+      render()
+      if (onNodeClick) {
+        onNodeClick({ id: node.id, label: node.label, type: node.type, data: node.data })
+      }
+    } else {
+      if (sim.selected) {
+        sim.selected = null
+        render()
+      }
+    }
+  }, [getPoint, findNode, render, onNodeClick])
+
+  const handleWheel = useCallback((e: React.WheelEvent) => {
+    e.preventDefault()
+    const sim = simRef.current
+    const delta = e.deltaY > 0 ? 0.92 : 1.08
+    sim.scale = Math.max(0.3, Math.min(3, sim.scale * delta))
+    render()
+  }, [render])
+
+  const handleDoubleClick = useCallback(() => {
+    const sim = simRef.current
+    sim.pan = { x: 0, y: 0 }
+    sim.scale = 1
+    render()
+  }, [render])
+
+  // Read from ref each render — renderKey ensures we re-render after buildSim
+  const simNodes = renderKey >= 0 ? simRef.current.nodes : []
 
   return (
-    <div style={containerStyle}>
+    <div style={{
+      position: 'relative',
+      width: '100%',
+      height,
+      borderRadius: 12,
+      overflow: 'hidden',
+      background: 'rgba(10, 14, 20, 0.7)',
+      border: '1px solid rgba(148, 163, 184, 0.08)',
+    }}>
       <svg
-        ref={canvasRef}
-        style={svgStyle}
-        onWheel={handleWheel}
+        ref={svgRef}
+        style={{ width: '100%', height: '100%', cursor: 'grab' }}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
+        onClick={handleClick}
+        onWheel={handleWheel}
+        onDoubleClick={handleDoubleClick}
       >
-        <g style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${scale})` }}>
-          {/* Draw edges */}
-          {simulatedEdges.map((edge, idx) => {
-            if (!edge.sourceNode || !edge.targetNode) return null
-            const isHovered = hoveredEdge === `${edge.source}-${edge.target}`
+        <defs>
+          <filter id="glow">
+            <feGaussianBlur stdDeviation="4" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+          {/* Dot grid pattern */}
+          <pattern id="dotgrid" width="20" height="20" patternUnits="userSpaceOnUse">
+            <circle cx="10" cy="10" r="0.5" fill="rgba(148, 163, 184, 0.12)" />
+          </pattern>
+        </defs>
 
+        {/* Background dot grid */}
+        <rect width="100%" height="100%" fill="url(#dotgrid)" />
+
+        <g id="graph-content">
+          {/* Edges */}
+          {edges.map((_, i) => (
+            <path
+              key={`e-${i}`}
+              id={`edge-${i}`}
+              fill="none"
+              stroke="rgba(148, 163, 184, 0.15)"
+              strokeWidth="0.8"
+            />
+          ))}
+
+          {/* Nodes */}
+          {simNodes.map((node) => {
+            const radius = 4 + Math.min(node.edges * 1.5, 8)
             return (
-              <g key={`edge-${idx}`}>
-                <line
-                  x1={edge.sourceNode.x}
-                  y1={edge.sourceNode.y}
-                  x2={edge.targetNode.x}
-                  y2={edge.targetNode.y}
-                  stroke={isHovered ? '#60a5fa' : 'rgba(148, 163, 184, 0.3)'}
-                  strokeWidth={isHovered ? 2 : 1}
-                  onMouseEnter={() => setHoveredEdge(`${edge.source}-${edge.target}`)}
-                  onMouseLeave={() => setHoveredEdge(null)}
-                  style={{ transition: 'stroke 0.2s ease' }}
-                />
-
-                {/* Edge label */}
-                {edge.label && isHovered && (
-                  <text
-                    x={(edge.sourceNode.x + edge.targetNode.x) / 2}
-                    y={(edge.sourceNode.y + edge.targetNode.y) / 2}
-                    fill="#94a3b8"
-                    fontSize="10"
-                    textAnchor="middle"
-                  >
-                    {edge.label}
-                  </text>
-                )}
-              </g>
-            )
-          })}
-
-          {/* Draw nodes */}
-          {simulatedNodes.map((node) => {
-            const isSelected = selectedNode?.id === node.id
-            const isHovered2 = hoveredNode === node.id
-            const radius = isSelected ? 8 : isHovered2 ? 6 : 5
-            const color = getNodeColor(node.type)
-
-            return (
-              <g key={`node-${node.id}`}>
+              <g key={node.id} data-nid={node.id}>
                 <circle
-                  cx={node.x}
-                  cy={node.y}
                   r={radius}
-                  fill={color}
-                  opacity={isSelected ? 1 : isHovered2 ? 0.9 : 0.7}
-                  onClick={() => handleNodeClick(node)}
-                  onMouseEnter={() => setHoveredNode(node.id)}
-                  onMouseLeave={() => setHoveredNode(null)}
-                  style={{
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                    filter: isSelected ? 'drop-shadow(0 0 8px rgba(59, 130, 246, 0.5))' : 'none',
-                  }}
+                  fill={getColor(node.type)}
+                  opacity={1}
                 />
-
-                {/* Node label on hover */}
-                {isHovered2 && (
-                  <text
-                    x={node.x}
-                    y={node.y - radius - 8}
-                    fill="#cbd5e1"
-                    fontSize="12"
-                    textAnchor="middle"
-                    pointerEvents="none"
-                    fontWeight="bold"
-                  >
-                    {node.label}
-                  </text>
-                )}
+                <text
+                  y={radius + 14}
+                  textAnchor="middle"
+                  fill="#cbd5e1"
+                  fontSize="10"
+                  fontFamily="Arial, sans-serif"
+                  opacity={0.85}
+                  style={{ pointerEvents: 'none', textShadow: '0 1px 3px rgba(0,0,0,0.8)' }}
+                >
+                  {truncate(node.label, 16)}
+                </text>
               </g>
             )
           })}
@@ -369,55 +492,37 @@ const GraphViewer: React.FC<Props> = ({
       </svg>
 
       {/* Legend */}
-      <div style={legendStyle}>
-        <div style={legendItemStyle}>
-          <div style={legendColorStyle('#3b82f6')} />
-          <span>Person</span>
-        </div>
-        <div style={legendItemStyle}>
-          <div style={legendColorStyle('#10b981')} />
-          <span>Organization</span>
-        </div>
-        <div style={legendItemStyle}>
-          <div style={legendColorStyle('#f97316')} />
-          <span>Topic</span>
-        </div>
+      <div style={{
+        position: 'absolute',
+        bottom: 12,
+        left: 12,
+        display: 'flex',
+        gap: 12,
+        fontSize: 10,
+        color: '#94a3b8',
+      }}>
+        {[
+          { type: 'Person', color: '#6b8fc9' },
+          { type: 'Organization', color: '#4ba383' },
+          { type: 'Topic', color: '#c4934a' },
+        ].map(({ type, color }) => (
+          <div key={type} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <div style={{ width: 6, height: 6, borderRadius: '50%', background: color }} />
+            {type}
+          </div>
+        ))}
       </div>
 
-      {/* Details panel */}
-      {selectedNode && (
-        <div style={detailsPanelStyle}>
-          <button style={closeBtnStyle} onClick={() => setSelectedNode(null)}>
-            ×
-          </button>
-          <div style={{ paddingRight: '20px' }}>
-            <div style={{ fontWeight: 'bold', marginBottom: '8px', color: '#f1f5f9' }}>
-              {selectedNode.label}
-            </div>
-            <div style={{ marginBottom: '8px', color: '#94a3b8' }}>
-              Type: <span style={{ color: '#cbd5e1' }}>{selectedNode.type}</span>
-            </div>
-            {selectedNode.data && Object.keys(selectedNode.data).length > 0 && (
-              <div>
-                <div style={{ marginBottom: '4px', color: '#94a3b8' }}>Details:</div>
-                <pre
-                  style={{
-                    fontSize: '10px',
-                    backgroundColor: 'rgba(15, 23, 42, 0.5)',
-                    padding: '6px',
-                    borderRadius: '4px',
-                    overflow: 'auto',
-                    maxHeight: '200px',
-                    color: '#cbd5e1',
-                  }}
-                >
-                  {JSON.stringify(selectedNode.data, null, 2)}
-                </pre>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      {/* Stats */}
+      <div style={{
+        position: 'absolute',
+        bottom: 12,
+        right: 12,
+        fontSize: 10,
+        color: '#475569',
+      }}>
+        {nodes.length} nodes · {edges.length} edges
+      </div>
     </div>
   )
 }

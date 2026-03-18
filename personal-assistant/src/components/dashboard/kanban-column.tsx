@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, memo, useId } from 'react'
 import { useDroppable } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { Plus } from 'lucide-react'
@@ -24,7 +24,7 @@ const PRIORITY_DOT_COLOR: Record<string, string> = {
   low: 'var(--text-dim)',
 }
 
-export function KanbanColumn({
+export const KanbanColumn = memo(function KanbanColumn({
   column,
   tasks,
   totalTaskCount,
@@ -39,6 +39,7 @@ export function KanbanColumn({
   const [ghostHover, setGhostHover] = useState(false)
   const [headerHover, setHeaderHover] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
+  const scrollId = useId().replace(/:/g, '')
 
   useEffect(() => {
     if (isAdding) setTimeout(() => inputRef.current?.focus(), 30)
@@ -51,11 +52,19 @@ export function KanbanColumn({
     setQuickPriority('medium')
   }
 
+  const isEmpty = tasks.length === 0
   const progressPct = totalTaskCount > 0 ? (tasks.length / totalTaskCount) * 100 : 0
 
   return (
     <div
-      style={{ display: 'flex', flex: 1, minWidth: 240, maxWidth: 340, flexDirection: 'column', height: '100%' }}
+      style={{
+        display: 'flex',
+        flex: isEmpty && !isOver ? '0 0 auto' : 1,
+        minWidth: isEmpty && !isOver ? 120 : 200,
+        flexDirection: 'column',
+        height: '100%',
+        transition: 'flex 0.15s ease, min-width 0.15s ease',
+      }}
       onMouseEnter={() => setHeaderHover(true)}
       onMouseLeave={() => setHeaderHover(false)}
     >
@@ -98,20 +107,20 @@ export function KanbanColumn({
       {/* Droppable area */}
       <div
         ref={setNodeRef}
+        data-col-id={column.id}
+        className={`kanban-scroll-${scrollId}${!isEmpty ? ' kanban-col-populated' : ''}`}
         style={{
           flex: 1,
           display: 'flex',
           flexDirection: 'column',
           gap: 6,
-          borderRadius: 14,
+          borderRadius: 16,
           padding: 6,
-          background: isOver ? 'transparent' : 'var(--glass-card-border)',
-          outline: isOver ? '1.5px dashed rgba(148, 163, 184, 0.15)' : '1.5px dashed transparent',
-          animation: isOver ? 'bb-drop-pulse 1.5s ease-in-out infinite' : undefined,
-          transition: 'background 0.2s ease, outline-color 0.2s ease',
+          background: isOver ? 'rgba(148, 163, 184, 0.04)' : 'var(--glass-card-border)',
+          outline: isOver ? '1.5px dashed rgba(148, 163, 184, 0.18)' : '1.5px dashed transparent',
+          transition: 'background 0.1s ease, outline-color 0.1s ease',
           minHeight: 0,
           overflowY: 'auto',
-          scrollbarGutter: 'stable',
         }}
       >
         <SortableContext
@@ -131,7 +140,7 @@ export function KanbanColumn({
         {/* Inline quick-add */}
         {isAdding ? (
           <div style={{
-            borderRadius: 14,
+            borderRadius: 10,
             padding: '10px 14px',
             background: 'var(--bg-card)',
             boxShadow: 'var(--card-inset)',
@@ -201,30 +210,29 @@ export function KanbanColumn({
               alignItems: 'center',
               justifyContent: 'center',
               gap: 6,
-              borderRadius: 14,
-              padding: 12,
+              borderRadius: 10,
+              padding: isEmpty ? '8px 12px' : 12,
               border: `1.5px dashed ${ghostHover ? 'rgba(148, 163, 184, 0.25)' : 'rgba(148, 163, 184, 0.12)'}`,
               background: ghostHover ? 'var(--glass-card-border)' : 'transparent',
               width: '100%',
               fontSize: 12,
-              color: ghostHover ? 'var(--text-dim)' : 'var(--text-dim)',
+              color: 'var(--text-dim)',
               cursor: 'pointer',
               transition: 'color 0.15s, background 0.15s, border-color 0.15s',
-              marginTop: 'auto',
+              marginTop: isEmpty ? 0 : 'auto',
             }}
           >
             <Plus style={{ width: 13, height: 13 }} />
-            Add task
+            {!isEmpty && 'Add task'}
           </button>
         ) : null}
       </div>
 
+      {/* Hide scrollbar while keeping scroll functional */}
       <style>{`
-        @keyframes bb-drop-pulse {
-          0%, 100% { outline-color: rgba(148, 163, 184, 0.08); }
-          50% { outline-color: rgba(148, 163, 184, 0.2); }
-        }
+        .kanban-scroll-${scrollId}::-webkit-scrollbar { display: none; }
+        .kanban-scroll-${scrollId} { scrollbar-width: none; -ms-overflow-style: none; }
       `}</style>
     </div>
   )
-}
+})

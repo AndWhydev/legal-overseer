@@ -14,6 +14,7 @@
 import type Anthropic from '@anthropic-ai/sdk'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { generateInvoicePdf } from '../invoice-pdf'
+import { loadOrgTemplate, templateToPdfSettings } from '@/lib/invoices/template-types'
 import { logger } from '@/lib/core/logger'
 
 export const invoiceToolDefinition: Anthropic.Tool = {
@@ -84,50 +85,50 @@ export async function handleGenerateInvoice(
   supabase: SupabaseClient,
 ): Promise<{ success: boolean; data?: unknown; error?: string }> {
   try {
-    // Step 1: Look up business details from memory
-    const { data: memories } = await supabase
-      .from('semantic_memories')
-      .select('content')
-      .eq('org_id', orgId)
-      .eq('is_active', true)
-      .or('content.ilike.%BSB%,content.ilike.%ABN%,content.ilike.%invoice-template%,content.ilike.%bank%')
-      .order('confidence', { ascending: false })
-      .limit(5)
+    // Step 1: Load org template (primary source) + semantic memories (fallback)
+    const [orgTemplate, { data: memories }] = await Promise.all([
+      loadOrgTemplate(supabase, orgId),
+      supabase
+        .from('semantic_memories')
+        .select('content')
+        .eq('org_id', orgId)
+        .eq('is_active', true)
+        .or('content.ilike.%BSB%,content.ilike.%ABN%,content.ilike.%invoice-template%,content.ilike.%bank%')
+        .order('confidence', { ascending: false })
+        .limit(5),
+    ])
 
-    let abn = ''
-    let bankDetails = ''
-    let companyName = 'Tor Kay'
-    let companyEmail = 'contact@torkay.com'
+    // Extract fallback values from semantic memories
+    let memAbn = ''
+    let memBankDetails = ''
+    let memCompanyName = ''
 
     for (const mem of memories ?? []) {
       const content = mem.content
-      // Skip invoice-html records (they contain rendered HTML, not extractable data)
       if (content.startsWith('[invoice-html:')) continue
 
-      // Extract ABN
       const abnMatch = content.match(/ABN[:\s]+(\d[\d\s]+\d)/i)
-      if (abnMatch && !abn) abn = abnMatch[1].replace(/\s/g, ' ').trim()
+      if (abnMatch && !memAbn) memAbn = abnMatch[1].replace(/\s/g, ' ').trim()
 
-      // Extract BSB + Account
       const bsbMatch = content.match(/BSB[:\s]+([\d-]+)/i)
       const accMatch = content.match(/Account(?:\s+Number)?[:\s]+(\d+)/i)
-      if (bsbMatch && accMatch && !bankDetails) {
+      if (bsbMatch && accMatch && !memBankDetails) {
         const nameMatch = content.match(/Account\s+Name[:\s]+([^\n]+)/i)
-        bankDetails = `BSB: ${bsbMatch[1]}, Account: ${accMatch[1]}${nameMatch ? `, Name: ${nameMatch[1].trim()}` : ''}`
+        memBankDetails = `BSB: ${bsbMatch[1]}, Account: ${accMatch[1]}${nameMatch ? `, Name: ${nameMatch[1].trim()}` : ''}`
       }
 
-      // Extract company name — only from "User's business" or "FROM" lines, not filenames
       const businessMatch = content.match(/User's business[:\s]+([^\n]+)/i)
-      if (businessMatch) companyName = businessMatch[1].trim()
+      if (businessMatch) memCompanyName = businessMatch[1].trim()
       else {
         const fromMatch = content.match(/^FROM[:\s]+([A-Z][a-z]+ [A-Z][a-z]+)/m)
-        if (fromMatch && !fromMatch[1].includes('.pdf')) companyName = fromMatch[1].trim()
+        if (fromMatch && !fromMatch[1].includes('.pdf') && !memCompanyName) memCompanyName = fromMatch[1].trim()
       }
-
-      // Extract email
-      const emailMatch = content.match(/(?:contact|tor)@[\w.]+\.com\.au/i)
-      if (emailMatch) companyEmail = emailMatch[0]
     }
+
+    // Template fields take precedence, semantic memories fill gaps
+    const companyName = orgTemplate.company_name || memCompanyName || 'Tor Kay'
+    const abn = orgTemplate.abn || memAbn
+    const bankDetails = orgTemplate.bank_details || orgTemplate.payment_instructions || memBankDetails
 
     // Step 2: Auto-generate invoice number if not provided
     let invoiceNumber = input.invoice_number
@@ -181,7 +182,18 @@ export async function handleGenerateInvoice(
     const dueDate = new Date(now)
     dueDate.setDate(dueDate.getDate() + termsDays)
 
-    // Step 4: Generate styled HTML invoice
+    // Step 4: Generate styled HTML invoice using org template + fallbacks
+    const pdfSettings = {
+      ...templateToPdfSettings(orgTemplate),
+      // Override with resolved fallback values where template is empty
+      company_name: companyName,
+      abn: abn || undefined,
+      bank_details: bankDetails || undefined,
+      payment_terms_days: termsDays,
+      gst_registered: orgTemplate.gst_registered ?? false,
+      address_lines: orgTemplate.address_lines?.length ? orgTemplate.address_lines : undefined,
+    }
+
     const result = generateInvoicePdf(
       {
         invoice_number: invoiceNumber,
@@ -197,14 +209,7 @@ export async function handleGenerateInvoice(
         payment_terms_days: termsDays,
         project_reference: input.project_reference ?? null,
       },
-      {
-        company_name: companyName,
-        abn: abn || undefined,
-        bank_details: bankDetails || undefined,
-        payment_terms_days: termsDays,
-        gst_registered: false,
-        address_lines: ['Brisbane, Queensland'],
-      }
+      pdfSettings,
     )
 
     // Step 5: Store the invoice in memory for future reference
@@ -236,14 +241,7 @@ export async function handleGenerateInvoice(
         payment_terms_days: termsDays,
         project_reference: input.project_reference ?? null,
       },
-      settings: {
-        company_name: companyName,
-        abn: abn || undefined,
-        bank_details: bankDetails || undefined,
-        payment_terms_days: termsDays,
-        gst_registered: false,
-        address_lines: ['Brisbane, Queensland'],
-      },
+      settings: pdfSettings,
     })).toString('base64')
 
     // Store the invoice HTML in a temporary record so it can be viewed

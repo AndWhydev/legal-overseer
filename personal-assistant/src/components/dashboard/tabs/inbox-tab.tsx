@@ -24,7 +24,8 @@ import {
   Forward,
   AlertTriangle,
   Star,
-  Send,
+  ArrowUp,
+  Trash2,
 } from 'lucide-react';
 import { resolveAvatar, resolveAvatarSync, type AvatarResult } from '@/lib/avatar/resolver';
 
@@ -32,10 +33,10 @@ import { resolveAvatar, resolveAvatarSync, type AvatarResult } from '@/lib/avata
 // Types
 // ---------------------------------------------------------------------------
 
-type MessageCategory = 'actionable' | 'informational' | 'spam' | 'personal';
+type MessageCategory = 'action_required' | 'fyi' | 'conversation' | 'automated' | 'marketing' | 'spam';
 type PriorityLevel = 'critical' | 'high' | 'medium' | 'low';
 type ThreadStatus = 'waiting_on_you' | 'waiting_on_them' | 'resolved' | 'new';
-type CategoryPillType = 'all' | 'focus' | 'waiting' | 'direct' | 'email' | 'notifications' | 'billing';
+type CategoryPillType = 'all' | 'action' | 'waiting' | 'direct' | 'email' | 'notifications' | 'billing';
 
 interface InboxMessage {
   id: string;
@@ -66,6 +67,97 @@ interface ToastEntry {
 }
 
 // ---------------------------------------------------------------------------
+// Notification Grouping — Apple Intelligence style
+// ---------------------------------------------------------------------------
+
+type DisplayItem =
+  | { type: 'individual'; message: InboxMessage }
+  | { type: 'group'; groupKey: string; label: string; channelType: string;
+      messages: InboxMessage[]; newestAt: string; hasUnread: boolean };
+
+function getGroupKey(msg: InboxMessage): string | null {
+  switch (msg.category) {
+    case 'action_required': return null; // never grouped
+    case 'automated': return `auto:${msg.channelType}`;
+    case 'marketing': return `mkt:${msg.senderEmail || msg.senderName || 'unknown'}`;
+    case 'fyi':
+    case 'conversation': return `contact:${msg.contactId || msg.senderEmail || msg.senderName || 'unknown'}`;
+    default: return null;
+  }
+}
+
+function getGroupLabel(key: string, representative: InboxMessage): string {
+  if (key.startsWith('auto:')) {
+    const channel = key.slice(5);
+    const names: Record<string, string> = {
+      asana: 'Asana', stripe: 'Stripe', calendly: 'Calendly',
+      gmail: 'Gmail', outlook: 'Outlook', slack: 'Slack',
+    };
+    return names[channel] || channel;
+  }
+  if (key.startsWith('mkt:')) {
+    return representative.senderName || representative.senderEmail || 'Newsletter';
+  }
+  return representative.contactName || representative.senderName || representative.senderEmail || 'Unknown';
+}
+
+function groupMessages(messages: InboxMessage[], activePill: CategoryPillType): DisplayItem[] {
+  // No grouping for action pill (all are action_required)
+  if (activePill === 'action') {
+    return messages.map(m => ({ type: 'individual' as const, message: m }));
+  }
+
+  const groupMap = new Map<string, InboxMessage[]>();
+  const order: (string | InboxMessage)[] = [];
+
+  for (const msg of messages) {
+    const key = getGroupKey(msg);
+    if (!key) {
+      order.push(msg);
+      continue;
+    }
+    if (!groupMap.has(key)) {
+      groupMap.set(key, []);
+      order.push(key);
+    }
+    groupMap.get(key)!.push(msg);
+  }
+
+  const items: DisplayItem[] = [];
+  for (const entry of order) {
+    if (typeof entry === 'string') {
+      const msgs = groupMap.get(entry)!;
+      if (msgs.length < 2) {
+        // Single message — dissolve back to individual
+        items.push({ type: 'individual', message: msgs[0] });
+      } else {
+        msgs.sort((a, b) => new Date(b.receivedAt).getTime() - new Date(a.receivedAt).getTime());
+        items.push({
+          type: 'group',
+          groupKey: entry,
+          label: getGroupLabel(entry, msgs[0]),
+          channelType: msgs[0].channelType,
+          messages: msgs,
+          newestAt: msgs[0].receivedAt,
+          hasUnread: msgs.some(m => m.status === 'unread'),
+        });
+      }
+    } else {
+      items.push({ type: 'individual', message: entry });
+    }
+  }
+
+  // Sort by most-recent timestamp
+  items.sort((a, b) => {
+    const aTime = a.type === 'group' ? a.newestAt : a.message.receivedAt;
+    const bTime = b.type === 'group' ? b.newestAt : b.message.receivedAt;
+    return new Date(bTime).getTime() - new Date(aTime).getTime();
+  });
+
+  return items;
+}
+
+// ---------------------------------------------------------------------------
 // Category Pill Config
 // ---------------------------------------------------------------------------
 
@@ -73,12 +165,12 @@ const PILL_CONFIG: Record<CategoryPillType, {
   label: string;
   filter: (m: InboxMessage) => boolean;
 }> = {
-  all:           { label: 'All',           filter: (m) => m.category !== 'spam' },
-  focus:         { label: 'Focus',         filter: (m) => m.category === 'actionable' },
-  waiting:       { label: 'Waiting',       filter: (m) => m.threadStatus === 'waiting_on_you' },
+  all:           { label: 'All',           filter: (m) => m.category !== 'spam' && m.category !== 'marketing' },
+  action:        { label: 'Action',        filter: (m) => m.category === 'action_required' },
+  waiting:       { label: 'Waiting',       filter: (m) => m.threadStatus === 'waiting_on_you' && m.category !== 'spam' && m.category !== 'marketing' && m.category !== 'automated' },
   direct:        { label: 'Direct',        filter: (m) => ['whatsapp', 'imessage', 'sms', 'slack'].includes(m.channelType) },
-  email:         { label: 'Email',         filter: (m) => ['gmail', 'outlook'].includes(m.channelType) && m.category !== 'spam' },
-  notifications: { label: 'Notifications', filter: (m) => ['asana', 'calendly', 'jira'].includes(m.channelType) },
+  email:         { label: 'Email',         filter: (m) => ['gmail', 'outlook'].includes(m.channelType) && m.category !== 'spam' && m.category !== 'marketing' },
+  notifications: { label: 'Notifications', filter: (m) => m.category === 'automated' },
   billing:       { label: 'Billing',       filter: (m) => ['stripe', 'xero'].includes(m.channelType) },
 };
 
@@ -201,7 +293,7 @@ const SEED_MESSAGES: InboxMessage[] = [
     id: 's1', channelType: 'gmail', senderName: 'Sarah Chen', senderEmail: 'sarah@designstudio.co',
     subject: 'Website revision — final round feedback', bodyPreview: 'Hey, the client loved the new hero section but wants the CTA button colour changed to match their brand guide...', fullBody: 'Hey, the client loved the new hero section but wants the CTA button colour changed to match their brand guide. Can you update it before the presentation on Friday? They want it to match hex #2B5BA0 from their style guide.\n\nAlso, they mentioned the font on the pricing page feels too small on mobile — can we bump it up a notch?\n\nThanks!',
     aiSummary: 'Client approved hero section but wants CTA button colour updated to match brand guide. Action needed before presentation.',
-    category: 'actionable', priority: 'high', significance: 8, contactId: 'c1', contactName: 'Sarah Chen',
+    category: 'action_required', priority: 'high', significance: 8, contactId: 'c1', contactName: 'Sarah Chen',
     threadStatus: 'waiting_on_you', deduplicatedWith: null, threadCount: 3,
     receivedAt: new Date(Date.now() - 12 * 60000).toISOString(),
     processedAt: new Date().toISOString(), status: 'unread',
@@ -211,7 +303,7 @@ const SEED_MESSAGES: InboxMessage[] = [
     subject: null, bodyPreview: 'Can you check the Sentry dashboard? Getting a spike in 500s on the checkout flow since the last deploy',
     fullBody: 'Can you check the Sentry dashboard? Getting a spike in 500s on the checkout flow since the last deploy.\n\nIt started around 2pm, right after the v2.4.1 release went out. Looks like it might be the new payment validation middleware.',
     aiSummary: 'Checkout flow seeing 500 error spike post-deploy. Needs immediate Sentry investigation.',
-    category: 'actionable', priority: 'critical', significance: 9, contactId: 'c2', contactName: 'Andy Wu',
+    category: 'action_required', priority: 'critical', significance: 9, contactId: 'c2', contactName: 'Andy Wu',
     threadStatus: 'waiting_on_you', deduplicatedWith: null, threadCount: 2,
     receivedAt: new Date(Date.now() - 5 * 60000).toISOString(),
     processedAt: new Date().toISOString(), status: 'unread',
@@ -221,7 +313,7 @@ const SEED_MESSAGES: InboxMessage[] = [
     subject: 'Task assigned: Q1 brand refresh deliverables', bodyPreview: 'You have been assigned to "Q1 brand refresh deliverables" in project Brand & Identity. Due: Mar 7',
     fullBody: 'You have been assigned to "Q1 brand refresh deliverables" in project Brand & Identity. Due: Mar 7\n\nThis task includes:\n- Updated logo variations (horizontal, stacked, icon-only)\n- Refreshed colour palette with accessibility audit\n- Social media template kit (Instagram, LinkedIn, Twitter)\n\nPlease review the brief in the project description.',
     aiSummary: 'Assigned to Q1 brand refresh deliverables in Brand & Identity project. Due March 7.',
-    category: 'actionable', priority: 'medium', significance: 6, contactId: null, contactName: null,
+    category: 'automated', priority: 'medium', significance: 6, contactId: null, contactName: null,
     threadStatus: 'new', deduplicatedWith: null,
     receivedAt: new Date(Date.now() - 45 * 60000).toISOString(),
     processedAt: new Date().toISOString(), status: 'unread',
@@ -231,7 +323,7 @@ const SEED_MESSAGES: InboxMessage[] = [
     subject: 'Payment received — $4,200.00', bodyPreview: 'Invoice INV-2024-0089 for DesignStudio Co has been paid. Amount: $4,200.00 AUD',
     fullBody: 'Invoice INV-2024-0089 for DesignStudio Co has been paid.\n\nAmount: $4,200.00 AUD\nPayment method: Visa ending in 4242\nDate: 17 Mar 2026\n\nView receipt: https://dashboard.stripe.com/...',
     aiSummary: 'DesignStudio Co paid $4,200 AUD for invoice INV-2024-0089.',
-    category: 'informational', priority: 'low', significance: 4, contactId: 'c1', contactName: 'Sarah Chen',
+    category: 'automated', priority: 'low', significance: 4, contactId: 'c1', contactName: 'Sarah Chen',
     threadStatus: null, deduplicatedWith: null,
     receivedAt: new Date(Date.now() - 2 * 3600000).toISOString(),
     processedAt: new Date().toISOString(), status: 'unread',
@@ -241,7 +333,7 @@ const SEED_MESSAGES: InboxMessage[] = [
     subject: 'Re: Proposal for Q2 retainer', bodyPreview: "Thanks for sending that through. I've shared it with our CFO. Expecting a decision by end of week.",
     fullBody: "Thanks for sending that through. I've shared it with our CFO and he's reviewing the scope and pricing now.\n\nExpecting a decision by end of week. If we go ahead, we'd want to kick off the first week of April.\n\nOne question — does the retainer include ad-hoc design requests, or is that billed separately?",
     aiSummary: 'Q2 retainer proposal shared with CFO. Decision expected by end of week. No action needed yet.',
-    category: 'informational', priority: 'medium', significance: 5, contactId: 'c3', contactName: 'Tom Bradley',
+    category: 'fyi', priority: 'medium', significance: 5, contactId: 'c3', contactName: 'Tom Bradley',
     threadStatus: 'waiting_on_them', deduplicatedWith: null, threadCount: 4,
     receivedAt: new Date(Date.now() - 4 * 3600000).toISOString(),
     processedAt: new Date().toISOString(), status: 'actioned',
@@ -251,7 +343,7 @@ const SEED_MESSAGES: InboxMessage[] = [
     subject: 'New booking: Discovery call with Mira Patel', bodyPreview: 'Mira Patel booked a 30-min discovery call for tomorrow at 10:00 AM AEST',
     fullBody: 'Mira Patel booked a 30-min discovery call for tomorrow at 10:00 AM AEST.\n\nEvent: Discovery Call\nDuration: 30 minutes\nDate: Tomorrow, 10:00 AM AEST\nLocation: Google Meet (link in calendar invite)\n\nNote from Mira: "Looking to discuss a website redesign for our e-commerce store. Currently on Shopify but considering a custom build."',
     aiSummary: 'Mira Patel booked a 30-min discovery call for tomorrow at 10 AM AEST.',
-    category: 'informational', priority: 'medium', significance: 5, contactId: null, contactName: 'Mira Patel',
+    category: 'automated', priority: 'medium', significance: 5, contactId: null, contactName: 'Mira Patel',
     threadStatus: 'new', deduplicatedWith: null,
     receivedAt: new Date(Date.now() - 6 * 3600000).toISOString(),
     processedAt: new Date().toISOString(), status: 'actioned',
@@ -261,7 +353,7 @@ const SEED_MESSAGES: InboxMessage[] = [
     subject: '3 people viewed your profile', bodyPreview: 'Your profile was viewed by a Product Manager at Canva, a Design Lead at Atlassian, and 1 other',
     fullBody: 'Your profile was viewed by a Product Manager at Canva, a Design Lead at Atlassian, and 1 other.\n\nSee who viewed your profile and connect with them on LinkedIn.',
     aiSummary: 'LinkedIn notification — 3 profile views including Canva PM and Atlassian Design Lead.',
-    category: 'spam', priority: 'low', significance: 1, contactId: null, contactName: null,
+    category: 'marketing', priority: 'low', significance: 1, contactId: null, contactName: null,
     threadStatus: null, deduplicatedWith: null,
     receivedAt: new Date(Date.now() - 12 * 3600000).toISOString(),
     processedAt: new Date().toISOString(), status: 'archived',
@@ -271,7 +363,7 @@ const SEED_MESSAGES: InboxMessage[] = [
     subject: null, bodyPreview: 'Lunch tomorrow? That new ramen place on Crown St just opened',
     fullBody: 'Lunch tomorrow? That new ramen place on Crown St just opened 🍜\n\nApparently the tonkotsu is insane. 12:30 work?',
     aiSummary: 'Lunch invite for tomorrow at new ramen place on Crown St.',
-    category: 'personal', priority: 'low', significance: 3, contactId: 'c4', contactName: 'Jess Reilly',
+    category: 'conversation', priority: 'low', significance: 3, contactId: 'c4', contactName: 'Jess Reilly',
     threadStatus: 'waiting_on_you', deduplicatedWith: null,
     receivedAt: new Date(Date.now() - 8 * 3600000).toISOString(),
     processedAt: new Date().toISOString(), status: 'unread',
@@ -280,7 +372,7 @@ const SEED_MESSAGES: InboxMessage[] = [
   ...Array.from({ length: 42 }, (_, i) => {
     const names = ['Alex Kim', 'Maria Lopez', 'James Wilson', 'Emma Davis', 'Raj Patel', 'Lisa Zhang', 'Ben O\'Brien', 'Natasha Roy'];
     const channels: InboxMessage['channelType'][] = ['gmail', 'outlook', 'whatsapp', 'asana', 'stripe', 'slack', 'calendly'];
-    const categories: MessageCategory[] = ['actionable', 'informational', 'informational', 'personal'];
+    const categories: MessageCategory[] = ['action_required', 'fyi', 'automated', 'conversation', 'fyi', 'automated'];
     const priorities: PriorityLevel[] = ['critical', 'high', 'medium', 'low'];
     const subjects = [
       'Invoice follow-up', 'Meeting notes from sync', 'Design assets ready', 'Quick question about scope',
@@ -378,13 +470,20 @@ function InboxTab() {
   const [newMessageAlert, setNewMessageAlert] = useState(false);
 
   // New state for P2-5, P2-2, P4-5
-  const [activePill, setActivePill] = useState<CategoryPillType>('all');
+  const [activePill, setActivePill] = useState<CategoryPillType>('action');
   const [undoToasts, setUndoToasts] = useState<ToastEntry[]>([]);
   const [snoozeTargetId, setSnoozeTargetId] = useState<string | null>(null);
   const [snoozeAnchor, setSnoozeAnchor] = useState<{ top: number; right: number } | null>(null);
   const [starredIds, setStarredIds] = useState<Set<string>>(new Set());
   const [snoozedIds, setSnoozedIds] = useState<Set<string>>(new Set());
   const lastClickedIndexRef = useRef<number>(-1);
+  const messagesRef = useRef(messages);
+  messagesRef.current = messages;
+
+  // Notification grouping
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+  const [collapsingGroupKey, setCollapsingGroupKey] = useState<string | null>(null);
+  const collapsingGroupRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   // Collapse animation
   const [collapsingId, setCollapsingId] = useState<string | null>(null);
@@ -429,8 +528,35 @@ function InboxTab() {
     });
   }, [messages, channelFilter, priorityFilter, activePill, snoozedIds]);
 
+  const displayItems = useMemo(
+    () => groupMessages(displayed, activePill),
+    [displayed, activePill]
+  );
+
+  const handleGroupClick = useCallback((groupKey: string) => {
+    setExpandedGroups(prev => {
+      const next = new Set(prev);
+      if (next.has(groupKey)) {
+        // Collapse with animation
+        next.delete(groupKey);
+        setCollapsingGroupKey(groupKey);
+        if (collapsingGroupRef.current) clearTimeout(collapsingGroupRef.current);
+        // Stagger out takes ~220ms (last child delay + duration), container 180ms
+        collapsingGroupRef.current = setTimeout(() => setCollapsingGroupKey(null), 250);
+      } else {
+        // Expand — cancel any in-progress collapse
+        if (collapsingGroupKey) {
+          clearTimeout(collapsingGroupRef.current);
+          setCollapsingGroupKey(null);
+        }
+        next.add(groupKey);
+      }
+      return next;
+    });
+  }, [collapsingGroupKey]);
+
   const pillCounts = useMemo(() => {
-    const counts: Record<CategoryPillType, number> = { all: 0, focus: 0, waiting: 0, direct: 0, email: 0, notifications: 0, billing: 0 };
+    const counts: Record<CategoryPillType, number> = { all: 0, action: 0, waiting: 0, direct: 0, email: 0, notifications: 0, billing: 0 };
     const nonSnooze = messages.filter(m => !snoozedIds.has(m.id));
     for (const m of nonSnooze) {
       for (const [key, cfg] of Object.entries(PILL_CONFIG) as [CategoryPillType, typeof PILL_CONFIG[CategoryPillType]][]) {
@@ -441,7 +567,7 @@ function InboxTab() {
   }, [messages, snoozedIds]);
 
   const hasUnreadPriority = useMemo(
-    () => messages.some(m => m.category === 'actionable' && m.status === 'unread' && !snoozedIds.has(m.id)),
+    () => messages.some(m => m.category === 'action_required' && m.status === 'unread' && !snoozedIds.has(m.id)),
     [messages, snoozedIds]
   );
 
@@ -459,7 +585,7 @@ function InboxTab() {
       if (channelFilter) params.set('channel', channelFilter);
       if (priorityFilter) params.set('priority', priorityFilter);
       params.set('limit', String(PAGE_SIZE));
-      if (loadMore) params.set('offset', String(messages.length));
+      if (loadMore) params.set('offset', String(messagesRef.current.length));
 
       const response = await fetch(`/api/agent/inbox?${params.toString()}`);
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -484,7 +610,7 @@ function InboxTab() {
       setRefreshing(false);
       setLoadingMore(false);
     }
-  }, [channelFilter, priorityFilter, useSeeded, messages.length]);
+  }, [channelFilter, priorityFilter, useSeeded]);
 
   useEffect(() => {
     if (useSeeded) {
@@ -617,31 +743,63 @@ function InboxTab() {
     }
   }, [expandedId, displayed]);
 
-  // ── Keyboard hook ──
+  // ── Keyboard hook (group-aware) ──
   const keyboard = useInboxKeyboard({
     enabled: true,
-    messageCount: displayed.length,
+    messageCount: displayItems.length,
     onOpen: (index) => {
-      if (index >= 0 && index < displayed.length) {
-        setExpandedId(prev => prev === displayed[index].id ? null : displayed[index].id);
+      const item = displayItems[index];
+      if (!item) return;
+      if (item.type === 'group') {
+        handleGroupClick(item.groupKey);
+      } else {
+        setExpandedId(prev => prev === item.message.id ? null : item.message.id);
       }
     },
     onArchive: (index) => {
-      if (index >= 0 && index < displayed.length) handleArchive(displayed[index].id);
+      const item = displayItems[index];
+      if (!item) return;
+      if (item.type === 'group') {
+        item.messages.forEach(m => handleArchive(m.id));
+      } else {
+        handleArchive(item.message.id);
+      }
     },
     onDone: (index) => {
-      if (index >= 0 && index < displayed.length) handleDone(displayed[index].id);
+      const item = displayItems[index];
+      if (!item) return;
+      if (item.type === 'group') {
+        item.messages.forEach(m => handleDone(m.id));
+      } else {
+        handleDone(item.message.id);
+      }
     },
     onReply: () => {},
     onForward: () => {},
     onSnooze: () => {},
     onStar: () => {},
     onDelete: (index) => {
-      if (index >= 0 && index < displayed.length) handleDelete(displayed[index].id);
+      const item = displayItems[index];
+      if (!item) return;
+      if (item.type === 'group') {
+        item.messages.forEach(m => handleDelete(m.id));
+      } else {
+        handleDelete(item.message.id);
+      }
     },
     onSpam: () => {},
     onSelect: (index) => {
-      if (index >= 0 && index < displayed.length) toggleSelect(displayed[index].id);
+      const item = displayItems[index];
+      if (!item) return;
+      if (item.type === 'group') {
+        keyboard.setSelectedIds((prev: Set<string>) => {
+          const next = new Set(prev);
+          item.messages.forEach(m => next.add(m.id));
+          return next;
+        });
+      } else {
+        toggleSelect(item.message.id);
+      }
     },
     onSelectAll: () => {
       keyboard.setSelectedIds(new Set(displayed.map(m => m.id)));
@@ -665,15 +823,21 @@ function InboxTab() {
   }, [keyboard]);
 
   const handleRowClick = useCallback((id: string, index: number, e: React.MouseEvent) => {
-    if (e.shiftKey) {
-      // Range select from lastClickedIndex to current
+    if (e.shiftKey && index >= 0) {
+      // Range select from lastClickedIndex to current (group-aware)
       e.preventDefault();
       const start = Math.min(lastClickedIndexRef.current >= 0 ? lastClickedIndexRef.current : index, index);
       const end = Math.max(lastClickedIndexRef.current >= 0 ? lastClickedIndexRef.current : index, index);
       keyboard.setSelectedIds((prev: Set<string>) => {
         const next = new Set(prev);
         for (let i = start; i <= end; i++) {
-          if (displayed[i]) next.add(displayed[i].id);
+          const item = displayItems[i];
+          if (!item) continue;
+          if (item.type === 'group') {
+            item.messages.forEach(m => next.add(m.id));
+          } else {
+            next.add(item.message.id);
+          }
         }
         return next;
       });
@@ -701,7 +865,7 @@ function InboxTab() {
         setExpandedId(id);
       }
     }
-  }, [displayed, keyboard, expandedId, closeExpanded, collapsingId]);
+  }, [displayItems, keyboard, expandedId, closeExpanded, collapsingId]);
 
   const clearSelection = useCallback(() => keyboard.setSelectedIds(new Set()), [keyboard]);
 
@@ -734,7 +898,7 @@ function InboxTab() {
   }
 
   const unreadCount = displayed.filter(m => m.status === 'unread').length;
-  const actionableCount = displayed.filter(m => m.category === 'actionable').length;
+  const actionableCount = displayed.filter(m => m.category === 'action_required').length;
   const waitingCount = displayed.filter(m => m.threadStatus === 'waiting_on_you').length;
   const totalCount = useSeeded ? displayed.length : total;
 
@@ -829,9 +993,9 @@ function InboxTab() {
       </div>
 
       {/* ── Scrollable Message List ── */}
-      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
+      <div className="bb-inbox-scroll" style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
       <div className="bb-inbox-list">
-        {displayed.length === 0 ? (
+        {displayItems.length === 0 ? (
           <EmptyState
             icon={<CheckCircle2 size={40} />}
             title="All caught up"
@@ -839,42 +1003,113 @@ function InboxTab() {
           />
         ) : (
           <>
-            {displayed.map((msg, idx) => (
-              <React.Fragment key={msg.id}>
-                <MessageRow
-                  message={msg}
-                  index={idx}
-                  expanded={expandedId === msg.id || collapsingId === msg.id}
-                  onArchive={handleArchive}
-                  onDone={handleDone}
-                  onSnooze={(id, e) => {
-                    const rect = (e.currentTarget as HTMLButtonElement).getBoundingClientRect();
-                    setSnoozeTargetId(id);
-                    setSnoozeAnchor({ top: rect.bottom + 8, right: window.innerWidth - rect.right });
-                  }}
-                  onReply={() => setExpandedId(msg.id)}
-                  onStar={handleStar}
-                  onRowClick={handleRowClick}
-                  focused={idx === keyboard.selectedIndex}
-                  selected={keyboard.selectedIds.has(msg.id)}
-                  starred={starredIds.has(msg.id)}
-                />
-                {(expandedId === msg.id || collapsingId === msg.id) && (
-                  <ExpandedMessageRow
+            {displayItems.map((item, idx) => {
+              if (item.type === 'group') {
+                const isGroupExpanded = expandedGroups.has(item.groupKey);
+                const isGroupCollapsing = collapsingGroupKey === item.groupKey;
+                const showChildren = isGroupExpanded || isGroupCollapsing;
+                return (
+                  <div key={item.groupKey} className="bb-inbox-group-wrapper">
+                    <GroupRow
+                      item={item}
+                      index={idx}
+                      expanded={isGroupExpanded || isGroupCollapsing}
+                      focused={idx === keyboard.selectedIndex}
+                      selected={item.messages.every(m => keyboard.selectedIds.has(m.id))}
+                      onClick={() => handleGroupClick(item.groupKey)}
+                      onDelete={() => item.messages.forEach(m => handleDelete(m.id))}
+                    />
+                    {showChildren && (
+                      <div
+                        className={`bb-inbox-group__children${isGroupCollapsing ? ' is-collapsing' : ''}`}
+                        style={{ pointerEvents: isGroupCollapsing ? 'none' : 'auto' }}
+                      >
+                        {item.messages.map((msg, childIdx) => (
+                          <div
+                            key={msg.id}
+                            className="bb-inbox-group__item"
+                            style={{ '--stagger': childIdx } as React.CSSProperties}
+                          >
+                            <MessageRow
+                              message={msg}
+                              index={idx}
+                              expanded={expandedId === msg.id || collapsingId === msg.id}
+                              onArchive={handleArchive}
+                              onDone={handleDone}
+                              onDelete={handleDelete}
+                              onSnooze={(id, e) => {
+                                const rect = (e.currentTarget as HTMLButtonElement).getBoundingClientRect();
+                                setSnoozeTargetId(id);
+                                setSnoozeAnchor({ top: rect.bottom + 8, right: window.innerWidth - rect.right });
+                              }}
+                              onReply={() => setExpandedId(msg.id)}
+                              onStar={handleStar}
+                              onRowClick={handleRowClick}
+                              focused={false}
+                              selected={keyboard.selectedIds.has(msg.id)}
+                              starred={starredIds.has(msg.id)}
+                              insideGroup
+                            />
+                            {(expandedId === msg.id || collapsingId === msg.id) && (
+                              <ExpandedMessageRow
+                                message={msg}
+                                threadMessages={SEED_THREAD_MESSAGES[msg.id]}
+                                onArchive={(id) => { handleArchive(id); setExpandedId(null); }}
+                                onDone={(id) => { handleDone(id); setExpandedId(null); }}
+                                onSpam={(id) => { handleSpam(id); setExpandedId(null); }}
+                                onReply={handleReply}
+                                onClose={closeExpanded}
+                                isCollapsing={collapsingId === msg.id}
+                                insideGroup
+                              />
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              }
+
+              const msg = item.message;
+              return (
+                <React.Fragment key={msg.id}>
+                  <MessageRow
                     message={msg}
-                    threadMessages={SEED_THREAD_MESSAGES[msg.id]}
-                    onArchive={(id) => { handleArchive(id); setExpandedId(null); }}
-                    onDone={(id) => { handleDone(id); setExpandedId(null); }}
-                    onSpam={(id) => { handleSpam(id); setExpandedId(null); }}
-                    onReply={handleReply}
-                    onClose={closeExpanded}
-                    isCollapsing={collapsingId === msg.id}
+                    index={idx}
+                    expanded={expandedId === msg.id || collapsingId === msg.id}
+                    onArchive={handleArchive}
+                    onDone={handleDone}
+                    onDelete={handleDelete}
+                    onSnooze={(id, e) => {
+                      const rect = (e.currentTarget as HTMLButtonElement).getBoundingClientRect();
+                      setSnoozeTargetId(id);
+                      setSnoozeAnchor({ top: rect.bottom + 8, right: window.innerWidth - rect.right });
+                    }}
+                    onReply={() => setExpandedId(msg.id)}
+                    onStar={handleStar}
+                    onRowClick={handleRowClick}
+                    focused={idx === keyboard.selectedIndex}
+                    selected={keyboard.selectedIds.has(msg.id)}
+                    starred={starredIds.has(msg.id)}
                   />
-                )}
-              </React.Fragment>
-            ))}
+                  {(expandedId === msg.id || collapsingId === msg.id) && (
+                    <ExpandedMessageRow
+                      message={msg}
+                      threadMessages={SEED_THREAD_MESSAGES[msg.id]}
+                      onArchive={(id) => { handleArchive(id); setExpandedId(null); }}
+                      onDone={(id) => { handleDone(id); setExpandedId(null); }}
+                      onSpam={(id) => { handleSpam(id); setExpandedId(null); }}
+                      onReply={handleReply}
+                      onClose={closeExpanded}
+                      isCollapsing={collapsingId === msg.id}
+                    />
+                  )}
+                </React.Fragment>
+              );
+            })}
             {/* Pagination: Load more (server-side) */}
-            {hasMore && displayed.length > 0 && (
+            {hasMore && !useSeeded && displayed.length > 0 && (
               <button
                 onClick={() => fetchInbox({ loadMore: true })}
                 disabled={loadingMore}
@@ -1005,7 +1240,7 @@ function InboxTab() {
 // Unified Filter Bar — single row with smart categories + dropdowns
 // ---------------------------------------------------------------------------
 
-const PILL_ORDER: CategoryPillType[] = ['all', 'focus', 'waiting', 'direct', 'email', 'notifications', 'billing'];
+const PILL_ORDER: CategoryPillType[] = ['all', 'action', 'waiting', 'direct', 'email', 'notifications', 'billing'];
 
 const CHANNEL_OPTIONS = [
   { value: '', label: 'All channels', icon: null },
@@ -1192,7 +1427,7 @@ function UnifiedFilterBar({
       {PILL_ORDER.map((pill) => {
         const cfg = PILL_CONFIG[pill];
         const isActive = activePill === pill;
-        const isPriority = pill === 'focus';
+        const isPriority = pill === 'action';
 
         return (
           <button
@@ -1509,15 +1744,18 @@ function extractSummaryInline(message: InboxMessage): { summary: string; actionI
   const body = message.fullBody || message.bodyPreview;
   const text = (message.subject || '') + ' ' + body;
   const actionItems: string[] = [];
-  const actionMatch = text.match(/want[s]?\s+(?:the\s+)?([^,.!?]{10,60})/i);
-  if (actionMatch) actionItems.push(actionMatch[0].trim());
-  const deadlineMatch = text.match(/(due|deadline|by|end of)\s+([^,.!?]{3,40})/i);
-  if (deadlineMatch) actionItems.push(`Deadline mentioned: ${deadlineMatch[0].trim()}`);
-  if (text.match(/urgent|asap|immediately|critical|error|crash|spike|500/i)) {
-    actionItems.push('Urgent -- requires immediate attention');
-  }
-  if (text.match(/assigned|you have been|please review|please confirm/i)) {
-    actionItems.push('Action assigned to you');
+  // Only extract actions for action_required messages
+  if (message.category === 'action_required') {
+    const actionMatch = text.match(/(?:can you|could you|please)\s+([^,.!?]{10,60})/i);
+    if (actionMatch) actionItems.push(actionMatch[1].trim());
+    const deadlineMatch = text.match(/(due|deadline|before|by end of)\s+([^,.!?\n]{3,40})/i);
+    if (deadlineMatch) actionItems.push(`Deadline: ${deadlineMatch[0].trim()}`);
+    if (text.match(/urgent|asap|immediately|critical|error|crash|spike in|500\s*error/i)) {
+      actionItems.push('Urgent — needs immediate attention');
+    }
+    if (text.match(/you have been assigned|please review|please confirm|action required/i)) {
+      actionItems.push('Action assigned to you');
+    }
   }
   // Summary: first 2-3 sentences, not arbitrarily truncated
   const sentences = body.match(/[^.!?\n]+[.!?]+/g);
@@ -1525,11 +1763,14 @@ function extractSummaryInline(message: InboxMessage): { summary: string; actionI
     ? sentences.slice(0, 3).join(' ').trim()
     : body;
   const senderFirstName = (message.contactName || message.senderName || 'there').split(' ')[0];
-  const draftReply = message.category === 'actionable'
+  const draftReply = message.category === 'action_required'
     ? `Hi ${senderFirstName},\n\nThanks for reaching out. I'll look into this and get back to you shortly.\n\nBest regards`
     : `Hi ${senderFirstName},\n\nThank you for the update. I'll review and let you know if I have any questions.\n\nBest regards`;
   return { summary, actionItems: actionItems.slice(0, 3), draftReply };
 }
+
+// AI result cache — avoids re-simulating loading on re-open
+const aiResultCache = new Map<string, { summary: string; actionItems: string[]; draftReply: string }>();
 
 function ExpandedMessageRow({
   message,
@@ -1540,6 +1781,7 @@ function ExpandedMessageRow({
   onReply,
   onClose,
   isCollapsing = false,
+  insideGroup = false,
 }: {
   message: InboxMessage;
   threadMessages?: ThreadMessageItem[];
@@ -1549,6 +1791,7 @@ function ExpandedMessageRow({
   onReply: (id: string, body: string) => void;
   onClose: () => void;
   isCollapsing?: boolean;
+  insideGroup?: boolean;
 }) {
   const [replyText, setReplyText] = useState('');
   const [replyFocused, setReplyFocused] = useState(false);
@@ -1556,6 +1799,8 @@ function ExpandedMessageRow({
   const expandedRef = useRef<HTMLDivElement>(null);
   const [aiResult, setAiResult] = useState<{ summary: string; actionItems: string[]; draftReply: string } | null>(null);
   const [aiLoading, setAiLoading] = useState(true);
+  // Track whether AI result was freshly computed (not cached) for shimmer transition
+  const [aiJustResolved, setAiJustResolved] = useState(false);
 
   // Ghost draft state
   const [ghostVisible, setGhostVisible] = useState(true);
@@ -1576,14 +1821,25 @@ function ExpandedMessageRow({
     }, 50);
   }, []);
 
-  // AI summary simulation
+  // AI summary — check cache first, simulate load only on first open
   useEffect(() => {
     if (!showSummary) { setAiLoading(false); return; }
+    const cached = aiResultCache.get(message.id);
+    if (cached) {
+      setAiResult(cached);
+      setAiLoading(false);
+      setAiJustResolved(false);
+      return;
+    }
     setAiLoading(true);
     setAiResult(null);
+    setAiJustResolved(false);
     const timer = setTimeout(() => {
-      setAiResult(extractSummaryInline(message));
+      const result = extractSummaryInline(message);
+      aiResultCache.set(message.id, result);
+      setAiResult(result);
       setAiLoading(false);
+      setAiJustResolved(true);
     }, 700);
     return () => clearTimeout(timer);
   }, [message.id, showSummary]);
@@ -1661,13 +1917,11 @@ function ExpandedMessageRow({
     <div
       ref={expandedRef}
       style={{
-        borderRadius: '0 0 12px 12px',
-        marginTop: -6,
+        borderRadius: insideGroup ? '0 0 8px 8px' : '0 0 12px 12px',
+        marginTop: insideGroup ? 0 : -6,
         background: 'var(--bg-card)',
         backdropFilter: 'blur(20px) saturate(1.2)',
         WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
-        borderTop: '1px solid var(--glass-divider)',
-        boxShadow: 'inset 0 1px 0 var(--glass-divider)',
         overflow: 'hidden',
         animation: isCollapsing
           ? 'collapseOut 180ms cubic-bezier(0.4, 0, 1, 1) forwards'
@@ -1729,35 +1983,55 @@ function ExpandedMessageRow({
           </h3>
         )}
 
-        {/* AI summary or body text -- show one, never both */}
-        {showSummary && aiResult && !aiLoading ? (
-          <p className="bb-ai-shine" style={{
-            fontSize: 14, color: 'var(--text-primary)', lineHeight: 1.6,
-            margin: 0, opacity: 1,
-            animation: 'fadeIn 200ms cubic-bezier(0.16, 1, 0.3, 1), bb-ai-shine 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.15s forwards',
-          }}>
-            {sanitizeText(aiResult.summary)}
-          </p>
-        ) : (
+        {/* Content: crossfade from raw body → AI summary with shimmer */}
+        <div style={{ position: 'relative', minHeight: 20 }}>
+          {/* Raw body — visible while AI loading, fades out when AI arrives */}
           <div style={{
             fontSize: 14, color: 'var(--text-primary)', lineHeight: 1.7,
             whiteSpace: 'pre-wrap', wordBreak: 'break-word',
             fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+            transition: 'opacity 300ms cubic-bezier(0.25, 1, 0.5, 1), filter 300ms cubic-bezier(0.25, 1, 0.5, 1)',
+            opacity: (showSummary && aiResult && !aiLoading) ? 0 : 1,
+            filter: (showSummary && aiResult && !aiLoading) ? 'blur(2px)' : 'none',
+            position: (showSummary && aiResult && !aiLoading) ? 'absolute' : 'relative',
+            pointerEvents: (showSummary && aiResult && !aiLoading) ? 'none' : 'auto',
+            top: 0, left: 0, right: 0,
           }}>
             {sanitizeText(String(message.fullBody || message.bodyPreview || '(No message body)'))}
           </div>
-        )}
 
-        {/* Action items -- neutral colors */}
+          {/* AI summary — fades in with shimmer when resolved */}
+          {showSummary && aiResult && !aiLoading && (
+            <p className={aiJustResolved ? 'bb-ai-shine' : undefined} style={{
+              fontSize: 14, color: 'var(--text-primary)', lineHeight: 1.6,
+              margin: 0,
+              animation: aiJustResolved
+                ? 'aiContentIn 400ms cubic-bezier(0.25, 1, 0.5, 1) both, bb-ai-shine 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.15s forwards'
+                : undefined,
+            }}>
+              {sanitizeText(aiResult.summary)}
+            </p>
+          )}
+        </div>
+
+        {/* Action items — styled pills, stagger in */}
         {aiResult && aiResult.actionItems.length > 0 && (
-          <ul className="bb-ai-shine" style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
             {aiResult.actionItems.map((item, i) => (
-              <li key={i} style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'flex', alignItems: 'flex-start', gap: 6 }}>
-                <span style={{ color: 'var(--text-dim)', marginTop: 1, flexShrink: 0 }}>{'>'}</span>
+              <span key={i} style={{
+                display: 'inline-flex', alignItems: 'center', gap: 5,
+                padding: '4px 10px', borderRadius: 6,
+                background: 'rgba(255, 90, 31, 0.08)',
+                border: '1px solid rgba(255, 90, 31, 0.15)',
+                fontSize: 11, fontWeight: 600, color: 'var(--bb-orange, #FF5A1F)',
+                animation: aiJustResolved ? 'aiContentIn 300ms cubic-bezier(0.25, 1, 0.5, 1) both' : undefined,
+                animationDelay: aiJustResolved ? `${150 + i * 60}ms` : undefined,
+              }}>
+                <CheckCircle2 size={11} style={{ opacity: 0.7, flexShrink: 0 }} />
                 {sanitizeText(item)}
-              </li>
+              </span>
             ))}
-          </ul>
+          </div>
         )}
 
         {/* Attachment pills stub */}
@@ -1829,8 +2103,12 @@ function ExpandedMessageRow({
         )}
       </div>
 
-      {/* Chat-style reply composer */}
-      <div style={{ padding: '12px 20px 16px', borderTop: '1px solid var(--glass-divider)' }}>
+      {/* Chat-style reply composer — slides up smoothly */}
+      <div style={{
+        padding: '12px 20px 16px',
+        animation: 'composerSlideIn 350ms cubic-bezier(0.25, 1, 0.5, 1) both',
+        animationDelay: aiResult ? '0ms' : '600ms',
+      }}>
         <div style={{
           display: 'flex',
           alignItems: 'flex-end',
@@ -1846,7 +2124,7 @@ function ExpandedMessageRow({
             {/* Ghost draft — in-flow element that sizes the container, textarea overlays it */}
             {ghostVisible && !replyText && aiResult?.draftReply && (
               <div
-                className="bb-ai-shine"
+                className={aiJustResolved ? 'bb-ai-shine' : undefined}
                 aria-hidden="true"
                 style={{
                   padding: '8px 0',
@@ -1859,6 +2137,8 @@ function ExpandedMessageRow({
                   pointerEvents: 'none',
                   maxHeight: 200,
                   overflow: 'hidden',
+                  animation: aiJustResolved ? 'aiContentIn 400ms cubic-bezier(0.25, 1, 0.5, 1) both' : undefined,
+                  animationDelay: aiJustResolved ? '100ms' : undefined,
                 }}
               >
                 {sanitizeText(aiResult.draftReply)}
@@ -1909,19 +2189,18 @@ function ExpandedMessageRow({
             onClick={handleSendReply}
             disabled={!replyText.trim()}
             style={{
-              width: 32, height: 32, borderRadius: '50%',
+              width: 28, height: 28, borderRadius: '50%',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               border: 'none', cursor: replyText.trim() ? 'pointer' : 'default',
               flexShrink: 0,
-              transition: 'background 150ms cubic-bezier(0.16, 1, 0.3, 1), color 150ms cubic-bezier(0.16, 1, 0.3, 1), opacity 150ms cubic-bezier(0.16, 1, 0.3, 1)',
-              background: 'transparent',
-              color: replyText.trim() ? 'var(--text-primary, #F1F5F9)' : 'var(--text-dim, rgba(255,255,255,0.25))',
-              opacity: replyText.trim() ? 1 : 0.4,
+              transition: 'opacity 200ms cubic-bezier(0.25, 1, 0.5, 1), transform 200ms cubic-bezier(0.25, 1, 0.5, 1)',
+              background: 'var(--text-primary)',
+              color: 'var(--bg-card)',
+              opacity: replyText.trim() ? 1 : 0.25,
+              transform: replyText.trim() ? 'scale(1)' : 'scale(0.85)',
             }}
-            onMouseEnter={(e) => { if (replyText.trim()) e.currentTarget.style.background = 'var(--hover-bg-strong, rgba(255,255,255,0.1))'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
           >
-            <Send size={14} />
+            <ArrowUp size={14} strokeWidth={2.5} />
           </button>
         </div>
         {/* Ghost hint and Cmd+Enter hint below the pill */}
@@ -1941,6 +2220,8 @@ function ExpandedMessageRow({
       <div style={{
         display: 'flex', alignItems: 'center', gap: 4,
         padding: '8px 20px 12px',
+        animation: 'composerSlideIn 300ms cubic-bezier(0.25, 1, 0.5, 1) both',
+        animationDelay: '50ms',
       }}>
         <IconActionBtn icon={<Reply size={16} />} title="Reply" onClick={() => textareaRef.current?.focus()} />
         <IconActionBtn icon={<Archive size={16} />} title="Archive" onClick={() => onArchive(message.id)} />
@@ -2018,11 +2299,120 @@ function IconActionBtn({
 }
 
 // ---------------------------------------------------------------------------
+// Group Row — Apple Intelligence style collapsed notification group
+// ---------------------------------------------------------------------------
+
+function GroupRow({
+  item,
+  index,
+  expanded,
+  focused,
+  selected,
+  onClick,
+  onDelete,
+}: {
+  item: Extract<DisplayItem, { type: 'group' }>;
+  index: number;
+  expanded: boolean;
+  focused?: boolean;
+  selected?: boolean;
+  onClick: () => void;
+  onDelete?: () => void;
+}) {
+  const ChannelIcon = CHANNEL_ICONS[item.channelType] || GmailIcon;
+  const brandColor = CHANNEL_BRAND_COLORS[item.channelType] || 'var(--text-dim)';
+  const newestMsg = item.messages[0];
+  const preview = newestMsg?.aiSummary || newestMsg?.subject || newestMsg?.bodyPreview || '';
+  const relTime = formatTimeAgo(item.newestAt);
+  const absTime = new Date(item.newestAt).toLocaleString('en-AU', {
+    weekday: 'short', day: 'numeric', month: 'short',
+    hour: '2-digit', minute: '2-digit',
+  });
+
+  return (
+    <div
+      className="bb-inbox-group"
+      data-expanded={expanded || undefined}
+      data-focused={focused || undefined}
+      data-selected={selected || undefined}
+      onClick={onClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } }}
+      style={{ cursor: 'pointer' }}
+    >
+      {/* Chevron — rotating like chain-of-thought dropdown */}
+      <svg
+        width={13}
+        height={13}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        style={{
+          flexShrink: 0,
+          color: 'var(--text-dim)',
+          transition: 'transform 0.25s cubic-bezier(0.25, 1, 0.5, 1)',
+          transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
+        }}
+      >
+        <polyline points="6 9 12 15 18 9" />
+      </svg>
+
+      {/* Channel icon */}
+      <div style={{ flexShrink: 0, width: 28, height: 28, borderRadius: 8, background: 'var(--hover-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: brandColor }}>
+        <ChannelIcon size={14} />
+      </div>
+
+      {/* Count badge */}
+      <span className="bb-inbox-group__count">
+        {item.messages.length}
+      </span>
+
+      {/* Label */}
+      <span className="bb-inbox-group__label">
+        {item.label}
+      </span>
+
+      {/* Preview of newest message */}
+      <span className="bb-inbox-group__preview">
+        {sanitizeText(String(preview))}
+      </span>
+
+      {/* Right side: unread dot + time + delete */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, marginLeft: 'auto' }}>
+        {item.hasUnread && (
+          <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--bb-blue, #3B82F6)', flexShrink: 0 }} />
+        )}
+        <span
+          className="bb-inbox-row__time"
+          title={absTime}
+          style={{ whiteSpace: 'nowrap' }}
+        >
+          {relTime}
+        </span>
+        {onDelete && (
+          <button
+            className="bb-inbox-group__delete"
+            title="Delete all"
+            onClick={(e) => { e.stopPropagation(); onDelete(); }}
+          >
+            <Trash2 size={12} />
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Message Row — time always visible, no hover actions
 // ---------------------------------------------------------------------------
 
 function MessageRow({
-  message, onArchive, onDone, onSnooze, onReply, onStar, onRowClick, index, focused, selected, starred, expanded,
+  message, onArchive, onDone, onSnooze, onReply, onStar, onRowClick, onDelete, index, focused, selected, starred, expanded, insideGroup,
 }: {
   message: InboxMessage;
   onArchive?: (id: string) => void;
@@ -2030,18 +2420,24 @@ function MessageRow({
   onSnooze?: (id: string, e: React.MouseEvent<HTMLButtonElement>) => void;
   onReply?: (id: string) => void;
   onStar?: (id: string) => void;
+  onDelete?: (id: string) => void;
   onRowClick?: (id: string, index: number, e: React.MouseEvent) => void;
   index: number;
   focused?: boolean;
   selected?: boolean;
   starred?: boolean;
   expanded?: boolean;
+  insideGroup?: boolean;
 }) {
   const ChannelIcon = CHANNEL_ICONS[message.channelType] || GmailIcon;
   const brandColor = CHANNEL_BRAND_COLORS[message.channelType] || 'var(--text-dim)';
   const isUnread = message.status === 'unread';
   const isImportant = message.significance >= 7;
   const timeAgo = formatTimeAgo(message.receivedAt);
+  const absTime = new Date(message.receivedAt).toLocaleString('en-AU', {
+    weekday: 'short', day: 'numeric', month: 'short',
+    hour: '2-digit', minute: '2-digit',
+  });
   const sender = message.contactName || message.senderName || message.senderEmail || 'Unknown';
 
   const level = message.significance >= 8 ? 'critical' :
@@ -2066,6 +2462,7 @@ function MessageRow({
       data-level={level}
       data-focused={focused || undefined}
       data-selected={selected || undefined}
+      data-inside-group={insideGroup || undefined}
       onClick={(e) => onRowClick?.(message.id, index, e)}
       role="button"
       tabIndex={0}
@@ -2107,7 +2504,10 @@ function MessageRow({
 
       {/* Col 2: Tag + subject + preview */}
       <div className="bb-inbox-row__col2">
-        <span className={`bb-inbox-row__tag bb-inbox-row__tag--${message.category}`}>
+        <span
+          className={`bb-inbox-row__tag bb-inbox-row__tag--${message.category}`}
+          style={TAG_COLORS[message.category]}
+        >
           {getCategoryLabel(message.category)}
         </span>
         {message.subject && (
@@ -2129,11 +2529,20 @@ function MessageRow({
         </span>
       </div>
 
-      {/* Right: time always visible */}
+      {/* Right: time + delete */}
       <div className="bb-inbox-row__meta">
         <div className="bb-inbox-row__meta-default">
           {starred && <Star size={11} style={{ color: '#f59e0b', fill: '#f59e0b', marginRight: 4 }} />}
-          <span className="bb-inbox-row__time">{timeAgo}</span>
+          <span className="bb-inbox-row__time" title={absTime}>{timeAgo}</span>
+          {onDelete && (
+            <button
+              className="bb-inbox-row__delete"
+              title="Delete"
+              onClick={(e) => { e.stopPropagation(); onDelete(message.id); }}
+            >
+              <Trash2 size={12} />
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -2155,11 +2564,23 @@ function formatTimeAgo(dateStr: string): string {
   return `${days}d`;
 }
 
+// Inline style fallbacks — guarantees tag background regardless of CSS cascade
+const TAG_COLORS: Record<MessageCategory, React.CSSProperties> = {
+  action_required: { background: '#E5520E', color: '#fff' },
+  fyi: { background: '#4338CA', color: '#fff' },
+  conversation: { background: '#BE185D', color: '#fff' },
+  automated: { background: '#5B5FC7', color: '#fff' },
+  marketing: { background: '#FACC15', color: '#000' },
+  spam: { background: '#4B5563', color: '#fff' },
+};
+
 function getCategoryLabel(category: MessageCategory): string {
   const labels: Record<MessageCategory, string> = {
-    actionable: 'Priority',
-    personal: 'Personal',
-    informational: 'Updates',
+    action_required: 'Action Required',
+    fyi: 'FYI',
+    conversation: 'Personal',
+    automated: 'Notification',
+    marketing: 'Newsletter',
     spam: 'Spam',
   };
   return labels[category] || category;

@@ -1,9 +1,11 @@
 'use client'
 
+import { memo } from 'react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { X } from 'lucide-react'
 import type { Task } from '@/lib/types'
+import { MarkdownRenderer } from './markdown-renderer'
 
 interface KanbanCardProps {
   task: Task
@@ -56,7 +58,7 @@ function getDeadlineStyle(deadline: string): { bg: string; color: string; label:
   return { bg: 'transparent', color: 'var(--text-dim)', label }
 }
 
-export function KanbanCard({ task, onEdit, onArchive }: KanbanCardProps) {
+export const KanbanCard = memo(function KanbanCard({ task, onEdit, onArchive }: KanbanCardProps) {
   const {
     attributes,
     listeners,
@@ -66,8 +68,9 @@ export function KanbanCard({ task, onEdit, onArchive }: KanbanCardProps) {
     isDragging,
   } = useSortable({ id: task.id })
 
+  // Use Translate instead of Transform to prevent dnd-kit from applying scale changes
   const dndStyle = {
-    transform: CSS.Transform.toString(transform),
+    transform: CSS.Translate.toString(transform),
     transition,
   }
 
@@ -92,22 +95,23 @@ export function KanbanCard({ task, onEdit, onArchive }: KanbanCardProps) {
       className="card-lift"
       onClick={() => onEdit?.(task)}
       style={{
-        borderRadius: 14,
+        borderRadius: 10,
         padding: '10px 12px',
+        borderLeft: isAgentWorking ? '2px solid var(--text-dim)' : undefined,
         background: glass.bg,
         backdropFilter: 'var(--glass-card-blur)',
         WebkitBackdropFilter: 'var(--glass-card-blur)',
-        boxShadow: isDragging
-          ? '0 16px 48px rgba(0, 0, 0, 0.4)'
-          : glass.shadow,
+        boxShadow: glass.shadow,
         cursor: isDragging ? 'grabbing' : 'grab',
         position: 'relative',
-        opacity: isDragging ? 0.5 : isOptimistic ? 0.7 : 1,
+        opacity: isDragging ? 0.3 : isOptimistic ? 0.7 : 1,
         userSelect: 'none',
         WebkitUserSelect: 'none' as const,
+        willChange: transform ? 'transform' : undefined,
+        contain: 'layout style',
         animation: isAgentWorking ? 'bb-card-breathe 3s ease-in-out infinite' : undefined,
         ...dndStyle,
-        transition: [dndStyle.transition, 'box-shadow 0.2s ease, opacity 0.2s ease'].filter(Boolean).join(', '),
+        transition: dndStyle.transition || undefined,
       } as React.CSSProperties}
     >
       {/* Archive (show on hover) */}
@@ -187,18 +191,19 @@ export function KanbanCard({ task, onEdit, onArchive }: KanbanCardProps) {
       </h4>
 
       {task.description && (
-        <p style={{
+        <div style={{
           margin: '3px 0 0',
-          fontSize: 11,
-          color: 'var(--text-dim)',
           display: '-webkit-box',
-          WebkitLineClamp: 1,
-          WebkitBoxOrient: 'vertical',
+          WebkitLineClamp: 2,
+          WebkitBoxOrient: 'vertical' as const,
           overflow: 'hidden',
-          lineHeight: 1.35,
         }}>
-          {task.description}
-        </p>
+          <MarkdownRenderer
+            content={task.description}
+            compact
+            style={{ fontSize: 11, color: 'var(--text-dim)', lineHeight: '1.35' }}
+          />
+        </div>
       )}
 
       {/* Metadata row: priority dot + tags + deadline + time */}
@@ -321,17 +326,7 @@ export function KanbanCard({ task, onEdit, onArchive }: KanbanCardProps) {
         </div>
       )}
 
-      <style>{`
-        .card-lift:hover .kanban-card-actions { opacity: 1 !important; }
-        @keyframes bb-agent-pulse {
-          0%, 100% { opacity: 1; transform: scale(1); }
-          50% { opacity: 0.4; transform: scale(0.85); }
-        }
-        @keyframes bb-card-breathe {
-          0%, 100% { box-shadow: var(--card-shadow, 0 1px 4px rgba(0,0,0,0.12)), 0 0 12px rgba(148, 163, 184, 0.03); }
-          50% { box-shadow: var(--card-shadow, 0 1px 4px rgba(0,0,0,0.12)), 0 0 12px rgba(148, 163, 184, 0.08); }
-        }
-      `}</style>
     </div>
   )
-}
+})
+

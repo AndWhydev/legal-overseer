@@ -1,254 +1,416 @@
 /**
- * Agent Swarm — Core type definitions.
+ * Swarm Orchestration Type System
  *
- * Swarms are multi-agent orchestration units. A swarm is defined by a DAG
- * of steps, each handled by a participant (agent/role). Steps can be
- * parallel, sequential, or conditional. Agents communicate via a message bus.
+ * Defines the core types for multi-agent swarm coordination.
+ * Swarms are DAGs of steps, each assigned to an agent role with
+ * typed input/output contracts, personas, and capability boundaries.
  */
 
-// ---------------------------------------------------------------------------
-// DAG Shape — defines the swarm blueprint
-// ---------------------------------------------------------------------------
+// ── Agent Roles ─────────────────────────────────────────────────────────────
 
-export interface SwarmDAG {
-  /** Unique agents participating in this swarm */
-  agents: SwarmAgent[]
-  /** Steps in the execution graph */
-  steps: SwarmStepDef[]
-  /** Global swarm-level config */
-  config?: {
-    max_duration_seconds?: number
-    budget_cents?: number
-    allow_parallel?: boolean
-    conflict_resolution?: 'coordinator' | 'voting' | 'first_wins'
-  }
+export type AgentRole =
+  | 'sales'
+  | 'finance'
+  | 'comms'
+  | 'operations'
+  | 'research'
+  | 'coordinator'
+
+/**
+ * Agent persona defines HOW an agent behaves within a swarm.
+ * Finance is conservative; Sales is optimistic. Tension produces better decisions.
+ */
+export interface AgentPersona {
+  style: 'conservative' | 'balanced' | 'optimistic' | 'analytical'
+  riskTolerance: number    // 0-1, how much risk the agent accepts
+  priorityWeight: number   // 0-1, how much weight this agent's opinion carries in negotiations
+  voice?: string           // prompt modifier for agent communication style
 }
 
-export interface SwarmAgent {
-  id: string
-  agent_type: string  // maps to existing agent types or role types
-  label: string
-  model_tier?: 'haiku' | 'sonnet' | 'opus'
-  config?: Record<string, unknown>
+export const DEFAULT_PERSONAS: Record<AgentRole, AgentPersona> = {
+  sales: {
+    style: 'optimistic',
+    riskTolerance: 0.7,
+    priorityWeight: 0.6,
+    voice: 'Focus on opportunities, client relationships, and revenue potential. Be proactive about growth.',
+  },
+  finance: {
+    style: 'conservative',
+    riskTolerance: 0.3,
+    priorityWeight: 0.8,
+    voice: 'Focus on financial accuracy, outstanding obligations, and risk. Flag overcommitment.',
+  },
+  comms: {
+    style: 'balanced',
+    riskTolerance: 0.5,
+    priorityWeight: 0.5,
+    voice: 'Focus on clear, professional communication. Consider tone and timing.',
+  },
+  operations: {
+    style: 'analytical',
+    riskTolerance: 0.4,
+    priorityWeight: 0.7,
+    voice: 'Focus on process efficiency, resource allocation, and operational readiness.',
+  },
+  research: {
+    style: 'analytical',
+    riskTolerance: 0.6,
+    priorityWeight: 0.4,
+    voice: 'Gather comprehensive information. Flag gaps in knowledge.',
+  },
+  coordinator: {
+    style: 'balanced',
+    riskTolerance: 0.5,
+    priorityWeight: 1.0,
+    voice: 'Orchestrate the team. Resolve conflicts. Ensure all agents contribute.',
+  },
 }
 
-export interface SwarmStepDef {
-  step_id: string
-  agent_id: string  // references SwarmAgent.id
-  name: string
-  step_type: 'parallel' | 'sequential' | 'conditional'
-  /** Step IDs that must complete before this step */
-  depends_on: string[]
-  /** For conditional steps: expression evaluated against prior step outputs */
-  condition?: SwarmCondition
-  /** Expected input keys from upstream steps */
-  input_mapping?: Record<string, string>  // local_key → "step_id.output_key"
-  /** What this step should produce */
-  expected_output?: string[]
-  /** Instructions for the agent */
-  prompt_template?: string
-  /** Max duration for this step in seconds */
-  timeout_seconds?: number
+// ── Capability Boundaries ───────────────────────────────────────────────────
+
+import type { ToolGroup } from '@/lib/agent/tools'
+
+/**
+ * Defines what tools an agent can use within a swarm step.
+ * Finance can read invoices but can't send emails.
+ * Comms can draft emails but can't approve payments.
+ */
+export interface CapabilityBoundary {
+  allowedToolGroups: ToolGroup[]
+  deniedTools?: string[]         // specific tool names to block
+  requiresApproval?: string[]    // tools that need approval even if auto-execute would normally apply
 }
 
-export interface SwarmCondition {
-  /** The step output to check */
-  source: string   // "step_id.output_key"
-  operator: 'equals' | 'not_equals' | 'contains' | 'gt' | 'lt' | 'truthy' | 'falsy'
-  value?: unknown
+export const DEFAULT_CAPABILITIES: Record<AgentRole, CapabilityBoundary> = {
+  sales: {
+    allowedToolGroups: ['core', 'memory', 'channel'],
+    deniedTools: ['generate_invoice', 'send_email'],
+  },
+  finance: {
+    allowedToolGroups: ['core', 'memory'],
+    deniedTools: ['send_email', 'send_sms', 'send_whatsapp'],
+    requiresApproval: ['generate_invoice'],
+  },
+  comms: {
+    allowedToolGroups: ['core', 'memory', 'channel', 'comms'],
+    deniedTools: ['generate_invoice'],
+    requiresApproval: ['send_email', 'send_sms', 'send_whatsapp'],
+  },
+  operations: {
+    allowedToolGroups: ['core', 'memory', 'channel'],
+    deniedTools: ['send_email', 'generate_invoice'],
+  },
+  research: {
+    allowedToolGroups: ['core', 'memory', 'web'],
+    deniedTools: ['send_email', 'send_sms', 'generate_invoice', 'create_task'],
+  },
+  coordinator: {
+    allowedToolGroups: ['core', 'memory'],
+    deniedTools: [],
+  },
 }
 
-// ---------------------------------------------------------------------------
-// Template — reusable swarm patterns
-// ---------------------------------------------------------------------------
+// ── Step Types ──────────────────────────────────────────────────────────────
 
-export interface SwarmTemplate {
-  id: string
-  slug: string
-  name: string
-  description: string | null
-  category: string
-  dag: SwarmDAG
-  param_schema: Record<string, SwarmParamDef>
-  trigger_patterns: string[]
-  is_builtin: boolean
-  org_id: string | null
-  usage_count: number
-  created_at: string
-  updated_at: string
+export type StepType = 'agent' | 'parallel_group' | 'conditional' | 'sub_swarm'
+
+export interface StepCondition {
+  /** Which step's output to evaluate */
+  sourceStep: string
+  /** JSONPath expression to extract value from step output */
+  path: string
+  /** Comparison operator */
+  operator: 'eq' | 'neq' | 'gt' | 'lt' | 'contains' | 'exists' | 'not_exists'
+  /** Value to compare against */
+  value: unknown
 }
 
-export interface SwarmParamDef {
-  type: 'string' | 'number' | 'boolean' | 'object'
-  description: string
-  required: boolean
-  default?: unknown
+// ── Swarm Definition (Template Schema) ──────────────────────────────────────
+
+export interface SwarmStepDefinition {
+  key: string                   // unique identifier within swarm
+  type: StepType
+  label: string                 // human-readable name
+  description?: string
+
+  // Agent assignment
+  agentRole: AgentRole
+  persona?: Partial<AgentPersona>     // override default persona
+  capabilities?: Partial<CapabilityBoundary>  // override default capabilities
+
+  // Execution
+  prompt: string                // instruction template (supports {{param}} substitution)
+  modelTier?: 'classification' | 'conversation' | 'synthesis'  // defaults to conversation
+
+  // Dependencies (step keys)
+  dependsOn?: string[]
+
+  // For conditional steps
+  condition?: StepCondition
+
+  // For parallel_group: which steps run in parallel
+  parallelSteps?: string[]
+
+  // For sub_swarm: template to invoke
+  subSwarmSlug?: string
+
+  // Governance
+  requiresApproval?: boolean
+  maxRetries?: number
+
+  // Output contract: what this step produces
+  outputSchema?: Record<string, string>  // key -> type description
 }
 
-// ---------------------------------------------------------------------------
-// Definition — org-specific instantiation of a template
-// ---------------------------------------------------------------------------
+export interface SwarmGovernance {
+  /** Steps that require user approval before executing */
+  approvalRequired: string[]
+  /** Steps that should notify user but proceed */
+  notifyOnComplete: string[]
+  /** Maximum total cost before swarm pauses for approval */
+  costCeiling?: number
+  /** Maximum execution time (ms) before swarm is cancelled */
+  timeoutMs?: number
+  /** Escalation: model to use when agents negotiate */
+  negotiationModel?: 'classification' | 'conversation' | 'synthesis'
+}
 
 export interface SwarmDefinition {
+  version: '1.0'
+  steps: SwarmStepDefinition[]
+  governance: SwarmGovernance
+  /** Input parameters the template expects */
+  inputSchema: Record<string, {
+    type: 'string' | 'number' | 'boolean' | 'object'
+    description: string
+    required: boolean
+    default?: unknown
+  }>
+}
+
+// ── Database Row Types ──────────────────────────────────────────────────────
+
+export type SwarmRunStatus =
+  | 'pending'
+  | 'planning'
+  | 'executing'
+  | 'negotiating'
+  | 'completed'
+  | 'partial'
+  | 'failed'
+  | 'rolled_back'
+  | 'cancelled'
+
+export type SwarmStepStatus =
+  | 'pending'
+  | 'ready'
+  | 'executing'
+  | 'completed'
+  | 'failed'
+  | 'skipped'
+  | 'negotiating'
+  | 'rolled_back'
+  | 'blocked'
+
+export type SwarmMessageType =
+  | 'finding'
+  | 'warning'
+  | 'blocker'
+  | 'handoff'
+  | 'completion'
+  | 'negotiation'
+  | 'status'
+
+export interface SwarmTemplateRow {
   id: string
   org_id: string
   name: string
+  slug: string
   description: string | null
-  dag: SwarmDAG
-  input_schema: Record<string, SwarmParamDef>
-  output_schema: Record<string, SwarmParamDef>
-  template_id: string | null
-  enabled: boolean
+  category: string
+  trigger_patterns: string[]
+  definition: SwarmDefinition
+  governance: SwarmGovernance
+  parent_template_id: string | null
+  total_runs: number
+  success_runs: number
+  avg_duration_ms: number | null
+  avg_cost: number | null
+  success_rate: number
+  is_builtin: boolean
+  is_active: boolean
   created_at: string
   updated_at: string
 }
 
-// ---------------------------------------------------------------------------
-// Run — execution instance
-// ---------------------------------------------------------------------------
-
-export type SwarmRunStatus = 'pending' | 'running' | 'paused' | 'completed' | 'failed' | 'cancelled' | 'rolling_back'
-
-export interface SwarmRun {
+export interface SwarmRunRow {
   id: string
   org_id: string
-  definition_id: string | null
   template_id: string | null
-  name: string
+  template_slug: string | null
+  trigger_type: string
+  trigger_input: string
+  trigger_params: Record<string, unknown>
+  parent_run_id: string | null
+  parent_step_id: string | null
   status: SwarmRunStatus
-  input_params: Record<string, unknown>
-  output: Record<string, unknown>
-  dag_snapshot: SwarmDAG
-  total_cost_cents: number
+  started_at: string | null
+  completed_at: string | null
+  duration_ms: number | null
+  total_cost: number
   total_tokens_in: number
   total_tokens_out: number
-  triggered_by: string
-  trigger_input: string | null
-  started_at: string | null
-  completed_at: string | null
+  result_summary: string | null
+  result_data: Record<string, unknown> | null
+  error_message: string | null
+  rollback_log: ReversibleAction[] | null
+  rolled_back_at: string | null
+  lock_key: number
   created_at: string
   updated_at: string
 }
 
-// ---------------------------------------------------------------------------
-// Step — individual step execution
-// ---------------------------------------------------------------------------
-
-export type SwarmStepStatus = 'pending' | 'running' | 'completed' | 'failed' | 'skipped' | 'rolled_back'
-
-export interface SwarmStep {
+export interface SwarmStepRow {
   id: string
-  swarm_run_id: string
+  run_id: string
   org_id: string
-  step_id: string
-  step_type: 'parallel' | 'sequential' | 'conditional'
-  agent_type: string
-  status: SwarmStepStatus
-  input: Record<string, unknown>
-  output: Record<string, unknown>
-  condition: SwarmCondition | null
-  rollback_action: Record<string, unknown> | null
-  cost_cents: number
-  tokens_in: number
-  tokens_out: number
-  error: string | null
-  execution_order: number
+  step_key: string
+  step_type: string
+  agent_role: string | null
+  persona: AgentPersona | null
+  allowed_tools: string[] | null
+  prompt: string | null
+  input_data: Record<string, unknown>
+  output_data: Record<string, unknown> | null
   depends_on: string[]
+  condition: StepCondition | null
+  status: SwarmStepStatus
   started_at: string | null
   completed_at: string | null
+  duration_ms: number | null
+  cost_estimate: number
+  tokens_in: number
+  tokens_out: number
+  model_used: string | null
+  agent_run_id: string | null
+  reversible_actions: ReversibleAction[] | null
+  negotiation: NegotiationResult | null
+  error_message: string | null
+  retry_count: number
+  max_retries: number
   created_at: string
+  updated_at: string
 }
 
-// ---------------------------------------------------------------------------
-// Message — inter-agent communication
-// ---------------------------------------------------------------------------
-
-export type SwarmMessageType = 'finding' | 'request' | 'response' | 'conflict' | 'resolution' | 'status'
-
-export interface SwarmMessage {
+export interface SwarmMessageRow {
   id: string
-  swarm_run_id: string
+  run_id: string
   org_id: string
-  from_step_id: string
-  to_step_id: string | null  // null = broadcast
+  from_step_key: string
+  to_step_key: string | null
   message_type: SwarmMessageType
-  content: Record<string, unknown>
+  content: string
+  data: Record<string, unknown> | null
+  resolved: boolean
+  resolved_at: string | null
+  resolved_by: string | null
   created_at: string
 }
 
-// ---------------------------------------------------------------------------
-// Participant Interface — what each agent must implement
-// ---------------------------------------------------------------------------
+// ── Execution Types ─────────────────────────────────────────────────────────
 
-export interface SwarmContext {
-  /** The current swarm run */
-  run: SwarmRun
-  /** The current step being executed */
-  step: SwarmStep
-  /** The step definition from the DAG */
-  stepDef: SwarmStepDef
-  /** Input from upstream steps and swarm params */
-  input: Record<string, unknown>
-  /** Findings shared by other agents in this swarm */
-  findings: SwarmMessage[]
-  /** Org ID */
-  orgId: string
+export interface ReversibleAction {
+  stepKey: string
+  actionType: string           // e.g. 'create_task', 'send_email', 'generate_invoice'
+  actionData: Record<string, unknown>  // data needed to undo
+  undoStrategy: 'delete' | 'update' | 'archive' | 'manual'  // how to undo
+  undoPayload?: Record<string, unknown>  // specific undo data
+  executedAt: string
 }
 
-export interface SwarmResult {
+export interface NegotiationResult {
+  agentRole: AgentRole
+  originalRequest: string
+  counterProposal: string
+  reasoning: string
+  suggestedAlternative?: Record<string, unknown>
+  resolved: boolean
+  resolution?: string
+}
+
+export interface SwarmStepResult {
   success: boolean
-  /** Output data from this step */
-  output: Record<string, unknown>
-  /** Messages to share with other agents */
-  messages?: Array<{
-    to_step_id?: string  // null = broadcast
-    message_type: SwarmMessageType
-    content: Record<string, unknown>
-  }>
-  /** If this action can be rolled back, describe how */
-  rollback_action?: Record<string, unknown>
-  /** Cost of this step */
-  cost_cents?: number
-  tokens_in?: number
-  tokens_out?: number
-  /** Error message if failed */
+  data?: Record<string, unknown>
   error?: string
-}
-
-export interface SwarmParticipant {
-  /** The agent type this participant handles */
-  agent_type: string
-  /** Execute a swarm step */
-  execute(context: SwarmContext): Promise<SwarmResult>
-  /** Optional: roll back a completed step */
-  rollback?(context: SwarmContext): Promise<{ success: boolean; error?: string }>
-}
-
-// ---------------------------------------------------------------------------
-// Coordinator types
-// ---------------------------------------------------------------------------
-
-export interface SwarmTriggerResult {
-  matched: boolean
-  template?: SwarmTemplate
-  params?: Record<string, unknown>
-  confidence: number
-  reasoning: string
-}
-
-export interface ConflictResolutionInput {
-  swarm_run_id: string
-  conflicting_steps: Array<{
-    step_id: string
-    agent_type: string
-    output: Record<string, unknown>
-    reasoning: string
+  messages?: Array<{
+    type: SwarmMessageType
+    content: string
+    data?: Record<string, unknown>
   }>
-  context: Record<string, unknown>
+  reversibleActions?: ReversibleAction[]
+  negotiation?: NegotiationResult
+  cost?: number
+  tokensIn?: number
+  tokensOut?: number
+  modelUsed?: string
 }
 
-export interface ConflictResolutionResult {
-  resolution: Record<string, unknown>
-  reasoning: string
-  chosen_step_id?: string
+/**
+ * SwarmParticipant interface — each agent in a swarm implements this.
+ * The coordinator calls execute() with context and upstream findings.
+ */
+export interface SwarmParticipant {
+  role: AgentRole
+  persona: AgentPersona
+  capabilities: CapabilityBoundary
+
+  execute(
+    prompt: string,
+    context: SwarmStepContext,
+  ): Promise<SwarmStepResult>
 }
+
+export interface SwarmStepContext {
+  orgId: string
+  runId: string
+  stepKey: string
+  inputData: Record<string, unknown>
+  upstreamFindings: SwarmMessageRow[]
+  triggerParams: Record<string, unknown>
+  /** All completed step outputs available for reference */
+  completedSteps: Record<string, Record<string, unknown>>
+}
+
+// ── Coordinator Types ───────────────────────────────────────────────────────
+
+export interface CoordinatorClassification {
+  templateSlug: string | null
+  confidence: number
+  extractedParams: Record<string, unknown>
+  reasoning: string
+}
+
+export interface SwarmExecutionPlan {
+  runId: string
+  templateSlug: string
+  steps: SwarmStepDefinition[]
+  params: Record<string, unknown>
+  estimatedCost: number
+  estimatedDurationMs: number
+}
+
+// ── Events (for SSE streaming to dashboard) ─────────────────────────────────
+
+export type SwarmEvent =
+  | { type: 'swarm_started'; data: { runId: string; templateSlug: string; params: Record<string, unknown> } }
+  | { type: 'step_started'; data: { runId: string; stepKey: string; agentRole: string } }
+  | { type: 'step_completed'; data: { runId: string; stepKey: string; result: SwarmStepResult } }
+  | { type: 'step_failed'; data: { runId: string; stepKey: string; error: string } }
+  | { type: 'message_posted'; data: { runId: string; message: SwarmMessageRow } }
+  | { type: 'negotiation_started'; data: { runId: string; stepKey: string; negotiation: NegotiationResult } }
+  | { type: 'negotiation_resolved'; data: { runId: string; stepKey: string; resolution: string } }
+  | { type: 'swarm_completed'; data: { runId: string; status: SwarmRunStatus; summary: string | null } }
+  | { type: 'swarm_failed'; data: { runId: string; error: string } }
+  | { type: 'rollback_started'; data: { runId: string } }
+  | { type: 'rollback_completed'; data: { runId: string } }
+  | { type: 'cost_update'; data: { runId: string; totalCost: number; stepKey: string; stepCost: number } }

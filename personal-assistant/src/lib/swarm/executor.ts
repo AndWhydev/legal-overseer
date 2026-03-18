@@ -1,618 +1,785 @@
 /**
- * Swarm Executor — runs a swarm DAG to completion.
+ * Swarm Executor
  *
- * Responsibilities:
- * - Create swarm run + step rows in DB
- * - Topological sort the DAG to determine execution order
- * - Execute steps respecting dependencies (parallel where possible)
- * - Track cost per step and aggregate
- * - Handle failures: mark failed, optionally roll back
- * - Publish messages between agents
- * - Advisory locks prevent duplicate execution of the same run
+ * DAG walker that executes swarm steps with parallel/sequential/conditional
+ * handling, inter-agent message bus, and atomic rollback.
+ *
+ * Key patterns:
+ * - Topological sort for dependency resolution
+ * - Promise.allSettled for parallel execution
+ * - Postgres advisory locks for execution safety
+ * - Reversible action log for rollback
  */
 
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type {
-  SwarmDAG,
-  SwarmRun,
-  SwarmStep,
-  SwarmStepDef,
-  SwarmMessage,
-  SwarmContext,
-  SwarmResult,
+  SwarmDefinition,
+  SwarmStepDefinition,
+  SwarmStepResult,
+  SwarmStepContext,
   SwarmRunStatus,
-  SwarmCondition,
+  SwarmStepStatus,
+  SwarmMessageType,
+  SwarmMessageRow,
+  ReversibleAction,
+  StepCondition,
+  SwarmEvent,
 } from './types'
-import { getParticipant } from './participant-registry'
+import { SwarmAgent } from './agent'
 import { logger } from '@/lib/core/logger'
 
-// ---------------------------------------------------------------------------
-// Advisory Lock (same pattern as role-runtime)
-// ---------------------------------------------------------------------------
+// ── Executor ────────────────────────────────────────────────────────────────
 
-function lockKeyFromId(uuid: string): number {
-  // Use a different namespace than role locks (offset by 0x10000000)
-  const hex = uuid.replace(/-/g, '').slice(0, 8)
-  return ((parseInt(hex, 16) + 0x10000000) | 0)
-}
-
-async function acquireSwarmLock(supabase: SupabaseClient, runId: string): Promise<boolean> {
-  const lockKey = lockKeyFromId(runId)
-  try {
-    const { data } = await supabase.rpc('pg_try_advisory_lock', { lock_key: lockKey }).maybeSingle()
-    return data === true
-  } catch {
-    logger.warn(`[swarm-executor] Advisory lock unavailable for ${runId}, proceeding optimistically`)
-    return true
-  }
-}
-
-async function releaseSwarmLock(supabase: SupabaseClient, runId: string): Promise<void> {
-  const lockKey = lockKeyFromId(runId)
-  try {
-    await supabase.rpc('pg_advisory_unlock', { lock_key: lockKey }).maybeSingle()
-  } catch {
-    // Best-effort — auto-released on session end
-  }
-}
-
-// ---------------------------------------------------------------------------
-// DAG Utilities
-// ---------------------------------------------------------------------------
-
-/**
- * Topological sort of DAG steps. Returns layers where each layer's steps
- * can execute in parallel (all deps satisfied by prior layers).
- */
-export function topologicalLayers(steps: SwarmStepDef[]): SwarmStepDef[][] {
-  const stepMap = new Map(steps.map(s => [s.step_id, s]))
-  const completed = new Set<string>()
-  const layers: SwarmStepDef[][] = []
-  const remaining = new Set(steps.map(s => s.step_id))
-
-  let maxIterations = steps.length + 1
-  while (remaining.size > 0 && maxIterations-- > 0) {
-    const layer: SwarmStepDef[] = []
-    for (const stepId of remaining) {
-      const step = stepMap.get(stepId)!
-      const depsReady = step.depends_on.every(d => completed.has(d))
-      if (depsReady) {
-        layer.push(step)
-      }
-    }
-
-    if (layer.length === 0) {
-      // Circular dependency or unresolvable deps
-      throw new Error(
-        `Circular dependency detected in swarm DAG. Remaining: ${Array.from(remaining).join(', ')}`
-      )
-    }
-
-    for (const step of layer) {
-      completed.add(step.step_id)
-      remaining.delete(step.step_id)
-    }
-    layers.push(layer)
-  }
-
-  return layers
-}
-
-// ---------------------------------------------------------------------------
-// Condition Evaluator
-// ---------------------------------------------------------------------------
-
-function evaluateCondition(
-  condition: SwarmCondition,
-  stepOutputs: Map<string, Record<string, unknown>>,
-): boolean {
-  const [sourceStepId, outputKey] = condition.source.split('.')
-  const stepOutput = stepOutputs.get(sourceStepId)
-  if (!stepOutput) return false
-
-  const actual = outputKey ? stepOutput[outputKey] : stepOutput
-
-  switch (condition.operator) {
-    case 'equals':
-      return actual === condition.value
-    case 'not_equals':
-      return actual !== condition.value
-    case 'contains':
-      return typeof actual === 'string' && typeof condition.value === 'string'
-        ? actual.includes(condition.value)
-        : Array.isArray(actual)
-          ? actual.includes(condition.value)
-          : false
-    case 'gt':
-      return typeof actual === 'number' && typeof condition.value === 'number'
-        ? actual > condition.value
-        : false
-    case 'lt':
-      return typeof actual === 'number' && typeof condition.value === 'number'
-        ? actual < condition.value
-        : false
-    case 'truthy':
-      return Boolean(actual)
-    case 'falsy':
-      return !actual
-    default:
-      return false
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Create Swarm Run
-// ---------------------------------------------------------------------------
-
-export interface CreateSwarmRunParams {
+export interface ExecutorConfig {
   orgId: string
-  name: string
-  dag: SwarmDAG
-  inputParams?: Record<string, unknown>
-  definitionId?: string
-  templateId?: string
-  triggeredBy?: string
-  triggerInput?: string
+  supabase: SupabaseClient
+  runId: string
+  definition: SwarmDefinition
+  params: Record<string, unknown>
+  onEvent?: (event: SwarmEvent) => void
 }
 
-/**
- * Create a new swarm run with step rows for each DAG step.
- */
-export async function createSwarmRun(
-  supabase: SupabaseClient,
-  params: CreateSwarmRunParams,
-): Promise<SwarmRun> {
-  const { orgId, name, dag, inputParams = {}, definitionId, templateId, triggeredBy = 'manual', triggerInput } = params
+export class SwarmExecutor {
+  private config: ExecutorConfig
+  private completedSteps: Map<string, Record<string, unknown>> = new Map()
+  private stepStatuses: Map<string, SwarmStepStatus> = new Map()
+  private allReversibleActions: ReversibleAction[] = []
+  private totalCost = 0
+  private totalTokensIn = 0
+  private totalTokensOut = 0
+  private aborted = false
+  private startTime = 0
 
-  // Insert the run
-  const { data: run, error: runError } = await supabase
-    .from('swarm_runs')
-    .insert({
-      org_id: orgId,
-      definition_id: definitionId ?? null,
-      template_id: templateId ?? null,
-      name,
-      status: 'pending',
-      input_params: inputParams,
-      output: {},
-      dag_snapshot: dag,
-      total_cost_cents: 0,
-      total_tokens_in: 0,
-      total_tokens_out: 0,
-      triggered_by: triggeredBy,
-      trigger_input: triggerInput ?? null,
-    })
-    .select('*')
-    .single()
-
-  if (runError || !run) {
-    throw new Error(`Failed to create swarm run: ${runError?.message ?? 'unknown error'}`)
+  constructor(config: ExecutorConfig) {
+    this.config = config
   }
 
-  // Compute execution order via topological sort
-  const layers = topologicalLayers(dag.steps)
-  let executionOrder = 0
+  /**
+   * Execute the swarm DAG.
+   * Returns the final status and result summary.
+   */
+  async execute(): Promise<{ status: SwarmRunStatus; summary: string | null }> {
+    const { supabase, runId, definition, orgId, params } = this.config
+    this.startTime = Date.now()
+    const startedAt = new Date().toISOString()
 
-  // Insert steps
-  const stepInserts = layers.flatMap(layer =>
-    layer.map(stepDef => {
-      const agent = dag.agents.find(a => a.id === stepDef.agent_id)
-      return {
-        swarm_run_id: run.id,
-        org_id: orgId,
-        step_id: stepDef.step_id,
-        step_type: stepDef.step_type,
-        agent_type: agent?.agent_type ?? stepDef.agent_id,
-        status: 'pending',
-        input: {},
-        output: {},
-        condition: stepDef.condition ?? null,
-        rollback_action: null,
-        cost_cents: 0,
-        tokens_in: 0,
-        tokens_out: 0,
-        error: null,
-        execution_order: executionOrder++,
-        depends_on: stepDef.depends_on,
-      }
-    })
-  )
-
-  if (stepInserts.length > 0) {
-    const { error: stepsError } = await supabase
-      .from('swarm_steps')
-      .insert(stepInserts)
-
-    if (stepsError) {
-      throw new Error(`Failed to create swarm steps: ${stepsError.message}`)
-    }
-  }
-
-  return run as SwarmRun
-}
-
-// ---------------------------------------------------------------------------
-// Execute Swarm Run
-// ---------------------------------------------------------------------------
-
-/**
- * Execute a swarm run to completion.
- *
- * This is the main orchestration loop:
- * 1. Acquire advisory lock
- * 2. Mark run as running
- * 3. For each layer in topological order:
- *    a. Resolve inputs from upstream outputs + swarm params
- *    b. For conditional steps, evaluate condition (skip if false)
- *    c. Execute all steps in the layer in parallel
- *    d. Publish messages from step results
- *    e. Update step rows with output/cost/status
- * 4. Aggregate cost and output
- * 5. Mark run as completed (or failed)
- * 6. Release lock
- */
-export async function executeSwarmRun(
-  supabase: SupabaseClient,
-  runId: string,
-): Promise<SwarmRun> {
-  const tag = `[swarm:${runId.slice(0, 8)}]`
-  let lockAcquired = false
-
-  try {
-    // Acquire lock
-    lockAcquired = await acquireSwarmLock(supabase, runId)
+    // Acquire advisory lock to prevent duplicate execution
+    const lockAcquired = await this.acquireLock()
     if (!lockAcquired) {
-      throw new Error('Another execution is already running for this swarm')
+      logger.warn('[swarm] Failed to acquire advisory lock', { runId })
+      await this.updateRunStatus('failed', 'Failed to acquire execution lock — swarm may already be running')
+      return { status: 'failed', summary: 'Duplicate execution prevented' }
     }
 
-    // Load the run
-    const { data: run, error: runError } = await supabase
-      .from('swarm_runs')
-      .select('*')
-      .eq('id', runId)
-      .single()
+    try {
+      // Update run status to executing
+      await this.updateRunStatus('executing', undefined, startedAt)
+      this.emit({ type: 'swarm_started', data: { runId, templateSlug: '', params } })
 
-    if (runError || !run) {
-      throw new Error(`Swarm run not found: ${runId}`)
-    }
+      // Create step rows in DB
+      await this.createStepRows(definition.steps)
 
-    if (run.status !== 'pending' && run.status !== 'paused') {
-      throw new Error(`Swarm run ${runId} is in status ${run.status}, cannot execute`)
-    }
+      // Topological execution
+      const executionOrder = this.topologicalSort(definition.steps)
 
-    const dag = run.dag_snapshot as SwarmDAG
+      for (const batch of executionOrder) {
+        if (this.aborted) break
 
-    // Mark as running
-    await supabase
-      .from('swarm_runs')
-      .update({ status: 'running', started_at: new Date().toISOString() })
-      .eq('id', runId)
-
-    logger.info(`${tag} Starting swarm: ${run.name} (${dag.steps.length} steps)`)
-
-    // Load all step rows
-    const { data: stepRows } = await supabase
-      .from('swarm_steps')
-      .select('*')
-      .eq('swarm_run_id', runId)
-      .order('execution_order', { ascending: true })
-
-    if (!stepRows || stepRows.length === 0) {
-      throw new Error('No steps found for swarm run')
-    }
-
-    const stepRowMap = new Map(stepRows.map(s => [s.step_id as string, s as SwarmStep]))
-
-    // Execute layers
-    const layers = topologicalLayers(dag.steps)
-    const stepOutputs = new Map<string, Record<string, unknown>>()
-    let totalCostCents = 0
-    let totalTokensIn = 0
-    let totalTokensOut = 0
-    let failed = false
-
-    for (const layer of layers) {
-      if (failed) break
-
-      // Execute all steps in this layer in parallel
-      const layerPromises = layer.map(async (stepDef) => {
-        const stepRow = stepRowMap.get(stepDef.step_id)
-        if (!stepRow) {
-          logger.warn(`${tag} Step row not found for ${stepDef.step_id}`)
-          return
+        // Check cost ceiling
+        if (definition.governance.costCeiling && this.totalCost >= definition.governance.costCeiling) {
+          logger.warn('[swarm] Cost ceiling reached', { runId, totalCost: this.totalCost, ceiling: definition.governance.costCeiling })
+          await this.updateRunStatus('failed', `Cost ceiling reached: $${this.totalCost.toFixed(4)} >= $${definition.governance.costCeiling}`)
+          return { status: 'failed', summary: `Cost ceiling exceeded ($${this.totalCost.toFixed(2)})` }
         }
 
-        // Check condition for conditional steps
-        if (stepDef.step_type === 'conditional' && stepDef.condition) {
-          const conditionMet = evaluateCondition(stepDef.condition, stepOutputs)
-          if (!conditionMet) {
-            logger.info(`${tag} Skipping conditional step ${stepDef.step_id}: condition not met`)
-            await supabase
-              .from('swarm_steps')
-              .update({ status: 'skipped', completed_at: new Date().toISOString() })
-              .eq('id', stepRow.id)
-            return
-          }
+        if (batch.length === 1) {
+          // Sequential execution
+          await this.executeStep(batch[0])
+        } else {
+          // Parallel execution
+          await Promise.allSettled(
+            batch.map(step => this.executeStep(step))
+          )
         }
+      }
 
-        // Resolve input from upstream outputs and swarm params
-        const input: Record<string, unknown> = { ...run.input_params }
-        if (stepDef.input_mapping) {
-          for (const [localKey, sourceRef] of Object.entries(stepDef.input_mapping)) {
-            const [srcStepId, srcKey] = sourceRef.split('.')
-            const srcOutput = stepOutputs.get(srcStepId)
-            if (srcOutput && srcKey) {
-              input[localKey] = srcOutput[srcKey]
-            } else if (srcOutput) {
-              input[localKey] = srcOutput
-            }
-          }
-        }
-        // Also include all upstream findings
-        for (const depId of stepDef.depends_on) {
-          const depOutput = stepOutputs.get(depId)
+      // Determine final status
+      const allStatuses = Array.from(this.stepStatuses.values())
+      const hasFailures = allStatuses.some(s => s === 'failed')
+      const allCompleted = allStatuses.every(s => s === 'completed' || s === 'skipped')
+
+      let finalStatus: SwarmRunStatus
+      let summary: string | null = null
+
+      if (this.aborted) {
+        finalStatus = 'failed'
+        summary = 'Swarm execution was aborted'
+      } else if (allCompleted) {
+        finalStatus = 'completed'
+        summary = this.buildSummary()
+      } else if (hasFailures) {
+        finalStatus = 'partial'
+        summary = this.buildSummary()
+      } else {
+        finalStatus = 'completed'
+        summary = this.buildSummary()
+      }
+
+      // Update run with results
+      const durationMs = Date.now() - this.startTime
+      await supabase
+        .from('swarm_runs')
+        .update({
+          status: finalStatus,
+          completed_at: new Date().toISOString(),
+          duration_ms: durationMs,
+          total_cost: this.totalCost,
+          total_tokens_in: this.totalTokensIn,
+          total_tokens_out: this.totalTokensOut,
+          result_summary: summary,
+          result_data: Object.fromEntries(this.completedSteps),
+          rollback_log: this.allReversibleActions,
+        })
+        .eq('id', runId)
+
+      // Update template metrics
+      if (this.config.params._templateId) {
+        await this.updateTemplateMetrics(
+          this.config.params._templateId as string,
+          finalStatus === 'completed',
+        )
+      }
+
+      this.emit({ type: 'swarm_completed', data: { runId, status: finalStatus, summary } })
+      return { status: finalStatus, summary }
+
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : String(err)
+      logger.error('[swarm] Execution failed', { runId, error: errorMsg })
+      await this.updateRunStatus('failed', errorMsg)
+      this.emit({ type: 'swarm_failed', data: { runId, error: errorMsg } })
+      return { status: 'failed', summary: errorMsg }
+    } finally {
+      await this.releaseLock()
+    }
+  }
+
+  /**
+   * Execute a single step.
+   */
+  private async executeStep(stepDef: SwarmStepDefinition): Promise<void> {
+    const { supabase, runId, orgId, params } = this.config
+
+    // Check if dependencies completed successfully
+    if (stepDef.dependsOn && stepDef.dependsOn.length > 0) {
+      const depsFailed = stepDef.dependsOn.some(
+        dep => this.stepStatuses.get(dep) === 'failed'
+      )
+      if (depsFailed) {
+        this.stepStatuses.set(stepDef.key, 'blocked')
+        await this.updateStepStatus(stepDef.key, 'blocked', 'Blocked by failed dependency')
+        return
+      }
+    }
+
+    // Evaluate condition
+    if (stepDef.condition) {
+      const shouldRun = this.evaluateCondition(stepDef.condition)
+      if (!shouldRun) {
+        this.stepStatuses.set(stepDef.key, 'skipped')
+        await this.updateStepStatus(stepDef.key, 'skipped')
+        return
+      }
+    }
+
+    // Mark as executing
+    this.stepStatuses.set(stepDef.key, 'executing')
+    await this.updateStepStatus(stepDef.key, 'executing')
+    this.emit({ type: 'step_started', data: { runId, stepKey: stepDef.key, agentRole: stepDef.agentRole } })
+
+    try {
+      // Build prompt with parameter substitution
+      const prompt = this.substituteParams(stepDef.prompt, params)
+
+      // Gather upstream findings
+      const upstreamFindings = await this.getUpstreamFindings(stepDef.key)
+
+      // Build input data from completed dependencies
+      const inputData: Record<string, unknown> = {}
+      if (stepDef.dependsOn) {
+        for (const dep of stepDef.dependsOn) {
+          const depOutput = this.completedSteps.get(dep)
           if (depOutput) {
-            input[`upstream_${depId}`] = depOutput
+            inputData[dep] = depOutput
+          }
+        }
+      }
+
+      // Build step context
+      const context: SwarmStepContext = {
+        orgId,
+        runId,
+        stepKey: stepDef.key,
+        inputData,
+        upstreamFindings,
+        triggerParams: params,
+        completedSteps: Object.fromEntries(this.completedSteps),
+      }
+
+      // Create and execute agent
+      const agent = new SwarmAgent({
+        role: stepDef.agentRole,
+        persona: stepDef.persona,
+        capabilities: stepDef.capabilities,
+        modelTier: stepDef.modelTier,
+        supabase,
+        orgId,
+      })
+
+      const result = await agent.execute(prompt, context)
+
+      // Process result
+      if (result.success) {
+        this.stepStatuses.set(stepDef.key, 'completed')
+        this.completedSteps.set(stepDef.key, result.data || {})
+
+        // Track costs
+        if (result.cost) {
+          this.totalCost += result.cost
+          this.emit({ type: 'cost_update', data: { runId, totalCost: this.totalCost, stepKey: stepDef.key, stepCost: result.cost } })
+        }
+        if (result.tokensIn) this.totalTokensIn += result.tokensIn
+        if (result.tokensOut) this.totalTokensOut += result.tokensOut
+
+        // Track reversible actions
+        if (result.reversibleActions) {
+          this.allReversibleActions.push(...result.reversibleActions)
+        }
+
+        // Post messages to bus
+        if (result.messages) {
+          for (const msg of result.messages) {
+            await this.postMessage(stepDef.key, null, msg.type, msg.content, msg.data)
           }
         }
 
-        // Get participant
-        const participant = getParticipant(stepDef.agent_id) ?? getParticipant(
-          dag.agents.find(a => a.id === stepDef.agent_id)?.agent_type ?? ''
+        // Post completion message
+        await this.postMessage(
+          stepDef.key,
+          null,
+          'completion',
+          `Step "${stepDef.label}" completed successfully`,
+          result.data
         )
 
-        if (!participant) {
-          logger.warn(`${tag} No participant for agent ${stepDef.agent_id}, using generic executor`)
-          // Mark as failed but don't stop the swarm for non-critical steps
-          await supabase
-            .from('swarm_steps')
-            .update({
-              status: 'failed',
-              error: `No participant registered for agent type: ${stepDef.agent_id}`,
-              completed_at: new Date().toISOString(),
-            })
-            .eq('id', stepRow.id)
-          return
-        }
-
-        // Mark step as running
+        // Update step in DB
         await supabase
           .from('swarm_steps')
-          .update({ status: 'running', input, started_at: new Date().toISOString() })
-          .eq('id', stepRow.id)
+          .update({
+            status: 'completed',
+            completed_at: new Date().toISOString(),
+            output_data: result.data || {},
+            cost_estimate: result.cost || 0,
+            tokens_in: result.tokensIn || 0,
+            tokens_out: result.tokensOut || 0,
+            model_used: result.modelUsed || null,
+            reversible_actions: result.reversibleActions || null,
+          })
+          .eq('run_id', runId)
+          .eq('step_key', stepDef.key)
 
-        // Load findings from message bus
-        const { data: findings } = await supabase
-          .from('swarm_messages')
-          .select('*')
-          .eq('swarm_run_id', runId)
-          .or(`to_step_id.eq.${stepDef.step_id},to_step_id.is.null`)
-          .order('created_at', { ascending: true })
+        this.emit({ type: 'step_completed', data: { runId, stepKey: stepDef.key, result } })
 
-        // Build context
-        const context: SwarmContext = {
-          run: run as SwarmRun,
-          step: { ...stepRow, input } as SwarmStep,
-          stepDef,
-          input,
-          findings: (findings ?? []) as SwarmMessage[],
-          orgId: run.org_id as string,
-        }
-
-        // Execute with timeout
-        let result: SwarmResult
-        const timeoutMs = (stepDef.timeout_seconds ?? 120) * 1000
-        try {
-          result = await Promise.race([
-            participant.execute(context),
-            new Promise<SwarmResult>((_, reject) =>
-              setTimeout(() => reject(new Error('Step execution timed out')), timeoutMs)
-            ),
-          ])
-        } catch (err) {
-          const errorMsg = err instanceof Error ? err.message : String(err)
-          logger.error(`${tag} Step ${stepDef.step_id} failed: ${errorMsg}`)
-
-          await supabase
-            .from('swarm_steps')
-            .update({
-              status: 'failed',
-              error: errorMsg,
-              completed_at: new Date().toISOString(),
-            })
-            .eq('id', stepRow.id)
-
-          failed = true
-          return
-        }
-
-        // Store outputs
-        stepOutputs.set(stepDef.step_id, result.output)
-
-        // Update step row
-        const stepCost = result.cost_cents ?? 0
-        const stepTokensIn = result.tokens_in ?? 0
-        const stepTokensOut = result.tokens_out ?? 0
-        totalCostCents += stepCost
-        totalTokensIn += stepTokensIn
-        totalTokensOut += stepTokensOut
+      } else if (result.negotiation) {
+        // Agent pushed back
+        this.stepStatuses.set(stepDef.key, 'negotiating')
+        await this.updateStepStatus(stepDef.key, 'negotiating')
 
         await supabase
           .from('swarm_steps')
           .update({
-            status: result.success ? 'completed' : 'failed',
-            output: result.output,
-            rollback_action: result.rollback_action ?? null,
-            cost_cents: stepCost,
-            tokens_in: stepTokensIn,
-            tokens_out: stepTokensOut,
-            error: result.error ?? null,
-            completed_at: new Date().toISOString(),
+            status: 'negotiating',
+            negotiation: result.negotiation,
           })
-          .eq('id', stepRow.id)
+          .eq('run_id', runId)
+          .eq('step_key', stepDef.key)
 
-        // Publish messages
-        if (result.messages && result.messages.length > 0) {
-          const msgInserts = result.messages.map(msg => ({
-            swarm_run_id: runId,
-            org_id: run.org_id,
-            from_step_id: stepDef.step_id,
-            to_step_id: msg.to_step_id ?? null,
-            message_type: msg.message_type,
-            content: msg.content,
-          }))
+        this.emit({ type: 'negotiation_started', data: { runId, stepKey: stepDef.key, negotiation: result.negotiation } })
 
-          await supabase.from('swarm_messages').insert(msgInserts)
+        // Post negotiation message
+        await this.postMessage(
+          stepDef.key,
+          null,
+          'negotiation',
+          result.negotiation.counterProposal,
+          { negotiation: result.negotiation }
+        )
+
+        // For now, mark as completed with the negotiation result
+        // In the future, the coordinator would resolve this
+        this.stepStatuses.set(stepDef.key, 'completed')
+        this.completedSteps.set(stepDef.key, {
+          negotiated: true,
+          ...result.negotiation.suggestedAlternative,
+        })
+
+      } else {
+        // Step failed
+        throw new Error(result.error || 'Unknown step failure')
+      }
+
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : String(err)
+      logger.error('[swarm] Step failed', { runId, stepKey: stepDef.key, error: errorMsg })
+
+      this.stepStatuses.set(stepDef.key, 'failed')
+      await supabase
+        .from('swarm_steps')
+        .update({
+          status: 'failed',
+          completed_at: new Date().toISOString(),
+          error_message: errorMsg,
+        })
+        .eq('run_id', runId)
+        .eq('step_key', stepDef.key)
+
+      // Post failure message
+      await this.postMessage(
+        stepDef.key,
+        null,
+        'warning',
+        `Step "${stepDef.label}" failed: ${errorMsg}`,
+      )
+
+      this.emit({ type: 'step_failed', data: { runId, stepKey: stepDef.key, error: errorMsg } })
+    }
+  }
+
+  /**
+   * Topological sort: returns batches of steps that can run in parallel.
+   * Each batch only depends on previously completed batches.
+   */
+  private topologicalSort(steps: SwarmStepDefinition[]): SwarmStepDefinition[][] {
+    const batches: SwarmStepDefinition[][] = []
+    const completed = new Set<string>()
+    const remaining = new Map(steps.map(s => [s.key, s]))
+
+    while (remaining.size > 0) {
+      const batch: SwarmStepDefinition[] = []
+
+      for (const [key, step] of remaining) {
+        const deps = step.dependsOn || []
+        const depsResolved = deps.every(d => completed.has(d))
+        if (depsResolved) {
+          batch.push(step)
         }
+      }
 
-        if (!result.success) {
-          failed = true
+      if (batch.length === 0) {
+        // Circular dependency or unresolvable deps — run remaining sequentially
+        logger.warn('[swarm] Unresolvable dependencies detected, running remaining sequentially')
+        for (const step of remaining.values()) {
+          batches.push([step])
         }
+        break
+      }
 
-        logger.info(`${tag} Step ${stepDef.step_id} completed (${result.success ? 'ok' : 'failed'})`)
-      })
+      for (const step of batch) {
+        remaining.delete(step.key)
+        completed.add(step.key)
+      }
 
-      await Promise.all(layerPromises)
+      batches.push(batch)
     }
 
-    // Aggregate output from all completed steps
-    const aggregatedOutput: Record<string, unknown> = {}
-    for (const [stepId, output] of stepOutputs) {
-      aggregatedOutput[stepId] = output
-    }
+    return batches
+  }
 
-    // Update run with final status
-    const finalStatus: SwarmRunStatus = failed ? 'failed' : 'completed'
-    const { data: updatedRun, error: updateError } = await supabase
-      .from('swarm_runs')
-      .update({
-        status: finalStatus,
-        output: aggregatedOutput,
-        total_cost_cents: totalCostCents,
-        total_tokens_in: totalTokensIn,
-        total_tokens_out: totalTokensOut,
-        completed_at: new Date().toISOString(),
-      })
-      .eq('id', runId)
+  /**
+   * Evaluate a step condition against completed step outputs.
+   */
+  private evaluateCondition(condition: StepCondition): boolean {
+    const sourceOutput = this.completedSteps.get(condition.sourceStep)
+    if (!sourceOutput) return false
+
+    // Simple JSONPath extraction ($.key.subkey)
+    const value = this.extractPath(sourceOutput, condition.path)
+
+    switch (condition.operator) {
+      case 'eq': return value === condition.value
+      case 'neq': return value !== condition.value
+      case 'gt': return typeof value === 'number' && value > (condition.value as number)
+      case 'lt': return typeof value === 'number' && value < (condition.value as number)
+      case 'contains': return typeof value === 'string' && value.includes(condition.value as string)
+      case 'exists': return value !== undefined && value !== null
+      case 'not_exists': return value === undefined || value === null
+      default: return false
+    }
+  }
+
+  /**
+   * Simple JSONPath-like extraction: $.key.subkey
+   */
+  private extractPath(obj: Record<string, unknown>, path: string): unknown {
+    const parts = path.replace(/^\$\.?/, '').split('.')
+    let current: unknown = obj
+    for (const part of parts) {
+      if (current === null || current === undefined || typeof current !== 'object') return undefined
+      current = (current as Record<string, unknown>)[part]
+    }
+    return current
+  }
+
+  /**
+   * Substitute {{param}} placeholders in a prompt.
+   */
+  private substituteParams(prompt: string, params: Record<string, unknown>): string {
+    return prompt.replace(/\{\{(\w+)\}\}/g, (_, key) => {
+      const value = params[key]
+      if (value === undefined || value === null) return `[${key} not provided]`
+      return String(value)
+    })
+  }
+
+  /**
+   * Get upstream findings (messages) relevant to a step.
+   */
+  private async getUpstreamFindings(stepKey: string): Promise<SwarmMessageRow[]> {
+    const { data } = await this.config.supabase
+      .from('swarm_messages')
       .select('*')
-      .single()
+      .eq('run_id', this.config.runId)
+      .or(`to_step_key.eq.${stepKey},to_step_key.is.null`)
+      .order('created_at', { ascending: true })
 
-    if (updateError) {
-      logger.error(`${tag} Failed to update run status: ${updateError.message}`)
-    }
-
-    // If failed, attempt rollback
-    if (failed) {
-      logger.info(`${tag} Swarm failed, initiating rollback`)
-      await rollbackSwarmRun(supabase, runId)
-    }
-
-    logger.info(`${tag} Swarm ${finalStatus}: ${totalCostCents}c, ${totalTokensIn + totalTokensOut} tokens`)
-
-    return (updatedRun ?? run) as SwarmRun
-  } finally {
-    if (lockAcquired) {
-      await releaseSwarmLock(supabase, runId)
-    }
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Rollback
-// ---------------------------------------------------------------------------
-
-/**
- * Roll back a swarm run by replaying rollback actions in reverse order.
- */
-export async function rollbackSwarmRun(
-  supabase: SupabaseClient,
-  runId: string,
-): Promise<void> {
-  const tag = `[swarm-rollback:${runId.slice(0, 8)}]`
-
-  await supabase
-    .from('swarm_runs')
-    .update({ status: 'rolling_back' })
-    .eq('id', runId)
-
-  // Get completed steps in reverse execution order
-  const { data: steps } = await supabase
-    .from('swarm_steps')
-    .select('*')
-    .eq('swarm_run_id', runId)
-    .eq('status', 'completed')
-    .order('execution_order', { ascending: false })
-
-  if (!steps || steps.length === 0) {
-    logger.info(`${tag} No completed steps to roll back`)
-    return
+    return (data || []) as SwarmMessageRow[]
   }
 
-  // Load the run for DAG info
-  const { data: run } = await supabase
-    .from('swarm_runs')
-    .select('dag_snapshot')
-    .eq('id', runId)
-    .single()
+  /**
+   * Post a message to the inter-agent message bus.
+   */
+  private async postMessage(
+    fromStepKey: string,
+    toStepKey: string | null,
+    messageType: SwarmMessageType,
+    content: string,
+    data?: Record<string, unknown>,
+  ): Promise<void> {
+    try {
+      const { data: row } = await this.config.supabase
+        .from('swarm_messages')
+        .insert({
+          run_id: this.config.runId,
+          org_id: this.config.orgId,
+          from_step_key: fromStepKey,
+          to_step_key: toStepKey,
+          message_type: messageType,
+          content,
+          data: data || null,
+        })
+        .select()
+        .single()
 
-  const dag = run?.dag_snapshot as SwarmDAG | undefined
+      if (row) {
+        this.emit({ type: 'message_posted', data: { runId: this.config.runId, message: row as SwarmMessageRow } })
+      }
+    } catch (err) {
+      logger.warn('[swarm] Failed to post message', { error: err })
+    }
+  }
 
-  for (const step of steps) {
-    if (!step.rollback_action) continue
+  /**
+   * Build a summary from all completed step outputs.
+   */
+  private buildSummary(): string {
+    const parts: string[] = []
+    for (const [key, output] of this.completedSteps) {
+      const status = this.stepStatuses.get(key) || 'unknown'
+      if (status === 'completed' && output) {
+        // Try to extract summary-like fields
+        const summary = (output as Record<string, unknown>).summary
+          || (output as Record<string, unknown>).report
+          || (output as Record<string, unknown>).pitchBrief
+          || (output as Record<string, unknown>).emailBody
+        if (summary) {
+          parts.push(`[${key}] ${String(summary).slice(0, 200)}`)
+        }
+      }
+    }
+    return parts.length > 0
+      ? parts.join('\n\n')
+      : `Swarm completed with ${this.completedSteps.size} steps. Total cost: $${this.totalCost.toFixed(4)}`
+  }
 
-    const stepDef = dag?.steps.find(s => s.step_id === step.step_id)
-    const participant = getParticipant(step.agent_type)
+  // ── Database Operations ─────────────────────────────────────────────────
 
-    if (participant?.rollback && stepDef) {
+  private async createStepRows(steps: SwarmStepDefinition[]): Promise<void> {
+    const rows = steps.map(step => ({
+      run_id: this.config.runId,
+      org_id: this.config.orgId,
+      step_key: step.key,
+      step_type: step.type,
+      agent_role: step.agentRole,
+      persona: step.persona || null,
+      allowed_tools: step.capabilities?.allowedToolGroups || null,
+      prompt: step.prompt,
+      depends_on: step.dependsOn || [],
+      condition: step.condition || null,
+      status: 'pending' as const,
+      max_retries: step.maxRetries ?? 2,
+    }))
+
+    await this.config.supabase
+      .from('swarm_steps')
+      .insert(rows)
+  }
+
+  private async updateStepStatus(
+    stepKey: string,
+    status: SwarmStepStatus,
+    errorMessage?: string,
+  ): Promise<void> {
+    const update: Record<string, unknown> = { status }
+    if (status === 'executing') update.started_at = new Date().toISOString()
+    if (errorMessage) update.error_message = errorMessage
+    if (status === 'completed' || status === 'failed' || status === 'skipped' || status === 'blocked') {
+      update.completed_at = new Date().toISOString()
+    }
+
+    await this.config.supabase
+      .from('swarm_steps')
+      .update(update)
+      .eq('run_id', this.config.runId)
+      .eq('step_key', stepKey)
+  }
+
+  private async updateRunStatus(status: SwarmRunStatus, errorMessage?: string, startedAt?: string): Promise<void> {
+    const update: Record<string, unknown> = { status }
+    if (status === 'executing') update.started_at = startedAt || new Date().toISOString()
+    if (errorMessage) update.error_message = errorMessage
+
+    await this.config.supabase
+      .from('swarm_runs')
+      .update(update)
+      .eq('id', this.config.runId)
+  }
+
+  private async updateTemplateMetrics(templateId: string, success: boolean): Promise<void> {
+    try {
+      // Increment counters
+      const { data: template } = await this.config.supabase
+        .from('swarm_templates')
+        .select('total_runs, success_runs, avg_duration_ms, avg_cost')
+        .eq('id', templateId)
+        .single()
+
+      if (!template) return
+
+      const newTotalRuns = (template.total_runs || 0) + 1
+      const newSuccessRuns = (template.success_runs || 0) + (success ? 1 : 0)
+
+      // Running average for duration and cost
+      const prevAvgDuration = template.avg_duration_ms || 0
+      const prevAvgCost = template.avg_cost || 0
+      const runDuration = Date.now() - this.startTime
+      const newAvgDuration = prevAvgDuration === 0
+        ? runDuration
+        : Math.round((prevAvgDuration * (newTotalRuns - 1) + runDuration) / newTotalRuns)
+      const newAvgCost = prevAvgCost === 0
+        ? this.totalCost
+        : Number(((Number(prevAvgCost) * (newTotalRuns - 1) + this.totalCost) / newTotalRuns).toFixed(4))
+
+      await this.config.supabase
+        .from('swarm_templates')
+        .update({
+          total_runs: newTotalRuns,
+          success_runs: newSuccessRuns,
+          avg_duration_ms: newAvgDuration,
+          avg_cost: newAvgCost,
+        })
+        .eq('id', templateId)
+    } catch (err) {
+      logger.warn('[swarm] Failed to update template metrics', { error: err })
+    }
+  }
+
+  // ── Advisory Lock ─────────────────────────────────────────────────────
+
+  private async acquireLock(): Promise<boolean> {
+    try {
+      const { data } = await this.config.supabase
+        .from('swarm_runs')
+        .select('lock_key')
+        .eq('id', this.config.runId)
+        .single()
+
+      if (!data?.lock_key) return true // No lock key, proceed
+
+      const { data: lockResult } = await this.config.supabase
+        .rpc('pg_try_advisory_lock', { lock_key: data.lock_key })
+
+      return lockResult === true
+    } catch {
+      // If advisory lock RPC doesn't exist, proceed without lock
+      return true
+    }
+  }
+
+  private async releaseLock(): Promise<void> {
+    try {
+      const { data } = await this.config.supabase
+        .from('swarm_runs')
+        .select('lock_key')
+        .eq('id', this.config.runId)
+        .single()
+
+      if (data?.lock_key) {
+        await this.config.supabase
+          .rpc('pg_advisory_unlock', { lock_key: data.lock_key })
+      }
+    } catch {
+      // Best effort
+    }
+  }
+
+  // ── Event Emitter ─────────────────────────────────────────────────────
+
+  private emit(event: SwarmEvent): void {
+    if (this.config.onEvent) {
       try {
-        const context: SwarmContext = {
-          run: { id: runId } as SwarmRun,
-          step: step as SwarmStep,
-          stepDef,
-          input: step.input as Record<string, unknown>,
-          findings: [],
-          orgId: step.org_id as string,
-        }
-
-        const result = await participant.rollback(context)
-        if (result.success) {
-          await supabase
-            .from('swarm_steps')
-            .update({ status: 'rolled_back' })
-            .eq('id', step.id)
-          logger.info(`${tag} Rolled back step ${step.step_id}`)
-        } else {
-          logger.warn(`${tag} Rollback failed for step ${step.step_id}: ${result.error}`)
-        }
-      } catch (err) {
-        logger.warn(`${tag} Rollback error for step ${step.step_id}: ${err}`)
+        this.config.onEvent(event)
+      } catch {
+        // Never let event emission break execution
       }
     }
   }
 }
 
-// ---------------------------------------------------------------------------
-// Cancel
-// ---------------------------------------------------------------------------
+// ── Rollback Engine ─────────────────────────────────────────────────────────
 
-/**
- * Cancel a running or pending swarm.
- */
-export async function cancelSwarmRun(
+export async function rollbackSwarm(
   supabase: SupabaseClient,
   runId: string,
-): Promise<void> {
-  // Cancel the run
-  await supabase
-    .from('swarm_runs')
-    .update({ status: 'cancelled', completed_at: new Date().toISOString() })
-    .eq('id', runId)
-    .in('status', ['pending', 'running', 'paused'])
+  orgId: string,
+): Promise<{ success: boolean; rolledBack: number; errors: string[] }> {
+  const errors: string[] = []
+  let rolledBack = 0
 
-  // Cancel pending steps
+  // Load the run and its reversible actions
+  const { data: run } = await supabase
+    .from('swarm_runs')
+    .select('*')
+    .eq('id', runId)
+    .eq('org_id', orgId)
+    .single()
+
+  if (!run) {
+    return { success: false, rolledBack: 0, errors: ['Swarm run not found'] }
+  }
+
+  const actions = (run.rollback_log as ReversibleAction[]) || []
+
+  if (actions.length === 0) {
+    return { success: true, rolledBack: 0, errors: ['No reversible actions to roll back'] }
+  }
+
+  // Whitelist of allowed tables for rollback operations
+  const ALLOWED_TABLES = new Set(['tasks', 'invoices', 'swarm_runs', 'swarm_steps'])
+
+  // Execute rollbacks in reverse order
+  for (let i = actions.length - 1; i >= 0; i--) {
+    const action = actions[i]
+    try {
+      switch (action.undoStrategy) {
+        case 'delete': {
+          const table = action.undoPayload?.table
+          const id = action.undoPayload?.id
+          if (!table || !id || typeof table !== 'string' || typeof id !== 'string') {
+            errors.push(`Invalid undo payload for delete action: ${action.actionType}`)
+            break
+          }
+          if (!ALLOWED_TABLES.has(table)) {
+            errors.push(`Unauthorized table for rollback: ${table}`)
+            break
+          }
+          await supabase
+            .from(table)
+            .delete()
+            .eq('id', id)
+            .eq('org_id', orgId)
+          break
+        }
+
+        case 'update': {
+          const table = action.undoPayload?.table
+          const id = action.undoPayload?.id
+          const data = action.undoPayload?.data
+          if (!table || !id || !data || typeof table !== 'string' || typeof id !== 'string') {
+            errors.push(`Invalid undo payload for update action: ${action.actionType}`)
+            break
+          }
+          if (!ALLOWED_TABLES.has(table)) {
+            errors.push(`Unauthorized table for rollback: ${table}`)
+            break
+          }
+          await supabase
+            .from(table)
+            .update(data as Record<string, unknown>)
+            .eq('id', id)
+            .eq('org_id', orgId)
+          break
+        }
+
+        case 'archive': {
+          const table = action.undoPayload?.table
+          const id = action.undoPayload?.id
+          if (!table || !id || typeof table !== 'string' || typeof id !== 'string') {
+            errors.push(`Invalid undo payload for archive action: ${action.actionType}`)
+            break
+          }
+          if (!ALLOWED_TABLES.has(table)) {
+            errors.push(`Unauthorized table for rollback: ${table}`)
+            break
+          }
+          await supabase
+            .from(table)
+            .update({ status: 'archived' })
+            .eq('id', id)
+            .eq('org_id', orgId)
+          break
+        }
+
+        case 'manual':
+          errors.push(`Manual rollback required for: ${action.actionType} in step ${action.stepKey}`)
+          continue
+      }
+
+      rolledBack++
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : String(err)
+      errors.push(`Failed to rollback ${action.actionType}: ${errorMsg}`)
+    }
+  }
+
+  // Mark all steps as rolled back
   await supabase
     .from('swarm_steps')
-    .update({ status: 'skipped' })
-    .eq('swarm_run_id', runId)
-    .eq('status', 'pending')
+    .update({ status: 'rolled_back' })
+    .eq('run_id', runId)
+    .in('status', ['completed', 'failed', 'partial'])
+
+  // Mark run as rolled back
+  await supabase
+    .from('swarm_runs')
+    .update({
+      status: 'rolled_back',
+      rolled_back_at: new Date().toISOString(),
+    })
+    .eq('id', runId)
+
+  return {
+    success: errors.length === 0,
+    rolledBack,
+    errors,
+  }
 }

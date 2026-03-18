@@ -34,15 +34,18 @@ export async function GET(request: Request) {
         // Query entities for this org
         const { data: contacts } = await supabase
           .from('contacts')
-          .select('id, name, email, phone, created_at')
+          .select('id, name, emails, phones, created_at')
           .eq('org_id', profile.org_id)
           .limit(100)
 
-        const { data: organizations } = await supabase
+        // Organization is the org itself
+        const { data: orgRow } = await supabase
           .from('organizations')
-          .select('id, name, domain, created_at')
-          .eq('org_id', profile.org_id)
-          .limit(50)
+          .select('id, name, created_at')
+          .eq('id', profile.org_id)
+          .single()
+
+        const organizations = orgRow ? [orgRow] : []
 
         const nodes: Array<{
           id: string
@@ -62,32 +65,74 @@ export async function GET(request: Request) {
           contacts.forEach((contact) => {
             nodes.push({
               id: `person:${contact.id}`,
-              label: contact.name || contact.email || 'Unknown',
+              label: contact.name || (contact.emails?.[0]) || 'Unknown',
               type: 'Person',
               data: {
                 name: contact.name,
-                email: contact.email,
-                phone: contact.phone,
+                email: contact.emails?.[0],
                 created_at: contact.created_at,
               },
             })
           })
         }
 
-        // Add organization nodes
-        if (organizations) {
-          organizations.forEach((org) => {
-            nodes.push({
-              id: `organization:${org.id}`,
-              label: org.name || 'Unknown Organization',
-              type: 'Organization',
-              data: {
-                name: org.name,
-                domain: org.domain,
-                created_at: org.created_at,
-              },
-            })
+        // Add organization node
+        for (const org of organizations) {
+          nodes.push({
+            id: `organization:${org.id}`,
+            label: org.name || 'Unknown Organization',
+            type: 'Organization',
+            data: {
+              name: org.name,
+              created_at: org.created_at,
+            },
           })
+        }
+
+        // Fetch entity_relationships to build edges
+        const { data: relationships } = await supabase
+          .from('entity_relationships')
+          .select('entity_a_type, entity_a_id, entity_b_type, entity_b_id, relationship_type, strength')
+          .eq('org_id', profile.org_id)
+          .limit(500)
+
+        if (relationships) {
+          for (const rel of relationships) {
+            const sourceId = `${rel.entity_a_type}:${rel.entity_a_id}`
+            const targetId = `${rel.entity_b_type}:${rel.entity_b_id}`
+            // Map 'contact' type to 'person' to match node IDs
+            const srcId = sourceId.replace(/^contact:/, 'person:')
+            const tgtId = targetId.replace(/^contact:/, 'person:')
+            // Only add edge if both nodes exist
+            if (nodes.some(n => n.id === srcId) && nodes.some(n => n.id === tgtId)) {
+              edges.push({
+                source: srcId,
+                target: tgtId,
+                label: rel.relationship_type?.replace(/_/g, ' ') ?? 'related',
+              })
+            }
+          }
+        }
+
+        // Also fetch kg_edges if kg_nodes exist
+        const { data: kgEdges } = await supabase
+          .from('kg_edges')
+          .select('source_id, target_id, edge_type')
+          .eq('org_id', profile.org_id)
+          .is('expired_at', null)
+          .limit(500)
+
+        if (kgEdges) {
+          for (const ke of kgEdges) {
+            // kg_edges source/target IDs are entity IDs that may already be in our nodes
+            if (nodes.some(n => n.id === ke.source_id) && nodes.some(n => n.id === ke.target_id)) {
+              edges.push({
+                source: ke.source_id,
+                target: ke.target_id,
+                label: ke.edge_type?.replace(/_/g, ' ').toLowerCase() ?? 'related',
+              })
+            }
+          }
         }
 
         logger.info('Knowledge graph visualization data generated', {

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { NextRequest, NextResponse } from 'next/server'
 import { getPortalContext } from '@/lib/portal/auth'
 import { getPortalInvoices } from '@/lib/portal/data'
@@ -18,5 +19,16 @@ export async function GET(request: NextRequest) {
   }
 
   const invoices = await getPortalInvoices(ctx)
+=======
+import { NextResponse } from 'next/server'
+import { validatePortalRequest } from '@/lib/portal/middleware'
+import { getPortalInvoices } from '@/lib/portal/data'
+
+export async function GET() {
+  const auth = await validatePortalRequest()
+  if (!auth.ok) return auth.response
+
+  const invoices = await getPortalInvoices(auth.access.org_id, auth.access.contact_id)
+>>>>>>> v1.5-marketing-launch
   return NextResponse.json({ invoices })
 }

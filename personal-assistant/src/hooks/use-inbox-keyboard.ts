@@ -81,10 +81,13 @@ export function useInboxKeyboard(options: UseInboxKeyboardOptions): UseInboxKeyb
     const now = Date.now();
     const opts = optionsRef.current;
 
-    // ── Cmd/Ctrl shortcuts (always active, even when editing) ──
+    // ── Non-editing shortcuts (skip if typing) ──
+    if (isEditing) return;
 
-    // Cmd+A → Select all
-    if (meta && e.key === 'a' && !alt) {
+    // ── Cmd/Ctrl shortcuts (only when not editing) ──
+
+    // Cmd+A → Select all emails
+    if (meta && e.key === 'a' && !shift && !alt) {
       e.preventDefault();
       opts.onSelectAll();
       return;
@@ -94,16 +97,6 @@ export function useInboxKeyboard(options: UseInboxKeyboardOptions): UseInboxKeyb
     if (meta && shift && e.key === 'a' && !alt) {
       e.preventDefault();
       opts.onDeselectAll();
-      return;
-    }
-
-    // ── Non-editing shortcuts (skip if typing) ──
-    if (isEditing) {
-      // Allow / to open search even while editing (clear the input first)
-      if (e.key === '/' && !meta && !alt) {
-        e.preventDefault();
-        opts.onSearch();
-      }
       return;
     }
 

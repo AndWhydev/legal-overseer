@@ -156,6 +156,10 @@ export const TOPBAR_CONFIGS: Record<string, TopbarConfig> = {
     title: 'Sentry',
     breadcrumb: <IconBreadcrumb icon={AlertTriangle} text="Monitoring" />,
   },
+  swarm: {
+    title: 'Swarm',
+    breadcrumb: <IconBreadcrumb icon={Zap} text="Multi-agent teams" />,
+  },
   approvals: {
     title: 'Approvals',
     breadcrumb: <IconBreadcrumb icon={CheckSquare} text="Agent decisions" />,

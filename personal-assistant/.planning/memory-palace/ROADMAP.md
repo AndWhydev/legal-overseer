@@ -43,9 +43,9 @@
 
 ## Progress
 
-| Phase | Plans | Status |
-|-------|-------|--------|
-| 26. Core Schema & Types | 1/1 | Pending |
-| 27. Retrieval & Extraction | 1/1 | Pending |
-| 28. Maintenance, GDPR & API | 1/1 | Pending |
-| 29. Dashboard | 1/1 | Pending |
+| Phase | Plans | Status | Commit |
+|-------|-------|--------|--------|
+| 26. Core Schema & Types | 1/1 | Complete | `606a23ca` |
+| 27. Retrieval & Extraction | 1/1 | Complete | `606a23ca` + `060fa905` |
+| 28. Maintenance, GDPR & API | 1/1 | Complete | `606a23ca` + `060fa905` |
+| 29. Dashboard | 1/1 | Complete | `606a23ca` |

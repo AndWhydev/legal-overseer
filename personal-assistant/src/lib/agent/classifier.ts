@@ -33,7 +33,7 @@ export interface ActionabilitySignals {
   category: 'priority' | 'updates' | 'low' // score >= 4 → priority, 2-3 → updates, 0-1 → low
 }
 
-export type InboxCategory = 'priority' | 'updates' | 'feed' | 'receipts' | 'spam'
+export type InboxCategory = 'action_required' | 'fyi' | 'conversation' | 'automated' | 'marketing' | 'spam'
 
 export interface ClassificationResult {
   significance: number // 1-10
@@ -236,22 +236,6 @@ export function scoreActionability(
   }
 }
 
-/**
- * Map old classification category + sender type to new inbox category.
- */
-export function toNewCategory(
-  classification: { category: string; significance: number },
-  senderType: SenderType,
-): InboxCategory {
-  if (classification.category === 'spam') return 'spam'
-  if (senderType === 'marketing') return 'feed'
-  if (senderType === 'transactional') return 'receipts'
-  if (senderType === 'automated') return 'updates'
-  // Human sender: use significance/category to determine priority
-  if (classification.significance >= 4) return 'priority'
-  if (classification.category === 'client' || classification.category === 'lead') return 'priority'
-  return 'updates'
-}
 
 // ---------------------------------------------------------------------------
 // Smart Contact Creation Rules

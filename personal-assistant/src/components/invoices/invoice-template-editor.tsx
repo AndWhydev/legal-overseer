@@ -2,16 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useToast } from '@/components/ui/toast'
-
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-interface InvoiceTemplate {
-  logo_base64?: string
-  primary_color?: string
-  accent_color?: string
-  footer_text?: string
-  terms?: string
-}
+import type { InvoiceTemplate } from '@/lib/invoices/template-types'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -78,7 +69,8 @@ function InvoicePreview({ template, orgName }: { template: InvoiceTemplate; orgN
           <div>
             <div style={{ fontSize: 9, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>From</div>
             <div style={{ fontWeight: 600 }}>{orgName}</div>
-            <div style={{ color: '#64748b', lineHeight: 1.5 }}>123 Agency St<br />Sydney NSW 2000</div>
+            <div style={{ color: '#64748b', lineHeight: 1.5 }}>{(template.address_lines?.length ? template.address_lines : ['123 Agency St', 'Sydney NSW 2000']).join(', ')}</div>
+            {template.abn && <div style={{ color: '#94a3b8', fontSize: 9, marginTop: 2 }}>ABN: {template.abn}</div>}
           </div>
           <div style={{ textAlign: 'right' }}>
             <div style={{ fontSize: 9, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Bill to</div>
@@ -158,6 +150,11 @@ export function InvoiceTemplateEditor() {
   const [template, setTemplate] = useState<InvoiceTemplate>({
     primary_color: '#FF5A1F',
     accent_color: '#EA580C',
+    company_name: '',
+    abn: '',
+    gst_registered: false,
+    address_lines: [],
+    bank_details: '',
     footer_text: '',
     terms: '',
   })
@@ -285,7 +282,7 @@ export function InvoiceTemplateEditor() {
   if (loading) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 200 }}>
-        <div style={{ width: 24, height: 24, borderRadius: '50%', border: '2px solid rgba(255,90,31,0.3)', borderTopColor: '#FF5A1F', animation: 'spin 0.8s linear infinite' }} />
+        <div style={{ width: 24, height: 24, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.1)', borderTopColor: '#E2E8F0', animation: 'spin 0.8s linear infinite' }} />
       </div>
     )
   }
@@ -347,6 +344,87 @@ export function InvoiceTemplateEditor() {
             onChange={handleLogoUpload}
             style={{ display: 'none' }}
           />
+        </div>
+
+        {/* Business details */}
+        <div style={cardStyle}>
+          <label style={labelStyle}>Business Details</label>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div>
+              <label style={{ ...labelStyle, marginBottom: 6 }}>Company Name</label>
+              <input
+                type="text"
+                value={template.company_name ?? ''}
+                onChange={(e) => setTemplate((prev) => ({ ...prev, company_name: e.target.value }))}
+                style={inputStyle}
+                placeholder="e.g. Tor Kay Consulting"
+                maxLength={200}
+              />
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div>
+                <label style={{ ...labelStyle, marginBottom: 6 }}>ABN</label>
+                <input
+                  type="text"
+                  value={template.abn ?? ''}
+                  onChange={(e) => setTemplate((prev) => ({ ...prev, abn: e.target.value }))}
+                  style={inputStyle}
+                  placeholder="e.g. 12 345 678 901"
+                  maxLength={30}
+                />
+              </div>
+              <div>
+                <label style={{ ...labelStyle, marginBottom: 6 }}>GST Registered</label>
+                <button
+                  onClick={() => setTemplate((prev) => ({ ...prev, gst_registered: !prev.gst_registered }))}
+                  style={{
+                    ...inputStyle,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    background: template.gst_registered ? 'rgba(34,197,94,0.1)' : 'rgba(13, 17, 23, 0.6)',
+                    border: template.gst_registered ? '1px solid rgba(34,197,94,0.3)' : '1px solid rgba(255,255,255,0.1)',
+                  }}
+                >
+                  <span style={{
+                    width: 16, height: 16, borderRadius: 4,
+                    background: template.gst_registered ? '#22C55E' : 'rgba(255,255,255,0.1)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 11, color: '#fff', fontWeight: 700,
+                  }}>
+                    {template.gst_registered ? '✓' : ''}
+                  </span>
+                  {template.gst_registered ? 'Yes' : 'No'}
+                </button>
+              </div>
+            </div>
+            <div>
+              <label style={{ ...labelStyle, marginBottom: 6 }}>Address</label>
+              <input
+                type="text"
+                value={(template.address_lines ?? []).join(', ')}
+                onChange={(e) => setTemplate((prev) => ({
+                  ...prev,
+                  address_lines: e.target.value.split(',').map(l => l.trim()).filter(Boolean),
+                }))}
+                style={inputStyle}
+                placeholder="e.g. 123 Agency St, Sydney NSW 2000"
+              />
+              <p style={{ fontSize: 11, color: '#475569', margin: '4px 0 0' }}>Separate lines with commas</p>
+            </div>
+            <div>
+              <label style={{ ...labelStyle, marginBottom: 6 }}>Bank Details</label>
+              <input
+                type="text"
+                value={template.bank_details ?? ''}
+                onChange={(e) => setTemplate((prev) => ({ ...prev, bank_details: e.target.value }))}
+                style={inputStyle}
+                placeholder="e.g. BSB: 062-000, Account: 1234 5678, Name: Tor Kay"
+                maxLength={500}
+              />
+            </div>
+          </div>
         </div>
 
         {/* Color scheme */}
@@ -483,7 +561,7 @@ export function InvoiceTemplateEditor() {
             padding: '12px',
             borderRadius: 10,
             border: 'none',
-            background: saving ? 'rgba(255,90,31,0.5)' : '#FF5A1F',
+            background: saving ? 'rgba(26,26,27,0.5)' : '#1A1A1B',
             color: '#fff',
             fontWeight: 700,
             fontSize: 14,
@@ -498,7 +576,7 @@ export function InvoiceTemplateEditor() {
       {/* ── Right: Live Preview ── */}
       <div style={{ position: 'sticky', top: 24 }}>
         <p style={{ ...labelStyle, marginBottom: 12 }}>Live Preview</p>
-        <InvoicePreview template={template} orgName={orgName} />
+        <InvoicePreview template={template} orgName={template.company_name?.trim() || orgName} />
         <p style={{ fontSize: 11, color: '#475569', marginTop: 8, textAlign: 'center' }}>
           Preview only · not to scale
         </p>

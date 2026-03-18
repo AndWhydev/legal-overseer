@@ -1,353 +1,500 @@
 /**
- * Swarm Coordinator — the brain that matches user intent to swarm templates.
+ * Swarm Coordinator
  *
- * Flow:
- * 1. Haiku classifies user input → identifies if it's a swarm trigger
- * 2. Matches to a template using trigger_patterns + semantic similarity
- * 3. Fills template params from context (contacts, projects, etc.)
- * 4. Creates and starts the swarm run
+ * Haiku-powered brain that:
+ * 1. Classifies natural language triggers into swarm templates
+ * 2. Extracts parameters from context
+ * 3. Creates and manages swarm runs
+ * 4. Delegates execution to SwarmExecutor
  *
- * Cost-optimized: Haiku does classification, Sonnet/Opus handle execution.
+ * Uses classification-tier model (Haiku) for planning — only escalates
+ * to Sonnet/Opus for actual step execution.
  */
 
 import Anthropic from '@anthropic-ai/sdk'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import type {
+  CoordinatorClassification,
+  SwarmDefinition,
+  SwarmTemplateRow,
+  SwarmRunRow,
+  SwarmEvent,
+  SwarmRunStatus,
+} from './types'
+import { BUILTIN_TEMPLATES, matchTemplate, type BuiltinTemplate } from './templates'
+import { SwarmExecutor, rollbackSwarm } from './executor'
 import { resolveModel } from '@/lib/agent/model-registry'
-import { assembleContext } from '@/lib/context/assembler'
-import type { SwarmTemplate, SwarmTriggerResult, SwarmDAG } from './types'
-import { createSwarmRun, executeSwarmRun } from './executor'
 import { logger } from '@/lib/core/logger'
 
-// ---------------------------------------------------------------------------
-// Template Matching
-// ---------------------------------------------------------------------------
+// ── Coordinator ─────────────────────────────────────────────────────────────
 
-/**
- * Load all available templates for an org (builtin + org-specific).
- */
-export async function loadTemplates(
-  supabase: SupabaseClient,
-  orgId: string,
-): Promise<SwarmTemplate[]> {
-  const { data, error } = await supabase
-    .from('swarm_templates')
-    .select('*')
-    .or(`org_id.is.null,org_id.eq.${orgId}`)
-    .order('usage_count', { ascending: false })
+export class SwarmCoordinator {
+  private supabase: SupabaseClient
+  private orgId: string
 
-  if (error) {
-    logger.warn('[swarm-coordinator] Failed to load templates:', error.message)
-    return []
+  constructor(supabase: SupabaseClient, orgId: string) {
+    this.supabase = supabase
+    this.orgId = orgId
   }
 
-  return (data ?? []) as SwarmTemplate[]
-}
+  /**
+   * Process a natural language trigger and execute the matching swarm.
+   * This is the main entry point for swarm orchestration.
+   */
+  async trigger(
+    input: string,
+    options?: {
+      templateSlug?: string           // explicit template selection
+      params?: Record<string, unknown> // pre-filled parameters
+      triggerType?: string             // chat, api, cron
+      parentRunId?: string             // for sub-swarm composition
+      parentStepId?: string
+      onEvent?: (event: SwarmEvent) => void
+    },
+  ): Promise<{ runId: string; status: SwarmRunStatus; summary: string | null }> {
+    const triggerType = options?.triggerType || 'chat'
 
-/**
- * Match user input against available templates using pattern matching + LLM.
- *
- * Two-stage matching:
- * 1. Fast: check trigger_patterns with keyword overlap
- * 2. If no strong match, use Haiku to classify intent
- */
-export async function matchTemplate(
-  supabase: SupabaseClient,
-  orgId: string,
-  userInput: string,
-): Promise<SwarmTriggerResult> {
-  const templates = await loadTemplates(supabase, orgId)
-  if (templates.length === 0) {
-    return { matched: false, confidence: 0, reasoning: 'No templates available' }
+    // Step 1: Classify the input (or use explicit template)
+    let template: { slug: string; definition: SwarmDefinition; templateId?: string } | null = null
+    let params: Record<string, unknown> = options?.params || {}
+
+    if (options?.templateSlug) {
+      // Explicit template selection
+      template = await this.loadTemplate(options.templateSlug)
+      if (!template) {
+        throw new Error(`Template "${options.templateSlug}" not found`)
+      }
+    } else {
+      // NL classification
+      const classification = await this.classify(input)
+
+      if (!classification.templateSlug) {
+        throw new Error('No matching swarm template found for this request')
+      }
+
+      template = await this.loadTemplate(classification.templateSlug)
+      if (!template) {
+        throw new Error(`Template "${classification.templateSlug}" not found`)
+      }
+
+      params = { ...classification.extractedParams, ...params }
+    }
+
+    // Step 2: Create swarm run
+    const run = await this.createRun({
+      templateId: template.templateId,
+      templateSlug: template.slug,
+      triggerType,
+      triggerInput: input,
+      triggerParams: params,
+      parentRunId: options?.parentRunId,
+      parentStepId: options?.parentStepId,
+    })
+
+    // Step 3: Execute
+    const executor = new SwarmExecutor({
+      orgId: this.orgId,
+      supabase: this.supabase,
+      runId: run.id,
+      definition: template.definition,
+      params: { ...params, _templateId: template.templateId },
+      onEvent: options?.onEvent,
+    })
+
+    const result = await executor.execute()
+
+    return {
+      runId: run.id,
+      status: result.status,
+      summary: result.summary,
+    }
   }
 
-  // Stage 1: Pattern-based matching
-  const inputLower = userInput.toLowerCase()
-  const inputWords = inputLower.split(/\s+/).filter(w => w.length > 2)
-
-  let bestMatch: SwarmTemplate | undefined
-  let bestScore = 0
-
-  for (const template of templates) {
-    let score = 0
-
-    // Check trigger patterns
-    for (const pattern of template.trigger_patterns) {
-      const patternLower = pattern.toLowerCase()
-      if (inputLower.includes(patternLower)) {
-        score += 10 // Exact phrase match
-      } else {
-        // Word overlap
-        const patternWords = patternLower.split(/\s+/).filter(w => w.length > 2)
-        const overlap = patternWords.filter(pw => inputWords.some(iw => iw.includes(pw) || pw.includes(iw)))
-        score += overlap.length * 2
+  /**
+   * Classify a natural language input into a swarm template.
+   * Uses Haiku for cost optimization.
+   */
+  async classify(input: string): Promise<CoordinatorClassification> {
+    // Fast path: regex pattern matching against known templates
+    const regexMatch = matchTemplate(input)
+    if (regexMatch) {
+      // Extract parameters using Haiku
+      const params = await this.extractParams(input, regexMatch)
+      return {
+        templateSlug: regexMatch.slug,
+        confidence: 0.9,
+        extractedParams: params,
+        reasoning: `Matched trigger pattern for "${regexMatch.name}"`,
       }
     }
 
-    // Check template name/description
-    if (inputLower.includes(template.name.toLowerCase())) {
-      score += 5
+    // Load custom templates from DB
+    const { data: dbTemplates } = await this.supabase
+      .from('swarm_templates')
+      .select('slug, name, description, trigger_patterns, definition')
+      .eq('org_id', this.orgId)
+      .eq('is_active', true)
+
+    // Build template catalog for LLM classification
+    const allTemplates = [
+      ...BUILTIN_TEMPLATES.map(t => ({
+        slug: t.slug,
+        name: t.name,
+        description: t.description,
+      })),
+      ...(dbTemplates || []).map((t: { slug: string; name: string; description: string | null }) => ({
+        slug: t.slug,
+        name: t.name,
+        description: t.description,
+      })),
+    ]
+
+    // Use Haiku to classify
+    const apiKey = process.env.ANTHROPIC_API_KEY
+    if (!apiKey) {
+      throw new Error('ANTHROPIC_API_KEY environment variable is not set')
     }
+    const client = new Anthropic({ apiKey })
 
-    if (score > bestScore) {
-      bestScore = score
-      bestMatch = template
-    }
-  }
-
-  // If strong pattern match (score >= 6), return it directly
-  if (bestMatch && bestScore >= 6) {
-    return {
-      matched: true,
-      template: bestMatch,
-      confidence: Math.min(0.95, 0.5 + bestScore * 0.05),
-      reasoning: `Pattern match: "${bestMatch.name}" (score: ${bestScore})`,
-    }
-  }
-
-  // Stage 2: LLM-based classification
-  try {
-    const client = new Anthropic()
-
-    const templateDescriptions = templates.map(t =>
-      `- ${t.slug}: ${t.name} — ${t.description ?? 'No description'}. Triggers: ${t.trigger_patterns.join(', ')}`
-    ).join('\n')
-
-    const response = await client.messages.create({
-      model: resolveModel('classification'),
-      max_tokens: 300,
-      messages: [{
-        role: 'user',
-        content: `Is this user input requesting a multi-step coordinated operation? If so, which template matches best?
-
-User input: "${userInput}"
+    const systemPrompt = `You are a swarm template classifier for BitBit, an AI operations platform for agencies.
+Given a user request, determine which swarm template (if any) should be triggered, and extract the parameters.
 
 Available templates:
-${templateDescriptions}
-
-Return JSON only:
-{
-  "matched": true/false,
-  "template_slug": "<slug or null>",
-  "confidence": <0-1>,
-  "reasoning": "<brief explanation>",
-  "extracted_params": { "<param_name>": "<value>", ... }
-}
-
-If the input is NOT asking for a multi-step operation (e.g., just a chat question), set matched=false.`
-      }],
-    })
-
-    const text = response.content.find(b => b.type === 'text')?.text ?? '{}'
-    const jsonMatch = text.match(/\{[\s\S]*\}/)
-    if (!jsonMatch) {
-      return { matched: false, confidence: 0, reasoning: 'LLM returned no JSON' }
-    }
-
-    const parsed = JSON.parse(jsonMatch[0])
-
-    if (parsed.matched && parsed.template_slug) {
-      const matchedTemplate = templates.find(t => t.slug === parsed.template_slug)
-      if (matchedTemplate) {
-        return {
-          matched: true,
-          template: matchedTemplate,
-          params: parsed.extracted_params ?? {},
-          confidence: parsed.confidence ?? 0.7,
-          reasoning: parsed.reasoning ?? 'LLM match',
-        }
-      }
-    }
-
-    return {
-      matched: false,
-      confidence: parsed.confidence ?? 0,
-      reasoning: parsed.reasoning ?? 'No template match',
-    }
-  } catch (err) {
-    logger.warn('[swarm-coordinator] LLM matching failed:', err)
-    // Fall back to best pattern match if we have one
-    if (bestMatch && bestScore > 0) {
-      return {
-        matched: true,
-        template: bestMatch,
-        confidence: 0.4,
-        reasoning: `Weak pattern match: "${bestMatch.name}" (LLM unavailable)`,
-      }
-    }
-    return { matched: false, confidence: 0, reasoning: 'Matching failed' }
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Parameter Resolution
-// ---------------------------------------------------------------------------
-
-/**
- * Resolve swarm template parameters from context and user input.
- * Uses entity resolution to fill contact/project references.
- */
-export async function resolveParams(
-  supabase: SupabaseClient,
-  orgId: string,
-  template: SwarmTemplate,
-  userInput: string,
-  extractedParams: Record<string, unknown> = {},
-): Promise<Record<string, unknown>> {
-  const params: Record<string, unknown> = { ...extractedParams }
-
-  // Assemble context to find entities mentioned in user input
-  const context = await assembleContext(supabase, orgId, userInput)
-
-  // Auto-fill from context
-  if (context.resolvedEntities?.length) {
-    const firstEntity = context.resolvedEntities[0]
-    if (!params.contact_name && firstEntity.name) {
-      params.contact_name = firstEntity.name
-    }
-    if (!params.contact_id && firstEntity.id) {
-      params.contact_id = firstEntity.id
-    }
-  }
-
-  // Fill defaults from param_schema
-  for (const [key, def] of Object.entries(template.param_schema)) {
-    if (params[key] === undefined && def.default !== undefined) {
-      params[key] = def.default
-    }
-  }
-
-  // Pass the original input as a param too
-  params._user_input = userInput
-  params._context_summary = context.summary
-
-  return params
-}
-
-// ---------------------------------------------------------------------------
-// Trigger & Execute
-// ---------------------------------------------------------------------------
-
-/**
- * Full coordinator flow: match template → resolve params → create run → execute.
- */
-export async function triggerSwarm(
-  supabase: SupabaseClient,
-  orgId: string,
-  userInput: string,
-  options?: {
-    autoExecute?: boolean
-    triggeredBy?: string
-  },
-): Promise<{
-  triggered: boolean
-  run?: { id: string; name: string; status: string }
-  matchResult: SwarmTriggerResult
-}> {
-  const tag = '[swarm-coordinator]'
-
-  // 1. Match template
-  const matchResult = await matchTemplate(supabase, orgId, userInput)
-  if (!matchResult.matched || !matchResult.template) {
-    return { triggered: false, matchResult }
-  }
-
-  logger.info(`${tag} Matched template: ${matchResult.template.name} (${matchResult.confidence})`)
-
-  // 2. Resolve params
-  const params = await resolveParams(
-    supabase,
-    orgId,
-    matchResult.template,
-    userInput,
-    matchResult.params,
-  )
-
-  // 3. Create run
-  const run = await createSwarmRun(supabase, {
-    orgId,
-    name: `${matchResult.template.name}: ${userInput.slice(0, 50)}`,
-    dag: matchResult.template.dag,
-    inputParams: params,
-    templateId: matchResult.template.id,
-    triggeredBy: options?.triggeredBy ?? 'coordinator',
-    triggerInput: userInput,
-  })
-
-  // 4. Increment template usage
-  await supabase
-    .from('swarm_templates')
-    .update({ usage_count: matchResult.template.usage_count + 1 })
-    .eq('id', matchResult.template.id)
-
-  // 5. Execute (async if autoExecute, otherwise leave pending)
-  if (options?.autoExecute !== false) {
-    // Fire-and-forget execution
-    executeSwarmRun(supabase, run.id).catch(err => {
-      logger.error(`${tag} Swarm execution failed:`, err)
-    })
-  }
-
-  return {
-    triggered: true,
-    run: { id: run.id, name: run.name, status: run.status },
-    matchResult,
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Conflict Resolution
-// ---------------------------------------------------------------------------
-
-/**
- * When agents disagree, escalate to Sonnet for resolution.
- * E.g., Finance says "overcommitted" but Sales says "pursue".
- */
-export async function resolveConflict(
-  supabase: SupabaseClient,
-  orgId: string,
-  conflictingSteps: Array<{
-    step_id: string
-    agent_type: string
-    output: Record<string, unknown>
-  }>,
-  swarmContext: Record<string, unknown>,
-): Promise<{ resolution: Record<string, unknown>; reasoning: string }> {
-  const client = new Anthropic()
-
-  const perspectives = conflictingSteps.map(s =>
-    `${s.agent_type} (step ${s.step_id}): ${JSON.stringify(s.output)}`
-  ).join('\n\n')
-
-  const response = await client.messages.create({
-    model: resolveModel('synthesis'),
-    max_tokens: 1000,
-    messages: [{
-      role: 'user',
-      content: `You are a business operations coordinator. Two agents in a multi-agent swarm have produced conflicting recommendations. Analyze both perspectives and provide a resolution.
-
-Context: ${JSON.stringify(swarmContext)}
-
-Conflicting perspectives:
-${perspectives}
+${allTemplates.map(t => `- ${t.slug}: ${t.name} — ${t.description}`).join('\n')}
 
 Return JSON:
 {
-  "resolution": { "action": "<what to do>", "adjustments": {} },
-  "reasoning": "<why this resolution is best>",
-  "chosen_perspective": "<which agent's view to favor, if any>"
-}`
-    }],
-  })
+  "templateSlug": "<slug or null if no match>",
+  "confidence": <0-1>,
+  "extractedParams": { <key: value pairs extracted from input> },
+  "reasoning": "<brief explanation>"
+}
 
-  const text = response.content.find(b => b.type === 'text')?.text ?? '{}'
-  const jsonMatch = text.match(/\{[\s\S]*\}/)
-  if (!jsonMatch) {
-    return { resolution: {}, reasoning: 'Failed to parse conflict resolution' }
+Extract these common parameters when present:
+- clientName: the client/company being discussed
+- contactEmail: any email mentioned
+- projectType: type of project/work
+- projectValue: monetary amount
+- deadline: any deadline mentioned
+- month: any month/period mentioned
+
+Only match a template if the user's intent clearly aligns. Return null for general conversation.
+Return ONLY JSON, no markdown fences.`
+
+    try {
+      const response = await client.messages.create({
+        model: resolveModel('classification'),
+        max_tokens: 512,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: input }],
+      })
+
+      const text = response.content
+        .filter((b): b is Anthropic.TextBlock => b.type === 'text')
+        .map(b => b.text)
+        .join('')
+
+      const cleaned = text.replace(/```json?\n?/g, '').replace(/```/g, '').trim()
+      const parsed = JSON.parse(cleaned)
+
+      return {
+        templateSlug: parsed.templateSlug || null,
+        confidence: Number(parsed.confidence) || 0,
+        extractedParams: parsed.extractedParams || {},
+        reasoning: String(parsed.reasoning || ''),
+      }
+    } catch (err) {
+      logger.warn('[swarm-coordinator] Classification failed', { error: err })
+      return {
+        templateSlug: null,
+        confidence: 0,
+        extractedParams: {},
+        reasoning: 'Classification failed',
+      }
+    }
   }
 
-  const parsed = JSON.parse(jsonMatch[0])
-  return {
-    resolution: parsed.resolution ?? {},
-    reasoning: parsed.reasoning ?? 'No reasoning provided',
+  /**
+   * Extract parameters from input for a known template.
+   * Uses Haiku for speed and cost.
+   */
+  private async extractParams(
+    input: string,
+    template: BuiltinTemplate,
+  ): Promise<Record<string, unknown>> {
+    const apiKey = process.env.ANTHROPIC_API_KEY
+    if (!apiKey) {
+      throw new Error('ANTHROPIC_API_KEY environment variable is not set')
+    }
+    const client = new Anthropic({ apiKey })
+
+    const paramSchema = template.definition.inputSchema
+    const paramList = Object.entries(paramSchema)
+      .map(([key, spec]) => `- ${key} (${spec.type}${spec.required ? ', required' : ''}): ${spec.description}`)
+      .join('\n')
+
+    try {
+      const response = await client.messages.create({
+        model: resolveModel('classification'),
+        max_tokens: 256,
+        system: `Extract parameters from the user request for the "${template.name}" operation.
+
+Expected parameters:
+${paramList}
+
+Return ONLY a JSON object with the extracted values. Use null for parameters not mentioned. No markdown fences.`,
+        messages: [{ role: 'user', content: input }],
+      })
+
+      const text = response.content
+        .filter((b): b is Anthropic.TextBlock => b.type === 'text')
+        .map(b => b.text)
+        .join('')
+
+      const cleaned = text.replace(/```json?\n?/g, '').replace(/```/g, '').trim()
+      const parsed = JSON.parse(cleaned)
+
+      // Apply defaults for missing required params
+      for (const [key, spec] of Object.entries(paramSchema)) {
+        if (parsed[key] === null || parsed[key] === undefined) {
+          if (spec.default !== undefined) {
+            parsed[key] = spec.default
+          }
+        }
+      }
+
+      return parsed
+    } catch {
+      // Fallback: simple extraction
+      return this.simpleExtract(input)
+    }
+  }
+
+  /**
+   * Simple parameter extraction without LLM.
+   */
+  private simpleExtract(input: string): Record<string, unknown> {
+    const params: Record<string, unknown> = {}
+
+    // Extract client name (common pattern: "for <name>")
+    const forMatch = input.match(/\bfor\s+([A-Z][a-zA-Z\s]+?)(?:\s+(?:pitch|project|work|meeting|client)|[.,!?]|$)/i)
+    if (forMatch) {
+      params.clientName = forMatch[1].trim()
+    }
+
+    // Extract email
+    const emailMatch = input.match(/[\w.+-]+@[\w-]+\.[\w.]+/)
+    if (emailMatch) {
+      params.contactEmail = emailMatch[0]
+    }
+
+    // Extract monetary amount
+    const moneyMatch = input.match(/\$[\d,]+(?:\.\d{2})?/)
+    if (moneyMatch) {
+      params.projectValue = parseFloat(moneyMatch[0].replace(/[$,]/g, ''))
+    }
+
+    return params
+  }
+
+  // ── Template Loading ──────────────────────────────────────────────────
+
+  /**
+   * Load a template by slug — check DB first, then fall back to builtins.
+   */
+  private async loadTemplate(
+    slug: string,
+  ): Promise<{ slug: string; definition: SwarmDefinition; templateId?: string } | null> {
+    // Try DB first
+    const { data: dbTemplate } = await this.supabase
+      .from('swarm_templates')
+      .select('id, slug, definition')
+      .eq('org_id', this.orgId)
+      .eq('slug', slug)
+      .eq('is_active', true)
+      .single()
+
+    if (dbTemplate) {
+      return {
+        slug: dbTemplate.slug,
+        definition: dbTemplate.definition as SwarmDefinition,
+        templateId: dbTemplate.id,
+      }
+    }
+
+    // Fall back to builtin
+    const builtin = BUILTIN_TEMPLATES.find(t => t.slug === slug)
+    if (builtin) {
+      // Seed the builtin template into DB for metrics tracking
+      const templateId = await this.seedBuiltinTemplate(builtin)
+      return {
+        slug: builtin.slug,
+        definition: builtin.definition,
+        templateId: templateId || undefined,
+      }
+    }
+
+    return null
+  }
+
+  /**
+   * Seed a builtin template into the database for this org.
+   */
+  private async seedBuiltinTemplate(template: BuiltinTemplate): Promise<string | null> {
+    try {
+      const { data } = await this.supabase
+        .from('swarm_templates')
+        .insert({
+          org_id: this.orgId,
+          name: template.name,
+          slug: template.slug,
+          description: template.description,
+          category: template.category,
+          trigger_patterns: template.triggerPatterns,
+          definition: template.definition,
+          governance: template.definition.governance,
+          is_builtin: true,
+        })
+        .select('id')
+        .single()
+
+      return data?.id || null
+    } catch (err) {
+      // Might already exist (unique constraint on org_id + slug)
+      const { data: existing } = await this.supabase
+        .from('swarm_templates')
+        .select('id')
+        .eq('org_id', this.orgId)
+        .eq('slug', template.slug)
+        .single()
+
+      return existing?.id || null
+    }
+  }
+
+  // ── Run Management ────────────────────────────────────────────────────
+
+  private async createRun(args: {
+    templateId?: string
+    templateSlug: string
+    triggerType: string
+    triggerInput: string
+    triggerParams: Record<string, unknown>
+    parentRunId?: string
+    parentStepId?: string
+  }): Promise<SwarmRunRow> {
+    const { data, error } = await this.supabase
+      .from('swarm_runs')
+      .insert({
+        org_id: this.orgId,
+        template_id: args.templateId || null,
+        template_slug: args.templateSlug,
+        trigger_type: args.triggerType,
+        trigger_input: args.triggerInput,
+        trigger_params: args.triggerParams,
+        parent_run_id: args.parentRunId || null,
+        parent_step_id: args.parentStepId || null,
+        status: 'planning',
+      })
+      .select()
+      .single()
+
+    if (error) {
+      throw new Error(`Failed to create swarm run: ${error.message}`)
+    }
+
+    return data as SwarmRunRow
+  }
+
+  // ── Query Methods ─────────────────────────────────────────────────────
+
+  /**
+   * List swarm runs with optional filtering.
+   */
+  async listRuns(options?: {
+    status?: SwarmRunStatus | SwarmRunStatus[]
+    limit?: number
+    offset?: number
+  }): Promise<SwarmRunRow[]> {
+    let query = this.supabase
+      .from('swarm_runs')
+      .select('*')
+      .eq('org_id', this.orgId)
+      .order('created_at', { ascending: false })
+      .limit(options?.limit ?? 20)
+
+    if (options?.offset) {
+      query = query.range(options.offset, options.offset + (options.limit ?? 20) - 1)
+    }
+
+    if (options?.status) {
+      if (Array.isArray(options.status)) {
+        query = query.in('status', options.status)
+      } else {
+        query = query.eq('status', options.status)
+      }
+    }
+
+    const { data } = await query
+    return (data || []) as SwarmRunRow[]
+  }
+
+  /**
+   * Get a single run with steps and messages.
+   */
+  async getRun(runId: string): Promise<{
+    run: SwarmRunRow
+    steps: import('./types').SwarmStepRow[]
+    messages: import('./types').SwarmMessageRow[]
+  } | null> {
+    const [runResult, stepsResult, messagesResult] = await Promise.all([
+      this.supabase
+        .from('swarm_runs')
+        .select('*')
+        .eq('id', runId)
+        .eq('org_id', this.orgId)
+        .single(),
+      this.supabase
+        .from('swarm_steps')
+        .select('*')
+        .eq('run_id', runId)
+        .eq('org_id', this.orgId)
+        .order('created_at', { ascending: true }),
+      this.supabase
+        .from('swarm_messages')
+        .select('*')
+        .eq('run_id', runId)
+        .eq('org_id', this.orgId)
+        .order('created_at', { ascending: true }),
+    ])
+
+    if (!runResult.data) return null
+
+    return {
+      run: runResult.data as SwarmRunRow,
+      steps: (stepsResult.data || []) as import('./types').SwarmStepRow[],
+      messages: (messagesResult.data || []) as import('./types').SwarmMessageRow[],
+    }
+  }
+
+  /**
+   * List available templates.
+   */
+  async listTemplates(): Promise<SwarmTemplateRow[]> {
+    const { data } = await this.supabase
+      .from('swarm_templates')
+      .select('*')
+      .eq('org_id', this.orgId)
+      .eq('is_active', true)
+      .order('total_runs', { ascending: false })
+
+    return (data || []) as SwarmTemplateRow[]
+  }
+
+  /**
+   * Rollback a swarm run.
+   */
+  async rollback(runId: string): Promise<{ success: boolean; rolledBack: number; errors: string[] }> {
+    return rollbackSwarm(this.supabase, runId, this.orgId)
   }
 }

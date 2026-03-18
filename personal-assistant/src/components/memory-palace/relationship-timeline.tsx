@@ -1,0 +1,264 @@
+'use client'
+
+import React, { useState, useEffect, useCallback } from 'react'
+import type { MemoryTimelineEvent } from '@/lib/memory-palace/types'
+
+interface RelationshipTimelineProps {
+  entityId: string
+  entityName?: string
+}
+
+const EVENT_TYPE_COLORS: Record<string, string> = {
+  memory: '#3B82F6',
+  decision: '#8B5CF6',
+  pattern: '#14B8A6',
+}
+
+const EVENT_TYPE_ICONS: Record<string, string> = {
+  memory: 'M',
+  decision: 'D',
+  pattern: 'P',
+}
+
+export function RelationshipTimeline({ entityId, entityName }: RelationshipTimelineProps) {
+  const [timeline, setTimeline] = useState<MemoryTimelineEvent[]>([])
+  const [loading, setLoading] = useState(true)
+  const [displayName, setDisplayName] = useState(entityName ?? 'Entity')
+
+  const loadTimeline = useCallback(async () => {
+    setLoading(true)
+    try {
+      const res = await fetch(`/api/memory-palace/recall?entity_id=${entityId}`)
+      if (res.ok) {
+        const data = await res.json()
+        setTimeline(data.timeline ?? [])
+        if (data.entityName) setDisplayName(data.entityName)
+      }
+    } catch {
+      // silent
+    } finally {
+      setLoading(false)
+    }
+  }, [entityId])
+
+  useEffect(() => {
+    loadTimeline()
+  }, [loadTimeline])
+
+  if (loading) {
+    return (
+      <div style={{ textAlign: 'center', padding: '40px', color: 'rgba(255, 255, 255, 0.4)' }}>
+        Loading timeline...
+      </div>
+    )
+  }
+
+  if (timeline.length === 0) {
+    return (
+      <div style={{
+        textAlign: 'center',
+        padding: '40px 20px',
+        color: 'rgba(255, 255, 255, 0.3)',
+      }}>
+        No timeline events for {displayName}
+      </div>
+    )
+  }
+
+  // Group by month
+  const groups: { month: string; events: MemoryTimelineEvent[] }[] = []
+  let currentMonth = ''
+  for (const event of timeline) {
+    const month = new Date(event.timestamp).toLocaleDateString('en-AU', {
+      month: 'long',
+      year: 'numeric',
+    })
+    if (month !== currentMonth) {
+      currentMonth = month
+      groups.push({ month, events: [] })
+    }
+    groups[groups.length - 1].events.push(event)
+  }
+
+  return (
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '0',
+    }}>
+      {/* Header */}
+      <div style={{
+        padding: '12px 16px',
+        marginBottom: '16px',
+      }}>
+        <div style={{
+          fontSize: '16px',
+          fontWeight: 700,
+          color: 'rgba(255, 255, 255, 0.9)',
+        }}>
+          {displayName}
+        </div>
+        <div style={{
+          fontSize: '13px',
+          color: 'rgba(255, 255, 255, 0.4)',
+          marginTop: '2px',
+        }}>
+          {timeline.length} event{timeline.length !== 1 ? 's' : ''} in relationship history
+        </div>
+      </div>
+
+      {/* Timeline */}
+      {groups.map((group, gi) => (
+        <div key={gi}>
+          {/* Month Header */}
+          <div style={{
+            fontSize: '12px',
+            fontWeight: 600,
+            color: 'rgba(255, 255, 255, 0.3)',
+            padding: '8px 16px',
+            textTransform: 'uppercase',
+            letterSpacing: '1px',
+          }}>
+            {group.month}
+          </div>
+
+          {/* Events */}
+          {group.events.map((event, ei) => {
+            const color = EVENT_TYPE_COLORS[event.type] ?? '#666'
+            const icon = EVENT_TYPE_ICONS[event.type] ?? '?'
+            const day = new Date(event.timestamp).toLocaleDateString('en-AU', {
+              day: 'numeric',
+              month: 'short',
+            })
+            const time = new Date(event.timestamp).toLocaleTimeString('en-AU', {
+              hour: '2-digit',
+              minute: '2-digit',
+            })
+            const isLast = gi === groups.length - 1 && ei === group.events.length - 1
+
+            return (
+              <div
+                key={event.id}
+                style={{
+                  display: 'flex',
+                  gap: '12px',
+                  padding: '8px 16px',
+                  position: 'relative',
+                }}
+              >
+                {/* Timeline Line */}
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  width: '24px',
+                  flexShrink: 0,
+                }}>
+                  {/* Dot */}
+                  <div style={{
+                    width: '24px',
+                    height: '24px',
+                    borderRadius: '6px',
+                    background: `${color}20`,
+                    color,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '10px',
+                    fontWeight: 700,
+                    flexShrink: 0,
+                  }}>
+                    {icon}
+                  </div>
+                  {/* Connector line */}
+                  {!isLast && (
+                    <div style={{
+                      width: '2px',
+                      flex: 1,
+                      minHeight: '16px',
+                      background: 'rgba(255, 255, 255, 0.06)',
+                      marginTop: '4px',
+                    }} />
+                  )}
+                </div>
+
+                {/* Content */}
+                <div style={{
+                  flex: 1,
+                  paddingBottom: '12px',
+                }}>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    marginBottom: '4px',
+                  }}>
+                    <span style={{
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      color: 'rgba(255, 255, 255, 0.85)',
+                    }}>
+                      {event.title}
+                    </span>
+                    <span style={{ flex: 1 }} />
+                    <span style={{
+                      fontSize: '11px',
+                      color: 'rgba(255, 255, 255, 0.3)',
+                    }}>
+                      {day} {time}
+                    </span>
+                  </div>
+
+                  <div style={{
+                    fontSize: '12px',
+                    color: 'rgba(255, 255, 255, 0.5)',
+                    lineHeight: '1.5',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical' as const,
+                  }}>
+                    {event.content}
+                  </div>
+
+                  {/* Confidence indicator */}
+                  {event.confidence < 1 && (
+                    <div style={{
+                      marginTop: '4px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                    }}>
+                      <div style={{
+                        width: '40px',
+                        height: '3px',
+                        borderRadius: '2px',
+                        background: 'rgba(255, 255, 255, 0.08)',
+                        overflow: 'hidden',
+                      }}>
+                        <div style={{
+                          width: `${event.confidence * 100}%`,
+                          height: '100%',
+                          borderRadius: '2px',
+                          background: event.confidence > 0.7 ? '#22C55E' :
+                            event.confidence > 0.4 ? '#F59E0B' : '#EF4444',
+                        }} />
+                      </div>
+                      <span style={{
+                        fontSize: '10px',
+                        color: 'rgba(255, 255, 255, 0.3)',
+                      }}>
+                        {Math.round(event.confidence * 100)}%
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      ))}
+    </div>
+  )
+}

@@ -280,26 +280,11 @@ export function NotificationCenter({ onTabChange }: NotificationCenterProps) {
       {/* Bell Button */}
       <button
         ref={buttonRef}
+        className="bb-topbar-icon-btn"
         onClick={() => setIsOpen(!isOpen)}
         aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ''}`}
         aria-expanded={isOpen}
         aria-haspopup="true"
-        style={{
-          position: 'relative',
-          width: 36,
-          height: 36,
-          borderRadius: 8,
-          background: 'transparent',
-          border: 'none',
-          color: 'var(--text-dim)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          cursor: 'pointer',
-          transition: 'background 0.15s ease',
-        }}
-        onMouseEnter={e => { (e.currentTarget).style.background = 'var(--glass-hover-bg)'; }}
-        onMouseLeave={e => { (e.currentTarget).style.background = 'transparent'; }}
       >
         <Bell size={18} strokeWidth={1.8} />
         {unreadCount > 0 && (

@@ -1,6 +1,5 @@
 'use client'
 
-import { motion } from 'motion/react'
 import { Plus, X } from 'lucide-react'
 
 export interface Thread {
@@ -18,7 +17,26 @@ interface ConversationDrawerProps {
   activeThreadId: string | null
   onSelectThread: (threadId: string) => void
   onNewConversation: () => void
+  onDeleteThread: (threadId: string) => void
   isLoading: boolean
+}
+
+/** Strip markdown formatting for clean plain-text display */
+function stripMarkdown(text: string): string {
+  return text
+    .replace(/```[\s\S]*?```/g, '')      // code blocks
+    .replace(/`([^`]+)`/g, '$1')          // inline code
+    .replace(/\*\*([^*]+)\*\*/g, '$1')    // bold
+    .replace(/\*([^*]+)\*/g, '$1')        // italic
+    .replace(/__([^_]+)__/g, '$1')        // bold alt
+    .replace(/_([^_]+)_/g, '$1')          // italic alt
+    .replace(/#{1,6}\s+/g, '')            // headings
+    .replace(/>\s+/g, '')                 // blockquotes
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // links
+    .replace(/[-*+]\s+/g, '')             // list markers
+    .replace(/\n+/g, ' ')                 // newlines to spaces
+    .replace(/\s{2,}/g, ' ')             // collapse whitespace
+    .trim()
 }
 
 /** Relative time helper */
@@ -52,6 +70,7 @@ export function ConversationDrawer({
   activeThreadId,
   onSelectThread,
   onNewConversation,
+  onDeleteThread,
   isLoading,
 }: ConversationDrawerProps) {
   if (!isOpen) return null
@@ -59,85 +78,58 @@ export function ConversationDrawer({
   return (
     <>
       {/* Backdrop */}
-      <motion.div
+      <div
         className="bb-chat__drawer-backdrop"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.2 }}
         onClick={onClose}
       />
 
       {/* Drawer panel */}
-      <motion.div
-        className="bb-chat__drawer"
-        initial={{ x: -320 }}
-        animate={{ x: 0 }}
-        exit={{ x: -320 }}
-        transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-      >
-        {/* Header */}
+      <div className="bb-chat__drawer">
+        {/* Header — matches sidebar panel header style */}
         <div className="bb-chat__drawer-header">
           <span className="bb-chat__drawer-title">Conversations</span>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <button
-              className="bb-chat__drawer-new-btn"
-              onClick={() => {
-                onNewConversation()
-                onClose()
-              }}
-            >
-              <Plus size={14} />
-              New chat
-            </button>
-            <button
-              className="bb-chat__drawer-close-btn"
-              onClick={onClose}
-              aria-label="Close drawer"
-              style={{
-                background: 'none',
-                border: 'none',
-                color: 'var(--text-secondary)',
-                cursor: 'pointer',
-                padding: 4,
-                display: 'flex',
-                alignItems: 'center',
-              }}
-            >
-              <X size={16} />
-            </button>
-          </div>
+          <button
+            className="bb-chat__drawer-close"
+            onClick={onClose}
+            aria-label="Close drawer"
+          >
+            <X size={14} strokeWidth={1.8} />
+          </button>
+        </div>
+
+        {/* New chat — compact pill */}
+        <div style={{ padding: '0 10px 6px' }}>
+          <button
+            className="bb-chat__drawer-new-btn"
+            onClick={() => {
+              onNewConversation()
+              onClose()
+            }}
+          >
+            <Plus size={12} />
+            New chat
+          </button>
         </div>
 
         {/* Thread list */}
         <div className="bb-chat__drawer-list">
           {isLoading ? (
-            // Skeleton shimmer
             <>
               {[1, 2, 3].map(i => (
-                <div key={i} className="bb-chat__drawer-thread" style={{ opacity: 0.4 }}>
-                  <div
-                    className="bb-chat__drawer-thread-title"
-                    style={{
-                      height: 14,
-                      width: `${60 + i * 15}%`,
-                      background: 'var(--text-muted, rgba(255,255,255,0.15))',
-                      borderRadius: 4,
-                      animation: 'shimmer-pulse 1.5s ease-in-out infinite',
-                    }}
-                  />
-                  <div
-                    className="bb-chat__drawer-thread-preview"
-                    style={{
-                      height: 12,
-                      width: '80%',
-                      marginTop: 6,
-                      background: 'var(--text-muted, rgba(255,255,255,0.1))',
-                      borderRadius: 3,
-                      animation: 'shimmer-pulse 1.5s ease-in-out infinite',
-                      animationDelay: `${i * 0.2}s`,
-                    }}
-                  />
+                <div key={i} className="bb-chat__drawer-card" style={{ opacity: 0.3 }}>
+                  <div style={{
+                    height: 12, width: `${50 + i * 15}%`,
+                    background: 'var(--text-muted, rgba(255,255,255,0.15))',
+                    borderRadius: 3,
+                    animation: 'shimmer-pulse 1.5s ease-in-out infinite',
+                  }} />
+                  <div style={{
+                    height: 10, width: '75%', marginTop: 5,
+                    background: 'var(--text-muted, rgba(255,255,255,0.1))',
+                    borderRadius: 3,
+                    animation: 'shimmer-pulse 1.5s ease-in-out infinite',
+                    animationDelay: `${i * 0.2}s`,
+                  }} />
                 </div>
               ))}
             </>
@@ -147,8 +139,8 @@ export function ConversationDrawer({
             threads.map(thread => (
               <div
                 key={thread.id}
-                className={`bb-chat__drawer-thread ${
-                  thread.id === activeThreadId ? 'bb-chat__drawer-thread--active' : ''
+                className={`bb-chat__drawer-card${
+                  thread.id === activeThreadId ? ' bb-chat__drawer-card--active' : ''
                 }`}
                 onClick={() => {
                   onSelectThread(thread.id)
@@ -163,24 +155,40 @@ export function ConversationDrawer({
                   }
                 }}
               >
-                <div className="bb-chat__drawer-thread-title">
+                {/* Delete button — visible on hover */}
+                <button
+                  className="bb-chat__drawer-card-x"
+                  onClick={(e) => { e.stopPropagation(); onDeleteThread(thread.id) }}
+                  aria-label="Delete conversation"
+                >
+                  <X size={11} />
+                </button>
+
+                {/* Title */}
+                <div className="bb-chat__drawer-card-title">
                   {thread.title || 'Untitled'}
                 </div>
+
+                {/* Preview — stripped of markdown */}
                 {thread.preview && (
-                  <div className="bb-chat__drawer-thread-preview">
-                    {thread.preview.length > 60
-                      ? thread.preview.slice(0, 60) + '...'
-                      : thread.preview}
+                  <div className="bb-chat__drawer-card-preview">
+                    {(() => {
+                      const clean = stripMarkdown(thread.preview)
+                      return clean.length > 55 ? clean.slice(0, 55) + '...' : clean
+                    })()}
                   </div>
                 )}
-                <div className="bb-chat__drawer-thread-time">
-                  {relativeTime(thread.lastActivity)}
+
+                {/* Meta row */}
+                <div className="bb-chat__drawer-card-meta">
+                  <span>{thread.messageCount} message{thread.messageCount !== 1 ? 's' : ''}</span>
+                  <span style={{ marginLeft: 'auto' }}>{relativeTime(thread.lastActivity)}</span>
                 </div>
               </div>
             ))
           )}
         </div>
-      </motion.div>
+      </div>
     </>
   )
 }

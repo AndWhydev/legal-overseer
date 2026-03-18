@@ -3,7 +3,8 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { MessageBubble } from './message-bubble'
-import { ChevronDown, Search, PlusCircle, Pencil, Eye, FileText, Mail, Brain, Zap, AlertCircle, Globe, BookOpen, Calendar, Receipt, Users, MessageSquare, Loader2, Check, X } from 'lucide-react'
+import { ChevronDown, Search, PlusCircle, Pencil, Eye, FileText, Mail, Brain, Zap, AlertCircle, Globe, BookOpen, Calendar, Receipt, Users, MessageSquare, Loader2, Check, X, Menu } from 'lucide-react'
+import { ConversationDrawer, type Thread } from './conversation-drawer'
 import { BitBitFaceAvatar } from './bitbit-face-avatar'
 import { useAvatarEmotion } from './use-avatar-emotion'
 import { useSmoothStream } from './use-smooth-stream'
@@ -491,12 +492,26 @@ function InlineApprovalCard({
 
 const CHAT_SEND_EVENT = 'bitbit-chat-send'
 const CHAT_LAYOUT_EVENT = 'bitbit-chat-layout'
-// Thread ID kept in memory only — no localStorage persistence (single-stream design)
+const THREAD_STORAGE_KEY = 'bb-active-thread'
 
 export function ChatInterface({ userName }: { userName?: string }) {
   const [messages, setMessages] = useState<Message[]>([])
   const [isLoading, setIsLoading] = useState(false)
-  const [threadId, setThreadId] = useState<string | null>(null)
+  const [threadId, setThreadIdRaw] = useState<string | null>(() => {
+    if (typeof window !== 'undefined') {
+      return sessionStorage.getItem(THREAD_STORAGE_KEY)
+    }
+    return null
+  })
+
+  // Wrap setThreadId to sync with sessionStorage
+  const setThreadId = useCallback((id: string | null) => {
+    setThreadIdRaw(id)
+    if (typeof window !== 'undefined') {
+      if (id) sessionStorage.setItem(THREAD_STORAGE_KEY, id)
+      else sessionStorage.removeItem(THREAD_STORAGE_KEY)
+    }
+  }, [])
   // Reasoning state
   const [thinkingContent, setThinkingContent] = useState('')
   const [isThinkingStreaming, setIsThinkingStreaming] = useState(false)
@@ -515,6 +530,10 @@ export function ChatInterface({ userName }: { userName?: string }) {
     total: string; dueDate: string; description: string
     html: string; subject: string; afterMessageId: string
   }>>([])
+  // Conversation drawer state
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  const [drawerThreads, setDrawerThreads] = useState<Thread[]>([])
+  const [drawerLoading, setDrawerLoading] = useState(false)
   // Whispers visible state (hides when typing or conversation starts)
   const [whispersVisible, setWhispersVisible] = useState(true)
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -1283,6 +1302,178 @@ export function ChatInterface({ userName }: { userName?: string }) {
     </ChainOfThought>
   ) : null
 
+  // Fetch thread list for the drawer
+  const threadCacheRef = useRef(false) // true once we've fetched at least once
+  const fetchThreadList = useCallback(async (showSkeleton = true) => {
+    if (showSkeleton && !threadCacheRef.current) setDrawerLoading(true)
+    try {
+      const res = await fetch('/api/agent/chat/history?list=threads&channel=web')
+      if (res.ok) {
+        const data = await res.json()
+        setDrawerThreads(
+          (data.threads || []).map((t: Record<string, unknown>) => ({
+            id: t.id as string,
+            title: t.title as string | null,
+            lastActivity: t.lastActivity as string || t.last_activity_at as string || '',
+            messageCount: t.messageCount as number || t.message_count as number || 0,
+            preview: t.preview as string | null,
+          }))
+        )
+        threadCacheRef.current = true
+      }
+    } catch {
+      // Silently fail — drawer will show cached or empty state
+    } finally {
+      setDrawerLoading(false)
+    }
+  }, [])
+
+  // On mount: pre-fetch thread list + restore history if we have a threadId from session
+  useEffect(() => {
+    fetchThreadList(false)
+    const restoredId = sessionStorage.getItem(THREAD_STORAGE_KEY)
+    if (restoredId && messages.length === 0) {
+      fetch(`/api/agent/chat/history?threadId=${restoredId}&limit=50`)
+        .then(r => r.ok ? r.json() : null)
+        .then(data => {
+          if (!data?.messages?.length) return
+          const allRows = data.messages as Array<Record<string, unknown>>
+          const loaded: Message[] = []
+          const restoredArtifacts: Array<{
+            invoiceNumber: string; recipient: string; recipientEmail: string
+            total: string; dueDate: string; description: string
+            html: string; subject: string; afterMessageId: string
+          }> = []
+          let lastAsstId: string | null = null
+
+          for (const m of allRows) {
+            const role = m.role as string
+            const id = m.id as string || `hist-${Math.random()}`
+            if (role === 'user' || role === 'assistant') {
+              loaded.push({
+                id,
+                role: role as 'user' | 'assistant',
+                content: m.content as string || '',
+                timestamp: new Date(m.created_at as string || Date.now()),
+              })
+              if (role === 'assistant') lastAsstId = id
+            }
+            if (role === 'tool_result' && m.tool_data) {
+              const td = m.tool_data as Record<string, unknown>
+              if (td.name === 'generate_invoice' && td.result) {
+                const r = td.result as Record<string, unknown>
+                if (r.html && r.invoice_number) {
+                  restoredArtifacts.push({
+                    invoiceNumber: r.invoice_number as string,
+                    recipient: r.recipient as string || '',
+                    recipientEmail: r.recipient_email as string || '',
+                    total: r.total as string || '',
+                    dueDate: r.due_date as string || '',
+                    description: r.description as string || '',
+                    html: r.html as string,
+                    subject: r.subject as string || '',
+                    afterMessageId: lastAsstId || id,
+                  })
+                }
+              }
+            }
+          }
+          setMessages(loaded)
+          if (restoredArtifacts.length > 0) setInvoiceArtifacts(restoredArtifacts)
+          setWhispersVisible(false)
+        })
+        .catch(() => {})
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fetchThreadList])
+
+  // Open drawer — uses cached data, refreshes in background
+  const handleOpenDrawer = useCallback(() => {
+    setDrawerOpen(true)
+    if (threadCacheRef.current) {
+      // Already have data — refresh silently in background
+      fetchThreadList(false)
+    } else {
+      fetchThreadList(true)
+    }
+  }, [fetchThreadList])
+
+  // Switch to a different thread
+  const handleSelectThread = useCallback(async (selectedThreadId: string) => {
+    if (selectedThreadId === threadId) return
+
+    // Reset UI state
+    setMessages([])
+    setNarration('')
+    setThinkingContent('')
+    setIsThinkingStreaming(false)
+    narrationLockedRef.current = false
+    narrationContentRef.current = ''
+    interToolBufferRef.current = ''
+    setInterToolNarrations([])
+    setActiveCitations([])
+    setPendingApprovals([])
+    setInvoiceArtifacts([])
+    smoothStream.reset()
+    currentAssistantIdRef.current = null
+
+    setThreadId(selectedThreadId)
+
+    // Load history for the selected thread
+    try {
+      const res = await fetch(`/api/agent/chat/history?threadId=${selectedThreadId}&limit=50`)
+      if (res.ok) {
+        const data = await res.json()
+        const allRows = (data.messages || []) as Array<Record<string, unknown>>
+        const loaded: Message[] = []
+        const restoredArtifacts: typeof invoiceArtifacts = []
+        let lastAssistantId: string | null = null
+
+        for (const m of allRows) {
+          const role = m.role as string
+          const id = m.id as string || `hist-${Math.random()}`
+
+          if (role === 'user' || role === 'assistant') {
+            loaded.push({
+              id,
+              role: role as 'user' | 'assistant',
+              content: m.content as string || '',
+              timestamp: new Date(m.created_at as string || Date.now()),
+            })
+            if (role === 'assistant') lastAssistantId = id
+          }
+
+          // Reconstruct invoice artifacts from tool_result rows
+          if (role === 'tool_result' && m.tool_data) {
+            const td = m.tool_data as Record<string, unknown>
+            if (td.name === 'generate_invoice' && td.result) {
+              const r = td.result as Record<string, unknown>
+              if (r.html && r.invoice_number) {
+                restoredArtifacts.push({
+                  invoiceNumber: r.invoice_number as string,
+                  recipient: r.recipient as string || '',
+                  recipientEmail: r.recipient_email as string || '',
+                  total: r.total as string || '',
+                  dueDate: r.due_date as string || '',
+                  description: r.description as string || '',
+                  html: r.html as string,
+                  subject: r.subject as string || '',
+                  afterMessageId: lastAssistantId || id,
+                })
+              }
+            }
+          }
+        }
+
+        setMessages(loaded)
+        if (restoredArtifacts.length > 0) setInvoiceArtifacts(restoredArtifacts)
+        setWhispersVisible(loaded.length === 0)
+      }
+    } catch {
+      // Failed to load — user sees empty state
+    }
+  }, [threadId, smoothStream])
+
   const handleNewConversation = useCallback(() => {
     // Archive current thread and start fresh
     if (threadId) {
@@ -1309,28 +1500,49 @@ export function ChatInterface({ userName }: { userName?: string }) {
     setWhispersVisible(true)
   }, [threadId, smoothStream])
 
+  // Delete (archive) a thread from the drawer
+  const handleDeleteThread = useCallback(async (deleteThreadId: string) => {
+    // Optimistic removal from drawer list
+    setDrawerThreads(prev => prev.filter(t => t.id !== deleteThreadId))
+
+    // Archive on server
+    fetch('/api/agent/chat/history', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ threadId: deleteThreadId }),
+    }).catch(() => {})
+
+    // If we deleted the active thread, reset to fresh state
+    if (deleteThreadId === threadId) {
+      setMessages([])
+      setThreadId(null)
+      setWhispersVisible(true)
+    }
+  }, [threadId, setThreadId])
+
   return (
     <div className={`bb-chat ${chatStarted ? 'bb-chat--active' : 'bb-chat--pre-session'}`}>
-      {/* New conversation button — only visible when there are messages */}
-      {hasMessages && (
-        <button
-          onClick={handleNewConversation}
-          style={{
-            position: 'absolute', top: 12, right: 12, zIndex: 20,
-            display: 'flex', alignItems: 'center', gap: 6,
-            padding: '6px 12px', borderRadius: 8,
-            border: '1px solid var(--glass-card-border, rgba(255,255,255,0.08))',
-            background: 'var(--glass-card-bg, rgba(255,255,255,0.03))',
-            color: 'var(--text-dim, #64748B)', fontSize: 12, fontWeight: 500,
-            cursor: 'pointer', transition: 'all 0.15s',
-            backdropFilter: 'blur(8px)',
-          }}
-          onMouseEnter={e => { (e.currentTarget).style.background = 'var(--glass-hover-bg, rgba(255,255,255,0.08))'; (e.currentTarget).style.color = 'var(--text-secondary, #94A3B8)' }}
-          onMouseLeave={e => { (e.currentTarget).style.background = 'var(--glass-card-bg, rgba(255,255,255,0.03))'; (e.currentTarget).style.color = 'var(--text-dim, #64748B)' }}
-          title="Start a new conversation"
-        >
-          <PlusCircle size={14} /> New chat
-        </button>
+      {/* Conversation drawer toggle — always visible */}
+      <button
+        className="bb-chat__drawer-toggle"
+        onClick={handleOpenDrawer}
+        title="Conversations"
+      >
+        <Menu size={18} strokeWidth={1.8} />
+      </button>
+
+      {/* Conversation drawer — pure CSS animations for performance */}
+      {drawerOpen && (
+        <ConversationDrawer
+          isOpen={drawerOpen}
+          onClose={() => setDrawerOpen(false)}
+          threads={drawerThreads}
+          activeThreadId={threadId}
+          onSelectThread={handleSelectThread}
+          onNewConversation={handleNewConversation}
+          onDeleteThread={handleDeleteThread}
+          isLoading={drawerLoading}
+        />
       )}
       {/* Messages or empty state */}
       <div

@@ -1,54 +1,45 @@
 /**
- * Agent Swarm — barrel export.
+ * Swarm Orchestration Module
+ *
+ * Multi-agent coordination system for BitBit.
+ * Enables complex operations through coordinated agent teams.
  */
 
-// Types
+export { SwarmCoordinator } from './coordinator'
+export { SwarmExecutor, rollbackSwarm } from './executor'
+export { SwarmAgent } from './agent'
+export { BUILTIN_TEMPLATES, matchTemplate } from './templates'
 export type {
-  SwarmDAG,
-  SwarmAgent,
-  SwarmStepDef,
-  SwarmCondition,
-  SwarmTemplate,
-  SwarmParamDef,
+  // Core types
+  AgentRole,
+  AgentPersona,
+  CapabilityBoundary,
+  StepType,
+  StepCondition,
+  SwarmStepDefinition,
+  SwarmGovernance,
   SwarmDefinition,
-  SwarmRun,
+
+  // DB row types
   SwarmRunStatus,
-  SwarmStep,
   SwarmStepStatus,
-  SwarmMessage,
   SwarmMessageType,
-  SwarmContext,
-  SwarmResult,
+  SwarmTemplateRow,
+  SwarmRunRow,
+  SwarmStepRow,
+  SwarmMessageRow,
+
+  // Execution types
+  ReversibleAction,
+  NegotiationResult,
+  SwarmStepResult,
   SwarmParticipant,
-  SwarmTriggerResult,
-  ConflictResolutionInput,
-  ConflictResolutionResult,
+  SwarmStepContext,
+
+  // Coordinator types
+  CoordinatorClassification,
+  SwarmExecutionPlan,
+
+  // Events
+  SwarmEvent,
 } from './types'
-
-// Participant registry
-export {
-  registerParticipant,
-  getParticipant,
-  listParticipantTypes,
-} from './participant-registry'
-
-// Executor
-export {
-  createSwarmRun,
-  executeSwarmRun,
-  rollbackSwarmRun,
-  cancelSwarmRun,
-  topologicalLayers,
-} from './executor'
-
-// Coordinator
-export {
-  loadTemplates,
-  matchTemplate,
-  resolveParams,
-  triggerSwarm,
-  resolveConflict,
-} from './coordinator'
-
-// Participants
-export { registerBuiltinParticipants } from './participants'

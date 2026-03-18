@@ -1,50 +1,13 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { sanitizeTemplate } from '@/lib/invoices/template-types'
+import type { InvoiceTemplate } from '@/lib/invoices/template-types'
 import { logger } from '@/lib/core/logger'
 
 export const dynamic = 'force-dynamic'
 
-export interface InvoiceTemplate {
-  logo_base64?: string
-  primary_color?: string
-  accent_color?: string
-  footer_text?: string
-  terms?: string
-}
-
-const ALLOWED_COLORS = /^#[0-9A-Fa-f]{3,6}$/
-
-function sanitizeTemplate(raw: unknown): InvoiceTemplate {
-  if (!raw || typeof raw !== 'object') return {}
-  const src = raw as Record<string, unknown>
-
-  const out: InvoiceTemplate = {}
-
-  if (typeof src.logo_base64 === 'string' && src.logo_base64.startsWith('data:image/')) {
-    // Limit logo size to ~500 KB base64
-    if (src.logo_base64.length <= 700_000) {
-      out.logo_base64 = src.logo_base64
-    }
-  }
-
-  if (typeof src.primary_color === 'string' && ALLOWED_COLORS.test(src.primary_color)) {
-    out.primary_color = src.primary_color
-  }
-
-  if (typeof src.accent_color === 'string' && ALLOWED_COLORS.test(src.accent_color)) {
-    out.accent_color = src.accent_color
-  }
-
-  if (typeof src.footer_text === 'string') {
-    out.footer_text = src.footer_text.slice(0, 500)
-  }
-
-  if (typeof src.terms === 'string') {
-    out.terms = src.terms.slice(0, 5000)
-  }
-
-  return out
-}
+// Re-export for consumers that import from this route file
+export type { InvoiceTemplate }
 
 async function resolveOrgId(supabase: Awaited<ReturnType<typeof createClient>>, userId: string): Promise<string | null> {
   const { data } = await supabase!

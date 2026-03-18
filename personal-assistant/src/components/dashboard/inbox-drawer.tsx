@@ -20,7 +20,7 @@ import { resolveAvatarSync, resolveAvatar, type AvatarResult } from '@/lib/avata
 // Types
 // ─────────────────────────────────────────────────────────────────────────────
 
-type MessageCategory = 'actionable' | 'informational' | 'spam' | 'personal';
+type MessageCategory = 'action_required' | 'fyi' | 'conversation' | 'automated' | 'marketing' | 'spam';
 type ThreadStatus = 'waiting_on_you' | 'waiting_on_them' | 'resolved' | 'new';
 
 export interface InboxMessage {
@@ -152,9 +152,11 @@ const CHANNEL_BRAND_COLORS: Record<string, string> = {
 
 function getCategoryLabel(category: MessageCategory): string {
   const labels: Record<MessageCategory, string> = {
-    actionable: 'Priority',
-    personal: 'Personal',
-    informational: 'Updates',
+    action_required: 'Action Required',
+    fyi: 'FYI',
+    conversation: 'Personal',
+    automated: 'Notification',
+    marketing: 'Newsletter',
     spam: 'Spam',
   };
   return labels[category] || category;
@@ -220,7 +222,7 @@ function extractSummary(message: InboxMessage): AiSummaryResult {
     : message.bodyPreview;
 
   const senderFirstName = (message.contactName || message.senderName || 'there').split(' ')[0];
-  const draftReply = message.category === 'actionable'
+  const draftReply = message.category === 'action_required'
     ? `Hi ${senderFirstName},\n\nThanks for reaching out. I'll look into this and get back to you shortly.\n\nBest regards`
     : `Hi ${senderFirstName},\n\nThank you for the update. I'll review and let you know if I have any questions.\n\nBest regards`;
 
@@ -860,8 +862,8 @@ export default function InboxDrawer({
               display: 'inline-flex', alignItems: 'center', padding: '3px 10px',
               borderRadius: 10, fontSize: 11, fontWeight: 600,
               textTransform: 'uppercase', letterSpacing: '0.04em',
-              background: message.category === 'actionable' ? 'rgba(255,90,31,0.15)' : message.category === 'personal' ? 'rgba(139,92,246,0.15)' : message.category === 'spam' ? 'rgba(239,68,68,0.15)' : 'rgba(255,255,255,0.06)',
-              color: message.category === 'actionable' ? '#FF7A45' : message.category === 'personal' ? '#A78BFA' : message.category === 'spam' ? '#F87171' : 'rgba(255,255,255,0.5)',
+              background: message.category === 'action_required' ? 'rgba(255,90,31,0.15)' : message.category === 'conversation' ? 'rgba(139,92,246,0.15)' : message.category === 'spam' ? 'rgba(239,68,68,0.15)' : message.category === 'marketing' ? 'rgba(234,179,8,0.12)' : message.category === 'automated' ? 'rgba(79,70,229,0.12)' : 'rgba(255,255,255,0.06)',
+              color: message.category === 'action_required' ? '#FF7A45' : message.category === 'conversation' ? '#A78BFA' : message.category === 'spam' ? '#F87171' : message.category === 'marketing' ? '#EAB308' : message.category === 'automated' ? '#818CF8' : 'rgba(255,255,255,0.5)',
             }}>
               {getCategoryLabel(message.category)}
             </span>

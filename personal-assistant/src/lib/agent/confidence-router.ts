@@ -23,6 +23,12 @@ export const AGENT_THRESHOLDS: Record<string, ConfidenceThresholds> = {
   'quote-bot': { act: 0.90, ask: 0.58 },         // High: pricing commitments
   'tender-hunter': { act: 0.80, ask: 0.50 },     // Medium: sourcing, no commitment
   'ad-script-gen': { act: 0.78, ask: 0.48 },     // Low: content generation, reversible
+  'swarm-coordinator': { act: 0.85, ask: 0.55 }, // Medium: orchestrates multiple agents
+  'swarm-sales': { act: 0.85, ask: 0.55 },       // Medium: sales research, no commitments
+  'swarm-finance': { act: 0.90, ask: 0.60 },     // High: financial data and analysis
+  'swarm-comms': { act: 0.88, ask: 0.58 },       // High: drafts outbound messages
+  'swarm-operations': { act: 0.82, ask: 0.52 },  // Medium: task creation, setup
+  'swarm-research': { act: 0.78, ask: 0.48 },    // Low: information gathering only
 }
 
 /**

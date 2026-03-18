@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Download, Copy, ExternalLink, Check, Send, Pencil } from 'lucide-react'
+import { Download, Copy, ExternalLink, Check, Pencil } from 'lucide-react'
 
 interface InvoiceArtifactProps {
   invoiceNumber: string
@@ -44,7 +44,7 @@ export function InvoiceArtifact({
   }
 
   const card: React.CSSProperties = {
-    borderRadius: 12, overflow: 'hidden', maxWidth: 520, margin: '8px 0',
+    borderRadius: 14, overflow: 'hidden', maxWidth: 520, margin: '8px 0',
     border: '1px solid var(--glass-card-border, rgba(255,255,255,0.08))',
     background: 'var(--glass-card-bg, rgba(255,255,255,0.03))',
   }
@@ -63,13 +63,16 @@ export function InvoiceArtifact({
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
     padding: '10px 14px',
     borderTop: '1px solid var(--glass-card-border, rgba(255,255,255,0.08))',
-    gap: 8,
+    gap: 12,
+    flexWrap: 'wrap' as const,
   }
   const primaryBtn: React.CSSProperties = {
     display: 'flex', alignItems: 'center', gap: 6,
-    padding: '8px 18px', borderRadius: 8, border: 'none',
-    background: '#2563EB', color: '#FFFFFF',
+    padding: '8px 16px', borderRadius: 8, border: 'none',
+    background: '#000000', color: '#FFFFFF',
     fontSize: 13, fontWeight: 600, cursor: 'pointer', transition: 'opacity 0.15s',
+    whiteSpace: 'nowrap',
+    flexShrink: 0,
   }
   const secondaryBtn: React.CSSProperties = {
     display: 'flex', alignItems: 'center', gap: 6,
@@ -77,6 +80,8 @@ export function InvoiceArtifact({
     border: '1px solid var(--glass-card-border, rgba(255,255,255,0.12))',
     background: 'transparent', color: 'var(--text-secondary, #94A3B8)',
     fontSize: 13, fontWeight: 500, cursor: 'pointer', transition: 'all 0.15s',
+    whiteSpace: 'nowrap',
+    flexShrink: 0,
   }
 
   return (
@@ -97,18 +102,36 @@ export function InvoiceArtifact({
         </div>
       </div>
 
-      <iframe
-        srcDoc={html}
-        style={{ width: '100%', height: 340, border: 'none', background: '#ffffff' }}
-        sandbox="allow-same-origin"
-        title={`Invoice ${invoiceNumber}`}
-      />
+      <div style={{
+        borderTop: '1px solid var(--glass-card-border, rgba(255,255,255,0.08))',
+        borderBottom: '1px solid var(--glass-card-border, rgba(255,255,255,0.08))',
+        overflow: 'hidden',
+        position: 'relative',
+        /* A4 is 794x1123. Scale to fit ~490px card width = 0.617 scale. Height = 1123 * 0.617 = ~693px */
+        height: 693,
+      }}>
+        <iframe
+          srcDoc={html}
+          style={{
+            width: 794,
+            height: 1123,
+            border: 'none',
+            background: '#ffffff',
+            display: 'block',
+            transform: 'scale(0.617)',
+            transformOrigin: 'top left',
+          }}
+          sandbox="allow-same-origin"
+          title={`Invoice ${invoiceNumber}`}
+        />
+      </div>
 
       <div style={actionBar}>
-        <div style={{ fontSize: 11, color: 'var(--text-dim, #64748B)' }}>
-          {description} · Due {dueDate}
+        <div style={{ fontSize: 11, color: 'var(--text-dim, #64748B)', flex: 1, minWidth: 0, lineHeight: 1.4 }}>
+          {description}
+          <span style={{ opacity: 0.6 }}> · Due {dueDate}</span>
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
           {onEdit && (
             <button style={secondaryBtn} onClick={onEdit}>
               <Pencil size={13} /> Edit
@@ -116,7 +139,7 @@ export function InvoiceArtifact({
           )}
           {!sent ? (
             <button style={{ ...primaryBtn, opacity: sending ? 0.6 : 1 }} onClick={handleSend} disabled={sending}>
-              <Send size={13} /> {sending ? 'Sending...' : `Send to ${recipient.split(' ')[0]}`}
+              {sending ? 'Sending...' : `Send to ${recipient.split(' ')[0]}`}
             </button>
           ) : (
             <div style={{ ...primaryBtn, background: '#16A34A', cursor: 'default' }}>

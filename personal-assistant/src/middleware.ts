@@ -131,10 +131,12 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
   const isApiRoute = pathname.startsWith('/api/')
   const isDashboardRoute = pathname.startsWith('/dashboard')
+  const isPortalRoute = pathname.startsWith('/portal')
+  const isPortalApiRoute = pathname.startsWith('/api/portal/')
   const ip = getClientIp(request)
 
   // Ensure CSP is present across all matched responses.
-  if (!isApiRoute && !isDashboardRoute) {
+  if (!isApiRoute && !isDashboardRoute && !isPortalRoute) {
     return applySecurityHeaders(NextResponse.next())
   }
 

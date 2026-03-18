@@ -19,6 +19,8 @@ interface InboxMessage {
   processed: boolean;
   aiSummary?: string | null;
   bodyPreview?: string;
+  category?: string | null;
+  priority?: string | null;
 }
 
 interface InboxFeedProps {
@@ -37,9 +39,9 @@ function timeAgo(dateStr: string): string {
   return `${days}d`;
 }
 
-function priorityDot(significance: number) {
-  if (significance >= 8) return 'var(--bb-red)';
-  if (significance >= 5) return 'var(--bb-amber)';
+function priorityDot(msg: InboxMessage) {
+  if (msg.priority === 'critical') return 'var(--bb-red)';
+  if (msg.priority === 'high') return 'var(--bb-amber)';
   return 'var(--bb-blue)';
 }
 
@@ -192,9 +194,69 @@ export function InboxFeed({ isCollapsed = false, onCollapsedChange }: InboxFeedP
     });
   }, [fetchMessages]));
 
-  // Use seed data when active
-  const displayMessages = seed.active ? (seed.data?.inboxMessages ?? messages) : messages;
-  const unreadCount = displayMessages.filter((m: InboxMessage) => !m.processed).length;
+  // Use seed data when active, then filter out noise
+  const rawMessages = seed.active ? (seed.data?.inboxMessages ?? messages) : messages;
+  const filteredMessages = rawMessages
+    .filter((m: InboxMessage) =>
+      m.category !== 'spam' &&
+      m.category !== 'marketing' &&
+      (m.category === 'automated' || m.significance >= 5)
+    );
+
+  // Lightweight always-collapsed grouping for sidebar
+  type FeedItem =
+    | { type: 'individual'; message: InboxMessage }
+    | { type: 'group'; label: string; channelType: string; count: number; preview: string; time: string; hasUnread: boolean };
+
+  const feedItems: FeedItem[] = (() => {
+    const groupMap = new Map<string, InboxMessage[]>();
+    const order: (string | InboxMessage)[] = [];
+
+    for (const msg of filteredMessages) {
+      const cat = msg.category || '';
+      let key: string | null = null;
+      if (cat === 'automated') key = `auto:${msg.channelType || msg.channel || 'unknown'}`;
+      else if (cat === 'fyi' || cat === 'conversation') key = `contact:${msg.senderName || msg.sender || 'unknown'}`;
+
+      if (!key || cat === 'action_required') { order.push(msg); continue; }
+      if (!groupMap.has(key)) { groupMap.set(key, []); order.push(key); }
+      groupMap.get(key)!.push(msg);
+    }
+
+    const items: FeedItem[] = [];
+    for (const entry of order) {
+      if (typeof entry === 'string') {
+        const msgs = groupMap.get(entry)!;
+        if (msgs.length < 2) {
+          items.push({ type: 'individual', message: msgs[0] });
+        } else {
+          msgs.sort((a, b) => new Date(b.receivedAt || b.received_at).getTime() - new Date(a.receivedAt || a.received_at).getTime());
+          const newest = msgs[0];
+          const ch = newest.channelType || newest.channel || 'gmail';
+          let label: string;
+          if (entry.startsWith('auto:')) {
+            const n: Record<string, string> = { asana: 'Asana', stripe: 'Stripe', calendly: 'Calendly', gmail: 'Gmail', outlook: 'Outlook', slack: 'Slack' };
+            label = n[entry.slice(5)] || entry.slice(5);
+          } else {
+            label = newest.senderName || newest.sender || 'Unknown';
+          }
+          items.push({ type: 'group', label, channelType: ch, count: msgs.length, preview: newest.aiSummary || newest.bodyPreview || newest.subject || '', time: newest.receivedAt || newest.received_at, hasUnread: msgs.some(m => !m.processed) });
+        }
+      } else {
+        items.push({ type: 'individual', message: entry });
+      }
+    }
+
+    items.sort((a, b) => {
+      const aT = a.type === 'group' ? a.time : (a.message.receivedAt || a.message.received_at);
+      const bT = b.type === 'group' ? b.time : (b.message.receivedAt || b.message.received_at);
+      return new Date(bT).getTime() - new Date(aT).getTime();
+    });
+
+    return items.slice(0, 15);
+  })();
+
+  const unreadCount = filteredMessages.filter((m: InboxMessage) => !m.processed).length;
 
   const navigateToInbox = () => {
     window.dispatchEvent(new CustomEvent('bb-navigate', { detail: { tab: 'inbox' } }));
@@ -310,7 +372,7 @@ export function InboxFeed({ isCollapsed = false, onCollapsedChange }: InboxFeedP
 
       {/* Message list */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '4px 0' }}>
-        {displayMessages.length === 0 && (
+        {feedItems.length === 0 && (
           <div style={{
             flex: 1,
             display: 'flex',
@@ -325,7 +387,57 @@ export function InboxFeed({ isCollapsed = false, onCollapsedChange }: InboxFeedP
             <span style={{ fontSize: 13 }}>Inbox zero — all clear</span>
           </div>
         )}
-        {displayMessages.map((msg: InboxMessage) => {
+        {feedItems.map((item, i) => {
+          if (item.type === 'group') {
+            const IconComponent = CHANNEL_ICONS[item.channelType.toLowerCase()] || GmailIcon;
+            return (
+              <button
+                key={`grp-${i}`}
+                onClick={navigateToInbox}
+                style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: 10,
+                  width: '100%',
+                  padding: '10px 16px',
+                  background: 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  transition: 'background 0.15s',
+                }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--bb-surface-hover)'; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
+              >
+                <div style={{ flexShrink: 0, paddingTop: 2, display: 'flex', alignItems: 'center' }}>
+                  <IconComponent size={16} />
+                </div>
+                <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 3 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {item.label}
+                      <span style={{ marginLeft: 6, fontSize: 10, fontWeight: 700, color: '#fff', background: 'var(--bb-orange)', borderRadius: 99, padding: '1px 5px', verticalAlign: 'middle' }}>
+                        {item.count}
+                      </span>
+                    </span>
+                    <span style={{ flexShrink: 0, fontSize: 11, color: 'var(--text-dim)', paddingLeft: 8 }}>
+                      {timeAgo(item.time)}
+                    </span>
+                  </div>
+                  {item.preview && (
+                    <span style={{ fontSize: 12, color: 'var(--text-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {String(item.preview)}
+                    </span>
+                  )}
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                  {item.hasUnread && <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--bb-blue, #3B82F6)', flexShrink: 0 }} />}
+                </div>
+              </button>
+            );
+          }
+
+          const msg = item.message;
           const channelType = msg.channelType || msg.channel || 'gmail';
           const IconComponent = CHANNEL_ICONS[channelType.toLowerCase()] || GmailIcon;
           const messageTime = msg.receivedAt || msg.received_at;
@@ -352,75 +464,30 @@ export function InboxFeed({ isCollapsed = false, onCollapsedChange }: InboxFeedP
               onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--bb-surface-hover)'; }}
               onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
             >
-              {/* Channel Icon */}
               <div style={{ flexShrink: 0, paddingTop: 2, display: 'flex', alignItems: 'center' }}>
                 <IconComponent size={16} />
               </div>
-
-              {/* Content: Subject, Sender, Preview */}
               <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 3 }}>
-                {/* Line 1: Subject + Time */}
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span
-                    style={{
-                      flex: 1,
-                      minWidth: 0,
-                      fontSize: 13,
-                      fontWeight: 500,
-                      color: 'var(--text-primary)',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
+                  <span style={{ flex: 1, minWidth: 0, fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {String(msg.subject || '(no subject)')}
                   </span>
                   <span style={{ flexShrink: 0, fontSize: 11, color: 'var(--text-dim)', paddingLeft: 8 }}>
                     {timeAgo(messageTime)}
                   </span>
                 </div>
-
-                {/* Line 2: Sender only */}
-                <span
-                  style={{
-                    fontSize: 12,
-                    color: 'var(--text-secondary)',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
+                <span style={{ fontSize: 12, color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {String(msg.sender || msg.senderName || 'Unknown')}
                 </span>
-
-                {/* Line 3: Preview (Body or AI Summary) */}
                 {preview && (
-                  <span
-                    style={{
-                      fontSize: 12,
-                      color: 'var(--text-dim)',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
+                  <span style={{ fontSize: 12, color: 'var(--text-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {String(preview || '')}
                   </span>
                 )}
               </div>
-
-              {/* Right side: Status indicators */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
                 {msg.processed && <CheckCircle2 size={12} style={{ color: 'var(--bb-green)', opacity: 0.7 }} />}
-                <div
-                  style={{
-                    width: 6,
-                    height: 6,
-                    borderRadius: '50%',
-                    background: priorityDot(msg.significance),
-                    flexShrink: 0,
-                  }}
-                />
+                <div style={{ width: 6, height: 6, borderRadius: '50%', background: priorityDot(msg), flexShrink: 0 }} />
               </div>
             </button>
           );

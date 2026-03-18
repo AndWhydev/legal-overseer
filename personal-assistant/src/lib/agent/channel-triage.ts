@@ -9,7 +9,6 @@ import {
   analyzeContentSignals,
   scoreActionability,
   shouldCreateContact,
-  toNewCategory,
   type ActionabilitySignals,
   type InboxCategory,
   type ShouldCreateContactInput,
@@ -43,8 +42,7 @@ export interface DigestEntry {
   highlights: string[]
 }
 
-// Legacy category type (still used in some parts) maps to new taxonomy
-export type MessageCategory = 'actionable' | 'informational' | 'spam' | 'personal'
+export type MessageCategory = 'action_required' | 'fyi' | 'conversation' | 'automated' | 'marketing' | 'spam'
 
 export type PriorityLevel = 'critical' | 'high' | 'medium' | 'low'
 
@@ -120,27 +118,41 @@ export function scorePriority(
 }
 
 /**
- * Map classification category to triage category.
- * Lower thresholds to catch more actionable items:
- * - 'spam', 'newsletter' → 'spam'
- * - 'personal' → 'personal'
- * - 'lead', 'client', 'vendor' with significance >= 1 → 'actionable'
- * - Any category with significance >= 2 → 'actionable'
- * - Everything else → 'informational'
+ * Map classification + sender type + actionability to inbox category.
+ * Uses composite threshold: significance 8+ alone qualifies as action_required,
+ * OR 2+ converging signals from: significance >= 6, actionability >= 4,
+ * time-sensitive, client/lead sender.
  */
-function toMessageCategory(classification: ClassificationResult): MessageCategory {
-  const { category, significance } = classification
-  if (category === 'spam' || category === 'newsletter') return 'spam'
-  if (category === 'personal') return 'personal'
-  // Lower threshold for business-critical categories
-  if ((category === 'lead' || category === 'client' || category === 'vendor') && significance >= 1) {
-    return 'actionable'
-  }
-  // General actionable threshold: significance >= 2
-  if (significance >= 2) {
-    return 'actionable'
-  }
-  return 'informational'
+function toMessageCategory(
+  classification: ClassificationResult,
+  senderType: SenderType,
+  actionability: ActionabilitySignals | null,
+): MessageCategory {
+  // 1. Spam/newsletter — fast exit
+  if (classification.category === 'spam') return 'spam'
+  if (classification.category === 'newsletter') return 'marketing'
+  if (senderType === 'marketing') return 'marketing'
+
+  // 2. Automated/transactional senders
+  if (senderType === 'automated' || senderType === 'transactional') return 'automated'
+
+  // 3. Personal/social
+  if (classification.category === 'personal') return 'conversation'
+
+  // 4. Action required — composite threshold (2+ signals, OR significance 8+)
+  if (classification.significance >= 8) return 'action_required'
+
+  const signals = [
+    classification.significance >= 6,
+    (actionability?.score ?? 0) >= 4,
+    classification.timeSensitivity === 'immediate' || classification.timeSensitivity === 'today',
+    classification.category === 'client' || classification.category === 'lead',
+  ].filter(Boolean).length
+
+  if (signals >= 2) return 'action_required'
+
+  // 5. Everything else
+  return 'fyi'
 }
 
 // ---------------------------------------------------------------------------
@@ -242,7 +254,67 @@ async function resolveMessageSender(
 // ---------------------------------------------------------------------------
 
 /**
- * Create a task for an actionable message.
+ * Synthesize a concise task title from a message.
+ * Aims for 8 words or fewer — no channel prefix, no email cruft.
+ */
+function synthesizeTaskTitle(msg: Record<string, unknown>): string {
+  let subject = ((msg.subject as string) || '').trim()
+
+  // Strip Re:/Fwd:/FW: prefixes
+  subject = subject.replace(/^(re|fw|fwd)\s*:\s*/gi, '').trim()
+
+  // If no subject, derive from sender
+  if (!subject) {
+    const sender = (msg.sender as string) || 'Unknown'
+    const firstName = sender.split(/\s+/)[0]
+    return `Review message from ${firstName}`
+  }
+
+  // Truncate to ~8 words
+  const words = subject.split(/\s+/)
+  if (words.length > 8) {
+    subject = words.slice(0, 8).join(' ')
+  }
+
+  return subject
+}
+
+/**
+ * Create a structured task description — synthesized context, not verbatim email.
+ */
+function synthesizeTaskDescription(
+  msg: Record<string, unknown>,
+  classification: ClassificationResult,
+): string {
+  const parts: string[] = []
+
+  const sender = msg.sender as string | undefined
+  const senderEmail = msg.sender_email as string | undefined
+  if (sender) {
+    parts.push(`**From**: ${sender}${senderEmail ? ` (${senderEmail})` : ''}`)
+  }
+
+  if (classification.recommendedActions?.length) {
+    parts.push(`**Action**: ${classification.recommendedActions.join(', ')}`)
+  }
+
+  // Prefer AI summary over raw body
+  if (classification.summary) {
+    parts.push('')
+    parts.push(classification.summary)
+  } else {
+    const body = String(msg.body || '').trim()
+    if (body) {
+      parts.push('')
+      parts.push(body.length > 200 ? body.slice(0, 200) + '...' : body)
+    }
+  }
+
+  return parts.join('\n')
+}
+
+/**
+ * Create a task for a high-significance actionable message.
  */
 async function createTaskForMessage(
   supabase: SupabaseClient,
@@ -252,9 +324,7 @@ async function createTaskForMessage(
   priority: PriorityLevel,
   contactId: string | null,
 ): Promise<boolean> {
-  const title = msg.subject
-    ? `[${msg.channel}] ${msg.subject}`
-    : `[${msg.channel}] ${msg.sender || 'Unknown'}: ${String(msg.body || '').slice(0, 80)}`
+  const title = synthesizeTaskTitle(msg)
 
   // Check for existing task with same title to avoid duplicates
   const { count } = await supabase
@@ -276,24 +346,20 @@ async function createTaskForMessage(
 
   if (!column) return false
 
+  const description = synthesizeTaskDescription(msg, classification)
+
   const { error } = await supabase
     .from('tasks')
     .insert({
       org_id: orgId,
       title,
-      description: [
-        `From: ${msg.sender || 'Unknown'}${msg.sender_email ? ` <${msg.sender_email}>` : ''}`,
-        `Channel: ${msg.channel}`,
-        `Priority: ${priority}`,
-        `Classification: ${classification.category} (significance ${classification.significance})`,
-        '',
-        String(msg.body || '').slice(0, 500),
-      ].join('\n'),
+      description,
       priority,
       column_id: column.id,
       position: 0,
       status: 'pending',
       metadata: {
+        source: 'bitbit',
         source_channel: msg.channel,
         source_message_id: msg.id,
         sender: msg.sender,
@@ -544,7 +610,7 @@ export async function runTriage(
     }
 
     // 4. Priority scoring via temporal urgency scorer
-    const msgCategory = toMessageCategory(classification)
+    const msgCategory = toMessageCategory(classification, senderType, actionabilitySignals)
 
     // Compute multi-signal urgency score
     const urgencyResult: UrgencyResult = await computeUrgency(supabase, orgId, {
@@ -589,7 +655,7 @@ export async function runTriage(
     // 5. Count by category
     if (msgCategory === 'spam') {
       result.spam++
-    } else if (msgCategory === 'actionable') {
+    } else if (msgCategory === 'action_required') {
       result.actionable++
     } else {
       result.informational++
@@ -616,7 +682,7 @@ export async function runTriage(
           },
         })
         .eq('id', msg.id)
-    } else if (msgCategory === 'actionable' && !routing.targetAgent) {
+    } else if (msgCategory === 'action_required' && !routing.targetAgent) {
       // Actionable but no specific agent — route to client-comms as fallback
       result.routed.push({
         agent: 'client-comms',
@@ -643,8 +709,8 @@ export async function runTriage(
     // password resets, login confirmations, shipping notifications, newsletters, test emails
     const isEmailChannel = (msg.channel as string) === 'gmail' || (msg.channel as string) === 'outlook'
     const subjectLower = ((msg.subject as string) ?? '').toLowerCase()
-    const isTransactional = /(?:password|reset|confirm|verify|sign.?in|login|unsubscribe|no.?reply|delivery|shipped|tracking|newsletter|bridge test|test from)/i.test(subjectLower)
-    if (msgCategory === 'actionable' && !isDuplicate && senderType === 'human' && isEmailChannel && !isTransactional && classification.significance >= 6) {
+    const isTransactional = /(?:password|reset|confirm|verify|sign.?in|log.?in|unsubscribe|no.?reply|noreply|delivery|shipped|tracking|newsletter|bridge test|test from|account.?activ|welcome.?to|receipt|order.?confirm|email.?verif|security.?alert|two.?factor|2fa|otp|one.?time|subscription|billing.?statement)/i.test(subjectLower)
+    if (msgCategory === 'action_required' && !isDuplicate && senderType === 'human' && isEmailChannel && !isTransactional && classification.significance >= 8) {
       const created = await createTaskForMessage(
         supabase, orgId, msg, classification, priority, contactId,
       )
@@ -764,6 +830,32 @@ export interface InboxMessage {
 }
 
 /**
+ * Normalize category labels — the triage pipeline has used different naming
+ * conventions over time. Map them all to the canonical set the UI expects.
+ */
+const CATEGORY_ALIASES: Record<string, MessageCategory> = {
+  actionable: 'action_required',
+  action: 'action_required',
+  personal: 'conversation',
+  informational: 'fyi',
+  info: 'fyi',
+  notification: 'automated',
+  newsletter: 'marketing',
+  // Canonical names pass through
+  action_required: 'action_required',
+  fyi: 'fyi',
+  conversation: 'conversation',
+  automated: 'automated',
+  marketing: 'marketing',
+  spam: 'spam',
+}
+
+function normalizeCategoryLabel(raw: string | null | undefined): MessageCategory | null {
+  if (!raw) return null
+  return CATEGORY_ALIASES[raw.toLowerCase()] ?? null
+}
+
+/**
  * Query the unified inbox across all channels with filters.
  */
 export async function queryInbox(
@@ -812,7 +904,8 @@ export async function queryInbox(
       bodyPreview: String(msg.body || '').slice(0, 200),
       fullBody: String(msg.body || ''),
       aiSummary: (meta.ai_summary as string) || null,
-      category: (meta.category as MessageCategory) || 'informational',
+      category: normalizeCategoryLabel(meta.category as string)
+        || (['whatsapp', 'imessage', 'sms'].includes(msg.channel as string) ? 'conversation' : 'fyi'),
       priority: (msg.priority as PriorityLevel) || 'medium',
       significance: (msg.significance as number) || 0,
       contactId: (meta.contact_id as string) || null,

@@ -1184,17 +1184,17 @@ export const channelToolHandlers: Record<string, AgentToolHandler> = {
 
     // Group by category
     const categories: Record<string, Array<{ sender: string; subject: string }>> = {
-      priority: [],
-      updates: [],
-      feed: [],
-      receipts: [],
+      action_required: [],
+      fyi: [],
+      conversation: [],
+      automated: [],
       other: [],
     }
 
     for (const msg of messages) {
       const meta = (msg.metadata as Record<string, unknown>) || {}
       const category = (meta.category as string) || 'other'
-      const key = ['priority', 'updates', 'feed', 'receipts'].includes(category) ? category : 'other'
+      const key = ['action_required', 'fyi', 'conversation', 'automated'].includes(category) ? category : 'other'
 
       if (categories[key].length < 5) {
         categories[key].push({
@@ -1213,7 +1213,7 @@ export const channelToolHandlers: Record<string, AgentToolHandler> = {
       }
     }
 
-    const actionItems = categories.priority.map(item => `Reply to ${item.sender} about "${item.subject}"`)
+    const actionItems = categories.action_required.map(item => `Reply to ${item.sender} about "${item.subject}"`)
 
     return {
       success: true,
@@ -1221,10 +1221,10 @@ export const channelToolHandlers: Record<string, AgentToolHandler> = {
         period: `${hours} hours`,
         total: messages.length,
         categories: {
-          priority: { count: categories.priority.length, items: categories.priority },
-          updates: { count: categories.updates.length, items: categories.updates },
-          feed: { count: categories.feed.length, items: categories.feed },
-          receipts: { count: categories.receipts.length, items: categories.receipts },
+          action_required: { count: categories.action_required.length, items: categories.action_required },
+          fyi: { count: categories.fyi.length, items: categories.fyi },
+          conversation: { count: categories.conversation.length, items: categories.conversation },
+          automated: { count: categories.automated.length, items: categories.automated },
         },
         highlights,
         actionItems,
