@@ -55,6 +55,9 @@ export interface EngineConfig {
   userEmail?: string
   /** User's display name for identity anchoring in the system prompt. */
   userDisplayName?: string
+  /** Multimodal content blocks from file attachments (images, PDFs, documents).
+   *  When present, the user message is sent as ContentBlockParam[] instead of string. */
+  contentBlocks?: Anthropic.ContentBlockParam[]
 }
 
 export type StageId = 'cost_check' | 'model_routing' | 'context_assembly' | 'api_streaming' | 'tool_execution'
@@ -463,10 +466,33 @@ export async function* runAgentChat(
     fullSystemPrompt += `\n\n## Available Tools Note\n${toolRagResult.toolSummary}\n`
   }
 
-  // When ContextAssembler was used, history already includes the current message
-  let messages: Anthropic.MessageParam[] = config.threadId
-    ? [...(config.history || [])]
-    : [...(config.history || []), { role: 'user', content: message }]
+  // Build the user message content: multimodal (text + attachments) or plain string.
+  // When contentBlocks are present, construct a ContentBlockParam[] with the text
+  // message first, followed by attachment blocks (images, documents, etc.).
+  const userMessageContent: string | Anthropic.ContentBlockParam[] = config.contentBlocks?.length
+    ? [
+        { type: 'text' as const, text: message },
+        ...config.contentBlocks,
+      ]
+    : message
+
+  // When ContextAssembler was used, history already includes the current message.
+  // For multimodal messages with ContextAssembler, we need to replace the last
+  // user message (which was added as plain text) with the multimodal version.
+  let messages: Anthropic.MessageParam[]
+  if (config.threadId) {
+    const historyMessages = [...(config.history || [])]
+    // If we have content blocks, upgrade the last user message to multimodal
+    if (config.contentBlocks?.length && historyMessages.length > 0) {
+      const lastIdx = historyMessages.length - 1
+      if (historyMessages[lastIdx].role === 'user') {
+        historyMessages[lastIdx] = { role: 'user', content: userMessageContent }
+      }
+    }
+    messages = historyMessages
+  } else {
+    messages = [...(config.history || []), { role: 'user', content: userMessageContent }]
+  }
 
   // Track initial message count for observation masking and checkpoints
   const initialMsgCount = messages.length
