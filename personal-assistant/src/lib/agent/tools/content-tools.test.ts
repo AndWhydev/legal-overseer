@@ -1,8 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import type { ToolResult } from '../tools'
 
-// Mock Anthropic SDK before importing the module under test
-const mockCreate = vi.fn()
+// Use vi.hoisted so mockCreate is available when the hoisted vi.mock factory runs
+const { mockCreate } = vi.hoisted(() => ({
+  mockCreate: vi.fn(),
+}))
+
 vi.mock('@anthropic-ai/sdk', () => ({
   default: class MockAnthropic {
     messages = { create: mockCreate }
