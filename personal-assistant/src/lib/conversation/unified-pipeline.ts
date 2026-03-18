@@ -11,10 +11,11 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type Anthropic from '@anthropic-ai/sdk'
 import { resolveChannelIdentity } from './identity-resolver'
-import { resolveActiveThread, storeMessage, loadRecentMessages } from './thread-resolver'
+import { resolveActiveThread, storeMessage, loadRecentMessages, generateThreadTitle } from './thread-resolver'
 import { runAgentChat, type AgentEvent, type EngineConfig } from '@/lib/agent/engine'
 import { logger } from '@/lib/core/logger'
 import { MemoryConsolidator } from '@/lib/memory/memory-consolidator'
+import { getMemoryExtractor } from '@/lib/memory-palace'
 import { enqueueEmbedding } from '@/lib/rag/embedding-queue'
 import type {
   Channel,
@@ -302,13 +303,28 @@ export class UnifiedConversationPipeline {
     assistantResponse: string,
   ): Promise<void> {
     // Update thread last_activity_at and last_channel
-    await this.supabase
+    const { data: threadData } = await this.supabase
       .from('conversation_threads')
       .update({
         last_activity_at: new Date().toISOString(),
         last_channel: channel,
       })
       .eq('id', threadId)
+      .select('message_count')
+      .single()
+
+    // ── Auto-generate thread title ────────────────────────────────────
+    // Fire-and-forget: generates on 1st exchange, refines on 5th message
+    const msgCount = threadData?.message_count ?? 0
+    generateThreadTitle(
+      this.supabase,
+      threadId,
+      userMessage,
+      assistantResponse,
+      msgCount,
+    ).catch(err => {
+      logger.warn('[pipeline] Title generation failed (non-fatal)', { err, threadId })
+    })
 
     // ── Real-time fact extraction via MemoryConsolidator ──────────────
     // Process the user message for entity mentions, high-value signals,
@@ -360,6 +376,29 @@ export class UnifiedConversationPipeline {
         }
       } catch (err) {
         logger.warn('[pipeline] Memory consolidation failed (non-fatal)', {
+          threadId,
+          error: err instanceof Error ? err.message : String(err),
+        })
+      }
+    }
+
+    // ── Memory Palace extraction (typed memories) ─────────────────────
+    // Extract structured memories (decisions, facts, patterns, pricing)
+    // from the conversation turn. Runs alongside the existing consolidator.
+    if (userMessage && assistantResponse) {
+      try {
+        const extractor = getMemoryExtractor()
+        await extractor.extractAndStore(this.supabase, {
+          orgId,
+          threadId,
+          userMessage,
+          assistantMessage: assistantResponse,
+          entityIds: [], // Entity resolution happens inside extractor
+          entityNames: [],
+          channel,
+        })
+      } catch (err) {
+        logger.warn('[pipeline] Memory Palace extraction failed (non-fatal)', {
           threadId,
           error: err instanceof Error ? err.message : String(err),
         })

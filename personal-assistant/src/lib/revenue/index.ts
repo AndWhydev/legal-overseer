@@ -54,3 +54,9 @@ export { generateDigest } from './digest'
 
 // Revenue Radar (aggregate)
 export { getRevenueRadar } from './radar'
+
+// Retainer Monitoring
+export { detectRetainerRenewals } from './retainer-monitor'
+
+// Collection Acceleration
+export { generateCollectionActions, recordReminderSent } from './collection-accelerator'

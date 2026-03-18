@@ -285,6 +285,7 @@ export interface InsightScanResult {
   churn_risks: number
   scope_creep_alerts: number
   cash_flow_warnings: number
+  retainer_renewals: number
   total: number
 }
 
@@ -300,11 +301,15 @@ export async function runInsightScan(
     .eq('status', 'active')
     .lt('expires_at', new Date().toISOString())
 
-  const [overdueCollections, churnRisks, scopeCreepAlerts, cashFlowWarnings] = await Promise.all([
+  // Import retainer monitor lazily to avoid circular deps
+  const { detectRetainerRenewals } = await import('./retainer-monitor')
+
+  const [overdueCollections, churnRisks, scopeCreepAlerts, cashFlowWarnings, retainers] = await Promise.all([
     detectOverdueCollections(supabase, orgId),
     detectChurnRisk(supabase, orgId),
     detectScopeCreep(supabase, orgId),
     detectCashFlowWarnings(supabase, orgId),
+    detectRetainerRenewals(supabase, orgId).then(r => r.length).catch(() => 0),
   ])
 
   const result = {
@@ -312,7 +317,8 @@ export async function runInsightScan(
     churn_risks: churnRisks,
     scope_creep_alerts: scopeCreepAlerts,
     cash_flow_warnings: cashFlowWarnings,
-    total: overdueCollections + churnRisks + scopeCreepAlerts + cashFlowWarnings,
+    retainer_renewals: retainers,
+    total: overdueCollections + churnRisks + scopeCreepAlerts + cashFlowWarnings + retainers,
   }
 
   logger.info('[revenue-insights] Scan complete', { orgId, ...result })

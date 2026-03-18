@@ -6,6 +6,8 @@ import { codeExecutionToolDefinitions, codeExecutionToolHandlers } from './tools
 import { invoiceToolDefinition, handleGenerateInvoice } from './tools/invoice-tool'
 import { templateToolDefinition, handleUpdateInvoiceTemplate } from './tools/template-tool'
 import { meetingToolDefinitions, meetingToolHandlers } from '@/lib/meetings/agent-tools'
+import { swarmToolDefinitions, swarmToolHandlers } from './tools/swarm-tool'
+import { MEMORY_PALACE_TOOLS, executeMemoryPalaceTool } from '@/lib/memory-palace'
 import { composeCreatorStudioDeck } from '@/lib/creator-studio'
 import { routeAgentAction } from './confidence-router'
 import { queueAgentAction, getPendingApprovals, resolveApproval } from './approval-queue'
@@ -28,7 +30,7 @@ import { logger } from '@/lib/core/logger'
 // Tool Group metadata (for future Tool RAG via pgvector)
 // ---------------------------------------------------------------------------
 
-export type ToolGroup = 'core' | 'memory' | 'channel' | 'web' | 'comms' | 'agentic' | 'meetings'
+export type ToolGroup = 'core' | 'memory' | 'channel' | 'web' | 'comms' | 'agentic' | 'meetings' | 'swarm'
 
 export interface ToolGroupMeta {
   id: ToolGroup
@@ -47,8 +49,8 @@ export const TOOL_GROUPS: Record<ToolGroup, ToolGroupMeta> = {
   memory: {
     id: 'memory',
     label: 'Memory & Knowledge',
-    description: 'Store and recall learned preferences, patterns, and context',
-    tools: ['search_memory', 'add_memory'],
+    description: 'Store and recall learned preferences, patterns, context, decisions, and institutional knowledge',
+    tools: ['search_memory', 'add_memory', 'search_memories', 'recall_decisions', 'remember_this', 'forget_entity'],
   },
   channel: {
     id: 'channel',
@@ -79,6 +81,12 @@ export const TOOL_GROUPS: Record<ToolGroup, ToolGroupMeta> = {
     label: 'Meeting Intelligence',
     description: 'Search meeting transcripts, list meetings, get details, and create tasks from action items',
     tools: ['search_meetings', 'list_meetings', 'get_meeting_details', 'create_meeting_tasks'],
+  },
+  swarm: {
+    id: 'swarm' as ToolGroup,
+    label: 'Agent Swarm',
+    description: 'Trigger and monitor multi-agent swarms for complex coordinated operations',
+    tools: ['trigger_swarm', 'list_swarm_templates', 'get_swarm_status'],
   },
 }
 
@@ -119,6 +127,10 @@ export const JIT_INSTRUCTIONS: Record<string, string> = {
   // Memory
   search_memory: 'Reference specific senders, dates, and subjects when citing results. Do not quote raw chunks verbatim — synthesize the information naturally into your response. When referencing past communications, mention the sender and approximate date.',
   add_memory: 'Memory stored. Do not announce this to the user unless they explicitly asked you to remember something. Use proactively when you learn preferences, relationships, business context, or decisions. One fact per entry.',
+  search_memories: 'Synthesize results naturally. Reference dates and entities when citing memories. For decisions, mention the reasoning and outcome. For pricing, cite the specific amounts and project types.',
+  recall_decisions: 'Present decisions chronologically. For each, mention the outcome if known and any lessons learned. Help the user see patterns across decisions.',
+  remember_this: 'Memory stored in the institutional knowledge base. Confirm briefly what was remembered. This memory will surface proactively in future conversations when relevant.',
+  forget_entity: 'All memories about the entity have been permanently deleted. This is irreversible. Confirm what was removed.',
 
   // Channels
   find_messages: 'Present the most relevant messages first. Include sender, subject, and a brief preview. If the user is looking for something specific, highlight the best match. Never mention syncing, caching, or infrastructure details.',
@@ -151,6 +163,11 @@ export const JIT_INSTRUCTIONS: Record<string, string> = {
   list_meetings: 'Present meetings in a concise list format. Highlight any with pending action items or recent dates. Offer to show details for any specific meeting.',
   get_meeting_details: 'Present the meeting summary and key decisions first, then action items. Do not dump the full transcript — highlight the most important points. Mention participants and sentiment naturally.',
   create_meeting_tasks: 'Tasks created from meeting action items. Confirm how many were created and suggest reviewing them on the kanban board.',
+
+  // Swarm orchestration
+  trigger_swarm: 'A multi-agent swarm has been triggered. Report the swarm name and which agents are participating. The swarm is now running in the background — the user can check progress with get_swarm_status or on the Swarm dashboard.',
+  list_swarm_templates: 'Present the available templates concisely with their names and what they do. Mention trigger phrases the user can try.',
+  get_swarm_status: 'Present the swarm status clearly: which steps are complete, which are running, and any errors. Include cost and key outputs from completed steps.',
 }
 
 /** Get JIT instruction for a tool, if one exists. */
@@ -771,12 +788,23 @@ const handlers: Record<string, AgentToolHandler> = {
   },
 }
 
+// Memory Palace tool handlers — bridge from AgentToolHandler to Memory Palace service
+const memoryPalaceHandlers: Record<string, AgentToolHandler> = {}
+for (const tool of MEMORY_PALACE_TOOLS) {
+  memoryPalaceHandlers[tool.name] = async (input, orgId, supabase) => {
+    const result = await executeMemoryPalaceTool(supabase, orgId, tool.name, input)
+    return { success: true, data: result }
+  }
+}
+
 const allHandlers: Record<string, AgentToolHandler> = {
   ...handlers,
   ...channelToolHandlers,
   ...superpowerToolHandlers,
   ...codeExecutionToolHandlers,
   ...meetingToolHandlers,
+  ...swarmToolHandlers,
+  ...memoryPalaceHandlers,
   async generate_invoice(input, orgId, supabase) {
     return handleGenerateInvoice(input as unknown as Parameters<typeof handleGenerateInvoice>[0], orgId, supabase)
   },
@@ -786,7 +814,7 @@ const allHandlers: Record<string, AgentToolHandler> = {
 }
 
 export function getAgentTools(groups?: ToolGroup[]): Anthropic.Tool[] {
-  const allTools = [...toolDefinitions, ...channelToolDefinitions, ...superpowerToolDefinitions, ...codeExecutionToolDefinitions, ...meetingToolDefinitions, invoiceToolDefinition, templateToolDefinition]
+  const allTools = [...toolDefinitions, ...channelToolDefinitions, ...superpowerToolDefinitions, ...codeExecutionToolDefinitions, ...meetingToolDefinitions, ...swarmToolDefinitions, ...MEMORY_PALACE_TOOLS as unknown as Anthropic.Tool[], invoiceToolDefinition, templateToolDefinition]
   if (!groups || groups.length === 0) return allTools
 
   const selectedGroups = new Set<ToolGroup>(['core', ...groups])

@@ -12,6 +12,8 @@ import { StatCard, MiniSparkline, MiniBarChart, MiniDonut, MiniGauge } from '@/c
 import { DailyBrief } from './daily-brief';
 import { KanbanBoard } from './kanban-board';
 import { InboxFeed } from './inbox-feed';
+import { RoleStatusCards, AttentionView, RoleDetailView, IntelligenceWidgets } from '@/components/roles';
+import type { RoleType } from '@/lib/bitbit-core';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -28,6 +30,7 @@ interface DashboardRedesignProps {
 export function DashboardRedesign({ columns, tasks, messages, completedToday, totalActive }: DashboardRedesignProps) {
   const [inboxCollapsed, setInboxCollapsed] = React.useState(false);
   const [edgeGlow, setEdgeGlow] = React.useState(0);
+  const [selectedRole, setSelectedRole] = React.useState<RoleType | null>(null);
   const edgeRef = React.useRef<HTMLDivElement>(null);
   const { theme } = useTheme();
   const isLight = theme === 'light';
@@ -237,21 +240,42 @@ export function DashboardRedesign({ columns, tasks, messages, completedToday, to
       {/* Daily Brief */}
       <DailyBrief />
 
+      {/* Role Detail drill-down (replaces roles section when active) */}
+      {selectedRole ? (
+        <RoleDetailView roleType={selectedRole} onBack={() => setSelectedRole(null)} />
+      ) : (
+        <>
+          {/* Roles Section — status cards + attention + intelligence */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }} className="dashboard-roles-grid">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <RoleStatusCards onRoleClick={(rt) => setSelectedRole(rt)} />
+              <IntelligenceWidgets />
+            </div>
+            <AttentionView maxHeight="380px" />
+          </div>
+        </>
+      )}
+
       {/* Kanban + Inbox side-by-side */}
       <div
         style={{
-          display: 'grid',
-          gridTemplateColumns: inboxCollapsed ? '1fr auto' : '1fr auto',
+          display: 'flex',
           gap: 20,
           flex: 1,
           minHeight: 0,
           overflow: 'hidden',
-          transition: 'grid-template-columns 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
         }}
         className="dashboard-main-grid"
       >
         {/* Kanban Board */}
-        <div style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+        <div style={{
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+          flex: 1,
+          minHeight: 0,
+          transition: 'margin-right 0.3s cubic-bezier(0.25, 0.1, 0.25, 1)',
+        }}>
           <KanbanBoard
             initialColumns={displayColumns}
             initialTasks={displayTasks}
@@ -322,10 +346,14 @@ export function DashboardRedesign({ columns, tasks, messages, completedToday, to
             flexShrink: 0,
             transform: inboxCollapsed ? 'translateX(340px)' : 'translateX(0)',
             opacity: inboxCollapsed ? 0 : 1,
-            transition: 'transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.25s ease',
             pointerEvents: inboxCollapsed ? 'none' : 'auto',
             overflow: 'hidden',
             marginRight: inboxCollapsed ? -320 : 0,
+            transition: [
+              'transform 0.3s cubic-bezier(0.25, 0.1, 0.25, 1)',
+              'opacity 0.2s cubic-bezier(0.25, 0.1, 0.25, 1)',
+              'margin-right 0.3s cubic-bezier(0.25, 0.1, 0.25, 1)',
+            ].join(', '),
           }}
         >
           <InboxFeed
@@ -339,6 +367,9 @@ export function DashboardRedesign({ columns, tasks, messages, completedToday, to
       <style>{`
         @media (max-width: 1024px) {
           .dashboard-main-grid {
+            flex-direction: column !important;
+          }
+          .dashboard-roles-grid {
             grid-template-columns: 1fr !important;
           }
         }

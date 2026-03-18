@@ -24,6 +24,7 @@ import { getPendingApprovals, type ApprovalRecord } from '@/lib/agent/approval-q
 import { loadRecentMessages, loadThreadSummaries } from '@/lib/conversation/thread-resolver'
 import { scanForEntityMentions } from '@/lib/context/entity-mention-scanner'
 import { TokenBudgetManager, type TierInput } from './token-budget-manager'
+import { recallForContext, type ProactiveRecallResult } from '@/lib/memory-palace'
 import { logger } from '@/lib/core/logger'
 
 // ─── Constants ──────────────────────────────────────────────────────────────
@@ -626,6 +627,33 @@ export class ContextAssembler {
       if (trimmedRetrieved) {
         finalSystemPrompt = `${finalSystemPrompt}\n\n## Retrieved Context\n${trimmedRetrieved}`
       }
+    }
+
+    // Append Memory Palace proactive recall (institutional knowledge)
+    try {
+      // Extract entity IDs from entity mentions for targeted recall
+      let recallEntityIds: string[] = []
+      if (entityMentions.length > 0) {
+        const { data: mentionedContacts } = await supabase
+          .from('contacts')
+          .select('id')
+          .eq('org_id', orgId)
+          .in('name', entityMentions)
+          .limit(3)
+        recallEntityIds = (mentionedContacts ?? []).map((c: Record<string, unknown>) => c.id as string)
+      }
+
+      const recall = await recallForContext(supabase, orgId, {
+        entityIds: recallEntityIds,
+        query: currentMessage,
+        maxMemories: 6,
+      })
+
+      if (recall.formattedContext) {
+        finalSystemPrompt = `${finalSystemPrompt}\n\n${recall.formattedContext}`
+      }
+    } catch {
+      // Non-critical: proactive recall is additive, not essential
     }
 
     // ── Phase 6: Build message history ──────────────────────────────────
