@@ -1394,6 +1394,12 @@ export function ChatInterface({ userName }: { userName?: string }) {
                       citations={msg.citations || (isLastAssistantOverall && isLoading ? activeCitations : undefined)}
                     />
                     {/* Checkpoints are internal system state — hidden from users */}
+                    {/* Invoice artifacts — anchored to the message that generated them */}
+                    {invoiceArtifacts.filter(inv => inv.afterMessageId === msg.id).map(inv => (
+                      <motion.div key={inv.invoiceNumber} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} style={{ marginTop: 8 }}>
+                        <InvoiceArtifact invoiceNumber={inv.invoiceNumber} recipient={inv.recipient} recipientEmail={inv.recipientEmail} total={inv.total} dueDate={inv.dueDate} description={inv.description} html={inv.html} subject={inv.subject} />
+                      </motion.div>
+                    ))}
                   </div>
                 )
               })}
@@ -1413,28 +1419,6 @@ export function ChatInterface({ userName }: { userName?: string }) {
               )}
 
               {/* Inline approval cards */}
-              {/* Invoice artifacts — embedded document preview */}
-              {invoiceArtifacts.map(inv => (
-                <motion.div
-                  key={inv.invoiceNumber}
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-                  style={{ marginTop: 8 }}
-                >
-                  <InvoiceArtifact
-                    invoiceNumber={inv.invoiceNumber}
-                    recipient={inv.recipient}
-                    recipientEmail={inv.recipientEmail}
-                    total={inv.total}
-                    dueDate={inv.dueDate}
-                    description={inv.description}
-                    html={inv.html}
-                    subject={inv.subject}
-                  />
-                </motion.div>
-              ))}
-
               {pendingApprovals.map(approval => (
                 <motion.div
                   key={approval.id}
