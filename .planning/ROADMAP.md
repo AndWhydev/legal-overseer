@@ -248,7 +248,7 @@ Plans:
 **Requirements**: MEDIA-01, MEDIA-02, MEDIA-03, MEDIA-04, MEDIA-05, MEDIA-06, MEDIA-07, MEDIA-08, MEDIA-09, MEDIA-10, MEDIA-11
 **Success Criteria** (what must be TRUE):
   1. User can click the Paperclip button or drag-and-drop a file onto chat and see it upload with a progress indicator
-  2. Uploaded images render as inline previews in the chat message; PDFs show a first-page thumbnail with download link
+  2. Uploaded images render as inline previews in the chat message; PDFs show a file icon with filename, size, and download link
   3. User can say "summarize this document" after uploading a PDF and BitBit returns an accurate summary
   4. Uploading a 15MB file or an .exe is rejected with a clear error message explaining the limit
   5. Files are isolated per org -- one org cannot access another org's uploads

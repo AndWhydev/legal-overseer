@@ -76,7 +76,7 @@ Requirements for Media, Billing & Growth Roles. Closes the media gap, adds billi
 - [ ] **MEDIA-03**: Upload uses Supabase Storage signed URLs (bypasses Vercel 4.5MB body limit)
 - [ ] **MEDIA-04**: Upload progress indicator shown during file transfer
 - [ ] **MEDIA-05**: Uploaded images render inline in chat messages as previews
-- [ ] **MEDIA-06**: Uploaded PDFs render with first-page thumbnail and download link
+- [ ] **MEDIA-06**: Uploaded PDFs render with file icon, filename, size, and download link
 - [ ] **MEDIA-07**: File size limit enforced (10MB per file) with clear error message
 - [ ] **MEDIA-08**: Accepted file types filtered (block executables, allow business formats)
 - [ ] **MEDIA-09**: BitBit can read and analyse uploaded files (images via Claude Vision, documents via text extraction)
