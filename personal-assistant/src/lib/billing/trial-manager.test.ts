@@ -9,14 +9,16 @@ function createMockSupabase(args: {
   const state = {
     insertCalled: false,
     updateCalled: false,
+    lastInsertPayload: null as Record<string, unknown> | null,
   }
 
   const api = {
     from(table: string) {
       if (table === 'subscriptions') {
         return {
-          insert: () => {
+          insert: (payload: Record<string, unknown>) => {
             state.insertCalled = true
+            state.lastInsertPayload = payload
             return Promise.resolve({ error: null })
           },
           select: () => ({
@@ -80,6 +82,38 @@ describe('createTrial', () => {
     await createTrial(supabase, 'org-1', 'starter')
 
     expect(state.insertCalled).toBe(true)
+  })
+
+  it('sets trial_ends_at to 30 days from now (not 14)', async () => {
+    const { supabase, state } = createMockSupabase({
+      subscriptions: [],
+    })
+
+    await createTrial(supabase, 'org-1', 'starter')
+
+    expect(state.lastInsertPayload).not.toBeNull()
+    const payload = state.lastInsertPayload as Record<string, unknown>
+    const trialEndsAt = new Date(payload.trial_ends_at as string)
+    const now = new Date('2026-03-15T10:00:00.000Z')
+    const diffDays = Math.round((trialEndsAt.getTime() - now.getTime()) / (24 * 60 * 60 * 1000))
+    expect(diffDays).toBe(30)
+  })
+
+  it('creates growth tier trial with correct trial_ends_at', async () => {
+    const { supabase, state } = createMockSupabase({
+      subscriptions: [],
+    })
+
+    await createTrial(supabase, 'org-1', 'growth')
+
+    expect(state.lastInsertPayload).not.toBeNull()
+    const payload = state.lastInsertPayload as Record<string, unknown>
+    expect(payload.tier).toBe('growth')
+    expect(payload.plan).toBe('growth')
+    const trialEndsAt = new Date(payload.trial_ends_at as string)
+    const now = new Date('2026-03-15T10:00:00.000Z')
+    const diffDays = Math.round((trialEndsAt.getTime() - now.getTime()) / (24 * 60 * 60 * 1000))
+    expect(diffDays).toBe(30)
   })
 
   it('handles errors gracefully', async () => {
