@@ -268,6 +268,7 @@ export async function handleGenerateInvoice(
         terms: `${termsDays} days`,
         subject: result.subject,
         description: input.description,
+        html: result.html,
         view_url: `/api/invoices/render?data=${invoicePayload}`,
         // The frontend renders this as an embedded artifact card automatically.
         // The model should just confirm briefly — no need to describe the invoice contents.
