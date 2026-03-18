@@ -24,6 +24,9 @@ export { proactiveRecall, formatProactiveRecall } from './proactive-recall'
 export type { ProactiveRecallResult } from './proactive-recall'
 export { PricingIntelligence } from './pricing-intelligence'
 export { ArchaeologyEngine } from './archaeology'
+export { PatternDetector } from './pattern-detector'
+export { ExtractionBridge } from './extraction-bridge'
+export type { ExtractedFactInput, ExtractionBridgeResult } from './extraction-bridge'
 
 export type {
   // Core entry types
