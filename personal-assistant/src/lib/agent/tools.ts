@@ -598,45 +598,102 @@ const handlers: Record<string, AgentToolHandler> = {
 
   // Memory tools stay in tools.ts (not shared — chat-specific)
   async search_memory(input, orgId, supabase) {
+    const query = input.query as string
     const results: { source: string; entries: unknown[] }[] = []
 
-    // 1. Vector search (Pinecone) — primary path
-    try {
-      const { searchVectors } = await import('@/lib/rag/retriever')
-      const chunks = await searchVectors({
-        query: input.query as string,
-        orgId,
-        topK: 10,
-        channel: input.channel as string | undefined,
-        sender: input.sender as string | undefined,
-        dateFrom: input.date_from as string | undefined,
-        dateTo: input.date_to as string | undefined,
+    // Run dense (Pinecone) and sparse (Supabase full-text) search in parallel
+    const [denseResult, sparseResult] = await Promise.allSettled([
+      // 1. Dense vector search (Pinecone + Voyage-3.5)
+      (async () => {
+        const { searchVectors } = await import('@/lib/rag/retriever')
+        return searchVectors({
+          query,
+          orgId,
+          topK: 10,
+          channel: input.channel as string | undefined,
+          sender: input.sender as string | undefined,
+          dateFrom: input.date_from as string | undefined,
+          dateTo: input.date_to as string | undefined,
+        })
+      })(),
+      // 2. Sparse keyword search (Supabase full-text)
+      (async () => {
+        const { sparseSearch } = await import('@/lib/rag/sparse-search')
+        return sparseSearch(supabase, orgId, query, {
+          limit: 10,
+          channel: input.channel as string | undefined,
+          sender: input.sender as string | undefined,
+          dateFrom: input.date_from as string | undefined,
+          dateTo: input.date_to as string | undefined,
+        })
+      })(),
+    ])
+
+    // Merge results via RRF if both succeeded
+    if (denseResult.status === 'fulfilled' && denseResult.value.length > 0) {
+      results.push({
+        source: 'communications',
+        entries: denseResult.value.map(c => ({
+          content: c.content,
+          score: c.score,
+          channel: c.metadata.channel,
+          sender: c.metadata.sender,
+          date: c.metadata.received_at,
+          subject: c.metadata.subject,
+          citation: c.citationRef,
+        })),
       })
-      if (chunks.length > 0) {
+    }
+
+    if (sparseResult.status === 'fulfilled' && sparseResult.value.length > 0) {
+      // Add sparse results that aren't already in dense results
+      const denseContents = new Set(
+        denseResult.status === 'fulfilled'
+          ? denseResult.value.map(c => c.content.slice(0, 100))
+          : []
+      )
+      const uniqueSparse = sparseResult.value.filter(
+        s => !denseContents.has(s.content.slice(0, 100))
+      )
+      if (uniqueSparse.length > 0) {
         results.push({
-          source: 'communications',
-          entries: chunks.map(c => ({
-            content: c.content,
-            score: c.score,
-            channel: c.metadata.channel,
-            sender: c.metadata.sender,
-            date: c.metadata.received_at,
-            subject: c.metadata.subject,
-            citation: c.citationRef,
+          source: 'keyword_matches',
+          entries: uniqueSparse.map(s => ({
+            content: s.content,
+            channel: s.channel,
+            sender: s.sender,
+            date: s.receivedAt,
+            subject: s.subject,
           })),
         })
       }
-    } catch (err) {
-      logger.warn('[search_memory] Vector search failed, falling back to DB:', err)
     }
 
-    // 2. Memory entries (DB) — fallback / supplement
+    if (denseResult.status === 'rejected') {
+      logger.warn('[search_memory] Dense search failed:', denseResult.reason)
+    }
+
+    // 3. Semantic memories (stored facts, preferences, relationships)
+    const { data: semanticMems } = await supabase
+      .from('semantic_memories')
+      .select('content, category, confidence')
+      .eq('org_id', orgId)
+      .eq('is_active', true)
+      .ilike('content', `%${query.split(/\s+/).filter(w => w.length > 3).slice(0, 2).join('%')}%`)
+      .order('confidence', { ascending: false })
+      .limit(5)
+
+    if (semanticMems && semanticMems.length > 0) {
+      results.push({ source: 'stored_knowledge', entries: semanticMems })
+    }
+
+    // 4. Legacy memory_entries fallback
     let dbQuery = supabase.from('memory_entries').select('*').eq('org_id', orgId)
     if (input.category) dbQuery = dbQuery.eq('category', input.category as string)
-    if (input.query) dbQuery = dbQuery.ilike('content', `%${input.query}%`)
-    const { data: memories } = await dbQuery.order('created_at', { ascending: false }).limit(10)
+    if (input.query) dbQuery = dbQuery.ilike('content', `%${query}%`)
+    const { data: memories } = await dbQuery.order('created_at', { ascending: false }).limit(5)
     if (memories && memories.length > 0) {
-      results.push({ source: 'stored_knowledge', entries: memories })
+      results.push({ source: 'memory_entries', entries: memories })
     }
 
     const totalResults = results.reduce((sum, r) => sum + r.entries.length, 0)
@@ -688,6 +745,7 @@ export interface ExecuteToolOptions {
   agentConfigId?: string
   agentConfig?: { confidence_thresholds?: { act?: number; ask?: number } }
   orgSettings?: { confidence_thresholds?: { act?: number; ask?: number } }
+  calibratedThresholds?: { act: number; ask: number; sampleSize: number } | null
   confidenceScore?: number
   agentType?: string
 }
@@ -715,7 +773,8 @@ export async function executeAgentTool(
       options.confidenceScore,
       options.agentConfig,
       options.orgSettings,
-      options.agentType
+      options.agentType,
+      options.calibratedThresholds,
     )
 
     // Record auto-act outcomes for calibration (fire-and-forget)

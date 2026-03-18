@@ -7,7 +7,7 @@ export interface PlanOutput {
   toolGroups: ToolGroup[]
 }
 
-const VALID_TOOL_GROUPS = new Set<ToolGroup>(['core', 'memory', 'channel', 'web', 'comms'])
+const VALID_TOOL_GROUPS = new Set<ToolGroup>(['core', 'memory', 'channel', 'web', 'comms', 'agentic'])
 
 export interface PlanStage {
   id: string

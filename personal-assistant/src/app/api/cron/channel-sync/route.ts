@@ -1,6 +1,7 @@
 import { withCronGuard } from '@/lib/cron/cron-guard'
 import { pollChannel, type PollResult } from '@/lib/channels/relay-daemon'
 import { enqueueEmbedding } from '@/lib/rag/embedding-queue'
+import { enrichMessage } from '@/lib/intelligence/ingest-enrichment'
 import type { ChannelType } from '@/lib/channels/types'
 import { logger } from '@/lib/core/logger'
 
@@ -85,6 +86,23 @@ export async function GET(request: Request) {
                 })
               })
             }
+
+            // Fire-and-forget ingest-time enrichment (summary, urgency, entities, actions, category)
+            enrichMessage(supabase, orgId, {
+              id: msg.id,
+              org_id: orgId,
+              channel: channelType,
+              sender: msg.sender ?? 'unknown',
+              sender_email: msg.sender_email ?? null,
+              subject: msg.subject ?? null,
+              body: msg.body ?? '',
+              received_at: msg.received_at ?? new Date().toISOString(),
+            }).catch((err) => {
+              logger.warn('[cron/channel-sync] Ingest enrichment failed', {
+                messageId: msg.id,
+                error: err instanceof Error ? err.message : String(err),
+              })
+            })
           }
         }
 

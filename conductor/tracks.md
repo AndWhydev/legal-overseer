@@ -35,8 +35,8 @@
 | ID | Track | Type | Status | Notes |
 |----|-------|------|--------|-------|
 | T008 | Platform OAuth App Registrations | infrastructure | ~80% complete | Stripe webhook done (API bypass), Meta webhook done (Graph API), Google OAuth + APIs done, Telnyx webhook done (API), Resend DNS verified. Microsoft/Xero/Slack deferred (no accounts) |
-| T009 | Context Baseplate | architecture | ~95% complete | Bidirectional context loop fully wired and tested with real data (2026-03-17). Entity mention scanner matches first names (word-boundary). Baseplate snapshots inject into system prompt (Steve West: 4 emails, subjects, dates). Fact extraction fires per-turn via Haiku. Entity profiles refreshed (22/22). Context assembler budget: 16K tokens, systemPrompt 6K max. Remaining: knowledge graph persistence (in-memory only), no-reply contact cleanup |
-| T011 | Production Validation & Deployment | infrastructure | Mostly complete | Fly.io + Cloudflare + VPS worker deployed. 17 cron routes (added process-embeddings */5). Channel smoke tests now unblocked — all 5 key platform credentials configured. Gmail find_messages tested via chat (Steve West emails retrieved). Load test deferred until channels verified |
+| T009 | Context Baseplate | architecture | ~98% complete | Bidirectional context loop fully wired and tested with real data (2026-03-17). Entity mention scanner matches first names (word-boundary). Baseplate snapshots inject into system prompt (Steve West: 4 emails, subjects, dates). Fact extraction fires per-turn via Haiku. Entity profiles refreshed (22/22). Context assembler budget: 16K tokens, systemPrompt 6K max. First-contact intelligence: BitBit scans channels when it doesn't know something. Cross-channel search with deeper Gmail sync. Proactive memory building wired. Remaining: knowledge graph persistence (in-memory only), no-reply contact cleanup |
+| T011 | Production Validation & Deployment | infrastructure | Mostly complete | Fly.io + Cloudflare + VPS worker deployed. 19 cron routes (added process-embeddings */5, channel-sync, triage). Channel smoke tests now unblocked — all 5 key platform credentials configured. Gmail find_messages tested via chat (Steve West emails retrieved). Load test deferred until channels verified |
 
 ## Planned Tracks
 
@@ -47,7 +47,7 @@
 | T013 | Beta Launch Program | business | P1 | T008 mostly unblocked, T012 still blocking |
 | T024 | Creator Studio | feature | P3 | - |
 | T025 | Knowledge Base | feature | P3 | - |
-| T027 | Agent Superpower Toolkit | feature | P1 | Phase 1 shipped (web_search, fetch_url, send_email, send_sms). Phase 2 (browse_website via Playwright on Fly) planned. Spec: `conductor/tracks/T027/spec.md` |
+| T027 | Agent Superpower Toolkit | feature | P1 | Phase 1 shipped (web_search, fetch_url, send_email, send_sms). Phase 2 shipped (browse_website via Playwright headless). Phase 3 (1Password Connect + credential tool + skill extensibility) planned. Spec: `conductor/tracks/T027/spec.md` |
 | T028 | Agent Tool Orchestration (ADR-001) | architecture | P2 | Phase 1 shipped. Phase 2 (complexity routing + sub-agents) when quality complaints emerge. Phase 3 (multi-orchestrator) when tools > 100. Decision: `.claude/docs/research/tool-architecture-decision.md` |
 
 ## Track Descriptions
@@ -126,7 +126,7 @@ UX improvements for non-technical users. All items complete:
 ### T027 — Agent Superpower Toolkit
 Transform agents from chatbot to autonomous assistant. Full spec: `conductor/tracks/T027/spec.md`
 - **Phase 1 (P0)**: `web_search` (Brave API), `fetch_url` (readability extract), `send_email` (Resend), `send_sms` (Telnyx) — 4 new agent tools, ~2-3 hours
-- **Phase 2 (P1)**: `browse_website` (Playwright headless in Fly) — navigate, extract, screenshot
+- **Phase 2 (Shipped)**: `browse_website` (Playwright headless) — navigate, extract, screenshot
 - **Phase 3 (P2)**: 1Password Connect Server on Fly + generic credential tool + skill extensibility framework
 - **Phase 4 (P3)**: Per-user Fly Sprites (sleep-to-zero VMs with persistent credentials/browser/filesystem)
 - Reference: OpenClaw (68K stars, 13,700+ community skills), Stagehand v3, Composio (1000+ integrations)
@@ -134,7 +134,7 @@ Transform agents from chatbot to autonomous assistant. Full spec: `conductor/tra
 ### T028 — Agent Tool Orchestration (ADR-001)
 Scalable tool orchestration architecture based on SOTA research (Manus AI, Anthropic, Google-MIT 2026, Shopify). Hybrid Pattern D: planner-compiled tool groups as default, selective sub-agents for complex multi-domain queries.
 
-**Phase 1 (Shipped)**: Haiku planner selects tool groups → Sonnet receives filtered tools (5-12 instead of 20). KV cache preservation via stable tool sets. Context tokens reduced from ~6,000 to ~2,000-3,500 per session.
+**Phase 1 (Shipped)**: Haiku planner selects tool groups → Sonnet receives filtered tools (5-12 instead of 26). KV cache preservation via stable tool sets. Context tokens reduced from ~6,000 to ~2,000-3,500 per session. 6 tool groups: core, memory, channel, web, comms, agentic.
 - `planner.ts`: `PlanOutput` with `toolGroups` field, Haiku prompt with group selection examples
 - `tools.ts`: `getAgentTools(groups?)` with Set-based filtering, core always included
 - `engine.ts`: wiring, logging, KV-safe late plan handling, backward-compatible fallback

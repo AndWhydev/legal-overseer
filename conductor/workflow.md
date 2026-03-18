@@ -52,7 +52,7 @@
 ## API Development
 
 - **Route pattern**: `personal-assistant/src/app/api/[domain]/route.ts`
-- **22 API groups**: activity, admin, agent, ai, analytics, audit, auth, billing, channels, contacts, cron, events, health, knowledge, monitoring, onboarding, org, profile, reports, search, settings, tasks, webhooks
+- **25+ API groups**: activity, admin, agent, ai, analytics, audit, auth, billing, briefing, channels, confidence, contacts, conversations, cron, dashboard, data-export, events, health, inbox, invoices, keys, knowledge, medications, monitoring, onboarding, org, profile, rag, relationships, reports, search, settings, tasks, team, waitlist, webhooks, whispers, workers
 - **Auth**: Supabase session-based, `getActiveOrgId()` for tenancy scoping
 - **Rate limiting**: `api-rate-limiter.ts`
 
@@ -80,7 +80,7 @@
 
 ## Background Processing
 
-- **Cron routes**: 16 routes in `/api/cron/` (including archive-threads */15 for Total Recall)
+- **Cron routes**: 19 routes in `/api/cron/` (including archive-threads */15, channel-sync, triage, process-embeddings)
 - **Reflection**: Haiku extracts facts from significant messages
 - **Memory consolidation**: Dedup/merge/supersede cycle
 - **Scheduler**: Built-in cron infrastructure

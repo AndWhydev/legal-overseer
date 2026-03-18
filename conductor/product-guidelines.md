@@ -41,6 +41,7 @@ When a tradie messages BitBit from a job site saying "hey Bit, send Dave that in
 | Reflection | When BitBit extracts facts from conversations in the background |
 | Thread | A continuous conversation with a user across all channels |
 | Total Recall | BitBit's persistent memory — it remembers every conversation |
+| Whisper | A proactive nudge BitBit surfaces without being asked (stale contacts, due items, anomalies) |
 
 ## Words we never use in front of users
 

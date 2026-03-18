@@ -1,30 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-import { processEmailCommand } from '@/lib/channels/email-command'
+import { isCommandEmail, formatEmailResponse } from '@/lib/channels/email-command'
+import { sendCommandReplyEmail } from '@/lib/email/email-transport'
 import type { ChannelMessage } from '@/lib/channels/types'
 import { logger } from '@/lib/core/logger'
 import { resolveOrgFromWebhook } from '@/lib/core/resolve-org'
 import { verifyEmailWebhookSignature } from '@/lib/channels/email-command-verify'
+import { getServiceClient } from '@/lib/supabase/service-client'
+import { runPipelineToCompletion } from '@/lib/conversation/pipeline-helpers'
 
 /**
  * Email command webhook endpoint.
  *
- * Receives inbound email notifications and processes them as agent commands.
- * Supports multiple email providers (Gmail, Outlook, etc.) via unified ChannelMessage format.
- *
- * Expected POST payload (from email provider):
- * {
- *   "sender": "user@example.com",
- *   "senderName": "User Name",
- *   "subject": "[BitBit] Create task for me",
- *   "body": "Please create a task to follow up with Steve about the invoice.",
- *   "messageId": "unique-id",
- *   "receivedAt": "2024-01-15T10:30:00Z"
- * }
+ * Inbound email → unified conversation pipeline → agent response → reply email.
+ * Thread persistence, memory extraction, and RAG embedding all handled by pipeline.
  */
 export async function POST(request: NextRequest) {
   try {
-    // Read raw body text for signature verification before parsing
     const rawBody = await request.text()
 
     // Verify webhook signature if secret is configured
@@ -37,7 +28,6 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Parse request body from raw text
     let payload: Record<string, unknown>
     try {
       payload = JSON.parse(rawBody) as Record<string, unknown>
@@ -46,7 +36,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
     }
 
-    // Validate required fields
     const sender = String(payload.sender || payload.senderName || 'Unknown').trim()
     const senderEmail = String(payload.senderEmail || payload.sender || '').trim()
     const subject = String(payload.subject || '(no subject)').trim()
@@ -63,31 +52,25 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing subject and body' }, { status: 400 })
     }
 
-    // Extract orgId from payload, or resolve from email domain
     let orgId = String(payload.orgId || '').trim()
 
     if (!orgId) {
-      // Try to resolve org from email channel credentials using domain
       const emailDomain = senderEmail.split('@')[1]
       orgId = (await resolveOrgFromWebhook('email', emailDomain)) || ''
     }
 
     if (!orgId) {
-      logger.warn(
-        `[webhook/email-command] Could not resolve org for sender ${senderEmail}. Either pass orgId in payload or configure email channel in channel_credentials.`
-      )
+      logger.warn(`[webhook/email-command] Could not resolve org for sender ${senderEmail}`)
       return NextResponse.json(
         { error: 'Could not resolve organization for this email address' },
         { status: 400 }
       )
     }
 
-    logger.info('[webhook/email-command] Received command from', senderEmail, `(${subject.slice(0, 50)})`)
-
-    // Construct ChannelMessage
+    // Check if this is a command email
     const email: ChannelMessage = {
       id: `email-cmd-${messageId}`,
-      channel: 'gmail', // Default to gmail; could be parameterized
+      channel: 'gmail',
       externalId: messageId,
       sender,
       senderEmail,
@@ -96,40 +79,69 @@ export async function POST(request: NextRequest) {
       receivedAt: payload.receivedAt ? new Date(String(payload.receivedAt)) : new Date(),
       isActionable: true,
       priority: 'high',
-      metadata: {
-        provider: payload.provider || 'webhook',
-        messageId,
-      },
+      metadata: { provider: payload.provider || 'webhook', messageId },
     }
 
-    // Initialize Supabase client
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-
-    if (!supabaseUrl || !supabaseKey) {
-      logger.error('[webhook/email-command] Supabase credentials not configured')
-      return NextResponse.json({ error: 'Server not configured' }, { status: 500 })
-    }
-
-    const supabase = createClient(supabaseUrl, supabaseKey)
-
-    // Process the email command
-    const result = await processEmailCommand(supabase, orgId, email)
-
-    if (!result.success) {
-      logger.warn('[webhook/email-command] Command processing failed:', result.error)
+    if (!isCommandEmail(email)) {
       return NextResponse.json(
-        { error: result.error, messageId },
-        { status: result.error?.includes('does not appear') ? 400 : 500 }
+        { error: 'Email does not appear to be a command (missing command prefix)' },
+        { status: 400 }
       )
     }
 
-    logger.info('[webhook/email-command] Command processed successfully')
+    logger.info('[webhook/email-command] Processing command from', senderEmail, `(${subject.slice(0, 50)})`)
+
+    const supabase = getServiceClient()
+
+    // Construct command text from subject + body
+    const commandText = [subject.replace(/^\[BitBit\]\s*/i, '').replace(/^!\s*/, ''), body]
+      .filter(Boolean)
+      .join('\n\n')
+
+    // Route through unified conversation pipeline
+    const result = await runPipelineToCompletion(supabase, {
+      content: commandText,
+      channel: 'email',
+      channelIdentifier: {
+        channelType: 'email',
+        channelIdentifier: senderEmail,
+      },
+      orgId,
+      channelMetadata: {
+        externalId: messageId,
+        subject,
+      },
+    })
+
+    if (!result.success || !result.responseContent) {
+      logger.warn('[webhook/email-command] Pipeline produced no response', {
+        success: result.success,
+        error: result.error,
+      })
+      return NextResponse.json(
+        { error: result.error || 'Agent produced no response', messageId },
+        { status: 500 }
+      )
+    }
+
+    // Format and send reply email
+    const emailResponse = formatEmailResponse(result.responseContent, senderEmail)
+    const sent = await sendCommandReplyEmail(senderEmail, emailResponse.subject, emailResponse.htmlBody)
+
+    if (!sent) {
+      logger.warn('[webhook/email-command] Email send failed, response was generated but not delivered')
+    }
+
+    logger.info('[webhook/email-command] Command processed via unified pipeline', {
+      threadId: result.threadId,
+      emailQueued: sent,
+    })
+
     return NextResponse.json({
       received: true,
       messageId,
-      processed: result.success,
-      emailQueued: result.emailQueued,
+      processed: true,
+      emailQueued: sent,
     })
   } catch (err) {
     const errorMsg = err instanceof Error ? err.message : String(err)

@@ -38,24 +38,20 @@ export async function getBaseplateSnapshot(
 
   const profile = { ...data.profile_data } as BaseplateSnapshot['profile']
 
-  // Enrich profile with knowledge graph relationships
+  // Enrich profile with knowledge graph relationships (persisted in Supabase)
   try {
-    const graph = await getKnowledgeGraph()
+    const graph = getKnowledgeGraph(supabase, orgId)
 
-    // Get relationships for this entity
     const relationships = await graph.getRelationships(entityId, 2)
-
-    // Get topics associated with this entity
     const topics = await graph.getTopicsForEntity(entityId)
 
-    // Filter relationships to get related people
     const relatedPeople = relationships
       .filter(rel => rel.type === 'Person')
       .map(rel => ({
         id: rel.id,
         name: rel.name,
         connection_type: rel.relationshipType,
-        communication_frequency: undefined, // Could be extracted from edge data if available
+        communication_frequency: undefined,
       }))
 
     if (relatedPeople.length > 0 || topics.length > 0) {
@@ -74,8 +70,6 @@ export async function getBaseplateSnapshot(
       }
     }
   } catch (graphErr) {
-    // Graph unavailability should not break baseplate
-    // Log but continue with base profile
     logger.debug('[baseplate-snapshot] Graph enrichment failed (non-critical):', {
       error: graphErr instanceof Error ? graphErr.message : String(graphErr),
     })

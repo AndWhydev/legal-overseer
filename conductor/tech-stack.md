@@ -124,7 +124,7 @@ bitbit/                      # npm workspaces root
 ## Database
 
 - **Engine**: PostgreSQL via Supabase
-- **Migrations**: 90 SQL migration files in `personal-assistant/supabase/migrations/`
+- **Migrations**: 91 SQL migration files in `personal-assistant/supabase/migrations/`
 - **Auth**: Supabase Auth with RLS policies
 - **Tenancy**: Dual-tier — personal orgs (auto-created) + shared orgs
 - **Key patterns**: RLS on all tables, `org_id` scoping, `created_by` tracking
@@ -144,7 +144,7 @@ bitbit/                      # npm workspaces root
 - **Primary**: Claude (via @anthropic-ai/sdk)
 - **Agent routing**: Confidence-based — high confidence = auto-act, low = ask user
 - **Background**: Haiku for fact extraction (reflection) and tool group planning, larger models for synthesis
-- **Agent tools**: 25 tools across 5 groups (core, memory, channel, web, comms) — includes `approve_action` for conversational approval
+- **Agent tools**: 26 tools across 6 groups (core, memory, channel, web, comms, agentic) — includes `approve_action` for conversational approval, `execute_code` for agentic execution
 - **Safety**: Kill switch per org, approval queue for outbound comms, daily send limits, commitment-prevention prompt
 - **Conversation memory**: Total Recall system — persistent threads, cross-channel identity, 3-tier compression (Haiku), action execution dispatcher with 7 transport handlers
 
@@ -152,20 +152,21 @@ bitbit/                      # npm workspaces root
 
 **Architecture**: Hybrid Pattern D — Planner-compiled tool groups (default) with selective sub-agents (future).
 
-**Phase 1 (Shipped)**: Haiku planner selects 1-3 tool groups per conversation. Sonnet receives 5-12 filtered tools instead of all 25. Core group always included.
+**Phase 1 (Shipped)**: Haiku planner selects 1-3 tool groups per conversation. Sonnet receives 5-12 filtered tools instead of all 26. Core group always included.
 - `PlanOutput` type: planner returns both `stages` (UI pipeline) and `toolGroups` (tool filtering)
 - `getAgentTools(groups?)`: optional group filter, backward compatible (no args = all tools)
 - KV cache preservation: tools locked at first Sonnet call, never changed mid-turn (90-95% hit rate)
 - Fallback: trivial messages, planner timeouts, and empty groups all use full tool set
 
-**Tool Groups** (5 groups, 25 tools):
+**Tool Groups** (6 groups, 26 tools):
 | Group | Tools | When Selected |
 |-------|-------|---------------|
 | core | create_task, update_task, search_tasks, search_contacts, get_contact, log_activity, compose_creator_notification_mockup | Always included |
 | memory | search_memory, add_memory | "Remember...", preference recall |
-| channel | sync_channels, search_messages, get_upcoming, create_reminder, schedule_event | Calendar, email, messaging |
-| web | web_search, fetch_url | Research, URL reading |
-| comms | send_email, send_sms, approve_action | Outbound communications + action approval |
+| channel | find_messages, read_message, draft_reply, summarize_inbox, get_upcoming, create_reminder, schedule_event, send_gmail, send_outlook | Calendar, email, messaging |
+| web | web_search, fetch_url, browse_website | Research, URL reading, page rendering |
+| comms | send_email, send_sms, send_whatsapp, approve_action | Outbound communications + action approval |
+| agentic | execute_code | Complex multi-step operations via BitBit SDK |
 
 **Phase 2 (Planned, not built)**: Complexity routing — Haiku also selects `executionMode: 'single' | 'specialist' | 'orchestrator'`. Specialist sub-agents for single-domain deep queries. Orchestrator for multi-domain parallel queries. Trigger: quality complaints on complex queries.
 
@@ -187,7 +188,7 @@ bitbit/                      # npm workspaces root
 - **E2E**: `npx playwright test` (21 spec files)
 - **Preflight**: `npm run preflight` (tests + typecheck + build — same as pre-push hook)
 - **Pre-push hook**: `.git/hooks/pre-push` blocks pushes to main unless preflight passes (tests, tsc, build)
-- **Cron routes**: 16 routes in `/api/cron/` (including archive-threads */15)
+- **Cron routes**: 19 routes in `/api/cron/` (including archive-threads */15, channel-sync, triage, process-embeddings)
 - **Landing page dev**: `cd landing-page && npm run dev`
 - **CI/CD**: 5 GitHub Actions workflows (ci, e2e, deploy, migrate, preview)
 

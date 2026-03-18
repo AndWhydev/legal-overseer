@@ -71,12 +71,12 @@ describe('prompt-builder identity preamble', () => {
 
   it('preamble contains key identity assertions', () => {
     expect(BITBIT_IDENTITY_PREAMBLE).toContain('## Core Identity')
-    expect(BITBIT_IDENTITY_PREAMBLE).toContain('autonomous AI agent')
+    expect(BITBIT_IDENTITY_PREAMBLE).toContain('You are BitBit')
     expect(BITBIT_IDENTITY_PREAMBLE).toContain("I'm BitBit")
   })
 
-  it('preamble contains anti-leak instructions', () => {
-    expect(BITBIT_IDENTITY_PREAMBLE).toContain('NEVER')
-    expect(BITBIT_IDENTITY_PREAMBLE).toContain('as an AI')
+  it('preamble contains agency-first instructions', () => {
+    expect(BITBIT_IDENTITY_PREAMBLE).toContain('DO before DESCRIBE')
+    expect(BITBIT_IDENTITY_PREAMBLE).toContain('Never Claim Credit')
   })
 })

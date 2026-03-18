@@ -98,7 +98,8 @@ describe('tools with confidence routing', () => {
         0.9,
         options.agentConfig,
         options.orgSettings,
-        options.agentType
+        options.agentType,
+        options.calibratedThresholds,
       )
     })
 
@@ -282,7 +283,8 @@ describe('tools with confidence routing', () => {
         0.9,
         options.agentConfig,
         options.orgSettings,
-        'invoice-flow'
+        'invoice-flow',
+        options.calibratedThresholds,
       )
     })
 
@@ -366,7 +368,8 @@ describe('tools with confidence routing', () => {
         0,
         options.agentConfig,
         options.orgSettings,
-        options.agentType
+        options.agentType,
+        options.calibratedThresholds,
       )
     })
 
@@ -389,7 +392,8 @@ describe('tools with confidence routing', () => {
         1.0,
         options.agentConfig,
         options.orgSettings,
-        options.agentType
+        options.agentType,
+        options.calibratedThresholds,
       )
     })
   })

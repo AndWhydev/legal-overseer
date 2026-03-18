@@ -62,6 +62,7 @@ export interface QueueAgentActionParams {
   context_snapshot?: Record<string, unknown>
   agentConfig?: { confidence_thresholds?: { act?: number; ask?: number } }
   orgSettings?: { confidence_thresholds?: { act?: number; ask?: number } }
+  calibratedThresholds?: { act: number; ask: number; sampleSize: number } | null
 }
 
 function normalizeApprovalRow(row: ApprovalRecord): ApprovalRecord {
@@ -199,6 +200,18 @@ export async function resolveApproval(
           decision === 'approved',
           null, // wasCorrect: unknown at resolution time
         )
+
+        // Reflexion: record outcome for strategy learning
+        const { recordOutcomeAndReflect } = await import('@/lib/intelligence/reflexion')
+        await recordOutcomeAndReflect(supabase, {
+          orgId: existing.org_id,
+          domain: config.agent_type,
+          trigger: data.action_summary || existing.action_type,
+          originalAction: data.action_summary || 'agent action',
+          outcome: decision === 'approved' ? 'approved' : 'corrected',
+          correction: decision === 'rejected' ? 'User rejected this action' : undefined,
+          sourceActionId: approvalId,
+        })
       }
     } catch (err) {
       logger.warn('[approval-queue] Failed to record action outcome:', err)
@@ -304,7 +317,7 @@ export async function queueAgentAction(
   supabase: SupabaseClient,
   params: QueueAgentActionParams,
 ): Promise<ApprovalRecord | null> {
-  const routing = routeAgentAction(params.confidence_score, params.agentConfig, params.orgSettings)
+  const routing = routeAgentAction(params.confidence_score, params.agentConfig, params.orgSettings, undefined, params.calibratedThresholds)
   if (routing.decision === 'act') {
     return null
   }

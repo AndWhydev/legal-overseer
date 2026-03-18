@@ -1,6 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { getAgentTools, executeAgentTool, getJITInstruction, type ExecuteToolOptions, type ToolGroup } from './tools'
+import { selectRelevantTools } from './tool-rag'
 import { buildEntityAwarePrompt } from './prompt-builder'
 import { ContextAssembler } from '@/lib/context-assembly/context-assembler'
 import { selectModel } from './model-router'
@@ -42,6 +43,8 @@ export interface EngineConfig {
   agentType?: string
   /** Organization settings for confidence thresholds. */
   orgSettings?: { confidence_thresholds?: { act?: number; ask?: number } }
+  /** Calibrated thresholds (loaded from agent_configs, computed by calibration cron). */
+  calibratedThresholds?: { act: number; ask: number; sampleSize: number } | null
   /** Pre-loaded conversation history to prepend to the messages array. */
   history?: Anthropic.MessageParam[]
   /** User ID for thread ownership and context assembly. */
@@ -82,6 +85,171 @@ export type AgentEvent =
   | { type: 'citation'; data: { citations: Array<{ index: number; url: string; title: string; description?: string }> } }
   | { type: 'checkpoint'; data: { message_index: number; label: string } }
   | { type: 'done'; data: unknown }
+
+// ── Observation Masking ────────────────────────────────────────────────
+// Replaces verbose tool results from older iterations with compact
+// one-line placeholders, reducing token usage without losing context.
+// Based on NeurIPS 2025 research showing observation masking matches
+// LLM-summarized context at half the cost.
+
+const MASK_THRESHOLD_CHARS = 200
+
+/**
+ * Infer a short result-type description from stringified tool output.
+ * Keeps it fast — no LLM calls, just pattern matching.
+ */
+function inferResultType(content: string): { resultType: string; itemCount: number | null } {
+  // Try to detect arrays
+  if (/^\s*\[/.test(content)) {
+    const items = (content.match(/\},\s*\{/g) || []).length + 1
+    return { resultType: 'array', itemCount: items }
+  }
+
+  // Object with data/results/items array
+  const dataArrayMatch = content.match(/"(?:data|results|items|records|entries|messages|rows)"\s*:\s*\[/)
+  if (dataArrayMatch) {
+    const afterKey = content.slice(content.indexOf(dataArrayMatch[0]) + dataArrayMatch[0].length)
+    const items = (afterKey.match(/\},\s*\{/g) || []).length + 1
+    return { resultType: 'data', itemCount: items }
+  }
+
+  if (content.startsWith('Error:') || content.startsWith('Tool execution failed:')) {
+    return { resultType: 'error', itemCount: null }
+  }
+
+  if (content.includes('queued for approval')) {
+    return { resultType: 'queued', itemCount: null }
+  }
+
+  if (/^\s*\{/.test(content)) {
+    return { resultType: 'object', itemCount: null }
+  }
+
+  return { resultType: 'text', itemCount: null }
+}
+
+/**
+ * Build a tool_use_id -> tool_name lookup from assistant messages in the conversation.
+ */
+function buildToolIdMap(messages: Anthropic.MessageParam[]): Map<string, string> {
+  const map = new Map<string, string>()
+  for (const msg of messages) {
+    if (msg.role !== 'assistant' || typeof msg.content === 'string') continue
+    for (const block of msg.content) {
+      if (block.type === 'tool_use') {
+        map.set(block.id, block.name)
+      }
+    }
+  }
+  return map
+}
+
+/**
+ * Replace old tool results with compact placeholders to reduce token usage.
+ *
+ * - Only masks tool_result blocks from iterations before the most recent one
+ * - Only masks results longer than MASK_THRESHOLD_CHARS (200 chars)
+ * - Preserves tool_use_id references so the API format stays valid
+ * - Never modifies the original messages array
+ *
+ * @param messages         The full conversation messages array
+ * @param currentIteration 0-based current iteration index
+ * @param initialMsgCount  Number of messages before the agentic loop started
+ *                         (history + initial user message)
+ */
+export function maskOldObservations(
+  messages: Anthropic.MessageParam[],
+  currentIteration: number,
+  initialMsgCount: number
+): Anthropic.MessageParam[] {
+  // Nothing to mask on early iterations
+  if (currentIteration < 2) return messages
+
+  // Build tool_use_id -> tool_name map for the entire conversation
+  const toolIdMap = buildToolIdMap(messages)
+
+  // Each iteration appends 2 messages: assistant (tool_use) + user (tool_result).
+  // Sometimes a 3rd "system nudge" user message is injected (convergence hint,
+  // progress evaluation). Masking runs BEFORE the API call, so all messages in
+  // the array are from previous iterations. We preserve the last iteration's
+  // tool results (the most recent assistant+user pair).
+
+  // Walk backwards to find the start of the last iteration's messages.
+  let lastIterationStart = messages.length
+  for (let idx = messages.length - 1; idx >= initialMsgCount; idx--) {
+    const msg = messages[idx]
+    if (msg.role === 'assistant' && typeof msg.content !== 'string') {
+      const hasToolUse = (msg.content as Anthropic.ContentBlockParam[]).some(
+        (b) => b.type === 'tool_use'
+      )
+      if (hasToolUse) {
+        lastIterationStart = idx
+        break
+      }
+    }
+  }
+
+  // Clone messages, masking old tool results
+  const masked: Anthropic.MessageParam[] = []
+  for (let idx = 0; idx < messages.length; idx++) {
+    const msg = messages[idx]
+
+    // Preserve: initial messages (history + user input) and last iteration
+    if (idx < initialMsgCount || idx >= lastIterationStart) {
+      masked.push(msg)
+      continue
+    }
+
+    // Only mask user messages that contain tool_result blocks
+    if (msg.role !== 'user' || typeof msg.content === 'string') {
+      masked.push(msg)
+      continue
+    }
+
+    const contentBlocks = msg.content as Anthropic.ToolResultBlockParam[]
+    const hasToolResults = contentBlocks.some(
+      (b) => typeof b === 'object' && 'type' in b && b.type === 'tool_result'
+    )
+
+    if (!hasToolResults) {
+      masked.push(msg)
+      continue
+    }
+
+    // Mask each tool_result block that exceeds the threshold
+    const maskedBlocks = contentBlocks.map((block) => {
+      if (typeof block !== 'object' || !('type' in block) || block.type !== 'tool_result') {
+        return block
+      }
+
+      const toolResult = block as Anthropic.ToolResultBlockParam
+      const content = typeof toolResult.content === 'string'
+        ? toolResult.content
+        : JSON.stringify(toolResult.content)
+
+      // Keep short results and errors as-is
+      if (content.length <= MASK_THRESHOLD_CHARS || toolResult.is_error) {
+        return toolResult
+      }
+
+      // Build compact placeholder
+      const toolName = toolIdMap.get(toolResult.tool_use_id) || 'unknown_tool'
+      const { resultType, itemCount } = inferResultType(content)
+      const itemSuffix = itemCount !== null ? ` with ${itemCount} items` : ''
+      const placeholder = `[Previous: ${toolName} returned ${resultType}${itemSuffix}]`
+
+      return {
+        type: 'tool_result' as const,
+        tool_use_id: toolResult.tool_use_id,
+        content: placeholder,
+      }
+    })
+
+    masked.push({ role: 'user', content: maskedBlocks as Anthropic.ToolResultBlockParam[] })
+  }
+
+  return masked
+}
 
 export async function* runAgentChat(
   message: string,
@@ -149,8 +317,28 @@ export async function* runAgentChat(
     return
   }
 
+  // Load calibrated thresholds from agent_configs if not already provided
+  if (!config.calibratedThresholds && config.agentConfigId) {
+    try {
+      const { data: agentCfg } = await config.supabase
+        .from('agent_configs')
+        .select('calibrated_thresholds')
+        .eq('id', config.agentConfigId)
+        .single()
+
+      if (agentCfg?.calibrated_thresholds) {
+        const ct = agentCfg.calibrated_thresholds as { act: number; ask: number; sampleSize: number }
+        if (ct.sampleSize >= 50) {
+          config.calibratedThresholds = ct
+        }
+      }
+    } catch {
+      // Non-critical: calibration enhances routing but isn't required
+    }
+  }
+
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
-  const maxIterations = config.maxIterations || 8
+  const maxIterations = config.maxIterations || 15
 
   // Model routing: select model based on message complexity
   yield { type: 'stage', data: { stage: 'model_routing', status: 'start' } }
@@ -248,6 +436,18 @@ export async function* runAgentChat(
     }
   }
 
+  // Tool RAG: second-pass relevance filtering to reduce from 12-15 to 8-10 tools
+  const toolRagResult = selectRelevantTools(message, tools, 10)
+  if (toolRagResult.excluded.length > 0) {
+    tools = toolRagResult.tools
+    toolNames = tools.map(t => t.name)
+    logger.info('[engine] Tool RAG applied', {
+      selected: toolNames,
+      excluded: toolRagResult.excluded,
+      scores: toolRagResult.scores,
+    })
+  }
+
   // Build plan-aware system prompt addition
   let fullSystemPrompt = systemPrompt
   if (planStages.length > 0) {
@@ -257,16 +457,40 @@ export async function* runAgentChat(
     fullSystemPrompt += `\n\n## Execution Plan\nFollow this plan to fulfill the user's request:\n${planDescription}\n`
   }
 
+  // Append tool summary so model knows about excluded tools it can't see
+  if (toolRagResult.toolSummary) {
+    fullSystemPrompt += `\n\n## Available Tools Note\n${toolRagResult.toolSummary}\n`
+  }
+
   // When ContextAssembler was used, history already includes the current message
   let messages: Anthropic.MessageParam[] = config.threadId
     ? [...(config.history || [])]
     : [...(config.history || []), { role: 'user', content: message }]
 
-  // Track initial message count for checkpoints
+  // Track initial message count for observation masking and checkpoints
+  const initialMsgCount = messages.length
   userMessages.push(message)
 
   for (let i = 0; i < maxIterations; i++) {
     iterationCount++
+
+    // Inject convergence hint when running hot — force synthesis before hitting max
+    if (iterationCount === maxIterations - 1 && messages.length > 4) {
+      messages = [
+        ...messages,
+        {
+          role: 'user' as const,
+          content: '[SYSTEM: You are on your LAST iteration. You MUST respond to the user NOW with what you have. Do NOT call any more tools. Synthesize your findings and respond immediately.]',
+        },
+      ]
+    }
+
+    // ── Observation masking: replace old tool results with compact placeholders ──
+    // On iteration 3+, mask tool results from all but the most recent iteration.
+    // The original `messages` array is kept intact for appending new results;
+    // only the copy sent to the API is compressed.
+    const apiMessages = maskOldObservations(messages, i, initialMsgCount)
+
     let response: Anthropic.Message
     // Collect streamed deltas inside the circuit breaker so they can be yielded after
     const streamedDeltas: string[] = []
@@ -286,7 +510,7 @@ export async function* runAgentChat(
             max_tokens: maxTokens,
             system: fullSystemPrompt,
             tools,
-            messages,
+            messages: apiMessages,
           }
 
           // Add thinking config for synthesis tier requests
@@ -480,17 +704,21 @@ export async function* runAgentChat(
       (b): b is Anthropic.ToolUseBlock => b.type === 'tool_use'
     )
 
-    const toolResults: Anthropic.ToolResultBlockParam[] = []
+    // ── Parallel tool execution ──────────────────────────────────────
+    // Execute all tool_use blocks concurrently when possible.
+    // Events (tool_call, tool_result, plan_stage_update) are emitted
+    // after all tools complete to maintain event ordering.
+
+    // Pre-emit plan stage activations and tool_call events
+    const toolMeta: Array<{ tool: Anthropic.ToolUseBlock; matchedStage: PlanStage | null }> = []
     for (const tool of toolBlocks) {
       toolCallCount++
 
-      // Match tool to plan stage and emit plan_stage_update
-      const matchedStage = planStages.find(s => s.toolHint === tool.name && !activatedStages.has(s.id))
+      const matchedStage = planStages.find(s => s.toolHint === tool.name && !activatedStages.has(s.id)) ?? null
       if (matchedStage) {
         yield { type: 'plan_stage_update', data: { stageId: matchedStage.id, status: 'active' } }
         activatedStages.add(matchedStage.id)
       } else if (planStages.length === 0) {
-        // Reactive fallback: dynamically add stage from tool name
         const reactiveStage = stageFromToolName(tool.name)
         if (reactiveStage) {
           planStages.push(reactiveStage)
@@ -502,27 +730,58 @@ export async function* runAgentChat(
 
       yield { type: 'stage', data: { stage: 'tool_execution', status: 'start', meta: { toolName: tool.name, iteration: iterationCount } } }
       yield { type: 'tool_call', data: { name: tool.name, input: tool.input } }
-      try {
-        // Build execution options for confidence routing
-        let execOptions: ExecuteToolOptions | undefined
-        if (config.agentConfigId) {
-          execOptions = {
-            agentConfigId: config.agentConfigId,
-            orgSettings: config.orgSettings,
-            agentType: config.agentType,
-            // Confidence score would be provided by tool caller (e.g., LLM classification)
-            // For now, tools execute unconditionally unless explicitly provided
-            confidenceScore: undefined,
-          }
-        }
+      toolMeta.push({ tool, matchedStage })
+    }
 
-        const result = await executeAgentTool(
+    // Build execution options once (shared across all tools)
+    let execOptions: ExecuteToolOptions | undefined
+    if (config.agentConfigId) {
+      execOptions = {
+        agentConfigId: config.agentConfigId,
+        orgSettings: config.orgSettings,
+        agentType: config.agentType,
+        calibratedThresholds: config.calibratedThresholds,
+        confidenceScore: undefined,
+      }
+    }
+
+    // Execute all tools in parallel
+    const toolExecutions = await Promise.allSettled(
+      toolMeta.map(({ tool }) =>
+        executeAgentTool(
           tool.name,
           tool.input as Record<string, unknown>,
           config.orgId,
           config.supabase,
           execOptions
         )
+      )
+    )
+
+    // Process results in order, emit events, build toolResults array
+    const toolResults: Anthropic.ToolResultBlockParam[] = []
+    for (let t = 0; t < toolMeta.length; t++) {
+      const { tool, matchedStage } = toolMeta[t]
+      const execution = toolExecutions[t]
+
+      if (execution.status === 'rejected') {
+        const errorMsg = execution.reason instanceof Error ? execution.reason.message : String(execution.reason)
+        yield { type: 'tool_result', data: { name: tool.name, result: null, success: false } }
+        yield { type: 'stage', data: { stage: 'tool_execution', status: 'done', meta: { toolName: tool.name, success: false } } }
+        if (matchedStage) {
+          yield { type: 'plan_stage_update', data: { stageId: matchedStage.id, status: 'error' } }
+        }
+        toolResults.push({
+          type: 'tool_result',
+          tool_use_id: tool.id,
+          content: `Tool execution failed: ${errorMsg}`,
+          is_error: true,
+        })
+        continue
+      }
+
+      const result = execution.value
+      try {
 
         // Extract citations from tool result
         try {
@@ -643,6 +902,20 @@ export async function* runAgentChat(
       { role: 'assistant', content: response.content },
       { role: 'user', content: toolResults },
     ]
+
+    // ── Progress evaluation ───────────────────────────────────────────
+    // After 8+ tool calls, nudge the model to consider synthesizing.
+    // This is softer than the convergence hint — the model can continue
+    // if it genuinely needs more data, but it prevents aimless thrashing.
+    if (toolCallCount >= 8 && iterationCount < maxIterations - 2) {
+      messages = [
+        ...messages,
+        {
+          role: 'user' as const,
+          content: `[SYSTEM: You have used ${toolCallCount} tools so far. Consider whether you have enough information to give the user a comprehensive answer. If you do, respond now. If you genuinely need one or two more specific lookups, continue, but do not repeat searches you have already done.]`,
+        },
+      ]
+    }
 
     // Emit checkpoint events every 10 turns or when topic shifts
     const messageCount = messages.length

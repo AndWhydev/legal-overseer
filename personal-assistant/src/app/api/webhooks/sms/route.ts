@@ -1,28 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-import { verifyWebhookSignature, receiveSMS, processInboundSMS } from '@/lib/channels/sms'
+import { verifyWebhookSignature, receiveSMS, sendSMS } from '@/lib/channels/sms'
 import type { TelnyxWebhookPayload } from '@/lib/channels/sms'
 import { logger } from '@/lib/core/logger'
 import { resolveOrgFromWebhook } from '@/lib/core/resolve-org'
+import { getServiceClient } from '@/lib/supabase/service-client'
+import { runPipelineToCompletion } from '@/lib/conversation/pipeline-helpers'
 
 /**
  * Telnyx SMS webhook endpoint.
  *
- * Telnyx sends inbound SMS messages with headers:
- * - telnyx-signature-ed25519: signature for verification
- * - telnyx-timestamp: Unix timestamp of the request
- *
- * Payload format:
- * {
- *   "data": {
- *     "event_type": "message.received",
- *     "payload": {
- *       "from": { "phone_number": "+61..." },
- *       "to": [{ "phone_number": "+61..." }],
- *       "text": "..."
- *     }
- *   }
- * }
+ * Inbound SMS → unified conversation pipeline → agent response → reply SMS.
+ * Returns 200 immediately to prevent Telnyx retries, then processes async.
  */
 export async function POST(request: NextRequest) {
   const webhookSecret = process.env.TELNYX_WEBHOOK_SECRET
@@ -32,10 +20,8 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    // Read raw body for signature verification
     const rawBody = await request.text()
 
-    // Get headers for signature verification
     const signature = request.headers.get('telnyx-signature-ed25519')
     const timestamp = request.headers.get('telnyx-timestamp')
 
@@ -44,14 +30,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing headers' }, { status: 400 })
     }
 
-    // Verify webhook signature
     const isValid = await verifyWebhookSignature(rawBody, signature, timestamp)
     if (!isValid) {
       logger.warn('[webhook/sms] Invalid signature')
       return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
     }
 
-    // Parse JSON body
     let payload: TelnyxWebhookPayload
     try {
       payload = JSON.parse(rawBody) as TelnyxWebhookPayload
@@ -60,40 +44,86 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
     }
 
-    // Check event type
     if (payload.data?.event_type !== 'message.received') {
       logger.info('[webhook/sms] Ignoring event type:', payload.data?.event_type)
       return NextResponse.json({ received: true, event_type: payload.data?.event_type })
     }
 
-    // Parse inbound SMS
     const sms = receiveSMS(payload)
     if (!sms) {
       logger.warn('[webhook/sms] Failed to parse SMS payload')
       return NextResponse.json({ error: 'Failed to parse SMS' }, { status: 400 })
     }
 
-    // Resolve org from Telnyx webhook (use 'to' number as external_id to look up channel config)
     const orgId = await resolveOrgFromWebhook('sms', sms.to)
     if (!orgId) {
-      logger.warn(
-        `[webhook/sms] Could not resolve org for SMS to_number=${sms.to}. Make sure SMS channel is configured in channel_credentials.`
-      )
-      // Return 200 to prevent Telnyx from retrying, but don't process
+      logger.warn(`[webhook/sms] Could not resolve org for to_number=${sms.to}`)
       return NextResponse.json({ received: true, message_id: sms.id })
     }
 
-    // Process inbound SMS through conversation adapter pipeline
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-      process.env.SUPABASE_SERVICE_ROLE_KEY || '',
-    )
+    const supabase = getServiceClient()
 
-    const result = await processInboundSMS(supabase, orgId, sms)
+    // Return 200 immediately to Telnyx, process async
+    // (Telnyx retries if no 200 within ~2s; pipeline takes 5-20s)
+    processSMSThroughPipeline(supabase, orgId, sms.from, sms.text, sms.id).catch(err => {
+      logger.error('[webhook/sms] Async pipeline processing failed', {
+        error: err instanceof Error ? err.message : String(err),
+        messageId: sms.id,
+      })
+    })
 
-    return NextResponse.json({ received: true, message_id: sms.id, persisted: result.persisted })
+    return NextResponse.json({ received: true, message_id: sms.id })
   } catch (err) {
     logger.error('[webhook/sms] Unexpected error:', err)
     return NextResponse.json({ error: 'Processing failed' }, { status: 500 })
+  }
+}
+
+/**
+ * Process inbound SMS through the unified conversation pipeline,
+ * then send the agent's response back as an SMS reply.
+ */
+async function processSMSThroughPipeline(
+  supabase: ReturnType<typeof getServiceClient>,
+  orgId: string,
+  fromPhone: string,
+  text: string,
+  messageId: string,
+): Promise<void> {
+  logger.info('[webhook/sms] Processing through unified pipeline', { fromPhone, orgId, messageId })
+
+  const result = await runPipelineToCompletion(supabase, {
+    content: text,
+    channel: 'sms',
+    channelIdentifier: {
+      channelType: 'sms',
+      channelIdentifier: fromPhone,
+    },
+    orgId,
+    channelMetadata: { externalId: messageId },
+  })
+
+  if (!result.success || !result.responseContent) {
+    logger.warn('[webhook/sms] Pipeline produced no response', {
+      success: result.success,
+      error: result.error,
+      messageId,
+    })
+    return
+  }
+
+  // Send response SMS back to sender
+  const sendResult = await sendSMS(fromPhone, result.responseContent)
+  if (sendResult.success) {
+    logger.info('[webhook/sms] Reply SMS sent', {
+      to: fromPhone,
+      threadId: result.threadId,
+      responseLength: result.responseContent.length,
+    })
+  } else {
+    logger.error('[webhook/sms] Reply SMS failed', {
+      to: fromPhone,
+      error: sendResult.error,
+    })
   }
 }

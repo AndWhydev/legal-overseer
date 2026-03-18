@@ -392,6 +392,25 @@ export class MemoryConsolidator {
       }
       const dbCategory = categoryMap[fact.type] || 'general'
 
+      // Memory admission gate — score before storing
+      const { evaluateAdmission } = await import('@/lib/intelligence/memory-admission')
+      const admission = await evaluateAdmission(this.supabase, orgId, {
+        content: fact.text,
+        category: dbCategory,
+        confidence: fact.importance,
+        entityIds,
+        source: 'conversation_extraction',
+      })
+
+      if (!admission.admitted) {
+        logger.debug('[memory-consolidator] Memory rejected by admission gate', {
+          score: admission.score.toFixed(2),
+          reasoning: admission.reasoning,
+          factPreview: fact.text.slice(0, 50),
+        })
+        continue
+      }
+
       const { error: insertErr } = await this.supabase.from('semantic_memories').insert({
         org_id: orgId,
         content: `[${fact.type}] ${fact.text}`,
@@ -399,6 +418,8 @@ export class MemoryConsolidator {
         confidence: fact.importance,
         entity_ids: entityIds,
         is_active: true,
+        admission_score: admission.score,
+        decay_rate: admission.decayRate,
       })
 
       if (insertErr) {

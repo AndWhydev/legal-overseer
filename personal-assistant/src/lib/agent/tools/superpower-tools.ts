@@ -135,12 +135,45 @@ export const superpowerToolHandlers: Record<string, AgentToolHandler> = {
     const query = input.query as string
     const count = Math.min((input.count as number) || 5, 10)
 
-    const apiKey = process.env.BRAVE_SEARCH_API_KEY
-    if (!apiKey) {
-      return { success: false, error: 'Web search not configured: BRAVE_SEARCH_API_KEY not set' }
+    const braveKey = process.env.BRAVE_SEARCH_API_KEY
+    const serpKey = process.env.SERPAPI_KEY
+
+    if (!braveKey && !serpKey) {
+      return { success: false, error: 'Web search not configured' }
     }
 
     try {
+      // Try SerpAPI first (Google results), fall back to Brave
+      if (serpKey) {
+        const serpParams = new URLSearchParams({
+          q: query,
+          api_key: serpKey,
+          engine: 'google',
+          num: String(count),
+        })
+
+        const serpRes = await fetch(`https://serpapi.com/search.json?${serpParams}`)
+        if (serpRes.ok) {
+          const serpData = await serpRes.json() as {
+            organic_results?: Array<{ title?: string; link?: string; snippet?: string }>
+          }
+          const results = (serpData.organic_results ?? []).slice(0, count).map(r => ({
+            title: r.title ?? '',
+            url: r.link ?? '',
+            description: r.snippet ?? '',
+          }))
+          return {
+            success: true,
+            data: { results, totalResults: results.length, query },
+          }
+        }
+      }
+
+      // Brave fallback
+      if (!braveKey) {
+        return { success: false, error: 'Search API unavailable' }
+      }
+
       const params = new URLSearchParams({
         q: query,
         count: String(count),
@@ -151,7 +184,7 @@ export const superpowerToolHandlers: Record<string, AgentToolHandler> = {
         headers: {
           Accept: 'application/json',
           'Accept-Encoding': 'gzip',
-          'X-Subscription-Token': apiKey,
+          'X-Subscription-Token': braveKey,
         },
       })
 

@@ -32,7 +32,7 @@ export type TrimStrategy = 'truncate_end' | 'reduce_sections' | 'reduce_items'
 export class TokenBudgetManager {
   private budget: number
 
-  constructor(budget: number = 8000) {
+  constructor(budget: number = 48000) {
     this.budget = budget
   }
 

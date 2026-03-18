@@ -43,9 +43,9 @@ export interface AssemblerConfig {
 }
 
 export const DEFAULT_ASSEMBLER_CONFIG: AssemblerConfig = {
-  tokenBudget: 20000,
-  maxRecentTurns: 10,
-  maxCompressedTurns: 20,
+  tokenBudget: 48000,
+  maxRecentTurns: 20,
+  maxCompressedTurns: 40,
   maxEntities: 5,
   systemPromptCacheTtlMs: 300_000,
   includePendingActions: true,
@@ -532,8 +532,8 @@ export class ContextAssembler {
         name: 'systemPrompt',
         content: systemPrompt,
         priority: 1,
-        minTokens: 3000,
-        maxTokens: 8000,
+        minTokens: 4000,
+        maxTokens: 12000,
         compressible: true,
       },
       {
@@ -541,15 +541,15 @@ export class ContextAssembler {
         content: pendingActionsSection,
         priority: 2,
         minTokens: 0,
-        maxTokens: 500,
+        maxTokens: 800,
         compressible: true,
       },
       {
         name: 'recentTurns',
         content: recentMessages.map((m) => m.content).join('\n'),
         priority: 3,
-        minTokens: 600,
-        maxTokens: 4200,
+        minTokens: 1200,
+        maxTokens: 12000,
         compressible: true,
       },
       {
@@ -557,7 +557,7 @@ export class ContextAssembler {
         content: retrievedContextText,
         priority: 4,
         minTokens: 0,
-        maxTokens: 1500,
+        maxTokens: 6000,
         compressible: true,
       },
       {
@@ -573,7 +573,7 @@ export class ContextAssembler {
         content: formatCompressedSummaries(summaries),
         priority: 6,
         minTokens: 0,
-        maxTokens: 1000,
+        maxTokens: 4000,
         compressible: true,
       },
       {
@@ -581,7 +581,7 @@ export class ContextAssembler {
         content: formatKeyFactsPreamble(summaries),
         priority: 7,
         minTokens: 0,
-        maxTokens: 500,
+        maxTokens: 2000,
         compressible: true,
       },
     ]

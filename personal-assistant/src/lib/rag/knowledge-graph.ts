@@ -1,38 +1,27 @@
 /**
- * Knowledge Graph Database — Embedded semantic relationship engine
+ * Knowledge Graph Database — Supabase-persisted semantic relationship engine
  *
- * In-process graph database for tracking entity relationships (people, organizations, topics).
- * Used by Context Baseplate for semantic understanding and entity profiling.
- *
- * This is a lightweight in-memory implementation suitable for:
- * - Development and testing
- * - Small-scale deployments (Fly.io workers with limited memory)
- * - Rapid iteration
- *
- * For production with large entity graphs, consider migrating to:
- * - Kuzu (GraphQL-like query language via Python bindings)
- * - Neo4j (enterprise graph database)
- * - DuckDB (analytical SQL queries on graph data)
+ * Graph database backed by Supabase tables (kg_nodes, kg_edges) for tracking
+ * entity relationships (people, organizations, topics). Used by Context
+ * Baseplate for semantic understanding and entity profiling.
  *
  * Supports:
  * - Person nodes with contact metadata
  * - Organization nodes with domain info
  * - Topic nodes with temporal metadata
  * - Relationship edges: MENTIONED_IN, DISCUSSED, CONTACTED_BY
- * - Graph traversal for entity relationships at configurable depth
+ * - BFS graph traversal for entity relationships at configurable depth
+ * - In-memory cache with TTL for hot-path reads
  */
 
 import { logger } from '../core/logger'
+import type { SupabaseClient } from '@supabase/supabase-js'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-/** Supported node types in the knowledge graph */
 export type NodeType = 'Person' | 'Organization' | 'Topic'
-
-/** Supported relationship edge types */
 export type RelationshipType = 'MENTIONED_IN' | 'DISCUSSED' | 'CONTACTED_BY'
 
-/** Person node in the knowledge graph */
 export interface PersonNode {
   id: string
   name: string
@@ -42,7 +31,6 @@ export interface PersonNode {
   created_at: string
 }
 
-/** Organization node in the knowledge graph */
 export interface OrganizationNode {
   id: string
   name: string
@@ -51,7 +39,6 @@ export interface OrganizationNode {
   created_at: string
 }
 
-/** Topic node in the knowledge graph */
 export interface TopicNode {
   id: string
   name: string
@@ -60,7 +47,6 @@ export interface TopicNode {
   last_seen: string
 }
 
-/** MENTIONED_IN edge: entity mentioned in topic context */
 export interface MentionEdge {
   entity_id: string
   topic_id: string
@@ -69,7 +55,6 @@ export interface MentionEdge {
   timestamp: string
 }
 
-/** DISCUSSED edge: topic co-occurrence */
 export interface DiscussedEdge {
   topic_a_id: string
   topic_b_id: string
@@ -77,7 +62,6 @@ export interface DiscussedEdge {
   last_seen: string
 }
 
-/** CONTACTED_BY edge: person-to-person communication */
 export interface ContactedByEdge {
   person_a_id: string
   person_b_id: string
@@ -86,7 +70,6 @@ export interface ContactedByEdge {
   last_contact: string
 }
 
-/** Related entity in graph traversal results */
 export interface RelatedEntity {
   id: string
   type: NodeType
@@ -95,7 +78,6 @@ export interface RelatedEntity {
   relationshipType: RelationshipType
 }
 
-/** Full entity profile with relationships */
 export interface EntityProfile {
   id: string
   type: NodeType
@@ -105,149 +87,91 @@ export interface EntityProfile {
   topics?: TopicNode[]
 }
 
-/** Graph traversal result */
 export interface GraphTraversalResult {
   entity: PersonNode | OrganizationNode | TopicNode
   relatedEntities: RelatedEntity[]
 }
 
-// ─── In-Memory Graph Storage ─────────────────────────────────────────────────
+// ─── Edge Cache ──────────────────────────────────────────────────────────────
 
-/** In-memory storage for graph nodes */
-interface StoredNode {
-  type: NodeType
-  id: string
-  /** Composite key in the nodes Map: e.g. "person:abc123" */
-  mapKey: string
-  data: Record<string, unknown>
+interface CachedEdges {
+  edges: Array<{ source_id: string; target_id: string; edge_type: RelationshipType }>
+  loadedAt: number
 }
 
-/** In-memory storage for graph edges */
-interface StoredEdge {
-  source: string
-  target: string
-  type: RelationshipType
-  data: Record<string, unknown>
-}
+/** Per-org edge cache TTL: 2 minutes */
+const EDGE_CACHE_TTL_MS = 2 * 60 * 1000
 
 // ─── Knowledge Graph Client ──────────────────────────────────────────────────
 
-/**
- * In-process semantic relationship engine using an in-memory graph.
- * Manages entity nodes and relationship edges for context assembly.
- *
- * This lightweight implementation trades persistence for simplicity and portability.
- * It's ideal for Fly.io worker deployments and rapid iteration.
- */
 export class KnowledgeGraphClient {
-  private nodes: Map<string, StoredNode> = new Map()
-  /** Reverse index: entity ID -> map key, for O(1) lookups by entity ID */
-  private nodeIdIndex: Map<string, string> = new Map()
-  private edges: StoredEdge[] = []
-  private dbPath: string
-  private initialized: boolean = false
+  private supabase: SupabaseClient
+  private orgId: string
+  private edgeCache: CachedEdges | null = null
 
-  /**
-   * Create a new KnowledgeGraphClient
-   * @param dbPath Path for potential persistence (currently in-memory, kept for future compatibility)
-   */
-  constructor(dbPath?: string) {
-    this.dbPath = dbPath || this.getDefaultDbPath()
+  constructor(supabase: SupabaseClient, orgId: string) {
+    this.supabase = supabase
+    this.orgId = orgId
   }
 
-  /**
-   * Get default database path from environment or use convention
-   */
-  private getDefaultDbPath(): string {
-    if (typeof process !== 'undefined' && process.env.KUZU_DB_PATH) {
-      return process.env.KUZU_DB_PATH
-    }
-    return `${process.cwd()}/data/knowledge-graph`
-  }
+  // kept for API compatibility — no-op since Supabase is always ready
+  async init(): Promise<void> {}
+  isInitialized(): boolean { return true }
 
-  /**
-   * Initialize the graph database (no-op for in-memory, kept for API compatibility)
-   */
-  async init(): Promise<void> {
-    try {
-      // In-memory graph is always ready
-      this.initialized = true
-      logger.info('Knowledge graph initialized (in-memory)', { dbPath: this.dbPath })
-    } catch (error) {
-      logger.error('Failed to initialize knowledge graph', { error, dbPath: this.dbPath })
-      throw error
-    }
-  }
-
-  /**
-   * Upsert (insert or update) a Person node
-   */
   async upsertPerson(person: PersonNode): Promise<void> {
-    if (!this.initialized) await this.init()
-
     try {
-      const nodeId = `person:${person.id}`
-      this.nodes.set(nodeId, {
-        type: 'Person',
-        id: person.id,
-        mapKey: nodeId,
-        data: person as unknown as Record<string, unknown>
-      })
-      this.nodeIdIndex.set(person.id, nodeId)
-      logger.debug('Person upserted', { personId: person.id, name: person.name })
+      await this.supabase
+        .from('kg_nodes')
+        .upsert({
+          org_id: this.orgId,
+          node_type: 'Person',
+          entity_id: person.id,
+          name: person.name,
+          metadata: { email: person.email, phone: person.phone },
+        }, { onConflict: 'org_id,node_type,entity_id' })
+
+      this.invalidateEdgeCache()
     } catch (error) {
-      logger.error('Failed to upsert person', { person, error })
-      throw error
+      logger.error('[knowledge-graph] Failed to upsert person', { person: person.id, error })
     }
   }
 
-  /**
-   * Upsert an Organization node
-   */
   async upsertOrganization(org: OrganizationNode): Promise<void> {
-    if (!this.initialized) await this.init()
-
     try {
-      const nodeId = `organization:${org.id}`
-      this.nodes.set(nodeId, {
-        type: 'Organization',
-        id: org.id,
-        mapKey: nodeId,
-        data: org as unknown as Record<string, unknown>
-      })
-      this.nodeIdIndex.set(org.id, nodeId)
-      logger.debug('Organization upserted', { orgId: org.id, name: org.name })
+      await this.supabase
+        .from('kg_nodes')
+        .upsert({
+          org_id: this.orgId,
+          node_type: 'Organization',
+          entity_id: org.id,
+          name: org.name,
+          metadata: { domain: org.domain },
+        }, { onConflict: 'org_id,node_type,entity_id' })
+
+      this.invalidateEdgeCache()
     } catch (error) {
-      logger.error('Failed to upsert organization', { org, error })
-      throw error
+      logger.error('[knowledge-graph] Failed to upsert organization', { org: org.id, error })
     }
   }
 
-  /**
-   * Upsert a Topic node
-   */
   async upsertTopic(topic: TopicNode): Promise<void> {
-    if (!this.initialized) await this.init()
-
     try {
-      const nodeId = `topic:${topic.id}`
-      this.nodes.set(nodeId, {
-        type: 'Topic',
-        id: topic.id,
-        mapKey: nodeId,
-        data: topic as unknown as Record<string, unknown>
-      })
-      this.nodeIdIndex.set(topic.id, nodeId)
-      logger.debug('Topic upserted', { topicId: topic.id, name: topic.name })
+      await this.supabase
+        .from('kg_nodes')
+        .upsert({
+          org_id: this.orgId,
+          node_type: 'Topic',
+          entity_id: topic.id,
+          name: topic.name,
+          metadata: { first_seen: topic.first_seen, last_seen: topic.last_seen },
+        }, { onConflict: 'org_id,node_type,entity_id' })
+
+      this.invalidateEdgeCache()
     } catch (error) {
-      logger.error('Failed to upsert topic', { topic, error })
-      throw error
+      logger.error('[knowledge-graph] Failed to upsert topic', { topic: topic.id, error })
     }
   }
 
-  /**
-   * Create a MENTIONED_IN edge: entity mentioned in topic context
-   */
   async addMention(
     entityId: string,
     topicId: string,
@@ -255,54 +179,42 @@ export class KnowledgeGraphClient {
     channel: string,
     timestamp: string
   ): Promise<void> {
-    if (!this.initialized) await this.init()
-
     try {
-      // Find entity node (either Person or Organization)
-      const entityNode = this.findNodeById(entityId)
-      if (!entityNode) {
-        logger.warn('Entity not found for mention edge', { entityId })
-        return
-      }
+      // Upsert edge — if exists, merge message_ids array in metadata
+      const { data: existing } = await this.supabase
+        .from('kg_edges')
+        .select('id, metadata')
+        .eq('org_id', this.orgId)
+        .eq('source_id', entityId)
+        .eq('target_id', topicId)
+        .eq('edge_type', 'MENTIONED_IN')
+        .maybeSingle()
 
-      // Check if topic exists
-      const topicNode = this.findNodeById(topicId)
-      if (!topicNode) {
-        logger.warn('Topic not found for mention edge', { topicId })
-        return
-      }
-
-      // Create or update edge
-      const existingEdge = this.edges.find(
-        (e) => e.source === entityNode.id && e.target === topicNode.id && e.type === 'MENTIONED_IN'
-      )
-
-      if (existingEdge) {
-        // Update existing edge
-        const messageIds = (existingEdge.data.message_ids as string[] || [])
-        messageIds.push(messageId)
-        existingEdge.data.message_ids = messageIds
-        existingEdge.data.last_timestamp = timestamp
+      if (existing) {
+        const messageIds = (existing.metadata?.message_ids as string[] ?? [])
+        if (!messageIds.includes(messageId)) messageIds.push(messageId)
+        await this.supabase
+          .from('kg_edges')
+          .update({ metadata: { message_ids: messageIds, channel, last_timestamp: timestamp } })
+          .eq('id', existing.id)
       } else {
-        // Create new edge
-        this.edges.push({
-          source: entityNode.id,
-          target: topicNode.id,
-          type: 'MENTIONED_IN',
-          data: { messageId, channel, timestamp }
-        })
+        await this.supabase
+          .from('kg_edges')
+          .insert({
+            org_id: this.orgId,
+            source_id: entityId,
+            target_id: topicId,
+            edge_type: 'MENTIONED_IN',
+            metadata: { message_ids: [messageId], channel, timestamp },
+          })
       }
 
-      logger.debug('Mention edge created', { entityId, topicId, channel })
+      this.invalidateEdgeCache()
     } catch (error) {
-      logger.error('Failed to add mention edge', { entityId, topicId, error })
-      throw error
+      logger.error('[knowledge-graph] Failed to add mention', { entityId, topicId, error })
     }
   }
 
-  /**
-   * Create or update a CONTACTED_BY edge: person-to-person communication
-   */
   async addContact(
     personAId: string,
     personBId: string,
@@ -310,138 +222,127 @@ export class KnowledgeGraphClient {
     messageCount: number = 1,
     lastContact: string = new Date().toISOString()
   ): Promise<void> {
-    if (!this.initialized) await this.init()
-
     try {
-      // Find person nodes
-      const personA = this.findNodeById(personAId)
-      const personB = this.findNodeById(personBId)
+      const { data: existing } = await this.supabase
+        .from('kg_edges')
+        .select('id, metadata')
+        .eq('org_id', this.orgId)
+        .eq('source_id', personAId)
+        .eq('target_id', personBId)
+        .eq('edge_type', 'CONTACTED_BY')
+        .maybeSingle()
 
-      if (!personA || !personB) {
-        logger.warn('Person not found for contact edge', { personAId, personBId })
-        return
-      }
-
-      // Find or create edge
-      const existingEdge = this.edges.find(
-        (e) => e.source === personA.id && e.target === personB.id && e.type === 'CONTACTED_BY'
-      )
-
-      if (existingEdge) {
-        existingEdge.data.message_count = (existingEdge.data.message_count as number || 1) + messageCount
-        existingEdge.data.last_contact = lastContact
+      if (existing) {
+        const prevCount = (existing.metadata?.message_count as number) ?? 0
+        await this.supabase
+          .from('kg_edges')
+          .update({
+            metadata: {
+              ...existing.metadata,
+              channel,
+              message_count: prevCount + messageCount,
+              last_contact: lastContact,
+            },
+          })
+          .eq('id', existing.id)
       } else {
-        this.edges.push({
-          source: personA.id,
-          target: personB.id,
-          type: 'CONTACTED_BY',
-          data: { channel, message_count: messageCount, last_contact: lastContact }
-        })
+        await this.supabase
+          .from('kg_edges')
+          .insert({
+            org_id: this.orgId,
+            source_id: personAId,
+            target_id: personBId,
+            edge_type: 'CONTACTED_BY',
+            metadata: { channel, message_count: messageCount, last_contact: lastContact },
+          })
       }
 
-      logger.debug('Contact edge created/updated', { personAId, personBId, channel })
+      this.invalidateEdgeCache()
     } catch (error) {
-      logger.error('Failed to add contact edge', { personAId, personBId, error })
-      throw error
+      logger.error('[knowledge-graph] Failed to add contact edge', { personAId, personBId, error })
     }
   }
 
-  /**
-   * Create or update a DISCUSSED edge: topic co-occurrence
-   */
   async addDiscussed(
     topicAId: string,
     topicBId: string,
     lastSeen: string = new Date().toISOString()
   ): Promise<void> {
-    if (!this.initialized) await this.init()
-
     try {
-      // Find topic nodes
-      const topicA = this.findNodeById(topicAId)
-      const topicB = this.findNodeById(topicBId)
+      const { data: existing } = await this.supabase
+        .from('kg_edges')
+        .select('id, metadata')
+        .eq('org_id', this.orgId)
+        .eq('source_id', topicAId)
+        .eq('target_id', topicBId)
+        .eq('edge_type', 'DISCUSSED')
+        .maybeSingle()
 
-      if (!topicA || !topicB) {
-        logger.warn('Topic not found for discussed edge', { topicAId, topicBId })
-        return
-      }
-
-      // Find or create edge
-      const existingEdge = this.edges.find(
-        (e) => e.source === topicA.id && e.target === topicB.id && e.type === 'DISCUSSED'
-      )
-
-      if (existingEdge) {
-        existingEdge.data.co_occurrence_count = (existingEdge.data.co_occurrence_count as number || 1) + 1
-        existingEdge.data.last_seen = lastSeen
+      if (existing) {
+        const prevCount = (existing.metadata?.co_occurrence_count as number) ?? 0
+        await this.supabase
+          .from('kg_edges')
+          .update({
+            metadata: { co_occurrence_count: prevCount + 1, last_seen: lastSeen },
+          })
+          .eq('id', existing.id)
       } else {
-        this.edges.push({
-          source: topicA.id,
-          target: topicB.id,
-          type: 'DISCUSSED',
-          data: { co_occurrence_count: 1, last_seen: lastSeen }
-        })
+        await this.supabase
+          .from('kg_edges')
+          .insert({
+            org_id: this.orgId,
+            source_id: topicAId,
+            target_id: topicBId,
+            edge_type: 'DISCUSSED',
+            metadata: { co_occurrence_count: 1, last_seen: lastSeen },
+          })
       }
 
-      logger.debug('Discussed edge created/updated', { topicAId, topicBId })
+      this.invalidateEdgeCache()
     } catch (error) {
-      logger.error('Failed to add discussed edge', { topicAId, topicBId, error })
-      throw error
+      logger.error('[knowledge-graph] Failed to add discussed edge', { topicAId, topicBId, error })
     }
   }
 
   /**
-   * Find a node in the graph by entity ID (without type prefix).
-   * Uses reverse index for O(1) lookup instead of O(n) scan.
-   */
-  private findNodeById(entityId: string): StoredNode | undefined {
-    const mapKey = this.nodeIdIndex.get(entityId)
-    if (!mapKey) return undefined
-    return this.nodes.get(mapKey)
-  }
-
-  /**
-   * Get all relationships for an entity at specified depth using BFS traversal
-   * @param entityId The entity ID to traverse from
-   * @param depth Maximum relationship depth (default: 2)
+   * BFS traversal to find related entities at given depth.
+   * Loads all org edges into memory cache for fast traversal.
    */
   async getRelationships(entityId: string, depth: number = 2): Promise<RelatedEntity[]> {
-    if (!this.initialized) await this.init()
-
     try {
+      const edges = await this.loadEdges()
+      const nodeMap = await this.loadNodeMap()
+
       const results: RelatedEntity[] = []
-      const visited: Record<string, boolean> = {}
-      const queue: Array<{ nodeId: string; currentDepth: number; viaEdgeType?: RelationshipType }> = [{ nodeId: entityId, currentDepth: 0 }]
+      const visited = new Set<string>([entityId])
+      const queue: Array<{ nodeId: string; currentDepth: number; viaEdgeType?: RelationshipType }> = [
+        { nodeId: entityId, currentDepth: 0 },
+      ]
 
-      visited[entityId] = true
-
-      while (queue.length > 0 && Object.keys(visited).length < 1000) {
-        // Limit to prevent runaway traversal
+      while (queue.length > 0 && visited.size < 500) {
         const { nodeId, currentDepth, viaEdgeType } = queue.shift()!
 
         if (currentDepth > 0 && currentDepth <= depth) {
-          // Get the node
-          const node = this.findNodeById(nodeId)
+          const node = nodeMap.get(nodeId)
           if (node && nodeId !== entityId) {
             results.push({
               id: nodeId,
-              type: node.type,
-              name: (node.data.name as string) || 'Unknown',
+              type: node.node_type as NodeType,
+              name: node.name,
               distance: currentDepth,
               relationshipType: viaEdgeType || 'MENTIONED_IN',
             })
           }
         }
 
-        // Add connected nodes to queue
         if (currentDepth < depth) {
-          for (const edge of this.edges) {
-            if (edge.source === nodeId && !visited[edge.target]) {
-              visited[edge.target] = true
-              queue.push({ nodeId: edge.target, currentDepth: currentDepth + 1, viaEdgeType: edge.type })
-            } else if (edge.target === nodeId && !visited[edge.source]) {
-              visited[edge.source] = true
-              queue.push({ nodeId: edge.source, currentDepth: currentDepth + 1, viaEdgeType: edge.type })
+          for (const edge of edges) {
+            if (edge.source_id === nodeId && !visited.has(edge.target_id)) {
+              visited.add(edge.target_id)
+              queue.push({ nodeId: edge.target_id, currentDepth: currentDepth + 1, viaEdgeType: edge.edge_type })
+            } else if (edge.target_id === nodeId && !visited.has(edge.source_id)) {
+              visited.add(edge.source_id)
+              queue.push({ nodeId: edge.source_id, currentDepth: currentDepth + 1, viaEdgeType: edge.edge_type })
             }
           }
         }
@@ -449,135 +350,146 @@ export class KnowledgeGraphClient {
 
       return results
     } catch (error) {
-      logger.error('Failed to get relationships', { entityId, depth, error })
+      logger.error('[knowledge-graph] Failed to get relationships', { entityId, depth, error })
       return []
     }
   }
 
-  /**
-   * Get all topics an entity is mentioned in
-   */
   async getTopicsForEntity(entityId: string): Promise<TopicNode[]> {
-    if (!this.initialized) await this.init()
-
     try {
-      const results: TopicNode[] = []
+      const { data } = await this.supabase
+        .from('kg_edges')
+        .select('target_id')
+        .eq('org_id', this.orgId)
+        .eq('source_id', entityId)
+        .eq('edge_type', 'MENTIONED_IN')
 
-      // Find edges from this entity with MENTIONED_IN relationship
-      for (const edge of this.edges) {
-        if (edge.source === entityId && edge.type === 'MENTIONED_IN') {
-          const topicNode = this.findNodeById(edge.target)
-          if (topicNode && topicNode.type === 'Topic') {
-            results.push(topicNode.data as unknown as TopicNode)
-          }
-        }
-      }
+      if (!data || data.length === 0) return []
 
-      return results
+      const topicIds = data.map(e => e.target_id)
+      const { data: nodes } = await this.supabase
+        .from('kg_nodes')
+        .select('*')
+        .eq('org_id', this.orgId)
+        .eq('node_type', 'Topic')
+        .in('entity_id', topicIds)
+
+      return (nodes ?? []).map(n => ({
+        id: n.entity_id,
+        name: n.name,
+        org_id: n.org_id,
+        first_seen: n.metadata?.first_seen ?? n.created_at,
+        last_seen: n.metadata?.last_seen ?? n.updated_at,
+      }))
     } catch (error) {
-      logger.error('Failed to get topics for entity', { entityId, error })
+      logger.error('[knowledge-graph] Failed to get topics', { entityId, error })
       return []
     }
   }
 
-  /**
-   * Get full entity profile including all relationships
-   */
   async getEntityProfile(entityId: string): Promise<EntityProfile | null> {
-    if (!this.initialized) await this.init()
-
     try {
-      const node = this.findNodeById(entityId)
+      const { data: node } = await this.supabase
+        .from('kg_nodes')
+        .select('*')
+        .eq('org_id', this.orgId)
+        .eq('entity_id', entityId)
+        .maybeSingle()
+
       if (!node) return null
 
-      // Get relationships
       const relationships = await this.getRelationships(entityId, 2)
-
-      // Get topics if applicable
       const topics = await this.getTopicsForEntity(entityId)
 
       return {
-        id: node.id,
-        type: node.type,
-        name: (node.data.name as string) || 'Unknown',
-        metadata: node.data,
+        id: node.entity_id,
+        type: node.node_type as NodeType,
+        name: node.name,
+        metadata: node.metadata ?? {},
         relationships,
-        topics: topics.length > 0 ? topics : undefined
+        topics: topics.length > 0 ? topics : undefined,
       }
     } catch (error) {
-      logger.error('Failed to get entity profile', { entityId, error })
+      logger.error('[knowledge-graph] Failed to get entity profile', { entityId, error })
       return null
     }
   }
 
-  /**
-   * Close the database connection (clears in-memory storage)
-   */
   async close(): Promise<void> {
-    try {
-      this.nodes.clear()
-      this.nodeIdIndex.clear()
-      this.edges = []
-      this.initialized = false
-      logger.info('Knowledge graph connection closed')
-    } catch (error) {
-      logger.error('Failed to close knowledge graph', { error })
-      throw error
+    this.edgeCache = null
+  }
+
+  getStats(): { nodeCount: number; edgeCount: number; memoryEstimate: string } {
+    const edges = this.edgeCache?.edges ?? []
+    return {
+      nodeCount: 0, // would need a DB query
+      edgeCount: edges.length,
+      memoryEstimate: `${((edges.length * 200) / 1024).toFixed(2)} KB (edge cache)`,
     }
   }
 
-  /**
-   * Check if database is initialized and ready
-   */
-  isInitialized(): boolean {
-    return this.initialized
+  // ─── Private helpers ────────────────────────────────────────────────────
+
+  private invalidateEdgeCache(): void {
+    this.edgeCache = null
   }
 
-  /**
-   * Get memory usage statistics (for monitoring)
-   */
-  getStats(): { nodeCount: number; edgeCount: number; memoryEstimate: string } {
-    const nodeCount = this.nodes.size
-    const edgeCount = this.edges.length
+  private async loadEdges(): Promise<CachedEdges['edges']> {
+    if (this.edgeCache && (Date.now() - this.edgeCache.loadedAt) < EDGE_CACHE_TTL_MS) {
+      return this.edgeCache.edges
+    }
 
-    // Very rough estimate: ~1KB per node, ~200 bytes per edge
-    const estimateBytes = nodeCount * 1024 + edgeCount * 200
-    const memoryEstimate = `${(estimateBytes / 1024).toFixed(2)} KB`
+    const { data } = await this.supabase
+      .from('kg_edges')
+      .select('source_id, target_id, edge_type')
+      .eq('org_id', this.orgId)
+      .limit(5000)
 
-    return { nodeCount, edgeCount, memoryEstimate }
+    const edges = (data ?? []) as CachedEdges['edges']
+    this.edgeCache = { edges, loadedAt: Date.now() }
+    return edges
+  }
+
+  private async loadNodeMap(): Promise<Map<string, { entity_id: string; node_type: string; name: string }>> {
+    const { data } = await this.supabase
+      .from('kg_nodes')
+      .select('entity_id, node_type, name')
+      .eq('org_id', this.orgId)
+      .limit(5000)
+
+    const map = new Map<string, { entity_id: string; node_type: string; name: string }>()
+    for (const row of data ?? []) {
+      map.set(row.entity_id, row)
+    }
+    return map
   }
 }
 
-// ─── Singleton Instance ──────────────────────────────────────────────────────
+// ─── Factory ──────────────────────────────────────────────────────────────────
 
-let graphInstance: KnowledgeGraphClient | null = null
+/** Per-org client cache (lightweight — just holds the instance ref) */
+const clientCache = new Map<string, KnowledgeGraphClient>()
 
 /**
- * Get or create singleton instance of KnowledgeGraphClient.
- * Lazy initialization allows graceful fallback in environments without Kuzu.
+ * Get or create a KnowledgeGraphClient for an org.
+ * Uses the provided Supabase client (service-role or user-scoped).
  */
-export async function getKnowledgeGraph(dbPath?: string): Promise<KnowledgeGraphClient> {
-  if (!graphInstance) {
-    graphInstance = new KnowledgeGraphClient(dbPath)
-    await graphInstance.init()
+export function getKnowledgeGraph(supabase: SupabaseClient, orgId: string): KnowledgeGraphClient {
+  const key = orgId
+  let client = clientCache.get(key)
+  if (!client) {
+    client = new KnowledgeGraphClient(supabase, orgId)
+    clientCache.set(key, client)
   }
-  return graphInstance
+  return client
 }
 
 /**
- * Get existing knowledge graph instance without initialization.
- * Returns null if not yet initialized.
- */
-export function getKnowledgeGraphSync(): KnowledgeGraphClient | null {
-  return graphInstance
-}
-
-/**
- * Close knowledge graph connection (useful for cleanup in tests)
+ * Close and clear all cached knowledge graph clients.
  */
 export async function closeKnowledgeGraph(): Promise<void> {
-  if (graphInstance) {
-    await graphInstance.close()
-    graphInstance = null
+  for (const client of clientCache.values()) {
+    await client.close()
   }
+  clientCache.clear()
 }

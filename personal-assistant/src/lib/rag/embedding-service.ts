@@ -12,6 +12,7 @@ import { upsertVectors, deletePineconeVectorsByFilter } from './pinecone-client'
 import { encodeSparseVector } from './sparse-encoder'
 import { processAttachment } from './attachment-processor'
 import { extractEntities } from './entity-extractor'
+import { populateGraphFromExtraction } from './graph-populator'
 import { computeContentHash, checkExistingHashesBatch } from './content-hasher'
 import { invalidateOrg } from '@/lib/cache/search-cache'
 import type { VectorDocument, EmbedUpsertResult, PineconeMetadata } from './types'
@@ -222,15 +223,27 @@ export async function embedAndUpsert(
         logger.debug('[embedding-service] Invalidated search cache', { orgId })
       }
 
-      // Fire-and-forget entity extraction — never block embedding pipeline
+      // Fire-and-forget entity extraction + graph population
       if (supabase && result.embedded > 0) {
         for (const doc of docs.filter((d) => d.orgId === orgId)) {
-          extractEntities(doc.content, orgId, supabase).catch((err) =>
-            logger.debug('[embedding-service] Entity extraction failed (non-critical):', {
-              error: err instanceof Error ? err.message : String(err),
-              orgId,
+          extractEntities(doc.content, orgId, supabase)
+            .then((extraction) => {
+              if (extraction.mentions.length > 0) {
+                return populateGraphFromExtraction(extraction, orgId, supabase, {
+                  messageId: doc.messageId,
+                  channel: doc.metadata.channel ?? 'unknown',
+                  senderName: doc.metadata.sender,
+                  subject: doc.metadata.subject,
+                  timestamp: doc.metadata.received_at,
+                })
+              }
             })
-          )
+            .catch((err) =>
+              logger.debug('[embedding-service] Entity extraction/graph population failed (non-critical):', {
+                error: err instanceof Error ? err.message : String(err),
+                orgId,
+              })
+            )
         }
       }
     }
