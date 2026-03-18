@@ -272,8 +272,8 @@ Plans:
 **Plans**: 3 plans (2 waves)
 
 Plans:
-- [ ] 21-01-PLAN.md -- Webhook consolidation, Stripe SDK, pre-created prices, subscription lifecycle handler
-- [ ] 21-02-PLAN.md -- Plan gating at tool execution, usage metering wiring, trial 14->30 day fix
+- [x] 21-01-PLAN.md -- Webhook consolidation, Stripe SDK, pre-created prices, subscription lifecycle handler
+- [x] 21-02-PLAN.md -- Plan gating at tool execution, usage metering wiring, trial 14->30 day fix
 - [ ] 21-03-PLAN.md -- Pricing page, billing settings, Customer Portal, trial expiry emails, dunning tests
 
 ### Phase 22: Cost Controls & Ad Script Generator
@@ -353,4 +353,4 @@ Phase 20 first (no dependencies), then 21 (billing before growth roles), then 22
 | 23. SEO Monitor & Tender Hunter | v1.4 | 0/2 | Not started | - |
 | 24. Content Creator | v1.4 | 0/1 | Not started | - |
 
-**Overall:** 57/57 plans complete for v1.0+v1.1+v1.2 (100%). v1.4: 0/11 plans (Phases 20-24).
+**Overall:** 57/57 plans complete for v1.0+v1.1+v1.2 (100%). v1.4: 5/11 plans (Phases 20-24).
