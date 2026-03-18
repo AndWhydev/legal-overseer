@@ -184,7 +184,12 @@ export async function synthesizeWorldModel(
   const corpus = selected.map((msg, i) => {
     channelCounts.set(msg.channel, (channelCounts.get(msg.channel) ?? 0) + 1)
     const dir = msg.direction === 'sent' ? 'SENT' : msg.direction === 'event' ? 'EVENT' : 'RECEIVED'
-    return `[${i + 1}/${selected.length}] [${msg.channel.toUpperCase()}] [${dir}] From: ${msg.from} | To: ${msg.to} | Date: ${msg.date}\nSubject: ${msg.subject}\n${msg.snippet}`
+    let content = `[${i + 1}/${selected.length}] [${msg.channel.toUpperCase()}] [${dir}] From: ${msg.from} | To: ${msg.to} | Date: ${msg.date}\nSubject: ${msg.subject}\n${msg.fullBody ?? msg.snippet}`
+    // Include attachment text (truncated) for documents like invoices, contracts
+    if (msg.attachmentText) {
+      content += `\n[ATTACHMENTS: ${msg.attachmentNames?.join(', ') ?? 'files'}]\n${msg.attachmentText.slice(0, 2000)}`
+    }
+    return content
   }).join('\n---\n')
 
   const channels = [...channelCounts.entries()].map(([ch, n]) => `${ch}(${n})`).join(', ')

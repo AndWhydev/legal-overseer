@@ -21,6 +21,12 @@ export interface CrawledMessage {
   date: string
   snippet: string
   direction: 'sent' | 'received' | 'event'
+  /** Full message body (if fetched) */
+  fullBody?: string
+  /** Extracted text from attachments (PDFs, docs) */
+  attachmentText?: string
+  /** Attachment filenames */
+  attachmentNames?: string[]
 }
 
 export interface CrawlResult {
@@ -214,7 +220,45 @@ async function crawlGmail(
     fetchGmailBatch(accessToken!, `in:inbox after:${dateStr}`, maxPerDirection, 'received'),
   ])
 
-  return { messages: [...sent, ...received], accountEmail }
+  // Second pass: fetch full content + attachments for messages that have them
+  // Focus on invoices, contracts, and important documents
+  const allMsgs = [...sent, ...received]
+  const importantWithAttachments = allMsgs.filter(m =>
+    m.subject.toLowerCase().match(/invoice|contract|proposal|agreement|receipt|statement|quote/) ||
+    m.snippet.toLowerCase().includes('attached') ||
+    m.snippet.toLowerCase().includes('pdf')
+  ).slice(0, 20) // Max 20 attachment fetches
+
+  if (importantWithAttachments.length > 0 && accessToken) {
+    try {
+      const { fetchFullGmailMessage, processMessageAttachments } = await import('@/lib/channels/gmail-attachments')
+      for (const msg of importantWithAttachments) {
+        try {
+          const full = await fetchFullGmailMessage(accessToken!, msg.id)
+          if (full) {
+            msg.fullBody = full.body
+            if (full.hasAttachments) {
+              const extracted = await processMessageAttachments(accessToken!, msg.id, full.parts)
+              if (extracted.length > 0) {
+                msg.attachmentText = extracted.map(a => `[${a.filename}]\n${a.extractedText}`).join('\n\n')
+                msg.attachmentNames = extracted.map(a => a.filename)
+              }
+            }
+          }
+        } catch {} // Individual attachment failures don't block
+      }
+      logger.info('[intelligence-crawl] Processed attachments', {
+        checked: importantWithAttachments.length,
+        withText: allMsgs.filter(m => m.attachmentText).length,
+      })
+    } catch (err) {
+      logger.warn('[intelligence-crawl] Attachment processing unavailable', {
+        error: err instanceof Error ? err.message : String(err),
+      })
+    }
+  }
+
+  return { messages: allMsgs, accountEmail }
 }
 
 async function fetchGmailBatch(
