@@ -56,3 +56,29 @@ export {
 
 // Output Formatter
 export { formatActivityForAutonomy } from './output-formatter'
+
+// Workflow Executor
+export {
+  startWorkflow,
+  resumeWorkflow,
+  cancelWorkflow,
+  getReadyWorkflows,
+  type WorkflowStepDef,
+  type WorkflowStepContext,
+  type WorkflowStepResult,
+  type WorkflowDefinition as ExecutorWorkflowDefinition,
+} from './workflow-executor'
+
+// Role Cost Guard
+export {
+  canRoleProceed,
+  shouldEvaluate,
+  type RoleCostCheck,
+} from './role-cost-guard'
+
+// Role Activity Logger
+export {
+  logRoleActivity as logRoleActivityAudit,
+  getRoleActivity,
+  getRoleActivitySummary,
+} from './role-activity-logger'

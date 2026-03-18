@@ -1,5 +1,6 @@
 import type { RoleType } from '@/lib/bitbit-core'
 import type { RoleContext } from './role-runtime'
+import type { WorkflowStepDef } from './workflow-executor'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -28,6 +29,12 @@ export interface RoleImplementation {
     daily_budget_cents: number
     autonomy_level: string
   }>
+
+  /** Optional: return step definitions for a workflow type (for resume). */
+  getWorkflowStepDefs?(workflowType: string): WorkflowStepDef[]
+
+  /** Optional: return a single step definition override (for start). */
+  getWorkflowStepDef?(workflowType: string, stepId: string): Partial<WorkflowStepDef> | undefined
 }
 
 /**

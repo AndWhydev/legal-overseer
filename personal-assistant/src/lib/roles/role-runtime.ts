@@ -2,6 +2,8 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import type { RoleConfig, RoleState, RoleType, AutonomyLevel } from '@/lib/bitbit-core'
 import { getRole, type RoleImplementation, type RoleEvaluation } from './role-registry'
 import { canProceed } from '@/lib/agent/cost-guard'
+import { canRoleProceed } from './role-cost-guard'
+import { getReadyWorkflows, resumeWorkflow, startWorkflow, type WorkflowStepDef } from './workflow-executor'
 import { logger } from '@/lib/core/logger'
 
 // ---------------------------------------------------------------------------
@@ -259,10 +261,10 @@ export async function executeRoleTick(
     // 2. Load persistent state
     const state = await loadRoleState(supabase, roleConfig.id, roleConfig.org_id)
 
-    // 3. Cost guard check
+    // 3. Cost guard check (org-level, then per-role)
     const costCheck = await canProceed(supabase, roleConfig.org_id)
     if (!costCheck.allowed) {
-      logger.warn(`${tag} Cost guard halted tick: ${costCheck.reason}`)
+      logger.warn(`${tag} Org cost guard halted tick: ${costCheck.reason}`)
       return {
         roleType: roleConfig.role_type,
         orgId: roleConfig.org_id,
@@ -272,6 +274,22 @@ export async function executeRoleTick(
         costCents: 0,
         durationMs: Date.now() - startMs,
         error: costCheck.reason,
+      }
+    }
+
+    // Per-role cost guard
+    const roleCostCheck = await canRoleProceed(supabase, roleConfig.id, roleConfig.daily_budget_cents)
+    if (!roleCostCheck.allowed) {
+      logger.warn(`${tag} Role cost guard halted tick: ${roleCostCheck.reason}`)
+      return {
+        roleType: roleConfig.role_type,
+        orgId: roleConfig.org_id,
+        triggered: false,
+        actionsGenerated: 0,
+        insightsGenerated: 0,
+        costCents: 0,
+        durationMs: Date.now() - startMs,
+        error: roleCostCheck.reason,
       }
     }
 
@@ -368,6 +386,47 @@ export async function executeRoleTick(
       )
     }
 
+    // 9. Process active workflows (resume any with next_step_at <= now)
+    let workflowsResumed = 0
+    try {
+      const readyWorkflows = await getReadyWorkflows(supabase, roleConfig.id)
+      for (const wf of readyWorkflows) {
+        // Get step defs from registered implementation (if available)
+        const wfStepDefs = impl.getWorkflowStepDefs?.(wf.workflow_type) ?? []
+        if (wfStepDefs.length > 0) {
+          await resumeWorkflow(supabase, wf, roleConfig, wfStepDefs)
+          workflowsResumed++
+        }
+      }
+    } catch (wfErr) {
+      const wfMsg = wfErr instanceof Error ? wfErr.message : String(wfErr)
+      logger.warn(`${tag} Workflow resume error: ${wfMsg}`)
+    }
+
+    // 10. Start new workflows from evaluation
+    let workflowsStarted = 0
+    for (const wfDef of evaluation.workflowsToStart) {
+      try {
+        // Convert registry WorkflowDefinition to executor WorkflowDefinition
+        const execDef = {
+          type: wfDef.workflowType,
+          steps: wfDef.steps.map((s) => ({
+            id: s.stepId,
+            name: s.name,
+            // Step execution functions come from the implementation
+            execute: async () => ({ success: true }),
+            ...(impl.getWorkflowStepDef?.(wfDef.workflowType, s.stepId) ?? {}),
+          })),
+          context: wfDef.context,
+        }
+        await startWorkflow(supabase, roleConfig, execDef)
+        workflowsStarted++
+      } catch (wfErr) {
+        const wfMsg = wfErr instanceof Error ? wfErr.message : String(wfErr)
+        logger.warn(`${tag} Failed to start workflow ${wfDef.workflowType}: ${wfMsg}`)
+      }
+    }
+
     // Log tick summary
     await logRoleActivity(
       supabase,
@@ -378,7 +437,8 @@ export async function executeRoleTick(
       {
         actions: evaluation.actions.length,
         insights: evaluation.insights.length,
-        workflowsStarted: evaluation.workflowsToStart.length,
+        workflowsStarted,
+        workflowsResumed,
         durationMs: Date.now() - startMs,
       },
       roleConfig.autonomy_level,
