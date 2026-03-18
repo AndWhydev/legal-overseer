@@ -6,6 +6,8 @@ interface UseSmoothStreamResult {
   displayedContent: string
   feedContent: (chunk: string) => void
   reset: () => void
+  /** Returns all content (displayed + still buffered) without mutating state */
+  getFullContent: () => string
   isBuffering: boolean
 }
 
@@ -71,6 +73,11 @@ export function useSmoothStream(): UseSmoothStreamResult {
     [tick]
   )
 
+  /** Snapshot all content (already displayed + still in buffer) */
+  const getFullContent = useCallback(() => {
+    return displayedRef.current + bufferRef.current
+  }, [])
+
   const reset = useCallback(() => {
     bufferRef.current = ''
     displayedRef.current = ''
@@ -93,5 +100,5 @@ export function useSmoothStream(): UseSmoothStreamResult {
 
   const isBuffering = bufferRef.current.length > 0
 
-  return { displayedContent: displayed, feedContent, reset, isBuffering }
+  return { displayedContent: displayed, feedContent, reset, getFullContent, isBuffering }
 }

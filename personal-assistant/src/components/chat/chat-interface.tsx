@@ -333,6 +333,17 @@ export function ChatInterface({ userName }: { userName?: string }) {
     setInterToolNarrations([])
     setActiveCitations([])
     setPendingApprovals([])
+    // Finalize previous message content if smooth stream was mid-drain.
+    // This prevents content loss when the user sends before the typing
+    // animation finishes, and stops stale content from leaking into the
+    // next assistant message via the smooth-stream useEffect.
+    const prevAid = currentAssistantIdRef.current
+    const pendingContent = smoothStream.getFullContent()
+    if (prevAid && pendingContent) {
+      setMessages(prev => prev.map(m =>
+        m.id === prevAid ? { ...m, content: pendingContent } : m
+      ))
+    }
     smoothStream.reset()
     smartScroll.scrollToBottom()
 
@@ -575,40 +586,57 @@ export function ChatInterface({ userName }: { userName?: string }) {
 
               case 'done': {
                 setIsThinkingStreaming(false)
-                // The inter-tool buffer holds the ONLY content that should be
-                // the response — everything else was pre-tool or inter-tool narration.
                 const responseContent = interToolBufferRef.current.trim()
-                if (responseContent) {
-                  smoothStream.feedContent(responseContent)
-                  interToolBufferRef.current = ''
-                }
-                // Use the buffered response content as the final message,
-                // falling back to assistantContent only if no tools were used
-                // (simple Q&A with no tool calls).
-                const finalContent = toolCalls.length > 0
-                  ? responseContent
-                  : assistantContent
-                // Ensure full content is set (in case smooth stream is still buffering)
-                if (finalContent) {
-                  setMessages(prev =>
-                    prev.map(m =>
-                      m.id === assistantId
-                        ? {
-                            ...m,
-                            content: finalContent,
-                            ...(responseCitations.length > 0 ? { citations: [...responseCitations] } : {}),
-                          }
-                        : m
+
+                if (toolCalls.length > 0) {
+                  // Tool-based response: smooth stream is the sole content writer.
+                  // The useEffect syncs displayedContent → message. Avoids the
+                  // dual-write race where setMessages + feedContent fight over
+                  // message.content and stale content can leak across requests.
+                  if (responseContent) {
+                    smoothStream.feedContent(responseContent)
+                    interToolBufferRef.current = ''
+                  }
+                  // Attach citations separately (no content overwrite)
+                  if (responseCitations.length > 0) {
+                    setMessages(prev =>
+                      prev.map(m =>
+                        m.id === assistantId
+                          ? { ...m, citations: [...responseCitations] }
+                          : m
+                      )
                     )
-                  )
-                } else if (responseCitations.length > 0) {
-                  setMessages(prev =>
-                    prev.map(m =>
-                      m.id === assistantId
-                        ? { ...m, citations: [...responseCitations] }
-                        : m
-                    )
-                  )
+                  }
+                } else {
+                  // No-tool response: smooth stream is unused, set content directly.
+                  // Create the message if it doesn't already exist (covers edge
+                  // case where server sends only content_delta + done, no message event).
+                  const finalContent = assistantContent
+                  setMessages(prev => {
+                    const existing = prev.find(m => m.id === assistantId)
+                    if (existing) {
+                      return prev.map(m =>
+                        m.id === assistantId
+                          ? {
+                              ...m,
+                              content: finalContent,
+                              ...(responseCitations.length > 0 ? { citations: [...responseCitations] } : {}),
+                            }
+                          : m
+                      )
+                    }
+                    if (!finalContent) return prev
+                    return [
+                      ...prev,
+                      {
+                        id: assistantId,
+                        role: 'assistant' as const,
+                        content: finalContent,
+                        ...(responseCitations.length > 0 ? { citations: [...responseCitations] } : {}),
+                        timestamp: new Date(),
+                      },
+                    ]
+                  })
                 }
                 break
               }
@@ -984,22 +1012,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
                       avatarActivity={isCurrentResponse ? avatarActivity : 'idle'}
                       citations={msg.citations || (isLastAssistantOverall && isLoading ? activeCitations : undefined)}
                     />
-                    {checkpoint && (
-                      <div style={{ margin: '16px 0', opacity: 0.6 }}>
-                        <Checkpoint>
-                          <CheckpointIcon />
-                          <span style={{
-                            fontSize: 12,
-                            fontFamily: 'var(--font-mono)',
-                            color: 'var(--text-secondary)',
-                            whiteSpace: 'nowrap',
-                            padding: '0 8px',
-                          }}>
-                            {checkpoint.label}
-                          </span>
-                        </Checkpoint>
-                      </div>
-                    )}
+                    {/* Checkpoints are internal system state — hidden from users */}
                   </div>
                 )
               })}
@@ -1092,15 +1105,4 @@ export function ChatInterface({ userName }: { userName?: string }) {
           >
             <ChevronDown size={18} />
           </motion.button>
-        )}
-      </AnimatePresence>
-
-      {/* Docked pill input */}
-      <div
-        className={`bb-chat__input-area ${chatStarted ? 'bb-chat__input-area--bottom' : 'bb-chat__input-area--centered'}`}
-      >
-        <div id="pill-dock" />
-      </div>
-    </div>
-  )
-}
+ 
