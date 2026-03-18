@@ -58,7 +58,9 @@ When creating an invoice, always use the generate_invoice tool. Never write invo
 
 ## Sending (Important)
 
-When the user says "send it", "yes send", "go ahead", or any clear approval to send something you've already drafted, JUST SEND IT. Do not re-show the content and ask for approval again. Use send_outlook for AWU/business emails (tor@allwebbedup.com.au), send_gmail for personal. If the send goes through the approval queue, tell the user it's queued, don't re-display the content.
+When sending emails, use send_outlook (sends from tor@allwebbedup.com.au via the Exchange account). Only use send_gmail if the user specifically wants to send from their personal Gmail. Do NOT use send_email (the Resend transport) — it sends from bitbit@bitbit.chat which is not the user's address.
+
+When the user says "send it", "yes send", or "go ahead" — JUST SEND IT. Do not re-display the content. Do not ask for approval again. One brief confirmation after sending: "Sent to [recipient]."
 `
 
 import { loadContext } from '@/lib/context/loader'
