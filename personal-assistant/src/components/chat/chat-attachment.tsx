@@ -11,11 +11,12 @@ export interface ChatAttachmentProps {
   type: string       // MIME type
   name: string       // filename
   url: string        // storage_path (NOT a signed URL)
+  size?: number      // file size in bytes
   attachmentId?: string  // if available, use /api/attachments/:id for download URL
 }
 
 export interface ChatAttachmentListProps {
-  attachments: Array<{ type: string; url: string; name: string; attachmentId?: string }>
+  attachments: Array<{ type: string; url: string; name: string; size?: number; attachmentId?: string }>
 }
 
 // ---------------------------------------------------------------------------
@@ -200,7 +201,7 @@ function ImageAttachment({ attachmentId, name }: { attachmentId?: string; name: 
 // FileCard (PDFs and other files)
 // ---------------------------------------------------------------------------
 
-function FileCard({ attachmentId, name, type }: { attachmentId?: string; name: string; type: string }) {
+function FileCard({ attachmentId, name, type, size }: { attachmentId?: string; name: string; type: string; size?: number }) {
   const [hovered, setHovered] = useState(false)
   const [downloading, setDownloading] = useState(false)
   const isPdf = type === 'application/pdf'
@@ -246,6 +247,7 @@ function FileCard({ attachmentId, name, type }: { attachmentId?: string; name: s
       </div>
       <div style={{ minWidth: 0, flex: 1 }}>
         <div style={filenameStyle}>{truncateFilename(name)}</div>
+        {size && size > 0 && <div style={fileSizeStyle}>{formatFileSize(size)}</div>}
         <div style={downloadLabelStyle}>
           {downloading ? (
             <span>Opening...</span>
@@ -266,14 +268,14 @@ function FileCard({ attachmentId, name, type }: { attachmentId?: string; name: s
 // ChatAttachment (public)
 // ---------------------------------------------------------------------------
 
-export function ChatAttachment({ type, name, url, attachmentId }: ChatAttachmentProps) {
+export function ChatAttachment({ type, name, url, size, attachmentId }: ChatAttachmentProps) {
   const isImage = type.startsWith('image/')
 
   if (isImage) {
     return <ImageAttachment attachmentId={attachmentId} name={name} />
   }
 
-  return <FileCard attachmentId={attachmentId} name={name} type={type} />
+  return <FileCard attachmentId={attachmentId} name={name} type={type} size={size} />
 }
 
 // ---------------------------------------------------------------------------
@@ -297,6 +299,7 @@ export function ChatAttachmentList({ attachments }: ChatAttachmentListProps) {
               type={att.type}
               name={att.name}
               url={att.url}
+              size={att.size}
               attachmentId={att.attachmentId}
             />
           ))}
@@ -310,6 +313,7 @@ export function ChatAttachmentList({ attachments }: ChatAttachmentListProps) {
               type={att.type}
               name={att.name}
               url={att.url}
+              size={att.size}
               attachmentId={att.attachmentId}
             />
           ))}

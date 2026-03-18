@@ -57,6 +57,7 @@ interface MessageAttachment {
   type: string       // MIME type
   name: string       // filename
   url: string        // storage_path
+  size?: number      // file size in bytes
   attachmentId?: string
 }
 
@@ -642,7 +643,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
       ...pendingAttachmentItemsRef.current,
       ...dragUpload.uploads
         .filter(u => u.status === 'ready')
-        .map(u => ({ attachmentId: u.id, type: u.mimeType, name: u.filename, url: '' })),
+        .map(u => ({ attachmentId: u.id, type: u.mimeType, name: u.filename, url: '', size: u.size })),
     ]
     pendingAttachmentIdsRef.current = []
     pendingAttachmentItemsRef.current = []

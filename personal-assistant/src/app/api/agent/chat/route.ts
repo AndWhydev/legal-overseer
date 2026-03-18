@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
 
   // ── Build multimodal content blocks from attachments ──────────────
   let attachmentContentBlocks: Anthropic.ContentBlockParam[] = []
-  let attachmentMetadata: Array<{ type: string; url: string; name: string }> | undefined
+  let attachmentMetadata: Array<{ type: string; url: string; name: string; size: number }> | undefined
 
   if (attachmentIds?.length > 0) {
     try {
@@ -72,6 +72,7 @@ export async function POST(request: NextRequest) {
           type: a.mime_type,
           url: a.storage_path,
           name: a.filename,
+          size: a.file_size ?? 0,
         }))
         logger.info('[chat] Built attachment content blocks', {
           requested: attachmentIds.length,
