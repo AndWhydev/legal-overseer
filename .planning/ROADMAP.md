@@ -301,11 +301,11 @@ Plans:
   3. User can say "find web design tenders in Brisbane" and receive matching government tender results with qualification scores
   4. Tender Hunter runs on a scheduled tick and notifies the user of new matching opportunities
   5. SEO tools are gated to growth/scale plans; Tender tools are gated to scale plan only
-**Plans**: TBD
+**Plans**: 2 plans (2 waves)
 
 Plans:
-- [ ] 23-01: SEO Monitor tool group (wrap ai-search-optimizer.ts, register tools, scheduled tick wiring, plan gate)
-- [ ] 23-02: Tender Hunter tool group (wrap tender-hunter.ts, register tools, scheduled tick wiring, plan gate)
+- [ ] 23-01-PLAN.md -- SEO Monitor tool group (wrap ai-search-optimizer.ts as 4 agent tools, register 'seo' tool group, autonomy mapping, JIT instructions)
+- [ ] 23-02-PLAN.md -- Tender Hunter tool group (wrap tender-hunter.ts as 3 agent tools, register 'tenders' tool group, autonomy mapping, JIT instructions)
 
 ### Phase 24: Content Creator
 **Goal**: Users can generate social media posts and blog drafts via chat with platform-specific formatting and brand voice
@@ -316,10 +316,10 @@ Plans:
   2. User can request blog post drafts with SEO keywords and brand voice applied
   3. Content tools produce platform-specific output for LinkedIn, Instagram, and X (different formatting, hashtag usage, character limits)
   4. Content tools are plan-gated to growth/scale tiers only
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 24-01: Content Creator tool group (tool definitions, blog generation handler, social post handler, plan gate, autonomy mapping)
+- [ ] 24-01-PLAN.md -- Content Creator tool group (tool definitions, blog generation handler, social post handler, autonomy mapping, JIT instructions)
 
 ## Progress
 
@@ -353,4 +353,4 @@ Phase 20 first (no dependencies), then 21 (billing before growth roles), then 22
 | 23. SEO Monitor & Tender Hunter | v1.4 | 0/2 | Not started | - |
 | 24. Content Creator | v1.4 | 0/1 | Not started | - |
 
-**Overall:** 57/57 plans complete for v1.0+v1.1+v1.2 (100%). v1.4: 5/11 plans (Phases 20-24).
+**Overall:** 57/57 plans complete for v1.0+v1.1+v1.2 (100%). v1.4: 8/11 plans (Phases 20-24).
