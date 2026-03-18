@@ -46,7 +46,7 @@ function formatCurrency(value: number): string {
 
 function formatMonthLabel(month: string): string {
   const [year, rawMonth] = month.split('-').map(Number)
-  if (!year || !rawMonth) return month
+  if (!year || !rawMonth || rawMonth < 1 || rawMonth > 12) return month
 
   return new Date(Date.UTC(year, rawMonth - 1, 1)).toLocaleDateString('en-AU', {
     month: 'long',
