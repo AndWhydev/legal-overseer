@@ -40,6 +40,20 @@ export type {
   OrgSettings,
 } from './core/types'
 
+// Role engine types (added in Phase 20)
+export type {
+  RoleType,
+  AutonomyLevel,
+  RoleConfig,
+  RoleState,
+  WorkflowStatus,
+  WorkflowStep,
+  RoleWorkflow,
+  ActivityType,
+  RoleActivity,
+  BISnapshot,
+} from './bitbit-core/types'
+
 export type { AgentDefinition } from './core/agent-registry'
 
 // Re-export values (functions)

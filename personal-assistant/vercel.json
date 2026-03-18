@@ -20,6 +20,7 @@
     { "path": "/api/cron/contact-timing", "schedule": "0 14 * * 6" },
     { "path": "/api/cron/relationship-health", "schedule": "0 4 * * *" },
     { "path": "/api/cron/sleep-compute", "schedule": "0 */2 * * *" },
-    { "path": "/api/cron/billing", "schedule": "0 0 * * *" }
+    { "path": "/api/cron/billing", "schedule": "0 0 * * *" },
+    { "path": "/api/cron/role-tick", "schedule": "*/5 * * * *" }
   ]
 }
