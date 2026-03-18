@@ -36,6 +36,7 @@ interface InvoiceRecord {
   issued_date: string | null
   due_date: string | null
   paid_date: string | null
+  client_contact_id: string | null
   created_at: string
 }
 
