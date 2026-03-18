@@ -21,7 +21,7 @@ function fmt(n: number, c: string): string {
 }
 
 const card: React.CSSProperties = {
-  padding: '14px 16px',
+  padding: '12px 16px',
   borderRadius: 12,
   background: 'var(--glass-card-bg-light)',
   backdropFilter: 'var(--glass-card-blur)',
@@ -56,12 +56,12 @@ export function InvoiceSummaryBar({
     <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
       {metrics.map((m, i) => (
         <div key={m.label} style={card}>
-          <span style={{ fontSize: 11, color: 'var(--text-dim)', fontWeight: 500, letterSpacing: '0.02em' }}>
+          <span style={{ fontSize: 14, color: 'var(--text-dim)', fontWeight: 500, letterSpacing: '0.02em' }}>
             {m.label}
           </span>
           <span style={{
-            fontSize: 24,
-            fontWeight: 700,
+            fontSize: 16,
+            fontWeight: 500,
             color: m.accent || 'var(--text-primary)',
             fontFamily: 'var(--font-mono)',
             letterSpacing: '-0.02em',
@@ -70,7 +70,7 @@ export function InvoiceSummaryBar({
             {m.value}
           </span>
           {m.sub && (
-            <span style={{ fontSize: 11, color: 'var(--text-dim)' }}>{m.sub}</span>
+            <span style={{ fontSize: 14, color: 'var(--text-dim)' }}>{m.sub}</span>
           )}
           {i === 0 && barTotal > 0 && (
             <div style={{ display: 'flex', height: 3, borderRadius: 99, overflow: 'hidden', marginTop: 2, gap: 1 }}>

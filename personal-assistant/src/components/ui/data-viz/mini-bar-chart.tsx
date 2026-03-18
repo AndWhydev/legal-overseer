@@ -141,7 +141,7 @@ export function MiniBarChart({
                 y={height - 1}
                 textAnchor="middle"
                 fill="var(--text-secondary)"
-                fontSize={10}
+                fontSize={14}
                 fontFamily="var(--font-sans)"
               >
                 {d.label}

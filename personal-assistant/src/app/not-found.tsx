@@ -47,8 +47,8 @@ export default function NotFound() {
       >
         <h1 style={{
           fontFamily: "var(--font-bb-mono, 'JetBrains Mono', monospace)",
-          fontSize: 72,
-          fontWeight: 700,
+          fontSize: 16,
+          fontWeight: 500,
           letterSpacing: '-0.02em',
           color: 'var(--text-primary, #fff)',
           margin: 0,
@@ -57,7 +57,7 @@ export default function NotFound() {
           404
         </h1>
         <p style={{
-          fontSize: 18,
+          fontSize: 16,
           color: 'var(--text-secondary, rgba(255,255,255,0.5))',
           margin: '12px 0 0',
           maxWidth: 340,
@@ -80,8 +80,8 @@ export default function NotFound() {
             display: 'inline-flex',
             alignItems: 'center',
             gap: 8,
-            padding: '10px 20px',
-            borderRadius: 10,
+            padding: '12px 20px',
+            borderRadius: 12,
             background: 'var(--text-primary, #fff)',
             color: 'var(--bg-primary, #0a0f1a)',
             fontSize: 14,
@@ -100,8 +100,8 @@ export default function NotFound() {
             display: 'inline-flex',
             alignItems: 'center',
             gap: 8,
-            padding: '10px 20px',
-            borderRadius: 10,
+            padding: '12px 20px',
+            borderRadius: 12,
             background: 'var(--glass-bg, rgba(255,255,255,0.06))',
             border: '1px solid var(--glass-border, rgba(255,255,255,0.1))',
             color: 'var(--text-secondary, rgba(255,255,255,0.6))',

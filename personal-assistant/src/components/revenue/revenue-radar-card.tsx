@@ -70,16 +70,16 @@ const card: React.CSSProperties = {
 }
 
 const sectionTitle: React.CSSProperties = {
-  fontSize: 11,
-  fontWeight: 600,
+  fontSize: 14,
+  fontWeight: 500,
   color: 'var(--text-dim)',
   textTransform: 'uppercase',
-  letterSpacing: '0.06em',
+  letterSpacing: '0.04em',
 }
 
 const bigNumber: React.CSSProperties = {
-  fontSize: 32,
-  fontWeight: 700,
+  fontSize: 16,
+  fontWeight: 500,
   fontFamily: 'var(--font-mono)',
   letterSpacing: '-0.03em',
   lineHeight: 1.1,
@@ -88,8 +88,8 @@ const bigNumber: React.CSSProperties = {
 const insightRow: React.CSSProperties = {
   display: 'flex',
   alignItems: 'flex-start',
-  gap: 10,
-  padding: '10px 12px',
+  gap: 12,
+  padding: '12px 12px',
   borderRadius: 8,
   background: 'rgba(255, 255, 255, 0.02)',
   cursor: 'pointer',
@@ -178,7 +178,7 @@ export function RevenueRadarCard() {
     return (
       <div style={{ ...card, alignItems: 'center', justifyContent: 'center', minHeight: 200 }}>
         <RefreshCw size={20} color="var(--text-dim)" style={{ animation: 'spin 1s linear infinite' }} />
-        <span style={{ fontSize: 13, color: 'var(--text-dim)' }}>Loading Revenue Radar...</span>
+        <span style={{ fontSize: 14, color: 'var(--text-dim)' }}>Loading Revenue Radar...</span>
       </div>
     )
   }
@@ -186,17 +186,17 @@ export function RevenueRadarCard() {
   if (!data) {
     return (
       <div style={{ ...card, alignItems: 'center', justifyContent: 'center', minHeight: 200 }}>
-        <span style={{ fontSize: 13, color: 'var(--text-dim)' }}>No revenue data available yet</span>
+        <span style={{ fontSize: 14, color: 'var(--text-dim)' }}>No revenue data available yet</span>
         <button
           onClick={handleRefresh}
           style={{
             background: 'var(--bb-orange)',
             color: '#000',
             border: 'none',
-            borderRadius: 6,
-            padding: '6px 16px',
-            fontSize: 12,
-            fontWeight: 600,
+            borderRadius: 8,
+            padding: '8px 16px',
+            fontSize: 14,
+            fontWeight: 500,
             cursor: 'pointer',
           }}
         >
@@ -232,13 +232,13 @@ export function RevenueRadarCard() {
 
         {hasRecoverable ? (
           <div>
-            <div style={{ fontSize: 12, color: 'var(--bb-amber)', fontWeight: 500, marginBottom: 4 }}>
+            <div style={{ fontSize: 14, color: 'var(--bb-amber)', fontWeight: 500, marginBottom: 4 }}>
               Recoverable Revenue
             </div>
             <div style={{ ...bigNumber, color: 'var(--bb-orange)' }}>
               {fmt(data.recoverable_total_cents)}
             </div>
-            <div style={{ fontSize: 12, color: 'var(--text-dim)', marginTop: 4 }}>
+            <div style={{ fontSize: 14, color: 'var(--text-dim)', marginTop: 4 }}>
               from {data.insights.filter(i => ['unbilled_work', 'overdue_collection', 'scope_creep'].includes(i.insight_type)).length} actionable items
             </div>
           </div>
@@ -263,10 +263,10 @@ export function RevenueRadarCard() {
               { label: '90 days', cents: data.cash_flow.net_90d_cents },
             ].map(({ label, cents }) => (
               <div key={label} style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: 11, color: 'var(--text-dim)', marginBottom: 4 }}>{label}</div>
+                <div style={{ fontSize: 14, color: 'var(--text-dim)', marginBottom: 4 }}>{label}</div>
                 <div style={{
-                  fontSize: 20,
-                  fontWeight: 700,
+                  fontSize: 16,
+                  fontWeight: 500,
                   fontFamily: 'var(--font-mono)',
                   letterSpacing: '-0.02em',
                   color: cents >= 0 ? 'var(--bb-green)' : 'var(--bb-red)',
@@ -277,7 +277,7 @@ export function RevenueRadarCard() {
             ))}
           </div>
           {data.cash_flow.confidence_low_30d_cents !== null && (
-            <div style={{ fontSize: 11, color: 'var(--text-dim)', textAlign: 'center' }}>
+            <div style={{ fontSize: 14, color: 'var(--text-dim)', textAlign: 'center' }}>
               30d range: {fmt(data.cash_flow.confidence_low_30d_cents)} — {fmt(data.cash_flow.confidence_high_30d_cents ?? 0)}
             </div>
           )}
@@ -292,29 +292,29 @@ export function RevenueRadarCard() {
               Active Insights ({data.insights.length})
             </span>
             {criticalInsights.length > 0 && (
-              <span style={{ fontSize: 11, color: '#EF4444', fontWeight: 600 }}>
+              <span style={{ fontSize: 14, color: '#EF4444', fontWeight: 500 }}>
                 {criticalInsights.length} urgent
               </span>
             )}
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {data.insights.slice(0, 8).map(insight => (
               <div key={insight.id} style={insightRow}>
                 <div style={{
-                  width: 6,
-                  height: 6,
+                  width: 8,
+                  height: 8,
                   borderRadius: '50%',
                   background: severityColors[insight.severity] ?? '#6B7280',
-                  marginTop: 5,
+                  marginTop: 4,
                   flexShrink: 0,
                 }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13, color: 'var(--text-primary)', fontWeight: 500 }}>
+                  <div style={{ fontSize: 14, color: 'var(--text-primary)', fontWeight: 500 }}>
                     {insight.title}
                   </div>
                   {insight.impact_cents && insight.impact_cents > 0 && (
                     <span style={{
-                      fontSize: 11,
+                      fontSize: 14,
                       color: severityColors[insight.severity],
                       fontFamily: 'var(--font-mono)',
                     }}>
@@ -322,7 +322,7 @@ export function RevenueRadarCard() {
                     </span>
                   )}
                   {insight.suggested_action && (
-                    <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 2 }}>
+                    <div style={{ fontSize: 14, color: 'var(--text-dim)', marginTop: 2 }}>
                       {insight.suggested_action}
                     </div>
                   )}
@@ -353,46 +353,46 @@ export function RevenueRadarCard() {
       {data.top_clients.length > 0 && (
         <div style={card}>
           <span style={sectionTitle}>Top Clients by Revenue Score</span>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {data.top_clients.slice(0, 6).map((client, i) => (
               <div key={client.contact_id} style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: 10,
-                padding: '8px 10px',
+                gap: 12,
+                padding: '8px 12px',
                 borderRadius: 8,
                 background: i === 0 ? 'rgba(255, 90, 31, 0.06)' : 'rgba(255, 255, 255, 0.02)',
               }}>
                 <div style={{
                   width: 28,
                   height: 28,
-                  borderRadius: 6,
+                  borderRadius: 8,
                   background: `${trendColors[client.trend] ?? '#3B82F6'}20`,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: 12,
-                  fontWeight: 700,
+                  fontSize: 14,
+                  fontWeight: 500,
                   color: trendColors[client.trend] ?? '#3B82F6',
                   fontFamily: 'var(--font-mono)',
                 }}>
                   {client.composite_score}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>
+                  <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>
                     {client.contact_name}
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 1 }}>
-                    <span style={{ fontSize: 11, color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 1 }}>
+                    <span style={{ fontSize: 14, color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>
                       {fmt(client.total_revenue_cents)}
                     </span>
                     <TrendIcon trend={client.trend} />
-                    <span style={{ fontSize: 10, color: trendColors[client.trend], textTransform: 'capitalize' }}>
+                    <span style={{ fontSize: 14, color: trendColors[client.trend], textTransform: 'capitalize' }}>
                       {client.trend}
                     </span>
                   </div>
                 </div>
-                <div style={{ fontSize: 11, color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>
+                <div style={{ fontSize: 14, color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>
                   90d: {fmt(client.revenue_last_90d_cents)}
                 </div>
               </div>
@@ -410,16 +410,16 @@ export function RevenueRadarCard() {
               display: 'flex',
               alignItems: 'center',
               gap: 8,
-              padding: '8px 10px',
+              padding: '8px 12px',
               borderRadius: 8,
               background: 'rgba(245, 158, 11, 0.06)',
             }}>
               <AlertTriangle size={14} color="#F59E0B" />
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>
+                <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>
                   {alert.project_name}
                 </div>
-                <div style={{ fontSize: 11, color: 'var(--text-dim)' }}>
+                <div style={{ fontSize: 14, color: 'var(--text-dim)' }}>
                   +{Math.round(alert.scope_creep_pct)}% scope • {fmt(alert.unbilled_value_cents)} unbilled
                 </div>
               </div>

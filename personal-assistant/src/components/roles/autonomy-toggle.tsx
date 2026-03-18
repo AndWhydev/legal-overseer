@@ -81,7 +81,7 @@ export function AutonomyToggle({ roleType, currentLevel, enabled, onLevelChange 
         gap: 0,
         borderRadius: 12,
         background: 'rgba(10, 14, 23, 0.5)',
-        padding: 3,
+        padding: 4,
         position: 'relative',
         opacity: enabled ? 1 : 0.4,
         pointerEvents: enabled ? 'auto' : 'none',
@@ -104,12 +104,12 @@ export function AutonomyToggle({ roleType, currentLevel, enabled, onLevelChange 
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: 6,
+                gap: 8,
                 padding: '8px 12px',
-                borderRadius: 10,
+                borderRadius: 12,
                 border: 'none',
-                fontSize: 12,
-                fontWeight: isActive ? 600 : 500,
+                fontSize: 14,
+                fontWeight: isActive ? 500 : 500,
                 cursor: saving ? 'wait' : 'pointer',
                 transition: 'all 200ms',
                 background: isActive
@@ -133,7 +133,7 @@ export function AutonomyToggle({ roleType, currentLevel, enabled, onLevelChange 
 
       {/* Description */}
       {(hoveredLevel || optimisticLevel) && (
-        <div style={{ fontSize: 11, color: 'var(--text-dim, #475569)', paddingLeft: 4 }}>
+        <div style={{ fontSize: 14, color: 'var(--text-dim, #475569)', paddingLeft: 4 }}>
           {LEVELS.find(l => l.level === (hoveredLevel ?? optimisticLevel))?.description}
         </div>
       )}

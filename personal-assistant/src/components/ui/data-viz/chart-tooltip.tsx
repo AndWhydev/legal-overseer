@@ -28,7 +28,7 @@ export function ChartTooltip({ visible, x, y, label, value, color }: ChartToolti
             pointerEvents: 'none',
             zIndex: 50,
             padding: '4px 8px',
-            borderRadius: 6,
+            borderRadius: 8,
             background: 'var(--bg-elevated, rgba(30, 30, 30, 0.95))',
             border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.08))',
             boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
@@ -40,14 +40,14 @@ export function ChartTooltip({ visible, x, y, label, value, color }: ChartToolti
           }}
         >
           {label && (
-            <span style={{ fontSize: 9, color: 'var(--text-secondary)', lineHeight: 1.2 }}>
+            <span style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.2 }}>
               {label}
             </span>
           )}
           <span
             style={{
-              fontSize: 11,
-              fontWeight: 600,
+              fontSize: 14,
+              fontWeight: 500,
               color: color || 'var(--text-primary)',
               fontFamily: 'var(--font-mono)',
               lineHeight: 1.2,

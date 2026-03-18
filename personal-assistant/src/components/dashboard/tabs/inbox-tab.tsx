@@ -948,8 +948,8 @@ function InboxTab() {
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: 6,
-                padding: '6px 14px',
+                gap: 8,
+                padding: '8px 16px',
                 borderRadius: 20,
                 border: 'none',
                 background: 'var(--glass-pill-bg)',
@@ -957,7 +957,7 @@ function InboxTab() {
                 WebkitBackdropFilter: 'var(--glass-card-blur)',
                 boxShadow: 'var(--glass-pill-inset)',
                 color: 'var(--text-secondary)',
-                fontSize: 12,
+                fontSize: 14,
                 cursor: refreshing ? 'default' : 'pointer',
                 transition: 'all 150ms ease',
                 whiteSpace: 'nowrap',
@@ -1125,7 +1125,7 @@ function InboxTab() {
                   border: 'none',
                   background: 'var(--hover-bg)',
                   color: loadingMore ? 'var(--text-dim)' : 'var(--text-secondary)',
-                  fontSize: 13,
+                  fontSize: 14,
                   fontWeight: 500,
                   cursor: loadingMore ? 'default' : 'pointer',
                   transition: 'all 150ms cubic-bezier(0.16, 1, 0.3, 1)',
@@ -1166,7 +1166,7 @@ function InboxTab() {
           display: 'flex',
           alignItems: 'center',
           gap: 12,
-          padding: '10px 16px',
+          padding: '12px 16px',
           background: 'var(--bg-card-solid)',
           backdropFilter: 'blur(20px) saturate(1.2)',
           WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
@@ -1176,20 +1176,20 @@ function InboxTab() {
           zIndex: 50,
           animation: 'fadeSlideUp 160ms cubic-bezier(0.16, 1, 0.3, 1)',
         }}>
-          <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)' }}>
+          <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>
             {keyboard.selectedIds.size} selected
           </span>
-          <button style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 10px', borderRadius: 6, border: '1px solid var(--glass-divider)', background: 'var(--hover-bg)', color: 'var(--text-secondary)', fontSize: 12, fontWeight: 500, cursor: 'pointer', transition: 'all 150ms ease' }}
+          <button style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 12px', borderRadius: 8, border: '1px solid var(--glass-divider)', background: 'var(--hover-bg)', color: 'var(--text-secondary)', fontSize: 14, fontWeight: 500, cursor: 'pointer', transition: 'all 150ms ease' }}
             onClick={handleBulkArchive}
             onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--hover-bg-strong)'; }}
             onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--hover-bg)'; }}
           ><Archive size={13} /> Archive</button>
-          <button style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 10px', borderRadius: 6, border: '1px solid var(--glass-divider)', background: 'var(--hover-bg)', color: 'var(--text-secondary)', fontSize: 12, fontWeight: 500, cursor: 'pointer', transition: 'all 150ms ease' }}
+          <button style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 12px', borderRadius: 8, border: '1px solid var(--glass-divider)', background: 'var(--hover-bg)', color: 'var(--text-secondary)', fontSize: 14, fontWeight: 500, cursor: 'pointer', transition: 'all 150ms ease' }}
             onClick={handleBulkDone}
             onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--hover-bg-strong)'; }}
             onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--hover-bg)'; }}
           ><CheckCircle2 size={13} /> Done</button>
-          <button style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 10px', borderRadius: 6, border: '1px solid var(--glass-divider)', background: 'var(--hover-bg)', color: 'var(--text-secondary)', fontSize: 12, fontWeight: 500, cursor: 'pointer', transition: 'all 150ms ease' }}
+          <button style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 12px', borderRadius: 8, border: '1px solid var(--glass-divider)', background: 'var(--hover-bg)', color: 'var(--text-secondary)', fontSize: 14, fontWeight: 500, cursor: 'pointer', transition: 'all 150ms ease' }}
             onClick={(e) => {
               const rect = e.currentTarget.getBoundingClientRect();
               setSnoozeTargetId(Array.from(keyboard.selectedIds)[0]);
@@ -1198,12 +1198,12 @@ function InboxTab() {
             onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--hover-bg-strong)'; }}
             onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--hover-bg)'; }}
           ><Clock size={13} /> Snooze</button>
-          <button style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 10px', borderRadius: 6, border: '1px solid var(--glass-divider)', background: 'var(--hover-bg)', color: 'var(--text-secondary)', fontSize: 12, fontWeight: 500, cursor: 'pointer', transition: 'all 150ms ease' }}
+          <button style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 12px', borderRadius: 8, border: '1px solid var(--glass-divider)', background: 'var(--hover-bg)', color: 'var(--text-secondary)', fontSize: 14, fontWeight: 500, cursor: 'pointer', transition: 'all 150ms ease' }}
             onClick={handleBulkSpam}
             onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--hover-bg-strong)'; }}
             onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--hover-bg)'; }}
           ><AlertTriangle size={13} /> Spam</button>
-          <button style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 24, height: 24, borderRadius: 6, border: '1px solid var(--glass-divider)', background: 'var(--hover-bg)', color: 'var(--text-secondary)', fontSize: 12, cursor: 'pointer', padding: 0, transition: 'all 150ms ease' }}
+          <button style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 24, height: 24, borderRadius: 8, border: '1px solid var(--glass-divider)', background: 'var(--hover-bg)', color: 'var(--text-secondary)', fontSize: 14, cursor: 'pointer', padding: 0, transition: 'all 150ms ease' }}
             onClick={clearSelection}
             onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--hover-bg-strong)'; }}
             onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--hover-bg)'; }}
@@ -1317,7 +1317,7 @@ function FilterDropdown({
       zIndex: 9999,
       minWidth: 160,
       padding: 4,
-      borderRadius: 10,
+      borderRadius: 12,
       background: 'var(--bg-card-solid)',
       backdropFilter: 'blur(20px) saturate(1.2)',
       WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
@@ -1336,12 +1336,12 @@ function FilterDropdown({
               alignItems: 'center',
               gap: 8,
               width: '100%',
-              padding: '7px 10px',
-              borderRadius: 6,
+              padding: '8px 12px',
+              borderRadius: 8,
               border: 'none',
               background: isSelected ? 'var(--hover-bg-strong)' : 'transparent',
               color: isSelected ? 'var(--text-primary)' : 'var(--text-secondary)',
-              fontSize: 12,
+              fontSize: 14,
               fontWeight: isSelected ? 600 : 400,
               cursor: 'pointer',
               transition: 'background 100ms ease',
@@ -1366,13 +1366,13 @@ function FilterDropdown({
         style={{
           display: 'inline-flex',
           alignItems: 'center',
-          gap: 6,
-          padding: '5px 10px 5px 12px',
+          gap: 8,
+          padding: '4px 12px 4px 12px',
           borderRadius: 8,
           border: isFiltered ? '1px solid var(--glass-card-border)' : '1px solid var(--glass-divider)',
           background: isFiltered ? 'var(--hover-bg-strong)' : 'var(--hover-bg)',
           color: isFiltered ? 'var(--text-primary)' : 'var(--text-dim)',
-          fontSize: 12,
+          fontSize: 14,
           fontWeight: isFiltered ? 600 : 400,
           cursor: 'pointer',
           transition: 'all 150ms ease',
@@ -1417,7 +1417,7 @@ function UnifiedFilterBar({
       display: 'flex',
       alignItems: 'center',
       gap: 4,
-      padding: '6px 0 8px',
+      padding: '8px 0 8px',
       overflowX: 'auto',
       scrollbarWidth: 'none',
       flexShrink: 0,
@@ -1436,13 +1436,13 @@ function UnifiedFilterBar({
             style={{
               display: 'inline-flex',
               alignItems: 'center',
-              gap: 5,
-              padding: '6px 12px',
+              gap: 4,
+              padding: '8px 12px',
               borderRadius: 20,
               border: 'none',
               background: isActive ? 'var(--text-primary)' : 'transparent',
               color: isActive ? 'var(--bg-card)' : 'var(--text-secondary)',
-              fontSize: 12,
+              fontSize: 14,
               fontWeight: isActive ? 600 : 500,
               cursor: 'pointer',
               transition: 'all 150ms ease',
@@ -1485,11 +1485,11 @@ function UnifiedFilterBar({
             alignItems: 'center',
             gap: 4,
             padding: '4px 8px',
-            borderRadius: 6,
+            borderRadius: 8,
             border: 'none',
             background: 'rgba(255, 90, 31, 0.1)',
             color: '#FF7A45',
-            fontSize: 11,
+            fontSize: 14,
             fontWeight: 500,
             cursor: 'pointer',
             transition: 'all 150ms ease',
@@ -1542,8 +1542,8 @@ function UndoToastStack({
             display: 'flex',
             alignItems: 'center',
             gap: 12,
-            padding: '10px 16px',
-            borderRadius: 10,
+            padding: '12px 16px',
+            borderRadius: 12,
             background: 'var(--bg-card-solid)',
             backdropFilter: 'blur(20px) saturate(1.2)',
             WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
@@ -1554,19 +1554,19 @@ function UndoToastStack({
           }}
         >
           <style>{`@keyframes fadeSlideUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }`}</style>
-          <span style={{ fontSize: 13, color: 'var(--text-primary)', fontWeight: 400 }}>
+          <span style={{ fontSize: 14, color: 'var(--text-primary)', fontWeight: 400 }}>
             {toast.message}
           </span>
           <button
             onClick={() => onUndo(toast)}
             style={{
-              padding: '3px 10px',
-              borderRadius: 6,
+              padding: '4px 12px',
+              borderRadius: 8,
               border: '1px solid rgba(255,90,31,0.4)',
               background: 'rgba(255,90,31,0.12)',
               color: '#FF7A45',
-              fontSize: 12,
-              fontWeight: 600,
+              fontSize: 14,
+              fontWeight: 500,
               cursor: 'pointer',
               transition: 'all 150ms ease',
             }}
@@ -1619,14 +1619,14 @@ function SnoozePickerPopover({
         backdropFilter: 'blur(20px) saturate(1.2)',
         WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
         border: '1px solid var(--glass-card-border)',
-        borderRadius: 10,
-        padding: 6,
+        borderRadius: 12,
+        padding: 8,
         boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
         minWidth: 200,
         animation: 'fadeSlideUp 140ms cubic-bezier(0.16, 1, 0.3, 1)',
       }}
     >
-      <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '6px 10px 4px' }}>
+      <div style={{ fontSize: 10, fontWeight: 500, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.04em', padding: '8px 12px 4px' }}>
         Snooze until
       </div>
       {options.map((opt) => (
@@ -1639,11 +1639,11 @@ function SnoozePickerPopover({
             justifyContent: 'space-between',
             width: '100%',
             padding: '8px 10px',
-            borderRadius: 6,
+            borderRadius: 8,
             border: 'none',
             background: 'transparent',
             color: 'var(--text-primary)',
-            fontSize: 13,
+            fontSize: 14,
             cursor: 'pointer',
             transition: 'background 100ms ease',
             textAlign: 'left',
@@ -1656,7 +1656,7 @@ function SnoozePickerPopover({
             <Clock size={13} style={{ color: 'var(--text-dim)', flexShrink: 0 }} />
             {opt.label}
           </span>
-          <span style={{ fontSize: 11, color: 'var(--text-dim)', flexShrink: 0 }}>
+          <span style={{ fontSize: 14, color: 'var(--text-dim)', flexShrink: 0 }}>
             {opt.sublabel}
           </span>
         </button>
@@ -1674,7 +1674,7 @@ const shimmer: React.CSSProperties = {
   background: 'linear-gradient(90deg, var(--border-subtle) 25%, var(--hover-bg) 50%, var(--border-subtle) 75%)',
   backgroundSize: '200% 100%',
   animation: 'shimmer 1.5s ease-in-out infinite',
-  borderRadius: 6,
+  borderRadius: 8,
 };
 
 function InboxSkeleton() {
@@ -1686,7 +1686,7 @@ function InboxSkeleton() {
             {[80, 100, 90, 60].map((w, i) => (
               <React.Fragment key={i}>
                 {i > 0 && <span className="bb-inbox-stats__sep" />}
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
                   <div style={{ ...shimmer, width: 24, height: 20 }} />
                   <div style={{ ...shimmer, width: w - 24, height: 12 }} />
                 </div>
@@ -1706,7 +1706,7 @@ function InboxSkeleton() {
                 <div style={{ ...shimmer, width: 80 + (i % 3) * 20, height: 13 }} />
               </div>
               <div className="bb-inbox-row__col2" style={{ gap: 8 }}>
-                <div style={{ ...shimmer, width: 56, height: 18, borderRadius: 10 }} />
+                <div style={{ ...shimmer, width: 56, height: 18, borderRadius: 12 }} />
                 <div style={{ ...shimmer, width: 140 + (i % 4) * 30, height: 13 }} />
                 <div style={{ ...shimmer, width: 200 + (i % 3) * 40, height: 11 }} />
               </div>
@@ -1947,18 +1947,18 @@ function ExpandedMessageRow({
           <div style={{ width: 14, height: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', color: brandColor, flexShrink: 0 }}>
             <ChannelIcon size={13} />
           </div>
-          <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>
+          <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>
             {sanitizeText(String(sender))}
           </span>
           {message.senderEmail && (
             <>
               <span style={{ color: 'var(--text-dim)', margin: '0 2px' }}>&middot;</span>
-              <span style={{ fontSize: 12, color: 'var(--text-dim)', fontWeight: 400 }}>
+              <span style={{ fontSize: 14, color: 'var(--text-dim)', fontWeight: 400 }}>
                 {String(message.senderEmail)}
               </span>
             </>
           )}
-          <span style={{ fontSize: 12, color: 'var(--text-dim)', marginLeft: 'auto', flexShrink: 0 }}>
+          <span style={{ fontSize: 14, color: 'var(--text-dim)', marginLeft: 'auto', flexShrink: 0 }}>
             {fullDate}
           </span>
         </div>
@@ -1976,7 +1976,7 @@ function ExpandedMessageRow({
         {/* Subject */}
         {message.subject && (
           <h3 style={{
-            fontSize: 16, fontWeight: 600, color: 'var(--text-primary)',
+            fontSize: 16, fontWeight: 500, color: 'var(--text-primary)',
             margin: 0, lineHeight: 1.3,
           }}>
             {sanitizeText(String(message.subject))}
@@ -2016,14 +2016,14 @@ function ExpandedMessageRow({
 
         {/* Action items — styled pills, stagger in */}
         {aiResult && aiResult.actionItems.length > 0 && (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
             {aiResult.actionItems.map((item, i) => (
               <span key={i} style={{
-                display: 'inline-flex', alignItems: 'center', gap: 5,
-                padding: '4px 10px', borderRadius: 6,
+                display: 'inline-flex', alignItems: 'center', gap: 4,
+                padding: '4px 10px', borderRadius: 8,
                 background: 'rgba(255, 90, 31, 0.08)',
                 border: '1px solid rgba(255, 90, 31, 0.15)',
-                fontSize: 11, fontWeight: 600, color: 'var(--bb-orange, #FF5A1F)',
+                fontSize: 14, fontWeight: 500, color: 'var(--bb-orange, #FF5A1F)',
                 animation: aiJustResolved ? 'aiContentIn 300ms cubic-bezier(0.25, 1, 0.5, 1) both' : undefined,
                 animationDelay: aiJustResolved ? `${150 + i * 60}ms` : undefined,
               }}>
@@ -2039,8 +2039,8 @@ function ExpandedMessageRow({
 
         {/* Thread view */}
         {hasThread && threadMessages && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-            <div style={{ fontSize: 11, color: 'var(--text-dim)', marginBottom: 2, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <div style={{ fontSize: 14, color: 'var(--text-dim)', marginBottom: 2, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
               {threadMessages.length} messages in thread
             </div>
             {threadMessages.map((tm) => {
@@ -2066,16 +2066,16 @@ function ExpandedMessageRow({
                       width: 22, height: 22, borderRadius: '50%',
                       background: tm.isSelf ? 'rgba(255,90,31,0.2)' : 'var(--hover-bg-strong)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: 9, fontWeight: 700,
+                      fontSize: 9, fontWeight: 500,
                       color: tm.isSelf ? '#FF7A45' : 'var(--text-secondary)', flexShrink: 0,
                     }}>
                       {String(tmSender[0] || '?').toUpperCase()}
                     </div>
-                    <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', flexShrink: 0 }}>
+                    <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)', flexShrink: 0 }}>
                       {tm.isSelf ? 'You' : tmSender}
                     </span>
                     {!isExpTh && !isLatest && (
-                      <span style={{ fontSize: 11, color: 'var(--text-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
+                      <span style={{ fontSize: 14, color: 'var(--text-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
                         {sanitizeText(String(tm.bodyPreview || '').slice(0, 70))}
                       </span>
                     )}
@@ -2090,7 +2090,7 @@ function ExpandedMessageRow({
                   </div>
                   {(isExpTh || isLatest) && (
                     <div style={{
-                      padding: '0 12px 10px 42px', fontSize: 13, color: 'var(--text-secondary)',
+                      padding: '0 12px 10px 42px', fontSize: 14, color: 'var(--text-secondary)',
                       lineHeight: 1.6, whiteSpace: 'pre-wrap', wordBreak: 'break-word',
                     }}>
                       {sanitizeText(String(tm.bodyPreview || ''))}
@@ -2130,7 +2130,7 @@ function ExpandedMessageRow({
                   padding: '8px 0',
                   color: 'var(--text-dim)',
                   fontStyle: 'italic',
-                  fontSize: 13,
+                  fontSize: 14,
                   fontFamily: 'inherit',
                   lineHeight: 1.5,
                   whiteSpace: 'pre-wrap',
@@ -2178,7 +2178,7 @@ function ExpandedMessageRow({
                 height: ghostVisible && !replyText && aiResult?.draftReply ? '100%' : undefined,
                 padding: '8px 0',
                 color: 'var(--text-primary)',
-                fontSize: 13, fontFamily: 'inherit', lineHeight: 1.5,
+                fontSize: 14, fontFamily: 'inherit', lineHeight: 1.5,
                 resize: 'none', minHeight: ghostVisible && !replyText && aiResult?.draftReply ? undefined : 32,
                 maxHeight: 200,
                 zIndex: 2,
@@ -2205,12 +2205,12 @@ function ExpandedMessageRow({
         </div>
         {/* Ghost hint and Cmd+Enter hint below the pill */}
         {ghostVisible && !replyText && aiResult?.draftReply && (
-          <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 5, paddingLeft: 16 }}>
+          <div style={{ fontSize: 14, color: 'var(--text-dim)', marginTop: 4, paddingLeft: 16 }}>
             Tab to use suggested reply
           </div>
         )}
         {replyText && (
-          <div style={{ fontSize: 10, color: 'var(--text-dim)', marginTop: 5, paddingLeft: 16 }}>
+          <div style={{ fontSize: 10, color: 'var(--text-dim)', marginTop: 4, paddingLeft: 16 }}>
             <kbd style={{ padding: '1px 4px', borderRadius: 3, background: 'var(--hover-bg)', border: '1px solid var(--glass-divider)', fontSize: 9, fontFamily: 'inherit' }}>Cmd+Enter</kbd> to send
           </div>
         )}
@@ -2250,13 +2250,13 @@ function AttachmentPills({ attachments }: { attachments?: { name: string; size: 
           height: 32, padding: '0 10px', borderRadius: 8,
           background: 'var(--hover-bg)',
           border: '1px solid var(--glass-divider)',
-          fontSize: 12, color: 'var(--text-secondary)',
+          fontSize: 14, color: 'var(--text-secondary)',
           cursor: 'pointer', transition: 'all 150ms ease',
         }}>
           <span style={{ maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {att.name}
           </span>
-          <span style={{ fontSize: 11, color: 'var(--text-dim)' }}>{att.size}</span>
+          <span style={{ fontSize: 14, color: 'var(--text-dim)' }}>{att.size}</span>
         </div>
       ))}
     </div>
@@ -2382,7 +2382,7 @@ function GroupRow({
       </span>
 
       {/* Right side: unread dot + time + delete */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, marginLeft: 'auto' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, marginLeft: 'auto' }}>
         {item.hasUnread && (
           <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--bb-blue, #3B82F6)', flexShrink: 0 }} />
         )}
@@ -2484,7 +2484,7 @@ function MessageRow({
             <div style={{
               width: 32, height: 32, borderRadius: '50%',
               background: 'var(--border-subtle)', display: 'flex', alignItems: 'center',
-              justifyContent: 'center', fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)',
+              justifyContent: 'center', fontSize: 14, fontWeight: 500, color: 'var(--text-secondary)',
             }}>
               {sender[0]?.toUpperCase() || '?'}
             </div>
@@ -2514,7 +2514,7 @@ function MessageRow({
           <span className="bb-inbox-row__subject">
             {String(message.subject || '')}
             {message.threadCount && message.threadCount > 1 && (
-              <span style={{ marginLeft: 6, fontSize: 11, color: 'var(--text-dim)', fontWeight: 400 }}>
+              <span style={{ marginLeft: 8, fontSize: 14, color: 'var(--text-dim)', fontWeight: 400 }}>
                 ({message.threadCount})
               </span>
             )}

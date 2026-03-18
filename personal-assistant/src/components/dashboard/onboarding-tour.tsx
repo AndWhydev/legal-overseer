@@ -225,8 +225,8 @@ export function OnboardingTour({ onNavigate }: OnboardingTourProps) {
           <h3
             style={{
               margin: '0 0 8px',
-              fontSize: '18px',
-              fontWeight: 600,
+              fontSize: '16px',
+              fontWeight: 500,
               color: 'var(--text-primary)',
             }}
           >
@@ -252,7 +252,7 @@ export function OnboardingTour({ onNavigate }: OnboardingTourProps) {
             }}
           >
             {/* Step dots */}
-            <div style={{ display: 'flex', gap: '6px' }}>
+            <div style={{ display: 'flex', gap: '8px' }}>
               {TOUR_STEPS.map((_, i) => (
                 <div
                   key={i}
@@ -282,7 +282,7 @@ export function OnboardingTour({ onNavigate }: OnboardingTourProps) {
                     background: 'transparent',
                     color: 'var(--text-primary)',
                     cursor: 'pointer',
-                    fontSize: '13px',
+                    fontSize: '14px',
                     fontWeight: 500,
                     display: 'flex',
                     alignItems: 'center',
@@ -308,8 +308,8 @@ export function OnboardingTour({ onNavigate }: OnboardingTourProps) {
                   background: '#1A1A1B',
                   color: '#FFFFFF',
                   cursor: 'pointer',
-                  fontSize: '13px',
-                  fontWeight: 600,
+                  fontSize: '14px',
+                  fontWeight: 500,
                   display: 'flex',
                   alignItems: 'center',
                   gap: '4px',
@@ -337,7 +337,7 @@ export function OnboardingTour({ onNavigate }: OnboardingTourProps) {
               border: 'none',
               color: 'var(--text-secondary)',
               cursor: 'pointer',
-              fontSize: '12px',
+              fontSize: '14px',
               transition: 'color 0.15s ease',
             }}
             onMouseEnter={(e) => {

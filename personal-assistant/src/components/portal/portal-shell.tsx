@@ -70,13 +70,13 @@ export function PortalShell({ branding, orgName, contactName, orgSlug, accessId,
                   justifyContent: 'center',
                   color: '#FFFFFF',
                   fontSize: 14,
-                  fontWeight: 600,
+                  fontWeight: 500,
                 }}
               >
                 {companyName.charAt(0)}
               </div>
             )}
-            <span style={{ fontSize: 16, fontWeight: 600, color: '#111827', letterSpacing: '-0.01em' }}>
+            <span style={{ fontSize: 16, fontWeight: 500, color: '#111827', letterSpacing: '-0.01em' }}>
               {companyName}
             </span>
           </Link>
@@ -95,7 +95,7 @@ export function PortalShell({ branding, orgName, contactName, orgSlug, accessId,
                   href={itemPath}
                   className="flex items-center gap-2"
                   style={{
-                    padding: '8px 14px',
+                    padding: '8px 16px',
                     borderRadius: 8,
                     fontSize: 14,
                     fontWeight: isActive ? 500 : 400,
@@ -126,8 +126,8 @@ export function PortalShell({ branding, orgName, contactName, orgSlug, accessId,
                 alignItems: 'center',
                 justifyContent: 'center',
                 color: primaryColor,
-                fontSize: 13,
-                fontWeight: 600,
+                fontSize: 14,
+                fontWeight: 500,
               }}
             >
               {initials}
@@ -179,7 +179,7 @@ export function PortalShell({ branding, orgName, contactName, orgSlug, accessId,
                   className="flex items-center gap-3"
                   style={{
                     padding: '12px 0',
-                    fontSize: 15,
+                    fontSize: 16,
                     fontWeight: isActive ? 500 : 400,
                     color: isActive ? primaryColor : '#374151',
                     textDecoration: 'none',
@@ -203,7 +203,7 @@ export function PortalShell({ branding, orgName, contactName, orgSlug, accessId,
       {/* Footer */}
       <footer style={{ borderTop: '1px solid #E5E7EB', padding: '24px 0', marginTop: 48 }}>
         <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 24px', textAlign: 'center' }}>
-          <p style={{ fontSize: 13, color: '#9CA3AF' }}>
+          <p style={{ fontSize: 14, color: '#9CA3AF' }}>
             {branding?.support_email && (
               <>
                 Need help? <a href={`mailto:${branding.support_email}`} style={{ color: primaryColor, textDecoration: 'none' }}>{branding.support_email}</a>

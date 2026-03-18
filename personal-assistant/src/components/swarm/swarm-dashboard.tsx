@@ -24,13 +24,13 @@ const styles = {
     gap: '16px',
   },
   title: {
-    fontSize: '20px',
-    fontWeight: 600,
+    fontSize: '16px',
+    fontWeight: 500,
     color: 'rgba(255, 255, 255, 0.95)',
     letterSpacing: '-0.02em',
   },
   subtitle: {
-    fontSize: '13px',
+    fontSize: '14px',
     color: 'rgba(255, 255, 255, 0.45)',
     marginTop: '2px',
   },
@@ -40,9 +40,9 @@ const styles = {
     flexWrap: 'wrap' as const,
   },
   filterButton: (active: boolean) => ({
-    padding: '6px 14px',
+    padding: '8px 16px',
     borderRadius: '9999px',
-    fontSize: '12px',
+    fontSize: '14px',
     fontWeight: 500,
     cursor: 'pointer',
     border: 'none',
@@ -64,7 +64,7 @@ const styles = {
     gap: '12px',
   },
   emptyIcon: {
-    fontSize: '32px',
+    fontSize: '16px',
     opacity: 0.4,
   },
   emptyText: {
@@ -73,7 +73,7 @@ const styles = {
     textAlign: 'center' as const,
   },
   emptyHint: {
-    fontSize: '12px',
+    fontSize: '14px',
     color: 'rgba(255, 255, 255, 0.25)',
     textAlign: 'center' as const,
     maxWidth: '400px',

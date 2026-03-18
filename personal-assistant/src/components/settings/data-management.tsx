@@ -144,7 +144,7 @@ export function DataManagement() {
   };
 
   const buttonStyle: React.CSSProperties = {
-    padding: '10px 16px',
+    padding: '12px 16px',
     borderRadius: '8px',
     border: 'none',
     fontSize: '14px',
@@ -167,7 +167,7 @@ export function DataManagement() {
   const messageStyle: React.CSSProperties = {
     padding: '12px 16px',
     borderRadius: '8px',
-    fontSize: '13px',
+    fontSize: '14px',
     marginBottom: '16px',
     display: 'flex',
     alignItems: 'center',
@@ -190,10 +190,10 @@ export function DataManagement() {
       )}
 
       <div style={containerStyle}>
-        <h3 style={{ fontSize: '16px', fontWeight: '600', margin: '0 0 12px 0', color: 'var(--text-primary)' }}>
+        <h3 style={{ fontSize: '16px', fontWeight: '500', margin: '0 0 12px 0', color: 'var(--text-primary)' }}>
           Export Your Data
         </h3>
-        <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: '0 0 16px 0', lineHeight: '1.5' }}>
+        <p style={{ fontSize: '14px', color: 'var(--text-secondary)', margin: '0 0 16px 0', lineHeight: '1.5' }}>
           Download all your data in JSON format, including contacts, tasks, messages, and memories. Limited to 1 export per hour.
         </p>
         <button
@@ -213,11 +213,11 @@ export function DataManagement() {
         <div style={{ ...containerStyle, borderColor: 'rgba(239, 68, 68, 0.3)', background: 'rgba(239, 68, 68, 0.05)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
             <AlertTriangle size={18} style={{ color: '#EF4444', flexShrink: 0 }} />
-            <h3 style={{ fontSize: '16px', fontWeight: '600', margin: 0, color: '#EF4444' }}>
+            <h3 style={{ fontSize: '16px', fontWeight: '500', margin: 0, color: '#EF4444' }}>
               Deletion Pending
             </h3>
           </div>
-          <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: '0 0 12px 0', lineHeight: '1.5' }}>
+          <p style={{ fontSize: '14px', color: 'var(--text-secondary)', margin: '0 0 12px 0', lineHeight: '1.5' }}>
             Your account deletion is scheduled. You have until{' '}
             <strong style={{ color: 'var(--text-primary)' }}>
               {new Date(deletionStatus.cancel_until || '').toLocaleDateString()}
@@ -240,10 +240,10 @@ export function DataManagement() {
         </div>
       ) : (
         <div style={containerStyle}>
-          <h3 style={{ fontSize: '16px', fontWeight: '600', margin: '0 0 12px 0', color: 'var(--text-primary)' }}>
+          <h3 style={{ fontSize: '16px', fontWeight: '500', margin: '0 0 12px 0', color: 'var(--text-primary)' }}>
             Delete Your Account
           </h3>
-          <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: '0 0 16px 0', lineHeight: '1.5' }}>
+          <p style={{ fontSize: '14px', color: 'var(--text-secondary)', margin: '0 0 16px 0', lineHeight: '1.5' }}>
             Permanently delete your account and all associated data. This action cannot be undone, but you will have 30 days to cancel.
           </p>
           <button
@@ -311,16 +311,16 @@ export function DataManagement() {
                   <path d="M20 9V24M12 28H28" stroke="#EF4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </div>
-              <h3 style={{ fontSize: '18px', fontWeight: '600', margin: 0, color: 'var(--text-primary)' }}>
+              <h3 style={{ fontSize: '16px', fontWeight: '500', margin: 0, color: 'var(--text-primary)' }}>
                 Delete Your Account?
               </h3>
-              <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '4px' }}>
+              <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginTop: '4px' }}>
                 This will schedule your account for permanent deletion.
               </p>
             </div>
 
             <div style={{ marginBottom: '20px' }}>
-              <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '8px', fontWeight: '500' }}>
+              <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '8px', fontWeight: '500' }}>
                 Type DELETE to confirm:
               </p>
               <input
@@ -331,19 +331,19 @@ export function DataManagement() {
                 disabled={deleteLoading}
                 style={{
                   width: '100%',
-                  padding: '10px 12px',
+                  padding: '12px 12px',
                   borderRadius: '8px',
                   background: 'rgba(255, 255, 255, 0.05)',
                   border: '1px solid rgba(255, 255, 255, 0.1)',
                   color: 'var(--text-primary)',
-                  fontSize: '13px',
+                  fontSize: '14px',
                   fontFamily: 'monospace',
                   opacity: deleteLoading ? 0.5 : 1,
                 }}
               />
             </div>
 
-            <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '20px', lineHeight: '1.5' }}>
+            <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '20px', lineHeight: '1.5' }}>
               You will have 30 days to cancel this request before your data is permanently deleted.
             </p>
 

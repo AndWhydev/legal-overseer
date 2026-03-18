@@ -79,8 +79,8 @@ const lightCard: React.CSSProperties = {
 
 const glassInput: React.CSSProperties = {
   width: '100%',
-  padding: '10px 14px',
-  borderRadius: 10,
+  padding: '12px 16px',
+  borderRadius: 12,
   background: 'var(--glass-card-bg)',
   border: '1px solid var(--glass-interactive-border)',
   color: 'var(--text-primary)',
@@ -90,8 +90,8 @@ const glassInput: React.CSSProperties = {
 }
 
 const glassSelect: React.CSSProperties = {
-  padding: '10px 14px',
-  borderRadius: 10,
+  padding: '12px 16px',
+  borderRadius: 12,
   background: 'var(--glass-card-bg)',
   border: '1px solid var(--glass-interactive-border)',
   color: 'var(--text-primary)',
@@ -104,32 +104,32 @@ const glassSelect: React.CSSProperties = {
 
 const accentBtn: React.CSSProperties = {
   padding: '8px 16px',
-  borderRadius: 10,
+  borderRadius: 12,
   background: '#1A1A1B',
   border: 'none',
   color: '#FFFFFF',
-  fontSize: 13,
-  fontWeight: 600,
+  fontSize: 14,
+  fontWeight: 500,
   cursor: 'pointer',
   transition: 'all 200ms',
 }
 
 const ghostBtn: React.CSSProperties = {
   padding: '8px 12px',
-  borderRadius: 10,
+  borderRadius: 12,
   background: 'transparent',
   border: '1px solid var(--glass-hover-bg)',
   color: 'var(--text-primary)',
-  fontSize: 12,
+  fontSize: 14,
   fontWeight: 500,
   cursor: 'pointer',
   transition: 'all 200ms',
 }
 
 const sectionHeader: React.CSSProperties = {
-  fontSize: 11,
-  fontWeight: 600,
-  letterSpacing: '0.08em',
+  fontSize: 14,
+  fontWeight: 500,
+  letterSpacing: '0.04em',
   textTransform: 'uppercase' as const,
   color: 'var(--text-dim)',
   marginBottom: 12,
@@ -137,7 +137,7 @@ const sectionHeader: React.CSSProperties = {
 
 const cardTitle: React.CSSProperties = {
   fontSize: 14,
-  fontWeight: 600,
+  fontWeight: 500,
   color: 'var(--text-primary)',
 }
 
@@ -148,12 +148,12 @@ const bodyText: React.CSSProperties = {
 }
 
 const secondaryText: React.CSSProperties = {
-  fontSize: 13,
+  fontSize: 14,
   color: 'var(--text-secondary)',
 }
 
 const dimText: React.CSSProperties = {
-  fontSize: 12,
+  fontSize: 14,
   color: 'var(--text-dim)',
 }
 
@@ -362,7 +362,7 @@ export function WatchManager() {
             borderRadius: 12,
             background: 'rgba(34, 197, 94, 0.12)',
             border: '1px solid var(--status-success-border)',
-            fontSize: 13,
+            fontSize: 14,
             color: 'var(--bb-green)',
           }}
         >
@@ -378,7 +378,7 @@ export function WatchManager() {
             borderRadius: 12,
             background: 'rgba(239, 68, 68, 0.12)',
             border: '1px solid var(--status-error-border)',
-            fontSize: 13,
+            fontSize: 14,
             color: 'var(--bb-red)',
           }}
         >
@@ -389,7 +389,7 @@ export function WatchManager() {
       {/* Create Watch Section */}
       <section style={glassCard}>
         <div style={{ marginBottom: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <h2 style={{ ...cardTitle, fontSize: 16, fontWeight: 600 }}>Create watch</h2>
+          <h2 style={{ ...cardTitle, fontSize: 16, fontWeight: 500 }}>Create watch</h2>
           <span style={secondaryText}>{watches.length} watches configured</span>
         </div>
         <form
@@ -397,7 +397,7 @@ export function WatchManager() {
           aria-describedby={errorMessage ? 'sentry-error' : undefined}
           onSubmit={handleCreateWatch}
         >
-          <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <label style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <span style={dimText}>Watch type</span>
             <select
               style={glassSelect}
@@ -411,7 +411,7 @@ export function WatchManager() {
               ))}
             </select>
           </label>
-          <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <label style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <span style={dimText}>Description</span>
             <input
               style={glassInput}
@@ -429,14 +429,14 @@ export function WatchManager() {
               }}
             />
           </label>
-          <label style={{ display: 'flex', flexDirection: 'column', gap: 6, gridColumn: 'span 2' }}>
+          <label style={{ display: 'flex', flexDirection: 'column', gap: 8, gridColumn: 'span 2' }}>
             <span style={dimText}>Conditions (JSON)</span>
             <textarea
               style={{
                 ...glassInput,
                 minHeight: 80,
                 fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
-                fontSize: 12,
+                fontSize: 14,
               }}
               value={form.conditions}
               onChange={(event) => setForm((prev) => ({ ...prev, conditions: event.target.value }))}
@@ -450,7 +450,7 @@ export function WatchManager() {
               }}
             />
           </label>
-          <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <label style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <span style={dimText}>Interval seconds</span>
             <input
               style={glassInput}
@@ -471,7 +471,7 @@ export function WatchManager() {
               }}
             />
           </label>
-          <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <label style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <span style={dimText}>Escalation minutes</span>
             <input
               style={glassInput}
@@ -520,7 +520,7 @@ export function WatchManager() {
 
       {/* Configured Watches Section */}
       <section style={glassCard}>
-        <h2 style={{ ...cardTitle, fontSize: 16, fontWeight: 600, marginBottom: 20 }}>Configured watches</h2>
+        <h2 style={{ ...cardTitle, fontSize: 16, fontWeight: 500, marginBottom: 20 }}>Configured watches</h2>
         {watches.length === 0 ? (
           <div
             style={{
@@ -554,10 +554,10 @@ export function WatchManager() {
                     style={{
                       display: 'inline-flex',
                       alignItems: 'center',
-                      padding: '3px 10px',
+                      padding: '4px 12px',
                       borderRadius: 8,
-                      fontSize: 10,
-                      fontWeight: 600,
+                      fontSize: 14,
+                      fontWeight: 500,
                       letterSpacing: '0.02em',
                       background:
                         watch.status === 'active' ? 'rgba(34, 197, 94, 0.12)' : 'var(--glass-hover-bg)',
@@ -576,11 +576,11 @@ export function WatchManager() {
                   style={{
                     marginTop: 12,
                     padding: 12,
-                    borderRadius: 10,
+                    borderRadius: 12,
                     background: 'var(--bg-card)',
                     border: '1px solid var(--glass-interactive-border)',
                     overflowX: 'auto',
-                    fontSize: 11,
+                    fontSize: 14,
                     color: 'var(--text-dim)',
                     fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
                     lineHeight: 1.4,
@@ -633,7 +633,7 @@ export function WatchManager() {
       {/* Active Alerts Section */}
       <section style={glassCard}>
         <div style={{ marginBottom: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <h2 style={{ ...cardTitle, fontSize: 16, fontWeight: 600 }}>Active alerts</h2>
+          <h2 style={{ ...cardTitle, fontSize: 16, fontWeight: 500 }}>Active alerts</h2>
           <span style={secondaryText}>{activeAlertCount} pending/escalated</span>
         </div>
         {alerts.length === 0 ? (
@@ -662,10 +662,10 @@ export function WatchManager() {
                     style={{
                       display: 'inline-flex',
                       alignItems: 'center',
-                      padding: '3px 10px',
+                      padding: '4px 12px',
                       borderRadius: 8,
-                      fontSize: 10,
-                      fontWeight: 600,
+                      fontSize: 14,
+                      fontWeight: 500,
                       letterSpacing: '0.02em',
                       background: 'rgba(234, 179, 8, 0.12)',
                       color: 'var(--bb-amber)',

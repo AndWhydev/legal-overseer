@@ -108,8 +108,8 @@ export function ApprovalQueue() {
   );
 
   const pageTitle: React.CSSProperties = {
-    fontSize: 22,
-    fontWeight: 700,
+    fontSize: 16,
+    fontWeight: 500,
     color: 'var(--text-primary)',
     letterSpacing: '-0.02em',
   };
@@ -117,24 +117,24 @@ export function ApprovalQueue() {
   const countBadge: React.CSSProperties = {
     display: 'inline-flex',
     alignItems: 'center',
-    padding: '3px 10px',
+    padding: '4px 12px',
     borderRadius: 8,
-    fontSize: 11,
-    fontWeight: 600,
+    fontSize: 14,
+    fontWeight: 500,
     letterSpacing: '0.02em',
     background: 'var(--glass-hover-bg)',
     color: 'var(--text-secondary)',
   };
 
   const pillBtn: React.CSSProperties = {
-    padding: '6px 14px',
+    padding: '8px 16px',
     borderRadius: 20,
     background: 'var(--glass-pill-bg)',
     backdropFilter: 'var(--glass-card-blur)',
     WebkitBackdropFilter: 'var(--glass-card-blur)',
     boxShadow: 'var(--glass-pill-inset)',
     border: 'none',
-    fontSize: 12,
+    fontSize: 14,
     color: 'var(--text-secondary)',
     cursor: 'pointer',
     transition: 'all 200ms',
@@ -172,7 +172,7 @@ export function ApprovalQueue() {
   };
 
   const loadingText: React.CSSProperties = {
-    fontSize: 13,
+    fontSize: 14,
     color: 'var(--text-secondary)',
     display: 'flex',
     alignItems: 'center',
@@ -235,17 +235,17 @@ export function ApprovalQueue() {
             <button
               style={{
                 padding: '8px 16px',
-                borderRadius: 10,
+                borderRadius: 12,
                 background: 'transparent',
                 border: '1px solid var(--glass-hover-bg)',
                 color: 'var(--text-primary)',
-                fontSize: 13,
+                fontSize: 14,
                 fontWeight: 500,
                 cursor: 'pointer',
                 transition: 'all 200ms',
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: 6,
+                gap: 8,
                 width: 'fit-content',
               }}
               onClick={() => fetchApprovals()}

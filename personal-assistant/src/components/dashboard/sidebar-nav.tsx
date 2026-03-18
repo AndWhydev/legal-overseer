@@ -222,7 +222,7 @@ export function SidebarNav({
               border: '1px solid var(--glass-interactive-border)',
               borderRadius: '12px',
               boxShadow: 'var(--card-shadow-hover), 0 0 0 1px var(--glass-card-border)',
-              padding: '6px',
+              padding: '8px',
               zIndex: 'var(--z-dropdown)',
               animation: 'bb-profile-pop 200ms cubic-bezier(0.2, 0.9, 0.3, 1)',
             }}
@@ -230,15 +230,15 @@ export function SidebarNav({
             {/* User info */}
             <div
               style={{
-                padding: '10px 12px 8px',
+                padding: '12px 12px 8px',
                 borderBottom: '1px solid var(--glass-divider)',
                 marginBottom: '4px',
               }}
             >
-              <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>
+              <div style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text-primary)' }}>
                 {displayName || 'User'}
               </div>
-              <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '2px' }}>
+              <div style={{ fontSize: '14px', color: 'var(--text-secondary)', marginTop: '4px' }}>
                 Manage your account
               </div>
             </div>
@@ -251,13 +251,13 @@ export function SidebarNav({
                 width: '100%',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '10px',
+                gap: '12px',
                 padding: '8px 12px',
                 background: 'transparent',
                 border: 'none',
                 borderRadius: '8px',
                 color: 'var(--text-secondary)',
-                fontSize: '13px',
+                fontSize: '14px',
                 cursor: 'pointer',
                 transition: 'all 0.12s ease',
                 textAlign: 'left',
@@ -286,13 +286,13 @@ export function SidebarNav({
                 width: '100%',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '10px',
+                gap: '12px',
                 padding: '8px 12px',
                 background: 'transparent',
                 border: 'none',
                 borderRadius: '8px',
                 color: '#ef4444',
-                fontSize: '13px',
+                fontSize: '14px',
                 cursor: 'pointer',
                 transition: 'all 0.12s ease',
                 textAlign: 'left',

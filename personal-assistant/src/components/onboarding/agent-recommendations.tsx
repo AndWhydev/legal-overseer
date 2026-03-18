@@ -99,7 +99,7 @@ export function AgentRecommendations({
         <h3 style={{
           margin: 0,
           fontSize: 14,
-          fontWeight: 600,
+          fontWeight: 500,
           color: 'var(--text-primary, #F1F5F9)',
           textTransform: 'uppercase',
           letterSpacing: '0.05em',
@@ -155,12 +155,12 @@ export function AgentRecommendations({
                 position: 'absolute',
                 top: 12,
                 right: 12,
-                fontSize: 10,
-                fontWeight: 600,
+                fontSize: 14,
+                fontWeight: 500,
                 textTransform: 'uppercase',
                 letterSpacing: '0.06em',
                 padding: '4px 8px',
-                borderRadius: 6,
+                borderRadius: 8,
                 background: 'rgba(127, 178, 140, 0.15)',
                 color: '#7fb28c',
               }}>
@@ -197,7 +197,7 @@ export function AgentRecommendations({
             <div style={{ marginTop: 32, paddingTop: 12 }}>
               {/* Emoji */}
               <div style={{
-                fontSize: 28,
+                fontSize: 16,
                 marginBottom: 12,
                 lineHeight: 1,
               }}>
@@ -208,7 +208,7 @@ export function AgentRecommendations({
               <h4 style={{
                 margin: '0 0 8px',
                 fontSize: 14,
-                fontWeight: 600,
+                fontWeight: 500,
                 color: agent.selected ? '#FF5A1F' : 'var(--text-primary, #F1F5F9)',
                 transition: 'color 0.2s',
               }}>
@@ -218,7 +218,7 @@ export function AgentRecommendations({
               {/* Description */}
               <p style={{
                 margin: 0,
-                fontSize: 12,
+                fontSize: 14,
                 lineHeight: 1.5,
                 color: 'var(--text-secondary, #94A3B8)',
               }}>
@@ -232,7 +232,7 @@ export function AgentRecommendations({
       {/* Info Text */}
       <p style={{
         margin: '8px 0 0',
-        fontSize: 12,
+        fontSize: 14,
         color: 'var(--text-dim, #475569)',
         lineHeight: 1.5,
       }}>

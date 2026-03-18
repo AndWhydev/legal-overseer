@@ -41,21 +41,21 @@ const sectionWrapper: React.CSSProperties = {
 };
 
 const sectionTitle: React.CSSProperties = {
-  fontSize: 15,
-  fontWeight: 600,
+  fontSize: 16,
+  fontWeight: 500,
   color: 'var(--text-primary, #F1F5F9)',
   margin: 0,
 };
 
 const sectionDesc: React.CSSProperties = {
-  fontSize: 13,
+  fontSize: 14,
   color: 'var(--text-secondary, #94A3B8)',
   margin: '4px 0 16px',
 };
 
 const glassCard: React.CSSProperties = {
   padding: '16px',
-  borderRadius: 14,
+  borderRadius: 12,
   background: 'rgba(15, 20, 30, 0.6)',
   backdropFilter: 'blur(20px) saturate(1.2)',
   WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
@@ -66,19 +66,19 @@ const glassCard: React.CSSProperties = {
 const listRow: React.CSSProperties = {
   display: 'flex',
   alignItems: 'center',
-  padding: '12px 14px',
+  padding: '12px 16px',
   borderRadius: 12,
   background: 'rgba(10, 14, 23, 0.5)',
   border: '1px solid rgba(255, 255, 255, 0.03)',
 };
 
 const ghostBtn: React.CSSProperties = {
-  padding: '8px 14px',
+  padding: '8px 16px',
   borderRadius: 8,
   background: 'transparent',
   border: '1px solid rgba(255, 255, 255, 0.1)',
   color: 'var(--text-primary, #F1F5F9)',
-  fontSize: 12,
+  fontSize: 14,
   fontWeight: 500,
   cursor: 'pointer',
   transition: 'all 200ms',
@@ -90,19 +90,19 @@ const accentBtn: React.CSSProperties = {
   background: '#FF5A1F',
   border: 'none',
   color: '#000',
-  fontSize: 12,
-  fontWeight: 600,
+  fontSize: 14,
+  fontWeight: 500,
   cursor: 'pointer',
   transition: 'all 200ms',
 };
 
 const dangerBtn: React.CSSProperties = {
-  padding: '6px 10px',
-  borderRadius: 6,
+  padding: '8px 12px',
+  borderRadius: 8,
   background: 'rgba(239, 68, 68, 0.1)',
   border: '1px solid rgba(239, 68, 68, 0.3)',
   color: '#EF4444',
-  fontSize: 11,
+  fontSize: 14,
   fontWeight: 500,
   cursor: 'pointer',
   transition: 'all 200ms',
@@ -119,12 +119,12 @@ function SaveIndicator({ visible, message = 'Saved' }: { visible: boolean; messa
         right: 24,
         display: 'flex',
         alignItems: 'center',
-        gap: 6,
-        padding: '6px 14px',
+        gap: 8,
+        padding: '8px 16px',
         borderRadius: 8,
         background: 'rgba(34, 197, 94, 0.12)',
         color: '#22C55E',
-        fontSize: 12,
+        fontSize: 14,
         fontWeight: 500,
         opacity: visible ? 1 : 0,
         transform: visible ? 'translateY(0)' : 'translateY(-8px)',
@@ -155,12 +155,12 @@ function RoleBadge({ role }: { role: string }) {
     <span
       style={{
         display: 'inline-block',
-        padding: '4px 10px',
-        borderRadius: 6,
+        padding: '4px 12px',
+        borderRadius: 8,
         background: color.bg,
         color: color.text,
-        fontSize: 11,
-        fontWeight: 600,
+        fontSize: 14,
+        fontWeight: 500,
         textTransform: 'capitalize',
       }}
     >
@@ -217,7 +217,7 @@ function RoleDropdown({
             width: 200,
             background: 'rgba(12, 16, 24, 0.95)',
             border: '1px solid rgba(255, 255, 255, 0.1)',
-            borderRadius: 10,
+            borderRadius: 12,
             backdropFilter: 'blur(20px)',
             WebkitBackdropFilter: 'blur(20px)',
             zIndex: 1000,
@@ -239,7 +239,7 @@ function RoleDropdown({
                 background: currentRole === option.id ? 'rgba(255, 90, 31, 0.15)' : 'transparent',
                 border: 'none',
                 color: currentRole === option.id ? '#FF5A1F' : 'var(--text-primary, #F1F5F9)',
-                fontSize: 12,
+                fontSize: 14,
                 fontWeight: 500,
                 cursor: 'pointer',
                 transition: 'background 150ms',
@@ -255,8 +255,8 @@ function RoleDropdown({
                 }
               }}
             >
-              <div style={{ fontWeight: 600, marginBottom: 2 }}>{option.label}</div>
-              <div style={{ fontSize: 11, color: 'var(--text-secondary, #94A3B8)' }}>
+              <div style={{ fontWeight: 500, marginBottom: 2 }}>{option.label}</div>
+              <div style={{ fontSize: 14, color: 'var(--text-secondary, #94A3B8)' }}>
                 {option.desc}
               </div>
             </button>
@@ -318,10 +318,10 @@ function ConfirmDialog({
         }}
         onClick={e => e.stopPropagation()}
       >
-        <h3 style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary, #F1F5F9)', margin: 0 }}>
+        <h3 style={{ fontSize: 16, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)', margin: 0 }}>
           {title}
         </h3>
-        <p style={{ fontSize: 13, color: 'var(--text-secondary, #94A3B8)', margin: '8px 0 16px' }}>
+        <p style={{ fontSize: 14, color: 'var(--text-secondary, #94A3B8)', margin: '8px 0 16px' }}>
           {message}
         </p>
 
@@ -493,7 +493,7 @@ export function TeamManagementTab() {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
           <div style={{ textAlign: 'center', color: 'var(--text-secondary, #94A3B8)' }}>
             <Loader2 size={24} style={{ animation: 'bb-spin 1s linear infinite', marginBottom: 12 }} />
-            <div style={{ fontSize: 13 }}>Loading team...</div>
+            <div style={{ fontSize: 14 }}>Loading team...</div>
           </div>
         </div>
       </div>
@@ -518,12 +518,12 @@ export function TeamManagementTab() {
               onKeyPress={e => e.key === 'Enter' && handleInvite()}
               style={{
                 flex: 1,
-                padding: '10px 12px',
+                padding: '12px 12px',
                 borderRadius: 8,
                 background: 'rgba(13, 17, 23, 0.6)',
                 border: '1px solid rgba(255, 255, 255, 0.1)',
                 color: 'var(--text-primary, #F1F5F9)',
-                fontSize: 13,
+                fontSize: 14,
                 transition: 'border-color 200ms',
               }}
               onFocus={e => {
@@ -538,12 +538,12 @@ export function TeamManagementTab() {
               value={inviteRole}
               onChange={e => setInviteRole(e.target.value as typeof inviteRole)}
               style={{
-                padding: '10px 12px',
+                padding: '12px 12px',
                 borderRadius: 8,
                 background: 'rgba(13, 17, 23, 0.6)',
                 border: '1px solid rgba(255, 255, 255, 0.1)',
                 color: 'var(--text-primary, #F1F5F9)',
-                fontSize: 13,
+                fontSize: 14,
                 cursor: 'pointer',
                 transition: 'border-color 200ms',
               }}
@@ -591,7 +591,7 @@ export function TeamManagementTab() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {members.length === 0 ? (
               <div style={{ ...glassCard, textAlign: 'center', padding: '24px' }}>
-                <p style={{ fontSize: 13, color: 'var(--text-secondary, #94A3B8)', margin: 0 }}>
+                <p style={{ fontSize: 14, color: 'var(--text-secondary, #94A3B8)', margin: 0 }}>
                   No team members yet
                 </p>
               </div>
@@ -599,15 +599,15 @@ export function TeamManagementTab() {
               members.map(member => (
                 <div key={member.id} style={{ ...listRow, justifyContent: 'space-between' }}>
                   <div style={{ minWidth: 0, flex: 1 }}>
-                    <p style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)', margin: 0 }}>
+                    <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)', margin: 0 }}>
                       {member.display_name || member.email}
                     </p>
-                    <p style={{ fontSize: 11, color: 'var(--text-secondary, #94A3B8)', margin: '2px 0 0' }}>
+                    <p style={{ fontSize: 14, color: 'var(--text-secondary, #94A3B8)', margin: '2px 0 0' }}>
                       {member.email}
                     </p>
                   </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                     <RoleBadge role={member.role} />
                     <RoleDropdown
                       currentRole={member.role}
@@ -651,25 +651,25 @@ export function TeamManagementTab() {
               {invites.map(invite => (
                 <div key={invite.id} style={{ ...listRow, justifyContent: 'space-between', opacity: 0.7 }}>
                   <div style={{ minWidth: 0, flex: 1 }}>
-                    <p style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)', margin: 0 }}>
+                    <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)', margin: 0 }}>
                       {invite.email}
                     </p>
-                    <p style={{ fontSize: 11, color: 'var(--text-secondary, #94A3B8)', margin: '2px 0 0' }}>
+                    <p style={{ fontSize: 14, color: 'var(--text-secondary, #94A3B8)', margin: '2px 0 0' }}>
                       Invited {new Date(invite.created_at).toLocaleDateString()}
                     </p>
                   </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                     <RoleBadge role={invite.role} />
                     <span
                       style={{
                         display: 'inline-block',
-                        padding: '4px 10px',
-                        borderRadius: 6,
+                        padding: '4px 12px',
+                        borderRadius: 8,
                         background: 'rgba(251, 191, 36, 0.15)',
                         color: '#FBBF24',
-                        fontSize: 11,
-                        fontWeight: 600,
+                        fontSize: 14,
+                        fontWeight: 500,
                         textTransform: 'capitalize',
                       }}
                     >

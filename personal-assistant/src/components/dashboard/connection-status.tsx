@@ -38,10 +38,10 @@ export function ConnectionStatus() {
       style={{
         display: 'flex',
         alignItems: 'center',
-        gap: '6px',
+        gap: '8px',
         padding: '4px 8px',
-        borderRadius: '6px',
-        fontSize: '11px',
+        borderRadius: '8px',
+        fontSize: '14px',
         fontWeight: 500,
         color: config.color,
         opacity: status === 'connected' ? 0.6 : 1,

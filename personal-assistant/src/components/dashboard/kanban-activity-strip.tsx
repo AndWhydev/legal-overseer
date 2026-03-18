@@ -32,8 +32,8 @@ export function KanbanActivityStrip({ tasks }: KanbanActivityStripProps) {
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: 6,
-            fontSize: 11,
+            gap: 8,
+            fontSize: 14,
             color: 'var(--text-dim)',
             whiteSpace: 'nowrap',
             flexShrink: 0,

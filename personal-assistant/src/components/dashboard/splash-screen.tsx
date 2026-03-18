@@ -108,7 +108,7 @@ function AmbientGlow() {
 /* ── Loading shimmer — bouncing dots ── */
 function LoadingShimmer() {
   return (
-    <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
+    <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
       {[0, 1, 2, 3, 4].map((i) => (
         <motion.div
           key={i}
@@ -291,9 +291,9 @@ export function SplashScreen({
                         key={i}
                         style={{
                           fontFamily: "var(--font-mono, 'JetBrains Mono', monospace)",
-                          fontSize: 28,
-                          fontWeight: 600,
-                          letterSpacing: '0.08em',
+                          fontSize: 16,
+                          fontWeight: 500,
+                          letterSpacing: '0.04em',
                           color: 'var(--text-primary)',
                           display: 'inline-block',
                         }}

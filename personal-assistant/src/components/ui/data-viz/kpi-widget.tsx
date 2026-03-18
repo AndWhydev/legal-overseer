@@ -29,7 +29,7 @@ const cardStyle: React.CSSProperties = {
   boxShadow: 'var(--card-shadow), var(--card-inset)',
   display: 'flex',
   flexDirection: 'column',
-  gap: 10,
+  gap: 12,
 }
 
 export function KPIWidget({
@@ -51,13 +51,13 @@ export function KPIWidget({
     <div className={className} style={cardStyle}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         {icon && <span style={{ color, display: 'flex', alignItems: 'center' }}>{icon}</span>}
-        <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{label}</span>
+        <span style={{ fontSize: 14, color: 'var(--text-secondary)' }}>{label}</span>
       </div>
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
         <span
           style={{
-            fontSize: 28,
-            fontWeight: 700,
+            fontSize: 16,
+            fontWeight: 500,
             color: 'var(--text-primary)',
             fontFamily: 'var(--font-mono)',
             letterSpacing: '-0.02em',
@@ -66,12 +66,12 @@ export function KPIWidget({
           {value}
         </span>
         {unit && (
-          <span style={{ fontSize: 13, color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>
+          <span style={{ fontSize: 14, color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>
             {unit}
           </span>
         )}
         {trend && (
-          <span style={{ fontSize: 12, color: trendColor, fontWeight: 600, marginLeft: 'auto' }}>
+          <span style={{ fontSize: 14, color: trendColor, fontWeight: 500, marginLeft: 'auto' }}>
             {trendArrow} {trendValue}
           </span>
         )}

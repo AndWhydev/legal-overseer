@@ -369,3 +369,7 @@ export function isSupportedMimeType(mimeType: string): boolean {
     mimeType.startsWith('audio/') ||
     mimeType.startsWith('video/')
 }
+
+// Alias for API route compatibility
+export const transcribeMeeting = runTranscriptionPipeline
+

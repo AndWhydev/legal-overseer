@@ -61,20 +61,20 @@ function KanbanDropColumn({
   return (
     <div className="kanban-col" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       {/* Column header */}
-      <div style={{ padding: '0 6px 8px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+      <div style={{ padding: '0 8px 8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
           <h3 style={{
-            fontSize: 11,
-            fontWeight: 600,
+            fontSize: 14,
+            fontWeight: 500,
             textTransform: 'uppercase',
-            letterSpacing: '0.06em',
+            letterSpacing: '0.04em',
             color: 'var(--text-secondary)',
             margin: 0,
           }}>
             {label}
           </h3>
           <span style={{
-            fontSize: 11,
+            fontSize: 14,
             fontWeight: 500,
             fontFamily: 'var(--font-mono)',
             color: 'var(--text-dim)',
@@ -84,14 +84,14 @@ function KanbanDropColumn({
         </div>
 
         {/* Progress bar — visible on column hover via CSS */}
-        <div style={{ height: 2, background: 'rgba(255,255,255,0.06)', borderRadius: 2, overflow: 'hidden' }}>
+        <div style={{ height: 2, background: 'rgba(255,255,255,0.06)', borderRadius: 8, overflow: 'hidden' }}>
           <div
             className="col-progress"
             style={{
               height: '100%',
               width: progressWidth + '%',
               background: color,
-              borderRadius: 2,
+              borderRadius: 8,
             }}
           />
         </div>
@@ -104,9 +104,9 @@ function KanbanDropColumn({
           flex: 1,
           display: 'flex',
           flexDirection: 'column',
-          gap: 6,
-          borderRadius: 14,
-          padding: 6,
+          gap: 8,
+          borderRadius: 12,
+          padding: 8,
           minHeight: 120,
           background: isOver ? 'rgba(255, 255, 255, 0.03)' : 'transparent',
           border: isOver
@@ -134,7 +134,7 @@ function KanbanDropColumn({
           <div style={{
             padding: '24px 12px',
             textAlign: 'center',
-            fontSize: 12,
+            fontSize: 14,
             color: 'var(--text-dim)',
             borderRadius: 12,
             border: '1px dashed var(--border-subtle)',

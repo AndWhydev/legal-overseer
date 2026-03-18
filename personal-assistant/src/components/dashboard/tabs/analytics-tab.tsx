@@ -87,7 +87,7 @@ const glassCard: React.CSSProperties = {
 const listRow: React.CSSProperties = {
   display: 'flex',
   alignItems: 'center',
-  padding: '12px 18px',
+  padding: '12px 20px',
   borderRadius: 12,
   background: 'var(--glass-pill-bg)',
   backdropFilter: 'var(--glass-blur)',
@@ -98,17 +98,17 @@ const listRow: React.CSSProperties = {
 }
 
 const sectionHeader: React.CSSProperties = {
-  fontSize: 11,
-  fontWeight: 600,
-  letterSpacing: '0.08em',
+  fontSize: 14,
+  fontWeight: 500,
+  letterSpacing: '0.04em',
   textTransform: 'uppercase' as const,
   color: 'var(--text-dim)',
   marginBottom: 12,
 }
 
 const bigNumber: React.CSSProperties = {
-  fontSize: 38,
-  fontWeight: 700,
+  fontSize: 16,
+  fontWeight: 500,
   color: 'var(--text-primary)',
   fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
   letterSpacing: '-0.03em',
@@ -118,10 +118,10 @@ const bigNumber: React.CSSProperties = {
 const badge = (color: string): React.CSSProperties => ({
   display: 'inline-flex',
   alignItems: 'center',
-  padding: '3px 10px',
+  padding: '4px 12px',
   borderRadius: 8,
-  fontSize: 11,
-  fontWeight: 600,
+  fontSize: 14,
+  fontWeight: 500,
   letterSpacing: '0.02em',
   background: `${color}15`,
   color: color,
@@ -243,11 +243,11 @@ function TrendChart({
   return (
     <div style={{ ...glassCard, position: 'relative' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{label}</span>
+        <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>{label}</span>
         <span
           style={{
-            fontSize: 12,
-            fontWeight: 600,
+            fontSize: 14,
+            fontWeight: 500,
             color: trendColor,
             display: 'flex',
             alignItems: 'center',
@@ -365,7 +365,7 @@ function LegendItem({
   circle?: boolean
 }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: 'var(--text-dim)' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 14, color: 'var(--text-dim)' }}>
       {circle ? (
         <svg width={10} height={10} viewBox="0 0 10 10">
           <circle cx={5} cy={5} r={4} fill="none" stroke={color} strokeWidth={1.5} />
@@ -407,13 +407,13 @@ function AnomalyDigest({ anomalies }: { anomalies: AnomalySummary[] }) {
         borderRadius: 12,
         background: 'rgba(245,107,84,0.06)',
         border: '1px solid rgba(245,107,84,0.22)',
-        padding: '14px 18px',
+        padding: '12px 20px',
         display: 'flex',
         flexDirection: 'column',
         gap: 8,
       }}
     >
-      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(245,107,84,0.9)' }}>
+      <div style={{ fontSize: 14, fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(245,107,84,0.9)' }}>
         {anomalies.length} anomaly{anomalies.length !== 1 ? 'ies' : ''} detected
       </div>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
@@ -423,15 +423,15 @@ function AnomalyDigest({ anomalies }: { anomalies: AnomalySummary[] }) {
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: 6,
+              gap: 8,
               padding: '4px 10px',
               borderRadius: 8,
               background: 'rgba(245,107,84,0.10)',
-              fontSize: 11,
+              fontSize: 14,
               color: 'var(--text-secondary)',
             }}
           >
-            <span style={{ color: 'rgba(245,107,84,0.85)', fontWeight: 700 }}>
+            <span style={{ color: 'rgba(245,107,84,0.85)', fontWeight: 500 }}>
               {a.zScore > 0 ? '+' : ''}{a.zScore}σ
             </span>
             <span>{METRIC_LABELS[a.metric] ?? a.metric}</span>
@@ -450,7 +450,7 @@ function AnomalyDigest({ anomalies }: { anomalies: AnomalySummary[] }) {
 function CohortHeatmap({ matrix }: { matrix: CohortMatrix }) {
   if (matrix.cohorts.length === 0) {
     return (
-      <div style={{ ...glassCard, textAlign: 'center', color: 'var(--text-dim)', fontSize: 13, padding: 40 }}>
+      <div style={{ ...glassCard, textAlign: 'center', color: 'var(--text-dim)', fontSize: 14, padding: 40 }}>
         Not enough data to compute cohort retention yet.
       </div>
     )
@@ -468,11 +468,11 @@ function CohortHeatmap({ matrix }: { matrix: CohortMatrix }) {
           style={{
             display: 'grid',
             gridTemplateColumns: `120px repeat(${weekHeaders.length}, 1fr)`,
-            gap: 3,
-            marginBottom: 3,
+            gap: 4,
+            marginBottom: 4,
           }}
         >
-          <div style={{ fontSize: 11, color: 'var(--text-dim)', fontWeight: 600, padding: '4px 0' }}>
+          <div style={{ fontSize: 14, color: 'var(--text-dim)', fontWeight: 500, padding: '4px 0' }}>
             Cohort
           </div>
           {weekHeaders.map((w) => (
@@ -482,7 +482,7 @@ function CohortHeatmap({ matrix }: { matrix: CohortMatrix }) {
                 fontSize: 10,
                 color: 'var(--text-dim)',
                 textAlign: 'center',
-                fontWeight: 600,
+                fontWeight: 500,
                 padding: '4px 0',
               }}
             >
@@ -498,21 +498,21 @@ function CohortHeatmap({ matrix }: { matrix: CohortMatrix }) {
             style={{
               display: 'grid',
               gridTemplateColumns: `120px repeat(${weekHeaders.length}, 1fr)`,
-              gap: 3,
-              marginBottom: 3,
+              gap: 4,
+              marginBottom: 4,
             }}
           >
             <div
               style={{
-                fontSize: 11,
+                fontSize: 14,
                 color: 'var(--text-secondary)',
-                padding: '6px 4px',
+                padding: '8px 4px',
                 display: 'flex',
                 flexDirection: 'column',
                 gap: 2,
               }}
             >
-              <span style={{ fontWeight: 600 }}>{cohort.cohortLabel}</span>
+              <span style={{ fontWeight: 500 }}>{cohort.cohortLabel}</span>
               <span style={{ fontSize: 10, color: 'var(--text-dim)' }}>
                 {cohort.orgCount} org{cohort.orgCount !== 1 ? 's' : ''}
               </span>
@@ -524,14 +524,14 @@ function CohortHeatmap({ matrix }: { matrix: CohortMatrix }) {
                   key={wi}
                   title={pct !== null ? `${pct}%` : 'N/A'}
                   style={{
-                    borderRadius: 6,
+                    borderRadius: 8,
                     background: pct !== null ? retentionColor(pct) : 'rgba(255,255,255,0.02)',
                     height: 32,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     fontSize: 10,
-                    fontWeight: 600,
+                    fontWeight: 500,
                     color: pct !== null && pct >= 40 ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.45)',
                     fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
                   }}
@@ -659,7 +659,7 @@ function AnalyticsTab() {
 
           {/* MRR by Tier */}
           <div style={{ ...glassCard, position: 'relative' }}>
-            <h4 style={{ fontSize: 14, fontWeight: 600, marginBottom: 16, color: 'var(--text-primary)' }}>
+            <h4 style={{ fontSize: 14, fontWeight: 500, marginBottom: 16, color: 'var(--text-primary)' }}>
               Revenue by Tier
             </h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -667,7 +667,7 @@ function AnalyticsTab() {
                 const pct = mrr.totalMRR > 0 ? (info.mrr / mrr.totalMRR) * 100 : 0
                 return (
                   <div key={tier} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <span style={{ fontSize: 13, minWidth: 80, textTransform: 'capitalize', color: 'var(--text-primary)' }}>
+                    <span style={{ fontSize: 14, minWidth: 80, textTransform: 'capitalize', color: 'var(--text-primary)' }}>
                       {tier}
                     </span>
                     <div style={{ flex: 1, height: 8, borderRadius: 4, background: 'rgba(255, 255, 255, 0.08)', overflow: 'hidden' }}>
@@ -681,7 +681,7 @@ function AnalyticsTab() {
                         }}
                       />
                     </div>
-                    <span style={{ fontSize: 12, minWidth: 100, textAlign: 'right', color: 'var(--text-secondary)' }}>
+                    <span style={{ fontSize: 14, minWidth: 100, textAlign: 'right', color: 'var(--text-secondary)' }}>
                       ${info.mrr} ({info.count})
                     </span>
                   </div>
@@ -716,7 +716,7 @@ function AnalyticsTab() {
               </div>
             </div>
           ) : (
-            <div style={{ ...glassCard, textAlign: 'center', color: 'var(--text-dim)', fontSize: 13, padding: 32 }}>
+            <div style={{ ...glassCard, textAlign: 'center', color: 'var(--text-dim)', fontSize: 14, padding: 32 }}>
               Trend data unavailable
             </div>
           )}
@@ -725,19 +725,19 @@ function AnalyticsTab() {
         {/* Cohort Retention */}
         <section>
           <h3 style={sectionHeader}>Cohort Retention</h3>
-          <p style={{ fontSize: 12, color: 'var(--text-dim)', marginBottom: 12, marginTop: -6 }}>
+          <p style={{ fontSize: 14, color: 'var(--text-dim)', marginBottom: 12, marginTop: -6 }}>
             Weekly cohorts — % of orgs still active N weeks after signup
           </p>
           {cohortLoading ? (
             <div style={{ ...glassCard, position: 'relative' }}>
               {[1, 2, 3, 4].map((i) => (
-                <div key={i} style={{ ...skeletonStyle, height: 32, marginBottom: 6 }} />
+                <div key={i} style={{ ...skeletonStyle, height: 32, marginBottom: 8 }} />
               ))}
             </div>
           ) : cohortData ? (
             <CohortHeatmap matrix={cohortData} />
           ) : (
-            <div style={{ ...glassCard, textAlign: 'center', color: 'var(--text-dim)', fontSize: 13, padding: 32 }}>
+            <div style={{ ...glassCard, textAlign: 'center', color: 'var(--text-dim)', fontSize: 14, padding: 32 }}>
               Cohort data unavailable
             </div>
           )}
@@ -764,16 +764,16 @@ function AnalyticsTab() {
                     borderBottom: '1px solid var(--glass-interactive-border)',
                   }}
                 >
-                  <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-dim)' }}>
+                  <div style={{ fontSize: 14, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-dim)' }}>
                     Agent
                   </div>
-                  <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-dim)', textAlign: 'right' }}>
+                  <div style={{ fontSize: 14, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-dim)', textAlign: 'right' }}>
                     Invocations
                   </div>
-                  <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-dim)', textAlign: 'right' }}>
+                  <div style={{ fontSize: 14, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-dim)', textAlign: 'right' }}>
                     Tokens
                   </div>
-                  <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-dim)', textAlign: 'right' }}>
+                  <div style={{ fontSize: 14, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-dim)', textAlign: 'right' }}>
                     Cost
                   </div>
                 </div>
@@ -786,7 +786,7 @@ function AnalyticsTab() {
                       gap: 16,
                       padding: '12px 0',
                       borderBottom: '1px solid var(--glass-card-border)',
-                      fontSize: 13,
+                      fontSize: 14,
                       color: 'var(--text-primary)',
                     }}
                   >
@@ -806,10 +806,10 @@ function AnalyticsTab() {
             {/* By Client */}
             {usage.byClient.length > 0 && (
               <div style={{ marginTop: 16 }}>
-                <h4 style={{ fontSize: 13, fontWeight: 600, marginBottom: 12, color: 'var(--text-primary)' }}>
+                <h4 style={{ fontSize: 14, fontWeight: 500, marginBottom: 12, color: 'var(--text-primary)' }}>
                   Cost per Client
                 </h4>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {usage.byClient
                     .sort((a, b) => b.costUSD - a.costUSD)
                     .slice(0, 10)
@@ -821,12 +821,12 @@ function AnalyticsTab() {
                           justifyContent: 'space-between',
                         }}
                       >
-                        <span style={{ fontSize: 13, color: 'var(--text-primary)' }}>
+                        <span style={{ fontSize: 14, color: 'var(--text-primary)' }}>
                           {c.clientName}
                         </span>
                         <span
                           style={{
-                            fontSize: 13,
+                            fontSize: 14,
                             color: 'var(--text-secondary)',
                             fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
                           }}
@@ -870,7 +870,7 @@ function AnalyticsTab() {
                       />
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 8 }}>
-                          <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>
+                          <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>
                             {r.orgName}
                           </span>
                           <span style={badge(riskColor)}>
@@ -883,11 +883,11 @@ function AnalyticsTab() {
                               <div
                                 key={idx}
                                 style={{
-                                  fontSize: 12,
+                                  fontSize: 14,
                                   color: 'var(--text-secondary)',
                                   display: 'flex',
                                   alignItems: 'center',
-                                  gap: 6,
+                                  gap: 8,
                                 }}
                               >
                                 <span
@@ -992,7 +992,7 @@ function LoadingSkeleton() {
           <h3 style={sectionHeader}>Cohort Retention</h3>
           <div style={{ ...glassCard, position: 'relative' }}>
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} style={{ ...skeletonStyle, height: 32, marginBottom: 6 }} />
+              <div key={i} style={{ ...skeletonStyle, height: 32, marginBottom: 8 }} />
             ))}
           </div>
         </section>
@@ -1069,8 +1069,8 @@ function StatCard({
         style={{
           display: 'flex',
           alignItems: 'center',
-          gap: 6,
-          fontSize: 12,
+          gap: 8,
+          fontSize: 14,
           color: 'var(--text-secondary)',
         }}
       >
@@ -1101,13 +1101,13 @@ function MetricCard({ label, value }: { label: string; value: string }) {
         textAlign: 'center',
       }}
     >
-      <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+      <div style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
         {label}
       </div>
       <div
         style={{
-          fontSize: 28,
-          fontWeight: 600,
+          fontSize: 16,
+          fontWeight: 500,
           color: 'var(--text-primary)',
           fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
         }}

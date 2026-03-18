@@ -52,7 +52,7 @@ export function TimelineBar({
       }}
     >
       {ticks.length > 0 && (
-        <div style={{ position: 'relative', height: 14, marginBottom: 6 }}>
+        <div style={{ position: 'relative', height: 14, marginBottom: 8 }}>
           {ticks.map((t, i) => (
             <span
               key={i}
@@ -60,7 +60,7 @@ export function TimelineBar({
                 position: 'absolute',
                 left: `${t.position * 100}%`,
                 transform: 'translateX(-50%)',
-                fontSize: 9,
+                fontSize: 14,
                 color: 'var(--text-dim)',
                 fontFamily: 'var(--font-mono)',
               }}
@@ -111,11 +111,11 @@ export function TimelineBar({
         ))}
       </div>
       {(startLabel || endLabel) && (
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
-          <span style={{ fontSize: 9, color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8 }}>
+          <span style={{ fontSize: 14, color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>
             {startLabel}
           </span>
-          <span style={{ fontSize: 9, color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>
+          <span style={{ fontSize: 14, color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>
             {endLabel}
           </span>
         </div>

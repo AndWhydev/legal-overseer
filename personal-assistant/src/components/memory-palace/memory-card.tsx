@@ -23,7 +23,7 @@ export function MemoryCard({ memory, categoryColor }: MemoryCardProps) {
       style={{
         background: 'rgba(15, 20, 30, 0.35)',
         backdropFilter: 'blur(12px)',
-        borderRadius: '10px',
+        borderRadius: '12px',
         padding: '14px 16px',
         cursor: 'pointer',
         transition: 'background 0.15s ease',
@@ -40,7 +40,7 @@ export function MemoryCard({ memory, categoryColor }: MemoryCardProps) {
       <div style={{
         display: 'flex',
         alignItems: 'center',
-        gap: '10px',
+        gap: '12px',
         marginBottom: '6px',
       }}>
         {/* Category Pill */}
@@ -49,8 +49,8 @@ export function MemoryCard({ memory, categoryColor }: MemoryCardProps) {
           borderRadius: '8px',
           background: `${categoryColor}15`,
           color: categoryColor,
-          fontSize: '11px',
-          fontWeight: 600,
+          fontSize: '14px',
+          fontWeight: 500,
           textTransform: 'uppercase',
           letterSpacing: '0.5px',
         }}>
@@ -59,7 +59,7 @@ export function MemoryCard({ memory, categoryColor }: MemoryCardProps) {
 
         {/* Confidence */}
         <span style={{
-          fontSize: '11px',
+          fontSize: '14px',
           color: confidencePct > 70 ? '#22C55E' :
             confidencePct > 40 ? '#F59E0B' : '#EF4444',
           fontWeight: 500,
@@ -70,7 +70,7 @@ export function MemoryCard({ memory, categoryColor }: MemoryCardProps) {
         {/* Source badge */}
         {memory.source === 'user_explicit' && (
           <span style={{
-            fontSize: '10px',
+            fontSize: '14px',
             color: '#FF7A45',
             fontWeight: 500,
           }}>
@@ -83,7 +83,7 @@ export function MemoryCard({ memory, categoryColor }: MemoryCardProps) {
 
         {/* Age */}
         <span style={{
-          fontSize: '11px',
+          fontSize: '14px',
           color: 'rgba(255, 255, 255, 0.3)',
         }}>
           {age}
@@ -94,7 +94,7 @@ export function MemoryCard({ memory, categoryColor }: MemoryCardProps) {
       {memory.title && (
         <div style={{
           fontSize: '14px',
-          fontWeight: 600,
+          fontWeight: 500,
           color: 'rgba(255, 255, 255, 0.9)',
           marginBottom: '4px',
         }}>
@@ -104,7 +104,7 @@ export function MemoryCard({ memory, categoryColor }: MemoryCardProps) {
 
       {/* Content */}
       <div style={{
-        fontSize: '13px',
+        fontSize: '14px',
         color: 'rgba(255, 255, 255, 0.7)',
         lineHeight: '1.5',
         overflow: expanded ? 'visible' : 'hidden',
@@ -128,8 +128,8 @@ export function MemoryCard({ memory, categoryColor }: MemoryCardProps) {
         }}>
           {/* Entity Names */}
           {memory.entity_names && memory.entity_names.length > 0 && (
-            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-              <span style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.4)' }}>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '14px', color: 'rgba(255, 255, 255, 0.4)' }}>
                 Entities:
               </span>
               {memory.entity_names.map((name, i) => (
@@ -137,10 +137,10 @@ export function MemoryCard({ memory, categoryColor }: MemoryCardProps) {
                   key={i}
                   style={{
                     padding: '1px 8px',
-                    borderRadius: '6px',
+                    borderRadius: '8px',
                     background: 'rgba(59, 130, 246, 0.1)',
                     color: '#3B82F6',
-                    fontSize: '11px',
+                    fontSize: '14px',
                   }}
                 >
                   {name}
@@ -151,19 +151,19 @@ export function MemoryCard({ memory, categoryColor }: MemoryCardProps) {
 
           {/* Tags */}
           {memory.tags && memory.tags.length > 0 && (
-            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-              <span style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.4)' }}>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '14px', color: 'rgba(255, 255, 255, 0.4)' }}>
                 Tags:
               </span>
               {memory.tags.map((tag, i) => (
                 <span
                   key={i}
                   style={{
-                    padding: '1px 6px',
-                    borderRadius: '4px',
+                    padding: '4px 8px',
+                    borderRadius: '8px',
                     background: 'rgba(255, 255, 255, 0.05)',
                     color: 'rgba(255, 255, 255, 0.5)',
-                    fontSize: '11px',
+                    fontSize: '14px',
                   }}
                 >
                   #{tag}
@@ -176,7 +176,7 @@ export function MemoryCard({ memory, categoryColor }: MemoryCardProps) {
           <div style={{
             display: 'flex',
             gap: '16px',
-            fontSize: '11px',
+            fontSize: '14px',
             color: 'rgba(255, 255, 255, 0.3)',
           }}>
             <span>{decayLabel}</span>

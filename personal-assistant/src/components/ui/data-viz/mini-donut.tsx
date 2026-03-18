@@ -123,7 +123,7 @@ export function MiniDonut({
             alignItems: 'center',
             justifyContent: 'center',
             fontSize: size * 0.22,
-            fontWeight: 600,
+            fontWeight: 500,
             color: interactive && activeIndex !== null ? segments[activeIndex].color || color : 'var(--text-primary)',
             fontFamily: 'var(--font-mono)',
             transition: 'color 0.2s ease-out',

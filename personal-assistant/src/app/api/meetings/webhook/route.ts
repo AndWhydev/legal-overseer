@@ -98,13 +98,13 @@ async function handleZoomWebhook(supabase: any, body: any) {
         zoom_recording_id: audioRecording.id,
       },
     })
-    .eq('id', meeting.id)
+    .eq('id', meeting!.id)
 
-  logger.info(`[meetings/webhook] Zoom meeting created: ${meeting.id} (${meetingData.topic})`)
+  logger.info(`[meetings/webhook] Zoom meeting created: ${meeting!.id} (${meetingData.topic})`)
 
   return NextResponse.json({
     success: true,
-    meeting_id: meeting.id,
+    meeting_id: meeting!.id,
     message: 'Meeting created from Zoom webhook',
   })
 }
@@ -143,13 +143,13 @@ async function handleGoogleMeetWebhook(supabase: any, body: any) {
         google_meet_recording_url: conferenceRecord.recordings?.[0]?.driveUri ?? null,
       },
     })
-    .eq('id', meeting.id)
+    .eq('id', meeting!.id)
 
-  logger.info(`[meetings/webhook] Google Meet created: ${meeting.id}`)
+  logger.info(`[meetings/webhook] Google Meet created: ${meeting!.id}`)
 
   return NextResponse.json({
     success: true,
-    meeting_id: meeting.id,
+    meeting_id: meeting!.id,
     message: 'Meeting created from Google Meet webhook',
   })
 }

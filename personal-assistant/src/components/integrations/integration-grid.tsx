@@ -88,7 +88,7 @@ export function ConnectionsGrid({ integrations, isLoading, onStatusChange, onWha
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-      <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0 }}>
+      <p style={{ fontSize: 14, color: 'var(--text-secondary)', margin: 0 }}>
         Connect your tools and services to let BitBit work across everything.
       </p>
 
@@ -99,9 +99,9 @@ export function ConnectionsGrid({ integrations, isLoading, onStatusChange, onWha
           style={{
             display: 'inline-flex',
             alignItems: 'center',
-            gap: 6,
-            padding: '7px 14px',
-            borderRadius: 10,
+            gap: 8,
+            padding: '8px 16px',
+            borderRadius: 12,
             background: activeCategory !== 'all' ? 'rgba(255, 255, 255, 0.1)' : 'var(--glass-pill-bg)',
             backdropFilter: 'var(--glass-blur)',
             WebkitBackdropFilter: 'var(--glass-blur)',
@@ -109,7 +109,7 @@ export function ConnectionsGrid({ integrations, isLoading, onStatusChange, onWha
               ? '1px solid rgba(255, 255, 255, 0.15)'
               : '1px solid var(--glass-interactive-border)',
             color: activeCategory !== 'all' ? 'var(--text-primary)' : 'var(--text-secondary)',
-            fontSize: 12,
+            fontSize: 14,
             fontWeight: 500,
             cursor: 'pointer',
             transition: 'all 150ms ease',
@@ -162,7 +162,7 @@ export function ConnectionsGrid({ integrations, isLoading, onStatusChange, onWha
                     background: isActive ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
                     border: 'none',
                     color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
-                    fontSize: 12,
+                    fontSize: 14,
                     fontWeight: isActive ? 600 : 400,
                     cursor: 'pointer',
                     transition: 'all 120ms ease',

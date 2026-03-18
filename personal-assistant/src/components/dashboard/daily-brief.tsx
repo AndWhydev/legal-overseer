@@ -90,7 +90,7 @@ export function DailyBrief() {
     alignItems: 'center',
     gap: 12,
     flexWrap: 'wrap',
-    padding: '10px 16px',
+    padding: '12px 16px',
     borderRadius: 12,
     background: 'var(--glass-card-bg)',
     backdropFilter: 'var(--glass-card-blur)',
@@ -104,12 +104,12 @@ export function DailyBrief() {
   const chipStyle: React.CSSProperties = {
     display: 'inline-flex',
     alignItems: 'center',
-    gap: 6,
-    padding: '4px 10px',
+    gap: 8,
+    padding: '4px 12px',
     borderRadius: 99,
     background: 'var(--glass-card-bg-light)',
     border: '1px solid var(--glass-interactive-border)',
-    fontSize: 12,
+    fontSize: 14,
     color: 'var(--text-secondary)',
     whiteSpace: 'nowrap',
   };
@@ -118,7 +118,7 @@ export function DailyBrief() {
     return (
       <div style={stripStyle}>
         <Sparkles size={14} style={{ color: '#a78bfa', flexShrink: 0 }} />
-        <span style={{ fontSize: 13, color: 'var(--text-secondary)', fontStyle: 'italic' }}>
+        <span style={{ fontSize: 14, color: 'var(--text-secondary)', fontStyle: 'italic' }}>
           Preparing your brief...
         </span>
         <div
@@ -151,7 +151,7 @@ export function DailyBrief() {
   return (
     <div style={stripStyle}>
       <Sparkles size={14} style={{ color: '#a78bfa', flexShrink: 0 }} />
-      <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>
+      <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>
         Good morning
       </span>
 
@@ -163,7 +163,7 @@ export function DailyBrief() {
             return (
               <span key={i} style={chipStyle}>
                 <Icon size={12} style={{ color: chip.accent || 'var(--text-secondary)', flexShrink: 0 }} />
-                <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, color: 'var(--text-primary)' }}>
+                <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 500, color: 'var(--text-primary)' }}>
                   {formatChipValue(chip)}
                 </span>
                 {chip.label}
@@ -172,25 +172,25 @@ export function DailyBrief() {
           })}
         </>
       ) : (
-        <span style={{ fontSize: 13, color: 'var(--text-secondary)', flex: 1 }}>
+        <span style={{ fontSize: 14, color: 'var(--text-secondary)', flex: 1 }}>
           {brief.summary}
         </span>
       )}
 
-      <div style={{ marginLeft: 'auto', display: 'flex', gap: 6, alignItems: 'center', flexShrink: 0 }}>
+      <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0 }}>
         <button
           onClick={handlePlanMyDay}
           style={{
             display: 'inline-flex',
             alignItems: 'center',
-            gap: 5,
+            gap: 4,
             padding: '4px 12px',
             borderRadius: 8,
             border: '1px solid rgba(167, 139, 250, 0.3)',
             background: 'rgba(167, 139, 250, 0.1)',
             color: 'var(--bb-purple)',
-            fontSize: 12,
-            fontWeight: 600,
+            fontSize: 14,
+            fontWeight: 500,
             cursor: 'pointer',
             whiteSpace: 'nowrap',
             transition: 'background 0.15s, border-color 0.15s',
@@ -215,7 +215,7 @@ export function DailyBrief() {
             justifyContent: 'center',
             width: 24,
             height: 24,
-            borderRadius: 6,
+            borderRadius: 8,
             border: 'none',
             background: 'transparent',
             color: 'var(--text-dim)',

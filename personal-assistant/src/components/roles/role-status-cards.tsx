@@ -47,7 +47,7 @@ interface RoleStatusCardsProps {
 // ---------------------------------------------------------------------------
 
 const glassCard: React.CSSProperties = {
-  padding: '18px',
+  padding: '20px',
   borderRadius: 16,
   background: 'rgba(15, 20, 30, 0.6)',
   backdropFilter: 'blur(20px) saturate(1.2)',
@@ -59,12 +59,12 @@ const glassCard: React.CSSProperties = {
 }
 
 const sectionHeader: React.CSSProperties = {
-  fontSize: 11,
-  fontWeight: 600,
-  letterSpacing: '0.08em',
+  fontSize: 14,
+  fontWeight: 500,
+  letterSpacing: '0.04em',
   textTransform: 'uppercase' as const,
   color: 'var(--text-dim, #475569)',
-  marginBottom: 14,
+  marginBottom: 12,
 }
 
 // ---------------------------------------------------------------------------
@@ -173,12 +173,12 @@ export function RoleStatusCards({ onRoleClick }: RoleStatusCardsProps) {
               }}
             >
               {/* Header row */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                   <div style={{
                     width: 32,
                     height: 32,
-                    borderRadius: 10,
+                    borderRadius: 12,
                     background: `${meta.color}15`,
                     display: 'flex',
                     alignItems: 'center',
@@ -187,10 +187,10 @@ export function RoleStatusCards({ onRoleClick }: RoleStatusCardsProps) {
                     <Icon size={16} style={{ color: meta.color }} />
                   </div>
                   <div>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary, #F1F5F9)' }}>
+                    <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)' }}>
                       {meta.label}
                     </div>
-                    <div style={{ fontSize: 11, color: 'var(--text-dim, #475569)', marginTop: 1 }}>
+                    <div style={{ fontSize: 14, color: 'var(--text-dim, #475569)', marginTop: 1 }}>
                       {meta.description}
                     </div>
                   </div>
@@ -207,7 +207,7 @@ export function RoleStatusCards({ onRoleClick }: RoleStatusCardsProps) {
               </div>
 
               {!isConfigured ? (
-                <div style={{ fontSize: 12, color: 'var(--text-dim, #475569)', padding: '8px 0' }}>
+                <div style={{ fontSize: 14, color: 'var(--text-dim, #475569)', padding: '8px 0' }}>
                   Not configured
                 </div>
               ) : (
@@ -218,10 +218,10 @@ export function RoleStatusCards({ onRoleClick }: RoleStatusCardsProps) {
                       <span style={{
                         display: 'inline-flex',
                         alignItems: 'center',
-                        padding: '3px 10px',
+                        padding: '4px 12px',
                         borderRadius: 8,
-                        fontSize: 11,
-                        fontWeight: 600,
+                        fontSize: 14,
+                        fontWeight: 500,
                         letterSpacing: '0.02em',
                         background: `${autonomy.color}15`,
                         color: autonomy.color,
@@ -233,10 +233,10 @@ export function RoleStatusCards({ onRoleClick }: RoleStatusCardsProps) {
                       <span style={{
                         display: 'inline-flex',
                         alignItems: 'center',
-                        padding: '3px 10px',
+                        padding: '4px 12px',
                         borderRadius: 8,
-                        fontSize: 11,
-                        fontWeight: 600,
+                        fontSize: 14,
+                        fontWeight: 500,
                         background: 'rgba(239, 68, 68, 0.12)',
                         color: '#ef4444',
                       }}>
@@ -250,7 +250,7 @@ export function RoleStatusCards({ onRoleClick }: RoleStatusCardsProps) {
                     display: 'grid',
                     gridTemplateColumns: '1fr 1fr',
                     gap: 8,
-                    padding: '10px 0',
+                    padding: '12px 0',
                     borderTop: '1px solid rgba(255, 255, 255, 0.03)',
                   }}>
                     <MetricCell
@@ -281,14 +281,14 @@ export function RoleStatusCards({ onRoleClick }: RoleStatusCardsProps) {
                     <div style={{
                       display: 'flex',
                       alignItems: 'center',
-                      gap: 6,
+                      gap: 8,
                       marginTop: 8,
-                      padding: '6px 10px',
+                      padding: '8px 12px',
                       borderRadius: 8,
                       background: 'rgba(239, 68, 68, 0.08)',
                     }}>
                       <AlertCircle size={12} style={{ color: '#ef4444' }} />
-                      <span style={{ fontSize: 11, color: '#ef4444' }}>
+                      <span style={{ fontSize: 14, color: '#ef4444' }}>
                         {status.activity_24h.errors} error{status.activity_24h.errors !== 1 ? 's' : ''} in last 24h
                       </span>
                     </div>
@@ -314,12 +314,12 @@ function MetricCell({ icon, label, value, isText = false }: {
   isText?: boolean
 }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
       <span style={{ color: 'var(--text-dim, #475569)', display: 'flex' }}>{icon}</span>
-      <span style={{ fontSize: 11, color: 'var(--text-dim, #475569)' }}>{label}</span>
+      <span style={{ fontSize: 14, color: 'var(--text-dim, #475569)' }}>{label}</span>
       <span style={{
-        fontSize: isText ? 11 : 13,
-        fontWeight: isText ? 400 : 700,
+        fontSize: isText ? 14 : 14,
+        fontWeight: isText ? 400 : 500,
         color: 'var(--text-primary, #F1F5F9)',
         fontFamily: isText ? undefined : 'var(--font-mono)',
         marginLeft: 'auto',

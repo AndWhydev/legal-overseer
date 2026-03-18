@@ -54,7 +54,7 @@ export default async function BlogPostPage({ params }: { params: Promise<Params>
                 flexShrink: 0,
               }}
             />
-            <span style={{ fontWeight: 700, fontSize: 18, color: '#E2E8F0', letterSpacing: '-0.02em' }}>BitBit</span>
+            <span style={{ fontWeight: 500, fontSize: 18, color: '#E2E8F0', letterSpacing: '-0.02em' }}>BitBit</span>
           </Link>
           <nav style={{ display: 'flex', gap: 24 }}>
             <Link href="/pricing" style={{ color: '#94A3B8', textDecoration: 'none', fontSize: 14 }}>Pricing</Link>
@@ -106,7 +106,7 @@ export default async function BlogPostPage({ params }: { params: Promise<Params>
 
         {/* Title */}
         <h1 style={{
-          fontSize: 40, fontWeight: 700, color: '#F1F5F9',
+          fontSize: 40, fontWeight: 500, color: '#F1F5F9',
           letterSpacing: '-0.03em', lineHeight: 1.2,
           margin: '0 0 20px',
         }}>
@@ -120,7 +120,7 @@ export default async function BlogPostPage({ params }: { params: Promise<Params>
               width: 36, height: 36, borderRadius: '50%',
               background: 'linear-gradient(135deg, #FF5A1F 0%, #8B5CF6 100%)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 14, fontWeight: 700, color: '#fff', flexShrink: 0,
+              fontSize: 14, fontWeight: 500, color: '#fff', flexShrink: 0,
             }}
           >
             {post.author.charAt(0).toUpperCase()}
@@ -143,10 +143,10 @@ export default async function BlogPostPage({ params }: { params: Promise<Params>
             remarkPlugins={[remarkGfm]}
             components={{
               h1: ({ children }) => (
-                <h1 style={{ fontSize: 32, fontWeight: 700, color: '#F1F5F9', letterSpacing: '-0.02em', margin: '48px 0 16px', lineHeight: 1.25 }}>{children}</h1>
+                <h1 style={{ fontSize: 32, fontWeight: 500, color: '#F1F5F9', letterSpacing: '-0.02em', margin: '48px 0 16px', lineHeight: 1.25 }}>{children}</h1>
               ),
               h2: ({ children }) => (
-                <h2 style={{ fontSize: 24, fontWeight: 700, color: '#F1F5F9', letterSpacing: '-0.02em', margin: '40px 0 14px', lineHeight: 1.3 }}>{children}</h2>
+                <h2 style={{ fontSize: 24, fontWeight: 500, color: '#F1F5F9', letterSpacing: '-0.02em', margin: '40px 0 14px', lineHeight: 1.3 }}>{children}</h2>
               ),
               h3: ({ children }) => (
                 <h3 style={{ fontSize: 19, fontWeight: 600, color: '#E2E8F0', margin: '32px 0 10px', lineHeight: 1.35 }}>{children}</h3>
@@ -164,7 +164,7 @@ export default async function BlogPostPage({ params }: { params: Promise<Params>
                 <li style={{ margin: '6px 0', lineHeight: 1.65 }}>{children}</li>
               ),
               strong: ({ children }) => (
-                <strong style={{ fontWeight: 700, color: '#E2E8F0' }}>{children}</strong>
+                <strong style={{ fontWeight: 500, color: '#E2E8F0' }}>{children}</strong>
               ),
               a: ({ href, children }) => (
                 <a href={href} style={{ color: '#FF5A1F', textDecoration: 'underline', textDecorationColor: 'rgba(255,90,31,0.4)' }}>{children}</a>

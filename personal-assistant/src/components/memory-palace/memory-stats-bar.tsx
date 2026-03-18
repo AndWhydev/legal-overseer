@@ -18,7 +18,7 @@ export function MemoryStatsBar({ stats }: MemoryStatsBarProps) {
       padding: '12px 16px',
       background: 'rgba(15, 20, 30, 0.25)',
       backdropFilter: 'blur(8px)',
-      borderRadius: '10px',
+      borderRadius: '12px',
       alignItems: 'center',
       flexWrap: 'wrap',
     }}>
@@ -84,10 +84,10 @@ function StatPill({
     <div style={{
       display: 'flex',
       alignItems: 'center',
-      gap: '6px',
+      gap: '8px',
     }}>
       <span style={{
-        fontSize: '11px',
+        fontSize: '14px',
         color: 'rgba(255, 255, 255, 0.4)',
         fontWeight: 400,
       }}>
@@ -95,7 +95,7 @@ function StatPill({
       </span>
       <span style={{
         fontSize: '14px',
-        fontWeight: 700,
+        fontWeight: 500,
         color,
         fontVariantNumeric: 'tabular-nums',
       }}>

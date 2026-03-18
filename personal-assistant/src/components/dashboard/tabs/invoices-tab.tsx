@@ -11,13 +11,13 @@ function InvoicesTab() {
   const [view, setView] = useState<InvoiceView>('list')
 
   const toggleStyle = (active: boolean): React.CSSProperties => ({
-    padding: '6px 16px',
+    padding: '8px 16px',
     borderRadius: 20,
     border: 'none',
     background: active ? 'rgba(255,255,255,0.1)' : 'transparent',
     color: active ? '#E2E8F0' : '#64748B',
     fontWeight: active ? 600 : 400,
-    fontSize: 13,
+    fontSize: 14,
     cursor: 'pointer',
     transition: 'all 0.15s',
   })

@@ -85,7 +85,7 @@ const PROGRESS_STEPS = ['Draft', 'Sent', 'Paid'] as const
 // ─── Shared Styles ──────────────────────────────────────────────────────────
 
 const glassCard: React.CSSProperties = {
-  borderRadius: 14,
+  borderRadius: 12,
   background: 'var(--glass-card-bg-light)',
   backdropFilter: 'var(--glass-card-blur)',
   WebkitBackdropFilter: 'var(--glass-card-blur)',
@@ -333,41 +333,41 @@ function generateInvoicePreviewHtml(invoice: InvoiceRow): string {
 
   const itemsHtml = items.map(item => `
     <tr>
-      <td style="padding:8px 6px;border-bottom:1px solid #1e293b;">${escapeHtml(item.description)}</td>
-      <td style="padding:8px 6px;border-bottom:1px solid #1e293b;text-align:right;">${item.quantity}</td>
-      <td style="padding:8px 6px;border-bottom:1px solid #1e293b;text-align:right;">${fmt(item.unit_price)}</td>
-      <td style="padding:8px 6px;border-bottom:1px solid #1e293b;text-align:right;">${fmt(item.total)}</td>
+      <td style="padding:8px 8px;border-bottom:1px solid #1e293b;">${escapeHtml(item.description)}</td>
+      <td style="padding:8px 8px;border-bottom:1px solid #1e293b;text-align:right;">${item.quantity}</td>
+      <td style="padding:8px 8px;border-bottom:1px solid #1e293b;text-align:right;">${fmt(item.unit_price)}</td>
+      <td style="padding:8px 8px;border-bottom:1px solid #1e293b;text-align:right;">${fmt(item.total)}</td>
     </tr>
   `).join('')
 
   return `<!doctype html>
 <html><head><meta charset="utf-8"><style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0a0f1a; color: #e2e8f0; padding: 20px; font-size: 13px; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0a0f1a; color: #e2e8f0; padding: 20px; font-size: 14px; }
   .card { max-width: 600px; margin: 0 auto; background: #111827; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; overflow: hidden; }
-  .header { padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.06); border-left: 3px solid #3B82F6; display: flex; justify-content: space-between; }
-  .header h1 { font-size: 18px; color: #3B82F6; margin-bottom: 4px; }
-  .header .meta { text-align: right; font-size: 12px; color: #94a3b8; line-height: 1.8; }
+  .header { padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.06); border-left: 4px solid #3B82F6; display: flex; justify-content: space-between; }
+  .header h1 { font-size: 16px; color: #3B82F6; margin-bottom: 4px; }
+  .header .meta { text-align: right; font-size: 14px; color: #94a3b8; line-height: 1.8; }
   .section { padding: 16px 20px; }
-  .bill-to { font-size: 12px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 4px; }
+  .bill-to { font-size: 14px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 4px; }
   .client { font-size: 14px; color: #e2e8f0; }
-  table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  th { padding: 8px 6px; text-align: left; color: #94a3b8; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 1px solid #1e293b; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { padding: 8px 8px; text-align: left; color: #94a3b8; font-weight: 500; font-size: 14px; text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 1px solid #1e293b; }
   th:not(:first-child) { text-align: right; }
   .totals { margin-top: 16px; display: flex; justify-content: flex-end; }
   .totals table { width: 220px; }
-  .totals td { padding: 6px 0; color: #94a3b8; font-size: 13px; }
+  .totals td { padding: 8px 0; color: #94a3b8; font-size: 14px; }
   .totals td:last-child { text-align: right; color: #e2e8f0; }
-  .totals .grand { border-top: 1px solid #334155; font-weight: 700; font-size: 15px; padding-top: 10px; }
+  .totals .grand { border-top: 1px solid #334155; font-weight: 500; font-size: 16px; padding-top: 12px; }
   .totals .grand td { color: #e2e8f0; }
-  .footer { padding: 14px 20px; border-top: 1px solid rgba(255,255,255,0.06); font-size: 11px; color: #64748b; }
+  .footer { padding: 12px 20px; border-top: 1px solid rgba(255,255,255,0.06); font-size: 14px; color: #64748b; }
 </style></head><body>
 <div class="card">
   <div class="header">
     <div>
-      <p style="font-size:10px;text-transform:uppercase;letter-spacing:0.06em;color:#64748b;margin-bottom:2px;">Tax Invoice</p>
+      <p style="font-size:14px;text-transform:uppercase;letter-spacing:0.06em;color:#64748b;margin-bottom:2px;">Tax Invoice</p>
       <h1>Invoice</h1>
-      <p style="font-size:13px;color:#94a3b8;margin-top:2px;">BitBit</p>
+      <p style="font-size:14px;color:#94a3b8;margin-top:2px;">BitBit</p>
     </div>
     <div class="meta">
       <div><strong style="color:#64748b;">Invoice #:</strong> ${escapeHtml(invoice.invoice_number)}</div>
@@ -379,7 +379,7 @@ function generateInvoicePreviewHtml(invoice: InvoiceRow): string {
     <div>
       <div class="bill-to">Bill To</div>
       <div class="client">${escapeHtml(invoice.client_name || 'Client')}</div>
-      ${invoice.client_email ? `<div style="font-size:12px;color:#64748b;margin-top:2px;">${escapeHtml(invoice.client_email)}</div>` : ''}
+      ${invoice.client_email ? `<div style="font-size:14px;color:#64748b;margin-top:2px;">${escapeHtml(invoice.client_email)}</div>` : ''}
     </div>
     ${invoice.project_reference ? `<div><div class="bill-to">Project</div><div class="client">${escapeHtml(invoice.project_reference)}</div></div>` : ''}
   </div>
@@ -419,7 +419,7 @@ function InvoiceAvatar({ name, email, size = 36 }: { name: string; email?: strin
     <div style={{
       width: size,
       height: size,
-      borderRadius: 10,
+      borderRadius: 12,
       flexShrink: 0,
       position: 'relative',
       overflow: 'hidden',
@@ -439,7 +439,7 @@ function InvoiceAvatar({ name, email, size = 36 }: { name: string; email?: strin
           justifyContent: 'center',
           color: '#fff',
           fontSize: size * 0.36,
-          fontWeight: 600,
+          fontWeight: 500,
           letterSpacing: '0.02em',
           textShadow: '0 1px 2px rgba(0,0,0,0.3)',
         }}>
@@ -457,7 +457,7 @@ function InvoiceAvatar({ name, email, size = 36 }: { name: string; email?: strin
             width: '100%',
             height: '100%',
             objectFit: 'cover',
-            borderRadius: 10,
+            borderRadius: 12,
           }}
         />
       )}
@@ -473,7 +473,7 @@ function PdfPreviewPanel({ invoice }: { invoice: InvoiceRow }) {
   return (
     <div style={{
       marginTop: 8,
-      borderRadius: 10,
+      borderRadius: 12,
       overflow: 'hidden',
       border: '1px solid var(--glass-divider)',
     }}>
@@ -485,7 +485,7 @@ function PdfPreviewPanel({ invoice }: { invoice: InvoiceRow }) {
           width: '100%',
           height: 380,
           border: 'none',
-          borderRadius: 10,
+          borderRadius: 12,
           background: 'var(--bg-primary)',
         }}
       />
@@ -523,15 +523,15 @@ function InvoiceDetailPanel({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: 6,
-        padding: '10px 16px',
-        borderRadius: 10,
+        gap: 8,
+        padding: '12px 16px',
+        borderRadius: 12,
         cursor: busy ? 'not-allowed' : 'pointer',
         background: bg,
         border: 'none',
         color: fg,
-        fontSize: 13,
-        fontWeight: 600,
+        fontSize: 14,
+        fontWeight: 500,
         opacity: busy ? 0.5 : 1,
         transition: `all 100ms ${SNAP}`,
       }}
@@ -559,8 +559,8 @@ function InvoiceDetailPanel({
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
           <div style={{
-            fontSize: 28,
-            fontWeight: 700,
+            fontSize: 16,
+            fontWeight: 500,
             color: 'var(--text-primary)',
             fontFamily: 'var(--font-mono)',
             letterSpacing: '-0.02em',
@@ -568,7 +568,7 @@ function InvoiceDetailPanel({
           }}>
             {formatMoney(invoice.total, invoice.currency)}
           </div>
-          <div style={{ fontSize: 12, color: dueColor, marginTop: 6, fontWeight: 500 }}>
+          <div style={{ fontSize: 14, color: dueColor, marginTop: 8, fontWeight: 500 }}>
             {invoice.status === 'paid'
               ? `Paid ${formatDate(invoice.paid_date)}`
               : invoice.due_date
@@ -576,12 +576,12 @@ function InvoiceDetailPanel({
                 : 'No due date'}
           </div>
           {invoice.project_reference && (
-            <div style={{ fontSize: 12, color: 'var(--text-dim)', marginTop: 4 }}>
+            <div style={{ fontSize: 14, color: 'var(--text-dim)', marginTop: 4 }}>
               Project: {invoice.project_reference}
             </div>
           )}
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 3, minWidth: 140 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4, minWidth: 140 }}>
           {PROGRESS_STEPS.map((step, i) => (
             <div key={step} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
               <div style={{
@@ -594,7 +594,7 @@ function InvoiceDetailPanel({
                 transition: `background 200ms ${SNAP}`,
               }} />
               <span style={{
-                fontSize: 10,
+                fontSize: 14,
                 fontWeight: 500,
                 color: i <= progressIdx ? 'var(--text-primary)' : 'var(--text-dim)',
               }}>
@@ -609,16 +609,16 @@ function InvoiceDetailPanel({
       {invoice.line_items && invoice.line_items.length > 0 && (
         <div>
           <div style={{
-            fontSize: 10,
-            fontWeight: 600,
+            fontSize: 14,
+            fontWeight: 500,
             textTransform: 'uppercase',
             letterSpacing: '0.06em',
             color: 'var(--text-dim)',
-            marginBottom: 6,
+            marginBottom: 8,
           }}>
             Line Items
           </div>
-          <div style={{ borderRadius: 10, background: 'var(--bg-card)', overflow: 'hidden' }}>
+          <div style={{ borderRadius: 12, background: 'var(--bg-card)', overflow: 'hidden' }}>
             {invoice.line_items.map((item, i) => (
               <div
                 key={i}
@@ -632,13 +632,13 @@ function InvoiceDetailPanel({
                 }}
               >
                 <div>
-                  <div style={{ fontSize: 13, color: 'var(--text-primary)' }}>{item.description}</div>
-                  <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 1 }}>
+                  <div style={{ fontSize: 14, color: 'var(--text-primary)' }}>{item.description}</div>
+                  <div style={{ fontSize: 14, color: 'var(--text-dim)', marginTop: 1 }}>
                     {item.quantity} &times; {formatMoney(item.unit_price, invoice.currency)}
                   </div>
                 </div>
                 <span style={{
-                  fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-mono)',
+                  fontSize: 14, fontWeight: 500, color: 'var(--text-primary)', fontFamily: 'var(--font-mono)',
                 }}>
                   {formatMoney(item.total, invoice.currency)}
                 </span>
@@ -654,13 +654,13 @@ function InvoiceDetailPanel({
             }}>
               {(invoice.subtotal != null || invoice.tax != null) && (
                 <>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 12px', fontSize: 12 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px', fontSize: 14 }}>
                     <span style={{ color: 'var(--text-dim)' }}>Subtotal</span>
                     <span style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>
                       {formatMoney(invoice.subtotal ?? invoice.line_items!.reduce((s, i) => s + i.total, 0), invoice.currency)}
                     </span>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 12px', fontSize: 12 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px', fontSize: 14 }}>
                     <span style={{ color: 'var(--text-dim)' }}>GST (10%)</span>
                     <span style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>
                       {formatMoney(invoice.tax ?? 0, invoice.currency)}
@@ -668,7 +668,7 @@ function InvoiceDetailPanel({
                   </div>
                 </>
               )}
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 12px', fontSize: 14, fontWeight: 700, borderTop: (invoice.subtotal != null || invoice.tax != null) ? '1px solid var(--glass-divider)' : 'none' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 12px', fontSize: 14, fontWeight: 500, borderTop: (invoice.subtotal != null || invoice.tax != null) ? '1px solid var(--glass-divider)' : 'none' }}>
                 <span style={{ color: 'var(--text-dim)' }}>Total</span>
                 <span style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-mono)' }}>
                   {formatMoney(invoice.total, invoice.currency)}
@@ -680,7 +680,7 @@ function InvoiceDetailPanel({
       )}
 
       {/* Dates + Payment */}
-      <div style={{ display: 'flex', gap: 24, fontSize: 12, flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: 24, fontSize: 14, flexWrap: 'wrap' }}>
         {invoice.issued_date && (
           <div><span style={{ color: 'var(--text-dim)' }}>Issued </span><span style={{ color: 'var(--text-secondary)' }}>{formatDate(invoice.issued_date)}</span></div>
         )}
@@ -701,10 +701,10 @@ function InvoiceDetailPanel({
             onClick={(e) => { e.stopPropagation(); onAction(invoice.id, 'cancelled') }}
             disabled={busy}
             style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-              padding: '10px 16px', borderRadius: 10, cursor: busy ? 'not-allowed' : 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              padding: '12px 16px', borderRadius: 12, cursor: busy ? 'not-allowed' : 'pointer',
               background: 'transparent', border: '1px solid var(--glass-interactive-border)',
-              color: 'var(--text-dim)', fontSize: 13, fontWeight: 500,
+              color: 'var(--text-dim)', fontSize: 14, fontWeight: 500,
               opacity: busy ? 0.5 : 1, transition: `all 100ms ${SNAP}`,
             }}
           >
@@ -714,11 +714,11 @@ function InvoiceDetailPanel({
         <button
           onClick={(e) => { e.stopPropagation(); setShowPdf(v => !v) }}
           style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-            padding: '10px 16px', borderRadius: 10, cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            padding: '12px 16px', borderRadius: 12, cursor: 'pointer',
             background: showPdf ? 'rgba(59, 130, 246, 0.15)' : 'var(--glass-interactive-bg)',
             border: 'none',
-            color: showPdf ? 'var(--bb-blue)' : 'var(--text-dim)', fontSize: 13, fontWeight: 500,
+            color: showPdf ? 'var(--bb-blue)' : 'var(--text-dim)', fontSize: 14, fontWeight: 500,
             transition: `all 100ms ${SNAP}`,
           }}
         >
@@ -825,7 +825,7 @@ function InvoiceRowItem({
         style={{
           display: 'flex',
           alignItems: 'center',
-          gap: 14,
+          gap: 12,
           padding: '12px 16px',
           cursor: isDragging ? 'grabbing' : expanded ? 'pointer' : 'grab',
           transition: `background 60ms ${SNAP}`,
@@ -842,7 +842,7 @@ function InvoiceRowItem({
         <InvoiceAvatar name={name} email={invoice.client_email} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{
-            fontSize: 14, fontWeight: 600, color: 'var(--text-primary)',
+            fontSize: 14, fontWeight: 500, color: 'var(--text-primary)',
             overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
           }}>
             {name}
@@ -851,16 +851,16 @@ function InvoiceRowItem({
             {/* Status dot + label */}
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
               <span style={{
-                width: 6, height: 6, borderRadius: '50%', background: sc.dot, flexShrink: 0,
+                width: 8, height: 8, borderRadius: '50%', background: sc.dot, flexShrink: 0,
               }} />
-              <span style={{ fontSize: 11, color: sc.dot, fontWeight: 500 }}>{sc.label}</span>
+              <span style={{ fontSize: 14, color: sc.dot, fontWeight: 500 }}>{sc.label}</span>
             </span>
-            <span style={{ fontSize: 12, color: 'var(--text-dim)' }}>{invoice.invoice_number}</span>
+            <span style={{ fontSize: 14, color: 'var(--text-dim)' }}>{invoice.invoice_number}</span>
             {invoice.project_reference && (
-              <span style={{ fontSize: 11, color: 'var(--text-dim)', opacity: 0.7 }}>{invoice.project_reference}</span>
+              <span style={{ fontSize: 14, color: 'var(--text-dim)', opacity: 0.7 }}>{invoice.project_reference}</span>
             )}
             {urgency.text && (
-              <span style={{ fontSize: 12, color: urgency.color, fontWeight: 600 }}>{urgency.text}</span>
+              <span style={{ fontSize: 14, color: urgency.color, fontWeight: 500 }}>{urgency.text}</span>
             )}
           </div>
         </div>
@@ -912,13 +912,13 @@ function InvoiceRowItem({
 
         <div style={{ textAlign: 'right', flexShrink: 0 }}>
           <div style={{
-            fontSize: 14, fontWeight: 700, color: 'var(--text-primary)',
+            fontSize: 14, fontWeight: 500, color: 'var(--text-primary)',
             fontFamily: 'var(--font-mono)', letterSpacing: '-0.01em',
           }}>
             {formatMoney(invoice.total, invoice.currency)}
           </div>
           <div style={{
-            fontSize: 11, marginTop: 2, fontWeight: 500,
+            fontSize: 14, marginTop: 2, fontWeight: 500,
             color: invoice.status === 'paid' ? 'var(--bb-green)'
               : urgency.color || 'var(--text-secondary)',
           }}>
@@ -1000,20 +1000,20 @@ function InvoiceSection({
           width: '100%',
           display: 'flex',
           alignItems: 'center',
-          gap: 10,
-          padding: '14px 16px',
+          gap: 12,
+          padding: '12px 16px',
           background: 'transparent',
           border: 'none',
           cursor: 'pointer',
         }}
       >
         {accent && (
-          <div style={{ width: 3, height: 16, borderRadius: 2, background: accent, flexShrink: 0 }} />
+          <div style={{ width: 4, height: 16, borderRadius: 8, background: accent, flexShrink: 0 }} />
         )}
-        <span style={{ fontSize: 13, fontWeight: 600, color: accent || 'var(--text-secondary)', letterSpacing: '0.01em' }}>
+        <span style={{ fontSize: 14, fontWeight: 500, color: accent || 'var(--text-secondary)', letterSpacing: '0.01em' }}>
           {label}
         </span>
-        <span style={{ fontSize: 12, color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>
+        <span style={{ fontSize: 14, color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>
           {invoices.length}
         </span>
         <div style={{ flex: 1 }} />
@@ -1049,7 +1049,7 @@ function InvoiceSection({
           {isOver && invoices.length === 0 && (
             <div style={{
               padding: '12px 16px',
-              fontSize: 12,
+              fontSize: 14,
               color: 'var(--text-dim)',
               textAlign: 'center',
               opacity: 0.7,
@@ -1099,20 +1099,20 @@ function ClientGroupSection({
           display: 'flex',
           alignItems: 'center',
           gap: 12,
-          padding: '14px 16px',
+          padding: '12px 16px',
           background: 'transparent',
           border: 'none',
           cursor: 'pointer',
         }}
       >
         <InvoiceAvatar name={name} email={invoices[0]?.client_email} size={28} />
-        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{name}</span>
-        <span style={{ fontSize: 12, color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>
+        <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>{name}</span>
+        <span style={{ fontSize: 14, color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>
           {invoices.length}
         </span>
         <div style={{ flex: 1 }} />
         {outstandingTotal > 0 && (
-          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-mono)' }}>
+          <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)', fontFamily: 'var(--font-mono)' }}>
             {formatMoney(outstandingTotal, invoices[0]?.currency || 'AUD')}
           </span>
         )}
@@ -1159,7 +1159,7 @@ function DragGhost({ invoice }: { invoice: InvoiceRow }) {
       alignItems: 'center',
       gap: 12,
       padding: '12px 16px',
-      borderRadius: 14,
+      borderRadius: 12,
       background: 'var(--glass-bg-heavy)',
       backdropFilter: 'var(--glass-blur)',
       WebkitBackdropFilter: 'var(--glass-blur)',
@@ -1171,14 +1171,14 @@ function DragGhost({ invoice }: { invoice: InvoiceRow }) {
       <InvoiceAvatar name={name} email={invoice.client_email} size={32} />
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{
-          fontSize: 14, fontWeight: 600, color: 'var(--text-primary)',
+          fontSize: 14, fontWeight: 500, color: 'var(--text-primary)',
           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
         }}>
           {name}
         </div>
       </div>
       <div style={{
-        fontSize: 14, fontWeight: 700, color: 'var(--text-primary)',
+        fontSize: 14, fontWeight: 500, color: 'var(--text-primary)',
         fontFamily: 'var(--font-mono)', flexShrink: 0,
       }}>
         {formatMoney(invoice.total, invoice.currency)}
@@ -1206,26 +1206,26 @@ function InvoiceSkeleton() {
       `}</style>
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {[0, 1, 2, 3].map(i => (
-          <div key={i} style={{ ...glassCard, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div key={i} style={{ ...glassCard, padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
             <div style={{ ...shimmer, width: 60, height: 10, animationDelay: `${i * 80}ms` }} />
             <div style={{ ...shimmer, width: 100, height: 24, animationDelay: `${i * 80 + 40}ms` }} />
           </div>
         ))}
       </div>
-      <div style={{ ...shimmer, height: 40, borderRadius: 10 }} />
+      <div style={{ ...shimmer, height: 40, borderRadius: 12 }} />
       {[0, 1, 2].map(s => (
         <div key={s} style={{ ...glassCard, padding: 0 }}>
-          <div style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={{ ...shimmer, width: 80, height: 12, animationDelay: `${s * 60}ms` }} />
             <div style={{ ...shimmer, width: 20, height: 12, animationDelay: `${s * 60 + 30}ms` }} />
           </div>
           {[0, 1].map(r => (
             <div key={r} style={{
-              display: 'flex', alignItems: 'center', gap: 14, padding: '12px 16px',
+              display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px',
               borderTop: '1px solid var(--glass-card-border)',
             }}>
-              <div style={{ ...shimmer, width: 36, height: 36, borderRadius: 10, animationDelay: `${s * 60 + r * 40}ms` }} />
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <div style={{ ...shimmer, width: 36, height: 36, borderRadius: 12, animationDelay: `${s * 60 + r * 40}ms` }} />
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <div style={{ ...shimmer, width: 120, height: 12, animationDelay: `${s * 60 + r * 40 + 20}ms` }} />
                 <div style={{ ...shimmer, width: 80, height: 10, animationDelay: `${s * 60 + r * 40 + 40}ms` }} />
               </div>
@@ -1483,7 +1483,7 @@ export function InvoiceList() {
               onChange={e => setSearch(e.target.value)}
               placeholder="Search invoices..."
               style={{
-                width: '100%', padding: '10px 16px 10px 34px', borderRadius: 10,
+                width: '100%', padding: '12px 16px 12px 36px', borderRadius: 12,
                 border: 'none', background: 'var(--glass-interactive-bg)',
                 color: 'var(--text-primary)', fontSize: 14, outline: 'none',
                 transition: `background 80ms ${SNAP}`,
@@ -1495,7 +1495,7 @@ export function InvoiceList() {
 
           {/* Inline stats */}
           {allInvoices.length > 0 && (
-            <span style={{ fontSize: 12, color: 'var(--text-dim)', whiteSpace: 'nowrap', flexShrink: 0 }}>
+            <span style={{ fontSize: 14, color: 'var(--text-dim)', whiteSpace: 'nowrap', flexShrink: 0 }}>
               {allInvoices.length} invoice{allInvoices.length !== 1 ? 's' : ''}
             </span>
           )}
@@ -1506,14 +1506,14 @@ export function InvoiceList() {
             title={groupMode === 'status' ? 'Group by client' : 'Group by status'}
             style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              width: 36, height: 36, borderRadius: 10, cursor: 'pointer',
+              width: 36, height: 36, borderRadius: 12, cursor: 'pointer',
               border: 'none',
               background: groupMode === 'client' ? 'rgba(59, 130, 246, 0.12)' : 'var(--glass-interactive-bg)',
               color: groupMode === 'client' ? 'var(--bb-blue)' : 'var(--text-dim)',
               transition: `all 80ms ${SNAP}`,
             }}
           >
-            {groupMode === 'status' ? <Users size={15} /> : <LayoutList size={15} />}
+            {groupMode === 'status' ? <Users size={16} /> : <LayoutList size={16} />}
           </button>
 
           <button
@@ -1521,7 +1521,7 @@ export function InvoiceList() {
             title="Export CSV"
             style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              width: 36, height: 36, borderRadius: 10, cursor: 'pointer',
+              width: 36, height: 36, borderRadius: 12, cursor: 'pointer',
               border: 'none', background: 'var(--glass-interactive-bg)',
               color: 'var(--text-dim)', transition: `all 80ms ${SNAP}`,
             }}
@@ -1534,7 +1534,7 @@ export function InvoiceList() {
               e.currentTarget.style.color = 'var(--text-dim)'
             }}
           >
-            <Download size={15} />
+            <Download size={16} />
           </button>
 
           {/* New Invoice CTA */}
@@ -1542,10 +1542,10 @@ export function InvoiceList() {
             onClick={() => toast('info', 'New invoice creation coming soon. Use the chat agent: "Send invoice to X for $Y"')}
             title="New invoice"
             style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-              height: 36, padding: '0 14px', borderRadius: 10, cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              height: 36, padding: '0 16px', borderRadius: 12, cursor: 'pointer',
               border: 'none', background: 'rgba(59, 130, 246, 0.12)',
-              color: 'var(--bb-blue)', fontSize: 13, fontWeight: 600,
+              color: 'var(--bb-blue)', fontSize: 14, fontWeight: 500,
               transition: `all 80ms ${SNAP}`, whiteSpace: 'nowrap',
             }}
             onMouseEnter={e => {
@@ -1567,7 +1567,7 @@ export function InvoiceList() {
             description={search ? 'Try a different search term.' : 'Create your first invoice via chat: "Send invoice to X for $Y"'}
           />
         ) : groupMode === 'status' ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {SECTIONS.map((s, i) => (
               <InvoiceSection
                 key={s.key}
@@ -1586,7 +1586,7 @@ export function InvoiceList() {
             ))}
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {clientGroups.map((g, i) => (
               <ClientGroupSection
                 key={g.name}

@@ -132,8 +132,8 @@ export default function ReportsTab() {
   }
 
   const glassSelect: React.CSSProperties = {
-    padding: '10px 14px',
-    borderRadius: 10,
+    padding: '12px 16px',
+    borderRadius: 12,
     background: 'rgba(13, 17, 23, 0.6)',
     border: '1px solid var(--glass-interactive-border)',
     color: 'var(--text-primary)',
@@ -146,12 +146,12 @@ export default function ReportsTab() {
 
   const accentBtn: React.CSSProperties = {
     padding: '8px 16px',
-    borderRadius: 10,
+    borderRadius: 12,
     background: '#1A1A1B',
     border: 'none',
     color: '#FFFFFF',
-    fontSize: 13,
-    fontWeight: 600,
+    fontSize: 14,
+    fontWeight: 500,
     cursor: 'pointer',
     transition: 'all 200ms',
     display: 'flex',
@@ -161,20 +161,20 @@ export default function ReportsTab() {
 
   const ghostBtn: React.CSSProperties = {
     padding: '8px 16px',
-    borderRadius: 10,
+    borderRadius: 12,
     background: 'transparent',
     border: '1px solid var(--glass-interactive-border)',
     color: 'var(--text-primary)',
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: 500,
     cursor: 'pointer',
     transition: 'all 200ms',
   }
 
   const sectionHeader: React.CSSProperties = {
-    fontSize: 11,
-    fontWeight: 600,
-    letterSpacing: '0.08em',
+    fontSize: 14,
+    fontWeight: 500,
+    letterSpacing: '0.04em',
     textTransform: 'uppercase' as const,
     color: 'var(--text-dim)',
     marginBottom: 12,
@@ -183,7 +183,7 @@ export default function ReportsTab() {
   const listRow: React.CSSProperties = {
     display: 'flex',
     alignItems: 'center',
-    padding: '12px 18px',
+    padding: '12px 20px',
     borderRadius: 12,
     background: 'var(--glass-pill-bg)',
     backdropFilter: 'var(--glass-blur)',
@@ -325,7 +325,7 @@ export default function ReportsTab() {
                 ;(e.target as HTMLButtonElement).style.opacity = '1'
               }}
               style={{
-                padding: '6px',
+                padding: '8px',
                 background: 'none',
                 border: 'none',
                 color: 'var(--text-secondary)',
@@ -380,7 +380,7 @@ export default function ReportsTab() {
                       {REPORT_LABELS[r.report_type as ReportType] ?? r.report_type}
                     </div>
                     <div style={{
-                      fontSize: 12,
+                      fontSize: 14,
                       color: 'var(--text-secondary)',
                     }}>
                       Period: {r.period_from ?? '-'} • Generated: {new Date(r.created_at).toLocaleDateString('en-AU')}

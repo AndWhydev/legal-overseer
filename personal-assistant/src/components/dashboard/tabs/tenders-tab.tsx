@@ -135,14 +135,14 @@ const PIPELINE_STAGES: { key: PipelineStage; label: string }[] = [
 // ---------------------------------------------------------------------------
 
 const pageTitle: React.CSSProperties = {
-  fontSize: 22,
-  fontWeight: 700,
+  fontSize: 16,
+  fontWeight: 500,
   color: 'var(--text-primary)',
   letterSpacing: '-0.02em',
 };
 
 const pageSubtitle: React.CSSProperties = {
-  fontSize: 13,
+  fontSize: 14,
   color: 'var(--text-secondary)',
   marginTop: 4,
 };
@@ -159,8 +159,8 @@ const glassCard: React.CSSProperties = {
 
 const glassInput: React.CSSProperties = {
   width: '100%',
-  padding: '10px 14px',
-  borderRadius: 10,
+  padding: '12px 16px',
+  borderRadius: 12,
   background: 'var(--bg-card-solid)',
   border: '1px solid var(--border-subtle)',
   color: 'var(--text-primary)',
@@ -170,14 +170,14 @@ const glassInput: React.CSSProperties = {
 };
 
 const pillBtn: React.CSSProperties = {
-  padding: '6px 14px',
+  padding: '8px 16px',
   borderRadius: 20,
   background: 'var(--glass-pill-bg)',
   backdropFilter: 'var(--glass-card-blur)',
   WebkitBackdropFilter: 'var(--glass-card-blur)',
   boxShadow: 'var(--glass-card-inset)',
   border: 'none',
-  fontSize: 12,
+  fontSize: 14,
   color: 'var(--text-secondary)',
   cursor: 'pointer',
   transition: 'all 200ms',
@@ -185,23 +185,23 @@ const pillBtn: React.CSSProperties = {
 
 const accentBtn: React.CSSProperties = {
   padding: '8px 16px',
-  borderRadius: 10,
+  borderRadius: 12,
   background: '#1A1A1B',
   border: 'none',
   color: '#FFFFFF',
-  fontSize: 13,
-  fontWeight: 600,
+  fontSize: 14,
+  fontWeight: 500,
   cursor: 'pointer',
   transition: 'all 200ms',
 };
 
 const ghostBtn: React.CSSProperties = {
   padding: '8px 16px',
-  borderRadius: 10,
+  borderRadius: 12,
   background: 'transparent',
   border: '1px solid var(--glass-interactive-border)',
   color: 'var(--text-primary)',
-  fontSize: 13,
+  fontSize: 14,
   fontWeight: 500,
   cursor: 'pointer',
   transition: 'all 200ms',
@@ -210,7 +210,7 @@ const ghostBtn: React.CSSProperties = {
 const listRow: React.CSSProperties = {
   display: 'flex',
   alignItems: 'center',
-  padding: '12px 18px',
+  padding: '12px 20px',
   borderRadius: 12,
   background: 'var(--bb-surface)',
   backdropFilter: 'var(--glass-blur)',
@@ -222,9 +222,9 @@ const listRow: React.CSSProperties = {
 };
 
 const sectionHeader: React.CSSProperties = {
-  fontSize: 11,
-  fontWeight: 600,
-  letterSpacing: '0.08em',
+  fontSize: 14,
+  fontWeight: 500,
+  letterSpacing: '0.04em',
   textTransform: 'uppercase' as const,
   color: 'var(--text-dim)',
   marginBottom: 12,
@@ -233,10 +233,10 @@ const sectionHeader: React.CSSProperties = {
 const badge: React.CSSProperties = {
   display: 'inline-flex',
   alignItems: 'center',
-  padding: '3px 10px',
+  padding: '4px 12px',
   borderRadius: 8,
-  fontSize: 11,
-  fontWeight: 600,
+  fontSize: 14,
+  fontWeight: 500,
   letterSpacing: '0.02em',
   background: 'var(--glass-hover-bg)',
   color: 'var(--text-secondary)',
@@ -246,11 +246,11 @@ function coloredBadge(color: string): React.CSSProperties {
   return {
     display: 'inline-flex',
     alignItems: 'center',
-    gap: 6,
-    padding: '3px 10px',
+    gap: 8,
+    padding: '4px 12px',
     borderRadius: 8,
-    fontSize: 11,
-    fontWeight: 600,
+    fontSize: 14,
+    fontWeight: 500,
     letterSpacing: '0.02em',
     background: `${color}15`,
     color: color,
@@ -379,14 +379,14 @@ function TendersTab() {
 
         {/* View Toggles + Actions */}
         <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-          <div style={{ display: 'flex', borderRadius: 10, border: '1px solid var(--glass-interactive-border)', overflow: 'hidden' }}>
+          <div style={{ display: 'flex', borderRadius: 12, border: '1px solid var(--glass-interactive-border)', overflow: 'hidden' }}>
             {(['pipeline', 'list', 'profiles'] as const).map((v) => (
               <button
                 key={v}
                 onClick={() => setView(v)}
                 style={{
                   padding: '8px 16px',
-                  fontSize: 12,
+                  fontSize: 14,
                   fontWeight: 500,
                   background: view === v ? 'var(--glass-hover-bg)' : 'transparent',
                   color: view === v ? 'var(--text-primary)' : 'var(--text-secondary)',
@@ -460,11 +460,11 @@ function TendersTab() {
                   marginBottom: 16,
                   background: 'rgba(255, 90, 31, 0.15)',
                   color: 'var(--text-primary)',
-                  fontWeight: 600,
+                  fontWeight: 500,
                 }}
               >
                 <span>{stage.label}</span>
-                <span style={{ fontSize: 11, opacity: 0.7 }}>{stage.tenders.length}</span>
+                <span style={{ fontSize: 14, opacity: 0.7 }}>{stage.tenders.length}</span>
               </button>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -481,12 +481,12 @@ function TendersTab() {
                       background: hoveredTender === tender.id ? 'var(--hover-bg-strong)' : 'var(--bb-surface)',
                     }}
                   >
-                    <p style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', marginBottom: 8, lineHeight: 1.4 }}>
+                    <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)', marginBottom: 8, lineHeight: 1.4 }}>
                       {tender.title}
                     </p>
-                    <div style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 11, color: 'var(--text-secondary)', marginBottom: 8, width: '100%' }}>
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 14, color: 'var(--text-secondary)', marginBottom: 8, width: '100%' }}>
                       <span>{sourceLabel(tender.source)}</span>
-                      {tender.value && <span style={{ fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)', fontWeight: 600 }}>{formatMoney(tender.value)}</span>}
+                      {tender.value && <span style={{ fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)', fontWeight: 500 }}>{formatMoney(tender.value)}</span>}
                     </div>
                     {tender.fit_score !== null && (
                       <span style={coloredBadge(fitScoreColor(tender.fit_score))}>
@@ -503,7 +503,7 @@ function TendersTab() {
                       borderRadius: 12,
                       border: '1px dashed var(--border-active)',
                       textAlign: 'center',
-                      fontSize: 12,
+                      fontSize: 14,
                       color: 'var(--text-dim)',
                     }}
                   >
@@ -520,25 +520,25 @@ function TendersTab() {
       {view === 'list' && (
         <div style={{ ...glassCard, overflow: 'hidden' }}>
           <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', fontSize: 13 }}>
+            <table style={{ width: '100%', fontSize: 14 }}>
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--glass-interactive-border)', textAlign: 'left' }}>
-                  <th style={{ padding: '12px 16px', fontSize: 11, fontWeight: 600, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  <th style={{ padding: '12px 16px', fontSize: 14, fontWeight: 500, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                     Tender
                   </th>
-                  <th style={{ padding: '12px 16px', fontSize: 11, fontWeight: 600, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  <th style={{ padding: '12px 16px', fontSize: 14, fontWeight: 500, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                     Source
                   </th>
-                  <th style={{ padding: '12px 16px', fontSize: 11, fontWeight: 600, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  <th style={{ padding: '12px 16px', fontSize: 14, fontWeight: 500, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                     Value
                   </th>
-                  <th style={{ padding: '12px 16px', fontSize: 11, fontWeight: 600, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  <th style={{ padding: '12px 16px', fontSize: 14, fontWeight: 500, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                     Closing
                   </th>
-                  <th style={{ padding: '12px 16px', fontSize: 11, fontWeight: 600, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  <th style={{ padding: '12px 16px', fontSize: 14, fontWeight: 500, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                     Fit
                   </th>
-                  <th style={{ padding: '12px 16px', fontSize: 11, fontWeight: 600, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  <th style={{ padding: '12px 16px', fontSize: 14, fontWeight: 500, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                     Actions
                   </th>
                 </tr>
@@ -562,15 +562,15 @@ function TendersTab() {
                   >
                     <td style={{ padding: '12px 16px' }}>
                       <p style={{ fontWeight: 500, color: 'var(--text-primary)', marginBottom: 4 }}>{tender.title}</p>
-                      <p style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{tender.tender_number}</p>
+                      <p style={{ fontSize: 14, color: 'var(--text-secondary)' }}>{tender.tender_number}</p>
                     </td>
-                    <td style={{ padding: '12px 16px', fontSize: 12, color: 'var(--text-secondary)' }}>
+                    <td style={{ padding: '12px 16px', fontSize: 14, color: 'var(--text-secondary)' }}>
                       {sourceLabel(tender.source)}
                     </td>
-                    <td style={{ padding: '12px 16px', fontSize: 12, color: 'var(--text-secondary)', fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)', fontWeight: 600 }}>
+                    <td style={{ padding: '12px 16px', fontSize: 14, color: 'var(--text-secondary)', fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)', fontWeight: 500 }}>
                       {tender.value ? formatMoney(tender.value) : '--'}
                     </td>
-                    <td style={{ padding: '12px 16px', fontSize: 12, color: 'var(--text-secondary)' }}>
+                    <td style={{ padding: '12px 16px', fontSize: 14, color: 'var(--text-secondary)' }}>
                       {tender.deadline ? (
                         <span style={{ color: daysUntil(tender.deadline) < 7 ? 'var(--bb-red)' : 'inherit' }}>
                           {formatDate(tender.deadline)} ({daysUntil(tender.deadline)}d)
@@ -583,7 +583,7 @@ function TendersTab() {
                           {tender.fit_score}%
                         </span>
                       ) : (
-                        <span style={{ fontSize: 12, color: 'var(--text-dim)' }}>--</span>
+                        <span style={{ fontSize: 14, color: 'var(--text-dim)' }}>--</span>
                       )}
                     </td>
                     <td style={{ padding: '12px 16px' }}>
@@ -593,8 +593,8 @@ function TendersTab() {
                           disabled={actionLoading === tender.id}
                           style={{
                             ...ghostBtn,
-                            fontSize: 11,
-                            padding: '6px 10px',
+                            fontSize: 14,
+                            padding: '8px 12px',
                             background: 'rgba(59, 130, 246, 0.12)',
                             color: '#3b82f6',
                             opacity: actionLoading === tender.id ? 0.5 : 1,
@@ -617,8 +617,8 @@ function TendersTab() {
                           disabled={actionLoading === tender.id}
                           style={{
                             ...ghostBtn,
-                            fontSize: 11,
-                            padding: '6px 10px',
+                            fontSize: 14,
+                            padding: '8px 12px',
                             background: 'rgba(168, 85, 247, 0.12)',
                             color: '#a855f7',
                             opacity: actionLoading === tender.id ? 0.5 : 1,
@@ -686,10 +686,10 @@ function TendersTab() {
                     ...glassCard,
                   }}
                 >
-                  <h3 style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 8 }}>
+                  <h3 style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)', marginBottom: 8 }}>
                     {profile.name}
                   </h3>
-                  <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 12 }}>
+                  <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 12 }}>
                     {profile.service_category}
                   </p>
 
@@ -721,9 +721,9 @@ function TendersTab() {
 
                   {profile.max_contract_value && (
                     <div style={{ paddingTop: 12, borderTop: '1px solid var(--border-subtle)' }}>
-                      <p style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+                      <p style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
                         Max contract:{' '}
-                        <span style={{ fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)', fontWeight: 600, color: 'var(--text-primary)' }}>
+                        <span style={{ fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)', fontWeight: 500, color: 'var(--text-primary)' }}>
                           {formatMoney(profile.max_contract_value)}
                         </span>
                       </p>
@@ -789,10 +789,10 @@ function TenderDetailDrawer({ tender, response, onClose, onAction, actionLoading
           {/* Header */}
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 16 }}>
             <div style={{ flex: 1 }}>
-              <h2 style={{ fontSize: 18, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 8 }}>
+              <h2 style={{ fontSize: 16, fontWeight: 500, color: 'var(--text-primary)', marginBottom: 8 }}>
                 {tender.title}
               </h2>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--text-secondary)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, color: 'var(--text-secondary)' }}>
                 <span>{sourceLabel(tender.source)}</span>
                 {tender.tender_number && (
                   <>
@@ -828,23 +828,23 @@ function TenderDetailDrawer({ tender, response, onClose, onAction, actionLoading
           {/* Key metrics */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
             <div style={{ ...glassCard, padding: '12px', textAlign: 'center' }}>
-              <p style={{ fontSize: 10, color: 'var(--text-secondary)', marginBottom: 4, textTransform: 'uppercase', fontWeight: 600 }}>
+              <p style={{ fontSize: 10, color: 'var(--text-secondary)', marginBottom: 4, textTransform: 'uppercase', fontWeight: 500 }}>
                 Value
               </p>
-              <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)' }}>
+              <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)', fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)' }}>
                 {tender.value ? formatMoney(tender.value) : '--'}
               </p>
             </div>
             <div style={{ ...glassCard, padding: '12px', textAlign: 'center' }}>
-              <p style={{ fontSize: 10, color: 'var(--text-secondary)', marginBottom: 4, textTransform: 'uppercase', fontWeight: 600 }}>
+              <p style={{ fontSize: 10, color: 'var(--text-secondary)', marginBottom: 4, textTransform: 'uppercase', fontWeight: 500 }}>
                 Closing
               </p>
-              <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
+              <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>
                 {tender.deadline ? formatDate(tender.deadline) : '--'}
               </p>
             </div>
             <div style={{ ...glassCard, padding: '12px', textAlign: 'center' }}>
-              <p style={{ fontSize: 10, color: 'var(--text-secondary)', marginBottom: 4, textTransform: 'uppercase', fontWeight: 600 }}>
+              <p style={{ fontSize: 10, color: 'var(--text-secondary)', marginBottom: 4, textTransform: 'uppercase', fontWeight: 500 }}>
                 Fit Score
               </p>
               {tender.fit_score !== null ? (
@@ -852,7 +852,7 @@ function TenderDetailDrawer({ tender, response, onClose, onAction, actionLoading
                   {tender.fit_score}%
                 </span>
               ) : (
-                <p style={{ fontSize: 13, color: 'var(--text-dim)' }}>--</p>
+                <p style={{ fontSize: 14, color: 'var(--text-dim)' }}>--</p>
               )}
             </div>
           </div>
@@ -861,7 +861,7 @@ function TenderDetailDrawer({ tender, response, onClose, onAction, actionLoading
         {/* Scrollable content */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '24px' }}>
           {/* Actions */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 24 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 24 }}>
             <button
               onClick={() => onAction(tender.id, 'evaluate')}
               disabled={actionLoading === tender.id}
@@ -874,7 +874,7 @@ function TenderDetailDrawer({ tender, response, onClose, onAction, actionLoading
                 justifyContent: 'center',
                 gap: 8,
                 width: '100%',
-                padding: '10px 16px',
+                padding: '12px 16px',
                 opacity: actionLoading === tender.id ? 0.5 : 1,
                 background: hoveredBtn === 'evaluate' && actionLoading !== tender.id ? '#333333' : '#1A1A1B',
                 transform: hoveredBtn === 'evaluate' && actionLoading !== tender.id ? 'translateY(-1px)' : 'translateY(0)',
@@ -895,7 +895,7 @@ function TenderDetailDrawer({ tender, response, onClose, onAction, actionLoading
                 justifyContent: 'center',
                 gap: 8,
                 width: '100%',
-                padding: '10px 16px',
+                padding: '12px 16px',
                 background: '#eab308',
                 opacity: actionLoading === tender.id ? 0.5 : 1,
                 transform: hoveredBtn === 'compliance' && actionLoading !== tender.id ? 'translateY(-1px)' : 'translateY(0)',
@@ -916,7 +916,7 @@ function TenderDetailDrawer({ tender, response, onClose, onAction, actionLoading
                 justifyContent: 'center',
                 gap: 8,
                 width: '100%',
-                padding: '10px 16px',
+                padding: '12px 16px',
                 background: '#a855f7',
                 opacity: actionLoading === tender.id ? 0.5 : 1,
                 transform: hoveredBtn === 'response' && actionLoading !== tender.id ? 'translateY(-1px)' : 'translateY(0)',
@@ -936,8 +936,8 @@ function TenderDetailDrawer({ tender, response, onClose, onAction, actionLoading
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: 6,
-                fontSize: 12,
+                gap: 8,
+                fontSize: 14,
                 color: 'var(--bb-purple)',
                 textDecoration: 'none',
                 marginBottom: 24,
@@ -961,10 +961,10 @@ function TenderDetailDrawer({ tender, response, onClose, onAction, actionLoading
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {response.content.sections.map((section, i) => (
                   <div key={i} style={{ ...glassCard, padding: '16px' }}>
-                    <h4 style={{ fontSize: 12, fontWeight: 600, color: 'var(--bb-purple)', marginBottom: 8 }}>
+                    <h4 style={{ fontSize: 14, fontWeight: 500, color: 'var(--bb-purple)', marginBottom: 8 }}>
                       {section.title}
                     </h4>
-                    <p style={{ fontSize: 12, color: 'var(--text-secondary)', whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>
+                    <p style={{ fontSize: 14, color: 'var(--text-secondary)', whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>
                       {section.content}
                     </p>
                   </div>
@@ -977,13 +977,13 @@ function TenderDetailDrawer({ tender, response, onClose, onAction, actionLoading
           {response?.content?.compliance_matrix && response.content.compliance_matrix.length > 0 && (
             <div>
               <h3 style={sectionHeader}>Compliance Check</h3>
-              <div style={{ marginBottom: 12, fontSize: 12, color: 'var(--text-secondary)' }}>
+              <div style={{ marginBottom: 12, fontSize: 14, color: 'var(--text-secondary)' }}>
                 Score:{' '}
-                <span style={{ fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)', fontWeight: 600, color: 'var(--text-primary)' }}>
+                <span style={{ fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)', fontWeight: 500, color: 'var(--text-primary)' }}>
                   {response.compliance_score ?? '--'}%
                 </span>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {response.content.compliance_matrix.map((item, i) => (
                   <div
                     key={i}
@@ -1004,10 +1004,10 @@ function TenderDetailDrawer({ tender, response, onClose, onAction, actionLoading
                       <MinusCircle size={18} style={{ color: '#ef4444', flexShrink: 0, marginTop: 2 }} />
                     )}
                     <div style={{ flex: 1 }}>
-                      <p style={{ fontSize: 12, color: 'var(--text-primary)', marginBottom: 4 }}>
+                      <p style={{ fontSize: 14, color: 'var(--text-primary)', marginBottom: 4 }}>
                         {item.requirement}
                       </p>
-                      <p style={{ fontSize: 11, color: 'var(--text-secondary)' }}>
+                      <p style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
                         {item.evidence}
                       </p>
                     </div>

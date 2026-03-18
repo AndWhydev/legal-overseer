@@ -24,8 +24,8 @@ const headerStyle: React.CSSProperties = {
 }
 
 const titleStyle: React.CSSProperties = {
-  fontSize: 20,
-  fontWeight: 700,
+  fontSize: 16,
+  fontWeight: 500,
   color: 'var(--text-primary)',
   fontFamily: 'var(--font-sans)',
   letterSpacing: '-0.02em',
@@ -45,26 +45,26 @@ const kpiCardStyle: React.CSSProperties = {
   WebkitBackdropFilter: 'var(--glass-blur)',
   display: 'flex',
   flexDirection: 'column',
-  gap: 6,
+  gap: 8,
 }
 
 const kpiLabelStyle: React.CSSProperties = {
-  fontSize: 11,
+  fontSize: 14,
   color: 'var(--text-secondary)',
   textTransform: 'uppercase',
-  letterSpacing: '0.05em',
+  letterSpacing: '0.04em',
 }
 
 const kpiValueStyle: React.CSSProperties = {
-  fontSize: 28,
-  fontWeight: 800,
+  fontSize: 16,
+  fontWeight: 500,
   fontFamily: 'var(--font-mono)',
   letterSpacing: '-0.03em',
   lineHeight: 1,
 }
 
 const kpiSubStyle: React.CSSProperties = {
-  fontSize: 11,
+  fontSize: 14,
   color: 'var(--text-secondary)',
   opacity: 0.7,
 }
@@ -77,7 +77,7 @@ const sectionStyle: React.CSSProperties = {
 
 const sectionTitleStyle: React.CSSProperties = {
   fontSize: 14,
-  fontWeight: 600,
+  fontWeight: 500,
   color: 'var(--text-secondary)',
   textTransform: 'uppercase',
   letterSpacing: '0.04em',
@@ -87,7 +87,7 @@ const emptyStateStyle: React.CSSProperties = {
   padding: '32px 24px',
   textAlign: 'center',
   color: 'var(--text-secondary)',
-  fontSize: 13,
+  fontSize: 14,
   borderRadius: 'var(--radius-lg)',
   background: 'var(--bg-card)',
   backdropFilter: 'var(--glass-blur)',
@@ -136,8 +136,8 @@ export function RevenueRadar() {
         <span style={titleStyle}>Revenue Radar</span>
         {recoverable > 0 && (
           <span style={{
-            fontSize: 12,
-            fontWeight: 600,
+            fontSize: 14,
+            fontWeight: 500,
             color: 'var(--bb-orange)',
             background: 'var(--bb-orange-glow)',
             padding: '4px 12px',
@@ -211,7 +211,7 @@ export function RevenueRadar() {
         <span style={sectionTitleStyle}>
           Action Items ({insights.length})
           {totalAmountCents > 0 && (
-            <span style={{ fontWeight: 400, marginLeft: 8, fontSize: 12 }}>
+            <span style={{ fontWeight: 400, marginLeft: 8, fontSize: 14 }}>
               {formatCents(totalAmountCents)} total
             </span>
           )}

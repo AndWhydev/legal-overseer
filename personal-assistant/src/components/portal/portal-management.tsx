@@ -178,7 +178,7 @@ export function PortalManagement() {
         <div>
           {/* Invite Form */}
           <form onSubmit={handleInvite} style={{ ...glassCard, padding: 20, marginBottom: 24 }}>
-            <h3 style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary, #F1F5F9)', margin: '0 0 16px' }}>
+            <h3 style={{ fontSize: 16, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)', margin: '0 0 16px' }}>
               Invite Client to Portal
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -216,7 +216,7 @@ export function PortalManagement() {
                   type="submit"
                   disabled={inviting || !inviteForm.contact_id || !inviteForm.email}
                   style={{
-                    padding: '10px 20px',
+                    padding: '12px 20px',
                     borderRadius: 8,
                     background: '#FF5A1F',
                     color: '#FFFFFF',
@@ -237,8 +237,8 @@ export function PortalManagement() {
 
           {/* Access List */}
           <div style={glassCard}>
-            <div style={{ padding: '14px 20px', borderBottom: '1px solid rgba(255, 255, 255, 0.03)' }}>
-              <h3 style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary, #F1F5F9)', margin: 0 }}>
+            <div style={{ padding: '12px 20px', borderBottom: '1px solid rgba(255, 255, 255, 0.03)' }}>
+              <h3 style={{ fontSize: 16, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)', margin: 0 }}>
                 Portal Access ({accessList.length})
               </h3>
             </div>
@@ -252,7 +252,7 @@ export function PortalManagement() {
                   key={access.id}
                   className="flex items-center justify-between"
                   style={{
-                    padding: '14px 20px',
+                    padding: '12px 20px',
                     borderBottom: i < accessList.length - 1 ? '1px solid rgba(255, 255, 255, 0.03)' : 'none',
                   }}
                 >
@@ -260,17 +260,17 @@ export function PortalManagement() {
                     <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)', margin: 0 }}>
                       {access.contacts?.name ?? access.email}
                     </p>
-                    <p style={{ fontSize: 13, color: 'var(--text-secondary, #94A3B8)', margin: '2px 0 0' }}>
+                    <p style={{ fontSize: 14, color: 'var(--text-secondary, #94A3B8)', margin: '2px 0 0' }}>
                       {access.email}
                     </p>
                   </div>
                   <div className="flex items-center gap-3">
                     <span
                       style={{
-                        fontSize: 12,
+                        fontSize: 14,
                         fontWeight: 500,
-                        padding: '3px 10px',
-                        borderRadius: 6,
+                        padding: '4px 12px',
+                        borderRadius: 8,
                         background: access.status === 'active' ? 'rgba(34, 197, 94, 0.12)' : access.status === 'invited' ? 'rgba(234, 179, 8, 0.12)' : 'rgba(239, 68, 68, 0.12)',
                         color: access.status === 'active' ? '#22c55e' : access.status === 'invited' ? '#eab308' : '#ef4444',
                         textTransform: 'capitalize',
@@ -279,7 +279,7 @@ export function PortalManagement() {
                       {access.status}
                     </span>
                     {access.last_login_at && (
-                      <span style={{ fontSize: 12, color: 'var(--text-dim, #475569)' }}>
+                      <span style={{ fontSize: 14, color: 'var(--text-dim, #475569)' }}>
                         Last login: {new Date(access.last_login_at).toLocaleDateString('en-AU')}
                       </span>
                     )}
@@ -287,12 +287,12 @@ export function PortalManagement() {
                       <button
                         onClick={() => handleRevoke(access.id)}
                         style={{
-                          padding: '6px 12px',
-                          borderRadius: 6,
+                          padding: '8px 12px',
+                          borderRadius: 8,
                           background: 'transparent',
                           border: '1px solid rgba(239, 68, 68, 0.3)',
                           color: '#ef4444',
-                          fontSize: 12,
+                          fontSize: 14,
                           cursor: 'pointer',
                           transition: 'all 150ms',
                         }}
@@ -310,11 +310,11 @@ export function PortalManagement() {
 
       {tab === 'branding' && (
         <form onSubmit={handleSaveBranding} style={glassCard}>
-          <div style={{ padding: '14px 20px', borderBottom: '1px solid rgba(255, 255, 255, 0.03)' }}>
-            <h3 style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary, #F1F5F9)', margin: 0 }}>
+          <div style={{ padding: '12px 20px', borderBottom: '1px solid rgba(255, 255, 255, 0.03)' }}>
+            <h3 style={{ fontSize: 16, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)', margin: 0 }}>
               Portal Branding
             </h3>
-            <p style={{ fontSize: 13, color: 'var(--text-secondary, #94A3B8)', margin: '4px 0 0' }}>
+            <p style={{ fontSize: 14, color: 'var(--text-secondary, #94A3B8)', margin: '4px 0 0' }}>
               Customize how your client portal looks
             </p>
           </div>
@@ -348,7 +348,7 @@ export function PortalManagement() {
                     type="color"
                     value={branding.primary_color}
                     onChange={e => setBranding(prev => ({ ...prev, primary_color: e.target.value }))}
-                    style={{ width: 40, height: 36, border: 'none', borderRadius: 6, cursor: 'pointer' }}
+                    style={{ width: 40, height: 36, border: 'none', borderRadius: 8, cursor: 'pointer' }}
                   />
                   <input
                     type="text"
@@ -365,7 +365,7 @@ export function PortalManagement() {
                     type="color"
                     value={branding.accent_color}
                     onChange={e => setBranding(prev => ({ ...prev, accent_color: e.target.value }))}
-                    style={{ width: 40, height: 36, border: 'none', borderRadius: 6, cursor: 'pointer' }}
+                    style={{ width: 40, height: 36, border: 'none', borderRadius: 8, cursor: 'pointer' }}
                   />
                   <input
                     type="text"
@@ -392,7 +392,7 @@ export function PortalManagement() {
                     type="color"
                     value={branding.background_color}
                     onChange={e => setBranding(prev => ({ ...prev, background_color: e.target.value }))}
-                    style={{ width: 40, height: 36, border: 'none', borderRadius: 6, cursor: 'pointer' }}
+                    style={{ width: 40, height: 36, border: 'none', borderRadius: 8, cursor: 'pointer' }}
                   />
                   <input
                     type="text"
@@ -441,13 +441,13 @@ export function PortalManagement() {
                         justifyContent: 'center',
                         color: '#FFFFFF',
                         fontSize: 14,
-                        fontWeight: 600,
+                        fontWeight: 500,
                       }}
                     >
                       {(branding.company_name || 'A').charAt(0)}
                     </div>
                   )}
-                  <span style={{ fontSize: 16, fontWeight: 600, color: '#111827' }}>
+                  <span style={{ fontSize: 16, fontWeight: 500, color: '#111827' }}>
                     {branding.company_name || 'Your Agency'}
                   </span>
                 </div>
@@ -456,9 +456,9 @@ export function PortalManagement() {
                     <span
                       key={item}
                       style={{
-                        padding: '6px 14px',
-                        borderRadius: 6,
-                        fontSize: 13,
+                        padding: '8px 16px',
+                        borderRadius: 8,
+                        fontSize: 14,
                         color: idx === 0 ? branding.primary_color : '#6B7280',
                         background: idx === 0 ? `${branding.primary_color}0D` : 'transparent',
                         fontWeight: idx === 0 ? 500 : 400,
@@ -475,7 +475,7 @@ export function PortalManagement() {
               type="submit"
               disabled={savingBranding}
               style={{
-                padding: '10px 24px',
+                padding: '12px 24px',
                 borderRadius: 8,
                 background: '#FF5A1F',
                 color: '#FFFFFF',
@@ -508,15 +508,15 @@ const glassCard: React.CSSProperties = {
 
 const darkLabelStyle: React.CSSProperties = {
   display: 'block',
-  fontSize: 13,
+  fontSize: 14,
   fontWeight: 500,
   color: 'var(--text-secondary, #94A3B8)',
-  marginBottom: 6,
+  marginBottom: 8,
 }
 
 const darkInputStyle: React.CSSProperties = {
   width: '100%',
-  padding: '10px 14px',
+  padding: '12px 16px',
   borderRadius: 8,
   border: '1px solid rgba(255, 255, 255, 0.06)',
   fontSize: 14,

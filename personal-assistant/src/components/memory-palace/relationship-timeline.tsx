@@ -93,13 +93,13 @@ export function RelationshipTimeline({ entityId, entityName }: RelationshipTimel
       }}>
         <div style={{
           fontSize: '16px',
-          fontWeight: 700,
+          fontWeight: 500,
           color: 'rgba(255, 255, 255, 0.9)',
         }}>
           {displayName}
         </div>
         <div style={{
-          fontSize: '13px',
+          fontSize: '14px',
           color: 'rgba(255, 255, 255, 0.4)',
           marginTop: '2px',
         }}>
@@ -112,8 +112,8 @@ export function RelationshipTimeline({ entityId, entityName }: RelationshipTimel
         <div key={gi}>
           {/* Month Header */}
           <div style={{
-            fontSize: '12px',
-            fontWeight: 600,
+            fontSize: '14px',
+            fontWeight: 500,
             color: 'rgba(255, 255, 255, 0.3)',
             padding: '8px 16px',
             textTransform: 'uppercase',
@@ -158,14 +158,14 @@ export function RelationshipTimeline({ entityId, entityName }: RelationshipTimel
                   <div style={{
                     width: '24px',
                     height: '24px',
-                    borderRadius: '6px',
+                    borderRadius: '8px',
                     background: `${color}20`,
                     color,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    fontSize: '10px',
-                    fontWeight: 700,
+                    fontSize: '14px',
+                    fontWeight: 500,
                     flexShrink: 0,
                   }}>
                     {icon}
@@ -194,15 +194,15 @@ export function RelationshipTimeline({ entityId, entityName }: RelationshipTimel
                     marginBottom: '4px',
                   }}>
                     <span style={{
-                      fontSize: '13px',
-                      fontWeight: 600,
+                      fontSize: '14px',
+                      fontWeight: 500,
                       color: 'rgba(255, 255, 255, 0.85)',
                     }}>
                       {event.title}
                     </span>
                     <span style={{ flex: 1 }} />
                     <span style={{
-                      fontSize: '11px',
+                      fontSize: '14px',
                       color: 'rgba(255, 255, 255, 0.3)',
                     }}>
                       {day} {time}
@@ -210,7 +210,7 @@ export function RelationshipTimeline({ entityId, entityName }: RelationshipTimel
                   </div>
 
                   <div style={{
-                    fontSize: '12px',
+                    fontSize: '14px',
                     color: 'rgba(255, 255, 255, 0.5)',
                     lineHeight: '1.5',
                     overflow: 'hidden',
@@ -228,11 +228,11 @@ export function RelationshipTimeline({ entityId, entityName }: RelationshipTimel
                       marginTop: '4px',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '6px',
+                      gap: '8px',
                     }}>
                       <div style={{
                         width: '40px',
-                        height: '3px',
+                        height: '4px',
                         borderRadius: '2px',
                         background: 'rgba(255, 255, 255, 0.08)',
                         overflow: 'hidden',
@@ -246,7 +246,7 @@ export function RelationshipTimeline({ entityId, entityName }: RelationshipTimel
                         }} />
                       </div>
                       <span style={{
-                        fontSize: '10px',
+                        fontSize: '14px',
                         color: 'rgba(255, 255, 255, 0.3)',
                       }}>
                         {Math.round(event.confidence * 100)}%

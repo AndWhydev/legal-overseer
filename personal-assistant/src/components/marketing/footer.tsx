@@ -64,11 +64,11 @@ export default function Footer() {
             <h4
               style={{
                 fontSize: '14px',
-                fontWeight: 600,
+                fontWeight: 500,
                 color: '#F1F5F9',
                 marginBottom: '20px',
                 textTransform: 'uppercase',
-                letterSpacing: '0.08em',
+                letterSpacing: '0.04em',
               }}
             >
               Product
@@ -79,7 +79,7 @@ export default function Footer() {
                   <a
                     href={link.href}
                     style={{
-                      fontSize: '13px',
+                      fontSize: '14px',
                       color: '#94A3B8',
                       textDecoration: 'none',
                       transition: 'color 200ms',
@@ -104,11 +104,11 @@ export default function Footer() {
             <h4
               style={{
                 fontSize: '14px',
-                fontWeight: 600,
+                fontWeight: 500,
                 color: '#F1F5F9',
                 marginBottom: '20px',
                 textTransform: 'uppercase',
-                letterSpacing: '0.08em',
+                letterSpacing: '0.04em',
               }}
             >
               Company
@@ -119,7 +119,7 @@ export default function Footer() {
                   <a
                     href={link.href}
                     style={{
-                      fontSize: '13px',
+                      fontSize: '14px',
                       color: '#94A3B8',
                       textDecoration: 'none',
                       transition: 'color 200ms',
@@ -144,11 +144,11 @@ export default function Footer() {
             <h4
               style={{
                 fontSize: '14px',
-                fontWeight: 600,
+                fontWeight: 500,
                 color: '#F1F5F9',
                 marginBottom: '20px',
                 textTransform: 'uppercase',
-                letterSpacing: '0.08em',
+                letterSpacing: '0.04em',
               }}
             >
               Legal
@@ -159,7 +159,7 @@ export default function Footer() {
                   <a
                     href={link.href}
                     style={{
-                      fontSize: '13px',
+                      fontSize: '14px',
                       color: '#94A3B8',
                       textDecoration: 'none',
                       transition: 'color 200ms',
@@ -184,18 +184,18 @@ export default function Footer() {
             <h4
               style={{
                 fontSize: '14px',
-                fontWeight: 600,
+                fontWeight: 500,
                 color: '#F1F5F9',
                 marginBottom: '20px',
                 textTransform: 'uppercase',
-                letterSpacing: '0.08em',
+                letterSpacing: '0.04em',
               }}
             >
               Connect
             </h4>
             <p
               style={{
-                fontSize: '13px',
+                fontSize: '14px',
                 color: '#94A3B8',
                 marginBottom: '16px',
                 lineHeight: 1.6,
@@ -223,7 +223,7 @@ export default function Footer() {
                     background: 'rgba(255, 255, 255, 0.05)',
                     border: '1px solid rgba(255, 255, 255, 0.1)',
                     color: '#F1F5F9',
-                    fontSize: '13px',
+                    fontSize: '14px',
                     transition: 'all 200ms',
                   }}
                   onFocus={(e) => {
@@ -243,8 +243,8 @@ export default function Footer() {
                     background: '#10b981',
                     border: 'none',
                     color: '#000',
-                    fontSize: '13px',
-                    fontWeight: 600,
+                    fontSize: '14px',
+                    fontWeight: 500,
                     cursor: 'pointer',
                     transition: 'all 200ms',
                   }}
@@ -261,7 +261,7 @@ export default function Footer() {
               {subscribed && (
                 <p
                   style={{
-                    fontSize: '12px',
+                    fontSize: '14px',
                     color: '#10b981',
                     margin: 0,
                   }}
@@ -334,7 +334,7 @@ export default function Footer() {
             <div>
               <p
                 style={{
-                  fontSize: '13px',
+                  fontSize: '14px',
                   color: '#475569',
                   margin: 0,
                   marginBottom: '8px',
@@ -347,7 +347,7 @@ export default function Footer() {
                   display: 'flex',
                   alignItems: 'center',
                   gap: '8px',
-                  fontSize: '12px',
+                  fontSize: '14px',
                   color: '#94A3B8',
                 }}
               >
@@ -358,7 +358,7 @@ export default function Footer() {
 
             <div
               style={{
-                fontSize: '12px',
+                fontSize: '14px',
                 color: '#94A3B8',
               }}
             >

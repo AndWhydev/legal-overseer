@@ -95,10 +95,10 @@ export function ApprovalCard({ approval, isResolving = false, onApprove, onRejec
   const badge: React.CSSProperties = {
     display: 'inline-flex',
     alignItems: 'center',
-    padding: '3px 10px',
+    padding: '4px 12px',
     borderRadius: 8,
-    fontSize: 11,
-    fontWeight: 600,
+    fontSize: 14,
+    fontWeight: 500,
     letterSpacing: '0.02em',
     background: 'var(--glass-hover-bg)',
     color: 'var(--text-secondary)',
@@ -107,10 +107,10 @@ export function ApprovalCard({ approval, isResolving = false, onApprove, onRejec
   const coloredBadge = (color: string): React.CSSProperties => ({
     display: 'inline-flex',
     alignItems: 'center',
-    padding: '3px 10px',
+    padding: '4px 12px',
     borderRadius: 8,
-    fontSize: 11,
-    fontWeight: 600,
+    fontSize: 14,
+    fontWeight: 500,
     letterSpacing: '0.02em',
     background: `${color}15`,
     color: color,
@@ -130,14 +130,14 @@ export function ApprovalCard({ approval, isResolving = false, onApprove, onRejec
 
   const cardTitle: React.CSSProperties = {
     fontSize: 16,
-    fontWeight: 600,
+    fontWeight: 500,
     color: 'var(--text-primary)',
     lineHeight: 1.4,
     margin: 0,
   };
 
   const subtitle: React.CSSProperties = {
-    fontSize: 13,
+    fontSize: 14,
     color: 'var(--text-secondary)',
     margin: '4px 0 0 0',
   };
@@ -149,9 +149,9 @@ export function ApprovalCard({ approval, isResolving = false, onApprove, onRejec
   };
 
   const sectionLabel: React.CSSProperties = {
-    fontSize: 11,
-    fontWeight: 600,
-    letterSpacing: '0.08em',
+    fontSize: 14,
+    fontWeight: 500,
+    letterSpacing: '0.04em',
     textTransform: 'uppercase' as const,
     color: 'var(--text-dim)',
     marginBottom: 8,
@@ -171,12 +171,12 @@ export function ApprovalCard({ approval, isResolving = false, onApprove, onRejec
   };
 
   const definitionTerm: React.CSSProperties = {
-    fontSize: 13,
+    fontSize: 14,
     color: 'var(--text-secondary)',
   };
 
   const definitionData: React.CSSProperties = {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: 500,
     color: 'var(--text-primary)',
     textAlign: 'right' as const,
@@ -191,37 +191,37 @@ export function ApprovalCard({ approval, isResolving = false, onApprove, onRejec
   const approveBtn: React.CSSProperties = {
     flex: 1,
     padding: '8px 16px',
-    borderRadius: 10,
+    borderRadius: 12,
     background: '#1A1A1B',
     border: 'none',
     color: '#FFFFFF',
-    fontSize: 13,
-    fontWeight: 600,
+    fontSize: 14,
+    fontWeight: 500,
     cursor: isResolving ? 'not-allowed' : 'pointer',
     transition: 'all 200ms',
     opacity: isResolving ? 0.6 : 1,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
+    gap: 8,
   };
 
   const rejectBtn: React.CSSProperties = {
     flex: 1,
     padding: '8px 16px',
-    borderRadius: 10,
+    borderRadius: 12,
     background: 'transparent',
     border: '1px solid var(--status-error-border)',
     color: 'var(--bb-red)',
-    fontSize: 13,
-    fontWeight: 600,
+    fontSize: 14,
+    fontWeight: 500,
     cursor: isResolving ? 'not-allowed' : 'pointer',
     transition: 'all 200ms',
     opacity: isResolving ? 0.6 : 1,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
+    gap: 8,
   };
 
   return (

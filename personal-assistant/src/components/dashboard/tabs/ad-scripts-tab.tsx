@@ -124,11 +124,11 @@ const glassCard: React.CSSProperties = {
 
 const ghostBtn: React.CSSProperties = {
   padding: '8px 16px',
-  borderRadius: 10,
+  borderRadius: 12,
   background: 'transparent',
   border: '1px solid var(--glass-interactive-border)',
   color: 'var(--text-primary)',
-  fontSize: 13,
+  fontSize: 14,
   fontWeight: 500,
   cursor: 'pointer',
   transition: 'all 200ms',
@@ -136,25 +136,25 @@ const ghostBtn: React.CSSProperties = {
 
 const accentBtn: React.CSSProperties = {
   padding: '8px 16px',
-  borderRadius: 10,
+  borderRadius: 12,
   background: '#1A1A1B',
   border: 'none',
   color: '#FFFFFF',
-  fontSize: 13,
-  fontWeight: 600,
+  fontSize: 14,
+  fontWeight: 500,
   cursor: 'pointer',
   transition: 'all 200ms',
 }
 
 const pillBtn: React.CSSProperties = {
-  padding: '6px 14px',
+  padding: '8px 16px',
   borderRadius: 20,
   background: 'var(--glass-pill-bg)',
   backdropFilter: 'var(--glass-card-blur)',
   WebkitBackdropFilter: 'var(--glass-card-blur)',
   boxShadow: 'var(--glass-card-inset)',
   border: 'none',
-  fontSize: 12,
+  fontSize: 14,
   color: 'var(--text-secondary)',
   cursor: 'pointer',
   transition: 'all 200ms',
@@ -162,8 +162,8 @@ const pillBtn: React.CSSProperties = {
 
 const glassInput: React.CSSProperties = {
   width: '100%',
-  padding: '10px 14px',
-  borderRadius: 10,
+  padding: '12px 16px',
+  borderRadius: 12,
   background: 'rgba(13, 17, 23, 0.6)',
   border: '1px solid rgba(255, 255, 255, 0.05)',
   color: 'var(--text-primary)',
@@ -174,8 +174,8 @@ const glassInput: React.CSSProperties = {
 
 const glassSelect: React.CSSProperties = {
   width: '100%',
-  padding: '10px 14px',
-  borderRadius: 10,
+  padding: '12px 16px',
+  borderRadius: 12,
   background: 'rgba(13, 17, 23, 0.6)',
   border: '1px solid rgba(255, 255, 255, 0.05)',
   color: 'var(--text-primary)',
@@ -188,7 +188,7 @@ const glassSelect: React.CSSProperties = {
 const listRow: React.CSSProperties = {
   display: 'flex',
   alignItems: 'center',
-  padding: '12px 18px',
+  padding: '12px 20px',
   borderRadius: 12,
   background: 'var(--glass-pill-bg)',
   backdropFilter: 'var(--glass-blur)',
@@ -200,9 +200,9 @@ const listRow: React.CSSProperties = {
 }
 
 const sectionHeader: React.CSSProperties = {
-  fontSize: 11,
-  fontWeight: 600,
-  letterSpacing: '0.08em',
+  fontSize: 14,
+  fontWeight: 500,
+  letterSpacing: '0.04em',
   textTransform: 'uppercase' as const,
   color: 'var(--text-dim)',
   marginBottom: 12,
@@ -244,7 +244,7 @@ function CopyButton({ text }: { text: string }) {
       title="Copy to clipboard"
     >
       {copied ? <Check size={12} /> : <Copy size={12} />}
-      <span style={{ fontSize: 11 }}>{copied ? 'Copied' : 'Copy'}</span>
+      <span style={{ fontSize: 14 }}>{copied ? 'Copied' : 'Copy'}</span>
     </button>
   )
 }
@@ -264,7 +264,7 @@ function StoryboardView({ shots }: { shots: StoryboardShot[] }) {
           display: 'flex',
           alignItems: 'center',
           gap: 4,
-          fontSize: 12,
+          fontSize: 14,
           color: 'var(--text-secondary)',
           background: 'transparent',
           border: 'none',
@@ -297,23 +297,23 @@ function StoryboardView({ shots }: { shots: StoryboardShot[] }) {
                   marginBottom: 8,
                 }}
               >
-                <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)' }}>
+                <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-secondary)' }}>
                   Shot {shot.shotNumber}
                 </span>
-                <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>
+                <span style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
                   {shot.startTime}s - {shot.endTime}s ({shot.duration}s)
                 </span>
               </div>
-              <p style={{ fontSize: 14, marginBottom: 6, color: 'var(--text-primary)' }}>
+              <p style={{ fontSize: 14, marginBottom: 8, color: 'var(--text-primary)' }}>
                 {shot.visual}
               </p>
               {shot.textOverlay && (
-                <p style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+                <p style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
                   Text: <span style={{ color: 'rgba(241, 245, 249, 0.8)' }}>{shot.textOverlay}</span>
                 </p>
               )}
               {shot.audio && (
-                <p style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+                <p style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
                   Audio: <span style={{ color: 'rgba(241, 245, 249, 0.8)' }}>{shot.audio}</span>
                 </p>
               )}
@@ -345,7 +345,7 @@ function ScriptCard({ script }: { script: AdScript }) {
             style={{
               ...pillBtn,
               ...PLATFORM_COLORS[script.platform],
-              padding: '6px 12px',
+              padding: '8px 12px',
               borderRadius: 16,
             }}
           >
@@ -354,13 +354,13 @@ function ScriptCard({ script }: { script: AdScript }) {
           <span
             style={{
               ...pillBtn,
-              padding: '6px 12px',
+              padding: '8px 12px',
               borderRadius: 16,
             }}
           >
             {HOOK_LABELS[script.hookType]}
           </span>
-          <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+          <span style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
             {script.duration}s
           </span>
         </div>
@@ -406,7 +406,7 @@ function VariationCard({ variation }: { variation: AdScriptVariation }) {
           <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>
             {variation.variantLabel}
           </span>
-          <span style={{ fontSize: 12, ...TONE_COLORS[variation.tone] }}>
+          <span style={{ fontSize: 14, ...TONE_COLORS[variation.tone] }}>
             {variation.tone}
           </span>
         </div>
@@ -484,7 +484,7 @@ function GenerateForm({
       }}
     >
       <div>
-        <label style={{ display: 'block', fontSize: 14, fontWeight: 500, marginBottom: 6, color: 'var(--text-primary)' }}>
+        <label style={{ display: 'block', fontSize: 14, fontWeight: 500, marginBottom: 8, color: 'var(--text-primary)' }}>
           Service / Offer Package
         </label>
         <select
@@ -633,11 +633,11 @@ function HistorySection({ batches, onSelect }: { batches: SavedBatch[]; onSelect
               <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>
                 {b.offer_name}
               </span>
-              <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+              <span style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
                 {new Date(b.created_at).toLocaleDateString()}
               </span>
             </div>
-            <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 4 }}>
+            <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 4 }}>
               {b.scripts.length} script{b.scripts.length !== 1 ? 's' : ''}
               {b.variations.length > 0 ? ` + ${b.variations.length} variations` : ''}
             </p>
@@ -776,7 +776,7 @@ function AdScriptsTab() {
             {/* Current result */}
             {currentResult && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                <h2 style={{ fontSize: 18, fontWeight: 600, color: 'var(--text-primary)' }}>
+                <h2 style={{ fontSize: 16, fontWeight: 500, color: 'var(--text-primary)' }}>
                   Scripts for {currentResult.offerName}
                 </h2>
 
@@ -794,7 +794,7 @@ function AdScriptsTab() {
 
                 {currentResult.variations.length > 0 && (
                   <>
-                    <h3 style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-secondary)', marginTop: 8 }}>
+                    <h3 style={{ fontSize: 16, fontWeight: 500, color: 'var(--text-secondary)', marginTop: 8 }}>
                       A/B Variations
                     </h3>
                     <div

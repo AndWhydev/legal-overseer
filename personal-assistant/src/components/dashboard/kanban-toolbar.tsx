@@ -24,13 +24,13 @@ interface KanbanToolbarProps {
 const chipBase: React.CSSProperties = {
   display: 'inline-flex',
   alignItems: 'center',
-  gap: 5,
-  padding: '4px 10px',
+  gap: 4,
+  padding: '4px 12px',
   borderRadius: 20,
   background: 'var(--bb-surface)',
   boxShadow: 'var(--card-inset)',
   border: 'none',
-  fontSize: 12,
+  fontSize: 14,
   fontWeight: 500,
   color: 'var(--text-secondary)',
   cursor: 'pointer',
@@ -52,9 +52,9 @@ const menuStyle: React.CSSProperties = {
   background: 'var(--glass-bg-heavy)',
   backdropFilter: 'var(--glass-blur)',
   WebkitBackdropFilter: 'var(--glass-blur)',
-  borderRadius: 14,
+  borderRadius: 12,
   boxShadow: 'var(--card-shadow-hover), var(--card-inset)',
-  padding: '6px',
+  padding: '8px',
   zIndex: 10,
   overflow: 'hidden',
 }
@@ -105,13 +105,13 @@ export function KanbanToolbar({
       display: 'flex',
       alignItems: 'center',
       gap: 8,
-      paddingBottom: 10,
+      paddingBottom: 12,
       flexShrink: 0,
     }}>
       {/* Left: Title + count */}
       <h2 style={{
-        fontSize: 15,
-        fontWeight: 700,
+        fontSize: 16,
+        fontWeight: 500,
         color: 'var(--text-primary)',
         letterSpacing: '-0.01em',
         margin: 0,
@@ -119,12 +119,12 @@ export function KanbanToolbar({
         Tasks
       </h2>
       <span style={{
-        fontSize: 11,
-        fontWeight: 600,
+        fontSize: 14,
+        fontWeight: 500,
         color: 'var(--text-dim)',
         background: 'var(--border-subtle)',
         borderRadius: 99,
-        padding: '1px 7px',
+        padding: '4px 8px',
       }}>
         {totalCount}
       </span>
@@ -137,12 +137,12 @@ export function KanbanToolbar({
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: '2px 8px',
-            borderRadius: 10,
+            padding: '4px 8px',
+            borderRadius: 12,
             background: '#EF4444',
             border: 'none',
-            fontSize: 11,
-            fontWeight: 700,
+            fontSize: 14,
+            fontWeight: 500,
             color: '#FFFFFF',
             cursor: 'pointer',
             fontFamily: 'inherit',
@@ -197,12 +197,12 @@ export function KanbanToolbar({
                   style={{
                     display: 'block',
                     width: '100%',
-                    padding: '7px 10px',
+                    padding: '8px 12px',
                     borderRadius: 8,
                     border: 'none',
                     background: isActive ? 'var(--hover-bg-strong)' : isHov ? 'var(--hover-bg)' : 'transparent',
                     color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
-                    fontSize: 12,
+                    fontSize: 14,
                     fontWeight: isActive ? 600 : 400,
                     cursor: 'pointer',
                     textAlign: 'left',
@@ -261,12 +261,12 @@ export function KanbanToolbar({
                   style={{
                     display: 'block',
                     width: '100%',
-                    padding: '7px 10px',
+                    padding: '8px 12px',
                     borderRadius: 8,
                     border: 'none',
                     background: isActive ? 'var(--hover-bg-strong)' : isHov ? 'var(--hover-bg)' : 'transparent',
                     color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
-                    fontSize: 12,
+                    fontSize: 14,
                     fontWeight: isActive ? 600 : 400,
                     cursor: 'pointer',
                     textAlign: 'left',
@@ -289,8 +289,8 @@ export function KanbanToolbar({
       <div style={{
         display: 'flex',
         alignItems: 'center',
-        gap: 5,
-        padding: '4px 10px',
+        gap: 4,
+        padding: '4px 12px',
         borderRadius: 20,
         background: searchExpanded ? 'var(--glass-bg-heavy)' : 'var(--bb-surface)',
         backdropFilter: searchExpanded ? 'blur(12px)' : 'none',
@@ -328,7 +328,7 @@ export function KanbanToolbar({
               background: 'transparent',
               border: 'none',
               outline: 'none',
-              fontSize: 12,
+              fontSize: 14,
               color: 'var(--text-primary)',
               padding: 0,
               fontFamily: 'inherit',
@@ -347,7 +347,7 @@ export function KanbanToolbar({
           ...chipBase,
           background: 'var(--hover-bg)',
           color: 'var(--text-secondary)',
-          padding: '4px 10px',
+          padding: '4px 12px',
         }}
         onMouseEnter={(e) => {
           e.currentTarget.style.background = 'var(--border-active)'

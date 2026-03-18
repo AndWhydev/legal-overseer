@@ -91,13 +91,13 @@ export function LeadDetailDrawer({ lead, open, onClose, onUpdate, onAdvanceStage
           gap: 12,
         }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+            <h2 style={{ fontSize: 16, fontWeight: 500, color: 'var(--text-primary)', margin: 0 }}>
               {displayName}
             </h2>
             <button
               onClick={onClose}
               style={{
-                padding: 6,
+                padding: 8,
                 borderRadius: 8,
                 border: 'none',
                 background: 'var(--hover-bg)',
@@ -115,9 +115,9 @@ export function LeadDetailDrawer({ lead, open, onClose, onUpdate, onAdvanceStage
               value={lead.status}
               onChange={(e) => onUpdate(lead.id, { status: e.target.value })}
               style={{
-                fontSize: 12,
-                fontWeight: 600,
-                padding: '4px 10px',
+                fontSize: 14,
+                fontWeight: 500,
+                padding: '4px 12px',
                 borderRadius: 8,
                 border: '1px solid var(--border-active)',
                 background: 'var(--bb-surface)',
@@ -137,7 +137,7 @@ export function LeadDetailDrawer({ lead, open, onClose, onUpdate, onAdvanceStage
               dot
             />
 
-            <span style={{ fontSize: 10, textTransform: 'uppercase', fontFamily: 'var(--font-mono)', color: 'var(--text-dim)' }}>
+            <span style={{ fontSize: 14, textTransform: 'uppercase', fontFamily: 'var(--font-mono)', color: 'var(--text-dim)' }}>
               {lead.source_channel}
             </span>
 
@@ -146,7 +146,7 @@ export function LeadDetailDrawer({ lead, open, onClose, onUpdate, onAdvanceStage
                 href={lead.prospect_website.startsWith('http') ? lead.prospect_website : `https://${lead.prospect_website}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--bb-cyan)', fontSize: 11, textDecoration: 'none' }}
+                style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--bb-cyan)', fontSize: 14, textDecoration: 'none' }}
               >
                 <ExternalLink style={{ width: 12, height: 12 }} />
                 {lead.prospect_domain ?? 'Website'}
@@ -155,7 +155,7 @@ export function LeadDetailDrawer({ lead, open, onClose, onUpdate, onAdvanceStage
           </div>
 
           {/* Quick stats */}
-          <div style={{ display: 'flex', gap: 16, fontSize: 12, color: 'var(--text-dim)' }}>
+          <div style={{ display: 'flex', gap: 16, fontSize: 14, color: 'var(--text-dim)' }}>
             <span>Value: <strong style={{ color: 'var(--text-primary)' }}>{formatCurrency(lead.estimated_value)}</strong></span>
             <span>Speed: <strong style={{ color: speedLevel === 'fast' ? 'var(--bb-green)' : speedLevel === 'ok' ? 'var(--bb-amber)' : 'var(--bb-red)' }}>
               {formatSpeedToLead(lead.created_at, lead.first_ack_at)}
@@ -180,7 +180,7 @@ export function LeadDetailDrawer({ lead, open, onClose, onUpdate, onAdvanceStage
             {lead.status !== 'converted' && lead.status !== 'lost' && (
               <button
                 onClick={(e) => onAdvanceStage?.(lead.id, e)}
-                style={{ background: 'rgba(34, 197, 94, 0.1)', color: '#86efac', padding: '10px 16px', borderRadius: 10, border: 'none', fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+                style={{ background: 'rgba(34, 197, 94, 0.1)', color: '#86efac', height: 40, padding: '0 20px', borderRadius: 12, border: 'none', fontSize: 14, fontWeight: 500, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
                 onMouseEnter={e => (e.currentTarget.style.filter = 'brightness(1.3)')}
                 onMouseLeave={e => (e.currentTarget.style.filter = 'brightness(1)')}
               >
@@ -188,14 +188,14 @@ export function LeadDetailDrawer({ lead, open, onClose, onUpdate, onAdvanceStage
               </button>
             )}
             <button
-              style={{ background: 'rgba(56, 189, 248, 0.1)', color: '#7dd3fc', padding: '10px 16px', borderRadius: 10, border: 'none', fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+              style={{ background: 'rgba(56, 189, 248, 0.1)', color: '#7dd3fc', height: 40, padding: '0 20px', borderRadius: 12, border: 'none', fontSize: 14, fontWeight: 500, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
               onMouseEnter={e => (e.currentTarget.style.filter = 'brightness(1.3)')}
               onMouseLeave={e => (e.currentTarget.style.filter = 'brightness(1)')}
             >
               <Mail size={14} /> Email
             </button>
             <button
-              style={{ background: 'rgba(168, 85, 247, 0.1)', color: '#c4b5fd', padding: '10px 16px', borderRadius: 10, border: 'none', fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+              style={{ background: 'rgba(168, 85, 247, 0.1)', color: '#c4b5fd', height: 40, padding: '0 20px', borderRadius: 12, border: 'none', fontSize: 14, fontWeight: 500, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
               onMouseEnter={e => (e.currentTarget.style.filter = 'brightness(1.3)')}
               onMouseLeave={e => (e.currentTarget.style.filter = 'brightness(1)')}
             >
@@ -204,7 +204,7 @@ export function LeadDetailDrawer({ lead, open, onClose, onUpdate, onAdvanceStage
             {lead.status !== 'converted' && lead.status !== 'lost' && (
               <button
                 onClick={() => onUpdate(lead.id, { status: 'lost' })}
-                style={{ background: 'rgba(239, 68, 68, 0.08)', color: '#fca5a5', padding: '10px 16px', borderRadius: 10, border: 'none', fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+                style={{ background: 'rgba(239, 68, 68, 0.08)', color: '#fca5a5', height: 40, padding: '0 20px', borderRadius: 12, border: 'none', fontSize: 14, fontWeight: 500, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
                 onMouseEnter={e => (e.currentTarget.style.filter = 'brightness(1.3)')}
                 onMouseLeave={e => (e.currentTarget.style.filter = 'brightness(1)')}
               >
@@ -214,18 +214,18 @@ export function LeadDetailDrawer({ lead, open, onClose, onUpdate, onAdvanceStage
           </div>
 
           {/* Status Progress Bar */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
             {PROGRESS_STAGES.map((stage, i) => {
               const idx = PROGRESS_STAGES.findIndex(s => s.status === lead.status)
               const isLost = lead.status === 'lost'
               return (
                 <div key={stage.status} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
                   <div style={{
-                    height: 3, width: '100%', borderRadius: 99,
+                    height: 3, width: '100%', borderRadius: 9999,
                     background: isLost ? '#71717a' : (i <= idx ? '#22C55E' : 'var(--glass-hover-bg)'),
                     transition: 'background 200ms cubic-bezier(0.2, 0.9, 0.3, 1)',
                   }} />
-                  <span style={{ fontSize: 10, fontWeight: 500, color: i <= idx ? 'var(--text-primary)' : 'var(--text-dim)' }}>
+                  <span style={{ fontSize: 14, fontWeight: 500, color: i <= idx ? 'var(--text-primary)' : 'var(--text-dim)' }}>
                     {stage.label}
                   </span>
                 </div>
@@ -275,21 +275,21 @@ export function LeadDetailDrawer({ lead, open, onClose, onUpdate, onAdvanceStage
           {/* Contact Info */}
           {(lead.prospect_phone || (lead.prospect_emails && lead.prospect_emails.length > 0)) && (
             <div>
-              <h4 style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-dim)', margin: '0 0 8px' }}>
+              <h4 style={{ fontSize: 14, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--text-dim)', margin: '0 0 8px' }}>
                 Contact
               </h4>
               {lead.prospect_phone && (
-                <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 4 }}>
+                <div style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 4 }}>
                   Phone: <span style={{ color: 'var(--text-primary)' }}>{lead.prospect_phone}</span>
                 </div>
               )}
               {lead.prospect_emails?.map((email) => (
-                <div key={email} style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 2 }}>
+                <div key={email} style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 2 }}>
                   Email: <span style={{ color: 'var(--text-primary)' }}>{email}</span>
                 </div>
               ))}
               {lead.prospect_address && (
-                <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+                <div style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
                   Address: <span style={{ color: 'var(--text-primary)' }}>{lead.prospect_address}</span>
                 </div>
               )}
@@ -299,14 +299,14 @@ export function LeadDetailDrawer({ lead, open, onClose, onUpdate, onAdvanceStage
           {/* Notes */}
           {lead.notes && (
             <div>
-              <h4 style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-dim)', margin: '0 0 8px' }}>
+              <h4 style={{ fontSize: 14, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--text-dim)', margin: '0 0 8px' }}>
                 Notes
               </h4>
               <div style={{
                 padding: '12px 16px',
-                borderRadius: 10,
+                borderRadius: 12,
                 background: 'var(--hover-bg)',
-                fontSize: 12,
+                fontSize: 14,
                 color: 'var(--text-secondary)',
                 lineHeight: 1.5,
                 whiteSpace: 'pre-wrap',
@@ -319,13 +319,13 @@ export function LeadDetailDrawer({ lead, open, onClose, onUpdate, onAdvanceStage
           {/* Service Interest */}
           {lead.service_interest && lead.service_interest.length > 0 && (
             <div>
-              <h4 style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-dim)', margin: '0 0 8px' }}>
+              <h4 style={{ fontSize: 14, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--text-dim)', margin: '0 0 8px' }}>
                 Services
               </h4>
-              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 {lead.service_interest.map((s) => (
                   <span key={s} style={{
-                    fontSize: 11,
+                    fontSize: 14,
                     padding: '4px 12px',
                     borderRadius: 20,
                     background: 'var(--hover-bg)',
@@ -340,7 +340,7 @@ export function LeadDetailDrawer({ lead, open, onClose, onUpdate, onAdvanceStage
 
           {/* Activity Timeline (simplified) */}
           <div>
-            <h4 style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-dim)', margin: '0 0 8px' }}>
+            <h4 style={{ fontSize: 14, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--text-dim)', margin: '0 0 8px' }}>
               Timeline
             </h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingLeft: 12, borderLeft: '2px solid var(--hover-bg)' }}>
@@ -353,7 +353,7 @@ export function LeadDetailDrawer({ lead, open, onClose, onUpdate, onAdvanceStage
           </div>
 
           {/* Lead ID */}
-          <div style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--text-dim)', paddingTop: 8 }}>
+          <div style={{ fontSize: 14, fontFamily: 'var(--font-mono)', color: 'var(--text-dim)', paddingTop: 8 }}>
             ID: {lead.id}
           </div>
         </div>
@@ -375,10 +375,10 @@ export function LeadDetailDrawer({ lead, open, onClose, onUpdate, onAdvanceStage
 function TimelineEntry({ label, date }: { label: string; date: string }) {
   return (
     <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-      <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--glass-interactive-border)', flexShrink: 0, marginTop: 4 }} />
+      <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--glass-interactive-border)', flexShrink: 0, marginTop: 4 }} />
       <div>
-        <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{label}</span>
-        <span style={{ fontSize: 10, color: 'var(--text-dim)', marginLeft: 6 }}>{relativeTime(date)}</span>
+        <span style={{ fontSize: 14, color: 'var(--text-secondary)' }}>{label}</span>
+        <span style={{ fontSize: 14, color: 'var(--text-dim)', marginLeft: 8 }}>{relativeTime(date)}</span>
       </div>
     </div>
   )

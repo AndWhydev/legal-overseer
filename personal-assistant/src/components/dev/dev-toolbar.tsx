@@ -113,16 +113,16 @@ export function DevToolbar() {
             zIndex: 9990,
             display: 'flex',
             alignItems: 'center',
-            gap: 6,
-            padding: '6px 12px',
+            gap: 8,
+            padding: '8px 12px',
             borderRadius: 20,
             border: '1px solid rgba(255,255,255,0.15)',
             background: isOverriding
               ? 'linear-gradient(135deg, #7c3aed, #4f46e5)'
               : 'rgba(0,0,0,0.75)',
             color: '#fff',
-            fontSize: 12,
-            fontWeight: 600,
+            fontSize: 14,
+            fontWeight: 500,
             fontFamily: 'monospace',
             cursor: 'pointer',
             backdropFilter: 'blur(8px)',
@@ -133,7 +133,7 @@ export function DevToolbar() {
           Dev
           {isOverriding && (
             <span style={{
-              width: 6, height: 6, borderRadius: '50%',
+              width: 8, height: 8, borderRadius: '50%',
               background: '#34d399', display: 'inline-block',
             }} />
           )}
@@ -156,15 +156,15 @@ export function DevToolbar() {
           backdropFilter: 'blur(12px)',
           boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
           color: '#e2e8f0',
-          fontSize: 13,
+          fontSize: 14,
           fontFamily: 'system-ui, -apple-system, sans-serif',
         }}>
           {/* Header */}
           <div style={{
             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-            padding: '10px 14px', borderBottom: '1px solid rgba(255,255,255,0.08)',
+            padding: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.08)',
           }}>
-            <span style={{ fontWeight: 700, fontSize: 13, fontFamily: 'monospace' }}>
+            <span style={{ fontWeight: 500, fontSize: 14, fontFamily: 'monospace' }}>
               BitBit Dev Toolbar
             </span>
             <button onClick={() => setOpen(false)} style={{
@@ -178,7 +178,7 @@ export function DevToolbar() {
           <Section title="Seed Data">
             <label style={{
               display: 'flex', alignItems: 'center', gap: 8,
-              fontSize: 12, color: seedOn ? '#34d399' : '#94a3b8', cursor: 'pointer',
+              fontSize: 14, color: seedOn ? '#34d399' : '#94a3b8', cursor: 'pointer',
             }}>
               <input
                 type="checkbox"
@@ -204,12 +204,12 @@ export function DevToolbar() {
                     key={t}
                     onClick={() => handleThemeToggle(t)}
                     style={{
-                      display: 'flex', alignItems: 'center', gap: 5,
-                      padding: '4px 10px', borderRadius: 6,
+                      display: 'flex', alignItems: 'center', gap: 4,
+                      padding: '4px 12px', borderRadius: 8,
                       border: active ? '1px solid #7c3aed' : '1px solid rgba(255,255,255,0.1)',
                       background: active ? 'rgba(124,58,237,0.2)' : 'rgba(255,255,255,0.05)',
                       color: active ? '#c4b5fd' : '#94a3b8',
-                      fontSize: 12, fontWeight: active ? 600 : 400, cursor: 'pointer',
+                      fontSize: 14, fontWeight: active ? 500 : 400, cursor: 'pointer',
                     }}
                   >
                     {t === 'midnight' ? <Moon size={12} /> : <Sun size={12} />}
@@ -255,12 +255,12 @@ export function DevToolbar() {
                   key={tab.id}
                   onClick={() => handleNavigate(tab.id)}
                   style={{
-                    padding: '3px 8px',
-                    borderRadius: 6,
+                    padding: '4px 8px',
+                    borderRadius: 8,
                     border: '1px solid rgba(255,255,255,0.1)',
                     background: 'rgba(255,255,255,0.05)',
                     color: modules.includes(tab.id) ? 'var(--text-primary)' : 'var(--text-dim)',
-                    fontSize: 11,
+                    fontSize: 14,
                     cursor: 'pointer',
                     textDecoration: modules.includes(tab.id) ? 'none' : 'line-through',
                   }}
@@ -276,9 +276,9 @@ export function DevToolbar() {
             <button
               onClick={() => setShowModules(!showModules)}
               style={{
-                width: '100%', display: 'flex', alignItems: 'center', gap: 6,
-                padding: '8px 14px', background: 'none', border: 'none',
-                color: '#94a3b8', fontSize: 11, fontWeight: 600, cursor: 'pointer',
+                width: '100%', display: 'flex', alignItems: 'center', gap: 8,
+                padding: '8px 16px', background: 'none', border: 'none',
+                color: '#94a3b8', fontSize: 14, fontWeight: 500, cursor: 'pointer',
                 textTransform: 'uppercase', letterSpacing: '0.05em',
               }}
             >
@@ -286,7 +286,7 @@ export function DevToolbar() {
               Module Overrides
             </button>
             {showModules && (
-              <div style={{ padding: '0 14px 10px', display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <div style={{ padding: '0 16px 12px', display: 'flex', flexDirection: 'column', gap: 2 }}>
                 {ALL_MODULES.map(mod => {
                   const checked = moduleOverrides
                     ? moduleOverrides.includes(mod)
@@ -294,7 +294,7 @@ export function DevToolbar() {
                   return (
                     <label key={mod} style={{
                       display: 'flex', alignItems: 'center', gap: 8,
-                      fontSize: 12, color: checked ? '#e2e8f0' : '#64748b',
+                      fontSize: 14, color: checked ? '#e2e8f0' : '#64748b',
                       cursor: 'pointer', padding: '2px 0',
                     }}>
                       <input
@@ -316,10 +316,10 @@ export function DevToolbar() {
 
           {/* Status + Reset */}
           <div style={{
-            padding: '10px 14px',
+            padding: '12px 16px',
             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
           }}>
-            <span style={{ fontSize: 11, color: '#64748b' }}>
+            <span style={{ fontSize: 14, color: '#64748b' }}>
               {modules.length} modules · {composition.profileId}
             </span>
             <button
@@ -327,11 +327,11 @@ export function DevToolbar() {
               disabled={!isOverriding}
               style={{
                 display: 'flex', alignItems: 'center', gap: 4,
-                padding: '4px 10px', borderRadius: 6,
+                padding: '4px 12px', borderRadius: 8,
                 border: '1px solid rgba(255,255,255,0.1)',
                 background: isOverriding ? 'rgba(239,68,68,0.15)' : 'transparent',
                 color: isOverriding ? 'var(--bb-red)' : 'var(--text-dim)',
-                fontSize: 11, fontWeight: 600, cursor: isOverriding ? 'pointer' : 'default',
+                fontSize: 14, fontWeight: 500, cursor: isOverriding ? 'pointer' : 'default',
               }}
             >
               <RotateCcw size={12} />
@@ -346,9 +346,9 @@ export function DevToolbar() {
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div style={{ padding: '10px 14px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+    <div style={{ padding: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
       <div style={{
-        fontSize: 11, fontWeight: 600, color: '#94a3b8',
+        fontSize: 14, fontWeight: 500, color: '#94a3b8',
         textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8,
       }}>
         {title}
@@ -376,15 +376,15 @@ function ChipGroup({
             key={opt}
             onClick={() => onChange(opt)}
             style={{
-              padding: '4px 10px',
-              borderRadius: 6,
+              padding: '4px 12px',
+              borderRadius: 8,
               border: active
                 ? '1px solid #7c3aed'
                 : '1px solid rgba(255,255,255,0.1)',
               background: active ? 'rgba(124,58,237,0.2)' : 'rgba(255,255,255,0.05)',
               color: active ? '#c4b5fd' : '#94a3b8',
-              fontSize: 12,
-              fontWeight: active ? 600 : 400,
+              fontSize: 14,
+              fontWeight: active ? 500 : 400,
               cursor: 'pointer',
             }}
           >
@@ -451,12 +451,12 @@ function DevAuthSection() {
 
   const inputStyle: React.CSSProperties = {
     width: '100%',
-    padding: '6px 10px',
-    borderRadius: 6,
+    padding: '8px 12px',
+    borderRadius: 8,
     border: '1px solid rgba(255,255,255,0.12)',
     background: 'rgba(255,255,255,0.06)',
     color: '#e2e8f0',
-    fontSize: 12,
+    fontSize: 14,
     outline: 'none',
   };
 
@@ -464,9 +464,9 @@ function DevAuthSection() {
     <Section title="Dev Auth">
       {userEmail ? (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
             <User size={12} style={{ flexShrink: 0, color: '#34d399' }} />
-            <span style={{ fontSize: 11, color: '#34d399', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <span style={{ fontSize: 14, color: '#34d399', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {userEmail}
             </span>
           </div>
@@ -474,10 +474,10 @@ function DevAuthSection() {
             onClick={handleLogout}
             style={{
               display: 'flex', alignItems: 'center', gap: 4,
-              padding: '3px 8px', borderRadius: 6, flexShrink: 0,
+              padding: '4px 8px', borderRadius: 8, flexShrink: 0,
               border: '1px solid rgba(255,255,255,0.1)',
               background: 'rgba(239,68,68,0.12)',
-              color: '#f87171', fontSize: 11, fontWeight: 600, cursor: 'pointer',
+              color: '#f87171', fontSize: 14, fontWeight: 500, cursor: 'pointer',
             }}
           >
             <LogOut size={11} />
@@ -485,7 +485,7 @@ function DevAuthSection() {
           </button>
         </div>
       ) : (
-        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <input
             type="email"
             placeholder="Email"
@@ -503,17 +503,17 @@ function DevAuthSection() {
             autoComplete="current-password"
           />
           {status === 'error' && (
-            <span style={{ fontSize: 11, color: '#f87171' }}>{error}</span>
+            <span style={{ fontSize: 14, color: '#f87171' }}>{error}</span>
           )}
           <button
             type="submit"
             disabled={status === 'loading' || !email.trim() || !password}
             style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-              padding: '6px 10px', borderRadius: 6,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              padding: '8px 12px', borderRadius: 8,
               border: '1px solid rgba(124,58,237,0.4)',
               background: 'rgba(124,58,237,0.2)',
-              color: '#c4b5fd', fontSize: 12, fontWeight: 600,
+              color: '#c4b5fd', fontSize: 14, fontWeight: 500,
               cursor: status === 'loading' ? 'wait' : 'pointer',
               opacity: (!email.trim() || !password) ? 0.4 : 1,
             }}

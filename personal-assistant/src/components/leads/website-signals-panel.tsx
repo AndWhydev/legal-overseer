@@ -21,8 +21,8 @@ function LoadTimeColor(ms: number | null | undefined): string {
 }
 
 const cellStyle: React.CSSProperties = {
-  padding: '10px 12px',
-  borderRadius: 10,
+  padding: '12px 12px',
+  borderRadius: 12,
   background: 'var(--hover-bg)',
   display: 'flex',
   flexDirection: 'column',
@@ -31,21 +31,21 @@ const cellStyle: React.CSSProperties = {
 }
 
 const cellLabelStyle: React.CSSProperties = {
-  fontSize: 10,
+  fontSize: 14,
   fontWeight: 500,
   color: 'var(--text-dim)',
 }
 
 const cellValueStyle: React.CSSProperties = {
-  fontSize: 12,
-  fontWeight: 600,
+  fontSize: 14,
+  fontWeight: 500,
   fontFamily: 'var(--font-mono)',
 }
 
 export function WebsiteSignalsPanel({ signals }: WebsiteSignalsPanelProps) {
   return (
     <div>
-      <h4 style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-dim)', margin: '0 0 12px' }}>
+      <h4 style={{ fontSize: 14, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--text-dim)', margin: '0 0 12px' }}>
         Website Signals
       </h4>
 

@@ -44,7 +44,7 @@ export function MeetingsPage() {
             <Mic size={16} style={{ color: 'var(--bb-orange)' }} />
             <h1 style={{
               fontSize: '14px',
-              fontWeight: 600,
+              fontWeight: 500,
               color: 'var(--text-primary)',
               margin: 0,
             }}>
@@ -57,14 +57,14 @@ export function MeetingsPage() {
               display: 'flex',
               alignItems: 'center',
               gap: '4px',
-              padding: '6px 12px',
+              padding: '8px 12px',
               background: 'var(--bb-orange)',
               color: '#000',
               borderRadius: 'var(--radius-md)',
               border: 'none',
               cursor: 'pointer',
-              fontSize: '12px',
-              fontWeight: 600,
+              fontSize: '14px',
+              fontWeight: 500,
             }}
           >
             <Plus size={14} />
@@ -73,9 +73,8 @@ export function MeetingsPage() {
         </div>
 
         <MeetingList
-          key={refreshKey}
-          onSelectMeeting={setSelectedMeetingId}
-          selectedId={selectedMeetingId ?? undefined}
+          onSelectMeeting={(m: import('@/lib/meetings/types').Meeting) => setSelectedMeetingId(m.id)}
+          onUpload={() => setShowUpload(true)}
         />
       </div>
 
@@ -99,7 +98,7 @@ export function MeetingsPage() {
           }}>
             <Mic size={48} style={{ opacity: 0.15 }} />
             <p style={{ fontSize: '14px' }}>Select a meeting or upload a recording</p>
-            <p style={{ fontSize: '12px', opacity: 0.6 }}>
+            <p style={{ fontSize: '14px', opacity: 0.6 }}>
               Upload recordings to auto-transcribe, extract action items, and generate summaries
             </p>
           </div>

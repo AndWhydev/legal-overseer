@@ -71,13 +71,13 @@ export function PortalRequestsView({ initialRequests, primaryColor }: PortalRequ
   return (
     <div>
       <div className="flex items-center justify-between" style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: 24, fontWeight: 600, color: '#111827', margin: 0, letterSpacing: '-0.02em' }}>
+        <h1 style={{ fontSize: 16, fontWeight: 500, color: '#111827', margin: 0, letterSpacing: '-0.02em' }}>
           Requests
         </h1>
         <button
           onClick={() => setShowForm(!showForm)}
           style={{
-            padding: '10px 20px',
+            padding: '12px 20px',
             borderRadius: 8,
             background: showForm ? '#F3F4F6' : primaryColor,
             color: showForm ? '#374151' : '#FFFFFF',
@@ -95,7 +95,7 @@ export function PortalRequestsView({ initialRequests, primaryColor }: PortalRequ
       {/* New Request Form */}
       {showForm && (
         <form onSubmit={handleSubmit} style={{ ...cardStyle, padding: 24, marginBottom: 24 }}>
-          <h2 style={{ fontSize: 16, fontWeight: 600, color: '#111827', margin: '0 0 20px' }}>
+          <h2 style={{ fontSize: 16, fontWeight: 500, color: '#111827', margin: '0 0 20px' }}>
             Submit a Request
           </h2>
 
@@ -153,7 +153,7 @@ export function PortalRequestsView({ initialRequests, primaryColor }: PortalRequ
             type="submit"
             disabled={submitting || !formData.title.trim()}
             style={{
-              padding: '10px 24px',
+              padding: '12px 24px',
               borderRadius: 8,
               background: primaryColor,
               color: '#FFFFFF',
@@ -194,19 +194,19 @@ export function PortalRequestsView({ initialRequests, primaryColor }: PortalRequ
               <div
                 key={req.id}
                 style={{
-                  padding: '18px 20px',
+                  padding: '20px 20px',
                   borderBottom: i < requests.length - 1 ? '1px solid #F3F4F6' : 'none',
                 }}
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
-                    <div className="flex items-center gap-2 flex-wrap" style={{ marginBottom: 6 }}>
-                      <h3 style={{ fontSize: 15, fontWeight: 500, color: '#111827', margin: 0 }}>
+                    <div className="flex items-center gap-2 flex-wrap" style={{ marginBottom: 8 }}>
+                      <h3 style={{ fontSize: 16, fontWeight: 500, color: '#111827', margin: 0 }}>
                         {req.title}
                       </h3>
                       <span
                         style={{
-                          fontSize: 11,
+                          fontSize: 14,
                           fontWeight: 500,
                           padding: '2px 8px',
                           borderRadius: 4,
@@ -223,11 +223,11 @@ export function PortalRequestsView({ initialRequests, primaryColor }: PortalRequ
                       </p>
                     )}
                     <div className="flex items-center gap-3">
-                      <span style={{ fontSize: 12, color: '#9CA3AF' }}>{typeLabel}</span>
-                      <span style={{ fontSize: 12, color: priority?.color ?? '#6B7280', fontWeight: 500 }}>
+                      <span style={{ fontSize: 14, color: '#9CA3AF' }}>{typeLabel}</span>
+                      <span style={{ fontSize: 14, color: priority?.color ?? '#6B7280', fontWeight: 500 }}>
                         {priority?.label ?? req.priority}
                       </span>
-                      <span style={{ fontSize: 12, color: '#9CA3AF' }}>
+                      <span style={{ fontSize: 14, color: '#9CA3AF' }}>
                         {new Date(req.created_at).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })}
                       </span>
                     </div>
@@ -251,15 +251,15 @@ const cardStyle: React.CSSProperties = {
 
 const labelStyle: React.CSSProperties = {
   display: 'block',
-  fontSize: 13,
+  fontSize: 14,
   fontWeight: 500,
   color: '#374151',
-  marginBottom: 6,
+  marginBottom: 8,
 }
 
 const inputStyle: React.CSSProperties = {
   width: '100%',
-  padding: '10px 14px',
+  padding: '12px 16px',
   borderRadius: 8,
   border: '1px solid #D1D5DB',
   fontSize: 14,

@@ -46,7 +46,7 @@ interface IntelligenceData {
 
 const widgetCard: React.CSSProperties = {
   padding: '16px',
-  borderRadius: 14,
+  borderRadius: 12,
   background: 'rgba(15, 20, 30, 0.6)',
   backdropFilter: 'blur(20px) saturate(1.2)',
   WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
@@ -56,12 +56,12 @@ const widgetCard: React.CSSProperties = {
 }
 
 const sectionHeader: React.CSSProperties = {
-  fontSize: 11,
-  fontWeight: 600,
-  letterSpacing: '0.08em',
+  fontSize: 14,
+  fontWeight: 500,
+  letterSpacing: '0.04em',
   textTransform: 'uppercase' as const,
   color: 'var(--text-dim, #475569)',
-  marginBottom: 14,
+  marginBottom: 12,
 }
 
 // ---------------------------------------------------------------------------
@@ -164,7 +164,7 @@ export function IntelligenceWidgets() {
   return (
     <div>
       <div style={sectionHeader}>Intelligence</div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 10 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
         {WIDGET_DEFS.map(widget => {
           const widgetData = widget.extract(data)
           const Icon = widget.icon
@@ -187,7 +187,7 @@ export function IntelligenceWidgets() {
               }}
             >
               {/* Header */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
                 <div style={{
                   width: 26,
                   height: 26,
@@ -199,7 +199,7 @@ export function IntelligenceWidgets() {
                 }}>
                   <Icon size={13} style={{ color: widget.color }} />
                 </div>
-                <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-secondary, #94A3B8)' }}>
+                <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-secondary, #94A3B8)' }}>
                   {widget.label}
                 </span>
                 {formatted?.alert && (
@@ -211,20 +211,20 @@ export function IntelligenceWidgets() {
               {loading || !formatted ? (
                 <div style={{
                   height: 28,
-                  borderRadius: 6,
+                  borderRadius: 8,
                   background: 'rgba(255,255,255,0.04)',
                   width: '50%',
-                  marginBottom: 6,
+                  marginBottom: 8,
                 }} />
               ) : (
                 <div style={{
-                  fontSize: 24,
-                  fontWeight: 700,
+                  fontSize: 16,
+                  fontWeight: 500,
                   color: 'var(--text-primary, #F1F5F9)',
                   fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
                   letterSpacing: '-0.03em',
                   lineHeight: 1,
-                  marginBottom: 6,
+                  marginBottom: 8,
                 }}>
                   {formatted.value}
                 </div>
@@ -232,7 +232,7 @@ export function IntelligenceWidgets() {
 
               {/* Subtitle */}
               {formatted && (
-                <div style={{ fontSize: 11, color: 'var(--text-dim, #475569)' }}>
+                <div style={{ fontSize: 14, color: 'var(--text-dim, #475569)' }}>
                   {formatted.subtitle}
                 </div>
               )}

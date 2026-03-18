@@ -38,13 +38,13 @@ export function ToolCallSummary({ toolCalls }: { toolCalls: ToolCall[] }) {
         style={{
           display: 'inline-flex',
           alignItems: 'center',
-          gap: 6,
+          gap: 8,
           padding: '4px 0',
           background: 'none',
           border: 'none',
           cursor: 'pointer',
           color: 'var(--text-dim)',
-          fontSize: 12,
+          fontSize: 14,
           fontFamily: 'inherit',
           transition: 'color 0.15s ease',
         }}
@@ -87,8 +87,8 @@ export function ToolCallSummary({ toolCalls }: { toolCalls: ToolCall[] }) {
                     style={{
                       display: 'flex',
                       alignItems: 'center',
-                      gap: 6,
-                      fontSize: 12,
+                      gap: 8,
+                      fontSize: 14,
                       color: 'var(--text-dim)',
                       lineHeight: 1.5,
                     }}
@@ -116,7 +116,7 @@ export function ToolCallSummary({ toolCalls }: { toolCalls: ToolCall[] }) {
 export function ToolCallCard({ toolCall }: { toolCall: ToolCall }) {
   const display = toolDisplayNames[toolCall.name]
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--text-dim)' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, color: 'var(--text-dim)' }}>
       {toolCall.status === 'done' && <Check size={11} color="var(--bb-green)" />}
       {toolCall.status === 'error' && <X size={11} color="var(--bb-red)" />}
       <span>{display?.label || toolCall.name}</span>

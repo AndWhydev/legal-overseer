@@ -474,3 +474,81 @@ export async function getRecordingUrl(
 
   return data?.signedUrl ?? null
 }
+
+// ── Aliases for API route compatibility ─────────────────────────────────────
+
+export async function updateActionItem(
+  supabase: SupabaseClient,
+  actionItemId: string,
+  orgId: string,
+  updates: { status?: string; title?: string; assignee_name?: string; due_date?: string; priority?: string }
+): Promise<Record<string, unknown> | null> {
+  const updateData: Record<string, unknown> = {}
+  if (updates.status) updateData.status = updates.status
+  if (updates.title) updateData.title = updates.title
+  if (updates.assignee_name) updateData.assigned_to = updates.assignee_name
+  if (updates.due_date) updateData.due_date = updates.due_date
+  if (updates.priority) updateData.priority = updates.priority
+
+  const { data, error } = await supabase
+    .from('meeting_action_items')
+    .update(updateData)
+    .eq('id', actionItemId)
+    .eq('org_id', orgId)
+    .select()
+    .single()
+
+  if (error) {
+    logger.error('[meeting-service] Failed to update action item:', error.message)
+    return null
+  }
+  return data
+}
+
+export async function createTasksFromActionItems(
+  supabase: SupabaseClient,
+  meetingId: string,
+  orgId: string
+): Promise<number> {
+  const { data: items } = await supabase
+    .from('meeting_action_items')
+    .select('*')
+    .eq('meeting_id', meetingId)
+    .eq('org_id', orgId)
+    .eq('status', 'pending')
+
+  if (!items || items.length === 0) return 0
+
+  let created = 0
+  for (const item of items) {
+    const { error } = await supabase.from('tasks').insert({
+      org_id: orgId,
+      title: item.title,
+      description: item.description || `From meeting action item`,
+      status: 'todo',
+      priority: item.priority || 'medium',
+      source: 'meeting',
+      source_id: meetingId,
+    })
+    if (!error) {
+      await updateActionItemStatus(supabase, item.id, 'converted_to_task')
+      created++
+    }
+  }
+  return created
+}
+
+export async function getTranscriptSegments(
+  supabase: SupabaseClient,
+  meetingId: string,
+  _orgId?: string
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+): Promise<any[]> {
+  const { data } = await supabase
+    .from('meeting_transcript_segments')
+    .select('*')
+    .eq('meeting_id', meetingId)
+    .order('segment_index')
+
+  return data || []
+}

@@ -62,15 +62,15 @@ function getFitGlow(score: number): string {
 
 const ACTION_BTN: React.CSSProperties = {
   padding: '4px 8px',
-  borderRadius: 6,
+  borderRadius: 8,
   border: 'none',
   background: 'rgba(255, 255, 255, 0.06)',
   color: 'var(--text-dim)',
   cursor: 'pointer',
-  fontSize: 10,
+  fontSize: 14,
   display: 'flex',
   alignItems: 'center',
-  gap: 3,
+  gap: 4,
 }
 
 export function LeadCard({ lead, onClick, onAdvanceStage }: LeadCardProps) {
@@ -108,7 +108,7 @@ export function LeadCard({ lead, onClick, onAdvanceStage }: LeadCardProps) {
         data-rot={rotLevel}
         style={{
           borderRadius: 16,
-          padding: '14px 16px',
+          padding: '12px 16px',
           background: SCORE_TINT[lead.score] ?? 'var(--bb-surface)',
           backdropFilter: 'var(--glass-blur)',
           WebkitBackdropFilter: 'var(--glass-blur)',
@@ -127,8 +127,8 @@ export function LeadCard({ lead, onClick, onAdvanceStage }: LeadCardProps) {
         }}
       >
         {/* Header: activity dot + source channel + score pill */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             {/* Activity urgency dot */}
             <span style={{
               width: 7,
@@ -141,10 +141,10 @@ export function LeadCard({ lead, onClick, onAdvanceStage }: LeadCardProps) {
             }} />
             {/* Source channel */}
             <span style={{
-              fontSize: 10,
+              fontSize: 14,
               fontWeight: 500,
               textTransform: 'uppercase',
-              letterSpacing: '0.06em',
+              letterSpacing: '0.04em',
               color: 'var(--text-dim)',
               fontFamily: 'var(--font-mono)',
             }}>
@@ -171,8 +171,8 @@ export function LeadCard({ lead, onClick, onAdvanceStage }: LeadCardProps) {
 
         {/* Title */}
         <h4 style={{
-          fontSize: 13,
-          fontWeight: 600,
+          fontSize: 14,
+          fontWeight: 500,
           color: 'var(--text-primary)',
           lineHeight: 1.4,
           margin: 0,
@@ -188,7 +188,7 @@ export function LeadCard({ lead, onClick, onAdvanceStage }: LeadCardProps) {
         {lead.outreach_angle && (
           <p style={{
             margin: '4px 0 0',
-            fontSize: 11,
+            fontSize: 14,
             fontStyle: 'italic',
             color: 'var(--text-dim)',
             lineHeight: 1.4,
@@ -202,8 +202,8 @@ export function LeadCard({ lead, onClick, onAdvanceStage }: LeadCardProps) {
         )}
 
         {/* Details row: value + timeline */}
-        <div style={{ marginTop: 6, display: 'flex', gap: 12, fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--text-dim)' }}>
-          <span style={{ fontWeight: 600, color: 'var(--text-secondary)' }}>
+        <div style={{ marginTop: 8, display: 'flex', gap: 12, fontSize: 14, fontFamily: 'var(--font-mono)', color: 'var(--text-dim)' }}>
+          <span style={{ fontWeight: 500, color: 'var(--text-secondary)' }}>
             {formatCurrency(lead.estimated_value)}
           </span>
           {lead.timeline_days != null && (
@@ -213,10 +213,10 @@ export function LeadCard({ lead, onClick, onAdvanceStage }: LeadCardProps) {
 
         {/* Service tags */}
         {lead.service_interest && lead.service_interest.length > 0 && (
-          <div style={{ marginTop: 6, display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+          <div style={{ marginTop: 8, display: 'flex', gap: 4, flexWrap: 'wrap' }}>
             {lead.service_interest.slice(0, 3).map((s) => (
               <span key={s} style={{
-                fontSize: 10,
+                fontSize: 14,
                 padding: '2px 8px',
                 borderRadius: 12,
                 background: 'var(--hover-bg)',
@@ -242,8 +242,8 @@ export function LeadCard({ lead, onClick, onAdvanceStage }: LeadCardProps) {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: 9,
-            fontWeight: 700,
+            fontSize: 14,
+            fontWeight: 500,
             fontFamily: 'var(--font-mono)',
             color: 'var(--bb-cyan)',
           }}>
@@ -252,14 +252,14 @@ export function LeadCard({ lead, onClick, onAdvanceStage }: LeadCardProps) {
         )}
 
         {/* Bottom: relative time */}
-        <div style={{ marginTop: 8, fontSize: 9, color: 'rgba(148, 163, 184, 0.6)' }}>
+        <div style={{ marginTop: 8, fontSize: 14, color: 'rgba(148, 163, 184, 0.6)' }}>
           {relativeTime(lead.updated_at)}
         </div>
 
         {/* Hover quick actions */}
         <div
           className="bb-lead-actions"
-          style={{ opacity: 0, transition: 'opacity 150ms ease', display: 'flex', gap: 6, marginTop: 10 }}
+          style={{ opacity: 0, transition: 'opacity 150ms ease', display: 'flex', gap: 8, marginTop: 12 }}
         >
           <button
             onClick={(e) => { e.stopPropagation(); onAdvanceStage?.(lead.id, e) }}

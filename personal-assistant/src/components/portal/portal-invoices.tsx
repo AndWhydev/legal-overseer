@@ -33,27 +33,27 @@ export function PortalInvoicesView({ invoices, primaryColor }: PortalInvoicesVie
 
   return (
     <div>
-      <h1 style={{ fontSize: 24, fontWeight: 600, color: '#111827', margin: '0 0 24px', letterSpacing: '-0.02em' }}>
+      <h1 style={{ fontSize: 16, fontWeight: 500, color: '#111827', margin: '0 0 24px', letterSpacing: '-0.02em' }}>
         Invoices
       </h1>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4" style={{ marginBottom: 24 }}>
         <div style={{ ...cardStyle, padding: 20 }}>
-          <p style={{ fontSize: 13, color: '#6B7280', margin: '0 0 4px' }}>Outstanding</p>
-          <p style={{ fontSize: 24, fontWeight: 700, color: '#DC2626', margin: 0 }}>
+          <p style={{ fontSize: 14, color: '#6B7280', margin: '0 0 4px' }}>Outstanding</p>
+          <p style={{ fontSize: 16, fontWeight: 500, color: '#DC2626', margin: 0 }}>
             ${totalOutstanding.toLocaleString('en-AU', { minimumFractionDigits: 2 })}
           </p>
         </div>
         <div style={{ ...cardStyle, padding: 20 }}>
-          <p style={{ fontSize: 13, color: '#6B7280', margin: '0 0 4px' }}>Paid</p>
-          <p style={{ fontSize: 24, fontWeight: 700, color: '#059669', margin: 0 }}>
+          <p style={{ fontSize: 14, color: '#6B7280', margin: '0 0 4px' }}>Paid</p>
+          <p style={{ fontSize: 16, fontWeight: 500, color: '#059669', margin: 0 }}>
             ${totalPaid.toLocaleString('en-AU', { minimumFractionDigits: 2 })}
           </p>
         </div>
         <div style={{ ...cardStyle, padding: 20 }}>
-          <p style={{ fontSize: 13, color: '#6B7280', margin: '0 0 4px' }}>Total Invoices</p>
-          <p style={{ fontSize: 24, fontWeight: 700, color: '#111827', margin: 0 }}>{invoices.length}</p>
+          <p style={{ fontSize: 14, color: '#6B7280', margin: '0 0 4px' }}>Total Invoices</p>
+          <p style={{ fontSize: 16, fontWeight: 500, color: '#111827', margin: 0 }}>{invoices.length}</p>
         </div>
       </div>
 
@@ -66,7 +66,7 @@ export function PortalInvoicesView({ invoices, primaryColor }: PortalInvoicesVie
             style={{
               padding: '8px 16px',
               borderRadius: 8,
-              fontSize: 13,
+              fontSize: 14,
               fontWeight: filter === f ? 500 : 400,
               background: filter === f ? `${primaryColor}0D` : 'transparent',
               color: filter === f ? primaryColor : '#6B7280',
@@ -84,7 +84,7 @@ export function PortalInvoicesView({ invoices, primaryColor }: PortalInvoicesVie
       {/* Invoice List */}
       {filtered.length === 0 ? (
         <div style={{ ...cardStyle, padding: 48, textAlign: 'center' }}>
-          <p style={{ fontSize: 15, color: '#9CA3AF' }}>No invoices found</p>
+          <p style={{ fontSize: 16, color: '#9CA3AF' }}>No invoices found</p>
         </div>
       ) : (
         <div style={cardStyle}>
@@ -95,8 +95,8 @@ export function PortalInvoicesView({ invoices, primaryColor }: PortalInvoicesVie
               gridTemplateColumns: '1fr 100px 120px 120px 100px',
               padding: '12px 20px',
               borderBottom: '1px solid #E5E7EB',
-              fontSize: 12,
-              fontWeight: 600,
+              fontSize: 14,
+              fontWeight: 500,
               color: '#6B7280',
               textTransform: 'uppercase',
               letterSpacing: '0.05em',
@@ -137,11 +137,11 @@ export function PortalInvoicesView({ invoices, primaryColor }: PortalInvoicesVie
                   >
                     <div className="md:grid md:items-center" style={{ gridTemplateColumns: '1fr 100px 120px 120px 100px' }}>
                       <div>
-                        <span style={{ fontSize: 15, fontWeight: 500, color: '#111827' }}>
+                        <span style={{ fontSize: 16, fontWeight: 500, color: '#111827' }}>
                           {inv.invoice_number}
                         </span>
                         {inv.issued_date && (
-                          <span className="md:hidden" style={{ fontSize: 13, color: '#9CA3AF', marginLeft: 8 }}>
+                          <span className="md:hidden" style={{ fontSize: 14, color: '#9CA3AF', marginLeft: 8 }}>
                             {new Date(inv.issued_date).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })}
                           </span>
                         )}
@@ -149,10 +149,10 @@ export function PortalInvoicesView({ invoices, primaryColor }: PortalInvoicesVie
                       <div>
                         <span
                           style={{
-                            fontSize: 12,
+                            fontSize: 14,
                             fontWeight: 500,
-                            padding: '3px 8px',
-                            borderRadius: 6,
+                            padding: '4px 8px',
+                            borderRadius: 8,
                             background: sc.bg,
                             color: sc.text,
                           }}
@@ -161,7 +161,7 @@ export function PortalInvoicesView({ invoices, primaryColor }: PortalInvoicesVie
                         </span>
                       </div>
                       <div style={{ textAlign: 'right' }}>
-                        <span style={{ fontSize: 15, fontWeight: 600, color: '#111827' }}>
+                        <span style={{ fontSize: 16, fontWeight: 500, color: '#111827' }}>
                           ${inv.total.toLocaleString('en-AU', { minimumFractionDigits: 2 })}
                         </span>
                       </div>
@@ -180,7 +180,7 @@ export function PortalInvoicesView({ invoices, primaryColor }: PortalInvoicesVie
                             rel="noopener noreferrer"
                             onClick={e => e.stopPropagation()}
                             style={{
-                              fontSize: 13,
+                              fontSize: 14,
                               color: primaryColor,
                               textDecoration: 'none',
                               fontWeight: 500,
@@ -217,28 +217,28 @@ export function PortalInvoicesView({ invoices, primaryColor }: PortalInvoicesVie
                     <div style={{ ...cardStyle, padding: 16, background: '#FFFFFF' }}>
                       <div className="grid grid-cols-2 gap-4" style={{ marginBottom: 16 }}>
                         <div>
-                          <p style={{ fontSize: 12, color: '#6B7280', margin: '0 0 2px' }}>Invoice Number</p>
+                          <p style={{ fontSize: 14, color: '#6B7280', margin: '0 0 2px' }}>Invoice Number</p>
                           <p style={{ fontSize: 14, fontWeight: 500, color: '#111827', margin: 0 }}>{inv.invoice_number}</p>
                         </div>
                         <div>
-                          <p style={{ fontSize: 12, color: '#6B7280', margin: '0 0 2px' }}>Currency</p>
+                          <p style={{ fontSize: 14, color: '#6B7280', margin: '0 0 2px' }}>Currency</p>
                           <p style={{ fontSize: 14, fontWeight: 500, color: '#111827', margin: 0 }}>{inv.currency}</p>
                         </div>
                         <div>
-                          <p style={{ fontSize: 12, color: '#6B7280', margin: '0 0 2px' }}>Issued</p>
+                          <p style={{ fontSize: 14, color: '#6B7280', margin: '0 0 2px' }}>Issued</p>
                           <p style={{ fontSize: 14, color: '#111827', margin: 0 }}>
                             {inv.issued_date ? new Date(inv.issued_date).toLocaleDateString('en-AU') : '-'}
                           </p>
                         </div>
                         <div>
-                          <p style={{ fontSize: 12, color: '#6B7280', margin: '0 0 2px' }}>Due</p>
+                          <p style={{ fontSize: 14, color: '#6B7280', margin: '0 0 2px' }}>Due</p>
                           <p style={{ fontSize: 14, color: '#111827', margin: 0 }}>
                             {inv.due_date ? new Date(inv.due_date).toLocaleDateString('en-AU') : '-'}
                           </p>
                         </div>
                         {inv.paid_date && (
                           <div>
-                            <p style={{ fontSize: 12, color: '#6B7280', margin: '0 0 2px' }}>Paid</p>
+                            <p style={{ fontSize: 14, color: '#6B7280', margin: '0 0 2px' }}>Paid</p>
                             <p style={{ fontSize: 14, color: '#059669', margin: 0 }}>
                               {new Date(inv.paid_date).toLocaleDateString('en-AU')}
                             </p>
@@ -249,11 +249,11 @@ export function PortalInvoicesView({ invoices, primaryColor }: PortalInvoicesVie
                       {/* Line Items */}
                       {Array.isArray(inv.items) && inv.items.length > 0 && (
                         <div style={{ borderTop: '1px solid #E5E7EB', paddingTop: 16 }}>
-                          <p style={{ fontSize: 12, fontWeight: 600, color: '#6B7280', margin: '0 0 8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                          <p style={{ fontSize: 14, fontWeight: 500, color: '#6B7280', margin: '0 0 8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                             Line Items
                           </p>
                           {(inv.items as { description: string; quantity: number; unit_price: number; total: number }[]).map((item, idx) => (
-                            <div key={idx} className="flex justify-between" style={{ padding: '6px 0', borderBottom: '1px solid #F9FAFB' }}>
+                            <div key={idx} className="flex justify-between" style={{ padding: '8px 0', borderBottom: '1px solid #F9FAFB' }}>
                               <span style={{ fontSize: 14, color: '#374151' }}>
                                 {item.description} <span style={{ color: '#9CA3AF' }}>x{item.quantity}</span>
                               </span>
@@ -265,16 +265,16 @@ export function PortalInvoicesView({ invoices, primaryColor }: PortalInvoicesVie
 
                           <div style={{ borderTop: '1px solid #E5E7EB', marginTop: 8, paddingTop: 8 }}>
                             <div className="flex justify-between" style={{ marginBottom: 4 }}>
-                              <span style={{ fontSize: 13, color: '#6B7280' }}>Subtotal</span>
+                              <span style={{ fontSize: 14, color: '#6B7280' }}>Subtotal</span>
                               <span style={{ fontSize: 14, color: '#374151' }}>${inv.subtotal.toLocaleString('en-AU', { minimumFractionDigits: 2 })}</span>
                             </div>
                             <div className="flex justify-between" style={{ marginBottom: 4 }}>
-                              <span style={{ fontSize: 13, color: '#6B7280' }}>Tax (GST)</span>
+                              <span style={{ fontSize: 14, color: '#6B7280' }}>Tax (GST)</span>
                               <span style={{ fontSize: 14, color: '#374151' }}>${inv.tax.toLocaleString('en-AU', { minimumFractionDigits: 2 })}</span>
                             </div>
                             <div className="flex justify-between" style={{ marginTop: 8 }}>
-                              <span style={{ fontSize: 15, fontWeight: 600, color: '#111827' }}>Total</span>
-                              <span style={{ fontSize: 15, fontWeight: 700, color: '#111827' }}>
+                              <span style={{ fontSize: 16, fontWeight: 500, color: '#111827' }}>Total</span>
+                              <span style={{ fontSize: 16, fontWeight: 500, color: '#111827' }}>
                                 ${inv.total.toLocaleString('en-AU', { minimumFractionDigits: 2 })}
                               </span>
                             </div>
@@ -290,7 +290,7 @@ export function PortalInvoicesView({ invoices, primaryColor }: PortalInvoicesVie
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-2"
                             style={{
-                              padding: '10px 20px',
+                              padding: '12px 20px',
                               borderRadius: 8,
                               background: primaryColor,
                               color: '#FFFFFF',

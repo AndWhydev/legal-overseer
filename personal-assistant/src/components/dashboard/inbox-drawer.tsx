@@ -271,7 +271,7 @@ function AiSummaryPanel({
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
         <Sparkles size={14} style={{ color: '#A78BFA', flexShrink: 0 }} />
-        <span style={{ fontSize: 12, fontWeight: 600, color: '#A78BFA', letterSpacing: '0.02em' }}>
+        <span style={{ fontSize: 14, fontWeight: 500, color: '#A78BFA', letterSpacing: '0.02em' }}>
           AI Summary
         </span>
       </div>
@@ -286,7 +286,7 @@ function AiSummaryPanel({
         <>
           {/* Summary text */}
           <p style={{
-            fontSize: 13,
+            fontSize: 14,
             color: 'rgba(255,255,255,0.75)',
             margin: '0 0 10px',
             lineHeight: 1.5,
@@ -298,8 +298,8 @@ function AiSummaryPanel({
           {result.actionItems.length > 0 && (
             <ul style={{ margin: '0 0 12px', padding: '0 0 0 2px', listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 4 }}>
               {result.actionItems.map((item, i) => (
-                <li key={i} style={{ fontSize: 12, color: 'rgba(167,139,250,0.9)', display: 'flex', alignItems: 'flex-start', gap: 6 }}>
-                  <span style={{ color: '#6366f1', marginTop: 1, flexShrink: 0 }}>›</span>
+                <li key={i} style={{ fontSize: 14, color: 'rgba(167,139,250,0.9)', display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+                  <span style={{ color: '#6366f1', marginTop: 4, flexShrink: 0 }}>›</span>
                   {item}
                 </li>
               ))}
@@ -316,13 +316,13 @@ function AiSummaryPanel({
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: 5,
-                padding: '5px 10px',
-                borderRadius: 6,
+                gap: 4,
+                padding: '4px 12px',
+                borderRadius: 8,
                 border: '1px solid rgba(99,102,241,0.3)',
                 background: 'rgba(99,102,241,0.1)',
                 color: '#A78BFA',
-                fontSize: 11,
+                fontSize: 14,
                 fontWeight: 500,
                 cursor: 'pointer',
                 transition: 'all 150ms ease',
@@ -337,13 +337,13 @@ function AiSummaryPanel({
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: 5,
-                padding: '5px 10px',
-                borderRadius: 6,
+                gap: 4,
+                padding: '4px 12px',
+                borderRadius: 8,
                 border: '1px solid rgba(255,255,255,0.08)',
                 background: 'rgba(255,255,255,0.04)',
                 color: 'rgba(255,255,255,0.6)',
-                fontSize: 11,
+                fontSize: 14,
                 fontWeight: 500,
                 cursor: 'pointer',
                 transition: 'all 150ms ease',
@@ -373,7 +373,7 @@ function ThreadView({
 }) {
   if (!messages || messages.length === 0) {
     return (
-      <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', fontStyle: 'italic' }}>
+      <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', fontStyle: 'italic' }}>
         No thread messages available
       </div>
     );
@@ -391,9 +391,9 @@ function ThreadView({
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       {/* Thread count header */}
-      <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', marginBottom: 4, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+      <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.3)', marginBottom: 4, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
         {messages.length} messages in thread
       </div>
 
@@ -422,7 +422,7 @@ function ThreadView({
                 display: 'flex',
                 alignItems: 'center',
                 gap: 8,
-                padding: '10px 12px',
+                padding: '12px 12px',
                 cursor: isLatest ? 'default' : 'pointer',
                 userSelect: 'none',
               }}
@@ -437,8 +437,8 @@ function ThreadView({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: 10,
-                fontWeight: 700,
+                fontSize: 14,
+                fontWeight: 500,
                 color: msg.isSelf ? '#FF7A45' : 'rgba(255,255,255,0.7)',
                 flexShrink: 0,
               }}>
@@ -446,14 +446,14 @@ function ThreadView({
               </div>
 
               {/* Sender */}
-              <span style={{ fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.85)', flexShrink: 0 }}>
+              <span style={{ fontSize: 14, fontWeight: 500, color: 'rgba(255,255,255,0.85)', flexShrink: 0 }}>
                 {msg.isSelf ? 'You' : senderName}
               </span>
 
               {/* Collapsed preview */}
               {!isExpanded && !isLatest && (
                 <span style={{
-                  fontSize: 12,
+                  fontSize: 14,
                   color: 'rgba(255,255,255,0.3)',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
@@ -464,7 +464,7 @@ function ThreadView({
                 </span>
               )}
 
-              <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', flexShrink: 0, marginLeft: 'auto' }}>
+              <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.25)', flexShrink: 0, marginLeft: 'auto' }}>
                 {formatTimeAgo(msg.receivedAt)}
               </span>
 
@@ -479,7 +479,7 @@ function ThreadView({
             {(isExpanded || isLatest) && (
               <div style={{
                 padding: '0 12px 12px 44px',
-                fontSize: 13,
+                fontSize: 14,
                 color: 'rgba(255,255,255,0.75)',
                 lineHeight: 1.6,
                 whiteSpace: 'pre-wrap',
@@ -500,12 +500,12 @@ function ThreadView({
           display: 'flex',
           alignItems: 'center',
           gap: 8,
-          padding: '10px 12px',
+          padding: '12px 12px',
           borderRadius: 8,
           border: '1px dashed rgba(255,255,255,0.08)',
           background: 'transparent',
           color: 'rgba(255,255,255,0.3)',
-          fontSize: 12,
+          fontSize: 14,
           cursor: 'pointer',
           transition: 'all 150ms ease',
           textAlign: 'left',
@@ -665,13 +665,13 @@ export default function InboxDrawer({
   const btnStyle: React.CSSProperties = {
     display: 'inline-flex',
     alignItems: 'center',
-    gap: 6,
-    padding: '6px 12px',
+    gap: 8,
+    padding: '8px 12px',
     borderRadius: 8,
     border: '1px solid rgba(255, 255, 255, 0.08)',
     background: 'rgba(255, 255, 255, 0.04)',
     color: 'rgba(255, 255, 255, 0.7)',
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: 500,
     cursor: 'pointer',
     transition: 'all 150ms ease',
@@ -735,12 +735,12 @@ export default function InboxDrawer({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '14px 20px',
+          padding: '16px 20px',
           borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
           flexShrink: 0,
           gap: 12,
         }}>
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <button style={btnStyle} onClick={() => focusReply()} title="Reply (R)"
               onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
               onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}>
@@ -774,12 +774,12 @@ export default function InboxDrawer({
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
             {threadCount && threadCount > 1 && (
               <span style={{
-                fontSize: 11,
-                fontWeight: 600,
+                fontSize: 14,
+                fontWeight: 500,
                 color: 'rgba(255,255,255,0.4)',
                 background: 'rgba(255,255,255,0.06)',
-                padding: '2px 8px',
-                borderRadius: 10,
+                padding: '4px 8px',
+                borderRadius: 12,
               }}>
                 {threadCount} messages
               </span>
@@ -807,7 +807,7 @@ export default function InboxDrawer({
           flexShrink: 0,
         }}>
           {/* Sender row */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
             <div style={{ position: 'relative', width: 36, height: 36, flexShrink: 0 }}>
               {avatar?.url ? (
                 <img src={avatar.url} alt={sender} width={36} height={36}
@@ -817,7 +817,7 @@ export default function InboxDrawer({
                   width: 36, height: 36, borderRadius: '50%',
                   background: `${brandColor}20`, display: 'flex',
                   alignItems: 'center', justifyContent: 'center',
-                  fontSize: 13, fontWeight: 600, color: brandColor,
+                  fontSize: 14, fontWeight: 500, color: brandColor,
                 }}>
                   {sender[0]?.toUpperCase() || '?'}
                 </div>
@@ -834,24 +834,24 @@ export default function InboxDrawer({
             </div>
 
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 15, fontWeight: 600, color: 'rgba(255,255,255,0.95)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <div style={{ fontSize: 16, fontWeight: 500, color: 'rgba(255,255,255,0.95)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {String(sender || '')}
               </div>
               {message.senderEmail && (
-                <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginTop: 1 }}>
+                <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', marginTop: 4 }}>
                   {String(message.senderEmail || '')}
                 </div>
               )}
             </div>
 
-            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', flexShrink: 0, textAlign: 'right' }}>
+            <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.35)', flexShrink: 0, textAlign: 'right' }}>
               {formatDate(message.receivedAt)}
             </div>
           </div>
 
           {/* Subject */}
           {message.subject && (
-            <h2 style={{ fontSize: 18, fontWeight: 600, color: 'rgba(255,255,255,0.95)', margin: '0 0 10px', lineHeight: 1.3 }}>
+            <h2 style={{ fontSize: 16, fontWeight: 500, color: 'rgba(255,255,255,0.95)', margin: '0 0 10px', lineHeight: 1.3 }}>
               {String(message.subject || '')}
             </h2>
           )}
@@ -859,8 +859,8 @@ export default function InboxDrawer({
           {/* Badges */}
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <span style={{
-              display: 'inline-flex', alignItems: 'center', padding: '3px 10px',
-              borderRadius: 10, fontSize: 11, fontWeight: 600,
+              display: 'inline-flex', alignItems: 'center', padding: '4px 12px',
+              borderRadius: 12, fontSize: 14, fontWeight: 500,
               textTransform: 'uppercase', letterSpacing: '0.04em',
               background: message.category === 'action_required' ? 'rgba(255,90,31,0.15)' : message.category === 'conversation' ? 'rgba(139,92,246,0.15)' : message.category === 'spam' ? 'rgba(239,68,68,0.15)' : message.category === 'marketing' ? 'rgba(234,179,8,0.12)' : message.category === 'automated' ? 'rgba(79,70,229,0.12)' : 'rgba(255,255,255,0.06)',
               color: message.category === 'action_required' ? '#FF7A45' : message.category === 'conversation' ? '#A78BFA' : message.category === 'spam' ? '#F87171' : message.category === 'marketing' ? '#EAB308' : message.category === 'automated' ? '#818CF8' : 'rgba(255,255,255,0.5)',
@@ -870,8 +870,8 @@ export default function InboxDrawer({
 
             {message.threadStatus && (
               <span style={{
-                display: 'inline-flex', alignItems: 'center', padding: '3px 10px',
-                borderRadius: 10, fontSize: 11, fontWeight: 500,
+                display: 'inline-flex', alignItems: 'center', padding: '4px 12px',
+                borderRadius: 12, fontSize: 14, fontWeight: 500,
                 background: message.threadStatus === 'waiting_on_you' ? 'rgba(59,130,246,0.12)' : 'rgba(255,255,255,0.06)',
                 color: message.threadStatus === 'waiting_on_you' ? '#60A5FA' : 'rgba(255,255,255,0.4)',
               }}>
@@ -915,7 +915,7 @@ export default function InboxDrawer({
         </div>
 
         {/* Reply Composer */}
-        <div style={{ padding: '14px 20px', borderTop: '1px solid rgba(255,255,255,0.06)', flexShrink: 0 }}>
+        <div style={{ padding: '16px 20px', borderTop: '1px solid rgba(255,255,255,0.06)', flexShrink: 0 }}>
           <div style={{
             display: 'flex',
             alignItems: 'flex-end',
@@ -944,7 +944,7 @@ export default function InboxDrawer({
                 flex: 1, padding: '8px 0',
                 background: 'transparent', border: 'none', outline: 'none',
                 color: 'var(--text-primary, #F1F5F9)',
-                fontSize: 13, fontFamily: 'inherit', lineHeight: 1.5,
+                fontSize: 14, fontFamily: 'inherit', lineHeight: 1.5,
                 resize: 'none', minHeight: 32, maxHeight: 200,
                 width: '100%',
               }}
@@ -969,8 +969,8 @@ export default function InboxDrawer({
             </button>
           </div>
           {replyText && (
-            <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)', marginTop: 5, paddingLeft: 16 }}>
-              <kbd style={{ padding: '1px 4px', borderRadius: 3, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', fontSize: 9, fontFamily: 'inherit' }}>Cmd+Enter</kbd> to send
+            <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.2)', marginTop: 4, paddingLeft: 16 }}>
+              <kbd style={{ padding: '4px 4px', borderRadius: 3, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', fontSize: 14, fontFamily: 'inherit' }}>Cmd+Enter</kbd> to send
             </div>
           )}
         </div>

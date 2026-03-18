@@ -109,15 +109,15 @@ export function MeetingList({ onSelectMeeting, onUpload }: MeetingListProps) {
       <div className="flex items-center justify-between">
         <div>
           <h2 style={{
-            fontSize: 20,
-            fontWeight: 600,
+            fontSize: 16,
+            fontWeight: 500,
             color: 'var(--text-primary, #F1F5F9)',
             margin: 0,
           }}>
             Meetings
           </h2>
           <p style={{
-            fontSize: 13,
+            fontSize: 14,
             color: 'var(--text-secondary, #94A3B8)',
             margin: '4px 0 0',
           }}>
@@ -128,17 +128,17 @@ export function MeetingList({ onSelectMeeting, onUpload }: MeetingListProps) {
           onClick={onUpload}
           style={{
             padding: '8px 16px',
-            borderRadius: 10,
+            borderRadius: 12,
             background: '#FF5A1F',
             border: 'none',
             color: '#000',
-            fontSize: 13,
-            fontWeight: 600,
+            fontSize: 14,
+            fontWeight: 500,
             cursor: 'pointer',
             transition: 'all 200ms',
             display: 'flex',
             alignItems: 'center',
-            gap: 6,
+            gap: 8,
           }}
         >
           <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -155,12 +155,12 @@ export function MeetingList({ onSelectMeeting, onUpload }: MeetingListProps) {
             key={type || 'all'}
             onClick={() => setTypeFilter(type as MeetingType | '')}
             style={{
-              padding: '6px 14px',
+              padding: '8px 16px',
               borderRadius: 20,
               background: typeFilter === type ? 'rgba(255, 90, 31, 0.15)' : 'rgba(10, 14, 23, 0.42)',
               border: typeFilter === type ? '1px solid rgba(255, 90, 31, 0.3)' : '1px solid rgba(255, 255, 255, 0.06)',
               color: typeFilter === type ? '#FF7A45' : 'var(--text-secondary, #94A3B8)',
-              fontSize: 12,
+              fontSize: 14,
               fontWeight: 500,
               cursor: 'pointer',
               transition: 'all 200ms',
@@ -182,7 +182,7 @@ export function MeetingList({ onSelectMeeting, onUpload }: MeetingListProps) {
             <p style={{ color: 'var(--text-secondary, #94A3B8)', fontSize: 14, margin: 0 }}>
               No meetings yet
             </p>
-            <p style={{ color: 'var(--text-dim, #475569)', fontSize: 13, margin: '8px 0 0' }}>
+            <p style={{ color: 'var(--text-dim, #475569)', fontSize: 14, margin: '8px 0 0' }}>
               Upload a recording to get started
             </p>
           </div>
@@ -212,7 +212,7 @@ export function MeetingList({ onSelectMeeting, onUpload }: MeetingListProps) {
                   <div style={{
                     width: 36,
                     height: 36,
-                    borderRadius: 10,
+                    borderRadius: 12,
                     background: 'rgba(255, 90, 31, 0.08)',
                     display: 'flex',
                     alignItems: 'center',
@@ -237,7 +237,7 @@ export function MeetingList({ onSelectMeeting, onUpload }: MeetingListProps) {
                       {meeting.title}
                     </div>
                     <div style={{
-                      fontSize: 12,
+                      fontSize: 14,
                       color: 'var(--text-dim, #475569)',
                       marginTop: 2,
                     }}>
@@ -247,9 +247,9 @@ export function MeetingList({ onSelectMeeting, onUpload }: MeetingListProps) {
 
                   {/* Status badge */}
                   <span style={{
-                    padding: '3px 10px',
+                    padding: '4px 12px',
                     borderRadius: 12,
-                    fontSize: 11,
+                    fontSize: 14,
                     fontWeight: 500,
                     background: statusColor.bg,
                     color: statusColor.text,

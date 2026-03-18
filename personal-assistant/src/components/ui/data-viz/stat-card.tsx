@@ -48,7 +48,7 @@ export function StatCard({
       {/* Row 1: Label */}
       <span
         style={{
-          fontSize: 11,
+          fontSize: 14,
           color: 'var(--text-secondary)',
           fontFamily: 'var(--font-sans)',
           textTransform: 'uppercase',
@@ -62,14 +62,14 @@ export function StatCard({
       {/* Row 2: Left side (value + trend + subtitle) + Right side (chart) */}
       <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
         {/* Left side: value with unit, then trend below, then subtitle below */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flexShrink: 0 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flexShrink: 0 }}>
           {/* Value + unit */}
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
             {unit && (
               <span
                 style={{
                   fontSize: 16,
-                  fontWeight: 600,
+                  fontWeight: 500,
                   color: 'var(--text-secondary)',
                   fontFamily: 'var(--font-mono)',
                 }}
@@ -79,8 +79,8 @@ export function StatCard({
             )}
             <span
               style={{
-                fontSize: 32,
-                fontWeight: 800,
+                fontSize: 16,
+                fontWeight: 500,
                 color: 'var(--text-primary)',
                 fontFamily: 'var(--font-mono)',
                 letterSpacing: '-0.03em',
@@ -93,7 +93,7 @@ export function StatCard({
 
           {/* Trend */}
           {trend && trendValue && (
-            <span style={{ fontSize: 11, color: trendColor, fontWeight: 600 }}>
+            <span style={{ fontSize: 14, color: trendColor, fontWeight: 500 }}>
               {trendArrow} {trendValue}
             </span>
           )}
@@ -102,7 +102,7 @@ export function StatCard({
           {subtitle && (
             <span
               style={{
-                fontSize: 10,
+                fontSize: 14,
                 color: 'var(--text-secondary)',
                 fontFamily: 'var(--font-sans)',
                 opacity: 0.7,

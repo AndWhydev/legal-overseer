@@ -62,20 +62,20 @@ interface IntegrationCardProps {
 
 // Shared glass button base
 const glassBtn: React.CSSProperties = {
-  padding: '5px 12px',
-  borderRadius: 10,
+  padding: '4px 12px',
+  borderRadius: 12,
   background: 'rgba(255, 255, 255, 0.06)',
   backdropFilter: 'blur(12px)',
   WebkitBackdropFilter: 'blur(12px)',
   border: '1px solid rgba(255, 255, 255, 0.08)',
-  fontSize: 11,
+  fontSize: 14,
   fontWeight: 500,
   cursor: 'pointer',
   transition: 'all 180ms ease',
   flexShrink: 0,
   display: 'flex',
   alignItems: 'center',
-  gap: 5,
+  gap: 4,
   lineHeight: 1.4,
 };
 
@@ -173,8 +173,8 @@ export function IntegrationCard({ integration, isConnected = false, onStatusChan
           display: 'flex',
           alignItems: 'center',
           gap: 12,
-          padding: '12px 14px',
-          borderRadius: 14,
+          padding: '12px 16px',
+          borderRadius: 12,
           background: hovered && !isComingSoon
             ? 'rgba(255, 255, 255, 0.04)'
             : 'var(--glass-pill-bg)',
@@ -206,8 +206,8 @@ export function IntegrationCard({ integration, isConnected = false, onStatusChan
 
         {/* Info */}
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>
               {integration.name}
             </span>
             <SuccessTick visible={showTick} />
@@ -215,9 +215,9 @@ export function IntegrationCard({ integration, isConnected = false, onStatusChan
               <span style={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                padding: '1px 6px',
-                borderRadius: 5,
-                fontSize: 9,
+                padding: '1px 8px',
+                borderRadius: 8,
+                fontSize: 14,
                 fontWeight: 500,
                 background: 'var(--glass-hover-bg)',
                 color: 'var(--text-dim)',
@@ -227,7 +227,7 @@ export function IntegrationCard({ integration, isConnected = false, onStatusChan
             )}
           </div>
           <p style={{
-            fontSize: 11,
+            fontSize: 14,
             color: 'var(--text-secondary)',
             margin: '1px 0 0',
             lineHeight: 1.35,
@@ -324,10 +324,10 @@ export function IntegrationCard({ integration, isConnected = false, onStatusChan
                 {BrandIcon && <BrandIcon size={36} />}
               </div>
               <div>
-                <h3 style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
+                <h3 style={{ fontSize: 16, fontWeight: 500, color: 'var(--text-primary)', margin: 0 }}>
                   Connect {integration.name}
                 </h3>
-                <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: '2px 0 0' }}>
+                <p style={{ fontSize: 14, color: 'var(--text-secondary)', margin: '2px 0 0' }}>
                   Enter your API key to connect.
                 </p>
               </div>
@@ -335,9 +335,9 @@ export function IntegrationCard({ integration, isConnected = false, onStatusChan
 
             {error && (
               <div style={{
-                padding: '10px 14px', borderRadius: 10,
+                padding: '12px 16px', borderRadius: 12,
                 background: 'rgba(239, 68, 68, 0.1)', color: '#EF4444',
-                fontSize: 13, marginBottom: 16,
+                fontSize: 14, marginBottom: 16,
               }}>
                 {error}
               </div>
@@ -354,8 +354,8 @@ export function IntegrationCard({ integration, isConnected = false, onStatusChan
               onKeyDown={e => { if (e.key === 'Enter' && apiKey.trim()) handleApiKeySubmit(); }}
               style={{
                 width: '100%',
-                padding: '10px 14px',
-                borderRadius: 10,
+                padding: '12px 16px',
+                borderRadius: 12,
                 background: 'rgba(13, 17, 23, 0.6)',
                 border: inputFocused
                   ? '1px solid rgba(255, 255, 255, 0.2)'
@@ -376,7 +376,7 @@ export function IntegrationCard({ integration, isConnected = false, onStatusChan
                 style={{
                   ...glassBtn,
                   padding: '8px 16px',
-                  fontSize: 13,
+                  fontSize: 14,
                   color: 'var(--text-primary)',
                 }}
               >
@@ -388,8 +388,8 @@ export function IntegrationCard({ integration, isConnected = false, onStatusChan
                 style={{
                   ...glassBtn,
                   padding: '8px 16px',
-                  fontSize: 13,
-                  fontWeight: 600,
+                  fontSize: 14,
+                  fontWeight: 500,
                   background: 'rgba(255, 255, 255, 0.12)',
                   color: 'var(--text-primary)',
                   cursor: isLoading || !apiKey.trim() ? 'not-allowed' : 'pointer',

@@ -18,9 +18,9 @@ interface LeadsToolbarProps {
 }
 
 const selectStyle: React.CSSProperties = {
-  fontSize: 12,
+  fontSize: 14,
   fontWeight: 500,
-  padding: '6px 10px',
+  padding: '8px 12px',
   borderRadius: 8,
   border: '1px solid var(--glass-interactive-border)',
   background: 'var(--glass-pill-bg)',
@@ -84,8 +84,8 @@ export function LeadsToolbar({
           placeholder="Search leads..."
           style={{
             width: 200,
-            fontSize: 12,
-            padding: '6px 10px 6px 26px',
+            fontSize: 14,
+            padding: '8px 12px 8px 28px',
             borderRadius: 8,
             border: '1px solid var(--glass-interactive-border)',
             background: 'var(--glass-pill-bg)',
@@ -98,10 +98,10 @@ export function LeadsToolbar({
           <span style={{
             position: 'absolute',
             right: 8,
-            fontSize: 10,
+            fontSize: 14,
             color: 'var(--text-dim)',
             background: 'var(--glass-pill-bg)',
-            borderRadius: 4,
+            borderRadius: 8,
             padding: '1px 4px',
             border: '1px solid var(--glass-interactive-border)',
             pointerEvents: 'none',
@@ -145,7 +145,7 @@ export function LeadsToolbar({
       <div style={{
         display: 'flex',
         alignItems: 'center',
-        fontSize: 12,
+        fontSize: 14,
         fontFamily: 'var(--font-mono)',
         color: 'var(--text-dim)',
         gap: 0,
@@ -171,7 +171,7 @@ export function LeadsToolbar({
         <button
           onClick={() => onViewModeChange('kanban')}
           style={{
-            padding: '6px 10px',
+            padding: '8px 12px',
             border: 'none',
             background: viewMode === 'kanban' ? 'var(--hover-bg-strong)' : 'transparent',
             color: viewMode === 'kanban' ? 'var(--text-primary)' : 'var(--text-dim)',
@@ -185,7 +185,7 @@ export function LeadsToolbar({
         <button
           onClick={() => onViewModeChange('list')}
           style={{
-            padding: '6px 10px',
+            padding: '8px 12px',
             border: 'none',
             background: viewMode === 'list' ? 'var(--hover-bg-strong)' : 'transparent',
             color: viewMode === 'list' ? 'var(--text-primary)' : 'var(--text-dim)',
@@ -204,14 +204,15 @@ export function LeadsToolbar({
         style={{
           display: 'flex',
           alignItems: 'center',
-          gap: 6,
-          padding: '8px 16px',
-          borderRadius: 10,
+          gap: 8,
+          height: 40,
+          padding: '0 20px',
+          borderRadius: 12,
           border: 'none',
           background: 'linear-gradient(135deg, var(--bb-cyan) 0%, var(--bb-blue) 100%)',
           color: '#fff',
-          fontSize: 12,
-          fontWeight: 600,
+          fontSize: 14,
+          fontWeight: 500,
           cursor: 'pointer',
           transition: 'opacity 0.15s',
         }}

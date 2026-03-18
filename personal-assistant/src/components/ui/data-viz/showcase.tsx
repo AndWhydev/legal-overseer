@@ -54,7 +54,7 @@ export function DataVizShowcase() {
         fontFamily: 'var(--font-sans)',
       }}
     >
-      <h2 style={{ color: 'var(--text-primary)', fontSize: 20, fontWeight: 700, margin: 0 }}>
+      <h2 style={{ color: 'var(--text-primary)', fontSize: 16, fontWeight: 500, margin: 0 }}>
         BitBit Data Viz Component Library
       </h2>
 
@@ -168,13 +168,13 @@ export function DataVizShowcase() {
       {/* Section: DataConnector */}
       <Section title="DataConnector">
         <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
-          <span style={{ color: 'var(--text-primary)', fontSize: 12 }}>Node A</span>
+          <span style={{ color: 'var(--text-primary)', fontSize: 14 }}>Node A</span>
           <DataConnector status="active" width={80} />
-          <span style={{ color: 'var(--text-primary)', fontSize: 12 }}>Node B</span>
+          <span style={{ color: 'var(--text-primary)', fontSize: 14 }}>Node B</span>
           <DataConnector status="warning" width={80} />
-          <span style={{ color: 'var(--text-primary)', fontSize: 12 }}>Node C</span>
+          <span style={{ color: 'var(--text-primary)', fontSize: 14 }}>Node C</span>
           <DataConnector status="error" width={80} />
-          <span style={{ color: 'var(--text-primary)', fontSize: 12 }}>Node D</span>
+          <span style={{ color: 'var(--text-primary)', fontSize: 14 }}>Node D</span>
         </div>
       </Section>
 
@@ -263,8 +263,8 @@ function Section({ title, children }: { title: string; children: React.ReactNode
       <h3
         style={{
           color: 'var(--bb-orange)',
-          fontSize: 13,
-          fontWeight: 600,
+          fontSize: 14,
+          fontWeight: 500,
           textTransform: 'uppercase',
           letterSpacing: '0.05em',
           marginBottom: 16,
@@ -282,9 +282,9 @@ function Label({ children }: { children: React.ReactNode }) {
   return (
     <div
       style={{
-        fontSize: 10,
+        fontSize: 14,
         color: 'var(--text-secondary)',
-        marginBottom: 6,
+        marginBottom: 8,
         fontFamily: 'var(--font-mono)',
       }}
     >

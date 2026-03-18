@@ -98,7 +98,7 @@ export function ConversationDrawer({
         </div>
 
         {/* New chat — compact pill */}
-        <div style={{ padding: '0 10px 6px' }}>
+        <div style={{ padding: '0 12px 8px' }}>
           <button
             className="bb-chat__drawer-new-btn"
             onClick={() => {
@@ -120,13 +120,13 @@ export function ConversationDrawer({
                   <div style={{
                     height: 12, width: `${50 + i * 15}%`,
                     background: 'var(--text-muted, rgba(255,255,255,0.15))',
-                    borderRadius: 3,
+                    borderRadius: 8,
                     animation: 'shimmer-pulse 1.5s ease-in-out infinite',
                   }} />
                   <div style={{
-                    height: 10, width: '75%', marginTop: 5,
+                    height: 12, width: '75%', marginTop: 4,
                     background: 'var(--text-muted, rgba(255,255,255,0.1))',
-                    borderRadius: 3,
+                    borderRadius: 8,
                     animation: 'shimmer-pulse 1.5s ease-in-out infinite',
                     animationDelay: `${i * 0.2}s`,
                   }} />

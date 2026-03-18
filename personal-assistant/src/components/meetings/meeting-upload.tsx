@@ -102,7 +102,7 @@ export function MeetingUpload({ onUploaded, onCancel }: MeetingUploadProps) {
       }}>
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-          <h2 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
+          <h2 style={{ fontSize: '16px', fontWeight: 500, color: 'var(--text-primary)', margin: 0 }}>
             Upload Meeting Recording
           </h2>
           <button
@@ -144,20 +144,20 @@ export function MeetingUpload({ onUploaded, onCancel }: MeetingUploadProps) {
           {file ? (
             <div>
               <FileAudio size={32} style={{ color: 'var(--bb-orange)', margin: '0 auto 8px' }} />
-              <div style={{ fontSize: '13px', color: 'var(--text-primary)', fontWeight: 500 }}>
+              <div style={{ fontSize: '14px', color: 'var(--text-primary)', fontWeight: 500 }}>
                 {file.name}
               </div>
-              <div style={{ fontSize: '11px', color: 'var(--text-dim)', marginTop: '4px' }}>
+              <div style={{ fontSize: '14px', color: 'var(--text-dim)', marginTop: '4px' }}>
                 {(file.size / (1024 * 1024)).toFixed(1)}MB
               </div>
             </div>
           ) : (
             <div>
               <Upload size={32} style={{ color: 'var(--text-dim)', margin: '0 auto 8px', opacity: 0.5 }} />
-              <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
+              <div style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
                 Drop audio/video file here or click to browse
               </div>
-              <div style={{ fontSize: '11px', color: 'var(--text-dim)', marginTop: '4px' }}>
+              <div style={{ fontSize: '14px', color: 'var(--text-dim)', marginTop: '4px' }}>
                 MP3, WAV, M4A, MP4, WebM, OGG, FLAC (max 500MB)
               </div>
             </div>
@@ -166,7 +166,7 @@ export function MeetingUpload({ onUploaded, onCancel }: MeetingUploadProps) {
 
         {/* Title input */}
         <div style={{ marginBottom: '12px' }}>
-          <label style={{ fontSize: '12px', color: 'var(--text-dim)', marginBottom: '4px', display: 'block' }}>
+          <label style={{ fontSize: '14px', color: 'var(--text-dim)', marginBottom: '4px', display: 'block' }}>
             Meeting Title
           </label>
           <input
@@ -181,7 +181,7 @@ export function MeetingUpload({ onUploaded, onCancel }: MeetingUploadProps) {
               border: 'none',
               borderRadius: 'var(--radius-md)',
               color: 'var(--text-primary)',
-              fontSize: '13px',
+              fontSize: '14px',
               outline: 'none',
               fontFamily: 'var(--font-sans)',
               boxSizing: 'border-box',
@@ -191,7 +191,7 @@ export function MeetingUpload({ onUploaded, onCancel }: MeetingUploadProps) {
 
         {/* Participants input */}
         <div style={{ marginBottom: '16px' }}>
-          <label style={{ fontSize: '12px', color: 'var(--text-dim)', marginBottom: '4px', display: 'block' }}>
+          <label style={{ fontSize: '14px', color: 'var(--text-dim)', marginBottom: '4px', display: 'block' }}>
             Participants (comma-separated, optional)
           </label>
           <input
@@ -206,7 +206,7 @@ export function MeetingUpload({ onUploaded, onCancel }: MeetingUploadProps) {
               border: 'none',
               borderRadius: 'var(--radius-md)',
               color: 'var(--text-primary)',
-              fontSize: '13px',
+              fontSize: '14px',
               outline: 'none',
               fontFamily: 'var(--font-sans)',
               boxSizing: 'border-box',
@@ -217,7 +217,7 @@ export function MeetingUpload({ onUploaded, onCancel }: MeetingUploadProps) {
         {/* Error */}
         {error && (
           <div style={{
-            fontSize: '12px',
+            fontSize: '14px',
             color: 'var(--bb-red)',
             marginBottom: '12px',
             padding: '8px',
@@ -239,7 +239,7 @@ export function MeetingUpload({ onUploaded, onCancel }: MeetingUploadProps) {
               borderRadius: 'var(--radius-md)',
               border: 'none',
               cursor: 'pointer',
-              fontSize: '13px',
+              fontSize: '14px',
             }}
           >
             Cancel
@@ -250,15 +250,15 @@ export function MeetingUpload({ onUploaded, onCancel }: MeetingUploadProps) {
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '6px',
+              gap: '8px',
               padding: '8px 20px',
               background: !file || uploading ? 'rgba(255,90,31,0.3)' : 'var(--bb-orange)',
               color: '#000',
               borderRadius: 'var(--radius-md)',
               border: 'none',
               cursor: !file || uploading ? 'not-allowed' : 'pointer',
-              fontSize: '13px',
-              fontWeight: 600,
+              fontSize: '14px',
+              fontWeight: 500,
             }}
           >
             {uploading ? (

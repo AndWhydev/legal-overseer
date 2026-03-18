@@ -70,17 +70,17 @@ export const KanbanColumn = memo(function KanbanColumn({
     >
       {/* Column header */}
       <div style={{ padding: '0 6px 4px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingBottom: 6 }}>
-          <h3 style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', margin: 0, letterSpacing: '0.01em' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingBottom: 8 }}>
+          <h3 style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-secondary)', margin: 0, letterSpacing: '0.01em' }}>
             {column.title}
           </h3>
           <span style={{
-            fontSize: 11,
-            fontWeight: 600,
+            fontSize: 14,
+            fontWeight: 500,
             color: 'var(--text-dim)',
             background: 'var(--glass-interactive-bg)',
             borderRadius: 99,
-            padding: '1px 7px',
+            padding: '4px 8px',
           }}>
             {tasks.length}
           </span>
@@ -113,9 +113,9 @@ export const KanbanColumn = memo(function KanbanColumn({
           flex: 1,
           display: 'flex',
           flexDirection: 'column',
-          gap: 6,
+          gap: 8,
           borderRadius: 16,
-          padding: 6,
+          padding: 8,
           background: isOver ? 'rgba(148, 163, 184, 0.04)' : 'var(--glass-card-border)',
           outline: isOver ? '1.5px dashed rgba(148, 163, 184, 0.18)' : '1.5px dashed transparent',
           transition: 'background 0.1s ease, outline-color 0.1s ease',
@@ -140,12 +140,12 @@ export const KanbanColumn = memo(function KanbanColumn({
         {/* Inline quick-add */}
         {isAdding ? (
           <div style={{
-            borderRadius: 10,
-            padding: '10px 14px',
+            borderRadius: 12,
+            padding: '12px 16px',
             background: 'var(--bg-card)',
             boxShadow: 'var(--card-inset)',
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               {/* Priority dot indicator */}
               <span style={{
                 width: 6,
@@ -188,15 +188,15 @@ export const KanbanColumn = memo(function KanbanColumn({
                   background: 'transparent',
                   border: 'none',
                   outline: 'none',
-                  fontSize: 13,
-                  fontWeight: 600,
+                  fontSize: 14,
+                  fontWeight: 500,
                   color: 'var(--text-primary)',
                   padding: 0,
                   fontFamily: 'inherit',
                 }}
               />
             </div>
-            <div style={{ marginTop: 5, fontSize: 9, color: 'var(--text-dim)', letterSpacing: '0.02em' }}>
+            <div style={{ marginTop: 4, fontSize: 14, color: 'var(--text-dim)', letterSpacing: '0.02em' }}>
               ↵ create · tab priority · esc close
             </div>
           </div>
@@ -209,13 +209,13 @@ export const KanbanColumn = memo(function KanbanColumn({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: 6,
-              borderRadius: 10,
+              gap: 8,
+              borderRadius: 12,
               padding: isEmpty ? '8px 12px' : 12,
               border: `1.5px dashed ${ghostHover ? 'rgba(148, 163, 184, 0.25)' : 'rgba(148, 163, 184, 0.12)'}`,
               background: ghostHover ? 'var(--glass-card-border)' : 'transparent',
               width: '100%',
-              fontSize: 12,
+              fontSize: 14,
               color: 'var(--text-dim)',
               cursor: 'pointer',
               transition: 'color 0.15s, background 0.15s, border-color 0.15s',

@@ -170,7 +170,7 @@ function PipelineStage({
         display: 'flex',
         alignItems: 'center',
         gap: '12px',
-        padding: '10px 12px',
+        padding: '12px 12px',
         borderRadius: '8px',
         background: bgColor[stage.status],
         border: `1px solid ${statusStyles[stage.status].borderColor}`,
@@ -209,7 +209,7 @@ function PipelineStage({
       <div style={{ flex: 1, minWidth: 0 }}>
         <div
           style={{
-            fontSize: '13px',
+            fontSize: '14px',
             fontWeight: 500,
             color: statusColor[stage.status],
             transition: 'color 0.2s ease',
@@ -220,7 +220,7 @@ function PipelineStage({
         {stage.sublabel && (
           <div
             style={{
-              fontSize: '11px',
+              fontSize: '14px',
               color: 'var(--text-muted)',
               textTransform: 'uppercase',
               letterSpacing: '0.5px',
@@ -238,8 +238,8 @@ function PipelineStage({
           animate={{ opacity: [0.3, 0.6, 0.3] }}
           transition={{ duration: 2, repeat: Infinity }}
           style={{
-            width: '6px',
-            height: '6px',
+            width: '8px',
+            height: '8px',
             borderRadius: '50%',
             background: 'var(--accent-primary)',
             boxShadow: '0 0 8px var(--accent-primary)',

@@ -213,7 +213,7 @@ export function FirstRunGuideSkipButton() {
         background: 'none',
         border: 'none',
         color: 'var(--text-secondary, #94A3B8)',
-        fontSize: 12,
+        fontSize: 14,
         cursor: 'pointer',
         padding: '4px 8px',
         transition: 'color 0.15s ease',

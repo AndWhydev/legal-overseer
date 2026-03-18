@@ -60,21 +60,21 @@ const sectionWrapper: React.CSSProperties = {
 };
 
 const sectionTitle: React.CSSProperties = {
-  fontSize: 15,
-  fontWeight: 600,
+  fontSize: 16,
+  fontWeight: 500,
   color: 'var(--text-primary, #F1F5F9)',
   margin: 0,
 };
 
 const sectionDesc: React.CSSProperties = {
-  fontSize: 13,
+  fontSize: 14,
   color: 'var(--text-secondary, #94A3B8)',
   margin: '4px 0 16px',
 };
 
 const glassCard: React.CSSProperties = {
   padding: '16px',
-  borderRadius: 14,
+  borderRadius: 12,
   background: 'rgba(15, 20, 30, 0.6)',
   backdropFilter: 'blur(20px) saturate(1.2)',
   WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
@@ -85,7 +85,7 @@ const glassCard: React.CSSProperties = {
 const listRow: React.CSSProperties = {
   display: 'flex',
   alignItems: 'center',
-  padding: '12px 14px',
+  padding: '12px 16px',
   borderRadius: 12,
   background: 'rgba(10, 14, 23, 0.5)',
   border: '1px solid rgba(255, 255, 255, 0.03)',
@@ -161,12 +161,12 @@ function SaveIndicator({ visible }: { visible: boolean }) {
         right: 24,
         display: 'flex',
         alignItems: 'center',
-        gap: 6,
-        padding: '6px 14px',
+        gap: 8,
+        padding: '8px 16px',
         borderRadius: 8,
         background: 'rgba(34, 197, 94, 0.12)',
         color: '#22C55E',
-        fontSize: 12,
+        fontSize: 14,
         fontWeight: 500,
         opacity: visible ? 1 : 0,
         transform: visible ? 'translateY(0)' : 'translateY(-8px)',
@@ -190,12 +190,12 @@ function TimeInput({ value, onChange }: { value: string; onChange: (v: string) =
       value={value}
       onChange={e => onChange(e.target.value)}
       style={{
-        padding: '6px 10px',
+        padding: '8px 12px',
         borderRadius: 8,
         background: 'rgba(13, 17, 23, 0.6)',
         border: '1px solid rgba(255, 255, 255, 0.1)',
         color: 'var(--text-primary, #F1F5F9)',
-        fontSize: 13,
+        fontSize: 14,
         cursor: 'pointer',
         transition: 'border-color 200ms',
       }}
@@ -314,7 +314,7 @@ export function NotificationPreferencesTab() {
       <div style={sectionWrapper}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
           <div style={{ textAlign: 'center', color: 'var(--text-secondary, #94A3B8)' }}>
-            <div style={{ fontSize: 13 }}>Loading preferences...</div>
+            <div style={{ fontSize: 14 }}>Loading preferences...</div>
           </div>
         </div>
       </div>
@@ -334,10 +334,10 @@ export function NotificationPreferencesTab() {
             {EVENT_TYPES.map(event => (
               <div key={event.id} style={{ ...listRow, justifyContent: 'space-between' }}>
                 <div style={{ minWidth: 0, flex: 1 }}>
-                  <p style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)', margin: 0 }}>
+                  <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)', margin: 0 }}>
                     {event.label}
                   </p>
-                  <p style={{ fontSize: 11, color: 'var(--text-secondary, #94A3B8)', margin: '2px 0 0' }}>
+                  <p style={{ fontSize: 14, color: 'var(--text-secondary, #94A3B8)', margin: '2px 0 0' }}>
                     {event.desc}
                   </p>
                 </div>
@@ -359,10 +359,10 @@ export function NotificationPreferencesTab() {
             {CHANNELS.map(channel => (
               <div key={channel.id} style={{ ...listRow, justifyContent: 'space-between', opacity: channel.disabled ? 0.5 : 1 }}>
                 <div style={{ minWidth: 0, flex: 1 }}>
-                  <p style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)', margin: 0 }}>
+                  <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)', margin: 0 }}>
                     {channel.label}
                   </p>
-                  <p style={{ fontSize: 11, color: 'var(--text-secondary, #94A3B8)', margin: '2px 0 0' }}>
+                  <p style={{ fontSize: 14, color: 'var(--text-secondary, #94A3B8)', margin: '2px 0 0' }}>
                     {channel.desc}
                   </p>
                 </div>
@@ -388,7 +388,7 @@ export function NotificationPreferencesTab() {
                 onClick={() => updateDigestMode(mode.id as typeof prefs.digest_mode)}
                 style={{
                   ...glassCard,
-                  padding: '12px 14px',
+                  padding: '12px 16px',
                   cursor: 'pointer',
                   border: prefs.digest_mode === mode.id ? '2px solid #FF5A1F' : '1px solid rgba(255, 255, 255, 0.03)',
                   transition: 'all 200ms',
@@ -406,10 +406,10 @@ export function NotificationPreferencesTab() {
                   }
                 }}
               >
-                <p style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)', margin: 0 }}>
+                <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)', margin: 0 }}>
                   {mode.label}
                 </p>
-                <p style={{ fontSize: 11, color: 'var(--text-secondary, #94A3B8)', margin: '4px 0 0' }}>
+                <p style={{ fontSize: 14, color: 'var(--text-secondary, #94A3B8)', margin: '4px 0 0' }}>
                   {mode.desc}
                 </p>
               </button>
@@ -421,13 +421,13 @@ export function NotificationPreferencesTab() {
         <div>
           <h3 style={sectionTitle}>Quiet Hours</h3>
           <p style={sectionDesc}>Pause notifications during specific times</p>
-          <div style={{ ...glassCard, display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div style={{ ...glassCard, display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div style={toggleContainer}>
               <div>
-                <p style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)', margin: 0 }}>
+                <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)', margin: 0 }}>
                   Enable Quiet Hours
                 </p>
-                <p style={{ fontSize: 11, color: 'var(--text-secondary, #94A3B8)', margin: '2px 0 0' }}>
+                <p style={{ fontSize: 14, color: 'var(--text-secondary, #94A3B8)', margin: '2px 0 0' }}>
                   Notifications will be silenced during this time
                 </p>
               </div>
@@ -442,7 +442,7 @@ export function NotificationPreferencesTab() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, paddingTop: 12, borderTop: '1px solid rgba(255, 255, 255, 0.05)' }}>
                 <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8 }}>
                   <div style={{ flex: 1 }}>
-                    <label style={{ fontSize: 12, color: 'var(--text-secondary, #94A3B8)', display: 'block', marginBottom: 4 }}>
+                    <label style={{ fontSize: 14, color: 'var(--text-secondary, #94A3B8)', display: 'block', marginBottom: 4 }}>
                       From
                     </label>
                     <TimeInput value={prefs.quiet_hours.start_time} onChange={v => updateQuietHours('start_time', v)} />
@@ -450,7 +450,7 @@ export function NotificationPreferencesTab() {
                 </div>
                 <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8 }}>
                   <div style={{ flex: 1 }}>
-                    <label style={{ fontSize: 12, color: 'var(--text-secondary, #94A3B8)', display: 'block', marginBottom: 4 }}>
+                    <label style={{ fontSize: 14, color: 'var(--text-secondary, #94A3B8)', display: 'block', marginBottom: 4 }}>
                       To
                     </label>
                     <TimeInput value={prefs.quiet_hours.end_time} onChange={v => updateQuietHours('end_time', v)} />

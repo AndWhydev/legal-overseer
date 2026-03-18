@@ -43,7 +43,7 @@ export function PortalProjectsView({ projects, primaryColor }: PortalProjectsVie
 
   return (
     <div>
-      <h1 style={{ fontSize: 24, fontWeight: 600, color: '#111827', margin: '0 0 24px', letterSpacing: '-0.02em' }}>
+      <h1 style={{ fontSize: 16, fontWeight: 500, color: '#111827', margin: '0 0 24px', letterSpacing: '-0.02em' }}>
         Projects
       </h1>
 
@@ -77,15 +77,15 @@ export function PortalProjectsView({ projects, primaryColor }: PortalProjectsVie
                   }}
                 >
                   <div className="flex items-center justify-between" style={{ marginBottom: 12 }}>
-                    <h3 style={{ fontSize: 17, fontWeight: 600, color: '#111827', margin: 0 }}>
+                    <h3 style={{ fontSize: 16, fontWeight: 500, color: '#111827', margin: 0 }}>
                       {project.title}
                     </h3>
                     <span
                       style={{
-                        fontSize: 12,
+                        fontSize: 14,
                         fontWeight: 500,
-                        padding: '4px 10px',
-                        borderRadius: 6,
+                        padding: '4px 12px',
+                        borderRadius: 8,
                         background: sc.bg,
                         color: sc.text,
                       }}
@@ -101,16 +101,16 @@ export function PortalProjectsView({ projects, primaryColor }: PortalProjectsVie
                   )}
 
                   {project.current_phase && (
-                    <p style={{ fontSize: 13, color: '#6B7280', margin: '0 0 12px' }}>
+                    <p style={{ fontSize: 14, color: '#6B7280', margin: '0 0 12px' }}>
                       Current phase: <span style={{ fontWeight: 500, color: '#374151' }}>{project.current_phase}</span>
                     </p>
                   )}
 
                   {/* Progress Bar */}
                   <div>
-                    <div className="flex items-center justify-between" style={{ marginBottom: 6 }}>
-                      <span style={{ fontSize: 13, color: '#6B7280' }}>Progress</span>
-                      <span style={{ fontSize: 13, fontWeight: 600, color: '#111827' }}>{project.progress}%</span>
+                    <div className="flex items-center justify-between" style={{ marginBottom: 8 }}>
+                      <span style={{ fontSize: 14, color: '#6B7280' }}>Progress</span>
+                      <span style={{ fontSize: 14, fontWeight: 500, color: '#111827' }}>{project.progress}%</span>
                     </div>
                     <div style={{ height: 8, borderRadius: 4, background: '#F3F4F6', overflow: 'hidden' }}>
                       <div
@@ -127,12 +127,12 @@ export function PortalProjectsView({ projects, primaryColor }: PortalProjectsVie
 
                   <div className="flex items-center gap-4" style={{ marginTop: 16 }}>
                     {project.start_date && (
-                      <span style={{ fontSize: 13, color: '#9CA3AF' }}>
+                      <span style={{ fontSize: 14, color: '#9CA3AF' }}>
                         Started: {new Date(project.start_date).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })}
                       </span>
                     )}
                     {project.target_date && (
-                      <span style={{ fontSize: 13, color: '#9CA3AF' }}>
+                      <span style={{ fontSize: 14, color: '#9CA3AF' }}>
                         Target: {new Date(project.target_date).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })}
                       </span>
                     )}
@@ -142,7 +142,7 @@ export function PortalProjectsView({ projects, primaryColor }: PortalProjectsVie
                 {/* Task List (expanded) */}
                 {isSelected && (
                   <div style={{ ...cardStyle, marginTop: 8, overflow: 'hidden' }}>
-                    <div style={{ padding: '14px 20px', borderBottom: '1px solid #F3F4F6', fontWeight: 600, fontSize: 14, color: '#111827' }}>
+                    <div style={{ padding: '12px 20px', borderBottom: '1px solid #F3F4F6', fontWeight: 500, fontSize: 14, color: '#111827' }}>
                       Project Milestones & Tasks
                     </div>
                     {loadingTasks ? (
@@ -194,7 +194,7 @@ export function PortalProjectsView({ projects, primaryColor }: PortalProjectsVie
                               }}
                             >
                               {task.is_milestone && (
-                                <span style={{ color: primaryColor, marginRight: 6, fontSize: 12 }}>MILESTONE</span>
+                                <span style={{ color: primaryColor, marginRight: 8, fontSize: 14 }}>MILESTONE</span>
                               )}
                               {task.display_name ?? task.task_title}
                             </span>

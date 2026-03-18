@@ -62,3 +62,35 @@ export type {
   MemoryPalaceStats,
   ForgetResult,
 } from './types'
+
+// Alias for API route compatibility
+export type MemoryType = import('./types').MemoryCategory
+
+import type { SupabaseClient } from '@supabase/supabase-js'
+
+/** Factory to create Memory Palace service instances */
+export function createMemoryPalace(supabase: SupabaseClient, orgId: string) {
+  const writer = new MemoryWriter(supabase, orgId)
+  const search = new MemorySearch(supabase, orgId)
+  const pricing = new PricingIntelligence(supabase, orgId)
+  const archaeology = new ArchaeologyEngine(supabase, orgId)
+  return {
+    writer, search, pricing, archaeology, supabase, orgId,
+    // Facade methods for API route compatibility
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    searchMemories: (opts: any) => search.search(opts),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    createMemory: (input: any) => writer.store(input),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    createDecision: (input: any) => writer.storeDecision(input),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    forgetEntity: (entityId: string) => supabase.rpc('forget_entity', { p_org_id: orgId, p_entity_id: entityId }),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    recordDecisionOutcome: (id: string, outcome: any) => supabase.from('memory_decisions').update({ outcome_summary: outcome.summary, status: outcome.status }).eq('id', id).eq('org_id', orgId),
+    getStats: () => supabase.rpc('memory_palace_stats', { p_org_id: orgId }),
+    getEntityMemories: (entityId: string, _opts?: unknown) => search.entityRecall({ entityId }),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    getDecisions: (opts?: any) => supabase.from('memory_decisions').select('*').eq('org_id', orgId).order('decided_at', { ascending: false }).limit(opts?.limit ?? 50),
+    getMemory: (id: string) => supabase.from('memory_palace_entries').select('*').eq('id', id).eq('org_id', orgId).single(),
+  }
+}

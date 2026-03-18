@@ -77,7 +77,7 @@ export default function PortalLoginPage() {
               <path d="M14 2v6h6" />
             </svg>
           </div>
-          <h1 style={{ fontSize: 22, fontWeight: 600, color: '#111827', margin: 0 }}>Client Portal</h1>
+          <h1 style={{ fontSize: 16, fontWeight: 500, color: '#111827', margin: 0 }}>Client Portal</h1>
           <p style={{ fontSize: 14, color: '#6B7280', marginTop: 8 }}>
             Sign in with your email to access your portal
           </p>
@@ -101,7 +101,7 @@ export default function PortalLoginPage() {
                 <polyline points="20 6 9 17 4 12" />
               </svg>
             </div>
-            <h2 style={{ fontSize: 18, fontWeight: 600, color: '#111827', margin: '0 0 8px' }}>
+            <h2 style={{ fontSize: 16, fontWeight: 500, color: '#111827', margin: '0 0 8px' }}>
               Check your email
             </h2>
             <p style={{ fontSize: 14, color: '#6B7280', lineHeight: 1.6 }}>
@@ -111,7 +111,7 @@ export default function PortalLoginPage() {
         ) : (
           <form onSubmit={handleSubmit}>
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', fontSize: 14, fontWeight: 500, color: '#374151', marginBottom: 6 }}>
+              <label style={{ display: 'block', fontSize: 14, fontWeight: 500, color: '#374151', marginBottom: 8 }}>
                 Email address
               </label>
               <input
@@ -123,10 +123,10 @@ export default function PortalLoginPage() {
                 autoFocus
                 style={{
                   width: '100%',
-                  padding: '12px 14px',
+                  padding: '12px 16px',
                   borderRadius: 8,
                   border: '1px solid #D1D5DB',
-                  fontSize: 15,
+                  fontSize: 16,
                   color: '#111827',
                   outline: 'none',
                   transition: 'border-color 200ms',
@@ -138,12 +138,12 @@ export default function PortalLoginPage() {
             {error && (
               <div
                 style={{
-                  padding: '10px 14px',
+                  padding: '12px 16px',
                   borderRadius: 8,
                   background: '#FEF2F2',
                   border: '1px solid #FECACA',
                   color: '#DC2626',
-                  fontSize: 13,
+                  fontSize: 14,
                   marginBottom: 16,
                 }}
               >
@@ -160,7 +160,7 @@ export default function PortalLoginPage() {
                 borderRadius: 8,
                 background: '#2563EB',
                 color: '#FFFFFF',
-                fontSize: 15,
+                fontSize: 16,
                 fontWeight: 500,
                 border: 'none',
                 cursor: loading ? 'wait' : 'pointer',
@@ -171,7 +171,7 @@ export default function PortalLoginPage() {
               {loading ? 'Sending...' : 'Send Magic Link'}
             </button>
 
-            <p style={{ fontSize: 13, color: '#9CA3AF', textAlign: 'center', marginTop: 16 }}>
+            <p style={{ fontSize: 14, color: '#9CA3AF', textAlign: 'center', marginTop: 16 }}>
               You must have been invited to access this portal.
             </p>
           </form>

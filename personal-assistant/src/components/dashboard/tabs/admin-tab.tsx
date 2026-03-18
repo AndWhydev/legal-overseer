@@ -166,7 +166,7 @@ export default function AdminTab() {
         <div style={{ padding: 32 }}>
           <AlertBanner variant="error">
             <div>
-              <h2 style={{ color: 'var(--text-primary)', fontSize: 16, marginBottom: 4, fontWeight: 600 }}>Access Denied</h2>
+              <h2 style={{ color: 'var(--text-primary)', fontSize: 16, marginBottom: 4, fontWeight: 500 }}>Access Denied</h2>
               <p style={{ color: 'var(--text-secondary)' }}>Admin role required to access this panel.</p>
             </div>
           </AlertBanner>
@@ -188,7 +188,7 @@ export default function AdminTab() {
               onClick={runHealthCheck}
               disabled={healthLoading}
               style={{
-                padding: '6px 14px', borderRadius: 6, fontSize: 13,
+                padding: '8px 16px', borderRadius: 8, fontSize: 14,
                 background: 'var(--bg-elevated)', color: 'var(--text-primary)',
                 border: '1px solid var(--border)', cursor: 'pointer',
               }}
@@ -201,7 +201,7 @@ export default function AdminTab() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 12 }}>
             {health.map(h => (
               <div key={h.service} style={{
-                padding: 14, borderRadius: 8, background: 'var(--bg-elevated)',
+                padding: 16, borderRadius: 8, background: 'var(--bg-elevated)',
                 border: '1px solid var(--border)',
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
@@ -209,18 +209,18 @@ export default function AdminTab() {
                     width: 10, height: 10, borderRadius: '50%',
                     background: STATUS_COLORS[h.status] || '#888',
                   }} />
-                  <span style={{ fontWeight: 600, fontSize: 14, color: 'var(--text-primary)', textTransform: 'capitalize' }}>
+                  <span style={{ fontWeight: 500, fontSize: 14, color: 'var(--text-primary)', textTransform: 'capitalize' }}>
                     {h.service}
                   </span>
                 </div>
-                <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+                <div style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
                   {h.status} &middot; {h.latency_ms}ms
                 </div>
-                {h.error && <div style={{ fontSize: 11, color: 'var(--bb-red)', marginTop: 4 }}>{h.error}</div>}
+                {h.error && <div style={{ fontSize: 14, color: 'var(--bb-red)', marginTop: 4 }}>{h.error}</div>}
               </div>
             ))}
             {health.length === 0 && !healthLoading && (
-              <div style={{ color: 'var(--text-secondary)', fontSize: 13 }}>No data yet</div>
+              <div style={{ color: 'var(--text-secondary)', fontSize: 14 }}>No data yet</div>
             )}
           </div>
         </CardContent>
@@ -234,11 +234,11 @@ export default function AdminTab() {
             <select
               value={importEntity}
               onChange={e => setImportEntity(e.target.value)}
-              style={{ padding: '6px 10px', borderRadius: 6, background: 'var(--bg-elevated)', color: 'var(--text-primary)', border: '1px solid var(--border)' }}
+              style={{ padding: '8px 12px', borderRadius: 8, background: 'var(--bg-elevated)', color: 'var(--text-primary)', border: '1px solid var(--border)' }}
             >
               {IMPORT_ENTITIES.map(e => <option key={e} value={e}>{e}</option>)}
             </select>
-            <input type="file" accept=".json" onChange={handleFileUpload} style={{ fontSize: 13 }} />
+            <input type="file" accept=".json" onChange={handleFileUpload} style={{ fontSize: 14 }} />
           </div>
           <textarea
             value={importText}
@@ -246,7 +246,7 @@ export default function AdminTab() {
             placeholder='Paste JSON array, e.g. [{"name":"Acme","email":"a@b.com"}]'
             rows={6}
             style={{
-              width: '100%', padding: 10, borderRadius: 6, fontFamily: 'monospace', fontSize: 13,
+              width: '100%', padding: 12, borderRadius: 8, fontFamily: 'monospace', fontSize: 14,
               background: 'var(--bg-elevated)', color: 'var(--text-primary)', border: '1px solid var(--border)',
               resize: 'vertical',
             }}
@@ -256,7 +256,7 @@ export default function AdminTab() {
               onClick={handleImport}
               disabled={importing || !importText.trim()}
               style={{
-                padding: '8px 20px', borderRadius: 6, fontWeight: 600, fontSize: 14,
+                padding: '8px 20px', borderRadius: 8, fontWeight: 500, fontSize: 14,
                 background: '#1A1A1B', color: '#fff', border: 'none', cursor: 'pointer',
                 opacity: importing || !importText.trim() ? 0.5 : 1,
               }}
@@ -264,13 +264,13 @@ export default function AdminTab() {
               {importing ? 'Importing...' : 'Import'}
             </button>
             {importResult && (
-              <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+              <span style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
                 {importResult.imported} imported, {importResult.skipped} skipped, {importResult.errors.length} errors
               </span>
             )}
           </div>
           {importResult && importResult.errors.length > 0 && (
-            <div style={{ marginTop: 8, fontSize: 12, color: 'var(--bb-red)', maxHeight: 120, overflow: 'auto' }}>
+            <div style={{ marginTop: 8, fontSize: 14, color: 'var(--bb-red)', maxHeight: 120, overflow: 'auto' }}>
               {importResult.errors.map((e, i) => <div key={i}>Row {e.row}: {e.message}</div>)}
             </div>
           )}
@@ -285,7 +285,7 @@ export default function AdminTab() {
             <select
               value={exportEntity}
               onChange={e => setExportEntity(e.target.value)}
-              style={{ padding: '6px 10px', borderRadius: 6, background: 'var(--bg-elevated)', color: 'var(--text-primary)', border: '1px solid var(--border)' }}
+              style={{ padding: '8px 12px', borderRadius: 8, background: 'var(--bg-elevated)', color: 'var(--text-primary)', border: '1px solid var(--border)' }}
             >
               {EXPORT_ENTITIES.map(e => <option key={e} value={e}>{e}</option>)}
             </select>
@@ -295,7 +295,7 @@ export default function AdminTab() {
                   key={f}
                   onClick={() => setExportFormat(f)}
                   style={{
-                    padding: '6px 14px', borderRadius: 6, fontSize: 13, cursor: 'pointer',
+                    padding: '8px 16px', borderRadius: 8, fontSize: 14, cursor: 'pointer',
                     background: exportFormat === f ? '#1A1A1B' : 'var(--bg-elevated)',
                     color: exportFormat === f ? '#fff' : 'var(--text-primary)',
                     border: '1px solid var(--border)',
@@ -309,7 +309,7 @@ export default function AdminTab() {
               onClick={handleExport}
               disabled={exporting}
               style={{
-                padding: '8px 20px', borderRadius: 6, fontWeight: 600, fontSize: 14,
+                padding: '8px 20px', borderRadius: 8, fontWeight: 500, fontSize: 14,
                 background: '#1A1A1B', color: '#fff', border: 'none', cursor: 'pointer',
                 opacity: exporting ? 0.5 : 1,
               }}

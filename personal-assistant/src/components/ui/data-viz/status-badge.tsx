@@ -17,8 +17,8 @@ export function StatusBadge({
   size = 'sm',
   className,
 }: StatusBadgeProps) {
-  const px = size === 'sm' ? '6px 10px' : '8px 14px'
-  const fs = size === 'sm' ? 10 : 12
+  const px = size === 'sm' ? '8px 12px' : '8px 16px'
+  const fs = size === 'sm' ? 14 : 14
 
   return (
     <span
@@ -26,11 +26,11 @@ export function StatusBadge({
       style={{
         display: 'inline-flex',
         alignItems: 'center',
-        gap: 5,
+        gap: 4,
         padding: px,
         borderRadius: 9999,
         fontSize: fs,
-        fontWeight: 600,
+        fontWeight: 500,
         color,
         background: `color-mix(in srgb, ${color} 10%, transparent)`,
         border: 'none',

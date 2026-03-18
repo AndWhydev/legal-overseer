@@ -54,18 +54,18 @@ export function MeetingsTab({ initialMeetingId }: MeetingsTabProps) {
           <button
             onClick={() => { setActiveSection('meetings'); setView('list') }}
             style={{
-              padding: '7px 16px',
+              padding: '8px 16px',
               borderRadius: 8,
               background: activeSection === 'meetings' ? 'rgba(255, 255, 255, 0.06)' : 'transparent',
               border: 'none',
               color: activeSection === 'meetings' ? 'var(--text-primary, #F1F5F9)' : 'var(--text-dim, #475569)',
-              fontSize: 13,
+              fontSize: 14,
               fontWeight: 500,
               cursor: 'pointer',
               transition: 'all 200ms',
               display: 'flex',
               alignItems: 'center',
-              gap: 6,
+              gap: 8,
             }}
           >
             <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -76,18 +76,18 @@ export function MeetingsTab({ initialMeetingId }: MeetingsTabProps) {
           <button
             onClick={() => { setActiveSection('search'); setView('search') }}
             style={{
-              padding: '7px 16px',
+              padding: '8px 16px',
               borderRadius: 8,
               background: activeSection === 'search' ? 'rgba(255, 255, 255, 0.06)' : 'transparent',
               border: 'none',
               color: activeSection === 'search' ? 'var(--text-primary, #F1F5F9)' : 'var(--text-dim, #475569)',
-              fontSize: 13,
+              fontSize: 14,
               fontWeight: 500,
               cursor: 'pointer',
               transition: 'all 200ms',
               display: 'flex',
               alignItems: 'center',
-              gap: 6,
+              gap: 8,
             }}
           >
             <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>

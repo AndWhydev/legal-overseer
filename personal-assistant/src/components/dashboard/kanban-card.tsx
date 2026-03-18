@@ -95,8 +95,8 @@ export const KanbanCard = memo(function KanbanCard({ task, onEdit, onArchive }: 
       className="card-lift"
       onClick={() => onEdit?.(task)}
       style={{
-        borderRadius: 10,
-        padding: '10px 12px',
+        borderRadius: 12,
+        padding: '12px 12px',
         borderLeft: isAgentWorking ? '2px solid var(--text-dim)' : undefined,
         background: glass.bg,
         backdropFilter: 'var(--glass-card-blur)',
@@ -130,7 +130,7 @@ export const KanbanCard = memo(function KanbanCard({ task, onEdit, onArchive }: 
             onClick={(e) => { e.stopPropagation(); onArchive(task) }}
             style={{
               borderRadius: 8,
-              padding: 3,
+              padding: 4,
               border: 'none',
               background: 'var(--glass-hover-bg)',
               color: 'var(--text-dim)',
@@ -148,8 +148,8 @@ export const KanbanCard = memo(function KanbanCard({ task, onEdit, onArchive }: 
 
       {/* Title row with source dot */}
       <h4 style={{
-        fontSize: 13,
-        fontWeight: 600,
+        fontSize: 14,
+        fontWeight: 500,
         color: 'var(--text-primary)',
         lineHeight: 1.4,
         display: '-webkit-box',
@@ -168,7 +168,7 @@ export const KanbanCard = memo(function KanbanCard({ task, onEdit, onArchive }: 
               height: 6,
               borderRadius: '50%',
               background: 'linear-gradient(135deg, #4DAF6B, #9DC74D, #D4C24E, #E0A860, #D8908B)',
-              marginRight: 5,
+              marginRight: 4,
               verticalAlign: 'middle',
               position: 'relative',
               top: -1,
@@ -180,7 +180,7 @@ export const KanbanCard = memo(function KanbanCard({ task, onEdit, onArchive }: 
               height: 6,
               borderRadius: '50%',
               background: sourceColors[source],
-              marginRight: 5,
+              marginRight: 4,
               verticalAlign: 'middle',
               position: 'relative',
               top: -1,
@@ -201,21 +201,21 @@ export const KanbanCard = memo(function KanbanCard({ task, onEdit, onArchive }: 
           <MarkdownRenderer
             content={task.description}
             compact
-            style={{ fontSize: 11, color: 'var(--text-dim)', lineHeight: '1.35' }}
+            style={{ fontSize: 14, color: 'var(--text-dim)', lineHeight: '1.35' }}
           />
         </div>
       )}
 
       {/* Metadata row: priority dot + tags + deadline + time */}
-      <div style={{ marginTop: 7, display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap' }}>
+      <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'wrap' }}>
         {/* Priority dot + optional label */}
         <span style={{
           display: 'inline-flex',
           alignItems: 'center',
           gap: 4,
-          fontSize: 10,
+          fontSize: 14,
           fontWeight: 500,
-          padding: '2px 8px',
+          padding: '4px 8px',
           borderRadius: 20,
           background: 'var(--glass-pill-bg)',
           boxShadow: 'var(--glass-pill-inset)',
@@ -237,9 +237,9 @@ export const KanbanCard = memo(function KanbanCard({ task, onEdit, onArchive }: 
           <span
             key={tag}
             style={{
-              fontSize: 10,
+              fontSize: 14,
               fontWeight: 500,
-              padding: '2px 8px',
+              padding: '4px 8px',
               borderRadius: 20,
               background: 'var(--glass-pill-bg)',
               boxShadow: 'var(--glass-pill-inset)',
@@ -254,9 +254,9 @@ export const KanbanCard = memo(function KanbanCard({ task, onEdit, onArchive }: 
         {/* Deadline pill */}
         {deadlineInfo && (
           <span style={{
-            fontSize: 10,
+            fontSize: 14,
             fontWeight: 500,
-            padding: '2px 8px',
+            padding: '4px 8px',
             borderRadius: 20,
             background: deadlineInfo.bg,
             color: deadlineInfo.color,
@@ -267,7 +267,7 @@ export const KanbanCard = memo(function KanbanCard({ task, onEdit, onArchive }: 
         )}
 
         {/* Time ago */}
-        <span style={{ fontSize: 9, color: 'rgba(148, 163, 184, 0.5)', marginLeft: 'auto' }}>
+        <span style={{ fontSize: 14, color: 'rgba(148, 163, 184, 0.5)', marginLeft: 'auto' }}>
           {timeAgo(task.updated_at)}
         </span>
       </div>
@@ -275,13 +275,13 @@ export const KanbanCard = memo(function KanbanCard({ task, onEdit, onArchive }: 
       {/* Agent activity bar — conditional */}
       {task.assigned_to && (
         <div style={{
-          marginTop: 6,
-          paddingTop: 6,
+          marginTop: 8,
+          paddingTop: 8,
           borderTop: '1px solid var(--glass-divider)',
           display: 'flex',
           alignItems: 'center',
-          gap: 5,
-          fontSize: 10,
+          gap: 4,
+          fontSize: 14,
           color: 'var(--text-dim)',
         }}>
           {agentStatus === 'working' && (
@@ -295,12 +295,12 @@ export const KanbanCard = memo(function KanbanCard({ task, onEdit, onArchive }: 
             }} />
           )}
           {agentStatus === 'done' && (
-            <span style={{ color: '#22C55E', fontSize: 11, lineHeight: 1 }}>&#10003;</span>
+            <span style={{ color: '#22C55E', fontSize: 14, lineHeight: 1 }}>&#10003;</span>
           )}
           {agentStatus === 'error' && (
-            <span style={{ color: '#EF4444', fontSize: 11, lineHeight: 1 }}>&#9888;</span>
+            <span style={{ color: '#EF4444', fontSize: 14, lineHeight: 1 }}>&#9888;</span>
           )}
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10 }}>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 14 }}>
             {task.assigned_to}
           </span>
           <span style={{ color: 'var(--text-dim)' }}>
@@ -312,9 +312,9 @@ export const KanbanCard = memo(function KanbanCard({ task, onEdit, onArchive }: 
           {isAgentCreated && (
             <span style={{
               marginLeft: 'auto',
-              fontSize: 8,
-              fontWeight: 600,
-              padding: '1px 4px',
+              fontSize: 14,
+              fontWeight: 500,
+              padding: '4px 4px',
               borderRadius: 4,
               background: 'var(--glass-interactive-bg)',
               color: 'var(--text-dim)',

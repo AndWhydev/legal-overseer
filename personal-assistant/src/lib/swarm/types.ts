@@ -414,3 +414,16 @@ export type SwarmEvent =
   | { type: 'rollback_started'; data: { runId: string } }
   | { type: 'rollback_completed'; data: { runId: string } }
   | { type: 'cost_update'; data: { runId: string; totalCost: number; stepKey: string; stepCost: number } }
+
+// Aliases for component compatibility
+export type SwarmRun = SwarmRunRow & {
+  name?: string
+  triggered_by?: string
+  total_cost_cents?: number
+}
+export type SwarmStep = SwarmStepRow & {
+  step_id?: string
+}
+export type SwarmMessage = SwarmMessageRow
+export type SwarmMessage = SwarmMessageRow
+

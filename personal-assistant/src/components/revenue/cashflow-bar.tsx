@@ -25,11 +25,11 @@ const columnStyle: React.CSSProperties = {
 }
 
 const labelStyle: React.CSSProperties = {
-  fontSize: 11,
+  fontSize: 14,
   color: 'var(--text-secondary)',
   textTransform: 'uppercase',
-  letterSpacing: '0.05em',
-  fontWeight: 600,
+  letterSpacing: '0.04em',
+  fontWeight: 500,
 }
 
 const barContainerStyle: React.CSSProperties = {
@@ -44,21 +44,21 @@ const barContainerStyle: React.CSSProperties = {
 
 const valueStyle: React.CSSProperties = {
   fontSize: 16,
-  fontWeight: 700,
+  fontWeight: 500,
   fontFamily: 'var(--font-mono)',
   color: 'var(--text-primary)',
   letterSpacing: '-0.02em',
 }
 
 const rangeStyle: React.CSSProperties = {
-  fontSize: 10,
+  fontSize: 14,
   color: 'var(--text-secondary)',
   fontFamily: 'var(--font-mono)',
   opacity: 0.6,
 }
 
 const confidenceStyle: React.CSSProperties = {
-  fontSize: 10,
+  fontSize: 14,
   color: 'var(--text-secondary)',
   marginTop: 2,
 }

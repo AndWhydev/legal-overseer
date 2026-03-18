@@ -73,9 +73,9 @@ const glassCard: React.CSSProperties = {
 }
 
 const sectionHeader: React.CSSProperties = {
-  fontSize: 11,
-  fontWeight: 600,
-  letterSpacing: '0.08em',
+  fontSize: 14,
+  fontWeight: 500,
+  letterSpacing: '0.04em',
   textTransform: 'uppercase' as const,
   color: 'var(--text-dim, #475569)',
   marginBottom: 12,
@@ -84,7 +84,7 @@ const sectionHeader: React.CSSProperties = {
 const listRow: React.CSSProperties = {
   display: 'flex',
   alignItems: 'flex-start',
-  padding: '12px 14px',
+  padding: '12px 16px',
   borderRadius: 12,
   background: 'rgba(10, 14, 23, 0.5)',
   boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
@@ -186,7 +186,7 @@ export function RoleDetailView({ roleType, onBack }: RoleDetailViewProps) {
             justifyContent: 'center',
             width: 32,
             height: 32,
-            borderRadius: 10,
+            borderRadius: 12,
             border: '1px solid rgba(255, 255, 255, 0.06)',
             background: 'transparent',
             color: 'var(--text-primary, #F1F5F9)',
@@ -208,10 +208,10 @@ export function RoleDetailView({ roleType, onBack }: RoleDetailViewProps) {
           <RoleIcon size={18} style={{ color: meta.color }} />
         </div>
         <div>
-          <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary, #F1F5F9)', letterSpacing: '-0.02em' }}>
+          <div style={{ fontSize: 16, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)', letterSpacing: '-0.02em' }}>
             {meta.label} Role
           </div>
-          <div style={{ fontSize: 12, color: 'var(--text-secondary, #94A3B8)', marginTop: 2 }}>
+          <div style={{ fontSize: 14, color: 'var(--text-secondary, #94A3B8)', marginTop: 2 }}>
             Full activity history and configuration
           </div>
         </div>
@@ -235,7 +235,7 @@ export function RoleDetailView({ roleType, onBack }: RoleDetailViewProps) {
 
           {/* Autonomy card */}
           <div style={glassCard}>
-            <div style={{ ...sectionHeader, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div style={{ ...sectionHeader, display: 'flex', alignItems: 'center', gap: 8 }}>
               <Settings size={11} />
               Autonomy Level
             </div>
@@ -254,18 +254,18 @@ export function RoleDetailView({ roleType, onBack }: RoleDetailViewProps) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
           <Activity size={14} style={{ color: meta.color }} />
           <span style={sectionHeader}>Activity Timeline</span>
-          <span style={{ fontSize: 11, color: 'var(--text-dim, #475569)', marginLeft: 'auto' }}>
+          <span style={{ fontSize: 14, color: 'var(--text-dim, #475569)', marginLeft: 'auto' }}>
             {activities.length} events
           </span>
         </div>
 
-        <div style={{ overflowY: 'auto', maxHeight: 'calc(100vh - 450px)', display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <div style={{ overflowY: 'auto', maxHeight: 'calc(100vh - 450px)', display: 'flex', flexDirection: 'column', gap: 8 }}>
           {loading ? (
             Array.from({ length: 6 }, (_, i) => (
               <div key={i} style={{ ...listRow, opacity: 0.5 }}>
                 <div style={{ width: 24, height: 24, borderRadius: 8, background: 'rgba(255,255,255,0.06)' }} />
                 <div style={{ flex: 1 }}>
-                  <div style={{ height: 12, borderRadius: 4, background: 'rgba(255,255,255,0.06)', width: '60%', marginBottom: 6 }} />
+                  <div style={{ height: 12, borderRadius: 4, background: 'rgba(255,255,255,0.06)', width: '60%', marginBottom: 8 }} />
                   <div style={{ height: 10, borderRadius: 4, background: 'rgba(255,255,255,0.04)', width: '30%' }} />
                 </div>
               </div>
@@ -273,7 +273,7 @@ export function RoleDetailView({ roleType, onBack }: RoleDetailViewProps) {
           ) : activities.length === 0 ? (
             <div style={{ padding: '40px 20px', textAlign: 'center' }}>
               <Activity size={28} style={{ color: 'var(--text-dim, #475569)', marginBottom: 8 }} />
-              <div style={{ fontSize: 13, color: 'var(--text-secondary, #94A3B8)' }}>No activity yet</div>
+              <div style={{ fontSize: 14, color: 'var(--text-secondary, #94A3B8)' }}>No activity yet</div>
             </div>
           ) : (
             activities.map(item => {
@@ -310,14 +310,14 @@ export function RoleDetailView({ roleType, onBack }: RoleDetailViewProps) {
 
                     {/* Content */}
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)', lineHeight: 1.4 }}>
+                      <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)', lineHeight: 1.4 }}>
                         {item.summary}
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 3 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
                         <span style={{
-                          fontSize: 10,
-                          fontWeight: 600,
-                          padding: '2px 6px',
+                          fontSize: 14,
+                          fontWeight: 500,
+                          padding: '2px 8px',
                           borderRadius: 4,
                           background: `${color}15`,
                           color,
@@ -326,11 +326,11 @@ export function RoleDetailView({ roleType, onBack }: RoleDetailViewProps) {
                           {item.activity_type.replace('_', ' ')}
                         </span>
                         {item.confidence != null && (
-                          <span style={{ fontSize: 11, color: 'var(--text-dim, #475569)', fontFamily: 'var(--font-mono)' }}>
+                          <span style={{ fontSize: 14, color: 'var(--text-dim, #475569)', fontFamily: 'var(--font-mono)' }}>
                             {Math.round(item.confidence * 100)}%
                           </span>
                         )}
-                        <span style={{ fontSize: 11, color: 'var(--text-dim, #475569)' }}>
+                        <span style={{ fontSize: 14, color: 'var(--text-dim, #475569)' }}>
                           {timeAgo(item.created_at)}
                         </span>
                       </div>
@@ -342,39 +342,39 @@ export function RoleDetailView({ roleType, onBack }: RoleDetailViewProps) {
                     <div style={{
                       marginTop: 2,
                       marginLeft: 36,
-                      padding: '12px 14px',
-                      borderRadius: 10,
+                      padding: '12px 16px',
+                      borderRadius: 12,
                       background: 'rgba(10, 14, 23, 0.3)',
                       border: '1px solid rgba(255, 255, 255, 0.03)',
-                      fontSize: 12,
+                      fontSize: 14,
                       color: 'var(--text-secondary, #94A3B8)',
                       lineHeight: 1.6,
                     }}>
                       {item.reasoning && (
                         <div style={{ marginBottom: 8 }}>
-                          <span style={{ fontWeight: 600, color: 'var(--text-primary, #F1F5F9)' }}>Reasoning: </span>
+                          <span style={{ fontWeight: 500, color: 'var(--text-primary, #F1F5F9)' }}>Reasoning: </span>
                           {item.reasoning}
                         </div>
                       )}
                       {item.autonomy_mode && (
                         <div style={{ marginBottom: 4 }}>
-                          <span style={{ fontWeight: 600 }}>Mode:</span> {item.autonomy_mode}
+                          <span style={{ fontWeight: 500 }}>Mode:</span> {item.autonomy_mode}
                         </div>
                       )}
                       {item.reversible != null && (
                         <div style={{ marginBottom: 4 }}>
-                          <span style={{ fontWeight: 600 }}>Reversible:</span> {item.reversible ? 'Yes' : 'No'}
+                          <span style={{ fontWeight: 500 }}>Reversible:</span> {item.reversible ? 'Yes' : 'No'}
                         </div>
                       )}
                       {Object.keys(item.details).length > 0 && (
                         <div>
-                          <span style={{ fontWeight: 600 }}>Details:</span>
+                          <span style={{ fontWeight: 500 }}>Details:</span>
                           <pre style={{
                             marginTop: 4,
-                            padding: '8px 10px',
+                            padding: '8px 12px',
                             borderRadius: 8,
                             background: 'rgba(10, 14, 23, 0.5)',
-                            fontSize: 11,
+                            fontSize: 14,
                             fontFamily: 'var(--font-mono)',
                             color: 'var(--text-dim, #475569)',
                             overflow: 'auto',
@@ -405,10 +405,10 @@ export function RoleDetailView({ roleType, onBack }: RoleDetailViewProps) {
 function StatCell({ label, value, mono = false }: { label: string; value: string; mono?: boolean }) {
   return (
     <div>
-      <div style={{ fontSize: 11, color: 'var(--text-dim, #475569)', marginBottom: 3 }}>{label}</div>
+      <div style={{ fontSize: 14, color: 'var(--text-dim, #475569)', marginBottom: 4 }}>{label}</div>
       <div style={{
         fontSize: 14,
-        fontWeight: mono ? 700 : 500,
+        fontWeight: mono ? 500 : 500,
         color: 'var(--text-primary, #F1F5F9)',
         fontFamily: mono ? 'var(--font-mono)' : undefined,
       }}>

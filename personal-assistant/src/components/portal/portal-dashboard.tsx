@@ -30,11 +30,11 @@ export function PortalDashboard({
     <div>
       {/* Welcome Header */}
       <div style={{ marginBottom: 32 }}>
-        <h1 style={{ fontSize: 28, fontWeight: 600, color: '#111827', margin: 0, letterSpacing: '-0.02em' }}>
+        <h1 style={{ fontSize: 16, fontWeight: 500, color: '#111827', margin: 0, letterSpacing: '-0.02em' }}>
           {greeting}, {contactName.split(' ')[0]}
         </h1>
         {welcomeMessage && (
-          <p style={{ fontSize: 15, color: '#6B7280', marginTop: 8 }}>{welcomeMessage}</p>
+          <p style={{ fontSize: 16, color: '#6B7280', marginTop: 8 }}>{welcomeMessage}</p>
         )}
       </div>
 
@@ -75,7 +75,7 @@ export function PortalDashboard({
         {/* Projects */}
         <div className="lg:col-span-2">
           <div className="flex items-center justify-between" style={{ marginBottom: 16 }}>
-            <h2 style={{ fontSize: 18, fontWeight: 600, color: '#111827', margin: 0 }}>Your Projects</h2>
+            <h2 style={{ fontSize: 16, fontWeight: 500, color: '#111827', margin: 0 }}>Your Projects</h2>
             <Link
               href={`${basePath}/projects`}
               style={{ fontSize: 14, color: primaryColor, textDecoration: 'none', fontWeight: 500 }}
@@ -86,7 +86,7 @@ export function PortalDashboard({
 
           {projects.length === 0 ? (
             <div style={{ ...cardStyle, padding: 48, textAlign: 'center' }}>
-              <p style={{ color: '#9CA3AF', fontSize: 15 }}>No projects yet</p>
+              <p style={{ color: '#9CA3AF', fontSize: 16 }}>No projects yet</p>
             </div>
           ) : (
             <div className="flex flex-col gap-3">
@@ -104,11 +104,11 @@ export function PortalDashboard({
 
         {/* Activity Feed */}
         <div>
-          <h2 style={{ fontSize: 18, fontWeight: 600, color: '#111827', margin: '0 0 16px' }}>Recent Activity</h2>
+          <h2 style={{ fontSize: 16, fontWeight: 500, color: '#111827', margin: '0 0 16px' }}>Recent Activity</h2>
 
           {activity.length === 0 ? (
             <div style={{ ...cardStyle, padding: 48, textAlign: 'center' }}>
-              <p style={{ color: '#9CA3AF', fontSize: 15 }}>No activity yet</p>
+              <p style={{ color: '#9CA3AF', fontSize: 16 }}>No activity yet</p>
             </div>
           ) : (
             <div style={cardStyle}>
@@ -116,7 +116,7 @@ export function PortalDashboard({
                 <div
                   key={item.id}
                   style={{
-                    padding: '14px 16px',
+                    padding: '12px 16px',
                     borderBottom: i < activity.length - 1 ? '1px solid #F3F4F6' : 'none',
                   }}
                 >
@@ -127,7 +127,7 @@ export function PortalDashboard({
                         height: 8,
                         borderRadius: '50%',
                         background: item.read ? '#D1D5DB' : primaryColor,
-                        marginTop: 6,
+                        marginTop: 8,
                         flexShrink: 0,
                       }}
                     />
@@ -135,7 +135,7 @@ export function PortalDashboard({
                       <p style={{ fontSize: 14, color: '#111827', margin: 0, fontWeight: item.read ? 400 : 500 }}>
                         {item.title}
                       </p>
-                      <p style={{ fontSize: 13, color: '#9CA3AF', margin: '4px 0 0' }}>
+                      <p style={{ fontSize: 14, color: '#9CA3AF', margin: '4px 0 0' }}>
                         {formatRelative(item.created_at)}
                       </p>
                     </div>
@@ -181,7 +181,7 @@ function StatCard({
           style={{
             width: 40,
             height: 40,
-            borderRadius: 10,
+            borderRadius: 12,
             background: `${primaryColor}0D`,
             display: 'flex',
             alignItems: 'center',
@@ -191,11 +191,11 @@ function StatCard({
           {icon}
         </div>
       </div>
-      <p style={{ fontSize: 28, fontWeight: 700, color: '#111827', margin: 0, letterSpacing: '-0.02em' }}>
+      <p style={{ fontSize: 16, fontWeight: 500, color: '#111827', margin: 0, letterSpacing: '-0.02em' }}>
         {value}
       </p>
-      <p style={{ fontSize: 13, color: '#6B7280', margin: '4px 0 0' }}>{label}</p>
-      {subtext && <p style={{ fontSize: 13, color: primaryColor, margin: '4px 0 0', fontWeight: 500 }}>{subtext}</p>}
+      <p style={{ fontSize: 14, color: '#6B7280', margin: '4px 0 0' }}>{label}</p>
+      {subtext && <p style={{ fontSize: 14, color: primaryColor, margin: '4px 0 0', fontWeight: 500 }}>{subtext}</p>}
     </div>
   )
 
@@ -227,13 +227,13 @@ function ProjectCard({
     <Link href={`${basePath}/projects`} style={{ textDecoration: 'none' }}>
       <div style={{ ...cardStyle, padding: '20px', transition: 'box-shadow 150ms' }}>
         <div className="flex items-center justify-between" style={{ marginBottom: 12 }}>
-          <h3 style={{ fontSize: 16, fontWeight: 600, color: '#111827', margin: 0 }}>{project.title}</h3>
+          <h3 style={{ fontSize: 16, fontWeight: 500, color: '#111827', margin: 0 }}>{project.title}</h3>
           <span
             style={{
-              fontSize: 12,
+              fontSize: 14,
               fontWeight: 500,
-              padding: '4px 10px',
-              borderRadius: 6,
+              padding: '4px 12px',
+              borderRadius: 8,
               background: sc.bg,
               color: sc.text,
               textTransform: 'capitalize',
@@ -244,16 +244,16 @@ function ProjectCard({
         </div>
 
         {project.current_phase && (
-          <p style={{ fontSize: 13, color: '#6B7280', margin: '0 0 12px' }}>
+          <p style={{ fontSize: 14, color: '#6B7280', margin: '0 0 12px' }}>
             Phase: {project.current_phase}
           </p>
         )}
 
         {/* Progress Bar */}
         <div style={{ marginTop: 8 }}>
-          <div className="flex items-center justify-between" style={{ marginBottom: 6 }}>
-            <span style={{ fontSize: 13, color: '#6B7280' }}>Progress</span>
-            <span style={{ fontSize: 13, fontWeight: 600, color: '#111827' }}>{project.progress}%</span>
+          <div className="flex items-center justify-between" style={{ marginBottom: 8 }}>
+            <span style={{ fontSize: 14, color: '#6B7280' }}>Progress</span>
+            <span style={{ fontSize: 14, fontWeight: 500, color: '#111827' }}>{project.progress}%</span>
           </div>
           <div style={{ height: 6, borderRadius: 3, background: '#F3F4F6', overflow: 'hidden' }}>
             <div
@@ -269,7 +269,7 @@ function ProjectCard({
         </div>
 
         {project.target_date && (
-          <p style={{ fontSize: 13, color: '#9CA3AF', margin: '12px 0 0' }}>
+          <p style={{ fontSize: 14, color: '#9CA3AF', margin: '12px 0 0' }}>
             Target: {new Date(project.target_date).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })}
           </p>
         )}

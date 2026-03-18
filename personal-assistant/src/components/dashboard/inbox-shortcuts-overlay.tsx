@@ -104,8 +104,8 @@ export function InboxShortcutsOverlay({ isOpen, onClose }: InboxShortcutsOverlay
   };
 
   const titleStyle: React.CSSProperties = {
-    fontSize: 24,
-    fontWeight: 700,
+    fontSize: 16,
+    fontWeight: 500,
     color: 'rgba(255, 255, 255, 0.95)',
     margin: 0,
   };
@@ -129,10 +129,10 @@ export function InboxShortcutsOverlay({ isOpen, onClose }: InboxShortcutsOverlay
   };
 
   const categoryTitleStyle: React.CSSProperties = {
-    fontSize: 12,
-    fontWeight: 700,
+    fontSize: 14,
+    fontWeight: 500,
     textTransform: 'uppercase',
-    letterSpacing: '0.08em',
+    letterSpacing: '0.04em',
     color: 'rgba(255, 255, 255, 0.4)',
     marginBottom: 16,
     display: 'block',
@@ -158,23 +158,23 @@ export function InboxShortcutsOverlay({ isOpen, onClose }: InboxShortcutsOverlay
   const keyStyle: React.CSSProperties = {
     display: 'inline-flex',
     alignItems: 'center',
-    gap: 2,
+    gap: 4,
   };
 
   const keyPillStyle: React.CSSProperties = {
-    padding: '3px 8px',
+    padding: '4px 8px',
     borderRadius: 4,
     background: 'rgba(255, 255, 255, 0.08)',
     border: '1px solid rgba(255, 255, 255, 0.1)',
     color: 'rgba(255, 255, 255, 0.8)',
-    fontSize: 11,
-    fontWeight: 600,
+    fontSize: 14,
+    fontWeight: 500,
     fontFamily: 'ui-monospace, Menlo, Monaco, monospace',
     whiteSpace: 'nowrap',
   };
 
   const descriptionStyle: React.CSSProperties = {
-    fontSize: 13,
+    fontSize: 14,
     color: 'rgba(255, 255, 255, 0.6)',
     flex: 1,
   };
@@ -233,7 +233,7 @@ export function InboxShortcutsOverlay({ isOpen, onClose }: InboxShortcutsOverlay
                       <React.Fragment key={keyIdx}>
                         <span style={keyPillStyle}>{key}</span>
                         {keyIdx < shortcut.keys.length - 1 && (
-                          <span style={{ color: 'rgba(255, 255, 255, 0.3)', fontSize: 11 }}>
+                          <span style={{ color: 'rgba(255, 255, 255, 0.3)', fontSize: 14 }}>
                             +
                           </span>
                         )}

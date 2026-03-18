@@ -54,7 +54,7 @@ export function ProcessPipeline({
             <div
               style={{
                 position: 'relative',
-                padding: '16px 20px 14px',
+                padding: '16px 20px 12px',
                 borderRadius: 'var(--radius-xl)',
                 background: 'var(--bg-card)',
                 backdropFilter: 'var(--glass-blur)',
@@ -101,8 +101,8 @@ export function ProcessPipeline({
               <div
                 style={{
                   position: 'relative',
-                  fontSize: 12,
-                  fontWeight: 600,
+                  fontSize: 14,
+                  fontWeight: 500,
                   color: 'var(--text-primary)',
                   textAlign: 'center',
                   letterSpacing: '0.01em',
@@ -114,11 +114,11 @@ export function ProcessPipeline({
                 <div
                   style={{
                     position: 'relative',
-                    fontSize: 9,
-                    fontWeight: 600,
+                    fontSize: 14,
+                    fontWeight: 500,
                     color: 'var(--text-secondary)',
                     background: 'var(--bg-secondary)',
-                    padding: '2px 10px',
+                    padding: '2px 12px',
                     borderRadius: 'var(--radius-full)',
                     fontFamily: 'var(--font-mono)',
                     letterSpacing: '0.04em',

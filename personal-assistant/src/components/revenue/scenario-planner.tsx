@@ -29,10 +29,10 @@ const card: React.CSSProperties = {
 const input: React.CSSProperties = {
   background: 'var(--bg-input)',
   border: '1px solid rgba(255, 255, 255, 0.06)',
-  borderRadius: 6,
+  borderRadius: 8,
   padding: '8px 12px',
   color: 'var(--text-primary)',
-  fontSize: 13,
+  fontSize: 14,
   width: '100%',
   outline: 'none',
 }
@@ -85,10 +85,10 @@ export function ScenarioPlanner() {
   return (
     <div className="flex flex-col gap-4">
       <div style={card}>
-        <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>
+        <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 12 }}>
           Scenario Planner
         </div>
-        <div style={{ fontSize: 12, color: 'var(--text-dim)', marginBottom: 12 }}>
+        <div style={{ fontSize: 14, color: 'var(--text-dim)', marginBottom: 12 }}>
           Run "what-if" simulations using Monte Carlo analysis with client-specific churn probability.
         </div>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
@@ -101,7 +101,7 @@ export function ScenarioPlanner() {
                 display: 'flex',
                 alignItems: 'center',
                 gap: 8,
-                padding: '10px 14px',
+                padding: '12px 16px',
                 borderRadius: 8,
                 background: activePreset === preset.name
                   ? 'rgba(255, 90, 31, 0.15)'
@@ -109,7 +109,7 @@ export function ScenarioPlanner() {
                 border: '1px solid rgba(255, 255, 255, 0.06)',
                 color: 'var(--text-primary)',
                 cursor: running ? 'wait' : 'pointer',
-                fontSize: 13,
+                fontSize: 14,
                 fontWeight: 500,
                 transition: 'all 150ms',
                 textAlign: 'left',
@@ -131,10 +131,10 @@ export function ScenarioPlanner() {
           <div key={result.id} style={card}>
             <div className="flex items-center justify-between" style={{ marginBottom: 8 }}>
               <div>
-                <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>
+                <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>
                   {result.name}
                 </div>
-                <div style={{ fontSize: 11, color: 'var(--text-dim)' }}>
+                <div style={{ fontSize: 14, color: 'var(--text-dim)' }}>
                   1,000 simulations • {new Date(result.computed_at).toLocaleString()}
                 </div>
               </div>
@@ -145,7 +145,7 @@ export function ScenarioPlanner() {
                 color: isPositive ? 'var(--bb-green)' : 'var(--bb-red)',
               }}>
                 {isPositive ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
-                <span style={{ fontSize: 18, fontWeight: 700, fontFamily: 'var(--font-mono)' }}>
+                <span style={{ fontSize: 16, fontWeight: 500, fontFamily: 'var(--font-mono)' }}>
                   {isPositive ? '+' : ''}{fmt(result.delta_cents ?? 0)}
                 </span>
               </div>
@@ -153,23 +153,23 @@ export function ScenarioPlanner() {
 
             <div className="grid grid-cols-3 gap-3" style={{ marginBottom: 8 }}>
               <div>
-                <div style={{ fontSize: 11, color: 'var(--text-dim)' }}>Current Annual</div>
-                <div style={{ fontSize: 16, fontWeight: 600, fontFamily: 'var(--font-mono)', color: 'var(--text-primary)' }}>
+                <div style={{ fontSize: 14, color: 'var(--text-dim)' }}>Current Annual</div>
+                <div style={{ fontSize: 16, fontWeight: 500, fontFamily: 'var(--font-mono)', color: 'var(--text-primary)' }}>
                   {fmt(result.current_annual_cents ?? 0)}
                 </div>
               </div>
               <div>
-                <div style={{ fontSize: 11, color: 'var(--text-dim)' }}>Projected Annual</div>
+                <div style={{ fontSize: 14, color: 'var(--text-dim)' }}>Projected Annual</div>
                 <div style={{
-                  fontSize: 16, fontWeight: 600, fontFamily: 'var(--font-mono)',
+                  fontSize: 16, fontWeight: 500, fontFamily: 'var(--font-mono)',
                   color: isPositive ? 'var(--bb-green)' : 'var(--bb-red)',
                 }}>
                   {fmt(result.projected_annual_cents ?? 0)}
                 </div>
               </div>
               <div>
-                <div style={{ fontSize: 11, color: 'var(--text-dim)' }}>Positive Outcome</div>
-                <div style={{ fontSize: 16, fontWeight: 600, fontFamily: 'var(--font-mono)', color: 'var(--text-primary)' }}>
+                <div style={{ fontSize: 14, color: 'var(--text-dim)' }}>Positive Outcome</div>
+                <div style={{ fontSize: 16, fontWeight: 500, fontFamily: 'var(--font-mono)', color: 'var(--text-primary)' }}>
                   {Math.round((result.probability_positive ?? 0) * 100)}%
                 </div>
               </div>
@@ -178,7 +178,7 @@ export function ScenarioPlanner() {
             {/* Percentile distribution bar */}
             {p && (
               <div>
-                <div style={{ fontSize: 11, color: 'var(--text-dim)', marginBottom: 6 }}>
+                <div style={{ fontSize: 14, color: 'var(--text-dim)', marginBottom: 8 }}>
                   Distribution (P10 → P90)
                 </div>
                 <div style={{
@@ -186,7 +186,7 @@ export function ScenarioPlanner() {
                   alignItems: 'center',
                   gap: 2,
                   height: 24,
-                  borderRadius: 6,
+                  borderRadius: 8,
                   overflow: 'hidden',
                   background: 'rgba(255, 255, 255, 0.03)',
                 }}>
@@ -205,7 +205,7 @@ export function ScenarioPlanner() {
                       alignItems: 'center',
                       justifyContent: 'center',
                     }}>
-                      <span style={{ fontSize: 9, color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>
+                      <span style={{ fontSize: 14, color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>
                         {fmt(value)}
                       </span>
                     </div>

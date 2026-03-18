@@ -159,8 +159,8 @@ export function SidebarRail({
               justifyContent: 'center',
               background: 'var(--bg-elevated)',
               color: 'var(--text-primary)',
-              fontSize: '13px',
-              fontWeight: 600,
+              fontSize: '14px',
+              fontWeight: 500,
             }}
           >
             {avatarFallback}

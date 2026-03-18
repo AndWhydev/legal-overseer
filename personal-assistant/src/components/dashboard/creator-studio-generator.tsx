@@ -32,20 +32,20 @@ const sectionWrapper: React.CSSProperties = {
 
 const sectionTitle: React.CSSProperties = {
   fontSize: 16,
-  fontWeight: 600,
+  fontWeight: 500,
   color: 'var(--text-primary, #F1F5F9)',
   marginBottom: 8,
 }
 
 const sectionDesc: React.CSSProperties = {
-  fontSize: 13,
+  fontSize: 14,
   color: 'var(--text-secondary, #94A3B8)',
   marginBottom: 16,
 }
 
 const glassCard: React.CSSProperties = {
   padding: '16px',
-  borderRadius: 14,
+  borderRadius: 12,
   background: 'rgba(15, 20, 30, 0.6)',
   backdropFilter: 'blur(20px) saturate(1.2)',
   WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
@@ -56,8 +56,8 @@ const glassCard: React.CSSProperties = {
 
 const inputStyle: React.CSSProperties = {
   width: '100%',
-  padding: '12px 14px',
-  borderRadius: 10,
+  padding: '12px 16px',
+  borderRadius: 12,
   background: 'rgba(10, 14, 23, 0.5)',
   border: '1px solid rgba(255, 255, 255, 0.08)',
   color: 'var(--text-primary, #F1F5F9)',
@@ -71,13 +71,13 @@ const selectStyle: React.CSSProperties = {
 }
 
 const buttonStyle: React.CSSProperties = {
-  padding: '12px 18px',
-  borderRadius: 10,
+  padding: '12px 20px',
+  borderRadius: 12,
   background: '#FF5A1F',
   border: 'none',
   color: '#000',
   fontSize: 14,
-  fontWeight: 600,
+  fontWeight: 500,
   cursor: 'pointer',
   transition: 'all 200ms',
   display: 'inline-flex',
@@ -93,7 +93,7 @@ const secondaryButtonStyle: React.CSSProperties = {
 }
 
 const historyItem: React.CSSProperties = {
-  padding: '14px',
+  padding: '12px',
   borderRadius: 12,
   background: 'rgba(10, 14, 23, 0.5)',
   border: '1px solid rgba(255, 255, 255, 0.03)',
@@ -197,7 +197,7 @@ export function CreatorStudioGenerator() {
         <p style={sectionDesc}>Create ad scripts, social posts, emails, and more using AI</p>
 
         <div>
-          <label style={{ display: 'block', marginBottom: 8, fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>
+          <label style={{ display: 'block', marginBottom: 8, fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>
             Template Type
           </label>
           <select
@@ -212,14 +212,14 @@ export function CreatorStudioGenerator() {
             ))}
           </select>
           {templates.find((t) => t.id === selectedTemplate)?.description && (
-            <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 6 }}>
+            <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 8 }}>
               {templates.find((t) => t.id === selectedTemplate)?.description}
             </p>
           )}
         </div>
 
         <div style={{ marginTop: 20 }}>
-          <label style={{ display: 'block', marginBottom: 8, fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>
+          <label style={{ display: 'block', marginBottom: 8, fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>
             Product Name
           </label>
           <input
@@ -232,7 +232,7 @@ export function CreatorStudioGenerator() {
         </div>
 
         <div style={{ marginTop: 16 }}>
-          <label style={{ display: 'block', marginBottom: 8, fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>
+          <label style={{ display: 'block', marginBottom: 8, fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>
             Target Audience
           </label>
           <input
@@ -246,7 +246,7 @@ export function CreatorStudioGenerator() {
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 16 }}>
           <div>
-            <label style={{ display: 'block', marginBottom: 8, fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>
+            <label style={{ display: 'block', marginBottom: 8, fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>
               Tone
             </label>
             <select
@@ -260,7 +260,7 @@ export function CreatorStudioGenerator() {
             </select>
           </div>
           <div>
-            <label style={{ display: 'block', marginBottom: 8, fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>
+            <label style={{ display: 'block', marginBottom: 8, fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>
               Length
             </label>
             <select
@@ -315,7 +315,7 @@ export function CreatorStudioGenerator() {
               marginTop: 24,
             }}
           >
-            <p style={{ color: 'var(--text-secondary)', fontSize: 13 }}>No content generated yet. Create your first one!</p>
+            <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>No content generated yet. Create your first one!</p>
           </div>
         ) : (
           <div>
@@ -323,10 +323,10 @@ export function CreatorStudioGenerator() {
               <div key={item.id} style={historyItem}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: 12 }}>
                   <div>
-                    <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 4 }}>
+                    <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 4 }}>
                       {item.inputs.product_name}
                     </p>
-                    <p style={{ fontSize: 12, color: 'var(--text-tertiary, #64748B)' }}>
+                    <p style={{ fontSize: 14, color: 'var(--text-tertiary, #64748B)' }}>
                       {new Date(item.created_at).toLocaleDateString()}
                     </p>
                   </div>
@@ -338,7 +338,7 @@ export function CreatorStudioGenerator() {
                       color: 'var(--text-secondary)',
                       cursor: 'pointer',
                       padding: '4px 8px',
-                      fontSize: 12,
+                      fontSize: 14,
                     }}
                     title="Copy to clipboard"
                   >
@@ -349,7 +349,7 @@ export function CreatorStudioGenerator() {
                     )}
                   </button>
                 </div>
-                <p style={{ fontSize: 12, lineHeight: 1.5, color: 'var(--text-primary)', maxHeight: 100, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                <p style={{ fontSize: 14, lineHeight: 1.5, color: 'var(--text-primary)', maxHeight: 100, overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   {item.output}
                 </p>
               </div>

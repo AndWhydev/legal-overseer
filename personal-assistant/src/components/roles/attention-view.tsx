@@ -47,9 +47,9 @@ const glassCard: React.CSSProperties = {
 }
 
 const sectionHeader: React.CSSProperties = {
-  fontSize: 11,
-  fontWeight: 600,
-  letterSpacing: '0.08em',
+  fontSize: 14,
+  fontWeight: 500,
+  letterSpacing: '0.04em',
   textTransform: 'uppercase' as const,
   color: 'var(--text-dim, #475569)',
   marginBottom: 12,
@@ -58,7 +58,7 @@ const sectionHeader: React.CSSProperties = {
 const listRow: React.CSSProperties = {
   display: 'flex',
   alignItems: 'flex-start',
-  padding: '12px 14px',
+  padding: '12px 16px',
   borderRadius: 12,
   background: 'rgba(10, 14, 23, 0.5)',
   backdropFilter: 'blur(26px) saturate(1.15)',
@@ -174,10 +174,10 @@ export function AttentionView({ maxHeight = 'calc(100vh - 300px)' }: AttentionVi
               justifyContent: 'center',
               minWidth: 20,
               height: 20,
-              padding: '0 6px',
-              borderRadius: 10,
-              fontSize: 11,
-              fontWeight: 700,
+              padding: '0 8px',
+              borderRadius: 12,
+              fontSize: 14,
+              fontWeight: 500,
               background: '#FF5A1F',
               color: '#000',
               fontFamily: 'var(--font-mono)',
@@ -189,7 +189,7 @@ export function AttentionView({ maxHeight = 'calc(100vh - 300px)' }: AttentionVi
       </div>
 
       {/* Item list */}
-      <div style={{ overflowY: 'auto', maxHeight, display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <div style={{ overflowY: 'auto', maxHeight, display: 'flex', flexDirection: 'column', gap: 8 }}>
         {loading ? (
           Array.from({ length: 3 }, (_, i) => (
             <div key={i} style={{ ...listRow, opacity: 0.5 }}>
@@ -204,7 +204,7 @@ export function AttentionView({ maxHeight = 'calc(100vh - 300px)' }: AttentionVi
           <div style={{ padding: '40px 20px', textAlign: 'center' }}>
             <CheckCircle2 size={28} style={{ color: '#22c55e', marginBottom: 8 }} />
             <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)' }}>All clear</div>
-            <div style={{ fontSize: 12, color: 'var(--text-dim, #475569)', marginTop: 4 }}>
+            <div style={{ fontSize: 14, color: 'var(--text-dim, #475569)', marginTop: 4 }}>
               No items need your attention right now
             </div>
           </div>
@@ -254,14 +254,14 @@ export function AttentionView({ maxHeight = 'calc(100vh - 300px)' }: AttentionVi
 
                 {/* Content */}
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)', lineHeight: 1.4 }}>
+                  <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)', lineHeight: 1.4 }}>
                     {item.summary}
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4, flexWrap: 'wrap' }}>
                     <span style={{
-                      fontSize: 10,
-                      fontWeight: 600,
-                      padding: '2px 6px',
+                      fontSize: 14,
+                      fontWeight: 500,
+                      padding: '2px 8px',
                       borderRadius: 4,
                       background: `${sourceMeta.color}15`,
                       color: sourceMeta.color,
@@ -270,9 +270,9 @@ export function AttentionView({ maxHeight = 'calc(100vh - 300px)' }: AttentionVi
                     </span>
                     {item.role_type && (
                       <span style={{
-                        fontSize: 10,
-                        fontWeight: 600,
-                        padding: '2px 6px',
+                        fontSize: 14,
+                        fontWeight: 500,
+                        padding: '2px 8px',
                         borderRadius: 4,
                         background: `${ROLE_COLORS[item.role_type] ?? '#94A3B8'}15`,
                         color: ROLE_COLORS[item.role_type] ?? '#94A3B8',
@@ -280,22 +280,22 @@ export function AttentionView({ maxHeight = 'calc(100vh - 300px)' }: AttentionVi
                         {ROLE_LABELS[item.role_type] ?? item.role_type}
                       </span>
                     )}
-                    <span style={{ fontSize: 11, color: 'var(--text-dim, #475569)' }}>
+                    <span style={{ fontSize: 14, color: 'var(--text-dim, #475569)' }}>
                       {timeAgo(item.created_at)}
                     </span>
                   </div>
 
                   {/* Action buttons for approvals */}
                   {item.source === 'approval' && isHovered && !isResolving && (
-                    <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
+                    <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
                       <button
                         onClick={(e) => { e.stopPropagation(); handleApproval(item.source_id, 'approved') }}
                         style={{
-                          padding: '5px 14px',
+                          padding: '4px 16px',
                           borderRadius: 8,
                           border: 'none',
-                          fontSize: 12,
-                          fontWeight: 600,
+                          fontSize: 14,
+                          fontWeight: 500,
                           cursor: 'pointer',
                           background: 'rgba(34, 197, 94, 0.15)',
                           color: '#22c55e',
@@ -307,11 +307,11 @@ export function AttentionView({ maxHeight = 'calc(100vh - 300px)' }: AttentionVi
                       <button
                         onClick={(e) => { e.stopPropagation(); handleApproval(item.source_id, 'rejected') }}
                         style={{
-                          padding: '5px 14px',
+                          padding: '4px 16px',
                           borderRadius: 8,
                           border: 'none',
-                          fontSize: 12,
-                          fontWeight: 600,
+                          fontSize: 14,
+                          fontWeight: 500,
                           cursor: 'pointer',
                           background: 'rgba(239, 68, 68, 0.12)',
                           color: '#ef4444',

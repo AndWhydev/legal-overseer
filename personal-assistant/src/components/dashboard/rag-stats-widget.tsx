@@ -63,7 +63,7 @@ function CountUp({ target, suffix = '' }: { target: number; suffix?: string }) {
   }, [target])
 
   return (
-    <span style={{ fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)', fontWeight: 700 }}>
+    <span style={{ fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)', fontWeight: 500 }}>
       {value.toLocaleString()}{suffix}
     </span>
   )
@@ -128,7 +128,7 @@ export function RagStatsWidget({ className = '', showDetails = true }: RagStatsW
   }
 
   const metricLabel: React.CSSProperties = {
-    fontSize: 12,
+    fontSize: 14,
     color: 'var(--text-secondary, #94A3B8)',
     fontWeight: 500,
   }
@@ -136,7 +136,7 @@ export function RagStatsWidget({ className = '', showDetails = true }: RagStatsW
   const metricValue: React.CSSProperties = {
     fontSize: 16,
     color: 'var(--text-primary, #F1F5F9)',
-    fontWeight: 600,
+    fontWeight: 500,
   }
 
   const headerStyle: React.CSSProperties = {
@@ -149,8 +149,8 @@ export function RagStatsWidget({ className = '', showDetails = true }: RagStatsW
   }
 
   const titleStyle: React.CSSProperties = {
-    fontSize: 13,
-    fontWeight: 600,
+    fontSize: 14,
+    fontWeight: 500,
     color: 'var(--text-primary, #F1F5F9)',
     margin: 0,
   }
@@ -169,7 +169,7 @@ export function RagStatsWidget({ className = '', showDetails = true }: RagStatsW
         }}
       >
         <AlertCircle size={16} style={{ color: '#EF4444', flexShrink: 0 }} />
-        <span style={{ fontSize: 12, color: '#EF4444' }}>{error}</span>
+        <span style={{ fontSize: 14, color: '#EF4444' }}>{error}</span>
       </div>
     )
   }
@@ -185,7 +185,7 @@ export function RagStatsWidget({ className = '', showDetails = true }: RagStatsW
             flexShrink: 0,
           }}
         />
-        <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Loading vector stats...</span>
+        <span style={{ fontSize: 14, color: 'var(--text-secondary)' }}>Loading vector stats...</span>
       </div>
     )
   }
@@ -208,7 +208,7 @@ export function RagStatsWidget({ className = '', showDetails = true }: RagStatsW
         <h3 style={titleStyle}>Vector Index</h3>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         {/* Total vectors card */}
         <div style={metricRow}>
           <span style={metricLabel}>Total Vectors</span>
@@ -251,15 +251,15 @@ export function RagStatsWidget({ className = '', showDetails = true }: RagStatsW
           <div
             style={{
               padding: 8,
-              borderRadius: 6,
+              borderRadius: 8,
               background: 'rgba(239, 68, 68, 0.1)',
               border: '1px solid rgba(239, 68, 68, 0.3)',
               display: 'flex',
-              gap: 6,
+              gap: 8,
             }}
           >
-            <AlertTriangle size={14} style={{ color: '#EF4444', flexShrink: 0, marginTop: 1 }} />
-            <span style={{ fontSize: 11, color: '#FCA5A5', lineHeight: 1.4 }}>
+            <AlertTriangle size={14} style={{ color: '#EF4444', flexShrink: 0, marginTop: 4 }} />
+            <span style={{ fontSize: 14, color: '#FCA5A5', lineHeight: 1.4 }}>
               {criticalAlerts[0].message}
             </span>
           </div>
@@ -270,15 +270,15 @@ export function RagStatsWidget({ className = '', showDetails = true }: RagStatsW
           <div
             style={{
               padding: 8,
-              borderRadius: 6,
+              borderRadius: 8,
               background: 'rgba(245, 158, 11, 0.1)',
               border: '1px solid rgba(245, 158, 11, 0.3)',
               display: 'flex',
-              gap: 6,
+              gap: 8,
             }}
           >
-            <AlertCircle size={14} style={{ color: '#F59E0B', flexShrink: 0, marginTop: 1 }} />
-            <span style={{ fontSize: 11, color: '#FECACA', lineHeight: 1.4 }}>
+            <AlertCircle size={14} style={{ color: '#F59E0B', flexShrink: 0, marginTop: 4 }} />
+            <span style={{ fontSize: 14, color: '#FECACA', lineHeight: 1.4 }}>
               {warningAlerts[0].message}
             </span>
           </div>
@@ -294,19 +294,19 @@ export function RagStatsWidget({ className = '', showDetails = true }: RagStatsW
                 borderTop: '1px solid rgba(255, 255, 255, 0.06)',
               }}
             />
-            <div style={{ fontSize: 11, color: 'var(--text-dim, #475569)', fontWeight: 600, marginBottom: 6 }}>
+            <div style={{ fontSize: 14, color: 'var(--text-dim, #475569)', fontWeight: 500, marginBottom: 8 }}>
               TOP CHANNELS
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {topChannels.map(([channel, count]) => (
                 <div key={channel} style={metricRow}>
-                  <span style={{ ...metricLabel, fontSize: 11, color: 'var(--text-secondary)' }}>
+                  <span style={{ ...metricLabel, fontSize: 14, color: 'var(--text-secondary)' }}>
                     {channel}
                   </span>
                   <span
                     style={{
                       ...metricValue,
-                      fontSize: 12,
+                      fontSize: 14,
                       color: 'var(--text-primary)',
                     }}
                   >
@@ -321,7 +321,7 @@ export function RagStatsWidget({ className = '', showDetails = true }: RagStatsW
         {/* Last updated timestamp */}
         <div
           style={{
-            fontSize: 10,
+            fontSize: 14,
             color: 'var(--text-dim, #475569)',
             marginTop: 8,
             textAlign: 'right',

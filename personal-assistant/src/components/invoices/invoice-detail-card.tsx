@@ -65,7 +65,7 @@ export function InvoiceDetailCard({ invoice, onClose }: InvoiceDetailCardProps) 
           {/* Client */}
           <div className="bb-invoices-detail__metric" style={{ gridColumn: '1 / -1' }}>
             <div className="bb-invoices-detail__metric-label">Client</div>
-            <div className="bb-invoices-detail__metric-value" style={{ fontSize: 13, letterSpacing: 0 }}>
+            <div className="bb-invoices-detail__metric-value" style={{ fontSize: 14, letterSpacing: 0 }}>
               {invoice.client_name || invoice.client_contact_id || 'Unknown client'}
             </div>
           </div>
@@ -90,7 +90,7 @@ export function InvoiceDetailCard({ invoice, onClose }: InvoiceDetailCardProps) 
           {invoice.created_at && (
             <div className="bb-invoices-detail__metric">
               <div className="bb-invoices-detail__metric-label">Created</div>
-              <div className="bb-invoices-detail__metric-value" style={{ fontSize: 12 }}>
+              <div className="bb-invoices-detail__metric-value" style={{ fontSize: 14 }}>
                 {formatDate(invoice.created_at)}
               </div>
             </div>

@@ -23,7 +23,7 @@ function renderInline(text: string): string {
   // Italic (avoid matching underscores in_words)
   r = r.replace(/\*(.*?)\*/g, '<em>$1</em>')
   // Inline code
-  r = r.replace(/`(.*?)`/g, '<code style="background:rgba(255,255,255,0.06);padding:1px 4px;border-radius:3px;font-size:0.9em">$1</code>')
+  r = r.replace(/`(.*?)`/g, '<code style="background:rgba(255,255,255,0.06);padding:4px 4px;border-radius:4px;font-size:0.9em">$1</code>')
   return r
 }
 
@@ -43,17 +43,17 @@ function renderMarkdown(content: string): string {
     // Headers
     if (trimmed.startsWith('### ')) {
       if (inList) { html.push('</ul>'); inList = false }
-      html.push(`<div style="margin:8px 0 4px;font-size:13px;font-weight:600;color:var(--text-primary)">${renderInline(trimmed.slice(4))}</div>`)
+      html.push(`<div style="margin:8px 0 4px;font-size:14px;font-weight:500;color:var(--text-primary)">${renderInline(trimmed.slice(4))}</div>`)
       continue
     }
     if (trimmed.startsWith('## ')) {
       if (inList) { html.push('</ul>'); inList = false }
-      html.push(`<div style="margin:8px 0 4px;font-size:14px;font-weight:600;color:var(--text-primary)">${renderInline(trimmed.slice(3))}</div>`)
+      html.push(`<div style="margin:8px 0 4px;font-size:14px;font-weight:500;color:var(--text-primary)">${renderInline(trimmed.slice(3))}</div>`)
       continue
     }
     if (trimmed.startsWith('# ')) {
       if (inList) { html.push('</ul>'); inList = false }
-      html.push(`<div style="margin:8px 0 4px;font-size:15px;font-weight:600;color:var(--text-primary)">${renderInline(trimmed.slice(2))}</div>`)
+      html.push(`<div style="margin:8px 0 4px;font-size:16px;font-weight:500;color:var(--text-primary)">${renderInline(trimmed.slice(2))}</div>`)
       continue
     }
 
@@ -63,13 +63,13 @@ function renderMarkdown(content: string): string {
         html.push('<ul style="margin:4px 0;padding-left:16px">')
         inList = true
       }
-      html.push(`<li style="margin:2px 0">${renderInline(trimmed.slice(2))}</li>`)
+      html.push(`<li style="margin:4px 0">${renderInline(trimmed.slice(2))}</li>`)
       continue
     }
 
     // Paragraph
     if (inList) { html.push('</ul>'); inList = false }
-    html.push(`<div style="margin:3px 0">${renderInline(trimmed)}</div>`)
+    html.push(`<div style="margin:4px 0">${renderInline(trimmed)}</div>`)
   }
 
   if (inList) html.push('</ul>')
@@ -89,7 +89,7 @@ export function MarkdownRenderer({ content, compact, style }: MarkdownRendererPr
     <div
       dangerouslySetInnerHTML={{ __html: html }}
       style={{
-        fontSize: 13,
+        fontSize: 14,
         lineHeight: 1.5,
         color: 'var(--text-secondary)',
         wordBreak: 'break-word',

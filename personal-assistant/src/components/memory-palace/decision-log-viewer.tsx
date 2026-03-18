@@ -66,7 +66,7 @@ export function DecisionLogViewer({ orgId, entityId }: DecisionLogViewerProps) {
         padding: '60px 20px',
         color: 'rgba(255, 255, 255, 0.3)',
       }}>
-        <div style={{ fontSize: '24px', marginBottom: '8px' }}>No decisions recorded</div>
+        <div style={{ fontSize: '16px', marginBottom: '8px' }}>No decisions recorded</div>
         <div style={{ fontSize: '14px' }}>
           Decision reasoning chains are captured automatically when BitBit makes or recommends significant choices.
         </div>
@@ -93,7 +93,7 @@ export function DecisionLogViewer({ orgId, entityId }: DecisionLogViewerProps) {
             style={{
               background: 'rgba(15, 20, 30, 0.35)',
               backdropFilter: 'blur(12px)',
-              borderRadius: '10px',
+              borderRadius: '12px',
               padding: '14px 16px',
               cursor: 'pointer',
               transition: 'background 0.15s ease',
@@ -110,20 +110,20 @@ export function DecisionLogViewer({ orgId, entityId }: DecisionLogViewerProps) {
             <div style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '10px',
+              gap: '12px',
               marginBottom: '6px',
             }}>
               {/* Domain Icon */}
               <span style={{
                 width: '22px',
                 height: '22px',
-                borderRadius: '6px',
+                borderRadius: '8px',
                 background: `${impactColor}15`,
                 color: impactColor,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '11px',
+                fontSize: '14px',
                 fontWeight: 700,
               }}>
                 {domainIcon}
@@ -131,8 +131,8 @@ export function DecisionLogViewer({ orgId, entityId }: DecisionLogViewerProps) {
 
               {/* Impact */}
               <span style={{
-                fontSize: '10px',
-                fontWeight: 600,
+                fontSize: '14px',
+                fontWeight: 500,
                 color: impactColor,
                 textTransform: 'uppercase',
                 letterSpacing: '0.5px',
@@ -142,7 +142,7 @@ export function DecisionLogViewer({ orgId, entityId }: DecisionLogViewerProps) {
 
               <span style={{ flex: 1 }} />
 
-              <span style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.3)' }}>
+              <span style={{ fontSize: '14px', color: 'rgba(255, 255, 255, 0.3)' }}>
                 {dateStr}
               </span>
             </div>
@@ -150,7 +150,7 @@ export function DecisionLogViewer({ orgId, entityId }: DecisionLogViewerProps) {
             {/* Title */}
             <div style={{
               fontSize: '14px',
-              fontWeight: 600,
+              fontWeight: 500,
               color: 'rgba(255, 255, 255, 0.9)',
               marginBottom: '4px',
             }}>
@@ -159,7 +159,7 @@ export function DecisionLogViewer({ orgId, entityId }: DecisionLogViewerProps) {
 
             {/* Decision summary */}
             <div style={{
-              fontSize: '13px',
+              fontSize: '14px',
               color: 'rgba(255, 255, 255, 0.6)',
               lineHeight: '1.5',
               overflow: isExpanded ? 'visible' : 'hidden',
@@ -179,20 +179,20 @@ export function DecisionLogViewer({ orgId, entityId }: DecisionLogViewerProps) {
                 borderTop: '1px solid rgba(255, 255, 255, 0.06)',
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '10px',
+                gap: '12px',
               }}>
                 {/* Reasoning */}
                 <div>
                   <div style={{
-                    fontSize: '11px',
+                    fontSize: '14px',
                     color: 'rgba(255, 255, 255, 0.4)',
                     marginBottom: '4px',
-                    fontWeight: 600,
+                    fontWeight: 500,
                   }}>
                     REASONING
                   </div>
                   <div style={{
-                    fontSize: '13px',
+                    fontSize: '14px',
                     color: 'rgba(255, 255, 255, 0.7)',
                     lineHeight: '1.5',
                   }}>
@@ -204,21 +204,21 @@ export function DecisionLogViewer({ orgId, entityId }: DecisionLogViewerProps) {
                 {decision.alternatives && (decision.alternatives as { option: string; pros: string[]; cons: string[] }[]).length > 0 && (
                   <div>
                     <div style={{
-                      fontSize: '11px',
+                      fontSize: '14px',
                       color: 'rgba(255, 255, 255, 0.4)',
                       marginBottom: '4px',
-                      fontWeight: 600,
+                      fontWeight: 500,
                     }}>
                       ALTERNATIVES CONSIDERED
                     </div>
                     {(decision.alternatives as { option: string; pros: string[]; cons: string[] }[]).map((alt, i) => (
                       <div key={i} style={{
-                        padding: '6px 10px',
+                        padding: '8px 12px',
                         background: 'rgba(255, 255, 255, 0.03)',
-                        borderRadius: '6px',
+                        borderRadius: '8px',
                         marginBottom: '4px',
                       }}>
-                        <div style={{ fontSize: '13px', color: 'rgba(255, 255, 255, 0.7)' }}>
+                        <div style={{ fontSize: '14px', color: 'rgba(255, 255, 255, 0.7)' }}>
                           {alt.option}
                         </div>
                       </div>
@@ -230,15 +230,15 @@ export function DecisionLogViewer({ orgId, entityId }: DecisionLogViewerProps) {
                 {decision.outcome && (
                   <div>
                     <div style={{
-                      fontSize: '11px',
+                      fontSize: '14px',
                       color: 'rgba(255, 255, 255, 0.4)',
                       marginBottom: '4px',
-                      fontWeight: 600,
+                      fontWeight: 500,
                     }}>
                       OUTCOME
                     </div>
                     <div style={{
-                      fontSize: '13px',
+                      fontSize: '14px',
                       color: '#22C55E',
                       lineHeight: '1.5',
                     }}>
@@ -251,15 +251,15 @@ export function DecisionLogViewer({ orgId, entityId }: DecisionLogViewerProps) {
                 {decision.lessons_learned && (
                   <div>
                     <div style={{
-                      fontSize: '11px',
+                      fontSize: '14px',
                       color: 'rgba(255, 255, 255, 0.4)',
                       marginBottom: '4px',
-                      fontWeight: 600,
+                      fontWeight: 500,
                     }}>
                       LESSONS LEARNED
                     </div>
                     <div style={{
-                      fontSize: '13px',
+                      fontSize: '14px',
                       color: '#F59E0B',
                       lineHeight: '1.5',
                     }}>
@@ -270,14 +270,14 @@ export function DecisionLogViewer({ orgId, entityId }: DecisionLogViewerProps) {
 
                 {/* Entity names */}
                 {decision.entity_names && decision.entity_names.length > 0 && (
-                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                     {decision.entity_names.map((name, i) => (
                       <span key={i} style={{
                         padding: '1px 8px',
-                        borderRadius: '6px',
+                        borderRadius: '8px',
                         background: 'rgba(59, 130, 246, 0.1)',
                         color: '#3B82F6',
-                        fontSize: '11px',
+                        fontSize: '14px',
                       }}>
                         {name}
                       </span>
@@ -287,7 +287,7 @@ export function DecisionLogViewer({ orgId, entityId }: DecisionLogViewerProps) {
 
                 {/* Decided by */}
                 {decision.decided_by && (
-                  <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.3)' }}>
+                  <div style={{ fontSize: '14px', color: 'rgba(255, 255, 255, 0.3)' }}>
                     Decided by: {decision.decided_by}
                   </div>
                 )}

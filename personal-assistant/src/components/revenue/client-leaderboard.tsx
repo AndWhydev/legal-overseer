@@ -44,8 +44,8 @@ const rowStyle: React.CSSProperties = {
   gridTemplateColumns: '32px 1fr 90px 70px 70px 60px',
   alignItems: 'center',
   gap: 8,
-  padding: '10px 16px',
-  fontSize: 12,
+  padding: '12px 16px',
+  fontSize: 14,
   transition: 'background var(--duration-fast) var(--ease-default)',
   cursor: 'default',
 }
@@ -53,11 +53,11 @@ const rowStyle: React.CSSProperties = {
 const headerRowStyle: React.CSSProperties = {
   ...rowStyle,
   padding: '8px 16px',
-  fontSize: 10,
+  fontSize: 14,
   color: 'var(--text-secondary)',
   textTransform: 'uppercase',
-  letterSpacing: '0.05em',
-  fontWeight: 600,
+  letterSpacing: '0.04em',
+  fontWeight: 500,
   background: 'rgba(255,255,255,0.02)',
 }
 
@@ -72,14 +72,14 @@ const scoreCircleStyle = (score: number): React.CSSProperties => {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    fontSize: 11,
-    fontWeight: 700,
+    fontSize: 14,
+    fontWeight: 500,
     fontFamily: 'var(--font-mono)',
   }
 }
 
 const nameStyle: React.CSSProperties = {
-  fontWeight: 600,
+  fontWeight: 500,
   color: 'var(--text-primary)',
   whiteSpace: 'nowrap',
   overflow: 'hidden',
@@ -88,8 +88,8 @@ const nameStyle: React.CSSProperties = {
 
 const monoStyle: React.CSSProperties = {
   fontFamily: 'var(--font-mono)',
-  fontWeight: 600,
-  fontSize: 12,
+  fontWeight: 500,
+  fontSize: 14,
 }
 
 // ─── Component ──────────────────────────────────────────────────────────────
@@ -175,7 +175,7 @@ export function ClientLeaderboard({ clients, atRisk = [] }: ClientLeaderboardPro
             </span>
 
             {/* Trend */}
-            <span style={{ color: TREND_COLORS[client.trend_direction], fontWeight: 600 }}>
+            <span style={{ color: TREND_COLORS[client.trend_direction], fontWeight: 500 }}>
               {TREND_ICONS[client.trend_direction]} {client.trend_direction}
             </span>
 
@@ -186,8 +186,8 @@ export function ClientLeaderboard({ clients, atRisk = [] }: ClientLeaderboardPro
 
             {/* Risk level */}
             <span style={{
-              fontSize: 10,
-              fontWeight: 600,
+              fontSize: 14,
+              fontWeight: 500,
               color: RISK_COLORS[client.risk_level],
               textTransform: 'uppercase',
             }}>

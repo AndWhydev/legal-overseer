@@ -32,20 +32,20 @@ const sectionWrapper: React.CSSProperties = {
 
 const sectionTitle: React.CSSProperties = {
   fontSize: 16,
-  fontWeight: 600,
+  fontWeight: 500,
   color: 'var(--text-primary, #F1F5F9)',
   marginBottom: 8,
 }
 
 const sectionDesc: React.CSSProperties = {
-  fontSize: 13,
+  fontSize: 14,
   color: 'var(--text-secondary, #94A3B8)',
   marginBottom: 16,
 }
 
 const glassCard: React.CSSProperties = {
   padding: '16px',
-  borderRadius: 14,
+  borderRadius: 12,
   background: 'rgba(15, 20, 30, 0.6)',
   backdropFilter: 'blur(20px) saturate(1.2)',
   WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
@@ -56,8 +56,8 @@ const glassCard: React.CSSProperties = {
 
 const inputStyle: React.CSSProperties = {
   width: '100%',
-  padding: '12px 14px',
-  borderRadius: 10,
+  padding: '12px 16px',
+  borderRadius: 12,
   background: 'rgba(10, 14, 23, 0.5)',
   border: '1px solid rgba(255, 255, 255, 0.08)',
   color: 'var(--text-primary, #F1F5F9)',
@@ -66,13 +66,13 @@ const inputStyle: React.CSSProperties = {
 }
 
 const buttonStyle: React.CSSProperties = {
-  padding: '12px 18px',
-  borderRadius: 10,
+  padding: '12px 20px',
+  borderRadius: 12,
   background: '#FF5A1F',
   border: 'none',
   color: '#000',
   fontSize: 14,
-  fontWeight: 600,
+  fontWeight: 500,
   cursor: 'pointer',
   transition: 'all 200ms',
   display: 'inline-flex',
@@ -93,13 +93,13 @@ const dangerButtonStyle: React.CSSProperties = {
   color: '#ef4444',
   border: '1px solid rgba(239, 68, 68, 0.3)',
   padding: '8px 12px',
-  fontSize: 12,
+  fontSize: 14,
 }
 
 const listRow: React.CSSProperties = {
   display: 'flex',
   alignItems: 'center',
-  padding: '14px',
+  padding: '12px',
   borderRadius: 12,
   background: 'rgba(10, 14, 23, 0.5)',
   border: '1px solid rgba(255, 255, 255, 0.03)',
@@ -224,11 +224,11 @@ export function ApiKeyManagement() {
 
       {showNewKey && (
         <div style={{ ...glassCard, padding: 20, marginBottom: 24 }}>
-          <h3 style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 16 }}>
+          <h3 style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)', marginBottom: 16 }}>
             Generate New API Key
           </h3>
           <div style={{ marginBottom: 16 }}>
-            <label style={{ display: 'block', marginBottom: 8, fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>
+            <label style={{ display: 'block', marginBottom: 8, fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>
               Key Name
             </label>
             <input
@@ -238,7 +238,7 @@ export function ApiKeyManagement() {
               onChange={(e) => setNewKeyForm({ name: e.target.value })}
               style={inputStyle}
             />
-            <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 6 }}>
+            <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 8 }}>
               Use a descriptive name to identify where this key is used
             </p>
           </div>
@@ -282,7 +282,7 @@ export function ApiKeyManagement() {
           }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: 16 }}>
-            <h3 style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
+            <h3 style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)', margin: 0 }}>
               Your API Key
             </h3>
             <button
@@ -298,7 +298,7 @@ export function ApiKeyManagement() {
               Dismiss
             </button>
           </div>
-          <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 12 }}>
+          <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 12 }}>
             {newKeyDisplay.warning}
           </p>
           <div
@@ -312,7 +312,7 @@ export function ApiKeyManagement() {
               border: '1px solid rgba(255, 255, 255, 0.08)',
               marginBottom: 12,
               fontFamily: 'monospace',
-              fontSize: 12,
+              fontSize: 14,
               wordBreak: 'break-all',
             }}
           >
@@ -339,7 +339,7 @@ export function ApiKeyManagement() {
         </div>
       )}
 
-      <h3 style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 12, marginTop: 24 }}>
+      <h3 style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)', marginBottom: 12, marginTop: 24 }}>
         Active Keys
       </h3>
 
@@ -351,17 +351,17 @@ export function ApiKeyManagement() {
             padding: 32,
           }}
         >
-          <p style={{ color: 'var(--text-secondary)', fontSize: 13 }}>No API keys yet. Generate one to get started.</p>
+          <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>No API keys yet. Generate one to get started.</p>
         </div>
       ) : (
         <div>
           {keys.map((key) => (
             <div key={key.id} style={listRow}>
               <div style={{ flex: 1 }}>
-                <p style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', marginBottom: 4 }}>
+                <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)', marginBottom: 4 }}>
                   {key.name}
                 </p>
-                <div style={{ display: 'flex', gap: 16, fontSize: 12, color: 'var(--text-secondary)' }}>
+                <div style={{ display: 'flex', gap: 16, fontSize: 14, color: 'var(--text-secondary)' }}>
                   <span>Key: {key.displayKey}</span>
                   {key.lastUsedAt && <span>Last used: {new Date(key.lastUsedAt).toLocaleDateString()}</span>}
                   <span>Created: {new Date(key.createdAt).toLocaleDateString()}</span>

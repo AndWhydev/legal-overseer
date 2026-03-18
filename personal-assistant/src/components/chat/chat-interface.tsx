@@ -305,8 +305,8 @@ function InlineApprovalCard({
   const ToolIcon = getToolIcon(approval.toolName)
 
   const cardStyle: React.CSSProperties = {
-    padding: '14px 16px',
-    borderRadius: 14,
+    padding: '12px 16px',
+    borderRadius: 12,
     background: 'var(--glass-bg, rgba(15, 20, 30, 0.35))',
     backdropFilter: 'var(--glass-blur, blur(24px) saturate(1.3) brightness(1.05))',
     WebkitBackdropFilter: 'var(--glass-blur, blur(24px) saturate(1.3) brightness(1.05))',
@@ -323,7 +323,7 @@ function InlineApprovalCard({
   const headerStyle: React.CSSProperties = {
     display: 'flex',
     alignItems: 'flex-start',
-    gap: 10,
+    gap: 12,
   }
 
   const iconWrapStyle: React.CSSProperties = {
@@ -362,13 +362,13 @@ function InlineApprovalCard({
     alignItems: 'center',
     gap: 4,
     padding: '2px 8px',
-    borderRadius: 6,
+    borderRadius: 8,
     background: 'var(--hover-bg, rgba(255, 255, 255, 0.04))',
-    fontSize: 11,
-    fontWeight: 600,
+    fontSize: 14,
+    fontWeight: 500,
     letterSpacing: '0.02em',
     color: 'var(--text-secondary, #94A3B8)',
-    marginTop: 6,
+    marginTop: 8,
   }
 
   const buttonContainerStyle: React.CSSProperties = {
@@ -379,49 +379,49 @@ function InlineApprovalCard({
 
   const approveBtnStyle: React.CSSProperties = {
     flex: 1,
-    padding: '7px 14px',
-    borderRadius: 10,
+    padding: '8px 16px',
+    borderRadius: 12,
     background: '#1A1A1B',
     border: 'none',
     color: '#FFFFFF',
-    fontSize: 13,
-    fontWeight: 600,
+    fontSize: 14,
+    fontWeight: 500,
     cursor: isResolving ? 'not-allowed' : 'pointer',
     transition: 'all 200ms',
     opacity: isResolving ? 0.6 : 1,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
+    gap: 8,
   }
 
   const rejectBtnStyle: React.CSSProperties = {
     flex: 1,
-    padding: '7px 14px',
-    borderRadius: 10,
+    padding: '8px 16px',
+    borderRadius: 12,
     background: 'transparent',
     border: '1px solid rgba(239, 68, 68, 0.35)',
     color: 'var(--bb-red, #EF4444)',
-    fontSize: 13,
-    fontWeight: 600,
+    fontSize: 14,
+    fontWeight: 500,
     cursor: isResolving ? 'not-allowed' : 'pointer',
     transition: 'all 200ms',
     opacity: isResolving ? 0.6 : 1,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
+    gap: 8,
   }
 
   const resolvedBadgeStyle: React.CSSProperties = {
     display: 'inline-flex',
     alignItems: 'center',
-    gap: 5,
-    padding: '4px 10px',
+    gap: 4,
+    padding: '4px 12px',
     borderRadius: 8,
-    fontSize: 12,
-    fontWeight: 600,
-    marginTop: 10,
+    fontSize: 14,
+    fontWeight: 500,
+    marginTop: 12,
     background: isApproved ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)',
     color: isApproved ? 'var(--bb-green, #22C55E)' : 'var(--bb-red, #EF4444)',
   }
@@ -1199,11 +1199,11 @@ export function ChatInterface({ userName }: { userName?: string }) {
                   {narrationAfter && (
                     <span style={{
                       display: 'block',
-                      fontSize: 12,
+                      fontSize: 14,
                       color: 'var(--text-muted)',
                       fontStyle: 'italic',
                       fontWeight: 400,
-                      lineHeight: '18px',
+                      lineHeight: '20px',
                     }}>
                       {narrationAfter}
                     </span>
@@ -1246,9 +1246,9 @@ export function ChatInterface({ userName }: { userName?: string }) {
                         style={{
                           display: 'flex',
                           alignItems: 'center',
-                          gap: 6,
+                          gap: 8,
                           paddingBottom: 4,
-                          fontSize: 12,
+                          fontSize: 14,
                           color: 'var(--text-dim)',
                         }}
                       >
@@ -1265,10 +1265,10 @@ export function ChatInterface({ userName }: { userName?: string }) {
                         {!detail && (
                           <span style={{
                             display: 'inline-flex',
-                            padding: '1px 6px',
-                            borderRadius: 4,
+                            padding: '1px 8px',
+                            borderRadius: 8,
                             background: 'var(--hover-bg)',
-                            fontSize: 11,
+                            fontSize: 14,
                             color: 'var(--text-muted)',
                           }}>
                             {`#${cIdx + 1}`}
@@ -1280,11 +1280,11 @@ export function ChatInterface({ userName }: { userName?: string }) {
                   {narrationAfter && (
                     <span style={{
                       display: 'block',
-                      fontSize: 12,
+                      fontSize: 14,
                       color: 'var(--text-muted)',
                       fontStyle: 'italic',
                       fontWeight: 400,
-                      lineHeight: '18px',
+                      lineHeight: '20px',
                       marginTop: 2,
                     }}>
                       {narrationAfter}

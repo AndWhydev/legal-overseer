@@ -72,9 +72,9 @@ const glassCard: React.CSSProperties = {
 
 const glassInput: React.CSSProperties = {
   width: '100%',
-  padding: '10px 14px',
+  padding: '12px 16px',
   paddingLeft: '40px',
-  borderRadius: 10,
+  borderRadius: 12,
   background: 'rgba(13, 17, 23, 0.6)',
   border: '1px solid var(--glass-interactive-border)',
   color: 'var(--text-primary)',
@@ -86,7 +86,7 @@ const glassInput: React.CSSProperties = {
 const listRow: React.CSSProperties = {
   display: 'flex',
   alignItems: 'center',
-  padding: '12px 18px',
+  padding: '12px 20px',
   borderRadius: 12,
   background: 'var(--glass-pill-bg)',
   backdropFilter: 'var(--glass-blur)',
@@ -103,7 +103,7 @@ const ghostBtn: React.CSSProperties = {
   background: 'transparent',
   border: '1px solid var(--glass-interactive-border)',
   color: 'var(--text-primary)',
-  fontSize: 13,
+  fontSize: 14,
   fontWeight: 500,
   cursor: 'pointer',
   transition: 'all 200ms',
@@ -113,14 +113,14 @@ const ghostBtn: React.CSSProperties = {
 };
 
 const pillBtn: React.CSSProperties = {
-  padding: '6px 14px',
+  padding: '8px 16px',
   borderRadius: 20,
   background: 'var(--glass-pill-bg)',
   backdropFilter: 'var(--glass-card-blur)',
   WebkitBackdropFilter: 'var(--glass-card-blur)',
   boxShadow: 'var(--glass-card-inset)',
   border: 'none',
-  fontSize: 12,
+  fontSize: 14,
   color: 'var(--text-secondary)',
   cursor: 'pointer',
   transition: 'all 200ms',
@@ -128,9 +128,9 @@ const pillBtn: React.CSSProperties = {
 };
 
 const sectionHeader: React.CSSProperties = {
-  fontSize: 11,
-  fontWeight: 600,
-  letterSpacing: '0.08em',
+  fontSize: 14,
+  fontWeight: 500,
+  letterSpacing: '0.04em',
   textTransform: 'uppercase' as const,
   color: 'var(--text-dim)',
   marginBottom: 12,
@@ -239,7 +239,7 @@ function KnowledgeTab() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 24, padding: '24px' }}>
         {/* ─── Entity Graph ───────────────────────────────────────────────────── */}
         <div style={glassCard}>
-          <div style={{ ...sectionHeader, marginBottom: 14 }}>Entity Graph</div>
+          <div style={{ ...sectionHeader, marginBottom: 12 }}>Entity Graph</div>
           {graphLoading ? (
             <div style={{
               height: 420,
@@ -264,7 +264,7 @@ function KnowledgeTab() {
               justifyContent: 'center',
               gap: 8,
               color: 'var(--text-dim)',
-              fontSize: 13,
+              fontSize: 14,
             }}>
               <Book size={28} style={{ opacity: 0.4 }} />
               No entities yet. Add contacts and relationships to see your knowledge graph.
@@ -337,7 +337,7 @@ function KnowledgeTab() {
               <h2
                 style={{
                   fontSize: 16,
-                  fontWeight: 600,
+                  fontWeight: 500,
                   color: 'var(--text-primary)',
                   margin: 0,
                 }}
@@ -406,7 +406,7 @@ function KnowledgeTab() {
                               justifyContent: 'center',
                               width: 40,
                               height: 40,
-                              borderRadius: 10,
+                              borderRadius: 12,
                               backgroundColor: `${color}20`,
                               flexShrink: 0,
                             }}
@@ -417,7 +417,7 @@ function KnowledgeTab() {
                             <div
                               style={{
                                 fontSize: 14,
-                                fontWeight: 600,
+                                fontWeight: 500,
                                 color: 'var(--text-primary)',
                                 margin: 0,
                               }}
@@ -426,7 +426,7 @@ function KnowledgeTab() {
                             </div>
                             <div
                               style={{
-                                fontSize: 11,
+                                fontSize: 14,
                                 color: 'var(--text-secondary)',
                                 marginTop: 4,
                                 textTransform: 'capitalize',
@@ -484,14 +484,14 @@ function KnowledgeTab() {
                                 justifyContent: 'center',
                                 width: 20,
                                 height: 20,
-                                borderRadius: 6,
+                                borderRadius: 8,
                                 backgroundColor: `${color}20`,
                                 flexShrink: 0,
                               }}
                             >
                               <Icon size={14} style={{ color }} />
                             </div>
-                            <span style={{ whiteSpace: 'nowrap', fontSize: 12 }}>{node.label}</span>
+                            <span style={{ whiteSpace: 'nowrap', fontSize: 14 }}>{node.label}</span>
                           </button>
                         );
                       })}
@@ -521,7 +521,7 @@ function KnowledgeTab() {
                             <div style={{ flex: 1, minWidth: 0 }}>
                               <div
                                 style={{
-                                  fontSize: 13,
+                                  fontSize: 14,
                                   fontWeight: 500,
                                   color: 'var(--text-primary)',
                                   marginBottom: 4,
@@ -531,7 +531,7 @@ function KnowledgeTab() {
                               </div>
                               <div
                                 style={{
-                                  fontSize: 11,
+                                  fontSize: 14,
                                   color: 'var(--text-secondary)',
                                   textTransform: 'capitalize',
                                 }}
@@ -542,7 +542,7 @@ function KnowledgeTab() {
                             </div>
                             <div
                               style={{
-                                fontSize: 11,
+                                fontSize: 14,
                                 color: 'var(--text-dim)',
                                 flexShrink: 0,
                                 marginLeft: 12,
@@ -648,7 +648,7 @@ function KnowledgeTab() {
                           justifyContent: 'center',
                           width: 36,
                           height: 36,
-                          borderRadius: 10,
+                          borderRadius: 12,
                           backgroundColor: `${color}20`,
                           flexShrink: 0,
                         }}
@@ -659,7 +659,7 @@ function KnowledgeTab() {
                         <div
                           style={{
                             fontSize: 14,
-                            fontWeight: 600,
+                            fontWeight: 500,
                             color: 'var(--text-primary)',
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
@@ -670,9 +670,9 @@ function KnowledgeTab() {
                         </div>
                         <div
                           style={{
-                            fontSize: 11,
+                            fontSize: 14,
                             color: 'var(--text-secondary)',
-                            marginTop: 3,
+                            marginTop: 4,
                             textTransform: 'capitalize',
                           }}
                         >
@@ -683,7 +683,7 @@ function KnowledgeTab() {
                     {result.snippet && (
                       <p
                         style={{
-                          fontSize: 12,
+                          fontSize: 14,
                           color: 'var(--text-secondary)',
                           margin: 0,
                           overflow: 'hidden',

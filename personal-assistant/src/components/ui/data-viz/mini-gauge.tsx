@@ -90,7 +90,7 @@ export function MiniGauge({
           style={{
             marginTop: -size * 0.18,
             fontSize: interactive && hovered ? size * 0.25 : size * 0.22,
-            fontWeight: 700,
+            fontWeight: 500,
             color: interactive && hovered ? color : 'var(--text-primary)',
             fontFamily: 'var(--font-mono)',
             transition: 'all 0.2s ease-out',
@@ -107,7 +107,7 @@ export function MiniGauge({
       {label && (
         <div
           style={{
-            fontSize: 10,
+            fontSize: 14,
             color: 'var(--text-secondary)',
             marginTop: 2,
           }}

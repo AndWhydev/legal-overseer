@@ -50,7 +50,7 @@ const sectionWrapper: React.CSSProperties = {
 const listRow: React.CSSProperties = {
   display: 'flex',
   alignItems: 'center',
-  padding: '14px 16px',
+  padding: '12px 16px',
   borderRadius: 12,
   background: 'var(--glass-pill-bg)',
   backdropFilter: 'var(--glass-blur)',
@@ -188,27 +188,27 @@ function WhatsAppWizardModal({ onClose, onConnected }: { onClose: () => void; on
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/icons/integrations/whatsapp.png" alt="" width={48} height={48}
             style={{ borderRadius: 12, objectFit: 'cover', display: 'block', margin: '0 auto 12px' }} />
-          <h3 style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
+          <h3 style={{ fontSize: 16, fontWeight: 500, color: 'var(--text-primary)', margin: 0 }}>
             {alreadyConnected ? 'WhatsApp Connected' : 'Connect WhatsApp'}
           </h3>
-          <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>
+          <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 4 }}>
             {alreadyConnected ? 'Your account is active and receiving messages' : 'Link your WhatsApp account to BitBit'}
           </p>
         </div>
 
         {error && (
           <div style={{
-            padding: '10px 14px', borderRadius: 10,
+            padding: '12px 16px', borderRadius: 12,
             background: 'rgba(239, 68, 68, 0.1)', color: '#EF4444',
-            fontSize: 13, marginBottom: 16, textAlign: 'center',
+            fontSize: 14, marginBottom: 16, textAlign: 'center',
           }}>
             {error}
             <button
               onClick={() => window.location.reload()}
               style={{
-                display: 'block', margin: '8px auto 0', padding: '6px 14px', borderRadius: 8,
+                display: 'block', margin: '8px auto 0', padding: '8px 16px', borderRadius: 8,
                 background: 'rgba(255, 255, 255, 0.08)', border: '1px solid var(--glass-interactive-border)',
-                color: 'var(--text-primary)', fontSize: 12, cursor: 'pointer',
+                color: 'var(--text-primary)', fontSize: 14, cursor: 'pointer',
               }}
             >
               Try Again
@@ -254,12 +254,12 @@ function SaveIndicator({ visible }: { visible: boolean }) {
       right: 24,
       display: 'flex',
       alignItems: 'center',
-      gap: 6,
-      padding: '6px 14px',
+      gap: 8,
+      padding: '8px 16px',
       borderRadius: 8,
       background: 'rgba(34, 197, 94, 0.12)',
       color: '#22C55E',
-      fontSize: 12,
+      fontSize: 14,
       fontWeight: 500,
       opacity: visible ? 1 : 0,
       transform: visible ? 'translateY(0)' : 'translateY(-8px)',
@@ -303,8 +303,8 @@ export function SettingsConnectionsTab() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
         {/* RAG Stats Widget */}
         <div>
-          <h3 style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Data & Synchronization</h3>
-          <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '4px 0 0' }}>Vector index and channel sync status</p>
+          <h3 style={{ fontSize: 16, fontWeight: 500, color: 'var(--text-primary)', margin: 0 }}>Data & Synchronization</h3>
+          <p style={{ fontSize: 14, color: 'var(--text-secondary)', margin: '4px 0 0' }}>Vector index and channel sync status</p>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 12 }}>
           <RagStatsWidget showDetails={true} />
@@ -312,8 +312,8 @@ export function SettingsConnectionsTab() {
 
         {/* Connections Grid */}
         <div>
-          <h3 style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Integrations</h3>
-          <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '4px 0 0' }}>Connect your communication channels</p>
+          <h3 style={{ fontSize: 16, fontWeight: 500, color: 'var(--text-primary)', margin: 0 }}>Integrations</h3>
+          <p style={{ fontSize: 14, color: 'var(--text-secondary)', margin: '4px 0 0' }}>Connect your communication channels</p>
         </div>
         <div>
           <ConnectionsGrid
@@ -407,8 +407,8 @@ export function SettingsAutomationsTab() {
       <SaveIndicator visible={saveIndicatorVisible} />
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
         <div>
-          <h3 style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Automations</h3>
-          <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '4px 0 0' }}>Choose what BitBit handles for you.</p>
+          <h3 style={{ fontSize: 16, fontWeight: 500, color: 'var(--text-primary)', margin: 0 }}>Automations</h3>
+          <p style={{ fontSize: 14, color: 'var(--text-secondary)', margin: '4px 0 0' }}>Choose what BitBit handles for you.</p>
         </div>
         <div style={{
           display: 'grid',
@@ -418,8 +418,8 @@ export function SettingsAutomationsTab() {
           {AUTOMATION_TYPES.map(a => (
             <div key={a.id} style={{ ...listRow, justifyContent: 'space-between', gap: 12 }}>
               <div style={{ minWidth: 0 }}>
-                <p style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', margin: 0 }}>{a.label}</p>
-                <p style={{ fontSize: 11, color: 'var(--text-secondary)', margin: '1px 0 0' }}>{a.description}</p>
+                <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)', margin: 0 }}>{a.label}</p>
+                <p style={{ fontSize: 14, color: 'var(--text-secondary)', margin: '1px 0 0' }}>{a.description}</p>
               </div>
               <Toggle checked={settings.enabled_agents.includes(a.id)} onChange={() => handleToggle(a.id)} label={a.label} />
             </div>
@@ -445,8 +445,8 @@ export function SettingsAppearanceTab() {
     <div style={sectionWrapper}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
         <div>
-          <h3 style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Theme</h3>
-          <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '4px 0 0' }}>Choose your visual style.</p>
+          <h3 style={{ fontSize: 16, fontWeight: 500, color: 'var(--text-primary)', margin: 0 }}>Theme</h3>
+          <p style={{ fontSize: 14, color: 'var(--text-secondary)', margin: '4px 0 0' }}>Choose your visual style.</p>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 12 }}>
           {themes.map(t => {
@@ -459,9 +459,9 @@ export function SettingsAppearanceTab() {
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
-                  gap: 10,
+                  gap: 12,
                   padding: 16,
-                  borderRadius: 14,
+                  borderRadius: 12,
                   border: active ? '2px solid #22C55E' : `1px solid ${t.border}`,
                   background: 'var(--bg-card)',
                   cursor: 'pointer',
@@ -477,14 +477,14 @@ export function SettingsAppearanceTab() {
                 }}
               >
                 <div style={{
-                  width: '100%', height: 72, borderRadius: 10, background: t.bg,
+                  width: '100%', height: 72, borderRadius: 12, background: t.bg,
                   display: 'flex', alignItems: 'center', justifyContent: 'center', color: t.previewText,
                 }}>
                   {t.icon}
                 </div>
                 <div style={{ textAlign: 'center' }}>
-                  <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>{t.label}</p>
-                  <p style={{ fontSize: 11, color: 'var(--text-secondary)', margin: '2px 0 0' }}>{t.desc}</p>
+                  <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)', margin: 0 }}>{t.label}</p>
+                  <p style={{ fontSize: 14, color: 'var(--text-secondary)', margin: '2px 0 0' }}>{t.desc}</p>
                 </div>
                 {active && (
                   <div style={{

@@ -134,7 +134,7 @@ export default function WebhookEventsWidget() {
       }}
     >
       <div style={{ marginBottom: '24px' }}>
-        <h2 style={{ fontSize: '20px', fontWeight: '600', margin: '0 0 16px 0' }}>Webhook Events</h2>
+        <h2 style={{ fontSize: '16px', fontWeight: '500', margin: '0 0 16px 0' }}>Webhook Events</h2>
 
         {/* Filters */}
         <div
@@ -150,7 +150,7 @@ export default function WebhookEventsWidget() {
             onChange={(e) => handleFilterChange('source', e.target.value)}
             style={{
               padding: '8px 12px',
-              borderRadius: '6px',
+              borderRadius: '8px',
               border: '1px solid rgba(0, 0, 0, 0.1)',
               fontSize: '14px',
               backgroundColor: '#fff',
@@ -171,7 +171,7 @@ export default function WebhookEventsWidget() {
             onChange={(e) => handleFilterChange('status', e.target.value)}
             style={{
               padding: '8px 12px',
-              borderRadius: '6px',
+              borderRadius: '8px',
               border: '1px solid rgba(0, 0, 0, 0.1)',
               fontSize: '14px',
               backgroundColor: '#fff',
@@ -190,7 +190,7 @@ export default function WebhookEventsWidget() {
             onChange={(e) => handleFilterChange('start_date', e.target.value)}
             style={{
               padding: '8px 12px',
-              borderRadius: '6px',
+              borderRadius: '8px',
               border: '1px solid rgba(0, 0, 0, 0.1)',
               fontSize: '14px',
               backgroundColor: '#fff',
@@ -204,7 +204,7 @@ export default function WebhookEventsWidget() {
             onChange={(e) => handleFilterChange('end_date', e.target.value)}
             style={{
               padding: '8px 12px',
-              borderRadius: '6px',
+              borderRadius: '8px',
               border: '1px solid rgba(0, 0, 0, 0.1)',
               fontSize: '14px',
               backgroundColor: '#fff',
@@ -213,7 +213,7 @@ export default function WebhookEventsWidget() {
           />
         </div>
 
-        <div style={{ fontSize: '12px', color: '#666' }}>
+        <div style={{ fontSize: '14px', color: '#666' }}>
           Showing {events.length} of {total} events
         </div>
       </div>
@@ -257,8 +257,8 @@ export default function WebhookEventsWidget() {
                       color: '#fff',
                       padding: '4px 8px',
                       borderRadius: '4px',
-                      fontSize: '11px',
-                      fontWeight: '600',
+                      fontSize: '14px',
+                      fontWeight: '500',
                       minWidth: '60px',
                       textAlign: 'center',
                     }}
@@ -268,8 +268,8 @@ export default function WebhookEventsWidget() {
 
                   {/* Event Type */}
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: '13px', fontWeight: '500' }}>{event.event_type}</div>
-                    <div style={{ fontSize: '12px', color: '#666', marginTop: '2px' }}>{formatDate(event.created_at)}</div>
+                    <div style={{ fontSize: '14px', fontWeight: '500' }}>{event.event_type}</div>
+                    <div style={{ fontSize: '14px', color: '#666', marginTop: '4px' }}>{formatDate(event.created_at)}</div>
                   </div>
 
                   {/* Status Badge */}
@@ -279,8 +279,8 @@ export default function WebhookEventsWidget() {
                       color: '#fff',
                       padding: '4px 12px',
                       borderRadius: '4px',
-                      fontSize: '11px',
-                      fontWeight: '600',
+                      fontSize: '14px',
+                      fontWeight: '500',
                       minWidth: '80px',
                       textAlign: 'center',
                     }}
@@ -292,7 +292,7 @@ export default function WebhookEventsWidget() {
                 {/* Expand Indicator */}
                 <div
                   style={{
-                    fontSize: '18px',
+                    fontSize: '16px',
                     transition: 'transform 0.2s ease',
                     transform: expandedId === event.id ? 'rotate(180deg)' : 'rotate(0deg)',
                   }}
@@ -307,10 +307,10 @@ export default function WebhookEventsWidget() {
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
                     {event.external_event_id && (
                       <div>
-                        <div style={{ fontSize: '11px', color: '#999', fontWeight: '500' }}>External ID</div>
+                        <div style={{ fontSize: '14px', color: '#999', fontWeight: '500' }}>External ID</div>
                         <div
                           style={{
-                            fontSize: '12px',
+                            fontSize: '14px',
                             fontFamily: 'monospace',
                             wordBreak: 'break-all',
                             marginTop: '4px',
@@ -323,35 +323,35 @@ export default function WebhookEventsWidget() {
 
                     {event.response_code && (
                       <div>
-                        <div style={{ fontSize: '11px', color: '#999', fontWeight: '500' }}>Response Code</div>
-                        <div style={{ fontSize: '12px', marginTop: '4px' }}>{event.response_code}</div>
+                        <div style={{ fontSize: '14px', color: '#999', fontWeight: '500' }}>Response Code</div>
+                        <div style={{ fontSize: '14px', marginTop: '4px' }}>{event.response_code}</div>
                       </div>
                     )}
 
                     {event.retry_count > 0 && (
                       <div>
-                        <div style={{ fontSize: '11px', color: '#999', fontWeight: '500' }}>Retry Count</div>
-                        <div style={{ fontSize: '12px', marginTop: '4px' }}>{event.retry_count}</div>
+                        <div style={{ fontSize: '14px', color: '#999', fontWeight: '500' }}>Retry Count</div>
+                        <div style={{ fontSize: '14px', marginTop: '4px' }}>{event.retry_count}</div>
                       </div>
                     )}
 
                     {event.processed_at && (
                       <div>
-                        <div style={{ fontSize: '11px', color: '#999', fontWeight: '500' }}>Processed</div>
-                        <div style={{ fontSize: '12px', marginTop: '4px' }}>{formatDate(event.processed_at)}</div>
+                        <div style={{ fontSize: '14px', color: '#999', fontWeight: '500' }}>Processed</div>
+                        <div style={{ fontSize: '14px', marginTop: '4px' }}>{formatDate(event.processed_at)}</div>
                       </div>
                     )}
                   </div>
 
                   {/* Payload */}
                   <div style={{ marginBottom: '12px' }}>
-                    <div style={{ fontSize: '11px', color: '#999', fontWeight: '500', marginBottom: '6px' }}>Payload</div>
+                    <div style={{ fontSize: '14px', color: '#999', fontWeight: '500', marginBottom: '8px' }}>Payload</div>
                     <pre
                       style={{
                         background: 'rgba(0, 0, 0, 0.02)',
                         padding: '8px',
                         borderRadius: '4px',
-                        fontSize: '11px',
+                        fontSize: '14px',
                         fontFamily: 'monospace',
                         overflow: 'auto',
                         maxHeight: '200px',
@@ -365,14 +365,14 @@ export default function WebhookEventsWidget() {
                   {/* Error Message */}
                   {event.error_message && (
                     <div style={{ marginBottom: '12px' }}>
-                      <div style={{ fontSize: '11px', color: '#999', fontWeight: '500', marginBottom: '6px' }}>Error</div>
+                      <div style={{ fontSize: '14px', color: '#999', fontWeight: '500', marginBottom: '8px' }}>Error</div>
                       <div
                         style={{
                           background: 'rgba(239, 68, 68, 0.1)',
                           color: '#dc2626',
                           padding: '8px',
                           borderRadius: '4px',
-                          fontSize: '12px',
+                          fontSize: '14px',
                           wordBreak: 'break-word',
                         }}
                       >
@@ -394,7 +394,7 @@ export default function WebhookEventsWidget() {
                         border: 'none',
                         padding: '8px 12px',
                         borderRadius: '4px',
-                        fontSize: '12px',
+                        fontSize: '14px',
                         fontWeight: '500',
                         cursor: 'pointer',
                         transition: 'all 0.2s ease',
@@ -432,14 +432,14 @@ export default function WebhookEventsWidget() {
               border: '1px solid rgba(0, 0, 0, 0.1)',
               background: offset === 0 ? '#f3f4f6' : '#fff',
               cursor: offset === 0 ? 'not-allowed' : 'pointer',
-              fontSize: '12px',
+              fontSize: '14px',
               fontWeight: '500',
               opacity: offset === 0 ? 0.5 : 1,
             }}
           >
             Previous
           </button>
-          <div style={{ padding: '8px 12px', fontSize: '12px', color: '#666' }}>
+          <div style={{ padding: '8px 12px', fontSize: '14px', color: '#666' }}>
             Page {Math.floor(offset / limit) + 1} of {Math.ceil(total / limit)}
           </div>
           <button
@@ -451,7 +451,7 @@ export default function WebhookEventsWidget() {
               border: '1px solid rgba(0, 0, 0, 0.1)',
               background: offset + limit >= total ? '#f3f4f6' : '#fff',
               cursor: offset + limit >= total ? 'not-allowed' : 'pointer',
-              fontSize: '12px',
+              fontSize: '14px',
               fontWeight: '500',
               opacity: offset + limit >= total ? 0.5 : 1,
             }}

@@ -49,7 +49,7 @@ const TYPE_ICONS: Record<InsightType, string> = {
 // ─── Styles ─────────────────────────────────────────────────────────────────
 
 const cardStyle: React.CSSProperties = {
-  padding: '14px 16px',
+  padding: '12px 16px',
   borderRadius: 'var(--radius-lg)',
   background: 'var(--bg-card)',
   backdropFilter: 'var(--glass-blur)',
@@ -71,7 +71,7 @@ const iconStyle = (severity: InsightSeverity): React.CSSProperties => ({
   alignItems: 'center',
   justifyContent: 'center',
   fontSize: 14,
-  fontWeight: 700,
+  fontWeight: 500,
   fontFamily: 'var(--font-mono)',
   flexShrink: 0,
 })
@@ -91,8 +91,8 @@ const titleRowStyle: React.CSSProperties = {
 }
 
 const titleTextStyle: React.CSSProperties = {
-  fontSize: 13,
-  fontWeight: 600,
+  fontSize: 14,
+  fontWeight: 500,
   color: 'var(--text-primary)',
   whiteSpace: 'nowrap',
   overflow: 'hidden',
@@ -100,11 +100,11 @@ const titleTextStyle: React.CSSProperties = {
 }
 
 const badgeStyle = (severity: InsightSeverity): React.CSSProperties => ({
-  fontSize: 10,
-  fontWeight: 600,
+  fontSize: 14,
+  fontWeight: 500,
   color: SEVERITY_COLORS[severity],
   background: SEVERITY_BG[severity],
-  padding: '2px 6px',
+  padding: '2px 8px',
   borderRadius: 'var(--radius-sm)',
   textTransform: 'uppercase',
   letterSpacing: '0.03em',
@@ -112,7 +112,7 @@ const badgeStyle = (severity: InsightSeverity): React.CSSProperties => ({
 })
 
 const descStyle: React.CSSProperties = {
-  fontSize: 12,
+  fontSize: 14,
   color: 'var(--text-secondary)',
   lineHeight: 1.4,
   display: '-webkit-box',
@@ -129,9 +129,9 @@ const actionRowStyle: React.CSSProperties = {
 }
 
 const actionBtnStyle: React.CSSProperties = {
-  fontSize: 11,
-  fontWeight: 600,
-  padding: '4px 10px',
+  fontSize: 14,
+  fontWeight: 500,
+  padding: '4px 12px',
   borderRadius: 'var(--radius-sm)',
   border: 'none',
   cursor: 'pointer',
@@ -140,7 +140,7 @@ const actionBtnStyle: React.CSSProperties = {
 
 const amountStyle: React.CSSProperties = {
   fontSize: 14,
-  fontWeight: 700,
+  fontWeight: 500,
   fontFamily: 'var(--font-mono)',
   color: 'var(--bb-orange)',
   flexShrink: 0,
@@ -188,7 +188,7 @@ export function RevenueInsightCard({ insight, onAction }: InsightCardProps) {
           <>
             {insight.recommended_action && (
               <div style={{
-                fontSize: 12,
+                fontSize: 14,
                 color: 'var(--bb-green)',
                 marginTop: 4,
                 fontWeight: 500,

@@ -60,8 +60,8 @@ export function HotLeadsWidget() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 {lead.score && (
                   <span style={{
-                    fontSize: 10,
-                    fontWeight: 600,
+                    fontSize: 14,
+                    fontWeight: 500,
                     textTransform: 'uppercase',
                     color: SCORE_COLOR[lead.score] ?? 'var(--text-dim)',
                   }}>
@@ -69,8 +69,8 @@ export function HotLeadsWidget() {
                   </span>
                 )}
                 <span style={{
-                  fontSize: 12,
-                  fontWeight: 600,
+                  fontSize: 14,
+                  fontWeight: 500,
                   fontFamily: 'var(--font-mono)',
                   color: 'var(--bb-amber)',
                 }}>

@@ -14,20 +14,20 @@ function ScoreGauge({ label, score, color }: { label: string; score: number; col
 
   return (
     <div style={{ flex: 1 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
-        <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)' }}>{label}</span>
-        <span style={{ fontSize: 20, fontWeight: 700, fontFamily: 'var(--font-mono)', color }}>{score}</span>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
+        <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-secondary)' }}>{label}</span>
+        <span style={{ fontSize: 16, fontWeight: 500, fontFamily: 'var(--font-mono)', color }}>{score}</span>
       </div>
       <div style={{
         height: 6,
-        borderRadius: 3,
+        borderRadius: 8,
         background: 'var(--hover-bg)',
         overflow: 'hidden',
       }}>
         <div style={{
           width: `${pct}%`,
           height: '100%',
-          borderRadius: 3,
+          borderRadius: 8,
           background: color,
           transition: 'width 0.5s ease',
         }} />
@@ -43,16 +43,16 @@ function FactorList({ breakdown }: { breakdown: ScoreBreakdown | null }) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
       {breakdown.components.map((c, i) => (
         <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 0' }}>
-          <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>
+          <span style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
             {c.factor}
             {c.note && <span style={{ color: 'var(--text-dim)', marginLeft: 4 }}>({c.note})</span>}
           </span>
           <span style={{
-            fontSize: 10,
-            fontWeight: 600,
+            fontSize: 14,
+            fontWeight: 500,
             fontFamily: 'var(--font-mono)',
             padding: '2px 8px',
-            borderRadius: 10,
+            borderRadius: 12,
             background: c.points > 0 ? 'rgba(34, 197, 94, 0.12)' : 'rgba(239, 68, 68, 0.12)',
             color: c.points > 0 ? 'var(--bb-green)' : 'var(--bb-red)',
           }}>
@@ -67,7 +67,7 @@ function FactorList({ breakdown }: { breakdown: ScoreBreakdown | null }) {
 export function ScoreBreakdownPanel({ fitScore, opportunityScore, fitBreakdown, opportunityBreakdown }: ScoreBreakdownPanelProps) {
   return (
     <div>
-      <h4 style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-dim)', margin: '0 0 12px' }}>
+      <h4 style={{ fontSize: 14, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--text-dim)', margin: '0 0 12px' }}>
         Score Breakdown
       </h4>
 
@@ -80,14 +80,14 @@ export function ScoreBreakdownPanel({ fitScore, opportunityScore, fitBreakdown, 
       {/* Factor breakdowns */}
       {fitBreakdown && (
         <div style={{ marginBottom: 12 }}>
-          <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-dim)', marginBottom: 6 }}>Fit Factors</div>
+          <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-dim)', marginBottom: 8 }}>Fit Factors</div>
           <FactorList breakdown={fitBreakdown} />
         </div>
       )}
 
       {opportunityBreakdown && (
         <div>
-          <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-dim)', marginBottom: 6 }}>Opportunity Factors</div>
+          <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-dim)', marginBottom: 8 }}>Opportunity Factors</div>
           <FactorList breakdown={opportunityBreakdown} />
         </div>
       )}

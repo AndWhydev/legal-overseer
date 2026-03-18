@@ -17,7 +17,7 @@ const glassCard: React.CSSProperties = {
 
 const sectionTitle: React.CSSProperties = {
   fontSize: 14,
-  fontWeight: 600,
+  fontWeight: 500,
   color: 'var(--text-primary, #F1F5F9)',
   margin: '0 0 12px',
   display: 'flex',
@@ -157,12 +157,12 @@ export function MeetingDetail({ meetingId, onBack }: MeetingDetailProps) {
         <button
           onClick={onBack}
           style={{
-            padding: '6px 12px',
+            padding: '8px 12px',
             borderRadius: 8,
             background: 'transparent',
             border: '1px solid rgba(255, 255, 255, 0.06)',
             color: 'var(--text-secondary, #94A3B8)',
-            fontSize: 13,
+            fontSize: 14,
             cursor: 'pointer',
             transition: 'all 200ms',
           }}
@@ -171,15 +171,15 @@ export function MeetingDetail({ meetingId, onBack }: MeetingDetailProps) {
         </button>
         <div style={{ flex: 1 }}>
           <h2 style={{
-            fontSize: 18,
-            fontWeight: 600,
+            fontSize: 16,
+            fontWeight: 500,
             color: 'var(--text-primary, #F1F5F9)',
             margin: 0,
           }}>
             {meeting.title}
           </h2>
           <p style={{
-            fontSize: 12,
+            fontSize: 14,
             color: 'var(--text-dim, #475569)',
             margin: '2px 0 0',
           }}>
@@ -194,12 +194,12 @@ export function MeetingDetail({ meetingId, onBack }: MeetingDetailProps) {
             disabled={processing}
             style={{
               padding: '8px 16px',
-              borderRadius: 10,
+              borderRadius: 12,
               background: processing ? 'rgba(255, 90, 31, 0.5)' : '#FF5A1F',
               border: 'none',
               color: '#000',
-              fontSize: 13,
-              fontWeight: 600,
+              fontSize: 14,
+              fontWeight: 500,
               cursor: processing ? 'wait' : 'pointer',
               transition: 'all 200ms',
             }}
@@ -230,12 +230,12 @@ export function MeetingDetail({ meetingId, onBack }: MeetingDetailProps) {
           {/* Key decisions */}
           {Array.isArray(meeting.key_decisions) && meeting.key_decisions.length > 0 && (
             <div style={{ marginTop: 16 }}>
-              <h4 style={{ ...sectionTitle, fontSize: 12, color: 'var(--text-secondary, #94A3B8)' }}>
+              <h4 style={{ ...sectionTitle, fontSize: 14, color: 'var(--text-secondary, #94A3B8)' }}>
                 Key Decisions
               </h4>
-              <ul style={{ margin: 0, paddingLeft: 20, display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <ul style={{ margin: 0, paddingLeft: 20, display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {meeting.key_decisions.map((decision, i) => (
-                  <li key={i} style={{ fontSize: 13, color: 'var(--text-primary, #F1F5F9)' }}>
+                  <li key={i} style={{ fontSize: 14, color: 'var(--text-primary, #F1F5F9)' }}>
                     {decision}
                   </li>
                 ))}
@@ -261,7 +261,7 @@ export function MeetingDetail({ meetingId, onBack }: MeetingDetailProps) {
                     ? '#ef4444'
                     : '#eab308',
               }} />
-              <span style={{ fontSize: 12, color: 'var(--text-dim, #475569)' }}>
+              <span style={{ fontSize: 14, color: 'var(--text-dim, #475569)' }}>
                 Sentiment: {meeting.sentiment_label.replace('_', ' ')}
               </span>
             </div>
@@ -280,7 +280,7 @@ export function MeetingDetail({ meetingId, onBack }: MeetingDetailProps) {
                 borderRadius: 16,
                 background: 'rgba(10, 14, 23, 0.5)',
                 border: '1px solid rgba(255, 255, 255, 0.06)',
-                fontSize: 12,
+                fontSize: 14,
                 color: 'var(--text-secondary, #94A3B8)',
               }}
             >
@@ -310,25 +310,25 @@ export function MeetingDetail({ meetingId, onBack }: MeetingDetailProps) {
               background: activeTab === tab.key ? 'rgba(255, 255, 255, 0.06)' : 'transparent',
               border: 'none',
               color: activeTab === tab.key ? 'var(--text-primary, #F1F5F9)' : 'var(--text-dim, #475569)',
-              fontSize: 13,
+              fontSize: 14,
               fontWeight: 500,
               cursor: 'pointer',
               transition: 'all 200ms',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: 6,
+              gap: 8,
             }}
           >
             {tab.label}
             {tab.count > 0 && (
               <span style={{
-                fontSize: 10,
+                fontSize: 14,
                 background: 'rgba(255, 90, 31, 0.15)',
                 color: '#FF7A45',
-                padding: '1px 6px',
+                padding: '0px 8px',
                 borderRadius: 8,
-                fontWeight: 600,
+                fontWeight: 500,
               }}>
                 {tab.count}
               </span>
@@ -364,7 +364,7 @@ export function MeetingDetail({ meetingId, onBack }: MeetingDetailProps) {
 function TranscriptView({ segments }: { segments: TranscriptSegment[] }) {
   if (segments.length === 0) {
     return (
-      <p style={{ color: 'var(--text-dim, #475569)', fontSize: 13, margin: 0, textAlign: 'center', padding: 20 }}>
+      <p style={{ color: 'var(--text-dim, #475569)', fontSize: 14, margin: 0, textAlign: 'center', padding: 20 }}>
         No transcript available. Process the recording to generate the transcript.
       </p>
     )
@@ -403,7 +403,7 @@ function TranscriptView({ segments }: { segments: TranscriptSegment[] }) {
         <div key={i} style={{ display: 'flex', gap: 12 }}>
           {/* Time */}
           <span style={{
-            fontSize: 11,
+            fontSize: 14,
             color: 'var(--text-dim, #475569)',
             fontFamily: 'var(--font-mono, monospace)',
             minWidth: 40,
@@ -416,8 +416,8 @@ function TranscriptView({ segments }: { segments: TranscriptSegment[] }) {
           <div style={{ flex: 1 }}>
             {group.speaker && (
               <span style={{
-                fontSize: 12,
-                fontWeight: 600,
+                fontSize: 14,
+                fontWeight: 500,
                 color: '#FF7A45',
                 display: 'block',
                 marginBottom: 4,
@@ -451,7 +451,7 @@ function ActionItemsView({
 }) {
   if (items.length === 0) {
     return (
-      <p style={{ color: 'var(--text-dim, #475569)', fontSize: 13, margin: 0, textAlign: 'center', padding: 20 }}>
+      <p style={{ color: 'var(--text-dim, #475569)', fontSize: 14, margin: 0, textAlign: 'center', padding: 20 }}>
         No action items extracted yet.
       </p>
     )
@@ -466,12 +466,12 @@ function ActionItemsView({
           <button
             onClick={onConvertToTasks}
             style={{
-              padding: '6px 14px',
+              padding: '8px 16px',
               borderRadius: 8,
               background: 'rgba(255, 90, 31, 0.15)',
               border: '1px solid rgba(255, 90, 31, 0.3)',
               color: '#FF7A45',
-              fontSize: 12,
+              fontSize: 14,
               fontWeight: 500,
               cursor: 'pointer',
               transition: 'all 200ms',
@@ -487,12 +487,12 @@ function ActionItemsView({
           key={item.id}
           style={{
             padding: '12px 16px',
-            borderRadius: 10,
+            borderRadius: 12,
             background: 'rgba(10, 14, 23, 0.4)',
             border: '1px solid rgba(255, 255, 255, 0.03)',
             display: 'flex',
             flexDirection: 'column',
-            gap: 6,
+            gap: 8,
           }}
         >
           <div className="flex items-start gap-3">
@@ -502,7 +502,7 @@ function ActionItemsView({
               height: 8,
               borderRadius: '50%',
               background: PRIORITY_COLORS[item.priority] || PRIORITY_COLORS.medium,
-              marginTop: 5,
+              marginTop: 4,
               flexShrink: 0,
             }} />
             <div style={{ flex: 1 }}>
@@ -515,7 +515,7 @@ function ActionItemsView({
               </div>
               {item.description && (
                 <p style={{
-                  fontSize: 12,
+                  fontSize: 14,
                   color: 'var(--text-secondary, #94A3B8)',
                   margin: '4px 0 0',
                   lineHeight: 1.5,
@@ -525,18 +525,18 @@ function ActionItemsView({
               )}
               <div className="flex gap-3 mt-1" style={{ flexWrap: 'wrap' }}>
                 {item.assigned_to && (
-                  <span style={{ fontSize: 11, color: 'var(--text-dim, #475569)' }}>
+                  <span style={{ fontSize: 14, color: 'var(--text-dim, #475569)' }}>
                     Assigned: {item.assigned_to}
                   </span>
                 )}
                 {item.due_date && (
-                  <span style={{ fontSize: 11, color: 'var(--text-dim, #475569)' }}>
+                  <span style={{ fontSize: 14, color: 'var(--text-dim, #475569)' }}>
                     Due: {new Date(item.due_date).toLocaleDateString()}
                   </span>
                 )}
                 {item.task_id && (
                   <span style={{
-                    fontSize: 11,
+                    fontSize: 14,
                     color: '#22c55e',
                     display: 'flex',
                     alignItems: 'center',
@@ -554,7 +554,7 @@ function ActionItemsView({
 
           {item.source_quote && (
             <div style={{
-              fontSize: 12,
+              fontSize: 14,
               color: 'var(--text-dim, #475569)',
               fontStyle: 'italic',
               paddingLeft: 20,
@@ -581,7 +581,7 @@ function FollowUpView({
 }) {
   if (followUps.length === 0) {
     return (
-      <p style={{ color: 'var(--text-dim, #475569)', fontSize: 13, margin: 0, textAlign: 'center', padding: 20 }}>
+      <p style={{ color: 'var(--text-dim, #475569)', fontSize: 14, margin: 0, textAlign: 'center', padding: 20 }}>
         No follow-up emails drafted yet.
       </p>
     )
@@ -608,15 +608,15 @@ function FollowUpView({
                 </div>
               )}
               {fu.recipient_name && (
-                <div style={{ fontSize: 12, color: 'var(--text-dim, #475569)', marginTop: 2 }}>
+                <div style={{ fontSize: 14, color: 'var(--text-dim, #475569)', marginTop: 2 }}>
                   To: {fu.recipient_name} {fu.recipient_email && `<${fu.recipient_email}>`}
                 </div>
               )}
             </div>
             <span style={{
-              padding: '3px 10px',
+              padding: '4px 12px',
               borderRadius: 12,
-              fontSize: 11,
+              fontSize: 14,
               fontWeight: 500,
               background: fu.status === 'approved' ? 'rgba(34, 197, 94, 0.12)' : fu.status === 'sent' ? 'rgba(59, 130, 246, 0.12)' : 'rgba(234, 179, 8, 0.12)',
               color: fu.status === 'approved' ? '#22c55e' : fu.status === 'sent' ? '#3b82f6' : '#eab308',
@@ -627,7 +627,7 @@ function FollowUpView({
 
           {/* Body */}
           <div style={{
-            fontSize: 13,
+            fontSize: 14,
             color: 'var(--text-primary, #F1F5F9)',
             lineHeight: 1.6,
             whiteSpace: 'pre-wrap',
@@ -644,13 +644,13 @@ function FollowUpView({
               <button
                 onClick={() => onApprove(fu.id)}
                 style={{
-                  padding: '6px 14px',
+                  padding: '8px 16px',
                   borderRadius: 8,
                   background: '#22c55e',
                   border: 'none',
                   color: '#000',
-                  fontSize: 12,
-                  fontWeight: 600,
+                  fontSize: 14,
+                  fontWeight: 500,
                   cursor: 'pointer',
                   transition: 'all 200ms',
                 }}

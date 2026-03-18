@@ -337,7 +337,7 @@ export function NotificationCenter({ onTabChange }: NotificationCenterProps) {
               style={{
                 margin: 0,
                 fontSize: '14px',
-                fontWeight: 600,
+                fontWeight: 500,
                 color: 'var(--text-primary)',
               }}
             >
@@ -352,7 +352,7 @@ export function NotificationCenter({ onTabChange }: NotificationCenterProps) {
                   border: 'none',
                   color: 'var(--bb-orange)',
                   cursor: 'pointer',
-                  fontSize: '12px',
+                  fontSize: '14px',
                   fontWeight: 500,
                   padding: '4px 8px',
                   borderRadius: '4px',
@@ -384,7 +384,7 @@ export function NotificationCenter({ onTabChange }: NotificationCenterProps) {
                   padding: '32px 16px',
                   textAlign: 'center',
                   color: 'var(--text-secondary)',
-                  fontSize: '13px',
+                  fontSize: '14px',
                 }}
               >
                 Loading...
@@ -400,7 +400,7 @@ export function NotificationCenter({ onTabChange }: NotificationCenterProps) {
                   border: '1px solid rgba(239, 68, 68, 0.3)',
                   borderRadius: '8px',
                   color: 'var(--bb-red)',
-                  fontSize: '12px',
+                  fontSize: '14px',
                 }}
               >
                 {error}
@@ -413,7 +413,7 @@ export function NotificationCenter({ onTabChange }: NotificationCenterProps) {
                   padding: '32px 16px',
                   textAlign: 'center',
                   color: 'var(--text-secondary)',
-                  fontSize: '13px',
+                  fontSize: '14px',
                 }}
               >
                 No notifications yet
@@ -426,7 +426,7 @@ export function NotificationCenter({ onTabChange }: NotificationCenterProps) {
                   padding: '32px 16px',
                   textAlign: 'center',
                   color: 'var(--text-secondary)',
-                  fontSize: '13px',
+                  fontSize: '14px',
                 }}
               >
                 All caught up!
@@ -439,8 +439,8 @@ export function NotificationCenter({ onTabChange }: NotificationCenterProps) {
                 <div
                   style={{
                     padding: '8px 16px',
-                    fontSize: '11px',
-                    fontWeight: 600,
+                    fontSize: '14px',
+                    fontWeight: 500,
                     color: 'var(--text-secondary)',
                     textTransform: 'uppercase',
                     letterSpacing: '0.5px',
@@ -466,8 +466,8 @@ export function NotificationCenter({ onTabChange }: NotificationCenterProps) {
                 <div
                   style={{
                     padding: '8px 16px',
-                    fontSize: '11px',
-                    fontWeight: 600,
+                    fontSize: '14px',
+                    fontWeight: 500,
                     color: 'var(--text-secondary)',
                     textTransform: 'uppercase',
                     letterSpacing: '0.5px',
@@ -493,8 +493,8 @@ export function NotificationCenter({ onTabChange }: NotificationCenterProps) {
                 <div
                   style={{
                     padding: '8px 16px',
-                    fontSize: '11px',
-                    fontWeight: 600,
+                    fontSize: '14px',
+                    fontWeight: 500,
                     color: 'var(--text-secondary)',
                     textTransform: 'uppercase',
                     letterSpacing: '0.5px',
@@ -578,23 +578,23 @@ function NotificationItemRow({
         style={{
           color: iconColor,
           flexShrink: 0,
-          marginTop: '2px',
+          marginTop: '4px',
         }}
       />
       <div style={{ flex: 1, minWidth: 0 }}>
         <div
           style={{
-            fontSize: '13px',
+            fontSize: '14px',
             fontWeight: 500,
             color: 'var(--text-primary)',
-            marginBottom: '2px',
+            marginBottom: '4px',
           }}
         >
           {notification.title}
         </div>
         <div
           style={{
-            fontSize: '12px',
+            fontSize: '14px',
             color: 'var(--text-secondary)',
             marginBottom: '4px',
             overflow: 'hidden',
@@ -606,7 +606,7 @@ function NotificationItemRow({
         </div>
         <div
           style={{
-            fontSize: '11px',
+            fontSize: '14px',
             color: 'var(--text-secondary)',
           }}
         >
@@ -621,7 +621,7 @@ function NotificationItemRow({
             borderRadius: '50%',
             backgroundColor: 'var(--bb-orange)',
             flexShrink: 0,
-            marginTop: '6px',
+            marginTop: '8px',
           }}
         />
       )}

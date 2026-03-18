@@ -159,8 +159,12 @@ export interface MeetingUploadRequest {
   meeting_type?: MeetingType
   description?: string
   contact_id?: string
-  participants?: Array<{ name: string; email?: string; role?: ParticipantRole }>
+  participants?: Array<{ name: string; email?: string; role?: ParticipantRole; display_name?: string }>
   scheduled_at?: string
+  source?: string
+  started_at?: string
+  external_id?: string
+  external_url?: string | null
 }
 
 /** Transcription job status for polling */
@@ -170,3 +174,7 @@ export interface TranscriptionJob {
   progress: number // 0-100
   error?: string
 }
+
+// Constants
+export const ALLOWED_MIME_TYPES = ['audio/mpeg', 'audio/mp4', 'audio/m4a', 'audio/wav', 'audio/webm', 'video/mp4', 'video/webm']
+export const MAX_RECORDING_SIZE = 500 * 1024 * 1024 // 500MB

@@ -110,8 +110,8 @@ const glassCard: React.CSSProperties = {
 
 const glassInput: React.CSSProperties = {
   width: '100%',
-  padding: '10px 14px',
-  borderRadius: 10,
+  padding: '12px 16px',
+  borderRadius: 12,
   background: 'rgba(13, 17, 23, 0.6)',
   border: '1px solid rgba(255, 255, 255, 0.05)',
   color: 'var(--text-primary, #F1F5F9)',
@@ -123,8 +123,8 @@ const glassInput: React.CSSProperties = {
 
 const glassSelect: React.CSSProperties = {
   width: '100%',
-  padding: '10px 14px',
-  borderRadius: 10,
+  padding: '12px 16px',
+  borderRadius: 12,
   background: 'rgba(13, 17, 23, 0.6)',
   border: '1px solid rgba(255, 255, 255, 0.05)',
   color: 'var(--text-primary, #F1F5F9)',
@@ -135,13 +135,13 @@ const glassSelect: React.CSSProperties = {
 }
 
 const accentBtn: React.CSSProperties = {
-  padding: '10px 20px',
-  borderRadius: 10,
+  padding: '12px 20px',
+  borderRadius: 12,
   background: '#FF5A1F',
   border: 'none',
   color: '#000',
   fontSize: 14,
-  fontWeight: 600,
+  fontWeight: 500,
   cursor: 'pointer',
   transition: 'all 200ms',
   display: 'inline-flex',
@@ -151,23 +151,23 @@ const accentBtn: React.CSSProperties = {
 
 const ghostBtn: React.CSSProperties = {
   padding: '8px 16px',
-  borderRadius: 10,
+  borderRadius: 12,
   background: 'transparent',
   border: '1px solid rgba(255, 255, 255, 0.06)',
   color: 'var(--text-primary, #F1F5F9)',
-  fontSize: 13,
+  fontSize: 14,
   fontWeight: 500,
   cursor: 'pointer',
   transition: 'all 200ms',
   display: 'inline-flex',
   alignItems: 'center',
-  gap: 6,
+  gap: 8,
 }
 
 const labelStyle: React.CSSProperties = {
   display: 'block',
-  fontSize: 12,
-  fontWeight: 600,
+  fontSize: 14,
+  fontWeight: 500,
   letterSpacing: '0.04em',
   textTransform: 'uppercase',
   color: 'var(--text-secondary, #94A3B8)',
@@ -203,18 +203,18 @@ function TemplateCard({
         outline: 'none',
       }}
     >
-      <div style={{ fontSize: 24, marginBottom: 8 }}>{template.icon}</div>
+      <div style={{ fontSize: 16, marginBottom: 8 }}>{template.icon}</div>
       <div
         style={{
           fontSize: 14,
-          fontWeight: 600,
+          fontWeight: 500,
           color: selected ? '#FF5A1F' : 'var(--text-primary, #F1F5F9)',
           marginBottom: 4,
         }}
       >
         {template.label}
       </div>
-      <div style={{ fontSize: 12, color: 'var(--text-secondary, #94A3B8)', lineHeight: 1.5 }}>
+      <div style={{ fontSize: 14, color: 'var(--text-secondary, #94A3B8)', lineHeight: 1.5 }}>
         {template.description}
       </div>
     </button>
@@ -227,10 +227,10 @@ function StatusBadge({ status }: { status: ContentStatus }) {
       style={{
         display: 'inline-flex',
         alignItems: 'center',
-        padding: '3px 10px',
+        padding: '4px 12px',
         borderRadius: 8,
-        fontSize: 11,
-        fontWeight: 600,
+        fontSize: 14,
+        fontWeight: 500,
         letterSpacing: '0.03em',
         background: STATUS_BG[status],
         color: STATUS_COLORS[status],
@@ -312,16 +312,16 @@ function CalendarView({
       >
         <button
           onClick={() => setCurrentMonth(new Date(year, month - 1, 1))}
-          style={{ ...ghostBtn, padding: '6px 12px' }}
+          style={{ ...ghostBtn, padding: '8px 12px' }}
         >
           ← Prev
         </button>
-        <span style={{ fontWeight: 600, color: 'var(--text-primary, #F1F5F9)', fontSize: 15 }}>
+        <span style={{ fontWeight: 500, color: 'var(--text-primary, #F1F5F9)', fontSize: 16 }}>
           {monthLabel}
         </span>
         <button
           onClick={() => setCurrentMonth(new Date(year, month + 1, 1))}
-          style={{ ...ghostBtn, padding: '6px 12px' }}
+          style={{ ...ghostBtn, padding: '8px 12px' }}
         >
           Next →
         </button>
@@ -334,11 +334,11 @@ function CalendarView({
             key={d}
             style={{
               textAlign: 'center',
-              fontSize: 11,
-              fontWeight: 600,
+              fontSize: 14,
+              fontWeight: 500,
               letterSpacing: '0.04em',
               color: 'var(--text-dim, #475569)',
-              padding: '6px 0',
+              padding: '8px 0',
             }}
           >
             {d}
@@ -364,7 +364,7 @@ function CalendarView({
               key={day}
               style={{
                 minHeight: 80,
-                padding: 6,
+                padding: 8,
                 borderRadius: 8,
                 background: isToday
                   ? 'rgba(255, 90, 31, 0.08)'
@@ -376,7 +376,7 @@ function CalendarView({
             >
               <div
                 style={{
-                  fontSize: 12,
+                  fontSize: 14,
                   fontWeight: isToday ? 700 : 500,
                   color: isToday ? '#FF5A1F' : 'var(--text-secondary, #94A3B8)',
                   marginBottom: 4,
@@ -391,7 +391,7 @@ function CalendarView({
                     title={`${TEMPLATE_LABELS[item.template_type]}: ${item.inputs.product_name}`}
                     style={{
                       fontSize: 10,
-                      padding: '2px 6px',
+                      padding: '4px 8px',
                       borderRadius: 4,
                       background: STATUS_BG[item.status],
                       color: STATUS_COLORS[item.status],
@@ -430,7 +430,7 @@ function CalendarView({
         }}
       >
         {(['draft', 'scheduled', 'published'] as ContentStatus[]).map((s) => (
-          <div key={s} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11 }}>
+          <div key={s} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14 }}>
             <div
               style={{
                 width: 8,
@@ -491,17 +491,17 @@ function HistoryItem({
           display: 'flex',
           alignItems: 'center',
           gap: 12,
-          padding: '14px 16px',
+          padding: '12px 16px',
           cursor: 'pointer',
         }}
         onClick={() => setExpanded((e) => !e)}
       >
-        <span style={{ fontSize: 20 }}>{template?.icon ?? '📄'}</span>
+        <span style={{ fontSize: 16 }}>{template?.icon ?? '📄'}</span>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div
             style={{
-              fontSize: 13,
-              fontWeight: 600,
+              fontSize: 14,
+              fontWeight: 500,
               color: 'var(--text-primary, #F1F5F9)',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
@@ -510,7 +510,7 @@ function HistoryItem({
           >
             {TEMPLATE_LABELS[item.template_type]} — {item.inputs.product_name}
           </div>
-          <div style={{ fontSize: 11, color: 'var(--text-dim, #475569)', marginTop: 2 }}>
+          <div style={{ fontSize: 14, color: 'var(--text-dim, #475569)', marginTop: 2 }}>
             {created} · {item.inputs.tone} · {item.inputs.length}
           </div>
         </div>
@@ -518,7 +518,7 @@ function HistoryItem({
         <span
           style={{
             color: 'var(--text-dim, #475569)',
-            fontSize: 12,
+            fontSize: 14,
             transition: 'transform 200ms',
             transform: expanded ? 'rotate(180deg)' : 'none',
           }}
@@ -538,10 +538,10 @@ function HistoryItem({
           <pre
             style={{
               marginTop: 12,
-              padding: 14,
-              borderRadius: 10,
+              padding: 12,
+              borderRadius: 12,
               background: 'rgba(0, 0, 0, 0.3)',
-              fontSize: 13,
+              fontSize: 14,
               color: 'var(--text-secondary, #94A3B8)',
               whiteSpace: 'pre-wrap',
               wordBreak: 'break-word',
@@ -589,7 +589,7 @@ function HistoryItem({
             {!scheduling && item.status !== 'published' && (
               <button
                 onClick={() => setScheduling(true)}
-                style={{ ...ghostBtn, fontSize: 12 }}
+                style={{ ...ghostBtn, fontSize: 14 }}
               >
                 📅 Set date
               </button>
@@ -601,7 +601,7 @@ function HistoryItem({
                   type="datetime-local"
                   value={dateValue}
                   onChange={(e) => setDateValue(e.target.value)}
-                  style={{ ...glassInput, width: 'auto', fontSize: 12, padding: '6px 10px' }}
+                  style={{ ...glassInput, width: 'auto', fontSize: 14, padding: '8px 12px' }}
                 />
                 <button
                   onClick={() => {
@@ -610,13 +610,13 @@ function HistoryItem({
                     }
                     setScheduling(false)
                   }}
-                  style={{ ...accentBtn, padding: '6px 12px', fontSize: 12 }}
+                  style={{ ...accentBtn, padding: '8px 12px', fontSize: 14 }}
                 >
                   Save
                 </button>
                 <button
                   onClick={() => setScheduling(false)}
-                  style={{ ...ghostBtn, padding: '6px 12px', fontSize: 12 }}
+                  style={{ ...ghostBtn, padding: '8px 12px', fontSize: 14 }}
                 >
                   Cancel
                 </button>
@@ -627,8 +627,8 @@ function HistoryItem({
           {item.scheduled_for && (
             <div
               style={{
-                marginTop: 10,
-                fontSize: 12,
+                marginTop: 12,
+                fontSize: 14,
                 color: STATUS_COLORS.scheduled,
               }}
             >
@@ -787,11 +787,11 @@ export default function CreatorStudioTab() {
           <div style={{ marginBottom: 28 }}>
             <h1
               style={{
-                fontSize: 22,
-                fontWeight: 700,
+                fontSize: 16,
+                fontWeight: 500,
                 color: 'var(--text-primary, #F1F5F9)',
                 margin: 0,
-                marginBottom: 6,
+                marginBottom: 8,
               }}
             >
               Creator Studio
@@ -820,9 +820,9 @@ export default function CreatorStudioTab() {
                 onClick={() => setView(tab.id)}
                 style={{
                   padding: '8px 18px',
-                  borderRadius: 9,
+                  borderRadius: 8,
                   border: 'none',
-                  fontSize: 13,
+                  fontSize: 14,
                   fontWeight: 500,
                   cursor: 'pointer',
                   transition: 'all 200ms',
@@ -858,7 +858,7 @@ export default function CreatorStudioTab() {
                     style={{
                       display: 'grid',
                       gridTemplateColumns: 'repeat(2, 1fr)',
-                      gap: 10,
+                      gap: 12,
                     }}
                   >
                     {TEMPLATES.map((t) => (
@@ -915,7 +915,7 @@ export default function CreatorStudioTab() {
                             onClick={() => setTone(t.value)}
                             style={{
                               padding: '8px 16px',
-                              borderRadius: 10,
+                              borderRadius: 12,
                               border: tone === t.value
                                 ? '1px solid rgba(255, 90, 31, 0.4)'
                                 : '1px solid rgba(255, 255, 255, 0.05)',
@@ -925,7 +925,7 @@ export default function CreatorStudioTab() {
                               color: tone === t.value
                                 ? '#FF5A1F'
                                 : 'var(--text-secondary, #94A3B8)',
-                              fontSize: 13,
+                              fontSize: 14,
                               fontWeight: 500,
                               cursor: 'pointer',
                               transition: 'all 200ms',
@@ -947,7 +947,7 @@ export default function CreatorStudioTab() {
                             onClick={() => setLength(l.value)}
                             style={{
                               padding: '8px 16px',
-                              borderRadius: 10,
+                              borderRadius: 12,
                               border: length === l.value
                                 ? '1px solid rgba(255, 90, 31, 0.4)'
                                 : '1px solid rgba(255, 255, 255, 0.05)',
@@ -957,7 +957,7 @@ export default function CreatorStudioTab() {
                               color: length === l.value
                                 ? '#FF5A1F'
                                 : 'var(--text-secondary, #94A3B8)',
-                              fontSize: 13,
+                              fontSize: 14,
                               cursor: 'pointer',
                               transition: 'all 200ms',
                             }}
@@ -965,8 +965,8 @@ export default function CreatorStudioTab() {
                             <span style={{ fontWeight: 500 }}>{l.label}</span>
                             <span
                               style={{
-                                marginLeft: 6,
-                                fontSize: 11,
+                                marginLeft: 8,
+                                fontSize: 14,
                                 opacity: 0.6,
                               }}
                             >
@@ -980,12 +980,12 @@ export default function CreatorStudioTab() {
                     {generateError && (
                       <div
                         style={{
-                          padding: '10px 14px',
-                          borderRadius: 10,
+                          padding: '12px 16px',
+                          borderRadius: 12,
                           background: 'rgba(239, 68, 68, 0.1)',
                           border: '1px solid rgba(239, 68, 68, 0.2)',
                           color: '#ef4444',
-                          fontSize: 13,
+                          fontSize: 14,
                         }}
                       >
                         {generateError}
@@ -1037,10 +1037,10 @@ export default function CreatorStudioTab() {
                     }}
                   >
                     <div>
-                      <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary, #F1F5F9)' }}>
+                      <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)' }}>
                         {TEMPLATE_LABELS[generatedOutput.template_type]}
                       </div>
-                      <div style={{ fontSize: 12, color: 'var(--text-dim, #475569)', marginTop: 2 }}>
+                      <div style={{ fontSize: 14, color: 'var(--text-dim, #475569)', marginTop: 2 }}>
                         {generatedOutput.inputs.product_name} · {generatedOutput.inputs.tone} ·{' '}
                         {generatedOutput.inputs.length}
                       </div>
@@ -1053,10 +1053,10 @@ export default function CreatorStudioTab() {
                       flex: 1,
                       margin: 0,
                       padding: 16,
-                      borderRadius: 10,
+                      borderRadius: 12,
                       background: 'rgba(0, 0, 0, 0.35)',
                       border: '1px solid rgba(255, 255, 255, 0.04)',
-                      fontSize: 13,
+                      fontSize: 14,
                       color: 'var(--text-secondary, #94A3B8)',
                       whiteSpace: 'pre-wrap',
                       wordBreak: 'break-word',
@@ -1119,10 +1119,10 @@ export default function CreatorStudioTab() {
                 <button
                   onClick={() => setHistoryFilter('all')}
                   style={{
-                    padding: '6px 14px',
+                    padding: '8px 16px',
                     borderRadius: 20,
                     border: 'none',
-                    fontSize: 12,
+                    fontSize: 14,
                     fontWeight: 500,
                     cursor: 'pointer',
                     background:
@@ -1142,10 +1142,10 @@ export default function CreatorStudioTab() {
                     key={t.id}
                     onClick={() => setHistoryFilter(t.id)}
                     style={{
-                      padding: '6px 14px',
+                      padding: '8px 16px',
                       borderRadius: 20,
                       border: 'none',
-                      fontSize: 12,
+                      fontSize: 14,
                       fontWeight: 500,
                       cursor: 'pointer',
                       background:
@@ -1182,18 +1182,18 @@ export default function CreatorStudioTab() {
                     textAlign: 'center',
                   }}
                 >
-                  <div style={{ fontSize: 32, marginBottom: 12 }}>✦</div>
+                  <div style={{ fontSize: 16, marginBottom: 12 }}>✦</div>
                   <div
                     style={{
-                      fontSize: 15,
-                      fontWeight: 600,
+                      fontSize: 16,
+                      fontWeight: 500,
                       color: 'var(--text-primary, #F1F5F9)',
                       marginBottom: 8,
                     }}
                   >
                     No content yet
                   </div>
-                  <div style={{ fontSize: 13, color: 'var(--text-secondary, #94A3B8)', marginBottom: 20 }}>
+                  <div style={{ fontSize: 14, color: 'var(--text-secondary, #94A3B8)', marginBottom: 20 }}>
                     Generate your first piece of content to see it here.
                   </div>
                   <button onClick={() => setView('generate')} style={accentBtn}>
@@ -1222,14 +1222,14 @@ export default function CreatorStudioTab() {
                 <div
                   style={{
                     fontSize: 14,
-                    fontWeight: 600,
+                    fontWeight: 500,
                     color: 'var(--text-primary, #F1F5F9)',
                     marginBottom: 4,
                   }}
                 >
                   Content Calendar
                 </div>
-                <div style={{ fontSize: 12, color: 'var(--text-secondary, #94A3B8)' }}>
+                <div style={{ fontSize: 14, color: 'var(--text-secondary, #94A3B8)' }}>
                   Scheduled and published content across the month. Click a dot to cycle its status.
                 </div>
               </div>

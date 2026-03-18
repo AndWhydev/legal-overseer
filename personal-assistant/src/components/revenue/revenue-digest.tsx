@@ -86,7 +86,7 @@ export function RevenueDigestCard() {
         <div className="flex items-center justify-between" style={{ marginBottom: 12 }}>
           <div className="flex items-center gap-2">
             <Calendar size={14} color="var(--bb-orange)" />
-            <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+            <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
               Revenue Digest
             </span>
           </div>
@@ -96,10 +96,10 @@ export function RevenueDigestCard() {
                 key={p}
                 onClick={() => setPeriod(p)}
                 style={{
-                  fontSize: 11,
+                  fontSize: 14,
                   fontWeight: 500,
-                  padding: '4px 10px',
-                  borderRadius: 4,
+                  padding: '4px 12px',
+                  borderRadius: 8,
                   border: 'none',
                   cursor: 'pointer',
                   background: period === p ? 'rgba(255, 90, 31, 0.15)' : 'rgba(255, 255, 255, 0.04)',
@@ -126,12 +126,12 @@ export function RevenueDigestCard() {
         </div>
 
         {loading ? (
-          <div style={{ textAlign: 'center', color: 'var(--text-dim)', fontSize: 13, padding: 20 }}>
+          <div style={{ textAlign: 'center', color: 'var(--text-dim)', fontSize: 14, padding: 20 }}>
             Loading...
           </div>
         ) : !latest ? (
           <div style={{ textAlign: 'center', padding: 20 }}>
-            <div style={{ color: 'var(--text-dim)', fontSize: 13, marginBottom: 8 }}>
+            <div style={{ color: 'var(--text-dim)', fontSize: 14, marginBottom: 8 }}>
               No {period} digest yet
             </div>
             <button
@@ -140,10 +140,10 @@ export function RevenueDigestCard() {
                 background: 'var(--bb-orange)',
                 color: '#000',
                 border: 'none',
-                borderRadius: 6,
-                padding: '6px 16px',
-                fontSize: 12,
-                fontWeight: 600,
+                borderRadius: 8,
+                padding: '8px 16px',
+                fontSize: 14,
+                fontWeight: 500,
                 cursor: 'pointer',
               }}
             >
@@ -152,7 +152,7 @@ export function RevenueDigestCard() {
           </div>
         ) : (
           <>
-            <div style={{ fontSize: 12, color: 'var(--text-dim)', marginBottom: 12 }}>
+            <div style={{ fontSize: 14, color: 'var(--text-dim)', marginBottom: 12 }}>
               {latest.period_start} — {latest.period_end}
             </div>
 
@@ -164,34 +164,34 @@ export function RevenueDigestCard() {
                 { label: '30d Outlook', value: fmt(latest.projected_30d_cents) },
               ].map(m => (
                 <div key={m.label} style={{
-                  padding: '10px 12px',
+                  padding: '12px 12px',
                   borderRadius: 8,
                   background: 'rgba(255, 255, 255, 0.02)',
                 }}>
-                  <div style={{ fontSize: 11, color: 'var(--text-dim)', marginBottom: 4 }}>{m.label}</div>
+                  <div style={{ fontSize: 14, color: 'var(--text-dim)', marginBottom: 4 }}>{m.label}</div>
                   <div style={{
-                    fontSize: 18,
-                    fontWeight: 700,
+                    fontSize: 16,
+                    fontWeight: 500,
                     fontFamily: 'var(--font-mono)',
                     letterSpacing: '-0.02em',
                     color: m.color ?? 'var(--text-primary)',
                   }}>
                     {m.value}
                   </div>
-                  {m.sub && <div style={{ fontSize: 11, color: 'var(--text-dim)' }}>{m.sub}</div>}
+                  {m.sub && <div style={{ fontSize: 14, color: 'var(--text-dim)' }}>{m.sub}</div>}
                 </div>
               ))}
             </div>
 
             {/* Highlights */}
             {latest.highlights.length > 0 && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {latest.highlights.map((h, i) => {
                   const Icon = highlightIcons[h.type] ?? Minus
                   return (
-                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0' }}>
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0' }}>
                       <Icon size={12} color={highlightColors[h.type]} />
-                      <span style={{ fontSize: 13, color: 'var(--text-primary)' }}>{h.text}</span>
+                      <span style={{ fontSize: 14, color: 'var(--text-primary)' }}>{h.text}</span>
                     </div>
                   )
                 })}

@@ -40,13 +40,13 @@ const priorityDotColors: Record<string, string> = {
 const chipBase: React.CSSProperties = {
   display: 'inline-flex',
   alignItems: 'center',
-  gap: 5,
-  padding: '5px 12px',
+  gap: 4,
+  padding: '4px 12px',
   borderRadius: 20,
   background: 'var(--glass-pill-bg)',
   boxShadow: 'var(--glass-card-inset)',
   border: 'none',
-  fontSize: 12,
+  fontSize: 14,
   fontWeight: 500,
   color: 'var(--text-secondary)',
   cursor: 'pointer',
@@ -68,9 +68,9 @@ const menuStyle: React.CSSProperties = {
   background: 'var(--glass-card-bg)',
   backdropFilter: 'var(--glass-card-blur)',
   WebkitBackdropFilter: 'var(--glass-card-blur)',
-  borderRadius: 14,
+  borderRadius: 12,
   boxShadow: 'var(--card-shadow-hover), var(--glass-card-inset)',
-  padding: '6px',
+  padding: '8px',
   zIndex: 10,
   overflow: 'hidden',
 }
@@ -230,7 +230,7 @@ export function TaskDialog({
             background: 'var(--glass-card-bg)',
             backdropFilter: 'var(--glass-card-blur)',
             WebkitBackdropFilter: 'var(--glass-card-blur)',
-            borderRadius: 18,
+            borderRadius: 16,
             boxShadow: 'var(--card-shadow-hover), var(--glass-card-inset)',
             overflow: 'visible',
             animation: 'td-in 180ms cubic-bezier(0.16, 1, 0.3, 1) both',
@@ -260,7 +260,7 @@ export function TaskDialog({
                     border: 'none',
                     outline: 'none',
                     fontSize: 16,
-                    fontWeight: 600,
+                    fontWeight: 500,
                     color: 'var(--text-primary)',
                     padding: 0,
                     fontFamily: 'inherit',
@@ -283,7 +283,7 @@ export function TaskDialog({
                       background: 'transparent',
                       border: 'none',
                       outline: 'none',
-                      fontSize: 13,
+                      fontSize: 14,
                       color: 'var(--text-secondary)',
                       padding: '8px 0 0',
                       fontFamily: 'inherit',
@@ -297,7 +297,7 @@ export function TaskDialog({
                     style={{
                       background: 'transparent',
                       border: 'none',
-                      fontSize: 12,
+                      fontSize: 14,
                       color: 'var(--text-dim)',
                       cursor: 'pointer',
                       padding: '8px 0 0',
@@ -313,8 +313,8 @@ export function TaskDialog({
               <div style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: 6,
-                padding: '14px 22px',
+                gap: 8,
+                padding: '16px 24px',
                 flexWrap: 'wrap',
               }}>
                 {/* Column chip */}
@@ -353,7 +353,7 @@ export function TaskDialog({
                             style={{
                               display: 'block',
                               width: '100%',
-                              padding: '7px 10px',
+                              padding: '8px 12px',
                               borderRadius: 8,
                               border: 'none',
                               background: isActive
@@ -362,7 +362,7 @@ export function TaskDialog({
                                   ? 'var(--glass-interactive-bg)'
                                   : 'transparent',
                               color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
-                              fontSize: 12,
+                              fontSize: 14,
                               fontWeight: isActive ? 600 : 400,
                               cursor: 'pointer',
                               textAlign: 'left',
@@ -414,7 +414,7 @@ export function TaskDialog({
                             style={{
                               display: 'block',
                               width: '100%',
-                              padding: '7px 10px',
+                              padding: '8px 12px',
                               borderRadius: 8,
                               border: 'none',
                               background: isActive
@@ -423,7 +423,7 @@ export function TaskDialog({
                                   ? 'var(--glass-interactive-bg)'
                                   : 'transparent',
                               color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
-                              fontSize: 12,
+                              fontSize: 14,
                               fontWeight: isActive ? 600 : 400,
                               cursor: 'pointer',
                               textAlign: 'left',
@@ -444,7 +444,7 @@ export function TaskDialog({
                   <span key={tag} style={{
                     ...chipBase,
                     cursor: 'default',
-                    paddingRight: 6,
+                    paddingRight: 8,
                     gap: 4,
                   }}>
                     {tag}
@@ -483,7 +483,7 @@ export function TaskDialog({
                     Tag
                   </button>
                   {activeMenu === 'tags' && (
-                    <div style={{ ...menuStyle, minWidth: 180, padding: '8px 10px' }}>
+                    <div style={{ ...menuStyle, minWidth: 180, padding: '8px 12px' }}>
                       <input
                         ref={tagsInputRef}
                         className="td-inline-input"
@@ -507,7 +507,7 @@ export function TaskDialog({
                           background: 'transparent',
                           border: 'none',
                           outline: 'none',
-                          fontSize: 12,
+                          fontSize: 14,
                           color: 'var(--text-primary)',
                           padding: 0,
                           fontFamily: 'inherit',
@@ -540,7 +540,7 @@ export function TaskDialog({
                     {deadline || 'Date'}
                   </button>
                   {activeMenu === 'deadline' && (
-                    <div style={{ ...menuStyle, minWidth: 160, padding: '8px 10px' }}>
+                    <div style={{ ...menuStyle, minWidth: 160, padding: '8px 12px' }}>
                       <input
                         ref={deadlineInputRef}
                         className="td-inline-input"
@@ -562,7 +562,7 @@ export function TaskDialog({
                           background: 'transparent',
                           border: 'none',
                           outline: 'none',
-                          fontSize: 12,
+                          fontSize: 14,
                           color: 'var(--text-primary)',
                           padding: 0,
                           fontFamily: 'inherit',
@@ -578,7 +578,7 @@ export function TaskDialog({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                padding: '12px 22px',
+                padding: '12px 24px',
                 borderTop: '1px solid var(--glass-divider)',
               }}>
                 <div>
@@ -588,11 +588,11 @@ export function TaskDialog({
                       style={{
                         display: 'flex',
                         alignItems: 'center',
-                        gap: 5,
+                        gap: 4,
                         background: 'transparent',
                         border: 'none',
                         color: 'var(--text-dim)',
-                        fontSize: 12,
+                        fontSize: 14,
                         cursor: 'pointer',
                         padding: '4px 0',
                         fontFamily: 'inherit',
@@ -629,7 +629,7 @@ export function TaskDialog({
                       ...chipBase,
                       background: 'var(--glass-interactive-border)',
                       color: 'var(--text-primary)',
-                      fontWeight: 600,
+                      fontWeight: 500,
                     }}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.background = 'rgba(255, 255, 255, 0.12)'
@@ -640,10 +640,10 @@ export function TaskDialog({
                   >
                     {task ? 'Update' : 'Create'}
                     <kbd style={{
-                      fontSize: 9,
+                      fontSize: 14,
                       color: 'var(--text-dim)',
                       fontFamily: 'inherit',
-                      marginLeft: 2,
+                      marginLeft: 4,
                     }}>↵</kbd>
                   </button>
                 </div>
@@ -662,8 +662,8 @@ export function TaskDialog({
                 <h2 style={{
                   flex: 1,
                   margin: 0,
-                  fontSize: 17,
-                  fontWeight: 600,
+                  fontSize: 16,
+                  fontWeight: 500,
                   color: 'var(--text-primary)',
                   lineHeight: 1.35,
                   letterSpacing: '-0.01em',
@@ -676,7 +676,7 @@ export function TaskDialog({
                     background: 'var(--glass-pill-bg)',
                     border: 'none',
                     borderRadius: 8,
-                    padding: 6,
+                    padding: 8,
                     cursor: 'pointer',
                     color: 'var(--text-dim)',
                     display: 'flex',
@@ -703,7 +703,7 @@ export function TaskDialog({
               {isAiCreated && sourceChannel && (
                 <div style={{ padding: '6px 22px 0' }}>
                   <span style={{
-                    fontSize: 10,
+                    fontSize: 14,
                     color: 'var(--text-dim)',
                     fontStyle: 'italic',
                   }}>
@@ -723,8 +723,8 @@ export function TaskDialog({
               <div style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: 6,
-                padding: '14px 22px',
+                gap: 8,
+                padding: '16px 24px',
                 flexWrap: 'wrap',
               }}>
                 {/* Column */}
@@ -763,7 +763,7 @@ export function TaskDialog({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                padding: '12px 22px',
+                padding: '12px 24px',
                 borderTop: '1px solid var(--glass-divider)',
               }}>
                 <div>
@@ -773,11 +773,11 @@ export function TaskDialog({
                       style={{
                         display: 'flex',
                         alignItems: 'center',
-                        gap: 5,
+                        gap: 4,
                         background: 'transparent',
                         border: 'none',
                         color: 'var(--text-dim)',
-                        fontSize: 12,
+                        fontSize: 14,
                         cursor: 'pointer',
                         padding: '4px 0',
                         fontFamily: 'inherit',

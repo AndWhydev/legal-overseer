@@ -87,7 +87,7 @@ export function LeadsPage() {
   if (isLoading) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        <div style={{ display: 'flex', gap: 6 }}>
+        <div style={{ display: 'flex', gap: 8 }}>
           {Array.from({ length: 5 }).map((_, i) => (
             <div key={i} style={{ width: 80, height: 30, borderRadius: 20, background: 'var(--glass-hover-bg)', animation: 'pulse 1.5s ease-in-out infinite' }} />
           ))}
@@ -95,7 +95,7 @@ export function LeadsPage() {
         <div style={{ height: 36, borderRadius: 8, background: 'var(--glass-hover-bg)', animation: 'pulse 1.5s ease-in-out infinite' }} />
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} style={{ height: 120, borderRadius: 14, background: 'var(--glass-card-bg-light)', animation: 'pulse 1.5s ease-in-out infinite', animationDelay: `${i * 100}ms` }} />
+            <div key={i} style={{ height: 120, borderRadius: 12, background: 'var(--glass-card-bg-light)', animation: 'pulse 1.5s ease-in-out infinite', animationDelay: `${i * 100}ms` }} />
           ))}
         </div>
       </div>
@@ -104,7 +104,7 @@ export function LeadsPage() {
 
   if (error) {
     return (
-      <div style={{ padding: '12px 16px', borderRadius: 12, border: '1px solid var(--status-error-border)', background: 'var(--status-error-bg)', fontSize: 13, color: 'var(--bb-red)' }}>
+      <div style={{ padding: '12px 16px', borderRadius: 12, border: '1px solid var(--status-error-border)', background: 'var(--status-error-bg)', fontSize: 14, color: 'var(--bb-red)' }}>
         {error}
       </div>
     )
@@ -116,7 +116,7 @@ export function LeadsPage() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12, height: '100%' }}>
       {/* Smart View Pills */}
-      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         {SMART_VIEWS.map((sv) => {
           const active = activeView === sv.key
           const count = (counts as Record<string, number>)[sv.key]
@@ -125,7 +125,7 @@ export function LeadsPage() {
               key={sv.key}
               onClick={() => setFilters(f => ({ ...f, smartView: sv.key }))}
               style={{
-                padding: '6px 14px', borderRadius: 20, fontSize: 12, fontWeight: 500,
+                padding: '8px 16px', borderRadius: 20, fontSize: 14, fontWeight: 500,
                 border: 'none', cursor: 'pointer',
                 background: active ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
                 color: active ? 'var(--text-primary)' : 'var(--text-dim)',
@@ -133,11 +133,11 @@ export function LeadsPage() {
               }}
             >
               {sv.key === 'hot_followup' && count > 0 && (
-                <span style={{ width: 6, height: 6, borderRadius: 3, background: '#F97316', display: 'inline-block', marginRight: 4 }} />
+                <span style={{ width: 6, height: 6, borderRadius: 8, background: '#F97316', display: 'inline-block', marginRight: 4 }} />
               )}
               {sv.label}
               {count > 0 && (
-                <span style={{ marginLeft: 6, background: 'rgba(255, 255, 255, 0.1)', borderRadius: 10, padding: '1px 7px', fontSize: 10, fontFamily: 'var(--font-mono)' }}>
+                <span style={{ marginLeft: 8, background: 'rgba(255, 255, 255, 0.1)', borderRadius: 12, padding: '1px 8px', fontSize: 14, fontFamily: 'var(--font-mono)' }}>
                   {count}
                 </span>
               )}
@@ -168,11 +168,11 @@ export function LeadsPage() {
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 64, height: 64, borderRadius: 20, background: 'rgba(255, 255, 255, 0.04)', border: '1px solid rgba(255, 255, 255, 0.08)', color: 'var(--text-dim)' }}>
               <Handshake size={28} />
             </div>
-            <p style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Your pipeline is empty</p>
-            <p style={{ fontSize: 13, color: 'var(--text-dim)', margin: 0, textAlign: 'center' }}>Discover prospects or connect your channels.</p>
+            <p style={{ fontSize: 16, fontWeight: 500, color: 'var(--text-primary)', margin: 0 }}>Your pipeline is empty</p>
+            <p style={{ fontSize: 14, color: 'var(--text-dim)', margin: 0, textAlign: 'center' }}>Discover prospects or connect your channels.</p>
             <button
               onClick={() => setDiscoveryOpen(true)}
-              style={{ padding: '10px 20px', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg, #06B6D4 0%, #3B82F6 100%)', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+              style={{ height: 40, padding: '0 20px', display: 'inline-flex', alignItems: 'center', borderRadius: 12, border: 'none', background: 'linear-gradient(135deg, #06B6D4 0%, #3B82F6 100%)', color: '#fff', fontSize: 14, fontWeight: 500, cursor: 'pointer' }}
             >
               Discover Prospects
             </button>

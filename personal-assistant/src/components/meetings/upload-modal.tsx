@@ -124,8 +124,8 @@ export function UploadModal({ open, onClose, onUploadComplete }: UploadModalProp
 
   const inputStyle: React.CSSProperties = {
     width: '100%',
-    padding: '10px 14px',
-    borderRadius: 10,
+    padding: '12px 16px',
+    borderRadius: 12,
     background: 'rgba(13, 17, 23, 0.6)',
     border: '1px solid rgba(255, 255, 255, 0.06)',
     color: 'var(--text-primary, #F1F5F9)',
@@ -135,10 +135,10 @@ export function UploadModal({ open, onClose, onUploadComplete }: UploadModalProp
   }
 
   const labelStyle: React.CSSProperties = {
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: 500,
     color: 'var(--text-secondary, #94A3B8)',
-    marginBottom: 6,
+    marginBottom: 8,
     display: 'block',
   }
 
@@ -169,7 +169,7 @@ export function UploadModal({ open, onClose, onUploadComplete }: UploadModalProp
       }}>
         {/* Header */}
         <div className="flex items-center justify-between mb-5">
-          <h2 style={{ fontSize: 18, fontWeight: 600, color: 'var(--text-primary, #F1F5F9)', margin: 0 }}>
+          <h2 style={{ fontSize: 16, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)', margin: 0 }}>
             Upload Meeting Recording
           </h2>
           <button
@@ -200,7 +200,7 @@ export function UploadModal({ open, onClose, onUploadComplete }: UploadModalProp
           onClick={() => fileInputRef.current?.click()}
           style={{
             padding: file ? '16px' : '40px 20px',
-            borderRadius: 14,
+            borderRadius: 12,
             border: `2px dashed ${dragOver ? '#FF5A1F' : 'rgba(255, 255, 255, 0.08)'}`,
             background: dragOver ? 'rgba(255, 90, 31, 0.05)' : 'rgba(13, 17, 23, 0.4)',
             textAlign: 'center',
@@ -225,10 +225,10 @@ export function UploadModal({ open, onClose, onUploadComplete }: UploadModalProp
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z" />
               </svg>
               <div style={{ flex: 1, textAlign: 'left' }}>
-                <div style={{ fontSize: 13, color: 'var(--text-primary, #F1F5F9)', fontWeight: 500 }}>
+                <div style={{ fontSize: 14, color: 'var(--text-primary, #F1F5F9)', fontWeight: 500 }}>
                   {file.name}
                 </div>
-                <div style={{ fontSize: 11, color: 'var(--text-dim, #475569)' }}>
+                <div style={{ fontSize: 14, color: 'var(--text-dim, #475569)' }}>
                   {formatFileSize(file.size)} &middot; {file.type || 'audio'}
                 </div>
               </div>
@@ -236,11 +236,11 @@ export function UploadModal({ open, onClose, onUploadComplete }: UploadModalProp
                 onClick={(e) => { e.stopPropagation(); setFile(null) }}
                 style={{
                   padding: '4px 8px',
-                  borderRadius: 6,
+                  borderRadius: 8,
                   background: 'transparent',
                   border: '1px solid rgba(255, 255, 255, 0.06)',
                   color: 'var(--text-dim, #475569)',
-                  fontSize: 11,
+                  fontSize: 14,
                   cursor: 'pointer',
                 }}
               >
@@ -255,7 +255,7 @@ export function UploadModal({ open, onClose, onUploadComplete }: UploadModalProp
               <p style={{ fontSize: 14, color: 'var(--text-secondary, #94A3B8)', margin: '0 0 4px' }}>
                 Drop audio or video file here
               </p>
-              <p style={{ fontSize: 12, color: 'var(--text-dim, #475569)', margin: 0 }}>
+              <p style={{ fontSize: 14, color: 'var(--text-dim, #475569)', margin: 0 }}>
                 MP3, WAV, M4A, OGG, MP4, WebM (up to 500MB)
               </p>
             </>
@@ -306,15 +306,15 @@ export function UploadModal({ open, onClose, onUploadComplete }: UploadModalProp
                   <span
                     key={i}
                     style={{
-                      padding: '4px 10px',
+                      padding: '4px 12px',
                       borderRadius: 16,
                       background: 'rgba(10, 14, 23, 0.5)',
                       border: '1px solid rgba(255, 255, 255, 0.06)',
-                      fontSize: 12,
+                      fontSize: 14,
                       color: 'var(--text-secondary, #94A3B8)',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: 6,
+                      gap: 8,
                     }}
                   >
                     {p.name}
@@ -355,11 +355,11 @@ export function UploadModal({ open, onClose, onUploadComplete }: UploadModalProp
                 onClick={handleAddParticipant}
                 style={{
                   padding: '0 12px',
-                  borderRadius: 10,
+                  borderRadius: 12,
                   background: 'transparent',
                   border: '1px solid rgba(255, 255, 255, 0.06)',
                   color: 'var(--text-secondary, #94A3B8)',
-                  fontSize: 18,
+                  fontSize: 16,
                   cursor: 'pointer',
                 }}
               >
@@ -373,11 +373,11 @@ export function UploadModal({ open, onClose, onUploadComplete }: UploadModalProp
         {error && (
           <div style={{
             marginTop: 12,
-            padding: '10px 14px',
-            borderRadius: 10,
+            padding: '12px 16px',
+            borderRadius: 12,
             background: 'rgba(239, 68, 68, 0.1)',
             border: '1px solid rgba(239, 68, 68, 0.2)',
-            fontSize: 13,
+            fontSize: 14,
             color: '#ef4444',
           }}>
             {error}
@@ -388,11 +388,11 @@ export function UploadModal({ open, onClose, onUploadComplete }: UploadModalProp
         {uploading && uploadProgress && (
           <div style={{
             marginTop: 12,
-            padding: '10px 14px',
-            borderRadius: 10,
+            padding: '12px 16px',
+            borderRadius: 12,
             background: 'rgba(59, 130, 246, 0.1)',
             border: '1px solid rgba(59, 130, 246, 0.2)',
-            fontSize: 13,
+            fontSize: 14,
             color: '#3b82f6',
             display: 'flex',
             alignItems: 'center',
@@ -416,12 +416,12 @@ export function UploadModal({ open, onClose, onUploadComplete }: UploadModalProp
             onClick={onClose}
             disabled={uploading}
             style={{
-              padding: '10px 20px',
-              borderRadius: 10,
+              padding: '12px 20px',
+              borderRadius: 12,
               background: 'transparent',
               border: '1px solid rgba(255, 255, 255, 0.06)',
               color: 'var(--text-secondary, #94A3B8)',
-              fontSize: 13,
+              fontSize: 14,
               fontWeight: 500,
               cursor: uploading ? 'not-allowed' : 'pointer',
               transition: 'all 200ms',
@@ -433,13 +433,13 @@ export function UploadModal({ open, onClose, onUploadComplete }: UploadModalProp
             onClick={handleUpload}
             disabled={uploading || !file || !title.trim()}
             style={{
-              padding: '10px 20px',
-              borderRadius: 10,
+              padding: '12px 20px',
+              borderRadius: 12,
               background: (!file || !title.trim() || uploading) ? 'rgba(255, 90, 31, 0.3)' : '#FF5A1F',
               border: 'none',
               color: (!file || !title.trim() || uploading) ? 'rgba(0, 0, 0, 0.5)' : '#000',
-              fontSize: 13,
-              fontWeight: 600,
+              fontSize: 14,
+              fontWeight: 500,
               cursor: (!file || !title.trim() || uploading) ? 'not-allowed' : 'pointer',
               transition: 'all 200ms',
             }}

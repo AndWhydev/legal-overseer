@@ -70,7 +70,7 @@ export function BottomNav({
         borderTop: '1px solid var(--glass-interactive-border)',
         padding: '0 4px',
         paddingBottom: 'env(safe-area-inset-bottom)',
-        gap: '2px',
+        gap: '4px',
       }}
     >
       {visibleItems.map(item => {
@@ -98,7 +98,7 @@ export function BottomNav({
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '2px',
+              gap: '4px',
               width: '100%',
               height: '100%',
               padding: '0',
@@ -112,7 +112,7 @@ export function BottomNav({
             <Icon size={20} strokeWidth={1.8} style={{ color: activeColor }} />
             <span
               style={{
-                fontSize: '10px',
+                fontSize: '14px',
                 fontWeight: active ? 600 : 500,
                 color: activeColor,
                 lineHeight: 1,

@@ -26,7 +26,7 @@ export function NextActionPanel({ nextAction, nextActionAt, onSave }: NextAction
 
   return (
     <div>
-      <h4 style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-dim)', margin: '0 0 12px' }}>
+      <h4 style={{ fontSize: 14, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--text-dim)', margin: '0 0 12px' }}>
         Next Action
       </h4>
 
@@ -38,12 +38,12 @@ export function NextActionPanel({ nextAction, nextActionAt, onSave }: NextAction
           placeholder="What's the next step?"
           style={{
             width: '100%',
-            padding: '10px 12px',
-            borderRadius: 10,
+            padding: '12px 12px',
+            borderRadius: 12,
             border: '1px solid var(--border-subtle)',
             background: 'var(--bb-surface)',
             color: 'var(--text-primary)',
-            fontSize: 13,
+            fontSize: 14,
             outline: 'none',
           }}
         />
@@ -56,11 +56,11 @@ export function NextActionPanel({ nextAction, nextActionAt, onSave }: NextAction
             style={{
               flex: 1,
               padding: '8px 12px',
-              borderRadius: 10,
+              borderRadius: 12,
               border: '1px solid var(--border-subtle)',
               background: 'var(--bb-surface)',
               color: 'var(--text-secondary)',
-              fontSize: 12,
+              fontSize: 14,
               outline: 'none',
             }}
           />
@@ -69,13 +69,16 @@ export function NextActionPanel({ nextAction, nextActionAt, onSave }: NextAction
             onClick={handleSave}
             disabled={!hasChanged || saving}
             style={{
-              padding: '8px 16px',
-              borderRadius: 10,
+              height: 40,
+              padding: '0 20px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              borderRadius: 12,
               border: 'none',
               background: hasChanged ? 'var(--bb-cyan)' : 'var(--hover-bg)',
               color: hasChanged ? '#fff' : 'var(--text-dim)',
-              fontSize: 12,
-              fontWeight: 600,
+              fontSize: 14,
+              fontWeight: 500,
               cursor: hasChanged ? 'pointer' : 'not-allowed',
               opacity: saving ? 0.6 : 1,
               transition: 'background 0.15s, color 0.15s',

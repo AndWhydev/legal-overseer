@@ -58,7 +58,7 @@ export default function TestimonialsSection() {
           <h2
             style={{
               fontSize: 'clamp(28px, 5vw, 48px)',
-              fontWeight: 700,
+              fontWeight: 500,
               marginBottom: '16px',
               letterSpacing: '-0.02em',
               color: '#F1F5F9',
@@ -68,7 +68,7 @@ export default function TestimonialsSection() {
           </h2>
           <p
             style={{
-              fontSize: '18px',
+              fontSize: '16px',
               color: '#94A3B8',
               maxWidth: '600px',
               margin: '0 auto',
@@ -142,7 +142,7 @@ export default function TestimonialsSection() {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    fontSize: '24px',
+                    fontSize: '16px',
                     border: '1px solid rgba(16, 185, 129, 0.2)',
                   }}
                 >
@@ -152,7 +152,7 @@ export default function TestimonialsSection() {
                   <p
                     style={{
                       fontSize: '14px',
-                      fontWeight: 600,
+                      fontWeight: 500,
                       color: '#F1F5F9',
                       margin: '0 0 2px 0',
                     }}
@@ -161,7 +161,7 @@ export default function TestimonialsSection() {
                   </p>
                   <p
                     style={{
-                      fontSize: '12px',
+                      fontSize: '14px',
                       color: '#94A3B8',
                       margin: 0,
                     }}
@@ -194,8 +194,8 @@ export default function TestimonialsSection() {
             <div key={metric.label}>
               <div
                 style={{
-                  fontSize: '36px',
-                  fontWeight: 700,
+                  fontSize: '16px',
+                  fontWeight: 500,
                   color: '#10b981',
                   marginBottom: '8px',
                 }}
@@ -220,10 +220,10 @@ export default function TestimonialsSection() {
         <div style={{ textAlign: 'center' }}>
           <p
             style={{
-              fontSize: '12px',
+              fontSize: '14px',
               color: '#94A3B8',
               textTransform: 'uppercase',
-              letterSpacing: '0.08em',
+              letterSpacing: '0.04em',
               marginBottom: '24px',
             }}
           >
@@ -261,10 +261,10 @@ export default function TestimonialsSection() {
                   e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.05)'
                 }}
               >
-                <span style={{ fontSize: '20px' }}>{partner.icon}</span>
+                <span style={{ fontSize: '16px' }}>{partner.icon}</span>
                 <span
                   style={{
-                    fontSize: '13px',
+                    fontSize: '14px',
                     fontWeight: 500,
                     color: '#F1F5F9',
                   }}

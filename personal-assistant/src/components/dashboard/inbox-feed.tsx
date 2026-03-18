@@ -283,14 +283,14 @@ export function InboxFeed({ isCollapsed = false, onCollapsedChange }: InboxFeedP
           display: 'flex',
           alignItems: 'center',
           gap: 8,
-          padding: '14px 16px',
+          padding: '16px 16px',
           borderBottom: '1px solid var(--glass-divider)',
         }}
       >
         <Inbox size={16} style={{ color: 'var(--text-secondary)' }} />
         <span
           onClick={navigateToInbox}
-          style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', cursor: 'pointer', transition: 'opacity 0.15s ease' }}
+          style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)', cursor: 'pointer', transition: 'opacity 0.15s ease' }}
           onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '0.8'; }}
           onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '1'; }}
           role="button"
@@ -299,12 +299,12 @@ export function InboxFeed({ isCollapsed = false, onCollapsedChange }: InboxFeedP
         {unreadCount > 0 && (
           <span
             style={{
-              fontSize: 10,
-              fontWeight: 700,
+              fontSize: 14,
+              fontWeight: 500,
               color: '#fff',
               background: 'var(--bb-orange)',
               borderRadius: 99,
-              padding: '1px 6px',
+              padding: '4px 8px',
               lineHeight: '16px',
             }}
           >
@@ -384,7 +384,7 @@ export function InboxFeed({ isCollapsed = false, onCollapsedChange }: InboxFeedP
             minHeight: 200,
           }}>
             <CheckCircle2 size={24} style={{ opacity: 0.4 }} />
-            <span style={{ fontSize: 13 }}>Inbox zero — all clear</span>
+            <span style={{ fontSize: 14 }}>Inbox zero — all clear</span>
           </div>
         )}
         {feedItems.map((item, i) => {
@@ -397,9 +397,9 @@ export function InboxFeed({ isCollapsed = false, onCollapsedChange }: InboxFeedP
                 style={{
                   display: 'flex',
                   alignItems: 'flex-start',
-                  gap: 10,
+                  gap: 12,
                   width: '100%',
-                  padding: '10px 16px',
+                  padding: '12px 16px',
                   background: 'transparent',
                   border: 'none',
                   cursor: 'pointer',
@@ -409,28 +409,28 @@ export function InboxFeed({ isCollapsed = false, onCollapsedChange }: InboxFeedP
                 onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--bb-surface-hover)'; }}
                 onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
               >
-                <div style={{ flexShrink: 0, paddingTop: 2, display: 'flex', alignItems: 'center' }}>
+                <div style={{ flexShrink: 0, paddingTop: 4, display: 'flex', alignItems: 'center' }}>
                   <IconComponent size={16} />
                 </div>
-                <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 3 }}>
+                <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {item.label}
-                      <span style={{ marginLeft: 6, fontSize: 10, fontWeight: 700, color: '#fff', background: 'var(--bb-orange)', borderRadius: 99, padding: '1px 5px', verticalAlign: 'middle' }}>
+                      <span style={{ marginLeft: 8, fontSize: 14, fontWeight: 500, color: '#fff', background: 'var(--bb-orange)', borderRadius: 99, padding: '4px 4px', verticalAlign: 'middle' }}>
                         {item.count}
                       </span>
                     </span>
-                    <span style={{ flexShrink: 0, fontSize: 11, color: 'var(--text-dim)', paddingLeft: 8 }}>
+                    <span style={{ flexShrink: 0, fontSize: 14, color: 'var(--text-dim)', paddingLeft: 8 }}>
                       {timeAgo(item.time)}
                     </span>
                   </div>
                   {item.preview && (
-                    <span style={{ fontSize: 12, color: 'var(--text-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <span style={{ fontSize: 14, color: 'var(--text-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {String(item.preview)}
                     </span>
                   )}
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
                   {item.hasUnread && <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--bb-blue, #3B82F6)', flexShrink: 0 }} />}
                 </div>
               </button>
@@ -451,9 +451,9 @@ export function InboxFeed({ isCollapsed = false, onCollapsedChange }: InboxFeedP
               style={{
                 display: 'flex',
                 alignItems: 'flex-start',
-                gap: 10,
+                gap: 12,
                 width: '100%',
-                padding: '10px 16px',
+                padding: '12px 16px',
                 background: 'transparent',
                 border: 'none',
                 cursor: 'pointer',
@@ -464,28 +464,28 @@ export function InboxFeed({ isCollapsed = false, onCollapsedChange }: InboxFeedP
               onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--bb-surface-hover)'; }}
               onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
             >
-              <div style={{ flexShrink: 0, paddingTop: 2, display: 'flex', alignItems: 'center' }}>
+              <div style={{ flexShrink: 0, paddingTop: 4, display: 'flex', alignItems: 'center' }}>
                 <IconComponent size={16} />
               </div>
-              <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 3 }}>
+              <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span style={{ flex: 1, minWidth: 0, fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <span style={{ flex: 1, minWidth: 0, fontSize: 14, fontWeight: 500, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {String(msg.subject || '(no subject)')}
                   </span>
-                  <span style={{ flexShrink: 0, fontSize: 11, color: 'var(--text-dim)', paddingLeft: 8 }}>
+                  <span style={{ flexShrink: 0, fontSize: 14, color: 'var(--text-dim)', paddingLeft: 8 }}>
                     {timeAgo(messageTime)}
                   </span>
                 </div>
-                <span style={{ fontSize: 12, color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <span style={{ fontSize: 14, color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {String(msg.sender || msg.senderName || 'Unknown')}
                 </span>
                 {preview && (
-                  <span style={{ fontSize: 12, color: 'var(--text-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <span style={{ fontSize: 14, color: 'var(--text-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {String(preview || '')}
                   </span>
                 )}
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
                 {msg.processed && <CheckCircle2 size={12} style={{ color: 'var(--bb-green)', opacity: 0.7 }} />}
                 <div style={{ width: 6, height: 6, borderRadius: '50%', background: priorityDot(msg), flexShrink: 0 }} />
               </div>

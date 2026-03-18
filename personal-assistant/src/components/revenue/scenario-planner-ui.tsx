@@ -30,7 +30,7 @@ const inputStyle: React.CSSProperties = {
   border: 'none',
   background: 'var(--bg-input)',
   color: 'var(--text-primary)',
-  fontSize: 13,
+  fontSize: 14,
   fontFamily: 'var(--font-sans)',
   outline: 'none',
   width: '100%',
@@ -43,24 +43,24 @@ const selectStyle: React.CSSProperties = {
 }
 
 const buttonStyle: React.CSSProperties = {
-  padding: '10px 20px',
+  padding: '12px 20px',
   borderRadius: 'var(--radius-md)',
   border: 'none',
   background: 'var(--bb-orange)',
   color: 'var(--text-on-accent)',
-  fontSize: 13,
-  fontWeight: 600,
+  fontSize: 14,
+  fontWeight: 500,
   cursor: 'pointer',
   transition: 'opacity var(--duration-fast) var(--ease-default)',
   alignSelf: 'flex-start',
 }
 
 const labelStyle: React.CSSProperties = {
-  fontSize: 11,
+  fontSize: 14,
   color: 'var(--text-secondary)',
   textTransform: 'uppercase',
   letterSpacing: '0.04em',
-  fontWeight: 600,
+  fontWeight: 500,
 }
 
 const scenarioCardStyle: React.CSSProperties = {
@@ -71,7 +71,7 @@ const scenarioCardStyle: React.CSSProperties = {
   WebkitBackdropFilter: 'var(--glass-blur)',
   display: 'flex',
   flexDirection: 'column',
-  gap: 10,
+  gap: 12,
 }
 
 const resultRowStyle: React.CSSProperties = {
@@ -88,7 +88,7 @@ const resultCellStyle: React.CSSProperties = {
 }
 
 const resultLabelStyle: React.CSSProperties = {
-  fontSize: 10,
+  fontSize: 14,
   color: 'var(--text-secondary)',
   textTransform: 'uppercase',
   letterSpacing: '0.04em',
@@ -96,7 +96,7 @@ const resultLabelStyle: React.CSSProperties = {
 
 const resultValueStyle: React.CSSProperties = {
   fontSize: 16,
-  fontWeight: 700,
+  fontWeight: 500,
   fontFamily: 'var(--font-mono)',
   letterSpacing: '-0.02em',
 }
@@ -174,7 +174,7 @@ export function ScenarioPlannerUI() {
         </button>
       ) : (
         <div style={formCardStyle}>
-          <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>
+          <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>
             Create What-If Scenario
           </span>
 
@@ -285,13 +285,13 @@ export function ScenarioPlannerUI() {
 
       {/* Existing Scenarios */}
       {loading ? (
-        <div style={{ color: 'var(--text-secondary)', fontSize: 12 }}>Loading scenarios...</div>
+        <div style={{ color: 'var(--text-secondary)', fontSize: 14 }}>Loading scenarios...</div>
       ) : scenarios.length === 0 ? (
         <div style={{
           padding: '24px',
           textAlign: 'center',
           color: 'var(--text-secondary)',
-          fontSize: 13,
+          fontSize: 14,
           borderRadius: 'var(--radius-lg)',
           background: 'var(--bg-card)',
         }}>
@@ -316,12 +316,12 @@ function ScenarioCard({ scenario }: { scenario: RevenueScenario }) {
     <div style={scenarioCardStyle}>
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>
+        <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>
           {scenario.name}
         </span>
         <span style={{
-          fontSize: 10,
-          fontWeight: 600,
+          fontSize: 14,
+          fontWeight: 500,
           padding: '2px 8px',
           borderRadius: 'var(--radius-sm)',
           background: `${deltaColor}15`,
@@ -334,7 +334,7 @@ function ScenarioCard({ scenario }: { scenario: RevenueScenario }) {
 
       {/* Impact summary */}
       {scenario.impact_summary && (
-        <div style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.4 }}>
+        <div style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.4 }}>
           {scenario.impact_summary}
         </div>
       )}
@@ -365,7 +365,7 @@ function ScenarioCard({ scenario }: { scenario: RevenueScenario }) {
       <div style={{
         display: 'flex',
         gap: 12,
-        fontSize: 11,
+        fontSize: 14,
         color: 'var(--text-secondary)',
         fontFamily: 'var(--font-mono)',
       }}>
@@ -376,10 +376,10 @@ function ScenarioCard({ scenario }: { scenario: RevenueScenario }) {
 
       {/* Risk factors */}
       {scenario.risk_factors && scenario.risk_factors.length > 0 && (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
           {scenario.risk_factors.map((rf, i) => (
             <span key={i} style={{
-              fontSize: 10,
+              fontSize: 14,
               padding: '2px 8px',
               borderRadius: 'var(--radius-sm)',
               background: 'rgba(239, 68, 68, 0.08)',

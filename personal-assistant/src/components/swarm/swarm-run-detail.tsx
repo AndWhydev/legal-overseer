@@ -20,7 +20,7 @@ const s = {
     gap: '8px',
     cursor: 'pointer',
     color: 'rgba(255, 255, 255, 0.45)',
-    fontSize: '13px',
+    fontSize: '14px',
     width: 'fit-content',
   },
   header: {
@@ -30,13 +30,13 @@ const s = {
     gap: '16px',
   },
   title: {
-    fontSize: '18px',
-    fontWeight: 600,
+    fontSize: '16px',
+    fontWeight: 500,
     color: 'rgba(255, 255, 255, 0.95)',
     letterSpacing: '-0.02em',
   },
   triggerText: {
-    fontSize: '13px',
+    fontSize: '14px',
     color: 'rgba(255, 255, 255, 0.5)',
     marginTop: '4px',
   },
@@ -47,17 +47,17 @@ const s = {
     marginTop: '6px',
   },
   metaPill: {
-    padding: '3px 10px',
+    padding: '4px 12px',
     borderRadius: '9999px',
-    fontSize: '11px',
+    fontSize: '14px',
     fontWeight: 500,
     background: 'rgba(255, 255, 255, 0.04)',
     color: 'rgba(255, 255, 255, 0.4)',
   },
   rollbackBtn: {
-    padding: '6px 14px',
+    padding: '8px 16px',
     borderRadius: '8px',
-    fontSize: '12px',
+    fontSize: '14px',
     fontWeight: 500,
     cursor: 'pointer',
     border: '1px solid rgba(239, 68, 68, 0.3)',
@@ -66,8 +66,8 @@ const s = {
     transition: 'all 0.15s ease',
   },
   sectionLabel: {
-    fontSize: '11px',
-    fontWeight: 600,
+    fontSize: '14px',
+    fontWeight: 500,
     color: 'rgba(255, 255, 255, 0.3)',
     textTransform: 'uppercase' as const,
     letterSpacing: '0.06em',
@@ -94,8 +94,8 @@ const s = {
     return {
       background: 'rgba(15, 20, 30, 0.4)',
       backdropFilter: 'blur(12px)',
-      borderRadius: '10px',
-      padding: '14px 16px',
+      borderRadius: '12px',
+      padding: '16px 16px',
       borderLeft: `3px solid ${border[status] || border.pending}`,
     };
   },
@@ -106,15 +106,15 @@ const s = {
     gap: '8px',
   },
   stepLabel: {
-    fontSize: '13px',
-    fontWeight: 600,
+    fontSize: '14px',
+    fontWeight: 500,
     color: 'rgba(255, 255, 255, 0.85)',
   },
   stepRole: {
-    fontSize: '11px',
+    fontSize: '14px',
     fontWeight: 500,
     padding: '2px 8px',
-    borderRadius: '4px',
+    borderRadius: '8px',
     background: 'rgba(255, 255, 255, 0.04)',
     color: 'rgba(255, 255, 255, 0.4)',
   },
@@ -131,7 +131,7 @@ const s = {
       rolled_back: 'rgba(255,255,255,0.3)',
     };
     return {
-      fontSize: '11px',
+      fontSize: '14px',
       fontWeight: 500,
       color: colors[status] || colors.pending,
     };
@@ -140,15 +140,15 @@ const s = {
     display: 'flex',
     gap: '12px',
     marginTop: '6px',
-    fontSize: '11px',
+    fontSize: '14px',
     color: 'rgba(255, 255, 255, 0.3)',
   },
   stepOutput: {
     marginTop: '8px',
-    padding: '8px 10px',
-    borderRadius: '6px',
+    padding: '8px 12px',
+    borderRadius: '8px',
     background: 'rgba(0, 0, 0, 0.2)',
-    fontSize: '11px',
+    fontSize: '14px',
     fontFamily: 'var(--font-mono, monospace)',
     color: 'rgba(255, 255, 255, 0.5)',
     maxHeight: '120px',
@@ -175,13 +175,13 @@ const s = {
       padding: '8px 12px',
       borderRadius: '8px',
       background: bg[type] || bg.status,
-      fontSize: '12px',
+      fontSize: '14px',
       color: 'rgba(255, 255, 255, 0.6)',
     };
   },
   msgFrom: {
-    fontSize: '10px',
-    fontWeight: 600,
+    fontSize: '14px',
+    fontWeight: 500,
     color: 'rgba(255, 255, 255, 0.3)',
     textTransform: 'uppercase' as const,
     letterSpacing: '0.04em',
@@ -198,8 +198,8 @@ const s = {
       handoff: 'rgba(255,255,255,0.35)',
     };
     return {
-      fontSize: '10px',
-      fontWeight: 600,
+      fontSize: '14px',
+      fontWeight: 500,
       color: colors[type] || colors.status,
       textTransform: 'uppercase' as const,
     };
@@ -209,7 +209,7 @@ const s = {
     justifyContent: 'center',
     padding: '40px',
     color: 'rgba(255, 255, 255, 0.3)',
-    fontSize: '13px',
+    fontSize: '14px',
   },
 };
 
@@ -434,10 +434,10 @@ export function SwarmRunDetail({ runId, onBack, onRollback }: SwarmRunDetailProp
         <div>
           <div style={s.sectionLabel}>Result Summary</div>
           <div style={{
-            padding: '12px 14px',
-            borderRadius: '10px',
+            padding: '12px 16px',
+            borderRadius: '12px',
             background: 'rgba(15, 20, 30, 0.4)',
-            fontSize: '13px',
+            fontSize: '14px',
             color: 'rgba(255, 255, 255, 0.65)',
             lineHeight: 1.6,
             whiteSpace: 'pre-wrap' as const,

@@ -191,8 +191,8 @@ export function HelpTooltip({
             <h4
               style={{
                 margin: 0,
-                fontSize: 13,
-                fontWeight: 600,
+                fontSize: 14,
+                fontWeight: 500,
                 color: 'var(--text-primary, #F1F5F9)',
               }}
             >
@@ -227,7 +227,7 @@ export function HelpTooltip({
           <p
             style={{
               margin: '0 0 12px',
-              fontSize: 12,
+              fontSize: 14,
               lineHeight: 1.5,
               color: 'var(--text-secondary, #94A3B8)',
             }}
@@ -239,8 +239,8 @@ export function HelpTooltip({
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: 6,
-              fontSize: 11,
+              gap: 8,
+              fontSize: 14,
               color: 'var(--text-secondary, #94A3B8)',
               cursor: 'pointer',
               userSelect: 'none',

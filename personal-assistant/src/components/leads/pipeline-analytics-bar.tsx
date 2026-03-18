@@ -31,21 +31,21 @@ const cardStyle: React.CSSProperties = {
   border: '1px solid var(--border-subtle)',
   display: 'flex',
   flexDirection: 'column',
-  gap: 6,
+  gap: 8,
 }
 
 const labelStyle: React.CSSProperties = {
-  fontSize: 11,
+  fontSize: 14,
   fontWeight: 500,
   color: 'var(--text-secondary)',
   display: 'flex',
   alignItems: 'center',
-  gap: 6,
+  gap: 8,
 }
 
 const valueStyle: React.CSSProperties = {
-  fontSize: 24,
-  fontWeight: 700,
+  fontSize: 16,
+  fontWeight: 500,
   fontFamily: 'var(--font-mono)',
   letterSpacing: '-0.02em',
   color: 'var(--text-primary)',

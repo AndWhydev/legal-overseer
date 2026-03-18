@@ -47,8 +47,8 @@ export function EmptyState({ icon, title, description, action }: EmptyStateProps
 
       <h3
         style={{
-          fontSize: 18,
-          fontWeight: 600,
+          fontSize: 16,
+          fontWeight: 500,
           color: 'var(--text-primary)',
           margin: 0,
         }}
@@ -79,11 +79,11 @@ export function EmptyState({ icon, title, description, action }: EmptyStateProps
           style={{
             marginTop: 16,
             padding: '8px 16px',
-            borderRadius: 10,
+            borderRadius: 12,
             background: actionHovered ? 'var(--accent)' : 'transparent',
             border: `1px solid ${actionHovered ? 'var(--accent)' : 'var(--glass-interactive-border)'}`,
             color: actionHovered ? '#FFFFFF' : 'var(--text-secondary)',
-            fontSize: 13,
+            fontSize: 14,
             fontWeight: 500,
             cursor: 'pointer',
             transition: 'all 200ms ease',

@@ -147,7 +147,7 @@ export function MemoryExplorer({ orgId }: MemoryExplorerProps) {
             placeholder="Search memories... (e.g., 'pricing WordPress builds')"
             style={{
               width: '100%',
-              padding: '10px 14px',
+              padding: '12px 16px',
               background: 'rgba(13, 17, 23, 0.6)',
               border: '1px solid rgba(255, 255, 255, 0.08)',
               borderRadius: '8px',
@@ -164,15 +164,15 @@ export function MemoryExplorer({ orgId }: MemoryExplorerProps) {
           gap: '2px',
           background: 'rgba(15, 20, 30, 0.35)',
           borderRadius: '8px',
-          padding: '3px',
+          padding: '4px',
         }}>
           {(['feed', 'decisions'] as ViewMode[]).map(mode => (
             <button
               key={mode}
               onClick={() => setViewMode(mode)}
               style={{
-                padding: '6px 14px',
-                borderRadius: '6px',
+                padding: '8px 16px',
+                borderRadius: '8px',
                 border: 'none',
                 background: viewMode === mode
                   ? 'rgba(255, 90, 31, 0.2)'
@@ -180,8 +180,8 @@ export function MemoryExplorer({ orgId }: MemoryExplorerProps) {
                 color: viewMode === mode
                   ? '#FF7A45'
                   : 'rgba(255, 255, 255, 0.5)',
-                fontSize: '13px',
-                fontWeight: viewMode === mode ? 600 : 400,
+                fontSize: '14px',
+                fontWeight: viewMode === mode ? 500 : 400,
                 cursor: 'pointer',
                 transition: 'all 0.15s ease',
                 textTransform: 'capitalize',
@@ -208,7 +208,7 @@ export function MemoryExplorer({ orgId }: MemoryExplorerProps) {
             border: 'none',
             background: activeCategory === null ? 'rgba(255, 90, 31, 0.15)' : 'rgba(255, 255, 255, 0.05)',
             color: activeCategory === null ? '#FF7A45' : 'rgba(255, 255, 255, 0.5)',
-            fontSize: '12px',
+            fontSize: '14px',
             cursor: 'pointer',
             whiteSpace: 'nowrap',
           }}
@@ -229,7 +229,7 @@ export function MemoryExplorer({ orgId }: MemoryExplorerProps) {
               color: activeCategory === cat
                 ? CATEGORY_COLORS[cat]
                 : 'rgba(255, 255, 255, 0.5)',
-              fontSize: '12px',
+              fontSize: '14px',
               cursor: 'pointer',
               whiteSpace: 'nowrap',
             }}
@@ -246,7 +246,7 @@ export function MemoryExplorer({ orgId }: MemoryExplorerProps) {
           background: 'rgba(239, 68, 68, 0.1)',
           borderRadius: '8px',
           color: '#EF4444',
-          fontSize: '13px',
+          fontSize: '14px',
         }}>
           {error}
         </div>
@@ -276,7 +276,7 @@ export function MemoryExplorer({ orgId }: MemoryExplorerProps) {
                 padding: '60px 20px',
                 color: 'rgba(255, 255, 255, 0.3)',
               }}>
-                <div style={{ fontSize: '24px', marginBottom: '8px' }}>No memories yet</div>
+                <div style={{ fontSize: '16px', marginBottom: '8px' }}>No memories yet</div>
                 <div style={{ fontSize: '14px' }}>
                   BitBit will automatically remember important facts, decisions, and patterns as you interact.
                 </div>
@@ -300,7 +300,7 @@ export function MemoryExplorer({ orgId }: MemoryExplorerProps) {
         {!loading && viewMode === 'search' && searchResults && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <div style={{
-              fontSize: '13px',
+              fontSize: '14px',
               color: 'rgba(255, 255, 255, 0.4)',
               padding: '4px 0',
             }}>

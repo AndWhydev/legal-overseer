@@ -37,9 +37,9 @@ export function NotificationBadge({
 
   // Size mappings
   const sizeMap = {
-    sm: { width: 16, height: 16, fontSize: 10, padding: 2 },
-    md: { width: 20, height: 20, fontSize: 12, padding: 2 },
-    lg: { width: 24, height: 24, fontSize: 13, padding: 3 },
+    sm: { width: 16, height: 16, fontSize: 14, padding: 2 },
+    md: { width: 20, height: 20, fontSize: 14, padding: 2 },
+    lg: { width: 24, height: 24, fontSize: 14, padding: 4 },
   };
 
   const dims = sizeMap[size];
@@ -60,7 +60,7 @@ export function NotificationBadge({
         alignItems: 'center',
         justifyContent: 'center',
         fontSize: `${dims.fontSize}px`,
-        fontWeight: 600,
+        fontWeight: 500,
         color: '#FFFFFF',
         lineHeight: 1,
         flexShrink: 0,

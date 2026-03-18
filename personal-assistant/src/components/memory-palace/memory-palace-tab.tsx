@@ -61,9 +61,9 @@ const glassCard: React.CSSProperties = {
 
 const glassInput: React.CSSProperties = {
   width: '100%',
-  padding: '10px 14px',
+  padding: '12px 16px',
   paddingLeft: '40px',
-  borderRadius: 10,
+  borderRadius: 12,
   background: 'rgba(13, 17, 23, 0.6)',
   border: '1px solid var(--glass-interactive-border)',
   color: 'var(--text-primary)',
@@ -76,9 +76,9 @@ const badge: React.CSSProperties = {
   alignItems: 'center',
   gap: 4,
   padding: '2px 8px',
-  borderRadius: 6,
-  fontSize: 11,
-  fontWeight: 600,
+  borderRadius: 8,
+  fontSize: 14,
+  fontWeight: 500,
   letterSpacing: '0.03em',
   textTransform: 'uppercase' as const,
 };
@@ -117,7 +117,7 @@ function ConfidenceBar({ value }: { value: number }) {
           transition: 'width 0.3s ease',
         }} />
       </div>
-      <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>{pct}%</span>
+      <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)' }}>{pct}%</span>
     </div>
   );
 }
@@ -160,11 +160,11 @@ function MemoryCard({ memory }: { memory: MemoryEntry }) {
           }}>
             {config.label}
           </span>
-          <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>{date}</span>
+          <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)' }}>{date}</span>
         </div>
         <div style={{
-          fontSize: 13,
-          fontWeight: 600,
+          fontSize: 14,
+          fontWeight: 500,
           color: 'var(--text-primary)',
           marginBottom: 4,
           overflow: 'hidden',
@@ -174,7 +174,7 @@ function MemoryCard({ memory }: { memory: MemoryEntry }) {
           {memory.title}
         </div>
         <div style={{
-          fontSize: 12,
+          fontSize: 14,
           color: 'rgba(255,255,255,0.55)',
           lineHeight: 1.4,
           display: '-webkit-box',
@@ -187,7 +187,7 @@ function MemoryCard({ memory }: { memory: MemoryEntry }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 6 }}>
           <ConfidenceBar value={memory.confidence} />
           {memory.entity_names.length > 0 && (
-            <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>
+            <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)' }}>
               {memory.entity_names.slice(0, 2).join(', ')}
             </span>
           )}
@@ -214,10 +214,10 @@ function StatsCard({ stats }: { stats: MemoryStats | null }) {
         return (
           <div key={item.label} style={{ ...glassCard, padding: '14px 16px', textAlign: 'center' as const }}>
             <Icon size={18} color={item.color} style={{ marginBottom: 6 }} />
-            <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)' }}>
+            <div style={{ fontSize: 16, fontWeight: 500, color: 'var(--text-primary)' }}>
               {item.value}
             </div>
-            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>
+            <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>
               {item.label}
             </div>
           </div>
@@ -248,7 +248,7 @@ function TypeFilter({
           color: !activeType ? '#000' : 'rgba(255,255,255,0.6)',
           cursor: 'pointer',
           border: 'none',
-          padding: '4px 10px',
+          padding: '4px 12px',
         }}
       >
         All
@@ -263,7 +263,7 @@ function TypeFilter({
             color: activeType === key ? config.color : 'rgba(255,255,255,0.5)',
             cursor: 'pointer',
             border: 'none',
-            padding: '4px 10px',
+            padding: '4px 12px',
           }}
         >
           {config.label} {counts[key] ? `(${counts[key]})` : ''}
@@ -332,8 +332,8 @@ export function MemoryPalaceTab() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <Brain size={22} color="var(--bb-orange)" />
             <h2 style={{
-              fontSize: 18,
-              fontWeight: 700,
+              fontSize: 16,
+              fontWeight: 500,
               color: 'var(--text-primary)',
               letterSpacing: '-0.02em',
               margin: 0,
@@ -350,8 +350,8 @@ export function MemoryPalaceTab() {
                 color: view === 'search' ? '#000' : 'rgba(255,255,255,0.6)',
                 cursor: 'pointer',
                 border: 'none',
-                padding: '5px 12px',
-                fontSize: 12,
+                padding: '4px 12px',
+                fontSize: 14,
               }}
             >
               Search
@@ -364,8 +364,8 @@ export function MemoryPalaceTab() {
                 color: view === 'decisions' ? '#000' : 'rgba(255,255,255,0.6)',
                 cursor: 'pointer',
                 border: 'none',
-                padding: '5px 12px',
-                fontSize: 12,
+                padding: '4px 12px',
+                fontSize: 14,
               }}
             >
               Decisions

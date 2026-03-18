@@ -51,9 +51,9 @@ const glassCard: React.CSSProperties = {
 }
 
 const sectionHeader: React.CSSProperties = {
-  fontSize: 11,
-  fontWeight: 600,
-  letterSpacing: '0.08em',
+  fontSize: 14,
+  fontWeight: 500,
+  letterSpacing: '0.04em',
   textTransform: 'uppercase' as const,
   color: 'var(--text-dim, #475569)',
   marginBottom: 12,
@@ -62,7 +62,7 @@ const sectionHeader: React.CSSProperties = {
 const listRow: React.CSSProperties = {
   display: 'flex',
   alignItems: 'flex-start',
-  padding: '12px 14px',
+  padding: '12px 16px',
   borderRadius: 12,
   background: 'rgba(10, 14, 23, 0.5)',
   backdropFilter: 'blur(26px) saturate(1.15)',
@@ -75,14 +75,14 @@ const listRow: React.CSSProperties = {
 }
 
 const pillBtn: React.CSSProperties = {
-  padding: '6px 14px',
+  padding: '8px 16px',
   borderRadius: 20,
   background: 'rgba(10, 14, 23, 0.42)',
   backdropFilter: 'blur(22px) saturate(1.2)',
   WebkitBackdropFilter: 'blur(22px) saturate(1.2)',
   boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.06)',
   border: 'none',
-  fontSize: 12,
+  fontSize: 14,
   color: 'var(--text-secondary, #94A3B8)',
   cursor: 'pointer',
   transition: 'all 200ms',
@@ -201,13 +201,13 @@ export function RoleActivityFeed({ maxHeight = 'calc(100vh - 300px)', limit = 50
           <Activity size={14} style={{ color: '#FF5A1F' }} />
           <span style={sectionHeader}>Role Activity</span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <Filter size={12} style={{ color: 'var(--text-dim, #475569)' }} />
         </div>
       </div>
 
       {/* Filter pills */}
-      <div style={{ display: 'flex', gap: 6, marginBottom: 14, flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
         {(['all', 'finance', 'comms', 'sales'] as const).map(role => (
           <button
             key={role}
@@ -230,7 +230,7 @@ export function RoleActivityFeed({ maxHeight = 'calc(100vh - 300px)', limit = 50
       </div>
 
       {/* Activity list */}
-      <div style={{ overflowY: 'auto', maxHeight, display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <div style={{ overflowY: 'auto', maxHeight, display: 'flex', flexDirection: 'column', gap: 8 }}>
         {loading ? (
           Array.from({ length: 5 }, (_, i) => (
             <div key={i} style={{ ...listRow, opacity: 0.5 }}>
@@ -242,14 +242,14 @@ export function RoleActivityFeed({ maxHeight = 'calc(100vh - 300px)', limit = 50
             </div>
           ))
         ) : error ? (
-          <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-dim, #475569)', fontSize: 13 }}>
+          <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-dim, #475569)', fontSize: 14 }}>
             Failed to load activity
           </div>
         ) : sortedActivities.length === 0 ? (
           <div style={{ padding: '40px 20px', textAlign: 'center' }}>
             <Activity size={28} style={{ color: 'var(--text-dim, #475569)', marginBottom: 8 }} />
-            <div style={{ fontSize: 13, color: 'var(--text-secondary, #94A3B8)' }}>No role activity yet</div>
-            <div style={{ fontSize: 12, color: 'var(--text-dim, #475569)', marginTop: 4 }}>
+            <div style={{ fontSize: 14, color: 'var(--text-secondary, #94A3B8)' }}>No role activity yet</div>
+            <div style={{ fontSize: 14, color: 'var(--text-dim, #475569)', marginTop: 4 }}>
               Activity will appear as roles process work
             </div>
           </div>
@@ -286,7 +286,7 @@ export function RoleActivityFeed({ maxHeight = 'calc(100vh - 300px)', limit = 50
 
                 {/* Content */}
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)', lineHeight: 1.4 }}>
+                  <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)', lineHeight: 1.4 }}>
                     {item.summary}
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
@@ -295,9 +295,9 @@ export function RoleActivityFeed({ maxHeight = 'calc(100vh - 300px)', limit = 50
                         display: 'inline-flex',
                         alignItems: 'center',
                         padding: '2px 8px',
-                        borderRadius: 6,
-                        fontSize: 10,
-                        fontWeight: 600,
+                        borderRadius: 8,
+                        fontSize: 14,
+                        fontWeight: 500,
                         letterSpacing: '0.02em',
                         background: `${ROLE_COLORS[item.role_type]}15`,
                         color: ROLE_COLORS[item.role_type],
@@ -306,11 +306,11 @@ export function RoleActivityFeed({ maxHeight = 'calc(100vh - 300px)', limit = 50
                       </span>
                     )}
                     {item.confidence != null && (
-                      <span style={{ fontSize: 11, color: 'var(--text-dim, #475569)', fontFamily: 'var(--font-mono)' }}>
+                      <span style={{ fontSize: 14, color: 'var(--text-dim, #475569)', fontFamily: 'var(--font-mono)' }}>
                         {Math.round(item.confidence * 100)}%
                       </span>
                     )}
-                    <span style={{ fontSize: 11, color: 'var(--text-dim, #475569)' }}>
+                    <span style={{ fontSize: 14, color: 'var(--text-dim, #475569)' }}>
                       {timeAgo(item.created_at)}
                     </span>
                   </div>

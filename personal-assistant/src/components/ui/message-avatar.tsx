@@ -87,7 +87,7 @@ export default function MessageAvatar({
   const initialsStyle: React.CSSProperties = {
     color: '#ffffff',
     fontSize: size * 0.4,
-    fontWeight: 600,
+    fontWeight: 500,
     fontFamily:
       'system-ui, -apple-system, sans-serif',
   }
@@ -112,7 +112,7 @@ export default function MessageAvatar({
   const badgeIconStyle: React.CSSProperties = {
     color: '#ffffff',
     fontSize: badgeFontSize,
-    fontWeight: 600,
+    fontWeight: 500,
     fontFamily: 'system-ui, -apple-system, sans-serif',
     lineHeight: 1,
   }

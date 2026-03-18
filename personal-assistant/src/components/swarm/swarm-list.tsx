@@ -66,7 +66,7 @@ export function SwarmList({ onSelectRun }: SwarmListProps) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h2 style={{ fontSize: '18px', fontWeight: 600, color: 'rgba(255,255,255,0.95)', margin: 0 }}>
+        <h2 style={{ fontSize: '16px', fontWeight: 500, color: 'rgba(255,255,255,0.95)', margin: 0 }}>
           Agent Swarms
         </h2>
         <div style={{ display: 'flex', gap: '6px' }}>
@@ -75,10 +75,10 @@ export function SwarmList({ onSelectRun }: SwarmListProps) {
               key={s ?? 'all'}
               onClick={() => setFilter(s)}
               style={{
-                padding: '4px 10px',
-                borderRadius: '6px',
+                padding: '4px 12px',
+                borderRadius: '8px',
                 border: 'none',
-                fontSize: '12px',
+                fontSize: '14px',
                 fontWeight: 500,
                 cursor: 'pointer',
                 background: filter === s ? 'rgba(255,90,31,0.2)' : 'rgba(255,255,255,0.05)',
@@ -106,8 +106,8 @@ export function SwarmList({ onSelectRun }: SwarmListProps) {
           borderRadius: '12px',
           backdropFilter: 'blur(20px)',
         }}>
-          <div style={{ fontSize: '32px', marginBottom: '12px' }}>No swarms yet</div>
-          <p style={{ fontSize: '13px', maxWidth: '300px', margin: '0 auto' }}>
+          <div style={{ fontSize: '16px', marginBottom: '12px' }}>No swarms yet</div>
+          <p style={{ fontSize: '14px', maxWidth: '300px', margin: '0 auto' }}>
             Trigger a swarm from chat: &quot;Prepare for Thomson pitch&quot; or &quot;Onboard Acme Corp&quot;
           </p>
         </div>
@@ -124,7 +124,7 @@ export function SwarmList({ onSelectRun }: SwarmListProps) {
                 padding: '14px 16px',
                 background: 'rgba(15,20,30,0.35)',
                 backdropFilter: 'blur(20px)',
-                borderRadius: '10px',
+                borderRadius: '12px',
                 border: 'none',
                 cursor: 'pointer',
                 textAlign: 'left',
@@ -156,17 +156,17 @@ export function SwarmList({ onSelectRun }: SwarmListProps) {
                 }}>
                   {run.name}
                 </div>
-                <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginTop: '2px' }}>
+                <div style={{ fontSize: '14px', color: 'rgba(255,255,255,0.4)', marginTop: '2px' }}>
                   {formatTime(run.created_at)} · {run.triggered_by}
                 </div>
               </div>
 
               {/* Status badge */}
               <div style={{
-                padding: '3px 8px',
-                borderRadius: '4px',
-                fontSize: '11px',
-                fontWeight: 600,
+                padding: '4px 8px',
+                borderRadius: '8px',
+                fontSize: '14px',
+                fontWeight: 500,
                 textTransform: 'uppercase',
                 letterSpacing: '0.5px',
                 color: STATUS_COLORS[run.status] ?? '#666',
@@ -177,7 +177,7 @@ export function SwarmList({ onSelectRun }: SwarmListProps) {
 
               {/* Cost */}
               <div style={{
-                fontSize: '12px',
+                fontSize: '14px',
                 color: 'rgba(255,255,255,0.3)',
                 fontFamily: 'var(--font-mono, monospace)',
                 minWidth: '50px',

@@ -100,7 +100,7 @@ function ContactAvatar({ meta, size = 40 }: { meta: Record<string, unknown>; siz
         alignItems: 'center',
         justifyContent: 'center',
         fontSize: size * 0.35,
-        fontWeight: 600,
+        fontWeight: 500,
         flexShrink: 0,
         background: 'rgba(96, 165, 250, 0.15)',
         color: '#60a5fa',
@@ -336,7 +336,7 @@ function EntityDetailDrawer({ open, onClose, entityType, entityId }: EntityDetai
                     justifyContent: 'center',
                     width: 36,
                     height: 36,
-                    borderRadius: 10,
+                    borderRadius: 12,
                     backgroundColor: `${TYPE_COLOR[entityType]}20`,
                     color: TYPE_COLOR[entityType],
                   }}
@@ -358,7 +358,7 @@ function EntityDetailDrawer({ open, onClose, entityType, entityId }: EntityDetai
                 </span>
                 {isContact && contactType && (
                   <span style={{
-                    fontSize: 11,
+                    fontSize: 14,
                     fontWeight: 500,
                     color: TYPE_COLOR[entityType],
                     textTransform: 'capitalize',
@@ -372,7 +372,7 @@ function EntityDetailDrawer({ open, onClose, entityType, entityId }: EntityDetai
               onClick={onClose}
               style={{
                 padding: '8px',
-                borderRadius: 10,
+                borderRadius: 12,
                 background: 'transparent',
                 border: '1px solid rgba(255, 255, 255, 0.04)',
                 color: 'var(--text-primary)',
@@ -446,11 +446,11 @@ function EntityDetailDrawer({ open, onClose, entityType, entityId }: EntityDetai
 
                 {/* Related Entities */}
                 {related.length > 0 && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                     <h3 style={{
-                      fontSize: 11,
-                      fontWeight: 600,
-                      letterSpacing: '0.08em',
+                      fontSize: 14,
+                      fontWeight: 500,
+                      letterSpacing: '0.04em',
                       textTransform: 'uppercase',
                       color: 'var(--text-dim)',
                       margin: 0,
@@ -467,7 +467,7 @@ function EntityDetailDrawer({ open, onClose, entityType, entityId }: EntityDetai
                             alignItems: 'center',
                             gap: '12px',
                             borderRadius: 12,
-                            padding: '10px 14px',
+                            padding: '12px 16px',
                             background: 'rgba(20, 28, 40, 0.5)',
                             border: '1px solid rgba(255, 255, 255, 0.03)',
                           }}
@@ -489,7 +489,7 @@ function EntityDetailDrawer({ open, onClose, entityType, entityId }: EntityDetai
                           </div>
                           <div style={{ minWidth: 0, flex: 1 }}>
                             <div style={{
-                              fontSize: 13,
+                              fontSize: 14,
                               fontWeight: 500,
                               color: 'var(--text-primary)',
                               whiteSpace: 'nowrap',
@@ -499,7 +499,7 @@ function EntityDetailDrawer({ open, onClose, entityType, entityId }: EntityDetai
                               {node.label}
                             </div>
                             <div style={{
-                              fontSize: 11,
+                              fontSize: 14,
                               color: 'var(--text-secondary)',
                               textTransform: 'capitalize',
                             }}>
@@ -514,11 +514,11 @@ function EntityDetailDrawer({ open, onClose, entityType, entityId }: EntityDetai
 
                 {/* Timeline */}
                 {timeline.length > 0 && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                     <h3 style={{
-                      fontSize: 11,
-                      fontWeight: 600,
-                      letterSpacing: '0.08em',
+                      fontSize: 14,
+                      fontWeight: 500,
+                      letterSpacing: '0.04em',
                       textTransform: 'uppercase',
                       color: 'var(--text-dim)',
                       margin: 0,
@@ -530,15 +530,15 @@ function EntityDetailDrawer({ open, onClose, entityType, entityId }: EntityDetai
                         key={event.id}
                         style={{
                           display: 'flex',
-                          gap: '10px',
+                          gap: '12px',
                           borderRadius: 12,
-                          padding: '10px 14px',
+                          padding: '12px 16px',
                           background: 'rgba(20, 28, 40, 0.5)',
                           border: '1px solid rgba(255, 255, 255, 0.03)',
                         }}
                       >
                         <div style={{
-                          marginTop: 5,
+                          marginTop: 4,
                           width: 6,
                           height: 6,
                           borderRadius: '50%',
@@ -547,13 +547,13 @@ function EntityDetailDrawer({ open, onClose, entityType, entityId }: EntityDetai
                         }} />
                         <div style={{ minWidth: 0, flex: 1 }}>
                           <div style={{
-                            fontSize: 13,
+                            fontSize: 14,
                             color: 'var(--text-primary)',
                           }}>
                             {formatEventType(event.eventType)}
                           </div>
                           <div style={{
-                            fontSize: 11,
+                            fontSize: 14,
                             color: 'var(--text-secondary)',
                           }}>
                             {formatDate(event.occurredAt)}

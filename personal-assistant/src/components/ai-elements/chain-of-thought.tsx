@@ -85,12 +85,12 @@ export const ChainOfThoughtHeader = memo(
     const headerStyle: CSSProperties = {
       display: "inline-flex",
       alignItems: "center",
-      gap: "6px",
+      gap: "8px",
       cursor: "pointer",
       userSelect: "none",
       padding: "4px 0",
       color: "var(--text-dim)",
-      fontSize: "13px",
+      fontSize: "14px",
       fontWeight: 400,
       fontFamily: "inherit",
       background: "none",
@@ -211,8 +211,8 @@ export const ChainOfThoughtStep = memo(
           display: "flex",
           alignItems: "center",
           gap: 6,
-          fontSize: 12,
-          paddingBottom: 5,
+          fontSize: 14,
+          paddingBottom: 4,
           position: "relative",
           zIndex: 1,
           ...(expandable ? { cursor: "pointer" } : {}),
@@ -277,7 +277,7 @@ export const ChainOfThoughtStep = memo(
             <span
               style={{
                 color: status === "active" ? "var(--text-dim)" : "var(--text-muted)",
-                fontSize: 12,
+                fontSize: 14,
                 fontWeight: 400,
               }}
             >
@@ -287,10 +287,10 @@ export const ChainOfThoughtStep = memo(
               <span
                 style={{
                   display: "inline-flex",
-                  padding: "1px 6px",
-                  borderRadius: 4,
+                  padding: "4px 8px",
+                  borderRadius: 8,
                   background: "var(--hover-bg)",
-                  fontSize: 10,
+                  fontSize: 14,
                   color: "var(--text-muted)",
                   fontStyle: "normal",
                   fontWeight: 400,
@@ -428,7 +428,7 @@ export const ChainOfThoughtSearchResults = memo(
     const wrapperStyle: CSSProperties = {
       display: "flex",
       flexWrap: "wrap",
-      gap: "6px",
+      gap: "8px",
       marginTop: "8px",
       ...style,
     };
@@ -462,8 +462,8 @@ export const ChainOfThoughtSearchResult = memo(
       padding: "4px 8px",
       backgroundColor: "var(--text-muted)",
       opacity: 0.1,
-      borderRadius: "4px",
-      fontSize: "12px",
+      borderRadius: "8px",
+      fontSize: "14px",
       color: "var(--text-secondary)",
       whiteSpace: "nowrap",
       overflow: "hidden",
@@ -510,14 +510,14 @@ export const ChainOfThoughtImage = memo(
       justifyContent: "center",
       maxHeight: "352px",
       overflow: "hidden",
-      borderRadius: "6px",
+      borderRadius: "8px",
       backgroundColor: "var(--text-muted)",
       opacity: 0.05,
       padding: "12px",
     };
 
     const captionStyle: CSSProperties = {
-      fontSize: "12px",
+      fontSize: "14px",
       color: "var(--text-muted)",
       lineHeight: "1.4",
     };

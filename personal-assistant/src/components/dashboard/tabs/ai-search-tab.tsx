@@ -49,8 +49,8 @@ const glassCard: React.CSSProperties = {
 
 const glassInput: React.CSSProperties = {
   width: '100%',
-  padding: '10px 14px',
-  borderRadius: 10,
+  padding: '12px 16px',
+  borderRadius: 12,
   background: 'rgba(13, 17, 23, 0.6)',
   border: '1px solid var(--glass-interactive-border)',
   color: 'var(--text-primary)',
@@ -60,38 +60,38 @@ const glassInput: React.CSSProperties = {
 }
 
 const pillBtn: React.CSSProperties = {
-  padding: '6px 14px',
+  padding: '8px 16px',
   borderRadius: 20,
   background: 'var(--glass-pill-bg)',
   backdropFilter: 'var(--glass-card-blur)',
   WebkitBackdropFilter: 'var(--glass-card-blur)',
   boxShadow: 'var(--glass-card-inset)',
   border: 'none',
-  fontSize: 12,
+  fontSize: 14,
   color: 'var(--text-secondary)',
   cursor: 'pointer',
   transition: 'all 200ms',
 }
 
 const accentBtn: React.CSSProperties = {
-  padding: '10px 20px',
-  borderRadius: 10,
+  padding: '12px 20px',
+  borderRadius: 12,
   background: '#1A1A1B',
   border: 'none',
   color: '#FFFFFF',
-  fontSize: 13,
-  fontWeight: 600,
+  fontSize: 14,
+  fontWeight: 500,
   cursor: 'pointer',
   transition: 'all 200ms',
 }
 
 const ghostBtn: React.CSSProperties = {
   padding: '8px 16px',
-  borderRadius: 10,
+  borderRadius: 12,
   background: 'transparent',
   border: '1px solid var(--glass-interactive-border)',
   color: 'var(--text-primary)',
-  fontSize: 13,
+  fontSize: 14,
   fontWeight: 500,
   cursor: 'pointer',
   transition: 'all 200ms',
@@ -100,7 +100,7 @@ const ghostBtn: React.CSSProperties = {
 const listRow: React.CSSProperties = {
   display: 'flex',
   alignItems: 'center',
-  padding: '12px 18px',
+  padding: '12px 20px',
   borderRadius: 12,
   background: 'var(--glass-pill-bg)',
   backdropFilter: 'var(--glass-blur)',
@@ -112,9 +112,9 @@ const listRow: React.CSSProperties = {
 }
 
 const smallText: React.CSSProperties = {
-  fontSize: 11,
-  fontWeight: 600,
-  letterSpacing: '0.08em',
+  fontSize: 14,
+  fontWeight: 500,
+  letterSpacing: '0.04em',
   textTransform: 'uppercase' as const,
   color: 'var(--text-dim)',
 }
@@ -157,8 +157,8 @@ function ScoreBadge({ score }: { score: number }) {
         padding: '4px 12px',
         borderRadius: 8,
         fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
-        fontSize: 18,
-        fontWeight: 700,
+        fontSize: 16,
+        fontWeight: 500,
         color,
         background: bgColor,
       }}
@@ -191,14 +191,14 @@ function CopyButton({ text }: { text: string }) {
       style={{
         display: 'inline-flex',
         alignItems: 'center',
-        gap: 6,
-        padding: '6px 12px',
+        gap: 8,
+        padding: '8px 12px',
         borderRadius: 8,
         border: '1px solid var(--glass-interactive-border)',
         background: 'var(--glass-interactive-bg)',
         color: copied ? '#22c55e' : 'var(--text-secondary)',
         cursor: 'pointer',
-        fontSize: 12,
+        fontSize: 14,
         fontWeight: 500,
         transition: 'all 200ms',
       }}
@@ -252,7 +252,7 @@ function AuditForm({
   return (
     <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-        <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <label style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <span style={smallText}>Domain</span>
           <input
             type="text"
@@ -275,7 +275,7 @@ function AuditForm({
             }}
           />
         </label>
-        <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <label style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <span style={smallText}>Brand Name</span>
           <input
             type="text"
@@ -299,7 +299,7 @@ function AuditForm({
           />
         </label>
       </div>
-      <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <label style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         <span style={smallText}>Target Queries (one per line)</span>
         <textarea
           value={queries}
@@ -323,7 +323,7 @@ function AuditForm({
           }}
         />
       </label>
-      <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <label style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         <span style={smallText}>Competitors (one per line, optional)</span>
         <textarea
           value={competitors}
@@ -396,13 +396,13 @@ function QueryBreakdown({ results }: { results: QueryResult[] }) {
         style={{
           display: 'grid',
           gridTemplateColumns: '2fr repeat(4, 1fr)',
-          padding: '10px 16px',
-          fontSize: 11,
+          padding: '12px 16px',
+          fontSize: 14,
           color: 'var(--text-dim)',
           textTransform: 'uppercase',
           letterSpacing: 1,
           borderBottom: '1px solid var(--glass-interactive-border)',
-          fontWeight: 600,
+          fontWeight: 500,
         }}
       >
         <span>Query</span>
@@ -429,7 +429,7 @@ function QueryBreakdown({ results }: { results: QueryResult[] }) {
             e.currentTarget.style.background = 'transparent'
           }}
         >
-          <span style={{ fontSize: 13, color: 'var(--text-primary)' }}>{query}</span>
+          <span style={{ fontSize: 14, color: 'var(--text-primary)' }}>{query}</span>
           {['perplexity', 'chatgpt-search', 'gemini', 'copilot'].map((src) => {
             const match = sources.find((s) => s.source === src)
             const pos = match?.position ?? 'absent'
@@ -437,7 +437,7 @@ function QueryBreakdown({ results }: { results: QueryResult[] }) {
               <span
                 key={src}
                 style={{
-                  fontSize: 12,
+                  fontSize: 14,
                   fontWeight: 500,
                   color: POSITION_COLORS[pos],
                 }}
@@ -474,13 +474,13 @@ function CompetitorTable({
         style={{
           display: 'grid',
           gridTemplateColumns: '2fr 1fr 1fr',
-          padding: '10px 16px',
-          fontSize: 11,
+          padding: '12px 16px',
+          fontSize: 14,
           color: 'var(--text-dim)',
           textTransform: 'uppercase',
           letterSpacing: 1,
           borderBottom: '1px solid var(--glass-interactive-border)',
-          fontWeight: 600,
+          fontWeight: 500,
         }}
       >
         <span>Competitor</span>
@@ -507,12 +507,12 @@ function CompetitorTable({
               e.currentTarget.style.background = 'transparent'
             }}
           >
-            <span style={{ fontSize: 13, color: 'var(--text-primary)' }}>{name}</span>
+            <span style={{ fontSize: 14, color: 'var(--text-primary)' }}>{name}</span>
             <span
               style={{
                 fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
                 color: 'var(--text-secondary)',
-                fontSize: 13,
+                fontSize: 14,
               }}
             >
               {score}
@@ -521,7 +521,7 @@ function CompetitorTable({
               style={{
                 fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
                 color: diff > 0 ? '#ef4444' : diff < 0 ? '#22c55e' : 'rgba(255,255,255,0.5)',
-                fontSize: 13,
+                fontSize: 14,
               }}
             >
               {diff > 0 ? '+' : ''}{diff}
@@ -721,7 +721,7 @@ function SchemaGenerator() {
             <span
               style={{
                 fontSize: 14,
-                fontWeight: 600,
+                fontWeight: 500,
                 color: 'var(--text-primary)',
               }}
             >
@@ -733,7 +733,7 @@ function SchemaGenerator() {
             style={{
               ...glassCard,
               color: 'rgba(165, 243, 252, 0.9)',
-              fontSize: 12,
+              fontSize: 14,
               fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
               overflow: 'auto',
               maxHeight: 400,
@@ -745,7 +745,7 @@ function SchemaGenerator() {
             {result.htmlSnippet}
           </pre>
           {result.validationNotes.length > 0 && (
-            <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+            <div style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
               {result.validationNotes.map((note, i) => (
                 <div key={i}>- {note}</div>
               ))}
@@ -824,7 +824,7 @@ function AISearchTab() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 8 }}>
                 <ScoreBadge score={auditResult.overallScore} />
                 <TrendArrow current={auditResult.overallScore} previous={previousScore} />
-                <span style={{ fontSize: 12, color: 'var(--text-dim)' }}>/100</span>
+                <span style={{ fontSize: 14, color: 'var(--text-dim)' }}>/100</span>
               </div>
             </div>
 
@@ -833,8 +833,8 @@ function AISearchTab() {
               <div style={smallText}>Queries Tracked</div>
               <div
                 style={{
-                  fontSize: 28,
-                  fontWeight: 700,
+                  fontSize: 16,
+                  fontWeight: 500,
                   color: 'var(--text-primary)',
                   fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
                   marginTop: 8,
@@ -849,8 +849,8 @@ function AISearchTab() {
               <div style={smallText}>Mentioned</div>
               <div
                 style={{
-                  fontSize: 28,
-                  fontWeight: 700,
+                  fontSize: 16,
+                  fontWeight: 500,
                   color: '#22c55e',
                   fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
                   marginTop: 8,
@@ -865,8 +865,8 @@ function AISearchTab() {
               <div style={smallText}>Absent</div>
               <div
                 style={{
-                  fontSize: 28,
-                  fontWeight: 700,
+                  fontSize: 16,
+                  fontWeight: 500,
                   color: '#ef4444',
                   fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
                   marginTop: 8,
@@ -890,8 +890,8 @@ function AISearchTab() {
                 ...pillBtn,
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: 6,
-                padding: '6px 14px',
+                gap: 8,
+                padding: '8px 16px',
                 color:
                   activePanel === btn.id
                     ? 'var(--text-primary)'
@@ -920,7 +920,7 @@ function AISearchTab() {
               <h3
                 style={{
                   fontSize: 14,
-                  fontWeight: 600,
+                  fontWeight: 500,
                   color: 'var(--text-primary)',
                   marginTop: 0,
                   marginBottom: 16,
@@ -938,7 +938,7 @@ function AISearchTab() {
                   <h3
                     style={{
                       fontSize: 14,
-                      fontWeight: 600,
+                      fontWeight: 500,
                       color: 'var(--text-primary)',
                       marginBottom: 12,
                       marginTop: 0,
@@ -955,7 +955,7 @@ function AISearchTab() {
                     <h3
                       style={{
                         fontSize: 14,
-                        fontWeight: 600,
+                        fontWeight: 500,
                         color: 'var(--text-primary)',
                         marginBottom: 12,
                         marginTop: 0,
@@ -975,7 +975,7 @@ function AISearchTab() {
                   <h3
                     style={{
                       fontSize: 14,
-                      fontWeight: 600,
+                      fontWeight: 500,
                       color: 'var(--text-primary)',
                       marginBottom: 12,
                       marginTop: 0,
@@ -1003,7 +1003,7 @@ function AISearchTab() {
                       >
                         <span
                           style={{
-                            fontSize: 13,
+                            fontSize: 14,
                             color: 'var(--text-secondary)',
                             lineHeight: 1.6,
                           }}
@@ -1024,7 +1024,7 @@ function AISearchTab() {
             <h3
               style={{
                 fontSize: 14,
-                fontWeight: 600,
+                fontWeight: 500,
                 color: 'var(--text-primary)',
                 marginTop: 0,
                 marginBottom: 12,
@@ -1034,7 +1034,7 @@ function AISearchTab() {
             </h3>
             <p
               style={{
-                fontSize: 13,
+                fontSize: 14,
                 color: 'var(--text-secondary)',
                 marginBottom: 16,
                 lineHeight: 1.6,
@@ -1046,7 +1046,7 @@ function AISearchTab() {
             </p>
             {auditResult ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+                <p style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
                   Based on your audit, focus content on these absent/partial queries:
                 </p>
                 {auditResult.queryResults
@@ -1067,7 +1067,7 @@ function AISearchTab() {
                         e.currentTarget.style.background = 'var(--glass-pill-bg)'
                       }}
                     >
-                      <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+                      <span style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
                         Create a dedicated FAQ page for: <strong>&quot;{query}&quot;</strong>
                       </span>
                     </div>
@@ -1076,7 +1076,7 @@ function AISearchTab() {
             ) : (
               <p
                 style={{
-                  fontSize: 13,
+                  fontSize: 14,
                   color: 'var(--text-dim)',
                   fontStyle: 'italic',
                 }}
@@ -1092,7 +1092,7 @@ function AISearchTab() {
             <h3
               style={{
                 fontSize: 14,
-                fontWeight: 600,
+                fontWeight: 500,
                 color: 'var(--text-primary)',
                 marginTop: 0,
                 marginBottom: 12,
@@ -1102,7 +1102,7 @@ function AISearchTab() {
             </h3>
             <p
               style={{
-                fontSize: 13,
+                fontSize: 14,
                 color: 'var(--text-secondary)',
                 marginBottom: 16,
                 lineHeight: 1.6,

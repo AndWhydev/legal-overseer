@@ -27,7 +27,7 @@ const styles = {
   },
   templateName: {
     fontSize: '14px',
-    fontWeight: 600,
+    fontWeight: 500,
     color: 'rgba(255, 255, 255, 0.9)',
     letterSpacing: '-0.01em',
   },
@@ -47,14 +47,14 @@ const styles = {
     return {
       padding: '2px 8px',
       borderRadius: '9999px',
-      fontSize: '11px',
+      fontSize: '14px',
       fontWeight: 500,
       background: c.bg,
       color: c.text,
     };
   },
   triggerText: {
-    fontSize: '13px',
+    fontSize: '14px',
     color: 'rgba(255, 255, 255, 0.5)',
     lineHeight: 1.5,
     overflow: 'hidden' as const,
@@ -65,14 +65,14 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     gap: '16px',
-    marginTop: '10px',
+    marginTop: '12px',
   },
   meta: {
-    fontSize: '11px',
+    fontSize: '14px',
     color: 'rgba(255, 255, 255, 0.3)',
   },
   costBadge: {
-    fontSize: '11px',
+    fontSize: '14px',
     color: 'rgba(255, 90, 31, 0.7)',
     fontFamily: 'var(--font-mono, monospace)',
   },

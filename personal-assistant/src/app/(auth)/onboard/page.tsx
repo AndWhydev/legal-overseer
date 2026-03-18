@@ -721,16 +721,16 @@ export default function OnboardPage() {
                     background: 'rgba(127, 178, 140, 0.08)',
                     border: '1px solid rgba(127, 178, 140, 0.2)',
                     borderRadius: 12,
-                    padding: '14px 18px',
+                    padding: '16px 20px',
                     marginTop: 16,
                   }}>
-                    <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#7fb28c', marginBottom: 6 }}>
+                    <div style={{ fontSize: 14, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#7fb28c', marginBottom: 8 }}>
                       BitBit already found
                     </div>
-                    <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>
+                    <div style={{ fontSize: 16, fontWeight: 500, color: 'var(--text-primary)' }}>
                       {firstValue.headline}
                     </div>
-                    <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 2 }}>
+                    <div style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 2 }}>
                       {firstValue.detail} — via {firstValue.source}
                     </div>
                   </div>
@@ -791,13 +791,13 @@ export default function OnboardPage() {
             display: 'flex',
             alignItems: 'center',
             gap: 6,
-            padding: '8px 14px',
+            padding: '8px 16px',
             borderRadius: 20,
             background: 'rgba(255,255,255,0.06)',
             backdropFilter: 'blur(8px)',
             border: '1px solid rgba(255,255,255,0.1)',
             color: 'var(--text-secondary)',
-            fontSize: 13,
+            fontSize: 14,
             textDecoration: 'none',
             transition: 'background 0.2s',
           }}

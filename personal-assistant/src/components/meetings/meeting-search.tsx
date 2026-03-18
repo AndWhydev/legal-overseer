@@ -46,7 +46,7 @@ export function MeetingSearch({ onSelectMeeting }: MeetingSearchProps) {
     const parts = text.split(regex)
     return parts.map((part, i) =>
       regex.test(part)
-        ? <mark key={i} style={{ background: 'rgba(255, 90, 31, 0.3)', color: '#FF7A45', borderRadius: 2, padding: '0 1px' }}>{part}</mark>
+        ? <mark key={i} style={{ background: 'rgba(255, 90, 31, 0.3)', color: '#FF7A45', borderRadius: 8, padding: '0 4px' }}>{part}</mark>
         : part
     )
   }
@@ -74,8 +74,8 @@ export function MeetingSearch({ onSelectMeeting }: MeetingSearchProps) {
             placeholder="Search across all meeting transcripts..."
             style={{
               width: '100%',
-              padding: '10px 14px 10px 36px',
-              borderRadius: 10,
+              padding: '12px 16px 12px 36px',
+              borderRadius: 12,
               background: 'rgba(13, 17, 23, 0.6)',
               border: '1px solid rgba(255, 255, 255, 0.06)',
               color: 'var(--text-primary, #F1F5F9)',
@@ -89,13 +89,13 @@ export function MeetingSearch({ onSelectMeeting }: MeetingSearchProps) {
           onClick={handleSearch}
           disabled={!query.trim() || searching}
           style={{
-            padding: '10px 18px',
-            borderRadius: 10,
+            padding: '12px 20px',
+            borderRadius: 12,
             background: query.trim() ? '#FF5A1F' : 'rgba(255, 90, 31, 0.3)',
             border: 'none',
             color: query.trim() ? '#000' : 'rgba(0, 0, 0, 0.5)',
-            fontSize: 13,
-            fontWeight: 600,
+            fontSize: 14,
+            fontWeight: 500,
             cursor: query.trim() ? 'pointer' : 'not-allowed',
             transition: 'all 200ms',
           }}
@@ -106,13 +106,13 @@ export function MeetingSearch({ onSelectMeeting }: MeetingSearchProps) {
 
       {/* Results */}
       {searching && (
-        <div style={{ padding: 20, textAlign: 'center', color: 'var(--text-dim, #475569)', fontSize: 13 }}>
+        <div style={{ padding: 20, textAlign: 'center', color: 'var(--text-dim, #475569)', fontSize: 14 }}>
           Searching transcripts...
         </div>
       )}
 
       {!searching && searched && results.length === 0 && (
-        <div style={{ padding: 20, textAlign: 'center', color: 'var(--text-dim, #475569)', fontSize: 13 }}>
+        <div style={{ padding: 20, textAlign: 'center', color: 'var(--text-dim, #475569)', fontSize: 14 }}>
           No results found for &ldquo;{query}&rdquo;
         </div>
       )}
@@ -130,7 +130,7 @@ export function MeetingSearch({ onSelectMeeting }: MeetingSearchProps) {
           <div style={{
             padding: '12px 16px',
             borderBottom: '1px solid rgba(255, 255, 255, 0.03)',
-            fontSize: 12,
+            fontSize: 14,
             color: 'var(--text-dim, #475569)',
           }}>
             {results.length} result{results.length !== 1 ? 's' : ''} across transcripts
@@ -140,7 +140,7 @@ export function MeetingSearch({ onSelectMeeting }: MeetingSearchProps) {
               key={i}
               onClick={() => onSelectMeeting(result.meeting_id)}
               style={{
-                padding: '14px 16px',
+                padding: '12px 16px',
                 borderBottom: i < results.length - 1 ? '1px solid rgba(255, 255, 255, 0.03)' : 'none',
                 cursor: 'pointer',
                 transition: 'background 200ms',
@@ -149,20 +149,20 @@ export function MeetingSearch({ onSelectMeeting }: MeetingSearchProps) {
               onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
             >
               <div className="flex items-center gap-2 mb-1">
-                <span style={{ fontSize: 13, fontWeight: 500, color: '#FF7A45' }}>
+                <span style={{ fontSize: 14, fontWeight: 500, color: '#FF7A45' }}>
                   {result.meeting_title}
                 </span>
-                <span style={{ fontSize: 11, color: 'var(--text-dim, #475569)', fontFamily: 'var(--font-mono, monospace)' }}>
+                <span style={{ fontSize: 14, color: 'var(--text-dim, #475569)', fontFamily: 'var(--font-mono, monospace)' }}>
                   {formatTime(result.start_time_ms)}
                 </span>
                 {result.speaker_label && (
-                  <span style={{ fontSize: 11, color: 'var(--text-dim, #475569)' }}>
+                  <span style={{ fontSize: 14, color: 'var(--text-dim, #475569)' }}>
                     &middot; {result.speaker_label}
                   </span>
                 )}
               </div>
               <p style={{
-                fontSize: 13,
+                fontSize: 14,
                 color: 'var(--text-primary, #F1F5F9)',
                 margin: 0,
                 lineHeight: 1.5,

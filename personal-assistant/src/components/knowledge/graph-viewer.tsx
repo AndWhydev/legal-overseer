@@ -478,7 +478,7 @@ const GraphViewer: React.FC<Props> = ({ nodes, edges, onNodeClick, height = 420 
                   y={radius + 14}
                   textAnchor="middle"
                   fill="#cbd5e1"
-                  fontSize="10"
+                  fontSize="14"
                   fontFamily="Arial, sans-serif"
                   opacity={0.85}
                   style={{ pointerEvents: 'none', textShadow: '0 1px 3px rgba(0,0,0,0.8)' }}
@@ -498,7 +498,7 @@ const GraphViewer: React.FC<Props> = ({ nodes, edges, onNodeClick, height = 420 
         left: 12,
         display: 'flex',
         gap: 12,
-        fontSize: 10,
+        fontSize: 14,
         color: '#94a3b8',
       }}>
         {[
@@ -518,7 +518,7 @@ const GraphViewer: React.FC<Props> = ({ nodes, edges, onNodeClick, height = 420 
         position: 'absolute',
         bottom: 12,
         right: 12,
-        fontSize: 10,
+        fontSize: 14,
         color: '#475569',
       }}>
         {nodes.length} nodes · {edges.length} edges

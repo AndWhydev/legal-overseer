@@ -92,8 +92,8 @@ export function PortalNotificationBell({ accessId, primaryColor }: PortalNotific
               borderRadius: '50%',
               background: primaryColor,
               color: '#FFFFFF',
-              fontSize: 10,
-              fontWeight: 600,
+              fontSize: 14,
+              fontWeight: 500,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -129,7 +129,7 @@ export function PortalNotificationBell({ accessId, primaryColor }: PortalNotific
               zIndex: 50,
             }}
           >
-            <div style={{ padding: '14px 16px', borderBottom: '1px solid #F3F4F6', fontWeight: 600, fontSize: 14, color: '#111827' }}>
+            <div style={{ padding: '12px 16px', borderBottom: '1px solid #F3F4F6', fontWeight: 500, fontSize: 14, color: '#111827' }}>
               Notifications
             </div>
             {notifications.length === 0 ? (
@@ -150,9 +150,9 @@ export function PortalNotificationBell({ accessId, primaryColor }: PortalNotific
                     {n.title}
                   </p>
                   {n.body && (
-                    <p style={{ fontSize: 13, color: '#6B7280', margin: '4px 0 0' }}>{n.body}</p>
+                    <p style={{ fontSize: 14, color: '#6B7280', margin: '4px 0 0' }}>{n.body}</p>
                   )}
-                  <p style={{ fontSize: 12, color: '#9CA3AF', margin: '6px 0 0' }}>
+                  <p style={{ fontSize: 14, color: '#9CA3AF', margin: '8px 0 0' }}>
                     {formatRelative(n.created_at)}
                   </p>
                 </div>

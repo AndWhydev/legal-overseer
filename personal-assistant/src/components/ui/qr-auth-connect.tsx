@@ -336,7 +336,7 @@ export function QrAuthConnect({ sessionId, serviceName, onConnected, onError }: 
             </div>
             {phoneNumber && (
               <span style={{
-                fontSize: 13,
+                fontSize: 14,
                 fontWeight: 400,
                 color: 'var(--text-secondary)',
                 letterSpacing: '0.02em',
@@ -380,7 +380,7 @@ export function QrAuthConnect({ sessionId, serviceName, onConnected, onError }: 
                 {errorMsg || 'Something went wrong'}
               </span>
               <span style={{
-                fontSize: 13,
+                fontSize: 14,
                 color: 'var(--text-secondary)',
               }}>
                 Check your connection and try again.
@@ -408,13 +408,13 @@ export function QrAuthConnect({ sessionId, serviceName, onConnected, onError }: 
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: 6,
-                padding: '8px 18px',
+                gap: 8,
+                padding: '8px 20px',
                 borderRadius: 20,
                 border: '1px solid var(--glass-interactive-border)',
                 background: 'var(--glass-interactive-bg)',
                 color: 'var(--text-primary)',
-                fontSize: 13,
+                fontSize: 14,
                 fontWeight: 500,
                 cursor: 'pointer',
                 transition: 'background 200ms ease, border-color 200ms ease',
@@ -436,7 +436,7 @@ export function QrAuthConnect({ sessionId, serviceName, onConnected, onError }: 
 
         {/* ─── Single status line ─── */}
         <span style={{
-          fontSize: 13,
+          fontSize: 14,
           fontWeight: phase === 'connected' ? 500 : 400,
           color: phase === 'connected'
             ? 'var(--status-success-fg)'

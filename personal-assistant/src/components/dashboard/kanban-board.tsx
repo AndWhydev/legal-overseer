@@ -539,7 +539,7 @@ export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: Kanb
           }}
         >
           <span style={{
-            fontSize: 13,
+            fontSize: 14,
             fontWeight: 500,
             color: 'var(--text-secondary)',
             flex: 1,
@@ -552,9 +552,9 @@ export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: Kanb
               background: 'var(--hover-bg-strong)',
               border: 'none',
               borderRadius: 8,
-              padding: '6px 12px',
-              fontSize: 12,
-              fontWeight: 600,
+              padding: '8px 12px',
+              fontSize: 14,
+              fontWeight: 500,
               color: 'var(--text-primary)',
               cursor: 'pointer',
               flexShrink: 0,

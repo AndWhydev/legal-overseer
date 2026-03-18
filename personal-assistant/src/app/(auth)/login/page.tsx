@@ -347,7 +347,7 @@ function DevPasswordLogin() {
         onClick={() => setExpanded(!expanded)}
         style={{
           background: 'none', border: 'none', color: '#64748b',
-          fontSize: 11, fontFamily: 'monospace', cursor: 'pointer',
+          fontSize: 14, fontFamily: 'monospace', cursor: 'pointer',
           display: 'flex', alignItems: 'center', gap: 4, padding: 0,
         }}
       >

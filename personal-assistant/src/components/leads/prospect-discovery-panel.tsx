@@ -78,13 +78,13 @@ export function ProspectDiscoveryPanel({ open, onClose }: ProspectDiscoveryPanel
           alignItems: 'center',
           justifyContent: 'space-between',
         }}>
-          <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+          <h2 style={{ fontSize: 16, fontWeight: 500, color: 'var(--text-primary)', margin: 0 }}>
             Discover Prospects
           </h2>
           <button
             onClick={handleClose}
             style={{
-              padding: 6,
+              padding: 8,
               borderRadius: 8,
               border: 'none',
               background: 'var(--hover-bg)',
@@ -102,7 +102,7 @@ export function ProspectDiscoveryPanel({ open, onClose }: ProspectDiscoveryPanel
           {!job && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div>
-                <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-dim)', display: 'block', marginBottom: 6 }}>
+                <label style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-dim)', display: 'block', marginBottom: 8 }}>
                   Business Type
                 </label>
                 <input
@@ -112,19 +112,19 @@ export function ProspectDiscoveryPanel({ open, onClose }: ProspectDiscoveryPanel
                   placeholder="plumber, accountant, buyer's agent"
                   style={{
                     width: '100%',
-                    padding: '10px 14px',
-                    borderRadius: 10,
+                    padding: '12px 16px',
+                    borderRadius: 12,
                     border: '1px solid var(--border-subtle)',
                     background: 'var(--bb-surface)',
                     color: 'var(--text-primary)',
-                    fontSize: 13,
+                    fontSize: 14,
                     outline: 'none',
                   }}
                 />
               </div>
 
               <div>
-                <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-dim)', display: 'block', marginBottom: 6 }}>
+                <label style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-dim)', display: 'block', marginBottom: 8 }}>
                   Location
                 </label>
                 <input
@@ -134,19 +134,19 @@ export function ProspectDiscoveryPanel({ open, onClose }: ProspectDiscoveryPanel
                   placeholder="Brisbane, QLD"
                   style={{
                     width: '100%',
-                    padding: '10px 14px',
-                    borderRadius: 10,
+                    padding: '12px 16px',
+                    borderRadius: 12,
                     border: '1px solid var(--border-subtle)',
                     background: 'var(--bb-surface)',
                     color: 'var(--text-primary)',
-                    fontSize: 13,
+                    fontSize: 14,
                     outline: 'none',
                   }}
                 />
               </div>
 
               <div>
-                <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-dim)', display: 'block', marginBottom: 6 }}>
+                <label style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-dim)', display: 'block', marginBottom: 8 }}>
                   Limit
                 </label>
                 <input
@@ -157,12 +157,12 @@ export function ProspectDiscoveryPanel({ open, onClose }: ProspectDiscoveryPanel
                   max={50}
                   style={{
                     width: 80,
-                    padding: '10px 14px',
-                    borderRadius: 10,
+                    padding: '12px 16px',
+                    borderRadius: 12,
                     border: '1px solid var(--border-subtle)',
                     background: 'var(--bb-surface)',
                     color: 'var(--text-primary)',
-                    fontSize: 13,
+                    fontSize: 14,
                     outline: 'none',
                   }}
                 />
@@ -176,7 +176,8 @@ export function ProspectDiscoveryPanel({ open, onClose }: ProspectDiscoveryPanel
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: 8,
-                  padding: '12px 24px',
+                  height: 40,
+                  padding: '0 24px',
                   borderRadius: 12,
                   border: 'none',
                   background: businessType.trim() && location.trim()
@@ -184,7 +185,7 @@ export function ProspectDiscoveryPanel({ open, onClose }: ProspectDiscoveryPanel
                     : 'var(--hover-bg)',
                   color: businessType.trim() && location.trim() ? '#fff' : 'var(--text-dim)',
                   fontSize: 14,
-                  fontWeight: 600,
+                  fontWeight: 500,
                   cursor: businessType.trim() && location.trim() ? 'pointer' : 'not-allowed',
                   marginTop: 8,
                 }}
@@ -200,23 +201,23 @@ export function ProspectDiscoveryPanel({ open, onClose }: ProspectDiscoveryPanel
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, padding: '40px 0' }}>
               <Loader2 style={{ width: 32, height: 32, color: 'var(--bb-cyan)', animation: 'spin 1s linear infinite' }} />
               <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 4 }}>
+                <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)', marginBottom: 4 }}>
                   {job.status === 'searching' ? 'Searching...' : job.status === 'enriching' ? 'Enriching...' : 'Scoring...'}
                 </div>
-                <div style={{ fontSize: 12, color: 'var(--text-dim)' }}>{job.message}</div>
+                <div style={{ fontSize: 14, color: 'var(--text-dim)' }}>{job.message}</div>
               </div>
               <div style={{
                 width: '100%',
                 maxWidth: 300,
                 height: 4,
-                borderRadius: 2,
+                borderRadius: 8,
                 background: 'var(--hover-bg)',
                 overflow: 'hidden',
               }}>
                 <div style={{
                   width: `${job.progress}%`,
                   height: '100%',
-                  borderRadius: 2,
+                  borderRadius: 8,
                   background: 'var(--bb-cyan)',
                   transition: 'width 0.3s ease',
                 }} />
@@ -229,16 +230,19 @@ export function ProspectDiscoveryPanel({ open, onClose }: ProspectDiscoveryPanel
           {/* Error State */}
           {job?.status === 'error' && (
             <div style={{ padding: '24px 0', textAlign: 'center' }}>
-              <div style={{ fontSize: 13, color: 'var(--bb-red)', marginBottom: 12 }}>{job.error}</div>
+              <div style={{ fontSize: 14, color: 'var(--bb-red)', marginBottom: 12 }}>{job.error}</div>
               <button
                 onClick={reset}
                 style={{
-                  padding: '8px 16px',
+                  height: 40,
+                  padding: '0 20px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
                   borderRadius: 8,
                   border: '1px solid var(--border-active)',
                   background: 'transparent',
                   color: 'var(--text-secondary)',
-                  fontSize: 12,
+                  fontSize: 14,
                   cursor: 'pointer',
                 }}
               >
@@ -251,18 +255,18 @@ export function ProspectDiscoveryPanel({ open, onClose }: ProspectDiscoveryPanel
           {job?.status === 'complete' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
+                <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>
                   {job.results.length} prospects found
                 </span>
                 <button
                   onClick={reset}
                   style={{
-                    padding: '6px 12px',
+                    padding: '8px 12px',
                     borderRadius: 8,
                     border: '1px solid var(--border-subtle)',
                     background: 'transparent',
                     color: 'var(--text-dim)',
-                    fontSize: 11,
+                    fontSize: 14,
                     cursor: 'pointer',
                   }}
                 >

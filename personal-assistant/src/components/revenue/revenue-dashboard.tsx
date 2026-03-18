@@ -28,8 +28,8 @@ const tabBarStyle: React.CSSProperties = {
 const tabStyle = (active: boolean): React.CSSProperties => ({
   padding: '8px 16px',
   borderRadius: 'var(--radius-md)',
-  fontSize: 12,
-  fontWeight: 600,
+  fontSize: 14,
+  fontWeight: 500,
   color: active ? 'var(--text-on-accent)' : 'var(--text-secondary)',
   background: active ? 'var(--bb-orange)' : 'transparent',
   border: 'none',

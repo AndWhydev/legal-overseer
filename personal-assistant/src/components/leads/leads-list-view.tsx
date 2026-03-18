@@ -23,8 +23,8 @@ const PROGRESS_STAGES: Array<{ status: LeadStatus; label: string }> = [
 ]
 
 const sectionLabel: React.CSSProperties = {
-  fontSize: 11, fontWeight: 600, textTransform: 'uppercase',
-  letterSpacing: '0.06em', color: 'var(--text-dim)', margin: '0 0 8px',
+  fontSize: 14, fontWeight: 500, textTransform: 'uppercase',
+  letterSpacing: '0.04em', color: 'var(--text-dim)', margin: '0 0 8px',
 }
 
 interface LeadsListViewProps {
@@ -43,7 +43,7 @@ function getActivityDot(lastActivityAt: string | null): { color: string; pulse: 
 }
 
 const glassRow: React.CSSProperties = {
-  borderRadius: 14,
+  borderRadius: 12,
   background: 'var(--glass-card-bg-light)',
   backdropFilter: 'var(--glass-card-blur)',
   WebkitBackdropFilter: 'var(--glass-card-blur)',
@@ -54,9 +54,9 @@ const glassRow: React.CSSProperties = {
 }
 
 const quickBtnStyle: React.CSSProperties = {
-  padding: '4px 8px', borderRadius: 6, border: 'none',
+  padding: '4px 8px', borderRadius: 8, border: 'none',
   background: 'rgba(255, 255, 255, 0.06)', color: 'var(--text-dim)',
-  cursor: 'pointer', fontSize: 11, display: 'flex', alignItems: 'center', gap: 3,
+  cursor: 'pointer', fontSize: 14, display: 'flex', alignItems: 'center', gap: 4,
 }
 
 function LeadDetailPanel({ lead, onAdvanceStage }: { lead: EnhancedLeadData; onAdvanceStage: (id: string, e: React.MouseEvent) => void }) {
@@ -71,15 +71,15 @@ function LeadDetailPanel({ lead, onAdvanceStage }: { lead: EnhancedLeadData; onA
       animation: `bb-detail-enter 180ms ${SPRING} both`,
     }}>
       {/* Progress bar */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
         {PROGRESS_STAGES.map((stage, i) => (
           <div key={stage.status} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
             <div style={{
-              height: 3, width: '100%', borderRadius: 99,
+              height: 3, width: '100%', borderRadius: 9999,
               background: isLost ? '#71717a' : (i <= stageIdx ? '#22C55E' : 'var(--glass-hover-bg)'),
               transition: `background 200ms ${SPRING}`,
             }} />
-            <span style={{ fontSize: 10, fontWeight: 500, color: i <= stageIdx ? 'var(--text-primary)' : 'var(--text-dim)' }}>{stage.label}</span>
+            <span style={{ fontSize: 14, fontWeight: 500, color: i <= stageIdx ? 'var(--text-primary)' : 'var(--text-dim)' }}>{stage.label}</span>
           </div>
         ))}
       </div>
@@ -89,7 +89,7 @@ function LeadDetailPanel({ lead, onAdvanceStage }: { lead: EnhancedLeadData; onA
         {lead.status !== 'converted' && lead.status !== 'lost' && (
           <button
             onClick={(e) => onAdvanceStage(lead.id, e)}
-            style={{ padding: '10px 16px', borderRadius: 10, border: 'none', background: 'rgba(34, 197, 94, 0.1)', color: '#86efac', fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+            style={{ height: 40, padding: '0 20px', borderRadius: 12, border: 'none', background: 'rgba(34, 197, 94, 0.1)', color: '#86efac', fontSize: 14, fontWeight: 500, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
             onMouseEnter={e => { e.currentTarget.style.filter = 'brightness(1.3)' }}
             onMouseLeave={e => { e.currentTarget.style.filter = 'brightness(1)' }}
           >
@@ -112,8 +112,8 @@ function LeadDetailPanel({ lead, onAdvanceStage }: { lead: EnhancedLeadData; onA
       {(lead.prospect_phone || (lead.prospect_emails && lead.prospect_emails.length > 0)) && (
         <div>
           <h4 style={sectionLabel}>Contact</h4>
-          {lead.prospect_phone && <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Phone: <span style={{ color: 'var(--text-primary)' }}>{lead.prospect_phone}</span></div>}
-          {lead.prospect_emails?.map(em => <div key={em} style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Email: <span style={{ color: 'var(--text-primary)' }}>{em}</span></div>)}
+          {lead.prospect_phone && <div style={{ fontSize: 14, color: 'var(--text-secondary)' }}>Phone: <span style={{ color: 'var(--text-primary)' }}>{lead.prospect_phone}</span></div>}
+          {lead.prospect_emails?.map(em => <div key={em} style={{ fontSize: 14, color: 'var(--text-secondary)' }}>Email: <span style={{ color: 'var(--text-primary)' }}>{em}</span></div>)}
         </div>
       )}
 
@@ -121,7 +121,7 @@ function LeadDetailPanel({ lead, onAdvanceStage }: { lead: EnhancedLeadData; onA
       {lead.notes && (
         <div>
           <h4 style={sectionLabel}>Notes</h4>
-          <div style={{ padding: '10px 14px', borderRadius: 10, background: 'var(--hover-bg)', fontSize: 12, color: 'var(--text-secondary)', whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>{lead.notes}</div>
+          <div style={{ padding: '12px 16px', borderRadius: 12, background: 'var(--hover-bg)', fontSize: 14, color: 'var(--text-secondary)', whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>{lead.notes}</div>
         </div>
       )}
     </div>
@@ -144,7 +144,7 @@ export function LeadsListView({ leads, onSelectLead, onAdvanceStage }: LeadsList
   }, [])
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       {leads.map((lead, index) => {
         const expanded = expandedId === lead.id
         const activity = getActivityDot(lead.last_activity_at)
@@ -176,19 +176,19 @@ export function LeadsListView({ leads, onSelectLead, onAdvanceStage }: LeadsList
               }} />
 
               {/* Name */}
-              <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <span style={{ flex: 1, fontSize: 14, fontWeight: 500, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {displayName}
               </span>
 
               <StatusPill variant={SCORE_VARIANT[lead.score] ?? 'neutral'} label={lead.score} dot />
 
-              <span style={{ fontSize: 12, fontFamily: 'var(--font-mono)', fontWeight: 600, color: 'var(--text-secondary)', minWidth: 60, textAlign: 'right' }}>
+              <span style={{ fontSize: 14, fontFamily: 'var(--font-mono)', fontWeight: 500, color: 'var(--text-secondary)', minWidth: 60, textAlign: 'right' }}>
                 {formatCurrency(lead.estimated_value)}
               </span>
 
               <StatusPill variant={STATUS_VARIANT[lead.status] ?? 'neutral'} label={lead.status} />
 
-              <span style={{ fontSize: 11, color: 'var(--text-dim)', minWidth: 50, textAlign: 'right' }}>
+              <span style={{ fontSize: 14, color: 'var(--text-dim)', minWidth: 50, textAlign: 'right' }}>
                 {lead.last_activity_at ? relativeTime(lead.last_activity_at) : '—'}
               </span>
 

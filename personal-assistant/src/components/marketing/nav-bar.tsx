@@ -37,8 +37,8 @@ export function NavBar() {
         <Link
           href="/"
           style={{
-            fontSize: '20px',
-            fontWeight: 700,
+            fontSize: '16px',
+            fontWeight: 500,
             color: '#F1F5F9',
             textDecoration: 'none',
             display: 'flex',
@@ -46,7 +46,7 @@ export function NavBar() {
             gap: '8px',
           }}
         >
-          <span style={{ fontSize: '24px' }}>🤖</span>
+          <span style={{ fontSize: '16px' }}>🤖</span>
           BitBit
         </Link>
 
@@ -151,7 +151,7 @@ export function NavBar() {
                 color: '#000',
                 textDecoration: 'none',
                 fontSize: '14px',
-                fontWeight: 600,
+                fontWeight: 500,
                 transition: 'all 200ms',
                 cursor: 'pointer',
                 display: 'inline-block',
