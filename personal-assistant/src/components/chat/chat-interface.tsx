@@ -1093,10 +1093,13 @@ export function ChatInterface({ userName }: { userName?: string }) {
     return firstSentence.length > 100 ? firstSentence.slice(0, 97) + '...' : firstSentence
   }
 
+  // Only show expandable content when there are actual steps (tools or narration)
+  const hasChainContent = currentToolCalls.length > 0 || (narration && narration.length > 0)
+
   const reasoningChainJSX = showReasoningChain ? (
     <ChainOfThought open={reasoningOpen} onOpenChange={setReasoningOpen}>
       <ChainOfThoughtHeader>{headerText}</ChainOfThoughtHeader>
-      <ChainOfThoughtContent>
+      {hasChainContent && <ChainOfThoughtContent>
         {/* Pre-tool narration is now rendered as visible text above the chain — see narrationJSX */}
 
         {/* Tool call steps — collapsed, with inline detail pills and inter-tool narration */}
@@ -1244,14 +1247,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
           return elements
         })()}
 
-        {/* Thinking step — if we have thinking content and no narration/tools yet */}
-        {isThinkingStreaming && !narration && currentToolCalls.length === 0 && (
-          <ChainOfThoughtStep
-            label="Thinking..."
-            status="active"
-          />
-        )}
-      </ChainOfThoughtContent>
+      </ChainOfThoughtContent>}
     </ChainOfThought>
   ) : null
 
