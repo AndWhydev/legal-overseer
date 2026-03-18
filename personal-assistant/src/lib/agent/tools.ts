@@ -4,6 +4,8 @@ import { channelToolDefinitions, channelToolHandlers } from './tools/channel-too
 import { superpowerToolDefinitions, superpowerToolHandlers } from './tools/superpower-tools'
 import { codeExecutionToolDefinitions, codeExecutionToolHandlers } from './tools/code-execution'
 import { invoiceToolDefinition, handleGenerateInvoice } from './tools/invoice-tool'
+import { templateToolDefinition, handleUpdateInvoiceTemplate } from './tools/template-tool'
+import { meetingToolDefinitions, meetingToolHandlers } from '@/lib/meetings/agent-tools'
 import { composeCreatorStudioDeck } from '@/lib/creator-studio'
 import { routeAgentAction } from './confidence-router'
 import { queueAgentAction, getPendingApprovals, resolveApproval } from './approval-queue'
@@ -26,7 +28,7 @@ import { logger } from '@/lib/core/logger'
 // Tool Group metadata (for future Tool RAG via pgvector)
 // ---------------------------------------------------------------------------
 
-export type ToolGroup = 'core' | 'memory' | 'channel' | 'web' | 'comms' | 'agentic'
+export type ToolGroup = 'core' | 'memory' | 'channel' | 'web' | 'comms' | 'agentic' | 'meetings'
 
 export interface ToolGroupMeta {
   id: ToolGroup
@@ -40,7 +42,7 @@ export const TOOL_GROUPS: Record<ToolGroup, ToolGroupMeta> = {
     id: 'core',
     label: 'Core Operations',
     description: 'Task management, contacts, activity logging, and creator tools',
-    tools: ['create_task', 'update_task', 'search_tasks', 'search_contacts', 'get_contact', 'log_activity', 'compose_creator_notification_mockup', 'generate_invoice'],
+    tools: ['create_task', 'update_task', 'search_tasks', 'search_contacts', 'get_contact', 'log_activity', 'compose_creator_notification_mockup', 'generate_invoice', 'update_invoice_template'],
   },
   memory: {
     id: 'memory',
@@ -72,6 +74,12 @@ export const TOOL_GROUPS: Record<ToolGroup, ToolGroupMeta> = {
     description: 'Run code against the BitBit SDK to solve complex problems, query data flexibly, and compose multi-step operations',
     tools: ['execute_code'],
   },
+  meetings: {
+    id: 'meetings' as ToolGroup,
+    label: 'Meeting Intelligence',
+    description: 'Search meeting transcripts, list meetings, get details, and create tasks from action items',
+    tools: ['search_meetings', 'list_meetings', 'get_meeting_details', 'create_meeting_tasks'],
+  },
 }
 
 /** Quick lookup: tool name → group. Derived from TOOL_GROUPS. */
@@ -92,6 +100,7 @@ export function getToolsByGroup(group: ToolGroup): Anthropic.Tool[] {
 export const JIT_INSTRUCTIONS: Record<string, string> = {
   // Invoices
   generate_invoice: 'Invoice generated and rendered as an embedded artifact in the chat UI. Do NOT repeat the invoice details as text. Just confirm briefly: "Invoice [number] generated for [recipient], [amount]. Ready to send when you approve." The user can see the full styled invoice in the artifact below your message.',
+  update_invoice_template: 'Template updated. Confirm what changed briefly. These settings apply to all future invoices. The user can also edit the template visually in the Invoices → Template tab.',
 
   // Web & Research
   web_search: 'Use these search results to answer the user\'s question. Cite sources with URLs when relevant. If results are insufficient, refine your search query and try again.',
@@ -136,6 +145,12 @@ export const JIT_INSTRUCTIONS: Record<string, string> = {
 
   // Agentic execution
   execute_code: 'Code execution complete. Use the output and result to continue the conversation. If there was an error, fix the code and try again. Do not show raw code to the user — summarize what you found or did. Reference specific data points from the result.',
+
+  // Meetings
+  search_meetings: 'Present the most relevant transcript matches. Include the meeting title, speaker, and timestamp for each result. Quote key phrases rather than full segments.',
+  list_meetings: 'Present meetings in a concise list format. Highlight any with pending action items or recent dates. Offer to show details for any specific meeting.',
+  get_meeting_details: 'Present the meeting summary and key decisions first, then action items. Do not dump the full transcript — highlight the most important points. Mention participants and sentiment naturally.',
+  create_meeting_tasks: 'Tasks created from meeting action items. Confirm how many were created and suggest reviewing them on the kanban board.',
 }
 
 /** Get JIT instruction for a tool, if one exists. */
@@ -761,13 +776,17 @@ const allHandlers: Record<string, AgentToolHandler> = {
   ...channelToolHandlers,
   ...superpowerToolHandlers,
   ...codeExecutionToolHandlers,
+  ...meetingToolHandlers,
   async generate_invoice(input, orgId, supabase) {
-    return handleGenerateInvoice(input as Parameters<typeof handleGenerateInvoice>[0], orgId, supabase)
+    return handleGenerateInvoice(input as unknown as Parameters<typeof handleGenerateInvoice>[0], orgId, supabase)
+  },
+  async update_invoice_template(input, orgId, supabase) {
+    return handleUpdateInvoiceTemplate(input as unknown as Parameters<typeof handleUpdateInvoiceTemplate>[0], orgId, supabase)
   },
 }
 
 export function getAgentTools(groups?: ToolGroup[]): Anthropic.Tool[] {
-  const allTools = [...toolDefinitions, ...channelToolDefinitions, ...superpowerToolDefinitions, ...codeExecutionToolDefinitions, invoiceToolDefinition]
+  const allTools = [...toolDefinitions, ...channelToolDefinitions, ...superpowerToolDefinitions, ...codeExecutionToolDefinitions, ...meetingToolDefinitions, invoiceToolDefinition, templateToolDefinition]
   if (!groups || groups.length === 0) return allTools
 
   const selectedGroups = new Set<ToolGroup>(['core', ...groups])

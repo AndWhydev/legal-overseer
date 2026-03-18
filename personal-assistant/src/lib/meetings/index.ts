@@ -39,3 +39,4 @@ export {
 export { transcribeMeeting } from './transcription-pipeline'
 export { extractMeetingIntelligence } from './action-extractor'
 export { draftFollowUpEmail, queueFollowUpEmail } from './followup-drafter'
+export { meetingToolDefinitions, meetingToolHandlers } from './agent-tools'
