@@ -24,6 +24,7 @@
     "node": ">=20"
   },
   "dependencies": {
+    "jspdf": "^4.2.1",
     "lazygit": "^1.0.4"
   }
 }
