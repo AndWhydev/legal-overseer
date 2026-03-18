@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Media, Billing & Growth Roles
 status: in_progress
-stopped_at: Completed 21-01-PLAN.md (Billing Infrastructure Hardening) -- 2/3 phase plans done, ready for 21-03
-last_updated: "2026-03-18T18:08:37Z"
-last_activity: 2026-03-18 -- Completed 21-01 (Billing Infrastructure Hardening)
+stopped_at: Completed 21-03-PLAN.md (Pricing, Billing Settings & Trial Email) -- Phase 21 complete, ready for Phase 22
+last_updated: "2026-03-18T18:32:22Z"
+last_activity: 2026-03-18 -- Completed 21-03 (Pricing, Billing Settings & Trial Email)
 progress:
   total_phases: 18
-  completed_phases: 8
+  completed_phases: 9
   total_plans: 25
-  completed_plans: 27
-  percent: 36
+  completed_plans: 28
+  percent: 40
 ---
 
 # Project State
@@ -21,21 +21,21 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-18)
 
 **Core value:** BitBit understands the business better than the business owner -- when Andy says "Invoice Sezer for the White House RE work", BitBit knows who Sezer is, what the work was, the rate, and whether it's already been invoiced.
-**Current focus:** v1.4 Media, Billing & Growth Roles -- Phase 21 (Billing Infrastructure)
+**Current focus:** v1.4 Media, Billing & Growth Roles -- Phase 22 (Cost Controls & Ad Script Generator)
 
 ## Current Position
 
-Phase: 21 of 24 (Billing Infrastructure)
-Plan: 2 of 3 in current phase (21-01 and 21-02 done, 21-03 remaining)
+Phase: 22 of 24 (Cost Controls & Ad Script Generator)
+Plan: 0 of 2 in current phase
 Status: In Progress
-Last activity: 2026-03-18 -- Completed 21-01 (Billing Infrastructure Hardening)
+Last activity: 2026-03-18 -- Completed Phase 21 (Billing Infrastructure) -- all 3 plans done
 
-Progress: v1.0 ======== | v1.1 ======== | v1.2 ======== | v1.4 [====_______] 36%
+Progress: v1.0 ======== | v1.1 ======== | v1.2 ======== | v1.4 [=====______] 40%
 
 ## Performance Metrics
 
 **Delivery totals:**
-- Total plans completed: 62 (v1.0: 19, v1.1: 16, v1.2: 22, v1.4: 5)
+- Total plans completed: 63 (v1.0: 19, v1.1: 16, v1.2: 22, v1.4: 6)
 - Milestones shipped: v1.0 (2026-02-21), v1.1 (2026-02-22), v1.2 (2026-03-02)
 
 **v1.4 Phases:**
@@ -43,7 +43,7 @@ Progress: v1.0 ======== | v1.1 ======== | v1.2 ======== | v1.4 [====_______] 36%
 | Phase | Plans | Status |
 |-------|-------|--------|
 | 20. File Attachments & Multimedia | 3 | COMPLETE |
-| 21. Billing Infrastructure | 3 | 2/3 plans complete |
+| 21. Billing Infrastructure | 3 | COMPLETE |
 | 22. Cost Controls & Ad Script Generator | 2 | Not started |
 | 23. SEO Monitor & Tender Hunter | 2 | Not started |
 | 24. Content Creator | 1 | Not started |
@@ -77,6 +77,9 @@ See PROJECT.md Key Decisions table.
 - [21-02] Server-side plan gate in executeAgentTool: gate check before autonomy routing and handler call
 - [21-02] PLAN_ORDER array for tier comparison instead of numeric values
 - [21-02] TRIAL_PERIOD_DAYS constant (30) replacing hardcoded 14
+- [21-03] Stripe.js v8 URL redirect: redirectToCheckout removed, checkout API returns session URL for direct redirect
+- [21-03] Trial email dedup via Stripe subscription metadata (trial_end_notified flag)
+- [21-03] Portal endpoint fallback chain: organizations.stripe_customer_id -> subscriptions.stripe_customer_id
 
 ### Pending Todos
 
@@ -93,5 +96,5 @@ See PROJECT.md Key Decisions table.
 ## Session Continuity
 
 Last session: 2026-03-18
-Stopped at: Completed 21-01-PLAN.md (Billing Infrastructure Hardening) -- 21-01 and 21-02 done, ready for 21-03
+Stopped at: Completed 21-03-PLAN.md (Pricing, Billing Settings & Trial Email) -- Phase 21 complete, ready for Phase 22
 Resume file: None

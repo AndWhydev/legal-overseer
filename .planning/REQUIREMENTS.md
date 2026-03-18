@@ -91,10 +91,10 @@ Requirements for Media, Billing & Growth Roles. Closes the media gap, adds billi
 - [x] **BILL-04**: Plan gating enforced at tool execution layer (growth tools gated to growth/scale plans)
 - [x] **BILL-05**: Usage metering wired into agent run logger (tokens, agent runs, storage tracked per org)
 - [x] **BILL-06**: 30-day free trial with feature access matching growth plan (fix 14-day mismatch)
-- [ ] **BILL-07**: Trial conversion and expiry notifications via email
-- [ ] **BILL-08**: Pricing page with plan comparison and live Stripe Checkout integration
-- [ ] **BILL-09**: Stripe Customer Portal for self-service plan management
-- [ ] **BILL-10**: Dunning sequence handles failed payments with escalating notifications
+- [x] **BILL-07**: Trial conversion and expiry notifications via email
+- [x] **BILL-08**: Pricing page with plan comparison and live Stripe Checkout integration
+- [x] **BILL-09**: Stripe Customer Portal for self-service plan management
+- [x] **BILL-10**: Dunning sequence handles failed payments with escalating notifications
 
 ### Growth Role: Ad Script Generator
 
@@ -217,10 +217,10 @@ Requirements for Media, Billing & Growth Roles. Closes the media gap, adds billi
 | BILL-04 | Phase 21 | Complete |
 | BILL-05 | Phase 21 | Complete |
 | BILL-06 | Phase 21 | Complete |
-| BILL-07 | Phase 21 | Pending |
-| BILL-08 | Phase 21 | Pending |
-| BILL-09 | Phase 21 | Pending |
-| BILL-10 | Phase 21 | Pending |
+| BILL-07 | Phase 21 | Complete |
+| BILL-08 | Phase 21 | Complete |
+| BILL-09 | Phase 21 | Complete |
+| BILL-10 | Phase 21 | Complete |
 | COST-01 | Phase 22 | Pending |
 | COST-02 | Phase 22 | Pending |
 | COST-03 | Phase 22 | Pending |

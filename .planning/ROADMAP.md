@@ -235,7 +235,7 @@ Plans:
 **Milestone Goal:** Close the media gap (file attachments in chat), add Stripe billing infrastructure for public launch readiness, and ship Growth Roles that extend the agent engine into marketing/content/sales domains.
 
 - [x] **Phase 20: File Attachments & Multimedia** - Users can upload, preview, and have BitBit analyse files in chat (completed 2026-03-18)
-- [ ] **Phase 21: Billing Infrastructure** - Stripe subscription lifecycle, plan gating, usage metering, and pricing page
+- [x] **Phase 21: Billing Infrastructure** - Stripe subscription lifecycle, plan gating, usage metering, and pricing page (completed 2026-03-18)
 - [ ] **Phase 22: Cost Controls & Ad Script Generator** - Per-execution budgets protect against token spirals; first growth role proves the pattern
 - [ ] **Phase 23: SEO Monitor & Tender Hunter** - Wrap existing 700+ LOC implementations as plan-gated agent tools with scheduled ticks
 - [ ] **Phase 24: Content Creator** - Social media post drafting and blog generation via chat with platform-specific formatting
@@ -348,7 +348,7 @@ Phase 20 first (no dependencies), then 21 (billing before growth roles), then 22
 | 18. Integration Fixes & Tech Debt | v1.2 | 3/3 | Complete | 2026-03-02 |
 | 19. Credential Provisioning & Live Verification | v1.2 | 3/3 | Complete | 2026-03-02 |
 | 20. File Attachments & Multimedia | 3/3 | Complete    | 2026-03-18 | - |
-| 21. Billing Infrastructure | 2/3 | In Progress|  | - |
+| 21. Billing Infrastructure | 3/3 | Complete   | 2026-03-18 | - |
 | 22. Cost Controls & Ad Script Generator | v1.4 | 0/2 | Not started | - |
 | 23. SEO Monitor & Tender Hunter | v1.4 | 0/2 | Not started | - |
 | 24. Content Creator | v1.4 | 0/1 | Not started | - |
