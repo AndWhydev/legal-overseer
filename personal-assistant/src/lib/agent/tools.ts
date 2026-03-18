@@ -21,6 +21,7 @@ import {
   logActivity,
 } from './shared-tools'
 import { logger } from '@/lib/core/logger'
+import { getOrgPlan, checkToolPlanGate, TOOL_PLAN_REQUIREMENTS } from '@/lib/billing/plan-gates'
 
 // ---------------------------------------------------------------------------
 // Tool Group metadata (for future Tool RAG via pgvector)
@@ -800,6 +801,21 @@ export async function executeAgentTool(
   const handler = allHandlers[name]
   if (!handler) {
     return { success: false, error: `Unknown tool: ${name}` }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Plan gate check for growth tools — must come before execution.
+  // ---------------------------------------------------------------------------
+  const requiredPlan = TOOL_PLAN_REQUIREMENTS[name]
+  if (requiredPlan) {
+    const orgPlan = await getOrgPlan(supabase, orgId)
+    const gate = checkToolPlanGate(orgPlan, name)
+    if (!gate.allowed) {
+      return {
+        success: false,
+        error: `${name} requires the ${gate.requiredPlan} plan or higher. You're on the ${orgPlan} plan. Ask the user to upgrade at /pricing to unlock this feature.`,
+      }
+    }
   }
 
   // ---------------------------------------------------------------------------
