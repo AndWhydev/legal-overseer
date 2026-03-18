@@ -18,13 +18,6 @@ import {
   ChainOfThoughtStep,
 } from '@/components/ai-elements/chain-of-thought'
 import { Checkpoint, CheckpointIcon } from '@/components/ai-elements/checkpoint'
-import {
-  Confirmation,
-  ConfirmationTitle,
-  ConfirmationActions,
-  ConfirmationAction,
-  ConfirmationRequest,
-} from '@/components/ai-elements/confirmation'
 
 interface ToolCall {
   name: string
