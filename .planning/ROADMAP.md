@@ -269,12 +269,12 @@ Plans:
   3. Growth tools return an upgrade prompt when invoked by a user on a plan that doesn't include them
   4. Usage dashboard shows token consumption, agent runs, and storage usage for the current billing period
   5. Trial users receive email notification 3 days before trial expires, and expired trials downgrade gracefully
-**Plans**: TBD
+**Plans**: 3 plans (2 waves)
 
 Plans:
-- [ ] 21-01: Webhook consolidation and subscription lifecycle (single handler, event routing, idempotency, pre-created Products/Prices)
-- [ ] 21-02: Plan gating and usage metering (tool execution gate, run logger wiring, storage tracking, trial fix to 30 days)
-- [ ] 21-03: Pricing page, billing settings, and Customer Portal (plan comparison UI, Stripe Checkout, self-service management, dunning notifications)
+- [ ] 21-01-PLAN.md -- Webhook consolidation, Stripe SDK, pre-created prices, subscription lifecycle handler
+- [ ] 21-02-PLAN.md -- Plan gating at tool execution, usage metering wiring, trial 14->30 day fix
+- [ ] 21-03-PLAN.md -- Pricing page, billing settings, Customer Portal, trial expiry emails, dunning tests
 
 ### Phase 22: Cost Controls & Ad Script Generator
 **Goal**: Per-execution token budgets prevent runaway costs, and the Ad Script Generator validates the growth role tool pattern end-to-end
