@@ -1,10 +1,12 @@
 import type Stripe from 'stripe'
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { resolveTierFromPrice } from './stripe-client'
+import { resolveTierFromPrice, stripe } from './stripe-client'
 import {
   handlePaymentFailed as triggerDunning,
   resetDunningState,
 } from './dunning'
+import { sendCommandReplyEmail } from '@/lib/email/email-transport'
+import { getAppUrl } from '@/lib/core/app-url'
 import { logger } from '@/lib/core/logger'
 
 // ---------------------------------------------------------------------------
@@ -288,21 +290,146 @@ export async function handleCheckoutComplete(
 }
 
 // ---------------------------------------------------------------------------
-// Trial ending handler (placeholder for BILL-07, implemented in 21-03)
+// Trial ending handler (BILL-07)
 // ---------------------------------------------------------------------------
 
 /**
  * Handle customer.subscription.trial_will_end events.
- * Placeholder -- full implementation in plan 21-03.
+ * Sends email notification 3 days before trial expires.
+ * Marks subscription metadata with trial_end_notified to prevent duplicate emails.
  */
 export async function handleTrialEnding(
-  _supabase: SupabaseClient,
+  supabase: SupabaseClient,
   event: Stripe.Event,
 ): Promise<void> {
   const sub = event.data.object as unknown as Record<string, unknown>
-  logger.info(
-    `[subscription-handler] trial_will_end: ${sub.id} (placeholder -- see BILL-07 / plan 21-03)`,
-  )
+  const subscriptionId = sub.id as string
+  const metadata = (sub.metadata ?? {}) as Record<string, string>
+  const orgId = metadata.org_id
+
+  if (!orgId) {
+    // Try resolving from DB
+    const resolved = await resolveOrgId(supabase, subscriptionId, metadata)
+    if (!resolved) {
+      logger.warn(
+        `[subscription-handler] trial_will_end: no org_id found for ${subscriptionId}`,
+      )
+      return
+    }
+  }
+
+  const resolvedOrgId = orgId || (await resolveOrgId(supabase, subscriptionId, metadata))
+  if (!resolvedOrgId) return
+
+  // Check if notification already sent (prevent duplicates)
+  if (metadata.trial_end_notified === 'true') {
+    logger.info(
+      `[subscription-handler] trial_will_end: already notified for ${subscriptionId}`,
+    )
+    return
+  }
+
+  // Look up organization name and billing email
+  const { data: org, error: orgError } = await supabase
+    .from('organizations')
+    .select('name, metadata')
+    .eq('id', resolvedOrgId)
+    .single()
+
+  if (orgError || !org) {
+    logger.warn(
+      `[subscription-handler] trial_will_end: could not find org ${resolvedOrgId}`,
+    )
+    return
+  }
+
+  const orgName = (org as Record<string, unknown>).name as string
+  const orgMeta = (org as Record<string, unknown>).metadata as Record<string, unknown> | null
+
+  // Try billing_email from org metadata, then fall back to profile email
+  let billingEmail: string | null = null
+  if (orgMeta && typeof orgMeta === 'object' && orgMeta.billing_email) {
+    billingEmail = orgMeta.billing_email as string
+  }
+
+  if (!billingEmail) {
+    // Look up owner's email from profiles
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('email')
+      .eq('org_id', resolvedOrgId)
+      .order('created_at', { ascending: true })
+      .limit(1)
+      .maybeSingle()
+
+    billingEmail = (profile?.email as string) ?? null
+  }
+
+  if (!billingEmail) {
+    logger.warn(
+      `[subscription-handler] trial_will_end: no billing email for org ${resolvedOrgId}, skipping`,
+    )
+    return
+  }
+
+  // Send trial expiry notification email
+  let settingsUrl: string
+  try {
+    settingsUrl = `${getAppUrl()}/dashboard/settings`
+  } catch {
+    settingsUrl = 'https://app.bitbit.chat/dashboard/settings'
+  }
+
+  const subject = 'Your BitBit trial ends in 3 days'
+  const htmlBody = `
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333;">
+      <h2 style="color: #1a1a1a; margin-bottom: 20px;">Your trial is ending soon</h2>
+      <p style="font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
+        Hi there! Your 30-day free trial for <strong>${orgName}</strong> ends in 3 days.
+      </p>
+      <p style="font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
+        To keep using all your AI-powered features, subscribe to a plan before your trial expires.
+        If you don't subscribe, your account will be downgraded to the free tier.
+      </p>
+      <p style="margin-bottom: 20px;">
+        <a href="${settingsUrl}" style="display: inline-block; background: #007bff; color: white; padding: 12px 24px; border-radius: 4px; text-decoration: none; font-weight: 500;">
+          Manage Billing
+        </a>
+      </p>
+      <p style="color: #666; font-size: 14px; margin: 0;">
+        If you have any questions about our plans, reply to this email and we'll help you out.
+      </p>
+    </div>
+  `
+
+  try {
+    await sendCommandReplyEmail(billingEmail, subject, htmlBody)
+    logger.info(
+      `[subscription-handler] trial_will_end: sent notification to ${billingEmail} for org ${resolvedOrgId}`,
+    )
+  } catch (err) {
+    logger.warn(
+      `[subscription-handler] trial_will_end: failed to send email to ${billingEmail}:`,
+      err,
+    )
+    return
+  }
+
+  // Mark notification sent via Stripe subscription metadata to prevent duplicates
+  try {
+    await stripe.subscriptions.update(subscriptionId, {
+      metadata: {
+        ...metadata,
+        trial_end_notified: 'true',
+      },
+    })
+  } catch (err) {
+    // Non-critical -- email was still sent
+    logger.warn(
+      `[subscription-handler] trial_will_end: failed to update Stripe metadata:`,
+      err,
+    )
+  }
 }
 
 // ---------------------------------------------------------------------------
