@@ -36,12 +36,24 @@ export async function GET(request: NextRequest) {
       }
     )
 
-    const { error } = await supabase.auth.verifyOtp({
+    const { error, data } = await supabase.auth.verifyOtp({
       token_hash: tokenHash,
       type,
     })
 
     if (!error) {
+      // If this is a portal redirect, activate portal access
+      if (next.startsWith('/portal') && data?.user) {
+        await supabase
+          .from('portal_access')
+          .update({
+            user_id: data.user.id,
+            status: 'active',
+            last_login_at: new Date().toISOString(),
+          })
+          .eq('email', data.user.email ?? '')
+          .eq('status', 'invited')
+      }
       return response
     }
   }

@@ -131,10 +131,12 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
   const isApiRoute = pathname.startsWith('/api/')
   const isDashboardRoute = pathname.startsWith('/dashboard')
+  const isPortalRoute = pathname.startsWith('/portal')
+  const isPortalApiRoute = pathname.startsWith('/api/portal/')
   const ip = getClientIp(request)
 
   // Ensure CSP is present across all matched responses.
-  if (!isApiRoute && !isDashboardRoute) {
+  if (!isApiRoute && !isDashboardRoute && !isPortalRoute) {
     return applySecurityHeaders(NextResponse.next())
   }
 
@@ -219,7 +221,7 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Routes that handle their own auth (Bearer tokens, cron secrets, OAuth flows, webhooks)
+  // Routes that handle their own auth (Bearer tokens, cron secrets, OAuth flows, webhooks, portal)
   if (
     pathname.startsWith('/api/channels/') ||
     pathname.startsWith('/api/cron/') ||
@@ -227,6 +229,7 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/api/monitoring/') ||
     pathname.startsWith('/api/health') ||
     pathname.startsWith('/api/webhooks/') ||
+    pathname.startsWith('/api/portal/') ||
     pathname === '/api/agent/invoices/dispatch' // Fly.io worker callback (WORKER_AUTH_TOKEN)
   ) {
     return applySecurityHeaders(NextResponse.next())

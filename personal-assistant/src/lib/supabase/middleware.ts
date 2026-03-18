@@ -36,7 +36,13 @@ export async function updateSession(request: NextRequest) {
     !request.nextUrl.pathname.startsWith('/callback')
   ) {
     const url = request.nextUrl.clone()
-    url.pathname = '/login'
+    // Portal routes redirect to portal login instead of main login
+    if (request.nextUrl.pathname.startsWith('/portal')) {
+      url.pathname = '/portal/login'
+      url.searchParams.set('next', request.nextUrl.pathname)
+    } else {
+      url.pathname = '/login'
+    }
     return NextResponse.redirect(url)
   }
 
