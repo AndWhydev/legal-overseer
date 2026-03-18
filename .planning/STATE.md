@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in_progress
-stopped_at: Completed 21-02-PLAN.md (Proactive Invoicing + Collections)
+stopped_at: Completed 21-03-PLAN.md (Cash Flow + Payment Learning + Weekly Digest)
 last_updated: "2026-03-18T16:25:00.000Z"
-last_activity: 2026-03-18 — 21-02 Proactive invoicing + collection reminder workflows
+last_activity: 2026-03-18 — 21-03 Cash flow monitoring, payment learning, weekly digest
 progress:
   total_phases: 19
   completed_phases: 8
   total_plans: 29
-  completed_plans: 27
-  percent: 93
+  completed_plans: 28
+  percent: 96
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 ## Current Position
 
 Phase: 21 of 25 (Finance Role)
-Plan: 2 of 3
-Status: Phase 21 IN PROGRESS
-Last activity: 2026-03-18 — 21-02 Proactive invoicing + collection reminder workflows
+Plan: 3 of 3
+Status: Phase 21 COMPLETE
+Last activity: 2026-03-18 — 21-03 Cash flow monitoring, payment learning, weekly digest
 
-Progress: [█████████░] 93%
+Progress: [██████████] 96%
 
 ## Performance Metrics
 
@@ -75,7 +75,7 @@ Progress: [█████████░] 93%
 | Phase | Plans | Status |
 |-------|-------|--------|
 | 20. Role Engine Foundation | 4 | 4/4 COMPLETE |
-| 21. Finance Role | 3 | 2/3 IN PROGRESS |
+| 21. Finance Role | 3 | 3/3 COMPLETE |
 
 | Phase | Plan | Duration | Tasks | Files |
 |-------|------|----------|-------|-------|
@@ -83,6 +83,7 @@ Progress: [█████████░] 93%
 | 20 | 03 | 5min | 5 | 7 |
 | 20 | 04 | 11min | 5 | 7 |
 | 21 | 01 | 5min | 5 | 5 |
+| 21 | 03 | 11min | 5 | 6 |
 | 21 | 02 | 13min | 4 | 3 |
 
 ## Accumulated Context
@@ -207,6 +208,12 @@ See PROJECT.md Key Decisions table.
 - [21-02] Escalation always goes to user regardless of autonomy level (human decision point)
 - [21-02] Auto-invoice detection gated by config.auto_invoice_enabled (opt-in)
 - [21-02] Billable item hash dedup stored in state (cap 200) to avoid re-surfacing
+- [21-03] Cash flow cached in bi_snapshots with 24h TTL; overdue threshold $5000 for high-severity alerts
+- [21-03] Payment prediction uses median (not mean); confidence 0.2-0.85 by sample size
+- [21-03] Unusual delay threshold: 50% over median or 7 days over, whichever is larger; needs 2+ invoices
+- [21-03] Weekly digest on Monday only using AEST (UTC+10); guarded by 6-day cooldown
+- [21-03] Cash flow alerts: high severity as RoleActions (autonomy gate), medium/low as RoleInsights
+- [21-03] FinanceState extended with cash_flow, payment_pattern, weekly_digest timestamps
 
 ### Pending Todos
 
@@ -247,5 +254,5 @@ See PROJECT.md Key Decisions table.
 ## Session Continuity
 
 Last session: 2026-03-18
-Stopped at: Completed 21-02-PLAN.md (Proactive Invoicing + Collections)
+Stopped at: Completed 21-03-PLAN.md (Cash Flow + Payment Learning + Weekly Digest) -- Phase 21 COMPLETE
 Resume file: None
