@@ -1,11 +1,15 @@
 'use client';
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { ArrowUp, Paperclip } from 'lucide-react';
+import { ArrowUp, Paperclip, X } from 'lucide-react';
 import { MiniWaveform } from '../ui/mini-waveform';
+import { useFileUpload, type UploadItem } from '@/hooks/use-file-upload';
 
 export type PillMode = 'hidden' | 'voice' | 'text' | 'processing' | 'response';
 export type PillMorphPhase = 'to-floating' | 'to-docked';
+
+/** Custom event for delivering attachment IDs alongside text messages */
+export const CHAT_ATTACHMENTS_EVENT = 'bitbit-chat-attachments';
 
 interface VoicePillProps {
   mode: PillMode;
@@ -21,7 +25,11 @@ interface VoicePillProps {
   error: string | null;
   onTextSubmit: (query: string) => void;
   onDismiss: () => void;
+  threadId?: string | null;
 }
+
+/** File input accept filter matching ALLOWED_MIME_TYPES */
+const FILE_ACCEPT = '.jpg,.jpeg,.png,.gif,.webp,.pdf,.docx,.txt,.csv';
 
 export function VoicePill({
   mode,
@@ -37,6 +45,7 @@ export function VoicePill({
   error,
   onTextSubmit,
   onDismiss,
+  threadId,
 }: VoicePillProps) {
   const [textValue, setTextValue] = useState('');
   const [displayMode, setDisplayMode] = useState<PillMode>('hidden');
@@ -47,6 +56,10 @@ export function VoicePill({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const dismissTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const pillRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // File upload hook
+  const fileUpload = useFileUpload(threadId);
 
   useEffect(() => {
     const prevMode = prevModeRef.current;
@@ -150,10 +163,23 @@ export function VoicePill({
 
   const handleSubmit = useCallback(() => {
     const q = textValue.trim();
-    if (!q) return;
-    onTextSubmit(q);
+    if (!q && fileUpload.readyAttachmentIds.length === 0) return;
+    if (fileUpload.isUploading) return; // Don't send while uploads in progress
+
+    // Dispatch attachment IDs via custom event before the text submit.
+    // The chat-interface listens for this event and includes the IDs in the request.
+    if (fileUpload.readyAttachmentIds.length > 0) {
+      window.dispatchEvent(
+        new CustomEvent(CHAT_ATTACHMENTS_EVENT, {
+          detail: fileUpload.readyAttachmentIds,
+        })
+      );
+    }
+
+    onTextSubmit(q || '(attached files)');
     setTextValue('');
-  }, [textValue, onTextSubmit]);
+    fileUpload.clearUploads();
+  }, [textValue, onTextSubmit, fileUpload]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -165,9 +191,25 @@ export function VoicePill({
     }
   }, [handleSubmit, onDismiss, docked]);
 
+  const handlePaperclipClick = useCallback(() => {
+    fileInputRef.current?.click();
+  }, []);
+
+  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      fileUpload.addFiles(files);
+    }
+    // Reset file input so the same file can be selected again
+    e.target.value = '';
+  }, [fileUpload]);
+
   const renderMode = isExiting ? prevModeRef.current : displayMode;
   const effectiveMode = docked && renderMode === 'hidden' ? 'text' : renderMode;
   const isVisible = effectiveMode !== 'hidden';
+
+  const hasUploads = fileUpload.uploads.length > 0;
+  const canSend = textValue.trim() || fileUpload.readyAttachmentIds.length > 0;
 
   const pillClass = [
     'bb-pill',
@@ -226,8 +268,38 @@ export function VoicePill({
 
       {effectiveMode === 'text' && (
         <>
+          {/* Hidden file input for Paperclip button */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept={FILE_ACCEPT}
+            multiple
+            onChange={handleFileSelect}
+            style={{ display: 'none' }}
+            aria-hidden="true"
+          />
+
           {docked ? (
             <>
+              {/* Upload progress indicators */}
+              {hasUploads && (
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '4px',
+                  padding: '6px 12px 0',
+                  width: '100%',
+                }}>
+                  {fileUpload.uploads.map((item) => (
+                    <UploadProgressItem
+                      key={item.id}
+                      item={item}
+                      onRemove={() => fileUpload.removeUpload(item.id)}
+                    />
+                  ))}
+                </div>
+              )}
+
               <textarea
                 ref={textareaRef}
                 className="bb-pill__textarea"
@@ -251,6 +323,7 @@ export function VoicePill({
                   className="bb-pill__attach"
                   aria-label="Attach file"
                   type="button"
+                  onClick={handlePaperclipClick}
                 >
                   <Paperclip size={18} />
                 </button>
@@ -258,7 +331,7 @@ export function VoicePill({
                   className="bb-pill__send"
                   onClick={handleSubmit}
                   aria-label="Send"
-                  disabled={!textValue.trim()}
+                  disabled={!canSend || fileUpload.isUploading}
                 >
                   <ArrowUp size={18} />
                 </button>
@@ -304,6 +377,104 @@ export function VoicePill({
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Upload progress indicator (inline component)
+// ---------------------------------------------------------------------------
+
+function UploadProgressItem({ item, onRemove }: { item: UploadItem; onRemove: () => void }) {
+  const isError = item.status === 'error';
+  const isReady = item.status === 'ready';
+  const isActive = item.status === 'uploading' || item.status === 'pending';
+
+  return (
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: '8px',
+      padding: '4px 0',
+      fontSize: '12px',
+      color: isError ? 'var(--bb-color-error, #ef4444)' : 'var(--bb-color-text-secondary, rgba(255,255,255,0.7))',
+    }}>
+      {/* Preview thumbnail for images */}
+      {item.previewUrl && (
+        <img
+          src={item.previewUrl}
+          alt=""
+          style={{
+            width: '24px',
+            height: '24px',
+            borderRadius: '4px',
+            objectFit: 'cover',
+            flexShrink: 0,
+          }}
+        />
+      )}
+
+      {/* Filename */}
+      <span style={{
+        flex: 1,
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap',
+      }}>
+        {item.filename}
+        {isError && item.error && (
+          <span style={{ display: 'block', fontSize: '11px', opacity: 0.8 }}>
+            {item.error}
+          </span>
+        )}
+      </span>
+
+      {/* Progress bar */}
+      {isActive && (
+        <div style={{
+          width: '60px',
+          height: '4px',
+          borderRadius: '2px',
+          background: 'rgba(255,255,255,0.1)',
+          overflow: 'hidden',
+          flexShrink: 0,
+        }}>
+          <div style={{
+            width: `${item.progress}%`,
+            height: '100%',
+            borderRadius: '2px',
+            background: 'var(--bb-color-accent, #3b82f6)',
+            transition: 'width 200ms ease',
+          }} />
+        </div>
+      )}
+
+      {/* Ready checkmark */}
+      {isReady && (
+        <span style={{ color: 'var(--bb-color-success, #22c55e)', fontSize: '14px' }}>
+          ✓
+        </span>
+      )}
+
+      {/* Remove button */}
+      <button
+        type="button"
+        onClick={onRemove}
+        aria-label={`Remove ${item.filename}`}
+        style={{
+          background: 'none',
+          border: 'none',
+          padding: '2px',
+          cursor: 'pointer',
+          color: 'inherit',
+          opacity: 0.6,
+          flexShrink: 0,
+          display: 'flex',
+          alignItems: 'center',
+        }}
+      >
+        <X size={14} />
+      </button>
     </div>
   );
 }
