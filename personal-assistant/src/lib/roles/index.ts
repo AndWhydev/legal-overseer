@@ -82,3 +82,6 @@ export {
   getRoleActivity,
   getRoleActivitySummary,
 } from './role-activity-logger'
+
+// Domain Roles — auto-register on import
+import './finance/finance-role'
