@@ -11,6 +11,7 @@ import {
   getEscalationStepDefs,
   getEscalationStepDef,
 } from './escalation-workflow'
+import { computeClientHealth } from '@/lib/intelligence/client-health'
 import { logger } from '@/lib/core/logger'
 
 // ---------------------------------------------------------------------------
@@ -219,6 +220,35 @@ const commsRole: RoleImplementation = {
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
       logger.warn(`${tag} Relationship monitoring failed: ${message}`)
+    }
+
+    // -----------------------------------------------------------------------
+    // 4b. Client health insights (Intelligence Layer)
+    // -----------------------------------------------------------------------
+    try {
+      const health = await computeClientHealth(ctx.supabase, ctx.orgId)
+      if (!health.gatheringData) {
+        const critical = health.scores.filter((s) => s.grade === 'critical' || s.grade === 'poor')
+        for (const client of critical.slice(0, 5)) {
+          insights.push({
+            summary: `Client health ${client.grade}: ${client.contactName} (score ${client.score}/100)${client.flags.length > 0 ? ' -- ' + client.flags.join(', ') : ''}`,
+            details: {
+              contactId: client.contactId,
+              score: client.score,
+              grade: client.grade,
+              breakdown: client.breakdown,
+              flags: client.flags,
+            },
+            priority: client.grade === 'critical' ? 'high' : 'medium',
+          })
+        }
+        if (critical.length > 0) {
+          logger.info(`${tag} Client Health: ${critical.length} clients need attention`)
+        }
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      logger.warn(`${tag} Client Health failed: ${message}`)
     }
 
     // -----------------------------------------------------------------------

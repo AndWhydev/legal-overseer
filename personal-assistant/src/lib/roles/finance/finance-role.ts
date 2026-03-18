@@ -14,6 +14,7 @@ import {
 import { computeCashFlow, type CashFlowSnapshot } from './cash-flow-monitor'
 import { learnPaymentPatterns, detectUnusualDelays, type PaymentPattern } from './payment-learner'
 import { generateWeeklyDigest, isMondayInAEST } from './weekly-digest'
+import { projectCashFlow } from '@/lib/intelligence/cash-flow-prophet'
 import { logger } from '@/lib/core/logger'
 
 // ---------------------------------------------------------------------------
@@ -239,6 +240,26 @@ const financeRole: RoleImplementation = {
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
       logger.warn(`${tag} Cash flow check failed: ${message}`)
+    }
+
+    // -----------------------------------------------------------------------
+    // 4b. Cash flow forward projections (Intelligence Layer)
+    // -----------------------------------------------------------------------
+    try {
+      const projections = await projectCashFlow(ctx.supabase, ctx.orgId, 3)
+      if (!projections.gatheringData && projections.alerts.length > 0) {
+        for (const alert of projections.alerts) {
+          insights.push({
+            summary: `Cash Flow Prophet: ${alert.summary}`,
+            details: { alertType: alert.type, month: alert.month, amount: alert.amount },
+            priority: alert.severity === 'high' ? 'high' : 'medium',
+          })
+        }
+        logger.info(`${tag} Cash Flow Prophet: ${projections.alerts.length} forward-looking alerts`)
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      logger.warn(`${tag} Cash Flow Prophet failed: ${message}`)
     }
 
     // -----------------------------------------------------------------------

@@ -20,6 +20,7 @@ import {
 } from './client-onboarding'
 import { analyzeWinLossPatterns } from './win-loss-learner'
 import { computePipelineSnapshot } from './pipeline-tracker'
+import { analyzeRevenueOpportunities } from '@/lib/intelligence/revenue-radar'
 import { logger } from '@/lib/core/logger'
 
 // ---------------------------------------------------------------------------
@@ -335,6 +336,50 @@ const salesRole: RoleImplementation = {
         const message = err instanceof Error ? err.message : String(err)
         logger.warn(`${tag} Pipeline snapshot failed: ${message}`)
       }
+    }
+
+    // -----------------------------------------------------------------------
+    // 6b. Revenue radar insights (Intelligence Layer)
+    // -----------------------------------------------------------------------
+    try {
+      const radar = await analyzeRevenueOpportunities(ctx.supabase, ctx.orgId)
+      if (!radar.gatheringData) {
+        for (const opp of radar.opportunities.slice(0, 5)) {
+          if (ctx.autonomyLevel === 'observer') {
+            insights.push({
+              summary: `Revenue Radar: ${opp.summary}`,
+              details: {
+                type: opp.type,
+                contactId: opp.contactId,
+                contactName: opp.contactName,
+                estimatedValue: opp.estimatedValue,
+                confidence: opp.confidence,
+              },
+              priority: opp.confidence >= 0.8 ? 'high' : 'medium',
+            })
+          } else {
+            actions.push({
+              type: `revenue_${opp.type}`,
+              summary: `Revenue Radar: ${opp.summary}`,
+              payload: {
+                opportunityType: opp.type,
+                contactId: opp.contactId,
+                contactName: opp.contactName,
+                estimatedValue: opp.estimatedValue,
+                ...opp.details,
+              },
+              confidence: opp.confidence,
+              reversible: true,
+            })
+          }
+        }
+        if (radar.opportunities.length > 0) {
+          logger.info(`${tag} Revenue Radar: ${radar.opportunities.length} opportunities ($${radar.totalEstimatedValue.toFixed(0)} est.)`)
+        }
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      logger.warn(`${tag} Revenue Radar failed: ${message}`)
     }
 
     // -----------------------------------------------------------------------
