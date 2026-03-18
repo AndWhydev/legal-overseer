@@ -75,8 +75,8 @@ Requirements for Media, Billing & Growth Roles. Closes the media gap, adds billi
 - [x] **MEDIA-02**: User can drag-and-drop files onto the chat area to upload
 - [x] **MEDIA-03**: Upload uses Supabase Storage signed URLs (bypasses Vercel 4.5MB body limit)
 - [x] **MEDIA-04**: Upload progress indicator shown during file transfer
-- [ ] **MEDIA-05**: Uploaded images render inline in chat messages as previews
-- [ ] **MEDIA-06**: Uploaded PDFs render with file icon, filename, size, and download link
+- [x] **MEDIA-05**: Uploaded images render inline in chat messages as previews
+- [x] **MEDIA-06**: Uploaded PDFs render with file icon, filename, size, and download link
 - [x] **MEDIA-07**: File size limit enforced (10MB per file) with clear error message
 - [x] **MEDIA-08**: Accepted file types filtered (block executables, allow business formats)
 - [x] **MEDIA-09**: BitBit can read and analyse uploaded files (images via Claude Vision, documents via text extraction)
@@ -204,8 +204,8 @@ Requirements for Media, Billing & Growth Roles. Closes the media gap, adds billi
 | MEDIA-02 | Phase 20 | Complete |
 | MEDIA-03 | Phase 20 | Complete |
 | MEDIA-04 | Phase 20 | Complete |
-| MEDIA-05 | Phase 20 | Pending |
-| MEDIA-06 | Phase 20 | Pending |
+| MEDIA-05 | Phase 20 | Complete |
+| MEDIA-06 | Phase 20 | Complete |
 | MEDIA-07 | Phase 20 | Complete |
 | MEDIA-08 | Phase 20 | Complete |
 | MEDIA-09 | Phase 20 | Complete |

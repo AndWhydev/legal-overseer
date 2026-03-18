@@ -10,23 +10,23 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 ## Current Position
 
 Phase: 20 of 24 (File Attachments & Multimedia)
-Plan: 2 of 3 in current phase
-Status: Executing
-Last activity: 2026-03-18 -- Completed 20-02 (Upload Hook & Multimodal Chat Wiring)
+Plan: 3 of 3 in current phase
+Status: Phase Complete
+Last activity: 2026-03-18 -- Completed 20-03 (Inline Attachment Previews)
 
-Progress: v1.0 ======== | v1.1 ======== | v1.2 ======== | v1.4 [==#________] 18%
+Progress: v1.0 ======== | v1.1 ======== | v1.2 ======== | v1.4 [===________] 27%
 
 ## Performance Metrics
 
 **Delivery totals:**
-- Total plans completed: 59 (v1.0: 19, v1.1: 16, v1.2: 22, v1.4: 2)
+- Total plans completed: 60 (v1.0: 19, v1.1: 16, v1.2: 22, v1.4: 3)
 - Milestones shipped: v1.0 (2026-02-21), v1.1 (2026-02-22), v1.2 (2026-03-02)
 
 **v1.4 Phases:**
 
 | Phase | Plans | Status |
 |-------|-------|--------|
-| 20. File Attachments & Multimedia | 3 | 2 of 3 done |
+| 20. File Attachments & Multimedia | 3 | COMPLETE |
 | 21. Billing Infrastructure | 3 | Not started |
 | 22. Cost Controls & Ad Script Generator | 2 | Not started |
 | 23. SEO Monitor & Tender Hunter | 2 | Not started |
@@ -50,6 +50,9 @@ See PROJECT.md Key Decisions table.
 - [20-02] Custom event bridge (CHAT_ATTACHMENTS_EVENT): decoupled attachment ID delivery between VoicePill and ChatInterface
 - [20-02] Engine-level multimodal injection: contentBlocks in EngineConfig replaces last user message with ContentBlockParam[]
 - [20-02] Graceful attachment failure: individual block failures logged and skipped, message still sends
+- [20-03] On-demand signed URL fetch: thumbnails load via signed URL on mount, downloads fetch fresh URLs on click (no caching)
+- [20-03] CHAT_ATTACHMENTS_EVENT extended to carry metadata { ids, items } for immediate preview rendering
+- [20-03] PDF thumbnails deferred: static FileText icon with download link per research recommendation
 
 ### Pending Todos
 
@@ -66,5 +69,5 @@ See PROJECT.md Key Decisions table.
 ## Session Continuity
 
 Last session: 2026-03-18
-Stopped at: Completed 20-02-PLAN.md (Upload Hook & Multimodal Chat Wiring) -- ready for 20-03
+Stopped at: Completed 20-03-PLAN.md (Inline Attachment Previews) -- Phase 20 complete, ready for Phase 21
 Resume file: None
