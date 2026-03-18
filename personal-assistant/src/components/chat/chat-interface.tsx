@@ -1283,8 +1283,55 @@ export function ChatInterface({ userName }: { userName?: string }) {
     </ChainOfThought>
   ) : null
 
+  const handleNewConversation = useCallback(() => {
+    // Archive current thread and start fresh
+    if (threadId) {
+      fetch('/api/agent/chat/history', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ threadId }),
+      }).catch(() => {}) // fire-and-forget archive
+    }
+    setMessages([])
+    setThreadId(null)
+    setNarration('')
+    setThinkingContent('')
+    setIsThinkingStreaming(false)
+    narrationLockedRef.current = false
+    narrationContentRef.current = ''
+    interToolBufferRef.current = ''
+    setInterToolNarrations([])
+    setActiveCitations([])
+    setPendingApprovals([])
+    setInvoiceArtifacts([])
+    smoothStream.reset()
+    currentAssistantIdRef.current = null
+    setWhispersVisible(true)
+  }, [threadId, smoothStream])
+
   return (
     <div className={`bb-chat ${chatStarted ? 'bb-chat--active' : 'bb-chat--pre-session'}`}>
+      {/* New conversation button — only visible when there are messages */}
+      {hasMessages && (
+        <button
+          onClick={handleNewConversation}
+          style={{
+            position: 'absolute', top: 12, right: 12, zIndex: 20,
+            display: 'flex', alignItems: 'center', gap: 6,
+            padding: '6px 12px', borderRadius: 8,
+            border: '1px solid var(--glass-card-border, rgba(255,255,255,0.08))',
+            background: 'var(--glass-card-bg, rgba(255,255,255,0.03))',
+            color: 'var(--text-dim, #64748B)', fontSize: 12, fontWeight: 500,
+            cursor: 'pointer', transition: 'all 0.15s',
+            backdropFilter: 'blur(8px)',
+          }}
+          onMouseEnter={e => { (e.currentTarget).style.background = 'var(--glass-hover-bg, rgba(255,255,255,0.08))'; (e.currentTarget).style.color = 'var(--text-secondary, #94A3B8)' }}
+          onMouseLeave={e => { (e.currentTarget).style.background = 'var(--glass-card-bg, rgba(255,255,255,0.03))'; (e.currentTarget).style.color = 'var(--text-dim, #64748B)' }}
+          title="Start a new conversation"
+        >
+          <PlusCircle size={14} /> New chat
+        </button>
+      )}
       {/* Messages or empty state */}
       <div
         className={`bb-chat__messages ${!hasMessages ? 'bb-chat__messages--empty' : ''}`}
