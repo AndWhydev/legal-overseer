@@ -4,6 +4,7 @@ import { channelToolDefinitions, channelToolHandlers } from './tools/channel-too
 import { superpowerToolDefinitions, superpowerToolHandlers } from './tools/superpower-tools'
 import { codeExecutionToolDefinitions, codeExecutionToolHandlers } from './tools/code-execution'
 import { invoiceToolDefinition, handleGenerateInvoice } from './tools/invoice-tool'
+import { swarmToolDefinition, handleTriggerSwarm } from './tools/swarm-tool'
 import { composeCreatorStudioDeck } from '@/lib/creator-studio'
 import { routeAgentAction } from './confidence-router'
 import { queueAgentAction, getPendingApprovals, resolveApproval } from './approval-queue'
@@ -69,8 +70,8 @@ export const TOOL_GROUPS: Record<ToolGroup, ToolGroupMeta> = {
   agentic: {
     id: 'agentic',
     label: 'Agentic Execution',
-    description: 'Run code against the BitBit SDK to solve complex problems, query data flexibly, and compose multi-step operations',
-    tools: ['execute_code'],
+    description: 'Run code against the BitBit SDK, deploy multi-agent swarms for complex coordinated operations',
+    tools: ['execute_code', 'trigger_swarm'],
   },
 }
 
@@ -136,6 +137,9 @@ export const JIT_INSTRUCTIONS: Record<string, string> = {
 
   // Agentic execution
   execute_code: 'Code execution complete. Use the output and result to continue the conversation. If there was an error, fix the code and try again. Do not show raw code to the user — summarize what you found or did. Reference specific data points from the result.',
+
+  // Swarm orchestration
+  trigger_swarm: 'Swarm deployed. Report the swarm status and summary to the user. If the swarm is still running, let them know they can check the Swarm dashboard for live progress. Reference specific findings from each agent when available.',
 }
 
 /** Get JIT instruction for a tool, if one exists. */
@@ -764,10 +768,13 @@ const allHandlers: Record<string, AgentToolHandler> = {
   async generate_invoice(input, orgId, supabase) {
     return handleGenerateInvoice(input as Parameters<typeof handleGenerateInvoice>[0], orgId, supabase)
   },
+  async trigger_swarm(input, orgId, supabase) {
+    return handleTriggerSwarm(input, orgId, supabase)
+  },
 }
 
 export function getAgentTools(groups?: ToolGroup[]): Anthropic.Tool[] {
-  const allTools = [...toolDefinitions, ...channelToolDefinitions, ...superpowerToolDefinitions, ...codeExecutionToolDefinitions, invoiceToolDefinition]
+  const allTools = [...toolDefinitions, ...channelToolDefinitions, ...superpowerToolDefinitions, ...codeExecutionToolDefinitions, invoiceToolDefinition, swarmToolDefinition]
   if (!groups || groups.length === 0) return allTools
 
   const selectedGroups = new Set<ToolGroup>(['core', ...groups])

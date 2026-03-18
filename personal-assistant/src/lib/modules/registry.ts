@@ -35,6 +35,7 @@ export const ALL_MODULES = [
   'activity',
   'admin',
   'sentry',
+  'swarm',
 ] as const;
 
 export type ModuleId = (typeof ALL_MODULES)[number];
@@ -85,6 +86,7 @@ const TIER_MODULES: Record<string, readonly string[] | 'all'> = {
     'activity',
     'admin',
     'sentry',
+    'swarm',
   ],
   enterprise: 'all',
 };
@@ -152,7 +154,7 @@ export const SIDEBAR_CATEGORIES: SidebarCategory[] = [
   { id: 'home',         label: 'Home',         icon: 'LayoutDashboard', items: ['dashboard', 'command-center'], directNav: 'dashboard' },
   { id: 'messages',     label: 'Messages',     icon: 'MessageSquare',   items: ['chat', 'inbox', 'creator-studio'] },
   { id: 'business',     label: 'Business',     icon: 'Briefcase',       items: ['leads', 'invoices', 'tenders', 'contacts', 'approvals'] },
-  { id: 'intelligence', label: 'Intelligence', icon: 'Brain',           items: ['sentry', 'ad-scripts', 'ai-search', 'reports', 'knowledge', 'analytics'] },
+  { id: 'intelligence', label: 'Intelligence', icon: 'Brain',           items: ['swarm', 'sentry', 'ad-scripts', 'ai-search', 'reports', 'knowledge', 'analytics'] },
   { id: 'operations',   label: 'Operations',   icon: 'Wrench',          items: ['activity', 'costs', 'admin', 'medications'] },
   { id: 'settings',      label: 'Settings',     icon: 'Settings',        items: ['settings-connections', 'settings-automations', 'settings-appearance'] },
 ];

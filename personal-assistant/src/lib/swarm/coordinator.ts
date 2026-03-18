@@ -142,7 +142,7 @@ export class SwarmCoordinator {
         name: t.name,
         description: t.description,
       })),
-      ...(dbTemplates || []).map((t: SwarmTemplateRow) => ({
+      ...(dbTemplates || []).map((t: { slug: string; name: string; description: string | null }) => ({
         slug: t.slug,
         name: t.name,
         description: t.description,

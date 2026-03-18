@@ -22,7 +22,7 @@ import type {
 import { DEFAULT_PERSONAS, DEFAULT_CAPABILITIES } from './types'
 import { runAgentChat } from '@/lib/agent/engine'
 import type { EngineConfig, AgentEvent } from '@/lib/agent/engine'
-import { resolveModel, type ModelPurpose } from '@/lib/agent/model-registry'
+import { resolveModel, computeCost, type ModelPurpose } from '@/lib/agent/model-registry'
 import { logger } from '@/lib/core/logger'
 
 // ── Agent Config ────────────────────────────────────────────────────────────
@@ -394,7 +394,6 @@ End your response with a JSON block containing your structured findings:
   }
 
   private estimateCost(tokensIn: number, tokensOut: number): number {
-    const { computeCost } = require('@/lib/agent/model-registry')
     return computeCost(this.modelTier, tokensIn, tokensOut)
   }
 }
