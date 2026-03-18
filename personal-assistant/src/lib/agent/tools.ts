@@ -4,6 +4,7 @@ import { channelToolDefinitions, channelToolHandlers } from './tools/channel-too
 import { superpowerToolDefinitions, superpowerToolHandlers } from './tools/superpower-tools'
 import { codeExecutionToolDefinitions, codeExecutionToolHandlers } from './tools/code-execution'
 import { invoiceToolDefinition, handleGenerateInvoice } from './tools/invoice-tool'
+import { adToolDefinitions, adToolHandlers } from './tools/ad-tools'
 import { composeCreatorStudioDeck } from '@/lib/creator-studio'
 import { routeAgentAction } from './confidence-router'
 import { queueAgentAction, getPendingApprovals, resolveApproval } from './approval-queue'
@@ -27,7 +28,7 @@ import { getOrgPlan, checkToolPlanGate, TOOL_PLAN_REQUIREMENTS } from '@/lib/bil
 // Tool Group metadata (for future Tool RAG via pgvector)
 // ---------------------------------------------------------------------------
 
-export type ToolGroup = 'core' | 'memory' | 'channel' | 'web' | 'comms' | 'agentic'
+export type ToolGroup = 'core' | 'memory' | 'channel' | 'web' | 'comms' | 'agentic' | 'ads'
 
 export interface ToolGroupMeta {
   id: ToolGroup
@@ -72,6 +73,12 @@ export const TOOL_GROUPS: Record<ToolGroup, ToolGroupMeta> = {
     label: 'Agentic Execution',
     description: 'Run code against the BitBit SDK to solve complex problems, query data flexibly, and compose multi-step operations',
     tools: ['execute_code'],
+  },
+  ads: {
+    id: 'ads',
+    label: 'Ad Scripts',
+    description: 'Generate video ad scripts for social platforms with hook variations, storyboards, and platform-specific formatting',
+    tools: ['generate_ad_scripts', 'list_ad_batches', 'adapt_script'],
   },
 }
 
@@ -137,6 +144,11 @@ export const JIT_INSTRUCTIONS: Record<string, string> = {
 
   // Agentic execution
   execute_code: 'Code execution complete. Use the output and result to continue the conversation. If there was an error, fix the code and try again. Do not show raw code to the user — summarize what you found or did. Reference specific data points from the result.',
+
+  // Ad Scripts
+  generate_ad_scripts: 'Ad scripts generated. Present the scripts in a structured format showing each platform\'s hook, body, CTA, and duration. Highlight the hook variations for A/B testing. If storyboard data is included, present the shot-by-shot breakdown with timing. Ask if the user wants to adapt any script to a different platform.',
+  list_ad_batches: 'Present the script batches as a list with batch ID, offer name, number of scripts, and date created. Ask if the user wants to view scripts from a specific batch.',
+  adapt_script: 'Script adapted for the new platform. Present the adapted version highlighting what changed (duration, pacing, format). Compare key differences between the original and adapted versions.',
 }
 
 /** Get JIT instruction for a tool, if one exists. */
@@ -762,13 +774,14 @@ const allHandlers: Record<string, AgentToolHandler> = {
   ...channelToolHandlers,
   ...superpowerToolHandlers,
   ...codeExecutionToolHandlers,
+  ...adToolHandlers,
   async generate_invoice(input, orgId, supabase) {
     return handleGenerateInvoice(input as Parameters<typeof handleGenerateInvoice>[0], orgId, supabase)
   },
 }
 
 export function getAgentTools(groups?: ToolGroup[]): Anthropic.Tool[] {
-  const allTools = [...toolDefinitions, ...channelToolDefinitions, ...superpowerToolDefinitions, ...codeExecutionToolDefinitions, invoiceToolDefinition]
+  const allTools = [...toolDefinitions, ...channelToolDefinitions, ...superpowerToolDefinitions, ...codeExecutionToolDefinitions, ...adToolDefinitions, invoiceToolDefinition]
   if (!groups || groups.length === 0) return allTools
 
   const selectedGroups = new Set<ToolGroup>(['core', ...groups])

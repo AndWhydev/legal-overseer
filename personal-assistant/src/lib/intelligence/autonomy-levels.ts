@@ -65,6 +65,11 @@ export const TOOL_AUTONOMY_MAP: Record<string, AutonomyLevel> = {
   send_outlook: 'L2_propose',
   approve_action: 'L2_propose',
 
+  // Ad Script tools: generate content internally, no external side effects
+  generate_ad_scripts: 'L3_notify',   // Creates scripts, saves to DB
+  list_ad_batches: 'L4_silent',       // Read-only query
+  adapt_script: 'L4_silent',          // Pure transformation, no DB write
+
   // L1: Financial / irreversible — always require approval
   // (future: invoice_send, payment_process, contract_sign)
 }
