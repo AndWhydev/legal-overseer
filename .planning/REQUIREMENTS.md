@@ -98,10 +98,10 @@ Requirements for Media, Billing & Growth Roles. Closes the media gap, adds billi
 
 ### Growth Role: Ad Script Generator
 
-- [ ] **ADS-01**: Ad Script Generator registered as agent tool group (wraps existing ad-script-gen.ts)
-- [ ] **ADS-02**: User can request ad scripts via chat with hook variations, tone control, and platform targeting
-- [ ] **ADS-03**: Generated scripts include video structure (hook, body, CTA) with timing guidance
-- [ ] **ADS-04**: Ad scripts are plan-gated (growth and scale tiers only)
+- [x] **ADS-01**: Ad Script Generator registered as agent tool group (wraps existing ad-script-gen.ts)
+- [x] **ADS-02**: User can request ad scripts via chat with hook variations, tone control, and platform targeting
+- [x] **ADS-03**: Generated scripts include video structure (hook, body, CTA) with timing guidance
+- [x] **ADS-04**: Ad scripts are plan-gated (growth and scale tiers only)
 
 ### Growth Role: SEO Monitor
 
@@ -224,10 +224,10 @@ Requirements for Media, Billing & Growth Roles. Closes the media gap, adds billi
 | COST-01 | Phase 22 | Complete |
 | COST-02 | Phase 22 | Complete |
 | COST-03 | Phase 22 | Complete |
-| ADS-01 | Phase 22 | Pending |
-| ADS-02 | Phase 22 | Pending |
-| ADS-03 | Phase 22 | Pending |
-| ADS-04 | Phase 22 | Pending |
+| ADS-01 | Phase 22 | Complete |
+| ADS-02 | Phase 22 | Complete |
+| ADS-03 | Phase 22 | Complete |
+| ADS-04 | Phase 22 | Complete |
 | SEO-01 | Phase 23 | Pending |
 | SEO-02 | Phase 23 | Pending |
 | SEO-03 | Phase 23 | Pending |

@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Media, Billing & Growth Roles
 status: executing
-stopped_at: Completed 21-03-PLAN.md (Pricing, Billing Settings & Trial Email) -- Phase 21 complete, ready for Phase 22
-last_updated: "2026-03-18T18:48:07.814Z"
-last_activity: 2026-03-18 -- Completed Phase 21 (Billing Infrastructure) -- all 3 plans done
+stopped_at: Completed 22-02-PLAN.md (Ad Script Generator Tool Wiring) -- Phase 22 complete, ready for Phase 23
+last_updated: "2026-03-18T19:39:00Z"
+last_activity: 2026-03-18 -- Completed Phase 22 (Cost Controls & Ad Script Generator) -- all 2 plans done
 progress:
   total_phases: 18
   completed_phases: 9
   total_plans: 28
-  completed_plans: 29
-  percent: 43
+  completed_plans: 30
+  percent: 46
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-18)
 
 **Core value:** BitBit understands the business better than the business owner -- when Andy says "Invoice Sezer for the White House RE work", BitBit knows who Sezer is, what the work was, the rate, and whether it's already been invoiced.
-**Current focus:** v1.4 Media, Billing & Growth Roles -- Phase 22 (Cost Controls & Ad Script Generator)
+**Current focus:** v1.4 Media, Billing & Growth Roles -- Phase 23 (SEO Monitor & Tender Hunter)
 
 ## Current Position
 
-Phase: 22 of 24 (Cost Controls & Ad Script Generator)
+Phase: 23 of 24 (SEO Monitor & Tender Hunter)
 Plan: 1 of 2 in current phase
-Status: In Progress
-Last activity: 2026-03-18 -- Completed 22-01-PLAN.md (Cost Controls -- per-role budget enforcement)
+Status: Not Started
+Last activity: 2026-03-18 -- Completed 22-02-PLAN.md (Ad Script Generator Tool Wiring) -- Phase 22 complete
 
-Progress: v1.0 ======== | v1.1 ======== | v1.2 ======== | v1.4 [======_____] 43%
+Progress: v1.0 ======== | v1.1 ======== | v1.2 ======== | v1.4 [======_____] 46%
 
 ## Performance Metrics
 
@@ -44,7 +44,7 @@ Progress: v1.0 ======== | v1.1 ======== | v1.2 ======== | v1.4 [======_____] 43%
 |-------|-------|--------|
 | 20. File Attachments & Multimedia | 3 | COMPLETE |
 | 21. Billing Infrastructure | 3 | COMPLETE |
-| 22. Cost Controls & Ad Script Generator | 2 | 1/2 complete |
+| 22. Cost Controls & Ad Script Generator | 2 | COMPLETE |
 | 23. SEO Monitor & Tender Hunter | 2 | Not started |
 | 24. Content Creator | 1 | Not started |
 
@@ -83,6 +83,9 @@ See PROJECT.md Key Decisions table.
 - [22-01] TOOL_ROLE_MAP as static constant -- explicit control over budget categories vs deriving from TOOL_PLAN_REQUIREMENTS
 - [22-01] Budget-blocked tools return synthetic error, not engine halt -- graceful agent communication
 - [22-01] Execution cap injects convergence hint, not force-stop -- agent produces useful summary
+- [22-02] adaptForPlatform takes raw string (not AdScript object) -- matches existing library API
+- [22-02] 'chat-generated' sentinel for offerPackageId when user provides only description
+- [22-02] Autonomy: generate=L3_notify (DB write), list/adapt=L4_silent (read-only/pure)
 
 ### Pending Todos
 
@@ -99,5 +102,5 @@ See PROJECT.md Key Decisions table.
 ## Session Continuity
 
 Last session: 2026-03-18
-Stopped at: Completed 22-01-PLAN.md (Cost Controls -- per-role budget enforcement)
+Stopped at: Completed 22-02-PLAN.md (Ad Script Generator Tool Wiring) -- Phase 22 complete
 Resume file: None
