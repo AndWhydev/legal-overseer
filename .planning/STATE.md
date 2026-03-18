@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 ## Current Position
 
 Phase: 20 of 25 (Role Engine Foundation)
-Plan: 0 of 4 (planning complete, ready to execute)
-Status: Phase 20 planned
-Last activity: 2026-03-18 — Phase 20 plans written (4 plans)
+Plan: 1 of 4 (executing)
+Status: Phase 20 in progress
+Last activity: 2026-03-18 — 20-01 Role Schema & Type System complete
 
-Progress: v1.0 ✓ | v1.1 ✓ | v1.2 ✓ | v1.3 Phase 20 [....] 0/4
+Progress: v1.0 ✓ | v1.1 ✓ | v1.2 ✓ | v1.3 Phase 20 [#...] 1/4
 
 ## Performance Metrics
 
@@ -53,6 +53,16 @@ Progress: v1.0 ✓ | v1.1 ✓ | v1.2 ✓ | v1.3 Phase 20 [....] 0/4
 | 17 | 03 | 9min | 2 | 4 |
 | 19 | 01 | 12min | 2 | 7 |
 | 19 | 02 | 7min | 2 | 2 |
+
+**By Phase (v1.3):**
+
+| Phase | Plans | Status |
+|-------|-------|--------|
+| 20. Role Engine Foundation | 4 | 1/4 IN PROGRESS |
+
+| Phase | Plan | Duration | Tasks | Files |
+|-------|------|----------|-------|-------|
+| 20 | 01 | 5min | 3 | 3 |
 
 ## Accumulated Context
 
@@ -149,6 +159,11 @@ See PROJECT.md Key Decisions table.
 - [Q10] Greedy pairing for response latency: each sent pairs with next received (measures "how quickly does ANY response come")
 - [Q10] Dual storage: entity_patterns (7-day cache) + contacts.communication_patterns (fast dashboard reads)
 - [Q10] AEST bucketing (UTC+10) for Australian business context; 5 min samples per window, 10 events per contact
+- [20-01] RLS uses org_members subquery pattern (not current_setting) for consistency with codebase
+- [20-01] Service role bypass uses auth.role() = 'service_role' matching existing migrations
+- [20-01] ON DELETE CASCADE on all role engine org_id FKs for clean org teardown
+- [20-01] Updated_at triggers on mutable role engine tables (configs, states, workflows)
+- [20-01] Partial index on role_states.next_tick_at for efficient tick scheduling
 
 ### Pending Todos
 
@@ -188,6 +203,6 @@ See PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-03-14
-Stopped at: Completed quick task 20 (Inbox collapse/expand UX design specification -- 1205-line design document)
+Last session: 2026-03-18
+Stopped at: Completed 20-01-PLAN.md (Role Schema & Type System)
 Resume file: None

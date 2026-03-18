@@ -239,6 +239,10 @@ Plans:
   7. Every role action writes to `role_activity` with reasoning chain, confidence, autonomy mode, reversibility
   8. Autonomy gate correctly routes: Observer → insight only, Co-pilot → approval queue, Autopilot → execute or queue based on confidence
 **Plans**: 4 plans
+- [x] 20-01-PLAN.md -- Role schema & type system (5 tables, RLS, 9 TS types)
+- [ ] 20-02-PLAN.md
+- [ ] 20-03-PLAN.md
+- [ ] 20-04-PLAN.md
 
 ### Phase 21: Finance Role
 **Goal**: Finance role owns all money operations — subsumes invoice agent, adds proactive invoicing, collections, cash flow monitoring, payment pattern learning, and weekly financial digest
@@ -313,7 +317,7 @@ Phase 20 first (foundation), then 21/22/23 can partially parallel (all depend on
 | 1-6 | v1.0 | 19/19 | Complete | 2026-02-21 |
 | 7-12 | v1.1 | 16/16 | Complete | 2026-02-22 |
 | 13-19 | v1.2 | 24/24 | Complete | 2026-03-14 |
-| 20. Role Engine Foundation | v1.3 | 0/4 | Pending | — |
+| 20. Role Engine Foundation | v1.3 | 1/4 | In Progress | — |
 | 21. Finance Role | v1.3 | 0/3 | Pending | — |
 | 22. Comms Role | v1.3 | 0/3 | Pending | — |
 | 23. Sales Role | v1.3 | 0/3 | Pending | — |

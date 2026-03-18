@@ -71,7 +71,7 @@ Requirements for Agent Roles & Autonomy Engine. Transform BitBit from task-execu
 
 ### Role Engine
 
-- [ ] **ROLE-01**: Role definition schema — each role has identity, domain, responsibilities, tools, memory schema, and default autonomy level stored in `role_configs`
+- [x] **ROLE-01**: Role definition schema — each role has identity, domain, responsibilities, tools, memory schema, and default autonomy level stored in `role_configs`
 - [ ] **ROLE-02**: Role state persistence — each role maintains working memory (JSONB) that survives restarts and is loadable per tick
 - [ ] **ROLE-03**: Role activation via events (new message, invoice paid, lead submitted) and scheduled ticks (configurable per role)
 - [ ] **ROLE-04**: Concurrency control — simultaneous activations of the same role are serialized via Postgres advisory locks
