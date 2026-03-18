@@ -113,21 +113,30 @@ export async function GET(
       )
     }
 
+    let userId: string
+    let orgId: string
+
     const {
       data: { user },
     } = await supabase.auth.getUser()
-    if (!user) {
+
+    if (user) {
+      userId = user.id
+      const resolved = await getActiveOrgId(supabase, user.id)
+      if (!resolved) {
+        return NextResponse.redirect(
+          buildRedirectUrl(request, '/dashboard/connections?error=No organization found'),
+        )
+      }
+      orgId = resolved
+    } else if (process.env.DEV_BYPASS_AUTH === 'true') {
+      // Dev mode: use hardcoded Tor user/org for OAuth callback
+      userId = '02ce2616-c01b-45a5-a2ad-16ebe936a6b2'
+      orgId = '7abcbfb1-67e5-4a3b-aa08-a17cfd2867e9'
+      logger.warn('[oauth-callback] Using dev bypass auth — hardcoded user/org')
+    } else {
       return NextResponse.redirect(
         buildRedirectUrl(request, '/auth/login?error=Not authenticated'),
-      )
-    }
-
-    // Use dual-tier tenancy: resolve active org for this user
-    const orgId = await getActiveOrgId(supabase, user.id)
-
-    if (!orgId) {
-      return NextResponse.redirect(
-        buildRedirectUrl(request, '/dashboard/connections?error=No organization found'),
       )
     }
 
@@ -148,7 +157,7 @@ export async function GET(
       orgId,
       provider,
       buildCredentialPayload(provider, tokens, tokenExpiresAt),
-      user.id
+      userId
     )
 
     const connectionChannelType = getConnectionChannelType(provider)
