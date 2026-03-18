@@ -448,8 +448,9 @@ export async function* runAgentChat(
     })
   }
 
-  // Build plan-aware system prompt addition
-  let fullSystemPrompt = systemPrompt
+  // Append tier-appropriate prompt modifier based on model selection
+  const { getTierModifier } = await import('./tier-prompts')
+  let fullSystemPrompt = systemPrompt + getTierModifier(purpose)
   if (planStages.length > 0) {
     const planDescription = planStages
       .map((s, i) => `${i + 1}. ${s.icon} ${s.label}${s.sublabel ? ` (${s.sublabel})` : ''}${s.toolHint ? ` [tool: ${s.toolHint}]` : ''}`)

@@ -15,7 +15,12 @@ export async function GET(request: Request) {
   }
 
   try {
-    const requestOrigin = new URL(request.url).origin
+    // In dev, always use localhost for OAuth redirects — Google rejects
+    // non-registered origins (Tailscale IPs, 0.0.0.0, etc.).
+    // Use SSH port-forward from client machine: ssh -L 3000:localhost:3000 <host>
+    const requestOrigin = process.env.NODE_ENV === 'production'
+      ? new URL(request.url).origin
+      : 'http://localhost:3000'
     const { url, state, codeVerifier } = getOAuthRedirectUrl(provider, requestOrigin)
 
     const response = NextResponse.redirect(url)

@@ -10,6 +10,14 @@ vi.mock('../confidence-router')
 vi.mock('../approval-queue')
 vi.mock('../approval-notifier')
 
+// Mock autonomy levels to always fall through to confidence routing
+vi.mock('@/lib/intelligence/autonomy-levels', () => ({
+  shouldAutoExecute: vi.fn().mockReturnValue({ execute: false, notify: false, reason: 'test-bypass' }),
+}))
+vi.mock('@/lib/notifications/dispatcher', () => ({
+  dispatchNotification: vi.fn().mockResolvedValue({ dashboard: true }),
+}))
+
 // Mock shared-tools
 vi.mock('../shared-tools', () => ({
   createTask: vi.fn().mockResolvedValue({ success: true, data: { id: 'task-1' } }),

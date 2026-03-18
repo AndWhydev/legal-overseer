@@ -17,6 +17,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { resolveModel } from '@/lib/agent/model-registry'
 import { extractEntities } from '@/lib/rag/entity-extractor'
 import { logger } from '@/lib/core/logger'
+import { computeUrgency, type UrgencyResult } from './urgency-scorer'
 
 // ─── Types ───────────────────────────────────────────────────────────────
 
@@ -44,6 +45,7 @@ export type EnrichmentCategory =
 export interface EnrichmentResult {
   summary: string
   urgency_score: number
+  urgency: UrgencyResult
   entity_ids: string[]
   action_items: string[]
   enrichment_category: EnrichmentCategory
@@ -54,32 +56,6 @@ export interface EnrichmentResult {
 
 /** Max body length sent to Haiku for summarisation */
 const MAX_SUMMARY_BODY = 1500
-
-/** Urgency keyword patterns with weights */
-const URGENCY_KEYWORDS: Array<{ pattern: RegExp; weight: number }> = [
-  { pattern: /\burgent\b/i, weight: 0.25 },
-  { pattern: /\basap\b/i, weight: 0.25 },
-  { pattern: /\bimmediately\b/i, weight: 0.2 },
-  { pattern: /\bcritical\b/i, weight: 0.2 },
-  { pattern: /\btime[- ]?sensitive\b/i, weight: 0.15 },
-  { pattern: /\bright\s+away\b/i, weight: 0.15 },
-  { pattern: /\bdeadline\b/i, weight: 0.15 },
-  { pattern: /\boverdue\b/i, weight: 0.2 },
-  { pattern: /\bfinal\s+notice\b/i, weight: 0.25 },
-  { pattern: /\blast\s+chance\b/i, weight: 0.15 },
-]
-
-/** Deadline mention patterns */
-const DEADLINE_PATTERNS = [
-  /\bby\s+(?:end\s+of\s+)?(?:today|tonight|tomorrow|eod|eow|eom)\b/i,
-  /\bdue\s+(?:by|on|date)\b/i,
-  /\bdeadline\s*(?:is|:)/i,
-  /\bby\s+(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/i,
-  /\bby\s+(?:january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{1,2}/i,
-]
-
-/** Financial amount pattern */
-const FINANCIAL_PATTERN = /\$\s*[\d,]+\.?\d{0,2}|\b\d[\d,]*\.?\d{0,2}\s*(?:AUD|USD|EUR|GBP)\b/i
 
 /** Action item patterns — questions or requests directed at the reader */
 const ACTION_ITEM_PATTERNS: Array<{ pattern: RegExp; label: string }> = [
@@ -215,52 +191,6 @@ Body: ${body}`
 }
 
 /**
- * Score urgency 0-1 using heuristic signals.
- * No LLM — pure regex/keyword analysis.
- */
-function scoreUrgency(message: IngestMessage): number {
-  const text = [message.subject, message.body].filter(Boolean).join(' ')
-  let score = 0
-
-  // Urgency keywords
-  for (const { pattern, weight } of URGENCY_KEYWORDS) {
-    if (pattern.test(text)) {
-      score += weight
-    }
-  }
-
-  // Deadline mentions (+0.15 each, max 0.3)
-  let deadlineHits = 0
-  for (const pattern of DEADLINE_PATTERNS) {
-    if (pattern.test(text)) {
-      deadlineHits++
-    }
-  }
-  score += Math.min(deadlineHits * 0.15, 0.3)
-
-  // Financial amounts (+0.1)
-  if (FINANCIAL_PATTERN.test(text)) {
-    score += 0.1
-  }
-
-  // Question density — many question marks suggest awaiting response (+0.05 per ?, max 0.15)
-  const questionMarks = (text.match(/\?/g) || []).length
-  score += Math.min(questionMarks * 0.05, 0.15)
-
-  // Known-client sender heuristic: if sender_email has a non-free domain, slight bump
-  if (message.sender_email) {
-    const domain = message.sender_email.split('@')[1]?.toLowerCase()
-    const freeProviders = ['gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com', 'icloud.com', 'protonmail.com']
-    if (domain && !freeProviders.includes(domain)) {
-      score += 0.05
-    }
-  }
-
-  // Clamp to [0, 1]
-  return Math.round(Math.min(1, Math.max(0, score)) * 100) / 100
-}
-
-/**
  * Extract entity IDs using the existing entity extractor.
  * Returns array of contact IDs for entities that matched known contacts.
  */
@@ -363,19 +293,27 @@ export async function enrichMessage(
   try {
     const startTime = performance.now()
 
-    // Run all enrichments concurrently — summary is async (Haiku), rest are sync/fast
-    const [summary, entityIds] = await Promise.all([
+    // Run all enrichments concurrently — summary + entities are async, urgency hits DB
+    const [summary, entityIds, urgencyResult] = await Promise.all([
       generateSummary(message),
       extractEntityIds(supabase, orgId, message),
+      computeUrgency(supabase, orgId, {
+        sender: message.sender,
+        sender_email: message.sender_email,
+        subject: message.subject,
+        body: message.body,
+        channel: message.channel,
+        received_at: message.received_at,
+      }),
     ])
 
-    const urgencyScore = scoreUrgency(message)
     const actionItems = detectActionItems(message)
     const category = classifyCategory(message)
 
     const enrichment: EnrichmentResult = {
       summary,
-      urgency_score: urgencyScore,
+      urgency_score: urgencyResult.score,
+      urgency: urgencyResult,
       entity_ids: entityIds,
       action_items: actionItems,
       enrichment_category: category,
@@ -405,7 +343,8 @@ export async function enrichMessage(
     const elapsed = Math.round(performance.now() - startTime)
     logger.debug('[ingest-enrichment] Enriched message', {
       messageId: message.id,
-      urgency: urgencyScore,
+      urgency: urgencyResult.score,
+      urgencyLevel: urgencyResult.level,
       category,
       actionItems: actionItems.length,
       entities: entityIds.length,

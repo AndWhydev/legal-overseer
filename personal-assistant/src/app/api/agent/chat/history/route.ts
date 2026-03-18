@@ -61,8 +61,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
-  // Load messages
+  // Load messages (returned newest-first, reverse for chronological display)
   const messages = await loadRecentMessages(supabase, threadId, limit)
+  messages.reverse()
 
   return NextResponse.json({ threadId, messages })
 }

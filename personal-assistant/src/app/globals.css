@@ -376,6 +376,23 @@ html.light ::-webkit-scrollbar-thumb:hover {
   * {
     @apply border-border outline-ring/50;
   }
+  /* Transparent textareas — exempt from global border-border */
+  .bb-inbox-reply-textarea,
+  .bb-inbox-reply-textarea:focus,
+  .bb-inbox-reply-textarea:focus-visible,
+  .bb-pill__textarea,
+  .bb-pill__textarea:focus,
+  .bb-pill__textarea:focus-visible {
+    border: none !important;
+    border-width: 0 !important;
+    border-style: none !important;
+    border-color: transparent !important;
+    outline: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    -webkit-appearance: none !important;
+    appearance: none !important;
+  }
   body {
     @apply bg-background text-foreground;
   }

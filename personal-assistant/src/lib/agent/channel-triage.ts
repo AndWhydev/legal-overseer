@@ -19,6 +19,8 @@ import { resolveEntityRanked } from '@/lib/context/entity-resolver'
 import { writeMessageEvent } from '@/lib/context/timeline-writer'
 import { linkRelationship } from '@/lib/context/relationship-linker'
 import { reflectOnEvent } from './reflection'
+import { getActiveOrders, matchOrdersToContext, type StandingOrder } from '@/lib/intelligence/standing-orders'
+import { computeUrgency, type UrgencyResult } from '@/lib/intelligence/urgency-scorer'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -438,6 +440,14 @@ export async function runTriage(
     routed: [],
   }
 
+  // 0. Load standing orders once for the entire batch
+  let activeOrders: StandingOrder[] = []
+  try {
+    activeOrders = await getActiveOrders(supabase, orgId)
+  } catch {
+    // Non-critical: triage proceeds without standing orders
+  }
+
   // 1. Cross-channel deduplication
   const duplicates = findDuplicates(messages)
   result.deduplicated = duplicates.size
@@ -533,40 +543,48 @@ export async function runTriage(
       isTransientSender = true
     }
 
-    // 4. Priority scoring with entity context
+    // 4. Priority scoring via temporal urgency scorer
     const msgCategory = toMessageCategory(classification)
-    let contactMeta: Parameters<typeof scorePriority>[1] | undefined
-    if (contactId) {
-      // Quick lookup for financial signals
-      const { data: invoices } = await supabase
-        .from('invoices')
-        .select('status, total')
-        .eq('org_id', orgId)
-        .eq('client_contact_id', contactId)
-        .in('status', ['sent', 'viewed', 'overdue'])
 
-      const outstanding = invoices?.reduce((sum, inv) => sum + Number(inv.total || 0), 0) ?? 0
-      const overdueCount = invoices?.filter(inv => inv.status === 'overdue').length ?? 0
+    // Compute multi-signal urgency score
+    const urgencyResult: UrgencyResult = await computeUrgency(supabase, orgId, {
+      sender: (msg.sender as string) || 'Unknown',
+      sender_email: msg.sender_email as string | null,
+      subject: msg.subject as string | null,
+      body: String(msg.body || ''),
+      channel: msg.channel as string,
+      received_at: msg.received_at as string,
+    })
 
-      // Upcoming deadlines
-      const { count: deadlineCount } = await supabase
-        .from('tasks')
-        .select('*', { count: 'exact', head: true })
-        .eq('org_id', orgId)
-        .contains('metadata', { contact_id: contactId })
-        .gte('metadata->>target_date', new Date().toISOString())
-        .lte('metadata->>target_date', new Date(Date.now() + 7 * 86400000).toISOString()) as { count: number | null }
+    let priority: PriorityLevel = urgencyResult.level
+    const routing = routeMessage(classification)
 
-      contactMeta = {
-        isClient: classification.category === 'client',
-        hasOutstanding: outstanding > 0,
-        overdueCount,
-        upcomingDeadlines: deadlineCount ?? 0,
+    // 4b. Apply standing orders — boost significance/priority if a directive matches
+    if (activeOrders.length > 0) {
+      const matchedOrders = matchOrdersToContext(activeOrders, {
+        sender: msg.sender as string | undefined,
+        senderEmail: msg.sender_email as string | undefined,
+        channel: msg.channel as string | undefined,
+        subject: msg.subject as string | undefined,
+      })
+      if (matchedOrders.length > 0) {
+        // Boost significance by 2 per matched order (capped at 10)
+        classification.significance = Math.min(10, classification.significance + matchedOrders.length * 2)
+
+        // If any matched order is in triage category, escalate priority
+        const hasTriageOrder = matchedOrders.some(o => o.category === 'triage')
+        if (hasTriageOrder && (priority === 'low' || priority === 'medium')) {
+          priority = 'high'
+        }
+
+        logger.info('[triage] Standing orders matched', {
+          messageId: msg.id,
+          matchedCount: matchedOrders.length,
+          directives: matchedOrders.map(o => o.directive),
+          boostedPriority: priority,
+        })
       }
     }
-
-    const priority = scorePriority(classification, contactMeta)
-    const routing = routeMessage(classification)
 
     // 5. Count by category
     if (msgCategory === 'spam') {
@@ -698,6 +716,7 @@ export async function runTriage(
           contact_name: contactName,
           thread_status: threadStatus,
           deduplicated_with: isDuplicate ? duplicates.get(msg.id) : null,
+          urgency: urgencyResult,
           processed_at: new Date().toISOString(),
         },
       })
@@ -728,6 +747,7 @@ export interface InboxMessage {
   senderEmail: string | null
   subject: string | null
   bodyPreview: string
+  fullBody: string
   aiSummary: string | null
   category: MessageCategory
   priority: PriorityLevel
@@ -788,6 +808,7 @@ export async function queryInbox(
       senderEmail: (msg.sender_email as string) || null,
       subject: (msg.subject as string) || null,
       bodyPreview: String(msg.body || '').slice(0, 200),
+      fullBody: String(msg.body || ''),
       aiSummary: (meta.ai_summary as string) || null,
       category: (meta.category as MessageCategory) || 'informational',
       priority: (msg.priority as PriorityLevel) || 'medium',

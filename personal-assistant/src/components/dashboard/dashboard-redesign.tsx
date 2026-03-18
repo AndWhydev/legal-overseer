@@ -5,13 +5,13 @@ import type { KanbanColumn, Task } from '@/lib/types';
 import { useDashboardStats } from '@/hooks/use-dashboard-stats';
 import { useSeedData } from '@/hooks/use-seed-data';
 import { useEnabledModules } from '@/lib/modules/use-enabled-modules';
+import { useTheme } from '@/lib/theme/theme-provider';
 import { getPack } from '@/lib/industry/registry';
 import type { KPIConfig } from '@/lib/industry/types';
 import { StatCard, MiniSparkline, MiniBarChart, MiniDonut, MiniGauge } from '@/components/ui/data-viz';
 import { DailyBrief } from './daily-brief';
 import { KanbanBoard } from './kanban-board';
 import { InboxFeed } from './inbox-feed';
-import { KanbanBoardTooltip } from '@/components/onboarding/first-run-guide';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -29,6 +29,8 @@ export function DashboardRedesign({ columns, tasks, messages, completedToday, to
   const [inboxCollapsed, setInboxCollapsed] = React.useState(false);
   const [edgeGlow, setEdgeGlow] = React.useState(0);
   const edgeRef = React.useRef<HTMLDivElement>(null);
+  const { theme } = useTheme();
+  const isLight = theme === 'light';
   const { stats, loading } = useDashboardStats();
   const seed = useSeedData();
   const { industry } = useEnabledModules();
@@ -49,30 +51,73 @@ export function DashboardRedesign({ columns, tasks, messages, completedToday, to
     localStorage.setItem('bb-inbox-collapsed', JSON.stringify(collapsed));
   }, []);
 
-  // Edge-knock proximity detection for collapsed inbox
+  // Edge-knock: fling cursor into right viewport edge → toggle inbox.
+  // Uses mouseleave to catch the cursor exiting the browser (fast fling).
+  // Knock flash gives tactile visual feedback on trigger.
+  const knockArmedRef = React.useRef(true);
+  const [knockFlash, setKnockFlash] = React.useState(false);
+  const lastMouseXRef = React.useRef(0);
+
+  const fireKnock = React.useCallback(() => {
+    if (!knockArmedRef.current) return;
+    knockArmedRef.current = false;
+    // Tactile flash
+    setKnockFlash(true);
+    setTimeout(() => setKnockFlash(false), 300);
+    handleInboxCollapse(!inboxCollapsed);
+  }, [inboxCollapsed, handleInboxCollapse]);
+
   React.useEffect(() => {
-    if (!inboxCollapsed) {
-      setEdgeGlow(0);
-      return;
-    }
     let rafId: number;
+
     const handleMouseMove = (e: MouseEvent) => {
-      cancelAnimationFrame(rafId);
-      rafId = requestAnimationFrame(() => {
-        const distFromRight = window.innerWidth - e.clientX;
-        if (distFromRight < 60) {
-          setEdgeGlow(Math.min(1, (60 - distFromRight) / 60));
-        } else {
-          setEdgeGlow(0);
-        }
-      });
+      lastMouseXRef.current = e.clientX;
+      const distFromEdge = window.innerWidth - e.clientX;
+
+      // Re-arm once cursor moves away from edge
+      if (distFromEdge > 80) {
+        knockArmedRef.current = true;
+      }
+
+      // Direct edge hit (within 8px)
+      if (distFromEdge <= 8) {
+        fireKnock();
+      }
+
+      // Glow effect (only when collapsed) — throttled via rAF
+      if (inboxCollapsed) {
+        cancelAnimationFrame(rafId);
+        rafId = requestAnimationFrame(() => {
+          const glowThreshold = 80;
+          if (distFromEdge < glowThreshold) {
+            setEdgeGlow(Math.min(1, (glowThreshold - distFromEdge) / glowThreshold));
+          } else {
+            setEdgeGlow(0);
+          }
+        });
+      }
     };
+
+    // Cursor left the browser window — check if it exited from the right side.
+    // This is the primary detection for fast flings where mousemove never
+    // reaches the edge because the cursor exits the viewport entirely.
+    const handleMouseLeave = (e: MouseEvent) => {
+      // e.clientX at the moment of exit — if it's in the right 25% of the
+      // viewport, the cursor left through the right edge.
+      const exitX = e.clientX || lastMouseXRef.current;
+      if (exitX > window.innerWidth * 0.75) {
+        fireKnock();
+      }
+    };
+
     document.addEventListener('mousemove', handleMouseMove, { passive: true });
+    document.documentElement.addEventListener('mouseleave', handleMouseLeave);
     return () => {
       document.removeEventListener('mousemove', handleMouseMove);
+      document.documentElement.removeEventListener('mouseleave', handleMouseLeave);
       cancelAnimationFrame(rafId);
     };
-  }, [inboxCollapsed]);
+  }, [inboxCollapsed, fireKnock]);
 
   // Use seed kanban data when active, otherwise use props
   const displayColumns = seed.active && seed.data?.kanbanColumns ? seed.data.kanbanColumns : columns;
@@ -196,84 +241,98 @@ export function DashboardRedesign({ columns, tasks, messages, completedToday, to
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: inboxCollapsed ? '1fr 36px' : '1fr 320px',
+          gridTemplateColumns: inboxCollapsed ? '1fr auto' : '1fr auto',
           gap: 20,
           flex: 1,
           minHeight: 0,
+          overflow: 'hidden',
           transition: 'grid-template-columns 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
         }}
         className="dashboard-main-grid"
       >
         {/* Kanban Board */}
         <div style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
-          <KanbanBoardTooltip>
-            <KanbanBoard
-              initialColumns={displayColumns}
-              initialTasks={displayTasks}
-            />
-          </KanbanBoardTooltip>
+          <KanbanBoard
+            initialColumns={displayColumns}
+            initialTasks={displayTasks}
+          />
         </div>
 
-        {/* Inbox Feed or Edge Knock Strip */}
-        {inboxCollapsed ? (
-          <div
-            ref={edgeRef}
-            onClick={() => handleInboxCollapse(false)}
-            aria-label="Expand inbox"
-            role="button"
-            tabIndex={0}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              position: 'relative',
-              borderRadius: 12,
-              transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
-            }}
-          >
-            {/* Luminous edge strip */}
-            <div style={{
-              position: 'absolute',
-              top: 16,
-              bottom: 16,
-              left: '50%',
-              transform: 'translateX(-50%)',
-              width: 3,
-              borderRadius: 3,
-              background: `rgba(255, 255, 255, ${0.06 + edgeGlow * 0.14})`,
-              boxShadow: edgeGlow > 0.3
-                ? `0 0 ${8 * edgeGlow}px rgba(255, 255, 255, ${0.05 * edgeGlow}), 0 0 ${20 * edgeGlow}px rgba(255, 255, 255, ${0.03 * edgeGlow})`
-                : 'none',
-              transition: 'all 0.3s ease',
-            }} />
-            {/* Inbox icon hint -- appears on hover */}
-            <div style={{
-              opacity: edgeGlow > 0.5 ? edgeGlow : 0,
-              transition: 'opacity 0.2s ease',
-              color: `rgba(255, 255, 255, ${0.3 + edgeGlow * 0.3})`,
-            }}>
-              <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="15 18 9 12 15 6" />
-              </svg>
-            </div>
-          </div>
-        ) : (
-          <aside
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              minHeight: 0,
-              opacity: 1,
-              transition: 'opacity 0.3s ease',
-            }}
-          >
-            <InboxFeed
-              isCollapsed={inboxCollapsed}
-              onCollapsedChange={handleInboxCollapse}
-            />
-          </aside>
-        )}
+        {/* Fixed edge strip — always present, pinned to viewport edge */}
+        <div
+          ref={edgeRef}
+          aria-label={inboxCollapsed ? 'Open inbox (fling cursor to right edge)' : 'Close inbox (fling cursor to right edge)'}
+          style={{
+            position: 'fixed',
+            top: 0,
+            right: 0,
+            bottom: 0,
+            width: inboxCollapsed ? 8 : 4,
+            zIndex: 30,
+            cursor: 'pointer',
+            pointerEvents: 'auto',
+          }}
+          onClick={() => handleInboxCollapse(!inboxCollapsed)}
+        >
+          {/* Glow strip — theme-inverse: white on dark, black on light */}
+          <div style={{
+            position: 'absolute',
+            top: '10%',
+            bottom: '10%',
+            right: 0,
+            width: edgeGlow > 0.3 ? 4 : 2,
+            borderRadius: '3px 0 0 3px',
+            background: inboxCollapsed
+              ? (isLight
+                  ? `rgba(0, 0, 0, ${0.03 + edgeGlow * 0.25})`
+                  : `rgba(255, 255, 255, ${0.04 + edgeGlow * 0.4})`)
+              : 'transparent',
+            boxShadow: (inboxCollapsed && edgeGlow > 0.15)
+              ? (isLight
+                  ? `0 0 ${14 * edgeGlow}px rgba(0, 0, 0, ${0.1 * edgeGlow})`
+                  : `0 0 ${14 * edgeGlow}px rgba(255, 255, 255, ${0.2 * edgeGlow})`)
+              : 'none',
+            transition: 'all 0.15s ease',
+          }} />
+          {/* Knock flash — theme-inverse pulse on trigger */}
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            right: 0,
+            bottom: 0,
+            width: knockFlash ? 3 : 0,
+            background: 'var(--edge-knock-flash, rgba(255, 255, 255, 0.7))',
+            boxShadow: knockFlash
+              ? '0 0 20px var(--edge-knock-flash-spread, rgba(255, 255, 255, 0.4)), 0 0 60px var(--edge-knock-flash-spread, rgba(255, 255, 255, 0.15))'
+              : 'none',
+            opacity: knockFlash ? 1 : 0,
+            transition: knockFlash
+              ? 'opacity 0.05s ease, width 0.05s ease'
+              : 'opacity 0.25s ease, width 0.25s ease',
+          }} />
+        </div>
+
+        {/* Inbox panel — always rendered, slides in/out */}
+        <aside
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            minHeight: 0,
+            width: 320,
+            flexShrink: 0,
+            transform: inboxCollapsed ? 'translateX(340px)' : 'translateX(0)',
+            opacity: inboxCollapsed ? 0 : 1,
+            transition: 'transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.25s ease',
+            pointerEvents: inboxCollapsed ? 'none' : 'auto',
+            overflow: 'hidden',
+            marginRight: inboxCollapsed ? -320 : 0,
+          }}
+        >
+          <InboxFeed
+            isCollapsed={inboxCollapsed}
+            onCollapsedChange={handleInboxCollapse}
+          />
+        </aside>
       </div>
 
       {/* Responsive: stack on mobile */}

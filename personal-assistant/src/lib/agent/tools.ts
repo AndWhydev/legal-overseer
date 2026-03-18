@@ -9,6 +9,8 @@ import { queueAgentAction, getPendingApprovals, resolveApproval } from './approv
 import { executeApprovedAction, requeueExpiredAction } from './action-executor'
 import { notifyApproval } from './approval-notifier'
 import { recordActionOutcome } from '@/lib/intelligence/confidence-calibrator'
+import { shouldAutoExecute, type OrgAutonomyOverrides } from '@/lib/intelligence/autonomy-levels'
+import { dispatchNotification } from '@/lib/notifications/dispatcher'
 import {
   createTask,
   updateTask,
@@ -748,6 +750,7 @@ export interface ExecuteToolOptions {
   calibratedThresholds?: { act: number; ask: number; sampleSize: number } | null
   confidenceScore?: number
   agentType?: string
+  orgAutonomyOverrides?: OrgAutonomyOverrides | null
 }
 
 export async function executeAgentTool(
@@ -761,6 +764,43 @@ export async function executeAgentTool(
   if (!handler) {
     return { success: false, error: `Unknown tool: ${name}` }
   }
+
+  // ---------------------------------------------------------------------------
+  // Autonomy pre-filter: check tool risk level BEFORE confidence routing.
+  // L4 (silent) and L3 (notify) bypass the approval queue entirely.
+  // L2 (propose) and L1 (approve) fall through to existing confidence routing.
+  // ---------------------------------------------------------------------------
+  const confidenceScore = options?.confidenceScore ?? 1 // Default to 1 (max confidence) for chat-driven calls
+  const autonomy = shouldAutoExecute(name, confidenceScore, options?.orgAutonomyOverrides)
+
+  if (autonomy.execute) {
+    // L4 or L3 with sufficient confidence — execute directly
+    logger.debug(`[tools] Autonomy bypass: ${autonomy.reason}`)
+    try {
+      const result = await handler(input, orgId, supabase)
+
+      // L3: fire-and-forget notification so user knows what happened
+      if (autonomy.notify) {
+        dispatchNotification(supabase, {
+          orgId,
+          type: 'info',
+          title: `Agent executed: ${name}`,
+          body: autonomy.reason,
+          urgency: 'low',
+          channels: ['dashboard'],
+          metadata: { toolName: name, autonomyLevel: 'L3_notify' },
+        }).catch(() => { /* swallow */ })
+      }
+
+      return result
+    } catch (err) {
+      return { success: false, error: String(err) }
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // L2 / L1 (or L3 with low confidence): fall through to confidence routing
+  // ---------------------------------------------------------------------------
 
   // Apply confidence routing if confidence score is provided and approval infrastructure exists
   if (

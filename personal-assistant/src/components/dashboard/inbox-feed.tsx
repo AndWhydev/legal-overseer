@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useState as useLocalState } from 'react';
-import { Inbox, CheckCircle2 } from 'lucide-react';
+import { Inbox, CheckCircle2, PanelRightClose } from 'lucide-react';
 import { useRealtimeSubscription } from '@/lib/realtime/supabase-realtime';
 import { useSeedData } from '@/hooks/use-seed-data';
 
@@ -280,6 +280,31 @@ export function InboxFeed({ isCollapsed = false, onCollapsedChange }: InboxFeedP
           >
             <AutopilotIcon size={14} active={autopilotActive} />
           </button>
+          {onCollapsedChange && (
+            <button
+              onClick={() => onCollapsedChange(true)}
+              title="Collapse inbox"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: 28,
+                height: 28,
+                padding: 0,
+                borderRadius: 8,
+                border: '1px solid transparent',
+                background: 'transparent',
+                color: 'var(--text-secondary)',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.background = 'var(--hover-bg)'; }}
+              onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.background = 'transparent'; }}
+              aria-label="Collapse inbox"
+            >
+              <PanelRightClose size={14} />
+            </button>
+          )}
         </div>
       </div>
 

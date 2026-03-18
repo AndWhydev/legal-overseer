@@ -53,6 +53,7 @@ import { getPack, resolveIndustry } from '@/lib/industry/registry'
 import { scanForEntityMentions, type ScanContact } from '@/lib/context/entity-mention-scanner'
 import { getBaseplateSnapshot, type BaseplateSnapshot } from '@/lib/context/baseplate-snapshot'
 import { getPendingApprovals } from './approval-queue'
+import { getActiveOrders, formatOrdersForPrompt } from '@/lib/intelligence/standing-orders'
 import { logger } from '@/lib/core/logger'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
@@ -278,7 +279,7 @@ export async function buildSystemPrompt(supabase: SupabaseClient, orgId: string,
     _channelSummaryOrgId = orgId
   }
 
-  const [ctx, channelSummary, todayEvents, dueReminders, policyText, voiceText, pendingApprovals, connectedEmails] = await Promise.all([
+  const [ctx, channelSummary, todayEvents, dueReminders, policyText, voiceText, pendingApprovals, connectedEmails, standingOrders] = await Promise.all([
     supabase
       ? loadContext(supabase, orgId, {
           activeTasksOnly: true,
@@ -296,6 +297,9 @@ export async function buildSystemPrompt(supabase: SupabaseClient, orgId: string,
       : Promise.resolve([]),
     supabase
       ? loadConnectedEmails(supabase, orgId)
+      : Promise.resolve([]),
+    supabase
+      ? getActiveOrders(supabase, orgId).catch(() => [])
       : Promise.resolve([]),
   ])
 
@@ -450,6 +454,8 @@ When you discover a person or organization:
 6. Connect relationships: if A mentions B, and B mentions C, map that chain
 
 This drive is not optional. It is the core of what makes you useful. A user should never need to tell you to "dig deeper" or "search for that." You should already be doing it.
+
+${formatOrdersForPrompt(standingOrders)}
 
 ## Guidelines
 

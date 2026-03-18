@@ -184,58 +184,66 @@ export function BitBitOverlay({
       return;
     }
 
-    let cancelled = false;
     let rafId: number | null = null;
     let settleTimer: ReturnType<typeof setTimeout> | undefined;
     let removeListeners: (() => void) | undefined;
+    let observer: MutationObserver | null = null;
 
-    const resolveDock = () => {
-      if (cancelled) return;
-      const el = document.getElementById('pill-dock');
-      if (el) {
-        setDockEl(el);
+    const attachListeners = (el: HTMLElement) => {
+      setDockEl(el);
 
-        const queueMeasure = () => {
-          if (rafId !== null) {
-            window.cancelAnimationFrame(rafId);
-          }
-          rafId = window.requestAnimationFrame(() => {
-            rafId = null;
-            measureDockMetrics(el);
-          });
-        };
+      const queueMeasure = () => {
+        if (rafId !== null) {
+          window.cancelAnimationFrame(rafId);
+        }
+        rafId = window.requestAnimationFrame(() => {
+          rafId = null;
+          measureDockMetrics(el);
+        });
+      };
 
-        queueMeasure();
+      queueMeasure();
 
-        const host = el.parentElement;
-        const onResize = () => queueMeasure();
-        const onTransition = () => queueMeasure();
+      const host = el.parentElement;
+      const onResize = () => queueMeasure();
+      const onTransition = () => queueMeasure();
 
-        window.addEventListener('resize', onResize);
-        host?.addEventListener('transitionrun', onTransition);
-        host?.addEventListener('transitionend', onTransition);
+      window.addEventListener('resize', onResize);
+      host?.addEventListener('transitionrun', onTransition);
+      host?.addEventListener('transitionend', onTransition);
 
-        settleTimer = setTimeout(queueMeasure, 260);
+      settleTimer = setTimeout(queueMeasure, 260);
 
-        removeListeners = () => {
-          window.removeEventListener('resize', onResize);
-          host?.removeEventListener('transitionrun', onTransition);
-          host?.removeEventListener('transitionend', onTransition);
-          if (settleTimer) {
-            clearTimeout(settleTimer);
-            settleTimer = undefined;
-          }
-        };
-
-        return;
-      }
-      rafId = window.requestAnimationFrame(resolveDock);
+      removeListeners = () => {
+        window.removeEventListener('resize', onResize);
+        host?.removeEventListener('transitionrun', onTransition);
+        host?.removeEventListener('transitionend', onTransition);
+        if (settleTimer) {
+          clearTimeout(settleTimer);
+          settleTimer = undefined;
+        }
+      };
     };
 
-    resolveDock();
+    // Try synchronous lookup first
+    const el = document.getElementById('pill-dock');
+    if (el) {
+      attachListeners(el);
+    } else {
+      // Element not in DOM yet (Suspense fallback showing).
+      // Use MutationObserver to catch it the moment it appears.
+      observer = new MutationObserver(() => {
+        const found = document.getElementById('pill-dock');
+        if (found) {
+          observer?.disconnect();
+          observer = null;
+          attachListeners(found);
+        }
+      });
+      observer.observe(document.body, { childList: true, subtree: true });
+    }
 
     return () => {
-      cancelled = true;
       if (rafId !== null) {
         window.cancelAnimationFrame(rafId);
       }
@@ -243,8 +251,13 @@ export function BitBitOverlay({
         clearTimeout(settleTimer);
       }
       removeListeners?.();
+      observer?.disconnect();
     };
-  }, [isChatTab, measureDockMetrics, chatSessionStarted]);
+    // Note: measureDockMetrics intentionally excluded — it depends on dockEl
+    // which would cause circular effect restarts. Metrics are measured via
+    // the dedicated effect below instead.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isChatTab]);
 
   useEffect(() => {
     if (!isChatTab) return;
@@ -294,6 +307,13 @@ export function BitBitOverlay({
   }, [beginChatMorph, forceFloating, isChatTab]);
 
   const startVoice = useCallback(async () => {
+    // Pre-check: is getUserMedia available at all?
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setError('Voice input is not available in this browser');
+      setPillMode('response');
+      return;
+    }
+
     if (isChatTab && !forceFloating) {
       beginChatMorph('to-floating');
       setForceFloating(true);
@@ -400,6 +420,7 @@ export function BitBitOverlay({
       lastTriggerRef.current = now;
 
       if (gap < DOUBLE_TAP_MS) {
+        // ── Double-tap: open text input (no microphone needed) ──
         if (doubleTapTimerRef.current) {
           clearTimeout(doubleTapTimerRef.current);
           doubleTapTimerRef.current = undefined;
@@ -412,15 +433,22 @@ export function BitBitOverlay({
           beginChatMorph('to-floating');
           setForceFloating(true);
         }
+        setError(null);
         setPillMode('text');
         return;
       }
 
+      // ── First tap: wait to see if a second tap follows ──
+      // Don't start voice yet — defer until the double-tap window expires.
       isHoldingRef.current = true;
-      startVoice();
 
       doubleTapTimerRef.current = setTimeout(() => {
         doubleTapTimerRef.current = undefined;
+        // No second tap arrived — commit to voice (hold-to-talk).
+        // Only start if still holding (keyUp hasn't fired).
+        if (isHoldingRef.current) {
+          startVoice();
+        }
       }, DOUBLE_TAP_MS);
     };
 
@@ -435,16 +463,24 @@ export function BitBitOverlay({
       if (!isHoldingRef.current) return;
       isHoldingRef.current = false;
 
-      if (isVoiceActiveRef.current && !doubleTapTimerRef.current) {
-        stopVoiceAndProcess();
-      } else if (isVoiceActiveRef.current && doubleTapTimerRef.current) {
+      // If the double-tap timer is still running, the user released quickly.
+      // This was a tap-and-release (not a hold). Wait for the timer to expire
+      // to decide: if another keydown arrives → double-tap → text mode.
+      // If not → it was a short press (too short for voice). Do nothing.
+      if (doubleTapTimerRef.current) {
+        // Cancel deferred voice start — key was released too quickly for hold-to-talk
         clearTimeout(doubleTapTimerRef.current);
         doubleTapTimerRef.current = setTimeout(() => {
           doubleTapTimerRef.current = undefined;
-          if (isVoiceActiveRef.current) {
-            stopVoiceAndProcess();
-          }
-        }, 50);
+          // Timer expired with no second tap and key already released.
+          // This was a single quick tap — not enough for voice. Ignore.
+        }, DOUBLE_TAP_MS);
+        return;
+      }
+
+      // Double-tap window has passed and key released — stop voice recording.
+      if (isVoiceActiveRef.current) {
+        stopVoiceAndProcess();
       }
     };
 
@@ -500,10 +536,16 @@ export function BitBitOverlay({
     />
   );
 
+  // Resolve dock target: prefer cached dockEl, fall back to synchronous DOM lookup.
+  // This eliminates the race where the effect hasn't set dockEl yet after tab switch.
+  const dockTarget = isDocked
+    ? (dockEl ?? (typeof document !== 'undefined' ? document.getElementById('pill-dock') : null))
+    : null;
+
   return (
     <>
       {children}
-      {isDocked ? (dockEl ? createPortal(pill, dockEl) : null) : pill}
+      {isDocked ? (dockTarget ? createPortal(pill, dockTarget) : null) : pill}
     </>
   );
 }

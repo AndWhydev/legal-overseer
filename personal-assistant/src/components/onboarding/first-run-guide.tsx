@@ -13,7 +13,7 @@ interface FirstRunGuideContextType {
 const FirstRunGuideContext = createContext<FirstRunGuideContextType | undefined>(undefined);
 
 export function FirstRunGuideProvider({ children }: { children: React.ReactNode }) {
-  const [isFirstRun, setIsFirstRun] = useState(true);
+  const [isFirstRun, setIsFirstRun] = useState(false);
   const [dismissedTooltips, setDismissedTooltips] = useState<Set<string>>(new Set());
 
   // Check if first-run guide has been completed

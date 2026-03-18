@@ -507,6 +507,7 @@ beforeEach(() => {
   processSentryEscalationsMock.mockResolvedValue({
     processed: 0,
     escalated: 0,
+    silenced: 0,
     failed: 0,
   })
 

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useRealtimeSubscription } from '@/lib/realtime/supabase-realtime';
 import { useDevOverrides } from '@/lib/dev/dev-overrides';
 import { useInboxKeyboard } from '@/hooks/use-inbox-keyboard';
@@ -43,6 +44,7 @@ interface InboxMessage {
   senderEmail: string | null;
   subject: string | null;
   bodyPreview: string;
+  fullBody: string;
   aiSummary: string | null;
   category: MessageCategory;
   priority: PriorityLevel;
@@ -197,7 +199,7 @@ function sanitizeText(text: string): string {
 const SEED_MESSAGES: InboxMessage[] = [
   {
     id: 's1', channelType: 'gmail', senderName: 'Sarah Chen', senderEmail: 'sarah@designstudio.co',
-    subject: 'Website revision — final round feedback', bodyPreview: 'Hey, the client loved the new hero section but wants the CTA button colour changed to match their brand guide...',
+    subject: 'Website revision — final round feedback', bodyPreview: 'Hey, the client loved the new hero section but wants the CTA button colour changed to match their brand guide...', fullBody: 'Hey, the client loved the new hero section but wants the CTA button colour changed to match their brand guide. Can you update it before the presentation on Friday? They want it to match hex #2B5BA0 from their style guide.\n\nAlso, they mentioned the font on the pricing page feels too small on mobile — can we bump it up a notch?\n\nThanks!',
     aiSummary: 'Client approved hero section but wants CTA button colour updated to match brand guide. Action needed before presentation.',
     category: 'actionable', priority: 'high', significance: 8, contactId: 'c1', contactName: 'Sarah Chen',
     threadStatus: 'waiting_on_you', deduplicatedWith: null, threadCount: 3,
@@ -207,6 +209,7 @@ const SEED_MESSAGES: InboxMessage[] = [
   {
     id: 's2', channelType: 'whatsapp', senderName: 'Andy Wu', senderEmail: null,
     subject: null, bodyPreview: 'Can you check the Sentry dashboard? Getting a spike in 500s on the checkout flow since the last deploy',
+    fullBody: 'Can you check the Sentry dashboard? Getting a spike in 500s on the checkout flow since the last deploy.\n\nIt started around 2pm, right after the v2.4.1 release went out. Looks like it might be the new payment validation middleware.',
     aiSummary: 'Checkout flow seeing 500 error spike post-deploy. Needs immediate Sentry investigation.',
     category: 'actionable', priority: 'critical', significance: 9, contactId: 'c2', contactName: 'Andy Wu',
     threadStatus: 'waiting_on_you', deduplicatedWith: null, threadCount: 2,
@@ -216,6 +219,7 @@ const SEED_MESSAGES: InboxMessage[] = [
   {
     id: 's3', channelType: 'asana', senderName: 'Asana', senderEmail: 'notifications@asana.com',
     subject: 'Task assigned: Q1 brand refresh deliverables', bodyPreview: 'You have been assigned to "Q1 brand refresh deliverables" in project Brand & Identity. Due: Mar 7',
+    fullBody: 'You have been assigned to "Q1 brand refresh deliverables" in project Brand & Identity. Due: Mar 7\n\nThis task includes:\n- Updated logo variations (horizontal, stacked, icon-only)\n- Refreshed colour palette with accessibility audit\n- Social media template kit (Instagram, LinkedIn, Twitter)\n\nPlease review the brief in the project description.',
     aiSummary: 'Assigned to Q1 brand refresh deliverables in Brand & Identity project. Due March 7.',
     category: 'actionable', priority: 'medium', significance: 6, contactId: null, contactName: null,
     threadStatus: 'new', deduplicatedWith: null,
@@ -225,6 +229,7 @@ const SEED_MESSAGES: InboxMessage[] = [
   {
     id: 's4', channelType: 'stripe', senderName: 'Stripe', senderEmail: 'notifications@stripe.com',
     subject: 'Payment received — $4,200.00', bodyPreview: 'Invoice INV-2024-0089 for DesignStudio Co has been paid. Amount: $4,200.00 AUD',
+    fullBody: 'Invoice INV-2024-0089 for DesignStudio Co has been paid.\n\nAmount: $4,200.00 AUD\nPayment method: Visa ending in 4242\nDate: 17 Mar 2026\n\nView receipt: https://dashboard.stripe.com/...',
     aiSummary: 'DesignStudio Co paid $4,200 AUD for invoice INV-2024-0089.',
     category: 'informational', priority: 'low', significance: 4, contactId: 'c1', contactName: 'Sarah Chen',
     threadStatus: null, deduplicatedWith: null,
@@ -234,6 +239,7 @@ const SEED_MESSAGES: InboxMessage[] = [
   {
     id: 's5', channelType: 'gmail', senderName: 'Tom Bradley', senderEmail: 'tom@acmecorp.com',
     subject: 'Re: Proposal for Q2 retainer', bodyPreview: "Thanks for sending that through. I've shared it with our CFO. Expecting a decision by end of week.",
+    fullBody: "Thanks for sending that through. I've shared it with our CFO and he's reviewing the scope and pricing now.\n\nExpecting a decision by end of week. If we go ahead, we'd want to kick off the first week of April.\n\nOne question — does the retainer include ad-hoc design requests, or is that billed separately?",
     aiSummary: 'Q2 retainer proposal shared with CFO. Decision expected by end of week. No action needed yet.',
     category: 'informational', priority: 'medium', significance: 5, contactId: 'c3', contactName: 'Tom Bradley',
     threadStatus: 'waiting_on_them', deduplicatedWith: null, threadCount: 4,
@@ -243,6 +249,7 @@ const SEED_MESSAGES: InboxMessage[] = [
   {
     id: 's6', channelType: 'calendly', senderName: 'Calendly', senderEmail: 'notifications@calendly.com',
     subject: 'New booking: Discovery call with Mira Patel', bodyPreview: 'Mira Patel booked a 30-min discovery call for tomorrow at 10:00 AM AEST',
+    fullBody: 'Mira Patel booked a 30-min discovery call for tomorrow at 10:00 AM AEST.\n\nEvent: Discovery Call\nDuration: 30 minutes\nDate: Tomorrow, 10:00 AM AEST\nLocation: Google Meet (link in calendar invite)\n\nNote from Mira: "Looking to discuss a website redesign for our e-commerce store. Currently on Shopify but considering a custom build."',
     aiSummary: 'Mira Patel booked a 30-min discovery call for tomorrow at 10 AM AEST.',
     category: 'informational', priority: 'medium', significance: 5, contactId: null, contactName: 'Mira Patel',
     threadStatus: 'new', deduplicatedWith: null,
@@ -252,6 +259,7 @@ const SEED_MESSAGES: InboxMessage[] = [
   {
     id: 's7', channelType: 'gmail', senderName: 'LinkedIn', senderEmail: 'notifications@linkedin.com',
     subject: '3 people viewed your profile', bodyPreview: 'Your profile was viewed by a Product Manager at Canva, a Design Lead at Atlassian, and 1 other',
+    fullBody: 'Your profile was viewed by a Product Manager at Canva, a Design Lead at Atlassian, and 1 other.\n\nSee who viewed your profile and connect with them on LinkedIn.',
     aiSummary: 'LinkedIn notification — 3 profile views including Canva PM and Atlassian Design Lead.',
     category: 'spam', priority: 'low', significance: 1, contactId: null, contactName: null,
     threadStatus: null, deduplicatedWith: null,
@@ -261,6 +269,7 @@ const SEED_MESSAGES: InboxMessage[] = [
   {
     id: 's8', channelType: 'whatsapp', senderName: 'Jess Reilly', senderEmail: null,
     subject: null, bodyPreview: 'Lunch tomorrow? That new ramen place on Crown St just opened',
+    fullBody: 'Lunch tomorrow? That new ramen place on Crown St just opened 🍜\n\nApparently the tonkotsu is insane. 12:30 work?',
     aiSummary: 'Lunch invite for tomorrow at new ramen place on Crown St.',
     category: 'personal', priority: 'low', significance: 3, contactId: 'c4', contactName: 'Jess Reilly',
     threadStatus: 'waiting_on_you', deduplicatedWith: null,
@@ -285,6 +294,7 @@ const SEED_MESSAGES: InboxMessage[] = [
       senderEmail: `${names[i % names.length].toLowerCase().replace(/[^a-z]/g, '')}@example.com`,
       subject: subjects[i % subjects.length],
       bodyPreview: `Preview text for generated message ${i + 9}. This is a realistic inbox message body preview.`,
+      fullBody: `Preview text for generated message ${i + 9}. This is a realistic inbox message body preview.\n\nThis is the full body of the message with additional context that would normally be truncated in the preview.`,
       aiSummary: i % 3 === 0 ? `AI summary for message ${i + 9}` : null,
       category: categories[i % categories.length],
       priority: priorities[i % priorities.length],
@@ -729,89 +739,97 @@ function InboxTab() {
   const totalCount = useSeeded ? displayed.length : total;
 
   return (
-    <TabShell>
-      {/* ── Toolbar ── */}
-      <div className="bb-inbox-toolbar">
-        <div className="bb-inbox-stats">
-          <StatPill value={unreadCount} label="unread" active={unreadCount > 0} />
-          <span className="bb-inbox-stats__sep" />
-          <StatPill value={actionableCount} label="action needed" active={actionableCount > 0} />
-          <span className="bb-inbox-stats__sep" />
-          <StatPill value={waitingCount} label="needs reply" active={waitingCount > 0} />
-          <span className="bb-inbox-stats__sep" />
-          <StatPill value={totalCount} label="total" />
+    <TabShell scrollable={false} variant="fixed">
+      {/* ── Fixed Header: toolbar + filters (doesn't scroll with messages) ── */}
+      <div style={{
+        flexShrink: 0,
+        zIndex: 10,
+        paddingBottom: 8,
+      }}>
+        {/* ── Toolbar ── */}
+        <div className="bb-inbox-toolbar">
+          <div className="bb-inbox-stats">
+            <StatPill value={unreadCount} label="unread" active={unreadCount > 0} />
+            <span className="bb-inbox-stats__sep" />
+            <StatPill value={actionableCount} label="action needed" active={actionableCount > 0} />
+            <span className="bb-inbox-stats__sep" />
+            <StatPill value={waitingCount} label="needs reply" active={waitingCount > 0} />
+            <span className="bb-inbox-stats__sep" />
+            <StatPill value={totalCount} label="total" />
+          </div>
+
+          <div className="bb-inbox-toolbar__actions">
+            {newMessageAlert && (
+              <button onClick={() => setNewMessageAlert(false)} className="bb-btn bb-btn--ghost bb-btn--sm" style={{ color: 'var(--bb-green)' }}>
+                <span className="bb-inbox-pulse" />
+                New messages
+              </button>
+            )}
+            <button
+              onClick={async () => {
+                setRefreshing(true);
+                try {
+                  const res = await fetch('/api/inbox/refresh', { method: 'POST' });
+                  if (res.ok) {
+                    const data = await res.json();
+                    if (data.results?.some((r: { result: { messagesInserted: number } }) => r.result.messagesInserted > 0)) {
+                      await fetchInbox({ isRefresh: true });
+                    }
+                  }
+                } catch { /* ignore */ }
+                setRefreshing(false);
+              }}
+              disabled={refreshing}
+              title="Pull latest messages"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '6px 14px',
+                borderRadius: 20,
+                border: 'none',
+                background: 'var(--glass-pill-bg)',
+                backdropFilter: 'var(--glass-card-blur)',
+                WebkitBackdropFilter: 'var(--glass-card-blur)',
+                boxShadow: 'var(--glass-pill-inset)',
+                color: 'var(--text-secondary)',
+                fontSize: 12,
+                cursor: refreshing ? 'default' : 'pointer',
+                transition: 'all 150ms ease',
+                whiteSpace: 'nowrap',
+              }}
+              onMouseEnter={(e) => {
+                if (!refreshing) {
+                  e.currentTarget.style.transform = 'scale(1.02)';
+                  e.currentTarget.style.color = 'var(--text-primary)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'scale(1)';
+                if (!refreshing) e.currentTarget.style.color = 'var(--text-secondary)';
+              }}
+            >
+              <RefreshCw size={13} style={{ animation: refreshing ? 'spin 1s linear infinite' : 'none' }} />
+              {refreshing ? 'Syncing...' : 'Refresh'}
+            </button>
+          </div>
         </div>
 
-        <div className="bb-inbox-toolbar__actions">
-          {newMessageAlert && (
-            <button onClick={() => setNewMessageAlert(false)} className="bb-btn bb-btn--ghost bb-btn--sm" style={{ color: 'var(--bb-green)' }}>
-              <span className="bb-inbox-pulse" />
-              New messages
-            </button>
-          )}
-          <button
-            onClick={async () => {
-              setRefreshing(true);
-              try {
-                const res = await fetch('/api/inbox/refresh', { method: 'POST' });
-                if (res.ok) {
-                  const data = await res.json();
-                  if (data.results?.some((r: { result: { messagesInserted: number } }) => r.result.messagesInserted > 0)) {
-                    await fetchInbox({ isRefresh: true });
-                  }
-                }
-              } catch { /* ignore */ }
-              setRefreshing(false);
-            }}
-            disabled={refreshing}
-            title="Pull latest messages"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-              padding: '6px 14px',
-              borderRadius: 20,
-              border: 'none',
-              background: 'var(--glass-pill-bg)',
-              backdropFilter: 'var(--glass-card-blur)',
-              WebkitBackdropFilter: 'var(--glass-card-blur)',
-              boxShadow: 'var(--glass-pill-inset)',
-              color: 'rgba(255,255,255,0.5)',
-              fontSize: 12,
-              cursor: refreshing ? 'default' : 'pointer',
-              transition: 'all 150ms ease',
-              whiteSpace: 'nowrap',
-            }}
-            onMouseEnter={(e) => {
-              if (!refreshing) {
-                e.currentTarget.style.transform = 'scale(1.02)';
-                e.currentTarget.style.color = 'var(--text-primary, #F1F5F9)';
-              }
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'scale(1)';
-              if (!refreshing) e.currentTarget.style.color = 'rgba(255,255,255,0.5)';
-            }}
-          >
-            <RefreshCw size={13} style={{ animation: refreshing ? 'spin 1s linear infinite' : 'none' }} />
-            {refreshing ? 'Syncing...' : 'Refresh'}
-          </button>
-        </div>
+        {/* ── Unified Filter Bar ── */}
+        <UnifiedFilterBar
+          activePill={activePill}
+          onPillSelect={setActivePill}
+          pillCounts={pillCounts}
+          hasUnreadPriority={hasUnreadPriority}
+          channelFilter={channelFilter}
+          onChannelChange={setChannelFilter}
+          priorityFilter={priorityFilter}
+          onPriorityChange={setPriorityFilter}
+        />
       </div>
 
-      {/* ── Unified Filter Bar ── */}
-      <UnifiedFilterBar
-        activePill={activePill}
-        onPillSelect={setActivePill}
-        pillCounts={pillCounts}
-        hasUnreadPriority={hasUnreadPriority}
-        channelFilter={channelFilter}
-        onChannelChange={setChannelFilter}
-        priorityFilter={priorityFilter}
-        onPriorityChange={setPriorityFilter}
-      />
-
-      {/* ── Message List ── */}
+      {/* ── Scrollable Message List ── */}
+      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
       <div className="bb-inbox-list">
         {displayed.length === 0 ? (
           <EmptyState
@@ -870,8 +888,8 @@ function InboxTab() {
                   marginTop: 4,
                   borderRadius: 12,
                   border: 'none',
-                  background: 'rgba(255,255,255,0.03)',
-                  color: loadingMore ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.45)',
+                  background: 'var(--hover-bg)',
+                  color: loadingMore ? 'var(--text-dim)' : 'var(--text-secondary)',
                   fontSize: 13,
                   fontWeight: 500,
                   cursor: loadingMore ? 'default' : 'pointer',
@@ -879,13 +897,13 @@ function InboxTab() {
                 }}
                 onMouseEnter={(e) => {
                   if (!loadingMore) {
-                    e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
-                    e.currentTarget.style.color = 'rgba(255,255,255,0.7)';
+                    e.currentTarget.style.background = 'var(--hover-bg-strong)';
+                    e.currentTarget.style.color = 'var(--text-primary)';
                   }
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'rgba(255,255,255,0.03)';
-                  if (!loadingMore) e.currentTarget.style.color = 'rgba(255,255,255,0.45)';
+                  e.currentTarget.style.background = 'var(--hover-bg)';
+                  if (!loadingMore) e.currentTarget.style.color = 'var(--text-secondary)';
                 }}
               >
                 {loadingMore ? (
@@ -901,6 +919,7 @@ function InboxTab() {
           </>
         )}
       </div>
+      </div>{/* end scrollable wrapper */}
 
       {/* ── Floating Bulk Action Bar ── */}
       {keyboard.selectedIds.size > 0 && (
@@ -913,46 +932,46 @@ function InboxTab() {
           alignItems: 'center',
           gap: 12,
           padding: '10px 16px',
-          background: 'rgba(15, 20, 30, 0.95)',
+          background: 'var(--bg-card-solid)',
           backdropFilter: 'blur(20px) saturate(1.2)',
           WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
+          border: '1px solid var(--glass-card-border)',
           borderRadius: 12,
           boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.3)',
           zIndex: 50,
           animation: 'fadeSlideUp 160ms cubic-bezier(0.16, 1, 0.3, 1)',
         }}>
-          <span style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.8)' }}>
+          <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)' }}>
             {keyboard.selectedIds.size} selected
           </span>
-          <button style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 10px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.7)', fontSize: 12, fontWeight: 500, cursor: 'pointer', transition: 'all 150ms ease' }}
+          <button style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 10px', borderRadius: 6, border: '1px solid var(--glass-divider)', background: 'var(--hover-bg)', color: 'var(--text-secondary)', fontSize: 12, fontWeight: 500, cursor: 'pointer', transition: 'all 150ms ease' }}
             onClick={handleBulkArchive}
-            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--hover-bg-strong)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--hover-bg)'; }}
           ><Archive size={13} /> Archive</button>
-          <button style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 10px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.7)', fontSize: 12, fontWeight: 500, cursor: 'pointer', transition: 'all 150ms ease' }}
+          <button style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 10px', borderRadius: 6, border: '1px solid var(--glass-divider)', background: 'var(--hover-bg)', color: 'var(--text-secondary)', fontSize: 12, fontWeight: 500, cursor: 'pointer', transition: 'all 150ms ease' }}
             onClick={handleBulkDone}
-            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--hover-bg-strong)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--hover-bg)'; }}
           ><CheckCircle2 size={13} /> Done</button>
-          <button style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 10px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.7)', fontSize: 12, fontWeight: 500, cursor: 'pointer', transition: 'all 150ms ease' }}
+          <button style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 10px', borderRadius: 6, border: '1px solid var(--glass-divider)', background: 'var(--hover-bg)', color: 'var(--text-secondary)', fontSize: 12, fontWeight: 500, cursor: 'pointer', transition: 'all 150ms ease' }}
             onClick={(e) => {
               const rect = e.currentTarget.getBoundingClientRect();
               setSnoozeTargetId(Array.from(keyboard.selectedIds)[0]);
               setSnoozeAnchor({ top: rect.top - 200, right: window.innerWidth - rect.right });
             }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--hover-bg-strong)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--hover-bg)'; }}
           ><Clock size={13} /> Snooze</button>
-          <button style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 10px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.7)', fontSize: 12, fontWeight: 500, cursor: 'pointer', transition: 'all 150ms ease' }}
+          <button style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 10px', borderRadius: 6, border: '1px solid var(--glass-divider)', background: 'var(--hover-bg)', color: 'var(--text-secondary)', fontSize: 12, fontWeight: 500, cursor: 'pointer', transition: 'all 150ms ease' }}
             onClick={handleBulkSpam}
-            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--hover-bg-strong)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--hover-bg)'; }}
           ><AlertTriangle size={13} /> Spam</button>
-          <button style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 24, height: 24, borderRadius: 6, border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.5)', fontSize: 12, cursor: 'pointer', padding: 0, transition: 'all 150ms ease' }}
+          <button style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 24, height: 24, borderRadius: 6, border: '1px solid var(--glass-divider)', background: 'var(--hover-bg)', color: 'var(--text-secondary)', fontSize: 12, cursor: 'pointer', padding: 0, transition: 'all 150ms ease' }}
             onClick={clearSelection}
-            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--hover-bg-strong)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--hover-bg)'; }}
           ><X size={12} /></button>
         </div>
       )}
@@ -1003,7 +1022,7 @@ const PRIORITY_OPTIONS = [
   { value: 'critical', label: 'Critical', color: '#FF3B30' },
   { value: 'high', label: 'High', color: '#FF9500' },
   { value: 'medium', label: 'Medium', color: '#FFCC00' },
-  { value: 'low', label: 'Low', color: 'rgba(255,255,255,0.3)' },
+  { value: 'low', label: 'Low', color: 'var(--text-dim)' },
 ];
 
 function FilterDropdown({
@@ -1018,95 +1037,121 @@ function FilterDropdown({
   label: string;
 }) {
   const [open, setOpen] = useState(false);
+  const [dropdownPos, setDropdownPos] = useState<{ top: number; left: number } | null>(null);
   const ref = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const selected = options.find(o => o.value === value);
   const isFiltered = value !== '';
 
+  const toggleOpen = useCallback(() => {
+    setOpen(prev => {
+      if (!prev && ref.current) {
+        const rect = ref.current.getBoundingClientRect();
+        setDropdownPos({ top: rect.bottom + 4, left: rect.left });
+      }
+      return !prev;
+    });
+  }, []);
+
+  // Click-outside: check both the trigger ref AND the portal dropdown ref
   useEffect(() => {
     if (!open) return;
     const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      if (ref.current && !ref.current.contains(e.target as Node) &&
+          dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) setOpen(false);
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, [open]);
 
+  // Close on scroll of the tab panel (clipping ancestor)
+  useEffect(() => {
+    if (!open) return;
+    const tabPanel = ref.current?.closest('.bb-tab-panel');
+    if (!tabPanel) return;
+    const handleScroll = () => setOpen(false);
+    tabPanel.addEventListener('scroll', handleScroll, { passive: true });
+    return () => tabPanel.removeEventListener('scroll', handleScroll);
+  }, [open]);
+
+  const dropdownMenu = open && dropdownPos ? (
+    <div ref={dropdownRef} style={{
+      position: 'fixed',
+      top: dropdownPos.top,
+      left: dropdownPos.left,
+      zIndex: 9999,
+      minWidth: 160,
+      padding: 4,
+      borderRadius: 10,
+      background: 'var(--bg-card-solid)',
+      backdropFilter: 'blur(20px) saturate(1.2)',
+      WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
+      border: '1px solid var(--glass-card-border)',
+      boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+      animation: 'fadeSlideUp 120ms cubic-bezier(0.16, 1, 0.3, 1)',
+    }}>
+      {options.map((opt) => {
+        const isSelected = opt.value === value;
+        return (
+          <button
+            key={opt.value}
+            onClick={() => { onChange(opt.value); setOpen(false); }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              width: '100%',
+              padding: '7px 10px',
+              borderRadius: 6,
+              border: 'none',
+              background: isSelected ? 'var(--hover-bg-strong)' : 'transparent',
+              color: isSelected ? 'var(--text-primary)' : 'var(--text-secondary)',
+              fontSize: 12,
+              fontWeight: isSelected ? 600 : 400,
+              cursor: 'pointer',
+              transition: 'background 100ms ease',
+              textAlign: 'left',
+            }}
+            onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.background = 'var(--hover-bg)'; }}
+            onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.background = 'transparent'; }}
+          >
+            {opt.color && <span style={{ width: 6, height: 6, borderRadius: '50%', background: opt.color, flexShrink: 0 }} />}
+            {opt.label}
+            {isSelected && <CheckCircle2 size={11} style={{ marginLeft: 'auto', opacity: 0.6 }} />}
+          </button>
+        );
+      })}
+    </div>
+  ) : null;
+
   return (
     <div ref={ref} style={{ position: 'relative', flexShrink: 0 }}>
       <button
-        onClick={() => setOpen(!open)}
+        onClick={toggleOpen}
         style={{
           display: 'inline-flex',
           alignItems: 'center',
           gap: 6,
           padding: '5px 10px 5px 12px',
           borderRadius: 8,
-          border: isFiltered ? '1px solid rgba(255,255,255,0.15)' : '1px solid rgba(255,255,255,0.06)',
-          background: isFiltered ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.03)',
-          color: isFiltered ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.4)',
+          border: isFiltered ? '1px solid var(--glass-card-border)' : '1px solid var(--glass-divider)',
+          background: isFiltered ? 'var(--hover-bg-strong)' : 'var(--hover-bg)',
+          color: isFiltered ? 'var(--text-primary)' : 'var(--text-dim)',
           fontSize: 12,
           fontWeight: isFiltered ? 600 : 400,
           cursor: 'pointer',
           transition: 'all 150ms ease',
           whiteSpace: 'nowrap',
         }}
-        onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = 'rgba(255,255,255,0.8)'; }}
-        onMouseLeave={(e) => { e.currentTarget.style.background = isFiltered ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.03)'; e.currentTarget.style.color = isFiltered ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.4)'; }}
+        onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--hover-bg-strong)'; e.currentTarget.style.color = 'var(--text-primary)'; }}
+        onMouseLeave={(e) => { e.currentTarget.style.background = isFiltered ? 'var(--hover-bg-strong)' : 'var(--hover-bg)'; e.currentTarget.style.color = isFiltered ? 'var(--text-primary)' : 'var(--text-dim)'; }}
       >
         {selected?.color && <span style={{ width: 6, height: 6, borderRadius: '50%', background: selected.color, flexShrink: 0 }} />}
         {selected?.label || label}
         <ChevronDown size={11} style={{ opacity: 0.5, transition: 'transform 150ms', transform: open ? 'rotate(180deg)' : 'none' }} />
       </button>
 
-      {open && (
-        <div style={{
-          position: 'absolute',
-          top: 'calc(100% + 4px)',
-          left: 0,
-          zIndex: 100,
-          minWidth: 160,
-          padding: 4,
-          borderRadius: 10,
-          background: 'rgba(14, 18, 28, 0.96)',
-          backdropFilter: 'blur(20px) saturate(1.2)',
-          WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
-          border: '1px solid rgba(255,255,255,0.1)',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
-          animation: 'fadeSlideUp 120ms cubic-bezier(0.16, 1, 0.3, 1)',
-        }}>
-          {options.map((opt) => {
-            const isSelected = opt.value === value;
-            return (
-              <button
-                key={opt.value}
-                onClick={() => { onChange(opt.value); setOpen(false); }}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  width: '100%',
-                  padding: '7px 10px',
-                  borderRadius: 6,
-                  border: 'none',
-                  background: isSelected ? 'rgba(255,255,255,0.08)' : 'transparent',
-                  color: isSelected ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.6)',
-                  fontSize: 12,
-                  fontWeight: isSelected ? 600 : 400,
-                  cursor: 'pointer',
-                  transition: 'background 100ms ease',
-                  textAlign: 'left',
-                }}
-                onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; }}
-                onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.background = 'transparent'; }}
-              >
-                {opt.color && <span style={{ width: 6, height: 6, borderRadius: '50%', background: opt.color, flexShrink: 0 }} />}
-                {opt.label}
-                {isSelected && <CheckCircle2 size={11} style={{ marginLeft: 'auto', opacity: 0.6 }} />}
-              </button>
-            );
-          })}
-        </div>
-      )}
+      {typeof document !== 'undefined' && dropdownMenu && createPortal(dropdownMenu, document.body)}
     </div>
   );
 }
@@ -1160,8 +1205,8 @@ function UnifiedFilterBar({
               padding: '6px 12px',
               borderRadius: 20,
               border: 'none',
-              background: isActive ? 'rgba(255,255,255,0.95)' : 'transparent',
-              color: isActive ? '#0A0A0B' : 'rgba(255,255,255,0.45)',
+              background: isActive ? 'var(--text-primary)' : 'transparent',
+              color: isActive ? 'var(--bg-card)' : 'var(--text-secondary)',
               fontSize: 12,
               fontWeight: isActive ? 600 : 500,
               cursor: 'pointer',
@@ -1170,10 +1215,10 @@ function UnifiedFilterBar({
               flexShrink: 0,
             }}
             onMouseEnter={(e) => {
-              if (!isActive) e.currentTarget.style.color = 'rgba(255,255,255,0.8)';
+              if (!isActive) e.currentTarget.style.color = 'var(--text-primary)';
             }}
             onMouseLeave={(e) => {
-              if (!isActive) e.currentTarget.style.color = 'rgba(255,255,255,0.45)';
+              if (!isActive) e.currentTarget.style.color = 'var(--text-secondary)';
             }}
           >
             {isPriority && hasUnreadPriority && !isActive && (
@@ -1189,8 +1234,8 @@ function UnifiedFilterBar({
         );
       })}
 
-      {/* Separator between categories and filter dropdowns */}
-      <div style={{ width: 1, height: 16, background: 'rgba(255,255,255,0.06)', margin: '0 6px', flexShrink: 0 }} />
+      {/* Spacer pushes filter dropdowns to the right */}
+      <div style={{ flex: 1 }} />
 
       {/* Channel + Priority dropdowns */}
       <FilterDropdown options={CHANNEL_OPTIONS} value={channelFilter} onChange={onChannelChange} label="Channel" />
@@ -1264,17 +1309,17 @@ function UndoToastStack({
             gap: 12,
             padding: '10px 16px',
             borderRadius: 10,
-            background: 'rgba(20, 26, 38, 0.95)',
+            background: 'var(--bg-card-solid)',
             backdropFilter: 'blur(20px) saturate(1.2)',
             WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
-            border: '1px solid rgba(255,255,255,0.1)',
+            border: '1px solid var(--glass-card-border)',
             boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
             pointerEvents: 'auto',
             animation: 'fadeSlideUp 160ms cubic-bezier(0.16, 1, 0.3, 1)',
           }}
         >
           <style>{`@keyframes fadeSlideUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }`}</style>
-          <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.8)', fontWeight: 400 }}>
+          <span style={{ fontSize: 13, color: 'var(--text-primary)', fontWeight: 400 }}>
             {toast.message}
           </span>
           <button
@@ -1300,7 +1345,7 @@ function UndoToastStack({
             style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               width: 20, height: 20, borderRadius: 4, border: 'none',
-              background: 'transparent', color: 'rgba(255,255,255,0.3)',
+              background: 'transparent', color: 'var(--text-dim)',
               cursor: 'pointer', padding: 0,
             }}
           >
@@ -1335,10 +1380,10 @@ function SnoozePickerPopover({
         top: anchor.top,
         right: anchor.right,
         zIndex: 150,
-        background: 'rgba(14, 18, 28, 0.96)',
+        background: 'var(--bg-card-solid)',
         backdropFilter: 'blur(20px) saturate(1.2)',
         WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
-        border: '1px solid rgba(255,255,255,0.1)',
+        border: '1px solid var(--glass-card-border)',
         borderRadius: 10,
         padding: 6,
         boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
@@ -1346,7 +1391,7 @@ function SnoozePickerPopover({
         animation: 'fadeSlideUp 140ms cubic-bezier(0.16, 1, 0.3, 1)',
       }}
     >
-      <div style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '6px 10px 4px' }}>
+      <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '6px 10px 4px' }}>
         Snooze until
       </div>
       {options.map((opt) => (
@@ -1362,21 +1407,21 @@ function SnoozePickerPopover({
             borderRadius: 6,
             border: 'none',
             background: 'transparent',
-            color: 'rgba(255,255,255,0.8)',
+            color: 'var(--text-primary)',
             fontSize: 13,
             cursor: 'pointer',
             transition: 'background 100ms ease',
             textAlign: 'left',
             gap: 16,
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--hover-bg-strong)'; }}
           onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
         >
           <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Clock size={13} style={{ color: 'rgba(255,255,255,0.35)', flexShrink: 0 }} />
+            <Clock size={13} style={{ color: 'var(--text-dim)', flexShrink: 0 }} />
             {opt.label}
           </span>
-          <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', flexShrink: 0 }}>
+          <span style={{ fontSize: 11, color: 'var(--text-dim)', flexShrink: 0 }}>
             {opt.sublabel}
           </span>
         </button>
@@ -1461,7 +1506,8 @@ function StatPill({ value, label, active }: { value: number; label: string; acti
 // ---------------------------------------------------------------------------
 
 function extractSummaryInline(message: InboxMessage): { summary: string; actionItems: string[]; draftReply: string } {
-  const text = (message.subject || '') + ' ' + message.bodyPreview;
+  const body = message.fullBody || message.bodyPreview;
+  const text = (message.subject || '') + ' ' + body;
   const actionItems: string[] = [];
   const actionMatch = text.match(/want[s]?\s+(?:the\s+)?([^,.!?]{10,60})/i);
   if (actionMatch) actionItems.push(actionMatch[0].trim());
@@ -1473,9 +1519,11 @@ function extractSummaryInline(message: InboxMessage): { summary: string; actionI
   if (text.match(/assigned|you have been|please review|please confirm/i)) {
     actionItems.push('Action assigned to you');
   }
-  const summary = message.bodyPreview.length > 120
-    ? message.bodyPreview.slice(0, 120).trim() + '...'
-    : message.bodyPreview;
+  // Summary: first 2-3 sentences, not arbitrarily truncated
+  const sentences = body.match(/[^.!?\n]+[.!?]+/g);
+  const summary = sentences && sentences.length > 0
+    ? sentences.slice(0, 3).join(' ').trim()
+    : body;
   const senderFirstName = (message.contactName || message.senderName || 'there').split(' ')[0];
   const draftReply = message.category === 'actionable'
     ? `Hi ${senderFirstName},\n\nThanks for reaching out. I'll look into this and get back to you shortly.\n\nBest regards`
@@ -1614,12 +1662,12 @@ function ExpandedMessageRow({
       ref={expandedRef}
       style={{
         borderRadius: '0 0 12px 12px',
-        marginTop: 0,
-        background: 'rgba(10, 14, 23, 0.5)',
+        marginTop: -6,
+        background: 'var(--bg-card)',
         backdropFilter: 'blur(20px) saturate(1.2)',
         WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
-        borderTop: '1px solid rgba(255, 255, 255, 0.04)',
-        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05)',
+        borderTop: '1px solid var(--glass-divider)',
+        boxShadow: 'inset 0 1px 0 var(--glass-divider)',
         overflow: 'hidden',
         animation: isCollapsing
           ? 'collapseOut 180ms cubic-bezier(0.4, 0, 1, 1) forwards'
@@ -1645,18 +1693,18 @@ function ExpandedMessageRow({
           <div style={{ width: 14, height: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', color: brandColor, flexShrink: 0 }}>
             <ChannelIcon size={13} />
           </div>
-          <span style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.9)' }}>
+          <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>
             {sanitizeText(String(sender))}
           </span>
           {message.senderEmail && (
             <>
-              <span style={{ color: 'rgba(255,255,255,0.25)', margin: '0 2px' }}>&middot;</span>
-              <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', fontWeight: 400 }}>
+              <span style={{ color: 'var(--text-dim)', margin: '0 2px' }}>&middot;</span>
+              <span style={{ fontSize: 12, color: 'var(--text-dim)', fontWeight: 400 }}>
                 {String(message.senderEmail)}
               </span>
             </>
           )}
-          <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', marginLeft: 'auto', flexShrink: 0 }}>
+          <span style={{ fontSize: 12, color: 'var(--text-dim)', marginLeft: 'auto', flexShrink: 0 }}>
             {fullDate}
           </span>
         </div>
@@ -1669,12 +1717,12 @@ function ExpandedMessageRow({
         maxHeight: '60vh',
         overflowY: 'auto',
         scrollbarWidth: 'thin',
-        scrollbarColor: 'rgba(255,255,255,0.1) transparent',
+        scrollbarColor: 'var(--hover-bg-strong) transparent',
       }}>
         {/* Subject */}
         {message.subject && (
           <h3 style={{
-            fontSize: 16, fontWeight: 600, color: 'rgba(255,255,255,0.93)',
+            fontSize: 16, fontWeight: 600, color: 'var(--text-primary)',
             margin: 0, lineHeight: 1.3,
           }}>
             {sanitizeText(String(message.subject))}
@@ -1683,29 +1731,29 @@ function ExpandedMessageRow({
 
         {/* AI summary or body text -- show one, never both */}
         {showSummary && aiResult && !aiLoading ? (
-          <p style={{
-            fontSize: 14, color: 'rgba(255,255,255,0.82)', lineHeight: 1.6,
+          <p className="bb-ai-shine" style={{
+            fontSize: 14, color: 'var(--text-primary)', lineHeight: 1.6,
             margin: 0, opacity: 1,
-            animation: 'fadeIn 200ms cubic-bezier(0.16, 1, 0.3, 1)',
+            animation: 'fadeIn 200ms cubic-bezier(0.16, 1, 0.3, 1), bb-ai-shine 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.15s forwards',
           }}>
             {sanitizeText(aiResult.summary)}
           </p>
         ) : (
           <div style={{
-            fontSize: 14, color: 'rgba(255,255,255,0.82)', lineHeight: 1.7,
+            fontSize: 14, color: 'var(--text-primary)', lineHeight: 1.7,
             whiteSpace: 'pre-wrap', wordBreak: 'break-word',
             fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
           }}>
-            {sanitizeText(String(message.bodyPreview || '(No message body)'))}
+            {sanitizeText(String(message.fullBody || message.bodyPreview || '(No message body)'))}
           </div>
         )}
 
         {/* Action items -- neutral colors */}
         {aiResult && aiResult.actionItems.length > 0 && (
-          <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <ul className="bb-ai-shine" style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 4 }}>
             {aiResult.actionItems.map((item, i) => (
-              <li key={i} style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', display: 'flex', alignItems: 'flex-start', gap: 6 }}>
-                <span style={{ color: 'rgba(255,255,255,0.3)', marginTop: 1, flexShrink: 0 }}>{'>'}</span>
+              <li key={i} style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'flex', alignItems: 'flex-start', gap: 6 }}>
+                <span style={{ color: 'var(--text-dim)', marginTop: 1, flexShrink: 0 }}>{'>'}</span>
                 {sanitizeText(item)}
               </li>
             ))}
@@ -1718,7 +1766,7 @@ function ExpandedMessageRow({
         {/* Thread view */}
         {hasThread && threadMessages && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', marginBottom: 2, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+            <div style={{ fontSize: 11, color: 'var(--text-dim)', marginBottom: 2, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
               {threadMessages.length} messages in thread
             </div>
             {threadMessages.map((tm) => {
@@ -1729,8 +1777,8 @@ function ExpandedMessageRow({
               return (
                 <div key={tm.id} style={{
                   borderRadius: 8,
-                  border: `1px solid ${isLatest ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.04)'}`,
-                  background: isLatest ? 'rgba(255,255,255,0.03)' : 'transparent',
+                  border: `1px solid ${isLatest ? 'var(--glass-card-border)' : 'var(--glass-divider)'}`,
+                  background: isLatest ? 'var(--hover-bg)' : 'transparent',
                   overflow: 'hidden',
                 }}>
                   <div
@@ -1742,33 +1790,33 @@ function ExpandedMessageRow({
                   >
                     <div style={{
                       width: 22, height: 22, borderRadius: '50%',
-                      background: tm.isSelf ? 'rgba(255,90,31,0.2)' : 'rgba(255,255,255,0.1)',
+                      background: tm.isSelf ? 'rgba(255,90,31,0.2)' : 'var(--hover-bg-strong)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       fontSize: 9, fontWeight: 700,
-                      color: tm.isSelf ? '#FF7A45' : 'rgba(255,255,255,0.7)', flexShrink: 0,
+                      color: tm.isSelf ? '#FF7A45' : 'var(--text-secondary)', flexShrink: 0,
                     }}>
                       {String(tmSender[0] || '?').toUpperCase()}
                     </div>
-                    <span style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.85)', flexShrink: 0 }}>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', flexShrink: 0 }}>
                       {tm.isSelf ? 'You' : tmSender}
                     </span>
                     {!isExpTh && !isLatest && (
-                      <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
+                      <span style={{ fontSize: 11, color: 'var(--text-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
                         {sanitizeText(String(tm.bodyPreview || '').slice(0, 70))}
                       </span>
                     )}
-                    <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', flexShrink: 0, marginLeft: 'auto' }}>
+                    <span style={{ fontSize: 10, color: 'var(--text-dim)', flexShrink: 0, marginLeft: 'auto' }}>
                       {formatTimeAgo(tm.receivedAt)}
                     </span>
                     {!isLatest && (
-                      <span style={{ color: 'rgba(255,255,255,0.2)', flexShrink: 0 }}>
+                      <span style={{ color: 'var(--text-dim)', flexShrink: 0 }}>
                         {isExpTh ? <ChevronDown size={11} /> : <ChevronRight size={11} />}
                       </span>
                     )}
                   </div>
                   {(isExpTh || isLatest) && (
                     <div style={{
-                      padding: '0 12px 10px 42px', fontSize: 13, color: 'rgba(255,255,255,0.72)',
+                      padding: '0 12px 10px 42px', fontSize: 13, color: 'var(--text-secondary)',
                       lineHeight: 1.6, whiteSpace: 'pre-wrap', wordBreak: 'break-word',
                     }}>
                       {sanitizeText(String(tm.bodyPreview || ''))}
@@ -1782,7 +1830,7 @@ function ExpandedMessageRow({
       </div>
 
       {/* Chat-style reply composer */}
-      <div style={{ padding: '12px 20px 16px', borderTop: '1px solid rgba(255,255,255,0.04)' }}>
+      <div style={{ padding: '12px 20px 16px', borderTop: '1px solid var(--glass-divider)' }}>
         <div style={{
           display: 'flex',
           alignItems: 'flex-end',
@@ -1794,27 +1842,31 @@ function ExpandedMessageRow({
           padding: '4px 4px 4px 16px',
           boxShadow: 'var(--glass-pill-inset)',
         }}>
-          <div style={{ position: 'relative', flex: 1 }}>
-            {/* Ghost text overlay — aligned with textarea */}
+          <div style={{ position: 'relative', flex: 1, minHeight: 32 }}>
+            {/* Ghost draft — in-flow element that sizes the container, textarea overlays it */}
             {ghostVisible && !replyText && aiResult?.draftReply && (
-              <div style={{
-                position: 'absolute',
-                top: 0, left: 0, right: 0,
-                padding: '8px 0',
-                color: 'rgba(255, 255, 255, 0.25)',
-                fontStyle: 'italic',
-                fontSize: 13,
-                fontFamily: 'inherit',
-                lineHeight: 1.5,
-                pointerEvents: 'none',
-                whiteSpace: 'pre-wrap',
-                zIndex: 1,
-              }}>
+              <div
+                className="bb-ai-shine"
+                aria-hidden="true"
+                style={{
+                  padding: '8px 0',
+                  color: 'var(--text-dim)',
+                  fontStyle: 'italic',
+                  fontSize: 13,
+                  fontFamily: 'inherit',
+                  lineHeight: 1.5,
+                  whiteSpace: 'pre-wrap',
+                  pointerEvents: 'none',
+                  maxHeight: 200,
+                  overflow: 'hidden',
+                }}
+              >
                 {sanitizeText(aiResult.draftReply)}
               </div>
             )}
             <textarea
               ref={textareaRef}
+              className="bb-inbox-reply-textarea"
               value={replyText}
               onChange={handleAutoExpand}
               onFocus={() => setReplyFocused(true)}
@@ -1840,13 +1892,16 @@ function ExpandedMessageRow({
               }}
               placeholder={ghostVisible && aiResult?.draftReply ? '' : 'Reply... (Cmd+Enter to send)'}
               style={{
-                flex: 1, padding: '8px 0',
-                background: 'transparent', border: 'none', outline: 'none',
-                color: 'var(--text-primary, #F1F5F9)',
-                fontSize: 13, fontFamily: 'inherit', lineHeight: 1.5,
-                resize: 'none', minHeight: 32, maxHeight: 200,
-                position: 'relative', zIndex: 2,
+                position: ghostVisible && !replyText && aiResult?.draftReply ? 'absolute' : 'relative',
+                top: 0, left: 0,
                 width: '100%',
+                height: ghostVisible && !replyText && aiResult?.draftReply ? '100%' : undefined,
+                padding: '8px 0',
+                color: 'var(--text-primary)',
+                fontSize: 13, fontFamily: 'inherit', lineHeight: 1.5,
+                resize: 'none', minHeight: ghostVisible && !replyText && aiResult?.draftReply ? undefined : 32,
+                maxHeight: 200,
+                zIndex: 2,
               }}
             />
           </div>
@@ -1871,13 +1926,13 @@ function ExpandedMessageRow({
         </div>
         {/* Ghost hint and Cmd+Enter hint below the pill */}
         {ghostVisible && !replyText && aiResult?.draftReply && (
-          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.2)', marginTop: 5, paddingLeft: 16 }}>
+          <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 5, paddingLeft: 16 }}>
             Tab to use suggested reply
           </div>
         )}
         {replyText && (
-          <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)', marginTop: 5, paddingLeft: 16 }}>
-            <kbd style={{ padding: '1px 4px', borderRadius: 3, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', fontSize: 9, fontFamily: 'inherit' }}>Cmd+Enter</kbd> to send
+          <div style={{ fontSize: 10, color: 'var(--text-dim)', marginTop: 5, paddingLeft: 16 }}>
+            <kbd style={{ padding: '1px 4px', borderRadius: 3, background: 'var(--hover-bg)', border: '1px solid var(--glass-divider)', fontSize: 9, fontFamily: 'inherit' }}>Cmd+Enter</kbd> to send
           </div>
         )}
       </div>
@@ -1912,15 +1967,15 @@ function AttachmentPills({ attachments }: { attachments?: { name: string; size: 
         <div key={i} style={{
           display: 'inline-flex', alignItems: 'center', gap: 8,
           height: 32, padding: '0 10px', borderRadius: 8,
-          background: 'rgba(255,255,255,0.04)',
-          border: '1px solid rgba(255,255,255,0.06)',
-          fontSize: 12, color: 'rgba(255,255,255,0.7)',
+          background: 'var(--hover-bg)',
+          border: '1px solid var(--glass-divider)',
+          fontSize: 12, color: 'var(--text-secondary)',
           cursor: 'pointer', transition: 'all 150ms ease',
         }}>
           <span style={{ maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {att.name}
           </span>
-          <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>{att.size}</span>
+          <span style={{ fontSize: 11, color: 'var(--text-dim)' }}>{att.size}</span>
         </div>
       ))}
     </div>
@@ -1940,8 +1995,8 @@ function IconActionBtn({
   isSpam?: boolean;
   'data-snooze-trigger'?: boolean;
 }) {
-  const baseColor = isSpam ? 'rgba(239,68,68,0.5)' : 'rgba(255,255,255,0.4)';
-  const hoverColor = isSpam ? 'rgba(239,68,68,0.8)' : 'rgba(255,255,255,0.8)';
+  const baseColor = isSpam ? 'rgba(239,68,68,0.5)' : 'var(--text-secondary)';
+  const hoverColor = isSpam ? 'rgba(239,68,68,0.8)' : 'var(--text-primary)';
   return (
     <button
       title={title}
@@ -2019,7 +2074,7 @@ function MessageRow({
         '--channel-color': brandColor,
         cursor: 'pointer',
         ...(expanded ? { borderRadius: '12px 12px 0 0' } : {}),
-        ...(focused ? { background: 'rgba(255,255,255,0.04)', outline: '1px solid rgba(255,255,255,0.1)' } : {}),
+        ...(focused ? { background: 'var(--hover-bg)', outline: '1px solid var(--glass-card-border)' } : {}),
       } as React.CSSProperties}
     >
       {/* Col 1: Avatar + sender */}
@@ -2059,7 +2114,7 @@ function MessageRow({
           <span className="bb-inbox-row__subject">
             {String(message.subject || '')}
             {message.threadCount && message.threadCount > 1 && (
-              <span style={{ marginLeft: 6, fontSize: 11, color: 'rgba(255,255,255,0.3)', fontWeight: 400 }}>
+              <span style={{ marginLeft: 6, fontSize: 11, color: 'var(--text-dim)', fontWeight: 400 }}>
                 ({message.threadCount})
               </span>
             )}
