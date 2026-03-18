@@ -130,12 +130,12 @@ export function MessageBubble({ message, citations, showAvatar = false, avatarEm
     : undefined
 
   return (
-    <div className={`bb-chat__msg ${isUser ? 'bb-chat__msg--user' : 'bb-chat__msg--assistant'}`}>
+    <div className={`bb-chat__msg ${isUser ? 'bb-chat__msg--user' : 'bb-chat__msg--assistant'}`} style={!isUser && showAvatar ? { position: 'relative' } : undefined}>
       {!isUser && showAvatar && (
         <motion.div
-          className="bb-chat__assistant-icon"
           layoutId="bitbit-chat-avatar"
           transition={{ type: 'spring', stiffness: 400, damping: 30, mass: 0.8 }}
+          style={{ position: 'absolute', left: -44, top: 0, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
         >
           <BitBitFaceAvatar size={32} emotion={avatarEmotion as any} isThinking={avatarThinking} activity={avatarActivity as any} />
         </motion.div>

@@ -1086,14 +1086,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
     <ChainOfThought open={reasoningOpen} onOpenChange={setReasoningOpen}>
       <ChainOfThoughtHeader>{headerText}</ChainOfThoughtHeader>
       <ChainOfThoughtContent>
-        {/* Pre-tool narration step — subtle appearance */}
-        {narration && (
-          <ChainOfThoughtStep
-            label={formatNarration(narration)}
-            status={isReasoningActive ? 'active' : 'complete'}
-            style={{ opacity: 0.7, fontSize: 12 }}
-          />
-        )}
+        {/* Pre-tool narration is now rendered as visible text above the chain — see narrationJSX */}
 
         {/* Tool call steps — collapsed, with inline detail pills and inter-tool narration */}
         {(() => {
@@ -1136,7 +1129,6 @@ export function ChatInterface({ userName }: { userName?: string }) {
                   icon={ToolIcon}
                   label={formatToolName(group.name)}
                   detail={detail ?? undefined}
-                  resultSummary={summary ?? undefined}
                   status={tc0.status === 'running' ? 'active' : 'complete'}
                 >
                   {narrationAfter && (
@@ -1298,15 +1290,39 @@ export function ChatInterface({ userName }: { userName?: string }) {
                     key={msg.id}
                     className={isGroupChange ? 'bb-chat__msg-group-gap' : ''}
                   >
-                    {/* Live reasoning chain with avatar to the left */}
-                    {isCurrentResponse && reasoningChainJSX && (
-                      <div className="bb-chat__msg bb-chat__msg--assistant" style={{ marginBottom: 4 }}>
-                        <motion.div className="bb-chat__assistant-icon" layoutId="bitbit-chat-avatar" transition={{ type: 'spring', stiffness: 400, damping: 30, mass: 0.8 }}>
-                          <BitBitFaceAvatar size={32} emotion={avatarEmotion} isThinking={isThinkingStreaming} activity={avatarActivity} />
+                    {/* Pre-tool verbal acknowledgment — rendered as visible text above the chain */}
+                    {isCurrentResponse && narration && reasoningChainJSX && (
+                      <div style={{ position: 'relative', marginBottom: 8 }}>
+                        <motion.div
+                          layoutId="bitbit-chat-avatar"
+                          transition={{ type: 'spring', stiffness: 400, damping: 30, mass: 0.8 }}
+                          style={{ position: 'absolute', left: -44, top: 0, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                        >
+                          <BitBitFaceAvatar size={32} emotion={avatarEmotion} isThinking={false} activity={avatarActivity} />
                         </motion.div>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          {reasoningChainJSX}
-                        </div>
+                        <p style={{
+                          margin: 0,
+                          fontSize: 14,
+                          lineHeight: '22px',
+                          color: 'var(--text-primary)',
+                        }}>
+                          {narration}
+                        </p>
+                      </div>
+                    )}
+                    {/* Live reasoning chain */}
+                    {isCurrentResponse && reasoningChainJSX && (
+                      <div style={{ position: 'relative', marginBottom: 4 }}>
+                        {!narration && (
+                          <motion.div
+                            layoutId="bitbit-chat-avatar"
+                            transition={{ type: 'spring', stiffness: 400, damping: 30, mass: 0.8 }}
+                            style={{ position: 'absolute', left: -44, top: 0, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                          >
+                            <BitBitFaceAvatar size={32} emotion={avatarEmotion} isThinking={isThinkingStreaming} activity={avatarActivity} />
+                          </motion.div>
+                        )}
+                        {reasoningChainJSX}
                       </div>
                     )}
                     {/* Past response — collapsed reasoning chain */}
@@ -1327,8 +1343,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
                                   icon={ToolIcon}
                                   label={formatToolName(tc.name)}
                                   detail={detail ?? undefined}
-                                  resultSummary={summary ?? undefined}
-                                  status="complete"
+                                                  status="complete"
                                 />
                               )
                             })}
@@ -1351,13 +1366,15 @@ export function ChatInterface({ userName }: { userName?: string }) {
 
               {/* Standalone reasoning chain (before assistant message exists) */}
               {showReasoningChain && !currentResponseMsg && (
-                <div className="bb-chat__msg bb-chat__msg--assistant">
-                  <motion.div className="bb-chat__assistant-icon" layoutId="bitbit-chat-avatar" transition={{ type: 'spring', stiffness: 400, damping: 30, mass: 0.8 }}>
+                <div style={{ position: 'relative', marginBottom: 4 }}>
+                  <motion.div
+                    layoutId="bitbit-chat-avatar"
+                    transition={{ type: 'spring', stiffness: 400, damping: 30, mass: 0.8 }}
+                    style={{ position: 'absolute', left: -44, top: 0, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  >
                     <BitBitFaceAvatar size={32} emotion={avatarEmotion} isThinking={isThinkingStreaming} activity={avatarActivity} />
                   </motion.div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    {reasoningChainJSX}
-                  </div>
+                  {reasoningChainJSX}
                 </div>
               )}
 

@@ -659,17 +659,17 @@ export function BitBitFaceAvatar({
             animate={{ opacity: 1, rotate: 0, x: 0, y: 0 }}
             exit={{ opacity: 0, rotate: -20, x: -4, y: -4, transition: { duration: 0.2 } }}
             transition={{ type: 'spring', stiffness: 500, damping: 25, mass: 0.6 }}
-            style={{ transformOrigin: '43px 16px' }}
+            style={{ transformOrigin: `${RIGHT_EYE_CX + 4}px ${EYE_CY + 4}px` }}
           >
             <motion.circle
-              cx={39} cy={12} r={5}
+              cx={RIGHT_EYE_CX} cy={EYE_CY} r={5}
               stroke={color} strokeWidth={browStroke} fill="none"
               animate={{ scale: [1, 1.1, 1], x: [-1, 1, -1] }}
               transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
-              style={{ transformOrigin: '39px 12px' }}
+              style={{ transformOrigin: `${RIGHT_EYE_CX}px ${EYE_CY}px` }}
             />
             <motion.line
-              x1={43} y1={16} x2={47} y2={20}
+              x1={RIGHT_EYE_CX + 4} y1={EYE_CY + 4} x2={RIGHT_EYE_CX + 8} y2={EYE_CY + 8}
               stroke={color} strokeWidth={browStroke} strokeLinecap="round"
             />
           </motion.g>
