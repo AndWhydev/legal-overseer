@@ -1,12 +1,4 @@
 /**
-<<<<<<< HEAD
- * Meeting Intelligence — Type Definitions
- */
-
-export type MeetingStatus = 'uploading' | 'uploaded' | 'transcribing' | 'transcribed' | 'processing' | 'ready' | 'failed'
-export type MeetingSource = 'upload' | 'zoom' | 'google_meet' | 'teams' | 'other'
-export type ActionItemStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled'
-=======
  * Meeting Intelligence — Core Types
  *
  * Type definitions for meetings, transcripts, action items, and follow-ups.
@@ -20,32 +12,12 @@ export type ActionItemStatus = 'pending' | 'in_progress' | 'completed' | 'cancel
 export type FollowUpType = 'email' | 'whatsapp' | 'slack' | 'task'
 export type FollowUpStatus = 'draft' | 'approved' | 'sent' | 'failed'
 export type ParticipantRole = 'host' | 'attendee' | 'guest' | 'note_taker'
->>>>>>> v1.5-marketing-launch
 
 export interface Meeting {
   id: string
   org_id: string
   title: string
   description: string | null
-<<<<<<< HEAD
-  source: MeetingSource
-  status: MeetingStatus
-  started_at: string | null
-  ended_at: string | null
-  duration_seconds: number | null
-  recording_path: string | null
-  recording_mime_type: string | null
-  recording_size_bytes: number | null
-  summary: string | null
-  key_decisions: string[]
-  sentiment_score: number | null
-  sentiment_label: string | null
-  project_id: string | null
-  external_id: string | null
-  external_url: string | null
-  metadata: Record<string, unknown>
-  error_message: string | null
-=======
   meeting_type: MeetingType
   status: MeetingStatus
   scheduled_at: string | null
@@ -66,7 +38,6 @@ export interface Meeting {
   project_id: string | null
   metadata: Record<string, unknown>
   created_by: string | null
->>>>>>> v1.5-marketing-launch
   created_at: string
   updated_at: string
 }
@@ -75,19 +46,11 @@ export interface MeetingParticipant {
   id: string
   meeting_id: string
   org_id: string
-<<<<<<< HEAD
-  display_name: string
-  email: string | null
-  speaker_label: string | null
-  contact_id: string | null
-  role: string
-=======
   name: string
   email: string | null
   role: ParticipantRole
   speaker_label: string | null
   contact_id: string | null
->>>>>>> v1.5-marketing-launch
   created_at: string
 }
 
@@ -96,17 +59,6 @@ export interface TranscriptSegment {
   meeting_id: string
   org_id: string
   segment_index: number
-<<<<<<< HEAD
-  text: string
-  speaker_label: string | null
-  speaker_name: string | null
-  start_seconds: number
-  end_seconds: number
-  is_actionable: boolean
-  sentiment_score: number | null
-  confidence: number | null
-  language: string | null
-=======
   speaker_label: string | null
   speaker_id: string | null
   start_time_ms: number
@@ -114,7 +66,6 @@ export interface TranscriptSegment {
   text: string
   confidence: number | null
   language: string
->>>>>>> v1.5-marketing-launch
   created_at: string
 }
 
@@ -124,18 +75,6 @@ export interface MeetingActionItem {
   org_id: string
   title: string
   description: string | null
-<<<<<<< HEAD
-  status: ActionItemStatus
-  assignee_name: string | null
-  assignee_contact_id: string | null
-  due_date: string | null
-  due_date_raw: string | null
-  source_segment_id: string | null
-  source_text: string | null
-  task_id: string | null
-  confidence: number | null
-  priority: string
-=======
   assigned_to: string | null
   assigned_participant_id: string | null
   due_date: string | null
@@ -146,56 +85,10 @@ export interface MeetingActionItem {
   source_quote: string | null
   confidence: number
   extraction_method: string
->>>>>>> v1.5-marketing-launch
   created_at: string
   updated_at: string
 }
 
-<<<<<<< HEAD
-export interface MeetingWithRelations extends Meeting {
-  participants: MeetingParticipant[]
-  action_items: MeetingActionItem[]
-  segment_count: number
-}
-
-export interface TranscriptionProgress {
-  meeting_id: string
-  status: MeetingStatus
-  segments_processed: number
-  total_duration_seconds: number | null
-  error?: string
-}
-
-export interface ActionExtractionResult {
-  actions: Array<{
-    title: string
-    description: string
-    assignee_name: string | null
-    due_date_raw: string | null
-    source_text: string
-    confidence: number
-    priority: 'critical' | 'high' | 'medium' | 'low'
-  }>
-  summary: string
-  key_decisions: string[]
-  sentiment: {
-    score: number
-    label: 'positive' | 'neutral' | 'negative' | 'mixed'
-  }
-}
-
-// Upload constraints
-export const MAX_RECORDING_SIZE = 500 * 1024 * 1024 // 500MB
-export const ALLOWED_AUDIO_TYPES = [
-  'audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/x-wav',
-  'audio/mp4', 'audio/m4a', 'audio/x-m4a', 'audio/ogg',
-  'audio/webm', 'audio/flac',
-]
-export const ALLOWED_VIDEO_TYPES = [
-  'video/mp4', 'video/webm', 'video/quicktime',
-]
-export const ALLOWED_MIME_TYPES = [...ALLOWED_AUDIO_TYPES, ...ALLOWED_VIDEO_TYPES]
-=======
 export interface MeetingFollowUp {
   id: string
   meeting_id: string
@@ -277,4 +170,3 @@ export interface TranscriptionJob {
   progress: number // 0-100
   error?: string
 }
->>>>>>> v1.5-marketing-launch

@@ -61,18 +61,19 @@
   --sidebar-rail-width: 56px;
   --sidebar-panel-width: 200px;
   --sidebar-width: 56px;
-  --topbar-height: 60px;
+  --topbar-height: 56px;
   --gap-xs: 4px;
   --gap-sm: 8px;
   --gap-md: 16px;
   --gap-lg: 24px;
   --gap-xl: 32px;
+  --gap-2xl: 40px;
 
-  /* ── Radii ── */
-  --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
+  /* ── Radii (8px–40px range only, no 0/6/10/14/18) ── */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
   --radius-full: 9999px;
 
   /* ── Transitions ── */

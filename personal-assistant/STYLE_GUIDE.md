@@ -1,4 +1,56 @@
-# BitBit Glassmorphic Style Guide — Agent Reference
+# BitBit UI Design System — Agent Reference
+
+## HARD CONSTRAINTS (no exceptions unless justified for accessibility)
+
+### 1. Typography (extremely limited scale)
+
+Two font sizes only:
+- **16px** — primary body, labels, card titles, section headers
+- **14px** — secondary/helper text, captions, metadata
+
+Allowed weights: **400** (Regular) + **500** (Medium) only.
+No bold (600/700+), no light (300-), no other sizes (no 11px, 12px, 13px, 18px, 20px, 22px, 24px, 38px etc.)
+
+Line height: 1.4–1.5x for 16px, 1.35–1.45x for 14px
+
+Font family: Inter (via `--font-inter` / `var(--font-sans)`) — do not mix families.
+Mono numbers: JetBrains Mono (via `var(--font-mono)`) — allowed for numeric displays only.
+
+### 2. Spacing & Layout (4px gospel)
+
+Every spacing value MUST be a multiple of 4px.
+Allowed: 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, ...
+Forbidden: 3, 5, 6, 7, 10, 14, 15, 18, 22, etc.
+
+Most common values: **8px / 12px / 16px / 24px**
+
+Use CSS vars: `--gap-xs: 4px`, `--gap-sm: 8px`, `--gap-md: 16px`, `--gap-lg: 24px`, `--gap-xl: 32px`, `--gap-2xl: 40px`
+
+### 3. Buttons & Interactive Elements
+
+Minimum tappable/clickable height = **40px** (most buttons exactly 40px tall).
+Horizontal padding: 16px–24px (most commonly 20px).
+Touch targets: minimum 40x40px hit area.
+Primary CTA: may go 48px on mobile/spacious layouts — otherwise 40px.
+
+### 4. Corner Radius (border-radius)
+
+Only values in the range **8px → 40px** (or 9999px for pills).
+- Cards, containers, large surfaces → 12px–16px
+- Buttons, chips, tags → 8px–12px (or 9999px pill)
+- Modals/dialogs → 16px–24px
+- Soft/modern feel on large cards → 20px–32px
+
+Forbidden: 0px, 6px, 10px, 14px, 18px
+
+Use CSS vars: `--radius-sm: 8px`, `--radius-md: 12px`, `--radius-lg: 16px`, `--radius-xl: 24px`, `--radius-full: 9999px`
+
+### 5. Icons
+
+Default size: **24x24px**
+Smaller contextual icons: 20x20px or 16x16px only when necessary.
+Stroke width: 1.5px default, 2px for high-contrast.
+Prefer outlined style (lucide-react default).
 
 ## CRITICAL RULES
 
@@ -10,6 +62,12 @@
 6. **Preserve all functionality** — Only change styling, not behavior. Keep all hooks, state, API calls, data flow intact.
 7. **Do NOT import shadcn components** (Card, Button, Badge, Input, Tabs, etc.) — Replace with styled `<div>`, `<button>`, `<span>`, `<input>` elements using inline styles.
 8. **Keep TabShell wrapper** — Every tab must stay wrapped in `<TabShell>`.
+
+## DEFAULT DECISION (when in doubt)
+
+```
+fontSize: 16, padding: 16, borderRadius: 12, icon: 24px, button height: 40px, fontWeight: 400
+```
 
 ## COLOR TOKENS (use as CSS values in inline styles)
 
@@ -52,7 +110,7 @@
 
 ```typescript
 const glassCard: React.CSSProperties = {
-  padding: '20px',
+  padding: 16,
   borderRadius: 16,
   background: 'rgba(15, 20, 30, 0.6)',
   backdropFilter: 'blur(20px) saturate(1.2)',
@@ -65,47 +123,59 @@ const glassCard: React.CSSProperties = {
 ## GLASS BUTTON PATTERNS
 
 ```typescript
-// Ghost button (default)
+// Ghost button (default) — 40px tall
 const ghostBtn: React.CSSProperties = {
-  padding: '8px 16px',
-  borderRadius: 10,
+  height: 40,
+  padding: '0 20px',
+  borderRadius: 8,
   background: 'transparent',
   border: '1px solid rgba(255, 255, 255, 0.06)',
   color: 'var(--text-primary, #F1F5F9)',
-  fontSize: 13,
+  fontSize: 14,
   fontWeight: 500,
   cursor: 'pointer',
   transition: 'all 200ms',
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 8,
 }
 // On hover: background: 'rgba(255, 255, 255, 0.04)', borderColor: 'rgba(255, 255, 255, 0.1)'
 
-// Accent button (primary CTA)
+// Accent button (primary CTA) — 40px tall
 const accentBtn: React.CSSProperties = {
-  padding: '8px 16px',
-  borderRadius: 10,
+  height: 40,
+  padding: '0 20px',
+  borderRadius: 8,
   background: '#FF5A1F',
   border: 'none',
   color: '#000',
-  fontSize: 13,
-  fontWeight: 600,
+  fontSize: 14,
+  fontWeight: 500,
   cursor: 'pointer',
   transition: 'all 200ms',
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 8,
 }
 // On hover: background: '#FF7A45', transform: 'translateY(-1px)'
 
-// Pill/chip button (filter pills, tags)
+// Pill/chip button (filter pills, tags) — 40px tall
 const pillBtn: React.CSSProperties = {
-  padding: '6px 14px',
-  borderRadius: 20,
+  height: 40,
+  padding: '0 16px',
+  borderRadius: 9999,
   background: 'rgba(10, 14, 23, 0.42)',
   backdropFilter: 'blur(22px) saturate(1.2)',
   WebkitBackdropFilter: 'blur(22px) saturate(1.2)',
   boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.06)',
   border: 'none',
-  fontSize: 12,
+  fontSize: 14,
   color: 'var(--text-secondary, #94A3B8)',
   cursor: 'pointer',
   transition: 'all 200ms',
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 8,
 }
 // Active state: color: 'var(--text-primary)', background: 'rgba(255, 90, 31, 0.15)'
 ```
@@ -113,10 +183,12 @@ const pillBtn: React.CSSProperties = {
 ## INPUT PATTERN
 
 ```typescript
+// 40px tall input
 const glassInput: React.CSSProperties = {
   width: '100%',
-  padding: '10px 14px',
-  borderRadius: 10,
+  height: 40,
+  padding: '0 12px',
+  borderRadius: 8,
   background: 'rgba(13, 17, 23, 0.6)',
   border: '1px solid rgba(255, 255, 255, 0.05)',
   color: 'var(--text-primary, #F1F5F9)',
@@ -131,8 +203,9 @@ const glassInput: React.CSSProperties = {
 
 ```typescript
 const glassSelect: React.CSSProperties = {
-  padding: '10px 14px',
-  borderRadius: 10,
+  height: 40,
+  padding: '0 12px',
+  borderRadius: 8,
   background: 'rgba(13, 17, 23, 0.6)',
   border: '1px solid rgba(255, 255, 255, 0.05)',
   color: 'var(--text-primary, #F1F5F9)',
@@ -150,11 +223,10 @@ const glassSelect: React.CSSProperties = {
 const badge: React.CSSProperties = {
   display: 'inline-flex',
   alignItems: 'center',
-  padding: '3px 10px',
+  padding: '4px 12px',
   borderRadius: 8,
-  fontSize: 11,
-  fontWeight: 600,
-  letterSpacing: '0.02em',
+  fontSize: 14,
+  fontWeight: 500,
   background: 'rgba(255, 255, 255, 0.06)',
   color: 'var(--text-secondary, #94A3B8)',
 }
@@ -164,11 +236,10 @@ function coloredBadge(color: string): React.CSSProperties {
   return {
     display: 'inline-flex',
     alignItems: 'center',
-    padding: '3px 10px',
+    padding: '4px 12px',
     borderRadius: 8,
-    fontSize: 11,
-    fontWeight: 600,
-    letterSpacing: '0.02em',
+    fontSize: 14,
+    fontWeight: 500,
     background: `${color}15`,
     color: color,
   }
@@ -181,7 +252,7 @@ function coloredBadge(color: string): React.CSSProperties {
 const listRow: React.CSSProperties = {
   display: 'flex',
   alignItems: 'center',
-  padding: '12px 18px',
+  padding: '12px 16px',
   borderRadius: 12,
   background: 'rgba(10, 14, 23, 0.5)',
   backdropFilter: 'blur(26px) saturate(1.15)',
@@ -198,9 +269,9 @@ const listRow: React.CSSProperties = {
 
 ```typescript
 const sectionHeader: React.CSSProperties = {
-  fontSize: 11,
-  fontWeight: 600,
-  letterSpacing: '0.08em',
+  fontSize: 14,
+  fontWeight: 500,
+  letterSpacing: '0.04em',
   textTransform: 'uppercase' as const,
   color: 'var(--text-dim, #475569)',
   marginBottom: 12,
@@ -211,14 +282,14 @@ const sectionHeader: React.CSSProperties = {
 
 ```typescript
 const pageTitle: React.CSSProperties = {
-  fontSize: 22,
-  fontWeight: 700,
+  fontSize: 16,
+  fontWeight: 500,
   color: 'var(--text-primary, #F1F5F9)',
-  letterSpacing: '-0.02em',
+  letterSpacing: '-0.01em',
 }
 
 const pageSubtitle: React.CSSProperties = {
-  fontSize: 13,
+  fontSize: 14,
   color: 'var(--text-secondary, #94A3B8)',
   marginTop: 4,
 }
@@ -227,26 +298,26 @@ const pageSubtitle: React.CSSProperties = {
 ## KPI/METRIC LARGE NUMBER
 
 ```typescript
+// Exception: KPI numbers use 16px mono — the only allowed display pattern
 const bigNumber: React.CSSProperties = {
-  fontSize: 38,
-  fontWeight: 700,
+  fontSize: 16,
+  fontWeight: 500,
   color: 'var(--text-primary, #F1F5F9)',
   fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
-  letterSpacing: '-0.03em',
-  lineHeight: 1,
+  letterSpacing: '-0.02em',
+  lineHeight: 1.2,
 }
 ```
 
 ## TYPOGRAPHY REFERENCE
 
 ```
-// Page title:     fontSize: 22, fontWeight: 700, letterSpacing: '-0.02em'
-// Section label:  fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase'
-// Card title:     fontSize: 14, fontWeight: 600
-// Body text:      fontSize: 14, fontWeight: 400
-// Small text:     fontSize: 12, fontWeight: 400
-// Tiny label:     fontSize: 11, fontWeight: 500
-// Mono numbers:   fontFamily: 'var(--font-mono)', fontWeight: 700
+// Page title:     fontSize: 16, fontWeight: 500, letterSpacing: '-0.01em'
+// Section label:  fontSize: 14, fontWeight: 500, letterSpacing: '0.04em', textTransform: 'uppercase'
+// Card title:     fontSize: 16, fontWeight: 500
+// Body text:      fontSize: 16, fontWeight: 400
+// Secondary text: fontSize: 14, fontWeight: 400
+// Mono numbers:   fontFamily: 'var(--font-mono)', fontSize: 16, fontWeight: 500
 ```
 
 ## NOISE OVERLAY (for glowing/colored surfaces)
@@ -278,7 +349,7 @@ Apply as a `::after` pseudo-element via CSS class in bitbit-design-system.css, o
   padding: '60px 20px',
   gap: 12,
 }}>
-  <IconComponent size={32} style={{ color: 'var(--text-dim)' }} />
+  <IconComponent size={24} style={{ color: 'var(--text-dim)' }} />
   <span style={{ fontSize: 14, color: 'var(--text-secondary)' }}>No items yet</span>
 </div>
 ```

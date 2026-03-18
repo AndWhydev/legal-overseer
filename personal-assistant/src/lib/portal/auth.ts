@@ -1,20 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
-<<<<<<< HEAD
-import type { PortalContext } from './types'
-
-/**
- * Validates portal access for the current authenticated user against an org slug.
- * Returns PortalContext if valid, null otherwise.
- *
- * This is the SINGLE security gate for all portal operations.
- * Every portal API route and page MUST call this first.
-=======
 import type { PortalAccess, PortalBranding, PortalContext } from './types'
 
 /**
  * Authenticate a portal user and return their full portal context.
  * Returns null if the user is not authenticated or has no active portal access.
->>>>>>> v1.5-marketing-launch
  */
 export async function getPortalContext(orgSlug: string): Promise<PortalContext | null> {
   const supabase = await createClient()
@@ -23,11 +12,7 @@ export async function getPortalContext(orgSlug: string): Promise<PortalContext |
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
 
-<<<<<<< HEAD
-  // Get org by slug
-=======
   // Resolve org from slug
->>>>>>> v1.5-marketing-launch
   const { data: org } = await supabase
     .from('organizations')
     .select('id, name, slug')
@@ -36,11 +21,7 @@ export async function getPortalContext(orgSlug: string): Promise<PortalContext |
 
   if (!org) return null
 
-<<<<<<< HEAD
-  // Check portal access — user must have active access to this org
-=======
   // Check portal access
->>>>>>> v1.5-marketing-launch
   const { data: access } = await supabase
     .from('portal_access')
     .select('*')
@@ -51,47 +32,13 @@ export async function getPortalContext(orgSlug: string): Promise<PortalContext |
 
   if (!access) return null
 
-<<<<<<< HEAD
-  // Get contact info
-  const { data: contact } = await supabase
-    .from('contacts')
-    .select('id, name, emails')
-    .eq('id', access.contact_id)
-    .single()
-
-  if (!contact) return null
-
-  // Get branding (optional)
-=======
   // Load branding
->>>>>>> v1.5-marketing-launch
   const { data: branding } = await supabase
     .from('portal_branding')
     .select('*')
     .eq('org_id', org.id)
     .single()
 
-<<<<<<< HEAD
-  // Update last login
-  await supabase
-    .from('portal_access')
-    .update({ last_login_at: new Date().toISOString() })
-    .eq('id', access.id)
-
-  return {
-    access,
-    branding,
-    contact: {
-      id: contact.id,
-      name: contact.name,
-      email: contact.emails?.[0] || access.email,
-    },
-    org: {
-      id: org.id,
-      name: org.name,
-      slug: org.slug,
-    },
-=======
   // Load contact name
   const { data: contact } = await supabase
     .from('contacts')
@@ -110,28 +57,10 @@ export async function getPortalContext(orgSlug: string): Promise<PortalContext |
     branding: (branding as PortalBranding) ?? null,
     orgName: org.name,
     contactName: contact?.name ?? 'Client',
->>>>>>> v1.5-marketing-launch
   }
 }
 
 /**
-<<<<<<< HEAD
- * Validates an invite token and returns the portal access record.
- * Used during the magic link accept flow.
- */
-export async function validateInviteToken(token: string) {
-  const supabase = await createClient()
-  if (!supabase) return null
-
-  const { data } = await supabase
-    .from('portal_access')
-    .select('*, contacts(name, emails), organizations(name, slug)')
-    .eq('invite_token', token)
-    .eq('status', 'invited')
-    .single()
-
-  return data
-=======
  * Check if a user is an agency member for a given org (not a portal client).
  * Used by agency-side portal management.
  */
@@ -264,5 +193,4 @@ export async function revokePortalAccess(accessId: string): Promise<{ success: b
 
   if (error) return { success: false, error: error.message }
   return { success: true }
->>>>>>> v1.5-marketing-launch
 }
