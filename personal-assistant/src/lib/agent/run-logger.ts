@@ -33,6 +33,8 @@ export interface RunLogPayload {
   iterations: number
   error_message?: string
   model_purpose?: ModelPurpose
+  /** Growth role name for per-role budget tracking (e.g. 'ads', 'seo'). */
+  role?: string
 }
 
 /**
@@ -75,7 +77,7 @@ export async function logAgentRun(
       await trackUsage(supabase, run.org_id, 'agent_run', 1)
       const totalTokens = run.tokens_in + run.tokens_out
       if (totalTokens > 0) {
-        await trackUsage(supabase, run.org_id, 'token_usage', totalTokens)
+        await trackUsage(supabase, run.org_id, 'token_usage', totalTokens, run.role)
       }
     } catch (err) {
       console.warn('[run-logger] Failed to track usage:', err)

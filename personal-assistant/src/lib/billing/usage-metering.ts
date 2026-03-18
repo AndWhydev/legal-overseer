@@ -22,12 +22,15 @@ export async function trackUsage(
   orgId: string,
   type: 'token_usage' | 'agent_run' | 'storage_mb',
   amount: number,
+  role?: string,
 ): Promise<void> {
   try {
+    const metadata: Record<string, unknown> = { amount }
+    if (role) metadata.role = role
     await supabase.from('usage_events').insert({
       org_id: orgId,
       event_type: type,
-      metadata: { amount },
+      metadata,
     })
   } catch (err) {
     logger.warn('[usage-metering] Failed to track usage:', type, amount, err)
