@@ -285,11 +285,11 @@ Plans:
   2. When a role's daily budget is 80% consumed, the user sees a warning; at 100%, further executions are blocked until the next day
   3. User can request ad scripts via chat and receive structured output with hook variations, body, CTA, and platform-specific timing guidance
   4. Ad Script Generator is plan-gated -- free/starter users get an upgrade prompt, growth/scale users get results
-**Plans**: TBD
+**Plans**: 2 plans (2 waves)
 
 Plans:
-- [ ] 22-01: Cost control infrastructure (per-execution token cap, per-role daily budget, circuit breaker, budget alerts)
-- [ ] 22-02: Ad Script Generator tool group (wrap ad-script-gen.ts as agent tools, register in tool system, plan gate, autonomy mapping)
+- [ ] 22-01-PLAN.md -- Cost control infrastructure (per-execution token cap, per-role daily budget, budget alerts, engine enforcement)
+- [ ] 22-02-PLAN.md -- Ad Script Generator tool group (wrap ad-script-gen.ts as agent tools, register in tool system, autonomy mapping)
 
 ### Phase 23: SEO Monitor & Tender Hunter
 **Goal**: Users can monitor SEO rankings and discover government tenders via chat commands and scheduled monitoring ticks
