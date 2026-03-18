@@ -113,11 +113,11 @@ Requirements for Media, Billing & Growth Roles. Closes the media gap, adds billi
 
 ### Growth Role: Tender Hunter
 
-- [ ] **TNDR-01**: Tender Hunter registered as agent tool group (wraps existing tender-hunter.ts)
-- [ ] **TNDR-02**: User can search government tenders by keyword, category, and location via chat
-- [ ] **TNDR-03**: Tender Hunter runs on scheduled tick to find new matching opportunities
-- [ ] **TNDR-04**: New tender matches trigger notification with qualification assessment
-- [ ] **TNDR-05**: Tender tools are plan-gated (scale tier only)
+- [x] **TNDR-01**: Tender Hunter registered as agent tool group (wraps existing tender-hunter.ts)
+- [x] **TNDR-02**: User can search government tenders by keyword, category, and location via chat
+- [x] **TNDR-03**: Tender Hunter runs on scheduled tick to find new matching opportunities
+- [x] **TNDR-04**: New tender matches trigger notification with qualification assessment
+- [x] **TNDR-05**: Tender tools are plan-gated (scale tier only)
 
 ### Growth Role: Content Creator
 
@@ -233,11 +233,11 @@ Requirements for Media, Billing & Growth Roles. Closes the media gap, adds billi
 | SEO-03 | Phase 23 | Complete |
 | SEO-04 | Phase 23 | Complete |
 | SEO-05 | Phase 23 | Complete |
-| TNDR-01 | Phase 23 | Pending |
-| TNDR-02 | Phase 23 | Pending |
-| TNDR-03 | Phase 23 | Pending |
-| TNDR-04 | Phase 23 | Pending |
-| TNDR-05 | Phase 23 | Pending |
+| TNDR-01 | Phase 23 | Complete |
+| TNDR-02 | Phase 23 | Complete |
+| TNDR-03 | Phase 23 | Complete |
+| TNDR-04 | Phase 23 | Complete |
+| TNDR-05 | Phase 23 | Complete |
 | CONT-01 | Phase 24 | Pending |
 | CONT-02 | Phase 24 | Pending |
 | CONT-03 | Phase 24 | Pending |
