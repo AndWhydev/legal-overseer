@@ -81,6 +81,11 @@ export const TOOL_AUTONOMY_MAP: Record<string, AutonomyLevel> = {
   score_tender: 'L3_notify',                // Evaluates fit, persists score to DB
   generate_tender_response: 'L3_notify',    // Generates draft, upserts to tender_responses table
 
+  // Content tools: generate content via LLM, no external publish
+  schedule_post: 'L3_notify',      // Generates content via LLM, no external publish
+  generate_blog: 'L3_notify',      // Generates content via LLM, no external publish
+  content_calendar: 'L4_silent',   // Read-only listing
+
   // L1: Financial / irreversible — always require approval
   // (future: invoice_send, payment_process, contract_sign)
 }

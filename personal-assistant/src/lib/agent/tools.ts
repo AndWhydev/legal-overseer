@@ -7,6 +7,7 @@ import { invoiceToolDefinition, handleGenerateInvoice } from './tools/invoice-to
 import { adToolDefinitions, adToolHandlers } from './tools/ad-tools'
 import { seoToolDefinitions, seoToolHandlers } from './tools/seo-tools'
 import { tenderToolDefinitions, tenderToolHandlers } from './tools/tender-tools'
+import { contentToolDefinitions, contentToolHandlers } from './tools/content-tools'
 import { composeCreatorStudioDeck } from '@/lib/creator-studio'
 import { routeAgentAction } from './confidence-router'
 import { queueAgentAction, getPendingApprovals, resolveApproval } from './approval-queue'
@@ -30,7 +31,7 @@ import { getOrgPlan, checkToolPlanGate, TOOL_PLAN_REQUIREMENTS } from '@/lib/bil
 // Tool Group metadata (for future Tool RAG via pgvector)
 // ---------------------------------------------------------------------------
 
-export type ToolGroup = 'core' | 'memory' | 'channel' | 'web' | 'comms' | 'agentic' | 'ads' | 'seo' | 'tenders'
+export type ToolGroup = 'core' | 'memory' | 'channel' | 'web' | 'comms' | 'agentic' | 'ads' | 'seo' | 'tenders' | 'content'
 
 export interface ToolGroupMeta {
   id: ToolGroup
@@ -93,6 +94,12 @@ export const TOOL_GROUPS: Record<ToolGroup, ToolGroupMeta> = {
     label: 'Tender Hunter',
     description: 'Search government tenders, score fit against capabilities, and generate draft responses',
     tools: ['search_tenders', 'score_tender', 'generate_tender_response'],
+  },
+  content: {
+    id: 'content',
+    label: 'Content & Social',
+    description: 'Generate social media posts and blog drafts with platform-specific formatting and brand voice',
+    tools: ['schedule_post', 'generate_blog', 'content_calendar'],
   },
 }
 
@@ -174,6 +181,11 @@ export const JIT_INSTRUCTIONS: Record<string, string> = {
   search_tenders: 'Tender search results returned. Present matching tenders as a structured list showing: title, source, estimated value, deadline, and category. Highlight tenders closing within 14 days as urgent. If many results, summarize the top 5 by relevance and offer to show more. Suggest running score_tender on promising matches.',
   score_tender: 'Tender fit assessment complete. Lead with the recommendation (PURSUE / CONSIDER / SKIP) in bold, followed by the overall fit score (X/100). Show the breakdown: compliance score, win probability, effort-vs-value ratio. List matched capabilities as strengths and gaps as areas to address. If recommendation is pursue or consider, offer to generate a draft response.',
   generate_tender_response: 'Tender response draft generated. Present each response section with its title and content. Show the compliance matrix as a table (requirement, status: met/partially met/not met, evidence). Note the estimated effort hours. Remind the user this is a draft for human review — they should verify all claims and tailor the response before submission. Offer to score the tender for fit if not already done.',
+
+  // Content & Social
+  schedule_post: 'Social post generated. Present the formatted post to the user with the platform name, character count, and hashtag count. If the post includes hashtags, display them clearly. Ask if they want to adjust the tone, add/remove hashtags, or adapt it for a different platform.',
+  generate_blog: 'Blog draft generated. Present the title and meta description first, then the full body in markdown. Mention the word count and which keywords were integrated. Offer to refine specific sections, adjust length, or optimize for additional keywords.',
+  content_calendar: 'Present the content items as a list showing topic, platform, and date. If the calendar is empty, suggest creating content with schedule_post or generate_blog. Group items by platform if there are many.',
 }
 
 /** Get JIT instruction for a tool, if one exists. */
@@ -802,13 +814,14 @@ const allHandlers: Record<string, AgentToolHandler> = {
   ...adToolHandlers,
   ...seoToolHandlers,
   ...tenderToolHandlers,
+  ...contentToolHandlers,
   async generate_invoice(input, orgId, supabase) {
     return handleGenerateInvoice(input as Parameters<typeof handleGenerateInvoice>[0], orgId, supabase)
   },
 }
 
 export function getAgentTools(groups?: ToolGroup[]): Anthropic.Tool[] {
-  const allTools = [...toolDefinitions, ...channelToolDefinitions, ...superpowerToolDefinitions, ...codeExecutionToolDefinitions, ...adToolDefinitions, ...seoToolDefinitions, ...tenderToolDefinitions, invoiceToolDefinition]
+  const allTools = [...toolDefinitions, ...channelToolDefinitions, ...superpowerToolDefinitions, ...codeExecutionToolDefinitions, ...adToolDefinitions, ...seoToolDefinitions, ...tenderToolDefinitions, ...contentToolDefinitions, invoiceToolDefinition]
   if (!groups || groups.length === 0) return allTools
 
   const selectedGroups = new Set<ToolGroup>(['core', ...groups])
