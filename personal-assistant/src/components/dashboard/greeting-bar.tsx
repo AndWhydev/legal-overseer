@@ -20,12 +20,12 @@ function getFormattedDate() {
 }
 
 function getMotivation(pct: number) {
-  if (pct >= 100) return 'All done!'
-  if (pct >= 76) return 'Almost there!'
-  if (pct >= 51) return 'On a roll!'
+  if (pct >= 100) return 'All clear'
+  if (pct >= 76) return 'Almost there'
+  if (pct >= 51) return 'On a roll'
   if (pct >= 26) return 'Making progress'
-  if (pct >= 1) return 'Good start!'
-  return 'Ready to start?'
+  if (pct >= 1) return 'Getting started'
+  return 'Clean slate'
 }
 
 interface GreetingBarProps {

@@ -79,7 +79,7 @@ export function DailyBrief() {
     setTimeout(() => {
       window.dispatchEvent(
         new CustomEvent('bitbit-chat-send', {
-          detail: 'Plan my day. Look at my tasks, messages, and calendar to suggest what I should focus on today.',
+          detail: 'Plan our day. Look at tasks, messages, and calendar to figure out what to focus on today.',
         })
       );
     }, 300);
@@ -119,7 +119,7 @@ export function DailyBrief() {
       <div style={stripStyle}>
         <Sparkles size={14} style={{ color: '#a78bfa', flexShrink: 0 }} />
         <span style={{ fontSize: 14, color: 'var(--text-secondary)', fontStyle: 'italic' }}>
-          Preparing your brief...
+          Pulling things together...
         </span>
         <div
           style={{
@@ -205,7 +205,7 @@ export function DailyBrief() {
           }}
         >
           <Sparkles size={11} />
-          Plan my day
+          Plan our day
         </button>
         <button
           onClick={handleDismiss}

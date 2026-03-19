@@ -129,7 +129,7 @@ export function formatBriefingWhatsApp(briefing: BriefingData): string {
   }
 
   if (s.totalActionItems === 0) {
-    lines.push('All clear -- no urgent items this morning.')
+    lines.push('All clear, nothing urgent this morning.')
     lines.push('')
   }
 
