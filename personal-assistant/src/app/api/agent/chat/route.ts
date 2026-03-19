@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
           type: a.mime_type,
           url: a.storage_path,
           name: a.filename,
-          size: a.file_size ?? 0,
+          size: a.size ?? 0,
         }))
         logger.info('[chat] Built attachment content blocks', {
           requested: attachmentIds.length,

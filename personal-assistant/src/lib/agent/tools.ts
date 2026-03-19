@@ -816,7 +816,7 @@ const allHandlers: Record<string, AgentToolHandler> = {
   ...tenderToolHandlers,
   ...contentToolHandlers,
   async generate_invoice(input, orgId, supabase) {
-    return handleGenerateInvoice(input as Parameters<typeof handleGenerateInvoice>[0], orgId, supabase)
+    return handleGenerateInvoice(input as unknown as Parameters<typeof handleGenerateInvoice>[0], orgId, supabase)
   },
 }
 
