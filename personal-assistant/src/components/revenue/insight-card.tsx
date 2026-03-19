@@ -24,6 +24,7 @@ const TYPE_LABELS: Record<InsightType, string> = {
   unbilled_work: 'Unbilled Work',
   scope_creep: 'Scope Creep',
   overdue_invoice: 'Overdue',
+  overdue_collection: 'Overdue',
   payment_pattern: 'Payment Risk',
   retainer_renewal: 'Renewal',
   retainer_underuse: 'Underuse',
@@ -31,12 +32,15 @@ const TYPE_LABELS: Record<InsightType, string> = {
   revenue_decline: 'Decline',
   collection_opportunity: 'Collection',
   rate_optimization: 'Rate',
+  client_churn_risk: 'Churn Risk',
+  cash_flow_warning: 'Cash Flow',
 }
 
 const TYPE_ICONS: Record<InsightType, string> = {
   unbilled_work: '$',
   scope_creep: '+',
   overdue_invoice: '!',
+  overdue_collection: '!',
   payment_pattern: '~',
   retainer_renewal: 'R',
   retainer_underuse: '-',
@@ -44,6 +48,8 @@ const TYPE_ICONS: Record<InsightType, string> = {
   revenue_decline: 'v',
   collection_opportunity: '$',
   rate_optimization: '%',
+  client_churn_risk: 'X',
+  cash_flow_warning: 'W',
 }
 
 // ─── Styles ─────────────────────────────────────────────────────────────────

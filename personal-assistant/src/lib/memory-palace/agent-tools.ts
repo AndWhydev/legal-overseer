@@ -8,7 +8,8 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { createMemoryPalace } from './service'
 import { logger } from '@/lib/core/logger'
-import type { MemoryType } from './types'
+// MemoryType is a superset of MemoryCategory that includes service-level types
+type MemoryType = 'conversation' | 'decision' | 'pattern' | 'fact' | 'relationship' | 'pricing' | 'convention' | 'lesson_learned'
 
 // ─── Tool Definitions (for Anthropic tool_use) ─────────────────────────────
 
@@ -123,9 +124,10 @@ export async function executeMemoryPalaceTool(
   try {
     switch (toolName) {
       case 'search_memories': {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const results = await palace.searchMemories({
           query: (input.query as string) ?? '',
-          memoryType: input.memory_type as MemoryType | undefined,
+          memoryType: input.memory_type as any,
           entityId: input.entity_id as string | undefined,
           limit: 10,
         })
@@ -166,8 +168,9 @@ export async function executeMemoryPalaceTool(
       }
 
       case 'remember_this': {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const id = await palace.createMemory({
-          memoryType: (input.memory_type as MemoryType) ?? 'fact',
+          memoryType: (input.memory_type ?? 'fact') as any,
           title: (input.title as string) ?? 'Untitled',
           content: (input.content as string) ?? '',
           sourceType: 'user_explicit',
@@ -188,7 +191,7 @@ export async function executeMemoryPalaceTool(
         }
 
         const result = await palace.forgetEntity(input.entity_id as string)
-        return `Entity forgotten. Deleted ${result.deletedMemories} memories, updated ${result.updatedMemories} memories, deleted ${result.deletedDecisions} decisions.`
+        return `Entity forgotten. Deleted ${result.memories_deleted} memories, ${result.decisions_deleted} decisions, ${result.patterns_deleted} patterns.`
       }
 
       default:

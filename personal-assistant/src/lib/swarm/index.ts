@@ -5,9 +5,12 @@
  * Enables complex operations through coordinated agent teams.
  */
 
-export { SwarmCoordinator } from './coordinator'
-export { SwarmExecutor, rollbackSwarm } from './executor'
-export { SwarmAgent } from './agent'
+import { SwarmCoordinator } from './coordinator'
+import { SwarmExecutor, rollbackSwarm } from './executor'
+import { SwarmAgent } from './agent'
+export { SwarmCoordinator }
+export { SwarmExecutor, rollbackSwarm }
+export { SwarmAgent }
 export { BUILTIN_TEMPLATES, matchTemplate } from './templates'
 export type {
   // Core types
@@ -56,12 +59,12 @@ export async function triggerSwarm(
 ) {
   const coordinator = new SwarmCoordinator(supabase, orgId)
   if (typeof input === 'string') {
-    return coordinator.classify(input)
+    return coordinator.trigger(input)
   }
   if (input.templateSlug) {
-    return coordinator.triggerByTemplate(input.templateSlug, input.params || {})
+    return coordinator.trigger(input.query || '', { templateSlug: input.templateSlug, params: input.params || {} })
   }
-  return coordinator.classify(input.query || '')
+  return coordinator.trigger(input.query || '')
 }
 
 /** Cancel a running swarm */
@@ -97,8 +100,22 @@ export async function createSwarmRun(supabase: SupabaseClient, opts: any) {
 
 /** Execute a swarm run by ID */
 export async function executeSwarmRun(supabase: SupabaseClient, runId: string) {
-  const { data: run } = await supabase.from('swarm_runs').select('org_id').eq('id', runId).single()
+  const { data: run } = await supabase.from('swarm_runs').select('org_id, template_id, trigger_params').eq('id', runId).single()
   if (!run) throw new Error(`Swarm run not found: ${runId}`)
-  const executor = new SwarmExecutor(supabase, run.org_id, runId)
+
+  // Load template definition if available
+  let definition: import('./types').SwarmDefinition = { version: '1.0', steps: [], governance: { approvalRequired: [], notifyOnComplete: [] }, inputSchema: {} }
+  if (run.template_id) {
+    const { data: tpl } = await supabase.from('swarm_templates').select('definition').eq('id', run.template_id).single()
+    if (tpl?.definition) definition = tpl.definition as import('./types').SwarmDefinition
+  }
+
+  const executor = new SwarmExecutor({
+    orgId: run.org_id,
+    supabase,
+    runId,
+    definition,
+    params: (run.trigger_params as Record<string, unknown>) ?? {},
+  })
   return executor.execute()
 }

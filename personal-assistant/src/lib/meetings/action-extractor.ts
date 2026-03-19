@@ -14,9 +14,24 @@ import { resolveModel } from '@/lib/agent/model-registry'
 import { logger } from '@/lib/core/logger'
 import type {
   TranscriptSegment,
-  ActionExtractionResult,
   MeetingActionItem,
+  SentimentLabel,
 } from './types'
+
+interface ActionExtractionResult {
+  actions: Array<{
+    title: string
+    description: string
+    assignee_name?: string | null
+    due_date_raw?: string | null
+    source_text?: string
+    confidence: number
+    priority: 'critical' | 'high' | 'medium' | 'low'
+  }>
+  summary: string
+  key_decisions: string[]
+  sentiment: { score: number; label: SentimentLabel | 'neutral' | 'positive' | 'negative' | 'mixed' }
+}
 
 const anthropic = new Anthropic()
 
@@ -41,8 +56,8 @@ export async function extractMeetingIntelligence(
   // Build full transcript text with timestamps
   const transcriptText = segments
     .map(s => {
-      const speaker = s.speaker_name || s.speaker_label || 'Unknown'
-      const time = formatTimestamp(s.start_seconds)
+      const speaker = s.speaker_label || 'Unknown'
+      const time = formatTimestamp(s.start_time_ms / 1000)
       return `[${time}] ${speaker}: ${s.text}`
     })
     .join('\n')

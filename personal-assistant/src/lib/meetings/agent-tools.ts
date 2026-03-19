@@ -13,7 +13,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import type { AgentToolHandler, ToolResult } from '@/lib/agent/tools'
 import {
   listMeetings,
-  getMeeting,
+  getMeetingWithDetails,
   searchTranscripts,
   createTasksFromActionItems,
 } from './meeting-service'
@@ -71,16 +71,16 @@ export const meetingToolHandlers: Record<string, AgentToolHandler> = {
     const query = input.query as string
     const limit = (input.limit as number) ?? 10
 
-    const results = await searchTranscripts(supabase, orgId, query, { limit })
+    const results = await searchTranscripts(supabase, orgId, query, limit)
 
     return {
       success: true,
       data: {
         results: results.map(r => ({
           meeting_title: r.meeting_title,
-          speaker: r.speaker_name ?? r.speaker_label,
-          text: r.text,
-          timestamp: `${Math.floor(r.start_seconds / 60)}:${String(Math.floor(r.start_seconds % 60)).padStart(2, '0')}`,
+          speaker: r.speaker_label,
+          text: r.segment_text,
+          timestamp: `${Math.floor(r.start_time_ms / 60000)}:${String(Math.floor((r.start_time_ms % 60000) / 1000)).padStart(2, '0')}`,
           meeting_id: r.meeting_id,
         })),
         total: results.length,
@@ -91,7 +91,7 @@ export const meetingToolHandlers: Record<string, AgentToolHandler> = {
   async list_meetings(input, orgId, supabase): Promise<ToolResult> {
     const { meetings, total } = await listMeetings(supabase, orgId, {
       limit: (input.limit as number) ?? 10,
-      status: input.status as string | undefined,
+      status: (input.status as 'pending' | 'recording' | 'transcribing' | 'processing' | 'completed' | 'failed') ?? undefined,
     })
 
     return {
@@ -113,7 +113,7 @@ export const meetingToolHandlers: Record<string, AgentToolHandler> = {
 
   async get_meeting_details(input, orgId, supabase): Promise<ToolResult> {
     const meetingId = input.meeting_id as string
-    const meeting = await getMeeting(supabase, meetingId, orgId)
+    const meeting = await getMeetingWithDetails(supabase, meetingId)
 
     if (!meeting) return { success: false, error: 'Meeting not found' }
 
@@ -127,15 +127,15 @@ export const meetingToolHandlers: Record<string, AgentToolHandler> = {
         summary: meeting.summary,
         key_decisions: meeting.key_decisions,
         sentiment: meeting.sentiment_label,
-        participants: meeting.participants.map(p => p.display_name),
-        action_items: meeting.action_items.map(a => ({
+        participants: meeting.participants.map((p: { name: string }) => p.name),
+        action_items: meeting.action_items.map((a: { title: string; assigned_to: string | null; due_date: string | null; status: string; task_id: string | null }) => ({
           title: a.title,
-          assignee: a.assignee_name,
-          due: a.due_date_raw,
+          assignee: a.assigned_to,
+          due: a.due_date,
           status: a.status,
           has_task: !!a.task_id,
         })),
-        segment_count: meeting.segment_count,
+        segment_count: meeting.transcript_segments?.length ?? 0,
       },
     }
   },

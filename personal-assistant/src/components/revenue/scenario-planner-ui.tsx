@@ -309,7 +309,7 @@ export function ScenarioPlannerUI() {
 // ─── Scenario Result Card ───────────────────────────────────────────────────
 
 function ScenarioCard({ scenario }: { scenario: RevenueScenario }) {
-  const isPositive = scenario.revenue_delta_cents >= 0
+  const isPositive = (scenario.revenue_delta_cents ?? 0) >= 0
   const deltaColor = isPositive ? 'var(--bb-green)' : 'var(--bb-red)'
 
   return (
@@ -344,19 +344,19 @@ function ScenarioCard({ scenario }: { scenario: RevenueScenario }) {
         <div style={resultCellStyle}>
           <span style={resultLabelStyle}>Baseline</span>
           <span style={{ ...resultValueStyle, color: 'var(--text-secondary)' }}>
-            {formatCents(scenario.baseline_revenue_cents)}
+            {formatCents(scenario.baseline_revenue_cents ?? 0)}
           </span>
         </div>
         <div style={resultCellStyle}>
           <span style={resultLabelStyle}>Projected (P50)</span>
           <span style={{ ...resultValueStyle, color: deltaColor }}>
-            {formatCents(scenario.p50_revenue_cents)}
+            {formatCents(scenario.p50_revenue_cents ?? 0)}
           </span>
         </div>
         <div style={resultCellStyle}>
           <span style={resultLabelStyle}>Delta</span>
           <span style={{ ...resultValueStyle, color: deltaColor }}>
-            {isPositive ? '+' : ''}{formatCents(scenario.revenue_delta_cents)}
+            {isPositive ? '+' : ''}{formatCents(scenario.revenue_delta_cents ?? 0)}
           </span>
         </div>
       </div>
@@ -369,8 +369,8 @@ function ScenarioCard({ scenario }: { scenario: RevenueScenario }) {
         color: 'var(--text-secondary)',
         fontFamily: 'var(--font-mono)',
       }}>
-        <span>P10: {formatCents(scenario.p10_revenue_cents)}</span>
-        <span>P90: {formatCents(scenario.p90_revenue_cents)}</span>
+        <span>P10: {formatCents(scenario.p10_revenue_cents ?? 0)}</span>
+        <span>P90: {formatCents(scenario.p90_revenue_cents ?? 0)}</span>
         <span>{scenario.simulation_runs} runs</span>
       </div>
 

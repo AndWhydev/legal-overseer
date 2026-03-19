@@ -11,7 +11,8 @@ import Anthropic from '@anthropic-ai/sdk'
 import { resolveModel } from '@/lib/agent/model-registry'
 import { logger } from '@/lib/core/logger'
 import { createMemoryPalace } from './service'
-import type { MemoryType, CreateMemoryInput, CreateDecisionInput } from './types'
+// MemoryType is a superset of MemoryCategory that includes service-level types
+type MemoryType = 'conversation' | 'decision' | 'pattern' | 'fact' | 'relationship' | 'pricing' | 'convention' | 'lesson_learned'
 
 // ─── Signal Detection ───────────────────────────────────────────────────────
 
@@ -147,8 +148,9 @@ export class MemoryExtractor {
           })
           if (id) stored++
         } else {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const id = await palace.createMemory({
-            memoryType: mem.memory_type,
+            memoryType: mem.memory_type as any,
             title: mem.title,
             content: mem.content,
             typeMetadata: mem.type_metadata,

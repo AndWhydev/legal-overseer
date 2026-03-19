@@ -183,7 +183,7 @@ export function SwarmList({ onSelectRun }: SwarmListProps) {
                 minWidth: '50px',
                 textAlign: 'right',
               }}>
-                {formatCost(run.total_cost_cents)}
+                {formatCost(run.total_cost_cents ?? run.total_cost ?? 0)}
               </div>
             </button>
           ))}

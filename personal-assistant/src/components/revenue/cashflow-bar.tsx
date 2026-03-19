@@ -88,7 +88,7 @@ function ProjectionColumn({ projection, label, color }: {
   }
 
   // Determine bar height as percentage of maximum across columns
-  const amount = projection.projected_inflow_cents
+  const amount = projection.projected_inflow_cents ?? 0
 
   return (
     <div style={columnStyle}>
@@ -107,7 +107,7 @@ function ProjectionColumn({ projection, label, color }: {
         <div style={{
           position: 'relative',
           width: '60%',
-          height: `${Math.min(100, Math.max(20, projection.confidence_pct * 100))}%`,
+          height: `${Math.min(100, Math.max(20, (projection.confidence_pct ?? 0) * 100))}%`,
           background: `${color}25`,
           borderRadius: 'var(--radius-md)',
           display: 'flex',
@@ -118,10 +118,10 @@ function ProjectionColumn({ projection, label, color }: {
       </div>
       <span style={{ ...valueStyle, color }}>{formatCents(amount)}</span>
       <span style={rangeStyle}>
-        {formatCents(projection.confidence_low_cents)} - {formatCents(projection.confidence_high_cents)}
+        {formatCents(projection.confidence_low_cents ?? 0)} - {formatCents(projection.confidence_high_cents ?? 0)}
       </span>
       <span style={confidenceStyle}>
-        {Math.round(projection.confidence_pct * 100)}% confidence
+        {Math.round((projection.confidence_pct ?? 0) * 100)}% confidence
       </span>
     </div>
   )

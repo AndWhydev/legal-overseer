@@ -44,13 +44,13 @@ export async function draftFollowUpEmail(
 
   const actionList = actionItems
     .map(a => {
-      const assignee = a.assignee_name ? ` (${a.assignee_name})` : ''
-      const due = a.due_date_raw ? ` — due ${a.due_date_raw}` : ''
+      const assignee = a.assigned_to ? ` (${a.assigned_to})` : ''
+      const due = a.due_date ? ` — due ${a.due_date}` : ''
       return `- ${a.title}${assignee}${due}`
     })
     .join('\n')
 
-  const participantNames = participants.map(p => p.display_name).join(', ')
+  const participantNames = participants.map(p => p.name).join(', ')
 
   try {
     const response = await anthropic.messages.create({
