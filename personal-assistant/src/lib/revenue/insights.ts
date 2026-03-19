@@ -302,14 +302,14 @@ export async function runInsightScan(
     .lt('expires_at', new Date().toISOString())
 
   // Import retainer monitor lazily to avoid circular deps
-  const { detectRetainerRenewals } = await import('./retainer-monitor')
+  const { checkRetainers } = await import('./retainer-monitor')
 
   const [overdueCollections, churnRisks, scopeCreepAlerts, cashFlowWarnings, retainers] = await Promise.all([
     detectOverdueCollections(supabase, orgId),
     detectChurnRisk(supabase, orgId),
     detectScopeCreep(supabase, orgId),
     detectCashFlowWarnings(supabase, orgId),
-    detectRetainerRenewals(supabase, orgId).then(r => r.length).catch(() => 0),
+    checkRetainers(supabase, orgId).then((r: unknown[]) => r.length).catch(() => 0),
   ])
 
   const result = {

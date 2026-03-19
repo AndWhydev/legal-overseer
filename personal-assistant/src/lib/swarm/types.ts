@@ -200,6 +200,7 @@ export type SwarmRunStatus =
   | 'failed'
   | 'rolled_back'
   | 'cancelled'
+  | 'running'
 
 export type SwarmStepStatus =
   | 'pending'
@@ -220,6 +221,8 @@ export type SwarmMessageType =
   | 'completion'
   | 'negotiation'
   | 'status'
+  | 'conflict'
+  | 'resolution'
 
 export interface SwarmTemplateRow {
   id: string
@@ -423,7 +426,13 @@ export type SwarmRun = SwarmRunRow & {
 }
 export type SwarmStep = SwarmStepRow & {
   step_id?: string
+  agent_type?: string
+  error?: string | null
+  output?: Record<string, unknown> | null
+  cost_cents?: number
 }
-export type SwarmMessage = SwarmMessageRow
-export type SwarmMessage = SwarmMessageRow
+export type SwarmMessage = SwarmMessageRow & {
+  from_step_id?: string
+  to_step_id?: string | null
+}
 

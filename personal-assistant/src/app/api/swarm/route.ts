@@ -114,26 +114,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Natural language trigger
-    const result = await triggerSwarm(supabase, membership.org_id, input, {
-      autoExecute: auto_execute !== false,
-      triggeredBy: 'api',
-    })
-
-    if (!result.triggered) {
-      return NextResponse.json({
-        triggered: false,
-        reasoning: result.matchResult.reasoning,
-      })
-    }
+    const result = await triggerSwarm(supabase, membership.org_id, input)
 
     return NextResponse.json({
       triggered: true,
-      run: result.run,
-      match: {
-        template: result.matchResult.template?.name,
-        confidence: result.matchResult.confidence,
-        reasoning: result.matchResult.reasoning,
-      },
+      runId: result.runId,
+      status: result.status,
+      summary: result.summary,
     })
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)

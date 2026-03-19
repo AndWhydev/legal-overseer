@@ -10,8 +10,8 @@ const participants = new Map<string, SwarmParticipant>()
  * Register a SwarmParticipant implementation for an agent type.
  * Call at module load time or during initialization.
  */
-export function registerParticipant(participant: SwarmParticipant): void {
-  participants.set(participant.agent_type, participant)
+export function registerParticipant(participant: SwarmParticipant & { agent_type?: string }): void {
+  participants.set(participant.agent_type ?? participant.role, participant)
 }
 
 /**

@@ -24,7 +24,7 @@ import { getPendingApprovals, type ApprovalRecord } from '@/lib/agent/approval-q
 import { loadRecentMessages, loadThreadSummaries } from '@/lib/conversation/thread-resolver'
 import { scanForEntityMentions } from '@/lib/context/entity-mention-scanner'
 import { TokenBudgetManager, type TierInput } from './token-budget-manager'
-import { recallForContext, type ProactiveRecallResult } from '@/lib/memory-palace'
+import { proactiveRecall as recallForContext, type ProactiveRecallResult } from '@/lib/memory-palace'
 import { logger } from '@/lib/core/logger'
 
 // ─── Constants ──────────────────────────────────────────────────────────────
@@ -643,14 +643,14 @@ export class ContextAssembler {
         recallEntityIds = (mentionedContacts ?? []).map((c: Record<string, unknown>) => c.id as string)
       }
 
-      const recall = await recallForContext(supabase, orgId, {
-        entityIds: recallEntityIds,
-        query: currentMessage,
-        maxMemories: 6,
-      })
+      const recallResults = await recallForContext(supabase, orgId, recallEntityIds)
 
-      if (recall.formattedContext) {
-        finalSystemPrompt = `${finalSystemPrompt}\n\n${recall.formattedContext}`
+      if (recallResults.length > 0) {
+        const { formatProactiveRecall } = await import('@/lib/memory-palace')
+        const formattedContext = formatProactiveRecall(recallResults)
+        if (formattedContext) {
+          finalSystemPrompt = `${finalSystemPrompt}\n\n${formattedContext}`
+        }
       }
     } catch {
       // Non-critical: proactive recall is additive, not essential

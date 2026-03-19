@@ -200,10 +200,10 @@ function estimateChurnRisk(client: ClientRevenueScore, rateChangePct: number): n
     medium: 1.0,
     high: 1.5,
     critical: 2.5,
-  }[client.risk_level]
+  }[client.risk_level ?? 'medium'] ?? 1.0
 
   // Adjust by score (high score = lower churn risk)
-  const scoreAdjustment = (100 - client.overall_score) / 100 * 0.1
+  const scoreAdjustment = (100 - (client.overall_score ?? client.composite_score ?? 50)) / 100 * 0.1
 
   return Math.min(0.95, baseChurn * riskMultiplier + scoreAdjustment)
 }

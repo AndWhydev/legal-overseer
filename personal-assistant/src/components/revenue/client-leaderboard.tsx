@@ -162,8 +162,8 @@ export function ClientLeaderboard({ clients, atRisk = [] }: ClientLeaderboardPro
             onMouseLeave={() => setHoveredRow(null)}
           >
             {/* Score circle */}
-            <div style={scoreCircleStyle(client.overall_score)}>
-              {client.overall_score}
+            <div style={scoreCircleStyle(client.overall_score ?? client.composite_score ?? 0)}>
+              {client.overall_score ?? client.composite_score ?? 0}
             </div>
 
             {/* Name */}
@@ -175,20 +175,20 @@ export function ClientLeaderboard({ clients, atRisk = [] }: ClientLeaderboardPro
             </span>
 
             {/* Trend */}
-            <span style={{ color: TREND_COLORS[client.trend_direction], fontWeight: 500 }}>
-              {TREND_ICONS[client.trend_direction]} {client.trend_direction}
+            <span style={{ color: TREND_COLORS[client.trend_direction ?? client.trend ?? 'stable'], fontWeight: 500 }}>
+              {TREND_ICONS[client.trend_direction ?? client.trend ?? 'stable']} {client.trend_direction ?? client.trend ?? 'stable'}
             </span>
 
             {/* Avg days to pay */}
-            <span style={{ ...monoStyle, color: client.avg_days_to_pay > 14 ? 'var(--bb-amber)' : 'var(--text-secondary)' }}>
-              {client.avg_days_to_pay}d
+            <span style={{ ...monoStyle, color: (client.avg_days_to_pay ?? 0) > 14 ? 'var(--bb-amber)' : 'var(--text-secondary)' }}>
+              {client.avg_days_to_pay ?? 0}d
             </span>
 
             {/* Risk level */}
             <span style={{
               fontSize: 14,
               fontWeight: 500,
-              color: RISK_COLORS[client.risk_level],
+              color: RISK_COLORS[client.risk_level ?? 'low'],
               textTransform: 'uppercase',
             }}>
               {client.risk_level}

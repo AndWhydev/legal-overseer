@@ -7,7 +7,28 @@
 
 import Anthropic from '@anthropic-ai/sdk'
 import { resolveModel } from '@/lib/agent/model-registry'
-import type { SwarmParticipant, SwarmContext, SwarmResult, SwarmMessageType } from './types'
+import type { SwarmParticipant, SwarmStepContext, SwarmStepResult, SwarmMessageType } from './types'
+
+// Aliases for this module's usage
+type SwarmContext = SwarmStepContext & {
+  step: { step_id?: string }
+  run: { dag_snapshot?: { agents?: Array<{ id: string; model_tier?: string }> } }
+  stepDef: { agent_id?: string; name?: string; prompt_template?: string }
+  input: Record<string, unknown>
+  findings: Array<{ from_step_id?: string; message_type: string; content: unknown }>
+}
+type SwarmResult = SwarmStepResult & {
+  output: Record<string, unknown>
+  cost_cents?: number
+  tokens_in?: number
+  tokens_out?: number
+}
+
+// Extend SwarmParticipant locally to include agent_type
+interface SwarmParticipantWithType extends Omit<SwarmParticipant, 'execute'> {
+  agent_type: string
+  execute(ctx: SwarmContext): Promise<SwarmResult>
+}
 import { registerParticipant } from './participant-registry'
 import { logger } from '@/lib/core/logger'
 
@@ -15,9 +36,12 @@ import { logger } from '@/lib/core/logger'
 // Generic LLM Participant — works for any agent type
 // ---------------------------------------------------------------------------
 
-function createLLMParticipant(agentType: string, systemPrompt: string): SwarmParticipant {
+function createLLMParticipant(agentType: string, systemPrompt: string): SwarmParticipantWithType {
   return {
     agent_type: agentType,
+    role: agentType as SwarmParticipantWithType['role'],
+    persona: { style: 'balanced', riskTolerance: 0.5, priorityWeight: 0.5 },
+    capabilities: { allowedToolGroups: ['core'] },
 
     async execute(ctx: SwarmContext): Promise<SwarmResult> {
       const tag = `[swarm-participant:${agentType}:${ctx.step.step_id}]`
@@ -124,9 +148,9 @@ Return your response as JSON with the following structure:
           success: true,
           output,
           messages: messages.map((m: Record<string, unknown>) => ({
-            to_step_id: (m.to_step_id as string) ?? undefined,
-            message_type: ((m.message_type as string) ?? 'finding') as SwarmMessageType,
-            content: (m.content as Record<string, unknown>) ?? m,
+            type: ((m.message_type as string) ?? 'finding') as SwarmMessageType,
+            content: typeof m.content === 'string' ? m.content : JSON.stringify(m.content ?? m),
+            data: (m.content as Record<string, unknown>) ?? undefined,
           })),
           cost_cents: costCents,
           tokens_in: tokensIn,
@@ -169,10 +193,14 @@ Always return structured JSON with research findings and recommendations.
 If you identify upsell opportunities or competitive threats, share as "finding" messages.`
 
 export function registerBuiltinParticipants(): void {
-  registerParticipant(createLLMParticipant('finance', FINANCE_SYSTEM))
-  registerParticipant(createLLMParticipant('comms', COMMS_SYSTEM))
-  registerParticipant(createLLMParticipant('sales', SALES_SYSTEM))
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  registerParticipant(createLLMParticipant('finance', FINANCE_SYSTEM) as any)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  registerParticipant(createLLMParticipant('comms', COMMS_SYSTEM) as any)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  registerParticipant(createLLMParticipant('sales', SALES_SYSTEM) as any)
 
   // Generic fallback participant for custom agent types
-  registerParticipant(createLLMParticipant('generic', `You are an agent in a multi-agent swarm within BitBit. Execute the given task and return structured JSON results.`))
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  registerParticipant(createLLMParticipant('generic', `You are an agent in a multi-agent swarm within BitBit. Execute the given task and return structured JSON results.`) as any)
 }

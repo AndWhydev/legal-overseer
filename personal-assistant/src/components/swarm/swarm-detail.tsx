@@ -242,11 +242,11 @@ export function SwarmDetail({ runId, onBack }: SwarmDetailProps) {
                     fontWeight: 500,
                     padding: '4px 8px',
                     borderRadius: '8px',
-                    background: `${AGENT_COLORS[step.agent_type] ?? '#8B5CF6'}20`,
-                    color: AGENT_COLORS[step.agent_type] ?? '#8B5CF6',
+                    background: `${AGENT_COLORS[step.agent_type ?? step.agent_role ?? 'generic'] ?? '#8B5CF6'}20`,
+                    color: AGENT_COLORS[step.agent_type ?? step.agent_role ?? 'generic'] ?? '#8B5CF6',
                     textTransform: 'uppercase',
                   }}>
-                    {step.agent_type}
+                    {step.agent_type ?? step.agent_role ?? 'agent'}
                   </span>
                 </div>
 
@@ -290,9 +290,9 @@ export function SwarmDetail({ runId, onBack }: SwarmDetailProps) {
                 whiteSpace: 'nowrap',
               }}>
                 <div>{formatDuration(step.started_at, step.completed_at)}</div>
-                {step.cost_cents > 0 && (
+                {(step.cost_cents ?? 0) > 0 && (
                   <div style={{ marginTop: '2px' }}>
-                    ${(step.cost_cents / 100).toFixed(2)}
+                    ${((step.cost_cents ?? 0) / 100).toFixed(2)}
                   </div>
                 )}
               </div>
@@ -329,7 +329,7 @@ export function SwarmDetail({ runId, onBack }: SwarmDetailProps) {
                 <div style={{ display: 'flex', gap: '8px', fontSize: '14px', marginBottom: '4px' }}>
                   <span style={{
                     fontWeight: 500,
-                    color: AGENT_COLORS[msg.from_step_id] ?? 'rgba(255,255,255,0.6)',
+                    color: AGENT_COLORS[msg.from_step_id ?? msg.from_step_key ?? ''] ?? 'rgba(255,255,255,0.6)',
                   }}>
                     {msg.from_step_id}
                   </span>

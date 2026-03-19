@@ -78,9 +78,9 @@ export async function handleRevenueIntelligence(
               collection_rate: `${overview.collection_rate_pct}%`,
             } : null,
             cash_flow: overview.cash_flow_30d ? {
-              '30d': formatCents(overview.cash_flow_30d.projected_inflow_cents),
-              '60d': overview.cash_flow_60d ? formatCents(overview.cash_flow_60d.projected_inflow_cents) : null,
-              '90d': overview.cash_flow_90d ? formatCents(overview.cash_flow_90d.projected_inflow_cents) : null,
+              '30d': formatCents(overview.cash_flow_30d.projected_inflow_cents ?? 0),
+              '60d': overview.cash_flow_60d ? formatCents(overview.cash_flow_60d.projected_inflow_cents ?? 0) : null,
+              '90d': overview.cash_flow_90d ? formatCents(overview.cash_flow_90d.projected_inflow_cents ?? 0) : null,
             } : null,
             recoverable_revenue: formatCents(overview.total_recoverable_cents),
             active_insights: overview.active_insights_count,
@@ -160,12 +160,12 @@ export async function handleRevenueIntelligence(
           success: true,
           data: {
             projections: projections.map(p => ({
-              horizon: `${p.horizon_days} days`,
-              projected_inflow: formatCents(p.projected_inflow_cents),
-              confidence_range: `${formatCents(p.confidence_low_cents)} - ${formatCents(p.confidence_high_cents)}`,
-              confidence: `${Math.round(p.confidence_pct * 100)}%`,
-              from_outstanding: formatCents(p.from_outstanding_cents),
-              from_recurring: formatCents(p.from_recurring_cents),
+              horizon: `${p.horizon_days ?? 30} days`,
+              projected_inflow: formatCents(p.projected_inflow_cents ?? 0),
+              confidence_range: `${formatCents(p.confidence_low_cents ?? 0)} - ${formatCents(p.confidence_high_cents ?? 0)}`,
+              confidence: `${Math.round((p.confidence_pct ?? 0) * 100)}%`,
+              from_outstanding: formatCents(p.from_outstanding_cents ?? 0),
+              from_recurring: formatCents(p.from_recurring_cents ?? 0),
             })),
           },
         }
@@ -301,7 +301,7 @@ function buildHealthSummary(overview: Awaited<ReturnType<typeof getRevenueHealth
   }
 
   if (overview.cash_flow_30d) {
-    parts.push(`30-day projection: ${formatCents(overview.cash_flow_30d.projected_inflow_cents)}.`)
+    parts.push(`30-day projection: ${formatCents(overview.cash_flow_30d.projected_inflow_cents ?? 0)}.`)
   }
 
   return parts.join(' ')

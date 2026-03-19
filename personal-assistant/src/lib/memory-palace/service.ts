@@ -11,18 +11,71 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { logger } from '@/lib/core/logger'
 import type {
-  MemoryType,
   DecayRate,
-  SourceType,
-  CreateMemoryInput,
-  CreateDecisionInput,
-  SearchMemoryInput,
-  SearchMemoryResult,
-  MemoryEntryRow,
-  MemoryDecisionRow,
-  MemoryStats,
   ForgetResult,
 } from './types'
+
+// Local type aliases for this service's own API shape
+type MemoryType = 'conversation' | 'decision' | 'pattern' | 'fact' | 'relationship' | 'pricing' | 'lesson_learned'
+type SourceType = 'extraction' | 'user_explicit' | 'agent_reflection'
+
+interface CreateMemoryInput {
+  memoryType: MemoryType
+  title: string
+  content: string
+  typeMetadata?: Record<string, unknown>
+  confidence?: number
+  decayRate?: DecayRate
+  sourceType?: SourceType
+  sourceThreadId?: string
+  sourceMessageIds?: string[]
+  sourceChannel?: string
+  entityIds?: string[]
+  entityNames?: string[]
+  occurredAt?: string
+}
+
+interface CreateDecisionInput {
+  decisionSummary: string
+  content: string
+  alternatives?: Array<{ option: string; pros: string[]; cons: string[] }>
+  reasoningChain?: string
+  domain?: string
+  participants?: string[]
+  entityIds?: string[]
+  entityNames?: string[]
+  sourceThreadId?: string
+  decidedAt?: string
+}
+
+interface SearchMemoryInput {
+  query: string
+  memoryType?: MemoryType
+  entityId?: string
+  minConfidence?: number
+  limit?: number
+}
+
+interface SearchMemoryResult {
+  id: string
+  memoryType: MemoryType
+  title: string
+  content: string
+  confidence: number
+  entityIds: string[]
+  entityNames: string[]
+  occurredAt: string
+  sourceType: SourceType
+  typeMetadata: Record<string, unknown>
+  rank: number
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type MemoryEntryRow = any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type MemoryDecisionRow = any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type MemoryStats = any
 
 // ─── Default decay rates by memory type ─────────────────────────────────────
 
@@ -402,22 +455,26 @@ export class MemoryPalaceService {
 
       if (error) {
         logger.error('[memory-palace] forgetEntity RPC failed', { error: error.message })
-        return { deletedMemories: 0, updatedMemories: 0, deletedDecisions: 0 }
+        return { entity_id: entityId, memories_deleted: 0, decisions_deleted: 0, patterns_deleted: 0, timeline_deleted: 0, semantic_deleted: 0, forgotten_at: new Date().toISOString() }
       }
 
       const result = data as Record<string, number>
       logger.info('[memory-palace] Entity forgotten', { entityId, result })
 
       return {
-        deletedMemories: result.deleted_memories ?? 0,
-        updatedMemories: result.updated_memories ?? 0,
-        deletedDecisions: result.deleted_decisions ?? 0,
+        entity_id: entityId,
+        memories_deleted: result.deleted_memories ?? 0,
+        decisions_deleted: result.deleted_decisions ?? 0,
+        patterns_deleted: result.deleted_patterns ?? 0,
+        timeline_deleted: result.deleted_timeline ?? 0,
+        semantic_deleted: result.deleted_semantic ?? 0,
+        forgotten_at: new Date().toISOString(),
       }
     } catch (err) {
       logger.error('[memory-palace] forgetEntity exception', {
         error: err instanceof Error ? err.message : String(err),
       })
-      return { deletedMemories: 0, updatedMemories: 0, deletedDecisions: 0 }
+      return { entity_id: entityId, memories_deleted: 0, decisions_deleted: 0, patterns_deleted: 0, timeline_deleted: 0, semantic_deleted: 0, forgotten_at: new Date().toISOString() }
     }
   }
 

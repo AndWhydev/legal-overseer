@@ -45,33 +45,41 @@ export interface ClientRevenueScore {
   org_id: string
   contact_id: string
 
-  overall_score: number
+  overall_score?: number
+  composite_score?: number
   invoice_frequency_score: number
   payment_speed_score: number
   project_value_score: number
-  consistency_score: number
+  consistency_score?: number
   trend_score: number
 
   total_revenue_cents: number
   revenue_last_90d_cents: number
-  revenue_last_30d_cents: number
+  revenue_last_30d_cents?: number
+  revenue_last_365d_cents?: number
   avg_invoice_cents: number
-  total_outstanding_cents: number
+  total_outstanding_cents?: number
 
-  avg_days_to_pay: number
-  on_time_rate_pct: number
-  invoices_total: number
-  invoices_paid: number
-  invoices_overdue: number
+  avg_days_to_pay?: number
+  avg_payment_days?: number | null
+  on_time_rate_pct?: number
+  invoices_total?: number
+  invoices_paid?: number
+  invoices_overdue?: number
+  invoice_count?: number
+  overdue_count?: number
 
-  trend_direction: TrendDirection
-  risk_level: RiskLevel
-  risk_factors: string[]
+  trend_direction?: TrendDirection
+  trend?: TrendDirection
+  risk_level?: RiskLevel
+  risk_factors?: string[]
+  monthly_growth_rate?: number | null
 
-  last_invoice_date: string | null
-  first_invoice_date: string | null
-  currency: string
-  computed_at: string
+  last_invoice_date?: string | null
+  first_invoice_date?: string | null
+  currency?: string
+  computed_at?: string
+  scored_at?: string
   created_at: string
   updated_at: string
 }
@@ -82,6 +90,7 @@ export type InsightType =
   | 'unbilled_work'
   | 'scope_creep'
   | 'overdue_invoice'
+  | 'overdue_collection'
   | 'payment_pattern'
   | 'retainer_renewal'
   | 'retainer_underuse'
@@ -89,6 +98,8 @@ export type InsightType =
   | 'revenue_decline'
   | 'collection_opportunity'
   | 'rate_optimization'
+  | 'client_churn_risk'
+  | 'cash_flow_warning'
 
 export type InsightSeverity = 'low' | 'medium' | 'high' | 'critical'
 export type InsightStatus = 'active' | 'acknowledged' | 'actioned' | 'dismissed' | 'expired'
@@ -154,30 +165,51 @@ export interface ScopeTracking {
 
 export type HorizonDays = 30 | 60 | 90
 
+export interface CashFlowBreakdown {
+  pending_invoices?: Array<{ contact_name: string; amount_cents: number; due_date: string }>
+  overdue_invoices?: Array<{ contact_name: string; amount_cents: number; days_overdue: number }>
+  projected_recurring?: Array<{ contact_name: string; amount_cents: number; basis: string }>
+}
+
 export interface CashFlowProjection {
   id: string
   org_id: string
 
   projection_date: string
-  horizon_days: HorizonDays
+  horizon_days?: HorizonDays
 
-  projected_inflow_cents: number
-  projected_outflow_cents: number
-  net_cash_flow_cents: number
+  projected_inflow_cents?: number
+  projected_outflow_cents?: number
+  net_cash_flow_cents?: number
 
-  confidence_low_cents: number
-  confidence_high_cents: number
-  confidence_pct: number
+  confidence_low_cents?: number
+  confidence_high_cents?: number
+  confidence_pct?: number
 
-  from_outstanding_cents: number
-  from_recurring_cents: number
-  from_pipeline_cents: number
+  from_outstanding_cents?: number
+  from_recurring_cents?: number
+  from_pipeline_cents?: number
 
-  sources: Record<string, unknown>
+  sources?: Record<string, unknown>
 
-  currency: string
+  // Granular 30/60/90 day projections
+  inflow_30d_cents?: number
+  inflow_60d_cents?: number
+  inflow_90d_cents?: number
+  outflow_30d_cents?: number
+  outflow_60d_cents?: number
+  outflow_90d_cents?: number
+  net_30d_cents?: number
+  net_60d_cents?: number
+  net_90d_cents?: number
+  confidence_low_30d_cents?: number
+  confidence_high_30d_cents?: number
+  breakdown?: CashFlowBreakdown
+  model_version?: string
+
+  currency?: string
   computed_at: string
-  created_at: string
+  created_at?: string
 }
 
 // ─── Scenarios ──────────────────────────────────────────────────────────────
@@ -222,34 +254,53 @@ export type ScenarioParams =
   | NewClientParams
   | CustomParams
 
+export interface ScenarioResults {
+  percentiles?: {
+    p10: number
+    p25: number
+    p50: number
+    p75: number
+    p90: number
+  }
+  [key: string]: unknown
+}
+
 export interface RevenueScenario {
   id: string
   org_id: string
 
   name: string
-  description: string | null
+  description?: string | null
   scenario_type: ScenarioType
-  parameters: ScenarioParams
+  parameters: ScenarioParams | Record<string, unknown>
 
-  baseline_revenue_cents: number
-  projected_revenue_cents: number
-  revenue_delta_cents: number
-  revenue_delta_pct: number
+  baseline_revenue_cents?: number
+  projected_revenue_cents?: number
+  revenue_delta_cents?: number
+  revenue_delta_pct?: number
 
-  simulation_runs: number
-  p10_revenue_cents: number
-  p50_revenue_cents: number
-  p90_revenue_cents: number
+  // Alternative naming used by scenario planner
+  projected_annual_cents?: number
+  current_annual_cents?: number
+  delta_cents?: number
+  probability_positive?: number
 
-  impact_summary: string | null
-  affected_clients: string[]
-  risk_factors: string[]
+  simulation_runs?: number
+  simulations?: number
+  results?: ScenarioResults
+  p10_revenue_cents?: number
+  p50_revenue_cents?: number
+  p90_revenue_cents?: number
 
-  status: ScenarioStatus
+  impact_summary?: string | null
+  affected_clients?: string[]
+  risk_factors?: string[]
+
+  status?: ScenarioStatus
   computed_at: string | null
-  created_by: string | null
+  created_by?: string | null
   created_at: string
-  updated_at: string
+  updated_at?: string
 }
 
 // ─── Retainer Agreements ────────────────────────────────────────────────────
@@ -318,6 +369,66 @@ export interface WeeklyDigest {
     trend: TrendDirection
     revenue_cents: number
   }>
+}
+
+// ─── Revenue Trend (alias for TrendDirection) ──────────────────────────────
+
+export type RevenueTrend = TrendDirection
+
+// ─── Payment Patterns ──────────────────────────────────────────────────────
+
+export interface PaymentPattern {
+  id: string
+  org_id: string
+  contact_id: string
+  avg_days_to_pay: number | null
+  median_days_to_pay: number | null
+  fastest_payment_days: number | null
+  slowest_payment_days: number | null
+  preferred_payment_method: string | null
+  on_time_rate: number | null
+  reminder_response_rate: number | null
+  optimal_reminder_day: number | null
+  total_invoices_analyzed: number
+  computed_at: string
+  updated_at: string
+}
+
+// ─── Revenue Radar ─────────────────────────────────────────────────────────
+
+export interface RevenueRadar {
+  recoverable_total_cents: number
+  insights: Array<RevenueInsight & { impact_cents?: number | null }>
+  top_clients: Array<ClientRevenueScore & { contact_name?: string }>
+  cash_flow: CashFlowProjection | null
+  scope_alerts: ScopeTracking[]
+}
+
+// ─── Revenue Digest ────────────────────────────────────────────────────────
+
+export interface DigestHighlight {
+  type: 'positive' | 'negative' | 'neutral'
+  text: string
+  impact_cents?: number
+}
+
+export interface RevenueDigest {
+  id: string
+  org_id: string
+  period_type: 'weekly' | 'monthly'
+  period_start: string
+  period_end: string
+  invoiced_cents: number
+  received_cents: number
+  overdue_cents: number
+  projected_30d_cents: number
+  invoices_sent: number
+  invoices_paid: number
+  new_clients: number
+  highlights: DigestHighlight[]
+  delivered_at: string | null
+  delivery_channel: string | null
+  created_at: string
 }
 
 // ─── Utility ────────────────────────────────────────────────────────────────
