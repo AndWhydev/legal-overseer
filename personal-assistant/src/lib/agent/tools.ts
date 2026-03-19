@@ -46,7 +46,7 @@ export const TOOL_GROUPS: Record<ToolGroup, ToolGroupMeta> = {
     id: 'core',
     label: 'Core Operations',
     description: 'Task management, contacts, activity logging, and creator tools',
-    tools: ['create_task', 'update_task', 'search_tasks', 'search_contacts', 'get_contact', 'log_activity', 'compose_creator_notification_mockup', 'generate_invoice'],
+    tools: ['create_task', 'update_task', 'search_tasks', 'search_contacts', 'get_contact', 'log_activity', 'compose_creator_notification_mockup', 'generate_invoice', 'resolve_tool'],
   },
   memory: {
     id: 'memory',
@@ -167,6 +167,8 @@ export const JIT_INSTRUCTIONS: Record<string, string> = {
   // Agentic execution
   execute_code: 'Code execution complete. Use the output and result to continue the conversation. If there was an error, fix the code and try again. Do not show raw code to the user — summarize what you found or did. Reference specific data points from the result.',
   spawn_agent: 'Sub-agent completed. Use the returned summary to inform your response. Synthesize results from all sub-agents into one coherent message for the user. Never mention sub-agents, delegation, or parallel processing — just present the combined results naturally.',
+
+  resolve_tool: 'Tool schema loaded. You can now call this tool in subsequent turns. Do not announce the tool resolution to the user — just proceed to use the tool.',
 
   // Ad Scripts
   generate_ad_scripts: 'Ad scripts generated. Present the scripts in a structured format showing each platform\'s hook, body, CTA, and duration. Highlight the hook variations for A/B testing. If storyboard data is included, present the shot-by-shot breakdown with timing. Ask if the user wants to adapt any script to a different platform.',
@@ -400,6 +402,18 @@ const toolDefinitions: Anthropic.Tool[] = [
         },
       },
       required: ['content', 'category'],
+    },
+  },
+  {
+    name: 'resolve_tool',
+    description: 'Load the full schema for a deferred tool so you can call it. Use when you need a tool from the "Additional Tools (On-Demand)" list in the system prompt. After resolving, the tool becomes available for use in subsequent turns.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        tool_name: { type: 'string', description: 'Exact name of the tool to load (from the on-demand list)' },
+        query: { type: 'string', description: 'Optional: keyword search if you are unsure of the exact name' },
+      },
+      required: [] as string[],
     },
   },
 ]
@@ -805,6 +819,27 @@ const handlers: Record<string, AgentToolHandler> = {
 
     if (error) return { success: false, error: error.message }
     return { success: true, data }
+  },
+
+  async resolve_tool(input, _orgId, _supabase) {
+    const { resolveToolSchema, searchToolSchemas } = await import('./tools/deferred-loader')
+
+    const toolName = input.tool_name as string | undefined
+    const query = input.query as string | undefined
+
+    if (toolName) {
+      const schema = resolveToolSchema(toolName)
+      if (!schema) return { success: false, error: `Tool "${toolName}" not found. Check the on-demand tools list.` }
+      return { success: true, data: { name: schema.name, description: schema.description, input_schema: schema.input_schema } }
+    }
+
+    if (query) {
+      const results = searchToolSchemas(query, 3)
+      if (results.length === 0) return { success: false, error: `No tools matching "${query}". Check the on-demand tools list.` }
+      return { success: true, data: results.map(t => ({ name: t.name, description: t.description })) }
+    }
+
+    return { success: false, error: 'Provide either tool_name or query.' }
   },
 }
 

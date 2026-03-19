@@ -14,6 +14,7 @@
 
 import Anthropic from '@anthropic-ai/sdk'
 import { getAgentTools, type ExecuteToolOptions, type ToolGroup } from '@/lib/agent/tools'
+import { getEagerTools, buildDeferredToolsPrompt, resolveToolSchema } from '@/lib/agent/tools/deferred-loader'
 import { selectRelevantTools } from '@/lib/agent/tool-rag'
 import { buildEntityAwarePrompt } from '@/lib/agent/prompt-builder'
 import { ContextAssembler } from '@/lib/context-assembly/context-assembler'
@@ -128,8 +129,11 @@ export async function* runTAORLoop(
     logger.info(`[model-router] ${selection.purpose}: ${selection.reasoning}`)
   }
 
-  // ── 4. Tool selection ──────────────────────────────────────────────
-  let tools = getAgentTools(config.toolGroups as ToolGroup[] | undefined)
+  // ── 4. Tool selection: eager tools + deferred tool names in prompt ──
+  let tools = config.toolGroups
+    ? getAgentTools(config.toolGroups as ToolGroup[])
+    : getEagerTools()
+  let deferredPromptSection = config.toolGroups ? '' : buildDeferredToolsPrompt()
   let toolNames = tools.map(t => t.name)
   const totalToolCount = tools.length
 
@@ -196,6 +200,10 @@ export async function* runTAORLoop(
 
   if (toolRagResult.toolSummary) {
     fullSystemPrompt += `\n\n## Available Tools Note\n${toolRagResult.toolSummary}\n`
+  }
+
+  if (deferredPromptSection) {
+    fullSystemPrompt += deferredPromptSection
   }
 
   // ── 6. Build initial messages array ────────────────────────────────
@@ -492,6 +500,19 @@ export async function* runTAORLoop(
       yield event
     }
     activeRole = batchResult.activeRole
+
+    // Dynamic tool loading: if resolve_tool was called, add resolved tools to the active set
+    for (const tool of toolBlocks) {
+      if (tool.name === 'resolve_tool') {
+        const toolName = (tool.input as Record<string, unknown>).tool_name as string | undefined
+        if (toolName) {
+          const resolved = resolveToolSchema(toolName)
+          if (resolved && !tools.some(t => t.name === resolved.name)) {
+            tools = [...tools, resolved]
+          }
+        }
+      }
+    }
 
     // Emit plan stage completions for matched stages
     for (let t = 0; t < toolMeta.length; t++) {
