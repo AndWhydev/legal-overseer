@@ -74,8 +74,6 @@ export async function handleSpawnAgent(
 
   try {
     // Dynamic import to avoid circular dependency (taor-loop imports tools, tools imports taor-loop)
-    // Module created in Task 3 — until then this import will fail at runtime (not at build time).
-    // @ts-expect-error — taor-loop module is created in Task 3 (TAOR loop rewrite)
     const { runTAORLoop } = await import('../engine/taor-loop')
 
     let finalMessage = ''

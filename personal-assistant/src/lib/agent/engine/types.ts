@@ -89,3 +89,20 @@ export type AgentEvent =
   | { type: 'sub_agent_start'; data: { agentId: string; parentAgentId?: string; task: string } }
   | { type: 'sub_agent_complete'; data: { agentId: string; parentAgentId?: string; result: unknown; success: boolean } }
   | { type: 'done'; data: unknown }
+
+// ---------------------------------------------------------------------------
+// Legacy types (used by orchestrator.ts and other consumers)
+// ---------------------------------------------------------------------------
+
+export interface ChatMessage {
+  role: 'user' | 'assistant'
+  content: string
+  toolCalls?: ToolCallResult[]
+}
+
+export interface ToolCallResult {
+  name: string
+  input: Record<string, unknown>
+  result: unknown
+  success: boolean
+}

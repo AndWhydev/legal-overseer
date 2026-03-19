@@ -1,17 +1,9 @@
-/**
- * Agent Engine — extracted modules.
- *
- * Re-exports shared types, pre-flight checks, and tool executor
- * so consumers can import from `@/lib/agent/engine`.
- */
+// Primary exports
+export { runTAORLoop, runTAORLoop as runAgentChat } from './taor-loop'
 
 // Types
-export type { EngineConfig, StageId, AgentEvent } from './types'
+export type { EngineConfig, AgentEvent, StageId, ChatMessage, ToolCallResult } from './types'
 
-// Pre-flight
-export { preFlightChecks } from './pre-flight'
-export type { PreFlightResult } from './pre-flight'
-
-// Tool executor
-export { executeToolBatch, TOOL_ROLE_MAP, MAX_TOOL_RESULT_CHARS } from './tool-executor'
-export type { ToolExecutionResult } from './tool-executor'
+// Sub-modules (for direct import when needed)
+export { preFlightChecks, type PreFlightResult } from './pre-flight'
+export { executeToolBatch, TOOL_ROLE_MAP, MAX_TOOL_RESULT_CHARS, type ToolExecutionResult } from './tool-executor'
