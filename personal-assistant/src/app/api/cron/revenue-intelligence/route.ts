@@ -8,8 +8,8 @@ import { runRetainerMonitoring } from '@/lib/revenue/retainer-monitor'
 import { runWeeklyDigest } from '@/lib/revenue/weekly-digest'
 import { logger } from '@/lib/core/logger'
 
-export const maxDuration = cronMaxDuration
-export const dynamic = cronDynamic
+export const maxDuration = 300
+export const dynamic = 'force-dynamic'
 
 /**
  * GET /api/cron/revenue-intelligence

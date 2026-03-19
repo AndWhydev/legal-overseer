@@ -1,9 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 
-export default function PortalLoginPage() {
+function PortalLoginContent() {
   const searchParams = useSearchParams()
   const next = searchParams.get('next') ?? '/portal'
   const [email, setEmail] = useState('')
@@ -178,5 +178,13 @@ export default function PortalLoginPage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function PortalLoginPage() {
+  return (
+    <Suspense fallback={<div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Loading...</div>}>
+      <PortalLoginContent />
+    </Suspense>
   )
 }
