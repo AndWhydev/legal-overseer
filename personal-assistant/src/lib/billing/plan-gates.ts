@@ -12,6 +12,8 @@ export interface PlanFeatures {
   maxLeads: number
   maxInvoicesPerMonth: number
   agents: string[]
+  growthRoles: string[]
+  fileAttachments: boolean
   whatsapp: boolean
   proposals: boolean
   multiUser: boolean
@@ -28,6 +30,8 @@ export const PLAN_FEATURES: Record<PlanName, PlanFeatures> = {
     maxLeads: 50,
     maxInvoicesPerMonth: 5,
     agents: ['sentry'],
+    growthRoles: [],
+    fileAttachments: false,
     whatsapp: false,
     proposals: false,
     multiUser: false,
@@ -37,6 +41,8 @@ export const PLAN_FEATURES: Record<PlanName, PlanFeatures> = {
     maxLeads: 500,
     maxInvoicesPerMonth: 50,
     agents: ['sentry', 'lead-swarm', 'invoice-flow'],
+    growthRoles: [],
+    fileAttachments: true,
     whatsapp: true,
     proposals: false,
     multiUser: false,
@@ -53,6 +59,8 @@ export const PLAN_FEATURES: Record<PlanName, PlanFeatures> = {
       'client-comms',
       'proposal-bot',
     ],
+    growthRoles: ['seo', 'content', 'ad-script'],
+    fileAttachments: true,
     whatsapp: true,
     proposals: true,
     multiUser: true,
@@ -63,6 +71,8 @@ export const PLAN_FEATURES: Record<PlanName, PlanFeatures> = {
     maxLeads: 99999,
     maxInvoicesPerMonth: 9999,
     agents: ['all'],
+    growthRoles: ['all'],
+    fileAttachments: true,
     whatsapp: true,
     proposals: true,
     multiUser: true,
@@ -118,6 +128,57 @@ export function isFeatureEnabled(
 }
 
 // ---------------------------------------------------------------------------
+// Growth tool plan requirements
+// ---------------------------------------------------------------------------
+
+/** Ordered list of plan tiers from lowest to highest. */
+const PLAN_ORDER: PlanName[] = ['free', 'starter', 'growth', 'scale']
+
+/**
+ * Map each growth tool name to its minimum required plan.
+ * Tools not in this map are available to all plans.
+ */
+export const TOOL_PLAN_REQUIREMENTS: Record<string, PlanName> = {
+  // SEO tools (growth+)
+  audit_visibility: 'growth',
+  generate_seo_content: 'growth',
+  generate_schema_markup: 'growth',
+  visibility_report: 'growth',
+  // Ad script tools (growth+)
+  generate_ad_scripts: 'growth',
+  list_ad_batches: 'growth',
+  adapt_script: 'growth',
+  // Content tools (growth+)
+  schedule_post: 'growth',
+  generate_blog: 'growth',
+  content_calendar: 'growth',
+  // Tender tools (scale only)
+  search_tenders: 'scale',
+  score_tender: 'scale',
+  generate_tender_response: 'scale',
+}
+
+/**
+ * Check if a tool is allowed for the given plan.
+ * Tools not in TOOL_PLAN_REQUIREMENTS are allowed for all plans.
+ */
+export function checkToolPlanGate(
+  orgPlan: PlanName,
+  toolName: string,
+): { allowed: boolean; requiredPlan?: PlanName } {
+  const requiredPlan = TOOL_PLAN_REQUIREMENTS[toolName]
+  if (!requiredPlan) {
+    return { allowed: true }
+  }
+
+  if (PLAN_ORDER.indexOf(orgPlan) >= PLAN_ORDER.indexOf(requiredPlan)) {
+    return { allowed: true }
+  }
+
+  return { allowed: false, requiredPlan }
+}
+
+// ---------------------------------------------------------------------------
 // Plan gate enforcement
 // ---------------------------------------------------------------------------
 
@@ -128,6 +189,7 @@ export type GateAction =
   | 'whatsapp'
   | 'proposals'
   | 'multi_user'
+  | 'growth_tool'
 
 /**
  * Check if an organization can perform a gated action.
@@ -185,18 +247,16 @@ export async function checkPlanGate(
 
       const limit = storageLimits[plan]
 
-      // Query current storage usage (simplified: count attachments)
-      const { data: files, error } = await client
-        .from('attachments')
-        .select('size:sum')
-        .eq('org_id', orgId)
+      // Query current storage usage via RPC (replaces broken .select('size:sum'))
+      const { data: totalBytes, error } = await client
+        .rpc('get_org_storage_bytes', { p_org_id: orgId })
 
       if (error) {
         logger.warn('[plan-gates] Failed to check storage:', error.message)
         return true // Allow on error
       }
 
-      const currentUsageMB = ((files?.[0]?.size as number) ?? 0) / (1024 * 1024)
+      const currentUsageMB = ((totalBytes as number) ?? 0) / (1024 * 1024)
       return currentUsageMB < limit
     }
 

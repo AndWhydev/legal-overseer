@@ -41,6 +41,8 @@ interface PipelineConfig {
   threadId?: string
   /** Engine overrides */
   engineOverrides?: Partial<EngineConfig>
+  /** Multimodal content blocks from file attachments (images, PDFs, documents) */
+  contentBlocks?: Anthropic.ContentBlockParam[]
 }
 
 /**
@@ -230,6 +232,8 @@ export class UnifiedConversationPipeline {
       // User identity for system prompt anchoring
       userEmail: identity.email,
       userDisplayName: identity.displayName,
+      // Multimodal content blocks from file attachments
+      contentBlocks: config.contentBlocks,
       ...config.engineOverrides,
     }
 

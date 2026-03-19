@@ -8,7 +8,7 @@ import { selectModel } from './model-router'
 import { resolveModel, resolveTokenLimit } from './model-registry'
 import type { ModelPurpose } from './model-registry'
 import { logAgentRun, estimateRunCost } from './run-logger'
-import { canProceed } from './cost-guard'
+import { canProceed, checkRoleBudget, getExecutionTokenCap } from './cost-guard'
 import { generatePlan, stageFromToolName, isTrivialMessage, type PlanStage, type PlanOutput } from './planner'
 import { withCircuitBreaker, CircuitOpenError } from './circuit-breaker'
 import { writeToDeadLetterQueue } from './dlq'
@@ -16,6 +16,31 @@ import { reflectAction } from '@/lib/context/action-reflector'
 import { detectLeak, scrubLeaks } from './response-guard'
 import { logger } from '@/lib/core/logger'
 import { extractCitationsFromToolResult, extractCitationsFromText, detectTopicShift, type Citation } from './citation-extractor'
+
+// ---------------------------------------------------------------------------
+// Tool → Growth Role mapping (for per-role budget enforcement)
+// ---------------------------------------------------------------------------
+
+/** Maps growth tool names to their budget role. Tools not here are unbounded. */
+const TOOL_ROLE_MAP: Record<string, string> = {
+  // Ads
+  generate_ad_scripts: 'ads',
+  list_ad_batches: 'ads',
+  adapt_script: 'ads',
+  // SEO
+  audit_visibility: 'seo',
+  generate_seo_content: 'seo',
+  generate_schema_markup: 'seo',
+  visibility_report: 'seo',
+  // Content
+  schedule_post: 'content',
+  generate_blog: 'content',
+  content_calendar: 'content',
+  // Tenders
+  search_tenders: 'tenders',
+  score_tender: 'tenders',
+  generate_tender_response: 'tenders',
+}
 
 export interface ChatMessage {
   role: 'user' | 'assistant'
@@ -55,6 +80,9 @@ export interface EngineConfig {
   userEmail?: string
   /** User's display name for identity anchoring in the system prompt. */
   userDisplayName?: string
+  /** Multimodal content blocks from file attachments (images, PDFs, documents).
+   *  When present, the user message is sent as ContentBlockParam[] instead of string. */
+  contentBlocks?: Anthropic.ContentBlockParam[]
 }
 
 export type StageId = 'cost_check' | 'model_routing' | 'context_assembly' | 'api_streaming' | 'tool_execution'
@@ -82,6 +110,9 @@ export type AgentEvent =
   | { type: 'message'; data: string }
   | { type: 'error'; data: string }
   | { type: 'cost_blocked'; data: { spentToday: number; dailyLimit: number } }
+  | { type: 'budget_blocked'; data: { role: string; dailyUsed: number; dailyLimit: number } }
+  | { type: 'budget_warning'; data: { role: string; dailyUsed: number; dailyLimit: number; remainingTokens: number } }
+  | { type: 'execution_cap_hit'; data: { role: string; tokensUsed: number; cap: number } }
   | { type: 'citation'; data: { citations: Array<{ index: number; url: string; title: string; description?: string }> } }
   | { type: 'checkpoint'; data: { message_index: number; label: string } }
   | { type: 'done'; data: unknown }
@@ -264,6 +295,8 @@ export async function* runAgentChat(
   let finalMessage = ''
   const userMessages: string[] = []
   let lastCheckpointAtMessageCount = 0
+  let executionTokens = 0 // cumulative tokens for per-execution cap enforcement
+  let activeRole: string | undefined // tracked role for this execution (first growth tool seen)
 
   // Cost guard: check daily budget before running (background agents)
   if (!config.skipCostGuard) {
@@ -463,10 +496,33 @@ export async function* runAgentChat(
     fullSystemPrompt += `\n\n## Available Tools Note\n${toolRagResult.toolSummary}\n`
   }
 
-  // When ContextAssembler was used, history already includes the current message
-  let messages: Anthropic.MessageParam[] = config.threadId
-    ? [...(config.history || [])]
-    : [...(config.history || []), { role: 'user', content: message }]
+  // Build the user message content: multimodal (text + attachments) or plain string.
+  // When contentBlocks are present, construct a ContentBlockParam[] with the text
+  // message first, followed by attachment blocks (images, documents, etc.).
+  const userMessageContent: string | Anthropic.ContentBlockParam[] = config.contentBlocks?.length
+    ? [
+        { type: 'text' as const, text: message },
+        ...config.contentBlocks,
+      ]
+    : message
+
+  // When ContextAssembler was used, history already includes the current message.
+  // For multimodal messages with ContextAssembler, we need to replace the last
+  // user message (which was added as plain text) with the multimodal version.
+  let messages: Anthropic.MessageParam[]
+  if (config.threadId) {
+    const historyMessages = [...(config.history || [])]
+    // If we have content blocks, upgrade the last user message to multimodal
+    if (config.contentBlocks?.length && historyMessages.length > 0) {
+      const lastIdx = historyMessages.length - 1
+      if (historyMessages[lastIdx].role === 'user') {
+        historyMessages[lastIdx] = { role: 'user', content: userMessageContent }
+      }
+    }
+    messages = historyMessages
+  } else {
+    messages = [...(config.history || []), { role: 'user', content: userMessageContent }]
+  }
 
   // Track initial message count for observation masking and checkpoints
   const initialMsgCount = messages.length
@@ -654,8 +710,11 @@ export async function* runAgentChat(
     }
 
     // Track token usage
-    totalInputTokens += response.usage?.input_tokens || 0
-    totalOutputTokens += response.usage?.output_tokens || 0
+    const iterInputTokens = response.usage?.input_tokens || 0
+    const iterOutputTokens = response.usage?.output_tokens || 0
+    totalInputTokens += iterInputTokens
+    totalOutputTokens += iterOutputTokens
+    executionTokens += iterInputTokens + iterOutputTokens
 
     if (response.stop_reason !== 'tool_use') {
       const text = response.content
@@ -746,17 +805,62 @@ export async function* runAgentChat(
       }
     }
 
-    // Execute all tools in parallel
+    // ── Per-role budget check: block growth tools whose daily budget is exhausted ──
+    // Check budgets for any growth tools in this batch. Collect per-tool overrides.
+    const toolBudgetOverrides = new Map<string, { blocked: boolean; warning: boolean; role: string; result: import('./cost-guard').RoleBudgetResult }>()
+    for (const { tool } of toolMeta) {
+      const role = TOOL_ROLE_MAP[tool.name]
+      if (!role || config.skipCostGuard) continue
+
+      // Track the active role for execution cap enforcement
+      if (!activeRole) activeRole = role
+
+      const budget = await checkRoleBudget(config.supabase, config.orgId, role)
+      if (!budget.allowed) {
+        toolBudgetOverrides.set(tool.id, { blocked: true, warning: false, role, result: budget })
+        yield { type: 'budget_blocked', data: { role, dailyUsed: budget.dailyUsed, dailyLimit: budget.dailyLimit } }
+      } else if (budget.warning) {
+        toolBudgetOverrides.set(tool.id, { blocked: false, warning: true, role, result: budget })
+        yield { type: 'budget_warning', data: { role, dailyUsed: budget.dailyUsed, dailyLimit: budget.dailyLimit, remainingTokens: budget.remainingTokens } }
+      }
+    }
+
+    // ── Per-execution token cap: check if cumulative tokens exceed role cap ──
+    let executionCapHit = false
+    if (activeRole && !config.skipCostGuard) {
+      const cap = getExecutionTokenCap(activeRole)
+      if (cap && executionTokens > cap) {
+        yield { type: 'execution_cap_hit', data: { role: activeRole, tokensUsed: executionTokens, cap } }
+        executionCapHit = true
+      }
+    }
+
+    // Execute all tools in parallel (budget-blocked tools return error immediately)
     const toolExecutions = await Promise.allSettled(
-      toolMeta.map(({ tool }) =>
-        executeAgentTool(
+      toolMeta.map(({ tool }) => {
+        const override = toolBudgetOverrides.get(tool.id)
+        if (override?.blocked) {
+          // Return a synthetic budget-blocked result without calling the handler
+          return Promise.resolve({
+            success: false,
+            error: override.result.reason || `Daily token budget for ${override.role} exhausted`,
+          } as import('./tools').ToolResult)
+        }
+        if (executionCapHit) {
+          // Execution token cap hit — skip remaining tool calls
+          return Promise.resolve({
+            success: false,
+            error: `Per-execution token cap reached for ${activeRole}. Provide your best answer with current information.`,
+          } as import('./tools').ToolResult)
+        }
+        return executeAgentTool(
           tool.name,
           tool.input as Record<string, unknown>,
           config.orgId,
           config.supabase,
           execOptions
         )
-      )
+      })
     )
 
     // Process results in order, emit events, build toolResults array
@@ -903,6 +1007,17 @@ export async function* runAgentChat(
       { role: 'assistant', content: response.content },
       { role: 'user', content: toolResults },
     ]
+
+    // ── Execution cap convergence: force synthesis when token cap exceeded ──
+    if (executionCapHit) {
+      messages = [
+        ...messages,
+        {
+          role: 'user' as const,
+          content: '[SYSTEM: Token budget for this execution reached. Provide your best answer with current information. Do NOT call any more tools.]',
+        },
+      ]
+    }
 
     // ── Progress evaluation ───────────────────────────────────────────
     // After 8+ tool calls, nudge the model to consider synthesizing.

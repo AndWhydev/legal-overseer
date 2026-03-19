@@ -4,8 +4,8 @@
 
 - v1.0 MVP -- Phases 1-6 (shipped 2026-02-21)
 - v1.1 Agent Runtime + First Agents -- Phases 7-12 (shipped 2026-02-22)
-- v1.2 Battle-Testing & Sellability -- Phases 13-19 (shipped 2026-03-14)
-- v1.3 Agent Roles & Autonomy Engine -- Phases 20-25 (in progress)
+- v1.2 Battle-Testing & Sellability -- Phases 13-19 (shipped 2026-03-02)
+- v1.4 Media, Billing & Growth Roles -- Phases 20-24 (in progress)
 
 ## Phases
 
@@ -100,6 +100,9 @@ Plans:
 - [x] 12-01 through 12-03 -- NL resolution, PDF/send, APIs/dashboard
 
 </details>
+
+<details>
+<summary>v1.2 Battle-Testing & Sellability (Phases 13-19) -- SHIPPED 2026-03-02</summary>
 
 ### Phase 13: Deployment Stability
 **Goal**: Platform runs reliably in production with all infrastructure components operational
@@ -225,103 +228,129 @@ Plans:
 - [x] 19-02-PLAN.md -- OAuth credential verification script + channel smoke test script
 - [x] 19-03-PLAN.md -- Credential provisioning checkpoints + live channel verification
 
-### Phase 20: Role Engine Foundation
-**Goal**: The infrastructure that makes autonomous roles possible — role definitions, persistent state, autonomy gating, workflow execution, cost guards, concurrency control, and audit logging
+</details>
+
+### v1.4 Media, Billing & Growth Roles
+
+**Milestone Goal:** Close the media gap (file attachments in chat), add Stripe billing infrastructure for public launch readiness, and ship Growth Roles that extend the agent engine into marketing/content/sales domains.
+
+- [x] **Phase 20: File Attachments & Multimedia** - Users can upload, preview, and have BitBit analyse files in chat (completed 2026-03-18)
+- [x] **Phase 21: Billing Infrastructure** - Stripe subscription lifecycle, plan gating, usage metering, and pricing page (completed 2026-03-18)
+- [x] **Phase 22: Cost Controls & Ad Script Generator** - Per-execution budgets protect against token spirals; first growth role proves the pattern (completed 2026-03-18)
+- [x] **Phase 23: SEO Monitor & Tender Hunter** - Wrap existing 700+ LOC implementations as plan-gated agent tools with scheduled ticks (completed 2026-03-18)
+- [x] **Phase 24: Content Creator** - Social media post drafting and blog generation via chat with platform-specific formatting (completed 2026-03-18)
+
+## Phase Details
+
+### Phase 20: File Attachments & Multimedia
+**Goal**: Users can share files with BitBit in chat and receive intelligent analysis -- images render inline, PDFs show thumbnails, and BitBit reads/understands all uploaded content
 **Depends on**: Phase 19 (v1.2 complete)
-**Requirements**: ROLE-01, ROLE-02, ROLE-03, ROLE-04, ROLE-05, ROLE-06, ROLE-07, AUTO-01, AUTO-02, AUTO-03, AUTO-04, AUTO-05, AUTO-06
+**Requirements**: MEDIA-01, MEDIA-02, MEDIA-03, MEDIA-04, MEDIA-05, MEDIA-06, MEDIA-07, MEDIA-08, MEDIA-09, MEDIA-10, MEDIA-11
 **Success Criteria** (what must be TRUE):
-  1. Roles can be defined, enabled/disabled, and configured with autonomy levels in `role_configs`
-  2. Role state persists across ticks/restarts via `role_states` JSONB
-  3. Roles activate from both scheduled ticks and database events (new message, invoice paid, etc.)
-  4. Concurrent activation of the same role is serialized (advisory locks prevent double-execution)
-  5. Multi-step workflows checkpoint progress in `role_workflows` and resume after interruption
-  6. Per-role daily budget caps prevent cost explosion; Haiku pre-screens before Sonnet/Opus calls
-  7. Every role action writes to `role_activity` with reasoning chain, confidence, autonomy mode, reversibility
-  8. Autonomy gate correctly routes: Observer → insight only, Co-pilot → approval queue, Autopilot → execute or queue based on confidence
-**Plans**: 4 plans
-- [x] 20-01-PLAN.md -- Role schema & type system (5 tables, RLS, 9 TS types)
-- [x] 20-02-PLAN.md -- Role runtime: state, ticks, events, concurrency
-- [ ] 20-03-PLAN.md
-- [ ] 20-04-PLAN.md
+  1. User can click the Paperclip button or drag-and-drop a file onto chat and see it upload with a progress indicator
+  2. Uploaded images render as inline previews in the chat message; PDFs show a file icon with filename, size, and download link
+  3. User can say "summarize this document" after uploading a PDF and BitBit returns an accurate summary
+  4. Uploading a 15MB file or an .exe is rejected with a clear error message explaining the limit
+  5. Files are isolated per org -- one org cannot access another org's uploads
+**Plans**: 3 plans (2 waves)
 
-### Phase 21: Finance Role
-**Goal**: Finance role owns all money operations — subsumes invoice agent, adds proactive invoicing, collections, cash flow monitoring, payment pattern learning, and weekly financial digest
+Plans:
+- [ ] 20-01-PLAN.md -- Storage infrastructure (attachments table, Supabase Storage bucket, RLS policies, signed upload URL API, plan-gates fix)
+- [ ] 20-02-PLAN.md -- Chat integration (Paperclip button, drag-and-drop, upload progress, multimodal content blocks to engine)
+- [ ] 20-03-PLAN.md -- Preview rendering and visual verification (inline image/PDF previews, chat message integration, end-to-end checkpoint)
+
+### Phase 21: Billing Infrastructure
+**Goal**: BitBit has a working Stripe subscription system -- users can subscribe, manage plans, and growth tools are gated by plan tier
 **Depends on**: Phase 20
-**Requirements**: FIN-01, FIN-02, FIN-03, FIN-04, FIN-05, FIN-06
+**Requirements**: BILL-01, BILL-02, BILL-03, BILL-04, BILL-05, BILL-06, BILL-07, BILL-08, BILL-09, BILL-10
 **Success Criteria** (what must be TRUE):
-  1. All existing invoice agent capabilities work through Finance role (NL commands, PDF, email, lifecycle)
-  2. Finance proactively identifies billable work and generates draft invoices without being asked
-  3. Overdue invoices trigger escalating reminder sequence (gentle → firm → escalation)
-  4. Cash flow tracking shows incoming/outgoing/pending with shortfall alerts
-  5. Per-client payment patterns are learned and stored (avg days, preferred method)
-  6. Weekly financial digest is generated and delivered (invoiced, received, overdue, projected)
-**Plans**: 3 plans
+  1. Stripe webhook handler processes all subscription lifecycle events (create, update, cancel, trial_will_end, payment_failed) idempotently through a single consolidated route
+  2. User can select a plan on the pricing page, complete Stripe Checkout, and see their plan reflected in the dashboard within 10 seconds
+  3. Growth tools return an upgrade prompt when invoked by a user on a plan that doesn't include them
+  4. Usage dashboard shows token consumption, agent runs, and storage usage for the current billing period
+  5. Trial users receive email notification 3 days before trial expires, and expired trials downgrade gracefully
+**Plans**: 3 plans (2 waves)
 
-### Phase 22: Comms Role
-**Goal**: Comms role owns all communication — subsumes channel triage, adds response drafting, follow-up tracking, relationship monitoring, tone adaptation, and overdue escalation
-**Depends on**: Phase 20
-**Requirements**: COMM-01, COMM-02, COMM-03, COMM-04, COMM-05, COMM-06
-**Success Criteria** (what must be TRUE):
-  1. All existing channel triage capabilities work through Comms role (classification, routing)
-  2. Comms drafts contextual replies using conversation history and entity context
-  3. Unanswered threads older than configurable threshold are surfaced with urgency scoring
-  4. Per-client communication frequency is monitored; engagement drops flagged
-  5. Tone/style adapts per client based on historical communication patterns
-  6. Threads exceeding SLA threshold auto-escalate with pre-drafted response
-**Plans**: 3 plans
+Plans:
+- [x] 21-01-PLAN.md -- Webhook consolidation, Stripe SDK, pre-created prices, subscription lifecycle handler
+- [x] 21-02-PLAN.md -- Plan gating at tool execution, usage metering wiring, trial 14->30 day fix
+- [ ] 21-03-PLAN.md -- Pricing page, billing settings, Customer Portal, trial expiry emails, dunning tests
 
-### Phase 23: Sales Role
-**Goal**: Sales role owns revenue growth — subsumes lead swarm, adds proposal generation from briefs, lead nurture sequences, client onboarding automation, win/loss learning, and pipeline visibility
-**Depends on**: Phase 20
-**Requirements**: SALE-01, SALE-02, SALE-03, SALE-04, SALE-05, SALE-06
+### Phase 22: Cost Controls & Ad Script Generator
+**Goal**: Per-execution token budgets prevent runaway costs, and the Ad Script Generator validates the growth role tool pattern end-to-end
+**Depends on**: Phase 21
+**Requirements**: COST-01, COST-02, COST-03, ADS-01, ADS-02, ADS-03, ADS-04
 **Success Criteria** (what must be TRUE):
-  1. All existing lead swarm capabilities work through Sales role (intake, classification, qualification)
-  2. Sales generates branded proposals from verbal briefs using past project data for pricing
-  3. Stale proposals and cold leads receive automated follow-up on configurable cadence
-  4. Lead conversion triggers automated onboarding (project creation, welcome email, task setup)
-  5. Proposal outcomes tracked; pricing and approach adapt based on win/loss patterns
-  6. Pipeline view shows leads → proposals → active → closed with conversion metrics
-**Plans**: 3 plans
+  1. A growth role execution that exceeds its token budget cap is halted mid-execution with a clear message to the user
+  2. When a role's daily budget is 80% consumed, the user sees a warning; at 100%, further executions are blocked until the next day
+  3. User can request ad scripts via chat and receive structured output with hook variations, body, CTA, and platform-specific timing guidance
+  4. Ad Script Generator is plan-gated -- free/starter users get an upgrade prompt, growth/scale users get results
+**Plans**: 2 plans (2 waves)
 
-### Phase 24: Intelligence Layer
-**Goal**: Business intelligence that sees what the user misses — Revenue Radar identifies upsell opportunities, Client Health scores relationships, Cash Flow Prophet projects finances, Capacity Oracle manages workload
-**Depends on**: Phase 21, Phase 22, Phase 23 (needs role data)
-**Requirements**: INTEL-01, INTEL-02, INTEL-03, INTEL-04, INTEL-05
-**Success Criteria** (what must be TRUE):
-  1. Revenue Radar identifies upsell opportunities from client history and flags stale clients
-  2. Client Health Score (0-100) computed from response times, payments, project progress, communication
-  3. Cash Flow Prophet projects forward from invoices, proposals, and recurring patterns with shortfall alerts
-  4. Capacity Oracle models workload from active projects/tasks and warns on overcommitment
-  5. Each metric shows "gathering data" below minimum data thresholds instead of unreliable predictions
-**Plans**: 3 plans
+Plans:
+- [ ] 22-01-PLAN.md -- Cost control infrastructure (per-execution token cap, per-role daily budget, budget alerts, engine enforcement)
+- [ ] 22-02-PLAN.md -- Ad Script Generator tool group (wrap ad-script-gen.ts as agent tools, register in tool system, autonomy mapping)
 
-### Phase 25: Role Dashboard & Integration Polish
-**Goal**: Unified dashboard experience for all roles — activity feed, status cards, autonomy controls, attention view, and end-to-end integration testing across all roles
-**Depends on**: Phase 24
-**Requirements**: DASH-01, DASH-02, DASH-03, DASH-04, DASH-05
+### Phase 23: SEO Monitor & Tender Hunter
+**Goal**: Users can monitor SEO rankings and discover government tenders via chat commands and scheduled monitoring ticks
+**Depends on**: Phase 22
+**Requirements**: SEO-01, SEO-02, SEO-03, SEO-04, SEO-05, TNDR-01, TNDR-02, TNDR-03, TNDR-04, TNDR-05
 **Success Criteria** (what must be TRUE):
-  1. All role activity appears in single priority-sorted feed (not per-role silos)
-  2. Each role has status card showing state, active workflows, key metrics, and autonomy level
-  3. Autonomy level (Observer/Co-pilot/Autopilot) toggleable per role directly from dashboard
-  4. "What needs my attention" view shows all items requiring human input across all roles
-  5. Drill-down into any role shows full activity history with reasoning chains and outcomes
-**Plans**: 3 plans
+  1. User can say "check my keyword rankings" and receive a structured SEO visibility report
+  2. SEO monitor runs on a scheduled tick and alerts the user when rankings drop with diagnosis and suggested fixes
+  3. User can say "find web design tenders in Brisbane" and receive matching government tender results with qualification scores
+  4. Tender Hunter runs on a scheduled tick and notifies the user of new matching opportunities
+  5. SEO tools are gated to growth/scale plans; Tender tools are gated to scale plan only
+**Plans**: 2 plans (2 waves)
+
+Plans:
+- [x] 23-01-PLAN.md -- SEO Monitor tool group (wrap ai-search-optimizer.ts as 4 agent tools, register 'seo' tool group, autonomy mapping, JIT instructions)
+- [x] 23-02-PLAN.md -- Tender Hunter tool group (wrap tender-hunter.ts as 3 agent tools, register 'tenders' tool group, autonomy mapping, JIT instructions)
+
+### Phase 24: Content Creator
+**Goal**: Users can generate social media posts and blog drafts via chat with platform-specific formatting and brand voice
+**Depends on**: Phase 22
+**Requirements**: CONT-01, CONT-02, CONT-03, CONT-04
+**Success Criteria** (what must be TRUE):
+  1. User can say "write a LinkedIn post about our new project" and receive a post formatted for LinkedIn's conventions
+  2. User can request blog post drafts with SEO keywords and brand voice applied
+  3. Content tools produce platform-specific output for LinkedIn, Instagram, and X (different formatting, hashtag usage, character limits)
+  4. Content tools are plan-gated to growth/scale tiers only
+**Plans**: 1 plan
+
+Plans:
+- [x] 24-01-PLAN.md -- Content Creator tool group (tool definitions, blog generation handler, social post handler, autonomy mapping, JIT instructions)
 
 ## Progress
 
 **Execution Order:**
-Phase 20 first (foundation), then 21/22/23 can partially parallel (all depend on 20), then 24 (needs role data from 21-23), then 25 (dashboard, needs everything).
+Phase 20 first (no dependencies), then 21 (billing before growth roles), then 22 (cost controls + first growth role), then 23 and 24 can run in parallel (both depend on 22).
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 1-6 | v1.0 | 19/19 | Complete | 2026-02-21 |
-| 7-12 | v1.1 | 16/16 | Complete | 2026-02-22 |
-| 13-19 | v1.2 | 24/24 | Complete | 2026-03-14 |
-| 20. Role Engine Foundation | v1.3 | 2/4 | In Progress | — |
-| 21. Finance Role | v1.3 | 3/3 | Complete | 2026-03-18 |
-| 22. Comms Role | v1.3 | 0/3 | Pending | — |
-| 23. Sales Role | v1.3 | 0/3 | Pending | — |
-| 24. Intelligence Layer | v1.3 | 3/3 | Complete | 2026-03-18 |
-| 25. Role Dashboard & Integration Polish | v1.3 | 0/3 | Pending | — |
+| 1. Platform Deploy | v1.0 | 4/4 | Complete | 2026-02-21 |
+| 2. Schema Expansion | v1.0 | 4/4 | Complete | 2026-02-21 |
+| 3. Semantic Context Engine | v1.0 | 3/3 | Complete | 2026-02-21 |
+| 4. Agent Infrastructure | v1.0 | 4/4 | Complete | 2026-02-21 |
+| 5. Wire Integration Points | v1.0 | 2/2 | Complete | 2026-02-21 |
+| 6. Verification Artifacts | v1.0 | 2/2 | Complete | 2026-02-21 |
+| 7. Infrastructure Foundation | v1.1 | 2/2 | Complete | 2026-02-22 |
+| 8. Agent Runtime | v1.1 | 3/3 | Complete | 2026-02-22 |
+| 9. Approval Flow | v1.1 | 3/3 | Complete | 2026-02-22 |
+| 10. Sentry Agent | v1.1 | 4/4 | Complete | 2026-02-22 |
+| 11. Lead Swarm Agent | v1.1 | 4/4 | Complete | 2026-02-22 |
+| 12. Invoice Flow Agent | v1.1 | 3/3 | Complete | 2026-02-22 |
+| 13. Deployment Stability | v1.2 | 4/4 | Complete | 2026-03-01 |
+| 14. Channel Relay & OAuth | v1.2 | 5/5 | Complete | 2026-03-02 |
+| 15. WhatsApp Pipeline | v1.2 | 2/2 | Complete | 2026-03-02 |
+| 16. Confidence Routing Validation | v1.2 | 2/2 | Complete | 2026-03-02 |
+| 17. Invoice & Lead Validation | v1.2 | 3/3 | Complete | 2026-03-02 |
+| 18. Integration Fixes & Tech Debt | v1.2 | 3/3 | Complete | 2026-03-02 |
+| 19. Credential Provisioning & Live Verification | v1.2 | 3/3 | Complete | 2026-03-02 |
+| 20. File Attachments & Multimedia | 3/3 | Complete    | 2026-03-18 | - |
+| 21. Billing Infrastructure | 3/3 | Complete    | 2026-03-18 | - |
+| 22. Cost Controls & Ad Script Generator | 2/2 | Complete    | 2026-03-18 | - |
+| 23. SEO Monitor & Tender Hunter | v1.4 | Complete    | 2026-03-18 | 2026-03-18 |
+| 24. Content Creator | v1.4 | Complete    | 2026-03-18 | 2026-03-18 |
 
-**Overall:** 59/59 plans complete for v1.0-v1.2 (100%). v1.3: 5/19 plans (Phase 21 complete, Phase 22 next).
+**Overall:** 57/57 plans complete for v1.0+v1.1+v1.2 (100%). v1.4: 11/11 plans (Phases 20-24) -- MILESTONE COMPLETE.

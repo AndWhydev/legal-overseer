@@ -4,9 +4,10 @@ import { channelToolDefinitions, channelToolHandlers } from './tools/channel-too
 import { superpowerToolDefinitions, superpowerToolHandlers } from './tools/superpower-tools'
 import { codeExecutionToolDefinitions, codeExecutionToolHandlers } from './tools/code-execution'
 import { invoiceToolDefinition, handleGenerateInvoice } from './tools/invoice-tool'
-import { meetingToolDefinitions, meetingToolHandlers } from './tools/meeting-tools'
-import { revenueToolDefinition, handleRevenueIntelligence } from './tools/revenue-tool'
-import { swarmToolDefinition, handleTriggerSwarm } from './tools/swarm-tool'
+import { adToolDefinitions, adToolHandlers } from './tools/ad-tools'
+import { seoToolDefinitions, seoToolHandlers } from './tools/seo-tools'
+import { tenderToolDefinitions, tenderToolHandlers } from './tools/tender-tools'
+import { contentToolDefinitions, contentToolHandlers } from './tools/content-tools'
 import { composeCreatorStudioDeck } from '@/lib/creator-studio'
 import { routeAgentAction } from './confidence-router'
 import { queueAgentAction, getPendingApprovals, resolveApproval } from './approval-queue'
@@ -24,12 +25,13 @@ import {
   logActivity,
 } from './shared-tools'
 import { logger } from '@/lib/core/logger'
+import { getOrgPlan, checkToolPlanGate, TOOL_PLAN_REQUIREMENTS } from '@/lib/billing/plan-gates'
 
 // ---------------------------------------------------------------------------
 // Tool Group metadata (for future Tool RAG via pgvector)
 // ---------------------------------------------------------------------------
 
-export type ToolGroup = 'core' | 'memory' | 'channel' | 'web' | 'comms' | 'agentic' | 'meetings'
+export type ToolGroup = 'core' | 'memory' | 'channel' | 'web' | 'comms' | 'agentic' | 'ads' | 'seo' | 'tenders' | 'content'
 
 export interface ToolGroupMeta {
   id: ToolGroup
@@ -43,7 +45,7 @@ export const TOOL_GROUPS: Record<ToolGroup, ToolGroupMeta> = {
     id: 'core',
     label: 'Core Operations',
     description: 'Task management, contacts, activity logging, and creator tools',
-    tools: ['create_task', 'update_task', 'search_tasks', 'search_contacts', 'get_contact', 'log_activity', 'compose_creator_notification_mockup', 'generate_invoice', 'revenue_intelligence'],
+    tools: ['create_task', 'update_task', 'search_tasks', 'search_contacts', 'get_contact', 'log_activity', 'compose_creator_notification_mockup', 'generate_invoice'],
   },
   memory: {
     id: 'memory',
@@ -72,14 +74,32 @@ export const TOOL_GROUPS: Record<ToolGroup, ToolGroupMeta> = {
   agentic: {
     id: 'agentic',
     label: 'Agentic Execution',
-    description: 'Run code against the BitBit SDK, deploy multi-agent swarms for complex coordinated operations',
-    tools: ['execute_code', 'trigger_swarm'],
+    description: 'Run code against the BitBit SDK to solve complex problems, query data flexibly, and compose multi-step operations',
+    tools: ['execute_code'],
   },
-  meetings: {
-    id: 'meetings',
-    label: 'Meeting Intelligence',
-    description: 'Search meeting transcripts, list meetings, and get meeting details including action items and summaries',
-    tools: ['search_meetings', 'list_meetings', 'get_meeting_details'],
+  ads: {
+    id: 'ads',
+    label: 'Ad Scripts',
+    description: 'Generate video ad scripts for social platforms with hook variations, storyboards, and platform-specific formatting',
+    tools: ['generate_ad_scripts', 'list_ad_batches', 'adapt_script'],
+  },
+  seo: {
+    id: 'seo',
+    label: 'SEO & AI Visibility',
+    description: 'Audit AI search visibility, generate SEO-optimized content, create schema markup, and view visibility reports',
+    tools: ['audit_visibility', 'generate_seo_content', 'generate_schema_markup', 'visibility_report'],
+  },
+  tenders: {
+    id: 'tenders',
+    label: 'Tender Hunter',
+    description: 'Search government tenders, score fit against capabilities, and generate draft responses',
+    tools: ['search_tenders', 'score_tender', 'generate_tender_response'],
+  },
+  content: {
+    id: 'content',
+    label: 'Content & Social',
+    description: 'Generate social media posts and blog drafts with platform-specific formatting and brand voice',
+    tools: ['schedule_post', 'generate_blog', 'content_calendar'],
   },
 }
 
@@ -101,8 +121,6 @@ export function getToolsByGroup(group: ToolGroup): Anthropic.Tool[] {
 export const JIT_INSTRUCTIONS: Record<string, string> = {
   // Invoices
   generate_invoice: 'Invoice generated and rendered as an embedded artifact in the chat UI. Do NOT repeat the invoice details as text. Just confirm briefly: "Invoice [number] generated for [recipient], [amount]. Ready to send when you approve." The user can see the full styled invoice in the artifact below your message.',
-
-  revenue_intelligence: 'Present the revenue data concisely. Use the summary field if available. Highlight the most actionable insight — recoverable revenue, at-risk clients, or overdue invoices. Format currency values naturally. Do not dump raw JSON.',
 
   // Web & Research
   web_search: 'Use these search results to answer the user\'s question. Cite sources with URLs when relevant. If results are insufficient, refine your search query and try again.',
@@ -148,13 +166,26 @@ export const JIT_INSTRUCTIONS: Record<string, string> = {
   // Agentic execution
   execute_code: 'Code execution complete. Use the output and result to continue the conversation. If there was an error, fix the code and try again. Do not show raw code to the user — summarize what you found or did. Reference specific data points from the result.',
 
-  // Meetings
-  search_meetings: 'Present transcript search results with meeting title, speaker, and relevant quote. Highlight the most relevant matches. Offer to show full meeting details if the user wants more context.',
-  list_meetings: 'Show the meeting list with title, type, date, and status. Highlight completed meetings with summaries available.',
-  get_meeting_details: 'Present the meeting summary, key decisions, and action items. Do not dump the entire transcript — summarize the key points. Mention pending action items and follow-ups that need attention.',
+  // Ad Scripts
+  generate_ad_scripts: 'Ad scripts generated. Present the scripts in a structured format showing each platform\'s hook, body, CTA, and duration. Highlight the hook variations for A/B testing. If storyboard data is included, present the shot-by-shot breakdown with timing. Ask if the user wants to adapt any script to a different platform.',
+  list_ad_batches: 'Present the script batches as a list with batch ID, offer name, number of scripts, and date created. Ask if the user wants to view scripts from a specific batch.',
+  adapt_script: 'Script adapted for the new platform. Present the adapted version highlighting what changed (duration, pacing, format). Compare key differences between the original and adapted versions.',
 
-  // Swarm orchestration
-  trigger_swarm: 'Swarm deployed. Report the swarm status and summary to the user. If the swarm is still running, let them know they can check the Swarm dashboard for live progress. Reference specific findings from each agent when available.',
+  // SEO & AI Visibility
+  audit_visibility: 'Visibility audit complete. Present the overall score prominently (X/100), then show per-query breakdown by AI source (Perplexity, ChatGPT, Gemini, Copilot). Highlight queries where the brand is absent — these are the priority optimization targets. Present recommendations as actionable next steps, not generic advice. If competitors were included, show comparative positioning.',
+  generate_seo_content: 'SEO content generated. Present the title and meta description first, then the main body. Show the FAQ section as expandable Q&A pairs. Mention the targeted queries it is optimized for. If structured data was included, note it is ready for implementation. Offer to generate schema markup for the content.',
+  generate_schema_markup: 'Schema markup generated. Present the JSON-LD in a code block the user can copy directly. Show any validation notes. Remind the user to paste this into the <head> section of their page. If there are multiple schema types that would benefit the page, suggest additional markup.',
+  visibility_report: 'Visibility report generated. Lead with the trend (improving/declining/stable) and current vs previous score. Show the per-query breakdown highlighting changes. Present competitor comparison as a ranked table with score deltas. Prioritize the recommendations that address the biggest visibility gaps.',
+
+  // Tender Hunter
+  search_tenders: 'Tender search results returned. Present matching tenders as a structured list showing: title, source, estimated value, deadline, and category. Highlight tenders closing within 14 days as urgent. If many results, summarize the top 5 by relevance and offer to show more. Suggest running score_tender on promising matches.',
+  score_tender: 'Tender fit assessment complete. Lead with the recommendation (PURSUE / CONSIDER / SKIP) in bold, followed by the overall fit score (X/100). Show the breakdown: compliance score, win probability, effort-vs-value ratio. List matched capabilities as strengths and gaps as areas to address. If recommendation is pursue or consider, offer to generate a draft response.',
+  generate_tender_response: 'Tender response draft generated. Present each response section with its title and content. Show the compliance matrix as a table (requirement, status: met/partially met/not met, evidence). Note the estimated effort hours. Remind the user this is a draft for human review — they should verify all claims and tailor the response before submission. Offer to score the tender for fit if not already done.',
+
+  // Content & Social
+  schedule_post: 'Social post generated. Present the formatted post to the user with the platform name, character count, and hashtag count. If the post includes hashtags, display them clearly. Ask if they want to adjust the tone, add/remove hashtags, or adapt it for a different platform.',
+  generate_blog: 'Blog draft generated. Present the title and meta description first, then the full body in markdown. Mention the word count and which keywords were integrated. Offer to refine specific sections, adjust length, or optimize for additional keywords.',
+  content_calendar: 'Present the content items as a list showing topic, platform, and date. If the calendar is empty, suggest creating content with schedule_post or generate_blog. Group items by platform if there are many.',
 }
 
 /** Get JIT instruction for a tool, if one exists. */
@@ -780,20 +811,17 @@ const allHandlers: Record<string, AgentToolHandler> = {
   ...channelToolHandlers,
   ...superpowerToolHandlers,
   ...codeExecutionToolHandlers,
-  ...meetingToolHandlers,
+  ...adToolHandlers,
+  ...seoToolHandlers,
+  ...tenderToolHandlers,
+  ...contentToolHandlers,
   async generate_invoice(input, orgId, supabase) {
-    return handleGenerateInvoice(input as unknown as Parameters<typeof handleGenerateInvoice>[0], orgId, supabase)
-  },
-  async revenue_intelligence(input, orgId, supabase) {
-    return handleRevenueIntelligence(input as unknown as Parameters<typeof handleRevenueIntelligence>[0], orgId, supabase)
-  },
-  async trigger_swarm(input, orgId, supabase) {
-    return handleTriggerSwarm(input, orgId, supabase)
+    return handleGenerateInvoice(input as Parameters<typeof handleGenerateInvoice>[0], orgId, supabase)
   },
 }
 
 export function getAgentTools(groups?: ToolGroup[]): Anthropic.Tool[] {
-  const allTools = [...toolDefinitions, ...channelToolDefinitions, ...superpowerToolDefinitions, ...codeExecutionToolDefinitions, invoiceToolDefinition, ...meetingToolDefinitions, revenueToolDefinition, swarmToolDefinition]
+  const allTools = [...toolDefinitions, ...channelToolDefinitions, ...superpowerToolDefinitions, ...codeExecutionToolDefinitions, ...adToolDefinitions, ...seoToolDefinitions, ...tenderToolDefinitions, ...contentToolDefinitions, invoiceToolDefinition]
   if (!groups || groups.length === 0) return allTools
 
   const selectedGroups = new Set<ToolGroup>(['core', ...groups])
@@ -826,6 +854,21 @@ export async function executeAgentTool(
   const handler = allHandlers[name]
   if (!handler) {
     return { success: false, error: `Unknown tool: ${name}` }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Plan gate check for growth tools — must come before execution.
+  // ---------------------------------------------------------------------------
+  const requiredPlan = TOOL_PLAN_REQUIREMENTS[name]
+  if (requiredPlan) {
+    const orgPlan = await getOrgPlan(supabase, orgId)
+    const gate = checkToolPlanGate(orgPlan, name)
+    if (!gate.allowed) {
+      return {
+        success: false,
+        error: `${name} requires the ${gate.requiredPlan} plan or higher. You're on the ${orgPlan} plan. Ask the user to upgrade at /pricing to unlock this feature.`,
+      }
+    }
   }
 
   // ---------------------------------------------------------------------------

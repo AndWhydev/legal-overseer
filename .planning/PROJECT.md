@@ -45,28 +45,24 @@ BitBit understands the business better than the business owner — when Andy say
 
 ### Active
 
-## Current Milestone: v1.3 Agent Roles & Autonomy Engine
+## Current Milestone: v1.4 Media, Billing & Growth Roles
 
-**Goal:** Transform BitBit from task-executing agents into domain-owning autonomous roles. Users control how much leverage they opt into — from full visibility to full agency — per role, per domain.
+**Goal:** Close the media gap (file attachments and multimedia in chat), add Stripe billing infrastructure for public launch readiness, and ship Growth Roles that extend the v1.3 role engine into marketing/content/sales domains.
 
 **Target features:**
-- Role Engine — persistent agents that own domains, maintain state, run continuously, learn from outcomes
-- Autonomy Spectrum — Observer / Co-pilot / Autopilot per role, with gating and escalation rules
-- First Roles: Finance (invoicing, cash flow, collections), Comms (triage, drafting, follow-ups, relationship maintenance), Sales (proposals, onboarding, nurture)
-- Intelligence Layer — Revenue Radar, Client Health Score, Cash Flow Prophet, Capacity Oracle
-- Persistent Role Memory — per-role context that accumulates and informs every decision
+- File Attachments & Multimedia — upload files in chat, inline image/PDF preview, pipeline processing (BitBit can read/analyse attachments), Paperclip button wired
+- Stripe Billing & Trial — subscription lifecycle, usage metering per role, plan gating, 30-day trial, pricing page
+- Growth Roles — SEO Role (ranking monitoring, fix implementation), Content Role (social scheduling, blog writing), Builder Role (agentic website/app construction), Ad Script Generator, Tender Hunter
 
 **Active requirements:** See REQUIREMENTS.md
 
 ### Out of Scope
 
-- Growth agents (Ad Script Gen, AI Search Optimizer, Tender Hunter) — v1.4
-- Builder Role (website/app construction via agentic coding) — v1.4
 - Marketing website, public launch, self-serve signup — v1.5
-- Stripe billing & trial infrastructure — v1.4 (deferred from v1.2)
 - CUA (computer-using agent) — future
 - Mobile app — not planned
 - Real-time chat — high complexity, not core value
+- Custom role builder — premature, ship built-in roles first
 
 ## Context
 

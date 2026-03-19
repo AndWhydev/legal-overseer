@@ -14,6 +14,7 @@ const CORE_MODULES = [
   'settings-connections',
   'settings-automations',
   'settings-appearance',
+  'settings-billing',
 ] as const;
 
 // All possible module IDs (matches tab IDs in spa-shell.tsx)
@@ -160,7 +161,7 @@ export const SIDEBAR_CATEGORIES: SidebarCategory[] = [
   { id: 'business',     label: 'Business',     icon: 'Briefcase',       items: ['leads', 'invoices', 'tenders', 'contacts', 'approvals'] },
   { id: 'intelligence', label: 'Intelligence', icon: 'Brain',           items: ['meetings', 'swarm', 'sentry', 'ad-scripts', 'ai-search', 'reports', 'knowledge', 'analytics'] },
   { id: 'operations',   label: 'Operations',   icon: 'Wrench',          items: ['activity', 'costs', 'admin', 'medications'] },
-  { id: 'settings',      label: 'Settings',     icon: 'Settings',        items: ['settings-connections', 'settings-automations', 'settings-appearance'] },
+  { id: 'settings',      label: 'Settings',     icon: 'Settings',        items: ['settings-connections', 'settings-automations', 'settings-appearance', 'settings-billing'] },
 ];
 
 /** Map a tab ID to its parent category ID */

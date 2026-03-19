@@ -1,5 +1,12 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { checkPlanGate, type GateAction } from './plan-gates'
+import {
+  checkPlanGate,
+  checkToolPlanGate,
+  PLAN_FEATURES,
+  TOOL_PLAN_REQUIREMENTS,
+  type GateAction,
+  type PlanName,
+} from './plan-gates'
 
 function createMockSupabase(args: {
   plan?: string
@@ -346,5 +353,147 @@ describe('checkPlanGate', () => {
 
       expect(allowed).toBe(true)
     })
+  })
+})
+
+// ---------------------------------------------------------------------------
+// PlanFeatures growthRoles and fileAttachments
+// ---------------------------------------------------------------------------
+
+describe('PlanFeatures growthRoles and fileAttachments', () => {
+  it('free plan has empty growthRoles array', () => {
+    expect(PLAN_FEATURES.free.growthRoles).toEqual([])
+  })
+
+  it('free plan has fileAttachments disabled', () => {
+    expect(PLAN_FEATURES.free.fileAttachments).toBe(false)
+  })
+
+  it('starter plan has empty growthRoles array', () => {
+    expect(PLAN_FEATURES.starter.growthRoles).toEqual([])
+  })
+
+  it('starter plan has fileAttachments enabled', () => {
+    expect(PLAN_FEATURES.starter.fileAttachments).toBe(true)
+  })
+
+  it('growth plan has seo, content, ad-script growthRoles', () => {
+    expect(PLAN_FEATURES.growth.growthRoles).toEqual(['seo', 'content', 'ad-script'])
+  })
+
+  it('growth plan has fileAttachments enabled', () => {
+    expect(PLAN_FEATURES.growth.fileAttachments).toBe(true)
+  })
+
+  it('scale plan has growthRoles with all', () => {
+    expect(PLAN_FEATURES.scale.growthRoles).toEqual(['all'])
+  })
+
+  it('scale plan has fileAttachments enabled', () => {
+    expect(PLAN_FEATURES.scale.fileAttachments).toBe(true)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// TOOL_PLAN_REQUIREMENTS
+// ---------------------------------------------------------------------------
+
+describe('TOOL_PLAN_REQUIREMENTS', () => {
+  it('maps audit_visibility to growth', () => {
+    expect(TOOL_PLAN_REQUIREMENTS.audit_visibility).toBe('growth')
+  })
+
+  it('maps generate_seo_content to growth', () => {
+    expect(TOOL_PLAN_REQUIREMENTS.generate_seo_content).toBe('growth')
+  })
+
+  it('maps generate_schema_markup to growth', () => {
+    expect(TOOL_PLAN_REQUIREMENTS.generate_schema_markup).toBe('growth')
+  })
+
+  it('maps visibility_report to growth', () => {
+    expect(TOOL_PLAN_REQUIREMENTS.visibility_report).toBe('growth')
+  })
+
+  it('maps generate_ad_scripts to growth', () => {
+    expect(TOOL_PLAN_REQUIREMENTS.generate_ad_scripts).toBe('growth')
+  })
+
+  it('maps schedule_post to growth', () => {
+    expect(TOOL_PLAN_REQUIREMENTS.schedule_post).toBe('growth')
+  })
+
+  it('maps generate_blog to growth', () => {
+    expect(TOOL_PLAN_REQUIREMENTS.generate_blog).toBe('growth')
+  })
+
+  it('maps content_calendar to growth', () => {
+    expect(TOOL_PLAN_REQUIREMENTS.content_calendar).toBe('growth')
+  })
+
+  it('maps search_tenders to scale', () => {
+    expect(TOOL_PLAN_REQUIREMENTS.search_tenders).toBe('scale')
+  })
+
+  it('maps score_tender to scale', () => {
+    expect(TOOL_PLAN_REQUIREMENTS.score_tender).toBe('scale')
+  })
+
+  it('maps generate_tender_response to scale', () => {
+    expect(TOOL_PLAN_REQUIREMENTS.generate_tender_response).toBe('scale')
+  })
+
+  it('does not include core tools like create_task', () => {
+    expect(TOOL_PLAN_REQUIREMENTS.create_task).toBeUndefined()
+  })
+})
+
+// ---------------------------------------------------------------------------
+// checkToolPlanGate
+// ---------------------------------------------------------------------------
+
+describe('checkToolPlanGate', () => {
+  it('allows non-gated tools for any plan', () => {
+    const result = checkToolPlanGate('free', 'create_task')
+    expect(result.allowed).toBe(true)
+    expect(result.requiredPlan).toBeUndefined()
+  })
+
+  it('denies growth tool for free plan', () => {
+    const result = checkToolPlanGate('free', 'audit_visibility')
+    expect(result.allowed).toBe(false)
+    expect(result.requiredPlan).toBe('growth')
+  })
+
+  it('denies growth tool for starter plan', () => {
+    const result = checkToolPlanGate('starter', 'audit_visibility')
+    expect(result.allowed).toBe(false)
+    expect(result.requiredPlan).toBe('growth')
+  })
+
+  it('allows growth tool for growth plan', () => {
+    const result = checkToolPlanGate('growth', 'audit_visibility')
+    expect(result.allowed).toBe(true)
+  })
+
+  it('allows growth tool for scale plan', () => {
+    const result = checkToolPlanGate('scale', 'generate_ad_scripts')
+    expect(result.allowed).toBe(true)
+  })
+
+  it('denies scale-only tool for growth plan', () => {
+    const result = checkToolPlanGate('growth', 'search_tenders')
+    expect(result.allowed).toBe(false)
+    expect(result.requiredPlan).toBe('scale')
+  })
+
+  it('allows scale-only tool for scale plan', () => {
+    const result = checkToolPlanGate('scale', 'search_tenders')
+    expect(result.allowed).toBe(true)
+  })
+
+  it('allows unknown tools for any plan', () => {
+    const result = checkToolPlanGate('free', 'some_future_tool')
+    expect(result.allowed).toBe(true)
   })
 })

@@ -1,8 +1,15 @@
 'use client'
 
-import type { Metadata } from 'next'
+import { useState } from 'react'
 import Link from 'next/link'
 import { Check } from 'lucide-react'
+import { loadStripe } from '@stripe/stripe-js'
+
+// Preload Stripe.js for fraud detection and faster checkout redirect
+// The promise triggers Stripe.js loading; actual checkout uses URL redirect
+const _stripePreload = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+  ? loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
+  : null
 
 interface Tier {
   name: string
@@ -13,7 +20,8 @@ interface Tier {
   cogs: string
   features: string[]
   cta: string
-  href: string
+  tier: string | null // null for Enterprise (no checkout)
+  href: string | null // only for Enterprise mailto
   highlighted: boolean
 }
 
@@ -28,13 +36,15 @@ const TIERS: Tier[] = [
     features: [
       '1 user',
       '3 channel integrations',
+      'Sentry (monitoring agent)',
+      'Lead Swarm (lead capture)',
+      'Invoice Flow (billing agent)',
       'Email + WhatsApp triage',
-      'Client comms drafting',
-      'Basic analytics',
       '50k AI tokens/mo',
     ],
-    cta: 'Start Free Trial',
-    href: '/api/billing/checkout?tier=starter',
+    cta: 'Start 30-Day Free Trial',
+    tier: 'starter',
+    href: null,
     highlighted: false,
   },
   {
@@ -47,14 +57,17 @@ const TIERS: Tier[] = [
     features: [
       '5 users',
       'All channel integrations',
+      'All Starter agents',
+      'SEO Monitor',
+      'Ad Script Generator',
+      'Content Creator',
       'Proposal generation',
-      'Revenue agents',
-      'Client onboarding flows',
       'Priority support',
       '200k AI tokens/mo',
     ],
-    cta: 'Start Free Trial',
-    href: '/api/billing/checkout?tier=growth',
+    cta: 'Start 30-Day Free Trial',
+    tier: 'growth',
+    href: null,
     highlighted: true,
   },
   {
@@ -67,15 +80,15 @@ const TIERS: Tier[] = [
     features: [
       '15 users',
       'All channel integrations',
-      'Ad script generator',
-      'AI search optimiser',
-      'Tender hunter',
+      'All Growth agents',
+      'Tender Hunter',
       'Advanced analytics & MRR',
       'Custom voice profiles',
       '500k AI tokens/mo',
     ],
-    cta: 'Start Free Trial',
-    href: '/api/billing/checkout?tier=scale',
+    cta: 'Start 30-Day Free Trial',
+    tier: 'scale',
+    href: null,
     highlighted: false,
   },
   {
@@ -96,22 +109,78 @@ const TIERS: Tier[] = [
       'Dedicated support manager',
     ],
     cta: 'Contact Sales',
+    tier: null,
     href: 'mailto:sales@bitbit.au',
     highlighted: false,
   },
 ]
 
 export default function PricingPage() {
+  const [loadingTier, setLoadingTier] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  async function handleCheckout(tier: string) {
+    setLoadingTier(tier)
+    setError(null)
+
+    try {
+      const res = await fetch('/api/billing/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tier,
+          successUrl: `${window.location.origin}/dashboard?checkout=success`,
+          cancelUrl: `${window.location.origin}/pricing?checkout=cancelled`,
+        }),
+      })
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        // If not authenticated, redirect to login with checkout intent
+        if (res.status === 401) {
+          window.location.href = `/login?redirect=/dashboard&checkout_tier=${tier}`
+          return
+        }
+        throw new Error((data as Record<string, string>).error || 'Failed to create checkout session')
+      }
+
+      const { url } = (await res.json()) as { sessionId: string; url: string }
+
+      if (!url) {
+        throw new Error('No checkout URL returned. Please try again.')
+      }
+
+      // Redirect to Stripe Checkout page
+      window.location.href = url
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Something went wrong')
+    } finally {
+      setLoadingTier(null)
+    }
+  }
+
   return (
     <main className="min-h-screen bg-white text-gray-900">
       <div className="mx-auto max-w-6xl px-6 py-16">
         <div className="text-center mb-14">
           <h1 className="text-4xl font-semibold mb-3">Simple, transparent pricing</h1>
           <p className="text-gray-500 text-lg max-w-xl mx-auto">
-            AI-powered operations for digital agencies. Start with a 14-day free trial, no
+            AI-powered operations for digital agencies. Start with a 30-day free trial, no
             credit card required.
           </p>
         </div>
+
+        {error && (
+          <div className="mb-8 mx-auto max-w-md p-4 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm text-center">
+            {error}
+            <button
+              onClick={() => setError(null)}
+              className="ml-2 text-red-500 hover:text-red-700 font-medium"
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {TIERS.map((tier) => (
@@ -147,17 +216,32 @@ export default function PricingPage() {
                 ))}
               </ul>
 
-              <Link
-                href={tier.href}
-                className={[
-                  'mt-6 block text-center rounded-lg px-4 py-2.5 text-sm font-medium transition',
-                  tier.highlighted
-                    ? 'bg-blue-600 text-white hover:bg-blue-700'
-                    : 'bg-gray-900 text-white hover:bg-gray-800',
-                ].join(' ')}
-              >
-                {tier.cta}
-              </Link>
+              {tier.tier ? (
+                <button
+                  onClick={() => handleCheckout(tier.tier!)}
+                  disabled={loadingTier !== null}
+                  className={[
+                    'mt-6 block w-full text-center rounded-lg px-4 py-2.5 text-sm font-medium transition',
+                    tier.highlighted
+                      ? 'bg-blue-600 text-white hover:bg-blue-700'
+                      : 'bg-gray-900 text-white hover:bg-gray-800',
+                    loadingTier === tier.tier ? 'opacity-60 cursor-wait' : '',
+                    loadingTier !== null && loadingTier !== tier.tier ? 'opacity-40 cursor-not-allowed' : '',
+                  ].join(' ')}
+                >
+                  {loadingTier === tier.tier ? 'Redirecting...' : tier.cta}
+                </button>
+              ) : (
+                <Link
+                  href={tier.href!}
+                  className={[
+                    'mt-6 block text-center rounded-lg px-4 py-2.5 text-sm font-medium transition',
+                    'bg-gray-900 text-white hover:bg-gray-800',
+                  ].join(' ')}
+                >
+                  {tier.cta}
+                </Link>
+              )}
 
               <p className="text-xs text-gray-400 mt-2 text-center">{tier.cogs}</p>
             </div>
@@ -165,7 +249,7 @@ export default function PricingPage() {
         </div>
 
         <div className="mt-16 text-center text-sm text-gray-500">
-          <p>All prices in AUD, exclusive of GST. 14-day free trial on all plans.</p>
+          <p>All prices in AUD, exclusive of GST. 30-day free trial on all plans.</p>
           <p className="mt-1">
             <Link href="/terms" className="underline hover:text-gray-700">Terms</Link>
             {' | '}

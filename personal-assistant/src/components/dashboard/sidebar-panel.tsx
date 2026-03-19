@@ -60,6 +60,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
   'settings-connections':  Link2,
   'settings-automations':  Zap,
   'settings-appearance':   Palette,
+  'settings-billing':      DollarSign,
 };
 
 const BADGE_CONFIG: Record<string, { key: keyof BadgeCounts; color: string }> = {

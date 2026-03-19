@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { getRoleUsageToday } from '@/lib/billing/usage-metering'
 
 /**
  * Per-org daily cost guard.
@@ -76,4 +77,88 @@ export async function canProceed(
     remainingBudget,
     reason: allowed ? undefined : `Daily cost limit $${dailyLimit} reached (spent $${spentToday.toFixed(4)})`,
   }
+}
+
+// ---------------------------------------------------------------------------
+// Per-role token budget enforcement
+// ---------------------------------------------------------------------------
+
+export interface RoleBudgetConfig {
+  maxTokensPerExecution: number
+  dailyTokenBudget: number
+  warningThresholdPct: number
+}
+
+/**
+ * Per-role budget configuration for growth workloads.
+ * Roles not in this map are unbounded (core agent tools).
+ */
+export const ROLE_BUDGET_CONFIG: Record<string, RoleBudgetConfig> = {
+  ads: { maxTokensPerExecution: 50_000, dailyTokenBudget: 500_000, warningThresholdPct: 0.8 },
+  seo: { maxTokensPerExecution: 30_000, dailyTokenBudget: 300_000, warningThresholdPct: 0.8 },
+  content: { maxTokensPerExecution: 80_000, dailyTokenBudget: 800_000, warningThresholdPct: 0.8 },
+  tenders: { maxTokensPerExecution: 60_000, dailyTokenBudget: 600_000, warningThresholdPct: 0.8 },
+}
+
+export interface RoleBudgetResult {
+  allowed: boolean
+  warning: boolean
+  dailyUsed: number
+  dailyLimit: number
+  remainingTokens: number
+  reason?: string
+}
+
+/**
+ * Check per-role daily token budget.
+ * Returns unbounded result for unknown roles (non-growth tools).
+ */
+export async function checkRoleBudget(
+  supabase: SupabaseClient,
+  orgId: string,
+  role: string,
+): Promise<RoleBudgetResult> {
+  const config = ROLE_BUDGET_CONFIG[role]
+  if (!config) {
+    return {
+      allowed: true,
+      warning: false,
+      dailyUsed: 0,
+      dailyLimit: Infinity,
+      remainingTokens: Infinity,
+    }
+  }
+
+  const dailyUsed = await getRoleUsageToday(supabase, orgId, role)
+  const { dailyTokenBudget, warningThresholdPct } = config
+  const remainingTokens = Math.max(0, dailyTokenBudget - dailyUsed)
+
+  if (dailyUsed >= dailyTokenBudget) {
+    return {
+      allowed: false,
+      warning: false,
+      dailyUsed,
+      dailyLimit: dailyTokenBudget,
+      remainingTokens: 0,
+      reason: `Daily token budget for ${role} exhausted (${dailyUsed}/${dailyTokenBudget})`,
+    }
+  }
+
+  const warning = dailyUsed >= dailyTokenBudget * warningThresholdPct
+
+  return {
+    allowed: true,
+    warning,
+    dailyUsed,
+    dailyLimit: dailyTokenBudget,
+    remainingTokens,
+  }
+}
+
+/**
+ * Get the per-execution token cap for a role.
+ * Returns undefined for non-growth roles (unbounded).
+ */
+export function getExecutionTokenCap(role: string): number | undefined {
+  return ROLE_BUDGET_CONFIG[role]?.maxTokensPerExecution
 }

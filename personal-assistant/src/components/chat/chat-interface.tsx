@@ -20,6 +20,9 @@ import {
 } from '@/components/ai-elements/chain-of-thought'
 import { Checkpoint, CheckpointIcon } from '@/components/ai-elements/checkpoint'
 import { InvoiceArtifact } from './invoice-artifact'
+import { ChatAttachmentList } from './chat-attachment'
+import { CHAT_ATTACHMENTS_EVENT } from '@/components/dashboard/voice-pill'
+import { useFileUpload } from '@/hooks/use-file-upload'
 
 interface ToolCall {
   name: string
@@ -51,12 +54,21 @@ interface CheckpointMarker {
   afterMessageId: string
 }
 
+interface MessageAttachment {
+  type: string       // MIME type
+  name: string       // filename
+  url: string        // storage_path
+  size?: number      // file size in bytes
+  attachmentId?: string
+}
+
 interface Message {
   id: string
   role: 'user' | 'assistant'
   content: string
   toolCalls?: ToolCall[]
   citations?: Citation[]
+  attachments?: MessageAttachment[]
   timestamp: Date
 }
 
@@ -548,6 +560,15 @@ export function ChatInterface({ userName }: { userName?: string }) {
   const prevReasoningActiveRef = useRef(false)
   const autoOpenedRef = useRef(false)
 
+  // Attachment state: IDs and metadata dispatched from VoicePill via custom event
+  const pendingAttachmentIdsRef = useRef<string[]>([])
+  const pendingAttachmentItemsRef = useRef<MessageAttachment[]>([])
+  // Drag-and-drop state
+  const [isDragOver, setIsDragOver] = useState(false)
+  const dragCounterRef = useRef(0)
+  // File upload hook for drag-and-drop (VoicePill handles its own uploads)
+  const dragUpload = useFileUpload(threadId)
+
   // Smooth streaming and smart scroll hooks
   const smoothStream = useSmoothStream()
   const smartScroll = useSmartScroll(scrollRef)
@@ -631,10 +652,29 @@ export function ChatInterface({ userName }: { userName?: string }) {
     const trimmed = text.trim()
     if (!trimmed || isLoading) return
 
+    // Capture and consume pending attachment IDs and metadata BEFORE creating
+    // the user message so we can include them for inline preview rendering.
+    const attachmentIds = [
+      ...pendingAttachmentIdsRef.current,
+      ...dragUpload.readyAttachmentIds,
+    ]
+    const msgAttachments: MessageAttachment[] = [
+      ...pendingAttachmentItemsRef.current,
+      ...dragUpload.uploads
+        .filter(u => u.status === 'ready')
+        .map(u => ({ attachmentId: u.id, type: u.mimeType, name: u.filename, url: '', size: u.size })),
+    ]
+    pendingAttachmentIdsRef.current = []
+    pendingAttachmentItemsRef.current = []
+    if (dragUpload.readyAttachmentIds.length > 0) {
+      dragUpload.clearUploads()
+    }
+
     const userMsg: Message = {
       id: `msg-${Date.now()}`,
       role: 'user',
       content: trimmed,
+      attachments: msgAttachments.length > 0 ? msgAttachments : undefined,
       timestamp: new Date(),
     }
 
@@ -688,7 +728,11 @@ export function ChatInterface({ userName }: { userName?: string }) {
       const res = await fetch('/api/agent/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: trimmed, threadId }),
+        body: JSON.stringify({
+          message: trimmed,
+          threadId,
+          attachmentIds: attachmentIds.length > 0 ? attachmentIds : undefined,
+        }),
         signal: controller.signal,
       })
 
@@ -1025,6 +1069,19 @@ export function ChatInterface({ userName }: { userName?: string }) {
       setIsThinkingStreaming(false)
     }
   }, [isLoading, threadId, smoothStream, smartScroll])
+
+  // Listen for attachment metadata dispatched from VoicePill before text submit
+  useEffect(() => {
+    const attachHandler = (e: Event) => {
+      const detail = (e as CustomEvent<{ ids: string[]; items: MessageAttachment[] }>).detail
+      if (detail?.ids && detail.ids.length > 0) {
+        pendingAttachmentIdsRef.current = detail.ids
+        pendingAttachmentItemsRef.current = detail.items ?? []
+      }
+    }
+    window.addEventListener(CHAT_ATTACHMENTS_EVENT, attachHandler)
+    return () => window.removeEventListener(CHAT_ATTACHMENTS_EVENT, attachHandler)
+  }, [])
 
   // Listen for custom events from the docked pill
   useEffect(() => {
@@ -1520,8 +1577,73 @@ export function ChatInterface({ userName }: { userName?: string }) {
     }
   }, [threadId, setThreadId])
 
+  // Drag-and-drop handlers for file upload
+  const handleDragEnter = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    dragCounterRef.current++
+    if (e.dataTransfer.types.includes('Files')) {
+      setIsDragOver(true)
+    }
+  }, [])
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    dragCounterRef.current--
+    if (dragCounterRef.current <= 0) {
+      dragCounterRef.current = 0
+      setIsDragOver(false)
+    }
+  }, [])
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+  }, [])
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    dragCounterRef.current = 0
+    setIsDragOver(false)
+    const files = e.dataTransfer.files
+    if (files && files.length > 0) {
+      dragUpload.addFiles(files)
+    }
+  }, [dragUpload])
+
   return (
-    <div className={`bb-chat ${chatStarted ? 'bb-chat--active' : 'bb-chat--pre-session'}`}>
+    <div
+      className={`bb-chat ${chatStarted ? 'bb-chat--active' : 'bb-chat--pre-session'}`}
+      onDragEnter={handleDragEnter}
+      onDragLeave={handleDragLeave}
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
+    >
+      {/* Drop zone overlay */}
+      {isDragOver && (
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          zIndex: 50,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'rgba(59, 130, 246, 0.08)',
+          border: '2px dashed rgba(59, 130, 246, 0.4)',
+          borderRadius: '12px',
+          pointerEvents: 'none',
+        }}>
+          <span style={{
+            color: 'rgba(59, 130, 246, 0.8)',
+            fontSize: '16px',
+            fontWeight: 500,
+          }}>
+            Drop files to attach
+          </span>
+        </div>
+      )}
       {/* Conversation drawer toggle — always visible */}
       <button
         className="bb-chat__drawer-toggle"
@@ -1649,6 +1771,14 @@ export function ChatInterface({ userName }: { userName?: string }) {
                         </ChainOfThought>
                       </div>
                     )}
+                    {/* Inline attachment previews — rendered above message text */}
+                    {msg.attachments && msg.attachments.length > 0 && (
+                      <div className={msg.role === 'user' ? 'bb-chat__msg bb-chat__msg--user' : 'bb-chat__msg bb-chat__msg--assistant'}>
+                        <div style={{ maxWidth: 480 }}>
+                          <ChatAttachmentList attachments={msg.attachments} />
+                        </div>
+                      </div>
+                    )}
                     <MessageBubble
                       message={msg}
                       showAvatar={isLastAssistantOverall && !(isCurrentResponse && reasoningChainJSX)}
@@ -1724,6 +1854,50 @@ export function ChatInterface({ userName }: { userName?: string }) {
       <div
         className={`bb-chat__input-area ${chatStarted ? 'bb-chat__input-area--bottom' : 'bb-chat__input-area--centered'}`}
       >
+        {/* Drag-and-drop upload progress */}
+        {dragUpload.uploads.length > 0 && (
+          <div style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: '4px',
+            padding: '4px 8px',
+            marginBottom: '4px',
+            fontSize: '12px',
+            color: 'var(--text-secondary, rgba(255,255,255,0.7))',
+          }}>
+            {dragUpload.uploads.map(item => (
+              <span key={item.id} style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '2px 8px',
+                borderRadius: '6px',
+                background: item.status === 'error'
+                  ? 'rgba(239,68,68,0.15)'
+                  : 'rgba(255,255,255,0.06)',
+                color: item.status === 'error'
+                  ? 'var(--bb-color-error, #ef4444)'
+                  : undefined,
+              }}>
+                {item.filename}
+                {item.status === 'uploading' && ` ${item.progress}%`}
+                {item.status === 'ready' && ' ✓'}
+                {item.status === 'error' && ` — ${item.error}`}
+                <button
+                  type="button"
+                  onClick={() => dragUpload.removeUpload(item.id)}
+                  style={{
+                    background: 'none', border: 'none', padding: '0 2px',
+                    cursor: 'pointer', color: 'inherit', opacity: 0.6,
+                    fontSize: '14px', lineHeight: 1,
+                  }}
+                >
+                  x
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
         <div id="pill-dock" />
       </div>
     </div>

@@ -65,6 +65,27 @@ export const TOOL_AUTONOMY_MAP: Record<string, AutonomyLevel> = {
   send_outlook: 'L2_propose',
   approve_action: 'L2_propose',
 
+  // Ad Script tools: generate content internally, no external side effects
+  generate_ad_scripts: 'L3_notify',   // Creates scripts, saves to DB
+  list_ad_batches: 'L4_silent',       // Read-only query
+  adapt_script: 'L4_silent',          // Pure transformation, no DB write
+
+  // SEO tools: visibility audits and content generation, no external side effects
+  audit_visibility: 'L3_notify',        // Runs audit, may persist results to DB
+  generate_seo_content: 'L3_notify',    // Generates content, may persist to DB
+  generate_schema_markup: 'L4_silent',  // Pure generation, no DB write
+  visibility_report: 'L4_silent',       // Read-only report from stored data
+
+  // Tender Hunter tools: search and scoring persist data, response is a draft
+  search_tenders: 'L3_notify',              // Scrapes sources, upserts tenders to DB
+  score_tender: 'L3_notify',                // Evaluates fit, persists score to DB
+  generate_tender_response: 'L3_notify',    // Generates draft, upserts to tender_responses table
+
+  // Content tools: generate content via LLM, no external publish
+  schedule_post: 'L3_notify',      // Generates content via LLM, no external publish
+  generate_blog: 'L3_notify',      // Generates content via LLM, no external publish
+  content_calendar: 'L4_silent',   // Read-only listing
+
   // L1: Financial / irreversible — always require approval
   // (future: invoice_send, payment_process, contract_sign)
 }

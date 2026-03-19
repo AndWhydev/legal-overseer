@@ -225,6 +225,8 @@ export interface InboundMessage {
   userId?: string
   orgId?: string
   channelMetadata?: ChannelMetadata
+  /** IDs of uploaded attachments to include as multimodal content blocks */
+  attachmentIds?: string[]
 }
 
 export interface PipelineResult {

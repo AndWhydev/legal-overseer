@@ -1,5 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { canProceed } from './cost-guard'
+import { canProceed, checkRoleBudget, getExecutionTokenCap, ROLE_BUDGET_CONFIG } from './cost-guard'
+
+// Mock usage-metering for role budget tests
+vi.mock('@/lib/billing/usage-metering', () => ({
+  getRoleUsageToday: vi.fn(),
+  trackUsage: vi.fn(),
+  getUsage: vi.fn(),
+}))
+
+import { getRoleUsageToday } from '@/lib/billing/usage-metering'
+
+const mockGetRoleUsageToday = vi.mocked(getRoleUsageToday)
 
 function createMockSupabase() {
   const mock: Record<string, ReturnType<typeof vi.fn>> = {}
@@ -238,5 +249,132 @@ describe('cost-guard', () => {
       expect(result.remainingBudget).toBe(0)
       expect(result.allowed).toBe(false)
     })
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Per-role budget tests
+// ---------------------------------------------------------------------------
+
+describe('ROLE_BUDGET_CONFIG', () => {
+  it('has entries for ads, seo, content, tenders', () => {
+    expect(ROLE_BUDGET_CONFIG).toHaveProperty('ads')
+    expect(ROLE_BUDGET_CONFIG).toHaveProperty('seo')
+    expect(ROLE_BUDGET_CONFIG).toHaveProperty('content')
+    expect(ROLE_BUDGET_CONFIG).toHaveProperty('tenders')
+  })
+
+  it('ads: 50K per exec, 500K daily', () => {
+    expect(ROLE_BUDGET_CONFIG.ads.maxTokensPerExecution).toBe(50_000)
+    expect(ROLE_BUDGET_CONFIG.ads.dailyTokenBudget).toBe(500_000)
+  })
+
+  it('seo: 30K per exec, 300K daily', () => {
+    expect(ROLE_BUDGET_CONFIG.seo.maxTokensPerExecution).toBe(30_000)
+    expect(ROLE_BUDGET_CONFIG.seo.dailyTokenBudget).toBe(300_000)
+  })
+
+  it('content: 80K per exec, 800K daily', () => {
+    expect(ROLE_BUDGET_CONFIG.content.maxTokensPerExecution).toBe(80_000)
+    expect(ROLE_BUDGET_CONFIG.content.dailyTokenBudget).toBe(800_000)
+  })
+
+  it('tenders: 60K per exec, 600K daily', () => {
+    expect(ROLE_BUDGET_CONFIG.tenders.maxTokensPerExecution).toBe(60_000)
+    expect(ROLE_BUDGET_CONFIG.tenders.dailyTokenBudget).toBe(600_000)
+  })
+
+  it('all roles have warningThresholdPct of 0.8', () => {
+    for (const role of ['ads', 'seo', 'content', 'tenders'] as const) {
+      expect(ROLE_BUDGET_CONFIG[role].warningThresholdPct).toBe(0.8)
+    }
+  })
+})
+
+describe('checkRoleBudget', () => {
+  const roleMockSupabase = {} as any
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('returns allowed=true, warning=false when usage is below 80% of daily budget', async () => {
+    mockGetRoleUsageToday.mockResolvedValue(100_000) // 20% of 500K ads budget
+    const result = await checkRoleBudget(roleMockSupabase, 'org-1', 'ads')
+    expect(result.allowed).toBe(true)
+    expect(result.warning).toBe(false)
+    expect(result.dailyUsed).toBe(100_000)
+    expect(result.dailyLimit).toBe(500_000)
+    expect(result.remainingTokens).toBe(400_000)
+  })
+
+  it('returns allowed=true, warning=true when usage is 80-99% of daily budget', async () => {
+    mockGetRoleUsageToday.mockResolvedValue(420_000) // 84% of 500K ads budget
+    const result = await checkRoleBudget(roleMockSupabase, 'org-1', 'ads')
+    expect(result.allowed).toBe(true)
+    expect(result.warning).toBe(true)
+    expect(result.dailyUsed).toBe(420_000)
+    expect(result.remainingTokens).toBe(80_000)
+  })
+
+  it('returns allowed=false when usage >= 100% of daily budget', async () => {
+    mockGetRoleUsageToday.mockResolvedValue(500_000) // 100% of 500K ads budget
+    const result = await checkRoleBudget(roleMockSupabase, 'org-1', 'ads')
+    expect(result.allowed).toBe(false)
+    expect(result.reason).toContain('ads')
+    expect(result.reason).toContain('exhausted')
+  })
+
+  it('returns allowed=false when usage exceeds daily budget', async () => {
+    mockGetRoleUsageToday.mockResolvedValue(600_000) // 120% of 500K ads budget
+    const result = await checkRoleBudget(roleMockSupabase, 'org-1', 'ads')
+    expect(result.allowed).toBe(false)
+  })
+
+  it('returns allowed=true for unknown roles (non-growth tools are unbounded)', async () => {
+    const result = await checkRoleBudget(roleMockSupabase, 'org-1', 'unknown_role')
+    expect(result.allowed).toBe(true)
+    expect(result.warning).toBe(false)
+    expect(result.dailyLimit).toBe(Infinity)
+    expect(result.remainingTokens).toBe(Infinity)
+  })
+
+  it('returns allowed=true when no usage events exist (0 usage)', async () => {
+    mockGetRoleUsageToday.mockResolvedValue(0)
+    const result = await checkRoleBudget(roleMockSupabase, 'org-1', 'seo')
+    expect(result.allowed).toBe(true)
+    expect(result.warning).toBe(false)
+    expect(result.dailyUsed).toBe(0)
+    expect(result.dailyLimit).toBe(300_000)
+  })
+
+  it('returns warning=true at exactly 80% threshold', async () => {
+    mockGetRoleUsageToday.mockResolvedValue(400_000) // exactly 80% of 500K
+    const result = await checkRoleBudget(roleMockSupabase, 'org-1', 'ads')
+    expect(result.allowed).toBe(true)
+    expect(result.warning).toBe(true)
+  })
+
+  it('works for all known roles', async () => {
+    for (const role of ['ads', 'seo', 'content', 'tenders']) {
+      mockGetRoleUsageToday.mockResolvedValue(0)
+      const result = await checkRoleBudget(roleMockSupabase, 'org-1', role)
+      expect(result.allowed).toBe(true)
+      expect(result.dailyLimit).toBe(ROLE_BUDGET_CONFIG[role].dailyTokenBudget)
+    }
+  })
+})
+
+describe('getExecutionTokenCap', () => {
+  it('returns maxTokensPerExecution for known roles', () => {
+    expect(getExecutionTokenCap('ads')).toBe(50_000)
+    expect(getExecutionTokenCap('seo')).toBe(30_000)
+    expect(getExecutionTokenCap('content')).toBe(80_000)
+    expect(getExecutionTokenCap('tenders')).toBe(60_000)
+  })
+
+  it('returns undefined for unknown roles', () => {
+    expect(getExecutionTokenCap('search_tasks')).toBeUndefined()
+    expect(getExecutionTokenCap('random')).toBeUndefined()
   })
 })
