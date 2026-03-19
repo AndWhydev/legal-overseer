@@ -117,7 +117,7 @@ export function useFileUpload(threadId?: string | null): UseFileUploadReturn {
           continue
         }
 
-        const { attachmentId, signedUrl, token } = await res.json()
+        const { attachmentId, signedUrl } = await res.json()
 
         // Update item with real attachment ID
         setUploads(prev =>
@@ -163,12 +163,8 @@ export function useFileUpload(threadId?: string | null): UseFileUploadReturn {
             reject(new Error('Upload aborted'))
           }
 
-          // Supabase Storage signed upload expects PUT with the token as a query param
-          const uploadUrl = signedUrl.includes('?')
-            ? `${signedUrl}&token=${encodeURIComponent(token)}`
-            : `${signedUrl}?token=${encodeURIComponent(token)}`
-
-          xhr.open('PUT', uploadUrl)
+          // Supabase Storage signedUrl already contains the token query param
+          xhr.open('PUT', signedUrl)
           xhr.setRequestHeader('Content-Type', file.type)
           xhr.send(file)
         })

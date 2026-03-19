@@ -19,53 +19,57 @@ const VALID_ACTIVITY_TYPES: ActivityType[] = ['insight', 'action', 'escalation',
  *   - offset: pagination offset
  */
 export async function GET(request: NextRequest) {
-  const supabase = await createClient()
-  if (!supabase) {
-    return NextResponse.json({ error: 'Failed to create client' }, { status: 500 })
-  }
+  try {
+    const supabase = await createClient()
+    if (!supabase) {
+      return NextResponse.json({ error: 'Supabase not configured' }, { status: 503 })
+    }
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
 
-  const orgId = await getActiveOrgId(supabase, user.id)
-  if (!orgId) {
-    return NextResponse.json({ error: 'No active organization' }, { status: 403 })
-  }
+    let orgId: string
+    try {
+      orgId = await getActiveOrgId(supabase, user.id)
+    } catch (tenancyError) {
+      const msg = tenancyError instanceof Error ? tenancyError.message : 'Unknown tenancy error'
+      logger.warn(`[api/roles/activity] Tenancy resolution failed for user ${user.id}: ${msg}`)
+      return NextResponse.json({ error: 'No active organization' }, { status: 403 })
+    }
 
-  const params = request.nextUrl.searchParams
-  const roleTypeParam = params.get('role_type')
-  const typesParam = params.get('types')
-  const limitParam = Number(params.get('limit') ?? '50')
-  const offsetParam = Number(params.get('offset') ?? '0')
+    const params = request.nextUrl.searchParams
+    const roleTypeParam = params.get('role_type')
+    const typesParam = params.get('types')
+    const limitParam = Number(params.get('limit') ?? '50')
+    const offsetParam = Number(params.get('offset') ?? '0')
 
-  const limit = Number.isFinite(limitParam) && limitParam > 0 ? Math.min(limitParam, 200) : 50
-  const offset = Number.isFinite(offsetParam) && offsetParam >= 0 ? offsetParam : 0
+    const limit = Number.isFinite(limitParam) && limitParam > 0 ? Math.min(limitParam, 200) : 50
+    const offset = Number.isFinite(offsetParam) && offsetParam >= 0 ? offsetParam : 0
 
-  // Validate role_type filter
-  if (roleTypeParam && !VALID_ROLE_TYPES.includes(roleTypeParam as RoleType)) {
-    return NextResponse.json(
-      { error: `Invalid role_type. Valid: ${VALID_ROLE_TYPES.join(', ')}` },
-      { status: 400 },
-    )
-  }
-
-  // Validate activity types filter
-  let typeFilters: ActivityType[] | undefined
-  if (typesParam) {
-    const requested = typesParam.split(',').map(t => t.trim()) as ActivityType[]
-    const invalid = requested.filter(t => !VALID_ACTIVITY_TYPES.includes(t))
-    if (invalid.length > 0) {
+    // Validate role_type filter
+    if (roleTypeParam && !VALID_ROLE_TYPES.includes(roleTypeParam as RoleType)) {
       return NextResponse.json(
-        { error: `Invalid activity types: ${invalid.join(', ')}. Valid: ${VALID_ACTIVITY_TYPES.join(', ')}` },
+        { error: `Invalid role_type. Valid: ${VALID_ROLE_TYPES.join(', ')}` },
         { status: 400 },
       )
     }
-    typeFilters = requested
-  }
 
-  try {
+    // Validate activity types filter
+    let typeFilters: ActivityType[] | undefined
+    if (typesParam) {
+      const requested = typesParam.split(',').map(t => t.trim()) as ActivityType[]
+      const invalid = requested.filter(t => !VALID_ACTIVITY_TYPES.includes(t))
+      if (invalid.length > 0) {
+        return NextResponse.json(
+          { error: `Invalid activity types: ${invalid.join(', ')}. Valid: ${VALID_ACTIVITY_TYPES.join(', ')}` },
+          { status: 400 },
+        )
+      }
+      typeFilters = requested
+    }
+
     // Build activity query
     let activityQuery = supabase
       .from('role_activity')

@@ -10,22 +10,26 @@ import { logger } from '@/lib/core/logger'
  * last tick, active workflows, key metrics.
  */
 export async function GET() {
-  const supabase = await createClient()
-  if (!supabase) {
-    return NextResponse.json({ error: 'Failed to create client' }, { status: 500 })
-  }
-
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
-  const orgId = await getActiveOrgId(supabase, user.id)
-  if (!orgId) {
-    return NextResponse.json({ error: 'No active organization' }, { status: 403 })
-  }
-
   try {
+    const supabase = await createClient()
+    if (!supabase) {
+      return NextResponse.json({ error: 'Supabase not configured' }, { status: 503 })
+    }
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    let orgId: string
+    try {
+      orgId = await getActiveOrgId(supabase, user.id)
+    } catch (tenancyError) {
+      const msg = tenancyError instanceof Error ? tenancyError.message : 'Unknown tenancy error'
+      logger.warn(`[api/roles/status] Tenancy resolution failed for user ${user.id}: ${msg}`)
+      return NextResponse.json({ error: 'No active organization' }, { status: 403 })
+    }
+
     // Fetch all role configs for this org
     const { data: configs, error: configError } = await supabase
       .from('role_configs')

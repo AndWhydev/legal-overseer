@@ -11,33 +11,37 @@ export async function POST(
   _request: NextRequest,
   { params }: { params: Promise<{ roleType: string }> },
 ) {
-  const { roleType } = await params
-
-  // Validate role type
-  if (!VALID_ROLE_TYPES.includes(roleType as RoleType)) {
-    return NextResponse.json(
-      { error: `Invalid role type: ${roleType}. Valid types: ${VALID_ROLE_TYPES.join(', ')}` },
-      { status: 400 },
-    )
-  }
-
-  // Auth
-  const supabase = await createClient()
-  if (!supabase) {
-    return NextResponse.json({ error: 'Failed to create client' }, { status: 500 })
-  }
-
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
-  const orgId = await getActiveOrgId(supabase, user.id)
-  if (!orgId) {
-    return NextResponse.json({ error: 'No active organization' }, { status: 403 })
-  }
-
   try {
+    const { roleType } = await params
+
+    // Validate role type
+    if (!VALID_ROLE_TYPES.includes(roleType as RoleType)) {
+      return NextResponse.json(
+        { error: `Invalid role type: ${roleType}. Valid types: ${VALID_ROLE_TYPES.join(', ')}` },
+        { status: 400 },
+      )
+    }
+
+    // Auth
+    const supabase = await createClient()
+    if (!supabase) {
+      return NextResponse.json({ error: 'Supabase not configured' }, { status: 503 })
+    }
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    let orgId: string
+    try {
+      orgId = await getActiveOrgId(supabase, user.id)
+    } catch (tenancyError) {
+      const msg = tenancyError instanceof Error ? tenancyError.message : 'Unknown tenancy error'
+      logger.warn(`[api/roles/disable] Tenancy resolution failed for user ${user.id}: ${msg}`)
+      return NextResponse.json({ error: 'No active organization' }, { status: 403 })
+    }
+
     const result = await disableRole(supabase, orgId, roleType as RoleType)
 
     if (!result.success) {
@@ -51,7 +55,7 @@ export async function POST(
     })
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
-    logger.error(`[api/roles/disable] Failed to disable ${roleType}: ${message}`)
+    logger.error(`[api/roles/disable] Failed to disable role: ${message}`)
     return NextResponse.json({ error: message }, { status: 500 })
   }
 }
