@@ -38,6 +38,7 @@ const TOOL_LABEL_MAP: Record<string, { label: string; sublabel: string; icon: st
   create_reminder: { label: 'Setting reminder', sublabel: 'CREATING', icon: '⏰' },
   schedule_event: { label: 'Scheduling event', sublabel: 'CREATING', icon: '📅' },
   trigger_swarm: { label: 'Deploying swarm', sublabel: 'COORDINATING', icon: '🐝' },
+  spawn_agent: { label: 'Working on sub-task', sublabel: 'DELEGATING', icon: '🔀' },
 }
 
 /** Quick heuristic: skip Haiku planner for trivial messages (greetings, single words, etc.) */
