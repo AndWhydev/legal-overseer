@@ -69,12 +69,21 @@ export class SwarmCoordinator {
       const classification = await this.classify(input)
 
       if (!classification.templateSlug) {
-        throw new Error('No matching swarm template found for this request')
-      }
-
-      template = await this.loadTemplate(classification.templateSlug)
-      if (!template) {
-        throw new Error(`Template "${classification.templateSlug}" not found`)
+        // No template matches — try freeform decomposition
+        const dynamicDef = await this.freeformDecompose(input)
+        if (!dynamicDef) {
+          throw new Error('Could not decompose this request into a multi-step workflow')
+        }
+        template = {
+          slug: 'dynamic',
+          definition: dynamicDef,
+        }
+        params = classification.extractedParams
+      } else {
+        template = await this.loadTemplate(classification.templateSlug)
+        if (!template) {
+          throw new Error(`Template "${classification.templateSlug}" not found`)
+        }
       }
 
       params = { ...classification.extractedParams, ...params }
@@ -295,6 +304,111 @@ Return ONLY a JSON object with the extracted values. Use null for parameters not
     }
 
     return params
+  }
+
+  // ── Freeform Decomposition ──────────────────────────────────────────
+
+  /**
+   * Decompose a natural language request into a dynamic execution DAG.
+   * Uses Haiku for cost optimization. Returns null if decomposition fails
+   * or the request is too simple for multi-step execution.
+   */
+  private async freeformDecompose(input: string): Promise<SwarmDefinition | null> {
+    const apiKey = process.env.ANTHROPIC_API_KEY
+    if (!apiKey) return null
+
+    const client = new Anthropic({ apiKey })
+
+    const systemPrompt = `You are a workflow decomposition engine for BitBit, an AI operations platform.
+
+Given a user request, break it into 2-6 independent execution steps that can be run by specialized agents.
+
+Available agent roles:
+- sales: Lead outreach, proposals, client communication, CRM updates
+- finance: Invoicing, payment tracking, financial reports, expense management
+- operations: Task management, scheduling, process automation, project coordination
+- research: Web research, competitive analysis, market intelligence, data gathering
+- comms: Email drafting, message composition, notification management, follow-ups
+
+Each step has:
+- key: snake_case identifier (unique within the workflow)
+- label: human-readable step name (2-4 words)
+- description: what this step should accomplish (1-2 sentences, include all context the agent needs)
+- agentRole: one of sales, finance, operations, research, comms (lowercase)
+- dependsOn: array of step keys that must complete before this step starts (empty array if independent)
+
+Rules:
+- Maximize parallelism: only add dependencies when a step genuinely needs output from another
+- Each step should be independently executable with its own context
+- Include relevant entity names, amounts, dates in step descriptions
+- If the request is too simple for multi-step execution (1 action), return null
+- Return ONLY valid JSON, no markdown fences
+
+Output format:
+{
+  "name": "Workflow name",
+  "description": "What this workflow accomplishes",
+  "steps": [
+    { "key": "step_key", "label": "Step Name", "description": "...", "agentRole": "operations", "dependsOn": [] }
+  ]
+}
+
+Or null if the request doesn't warrant multi-step decomposition.`
+
+    try {
+      const response = await client.messages.create({
+        model: resolveModel('classification'),
+        max_tokens: 1024,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: input }],
+      })
+
+      const text = response.content
+        .filter((b): b is Anthropic.TextBlock => b.type === 'text')
+        .map(b => b.text)
+        .join('')
+
+      const cleaned = text.replace(/```json?\n?/g, '').replace(/```/g, '').trim()
+
+      if (cleaned === 'null' || cleaned === '') return null
+
+      const parsed = JSON.parse(cleaned)
+      if (!parsed || !parsed.steps || !Array.isArray(parsed.steps) || parsed.steps.length < 2) {
+        return null
+      }
+
+      const validRoles = new Set(['sales', 'finance', 'comms', 'operations', 'research', 'coordinator'])
+
+      // Convert to SwarmDefinition format
+      const definition: SwarmDefinition = {
+        version: '1.0',
+        steps: parsed.steps.map((s: { key: string; label: string; description: string; agentRole: string; dependsOn?: string[] }) => ({
+          key: String(s.key),
+          type: 'agent' as const,
+          label: String(s.label),
+          description: String(s.description),
+          agentRole: (validRoles.has(s.agentRole) ? s.agentRole : 'operations') as import('./types').AgentRole,
+          prompt: String(s.description),
+          dependsOn: Array.isArray(s.dependsOn) ? s.dependsOn.map(String) : [],
+        })),
+        governance: {
+          approvalRequired: [],
+          notifyOnComplete: [],
+          timeoutMs: 30 * 60 * 1000,
+        },
+        inputSchema: {},
+      }
+
+      logger.info('[swarm-coordinator] Freeform decomposition succeeded', {
+        stepCount: definition.steps.length,
+        roles: [...new Set(definition.steps.map(s => s.agentRole))],
+      })
+
+      return definition
+    } catch (err) {
+      logger.warn('[swarm-coordinator] Freeform decomposition failed', { error: err })
+      return null
+    }
   }
 
   // ── Template Loading ──────────────────────────────────────────────────

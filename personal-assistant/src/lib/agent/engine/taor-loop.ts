@@ -40,6 +40,9 @@ import { executeToolBatch } from './tool-executor'
 /** Safety ceiling — only for runaway cost protection. The model decides when to stop. */
 const SAFETY_CEILING = 50
 
+/** Server-side compaction: API summarizes conversation when context overflows. */
+const COMPACTION_ENABLED = process.env.BITBIT_ENABLE_COMPACTION !== 'false' // default: enabled
+
 // ---------------------------------------------------------------------------
 // TAOR Loop
 // ---------------------------------------------------------------------------
@@ -269,6 +272,13 @@ export async function* runTAORLoop(
             messages,
           }
 
+          // Server-side compaction: handles context overflow automatically
+          if (COMPACTION_ENABLED) {
+            streamConfig.betas = ['interleaved-thinking-2025-05-14', 'compact-2026-01-12']
+          } else {
+            streamConfig.betas = ['interleaved-thinking-2025-05-14']
+          }
+
           if (purpose === 'synthesis') {
             streamConfig.thinking = { type: 'enabled', budget_tokens: 8192 }
           }
@@ -401,14 +411,23 @@ export async function* runTAORLoop(
     totalOutputTokens += iterOutputTokens
     executionTokens += iterInputTokens + iterOutputTokens
 
-    // ── Compaction handling ─────────────────────────────────────────
-    // If the API returns a compaction stop_reason, reset messages with
-    // the compacted content and continue the loop. The compaction beta
-    // may not be available yet — if it never fires, the loop proceeds
-    // normally until the model stops calling tools.
+    // ── COMPACTION: API summarized the conversation to free context ──
     if ((response as unknown as Record<string, unknown>).stop_reason === 'compaction') {
-      messages = [{ role: 'user', content: message }, { role: 'assistant', content: response.content }]
-      logger.info('[engine] Context compacted by API, continuing loop')
+      logger.info('[taor] Context compaction triggered', {
+        iteration: iterationCount,
+        inputTokens: response.usage?.input_tokens,
+        outputTokens: response.usage?.output_tokens,
+        totalInputSoFar: totalInputTokens,
+      })
+
+      // The compaction block is in response.content. Preserve it as the
+      // conversation summary, then continue the loop with fresh context.
+      messages = [
+        { role: 'assistant', content: response.content },
+        { role: 'user', content: '[Context compacted. Continue with the current task. All prior context has been summarized above.]' },
+      ]
+
+      yield { type: 'checkpoint', data: { message_index: messages.length, label: 'Context compacted' } }
       continue
     }
 

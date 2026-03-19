@@ -816,6 +816,19 @@ export function ChatInterface({ userName }: { userName?: string }) {
               case 'plan_stage_update':
                 break
 
+              case 'sub_agent_start': {
+                // Handled via chain of thought — the tool_call for spawn_agent already shows
+                // "Working on sub-task". This event adds the description.
+                // No state change needed — the tool_call UI handles the visual.
+                break
+              }
+
+              case 'sub_agent_complete': {
+                // Sub-agent finished — no special handling needed.
+                // The tool_result for spawn_agent will carry the summary.
+                break
+              }
+
               case 'tool_call': {
                 // Tools are running — stop thinking state so avatar switches to tool-specific activity
                 setIsThinkingStreaming(false)

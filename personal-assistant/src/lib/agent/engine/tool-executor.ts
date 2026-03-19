@@ -11,7 +11,7 @@
  */
 
 import type Anthropic from '@anthropic-ai/sdk'
-import { executeAgentTool, getJITInstruction, type ExecuteToolOptions } from '@/lib/agent/tools'
+import { executeAgentTool, getJITInstruction, type ExecuteToolOptions, type ToolResult } from '@/lib/agent/tools'
 import { checkRoleBudget, getExecutionTokenCap, type RoleBudgetResult } from '@/lib/agent/cost-guard'
 import { extractCitationsFromToolResult } from '@/lib/agent/citation-extractor'
 import { reflectAction } from '@/lib/context/action-reflector'
@@ -135,14 +135,14 @@ export async function executeToolBatch(
         return Promise.resolve({
           success: false,
           error: override.result.reason || `Daily token budget for ${override.role} exhausted`,
-        } as { success: boolean; data?: unknown; error?: string; queued?: boolean; approvalId?: string })
+        } as ToolResult)
       }
       if (executionCapHit) {
         // Execution token cap hit -- skip remaining tool calls
         return Promise.resolve({
           success: false,
           error: `Per-execution token cap reached for ${currentActiveRole}. Provide your best answer with current information.`,
-        } as { success: boolean; data?: unknown; error?: string; queued?: boolean; approvalId?: string })
+        } as ToolResult)
       }
       return executeAgentTool(
         tool.name,
@@ -177,6 +177,14 @@ export async function executeToolBatch(
     }
 
     const result = execution.value
+
+    // Forward side-channel events from tool handlers (e.g., sub_agent_start/complete)
+    if (result.sideEvents) {
+      for (const se of result.sideEvents) {
+        events.push(se as AgentEvent)
+      }
+    }
+
     try {
       // Extract citations from tool result
       try {

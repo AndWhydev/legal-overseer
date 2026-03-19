@@ -207,6 +207,8 @@ export interface ToolResult {
   error?: string
   queued?: boolean
   approvalId?: string
+  /** Side-channel events to forward to the parent's SSE stream (e.g., sub_agent_start/complete) */
+  sideEvents?: Array<{ type: string; data: unknown }>
 }
 
 export type AgentToolHandler = (

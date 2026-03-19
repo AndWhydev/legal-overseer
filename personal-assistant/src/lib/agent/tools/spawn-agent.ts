@@ -54,6 +54,7 @@ export async function handleSpawnAgent(
 ): Promise<ToolResult> {
   const task = input.task as string
   const description = input.description as string
+  const sideEvents: Array<{ type: string; data: unknown }> = []
 
   // Depth guard: prevent infinite recursion
   if (spawnContext.currentDepth >= spawnContext.maxDepth) {
@@ -64,6 +65,9 @@ export async function handleSpawnAgent(
   }
 
   const agentId = `sub-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+
+  // Emit start event
+  sideEvents.push({ type: 'sub_agent_start', data: { agentId, description } })
 
   logger.info('[spawn-agent] Spawning sub-agent', {
     agentId,
@@ -95,7 +99,8 @@ export async function handleSpawnAgent(
     }
 
     if (!finalMessage) {
-      return { success: false, error: 'Sub-agent completed without producing a response.' }
+      sideEvents.push({ type: 'sub_agent_complete', data: { agentId, summary: '(no response)' } })
+      return { success: false, error: 'Sub-agent completed without producing a response.', sideEvents }
     }
 
     logger.info('[spawn-agent] Sub-agent complete', {
@@ -104,10 +109,15 @@ export async function handleSpawnAgent(
       messageLength: finalMessage.length,
     })
 
-    return { success: true, data: finalMessage }
+    // Emit complete event with summary
+    const summaryPreview = finalMessage.length > 200 ? finalMessage.slice(0, 197) + '...' : finalMessage
+    sideEvents.push({ type: 'sub_agent_complete', data: { agentId, summary: summaryPreview } })
+
+    return { success: true, data: finalMessage, sideEvents }
   } catch (err) {
     const errorMsg = err instanceof Error ? err.message : String(err)
     logger.error('[spawn-agent] Sub-agent failed', { agentId, error: errorMsg })
-    return { success: false, error: `Sub-agent "${description}" failed: ${errorMsg}` }
+    sideEvents.push({ type: 'sub_agent_complete', data: { agentId, summary: `Failed: ${errorMsg}` } })
+    return { success: false, error: `Sub-agent "${description}" failed: ${errorMsg}`, sideEvents }
   }
 }
