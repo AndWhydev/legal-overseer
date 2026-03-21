@@ -2,10 +2,10 @@ import { describe, it, expect } from 'vitest'
 
 describe('/api/cron/triage', () => {
   it('route file exists and exports GET handler', async () => {
-    const module = await import('./route')
-    expect(module.GET).toBeDefined()
-    expect(typeof module.GET).toBe('function')
-    expect(module.maxDuration).toBe(300)
-    expect(module.dynamic).toBe('force-dynamic')
+    const routeModule = await import('./route')
+    expect(routeModule.GET).toBeDefined()
+    expect(typeof routeModule.GET).toBe('function')
+    expect(routeModule.maxDuration).toBe(300)
+    expect(routeModule.dynamic).toBe('force-dynamic')
   })
 })

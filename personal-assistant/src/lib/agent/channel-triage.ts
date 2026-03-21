@@ -706,11 +706,15 @@ export async function runTriage(
 
     // 7. Auto-create tasks for actionable EMAIL messages from human senders only.
     // Filter out automated/transactional emails that shouldn't become tasks:
-    // password resets, login confirmations, shipping notifications, newsletters, test emails
+    // password resets, login confirmations, shipping notifications, newsletters, test emails,
+    // AND BitBit's own notification emails (approval, alert, digest, report).
     const isEmailChannel = (msg.channel as string) === 'gmail' || (msg.channel as string) === 'outlook'
     const subjectLower = ((msg.subject as string) ?? '').toLowerCase()
-    const isTransactional = /(?:password|reset|confirm|verify|sign.?in|log.?in|unsubscribe|no.?reply|noreply|delivery|shipped|tracking|newsletter|bridge test|test from|account.?activ|welcome.?to|receipt|order.?confirm|email.?verif|security.?alert|two.?factor|2fa|otp|one.?time|subscription|billing.?statement)/i.test(subjectLower)
-    if (msgCategory === 'action_required' && !isDuplicate && senderType === 'human' && isEmailChannel && !isTransactional && classification.significance >= 8) {
+    const senderEmailLower = ((msg.sender_email as string) ?? '').toLowerCase()
+    const notificationFromEmail = (process.env.NOTIFICATION_FROM_EMAIL || 'bitbit@bitbit.chat').toLowerCase()
+    const isSelfEmail = senderEmailLower === notificationFromEmail || senderEmailLower.includes('bitbit')
+    const isTransactional = /(?:password|reset|confirm|verify|sign.?in|log.?in|unsubscribe|no.?reply|noreply|delivery|shipped|tracking|newsletter|bridge test|test from|account.?activ|welcome.?to|receipt|order.?confirm|email.?verif|security.?alert|two.?factor|2fa|otp|one.?time|subscription|billing.?statement|approval.?needed|alert.?escalation|daily.?digest|weekly.?report|bitbit.?digest|bitbit.?alert)/i.test(subjectLower)
+    if (msgCategory === 'action_required' && !isDuplicate && senderType === 'human' && isEmailChannel && !isTransactional && !isSelfEmail && classification.significance >= 8) {
       const created = await createTaskForMessage(
         supabase, orgId, msg, classification, priority, contactId,
       )
