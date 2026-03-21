@@ -86,8 +86,8 @@ export type AgentEvent =
   | { type: 'execution_cap_hit'; data: { role: string; tokensUsed: number; cap: number } }
   | { type: 'citation'; data: { citations: Array<{ index: number; url: string; title: string; description?: string }> } }
   | { type: 'checkpoint'; data: { message_index: number; label: string } }
-  | { type: 'sub_agent_start'; data: { agentId: string; parentAgentId?: string; task: string } }
-  | { type: 'sub_agent_complete'; data: { agentId: string; parentAgentId?: string; result: unknown; success: boolean } }
+  | { type: 'sub_agent_start'; data: { agentId: string; description: string } }
+  | { type: 'sub_agent_complete'; data: { agentId: string; summary: string } }
   | { type: 'done'; data: unknown }
 
 // ---------------------------------------------------------------------------

@@ -54,6 +54,7 @@ export async function handleSpawnAgent(
 ): Promise<ToolResult> {
   const task = input.task as string
   const description = input.description as string
+  const toolGroups = input.tool_groups as string[] | undefined
   const sideEvents: Array<{ type: string; data: unknown }> = []
 
   // Depth guard: prevent infinite recursion
@@ -89,8 +90,8 @@ export async function handleSpawnAgent(
       skipCostGuard: false,
       parentAgentId: agentId,
       maxDepth: spawnContext.maxDepth,
-      // Pass depth to the sub-agent so it knows its nesting level
       _spawnDepth: spawnContext.currentDepth + 1,
+      toolGroups,
     } as any)) {
       // Only capture the final message — sub-agent events are NOT forwarded to parent SSE
       if (event.type === 'message') {
