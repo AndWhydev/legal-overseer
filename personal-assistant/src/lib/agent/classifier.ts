@@ -98,6 +98,11 @@ export function classifyByHeaders(headers: Record<string, string>): SenderType {
     return 'automated'
   }
 
+  // Known notification platform domains — these are never human-to-human
+  if (/(@|\.)(?:linkedin\.com|facebookmail\.com|facebook\.com|twitter\.com|x\.com|github\.com|atlassian\.net|jira\.com|asana\.com|slack\.com|trello\.com|notion\.so|canva\.com|figma\.com|zoom\.us|calendly\.com|stripe\.com|paypal\.com|square\.com|intuit\.com|xero\.com|hubspot\.com|mailchimp\.com|sendgrid\.net|googleusercontent\.com|google\.com\/a|accounts\.google\.com)/i.test(from)) {
+    return 'automated'
+  }
+
   return 'human'
 }
 
