@@ -106,7 +106,7 @@ async function fallbackDecay(
 
   // Fast decay
   const { data: fastData } = await supabase
-    .from('memory_entries')
+    .from('memory_palace_entries')
     .update({ confidence: 0 }) // simplified — real decay is more nuanced
     .eq('org_id', orgId)
     .eq('is_active', true)
@@ -119,7 +119,7 @@ async function fallbackDecay(
 
   // Archive below threshold
   const { data: archivedData } = await supabase
-    .from('memory_entries')
+    .from('memory_palace_entries')
     .update({
       is_active: false,
       archived_at: new Date().toISOString(),
@@ -150,7 +150,7 @@ async function mergeNearDuplicates(
   try {
     // Find memories with identical titles (exact duplicates)
     const { data: candidates } = await supabase
-      .from('memory_entries')
+      .from('memory_palace_entries')
       .select('id, title, confidence, corroboration_count, created_at')
       .eq('org_id', orgId)
       .eq('is_active', true)
@@ -180,7 +180,7 @@ async function mergeNearDuplicates(
         // Keep highest confidence one, archive the rest
         for (const dupId of duplicates) {
           await supabase
-            .from('memory_entries')
+            .from('memory_palace_entries')
             .update({
               is_active: false,
               superseded_by: current.id,
@@ -194,7 +194,7 @@ async function mergeNearDuplicates(
 
         // Boost the survivor's corroboration count
         await supabase
-          .from('memory_entries')
+          .from('memory_palace_entries')
           .update({
             corroboration_count: (current.corroboration_count ?? 0) + duplicates.length,
             last_corroborated_at: new Date().toISOString(),

@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
       supabase.from('contacts').select('*').eq('org_id', orgId),
       supabase.from('tasks').select('*').eq('org_id', orgId),
       supabase.from('channel_messages').select('*').eq('org_id', orgId).order('received_at', { ascending: false }).limit(1000),
-      supabase.from('memory_entries').select('*').eq('org_id', orgId),
+      supabase.from('memory_palace_entries').select('*').eq('org_id', orgId),
       supabase.from('agent_sessions').select('*').eq('org_id', orgId).order('created_at', { ascending: false }).limit(100),
       supabase.from('user_integrations').select('provider,status,connected_at,settings').eq('org_id', orgId),
     ])

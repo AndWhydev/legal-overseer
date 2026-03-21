@@ -130,23 +130,33 @@ export class MemoryPalaceService {
     } = input
 
     try {
+      // Map memory_type to category for memory_palace_entries table
+      const categoryMap: Record<string, string> = {
+        conversation: 'conversation', decision: 'decision', pattern: 'pattern',
+        fact: 'fact', relationship: 'relationship', pricing: 'pricing',
+        lesson_learned: 'fact', // closest category
+      }
+      const sourceMap: Record<string, string> = {
+        extraction: 'conversation_extraction', user_explicit: 'user_explicit',
+        agent_reflection: 'reflection_agent', consolidation: 'consolidation',
+        import: 'auto',
+      }
+
       const { data, error } = await this.supabase
-        .from('memory_entries')
+        .from('memory_palace_entries')
         .insert({
           org_id: this.orgId,
-          memory_type: memoryType,
+          category: categoryMap[memoryType] ?? 'fact',
           title,
           content,
-          type_metadata: typeMetadata,
           confidence,
           decay_rate: decayRate,
-          source_type: sourceType,
+          source: sourceMap[sourceType] ?? 'auto',
           source_thread_id: sourceThreadId ?? null,
-          source_message_ids: sourceMessageIds,
           source_channel: sourceChannel ?? null,
           entity_ids: entityIds,
           entity_names: entityNames,
-          occurred_at: occurredAt,
+          metadata: typeMetadata,
         })
         .select('id')
         .single()
@@ -231,7 +241,7 @@ export class MemoryPalaceService {
    */
   async getMemory(memoryId: string): Promise<MemoryEntryRow | null> {
     const { data, error } = await this.supabase
-      .from('memory_entries')
+      .from('memory_palace_entries')
       .select('*')
       .eq('id', memoryId)
       .eq('org_id', this.orgId)
@@ -253,7 +263,7 @@ export class MemoryPalaceService {
     options?: { memoryType?: MemoryType; limit?: number; minConfidence?: number },
   ): Promise<MemoryEntryRow[]> {
     let query = this.supabase
-      .from('memory_entries')
+      .from('memory_palace_entries')
       .select('*')
       .eq('org_id', this.orgId)
       .eq('is_active', true)
@@ -361,7 +371,7 @@ export class MemoryPalaceService {
    */
   private async fallbackSearch(input: SearchMemoryInput): Promise<SearchMemoryResult[]> {
     let query = this.supabase
-      .from('memory_entries')
+      .from('memory_palace_entries')
       .select('*')
       .eq('org_id', this.orgId)
       .eq('is_active', true)
@@ -402,7 +412,7 @@ export class MemoryPalaceService {
   async corroborateMemory(memoryId: string, boost: number = 0.1): Promise<void> {
     // Get current memory to compute new confidence
     const { data: current } = await this.supabase
-      .from('memory_entries')
+      .from('memory_palace_entries')
       .select('confidence, corroboration_count')
       .eq('id', memoryId)
       .eq('org_id', this.orgId)
@@ -415,7 +425,7 @@ export class MemoryPalaceService {
     const newCount = ((current.corroboration_count as number) ?? 0) + 1
 
     await this.supabase
-      .from('memory_entries')
+      .from('memory_palace_entries')
       .update({
         confidence: newConfidence,
         corroboration_count: newCount,
@@ -430,7 +440,7 @@ export class MemoryPalaceService {
    */
   async supersedeMemory(oldMemoryId: string, newMemoryId: string): Promise<void> {
     await this.supabase
-      .from('memory_entries')
+      .from('memory_palace_entries')
       .update({
         is_active: false,
         superseded_by: newMemoryId,
@@ -486,22 +496,22 @@ export class MemoryPalaceService {
   async getStats(): Promise<MemoryStats> {
     const [activeRes, archivedRes, typeRes, confRes, decisionRes, rangeRes] = await Promise.all([
       this.supabase
-        .from('memory_entries')
+        .from('memory_palace_entries')
         .select('id', { count: 'exact', head: true })
         .eq('org_id', this.orgId)
         .eq('is_active', true),
       this.supabase
-        .from('memory_entries')
+        .from('memory_palace_entries')
         .select('id', { count: 'exact', head: true })
         .eq('org_id', this.orgId)
         .eq('is_active', false),
       this.supabase
-        .from('memory_entries')
+        .from('memory_palace_entries')
         .select('memory_type')
         .eq('org_id', this.orgId)
         .eq('is_active', true),
       this.supabase
-        .from('memory_entries')
+        .from('memory_palace_entries')
         .select('confidence')
         .eq('org_id', this.orgId)
         .eq('is_active', true),
@@ -511,7 +521,7 @@ export class MemoryPalaceService {
         .eq('org_id', this.orgId)
         .gte('decided_at', new Date(Date.now() - 30 * 86400000).toISOString()),
       this.supabase
-        .from('memory_entries')
+        .from('memory_palace_entries')
         .select('occurred_at')
         .eq('org_id', this.orgId)
         .eq('is_active', true)
@@ -591,7 +601,7 @@ export class MemoryPalaceService {
 
       if (decision) {
         const { data: memory } = await this.supabase
-          .from('memory_entries')
+          .from('memory_palace_entries')
           .select('entity_ids, entity_names')
           .eq('id', decision.memory_entry_id)
           .single()

@@ -791,13 +791,13 @@ const handlers: Record<string, AgentToolHandler> = {
       results.push({ source: 'stored_knowledge', entries: uniqueMems })
     }
 
-    // 4. Legacy memory_entries fallback
-    let dbQuery = supabase.from('memory_entries').select('*').eq('org_id', orgId)
+    // 4. Memory Palace entries fallback
+    let dbQuery = supabase.from('memory_palace_entries').select('*').eq('org_id', orgId).eq('is_active', true)
     if (input.category) dbQuery = dbQuery.eq('category', input.category as string)
     if (input.query) dbQuery = dbQuery.ilike('content', `%${query}%`)
-    const { data: memories } = await dbQuery.order('created_at', { ascending: false }).limit(5)
+    const { data: memories } = await dbQuery.order('confidence', { ascending: false }).limit(5)
     if (memories && memories.length > 0) {
-      results.push({ source: 'memory_entries', entries: memories })
+      results.push({ source: 'memory_palace', entries: memories })
     }
 
     const totalResults = results.reduce((sum, r) => sum + r.entries.length, 0)
@@ -809,12 +809,16 @@ const handlers: Record<string, AgentToolHandler> = {
 
   async add_memory(input, orgId, supabase) {
     const { data, error } = await supabase
-      .from('memory_entries')
+      .from('memory_palace_entries')
       .insert({
         org_id: orgId,
         content: input.content as string,
-        category: input.category as string,
+        category: (input.category as string) || 'fact',
         confidence: (input.confidence as number) ?? 0.8,
+        source: 'user_explicit',
+        is_active: true,
+        entity_ids: [],
+        entity_names: [],
       })
       .select()
       .single()
