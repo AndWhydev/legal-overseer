@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { getActiveOrgId } from '@/lib/tenancy'
 
 export async function GET() {
   const supabase = await createClient()
@@ -8,9 +9,12 @@ export async function GET() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+  const orgId = await getActiveOrgId(supabase, user.id)
+
   const { data, error } = await supabase
     .from('contacts')
     .select('*')
+    .eq('org_id', orgId)
     .order('name')
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

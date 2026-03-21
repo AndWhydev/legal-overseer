@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { getActiveOrgId } from '@/lib/tenancy'
 
 // Allowlist of fields that can be updated on contacts
 const ALLOWED_CONTACT_FIELDS = [
@@ -23,6 +24,7 @@ export async function PATCH(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+  const orgId = await getActiveOrgId(supabase, user.id)
   const { id } = await params
   const body = await request.json()
 
@@ -35,6 +37,7 @@ export async function PATCH(
     .from('contacts')
     .update(filteredBody)
     .eq('id', id)
+    .eq('org_id', orgId)
     .select()
     .single()
 
@@ -52,12 +55,14 @@ export async function DELETE(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+  const orgId = await getActiveOrgId(supabase, user.id)
   const { id } = await params
 
   const { error } = await supabase
     .from('contacts')
     .delete()
     .eq('id', id)
+    .eq('org_id', orgId)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ deleted: id })

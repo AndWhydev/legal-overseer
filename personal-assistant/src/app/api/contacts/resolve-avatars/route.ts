@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { resolveAvatar } from '@/lib/avatar/resolver'
+import { getActiveOrgId } from '@/lib/tenancy'
 
 /**
  * POST /api/contacts/resolve-avatars
@@ -17,13 +18,16 @@ export async function POST(request: Request) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+  const orgId = await getActiveOrgId(supabase, user.id)
+
   const body = await request.json().catch(() => ({}))
   const contactIds = body.contact_ids as string[] | undefined
 
-  // Fetch contacts without avatars
+  // Fetch contacts without avatars — scoped to user's org
   let query = supabase
     .from('contacts')
     .select('id, name, emails, avatar_url')
+    .eq('org_id', orgId)
     .is('avatar_url', null)
     .limit(50)
 

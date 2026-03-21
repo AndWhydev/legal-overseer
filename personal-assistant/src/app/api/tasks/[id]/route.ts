@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { getActiveOrgId } from '@/lib/tenancy'
 
 // Allowlist of fields that can be updated on tasks
 const ALLOWED_TASK_FIELDS = [
@@ -23,6 +24,7 @@ export async function PATCH(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+  const orgId = await getActiveOrgId(supabase, user.id)
   const { id } = await params
   const body = await request.json()
 
@@ -37,6 +39,7 @@ export async function PATCH(
       .from('tasks')
       .select('metadata')
       .eq('id', id)
+      .eq('org_id', orgId)
       .single()
 
     if (fetchError) return NextResponse.json({ error: fetchError.message }, { status: 500 })
@@ -49,6 +52,7 @@ export async function PATCH(
     .from('tasks')
     .update(filteredBody)
     .eq('id', id)
+    .eq('org_id', orgId)
     .select()
     .single()
 
@@ -66,12 +70,14 @@ export async function DELETE(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+  const orgId = await getActiveOrgId(supabase, user.id)
   const { id } = await params
 
   const { error } = await supabase
     .from('tasks')
     .delete()
     .eq('id', id)
+    .eq('org_id', orgId)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ deleted: id })

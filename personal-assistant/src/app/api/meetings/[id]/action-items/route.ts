@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { updateActionItemStatus } from '@/lib/meetings/meeting-service'
 import { convertActionItemsToTasks } from '@/lib/meetings/ai-extraction'
+import { getActiveOrgId } from '@/lib/tenancy'
 
 /**
  * GET /api/meetings/[id]/action-items — List action items for a meeting.
@@ -15,7 +16,18 @@ export async function GET(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+  const orgId = await getActiveOrgId(supabase, user.id)
   const { id: meetingId } = await params
+
+  // Verify meeting belongs to user's org
+  const { data: meeting } = await supabase
+    .from('meetings')
+    .select('id')
+    .eq('id', meetingId)
+    .eq('org_id', orgId)
+    .single()
+
+  if (!meeting) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   const { data, error } = await supabase
     .from('meeting_action_items')
@@ -84,14 +96,17 @@ export async function POST(
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { id: meetingId } = await params
-  const orgId = (user.user_metadata?.org_id as string) ?? user.id
+  const orgId = await getActiveOrgId(supabase, user.id)
 
-  // Get meeting title
+  // Verify meeting belongs to user's org
   const { data: meeting } = await supabase
     .from('meetings')
     .select('title')
     .eq('id', meetingId)
+    .eq('org_id', orgId)
     .single()
+
+  if (!meeting) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   const tasksCreated = await convertActionItemsToTasks(
     supabase,

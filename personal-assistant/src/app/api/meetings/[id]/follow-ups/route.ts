@@ -4,6 +4,7 @@ import { approveFollowUp } from '@/lib/meetings/meeting-service'
 import { sendFollowUpEmail } from '@/lib/meetings/follow-up-sender'
 import type { MeetingFollowUp } from '@/lib/meetings/types'
 import { logger } from '@/lib/core/logger'
+import { getActiveOrgId } from '@/lib/tenancy'
 
 /**
  * GET /api/meetings/[id]/follow-ups — List follow-ups for a meeting.
@@ -17,7 +18,18 @@ export async function GET(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+  const orgId = await getActiveOrgId(supabase, user.id)
   const { id: meetingId } = await params
+
+  // Verify meeting belongs to user's org
+  const { data: meeting } = await supabase
+    .from('meetings')
+    .select('id')
+    .eq('id', meetingId)
+    .eq('org_id', orgId)
+    .single()
+
+  if (!meeting) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   const { data, error } = await supabase
     .from('meeting_follow_ups')
@@ -45,7 +57,18 @@ export async function PATCH(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  await params // validate route
+  const orgId = await getActiveOrgId(supabase, user.id)
+  const { id: meetingId } = await params
+
+  // Verify meeting belongs to user's org
+  const { data: meetingCheck } = await supabase
+    .from('meetings')
+    .select('id')
+    .eq('id', meetingId)
+    .eq('org_id', orgId)
+    .single()
+
+  if (!meetingCheck) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   let body: Record<string, unknown>
   try {
@@ -75,11 +98,11 @@ export async function PATCH(
       .single()
 
     if (followUpRecord?.recipient_email) {
-      const { id: meetingId } = await params
       const { data: meeting } = await supabase
         .from('meetings')
         .select('title')
         .eq('id', meetingId)
+        .eq('org_id', orgId)
         .single()
 
       const sendResult = await sendFollowUpEmail(
