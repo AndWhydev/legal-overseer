@@ -99,7 +99,7 @@ export async function sendCampaignEmail(
       to: [payload.to],
       subject: payload.subject,
       html: payload.htmlBody,
-      reply_to: payload.replyTo,
+      replyTo: payload.replyTo,
       tags: payload.tags,
     })
 
