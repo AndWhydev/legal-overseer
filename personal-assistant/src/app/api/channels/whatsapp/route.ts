@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { processWhatsAppMessage } from '@/lib/channels/whatsapp-parser'
 import { transcribeVoiceNote, downloadWhatsAppMedia } from '@/lib/channels/whatsapp-voice'
 import { verifyHmacSignature } from '@/lib/security/webhook-verification'
+import { resolveChannelIdentity } from '@/lib/conversation/identity-resolver'
 import { logger } from '@/lib/core/logger';
 
 const VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN
@@ -155,11 +156,25 @@ export async function POST(request: Request) {
                         continue
                     }
 
+                    // Resolve org from sender phone → contact mapping
+                    let targetOrgId = orgId
+                    try {
+                        const resolved = await resolveChannelIdentity(supabase, {
+                            channelType: 'whatsapp',
+                            channelIdentifier: phone,
+                        })
+                        if (resolved?.orgId) {
+                            targetOrgId = resolved.orgId
+                        }
+                    } catch {
+                        // Non-fatal — fall back to config-resolved org
+                    }
+
                     // Log the incoming message to channel_messages
                     const { data: insertedMsg, error } = await supabase
                         .from('channel_messages')
                         .insert({
-                            org_id: orgId,
+                            org_id: targetOrgId,
                             channel: 'whatsapp',
                             external_id: msg.id,
                             sender: name,
@@ -178,14 +193,14 @@ export async function POST(request: Request) {
                         const processStartMs = Date.now()
                         // Background process the message intent
                         // Do not await this, let Meta Webhook receive 200 OK fast
-                        processWhatsAppMessage(supabase, orgId, insertedMsg, text)
+                        processWhatsAppMessage(supabase, targetOrgId, insertedMsg, text)
                             .catch(e => {
                                 logger.error('Failed processing WhatsApp Message:', e)
                             })
                             .finally(() => {
                                 logger.info(JSON.stringify({
                                     event: 'whatsapp_webhook_latency',
-                                    orgId,
+                                    orgId: targetOrgId,
                                     messageType: msg.type,
                                     insertMs: processStartMs - webhookStartMs,
                                     processMs: Date.now() - processStartMs,

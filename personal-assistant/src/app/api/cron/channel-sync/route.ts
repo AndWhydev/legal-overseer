@@ -57,20 +57,22 @@ export async function GET(request: Request) {
           })
 
           // Enqueue newly inserted messages for RAG embedding
+          // Note: messages may have been re-routed to a different org by the relay daemon's
+          // sender→contact resolution. Query recent messages across all orgs for this channel.
           const { data: newMsgs } = await supabase
             .from('channel_messages')
-            .select('id, body, sender, sender_email, subject, received_at')
-            .eq('org_id', orgId)
+            .select('id, org_id, body, sender, sender_email, subject, received_at')
             .eq('channel', channelType)
             .order('received_at', { ascending: false })
             .limit(result.messagesInserted)
 
           for (const msg of newMsgs ?? []) {
+            const msgOrgId = (msg as Record<string, unknown>).org_id as string || orgId
             const content = [msg.subject, msg.body].filter(Boolean).join('\n\n')
             if (content.length > 10) {
-              enqueueEmbedding(supabase, orgId, msg.id, content, {
+              enqueueEmbedding(supabase, msgOrgId, msg.id, content, {
                 message_id: msg.id,
-                org_id: orgId,
+                org_id: msgOrgId,
                 channel: channelType,
                 sender: msg.sender ?? 'unknown',
                 sender_email: msg.sender_email ?? undefined,

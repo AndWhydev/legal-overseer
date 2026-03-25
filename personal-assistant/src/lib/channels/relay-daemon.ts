@@ -27,7 +27,41 @@ import { wordpressAdapter } from './wordpress'
 import { cluelyAdapter } from './cluely'
 import { isDuplicate, computeContentHash } from './dedup'
 import { getOrgCredential, storeOrgCredential, storeChannelCredential, encryptCredential } from '@/lib/integrations/credentials'
+import { resolveChannelIdentity } from '@/lib/conversation/identity-resolver'
 import { logger } from '@/lib/core/logger';
+
+/**
+ * Resolve which org a message should be routed to based on the sender.
+ * Falls back to the polling org if no contact/identity match is found.
+ */
+async function resolveMessageOrg(
+  supabase: SupabaseClient,
+  pollingOrgId: string,
+  msg: ChannelMessage,
+): Promise<string> {
+  // Only attempt resolution if we have a sender identifier
+  const senderIdentifier = msg.senderEmail || null
+  if (!senderIdentifier) return pollingOrgId
+
+  try {
+    const channelType = msg.channel === 'gmail' || msg.channel === 'outlook' ? 'email' : msg.channel
+    const resolved = await resolveChannelIdentity(supabase, {
+      channelType: channelType as 'email' | 'whatsapp' | 'sms',
+      channelIdentifier: senderIdentifier,
+    })
+
+    if (resolved?.orgId && resolved.orgId !== pollingOrgId) {
+      logger.info(
+        `[relay] Routing message from ${msg.sender} to org ${resolved.orgId} (contact match) instead of polling org ${pollingOrgId}`,
+      )
+      return resolved.orgId
+    }
+  } catch {
+    // Resolution failure is non-fatal — fall back to polling org
+  }
+
+  return pollingOrgId
+}
 import { fetchGooglePhotos, fetchOutlookPhotos, fetchSlackPhotos, fetchAsanaPhotos } from '@/lib/avatar/channel-photos'
 
 export interface PollResult {
@@ -397,15 +431,22 @@ export async function pollChannel(
     }
     const dedupDurationMs = Date.now() - dedupStartMs
 
-    // Phase: Insert
+    // Phase: Insert (with per-message org routing)
     const insertStartMs = Date.now()
     let inserted = 0
+    // Track resolved org per message for downstream phases (RAG, etc.)
+    const resolvedOrgs = new Map<string, string>()
     for (const { msg, contentHash } of messagesToInsert) {
+      // Resolve which org this message belongs to based on sender identity.
+      // If the sender is a contact in a different org, route it there.
+      const targetOrgId = await resolveMessageOrg(supabase, orgId, msg)
+      resolvedOrgs.set(msg.externalId, targetOrgId)
+
       const { data: insertedRow, error: upsertErr } = await supabase
         .from('channel_messages')
         .upsert(
           {
-            org_id: orgId,
+            org_id: targetOrgId,
             channel: msg.channel,
             external_id: msg.externalId,
             sender: msg.sender,
@@ -427,8 +468,8 @@ export async function pollChannel(
 
       if (!upsertErr && insertedRow) {
         inserted++
-        // Trigger classification with retry for each inserted message
-        await classifyWithRetry(supabase, orgId, insertedRow.id, msg)
+        // Trigger classification with retry — use the target org, not polling org
+        await classifyWithRetry(supabase, targetOrgId, insertedRow.id, msg)
       }
     }
     const insertDurationMs = Date.now() - insertStartMs
@@ -443,10 +484,11 @@ export async function pollChannel(
           for (const { msg: m } of messagesToInsert) {
             if (!m.body || m.body.length === 0) continue
 
+            const msgOrgId = resolvedOrgs.get(m.externalId) ?? orgId
             const content = (m as unknown as { bodyFull?: string }).bodyFull ?? m.body
             const metadata = {
               message_id: m.externalId,
-              org_id: orgId,
+              org_id: msgOrgId,
               channel: m.channel,
               sender: m.sender,
               sender_email: m.senderEmail,
@@ -457,7 +499,7 @@ export async function pollChannel(
               is_full_body: Boolean((m as unknown as { bodyFull?: string }).bodyFull),
             }
 
-            const result = await enqueueEmbedding(supabase as any, orgId, m.externalId, content, metadata) // eslint-disable-line @typescript-eslint/no-explicit-any
+            const result = await enqueueEmbedding(supabase as any, msgOrgId, m.externalId, content, metadata) // eslint-disable-line @typescript-eslint/no-explicit-any
             if (result.success) enqueued++
           }
 
