@@ -290,9 +290,22 @@ function LoginPageContent() {
         }}
       >
         {/* ── Logo (black silhouette) ── */}
-        <div style={{ flexShrink: 0, filter: 'brightness(0)', opacity: 0.85 }}>
-          <BitBitLogoVideo size={80} variant="idle" />
-        </div>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/bitbit-idle.apng"
+          alt="BitBit"
+          width={80}
+          height={80}
+          style={{
+            width: 80,
+            height: 80,
+            objectFit: 'contain',
+            display: 'block',
+            filter: 'brightness(0)',
+            opacity: 0.85,
+            flexShrink: 0,
+          }}
+        />
 
         {/* ── Heading with gradient text ── */}
         <header style={{ textAlign: 'center' }}>
