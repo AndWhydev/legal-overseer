@@ -1,6 +1,8 @@
 'use client'
 
-import { Plus, X } from 'lucide-react'
+import React, { useState } from 'react'
+import { Plus, X, Search } from 'lucide-react'
+import { ConversationSearch } from './conversation-search'
 
 export interface Thread {
   id: string
@@ -73,6 +75,8 @@ export function ConversationDrawer({
   onDeleteThread,
   isLoading,
 }: ConversationDrawerProps) {
+  const [searchOpen, setSearchOpen] = useState(false)
+
   if (!isOpen) return null
 
   return (
@@ -88,14 +92,40 @@ export function ConversationDrawer({
         {/* Header — matches sidebar panel header style */}
         <div className="bb-chat__drawer-header">
           <span className="bb-chat__drawer-title">Conversations</span>
-          <button
-            className="bb-chat__drawer-close"
-            onClick={onClose}
-            aria-label="Close drawer"
-          >
-            <X size={14} strokeWidth={1.8} />
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <button
+              onClick={() => setSearchOpen(!searchOpen)}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: searchOpen ? 'var(--text-primary)' : 'var(--text-muted)',
+                cursor: 'pointer',
+                padding: '4px',
+              }}
+              aria-label="Search conversations"
+            >
+              <Search size={14} strokeWidth={1.8} />
+            </button>
+            <button
+              className="bb-chat__drawer-close"
+              onClick={onClose}
+              aria-label="Close drawer"
+            >
+              <X size={14} strokeWidth={1.8} />
+            </button>
+          </div>
         </div>
+
+        {/* Search box */}
+        {searchOpen && (
+          <ConversationSearch
+            onSelectThread={threadId => {
+              onSelectThread(threadId)
+              onClose()
+            }}
+            onClose={() => setSearchOpen(false)}
+          />
+        )}
 
         {/* New chat — compact pill */}
         <div style={{ padding: '0 12px 8px' }}>

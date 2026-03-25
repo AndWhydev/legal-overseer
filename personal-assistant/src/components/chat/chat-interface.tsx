@@ -10,6 +10,7 @@ import { useAvatarEmotion } from './use-avatar-emotion'
 import { useSmoothStream } from './use-smooth-stream'
 import { useSmartScroll } from './use-smart-scroll'
 import { Whispers } from './whispers'
+import { FollowUpChips } from './follow-up-chips'
 import type { Whisper } from '@/lib/whispers/types'
 import { Shimmer } from '@/components/ai-elements/shimmer'
 import {
@@ -21,8 +22,11 @@ import {
 import { Checkpoint, CheckpointIcon } from '@/components/ai-elements/checkpoint'
 import { InvoiceArtifact } from './invoice-artifact'
 import { ChatAttachmentList } from './chat-attachment'
-import { CHAT_ATTACHMENTS_EVENT } from '@/components/dashboard/voice-pill'
+import { CHAT_ATTACHMENTS_EVENT, CHAT_COMMAND_EVENT } from '@/components/dashboard/voice-pill'
 import { useFileUpload } from '@/hooks/use-file-upload'
+import { useArtifacts, type Artifact } from './use-artifacts'
+import { ArtifactPanel } from './artifact-panel'
+import { ExportMenu } from './export-menu'
 
 interface ToolCall {
   name: string
@@ -548,6 +552,8 @@ export function ChatInterface({ userName }: { userName?: string }) {
   const [drawerLoading, setDrawerLoading] = useState(false)
   // Whispers visible state (hides when typing or conversation starts)
   const [whispersVisible, setWhispersVisible] = useState(true)
+  // Follow-up suggestions state
+  const [followUps, setFollowUps] = useState<string[]>([])
   const scrollRef = useRef<HTMLDivElement>(null)
   const currentAssistantIdRef = useRef<string | null>(null)
   // Tracks which assistant message the smooth stream content belongs to.
@@ -572,6 +578,9 @@ export function ChatInterface({ userName }: { userName?: string }) {
   // Smooth streaming and smart scroll hooks
   const smoothStream = useSmoothStream()
   const smartScroll = useSmartScroll(scrollRef)
+
+  // Artifact panel hook
+  const { activeArtifact, addArtifact, closeArtifact } = useArtifacts()
 
   // Compute emotion state for face avatar
   const lastMsgForEmotion = messages[messages.length - 1]
@@ -648,6 +657,18 @@ export function ChatInterface({ userName }: { userName?: string }) {
     smartScroll.onContentUpdate()
   }, [thinkingContent, isThinkingStreaming, smartScroll])
 
+  const handleOpenArtifact = useCallback((content: string, lang: string) => {
+    const isHtml = lang === 'html' || (content.includes('<!DOCTYPE') || content.includes('<html'))
+    addArtifact({
+      id: `art-${Date.now()}`,
+      type: isHtml ? 'html' : 'code',
+      title: isHtml ? 'HTML Preview' : `${lang || 'code'} snippet`,
+      content,
+      language: lang,
+      messageId: currentAssistantIdRef.current || '',
+    })
+  }, [addArtifact])
+
   const handleSend = useCallback(async (text: string) => {
     const trimmed = text.trim()
     if (!trimmed || isLoading) return
@@ -696,6 +717,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
     setInterToolNarrations([])
     setActiveCitations([])
     setPendingApprovals([])
+    setFollowUps([])
     // Finalize previous message content if smooth stream was mid-drain.
     // This prevents content loss when the user sends before the typing
     // animation finishes, and stops stale content from leaking into the
@@ -723,6 +745,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
     abortRef.current?.abort()
     const controller = new AbortController()
     abortRef.current = controller
+    let stallTimer: ReturnType<typeof setTimeout> | null = null
 
     try {
       const res = await fetch('/api/agent/chat', {
@@ -742,6 +765,19 @@ export function ChatInterface({ userName }: { userName?: string }) {
       const decoder = new TextDecoder()
       let buffer = ''
 
+      // Stall detection: show feedback if no events arrive for 30s
+      const resetStallTimer = () => {
+        if (stallTimer) clearTimeout(stallTimer)
+        stallTimer = setTimeout(() => {
+          if (requestGenRef.current === gen) {
+            setThinkingContent(prev =>
+              prev.includes('Taking longer') ? prev : prev + '\n\nTaking longer than expected\u2026'
+            )
+          }
+        }, 30_000)
+      }
+      resetStallTimer()
+
       while (true) {
         // Stop processing if this request has been superseded
         if (controller.signal.aborted) break
@@ -749,6 +785,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
         const { done, value } = await reader.read()
         if (done) break
 
+        resetStallTimer()
         buffer += decoder.decode(value, { stream: true })
         const lines = buffer.split('\n')
         buffer = lines.pop() || ''
@@ -983,6 +1020,14 @@ export function ChatInterface({ userName }: { userName?: string }) {
                 })
                 break
 
+              case 'follow_ups': {
+                const suggestions = event.data?.suggestions || event.data
+                if (Array.isArray(suggestions)) {
+                  setFollowUps(suggestions.slice(0, 3))
+                }
+                break
+              }
+
               case 'error':
                 setIsThinkingStreaming(false)
                 setShowReasoning(false)
@@ -1011,6 +1056,24 @@ export function ChatInterface({ userName }: { userName?: string }) {
                   if (responseContent) {
                     smoothStream.feedContent(responseContent)
                     interToolBufferRef.current = ''
+                  } else if (!assistantContent) {
+                    // Tools ran but produced no response text — show fallback
+                    setMessages(prev => {
+                      const existing = prev.find(m => m.id === assistantId)
+                      if (existing) {
+                        return prev.map(m =>
+                          m.id === assistantId
+                            ? { ...m, content: 'I ran into an issue generating a response. Please try again.' }
+                            : m
+                        )
+                      }
+                      return [...prev, {
+                        id: assistantId,
+                        role: 'assistant' as const,
+                        content: 'I ran into an issue generating a response. Please try again.',
+                        timestamp: new Date(),
+                      }]
+                    })
                   }
                   // Attach citations separately (no content overwrite)
                   if (responseCitations.length > 0) {
@@ -1026,7 +1089,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
                   // No-tool response: smooth stream is unused, set content directly.
                   // Create the message if it doesn't already exist (covers edge
                   // case where server sends only content_delta + done, no message event).
-                  const finalContent = assistantContent
+                  const finalContent = assistantContent || 'I ran into an issue generating a response. Please try again.'
                   setMessages(prev => {
                     const existing = prev.find(m => m.id === assistantId)
                     if (existing) {
@@ -1034,13 +1097,12 @@ export function ChatInterface({ userName }: { userName?: string }) {
                         m.id === assistantId
                           ? {
                               ...m,
-                              content: finalContent,
+                              content: existing.content || finalContent,
                               ...(responseCitations.length > 0 ? { citations: [...responseCitations] } : {}),
                             }
                           : m
                       )
                     }
-                    if (!finalContent) return prev
                     return [
                       ...prev,
                       {
@@ -1052,6 +1114,56 @@ export function ChatInterface({ userName }: { userName?: string }) {
                       },
                     ]
                   })
+                }
+
+                // Generate client-side follow-up suggestions from response
+                const contentToAnalyze = toolCalls.length > 0 ? responseContent : assistantContent
+                if (contentToAnalyze.length > 100 && followUps.length === 0) {
+                  // Strip markdown formatting before extracting topics
+                  const cleaned = contentToAnalyze
+                    .replace(/```[\s\S]*?```/g, '')   // remove code blocks
+                    .replace(/\*\*([^*]+)\*\*/g, '$1') // bold → plain
+                    .replace(/\*([^*]+)\*/g, '$1')     // italic → plain
+                    .replace(/`([^`]+)`/g, '$1')       // inline code → plain
+                    .replace(/#{1,6}\s+/g, '')          // headers → plain
+                    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // links → text
+                    .replace(/[[\]]/g, '')              // stray brackets
+                    .replace(/[✅❌⚠️🔍📧💡]/g, '')   // emoji noise
+
+                  // Extract meaningful sentences (not fragments)
+                  const sentences = cleaned
+                    .split(/(?<=[.!?])\s+/)
+                    .map(s => s.trim())
+                    .filter(s => s.length > 20 && s.length < 120 && !s.startsWith('-') && !s.startsWith('•'))
+                    .slice(0, 6)
+
+                  const suggestions: string[] = []
+
+                  // Extract key nouns/topics from sentences for natural follow-ups
+                  if (sentences.length > 0) {
+                    // Find a sentence that mentions a person, thing, or action
+                    const topicSentence = sentences.find(s => /[A-Z][a-z]+/.test(s)) || sentences[0]
+                    // Extract the subject at a word boundary (max 45 chars)
+                    const subject = topicSentence
+                      .replace(/^(i |we |the |this |that |it |they |here |there )+/i, '')
+                      .replace(/[.!?]+$/, '')
+                    const truncated = subject.length > 45
+                      ? subject.slice(0, subject.lastIndexOf(' ', 45)) || subject.slice(0, 45)
+                      : subject
+                    if (truncated.length > 5) suggestions.push(`Tell me more about ${truncated.toLowerCase()}`)
+                  }
+                  if (sentences.length > 2) {
+                    const actionSentence = sentences.find(s => /\b(need|should|want|could|can|will)\b/i.test(s))
+                    if (actionSentence) {
+                      const action = actionSentence.replace(/[.!?]+$/, '')
+                      const truncAction = action.length > 50
+                        ? action.slice(0, action.lastIndexOf(' ', 50)) || action.slice(0, 50)
+                        : action
+                      if (truncAction.length > 10) suggestions.push(`${truncAction}?`)
+                    }
+                  }
+                  if (contentToAnalyze.includes('```')) suggestions.push('Can you modify this code?')
+                  if (suggestions.length > 0) setFollowUps(suggestions.slice(0, 3))
                 }
                 break
               }
@@ -1077,11 +1189,41 @@ export function ChatInterface({ userName }: { userName?: string }) {
       ])
     } finally {
       // Only clean up loading state if this is still the active request.
+      if (stallTimer) clearTimeout(stallTimer)
       if (requestGenRef.current !== gen) return
       setIsLoading(false)
       setIsThinkingStreaming(false)
     }
   }, [isLoading, threadId, smoothStream, smartScroll])
+
+  const handleEditMessage = useCallback((messageId: string, newContent: string) => {
+    const idx = messages.findIndex(m => m.id === messageId)
+    if (idx === -1) return
+    // Truncate conversation at this message (remove it and everything after)
+    setMessages(prev => prev.slice(0, idx))
+    // Clear related artifacts
+    setInvoiceArtifacts(prev => {
+      const removedIds = new Set(messages.slice(idx + 1).map(m => m.id))
+      return prev.filter(inv => !removedIds.has(inv.afterMessageId))
+    })
+    setFollowUps([])
+    // Re-send with edited content
+    handleSend(newContent)
+  }, [messages, handleSend])
+
+  const handleRegenerate = useCallback(() => {
+    const lastUserMsg = [...messages].reverse().find(m => m.role === 'user')
+    if (!lastUserMsg || isLoading) return
+    // Remove the last assistant message
+    setMessages(prev => {
+      const lastAssistantIdx = [...prev].reverse().findIndex(m => m.role === 'assistant')
+      if (lastAssistantIdx === -1) return prev
+      const actualIdx = prev.length - 1 - lastAssistantIdx
+      return prev.slice(0, actualIdx)
+    })
+    // Re-send the same user message
+    handleSend(lastUserMsg.content)
+  }, [messages, isLoading, handleSend])
 
   // Listen for attachment metadata dispatched from VoicePill before text submit
   useEffect(() => {
@@ -1570,6 +1712,25 @@ export function ChatInterface({ userName }: { userName?: string }) {
     setWhispersVisible(true)
   }, [threadId, smoothStream])
 
+  // Listen for slash command events
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const cmdId = (e as CustomEvent<string>).detail
+      if (cmdId === 'new') handleNewConversation()
+      if (cmdId === 'history') handleOpenDrawer()
+      if (cmdId === 'clear') handleNewConversation()
+      if (cmdId === 'search') setDrawerOpen(true) // Drawer will show search
+      if (cmdId === 'memory') {
+        // TODO: navigate to memory tab or open search panel
+      }
+      if (cmdId === 'export') {
+        // TODO: trigger export menu
+      }
+    }
+    window.addEventListener(CHAT_COMMAND_EVENT, handler)
+    return () => window.removeEventListener(CHAT_COMMAND_EVENT, handler)
+  }, [handleNewConversation, handleOpenDrawer])
+
   // Delete (archive) a thread from the drawer
   const handleDeleteThread = useCallback(async (deleteThreadId: string) => {
     // Optimistic removal from drawer list
@@ -1665,6 +1826,13 @@ export function ChatInterface({ userName }: { userName?: string }) {
       >
         <Menu size={18} strokeWidth={1.8} />
       </button>
+
+      {/* Export menu — next to drawer toggle, only when conversation active */}
+      {hasMessages && (
+        <div style={{ position: 'absolute', top: 12, right: 12, zIndex: 10 }}>
+          <ExportMenu messages={messages} />
+        </div>
+      )}
 
       {/* Conversation drawer — pure CSS animations for performance */}
       {drawerOpen && (
@@ -1799,6 +1967,9 @@ export function ChatInterface({ userName }: { userName?: string }) {
                       avatarThinking={isCurrentResponse ? isThinkingStreaming : false}
                       avatarActivity={isCurrentResponse ? avatarActivity : 'idle'}
                       citations={msg.citations || (isLastAssistantOverall && isLoading ? activeCitations : undefined)}
+                      onRegenerate={isLastAssistantOverall && !isLoading ? handleRegenerate : undefined}
+                      onEdit={msg.role === 'user' ? handleEditMessage : undefined}
+                      onOpenArtifact={handleOpenArtifact}
                     />
                     {/* Checkpoints are internal system state — hidden from users */}
                     {/* Invoice artifacts — anchored to the message that generated them */}
@@ -1841,6 +2012,14 @@ export function ChatInterface({ userName }: { userName?: string }) {
                   />
                 </motion.div>
               ))}
+
+              {/* Follow-up suggestions */}
+              {!isLoading && followUps.length > 0 && messages.length > 0 && (
+                <FollowUpChips
+                  suggestions={followUps}
+                  onSelect={(text) => handleSend(text)}
+                />
+              )}
             </motion.div>
           )}
         </AnimatePresence>
@@ -1913,6 +2092,9 @@ export function ChatInterface({ userName }: { userName?: string }) {
         )}
         <div id="pill-dock" />
       </div>
+
+      {/* Artifact Panel */}
+      <ArtifactPanel artifact={activeArtifact} onClose={closeArtifact} />
     </div>
   )
 }

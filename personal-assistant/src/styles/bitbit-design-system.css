@@ -6709,6 +6709,11 @@ html.light .bb-pill__shimmer-dots span {
   margin-right: auto;
 }
 
+/* Edit button visibility on user message hover */
+.bb-chat__msg--user:hover .bb-chat__edit-btn {
+  opacity: 1 !important;
+}
+
 .bb-chat__assistant-icon {
   flex-shrink: 0;
   width: 32px;
@@ -8115,4 +8120,16 @@ html.light .bb-chat__drawer-toggle:active,
 html.light .bb-topbar-icon-btn:active,
 html.light .bb-topbar-icon-btn[aria-expanded="true"] {
   color: #111827;
+}
+
+/* Shiki output normalization */
+.bb-shiki-output pre {
+  margin: 0;
+  padding: 0;
+  background: transparent !important;
+}
+.bb-shiki-output code {
+  font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+  font-size: 13px;
+  line-height: 20px;
 }

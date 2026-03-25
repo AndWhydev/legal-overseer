@@ -1,10 +1,12 @@
 'use client'
 
-import React from 'react'
+import React, { useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { motion } from 'motion/react'
+import { RefreshCw, ThumbsUp, ThumbsDown, Pencil } from 'lucide-react'
 import { BitBitFaceAvatar } from './bitbit-face-avatar'
+import { CodeBlock } from './code-block'
 import {
   InlineCitation,
   InlineCitationCard,
@@ -29,6 +31,7 @@ interface Message {
   toolCalls?: ToolCall[]
   citations?: Citation[]
   timestamp: Date
+  feedback?: 'up' | 'down' | null
 }
 
 /** Close dangling markdown syntax for mid-stream rendering */
@@ -96,15 +99,63 @@ function renderTextWithCitations(text: string, citations: Citation[]): React.Rea
   return parts
 }
 
-export function MessageBubble({ message, citations, showAvatar = false, avatarEmotion, avatarThinking, avatarActivity }: { message: Message; citations?: Citation[]; showAvatar?: boolean; avatarEmotion?: string; avatarThinking?: boolean; avatarActivity?: string }) {
+export function MessageBubble({ message, citations, showAvatar = false, avatarEmotion, avatarThinking, avatarActivity, onRegenerate, onFeedback, onEdit, onOpenArtifact }: { message: Message; citations?: Citation[]; showAvatar?: boolean; avatarEmotion?: string; avatarThinking?: boolean; avatarActivity?: string; onRegenerate?: () => void; onFeedback?: (type: 'up' | 'down') => void; onEdit?: (messageId: string, newContent: string) => void; onOpenArtifact?: (content: string, lang: string) => void }) {
   const isUser = message.role === 'user'
   const msgCitations = citations || message.citations
+  const [feedback, setFeedback] = useState<'up' | 'down' | null>(message.feedback || null)
+  const [isEditing, setIsEditing] = useState(false)
+  const [editText, setEditText] = useState(message.content)
+
+  const handleFeedback = (type: 'up' | 'down') => {
+    setFeedback(type)
+    onFeedback?.(type)
+    fetch('/api/agent/chat/feedback', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messageId: message.id, feedback: type }),
+    }).catch(() => {})
+  }
 
   if (!message.content && message.toolCalls?.length) return null
   if (!message.content) return null
 
+  // Base components for code blocks and inline code
+  const baseComponents = {
+    code: ({ className, children, ...props }: { className?: string; children?: React.ReactNode; [key: string]: any }) => {
+      // Check if it's inline code (no className, no newlines) or a code block
+      const isInline = !className || !String(children).includes('\n')
+
+      if (isInline) {
+        // Render as styled inline code
+        return (
+          <code
+            style={{
+              backgroundColor: 'rgba(255, 255, 255, 0.05)',
+              color: 'var(--text-primary, #F1F5F9)',
+              padding: '2px 6px',
+              borderRadius: '4px',
+              fontFamily: 'ui-monospace, "SF Mono", "Cascadia Code", "Segoe UI Mono", Menlo, Consolas, monospace',
+              fontSize: '0.9em',
+              whiteSpace: 'pre-wrap',
+              wordBreak: 'break-word',
+            }}
+          >
+            {children}
+          </code>
+        )
+      }
+
+      // Code block
+      return <CodeBlock className={className} onOpenArtifact={onOpenArtifact}>{String(children).replace(/\n$/, '')}</CodeBlock>
+    },
+    pre: ({ children, ...props }: { children?: React.ReactNode; [key: string]: any }) => {
+      // Just pass children through — CodeBlock handles the pre element
+      return <>{children}</>
+    },
+  }
+
   // Build custom ReactMarkdown components to inject citation badges
-  const markdownComponents = msgCitations && msgCitations.length > 0
+  const citationComponents = msgCitations && msgCitations.length > 0
     ? {
         p: ({ children }: { children?: React.ReactNode }) => {
           const processed = React.Children.map(children, child => {
@@ -127,10 +178,16 @@ export function MessageBubble({ message, citations, showAvatar = false, avatarEm
           return <li>{processed}</li>
         },
       }
-    : undefined
+    : {}
+
+  // Merge base components with citation components
+  const markdownComponents = {
+    ...baseComponents,
+    ...citationComponents,
+  }
 
   return (
-    <div className={`bb-chat__msg ${isUser ? 'bb-chat__msg--user' : 'bb-chat__msg--assistant'}`} style={!isUser && showAvatar ? { position: 'relative' } : undefined}>
+    <div className={`bb-chat__msg ${isUser ? 'bb-chat__msg--user' : 'bb-chat__msg--assistant'}`} style={!isUser && showAvatar ? { position: 'relative' } : isUser ? { position: 'relative' } : undefined}>
       {!isUser && showAvatar && (
         <motion.div
           layoutId="bitbit-chat-avatar"
@@ -140,8 +197,91 @@ export function MessageBubble({ message, citations, showAvatar = false, avatarEm
           <BitBitFaceAvatar size={40} emotion={avatarEmotion as any} isThinking={avatarThinking} activity={avatarActivity as any} />
         </motion.div>
       )}
+      {/* Edit button for user messages (appears on hover) */}
+      {isUser && onEdit && !isEditing && (
+        <button
+          onClick={() => setIsEditing(true)}
+          style={{
+            position: 'absolute',
+            left: -28,
+            top: '50%',
+            transform: 'translateY(-50%)',
+            background: 'none',
+            border: 'none',
+            color: 'var(--text-muted, rgba(255,255,255,0.2))',
+            cursor: 'pointer',
+            opacity: 0,
+            transition: 'opacity 150ms',
+            padding: 4,
+          }}
+          className="bb-chat__edit-btn"
+          aria-label="Edit message"
+        >
+          <Pencil size={12} />
+        </button>
+      )}
       <div className={isUser ? 'bb-chat__bubble--user' : 'bb-chat__bubble--assistant bb-chat__markdown'}>
-        {isUser ? (
+        {isUser && isEditing ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, width: '100%' }}>
+            <textarea
+              value={editText}
+              onChange={e => setEditText(e.target.value)}
+              autoFocus
+              style={{
+                width: '100%',
+                minHeight: 60,
+                padding: '8px 12px',
+                borderRadius: 10,
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                color: 'var(--text-primary, #F1F5F9)',
+                fontSize: 14,
+                fontFamily: 'inherit',
+                resize: 'vertical',
+                outline: 'none',
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault()
+                  if (editText.trim() && onEdit) {
+                    onEdit!(message.id, editText.trim())
+                    setIsEditing(false)
+                  }
+                }
+                if (e.key === 'Escape') {
+                  setIsEditing(false)
+                  setEditText(message.content)
+                }
+              }}
+            />
+            <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => { setIsEditing(false); setEditText(message.content) }}
+                style={{
+                  padding: '4px 12px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.1)',
+                  background: 'none', color: 'var(--text-secondary)', fontSize: 12, cursor: 'pointer',
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  if (editText.trim() && onEdit) {
+                    onEdit!(message.id, editText.trim())
+                    setIsEditing(false)
+                  }
+                }}
+                style={{
+                  padding: '4px 12px', borderRadius: 6, border: 'none',
+                  background: 'var(--bb-orange, #FF5A1F)', color: '#fff',
+                  fontSize: 12, fontWeight: 500, cursor: 'pointer',
+                }}
+              >
+                Save & Resend
+              </button>
+            </div>
+          </div>
+        ) : isUser ? (
           message.content
         ) : (
           <ReactMarkdown
@@ -152,6 +292,90 @@ export function MessageBubble({ message, citations, showAvatar = false, avatarEm
           </ReactMarkdown>
         )}
       </div>
+      {!isUser && (
+        <div style={{ display: 'flex', gap: 2, marginTop: 8, alignItems: 'center' }}>
+          {onRegenerate && (
+            <button
+              onClick={onRegenerate}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 4,
+                padding: '3px 8px',
+                borderRadius: 6,
+                background: 'none',
+                border: 'none',
+                color: 'var(--text-muted, rgba(255,255,255,0.25))',
+                fontSize: 12,
+                cursor: 'pointer',
+                transition: 'color 150ms',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--text-secondary, #94A3B8)' }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-muted, rgba(255,255,255,0.25))' }}
+              aria-label="Regenerate response"
+            >
+              <RefreshCw size={12} />
+              Regenerate
+            </button>
+          )}
+          <div style={{ display: 'inline-flex', gap: 2 }}>
+            <button
+              onClick={() => handleFeedback('up')}
+              style={{
+                background: 'none',
+                border: 'none',
+                padding: '3px 6px',
+                borderRadius: 4,
+                color: feedback === 'up' ? 'var(--bb-green, #22C55E)' : 'var(--text-muted, rgba(255,255,255,0.25))',
+                cursor: 'pointer',
+                transition: 'color 150ms',
+                display: 'flex',
+                alignItems: 'center',
+              }}
+              onMouseEnter={(e) => {
+                if (feedback !== 'up') {
+                  e.currentTarget.style.color = 'var(--text-secondary, #94A3B8)'
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (feedback !== 'up') {
+                  e.currentTarget.style.color = 'var(--text-muted, rgba(255,255,255,0.25))'
+                }
+              }}
+              aria-label="Good response"
+            >
+              <ThumbsUp size={12} />
+            </button>
+            <button
+              onClick={() => handleFeedback('down')}
+              style={{
+                background: 'none',
+                border: 'none',
+                padding: '3px 6px',
+                borderRadius: 4,
+                color: feedback === 'down' ? 'var(--bb-red, #EF4444)' : 'var(--text-muted, rgba(255,255,255,0.25))',
+                cursor: 'pointer',
+                transition: 'color 150ms',
+                display: 'flex',
+                alignItems: 'center',
+              }}
+              onMouseEnter={(e) => {
+                if (feedback !== 'down') {
+                  e.currentTarget.style.color = 'var(--text-secondary, #94A3B8)'
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (feedback !== 'down') {
+                  e.currentTarget.style.color = 'var(--text-muted, rgba(255,255,255,0.25))'
+                }
+              }}
+              aria-label="Bad response"
+            >
+              <ThumbsDown size={12} />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

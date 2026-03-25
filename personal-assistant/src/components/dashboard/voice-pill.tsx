@@ -1,15 +1,21 @@
 'use client';
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { ArrowUp, Paperclip, X } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { ArrowUp, Mic, MicOff, Paperclip, X } from 'lucide-react';
 import { MiniWaveform } from '../ui/mini-waveform';
 import { useFileUpload, type UploadItem } from '@/hooks/use-file-upload';
+import { useVoiceInput } from '../chat/use-voice-input';
+import { CommandPalette, DEFAULT_CHAT_COMMANDS, type ChatCommand } from '../chat/command-palette';
 
 export type PillMode = 'hidden' | 'voice' | 'text' | 'processing' | 'response';
 export type PillMorphPhase = 'to-floating' | 'to-docked';
 
 /** Custom event for delivering attachment IDs alongside text messages */
 export const CHAT_ATTACHMENTS_EVENT = 'bitbit-chat-attachments';
+
+/** Custom event for slash commands */
+export const CHAT_COMMAND_EVENT = 'bitbit-chat-command';
 
 interface VoicePillProps {
   mode: PillMode;
@@ -26,6 +32,7 @@ interface VoicePillProps {
   onTextSubmit: (query: string) => void;
   onDismiss: () => void;
   threadId?: string | null;
+  onCommandSelect?: (commandId: string) => void;
 }
 
 /** File input accept filter matching ALLOWED_MIME_TYPES */
@@ -46,11 +53,14 @@ export function VoicePill({
   onTextSubmit,
   onDismiss,
   threadId,
+  onCommandSelect,
 }: VoicePillProps) {
   const [textValue, setTextValue] = useState('');
   const [displayMode, setDisplayMode] = useState<PillMode>('hidden');
   const [isExiting, setIsExiting] = useState(false);
   const [isDockedExpanded, setIsDockedExpanded] = useState(false);
+  const [showCommands, setShowCommands] = useState(false);
+  const [commandQuery, setCommandQuery] = useState('');
   const prevModeRef = useRef<PillMode>('hidden');
   const inputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -60,6 +70,11 @@ export function VoicePill({
 
   // File upload hook
   const fileUpload = useFileUpload(threadId);
+
+  // Voice input hook
+  const voice = useVoiceInput((text) => {
+    setTextValue(text);
+  });
 
   useEffect(() => {
     const prevMode = prevModeRef.current;
@@ -213,6 +228,16 @@ export function VoicePill({
     e.target.value = '';
   }, [fileUpload]);
 
+  const handleCommandSelect = useCallback((cmd: ChatCommand) => {
+    setShowCommands(false);
+    setTextValue('');
+    setCommandQuery('');
+    // Dispatch event for chat-interface to handle
+    window.dispatchEvent(new CustomEvent(CHAT_COMMAND_EVENT, { detail: cmd.id }));
+    // Also call the optional callback
+    onCommandSelect?.(cmd.id);
+  }, [onCommandSelect]);
+
   const renderMode = isExiting ? prevModeRef.current : displayMode;
   const effectiveMode = docked && renderMode === 'hidden' ? 'text' : renderMode;
   const isVisible = effectiveMode !== 'hidden';
@@ -309,12 +334,24 @@ export function VoicePill({
                 </div>
               )}
 
-              <textarea
+              {/* Command palette container - positioned relative to contain absolute-positioned palette */}
+              <div style={{ position: 'relative', width: '100%' }}>
+                <textarea
                 ref={textareaRef}
                 className="bb-pill__textarea"
                 placeholder="Message BitBit..."
                 value={textValue}
-                onChange={(e) => setTextValue(e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setTextValue(val);
+                  if (val.startsWith('/') && val.length > 1) {
+                    setShowCommands(true);
+                    setCommandQuery(val.slice(1));
+                  } else {
+                    setShowCommands(false);
+                    setCommandQuery('');
+                  }
+                }}
                 onKeyDown={handleKeyDown}
                 autoComplete="off"
                 spellCheck={false}
@@ -326,7 +363,20 @@ export function VoicePill({
                   boxShadow: 'none',
                   WebkitAppearance: 'none',
                 }}
-              />
+                />
+
+                {/* Command palette - appears above the textarea */}
+                <AnimatePresence>
+                  {showCommands && (
+                    <CommandPalette
+                      query={commandQuery}
+                      commands={DEFAULT_CHAT_COMMANDS}
+                      onSelect={handleCommandSelect}
+                    />
+                  )}
+                </AnimatePresence>
+              </div>
+
               <div className="bb-pill__actions">
                 <button
                   className="bb-pill__attach"
@@ -336,6 +386,29 @@ export function VoicePill({
                 >
                   <Paperclip size={18} />
                 </button>
+                {voice.isSupported && (
+                  <button
+                    onClick={voice.toggleListening}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: voice.isListening
+                        ? 'var(--bb-red, #EF4444)'
+                        : 'var(--text-muted, rgba(255,255,255,0.35))',
+                      cursor: 'pointer',
+                      padding: '6px',
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      transition: 'color 150ms',
+                    }}
+                    aria-label={voice.isListening ? 'Stop listening' : 'Start voice input'}
+                    type="button"
+                  >
+                    {voice.isListening ? <MicOff size={16} /> : <Mic size={16} />}
+                  </button>
+                )}
                 <button
                   className="bb-pill__send"
                   onClick={handleSubmit}
@@ -347,18 +420,40 @@ export function VoicePill({
               </div>
             </>
           ) : (
-            <>
+            <div style={{ position: 'relative', width: '100%' }}>
               <input
                 ref={inputRef}
                 className="bb-pill__input"
                 type="text"
                 placeholder="Ask BitBit…"
                 value={textValue}
-                onChange={(e) => setTextValue(e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setTextValue(val);
+                  if (val.startsWith('/') && val.length > 1) {
+                    setShowCommands(true);
+                    setCommandQuery(val.slice(1));
+                  } else {
+                    setShowCommands(false);
+                    setCommandQuery('');
+                  }
+                }}
                 onKeyDown={handleKeyDown}
                 autoComplete="off"
                 spellCheck={false}
               />
+
+              {/* Command palette - appears above the input */}
+              <AnimatePresence>
+                {showCommands && (
+                  <CommandPalette
+                    query={commandQuery}
+                    commands={DEFAULT_CHAT_COMMANDS}
+                    onSelect={handleCommandSelect}
+                  />
+                )}
+              </AnimatePresence>
+
               <button
                 className="bb-pill__send"
                 onClick={handleSubmit}
@@ -367,7 +462,7 @@ export function VoicePill({
               >
                 <ArrowUp size={14} />
               </button>
-            </>
+            </div>
           )}
         </>
       )}

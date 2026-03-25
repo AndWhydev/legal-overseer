@@ -50,6 +50,7 @@
     "recharts": "^3.7.0",
     "remark-gfm": "^4.0.1",
     "resend": "^6.9.2",
+    "shiki": "^4.0.2",
     "simple-icons": "^14.0.0",
     "streamdown": "^2.4.0",
     "stripe": "^20.4.1",
