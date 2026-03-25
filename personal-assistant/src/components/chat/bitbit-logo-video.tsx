@@ -1,10 +1,9 @@
 'use client'
 
-type LogoVariant = 'idle' | 'loading' | 'pulse'
+type LogoVariant = 'idle' | 'pulse'
 
 const VARIANT_SRC: Record<LogoVariant, string> = {
   idle: '/bitbit-idle.apng',
-  loading: '/bitbit-loading.apng',
   pulse: '/bitbit-pulse.apng',
 }
 

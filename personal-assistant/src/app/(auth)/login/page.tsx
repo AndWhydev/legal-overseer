@@ -1,10 +1,11 @@
 'use client'
 
 import Link from 'next/link'
-import { Suspense, useEffect, useMemo, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { BitBitLogoVideo } from '@/components/chat/bitbit-logo-video'
+import { ForceFieldBackground } from '@/components/ui/force-field-background'
 import { extractAuthCallbackPayload } from '@/lib/auth/callback'
 
 type LoginStatus = 'idle' | 'loading' | 'sent' | 'error'
@@ -39,7 +40,7 @@ function resolveAuthRedirectOrigin(): string {
 
 function GoogleIcon() {
   return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false">
       <path
         fill="#EA4335"
         d="M12 10.2v3.98h5.57c-.24 1.28-.97 2.37-2.05 3.11l3.32 2.58c1.93-1.78 3.04-4.39 3.04-7.49 0-.73-.07-1.44-.2-2.13H12z"
@@ -62,10 +63,32 @@ function GoogleIcon() {
 
 function AppleIcon() {
   return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false">
       <path
         fill="currentColor"
         d="M16.36 12.48c.02 2.26 1.98 3.01 2 3.02-.01.05-.31 1.06-1.03 2.11-.62.9-1.27 1.8-2.28 1.82-1 .02-1.32-.59-2.47-.59-1.14 0-1.5.57-2.45.61-1 .04-1.75-.99-2.38-1.88-1.29-1.86-2.27-5.25-.95-7.56.66-1.14 1.84-1.86 3.12-1.88.97-.02 1.89.65 2.47.65.57 0 1.66-.8 2.8-.68.48.02 1.84.2 2.72 1.48-.07.04-1.62.95-1.6 2.9zm-2.4-5.32c.52-.63.87-1.5.77-2.37-.75.03-1.65.5-2.2 1.12-.48.56-.9 1.44-.79 2.28.84.06 1.7-.43 2.22-1.03z"
+      />
+    </svg>
+  )
+}
+
+/* ── Spinner for loading states ── */
+function Spinner() {
+  return (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 18 18"
+      fill="none"
+      aria-hidden="true"
+      style={{ animation: 'bb-login-spin 0.7s linear infinite' }}
+    >
+      <circle cx="9" cy="9" r="7" stroke="rgba(0,0,0,0.1)" strokeWidth="2" />
+      <path
+        d="M9 2a7 7 0 0 1 7 7"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
       />
     </svg>
   )
@@ -98,12 +121,6 @@ function LoginPageContent() {
     const nextUrl = `/callback${window.location.search}${window.location.hash}`
     window.location.replace(nextUrl)
   }, [])
-
-  const logoVariant = useMemo(() => {
-    if (status === 'loading') return 'loading'
-    if (status === 'sent') return 'pulse'
-    return 'idle'
-  }, [status])
 
   async function handleOAuthSignIn(provider: OAuthProvider) {
     setActiveMethod(provider)
@@ -179,75 +196,325 @@ function LoginPageContent() {
   }
 
   return (
-    <div className="bb-auth-page bb-backdrop">
-      <div className="bb-auth-page__ambient-logo" aria-hidden="true">
-        <BitBitLogoVideo size={108} variant={logoVariant} />
+    <div style={{
+      position: 'relative',
+      minHeight: '100dvh',
+      width: '100%',
+      overflow: 'hidden',
+      background: '#FAFAFA',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+    }}>
+      {/* ── Particle background (white bg, black dots) ── */}
+      <ForceFieldBackground
+        spacing={16}
+        minStroke={1}
+        maxStroke={2.5}
+        forceStrength={14}
+        magnifierRadius={160}
+        friction={0.88}
+        restoreSpeed={0.04}
+        bgColor="#FAFAFA"
+        particleRgb="0,0,0"
+      />
+
+      {/* ── Subtle radial vignette (light) ── */}
+      <div
+        aria-hidden="true"
+        style={{
+          position: 'absolute',
+          inset: 0,
+          background: 'radial-gradient(ellipse at 50% 40%, transparent 0%, rgba(250,250,250,0.4) 60%, rgba(250,250,250,0.8) 100%)',
+          pointerEvents: 'none',
+          zIndex: 1,
+        }}
+      />
+
+      {/* ── Edge light reflections ── */}
+      <div aria-hidden="true" style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 1, overflow: 'hidden' }}>
+        {/* Top-left */}
+        <div style={{
+          position: 'absolute',
+          top: -80,
+          left: -80,
+          width: 260,
+          height: 260,
+          background: 'radial-gradient(circle, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0) 70%)',
+          filter: 'blur(40px)',
+        }} />
+        {/* Top-right */}
+        <div style={{
+          position: 'absolute',
+          top: -60,
+          right: -60,
+          width: 200,
+          height: 200,
+          background: 'radial-gradient(circle, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0) 70%)',
+          filter: 'blur(35px)',
+        }} />
+        {/* Bottom-left */}
+        <div style={{
+          position: 'absolute',
+          bottom: -60,
+          left: -40,
+          width: 200,
+          height: 200,
+          background: 'radial-gradient(circle, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0) 70%)',
+          filter: 'blur(35px)',
+        }} />
+        {/* Bottom-right */}
+        <div style={{
+          position: 'absolute',
+          bottom: -80,
+          right: -80,
+          width: 260,
+          height: 260,
+          background: 'radial-gradient(circle, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0) 70%)',
+          filter: 'blur(40px)',
+        }} />
       </div>
 
-      <main className="bb-auth-page__content bb-stagger">
-        <section className="bb-auth-page__hero" aria-label="BitBit sign in">
-          <h1 className="bb-auth-page__title">Meet BitBit</h1>
-          <p className="bb-auth-card__privacy">
+      {/* ── Main content ── */}
+      <main
+        style={{
+          position: 'relative',
+          zIndex: 2,
+          width: '100%',
+          maxWidth: 420,
+          padding: 'clamp(20px, 4vw, 40px)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: 24,
+        }}
+      >
+        {/* ── Logo (black silhouette) ── */}
+        <div style={{ flexShrink: 0, filter: 'brightness(0)', opacity: 0.85 }}>
+          <BitBitLogoVideo size={80} variant="idle" />
+        </div>
+
+        {/* ── Heading with gradient text ── */}
+        <header style={{ textAlign: 'center' }}>
+          <h1 style={{
+            margin: 0,
+            fontSize: 'clamp(28px, 5vw, 36px)',
+            fontWeight: 700,
+            letterSpacing: '-0.03em',
+            lineHeight: 1.1,
+            background: 'linear-gradient(180deg, #6b6b6b 0%, #1d1d1f 50%, #000 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+          }}>
+            Meet BitBit
+          </h1>
+          <p style={{
+            margin: '8px 0 0',
+            fontSize: 14,
+            color: '#888',
+            lineHeight: 1.4,
+          }}>
             Sign in with your invited email
           </p>
-        </section>
+        </header>
 
-        <section className="bb-card bb-auth-card" aria-live="polite">
+        {/* ── Auth card ── */}
+        <section
+          aria-live="polite"
+          style={{
+            width: '100%',
+            padding: 24,
+            borderRadius: 20,
+            background: 'rgba(255,255,255,0.85)',
+            backdropFilter: 'blur(20px) saturate(1.1)',
+            WebkitBackdropFilter: 'blur(20px) saturate(1.1)',
+            border: '1px solid rgba(0,0,0,0.06)',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)',
+          }}
+        >
           {status === 'sent' ? (
-            <div className="bb-auth-card__sent">
-              <p className="bb-auth-card__sent-title">Check your inbox</p>
-              <p className="bb-auth-card__sent-copy">
-                We sent a sign-in link to <span>{sentTo}</span>. Open that inbox to continue.
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14, textAlign: 'center' }}>
+              <p style={{ fontSize: 18, fontWeight: 600, color: '#111', margin: 0 }}>
+                Check your inbox
+              </p>
+              <p style={{ fontSize: 13, color: '#666', margin: 0, lineHeight: 1.5 }}>
+                We sent a sign-in link to{' '}
+                <span style={{ color: '#111', fontFamily: 'var(--font-mono, monospace)' }}>{sentTo}</span>.
+                Open that inbox to continue.
               </p>
               <button
                 type="button"
-                className="bb-btn bb-btn--ghost bb-auth-card__ghost"
                 onClick={() => {
                   setStatus('idle')
                   setErrorMessage('')
+                }}
+                style={{
+                  background: 'none',
+                  border: '1px solid #ddd',
+                  borderRadius: 12,
+                  padding: '10px 16px',
+                  color: '#555',
+                  fontSize: 13,
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  transition: 'border-color 150ms, color 150ms',
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.borderColor = '#bbb'
+                  e.currentTarget.style.color = '#111'
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.borderColor = '#ddd'
+                  e.currentTarget.style.color = '#555'
                 }}
               >
                 Use a different email
               </button>
             </div>
           ) : (
-            <form className="bb-auth-card__form" onSubmit={handleEmailSignIn}>
-              <p className="bb-auth-card__privacy">
+            <form
+              onSubmit={handleEmailSignIn}
+              style={{ display: 'flex', flexDirection: 'column', gap: 14 }}
+            >
+              {/* ── Hint ── */}
+              <p style={{
+                margin: 0,
+                fontSize: 12,
+                color: '#999',
+                textAlign: 'center',
+                lineHeight: 1.4,
+              }}>
                 Use the sign-in method linked to your invite
               </p>
-              <div className="bb-auth-card__providers" role="group" aria-label="Social sign in">
+
+              {/* ── OAuth providers ── */}
+              <div
+                role="group"
+                aria-label="Social sign in"
+                data-login-providers=""
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(2, 1fr)',
+                  gap: 10,
+                }}
+              >
                 <button
                   type="button"
-                  className="bb-auth-provider-btn"
                   onClick={() => void handleOAuthSignIn('google')}
                   disabled={isBusy}
+                  aria-label="Continue with Google"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 8,
+                    minHeight: 44,
+                    borderRadius: 12,
+                    border: '1px solid #e0e0e0',
+                    background: '#fff',
+                    color: '#333',
+                    fontSize: 13,
+                    fontWeight: 500,
+                    cursor: isBusy ? 'not-allowed' : 'pointer',
+                    opacity: isBusy && activeMethod !== 'google' ? 0.5 : 1,
+                    transition: 'background 150ms, border-color 150ms, box-shadow 150ms',
+                  }}
+                  onMouseEnter={e => {
+                    if (!isBusy) {
+                      e.currentTarget.style.background = '#f8f8f8'
+                      e.currentTarget.style.borderColor = '#ccc'
+                      e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.06)'
+                    }
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.background = '#fff'
+                    e.currentTarget.style.borderColor = '#e0e0e0'
+                    e.currentTarget.style.boxShadow = 'none'
+                  }}
                 >
-                  <span className="bb-auth-provider-btn__icon" aria-hidden="true"><GoogleIcon /></span>
-                  Continue with Google
+                  {activeMethod === 'google' ? <Spinner /> : <GoogleIcon />}
+                  <span>Google</span>
                 </button>
 
                 <button
                   type="button"
-                  className="bb-auth-provider-btn"
                   onClick={() => void handleOAuthSignIn('apple')}
                   disabled={isBusy}
+                  aria-label="Continue with Apple"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 8,
+                    minHeight: 44,
+                    borderRadius: 12,
+                    border: '1px solid #e0e0e0',
+                    background: '#fff',
+                    color: '#333',
+                    fontSize: 13,
+                    fontWeight: 500,
+                    cursor: isBusy ? 'not-allowed' : 'pointer',
+                    opacity: isBusy && activeMethod !== 'apple' ? 0.5 : 1,
+                    transition: 'background 150ms, border-color 150ms, box-shadow 150ms',
+                  }}
+                  onMouseEnter={e => {
+                    if (!isBusy) {
+                      e.currentTarget.style.background = '#f8f8f8'
+                      e.currentTarget.style.borderColor = '#ccc'
+                      e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.06)'
+                    }
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.background = '#fff'
+                    e.currentTarget.style.borderColor = '#e0e0e0'
+                    e.currentTarget.style.boxShadow = 'none'
+                  }}
                 >
-                  <span className="bb-auth-provider-btn__icon" aria-hidden="true"><AppleIcon /></span>
-                  Continue with Apple
+                  {activeMethod === 'apple' ? <Spinner /> : <AppleIcon />}
+                  <span>Apple</span>
                 </button>
               </div>
 
-              <div className="bb-auth-card__divider" aria-hidden="true">
-                <span>or use email</span>
+              {/* ── Divider ── */}
+              <div
+                aria-hidden="true"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 12,
+                  margin: '2px 0',
+                }}
+              >
+                <div style={{ flex: 1, height: 1, background: '#e5e5e5' }} />
+                <span style={{
+                  fontSize: 11,
+                  letterSpacing: '0.04em',
+                  textTransform: 'uppercase' as const,
+                  color: '#aaa',
+                  whiteSpace: 'nowrap' as const,
+                }}>
+                  or use email
+                </span>
+                <div style={{ flex: 1, height: 1, background: '#e5e5e5' }} />
               </div>
 
-              <label htmlFor="email" className="bb-auth-card__label">
+              {/* ── Email input ── */}
+              <label
+                htmlFor="email"
+                style={{
+                  fontSize: 11,
+                  color: '#888',
+                  letterSpacing: '0.04em',
+                  textTransform: 'uppercase' as const,
+                  fontFamily: 'var(--font-mono, monospace)',
+                }}
+              >
                 Invited email address
               </label>
               <input
                 id="email"
                 type="email"
-                className="bb-input bb-input--lg bb-auth-card__input"
                 placeholder="name@yourcompany.com"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
@@ -255,22 +522,111 @@ function LoginPageContent() {
                 autoFocus
                 autoComplete="email"
                 disabled={isBusy}
+                style={{
+                  width: '100%',
+                  height: 48,
+                  padding: '0 16px',
+                  borderRadius: 12,
+                  border: '1px solid #ccc',
+                  background: '#fff',
+                  color: '#111',
+                  fontSize: 14,
+                  outline: 'none',
+                  transition: 'border-color 150ms, box-shadow 150ms',
+                  fontFamily: 'inherit',
+                  boxSizing: 'border-box' as const,
+                }}
+                onFocus={e => {
+                  e.currentTarget.style.borderColor = '#111'
+                  e.currentTarget.style.boxShadow = '0 0 0 3px rgba(0,0,0,0.08)'
+                }}
+                onBlur={e => {
+                  e.currentTarget.style.borderColor = '#ccc'
+                  e.currentTarget.style.boxShadow = 'none'
+                }}
               />
 
+              {/* ── Error ── */}
               {status === 'error' && (
-                <p className="bb-auth-card__error">{errorMessage}</p>
+                <p
+                  role="alert"
+                  style={{
+                    margin: 0,
+                    fontSize: 12,
+                    color: '#dc2626',
+                    lineHeight: 1.4,
+                  }}
+                >
+                  {errorMessage}
+                </p>
               )}
 
+              {/* ── Submit button ── */}
               <button
                 type="submit"
-                className="bb-auth-card__submit"
                 disabled={!canSubmit}
+                style={{
+                  width: '100%',
+                  minHeight: 48,
+                  borderRadius: 14,
+                  border: 'none',
+                  background: canSubmit ? '#111' : '#e8e8e8',
+                  color: canSubmit ? '#fff' : '#aaa',
+                  fontSize: 14,
+                  fontWeight: 600,
+                  letterSpacing: '-0.01em',
+                  cursor: canSubmit ? 'pointer' : 'not-allowed',
+                  transition: 'transform 100ms, box-shadow 200ms, background 150ms',
+                  boxShadow: canSubmit
+                    ? '0 4px 16px rgba(0,0,0,0.15)'
+                    : 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8,
+                  fontFamily: 'inherit',
+                }}
+                onMouseEnter={e => {
+                  if (canSubmit) {
+                    e.currentTarget.style.transform = 'translateY(-1px)'
+                    e.currentTarget.style.background = '#000'
+                    e.currentTarget.style.boxShadow = '0 6px 24px rgba(0,0,0,0.2)'
+                  }
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.transform = 'translateY(0)'
+                  if (canSubmit) {
+                    e.currentTarget.style.background = '#111'
+                    e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.15)'
+                  }
+                }}
               >
-                {activeMethod === 'email' ? 'Sending sign-in link...' : 'Send sign-in link'}
+                {activeMethod === 'email' && <Spinner />}
+                {activeMethod === 'email' ? 'Sending link...' : 'Send sign-in link'}
               </button>
 
-              <p className="bb-auth-card__privacy">
-                By continuing you agree to our <Link href="/privacy">Privacy Policy</Link> and <Link href="/terms">Terms</Link>
+              {/* ── Privacy ── */}
+              <p style={{
+                margin: '2px 0 0',
+                fontSize: 12,
+                color: '#aaa',
+                textAlign: 'center',
+                lineHeight: 1.5,
+              }}>
+                By continuing you agree to our{' '}
+                <Link
+                  href="/privacy"
+                  style={{ color: '#666', textDecoration: 'underline', textDecorationColor: 'rgba(0,0,0,0.25)', textUnderlineOffset: 2 }}
+                >
+                  Privacy Policy
+                </Link>{' '}
+                and{' '}
+                <Link
+                  href="/terms"
+                  style={{ color: '#666', textDecoration: 'underline', textDecorationColor: 'rgba(0,0,0,0.25)', textUnderlineOffset: 2 }}
+                >
+                  Terms
+                </Link>
               </p>
             </form>
           )}
@@ -280,28 +636,63 @@ function LoginPageContent() {
           )}
         </section>
       </main>
+
+      {/* ── Keyframe for spinner ── */}
+      <style>{`
+        @keyframes bb-login-spin {
+          to { transform: rotate(360deg); }
+        }
+        /* Focus-visible ring for keyboard navigation */
+        button:focus-visible,
+        input:focus-visible,
+        a:focus-visible {
+          outline: 2px solid rgba(0,0,0,0.3);
+          outline-offset: 2px;
+        }
+        /* Stack OAuth buttons on very small screens */
+        @media (max-width: 380px) {
+          [data-login-providers] {
+            grid-template-columns: 1fr !important;
+          }
+        }
+      `}</style>
     </div>
   )
 }
 
 function LoginPageFallback() {
   return (
-    <div className="bb-auth-page bb-backdrop">
-      <div className="bb-auth-page__ambient-logo" aria-hidden="true">
-        <BitBitLogoVideo size={108} variant="idle" />
+    <div style={{
+      position: 'relative',
+      minHeight: '100dvh',
+      width: '100%',
+      overflow: 'hidden',
+      background: '#FAFAFA',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+    }}>
+      <div style={{
+        textAlign: 'center',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: 20,
+      }}>
+        <BitBitLogoVideo size={80} variant="idle" />
+        <h1 style={{
+          margin: 0,
+          fontSize: 32,
+          fontWeight: 600,
+          letterSpacing: '-0.03em',
+          color: '#111',
+        }}>
+          Meet BitBit
+        </h1>
+        <p style={{ margin: 0, fontSize: 14, color: '#999' }}>
+          Loading...
+        </p>
       </div>
-
-      <main className="bb-auth-page__content bb-stagger">
-        <section className="bb-auth-page__hero" aria-label="BitBit sign in">
-          <h1 className="bb-auth-page__title">Meet BitBit</h1>
-          <p className="bb-auth-card__privacy">
-            Sign in with your invited email
-          </p>
-        </section>
-        <section className="bb-card bb-auth-card" aria-live="polite">
-          <p className="bb-auth-card__privacy">Loading...</p>
-        </section>
-      </main>
     </div>
   )
 }
@@ -336,22 +727,21 @@ function DevPasswordLogin() {
       return
     }
 
-    // Redirect to dashboard on success
     window.location.href = '/dashboard'
   }
 
   return (
-    <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', marginTop: 16, paddingTop: 12 }}>
+    <div style={{ borderTop: '1px solid #eee', marginTop: 16, paddingTop: 12 }}>
       <button
         type="button"
         onClick={() => setExpanded(!expanded)}
         style={{
-          background: 'none', border: 'none', color: '#64748b',
-          fontSize: 14, fontFamily: 'monospace', cursor: 'pointer',
+          background: 'none', border: 'none', color: '#aaa',
+          fontSize: 12, fontFamily: 'monospace', cursor: 'pointer',
           display: 'flex', alignItems: 'center', gap: 4, padding: 0,
         }}
       >
-        {expanded ? '▾' : '▸'} Dev: Password Login
+        {expanded ? '\u25BE' : '\u25B8'} Dev: Password Login
       </button>
       {expanded && (
         <form onSubmit={handleDevLogin} style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -360,25 +750,60 @@ function DevPasswordLogin() {
             placeholder="Email"
             value={devEmail}
             onChange={e => setDevEmail(e.target.value)}
-            className="bb-input bb-input--lg bb-auth-card__input"
             autoComplete="email"
+            style={{
+              width: '100%',
+              height: 44,
+              padding: '0 14px',
+              borderRadius: 10,
+              border: '1px solid #e0e0e0',
+              background: '#fff',
+              color: '#111',
+              fontSize: 13,
+              outline: 'none',
+              boxSizing: 'border-box' as const,
+              fontFamily: 'inherit',
+            }}
           />
           <input
             type="password"
             placeholder="Password"
             value={devPassword}
             onChange={e => setDevPassword(e.target.value)}
-            className="bb-input bb-input--lg bb-auth-card__input"
             autoComplete="current-password"
+            style={{
+              width: '100%',
+              height: 44,
+              padding: '0 14px',
+              borderRadius: 10,
+              border: '1px solid #e0e0e0',
+              background: '#fff',
+              color: '#111',
+              fontSize: 13,
+              outline: 'none',
+              boxSizing: 'border-box' as const,
+              fontFamily: 'inherit',
+            }}
           />
           {devStatus === 'error' && (
-            <p className="bb-auth-card__error">{devError}</p>
+            <p style={{ margin: 0, fontSize: 12, color: '#dc2626' }}>{devError}</p>
           )}
           <button
             type="submit"
-            className="bb-auth-card__submit"
             disabled={devStatus === 'loading' || !devEmail.trim() || !devPassword}
-            style={{ opacity: (!devEmail.trim() || !devPassword) ? 0.4 : 1 }}
+            style={{
+              width: '100%',
+              minHeight: 44,
+              borderRadius: 10,
+              border: '1px solid #e0e0e0',
+              background: '#f5f5f5',
+              color: '#333',
+              fontSize: 13,
+              fontWeight: 500,
+              cursor: (!devEmail.trim() || !devPassword) ? 'not-allowed' : 'pointer',
+              opacity: (!devEmail.trim() || !devPassword) ? 0.4 : 1,
+              fontFamily: 'inherit',
+            }}
           >
             {devStatus === 'loading' ? 'Signing in...' : 'Sign in with password'}
           </button>
