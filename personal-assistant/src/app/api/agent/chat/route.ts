@@ -1,7 +1,9 @@
 import { NextRequest } from 'next/server'
 import type Anthropic from '@anthropic-ai/sdk'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { loadAllAgents } from '@/lib/agent/registry-loader'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, isDevBypass } from '@/lib/supabase/server'
+import { getServiceClient } from '@/lib/supabase/service-client'
 import { UnifiedConversationPipeline } from '@/lib/conversation/unified-pipeline'
 import { detectInjection, neutralizeInjection } from '@/lib/agent/injection-guard'
 import { addTimingJitter } from '@/lib/security/timing-jitter'
@@ -22,31 +24,56 @@ export async function POST(request: NextRequest) {
   }
 
   // Authenticate and get org_id
-  const supabase = await createClient()
-  if (!supabase) {
-    return new Response('Supabase not configured', { status: 503 })
-  }
+  let supabase: SupabaseClient
+  let userId: string
+  let userEmail: string | undefined
+  let orgId: string
+  let displayName: string | undefined
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    return new Response('Unauthorized', { status: 401 })
-  }
+  if (isDevBypass()) {
+    // Dev mode: use service client with hardcoded Tor user/org
+    supabase = getServiceClient()
+    userId = '02ce2616-c01b-45a5-a2ad-16ebe936a6b2'
+    orgId = '7abcbfb1-67e5-4a3b-aa08-a17cfd2867e9'
+    userEmail = 'hi@torkay.com'
+    displayName = 'Tor'
+    logger.warn('[chat] Using dev bypass auth')
+  } else {
+    const client = await createClient()
+    if (!client) {
+      return new Response('Supabase not configured', { status: 503 })
+    }
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('org_id, display_name')
-    .eq('id', user.id)
-    .single()
+    const { data: { user } } = await client.auth.getUser()
+    if (!user) {
+      return new Response('Unauthorized', { status: 401 })
+    }
 
-  if (!profile) {
-    return new Response('No profile found', { status: 400 })
+    const { data: profile } = await client
+      .from('profiles')
+      .select('org_id, display_name')
+      .eq('id', user.id)
+      .single()
+
+    if (!profile) {
+      return new Response('No profile found', { status: 400 })
+    }
+
+    supabase = client
+    userId = user.id
+    userEmail = user.email ?? undefined
+    orgId = profile.org_id
+    displayName = profile.display_name
+      || user.user_metadata?.display_name
+      || user.email?.split('@')[0]
+      || undefined
   }
 
   // Injection detection — silent neutralization
   let processedMessage = message
   const injection = detectInjection(message)
   if (injection.detected) {
-    logger.warn('injection_detected', { userId: user.id, orgId: profile.org_id, patterns: injection.patterns })
+    logger.warn('injection_detected', { userId, orgId, patterns: injection.patterns })
     processedMessage = neutralizeInjection(message)
   }
 
@@ -61,7 +88,7 @@ export async function POST(request: NextRequest) {
         .from('attachments')
         .select('id, filename, mime_type, size, storage_path, extracted_text')
         .in('id', attachmentIds)
-        .eq('org_id', profile.org_id)
+        .eq('org_id', orgId)
         .eq('status', 'ready')
 
       if (attError) {
@@ -108,13 +135,10 @@ export async function POST(request: NextRequest) {
           {
             supabase,
             identity: {
-              userId: user.id,
-              orgId: profile.org_id,
-              email: user.email ?? undefined,
-              displayName: profile.display_name
-                || user.user_metadata?.display_name
-                || user.email?.split('@')[0]
-                || undefined,
+              userId,
+              orgId,
+              email: userEmail,
+              displayName,
             },
             threadId: threadId || undefined,
             contentBlocks: attachmentContentBlocks.length > 0
