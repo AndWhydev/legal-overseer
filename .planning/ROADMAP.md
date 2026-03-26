@@ -239,6 +239,11 @@ Plans:
 - [x] **Phase 22: Cost Controls & Ad Script Generator** - Per-execution budgets protect against token spirals; first growth role proves the pattern (completed 2026-03-18)
 - [x] **Phase 23: SEO Monitor & Tender Hunter** - Wrap existing 700+ LOC implementations as plan-gated agent tools with scheduled ticks (completed 2026-03-18)
 - [x] **Phase 24: Content Creator** - Social media post drafting and blog generation via chat with platform-specific formatting (completed 2026-03-18)
+- [x] **Phase 22b: Comms Role** - Wraps channel triage as a role with follow-up tracking, relationship monitoring, tone adaptation, and escalation workflows (completed 2026-03-26)
+- [x] **Phase 23b: Sales Role** - Wraps lead swarm as a role with proposal generation, lead nurture, client onboarding, win/loss learning, and pipeline analytics (completed 2026-03-26)
+- [x] **Phase 24b: Intelligence Layer** - Revenue radar, client health scoring, cash flow projections, capacity oracle, cron recomputation, and API routes (completed 2026-03-26)
+- [x] **Phase 25: Role Dashboard** - Unified role activity feed, status cards, autonomy controls, attention view, intelligence widgets, and dashboard integration (completed 2026-03-26)
+- [ ] **Phase 26: SOTA Response Drafter** - Wire ContextAssembler + RAG + Memory Palace + entity briefings into the response drafter for contextually rich, business-aware reply generation
 
 ## Phase Details
 
@@ -321,6 +326,62 @@ Plans:
 Plans:
 - [x] 24-01-PLAN.md -- Content Creator tool group (tool definitions, blog generation handler, social post handler, autonomy mapping, JIT instructions)
 
+### Phase 22b: Comms Role
+**Goal**: Comms role wraps channel triage as a sub-component with follow-up tracking, relationship monitoring, tone adaptation, and escalation workflows
+**Depends on**: Phase 22 (role engine pattern established)
+**Plans**: 3 plans
+
+Plans:
+- [x] 22-01-PLAN.md -- Comms role core: triage wrapper, response drafter, hasChanges(), auto-registration
+- [x] 22-02-PLAN.md -- Follow-up tracker (SLA urgency), relationship monitor (engagement drops), tone adapter (formality/verbosity heuristics)
+- [x] 22-03-PLAN.md -- CommsState schema, 3-step escalation workflow (2h/8h/24h), 18 tests
+
+### Phase 23b: Sales Role
+**Goal**: Sales role wraps lead swarm with proposal generation, lead nurture, client onboarding, win/loss learning, and pipeline analytics
+**Depends on**: Phase 23 (growth role tool pattern)
+**Plans**: 3 plans
+
+Plans:
+- [x] 23-01-PLAN.md -- Sales role core: lead wrapper, proposal generator, SalesState, auto-registration
+- [x] 23-02-PLAN.md -- Lead nurture (stale lead/proposal follow-up), client onboarding (5-step workflow)
+- [x] 23-03-PLAN.md -- Win/loss learner (pricing patterns), pipeline tracker (bi_snapshots cache), 13 tests
+
+### Phase 24b: Intelligence Layer
+**Goal**: Business intelligence modules providing revenue analysis, client health scoring, cash flow projections, and capacity planning
+**Depends on**: Phase 22b, 23b (role integration)
+**Plans**: 3 plans
+
+Plans:
+- [x] 24-01-PLAN.md -- Revenue radar (4 opportunity types) + client health (4-dimension 0-100 scoring)
+- [x] 24-02-PLAN.md -- Cash flow prophet (forward projections, 12h TTL) + capacity oracle (utilization model, 6h TTL)
+- [x] 24-03-PLAN.md -- Barrel index, intelligence cron (6h), dynamic API route, role integration wiring
+
+### Phase 25: Role Dashboard
+**Goal**: Unified dashboard for role management with activity feeds, status cards, autonomy controls, and intelligence widgets
+**Depends on**: Phase 22b, 23b, 24b
+**Plans**: 3 plans
+
+Plans:
+- [x] 25-01-PLAN.md -- Role activity API + status API, RoleActivityFeed + RoleStatusCards components
+- [x] 25-02-PLAN.md -- AutonomyToggle (tri-state), AttentionView (unified queue), attention API
+- [x] 25-03-PLAN.md -- RoleDetailView, IntelligenceWidgets, barrel index, dashboard-redesign.tsx integration
+
+### Phase 26: SOTA Response Drafter
+**Goal**: Response drafter produces contextually rich, business-aware replies indistinguishable from what the user would write -- leveraging full conversation history, entity knowledge, RAG retrieval, memory palace, relationship scoring, and contact timing
+**Depends on**: Phase 22b (Comms Role), existing ContextAssembler + RAG infrastructure
+**Requirements**: DRAFT-01, DRAFT-02, DRAFT-03, DRAFT-04, DRAFT-05
+**Success Criteria** (what must be TRUE):
+  1. Draft replies reference specific projects, tasks, invoices, and recent interactions with the contact
+  2. Draft quality assessed via blind comparison against user's actual replies to the same messages
+  3. ContextAssembler provides the same rich context to drafts that the main chat engine uses
+  4. Confidence scoring reflects actual context depth -- high-context drafts score higher than generic ones
+  5. Standing orders and per-contact voice preferences are applied to every draft
+**Plans**: 2 plans (2 waves)
+
+Plans:
+- [ ] 26-01-PLAN.md -- DraftContextAssembler with parallel context fetching and context-depth confidence scoring
+- [ ] 26-02-PLAN.md -- Wire assembler into client-comms.ts draftReply, tone adaptation, blind comparison evaluation harness
+
 ## Progress
 
 **Execution Order:**
@@ -352,5 +413,10 @@ Phase 20 first (no dependencies), then 21 (billing before growth roles), then 22
 | 22. Cost Controls & Ad Script Generator | 2/2 | Complete    | 2026-03-18 | - |
 | 23. SEO Monitor & Tender Hunter | v1.4 | Complete    | 2026-03-18 | 2026-03-18 |
 | 24. Content Creator | v1.4 | Complete    | 2026-03-18 | 2026-03-18 |
+| 22b. Comms Role | v1.4 | 3/3 | Complete | 2026-03-26 |
+| 23b. Sales Role | v1.4 | 3/3 | Complete | 2026-03-26 |
+| 24b. Intelligence Layer | v1.4 | 3/3 | Complete | 2026-03-26 |
+| 25. Role Dashboard | v1.4 | 3/3 | Complete | 2026-03-26 |
+| 26. SOTA Response Drafter | v1.4 | 0/2 | Planning | - |
 
-**Overall:** 57/57 plans complete for v1.0+v1.1+v1.2 (100%). v1.4: 11/11 plans (Phases 20-24) -- MILESTONE COMPLETE.
+**Overall:** 57/57 plans complete for v1.0+v1.1+v1.2 (100%). v1.4: 23/25 plans (Phases 20-26).
