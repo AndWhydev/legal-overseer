@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { DollarSign, TrendingUp, AlertTriangle, BarChart3, Zap } from 'lucide-react';
+import { DollarSign, TrendingUp, AlertTriangle, BarChart3 } from 'lucide-react';
 import { TabShell } from '@/components/ui/tab-shell';
 import { AlertBanner } from '@/components/ui/alert-banner';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -85,7 +85,7 @@ function CostsTab() {
     gap: 8,
     padding: 8,
     borderRadius: 12,
-    background: 'rgba(13, 17, 23, 0.6)',
+    background: 'var(--bg-input, rgba(13, 17, 23, 0.6))',
     backdropFilter: 'var(--glass-card-blur)',
     WebkitBackdropFilter: 'var(--glass-card-blur)',
     width: 'fit-content',
@@ -94,7 +94,7 @@ function CostsTab() {
   const pillBtn = (isActive: boolean): React.CSSProperties => ({
     padding: '8px 16px',
     borderRadius: 20,
-    background: isActive ? 'rgba(255, 90, 31, 0.15)' : 'var(--glass-pill-bg)',
+    background: isActive ? 'rgba(255, 255, 255, 0.08)' : 'var(--glass-pill-bg)',
     backdropFilter: 'var(--glass-card-blur)',
     WebkitBackdropFilter: 'var(--glass-card-blur)',
     boxShadow: 'var(--glass-card-inset)',
@@ -299,7 +299,6 @@ function CostsTab() {
 
         {!summary && !loading && !error && (
           <EmptyState
-            icon={<Zap size={40} />}
             title="No cost data available"
             description="Cost tracking will appear here once you start using AI agents and models."
           />

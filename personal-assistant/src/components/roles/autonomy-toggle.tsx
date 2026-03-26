@@ -80,7 +80,7 @@ export function AutonomyToggle({ roleType, currentLevel, enabled, onLevelChange 
         display: 'flex',
         gap: 0,
         borderRadius: 12,
-        background: 'rgba(10, 14, 23, 0.5)',
+        background: 'var(--bb-surface, rgba(10, 14, 23, 0.5))',
         padding: 4,
         position: 'relative',
         opacity: enabled ? 1 : 0.4,

@@ -35,8 +35,8 @@ const panel: React.CSSProperties = {
   width: '100%',
   maxWidth: 600,
   zIndex: 53,
-  background: '#0a0f1a',
-  borderLeft: '1px solid rgba(255, 255, 255, 0.06)',
+  background: 'var(--bg-primary, #0a0f1a)',
+  borderLeft: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
   display: 'flex',
   flexDirection: 'column',
   overflow: 'hidden',
@@ -45,7 +45,7 @@ const panel: React.CSSProperties = {
 
 const headerStyle: React.CSSProperties = {
   padding: '20px 24px',
-  borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
+  borderBottom: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'space-between',
@@ -66,7 +66,7 @@ const closeBtn: React.CSSProperties = {
   justifyContent: 'center',
   borderRadius: 8,
   border: 'none',
-  background: 'rgba(255, 255, 255, 0.04)',
+  background: 'var(--hover-bg, rgba(255, 255, 255, 0.04))',
   color: 'var(--text-dim, #475569)',
   cursor: 'pointer',
 }
@@ -93,8 +93,8 @@ const inputStyle: React.CSSProperties = {
   height: 40,
   padding: '0 12px',
   borderRadius: 8,
-  border: '1px solid rgba(255, 255, 255, 0.05)',
-  background: 'rgba(13, 17, 23, 0.6)',
+  border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.05))',
+  background: 'var(--bg-input, rgba(13, 17, 23, 0.6))',
   color: 'var(--text-primary, #F1F5F9)',
   fontSize: 14,
   outline: 'none',
@@ -131,8 +131,8 @@ const checkbox: React.CSSProperties = {
 
 const selectedCheckbox: React.CSSProperties = {
   ...checkbox,
-  background: '#FF5A1F',
-  borderColor: '#FF5A1F',
+  background: 'var(--btn-primary-bg, #F1F5F9)',
+  borderColor: 'var(--btn-primary-bg, #F1F5F9)',
 }
 
 const leadName: React.CSSProperties = {
@@ -150,11 +150,11 @@ const leadEmail: React.CSSProperties = {
 
 const summaryBar: React.CSSProperties = {
   padding: '16px 24px',
-  borderTop: '1px solid rgba(255, 255, 255, 0.06)',
+  borderTop: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'space-between',
-  background: 'rgba(15, 20, 30, 0.8)',
+  background: 'var(--glass-bg-heavy, rgba(15, 20, 30, 0.8))',
 }
 
 const summaryText: React.CSSProperties = {
@@ -170,8 +170,8 @@ const createBtn: React.CSSProperties = {
   padding: '0 24px',
   borderRadius: 8,
   border: 'none',
-  background: '#FF5A1F',
-  color: '#000',
+  background: 'var(--btn-primary-bg, #F1F5F9)',
+  color: 'var(--btn-primary-fg, #0a0f1a)',
   fontSize: 14,
   fontWeight: 500,
   cursor: 'pointer',
@@ -184,7 +184,7 @@ const createBtn: React.CSSProperties = {
 const noTemplateBox: React.CSSProperties = {
   padding: '24px 16px',
   borderRadius: 12,
-  border: '1px dashed rgba(255, 255, 255, 0.08)',
+  border: '1px dashed var(--glass-border, rgba(255, 255, 255, 0.03))',
   textAlign: 'center',
   color: 'var(--text-dim, #475569)',
   fontSize: 14,
@@ -325,8 +325,8 @@ function CampaignCreatePanelInner({
               maxHeight: 300,
               overflowY: 'auto',
               borderRadius: 12,
-              border: '1px solid rgba(255, 255, 255, 0.04)',
-              background: 'rgba(15, 20, 30, 0.4)',
+              border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.04))',
+              background: 'var(--bg-card, rgba(15, 20, 30, 0.4))',
             }}>
               {emailableLeads.length === 0 ? (
                 <div style={{ padding: 24, textAlign: 'center', color: 'var(--text-dim, #475569)', fontSize: 14 }}>
@@ -342,7 +342,7 @@ function CampaignCreatePanelInner({
                       onClick={() => toggleLead(lead.id)}
                       style={{
                         ...leadRow,
-                        background: selected ? 'rgba(255, 90, 31, 0.06)' : 'transparent',
+                        background: selected ? 'var(--hover-bg-strong, rgba(255, 255, 255, 0.08))' : 'transparent',
                       }}
                       onMouseEnter={e => { if (!selected) e.currentTarget.style.background = 'rgba(255, 255, 255, 0.02)' }}
                       onMouseLeave={e => { if (!selected) e.currentTarget.style.background = 'transparent' }}
@@ -379,8 +379,8 @@ function CampaignCreatePanelInner({
               opacity: canCreate ? 1 : 0.4,
               cursor: canCreate ? 'pointer' : 'not-allowed',
             }}
-            onMouseEnter={e => { if (canCreate) e.currentTarget.style.background = '#FF7A45' }}
-            onMouseLeave={e => { if (canCreate) e.currentTarget.style.background = '#FF5A1F' }}
+            onMouseEnter={e => { if (canCreate) e.currentTarget.style.background = '#E2E8F0' }}
+            onMouseLeave={e => { if (canCreate) e.currentTarget.style.background = '#F1F5F9' }}
           >
             <Send size={16} /> Create Campaign
           </button>

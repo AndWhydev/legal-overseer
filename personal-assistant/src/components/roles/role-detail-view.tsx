@@ -65,11 +65,11 @@ interface RoleStatus {
 const glassCard: React.CSSProperties = {
   padding: '20px',
   borderRadius: 16,
-  background: 'rgba(15, 20, 30, 0.6)',
-  backdropFilter: 'blur(20px) saturate(1.2)',
-  WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
-  border: '1px solid rgba(255, 255, 255, 0.03)',
-  boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+  background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.6))',
+  backdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
+  WebkitBackdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
+  border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
+  boxShadow: 'var(--card-inset, inset 0 1px 0 rgba(255, 255, 255, 0.05))',
 }
 
 const sectionHeader: React.CSSProperties = {
@@ -86,8 +86,8 @@ const listRow: React.CSSProperties = {
   alignItems: 'flex-start',
   padding: '12px 16px',
   borderRadius: 12,
-  background: 'rgba(10, 14, 23, 0.5)',
-  boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+  background: 'var(--bb-surface, rgba(10, 14, 23, 0.5))',
+  boxShadow: 'var(--card-inset, inset 0 1px 0 rgba(255, 255, 255, 0.05))',
   border: 'none',
   transition: 'background 200ms',
   gap: 12,
@@ -100,7 +100,7 @@ const listRow: React.CSSProperties = {
 const ROLE_META: Record<RoleType, { label: string; icon: React.ElementType; color: string }> = {
   finance: { label: 'Finance', icon: DollarSign, color: '#22c55e' },
   comms: { label: 'Communications', icon: MessageSquare, color: '#3b82f6' },
-  sales: { label: 'Sales', icon: TrendingUp, color: '#FF5A1F' },
+  sales: { label: 'Sales', icon: TrendingUp, color: '#F1F5F9' },
 }
 
 const ACTIVITY_ICONS: Record<ActivityType, React.ElementType> = {
@@ -113,7 +113,7 @@ const ACTIVITY_ICONS: Record<ActivityType, React.ElementType> = {
 }
 
 const ACTIVITY_COLORS: Record<ActivityType, string> = {
-  action: '#FF5A1F',
+  action: '#F1F5F9',
   insight: '#3b82f6',
   escalation: '#eab308',
   learning: '#8b5cf6',
@@ -187,7 +187,7 @@ export function RoleDetailView({ roleType, onBack }: RoleDetailViewProps) {
             width: 32,
             height: 32,
             borderRadius: 12,
-            border: '1px solid rgba(255, 255, 255, 0.06)',
+            border: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
             background: 'transparent',
             color: 'var(--text-primary, #F1F5F9)',
             cursor: 'pointer',
@@ -291,7 +291,7 @@ export function RoleDetailView({ roleType, onBack }: RoleDetailViewProps) {
                     style={{
                       ...listRow,
                       cursor: 'pointer',
-                      background: isHovered ? 'rgba(20, 28, 40, 0.7)' : 'rgba(10, 14, 23, 0.5)',
+                      background: isHovered ? 'var(--bb-surface-hover, rgba(20, 28, 40, 0.7))' : 'rgba(10, 14, 23, 0.5)',
                     }}
                   >
                     {/* Timeline dot */}
@@ -344,8 +344,8 @@ export function RoleDetailView({ roleType, onBack }: RoleDetailViewProps) {
                       marginLeft: 36,
                       padding: '12px 16px',
                       borderRadius: 12,
-                      background: 'rgba(10, 14, 23, 0.3)',
-                      border: '1px solid rgba(255, 255, 255, 0.03)',
+                      background: 'var(--bb-surface, rgba(10, 14, 23, 0.3))',
+                      border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
                       fontSize: 14,
                       color: 'var(--text-secondary, #94A3B8)',
                       lineHeight: 1.6,
@@ -373,7 +373,7 @@ export function RoleDetailView({ roleType, onBack }: RoleDetailViewProps) {
                             marginTop: 4,
                             padding: '8px 12px',
                             borderRadius: 8,
-                            background: 'rgba(10, 14, 23, 0.5)',
+                            background: 'var(--bb-surface, rgba(10, 14, 23, 0.5))',
                             fontSize: 14,
                             fontFamily: 'var(--font-mono)',
                             color: 'var(--text-dim, #475569)',

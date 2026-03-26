@@ -8,14 +8,14 @@ import { formatCents } from '@/lib/revenue/types'
 
 const SEVERITY_COLORS: Record<InsightSeverity, string> = {
   critical: 'var(--bb-red)',
-  high: 'var(--bb-orange)',
+  high: 'var(--text-primary, #F1F5F9)',
   medium: 'var(--bb-amber)',
   low: 'var(--bb-blue)',
 }
 
 const SEVERITY_BG: Record<InsightSeverity, string> = {
   critical: 'rgba(239, 68, 68, 0.12)',
-  high: 'rgba(255, 90, 31, 0.12)',
+  high: 'rgba(255, 255, 255, 0.06)',
   medium: 'rgba(245, 158, 11, 0.1)',
   low: 'rgba(59, 130, 246, 0.08)',
 }
@@ -148,7 +148,7 @@ const amountStyle: React.CSSProperties = {
   fontSize: 14,
   fontWeight: 500,
   fontFamily: 'var(--font-mono)',
-  color: 'var(--bb-orange)',
+  color: 'var(--text-primary, #F1F5F9)',
   flexShrink: 0,
 }
 

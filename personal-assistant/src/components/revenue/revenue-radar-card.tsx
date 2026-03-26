@@ -190,8 +190,8 @@ export function RevenueRadarCard() {
         <button
           onClick={handleRefresh}
           style={{
-            background: 'var(--bb-orange)',
-            color: '#000',
+            background: 'var(--btn-primary-bg, #F1F5F9)',
+            color: 'var(--btn-primary-fg, #0a0f1a)',
             border: 'none',
             borderRadius: 8,
             padding: '8px 16px',
@@ -235,7 +235,7 @@ export function RevenueRadarCard() {
             <div style={{ fontSize: 14, color: 'var(--bb-amber)', fontWeight: 500, marginBottom: 4 }}>
               Recoverable Revenue
             </div>
-            <div style={{ ...bigNumber, color: 'var(--bb-orange)' }}>
+            <div style={{ ...bigNumber, color: 'var(--text-primary, #F1F5F9)' }}>
               {fmt(data.recoverable_total_cents)}
             </div>
             <div style={{ fontSize: 14, color: 'var(--text-dim)', marginTop: 4 }}>
@@ -361,7 +361,7 @@ export function RevenueRadarCard() {
                 gap: 12,
                 padding: '8px 12px',
                 borderRadius: 8,
-                background: i === 0 ? 'rgba(255, 90, 31, 0.06)' : 'rgba(255, 255, 255, 0.02)',
+                background: i === 0 ? 'rgba(255, 255, 255, 0.04)' : 'rgba(255, 255, 255, 0.02)',
               }}>
                 <div style={{
                   width: 28,

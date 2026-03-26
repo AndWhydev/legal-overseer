@@ -26,6 +26,23 @@ interface InvoiceRow {
   created_at: string
 }
 
+/** Map internal source_channel identifiers to user-facing display names */
+const SOURCE_DISPLAY_NAMES: Record<string, string> = {
+  prospect_discovery: 'Prospect Discovery',
+  pcc_discovery: 'Prospect Discovery',
+  gmail: 'Gmail',
+  outlook: 'Outlook',
+  email: 'Email',
+  whatsapp: 'WhatsApp',
+  web: 'Website',
+  imessage: 'iMessage',
+  manual: 'Manual Entry',
+}
+
+function displaySource(channel: string): string {
+  return SOURCE_DISPLAY_NAMES[channel] ?? channel.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+}
+
 function fingerprint(item: DashboardNotificationItem) {
   return [
     item.type,
@@ -56,14 +73,19 @@ export function buildDashboardNotifications({
     })),
     ...leads.map((lead) => {
       const leadName = String(
-        lead.metadata?.name || lead.metadata?.company || lead.source_channel || 'Unknown',
+        lead.metadata?.name || lead.metadata?.company || 'Someone',
       )
+      const source = lead.source_channel
+        ? displaySource(lead.source_channel)
+        : null
 
       return {
         id: `lead-${lead.id}`,
         type: 'lead' as const,
         title: 'New Lead',
-        description: `${leadName} signed up`,
+        description: source
+          ? `${leadName} via ${source}`
+          : `${leadName} signed up`,
         timestamp: new Date(lead.created_at),
         read: false,
         tabId: 'leads',

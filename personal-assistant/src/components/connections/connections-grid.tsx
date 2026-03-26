@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
-import { Plug } from 'lucide-react'
 import { useSearchParams } from 'next/navigation'
 import { ConnectModal, type ConnectModalMode } from '@/components/channels/connect-modal'
 import { EmptyState } from '@/components/ui/empty-state'
@@ -669,7 +668,6 @@ export function ConnectionsGrid({
 
       {filteredConnections.length === 0 ? (
         <EmptyState
-          icon={<Plug size={48} />}
           title="No connections configured"
           description="Connect your services to let BitBit start working for you"
         />

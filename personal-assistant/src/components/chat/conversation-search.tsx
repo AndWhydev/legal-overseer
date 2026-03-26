@@ -55,7 +55,7 @@ export function ConversationSearch({ onSelectThread, onClose }: ConversationSear
           padding: '6px 10px',
           borderRadius: 8,
           background: 'rgba(255,255,255,0.04)',
-          border: '1px solid rgba(255,255,255,0.06)',
+          border: '1px solid var(--glass-border, rgba(255,255,255,0.03))',
         }}
       >
         <Search size={14} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />

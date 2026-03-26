@@ -247,7 +247,7 @@ export function ChannelConfigDrawer({
                   value={config.folder_filter || ''}
                   onChange={e => updateConfig({ folder_filter: e.target.value })}
                   placeholder={channel === 'gmail' ? 'INBOX, IMPORTANT' : 'Inbox, Sent Items'}
-                  className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-[#D4A574] focus:outline-none focus:ring-1 focus:ring-[#D4A574]"
+                  className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-[rgba(255,255,255,0.15)] focus:outline-none focus:ring-1 focus:ring-[rgba(255,255,255,0.15)]"
                 />
               </div>
             )}
@@ -262,7 +262,7 @@ export function ChannelConfigDrawer({
                   <select
                     value={config.workspace_id || ''}
                     onChange={e => updateConfig({ workspace_id: e.target.value })}
-                    className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-[#D4A574] focus:outline-none focus:ring-1 focus:ring-[#D4A574]"
+                    className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-[rgba(255,255,255,0.15)] focus:outline-none focus:ring-1 focus:ring-[rgba(255,255,255,0.15)]"
                   >
                     <option value="">All workspaces</option>
                     {config.workspaces.map(ws => (
@@ -275,7 +275,7 @@ export function ChannelConfigDrawer({
                     value={config.workspace_id || ''}
                     onChange={e => updateConfig({ workspace_id: e.target.value })}
                     placeholder="Workspace ID (optional)"
-                    className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-[#D4A574] focus:outline-none focus:ring-1 focus:ring-[#D4A574]"
+                    className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-[rgba(255,255,255,0.15)] focus:outline-none focus:ring-1 focus:ring-[rgba(255,255,255,0.15)]"
                   />
                 )}
               </div>
@@ -292,7 +292,7 @@ export function ChannelConfigDrawer({
                   value={config.event_type_filter || ''}
                   onChange={e => updateConfig({ event_type_filter: e.target.value })}
                   placeholder="30 Minute Meeting, Discovery Call"
-                  className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-[#D4A574] focus:outline-none focus:ring-1 focus:ring-[#D4A574]"
+                  className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-[rgba(255,255,255,0.15)] focus:outline-none focus:ring-1 focus:ring-[rgba(255,255,255,0.15)]"
                 />
               </div>
             )}
@@ -318,7 +318,7 @@ export function ChannelConfigDrawer({
                               : [...current, evt]
                             updateConfig({ event_types: next })
                           }}
-                          className="h-4 w-4 rounded border-border text-[#D4A574] focus:ring-[#D4A574]"
+                          className="h-4 w-4 rounded border-border text-[rgba(255,255,255,0.15)] focus:ring-[rgba(255,255,255,0.15)]"
                         />
                         <span className="text-xs text-foreground font-mono">{evt}</span>
                       </label>

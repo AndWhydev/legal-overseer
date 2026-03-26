@@ -113,11 +113,11 @@ export function RagStatsWidget({ className = '', showDetails = true }: RagStatsW
   const glassCard: React.CSSProperties = {
     padding: '16px',
     borderRadius: 12,
-    background: 'rgba(15, 20, 30, 0.6)',
-    backdropFilter: 'blur(20px) saturate(1.2)',
-    WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
-    border: '1px solid rgba(255, 255, 255, 0.03)',
-    boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+    background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.6))',
+    backdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
+    WebkitBackdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
+    border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
+    boxShadow: 'var(--card-inset, inset 0 1px 0 rgba(255, 255, 255, 0.05))',
   }
 
   const metricRow: React.CSSProperties = {
@@ -145,7 +145,7 @@ export function RagStatsWidget({ className = '', showDetails = true }: RagStatsW
     gap: 8,
     marginBottom: 12,
     paddingBottom: 12,
-    borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
+    borderBottom: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
   }
 
   const titleStyle: React.CSSProperties = {
@@ -204,7 +204,7 @@ export function RagStatsWidget({ className = '', showDetails = true }: RagStatsW
   return (
     <div style={glassCard} className={className}>
       <div style={headerStyle}>
-        <Database size={16} style={{ color: '#FF5A1F' }} />
+        <Database size={16} style={{ color: '#F1F5F9' }} />
         <h3 style={titleStyle}>Vector Index</h3>
       </div>
 
@@ -291,7 +291,7 @@ export function RagStatsWidget({ className = '', showDetails = true }: RagStatsW
               style={{
                 marginTop: 8,
                 paddingTop: 8,
-                borderTop: '1px solid rgba(255, 255, 255, 0.06)',
+                borderTop: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
               }}
             />
             <div style={{ fontSize: 14, color: 'var(--text-dim, #475569)', fontWeight: 500, marginBottom: 8 }}>

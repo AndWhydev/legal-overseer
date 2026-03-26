@@ -11,7 +11,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { logger } from '@/lib/core/logger';
 import { useTheme, type ThemeName } from '@/lib/theme/theme-provider';
 
-// ─── Automation types ─────────────────────────────────────────────────────────
+// ─── Plugin types ────────────────────────────────────────────────────────────
 
 const AUTOMATION_TYPES = [
   { id: 'lead_swarm', label: 'Lead Generation', description: 'Automatically find and score new leads' },
@@ -77,7 +77,7 @@ function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: 
         borderRadius: 12,
         transition: 'background-color 200ms ease',
         border: 'none',
-        background: checked ? '#22C55E' : 'rgba(255, 255, 255, 0.1)',
+        background: checked ? '#22C55E' : 'var(--toggle-off-bg, rgba(255, 255, 255, 0.1))',
         outline: 'none',
       }}
       role="switch"
@@ -339,7 +339,7 @@ export function SettingsConnectionsTab() {
   );
 }
 
-// ─── Automations Tab ──────────────────────────────────────────────────────────
+// ─── Plugins Tab ─────────────────────────────────────────────────────────────
 
 export function SettingsAutomationsTab() {
   const [supabase, setSupabase] = useState<SupabaseClient | null>(null);
@@ -408,7 +408,7 @@ export function SettingsAutomationsTab() {
       <SaveIndicator visible={saveIndicatorVisible} />
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
         <div>
-          <h3 style={{ fontSize: 16, fontWeight: 500, color: 'var(--text-primary)', margin: 0 }}>Automations</h3>
+          <h3 style={{ fontSize: 16, fontWeight: 500, color: 'var(--text-primary)', margin: 0 }}>Plugins</h3>
           <p style={{ fontSize: 14, color: 'var(--text-secondary)', margin: '4px 0 0' }}>Choose what BitBit handles for you.</p>
         </div>
         <div style={{
@@ -436,9 +436,11 @@ export function SettingsAutomationsTab() {
 export function SettingsAppearanceTab() {
   const { theme: currentPalette, setTheme: setPalette } = useTheme();
 
+  const isDev = process.env.NODE_ENV === 'development'
   const themes = [
     { id: 'midnight' as ThemeName, label: 'Midnight', desc: 'Deep dark', bg: 'linear-gradient(135deg, #0a0f1a 0%, #141b2d 100%)', border: 'rgba(255,255,255,0.08)', icon: <Moon size={20} />, previewText: 'rgba(255,255,255,0.6)' },
-    { id: 'aurora' as ThemeName, label: 'Aurora', desc: 'Glassmorphic', bg: 'linear-gradient(135deg, #F5E6D8 0%, #AFCADF 100%)', border: 'rgba(0,0,0,0.08)', icon: <Sun size={20} />, previewText: 'rgba(0,0,0,0.5)' },
+    // Aurora is still WIP — only show in dev mode
+    ...(isDev ? [{ id: 'aurora' as ThemeName, label: 'Aurora', desc: 'Glassmorphic', bg: 'linear-gradient(135deg, #F5E6D8 0%, #AFCADF 100%)', border: 'rgba(0,0,0,0.08)', icon: <Sun size={20} />, previewText: 'rgba(0,0,0,0.5)' }] : []),
     { id: 'light' as ThemeName, label: 'Light', desc: 'Clean & minimal', bg: 'linear-gradient(135deg, #FAFAF9 0%, #F0F0EE 100%)', border: 'rgba(0,0,0,0.08)', icon: <Monitor size={20} />, previewText: 'rgba(0,0,0,0.5)' },
   ];
 

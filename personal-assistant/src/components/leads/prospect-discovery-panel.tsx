@@ -27,8 +27,8 @@ const panel: React.CSSProperties = {
   width: '100%',
   maxWidth: 560,
   zIndex: 53,
-  background: '#0a0f1a',
-  borderLeft: '1px solid rgba(255, 255, 255, 0.06)',
+  background: 'var(--bg-primary, #0a0f1a)',
+  borderLeft: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
   display: 'flex',
   flexDirection: 'column',
   overflow: 'hidden',
@@ -37,7 +37,7 @@ const panel: React.CSSProperties = {
 
 const headerStyle: React.CSSProperties = {
   padding: '20px 24px',
-  borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
+  borderBottom: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'space-between',
@@ -58,7 +58,7 @@ const closeBtnStyle: React.CSSProperties = {
   justifyContent: 'center',
   borderRadius: 8,
   border: 'none',
-  background: 'rgba(255, 255, 255, 0.04)',
+  background: 'var(--hover-bg, rgba(255, 255, 255, 0.04))',
   color: 'var(--text-dim, #475569)',
   cursor: 'pointer',
   transition: 'background 200ms',
@@ -83,8 +83,8 @@ const inputStyle: React.CSSProperties = {
   height: 40,
   padding: '0 12px',
   borderRadius: 8,
-  border: '1px solid rgba(255, 255, 255, 0.05)',
-  background: 'rgba(13, 17, 23, 0.6)',
+  border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.05))',
+  background: 'var(--bg-input, rgba(13, 17, 23, 0.6))',
   color: 'var(--text-primary, #F1F5F9)',
   fontSize: 14,
   outline: 'none',
@@ -109,7 +109,7 @@ const progressTrack: React.CSSProperties = {
   maxWidth: 300,
   height: 4,
   borderRadius: 8,
-  background: 'rgba(255, 255, 255, 0.06)',
+  background: 'var(--hover-bg-strong, rgba(255, 255, 255, 0.06))',
   overflow: 'hidden',
 }
 
@@ -119,7 +119,7 @@ const retryBtn: React.CSSProperties = {
   display: 'inline-flex',
   alignItems: 'center',
   borderRadius: 8,
-  border: '1px solid rgba(255, 255, 255, 0.1)',
+  border: '1px solid var(--border-active, rgba(255, 255, 255, 0.1))',
   background: 'transparent',
   color: 'var(--text-secondary, #94A3B8)',
   fontSize: 14,
@@ -129,7 +129,7 @@ const retryBtn: React.CSSProperties = {
 const newSearchBtn: React.CSSProperties = {
   padding: '8px 12px',
   borderRadius: 8,
-  border: '1px solid rgba(255, 255, 255, 0.06)',
+  border: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
   background: 'transparent',
   color: 'var(--text-dim, #475569)',
   fontSize: 14,
@@ -177,8 +177,8 @@ function ProspectDiscoveryPanelInner({ open, onClose }: ProspectDiscoveryPanelPr
     padding: '0 24px',
     borderRadius: 8,
     border: 'none',
-    background: canSearch ? '#FF5A1F' : 'rgba(255, 255, 255, 0.04)',
-    color: canSearch ? '#000' : 'var(--text-dim, #475569)',
+    background: canSearch ? 'var(--btn-primary-bg, #F1F5F9)' : 'var(--hover-bg, rgba(255, 255, 255, 0.04))',
+    color: canSearch ? 'var(--btn-primary-fg, #0a0f1a)' : 'var(--text-dim, #475569)',
     fontSize: 14,
     fontWeight: 500,
     cursor: canSearch ? 'pointer' : 'not-allowed',
@@ -197,8 +197,8 @@ function ProspectDiscoveryPanelInner({ open, onClose }: ProspectDiscoveryPanelPr
             onClick={handleClose}
             style={closeBtnStyle}
             aria-label="Close discovery panel"
-            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)' }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)' }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'var(--hover-bg-strong, rgba(255, 255, 255, 0.08))' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'var(--hover-bg, rgba(255, 255, 255, 0.04))' }}
           >
             <X size={16} />
           </button>
@@ -249,8 +249,8 @@ function ProspectDiscoveryPanelInner({ open, onClose }: ProspectDiscoveryPanelPr
                 onClick={handleSearch}
                 disabled={!canSearch}
                 style={searchBtn}
-                onMouseEnter={e => { if (canSearch) { e.currentTarget.style.background = '#FF7A45'; e.currentTarget.style.transform = 'translateY(-1px)' } }}
-                onMouseLeave={e => { if (canSearch) { e.currentTarget.style.background = '#FF5A1F'; e.currentTarget.style.transform = 'translateY(0)' } }}
+                onMouseEnter={e => { if (canSearch) { e.currentTarget.style.background = '#E2E8F0'; e.currentTarget.style.transform = 'translateY(-1px)' } }}
+                onMouseLeave={e => { if (canSearch) { e.currentTarget.style.background = '#F1F5F9'; e.currentTarget.style.transform = 'translateY(0)' } }}
               >
                 <Search size={16} />
                 Search
@@ -261,7 +261,7 @@ function ProspectDiscoveryPanelInner({ open, onClose }: ProspectDiscoveryPanelPr
           {/* Progress State */}
           {job && job.status !== 'complete' && job.status !== 'error' && (
             <div style={progressContainer}>
-              <Loader2 size={24} style={{ color: '#FF5A1F', animation: 'spin 1s linear infinite' }} />
+              <Loader2 size={24} style={{ color: 'var(--text-primary, #F1F5F9)', animation: 'spin 1s linear infinite' }} />
               <div style={{ textAlign: 'center' }}>
                 <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)', marginBottom: 4 }}>
                   {job.status === 'searching' ? 'Searching...' : job.status === 'enriching' ? 'Enriching...' : 'Scoring...'}
@@ -273,7 +273,7 @@ function ProspectDiscoveryPanelInner({ open, onClose }: ProspectDiscoveryPanelPr
                   width: `${job.progress}%`,
                   height: '100%',
                   borderRadius: 8,
-                  background: '#FF5A1F',
+                  background: 'var(--btn-primary-bg, #F1F5F9)',
                   transition: 'width 0.3s ease',
                 }} />
               </div>

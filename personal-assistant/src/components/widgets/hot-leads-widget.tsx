@@ -45,7 +45,7 @@ export function HotLeadsWidget() {
     >
       <div className="space-y-3">
         {leads.length === 0 ? (
-          <EmptyState icon={<TrendingUp size={32} />} title="No active leads" description="New leads will appear here as they come in." />
+          <EmptyState title="No active leads" description="New leads will appear here as they come in." />
         ) : (
           leads.map(lead => (
             <div key={lead.id} className="flex items-center justify-between p-3 rounded-md bg-[var(--bg-elevated)] border border-[var(--border-subtle)]">

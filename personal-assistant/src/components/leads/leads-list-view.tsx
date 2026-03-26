@@ -3,17 +3,13 @@
 import React, { useState, useCallback, memo } from 'react'
 import { ArrowRight, Mail, ChevronDown } from 'lucide-react'
 import type { EnhancedLeadData, LeadStatus } from '@/lib/leads/types'
-import { getDealRotLevel, formatCurrency, relativeTime } from '@/lib/leads/utils'
-import { StatusPill, type StatusVariant } from '@/components/ui/status-pill'
+import { formatCurrency, relativeTime } from '@/lib/leads/utils'
 import { ScoreBreakdownPanel } from './score-breakdown-panel'
 import { OutreachIntelPanel } from './outreach-intel-panel'
 import { WebsiteSignalsPanel } from './website-signals-panel'
 import { NextActionPanel } from './next-action-panel'
 
 const SPRING = 'cubic-bezier(0.2, 0.9, 0.3, 1)'
-
-const SCORE_VARIANT: Record<string, StatusVariant> = { hot: 'error', warm: 'warning', cold: 'info' }
-const STATUS_VARIANT: Record<string, StatusVariant> = { new: 'info', qualified: 'warning', booked: 'purple', converted: 'success', lost: 'neutral' }
 
 const PROGRESS_STAGES: Array<{ status: LeadStatus; label: string }> = [
   { status: 'new', label: 'New' },
@@ -33,23 +29,20 @@ const sectionLabel: React.CSSProperties = {
 }
 
 const glassRow: React.CSSProperties = {
-  borderRadius: 12,
-  background: 'rgba(15, 20, 30, 0.6)',
-  backdropFilter: 'blur(20px) saturate(1.2)',
-  WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
-  boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
-  border: '1px solid rgba(255, 255, 255, 0.03)',
   overflow: 'hidden',
-  transition: `all 180ms ${SPRING}`,
+  transition: 'background 150ms',
 }
 
 const rowHeader: React.CSSProperties = {
   display: 'flex',
   alignItems: 'center',
   gap: 12,
-  padding: '12px 16px',
+  padding: '0 16px',
+  height: 48,
+  borderBottom: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
+  background: 'transparent',
   cursor: 'pointer',
-  transition: `background 200ms ${SPRING}`,
+  transition: 'background 150ms',
 }
 
 const nameStyle: React.CSSProperties = {
@@ -62,6 +55,15 @@ const nameStyle: React.CSSProperties = {
   whiteSpace: 'nowrap',
 }
 
+const scoreCell: React.CSSProperties = {
+  fontSize: 14,
+  fontWeight: 500,
+  color: 'var(--text-secondary, #94A3B8)',
+  minWidth: 48,
+  textAlign: 'right',
+  textTransform: 'capitalize',
+}
+
 const valueCell: React.CSSProperties = {
   fontSize: 14,
   fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
@@ -69,6 +71,14 @@ const valueCell: React.CSSProperties = {
   color: 'var(--text-secondary, #94A3B8)',
   minWidth: 60,
   textAlign: 'right',
+}
+
+const statusCell: React.CSSProperties = {
+  fontSize: 14,
+  color: 'var(--text-secondary, #94A3B8)',
+  minWidth: 72,
+  textAlign: 'right',
+  textTransform: 'capitalize',
 }
 
 const timeCell: React.CSSProperties = {
@@ -84,7 +94,7 @@ const quickBtnStyle: React.CSSProperties = {
   padding: 0,
   borderRadius: 8,
   border: 'none',
-  background: 'rgba(255, 255, 255, 0.06)',
+  background: 'var(--hover-bg-strong, rgba(255, 255, 255, 0.06))',
   color: 'var(--text-dim, #475569)',
   cursor: 'pointer',
   fontSize: 14,
@@ -95,13 +105,13 @@ const quickBtnStyle: React.CSSProperties = {
 }
 
 const detailPanel: React.CSSProperties = {
-  borderTop: '1px solid rgba(255, 255, 255, 0.03)',
-  background: 'rgba(255, 255, 255, 0.02)',
+  borderTop: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
+  background: 'var(--hover-bg, rgba(255, 255, 255, 0.02))',
   padding: '20px 16px',
   display: 'flex',
   flexDirection: 'column',
   gap: 16,
-  animation: `bb-detail-enter 180ms ${SPRING} both`,
+  animation: 'bb-fade-up 200ms cubic-bezier(0.16, 1, 0.3, 1) both',
 }
 
 const advanceBtn: React.CSSProperties = {
@@ -109,8 +119,8 @@ const advanceBtn: React.CSSProperties = {
   padding: '0 20px',
   borderRadius: 8,
   border: 'none',
-  background: 'rgba(34, 197, 94, 0.1)',
-  color: '#86efac',
+  background: 'var(--hover-bg-strong, rgba(255, 255, 255, 0.06))',
+  color: 'var(--text-primary, #F1F5F9)',
   fontSize: 14,
   fontWeight: 500,
   cursor: 'pointer',
@@ -123,17 +133,10 @@ const advanceBtn: React.CSSProperties = {
 const listContainer: React.CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
-  gap: 8,
-}
-
-// ─── Helpers ────────────────────────────────────────────────────────────────
-function getActivityDot(lastActivityAt: string | null): { color: string; pulse: boolean; label: string } {
-  if (!lastActivityAt) return { color: '#ef4444', pulse: true, label: 'No activity' }
-  const hours = (Date.now() - new Date(lastActivityAt).getTime()) / 3_600_000
-  if (hours < 24) return { color: '#22c55e', pulse: false, label: 'Active today' }
-  if (hours < 168) return { color: '#eab308', pulse: false, label: 'Active this week' }
-  if (hours < 336) return { color: '#ef4444', pulse: false, label: 'Inactive 2 weeks' }
-  return { color: '#ef4444', pulse: true, label: 'Critically inactive' }
+  gap: 0,
+  flex: 1,
+  minHeight: 0,
+  overflowY: 'auto',
 }
 
 // ─── Detail Panel ───────────────────────────────────────────────────────────
@@ -144,12 +147,12 @@ interface LeadsListViewProps {
 }
 
 const LeadDetailPanel = memo(function LeadDetailPanel({ lead, onAdvanceStage }: { lead: EnhancedLeadData; onAdvanceStage: (id: string, e: React.MouseEvent) => void }) {
-  const hasPcc = lead.fit_score != null
+  const hasDiscovery = lead.fit_score != null
   const stageIdx = PROGRESS_STAGES.findIndex(s => s.status === lead.status)
   const isLost = lead.status === 'lost'
 
   return (
-    <div style={detailPanel}>
+    <div className="bb-stagger" style={detailPanel}>
       {/* Progress bar */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 4 }} role="progressbar" aria-label="Lead stage progress">
         {PROGRESS_STAGES.map((stage, i) => (
@@ -158,7 +161,7 @@ const LeadDetailPanel = memo(function LeadDetailPanel({ lead, onAdvanceStage }: 
               height: 3,
               width: '100%',
               borderRadius: 9999,
-              background: isLost ? '#71717a' : (i <= stageIdx ? '#22c55e' : 'rgba(255, 255, 255, 0.06)'),
+              background: isLost ? '#71717a' : (i <= stageIdx ? '#22c55e' : 'var(--hover-bg-strong, rgba(255, 255, 255, 0.06))'),
               transition: `background 200ms ${SPRING}`,
             }} />
             <span style={{
@@ -188,8 +191,8 @@ const LeadDetailPanel = memo(function LeadDetailPanel({ lead, onAdvanceStage }: 
       )}
 
       {/* Score & Outreach panels */}
-      {hasPcc && <ScoreBreakdownPanel fitScore={lead.fit_score!} opportunityScore={lead.opportunity_score!} fitBreakdown={lead.fit_breakdown} opportunityBreakdown={lead.opportunity_breakdown} />}
-      {hasPcc && <OutreachIntelPanel opportunityNotes={lead.opportunity_notes} outreachAngle={lead.outreach_angle} priorityServices={lead.priority_services} />}
+      {hasDiscovery && <ScoreBreakdownPanel fitScore={lead.fit_score!} opportunityScore={lead.opportunity_score!} fitBreakdown={lead.fit_breakdown} opportunityBreakdown={lead.opportunity_breakdown} />}
+      {hasDiscovery && <OutreachIntelPanel opportunityNotes={lead.opportunity_notes} outreachAngle={lead.outreach_angle} priorityServices={lead.priority_services} />}
       {lead.website_signals && <WebsiteSignalsPanel signals={lead.website_signals} />}
 
       {/* Next action */}
@@ -221,7 +224,7 @@ const LeadDetailPanel = memo(function LeadDetailPanel({ lead, onAdvanceStage }: 
           <div style={{
             padding: '12px 16px',
             borderRadius: 12,
-            background: 'rgba(255, 255, 255, 0.04)',
+            background: 'var(--hover-bg, rgba(255, 255, 255, 0.04))',
             fontSize: 14,
             color: 'var(--text-secondary, #94A3B8)',
             whiteSpace: 'pre-wrap',
@@ -249,8 +252,6 @@ const LeadRow = memo(function LeadRow({
   onToggle: (id: string) => void
   onAdvanceStage: (leadId: string, event: React.MouseEvent) => void
 }) {
-  const activity = getActivityDot(lead.last_activity_at)
-  const rotLevel = getDealRotLevel(lead.last_activity_at)
   const displayName = lead.prospect_name ?? lead.source_detail ?? `Lead ${lead.id.slice(0, 8)}`
 
   return (
@@ -260,7 +261,7 @@ const LeadRow = memo(function LeadRow({
       aria-expanded={expanded}
       style={{
         ...glassRow,
-        opacity: rotLevel === 'critical' ? 0.6 : rotLevel === 'stale' ? 0.7 : 1,
+        opacity: 1,
         animation: `bb-row-enter 200ms ${SPRING} both`,
         animationDelay: `${index * 30}ms`,
       }}
@@ -273,33 +274,19 @@ const LeadRow = memo(function LeadRow({
         role="button"
         aria-label={`${displayName}, ${lead.score} lead, ${formatCurrency(lead.estimated_value)}`}
         style={rowHeader}
-        onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(20, 28, 40, 0.7)' }}
+        onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--hover-bg, rgba(255, 255, 255, 0.04))' }}
         onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
       >
-        {/* Activity dot */}
-        <span
-          style={{
-            width: 8,
-            height: 8,
-            borderRadius: 9999,
-            backgroundColor: activity.color,
-            flexShrink: 0,
-            animation: activity.pulse ? 'bb-pulse-dot 1.5s ease-in-out infinite' : 'none',
-          }}
-          role="img"
-          aria-label={activity.label}
-        />
-
         {/* Name */}
         <span style={nameStyle}>{displayName}</span>
 
-        <StatusPill variant={SCORE_VARIANT[lead.score] ?? 'neutral'} label={lead.score} dot />
+        <span style={scoreCell}>{lead.score}</span>
 
         <span style={valueCell}>
           {formatCurrency(lead.estimated_value)}
         </span>
 
-        <StatusPill variant={STATUS_VARIANT[lead.status] ?? 'neutral'} label={lead.status} />
+        <span style={statusCell}>{lead.status}</span>
 
         <span style={timeCell}>
           {lead.last_activity_at ? relativeTime(lead.last_activity_at) : '--'}
@@ -323,8 +310,8 @@ const LeadRow = memo(function LeadRow({
               onClick={(e) => { e.stopPropagation(); onAdvanceStage(lead.id, e) }}
               style={quickBtnStyle}
               aria-label="Advance to next stage"
-              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.12)' }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.06)' }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'var(--hover-bg-strong, rgba(255, 255, 255, 0.12))' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'var(--hover-bg-strong, rgba(255, 255, 255, 0.06))' }}
             >
               <ArrowRight size={16} />
             </button>
@@ -333,8 +320,8 @@ const LeadRow = memo(function LeadRow({
             onClick={(e) => e.stopPropagation()}
             style={quickBtnStyle}
             aria-label="Send email"
-            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.12)' }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.06)' }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'var(--hover-bg-strong, rgba(255, 255, 255, 0.12))' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'var(--hover-bg-strong, rgba(255, 255, 255, 0.06))' }}
           >
             <Mail size={16} />
           </button>
@@ -382,7 +369,18 @@ function LeadsListViewInner({ leads, onSelectLead: _onSelectLead, onAdvanceStage
         .bb-lead-row:hover .bb-lead-quick-actions { opacity: 1 !important; }
         .bb-lead-row:focus-within .bb-lead-quick-actions { opacity: 1 !important; }
         @keyframes bb-row-enter { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes bb-detail-enter { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes bb-stagger-child { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+        .bb-stagger > * {
+          animation: bb-stagger-child 200ms cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+        .bb-stagger > *:nth-child(1) { animation-delay: 0ms; }
+        .bb-stagger > *:nth-child(2) { animation-delay: 40ms; }
+        .bb-stagger > *:nth-child(3) { animation-delay: 80ms; }
+        .bb-stagger > *:nth-child(4) { animation-delay: 120ms; }
+        .bb-stagger > *:nth-child(5) { animation-delay: 160ms; }
+        .bb-stagger > *:nth-child(6) { animation-delay: 200ms; }
+        .bb-stagger > *:nth-child(7) { animation-delay: 240ms; }
+        .bb-stagger > *:nth-child(8) { animation-delay: 280ms; }
         @keyframes bb-pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
       `}</style>
     </>

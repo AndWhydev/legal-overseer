@@ -1,7 +1,6 @@
 'use client'
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { FileSignature } from 'lucide-react'
 import { TabShell } from '@/components/ui/tab-shell'
 import { EmptyState } from '@/components/ui/empty-state'
 
@@ -167,7 +166,6 @@ function ProposalsKanban() {
   if (proposals.length === 0) {
     return (
       <EmptyState
-        icon={<FileSignature size={48} />}
         title="No proposals yet"
         description="Proposals generated from meeting transcripts will show up here"
       />

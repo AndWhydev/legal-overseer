@@ -40,7 +40,7 @@ export default function MarketingPageClient() {
       {/* Hero */}
       <section style={{ position: 'relative', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '60px 20px', background: 'linear-gradient(135deg, #0a0a0f 0%, #0f1419 50%, #141a23 100%)', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', top: '-40%', right: '-20%', width: 600, height: 600, borderRadius: '50%', background: 'radial-gradient(circle, rgba(16,185,129,0.15) 0%, transparent 70%)', filter: 'blur(80px)', animation: 'float 20s ease-in-out infinite' }} />
-        <div style={{ position: 'absolute', bottom: '-30%', left: '-10%', width: 500, height: 500, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,90,31,0.1) 0%, transparent 70%)', filter: 'blur(80px)', animation: 'float 25s ease-in-out infinite reverse' }} />
+        <div style={{ position: 'absolute', bottom: '-30%', left: '-10%', width: 500, height: 500, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,255,255,0.04) 0%, transparent 70%)', filter: 'blur(80px)', animation: 'float 25s ease-in-out infinite reverse' }} />
         <div style={{ position: 'relative', zIndex: 10, maxWidth: 900, textAlign: 'center' }}>
           <h1 style={{ fontSize: 'clamp(36px, 8vw, 72px)', fontWeight: 500, lineHeight: 1.2, marginBottom: 24, letterSpacing: '-0.03em', color: '#F1F5F9' }}>Operations, handled.</h1>
           <p style={{ fontSize: 'clamp(16px, 2vw, 20px)', color: '#94A3B8', marginBottom: 48, lineHeight: 1.6, maxWidth: 700, margin: '0 auto 48px' }}>We remember every conversation, understand every relationship, and handle the admin — so you can focus on the work that matters.</p>
@@ -68,14 +68,14 @@ export default function MarketingPageClient() {
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 24, marginBottom: 80 }}>
             {FEATURES.map((f) => (
-              <div key={f.title} className="bb-feature-card" style={{ padding: '32px 24px', borderRadius: 16, background: 'rgba(15,20,30,0.6)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.03)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05)', transition: 'all 300ms', cursor: 'pointer' }}>
+              <div key={f.title} className="bb-feature-card" style={{ padding: '32px 24px', borderRadius: 16, background: 'var(--bg-card-solid, rgba(15,20,30,0.6))', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: '1px solid var(--border-subtle, rgba(255,255,255,0.03))', boxShadow: 'var(--card-inset, inset 0 1px 0 rgba(255,255,255,0.05))', transition: 'all 300ms', cursor: 'pointer' }}>
                 <div style={{ fontSize: 40, marginBottom: 16 }}>{f.emoji}</div>
                 <h3 style={{ fontSize: 16, fontWeight: 500, marginBottom: 12, color: '#F1F5F9' }}>{f.title}</h3>
                 <p style={{ fontSize: 14, color: '#94A3B8', lineHeight: 1.6 }}>{f.description}</p>
               </div>
             ))}
           </div>
-          <div style={{ padding: '40px 32px', borderRadius: 20, background: 'rgba(10,14,23,0.5)', backdropFilter: 'blur(26px)', WebkitBackdropFilter: 'blur(26px)', border: '1px solid rgba(16,185,129,0.1)', textAlign: 'center' }}>
+          <div style={{ padding: '40px 32px', borderRadius: 20, background: 'var(--bb-surface, rgba(10,14,23,0.5))', backdropFilter: 'blur(26px)', WebkitBackdropFilter: 'blur(26px)', border: '1px solid rgba(16,185,129,0.1)', textAlign: 'center' }}>
             <h3 style={{ fontSize: 16, fontWeight: 500, marginBottom: 32, color: '#F1F5F9' }}>15+ Integrations</h3>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(80px, 1fr))', gap: 16 }}>
               {INTEGRATION_LOGOS.map((logo) => (

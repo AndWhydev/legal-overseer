@@ -127,7 +127,7 @@ export default function WebhookEventsWidget() {
       style={{
         background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%)',
         backdropFilter: 'blur(10px)',
-        border: '1px solid rgba(255, 255, 255, 0.2)',
+        border: '1px solid rgba(255, 255, 255, 0.03)',
         borderRadius: '12px',
         padding: '24px',
         color: '#1a1a1a',

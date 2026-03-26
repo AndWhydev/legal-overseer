@@ -139,7 +139,7 @@ export function DataManagement() {
     backdropFilter: 'var(--glass-blur)',
     WebkitBackdropFilter: 'var(--glass-blur)',
     boxShadow: 'var(--glass-card-inset)',
-    border: '1px solid rgba(255, 255, 255, 0.1)',
+    border: 'none',
     marginBottom: '16px',
   };
 

@@ -70,8 +70,10 @@ export async function createUploadUrl(
   }
 
   // Generate storage path: {org_id}/{thread_id|unthreaded}/{uuid}/{filename}
+  // Sanitize filename: replace spaces and special chars that break storage URLs
   const fileId = crypto.randomUUID()
-  const storagePath = `${orgId}/${threadId || 'unthreaded'}/${fileId}/${filename}`
+  const safeFilename = filename.replace(/[^a-zA-Z0-9._-]/g, '_')
+  const storagePath = `${orgId}/${threadId || 'unthreaded'}/${fileId}/${safeFilename}`
 
   // Create signed upload URL (2-hour expiry, set by Supabase)
   const { data: signedData, error: signedError } = await supabase.storage

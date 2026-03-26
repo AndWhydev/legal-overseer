@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Download, RefreshCw, FileText } from 'lucide-react'
+import { Download, RefreshCw } from 'lucide-react'
 import { SkeletonTable } from '@/components/ui/skeleton'
 import { EmptyState } from '@/components/ui/empty-state'
 import { useToast } from '@/components/ui/toast'
@@ -130,7 +130,6 @@ export function ReportList({ onRefresh }: { onRefresh?: () => void }) {
   if (reports.length === 0) {
     return (
       <EmptyState
-        icon={<FileText size={40} />}
         title="No reports generated"
         description="Generate your first report to see it listed here."
       />

@@ -13,11 +13,11 @@ interface ProspectCardProps {
 const card: React.CSSProperties = {
   padding: '16px 20px',
   borderRadius: 16,
-  background: 'rgba(15, 20, 30, 0.6)',
-  backdropFilter: 'blur(20px) saturate(1.2)',
-  WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
-  border: '1px solid rgba(255, 255, 255, 0.03)',
-  boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+  background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.6))',
+  backdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
+  WebkitBackdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
+  border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
+  boxShadow: 'var(--card-inset, inset 0 1px 0 rgba(255, 255, 255, 0.05))',
   display: 'flex',
   flexDirection: 'column',
   gap: 12,
@@ -38,7 +38,7 @@ const prospectName: React.CSSProperties = {
 
 const domainLink: React.CSSProperties = {
   fontSize: 14,
-  color: '#06b6d4',
+  color: 'var(--text-primary, #F1F5F9)',
   textDecoration: 'none',
   display: 'inline-flex',
   alignItems: 'center',
@@ -125,8 +125,8 @@ function ProspectCardInner({ prospect, onImport }: ProspectCardProps) {
     border: 'none',
     background: prospect.imported
       ? 'rgba(34, 197, 94, 0.1)'
-      : '#FF5A1F',
-    color: prospect.imported ? '#22c55e' : '#000',
+      : 'var(--btn-primary-bg, #F1F5F9)',
+    color: prospect.imported ? '#22c55e' : 'var(--btn-primary-fg, #0a0f1a)',
     fontSize: 14,
     fontWeight: 500,
     cursor: prospect.imported ? 'default' : 'pointer',
@@ -152,8 +152,8 @@ function ProspectCardInner({ prospect, onImport }: ProspectCardProps) {
         </div>
 
         <div style={scoresRow}>
-          <ScoreMini label="Fit" score={prospect.fit_score} color="#06b6d4" />
-          <ScoreMini label="Opp" score={prospect.opportunity_score} color="#eab308" />
+          <ScoreMini label="Fit" score={prospect.fit_score} color="var(--text-primary, #F1F5F9)" />
+          <ScoreMini label="Opp" score={prospect.opportunity_score} color="var(--text-primary, #F1F5F9)" />
         </div>
       </div>
 
@@ -197,8 +197,8 @@ function ProspectCardInner({ prospect, onImport }: ProspectCardProps) {
         disabled={prospect.imported}
         style={importBtn}
         aria-label={prospect.imported ? 'Already imported' : `Import ${prospect.name} to pipeline`}
-        onMouseEnter={e => { if (!prospect.imported) { e.currentTarget.style.background = '#FF7A45'; e.currentTarget.style.transform = 'translateY(-1px)' } }}
-        onMouseLeave={e => { if (!prospect.imported) { e.currentTarget.style.background = '#FF5A1F'; e.currentTarget.style.transform = 'translateY(0)' } }}
+        onMouseEnter={e => { if (!prospect.imported) { e.currentTarget.style.background = '#E2E8F0'; e.currentTarget.style.transform = 'translateY(-1px)' } }}
+        onMouseLeave={e => { if (!prospect.imported) { e.currentTarget.style.background = '#F1F5F9'; e.currentTarget.style.transform = 'translateY(0)' } }}
       >
         {prospect.imported ? 'Imported' : 'Import to Pipeline'}
       </button>

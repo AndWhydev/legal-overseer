@@ -9,13 +9,13 @@ describe('buildDashboardNotifications', () => {
       leads: [
         {
           id: 'lead-1',
-          source_channel: 'pcc_discovery',
+          source_channel: 'prospect_discovery',
           metadata: {},
           created_at: '2026-03-09T09:00:00.000Z',
         },
         {
           id: 'lead-2',
-          source_channel: 'pcc_discovery',
+          source_channel: 'prospect_discovery',
           metadata: {},
           created_at: '2026-03-09T12:00:00.000Z',
         },
@@ -24,7 +24,7 @@ describe('buildDashboardNotifications', () => {
     })
 
     expect(items).toHaveLength(1)
-    expect(items[0].description).toBe('pcc_discovery signed up')
+    expect(items[0].description).toBe('Someone via Prospect Discovery')
     expect(items[0].id).toBe('lead-lead-2')
   })
 

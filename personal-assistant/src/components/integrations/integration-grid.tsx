@@ -136,7 +136,7 @@ export function ConnectionsGrid({ integrations, isLoading, onStatusChange, onWha
             background: 'var(--glass-bg-heavy, rgba(15, 18, 25, 0.95))',
             backdropFilter: 'blur(24px)',
             WebkitBackdropFilter: 'blur(24px)',
-            border: '1px solid var(--glass-interactive-border)',
+            border: '1px solid var(--glass-card-border)',
             boxShadow: '0 12px 32px rgba(0, 0, 0, 0.4)',
             zIndex: 50,
             animation: 'bb-dropdown-in 150ms cubic-bezier(0.2, 0.9, 0.3, 1)',

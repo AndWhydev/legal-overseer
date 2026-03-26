@@ -121,14 +121,14 @@ export function AgentRecommendations({
             style={{
               padding: 16,
               borderRadius: 16,
-              background: 'rgba(15, 20, 30, 0.6)',
-              backdropFilter: 'blur(20px) saturate(1.2)',
-              WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
+              background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.6))',
+              backdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
+              WebkitBackdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
               border: agent.selected
-                ? '1px solid rgba(255, 90, 31, 0.3)'
+                ? '1px solid rgba(255, 255, 255, 0.15)'
                 : '1px solid rgba(255, 255, 255, 0.03)',
               boxShadow: agent.selected
-                ? 'inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 0 20px rgba(255, 90, 31, 0.1)'
+                ? 'inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 0 20px rgba(255, 255, 255, 0.05)'
                 : 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
               cursor: 'pointer',
               transition: 'all 0.2s ease',
@@ -138,14 +138,14 @@ export function AgentRecommendations({
               const el = e.currentTarget as HTMLDivElement
               el.style.background = 'rgba(15, 20, 30, 0.75)'
               el.style.borderColor = agent.selected
-                ? 'rgba(255, 90, 31, 0.5)'
+                ? 'rgba(255, 255, 255, 0.25)'
                 : 'rgba(255, 255, 255, 0.08)'
             }}
             onMouseLeave={(e) => {
               const el = e.currentTarget as HTMLDivElement
               el.style.background = 'rgba(15, 20, 30, 0.6)'
               el.style.borderColor = agent.selected
-                ? 'rgba(255, 90, 31, 0.3)'
+                ? 'rgba(255, 255, 255, 0.15)'
                 : 'rgba(255, 255, 255, 0.03)'
             }}
           >
@@ -187,7 +187,7 @@ export function AgentRecommendations({
                   width: 18,
                   height: 18,
                   cursor: 'pointer',
-                  accentColor: '#FF5A1F',
+                  accentColor: '#F1F5F9',
                 }}
                 onClick={(e) => e.stopPropagation()}
               />
@@ -209,7 +209,7 @@ export function AgentRecommendations({
                 margin: '0 0 8px',
                 fontSize: 14,
                 fontWeight: 500,
-                color: agent.selected ? '#FF5A1F' : 'var(--text-primary, #F1F5F9)',
+                color: agent.selected ? '#F1F5F9' : 'var(--text-primary, #F1F5F9)',
                 transition: 'color 0.2s',
               }}>
                 {agent.title}

@@ -27,6 +27,8 @@ import { useFileUpload } from '@/hooks/use-file-upload'
 import { useArtifacts, type Artifact } from './use-artifacts'
 import { ArtifactPanel } from './artifact-panel'
 import { ExportMenu } from './export-menu'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 
 interface ToolCall {
   name: string
@@ -75,6 +77,13 @@ interface Message {
   attachments?: MessageAttachment[]
   timestamp: Date
 }
+
+/** Chronologically ordered content segment during streaming.
+ *  Tool segments reference indices into the flat toolCalls array
+ *  so they stay in sync when tool_result updates status. */
+type StreamSegment =
+  | { type: 'tools'; startIdx: number; endIdx: number; narrations: string[] }
+  | { type: 'text'; content: string }
 
 function getGreeting(): string {
   const h = new Date().getHours()
@@ -395,11 +404,12 @@ function InlineApprovalCard({
 
   const approveBtnStyle: React.CSSProperties = {
     flex: 1,
-    padding: '8px 16px',
-    borderRadius: 12,
-    background: '#1A1A1B',
+    height: 40,
+    padding: '0 20px',
+    borderRadius: 8,
+    background: 'var(--btn-primary-bg, #F1F5F9)',
     border: 'none',
-    color: '#FFFFFF',
+    color: 'var(--btn-primary-fg, #0a0f1a)',
     fontSize: 14,
     fontWeight: 500,
     cursor: isResolving ? 'not-allowed' : 'pointer',
@@ -538,6 +548,12 @@ export function ChatInterface({ userName }: { userName?: string }) {
   const narrationContentRef = useRef('') // Tracks ONLY pre-tool narration text, separate from assistantContent
   const interToolBufferRef = useRef('') // Buffers content between tool calls (inter-tool narration)
   const [interToolNarrations, setInterToolNarrations] = useState<string[]>([]) // Confirmed inter-tool narration steps
+  // Chronologically ordered segments for the current streaming response
+  const [streamSegments, setStreamSegments] = useState<StreamSegment[]>([])
+  // Mutable ref mirroring streamSegments during SSE processing (avoids stale closures)
+  const streamSegmentsRef = useRef<StreamSegment[]>([])
+  // Tracks whether we've seen text content AFTER at least one tool segment
+  const hasPostToolTextRef = useRef(false)
   const [activeCitations, setActiveCitations] = useState<Citation[]>([])
   const [checkpoints, setCheckpoints] = useState<CheckpointMarker[]>([])
   const [pendingApprovals, setPendingApprovals] = useState<PendingApproval[]>([])
@@ -715,6 +731,9 @@ export function ChatInterface({ userName }: { userName?: string }) {
     narrationContentRef.current = ''
     interToolBufferRef.current = ''
     setInterToolNarrations([])
+    setStreamSegments([])
+    streamSegmentsRef.current = []
+    hasPostToolTextRef.current = false
     setActiveCitations([])
     setPendingApprovals([])
     setFollowUps([])
@@ -871,18 +890,52 @@ export function ChatInterface({ userName }: { userName?: string }) {
                 setIsThinkingStreaming(false)
                 // Lock narration — any content after this goes to chain of thought
                 narrationLockedRef.current = true
-                // Flush inter-tool buffer as a narration step in the chain
-                if (interToolBufferRef.current.trim()) {
-                  const text = interToolBufferRef.current.trim()
-                  setInterToolNarrations(prev => [...prev, text])
-                  interToolBufferRef.current = ''
-                }
+                // Flush inter-tool buffer
+                const flushedText = interToolBufferRef.current.trim()
+                interToolBufferRef.current = ''
                 const tc: ToolCall = {
                   name: event.data.name,
                   input: event.data.input,
                   status: 'running',
                 }
+                const newToolIdx = toolCalls.length  // index before push
                 toolCalls.push(tc)
+
+                // --- Stream segments: track chronological tool/text order ---
+                const segs = streamSegmentsRef.current
+                const lastSeg = segs[segs.length - 1]
+
+                // If this is the very first tool and there's pre-tool narration,
+                // inject it as the first text segment so it renders above the chain.
+                if (segs.length === 0 && narrationContentRef.current) {
+                  segs.push({ type: 'text', content: narrationContentRef.current })
+                }
+
+                // If we have buffered post-tool text AND another tool arrives,
+                // split the text into a visible text segment between tool batches.
+                const lastSegAfterNarration = segs[segs.length - 1]
+                if (hasPostToolTextRef.current && flushedText) {
+                  segs.push({ type: 'text', content: flushedText })
+                  hasPostToolTextRef.current = false
+                  // Start a fresh tools segment for this new batch
+                  segs.push({ type: 'tools', startIdx: newToolIdx, endIdx: newToolIdx, narrations: [] })
+                } else if (flushedText && lastSegAfterNarration?.type === 'tools') {
+                  // Text between tools within the same batch — narration inside the segment
+                  lastSegAfterNarration.narrations.push(flushedText)
+                  // Also keep interToolNarrations in sync for the old rendering path
+                  setInterToolNarrations(prev => [...prev, flushedText])
+                  lastSegAfterNarration.endIdx = newToolIdx
+                } else if (lastSegAfterNarration?.type === 'tools') {
+                  // Extend existing tools segment
+                  lastSegAfterNarration.endIdx = newToolIdx
+                } else {
+                  // First tools segment (or after a text segment)
+                  segs.push({ type: 'tools', startIdx: newToolIdx, endIdx: newToolIdx, narrations: [] })
+                }
+
+                streamSegmentsRef.current = segs
+                setStreamSegments([...segs])
+                hasPostToolTextRef.current = false
 
                 setMessages(prev => {
                   const existing = prev.find(m => m.id === assistantId)
@@ -950,6 +1003,9 @@ export function ChatInterface({ userName }: { userName?: string }) {
                   }])
                 }
 
+                // Update stream segments with tool result status
+                setStreamSegments([...streamSegmentsRef.current])
+
                 setMessages(prev =>
                   prev.map(m =>
                     m.id === assistantId
@@ -965,7 +1021,10 @@ export function ChatInterface({ userName }: { userName?: string }) {
                 assistantContent += event.data
 
                 if (!narrationLockedRef.current && toolCalls.length === 0) {
-                  // No tools yet — stream content directly into the message for smooth typing effect
+                  // No tools yet — stream content directly into the message for smooth typing effect.
+                  // Also track in narrationContentRef so it can be injected as the first text segment
+                  // if tools arrive later (chronological ordering: text → tools → text → tools).
+                  narrationContentRef.current = assistantContent
                   setMessages(prev => {
                     const existing = prev.find(m => m.id === assistantId)
                     if (existing) {
@@ -981,6 +1040,10 @@ export function ChatInterface({ userName }: { userName?: string }) {
                   // Buffer it; it'll be flushed to narration if another tool_call comes,
                   // or flushed to smoothStream on 'done'
                   interToolBufferRef.current += event.data
+                  // Mark that we've seen text after tools completed — this enables
+                  // the tool_call handler to split it into a separate text segment
+                  // if more tools arrive later
+                  hasPostToolTextRef.current = true
                 } else {
                   if (!narrationLockedRef.current) {
                     narrationLockedRef.current = true
@@ -1046,15 +1109,38 @@ export function ChatInterface({ userName }: { userName?: string }) {
                 setIsThinkingStreaming(false)
                 const responseContent = interToolBufferRef.current.trim()
 
+                // Finalize stream segments: add trailing text as final segment
+                if (toolCalls.length > 0 && responseContent) {
+                  const segs = streamSegmentsRef.current
+                  segs.push({ type: 'text', content: responseContent })
+                  streamSegmentsRef.current = segs
+                  setStreamSegments([...segs])
+                }
+
                 if (toolCalls.length > 0) {
                   // Tag smooth stream content as belonging to this assistant message
                   smoothStreamOwnerRef.current = assistantId
-                  // Tool-based response: smooth stream is the sole content writer.
-                  // The useEffect syncs displayedContent → message. Avoids the
-                  // dual-write race where setMessages + feedContent fight over
-                  // message.content and stale content can leak across requests.
-                  if (responseContent) {
-                    smoothStream.feedContent(responseContent)
+
+                  // Merge ALL text segments into the full content for persistence.
+                  // The smooth stream only handles the trailing text for animation,
+                  // but the full message (including intermediate narration) must be saved.
+                  const allTextSegments = streamSegmentsRef.current
+                    .filter(s => s.type === 'text')
+                    .map(s => (s as { type: 'text'; content: string }).content.trim())
+                    .filter(Boolean)
+                  const fullContent = allTextSegments.join('\n\n')
+
+                  if (fullContent) {
+                    // Save full content to message immediately for persistence
+                    setMessages(prev =>
+                      prev.map(m =>
+                        m.id === assistantId ? { ...m, content: fullContent } : m
+                      )
+                    )
+                    // Feed only the trailing response to smooth stream for animation
+                    if (responseContent) {
+                      smoothStream.feedContent(responseContent)
+                    }
                     interToolBufferRef.current = ''
                   } else if (!assistantContent) {
                     // Tools ran but produced no response text — show fallback
@@ -1332,7 +1418,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
 
   // Build the reasoning chain JSX using chain-of-thought component
   const headerText = isReasoningActive ? (
-    <Shimmer duration={1}>Thinking...</Shimmer>
+    <Shimmer duration={1}>Thinking</Shimmer>
   ) : (() => {
     const parts: string[] = []
     if (thinkingDuration !== undefined && thinkingDuration > 0) {
@@ -1356,163 +1442,280 @@ export function ChatInterface({ userName }: { userName?: string }) {
     return firstSentence.length > 100 ? firstSentence.slice(0, 97) + '...' : firstSentence
   }
 
+  /** Build chain-of-thought steps JSX for a subset of tool calls with their narrations */
+  const buildToolStepsJSX = (tools: ToolCall[], narrations: string[], keyPrefix: string): React.ReactNode[] => {
+    // Group consecutive same-name tool calls into collapsed steps
+    const groups: { name: string; calls: ToolCall[] }[] = []
+    for (const tc of tools) {
+      const last = groups[groups.length - 1]
+      if (last && last.name === tc.name) {
+        last.calls.push(tc)
+      } else {
+        groups.push({ name: tc.name, calls: [tc] })
+      }
+    }
+
+    const elements: React.ReactNode[] = []
+    groups.forEach((group, gIdx) => {
+      const ToolIcon = getToolIcon(group.name)
+      const count = group.calls.length
+      const anyRunning = group.calls.some(tc => tc.status === 'running')
+      const status = anyRunning ? 'active' as const : 'complete' as const
+
+      const narrationAfter = gIdx < narrations.length
+        ? formatNarration(narrations[gIdx])
+        : null
+
+      if (count === 1) {
+        const tc0 = group.calls[0]
+        const detail = extractToolDetail(group.name, tc0.input, tc0.result)
+        elements.push(
+          <ChainOfThoughtStep
+            key={`${keyPrefix}-tool-${gIdx}`}
+            icon={ToolIcon}
+            label={formatToolName(group.name)}
+            detail={detail ?? undefined}
+            status={tc0.status === 'running' ? 'active' : 'complete'}
+          >
+            {narrationAfter && (
+              <span style={{
+                display: 'block',
+                fontSize: 14,
+                color: 'var(--text-muted)',
+                fontStyle: 'italic',
+                fontWeight: 400,
+                lineHeight: '20px',
+              }}>
+                {narrationAfter}
+              </span>
+            )}
+          </ChainOfThoughtStep>
+        )
+      } else {
+        const COLLAPSED_LABELS: Record<string, (n: number) => string> = {
+          read_message: (n) => `Read ${n} messages`,
+          find_messages: (n) => `Searched ${n} conversations`,
+          search_tasks: (n) => `Searched ${n} tasks`,
+          search_contacts: (n) => `Searched ${n} contacts`,
+          search_memory: () => `Searched memory`,
+          create_task: (n) => `Created ${n} tasks`,
+          update_task: (n) => `Updated ${n} tasks`,
+          send_email: (n) => `Sent ${n} emails`,
+          draft_reply: (n) => `Drafted ${n} replies`,
+          log_activity: (n) => `Logged ${n} activities`,
+          browse_website: (n) => `Browsed ${n} sites`,
+        }
+        const labelFn = COLLAPSED_LABELS[group.name]
+        const label = anyRunning
+          ? `${formatToolName(group.name)} (${count})`
+          : labelFn ? labelFn(count) : `${formatToolName(group.name)} (${count})`
+
+        elements.push(
+          <ChainOfThoughtStep
+            key={`${keyPrefix}-tool-${gIdx}`}
+            icon={ToolIcon}
+            label={label}
+            status={status}
+            expandable
+          >
+            {group.calls.map((tc, cIdx) => {
+              const detail = extractToolDetail(group.name, tc.input, tc.result)
+              return (
+                <div
+                  key={`${keyPrefix}-sub-${gIdx}-${cIdx}`}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    paddingBottom: 4,
+                    fontSize: 14,
+                    color: 'var(--text-dim)',
+                  }}
+                >
+                  <div style={{
+                    width: 4,
+                    height: 4,
+                    borderRadius: '50%',
+                    backgroundColor: tc.status === 'running'
+                      ? 'var(--text-secondary)'
+                      : 'var(--text-muted)',
+                    flexShrink: 0,
+                  }} />
+                  <span>{detail || formatToolName(group.name)}</span>
+                  {!detail && (
+                    <span style={{
+                      display: 'inline-flex',
+                      padding: '1px 8px',
+                      borderRadius: 8,
+                      background: 'var(--hover-bg)',
+                      fontSize: 14,
+                      color: 'var(--text-muted)',
+                    }}>
+                      {`#${cIdx + 1}`}
+                    </span>
+                  )}
+                </div>
+              )
+            })}
+            {narrationAfter && (
+              <span style={{
+                display: 'block',
+                fontSize: 14,
+                color: 'var(--text-muted)',
+                fontStyle: 'italic',
+                fontWeight: 400,
+                lineHeight: '20px',
+                marginTop: 2,
+              }}>
+                {narrationAfter}
+              </span>
+            )}
+          </ChainOfThoughtStep>
+        )
+      }
+    })
+
+    return elements
+  }
+
+  // Determine if we truly have interleaved content (text segments between tool segments).
+  // A trailing text segment (the final response) doesn't count since MessageBubble handles it.
+  const hasInterleavedSegments = (() => {
+    // Count non-trailing text segments (text that appears between tool batches)
+    const nonTrailingTextSegments = streamSegments.filter(
+      (seg, idx) => seg.type === 'text' && idx < streamSegments.length - 1
+    )
+    return nonTrailingTextSegments.length > 0
+  })()
+
   // Only show expandable content when there are actual steps (tools or narration)
   const hasChainContent = currentToolCalls.length > 0 || (narration && narration.length > 0)
 
-  const reasoningChainJSX = showReasoningChain ? (
-    <ChainOfThought open={reasoningOpen} onOpenChange={setReasoningOpen}>
-      <ChainOfThoughtHeader hideChevron={!hasChainContent}>{headerText}</ChainOfThoughtHeader>
-      {hasChainContent && <ChainOfThoughtContent>
-        {/* Pre-tool narration is now rendered as visible text above the chain — see narrationJSX */}
+  // Build segment-aware chain-of-thought JSX for the current streaming response.
+  // When there are multiple segments (text interleaved between tool batches),
+  // each tools segment gets its own ChainOfThought block.
+  // When there's only a single tools segment, render the classic single block.
+  const buildSegmentedReasoningJSX = (): React.ReactNode[] | null => {
+    if (!showReasoningChain) return null
 
-        {/* Tool call steps — collapsed, with inline detail pills and inter-tool narration */}
-        {(() => {
-          // Group consecutive same-name tool calls into collapsed steps
-          const groups: { name: string; calls: typeof currentToolCalls; }[] = []
-          for (const tc of currentToolCalls) {
-            const last = groups[groups.length - 1]
-            if (last && last.name === tc.name) {
-              last.calls.push(tc)
+    // No interleaving: classic rendering with one chain-of-thought.
+    // This covers: no segments, tools-only, or tools + trailing text.
+    if (!hasInterleavedSegments) {
+      const segHeaderText = isReasoningActive ? (
+        <Shimmer duration={1}>Thinking</Shimmer>
+      ) : (() => {
+        const parts: string[] = []
+        if (thinkingDuration !== undefined && thinkingDuration > 0) {
+          parts.push(`Thought for ${thinkingDuration}s`)
+        } else {
+          parts.push('Thought for a few seconds')
+        }
+        if (currentToolCalls.length > 0) {
+          parts.push(`${currentToolCalls.length} tool${currentToolCalls.length !== 1 ? 's' : ''} used`)
+        }
+        return parts.join(' \u00B7 ')
+      })()
+
+      return [
+        <ChainOfThought key="cot-single" open={reasoningOpen} onOpenChange={setReasoningOpen}>
+          <ChainOfThoughtHeader hideChevron={!hasChainContent}>{segHeaderText}</ChainOfThoughtHeader>
+          {hasChainContent && <ChainOfThoughtContent>
+            {buildToolStepsJSX(currentToolCalls, interToolNarrations, 'single')}
+          </ChainOfThoughtContent>}
+        </ChainOfThought>
+      ]
+    }
+
+    // Multiple segments: interleaved rendering
+    const elements: React.ReactNode[] = []
+    let toolSegIdx = 0
+
+    for (let sIdx = 0; sIdx < streamSegments.length; sIdx++) {
+      const seg = streamSegments[sIdx]
+
+      if (seg.type === 'tools') {
+        const tools = currentToolCalls.slice(seg.startIdx, seg.endIdx + 1)
+        const anyRunning = tools.some(tc => tc.status === 'running')
+        const isLastToolSeg = !streamSegments.slice(sIdx + 1).some(s => s.type === 'tools')
+        const segIsActive = anyRunning || (isLoading && isLastToolSeg)
+
+        // Header for this tools segment
+        const segHeader = segIsActive ? (
+          <Shimmer duration={1}>Thinking</Shimmer>
+        ) : (() => {
+          const parts: string[] = []
+          // Only show thinking duration on the first tools segment
+          if (toolSegIdx === 0) {
+            if (thinkingDuration !== undefined && thinkingDuration > 0) {
+              parts.push(`Thought for ${thinkingDuration}s`)
             } else {
-              groups.push({ name: tc.name, calls: [tc] })
+              parts.push('Thought for a few seconds')
             }
+          } else {
+            parts.push('Continued reasoning')
           }
+          parts.push(`${tools.length} tool${tools.length !== 1 ? 's' : ''} used`)
+          return parts.join(' \u00B7 ')
+        })()
 
-          // Interleave inter-tool narrations between groups
-          // Each narration was captured when a new tool_call flushed the buffer,
-          // so narration[i] appeared before group[i+1]
-          const elements: React.ReactNode[] = []
-          groups.forEach((group, gIdx) => {
-            const ToolIcon = getToolIcon(group.name)
-            const count = group.calls.length
-            const anyRunning = group.calls.some(tc => tc.status === 'running')
-            const status = anyRunning ? 'active' as const : 'complete' as const
+        // Each tools segment gets its own ChainOfThought.
+        // Current active segment: controlled open state via reasoningOpen.
+        // Past segments: uncontrolled (defaultOpen=false), user can click to expand.
+        const isCurrentSegment = isLastToolSeg && isLoading
+        elements.push(
+          <div key={`seg-tools-${sIdx}`} style={{ marginBottom: 4 }}>
+            {isCurrentSegment ? (
+              <ChainOfThought open={reasoningOpen} onOpenChange={setReasoningOpen}>
+                <ChainOfThoughtHeader>{segHeader}</ChainOfThoughtHeader>
+                <ChainOfThoughtContent>
+                  {buildToolStepsJSX(tools, seg.narrations, `seg-${sIdx}`)}
+                </ChainOfThoughtContent>
+              </ChainOfThought>
+            ) : (
+              <ChainOfThought defaultOpen={false}>
+                <ChainOfThoughtHeader>{segHeader}</ChainOfThoughtHeader>
+                <ChainOfThoughtContent>
+                  {buildToolStepsJSX(tools, seg.narrations, `seg-${sIdx}`)}
+                </ChainOfThoughtContent>
+              </ChainOfThought>
+            )}
+          </div>
+        )
+        toolSegIdx++
+      } else if (seg.type === 'text') {
+        // Check if this is the LAST segment — if so, it's the final response
+        // text which gets rendered via MessageBubble, so skip it here
+        const isLastSegment = sIdx === streamSegments.length - 1
+        if (!isLastSegment && seg.content.trim()) {
+          // Intermediate text between tool batches — render with markdown
+          // (no feedback buttons, no avatar — just the narration between tool phases)
+          elements.push(
+            <div
+              key={`seg-text-${sIdx}`}
+              className="bb-chat__markdown"
+              style={{
+                fontSize: 14,
+                lineHeight: 1.6,
+                color: 'var(--text-primary)',
+                marginBottom: 4,
+              }}
+            >
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {seg.content.trim()}
+              </ReactMarkdown>
+            </div>
+          )
+        }
+      }
+    }
 
-            // Attach inter-tool narration to this step as inline child
-            const narrationAfter = gIdx < interToolNarrations.length
-              ? formatNarration(interToolNarrations[gIdx])
-              : null
+    return elements.length > 0 ? elements : null
+  }
 
-            if (count === 1) {
-              // Single call — show with inline detail pill and result summary
-              const tc0 = group.calls[0]
-              const detail = extractToolDetail(group.name, tc0.input, tc0.result)
-              const summary = tc0.status !== 'running'
-                ? extractResultSummary(group.name, tc0.result, tc0.success)
-                : null
-              elements.push(
-                <ChainOfThoughtStep
-                  key={`tool-${gIdx}`}
-                  icon={ToolIcon}
-                  label={formatToolName(group.name)}
-                  detail={detail ?? undefined}
-                  status={tc0.status === 'running' ? 'active' : 'complete'}
-                >
-                  {narrationAfter && (
-                    <span style={{
-                      display: 'block',
-                      fontSize: 14,
-                      color: 'var(--text-muted)',
-                      fontStyle: 'italic',
-                      fontWeight: 400,
-                      lineHeight: '20px',
-                    }}>
-                      {narrationAfter}
-                    </span>
-                  )}
-                </ChainOfThoughtStep>
-              )
-            } else {
-              // Multiple calls — expandable collapsed step with individual items
-              const COLLAPSED_LABELS: Record<string, (n: number) => string> = {
-                read_message: (n) => `Read ${n} messages`,
-                find_messages: (n) => `Searched ${n} conversations`,
-                search_tasks: (n) => `Searched ${n} tasks`,
-                search_contacts: (n) => `Searched ${n} contacts`,
-                search_memory: () => `Searched memory`,
-                create_task: (n) => `Created ${n} tasks`,
-                update_task: (n) => `Updated ${n} tasks`,
-                send_email: (n) => `Sent ${n} emails`,
-                draft_reply: (n) => `Drafted ${n} replies`,
-                log_activity: (n) => `Logged ${n} activities`,
-                browse_website: (n) => `Browsed ${n} sites`,
-              }
-              const labelFn = COLLAPSED_LABELS[group.name]
-              const label = anyRunning
-                ? `${formatToolName(group.name)} (${count})`
-                : labelFn ? labelFn(count) : `${formatToolName(group.name)} (${count})`
-
-              elements.push(
-                <ChainOfThoughtStep
-                  key={`tool-${gIdx}`}
-                  icon={ToolIcon}
-                  label={label}
-                  status={status}
-                  expandable
-                >
-                  {group.calls.map((tc, cIdx) => {
-                    const detail = extractToolDetail(group.name, tc.input, tc.result)
-                    return (
-                      <div
-                        key={`sub-${gIdx}-${cIdx}`}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 8,
-                          paddingBottom: 4,
-                          fontSize: 14,
-                          color: 'var(--text-dim)',
-                        }}
-                      >
-                        <div style={{
-                          width: 4,
-                          height: 4,
-                          borderRadius: '50%',
-                          backgroundColor: tc.status === 'running'
-                            ? 'var(--text-secondary)'
-                            : 'var(--text-muted)',
-                          flexShrink: 0,
-                        }} />
-                        <span>{detail || formatToolName(group.name)}</span>
-                        {!detail && (
-                          <span style={{
-                            display: 'inline-flex',
-                            padding: '1px 8px',
-                            borderRadius: 8,
-                            background: 'var(--hover-bg)',
-                            fontSize: 14,
-                            color: 'var(--text-muted)',
-                          }}>
-                            {`#${cIdx + 1}`}
-                          </span>
-                        )}
-                      </div>
-                    )
-                  })}
-                  {narrationAfter && (
-                    <span style={{
-                      display: 'block',
-                      fontSize: 14,
-                      color: 'var(--text-muted)',
-                      fontStyle: 'italic',
-                      fontWeight: 400,
-                      lineHeight: '20px',
-                      marginTop: 2,
-                    }}>
-                      {narrationAfter}
-                    </span>
-                  )}
-                </ChainOfThoughtStep>
-              )
-            }
-          })
-
-          return elements
-        })()}
-
-      </ChainOfThoughtContent>}
-    </ChainOfThought>
-  ) : null
+  // Legacy single-block JSX (used for backward compat checks)
+  const reasoningChainJSX = showReasoningChain ? true : null
+  // The actual segmented JSX
+  const segmentedReasoningJSX = buildSegmentedReasoningJSX()
 
   // Fetch thread list for the drawer
   const threadCacheRef = useRef(false) // true once we've fetched at least once
@@ -1623,6 +1826,9 @@ export function ChatInterface({ userName }: { userName?: string }) {
     narrationContentRef.current = ''
     interToolBufferRef.current = ''
     setInterToolNarrations([])
+    setStreamSegments([])
+    streamSegmentsRef.current = []
+    hasPostToolTextRef.current = false
     setActiveCitations([])
     setPendingApprovals([])
     setInvoiceArtifacts([])
@@ -1704,6 +1910,9 @@ export function ChatInterface({ userName }: { userName?: string }) {
     narrationContentRef.current = ''
     interToolBufferRef.current = ''
     setInterToolNarrations([])
+    setStreamSegments([])
+    streamSegmentsRef.current = []
+    hasPostToolTextRef.current = false
     setActiveCitations([])
     setPendingApprovals([])
     setInvoiceArtifacts([])
@@ -1827,9 +2036,9 @@ export function ChatInterface({ userName }: { userName?: string }) {
         <Menu size={18} strokeWidth={1.8} />
       </button>
 
-      {/* Export menu — next to drawer toggle, only when conversation active */}
+      {/* Export menu — vertically centered in topbar, offset left to avoid notification bell */}
       {hasMessages && (
-        <div style={{ position: 'absolute', top: 12, right: 12, zIndex: 10 }}>
+        <div style={{ position: 'absolute', top: 0, right: 52, height: 'var(--topbar-height)', display: 'flex', alignItems: 'center', zIndex: 10 }}>
           <ExportMenu messages={messages} />
         </div>
       )}
@@ -1891,39 +2100,18 @@ export function ChatInterface({ userName }: { userName?: string }) {
                     key={msg.id}
                     className={isGroupChange ? 'bb-chat__msg-group-gap' : ''}
                   >
-                    {/* Pre-tool verbal acknowledgment — rendered as visible text above the chain */}
-                    {isCurrentResponse && narration && reasoningChainJSX && (
-                      <div style={{ position: 'relative', marginBottom: 8 }}>
+                    {/* Pre-tool narration is now included in streamSegments as the first text segment */}
+                    {/* Live reasoning chain — segmented (interleaved tools/text) */}
+                    {isCurrentResponse && segmentedReasoningJSX && (
+                      <div style={{ position: 'relative', marginBottom: 4 }}>
                         <motion.div
                           layoutId="bitbit-chat-avatar"
                           transition={{ type: 'spring', stiffness: 400, damping: 30, mass: 0.8 }}
                           style={{ position: 'absolute', left: -52, top: -4, width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                         >
-                          <BitBitFaceAvatar size={40} emotion={avatarEmotion} isThinking={false} activity={avatarActivity} />
+                          <BitBitFaceAvatar size={40} emotion={avatarEmotion} isThinking={isThinkingStreaming} activity={avatarActivity} />
                         </motion.div>
-                        <p style={{
-                          margin: 0,
-                          fontSize: 14,
-                          lineHeight: '22px',
-                          color: 'var(--text-primary)',
-                        }}>
-                          {narration}
-                        </p>
-                      </div>
-                    )}
-                    {/* Live reasoning chain */}
-                    {isCurrentResponse && reasoningChainJSX && (
-                      <div style={{ position: 'relative', marginBottom: 4 }}>
-                        {!narration && (
-                          <motion.div
-                            layoutId="bitbit-chat-avatar"
-                            transition={{ type: 'spring', stiffness: 400, damping: 30, mass: 0.8 }}
-                            style={{ position: 'absolute', left: -52, top: -4, width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                          >
-                            <BitBitFaceAvatar size={40} emotion={avatarEmotion} isThinking={isThinkingStreaming} activity={avatarActivity} />
-                          </motion.div>
-                        )}
-                        {reasoningChainJSX}
+                        {segmentedReasoningJSX}
                       </div>
                     )}
                     {/* Past response — collapsed reasoning chain */}
@@ -1961,8 +2149,25 @@ export function ChatInterface({ userName }: { userName?: string }) {
                       </div>
                     )}
                     <MessageBubble
-                      message={msg}
-                      showAvatar={isLastAssistantOverall && !(isCurrentResponse && reasoningChainJSX)}
+                      message={(() => {
+                        // When segments include text that's already rendered above,
+                        // strip it from the final MessageBubble to avoid duplication.
+                        if (!isCurrentResponse || !hasInterleavedSegments) return msg
+                        const textSegs = streamSegments.filter(s => s.type === 'text') as Array<{ type: 'text'; content: string }>
+                        // The last text segment IS the final response — only strip non-trailing text segments
+                        const nonTrailing = textSegs.slice(0, -1)
+                        if (nonTrailing.length === 0) return msg
+                        let cleaned = msg.content
+                        for (const seg of nonTrailing) {
+                          // Remove the first occurrence of each intermediate text from content
+                          const idx = cleaned.indexOf(seg.content.trim())
+                          if (idx !== -1) {
+                            cleaned = (cleaned.slice(0, idx) + cleaned.slice(idx + seg.content.trim().length)).trim()
+                          }
+                        }
+                        return { ...msg, content: cleaned }
+                      })()}
+                      showAvatar={isLastAssistantOverall && !(isCurrentResponse && segmentedReasoningJSX)}
                       avatarEmotion={isCurrentResponse ? avatarEmotion : 'neutral'}
                       avatarThinking={isCurrentResponse ? isThinkingStreaming : false}
                       avatarActivity={isCurrentResponse ? avatarActivity : 'idle'}
@@ -1983,7 +2188,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
               })}
 
               {/* Standalone reasoning chain (before assistant message exists) */}
-              {showReasoningChain && !currentResponseMsg && (
+              {showReasoningChain && !currentResponseMsg && segmentedReasoningJSX && (
                 <div style={{ position: 'relative', marginBottom: 4 }}>
                   <motion.div
                     layoutId="bitbit-chat-avatar"
@@ -1992,7 +2197,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
                   >
                     <BitBitFaceAvatar size={40} emotion={avatarEmotion} isThinking={isThinkingStreaming} activity={avatarActivity} />
                   </motion.div>
-                  {reasoningChainJSX}
+                  {segmentedReasoningJSX}
                 </div>
               )}
 
@@ -2025,27 +2230,26 @@ export function ChatInterface({ userName }: { userName?: string }) {
         </AnimatePresence>
       </div>
 
-      {/* Scroll-to-bottom button */}
-      <AnimatePresence>
-        {smartScroll.shouldShowScrollButton && (
-          <motion.button
-            className="bb-chat__scroll-btn"
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            transition={{ duration: 0.2 }}
-            onClick={smartScroll.scrollToBottom}
-            aria-label="Scroll to bottom"
-          >
-            <ChevronDown size={18} />
-          </motion.button>
-        )}
-      </AnimatePresence>
-
       {/* Docked pill input */}
       <div
         className={`bb-chat__input-area ${chatStarted ? 'bb-chat__input-area--bottom' : 'bb-chat__input-area--centered'}`}
       >
+        {/* Scroll-to-bottom button — anchored above the input pill */}
+        <AnimatePresence>
+          {smartScroll.shouldShowScrollButton && (
+            <motion.button
+              className="bb-chat__scroll-btn"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              transition={{ duration: 0.2 }}
+              onClick={smartScroll.scrollToBottom}
+              aria-label="Scroll to bottom"
+            >
+              <ChevronDown size={18} />
+            </motion.button>
+          )}
+        </AnimatePresence>
         {/* Drag-and-drop upload progress */}
         {dragUpload.uploads.length > 0 && (
           <div style={{

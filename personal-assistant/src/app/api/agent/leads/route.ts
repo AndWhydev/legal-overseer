@@ -7,7 +7,7 @@ const ALL_COLUMNS = [
   'id', 'status', 'score', 'notes', 'estimated_value', 'timeline_days',
   'service_interest', 'source_channel', 'source_detail', 'metadata',
   'created_at', 'updated_at',
-  // Discovery & PCC fields
+  // Discovery & Lead Swarm fields
   'discovery_source', 'prospect_name', 'prospect_website', 'prospect_domain',
   'prospect_phone', 'prospect_address', 'prospect_emails', 'prospect_rating',
   'prospect_review_count',
@@ -115,8 +115,8 @@ export async function GET(request: NextRequest) {
     query = query.lt('last_activity_at', sevenDaysAgo).not('status', 'in', '("converted","lost")')
   } else if (smartView === 'high_value') {
     query = query.gte('estimated_value', 10_000)
-  } else if (smartView === 'pcc_discoveries') {
-    query = query.eq('discovery_source', 'pcc_discovery')
+  } else if (smartView === 'lead_swarm_discoveries') {
+    query = query.eq('discovery_source', 'lead_swarm')
   }
 
   // Sorting

@@ -25,6 +25,7 @@ import {
   Settings,
   Link2,
   Zap,
+  Puzzle,
   Palette,
 } from 'lucide-react';
 import type { TopbarConfig } from './topbar';
@@ -202,7 +203,7 @@ export const TOPBAR_CONFIGS: Record<string, TopbarConfig> = {
   },
   'settings-automations': {
     title: 'Settings',
-    breadcrumb: <IconBreadcrumb icon={Zap} text="Automations" />,
+    breadcrumb: <IconBreadcrumb icon={Puzzle} text="Plugins" />,
   },
   'settings-appearance': {
     title: 'Settings',

@@ -116,7 +116,7 @@ function ApiKeyForm({
             onChange={e => setSecretKey(e.target.value)}
             placeholder="sk_live_..."
             autoComplete="off"
-            className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-[#D4A574] focus:outline-none focus:ring-1 focus:ring-[#D4A574]"
+            className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-[rgba(255,255,255,0.15)] focus:outline-none focus:ring-1 focus:ring-[rgba(255,255,255,0.15)]"
           />
           <p className="mt-1 text-xs text-muted-foreground">
             Your key is encrypted and stored securely. We never log or expose API keys.

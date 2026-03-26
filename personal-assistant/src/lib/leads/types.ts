@@ -1,9 +1,9 @@
 export type LeadStatus = 'new' | 'qualified' | 'booked' | 'converted' | 'lost'
 export type LeadScore = 'hot' | 'warm' | 'cold'
-export type DiscoverySource = 'inbound' | 'pcc_discovery'
+export type DiscoverySource = 'inbound' | 'lead_swarm'
 export type DealRotLevel = 'fresh' | 'aging' | 'stale' | 'critical'
 export type SpeedToLeadLevel = 'fast' | 'ok' | 'slow'
-export type SmartView = 'all' | 'hot_followup' | 'stale' | 'high_value' | 'pcc_discoveries'
+export type SmartView = 'all' | 'hot_followup' | 'stale' | 'high_value' | 'lead_swarm_discoveries'
 export type LeadViewMode = 'kanban' | 'list'
 
 export interface WebsiteSignals {
@@ -61,7 +61,7 @@ export interface EnhancedLeadData {
   prospect_rating: number | null
   prospect_review_count: number | null
 
-  // PCC Scoring
+  // Lead Swarm Scoring
   fit_score: number | null
   opportunity_score: number | null
   priority_score: number | null

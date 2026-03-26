@@ -39,8 +39,8 @@ const panel: React.CSSProperties = {
   width: '100%',
   maxWidth: 600,
   zIndex: 53,
-  background: '#0a0f1a',
-  borderLeft: '1px solid rgba(255, 255, 255, 0.06)',
+  background: 'var(--bg-primary, #0a0f1a)',
+  borderLeft: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
   display: 'flex',
   flexDirection: 'column',
   overflow: 'hidden',
@@ -49,7 +49,7 @@ const panel: React.CSSProperties = {
 
 const headerStyle: React.CSSProperties = {
   padding: '20px 24px',
-  borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
+  borderBottom: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'space-between',
@@ -70,7 +70,7 @@ const closeBtn: React.CSSProperties = {
   justifyContent: 'center',
   borderRadius: 8,
   border: 'none',
-  background: 'rgba(255, 255, 255, 0.04)',
+  background: 'var(--hover-bg, rgba(255, 255, 255, 0.04))',
   color: 'var(--text-dim, #475569)',
   cursor: 'pointer',
 }
@@ -97,8 +97,8 @@ const inputStyle: React.CSSProperties = {
   height: 40,
   padding: '0 12px',
   borderRadius: 8,
-  border: '1px solid rgba(255, 255, 255, 0.05)',
-  background: 'rgba(13, 17, 23, 0.6)',
+  border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.05))',
+  background: 'var(--bg-input, rgba(13, 17, 23, 0.6))',
   color: 'var(--text-primary, #F1F5F9)',
   fontSize: 14,
   outline: 'none',
@@ -142,8 +142,8 @@ const saveBtn: React.CSSProperties = {
   padding: '0 24px',
   borderRadius: 8,
   border: 'none',
-  background: '#FF5A1F',
-  color: '#000',
+  background: 'var(--btn-primary-bg, #F1F5F9)',
+  color: 'var(--btn-primary-fg, #0a0f1a)',
   fontSize: 14,
   fontWeight: 500,
   cursor: 'pointer',
@@ -295,8 +295,8 @@ function TemplateEditorPanelInner({ open, onClose, onSave, initial }: TemplateEd
                 opacity: canSave ? 1 : 0.4,
                 cursor: canSave ? 'pointer' : 'not-allowed',
               }}
-              onMouseEnter={e => { if (canSave) e.currentTarget.style.background = '#FF7A45' }}
-              onMouseLeave={e => { if (canSave) e.currentTarget.style.background = '#FF5A1F' }}
+              onMouseEnter={e => { if (canSave) e.currentTarget.style.background = '#E2E8F0' }}
+              onMouseLeave={e => { if (canSave) e.currentTarget.style.background = '#F1F5F9' }}
             >
               <Plus size={16} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }} />
               Save Template

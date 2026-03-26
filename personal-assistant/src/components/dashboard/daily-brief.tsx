@@ -108,7 +108,7 @@ export function DailyBrief() {
     padding: '4px 12px',
     borderRadius: 99,
     background: 'var(--glass-card-bg-light)',
-    border: '1px solid var(--glass-interactive-border)',
+    border: 'none',
     fontSize: 14,
     color: 'var(--text-secondary)',
     whiteSpace: 'nowrap',

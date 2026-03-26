@@ -9,7 +9,7 @@ import type { InvoiceTemplate } from '@/lib/invoices/template-types'
 const PRESET_SCHEMES = [
   { label: 'Ocean', primary: '#0EA5E9', accent: '#0284C7' },
   { label: 'Forest', primary: '#22C55E', accent: '#16A34A' },
-  { label: 'Ember', primary: '#FF5A1F', accent: '#EA580C' },
+  { label: 'Graphite', primary: '#334155', accent: '#1E293B' },
   { label: 'Violet', primary: '#8B5CF6', accent: '#7C3AED' },
   { label: 'Rose', primary: '#F43F5E', accent: '#E11D48' },
   { label: 'Slate', primary: '#64748B', accent: '#475569' },
@@ -29,21 +29,51 @@ function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
 // ─── Live Preview ─────────────────────────────────────────────────────────────
 
 function InvoicePreview({ template, orgName }: { template: InvoiceTemplate; orgName: string }) {
-  const primary = template.primary_color ?? '#FF5A1F'
-  const accent = template.accent_color ?? '#EA580C'
+  const primary = template.primary_color ?? '#334155'
+  const accent = template.accent_color ?? '#1E293B'
+  const wrapperRef = useRef<HTMLDivElement>(null)
+  const [scale, setScale] = useState(0.5)
+
+  useEffect(() => {
+    if (!wrapperRef.current) return
+    const ro = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const availW = entry.contentRect.width
+        setScale(Math.min(availW / 595, 1))
+      }
+    })
+    ro.observe(wrapperRef.current)
+    return () => ro.disconnect()
+  }, [])
 
   return (
     <div
+      ref={wrapperRef}
       style={{
-        background: '#fff',
-        borderRadius: 8,
+        width: '100%',
+        height: Math.round(842 * scale),
         overflow: 'hidden',
-        boxShadow: '0 4px 24px rgba(0,0,0,0.3)',
+        borderRadius: 16,
+        transition: 'height 0.15s ease',
+        position: 'relative',
+      }}
+    >
+    <div
+      style={{
+        width: 595,
+        height: 842,
+        background: '#ffffff',
+        borderRadius: 0,
+        transformOrigin: 'top left',
+        transform: `scale(${scale})`,
         fontSize: 14,
         color: '#1e293b',
-        minHeight: 360,
         display: 'flex',
         flexDirection: 'column',
+        flexShrink: 0,
+        position: 'absolute',
+        top: 0,
+        left: 0,
       }}
     >
       {/* Invoice header */}
@@ -139,6 +169,7 @@ function InvoicePreview({ template, orgName }: { template: InvoiceTemplate; orgN
         </div>
       </div>
     </div>
+    </div>
   )
 }
 
@@ -148,8 +179,8 @@ export function InvoiceTemplateEditor() {
   const { toast } = useToast()
 
   const [template, setTemplate] = useState<InvoiceTemplate>({
-    primary_color: '#FF5A1F',
-    accent_color: '#EA580C',
+    primary_color: '#334155',
+    accent_color: '#1E293B',
     company_name: '',
     abn: '',
     gst_registered: false,
@@ -251,9 +282,12 @@ export function InvoiceTemplateEditor() {
   }, [template, toast])
 
   const cardStyle: React.CSSProperties = {
-    background: 'rgba(15, 20, 30, 0.5)',
-    border: '1px solid rgba(255,255,255,0.07)',
-    borderRadius: 12,
+    background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.6))',
+    backdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
+    WebkitBackdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
+    boxShadow: 'var(--card-inset, inset 0 1px 0 rgba(255, 255, 255, 0.05))',
+    border: 'none',
+    borderRadius: 16,
     padding: '24px',
   }
 
@@ -261,7 +295,7 @@ export function InvoiceTemplateEditor() {
     display: 'block',
     fontSize: 14,
     fontWeight: 500,
-    color: '#94A3B8',
+    color: 'var(--text-secondary, #94A3B8)',
     letterSpacing: '0.04em',
     textTransform: 'uppercase',
     marginBottom: 8,
@@ -269,7 +303,7 @@ export function InvoiceTemplateEditor() {
 
   const inputStyle: React.CSSProperties = {
     width: '100%',
-    background: 'rgba(13, 17, 23, 0.6)',
+    background: 'var(--bg-input, rgba(13, 17, 23, 0.6))',
     border: '1px solid rgba(255,255,255,0.1)',
     borderRadius: 8,
     padding: '12px 16px',
@@ -323,7 +357,7 @@ export function InvoiceTemplateEditor() {
               style={{
                 width: '100%',
                 padding: '20px',
-                border: '1px dashed rgba(255,255,255,0.15)',
+                border: '1px dashed rgba(255,255,255,0.03)',
                 borderRadius: 8,
                 background: 'rgba(255,255,255,0.02)',
                 color: '#64748B',
@@ -375,28 +409,44 @@ export function InvoiceTemplateEditor() {
               </div>
               <div>
                 <label style={{ ...labelStyle, marginBottom: 8 }}>GST Registered</label>
-                <button
-                  onClick={() => setTemplate((prev) => ({ ...prev, gst_registered: !prev.gst_registered }))}
-                  style={{
-                    ...inputStyle,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 8,
-                    background: template.gst_registered ? 'rgba(34,197,94,0.1)' : 'rgba(13, 17, 23, 0.6)',
-                    border: template.gst_registered ? '1px solid rgba(34,197,94,0.3)' : '1px solid rgba(255,255,255,0.1)',
-                  }}
-                >
-                  <span style={{
-                    width: 16, height: 16, borderRadius: 8,
-                    background: template.gst_registered ? '#22C55E' : 'rgba(255,255,255,0.1)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 14, color: '#fff', fontWeight: 500,
-                  }}>
-                    {template.gst_registered ? '✓' : ''}
-                  </span>
-                  {template.gst_registered ? 'Yes' : 'No'}
-                </button>
+                <div style={{ display: 'flex', alignItems: 'center', height: 40 }}>
+                  <button
+                    role="switch"
+                    aria-checked={template.gst_registered}
+                    aria-label="GST Registered"
+                    onClick={() => setTemplate((prev) => ({ ...prev, gst_registered: !prev.gst_registered }))}
+                    style={{
+                      position: 'relative',
+                      display: 'inline-flex',
+                      height: 24,
+                      width: 44,
+                      flexShrink: 0,
+                      cursor: 'pointer',
+                      borderRadius: 12,
+                      transition: 'background-color 200ms ease',
+                      border: 'none',
+                      background: template.gst_registered ? '#22C55E' : 'var(--toggle-off-bg, rgba(255, 255, 255, 0.1))',
+                      outline: 'none',
+                    }}
+                    onFocus={e => { e.currentTarget.style.boxShadow = '0 0 0 2px rgba(34, 197, 94, 0.3)' }}
+                    onBlur={e => { e.currentTarget.style.boxShadow = 'none' }}
+                  >
+                    <span
+                      style={{
+                        pointerEvents: 'none',
+                        display: 'inline-block',
+                        height: 20,
+                        width: 20,
+                        borderRadius: 9999,
+                        background: '#FFFFFF',
+                        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.3)',
+                        transition: 'transform 200ms ease',
+                        transform: template.gst_registered ? 'translateX(20px)' : 'translateX(2px)',
+                        marginTop: 2,
+                      }}
+                    />
+                  </button>
+                </div>
               </div>
             </div>
             <div>
@@ -443,7 +493,7 @@ export function InvoiceTemplateEditor() {
                     display: 'flex', alignItems: 'center', gap: 8,
                     padding: '8px 12px',
                     borderRadius: 20,
-                    border: active ? `2px solid ${preset.primary}` : '1px solid rgba(255,255,255,0.1)',
+                    border: active ? `2px solid ${preset.primary}` : '1px solid rgba(255,255,255,0.03)',
                     background: active ? `${preset.primary}22` : 'rgba(255,255,255,0.04)',
                     cursor: 'pointer',
                     fontSize: 14,
@@ -464,36 +514,40 @@ export function InvoiceTemplateEditor() {
             <div>
               <label style={{ ...labelStyle, marginBottom: 8 }}>Primary</label>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <input
-                  type="color"
-                  value={template.primary_color ?? '#FF5A1F'}
-                  onChange={(e) => setTemplate((prev) => ({ ...prev, primary_color: e.target.value }))}
-                  style={{ width: 36, height: 36, borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', cursor: 'pointer', padding: 2 }}
-                />
+                <div style={{ width: 40, height: 40, borderRadius: 8, overflow: 'hidden', border: '1px solid var(--glass-border, rgba(255,255,255,0.03))', flexShrink: 0 }}>
+                  <input
+                    type="color"
+                    value={template.primary_color ?? '#334155'}
+                    onChange={(e) => setTemplate((prev) => ({ ...prev, primary_color: e.target.value }))}
+                    style={{ width: '100%', height: '100%', padding: 0, border: 'none', cursor: 'pointer' }}
+                  />
+                </div>
                 <input
                   type="text"
-                  value={template.primary_color ?? '#FF5A1F'}
+                  value={template.primary_color ?? '#334155'}
                   onChange={(e) => setTemplate((prev) => ({ ...prev, primary_color: e.target.value }))}
-                  style={{ ...inputStyle, width: 'auto', flex: 1, fontFamily: 'monospace', fontSize: 14 }}
-                  placeholder="#FF5A1F"
+                  style={{ ...inputStyle, width: 'auto', flex: 1, fontFamily: 'monospace', fontSize: 14, height: 40, padding: '0 16px' }}
+                  placeholder="#334155"
                 />
               </div>
             </div>
             <div>
               <label style={{ ...labelStyle, marginBottom: 8 }}>Accent</label>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <input
-                  type="color"
-                  value={template.accent_color ?? '#EA580C'}
-                  onChange={(e) => setTemplate((prev) => ({ ...prev, accent_color: e.target.value }))}
-                  style={{ width: 36, height: 36, borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', cursor: 'pointer', padding: 2 }}
-                />
+                <div style={{ width: 40, height: 40, borderRadius: 8, overflow: 'hidden', border: '1px solid var(--glass-border, rgba(255,255,255,0.03))', flexShrink: 0 }}>
+                  <input
+                    type="color"
+                    value={template.accent_color ?? '#1E293B'}
+                    onChange={(e) => setTemplate((prev) => ({ ...prev, accent_color: e.target.value }))}
+                    style={{ width: '100%', height: '100%', padding: 0, border: 'none', cursor: 'pointer' }}
+                  />
+                </div>
                 <input
                   type="text"
-                  value={template.accent_color ?? '#EA580C'}
+                  value={template.accent_color ?? '#1E293B'}
                   onChange={(e) => setTemplate((prev) => ({ ...prev, accent_color: e.target.value }))}
-                  style={{ ...inputStyle, width: 'auto', flex: 1, fontFamily: 'monospace', fontSize: 14 }}
-                  placeholder="#EA580C"
+                  style={{ ...inputStyle, width: 'auto', flex: 1, fontFamily: 'monospace', fontSize: 14, height: 40, padding: '0 16px' }}
+                  placeholder="#1E293B"
                 />
               </div>
             </div>
@@ -501,14 +555,14 @@ export function InvoiceTemplateEditor() {
 
           {/* Color swatch preview */}
           {(() => {
-            const rgb = hexToRgb(template.primary_color ?? '#FF5A1F')
+            const rgb = hexToRgb(template.primary_color ?? '#334155')
             return (
               <div
                 style={{
                   marginTop: 12, height: 6, borderRadius: 8,
                   background: rgb
-                    ? `linear-gradient(90deg, ${template.primary_color} 0%, ${template.accent_color ?? '#EA580C'} 100%)`
-                    : '#FF5A1F',
+                    ? `linear-gradient(90deg, ${template.primary_color} 0%, ${template.accent_color ?? '#1E293B'} 100%)`
+                    : '#334155',
                 }}
               />
             )
@@ -558,28 +612,25 @@ export function InvoiceTemplateEditor() {
           disabled={saving}
           style={{
             width: '100%',
-            padding: '12px',
-            borderRadius: 12,
+            height: 40,
+            padding: '0 16px',
+            borderRadius: 8,
             border: 'none',
-            background: saving ? 'rgba(26,26,27,0.5)' : '#1A1A1B',
-            color: '#fff',
+            background: saving ? 'rgba(241,245,249,0.5)' : '#F1F5F9',
+            color: 'var(--btn-primary-fg, #0a0f1a)',
             fontWeight: 500,
             fontSize: 14,
             cursor: saving ? 'not-allowed' : 'pointer',
             transition: 'background 0.15s',
           }}
         >
-          {saving ? 'Saving…' : 'Save template'}
+          {saving ? 'Saving…' : 'Save Template'}
         </button>
       </div>
 
       {/* ── Right: Live Preview ── */}
-      <div style={{ position: 'sticky', top: 24 }}>
-        <p style={{ ...labelStyle, marginBottom: 12 }}>Live Preview</p>
+      <div style={{ position: 'sticky', top: 24, alignSelf: 'start' }}>
         <InvoicePreview template={template} orgName={template.company_name?.trim() || orgName} />
-        <p style={{ fontSize: 14, color: '#475569', marginTop: 8, textAlign: 'center' }}>
-          Preview only · not to scale
-        </p>
       </div>
     </div>
   )

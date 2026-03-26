@@ -15,7 +15,7 @@ const STATUS_COLORS: Record<string, string> = {
 const AGENT_COLORS: Record<string, string> = {
   finance: '#22C55E',
   comms: '#3B82F6',
-  sales: '#FF5A1F',
+  sales: '#F1F5F9',
   generic: '#8B5CF6',
 }
 
@@ -142,7 +142,7 @@ export function SwarmDetail({ runId, onBack }: SwarmDetailProps) {
 
       {/* Progress bar */}
       <div style={{
-        background: 'rgba(15,20,30,0.35)',
+        background: 'var(--bg-card, rgba(15,20,30,0.35))',
         borderRadius: '12px',
         padding: '16px',
         backdropFilter: 'blur(20px)',
@@ -164,7 +164,7 @@ export function SwarmDetail({ runId, onBack }: SwarmDetailProps) {
           <div style={{
             height: '100%',
             width: `${progress}%`,
-            background: run.status === 'failed' ? '#EF4444' : '#FF5A1F',
+            background: run.status === 'failed' ? '#EF4444' : '#F1F5F9',
             borderRadius: '8px',
             transition: 'width 0.3s ease',
           }} />
@@ -183,7 +183,7 @@ export function SwarmDetail({ runId, onBack }: SwarmDetailProps) {
 
       {/* Steps timeline */}
       <div style={{
-        background: 'rgba(15,20,30,0.35)',
+        background: 'var(--bg-card, rgba(15,20,30,0.35))',
         borderRadius: '12px',
         padding: '16px',
         backdropFilter: 'blur(20px)',
@@ -304,7 +304,7 @@ export function SwarmDetail({ runId, onBack }: SwarmDetailProps) {
       {/* Messages */}
       {messages.length > 0 && (
         <div style={{
-          background: 'rgba(15,20,30,0.35)',
+          background: 'var(--bg-card, rgba(15,20,30,0.35))',
           borderRadius: '12px',
           padding: '16px',
           backdropFilter: 'blur(20px)',

@@ -47,11 +47,11 @@ interface IntelligenceData {
 const widgetCard: React.CSSProperties = {
   padding: '16px',
   borderRadius: 12,
-  background: 'rgba(15, 20, 30, 0.6)',
-  backdropFilter: 'blur(20px) saturate(1.2)',
-  WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
-  border: '1px solid rgba(255, 255, 255, 0.03)',
-  boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+  background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.6))',
+  backdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
+  WebkitBackdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
+  border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
+  boxShadow: 'var(--card-inset, inset 0 1px 0 rgba(255, 255, 255, 0.05))',
   transition: 'all 200ms',
 }
 
@@ -73,7 +73,7 @@ const WIDGET_DEFS = [
     key: 'revenueRadar',
     label: 'Revenue Radar',
     icon: Radar,
-    color: '#FF5A1F',
+    color: '#F1F5F9',
     extract: (d: IntelligenceData) => d.revenueRadar,
     format: (data: any) => ({
       value: data.gatheringData ? '--' : `$${(data.totalEstimatedValue / 1000).toFixed(1)}k`,
@@ -182,7 +182,7 @@ export function IntelligenceWidgets() {
                   ? '1px solid rgba(255, 255, 255, 0.1)'
                   : '1px solid rgba(255, 255, 255, 0.03)',
                 background: isHovered
-                  ? 'rgba(20, 28, 40, 0.7)'
+                  ? 'var(--bb-surface-hover, rgba(20, 28, 40, 0.7))'
                   : 'rgba(15, 20, 30, 0.6)',
               }}
             >

@@ -134,8 +134,8 @@ export default function MarketingPage() {
           {/* Main Headline */}
           <h1
             style={{
-              fontSize: 'clamp(36px, 8vw, 72px)',
-              fontWeight: 700,
+              fontSize: '16px',
+              fontWeight: 500,
               lineHeight: 1.2,
               marginBottom: '24px',
               letterSpacing: '-0.03em',
@@ -148,7 +148,7 @@ export default function MarketingPage() {
           {/* Subheadline */}
           <p
             style={{
-              fontSize: 'clamp(16px, 2vw, 20px)',
+              fontSize: '16px',
               color: '#94A3B8',
               marginBottom: '48px',
               lineHeight: 1.6,
@@ -174,11 +174,11 @@ export default function MarketingPage() {
               href="/onboard"
               style={{
                 padding: '14px 32px',
-                borderRadius: '10px',
+                borderRadius: '12px',
                 background: '#10b981',
                 color: '#fff',
                 fontSize: '16px',
-                fontWeight: 600,
+                fontWeight: 500,
                 textDecoration: 'none',
                 border: 'none',
                 cursor: 'pointer',
@@ -199,12 +199,12 @@ export default function MarketingPage() {
             <button
               style={{
                 padding: '14px 32px',
-                borderRadius: '10px',
+                borderRadius: '12px',
                 background: 'transparent',
                 border: '1px solid rgba(255, 255, 255, 0.1)',
                 color: '#F1F5F9',
                 fontSize: '16px',
-                fontWeight: 600,
+                fontWeight: 500,
                 cursor: 'pointer',
                 transition: 'all 200ms',
               }}
@@ -257,10 +257,10 @@ export default function MarketingPage() {
                     justifyContent: 'center',
                     width: '44px',
                     height: '44px',
-                    borderRadius: '10px',
+                    borderRadius: '12px',
                     background: 'rgba(255, 255, 255, 0.05)',
                     border: '1px solid rgba(255, 255, 255, 0.1)',
-                    fontSize: '20px',
+                    fontSize: '16px',
                     transition: 'all 200ms',
                   }}
                   onMouseEnter={(e) => {
@@ -288,8 +288,8 @@ export default function MarketingPage() {
           <div style={{ textAlign: 'center', marginBottom: '80px' }}>
             <h2
               style={{
-                fontSize: 'clamp(28px, 5vw, 48px)',
-                fontWeight: 700,
+                fontSize: '16px',
+                fontWeight: 500,
                 marginBottom: '16px',
                 letterSpacing: '-0.02em',
               }}
@@ -298,7 +298,7 @@ export default function MarketingPage() {
             </h2>
             <p
               style={{
-                fontSize: '18px',
+                fontSize: '16px',
                 color: '#94A3B8',
                 maxWidth: '600px',
                 margin: '0 auto',
@@ -323,21 +323,21 @@ export default function MarketingPage() {
                 style={{
                   padding: '32px 24px',
                   borderRadius: '16px',
-                  background: 'rgba(15, 20, 30, 0.6)',
-                  backdropFilter: 'blur(20px)',
-                  WebkitBackdropFilter: 'blur(20px)',
-                  border: '1px solid rgba(255, 255, 255, 0.03)',
-                  boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+                  background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.6))',
+                  backdropFilter: 'var(--glass-blur, blur(20px))',
+                  WebkitBackdropFilter: 'var(--glass-blur, blur(20px))',
+                  border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
+                  boxShadow: 'var(--card-inset, inset 0 1px 0 rgba(255, 255, 255, 0.05))',
                   transition: 'all 300ms',
                   cursor: 'pointer',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(15, 20, 30, 0.8)'
+                  e.currentTarget.style.background = 'var(--glass-bg-heavy, rgba(15, 20, 30, 0.8))'
                   e.currentTarget.style.borderColor = 'rgba(16, 185, 129, 0.2)'
                   e.currentTarget.style.transform = 'translateY(-4px)'
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'rgba(15, 20, 30, 0.6)'
+                  e.currentTarget.style.background = 'var(--bg-card-solid, rgba(15, 20, 30, 0.6))'
                   e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.03)'
                   e.currentTarget.style.transform = 'translateY(0)'
                 }}
@@ -345,8 +345,8 @@ export default function MarketingPage() {
                 <div style={{ fontSize: '40px', marginBottom: '16px' }}>{feature.emoji}</div>
                 <h3
                   style={{
-                    fontSize: '18px',
-                    fontWeight: 600,
+                    fontSize: '16px',
+                    fontWeight: 500,
                     marginBottom: '12px',
                     color: '#F1F5F9',
                   }}
@@ -370,8 +370,8 @@ export default function MarketingPage() {
           <div
             style={{
               padding: '40px 32px',
-              borderRadius: '20px',
-              background: 'rgba(10, 14, 23, 0.5)',
+              borderRadius: '24px',
+              background: 'var(--bb-surface, rgba(10, 14, 23, 0.5))',
               backdropFilter: 'blur(26px)',
               WebkitBackdropFilter: 'blur(26px)',
               border: '1px solid rgba(16, 185, 129, 0.1)',
@@ -380,8 +380,8 @@ export default function MarketingPage() {
           >
             <h3
               style={{
-                fontSize: '20px',
-                fontWeight: 600,
+                fontSize: '16px',
+                fontWeight: 500,
                 marginBottom: '32px',
                 color: '#F1F5F9',
               }}
@@ -406,7 +406,7 @@ export default function MarketingPage() {
                     padding: '16px',
                     borderRadius: '12px',
                     background: 'rgba(255, 255, 255, 0.02)',
-                    border: '1px solid rgba(255, 255, 255, 0.05)',
+                    border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.05))',
                     transition: 'all 200ms',
                   }}
                   onMouseEnter={(e) => {
@@ -434,8 +434,8 @@ export default function MarketingPage() {
           <div style={{ textAlign: 'center', marginBottom: '60px' }}>
             <h2
               style={{
-                fontSize: 'clamp(28px, 5vw, 48px)',
-                fontWeight: 700,
+                fontSize: '16px',
+                fontWeight: 500,
                 marginBottom: '24px',
                 letterSpacing: '-0.02em',
               }}
@@ -486,11 +486,11 @@ export default function MarketingPage() {
                   style={{
                     display: 'inline-block',
                     padding: '4px 12px',
-                    borderRadius: '20px',
+                    borderRadius: '24px',
                     background: 'rgba(16, 185, 129, 0.15)',
                     color: '#10b981',
                     fontSize: '12px',
-                    fontWeight: 600,
+                    fontWeight: 500,
                     marginLeft: '8px',
                   }}
                 >
@@ -520,12 +520,12 @@ export default function MarketingPage() {
                   style={{
                     position: 'relative',
                     padding: '32px 24px',
-                    borderRadius: '20px',
+                    borderRadius: '24px',
                     background: tier.popular
                       ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%)'
-                      : 'rgba(15, 20, 30, 0.6)',
-                    backdropFilter: 'blur(20px)',
-                    WebkitBackdropFilter: 'blur(20px)',
+                      : 'var(--bg-card-solid, rgba(15, 20, 30, 0.6))',
+                    backdropFilter: 'var(--glass-blur, blur(20px))',
+                    WebkitBackdropFilter: 'var(--glass-blur, blur(20px))',
                     border: tier.popular
                       ? '1px solid rgba(16, 185, 129, 0.3)'
                       : '1px solid rgba(255, 255, 255, 0.03)',
@@ -560,7 +560,7 @@ export default function MarketingPage() {
                         background: '#10b981',
                         color: '#000',
                         fontSize: '12px',
-                        fontWeight: 600,
+                        fontWeight: 500,
                       }}
                     >
                       Most Popular
@@ -569,8 +569,8 @@ export default function MarketingPage() {
 
                   <h3
                     style={{
-                      fontSize: '20px',
-                      fontWeight: 600,
+                      fontSize: '16px',
+                      fontWeight: 500,
                       marginBottom: '8px',
                       color: '#F1F5F9',
                     }}
@@ -591,7 +591,7 @@ export default function MarketingPage() {
                     <div
                       style={{
                         fontSize: '42px',
-                        fontWeight: 700,
+                        fontWeight: 500,
                         color: '#F1F5F9',
                       }}
                     >
@@ -613,12 +613,12 @@ export default function MarketingPage() {
                     style={{
                       width: '100%',
                       padding: '12px 16px',
-                      borderRadius: '10px',
+                      borderRadius: '12px',
                       border: 'none',
                       background: tier.popular ? '#10b981' : 'rgba(255, 255, 255, 0.05)',
                       color: tier.popular ? '#000' : '#F1F5F9',
                       fontSize: '14px',
-                      fontWeight: 600,
+                      fontWeight: 500,
                       cursor: 'pointer',
                       marginBottom: '24px',
                       transition: 'all 200ms',
@@ -659,7 +659,7 @@ export default function MarketingPage() {
                         <span
                           style={{
                             color: '#10b981',
-                            fontWeight: 'bold',
+                            fontWeight: 500,
                             fontSize: '16px',
                             lineHeight: 1,
                           }}
@@ -681,8 +681,8 @@ export default function MarketingPage() {
       <section style={{ padding: '80px 20px', textAlign: 'center' }}>
         <h2
           style={{
-            fontSize: '36px',
-            fontWeight: 700,
+            fontSize: '16px',
+            fontWeight: 500,
             marginBottom: '24px',
             color: '#F1F5F9',
           }}
@@ -705,11 +705,11 @@ export default function MarketingPage() {
           style={{
             display: 'inline-block',
             padding: '14px 40px',
-            borderRadius: '10px',
+            borderRadius: '12px',
             background: '#10b981',
             color: '#fff',
             fontSize: '16px',
-            fontWeight: 600,
+            fontWeight: 500,
             textDecoration: 'none',
             transition: 'all 200ms',
           }}

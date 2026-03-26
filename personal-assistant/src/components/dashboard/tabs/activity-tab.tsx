@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { Activity } from 'lucide-react';
 import { TabSkeleton } from './tab-skeleton';
 import { TabShell } from '@/components/ui/tab-shell';
 import { EmptyState } from '@/components/ui/empty-state';
+import { GlassDropdown } from '@/components/ui/glass-dropdown';
 import { logger } from '@/lib/core/logger';
 
 // ---------------------------------------------------------------------------
@@ -74,39 +74,23 @@ const ACTION_DATA_MAP: Record<string, string> = {
 };
 
 // ---------------------------------------------------------------------------
-// Filter bar
+// Filter option mappings for GlassDropdown
 // ---------------------------------------------------------------------------
 
-function FilterPill({
-  label,
-  options,
-  value,
-  onChange,
-}: {
-  label: string;
-  options: readonly string[];
-  value: string;
-  onChange: (v: string) => void;
-}) {
-  const id = `activity-filter-${label.toLowerCase()}`;
-  return (
-    <div className="bb-activity-filter">
-      <label htmlFor={id} className="bb-activity-filter__label">{label}</label>
-      <select
-        id={id}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="bb-activity-filter__select"
-      >
-        {options.map((o) => (
-          <option key={o} value={o}>
-            {o === 'all' ? 'All' : o.charAt(0).toUpperCase() + o.slice(1)}
-          </option>
-        ))}
-      </select>
-    </div>
-  );
-}
+const entityTypeOptions = ENTITY_TYPES.map((v) => ({
+  value: v,
+  label: v === 'all' ? 'All' : v.charAt(0).toUpperCase() + v.slice(1),
+}));
+
+const actorTypeOptions = ACTOR_TYPES.map((v) => ({
+  value: v,
+  label: v === 'all' ? 'All' : v.charAt(0).toUpperCase() + v.slice(1),
+}));
+
+const actionTypeOptions = ACTION_TYPES.map((v) => ({
+  value: v,
+  label: v === 'all' ? 'All' : v.charAt(0).toUpperCase() + v.slice(1),
+}));
 
 // ---------------------------------------------------------------------------
 // Entry row
@@ -269,9 +253,9 @@ function ActivityTab() {
 
         {/* Filters */}
         <div className="bb-activity-filters">
-          <FilterPill label="Entity" options={ENTITY_TYPES} value={entityType} onChange={setEntityType} />
-          <FilterPill label="Actor" options={ACTOR_TYPES} value={actorType} onChange={setActorType} />
-          <FilterPill label="Action" options={ACTION_TYPES} value={actionType} onChange={setActionType} />
+          <GlassDropdown options={entityTypeOptions} value={entityType} onChange={setEntityType} placeholder="Entity" />
+          <GlassDropdown options={actorTypeOptions} value={actorType} onChange={setActorType} placeholder="Actor" />
+          <GlassDropdown options={actionTypeOptions} value={actionType} onChange={setActionType} placeholder="Action" />
         </div>
 
         {/* Timeline */}
@@ -282,7 +266,6 @@ function ActivityTab() {
 
           {entries.length === 0 && (
             <EmptyState
-              icon={<Activity size={48} />}
               title="No activity yet"
               description="Activity will appear here as things get moving"
             />

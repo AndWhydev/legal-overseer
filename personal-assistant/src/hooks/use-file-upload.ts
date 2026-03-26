@@ -43,56 +43,50 @@ export function useFileUpload(threadId?: string | null): UseFileUploadReturn {
   const addFiles = useCallback(async (files: FileList | File[]) => {
     const fileArray = Array.from(files)
 
-    // Enforce max files cap
+    // Build pending items for all valid files first, so they all appear immediately
+    const filesToUpload: { file: File; tempId: string }[] = []
+
     setUploads(prev => {
       const remaining = MAX_FILES_PER_MESSAGE - prev.filter(u => u.status !== 'error').length
-      if (remaining <= 0) return prev // silently ignore
-      return prev // actual state update happens below
+      const accepted = fileArray.slice(0, Math.max(0, remaining))
+      const newItems: UploadItem[] = []
+
+      for (const file of accepted) {
+        const validation = validateFile(file.name, file.type, file.size)
+        const tempId = `tmp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+
+        if (!validation.valid) {
+          newItems.push({
+            id: `err-${tempId}`,
+            filename: file.name,
+            mimeType: file.type,
+            size: file.size,
+            progress: 0,
+            status: 'error',
+            error: validation.error,
+          })
+        } else {
+          const previewUrl = file.type.startsWith('image/')
+            ? URL.createObjectURL(file)
+            : undefined
+          newItems.push({
+            id: tempId,
+            filename: file.name,
+            mimeType: file.type,
+            size: file.size,
+            progress: 0,
+            status: 'pending',
+            previewUrl,
+          })
+          filesToUpload.push({ file, tempId })
+        }
+      }
+
+      return [...prev, ...newItems]
     })
 
-    for (const file of fileArray) {
-      // Check cap against current state
-      const currentCount = uploads.filter(u => u.status !== 'error').length
-      if (currentCount + fileArray.indexOf(file) >= MAX_FILES_PER_MESSAGE) {
-        break
-      }
-
-      // Client-side validation
-      const validation = validateFile(file.name, file.type, file.size)
-      if (!validation.valid) {
-        const errorItem: UploadItem = {
-          id: `err-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-          filename: file.name,
-          mimeType: file.type,
-          size: file.size,
-          progress: 0,
-          status: 'error',
-          error: validation.error,
-        }
-        setUploads(prev => [...prev, errorItem])
-        continue
-      }
-
-      // Create local preview for images
-      let previewUrl: string | undefined
-      if (file.type.startsWith('image/')) {
-        previewUrl = URL.createObjectURL(file)
-      }
-
-      // Temp ID while we request the signed URL
-      const tempId = `tmp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
-      const pendingItem: UploadItem = {
-        id: tempId,
-        filename: file.name,
-        mimeType: file.type,
-        size: file.size,
-        progress: 0,
-        status: 'pending',
-        previewUrl,
-      }
-      setUploads(prev => [...prev, pendingItem])
-
-      // Request signed upload URL from the server
+    // Upload all files concurrently
+    const uploadOne = async (file: File, tempId: string) => {
       try {
         const res = await fetch('/api/attachments/upload', {
           method: 'POST',
@@ -114,7 +108,7 @@ export function useFileUpload(threadId?: string | null): UseFileUploadReturn {
                 : u
             )
           )
-          continue
+          return
         }
 
         const { attachmentId, signedUrl } = await res.json()
@@ -163,7 +157,6 @@ export function useFileUpload(threadId?: string | null): UseFileUploadReturn {
             reject(new Error('Upload aborted'))
           }
 
-          // Supabase Storage signedUrl already contains the token query param
           xhr.open('PUT', signedUrl)
           xhr.setRequestHeader('Content-Type', file.type)
           xhr.send(file)
@@ -182,7 +175,7 @@ export function useFileUpload(threadId?: string | null): UseFileUploadReturn {
                 : u
             )
           )
-          continue
+          return
         }
 
         // Mark as ready
@@ -204,7 +197,13 @@ export function useFileUpload(threadId?: string | null): UseFileUploadReturn {
         )
       }
     }
-  }, [threadId, uploads])
+
+    // Stagger upload starts by 150ms each to avoid Supabase storage rate limits,
+    // but still run concurrently (each upload proceeds independently after starting)
+    await Promise.all(filesToUpload.map(({ file, tempId }, i) =>
+      new Promise<void>(resolve => setTimeout(resolve, i * 150)).then(() => uploadOne(file, tempId))
+    ))
+  }, [threadId])
 
   // ---- removeUpload ----
   const removeUpload = useCallback((id: string) => {

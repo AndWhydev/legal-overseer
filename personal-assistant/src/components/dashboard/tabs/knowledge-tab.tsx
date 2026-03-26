@@ -75,7 +75,7 @@ const glassInput: React.CSSProperties = {
   padding: '12px 16px',
   paddingLeft: '40px',
   borderRadius: 12,
-  background: 'rgba(13, 17, 23, 0.6)',
+  background: 'var(--bg-input, rgba(13, 17, 23, 0.6))',
   border: '1px solid var(--glass-interactive-border)',
   color: 'var(--text-primary)',
   fontSize: 14,
@@ -293,7 +293,7 @@ function KnowledgeTab() {
             style={glassInput}
             onFocus={(e) => {
               e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
-              e.currentTarget.style.boxShadow = '0 0 0 2px rgba(255, 90, 31, 0.15)';
+              e.currentTarget.style.boxShadow = '0 0 0 2px rgba(255, 255, 255, 0.08)';
             }}
             onBlur={(e) => {
               e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.05)';
@@ -313,8 +313,8 @@ function KnowledgeTab() {
                 style={{
                   width: 16,
                   height: 16,
-                  border: '2px solid rgba(255, 90, 31, 0.3)',
-                  borderTopColor: '#FF5A1F',
+                  border: '2px solid rgba(255, 255, 255, 0.12)',
+                  borderTopColor: '#F1F5F9',
                   borderRadius: '50%',
                   animation: 'spin 0.8s linear infinite',
                 }}
@@ -389,7 +389,7 @@ function KnowledgeTab() {
                       background: 'var(--glass-pill-bg)',
                       backdropFilter: 'var(--glass-blur)',
                       WebkitBackdropFilter: 'var(--glass-blur)',
-                      border: '1px solid var(--glass-interactive-border)',
+                      border: 'none',
                       boxShadow: 'var(--glass-card-inset)',
                     }}
                   >
@@ -473,7 +473,7 @@ function KnowledgeTab() {
                               gap: 8,
                               color: isHovered ? 'var(--text-primary)' : 'var(--text-secondary)',
                               background: isHovered
-                                ? 'rgba(255, 90, 31, 0.15)'
+                                ? 'rgba(255, 255, 255, 0.08)'
                                 : 'var(--glass-pill-bg)',
                             }}
                           >
@@ -627,7 +627,7 @@ function KnowledgeTab() {
                         ? '1px solid var(--glass-interactive-border)'
                         : '1px solid var(--glass-card-border)',
                       boxShadow: isHovered
-                        ? 'inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 0 0 1px rgba(255, 90, 31, 0.2)'
+                        ? 'inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 0 0 1px rgba(255, 255, 255, 0.1)'
                         : 'var(--glass-card-inset)',
                       cursor: 'pointer',
                       transition: 'all 200ms',
@@ -704,7 +704,6 @@ function KnowledgeTab() {
         {/* ─── Empty States ──────────────────────────────────────────────────────── */}
         {!selectedEntity && !searching && query && results.length === 0 && (
           <EmptyState
-            icon={<Search size={32} />}
             title={`No results for "${query}"`}
             description="Try searching for contacts, projects, invoices, or tasks."
           />
@@ -712,7 +711,6 @@ function KnowledgeTab() {
 
         {!selectedEntity && !query && (
           <EmptyState
-            icon={<Book size={40} />}
             title="Search the knowledge base"
             description="Find contacts, projects, invoices, and tasks to see how they connect across the organisation."
           />

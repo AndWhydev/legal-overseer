@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { pccScoreToLeadScore } from '@/lib/leads/utils'
+import { discoveryScoreToLeadScore } from '@/lib/leads/utils'
 import type { ProspectResult } from '@/lib/leads/types'
 
 export async function POST(request: NextRequest) {
@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
   }
 
   const now = new Date().toISOString()
-  const score = pccScoreToLeadScore(prospect.priority_score)
+  const score = discoveryScoreToLeadScore(prospect.priority_score)
 
   const { data, error } = await supabase
     .from('leads')
@@ -45,10 +45,10 @@ export async function POST(request: NextRequest) {
       org_id: profile.org_id,
       status: 'new',
       score,
-      source_channel: 'pcc_discovery',
+      source_channel: 'lead_swarm',
       source_detail: prospect.name,
       estimated_value: null,
-      discovery_source: 'pcc_discovery',
+      discovery_source: 'lead_swarm',
       prospect_name: prospect.name,
       prospect_website: prospect.website,
       prospect_domain: prospect.domain,

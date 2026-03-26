@@ -27,7 +27,7 @@ export function OverdueTasksWidget() {
     >
       <div className="space-y-3">
         {tasks.length === 0 ? (
-          <EmptyState icon={<AlertCircle size={32} />} title="No overdue tasks" description="You're all caught up." />
+          <EmptyState title="No overdue tasks" description="You're all caught up." />
         ) : (
           tasks.map(task => (
             <div key={task.id as string} className="flex items-center justify-between p-3 rounded-md bg-[var(--bg-elevated)] border border-[var(--border-subtle)]">

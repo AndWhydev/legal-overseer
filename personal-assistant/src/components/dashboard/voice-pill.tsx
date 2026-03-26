@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowUp, Mic, MicOff, Paperclip, X } from 'lucide-react';
+import { ArrowUp, FileText, Loader2, Mic, MicOff, Paperclip, X } from 'lucide-react';
 import { MiniWaveform } from '../ui/mini-waveform';
 import { useFileUpload, type UploadItem } from '@/hooks/use-file-upload';
 import { useVoiceInput } from '../chat/use-voice-input';
@@ -319,11 +319,18 @@ export function VoicePill({
               {hasUploads && (
                 <div style={{
                   display: 'flex',
-                  flexDirection: 'column',
-                  gap: '4px',
-                  padding: '6px 12px 0',
+                  flexDirection: 'row',
+                  flexWrap: 'wrap',
+                  gap: '8px',
+                  padding: '8px 12px 0',
                   width: '100%',
                 }}>
+                  <style>{`
+                    @keyframes bb-upload-spin {
+                      from { transform: rotate(0deg); }
+                      to { transform: rotate(360deg); }
+                    }
+                  `}</style>
                   {fileUpload.uploads.map((item) => (
                     <UploadProgressItem
                       key={item.id}
@@ -386,37 +393,39 @@ export function VoicePill({
                 >
                   <Paperclip size={18} />
                 </button>
-                {voice.isSupported && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  {voice.isSupported && (
+                    <button
+                      onClick={voice.toggleListening}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: voice.isListening
+                          ? 'var(--bb-red, #EF4444)'
+                          : 'var(--text-muted, rgba(255,255,255,0.35))',
+                        cursor: 'pointer',
+                        padding: '6px',
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        transition: 'color 150ms',
+                      }}
+                      aria-label={voice.isListening ? 'Stop listening' : 'Start voice input'}
+                      type="button"
+                    >
+                      {voice.isListening ? <MicOff size={16} /> : <Mic size={16} />}
+                    </button>
+                  )}
                   <button
-                    onClick={voice.toggleListening}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      color: voice.isListening
-                        ? 'var(--bb-red, #EF4444)'
-                        : 'var(--text-muted, rgba(255,255,255,0.35))',
-                      cursor: 'pointer',
-                      padding: '6px',
-                      borderRadius: '50%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      transition: 'color 150ms',
-                    }}
-                    aria-label={voice.isListening ? 'Stop listening' : 'Start voice input'}
-                    type="button"
+                    className="bb-pill__send"
+                    onClick={handleSubmit}
+                    aria-label="Send"
+                    disabled={!canSend || fileUpload.isUploading}
                   >
-                    {voice.isListening ? <MicOff size={16} /> : <Mic size={16} />}
+                    <ArrowUp size={18} />
                   </button>
-                )}
-                <button
-                  className="bb-pill__send"
-                  onClick={handleSubmit}
-                  aria-label="Send"
-                  disabled={!canSend || fileUpload.isUploading}
-                >
-                  <ArrowUp size={18} />
-                </button>
+                </div>
               </div>
             </>
           ) : (
@@ -491,94 +500,159 @@ export function VoicePill({
 
 function UploadProgressItem({ item, onRemove }: { item: UploadItem; onRemove: () => void }) {
   const isError = item.status === 'error';
-  const isReady = item.status === 'ready';
   const isActive = item.status === 'uploading' || item.status === 'pending';
+  const isImage = !!item.previewUrl;
+
+  const THUMB = 64;
 
   return (
     <div style={{
-      display: 'flex',
-      alignItems: 'center',
-      gap: '8px',
-      padding: '4px 0',
-      fontSize: '12px',
-      color: isError ? 'var(--bb-color-error, #ef4444)' : 'var(--bb-color-text-secondary, rgba(255,255,255,0.7))',
+      position: 'relative',
+      width: `${THUMB}px`,
+      flexShrink: 0,
     }}>
-      {/* Preview thumbnail for images */}
-      {item.previewUrl && (
-        <img
-          src={item.previewUrl}
-          alt=""
-          style={{
-            width: '24px',
-            height: '24px',
-            borderRadius: '4px',
-            objectFit: 'cover',
-            flexShrink: 0,
-          }}
-        />
-      )}
-
-      {/* Filename */}
-      <span style={{
-        flex: 1,
+      {/* Thumbnail area */}
+      <div style={{
+        position: 'relative',
+        width: `${THUMB}px`,
+        height: `${THUMB}px`,
+        borderRadius: '8px',
         overflow: 'hidden',
-        textOverflow: 'ellipsis',
-        whiteSpace: 'nowrap',
+        background: isError
+          ? 'rgba(239,68,68,0.15)'
+          : 'rgba(255,255,255,0.06)',
+        border: isError
+          ? '1px solid rgba(239,68,68,0.3)'
+          : '1px solid rgba(255,255,255,0.08)',
       }}>
-        {item.filename}
-        {isError && item.error && (
-          <span style={{ display: 'block', fontSize: '11px', opacity: 0.8 }}>
-            {item.error}
-          </span>
-        )}
-      </span>
-
-      {/* Progress bar */}
-      {isActive && (
-        <div style={{
-          width: '60px',
-          height: '4px',
-          borderRadius: '2px',
-          background: 'rgba(255,255,255,0.1)',
-          overflow: 'hidden',
-          flexShrink: 0,
-        }}>
+        {/* Image thumbnail or file icon */}
+        {isImage ? (
+          <img
+            src={item.previewUrl}
+            alt=""
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              display: 'block',
+            }}
+          />
+        ) : (
           <div style={{
-            width: `${item.progress}%`,
+            width: '100%',
             height: '100%',
-            borderRadius: '2px',
-            background: 'var(--bb-color-accent, #3b82f6)',
-            transition: 'width 200ms ease',
-          }} />
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'var(--bb-color-text-secondary, rgba(255,255,255,0.5))',
+          }}>
+            <FileText size={24} />
+          </div>
+        )}
+
+        {/* Uploading overlay: darkened + spinner */}
+        {isActive && (
+          <div style={{
+            position: 'absolute',
+            inset: 0,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}>
+            <Loader2
+              size={20}
+              style={{
+                color: 'var(--bb-color-accent, #3b82f6)',
+                animation: 'bb-upload-spin 1s linear infinite',
+              }}
+            />
+          </div>
+        )}
+
+        {/* Progress bar at bottom of thumbnail */}
+        {isActive && (
+          <div style={{
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: '3px',
+            background: 'rgba(0,0,0,0.3)',
+          }}>
+            <div style={{
+              width: `${item.progress}%`,
+              height: '100%',
+              background: 'var(--bb-color-accent, #3b82f6)',
+              transition: 'width 200ms ease',
+              borderRadius: '0 1px 0 0',
+            }} />
+          </div>
+        )}
+
+        {/* Remove button overlay */}
+        <button
+          type="button"
+          onClick={onRemove}
+          aria-label={`Remove ${item.filename}`}
+          style={{
+            position: 'absolute',
+            top: '3px',
+            right: '3px',
+            width: '18px',
+            height: '18px',
+            borderRadius: '50%',
+            background: 'rgba(0,0,0,0.6)',
+            backdropFilter: 'blur(4px)',
+            border: 'none',
+            padding: 0,
+            cursor: 'pointer',
+            color: 'rgba(255,255,255,0.85)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <X size={10} />
+        </button>
+      </div>
+
+      {/* Filename below thumbnail for non-image files */}
+      {!isImage && (
+        <div style={{
+          marginTop: '3px',
+          fontSize: '10px',
+          lineHeight: '13px',
+          color: isError
+            ? 'var(--bb-color-error, #ef4444)'
+            : 'var(--bb-color-text-secondary, rgba(255,255,255,0.5))',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+          textAlign: 'center',
+          maxWidth: `${THUMB}px`,
+        }}>
+          {item.filename}
         </div>
       )}
 
-      {/* Ready checkmark */}
-      {isReady && (
-        <span style={{ color: 'var(--bb-color-success, #22c55e)', fontSize: '14px' }}>
-          ✓
-        </span>
+      {/* Error tooltip for images */}
+      {isError && isImage && item.error && (
+        <div style={{
+          marginTop: '3px',
+          fontSize: '10px',
+          lineHeight: '13px',
+          color: 'var(--bb-color-error, #ef4444)',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+          textAlign: 'center',
+          maxWidth: `${THUMB}px`,
+        }}>
+          {item.error}
+        </div>
       )}
 
-      {/* Remove button */}
-      <button
-        type="button"
-        onClick={onRemove}
-        aria-label={`Remove ${item.filename}`}
-        style={{
-          background: 'none',
-          border: 'none',
-          padding: '2px',
-          cursor: 'pointer',
-          color: 'inherit',
-          opacity: 0.6,
-          flexShrink: 0,
-          display: 'flex',
-          alignItems: 'center',
-        }}
-      >
-        <X size={14} />
-      </button>
     </div>
   );
 }

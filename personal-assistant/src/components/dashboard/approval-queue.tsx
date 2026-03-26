@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { AlertCircle, CheckCircle2, RefreshCw, Loader2 } from 'lucide-react';
+import { AlertCircle, RefreshCw, Loader2 } from 'lucide-react';
 import { ApprovalCard, type ApprovalItem } from './approval-card';
 import { AlertBanner } from '../ui/alert-banner';
 import { EmptyState } from '../ui/empty-state';
@@ -127,7 +127,8 @@ export function ApprovalQueue() {
   };
 
   const pillBtn: React.CSSProperties = {
-    padding: '8px 16px',
+    height: 40,
+    padding: '0 20px',
     borderRadius: 20,
     background: 'var(--glass-pill-bg)',
     backdropFilter: 'var(--glass-card-blur)',
@@ -135,40 +136,19 @@ export function ApprovalQueue() {
     boxShadow: 'var(--glass-pill-inset)',
     border: 'none',
     fontSize: 14,
+    fontWeight: 500,
     color: 'var(--text-secondary)',
     cursor: 'pointer',
     transition: 'all 200ms',
+    display: 'inline-flex',
+    alignItems: 'center',
   };
 
   const pillBtnActive: React.CSSProperties = {
     ...pillBtn,
     color: 'var(--text-primary)',
-    background: 'rgba(255, 90, 31, 0.15)',
-    border: '1px solid var(--status-orange-border)',
-  };
-
-  const emptyState: React.CSSProperties = {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: '60px 20px',
-    gap: 12,
-    borderRadius: 16,
-    background: 'var(--glass-card-bg)',
-    backdropFilter: 'var(--glass-card-blur)',
-    WebkitBackdropFilter: 'var(--glass-card-blur)',
-    border: '1px solid var(--glass-card-border)',
-    boxShadow: 'var(--glass-card-inset)',
-  };
-
-  const emptyStateIcon: React.CSSProperties = {
-    color: 'var(--text-dim)',
-  };
-
-  const emptyStateText: React.CSSProperties = {
-    fontSize: 14,
-    color: 'var(--text-secondary)',
+    background: 'rgba(255, 255, 255, 0.08)',
+    border: '1px solid rgba(255, 255, 255, 0.03)',
   };
 
   const loadingText: React.CSSProperties = {
@@ -203,6 +183,8 @@ export function ApprovalQueue() {
     display: 'flex',
     flexDirection: 'column',
     gap: 12,
+    flex: 1,
+    minHeight: 0,
   };
 
   return (
@@ -234,7 +216,8 @@ export function ApprovalQueue() {
             <p>{error}</p>
             <button
               style={{
-                padding: '8px 16px',
+                height: 40,
+                padding: '0 20px',
                 borderRadius: 12,
                 background: 'transparent',
                 border: '1px solid var(--glass-hover-bg)',
@@ -266,7 +249,6 @@ export function ApprovalQueue() {
 
       {!loading && visibleApprovals.length === 0 ? (
         <EmptyState
-          icon={<CheckCircle2 size={48} />}
           title="No approvals pending"
           description="When something needs sign-off, requests will appear here"
         />

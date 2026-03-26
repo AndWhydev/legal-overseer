@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 
 interface EmptyStateProps {
   icon?: React.ReactNode;
@@ -15,6 +16,8 @@ interface EmptyStateProps {
 export function EmptyState({ icon, title, description, action }: EmptyStateProps) {
   const [actionHovered, setActionHovered] = React.useState(false);
 
+  const showDefaultLogo = !icon;
+
   return (
     <div
       style={{
@@ -22,13 +25,37 @@ export function EmptyState({ icon, title, description, action }: EmptyStateProps
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
+        flex: 1,
+        minHeight: 300,
         padding: '64px 24px',
         gap: 16,
         textAlign: 'center',
       }}
       role="status"
     >
-      {icon && (
+      {showDefaultLogo ? (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: 48,
+            height: 48,
+          }}
+          aria-hidden="true"
+        >
+          <Image
+            src="/bitbit-logo.svg"
+            alt=""
+            width={48}
+            height={48}
+            style={{
+              opacity: 0.25,
+              filter: 'var(--empty-icon-filter, grayscale(1) invert(1) brightness(1.5))',
+            }}
+          />
+        </div>
+      ) : (
         <div
           style={{
             display: 'flex',
@@ -78,15 +105,18 @@ export function EmptyState({ icon, title, description, action }: EmptyStateProps
           onMouseLeave={() => setActionHovered(false)}
           style={{
             marginTop: 16,
-            padding: '8px 16px',
-            borderRadius: 12,
-            background: actionHovered ? 'var(--accent)' : 'transparent',
-            border: `1px solid ${actionHovered ? 'var(--accent)' : 'var(--glass-interactive-border)'}`,
-            color: actionHovered ? '#FFFFFF' : 'var(--text-secondary)',
+            height: 40,
+            padding: '0 20px',
+            borderRadius: 8,
+            background: 'var(--btn-primary-bg, #F1F5F9)',
+            border: 'none',
+            color: 'var(--btn-primary-fg, #0a0f1a)',
             fontSize: 14,
             fontWeight: 500,
             cursor: 'pointer',
             transition: 'all 200ms ease',
+            transform: actionHovered ? 'translateY(-1px)' : 'translateY(0)',
+            boxShadow: actionHovered ? '0 4px 12px rgba(0, 0, 0, 0.2)' : 'none',
           }}
         >
           {action.label}

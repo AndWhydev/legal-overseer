@@ -23,9 +23,9 @@ const BOARD_COLUMNS: Array<{
   color: string
   emptyText: string
 }> = [
-  { id: 'new', label: 'New', color: '#3b82f6', emptyText: 'No new leads -- discover prospects or wait for inbound' },
-  { id: 'qualified', label: 'Qualified', color: '#eab308', emptyText: 'Move promising leads here' },
-  { id: 'booked', label: 'Booked', color: '#22c55e', emptyText: 'Leads with scheduled meetings' },
+  { id: 'new', label: 'New', color: 'rgba(255, 255, 255, 0.25)', emptyText: 'No new leads -- discover prospects or wait for inbound' },
+  { id: 'qualified', label: 'Qualified', color: 'rgba(255, 255, 255, 0.25)', emptyText: 'Move promising leads here' },
+  { id: 'booked', label: 'Booked', color: 'rgba(255, 255, 255, 0.25)', emptyText: 'Leads with scheduled meetings' },
 ]
 
 interface LeadsKanbanViewProps {
@@ -77,13 +77,14 @@ const emptyColumn: React.CSSProperties = {
   fontSize: 14,
   color: 'var(--text-dim, #475569)',
   borderRadius: 12,
-  border: '1px dashed rgba(255, 255, 255, 0.06)',
+  border: '1px dashed rgba(255, 255, 255, 0.03)',
 }
 
 const dragOverlayCard: React.CSSProperties = {
   width: 260,
-  transform: 'rotate(2deg)',
-  filter: 'drop-shadow(0 16px 32px rgba(0,0,0,0.4))',
+  opacity: 0.9,
+  filter: 'drop-shadow(0 8px 24px rgba(0,0,0,0.35))',
+  pointerEvents: 'none',
 }
 
 // ─── Kanban Column ──────────────────────────────────────────────────────────
@@ -146,10 +147,11 @@ const KanbanDropColumn = memo(function KanbanDropColumn({
           flex: 1,
           display: 'flex',
           flexDirection: 'column',
-          gap: 8,
+          gap: 10,
           borderRadius: 12,
           padding: 8,
           minHeight: 120,
+          overflow: 'visible',
           background: isOver ? 'rgba(255, 255, 255, 0.03)' : 'transparent',
           border: isOver
             ? '1px dashed rgba(255, 255, 255, 0.15)'
@@ -242,10 +244,11 @@ function LeadsKanbanViewInner({
         style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(3, 1fr)',
-          gap: 12,
+          gap: 16,
           flex: 1,
           minHeight: 0,
           alignItems: 'stretch',
+          overflowX: 'auto',
         }}
       >
         {BOARD_COLUMNS.map((column) => (
@@ -262,7 +265,7 @@ function LeadsKanbanViewInner({
         ))}
       </div>
 
-      <DragOverlay>
+      <DragOverlay dropAnimation={null}>
         {activeLead ? (
           <div style={dragOverlayCard}>
             <LeadCard lead={activeLead} />
@@ -279,6 +282,14 @@ function LeadsKanbanViewInner({
           0%, 100% { border-color: rgba(255, 255, 255, 0.15); }
           50% { border-color: rgba(255, 255, 255, 0.3); }
         }
+        .bb-leads-card:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
+        }
+        .bb-leads-card:focus-visible {
+          outline: 2px solid rgba(255, 255, 255, 0.2);
+          outline-offset: 2px;
+        }
         .kanban-col .col-progress {
           opacity: 0;
           transition: opacity 200ms ease;
@@ -291,6 +302,10 @@ function LeadsKanbanViewInner({
         }
         @media (max-width: 640px) {
           .leads-kanban-grid { grid-template-columns: 1fr !important; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .bb-leads-card { transition: none !important; }
+          .bb-leads-card:hover { transform: none !important; }
         }
       `}</style>
     </DndContext>

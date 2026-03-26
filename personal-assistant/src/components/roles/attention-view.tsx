@@ -39,11 +39,11 @@ interface AttentionViewProps {
 const glassCard: React.CSSProperties = {
   padding: '20px',
   borderRadius: 16,
-  background: 'rgba(15, 20, 30, 0.6)',
-  backdropFilter: 'blur(20px) saturate(1.2)',
-  WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
-  border: '1px solid rgba(255, 255, 255, 0.03)',
-  boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+  background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.6))',
+  backdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
+  WebkitBackdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
+  border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
+  boxShadow: 'var(--card-inset, inset 0 1px 0 rgba(255, 255, 255, 0.05))',
 }
 
 const sectionHeader: React.CSSProperties = {
@@ -60,10 +60,10 @@ const listRow: React.CSSProperties = {
   alignItems: 'flex-start',
   padding: '12px 16px',
   borderRadius: 12,
-  background: 'rgba(10, 14, 23, 0.5)',
+  background: 'var(--bb-surface, rgba(10, 14, 23, 0.5))',
   backdropFilter: 'blur(26px) saturate(1.15)',
   WebkitBackdropFilter: 'blur(26px) saturate(1.15)',
-  boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+  boxShadow: 'var(--card-inset, inset 0 1px 0 rgba(255, 255, 255, 0.05))',
   border: 'none',
   transition: 'background 200ms',
   gap: 12,
@@ -74,7 +74,7 @@ const listRow: React.CSSProperties = {
 // ---------------------------------------------------------------------------
 
 const SOURCE_META: Record<string, { icon: React.ElementType; color: string; label: string }> = {
-  approval: { icon: ShieldCheck, color: '#FF5A1F', label: 'Approval needed' },
+  approval: { icon: ShieldCheck, color: '#F1F5F9', label: 'Approval needed' },
   escalation: { icon: AlertTriangle, color: '#eab308', label: 'Escalation' },
   insight: { icon: Lightbulb, color: '#3b82f6', label: 'Needs review' },
 }
@@ -88,7 +88,7 @@ const ROLE_LABELS: Record<string, string> = {
 const ROLE_COLORS: Record<string, string> = {
   finance: '#22c55e',
   comms: '#3b82f6',
-  sales: '#FF5A1F',
+  sales: '#F1F5F9',
 }
 
 const PRIORITY_LABELS: Record<number, { label: string; color: string }> = {
@@ -165,7 +165,7 @@ export function AttentionView({ maxHeight = 'calc(100vh - 300px)' }: AttentionVi
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <Bell size={14} style={{ color: '#FF5A1F' }} />
+          <Bell size={14} style={{ color: 'var(--text-primary, #F1F5F9)' }} />
           <span style={sectionHeader}>Needs Your Attention</span>
           {counts.total > 0 && (
             <span style={{
@@ -178,8 +178,8 @@ export function AttentionView({ maxHeight = 'calc(100vh - 300px)' }: AttentionVi
               borderRadius: 12,
               fontSize: 14,
               fontWeight: 500,
-              background: '#FF5A1F',
-              color: '#000',
+              background: 'var(--btn-primary-bg, #F1F5F9)',
+              color: 'var(--btn-primary-fg, #0a0f1a)',
               fontFamily: 'var(--font-mono)',
             }}>
               {counts.total}
@@ -223,7 +223,7 @@ export function AttentionView({ maxHeight = 'calc(100vh - 300px)' }: AttentionVi
                 onMouseLeave={() => setHoveredId(null)}
                 style={{
                   ...listRow,
-                  background: isHovered ? 'rgba(20, 28, 40, 0.7)' : 'rgba(10, 14, 23, 0.5)',
+                  background: isHovered ? 'var(--bb-surface-hover, rgba(20, 28, 40, 0.7))' : 'rgba(10, 14, 23, 0.5)',
                   opacity: isResolving ? 0.5 : 1,
                 }}
               >

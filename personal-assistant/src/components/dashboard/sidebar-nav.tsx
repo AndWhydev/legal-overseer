@@ -219,7 +219,7 @@ export function SidebarNav({
               background: 'var(--glass-bg-heavy)',
               backdropFilter: 'var(--glass-card-blur)',
               WebkitBackdropFilter: 'var(--glass-card-blur)',
-              border: '1px solid var(--glass-interactive-border)',
+              border: '1px solid var(--glass-card-border)',
               borderRadius: '12px',
               boxShadow: 'var(--card-shadow-hover), 0 0 0 1px var(--glass-card-border)',
               padding: '8px',
@@ -291,17 +291,19 @@ export function SidebarNav({
                 background: 'transparent',
                 border: 'none',
                 borderRadius: '8px',
-                color: '#ef4444',
+                color: 'var(--text-secondary, #94A3B8)',
                 fontSize: '14px',
                 cursor: 'pointer',
                 transition: 'all 0.12s ease',
                 textAlign: 'left',
               }}
               onMouseEnter={e => {
-                e.currentTarget.style.background = 'rgba(239, 68, 68, 0.08)';
+                e.currentTarget.style.background = 'var(--glass-hover-bg)';
+                e.currentTarget.style.color = 'var(--text-primary)';
               }}
               onMouseLeave={e => {
                 e.currentTarget.style.background = 'transparent';
+                e.currentTarget.style.color = 'var(--text-secondary, #94A3B8)';
               }}
             >
               <LogOut size={16} strokeWidth={1.8} />

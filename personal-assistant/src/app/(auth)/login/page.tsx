@@ -61,11 +61,11 @@ function GoogleIcon() {
   )
 }
 
-function AppleIcon() {
+function AppleIcon({ dark }: { dark?: boolean }) {
   return (
     <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false">
       <path
-        fill="currentColor"
+        fill={dark ? '#ddd' : 'currentColor'}
         d="M16.36 12.48c.02 2.26 1.98 3.01 2 3.02-.01.05-.31 1.06-1.03 2.11-.62.9-1.27 1.8-2.28 1.82-1 .02-1.32-.59-2.47-.59-1.14 0-1.5.57-2.45.61-1 .04-1.75-.99-2.38-1.88-1.29-1.86-2.27-5.25-.95-7.56.66-1.14 1.84-1.86 3.12-1.88.97-.02 1.89.65 2.47.65.57 0 1.66-.8 2.8-.68.48.02 1.84.2 2.72 1.48-.07.04-1.62.95-1.6 2.9zm-2.4-5.32c.52-.63.87-1.5.77-2.37-.75.03-1.65.5-2.2 1.12-.48.56-.9 1.44-.79 2.28.84.06 1.7-.43 2.22-1.03z"
       />
     </svg>
@@ -83,7 +83,7 @@ function Spinner() {
       aria-hidden="true"
       style={{ animation: 'bb-login-spin 0.7s linear infinite' }}
     >
-      <circle cx="9" cy="9" r="7" stroke="rgba(0,0,0,0.1)" strokeWidth="2" />
+      <circle cx="9" cy="9" r="7" stroke="currentColor" strokeWidth="2" opacity={0.15} />
       <path
         d="M9 2a7 7 0 0 1 7 7"
         stroke="currentColor"
@@ -94,9 +94,23 @@ function Spinner() {
   )
 }
 
+/* ── Dark mode detection ── */
+function useDarkMode() {
+  const [isDark, setIsDark] = useState(false)
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-color-scheme: dark)')
+    setIsDark(mq.matches)
+    const h = (e: MediaQueryListEvent) => setIsDark(e.matches)
+    mq.addEventListener('change', h)
+    return () => mq.removeEventListener('change', h)
+  }, [])
+  return isDark
+}
+
 function LoginPageContent() {
   const searchParams = useSearchParams()
   const queryError = searchParams.get('error')
+  const isDark = useDarkMode()
 
   const [email, setEmail] = useState('')
   const [status, setStatus] = useState<LoginStatus>(queryError ? 'error' : 'idle')
@@ -195,38 +209,81 @@ function LoginPageContent() {
     setActiveMethod(null)
   }
 
+  /* ── Theme tokens ── */
+  const bg = isDark ? '#0A0A0A' : '#FAFAFA'
+  const cardBg = isDark ? 'rgba(20,20,20,0.85)' : 'rgba(255,255,255,0.85)'
+  const cardBorder = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'
+  const cardShadow = isDark
+    ? '0 8px 32px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.3)'
+    : '0 8px 32px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)'
+  const textPrimary = isDark ? '#f0f0f0' : '#111'
+  const textMuted = isDark ? '#777' : '#888'
+  const textDim = isDark ? '#666' : '#999'
+  const textDimmer = isDark ? '#555' : '#aaa'
+  const oauthBg = isDark ? '#161616' : '#fff'
+  const oauthBorder = isDark ? '#2a2a2a' : '#e0e0e0'
+  const oauthHoverBg = isDark ? '#1c1c1c' : '#f8f8f8'
+  const oauthHoverBorder = isDark ? '#444' : '#ccc'
+  const oauthColor = isDark ? '#ccc' : '#333'
+  const dividerLine = isDark ? '#2a2a2a' : '#e5e5e5'
+  const dividerText = isDark ? '#555' : '#aaa'
+  const linkColor = isDark ? '#999' : '#666'
+  const linkUnderline = isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.25)'
+  const errorColor = isDark ? '#ef4444' : '#dc2626'
+  const headingGradient = isDark
+    ? 'linear-gradient(180deg, #888 0%, #ccc 50%, #fff 100%)'
+    : 'linear-gradient(180deg, #6b6b6b 0%, #1d1d1f 50%, #000 100%)'
+  const logoFilter = isDark ? 'brightness(0) invert(1)' : 'brightness(0)'
+  const btnBg = isDark ? '#eee' : '#111'
+  const btnColor = isDark ? '#111' : '#fff'
+  const btnHoverBg = isDark ? '#fff' : '#000'
+  const btnShadow = isDark ? '0 4px 16px rgba(255,255,255,0.08)' : '0 4px 16px rgba(0,0,0,0.15)'
+  const btnHoverShadow = isDark ? '0 6px 24px rgba(255,255,255,0.12)' : '0 6px 24px rgba(0,0,0,0.2)'
+  const btnDisabledBg = isDark ? '#1a1a1a' : '#e8e8e8'
+  const btnDisabledColor = isDark ? '#555' : '#aaa'
+  const sentEmailColor = isDark ? '#eee' : '#111'
+  const sentTitleColor = isDark ? '#eee' : '#111'
+  const sentCopyColor = isDark ? '#999' : '#666'
+  const sentBtnBorder = isDark ? '#333' : '#ddd'
+  const sentBtnColor = isDark ? '#999' : '#555'
+  const sentBtnHoverBorder = isDark ? '#555' : '#bbb'
+  const sentBtnHoverColor = isDark ? '#eee' : '#111'
+  const oauthHoverShadow = isDark ? '0 2px 8px rgba(0,0,0,0.3)' : '0 2px 8px rgba(0,0,0,0.06)'
+
   return (
-    <div style={{
+    <div data-theme={isDark ? 'dark' : 'light'} style={{
       position: 'relative',
       minHeight: '100dvh',
       width: '100%',
       overflow: 'hidden',
-      background: '#FAFAFA',
+      background: bg,
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      colorScheme: 'light',
+      colorScheme: isDark ? 'dark' : 'light',
     }}>
-      {/* ── Particle background (white bg, black dots) ── */}
+      {/* ── Particle background ── */}
       <ForceFieldBackground
         spacing={16}
         minStroke={1}
-        maxStroke={2.5}
+        maxStroke={isDark ? 2 : 2.5}
         forceStrength={14}
         magnifierRadius={160}
         friction={0.88}
         restoreSpeed={0.04}
-        bgColor="#FAFAFA"
-        particleRgb="0,0,0"
+        bgColor={bg}
+        particleRgb={isDark ? '255,255,255' : '0,0,0'}
       />
 
-      {/* ── Subtle radial vignette (light) ── */}
+      {/* ── Subtle radial vignette ── */}
       <div
         aria-hidden="true"
         style={{
           position: 'absolute',
           inset: 0,
-          background: 'radial-gradient(ellipse at 50% 40%, transparent 0%, rgba(250,250,250,0.4) 60%, rgba(250,250,250,0.8) 100%)',
+          background: isDark
+            ? 'radial-gradient(ellipse at 50% 40%, transparent 0%, rgba(10,10,10,0.4) 60%, rgba(10,10,10,0.8) 100%)'
+            : 'radial-gradient(ellipse at 50% 40%, transparent 0%, rgba(250,250,250,0.4) 60%, rgba(250,250,250,0.8) 100%)',
           pointerEvents: 'none',
           zIndex: 1,
         }}
@@ -234,46 +291,43 @@ function LoginPageContent() {
 
       {/* ── Edge light reflections ── */}
       <div aria-hidden="true" style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 1, overflow: 'hidden' }}>
-        {/* Top-left */}
-        <div style={{
-          position: 'absolute',
-          top: -80,
-          left: -80,
-          width: 260,
-          height: 260,
-          background: 'radial-gradient(circle, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0) 70%)',
-          filter: 'blur(40px)',
-        }} />
-        {/* Top-right */}
-        <div style={{
-          position: 'absolute',
-          top: -60,
-          right: -60,
-          width: 200,
-          height: 200,
-          background: 'radial-gradient(circle, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0) 70%)',
-          filter: 'blur(35px)',
-        }} />
-        {/* Bottom-left */}
-        <div style={{
-          position: 'absolute',
-          bottom: -60,
-          left: -40,
-          width: 200,
-          height: 200,
-          background: 'radial-gradient(circle, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0) 70%)',
-          filter: 'blur(35px)',
-        }} />
-        {/* Bottom-right */}
-        <div style={{
-          position: 'absolute',
-          bottom: -80,
-          right: -80,
-          width: 260,
-          height: 260,
-          background: 'radial-gradient(circle, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0) 70%)',
-          filter: 'blur(40px)',
-        }} />
+        {isDark ? (
+          <>
+            <div style={{
+              position: 'absolute', top: -100, left: -100, width: 300, height: 300,
+              background: 'radial-gradient(circle, rgba(100,120,255,0.06) 0%, transparent 70%)',
+              filter: 'blur(50px)',
+            }} />
+            <div style={{
+              position: 'absolute', bottom: -100, right: -100, width: 300, height: 300,
+              background: 'radial-gradient(circle, rgba(200,100,255,0.04) 0%, transparent 70%)',
+              filter: 'blur(50px)',
+            }} />
+          </>
+        ) : (
+          <>
+            <div style={{
+              position: 'absolute', top: -80, left: -80, width: 260, height: 260,
+              background: 'radial-gradient(circle, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0) 70%)',
+              filter: 'blur(40px)',
+            }} />
+            <div style={{
+              position: 'absolute', top: -60, right: -60, width: 200, height: 200,
+              background: 'radial-gradient(circle, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0) 70%)',
+              filter: 'blur(35px)',
+            }} />
+            <div style={{
+              position: 'absolute', bottom: -60, left: -40, width: 200, height: 200,
+              background: 'radial-gradient(circle, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0) 70%)',
+              filter: 'blur(35px)',
+            }} />
+            <div style={{
+              position: 'absolute', bottom: -80, right: -80, width: 260, height: 260,
+              background: 'radial-gradient(circle, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0) 70%)',
+              filter: 'blur(40px)',
+            }} />
+          </>
+        )}
       </div>
 
       {/* ── Main content ── */}
@@ -290,7 +344,7 @@ function LoginPageContent() {
           gap: 24,
         }}
       >
-        {/* ── Logo (black silhouette) ── */}
+        {/* ── Logo ── */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/bitbit-idle.apng"
@@ -302,13 +356,13 @@ function LoginPageContent() {
             height: 80,
             objectFit: 'contain',
             display: 'block',
-            filter: 'brightness(0)',
+            filter: logoFilter,
             opacity: 0.85,
             flexShrink: 0,
           }}
         />
 
-        {/* ── Heading with gradient text ── */}
+        {/* ── Heading ── */}
         <header style={{ textAlign: 'center' }}>
           <h1 style={{
             margin: 0,
@@ -316,17 +370,22 @@ function LoginPageContent() {
             fontWeight: 700,
             letterSpacing: '-0.03em',
             lineHeight: 1.1,
-            background: 'linear-gradient(180deg, #6b6b6b 0%, #1d1d1f 50%, #000 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text',
+            ...(isDark
+              ? { color: '#fff' }
+              : {
+                  background: headingGradient,
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                }
+            ),
           }}>
             Meet BitBit
           </h1>
           <p style={{
             margin: '8px 0 0',
             fontSize: 14,
-            color: '#888',
+            color: textMuted,
             lineHeight: 1.4,
           }}>
             Sign in with your invited email
@@ -340,21 +399,21 @@ function LoginPageContent() {
             width: '100%',
             padding: 24,
             borderRadius: 20,
-            background: 'rgba(255,255,255,0.85)',
+            background: cardBg,
             backdropFilter: 'blur(20px) saturate(1.1)',
             WebkitBackdropFilter: 'blur(20px) saturate(1.1)',
-            border: '1px solid rgba(0,0,0,0.06)',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)',
+            border: `1px solid ${cardBorder}`,
+            boxShadow: cardShadow,
           }}
         >
           {status === 'sent' ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14, textAlign: 'center' }}>
-              <p style={{ fontSize: 18, fontWeight: 600, color: '#111', margin: 0 }}>
+              <p style={{ fontSize: 18, fontWeight: 600, color: sentTitleColor, margin: 0 }}>
                 Check your inbox
               </p>
-              <p style={{ fontSize: 13, color: '#666', margin: 0, lineHeight: 1.5 }}>
+              <p style={{ fontSize: 13, color: sentCopyColor, margin: 0, lineHeight: 1.5 }}>
                 We sent a sign-in link to{' '}
-                <span style={{ color: '#111', fontFamily: 'var(--font-mono, monospace)' }}>{sentTo}</span>.
+                <span style={{ color: sentEmailColor, fontFamily: 'var(--font-mono, monospace)' }}>{sentTo}</span>.
                 Open that inbox to continue.
               </p>
               <button
@@ -365,22 +424,22 @@ function LoginPageContent() {
                 }}
                 style={{
                   background: 'none',
-                  border: '1px solid #ddd',
+                  border: `1px solid ${sentBtnBorder}`,
                   borderRadius: 12,
                   padding: '10px 16px',
-                  color: '#555',
+                  color: sentBtnColor,
                   fontSize: 13,
                   fontWeight: 500,
                   cursor: 'pointer',
                   transition: 'border-color 150ms, color 150ms',
                 }}
                 onMouseEnter={e => {
-                  e.currentTarget.style.borderColor = '#bbb'
-                  e.currentTarget.style.color = '#111'
+                  e.currentTarget.style.borderColor = sentBtnHoverBorder
+                  e.currentTarget.style.color = sentBtnHoverColor
                 }}
                 onMouseLeave={e => {
-                  e.currentTarget.style.borderColor = '#ddd'
-                  e.currentTarget.style.color = '#555'
+                  e.currentTarget.style.borderColor = sentBtnBorder
+                  e.currentTarget.style.color = sentBtnColor
                 }}
               >
                 Use a different email
@@ -395,7 +454,7 @@ function LoginPageContent() {
               <p style={{
                 margin: 0,
                 fontSize: 12,
-                color: '#999',
+                color: textDim,
                 textAlign: 'center',
                 lineHeight: 1.4,
               }}>
@@ -425,9 +484,9 @@ function LoginPageContent() {
                     gap: 8,
                     minHeight: 44,
                     borderRadius: 12,
-                    border: '1px solid #e0e0e0',
-                    background: '#fff',
-                    color: '#333',
+                    border: `1px solid ${oauthBorder}`,
+                    background: oauthBg,
+                    color: oauthColor,
                     fontSize: 13,
                     fontWeight: 500,
                     cursor: isBusy ? 'not-allowed' : 'pointer',
@@ -436,14 +495,14 @@ function LoginPageContent() {
                   }}
                   onMouseEnter={e => {
                     if (!isBusy) {
-                      e.currentTarget.style.background = '#f8f8f8'
-                      e.currentTarget.style.borderColor = '#ccc'
-                      e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.06)'
+                      e.currentTarget.style.background = oauthHoverBg
+                      e.currentTarget.style.borderColor = oauthHoverBorder
+                      e.currentTarget.style.boxShadow = oauthHoverShadow
                     }
                   }}
                   onMouseLeave={e => {
-                    e.currentTarget.style.background = '#fff'
-                    e.currentTarget.style.borderColor = '#e0e0e0'
+                    e.currentTarget.style.background = oauthBg
+                    e.currentTarget.style.borderColor = oauthBorder
                     e.currentTarget.style.boxShadow = 'none'
                   }}
                 >
@@ -463,9 +522,9 @@ function LoginPageContent() {
                     gap: 8,
                     minHeight: 44,
                     borderRadius: 12,
-                    border: '1px solid #e0e0e0',
-                    background: '#fff',
-                    color: '#333',
+                    border: `1px solid ${oauthBorder}`,
+                    background: oauthBg,
+                    color: oauthColor,
                     fontSize: 13,
                     fontWeight: 500,
                     cursor: isBusy ? 'not-allowed' : 'pointer',
@@ -474,18 +533,18 @@ function LoginPageContent() {
                   }}
                   onMouseEnter={e => {
                     if (!isBusy) {
-                      e.currentTarget.style.background = '#f8f8f8'
-                      e.currentTarget.style.borderColor = '#ccc'
-                      e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.06)'
+                      e.currentTarget.style.background = oauthHoverBg
+                      e.currentTarget.style.borderColor = oauthHoverBorder
+                      e.currentTarget.style.boxShadow = oauthHoverShadow
                     }
                   }}
                   onMouseLeave={e => {
-                    e.currentTarget.style.background = '#fff'
-                    e.currentTarget.style.borderColor = '#e0e0e0'
+                    e.currentTarget.style.background = oauthBg
+                    e.currentTarget.style.borderColor = oauthBorder
                     e.currentTarget.style.boxShadow = 'none'
                   }}
                 >
-                  {activeMethod === 'apple' ? <Spinner /> : <AppleIcon />}
+                  {activeMethod === 'apple' ? <Spinner /> : <AppleIcon dark={isDark} />}
                   <span>Apple</span>
                 </button>
               </div>
@@ -500,17 +559,17 @@ function LoginPageContent() {
                   margin: '2px 0',
                 }}
               >
-                <div style={{ flex: 1, height: 1, background: '#e5e5e5' }} />
+                <div style={{ flex: 1, height: 1, background: dividerLine }} />
                 <span style={{
                   fontSize: 11,
                   letterSpacing: '0.04em',
                   textTransform: 'uppercase' as const,
-                  color: '#aaa',
+                  color: dividerText,
                   whiteSpace: 'nowrap' as const,
                 }}>
                   or use email
                 </span>
-                <div style={{ flex: 1, height: 1, background: '#e5e5e5' }} />
+                <div style={{ flex: 1, height: 1, background: dividerLine }} />
               </div>
 
               {/* ── Email input ── */}
@@ -518,7 +577,7 @@ function LoginPageContent() {
                 htmlFor="email"
                 style={{
                   fontSize: 11,
-                  color: '#888',
+                  color: textMuted,
                   letterSpacing: '0.04em',
                   textTransform: 'uppercase' as const,
                   fontFamily: 'var(--font-mono, monospace)',
@@ -558,7 +617,7 @@ function LoginPageContent() {
                   style={{
                     margin: 0,
                     fontSize: 12,
-                    color: '#dc2626',
+                    color: errorColor,
                     lineHeight: 1.4,
                   }}
                 >
@@ -575,16 +634,14 @@ function LoginPageContent() {
                   minHeight: 48,
                   borderRadius: 14,
                   border: 'none',
-                  background: canSubmit ? '#111' : '#e8e8e8',
-                  color: canSubmit ? '#fff' : '#aaa',
+                  background: canSubmit ? btnBg : btnDisabledBg,
+                  color: canSubmit ? btnColor : btnDisabledColor,
                   fontSize: 14,
                   fontWeight: 600,
                   letterSpacing: '-0.01em',
                   cursor: canSubmit ? 'pointer' : 'not-allowed',
                   transition: 'transform 100ms, box-shadow 200ms, background 150ms',
-                  boxShadow: canSubmit
-                    ? '0 4px 16px rgba(0,0,0,0.15)'
-                    : 'none',
+                  boxShadow: canSubmit ? btnShadow : 'none',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -594,15 +651,15 @@ function LoginPageContent() {
                 onMouseEnter={e => {
                   if (canSubmit) {
                     e.currentTarget.style.transform = 'translateY(-1px)'
-                    e.currentTarget.style.background = '#000'
-                    e.currentTarget.style.boxShadow = '0 6px 24px rgba(0,0,0,0.2)'
+                    e.currentTarget.style.background = btnHoverBg
+                    e.currentTarget.style.boxShadow = btnHoverShadow
                   }
                 }}
                 onMouseLeave={e => {
                   e.currentTarget.style.transform = 'translateY(0)'
                   if (canSubmit) {
-                    e.currentTarget.style.background = '#111'
-                    e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.15)'
+                    e.currentTarget.style.background = btnBg
+                    e.currentTarget.style.boxShadow = btnShadow
                   }
                 }}
               >
@@ -614,21 +671,21 @@ function LoginPageContent() {
               <p style={{
                 margin: '2px 0 0',
                 fontSize: 12,
-                color: '#aaa',
+                color: textDimmer,
                 textAlign: 'center',
                 lineHeight: 1.5,
               }}>
                 By continuing you agree to our{' '}
                 <Link
                   href="/privacy"
-                  style={{ color: '#666', textDecoration: 'underline', textDecorationColor: 'rgba(0,0,0,0.25)', textUnderlineOffset: 2 }}
+                  style={{ color: linkColor, textDecoration: 'underline', textDecorationColor: linkUnderline, textUnderlineOffset: 2 }}
                 >
                   Privacy Policy
                 </Link>{' '}
                 and{' '}
                 <Link
                   href="/terms"
-                  style={{ color: '#666', textDecoration: 'underline', textDecorationColor: 'rgba(0,0,0,0.25)', textUnderlineOffset: 2 }}
+                  style={{ color: linkColor, textDecoration: 'underline', textDecorationColor: linkUnderline, textUnderlineOffset: 2 }}
                 >
                   Terms
                 </Link>
@@ -637,47 +694,99 @@ function LoginPageContent() {
           )}
 
           {process.env.NODE_ENV === 'development' && status !== 'sent' && (
-            <DevPasswordLogin />
+            <DevPasswordLogin isDark={isDark} />
           )}
         </section>
       </main>
 
-      {/* ── Keyframe for spinner ── */}
+      {/* ── Styles ── */}
       <style>{`
         @keyframes bb-login-spin {
           to { transform: rotate(360deg); }
         }
-        /* Force all login inputs to have visible borders and light backgrounds */
+
+        /* ── Base input reset (both modes) ── */
         [data-login-input] {
+          -webkit-appearance: none !important;
+          -moz-appearance: none !important;
+          appearance: none !important;
+          outline: none !important;
+          box-shadow: none !important;
+          font: inherit !important;
+          font-size: 14px !important;
+          margin: 0 !important;
+        }
+
+        /* ── Light mode inputs ── */
+        [data-theme="light"] [data-login-input] {
           background: #f7f7f7 !important;
           border: 1.5px solid #c0c0c0 !important;
           color: #111 !important;
-          -webkit-appearance: none !important;
-          appearance: none !important;
+          -webkit-text-fill-color: #111 !important;
           color-scheme: light !important;
         }
-        [data-login-input]:focus {
+        [data-theme="light"] [data-login-input]:focus {
           background: #fff !important;
           border-color: #111 !important;
           box-shadow: 0 0 0 3px rgba(0,0,0,0.08) !important;
         }
-        /* Override browser autofill dark-mode backgrounds */
-        [data-login-input]:-webkit-autofill,
-        [data-login-input]:-webkit-autofill:hover,
-        [data-login-input]:-webkit-autofill:focus,
-        [data-login-input]:-webkit-autofill:active {
+        [data-theme="light"] [data-login-input]::placeholder {
+          color: #999 !important;
+          -webkit-text-fill-color: #999 !important;
+          opacity: 1 !important;
+        }
+        [data-theme="light"] [data-login-input]:-webkit-autofill,
+        [data-theme="light"] [data-login-input]:-webkit-autofill:hover,
+        [data-theme="light"] [data-login-input]:-webkit-autofill:focus,
+        [data-theme="light"] [data-login-input]:-webkit-autofill:active {
           -webkit-box-shadow: 0 0 0 1000px #f7f7f7 inset !important;
           -webkit-text-fill-color: #111 !important;
           border: 1.5px solid #c0c0c0 !important;
           transition: background-color 5000s ease-in-out 0s;
         }
+
+        /* ── Dark mode inputs ── */
+        [data-theme="dark"] [data-login-input] {
+          background: #161616 !important;
+          border: 1.5px solid #333 !important;
+          color: #eee !important;
+          -webkit-text-fill-color: #eee !important;
+          color-scheme: dark !important;
+        }
+        [data-theme="dark"] [data-login-input]:focus {
+          background: #1a1a1a !important;
+          border-color: #eee !important;
+          box-shadow: 0 0 0 3px rgba(255,255,255,0.06) !important;
+        }
+        [data-theme="dark"] [data-login-input]::placeholder {
+          color: #666 !important;
+          -webkit-text-fill-color: #666 !important;
+          opacity: 1 !important;
+        }
+        [data-theme="dark"] [data-login-input]:-webkit-autofill,
+        [data-theme="dark"] [data-login-input]:-webkit-autofill:hover,
+        [data-theme="dark"] [data-login-input]:-webkit-autofill:focus,
+        [data-theme="dark"] [data-login-input]:-webkit-autofill:active {
+          -webkit-box-shadow: 0 0 0 1000px #161616 inset !important;
+          -webkit-text-fill-color: #eee !important;
+          border: 1.5px solid #333 !important;
+          transition: background-color 5000s ease-in-out 0s;
+        }
+
         /* Focus-visible ring for keyboard navigation */
-        button:focus-visible,
-        input:focus-visible,
-        a:focus-visible {
+        [data-theme="light"] button:focus-visible,
+        [data-theme="light"] input:focus-visible,
+        [data-theme="light"] a:focus-visible {
           outline: 2px solid rgba(0,0,0,0.3);
           outline-offset: 2px;
         }
+        [data-theme="dark"] button:focus-visible,
+        [data-theme="dark"] input:focus-visible,
+        [data-theme="dark"] a:focus-visible {
+          outline: 2px solid rgba(255,255,255,0.3);
+          outline-offset: 2px;
+        }
+
         /* Stack OAuth buttons on very small screens */
         @media (max-width: 380px) {
           [data-login-providers] {
@@ -690,13 +799,16 @@ function LoginPageContent() {
 }
 
 function LoginPageFallback() {
+  const isDark = useDarkMode()
+  const bg = isDark ? '#0A0A0A' : '#FAFAFA'
+
   return (
     <div style={{
       position: 'relative',
       minHeight: '100dvh',
       width: '100%',
       overflow: 'hidden',
-      background: '#FAFAFA',
+      background: bg,
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -714,11 +826,11 @@ function LoginPageFallback() {
           fontSize: 32,
           fontWeight: 600,
           letterSpacing: '-0.03em',
-          color: '#111',
+          color: isDark ? '#eee' : '#111',
         }}>
           Meet BitBit
         </h1>
-        <p style={{ margin: 0, fontSize: 14, color: '#999' }}>
+        <p style={{ margin: 0, fontSize: 14, color: isDark ? '#666' : '#999' }}>
           Loading...
         </p>
       </div>
@@ -726,12 +838,18 @@ function LoginPageFallback() {
   )
 }
 
-function DevPasswordLogin() {
+function DevPasswordLogin({ isDark }: { isDark: boolean }) {
   const [devEmail, setDevEmail] = useState('')
   const [devPassword, setDevPassword] = useState('')
   const [devStatus, setDevStatus] = useState<'idle' | 'loading' | 'error'>('idle')
   const [devError, setDevError] = useState('')
   const [expanded, setExpanded] = useState(false)
+
+  const borderColor = isDark ? '#222' : '#eee'
+  const toggleColor = isDark ? '#666' : '#aaa'
+  const submitBg = isDark ? '#1a1a1a' : '#f5f5f5'
+  const submitBorder = isDark ? '#333' : '#e0e0e0'
+  const submitColor = isDark ? '#ccc' : '#333'
 
   async function handleDevLogin(e: React.FormEvent) {
     e.preventDefault()
@@ -760,12 +878,12 @@ function DevPasswordLogin() {
   }
 
   return (
-    <div style={{ borderTop: '1px solid #eee', marginTop: 16, paddingTop: 12 }}>
+    <div style={{ borderTop: `1px solid ${borderColor}`, marginTop: 16, paddingTop: 12 }}>
       <button
         type="button"
         onClick={() => setExpanded(!expanded)}
         style={{
-          background: 'none', border: 'none', color: '#aaa',
+          background: 'none', border: 'none', color: toggleColor,
           fontSize: 12, fontFamily: 'monospace', cursor: 'pointer',
           display: 'flex', alignItems: 'center', gap: 4, padding: 0,
         }}
@@ -787,10 +905,11 @@ function DevPasswordLogin() {
               height: 44,
               padding: '0 14px',
               borderRadius: 10,
-              fontSize: 13,
+              fontSize: 14,
               outline: 'none',
               boxSizing: 'border-box' as const,
               fontFamily: 'inherit',
+              transition: 'border-color 150ms, box-shadow 150ms, background 150ms',
             }}
           />
           <input
@@ -805,14 +924,15 @@ function DevPasswordLogin() {
               height: 44,
               padding: '0 14px',
               borderRadius: 10,
-              fontSize: 13,
+              fontSize: 14,
               outline: 'none',
               boxSizing: 'border-box' as const,
               fontFamily: 'inherit',
+              transition: 'border-color 150ms, box-shadow 150ms, background 150ms',
             }}
           />
           {devStatus === 'error' && (
-            <p style={{ margin: 0, fontSize: 12, color: '#dc2626' }}>{devError}</p>
+            <p style={{ margin: 0, fontSize: 12, color: isDark ? '#ef4444' : '#dc2626' }}>{devError}</p>
           )}
           <button
             type="submit"
@@ -821,9 +941,9 @@ function DevPasswordLogin() {
               width: '100%',
               minHeight: 44,
               borderRadius: 10,
-              border: '1px solid #e0e0e0',
-              background: '#f5f5f5',
-              color: '#333',
+              border: `1px solid ${submitBorder}`,
+              background: submitBg,
+              color: submitColor,
               fontSize: 13,
               fontWeight: 500,
               cursor: (!devEmail.trim() || !devPassword) ? 'not-allowed' : 'pointer',

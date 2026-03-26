@@ -230,8 +230,8 @@
 }
 
 .bb-admin-form__file::file-selector-button {
-  background: rgba(255, 90, 31, 0.15);
-  color: var(--bb-orange);
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary);
   border: none;
   border-radius: 8px;
   padding: 4px 10px;
@@ -244,7 +244,7 @@
 }
 
 .bb-admin-form__file::file-selector-button:hover {
-  background: rgba(255, 90, 31, 0.25);
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .bb-admin-form__textarea {
@@ -272,8 +272,8 @@
 
 .bb-admin-form__textarea:focus {
   box-shadow:
-    0 0 0 1px rgba(255, 90, 31, 0.20),
-    inset 0 1px 0 rgba(255, 90, 31, 0.08);
+    0 0 0 1px rgba(255, 255, 255, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 .bb-admin-form__actions {
@@ -305,8 +305,8 @@
 /* ── Buttons ── */
 
 .bb-admin-btn--primary {
-  background: linear-gradient(135deg, var(--bb-orange) 0%, var(--bb-orange-light) 100%);
-  color: #fff;
+  background: var(--text-primary);
+  color: #000;
   border: none;
   border-radius: 12px;
   padding: 9px 20px;
@@ -392,8 +392,8 @@
 }
 
 .bb-admin-format-btn[data-active="true"] {
-  background: rgba(255, 90, 31, 0.18);
-  color: var(--bb-orange);
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary);
 }
 
 /* ==========================================================================
@@ -486,8 +486,8 @@ html.light .bb-admin-form__textarea::placeholder {
 
 html.light .bb-admin-form__textarea:focus {
   box-shadow:
-    0 0 0 1px rgba(255, 90, 31, 0.25),
-    inset 0 1px 0 rgba(255, 90, 31, 0.06);
+    0 0 0 1px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(0, 0, 0, 0.04);
 }
 
 html.light .bb-admin-form__result {

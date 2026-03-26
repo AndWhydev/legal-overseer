@@ -1,6 +1,6 @@
 /**
  * Fit + Opportunity scoring engine.
- * Ported from PCC Python: prospect/scoring/fit.py + opportunity.py
+ * Ported from Lead Swarm: prospect/scoring/fit.py + opportunity.py
  */
 import type { ScoreBreakdown, WebsiteSignals, SerpPresence } from './types'
 import { FIT_WEIGHTS, OPPORTUNITY_WEIGHTS, DIY_CMS, PRIORITY_WEIGHTS } from './constants'

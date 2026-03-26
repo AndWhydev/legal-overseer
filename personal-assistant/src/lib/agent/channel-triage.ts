@@ -139,8 +139,8 @@ function toMessageCategory(
   // 3. Personal/social
   if (classification.category === 'personal') return 'conversation'
 
-  // 4. Action required — composite threshold (2+ signals, OR significance 8+)
-  if (classification.significance >= 8) return 'action_required'
+  // 4. Action required — composite threshold (2+ signals, OR significance 7+)
+  if (classification.significance >= 7) return 'action_required'
 
   const signals = [
     classification.significance >= 6,
@@ -195,6 +195,42 @@ function findDuplicates(messages: Record<string, unknown>[]): Map<string, string
   }
 
   return duplicates
+}
+
+// ---------------------------------------------------------------------------
+// Existing Classification Parser
+// ---------------------------------------------------------------------------
+
+/**
+ * Safely parse an existing classification from the DB.
+ * Handles: raw object, JSON string, or double-stringified JSON.
+ * Returns null if the value isn't a valid ClassificationResult.
+ */
+function parseExistingClassification(raw: unknown): ClassificationResult | null {
+  if (!raw) return null
+
+  let obj: unknown = raw
+
+  // Unwrap JSON strings (handle double-stringification)
+  if (typeof obj === 'string') {
+    try { obj = JSON.parse(obj) } catch { return null }
+    // Double-stringified case
+    if (typeof obj === 'string') {
+      try { obj = JSON.parse(obj) } catch { return null }
+    }
+  }
+
+  // Validate it has the required shape
+  if (
+    typeof obj === 'object' && obj !== null &&
+    'significance' in obj && 'category' in obj &&
+    typeof (obj as ClassificationResult).significance === 'number' &&
+    typeof (obj as ClassificationResult).category === 'string'
+  ) {
+    return obj as ClassificationResult
+  }
+
+  return null
 }
 
 // ---------------------------------------------------------------------------
@@ -526,8 +562,9 @@ export async function runTriage(
 
     // 2b. Classify (use LLM classifier or existing classification)
     let classification: ClassificationResult
-    if (msg.classification && msg.significance) {
-      classification = msg.classification as ClassificationResult
+    const existingClassification = parseExistingClassification(msg.classification)
+    if (existingClassification && msg.significance) {
+      classification = existingClassification
     } else {
       const channelMsg: ChannelMessage = {
         id: msg.id,
@@ -714,7 +751,7 @@ export async function runTriage(
     const notificationFromEmail = (process.env.NOTIFICATION_FROM_EMAIL || 'bitbit@bitbit.chat').toLowerCase()
     const isSelfEmail = senderEmailLower === notificationFromEmail || senderEmailLower.includes('bitbit')
     const isTransactional = /(?:password|reset|confirm|verify|sign.?in|log.?in|unsubscribe|no.?reply|noreply|delivery|shipped|tracking|newsletter|bridge test|test from|account.?activ|welcome.?to|receipt|order.?confirm|email.?verif|security.?alert|two.?factor|2fa|otp|one.?time|subscription|billing.?statement|approval.?needed|alert.?escalation|daily.?digest|weekly.?report|bitbit.?digest|bitbit.?alert)/i.test(subjectLower)
-    if (msgCategory === 'action_required' && !isDuplicate && senderType === 'human' && isEmailChannel && !isTransactional && !isSelfEmail && classification.significance >= 8) {
+    if (msgCategory === 'action_required' && !isDuplicate && senderType === 'human' && isEmailChannel && !isTransactional && !isSelfEmail && classification.significance >= 7) {
       const created = await createTaskForMessage(
         supabase, orgId, msg, classification, priority, contactId,
       )
@@ -764,10 +801,12 @@ export async function runTriage(
     }
 
     // 12. Update message with full triage data (only columns that exist in DB)
+    const isActionable = msgCategory === 'action_required'
     await supabase
       .from('channel_messages')
       .update({
         processed: true,
+        is_actionable: isActionable,
         classification: JSON.stringify(classification),
         significance: classification.significance,
         priority,

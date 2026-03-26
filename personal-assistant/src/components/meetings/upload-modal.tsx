@@ -126,8 +126,8 @@ export function UploadModal({ open, onClose, onUploadComplete }: UploadModalProp
     width: '100%',
     padding: '12px 16px',
     borderRadius: 12,
-    background: 'rgba(13, 17, 23, 0.6)',
-    border: '1px solid rgba(255, 255, 255, 0.06)',
+    background: 'var(--bg-input, rgba(13, 17, 23, 0.6))',
+    border: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
     color: 'var(--text-primary, #F1F5F9)',
     fontSize: 14,
     outline: 'none',
@@ -163,8 +163,8 @@ export function UploadModal({ open, onClose, onUploadComplete }: UploadModalProp
         overflow: 'auto',
         padding: '24px',
         borderRadius: 20,
-        background: 'rgba(12, 16, 24, 0.95)',
-        border: '1px solid rgba(255, 255, 255, 0.06)',
+        background: 'var(--glass-bg-heavy, rgba(12, 16, 24, 0.85))',
+        border: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
         boxShadow: '0 24px 48px rgba(0, 0, 0, 0.4)',
       }}>
         {/* Header */}
@@ -179,7 +179,7 @@ export function UploadModal({ open, onClose, onUploadComplete }: UploadModalProp
               height: 28,
               borderRadius: 8,
               background: 'transparent',
-              border: '1px solid rgba(255, 255, 255, 0.06)',
+              border: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
               color: 'var(--text-dim, #475569)',
               cursor: 'pointer',
               display: 'flex',
@@ -201,8 +201,8 @@ export function UploadModal({ open, onClose, onUploadComplete }: UploadModalProp
           style={{
             padding: file ? '16px' : '40px 20px',
             borderRadius: 12,
-            border: `2px dashed ${dragOver ? '#FF5A1F' : 'rgba(255, 255, 255, 0.08)'}`,
-            background: dragOver ? 'rgba(255, 90, 31, 0.05)' : 'rgba(13, 17, 23, 0.4)',
+            border: `2px dashed ${dragOver ? '#F1F5F9' : 'rgba(255, 255, 255, 0.08)'}`,
+            background: dragOver ? 'rgba(255, 255, 255, 0.03)' : 'rgba(13, 17, 23, 0.4)',
             textAlign: 'center',
             cursor: 'pointer',
             transition: 'all 200ms',
@@ -221,7 +221,7 @@ export function UploadModal({ open, onClose, onUploadComplete }: UploadModalProp
           />
           {file ? (
             <div className="flex items-center gap-3">
-              <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="#FF5A1F" strokeWidth={1.5}>
+              <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="#F1F5F9" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z" />
               </svg>
               <div style={{ flex: 1, textAlign: 'left' }}>
@@ -238,7 +238,7 @@ export function UploadModal({ open, onClose, onUploadComplete }: UploadModalProp
                   padding: '4px 8px',
                   borderRadius: 8,
                   background: 'transparent',
-                  border: '1px solid rgba(255, 255, 255, 0.06)',
+                  border: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
                   color: 'var(--text-dim, #475569)',
                   fontSize: 14,
                   cursor: 'pointer',
@@ -308,8 +308,8 @@ export function UploadModal({ open, onClose, onUploadComplete }: UploadModalProp
                     style={{
                       padding: '4px 12px',
                       borderRadius: 16,
-                      background: 'rgba(10, 14, 23, 0.5)',
-                      border: '1px solid rgba(255, 255, 255, 0.06)',
+                      background: 'var(--bb-surface, rgba(10, 14, 23, 0.5))',
+                      border: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
                       fontSize: 14,
                       color: 'var(--text-secondary, #94A3B8)',
                       display: 'flex',
@@ -357,7 +357,7 @@ export function UploadModal({ open, onClose, onUploadComplete }: UploadModalProp
                   padding: '0 12px',
                   borderRadius: 12,
                   background: 'transparent',
-                  border: '1px solid rgba(255, 255, 255, 0.06)',
+                  border: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
                   color: 'var(--text-secondary, #94A3B8)',
                   fontSize: 16,
                   cursor: 'pointer',
@@ -419,7 +419,7 @@ export function UploadModal({ open, onClose, onUploadComplete }: UploadModalProp
               padding: '12px 20px',
               borderRadius: 12,
               background: 'transparent',
-              border: '1px solid rgba(255, 255, 255, 0.06)',
+              border: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
               color: 'var(--text-secondary, #94A3B8)',
               fontSize: 14,
               fontWeight: 500,
@@ -435,9 +435,9 @@ export function UploadModal({ open, onClose, onUploadComplete }: UploadModalProp
             style={{
               padding: '12px 20px',
               borderRadius: 12,
-              background: (!file || !title.trim() || uploading) ? 'rgba(255, 90, 31, 0.3)' : '#FF5A1F',
+              background: (!file || !title.trim() || uploading) ? 'rgba(255, 255, 255, 0.12)' : '#F1F5F9',
               border: 'none',
-              color: (!file || !title.trim() || uploading) ? 'rgba(0, 0, 0, 0.5)' : '#000',
+              color: (!file || !title.trim() || uploading) ? 'rgba(0, 0, 0, 0.5)' : '#0a0f1a',
               fontSize: 14,
               fontWeight: 500,
               cursor: (!file || !title.trim() || uploading) ? 'not-allowed' : 'pointer',

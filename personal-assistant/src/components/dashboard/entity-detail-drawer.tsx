@@ -45,10 +45,10 @@ const TYPE_ICON: Record<EntityType, React.ElementType> = {
 };
 
 const TYPE_COLOR: Record<EntityType, string> = {
-  contact: '#60a5fa',
-  project: '#34d399',
-  invoice: '#f59e0b',
-  task: '#a78bfa',
+  contact: '#94A3B8',
+  project: '#94A3B8',
+  invoice: '#94A3B8',
+  task: '#94A3B8',
 };
 
 function formatDate(iso: string | null | undefined): string {
@@ -102,8 +102,8 @@ function ContactAvatar({ meta, size = 40 }: { meta: Record<string, unknown>; siz
         fontSize: size * 0.35,
         fontWeight: 500,
         flexShrink: 0,
-        background: 'rgba(96, 165, 250, 0.15)',
-        color: '#60a5fa',
+        background: 'rgba(255, 255, 255, 0.06)',
+        color: 'var(--text-secondary, #94A3B8)',
       }}
     >
       {initials}
@@ -178,7 +178,8 @@ function EntityDetailDrawer({ open, onClose, entityType, entityId }: EntityDetai
   const [entity, setEntity] = useState<GraphNode | null>(null);
   const [related, setRelated] = useState<{ node: GraphNode; edge: GraphEdge }[]>([]);
   const [timeline, setTimeline] = useState<TimelineEvent[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [hasFetched, setHasFetched] = useState(false);
   const dialogRef = useRef<HTMLDivElement>(null);
 
   const fetchData = useCallback(async () => {
@@ -208,11 +209,17 @@ function EntityDetailDrawer({ open, onClose, entityType, entityId }: EntityDetai
       setRelated([]);
     } finally {
       setLoading(false);
+      setHasFetched(true);
     }
   }, [entityType, entityId]);
 
   useEffect(() => {
-    if (open) fetchData();
+    if (open) {
+      setLoading(true);
+      setHasFetched(false);
+      setEntity(null);
+      fetchData();
+    }
   }, [open, fetchData]);
 
   // Lock body scroll when open
@@ -304,13 +311,14 @@ function EntityDetailDrawer({ open, onClose, entityType, entityId }: EntityDetai
             maxWidth: 560,
             maxHeight: 'min(80vh, 640px)',
             borderRadius: 20,
-            background: 'rgba(15, 20, 30, 0.92)',
+            background: 'var(--glass-bg-heavy, rgba(15, 20, 30, 0.92))',
             backdropFilter: 'blur(24px) saturate(1.3)',
             WebkitBackdropFilter: 'blur(24px) saturate(1.3)',
-            border: '1px solid rgba(255, 255, 255, 0.06)',
+            border: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
             boxShadow: '0 24px 80px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
             display: 'flex',
             flexDirection: 'column' as const,
+            minHeight: 0,
             overflow: 'hidden',
             pointerEvents: 'auto',
             animation: 'modalEnter 200ms ease-out',
@@ -326,47 +334,81 @@ function EntityDetailDrawer({ open, onClose, entityType, entityId }: EntityDetai
             flexShrink: 0,
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
-              {isContact && entity ? (
-                <ContactAvatar meta={entity.metadata} size={36} />
-              ) : (
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
+              {loading ? (
+                <>
+                  {/* Avatar skeleton */}
+                  <div style={{
                     width: 36,
                     height: 36,
                     borderRadius: 12,
-                    backgroundColor: `${TYPE_COLOR[entityType]}20`,
-                    color: TYPE_COLOR[entityType],
-                  }}
-                >
-                  <Icon size={20} />
-                </div>
+                    background: 'rgba(255, 255, 255, 0.06)',
+                    animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    flexShrink: 0,
+                  }} />
+                  {/* Text skeleton */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6, minWidth: 0 }}>
+                    <div style={{
+                      height: 14,
+                      width: 120,
+                      borderRadius: 6,
+                      background: 'rgba(255, 255, 255, 0.06)',
+                      animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    }} />
+                    <div style={{
+                      height: 12,
+                      width: 72,
+                      borderRadius: 6,
+                      background: 'rgba(255, 255, 255, 0.04)',
+                      animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                      animationDelay: '0.15s',
+                    }} />
+                  </div>
+                </>
+              ) : (
+                <>
+                  {isContact && entity ? (
+                    <ContactAvatar meta={entity.metadata} size={36} />
+                  ) : (
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: 36,
+                        height: 36,
+                        borderRadius: 12,
+                        backgroundColor: `${TYPE_COLOR[entityType]}20`,
+                        color: TYPE_COLOR[entityType],
+                      }}
+                    >
+                      <Icon size={20} />
+                    </div>
+                  )}
+                  <div style={{ minWidth: 0 }}>
+                    <span style={{
+                      fontSize: 14,
+                      fontWeight: 500,
+                      color: 'var(--text-primary)',
+                      display: 'block',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                    }}>
+                      {isContact && contactName ? contactName : `${entityType.charAt(0).toUpperCase() + entityType.slice(1)} Details`}
+                    </span>
+                    {isContact && contactType && (
+                      <span style={{
+                        fontSize: 14,
+                        fontWeight: 500,
+                        color: TYPE_COLOR[entityType],
+                        textTransform: 'capitalize',
+                      }}>
+                        {contactType}
+                      </span>
+                    )}
+                  </div>
+                </>
               )}
-              <div style={{ minWidth: 0 }}>
-                <span style={{
-                  fontSize: 14,
-                  fontWeight: 500,
-                  color: 'var(--text-primary)',
-                  display: 'block',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                }}>
-                  {isContact && contactName ? contactName : `${entityType.charAt(0).toUpperCase() + entityType.slice(1)} Details`}
-                </span>
-                {isContact && contactType && (
-                  <span style={{
-                    fontSize: 14,
-                    fontWeight: 500,
-                    color: TYPE_COLOR[entityType],
-                    textTransform: 'capitalize',
-                  }}>
-                    {contactType}
-                  </span>
-                )}
-              </div>
             </div>
             <button
               onClick={onClose}
@@ -374,7 +416,7 @@ function EntityDetailDrawer({ open, onClose, entityType, entityId }: EntityDetai
                 padding: '8px',
                 borderRadius: 12,
                 background: 'transparent',
-                border: '1px solid rgba(255, 255, 255, 0.04)',
+                border: '1px solid rgba(255, 255, 255, 0.03)',
                 color: 'var(--text-primary)',
                 cursor: 'pointer',
                 display: 'flex',
@@ -400,6 +442,7 @@ function EntityDetailDrawer({ open, onClose, entityType, entityId }: EntityDetai
             data-scroll-content
             style={{
               flex: 1,
+              minHeight: 0,
               overflowY: 'auto',
               overflowX: 'hidden',
               overscrollBehavior: 'contain',
@@ -469,7 +512,7 @@ function EntityDetailDrawer({ open, onClose, entityType, entityId }: EntityDetai
                             borderRadius: 12,
                             padding: '12px 16px',
                             background: 'rgba(20, 28, 40, 0.5)',
-                            border: '1px solid rgba(255, 255, 255, 0.03)',
+                            border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
                           }}
                         >
                           <div
@@ -534,7 +577,7 @@ function EntityDetailDrawer({ open, onClose, entityType, entityId }: EntityDetai
                           borderRadius: 12,
                           padding: '12px 16px',
                           background: 'rgba(20, 28, 40, 0.5)',
-                          border: '1px solid rgba(255, 255, 255, 0.03)',
+                          border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
                         }}
                       >
                         <div style={{
@@ -565,7 +608,7 @@ function EntityDetailDrawer({ open, onClose, entityType, entityId }: EntityDetai
                   </div>
                 )}
 
-                {!entity && !loading && (
+                {!entity && !loading && hasFetched && (
                   <p style={{
                     fontSize: 14,
                     color: 'var(--text-secondary)',

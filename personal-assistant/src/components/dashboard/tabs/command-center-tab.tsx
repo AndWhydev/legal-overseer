@@ -15,6 +15,8 @@ import { SectionCard } from '@/components/ui/section-card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { logger } from '@/lib/core/logger';
 
+/* ─── Interfaces ─── */
+
 interface AgentRun {
   id: string;
   output_summary: string;
@@ -28,6 +30,422 @@ interface PriorityTask {
   priority: string;
   status: string;
 }
+
+/* ─── Hoisted Style Objects ─── */
+
+const S = {
+  /* Layout grids */
+  quickActionsGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(2, 1fr)',
+    gap: 12,
+  } as React.CSSProperties,
+
+  kpiGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(2, 1fr)',
+    gap: 16,
+  } as React.CSSProperties,
+
+  mainGrid: {
+    display: 'grid',
+    gridTemplateColumns: '1fr',
+    gap: 24,
+  } as React.CSSProperties,
+
+  triGrid: {
+    display: 'grid',
+    gridTemplateColumns: '1fr',
+    gap: 24,
+  } as React.CSSProperties,
+
+  /* Glass card */
+  glassCard: {
+    background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.6))',
+    backdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
+    WebkitBackdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
+    border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
+    boxShadow: 'var(--card-inset, inset 0 1px 0 rgba(255, 255, 255, 0.05))',
+    borderRadius: 16,
+    overflow: 'hidden',
+  } as React.CSSProperties,
+
+  /* Card header */
+  cardHeader: {
+    padding: 16,
+    borderBottom: '1px solid rgba(255, 255, 255, 0.03)',
+  } as React.CSSProperties,
+
+  cardHeaderTitle: {
+    fontSize: 16,
+    fontWeight: 500,
+    color: 'var(--text-primary, #F1F5F9)',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    margin: 0,
+  } as React.CSSProperties,
+
+  cardHeaderSub: {
+    fontSize: 14,
+    color: 'var(--text-secondary, #94A3B8)',
+    marginTop: 4,
+  } as React.CSSProperties,
+
+  /* Card body */
+  cardBody: {
+    padding: 16,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 16,
+  } as React.CSSProperties,
+
+  cardBodyCompact: {
+    padding: 16,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 12,
+  } as React.CSSProperties,
+
+  cardBodyScroll: {
+    padding: 16,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 12,
+    maxHeight: 256,
+    overflowY: 'auto',
+  } as React.CSSProperties,
+
+  /* Quick action button */
+  quickActionBtn: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 12,
+    padding: 12,
+    borderRadius: 16,
+    border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
+    background: 'rgba(25, 35, 50, 0.8)',
+    cursor: 'pointer',
+    textAlign: 'left',
+    minHeight: 40,
+    transition: 'background 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
+    color: 'inherit',
+    fontSize: 'inherit',
+    fontFamily: 'inherit',
+  } as React.CSSProperties,
+
+  quickActionBtnDisabled: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 12,
+    padding: 12,
+    borderRadius: 16,
+    border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
+    background: 'rgba(25, 35, 50, 0.8)',
+    cursor: 'not-allowed',
+    textAlign: 'left',
+    minHeight: 40,
+    opacity: 0.4,
+    color: 'inherit',
+    fontSize: 'inherit',
+    fontFamily: 'inherit',
+  } as React.CSSProperties,
+
+  /* Icon containers with semantic status colors at 12% opacity */
+  iconBoxWarning: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    background: 'rgba(234, 179, 8, 0.12)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  } as React.CSSProperties,
+
+  iconBoxSuccess: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    background: 'rgba(34, 197, 94, 0.12)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  } as React.CSSProperties,
+
+  iconBoxOrange: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    background: 'rgba(255, 255, 255, 0.08)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  } as React.CSSProperties,
+
+  iconBoxError: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    background: 'rgba(239, 68, 68, 0.12)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  } as React.CSSProperties,
+
+  /* Quick action text */
+  qaTextWrap: {
+    minWidth: 0,
+  } as React.CSSProperties,
+
+  qaTitle: {
+    fontSize: 14,
+    fontWeight: 500,
+    color: 'var(--text-primary, #F1F5F9)',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+    margin: 0,
+  } as React.CSSProperties,
+
+  qaSub: {
+    fontSize: 14,
+    color: 'var(--text-secondary, #94A3B8)',
+    margin: 0,
+  } as React.CSSProperties,
+
+  /* Approval row */
+  approvalRow: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 12,
+    borderRadius: 12,
+    background: 'rgba(25, 35, 50, 0.8)',
+    border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
+  } as React.CSSProperties,
+
+  approvalTitle: {
+    fontSize: 14,
+    fontWeight: 500,
+    color: 'var(--text-primary, #F1F5F9)',
+    margin: 0,
+  } as React.CSSProperties,
+
+  approvalDesc: {
+    fontSize: 14,
+    color: 'var(--text-secondary, #94A3B8)',
+    marginTop: 4,
+  } as React.CSSProperties,
+
+  approvalActions: {
+    display: 'flex',
+    gap: 8,
+  } as React.CSSProperties,
+
+  dismissBtn: {
+    padding: '8px 12px',
+    fontSize: 14,
+    fontWeight: 500,
+    borderRadius: 12,
+    background: 'var(--bg-input, rgba(13, 17, 23, 0.6))',
+    border: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
+    color: 'var(--text-secondary, #94A3B8)',
+    cursor: 'pointer',
+    minHeight: 40,
+    transition: 'background 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
+  } as React.CSSProperties,
+
+  dismissBtnDisabled: {
+    padding: '8px 12px',
+    fontSize: 14,
+    fontWeight: 500,
+    borderRadius: 12,
+    background: 'var(--bg-input, rgba(13, 17, 23, 0.6))',
+    border: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
+    color: 'var(--text-secondary, #94A3B8)',
+    cursor: 'not-allowed',
+    minHeight: 40,
+    opacity: 0.5,
+  } as React.CSSProperties,
+
+  approveBtn: {
+    padding: '8px 12px',
+    fontSize: 14,
+    fontWeight: 500,
+    borderRadius: 12,
+    background: 'var(--btn-primary-bg, #F1F5F9)',
+    border: 'none',
+    color: 'var(--btn-primary-fg, #0a0f1a)',
+    cursor: 'pointer',
+    minHeight: 40,
+    transition: 'opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
+  } as React.CSSProperties,
+
+  approveBtnDisabled: {
+    padding: '8px 12px',
+    fontSize: 14,
+    fontWeight: 500,
+    borderRadius: 12,
+    background: 'var(--btn-primary-bg, #F1F5F9)',
+    border: 'none',
+    color: 'var(--btn-primary-fg, #0a0f1a)',
+    cursor: 'not-allowed',
+    minHeight: 40,
+    opacity: 0.5,
+  } as React.CSSProperties,
+
+  /* Priority task row */
+  priorityRow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 12,
+    padding: 8,
+    borderRadius: 12,
+    background: 'rgba(25, 35, 50, 0.8)',
+    border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
+  } as React.CSSProperties,
+
+  priorityBadgeCritical: {
+    fontSize: 14,
+    fontWeight: 500,
+    padding: '4px 8px',
+    borderRadius: 8,
+    background: 'rgba(239, 68, 68, 0.12)',
+    color: 'rgba(248, 113, 113, 1)',
+    border: '1px solid rgba(239, 68, 68, 0.2)',
+    whiteSpace: 'nowrap',
+  } as React.CSSProperties,
+
+  priorityBadgeHigh: {
+    fontSize: 14,
+    fontWeight: 500,
+    padding: '4px 8px',
+    borderRadius: 8,
+    background: 'rgba(234, 179, 8, 0.12)',
+    color: 'rgba(250, 204, 21, 1)',
+    border: '1px solid rgba(234, 179, 8, 0.2)',
+    whiteSpace: 'nowrap',
+  } as React.CSSProperties,
+
+  priorityTitle: {
+    fontSize: 14,
+    fontWeight: 500,
+    color: 'var(--text-primary, #F1F5F9)',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+    flex: 1,
+    margin: 0,
+  } as React.CSSProperties,
+
+  /* Feed item row */
+  feedRow: {
+    display: 'flex',
+    alignItems: 'flex-start',
+    gap: 12,
+    paddingBottom: 12,
+    borderBottom: '1px solid rgba(255, 255, 255, 0.03)',
+  } as React.CSSProperties,
+
+  feedRowLast: {
+    display: 'flex',
+    alignItems: 'flex-start',
+    gap: 12,
+    paddingBottom: 12,
+  } as React.CSSProperties,
+
+  feedDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 9999,
+    marginTop: 8,
+    flexShrink: 0,
+  } as React.CSSProperties,
+
+  feedContent: {
+    flex: 1,
+    minWidth: 0,
+  } as React.CSSProperties,
+
+  feedTitle: {
+    fontSize: 14,
+    fontWeight: 500,
+    color: 'var(--text-primary, #F1F5F9)',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+    margin: 0,
+  } as React.CSSProperties,
+
+  feedSub: {
+    fontSize: 14,
+    color: 'var(--text-secondary, #94A3B8)',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+    marginTop: 4,
+  } as React.CSSProperties,
+
+  feedTime: {
+    fontSize: 14,
+    color: 'var(--text-dim, #475569)',
+    marginTop: 4,
+  } as React.CSSProperties,
+
+  feedChannel: {
+    marginLeft: 8,
+    fontSize: 14,
+    opacity: 0.6,
+    color: 'var(--text-dim, #475569)',
+  } as React.CSSProperties,
+
+  /* Lead row */
+  leadRow: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 12,
+    borderRadius: 12,
+    background: 'rgba(25, 35, 50, 0.8)',
+    border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
+  } as React.CSSProperties,
+
+  leadName: {
+    fontSize: 14,
+    fontWeight: 500,
+    color: 'var(--text-primary, #F1F5F9)',
+    margin: 0,
+  } as React.CSSProperties,
+
+  leadStatus: {
+    fontSize: 14,
+    color: 'var(--text-secondary, #94A3B8)',
+    marginTop: 4,
+  } as React.CSSProperties,
+
+  leadValue: {
+    fontSize: 14,
+    fontWeight: 500,
+    color: 'var(--text-primary, #F1F5F9)',
+  } as React.CSSProperties,
+
+  /* Schedule section */
+  scheduleHint: {
+    fontSize: 14,
+    color: 'var(--text-secondary, #94A3B8)',
+    marginBottom: 16,
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+  } as React.CSSProperties,
+} as const;
+
+/* ─── Responsive breakpoint styles via media query classes (layout only) ─── */
+/* We use Tailwind ONLY for grid layout breakpoints: sm:grid-cols-4, lg:grid-cols-* */
 
 function CommandCenterTab() {
   const [loading, setLoading] = useState(true);
@@ -224,20 +642,20 @@ function CommandCenterTab() {
   return (
     <TabShell variant="fixed">
       {/* Quick Actions Bar */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4" style={{ gap: 12 }}>
         <button
           onClick={() => {
             if (topApprovalId && !topApprovalProcessing) handleApprove(topApprovalId);
           }}
           disabled={topApprovalDisabled}
-          className="flex items-center gap-3 p-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-elevated)] hover:bg-[var(--bg-hover)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-left"
+          style={topApprovalDisabled ? S.quickActionBtnDisabled : S.quickActionBtn}
         >
-          <div className="w-9 h-9 rounded-lg bg-amber-500/15 flex items-center justify-center flex-shrink-0">
-            <ShieldCheck size={18} style={{ color: 'var(--bb-status-warning)' }} />
+          <div style={S.iconBoxWarning}>
+            <ShieldCheck size={18} style={{ color: 'rgba(234, 179, 8, 1)' }} />
           </div>
-          <div className="min-w-0">
-            <p className="text-xs font-medium truncate">Approve Next</p>
-            <p className="text-[11px] text-muted-foreground">
+          <div style={S.qaTextWrap}>
+            <p style={S.qaTitle}>Approve Next</p>
+            <p style={S.qaSub}>
               {topApprovalProcessing ? 'Processing...' : `${approvals.length} pending`}
             </p>
           </div>
@@ -247,14 +665,14 @@ function CommandCenterTab() {
           onClick={() => {
             window.dispatchEvent(new CustomEvent('bb-navigate', { detail: { tab: 'invoices' } }));
           }}
-          className="flex items-center gap-3 p-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-elevated)] hover:bg-[var(--bg-hover)] transition-colors text-left"
+          style={S.quickActionBtn}
         >
-          <div className="w-9 h-9 rounded-lg bg-emerald-500/15 flex items-center justify-center flex-shrink-0">
-            <ReceiptText size={18} style={{ color: 'var(--bb-status-success)' }} />
+          <div style={S.iconBoxSuccess}>
+            <ReceiptText size={18} style={{ color: 'rgba(34, 197, 94, 1)' }} />
           </div>
-          <div className="min-w-0">
-            <p className="text-xs font-medium truncate">New Invoice</p>
-            <p className="text-[11px] text-muted-foreground">Create & send</p>
+          <div style={S.qaTextWrap}>
+            <p style={S.qaTitle}>New Invoice</p>
+            <p style={S.qaSub}>Create & send</p>
           </div>
         </button>
 
@@ -262,14 +680,14 @@ function CommandCenterTab() {
           onClick={() => {
             window.dispatchEvent(new CustomEvent('bb-navigate', { detail: { tab: 'inbox' } }));
           }}
-          className="flex items-center gap-3 p-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-elevated)] hover:bg-[var(--bg-hover)] transition-colors text-left"
+          style={S.quickActionBtn}
         >
-          <div className="w-9 h-9 rounded-lg bg-violet-500/15 flex items-center justify-center flex-shrink-0">
-            <Inbox size={18} style={{ color: 'var(--bb-purple)' }} />
+          <div style={S.iconBoxOrange}>
+            <Inbox size={18} style={{ color: 'var(--text-primary, #F1F5F9)' }} />
           </div>
-          <div className="min-w-0">
-            <p className="text-xs font-medium truncate">Inbox</p>
-            <p className="text-[11px] text-muted-foreground">{inboxCount} unread</p>
+          <div style={S.qaTextWrap}>
+            <p style={S.qaTitle}>Inbox</p>
+            <p style={S.qaSub}>{inboxCount} unread</p>
           </div>
         </button>
 
@@ -278,14 +696,14 @@ function CommandCenterTab() {
             if (topApprovalId && !topApprovalProcessing) handleDismiss(topApprovalId);
           }}
           disabled={topApprovalDisabled}
-          className="flex items-center gap-3 p-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-elevated)] hover:bg-[var(--bg-hover)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-left"
+          style={topApprovalDisabled ? S.quickActionBtnDisabled : S.quickActionBtn}
         >
-          <div className="w-9 h-9 rounded-lg bg-red-500/15 flex items-center justify-center flex-shrink-0">
-            <BellOff size={18} style={{ color: 'var(--bb-status-error)' }} />
+          <div style={S.iconBoxError}>
+            <BellOff size={18} style={{ color: 'rgba(239, 68, 68, 1)' }} />
           </div>
-          <div className="min-w-0">
-            <p className="text-xs font-medium truncate">Dismiss Top</p>
-            <p className="text-[11px] text-muted-foreground">
+          <div style={S.qaTextWrap}>
+            <p style={S.qaTitle}>Dismiss Top</p>
+            <p style={S.qaSub}>
               {topApprovalProcessing ? 'Processing...' : 'Clear alert'}
             </p>
           </div>
@@ -294,7 +712,7 @@ function CommandCenterTab() {
 
       {/* KPI Widgets — driven by industry pack */}
       {kpis.length > 0 && (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4" style={{ gap: 16 }}>
           {kpis.map((kpi) => {
             const liveValue = kpi.dataKey && stats ? stats[kpi.dataKey] : undefined;
             const displayValue = liveValue !== undefined
@@ -321,68 +739,67 @@ function CommandCenterTab() {
       )}
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3" style={{ gap: 24 }}>
         {/* Approvals - Left Column (spans 2) */}
-        <div className="bb-card col-span-1 lg:col-span-2">
-          <div className="p-4 border-b border-[var(--border-subtle)]">
-            <h2 className="text-lg font-medium flex items-center gap-2">
-              <ShieldCheck size={20} style={{ color: 'var(--bb-status-warning)' }} /> Action Required
+        <div className="lg:col-span-2" style={S.glassCard}>
+          <div style={S.cardHeader}>
+            <h2 style={S.cardHeaderTitle}>
+              <ShieldCheck size={20} style={{ color: 'rgba(234, 179, 8, 1)' }} /> Action Required
             </h2>
-            <p className="text-xs text-muted-foreground mt-1">{approvals.length} pending approvals</p>
+            <p style={S.cardHeaderSub}>{approvals.length} pending approvals</p>
           </div>
-          <div className="p-4 space-y-4">
+          <div style={S.cardBody}>
             {approvals.length === 0 ? (
-              <EmptyState icon={<ShieldCheck size={32} />} title="No pending approvals" description="Great work! All actions have been reviewed." />
+              <EmptyState title="No pending approvals" description="Great work! All actions have been reviewed." />
             ) : (
-              approvals.map(app => (
-                <div key={app.id as string} className="flex items-center justify-between p-3 rounded-md bg-[var(--bg-elevated)] border border-[var(--border-subtle)]">
-                  <div>
-                    <p className="font-medium text-sm">{(app.title || app.action_type || 'Approval Request') as string}</p>
-                    <p className="text-xs text-muted-foreground mt-1">{app.description as string}</p>
+              approvals.map(app => {
+                const isProcessing = processingIds.has(app.id as string);
+                return (
+                  <div key={app.id as string} style={S.approvalRow}>
+                    <div>
+                      <p style={S.approvalTitle}>{(app.title || app.action_type || 'Approval Request') as string}</p>
+                      <p style={S.approvalDesc}>{app.description as string}</p>
+                    </div>
+                    <div style={S.approvalActions}>
+                      <button
+                        onClick={() => handleDismiss(app.id as string)}
+                        disabled={isProcessing}
+                        style={isProcessing ? S.dismissBtnDisabled : S.dismissBtn}
+                      >
+                        {isProcessing ? 'Processing...' : 'Dismiss'}
+                      </button>
+                      <button
+                        onClick={() => handleApprove(app.id as string)}
+                        disabled={isProcessing}
+                        style={isProcessing ? S.approveBtnDisabled : S.approveBtn}
+                      >
+                        {isProcessing ? 'Processing...' : 'Approve'}
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => handleDismiss(app.id as string)}
-                      disabled={processingIds.has(app.id as string)}
-                      className="px-3 py-1 text-xs font-medium rounded-md bg-[var(--bg-element)] hover:bg-[var(--bg-hover)] border border-[var(--border-subtle)] disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {processingIds.has(app.id as string) ? 'Processing...' : 'Dismiss'}
-                    </button>
-                    <button
-                      onClick={() => handleApprove(app.id as string)}
-                      disabled={processingIds.has(app.id as string)}
-                      className="px-3 py-1 text-xs font-medium rounded-md bg-[var(--accent)] text-white hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {processingIds.has(app.id as string) ? 'Processing...' : 'Approve'}
-                    </button>
-                  </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>
 
         {/* Today's Priorities - Right Column */}
-        <div className="bb-card col-span-1">
-          <div className="p-4 border-b border-[var(--border-subtle)]">
-            <h2 className="text-lg font-medium flex items-center gap-2">
-              <Zap size={20} style={{ color: 'var(--bb-status-warning)' }} /> Today&apos;s Priorities
+        <div style={S.glassCard}>
+          <div style={S.cardHeader}>
+            <h2 style={S.cardHeaderTitle}>
+              <Zap size={20} style={{ color: 'rgba(234, 179, 8, 1)' }} /> Today&apos;s Priorities
             </h2>
           </div>
-          <div className="p-4 space-y-3">
+          <div style={S.cardBodyCompact}>
             {todaysPriorities.length === 0 ? (
-              <EmptyState icon={<Zap size={32} />} title="No high-priority tasks" description="Enjoy the calm — nothing urgent right now." />
+              <EmptyState title="No high-priority tasks" description="Enjoy the calm — nothing urgent right now." />
             ) : (
               todaysPriorities.map(task => (
-                <div key={task.id} className="flex items-center gap-3 p-2 rounded-md bg-[var(--bg-elevated)] border border-[var(--border-subtle)]">
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded border ${
-                    task.priority === 'critical'
-                      ? 'bg-red-500/20 text-red-400 border-red-500/30'
-                      : 'bg-amber-500/20 text-amber-400 border-amber-500/30'
-                  }`}>
+                <div key={task.id} style={S.priorityRow}>
+                  <span style={task.priority === 'critical' ? S.priorityBadgeCritical : S.priorityBadgeHigh}>
                     {task.priority}
                   </span>
-                  <p className="text-xs font-medium truncate flex-1">{task.title}</p>
+                  <p style={S.priorityTitle}>{task.title}</p>
                 </div>
               ))
             )}
@@ -391,30 +808,30 @@ function CommandCenterTab() {
       </div>
 
       {/* Agent Activity Feed + Hot Leads + Schedule */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3" style={{ gap: 24 }}>
         {/* Agent Activity Feed */}
-        <div className="bb-card">
-          <div className="p-4 border-b border-[var(--border-subtle)]">
-            <h2 className="text-lg font-medium flex items-center gap-2">
-              <Activity size={20} style={{ color: 'var(--bb-cyan)' }} /> Agent Activity
+        <div style={S.glassCard}>
+          <div style={S.cardHeader}>
+            <h2 style={S.cardHeaderTitle}>
+              <Activity size={20} style={{ color: 'var(--text-primary, #F1F5F9)' }} /> Agent Activity
             </h2>
-            <p className="text-xs text-muted-foreground mt-1">Recent agent runs</p>
+            <p style={S.cardHeaderSub}>Recent agent runs</p>
           </div>
-          <div className="p-4 space-y-3 max-h-64 overflow-y-auto">
+          <div style={S.cardBodyScroll}>
             {agentRuns.length === 0 ? (
-              <EmptyState icon={<Activity size={32} />} title="No recent agent activity" description="Agents will appear here when they run." />
+              <EmptyState title="No recent agent activity" description="Agents will appear here when they run." />
             ) : (
-              agentRuns.map((run) => (
-                <div key={run.id} className="flex items-start gap-3 pb-3 border-b border-[var(--border-subtle)] last:border-0">
-                  <div className="w-2 h-2 rounded-full mt-2 flex-shrink-0" style={{ background: 'var(--bb-cyan)' }} />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium truncate">
+              agentRuns.map((run, idx) => (
+                <div key={run.id} style={idx === agentRuns.length - 1 ? S.feedRowLast : S.feedRow}>
+                  <div style={{ ...S.feedDot, background: 'var(--text-primary, #F1F5F9)' }} />
+                  <div style={S.feedContent}>
+                    <p style={S.feedTitle}>
                       {run.agent_configs?.name || run.agent_configs?.agent_type || 'Agent'}
                     </p>
-                    <p className="text-[11px] text-muted-foreground mt-0.5 truncate">
+                    <p style={S.feedSub}>
                       {run.output_summary}
                     </p>
-                    <p className="text-[10px] text-muted-foreground mt-0.5">
+                    <p style={S.feedTime}>
                       {new Date(run.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </p>
                   </div>
@@ -425,28 +842,28 @@ function CommandCenterTab() {
         </div>
 
         {/* Hot Leads */}
-        <div className="bb-card">
-          <div className="p-4 border-b border-[var(--border-subtle)]">
-            <h2 className="text-lg font-medium flex items-center gap-2">
-              <TrendingUp size={20} style={{ color: 'var(--bb-pink)' }} /> Hot Leads
+        <div style={S.glassCard}>
+          <div style={S.cardHeader}>
+            <h2 style={S.cardHeaderTitle}>
+              <TrendingUp size={20} style={{ color: 'var(--text-primary, #F1F5F9)' }} /> Hot Leads
             </h2>
-            <p className="text-xs text-muted-foreground mt-1">Top opportunities this week</p>
+            <p style={S.cardHeaderSub}>Top opportunities this week</p>
           </div>
-          <div className="p-4 space-y-3">
+          <div style={S.cardBodyCompact}>
             {leads.length === 0 ? (
-              <EmptyState icon={<TrendingUp size={32} />} title="No active leads" description="New leads will appear here as they come in." />
+              <EmptyState title="No active leads" description="New leads will appear here as they come in." />
             ) : (
               leads.map(lead => (
-                <div key={lead.id as string} className="flex items-center justify-between p-3 rounded-md bg-[var(--bg-elevated)] border border-[var(--border-subtle)]">
-                  <div className="flex-1">
-                    <p className="font-medium text-sm">{((lead.metadata as Record<string, unknown>)?.name || (lead.metadata as Record<string, unknown>)?.company || lead.source_channel || 'Unnamed Lead') as string}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
+                <div key={lead.id as string} style={S.leadRow}>
+                  <div style={{ flex: 1 }}>
+                    <p style={S.leadName}>{((lead.metadata as Record<string, unknown>)?.name || (lead.metadata as Record<string, unknown>)?.company || lead.source_channel || 'Unnamed Lead') as string}</p>
+                    <p style={S.leadStatus}>
                       {lead.status === 'new' && 'New Contact'}
                       {lead.status === 'contacted' && 'Contacted'}
                       {lead.status === 'qualified' && 'Qualified'}
                     </p>
                   </div>
-                  <div className="text-xs font-medium" style={{ color: 'var(--bb-amber)' }}>{(lead.metadata as Record<string, unknown>)?.value ? `$${(lead.metadata as Record<string, unknown>).value}` : (lead.budget_range as string) || '--'}</div>
+                  <div style={S.leadValue}>{(lead.metadata as Record<string, unknown>)?.value ? `$${(lead.metadata as Record<string, unknown>).value}` : (lead.budget_range as string) || '--'}</div>
                 </div>
               ))
             )}
@@ -454,14 +871,14 @@ function CommandCenterTab() {
         </div>
 
         {/* Today's Schedule */}
-        <div className="bb-card col-span-1">
-          <div className="p-4 border-b border-[var(--border-subtle)]">
-            <h2 className="text-lg font-medium flex items-center gap-2">
-              <Clock size={20} style={{ color: 'var(--bb-status-info)' }} /> Today&apos;s Schedule
+        <div style={S.glassCard}>
+          <div style={S.cardHeader}>
+            <h2 style={S.cardHeaderTitle}>
+              <Clock size={20} style={{ color: 'var(--text-secondary, #94A3B8)' }} /> Today&apos;s Schedule
             </h2>
           </div>
-          <div className="p-4">
-            <div className="text-xs text-muted-foreground mb-4 flex items-center gap-2">
+          <div style={{ padding: 16 }}>
+            <div style={S.scheduleHint}>
               <Calendar size={14} />
               <span>Connect Google Calendar to see the schedule</span>
             </div>
@@ -476,35 +893,35 @@ function CommandCenterTab() {
       </div>
 
       {/* Recent Channel Activity */}
-      <div className="bb-card">
-        <div className="p-4 border-b border-[var(--border-subtle)]">
-          <h2 className="text-lg font-medium flex items-center gap-2">
-            <Users size={20} style={{ color: 'var(--bb-cyan)' }} /> Recent Channel Activity
+      <div style={S.glassCard}>
+        <div style={S.cardHeader}>
+          <h2 style={S.cardHeaderTitle}>
+            <Users size={20} style={{ color: 'var(--text-primary, #F1F5F9)' }} /> Recent Channel Activity
           </h2>
-          <p className="text-xs text-muted-foreground mt-1">Latest messages across all channels</p>
+          <p style={S.cardHeaderSub}>Latest messages across all channels</p>
         </div>
-        <div className="p-4 space-y-3 max-h-64 overflow-y-auto">
+        <div style={S.cardBodyScroll}>
           {recentActivity.length === 0 ? (
-            <EmptyState icon={<Users size={32} />} title="No recent activity" description="Channel messages will appear here." />
+            <EmptyState title="No recent activity" description="Channel messages will appear here." />
           ) : (
             recentActivity.map((activity, idx) => (
-              <div key={(activity.id as string) || idx} className="flex items-start gap-3 pb-3 border-b border-[var(--border-subtle)] last:border-0">
-                <div className="w-2 h-2 rounded-full bg-[var(--accent)] mt-2 flex-shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium truncate">
+              <div key={(activity.id as string) || idx} style={idx === recentActivity.length - 1 ? S.feedRowLast : S.feedRow}>
+                <div style={{ ...S.feedDot, background: 'var(--text-primary, #F1F5F9)' }} />
+                <div style={S.feedContent}>
+                  <p style={S.feedTitle}>
                     {(activity.sender_name || activity.content || activity.message || 'Activity Update') as string}
                   </p>
-                  <p className="text-[11px] text-muted-foreground truncate">
+                  <p style={S.feedSub}>
                     {activity.subject ? `${activity.subject}` : (activity.body as string || '').slice(0, 80)}
                   </p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
+                  <p style={S.feedTime}>
                     {activity.received_at || activity.created_at ? (
                       new Date((activity.received_at || activity.created_at) as string).toLocaleTimeString([], {
                         hour: '2-digit',
                         minute: '2-digit'
                       })
                     ) : 'Just now'}
-                    {activity.channel_type ? <span className="ml-2 text-[10px] opacity-60">via {String(activity.channel_type)}</span> : null}
+                    {activity.channel_type ? <span style={S.feedChannel}>via {String(activity.channel_type)}</span> : null}
                   </p>
                 </div>
               </div>

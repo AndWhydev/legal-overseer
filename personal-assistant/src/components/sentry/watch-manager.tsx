@@ -1,8 +1,8 @@
 'use client'
 
 import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react'
-import { AlertTriangle } from 'lucide-react'
 import { EmptyState } from '@/components/ui/empty-state'
+import { GlassDropdown } from '@/components/ui/glass-dropdown'
 
 type WatchStatus = 'active' | 'paused'
 type WatchType = 'error_keyword' | 'uptime' | 'negative_sentiment'
@@ -103,11 +103,15 @@ const glassSelect: React.CSSProperties = {
 }
 
 const accentBtn: React.CSSProperties = {
-  padding: '8px 16px',
-  borderRadius: 12,
-  background: '#1A1A1B',
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 8,
+  height: 40,
+  padding: '0 20px',
+  borderRadius: 8,
+  background: 'var(--btn-primary-bg, #F1F5F9)',
   border: 'none',
-  color: '#FFFFFF',
+  color: 'var(--btn-primary-fg, #0a0f1a)',
   fontSize: 14,
   fontWeight: 500,
   cursor: 'pointer',
@@ -156,6 +160,12 @@ const dimText: React.CSSProperties = {
   fontSize: 14,
   color: 'var(--text-dim)',
 }
+
+// ─── Watch type options for GlassDropdown ───────────────────────────────────
+const watchTypeOptions = (Object.entries(WATCH_LABEL) as [WatchType, string][]).map(([key, label]) => ({
+  value: key,
+  label,
+}))
 
 export function WatchManager() {
   const [watches, setWatches] = useState<SentryWatch[]>([])
@@ -353,6 +363,17 @@ export function WatchManager() {
     )
   }
 
+  // Full-page error state when initial load fails and no data is available
+  if (errorMessage && watches.length === 0 && alerts.length === 0) {
+    return (
+      <EmptyState
+        title="Something went wrong"
+        description={errorMessage}
+        action={{ label: 'Retry', onClick: () => { setIsLoading(true); setErrorMessage(null); loadData().catch((err) => setErrorMessage(err instanceof Error ? err.message : 'Failed to load sentry data')).finally(() => setIsLoading(false)) } }}
+      />
+    )
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       {statusMessage ? (
@@ -376,10 +397,10 @@ export function WatchManager() {
           style={{
             padding: '12px 16px',
             borderRadius: 12,
-            background: 'rgba(239, 68, 68, 0.12)',
-            border: '1px solid var(--status-error-border)',
+            background: 'var(--glass-pill-bg, rgba(255, 255, 255, 0.04))',
+            border: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
             fontSize: 14,
-            color: 'var(--bb-red)',
+            color: 'var(--text-secondary, #94A3B8)',
           }}
         >
           {errorMessage}
@@ -393,24 +414,20 @@ export function WatchManager() {
           <span style={secondaryText}>{watches.length} watches configured</span>
         </div>
         <form
+          id="sentry-create-watch-form"
           style={{ display: 'grid', gap: 16, gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))' }}
           aria-describedby={errorMessage ? 'sentry-error' : undefined}
           onSubmit={handleCreateWatch}
         >
-          <label style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <span style={dimText}>Watch type</span>
-            <select
-              style={glassSelect}
+            <GlassDropdown
+              options={watchTypeOptions}
               value={form.watch_type}
-              onChange={(event) => setForm((prev) => ({ ...prev, watch_type: event.target.value as WatchType }))}
-            >
-              {Object.entries(WATCH_LABEL).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </label>
+              onChange={(val) => setForm((prev) => ({ ...prev, watch_type: val as WatchType }))}
+              placeholder="Select watch type"
+            />
+          </div>
           <label style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <span style={dimText}>Description</span>
             <input
@@ -421,7 +438,7 @@ export function WatchManager() {
               placeholder="Example: monitor failed payment logs"
               onFocus={(e) => {
                 e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)'
-                e.currentTarget.style.boxShadow = '0 0 0 2px rgba(255, 90, 31, 0.15)'
+                e.currentTarget.style.boxShadow = '0 0 0 2px rgba(255, 255, 255, 0.08)'
               }}
               onBlur={(e) => {
                 e.currentTarget.style.borderColor = 'var(--glass-interactive-border)'
@@ -442,7 +459,7 @@ export function WatchManager() {
               onChange={(event) => setForm((prev) => ({ ...prev, conditions: event.target.value }))}
               onFocus={(e) => {
                 e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)'
-                e.currentTarget.style.boxShadow = '0 0 0 2px rgba(255, 90, 31, 0.15)'
+                e.currentTarget.style.boxShadow = '0 0 0 2px rgba(255, 255, 255, 0.08)'
               }}
               onBlur={(e) => {
                 e.currentTarget.style.borderColor = 'var(--glass-interactive-border)'
@@ -463,7 +480,7 @@ export function WatchManager() {
               }
               onFocus={(e) => {
                 e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)'
-                e.currentTarget.style.boxShadow = '0 0 0 2px rgba(255, 90, 31, 0.15)'
+                e.currentTarget.style.boxShadow = '0 0 0 2px rgba(255, 255, 255, 0.08)'
               }}
               onBlur={(e) => {
                 e.currentTarget.style.borderColor = 'var(--glass-interactive-border)'
@@ -484,7 +501,7 @@ export function WatchManager() {
               }
               onFocus={(e) => {
                 e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)'
-                e.currentTarget.style.boxShadow = '0 0 0 2px rgba(255, 90, 31, 0.15)'
+                e.currentTarget.style.boxShadow = '0 0 0 2px rgba(255, 255, 255, 0.08)'
               }}
               onBlur={(e) => {
                 e.currentTarget.style.borderColor = 'var(--glass-interactive-border)'
@@ -492,30 +509,31 @@ export function WatchManager() {
               }}
             />
           </label>
-          <div style={{ gridColumn: 'span 2' }}>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              style={{
-                ...accentBtn,
-                opacity: isSubmitting ? 0.6 : 1,
-                cursor: isSubmitting ? 'not-allowed' : 'pointer',
-              }}
-              onMouseEnter={(e) => {
-                if (!isSubmitting) {
-                  e.currentTarget.style.background = '#FF7A45'
-                  e.currentTarget.style.transform = 'translateY(-1px)'
-                }
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = '#1A1A1B'
-                e.currentTarget.style.transform = 'translateY(0)'
-              }}
-            >
-              {isSubmitting ? 'Creating...' : 'Create watch'}
-            </button>
-          </div>
         </form>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 20 }}>
+          <button
+            type="submit"
+            form="sentry-create-watch-form"
+            disabled={isSubmitting}
+            style={{
+              ...accentBtn,
+              opacity: isSubmitting ? 0.6 : 1,
+              cursor: isSubmitting ? 'not-allowed' : 'pointer',
+            }}
+            onMouseEnter={(e) => {
+              if (!isSubmitting) {
+                e.currentTarget.style.background = 'var(--btn-primary-hover, #E2E8F0)'
+                e.currentTarget.style.transform = 'translateY(-1px)'
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'var(--btn-primary-bg, #F1F5F9)'
+              e.currentTarget.style.transform = 'translateY(0)'
+            }}
+          >
+            {isSubmitting ? 'Creating...' : 'Create watch'}
+          </button>
+        </div>
       </section>
 
       {/* Configured Watches Section */}
@@ -578,7 +596,7 @@ export function WatchManager() {
                     padding: 12,
                     borderRadius: 12,
                     background: 'var(--bg-card)',
-                    border: '1px solid var(--glass-interactive-border)',
+                    border: 'none',
                     overflowX: 'auto',
                     fontSize: 14,
                     color: 'var(--text-dim)',
@@ -638,7 +656,6 @@ export function WatchManager() {
         </div>
         {alerts.length === 0 ? (
           <EmptyState
-            icon={<AlertTriangle size={48} />}
             title="All clear"
             description="No errors or alerts to report. Your systems are running smoothly"
           />

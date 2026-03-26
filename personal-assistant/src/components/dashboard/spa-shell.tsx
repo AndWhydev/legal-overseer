@@ -65,7 +65,7 @@ export const TABS: TabDef[] = [
   { id: 'activity', label: 'Activity', path: '/dashboard/activity' },
   { id: 'admin', label: 'Admin', path: '/dashboard/admin' },
   { id: 'settings-connections', label: 'Connections', path: '/dashboard/settings/connections' },
-  { id: 'settings-automations', label: 'Automations', path: '/dashboard/settings/automations' },
+  { id: 'settings-automations', label: 'Plugins', path: '/dashboard/settings/automations' },
   { id: 'settings-appearance', label: 'Appearance', path: '/dashboard/settings/appearance' },
   { id: 'settings-billing', label: 'Billing', path: '/dashboard/settings/billing' },
 ];

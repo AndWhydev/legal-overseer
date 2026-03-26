@@ -46,7 +46,7 @@ export function MeetingSearch({ onSelectMeeting }: MeetingSearchProps) {
     const parts = text.split(regex)
     return parts.map((part, i) =>
       regex.test(part)
-        ? <mark key={i} style={{ background: 'rgba(255, 90, 31, 0.3)', color: '#FF7A45', borderRadius: 8, padding: '0 4px' }}>{part}</mark>
+        ? <mark key={i} style={{ background: 'rgba(255, 255, 255, 0.12)', color: '#E2E8F0', borderRadius: 8, padding: '0 4px' }}>{part}</mark>
         : part
     )
   }
@@ -76,8 +76,8 @@ export function MeetingSearch({ onSelectMeeting }: MeetingSearchProps) {
               width: '100%',
               padding: '12px 16px 12px 36px',
               borderRadius: 12,
-              background: 'rgba(13, 17, 23, 0.6)',
-              border: '1px solid rgba(255, 255, 255, 0.06)',
+              background: 'var(--bg-input, rgba(13, 17, 23, 0.6))',
+              border: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
               color: 'var(--text-primary, #F1F5F9)',
               fontSize: 14,
               outline: 'none',
@@ -91,9 +91,9 @@ export function MeetingSearch({ onSelectMeeting }: MeetingSearchProps) {
           style={{
             padding: '12px 20px',
             borderRadius: 12,
-            background: query.trim() ? '#FF5A1F' : 'rgba(255, 90, 31, 0.3)',
+            background: query.trim() ? '#F1F5F9' : 'rgba(255, 255, 255, 0.12)',
             border: 'none',
-            color: query.trim() ? '#000' : 'rgba(0, 0, 0, 0.5)',
+            color: query.trim() ? '#0a0f1a' : 'rgba(0, 0, 0, 0.5)',
             fontSize: 14,
             fontWeight: 500,
             cursor: query.trim() ? 'pointer' : 'not-allowed',
@@ -120,11 +120,11 @@ export function MeetingSearch({ onSelectMeeting }: MeetingSearchProps) {
       {!searching && results.length > 0 && (
         <div style={{
           borderRadius: 16,
-          background: 'rgba(15, 20, 30, 0.6)',
-          backdropFilter: 'blur(20px) saturate(1.2)',
-          WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
-          border: '1px solid rgba(255, 255, 255, 0.03)',
-          boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+          background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.6))',
+          backdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
+          WebkitBackdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
+          border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
+          boxShadow: 'var(--card-inset, inset 0 1px 0 rgba(255, 255, 255, 0.05))',
           overflow: 'hidden',
         }}>
           <div style={{
@@ -149,7 +149,7 @@ export function MeetingSearch({ onSelectMeeting }: MeetingSearchProps) {
               onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
             >
               <div className="flex items-center gap-2 mb-1">
-                <span style={{ fontSize: 14, fontWeight: 500, color: '#FF7A45' }}>
+                <span style={{ fontSize: 14, fontWeight: 500, color: '#E2E8F0' }}>
                   {result.meeting_title}
                 </span>
                 <span style={{ fontSize: 14, color: 'var(--text-dim, #475569)', fontFamily: 'var(--font-mono, monospace)' }}>

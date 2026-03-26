@@ -191,7 +191,7 @@ async function hydrateAdapterConfig(
                 client_secret: clientSecret,
                 refresh_token: refreshToken,
                 grant_type: 'refresh_token',
-                scope: 'https://graph.microsoft.com/Mail.Read https://graph.microsoft.com/Mail.Send',
+                scope: 'https://graph.microsoft.com/Mail.Read https://graph.microsoft.com/Mail.Send offline_access',
               }),
             })
             if (res.ok) {
@@ -211,10 +211,14 @@ async function hydrateAdapterConfig(
               }
               logger.info('[relay] Outlook token refreshed successfully')
             } else {
-              logger.warn('[relay] Outlook token refresh failed:', await res.text())
+              const errorBody = await res.text()
+              logger.error(`[relay] Outlook token refresh failed (${res.status}): ${errorBody}`)
+              // Clear expired access token so we don't try to use it
+              accessToken = undefined
             }
           } catch (err) {
-            logger.warn('[relay] Outlook token refresh error:', err)
+            logger.error('[relay] Outlook token refresh error:', err)
+            accessToken = undefined
           }
         }
       }
@@ -422,8 +426,11 @@ export async function pollChannel(
     for (const msg of messages) {
       const result = await isDuplicate(supabase, orgId, msg)
       if (result.duplicate) {
-        if (result.matchType === 'external_id') externalIdDupes++
+        if (result.matchType === 'external_id' || result.matchType === 'cross_org_external_id') externalIdDupes++
         if (result.matchType === 'content_hash') contentHashDupes++
+        if (result.matchType === 'cross_org_external_id') {
+          logger.info(`[relay] Cross-org duplicate skipped: external_id=${msg.externalId} channel=${msg.channel} pollingOrg=${orgId}`)
+        }
         continue
       }
       const hash = computeContentHash(msg.sender, msg.subject, msg.body)

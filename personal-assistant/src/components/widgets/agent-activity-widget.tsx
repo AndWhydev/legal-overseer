@@ -37,7 +37,7 @@ export function AgentActivityWidget() {
     >
       <div className="space-y-3 max-h-64 overflow-y-auto">
         {runs.length === 0 ? (
-          <EmptyState icon={<Activity size={32} />} title="No recent agent activity" description="Agents will appear here when they run." />
+          <EmptyState title="No recent agent activity" description="Agents will appear here when they run." />
         ) : (
           runs.map(run => (
             <div key={run.id} className="flex items-start gap-3 pb-3 border-b border-[var(--border-subtle)] last:border-0">

@@ -21,7 +21,7 @@ export function MemoryCard({ memory, categoryColor }: MemoryCardProps) {
     <div
       onClick={() => setExpanded(!expanded)}
       style={{
-        background: 'rgba(15, 20, 30, 0.35)',
+        background: 'var(--bg-card, rgba(15, 20, 30, 0.35))',
         backdropFilter: 'blur(12px)',
         borderRadius: '12px',
         padding: '14px 16px',
@@ -30,7 +30,7 @@ export function MemoryCard({ memory, categoryColor }: MemoryCardProps) {
         borderLeft: `3px solid ${categoryColor}`,
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.background = 'rgba(20, 28, 40, 0.5)'
+        e.currentTarget.style.background = 'var(--bb-surface-hover, rgba(20, 28, 40, 0.5))'
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.background = 'rgba(15, 20, 30, 0.35)'
@@ -71,7 +71,7 @@ export function MemoryCard({ memory, categoryColor }: MemoryCardProps) {
         {memory.source === 'user_explicit' && (
           <span style={{
             fontSize: '14px',
-            color: '#FF7A45',
+            color: '#E2E8F0',
             fontWeight: 500,
           }}>
             USER
@@ -121,7 +121,7 @@ export function MemoryCard({ memory, categoryColor }: MemoryCardProps) {
         <div style={{
           marginTop: '12px',
           paddingTop: '12px',
-          borderTop: '1px solid rgba(255, 255, 255, 0.06)',
+          borderTop: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
           display: 'flex',
           flexDirection: 'column',
           gap: '8px',

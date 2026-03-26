@@ -100,7 +100,7 @@ export function ArtifactPanel({ artifact, onClose }: ArtifactPanelProps) {
             height: '100vh',
             width: 'clamp(400px, 50vw, 700px)',
             backgroundColor: 'var(--bg-primary, #0a0f1a)',
-            borderLeft: '1px solid rgba(255, 255, 255, 0.06)',
+            borderLeft: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
             display: 'flex',
             flexDirection: 'column',
             zIndex: 40,
@@ -114,7 +114,7 @@ export function ArtifactPanel({ artifact, onClose }: ArtifactPanelProps) {
               alignItems: 'center',
               justifyContent: 'space-between',
               padding: '10px 16px',
-              borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
+              borderBottom: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
               minHeight: '52px',
               backgroundColor: 'rgba(255, 255, 255, 0.02)',
             }}
@@ -322,7 +322,7 @@ export function ArtifactPanel({ artifact, onClose }: ArtifactPanelProps) {
                   fontFamily: 'ui-monospace, "SF Mono", Menlo, Consolas, monospace',
                   color: 'var(--text-primary, #F1F5F9)',
                   overflow: 'auto',
-                  backgroundColor: 'rgba(13, 17, 23, 0.4)',
+                  backgroundColor: 'var(--bg-input, rgba(13, 17, 23, 0.4))',
                 }}
               >
                 <pre

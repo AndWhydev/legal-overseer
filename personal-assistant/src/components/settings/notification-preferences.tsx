@@ -75,11 +75,11 @@ const sectionDesc: React.CSSProperties = {
 const glassCard: React.CSSProperties = {
   padding: '16px',
   borderRadius: 12,
-  background: 'rgba(15, 20, 30, 0.6)',
-  backdropFilter: 'blur(20px) saturate(1.2)',
-  WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
-  border: '1px solid rgba(255, 255, 255, 0.03)',
-  boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+  background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.6))',
+  backdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
+  WebkitBackdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
+  border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
+  boxShadow: 'var(--card-inset, inset 0 1px 0 rgba(255, 255, 255, 0.05))',
 };
 
 const listRow: React.CSSProperties = {
@@ -87,8 +87,8 @@ const listRow: React.CSSProperties = {
   alignItems: 'center',
   padding: '12px 16px',
   borderRadius: 12,
-  background: 'rgba(10, 14, 23, 0.5)',
-  border: '1px solid rgba(255, 255, 255, 0.03)',
+  background: 'var(--bb-surface, rgba(10, 14, 23, 0.5))',
+  border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
   transition: 'background 200ms',
 };
 
@@ -192,7 +192,7 @@ function TimeInput({ value, onChange }: { value: string; onChange: (v: string) =
       style={{
         padding: '8px 12px',
         borderRadius: 8,
-        background: 'rgba(13, 17, 23, 0.6)',
+        background: 'var(--bg-input, rgba(13, 17, 23, 0.6))',
         border: '1px solid rgba(255, 255, 255, 0.1)',
         color: 'var(--text-primary, #F1F5F9)',
         fontSize: 14,
@@ -390,7 +390,7 @@ export function NotificationPreferencesTab() {
                   ...glassCard,
                   padding: '12px 16px',
                   cursor: 'pointer',
-                  border: prefs.digest_mode === mode.id ? '2px solid #FF5A1F' : '1px solid rgba(255, 255, 255, 0.03)',
+                  border: prefs.digest_mode === mode.id ? '2px solid rgba(255, 255, 255, 0.3)' : '1px solid rgba(255, 255, 255, 0.03)',
                   transition: 'all 200ms',
                 }}
                 onMouseEnter={e => {

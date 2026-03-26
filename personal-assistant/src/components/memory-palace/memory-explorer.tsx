@@ -36,7 +36,7 @@ const CATEGORY_COLORS: Record<MemoryCategory, string> = {
   fact: '#22C55E',
   relationship: '#EC4899',
   pricing: '#F59E0B',
-  convention: '#FF5A1F',
+  convention: '#F1F5F9',
 }
 
 // ─── Component ───────────────────────────────────────────────────────────────
@@ -148,7 +148,7 @@ export function MemoryExplorer({ orgId }: MemoryExplorerProps) {
             style={{
               width: '100%',
               padding: '12px 16px',
-              background: 'rgba(13, 17, 23, 0.6)',
+              background: 'var(--bg-input, rgba(13, 17, 23, 0.6))',
               border: '1px solid rgba(255, 255, 255, 0.08)',
               borderRadius: '8px',
               color: 'rgba(255, 255, 255, 0.9)',
@@ -162,7 +162,7 @@ export function MemoryExplorer({ orgId }: MemoryExplorerProps) {
         <div style={{
           display: 'flex',
           gap: '2px',
-          background: 'rgba(15, 20, 30, 0.35)',
+          background: 'var(--bg-card, rgba(15, 20, 30, 0.35))',
           borderRadius: '8px',
           padding: '4px',
         }}>
@@ -175,10 +175,10 @@ export function MemoryExplorer({ orgId }: MemoryExplorerProps) {
                 borderRadius: '8px',
                 border: 'none',
                 background: viewMode === mode
-                  ? 'rgba(255, 90, 31, 0.2)'
+                  ? 'rgba(255, 255, 255, 0.12)'
                   : 'transparent',
                 color: viewMode === mode
-                  ? '#FF7A45'
+                  ? '#E2E8F0'
                   : 'rgba(255, 255, 255, 0.5)',
                 fontSize: '14px',
                 fontWeight: viewMode === mode ? 500 : 400,
@@ -206,8 +206,8 @@ export function MemoryExplorer({ orgId }: MemoryExplorerProps) {
             padding: '4px 12px',
             borderRadius: '12px',
             border: 'none',
-            background: activeCategory === null ? 'rgba(255, 90, 31, 0.15)' : 'rgba(255, 255, 255, 0.05)',
-            color: activeCategory === null ? '#FF7A45' : 'rgba(255, 255, 255, 0.5)',
+            background: activeCategory === null ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.05)',
+            color: activeCategory === null ? '#E2E8F0' : 'rgba(255, 255, 255, 0.5)',
             fontSize: '14px',
             cursor: 'pointer',
             whiteSpace: 'nowrap',

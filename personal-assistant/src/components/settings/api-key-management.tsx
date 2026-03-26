@@ -46,11 +46,11 @@ const sectionDesc: React.CSSProperties = {
 const glassCard: React.CSSProperties = {
   padding: '16px',
   borderRadius: 12,
-  background: 'rgba(15, 20, 30, 0.6)',
-  backdropFilter: 'blur(20px) saturate(1.2)',
-  WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
-  border: '1px solid rgba(255, 255, 255, 0.03)',
-  boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+  background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.6))',
+  backdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
+  WebkitBackdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
+  border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
+  boxShadow: 'var(--card-inset, inset 0 1px 0 rgba(255, 255, 255, 0.05))',
   marginBottom: 12,
 }
 
@@ -58,7 +58,7 @@ const inputStyle: React.CSSProperties = {
   width: '100%',
   padding: '12px 16px',
   borderRadius: 12,
-  background: 'rgba(10, 14, 23, 0.5)',
+  background: 'var(--bb-surface, rgba(10, 14, 23, 0.5))',
   border: '1px solid rgba(255, 255, 255, 0.08)',
   color: 'var(--text-primary, #F1F5F9)',
   fontSize: 14,
@@ -68,9 +68,9 @@ const inputStyle: React.CSSProperties = {
 const buttonStyle: React.CSSProperties = {
   padding: '12px 20px',
   borderRadius: 12,
-  background: '#FF5A1F',
+  background: 'var(--btn-primary-bg, #F1F5F9)',
   border: 'none',
-  color: '#000',
+  color: 'var(--btn-primary-fg, #0a0f1a)',
   fontSize: 14,
   fontWeight: 500,
   cursor: 'pointer',
@@ -82,7 +82,7 @@ const buttonStyle: React.CSSProperties = {
 
 const secondaryButtonStyle: React.CSSProperties = {
   ...buttonStyle,
-  background: 'rgba(15, 20, 30, 0.6)',
+  background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.6))',
   color: 'var(--text-primary, #F1F5F9)',
   border: '1px solid rgba(255, 255, 255, 0.1)',
 }
@@ -101,8 +101,8 @@ const listRow: React.CSSProperties = {
   alignItems: 'center',
   padding: '12px',
   borderRadius: 12,
-  background: 'rgba(10, 14, 23, 0.5)',
-  border: '1px solid rgba(255, 255, 255, 0.03)',
+  background: 'var(--bb-surface, rgba(10, 14, 23, 0.5))',
+  border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
   marginBottom: 12,
 }
 
@@ -308,8 +308,8 @@ export function ApiKeyManagement() {
               gap: 8,
               padding: 12,
               borderRadius: 8,
-              background: 'rgba(10, 14, 23, 0.5)',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
+              background: 'var(--bb-surface, rgba(10, 14, 23, 0.5))',
+              border: '1px solid rgba(255, 255, 255, 0.03)',
               marginBottom: 12,
               fontFamily: 'monospace',
               fontSize: 14,

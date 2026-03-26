@@ -1,8 +1,8 @@
 'use client'
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { UserPlus, Search, ChevronRight, Mail, Phone } from 'lucide-react'
-import { SkeletonKanban } from '@/components/ui/skeleton'
+import { Search, ChevronRight, Mail, Phone } from 'lucide-react'
+import { GlassDropdown } from '@/components/ui/glass-dropdown'
 import { EmptyState } from '@/components/ui/empty-state'
 import { useDevOverrides } from '@/lib/dev/dev-overrides'
 import { StatusPill, type StatusVariant } from '@/components/ui/status-pill'
@@ -148,6 +148,20 @@ function ContactsTab() {
       .catch(() => {})
   }, [contacts, loading, useSeeded, loadContacts])
 
+  // Auto-retry on error after 3 seconds
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => {
+        setError(null)
+        setLoading(true)
+        loadContacts()
+          .catch(() => setError('Failed to load contacts'))
+          .finally(() => setLoading(false))
+      }, 3000)
+      return () => clearTimeout(timer)
+    }
+  }, [error, loadContacts])
+
   const filtered = useMemo(() => {
     let result = contacts
     if (search) {
@@ -164,16 +178,51 @@ function ContactsTab() {
     })
   }, [contacts, search, sort])
 
-  if (loading && !useSeeded) return <SkeletonKanban columns={3} />
+  if (loading && !useSeeded) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        {/* Stats skeleton */}
+        <div style={{ display: 'flex', gap: 16, marginBottom: 4 }}>
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} style={{
+              width: 64, height: 20, borderRadius: 8,
+              background: 'linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.03) 75%)',
+              backgroundSize: '200% 100%',
+              animation: 'shimmer 1.5s ease infinite',
+              animationDelay: `${i * 100}ms`,
+            }} />
+          ))}
+        </div>
+        {/* Search skeleton */}
+        <div style={{
+          height: 40, borderRadius: 12,
+          background: 'linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.03) 75%)',
+          backgroundSize: '200% 100%',
+          animation: 'shimmer 1.5s ease infinite',
+        }} />
+        {/* Card skeletons */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} style={{
+              height: 80, borderRadius: 16,
+              background: 'linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.03) 75%)',
+              backgroundSize: '200% 100%',
+              animation: 'shimmer 1.5s ease infinite',
+              animationDelay: `${i * 100}ms`,
+            }} />
+          ))}
+        </div>
+      </div>
+    )
+  }
 
   if (error && contacts.length === 0) {
     return (
-      <div className="bb-tab-error">
-        <p className="bb-tab-error__text">{error}</p>
-        <button className="bb-btn bb-btn--ghost bb-btn--sm" onClick={() => { setError(null); setLoading(true); loadContacts().finally(() => setLoading(false)) }}>
-          Retry
-        </button>
-      </div>
+      <EmptyState
+        title="Couldn't load contacts"
+        description={error}
+        action={{ label: 'Retry', onClick: () => { setError(null); setLoading(true); loadContacts().catch(() => setError('Failed to load contacts')).finally(() => setLoading(false)) } }}
+      />
     )
   }
 
@@ -185,7 +234,6 @@ function ContactsTab() {
   if (contacts.length === 0) {
     return (
       <EmptyState
-        icon={<UserPlus size={40} />}
         title="No contacts yet"
         description="Import or add a contact to get started."
       />
@@ -216,29 +264,28 @@ function ContactsTab() {
               placeholder="Search contacts..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="bb-contacts-search__input"
+              className="bb-contacts-search__input bb-glass-input"
             />
           </div>
-          <select
+          <GlassDropdown
             value={sort}
-            onChange={e => setSort(e.target.value as 'az' | 'za' | 'recent')}
-            className="bb-contacts-sort"
-          >
-            <option value="az">A → Z</option>
-            <option value="za">Z → A</option>
-            <option value="recent">Recent</option>
-          </select>
+            onChange={v => setSort(v as 'az' | 'za' | 'recent')}
+            options={[
+              { value: 'az', label: 'A \u2192 Z' },
+              { value: 'za', label: 'Z \u2192 A' },
+              { value: 'recent', label: 'Recent' },
+            ]}
+          />
         </div>
 
         {/* ── Contact Grid ── */}
         {filtered.length === 0 ? (
           <EmptyState
-            icon={<UserPlus size={40} />}
             title="No matches"
             description={`No contacts matching "${search}"`}
           />
         ) : (
-          <div className="bb-contacts-grid">
+          <div className="bb-contacts-grid bb-stagger">
             {filtered.map((contact, index) => (
               <ContactCard
                 key={String(contact.id ?? `${contact.name ?? 'contact'}-${index}`)}
@@ -297,13 +344,13 @@ function ContactCard({ contact, onOpen }: { contact: Contact; onOpen: () => void
     .slice(0, 2)
 
   const typeColorMap: Record<string, string> = {
-    client: '#3B82F6',
-    lead: '#F59E0B',
-    partner: '#A855F7',
-    vendor: '#10B981',
+    client: '#94A3B8',
+    lead: '#94A3B8',
+    partner: '#94A3B8',
+    vendor: '#94A3B8',
   }
 
-  const typeColor = typeColorMap[contactType] || '#6B7280'
+  const typeColor = typeColorMap[contactType] || '#94A3B8'
 
   return (
     <button
@@ -322,16 +369,16 @@ function ContactCard({ contact, onOpen }: { contact: Contact; onOpen: () => void
         gap: '14px',
         padding: '16px 20px',
         borderRadius: 16,
-        background: 'rgba(15, 20, 30, 0.6)',
-        backdropFilter: 'blur(20px) saturate(1.2)',
-        WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
-        border: '1px solid rgba(255, 255, 255, 0.03)',
-        boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+        background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.6))',
+        backdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
+        WebkitBackdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
+        border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
+        boxShadow: 'var(--card-inset, inset 0 1px 0 rgba(255, 255, 255, 0.05))',
         cursor: canOpen ? 'pointer' : 'default',
         textAlign: 'left' as const,
         transition: 'all 200ms ease-out',
         transform: hovered ? 'translateY(-1px)' : 'translateY(0)',
-        backgroundColor: hovered ? 'rgba(20, 28, 40, 0.7)' : 'rgba(15, 20, 30, 0.6)',
+        backgroundColor: hovered ? 'var(--bb-surface-hover, rgba(20, 28, 40, 0.7))' : 'rgba(15, 20, 30, 0.6)',
       }}
     >
       {contact.avatar_url ? (
@@ -357,7 +404,7 @@ function ContactCard({ contact, onOpen }: { contact: Contact; onOpen: () => void
           fontSize: 14,
           fontWeight: 500,
           flexShrink: 0,
-          background: `rgba(15, 20, 30, 0.4)`,
+          background: 'rgba(255, 255, 255, 0.06)',
           color: 'var(--text-secondary)',
         }}>
           {initials}
@@ -384,8 +431,8 @@ function ContactCard({ contact, onOpen }: { contact: Contact; onOpen: () => void
             fontSize: 14,
             fontWeight: 500,
             textTransform: 'uppercase',
-            background: `${typeColor}1F`,
-            color: typeColor,
+            background: 'rgba(255, 255, 255, 0.06)',
+            color: 'var(--text-secondary, #94A3B8)',
             whiteSpace: 'nowrap',
             flexShrink: 0,
           }}>

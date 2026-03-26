@@ -16,7 +16,7 @@ export function MemoryStatsBar({ stats }: MemoryStatsBarProps) {
       display: 'flex',
       gap: '16px',
       padding: '12px 16px',
-      background: 'rgba(15, 20, 30, 0.25)',
+      background: 'var(--bg-card, rgba(15, 20, 30, 0.25))',
       backdropFilter: 'blur(8px)',
       borderRadius: '12px',
       alignItems: 'center',
@@ -26,7 +26,7 @@ export function MemoryStatsBar({ stats }: MemoryStatsBarProps) {
       <StatPill
         label="Memories"
         value={String(stats.total_memories)}
-        color="#FF7A45"
+        color="#E2E8F0"
       />
 
       {/* Decisions */}

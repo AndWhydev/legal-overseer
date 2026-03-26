@@ -11,7 +11,6 @@ import {
   TrendingUp,
   Cpu,
   AlertTriangle,
-  BarChart3,
 } from 'lucide-react'
 import type { CohortMatrix } from '@/app/api/analytics/cohorts/route'
 import type { TrendsResponse, AnomalySummary } from '@/app/api/analytics/trends/route'
@@ -633,7 +632,6 @@ function AnalyticsTab() {
     return (
       <TabShell>
         <EmptyState
-          icon={<BarChart3 size={40} />}
           title="No analytics data available"
           description={error ? error : 'Connect billing to see MRR metrics, usage, and churn analysis.'}
         />

@@ -108,7 +108,7 @@ async function refreshAccessToken(creds: OutlookCredentials): Promise<OutlookTok
     client_secret: clientSecret,
     refresh_token: creds.refresh_token,
     grant_type: 'refresh_token',
-    scope: 'https://graph.microsoft.com/Mail.Read https://graph.microsoft.com/Mail.Send',
+    scope: 'https://graph.microsoft.com/Mail.Read https://graph.microsoft.com/Mail.Send offline_access',
   })
 
   const res = await fetch(url, {
@@ -189,15 +189,24 @@ export async function resolveAccessToken(
 
       return tokens.access_token
     } catch (err) {
-      logger.warn('Outlook token refresh failed:', err)
+      logger.error('Outlook delegated token refresh failed — re-authorization likely needed:', err)
+      // Don't silently fall through to client_credentials, which can't access /me endpoints.
+      // Re-throw so callers know the refresh token is invalid and re-auth is required.
+      throw new Error(
+        `Outlook token refresh failed: ${err instanceof Error ? err.message : String(err)}. ` +
+        'The refresh token may be expired or revoked. Re-authorize the Outlook connection.'
+      )
     }
   }
 
-  if (creds.access_token && !isTokenExpired(creds.token_expires_at)) {
-    return creds.access_token
+  // No refresh token and no valid access token — try client credentials as last resort.
+  // Note: client_credentials tokens can only access /users/{id}, NOT /me endpoints.
+  if (!creds.refresh_token) {
+    logger.warn('Outlook: no refresh token available, falling back to client_credentials flow')
+    return getClientCredentialsToken(creds)
   }
 
-  return getClientCredentialsToken(creds)
+  throw new Error('Outlook: no valid access token and refresh failed')
 }
 
 // ---------------------------------------------------------------------------

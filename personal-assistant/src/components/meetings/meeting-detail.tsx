@@ -8,11 +8,11 @@ import type { MeetingWithDetails, MeetingActionItem, MeetingFollowUp, Transcript
 const glassCard: React.CSSProperties = {
   padding: '20px',
   borderRadius: 16,
-  background: 'rgba(15, 20, 30, 0.6)',
-  backdropFilter: 'blur(20px) saturate(1.2)',
-  WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
-  border: '1px solid rgba(255, 255, 255, 0.03)',
-  boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+  background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.6))',
+  backdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
+  WebkitBackdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
+  border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
+  boxShadow: 'var(--card-inset, inset 0 1px 0 rgba(255, 255, 255, 0.05))',
 }
 
 const sectionTitle: React.CSSProperties = {
@@ -160,7 +160,7 @@ export function MeetingDetail({ meetingId, onBack }: MeetingDetailProps) {
             padding: '8px 12px',
             borderRadius: 8,
             background: 'transparent',
-            border: '1px solid rgba(255, 255, 255, 0.06)',
+            border: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
             color: 'var(--text-secondary, #94A3B8)',
             fontSize: 14,
             cursor: 'pointer',
@@ -195,9 +195,9 @@ export function MeetingDetail({ meetingId, onBack }: MeetingDetailProps) {
             style={{
               padding: '8px 16px',
               borderRadius: 12,
-              background: processing ? 'rgba(255, 90, 31, 0.5)' : '#FF5A1F',
+              background: processing ? 'rgba(255, 255, 255, 0.2)' : '#F1F5F9',
               border: 'none',
-              color: '#000',
+              color: 'var(--btn-primary-fg, #0a0f1a)',
               fontSize: 14,
               fontWeight: 500,
               cursor: processing ? 'wait' : 'pointer',
@@ -213,7 +213,7 @@ export function MeetingDetail({ meetingId, onBack }: MeetingDetailProps) {
       {meeting.summary && (
         <div style={glassCard}>
           <h3 style={sectionTitle}>
-            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#FF5A1F" strokeWidth={2}>
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#F1F5F9" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
             Summary
@@ -278,15 +278,15 @@ export function MeetingDetail({ meetingId, onBack }: MeetingDetailProps) {
               style={{
                 padding: '4px 12px',
                 borderRadius: 16,
-                background: 'rgba(10, 14, 23, 0.5)',
-                border: '1px solid rgba(255, 255, 255, 0.06)',
+                background: 'var(--bb-surface, rgba(10, 14, 23, 0.5))',
+                border: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
                 fontSize: 14,
                 color: 'var(--text-secondary, #94A3B8)',
               }}
             >
               {p.name}
               {p.role === 'host' && (
-                <span style={{ color: '#FF5A1F', marginLeft: 4 }}>host</span>
+                <span style={{ color: '#F1F5F9', marginLeft: 4 }}>host</span>
               )}
             </span>
           ))}
@@ -295,7 +295,7 @@ export function MeetingDetail({ meetingId, onBack }: MeetingDetailProps) {
 
       {/* Tabs */}
       <div className="flex gap-1" style={{
-        background: 'rgba(10, 14, 23, 0.5)',
+        background: 'var(--bb-surface, rgba(10, 14, 23, 0.5))',
         borderRadius: 12,
         padding: 4,
       }}>
@@ -324,8 +324,8 @@ export function MeetingDetail({ meetingId, onBack }: MeetingDetailProps) {
             {tab.count > 0 && (
               <span style={{
                 fontSize: 14,
-                background: 'rgba(255, 90, 31, 0.15)',
-                color: '#FF7A45',
+                background: 'rgba(255, 255, 255, 0.08)',
+                color: '#E2E8F0',
                 padding: '0px 8px',
                 borderRadius: 8,
                 fontWeight: 500,
@@ -418,7 +418,7 @@ function TranscriptView({ segments }: { segments: TranscriptSegment[] }) {
               <span style={{
                 fontSize: 14,
                 fontWeight: 500,
-                color: '#FF7A45',
+                color: '#E2E8F0',
                 display: 'block',
                 marginBottom: 4,
               }}>
@@ -468,9 +468,9 @@ function ActionItemsView({
             style={{
               padding: '8px 16px',
               borderRadius: 8,
-              background: 'rgba(255, 90, 31, 0.15)',
-              border: '1px solid rgba(255, 90, 31, 0.3)',
-              color: '#FF7A45',
+              background: 'rgba(255, 255, 255, 0.08)',
+              border: '1px solid rgba(255, 255, 255, 0.15)',
+              color: '#E2E8F0',
               fontSize: 14,
               fontWeight: 500,
               cursor: 'pointer',
@@ -488,8 +488,8 @@ function ActionItemsView({
           style={{
             padding: '12px 16px',
             borderRadius: 12,
-            background: 'rgba(10, 14, 23, 0.4)',
-            border: '1px solid rgba(255, 255, 255, 0.03)',
+            background: 'var(--bb-surface, rgba(10, 14, 23, 0.4))',
+            border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
             display: 'flex',
             flexDirection: 'column',
             gap: 8,
@@ -558,7 +558,7 @@ function ActionItemsView({
               color: 'var(--text-dim, #475569)',
               fontStyle: 'italic',
               paddingLeft: 20,
-              borderLeft: '2px solid rgba(255, 90, 31, 0.2)',
+              borderLeft: '2px solid rgba(255, 255, 255, 0.12)',
               marginLeft: 8,
             }}>
               &ldquo;{item.source_quote}&rdquo;
@@ -595,8 +595,8 @@ function FollowUpView({
           style={{
             padding: '16px',
             borderRadius: 12,
-            background: 'rgba(10, 14, 23, 0.4)',
-            border: '1px solid rgba(255, 255, 255, 0.03)',
+            background: 'var(--bb-surface, rgba(10, 14, 23, 0.4))',
+            border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
           }}
         >
           {/* Header */}
@@ -633,7 +633,7 @@ function FollowUpView({
             whiteSpace: 'pre-wrap',
             padding: '12px',
             borderRadius: 8,
-            background: 'rgba(13, 17, 23, 0.6)',
+            background: 'var(--bg-input, rgba(13, 17, 23, 0.6))',
           }}>
             {fu.body}
           </div>

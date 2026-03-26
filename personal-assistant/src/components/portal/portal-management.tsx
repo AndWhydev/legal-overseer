@@ -218,8 +218,8 @@ export function PortalManagement() {
                   style={{
                     padding: '12px 20px',
                     borderRadius: 8,
-                    background: '#FF5A1F',
-                    color: '#FFFFFF',
+                    background: 'var(--btn-primary-bg, #F1F5F9)',
+                    color: 'var(--btn-primary-fg, #0a0f1a)',
                     fontSize: 14,
                     fontWeight: 500,
                     border: 'none',
@@ -423,7 +423,7 @@ export function PortalManagement() {
                   padding: 24,
                   borderRadius: 12,
                   background: branding.background_color || '#FAFAFA',
-                  border: '1px solid rgba(255, 255, 255, 0.06)',
+                  border: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
                 }}
               >
                 <div className="flex items-center gap-3" style={{ marginBottom: 16 }}>
@@ -477,8 +477,8 @@ export function PortalManagement() {
               style={{
                 padding: '12px 24px',
                 borderRadius: 8,
-                background: '#FF5A1F',
-                color: '#FFFFFF',
+                background: 'var(--btn-primary-bg, #F1F5F9)',
+                color: 'var(--btn-primary-fg, #0a0f1a)',
                 fontSize: 14,
                 fontWeight: 500,
                 border: 'none',
@@ -498,11 +498,11 @@ export function PortalManagement() {
 
 const glassCard: React.CSSProperties = {
   borderRadius: 16,
-  background: 'rgba(15, 20, 30, 0.6)',
-  backdropFilter: 'blur(20px) saturate(1.2)',
-  WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
-  border: '1px solid rgba(255, 255, 255, 0.03)',
-  boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+  background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.6))',
+  backdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
+  WebkitBackdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
+  border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
+  boxShadow: 'var(--card-inset, inset 0 1px 0 rgba(255, 255, 255, 0.05))',
   overflow: 'hidden',
 }
 
@@ -518,10 +518,10 @@ const darkInputStyle: React.CSSProperties = {
   width: '100%',
   padding: '12px 16px',
   borderRadius: 8,
-  border: '1px solid rgba(255, 255, 255, 0.06)',
+  border: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
   fontSize: 14,
   color: 'var(--text-primary, #F1F5F9)',
-  background: 'rgba(13, 17, 23, 0.6)',
+  background: 'var(--bg-input, rgba(13, 17, 23, 0.6))',
   outline: 'none',
   transition: 'border-color 150ms',
   fontFamily: 'inherit',

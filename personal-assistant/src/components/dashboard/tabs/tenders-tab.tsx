@@ -12,10 +12,10 @@ import {
   ArrowRight,
   Plus,
   X,
-  Briefcase,
 } from 'lucide-react';
 import { TabShell } from '@/components/ui/tab-shell';
 import { EmptyState } from '@/components/ui/empty-state';
+import { GlassToggle } from '@/components/ui/glass-toggle';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -171,6 +171,7 @@ const glassInput: React.CSSProperties = {
 
 const pillBtn: React.CSSProperties = {
   padding: '8px 16px',
+  minHeight: 40,
   borderRadius: 20,
   background: 'var(--glass-pill-bg)',
   backdropFilter: 'var(--glass-card-blur)',
@@ -184,11 +185,15 @@ const pillBtn: React.CSSProperties = {
 };
 
 const accentBtn: React.CSSProperties = {
-  padding: '8px 16px',
-  borderRadius: 12,
-  background: '#1A1A1B',
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 8,
+  height: 40,
+  padding: '0 20px',
+  borderRadius: 8,
+  background: 'var(--btn-primary-bg, #F1F5F9)',
   border: 'none',
-  color: '#FFFFFF',
+  color: 'var(--btn-primary-fg, #0a0f1a)',
   fontSize: 14,
   fontWeight: 500,
   cursor: 'pointer',
@@ -197,6 +202,7 @@ const accentBtn: React.CSSProperties = {
 
 const ghostBtn: React.CSSProperties = {
   padding: '8px 16px',
+  minHeight: 40,
   borderRadius: 12,
   background: 'transparent',
   border: '1px solid var(--glass-interactive-border)',
@@ -369,68 +375,46 @@ function TendersTab() {
     <TabShell>
       {/* Page Header */}
       <div style={{ marginBottom: 32 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-          <FileSearch size={28} style={{ color: 'var(--bb-purple)' }} />
-          <div>
-            <h1 style={pageTitle}>Tender Hunter</h1>
-            <p style={pageSubtitle}>Find, evaluate, and respond to government tenders</p>
-          </div>
-        </div>
-
         {/* View Toggles + Actions */}
         <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-          <div style={{ display: 'flex', borderRadius: 12, border: '1px solid var(--glass-interactive-border)', overflow: 'hidden' }}>
-            {(['pipeline', 'list', 'profiles'] as const).map((v) => (
-              <button
-                key={v}
-                onClick={() => setView(v)}
-                style={{
-                  padding: '8px 16px',
-                  fontSize: 14,
-                  fontWeight: 500,
-                  background: view === v ? 'var(--glass-hover-bg)' : 'transparent',
-                  color: view === v ? 'var(--text-primary)' : 'var(--text-secondary)',
-                  border: 'none',
-                  cursor: 'pointer',
-                  transition: 'all 200ms',
-                  textTransform: 'capitalize',
-                }}
-                onMouseEnter={(e) => {
-                  if (view !== v) {
-                    (e.target as HTMLElement).style.background = 'var(--glass-interactive-bg)';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (view !== v) {
-                    (e.target as HTMLElement).style.background = 'transparent';
-                  }
-                }}
-              >
-                {v}
-              </button>
-            ))}
-          </div>
+          <GlassToggle
+            options={[
+              { key: 'pipeline' as const, label: 'Pipeline' },
+              { key: 'list' as const, label: 'List' },
+              { key: 'profiles' as const, label: 'Profiles' },
+            ]}
+            value={view}
+            onChange={setView}
+          />
 
           <button
             onClick={handleScan}
             disabled={scanning}
             style={{
-              ...accentBtn,
-              display: 'flex',
+              height: 40,
+              padding: '0 20px',
+              borderRadius: 8,
+              background: 'var(--hover-bg-strong, rgba(255, 255, 255, 0.06))',
+              border: 'none',
+              color: 'var(--text-primary, #F1F5F9)',
+              fontSize: 14,
+              fontWeight: 500,
+              cursor: 'pointer',
+              display: 'inline-flex',
               alignItems: 'center',
               gap: 8,
+              boxShadow: 'var(--glass-pill-inset, none)',
               opacity: scanning ? 0.5 : 1,
+              transition: 'all 200ms',
             }}
             onMouseEnter={(e) => {
               if (!scanning) {
-                (e.target as HTMLElement).style.background = '#FF7A45';
-                (e.target as HTMLElement).style.transform = 'translateY(-1px)';
+                (e.target as HTMLElement).style.background = 'var(--hover-bg, rgba(255, 255, 255, 0.10))';
               }
             }}
             onMouseLeave={(e) => {
               if (!scanning) {
-                (e.target as HTMLElement).style.background = '#1A1A1B';
-                (e.target as HTMLElement).style.transform = 'translateY(0)';
+                (e.target as HTMLElement).style.background = 'var(--hover-bg-strong, rgba(255, 255, 255, 0.06))';
               }
             }}
           >
@@ -458,7 +442,8 @@ function TendersTab() {
                   alignItems: 'center',
                   justifyContent: 'space-between',
                   marginBottom: 16,
-                  background: 'rgba(255, 90, 31, 0.15)',
+                  background: 'var(--hover-bg-strong, rgba(255, 255, 255, 0.08))',
+                  boxShadow: 'var(--glass-pill-inset, none)',
                   color: 'var(--text-primary)',
                   fontWeight: 500,
                 }}
@@ -501,7 +486,7 @@ function TendersTab() {
                     style={{
                       padding: '20px 16px',
                       borderRadius: 12,
-                      border: '1px dashed var(--border-active)',
+                      border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
                       textAlign: 'center',
                       fontSize: 14,
                       color: 'var(--text-dim)',
@@ -522,7 +507,7 @@ function TendersTab() {
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', fontSize: 14 }}>
               <thead>
-                <tr style={{ borderBottom: '1px solid var(--glass-interactive-border)', textAlign: 'left' }}>
+                <tr style={{ borderBottom: '1px solid var(--glass-card-border)', textAlign: 'left' }}>
                   <th style={{ padding: '12px 16px', fontSize: 14, fontWeight: 500, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                     Tender
                   </th>
@@ -554,7 +539,7 @@ function TendersTab() {
                       transition: 'background 200ms',
                     }}
                     onMouseEnter={(e) => {
-                      (e.target as HTMLElement).style.background = 'rgba(255, 255, 255, 0.02)';
+                      (e.target as HTMLElement).style.background = 'var(--hover-bg, rgba(255, 255, 255, 0.02))';
                     }}
                     onMouseLeave={(e) => {
                       (e.target as HTMLElement).style.background = 'transparent';
@@ -595,18 +580,18 @@ function TendersTab() {
                             ...ghostBtn,
                             fontSize: 14,
                             padding: '8px 12px',
-                            background: 'rgba(59, 130, 246, 0.12)',
-                            color: '#3b82f6',
+                            background: 'var(--hover-bg-strong, rgba(255, 255, 255, 0.06))',
+                            color: 'var(--text-secondary, #94A3B8)',
                             opacity: actionLoading === tender.id ? 0.5 : 1,
                           }}
                           onMouseEnter={(e) => {
                             if (actionLoading !== tender.id) {
-                              (e.target as HTMLElement).style.background = 'rgba(59, 130, 246, 0.18)';
+                              (e.target as HTMLElement).style.background = 'var(--hover-bg, rgba(255, 255, 255, 0.10))';
                             }
                           }}
                           onMouseLeave={(e) => {
                             if (actionLoading !== tender.id) {
-                              (e.target as HTMLElement).style.background = 'rgba(59, 130, 246, 0.12)';
+                              (e.target as HTMLElement).style.background = 'var(--hover-bg-strong, rgba(255, 255, 255, 0.06))';
                             }
                           }}
                         >
@@ -619,18 +604,18 @@ function TendersTab() {
                             ...ghostBtn,
                             fontSize: 14,
                             padding: '8px 12px',
-                            background: 'rgba(168, 85, 247, 0.12)',
-                            color: '#a855f7',
+                            background: 'var(--hover-bg-strong, rgba(255, 255, 255, 0.08))',
+                            color: 'var(--text-primary, #F1F5F9)',
                             opacity: actionLoading === tender.id ? 0.5 : 1,
                           }}
                           onMouseEnter={(e) => {
                             if (actionLoading !== tender.id) {
-                              (e.target as HTMLElement).style.background = 'rgba(168, 85, 247, 0.18)';
+                              (e.target as HTMLElement).style.background = 'var(--hover-bg, rgba(255, 255, 255, 0.12))';
                             }
                           }}
                           onMouseLeave={(e) => {
                             if (actionLoading !== tender.id) {
-                              (e.target as HTMLElement).style.background = 'rgba(168, 85, 247, 0.12)';
+                              (e.target as HTMLElement).style.background = 'var(--hover-bg-strong, rgba(255, 255, 255, 0.08))';
                             }
                           }}
                         >
@@ -673,7 +658,6 @@ function TendersTab() {
         <div>
           {profiles.length === 0 ? (
             <EmptyState
-              icon={<Briefcase size={40} />}
               title="No capability profiles yet"
               description="Create profiles to enable smart tender matching and automated evaluations."
             />
@@ -698,7 +682,7 @@ function TendersTab() {
                       <p style={sectionHeader}>Skills</p>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                         {profile.skills.map((skill) => (
-                          <span key={skill} style={coloredBadge('#A78BFA')}>
+                          <span key={skill} style={badge}>
                             {skill}
                           </span>
                         ))}
@@ -711,7 +695,7 @@ function TendersTab() {
                       <p style={sectionHeader}>Certifications</p>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                         {profile.certifications.map((cert) => (
-                          <span key={cert} style={coloredBadge('#22c55e')}>
+                          <span key={cert} style={badge}>
                             {cert}
                           </span>
                         ))}
@@ -779,7 +763,7 @@ function TenderDetailDrawer({ tender, response, onClose, onAction, actionLoading
           background: 'var(--bg-card-solid)',
           backdropFilter: 'var(--glass-card-blur)',
           WebkitBackdropFilter: 'var(--glass-card-blur)',
-          borderLeft: '1px solid var(--glass-interactive-border)',
+          borderLeft: '1px solid var(--glass-card-border)',
           overflowY: 'auto',
           display: 'flex',
           flexDirection: 'column',
@@ -868,16 +852,21 @@ function TenderDetailDrawer({ tender, response, onClose, onAction, actionLoading
               onMouseEnter={() => setHoveredBtn('evaluate')}
               onMouseLeave={() => setHoveredBtn(null)}
               style={{
-                ...accentBtn,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: 8,
                 width: '100%',
                 padding: '12px 16px',
+                borderRadius: 8,
+                background: hoveredBtn === 'evaluate' && actionLoading !== tender.id ? 'var(--hover-bg, rgba(255, 255, 255, 0.10))' : 'var(--hover-bg-strong, rgba(255, 255, 255, 0.06))',
+                border: 'none',
+                color: 'var(--text-primary, #F1F5F9)',
+                fontSize: 14,
+                fontWeight: 500,
+                cursor: 'pointer',
                 opacity: actionLoading === tender.id ? 0.5 : 1,
-                background: hoveredBtn === 'evaluate' && actionLoading !== tender.id ? '#333333' : '#1A1A1B',
-                transform: hoveredBtn === 'evaluate' && actionLoading !== tender.id ? 'translateY(-1px)' : 'translateY(0)',
+                transition: 'all 200ms',
               }}
             >
               <Search size={16} />
@@ -889,16 +878,21 @@ function TenderDetailDrawer({ tender, response, onClose, onAction, actionLoading
               onMouseEnter={() => setHoveredBtn('compliance')}
               onMouseLeave={() => setHoveredBtn(null)}
               style={{
-                ...accentBtn,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: 8,
                 width: '100%',
                 padding: '12px 16px',
-                background: '#eab308',
+                borderRadius: 8,
+                background: hoveredBtn === 'compliance' && actionLoading !== tender.id ? 'var(--hover-bg, rgba(255, 255, 255, 0.10))' : 'var(--hover-bg-strong, rgba(255, 255, 255, 0.06))',
+                border: 'none',
+                color: 'var(--text-primary, #F1F5F9)',
+                fontSize: 14,
+                fontWeight: 500,
+                cursor: 'pointer',
                 opacity: actionLoading === tender.id ? 0.5 : 1,
-                transform: hoveredBtn === 'compliance' && actionLoading !== tender.id ? 'translateY(-1px)' : 'translateY(0)',
+                transition: 'all 200ms',
               }}
             >
               <CheckCircle2 size={16} />
@@ -917,7 +911,8 @@ function TenderDetailDrawer({ tender, response, onClose, onAction, actionLoading
                 gap: 8,
                 width: '100%',
                 padding: '12px 16px',
-                background: '#a855f7',
+                background: 'var(--btn-primary-bg, #F1F5F9)',
+                color: 'var(--btn-primary-fg, #0a0f1a)',
                 opacity: actionLoading === tender.id ? 0.5 : 1,
                 transform: hoveredBtn === 'response' && actionLoading !== tender.id ? 'translateY(-1px)' : 'translateY(0)',
               }}
@@ -938,15 +933,16 @@ function TenderDetailDrawer({ tender, response, onClose, onAction, actionLoading
                 alignItems: 'center',
                 gap: 8,
                 fontSize: 14,
-                color: 'var(--bb-purple)',
+                color: 'var(--text-secondary)',
                 textDecoration: 'none',
                 marginBottom: 24,
+                transition: 'color 200ms',
               }}
               onMouseEnter={(e) => {
-                (e.target as HTMLElement).style.color = 'var(--bb-purple)';
+                (e.target as HTMLElement).style.color = 'var(--text-primary)';
               }}
               onMouseLeave={(e) => {
-                (e.target as HTMLElement).style.color = 'var(--bb-purple)';
+                (e.target as HTMLElement).style.color = 'var(--text-secondary)';
               }}
             >
               View on {sourceLabel(tender.source)}
@@ -961,7 +957,7 @@ function TenderDetailDrawer({ tender, response, onClose, onAction, actionLoading
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {response.content.sections.map((section, i) => (
                   <div key={i} style={{ ...glassCard, padding: '16px' }}>
-                    <h4 style={{ fontSize: 14, fontWeight: 500, color: 'var(--bb-purple)', marginBottom: 8 }}>
+                    <h4 style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)', marginBottom: 8 }}>
                       {section.title}
                     </h4>
                     <p style={{ fontSize: 14, color: 'var(--text-secondary)', whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>

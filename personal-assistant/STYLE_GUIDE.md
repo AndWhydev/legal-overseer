@@ -55,10 +55,11 @@ Prefer outlined style (lucide-react default).
 ## CRITICAL RULES
 
 1. **INLINE React.CSSProperties ONLY** — No Tailwind utility classes for visual design. Tailwind is OK for layout (flex, grid) but all colors, backgrounds, borders, shadows, typography MUST use inline styles.
-2. **Monochrome palette** — Use whites, grays, and the dark navy background. Orange accent sparingly for CTAs only.
-3. **No fluoro colors** — Avoid bright greens, pinks, cyans unless absolutely required for UX (e.g., status indicators). Even status colors should be muted/desaturated.
-4. **Noise texture over glows** — Whenever there is glow or color, apply SVG noise overlay with `mix-blend-mode: overlay`.
-5. **Premium & minimalistic** — Less is more. Generous whitespace. No visual clutter.
+2. **Pure monochrome palette** — Black, white, and grays ONLY. No orange, no blue, no purple, no cyan. The accent is white-on-dark. Status colors (green/yellow/red) are the sole exception and ONLY for semantic indicators at 12% opacity backgrounds.
+3. **Import design tokens** — Use `import { S, C } from '@/lib/styles/design-tokens'` for all glass patterns, card surfaces, buttons, badges, and typography. Never hardcode rgba() values or duplicate glass patterns.
+4. **Glass = top-level surfaces only** — Glassmorphic effects (backdrop-filter, inset shadow) apply ONLY to elements that float directly on the page background: cards, modals, dropdown menus, standalone pills/buttons, the chat input container. Children INSIDE a glass surface (inputs, textareas, inline buttons, tags) use flat styling with subtle stroke + dim fill — no blur, no inset. The sidebar and pop-out rail are minimal/flat, not glassmorphic. Test: "Does this element sit on the page, or inside something that already has glass?" If inside → flat with stroke.
+5. **Noise texture over glows** — Whenever there is glow or color, apply SVG noise overlay with `mix-blend-mode: overlay`.
+6. **Premium & minimalistic** — Less is more. Generous whitespace. No visual clutter.
 6. **Preserve all functionality** — Only change styling, not behavior. Keep all hooks, state, API calls, data flow intact.
 7. **Do NOT import shadcn components** (Card, Button, Badge, Input, Tabs, etc.) — Replace with styled `<div>`, `<button>`, `<span>`, `<input>` elements using inline styles.
 8. **Keep TabShell wrapper** — Every tab must stay wrapped in `<TabShell>`.
@@ -69,55 +70,69 @@ Prefer outlined style (lucide-react default).
 fontSize: 16, padding: 16, borderRadius: 12, icon: 24px, button height: 40px, fontWeight: 400
 ```
 
-## COLOR TOKENS (use as CSS values in inline styles)
+## COLOR TOKENS — MONOCHROME ONLY
+
+**Import instead of hardcoding:** `import { S, C } from '@/lib/styles/design-tokens'`
 
 ```
-// Backgrounds
-'#0a0f1a'                              // page background (already set by layout)
-'rgba(15, 20, 30, 0.6)'               // glass card
-'rgba(12, 16, 24, 0.85)'              // heavy glass (modals, dropdowns)
-'rgba(10, 14, 23, 0.5)'               // list row
-'rgba(25, 35, 50, 0.8)'               // elevated surface
-'rgba(13, 17, 23, 0.6)'               // input background
+// Backgrounds (C.bgCard, C.bgElevated, etc.)
+C.bgPage         '#0a0f1a'                      // page background
+C.bgCard         'rgba(15, 20, 30, 0.6)'        // standard glass card
+C.bgCardLight    'rgba(15, 20, 30, 0.35)'       // lighter card
+C.bgCardHeavy    'rgba(12, 16, 24, 0.85)'       // heavy glass (modals)
+C.bgElevated     'rgba(25, 35, 50, 0.8)'        // elevated surface
+C.bgInput        'rgba(13, 17, 23, 0.6)'        // input background
+C.bgListRow      'rgba(10, 14, 23, 0.5)'        // list row
+C.bgHover        'rgba(255, 255, 255, 0.04)'    // hover state
+C.bgHoverStrong  'rgba(255, 255, 255, 0.08)'    // strong hover
 
-// Text
-'var(--text-primary, #F1F5F9)'         // primary text
-'var(--text-secondary, #94A3B8)'       // secondary/label text
-'var(--text-dim, #475569)'             // dim/muted text
-'rgba(255, 255, 255, 0.5)'            // placeholder text
+// Text (C.textPrimary, C.textSecondary, etc.)
+C.textPrimary    'var(--text-primary, #F1F5F9)'  // primary text (white)
+C.textSecondary  'var(--text-secondary, #94A3B8)' // secondary (gray)
+C.textDim        'var(--text-dim, #475569)'      // dim (dark gray)
 
-// Borders
-'1px solid rgba(255, 255, 255, 0.03)'  // subtle card border
-'1px solid rgba(255, 255, 255, 0.06)'  // slightly visible border
-'1px solid rgba(255, 255, 255, 0.1)'   // hover/active border
-'1px solid rgba(255, 255, 255, 0.2)'   // focus border
+// Borders (C.borderSubtle, C.borderVisible, etc.)
+C.borderSubtle   'rgba(255, 255, 255, 0.03)'    // subtle
+C.borderVisible  'rgba(255, 255, 255, 0.06)'    // visible
+C.borderHover    'rgba(255, 255, 255, 0.1)'     // hover/active
+C.borderFocus    'rgba(255, 255, 255, 0.2)'     // focus
 
-// Accent (use sparingly)
-'#FF5A1F'                              // orange accent (CTAs, active states)
-'rgba(255, 90, 31, 0.15)'             // orange tint background
-'rgba(255, 90, 31, 0.3)'              // orange border
+// Accent: WHITE is the accent on dark. No orange, no blue.
+// Primary CTA: white bg, dark text. Ghost: transparent + border.
 
-// Status colors (muted versions)
-'#22c55e'                              // success green
-'rgba(34, 197, 94, 0.12)'             // success bg
-'#eab308'                              // warning yellow
-'rgba(234, 179, 8, 0.12)'             // warning bg
-'#ef4444'                              // error red
-'rgba(239, 68, 68, 0.12)'             // error bg
+// Status (ONLY exception to monochrome — semantic meaning only)
+C.statusSuccess    '#22c55e'                     // green
+C.statusSuccessBg  'rgba(34, 197, 94, 0.12)'
+C.statusWarning    '#eab308'                     // yellow
+C.statusWarningBg  'rgba(234, 179, 8, 0.12)'
+C.statusError      '#ef4444'                     // red
+C.statusErrorBg    'rgba(239, 68, 68, 0.12)'
 ```
 
-## GLASS CARD PATTERN (copy-paste this)
+## GLASS CARD PATTERN — use `S.card` from design-tokens
 
 ```typescript
-const glassCard: React.CSSProperties = {
-  padding: 16,
-  borderRadius: 16,
-  background: 'rgba(15, 20, 30, 0.6)',
-  backdropFilter: 'blur(20px) saturate(1.2)',
-  WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
-  border: '1px solid rgba(255, 255, 255, 0.03)',
-  boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
-}
+import { S, C } from '@/lib/styles/design-tokens'
+
+// Standard card:
+<div style={S.card}>...</div>
+
+// Light card (nested/secondary):
+<div style={S.cardLight}>...</div>
+
+// Heavy card (modals/dropdowns):
+<div style={S.cardHeavy}>...</div>
+
+// Flush card (no padding, custom layout):
+<div style={S.cardFlush}>...</div>
+
+// Card with header:
+<div style={S.cardFlush}>
+  <div style={S.cardHeader}>
+    <div style={S.cardTitle}>Title</div>
+  </div>
+  <div style={S.cardBody}>Content</div>
+</div>
 ```
 
 ## GLASS BUTTON PATTERNS
@@ -141,14 +156,15 @@ const ghostBtn: React.CSSProperties = {
 }
 // On hover: background: 'rgba(255, 255, 255, 0.04)', borderColor: 'rgba(255, 255, 255, 0.1)'
 
-// Accent button (primary CTA) — 40px tall
-const accentBtn: React.CSSProperties = {
+// Primary button (monochrome accent — white on dark) — 40px tall
+// Use: { ...S.button, ...S.buttonPrimary }
+const primaryBtn: React.CSSProperties = {
   height: 40,
   padding: '0 20px',
   borderRadius: 8,
-  background: '#FF5A1F',
+  background: '#F1F5F9',
   border: 'none',
-  color: '#000',
+  color: '#0a0f1a',
   fontSize: 14,
   fontWeight: 500,
   cursor: 'pointer',
@@ -157,7 +173,7 @@ const accentBtn: React.CSSProperties = {
   alignItems: 'center',
   gap: 8,
 }
-// On hover: background: '#FF7A45', transform: 'translateY(-1px)'
+// On hover: background: '#E2E8F0', transform: 'translateY(-1px)'
 
 // Pill/chip button (filter pills, tags) — 40px tall
 const pillBtn: React.CSSProperties = {
@@ -177,7 +193,7 @@ const pillBtn: React.CSSProperties = {
   alignItems: 'center',
   gap: 8,
 }
-// Active state: color: 'var(--text-primary)', background: 'rgba(255, 90, 31, 0.15)'
+// Active state: color: 'var(--text-primary)', background: 'rgba(255, 255, 255, 0.08)'
 ```
 
 ## INPUT PATTERN

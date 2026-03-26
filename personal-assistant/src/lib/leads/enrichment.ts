@@ -1,6 +1,6 @@
 /**
  * Website enrichment: crawl, CMS detection, tracking detection, booking detection, contact extraction.
- * Ported from PCC Python: prospect/enrichment/
+ * Ported from Lead Swarm: prospect/enrichment/
  */
 import type { WebsiteSignals } from './types'
 import {

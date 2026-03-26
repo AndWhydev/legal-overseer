@@ -47,8 +47,8 @@ const styles = {
     cursor: 'pointer',
     border: 'none',
     transition: 'all 0.15s ease',
-    background: active ? 'rgba(255, 90, 31, 0.15)' : 'rgba(255, 255, 255, 0.04)',
-    color: active ? '#FF7A45' : 'rgba(255, 255, 255, 0.5)',
+    background: active ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.04)',
+    color: active ? '#F1F5F9' : 'rgba(255, 255, 255, 0.5)',
   }),
   runsList: {
     display: 'flex',

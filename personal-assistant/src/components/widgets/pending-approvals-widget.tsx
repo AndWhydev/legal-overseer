@@ -45,7 +45,7 @@ export function PendingApprovalsWidget() {
     >
       <div className="space-y-4">
         {approvals.length === 0 ? (
-          <EmptyState icon={<ShieldCheck size={32} />} title="No pending approvals" description="All actions have been reviewed." />
+          <EmptyState title="No pending approvals" description="All actions have been reviewed." />
         ) : (
           approvals.map(app => (
             <div key={app.id as string} className="flex items-center justify-between p-3 rounded-md bg-[var(--bg-elevated)] border border-[var(--border-subtle)]">

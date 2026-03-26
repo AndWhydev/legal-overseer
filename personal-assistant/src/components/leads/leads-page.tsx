@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { Handshake, Mail } from 'lucide-react'
+import { GlassToggle } from '@/components/ui/glass-toggle'
 import { useLeads } from '@/hooks/use-leads'
 import { useLeadsAnalytics } from '@/hooks/use-leads-analytics'
 import { LeadsToolbar } from './leads-toolbar'
@@ -11,6 +12,7 @@ import { LeadDetailDrawer } from './lead-detail-drawer'
 import { ProspectDiscoveryPanel } from './prospect-discovery-panel'
 import { OutreachDashboard } from './outreach-dashboard'
 import { CompletionAnimation } from '../dashboard/completion-animation'
+import { EmptyState } from '@/components/ui/empty-state'
 import type { SmartView } from '@/lib/leads/types'
 
 // ─── Smart Views (Lead Swarm discoveries moved to source filter) ────────────
@@ -60,17 +62,16 @@ const skeletonSearch: React.CSSProperties = {
 const skeletonCard: React.CSSProperties = {
   height: 120,
   borderRadius: 12,
-  background: 'rgba(15, 20, 30, 0.6)',
+  background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.6))',
   animation: 'pulse 1.5s ease-in-out infinite',
 }
 
-const errorBanner: React.CSSProperties = {
-  padding: '12px 16px',
+const shimmerCard: React.CSSProperties = {
+  height: 120,
   borderRadius: 12,
-  border: '1px solid rgba(239, 68, 68, 0.3)',
-  background: 'rgba(239, 68, 68, 0.12)',
-  fontSize: 14,
-  color: '#ef4444',
+  background: 'linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.03) 75%)',
+  backgroundSize: '200% 100%',
+  animation: 'shimmer 1.5s ease infinite',
 }
 
 const emptyContainer: React.CSSProperties = {
@@ -89,9 +90,9 @@ const emptyIconWrap: React.CSSProperties = {
   justifyContent: 'center',
   width: 64,
   height: 64,
-  borderRadius: 20,
+  borderRadius: 24,
   background: 'rgba(255, 255, 255, 0.04)',
-  border: '1px solid rgba(255, 255, 255, 0.06)',
+  border: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
   color: 'var(--text-dim, #475569)',
 }
 
@@ -117,8 +118,8 @@ const discoverBtn: React.CSSProperties = {
   gap: 8,
   borderRadius: 8,
   border: 'none',
-  background: '#FF5A1F',
-  color: '#000',
+  background: 'var(--btn-primary-bg, #F1F5F9)',
+  color: 'var(--btn-primary-fg, #0a0f1a)',
   fontSize: 14,
   fontWeight: 500,
   cursor: 'pointer',
@@ -137,26 +138,20 @@ const emptyFilterMsg: React.CSSProperties = {
 const contentArea: React.CSSProperties = {
   flex: 1,
   minHeight: 0,
+  overflowY: 'auto',
 }
 
-const urgencyDot: React.CSSProperties = {
-  width: 6,
-  height: 6,
-  borderRadius: 9999,
-  background: '#FF5A1F',
-  display: 'inline-block',
-  marginRight: 4,
-}
 
 // ─── Component ──────────────────────────────────────────────────────────────
 export function LeadsPage() {
   const {
-    leads, grouped, isLoading, error,
+    leads, allLeads, grouped, isLoading, error,
     selectedLead, setSelectedLeadId,
     viewMode, setViewMode,
     filters, setFilters,
     moveLead, advanceLead, updateLead,
     movingLeadId, searchQuery, setSearchQuery,
+    refresh,
   } = useLeads()
 
   const { analytics } = useLeadsAnalytics()
@@ -164,20 +159,26 @@ export function LeadsPage() {
   const [activeTab, setActiveTab] = useState<'leads' | 'campaigns'>('leads')
   const [winTrigger, setWinTrigger] = useState(false)
   const [winPos, setWinPos] = useState({ x: 0, y: 0 })
+  const [viewLoading, setViewLoading] = useState(false)
   const searchInputRef = useRef<HTMLInputElement | null>(null)
+  const prevViewRef = useRef<SmartView | undefined>(undefined)
   const activeView = filters.smartView ?? 'all'
 
+  // Smart view changes are now instant (client-side filtering in useLeads)
+  // No artificial skeleton delay needed
+
+  // Counts always computed from full dataset, not filtered view
   const counts = useMemo(() => {
     const oneDayAgo = Date.now() - 86_400_000
     const sevenDaysAgo = Date.now() - 7 * 86_400_000
-    const active = leads.filter(l => l.status !== 'converted' && l.status !== 'lost')
+    const active = allLeads.filter(l => l.status !== 'converted' && l.status !== 'lost')
     return {
-      all: leads.length,
+      all: allLeads.length,
       hot_followup: active.filter(l => l.score === 'hot' && l.last_activity_at && new Date(l.last_activity_at).getTime() < oneDayAgo).length,
       stale: active.filter(l => l.last_activity_at && new Date(l.last_activity_at).getTime() < sevenDaysAgo).length,
       high_value: active.filter(l => (l.estimated_value ?? 0) > 10000).length,
     } as Record<SmartView, number>
-  }, [leads])
+  }, [allLeads])
 
   const handleAdvance = useCallback(async (leadId: string, event?: React.MouseEvent) => {
     const lead = leads.find(l => l.id === leadId)
@@ -223,7 +224,13 @@ export function LeadsPage() {
   }
 
   if (error) {
-    return <div style={errorBanner}>{error}</div>
+    return (
+      <EmptyState
+        title="Something went wrong"
+        description={error}
+        action={{ label: 'Retry', onClick: () => refresh() }}
+      />
+    )
   }
 
   const empty = leads.length === 0
@@ -232,45 +239,15 @@ export function LeadsPage() {
   return (
     <div style={pageContainer}>
       {/* Main Tabs */}
-      <div style={{ display: 'flex', gap: 8, paddingBottom: 12, borderBottom: '1px solid rgba(255, 255, 255, 0.06)' }}>
-        <button
-          onClick={() => setActiveTab('leads')}
-          style={{
-            padding: '8px 16px',
-            border: 'none',
-            background: activeTab === 'leads' ? 'rgba(255, 90, 31, 0.15)' : 'transparent',
-            color: activeTab === 'leads' ? '#FF5A1F' : '#94a3b8',
-            cursor: 'pointer',
-            borderRadius: 6,
-            fontSize: 14,
-            fontWeight: 500,
-            transition: 'all 200ms',
-          }}
-        >
-          <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <Handshake size={16} />
-            Leads Pipeline
-          </span>
-        </button>
-        <button
-          onClick={() => setActiveTab('campaigns')}
-          style={{
-            padding: '8px 16px',
-            border: 'none',
-            background: activeTab === 'campaigns' ? 'rgba(255, 90, 31, 0.15)' : 'transparent',
-            color: activeTab === 'campaigns' ? '#FF5A1F' : '#94a3b8',
-            cursor: 'pointer',
-            borderRadius: 6,
-            fontSize: 14,
-            fontWeight: 500,
-            transition: 'all 200ms',
-          }}
-        >
-          <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <Mail size={16} />
-            Email Campaigns
-          </span>
-        </button>
+      <div style={{ paddingBottom: 12, borderBottom: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))' }}>
+        <GlassToggle
+          options={[
+            { key: 'leads' as const, label: 'Leads Pipeline', icon: <Handshake size={16} /> },
+            { key: 'campaigns' as const, label: 'Email Campaigns', icon: <Mail size={16} /> },
+          ]}
+          value={activeTab}
+          onChange={setActiveTab}
+        />
       </div>
 
       {/* Leads Tab */}
@@ -299,25 +276,26 @@ export function LeadsPage() {
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: 8,
-                    transition: 'all 200ms',
-                    background: isActive ? 'rgba(255, 90, 31, 0.15)' : 'rgba(10, 14, 23, 0.42)',
+                    transition: 'background 200ms cubic-bezier(0.16, 1, 0.3, 1), color 200ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 200ms, transform 200ms cubic-bezier(0.16, 1, 0.3, 1)',
+                    transform: isActive ? 'scale(1.02)' : 'scale(1)',
+                    background: isActive ? 'var(--pill-active-bg, rgba(255, 255, 255, 0.1))' : 'var(--pill-inactive-bg, rgba(10, 14, 23, 0.42))',
                     backdropFilter: 'blur(22px) saturate(1.2)',
                     WebkitBackdropFilter: 'blur(22px) saturate(1.2)',
-                    boxShadow: isActive ? 'none' : 'inset 0 1px 0 rgba(255, 255, 255, 0.06)',
+                    boxShadow: isActive
+                      ? 'var(--toggle-active-shadow, none)'
+                      : 'inset 0 1px 0 rgba(255, 255, 255, 0.06)',
                     color: isActive ? 'var(--text-primary, #F1F5F9)' : 'var(--text-secondary, #94A3B8)',
                   }}
                 >
-                  {sv.key === 'hot_followup' && count > 0 && (
-                    <span style={urgencyDot} aria-hidden="true" />
-                  )}
                   {sv.label}
                   {count > 0 && (
                     <span style={{
-                      background: 'rgba(255, 255, 255, 0.1)',
-                      borderRadius: 8,
-                      padding: '2px 8px',
                       fontSize: 14,
+                      fontWeight: 400,
                       fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
+                      color: isActive
+                        ? 'var(--text-secondary, #94A3B8)'
+                        : 'var(--text-dim, #475569)',
                     }}>
                       {count}
                     </span>
@@ -350,8 +328,8 @@ export function LeadsPage() {
                 <button
                   onClick={() => setDiscoveryOpen(true)}
                   style={discoverBtn}
-                  onMouseEnter={e => { e.currentTarget.style.background = '#FF7A45'; e.currentTarget.style.transform = 'translateY(-1px)' }}
-                  onMouseLeave={e => { e.currentTarget.style.background = '#FF5A1F'; e.currentTarget.style.transform = 'translateY(0)' }}
+                  onMouseEnter={e => { e.currentTarget.style.background = 'var(--btn-primary-hover, #E2E8F0)'; e.currentTarget.style.transform = 'translateY(-1px)' }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'var(--btn-primary-bg, #F1F5F9)'; e.currentTarget.style.transform = 'translateY(0)' }}
                 >
                   Discover Prospects
                 </button>

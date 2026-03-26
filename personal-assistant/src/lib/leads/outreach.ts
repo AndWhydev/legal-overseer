@@ -1,6 +1,6 @@
 /**
  * Outreach intelligence: opportunity notes, angles, priority services.
- * Ported from PCC Python: prospect/scoring/notes.py
+ * Ported from Lead Swarm: prospect/scoring/notes.py
  */
 import type { ProspectData } from './scoring'
 import { DIY_CMS } from './constants'

@@ -20,8 +20,8 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import {
-  ReceiptText, Search, Download, ChevronDown, Send, CheckCircle2,
-  Ban, Users, LayoutList, Eye, EyeOff, Plus,
+  Search, Download, ChevronDown, Send, CheckCircle2,
+  Ban, Users, LayoutList, Eye, EyeOff, Plus, X, Loader2,
 } from 'lucide-react'
 import { EmptyState } from '@/components/ui/empty-state'
 import { useToast } from '@/components/ui/toast'
@@ -300,20 +300,20 @@ function resolveTargetSection(
 // ─── Avatar Colors ──────────────────────────────────────────────────────────
 
 const AVATAR_PAIRS = [
-  ['#3B82F6', '#8B5CF6'],
-  ['#22C55E', '#06B6D4'],
-  ['#F59E0B', '#FF5A1F'],
-  ['#EC4899', '#A855F7'],
-  ['#14B8A6', '#3B82F6'],
+  ['#64748B', '#94A3B8'],
+  ['#94A3B8', '#CBD5E1'],
+  ['#475569', '#64748B'],
+  ['#334155', '#475569'],
+  ['#CBD5E1', 'rgba(255, 255, 255, 0.08)'],
 ]
 
 const STATUS_COLORS: Record<InvoiceStatus, { dot: string; bg: string; label: string }> = {
-  draft:     { dot: 'var(--text-dim)', bg: 'var(--status-neutral-bg)', label: 'Draft' },
-  sent:      { dot: '#38BDF8', bg: 'rgba(56, 189, 248, 0.06)',  label: 'Sent' },
-  viewed:    { dot: '#818CF8', bg: 'rgba(129, 140, 248, 0.06)', label: 'Viewed' },
-  overdue:   { dot: '#EF4444', bg: 'rgba(239, 68, 68, 0.08)',   label: 'Overdue' },
-  paid:      { dot: '#22C55E', bg: 'rgba(34, 197, 94, 0.06)',   label: 'Paid' },
-  cancelled: { dot: '#71717A', bg: 'rgba(113, 113, 122, 0.04)', label: 'Cancelled' },
+  draft:     { dot: '#94A3B8', bg: 'rgba(148, 163, 184, 0.12)', label: 'Draft' },
+  sent:      { dot: '#F1F5F9', bg: 'rgba(255, 255, 255, 0.08)', label: 'Sent' },
+  viewed:    { dot: '#eab308', bg: 'rgba(234, 179, 8, 0.12)',   label: 'Viewed' },
+  overdue:   { dot: '#ef4444', bg: 'rgba(239, 68, 68, 0.12)',   label: 'Overdue' },
+  paid:      { dot: '#22c55e', bg: 'rgba(34, 197, 94, 0.12)',   label: 'Paid' },
+  cancelled: { dot: '#475569', bg: 'rgba(71, 85, 105, 0.12)',   label: 'Cancelled' },
 }
 
 // ─── Client-Side Invoice PDF Preview ────────────────────────────────────────
@@ -716,9 +716,9 @@ function InvoiceDetailPanel({
           style={{
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             padding: '12px 16px', borderRadius: 12, cursor: 'pointer',
-            background: showPdf ? 'rgba(59, 130, 246, 0.15)' : 'var(--glass-interactive-bg)',
-            border: 'none',
-            color: showPdf ? 'var(--bb-blue)' : 'var(--text-dim)', fontSize: 14, fontWeight: 500,
+            background: showPdf ? 'rgba(255, 255, 255, 0.08)' : 'var(--glass-interactive-bg)',
+            border: showPdf ? '1px solid rgba(255, 255, 255, 0.03)' : 'none',
+            color: showPdf ? 'var(--text-primary, #F1F5F9)' : 'var(--text-dim)', fontSize: 14, fontWeight: 500,
             transition: `all 100ms ${SNAP}`,
           }}
         >
@@ -1254,6 +1254,16 @@ export function InvoiceList() {
   const draggingRef = useRef(false)
   const seed = useSeedData()
 
+  // ─── Create Invoice Modal State ──────────────────────────────────────────
+  const [showCreateModal, setShowCreateModal] = useState(false)
+  const [createForm, setCreateForm] = useState({
+    client_name: '',
+    description: '',
+    amount: '',
+    due_date: '',
+  })
+  const [isCreating, setIsCreating] = useState(false)
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
   )
@@ -1350,6 +1360,62 @@ export function InvoiceList() {
     }
   }
 
+  async function handleCreateInvoice() {
+    const name = createForm.client_name.trim()
+    const amountStr = createForm.amount.trim()
+    if (!name) { toast('error', 'Client name is required'); return }
+    if (!amountStr || isNaN(Number(amountStr)) || Number(amountStr) <= 0) {
+      toast('error', 'Enter a valid amount'); return
+    }
+
+    setIsCreating(true)
+    try {
+      const dueDateStr = createForm.due_date || undefined
+      const termsDays = dueDateStr
+        ? Math.max(1, Math.ceil((new Date(dueDateStr).getTime() - Date.now()) / 86_400_000))
+        : 14
+
+      const body: Record<string, unknown> = {
+        contact_name: name,
+        amount: Number(amountStr),
+        currency: 'AUD',
+        terms_days: termsDays,
+        line_items: [{
+          description: createForm.description.trim() || 'Services rendered',
+          quantity: 1,
+          unit_price: Number(amountStr),
+          total: Number(amountStr),
+        }],
+      }
+
+      const response = await fetch('/api/agent/invoices', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+
+      const payload = (await response.json().catch(() => ({}))) as {
+        queued?: boolean; approvalId?: string; error?: string
+      }
+
+      if (!response.ok) throw new Error(payload.error ?? 'Failed to create invoice')
+
+      if (payload.queued) {
+        toast('success', 'Invoice queued for approval.')
+      } else {
+        toast('success', 'Invoice created.')
+      }
+
+      setShowCreateModal(false)
+      setCreateForm({ client_name: '', description: '', amount: '', due_date: '' })
+      await loadInvoices()
+    } catch (err) {
+      toast('error', err instanceof Error ? err.message : 'Failed to create invoice')
+    } finally {
+      setIsCreating(false)
+    }
+  }
+
   function handleToggleExpand(id: string) {
     setExpandedId(prev => prev === id ? null : id)
   }
@@ -1429,14 +1495,15 @@ export function InvoiceList() {
   // Keyboard navigation
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape' && expandedId) {
+      if (e.key === 'Escape') {
         e.preventDefault()
-        setExpandedId(null)
+        if (showCreateModal) setShowCreateModal(false)
+        else if (expandedId) setExpandedId(null)
       }
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [expandedId])
+  }, [expandedId, showCreateModal])
 
   if (isLoading) return <InvoiceSkeleton />
 
@@ -1479,17 +1546,14 @@ export function InvoiceList() {
               }}
             />
             <input
+              className="bb-glass-input"
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Search invoices..."
               style={{
                 width: '100%', padding: '12px 16px 12px 36px', borderRadius: 12,
-                border: 'none', background: 'var(--glass-interactive-bg)',
-                color: 'var(--text-primary)', fontSize: 14, outline: 'none',
-                transition: `background 80ms ${SNAP}`,
+                fontSize: 14, transition: `background 80ms ${SNAP}`,
               }}
-              onFocus={e => { e.currentTarget.style.background = 'var(--glass-hover-bg)' }}
-              onBlur={e => { e.currentTarget.style.background = 'var(--glass-interactive-bg)' }}
             />
           </div>
 
@@ -1508,8 +1572,8 @@ export function InvoiceList() {
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               width: 36, height: 36, borderRadius: 12, cursor: 'pointer',
               border: 'none',
-              background: groupMode === 'client' ? 'rgba(59, 130, 246, 0.12)' : 'var(--glass-interactive-bg)',
-              color: groupMode === 'client' ? 'var(--bb-blue)' : 'var(--text-dim)',
+              background: groupMode === 'client' ? 'rgba(255, 255, 255, 0.08)' : 'var(--glass-interactive-bg)',
+              color: groupMode === 'client' ? 'var(--text-primary, #F1F5F9)' : 'var(--text-dim)',
               transition: `all 80ms ${SNAP}`,
             }}
           >
@@ -1539,20 +1603,20 @@ export function InvoiceList() {
 
           {/* New Invoice CTA */}
           <button
-            onClick={() => toast('info', 'New invoice creation coming soon. Use the chat agent: "Send invoice to X for $Y"')}
+            onClick={() => setShowCreateModal(true)}
             title="New invoice"
             style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
               height: 36, padding: '0 16px', borderRadius: 12, cursor: 'pointer',
-              border: 'none', background: 'rgba(59, 130, 246, 0.12)',
-              color: 'var(--bb-blue)', fontSize: 14, fontWeight: 500,
+              border: 'none', background: 'var(--btn-primary-bg, #F1F5F9)',
+              color: 'var(--btn-primary-fg, #0a0f1a)', fontSize: 14, fontWeight: 500,
               transition: `all 80ms ${SNAP}`, whiteSpace: 'nowrap',
             }}
             onMouseEnter={e => {
-              e.currentTarget.style.background = 'rgba(59, 130, 246, 0.2)'
+              e.currentTarget.style.background = 'var(--btn-primary-hover, #E2E8F0)'
             }}
             onMouseLeave={e => {
-              e.currentTarget.style.background = 'rgba(59, 130, 246, 0.12)'
+              e.currentTarget.style.background = 'var(--btn-primary-bg, #F1F5F9)'
             }}
           >
             <Plus size={14} /> New
@@ -1562,7 +1626,6 @@ export function InvoiceList() {
         {/* Content */}
         {filtered.length === 0 ? (
           <EmptyState
-            icon={<ReceiptText size={40} />}
             title={search ? 'No matching invoices' : 'No invoices yet'}
             description={search ? 'Try a different search term.' : 'Create your first invoice via chat: "Send invoice to X for $Y"'}
           />
@@ -1609,6 +1672,217 @@ export function InvoiceList() {
       }}>
         {activeInvoice ? <DragGhost invoice={activeInvoice} /> : null}
       </DragOverlay>
+
+      {/* ─── Create Invoice Modal ─────────────────────────────────────────── */}
+      {showCreateModal && (
+        <div
+          onClick={e => { if (e.target === e.currentTarget) setShowCreateModal(false) }}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 50,
+            background: 'rgba(0, 0, 0, 0.6)',
+            backdropFilter: 'blur(2px)',
+            display: 'flex', justifyContent: 'center', alignItems: 'center',
+          }}
+        >
+          <div style={{
+            position: 'relative', maxWidth: 480, width: '90%',
+            zIndex: 51,
+            background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.6))',
+            backdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
+            WebkitBackdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
+            border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
+            boxShadow: 'var(--card-inset, inset 0 1px 0 rgba(255, 255, 255, 0.05)), var(--card-shadow, 0 24px 48px rgba(0, 0, 0, 0.4))',
+            borderRadius: 24,
+            display: 'flex', flexDirection: 'column', overflow: 'hidden',
+            animation: 'bb-inv-modal-enter 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)',
+          }}>
+            <style>{`
+              @keyframes bb-inv-modal-enter {
+                from { opacity: 0; transform: scale(0.95) translateY(8px); }
+                to { opacity: 1; transform: scale(1) translateY(0); }
+              }
+            `}</style>
+
+            {/* Header */}
+            <div style={{
+              padding: '20px 24px',
+              borderBottom: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            }}>
+              <h3 style={{
+                fontSize: 16, fontWeight: 500, margin: 0,
+                color: 'var(--text-primary, #F1F5F9)',
+                letterSpacing: '-0.01em',
+              }}>
+                New Invoice
+              </h3>
+              <button
+                onClick={() => setShowCreateModal(false)}
+                style={{
+                  width: 32, height: 32, borderRadius: 8, border: 'none',
+                  background: 'var(--hover-bg, rgba(255, 255, 255, 0.04))',
+                  color: 'var(--text-dim, #475569)',
+                  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {/* Client Name */}
+              <div>
+                <label style={{
+                  fontSize: 14, fontWeight: 500, color: 'var(--text-dim, #475569)',
+                  display: 'block', marginBottom: 6,
+                }}>
+                  Client Name
+                </label>
+                <input
+                  value={createForm.client_name}
+                  onChange={e => setCreateForm(f => ({ ...f, client_name: e.target.value }))}
+                  placeholder="e.g. Acme Corp"
+                  autoFocus
+                  style={{
+                    width: '100%', height: 40, padding: '0 12px', borderRadius: 8,
+                    border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.05))',
+                    background: 'var(--bg-input, rgba(13, 17, 23, 0.6))',
+                    color: 'var(--text-primary, #F1F5F9)',
+                    fontSize: 14, outline: 'none', fontFamily: 'inherit',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+
+              {/* Description */}
+              <div>
+                <label style={{
+                  fontSize: 14, fontWeight: 500, color: 'var(--text-dim, #475569)',
+                  display: 'block', marginBottom: 6,
+                }}>
+                  Description
+                </label>
+                <input
+                  value={createForm.description}
+                  onChange={e => setCreateForm(f => ({ ...f, description: e.target.value }))}
+                  placeholder="e.g. Website redesign — March 2026"
+                  style={{
+                    width: '100%', height: 40, padding: '0 12px', borderRadius: 8,
+                    border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.05))',
+                    background: 'var(--bg-input, rgba(13, 17, 23, 0.6))',
+                    color: 'var(--text-primary, #F1F5F9)',
+                    fontSize: 14, outline: 'none', fontFamily: 'inherit',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+
+              {/* Amount + Due Date row */}
+              <div style={{ display: 'flex', gap: 12 }}>
+                {/* Amount */}
+                <div style={{ flex: 1 }}>
+                  <label style={{
+                    fontSize: 14, fontWeight: 500, color: 'var(--text-dim, #475569)',
+                    display: 'block', marginBottom: 6,
+                  }}>
+                    Amount (AUD)
+                  </label>
+                  <input
+                    value={createForm.amount}
+                    onChange={e => {
+                      const val = e.target.value
+                      if (val === '' || /^\d*\.?\d{0,2}$/.test(val)) {
+                        setCreateForm(f => ({ ...f, amount: val }))
+                      }
+                    }}
+                    placeholder="0.00"
+                    inputMode="decimal"
+                    style={{
+                      width: '100%', height: 40, padding: '0 12px', borderRadius: 8,
+                      border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.05))',
+                      background: 'var(--bg-input, rgba(13, 17, 23, 0.6))',
+                      color: 'var(--text-primary, #F1F5F9)',
+                      fontSize: 14, outline: 'none', fontFamily: 'inherit',
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                </div>
+
+                {/* Due Date */}
+                <div style={{ flex: 1 }}>
+                  <label style={{
+                    fontSize: 14, fontWeight: 500, color: 'var(--text-dim, #475569)',
+                    display: 'block', marginBottom: 6,
+                  }}>
+                    Due Date
+                  </label>
+                  <input
+                    type="date"
+                    value={createForm.due_date}
+                    onChange={e => setCreateForm(f => ({ ...f, due_date: e.target.value }))}
+                    min={new Date().toISOString().split('T')[0]}
+                    style={{
+                      width: '100%', height: 40, padding: '0 12px', borderRadius: 8,
+                      border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.05))',
+                      background: 'var(--bg-input, rgba(13, 17, 23, 0.6))',
+                      color: 'var(--text-primary, #F1F5F9)',
+                      fontSize: 14, outline: 'none', fontFamily: 'inherit',
+                      boxSizing: 'border-box',
+                      colorScheme: 'dark',
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div style={{
+              padding: '16px 24px',
+              borderTop: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
+              display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8,
+            }}>
+              <button
+                onClick={() => setShowCreateModal(false)}
+                disabled={isCreating}
+                style={{
+                  height: 40, padding: '0 20px', borderRadius: 8,
+                  border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.05))',
+                  background: 'transparent',
+                  color: 'var(--text-secondary, #94A3B8)',
+                  fontSize: 14, fontWeight: 500, cursor: 'pointer',
+                  transition: `all 80ms ${SNAP}`,
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.background = 'var(--hover-bg, rgba(255, 255, 255, 0.04))'
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.background = 'transparent'
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => void handleCreateInvoice()}
+                disabled={isCreating || !createForm.client_name.trim() || !createForm.amount.trim()}
+                style={{
+                  height: 40, padding: '0 24px', borderRadius: 8, border: 'none',
+                  background: (!createForm.client_name.trim() || !createForm.amount.trim())
+                    ? 'rgba(241, 245, 249, 0.3)' : 'var(--btn-primary-bg, #F1F5F9)',
+                  color: 'var(--btn-primary-fg, #0a0f1a)',
+                  fontSize: 14, fontWeight: 500, cursor: isCreating ? 'wait' : 'pointer',
+                  display: 'flex', alignItems: 'center', gap: 8,
+                  transition: `all 80ms ${SNAP}`,
+                  opacity: isCreating ? 0.7 : 1,
+                }}
+              >
+                {isCreating ? <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> : <Plus size={14} />}
+                {isCreating ? 'Creating...' : 'Create Invoice'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </DndContext>
   )
 }

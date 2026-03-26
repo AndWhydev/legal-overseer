@@ -73,8 +73,8 @@ export default function BlogIndexPage() {
                 <article
                   className="bb-blog-card"
                   style={{
-                    background: 'rgba(15, 20, 30, 0.35)',
-                    border: '1px solid rgba(255,255,255,0.06)',
+                    background: 'var(--bg-card, rgba(15, 20, 30, 0.35))',
+                    border: '1px solid var(--glass-border, rgba(255,255,255,0.06))',
                     borderRadius: 12,
                     padding: '28px 32px',
                     marginBottom: 12,

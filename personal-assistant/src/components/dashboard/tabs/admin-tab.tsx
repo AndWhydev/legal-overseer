@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
 import { createClient } from '@/lib/supabase/client';
 import { TabShell } from '@/components/ui/tab-shell';
 import { TabSkeleton } from './tab-skeleton';
@@ -36,6 +36,14 @@ const STATUS_COLORS: Record<string, string> = {
   healthy: '#22c55e',
   degraded: '#f59e0b',
   down: '#ef4444',
+};
+
+const glassCard: React.CSSProperties = {
+  background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.6))',
+  backdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
+  border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
+  boxShadow: 'var(--card-inset, inset 0 1px 0 rgba(255, 255, 255, 0.05))',
+  borderRadius: 16,
 };
 
 async function getToken(client: SupabaseClient): Promise<string | null> {
@@ -180,9 +188,9 @@ export default function AdminTab() {
       <div style={{ padding: 24, maxWidth: 900, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 24 }}>
 
       {/* System Health */}
-      <Card>
-        <CardHeader>
-          <CardTitle style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div style={glassCard}>
+        <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(255, 255, 255, 0.03)' }}>
+          <div style={{ fontSize: 16, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span>System Health</span>
             <button
               onClick={runHealthCheck}
@@ -195,9 +203,9 @@ export default function AdminTab() {
             >
               {healthLoading ? 'Checking...' : 'Refresh'}
             </button>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+          </div>
+        </div>
+        <div style={{ padding: 20 }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 12 }}>
             {health.map(h => (
               <div key={h.service} style={{
@@ -206,7 +214,7 @@ export default function AdminTab() {
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
                   <div style={{
-                    width: 10, height: 10, borderRadius: '50%',
+                    width: 12, height: 12, borderRadius: 9999,
                     background: STATUS_COLORS[h.status] || '#888',
                   }} />
                   <span style={{ fontWeight: 500, fontSize: 14, color: 'var(--text-primary)', textTransform: 'capitalize' }}>
@@ -223,13 +231,15 @@ export default function AdminTab() {
               <div style={{ color: 'var(--text-secondary)', fontSize: 14 }}>No data yet</div>
             )}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Import */}
-      <Card>
-        <CardHeader><CardTitle>Import Data</CardTitle></CardHeader>
-        <CardContent>
+      <div style={glassCard}>
+        <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(255, 255, 255, 0.03)' }}>
+          <div style={{ fontSize: 16, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)' }}>Import Data</div>
+        </div>
+        <div style={{ padding: 20 }}>
           <div style={{ display: 'flex', gap: 12, marginBottom: 12, flexWrap: 'wrap', alignItems: 'center' }}>
             <select
               value={importEntity}
@@ -257,7 +267,8 @@ export default function AdminTab() {
               disabled={importing || !importText.trim()}
               style={{
                 padding: '8px 20px', borderRadius: 8, fontWeight: 500, fontSize: 14,
-                background: '#1A1A1B', color: '#fff', border: 'none', cursor: 'pointer',
+                background: 'var(--btn-primary-bg, #F1F5F9)', color: 'var(--btn-primary-fg, #0a0f1a)', border: 'none', cursor: 'pointer',
+                display: 'inline-flex', alignItems: 'center', gap: 8,
                 opacity: importing || !importText.trim() ? 0.5 : 1,
               }}
             >
@@ -274,13 +285,15 @@ export default function AdminTab() {
               {importResult.errors.map((e, i) => <div key={i}>Row {e.row}: {e.message}</div>)}
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Export */}
-      <Card>
-        <CardHeader><CardTitle>Export Data</CardTitle></CardHeader>
-        <CardContent>
+      <div style={glassCard}>
+        <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(255, 255, 255, 0.03)' }}>
+          <div style={{ fontSize: 16, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)' }}>Export Data</div>
+        </div>
+        <div style={{ padding: 20 }}>
           <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
             <select
               value={exportEntity}
@@ -296,8 +309,8 @@ export default function AdminTab() {
                   onClick={() => setExportFormat(f)}
                   style={{
                     padding: '8px 16px', borderRadius: 8, fontSize: 14, cursor: 'pointer',
-                    background: exportFormat === f ? '#1A1A1B' : 'var(--bg-elevated)',
-                    color: exportFormat === f ? '#fff' : 'var(--text-primary)',
+                    background: exportFormat === f ? 'var(--btn-primary-bg, #F1F5F9)' : 'var(--bg-elevated)',
+                    color: exportFormat === f ? 'var(--btn-primary-fg, #0a0f1a)' : 'var(--text-primary)',
                     border: '1px solid var(--border)',
                   }}
                 >
@@ -310,15 +323,16 @@ export default function AdminTab() {
               disabled={exporting}
               style={{
                 padding: '8px 20px', borderRadius: 8, fontWeight: 500, fontSize: 14,
-                background: '#1A1A1B', color: '#fff', border: 'none', cursor: 'pointer',
+                background: 'var(--btn-primary-bg, #F1F5F9)', color: 'var(--btn-primary-fg, #0a0f1a)', border: 'none', cursor: 'pointer',
+                display: 'inline-flex', alignItems: 'center', gap: 8,
                 opacity: exporting ? 0.5 : 1,
               }}
             >
               {exporting ? 'Exporting...' : 'Download'}
             </button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
       </div>
     </TabShell>
   );

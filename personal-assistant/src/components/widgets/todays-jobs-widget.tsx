@@ -35,7 +35,7 @@ export function TodaysJobsWidget() {
     >
       <div className="space-y-3">
         {jobs.length === 0 ? (
-          <EmptyState icon={<Calendar size={32} />} title="No jobs today" description="Scheduled jobs will appear here." />
+          <EmptyState title="No jobs today" description="Scheduled jobs will appear here." />
         ) : (
           jobs.map(job => (
             <div key={job.id as string} className="flex items-center justify-between p-3 rounded-md bg-[var(--bg-elevated)] border border-[var(--border-subtle)]">

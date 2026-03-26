@@ -226,8 +226,8 @@ export function BillingSettings() {
       {/* Current Plan Card */}
       <div
         style={{
-          background: 'rgba(15, 20, 30, 0.6)',
-          border: '1px solid rgba(255, 255, 255, 0.03)',
+          background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.6))',
+          border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
           borderRadius: 12,
           padding: 24,
         }}
@@ -312,8 +312,8 @@ export function BillingSettings() {
       {/* Usage Dashboard */}
       <div
         style={{
-          background: 'rgba(15, 20, 30, 0.6)',
-          border: '1px solid rgba(255, 255, 255, 0.03)',
+          background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.6))',
+          border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
           borderRadius: 12,
           padding: 24,
         }}
@@ -358,8 +358,8 @@ export function BillingSettings() {
       {/* Manage Subscription */}
       <div
         style={{
-          background: 'rgba(15, 20, 30, 0.6)',
-          border: '1px solid rgba(255, 255, 255, 0.03)',
+          background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.6))',
+          border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
           borderRadius: 12,
           padding: 24,
         }}
@@ -383,8 +383,8 @@ export function BillingSettings() {
               display: 'inline-flex',
               alignItems: 'center',
               gap: 8,
-              background: '#FF5A1F',
-              color: 'white',
+              background: 'var(--btn-primary-bg, #F1F5F9)',
+              color: 'var(--btn-primary-fg, #0a0f1a)',
               border: 'none',
               borderRadius: 8,
               padding: '10px 20px',

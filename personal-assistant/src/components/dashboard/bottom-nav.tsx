@@ -25,7 +25,7 @@ const BOTTOM_NAV_ITEMS: { id: string; label: string; icon: React.ElementType }[]
 ];
 
 const BADGE_CONFIG: Record<string, { key: keyof BadgeCounts; color: string }> = {
-  approvals: { key: 'approvals', color: 'var(--bb-orange)' },
+  approvals: { key: 'approvals', color: 'var(--text-primary, #F1F5F9)' },
   leads:     { key: 'leads',     color: 'var(--bb-blue)' },
 };
 
@@ -76,7 +76,7 @@ export function BottomNav({
       {visibleItems.map(item => {
         const Icon = item.icon;
         const active = item.id === activeTabId;
-        const activeColor = active ? '#FF5A1F' : 'var(--text-secondary)';
+        const activeColor = active ? '#F1F5F9' : 'var(--text-secondary)';
         const label = composition.labelOverrides[item.id] ?? item.label;
 
         const badgeDef = BADGE_CONFIG[item.id];

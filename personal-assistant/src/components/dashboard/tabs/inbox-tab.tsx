@@ -8,6 +8,7 @@ import { useInboxKeyboard } from '@/hooks/use-inbox-keyboard';
 import { InboxShortcutsOverlay } from '@/components/dashboard/inbox-shortcuts-overlay';
 import { TabShell } from '@/components/ui/tab-shell';
 import { EmptyState } from '@/components/ui/empty-state';
+import { GlassDropdown } from '@/components/ui/glass-dropdown';
 import { logger } from '@/lib/core/logger';
 import { createClient } from '@/lib/supabase/client';
 import { type ThreadMessageItem } from '@/components/dashboard/inbox-drawer';
@@ -582,8 +583,7 @@ function InboxTab() {
 
     try {
       const params = new URLSearchParams();
-      if (channelFilter) params.set('channel', channelFilter);
-      if (priorityFilter) params.set('priority', priorityFilter);
+      // Channel + priority filtering is done client-side (no re-fetch needed)
       params.set('limit', String(PAGE_SIZE));
       if (loadMore) params.set('offset', String(messagesRef.current.length));
 
@@ -610,7 +610,7 @@ function InboxTab() {
       setRefreshing(false);
       setLoadingMore(false);
     }
-  }, [channelFilter, priorityFilter, useSeeded]);
+  }, [useSeeded]);
 
   useEffect(() => {
     if (useSeeded) {
@@ -889,10 +889,11 @@ function InboxTab() {
   if (error && messages.length === 0) {
     return (
       <TabShell>
-        <div className="bb-tab-error">
-          <p className="bb-tab-error__text">{error}</p>
-          <button className="bb-btn bb-btn--ghost bb-btn--sm" onClick={() => fetchInbox()}>Retry</button>
-        </div>
+        <EmptyState
+          title="Couldn't load inbox"
+          description={error}
+          action={{ label: 'Retry', onClick: () => fetchInbox() }}
+        />
       </TabShell>
     );
   }
@@ -997,7 +998,6 @@ function InboxTab() {
       <div className="bb-inbox-list">
         {displayItems.length === 0 ? (
           <EmptyState
-            icon={<CheckCircle2 size={40} />}
             title="All caught up"
             description="No messages to show. Adjust filters or wait for new messages."
           />
@@ -1168,8 +1168,8 @@ function InboxTab() {
           gap: 12,
           padding: '12px 16px',
           background: 'var(--bg-card-solid)',
-          backdropFilter: 'blur(20px) saturate(1.2)',
-          WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
+          backdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
+          WebkitBackdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
           border: '1px solid var(--glass-card-border)',
           borderRadius: 12,
           boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.3)',
@@ -1319,8 +1319,8 @@ function FilterDropdown({
       padding: 4,
       borderRadius: 12,
       background: 'var(--bg-card-solid)',
-      backdropFilter: 'blur(20px) saturate(1.2)',
-      WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
+      backdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
+      WebkitBackdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
       border: '1px solid var(--glass-card-border)',
       boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
       animation: 'fadeSlideUp 120ms cubic-bezier(0.16, 1, 0.3, 1)',
@@ -1418,10 +1418,10 @@ function UnifiedFilterBar({
       alignItems: 'center',
       gap: 4,
       padding: '8px 0 8px',
-      overflowX: 'auto',
-      scrollbarWidth: 'none',
+      overflowX: 'visible',
       flexShrink: 0,
       minHeight: 40,
+      flexWrap: 'wrap',
     }}>
       {/* Category pills — primary filter */}
       {PILL_ORDER.map((pill) => {
@@ -1434,34 +1434,42 @@ function UnifiedFilterBar({
             key={pill}
             onClick={() => onPillSelect(pill)}
             style={{
+              height: 40,
+              padding: '0 16px',
+              borderRadius: 9999,
+              border: 'none',
+              cursor: 'pointer',
               display: 'inline-flex',
               alignItems: 'center',
-              gap: 4,
-              padding: '8px 12px',
-              borderRadius: 20,
-              border: 'none',
-              background: isActive ? 'var(--text-primary)' : 'transparent',
-              color: isActive ? 'var(--bg-card)' : 'var(--text-secondary)',
-              fontSize: 14,
-              fontWeight: isActive ? 600 : 500,
-              cursor: 'pointer',
-              transition: 'all 150ms ease',
+              gap: 8,
+              transition: 'background 200ms cubic-bezier(0.16, 1, 0.3, 1), color 200ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 200ms, transform 200ms cubic-bezier(0.16, 1, 0.3, 1)',
+              transform: isActive ? 'scale(1.02)' : 'scale(1)',
               whiteSpace: 'nowrap',
               flexShrink: 0,
-            }}
-            onMouseEnter={(e) => {
-              if (!isActive) e.currentTarget.style.color = 'var(--text-primary)';
-            }}
-            onMouseLeave={(e) => {
-              if (!isActive) e.currentTarget.style.color = 'var(--text-secondary)';
+              fontSize: 14,
+              fontWeight: 500,
+              background: isActive
+                ? 'var(--pill-active-bg, rgba(255, 255, 255, 0.1))'
+                : 'var(--pill-inactive-bg, rgba(10, 14, 23, 0.42))',
+              backdropFilter: 'blur(22px) saturate(1.2)',
+              WebkitBackdropFilter: 'blur(22px) saturate(1.2)',
+              boxShadow: isActive
+                ? 'var(--toggle-active-shadow, none)'
+                : 'inset 0 1px 0 rgba(255, 255, 255, 0.06)',
+              color: isActive
+                ? 'var(--text-primary, #F1F5F9)'
+                : 'var(--text-secondary, #94A3B8)',
             }}
           >
-            {isPriority && hasUnreadPriority && !isActive && (
-              <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--bb-orange, #FF5A1F)', flexShrink: 0 }} />
-            )}
             {cfg.label}
             {pill !== 'all' && pillCounts[pill] > 0 && (
-              <span style={{ fontSize: 14, fontWeight: 500, opacity: isActive ? 0.6 : 0.5, marginLeft: -2 }}>
+              <span style={{
+                fontSize: 14,
+                fontWeight: 400,
+                color: isActive
+                  ? 'var(--text-secondary, #94A3B8)'
+                  : 'var(--text-dim, #475569)',
+              }}>
                 {pillCounts[pill]}
               </span>
             )}
@@ -1472,37 +1480,45 @@ function UnifiedFilterBar({
       {/* Spacer pushes filter dropdowns to the right */}
       <div style={{ flex: 1 }} />
 
-      {/* Channel + Priority dropdowns */}
-      <FilterDropdown options={CHANNEL_OPTIONS} value={channelFilter} onChange={onChannelChange} label="Channel" />
-      <FilterDropdown options={PRIORITY_OPTIONS} value={priorityFilter} onChange={onPriorityChange} label="Priority" />
-
-      {/* Clear filters indicator */}
+      {/* Clear filters — just an X, no background, before the dropdowns */}
       {hasActiveFilters && (
         <button
           onClick={() => { onChannelChange(''); onPriorityChange(''); }}
+          aria-label="Clear filters"
           style={{
             display: 'inline-flex',
             alignItems: 'center',
-            gap: 4,
-            padding: '4px 8px',
+            justifyContent: 'center',
+            width: 32,
+            height: 32,
             borderRadius: 8,
             border: 'none',
-            background: 'rgba(255, 90, 31, 0.1)',
-            color: '#FF7A45',
-            fontSize: 14,
-            fontWeight: 500,
+            background: 'transparent',
+            color: 'var(--text-dim, #475569)',
             cursor: 'pointer',
-            transition: 'all 150ms ease',
-            whiteSpace: 'nowrap',
+            transition: 'color 150ms',
             flexShrink: 0,
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255, 90, 31, 0.18)'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255, 90, 31, 0.1)'; }}
+          onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--text-primary, #F1F5F9)' }}
+          onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-dim, #475569)' }}
         >
-          <X size={10} />
-          Clear
+          <X size={14} />
         </button>
       )}
+
+      {/* Channel + Priority dropdowns */}
+      <GlassDropdown
+        options={CHANNEL_OPTIONS.map(o => ({ value: o.value, label: o.label }))}
+        value={channelFilter}
+        onChange={onChannelChange}
+        placeholder="Channel"
+      />
+      <GlassDropdown
+        options={PRIORITY_OPTIONS.map(o => ({ value: o.value, label: o.label }))}
+        value={priorityFilter}
+        onChange={onPriorityChange}
+        placeholder="Priority"
+      />
     </div>
   );
 }
@@ -1545,8 +1561,8 @@ function UndoToastStack({
             padding: '12px 16px',
             borderRadius: 12,
             background: 'var(--bg-card-solid)',
-            backdropFilter: 'blur(20px) saturate(1.2)',
-            WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
+            backdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
+            WebkitBackdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
             border: '1px solid var(--glass-card-border)',
             boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
             pointerEvents: 'auto',
@@ -1562,16 +1578,16 @@ function UndoToastStack({
             style={{
               padding: '4px 12px',
               borderRadius: 8,
-              border: '1px solid rgba(255,90,31,0.4)',
-              background: 'rgba(255,90,31,0.12)',
-              color: '#FF7A45',
+              border: '1px solid rgba(255,255,255,0.2)',
+              background: 'rgba(255,255,255,0.08)',
+              color: '#E2E8F0',
               fontSize: 14,
               fontWeight: 500,
               cursor: 'pointer',
               transition: 'all 150ms ease',
             }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,90,31,0.2)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,90,31,0.12)'; }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.12)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; }}
           >
             Undo
           </button>
@@ -1616,8 +1632,8 @@ function SnoozePickerPopover({
         right: anchor.right,
         zIndex: 150,
         background: 'var(--bg-card-solid)',
-        backdropFilter: 'blur(20px) saturate(1.2)',
-        WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
+        backdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
+        WebkitBackdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
         border: '1px solid var(--glass-card-border)',
         borderRadius: 12,
         padding: 8,
@@ -1920,8 +1936,8 @@ function ExpandedMessageRow({
         borderRadius: insideGroup ? '0 0 8px 8px' : '0 0 12px 12px',
         marginTop: insideGroup ? 0 : -6,
         background: 'var(--bg-card)',
-        backdropFilter: 'blur(20px) saturate(1.2)',
-        WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
+        backdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
+        WebkitBackdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
         overflow: 'hidden',
         animation: isCollapsing
           ? 'collapseOut 180ms cubic-bezier(0.4, 0, 1, 1) forwards'
@@ -2021,9 +2037,9 @@ function ExpandedMessageRow({
               <span key={i} style={{
                 display: 'inline-flex', alignItems: 'center', gap: 4,
                 padding: '4px 10px', borderRadius: 8,
-                background: 'rgba(255, 90, 31, 0.08)',
-                border: '1px solid rgba(255, 90, 31, 0.15)',
-                fontSize: 14, fontWeight: 500, color: 'var(--bb-orange, #FF5A1F)',
+                background: 'rgba(255, 255, 255, 0.05)',
+                border: '1px solid rgba(255, 255, 255, 0.03)',
+                fontSize: 14, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)',
                 animation: aiJustResolved ? 'aiContentIn 300ms cubic-bezier(0.25, 1, 0.5, 1) both' : undefined,
                 animationDelay: aiJustResolved ? `${150 + i * 60}ms` : undefined,
               }}>
@@ -2064,10 +2080,10 @@ function ExpandedMessageRow({
                   >
                     <div style={{
                       width: 22, height: 22, borderRadius: '50%',
-                      background: tm.isSelf ? 'rgba(255,90,31,0.2)' : 'var(--hover-bg-strong)',
+                      background: tm.isSelf ? 'rgba(255,255,255,0.12)' : 'var(--hover-bg-strong)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       fontSize: 9, fontWeight: 500,
-                      color: tm.isSelf ? '#FF7A45' : 'var(--text-secondary)', flexShrink: 0,
+                      color: tm.isSelf ? '#E2E8F0' : 'var(--text-secondary)', flexShrink: 0,
                     }}>
                       {String(tmSender[0] || '?').toUpperCase()}
                     </div>
@@ -2113,12 +2129,10 @@ function ExpandedMessageRow({
           display: 'flex',
           alignItems: 'flex-end',
           gap: 0,
-          background: 'var(--glass-pill-bg)',
-          backdropFilter: 'var(--glass-card-blur)',
-          WebkitBackdropFilter: 'var(--glass-card-blur)',
+          background: 'var(--bg-input, rgba(13, 17, 23, 0.6))',
+          border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
           borderRadius: 20,
           padding: '4px 4px 4px 16px',
-          boxShadow: 'var(--glass-pill-inset)',
         }}>
           <div style={{ position: 'relative', flex: 1, minHeight: 32 }}>
             {/* Ghost draft — in-flow element that sizes the container, textarea overlays it */}

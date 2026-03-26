@@ -1,9 +1,8 @@
 'use client'
 
 import React, { useState, useCallback } from 'react'
-import { Search, TrendingUp, TrendingDown, Minus, Copy, Check, Play, Code, FileText, Compass } from 'lucide-react'
+import { Search, TrendingUp, TrendingDown, Minus, Copy, Check, Play, Code, FileText, X } from 'lucide-react'
 import { TabShell } from '@/components/ui/tab-shell'
-import { EmptyState } from '@/components/ui/empty-state'
 
 // ---------------------------------------------------------------------------
 // Types (mirrors agent types without importing server code)
@@ -51,7 +50,7 @@ const glassInput: React.CSSProperties = {
   width: '100%',
   padding: '12px 16px',
   borderRadius: 12,
-  background: 'rgba(13, 17, 23, 0.6)',
+  background: 'var(--bg-input, rgba(13, 17, 23, 0.6))',
   border: '1px solid var(--glass-interactive-border)',
   color: 'var(--text-primary)',
   fontSize: 14,
@@ -74,15 +73,19 @@ const pillBtn: React.CSSProperties = {
 }
 
 const accentBtn: React.CSSProperties = {
-  padding: '12px 20px',
-  borderRadius: 12,
-  background: '#1A1A1B',
+  height: 40,
+  padding: '0 20px',
+  borderRadius: 8,
+  background: 'var(--btn-primary-bg, #F1F5F9)',
   border: 'none',
-  color: '#FFFFFF',
+  color: 'var(--btn-primary-fg, #0a0f1a)',
   fontSize: 14,
   fontWeight: 500,
   cursor: 'pointer',
   transition: 'all 200ms',
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 8,
 }
 
 const ghostBtn: React.CSSProperties = {
@@ -270,7 +273,7 @@ function AuditForm({
                   : 'rgba(255, 255, 255, 0.05)',
               boxShadow:
                 focusedField === 'domain'
-                  ? '0 0 0 2px rgba(255, 90, 31, 0.15)'
+                  ? '0 0 0 2px rgba(255, 255, 255, 0.08)'
                   : 'none',
             }}
           />
@@ -293,7 +296,7 @@ function AuditForm({
                   : 'rgba(255, 255, 255, 0.05)',
               boxShadow:
                 focusedField === 'brand'
-                  ? '0 0 0 2px rgba(255, 90, 31, 0.15)'
+                  ? '0 0 0 2px rgba(255, 255, 255, 0.08)'
                   : 'none',
             }}
           />
@@ -318,7 +321,7 @@ function AuditForm({
                 : 'rgba(255, 255, 255, 0.05)',
             boxShadow:
               focusedField === 'queries'
-                ? '0 0 0 2px rgba(255, 90, 31, 0.15)'
+                ? '0 0 0 2px rgba(255, 255, 255, 0.08)'
                 : 'none',
           }}
         />
@@ -341,7 +344,7 @@ function AuditForm({
                 : 'rgba(255, 255, 255, 0.05)',
             boxShadow:
               focusedField === 'competitors'
-                ? '0 0 0 2px rgba(255, 90, 31, 0.15)'
+                ? '0 0 0 2px rgba(255, 255, 255, 0.08)'
                 : 'none',
           }}
         />
@@ -361,12 +364,12 @@ function AuditForm({
         }}
         onMouseEnter={(e) => {
           if (!loading) {
-            e.currentTarget.style.background = '#FF7A45'
+            e.currentTarget.style.background = 'var(--btn-primary-hover, #E2E8F0)'
             e.currentTarget.style.transform = 'translateY(-1px)'
           }
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.background = '#1A1A1B'
+          e.currentTarget.style.background = 'var(--btn-primary-bg, #F1F5F9)'
           e.currentTarget.style.transform = 'translateY(0)'
         }}
       >
@@ -599,11 +602,11 @@ function SchemaGenerator() {
                   : 'var(--text-secondary)',
               background:
                 schemaType === t
-                  ? 'rgba(255, 90, 31, 0.15)'
+                  ? 'rgba(255, 255, 255, 0.08)'
                   : 'var(--glass-pill-bg)',
               borderBottom:
                 schemaType === t
-                  ? '1px solid rgba(255, 90, 31, 0.3)'
+                  ? '1px solid rgba(255, 255, 255, 0.12)'
                   : 'none',
             }}
             onMouseEnter={(e) => {
@@ -653,7 +656,7 @@ function SchemaGenerator() {
                   : 'rgba(255, 255, 255, 0.05)',
               boxShadow:
                 focusedField === key
-                  ? '0 0 0 2px rgba(255, 90, 31, 0.15)'
+                  ? '0 0 0 2px rgba(255, 255, 255, 0.08)'
                   : 'none',
             }}
           />
@@ -676,7 +679,7 @@ function SchemaGenerator() {
               : 'rgba(255, 255, 255, 0.05)',
           boxShadow:
             focusedField === 'desc'
-              ? '0 0 0 2px rgba(255, 90, 31, 0.15)'
+              ? '0 0 0 2px rgba(255, 255, 255, 0.08)'
               : 'none',
         }}
       />
@@ -696,12 +699,12 @@ function SchemaGenerator() {
         }}
         onMouseEnter={(e) => {
           if (!loading && bizName) {
-            e.currentTarget.style.background = '#FF7A45'
+            e.currentTarget.style.background = 'var(--btn-primary-hover, #E2E8F0)'
             e.currentTarget.style.transform = 'translateY(-1px)'
           }
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.background = '#1A1A1B'
+          e.currentTarget.style.background = 'var(--btn-primary-bg, #F1F5F9)'
           e.currentTarget.style.transform = 'translateY(0)'
         }}
       >
@@ -767,6 +770,12 @@ function AISearchTab() {
   const [previousScore] = useState<number | null>(null)
   const [loading, setLoading] = useState(false)
   const [hoverPanel, setHoverPanel] = useState<ActivePanel | null>(null)
+  const [infoDismissed, setInfoDismissed] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('bb-ai-search-info-dismissed') === '1'
+    }
+    return false
+  })
 
   const handleRunAudit = useCallback(
     async (params: {
@@ -800,13 +809,50 @@ function AISearchTab() {
   return (
     <TabShell>
       <div style={{ padding: 24, maxWidth: 1200, display: 'flex', flexDirection: 'column', gap: 24 }}>
-        {/* Empty state when no audit has run yet */}
-        {!auditResult && activePanel === 'overview' && (
-          <EmptyState
-            icon={<Compass size={40} />}
-            title="Run a visibility audit"
-            description="Discover how the website ranks in AI search engines like Perplexity, ChatGPT, and Gemini."
-          />
+        {/* Instructional info card when no audit has run yet */}
+        {!auditResult && activePanel === 'overview' && !infoDismissed && (
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+            padding: '16px 20px',
+            borderRadius: 16,
+            background: 'var(--bg-card, rgba(15, 20, 30, 0.35))',
+            backdropFilter: 'var(--glass-blur)',
+            WebkitBackdropFilter: 'var(--glass-blur)',
+            border: 'none',
+            boxShadow: 'var(--card-inset)',
+            animation: 'bb-fade-up 300ms cubic-bezier(0.16, 1, 0.3, 1) both',
+          }}>
+            <p style={{ fontSize: 14, color: 'var(--text-secondary)', margin: 0, lineHeight: 1.6, flex: 1 }}>
+              Run a visibility audit to discover how the website ranks in AI search engines like Perplexity, ChatGPT, and Gemini.
+            </p>
+            <button
+              onClick={() => {
+                setInfoDismissed(true)
+                localStorage.setItem('bb-ai-search-info-dismissed', '1')
+              }}
+              aria-label="Dismiss"
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: 8,
+                background: 'transparent',
+                border: 'none',
+                color: 'var(--text-dim)',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+                transition: 'color 150ms',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-primary)' }}
+              onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-dim)' }}
+            >
+              <X size={16} />
+            </button>
+          </div>
         )}
 
         {/* Score overview (shown when audit exists) */}
@@ -878,39 +924,45 @@ function AISearchTab() {
           </div>
         )}
 
-        {/* Panel selector */}
-        <div style={{ display: 'flex', gap: 8 }}>
-          {panelButtons.map((btn) => (
-            <button
-              key={btn.id}
-              onClick={() => setActivePanel(btn.id)}
-              onMouseEnter={() => setHoverPanel(btn.id)}
-              onMouseLeave={() => setHoverPanel(null)}
-              style={{
-                ...pillBtn,
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 8,
-                padding: '8px 16px',
-                color:
-                  activePanel === btn.id
-                    ? 'var(--text-primary)'
-                    : 'var(--text-secondary)',
-                background:
-                  activePanel === btn.id
-                    ? 'rgba(255, 90, 31, 0.15)'
-                    : hoverPanel === btn.id
-                      ? 'var(--glass-hover-bg)'
-                      : 'var(--glass-pill-bg)',
-                borderBottom:
-                  activePanel === btn.id ? '1px solid rgba(255, 90, 31, 0.3)' : 'none',
-              }}
-            >
-              {btn.icon}
-              {btn.label}
-            </button>
-          ))}
-        </div>
+        {/* Panel selector — same pill pattern as leads/inbox */}
+        <nav style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          {panelButtons.map((btn) => {
+            const isActive = activePanel === btn.id
+            return (
+              <button
+                key={btn.id}
+                onClick={() => setActivePanel(btn.id)}
+                style={{
+                  height: 40,
+                  padding: '0 16px',
+                  borderRadius: 9999,
+                  fontSize: 14,
+                  fontWeight: 500,
+                  border: 'none',
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  transition: 'background 200ms cubic-bezier(0.16, 1, 0.3, 1), color 200ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 200ms',
+                  background: isActive
+                    ? 'var(--pill-active-bg, rgba(255, 255, 255, 0.08))'
+                    : 'var(--pill-inactive-bg, rgba(10, 14, 23, 0.42))',
+                  backdropFilter: 'blur(22px) saturate(1.2)',
+                  WebkitBackdropFilter: 'blur(22px) saturate(1.2)',
+                  boxShadow: isActive
+                    ? 'var(--toggle-active-shadow, none)'
+                    : 'inset 0 1px 0 rgba(255, 255, 255, 0.06)',
+                  color: isActive
+                    ? 'var(--text-primary, #F1F5F9)'
+                    : 'var(--text-secondary, #94A3B8)',
+                }}
+              >
+                {btn.icon}
+                {btn.label}
+              </button>
+            )
+          })}
+        </nav>
 
         {/* Panels */}
         {activePanel === 'overview' && (
@@ -989,15 +1041,15 @@ function AISearchTab() {
                         key={i}
                         style={{
                           ...glassCard,
-                          borderLeft: '3px solid rgba(255, 90, 31, 0.5)',
+                          borderLeft: '3px solid rgba(255, 255, 255, 0.06)',
                           padding: '12px 16px',
                         }}
                         onMouseEnter={(e) => {
-                          e.currentTarget.style.borderLeftColor = '#FF5A1F'
+                          e.currentTarget.style.borderLeftColor = '#F1F5F9'
                           e.currentTarget.style.background = 'var(--glass-bg-heavy)'
                         }}
                         onMouseLeave={(e) => {
-                          e.currentTarget.style.borderLeftColor = 'rgba(255, 90, 31, 0.5)'
+                          e.currentTarget.style.borderLeftColor = 'rgba(255, 255, 255, 0.06)'
                           e.currentTarget.style.background = 'var(--glass-card-bg)'
                         }}
                       >

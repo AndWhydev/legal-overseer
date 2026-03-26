@@ -356,7 +356,7 @@ export function IntegrationCard({ integration, isConnected = false, onStatusChan
                 width: '100%',
                 padding: '12px 16px',
                 borderRadius: 12,
-                background: 'rgba(13, 17, 23, 0.6)',
+                background: 'var(--bg-input, rgba(13, 17, 23, 0.6))',
                 border: inputFocused
                   ? '1px solid rgba(255, 255, 255, 0.2)'
                   : '1px solid var(--glass-interactive-border)',

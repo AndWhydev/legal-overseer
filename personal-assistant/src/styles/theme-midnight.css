@@ -40,10 +40,10 @@
   --glass-hover-bg: rgba(255, 255, 255, 0.06);
   --glass-divider: rgba(255, 255, 255, 0.04);
   --glass-interactive-bg: rgba(255, 255, 255, 0.04);
-  --glass-interactive-border: rgba(255, 255, 255, 0.08);
+  --glass-interactive-border: rgba(255, 255, 255, 0.04);
 
-  /* ── Borders ── */
-  --border-subtle: #1E2D3D;
+  /* ── Borders (nearly invisible) ── */
+  --border-subtle: rgba(255, 255, 255, 0.03);
   --border-subtle-alpha: rgba(255, 255, 255, 0.08);
   --border-active: #FF5A1F;
   --glass-border: rgba(255, 255, 255, 0.03);
@@ -62,13 +62,13 @@
   /* ── Card variant (more opaque glass) ── */
   --bg-card-solid: rgba(20, 28, 40, 0.6);
 
-  /* ── Accent (BitBit Orange) ── */
-  --bb-orange: #FF5A1F;
-  --bb-orange-light: #FF7A45;
-  --bb-orange-glow: rgba(255, 90, 31, 0.12);
-  --bb-orange-glow-sm: 0 0 16px rgba(255, 90, 31, 0.3);
-  --bb-orange-glow-md: 0 0 24px rgba(255, 90, 31, 0.12);
-  --bb-orange-glow-lg: 0 0 60px rgba(255, 90, 31, 0.1);
+  /* ── Accent (monochrome) ── */
+  --bb-orange: #94A3B8;
+  --bb-orange-light: #94A3B8;
+  --bb-orange-glow: none;
+  --bb-orange-glow-sm: none;
+  --bb-orange-glow-md: none;
+  --bb-orange-glow-lg: none;
 
   /* ── Status Colors (bright for dark bg) ── */
   --bb-green: #22C55E;
@@ -188,14 +188,14 @@
   background: #0A0A0B !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
-  border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.03) !important;
 }
 
 [data-theme="midnight"] .bb-sidebar-panel {
   background: rgba(10, 10, 11, 0.85) !important;
   backdrop-filter: blur(20px) !important;
   -webkit-backdrop-filter: blur(20px) !important;
-  border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.03) !important;
 }
 
 [data-theme="midnight"] .bb-sidebar-rail__icon {
@@ -241,7 +241,7 @@
   background: rgba(10, 10, 11, 0.6) !important;
   backdrop-filter: blur(20px) !important;
   -webkit-backdrop-filter: blur(20px) !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03) !important;
 }
 
 [data-theme="midnight"] .bb-topbar {
@@ -262,7 +262,7 @@
 
 [data-theme="midnight"] .bb-btn--ghost {
   background: rgba(255, 255, 255, 0.04) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.03) !important;
   color: #F5F0E8 !important;
   backdrop-filter: blur(12px) !important;
   -webkit-backdrop-filter: blur(12px) !important;
@@ -270,7 +270,7 @@
 
 [data-theme="midnight"] .bb-btn--ghost:hover {
   background: rgba(255, 255, 255, 0.08) !important;
-  border-color: rgba(255, 255, 255, 0.15) !important;
+  border-color: rgba(255, 255, 255, 0.06) !important;
 }
 
 [data-theme="midnight"] .bb-btn--accent {
@@ -342,7 +342,7 @@
    -------------------------------------------------------------------------- */
 
 [data-theme="midnight"] ::selection {
-  background: rgba(255, 90, 31, 0.2);
+  background: rgba(100, 116, 139, 0.25);
   color: #F5F0E8;
 }
 
@@ -354,7 +354,7 @@
   background: #0A0F1A !important;
   backdrop-filter: blur(20px) !important;
   -webkit-backdrop-filter: blur(20px) !important;
-  border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.03) !important;
 }
 
 /* --------------------------------------------------------------------------
@@ -369,7 +369,7 @@
 [data-theme="midnight"] input[type="search"],
 [data-theme="midnight"] textarea {
   background: rgba(13, 17, 23, 0.6) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.03) !important;
   color: #F5F0E8 !important;
 }
 
@@ -386,7 +386,7 @@
   background: rgba(15, 20, 30, 0.8) !important;
   backdrop-filter: blur(24px) !important;
   -webkit-backdrop-filter: blur(24px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.03) !important;
 }
 
 /* --------------------------------------------------------------------------
@@ -495,7 +495,7 @@
   background: rgba(15, 20, 30, 0.8) !important;
   backdrop-filter: blur(24px) !important;
   -webkit-backdrop-filter: blur(24px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.03) !important;
 }
 
 /* --------------------------------------------------------------------------
@@ -506,7 +506,7 @@
   background: rgba(20, 28, 40, 0.8) !important;
   backdrop-filter: blur(16px) !important;
   -webkit-backdrop-filter: blur(16px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.03) !important;
   color: #F5F0E8 !important;
 }
 

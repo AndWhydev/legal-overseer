@@ -67,8 +67,8 @@ export function CodeBlock({ children, className, onOpenArtifact }: CodeBlockProp
       style={{
         borderRadius: '8px',
         overflow: 'hidden',
-        backgroundColor: 'rgba(13, 17, 23, 0.8)',
-        border: '1px solid rgba(255, 255, 255, 0.06)',
+        backgroundColor: 'var(--glass-bg-heavy, rgba(13, 17, 23, 0.8))',
+        border: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
         marginBlock: '12px',
       }}
     >
@@ -80,7 +80,7 @@ export function CodeBlock({ children, className, onOpenArtifact }: CodeBlockProp
           justifyContent: 'space-between',
           padding: '10px 14px',
           backgroundColor: 'rgba(255, 255, 255, 0.03)',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
+          borderBottom: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
           minHeight: '40px',
         }}
       >

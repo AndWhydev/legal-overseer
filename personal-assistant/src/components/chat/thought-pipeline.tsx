@@ -286,7 +286,7 @@ export function ThoughtPipeline({
             padding: '16px',
             borderRadius: '12px',
             background: 'rgba(255, 255, 255, 0.04)',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
+            border: '1px solid rgba(255, 255, 255, 0.03)',
             backdropFilter: 'blur(24px)',
           }}
         >

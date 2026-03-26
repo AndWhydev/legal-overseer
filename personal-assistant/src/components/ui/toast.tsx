@@ -32,11 +32,8 @@ const ICONS: Record<ToastType, React.ReactNode> = {
   info: <Info className="h-4 w-4 text-[var(--bb-blue)]" aria-hidden="true" />,
 };
 
-const BORDER_COLORS: Record<ToastType, string> = {
-  success: 'border-[var(--bb-green)]/30',
-  error: 'border-[var(--bb-red)]/30',
-  info: 'border-[var(--bb-blue)]/30',
-};
+// Toast uses inline glass styling — no border classes needed
+const _BORDER_COLORS_UNUSED = null;
 
 const AUTO_DISMISS_MS: Record<ToastType, number | null> = {
   success: 4000,
@@ -94,10 +91,22 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
         {toasts.filter(t => t.type !== 'error').map(t => (
           <div
             key={t.id}
-            className={cn(
-              'pointer-events-auto flex items-center gap-2.5 rounded-xl border bg-card/95 backdrop-blur-md px-4 py-3 text-sm text-foreground shadow-lg animate-in slide-in-from-right-5 fade-in duration-200',
-              BORDER_COLORS[t.type],
-            )}
+            style={{
+              pointerEvents: 'auto',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              borderRadius: 16,
+              border: 'none',
+              background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.95))',
+              backdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
+              WebkitBackdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
+              boxShadow: 'var(--card-inset, inset 0 1px 0 rgba(255, 255, 255, 0.05)), 0 8px 32px rgba(0, 0, 0, 0.3)',
+              padding: '12px 16px',
+              fontSize: 14,
+              color: 'var(--text-primary, #F1F5F9)',
+              animation: 'bb-fade-up 200ms cubic-bezier(0.16, 1, 0.3, 1)',
+            }}
           >
             {ICONS[t.type]}
             <span className="flex-1">{t.message}</span>
@@ -121,10 +130,22 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
         {toasts.filter(t => t.type === 'error').map(t => (
           <div
             key={t.id}
-            className={cn(
-              'pointer-events-auto flex items-center gap-2.5 rounded-xl border bg-card/95 backdrop-blur-md px-4 py-3 text-sm text-foreground shadow-lg animate-in slide-in-from-right-5 fade-in duration-200',
-              BORDER_COLORS[t.type],
-            )}
+            style={{
+              pointerEvents: 'auto',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              borderRadius: 16,
+              border: 'none',
+              background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.95))',
+              backdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
+              WebkitBackdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
+              boxShadow: 'var(--card-inset, inset 0 1px 0 rgba(255, 255, 255, 0.05)), 0 8px 32px rgba(0, 0, 0, 0.3)',
+              padding: '12px 16px',
+              fontSize: 14,
+              color: 'var(--text-primary, #F1F5F9)',
+              animation: 'bb-fade-up 200ms cubic-bezier(0.16, 1, 0.3, 1)',
+            }}
           >
             {ICONS[t.type]}
             <span className="flex-1">{t.message}</span>

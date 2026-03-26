@@ -46,7 +46,7 @@ export function MeetingsTab({ initialMeetingId }: MeetingsTabProps) {
       {/* Section toggle (only visible when not in detail view) */}
       {view !== 'detail' && (
         <div className="flex gap-1" style={{
-          background: 'rgba(10, 14, 23, 0.5)',
+          background: 'var(--bb-surface, rgba(10, 14, 23, 0.5))',
           borderRadius: 12,
           padding: 4,
           alignSelf: 'flex-start',

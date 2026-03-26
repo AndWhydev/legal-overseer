@@ -186,7 +186,7 @@ export default async function BlogPostPage({ params }: { params: Promise<Params>
                   return (
                     <code style={{
                       display: 'block',
-                      background: 'rgba(13, 17, 23, 0.8)',
+                      background: 'var(--glass-bg-heavy, rgba(13, 17, 23, 0.8))',
                       border: '1px solid rgba(255,255,255,0.08)',
                       borderRadius: 8,
                       padding: '16px 20px',
@@ -229,7 +229,7 @@ export default async function BlogPostPage({ params }: { params: Promise<Params>
         <div style={{
           marginTop: 64,
           padding: '32px',
-          background: 'rgba(15, 20, 30, 0.5)',
+          background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.5))',
           border: '1px solid rgba(255,255,255,0.08)',
           borderRadius: 12,
           textAlign: 'center',

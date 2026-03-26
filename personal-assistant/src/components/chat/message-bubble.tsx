@@ -107,12 +107,13 @@ export function MessageBubble({ message, citations, showAvatar = false, avatarEm
   const [editText, setEditText] = useState(message.content)
 
   const handleFeedback = (type: 'up' | 'down') => {
-    setFeedback(type)
-    onFeedback?.(type)
+    const next = feedback === type ? null : type
+    setFeedback(next)
+    onFeedback?.(next as 'up' | 'down')
     fetch('/api/agent/chat/feedback', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messageId: message.id, feedback: type }),
+      body: JSON.stringify({ messageId: message.id, feedback: next }),
     }).catch(() => {})
   }
 
@@ -273,7 +274,7 @@ export function MessageBubble({ message, citations, showAvatar = false, avatarEm
                 }}
                 style={{
                   padding: '4px 12px', borderRadius: 6, border: 'none',
-                  background: 'var(--bb-orange, #FF5A1F)', color: '#fff',
+                  background: 'var(--btn-primary-bg, #F1F5F9)', color: 'var(--btn-primary-fg, #0a0f1a)',
                   fontSize: 12, fontWeight: 500, cursor: 'pointer',
                 }}
               >
@@ -294,6 +295,66 @@ export function MessageBubble({ message, citations, showAvatar = false, avatarEm
       </div>
       {!isUser && (
         <div style={{ display: 'flex', gap: 2, marginTop: 8, alignItems: 'center' }}>
+          <div style={{ display: 'inline-flex', gap: 2 }}>
+            <motion.button
+              onClick={() => handleFeedback('up')}
+              animate={feedback === 'up' ? { scale: [1, 1.2, 1] } : { scale: 1 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+              style={{
+                background: 'none',
+                border: 'none',
+                padding: '3px 6px',
+                borderRadius: 4,
+                color: feedback === 'up' ? 'var(--text-primary, #F1F5F9)' : 'var(--text-muted, rgba(255,255,255,0.25))',
+                cursor: 'pointer',
+                transition: 'color 150ms',
+                display: 'flex',
+                alignItems: 'center',
+              }}
+              onMouseEnter={(e) => {
+                if (feedback !== 'up') {
+                  e.currentTarget.style.color = 'var(--text-secondary, #94A3B8)'
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (feedback !== 'up') {
+                  e.currentTarget.style.color = 'var(--text-muted, rgba(255,255,255,0.25))'
+                }
+              }}
+              aria-label="Good response"
+            >
+              <ThumbsUp size={12} fill={feedback === 'up' ? 'currentColor' : 'none'} />
+            </motion.button>
+            <motion.button
+              onClick={() => handleFeedback('down')}
+              animate={feedback === 'down' ? { scale: [1, 1.2, 1] } : { scale: 1 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+              style={{
+                background: 'none',
+                border: 'none',
+                padding: '3px 6px',
+                borderRadius: 4,
+                color: feedback === 'down' ? 'var(--text-primary, #F1F5F9)' : 'var(--text-muted, rgba(255,255,255,0.25))',
+                cursor: 'pointer',
+                transition: 'color 150ms',
+                display: 'flex',
+                alignItems: 'center',
+              }}
+              onMouseEnter={(e) => {
+                if (feedback !== 'down') {
+                  e.currentTarget.style.color = 'var(--text-secondary, #94A3B8)'
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (feedback !== 'down') {
+                  e.currentTarget.style.color = 'var(--text-muted, rgba(255,255,255,0.25))'
+                }
+              }}
+              aria-label="Bad response"
+            >
+              <ThumbsDown size={12} fill={feedback === 'down' ? 'currentColor' : 'none'} />
+            </motion.button>
+          </div>
           {onRegenerate && (
             <button
               onClick={onRegenerate}
@@ -318,62 +379,6 @@ export function MessageBubble({ message, citations, showAvatar = false, avatarEm
               Regenerate
             </button>
           )}
-          <div style={{ display: 'inline-flex', gap: 2 }}>
-            <button
-              onClick={() => handleFeedback('up')}
-              style={{
-                background: 'none',
-                border: 'none',
-                padding: '3px 6px',
-                borderRadius: 4,
-                color: feedback === 'up' ? 'var(--bb-green, #22C55E)' : 'var(--text-muted, rgba(255,255,255,0.25))',
-                cursor: 'pointer',
-                transition: 'color 150ms',
-                display: 'flex',
-                alignItems: 'center',
-              }}
-              onMouseEnter={(e) => {
-                if (feedback !== 'up') {
-                  e.currentTarget.style.color = 'var(--text-secondary, #94A3B8)'
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (feedback !== 'up') {
-                  e.currentTarget.style.color = 'var(--text-muted, rgba(255,255,255,0.25))'
-                }
-              }}
-              aria-label="Good response"
-            >
-              <ThumbsUp size={12} />
-            </button>
-            <button
-              onClick={() => handleFeedback('down')}
-              style={{
-                background: 'none',
-                border: 'none',
-                padding: '3px 6px',
-                borderRadius: 4,
-                color: feedback === 'down' ? 'var(--bb-red, #EF4444)' : 'var(--text-muted, rgba(255,255,255,0.25))',
-                cursor: 'pointer',
-                transition: 'color 150ms',
-                display: 'flex',
-                alignItems: 'center',
-              }}
-              onMouseEnter={(e) => {
-                if (feedback !== 'down') {
-                  e.currentTarget.style.color = 'var(--text-secondary, #94A3B8)'
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (feedback !== 'down') {
-                  e.currentTarget.style.color = 'var(--text-muted, rgba(255,255,255,0.25))'
-                }
-              }}
-              aria-label="Bad response"
-            >
-              <ThumbsDown size={12} />
-            </button>
-          </div>
         </div>
       )}
     </div>

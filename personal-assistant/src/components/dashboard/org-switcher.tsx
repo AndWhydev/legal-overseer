@@ -81,7 +81,7 @@ export function OrgSwitcher({ onOrgChange }: OrgSwitcherProps) {
   const tierColors: Record<string, string> = {
     free: 'text-muted-foreground',
     starter: 'text-blue-400',
-    pro: 'text-[var(--bb-orange,#FF5A1F)]',
+    pro: 'text-[#F1F5F9]',
     enterprise: 'text-purple-400',
   };
 
@@ -120,7 +120,7 @@ export function OrgSwitcher({ onOrgChange }: OrgSwitcherProps) {
                 </p>
               </div>
               {org.id === activeOrg.id && (
-                <Check size={14} className="shrink-0 text-[var(--bb-orange,#FF5A1F)]" />
+                <Check size={14} className="shrink-0 text-[#F1F5F9]" />
               )}
             </button>
           ))}

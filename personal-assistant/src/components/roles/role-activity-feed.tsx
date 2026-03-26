@@ -43,11 +43,11 @@ interface RoleActivityFeedProps {
 const glassCard: React.CSSProperties = {
   padding: '20px',
   borderRadius: 16,
-  background: 'rgba(15, 20, 30, 0.6)',
-  backdropFilter: 'blur(20px) saturate(1.2)',
-  WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
-  border: '1px solid rgba(255, 255, 255, 0.03)',
-  boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+  background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.6))',
+  backdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
+  WebkitBackdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
+  border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
+  boxShadow: 'var(--card-inset, inset 0 1px 0 rgba(255, 255, 255, 0.05))',
 }
 
 const sectionHeader: React.CSSProperties = {
@@ -64,10 +64,10 @@ const listRow: React.CSSProperties = {
   alignItems: 'flex-start',
   padding: '12px 16px',
   borderRadius: 12,
-  background: 'rgba(10, 14, 23, 0.5)',
+  background: 'var(--bb-surface, rgba(10, 14, 23, 0.5))',
   backdropFilter: 'blur(26px) saturate(1.15)',
   WebkitBackdropFilter: 'blur(26px) saturate(1.15)',
-  boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+  boxShadow: 'var(--card-inset, inset 0 1px 0 rgba(255, 255, 255, 0.05))',
   border: 'none',
   transition: 'background 200ms',
   cursor: 'default',
@@ -77,7 +77,7 @@ const listRow: React.CSSProperties = {
 const pillBtn: React.CSSProperties = {
   padding: '8px 16px',
   borderRadius: 20,
-  background: 'rgba(10, 14, 23, 0.42)',
+  background: 'var(--pill-inactive-bg, rgba(10, 14, 23, 0.42))',
   backdropFilter: 'blur(22px) saturate(1.2)',
   WebkitBackdropFilter: 'blur(22px) saturate(1.2)',
   boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.06)',
@@ -91,7 +91,7 @@ const pillBtn: React.CSSProperties = {
 const activePill: React.CSSProperties = {
   ...pillBtn,
   color: 'var(--text-primary, #F1F5F9)',
-  background: 'rgba(255, 90, 31, 0.15)',
+  background: 'rgba(255, 255, 255, 0.08)',
 }
 
 // ---------------------------------------------------------------------------
@@ -108,7 +108,7 @@ const ACTIVITY_ICONS: Record<ActivityType, React.ElementType> = {
 }
 
 const ACTIVITY_COLORS: Record<ActivityType, string> = {
-  action: '#FF5A1F',
+  action: '#F1F5F9',
   insight: '#3b82f6',
   escalation: '#eab308',
   learning: '#8b5cf6',
@@ -125,7 +125,7 @@ const ROLE_LABELS: Record<RoleType, string> = {
 const ROLE_COLORS: Record<RoleType, string> = {
   finance: '#22c55e',
   comms: '#3b82f6',
-  sales: '#FF5A1F',
+  sales: '#F1F5F9',
 }
 
 function timeAgo(dateStr: string): string {
@@ -198,7 +198,7 @@ export function RoleActivityFeed({ maxHeight = 'calc(100vh - 300px)', limit = 50
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <Activity size={14} style={{ color: '#FF5A1F' }} />
+          <Activity size={14} style={{ color: 'var(--text-primary, #F1F5F9)' }} />
           <span style={sectionHeader}>Role Activity</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -266,7 +266,7 @@ export function RoleActivityFeed({ maxHeight = 'calc(100vh - 300px)', limit = 50
                 onMouseLeave={() => setHoveredId(null)}
                 style={{
                   ...listRow,
-                  background: isHovered ? 'rgba(20, 28, 40, 0.7)' : 'rgba(10, 14, 23, 0.5)',
+                  background: isHovered ? 'var(--bb-surface-hover, rgba(20, 28, 40, 0.7))' : 'rgba(10, 14, 23, 0.5)',
                 }}
               >
                 {/* Icon */}

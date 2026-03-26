@@ -21,11 +21,11 @@ function parseNotesByCategory(notes: string): Array<{ category: string; note: st
 }
 
 const CATEGORY_COLOR: Record<string, string> = {
-  SEO: '#3b82f6',
-  Tracking: '#a855f7',
-  Conversion: '#22c55e',
-  Technical: '#eab308',
-  Note: '#06b6d4',
+  SEO: '#94A3B8',
+  Tracking: '#64748B',
+  Conversion: '#CBD5E1',
+  Technical: '#475569',
+  Note: '#94A3B8',
   General: '#475569',
 }
 
@@ -42,15 +42,15 @@ const sectionTitle: React.CSSProperties = {
 const angleBox: React.CSSProperties = {
   padding: '12px 16px',
   borderRadius: 12,
-  background: 'linear-gradient(135deg, rgba(6, 182, 212, 0.08) 0%, rgba(59, 130, 246, 0.06) 100%)',
-  border: '1px solid rgba(6, 182, 212, 0.15)',
+  background: 'var(--hover-bg, rgba(255, 255, 255, 0.04))',
+  border: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
   marginBottom: 16,
 }
 
 const angleLabel: React.CSSProperties = {
   fontSize: 14,
   fontWeight: 500,
-  color: '#06b6d4',
+  color: 'var(--text-dim, #475569)',
   marginBottom: 4,
 }
 
@@ -84,8 +84,8 @@ const servicePill: React.CSSProperties = {
   fontWeight: 500,
   padding: '4px 12px',
   borderRadius: 9999,
-  background: 'rgba(255, 255, 255, 0.04)',
-  border: '1px solid rgba(255, 255, 255, 0.06)',
+  background: 'var(--hover-bg, rgba(255, 255, 255, 0.04))',
+  border: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
   color: 'var(--text-secondary, #94A3B8)',
 }
 
@@ -115,7 +115,7 @@ function OutreachIntelPanelInner({ opportunityNotes, outreachAngle, priorityServ
                   fontWeight: 500,
                   padding: '2px 8px',
                   borderRadius: 8,
-                  background: `${color}15`,
+                  background: 'var(--hover-bg-strong, rgba(255, 255, 255, 0.06))',
                   color: color,
                   whiteSpace: 'nowrap',
                   marginTop: 1,

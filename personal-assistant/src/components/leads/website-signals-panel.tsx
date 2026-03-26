@@ -21,7 +21,7 @@ const sectionTitle: React.CSSProperties = {
 const cellStyle: React.CSSProperties = {
   padding: 12,
   borderRadius: 12,
-  background: 'rgba(255, 255, 255, 0.04)',
+  background: 'var(--hover-bg, rgba(255, 255, 255, 0.04))',
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',

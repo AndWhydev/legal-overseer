@@ -266,8 +266,8 @@ export const SEED_DATA: SeedDataSet = {
     // PCC-enriched discovery leads
     {
       id: 'seed-l7', name: 'Quick Fix Plumbing', email: 'contact@quickfixplumbing.com.au', status: 'new', value: 3500,
-      score: 'hot', source_channel: 'pcc_discovery', source_detail: 'Quick Fix Plumbing',
-      discovery_source: 'pcc_discovery',
+      score: 'hot', source_channel: 'prospect_discovery', source_detail: 'Quick Fix Plumbing',
+      discovery_source: 'prospect_discovery',
       prospect_name: 'Quick Fix Plumbing', prospect_website: 'https://quickfixplumbing.com.au',
       prospect_domain: 'quickfixplumbing.com.au', prospect_phone: '0412 345 678',
       prospect_address: '45 Main St, Brisbane QLD',
@@ -292,8 +292,8 @@ export const SEED_DATA: SeedDataSet = {
     },
     {
       id: 'seed-l8', name: 'Sunrise Accounting', email: 'hello@sunriseaccounting.com.au', status: 'new', value: 12000,
-      score: 'hot', source_channel: 'pcc_discovery', source_detail: 'Sunrise Accounting',
-      discovery_source: 'pcc_discovery',
+      score: 'hot', source_channel: 'prospect_discovery', source_detail: 'Sunrise Accounting',
+      discovery_source: 'prospect_discovery',
       prospect_name: 'Sunrise Accounting', prospect_website: 'https://sunriseaccounting.com.au',
       prospect_domain: 'sunriseaccounting.com.au', prospect_phone: '07 3456 7890',
       prospect_address: '120 Eagle St, Brisbane QLD',

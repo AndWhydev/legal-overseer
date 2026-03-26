@@ -36,12 +36,12 @@
   --glass-blur: blur(20px) saturate(1.4);
   --glass-blur-heavy: blur(24px) saturate(1.5);
 
-  /* ── Borders ── */
-  --border-subtle: rgba(255, 255, 255, 0.45);
-  --border-subtle-alpha: rgba(255, 255, 255, 0.45);
-  --border-active: rgba(255, 255, 255, 0.6);
-  --glass-border: rgba(255, 255, 255, 0.45);
-  --border-focus-ring: rgba(100, 120, 200, 0.3);
+  /* ── Borders (nearly invisible) ── */
+  --border-subtle: rgba(255, 255, 255, 0.03);
+  --border-subtle-alpha: rgba(255, 255, 255, 0.03);
+  --border-active: rgba(255, 255, 255, 0.08);
+  --glass-border: rgba(255, 255, 255, 0.03);
+  --border-focus-ring: rgba(255, 255, 255, 0.15);
 
   /* ── Card Shadows ── */
   --card-shadow: 0 8px 32px rgba(100, 120, 160, 0.1);
@@ -56,13 +56,13 @@
   /* ── Card variant (more opaque glass) ── */
   --bg-card-solid: rgba(255, 255, 255, 0.42);
 
-  /* ── Accent (slightly warmer for light) ── */
-  --bb-orange: #E04E1A;
-  --bb-orange-light: #F06630;
-  --bb-orange-glow: rgba(224, 78, 26, 0.12);
-  --bb-orange-glow-sm: 0 0 16px rgba(224, 78, 26, 0.15);
-  --bb-orange-glow-md: 0 0 24px rgba(224, 78, 26, 0.08);
-  --bb-orange-glow-lg: 0 0 60px rgba(224, 78, 26, 0.06);
+  /* ── Accent (monochrome) ── */
+  --bb-orange: #94A3B8;
+  --bb-orange-light: #94A3B8;
+  --bb-orange-glow: none;
+  --bb-orange-glow-sm: none;
+  --bb-orange-glow-md: none;
+  --bb-orange-glow-lg: none;
 
   /* ── Status Colors (slightly deeper for light bg) ── */
   --bb-green: #16A34A;

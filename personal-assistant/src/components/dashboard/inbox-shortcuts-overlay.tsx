@@ -89,7 +89,7 @@ export function InboxShortcutsOverlay({ isOpen, onClose }: InboxShortcutsOverlay
     borderRadius: 16,
     background: 'rgba(20, 20, 22, 0.95)',
     backdropFilter: 'blur(20px)',
-    border: '1px solid rgba(255, 255, 255, 0.08)',
+    border: '1px solid rgba(255, 255, 255, 0.03)',
     boxShadow: '0 20px 80px rgba(0, 0, 0, 0.5)',
     padding: '32px',
   };
@@ -100,7 +100,7 @@ export function InboxShortcutsOverlay({ isOpen, onClose }: InboxShortcutsOverlay
     justifyContent: 'space-between',
     marginBottom: 32,
     paddingBottom: 16,
-    borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
+    borderBottom: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
   };
 
   const titleStyle: React.CSSProperties = {
@@ -151,7 +151,7 @@ export function InboxShortcutsOverlay({ isOpen, onClose }: InboxShortcutsOverlay
     padding: '8px 12px',
     borderRadius: 8,
     background: 'rgba(255, 255, 255, 0.02)',
-    border: '1px solid rgba(255, 255, 255, 0.04)',
+    border: '1px solid rgba(255, 255, 255, 0.03)',
     transition: 'all 0.15s ease',
   };
 

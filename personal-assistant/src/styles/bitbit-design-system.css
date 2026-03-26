@@ -1,6 +1,6 @@
 /* ============================================================================
-   BitBit Design System v3.0
-   Industrial Dark Theme — Orange Accent, True Glassmorphism, No Borders
+   BitBit Design System v4.0
+   Monochrome Glassmorphism — Black/White continuum, status colors only
    ============================================================================ */
 
 /* --------------------------------------------------------------------------
@@ -18,29 +18,35 @@
   --bg-input: rgba(13, 17, 23, 0.6);
   --bg-overlay: rgba(10, 14, 26, 0.7);
 
-  /* ── Accent: Orange (Brand) ── */
-  --bb-orange: #FF5A1F;
-  --bb-orange-light: #FF7A45;
-  --bb-orange-glow: rgba(255, 90, 31, 0.2);
-  --bb-orange-glow-sm: 0 0 16px rgba(255, 90, 31, 0.3);
-  --bb-orange-glow-md: 0 0 24px rgba(255, 90, 31, 0.12);
-  --bb-orange-glow-lg: 0 0 60px rgba(255, 90, 31, 0.1);
+  /* ── Accent: Monochrome (white is the accent on dark) ── */
+  --bb-accent: #F1F5F9;
+  --bb-accent-dim: rgba(241, 245, 249, 0.12);
 
-  /* ── Status Colors ── */
+  /* ── Legacy orange refs (mapped to monochrome for backward compat) ── */
+  --bb-orange: #F1F5F9;
+  --bb-orange-light: #F1F5F9;
+  --bb-orange-glow: rgba(255, 255, 255, 0.08);
+  --bb-orange-glow-sm: 0 0 16px rgba(255, 255, 255, 0.08);
+  --bb-orange-glow-md: 0 0 24px rgba(255, 255, 255, 0.05);
+  --bb-orange-glow-lg: 0 0 60px rgba(255, 255, 255, 0.03);
+
+  /* ── Status Colors (semantic only — success/warning/error) ── */
   --bb-green: #22C55E;
-  --bb-blue: #3B82F6;
-  --bb-purple: #8B5CF6;
-  --bb-amber: #F59E0B;
+  --bb-amber: #eab308;
   --bb-red: #EF4444;
-  --bb-teal: #14B8A6;
-  --bb-pink: #EC4899;
-  --bb-cyan: #06B6D4;
+
+  /* ── Legacy color refs (mapped to monochrome) ── */
+  --bb-blue: #94A3B8;
+  --bb-purple: #94A3B8;
+  --bb-teal: #94A3B8;
+  --bb-pink: #94A3B8;
+  --bb-cyan: #94A3B8;
 
   /* ── Semantic Status Aliases ── */
   --bb-status-success: var(--bb-green);
   --bb-status-warning: var(--bb-amber);
   --bb-status-error: var(--bb-red);
-  --bb-status-info: var(--bb-blue);
+  --bb-status-info: #94A3B8;
 
   /* ── Surfaces ── */
   --bb-surface: rgba(15, 20, 30, 0.35);
@@ -121,12 +127,12 @@
   --border-subtle: rgba(255, 255, 255, 0.03);
   --border-subtle-alpha: rgba(255, 255, 255, 0.03);
   --border-active: rgba(255, 255, 255, 0.2);
-  --border-focus-ring: rgba(255, 90, 31, 0.5);
+  --border-focus-ring: rgba(255, 255, 255, 0.2);
   --glass-border: rgba(255, 255, 255, 0.03);
 
-  /* ── AI Gradient (for magic/AI buttons) ── */
-  --ai-gradient: linear-gradient(90deg, #4DAF6B, #9DC74D, #D4C24E, #E0A860, #D8908B);
-  --ai-gradient-glow: 0 4px 20px rgba(77, 175, 107, 0.2), 0 4px 20px rgba(216, 144, 139, 0.15);
+  /* ── AI Gradient (monochrome shimmer) ── */
+  --ai-gradient: linear-gradient(90deg, rgba(255,255,255,0.03), rgba(255,255,255,0.08), rgba(255,255,255,0.03));
+  --ai-gradient-glow: 0 4px 20px rgba(255, 255, 255, 0.04);
 
   /* ── Theme-aware card shadows (overridden by light theme) ── */
   --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
@@ -137,6 +143,20 @@
   /* ── Edge-knock (dark: white glow/flash) ── */
   --edge-knock-flash: rgba(255, 255, 255, 0.7);
   --edge-knock-flash-spread: rgba(255, 255, 255, 0.3);
+
+  /* ── Toggle / Pill / Button theme tokens ── */
+  --toggle-container-bg: rgba(15, 20, 30, 0.4);
+  --toggle-active-bg: rgba(255, 255, 255, 0.08);
+  --toggle-active-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --toggle-off-bg: rgba(255, 255, 255, 0.1);
+  --pill-active-bg: rgba(255, 255, 255, 0.08);
+  --pill-inactive-bg: rgba(10, 14, 23, 0.42);
+  --btn-primary-bg: #F1F5F9;
+  --btn-primary-fg: #0a0f1a;
+  --btn-primary-hover: #E2E8F0;
+
+  /* ── Empty state icon filter (dark: orange logo → pure white silhouette) ── */
+  --empty-icon-filter: grayscale(1) brightness(0) invert(1);
 }
 
 
@@ -145,56 +165,70 @@
    -------------------------------------------------------------------------- */
 
 html.light {
-  /* ── Core Backgrounds (Manus-inspired: clean white) ── */
-  --bg-primary: #FAFAFA;
-  --bg-secondary: #F5F5F5;
+  /* ── Core Backgrounds ── */
+  --bg-primary: #F5F5F4;
+  --bg-secondary: #EEEEEC;
   --bg-card: #FFFFFF;
   --bg-card-alpha: #FFFFFF;
   --bg-sidebar: #FFFFFF;
   --bg-elevated: #FFFFFF;
-  --bg-input: #F5F5F5;
+  --bg-input: #F0F0EE;
   --bg-overlay: rgba(255, 255, 255, 0.8);
 
   /* ── Text ── */
   /* --text-primary/secondary/dim: defined in globals.css */
   --text-on-accent: #FFFFFF;
 
-  /* ── Surfaces ── */
+  /* ── Surfaces (white cards pop against warm-gray page bg) ── */
   --bb-surface: #FFFFFF;
-  --bb-surface-hover: #F9FAFB;
-  --bb-surface-active: #F3F4F6;
+  --bb-surface-hover: #FAFAF9;
+  --bb-surface-active: #F5F5F4;
 
-  /* ── Glassmorphism (minimal in light) ── */
+  /* ── Glassmorphism (subtle in light) ── */
   --glass-bg: #FFFFFF;
   --glass-bg-heavy: #FFFFFF;
 
-  /* ── Borders (soft grey) ── */
-  --border-subtle: #E5E7EB;
-  --border-subtle-alpha: #E5E7EB;
-  --border-active: #D1D5DB;
-  --border-focus-ring: rgba(59, 130, 246, 0.15);
-  --glass-border: #E5E7EB;
+  /* ── Borders (nearly invisible — no visible card strokes) ── */
+  --border-subtle: rgba(0, 0, 0, 0.04);
+  --border-subtle-alpha: rgba(0, 0, 0, 0.04);
+  --border-active: rgba(0, 0, 0, 0.08);
+  --border-focus-ring: rgba(0, 0, 0, 0.1);
+  --glass-border: rgba(0, 0, 0, 0.04);
 
   /* ── Hover overlays (light) ── */
   --hover-bg: rgba(0, 0, 0, 0.04);
-  --hover-bg-strong: rgba(0, 0, 0, 0.06);
+  --hover-bg-strong: rgba(0, 0, 0, 0.08);
 
   /* ── Glassmorphism (disabled in light) ── */
   --glass-blur: none;
   --glass-blur-heavy: none;
 
-  /* ── Card solid (light) ── */
-  --bg-card-solid: rgba(255, 255, 255, 0.95);
+  /* ── Card solid (light — pure white pops against warm-gray page) ── */
+  --bg-card-solid: #FFFFFF;
 
-  /* ── Card shadows (very subtle, almost flat) ── */
-  --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-  --card-inset: none;
-  --card-shadow-hover: 0 2px 8px rgba(0, 0, 0, 0.06);
-  --card-inset-hover: none;
+  /* ── Card shadows (subtle but visible — cards need to lift off the page) ── */
+  --card-shadow: 0 1px 4px rgba(0, 0, 0, 0.06), 0 4px 16px rgba(0, 0, 0, 0.04);
+  --card-inset: 0 1px 0 rgba(255, 255, 255, 0.8);
+  --card-shadow-hover: 0 2px 8px rgba(0, 0, 0, 0.08), 0 8px 24px rgba(0, 0, 0, 0.06);
+  --card-inset-hover: 0 1px 0 rgba(255, 255, 255, 0.9);
 
   /* ── Edge-knock (light: black glow/flash) ── */
   --edge-knock-flash: rgba(0, 0, 0, 0.5);
   --edge-knock-flash-spread: rgba(0, 0, 0, 0.2);
+
+  /* ── Toggle / Pill / Button theme tokens (light) ── */
+  --toggle-container-bg: rgba(0, 0, 0, 0.06);
+  --toggle-active-bg: #FFFFFF;
+  --toggle-active-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+  --toggle-off-bg: rgba(0, 0, 0, 0.12);
+  --pill-active-bg: rgba(255, 255, 255, 0.9);
+  --pill-inactive-bg: rgba(0, 0, 0, 0.04);
+  --btn-primary-bg: #0a0f1a;
+  --btn-primary-fg: #F1F5F9;
+  --btn-primary-hover: #1e293b;
+
+  /* ── Empty state icon filter (light: orange logo → dark silhouette) ── */
+  --empty-icon-filter: grayscale(1) brightness(0);
 }
 
 /* ── Light theme: body ── */
@@ -211,10 +245,13 @@ html.light ::selection {
 
 /* ── Light theme: scrollbars ── */
 html.light ::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.1);
+  background: rgba(0, 0, 0, 0.08);
 }
 html.light ::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.18);
+  background: rgba(0, 0, 0, 0.15);
+}
+html.light * {
+  scrollbar-color: rgba(0, 0, 0, 0.08) transparent;
 }
 
 /* ── Light theme: dot grid / backdrop ── */
@@ -233,15 +270,15 @@ html.light .bb-dot-grid::after {
 /* ── Light theme: cards (clean white, subtle border) ── */
 html.light .bb-card {
   background: #FFFFFF;
-  border: 1px solid #E5E7EB;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  border: none;
+  box-shadow: var(--card-shadow);
   background-image: none;
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
 }
 
 html.light .bb-card:hover {
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--card-shadow-hover);
 }
 
 html.light .bb-card--flat {
@@ -252,7 +289,7 @@ html.light .bb-card--flat {
 /* ── Light theme: sidebar ── */
 html.light .bb-sidebar-rail {
   background: #FFFFFF;
-  border-right: 1px solid #E5E7EB;
+  border-right: none;
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
 }
@@ -274,13 +311,13 @@ html.light .bb-sidebar-rail__item--active {
 html.light .bb-sidebar-rail__item[data-tooltip]::after {
   background: #FFFFFF;
   color: #111827;
-  border: 1px solid #E5E7EB;
+  border: none;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 html.light .bb-sidebar-panel {
   background: #FAFAFA;
-  border-right: 1px solid #E5E7EB;
+  border-right: none;
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
 }
@@ -307,7 +344,7 @@ html.light .bb-sidebar__logo-button:hover {
 /* ── Light theme: topbar ── */
 html.light .bb-topbar-area {
   background: var(--bg-primary, #FAFAFA);
-  border-bottom: 1px solid #E5E7EB;
+  border-bottom: 1px solid var(--border-subtle);
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
 }
@@ -321,7 +358,7 @@ html.light .bb-topbar {
 /* ── Light theme: node / task cards ── */
 html.light .bb-node {
   background: #FFFFFF;
-  border: 1px solid #E5E7EB;
+  border: none;
   box-shadow: inset 0 -1px 2px rgba(0, 0, 0, 0.03);
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
@@ -357,7 +394,7 @@ html.light .bb-activity__item:hover {
 
 /* ── Light theme: buttons ── */
 html.light .bb-btn--ghost {
-  border: 1px solid #E5E7EB;
+  border: none;
   color: var(--text-primary);
 }
 
@@ -372,7 +409,7 @@ html.light .bb-btn--icon:hover {
 
 /* ── Light theme: inputs ── */
 html.light .bb-input {
-  border: 1px solid #E5E7EB;
+  border: none;
   background: #F9FAFB;
 }
 
@@ -392,7 +429,7 @@ html.light .bb-overlay {
 
 html.light .bb-overlay__card {
   background: #FFFFFF;
-  border: 1px solid #E5E7EB;
+  border: none;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
 }
 
@@ -469,6 +506,7 @@ body.bitbit-dark {
   color: var(--text-primary);
 }
 
+/* ── Global custom scrollbar ── */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -478,10 +516,19 @@ body.bitbit-dark {
 }
 ::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.08);
-  border-radius: var(--radius-full);
+  border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.15);
+}
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Firefox scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.08) transparent;
 }
 
 
@@ -599,7 +646,7 @@ body.bitbit-dark {
   background: rgba(15, 20, 30, 0.6);
   backdrop-filter: blur(20px) saturate(1.2);
   -webkit-backdrop-filter: blur(20px) saturate(1.2);
-  border: 1px solid rgba(255, 255, 255, 0.03);
+  border: none;
   border-radius: var(--radius-xl);
   padding: 20px;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
@@ -2262,7 +2309,7 @@ html.light .bb-chip {
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
   color: #6B7280;
-  border: 1px solid #E5E7EB;
+  border: none;
 }
 
 html.light .bb-chip:hover {
@@ -2406,24 +2453,7 @@ html.light .bb-chip--accent {
 
 /* ── Message list container ── */
 
-/* Custom scrollbar for inbox */
-.bb-inbox-scroll {
-  scrollbar-width: thin;
-  scrollbar-color: var(--hover-bg-strong) transparent;
-}
-.bb-inbox-scroll::-webkit-scrollbar {
-  width: 6px;
-}
-.bb-inbox-scroll::-webkit-scrollbar-track {
-  background: transparent;
-}
-.bb-inbox-scroll::-webkit-scrollbar-thumb {
-  background: var(--hover-bg-strong);
-  border-radius: 3px;
-}
-.bb-inbox-scroll::-webkit-scrollbar-thumb:hover {
-  background: var(--text-dim);
-}
+/* Inbox scrollbar: now handled by global scrollbar styles */
 
 .bb-inbox-list {
   display: flex;
@@ -5511,16 +5541,41 @@ html.light .bb-tenders-drawer__close:hover {
 
 .bb-search-input {
   flex: 1;
-  background: transparent;
-  border: none;
-  outline: none;
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
   font-size: 15px;
   font-family: var(--font-sans);
   color: var(--text-primary);
   caret-color: var(--bb-blue);
 }
 
+.bb-search-input:focus {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
 .bb-search-input::placeholder {
+  color: var(--text-dim);
+}
+
+/* ── Standalone glass input — overrides theme !important borders ── */
+.bb-glass-input {
+  border: none !important;
+  outline: none !important;
+  background: var(--bg-input, rgba(13, 17, 23, 0.6)) !important;
+  backdrop-filter: var(--glass-blur, blur(20px) saturate(1.2));
+  -webkit-backdrop-filter: var(--glass-blur, blur(20px) saturate(1.2));
+  box-shadow: var(--card-inset, inset 0 1px 0 rgba(255, 255, 255, 0.05)) !important;
+  color: var(--text-primary) !important;
+}
+.bb-glass-input:focus {
+  border: none !important;
+  box-shadow: var(--card-inset, inset 0 1px 0 rgba(255, 255, 255, 0.05)), 0 0 0 2px rgba(255, 255, 255, 0.08) !important;
+}
+.bb-glass-input::placeholder {
   color: var(--text-dim);
 }
 
@@ -5642,6 +5697,29 @@ html.light .bb-tenders-drawer__close:hover {
   margin-right: 4px;
 }
 
+.bb-search-footer button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--text-dim);
+  font-size: 12px;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: color 100ms;
+}
+
+.bb-search-footer button:hover {
+  color: var(--text-secondary);
+}
+
+.bb-search-footer button:hover kbd {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
 .bb-search-kbd-esc {
   display: inline-flex;
   align-items: center;
@@ -5656,17 +5734,24 @@ html.light .bb-tenders-drawer__close:hover {
   font-size: 11px;
   font-weight: 500;
   color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 100ms, border-color 100ms;
+}
+
+.bb-search-kbd-esc:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.16);
 }
 
 /* Light theme overrides */
 html.light .bb-search-panel {
   background: #FFFFFF;
-  border: 1px solid #E5E7EB;
+  border: none;
   box-shadow: 0 24px 80px rgba(0, 0, 0, 0.12);
 }
 
 html.light .bb-search-input-row {
-  border-bottom: 1px solid #E5E7EB;
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 html.light .bb-search-item:hover,
@@ -5675,13 +5760,23 @@ html.light .bb-search-item--selected {
 }
 
 html.light .bb-search-footer {
-  border-top: 1px solid #E5E7EB;
+  border-top: 1px solid var(--border-subtle);
 }
 
 html.light .bb-search-footer kbd,
 html.light .bb-search-kbd-esc {
   background: #F3F4F6;
-  border-color: #E5E7EB;
+  border-color: var(--border-subtle);
+}
+
+html.light .bb-search-kbd-esc:hover {
+  background: #E5E7EB;
+  border-color: #D1D5DB;
+}
+
+html.light .bb-search-footer button:hover kbd {
+  background: #E5E7EB;
+  border-color: #D1D5DB;
 }
 
 
@@ -5883,26 +5978,26 @@ html.light .bb-search-kbd-esc {
 /* Light theme overrides */
 html.light .bb-shortcuts-panel {
   background: #FFFFFF;
-  border: 1px solid #E5E7EB;
+  border: none;
   box-shadow: 0 24px 80px rgba(0, 0, 0, 0.12);
 }
 
 html.light .bb-shortcuts-header {
-  border-bottom: 1px solid #E5E7EB;
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 html.light .bb-shortcuts-key {
   background: #F3F4F6;
-  border-color: #E5E7EB;
+  border-color: var(--border-subtle);
 }
 
 html.light .bb-shortcuts-footer {
-  border-top: 1px solid #E5E7EB;
+  border-top: 1px solid var(--border-subtle);
 }
 
 html.light .bb-shortcuts-footer kbd {
   background: #F3F4F6;
-  border-color: #E5E7EB;
+  border-color: var(--border-subtle);
 }
 
 /* Stagger children */
@@ -6481,6 +6576,7 @@ html.light .bb-shortcuts-footer kbd {
 /* Textarea in docked pill — !important to beat theme global textarea rules */
 .bb-pill__textarea {
   flex: 1;
+  width: 100%;
   min-width: 0;
   background: transparent !important;
   border: none !important;
@@ -6697,16 +6793,17 @@ html.light .bb-pill__shimmer-dots span {
   display: flex;
   gap: 8px;
   align-items: flex-start;
-  max-width: min(560px, 74%);
 }
 
 .bb-chat__msg--user {
   margin-left: auto;
   flex-direction: row-reverse;
+  max-width: min(560px, 74%);
 }
 
 .bb-chat__msg--assistant {
   margin-right: auto;
+  max-width: 100%;
 }
 
 /* Edit button visibility on user message hover */
@@ -6749,7 +6846,7 @@ html.light .bb-chat__face-avatar {
 
 .bb-chat__scroll-btn {
   position: absolute;
-  bottom: 100px;
+  top: -48px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 10;
@@ -6759,7 +6856,7 @@ html.light .bb-chat__face-avatar {
   background: var(--glass-pill-bg, rgba(255, 255, 255, 0.06));
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: none;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -6767,6 +6864,7 @@ html.light .bb-chat__face-avatar {
   color: var(--text-secondary);
   transition: opacity 0.2s, color 0.2s;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  pointer-events: auto;
 }
 
 .bb-chat__scroll-btn:hover {
@@ -6776,7 +6874,7 @@ html.light .bb-chat__face-avatar {
 
 html.light .bb-chat__scroll-btn {
   background: rgba(255, 255, 255, 0.8);
-  border-color: rgba(0, 0, 0, 0.1);
+  border: none;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
@@ -6790,6 +6888,7 @@ html.light .bb-chat__scroll-btn {
   color: var(--text-primary);
   font-size: 14px;
   line-height: 1.5;
+  white-space: pre-wrap;
   overflow-wrap: break-word;
   word-break: break-word;
 }
@@ -8103,10 +8202,10 @@ html.light .bb-chat__drawer-card--active {
   color: var(--text-primary, #E2E8F0);
 }
 
-/* Drawer toggle positioning */
+/* Drawer toggle positioning — vertically centered in topbar height */
 .bb-chat__drawer-toggle {
   position: absolute;
-  top: 12px;
+  top: calc((var(--topbar-height) - 36px) / 2);
   left: 12px;
   z-index: 20;
 }
@@ -8132,4 +8231,102 @@ html.light .bb-topbar-icon-btn[aria-expanded="true"] {
   font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
   font-size: 13px;
   line-height: 20px;
+}
+
+/* ── Micro-Animations ─────────────────────────────────────────────────────── */
+
+@keyframes bb-fade-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes bb-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes bb-scale-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes bb-slide-up {
+  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes bb-slide-down {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes bb-modal-in {
+  from { opacity: 0; transform: scale(0.92) translateY(8px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes bb-drawer-in {
+  from { opacity: 0; transform: translateX(24px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes bb-expand {
+  from { opacity: 0; transform: translateY(-4px) scaleY(0.97); }
+  to { opacity: 1; transform: translateY(0) scaleY(1); }
+}
+
+@keyframes bb-collapse {
+  from { opacity: 1; transform: translateY(0) scaleY(1); }
+  to { opacity: 0; transform: translateY(-4px) scaleY(0.97); }
+}
+
+@keyframes bb-dot-pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+
+/* Utility classes for staggered entrance */
+.bb-stagger > * {
+  animation: bb-fade-up 300ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.bb-stagger > :nth-child(1) { animation-delay: 0ms; }
+.bb-stagger > :nth-child(2) { animation-delay: 40ms; }
+.bb-stagger > :nth-child(3) { animation-delay: 80ms; }
+.bb-stagger > :nth-child(4) { animation-delay: 120ms; }
+.bb-stagger > :nth-child(5) { animation-delay: 160ms; }
+.bb-stagger > :nth-child(6) { animation-delay: 200ms; }
+.bb-stagger > :nth-child(7) { animation-delay: 240ms; }
+.bb-stagger > :nth-child(8) { animation-delay: 280ms; }
+.bb-stagger > :nth-child(9) { animation-delay: 320ms; }
+.bb-stagger > :nth-child(10) { animation-delay: 360ms; }
+.bb-stagger > :nth-child(n+11) { animation-delay: 400ms; }
+
+/* Modal entrance */
+.bb-modal-enter {
+  animation: bb-modal-in 300ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* Drawer entrance */
+.bb-drawer-enter {
+  animation: bb-drawer-in 250ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Card hover lift */
+.bb-lift {
+  transition: transform 200ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 200ms;
+}
+.bb-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .bb-stagger > *,
+  .bb-modal-enter,
+  .bb-drawer-enter,
+  .bb-lift {
+    animation: none !important;
+    transition: none !important;
+  }
 }

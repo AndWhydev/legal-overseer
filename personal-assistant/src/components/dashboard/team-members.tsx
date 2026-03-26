@@ -27,7 +27,7 @@ const ROLE_OPTIONS = ['admin', 'member', 'viewer'] as const;
 
 const roleBadgeColor: Record<string, string> = {
   owner: 'bg-purple-500/20 text-purple-300',
-  admin: 'bg-[var(--bb-orange,#FF5A1F)]/20 text-[var(--bb-orange,#FF5A1F)]',
+  admin: 'bg-[#F1F5F9]/20 text-[#F1F5F9]',
   member: 'bg-blue-500/20 text-blue-300',
   viewer: 'bg-muted text-muted-foreground',
 };
@@ -179,7 +179,7 @@ export function TeamMembers() {
             <button
               onClick={handleInvite}
               disabled={sending || !inviteEmail}
-              className="flex items-center gap-1.5 rounded-md bg-[#1A1A1B] px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+              className="flex items-center gap-1.5 rounded-lg bg-[var(--btn-primary-bg,#F1F5F9)] h-10 px-5 text-sm font-medium text-[var(--btn-primary-fg,#0a0f1a)] transition-opacity hover:opacity-90 disabled:opacity-50"
             >
               {sending ? <Loader2 size={14} className="animate-spin" /> : <Mail size={14} />}
               Invite

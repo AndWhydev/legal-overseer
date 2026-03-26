@@ -64,7 +64,7 @@ const glassInput: React.CSSProperties = {
   padding: '12px 16px',
   paddingLeft: '40px',
   borderRadius: 12,
-  background: 'rgba(13, 17, 23, 0.6)',
+  background: 'var(--bg-input, rgba(13, 17, 23, 0.6))',
   border: '1px solid var(--glass-interactive-border)',
   color: 'var(--text-primary)',
   fontSize: '14px',
@@ -91,7 +91,7 @@ const TYPE_CONFIG: Record<string, { icon: React.ElementType; color: string; labe
   pattern: { icon: TrendingUp, color: '#8B5CF6', label: 'Pattern' },
   fact: { icon: Brain, color: '#22C55E', label: 'Fact' },
   relationship: { icon: Users, color: '#EC4899', label: 'Relationship' },
-  pricing: { icon: DollarSign, color: '#FF5A1F', label: 'Pricing' },
+  pricing: { icon: DollarSign, color: '#F1F5F9', label: 'Pricing' },
   lesson_learned: { icon: Shield, color: '#14B8A6', label: 'Lesson' },
 };
 
@@ -244,8 +244,8 @@ function TypeFilter({
         onClick={() => onTypeChange(null)}
         style={{
           ...badge,
-          background: !activeType ? 'var(--bb-orange)' : 'rgba(255,255,255,0.06)',
-          color: !activeType ? '#000' : 'rgba(255,255,255,0.6)',
+          background: !activeType ? '#F1F5F9' : 'rgba(255,255,255,0.06)',
+          color: !activeType ? '#0a0f1a' : 'rgba(255,255,255,0.6)',
           cursor: 'pointer',
           border: 'none',
           padding: '4px 12px',
@@ -330,7 +330,7 @@ export function MemoryPalaceTab() {
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <Brain size={22} color="var(--bb-orange)" />
+            <Brain size={22} color="var(--text-primary, #F1F5F9)" />
             <h2 style={{
               fontSize: 16,
               fontWeight: 500,
@@ -346,8 +346,8 @@ export function MemoryPalaceTab() {
               onClick={() => setView('search')}
               style={{
                 ...badge,
-                background: view === 'search' ? 'var(--bb-orange)' : 'rgba(255,255,255,0.06)',
-                color: view === 'search' ? '#000' : 'rgba(255,255,255,0.6)',
+                background: view === 'search' ? '#F1F5F9' : 'rgba(255,255,255,0.06)',
+                color: view === 'search' ? '#0a0f1a' : 'rgba(255,255,255,0.6)',
                 cursor: 'pointer',
                 border: 'none',
                 padding: '4px 12px',
@@ -360,8 +360,8 @@ export function MemoryPalaceTab() {
               onClick={() => setView('decisions')}
               style={{
                 ...badge,
-                background: view === 'decisions' ? 'var(--bb-orange)' : 'rgba(255,255,255,0.06)',
-                color: view === 'decisions' ? '#000' : 'rgba(255,255,255,0.6)',
+                background: view === 'decisions' ? '#F1F5F9' : 'rgba(255,255,255,0.06)',
+                color: view === 'decisions' ? '#0a0f1a' : 'rgba(255,255,255,0.6)',
                 cursor: 'pointer',
                 border: 'none',
                 padding: '4px 12px',
@@ -409,14 +409,12 @@ export function MemoryPalaceTab() {
           )}
           {!loading && memories.length === 0 && searchQuery && (
             <EmptyState
-              icon={<Brain size={24} />}
               title="No memories found"
               description="Try different keywords or broaden your search"
             />
           )}
           {!loading && memories.length === 0 && !searchQuery && (
             <EmptyState
-              icon={<Brain size={24} />}
               title="Institutional Memory"
               description="Search across all conversations, decisions, pricing history, and lessons learned"
             />

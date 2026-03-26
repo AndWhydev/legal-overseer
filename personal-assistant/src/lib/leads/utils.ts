@@ -45,7 +45,7 @@ export function formatSpeedToLead(createdAt: string, firstAckAt: string | null):
   return `${hours}h ${remainingMinutes}m`
 }
 
-export function pccScoreToLeadScore(priorityScore: number | null): LeadScore {
+export function discoveryScoreToLeadScore(priorityScore: number | null): LeadScore {
   if (priorityScore == null) return 'cold'
   if (priorityScore >= 60) return 'hot'
   if (priorityScore >= 35) return 'warm'

@@ -28,7 +28,7 @@ const card: React.CSSProperties = {
 
 const input: React.CSSProperties = {
   background: 'var(--bg-input)',
-  border: '1px solid rgba(255, 255, 255, 0.06)',
+  border: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
   borderRadius: 8,
   padding: '8px 12px',
   color: 'var(--text-primary)',
@@ -104,9 +104,9 @@ export function ScenarioPlanner() {
                 padding: '12px 16px',
                 borderRadius: 8,
                 background: activePreset === preset.name
-                  ? 'rgba(255, 90, 31, 0.15)'
+                  ? 'rgba(255, 255, 255, 0.08)'
                   : 'rgba(255, 255, 255, 0.03)',
-                border: '1px solid rgba(255, 255, 255, 0.06)',
+                border: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
                 color: 'var(--text-primary)',
                 cursor: running ? 'wait' : 'pointer',
                 fontSize: 14,
@@ -115,7 +115,7 @@ export function ScenarioPlanner() {
                 textAlign: 'left',
               }}
             >
-              <Play size={12} color="var(--bb-orange)" />
+              <Play size={12} color="var(--text-primary, #F1F5F9)" />
               {preset.name}
             </button>
           ))}

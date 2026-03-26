@@ -49,11 +49,11 @@ interface RoleStatusCardsProps {
 const glassCard: React.CSSProperties = {
   padding: '20px',
   borderRadius: 16,
-  background: 'rgba(15, 20, 30, 0.6)',
-  backdropFilter: 'blur(20px) saturate(1.2)',
-  WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
-  border: '1px solid rgba(255, 255, 255, 0.03)',
-  boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+  background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.6))',
+  backdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
+  WebkitBackdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
+  border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
+  boxShadow: 'var(--card-inset, inset 0 1px 0 rgba(255, 255, 255, 0.05))',
   transition: 'all 200ms',
   cursor: 'pointer',
 }
@@ -74,7 +74,7 @@ const sectionHeader: React.CSSProperties = {
 const ROLE_META: Record<RoleType, { label: string; icon: React.ElementType; color: string; description: string }> = {
   finance: { label: 'Finance', icon: DollarSign, color: '#22c55e', description: 'Invoices, payments, cash flow' },
   comms: { label: 'Communications', icon: MessageSquare, color: '#3b82f6', description: 'Email triage, responses, follow-ups' },
-  sales: { label: 'Sales', icon: TrendingUp, color: '#FF5A1F', description: 'Leads, proposals, pipeline' },
+  sales: { label: 'Sales', icon: TrendingUp, color: '#F1F5F9', description: 'Leads, proposals, pipeline' },
 }
 
 const AUTONOMY_LABELS: Record<AutonomyLevel, { label: string; color: string }> = {
@@ -168,7 +168,7 @@ export function RoleStatusCards({ onRoleClick }: RoleStatusCardsProps) {
                   ? '1px solid rgba(255, 255, 255, 0.1)'
                   : '1px solid rgba(255, 255, 255, 0.03)',
                 background: isHovered
-                  ? 'rgba(20, 28, 40, 0.7)'
+                  ? 'var(--bb-surface-hover, rgba(20, 28, 40, 0.7))'
                   : 'rgba(15, 20, 30, 0.6)',
               }}
             >

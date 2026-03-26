@@ -7,17 +7,17 @@ import type { SwarmRunRow } from '@/lib/swarm/types';
 
 const styles = {
   card: {
-    background: 'rgba(15, 20, 30, 0.35)',
+    background: 'var(--bg-card, rgba(15, 20, 30, 0.35))',
     backdropFilter: 'blur(20px)',
     borderRadius: '12px',
     padding: '16px 20px',
-    border: '1px solid rgba(255, 255, 255, 0.04)',
+    border: '1px solid rgba(255, 255, 255, 0.03)',
     cursor: 'pointer',
     transition: 'all 0.15s ease',
   },
   cardHover: {
     background: 'rgba(20, 28, 40, 0.5)',
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: 'rgba(255, 255, 255, 0.03)',
   },
   topRow: {
     display: 'flex',
@@ -35,7 +35,7 @@ const styles = {
     const colors: Record<string, { bg: string; text: string }> = {
       pending: { bg: 'rgba(255, 255, 255, 0.06)', text: 'rgba(255, 255, 255, 0.4)' },
       planning: { bg: 'rgba(59, 130, 246, 0.1)', text: '#3B82F6' },
-      executing: { bg: 'rgba(255, 90, 31, 0.1)', text: '#FF7A45' },
+      executing: { bg: 'rgba(255, 255, 255, 0.06)', text: '#E2E8F0' },
       negotiating: { bg: 'rgba(139, 92, 246, 0.1)', text: '#8B5CF6' },
       completed: { bg: 'rgba(34, 197, 94, 0.1)', text: '#22C55E' },
       partial: { bg: 'rgba(245, 158, 11, 0.1)', text: '#F59E0B' },
@@ -73,14 +73,14 @@ const styles = {
   },
   costBadge: {
     fontSize: '14px',
-    color: 'rgba(255, 90, 31, 0.7)',
+    color: 'rgba(255, 255, 255, 0.5)',
     fontFamily: 'var(--font-mono, monospace)',
   },
   executingDot: {
     width: '6px',
     height: '6px',
     borderRadius: '50%',
-    background: '#FF7A45',
+    background: '#E2E8F0',
     animation: 'pulse 1.5s ease-in-out infinite',
   },
 };

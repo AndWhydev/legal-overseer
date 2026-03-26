@@ -25,7 +25,7 @@ export function ChannelActivityWidget() {
     >
       <div className="space-y-3 max-h-64 overflow-y-auto">
         {activity.length === 0 ? (
-          <EmptyState icon={<Users size={32} />} title="No recent activity" description="Channel messages will appear here." />
+          <EmptyState title="No recent activity" description="Channel messages will appear here." />
         ) : (
           activity.map((item, idx) => (
             <div key={(item.id as string) || idx} className="flex items-start gap-3 pb-3 border-b border-[var(--border-subtle)] last:border-0">

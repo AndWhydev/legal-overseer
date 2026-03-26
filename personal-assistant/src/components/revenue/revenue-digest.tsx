@@ -85,7 +85,7 @@ export function RevenueDigestCard() {
       <div style={card}>
         <div className="flex items-center justify-between" style={{ marginBottom: 12 }}>
           <div className="flex items-center gap-2">
-            <Calendar size={14} color="var(--bb-orange)" />
+            <Calendar size={14} color="var(--text-primary, #F1F5F9)" />
             <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
               Revenue Digest
             </span>
@@ -102,8 +102,8 @@ export function RevenueDigestCard() {
                   borderRadius: 8,
                   border: 'none',
                   cursor: 'pointer',
-                  background: period === p ? 'rgba(255, 90, 31, 0.15)' : 'rgba(255, 255, 255, 0.04)',
-                  color: period === p ? 'var(--bb-orange)' : 'var(--text-dim)',
+                  background: period === p ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.04)',
+                  color: period === p ? 'var(--text-primary, #F1F5F9)' : 'var(--text-dim)',
                 }}
               >
                 {p}
@@ -137,8 +137,8 @@ export function RevenueDigestCard() {
             <button
               onClick={generate}
               style={{
-                background: 'var(--bb-orange)',
-                color: '#000',
+                background: 'var(--btn-primary-bg, #F1F5F9)',
+                color: 'var(--btn-primary-fg, #0a0f1a)',
                 border: 'none',
                 borderRadius: 8,
                 padding: '8px 16px',

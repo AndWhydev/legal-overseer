@@ -8,18 +8,18 @@ import type { Meeting, MeetingType } from '@/lib/meetings/types'
 const glassCard: React.CSSProperties = {
   padding: '20px',
   borderRadius: 16,
-  background: 'rgba(15, 20, 30, 0.6)',
-  backdropFilter: 'blur(20px) saturate(1.2)',
-  WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
-  border: '1px solid rgba(255, 255, 255, 0.03)',
-  boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+  background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.6))',
+  backdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
+  WebkitBackdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
+  border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
+  boxShadow: 'var(--card-inset, inset 0 1px 0 rgba(255, 255, 255, 0.05))',
 }
 
 const meetingRowStyle: React.CSSProperties = {
   padding: '16px 20px',
   borderRadius: 12,
-  background: 'rgba(10, 14, 23, 0.5)',
-  border: '1px solid rgba(255, 255, 255, 0.03)',
+  background: 'var(--bb-surface, rgba(10, 14, 23, 0.5))',
+  border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
   cursor: 'pointer',
   transition: 'all 200ms',
   display: 'flex',
@@ -129,9 +129,9 @@ export function MeetingList({ onSelectMeeting, onUpload }: MeetingListProps) {
           style={{
             padding: '8px 16px',
             borderRadius: 12,
-            background: '#FF5A1F',
+            background: 'var(--btn-primary-bg, #F1F5F9)',
             border: 'none',
-            color: '#000',
+            color: 'var(--btn-primary-fg, #0a0f1a)',
             fontSize: 14,
             fontWeight: 500,
             cursor: 'pointer',
@@ -157,9 +157,9 @@ export function MeetingList({ onSelectMeeting, onUpload }: MeetingListProps) {
             style={{
               padding: '8px 16px',
               borderRadius: 20,
-              background: typeFilter === type ? 'rgba(255, 90, 31, 0.15)' : 'rgba(10, 14, 23, 0.42)',
-              border: typeFilter === type ? '1px solid rgba(255, 90, 31, 0.3)' : '1px solid rgba(255, 255, 255, 0.06)',
-              color: typeFilter === type ? '#FF7A45' : 'var(--text-secondary, #94A3B8)',
+              background: typeFilter === type ? 'rgba(255, 255, 255, 0.08)' : 'rgba(10, 14, 23, 0.42)',
+              border: typeFilter === type ? '1px solid rgba(255, 255, 255, 0.15)' : '1px solid rgba(255, 255, 255, 0.06)',
+              color: typeFilter === type ? '#E2E8F0' : 'var(--text-secondary, #94A3B8)',
               fontSize: 14,
               fontWeight: 500,
               cursor: 'pointer',
@@ -213,13 +213,13 @@ export function MeetingList({ onSelectMeeting, onUpload }: MeetingListProps) {
                     width: 36,
                     height: 36,
                     borderRadius: 12,
-                    background: 'rgba(255, 90, 31, 0.08)',
+                    background: 'rgba(255, 255, 255, 0.04)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     flexShrink: 0,
                   }}>
-                    <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#FF5A1F" strokeWidth={1.5}>
+                    <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#F1F5F9" strokeWidth={1.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z" />
                     </svg>
                   </div>

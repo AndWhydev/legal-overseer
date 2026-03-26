@@ -91,7 +91,7 @@ export function DecisionLogViewer({ orgId, entityId }: DecisionLogViewerProps) {
             key={decision.id}
             onClick={() => setExpandedId(isExpanded ? null : decision.id)}
             style={{
-              background: 'rgba(15, 20, 30, 0.35)',
+              background: 'var(--bg-card, rgba(15, 20, 30, 0.35))',
               backdropFilter: 'blur(12px)',
               borderRadius: '12px',
               padding: '14px 16px',
@@ -100,7 +100,7 @@ export function DecisionLogViewer({ orgId, entityId }: DecisionLogViewerProps) {
               borderLeft: `3px solid ${impactColor}`,
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'rgba(20, 28, 40, 0.5)'
+              e.currentTarget.style.background = 'var(--bb-surface-hover, rgba(20, 28, 40, 0.5))'
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.background = 'rgba(15, 20, 30, 0.35)'
@@ -176,7 +176,7 @@ export function DecisionLogViewer({ orgId, entityId }: DecisionLogViewerProps) {
               <div style={{
                 marginTop: '12px',
                 paddingTop: '12px',
-                borderTop: '1px solid rgba(255, 255, 255, 0.06)',
+                borderTop: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '12px',

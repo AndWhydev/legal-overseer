@@ -35,13 +35,13 @@ const sectionTitle: React.CSSProperties = {
 }
 
 const actionBtn: React.CSSProperties = {
-  height: 36,
+  height: 40,
   padding: '0 16px',
   borderRadius: 8,
   border: 'none',
-  background: '#FF5A1F',
-  color: '#000',
-  fontSize: 13,
+  background: 'var(--btn-primary-bg, #F1F5F9)',
+  color: 'var(--btn-primary-fg, #0a0f1a)',
+  fontSize: 14,
   fontWeight: 500,
   cursor: 'pointer',
   display: 'flex',
@@ -52,18 +52,18 @@ const actionBtn: React.CSSProperties = {
 
 const secondaryBtn: React.CSSProperties = {
   ...actionBtn,
-  background: 'rgba(255, 255, 255, 0.06)',
+  background: 'var(--hover-bg-strong, rgba(255, 255, 255, 0.06))',
   color: 'var(--text-secondary, #94A3B8)',
 }
 
 const glassCard: React.CSSProperties = {
   padding: '16px 20px',
   borderRadius: 16,
-  background: 'rgba(15, 20, 30, 0.6)',
-  backdropFilter: 'blur(20px) saturate(1.2)',
-  WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
-  border: '1px solid rgba(255, 255, 255, 0.03)',
-  boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+  background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.6))',
+  backdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
+  WebkitBackdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
+  border: 'none',
+  boxShadow: 'var(--card-inset, inset 0 1px 0 rgba(255, 255, 255, 0.05))',
 }
 
 const statGrid: React.CSSProperties = {
@@ -73,9 +73,13 @@ const statGrid: React.CSSProperties = {
 }
 
 const statCell: React.CSSProperties = {
-  padding: 12,
-  borderRadius: 12,
-  background: 'rgba(255, 255, 255, 0.04)',
+  padding: 16,
+  borderRadius: 16,
+  background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.6))',
+  backdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
+  WebkitBackdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
+  boxShadow: 'var(--card-inset, inset 0 1px 0 rgba(255, 255, 255, 0.05))',
+  border: 'none',
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
@@ -83,7 +87,7 @@ const statCell: React.CSSProperties = {
 }
 
 const statLabel: React.CSSProperties = {
-  fontSize: 12,
+  fontSize: 14,
   fontWeight: 500,
   color: 'var(--text-dim, #475569)',
   display: 'flex',
@@ -92,7 +96,7 @@ const statLabel: React.CSSProperties = {
 }
 
 const statValue: React.CSSProperties = {
-  fontSize: 18,
+  fontSize: 16,
   fontWeight: 500,
   fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
   color: 'var(--text-primary, #F1F5F9)',
@@ -104,7 +108,7 @@ const campaignRow: React.CSSProperties = {
   gap: 12,
   padding: '12px 16px',
   borderRadius: 12,
-  background: 'rgba(255, 255, 255, 0.02)',
+  background: 'var(--hover-bg, rgba(255, 255, 255, 0.02))',
   transition: 'background 200ms',
   cursor: 'pointer',
 }
@@ -117,7 +121,7 @@ const campaignName: React.CSSProperties = {
 }
 
 const campaignMeta: React.CSSProperties = {
-  fontSize: 13,
+  fontSize: 14,
   fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
   color: 'var(--text-dim, #475569)',
 }
@@ -128,7 +132,7 @@ const templateRow: React.CSSProperties = {
   gap: 12,
   padding: '10px 16px',
   borderRadius: 8,
-  background: 'rgba(255, 255, 255, 0.02)',
+  background: 'var(--hover-bg, rgba(255, 255, 255, 0.02))',
 }
 
 const templateName: React.CSSProperties = {
@@ -139,18 +143,22 @@ const templateName: React.CSSProperties = {
 }
 
 const templateCategory: React.CSSProperties = {
-  fontSize: 12,
+  fontSize: 14,
   padding: '2px 8px',
   borderRadius: 8,
-  background: 'rgba(6, 182, 212, 0.1)',
-  color: '#06b6d4',
+  background: 'var(--hover-bg-strong, rgba(255, 255, 255, 0.06))',
+  color: 'var(--text-secondary, #94A3B8)',
 }
 
 const emptyBox: React.CSSProperties = {
   padding: '32px 16px',
   textAlign: 'center',
-  borderRadius: 12,
-  border: '1px dashed rgba(255, 255, 255, 0.06)',
+  borderRadius: 16,
+  border: 'none',
+  background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.6))',
+  backdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
+  WebkitBackdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
+  boxShadow: 'var(--card-inset, inset 0 1px 0 rgba(255, 255, 255, 0.05))',
 }
 
 const emptyTitle: React.CSSProperties = {
@@ -161,7 +169,7 @@ const emptyTitle: React.CSSProperties = {
 }
 
 const emptyDesc: React.CSSProperties = {
-  fontSize: 13,
+  fontSize: 14,
   color: 'var(--text-dim, #475569)',
   marginBottom: 16,
 }
@@ -171,9 +179,9 @@ const sendBtn: React.CSSProperties = {
   padding: '0 12px',
   borderRadius: 6,
   border: 'none',
-  background: 'rgba(34, 197, 94, 0.12)',
-  color: '#22c55e',
-  fontSize: 12,
+  background: 'var(--hover-bg-strong, rgba(255, 255, 255, 0.06))',
+  color: 'var(--text-secondary, #94A3B8)',
+  fontSize: 14,
   fontWeight: 500,
   cursor: 'pointer',
   display: 'flex',
@@ -252,7 +260,7 @@ function OutreachDashboardInner({ leads }: OutreachDashboardProps) {
           <div key={i} style={{
             height: 80,
             borderRadius: 16,
-            background: 'rgba(15, 20, 30, 0.6)',
+            background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.6))',
             animation: 'pulse 1.5s ease-in-out infinite',
             animationDelay: `${i * 100}ms`,
           }} />
@@ -271,25 +279,25 @@ function OutreachDashboardInner({ leads }: OutreachDashboardProps) {
         </div>
         <div style={statCell}>
           <span style={statLabel}><Eye size={12} /> Opened</span>
-          <span style={{ ...statValue, color: totalOpened > 0 ? '#22c55e' : undefined }}>
+          <span style={{ ...statValue, color: totalOpened > 0 ? '#F1F5F9' : undefined }}>
             {totalOpened}
           </span>
         </div>
         <div style={statCell}>
           <span style={statLabel}><MousePointer size={12} /> Clicked</span>
-          <span style={{ ...statValue, color: totalClicked > 0 ? '#3b82f6' : undefined }}>
+          <span style={{ ...statValue, color: totalClicked > 0 ? '#F1F5F9' : undefined }}>
             {totalClicked}
           </span>
         </div>
         <div style={statCell}>
           <span style={statLabel}><MessageSquare size={12} /> Replied</span>
-          <span style={{ ...statValue, color: totalReplied > 0 ? '#a855f7' : undefined }}>
+          <span style={{ ...statValue, color: totalReplied > 0 ? '#F1F5F9' : undefined }}>
             {totalReplied}
           </span>
         </div>
         <div style={statCell}>
           <span style={statLabel}><AlertCircle size={12} /> Bounced</span>
-          <span style={{ ...statValue, color: totalBounced > 0 ? '#ef4444' : undefined }}>
+          <span style={{ ...statValue, color: totalBounced > 0 ? '#F1F5F9' : undefined }}>
             {totalBounced}
           </span>
         </div>
@@ -302,8 +310,8 @@ function OutreachDashboardInner({ leads }: OutreachDashboardProps) {
           <button
             onClick={() => setCampaignCreateOpen(true)}
             style={actionBtn}
-            onMouseEnter={e => { e.currentTarget.style.background = '#FF7A45' }}
-            onMouseLeave={e => { e.currentTarget.style.background = '#FF5A1F' }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'var(--btn-primary-hover, #E2E8F0)' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'var(--btn-primary-bg, #F1F5F9)' }}
           >
             <Plus size={14} /> New Campaign
           </button>
@@ -326,8 +334,8 @@ function OutreachDashboardInner({ leads }: OutreachDashboardProps) {
                   }
                 }}
                 style={actionBtn}
-                onMouseEnter={e => { e.currentTarget.style.background = '#FF7A45' }}
-                onMouseLeave={e => { e.currentTarget.style.background = '#FF5A1F' }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'var(--btn-primary-hover, #E2E8F0)' }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'var(--btn-primary-bg, #F1F5F9)' }}
               >
                 <Plus size={14} /> {templates.length === 0 ? 'Create Template' : 'Create Campaign'}
               </button>
@@ -337,7 +345,7 @@ function OutreachDashboardInner({ leads }: OutreachDashboardProps) {
               <div
                 key={campaign.id}
                 style={campaignRow}
-                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)' }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'var(--hover-bg, rgba(255, 255, 255, 0.04))' }}
                 onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.02)' }}
               >
                 <span style={campaignName}>{campaign.name}</span>
@@ -375,8 +383,8 @@ function OutreachDashboardInner({ leads }: OutreachDashboardProps) {
           <button
             onClick={() => setTemplateEditorOpen(true)}
             style={secondaryBtn}
-            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)' }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.06)' }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'var(--hover-bg-strong, rgba(255, 255, 255, 0.1))' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'var(--hover-bg-strong, rgba(255, 255, 255, 0.06))' }}
           >
             <Plus size={14} /> New Template
           </button>
@@ -399,7 +407,7 @@ function OutreachDashboardInner({ leads }: OutreachDashboardProps) {
                 {template.category && (
                   <span style={templateCategory}>{template.category}</span>
                 )}
-                <span style={{ fontSize: 12, color: 'var(--text-dim, #475569)' }}>
+                <span style={{ fontSize: 14, color: 'var(--text-dim, #475569)' }}>
                   {template.variables?.length ?? 0} vars
                 </span>
               </div>

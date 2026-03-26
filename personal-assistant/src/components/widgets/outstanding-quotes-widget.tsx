@@ -27,7 +27,7 @@ export function OutstandingQuotesWidget() {
     >
       <div className="space-y-3">
         {quotes.length === 0 ? (
-          <EmptyState icon={<ReceiptText size={32} />} title="No outstanding quotes" description="Draft and sent quotes will appear here." />
+          <EmptyState title="No outstanding quotes" description="Draft and sent quotes will appear here." />
         ) : (
           quotes.map(quote => (
             <div key={quote.id as string} className="flex items-center justify-between p-3 rounded-md bg-[var(--bg-elevated)] border border-[var(--border-subtle)]">

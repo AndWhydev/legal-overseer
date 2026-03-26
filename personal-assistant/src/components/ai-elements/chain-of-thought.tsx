@@ -106,6 +106,7 @@ export const ChainOfThoughtHeader = memo(
       transition: "transform 0.3s cubic-bezier(0.25, 1, 0.5, 1)",
       transform: isOpen ? "rotate(180deg)" : "rotate(0deg)",
       flexShrink: 0,
+      color: "var(--text-secondary, rgba(255,255,255,0.55))",
     };
 
     return (
@@ -208,7 +209,7 @@ export const ChainOfThoughtStep = memo(
         transition={{ duration: 0.15 }}
         style={{
           display: "flex",
-          alignItems: "center",
+          alignItems: "flex-start",
           gap: 6,
           fontSize: 14,
           paddingBottom: 4,
@@ -220,7 +221,7 @@ export const ChainOfThoughtStep = memo(
         className={`cot-step ${className ?? ""}`}
         onClick={handleClick}
       >
-        {/* Icon column — fixed width, centered */}
+        {/* Icon column — fixed width, top-aligned with first line of text */}
         <div
           style={{
             width: ICON_COL,
@@ -229,6 +230,7 @@ export const ChainOfThoughtStep = memo(
             alignItems: "center",
             justifyContent: "center",
             flexShrink: 0,
+            marginTop: 3,
           }}
         >
           {status === "active" ? (
@@ -287,14 +289,15 @@ export const ChainOfThoughtStep = memo(
               <span
                 style={{
                   display: "inline-flex",
-                  padding: "4px 8px",
-                  borderRadius: 8,
+                  padding: "2px 8px",
+                  borderRadius: 6,
                   background: "var(--hover-bg)",
                   fontSize: 14,
                   color: "var(--text-muted)",
                   fontStyle: "normal",
                   fontWeight: 400,
                   letterSpacing: "0.01em",
+                  lineHeight: "18px",
                 }}
               >
                 {detail}

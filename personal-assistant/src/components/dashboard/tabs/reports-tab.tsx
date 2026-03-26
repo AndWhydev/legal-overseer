@@ -134,7 +134,7 @@ export default function ReportsTab() {
   const glassSelect: React.CSSProperties = {
     padding: '12px 16px',
     borderRadius: 12,
-    background: 'rgba(13, 17, 23, 0.6)',
+    background: 'var(--bg-input, rgba(13, 17, 23, 0.6))',
     border: '1px solid var(--glass-interactive-border)',
     color: 'var(--text-primary)',
     fontSize: 14,
@@ -145,18 +145,19 @@ export default function ReportsTab() {
   }
 
   const accentBtn: React.CSSProperties = {
-    padding: '8px 16px',
-    borderRadius: 12,
-    background: '#1A1A1B',
+    height: 40,
+    padding: '0 20px',
+    borderRadius: 8,
+    background: 'var(--btn-primary-bg, #F1F5F9)',
     border: 'none',
-    color: '#FFFFFF',
+    color: 'var(--btn-primary-fg, #0a0f1a)',
     fontSize: 14,
     fontWeight: 500,
     cursor: 'pointer',
     transition: 'all 200ms',
-    display: 'flex',
+    display: 'inline-flex',
     alignItems: 'center',
-    gap: '6px',
+    gap: 8,
   }
 
   const ghostBtn: React.CSSProperties = {
@@ -195,9 +196,9 @@ export default function ReportsTab() {
 
   return (
     <TabShell>
-      <div style={{ padding: '24px', maxWidth: 960, margin: '0 auto' }}>
+      <div style={{ maxWidth: 960, margin: '0 auto', width: '100%', display: 'flex', flexDirection: 'column', gap: 24 }}>
         {/* Controls Section */}
-        <div style={{ marginBottom: '28px' }}>
+        <div>
           <div style={sectionHeader}>Report Configuration</div>
           <div style={{
             ...glassCard,
@@ -241,12 +242,12 @@ export default function ReportsTab() {
               disabled={generating}
               onMouseEnter={(e) => {
                 if (!generating) {
-                  (e.target as HTMLButtonElement).style.background = '#FF7A45'
+                  (e.target as HTMLButtonElement).style.background = 'var(--btn-primary-hover, #E2E8F0)'
                   ;(e.target as HTMLButtonElement).style.transform = 'translateY(-1px)'
                 }
               }}
               onMouseLeave={(e) => {
-                (e.target as HTMLButtonElement).style.background = '#1A1A1B'
+                (e.target as HTMLButtonElement).style.background = 'var(--btn-primary-bg, #F1F5F9)'
                 ;(e.target as HTMLButtonElement).style.transform = 'translateY(0)'
               }}
               style={{
@@ -263,7 +264,7 @@ export default function ReportsTab() {
 
         {/* Preview Section */}
         {previewHtml && (
-          <div style={{ marginBottom: '28px' }}>
+          <div>
             <div style={sectionHeader}>Report Preview</div>
             <div style={{ marginBottom: '12px' }}>
               <button
@@ -353,7 +354,6 @@ export default function ReportsTab() {
             </div>
           ) : reports.length === 0 ? (
             <EmptyState
-              icon={<FileText size={48} />}
               title="No reports generated"
               description="Monthly and weekly reports will appear here after the first full week"
             />

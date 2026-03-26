@@ -17,7 +17,7 @@ export function KanbanActivityStrip({ tasks }: KanbanActivityStripProps) {
   return (
     <div style={{
       borderTop: '1px solid transparent',
-      borderImage: 'linear-gradient(90deg, rgba(255,90,31,0.2), rgba(255,90,31,0.2), rgba(255,90,31,0.2), rgba(255,90,31,0.2), rgba(255,90,31,0.2)) 1',
+      borderImage: 'linear-gradient(90deg, rgba(255,255,255,0.12), rgba(255,255,255,0.12), rgba(255,255,255,0.12), rgba(255,255,255,0.12), rgba(255,255,255,0.12)) 1',
       padding: '6px 0',
       display: 'flex',
       alignItems: 'center',
@@ -43,7 +43,7 @@ export function KanbanActivityStrip({ tasks }: KanbanActivityStripProps) {
             width: 5,
             height: 5,
             borderRadius: '50%',
-            background: '#FF5A1F',
+            background: 'var(--btn-primary-bg, #F1F5F9)',
             animation: 'bb-pulse 2s ease-in-out infinite',
             flexShrink: 0,
           }} />

@@ -93,11 +93,11 @@ export default function TestimonialsSection() {
               style={{
                 padding: '32px 24px',
                 borderRadius: '16px',
-                background: 'rgba(15, 20, 30, 0.6)',
+                background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.6))',
                 backdropFilter: 'blur(20px)',
                 WebkitBackdropFilter: 'blur(20px)',
-                border: '1px solid rgba(255, 255, 255, 0.03)',
-                boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+                border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
+                boxShadow: 'var(--card-inset, inset 0 1px 0 rgba(255, 255, 255, 0.05))',
                 transition: 'all 300ms',
                 cursor: 'pointer',
                 display: 'flex',
@@ -179,7 +179,7 @@ export default function TestimonialsSection() {
           style={{
             padding: '40px 32px',
             borderRadius: '20px',
-            background: 'rgba(10, 14, 23, 0.5)',
+            background: 'var(--bb-surface, rgba(10, 14, 23, 0.5))',
             backdropFilter: 'blur(26px)',
             WebkitBackdropFilter: 'blur(26px)',
             border: '1px solid rgba(16, 185, 129, 0.1)',
@@ -248,7 +248,7 @@ export default function TestimonialsSection() {
                   padding: '8px 16px',
                   borderRadius: '12px',
                   background: 'rgba(255, 255, 255, 0.02)',
-                  border: '1px solid rgba(255, 255, 255, 0.05)',
+                  border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.05))',
                   transition: 'all 200ms',
                   cursor: 'pointer',
                 }}

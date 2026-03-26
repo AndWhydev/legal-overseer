@@ -72,10 +72,10 @@ export function HelpTooltip({
     const baseStyles: React.CSSProperties = {
       position: 'absolute',
       zIndex: 50,
-      background: 'rgba(15, 20, 30, 0.95)',
+      background: 'var(--glass-bg-heavy, rgba(15, 20, 30, 0.95))',
       backdropFilter: 'blur(20px)',
       WebkitBackdropFilter: 'blur(20px)',
-      border: '1px solid rgba(255, 255, 255, 0.1)',
+      border: '1px solid rgba(255, 255, 255, 0.03)',
       borderRadius: 12,
       padding: '12px 16px',
       minWidth: '240px',
@@ -161,13 +161,13 @@ export function HelpTooltip({
             position: 'absolute',
             inset: 0,
             borderRadius: '50%',
-            background: 'rgba(255, 90, 31, 0.2)',
+            background: 'rgba(255, 255, 255, 0.12)',
             animation: 'bitbit-help-pulse 2s ease-in-out infinite',
           }}
         />
         {/* Icon */}
         <div style={{ position: 'relative', zIndex: 1 }}>
-          {icon || <HelpCircle size={16} style={{ color: '#FF5A1F' }} />}
+          {icon || <HelpCircle size={16} style={{ color: '#F1F5F9' }} />}
         </div>
       </button>
 
@@ -254,7 +254,7 @@ export function HelpTooltip({
                 width: 14,
                 height: 14,
                 cursor: 'pointer',
-                accentColor: '#FF5A1F',
+                accentColor: '#F1F5F9',
               }}
             />
             Don't show again

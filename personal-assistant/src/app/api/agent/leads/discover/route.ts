@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
     .from('leads')
     .select('id', { count: 'exact', head: true })
     .eq('org_id', profile.org_id)
-    .eq('discovery_source', 'pcc_discovery')
+    .eq('discovery_source', 'lead_swarm')
     .gte('created_at', startOfMonth.toISOString())
 
   const usedThisMonth = discoveredThisMonth ?? 0

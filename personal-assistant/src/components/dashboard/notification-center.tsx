@@ -2,11 +2,11 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Bell, CheckCircle2, Zap, AlertTriangle, Check } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 import { createClient } from '@/lib/supabase/client';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { logger } from '@/lib/core/logger';
 import { buildDashboardNotifications } from '@/lib/notifications/build-dashboard-notifications';
-import { NotificationBadge } from '@/components/ui/notification-badge';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -24,6 +24,31 @@ interface NotificationCenterProps {
   onTabChange?: (tabId: string) => void;
 }
 
+// ─── localStorage persistence helpers ───────────────────────────────────────
+
+const STORAGE_KEY = 'bb-notification-read-ids';
+
+function loadReadIds(): Set<string> {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const arr = JSON.parse(raw);
+      if (Array.isArray(arr)) return new Set(arr);
+    }
+  } catch {
+    // corrupted or unavailable — start fresh
+  }
+  return new Set();
+}
+
+function persistReadIds(ids: Set<string>) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify([...ids]));
+  } catch {
+    // localStorage full or unavailable — ignore
+  }
+}
+
 // ─── Helper Functions ───────────────────────────────────────────────────────
 
 function formatTimeAgo(date: Date): string {
@@ -34,9 +59,9 @@ function formatTimeAgo(date: Date): string {
   const diffDays = Math.floor(diffMs / 86400000);
 
   if (diffMins < 1) return 'Just now';
-  if (diffMins < 60) return `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
-  if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
-  if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays < 7) return `${diffDays}d ago`;
   return date.toLocaleDateString();
 }
 
@@ -53,31 +78,34 @@ function getNotificationIcon(type: 'approval' | 'lead' | 'invoice' | 'task') {
   }
 }
 
-function getIconColor(type: 'approval' | 'lead' | 'invoice' | 'task'): string {
-  switch (type) {
-    case 'approval':
-      return 'var(--bb-orange)';
-    case 'lead':
-      return '#60a5fa';
-    case 'invoice':
-      return '#ef4444';
-    default:
-      return 'var(--text-secondary)';
-  }
-}
-
 // ─── Component ──────────────────────────────────────────────────────────────
 
 export function NotificationCenter({ onTabChange }: NotificationCenterProps) {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [readIds, setReadIds] = useState<Set<string>>(new Set());
+  const [dismissingIds, setDismissingIds] = useState<Set<string>>(new Set());
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [bellHovered, setBellHovered] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const clientRef = useRef<SupabaseClient | null>(null);
+
+  // Hydrate read IDs from localStorage on mount
+  useEffect(() => {
+    setReadIds(loadReadIds());
+  }, []);
+
+  // Persist read IDs to localStorage on change
+  const updateReadIds = useCallback((updater: (prev: Set<string>) => Set<string>) => {
+    setReadIds(prev => {
+      const next = updater(prev);
+      persistReadIds(next);
+      return next;
+    });
+  }, []);
 
   // Initialize Supabase client
   useEffect(() => {
@@ -100,7 +128,6 @@ export function NotificationCenter({ onTabChange }: NotificationCenterProps) {
     try {
       setError(null);
 
-      // Fetch pending approvals
       const { data: approvals, error: approvalsError } = await clientRef.current
         .from('approval_queue')
         .select('id, created_at')
@@ -111,7 +138,6 @@ export function NotificationCenter({ onTabChange }: NotificationCenterProps) {
         logger.warn('Error fetching approvals:', approvalsError);
       }
 
-      // Fetch new leads
       const { data: leads, error: leadsError } = await clientRef.current
         .from('leads')
         .select('id, source_channel, metadata, created_at')
@@ -122,7 +148,6 @@ export function NotificationCenter({ onTabChange }: NotificationCenterProps) {
         logger.warn('Error fetching leads:', leadsError);
       }
 
-      // Fetch overdue invoices
       const { data: invoices, error: invoicesError } = await clientRef.current
         .from('invoices')
         .select('id, invoice_number, created_at')
@@ -160,7 +185,6 @@ export function NotificationCenter({ onTabChange }: NotificationCenterProps) {
     const client = clientRef.current;
     let realtimeActive = false;
 
-    // Try to subscribe to realtime changes
     try {
       const channel = client
         .channel('notification-changes')
@@ -182,7 +206,6 @@ export function NotificationCenter({ onTabChange }: NotificationCenterProps) {
         .subscribe((status: string) => {
           if (status === 'SUBSCRIBED') {
             realtimeActive = true;
-            // Clear polling if realtime is active
             if (pollIntervalRef.current) {
               clearInterval(pollIntervalRef.current);
               pollIntervalRef.current = null;
@@ -190,17 +213,15 @@ export function NotificationCenter({ onTabChange }: NotificationCenterProps) {
           }
         });
 
-      // Cleanup realtime on unmount
       const cleanup = () => {
         client.removeChannel(channel);
       };
 
-      // Fallback to polling if realtime not active after 5s
       const fallbackTimer = setTimeout(() => {
         if (!realtimeActive && !pollIntervalRef.current) {
           pollIntervalRef.current = setInterval(() => {
             fetchNotifications();
-          }, 15000); // 15s polling as fallback
+          }, 15000);
         }
       }, 5000);
 
@@ -212,7 +233,6 @@ export function NotificationCenter({ onTabChange }: NotificationCenterProps) {
         }
       };
     } catch {
-      // Realtime not available, fall back to polling
       pollIntervalRef.current = setInterval(() => {
         fetchNotifications();
       }, 15000);
@@ -252,283 +272,261 @@ export function NotificationCenter({ onTabChange }: NotificationCenterProps) {
     };
   }, [isOpen]);
 
-  // Handle notification click
-  const handleNotificationClick = (notification: NotificationItem) => {
-    setReadIds(prev => new Set(prev).add(notification.id));
-    onTabChange?.(notification.tabId);
-    setIsOpen(false);
-  };
+  // Handle notification click — fade out then mark read
+  const handleNotificationClick = useCallback((notification: NotificationItem) => {
+    setDismissingIds(prev => new Set(prev).add(notification.id));
+    // Wait for fade-out animation then mark read and navigate
+    setTimeout(() => {
+      updateReadIds(prev => new Set(prev).add(notification.id));
+      setDismissingIds(prev => {
+        const next = new Set(prev);
+        next.delete(notification.id);
+        return next;
+      });
+      onTabChange?.(notification.tabId);
+      setIsOpen(false);
+    }, 250);
+  }, [onTabChange, updateReadIds]);
 
   // Mark all as read
-  const handleMarkAllAsRead = () => {
-    const allIds = new Set(notifications.map(n => n.id));
-    setReadIds(allIds);
-  };
+  const handleMarkAllAsRead = useCallback(() => {
+    updateReadIds(() => new Set(notifications.map(n => n.id)));
+  }, [notifications, updateReadIds]);
 
   // Count unread notifications
   const unreadCount = notifications.filter(n => !readIds.has(n.id)).length;
 
-  // Group notifications by type
-  const groupedNotifications = {
-    approval: notifications.filter(n => n.type === 'approval' && !readIds.has(n.id)),
-    lead: notifications.filter(n => n.type === 'lead' && !readIds.has(n.id)),
-    invoice: notifications.filter(n => n.type === 'invoice' && !readIds.has(n.id)),
-  };
+  // Flat list of unread notifications (no grouping — cleaner)
+  const unreadNotifications = notifications.filter(n => !readIds.has(n.id));
 
   return (
     <div style={{ position: 'relative' }}>
-      {/* Bell Button */}
+      {/* Bell Button — minimal style matching chat download button */}
       <button
         ref={buttonRef}
-        className="bb-topbar-icon-btn"
         onClick={() => setIsOpen(!isOpen)}
+        onMouseEnter={() => setBellHovered(true)}
+        onMouseLeave={() => setBellHovered(false)}
         aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ''}`}
         aria-expanded={isOpen}
         aria-haspopup="true"
+        style={{
+          background: 'none',
+          border: 'none',
+          padding: 4,
+          color: 'var(--text-muted, rgba(255,255,255,0.35))',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          position: 'relative',
+        }}
       >
-        <Bell size={18} strokeWidth={1.8} />
-        {unreadCount > 0 && (
-          <NotificationBadge
-            count={unreadCount}
-            color="var(--bb-red)"
-            size="sm"
-            ariaLabel={`${unreadCount} unread notifications`}
-          />
-        )}
+        <motion.div
+          animate={bellHovered ? { rotate: [0, -8, 8, -4, 4, 0] } : { rotate: 0 }}
+          transition={{ duration: 0.3, ease: 'easeInOut' }}
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+        >
+          <Bell size={18} strokeWidth={1.8} />
+        </motion.div>
+
+        {/* Unread dot badge */}
+        <AnimatePresence>
+          {unreadCount > 0 && (
+            <motion.span
+              key={unreadCount}
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: [1.3, 1], opacity: 1 }}
+              exit={{ scale: 0, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              style={{
+                position: 'absolute',
+                top: 2,
+                right: 2,
+                width: 7,
+                height: 7,
+                borderRadius: '50%',
+                backgroundColor: 'var(--bb-red, #ef4444)',
+                boxShadow: '0 0 0 2px var(--bg-primary, #0A0A0B)',
+              }}
+              role="status"
+              aria-label={`${unreadCount} unread notifications`}
+            />
+          )}
+        </AnimatePresence>
       </button>
 
       {/* Dropdown Panel */}
-      {isOpen && (
-        <div
-          ref={panelRef}
-          className="bb-notification-panel"
-          role="dialog"
-          aria-label="Notifications"
-          style={{
-            position: 'fixed',
-            top: '56px',
-            right: '16px',
-            width: '360px',
-            maxWidth: 'calc(100vw - 32px)',
-            maxHeight: '600px',
-            zIndex: 1000,
-            background: 'var(--bg-card)',
-            backdropFilter: 'blur(12px)',
-            border: '1px solid var(--border-subtle)',
-            borderRadius: '12px',
-            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
-            display: 'flex',
-            flexDirection: 'column',
-            overflow: 'hidden',
-            animation: 'slideIn 0.2s ease-out',
-          }}
-        >
-          {/* Header */}
-          <div
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            ref={panelRef}
+            role="dialog"
+            aria-label="Notifications"
+            initial={{ opacity: 0, y: -8, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -8, scale: 0.98 }}
+            transition={{ duration: 0.18, ease: 'easeOut' }}
             style={{
-              padding: '16px',
-              borderBottom: '1px solid var(--border-subtle)',
+              position: 'fixed',
+              top: 56,
+              right: 16,
+              width: 340,
+              maxWidth: 'calc(100vw - 32px)',
+              maxHeight: 480,
+              zIndex: 1000,
+              background: 'var(--bg-card, rgba(15, 20, 30, 0.95))',
+              backdropFilter: 'blur(24px)',
+              WebkitBackdropFilter: 'blur(24px)',
+              border: '1px solid rgba(255,255,255,0.08)',
+              borderRadius: 10,
+              boxShadow: '0 16px 48px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.04) inset',
               display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
+              flexDirection: 'column',
+              overflow: 'hidden',
             }}
           >
-            <h3
+            {/* Header */}
+            <div
               style={{
-                margin: 0,
-                fontSize: '14px',
-                fontWeight: 500,
-                color: 'var(--text-primary)',
+                padding: '10px 14px',
+                borderBottom: '1px solid rgba(255,255,255,0.06)',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
               }}
             >
-              Notifications
-            </h3>
-            {unreadCount > 0 && (
-              <button
-                onClick={handleMarkAllAsRead}
-                aria-label="Mark all notifications as read"
+              <span
                 style={{
-                  background: 'none',
-                  border: 'none',
-                  color: 'var(--bb-orange)',
-                  cursor: 'pointer',
-                  fontSize: '14px',
+                  fontSize: 13,
                   fontWeight: 500,
-                  padding: '4px 8px',
-                  borderRadius: '4px',
-                  transition: 'background-color 0.2s',
-                }}
-                onMouseEnter={e => {
-                  (e.target as HTMLButtonElement).style.backgroundColor = 'rgba(255, 107, 53, 0.1)';
-                }}
-                onMouseLeave={e => {
-                  (e.target as HTMLButtonElement).style.backgroundColor = 'transparent';
+                  color: 'var(--text-primary, rgba(255,255,255,0.92))',
+                  letterSpacing: '-0.01em',
                 }}
               >
-                Mark all as read
-              </button>
-            )}
-          </div>
+                Notifications
+              </span>
+              <AnimatePresence>
+                {unreadCount > 0 && (
+                  <motion.button
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={handleMarkAllAsRead}
+                    aria-label="Mark all notifications as read"
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: 'var(--text-muted, rgba(255,255,255,0.35))',
+                      cursor: 'pointer',
+                      fontSize: 12,
+                      fontWeight: 400,
+                      padding: '2px 6px',
+                      borderRadius: 4,
+                      transition: 'color 0.15s',
+                    }}
+                    onMouseEnter={e => {
+                      (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-secondary, rgba(255,255,255,0.6))';
+                    }}
+                    onMouseLeave={e => {
+                      (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-muted, rgba(255,255,255,0.35))';
+                    }}
+                  >
+                    Mark all read
+                  </motion.button>
+                )}
+              </AnimatePresence>
+            </div>
 
-          {/* Content */}
-          <div
-            style={{
-              flex: 1,
-              overflowY: 'auto',
-              overscrollBehavior: 'contain',
-            }}
-          >
-            {isLoading && (
-              <div
-                style={{
-                  padding: '32px 16px',
-                  textAlign: 'center',
-                  color: 'var(--text-secondary)',
-                  fontSize: '14px',
-                }}
-              >
-                Loading...
-              </div>
-            )}
-
-            {error && (
-              <div
-                style={{
-                  padding: '16px',
-                  margin: '8px',
-                  background: 'rgba(239, 68, 68, 0.1)',
-                  border: '1px solid rgba(239, 68, 68, 0.3)',
-                  borderRadius: '8px',
-                  color: 'var(--bb-red)',
-                  fontSize: '14px',
-                }}
-              >
-                {error}
-              </div>
-            )}
-
-            {!isLoading && !error && unreadCount === 0 && notifications.length === 0 && (
-              <div
-                style={{
-                  padding: '32px 16px',
-                  textAlign: 'center',
-                  color: 'var(--text-secondary)',
-                  fontSize: '14px',
-                }}
-              >
-                No notifications yet
-              </div>
-            )}
-
-            {!isLoading && !error && unreadCount === 0 && notifications.length > 0 && (
-              <div
-                style={{
-                  padding: '32px 16px',
-                  textAlign: 'center',
-                  color: 'var(--text-secondary)',
-                  fontSize: '14px',
-                }}
-              >
-                All caught up!
-              </div>
-            )}
-
-            {/* Approvals */}
-            {groupedNotifications.approval.length > 0 && (
-              <div>
+            {/* Content */}
+            <div
+              style={{
+                flex: 1,
+                overflowY: 'auto',
+                overscrollBehavior: 'contain',
+              }}
+            >
+              {isLoading && (
                 <div
                   style={{
-                    padding: '8px 16px',
-                    fontSize: '14px',
-                    fontWeight: 500,
-                    color: 'var(--text-secondary)',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.5px',
-                    borderBottom: '1px solid var(--border-subtle)',
+                    padding: '28px 14px',
+                    textAlign: 'center',
+                    color: 'var(--text-muted, rgba(255,255,255,0.35))',
+                    fontSize: 12,
                   }}
                 >
-                  Approvals
+                  Loading...
                 </div>
-                {groupedNotifications.approval.map(notification => (
+              )}
+
+              {error && (
+                <div
+                  style={{
+                    padding: '12px 14px',
+                    margin: 6,
+                    background: 'rgba(239, 68, 68, 0.08)',
+                    border: '1px solid rgba(239, 68, 68, 0.2)',
+                    borderRadius: 6,
+                    color: 'var(--bb-red, #ef4444)',
+                    fontSize: 12,
+                  }}
+                >
+                  {error}
+                </div>
+              )}
+
+              {/* Empty state: no notifications at all */}
+              {!isLoading && !error && notifications.length === 0 && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.3 }}
+                  style={{
+                    padding: '28px 14px',
+                    textAlign: 'center',
+                    color: 'var(--text-muted, rgba(255,255,255,0.35))',
+                    fontSize: 12,
+                  }}
+                >
+                  No notifications yet
+                </motion.div>
+              )}
+
+              {/* Empty state: all read */}
+              {!isLoading && !error && unreadCount === 0 && notifications.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.3 }}
+                  style={{
+                    padding: '28px 14px',
+                    textAlign: 'center',
+                    color: 'var(--text-muted, rgba(255,255,255,0.35))',
+                    fontSize: 12,
+                  }}
+                >
+                  All caught up
+                </motion.div>
+              )}
+
+              {/* Notification items — flat list, staggered fade-in */}
+              <AnimatePresence mode="popLayout">
+                {unreadNotifications.map((notification, index) => (
                   <NotificationItemRow
                     key={notification.id}
                     notification={notification}
-                    isRead={readIds.has(notification.id)}
+                    index={index}
+                    isDismissing={dismissingIds.has(notification.id)}
                     onClick={() => handleNotificationClick(notification)}
                   />
                 ))}
-              </div>
-            )}
-
-            {/* Leads */}
-            {groupedNotifications.lead.length > 0 && (
-              <div>
-                <div
-                  style={{
-                    padding: '8px 16px',
-                    fontSize: '14px',
-                    fontWeight: 500,
-                    color: 'var(--text-secondary)',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.5px',
-                    borderBottom: '1px solid var(--border-subtle)',
-                  }}
-                >
-                  Leads
-                </div>
-                {groupedNotifications.lead.map(notification => (
-                  <NotificationItemRow
-                    key={notification.id}
-                    notification={notification}
-                    isRead={readIds.has(notification.id)}
-                    onClick={() => handleNotificationClick(notification)}
-                  />
-                ))}
-              </div>
-            )}
-
-            {/* Invoices */}
-            {groupedNotifications.invoice.length > 0 && (
-              <div>
-                <div
-                  style={{
-                    padding: '8px 16px',
-                    fontSize: '14px',
-                    fontWeight: 500,
-                    color: 'var(--text-secondary)',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.5px',
-                    borderBottom: '1px solid var(--border-subtle)',
-                  }}
-                >
-                  Invoices
-                </div>
-                {groupedNotifications.invoice.map(notification => (
-                  <NotificationItemRow
-                    key={notification.id}
-                    notification={notification}
-                    isRead={readIds.has(notification.id)}
-                    onClick={() => handleNotificationClick(notification)}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      <style>{`
-        @keyframes slideIn {
-          from {
-            opacity: 0;
-            transform: translateY(-8px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-      `}</style>
+              </AnimatePresence>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -537,66 +535,66 @@ export function NotificationCenter({ onTabChange }: NotificationCenterProps) {
 
 interface NotificationItemRowProps {
   notification: NotificationItem;
-  isRead: boolean;
+  index: number;
+  isDismissing: boolean;
   onClick: () => void;
 }
 
 function NotificationItemRow({
   notification,
-  isRead,
+  index,
+  isDismissing,
   onClick,
 }: NotificationItemRowProps) {
   const Icon = getNotificationIcon(notification.type);
-  const iconColor = getIconColor(notification.type);
+  const [hovered, setHovered] = useState(false);
 
   return (
-    <button
+    <motion.button
+      layout
+      initial={{ opacity: 0, y: 4 }}
+      animate={{
+        opacity: isDismissing ? 0 : 1,
+        y: 0,
+      }}
+      exit={{ opacity: 0, x: -8 }}
+      transition={{
+        duration: 0.2,
+        delay: isDismissing ? 0 : index * 0.04,
+      }}
       onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       style={{
         width: '100%',
-        padding: '12px 16px',
+        padding: '8px 14px',
         border: 'none',
-        background: 'transparent',
+        background: hovered ? 'rgba(255,255,255,0.04)' : 'transparent',
         textAlign: 'left',
         cursor: 'pointer',
-        borderBottom: '1px solid var(--border-subtle)',
-        transition: 'background-color 0.2s',
+        borderBottom: '1px solid rgba(255,255,255,0.06)',
         display: 'flex',
-        gap: '12px',
+        gap: 10,
         alignItems: 'flex-start',
-      }}
-      onMouseEnter={e => {
-        (e.currentTarget).style.backgroundColor = 'var(--glass-hover-bg)';
-      }}
-      onMouseLeave={e => {
-        (e.currentTarget).style.backgroundColor = 'transparent';
+        transition: 'background 0.15s',
       }}
     >
-      <Icon
-        size={16}
-        strokeWidth={2}
-        style={{
-          color: iconColor,
-          flexShrink: 0,
-          marginTop: '4px',
-        }}
-      />
       <div style={{ flex: 1, minWidth: 0 }}>
         <div
           style={{
-            fontSize: '14px',
+            fontSize: 13,
             fontWeight: 500,
-            color: 'var(--text-primary)',
-            marginBottom: '4px',
+            color: 'var(--text-primary, rgba(255,255,255,0.92))',
+            lineHeight: 1.3,
           }}
         >
           {notification.title}
         </div>
         <div
           style={{
-            fontSize: '14px',
-            color: 'var(--text-secondary)',
-            marginBottom: '4px',
+            fontSize: 12,
+            color: 'var(--text-secondary, rgba(255,255,255,0.55))',
+            marginTop: 2,
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
@@ -606,26 +604,25 @@ function NotificationItemRow({
         </div>
         <div
           style={{
-            fontSize: '14px',
-            color: 'var(--text-secondary)',
+            fontSize: 11,
+            color: 'var(--text-muted, rgba(255,255,255,0.3))',
+            marginTop: 2,
           }}
         >
           {formatTimeAgo(notification.timestamp)}
         </div>
       </div>
-      {!isRead && (
-        <div
-          style={{
-            width: '6px',
-            height: '6px',
-            borderRadius: '50%',
-            backgroundColor: 'var(--bb-orange)',
-            flexShrink: 0,
-            marginTop: '8px',
-          }}
-        />
-      )}
-    </button>
+      <div
+        style={{
+          width: 5,
+          height: 5,
+          borderRadius: '50%',
+          backgroundColor: 'var(--bb-accent, rgba(99,140,255,0.6))',
+          flexShrink: 0,
+          marginTop: 6,
+        }}
+      />
+    </motion.button>
   );
 }
 

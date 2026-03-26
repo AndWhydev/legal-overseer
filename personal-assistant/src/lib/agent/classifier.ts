@@ -311,7 +311,7 @@ function buildClassificationPrompt(message: ChannelMessage, contextSummary: stri
     ? message.body.slice(0, MAX_BODY_LENGTH) + '...[truncated]'
     : message.body
 
-  return `Classify this message. Return ONLY valid JSON matching the schema below.
+  return `Classify this inbound message for a small business owner's AI operations dashboard. Return ONLY valid JSON matching the schema below.
 
 Message:
 - Sender: ${message.sender}${message.senderEmail ? ` <${message.senderEmail}>` : ''}
@@ -334,10 +334,19 @@ Background Context for Sender:
 ${contextSummary || 'None available.'}
 
 Scoring guidelines:
-- 10: Business-critical (contract, legal, payment dispute)
-- 7-9: Important client/lead communication
-- 4-6: Routine business (status updates, scheduling)
-- 1-3: Newsletter, spam, noise, automated notifications`
+- 9-10: Business-critical (contract, legal, payment dispute, urgent client issue)
+- 7-8: Direct human communication requiring response (client email, lead inquiry, vendor question, colleague message)
+- 5-6: Routine updates that may need attention (scheduling, status updates, non-urgent replies)
+- 3-4: Automated but relevant (system alerts, service notifications, order confirmations)
+- 1-2: Pure noise (newsletter, spam, marketing, social media notifications)
+
+IMPORTANT classification rules:
+- Any direct email from a HUMAN (not a noreply/automated address) asking a question or continuing a conversation scores 7+
+- If background context identifies the sender as a known contact or client, score 8+
+- System alerts with [HIGH] or [CRITICAL] severity score 7+
+- Category "client" applies when the sender is a known client OR the context suggests an existing business relationship
+- Category "lead" applies when someone is inquiring about services
+- When in doubt between "notification" and "client"/"vendor", prefer the human category if the sender address looks personal`
 }
 
 function parseClassificationResponse(text: string): ClassificationResult {

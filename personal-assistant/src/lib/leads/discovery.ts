@@ -1,6 +1,6 @@
 /**
  * SerpAPI search integration + deduplication + orchestration.
- * Ported from PCC Python: prospect/scraper/serpapi.py + prospect/dedup.py
+ * Ported from Lead Swarm: prospect/scraper/serpapi.py + prospect/dedup.py
  */
 import type { ProspectResult, WebsiteSignals } from './types'
 import { DIRECTORY_DOMAINS, DIRECTORY_URL_PATTERNS, AU_STATES } from './constants'

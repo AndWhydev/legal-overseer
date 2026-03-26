@@ -101,19 +101,19 @@ const TEMPLATE_LABELS: Record<TemplateType, string> = {
 
 const glassCard: React.CSSProperties = {
   borderRadius: 16,
-  background: 'rgba(15, 20, 30, 0.6)',
-  backdropFilter: 'blur(20px) saturate(1.2)',
-  WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
-  border: '1px solid rgba(255, 255, 255, 0.03)',
-  boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+  background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.6))',
+  backdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
+  WebkitBackdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
+  border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
+  boxShadow: 'var(--card-inset, inset 0 1px 0 rgba(255, 255, 255, 0.05))',
 }
 
 const glassInput: React.CSSProperties = {
   width: '100%',
   padding: '12px 16px',
   borderRadius: 12,
-  background: 'rgba(13, 17, 23, 0.6)',
-  border: '1px solid rgba(255, 255, 255, 0.05)',
+  background: 'var(--bg-input, rgba(13, 17, 23, 0.6))',
+  border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.05))',
   color: 'var(--text-primary, #F1F5F9)',
   fontSize: 14,
   outline: 'none',
@@ -125,8 +125,8 @@ const glassSelect: React.CSSProperties = {
   width: '100%',
   padding: '12px 16px',
   borderRadius: 12,
-  background: 'rgba(13, 17, 23, 0.6)',
-  border: '1px solid rgba(255, 255, 255, 0.05)',
+  background: 'var(--bg-input, rgba(13, 17, 23, 0.6))',
+  border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.05))',
   color: 'var(--text-primary, #F1F5F9)',
   fontSize: 14,
   outline: 'none',
@@ -137,9 +137,9 @@ const glassSelect: React.CSSProperties = {
 const accentBtn: React.CSSProperties = {
   padding: '12px 20px',
   borderRadius: 12,
-  background: '#FF5A1F',
+  background: 'var(--btn-primary-bg, #F1F5F9)',
   border: 'none',
-  color: '#000',
+  color: 'var(--btn-primary-fg, #0a0f1a)',
   fontSize: 14,
   fontWeight: 500,
   cursor: 'pointer',
@@ -153,7 +153,7 @@ const ghostBtn: React.CSSProperties = {
   padding: '8px 16px',
   borderRadius: 12,
   background: 'transparent',
-  border: '1px solid rgba(255, 255, 255, 0.06)',
+  border: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
   color: 'var(--text-primary, #F1F5F9)',
   fontSize: 14,
   fontWeight: 500,
@@ -193,9 +193,9 @@ function TemplateCard({
       style={{
         padding: 16,
         borderRadius: 12,
-        background: selected ? 'rgba(255, 90, 31, 0.1)' : 'rgba(13, 17, 23, 0.5)',
+        background: selected ? 'rgba(255, 255, 255, 0.06)' : 'rgba(13, 17, 23, 0.5)',
         border: selected
-          ? '1px solid rgba(255, 90, 31, 0.4)'
+          ? '1px solid rgba(255, 255, 255, 0.2)'
           : '1px solid rgba(255, 255, 255, 0.04)',
         cursor: 'pointer',
         textAlign: 'left',
@@ -208,7 +208,7 @@ function TemplateCard({
         style={{
           fontSize: 14,
           fontWeight: 500,
-          color: selected ? '#FF5A1F' : 'var(--text-primary, #F1F5F9)',
+          color: selected ? 'var(--text-primary, #F1F5F9)' : 'var(--text-primary, #F1F5F9)',
           marginBottom: 4,
         }}
       >
@@ -367,10 +367,10 @@ function CalendarView({
                 padding: 8,
                 borderRadius: 8,
                 background: isToday
-                  ? 'rgba(255, 90, 31, 0.08)'
+                  ? 'rgba(255, 255, 255, 0.05)'
                   : 'rgba(13, 17, 23, 0.4)',
                 border: isToday
-                  ? '1px solid rgba(255, 90, 31, 0.25)'
+                  ? '1px solid rgba(255, 255, 255, 0.15)'
                   : '1px solid rgba(255, 255, 255, 0.03)',
               }}
             >
@@ -378,7 +378,7 @@ function CalendarView({
                 style={{
                   fontSize: 14,
                   fontWeight: isToday ? 700 : 500,
-                  color: isToday ? '#FF5A1F' : 'var(--text-secondary, #94A3B8)',
+                  color: isToday ? 'var(--text-primary, #F1F5F9)' : 'var(--text-secondary, #94A3B8)',
                   marginBottom: 4,
                 }}
               >
@@ -480,8 +480,8 @@ function HistoryItem({
     <div
       style={{
         borderRadius: 12,
-        background: 'rgba(13, 17, 23, 0.5)',
-        border: '1px solid rgba(255, 255, 255, 0.04)',
+        background: 'var(--bg-input, rgba(13, 17, 23, 0.5))',
+        border: '1px solid rgba(255, 255, 255, 0.03)',
         overflow: 'hidden',
       }}
     >
@@ -808,8 +808,8 @@ export default function CreatorStudioTab() {
               gap: 4,
               padding: 4,
               borderRadius: 12,
-              background: 'rgba(13, 17, 23, 0.6)',
-              border: '1px solid rgba(255, 255, 255, 0.04)',
+              background: 'var(--bg-input, rgba(13, 17, 23, 0.6))',
+              border: '1px solid rgba(255, 255, 255, 0.03)',
               width: 'fit-content',
               marginBottom: 28,
             }}
@@ -827,10 +827,10 @@ export default function CreatorStudioTab() {
                   cursor: 'pointer',
                   transition: 'all 200ms',
                   background:
-                    view === tab.id ? 'rgba(255, 90, 31, 0.15)' : 'transparent',
+                    view === tab.id ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
                   color:
                     view === tab.id
-                      ? '#FF5A1F'
+                      ? 'var(--text-primary, #F1F5F9)'
                       : 'var(--text-secondary, #94A3B8)',
                 }}
               >
@@ -917,13 +917,13 @@ export default function CreatorStudioTab() {
                               padding: '8px 16px',
                               borderRadius: 12,
                               border: tone === t.value
-                                ? '1px solid rgba(255, 90, 31, 0.4)'
+                                ? '1px solid rgba(255, 255, 255, 0.2)'
                                 : '1px solid rgba(255, 255, 255, 0.05)',
                               background: tone === t.value
-                                ? 'rgba(255, 90, 31, 0.1)'
+                                ? 'rgba(255, 255, 255, 0.06)'
                                 : 'rgba(13, 17, 23, 0.5)',
                               color: tone === t.value
-                                ? '#FF5A1F'
+                                ? 'var(--text-primary, #F1F5F9)'
                                 : 'var(--text-secondary, #94A3B8)',
                               fontSize: 14,
                               fontWeight: 500,
@@ -949,13 +949,13 @@ export default function CreatorStudioTab() {
                               padding: '8px 16px',
                               borderRadius: 12,
                               border: length === l.value
-                                ? '1px solid rgba(255, 90, 31, 0.4)'
+                                ? '1px solid rgba(255, 255, 255, 0.2)'
                                 : '1px solid rgba(255, 255, 255, 0.05)',
                               background: length === l.value
-                                ? 'rgba(255, 90, 31, 0.1)'
+                                ? 'rgba(255, 255, 255, 0.06)'
                                 : 'rgba(13, 17, 23, 0.5)',
                               color: length === l.value
-                                ? '#FF5A1F'
+                                ? 'var(--text-primary, #F1F5F9)'
                                 : 'var(--text-secondary, #94A3B8)',
                               fontSize: 14,
                               cursor: 'pointer',
@@ -1055,7 +1055,7 @@ export default function CreatorStudioTab() {
                       padding: 16,
                       borderRadius: 12,
                       background: 'rgba(0, 0, 0, 0.35)',
-                      border: '1px solid rgba(255, 255, 255, 0.04)',
+                      border: '1px solid rgba(255, 255, 255, 0.03)',
                       fontSize: 14,
                       color: 'var(--text-secondary, #94A3B8)',
                       whiteSpace: 'pre-wrap',
@@ -1127,11 +1127,11 @@ export default function CreatorStudioTab() {
                     cursor: 'pointer',
                     background:
                       historyFilter === 'all'
-                        ? 'rgba(255, 90, 31, 0.15)'
+                        ? 'rgba(255, 255, 255, 0.08)'
                         : 'rgba(13, 17, 23, 0.5)',
                     color:
                       historyFilter === 'all'
-                        ? '#FF5A1F'
+                        ? 'var(--text-primary, #F1F5F9)'
                         : 'var(--text-secondary, #94A3B8)',
                   }}
                 >
@@ -1150,11 +1150,11 @@ export default function CreatorStudioTab() {
                       cursor: 'pointer',
                       background:
                         historyFilter === t.id
-                          ? 'rgba(255, 90, 31, 0.15)'
+                          ? 'rgba(255, 255, 255, 0.08)'
                           : 'rgba(13, 17, 23, 0.5)',
                       color:
                         historyFilter === t.id
-                          ? '#FF5A1F'
+                          ? 'var(--text-primary, #F1F5F9)'
                           : 'var(--text-secondary, #94A3B8)',
                     }}
                   >

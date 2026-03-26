@@ -120,12 +120,12 @@ export function MeetingUpload({ onUploaded, onCancel }: MeetingUploadProps) {
           onDrop={handleDrop}
           onClick={() => fileInputRef.current?.click()}
           style={{
-            border: `2px dashed ${dragOver ? 'var(--bb-orange)' : 'rgba(255,255,255,0.1)'}`,
+            border: `2px dashed ${dragOver ? 'var(--text-primary, #F1F5F9)' : 'rgba(255,255,255,0.1)'}`,
             borderRadius: 'var(--radius-lg)',
             padding: '32px',
             textAlign: 'center',
             cursor: 'pointer',
-            background: dragOver ? 'var(--bb-orange-glow)' : 'transparent',
+            background: dragOver ? 'rgba(255,255,255,0.03)' : 'transparent',
             transition: 'all 0.15s var(--ease-default)',
             marginBottom: '16px',
           }}
@@ -143,7 +143,7 @@ export function MeetingUpload({ onUploaded, onCancel }: MeetingUploadProps) {
 
           {file ? (
             <div>
-              <FileAudio size={32} style={{ color: 'var(--bb-orange)', margin: '0 auto 8px' }} />
+              <FileAudio size={32} style={{ color: 'var(--text-primary, #F1F5F9)', margin: '0 auto 8px' }} />
               <div style={{ fontSize: '14px', color: 'var(--text-primary)', fontWeight: 500 }}>
                 {file.name}
               </div>
@@ -252,8 +252,8 @@ export function MeetingUpload({ onUploaded, onCancel }: MeetingUploadProps) {
               alignItems: 'center',
               gap: '8px',
               padding: '8px 20px',
-              background: !file || uploading ? 'rgba(255,90,31,0.3)' : 'var(--bb-orange)',
-              color: '#000',
+              background: !file || uploading ? 'rgba(255,255,255,0.12)' : '#F1F5F9',
+              color: 'var(--btn-primary-fg, #0a0f1a)',
               borderRadius: 'var(--radius-md)',
               border: 'none',
               cursor: !file || uploading ? 'not-allowed' : 'pointer',

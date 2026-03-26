@@ -82,7 +82,7 @@ const s = {
   stepCard: (status: string) => {
     const border: Record<string, string> = {
       completed: 'rgba(34, 197, 94, 0.15)',
-      executing: 'rgba(255, 90, 31, 0.2)',
+      executing: 'rgba(255, 255, 255, 0.12)',
       failed: 'rgba(239, 68, 68, 0.15)',
       negotiating: 'rgba(139, 92, 246, 0.15)',
       skipped: 'rgba(255, 255, 255, 0.04)',
@@ -92,7 +92,7 @@ const s = {
       rolled_back: 'rgba(255, 255, 255, 0.04)',
     };
     return {
-      background: 'rgba(15, 20, 30, 0.4)',
+      background: 'var(--bg-card, rgba(15, 20, 30, 0.4))',
       backdropFilter: 'blur(12px)',
       borderRadius: '12px',
       padding: '16px 16px',
@@ -121,7 +121,7 @@ const s = {
   stepStatus: (status: string) => {
     const colors: Record<string, string> = {
       completed: '#22C55E',
-      executing: '#FF7A45',
+      executing: '#E2E8F0',
       failed: '#EF4444',
       negotiating: '#8B5CF6',
       skipped: 'rgba(255,255,255,0.3)',
@@ -460,7 +460,7 @@ export function SwarmRunDetail({ runId, onBack, onRollback }: SwarmRunDetailProp
           <div style={{
             padding: '12px 16px',
             borderRadius: '12px',
-            background: 'rgba(15, 20, 30, 0.4)',
+            background: 'var(--bg-card, rgba(15, 20, 30, 0.4))',
             fontSize: '14px',
             color: 'rgba(255, 255, 255, 0.65)',
             lineHeight: 1.6,

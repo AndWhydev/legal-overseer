@@ -25,7 +25,7 @@ import {
   Settings,
   Monitor,
   Link2,
-  Zap,
+  Puzzle,
   Palette,
   Mic,
 } from 'lucide-react';
@@ -58,7 +58,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
   admin:           Wrench,
   settings:        Settings,
   'settings-connections':  Link2,
-  'settings-automations':  Zap,
+  'settings-automations':  Puzzle,
   'settings-appearance':   Palette,
   'settings-billing':      DollarSign,
 };

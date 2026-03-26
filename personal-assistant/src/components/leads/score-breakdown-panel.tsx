@@ -26,16 +26,17 @@ const gaugeLabel: React.CSSProperties = {
   color: 'var(--text-secondary, #94A3B8)',
 }
 
-const gaugeValue: React.CSSProperties = {
+const gaugeValueStyle: React.CSSProperties = {
   fontSize: 16,
   fontWeight: 500,
   fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
+  color: 'var(--text-primary, #F1F5F9)',
 }
 
 const gaugeTrack: React.CSSProperties = {
   height: 6,
   borderRadius: 8,
-  background: 'rgba(255, 255, 255, 0.06)',
+  background: 'var(--hover-bg, rgba(255, 255, 255, 0.04))',
   overflow: 'hidden',
 }
 
@@ -64,20 +65,20 @@ const subLabel: React.CSSProperties = {
 }
 
 // ─── Sub-components ─────────────────────────────────────────────────────────
-function ScoreGauge({ label, score, color }: { label: string; score: number; color: string }) {
+function ScoreGauge({ label, score }: { label: string; score: number }) {
   const pct = Math.min(score, 100)
   return (
     <div style={{ flex: 1 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
         <span style={gaugeLabel}>{label}</span>
-        <span style={{ ...gaugeValue, color }} aria-label={`${label} score: ${score}`}>{score}</span>
+        <span style={gaugeValueStyle} aria-label={`${label} score: ${score}`}>{score}</span>
       </div>
       <div style={gaugeTrack}>
         <div style={{
           width: `${pct}%`,
           height: '100%',
           borderRadius: 8,
-          background: color,
+          background: 'var(--text-primary, #F1F5F9)',
           transition: 'width 0.5s ease',
         }} />
       </div>
@@ -101,8 +102,8 @@ function FactorList({ breakdown }: { breakdown: ScoreBreakdown | null }) {
             fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
             padding: '2px 8px',
             borderRadius: 8,
-            background: c.points > 0 ? 'rgba(34, 197, 94, 0.12)' : 'rgba(239, 68, 68, 0.12)',
-            color: c.points > 0 ? '#22c55e' : '#ef4444',
+            background: 'transparent',
+            color: 'var(--text-primary, #F1F5F9)',
           }}>
             {c.points > 0 ? '+' : ''}{c.points}
           </span>
@@ -119,8 +120,8 @@ function ScoreBreakdownPanelInner({ fitScore, opportunityScore, fitBreakdown, op
       <h4 style={sectionTitle}>Score Breakdown</h4>
 
       <div style={{ display: 'flex', gap: 16, marginBottom: 16 }}>
-        <ScoreGauge label="Fit" score={fitScore} color="#06b6d4" />
-        <ScoreGauge label="Opportunity" score={opportunityScore} color="#eab308" />
+        <ScoreGauge label="Fit" score={fitScore} />
+        <ScoreGauge label="Opportunity" score={opportunityScore} />
       </div>
 
       {fitBreakdown && (

@@ -27,7 +27,7 @@ export function TodaysPrioritiesWidget() {
     >
       <div className="space-y-3">
         {priorities.length === 0 ? (
-          <EmptyState icon={<Zap size={32} />} title="No high-priority tasks" description="Enjoy the calm — nothing urgent right now." />
+          <EmptyState title="No high-priority tasks" description="Enjoy the calm — nothing urgent right now." />
         ) : (
           priorities.map(task => (
             <div key={task.id} className="flex items-center gap-3 p-2 rounded-md bg-[var(--bg-elevated)] border border-[var(--border-subtle)]">

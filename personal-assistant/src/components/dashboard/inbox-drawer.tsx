@@ -433,13 +433,13 @@ function ThreadView({
                 width: 24,
                 height: 24,
                 borderRadius: '50%',
-                background: msg.isSelf ? 'rgba(255,90,31,0.2)' : 'rgba(255,255,255,0.1)',
+                background: msg.isSelf ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.1)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 fontSize: 14,
                 fontWeight: 500,
-                color: msg.isSelf ? '#FF7A45' : 'rgba(255,255,255,0.7)',
+                color: msg.isSelf ? '#E2E8F0' : 'rgba(255,255,255,0.7)',
                 flexShrink: 0,
               }}>
                 {String(senderName[0] || '?').toUpperCase()}
@@ -706,7 +706,7 @@ export default function InboxDrawer({
           width: `${drawerWidth}%`,
           zIndex: 101,
           background: 'var(--bg-primary, #0a0f1a)',
-          borderLeft: '1px solid rgba(255, 255, 255, 0.06)',
+          borderLeft: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
           display: 'flex',
           flexDirection: 'column',
           transform: open ? 'translateX(0)' : 'translateX(100%)',
@@ -725,7 +725,7 @@ export default function InboxDrawer({
             width: 8,
             cursor: 'col-resize',
             zIndex: 100,
-            background: isResizing ? 'rgba(255, 90, 31, 0.2)' : 'transparent',
+            background: isResizing ? 'rgba(255, 255, 255, 0.12)' : 'transparent',
             transition: 'background 150ms ease',
           }}
         />
@@ -736,7 +736,7 @@ export default function InboxDrawer({
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '16px 20px',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
+          borderBottom: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
           flexShrink: 0,
           gap: 12,
         }}>
@@ -803,7 +803,7 @@ export default function InboxDrawer({
         {/* Meta: Sender, Subject, Badges */}
         <div style={{
           padding: '20px 24px',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
+          borderBottom: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
           flexShrink: 0,
         }}>
           {/* Sender row */}
@@ -862,8 +862,8 @@ export default function InboxDrawer({
               display: 'inline-flex', alignItems: 'center', padding: '4px 12px',
               borderRadius: 12, fontSize: 14, fontWeight: 500,
               textTransform: 'uppercase', letterSpacing: '0.04em',
-              background: message.category === 'action_required' ? 'rgba(255,90,31,0.15)' : message.category === 'conversation' ? 'rgba(139,92,246,0.15)' : message.category === 'spam' ? 'rgba(239,68,68,0.15)' : message.category === 'marketing' ? 'rgba(234,179,8,0.12)' : message.category === 'automated' ? 'rgba(79,70,229,0.12)' : 'rgba(255,255,255,0.06)',
-              color: message.category === 'action_required' ? '#FF7A45' : message.category === 'conversation' ? '#A78BFA' : message.category === 'spam' ? '#F87171' : message.category === 'marketing' ? '#EAB308' : message.category === 'automated' ? '#818CF8' : 'rgba(255,255,255,0.5)',
+              background: message.category === 'action_required' ? 'rgba(255,255,255,0.08)' : message.category === 'conversation' ? 'rgba(139,92,246,0.15)' : message.category === 'spam' ? 'rgba(239,68,68,0.15)' : message.category === 'marketing' ? 'rgba(234,179,8,0.12)' : message.category === 'automated' ? 'rgba(79,70,229,0.12)' : 'rgba(255,255,255,0.06)',
+              color: message.category === 'action_required' ? '#E2E8F0' : message.category === 'conversation' ? '#A78BFA' : message.category === 'spam' ? '#F87171' : message.category === 'marketing' ? '#EAB308' : message.category === 'automated' ? '#818CF8' : 'rgba(255,255,255,0.5)',
             }}>
               {getCategoryLabel(message.category)}
             </span>

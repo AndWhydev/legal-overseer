@@ -81,8 +81,8 @@ export function SwarmList({ onSelectRun }: SwarmListProps) {
                 fontSize: '14px',
                 fontWeight: 500,
                 cursor: 'pointer',
-                background: filter === s ? 'rgba(255,90,31,0.2)' : 'rgba(255,255,255,0.05)',
-                color: filter === s ? '#FF7A45' : 'rgba(255,255,255,0.5)',
+                background: filter === s ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.05)',
+                color: filter === s ? '#F1F5F9' : 'rgba(255,255,255,0.5)',
                 transition: 'all 0.15s',
               }}
             >
@@ -102,7 +102,7 @@ export function SwarmList({ onSelectRun }: SwarmListProps) {
           textAlign: 'center',
           padding: '60px 20px',
           color: 'rgba(255,255,255,0.4)',
-          background: 'rgba(15,20,30,0.35)',
+          background: 'var(--bg-card, rgba(15,20,30,0.35))',
           borderRadius: '12px',
           backdropFilter: 'blur(20px)',
         }}>
@@ -122,7 +122,7 @@ export function SwarmList({ onSelectRun }: SwarmListProps) {
                 alignItems: 'center',
                 gap: '12px',
                 padding: '14px 16px',
-                background: 'rgba(15,20,30,0.35)',
+                background: 'var(--bg-card, rgba(15,20,30,0.35))',
                 backdropFilter: 'blur(20px)',
                 borderRadius: '12px',
                 border: 'none',

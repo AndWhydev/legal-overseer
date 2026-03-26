@@ -64,7 +64,7 @@ const fileCardStyle: React.CSSProperties = {
   background: 'rgba(255, 255, 255, 0.06)',
   backdropFilter: 'blur(12px)',
   WebkitBackdropFilter: 'blur(12px)',
-  border: '1px solid rgba(255, 255, 255, 0.08)',
+  border: '1px solid rgba(255, 255, 255, 0.03)',
   cursor: 'pointer',
   transition: 'all 200ms ease',
   maxWidth: 320,
@@ -74,7 +74,7 @@ const fileCardStyle: React.CSSProperties = {
 const fileCardHoverStyle: React.CSSProperties = {
   ...fileCardStyle,
   background: 'rgba(255, 255, 255, 0.1)',
-  border: '1px solid rgba(255, 255, 255, 0.12)',
+  border: '1px solid rgba(255, 255, 255, 0.03)',
 }
 
 const filenameStyle: React.CSSProperties = {
@@ -109,7 +109,7 @@ const imageSkeletonStyle: React.CSSProperties = {
   background: 'linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.03) 75%)',
   backgroundSize: '200% 100%',
   animation: 'shimmer 1.5s ease infinite',
-  border: '1px solid rgba(255, 255, 255, 0.06)',
+  border: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
 }
 
 const imageErrorStyle: React.CSSProperties = {
@@ -122,7 +122,7 @@ const imageErrorStyle: React.CSSProperties = {
   height: 140,
   borderRadius: 8,
   background: 'rgba(255, 255, 255, 0.04)',
-  border: '1px solid rgba(255, 255, 255, 0.06)',
+  border: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
   color: 'var(--text-dim, #475569)',
   fontSize: 11,
 }
@@ -187,7 +187,7 @@ function ImageAttachment({ attachmentId, name }: { attachmentId?: string; name: 
         maxWidth: 300,
         maxHeight: 200,
         borderRadius: 8,
-        border: '1px solid rgba(255, 255, 255, 0.1)',
+        border: '1px solid rgba(255, 255, 255, 0.03)',
         cursor: 'pointer',
         objectFit: 'cover',
         display: status === 'loaded' ? 'block' : 'none',

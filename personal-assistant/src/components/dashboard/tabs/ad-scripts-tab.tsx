@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useCallback, useEffect, useState } from 'react'
-import { Copy, Check, Loader2, ChevronDown, ChevronRight, Film, Sparkles } from 'lucide-react'
+import { Copy, Check, Loader2, ChevronDown, ChevronRight, Film } from 'lucide-react'
 import { TabShell } from '@/components/ui/tab-shell'
 import { EmptyState } from '@/components/ui/empty-state'
 
@@ -135,11 +135,15 @@ const ghostBtn: React.CSSProperties = {
 }
 
 const accentBtn: React.CSSProperties = {
-  padding: '8px 16px',
-  borderRadius: 12,
-  background: '#1A1A1B',
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 8,
+  height: 40,
+  padding: '0 20px',
+  borderRadius: 8,
+  background: 'var(--btn-primary-bg, #F1F5F9)',
   border: 'none',
-  color: '#FFFFFF',
+  color: 'var(--btn-primary-fg, #0a0f1a)',
   fontSize: 14,
   fontWeight: 500,
   cursor: 'pointer',
@@ -164,8 +168,8 @@ const glassInput: React.CSSProperties = {
   width: '100%',
   padding: '12px 16px',
   borderRadius: 12,
-  background: 'rgba(13, 17, 23, 0.6)',
-  border: '1px solid rgba(255, 255, 255, 0.05)',
+  background: 'var(--bg-input, rgba(13, 17, 23, 0.6))',
+  border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.05))',
   color: 'var(--text-primary)',
   fontSize: 14,
   outline: 'none',
@@ -176,8 +180,8 @@ const glassSelect: React.CSSProperties = {
   width: '100%',
   padding: '12px 16px',
   borderRadius: 12,
-  background: 'rgba(13, 17, 23, 0.6)',
-  border: '1px solid rgba(255, 255, 255, 0.05)',
+  background: 'var(--bg-input, rgba(13, 17, 23, 0.6))',
+  border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.05))',
   color: 'var(--text-primary)',
   fontSize: 14,
   outline: 'none',
@@ -568,12 +572,12 @@ function GenerateForm({
         }}
         onMouseEnter={(e) => {
           if (!isGenerating && selectedOffer && selectedPlatforms.length > 0 && selectedHooks.length > 0) {
-            (e.currentTarget as HTMLButtonElement).style.background = '#FF7A45'
+            (e.currentTarget as HTMLButtonElement).style.background = 'var(--btn-primary-hover, #E2E8F0)'
             ;(e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-1px)'
           }
         }}
         onMouseLeave={(e) => {
-          (e.currentTarget as HTMLButtonElement).style.background = '#1A1A1B'
+          (e.currentTarget as HTMLButtonElement).style.background = 'var(--btn-primary-bg, #F1F5F9)'
           ;(e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0)'
         }}
       >
@@ -760,7 +764,6 @@ function AdScriptsTab() {
         {/* No offers state */}
         {offers.length === 0 && !currentResult ? (
           <EmptyState
-            icon={<Sparkles size={40} />}
             title="No offer packages found"
             description="Create offer packages or service tiers to generate ad scripts."
           />

@@ -259,7 +259,7 @@ export function OnboardingTour({ onNavigate }: OnboardingTourProps) {
                   style={{
                     width: i === stepIndex ? '20px' : '6px',
                     height: '6px',
-                    borderRadius: '3px',
+                    borderRadius: '8px',
                     background:
                       i === stepIndex
                         ? 'var(--bb-orange)'
@@ -305,8 +305,8 @@ export function OnboardingTour({ onNavigate }: OnboardingTourProps) {
                   padding: '8px 20px',
                   borderRadius: '8px',
                   border: 'none',
-                  background: '#1A1A1B',
-                  color: '#FFFFFF',
+                  background: 'var(--btn-primary-bg, #F1F5F9)',
+                  color: 'var(--btn-primary-fg, #0a0f1a)',
                   cursor: 'pointer',
                   fontSize: '14px',
                   fontWeight: 500,

@@ -162,7 +162,12 @@ export function GlobalSearch({ onNavigate }: GlobalSearchProps) {
               <X size={16} />
             </button>
           )}
-          <kbd className="bb-search-kbd-esc">ESC</kbd>
+          <button
+            type="button"
+            className="bb-search-kbd-esc"
+            onClick={() => setOpen(false)}
+            aria-label="Close search"
+          >ESC</button>
         </div>
 
         {/* Results */}
@@ -227,8 +232,18 @@ export function GlobalSearch({ onNavigate }: GlobalSearchProps) {
         {/* Footer */}
         <div className="bb-search-footer">
           <span><kbd>↑↓</kbd>navigate</span>
-          <span><kbd>↵</kbd>select</span>
-          <span><kbd>esc</kbd>close</span>
+          <button
+            type="button"
+            onClick={() => {
+              if (results[selectedIndex]) selectResult(results[selectedIndex]);
+            }}
+            aria-label="Select result"
+          ><kbd>↵</kbd>select</button>
+          <button
+            type="button"
+            onClick={() => setOpen(false)}
+            aria-label="Close search"
+          ><kbd>esc</kbd>close</button>
         </div>
       </div>
     </div>
