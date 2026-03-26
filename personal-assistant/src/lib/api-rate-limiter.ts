@@ -55,8 +55,10 @@ export const RATE_LIMIT_TIERS: Record<string, RateLimitConfig> = {
   auth: { maxRequests: 10, windowMs: 60_000 },
   /** Cron endpoints — very tight, only legitimate cron should call */
   cron: { maxRequests: 5, windowMs: 60_000 },
-  /** General API — reasonable default */
-  api: { maxRequests: 60, windowMs: 60_000 },
+  /** General API — generous for dashboard with many concurrent tab fetches */
+  api: { maxRequests: 120, windowMs: 60_000 },
+  /** Chat/SSE endpoints — must never be blocked by background tab fetches */
+  chat: { maxRequests: 30, windowMs: 60_000 },
   /** Webhook endpoints — higher limit for platform callbacks */
   webhook: { maxRequests: 200, windowMs: 60_000 },
 }
@@ -111,6 +113,10 @@ export function getTierForPath(pathname: string): RateLimitConfig {
   }
   if (pathname.startsWith('/api/channels/')) {
     return RATE_LIMIT_TIERS.webhook
+  }
+  // Chat SSE gets its own rate limit bucket so dashboard tab fetches can't block it
+  if (pathname.startsWith('/api/agent/chat')) {
+    return RATE_LIMIT_TIERS.chat
   }
   return RATE_LIMIT_TIERS.api
 }

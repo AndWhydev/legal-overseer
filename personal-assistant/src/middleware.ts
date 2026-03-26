@@ -171,11 +171,16 @@ export async function middleware(request: NextRequest) {
   }
 
   // ── API rate limiting ─────────────────────────────────────────────────────
-  if (isApiRoute) {
+  // Skip rate limiting for authenticated dashboard GET reads — users querying
+  // their own data should never be throttled. Rate limiting still applies to
+  // mutations (POST/PATCH/DELETE) and non-agent API routes.
+  const isDashboardRead = request.method === 'GET' && pathname.startsWith('/api/agent/')
+  if (isApiRoute && !isDashboardRead) {
     const tier = getTierForPath(pathname)
     const category = pathname.startsWith('/api/auth/') ? 'auth'
       : pathname.startsWith('/api/cron/') ? 'cron'
       : pathname.startsWith('/api/channels/') ? 'webhook'
+      : pathname.startsWith('/api/agent/chat') ? 'chat'
       : 'api'
     const key = `${ip}:${category}`
     const result = checkApiRateLimit(key, tier)

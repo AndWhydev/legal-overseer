@@ -51,9 +51,11 @@ function InvoicePreview({ template, orgName }: { template: InvoiceTemplate; orgN
       ref={wrapperRef}
       style={{
         width: '100%',
-        height: Math.round(842 * scale),
+        padding: 16,
+        height: Math.round(842 * scale) + 32,
         overflow: 'hidden',
         borderRadius: 16,
+        background: 'var(--bg-secondary, rgba(0, 0, 0, 0.15))',
         transition: 'height 0.15s ease',
         position: 'relative',
       }}
@@ -63,7 +65,9 @@ function InvoicePreview({ template, orgName }: { template: InvoiceTemplate; orgN
         width: 595,
         height: 842,
         background: '#ffffff',
-        borderRadius: 0,
+        borderRadius: 8,
+        overflow: 'hidden',
+        boxShadow: '0 4px 24px rgba(0, 0, 0, 0.3), 0 1px 4px rgba(0, 0, 0, 0.2)',
         transformOrigin: 'top left',
         transform: `scale(${scale})`,
         fontSize: 14,
@@ -73,7 +77,7 @@ function InvoicePreview({ template, orgName }: { template: InvoiceTemplate; orgN
         flexShrink: 0,
         position: 'absolute',
         top: 0,
-        left: 0,
+        left: `calc(50% - ${595 * scale / 2}px)`,
       }}
     >
       {/* Invoice header */}
