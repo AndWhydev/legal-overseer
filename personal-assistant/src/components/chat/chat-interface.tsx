@@ -2172,15 +2172,19 @@ export function ChatInterface({ userName }: { userName?: string }) {
                         // strip it from the final MessageBubble to avoid duplication.
                         if (!isCurrentResponse || !hasInterleavedSegments) return msg
                         const textSegs = streamSegments.filter(s => s.type === 'text') as Array<{ type: 'text'; content: string }>
-                        // The last text segment IS the final response — only strip non-trailing text segments
-                        const nonTrailing = textSegs.slice(0, -1)
-                        if (nonTrailing.length === 0) return msg
+                        // Determine which text segments are already rendered by the segment builder
+                        // (everything except the trailing text segment, which is the final response)
+                        const lastSegType = streamSegments[streamSegments.length - 1]?.type
+                        const alreadyRendered = lastSegType === 'text'
+                          ? textSegs.slice(0, -1) // Last segment is text = final response, strip the rest
+                          : textSegs // Last segment is tools = ALL text segments are intermediate, strip all
+                        if (alreadyRendered.length === 0) return msg
                         let cleaned = msg.content
-                        for (const seg of nonTrailing) {
-                          // Remove the first occurrence of each intermediate text from content
-                          const idx = cleaned.indexOf(seg.content.trim())
+                        for (const seg of alreadyRendered) {
+                          const trimmed = seg.content.trim()
+                          const idx = cleaned.indexOf(trimmed)
                           if (idx !== -1) {
-                            cleaned = (cleaned.slice(0, idx) + cleaned.slice(idx + seg.content.trim().length)).trim()
+                            cleaned = (cleaned.slice(0, idx) + cleaned.slice(idx + trimmed.length)).trim()
                           }
                         }
                         return { ...msg, content: cleaned }

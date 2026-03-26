@@ -267,15 +267,17 @@ export async function listUserThreads(
     )
 
     if (!rpcError && rpcData) {
-      return (rpcData as Array<Record<string, unknown>>).map((row) => ({
-        id: row.id as string,
-        title: (row.title as string | null) ?? null,
-        status: row.status as string,
-        lastChannel: row.last_channel as string,
-        messageCount: (row.message_count as number) ?? 0,
-        lastActivity: row.last_activity_at as string,
-        preview: (row.preview as string | null) ?? null,
-      }))
+      return (rpcData as Array<Record<string, unknown>>)
+        .filter((row) => row.status !== 'archived')
+        .map((row) => ({
+          id: row.id as string,
+          title: (row.title as string | null) ?? null,
+          status: row.status as string,
+          lastChannel: row.last_channel as string,
+          messageCount: (row.message_count as number) ?? 0,
+          lastActivity: row.last_activity_at as string,
+          preview: (row.preview as string | null) ?? null,
+        }))
     }
 
     // Fallback: direct query on conversation_threads

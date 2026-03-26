@@ -10,7 +10,6 @@ import { TabShell } from '@/components/ui/tab-shell';
 import { EmptyState } from '@/components/ui/empty-state';
 import { GlassDropdown } from '@/components/ui/glass-dropdown';
 import { logger } from '@/lib/core/logger';
-import { createClient } from '@/lib/supabase/client';
 import { type ThreadMessageItem } from '@/components/dashboard/inbox-drawer';
 import {
   CheckCircle2,
@@ -78,7 +77,7 @@ type DisplayItem =
 
 function getGroupKey(msg: InboxMessage): string | null {
   switch (msg.category) {
-    case 'action_required': return null; // never grouped
+    case 'action_required': return `action:${msg.senderEmail || msg.senderName || 'unknown'}`;
     case 'automated': return `auto:${msg.channelType}`;
     case 'marketing': return `mkt:${msg.senderEmail || msg.senderName || 'unknown'}`;
     case 'fyi':
@@ -96,6 +95,9 @@ function getGroupLabel(key: string, representative: InboxMessage): string {
     };
     return names[channel] || channel;
   }
+  if (key.startsWith('action:')) {
+    return representative.senderName || representative.senderEmail || 'Action Required';
+  }
   if (key.startsWith('mkt:')) {
     return representative.senderName || representative.senderEmail || 'Newsletter';
   }
@@ -103,10 +105,6 @@ function getGroupLabel(key: string, representative: InboxMessage): string {
 }
 
 function groupMessages(messages: InboxMessage[], activePill: CategoryPillType): DisplayItem[] {
-  // No grouping for action pill (all are action_required)
-  if (activePill === 'action') {
-    return messages.map(m => ({ type: 'individual' as const, message: m }));
-  }
 
   const groupMap = new Map<string, InboxMessage[]>();
   const order: (string | InboxMessage)[] = [];
@@ -657,38 +655,30 @@ function InboxTab() {
       addToast('Message archived', () => {
         setMessages(prev => [original, ...prev]);
         setTotal(prev => prev + 1);
+        fetch(`/api/agent/inbox/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'unarchive' }) });
       });
     }
-    const supabase = createClient();
-    if (supabase) {
-      await supabase.from('channel_messages')
-        .update({ metadata: { status: 'archived' } as Record<string, unknown> })
-        .eq('id', id);
-    }
+    await fetch(`/api/agent/inbox/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'archive' }) });
   }, [messages, addToast]);
 
   const handleDone = useCallback(async (id: string) => {
-    const supabase = createClient();
-    if (supabase) {
-      await supabase.from('channel_messages').update({ processed: true } as Record<string, unknown>).eq('id', id);
-    }
+    await fetch(`/api/agent/inbox/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'done' }) });
     setMessages(prev => prev.map(m => m.id === id ? { ...m, status: 'processed' } : m));
     addToast('Marked as done', () => {
       setMessages(prev => prev.map(m => m.id === id ? { ...m, status: 'unread' } : m));
+      fetch(`/api/agent/inbox/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'undo_done' }) });
     });
   }, [addToast]);
 
-  const handleSnooze = useCallback((id: string, snoozedUntil: string) => {
+  const handleSnooze = useCallback(async (id: string, snoozedUntil: string) => {
     setSnoozedIds(prev => new Set([...prev, id]));
     setSnoozeTargetId(null);
     setSnoozeAnchor(null);
     addToast('Message snoozed', () => {
       setSnoozedIds(prev => { const s = new Set(prev); s.delete(id); return s; });
+      fetch(`/api/agent/inbox/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'unsnooze' }) });
     });
-    const supabase = createClient();
-    supabase?.from('channel_messages')
-      .update({ metadata: { snoozed_until: snoozedUntil } as Record<string, unknown> })
-      .eq('id', id);
+    await fetch(`/api/agent/inbox/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'snooze', snoozed_until: snoozedUntil }) });
   }, [addToast]);
 
   const handleStar = useCallback((id: string) => {
@@ -709,12 +699,7 @@ function InboxTab() {
         setTotal(prev => prev + 1);
       });
     }
-    const supabase = createClient();
-    if (supabase) {
-      await supabase.from('channel_messages')
-        .update({ metadata: { status: 'spam' } as Record<string, unknown> })
-        .eq('id', id);
-    }
+    await fetch(`/api/agent/inbox/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'spam' }) });
   }, [messages, addToast]);
 
   const handleDelete = useCallback(async (id: string) => {
@@ -725,13 +710,18 @@ function InboxTab() {
     }
     setMessages(prev => prev.filter(m => m.id !== id));
     setTotal(prev => prev - 1);
-    const supabase = createClient();
-    if (supabase) await supabase.from('channel_messages').delete().eq('id', id);
+    await fetch(`/api/agent/inbox/${id}`, { method: 'DELETE' });
   }, [messages]);
 
   const handleReply = useCallback(async (id: string, body: string) => {
-    logger.info('[inbox-tab] reply handler called', { id, bodyLength: body.length });
-  }, []);
+    const res = await fetch(`/api/agent/inbox/${id}/reply`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ body }) });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({ error: 'Send failed' }));
+      addToast(data.error || 'Failed to send reply', () => {});
+    } else {
+      addToast('Reply sent', () => {});
+    }
+  }, [addToast]);
 
   const handleNavigate = useCallback((direction: 'prev' | 'next') => {
     const currentId = expandedId;
