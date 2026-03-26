@@ -318,3 +318,246 @@ describe('assembleDraftContext', () => {
     expect(result.metadata.tokenEstimate).toBeLessThanOrEqual(4200) // some margin for headers
   })
 })
+
+// ─── Confidence Scoring ─────────────────────────────────────────────────────
+
+describe('confidence scoring', () => {
+  function makeDraftContext(overrides: Partial<DraftContext> = {}): DraftContext {
+    return {
+      contactBriefing: '',
+      conversationHistory: '',
+      memoryRecall: '',
+      ragContext: '',
+      standingOrders: '',
+      relationshipScore: 0,
+      relationshipTrend: 'cold' as const,
+      confidenceScore: 0,
+      metadata: {
+        assemblyTimeMs: 50,
+        sourcesAvailable: {
+          baseplate: false,
+          history: false,
+          memories: false,
+          rag: false,
+          orders: false,
+          relationship: false,
+        },
+        tokenEstimate: 0,
+      },
+      ...overrides,
+    }
+  }
+
+  it('returns 0.40 base score when no context sources available', () => {
+    // No sources, relationship < 20 => 0.40 - 0.05 = 0.35
+    // But also: baseplate unavailable AND conversationHistory empty => -0.10
+    // So: 0.40 - 0.10 - 0.05 = 0.25
+    const ctx = makeDraftContext()
+    const score = computeDraftConfidence(ctx)
+    expect(score).toBe(0.25)
+  })
+
+  it('returns ~0.95 when all sources available and relationship strong', () => {
+    const ctx = makeDraftContext({
+      contactBriefing: 'x'.repeat(200), // >100 chars => +0.15
+      conversationHistory: 'Some history', // >0 => +0.15
+      memoryRecall: 'Some recall', // >0 => +0.10
+      ragContext: 'Some RAG context', // >0 => +0.10
+      standingOrders: 'Some orders', // >0 => +0.05
+      relationshipScore: 72, // >50 => +0.05
+      metadata: {
+        assemblyTimeMs: 50,
+        sourcesAvailable: {
+          baseplate: true,
+          history: true,
+          memories: true,
+          rag: true,
+          orders: true,
+          relationship: true,
+        },
+        tokenEstimate: 500,
+      },
+    })
+    const score = computeDraftConfidence(ctx)
+    // 0.40 + 0.15 + 0.15 + 0.10 + 0.10 + 0.05 + 0.05 = 1.00 => capped at 0.95
+    expect(score).toBe(0.95)
+  })
+
+  it('adds 0.15 for conversation history presence', () => {
+    const base = makeDraftContext({
+      metadata: {
+        assemblyTimeMs: 50,
+        sourcesAvailable: { baseplate: true, history: true, memories: false, rag: false, orders: false, relationship: true },
+        tokenEstimate: 100,
+      },
+      relationshipScore: 25, // >20, no negative modifier
+    })
+    const withHistory = makeDraftContext({
+      ...base,
+      conversationHistory: 'Some conversation',
+    })
+
+    const scoreWithout = computeDraftConfidence(base)
+    const scoreWith = computeDraftConfidence(withHistory)
+    expect(scoreWith - scoreWithout).toBeCloseTo(0.15)
+  })
+
+  it('adds 0.15 for contact briefing with >100 chars', () => {
+    const base = makeDraftContext({
+      metadata: {
+        assemblyTimeMs: 50,
+        sourcesAvailable: { baseplate: true, history: false, memories: false, rag: false, orders: false, relationship: true },
+        tokenEstimate: 100,
+      },
+      relationshipScore: 25,
+    })
+    const withBriefing = makeDraftContext({
+      ...base,
+      contactBriefing: 'x'.repeat(101),
+    })
+
+    const scoreWithout = computeDraftConfidence(base)
+    const scoreWith = computeDraftConfidence(withBriefing)
+    expect(scoreWith - scoreWithout).toBeCloseTo(0.15)
+  })
+
+  it('adds 0.10 for memory recall presence', () => {
+    const base = makeDraftContext({
+      metadata: {
+        assemblyTimeMs: 50,
+        sourcesAvailable: { baseplate: true, history: false, memories: false, rag: false, orders: false, relationship: true },
+        tokenEstimate: 100,
+      },
+      relationshipScore: 25,
+    })
+    const withMemory = makeDraftContext({
+      ...base,
+      memoryRecall: 'Some memories',
+    })
+
+    const scoreWithout = computeDraftConfidence(base)
+    const scoreWith = computeDraftConfidence(withMemory)
+    expect(scoreWith - scoreWithout).toBeCloseTo(0.10)
+  })
+
+  it('adds 0.10 for RAG context presence', () => {
+    const base = makeDraftContext({
+      metadata: {
+        assemblyTimeMs: 50,
+        sourcesAvailable: { baseplate: true, history: false, memories: false, rag: false, orders: false, relationship: true },
+        tokenEstimate: 100,
+      },
+      relationshipScore: 25,
+    })
+    const withRag = makeDraftContext({
+      ...base,
+      ragContext: 'Some RAG context',
+    })
+
+    const scoreWithout = computeDraftConfidence(base)
+    const scoreWith = computeDraftConfidence(withRag)
+    expect(scoreWith - scoreWithout).toBeCloseTo(0.10)
+  })
+
+  it('adds 0.05 for standing orders presence', () => {
+    const base = makeDraftContext({
+      metadata: {
+        assemblyTimeMs: 50,
+        sourcesAvailable: { baseplate: true, history: false, memories: false, rag: false, orders: false, relationship: true },
+        tokenEstimate: 100,
+      },
+      relationshipScore: 25,
+    })
+    const withOrders = makeDraftContext({
+      ...base,
+      standingOrders: 'Some orders',
+    })
+
+    const scoreWithout = computeDraftConfidence(base)
+    const scoreWith = computeDraftConfidence(withOrders)
+    expect(scoreWith - scoreWithout).toBeCloseTo(0.05)
+  })
+
+  it('adds 0.05 for relationship score >50', () => {
+    const base = makeDraftContext({
+      metadata: {
+        assemblyTimeMs: 50,
+        sourcesAvailable: { baseplate: true, history: false, memories: false, rag: false, orders: false, relationship: true },
+        tokenEstimate: 100,
+      },
+      relationshipScore: 45, // between 20 and 50
+    })
+    const withStrong = makeDraftContext({
+      ...base,
+      relationshipScore: 55, // >50
+    })
+
+    const scoreWithout = computeDraftConfidence(base)
+    const scoreWith = computeDraftConfidence(withStrong)
+    expect(scoreWith - scoreWithout).toBeCloseTo(0.05)
+  })
+
+  it('caps confidence at 0.95', () => {
+    const ctx = makeDraftContext({
+      contactBriefing: 'x'.repeat(200),
+      conversationHistory: 'Some history',
+      memoryRecall: 'Some recall',
+      ragContext: 'Some RAG',
+      standingOrders: 'Some orders',
+      relationshipScore: 72,
+      metadata: {
+        assemblyTimeMs: 50,
+        sourcesAvailable: { baseplate: true, history: true, memories: true, rag: true, orders: true, relationship: true },
+        tokenEstimate: 500,
+      },
+    })
+    const score = computeDraftConfidence(ctx)
+    expect(score).toBeLessThanOrEqual(0.95)
+  })
+
+  it('applies negative modifier: no baseplate AND no conversation history reduces by 0.10', () => {
+    const withBaseplate = makeDraftContext({
+      metadata: {
+        assemblyTimeMs: 50,
+        sourcesAvailable: { baseplate: true, history: false, memories: false, rag: false, orders: false, relationship: true },
+        tokenEstimate: 100,
+      },
+      relationshipScore: 25,
+    })
+    const withoutBaseplate = makeDraftContext({
+      metadata: {
+        assemblyTimeMs: 50,
+        sourcesAvailable: { baseplate: false, history: false, memories: false, rag: false, orders: false, relationship: true },
+        tokenEstimate: 100,
+      },
+      relationshipScore: 25,
+    })
+
+    const scoreWith = computeDraftConfidence(withBaseplate)
+    const scoreWithout = computeDraftConfidence(withoutBaseplate)
+    expect(scoreWith - scoreWithout).toBeCloseTo(0.10)
+  })
+
+  it('applies negative modifier: relationship score < 20 reduces by 0.05', () => {
+    const highRel = makeDraftContext({
+      metadata: {
+        assemblyTimeMs: 50,
+        sourcesAvailable: { baseplate: true, history: false, memories: false, rag: false, orders: false, relationship: true },
+        tokenEstimate: 100,
+      },
+      relationshipScore: 25, // >=20
+    })
+    const lowRel = makeDraftContext({
+      metadata: {
+        assemblyTimeMs: 50,
+        sourcesAvailable: { baseplate: true, history: false, memories: false, rag: false, orders: false, relationship: true },
+        tokenEstimate: 100,
+      },
+      relationshipScore: 15, // <20
+    })
+
+    const scoreHigh = computeDraftConfidence(highRel)
+    const scoreLow = computeDraftConfidence(lowRel)
+    expect(scoreHigh - scoreLow).toBeCloseTo(0.05)
+  })
+})
