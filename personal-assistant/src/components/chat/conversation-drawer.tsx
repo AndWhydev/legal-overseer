@@ -140,7 +140,7 @@ export function ConversationDrawer({
         </AnimatePresence>
 
         {/* New chat — compact pill */}
-        <div style={{ padding: '0 12px 8px' }}>
+        <div style={{ padding: '8px 12px 8px' }}>
           <button
             className="bb-chat__drawer-new-btn"
             onClick={() => {

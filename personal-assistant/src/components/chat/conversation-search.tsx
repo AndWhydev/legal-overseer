@@ -46,7 +46,7 @@ export function ConversationSearch({ onSelectThread, onClose }: ConversationSear
   }, [])
 
   return (
-    <div style={{ padding: '12px', paddingBottom: '16px', borderBottom: '1px solid rgba(255,255,255,0.06)', marginBottom: '4px' }}>
+    <div style={{ padding: '12px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
       <div
         style={{
           display: 'flex',
