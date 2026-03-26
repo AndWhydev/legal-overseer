@@ -29,6 +29,7 @@ import { ArtifactPanel } from './artifact-panel'
 import { ExportMenu } from './export-menu'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import { SmoothText } from './smooth-text'
 
 interface ToolCall {
   name: string
@@ -1699,14 +1700,12 @@ export function ChatInterface({ userName }: { userName?: string }) {
         // text which gets rendered via MessageBubble, so skip it here
         const isLastSegment = sIdx === streamSegments.length - 1
         if (!isLastSegment && seg.content.trim()) {
-          // Intermediate text between tool batches — render with markdown + fade-in
-          // (no feedback buttons, no avatar — just the narration between tool phases)
+          // Intermediate text between tool batches — smooth-stream typing effect
+          // Uses the same RAF adaptive speed as the final response's useSmoothStream
+          const trimmed = seg.content.trim()
           elements.push(
-            <motion.div
+            <div
               key={`seg-text-${sIdx}`}
-              initial={{ opacity: 0, y: 4 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, ease: 'easeOut' }}
               className="bb-chat__markdown"
               style={{
                 fontSize: 14,
@@ -1715,10 +1714,14 @@ export function ChatInterface({ userName }: { userName?: string }) {
                 marginBottom: 4,
               }}
             >
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                {seg.content.trim()}
-              </ReactMarkdown>
-            </motion.div>
+              <SmoothText content={trimmed}>
+                {(revealed) => (
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {revealed}
+                  </ReactMarkdown>
+                )}
+              </SmoothText>
+            </div>
           )
         }
       }
