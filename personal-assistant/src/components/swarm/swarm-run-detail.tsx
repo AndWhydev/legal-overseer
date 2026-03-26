@@ -250,6 +250,7 @@ export function SwarmRunDetail({ runId, onBack, onRollback }: SwarmRunDetailProp
   const [messages, setMessages] = useState<SwarmMessageRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedStep, setExpandedStep] = useState<string | null>(null);
+  const [showDetails, setShowDetails] = useState(false);
 
   const fetchDetail = useCallback(async () => {
     try {
@@ -318,16 +319,37 @@ export function SwarmRunDetail({ runId, onBack, onRollback }: SwarmRunDetailProp
           <div style={s.metaRow}>
             <span style={s.metaPill}>{run.status.replace('_', ' ')}</span>
             {durationLabel && <span style={s.metaPill}>{durationLabel}</span>}
-            {run.total_cost > 0 && (
-              <span style={s.metaPill}>${run.total_cost.toFixed(4)}</span>
-            )}
             <span style={s.metaPill}>{steps.length} steps</span>
-            {run.total_tokens_in + run.total_tokens_out > 0 && (
-              <span style={s.metaPill}>
-                {((run.total_tokens_in + run.total_tokens_out) / 1000).toFixed(1)}k tokens
-              </span>
-            )}
           </div>
+          <button
+            onClick={() => setShowDetails(d => !d)}
+            style={{
+              marginTop: '8px',
+              padding: '4px 12px',
+              borderRadius: '8px',
+              fontSize: '14px',
+              fontWeight: 500,
+              background: 'rgba(255, 255, 255, 0.04)',
+              color: 'rgba(255, 255, 255, 0.4)',
+              border: 'none',
+              cursor: 'pointer',
+              transition: 'color 0.15s ease',
+            }}
+          >
+            {showDetails ? 'Hide details' : 'Show details'}
+          </button>
+          {showDetails && (
+            <div style={{ ...s.metaRow, marginTop: '8px' }}>
+              {run.total_cost > 0 && (
+                <span style={s.metaPill}>${run.total_cost.toFixed(4)}</span>
+              )}
+              {run.total_tokens_in + run.total_tokens_out > 0 && (
+                <span style={s.metaPill}>
+                  {((run.total_tokens_in + run.total_tokens_out) / 1000).toFixed(1)}k tokens
+                </span>
+              )}
+            </div>
+          )}
         </div>
         {canRollback && (
           <button style={s.rollbackBtn} onClick={onRollback}>
@@ -337,6 +359,7 @@ export function SwarmRunDetail({ runId, onBack, onRollback }: SwarmRunDetailProp
       </div>
 
       {/* Execution Timeline */}
+      {showDetails && (
       <div>
         <div style={s.sectionLabel}>Execution Timeline</div>
         <div style={s.timeline}>
@@ -391,7 +414,7 @@ export function SwarmRunDetail({ runId, onBack, onRollback }: SwarmRunDetailProp
                   ...s.stepOutput,
                   borderLeft: '2px solid rgba(139, 92, 246, 0.3)',
                 }}>
-                  <div style={{ color: '#8B5CF6', marginBottom: '4px', fontWeight: 600 }}>
+                  <div style={{ color: '#8B5CF6', marginBottom: '4px', fontWeight: 500 }}>
                     Agent Pushback
                   </div>
                   {(step.negotiation as { counterProposal?: string }).counterProposal || 'Negotiation in progress'}
@@ -401,6 +424,7 @@ export function SwarmRunDetail({ runId, onBack, onRollback }: SwarmRunDetailProp
           ))}
         </div>
       </div>
+      )}
 
       {/* Inter-Agent Messages */}
       {filteredMessages.length > 0 && (
