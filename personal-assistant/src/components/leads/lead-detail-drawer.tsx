@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useCallback } from 'react'
+import React, { useEffect, useCallback, memo } from 'react'
 import { X, ExternalLink, ArrowRight, Mail, Calendar, XCircle } from 'lucide-react'
 import type { EnhancedLeadData, LeadStatus } from '@/lib/leads/types'
 import { getDealRotLevel, getSpeedToLeadLevel, formatCurrency, formatSpeedToLead, relativeTime } from '@/lib/leads/utils'
@@ -18,6 +18,7 @@ interface LeadDetailDrawerProps {
   onAdvanceStage?: (leadId: string, event: React.MouseEvent) => void
 }
 
+// ─── Constants ──────────────────────────────────────────────────────────────
 const SCORE_VARIANT: Record<string, StatusVariant> = {
   hot: 'error',
   warm: 'warning',
@@ -33,7 +34,210 @@ const PROGRESS_STAGES: Array<{ status: LeadStatus; label: string }> = [
   { status: 'converted', label: 'Won' },
 ]
 
-export function LeadDetailDrawer({ lead, open, onClose, onUpdate, onAdvanceStage }: LeadDetailDrawerProps) {
+// ─── Hoisted Styles ─────────────────────────────────────────────────────────
+const backdrop: React.CSSProperties = {
+  position: 'fixed',
+  inset: 0,
+  background: 'rgba(0, 0, 0, 0.6)',
+  zIndex: 50,
+  backdropFilter: 'blur(2px)',
+}
+
+const drawer: React.CSSProperties = {
+  position: 'fixed',
+  top: 0,
+  right: 0,
+  bottom: 0,
+  width: '100%',
+  maxWidth: 480,
+  zIndex: 51,
+  background: '#0a0f1a',
+  borderLeft: '1px solid rgba(255, 255, 255, 0.06)',
+  display: 'flex',
+  flexDirection: 'column',
+  overflow: 'hidden',
+  animation: 'slideInRight 0.3s cubic-bezier(0.2, 0.9, 0.3, 1)',
+}
+
+const headerSection: React.CSSProperties = {
+  padding: '20px 24px',
+  borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 12,
+}
+
+const headerTop: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+}
+
+const drawerTitle: React.CSSProperties = {
+  fontSize: 16,
+  fontWeight: 500,
+  color: 'var(--text-primary, #F1F5F9)',
+  margin: 0,
+  letterSpacing: '-0.01em',
+}
+
+const closeBtn: React.CSSProperties = {
+  width: 40,
+  height: 40,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  borderRadius: 8,
+  border: 'none',
+  background: 'rgba(255, 255, 255, 0.04)',
+  color: 'var(--text-dim, #475569)',
+  cursor: 'pointer',
+  transition: 'background 200ms',
+}
+
+const metaRow: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 8,
+  flexWrap: 'wrap',
+}
+
+const statusSelect: React.CSSProperties = {
+  height: 40,
+  fontSize: 14,
+  fontWeight: 500,
+  padding: '0 12px',
+  borderRadius: 8,
+  border: '1px solid rgba(255, 255, 255, 0.1)',
+  background: 'rgba(13, 17, 23, 0.6)',
+  color: 'var(--text-primary, #F1F5F9)',
+  cursor: 'pointer',
+  outline: 'none',
+  appearance: 'none' as const,
+}
+
+const sourceTag: React.CSSProperties = {
+  fontSize: 14,
+  textTransform: 'uppercase',
+  fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
+  color: 'var(--text-dim, #475569)',
+}
+
+const quickStats: React.CSSProperties = {
+  display: 'flex',
+  gap: 16,
+  fontSize: 14,
+  color: 'var(--text-dim, #475569)',
+}
+
+const scrollBody: React.CSSProperties = {
+  flex: 1,
+  overflowY: 'auto',
+  padding: '20px 24px',
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 24,
+}
+
+const actionsRow: React.CSSProperties = {
+  display: 'flex',
+  gap: 8,
+  flexWrap: 'wrap',
+}
+
+const advanceBtn: React.CSSProperties = {
+  background: '#FF5A1F',
+  color: '#000',
+  height: 40,
+  padding: '0 20px',
+  borderRadius: 8,
+  border: 'none',
+  fontSize: 14,
+  fontWeight: 500,
+  cursor: 'pointer',
+  display: 'flex',
+  alignItems: 'center',
+  gap: 8,
+  transition: 'all 200ms',
+}
+
+const actionBtnSecondary = (bg: string, fg: string): React.CSSProperties => ({
+  background: bg,
+  color: fg,
+  height: 40,
+  padding: '0 20px',
+  borderRadius: 8,
+  border: 'none',
+  fontSize: 14,
+  fontWeight: 500,
+  cursor: 'pointer',
+  display: 'flex',
+  alignItems: 'center',
+  gap: 8,
+  transition: 'filter 200ms',
+})
+
+const sectionLabel: React.CSSProperties = {
+  fontSize: 14,
+  fontWeight: 500,
+  textTransform: 'uppercase',
+  letterSpacing: '0.04em',
+  color: 'var(--text-dim, #475569)',
+  margin: '0 0 8px',
+}
+
+const dividerStyle: React.CSSProperties = {
+  height: 1,
+  background: 'rgba(255, 255, 255, 0.04)',
+}
+
+const noteBlock: React.CSSProperties = {
+  padding: '12px 16px',
+  borderRadius: 12,
+  background: 'rgba(255, 255, 255, 0.04)',
+  fontSize: 14,
+  color: 'var(--text-secondary, #94A3B8)',
+  lineHeight: 1.5,
+  whiteSpace: 'pre-wrap',
+}
+
+const servicePill: React.CSSProperties = {
+  fontSize: 14,
+  padding: '4px 12px',
+  borderRadius: 9999,
+  background: 'rgba(255, 255, 255, 0.04)',
+  color: 'var(--text-secondary, #94A3B8)',
+}
+
+const leadIdStyle: React.CSSProperties = {
+  fontSize: 14,
+  fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
+  color: 'var(--text-dim, #475569)',
+  paddingTop: 8,
+}
+
+// ─── Timeline Entry ─────────────────────────────────────────────────────────
+const TimelineEntry = memo(function TimelineEntry({ label, date }: { label: string; date: string }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+      <div style={{
+        width: 8,
+        height: 8,
+        borderRadius: 9999,
+        background: 'rgba(255, 255, 255, 0.1)',
+        flexShrink: 0,
+        marginTop: 4,
+      }} />
+      <div>
+        <span style={{ fontSize: 14, color: 'var(--text-secondary, #94A3B8)' }}>{label}</span>
+        <span style={{ fontSize: 14, color: 'var(--text-dim, #475569)', marginLeft: 8 }}>{relativeTime(date)}</span>
+      </div>
+    </div>
+  )
+})
+
+// ─── Drawer Component ───────────────────────────────────────────────────────
+function LeadDetailDrawerInner({ lead, open, onClose, onUpdate, onAdvanceStage }: LeadDetailDrawerProps) {
   const handleEsc = useCallback((e: KeyboardEvent) => {
     if (e.key === 'Escape') onClose()
   }, [onClose])
@@ -51,80 +255,37 @@ export function LeadDetailDrawer({ lead, open, onClose, onUpdate, onAdvanceStage
   const rotLevel = getDealRotLevel(lead.last_activity_at)
   const speedLevel = getSpeedToLeadLevel(lead.created_at, lead.first_ack_at)
   const hasPccData = lead.fit_score != null
+  const stageIdx = PROGRESS_STAGES.findIndex(s => s.status === lead.status)
+  const isLost = lead.status === 'lost'
 
   return (
     <>
       {/* Backdrop */}
-      <div
-        onClick={onClose}
-        style={{
-          position: 'fixed',
-          inset: 0,
-          background: 'var(--bg-overlay)',
-          zIndex: 50,
-          backdropFilter: 'blur(2px)',
-        }}
-      />
+      <div onClick={onClose} style={backdrop} aria-hidden="true" />
 
       {/* Drawer */}
-      <div style={{
-        position: 'fixed',
-        top: 0,
-        right: 0,
-        bottom: 0,
-        width: '100%',
-        maxWidth: 480,
-        zIndex: 51,
-        background: 'var(--bg-primary)',
-        borderLeft: '1px solid var(--border-subtle)',
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden',
-        animation: 'slideInRight 0.3s cubic-bezier(0.2, 0.9, 0.3, 1)',
-      }}>
+      <aside style={drawer} role="dialog" aria-label={`Lead details: ${displayName}`} aria-modal="true">
         {/* Header */}
-        <div style={{
-          padding: '20px 24px',
-          borderBottom: '1px solid var(--border-subtle)',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 12,
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <h2 style={{ fontSize: 16, fontWeight: 500, color: 'var(--text-primary)', margin: 0 }}>
-              {displayName}
-            </h2>
+        <div style={headerSection}>
+          <div style={headerTop}>
+            <h2 style={drawerTitle}>{displayName}</h2>
             <button
               onClick={onClose}
-              style={{
-                padding: 8,
-                borderRadius: 8,
-                border: 'none',
-                background: 'var(--hover-bg)',
-                color: 'var(--text-dim)',
-                cursor: 'pointer',
-              }}
+              style={closeBtn}
+              aria-label="Close drawer"
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)' }}
             >
-              <X style={{ width: 16, height: 16 }} />
+              <X size={16} />
             </button>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-            {/* Status selector */}
+          <div style={metaRow}>
             <select
               value={lead.status}
               onChange={(e) => onUpdate(lead.id, { status: e.target.value })}
-              style={{
-                fontSize: 14,
-                fontWeight: 500,
-                padding: '4px 12px',
-                borderRadius: 8,
-                border: '1px solid var(--border-active)',
-                background: 'var(--bb-surface)',
-                color: 'var(--text-primary)',
-                cursor: 'pointer',
-                outline: 'none',
-              }}
+              style={statusSelect}
+              aria-label="Lead status"
             >
               {STATUS_OPTIONS.map((s) => (
                 <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
@@ -137,103 +298,106 @@ export function LeadDetailDrawer({ lead, open, onClose, onUpdate, onAdvanceStage
               dot
             />
 
-            <span style={{ fontSize: 14, textTransform: 'uppercase', fontFamily: 'var(--font-mono)', color: 'var(--text-dim)' }}>
-              {lead.source_channel}
-            </span>
+            <span style={sourceTag}>{lead.source_channel}</span>
 
             {lead.prospect_website && (
               <a
                 href={lead.prospect_website.startsWith('http') ? lead.prospect_website : `https://${lead.prospect_website}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--bb-cyan)', fontSize: 14, textDecoration: 'none' }}
+                style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#06b6d4', fontSize: 14, textDecoration: 'none' }}
               >
-                <ExternalLink style={{ width: 12, height: 12 }} />
+                <ExternalLink size={16} />
                 {lead.prospect_domain ?? 'Website'}
               </a>
             )}
           </div>
 
           {/* Quick stats */}
-          <div style={{ display: 'flex', gap: 16, fontSize: 14, color: 'var(--text-dim)' }}>
-            <span>Value: <strong style={{ color: 'var(--text-primary)' }}>{formatCurrency(lead.estimated_value)}</strong></span>
-            <span>Speed: <strong style={{ color: speedLevel === 'fast' ? 'var(--bb-green)' : speedLevel === 'ok' ? 'var(--bb-amber)' : 'var(--bb-red)' }}>
+          <div style={quickStats}>
+            <span>Value: <strong style={{ color: 'var(--text-primary, #F1F5F9)', fontWeight: 500 }}>{formatCurrency(lead.estimated_value)}</strong></span>
+            <span>Speed: <strong style={{
+              fontWeight: 500,
+              color: speedLevel === 'fast' ? '#22c55e' : speedLevel === 'ok' ? '#eab308' : '#ef4444',
+            }}>
               {formatSpeedToLead(lead.created_at, lead.first_ack_at)}
             </strong></span>
-            <span>Activity: <strong style={{ color: rotLevel === 'fresh' ? 'var(--text-secondary)' : 'var(--bb-amber)' }}>
-              {lead.last_activity_at ? relativeTime(lead.last_activity_at) : '—'}
+            <span>Activity: <strong style={{
+              fontWeight: 500,
+              color: rotLevel === 'fresh' ? 'var(--text-secondary, #94A3B8)' : '#eab308',
+            }}>
+              {lead.last_activity_at ? relativeTime(lead.last_activity_at) : '--'}
             </strong></span>
           </div>
         </div>
 
         {/* Scrollable body */}
-        <div style={{
-          flex: 1,
-          overflowY: 'auto',
-          padding: '20px 24px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 24,
-        }}>
+        <div style={scrollBody}>
           {/* Quick Action Bar */}
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <div style={actionsRow}>
             {lead.status !== 'converted' && lead.status !== 'lost' && (
               <button
                 onClick={(e) => onAdvanceStage?.(lead.id, e)}
-                style={{ background: 'rgba(34, 197, 94, 0.1)', color: '#86efac', height: 40, padding: '0 20px', borderRadius: 12, border: 'none', fontSize: 14, fontWeight: 500, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
-                onMouseEnter={e => (e.currentTarget.style.filter = 'brightness(1.3)')}
-                onMouseLeave={e => (e.currentTarget.style.filter = 'brightness(1)')}
+                style={advanceBtn}
+                aria-label="Advance lead to next stage"
+                onMouseEnter={e => { e.currentTarget.style.background = '#FF7A45'; e.currentTarget.style.transform = 'translateY(-1px)' }}
+                onMouseLeave={e => { e.currentTarget.style.background = '#FF5A1F'; e.currentTarget.style.transform = 'translateY(0)' }}
               >
-                <ArrowRight size={14} /> Advance Stage
+                <ArrowRight size={16} /> Advance Stage
               </button>
             )}
             <button
-              style={{ background: 'rgba(56, 189, 248, 0.1)', color: '#7dd3fc', height: 40, padding: '0 20px', borderRadius: 12, border: 'none', fontSize: 14, fontWeight: 500, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
-              onMouseEnter={e => (e.currentTarget.style.filter = 'brightness(1.3)')}
-              onMouseLeave={e => (e.currentTarget.style.filter = 'brightness(1)')}
+              style={actionBtnSecondary('rgba(56, 189, 248, 0.1)', '#7dd3fc')}
+              aria-label="Send email"
+              onMouseEnter={e => { e.currentTarget.style.filter = 'brightness(1.3)' }}
+              onMouseLeave={e => { e.currentTarget.style.filter = 'brightness(1)' }}
             >
-              <Mail size={14} /> Email
+              <Mail size={16} /> Email
             </button>
             <button
-              style={{ background: 'rgba(168, 85, 247, 0.1)', color: '#c4b5fd', height: 40, padding: '0 20px', borderRadius: 12, border: 'none', fontSize: 14, fontWeight: 500, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
-              onMouseEnter={e => (e.currentTarget.style.filter = 'brightness(1.3)')}
-              onMouseLeave={e => (e.currentTarget.style.filter = 'brightness(1)')}
+              style={actionBtnSecondary('rgba(168, 85, 247, 0.1)', '#c4b5fd')}
+              aria-label="Schedule meeting"
+              onMouseEnter={e => { e.currentTarget.style.filter = 'brightness(1.3)' }}
+              onMouseLeave={e => { e.currentTarget.style.filter = 'brightness(1)' }}
             >
-              <Calendar size={14} /> Schedule
+              <Calendar size={16} /> Schedule
             </button>
             {lead.status !== 'converted' && lead.status !== 'lost' && (
               <button
                 onClick={() => onUpdate(lead.id, { status: 'lost' })}
-                style={{ background: 'rgba(239, 68, 68, 0.08)', color: '#fca5a5', height: 40, padding: '0 20px', borderRadius: 12, border: 'none', fontSize: 14, fontWeight: 500, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
-                onMouseEnter={e => (e.currentTarget.style.filter = 'brightness(1.3)')}
-                onMouseLeave={e => (e.currentTarget.style.filter = 'brightness(1)')}
+                style={actionBtnSecondary('rgba(239, 68, 68, 0.08)', '#fca5a5')}
+                aria-label="Mark lead as lost"
+                onMouseEnter={e => { e.currentTarget.style.filter = 'brightness(1.3)' }}
+                onMouseLeave={e => { e.currentTarget.style.filter = 'brightness(1)' }}
               >
-                <XCircle size={14} /> Mark Lost
+                <XCircle size={16} /> Mark Lost
               </button>
             )}
           </div>
 
           {/* Status Progress Bar */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            {PROGRESS_STAGES.map((stage, i) => {
-              const idx = PROGRESS_STAGES.findIndex(s => s.status === lead.status)
-              const isLost = lead.status === 'lost'
-              return (
-                <div key={stage.status} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-                  <div style={{
-                    height: 3, width: '100%', borderRadius: 9999,
-                    background: isLost ? '#71717a' : (i <= idx ? '#22C55E' : 'var(--glass-hover-bg)'),
-                    transition: 'background 200ms cubic-bezier(0.2, 0.9, 0.3, 1)',
-                  }} />
-                  <span style={{ fontSize: 14, fontWeight: 500, color: i <= idx ? 'var(--text-primary)' : 'var(--text-dim)' }}>
-                    {stage.label}
-                  </span>
-                </div>
-              )
-            })}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }} role="progressbar" aria-label="Pipeline progress">
+            {PROGRESS_STAGES.map((stage, i) => (
+              <div key={stage.status} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                <div style={{
+                  height: 3,
+                  width: '100%',
+                  borderRadius: 9999,
+                  background: isLost ? '#71717a' : (i <= stageIdx ? '#22c55e' : 'rgba(255, 255, 255, 0.06)'),
+                  transition: 'background 200ms cubic-bezier(0.2, 0.9, 0.3, 1)',
+                }} />
+                <span style={{
+                  fontSize: 14,
+                  fontWeight: 500,
+                  color: i <= stageIdx ? 'var(--text-primary, #F1F5F9)' : 'var(--text-dim, #475569)',
+                }}>
+                  {stage.label}
+                </span>
+              </div>
+            ))}
           </div>
 
-          {/* PCC Score Breakdown */}
+          {/* Score Breakdown */}
           {hasPccData && (
             <ScoreBreakdownPanel
               fitScore={lead.fit_score!}
@@ -243,7 +407,7 @@ export function LeadDetailDrawer({ lead, open, onClose, onUpdate, onAdvanceStage
             />
           )}
 
-          {/* PCC Outreach Intelligence */}
+          {/* Outreach Intelligence */}
           {hasPccData && (
             <OutreachIntelPanel
               opportunityNotes={lead.opportunity_notes}
@@ -252,13 +416,12 @@ export function LeadDetailDrawer({ lead, open, onClose, onUpdate, onAdvanceStage
             />
           )}
 
-          {/* PCC Website Signals */}
+          {/* Website Signals */}
           {lead.website_signals && (
             <WebsiteSignalsPanel signals={lead.website_signals} />
           )}
 
-          {/* Separator */}
-          <div style={{ height: 1, background: 'var(--hover-bg)' }} />
+          <div style={dividerStyle} aria-hidden="true" />
 
           {/* Next Action */}
           <NextActionPanel
@@ -275,22 +438,20 @@ export function LeadDetailDrawer({ lead, open, onClose, onUpdate, onAdvanceStage
           {/* Contact Info */}
           {(lead.prospect_phone || (lead.prospect_emails && lead.prospect_emails.length > 0)) && (
             <div>
-              <h4 style={{ fontSize: 14, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--text-dim)', margin: '0 0 8px' }}>
-                Contact
-              </h4>
+              <h4 style={sectionLabel}>Contact</h4>
               {lead.prospect_phone && (
-                <div style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 4 }}>
-                  Phone: <span style={{ color: 'var(--text-primary)' }}>{lead.prospect_phone}</span>
+                <div style={{ fontSize: 14, color: 'var(--text-secondary, #94A3B8)', marginBottom: 4 }}>
+                  Phone: <span style={{ color: 'var(--text-primary, #F1F5F9)' }}>{lead.prospect_phone}</span>
                 </div>
               )}
               {lead.prospect_emails?.map((email) => (
-                <div key={email} style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 2 }}>
-                  Email: <span style={{ color: 'var(--text-primary)' }}>{email}</span>
+                <div key={email} style={{ fontSize: 14, color: 'var(--text-secondary, #94A3B8)', marginBottom: 4 }}>
+                  Email: <span style={{ color: 'var(--text-primary, #F1F5F9)' }}>{email}</span>
                 </div>
               ))}
               {lead.prospect_address && (
-                <div style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
-                  Address: <span style={{ color: 'var(--text-primary)' }}>{lead.prospect_address}</span>
+                <div style={{ fontSize: 14, color: 'var(--text-secondary, #94A3B8)' }}>
+                  Address: <span style={{ color: 'var(--text-primary, #F1F5F9)' }}>{lead.prospect_address}</span>
                 </div>
               )}
             </div>
@@ -299,51 +460,27 @@ export function LeadDetailDrawer({ lead, open, onClose, onUpdate, onAdvanceStage
           {/* Notes */}
           {lead.notes && (
             <div>
-              <h4 style={{ fontSize: 14, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--text-dim)', margin: '0 0 8px' }}>
-                Notes
-              </h4>
-              <div style={{
-                padding: '12px 16px',
-                borderRadius: 12,
-                background: 'var(--hover-bg)',
-                fontSize: 14,
-                color: 'var(--text-secondary)',
-                lineHeight: 1.5,
-                whiteSpace: 'pre-wrap',
-              }}>
-                {lead.notes}
-              </div>
+              <h4 style={sectionLabel}>Notes</h4>
+              <div style={noteBlock}>{lead.notes}</div>
             </div>
           )}
 
           {/* Service Interest */}
           {lead.service_interest && lead.service_interest.length > 0 && (
             <div>
-              <h4 style={{ fontSize: 14, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--text-dim)', margin: '0 0 8px' }}>
-                Services
-              </h4>
+              <h4 style={sectionLabel}>Services</h4>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 {lead.service_interest.map((s) => (
-                  <span key={s} style={{
-                    fontSize: 14,
-                    padding: '4px 12px',
-                    borderRadius: 20,
-                    background: 'var(--hover-bg)',
-                    color: 'var(--text-secondary)',
-                  }}>
-                    {s}
-                  </span>
+                  <span key={s} style={servicePill}>{s}</span>
                 ))}
               </div>
             </div>
           )}
 
-          {/* Activity Timeline (simplified) */}
+          {/* Activity Timeline */}
           <div>
-            <h4 style={{ fontSize: 14, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--text-dim)', margin: '0 0 8px' }}>
-              Timeline
-            </h4>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingLeft: 12, borderLeft: '2px solid var(--hover-bg)' }}>
+            <h4 style={sectionLabel}>Timeline</h4>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingLeft: 12, borderLeft: '2px solid rgba(255, 255, 255, 0.04)' }}>
               <TimelineEntry label="Created" date={lead.created_at} />
               {lead.first_ack_at && <TimelineEntry label="First acknowledged" date={lead.first_ack_at} />}
               {lead.last_activity_at && lead.last_activity_at !== lead.created_at && (
@@ -353,11 +490,11 @@ export function LeadDetailDrawer({ lead, open, onClose, onUpdate, onAdvanceStage
           </div>
 
           {/* Lead ID */}
-          <div style={{ fontSize: 14, fontFamily: 'var(--font-mono)', color: 'var(--text-dim)', paddingTop: 8 }}>
+          <div style={leadIdStyle}>
             ID: {lead.id}
           </div>
         </div>
-      </div>
+      </aside>
 
       <style>{`
         @keyframes slideInRight {
@@ -365,21 +502,11 @@ export function LeadDetailDrawer({ lead, open, onClose, onUpdate, onAdvanceStage
           to { transform: translateX(0); }
         }
         @media (max-width: 640px) {
-          [style*="maxWidth: 480"] { max-width: 100% !important; }
+          aside[role="dialog"] { max-width: 100% !important; }
         }
       `}</style>
     </>
   )
 }
 
-function TimelineEntry({ label, date }: { label: string; date: string }) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-      <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--glass-interactive-border)', flexShrink: 0, marginTop: 4 }} />
-      <div>
-        <span style={{ fontSize: 14, color: 'var(--text-secondary)' }}>{label}</span>
-        <span style={{ fontSize: 14, color: 'var(--text-dim)', marginLeft: 8 }}>{relativeTime(date)}</span>
-      </div>
-    </div>
-  )
-}
+export const LeadDetailDrawer = memo(LeadDetailDrawerInner)

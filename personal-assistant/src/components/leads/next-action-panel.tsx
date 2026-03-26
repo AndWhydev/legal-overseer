@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import React, { useState, memo } from 'react'
 
 interface NextActionPanelProps {
   nextAction: string | null
@@ -8,7 +8,44 @@ interface NextActionPanelProps {
   onSave: (action: string, date: string | null) => void
 }
 
-export function NextActionPanel({ nextAction, nextActionAt, onSave }: NextActionPanelProps) {
+// ─── Hoisted Styles ─────────────────────────────────────────────────────────
+const sectionTitle: React.CSSProperties = {
+  fontSize: 14,
+  fontWeight: 500,
+  textTransform: 'uppercase',
+  letterSpacing: '0.04em',
+  color: 'var(--text-dim, #475569)',
+  margin: '0 0 12px',
+}
+
+const inputStyle: React.CSSProperties = {
+  width: '100%',
+  height: 40,
+  padding: '0 12px',
+  borderRadius: 8,
+  border: '1px solid rgba(255, 255, 255, 0.05)',
+  background: 'rgba(13, 17, 23, 0.6)',
+  color: 'var(--text-primary, #F1F5F9)',
+  fontSize: 14,
+  outline: 'none',
+  transition: 'border-color 200ms, box-shadow 200ms',
+}
+
+const dateInput: React.CSSProperties = {
+  flex: 1,
+  height: 40,
+  padding: '0 12px',
+  borderRadius: 8,
+  border: '1px solid rgba(255, 255, 255, 0.05)',
+  background: 'rgba(13, 17, 23, 0.6)',
+  color: 'var(--text-secondary, #94A3B8)',
+  fontSize: 14,
+  outline: 'none',
+  transition: 'border-color 200ms, box-shadow 200ms',
+}
+
+// ─── Component ──────────────────────────────────────────────────────────────
+function NextActionPanelInner({ nextAction, nextActionAt, onSave }: NextActionPanelProps) {
   const [action, setAction] = useState(nextAction ?? '')
   const [date, setDate] = useState(nextActionAt ? nextActionAt.split('T')[0] : '')
   const [saving, setSaving] = useState(false)
@@ -24,11 +61,25 @@ export function NextActionPanel({ nextAction, nextActionAt, onSave }: NextAction
     }
   }
 
+  const saveBtn: React.CSSProperties = {
+    height: 40,
+    padding: '0 20px',
+    display: 'inline-flex',
+    alignItems: 'center',
+    borderRadius: 8,
+    border: 'none',
+    background: hasChanged ? '#FF5A1F' : 'rgba(255, 255, 255, 0.04)',
+    color: hasChanged ? '#000' : 'var(--text-dim, #475569)',
+    fontSize: 14,
+    fontWeight: 500,
+    cursor: hasChanged ? 'pointer' : 'not-allowed',
+    opacity: saving ? 0.6 : 1,
+    transition: 'background 200ms, color 200ms',
+  }
+
   return (
     <div>
-      <h4 style={{ fontSize: 14, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--text-dim)', margin: '0 0 12px' }}>
-        Next Action
-      </h4>
+      <h4 style={sectionTitle}>Next Action</h4>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         <input
@@ -36,16 +87,8 @@ export function NextActionPanel({ nextAction, nextActionAt, onSave }: NextAction
           value={action}
           onChange={(e) => setAction(e.target.value)}
           placeholder="What's the next step?"
-          style={{
-            width: '100%',
-            padding: '12px 12px',
-            borderRadius: 12,
-            border: '1px solid var(--border-subtle)',
-            background: 'var(--bb-surface)',
-            color: 'var(--text-primary)',
-            fontSize: 14,
-            outline: 'none',
-          }}
+          aria-label="Next action description"
+          style={inputStyle}
         />
 
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -53,36 +96,15 @@ export function NextActionPanel({ nextAction, nextActionAt, onSave }: NextAction
             type="date"
             value={date}
             onChange={(e) => setDate(e.target.value)}
-            style={{
-              flex: 1,
-              padding: '8px 12px',
-              borderRadius: 12,
-              border: '1px solid var(--border-subtle)',
-              background: 'var(--bb-surface)',
-              color: 'var(--text-secondary)',
-              fontSize: 14,
-              outline: 'none',
-            }}
+            aria-label="Next action date"
+            style={dateInput}
           />
 
           <button
             onClick={handleSave}
             disabled={!hasChanged || saving}
-            style={{
-              height: 40,
-              padding: '0 20px',
-              display: 'inline-flex',
-              alignItems: 'center',
-              borderRadius: 12,
-              border: 'none',
-              background: hasChanged ? 'var(--bb-cyan)' : 'var(--hover-bg)',
-              color: hasChanged ? '#fff' : 'var(--text-dim)',
-              fontSize: 14,
-              fontWeight: 500,
-              cursor: hasChanged ? 'pointer' : 'not-allowed',
-              opacity: saving ? 0.6 : 1,
-              transition: 'background 0.15s, color 0.15s',
-            }}
+            style={saveBtn}
+            aria-label="Save next action"
           >
             {saving ? 'Saving...' : 'Save'}
           </button>
@@ -91,3 +113,5 @@ export function NextActionPanel({ nextAction, nextActionAt, onSave }: NextAction
     </div>
   )
 }
+
+export const NextActionPanel = memo(NextActionPanelInner)

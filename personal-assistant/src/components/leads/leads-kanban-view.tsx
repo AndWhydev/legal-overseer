@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useState } from 'react'
+import React, { useCallback, useState, memo } from 'react'
 import {
   DndContext,
   DragEndEvent,
@@ -16,15 +16,16 @@ import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import type { EnhancedLeadData, LeadStatus } from '@/lib/leads/types'
 import { LeadCard } from './lead-card'
 
+// ─── Board Configuration ────────────────────────────────────────────────────
 const BOARD_COLUMNS: Array<{
   id: LeadStatus
   label: string
   color: string
   emptyText: string
 }> = [
-  { id: 'new', label: 'New', color: 'var(--bb-blue)', emptyText: 'No new leads — run PCC or wait for inbound' },
-  { id: 'qualified', label: 'Qualified', color: 'var(--bb-amber)', emptyText: 'Move promising leads here' },
-  { id: 'booked', label: 'Booked', color: 'var(--bb-green)', emptyText: 'Leads with scheduled meetings' },
+  { id: 'new', label: 'New', color: '#3b82f6', emptyText: 'No new leads -- discover prospects or wait for inbound' },
+  { id: 'qualified', label: 'Qualified', color: '#eab308', emptyText: 'Move promising leads here' },
+  { id: 'booked', label: 'Booked', color: '#22c55e', emptyText: 'Leads with scheduled meetings' },
 ]
 
 interface LeadsKanbanViewProps {
@@ -35,7 +36,58 @@ interface LeadsKanbanViewProps {
   movingLeadId: string | null
 }
 
-function KanbanDropColumn({
+// ─── Hoisted Styles ─────────────────────────────────────────────────────────
+const columnHeaderWrap: React.CSSProperties = {
+  padding: '0 8px 8px',
+}
+
+const columnHeaderRow: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 8,
+  marginBottom: 8,
+}
+
+const columnTitle: React.CSSProperties = {
+  fontSize: 14,
+  fontWeight: 500,
+  textTransform: 'uppercase',
+  letterSpacing: '0.04em',
+  color: 'var(--text-secondary, #94A3B8)',
+  margin: 0,
+}
+
+const columnCount: React.CSSProperties = {
+  fontSize: 14,
+  fontWeight: 500,
+  fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
+  color: 'var(--text-dim, #475569)',
+}
+
+const progressTrack: React.CSSProperties = {
+  height: 2,
+  background: 'rgba(255, 255, 255, 0.06)',
+  borderRadius: 8,
+  overflow: 'hidden',
+}
+
+const emptyColumn: React.CSSProperties = {
+  padding: '24px 12px',
+  textAlign: 'center',
+  fontSize: 14,
+  color: 'var(--text-dim, #475569)',
+  borderRadius: 12,
+  border: '1px dashed rgba(255, 255, 255, 0.06)',
+}
+
+const dragOverlayCard: React.CSSProperties = {
+  width: 260,
+  transform: 'rotate(2deg)',
+  filter: 'drop-shadow(0 16px 32px rgba(0,0,0,0.4))',
+}
+
+// ─── Kanban Column ──────────────────────────────────────────────────────────
+const KanbanDropColumn = memo(function KanbanDropColumn({
   columnId,
   label,
   color,
@@ -59,32 +111,22 @@ function KanbanDropColumn({
     : 0
 
   return (
-    <div className="kanban-col" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+    <div
+      className="kanban-col"
+      role="region"
+      aria-label={`${label} column, ${leads.length} leads`}
+      style={{ display: 'flex', flexDirection: 'column', height: '100%' }}
+    >
       {/* Column header */}
-      <div style={{ padding: '0 8px 8px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-          <h3 style={{
-            fontSize: 14,
-            fontWeight: 500,
-            textTransform: 'uppercase',
-            letterSpacing: '0.04em',
-            color: 'var(--text-secondary)',
-            margin: 0,
-          }}>
-            {label}
-          </h3>
-          <span style={{
-            fontSize: 14,
-            fontWeight: 500,
-            fontFamily: 'var(--font-mono)',
-            color: 'var(--text-dim)',
-          }}>
+      <div style={columnHeaderWrap}>
+        <div style={columnHeaderRow}>
+          <h3 style={columnTitle}>{label}</h3>
+          <span style={columnCount} aria-label={`${leads.length} leads`}>
             {leads.length}
           </span>
         </div>
 
-        {/* Progress bar — visible on column hover via CSS */}
-        <div style={{ height: 2, background: 'rgba(255,255,255,0.06)', borderRadius: 8, overflow: 'hidden' }}>
+        <div style={progressTrack}>
           <div
             className="col-progress"
             style={{
@@ -113,8 +155,9 @@ function KanbanDropColumn({
             ? '1px dashed rgba(255, 255, 255, 0.15)'
             : '1px dashed transparent',
           animation: isOver ? 'bb-drop-pulse 1s ease infinite' : 'none',
-          transition: 'background 0.2s ease',
+          transition: 'background 200ms',
         }}
+        aria-label={`Drop zone for ${label}`}
       >
         <SortableContext items={leads.map((l) => l.id)} strategy={verticalListSortingStrategy}>
           {leads.map((lead, index) => (
@@ -131,23 +174,17 @@ function KanbanDropColumn({
         </SortableContext>
 
         {leads.length === 0 && (
-          <div style={{
-            padding: '24px 12px',
-            textAlign: 'center',
-            fontSize: 14,
-            color: 'var(--text-dim)',
-            borderRadius: 12,
-            border: '1px dashed var(--border-subtle)',
-          }}>
+          <div style={emptyColumn}>
             {emptyText}
           </div>
         )}
       </div>
     </div>
   )
-}
+})
 
-export function LeadsKanbanView({
+// ─── Kanban View ────────────────────────────────────────────────────────────
+function LeadsKanbanViewInner({
   grouped,
   onMoveLead,
   onSelectLead,
@@ -199,6 +236,9 @@ export function LeadsKanbanView({
     >
       <div
         className="leads-kanban-grid"
+        role="application"
+        aria-label="Lead pipeline kanban board"
+        aria-roledescription="kanban board"
         style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(3, 1fr)',
@@ -224,11 +264,7 @@ export function LeadsKanbanView({
 
       <DragOverlay>
         {activeLead ? (
-          <div style={{
-            width: 260,
-            transform: 'rotate(2deg)',
-            filter: 'drop-shadow(0 16px 32px rgba(0,0,0,0.4))',
-          }}>
+          <div style={dragOverlayCard}>
             <LeadCard lead={activeLead} />
           </div>
         ) : null}
@@ -245,22 +281,20 @@ export function LeadsKanbanView({
         }
         .kanban-col .col-progress {
           opacity: 0;
-          transition: opacity 0.2s ease;
+          transition: opacity 200ms ease;
         }
         .kanban-col:hover .col-progress {
           opacity: 1;
         }
         @media (max-width: 1024px) {
-          .leads-kanban-grid {
-            grid-template-columns: repeat(2, 1fr) !important;
-          }
+          .leads-kanban-grid { grid-template-columns: repeat(2, 1fr) !important; }
         }
         @media (max-width: 640px) {
-          .leads-kanban-grid {
-            grid-template-columns: 1fr !important;
-          }
+          .leads-kanban-grid { grid-template-columns: 1fr !important; }
         }
       `}</style>
     </DndContext>
   )
 }
+
+export const LeadsKanbanView = memo(LeadsKanbanViewInner)

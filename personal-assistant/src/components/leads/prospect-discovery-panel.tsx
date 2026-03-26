@@ -1,8 +1,7 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import React, { useState, useCallback, useEffect, memo } from 'react'
 import { X, Search, Loader2 } from 'lucide-react'
-import type { DiscoveryJob } from '@/lib/leads/types'
 import { useProspectDiscovery } from '@/hooks/use-prospect-discovery'
 import { ProspectCard } from './prospect-card'
 
@@ -11,7 +10,134 @@ interface ProspectDiscoveryPanelProps {
   onClose: () => void
 }
 
-export function ProspectDiscoveryPanel({ open, onClose }: ProspectDiscoveryPanelProps) {
+// ─── Hoisted Styles ─────────────────────────────────────────────────────────
+const backdropStyle: React.CSSProperties = {
+  position: 'fixed',
+  inset: 0,
+  background: 'rgba(0, 0, 0, 0.6)',
+  zIndex: 52,
+  backdropFilter: 'blur(2px)',
+}
+
+const panel: React.CSSProperties = {
+  position: 'fixed',
+  top: 0,
+  right: 0,
+  bottom: 0,
+  width: '100%',
+  maxWidth: 560,
+  zIndex: 53,
+  background: '#0a0f1a',
+  borderLeft: '1px solid rgba(255, 255, 255, 0.06)',
+  display: 'flex',
+  flexDirection: 'column',
+  overflow: 'hidden',
+  animation: 'slideInRight 0.25s ease-out',
+}
+
+const headerStyle: React.CSSProperties = {
+  padding: '20px 24px',
+  borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+}
+
+const panelTitle: React.CSSProperties = {
+  fontSize: 16,
+  fontWeight: 500,
+  color: 'var(--text-primary, #F1F5F9)',
+  margin: 0,
+}
+
+const closeBtnStyle: React.CSSProperties = {
+  width: 40,
+  height: 40,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  borderRadius: 8,
+  border: 'none',
+  background: 'rgba(255, 255, 255, 0.04)',
+  color: 'var(--text-dim, #475569)',
+  cursor: 'pointer',
+  transition: 'background 200ms',
+}
+
+const bodyStyle: React.CSSProperties = {
+  flex: 1,
+  overflowY: 'auto',
+  padding: '20px 24px',
+}
+
+const fieldLabel: React.CSSProperties = {
+  fontSize: 14,
+  fontWeight: 500,
+  color: 'var(--text-dim, #475569)',
+  display: 'block',
+  marginBottom: 8,
+}
+
+const inputStyle: React.CSSProperties = {
+  width: '100%',
+  height: 40,
+  padding: '0 12px',
+  borderRadius: 8,
+  border: '1px solid rgba(255, 255, 255, 0.05)',
+  background: 'rgba(13, 17, 23, 0.6)',
+  color: 'var(--text-primary, #F1F5F9)',
+  fontSize: 14,
+  outline: 'none',
+  transition: 'border-color 200ms, box-shadow 200ms',
+}
+
+const limitInput: React.CSSProperties = {
+  ...inputStyle,
+  width: 80,
+}
+
+const progressContainer: React.CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  gap: 16,
+  padding: '40px 0',
+}
+
+const progressTrack: React.CSSProperties = {
+  width: '100%',
+  maxWidth: 300,
+  height: 4,
+  borderRadius: 8,
+  background: 'rgba(255, 255, 255, 0.06)',
+  overflow: 'hidden',
+}
+
+const retryBtn: React.CSSProperties = {
+  height: 40,
+  padding: '0 20px',
+  display: 'inline-flex',
+  alignItems: 'center',
+  borderRadius: 8,
+  border: '1px solid rgba(255, 255, 255, 0.1)',
+  background: 'transparent',
+  color: 'var(--text-secondary, #94A3B8)',
+  fontSize: 14,
+  cursor: 'pointer',
+}
+
+const newSearchBtn: React.CSSProperties = {
+  padding: '8px 12px',
+  borderRadius: 8,
+  border: '1px solid rgba(255, 255, 255, 0.06)',
+  background: 'transparent',
+  color: 'var(--text-dim, #475569)',
+  fontSize: 14,
+  cursor: 'pointer',
+}
+
+// ─── Component ──────────────────────────────────────────────────────────────
+function ProspectDiscoveryPanelInner({ open, onClose }: ProspectDiscoveryPanelProps) {
   const { job, isSearching, startDiscovery, importProspect, reset } = useProspectDiscovery()
   const [businessType, setBusinessType] = useState('')
   const [location, setLocation] = useState('')
@@ -40,157 +166,93 @@ export function ProspectDiscoveryPanel({ open, onClose }: ProspectDiscoveryPanel
     onClose()
   }
 
+  const canSearch = businessType.trim() && location.trim()
+
+  const searchBtn: React.CSSProperties = {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    height: 40,
+    padding: '0 24px',
+    borderRadius: 8,
+    border: 'none',
+    background: canSearch ? '#FF5A1F' : 'rgba(255, 255, 255, 0.04)',
+    color: canSearch ? '#000' : 'var(--text-dim, #475569)',
+    fontSize: 14,
+    fontWeight: 500,
+    cursor: canSearch ? 'pointer' : 'not-allowed',
+    marginTop: 8,
+    transition: 'all 200ms',
+  }
+
   return (
     <>
-      {/* Backdrop */}
-      <div
-        onClick={handleClose}
-        style={{
-          position: 'fixed',
-          inset: 0,
-          background: 'var(--bg-overlay)',
-          zIndex: 52,
-          backdropFilter: 'blur(2px)',
-        }}
-      />
+      <div onClick={handleClose} style={backdropStyle} aria-hidden="true" />
 
-      {/* Panel */}
-      <div style={{
-        position: 'fixed',
-        top: 0,
-        right: 0,
-        bottom: 0,
-        width: '100%',
-        maxWidth: 560,
-        zIndex: 53,
-        background: 'var(--bg-primary)',
-        borderLeft: '1px solid var(--border-subtle)',
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden',
-        animation: 'slideInRight 0.25s ease-out',
-      }}>
-        {/* Header */}
-        <div style={{
-          padding: '20px 24px',
-          borderBottom: '1px solid var(--border-subtle)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-        }}>
-          <h2 style={{ fontSize: 16, fontWeight: 500, color: 'var(--text-primary)', margin: 0 }}>
-            Discover Prospects
-          </h2>
+      <aside style={panel} role="dialog" aria-label="Discover prospects" aria-modal="true">
+        <div style={headerStyle}>
+          <h2 style={panelTitle}>Discover Prospects</h2>
           <button
             onClick={handleClose}
-            style={{
-              padding: 8,
-              borderRadius: 8,
-              border: 'none',
-              background: 'var(--hover-bg)',
-              color: 'var(--text-dim)',
-              cursor: 'pointer',
-            }}
+            style={closeBtnStyle}
+            aria-label="Close discovery panel"
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)' }}
           >
-            <X style={{ width: 16, height: 16 }} />
+            <X size={16} />
           </button>
         </div>
 
-        {/* Body */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>
+        <div style={bodyStyle}>
           {/* Search Form */}
           {!job && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div>
-                <label style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-dim)', display: 'block', marginBottom: 8 }}>
-                  Business Type
-                </label>
+                <label style={fieldLabel}>Business Type</label>
                 <input
                   type="text"
                   value={businessType}
                   onChange={(e) => setBusinessType(e.target.value)}
                   placeholder="plumber, accountant, buyer's agent"
-                  style={{
-                    width: '100%',
-                    padding: '12px 16px',
-                    borderRadius: 12,
-                    border: '1px solid var(--border-subtle)',
-                    background: 'var(--bb-surface)',
-                    color: 'var(--text-primary)',
-                    fontSize: 14,
-                    outline: 'none',
-                  }}
+                  style={inputStyle}
+                  aria-label="Business type to search"
                 />
               </div>
 
               <div>
-                <label style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-dim)', display: 'block', marginBottom: 8 }}>
-                  Location
-                </label>
+                <label style={fieldLabel}>Location</label>
                 <input
                   type="text"
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
                   placeholder="Brisbane, QLD"
-                  style={{
-                    width: '100%',
-                    padding: '12px 16px',
-                    borderRadius: 12,
-                    border: '1px solid var(--border-subtle)',
-                    background: 'var(--bb-surface)',
-                    color: 'var(--text-primary)',
-                    fontSize: 14,
-                    outline: 'none',
-                  }}
+                  style={inputStyle}
+                  aria-label="Location to search"
                 />
               </div>
 
               <div>
-                <label style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-dim)', display: 'block', marginBottom: 8 }}>
-                  Limit
-                </label>
+                <label style={fieldLabel}>Limit</label>
                 <input
                   type="number"
                   value={limit}
                   onChange={(e) => setLimit(Math.min(50, Math.max(1, Number(e.target.value))))}
                   min={1}
                   max={50}
-                  style={{
-                    width: 80,
-                    padding: '12px 16px',
-                    borderRadius: 12,
-                    border: '1px solid var(--border-subtle)',
-                    background: 'var(--bb-surface)',
-                    color: 'var(--text-primary)',
-                    fontSize: 14,
-                    outline: 'none',
-                  }}
+                  style={limitInput}
+                  aria-label="Maximum number of results"
                 />
               </div>
 
               <button
                 onClick={handleSearch}
-                disabled={!businessType.trim() || !location.trim()}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 8,
-                  height: 40,
-                  padding: '0 24px',
-                  borderRadius: 12,
-                  border: 'none',
-                  background: businessType.trim() && location.trim()
-                    ? 'linear-gradient(135deg, var(--bb-cyan) 0%, var(--bb-blue) 100%)'
-                    : 'var(--hover-bg)',
-                  color: businessType.trim() && location.trim() ? '#fff' : 'var(--text-dim)',
-                  fontSize: 14,
-                  fontWeight: 500,
-                  cursor: businessType.trim() && location.trim() ? 'pointer' : 'not-allowed',
-                  marginTop: 8,
-                }}
+                disabled={!canSearch}
+                style={searchBtn}
+                onMouseEnter={e => { if (canSearch) { e.currentTarget.style.background = '#FF7A45'; e.currentTarget.style.transform = 'translateY(-1px)' } }}
+                onMouseLeave={e => { if (canSearch) { e.currentTarget.style.background = '#FF5A1F'; e.currentTarget.style.transform = 'translateY(0)' } }}
               >
-                <Search style={{ width: 16, height: 16 }} />
+                <Search size={16} />
                 Search
               </button>
             </div>
@@ -198,31 +260,23 @@ export function ProspectDiscoveryPanel({ open, onClose }: ProspectDiscoveryPanel
 
           {/* Progress State */}
           {job && job.status !== 'complete' && job.status !== 'error' && (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, padding: '40px 0' }}>
-              <Loader2 style={{ width: 32, height: 32, color: 'var(--bb-cyan)', animation: 'spin 1s linear infinite' }} />
+            <div style={progressContainer}>
+              <Loader2 size={24} style={{ color: '#FF5A1F', animation: 'spin 1s linear infinite' }} />
               <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)', marginBottom: 4 }}>
+                <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)', marginBottom: 4 }}>
                   {job.status === 'searching' ? 'Searching...' : job.status === 'enriching' ? 'Enriching...' : 'Scoring...'}
                 </div>
-                <div style={{ fontSize: 14, color: 'var(--text-dim)' }}>{job.message}</div>
+                <div style={{ fontSize: 14, color: 'var(--text-dim, #475569)' }}>{job.message}</div>
               </div>
-              <div style={{
-                width: '100%',
-                maxWidth: 300,
-                height: 4,
-                borderRadius: 8,
-                background: 'var(--hover-bg)',
-                overflow: 'hidden',
-              }}>
+              <div style={progressTrack}>
                 <div style={{
                   width: `${job.progress}%`,
                   height: '100%',
                   borderRadius: 8,
-                  background: 'var(--bb-cyan)',
+                  background: '#FF5A1F',
                   transition: 'width 0.3s ease',
                 }} />
               </div>
-
               <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
             </div>
           )}
@@ -230,22 +284,8 @@ export function ProspectDiscoveryPanel({ open, onClose }: ProspectDiscoveryPanel
           {/* Error State */}
           {job?.status === 'error' && (
             <div style={{ padding: '24px 0', textAlign: 'center' }}>
-              <div style={{ fontSize: 14, color: 'var(--bb-red)', marginBottom: 12 }}>{job.error}</div>
-              <button
-                onClick={reset}
-                style={{
-                  height: 40,
-                  padding: '0 20px',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  borderRadius: 8,
-                  border: '1px solid var(--border-active)',
-                  background: 'transparent',
-                  color: 'var(--text-secondary)',
-                  fontSize: 14,
-                  cursor: 'pointer',
-                }}
-              >
+              <div style={{ fontSize: 14, color: '#ef4444', marginBottom: 12 }}>{job.error}</div>
+              <button onClick={reset} style={retryBtn}>
                 Try Again
               </button>
             </div>
@@ -255,21 +295,10 @@ export function ProspectDiscoveryPanel({ open, onClose }: ProspectDiscoveryPanel
           {job?.status === 'complete' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>
+                <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)' }}>
                   {job.results.length} prospects found
                 </span>
-                <button
-                  onClick={reset}
-                  style={{
-                    padding: '8px 12px',
-                    borderRadius: 8,
-                    border: '1px solid var(--border-subtle)',
-                    background: 'transparent',
-                    color: 'var(--text-dim)',
-                    fontSize: 14,
-                    cursor: 'pointer',
-                  }}
-                >
+                <button onClick={reset} style={newSearchBtn}>
                   New Search
                 </button>
               </div>
@@ -280,7 +309,7 @@ export function ProspectDiscoveryPanel({ open, onClose }: ProspectDiscoveryPanel
             </div>
           )}
         </div>
-      </div>
+      </aside>
 
       <style>{`
         @keyframes slideInRight {
@@ -288,9 +317,11 @@ export function ProspectDiscoveryPanel({ open, onClose }: ProspectDiscoveryPanel
           to { transform: translateX(0); }
         }
         @media (max-width: 640px) {
-          [style*="maxWidth: 560"] { max-width: 100% !important; }
+          aside[role="dialog"] { max-width: 100% !important; }
         }
       `}</style>
     </>
   )
 }
+
+export const ProspectDiscoveryPanel = memo(ProspectDiscoveryPanelInner)

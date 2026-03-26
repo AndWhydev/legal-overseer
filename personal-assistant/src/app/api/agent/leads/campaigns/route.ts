@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { getOrgPlan } from '@/lib/billing/plan-gates'
+import { canCreateCampaign, type PlanTier } from '@/lib/leads/plan-limits'
 
 interface CreateCampaignRequest {
   name: string
@@ -102,6 +104,21 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'name and templateId are required' }, { status: 400 })
   }
 
+  // Plan limit check: count active campaigns
+  const orgPlan = await getOrgPlan(auth.supabase, auth.orgId) as PlanTier
+  const { count: activeCampaigns } = await auth.supabase
+    .from('email_campaigns')
+    .select('id', { count: 'exact', head: true })
+    .eq('org_id', auth.orgId)
+    .in('status', ['draft', 'scheduled', 'active'])
+
+  if (!canCreateCampaign(orgPlan, activeCampaigns ?? 0)) {
+    return NextResponse.json(
+      { error: `Campaign limit reached for ${orgPlan} plan. Upgrade to create more campaigns.` },
+      { status: 403 },
+    )
+  }
+
   try {
     // Verify template exists and belongs to org
     const { data: template, error: templateError } = await auth.supabase
@@ -163,59 +180,4 @@ export async function POST(request: NextRequest) {
   }
 }
 
-/**
- * PATCH /api/agent/leads/campaigns/:id
- * Update a campaign
- */
-export async function PATCH(request: NextRequest) {
-  const auth = await getAuthContext()
-  if ('error' in auth) return auth.error
-
-  const url = new URL(request.url)
-  const campaignId = url.pathname.split('/').pop()
-
-  if (!campaignId) {
-    return NextResponse.json({ error: 'Campaign ID is required' }, { status: 400 })
-  }
-
-  let body: UpdateCampaignRequest
-  try {
-    body = await request.json()
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
-  }
-
-  try {
-    // Verify campaign belongs to org
-    const { data: campaign, error: fetchError } = await auth.supabase
-      .from('email_campaigns')
-      .select('id')
-      .eq('id', campaignId)
-      .eq('org_id', auth.orgId)
-      .single()
-
-    if (fetchError || !campaign) {
-      return NextResponse.json({ error: 'Campaign not found' }, { status: 404 })
-    }
-
-    // Update campaign
-    const { data: updated, error: updateError } = await auth.supabase
-      .from('email_campaigns')
-      .update({
-        ...body,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', campaignId)
-      .select()
-      .single()
-
-    if (updateError) {
-      return NextResponse.json({ error: updateError.message }, { status: 500 })
-    }
-
-    return NextResponse.json({ campaign: updated })
-  } catch (err) {
-    const message = err instanceof Error ? err.message : 'Campaign update failed'
-    return NextResponse.json({ error: message }, { status: 500 })
-  }
-}
+// PATCH handler moved to [campaignId]/route.ts

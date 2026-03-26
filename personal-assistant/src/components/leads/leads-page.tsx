@@ -9,8 +9,6 @@ import { LeadsKanbanView } from './leads-kanban-view'
 import { LeadsListView } from './leads-list-view'
 import { LeadDetailDrawer } from './lead-detail-drawer'
 import { ProspectDiscoveryPanel } from './prospect-discovery-panel'
-import { TemplateEditorPanel } from './template-editor-panel'
-import { CampaignCreatePanel } from './campaign-create-panel'
 import { OutreachDashboard } from './outreach-dashboard'
 import { CompletionAnimation } from '../dashboard/completion-animation'
 import type { SmartView } from '@/lib/leads/types'
@@ -163,8 +161,6 @@ export function LeadsPage() {
 
   const { analytics } = useLeadsAnalytics()
   const [discoveryOpen, setDiscoveryOpen] = useState(false)
-  const [showTemplateBuilder, setShowTemplateBuilder] = useState(false)
-  const [showCampaignCreatePanel, setShowCampaignCreatePanel] = useState(false)
   const [activeTab, setActiveTab] = useState<'leads' | 'campaigns'>('leads')
   const [winTrigger, setWinTrigger] = useState(false)
   const [winPos, setWinPos] = useState({ x: 0, y: 0 })
@@ -383,9 +379,7 @@ export function LeadsPage() {
 
       {/* Campaigns Tab */}
       {activeTab === 'campaigns' && (
-        <OutreachDashboard
-          leads={leads}
-        />
+        <OutreachDashboard leads={leads} />
       )}
 
       <LeadDetailDrawer
@@ -394,18 +388,6 @@ export function LeadsPage() {
         onUpdate={updateLead} onAdvanceStage={handleAdvance}
       />
       <ProspectDiscoveryPanel open={discoveryOpen} onClose={() => setDiscoveryOpen(false)} />
-      <TemplateEditorPanel
-        open={showTemplateBuilder}
-        onClose={() => setShowTemplateBuilder(false)}
-        onSave={(_data) => setShowTemplateBuilder(false)}
-      />
-      <CampaignCreatePanel
-        open={showCampaignCreatePanel}
-        onClose={() => setShowCampaignCreatePanel(false)}
-        onCreate={(_data) => setShowCampaignCreatePanel(false)}
-        templates={[]}
-        leads={leads}
-      />
       <CompletionAnimation trigger={winTrigger} onComplete={() => setWinTrigger(false)} variant="confetti" x={winPos.x} y={winPos.y} />
     </div>
   )

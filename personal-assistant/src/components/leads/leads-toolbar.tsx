@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, memo } from 'react'
 import { Search, LayoutGrid, List } from 'lucide-react'
 import type { LeadFilter, LeadViewMode, PipelineAnalytics } from '@/lib/leads/types'
 import { formatPipelineValue } from '@/lib/leads/utils'
@@ -17,26 +17,144 @@ interface LeadsToolbarProps {
   searchInputRef: React.RefObject<HTMLInputElement | null>
 }
 
+// ─── Hoisted Styles ─────────────────────────────────────────────────────────
+const toolbarContainer: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 8,
+  padding: '4px 0',
+}
+
+const searchWrap: React.CSSProperties = {
+  position: 'relative',
+  display: 'inline-flex',
+  alignItems: 'center',
+}
+
+const searchIcon: React.CSSProperties = {
+  position: 'absolute',
+  left: 12,
+  width: 16,
+  height: 16,
+  color: 'var(--text-dim, #475569)',
+  pointerEvents: 'none',
+}
+
+const searchInput: React.CSSProperties = {
+  width: 200,
+  height: 40,
+  fontSize: 14,
+  padding: '0 12px 0 36px',
+  borderRadius: 8,
+  border: '1px solid rgba(255, 255, 255, 0.05)',
+  background: 'rgba(13, 17, 23, 0.6)',
+  color: 'var(--text-primary, #F1F5F9)',
+  outline: 'none',
+  fontFamily: 'inherit',
+  transition: 'border-color 200ms, box-shadow 200ms',
+}
+
+const kbdHint: React.CSSProperties = {
+  position: 'absolute',
+  right: 8,
+  fontSize: 14,
+  color: 'var(--text-dim, #475569)',
+  background: 'rgba(255, 255, 255, 0.06)',
+  borderRadius: 8,
+  padding: '2px 6px',
+  border: '1px solid rgba(255, 255, 255, 0.06)',
+  pointerEvents: 'none',
+  lineHeight: 1.4,
+}
+
 const selectStyle: React.CSSProperties = {
+  height: 40,
   fontSize: 14,
   fontWeight: 500,
-  padding: '8px 12px',
+  padding: '0 12px',
   borderRadius: 8,
-  border: '1px solid var(--glass-interactive-border)',
-  background: 'var(--glass-pill-bg)',
-  color: 'var(--text-secondary)',
+  border: '1px solid rgba(255, 255, 255, 0.05)',
+  background: 'rgba(13, 17, 23, 0.6)',
+  color: 'var(--text-secondary, #94A3B8)',
   cursor: 'pointer',
   outline: 'none',
+  appearance: 'none' as const,
 }
 
+const divider: React.CSSProperties = {
+  width: 1,
+  height: 20,
+  background: 'rgba(255, 255, 255, 0.06)',
+}
+
+const metricsContainer: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  fontSize: 14,
+  fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
+  color: 'var(--text-dim, #475569)',
+  gap: 0,
+  whiteSpace: 'nowrap',
+}
+
+const metricDot: React.CSSProperties = {
+  margin: '0 4px',
+  color: 'var(--text-dim, #475569)',
+}
+
+const spacer: React.CSSProperties = {
+  flex: 1,
+}
+
+const viewToggleWrap: React.CSSProperties = {
+  display: 'flex',
+  borderRadius: 8,
+  border: '1px solid rgba(255, 255, 255, 0.06)',
+  overflow: 'hidden',
+}
+
+const discoverBtnStyle: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 8,
+  height: 40,
+  padding: '0 20px',
+  borderRadius: 8,
+  border: 'none',
+  background: '#FF5A1F',
+  color: '#000',
+  fontSize: 14,
+  fontWeight: 500,
+  cursor: 'pointer',
+  transition: 'all 200ms',
+}
+
+// ─── Helpers ────────────────────────────────────────────────────────────────
 function getSpeedColor(minutes: number | null): string {
-  if (minutes === null) return 'var(--text-dim)'
-  if (minutes <= 5) return 'var(--bb-green)'
-  if (minutes <= 30) return 'var(--bb-amber)'
-  return 'var(--bb-red)'
+  if (minutes === null) return 'var(--text-dim, #475569)'
+  if (minutes <= 5) return '#22c55e'
+  if (minutes <= 30) return '#eab308'
+  return '#ef4444'
 }
 
-export function LeadsToolbar({
+function viewBtn(active: boolean): React.CSSProperties {
+  return {
+    width: 40,
+    height: 40,
+    padding: 0,
+    border: 'none',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    background: active ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
+    color: active ? 'var(--text-primary, #F1F5F9)' : 'var(--text-dim, #475569)',
+    cursor: 'pointer',
+    transition: 'all 200ms',
+  }
+}
+
+// ─── Component ──────────────────────────────────────────────────────────────
+function LeadsToolbarInner({
   filters,
   onFiltersChange,
   viewMode,
@@ -51,29 +169,16 @@ export function LeadsToolbar({
 
   const speedMinutes = analytics?.avgSpeedToLeadMinutes ?? null
   const speedColor = getSpeedColor(speedMinutes)
-  const speedLabel = speedMinutes !== null ? `⚡${speedMinutes}m` : '⚡—'
-
-  const pipelineValue = analytics ? formatPipelineValue(analytics.totalValue) : '—'
-  const conversionRate = analytics ? `${analytics.conversionRate}%` : '—'
+  const speedLabel = speedMinutes !== null ? `${speedMinutes}m` : '--'
+  const pipelineValue = analytics ? formatPipelineValue(analytics.totalValue) : '--'
+  const conversionRate = analytics ? `${analytics.conversionRate}%` : '--'
 
   return (
-    <div style={{
-      display: 'flex',
-      alignItems: 'center',
-      gap: 8,
-      padding: '4px 0',
-    }}>
+    <div style={toolbarContainer} role="toolbar" aria-label="Lead filters">
 
       {/* Search Input */}
-      <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
-        <Search style={{
-          position: 'absolute',
-          left: 8,
-          width: 13,
-          height: 13,
-          color: 'var(--text-dim)',
-          pointerEvents: 'none',
-        }} />
+      <div style={searchWrap}>
+        <Search style={searchIcon} aria-hidden="true" />
         <input
           ref={searchInputRef}
           type="text"
@@ -82,33 +187,17 @@ export function LeadsToolbar({
           onFocus={() => setSearchFocused(true)}
           onBlur={() => setSearchFocused(false)}
           placeholder="Search leads..."
+          aria-label="Search leads"
           style={{
-            width: 200,
-            fontSize: 14,
-            padding: '8px 12px 8px 28px',
-            borderRadius: 8,
-            border: '1px solid var(--glass-interactive-border)',
-            background: 'var(--glass-pill-bg)',
-            color: 'var(--text-secondary)',
-            outline: 'none',
-            fontFamily: 'inherit',
+            ...searchInput,
+            borderColor: searchFocused ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+            boxShadow: searchFocused ? '0 0 0 2px rgba(255, 90, 31, 0.15)' : 'none',
           }}
         />
         {!searchFocused && !searchQuery && (
-          <span style={{
-            position: 'absolute',
-            right: 8,
-            fontSize: 14,
-            color: 'var(--text-dim)',
-            background: 'var(--glass-pill-bg)',
-            borderRadius: 8,
-            padding: '1px 4px',
-            border: '1px solid var(--glass-interactive-border)',
-            pointerEvents: 'none',
-            lineHeight: 1.4,
-          }}>
-            ⌘K
-          </span>
+          <kbd style={kbdHint} aria-hidden="true">
+            {'\u2318'}K
+          </kbd>
         )}
       </div>
 
@@ -117,6 +206,7 @@ export function LeadsToolbar({
         value={filters.score ?? 'all'}
         onChange={(e) => onFiltersChange({ ...filters, score: e.target.value as LeadFilter['score'] })}
         style={selectStyle}
+        aria-label="Filter by score"
       >
         <option value="all">Score</option>
         <option value="hot">Hot</option>
@@ -124,102 +214,69 @@ export function LeadsToolbar({
         <option value="cold">Cold</option>
       </select>
 
-      {/* Source Filter */}
+      {/* Source Filter — includes Lead Swarm */}
       <select
         value={filters.source ?? 'all'}
         onChange={(e) => onFiltersChange({ ...filters, source: e.target.value })}
         style={selectStyle}
+        aria-label="Filter by source"
       >
         <option value="all">Source</option>
         <option value="email">Email</option>
         <option value="whatsapp">WhatsApp</option>
         <option value="web">Web</option>
         <option value="slack">Slack</option>
-        <option value="pcc_discovery">PCC Discovery</option>
+        <option value="pcc_discovery">Lead Swarm</option>
       </select>
 
-      {/* Separator */}
-      <div style={{ width: 1, height: 20, background: 'var(--glass-hover-bg)' }} />
+      <div style={divider} aria-hidden="true" />
 
       {/* Inline Pipeline Metrics */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        fontSize: 14,
-        fontFamily: 'var(--font-mono)',
-        color: 'var(--text-dim)',
-        gap: 0,
-        whiteSpace: 'nowrap',
-      }}>
+      <div style={metricsContainer} aria-label="Pipeline metrics">
         <span>{pipelineValue}</span>
-        <span style={{ margin: '0 4px', color: 'var(--text-dim)' }}>·</span>
+        <span style={metricDot} aria-hidden="true">&middot;</span>
         <span>{conversionRate}</span>
-        <span style={{ margin: '0 4px', color: 'var(--text-dim)' }}>·</span>
+        <span style={metricDot} aria-hidden="true">&middot;</span>
         <span style={{ color: speedColor }}>{speedLabel}</span>
       </div>
 
-      {/* Spacer */}
-      <div style={{ flex: 1 }} />
+      <div style={spacer} />
 
       {/* View Toggle */}
-      <div style={{
-        display: 'flex',
-        borderRadius: 8,
-        border: '1px solid var(--border-subtle)',
-        overflow: 'hidden',
-      }}>
+      <div style={viewToggleWrap} role="radiogroup" aria-label="View mode">
         <button
+          role="radio"
+          aria-checked={viewMode === 'kanban'}
+          aria-label="Kanban view"
           onClick={() => onViewModeChange('kanban')}
-          style={{
-            padding: '8px 12px',
-            border: 'none',
-            background: viewMode === 'kanban' ? 'var(--hover-bg-strong)' : 'transparent',
-            color: viewMode === 'kanban' ? 'var(--text-primary)' : 'var(--text-dim)',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-          }}
+          style={viewBtn(viewMode === 'kanban')}
         >
-          <LayoutGrid style={{ width: 14, height: 14 }} />
+          <LayoutGrid size={16} />
         </button>
         <button
+          role="radio"
+          aria-checked={viewMode === 'list'}
+          aria-label="List view"
           onClick={() => onViewModeChange('list')}
-          style={{
-            padding: '8px 12px',
-            border: 'none',
-            background: viewMode === 'list' ? 'var(--hover-bg-strong)' : 'transparent',
-            color: viewMode === 'list' ? 'var(--text-primary)' : 'var(--text-dim)',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-          }}
+          style={viewBtn(viewMode === 'list')}
         >
-          <List style={{ width: 14, height: 14 }} />
+          <List size={16} />
         </button>
       </div>
 
       {/* Discover Button */}
       <button
         onClick={onDiscoverClick}
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-          height: 40,
-          padding: '0 20px',
-          borderRadius: 12,
-          border: 'none',
-          background: 'linear-gradient(135deg, var(--bb-cyan) 0%, var(--bb-blue) 100%)',
-          color: '#fff',
-          fontSize: 14,
-          fontWeight: 500,
-          cursor: 'pointer',
-          transition: 'opacity 0.15s',
-        }}
+        style={discoverBtnStyle}
+        aria-label="Discover new prospects"
+        onMouseEnter={e => { e.currentTarget.style.background = '#FF7A45'; e.currentTarget.style.transform = 'translateY(-1px)' }}
+        onMouseLeave={e => { e.currentTarget.style.background = '#FF5A1F'; e.currentTarget.style.transform = 'translateY(0)' }}
       >
-        <Search style={{ width: 14, height: 14 }} />
+        <Search size={16} />
         Discover
       </button>
     </div>
   )
 }
+
+export const LeadsToolbar = memo(LeadsToolbarInner)

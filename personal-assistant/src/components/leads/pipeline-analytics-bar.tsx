@@ -1,5 +1,6 @@
 'use client'
 
+import React, { memo } from 'react'
 import { DollarSign, Target, Clock, Zap, AlertTriangle } from 'lucide-react'
 import type { PipelineAnalytics } from '@/lib/leads/types'
 import { formatPipelineValue } from '@/lib/leads/utils'
@@ -9,26 +10,15 @@ interface PipelineAnalyticsBarProps {
   isLoading: boolean
 }
 
-const SPEED_COLOR: Record<string, string> = {
-  fast: 'var(--bb-green)',
-  ok: 'var(--bb-amber)',
-  slow: 'var(--bb-red)',
-}
-
-function getSpeedColor(minutes: number | null): string {
-  if (minutes == null) return 'var(--text-dim)'
-  if (minutes <= 5) return SPEED_COLOR.fast
-  if (minutes <= 30) return SPEED_COLOR.ok
-  return SPEED_COLOR.slow
-}
-
+// ─── Hoisted Styles ─────────────────────────────────────────────────────────
 const cardStyle: React.CSSProperties = {
   padding: '16px 20px',
-  borderRadius: 'var(--radius-xl, 16px)',
-  background: 'var(--bg-card)',
-  backdropFilter: 'var(--glass-blur)',
-  WebkitBackdropFilter: 'var(--glass-blur)',
-  border: '1px solid var(--border-subtle)',
+  borderRadius: 16,
+  background: 'rgba(15, 20, 30, 0.6)',
+  backdropFilter: 'blur(20px) saturate(1.2)',
+  WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
+  border: '1px solid rgba(255, 255, 255, 0.03)',
+  boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
   display: 'flex',
   flexDirection: 'column',
   gap: 8,
@@ -37,7 +27,7 @@ const cardStyle: React.CSSProperties = {
 const labelStyle: React.CSSProperties = {
   fontSize: 14,
   fontWeight: 500,
-  color: 'var(--text-secondary)',
+  color: 'var(--text-secondary, #94A3B8)',
   display: 'flex',
   alignItems: 'center',
   gap: 8,
@@ -46,38 +36,61 @@ const labelStyle: React.CSSProperties = {
 const valueStyle: React.CSSProperties = {
   fontSize: 16,
   fontWeight: 500,
-  fontFamily: 'var(--font-mono)',
+  fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
   letterSpacing: '-0.02em',
-  color: 'var(--text-primary)',
+  color: 'var(--text-primary, #F1F5F9)',
 }
 
-export function PipelineAnalyticsBar({ analytics, isLoading }: PipelineAnalyticsBarProps) {
+const gridStyle: React.CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(5, 1fr)',
+  gap: 12,
+}
+
+const skeletonCard: React.CSSProperties = {
+  ...cardStyle,
+  height: 80,
+  animation: 'pulse 1.5s ease-in-out infinite',
+}
+
+// ─── Helpers ────────────────────────────────────────────────────────────────
+function getSpeedColor(minutes: number | null): string {
+  if (minutes == null) return 'var(--text-dim, #475569)'
+  if (minutes <= 5) return '#22c55e'
+  if (minutes <= 30) return '#eab308'
+  return '#ef4444'
+}
+
+// ─── Component ──────────────────────────────────────────────────────────────
+function PipelineAnalyticsBarInner({ analytics, isLoading }: PipelineAnalyticsBarProps) {
   if (isLoading || !analytics) {
     return (
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 12 }}>
-        {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} style={{ ...cardStyle, height: 80, animation: 'pulse 1.5s ease-in-out infinite' }} />
-        ))}
+      <>
+        <div style={gridStyle}>
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} style={{ ...skeletonCard, animationDelay: `${i * 100}ms` }} />
+          ))}
+        </div>
         <style>{`
           @media (max-width: 768px) {
             [style*="grid-template-columns: repeat(5"] { grid-template-columns: repeat(2, 1fr) !important; }
           }
         `}</style>
-      </div>
+      </>
     )
   }
 
   const speedMinutes = analytics.avgSpeedToLeadMinutes
   const speedDisplay = speedMinutes != null
     ? (speedMinutes < 60 ? `${speedMinutes}m` : `${Math.floor(speedMinutes / 60)}h ${speedMinutes % 60}m`)
-    : '—'
+    : '--'
 
   return (
     <>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 12 }}>
+      <div style={gridStyle}>
         <div style={cardStyle}>
           <div style={labelStyle}>
-            <DollarSign style={{ width: 14, height: 14 }} />
+            <DollarSign size={16} />
             Pipeline Value
           </div>
           <div style={valueStyle}>{formatPipelineValue(analytics.totalValue)}</div>
@@ -85,7 +98,7 @@ export function PipelineAnalyticsBar({ analytics, isLoading }: PipelineAnalytics
 
         <div style={cardStyle}>
           <div style={labelStyle}>
-            <Target style={{ width: 14, height: 14 }} />
+            <Target size={16} />
             Conversion Rate
           </div>
           <div style={valueStyle}>{analytics.conversionRate}%</div>
@@ -93,7 +106,7 @@ export function PipelineAnalyticsBar({ analytics, isLoading }: PipelineAnalytics
 
         <div style={cardStyle}>
           <div style={labelStyle}>
-            <Clock style={{ width: 14, height: 14 }} />
+            <Clock size={16} />
             Avg Days in Stage
           </div>
           <div style={valueStyle}>{analytics.avgDaysInStage}d</div>
@@ -101,7 +114,7 @@ export function PipelineAnalyticsBar({ analytics, isLoading }: PipelineAnalytics
 
         <div style={cardStyle}>
           <div style={labelStyle}>
-            <Zap style={{ width: 14, height: 14 }} />
+            <Zap size={16} />
             Speed-to-Lead
           </div>
           <div style={{ ...valueStyle, color: getSpeedColor(speedMinutes) }}>{speedDisplay}</div>
@@ -109,12 +122,12 @@ export function PipelineAnalyticsBar({ analytics, isLoading }: PipelineAnalytics
 
         <div style={cardStyle}>
           <div style={labelStyle}>
-            <AlertTriangle style={{ width: 14, height: 14 }} />
+            <AlertTriangle size={16} />
             Stale Leads
           </div>
           <div style={{
             ...valueStyle,
-            color: analytics.staleCount > 0 ? 'var(--bb-amber)' : 'var(--text-primary)',
+            color: analytics.staleCount > 0 ? '#eab308' : 'var(--text-primary, #F1F5F9)',
           }}>
             {analytics.staleCount}
           </div>
@@ -129,3 +142,5 @@ export function PipelineAnalyticsBar({ analytics, isLoading }: PipelineAnalytics
     </>
   )
 }
+
+export const PipelineAnalyticsBar = memo(PipelineAnalyticsBarInner)
