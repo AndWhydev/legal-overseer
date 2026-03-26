@@ -81,7 +81,7 @@ export function SwarmList({ onSelectRun }: SwarmListProps) {
                 fontSize: '14px',
                 fontWeight: 500,
                 cursor: 'pointer',
-                background: filter === s ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.05)',
+                background: filter === s ? 'var(--hover-bg-strong)' : 'var(--hover-bg)',
                 color: filter === s ? '#F1F5F9' : 'rgba(255,255,255,0.5)',
                 transition: 'all 0.15s',
               }}

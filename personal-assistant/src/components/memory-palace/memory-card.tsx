@@ -161,7 +161,7 @@ export function MemoryCard({ memory, categoryColor }: MemoryCardProps) {
                   style={{
                     padding: '4px 8px',
                     borderRadius: '8px',
-                    background: 'rgba(255, 255, 255, 0.05)',
+                    background: 'var(--hover-bg)',
                     color: 'rgba(255, 255, 255, 0.5)',
                     fontSize: '14px',
                   }}

@@ -1756,7 +1756,49 @@ function StatPill({ value, label, active }: { value: number; label: string; acti
 // Expanded Message Row — inline content panel (replaces drawer)
 // ---------------------------------------------------------------------------
 
-function extractSummaryInline(message: InboxMessage): { summary: string; actionItems: string[]; draftReply: string } {
+function generateContextualDraft(message: InboxMessage): string | null {
+  // No draft for non-actionable categories
+  if (['automated', 'marketing', 'spam', 'fyi'].includes(message.category)) return null;
+
+  const senderFirstName = (message.contactName || message.senderName || 'there').split(' ')[0];
+  const text = ((message.subject || '') + ' ' + (message.fullBody || message.bodyPreview)).toLowerCase();
+
+  // Conversation category — casual tone
+  if (message.category === 'conversation') {
+    if (text.match(/lunch|dinner|coffee|drinks|catch up|hang out|ramen/)) {
+      return `Hey ${senderFirstName}! Sounds great, I'm in. Let me check my calendar and confirm the time.`;
+    }
+    return `Hey ${senderFirstName}, thanks for the message! I'll get back to you on this shortly.`;
+  }
+
+  // Action required — contextual based on content
+  if (text.match(/error|crash|spike|500|bug|broke|down|outage|sentry|incident/)) {
+    return `Hi ${senderFirstName},\n\nOn it — I'll investigate and report back with findings shortly.`;
+  }
+  if (text.match(/invoice|payment|billing|overdue|outstanding/)) {
+    return `Hi ${senderFirstName},\n\nThanks for flagging. I'll review the billing details and update our records.`;
+  }
+  if (text.match(/proposal|retainer|quote|pricing|scope|contract/)) {
+    return `Hi ${senderFirstName},\n\nThanks for the update on the proposal. I'll review and follow up with any questions.`;
+  }
+  if (text.match(/design|revision|feedback|mockup|wireframe|brand|colour|color|font|hero|cta/)) {
+    return `Hi ${senderFirstName},\n\nThanks for the feedback. I'll make the requested changes and send an updated version.`;
+  }
+  if (text.match(/meeting|call|sync|standup|retro|agenda/)) {
+    return `Hi ${senderFirstName},\n\nThanks — I'll review the details and come prepared.`;
+  }
+  if (text.match(/deadline|due|deliver|ship|launch|release/)) {
+    return `Hi ${senderFirstName},\n\nNoted on the timeline. I'll prioritise accordingly and keep you posted on progress.`;
+  }
+  if (text.match(/review|approve|confirm|sign off|check/)) {
+    return `Hi ${senderFirstName},\n\nI'll take a look and get back to you with my review.`;
+  }
+
+  // Fallback for action_required with no specific match
+  return `Hi ${senderFirstName},\n\nThanks for this. I'll look into it and follow up shortly.`;
+}
+
+function extractSummaryInline(message: InboxMessage): { summary: string; actionItems: string[]; draftReply: string | null } {
   const body = message.fullBody || message.bodyPreview;
   const text = (message.subject || '') + ' ' + body;
   const actionItems: string[] = [];
@@ -1778,15 +1820,12 @@ function extractSummaryInline(message: InboxMessage): { summary: string; actionI
   const summary = sentences && sentences.length > 0
     ? sentences.slice(0, 3).join(' ').trim()
     : body;
-  const senderFirstName = (message.contactName || message.senderName || 'there').split(' ')[0];
-  const draftReply = message.category === 'action_required'
-    ? `Hi ${senderFirstName},\n\nThanks for reaching out. I'll look into this and get back to you shortly.\n\nBest regards`
-    : `Hi ${senderFirstName},\n\nThank you for the update. I'll review and let you know if I have any questions.\n\nBest regards`;
+  const draftReply = generateContextualDraft(message);
   return { summary, actionItems: actionItems.slice(0, 3), draftReply };
 }
 
 // AI result cache — avoids re-simulating loading on re-open
-const aiResultCache = new Map<string, { summary: string; actionItems: string[]; draftReply: string }>();
+const aiResultCache = new Map<string, { summary: string; actionItems: string[]; draftReply: string | null }>();
 
 function ExpandedMessageRow({
   message,
@@ -1813,7 +1852,7 @@ function ExpandedMessageRow({
   const [replyFocused, setReplyFocused] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const expandedRef = useRef<HTMLDivElement>(null);
-  const [aiResult, setAiResult] = useState<{ summary: string; actionItems: string[]; draftReply: string } | null>(null);
+  const [aiResult, setAiResult] = useState<{ summary: string; actionItems: string[]; draftReply: string | null } | null>(null);
   const [aiLoading, setAiLoading] = useState(true);
   // Track whether AI result was freshly computed (not cached) for shimmer transition
   const [aiJustResolved, setAiJustResolved] = useState(false);
@@ -2128,8 +2167,7 @@ function ExpandedMessageRow({
           borderRadius: 20,
           padding: '4px 4px 4px 16px',
         }}>
-          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 0 }}>
-          <div style={{ position: 'relative', flex: 1, minHeight: 32 }}>
+          <div style={{ position: 'relative', minHeight: 32 }}>
             {/* Ghost draft — in-flow element that sizes the container, textarea overlays it */}
             {ghostVisible && !replyText && aiResult?.draftReply && (
               <div
@@ -2163,14 +2201,15 @@ function ExpandedMessageRow({
               onKeyDown={(e) => {
                 if (e.key === 'Tab' && ghostVisible && !replyText && aiResult?.draftReply) {
                   e.preventDefault();
-                  setReplyText(aiResult.draftReply);
+                  const draft = aiResult.draftReply;
+                  setReplyText(draft);
                   setGhostVisible(false);
                   setGhostDismissed(true);
                   setTimeout(() => {
                     if (textareaRef.current) {
                       textareaRef.current.style.height = 'auto';
                       textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, 200) + 'px';
-                      textareaRef.current.setSelectionRange(aiResult.draftReply.length, aiResult.draftReply.length);
+                      textareaRef.current.setSelectionRange(draft.length, draft.length);
                     }
                   }, 0);
                 }
@@ -2194,36 +2233,34 @@ function ExpandedMessageRow({
               }}
             />
           </div>
-          <button
-            onClick={handleSendReply}
-            disabled={!replyText.trim()}
-            style={{
-              width: 32, height: 32, borderRadius: 9999,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              padding: 0,
-              border: 'none', cursor: replyText.trim() ? 'pointer' : 'default',
-              flexShrink: 0,
-              transition: 'opacity 200ms cubic-bezier(0.25, 1, 0.5, 1), transform 200ms cubic-bezier(0.25, 1, 0.5, 1)',
-              background: 'var(--btn-primary-bg)',
-              color: 'var(--btn-primary-fg)',
-              opacity: replyText.trim() ? 1 : 0.25,
-              transform: replyText.trim() ? 'scale(1)' : 'scale(0.85)',
-            }}
-          >
-            <ArrowUp size={14} strokeWidth={2.5} />
-          </button>
+          {/* Bottom row: hint left, send button right — all inside the pill */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '2px 0 4px' }}>
+            <div style={{ fontSize: 14, color: 'var(--text-dim)' }}>
+              {ghostVisible && !replyText && aiResult?.draftReply ? (
+                <span><kbd style={{ fontSize: 14, color: 'var(--text-dim)', padding: '2px 6px', borderRadius: 4, background: 'var(--hover-bg)', fontFamily: 'inherit' }}>Tab</kbd> to use suggested reply</span>
+              ) : (
+                <span><kbd style={{ fontSize: 14, color: 'var(--text-dim)', padding: '2px 6px', borderRadius: 4, background: 'var(--hover-bg)', fontFamily: 'inherit' }}>Cmd+Enter</kbd> to send</span>
+              )}
+            </div>
+            <button
+              onClick={handleSendReply}
+              disabled={!replyText.trim()}
+              style={{
+                width: 32, height: 32, borderRadius: 9999,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                padding: 0,
+                border: 'none', cursor: replyText.trim() ? 'pointer' : 'default',
+                flexShrink: 0,
+                transition: 'opacity 200ms cubic-bezier(0.25, 1, 0.5, 1), transform 200ms cubic-bezier(0.25, 1, 0.5, 1)',
+                background: 'var(--btn-primary-bg, #F1F5F9)',
+                color: 'var(--btn-primary-fg, #0a0f1a)',
+                opacity: replyText.trim() ? 1 : 0.25,
+                transform: replyText.trim() ? 'scale(1)' : 'scale(0.85)',
+              }}
+            >
+              <ArrowUp size={14} strokeWidth={2.5} />
+            </button>
           </div>
-          {/* Ghost hint and Cmd+Enter hint — inside the input container */}
-          {ghostVisible && !replyText && aiResult?.draftReply && (
-            <div style={{ fontSize: 14, color: 'var(--text-dim)', padding: '4px 0' }}>
-              Tab to use suggested reply
-            </div>
-          )}
-          {replyText && (
-            <div style={{ fontSize: 14, color: 'var(--text-dim)', padding: '4px 0' }}>
-              <kbd style={{ fontSize: 14, color: 'var(--text-dim)', padding: '2px 6px', borderRadius: 4, background: 'var(--hover-bg)', fontFamily: 'inherit' }}>Cmd+Enter</kbd> to send
-            </div>
-          )}
         </div>
       </div>
 
@@ -2287,8 +2324,6 @@ function IconActionBtn({
   isSpam?: boolean;
   'data-snooze-trigger'?: boolean;
 }) {
-  const baseColor = isSpam ? 'rgba(239,68,68,0.5)' : 'var(--text-secondary)';
-  const hoverColor = isSpam ? 'rgba(239,68,68,0.8)' : 'var(--text-primary)';
   return (
     <button
       title={title}
@@ -2297,11 +2332,12 @@ function IconActionBtn({
         display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
         width: 32, height: 32, borderRadius: 8,
         background: 'transparent', border: 'none',
-        color: baseColor, cursor: 'pointer',
-        transition: 'color 150ms ease',
+        color: 'var(--text-dim)', cursor: 'pointer',
+        transform: 'scale(1)',
+        transition: 'color 150ms, transform 150ms cubic-bezier(0.34, 1.56, 0.64, 1)',
       }}
-      onMouseEnter={(e) => { e.currentTarget.style.color = hoverColor; }}
-      onMouseLeave={(e) => { e.currentTarget.style.color = baseColor; }}
+      onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.transform = 'scale(1.1)'; }}
+      onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-dim)'; e.currentTarget.style.transform = 'scale(1)'; }}
       {...rest}
     >
       {icon}

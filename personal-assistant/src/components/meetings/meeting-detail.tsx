@@ -307,7 +307,7 @@ export function MeetingDetail({ meetingId, onBack }: MeetingDetailProps) {
               flex: 1,
               padding: '8px 12px',
               borderRadius: 8,
-              background: activeTab === tab.key ? 'rgba(255, 255, 255, 0.06)' : 'transparent',
+              background: activeTab === tab.key ? 'var(--hover-bg-strong)' : 'transparent',
               border: 'none',
               color: activeTab === tab.key ? 'var(--text-primary, #F1F5F9)' : 'var(--text-dim, #475569)',
               fontSize: 14,
@@ -324,7 +324,7 @@ export function MeetingDetail({ meetingId, onBack }: MeetingDetailProps) {
             {tab.count > 0 && (
               <span style={{
                 fontSize: 14,
-                background: 'rgba(255, 255, 255, 0.08)',
+                background: 'var(--hover-bg-strong)',
                 color: '#E2E8F0',
                 padding: '0px 8px',
                 borderRadius: 8,
@@ -468,7 +468,7 @@ function ActionItemsView({
             style={{
               padding: '8px 16px',
               borderRadius: 8,
-              background: 'rgba(255, 255, 255, 0.08)',
+              background: 'var(--hover-bg-strong)',
               border: '1px solid rgba(255, 255, 255, 0.15)',
               color: '#E2E8F0',
               fontSize: 14,

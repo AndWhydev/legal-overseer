@@ -56,7 +56,7 @@ export function MeetingsTab({ initialMeetingId }: MeetingsTabProps) {
             style={{
               padding: '8px 16px',
               borderRadius: 8,
-              background: activeSection === 'meetings' ? 'rgba(255, 255, 255, 0.06)' : 'transparent',
+              background: activeSection === 'meetings' ? 'var(--hover-bg-strong)' : 'transparent',
               border: 'none',
               color: activeSection === 'meetings' ? 'var(--text-primary, #F1F5F9)' : 'var(--text-dim, #475569)',
               fontSize: 14,
@@ -78,7 +78,7 @@ export function MeetingsTab({ initialMeetingId }: MeetingsTabProps) {
             style={{
               padding: '8px 16px',
               borderRadius: 8,
-              background: activeSection === 'search' ? 'rgba(255, 255, 255, 0.06)' : 'transparent',
+              background: activeSection === 'search' ? 'var(--hover-bg-strong)' : 'transparent',
               border: 'none',
               color: activeSection === 'search' ? 'var(--text-primary, #F1F5F9)' : 'var(--text-dim, #475569)',
               fontSize: 14,

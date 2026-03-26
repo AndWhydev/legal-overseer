@@ -125,7 +125,7 @@ export function MeetingUpload({ onUploaded, onCancel }: MeetingUploadProps) {
             padding: '32px',
             textAlign: 'center',
             cursor: 'pointer',
-            background: dragOver ? 'rgba(255,255,255,0.03)' : 'transparent',
+            background: dragOver ? 'var(--hover-bg)' : 'transparent',
             transition: 'all 0.15s var(--ease-default)',
             marginBottom: '16px',
           }}

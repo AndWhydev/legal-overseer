@@ -33,15 +33,15 @@ const styles = {
   },
   statusBadge: (status: string) => {
     const colors: Record<string, { bg: string; text: string }> = {
-      pending: { bg: 'rgba(255, 255, 255, 0.06)', text: 'rgba(255, 255, 255, 0.4)' },
+      pending: { bg: 'var(--hover-bg-strong)', text: 'rgba(255, 255, 255, 0.4)' },
       planning: { bg: 'rgba(59, 130, 246, 0.1)', text: '#3B82F6' },
-      executing: { bg: 'rgba(255, 255, 255, 0.06)', text: '#E2E8F0' },
+      executing: { bg: 'var(--hover-bg-strong)', text: '#E2E8F0' },
       negotiating: { bg: 'rgba(139, 92, 246, 0.1)', text: '#8B5CF6' },
       completed: { bg: 'rgba(34, 197, 94, 0.1)', text: '#22C55E' },
       partial: { bg: 'rgba(245, 158, 11, 0.1)', text: '#F59E0B' },
       failed: { bg: 'rgba(239, 68, 68, 0.1)', text: '#EF4444' },
-      rolled_back: { bg: 'rgba(255, 255, 255, 0.06)', text: 'rgba(255, 255, 255, 0.4)' },
-      cancelled: { bg: 'rgba(255, 255, 255, 0.06)', text: 'rgba(255, 255, 255, 0.3)' },
+      rolled_back: { bg: 'var(--hover-bg-strong)', text: 'rgba(255, 255, 255, 0.4)' },
+      cancelled: { bg: 'var(--hover-bg-strong)', text: 'rgba(255, 255, 255, 0.3)' },
     };
     const c = colors[status] || colors.pending;
     return {

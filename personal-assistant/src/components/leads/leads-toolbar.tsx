@@ -6,6 +6,7 @@ import { GlassToggle } from '@/components/ui/glass-toggle'
 import { GlassDropdown } from '@/components/ui/glass-dropdown'
 import type { LeadFilter, LeadViewMode, PipelineAnalytics } from '@/lib/leads/types'
 import { formatPipelineValue } from '@/lib/leads/utils'
+import { S, C } from '@/lib/styles/design-tokens'
 
 interface LeadsToolbarProps {
   filters: LeadFilter
@@ -38,47 +39,39 @@ const searchIcon: React.CSSProperties = {
   left: 12,
   width: 16,
   height: 16,
-  color: 'var(--text-dim, #475569)',
+  color: C.textDim,
   pointerEvents: 'none',
 }
 
 const searchInput: React.CSSProperties = {
+  ...S.input,
   width: 200,
-  height: 40,
-  fontSize: 14,
   padding: '0 12px 0 36px',
-  borderRadius: 8,
   border: 'none',
-  background: 'var(--bg-input, rgba(13, 17, 23, 0.6))',
-  color: 'var(--text-primary, #F1F5F9)',
-  outline: 'none',
   fontFamily: 'inherit',
   transition: 'box-shadow 200ms',
-  boxShadow: 'var(--card-shadow, 0 2px 8px rgba(0,0,0,0.3)), var(--card-inset, inset 0 1px 0 rgba(255,255,255,0.06))',
-  backdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
-  WebkitBackdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
 }
 
 
 const divider: React.CSSProperties = {
   width: 1,
   height: 20,
-  background: 'var(--hover-bg-strong, rgba(255, 255, 255, 0.06))',
+  background: C.bgHoverStrong,
 }
 
 const metricsContainer: React.CSSProperties = {
   display: 'flex',
   alignItems: 'center',
   fontSize: 14,
-  fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
-  color: 'var(--text-dim, #475569)',
+  fontFamily: S.mono.fontFamily,
+  color: C.textDim,
   gap: 0,
   whiteSpace: 'nowrap',
 }
 
 const metricDot: React.CSSProperties = {
   margin: '0 4px',
-  color: 'var(--text-dim, #475569)',
+  color: C.textDim,
 }
 
 const spacer: React.CSSProperties = {
@@ -86,22 +79,8 @@ const spacer: React.CSSProperties = {
 }
 
 const discoverBtnStyle: React.CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: 8,
-  height: 40,
-  padding: '0 20px',
-  borderRadius: 8,
-  border: 'none',
-  background: 'var(--btn-primary-bg, #F1F5F9)',
-  color: 'var(--btn-primary-fg, #0a0f1a)',
-  fontSize: 14,
-  fontWeight: 500,
-  cursor: 'pointer',
-  transition: 'all 200ms',
-  backdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
-  WebkitBackdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
-  boxShadow: 'var(--card-shadow, 0 2px 8px rgba(0,0,0,0.3)), var(--card-inset, inset 0 1px 0 rgba(255,255,255,0.06))',
+  ...S.button,
+  ...S.buttonPrimary,
 }
 
 // ─── Score Options ──────────────────────────────────────────────────────────

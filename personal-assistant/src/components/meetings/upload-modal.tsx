@@ -202,7 +202,7 @@ export function UploadModal({ open, onClose, onUploadComplete }: UploadModalProp
             padding: file ? '16px' : '40px 20px',
             borderRadius: 12,
             border: `2px dashed ${dragOver ? '#F1F5F9' : 'rgba(255, 255, 255, 0.08)'}`,
-            background: dragOver ? 'rgba(255, 255, 255, 0.03)' : 'rgba(13, 17, 23, 0.4)',
+            background: dragOver ? 'var(--hover-bg)' : 'rgba(13, 17, 23, 0.4)',
             textAlign: 'center',
             cursor: 'pointer',
             transition: 'all 200ms',

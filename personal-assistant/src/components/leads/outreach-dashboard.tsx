@@ -88,7 +88,7 @@ const campaignName: React.CSSProperties = {
 
 const campaignMeta: React.CSSProperties = {
   fontSize: 14,
-  fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
+  fontFamily: S.mono.fontFamily,
   color: C.textDim,
 }
 

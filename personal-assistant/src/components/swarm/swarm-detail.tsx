@@ -101,7 +101,7 @@ export function SwarmDetail({ runId, onBack }: SwarmDetailProps) {
           <button
             onClick={onBack}
             style={{
-              background: 'rgba(255,255,255,0.05)',
+              background: 'var(--hover-bg)',
               border: 'none',
               borderRadius: '8px',
               padding: '8px 12px',
@@ -157,7 +157,7 @@ export function SwarmDetail({ runId, onBack }: SwarmDetailProps) {
         </div>
         <div style={{
           height: '4px',
-          background: 'rgba(255,255,255,0.06)',
+          background: 'var(--hover-bg-strong)',
           borderRadius: '8px',
           overflow: 'hidden',
         }}>
@@ -221,7 +221,7 @@ export function SwarmDetail({ runId, onBack }: SwarmDetailProps) {
                   <div style={{
                     width: '2px',
                     flex: 1,
-                    background: 'rgba(255,255,255,0.06)',
+                    background: 'var(--hover-bg-strong)',
                     marginTop: '4px',
                   }} />
                 )}
@@ -323,7 +323,7 @@ export function SwarmDetail({ runId, onBack }: SwarmDetailProps) {
                     ? 'rgba(239,68,68,0.08)'
                     : msg.message_type === 'resolution'
                       ? 'rgba(34,197,94,0.08)'
-                      : 'rgba(255,255,255,0.03)',
+                      : 'var(--hover-bg)',
                 }}
               >
                 <div style={{ display: 'flex', gap: '8px', fontSize: '14px', marginBottom: '4px' }}>
@@ -339,7 +339,7 @@ export function SwarmDetail({ runId, onBack }: SwarmDetailProps) {
                   <span style={{
                     padding: '0 4px',
                     borderRadius: '8px',
-                    background: 'rgba(255,255,255,0.05)',
+                    background: 'var(--hover-bg)',
                     color: 'rgba(255,255,255,0.4)',
                   }}>
                     {msg.message_type}

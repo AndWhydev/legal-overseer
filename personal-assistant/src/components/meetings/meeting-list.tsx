@@ -157,7 +157,7 @@ export function MeetingList({ onSelectMeeting, onUpload }: MeetingListProps) {
             style={{
               padding: '8px 16px',
               borderRadius: 20,
-              background: typeFilter === type ? 'rgba(255, 255, 255, 0.08)' : 'rgba(10, 14, 23, 0.42)',
+              background: typeFilter === type ? 'var(--hover-bg-strong)' : 'rgba(10, 14, 23, 0.42)',
               border: typeFilter === type ? '1px solid rgba(255, 255, 255, 0.15)' : '1px solid rgba(255, 255, 255, 0.06)',
               color: typeFilter === type ? '#E2E8F0' : 'var(--text-secondary, #94A3B8)',
               fontSize: 14,
@@ -196,7 +196,7 @@ export function MeetingList({ onSelectMeeting, onUpload }: MeetingListProps) {
                   key={meeting.id}
                   style={{
                     ...meetingRowStyle,
-                    background: isHovered ? 'rgba(255, 255, 255, 0.04)' : 'transparent',
+                    background: isHovered ? 'var(--hover-bg)' : 'transparent',
                     borderBottom: i < meetings.length - 1 ? '1px solid rgba(255, 255, 255, 0.03)' : 'none',
                     borderRadius: 0,
                     border: 'none',
@@ -213,7 +213,7 @@ export function MeetingList({ onSelectMeeting, onUpload }: MeetingListProps) {
                     width: 36,
                     height: 36,
                     borderRadius: 12,
-                    background: 'rgba(255, 255, 255, 0.04)',
+                    background: 'var(--hover-bg)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',

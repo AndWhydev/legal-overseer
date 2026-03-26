@@ -176,7 +176,7 @@ export function RelationshipTimeline({ entityId, entityName }: RelationshipTimel
                       width: '2px',
                       flex: 1,
                       minHeight: '16px',
-                      background: 'rgba(255, 255, 255, 0.06)',
+                      background: 'var(--hover-bg-strong)',
                       marginTop: '4px',
                     }} />
                   )}
@@ -234,7 +234,7 @@ export function RelationshipTimeline({ entityId, entityName }: RelationshipTimel
                         width: '40px',
                         height: '4px',
                         borderRadius: '2px',
-                        background: 'rgba(255, 255, 255, 0.08)',
+                        background: 'var(--hover-bg-strong)',
                         overflow: 'hidden',
                       }}>
                         <div style={{

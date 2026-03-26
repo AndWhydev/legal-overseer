@@ -206,7 +206,7 @@ export function MemoryExplorer({ orgId }: MemoryExplorerProps) {
             padding: '4px 12px',
             borderRadius: '12px',
             border: 'none',
-            background: activeCategory === null ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.05)',
+            background: activeCategory === null ? 'var(--hover-bg-strong)' : 'var(--hover-bg)',
             color: activeCategory === null ? '#E2E8F0' : 'rgba(255, 255, 255, 0.5)',
             fontSize: '14px',
             cursor: 'pointer',
@@ -225,7 +225,7 @@ export function MemoryExplorer({ orgId }: MemoryExplorerProps) {
               border: 'none',
               background: activeCategory === cat
                 ? `${CATEGORY_COLORS[cat]}22`
-                : 'rgba(255, 255, 255, 0.05)',
+                : 'var(--hover-bg)',
               color: activeCategory === cat
                 ? CATEGORY_COLORS[cat]
                 : 'rgba(255, 255, 255, 0.5)',

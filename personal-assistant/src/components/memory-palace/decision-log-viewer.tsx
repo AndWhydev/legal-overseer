@@ -214,7 +214,7 @@ export function DecisionLogViewer({ orgId, entityId }: DecisionLogViewerProps) {
                     {(decision.alternatives as { option: string; pros: string[]; cons: string[] }[]).map((alt, i) => (
                       <div key={i} style={{
                         padding: '8px 12px',
-                        background: 'rgba(255, 255, 255, 0.03)',
+                        background: 'var(--hover-bg)',
                         borderRadius: '8px',
                         marginBottom: '4px',
                       }}>

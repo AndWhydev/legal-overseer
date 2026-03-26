@@ -51,7 +51,7 @@ const s = {
     borderRadius: '9999px',
     fontSize: '14px',
     fontWeight: 500,
-    background: 'rgba(255, 255, 255, 0.04)',
+    background: 'var(--hover-bg)',
     color: 'rgba(255, 255, 255, 0.4)',
   },
   rollbackBtn: {
@@ -115,7 +115,7 @@ const s = {
     fontWeight: 500,
     padding: '2px 8px',
     borderRadius: '8px',
-    background: 'rgba(255, 255, 255, 0.04)',
+    background: 'var(--hover-bg)',
     color: 'rgba(255, 255, 255, 0.4)',
   },
   stepStatus: (status: string) => {
@@ -329,7 +329,7 @@ export function SwarmRunDetail({ runId, onBack, onRollback }: SwarmRunDetailProp
               borderRadius: '8px',
               fontSize: '14px',
               fontWeight: 500,
-              background: 'rgba(255, 255, 255, 0.04)',
+              background: 'var(--hover-bg)',
               color: 'rgba(255, 255, 255, 0.4)',
               border: 'none',
               cursor: 'pointer',

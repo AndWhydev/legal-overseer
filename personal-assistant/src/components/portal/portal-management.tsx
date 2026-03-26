@@ -161,7 +161,7 @@ export function PortalManagement() {
               borderRadius: 8,
               fontSize: 14,
               fontWeight: tab === t ? 500 : 400,
-              background: tab === t ? 'rgba(255, 255, 255, 0.06)' : 'transparent',
+              background: tab === t ? 'var(--hover-bg-strong)' : 'transparent',
               color: tab === t ? 'var(--text-primary, #F1F5F9)' : 'var(--text-secondary, #94A3B8)',
               border: tab === t ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid transparent',
               cursor: 'pointer',

@@ -171,6 +171,18 @@ function extractToolDetail(name: string, input: unknown, result?: unknown): stri
     if (typeof title === 'string') return title.length > 60 ? title.slice(0, 57) + '...' : title
   }
 
+  // Memory — show what's being saved (key/category or content preview)
+  if (name === 'add_memory') {
+    const key = inp.key || inp.title || inp.category
+    if (typeof key === 'string' && key.length > 0) {
+      return key.length > 50 ? key.slice(0, 47) + '...' : key
+    }
+    const content = inp.content || inp.text || inp.value
+    if (typeof content === 'string' && content.length > 0) {
+      return content.length > 50 ? content.slice(0, 47) + '...' : content
+    }
+  }
+
   // Browse website — show URL
   if (name === 'browse_website') {
     const url = inp.url || inp.website || inp.href
@@ -1687,11 +1699,14 @@ export function ChatInterface({ userName }: { userName?: string }) {
         // text which gets rendered via MessageBubble, so skip it here
         const isLastSegment = sIdx === streamSegments.length - 1
         if (!isLastSegment && seg.content.trim()) {
-          // Intermediate text between tool batches — render with markdown
+          // Intermediate text between tool batches — render with markdown + fade-in
           // (no feedback buttons, no avatar — just the narration between tool phases)
           elements.push(
-            <div
+            <motion.div
               key={`seg-text-${sIdx}`}
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, ease: 'easeOut' }}
               className="bb-chat__markdown"
               style={{
                 fontSize: 14,
@@ -1703,7 +1718,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
               <ReactMarkdown remarkPlugins={[remarkGfm]}>
                 {seg.content.trim()}
               </ReactMarkdown>
-            </div>
+            </motion.div>
           )
         }
       }

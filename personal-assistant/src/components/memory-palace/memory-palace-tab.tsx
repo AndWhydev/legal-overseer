@@ -106,7 +106,7 @@ function ConfidenceBar({ value }: { value: number }) {
         width: 60,
         height: 4,
         borderRadius: 2,
-        background: 'rgba(255,255,255,0.08)',
+        background: 'var(--hover-bg-strong)',
         overflow: 'hidden',
       }}>
         <div style={{
@@ -244,7 +244,7 @@ function TypeFilter({
         onClick={() => onTypeChange(null)}
         style={{
           ...badge,
-          background: !activeType ? '#F1F5F9' : 'rgba(255,255,255,0.06)',
+          background: !activeType ? '#F1F5F9' : 'var(--hover-bg-strong)',
           color: !activeType ? '#0a0f1a' : 'rgba(255,255,255,0.6)',
           cursor: 'pointer',
           border: 'none',
@@ -259,7 +259,7 @@ function TypeFilter({
           onClick={() => onTypeChange(activeType === key ? null : key)}
           style={{
             ...badge,
-            background: activeType === key ? `${config.color}30` : 'rgba(255,255,255,0.06)',
+            background: activeType === key ? `${config.color}30` : 'var(--hover-bg-strong)',
             color: activeType === key ? config.color : 'rgba(255,255,255,0.5)',
             cursor: 'pointer',
             border: 'none',
@@ -346,7 +346,7 @@ export function MemoryPalaceTab() {
               onClick={() => setView('search')}
               style={{
                 ...badge,
-                background: view === 'search' ? '#F1F5F9' : 'rgba(255,255,255,0.06)',
+                background: view === 'search' ? '#F1F5F9' : 'var(--hover-bg-strong)',
                 color: view === 'search' ? '#0a0f1a' : 'rgba(255,255,255,0.6)',
                 cursor: 'pointer',
                 border: 'none',
@@ -360,7 +360,7 @@ export function MemoryPalaceTab() {
               onClick={() => setView('decisions')}
               style={{
                 ...badge,
-                background: view === 'decisions' ? '#F1F5F9' : 'rgba(255,255,255,0.06)',
+                background: view === 'decisions' ? '#F1F5F9' : 'var(--hover-bg-strong)',
                 color: view === 'decisions' ? '#0a0f1a' : 'rgba(255,255,255,0.6)',
                 cursor: 'pointer',
                 border: 'none',

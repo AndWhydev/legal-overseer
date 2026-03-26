@@ -47,7 +47,7 @@ const styles = {
     cursor: 'pointer',
     border: 'none',
     transition: 'all 0.15s ease',
-    background: active ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.04)',
+    background: active ? 'var(--hover-bg-strong)' : 'var(--hover-bg)',
     color: active ? '#F1F5F9' : 'rgba(255, 255, 255, 0.5)',
   }),
   runsList: {
