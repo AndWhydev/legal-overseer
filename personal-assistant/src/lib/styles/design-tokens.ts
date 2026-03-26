@@ -57,6 +57,7 @@ export const C = {
 
 const BLUR = 'var(--glass-blur, blur(20px) saturate(1.2))'
 const INSET = 'var(--card-inset, inset 0 1px 0 rgba(255, 255, 255, 0.05))'
+const SHADOW = `var(--card-shadow, 0 2px 8px rgba(0,0,0,0.3)), ${INSET}`
 
 // ─── Composed Style Objects ──────────────────────────────────────────────────
 
@@ -71,7 +72,7 @@ export const S = {
     backdropFilter: BLUR,
     WebkitBackdropFilter: BLUR,
     border: `1px solid ${C.borderSubtle}`,
-    boxShadow: INSET,
+    boxShadow: SHADOW,
   } satisfies CSSProperties,
 
   /** Lighter glass card — for nested/secondary surfaces */
@@ -82,7 +83,7 @@ export const S = {
     backdropFilter: BLUR,
     WebkitBackdropFilter: BLUR,
     border: `1px solid ${C.borderSubtle}`,
-    boxShadow: INSET,
+    boxShadow: SHADOW,
   } satisfies CSSProperties,
 
   /** Heavy glass — modals, dropdowns, popovers */
@@ -103,7 +104,7 @@ export const S = {
     backdropFilter: BLUR,
     WebkitBackdropFilter: BLUR,
     border: `1px solid ${C.borderSubtle}`,
-    boxShadow: INSET,
+    boxShadow: SHADOW,
     overflow: 'hidden' as const,
   } satisfies CSSProperties,
 
@@ -228,7 +229,7 @@ export const S = {
     background: 'var(--pill-inactive-bg, rgba(10, 14, 23, 0.42))',
     backdropFilter: 'blur(22px) saturate(1.2)',
     WebkitBackdropFilter: 'blur(22px) saturate(1.2)',
-    boxShadow: INSET,
+    boxShadow: SHADOW,
     border: 'none',
     fontSize: 14,
     color: C.textSecondary,
@@ -283,7 +284,7 @@ export const S = {
     background: C.bgListRow,
     backdropFilter: 'blur(26px) saturate(1.15)',
     WebkitBackdropFilter: 'blur(26px) saturate(1.15)',
-    boxShadow: INSET,
+    boxShadow: SHADOW,
     border: 'none',
     transition: 'background 200ms',
     cursor: 'pointer',

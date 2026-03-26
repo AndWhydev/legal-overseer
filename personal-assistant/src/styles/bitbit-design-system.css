@@ -3831,7 +3831,7 @@ html.light .bb-leads-card__actions {
   backdrop-filter: blur(26px) saturate(1.15);
   -webkit-backdrop-filter: blur(26px) saturate(1.15);
   border: none;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  box-shadow: var(--card-shadow, 0 2px 8px rgba(0,0,0,0.3)), inset 0 1px 0 rgba(255, 255, 255, 0.05);
   font-family: var(--font-sans);
   font-size: 13px;
   color: var(--text-primary);
@@ -3844,7 +3844,7 @@ html.light .bb-leads-card__actions {
 }
 
 .bb-contacts-search__input:focus {
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  box-shadow: var(--card-shadow, 0 2px 8px rgba(0,0,0,0.3)), inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .bb-contacts-sort {
@@ -5585,13 +5585,13 @@ html.light .bb-tenders-drawer__close:hover {
   background: var(--bg-input, rgba(13, 17, 23, 0.6)) !important;
   backdrop-filter: var(--glass-blur, blur(20px) saturate(1.2));
   -webkit-backdrop-filter: var(--glass-blur, blur(20px) saturate(1.2));
-  box-shadow: var(--card-inset, inset 0 1px 0 rgba(255, 255, 255, 0.05)) !important;
+  box-shadow: var(--card-shadow, 0 2px 8px rgba(0,0,0,0.3)), var(--card-inset, inset 0 1px 0 rgba(255, 255, 255, 0.05)) !important;
   color: var(--text-primary) !important;
 }
 .bb-glass-input:focus {
   border: none !important;
   outline: none !important;
-  box-shadow: var(--card-inset, inset 0 1px 0 rgba(255, 255, 255, 0.05)) !important;
+  box-shadow: var(--card-shadow, 0 2px 8px rgba(0,0,0,0.3)), var(--card-inset, inset 0 1px 0 rgba(255, 255, 255, 0.05)) !important;
 }
 .bb-glass-input::placeholder {
   color: var(--text-dim);

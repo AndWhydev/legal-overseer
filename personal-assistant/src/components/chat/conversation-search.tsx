@@ -15,10 +15,16 @@ interface ConversationSearchProps {
   threads: Thread[]
   onSelectThread: (threadId: string) => void
   onClose: () => void
+  onQueryChange?: (query: string) => void
 }
 
-export function ConversationSearch({ threads, onSelectThread, onClose }: ConversationSearchProps) {
+export function ConversationSearch({ threads, onSelectThread, onClose, onQueryChange }: ConversationSearchProps) {
   const [query, setQuery] = useState('')
+
+  const updateQuery = (q: string) => {
+    setQuery(q)
+    onQueryChange?.(q)
+  }
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -50,7 +56,7 @@ export function ConversationSearch({ threads, onSelectThread, onClose }: Convers
           type="text"
           className="bb-naked-input"
           value={query}
-          onChange={e => setQuery(e.target.value)}
+          onChange={e => updateQuery(e.target.value)}
           placeholder="Search conversations..."
           autoFocus
           style={{

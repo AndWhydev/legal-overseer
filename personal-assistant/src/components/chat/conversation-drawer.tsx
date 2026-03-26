@@ -77,6 +77,9 @@ export function ConversationDrawer({
   isLoading,
 }: ConversationDrawerProps) {
   const [searchOpen, setSearchOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+
+  const searchActive = searchOpen && searchQuery.trim().length >= 2
 
   if (!isOpen) return null
 
@@ -134,28 +137,31 @@ export function ConversationDrawer({
                   onSelectThread(threadId)
                   onClose()
                 }}
-                onClose={() => setSearchOpen(false)}
+                onClose={() => { setSearchOpen(false); setSearchQuery('') }}
+                onQueryChange={setSearchQuery}
               />
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* New chat — compact pill */}
-        <div style={{ padding: '10px 12px 10px' }}>
-          <button
-            className="bb-chat__drawer-new-btn"
-            onClick={() => {
-              onNewConversation()
-              onClose()
-            }}
-          >
-            <Plus size={12} />
-            New chat
-          </button>
-        </div>
+        {/* New chat — compact pill (hidden when search active) */}
+        {!searchActive && (
+          <div style={{ padding: '10px 12px 10px' }}>
+            <button
+              className="bb-chat__drawer-new-btn"
+              onClick={() => {
+                onNewConversation()
+                onClose()
+              }}
+            >
+              <Plus size={12} />
+              New chat
+            </button>
+          </div>
+        )}
 
-        {/* Thread list */}
-        <div className="bb-chat__drawer-list">
+        {/* Thread list (hidden when search active) */}
+        {!searchActive && <div className="bb-chat__drawer-list">
           {isLoading ? (
             <>
               {[1, 2, 3].map(i => (
@@ -230,7 +236,7 @@ export function ConversationDrawer({
               </div>
             ))
           )}
-        </div>
+        </div>}
       </div>
     </>
   )
