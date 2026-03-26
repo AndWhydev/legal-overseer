@@ -479,7 +479,7 @@ function CohortHeatmap({ matrix }: { matrix: CohortMatrix }) {
             <div
               key={w}
               style={{
-                fontSize: 10,
+                fontSize: 14,
                 color: 'var(--text-dim)',
                 textAlign: 'center',
                 fontWeight: 500,
@@ -513,7 +513,7 @@ function CohortHeatmap({ matrix }: { matrix: CohortMatrix }) {
               }}
             >
               <span style={{ fontWeight: 500 }}>{cohort.cohortLabel}</span>
-              <span style={{ fontSize: 10, color: 'var(--text-dim)' }}>
+              <span style={{ fontSize: 14, color: 'var(--text-dim)' }}>
                 {cohort.orgCount} org{cohort.orgCount !== 1 ? 's' : ''}
               </span>
             </div>
@@ -530,7 +530,7 @@ function CohortHeatmap({ matrix }: { matrix: CohortMatrix }) {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    fontSize: 10,
+                    fontSize: 14,
                     fontWeight: 500,
                     color: pct !== null && pct >= 40 ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.45)',
                     fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
@@ -545,7 +545,7 @@ function CohortHeatmap({ matrix }: { matrix: CohortMatrix }) {
 
         {/* Colour scale legend */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--glass-card-border)' }}>
-          <span style={{ fontSize: 10, color: 'var(--text-dim)' }}>Retention:</span>
+          <span style={{ fontSize: 14, color: 'var(--text-dim)' }}>Retention:</span>
           {[
             { pct: 0, label: '0%' },
             { pct: 25, label: '25%' },
@@ -563,7 +563,7 @@ function CohortHeatmap({ matrix }: { matrix: CohortMatrix }) {
                   border: '1px solid rgba(255,255,255,0.08)',
                 }}
               />
-              <span style={{ fontSize: 10, color: 'var(--text-dim)' }}>{label}</span>
+              <span style={{ fontSize: 14, color: 'var(--text-dim)' }}>{label}</span>
             </div>
           ))}
         </div>
@@ -635,7 +635,7 @@ function AnalyticsTab() {
         <EmptyState
           icon={<BarChart3 size={40} />}
           title="No analytics data available"
-          description={error ? error : 'Connect your billing system to see MRR metrics, token usage, and churn analysis.'}
+          description={error ? error : 'Connect billing to see MRR metrics, usage, and churn analysis.'}
         />
       </TabShell>
     )

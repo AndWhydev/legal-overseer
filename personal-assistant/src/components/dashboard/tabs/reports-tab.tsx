@@ -355,7 +355,7 @@ export default function ReportsTab() {
             <EmptyState
               icon={<FileText size={48} />}
               title="No reports generated"
-              description="Monthly and weekly reports will appear here after your first full week"
+              description="Monthly and weekly reports will appear here after the first full week"
             />
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>

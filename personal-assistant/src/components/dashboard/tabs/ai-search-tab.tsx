@@ -804,8 +804,8 @@ function AISearchTab() {
         {!auditResult && activePanel === 'overview' && (
           <EmptyState
             icon={<Compass size={40} />}
-            title="Run your first visibility audit"
-            description="Discover how your website ranks in AI search engines like Perplexity, ChatGPT, and Gemini."
+            title="Run a visibility audit"
+            description="Discover how the website ranks in AI search engines like Perplexity, ChatGPT, and Gemini."
           />
         )}
 
@@ -1042,12 +1042,12 @@ function AISearchTab() {
             >
               Run a visibility audit first to generate targeted content recommendations. The content
               generator creates FAQ-structured, entity-rich pages optimized for AI search engines
-              to cite your business.
+              to cite the business.
             </p>
             {auditResult ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 <p style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
-                  Based on your audit, focus content on these absent/partial queries:
+                  Based on the audit, focus content on these absent/partial queries:
                 </p>
                 {auditResult.queryResults
                   .filter((r) => r.position !== 'mentioned')
@@ -1108,7 +1108,7 @@ function AISearchTab() {
                 lineHeight: 1.6,
               }}
             >
-              Generate JSON-LD structured data for your client websites. Copy and paste the output
+              Generate JSON-LD structured data for client websites. Copy and paste the output
               into the page &lt;head&gt;.
             </p>
             <SchemaGenerator />

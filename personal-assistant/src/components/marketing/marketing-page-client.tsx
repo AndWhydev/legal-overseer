@@ -8,22 +8,22 @@ const INTEGRATION_LOGOS = [
   { name: 'Gmail', icon: '📧' },
   { name: 'Outlook', icon: '📨' },
   { name: 'WhatsApp', icon: '💬' },
-  { name: 'Slack', icon: '🔔' },
+  { name: 'Slack', icon: '💭' },
   { name: 'Stripe', icon: '💳' },
   { name: 'Google Calendar', icon: '📅' },
-  { name: 'Zoom', icon: '📹' },
-  { name: 'HubSpot', icon: '📊' },
-  { name: 'Salesforce', icon: '🎯' },
-  { name: 'LinkedIn', icon: '🤝' },
-  { name: 'Twitter', icon: '𝕏' },
-  { name: 'GitHub', icon: '🐙' },
+  { name: 'Asana', icon: '📋' },
+  { name: 'Xero', icon: '📊' },
+  { name: 'iMessage', icon: '💬' },
+  { name: 'Telegram', icon: '✈' },
+  { name: 'WordPress', icon: '🌐' },
+  { name: 'Calendly', icon: '📆' },
 ]
 
 const FEATURES = [
-  { emoji: '🧠', title: 'Semantic Memory', description: 'AI remembers every conversation, context, and relationship. No more searching through threads or forgetting critical details.' },
-  { emoji: '⚡', title: 'Smart Triage', description: 'Automatically categorizes and prioritizes incoming communications. Your agents learn what matters most to you.' },
-  { emoji: '✅', title: 'Approval Queue', description: 'Set guardrails. Review important decisions before AI acts. Build trust through graduated automation.' },
-  { emoji: '📋', title: 'Kanban + CRM', description: 'Unified view of leads, projects, and tasks. AI agents handle status updates, follow-ups, and reminders automatically.' },
+  { emoji: '🧠', title: 'Total Recall', description: 'Every conversation, every relationship, every detail — remembered permanently. Nothing slips through the cracks.' },
+  { emoji: '⚡', title: 'Smart Triage', description: 'Incoming messages are categorised and prioritised automatically. We learn what matters and surface it first.' },
+  { emoji: '✅', title: 'Graduated Trust', description: 'High-confidence actions happen automatically. Medium-confidence decisions come to you for approval. Full control, zero busywork.' },
+  { emoji: '📋', title: 'Live Operations', description: 'Leads, projects, and tasks in one place. Status updates, follow-ups, and reminders happen without being asked.' },
 ]
 
 const PRICING_TIERS = [
@@ -42,14 +42,14 @@ export default function MarketingPageClient() {
         <div style={{ position: 'absolute', top: '-40%', right: '-20%', width: 600, height: 600, borderRadius: '50%', background: 'radial-gradient(circle, rgba(16,185,129,0.15) 0%, transparent 70%)', filter: 'blur(80px)', animation: 'float 20s ease-in-out infinite' }} />
         <div style={{ position: 'absolute', bottom: '-30%', left: '-10%', width: 500, height: 500, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,90,31,0.1) 0%, transparent 70%)', filter: 'blur(80px)', animation: 'float 25s ease-in-out infinite reverse' }} />
         <div style={{ position: 'relative', zIndex: 10, maxWidth: 900, textAlign: 'center' }}>
-          <h1 style={{ fontSize: 'clamp(36px, 8vw, 72px)', fontWeight: 500, lineHeight: 1.2, marginBottom: 24, letterSpacing: '-0.03em', color: '#F1F5F9' }}>Your AI operations co-pilot</h1>
-          <p style={{ fontSize: 'clamp(16px, 2vw, 20px)', color: '#94A3B8', marginBottom: 48, lineHeight: 1.6, maxWidth: 700, margin: '0 auto 48px' }}>BitBit remembers every conversation, understands every relationship, and handles the admin so you can do the work you&apos;re good at.</p>
+          <h1 style={{ fontSize: 'clamp(36px, 8vw, 72px)', fontWeight: 500, lineHeight: 1.2, marginBottom: 24, letterSpacing: '-0.03em', color: '#F1F5F9' }}>Operations, handled.</h1>
+          <p style={{ fontSize: 'clamp(16px, 2vw, 20px)', color: '#94A3B8', marginBottom: 48, lineHeight: 1.6, maxWidth: 700, margin: '0 auto 48px' }}>We remember every conversation, understand every relationship, and handle the admin — so you can focus on the work that matters.</p>
           <div style={{ display: 'flex', gap: 16, justifyContent: 'center', marginBottom: 60, flexWrap: 'wrap' }}>
-            <Link href="/onboard" className="bb-cta-primary" style={{ padding: '14px 32px', borderRadius: 12, background: '#10b981', color: '#fff', fontSize: 16, fontWeight: 500, textDecoration: 'none', display: 'inline-block', transition: 'all 200ms' }}>Start Free Trial</Link>
-            <button className="bb-cta-secondary" style={{ padding: '14px 32px', borderRadius: 12, background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#F1F5F9', fontSize: 16, fontWeight: 500, cursor: 'pointer', transition: 'all 200ms' }}>Watch Demo</button>
+            <Link href="/onboard" className="bb-cta-primary" style={{ padding: '14px 32px', borderRadius: 12, background: '#10b981', color: '#fff', fontSize: 16, fontWeight: 500, textDecoration: 'none', display: 'inline-block', transition: 'all 200ms' }}>Get Started</Link>
+            <Link href="#features" className="bb-cta-secondary" style={{ padding: '14px 32px', borderRadius: 12, background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#F1F5F9', fontSize: 16, fontWeight: 500, textDecoration: 'none', display: 'inline-block', transition: 'all 200ms' }}>See How It Works</Link>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24 }}>
-            <p style={{ fontSize: 14, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Powered by Claude 3.5 Sonnet</p>
+            <p style={{ fontSize: 14, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Trusted by agencies across Australia</p>
             <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
               {INTEGRATION_LOGOS.slice(0, 6).map((logo) => (
                 <div key={logo.name} className="bb-integration-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 44, height: 44, borderRadius: 12, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', fontSize: 16, transition: 'all 200ms' }} title={logo.name}>{logo.icon}</div>
@@ -76,7 +76,7 @@ export default function MarketingPageClient() {
             ))}
           </div>
           <div style={{ padding: '40px 32px', borderRadius: 20, background: 'rgba(10,14,23,0.5)', backdropFilter: 'blur(26px)', WebkitBackdropFilter: 'blur(26px)', border: '1px solid rgba(16,185,129,0.1)', textAlign: 'center' }}>
-            <h3 style={{ fontSize: 16, fontWeight: 500, marginBottom: 32, color: '#F1F5F9' }}>20+ Channel Integrations</h3>
+            <h3 style={{ fontSize: 16, fontWeight: 500, marginBottom: 32, color: '#F1F5F9' }}>15+ Integrations</h3>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(80px, 1fr))', gap: 16 }}>
               {INTEGRATION_LOGOS.map((logo) => (
                 <div key={logo.name} className="bb-integration-icon" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 16, borderRadius: 12, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', transition: 'all 200ms' }}>
@@ -99,7 +99,7 @@ export default function MarketingPageClient() {
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16, marginTop: 32 }}>
               <span style={{ fontSize: 14, color: isAnnual ? '#94A3B8' : '#F1F5F9' }}>Monthly</span>
               <button onClick={() => setIsAnnual(!isAnnual)} style={{ position: 'relative', width: 60, height: 32, borderRadius: 16, border: 'none', background: isAnnual ? '#10b981' : 'rgba(255,255,255,0.1)', cursor: 'pointer', transition: 'background 300ms' }}>
-                <div style={{ position: 'absolute', width: 28, height: 28, borderRadius: 14, background: '#fff', top: 2, left: isAnnual ? 30 : 2, transition: 'left 300ms' }} />
+                <div style={{ position: 'absolute', width: 28, height: 28, borderRadius: 16, background: '#fff', top: 2, left: isAnnual ? 30 : 2, transition: 'left 300ms' }} />
               </button>
               <span style={{ fontSize: 14, color: isAnnual ? '#F1F5F9' : '#94A3B8' }}>Annual</span>
               {isAnnual && <span style={{ display: 'inline-block', padding: '4px 12px', borderRadius: 20, background: 'rgba(16,185,129,0.15)', color: '#10b981', fontSize: 14, fontWeight: 500, marginLeft: 8 }}>Save 20%</span>}

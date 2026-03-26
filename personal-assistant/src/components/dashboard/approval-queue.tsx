@@ -268,7 +268,7 @@ export function ApprovalQueue() {
         <EmptyState
           icon={<CheckCircle2 size={48} />}
           title="No approvals pending"
-          description="When agents need your sign-off, requests will appear here"
+          description="When something needs sign-off, requests will appear here"
         />
       ) : null}
 

@@ -122,7 +122,7 @@ export const TOPBAR_CONFIGS: Record<string, TopbarConfig> = {
   },
   connections: {
     title: 'Connections',
-    breadcrumb: <IconBreadcrumb icon={Radio} text="Your integrations" />,
+    breadcrumb: <IconBreadcrumb icon={Radio} text="Connected channels" />,
   },
   medications: {
     title: 'Medications',

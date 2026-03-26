@@ -239,7 +239,7 @@ export function SidebarNav({
                 {displayName || 'User'}
               </div>
               <div style={{ fontSize: '14px', color: 'var(--text-secondary)', marginTop: '4px' }}>
-                Manage your account
+                Account settings
               </div>
             </div>
 

@@ -828,7 +828,7 @@ function TenderDetailDrawer({ tender, response, onClose, onAction, actionLoading
           {/* Key metrics */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
             <div style={{ ...glassCard, padding: '12px', textAlign: 'center' }}>
-              <p style={{ fontSize: 10, color: 'var(--text-secondary)', marginBottom: 4, textTransform: 'uppercase', fontWeight: 500 }}>
+              <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 4, textTransform: 'uppercase', fontWeight: 500 }}>
                 Value
               </p>
               <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)', fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)' }}>
@@ -836,7 +836,7 @@ function TenderDetailDrawer({ tender, response, onClose, onAction, actionLoading
               </p>
             </div>
             <div style={{ ...glassCard, padding: '12px', textAlign: 'center' }}>
-              <p style={{ fontSize: 10, color: 'var(--text-secondary)', marginBottom: 4, textTransform: 'uppercase', fontWeight: 500 }}>
+              <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 4, textTransform: 'uppercase', fontWeight: 500 }}>
                 Closing
               </p>
               <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>
@@ -844,7 +844,7 @@ function TenderDetailDrawer({ tender, response, onClose, onAction, actionLoading
               </p>
             </div>
             <div style={{ ...glassCard, padding: '12px', textAlign: 'center' }}>
-              <p style={{ fontSize: 10, color: 'var(--text-secondary)', marginBottom: 4, textTransform: 'uppercase', fontWeight: 500 }}>
+              <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 4, textTransform: 'uppercase', fontWeight: 500 }}>
                 Fit Score
               </p>
               {tender.fit_score !== null ? (

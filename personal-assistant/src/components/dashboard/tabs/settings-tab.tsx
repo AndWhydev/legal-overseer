@@ -16,13 +16,13 @@ import { useTheme, type ThemeName } from '@/lib/theme/theme-provider';
 const AUTOMATION_TYPES = [
   { id: 'lead_swarm', label: 'Lead Generation', description: 'Automatically find and score new leads' },
   { id: 'invoice_flow', label: 'Invoicing', description: 'Create and follow up on invoices' },
-  { id: 'sentry', label: 'Monitoring', description: 'Watch for issues and alert you' },
+  { id: 'sentry', label: 'Monitoring', description: 'Watch for issues and raise alerts' },
   { id: 'channel_triage', label: 'Message Sorting', description: 'Categorise incoming messages by priority' },
-  { id: 'client_comms', label: 'Client Emails', description: 'Draft email responses for your clients' },
+  { id: 'client_comms', label: 'Client Emails', description: 'Draft email responses for clients' },
   { id: 'proposal_bot', label: 'Proposals', description: 'Generate quotes and scope documents' },
   { id: 'client_onboarding', label: 'Onboarding', description: 'Guide new clients through setup' },
   { id: 'ad_scripts', label: 'Ad Copy', description: 'Write creative ad scripts and copy' },
-  { id: 'ai_search', label: 'SEO', description: 'Audit and improve your search visibility' },
+  { id: 'ai_search', label: 'SEO', description: 'Audit and improve search visibility' },
   { id: 'tender_hunter', label: 'Tenders', description: 'Find and respond to government tenders' },
 ] as const;
 
@@ -193,7 +193,7 @@ function WhatsAppWizardModal({ onClose, onConnected }: { onClose: () => void; on
             {alreadyConnected ? 'WhatsApp Connected' : 'Connect WhatsApp'}
           </h3>
           <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 4 }}>
-            {alreadyConnected ? 'Your account is active and receiving messages' : 'Link your WhatsApp account to BitBit'}
+            {alreadyConnected ? 'Connected and receiving messages' : 'Link WhatsApp to start receiving messages'}
           </p>
         </div>
 
@@ -314,7 +314,7 @@ export function SettingsConnectionsTab() {
         {/* Connections Grid */}
         <div>
           <h3 style={{ fontSize: 16, fontWeight: 500, color: 'var(--text-primary)', margin: 0 }}>Integrations</h3>
-          <p style={{ fontSize: 14, color: 'var(--text-secondary)', margin: '4px 0 0' }}>Connect your communication channels</p>
+          <p style={{ fontSize: 14, color: 'var(--text-secondary)', margin: '4px 0 0' }}>Connect communication channels</p>
         </div>
         <div>
           <ConnectionsGrid
@@ -447,7 +447,7 @@ export function SettingsAppearanceTab() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
         <div>
           <h3 style={{ fontSize: 16, fontWeight: 500, color: 'var(--text-primary)', margin: 0 }}>Theme</h3>
-          <p style={{ fontSize: 14, color: 'var(--text-secondary)', margin: '4px 0 0' }}>Choose your visual style.</p>
+          <p style={{ fontSize: 14, color: 'var(--text-secondary)', margin: '4px 0 0' }}>Choose a visual style.</p>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 12 }}>
           {themes.map(t => {

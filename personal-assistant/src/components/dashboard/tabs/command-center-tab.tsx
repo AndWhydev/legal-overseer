@@ -463,7 +463,7 @@ function CommandCenterTab() {
           <div className="p-4">
             <div className="text-xs text-muted-foreground mb-4 flex items-center gap-2">
               <Calendar size={14} />
-              <span>Connect Google Calendar to see your schedule</span>
+              <span>Connect Google Calendar to see the schedule</span>
             </div>
             <TimelineBar
               startLabel="09:00"

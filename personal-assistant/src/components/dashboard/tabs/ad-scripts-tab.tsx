@@ -762,7 +762,7 @@ function AdScriptsTab() {
           <EmptyState
             icon={<Sparkles size={40} />}
             title="No offer packages found"
-            description="Create offer packages or service tiers in your system to generate ad scripts."
+            description="Create offer packages or service tiers to generate ad scripts."
           />
         ) : (
           <>

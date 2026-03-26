@@ -195,11 +195,11 @@ export function BillingSettings() {
         >
           <AlertTriangle size={20} style={{ color: '#ef4444', flexShrink: 0 }} />
           <div style={{ flex: 1 }}>
-            <p style={{ color: '#ef4444', fontWeight: 600, fontSize: 14, margin: 0 }}>
+            <p style={{ color: '#ef4444', fontWeight: 500, fontSize: 14, margin: 0 }}>
               Payment past due
             </p>
             <p style={{ color: 'var(--text-secondary, #94A3B8)', fontSize: 13, margin: '4px 0 0 0' }}>
-              Your last payment failed. Update your payment method to avoid service interruption.
+              Last payment failed. Update the payment method to avoid service interruption.
             </p>
           </div>
           <button
@@ -235,7 +235,7 @@ export function BillingSettings() {
         <div className="flex items-center justify-between" style={{ marginBottom: 16 }}>
           <div className="flex items-center" style={{ gap: 10 }}>
             <CreditCard size={18} style={{ color: 'var(--text-secondary, #94A3B8)' }} />
-            <h3 style={{ color: 'var(--text-primary, #F1F5F9)', fontSize: 16, fontWeight: 600, margin: 0 }}>
+            <h3 style={{ color: 'var(--text-primary, #F1F5F9)', fontSize: 16, fontWeight: 500, margin: 0 }}>
               Current Plan
             </h3>
           </div>
@@ -259,7 +259,7 @@ export function BillingSettings() {
         </div>
 
         <div style={{ marginBottom: 12 }}>
-          <span style={{ color: 'var(--text-primary, #F1F5F9)', fontSize: 28, fontWeight: 700 }}>
+          <span style={{ color: 'var(--text-primary, #F1F5F9)', fontSize: 28, fontWeight: 500 }}>
             {plan.charAt(0).toUpperCase() + plan.slice(1)}
           </span>
         </div>
@@ -286,7 +286,7 @@ export function BillingSettings() {
             padding: '16px 20px',
           }}
         >
-          <p style={{ color: '#3b82f6', fontWeight: 600, fontSize: 14, margin: '0 0 6px 0' }}>
+          <p style={{ color: '#3b82f6', fontWeight: 500, fontSize: 14, margin: '0 0 6px 0' }}>
             Trial Period
           </p>
           <p style={{ color: 'var(--text-secondary, #94A3B8)', fontSize: 13, margin: 0 }}>
@@ -295,7 +295,7 @@ export function BillingSettings() {
                 <strong style={{ color: 'var(--text-primary, #F1F5F9)' }}>
                   {subscription.daysRemaining} day{subscription.daysRemaining !== 1 ? 's' : ''} remaining
                 </strong>
-                {' '}-- Your trial ends on{' '}
+                {' '}-- Trial ends on{' '}
                 {new Date(trialEndsAt).toLocaleDateString('en-AU', {
                   day: 'numeric',
                   month: 'long',
@@ -322,7 +322,7 @@ export function BillingSettings() {
           style={{
             color: 'var(--text-primary, #F1F5F9)',
             fontSize: 16,
-            fontWeight: 600,
+            fontWeight: 500,
             margin: '0 0 20px 0',
           }}
         >
@@ -368,7 +368,7 @@ export function BillingSettings() {
           style={{
             color: 'var(--text-primary, #F1F5F9)',
             fontSize: 16,
-            fontWeight: 600,
+            fontWeight: 500,
             margin: '0 0 16px 0',
           }}
         >

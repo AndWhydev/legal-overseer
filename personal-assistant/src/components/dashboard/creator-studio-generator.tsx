@@ -304,7 +304,7 @@ export function CreatorStudioGenerator() {
       {/* Right column: History */}
       <div style={{ ...sectionWrapper, overflowY: 'auto', borderLeft: '1px solid rgba(255, 255, 255, 0.05)' }}>
         <h2 style={sectionTitle}>Recent Generations</h2>
-        <p style={sectionDesc}>Your generated content appears here</p>
+        <p style={sectionDesc}>Generated content appears here</p>
 
         {history.length === 0 ? (
           <div
@@ -315,7 +315,7 @@ export function CreatorStudioGenerator() {
               marginTop: 24,
             }}
           >
-            <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>No content generated yet. Create your first one!</p>
+            <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>Nothing generated yet.</p>
           </div>
         ) : (
           <div>

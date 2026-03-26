@@ -142,7 +142,7 @@ export default function MarketingPage() {
               color: '#F1F5F9',
             }}
           >
-            Your AI operations co-pilot
+            Operations, handled.
           </h1>
 
           {/* Subheadline */}
@@ -238,7 +238,7 @@ export default function MarketingPage() {
                 letterSpacing: '0.08em',
               }}
             >
-              Powered by Claude 3.5 Sonnet
+              Trusted by agencies across Australia
             </p>
             <div
               style={{

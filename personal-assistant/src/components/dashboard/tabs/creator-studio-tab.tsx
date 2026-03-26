@@ -59,7 +59,7 @@ const TEMPLATES: Array<{
   {
     id: 'blog_posts',
     label: 'Blog Posts',
-    description: 'Full articles, outlines, and introductions for your audience',
+    description: 'Full articles, outlines, and introductions for the target audience',
     icon: '✍️',
   },
 ]
@@ -390,7 +390,7 @@ function CalendarView({
                     key={item.id}
                     title={`${TEMPLATE_LABELS[item.template_type]}: ${item.inputs.product_name}`}
                     style={{
-                      fontSize: 10,
+                      fontSize: 14,
                       padding: '4px 8px',
                       borderRadius: 4,
                       background: STATUS_BG[item.status],
@@ -410,7 +410,7 @@ function CalendarView({
                   </div>
                 ))}
                 {dayItems.length > 3 && (
-                  <div style={{ fontSize: 10, color: 'var(--text-dim, #475569)' }}>
+                  <div style={{ fontSize: 14, color: 'var(--text-dim, #475569)' }}>
                     +{dayItems.length - 3} more
                   </div>
                 )}
@@ -1194,7 +1194,7 @@ export default function CreatorStudioTab() {
                     No content yet
                   </div>
                   <div style={{ fontSize: 14, color: 'var(--text-secondary, #94A3B8)', marginBottom: 20 }}>
-                    Generate your first piece of content to see it here.
+                    Generated content will appear here.
                   </div>
                   <button onClick={() => setView('generate')} style={accentBtn}>
                     Start generating

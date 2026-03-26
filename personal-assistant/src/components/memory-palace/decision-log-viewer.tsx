@@ -124,7 +124,7 @@ export function DecisionLogViewer({ orgId, entityId }: DecisionLogViewerProps) {
                 alignItems: 'center',
                 justifyContent: 'center',
                 fontSize: '14px',
-                fontWeight: 700,
+                fontWeight: 500,
               }}>
                 {domainIcon}
               </span>

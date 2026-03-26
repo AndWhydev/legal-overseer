@@ -267,7 +267,7 @@ function KnowledgeTab() {
               fontSize: 14,
             }}>
               <Book size={28} style={{ opacity: 0.4 }} />
-              No entities yet. Add contacts and relationships to see your knowledge graph.
+              No entities yet. Add contacts and relationships to build the knowledge graph.
             </div>
           )}
         </div>
@@ -713,8 +713,8 @@ function KnowledgeTab() {
         {!selectedEntity && !query && (
           <EmptyState
             icon={<Book size={40} />}
-            title="Search your knowledge base"
-            description="Find contacts, projects, invoices, and tasks to see how they connect across your organization."
+            title="Search the knowledge base"
+            description="Find contacts, projects, invoices, and tasks to see how they connect across the organisation."
           />
         )}
       </div>

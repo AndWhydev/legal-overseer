@@ -999,7 +999,7 @@ function InboxTab() {
           <EmptyState
             icon={<CheckCircle2 size={40} />}
             title="All caught up"
-            description="No messages to show. Adjust your filters or wait for new messages."
+            description="No messages to show. Adjust filters or wait for new messages."
           />
         ) : (
           <>
@@ -1461,7 +1461,7 @@ function UnifiedFilterBar({
             )}
             {cfg.label}
             {pill !== 'all' && pillCounts[pill] > 0 && (
-              <span style={{ fontSize: 10, fontWeight: 500, opacity: isActive ? 0.6 : 0.5, marginLeft: -2 }}>
+              <span style={{ fontSize: 14, fontWeight: 500, opacity: isActive ? 0.6 : 0.5, marginLeft: -2 }}>
                 {pillCounts[pill]}
               </span>
             )}
@@ -1626,7 +1626,7 @@ function SnoozePickerPopover({
         animation: 'fadeSlideUp 140ms cubic-bezier(0.16, 1, 0.3, 1)',
       }}
     >
-      <div style={{ fontSize: 10, fontWeight: 500, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.04em', padding: '8px 12px 4px' }}>
+      <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.04em', padding: '8px 12px 4px' }}>
         Snooze until
       </div>
       {options.map((opt) => (
@@ -2079,7 +2079,7 @@ function ExpandedMessageRow({
                         {sanitizeText(String(tm.bodyPreview || '').slice(0, 70))}
                       </span>
                     )}
-                    <span style={{ fontSize: 10, color: 'var(--text-dim)', flexShrink: 0, marginLeft: 'auto' }}>
+                    <span style={{ fontSize: 14, color: 'var(--text-dim)', flexShrink: 0, marginLeft: 'auto' }}>
                       {formatTimeAgo(tm.receivedAt)}
                     </span>
                     {!isLatest && (
@@ -2210,7 +2210,7 @@ function ExpandedMessageRow({
           </div>
         )}
         {replyText && (
-          <div style={{ fontSize: 10, color: 'var(--text-dim)', marginTop: 4, paddingLeft: 16 }}>
+          <div style={{ fontSize: 14, color: 'var(--text-dim)', marginTop: 4, paddingLeft: 16 }}>
             <kbd style={{ padding: '1px 4px', borderRadius: 3, background: 'var(--hover-bg)', border: '1px solid var(--glass-divider)', fontSize: 9, fontFamily: 'inherit' }}>Cmd+Enter</kbd> to send
           </div>
         )}

@@ -284,7 +284,7 @@ function ActivityTab() {
             <EmptyState
               icon={<Activity size={48} />}
               title="No activity yet"
-              description="Activity will appear here as you and your agents get to work"
+              description="Activity will appear here as things get moving"
             />
           )}
 

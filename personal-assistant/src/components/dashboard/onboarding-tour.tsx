@@ -33,7 +33,7 @@ const TOUR_STEPS: TourStep[] = [
   {
     id: 'chat',
     title: 'Chat',
-    description: 'Ask me to draft an email, check on an invoice, or look something up. I work across all your connected tools.',
+    description: 'We can draft emails, check invoices, look things up — across all connected tools.',
     icon: Handshake,
     tabId: 'chat',
     position: 'center',
@@ -41,7 +41,7 @@ const TOUR_STEPS: TourStep[] = [
   {
     id: 'approvals',
     title: 'Approvals',
-    description: 'Before I send anything or take action, I check with you here first.',
+    description: 'Before sending anything or taking action, decisions that need sign-off come here first.',
     icon: ShieldCheck,
     tabId: 'approvals',
     position: 'center',

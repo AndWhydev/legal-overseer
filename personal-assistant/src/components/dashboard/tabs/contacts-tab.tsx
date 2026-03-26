@@ -187,7 +187,7 @@ function ContactsTab() {
       <EmptyState
         icon={<UserPlus size={40} />}
         title="No contacts yet"
-        description="Import or add your first contact to get started."
+        description="Import or add a contact to get started."
       />
     )
   }
@@ -381,7 +381,7 @@ function ContactCard({ contact, onOpen }: { contact: Contact; onOpen: () => void
             alignItems: 'center',
             padding: '2px 8px',
             borderRadius: 8,
-            fontSize: 10,
+            fontSize: 14,
             fontWeight: 500,
             textTransform: 'uppercase',
             background: `${typeColor}1F`,
@@ -441,7 +441,7 @@ function ContactCard({ contact, onOpen }: { contact: Contact; onOpen: () => void
           }}>
             {tags.slice(0, 3).map(tag => (
               <span key={tag} style={{
-                fontSize: 10,
+                fontSize: 14,
                 fontWeight: 500,
                 padding: '2px 8px',
                 borderRadius: 8,
@@ -453,7 +453,7 @@ function ContactCard({ contact, onOpen }: { contact: Contact; onOpen: () => void
             ))}
             {tags.length > 3 && (
               <span style={{
-                fontSize: 10,
+                fontSize: 14,
                 fontWeight: 500,
                 padding: '2px 8px',
                 borderRadius: 8,
