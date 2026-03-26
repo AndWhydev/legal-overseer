@@ -528,7 +528,8 @@ function LoginPageContent() {
               </label>
               <input
                 id="email"
-                type="email"
+                type="text"
+                inputMode="email"
                 placeholder="name@yourcompany.com"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
@@ -536,31 +537,17 @@ function LoginPageContent() {
                 autoFocus
                 autoComplete="email"
                 disabled={isBusy}
+                data-login-input=""
                 style={{
                   width: '100%',
                   height: 48,
                   padding: '0 16px',
                   borderRadius: 12,
-                  border: '1.5px solid #c0c0c0',
-                  background: '#f7f7f7',
-                  color: '#111',
                   fontSize: 14,
                   outline: 'none',
                   transition: 'border-color 150ms, box-shadow 150ms, background 150ms',
                   fontFamily: 'inherit',
                   boxSizing: 'border-box' as const,
-                  WebkitAppearance: 'none' as const,
-                  appearance: 'none' as const,
-                }}
-                onFocus={e => {
-                  e.currentTarget.style.borderColor = '#111'
-                  e.currentTarget.style.boxShadow = '0 0 0 3px rgba(0,0,0,0.08)'
-                  e.currentTarget.style.background = '#fff'
-                }}
-                onBlur={e => {
-                  e.currentTarget.style.borderColor = '#c0c0c0'
-                  e.currentTarget.style.boxShadow = 'none'
-                  e.currentTarget.style.background = '#f7f7f7'
                 }}
               />
 
@@ -660,13 +647,28 @@ function LoginPageContent() {
         @keyframes bb-login-spin {
           to { transform: rotate(360deg); }
         }
+        /* Force all login inputs to have visible borders and light backgrounds */
+        [data-login-input] {
+          background: #f7f7f7 !important;
+          border: 1.5px solid #c0c0c0 !important;
+          color: #111 !important;
+          -webkit-appearance: none !important;
+          appearance: none !important;
+          color-scheme: light !important;
+        }
+        [data-login-input]:focus {
+          background: #fff !important;
+          border-color: #111 !important;
+          box-shadow: 0 0 0 3px rgba(0,0,0,0.08) !important;
+        }
         /* Override browser autofill dark-mode backgrounds */
-        input:-webkit-autofill,
-        input:-webkit-autofill:hover,
-        input:-webkit-autofill:focus,
-        input:-webkit-autofill:active {
-          -webkit-box-shadow: 0 0 0 1000px #fff inset !important;
+        [data-login-input]:-webkit-autofill,
+        [data-login-input]:-webkit-autofill:hover,
+        [data-login-input]:-webkit-autofill:focus,
+        [data-login-input]:-webkit-autofill:active {
+          -webkit-box-shadow: 0 0 0 1000px #f7f7f7 inset !important;
           -webkit-text-fill-color: #111 !important;
+          border: 1.5px solid #c0c0c0 !important;
           transition: background-color 5000s ease-in-out 0s;
         }
         /* Focus-visible ring for keyboard navigation */
@@ -773,25 +775,22 @@ function DevPasswordLogin() {
       {expanded && (
         <form onSubmit={handleDevLogin} style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
           <input
-            type="email"
+            type="text"
+            inputMode="email"
             placeholder="Email"
             value={devEmail}
             onChange={e => setDevEmail(e.target.value)}
             autoComplete="email"
+            data-login-input=""
             style={{
               width: '100%',
               height: 44,
               padding: '0 14px',
               borderRadius: 10,
-              border: '1.5px solid #c0c0c0',
-              background: '#f7f7f7',
-              color: '#111',
               fontSize: 13,
               outline: 'none',
               boxSizing: 'border-box' as const,
               fontFamily: 'inherit',
-              WebkitAppearance: 'none' as const,
-              appearance: 'none' as const,
             }}
           />
           <input
@@ -800,20 +799,16 @@ function DevPasswordLogin() {
             value={devPassword}
             onChange={e => setDevPassword(e.target.value)}
             autoComplete="current-password"
+            data-login-input=""
             style={{
               width: '100%',
               height: 44,
               padding: '0 14px',
               borderRadius: 10,
-              border: '1.5px solid #c0c0c0',
-              background: '#f7f7f7',
-              color: '#111',
               fontSize: 13,
               outline: 'none',
               boxSizing: 'border-box' as const,
               fontFamily: 'inherit',
-              WebkitAppearance: 'none' as const,
-              appearance: 'none' as const,
             }}
           />
           {devStatus === 'error' && (
