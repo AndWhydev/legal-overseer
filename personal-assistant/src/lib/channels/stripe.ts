@@ -243,7 +243,7 @@ export const stripeAdapter: ChannelAdapter = {
   icon: 'CreditCard',
 
   async pull(config, since) {
-    const secretKey = process.env.STRIPE_SECRET_KEY
+    const secretKey = process.env.STRIPE_SECRET_KEY?.trim()
     if (!secretKey) return []
 
     const sinceDate = since || new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
@@ -309,6 +309,6 @@ export const stripeAdapter: ChannelAdapter = {
   },
 
   async isAvailable() {
-    return Boolean(process.env.STRIPE_SECRET_KEY)
+    return Boolean(process.env.STRIPE_SECRET_KEY?.trim())
   },
 }

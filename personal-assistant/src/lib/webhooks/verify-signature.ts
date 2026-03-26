@@ -37,7 +37,7 @@ export class WebhookVerificationError extends Error {
 }
 
 function getStripeClient(): StripeWebhookClient {
-  const stripeKey = process.env.STRIPE_SECRET_KEY
+  const stripeKey = process.env.STRIPE_SECRET_KEY?.trim()
   if (!stripeKey) {
     throw new Error('STRIPE_SECRET_KEY environment variable is required')
   }

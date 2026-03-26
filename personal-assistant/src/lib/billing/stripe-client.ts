@@ -13,7 +13,7 @@ let _stripe: Stripe | null = null
  */
 export function getStripe(): Stripe {
   if (!_stripe) {
-    const key = process.env.STRIPE_SECRET_KEY
+    const key = process.env.STRIPE_SECRET_KEY?.trim()
     if (!key) throw new Error('STRIPE_SECRET_KEY is not set')
     _stripe = new Stripe(key, {
       apiVersion: '2025-03-31.basil' as Stripe.LatestApiVersion,

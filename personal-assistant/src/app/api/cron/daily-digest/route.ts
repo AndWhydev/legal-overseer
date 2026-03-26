@@ -21,6 +21,10 @@ export async function GET(request: Request) {
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString()
     const results: Record<string, unknown>[] = []
 
+    // Track email addresses that already received a digest in this run
+    // to prevent duplicate emails when multiple orgs share the same recipient
+    const emailedRecipients = new Set<string>()
+
     for (const org of orgs ?? []) {
       const orgId = org.id
 
@@ -85,15 +89,29 @@ export async function GET(request: Request) {
           })
         }
 
+        // Determine which channels to use for this org.
+        // Always insert a dashboard notification (scoped per org).
+        // Only send email if the recipient hasn't already received one this run,
+        // preventing duplicate emails when multiple orgs share the same address.
+        const toEmail = (process.env.NOTIFICATION_TO_EMAIL || 'hi@torkay.com').toLowerCase()
+        const channels: ('email' | 'dashboard')[] = emailedRecipients.has(toEmail)
+          ? ['dashboard']
+          : ['email', 'dashboard']
+
         const dispatchResult = await dispatchNotification(supabase, {
           orgId,
           type: 'daily_digest',
           title: `Daily Digest - ${digestData.date}`,
           body: `${digestData.agentRuns} agent runs, ${approvalsPending} approvals pending, ${digestData.leadsReceived} leads`,
           urgency: 'low',
-          channels: ['email', 'dashboard'],
+          channels,
           metadata: digestData as unknown as Record<string, unknown>,
         })
+
+        // Mark this recipient as already emailed
+        if (channels.includes('email')) {
+          emailedRecipients.add(toEmail)
+        }
 
         results.push({ orgId, digest: digestData, dispatch: dispatchResult })
       } catch (orgErr) {
@@ -106,7 +124,7 @@ export async function GET(request: Request) {
     }
 
     return {
-      message: `Daily digest dispatched for ${orgs?.length ?? 0} orgs`,
+      message: `Daily digest dispatched for ${orgs?.length ?? 0} orgs (${emailedRecipients.size} email(s) sent)`,
       details: { results },
     }
   })
