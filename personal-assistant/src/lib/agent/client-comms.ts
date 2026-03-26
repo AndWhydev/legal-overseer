@@ -7,8 +7,11 @@ import { getTemplate, mergeTemplate } from './templates'
 import { getClientProfile, type ClientProfile } from './client-profiles'
 import { analyzeSentiment, type SentimentResult } from './sentiment'
 import { enrichContact } from './contact-enrichment'
+import { assembleDraftContext, type DraftContext } from './draft-context-assembler'
 import { resolveModel } from '@/lib/agent/model-registry'
 import { getOrgNotificationConfig } from '@/lib/org/notification-config'
+import { adaptDraft } from '@/lib/roles/comms/tone-adapter'
+import { learnClientTone } from '@/lib/roles/comms/tone-adapter'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -207,8 +210,30 @@ export async function draftReply(
     })
   }
 
-  // LLM draft (Sonnet for quality)
-  const body = await generateContextualReplyWithLLM(
+  // Assemble rich context for LLM drafting (graceful fallback on failure)
+  let draftCtx: DraftContext | undefined
+  let contactId: string | undefined
+  try {
+    const { data: contactForContext } = await supabase
+      .from('contacts')
+      .select('id')
+      .eq('org_id', orgId)
+      .eq('slug', request.contactSlug)
+      .single()
+
+    if (contactForContext) {
+      contactId = contactForContext.id
+      draftCtx = await assembleDraftContext(
+        supabase, orgId, contactForContext.id, contactName,
+        request.incomingMessage, request.channel,
+      )
+    }
+  } catch {
+    // Context assembly failed -- fall back to context-free drafting
+  }
+
+  // LLM draft (Sonnet for quality) with enriched context
+  const rawDraft = await generateContextualReplyWithLLM(
     contactName,
     request.incomingMessage,
     voice.tone,
@@ -216,13 +241,26 @@ export async function draftReply(
     voice.signOff,
     request.channel,
     sentiment,
+    draftCtx,
   )
+
+  // Apply tone adaptation based on contact's communication style
+  let body = rawDraft
+  try {
+    const toneProfile = contactId
+      ? await learnClientTone(supabase, orgId, contactId)
+      : null
+    const adapted = adaptDraft(rawDraft, toneProfile)
+    body = adapted.adaptedDraft
+  } catch {
+    // Tone adaptation failed -- use raw draft
+  }
 
   return maybeQueueForApproval(supabase, orgId, request, {
     subject: request.channel === 'email' ? `Re: ${contactName}` : undefined,
     body,
     voice: voice.voiceName,
-    confidence: 0.7,
+    confidence: draftCtx?.confidenceScore ?? 0.7,
     sentiment,
   })
 }
@@ -291,6 +329,7 @@ async function generateContextualReplyWithLLM(
   signOff: string,
   channel: 'email' | 'whatsapp' | 'sms',
   sentiment?: SentimentResult,
+  draftCtx?: DraftContext,
 ): Promise<string> {
   const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey) {
@@ -313,16 +352,38 @@ async function generateContextualReplyWithLLM(
       sms: 'Write a very short SMS reply. Maximum 2-3 sentences.',
     }
 
-    const systemPrompt = `You are a professional communication assistant drafting ${channel} replies.
+    const systemPrompt = `You are drafting a ${channel} reply on behalf of the business owner.
 
+## Contact: ${name}
+${draftCtx?.contactBriefing || ''}
+
+## Relationship
+${draftCtx ? `Strength: ${draftCtx.relationshipScore}/100, Trend: ${draftCtx.relationshipTrend}` : 'Unknown contact'}
+
+## Recent Conversation History
+${draftCtx?.conversationHistory || 'No prior messages found.'}
+
+## Relevant Context
+${draftCtx?.ragContext || 'No additional context.'}
+
+## Institutional Knowledge
+${draftCtx?.memoryRecall || 'No specific memories.'}
+
+## Standing Orders
+${draftCtx?.standingOrders || 'No specific directives.'}
+
+## Voice
 Tone: ${tone}
 ${styleGuide ? `Style Guide: ${styleGuide}` : ''}
 ${voiceProfileText ? `Voice Profile:\n${voiceProfileText}` : ''}
+Sign off: ${signOff}
 ${sentimentNote}
 
 ${channelGuidance[channel] || ''}
 
-Draft a natural reply. End with "${signOff}" where appropriate.
+Draft a natural reply that demonstrates knowledge of the relationship and ongoing work.
+Reference specific projects, tasks, or interactions where relevant -- but only if they appear in the context above.
+Do NOT fabricate project names or details not present in the context.
 Return ONLY the message body, no metadata.`
 
     const message = await client.messages.create({
