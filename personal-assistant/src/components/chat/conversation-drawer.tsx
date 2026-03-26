@@ -129,6 +129,7 @@ export function ConversationDrawer({
               style={{ overflow: 'hidden' }}
             >
               <ConversationSearch
+                threads={threads}
                 onSelectThread={threadId => {
                   onSelectThread(threadId)
                   onClose()
@@ -140,7 +141,7 @@ export function ConversationDrawer({
         </AnimatePresence>
 
         {/* New chat — compact pill */}
-        <div style={{ padding: '8px 12px 8px' }}>
+        <div style={{ padding: '10px 12px 10px' }}>
           <button
             className="bb-chat__drawer-new-btn"
             onClick={() => {

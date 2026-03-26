@@ -1,52 +1,39 @@
 'use client'
 
-import React, { useState, useCallback, useRef } from 'react'
+import React, { useState, useMemo } from 'react'
 import { Search, X } from 'lucide-react'
 
-interface SearchResult {
+interface Thread {
   id: string
-  content: string
-  role: string
-  thread_id: string
-  created_at: string
+  title: string | null
+  lastActivity: string
+  messageCount: number
+  preview: string | null
 }
 
 interface ConversationSearchProps {
+  threads: Thread[]
   onSelectThread: (threadId: string) => void
   onClose: () => void
 }
 
-export function ConversationSearch({ onSelectThread, onClose }: ConversationSearchProps) {
+export function ConversationSearch({ threads, onSelectThread, onClose }: ConversationSearchProps) {
   const [query, setQuery] = useState('')
-  const [results, setResults] = useState<SearchResult[]>([])
-  const [loading, setLoading] = useState(false)
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined)
 
-  const handleSearch = useCallback((q: string) => {
-    setQuery(q)
-    clearTimeout(debounceRef.current)
-    if (q.length < 2) {
-      setResults([])
-      return
-    }
-    debounceRef.current = setTimeout(async () => {
-      setLoading(true)
-      try {
-        const res = await fetch(`/api/agent/chat/history?search=${encodeURIComponent(q)}`)
-        if (res.ok) {
-          const data = await res.json()
-          setResults(data.results || [])
-        }
-      } catch {
-        // silent
-      } finally {
-        setLoading(false)
-      }
-    }, 300)
-  }, [])
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    if (q.length < 2) return []
+    return threads.filter(t => {
+      const title = (t.title || '').toLowerCase()
+      const preview = (t.preview || '').toLowerCase()
+      return title.includes(q) || preview.includes(q)
+    })
+  }, [query, threads])
+
+  const showNoResults = query.trim().length >= 2 && filtered.length === 0
 
   return (
-    <div style={{ padding: '12px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+    <div style={{ padding: '4px 12px 0' }}>
       <div
         style={{
           display: 'flex',
@@ -63,7 +50,7 @@ export function ConversationSearch({ onSelectThread, onClose }: ConversationSear
           type="text"
           className="bb-naked-input"
           value={query}
-          onChange={e => handleSearch(e.target.value)}
+          onChange={e => setQuery(e.target.value)}
           placeholder="Search conversations..."
           autoFocus
           style={{
@@ -88,12 +75,12 @@ export function ConversationSearch({ onSelectThread, onClose }: ConversationSear
           <X size={12} />
         </button>
       </div>
-      {results.length > 0 && (
-        <div style={{ marginTop: 8, maxHeight: 240, overflow: 'auto' }}>
-          {results.map(r => (
+      {filtered.length > 0 && (
+        <div style={{ marginTop: 8, maxHeight: 300, overflow: 'auto' }}>
+          {filtered.map(t => (
             <button
-              key={r.id}
-              onClick={() => onSelectThread(r.thread_id)}
+              key={t.id}
+              onClick={() => onSelectThread(t.id)}
               style={{
                 display: 'block',
                 width: '100%',
@@ -115,27 +102,19 @@ export function ConversationSearch({ onSelectThread, onClose }: ConversationSear
                 e.currentTarget.style.background = 'transparent'
               }}
             >
-              <span
-                style={{
-                  color: 'var(--text-muted)',
-                  fontSize: 11,
-                  textTransform: 'capitalize',
-                }}
-              >
-                {r.role}
-              </span>
-              {' · '}
-              {r.content.length > 80 ? r.content.slice(0, 77) + '...' : r.content}
+              <div style={{ color: 'var(--text-primary)', fontSize: 13, fontWeight: 600, marginBottom: 2 }}>
+                {t.title || 'Untitled'}
+              </div>
+              {t.preview && (
+                <div style={{ color: 'var(--text-muted)', fontSize: 11, lineHeight: 1.4 }}>
+                  {t.preview.length > 80 ? t.preview.slice(0, 77) + '...' : t.preview}
+                </div>
+              )}
             </button>
           ))}
         </div>
       )}
-      {loading && (
-        <div style={{ marginTop: 8, fontSize: 12, color: 'var(--text-muted)' }}>
-          Searching...
-        </div>
-      )}
-      {!loading && query.length >= 2 && results.length === 0 && (
+      {showNoResults && (
         <div style={{ marginTop: 8, fontSize: 12, color: 'var(--text-muted)' }}>
           No results
         </div>
