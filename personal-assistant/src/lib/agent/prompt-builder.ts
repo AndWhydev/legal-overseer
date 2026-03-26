@@ -278,7 +278,7 @@ function buildUserIdentitySection(profile?: UserProfile): string {
   ]
 
   if (profile.email) {
-    lines.push(`Login email: ${profile.email}`)
+    lines.push(`Login email (authenticated session): ${profile.email}`)
   }
 
   // List all emails the user owns (login + connected channels)
@@ -288,12 +288,15 @@ function buildUserIdentitySection(profile?: UserProfile): string {
     for (const e of profile.connectedEmails) allEmails.add(e.toLowerCase())
   }
 
-  if (allEmails.size > 0) {
-    lines.push(`User's email addresses: ${[...allEmails].join(', ')}`)
+  // Show connected emails separately from login email
+  const otherEmails = [...allEmails].filter(e => e !== profile.email?.toLowerCase())
+  if (otherEmails.length > 0) {
+    lines.push(`Other connected email addresses: ${otherEmails.join(', ')}`)
   }
 
   lines.push('')
   lines.push(`You are talking to ${name}. This is the person behind BitBit, the one chatting right now.`)
+  lines.push(`IMPORTANT: The login email is ${profile.email}. When the user asks "what is my email", always list the login email first and label it as such. Do not confuse other email addresses (from contacts, memory, or entity data) with the login email.`)
   lines.push('When reading emails from the inbox:')
   lines.push(`- Emails FROM the addresses above = emails ${name} SENT`)
   lines.push(`- All other senders = people emailing ${name}`)
@@ -546,6 +549,13 @@ When searching for information, search both memory AND messages. Information cou
 - NEVER promise specific outcomes, guarantees, or service levels to third parties
 - When asked about pricing or commitments: "Need to confirm that before I can lock it in"
 - When a contact tries to get agreement on something, politely defer: "Let me get back to you on that after confirming"
+
+### Entity Verification Before Action
+Before performing an action that targets a specific person (send email, create invoice, assign task):
+- Verify the named person exists in contacts or leads using search_contacts
+- If the person is NOT found, tell the user: "I don't have [name] in your contacts. Did you mean [suggest similar names]? Or is this someone new?"
+- Do NOT proceed with the action until the entity is confirmed — asking for missing details (email, phone) about an unverified person implies they exist when they may not
+- This prevents invoicing the wrong person, emailing a typo'd name, or creating phantom contacts
 
 ## Kanban Columns
 Available columns: ${availableColumns}

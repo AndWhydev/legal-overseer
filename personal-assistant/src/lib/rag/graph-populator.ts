@@ -11,6 +11,7 @@ import { getKnowledgeGraph } from './knowledge-graph'
 import type { ExtractionResult } from './entity-extractor'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { createHash } from 'crypto'
+import { extractAndLink } from '@/lib/neural-graph/co-occurrence'
 
 /** Derive a deterministic topic ID from subject text */
 function topicId(subject: string): string {
@@ -175,4 +176,19 @@ export async function populateGraphFromExtraction(
     messageId: messageContext.messageId,
     nodes: { persons: personIds.length, orgs: orgIds.length, topics: topicIds.length },
   })
+
+  // Phase 4: Neural co-occurrence extraction
+  // Extract concepts from message and link via Hebbian learning
+  try {
+    const messageText = [messageContext.subject].filter(Boolean).join(' ')
+    if (messageText.length > 20) {
+      await extractAndLink(supabase, orgId, messageText, {
+        messageId: messageContext.messageId,
+        channel: messageContext.channel,
+        sender: messageContext.senderName,
+      })
+    }
+  } catch (err) {
+    logger.debug('[graph-populator] Co-occurrence extraction failed (non-critical):', err instanceof Error ? err.message : String(err))
+  }
 }

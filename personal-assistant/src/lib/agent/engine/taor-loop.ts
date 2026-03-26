@@ -272,12 +272,9 @@ export async function* runTAORLoop(
             messages,
           }
 
-          // Server-side compaction: handles context overflow automatically
-          if (COMPACTION_ENABLED) {
-            streamConfig.betas = ['interleaved-thinking-2025-05-14', 'compact-2026-01-12']
-          } else {
-            streamConfig.betas = ['interleaved-thinking-2025-05-14']
-          }
+          // Note: interleaved thinking is GA in SDK v0.74+ (no beta flag needed).
+          // Compaction (compact-2026-01-12) remains in beta — use client.beta.messages
+          // if re-enabling. For now, context overflow is handled by safety ceiling.
 
           if (purpose === 'synthesis') {
             streamConfig.thinking = { type: 'enabled', budget_tokens: 8192 }
