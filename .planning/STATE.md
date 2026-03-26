@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Media, Billing & Growth Roles
 status: completed
-stopped_at: Completed 24-01-PLAN.md (Content Creator Tool Group) -- v1.4 MILESTONE COMPLETE
-last_updated: "2026-03-18T20:31:29.804Z"
-last_activity: 2026-03-18 -- Completed 24-01-PLAN.md (Content Creator Tool Group)
+stopped_at: Retroactive close-out of phases 22b-25 (Comms Role, Sales Role, Intelligence Layer, Role Dashboard) -- v1.4 MILESTONE COMPLETE
+last_updated: "2026-03-26T21:45:00.000Z"
+last_activity: 2026-03-26 -- Retroactive summaries for 12 plans across 4 phases (22-comms-role, 23-sales-role, 24-intelligence-layer, 25-role-dashboard)
 progress:
-  total_phases: 18
-  completed_phases: 12
-  total_plans: 33
-  completed_plans: 33
+  total_phases: 22
+  completed_phases: 22
+  total_plans: 45
+  completed_plans: 45
   percent: 100
 ---
 
@@ -21,22 +21,22 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-18)
 
 **Core value:** BitBit understands the business better than the business owner -- when Andy says "Invoice Sezer for the White House RE work", BitBit knows who Sezer is, what the work was, the rate, and whether it's already been invoiced.
-**Current focus:** v1.4 Media, Billing & Growth Roles -- Phase 24 (Content Creator)
+**Current focus:** v1.4 Media, Billing & Growth Roles -- MILESTONE COMPLETE
 
 ## Current Position
 
-Phase: 24 of 24 (Content Creator)
-Plan: 1 of 1 in current phase (COMPLETE)
+Phase: 25 of 25 (Role Dashboard)
+Plan: 3 of 3 in current phase (COMPLETE)
 Status: Milestone Complete
-Last activity: 2026-03-18 -- Completed 24-01-PLAN.md (Content Creator Tool Group)
+Last activity: 2026-03-26 - Completed quick task 21: Improve whisper text generation
 
 Progress: v1.0 ======== | v1.1 ======== | v1.2 ======== | v1.4 [===========] 100%
 
 ## Performance Metrics
 
 **Delivery totals:**
-- Total plans completed: 67 (v1.0: 19, v1.1: 16, v1.2: 22, v1.4: 10)
-- Milestones shipped: v1.0 (2026-02-21), v1.1 (2026-02-22), v1.2 (2026-03-02)
+- Total plans completed: 79 (v1.0: 19, v1.1: 16, v1.2: 22, v1.4: 22)
+- Milestones shipped: v1.0 (2026-02-21), v1.1 (2026-02-22), v1.2 (2026-03-02), v1.4 (2026-03-26)
 
 **v1.4 Phases:**
 
@@ -47,6 +47,10 @@ Progress: v1.0 ======== | v1.1 ======== | v1.2 ======== | v1.4 [===========] 100
 | 22. Cost Controls & Ad Script Generator | 2 | COMPLETE |
 | 23. SEO Monitor & Tender Hunter | 2 | COMPLETE |
 | 24. Content Creator | 1 | COMPLETE |
+| 22b. Comms Role | 3 | COMPLETE |
+| 23b. Sales Role | 3 | COMPLETE |
+| 24b. Intelligence Layer | 3 | COMPLETE |
+| 25. Role Dashboard | 3 | COMPLETE |
 
 ## Accumulated Context
 
@@ -105,6 +109,12 @@ See PROJECT.md Key Decisions table.
 - Local Docker unavailable for supabase lint
 - ~~Fragmented Stripe webhook handling~~ RESOLVED in 21-01: consolidated into single /api/billing/webhook endpoint
 - ~~Growth role token costs can spiral 10-50x vs classification tasks~~ RESOLVED in 22-01: per-role budget enforcement with daily limits and per-execution caps
+
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Status | Directory |
+|---|-------------|------|--------|--------|-----------|
+| 21 | Improve whisper text generation to be user-facing, concise single-line, product-oriented | 2026-03-26 | 7bdfbba6 | Verified | [21-improve-whisper-text](./quick/21-improve-whisper-text-generation-to-be-us/) |
 
 ## Session Continuity
 
