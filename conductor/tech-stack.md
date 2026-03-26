@@ -124,7 +124,7 @@ bitbit/                      # npm workspaces root
 ## Database
 
 - **Engine**: PostgreSQL via Supabase
-- **Migrations**: 93 SQL migration files in `personal-assistant/supabase/migrations/`
+- **Migrations**: 120 SQL migration files in `personal-assistant/supabase/migrations/`
 - **Auth**: Supabase Auth with RLS policies
 - **Tenancy**: Dual-tier — personal orgs (auto-created) + shared orgs
 - **Key patterns**: RLS on all tables, `org_id` scoping, `created_by` tracking
@@ -142,6 +142,10 @@ bitbit/                      # npm workspaces root
 ## Role Engine (v1.3)
 
 - **Core**: `src/lib/roles/` — role-runtime, role-registry, role-scheduler, autonomy-gate, action-dispatcher, workflow-executor, role-cost-guard, role-activity-logger
+- **TAOR Engine**: `src/lib/agent/engine/taor-loop.ts` — Think-Act-Observe-Reflect loop replacing legacy 1,100-line engine. Unbounded iterations, pre-flight + tool-executor extracted. Old `engine.ts` is a thin re-export shim
+- **Sub-agents**: `src/lib/agent/tools/spawn-agent.ts` — isolated sub-agent decomposition for parallel domain queries
+- **Deferred tools**: Eager core tools loaded at start, growth tools loaded on demand
+- **Leads lib**: `src/lib/leads/` — types, utils, constants, scoring, enrichment, outreach, discovery, campaign-types, plan-limits, campaign-sender
 - **Roles**: `src/lib/roles/{finance,comms,sales}/` — domain-owning roles wrapping existing agents
 - **Intelligence**: `src/lib/intelligence/` — revenue-radar, client-health, cash-flow-prophet, capacity-oracle
 - **Dashboard**: `src/components/roles/` — activity feed, status cards, autonomy toggle, attention view, intelligence widgets
@@ -183,7 +187,7 @@ bitbit/                      # npm workspaces root
 
 **Phase 3 (Planned, not built)**: Multiple orchestrators for 100+ tools. Top-level intent classifier routes between domain orchestrators. Trigger: tool count exceeds 100.
 
-**Key files**: `planner.ts` (Haiku planning), `tools.ts` (tool definitions + group filtering), `engine.ts` (orchestration loop)
+**Key files**: `planner.ts` (Haiku planning), `tools.ts` (tool definitions + group filtering), `engine/taor-loop.ts` (TAOR orchestration loop), `engine.ts` (legacy shim)
 **Decision record**: `.claude/docs/research/tool-architecture-decision.md` (ADR-001)
 **Research**: `.claude/docs/research/multi-agent-tool-orchestration-research.md`
 
@@ -195,11 +199,11 @@ bitbit/                      # npm workspaces root
 - **Dev server**: `npm run dev` (Next.js dev with turbopack, auth enforced via `DEV_BYPASS_AUTH=false`)
 - **Dev server (no auth)**: `npm run dev:noauth` (bypass auth redirect — limited, API routes still need real sessions)
 - **Remote access**: Dev server binds `--hostname 0.0.0.0`, accessible from MacBook via Tailscale IP (100.124.167.125:3000). LAN IP blocked by Docker iptables
-- **Testing**: `vitest run` (1,862 tests across 678 test suites)
+- **Testing**: `vitest run` (2,072 tests across 768 test suites)
 - **E2E**: `npx playwright test` (21 spec files)
 - **Preflight**: `npm run preflight` (tests + typecheck + build — same as pre-push hook)
 - **Pre-push hook**: `.git/hooks/pre-push` blocks pushes to main unless preflight passes (tests, tsc, build)
-- **Cron routes**: 19 routes in `/api/cron/` (including archive-threads */15, channel-sync, triage, process-embeddings)
+- **Cron routes**: 23 routes in `/api/cron/` (including archive-threads */15, channel-sync, triage, process-embeddings, role-tick, intelligence)
 - **Landing page dev**: `cd landing-page && npm run dev`
 - **CI/CD**: 5 GitHub Actions workflows (ci, e2e, deploy, migrate, preview)
 

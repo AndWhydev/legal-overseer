@@ -20,7 +20,7 @@
 
 | Type | Tool | Location | Count |
 |------|------|----------|-------|
-| Unit/Integration | Vitest 4 | `**/*.test.ts` colocated | 1862 |
+| Unit/Integration | Vitest 4 | `**/*.test.ts` colocated | 2072 |
 | E2E | Playwright | `e2e/` (21 spec files) | ~80+ tests |
 
 **Run tests**: `npm run test` (from personal-assistant/)
@@ -31,7 +31,7 @@
 ### Test Expectations
 - New features should include tests
 - Test files colocated with source (e.g., `foo.ts` + `foo.test.ts`)
-- Target: maintain 1800+ test count, no regressions
+- Target: maintain 2000+ test count, no regressions
 
 ## Code Quality
 
@@ -80,7 +80,7 @@
 
 ## Background Processing
 
-- **Cron routes**: 19 routes in `/api/cron/` (including archive-threads */15, channel-sync, triage, process-embeddings)
+- **Cron routes**: 23 routes in `/api/cron/` (including archive-threads */15, channel-sync, triage, process-embeddings, role-tick, intelligence)
 - **Reflection**: Haiku extracts facts from significant messages
 - **Memory consolidation**: Dedup/merge/supersede cycle
 - **Scheduler**: Built-in cron infrastructure

@@ -30,6 +30,7 @@
 | T033 | Inbox Redesign & Chat UX | feature | 2026-03-14 |
 | T034 | RAG Infrastructure & Launch Readiness (Council Sprint) | architecture+feature | 2026-03-15 |
 | T035 | v1.3 Agent Roles & Autonomy Engine (6 phases, 19 plans) | architecture+feature | 2026-03-18 |
+| T036 | Post-v1.3 Engine Rewrite & UX Polish | architecture+feature | 2026-03-25 |
 
 ## Active Tracks
 
@@ -37,7 +38,8 @@
 |----|-------|------|--------|-------|
 | T008 | Platform OAuth App Registrations | infrastructure | ~80% complete | Stripe webhook done (API bypass), Meta webhook done (Graph API), Google OAuth + APIs done, Telnyx webhook done (API), Resend DNS verified. Microsoft/Xero/Slack deferred (no accounts) |
 | T009 | Context Baseplate | architecture | ~98% complete | Bidirectional context loop fully wired and tested with real data (2026-03-17). Entity mention scanner matches first names (word-boundary). Baseplate snapshots inject into system prompt (Steve West: 4 emails, subjects, dates). Fact extraction fires per-turn via Haiku. Entity profiles refreshed (22/22). Context assembler budget: 16K tokens, systemPrompt 6K max. First-contact intelligence: BitBit scans channels when it doesn't know something. Cross-channel search with deeper Gmail sync. Proactive memory building wired. Remaining: knowledge graph persistence (in-memory only), no-reply contact cleanup |
-| T011 | Production Validation & Deployment | infrastructure | Mostly complete | Fly.io + Cloudflare + VPS worker deployed. 19 cron routes (added process-embeddings */5, channel-sync, triage). Channel smoke tests now unblocked — all 5 key platform credentials configured. Gmail find_messages tested via chat (Steve West emails retrieved). Load test deferred until channels verified |
+| T011 | Production Validation & Deployment | infrastructure | Mostly complete | Fly.io + Cloudflare + VPS worker deployed. 23 cron routes. Channel smoke tests now unblocked — all 5 key platform credentials configured. Gmail find_messages tested via chat (Steve West emails retrieved). Load test deferred until channels verified |
+| T037 | Lead Discovery & Outreach Campaigns | feature | In progress | LeadSwarm email campaigns, prospect discovery, outreach intelligence, campaign management with plan-limit enforcement. Branch: `feat/lead-discovery-outreach` |
 
 ## Planned Tracks
 
@@ -150,6 +152,35 @@ Scalable tool orchestration architecture based on SOTA research (Manus AI, Anthr
 
 ### T034 — RAG Infrastructure & Launch Readiness (Council Sprint) ✅
 Comprehensive 9-sprint, 77-task execution covering RAG infrastructure (Pinecone + Voyage-3.5 + knowledge graph), production polish, marketing landing page, advanced features (GDPR, analytics, dunning, team management), testing (200+ new tests), performance (embedding queue, dedup, caching), and launch prep (E2E suite, beta gate, DR runbook, launch materials). 38 commits, 73/77 tasks complete. Full spec: `conductor/tracks/T034/spec.md`. Research: `.claude/docs/research/council/`. Remaining: WhatsApp token (manual) + 4 post-launch operational tasks.
+
+### T036 — Post-v1.3 Engine Rewrite & UX Polish ✅
+Batch of engine, UX, and stability work spanning 2026-03-19 to 2026-03-25. 30 commits.
+- [x] TAOR loop engine — clean harness replacing 1,100-line engine.ts with unbounded Think-Act-Observe-Reflect pattern. Old engine becomes thin re-export shim. Pre-flight and tool-executor extracted to standalone modules
+- [x] Sub-agent decomposition — `spawn_agent` tool for isolated sub-agent tasks, freeform swarm decomposition, sub-agent events in UI
+- [x] Deferred tool loading — eager core tools + on-demand growth tools to reduce initial context
+- [x] SOTA chat UX upgrade (10 features) — syntax-highlighted code blocks (shiki), regenerate response, thumbs feedback, follow-up chips, artifact/canvas panel, voice input (Web Speech API), slash command palette, message editing with forking, conversation search + history API, export (markdown/JSON)
+- [x] Monochrome login page with force field background + branded Supabase auth emails
+- [x] Collective voice refactor — 'we/us' language across dashboard UI
+- [x] Critical security fix: org_id isolation enforced on 8 API routes (multi-tenancy data leak)
+- [x] Memory system fix: write/read table mismatch unified on memory_palace_entries
+- [x] Stabilization migrations: create missing tables, fix organisations view
+- [x] Triage notification loop fix, automated email classification
+- [x] Message routing fix: ingested messages routed to correct org via sender→contact identity resolution
+
+### T037 — Lead Discovery & Outreach Campaigns (in progress)
+Native lead discovery and email outreach integration into the BitBit dashboard. Branch: `feat/lead-discovery-outreach`.
+- [x] Supabase migration for email_templates, email_campaigns, campaign_leads tables
+- [x] API routes: campaign CRUD (`/api/agent/leads/campaigns`), template management (`/api/agent/leads/templates`), prospect discovery (`/api/agent/leads/discover`), email sending via Resend
+- [x] Plan-limit enforcement on campaign send route (plan-tier gating)
+- [x] Campaign sender with Resend SDK integration
+- [x] React hooks: `use-campaigns`, `use-templates`, `use-prospect-discovery`
+- [x] Outreach dashboard component with campaign metrics
+- [x] Prospect discovery panel with search and ProspectCard display
+- [x] Outreach intelligence panel (opportunity notes, outreach angles, priority services by category)
+- [x] Website signals panel, score breakdown panel, next action panel
+- [ ] Uncommitted: UI polish across ~55 files (leads components, dashboard tabs, data-viz, chat components, sidebar, splash screen)
+- [ ] Campaign analytics and reporting
+- [ ] Template A/B testing
 
 ### T029 — Beta Blockers: Security, Safety, Compliance ✅
 7 tier-1 blockers fixed before beta launch:

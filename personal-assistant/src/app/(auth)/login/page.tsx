@@ -205,6 +205,7 @@ function LoginPageContent() {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
+      colorScheme: 'light',
     }}>
       {/* ── Particle background (white bg, black dots) ── */}
       <ForceFieldBackground
@@ -540,22 +541,26 @@ function LoginPageContent() {
                   height: 48,
                   padding: '0 16px',
                   borderRadius: 12,
-                  border: '1px solid #ccc',
-                  background: '#fff',
+                  border: '1.5px solid #c0c0c0',
+                  background: '#f7f7f7',
                   color: '#111',
                   fontSize: 14,
                   outline: 'none',
-                  transition: 'border-color 150ms, box-shadow 150ms',
+                  transition: 'border-color 150ms, box-shadow 150ms, background 150ms',
                   fontFamily: 'inherit',
                   boxSizing: 'border-box' as const,
+                  WebkitAppearance: 'none' as const,
+                  appearance: 'none' as const,
                 }}
                 onFocus={e => {
                   e.currentTarget.style.borderColor = '#111'
                   e.currentTarget.style.boxShadow = '0 0 0 3px rgba(0,0,0,0.08)'
+                  e.currentTarget.style.background = '#fff'
                 }}
                 onBlur={e => {
-                  e.currentTarget.style.borderColor = '#ccc'
+                  e.currentTarget.style.borderColor = '#c0c0c0'
                   e.currentTarget.style.boxShadow = 'none'
+                  e.currentTarget.style.background = '#f7f7f7'
                 }}
               />
 
@@ -654,6 +659,15 @@ function LoginPageContent() {
       <style>{`
         @keyframes bb-login-spin {
           to { transform: rotate(360deg); }
+        }
+        /* Override browser autofill dark-mode backgrounds */
+        input:-webkit-autofill,
+        input:-webkit-autofill:hover,
+        input:-webkit-autofill:focus,
+        input:-webkit-autofill:active {
+          -webkit-box-shadow: 0 0 0 1000px #fff inset !important;
+          -webkit-text-fill-color: #111 !important;
+          transition: background-color 5000s ease-in-out 0s;
         }
         /* Focus-visible ring for keyboard navigation */
         button:focus-visible,
@@ -769,13 +783,15 @@ function DevPasswordLogin() {
               height: 44,
               padding: '0 14px',
               borderRadius: 10,
-              border: '1px solid #e0e0e0',
-              background: '#fff',
+              border: '1.5px solid #c0c0c0',
+              background: '#f7f7f7',
               color: '#111',
               fontSize: 13,
               outline: 'none',
               boxSizing: 'border-box' as const,
               fontFamily: 'inherit',
+              WebkitAppearance: 'none' as const,
+              appearance: 'none' as const,
             }}
           />
           <input
@@ -789,13 +805,15 @@ function DevPasswordLogin() {
               height: 44,
               padding: '0 14px',
               borderRadius: 10,
-              border: '1px solid #e0e0e0',
-              background: '#fff',
+              border: '1.5px solid #c0c0c0',
+              background: '#f7f7f7',
               color: '#111',
               fontSize: 13,
               outline: 'none',
               boxSizing: 'border-box' as const,
               fontFamily: 'inherit',
+              WebkitAppearance: 'none' as const,
+              appearance: 'none' as const,
             }}
           />
           {devStatus === 'error' && (

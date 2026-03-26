@@ -6,11 +6,11 @@ Read these artifacts before starting any work on the project.
 
 | Artifact | What it covers | Verified |
 |----------|---------------|---------------|
-| [product.md](./product.md) | What BitBit is, who it's for, what's built, what's next | 2026-03-18 |
+| [product.md](./product.md) | What BitBit is, who it's for, what's built, what's next | 2026-03-26 |
 | [product-guidelines.md](./product-guidelines.md) | Brand voice, terminology, how BitBit should feel | 2026-03-18 |
-| [tech-stack.md](./tech-stack.md) | Technologies, dependencies, infrastructure | 2026-03-18 |
-| [workflow.md](./workflow.md) | Development practices, testing, deployment | 2026-03-18 |
-| [tracks.md](./tracks.md) | Current and planned work | 2026-03-18 |
+| [tech-stack.md](./tech-stack.md) | Technologies, dependencies, infrastructure | 2026-03-26 |
+| [workflow.md](./workflow.md) | Development practices, testing, deployment | 2026-03-26 |
+| [tracks.md](./tracks.md) | Current and planned work | 2026-03-26 |
 
 ## Quick start
 
