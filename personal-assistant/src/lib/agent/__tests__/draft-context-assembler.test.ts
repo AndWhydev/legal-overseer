@@ -165,7 +165,10 @@ function mockAllSources() {
   return { ...mockSupabase, from: mockFrom } as unknown as Parameters<typeof assembleDraftContext>[0]
 }
 
-afterEach(() => vi.restoreAllMocks())
+afterEach(() => {
+  vi.restoreAllMocks()
+  vi.clearAllMocks()
+})
 
 // ─── assembleDraftContext ───────────────────────────────────────────────────
 
