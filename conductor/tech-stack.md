@@ -207,6 +207,17 @@ bitbit/                      # npm workspaces root
 - **Landing page dev**: `cd landing-page && npm run dev`
 - **CI/CD**: 5 GitHub Actions workflows (ci, e2e, deploy, migrate, preview)
 
+## Design System (v4.0 — Monochrome Glassmorphism)
+
+- **Design tokens**: `src/lib/styles/design-tokens.ts` — `S` (composed style objects), `C` (color palette), `statusBadge()`, `hoveredRow()` helpers
+- **Shared components**: `GlassToggle` (segmented toggle), `GlassDropdown` (unified dropdown), `StatusPill` (monochrome badge), `EmptyState` (BitBit logo watermark)
+- **CSS classes**: `bb-glass-input` (standalone inputs), `bb-stagger` (staggered animations), `bb-lift` (hover lift), `bb-modal-enter` / `bb-drawer-enter` (entrance animations)
+- **CSS design system**: `src/styles/bitbit-design-system.css` — CSS vars for all theme-sensitive values, 10 keyframe animations
+- **Glass hierarchy**: Top-level surfaces = backdrop blur + inset shadow. Children inside glass = flat with subtle stroke. Sidebar = minimal.
+- **Palette**: Pure monochrome (black/white/grays). No orange/blue/purple. Status colors (green/yellow/red) only for semantic indicators at 12% opacity.
+- **Theme awareness**: All components use CSS variables that flip for light/dark mode. `--btn-primary-bg`, `--toggle-active-bg`, `--pill-active-bg`, `--toggle-active-shadow`, `--empty-icon-filter`
+- **Style guide**: `personal-assistant/STYLE_GUIDE.md` — 9 rules including glass hierarchy, design tokens import pattern, monochrome palette
+
 ## Conventions
 
 - Path alias: `@/*` maps to `./src/*`

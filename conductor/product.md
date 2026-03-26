@@ -84,11 +84,13 @@ Total Recall: persistent conversational memory with cross-channel continuity. On
 
 RAG infrastructure: Pinecone Serverless vector database with Voyage-3.5-lite embeddings for semantic search across all ingested content (emails, messages, documents). Kuzu WASM knowledge graph for entity relationship traversal. Embedding queue for async processing. Hybrid retrieval combining vector similarity, metadata filtering, and graph traversal. RAG stats monitoring widget in dashboard settings.
 
+Monochrome glassmorphic design system (shipped 2026-03-26, T038): Complete UI/UX rebuild. Orange accent eliminated — pure monochrome palette (black/white/grays, status colors only for semantic meaning). Design tokens system (`design-tokens.ts`) as single source of truth for all styles. Unified components: GlassToggle (segmented toggle with sliding indicator), GlassDropdown (unified dropdown replacing 5 different implementations), StatusPill (monochrome badge with dot-only status color), EmptyState (BitBit logo watermark). Glass hierarchy principle: top-level surfaces get backdrop blur + inset shadow; children inside glass get flat styling with subtle stroke. 150+ files modified, 10 micro-animation keyframes, full light/dark theme support via CSS variables. Client-side filtering for instant smart-view/score/source switching (no API re-fetch). Search debounced at 300ms. Inbox reply API created, archive/snooze/done bugs fixed. Invoice creation wired to direct Supabase fallback. Leads rate limiting removed for authenticated GET reads.
+
 23 cron routes. 120 database migrations. 2,072 tests across 768 suites. 21 E2E spec files.
 
 ## What's next
 
-**Lead discovery & outreach (T037, active).** Completing the LeadSwarm outreach integration — UI polish across leads components, campaign analytics, template A/B testing. Branch: `feat/lead-discovery-outreach`.
+**Lead discovery & outreach (T037, active).** Campaign analytics and reporting, template A/B testing. Core features shipped.
 
 **v1.4 scope.** Growth roles (SEO, Content, Builder for website/app construction via agentic coding), Stripe billing & trial infrastructure (deferred from v1.2), marketing website and public launch.
 

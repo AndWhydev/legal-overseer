@@ -31,6 +31,7 @@
 | T034 | RAG Infrastructure & Launch Readiness (Council Sprint) | architecture+feature | 2026-03-15 |
 | T035 | v1.3 Agent Roles & Autonomy Engine (6 phases, 19 plans) | architecture+feature | 2026-03-18 |
 | T036 | Post-v1.3 Engine Rewrite & UX Polish | architecture+feature | 2026-03-25 |
+| T038 | Monochrome Glassmorphic Design System Overhaul | design+architecture | 2026-03-26 |
 
 ## Active Tracks
 
@@ -166,6 +167,82 @@ Batch of engine, UX, and stability work spanning 2026-03-19 to 2026-03-25. 30 co
 - [x] Stabilization migrations: create missing tables, fix organisations view
 - [x] Triage notification loop fix, automated email classification
 - [x] Message routing fix: ingested messages routed to correct org via sender→contact identity resolution
+
+### T038 — Monochrome Glassmorphic Design System Overhaul ✅
+Complete UI/UX redesign from orange-accent to pure monochrome glassmorphic system. 150+ files modified across 10+ parallel agent sprints on 2026-03-26.
+
+**Design System Foundation:**
+- [x] Created `src/lib/styles/design-tokens.ts` — `S` (style objects) + `C` (color constants), fully monochrome with CSS vars for theme awareness
+- [x] Created `GlassToggle` — unified segmented toggle component with sliding indicator + spring animation
+- [x] Created `GlassDropdown` — unified dropdown component with fixed-width grid trick, 40px blur menu
+- [x] Rewrote `StatusPill` — monochrome glass badge, status meaning via dot color only, minimal mode
+- [x] Created `EmptyState` — BitBit logo watermark, theme-aware filter, centered layout
+- [x] Created `bb-glass-input` CSS class — standalone glass inputs that override theme `!important` borders
+- [x] 10 micro-animation keyframes (`bb-fade-up`, `bb-scale-in`, `bb-modal-in`, `bb-expand`, etc.) + `.bb-stagger`, `.bb-lift`, `.bb-modal-enter` utility classes
+- [x] Updated STYLE_GUIDE.md with 9 rules including glass hierarchy principle
+
+**Color Purge:**
+- [x] Stripped #FF5A1F orange from 63+ component files → monochrome white accent
+- [x] Stripped #1A1A1B dark buttons from 8+ files → `var(--btn-primary-bg)` theme-aware
+- [x] All 3 theme files (midnight/aurora/light) neutralized — orange vars → monochrome
+- [x] CSS design system v4.0 — monochrome vars, theme-aware tokens, no decorative colors
+- [x] Text selection, focus rings, notification icons all monochrome
+
+**Glass Hierarchy Rule:**
+- [x] Glass = top-level surfaces only (backdrop blur + inset shadow, no border)
+- [x] Children inside glass = flat with subtle stroke + dim fill
+- [x] Sidebar/rail = minimal, not glassmorphic
+- [x] Documented in STYLE_GUIDE.md rule #4
+
+**Light Mode:**
+- [x] 127 files: hardcoded `rgba()` → CSS variables that flip per theme
+- [x] Page bg darkened to #F5F5F4 for card contrast
+- [x] Cards differentiated by shadow not border (stronger shadows)
+- [x] Toggle/pill active states use drop shadow for 3D effect in light mode
+- [x] `--toggle-active-shadow`, `--pill-active-bg` CSS vars for theme-aware components
+
+**Dark Mode:**
+- [x] Stronger card shadows (`--card-shadow` multi-layer: `0 2px 8px` + `0 8px 32px`)
+- [x] All midnight theme `!important` borders → `none !important`
+- [x] 28+ component files updated with combined drop+inset shadows
+- [x] `--toggle-active-shadow` includes glass inset highlight
+
+**Component Overhauls:**
+- [x] Kanban cards: full redesign — minimal 3-row layout, no visual noise, shadow clipping fixed
+- [x] Lead detail: right drawer → center modal with spring animation
+- [x] Lead list view: flat inbox-style rows, micro-animated detail expand
+- [x] Kanban DnD: removed tilt/offset, clean cursor tracking
+- [x] Email Campaigns: consolidated stat bar, EmptyState integration, design tokens
+- [x] Invoice template: A4 preview with ResizeObserver scaling, color picker 40x40, GST iOS toggle
+- [x] Notification badge: smaller text (10/11/12px), pill shape, no stroke
+- [x] Toast notifications: glassmorphic with `bb-fade-up` animation
+- [x] All 27 EmptyState instances → BitBit logo watermark
+
+**Performance:**
+- [x] Smart view filtering: instant client-side (no API re-fetch)
+- [x] Score/Source dropdowns: client-side filtering
+- [x] Search debounced at 300ms
+- [x] Leads rate limiting: skip for authenticated GET reads
+- [x] Inbox channel/priority filtering: client-side (no re-fetch)
+
+**Feature Fixes:**
+- [x] Invoice creation: fallback to direct creation when no agent config
+- [x] Inbox reply: created API route, wired to channel adapters
+- [x] Inbox archive/snooze/done/spam: fixed JSONB metadata overwrite bugs
+- [x] Inbox delete: moved from client-side to proper API
+- [x] Contacts: auto-retry on error (3s), shimmer skeleton
+- [x] PCC → Lead Swarm renamed across 10+ files
+- [x] Automations → Plugins renamed across 5 files
+- [x] Contacts scroll bug fixed
+- [x] Global custom scrollbar (WebKit + Firefox)
+- [x] AI search info card dismissible with localStorage
+- [x] Reports padding root-caused (double 24px) and fixed
+
+**Code Simplification:**
+- [x] 3 inline dropdown implementations → shared GlassDropdown
+- [x] 2 unused Radix components deleted (select.tsx, dropdown-menu.tsx)
+- [x] Design tokens adopted across leads-toolbar, lead-detail-drawer, outreach-dashboard, tenders-tab
+- [x] 42 hardcoded rgba backgrounds replaced across swarm/memory/meetings/portal
 
 ### T037 — Lead Discovery & Outreach Campaigns (in progress)
 Native lead discovery and email outreach integration into the BitBit dashboard. Branch: `feat/lead-discovery-outreach`.
