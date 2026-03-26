@@ -195,6 +195,7 @@ export function SplashScreen({
                 alignItems: 'center',
                 gap: 28,
               }}
+              initial={{ scale: 1, opacity: 1, y: 0 }}
               animate={
                 exiting
                   ? { scale: 0.9, opacity: 0, y: -12 }

@@ -31,7 +31,8 @@ export function GlowIndicator({
         background: color,
         boxShadow: `0 0 ${size}px ${color}, 0 0 ${size * 2}px color-mix(in srgb, ${color} 40%, transparent)`,
       }}
-      animate={pulse ? { opacity: [1, 0.5, 1] } : undefined}
+      initial={{ opacity: 1 }}
+      animate={pulse ? { opacity: [1, 0.5, 1] } : { opacity: 1 }}
       transition={pulse ? { duration: 2, repeat: Infinity, ease: 'easeInOut' } : undefined}
     />
   )

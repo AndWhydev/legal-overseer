@@ -90,7 +90,7 @@ export function MiniDonut({
                 strokeDasharray={`${dashLen} ${dashGap}`}
                 strokeDashoffset={segOffset}
                 opacity={isInactive ? 0.3 : 1}
-                initial={animate ? { opacity: 0 } : undefined}
+                initial={{ opacity: animate ? 0 : 1 }}
                 animate={{ opacity: isInactive ? 0.3 : 1, strokeWidth: isActive ? strokeWidth + 2 : strokeWidth }}
                 transition={{ duration: 0.5, delay: i * 0.1 }}
               />

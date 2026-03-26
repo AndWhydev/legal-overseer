@@ -119,7 +119,7 @@ export function MiniBarChart({
               width={barW}
               rx={2}
               fill={`url(#${hatchId}-bar-grad-${i})`}
-              initial={animate ? { height: 0, y: chartH } : undefined}
+              initial={animate ? { height: 0, y: chartH, opacity: 1 } : { opacity: 1 }}
               animate={{ height: barH, y, opacity: interactive ? barOpacity : 1 }}
               transition={{ duration: 0.6, delay: i * 0.05, ease: 'easeOut' }}
             />
@@ -131,7 +131,7 @@ export function MiniBarChart({
               rx={2}
               fill={`url(#${hatchId})`}
               mask={`url(#${hatchId}-fade-mask)`}
-              initial={animate ? { height: 0, y: chartH } : undefined}
+              initial={animate ? { height: 0, y: chartH, opacity: 1 } : { opacity: 1 }}
               animate={{ height: barH, y, opacity: interactive ? barOpacity : 1 }}
               transition={{ duration: 0.6, delay: i * 0.05, ease: 'easeOut' }}
             />

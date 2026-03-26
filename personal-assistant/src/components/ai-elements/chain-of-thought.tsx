@@ -203,7 +203,6 @@ export const ChainOfThoughtStep = memo(
 
     return (
       <motion.div
-        layout
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.15 }}
@@ -239,6 +238,7 @@ export const ChainOfThoughtStep = memo(
                 alignItems: "center",
                 justifyContent: "center",
               }}
+              initial={hasIcon ? { opacity: 0.5 } : { scale: 1 }}
               animate={
                 hasIcon
                   ? { opacity: [0.5, 1, 0.5] }
@@ -375,8 +375,7 @@ export const ChainOfThoughtContent = memo(
         }}
         style={{ overflow: "hidden" }}
       >
-        <motion.div
-          layout
+        <div
           style={{
             display: "flex",
             flexDirection: "column",
@@ -402,10 +401,8 @@ export const ChainOfThoughtContent = memo(
               zIndex: 0,
             }}
           />
-          <AnimatePresence initial={false}>
-            {children}
-          </AnimatePresence>
-        </motion.div>
+          {children}
+        </div>
       </motion.div>
     );
   }

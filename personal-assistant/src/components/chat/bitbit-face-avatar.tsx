@@ -684,11 +684,13 @@ export function BitBitFaceAvatar({
             exit={{ opacity: 0, y: -5, scale: 0.95, transition: { duration: 0.2 } }}
             transition={{ type: 'spring', stiffness: 300, damping: 20, mass: 0.7 }}
           >
-            <motion.circle cx={LEFT_EYE_CX} cy={EYE_CY} r={5} stroke={color} strokeWidth={noseStroke * 0.8} fill="none" opacity={0.5}
+            <motion.circle cx={LEFT_EYE_CX} cy={EYE_CY} r={5} stroke={color} strokeWidth={noseStroke * 0.8} fill="none"
+              initial={{ opacity: 0.4 }}
               animate={{ opacity: [0.4, 0.6, 0.4] }}
               transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
             />
-            <motion.circle cx={RIGHT_EYE_CX} cy={EYE_CY} r={5} stroke={color} strokeWidth={noseStroke * 0.8} fill="none" opacity={0.5}
+            <motion.circle cx={RIGHT_EYE_CX} cy={EYE_CY} r={5} stroke={color} strokeWidth={noseStroke * 0.8} fill="none"
+              initial={{ opacity: 0.4 }}
               animate={{ opacity: [0.4, 0.6, 0.4] }}
               transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut', delay: 0.2 }}
             />

@@ -60,7 +60,7 @@ const fileCardStyle: React.CSSProperties = {
   alignItems: 'center',
   gap: 10,
   padding: '10px 14px',
-  borderRadius: 10,
+  borderRadius: 12,
   background: 'rgba(255, 255, 255, 0.06)',
   backdropFilter: 'blur(12px)',
   WebkitBackdropFilter: 'blur(12px)',

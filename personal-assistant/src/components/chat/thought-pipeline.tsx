@@ -19,6 +19,7 @@ function ThinkingEllipsis() {
   return (
     <span style={{ display: 'inline-flex', gap: '2px' }}>
       <motion.span
+        initial={{ opacity: 0.4 }}
         animate={{ opacity: [0.4, 1] }}
         transition={{ duration: 0.6, repeat: Infinity }}
         style={{ display: 'inline-block' }}
@@ -26,6 +27,7 @@ function ThinkingEllipsis() {
         .
       </motion.span>
       <motion.span
+        initial={{ opacity: 0.4 }}
         animate={{ opacity: [0.4, 1] }}
         transition={{ duration: 0.6, repeat: Infinity, delay: 0.2 }}
         style={{ display: 'inline-block' }}
@@ -33,6 +35,7 @@ function ThinkingEllipsis() {
         .
       </motion.span>
       <motion.span
+        initial={{ opacity: 0.4 }}
         animate={{ opacity: [0.4, 1] }}
         transition={{ duration: 0.6, repeat: Infinity, delay: 0.4 }}
         style={{ display: 'inline-block' }}
@@ -71,6 +74,7 @@ function ThinkingIndicator() {
       >
         {/* Outer pulsing glow */}
         <motion.div
+          initial={{ opacity: 0.3 }}
           animate={{ opacity: [0.3, 0.6, 0.3] }}
           transition={{ duration: 2, repeat: Infinity }}
           style={{
@@ -108,6 +112,7 @@ function ThinkingIndicator() {
 
         {/* Center sparkle */}
         <motion.div
+          initial={{ opacity: 0.6, scale: 1 }}
           animate={{ scale: [1, 1.2, 1], opacity: [0.6, 1, 0.6] }}
           transition={{ duration: 1.5, repeat: Infinity }}
           style={{
@@ -196,7 +201,8 @@ function PipelineStage({
           </motion.div>
         ) : (
           <motion.div
-            animate={stage.status === 'active' ? { opacity: [0.6, 1] } : undefined}
+            initial={{ opacity: statusStyles[stage.status].opacity }}
+            animate={stage.status === 'active' ? { opacity: [0.6, 1] } : { opacity: statusStyles[stage.status].opacity }}
             transition={{ duration: 1, repeat: Infinity }}
             style={{ opacity: statusStyles[stage.status].opacity }}
           >
@@ -235,6 +241,7 @@ function PipelineStage({
       {/* Active pulsing glow */}
       {stage.status === 'active' && (
         <motion.div
+          initial={{ opacity: 0.3 }}
           animate={{ opacity: [0.3, 0.6, 0.3] }}
           transition={{ duration: 2, repeat: Infinity }}
           style={{

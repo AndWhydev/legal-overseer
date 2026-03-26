@@ -82,7 +82,7 @@ export function MiniSparkline({
           <motion.path
             d={areaPath}
             fill={`url(#${hatchId}-area-grad)`}
-            initial={animate ? { opacity: 0 } : undefined}
+            initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.8 }}
           />
@@ -91,7 +91,7 @@ export function MiniSparkline({
             d={areaPath}
             fill={`url(#${hatchId})`}
             mask={`url(#${hatchId}-fade-mask)`}
-            initial={animate ? { opacity: 0 } : undefined}
+            initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.8 }}
           />

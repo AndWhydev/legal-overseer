@@ -71,6 +71,8 @@ export function Whispers({ onTapWhisper, visible }: WhispersProps) {
             maxWidth: 360,
             marginTop: 24,
           }}
+          initial={{ opacity: 1 }}
+          animate={{ opacity: 1 }}
           exit={{
             opacity: 0,
             y: 4,
