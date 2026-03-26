@@ -1,17 +1,17 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.4
-milestone_name: Media, Billing & Growth Roles
-status: completed
-stopped_at: Retroactive close-out of phases 22b-25 (Comms Role, Sales Role, Intelligence Layer, Role Dashboard) -- v1.4 MILESTONE COMPLETE
-last_updated: "2026-03-26T21:45:00.000Z"
-last_activity: 2026-03-26 -- Retroactive summaries for 12 plans across 4 phases (22-comms-role, 23-sales-role, 24-intelligence-layer, 25-role-dashboard)
+milestone: v1.5
+milestone_name: SOTA Response Drafter
+status: in_progress
+stopped_at: Completed 26-01-PLAN.md (DraftContextAssembler)
+last_updated: "2026-03-27T00:07:37.000Z"
+last_activity: 2026-03-27 -- Phase 26 Plan 01 DraftContextAssembler with parallel context fetching and confidence scoring
 progress:
-  total_phases: 22
+  total_phases: 23
   completed_phases: 22
-  total_plans: 45
-  completed_plans: 45
-  percent: 100
+  total_plans: 47
+  completed_plans: 46
+  percent: 97
 ---
 
 # Project State
@@ -21,21 +21,21 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-18)
 
 **Core value:** BitBit understands the business better than the business owner -- when Andy says "Invoice Sezer for the White House RE work", BitBit knows who Sezer is, what the work was, the rate, and whether it's already been invoiced.
-**Current focus:** v1.4 Media, Billing & Growth Roles -- MILESTONE COMPLETE
+**Current focus:** v1.5 SOTA Response Drafter
 
 ## Current Position
 
-Phase: 25 of 25 (Role Dashboard)
-Plan: 3 of 3 in current phase (COMPLETE)
-Status: Milestone Complete
-Last activity: 2026-03-26 - Completed quick task 21: Improve whisper text generation
+Phase: 26 of 26 (SOTA Response Drafter)
+Plan: 1 of 2 in current phase (COMPLETE)
+Status: In Progress
+Last activity: 2026-03-27 - Completed 26-01: DraftContextAssembler
 
-Progress: v1.0 ======== | v1.1 ======== | v1.2 ======== | v1.4 [===========] 100%
+Progress: v1.0 ======== | v1.1 ======== | v1.2 ======== | v1.4 ======== | v1.5 [=====     ] 50%
 
 ## Performance Metrics
 
 **Delivery totals:**
-- Total plans completed: 79 (v1.0: 19, v1.1: 16, v1.2: 22, v1.4: 22)
+- Total plans completed: 80 (v1.0: 19, v1.1: 16, v1.2: 22, v1.4: 22, v1.5: 1)
 - Milestones shipped: v1.0 (2026-02-21), v1.1 (2026-02-22), v1.2 (2026-03-02), v1.4 (2026-03-26)
 
 **v1.4 Phases:**
@@ -51,6 +51,12 @@ Progress: v1.0 ======== | v1.1 ======== | v1.2 ======== | v1.4 [===========] 100
 | 23b. Sales Role | 3 | COMPLETE |
 | 24b. Intelligence Layer | 3 | COMPLETE |
 | 25. Role Dashboard | 3 | COMPLETE |
+
+**v1.5 Phases:**
+
+| Phase | Plans | Status |
+|-------|-------|--------|
+| 26. SOTA Response Drafter | 2 | IN PROGRESS (1/2) |
 
 ## Accumulated Context
 
@@ -97,6 +103,13 @@ See PROJECT.md Key Decisions table.
 - [24-01] Content tools use claude-sonnet-4-20250514 for cost-effective generation within budget guard limits
 - [24-01] Autonomy: schedule_post/generate_blog at L3_notify (LLM token spend), content_calendar at L4_silent (read-only)
 - [24-01] content_calendar returns empty with guidance in v1.4 -- persistence deferred to future version
+- [26-01] safeCall never-throw wrapper for parallel context fetches -- cleaner than individual try/catch
+- [26-01] Token budget char/4 heuristic with priority-ordered truncation (history highest, RAG lowest)
+- [26-01] Confidence floor 0.15 and cap 0.95 -- never fully confident for auto-send
+
+### Roadmap Evolution
+
+- Phase 26 added: SOTA Context-Enriched Response Drafter — wire ContextAssembler + RAG + Memory Palace into draft path for business-aware replies
 
 ### Pending Todos
 
@@ -118,6 +131,6 @@ See PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-03-26
-Stopped at: Completed quick task 21 (Whisper text template rewrite)
+Last session: 2026-03-27
+Stopped at: Completed 26-01-PLAN.md (DraftContextAssembler)
 Resume file: None
