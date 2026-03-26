@@ -1,6 +1,12 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Whisper } from '../types'
 
+function truncateWhisper(text: string, max = 45): string {
+  if (text.length <= max) return text
+  const cut = text.lastIndexOf(' ', max - 3)
+  return (cut > 0 ? text.slice(0, cut) : text.slice(0, max - 3)) + '...'
+}
+
 export async function whisperDueItems(
   supabase: SupabaseClient,
   orgId: string,
@@ -31,9 +37,9 @@ export async function whisperDueItems(
       const label = contactName || `Invoice ${inv.invoice_number}`
 
       whispers.push({
-        text: daysOverdue === 0
-          ? `${label}'s invoice is due today`
-          : `${label}'s invoice is ${daysOverdue} day${daysOverdue !== 1 ? 's' : ''} overdue`,
+        text: truncateWhisper(daysOverdue === 0
+          ? `${label}'s invoice due today`
+          : `${label}'s invoice ${daysOverdue} day${daysOverdue !== 1 ? 's' : ''} overdue`),
         score: urgency,
         source: 'due_items',
         context: {
@@ -61,9 +67,10 @@ export async function whisperDueItems(
   if (tasks?.length) {
     for (const task of tasks) {
       const priorityScore = task.priority === 'critical' ? 0.9 : 0.65
+      const prefix = task.priority === 'critical' ? 'Urgent' : 'Priority'
 
       whispers.push({
-        text: `${task.title}`,
+        text: truncateWhisper(`${prefix}: ${task.title}`),
         score: priorityScore,
         source: 'due_items',
         context: {

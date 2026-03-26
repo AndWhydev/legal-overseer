@@ -1,6 +1,12 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Whisper } from '../types'
 
+function truncateWhisper(text: string, max = 45): string {
+  if (text.length <= max) return text
+  const cut = text.lastIndexOf(' ', max - 3)
+  return (cut > 0 ? text.slice(0, cut) : text.slice(0, max - 3)) + '...'
+}
+
 export async function whisperProactiveCompletions(
   supabase: SupabaseClient,
   orgId: string,
@@ -20,9 +26,10 @@ export async function whisperProactiveCompletions(
   if (!completions?.length) return []
 
   return completions.map((completion) => {
-    // Derive a natural whisper from the action summary
-    const summary = completion.action_summary || 'Completed a task'
-    const displayText = summary.length > 60 ? summary.slice(0, 57) + '...' : summary
+    const summary = completion.action_summary
+    const displayText = summary
+      ? truncateWhisper(`Done: ${summary}`)
+      : 'Handled a task for you'
 
     return {
       text: displayText,

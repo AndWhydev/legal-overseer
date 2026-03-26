@@ -1,6 +1,12 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Whisper } from '../types'
 
+function truncateWhisper(text: string, max = 45): string {
+  if (text.length <= max) return text
+  const cut = text.lastIndexOf(' ', max - 3)
+  return (cut > 0 ? text.slice(0, cut) : text.slice(0, max - 3)) + '...'
+}
+
 export async function whisperAnomalies(
   supabase: SupabaseClient,
   orgId: string,
@@ -20,9 +26,10 @@ export async function whisperAnomalies(
   if (alerts?.length) {
     for (const alert of alerts) {
       const severityScore = alert.severity === 'critical' ? 0.95 : alert.severity === 'high' ? 0.8 : 0.5
+      const prefix = alert.severity === 'critical' ? 'Alert' : alert.severity === 'high' ? 'Warning' : 'Notice'
 
       whispers.push({
-        text: alert.issue_summary,
+        text: truncateWhisper(`${prefix}: ${alert.issue_summary}`),
         score: severityScore,
         source: 'anomalies',
         context: {
@@ -48,7 +55,7 @@ export async function whisperAnomalies(
       const priorityScore = approval.priority === 'urgent' ? 0.85 : 0.55
 
       whispers.push({
-        text: approval.action_summary,
+        text: truncateWhisper(`Approve: ${approval.action_summary}`),
         score: priorityScore,
         source: 'anomalies',
         context: {
