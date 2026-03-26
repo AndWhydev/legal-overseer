@@ -33,7 +33,7 @@
   --glass-card-bg: rgba(15, 20, 30, 0.6);
   --glass-card-bg-light: rgba(15, 20, 30, 0.45);
   --glass-card-border: rgba(255, 255, 255, 0.03);
-  --glass-card-inset: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  --glass-card-inset: 0 2px 8px rgba(0, 0, 0, 0.4), 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.06);
   --glass-card-blur: blur(20px) saturate(1.2);
   --glass-pill-bg: rgba(10, 14, 23, 0.42);
   --glass-pill-inset: inset 0 1px 0 rgba(255, 255, 255, 0.06);
@@ -50,10 +50,10 @@
   --border-focus-ring: rgba(255, 90, 31, 0.3);
 
   /* ── Card Shadows ── */
-  --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  --card-inset: inset 0 1px 0 rgba(255, 255, 255, 0.05);
-  --card-shadow-hover: 0 20px 60px rgba(0, 0, 0, 0.6);
-  --card-inset-hover: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.4), 0 8px 32px rgba(0, 0, 0, 0.3);
+  --card-inset: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --card-shadow-hover: 0 4px 16px rgba(0, 0, 0, 0.5), 0 20px 60px rgba(0, 0, 0, 0.4);
+  --card-inset-hover: inset 0 1px 0 rgba(255, 255, 255, 0.1);
 
   /* ── Hover States ── */
   --hover-bg: rgba(255, 255, 255, 0.06);
@@ -163,14 +163,14 @@
   background: rgba(15, 20, 30, 0.6) !important;
   backdrop-filter: blur(20px) saturate(1.2) !important;
   -webkit-backdrop-filter: blur(20px) saturate(1.2) !important;
-  border: 1px solid rgba(255, 255, 255, 0.03) !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+  border: none !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4), 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
   background-image: none !important;
 }
 
 [data-theme="midnight"] .bb-card:hover {
   background: rgba(15, 20, 30, 0.75) !important;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5), 0 20px 60px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
 }
 
 [data-theme="midnight"] .glass-card {
@@ -262,7 +262,7 @@
 
 [data-theme="midnight"] .bb-btn--ghost {
   background: rgba(255, 255, 255, 0.04) !important;
-  border: 1px solid rgba(255, 255, 255, 0.03) !important;
+  border: none !important;
   color: #F5F0E8 !important;
   backdrop-filter: blur(12px) !important;
   -webkit-backdrop-filter: blur(12px) !important;
@@ -362,14 +362,14 @@
    -------------------------------------------------------------------------- */
 
 [data-theme="midnight"] select,
-[data-theme="midnight"] input[type="text"],
-[data-theme="midnight"] input[type="email"],
-[data-theme="midnight"] input[type="url"],
-[data-theme="midnight"] input[type="number"],
-[data-theme="midnight"] input[type="search"],
+[data-theme="midnight"] input[type="text"]:not(.bb-search-input):not(.bb-naked-input),
+[data-theme="midnight"] input[type="email"]:not(.bb-naked-input),
+[data-theme="midnight"] input[type="url"]:not(.bb-naked-input),
+[data-theme="midnight"] input[type="number"]:not(.bb-naked-input),
+[data-theme="midnight"] input[type="search"]:not(.bb-search-input):not(.bb-naked-input),
 [data-theme="midnight"] textarea {
   background: rgba(13, 17, 23, 0.6) !important;
-  border: 1px solid rgba(255, 255, 255, 0.03) !important;
+  border: none !important;
   color: #F5F0E8 !important;
 }
 
@@ -386,7 +386,7 @@
   background: rgba(15, 20, 30, 0.8) !important;
   backdrop-filter: blur(24px) !important;
   -webkit-backdrop-filter: blur(24px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.03) !important;
+  border: none !important;
 }
 
 /* --------------------------------------------------------------------------
@@ -495,7 +495,7 @@
   background: rgba(15, 20, 30, 0.8) !important;
   backdrop-filter: blur(24px) !important;
   -webkit-backdrop-filter: blur(24px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.03) !important;
+  border: none !important;
 }
 
 /* --------------------------------------------------------------------------
@@ -506,7 +506,7 @@
   background: rgba(20, 28, 40, 0.8) !important;
   backdrop-filter: blur(16px) !important;
   -webkit-backdrop-filter: blur(16px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.03) !important;
+  border: none !important;
   color: #F5F0E8 !important;
 }
 

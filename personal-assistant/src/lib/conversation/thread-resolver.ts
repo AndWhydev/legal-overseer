@@ -286,6 +286,7 @@ export async function listUserThreads(
       .select('id, title, status, last_channel, message_count, last_activity_at')
       .eq('user_id', userId)
       .eq('org_id', orgId)
+      .neq('status', 'archived')
       .order('last_activity_at', { ascending: false })
       .limit(limit)
 

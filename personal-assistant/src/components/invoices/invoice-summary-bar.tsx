@@ -21,12 +21,13 @@ function fmt(n: number, c: string): string {
 }
 
 const card: React.CSSProperties = {
-  padding: '12px 16px',
-  borderRadius: 12,
-  background: 'var(--glass-card-bg-light)',
-  backdropFilter: 'var(--glass-card-blur)',
-  WebkitBackdropFilter: 'var(--glass-card-blur)',
-  boxShadow: 'var(--glass-card-inset)',
+  padding: '16px 20px',
+  borderRadius: 16,
+  background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.6))',
+  backdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
+  WebkitBackdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
+  boxShadow: 'var(--card-shadow, 0 2px 8px rgba(0,0,0,0.3)), var(--card-inset, inset 0 1px 0 rgba(255,255,255,0.06))',
+  border: 'none',
   display: 'flex',
   flexDirection: 'column' as const,
   gap: 4,

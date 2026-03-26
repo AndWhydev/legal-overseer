@@ -46,7 +46,7 @@ export function ConversationSearch({ onSelectThread, onClose }: ConversationSear
   }, [])
 
   return (
-    <div style={{ padding: '12px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+    <div style={{ padding: '12px', paddingBottom: '16px', borderBottom: '1px solid rgba(255,255,255,0.06)', marginBottom: '4px' }}>
       <div
         style={{
           display: 'flex',
@@ -61,13 +61,14 @@ export function ConversationSearch({ onSelectThread, onClose }: ConversationSear
         <Search size={14} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
         <input
           type="text"
+          className="bb-naked-input"
           value={query}
           onChange={e => handleSearch(e.target.value)}
           placeholder="Search conversations..."
           autoFocus
           style={{
             flex: 1,
-            background: 'none',
+            background: 'transparent',
             border: 'none',
             outline: 'none',
             color: 'var(--text-primary, #F1F5F9)',

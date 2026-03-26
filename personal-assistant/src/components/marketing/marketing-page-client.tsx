@@ -68,7 +68,7 @@ export default function MarketingPageClient() {
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 24, marginBottom: 80 }}>
             {FEATURES.map((f) => (
-              <div key={f.title} className="bb-feature-card" style={{ padding: '32px 24px', borderRadius: 16, background: 'var(--bg-card-solid, rgba(15,20,30,0.6))', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: '1px solid var(--border-subtle, rgba(255,255,255,0.03))', boxShadow: 'var(--card-inset, inset 0 1px 0 rgba(255,255,255,0.05))', transition: 'all 300ms', cursor: 'pointer' }}>
+              <div key={f.title} className="bb-feature-card" style={{ padding: '32px 24px', borderRadius: 16, background: 'var(--bg-card-solid, rgba(15,20,30,0.6))', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: '1px solid var(--border-subtle, rgba(255,255,255,0.03))', boxShadow: 'var(--card-shadow, 0 2px 8px rgba(0,0,0,0.3)), var(--card-inset, inset 0 1px 0 rgba(255,255,255,0.06))', transition: 'all 300ms', cursor: 'pointer' }}>
                 <div style={{ fontSize: 40, marginBottom: 16 }}>{f.emoji}</div>
                 <h3 style={{ fontSize: 16, fontWeight: 500, marginBottom: 12, color: '#F1F5F9' }}>{f.title}</h3>
                 <p style={{ fontSize: 14, color: '#94A3B8', lineHeight: 1.6 }}>{f.description}</p>

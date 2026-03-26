@@ -2030,22 +2030,19 @@ function ExpandedMessageRow({
           )}
         </div>
 
-        {/* Action items — styled pills, stagger in */}
+        {/* Action items — subtle metadata line joined with separator */}
         {aiResult && aiResult.actionItems.length > 0 && (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+          <div style={{
+            fontSize: 14, fontStyle: 'italic', color: 'var(--text-secondary)',
+            lineHeight: 1.5,
+            animation: aiJustResolved ? 'aiContentIn 300ms cubic-bezier(0.25, 1, 0.5, 1) both' : undefined,
+            animationDelay: aiJustResolved ? '150ms' : undefined,
+          }}>
             {aiResult.actionItems.map((item, i) => (
-              <span key={i} style={{
-                display: 'inline-flex', alignItems: 'center', gap: 4,
-                padding: '4px 10px', borderRadius: 8,
-                background: 'rgba(255, 255, 255, 0.05)',
-                border: '1px solid rgba(255, 255, 255, 0.03)',
-                fontSize: 14, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)',
-                animation: aiJustResolved ? 'aiContentIn 300ms cubic-bezier(0.25, 1, 0.5, 1) both' : undefined,
-                animationDelay: aiJustResolved ? `${150 + i * 60}ms` : undefined,
-              }}>
-                <CheckCircle2 size={11} style={{ opacity: 0.7, flexShrink: 0 }} />
+              <React.Fragment key={i}>
+                {i > 0 && <span style={{ margin: '0 6px', color: 'var(--text-dim)' }}>&middot;</span>}
                 {sanitizeText(item)}
-              </span>
+              </React.Fragment>
             ))}
           </div>
         )}
@@ -2126,14 +2123,12 @@ function ExpandedMessageRow({
         animationDelay: aiResult ? '0ms' : '600ms',
       }}>
         <div style={{
-          display: 'flex',
-          alignItems: 'flex-end',
-          gap: 0,
           background: 'var(--bg-input, rgba(13, 17, 23, 0.6))',
           border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
           borderRadius: 20,
           padding: '4px 4px 4px 16px',
         }}>
+          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 0 }}>
           <div style={{ position: 'relative', flex: 1, minHeight: 32 }}>
             {/* Ghost draft — in-flow element that sizes the container, textarea overlays it */}
             {ghostVisible && !replyText && aiResult?.draftReply && (
@@ -2203,31 +2198,33 @@ function ExpandedMessageRow({
             onClick={handleSendReply}
             disabled={!replyText.trim()}
             style={{
-              width: 28, height: 28, borderRadius: '50%',
+              width: 32, height: 32, borderRadius: 9999,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
+              padding: 0,
               border: 'none', cursor: replyText.trim() ? 'pointer' : 'default',
               flexShrink: 0,
               transition: 'opacity 200ms cubic-bezier(0.25, 1, 0.5, 1), transform 200ms cubic-bezier(0.25, 1, 0.5, 1)',
-              background: 'var(--text-primary)',
-              color: 'var(--bg-card)',
+              background: 'var(--btn-primary-bg)',
+              color: 'var(--btn-primary-fg)',
               opacity: replyText.trim() ? 1 : 0.25,
               transform: replyText.trim() ? 'scale(1)' : 'scale(0.85)',
             }}
           >
             <ArrowUp size={14} strokeWidth={2.5} />
           </button>
+          </div>
+          {/* Ghost hint and Cmd+Enter hint — inside the input container */}
+          {ghostVisible && !replyText && aiResult?.draftReply && (
+            <div style={{ fontSize: 14, color: 'var(--text-dim)', padding: '4px 0' }}>
+              Tab to use suggested reply
+            </div>
+          )}
+          {replyText && (
+            <div style={{ fontSize: 14, color: 'var(--text-dim)', padding: '4px 0' }}>
+              <kbd style={{ fontSize: 14, color: 'var(--text-dim)', padding: '2px 6px', borderRadius: 4, background: 'var(--hover-bg)', fontFamily: 'inherit' }}>Cmd+Enter</kbd> to send
+            </div>
+          )}
         </div>
-        {/* Ghost hint and Cmd+Enter hint below the pill */}
-        {ghostVisible && !replyText && aiResult?.draftReply && (
-          <div style={{ fontSize: 14, color: 'var(--text-dim)', marginTop: 4, paddingLeft: 16 }}>
-            Tab to use suggested reply
-          </div>
-        )}
-        {replyText && (
-          <div style={{ fontSize: 14, color: 'var(--text-dim)', marginTop: 4, paddingLeft: 16 }}>
-            <kbd style={{ padding: '1px 4px', borderRadius: 3, background: 'var(--hover-bg)', border: '1px solid var(--glass-divider)', fontSize: 9, fontFamily: 'inherit' }}>Cmd+Enter</kbd> to send
-          </div>
-        )}
       </div>
 
       {/* Icon-only action bar */}

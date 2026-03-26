@@ -155,7 +155,7 @@ export function GlobalSearch({ onNavigate }: GlobalSearchProps) {
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Search contacts, invoices, leads..."
-            className="bb-search-input"
+            className="bb-search-input bb-naked-input"
           />
           {query && (
             <button onClick={() => setQuery('')} className="bb-search-clear">

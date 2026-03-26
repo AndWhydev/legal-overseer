@@ -364,11 +364,11 @@
    -------------------------------------------------------------------------- */
 
 [data-theme="aurora"] select,
-[data-theme="aurora"] input[type="text"],
-[data-theme="aurora"] input[type="email"],
-[data-theme="aurora"] input[type="url"],
-[data-theme="aurora"] input[type="number"],
-[data-theme="aurora"] input[type="search"],
+[data-theme="aurora"] input[type="text"]:not(.bb-search-input):not(.bb-naked-input),
+[data-theme="aurora"] input[type="email"]:not(.bb-naked-input),
+[data-theme="aurora"] input[type="url"]:not(.bb-naked-input),
+[data-theme="aurora"] input[type="number"]:not(.bb-naked-input),
+[data-theme="aurora"] input[type="search"]:not(.bb-search-input):not(.bb-naked-input),
 [data-theme="aurora"] textarea {
   background: rgba(255, 255, 255, 0.35) !important;
   border: 1px solid rgba(255, 255, 255, 0.4) !important;

@@ -47,7 +47,14 @@ export function useLeads() {
   const [filters, setFilters] = useState<LeadFilter>({ smartView: 'all' })
   const [movingLeadId, setMovingLeadId] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
   const abortRef = useRef<AbortController | null>(null)
+
+  // Debounce search — only update serverKey after 300ms of no typing
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchQuery), 300)
+    return () => clearTimeout(timer)
+  }, [searchQuery])
 
   // Client-side filtering — score, source, smartView all instant, no re-fetch
   const leads = useMemo(() => {
@@ -94,8 +101,8 @@ export function useLeads() {
     [leads, selectedLeadId],
   )
 
-  // Track server-side filter key to only re-fetch when non-smartView filters change
-  const serverKey = serverFilterKey(filters, searchQuery)
+  // Track server-side filter key to only re-fetch when debounced search changes
+  const serverKey = serverFilterKey(filters, debouncedSearch)
 
   const loadLeads = useCallback(async (f?: LeadFilter, q?: string) => {
     abortRef.current?.abort()
@@ -104,7 +111,7 @@ export function useLeads() {
     const timeout = setTimeout(() => controller.abort(), 5000)
 
     try {
-      const qs = buildQueryString(f ?? filters, q ?? searchQuery)
+      const qs = buildQueryString(f ?? filters, q ?? debouncedSearch)
       const response = await fetch(`/api/agent/leads${qs}`, { signal: controller.signal })
       if (!response.ok) {
         const body = (await response.json().catch(() => ({}))) as { error?: string }
@@ -123,7 +130,7 @@ export function useLeads() {
     setIsLoading(true)
     setError(null)
 
-    loadLeads(filters, searchQuery)
+    loadLeads(filters, debouncedSearch)
       .catch((err) => {
         if (mounted && err instanceof Error && err.name !== 'AbortError') {
           setError(err.message)
@@ -233,7 +240,7 @@ export function useLeads() {
     refresh: () => {
       setError(null)
       setIsLoading(true)
-      loadLeads(filters, searchQuery)
+      loadLeads(filters, debouncedSearch)
         .catch((err) => {
           if (err instanceof Error && err.name !== 'AbortError') setError(err.message)
         })

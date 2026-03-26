@@ -1,196 +1,128 @@
 'use client'
 
 import React, { useState, useCallback, memo } from 'react'
-import { Send, Plus, Mail, Eye, MousePointer, MessageSquare, AlertCircle, FileText, Rocket } from 'lucide-react'
-import { useCampaigns, type EmailCampaign, type EmailTemplate } from '@/hooks/use-campaigns'
+import { Send, Plus, Mail, Eye, MousePointer, MessageSquare, AlertCircle, FileText } from 'lucide-react'
+import { useCampaigns } from '@/hooks/use-campaigns'
 import type { EnhancedLeadData } from '@/lib/leads/types'
 import { TemplateEditorPanel } from './template-editor-panel'
 import { CampaignCreatePanel } from './campaign-create-panel'
 import { StatusPill, type StatusVariant } from '@/components/ui/status-pill'
+import { EmptyState } from '@/components/ui/empty-state'
+import { S, C, hoveredRow } from '@/lib/styles/design-tokens'
 
 interface OutreachDashboardProps {
   leads: EnhancedLeadData[]
 }
 
 // ─── Hoisted Styles ─────────────────────────────────────────────────────────
+
 const container: React.CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
-  gap: 16,
+  gap: 20,
 }
 
 const sectionHeader: React.CSSProperties = {
   display: 'flex',
   justifyContent: 'space-between',
   alignItems: 'center',
+  marginBottom: 12,
 }
 
 const sectionTitle: React.CSSProperties = {
-  fontSize: 14,
-  fontWeight: 500,
-  textTransform: 'uppercase',
-  letterSpacing: '0.04em',
-  color: 'var(--text-secondary, #94A3B8)',
+  ...S.sectionLabel,
   margin: 0,
 }
 
-const actionBtn: React.CSSProperties = {
-  height: 40,
-  padding: '0 16px',
-  borderRadius: 8,
-  border: 'none',
-  background: 'var(--btn-primary-bg, #F1F5F9)',
-  color: 'var(--btn-primary-fg, #0a0f1a)',
-  fontSize: 14,
-  fontWeight: 500,
-  cursor: 'pointer',
+const primaryBtn: React.CSSProperties = {
+  ...S.button,
+  ...S.buttonPrimary,
+}
+
+const ghostBtn: React.CSSProperties = {
+  ...S.button,
+  ...S.buttonGhost,
+}
+
+const statBarCard: React.CSSProperties = {
+  ...S.card,
+  padding: 0,
   display: 'flex',
-  alignItems: 'center',
-  gap: 6,
-  transition: 'all 200ms',
+  flexWrap: 'wrap' as const,
 }
 
-const secondaryBtn: React.CSSProperties = {
-  ...actionBtn,
-  background: 'var(--hover-bg-strong, rgba(255, 255, 255, 0.06))',
-  color: 'var(--text-secondary, #94A3B8)',
-}
-
-const glassCard: React.CSSProperties = {
-  padding: '16px 20px',
-  borderRadius: 16,
-  background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.6))',
-  backdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
-  WebkitBackdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
-  border: 'none',
-  boxShadow: 'var(--card-inset, inset 0 1px 0 rgba(255, 255, 255, 0.05))',
-}
-
-const statGrid: React.CSSProperties = {
-  display: 'grid',
-  gridTemplateColumns: 'repeat(5, 1fr)',
-  gap: 8,
-}
-
-const statCell: React.CSSProperties = {
-  padding: 16,
-  borderRadius: 16,
-  background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.6))',
-  backdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
-  WebkitBackdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
-  boxShadow: 'var(--card-inset, inset 0 1px 0 rgba(255, 255, 255, 0.05))',
-  border: 'none',
+const statItem: React.CSSProperties = {
+  flex: '1 1 0',
+  minWidth: 100,
   display: 'flex',
-  flexDirection: 'column',
+  flexDirection: 'column' as const,
   alignItems: 'center',
   gap: 4,
+  padding: '16px 12px',
 }
 
-const statLabel: React.CSSProperties = {
+const statItemDivider: React.CSSProperties = {
+  ...statItem,
+  borderRight: `1px solid ${C.borderSubtle}`,
+}
+
+const statLabelStyle: React.CSSProperties = {
   fontSize: 14,
-  fontWeight: 500,
-  color: 'var(--text-dim, #475569)',
+  fontWeight: 400,
+  color: C.textDim,
   display: 'flex',
   alignItems: 'center',
   gap: 4,
 }
 
-const statValue: React.CSSProperties = {
-  fontSize: 16,
-  fontWeight: 500,
-  fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
-  color: 'var(--text-primary, #F1F5F9)',
-}
-
-const campaignRow: React.CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: 12,
-  padding: '12px 16px',
-  borderRadius: 12,
-  background: 'var(--hover-bg, rgba(255, 255, 255, 0.02))',
-  transition: 'background 200ms',
-  cursor: 'pointer',
+const statValueStyle: React.CSSProperties = {
+  ...S.mono,
 }
 
 const campaignName: React.CSSProperties = {
   flex: 1,
   fontSize: 14,
   fontWeight: 500,
-  color: 'var(--text-primary, #F1F5F9)',
+  color: C.textPrimary,
 }
 
 const campaignMeta: React.CSSProperties = {
   fontSize: 14,
   fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
-  color: 'var(--text-dim, #475569)',
-}
-
-const templateRow: React.CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: 12,
-  padding: '10px 16px',
-  borderRadius: 8,
-  background: 'var(--hover-bg, rgba(255, 255, 255, 0.02))',
+  color: C.textDim,
 }
 
 const templateName: React.CSSProperties = {
   flex: 1,
   fontSize: 14,
   fontWeight: 500,
-  color: 'var(--text-primary, #F1F5F9)',
+  color: C.textPrimary,
 }
 
 const templateCategory: React.CSSProperties = {
-  fontSize: 14,
-  padding: '2px 8px',
-  borderRadius: 8,
-  background: 'var(--hover-bg-strong, rgba(255, 255, 255, 0.06))',
-  color: 'var(--text-secondary, #94A3B8)',
+  ...S.badge,
+  padding: '4px 8px',
 }
 
-const emptyBox: React.CSSProperties = {
-  padding: '32px 16px',
-  textAlign: 'center',
-  borderRadius: 16,
-  border: 'none',
-  background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.6))',
-  backdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
-  WebkitBackdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
-  boxShadow: 'var(--card-inset, inset 0 1px 0 rgba(255, 255, 255, 0.05))',
-}
-
-const emptyTitle: React.CSSProperties = {
-  fontSize: 14,
-  fontWeight: 500,
-  color: 'var(--text-primary, #F1F5F9)',
-  marginBottom: 4,
-}
-
-const emptyDesc: React.CSSProperties = {
-  fontSize: 14,
-  color: 'var(--text-dim, #475569)',
-  marginBottom: 16,
-}
-
-const sendBtn: React.CSSProperties = {
-  height: 28,
+const sendBtnStyle: React.CSSProperties = {
+  ...S.button,
+  ...S.buttonSoft,
+  height: 32,
   padding: '0 12px',
-  borderRadius: 6,
-  border: 'none',
-  background: 'var(--hover-bg-strong, rgba(255, 255, 255, 0.06))',
-  color: 'var(--text-secondary, #94A3B8)',
   fontSize: 14,
-  fontWeight: 500,
-  cursor: 'pointer',
-  display: 'flex',
-  alignItems: 'center',
   gap: 4,
-  transition: 'filter 200ms',
+}
+
+const skeletonBar: React.CSSProperties = {
+  height: 72,
+  borderRadius: 16,
+  background: 'linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.03) 75%)',
+  backgroundSize: '200% 100%',
+  animation: 'shimmer 1.5s ease infinite',
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
+
 const CAMPAIGN_STATUS_VARIANT: Record<string, StatusVariant> = {
   draft: 'neutral',
   scheduled: 'info',
@@ -203,7 +135,26 @@ function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString('en-AU', { month: 'short', day: 'numeric' })
 }
 
+// ─── Stat Item Sub-component ────────────────────────────────────────────────
+
+interface StatCellProps {
+  icon: React.ReactNode
+  label: string
+  value: number
+  isLast?: boolean
+}
+
+function StatCell({ icon, label, value, isLast }: StatCellProps) {
+  return (
+    <div style={isLast ? statItem : statItemDivider}>
+      <span style={statLabelStyle}>{icon} {label}</span>
+      <span style={statValueStyle}>{value}</span>
+    </div>
+  )
+}
+
 // ─── Component ──────────────────────────────────────────────────────────────
+
 function OutreachDashboardInner({ leads }: OutreachDashboardProps) {
   const {
     campaigns,
@@ -217,6 +168,8 @@ function OutreachDashboardInner({ leads }: OutreachDashboardProps) {
   const [templateEditorOpen, setTemplateEditorOpen] = useState(false)
   const [campaignCreateOpen, setCampaignCreateOpen] = useState(false)
   const [sendingCampaignId, setSendingCampaignId] = useState<string | null>(null)
+  const [hoveredCampaign, setHoveredCampaign] = useState<string | null>(null)
+  const [hoveredTemplate, setHoveredTemplate] = useState<string | null>(null)
 
   // Aggregate stats across all campaigns
   const totalSent = campaigns.reduce((sum, c) => sum + (c.sent_count ?? 0), 0)
@@ -258,10 +211,7 @@ function OutreachDashboardInner({ leads }: OutreachDashboardProps) {
       <div style={container}>
         {Array.from({ length: 3 }).map((_, i) => (
           <div key={i} style={{
-            height: 80,
-            borderRadius: 16,
-            background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.6))',
-            animation: 'pulse 1.5s ease-in-out infinite',
+            ...skeletonBar,
             animationDelay: `${i * 100}ms`,
           }} />
         ))}
@@ -271,152 +221,149 @@ function OutreachDashboardInner({ leads }: OutreachDashboardProps) {
 
   return (
     <div style={container}>
-      {/* Stats Overview */}
-      <div style={statGrid}>
-        <div style={statCell}>
-          <span style={statLabel}><Mail size={12} /> Sent</span>
-          <span style={statValue}>{totalSent}</span>
-        </div>
-        <div style={statCell}>
-          <span style={statLabel}><Eye size={12} /> Opened</span>
-          <span style={{ ...statValue, color: totalOpened > 0 ? '#F1F5F9' : undefined }}>
-            {totalOpened}
-          </span>
-        </div>
-        <div style={statCell}>
-          <span style={statLabel}><MousePointer size={12} /> Clicked</span>
-          <span style={{ ...statValue, color: totalClicked > 0 ? '#F1F5F9' : undefined }}>
-            {totalClicked}
-          </span>
-        </div>
-        <div style={statCell}>
-          <span style={statLabel}><MessageSquare size={12} /> Replied</span>
-          <span style={{ ...statValue, color: totalReplied > 0 ? '#F1F5F9' : undefined }}>
-            {totalReplied}
-          </span>
-        </div>
-        <div style={statCell}>
-          <span style={statLabel}><AlertCircle size={12} /> Bounced</span>
-          <span style={{ ...statValue, color: totalBounced > 0 ? '#F1F5F9' : undefined }}>
-            {totalBounced}
-          </span>
-        </div>
+      {/* ── Stat Bar ── */}
+      <div data-stat-bar="" style={statBarCard}>
+        <StatCell icon={<Mail size={16} />} label="Sent" value={totalSent} />
+        <StatCell icon={<Eye size={16} />} label="Opened" value={totalOpened} />
+        <StatCell icon={<MousePointer size={16} />} label="Clicked" value={totalClicked} />
+        <StatCell icon={<MessageSquare size={16} />} label="Replied" value={totalReplied} />
+        <StatCell icon={<AlertCircle size={16} />} label="Bounced" value={totalBounced} isLast />
       </div>
 
-      {/* Campaigns Section */}
+      {/* ── Campaigns Section ── */}
       <div>
         <div style={sectionHeader}>
           <h3 style={sectionTitle}>Campaigns</h3>
           <button
             onClick={() => setCampaignCreateOpen(true)}
-            style={actionBtn}
-            onMouseEnter={e => { e.currentTarget.style.background = 'var(--btn-primary-hover, #E2E8F0)' }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'var(--btn-primary-bg, #F1F5F9)' }}
+            style={primaryBtn}
+            onMouseEnter={e => {
+              e.currentTarget.style.background = 'var(--btn-primary-hover, #E2E8F0)'
+              e.currentTarget.style.transform = 'translateY(-1px)'
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.background = 'var(--btn-primary-bg, #F1F5F9)'
+              e.currentTarget.style.transform = 'translateY(0)'
+            }}
           >
-            <Plus size={14} /> New Campaign
+            <Plus size={16} /> New Campaign
           </button>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12 }}>
-          {campaigns.length === 0 ? (
-            <div style={emptyBox}>
-              <Rocket size={24} style={{ color: 'var(--text-dim, #475569)', marginBottom: 8 }} />
-              <div style={emptyTitle}>No campaigns yet</div>
-              <div style={emptyDesc}>
-                Create a template, select some leads, and launch your first outreach campaign.
-              </div>
-              <button
-                onClick={() => {
+        {campaigns.length === 0 ? (
+          <div style={S.card}>
+            <EmptyState
+              title="No campaigns yet"
+              description="Create a template, select some leads, and launch your first outreach campaign."
+              action={{
+                label: templates.length === 0 ? 'Create Template' : 'Create Campaign',
+                onClick: () => {
                   if (templates.length === 0) {
                     setTemplateEditorOpen(true)
                   } else {
                     setCampaignCreateOpen(true)
                   }
-                }}
-                style={actionBtn}
-                onMouseEnter={e => { e.currentTarget.style.background = 'var(--btn-primary-hover, #E2E8F0)' }}
-                onMouseLeave={e => { e.currentTarget.style.background = 'var(--btn-primary-bg, #F1F5F9)' }}
-              >
-                <Plus size={14} /> {templates.length === 0 ? 'Create Template' : 'Create Campaign'}
-              </button>
+                },
+              }}
+            />
+          </div>
+        ) : (
+          <div style={{ ...S.cardFlush }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4, padding: 8 }}>
+              {campaigns.map(campaign => (
+                <div
+                  key={campaign.id}
+                  style={hoveredRow(campaign.id, hoveredCampaign)}
+                  onMouseEnter={() => setHoveredCampaign(campaign.id)}
+                  onMouseLeave={() => setHoveredCampaign(null)}
+                >
+                  <span style={campaignName}>{campaign.name}</span>
+                  <StatusPill
+                    variant={CAMPAIGN_STATUS_VARIANT[campaign.status] ?? 'neutral'}
+                    label={campaign.status}
+                  />
+                  <span style={{ ...campaignMeta, marginLeft: 8 }}>{campaign.sent_count} sent</span>
+                  <span style={{ ...campaignMeta, marginLeft: 8 }}>{formatDate(campaign.created_at)}</span>
+                  {(campaign.status === 'draft' || campaign.status === 'active') && (
+                    <button
+                      onClick={(e) => handleSendCampaign(campaign.id, e)}
+                      disabled={sendingCampaignId === campaign.id}
+                      style={{
+                        ...sendBtnStyle,
+                        marginLeft: 8,
+                        opacity: sendingCampaignId === campaign.id ? 0.5 : 1,
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.background = C.bgHoverStrong }}
+                      onMouseLeave={e => { e.currentTarget.style.background = C.bgHover }}
+                    >
+                      <Send size={12} />
+                      {sendingCampaignId === campaign.id ? 'Sending...' : 'Send'}
+                    </button>
+                  )}
+                </div>
+              ))}
             </div>
-          ) : (
-            campaigns.map(campaign => (
-              <div
-                key={campaign.id}
-                style={campaignRow}
-                onMouseEnter={e => { e.currentTarget.style.background = 'var(--hover-bg, rgba(255, 255, 255, 0.04))' }}
-                onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.02)' }}
-              >
-                <span style={campaignName}>{campaign.name}</span>
-                <StatusPill
-                  variant={CAMPAIGN_STATUS_VARIANT[campaign.status] ?? 'neutral'}
-                  label={campaign.status}
-                />
-                <span style={campaignMeta}>{campaign.sent_count} sent</span>
-                <span style={campaignMeta}>{formatDate(campaign.created_at)}</span>
-                {(campaign.status === 'draft' || campaign.status === 'active') && (
-                  <button
-                    onClick={(e) => handleSendCampaign(campaign.id, e)}
-                    disabled={sendingCampaignId === campaign.id}
-                    style={{
-                      ...sendBtn,
-                      opacity: sendingCampaignId === campaign.id ? 0.5 : 1,
-                    }}
-                    onMouseEnter={e => { e.currentTarget.style.filter = 'brightness(1.3)' }}
-                    onMouseLeave={e => { e.currentTarget.style.filter = 'brightness(1)' }}
-                  >
-                    <Send size={11} />
-                    {sendingCampaignId === campaign.id ? 'Sending...' : 'Send'}
-                  </button>
-                )}
-              </div>
-            ))
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
-      {/* Templates Section */}
+      {/* ── Templates Section ── */}
       <div>
         <div style={sectionHeader}>
           <h3 style={sectionTitle}>Templates</h3>
           <button
             onClick={() => setTemplateEditorOpen(true)}
-            style={secondaryBtn}
-            onMouseEnter={e => { e.currentTarget.style.background = 'var(--hover-bg-strong, rgba(255, 255, 255, 0.1))' }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'var(--hover-bg-strong, rgba(255, 255, 255, 0.06))' }}
+            style={ghostBtn}
+            onMouseEnter={e => {
+              e.currentTarget.style.background = C.bgHover
+              e.currentTarget.style.borderColor = C.borderHover
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.background = 'transparent'
+              e.currentTarget.style.borderColor = C.borderVisible
+            }}
           >
-            <Plus size={14} /> New Template
+            <Plus size={16} /> New Template
           </button>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 12 }}>
-          {templates.length === 0 ? (
-            <div style={emptyBox}>
-              <FileText size={24} style={{ color: 'var(--text-dim, #475569)', marginBottom: 8 }} />
-              <div style={emptyTitle}>No templates</div>
-              <div style={emptyDesc}>
-                Create an email template to use in your campaigns.
-              </div>
+        {templates.length === 0 ? (
+          <div style={S.card}>
+            <EmptyState
+              title="No templates"
+              description="Create an email template to use in your campaigns."
+              action={{
+                label: 'Create Template',
+                onClick: () => setTemplateEditorOpen(true),
+              }}
+            />
+          </div>
+        ) : (
+          <div style={{ ...S.cardFlush }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4, padding: 8 }}>
+              {templates.map(template => (
+                <div
+                  key={template.id}
+                  style={hoveredRow(template.id, hoveredTemplate)}
+                  onMouseEnter={() => setHoveredTemplate(template.id)}
+                  onMouseLeave={() => setHoveredTemplate(null)}
+                >
+                  <FileText size={16} style={{ color: C.textDim, flexShrink: 0 }} />
+                  <span style={templateName}>{template.name}</span>
+                  {template.category && (
+                    <span style={templateCategory}>{template.category}</span>
+                  )}
+                  <span style={{ fontSize: 14, color: C.textDim }}>
+                    {template.variables?.length ?? 0} vars
+                  </span>
+                </div>
+              ))}
             </div>
-          ) : (
-            templates.map(template => (
-              <div key={template.id} style={templateRow}>
-                <FileText size={16} style={{ color: 'var(--text-dim, #475569)', flexShrink: 0 }} />
-                <span style={templateName}>{template.name}</span>
-                {template.category && (
-                  <span style={templateCategory}>{template.category}</span>
-                )}
-                <span style={{ fontSize: 14, color: 'var(--text-dim, #475569)' }}>
-                  {template.variables?.length ?? 0} vars
-                </span>
-              </div>
-            ))
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
-      {/* Panels */}
+      {/* ── Panels ── */}
       <TemplateEditorPanel
         open={templateEditorOpen}
         onClose={() => setTemplateEditorOpen(false)}
@@ -432,8 +379,14 @@ function OutreachDashboardInner({ leads }: OutreachDashboardProps) {
       />
 
       <style>{`
-        @media (max-width: 768px) {
-          [style*="grid-template-columns: repeat(5"] { grid-template-columns: repeat(2, 1fr) !important; }
+        @keyframes shimmer {
+          from { background-position: 200% 0; }
+          to { background-position: -200% 0; }
+        }
+        @media (max-width: 640px) {
+          [data-stat-bar] { flex-direction: column !important; }
+          [data-stat-bar] > div { border-right: none !important; border-bottom: 1px solid ${C.borderSubtle} !important; }
+          [data-stat-bar] > div:last-child { border-bottom: none !important; }
         }
       `}</style>
     </div>

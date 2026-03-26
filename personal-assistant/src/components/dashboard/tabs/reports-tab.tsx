@@ -189,7 +189,7 @@ export default function ReportsTab() {
     background: 'var(--glass-pill-bg)',
     backdropFilter: 'var(--glass-blur)',
     WebkitBackdropFilter: 'var(--glass-blur)',
-    boxShadow: 'var(--card-inset)',
+    boxShadow: 'var(--card-shadow), var(--card-inset)',
     border: 'none',
     transition: 'background 200ms',
   }

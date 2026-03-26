@@ -97,7 +97,7 @@ export default function TestimonialsSection() {
                 backdropFilter: 'blur(20px)',
                 WebkitBackdropFilter: 'blur(20px)',
                 border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
-                boxShadow: 'var(--card-inset, inset 0 1px 0 rgba(255, 255, 255, 0.05))',
+                boxShadow: 'var(--card-shadow, 0 2px 8px rgba(0,0,0,0.3)), var(--card-inset, inset 0 1px 0 rgba(255,255,255,0.06))',
                 transition: 'all 300ms',
                 cursor: 'pointer',
                 display: 'flex',

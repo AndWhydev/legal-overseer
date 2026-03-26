@@ -35,11 +35,11 @@ export function NotificationBadge({
   // Don't render if count is 0
   if (count <= 0) return null;
 
-  // Size mappings
+  // Size mappings — sm for collapsed rail, md for panel items, lg for topbar
   const sizeMap = {
-    sm: { width: 16, height: 16, fontSize: 14, padding: 2 },
-    md: { width: 20, height: 20, fontSize: 14, padding: 2 },
-    lg: { width: 24, height: 24, fontSize: 14, padding: 4 },
+    sm: { minWidth: 16, height: 16, fontSize: 10, padding: '0 4px' },
+    md: { minWidth: 18, height: 18, fontSize: 11, padding: '0 5px' },
+    lg: { minWidth: 22, height: 22, fontSize: 12, padding: '0 6px' },
   };
 
   const dims = sizeMap[size];
@@ -52,20 +52,22 @@ export function NotificationBadge({
         position: 'absolute',
         top: '-4px',
         right: '-4px',
-        width: `${dims.width}px`,
+        minWidth: `${dims.minWidth}px`,
         height: `${dims.height}px`,
-        borderRadius: '50%',
+        borderRadius: '9999px',
         backgroundColor: color,
-        display: 'flex',
+        border: 'none',
+        display: 'inline-flex',
         alignItems: 'center',
         justifyContent: 'center',
+        padding: dims.padding,
         fontSize: `${dims.fontSize}px`,
         fontWeight: 500,
         color: '#FFFFFF',
         lineHeight: 1,
         flexShrink: 0,
+        boxSizing: 'border-box',
         animation: animate ? 'bb-badge-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' : undefined,
-        boxShadow: `0 0 0 2px var(--bg-primary, #0A0A0B), 0 2px 4px rgba(0, 0, 0, 0.2)`,
       }}
       role="status"
       aria-label={ariaLabel || `${count} notifications`}

@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, memo } from 'react'
+import React, { memo } from 'react'
 import { Search, LayoutGrid, List } from 'lucide-react'
 import { GlassToggle } from '@/components/ui/glass-toggle'
 import { GlassDropdown } from '@/components/ui/glass-dropdown'
@@ -54,7 +54,7 @@ const searchInput: React.CSSProperties = {
   outline: 'none',
   fontFamily: 'inherit',
   transition: 'box-shadow 200ms',
-  boxShadow: 'var(--card-inset, inset 0 1px 0 rgba(255, 255, 255, 0.05))',
+  boxShadow: 'var(--card-shadow, 0 2px 8px rgba(0,0,0,0.3)), var(--card-inset, inset 0 1px 0 rgba(255,255,255,0.06))',
   backdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
   WebkitBackdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
 }
@@ -101,7 +101,7 @@ const discoverBtnStyle: React.CSSProperties = {
   transition: 'all 200ms',
   backdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
   WebkitBackdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
-  boxShadow: 'var(--card-inset, inset 0 1px 0 rgba(255, 255, 255, 0.05))',
+  boxShadow: 'var(--card-shadow, 0 2px 8px rgba(0,0,0,0.3)), var(--card-inset, inset 0 1px 0 rgba(255,255,255,0.06))',
 }
 
 // ─── Score Options ──────────────────────────────────────────────────────────
@@ -133,8 +133,6 @@ function LeadsToolbarInner({
   analytics,
   searchInputRef,
 }: LeadsToolbarProps) {
-  const [searchFocused, setSearchFocused] = useState(false)
-
   const speedMinutes = analytics?.avgSpeedToLeadMinutes ?? null
   const speedLabel = speedMinutes !== null ? `${speedMinutes}m` : '--'
   const pipelineValue = analytics ? formatPipelineValue(analytics.totalValue) : '--'
@@ -152,8 +150,6 @@ function LeadsToolbarInner({
           className="bb-glass-input"
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
-          onFocus={() => setSearchFocused(true)}
-          onBlur={() => setSearchFocused(false)}
           placeholder="Search leads..."
           aria-label="Search leads"
           style={{

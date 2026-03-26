@@ -360,11 +360,11 @@
    -------------------------------------------------------------------------- */
 
 [data-theme="light"] select,
-[data-theme="light"] input[type="text"],
-[data-theme="light"] input[type="email"],
-[data-theme="light"] input[type="url"],
-[data-theme="light"] input[type="number"],
-[data-theme="light"] input[type="search"],
+[data-theme="light"] input[type="text"]:not(.bb-search-input):not(.bb-naked-input),
+[data-theme="light"] input[type="email"]:not(.bb-naked-input),
+[data-theme="light"] input[type="url"]:not(.bb-naked-input),
+[data-theme="light"] input[type="number"]:not(.bb-naked-input),
+[data-theme="light"] input[type="search"]:not(.bb-search-input):not(.bb-naked-input),
 [data-theme="light"] textarea {
   background: #FFFFFF !important;
   border: 1px solid #E4E2DD !important;

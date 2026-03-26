@@ -96,7 +96,7 @@ export function DailyBrief() {
     backdropFilter: 'var(--glass-card-blur)',
     WebkitBackdropFilter: 'var(--glass-card-blur)',
     border: '1px solid var(--glass-card-border)',
-    boxShadow: 'var(--card-inset)',
+    boxShadow: 'var(--card-shadow), var(--card-inset)',
     borderLeft: '3px solid transparent',
     borderImage: 'linear-gradient(to bottom, #a78bfa, #3b82f6) 1',
   };

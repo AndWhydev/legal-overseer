@@ -94,15 +94,15 @@ function Spinner() {
   )
 }
 
-/* ── Dark mode detection ── */
+/* ── Dark mode detection — reads app theme from localStorage (bb-theme) ── */
 function useDarkMode() {
-  const [isDark, setIsDark] = useState(false)
+  const [isDark, setIsDark] = useState(() => {
+    if (typeof window === 'undefined') return false
+    return localStorage.getItem('bb-theme') === 'midnight'
+  })
   useEffect(() => {
-    const mq = window.matchMedia('(prefers-color-scheme: dark)')
-    setIsDark(mq.matches)
-    const h = (e: MediaQueryListEvent) => setIsDark(e.matches)
-    mq.addEventListener('change', h)
-    return () => mq.removeEventListener('change', h)
+    // Re-check in case SSR value differed
+    setIsDark(localStorage.getItem('bb-theme') === 'midnight')
   }, [])
   return isDark
 }
@@ -212,7 +212,7 @@ function LoginPageContent() {
   /* ── Theme tokens ── */
   const bg = isDark ? '#0A0A0A' : '#FAFAFA'
   const cardBg = isDark ? 'rgba(20,20,20,0.85)' : 'rgba(255,255,255,0.85)'
-  const cardBorder = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'
+  const cardBorder = isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.06)'
   const cardShadow = isDark
     ? '0 8px 32px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.3)'
     : '0 8px 32px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)'
@@ -220,10 +220,10 @@ function LoginPageContent() {
   const textMuted = isDark ? '#777' : '#888'
   const textDim = isDark ? '#666' : '#999'
   const textDimmer = isDark ? '#555' : '#aaa'
-  const oauthBg = isDark ? '#161616' : '#fff'
-  const oauthBorder = isDark ? '#2a2a2a' : '#e0e0e0'
-  const oauthHoverBg = isDark ? '#1c1c1c' : '#f8f8f8'
-  const oauthHoverBorder = isDark ? '#444' : '#ccc'
+  const oauthBg = isDark ? '#1e1e1e' : '#fff'
+  const oauthBorder = isDark ? '#383838' : '#e0e0e0'
+  const oauthHoverBg = isDark ? '#252525' : '#f8f8f8'
+  const oauthHoverBorder = isDark ? '#555' : '#ccc'
   const oauthColor = isDark ? '#ccc' : '#333'
   const dividerLine = isDark ? '#2a2a2a' : '#e5e5e5'
   const dividerText = isDark ? '#555' : '#aaa'
@@ -234,13 +234,6 @@ function LoginPageContent() {
     ? 'linear-gradient(180deg, #888 0%, #ccc 50%, #fff 100%)'
     : 'linear-gradient(180deg, #6b6b6b 0%, #1d1d1f 50%, #000 100%)'
   const logoFilter = isDark ? 'brightness(0) invert(1)' : 'brightness(0)'
-  const btnBg = isDark ? '#eee' : '#111'
-  const btnColor = isDark ? '#111' : '#fff'
-  const btnHoverBg = isDark ? '#fff' : '#000'
-  const btnShadow = isDark ? '0 4px 16px rgba(255,255,255,0.08)' : '0 4px 16px rgba(0,0,0,0.15)'
-  const btnHoverShadow = isDark ? '0 6px 24px rgba(255,255,255,0.12)' : '0 6px 24px rgba(0,0,0,0.2)'
-  const btnDisabledBg = isDark ? '#1a1a1a' : '#e8e8e8'
-  const btnDisabledColor = isDark ? '#555' : '#aaa'
   const sentEmailColor = isDark ? '#eee' : '#111'
   const sentTitleColor = isDark ? '#eee' : '#111'
   const sentCopyColor = isDark ? '#999' : '#666'
@@ -370,15 +363,12 @@ function LoginPageContent() {
             fontWeight: 700,
             letterSpacing: '-0.03em',
             lineHeight: 1.1,
-            ...(isDark
-              ? { color: '#fff' }
-              : {
-                  background: headingGradient,
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text',
-                }
-            ),
+            background: isDark
+              ? 'linear-gradient(180deg, #f0f0f0 0%, #e0e0e0 50%, #888 85%, #555 100%)'
+              : headingGradient,
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
           }}>
             Meet BitBit
           </h1>
@@ -632,35 +622,20 @@ function LoginPageContent() {
                 style={{
                   width: '100%',
                   minHeight: 48,
-                  borderRadius: 14,
-                  border: 'none',
-                  background: canSubmit ? btnBg : btnDisabledBg,
-                  color: canSubmit ? btnColor : btnDisabledColor,
+                  borderRadius: 12,
+                  border: `1px solid ${isDark ? '#383838' : '#e0e0e0'}`,
+                  background: isDark ? '#1e1e1e' : '#f5f5f5',
+                  color: isDark ? '#ccc' : '#333',
                   fontSize: 14,
-                  fontWeight: 600,
-                  letterSpacing: '-0.01em',
+                  fontWeight: 500,
                   cursor: canSubmit ? 'pointer' : 'not-allowed',
-                  transition: 'transform 100ms, box-shadow 200ms, background 150ms',
-                  boxShadow: canSubmit ? btnShadow : 'none',
+                  opacity: canSubmit ? 1 : 0.4,
+                  transition: 'border-color 150ms, background 150ms, opacity 150ms',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: 8,
                   fontFamily: 'inherit',
-                }}
-                onMouseEnter={e => {
-                  if (canSubmit) {
-                    e.currentTarget.style.transform = 'translateY(-1px)'
-                    e.currentTarget.style.background = btnHoverBg
-                    e.currentTarget.style.boxShadow = btnHoverShadow
-                  }
-                }}
-                onMouseLeave={e => {
-                  e.currentTarget.style.transform = 'translateY(0)'
-                  if (canSubmit) {
-                    e.currentTarget.style.background = btnBg
-                    e.currentTarget.style.boxShadow = btnShadow
-                  }
                 }}
               >
                 {activeMethod === 'email' && <Spinner />}
@@ -716,6 +691,10 @@ function LoginPageContent() {
           font-size: 14px !important;
           margin: 0 !important;
         }
+        /* Mask password field via CSS instead of type="password" to avoid browser styling */
+        [data-login-password] {
+          -webkit-text-security: disc !important;
+        }
 
         /* ── Light mode inputs ── */
         [data-theme="light"] [data-login-input] {
@@ -727,8 +706,8 @@ function LoginPageContent() {
         }
         [data-theme="light"] [data-login-input]:focus {
           background: #fff !important;
-          border-color: #111 !important;
-          box-shadow: 0 0 0 3px rgba(0,0,0,0.08) !important;
+          border-color: #aaa !important;
+          box-shadow: none !important;
         }
         [data-theme="light"] [data-login-input]::placeholder {
           color: #999 !important;
@@ -747,16 +726,16 @@ function LoginPageContent() {
 
         /* ── Dark mode inputs ── */
         [data-theme="dark"] [data-login-input] {
-          background: #161616 !important;
-          border: 1.5px solid #333 !important;
+          background: #1e1e1e !important;
+          border: 1.5px solid #383838 !important;
           color: #eee !important;
           -webkit-text-fill-color: #eee !important;
           color-scheme: dark !important;
         }
         [data-theme="dark"] [data-login-input]:focus {
-          background: #1a1a1a !important;
-          border-color: #eee !important;
-          box-shadow: 0 0 0 3px rgba(255,255,255,0.06) !important;
+          background: #252525 !important;
+          border-color: #555 !important;
+          box-shadow: none !important;
         }
         [data-theme="dark"] [data-login-input]::placeholder {
           color: #666 !important;
@@ -767,9 +746,9 @@ function LoginPageContent() {
         [data-theme="dark"] [data-login-input]:-webkit-autofill:hover,
         [data-theme="dark"] [data-login-input]:-webkit-autofill:focus,
         [data-theme="dark"] [data-login-input]:-webkit-autofill:active {
-          -webkit-box-shadow: 0 0 0 1000px #161616 inset !important;
+          -webkit-box-shadow: 0 0 0 1000px #1e1e1e inset !important;
           -webkit-text-fill-color: #eee !important;
-          border: 1.5px solid #333 !important;
+          border: 1.5px solid #383838 !important;
           transition: background-color 5000s ease-in-out 0s;
         }
 
@@ -845,10 +824,10 @@ function DevPasswordLogin({ isDark }: { isDark: boolean }) {
   const [devError, setDevError] = useState('')
   const [expanded, setExpanded] = useState(false)
 
-  const borderColor = isDark ? '#222' : '#eee'
+  const borderColor = isDark ? '#2a2a2a' : '#eee'
   const toggleColor = isDark ? '#666' : '#aaa'
-  const submitBg = isDark ? '#1a1a1a' : '#f5f5f5'
-  const submitBorder = isDark ? '#333' : '#e0e0e0'
+  const submitBg = isDark ? '#1e1e1e' : '#f5f5f5'
+  const submitBorder = isDark ? '#383838' : '#e0e0e0'
   const submitColor = isDark ? '#ccc' : '#333'
 
   async function handleDevLogin(e: React.FormEvent) {
@@ -904,7 +883,7 @@ function DevPasswordLogin({ isDark }: { isDark: boolean }) {
               width: '100%',
               height: 44,
               padding: '0 14px',
-              borderRadius: 10,
+              borderRadius: 12,
               fontSize: 14,
               outline: 'none',
               boxSizing: 'border-box' as const,
@@ -913,17 +892,18 @@ function DevPasswordLogin({ isDark }: { isDark: boolean }) {
             }}
           />
           <input
-            type="password"
+            type="text"
             placeholder="Password"
             value={devPassword}
             onChange={e => setDevPassword(e.target.value)}
             autoComplete="current-password"
             data-login-input=""
+            data-login-password=""
             style={{
               width: '100%',
               height: 44,
               padding: '0 14px',
-              borderRadius: 10,
+              borderRadius: 12,
               fontSize: 14,
               outline: 'none',
               boxSizing: 'border-box' as const,
@@ -940,11 +920,11 @@ function DevPasswordLogin({ isDark }: { isDark: boolean }) {
             style={{
               width: '100%',
               minHeight: 44,
-              borderRadius: 10,
+              borderRadius: 12,
               border: `1px solid ${submitBorder}`,
               background: submitBg,
               color: submitColor,
-              fontSize: 13,
+              fontSize: 14,
               fontWeight: 500,
               cursor: (!devEmail.trim() || !devPassword) ? 'not-allowed' : 'pointer',
               opacity: (!devEmail.trim() || !devPassword) ? 0.4 : 1,

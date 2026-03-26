@@ -273,7 +273,7 @@ export function InboxFeed({ isCollapsed = false, onCollapsedChange }: InboxFeedP
         backdropFilter: 'var(--glass-card-blur)',
         WebkitBackdropFilter: 'var(--glass-card-blur)',
         border: '1px solid var(--glass-card-border)',
-        boxShadow: 'var(--card-inset)',
+        boxShadow: 'var(--card-shadow), var(--card-inset)',
         overflow: 'hidden',
       }}
     >

@@ -28,7 +28,7 @@ const cardBase: React.CSSProperties = {
   backdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
   WebkitBackdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
   border: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
-  boxShadow: 'var(--card-inset, inset 0 1px 0 rgba(255, 255, 255, 0.05))',
+  boxShadow: 'var(--card-shadow, 0 2px 8px rgba(0,0,0,0.3)), var(--card-inset, inset 0 1px 0 rgba(255,255,255,0.06))',
   cursor: 'grab',
   transition: 'box-shadow 200ms cubic-bezier(0.16, 1, 0.3, 1), transform 200ms cubic-bezier(0.16, 1, 0.3, 1)',
   willChange: 'transform',

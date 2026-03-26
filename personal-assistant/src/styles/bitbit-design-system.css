@@ -96,6 +96,7 @@
   --glass-blur-heavy: blur(28px) saturate(1.4) brightness(1.08);
   --glass-bg: rgba(15, 20, 30, 0.35);
   --glass-bg-heavy: rgba(12, 16, 24, 0.85);
+  --glass-card-inset: 0 2px 8px rgba(0, 0, 0, 0.3), 0 8px 32px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.06);
 
   /* ── Hover overlays ── */
   --hover-bg: rgba(255, 255, 255, 0.04);
@@ -135,10 +136,10 @@
   --ai-gradient-glow: 0 4px 20px rgba(255, 255, 255, 0.04);
 
   /* ── Theme-aware card shadows (overridden by light theme) ── */
-  --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-  --card-inset: inset 0 1px 0 rgba(255, 255, 255, 0.05);
-  --card-shadow-hover: 0 12px 40px rgba(0, 0, 0, 0.4);
-  --card-inset-hover: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.3), 0 8px 32px rgba(0, 0, 0, 0.2);
+  --card-inset: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --card-shadow-hover: 0 4px 16px rgba(0, 0, 0, 0.4), 0 12px 40px rgba(0, 0, 0, 0.3);
+  --card-inset-hover: inset 0 1px 0 rgba(255, 255, 255, 0.08);
 
   /* ── Edge-knock (dark: white glow/flash) ── */
   --edge-knock-flash: rgba(255, 255, 255, 0.7);
@@ -649,7 +650,7 @@ body.bitbit-dark {
   border: none;
   border-radius: var(--radius-xl);
   padding: 20px;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  box-shadow: var(--card-shadow), var(--card-inset);
   background-image: none;
   transition: transform var(--duration-normal) var(--ease-default),
               box-shadow var(--duration-normal) var(--ease-default);
@@ -660,7 +661,7 @@ body.bitbit-dark {
 
 .bb-card:hover {
   transform: translateY(-2px);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  box-shadow: var(--card-shadow-hover), var(--card-inset-hover);
 }
 
 /* ── Glass refraction overlay (disabled — too overwhelming) ── */
@@ -2837,7 +2838,7 @@ html.light .bb-inbox-row__tag--spam {
   backdrop-filter: blur(20px) saturate(1.2);
   -webkit-backdrop-filter: blur(20px) saturate(1.2);
   border: 1px solid var(--glass-card-border);
-  box-shadow: var(--card-inset);
+  box-shadow: var(--card-shadow), var(--card-inset);
   margin-bottom: 2px;
   transition: all 180ms cubic-bezier(0.16, 1, 0.3, 1);
   min-height: 52px;
@@ -3009,7 +3010,8 @@ html.light .bb-inbox-row__tag--spam {
   cursor: pointer;
   padding: 0;
   opacity: 0;
-  transition: opacity 150ms ease, color 150ms ease, background 150ms ease;
+  transform: scale(1);
+  transition: opacity 150ms ease, color 150ms cubic-bezier(0.34, 1.56, 0.64, 1), transform 150ms cubic-bezier(0.34, 1.56, 0.64, 1);
   flex-shrink: 0;
 }
 
@@ -3020,8 +3022,8 @@ html.light .bb-inbox-row__tag--spam {
 
 .bb-inbox-group__delete:hover,
 .bb-inbox-row__delete:hover {
-  color: var(--bb-red, #EF4444);
-  background: rgba(239, 68, 68, 0.1);
+  color: var(--text-primary);
+  transform: scale(1.1);
 }
 
 /* ── Light theme overrides ── */
@@ -3824,7 +3826,7 @@ html.light .bb-leads-card__actions {
 .bb-contacts-search__input {
   width: 100%;
   padding: 10px 14px 10px 38px;
-  border-radius: 16px;
+  border-radius: 12px;
   background: rgba(10, 14, 23, 0.5);
   backdrop-filter: blur(26px) saturate(1.15);
   -webkit-backdrop-filter: blur(26px) saturate(1.15);
@@ -5561,6 +5563,21 @@ html.light .bb-tenders-drawer__close:hover {
   color: var(--text-dim);
 }
 
+/* ── Naked inner input — sits inside a styled container, must be invisible ── */
+.bb-naked-input {
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.bb-naked-input:focus {
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
 /* ── Standalone glass input — overrides theme !important borders ── */
 .bb-glass-input {
   border: none !important;
@@ -5573,7 +5590,8 @@ html.light .bb-tenders-drawer__close:hover {
 }
 .bb-glass-input:focus {
   border: none !important;
-  box-shadow: var(--card-inset, inset 0 1px 0 rgba(255, 255, 255, 0.05)), 0 0 0 2px rgba(255, 255, 255, 0.08) !important;
+  outline: none !important;
+  box-shadow: var(--card-inset, inset 0 1px 0 rgba(255, 255, 255, 0.05)) !important;
 }
 .bb-glass-input::placeholder {
   color: var(--text-dim);
@@ -6882,7 +6900,7 @@ html.light .bb-chat__scroll-btn {
   background: var(--bg-card);
   backdrop-filter: var(--glass-card-blur);
   -webkit-backdrop-filter: var(--glass-card-blur);
-  box-shadow: var(--card-inset);
+  box-shadow: var(--card-shadow), var(--card-inset);
   border-radius: 18px 18px 4px 18px;
   padding: 10px 14px;
   color: var(--text-primary);
@@ -8028,7 +8046,7 @@ html.light .bb-chat__markdown a:hover {
   transition-duration: 60ms;
 }
 
-/* New chat button — compact, black pill */
+/* New chat button — compact, theme-aware pill */
 .bb-chat__drawer-new-btn {
   display: inline-flex;
   align-items: center;
@@ -8036,18 +8054,19 @@ html.light .bb-chat__markdown a:hover {
   padding: 5px 10px;
   border-radius: 6px;
   border: none;
-  background: #000000;
-  color: #FFFFFF;
+  background: var(--text-primary);
+  color: var(--bg-primary);
   font-size: 11px;
   font-weight: 600;
   cursor: pointer;
   transition: background 120ms var(--ease-snap),
+              opacity 120ms var(--ease-snap),
               transform 180ms var(--ease-spring);
   transform: scale(1) translateZ(0);
 }
 
 .bb-chat__drawer-new-btn:hover {
-  background: #1A1A1A;
+  opacity: 0.85;
   transform: scale(1.04) translateZ(0);
 }
 

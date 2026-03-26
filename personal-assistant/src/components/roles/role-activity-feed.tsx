@@ -47,7 +47,7 @@ const glassCard: React.CSSProperties = {
   backdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
   WebkitBackdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
   border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
-  boxShadow: 'var(--card-inset, inset 0 1px 0 rgba(255, 255, 255, 0.05))',
+  boxShadow: 'var(--card-shadow, 0 2px 8px rgba(0,0,0,0.3)), var(--card-inset, inset 0 1px 0 rgba(255,255,255,0.06))',
 }
 
 const sectionHeader: React.CSSProperties = {
@@ -67,7 +67,7 @@ const listRow: React.CSSProperties = {
   background: 'var(--bb-surface, rgba(10, 14, 23, 0.5))',
   backdropFilter: 'blur(26px) saturate(1.15)',
   WebkitBackdropFilter: 'blur(26px) saturate(1.15)',
-  boxShadow: 'var(--card-inset, inset 0 1px 0 rgba(255, 255, 255, 0.05))',
+  boxShadow: 'var(--card-shadow, 0 2px 8px rgba(0,0,0,0.3)), var(--card-inset, inset 0 1px 0 rgba(255,255,255,0.06))',
   border: 'none',
   transition: 'background 200ms',
   cursor: 'default',

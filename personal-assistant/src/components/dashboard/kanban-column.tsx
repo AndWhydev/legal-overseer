@@ -143,7 +143,7 @@ export const KanbanColumn = memo(function KanbanColumn({
             borderRadius: 12,
             padding: '12px 16px',
             background: 'var(--bg-card)',
-            boxShadow: 'var(--card-inset)',
+            boxShadow: 'var(--card-shadow), var(--card-inset)',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               {/* Priority dot indicator */}

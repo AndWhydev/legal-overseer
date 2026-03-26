@@ -821,7 +821,7 @@ function AISearchTab() {
             backdropFilter: 'var(--glass-blur)',
             WebkitBackdropFilter: 'var(--glass-blur)',
             border: 'none',
-            boxShadow: 'var(--card-inset)',
+            boxShadow: 'var(--card-shadow), var(--card-inset)',
             animation: 'bb-fade-up 300ms cubic-bezier(0.16, 1, 0.3, 1) both',
           }}>
             <p style={{ fontSize: 14, color: 'var(--text-secondary)', margin: 0, lineHeight: 1.6, flex: 1 }}>
