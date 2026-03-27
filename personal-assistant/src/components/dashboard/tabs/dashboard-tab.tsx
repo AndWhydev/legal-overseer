@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 import { DashboardRedesign } from '../dashboard-redesign';
 import { TabSkeleton } from './tab-skeleton';
 import { TabShell } from '@/components/ui/tab-shell';
+import { DailyTipBanner } from '@/components/beta/daily-tip-banner';
 import type { KanbanColumn, Task } from '@/lib/types';
 import { logger } from '@/lib/core/logger';
 
@@ -58,7 +59,8 @@ function DashboardTab() {
 
   return (
     <TabShell variant="fixed" padding="p-0">
-      <div style={{ height: '100%', overflowY: 'auto', padding: 24 }}>
+      <div style={{ height: '100%', overflowY: 'auto', padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <DailyTipBanner />
         <DashboardRedesign
           columns={columns}
           tasks={tasks}
