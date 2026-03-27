@@ -364,7 +364,6 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
         <TooltipProvider>
           <SidebarProvider
             defaultOpen={true}
-            className="bb-layout"
             data-focus-mode={focusMode || undefined}
           >
             {/* Sidebar (desktop/tablet) */}
@@ -409,7 +408,7 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
               {/* SPA Content Area */}
               <main
                 id="main-content"
-                className="bb-spa-content relative flex-1 overflow-hidden"
+                className="relative flex-1 overflow-hidden"
                 tabIndex={-1}
               >
                 {TABS.map((tab, index) => {
