@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Media, Billing & Growth Roles
 status: executing
-stopped_at: Completed 34-04-PLAN.md (Preview, Deploy Tools & Builder Dashboard)
-last_updated: "2026-03-27T13:59:45Z"
-last_activity: "2026-03-27 - Completed 34-04: Preview, Deploy Tools & Builder Dashboard"
+stopped_at: Completed 35-01-PLAN.md (Workflow Rules Foundation)
+last_updated: "2026-03-28T15:47:17Z"
+last_activity: "2026-03-28 - Completed 35-01: Workflow Rules Foundation"
 progress:
   total_phases: 20
   completed_phases: 12
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 
 ## Current Position
 
-Phase: 34 of 36 (Builder Role)
-Plan: 4 of 4 in current phase
-Status: Complete (pending Task 3 human verification)
-Last activity: 2026-03-27 - Completed 34-04: Preview, Deploy Tools & Builder Dashboard
+Phase: 35 of 36 (Proactive Workflows)
+Plan: 1 of 3 in current phase
+Status: Executing
+Last activity: 2026-03-28 - Completed 35-01: Workflow Rules Foundation
 
-Progress: v1.0 ======== | v1.1 ======== | v1.2 ======== | v1.4 ======== | v1.5 ========== 100%
+Progress: v1.0 ======== | v1.1 ======== | v1.2 ======== | v1.4 ======== | v1.5 ========== | v1.6 ===--- 33%
 
 ## Performance Metrics
 
@@ -73,6 +73,13 @@ Progress: v1.0 ======== | v1.1 ======== | v1.2 ======== | v1.4 ======== | v1.5 =
 | Phase 34 P02 | 9min | 2 tasks | 5 files |
 | Phase 34 P03 | 15min | 2 tasks | 4 files |
 | Phase 34 P04 | 12min | 2 tasks | 7 files |
+
+**v1.6 Phases:**
+
+| Phase | Plans | Status |
+|-------|-------|--------|
+| 35. Proactive Workflows | 3 | IN PROGRESS (1/3) |
+| Phase 35 P01 | 27min | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -160,6 +167,10 @@ See PROJECT.md Key Decisions table.
 - [Phase 34-04]: Preview route allows unauthenticated access for preview/deployed status (shareable client links)
 - [Phase 34-04]: Deploy action on dashboard redirects to chat with suggested message (simpler than direct API call for v1)
 - [Phase 34-04]: iframe thumbnail uses 400% oversize with scale-25 CSS transform for miniature preview rendering
+- [Phase 35-01]: Zod v4 z.record requires (key, value) pair -- z.record(z.string(), z.unknown()) for parameter maps
+- [Phase 35-01]: Migration uses timestamp format (20260328000001) matching existing convention not plan-specified 151_ prefix
+- [Phase 35-01]: vi.hoisted() for Anthropic SDK mock in Vitest ESM mode -- vi.mock factory hoisted before variable declarations
+- [Phase 35-01]: matchesCronPattern uses 5-minute tolerance window matching role tick interval for HH:MM patterns
 
 ### Roadmap Evolution
 
@@ -185,6 +196,6 @@ See PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-03-27T13:59:45Z
-Stopped at: Completed 34-04-PLAN.md (Preview, Deploy Tools & Builder Dashboard)
+Last session: 2026-03-28T15:47:17Z
+Stopped at: Completed 35-01-PLAN.md (Workflow Rules Foundation)
 Resume file: None
