@@ -31,7 +31,7 @@ import { ThemeProvider } from '@/lib/theme/theme-provider';
 import { useHotkeys, getTabHistory } from '@/hooks/use-hotkeys';
 import { SIDEBAR_CATEGORIES } from '@/lib/modules/registry';
 import { FeedbackWidget } from '@/components/beta/feedback-widget';
-import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
+import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/animate-ui/components/radix/sidebar';
 import { Separator } from '@/components/ui/separator';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
