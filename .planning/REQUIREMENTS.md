@@ -126,6 +126,11 @@ Requirements for Media, Billing & Growth Roles. Closes the media gap, adds billi
 - [x] **CONT-03**: User can request social media posts with platform-specific formatting (LinkedIn, Instagram, X)
 - [x] **CONT-04**: Content tools are plan-gated (growth and scale tiers only)
 
+### Role Runtime
+
+- [x] **ROLE-RUNTIME-01**: All domain role modules (finance, comms, sales) are imported in the cron role-tick path so getRole() returns valid implementations at runtime
+- [x] **ROLE-RUNTIME-02**: revenue-intelligence cron entry registered in vercel.json with daily schedule (06:00 AEST)
+
 ### Cost Controls
 
 - [x] **COST-01**: Per-execution token budget cap prevents runaway growth role costs
@@ -242,11 +247,13 @@ Requirements for Media, Billing & Growth Roles. Closes the media gap, adds billi
 | CONT-02 | Phase 24 | Complete |
 | CONT-03 | Phase 24 | Complete |
 | CONT-04 | Phase 24 | Complete |
+| ROLE-RUNTIME-01 | Phase 27 | Complete |
+| ROLE-RUNTIME-02 | Phase 27 | Complete |
 
 **Coverage:**
 - v1.2 requirements: 37 satisfied
-- v1.4 requirements: 42 total, 38 satisfied, 4 pending (SEO-03, SEO-04, TNDR-03, TNDR-04 -> Phase 29)
-- Mapped to phases: 42/42 (100%)
+- v1.4 requirements: 44 total, 40 satisfied, 4 pending (SEO-03, SEO-04, TNDR-03, TNDR-04 -> Phase 29)
+- Mapped to phases: 44/44 (100%)
 
 ---
 *Requirements defined: 2026-03-01*
