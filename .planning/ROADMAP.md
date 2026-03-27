@@ -239,7 +239,7 @@ Plans:
 - [x] **Phase 32: Marketing Site & Checkout Flow** — Product landing page, industry pages, AWU case study, pricing with Stripe Checkout, SEO
 - [x] **Phase 33: Beta Program Infrastructure** — Invite flow, guided onboarding, feedback collection, usage monitoring, beta user admin (completed 2026-03-27)
 - [x] **Phase 34: Builder Role (Premium Differentiator)** — Website generation via chat, template library, WordPress/Elementor integration, staging preview (completed 2026-03-27)
-- [ ] **Phase 35: Proactive Workflows & Standing Orders** — NL workflow rules, multi-step sequences, cross-role orchestration, workflow dashboard
+- [x] **Phase 35: Proactive Workflows & Standing Orders** — NL workflow rules, multi-step sequences, cross-role orchestration, workflow dashboard (completed 2026-03-27)
 - [ ] **Phase 36: Mobile-First Experience** — React Native/Expo app, push notifications, voice input, offline queue, quick actions
 
 **Dependency Graph:** Phases 30-32 parallel --> Phase 33 --> Phase 34 --> Phases 35-36
@@ -375,6 +375,6 @@ Phase 20 first (no dependencies), then 21 (billing before growth roles), then 22
 | 32. Marketing Site & Checkout Flow | 3/3 | Complete | 2026-03-27 | - |
 | 33. Beta Program Infrastructure | v1.5 | 1/1 | Complete | 2026-03-27 |
 | 34. Builder Role | v1.5 | 4/4 | Complete | 2026-03-27 |
-| 35. Proactive Workflows | 2/3 | In Progress|  | - |
+| 35. Proactive Workflows | 3/3 | Complete   | 2026-03-27 | - |
 
 **Overall:** 57/57 plans complete for v1.0+v1.1+v1.2 (100%). v1.4: 24/28 plans (Phases 20-27 complete, 28-29 pending). v1.5: Phases 30-34 complete, Phase 35 planned (3 plans).

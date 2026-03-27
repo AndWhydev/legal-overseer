@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Media, Billing & Growth Roles
 status: executing
-stopped_at: Completed 35-02-PLAN.md
-last_updated: "2026-03-27T16:10:14.025Z"
+stopped_at: Completed 35-03-PLAN.md (Tasks 1-2; Task 3 pending user verification)
+last_updated: "2026-03-27T16:15:31.337Z"
 last_activity: "2026-03-28 - Completed 35-02: Trigger Wiring & Cross-Role Tool Bridge"
 progress:
   total_phases: 21
-  completed_phases: 13
+  completed_phases: 14
   total_plans: 37
-  completed_plans: 37
+  completed_plans: 38
   percent: 33
 ---
 
@@ -26,9 +26,9 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 ## Current Position
 
 Phase: 35 of 36 (Proactive Workflows)
-Plan: 2 of 3 in current phase
+Plan: 3 of 3 in current phase
 Status: Executing
-Last activity: 2026-03-28 - Completed 35-02: Trigger Wiring & Cross-Role Tool Bridge
+Last activity: 2026-03-28 - Completed 35-03: Workflow CRUD API & Dashboard (Tasks 1-2; Task 3 pending verification)
 
 Progress: v1.0 ======== | v1.1 ======== | v1.2 ======== | v1.4 ======== | v1.5 ========== | v1.6 ===--- 33%
 
@@ -78,9 +78,10 @@ Progress: v1.0 ======== | v1.1 ======== | v1.2 ======== | v1.4 ======== | v1.5 =
 
 | Phase | Plans | Status |
 |-------|-------|--------|
-| 35. Proactive Workflows | 3 | IN PROGRESS (2/3) |
+| 35. Proactive Workflows | 3 | IN PROGRESS (3/3, Task 3 pending verify) |
 | Phase 35 P01 | 27min | 2 tasks | 7 files |
 | Phase 35 P02 | 15min | 2 tasks | 4 files |
+| Phase 35 P03 | 19min | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -174,6 +175,8 @@ See PROJECT.md Key Decisions table.
 - [Phase 35-01]: matchesCronPattern uses 5-minute tolerance window matching role tick interval for HH:MM patterns
 - [Phase 35]: [Phase 35-02]: WorkflowToolBridge uses TOOL_GROUPS registry for resolution -- org-level canProceed for cross-role budget guard
 - [Phase 35]: [Phase 35-02]: Event triggers in triage only evaluate/record; workflow starting deferred to role tick for budget control
+- [Phase 35]: Hard-delete workflow rules with active workflow cancellation for clean removal
+- [Phase 35]: Workflows gated to growth+ tiers (beta, growth, scale, enterprise) in Intelligence sidebar category
 
 ### Roadmap Evolution
 
@@ -199,6 +202,6 @@ See PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-03-27T16:10:14.004Z
-Stopped at: Completed 35-02-PLAN.md
+Last session: 2026-03-27T16:15:31.316Z
+Stopped at: Completed 35-03-PLAN.md (Tasks 1-2; Task 3 pending user verification)
 Resume file: None
