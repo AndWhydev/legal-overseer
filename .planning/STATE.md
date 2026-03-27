@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Media, Billing & Growth Roles
 status: executing
-stopped_at: Completed 32-02-PLAN.md (Pricing Enhancement + AWU Case Study)
-last_updated: "2026-03-27T09:21:21Z"
-last_activity: "2026-03-27 - Completed 32-02: Pricing Enhancement + AWU Case Study"
+stopped_at: Completed 34-01-PLAN.md (Builder Role Foundation)
+last_updated: "2026-03-27T13:21:28Z"
+last_activity: "2026-03-27 - Completed 34-01: Builder Role Foundation"
 progress:
   total_phases: 20
   completed_phases: 12
@@ -25,10 +25,10 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 
 ## Current Position
 
-Phase: 32 of 36 (Marketing Site & Checkout)
-Plan: 2 of 3 in current phase
+Phase: 34 of 36 (Builder Role)
+Plan: 1 of 4 in current phase
 Status: In Progress
-Last activity: 2026-03-27 - Completed 32-02: Pricing Enhancement + AWU Case Study
+Last activity: 2026-03-27 - Completed 34-01: Builder Role Foundation
 
 Progress: v1.0 ======== | v1.1 ======== | v1.2 ======== | v1.4 ======== | v1.5 ========== 100%
 
@@ -69,6 +69,7 @@ Progress: v1.0 ======== | v1.1 ======== | v1.2 ======== | v1.4 ======== | v1.5 =
 | Phase 31 P02 | 7min | 2 tasks | 1 file |
 | Phase 32 P02 | 14min | 2 tasks | 5 files |
 | Phase 32 P01 | 15min | 2 tasks | 15 files |
+| Phase 34 P01 | 20min | 3 tasks | 17 files |
 
 ## Accumulated Context
 
@@ -142,6 +143,10 @@ See PROJECT.md Key Decisions table.
 - [Phase 32-01]: Industry page metadata in layout.tsx (not page.tsx) since pages are 'use client' -- standard Next.js pattern
 - [Phase 32-02]: Server/client split for pricing page -- page.tsx (server, metadata) + pricing-page-client.tsx ('use client', Stripe checkout)
 - [Phase 32-02]: Case study CTA links to /industries/agencies (not /pricing) to maintain funnel from social proof to industry page before conversion
+- [Phase 34-01]: Builder role uses copilot autonomy with $2/day budget -- chat-driven, tick only monitors stale projects
+- [Phase 34-01]: Template variables use {{mustache}} syntax with CSS custom properties for color injection
+- [Phase 34-01]: website_projects.slug unique per org (UNIQUE(org_id, slug)) for org-scoped namespacing
+- [Phase 34-01]: IconCode (violet) for builder role in dashboard UI, consistent with existing role color scheme
 
 ### Roadmap Evolution
 
@@ -167,6 +172,6 @@ See PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-03-27T09:31:00Z
-Stopped at: Completed 32-01-PLAN.md (Landing Page and Industry Pages)
+Last session: 2026-03-27T13:21:28Z
+Stopped at: Completed 34-01-PLAN.md (Builder Role Foundation)
 Resume file: None
