@@ -48,7 +48,7 @@ function DashboardBreadcrumb() {
 }
 
 function HeaderClock() {
-  return <FlipClock size="sm" variant="muted" />;
+  return <FlipClock size="xs" variant="outline" />;
 }
 
 function IconBreadcrumb({ icon: Icon, text }: { icon: React.ElementType; text: string }) {

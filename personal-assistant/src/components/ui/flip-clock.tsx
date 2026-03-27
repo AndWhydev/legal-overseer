@@ -16,6 +16,7 @@ const flipUnitVariants = cva(
   {
     variants: {
       size: {
+        xs: "w-6 min-w-6 h-8 text-sm", // Extra Small (Header bar)
         sm: "w-10 min-w-10 h-14 text-3xl", // Small (Compact UI)
         md: "w-14 min-w-14 h-20 text-5xl", // Medium (Standard sidebar/header)
         lg: "w-17 min-w-17 h-24 text-6xl", // Large (Focus/Hero)
@@ -138,6 +139,7 @@ const flipClockVariants = cva(
   {
     variants: {
       size: {
+        xs: "text-sm space-x-0.5",
         sm: "text-3xl space-x-1",
         md: "text-5xl space-x-2",
         lg: "text-6xl space-x-2",
@@ -179,6 +181,7 @@ type FlipClockSize = NonNullable<
 >;
 
 const heightMap: Record<FlipClockSize, string> = {
+  xs: "text-sm",
   sm: "text-4xl",
   md: "text-5xl",
   lg: "text-6xl",
