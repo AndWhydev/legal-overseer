@@ -20,6 +20,7 @@ import { linkRelationship } from '@/lib/context/relationship-linker'
 import { reflectOnEvent } from './reflection'
 import { getActiveOrders, matchOrdersToContext, type StandingOrder } from '@/lib/intelligence/standing-orders'
 import { computeUrgency, type UrgencyResult } from '@/lib/intelligence/urgency-scorer'
+import { evaluateEventTriggers } from '@/lib/workflows/workflow-rule-engine'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -714,6 +715,29 @@ export async function runTriage(
       }
     }
 
+    // 4c. Evaluate workflow rule triggers for this message
+    try {
+      const matchedRuleIds = await evaluateEventTriggers(supabase, orgId, {
+        event: 'new_message',
+        data: {
+          channel: msg.channel,
+          sender: msg.sender,
+          sender_email: msg.sender_email,
+          category: classification.category,
+          significance: classification.significance,
+          contactId: contactId,
+          subject: msg.subject,
+        },
+        triggered_by_workflow: false,
+      })
+      if (matchedRuleIds.length > 0) {
+        logger.info('[triage] Workflow rules triggered', { messageId: msg.id, ruleIds: matchedRuleIds })
+      }
+    } catch (wfErr) {
+      // Non-critical: triage continues even if workflow evaluation fails
+      logger.warn('[triage] Workflow trigger evaluation failed', { error: String(wfErr) })
+    }
+
     // 5. Count by category
     if (msgCategory === 'spam') {
       result.spam++
@@ -766,25 +790,26 @@ export async function runTriage(
         .eq('id', msg.id)
     }
 
-    // 7. Auto-create tasks for actionable EMAIL messages from human senders only.
-    // Filter out automated/transactional emails that shouldn't become tasks:
-    // password resets, login confirmations, shipping notifications, newsletters, test emails,
-    // AND BitBit's own notification emails (approval, alert, digest, report).
-    const isEmailChannel = (msg.channel as string) === 'gmail' || (msg.channel as string) === 'outlook'
-    const subjectLower = ((msg.subject as string) ?? '').toLowerCase()
-    const senderEmailLower = ((msg.sender_email as string) ?? '').toLowerCase()
-    const notificationFromEmail = (process.env.NOTIFICATION_FROM_EMAIL || 'bitbit@bitbit.chat').toLowerCase()
-    const isSelfEmail = senderEmailLower === notificationFromEmail || senderEmailLower.includes('bitbit')
-    const isTransactional = /(?:password|reset|confirm|verify|sign.?in|log.?in|unsubscribe|no.?reply|noreply|delivery|shipped|tracking|newsletter|bridge test|test from|account.?activ|welcome.?to|receipt|order.?confirm|email.?verif|security.?alert|security.?advisory|vulnerability|two.?factor|2fa|otp|one.?time|subscription|billing.?statement|approval.?needed|alert.?escalation|daily.?digest|weekly.?report|bitbit.?digest|bitbit.?alert|magic.?link|connection.?request|invitation|friend.?suggest|oauth|permission.?update|app.?added|authorized|plan.?change|moved.?to.?(?:basic|free|pro|premium|starter|enterprise)|migration.?reminder|migrate.?to|verification.?code|device.?verif)/i.test(subjectLower)
-    // Secondary sender domain check: block notifications from known automated platforms
-    // even when header classification misses them (e.g., missing headers in metadata)
-    const NOTIFICATION_SENDER_DOMAINS = /(?:@|\.)(?:github\.com|linkedin\.com|facebookmail\.com|facebook\.com|twitter\.com|x\.com|noreply\..*|notifications\..*|accounts\.google\.com|googleusercontent\.com|atlassian\.net|jira\.com|slack\.com|trello\.com|notion\.so|canva\.com|figma\.com|zoom\.us|calendly\.com|stripe\.com|paypal\.com|square\.com|intuit\.com|xero\.com|hubspot\.com|mailchimp\.com|sendgrid\.net|supabase\.io|supabase\.com|vercel\.com|fly\.io|railway\.app|cloudflare\.com|sentry\.io|grill?d\.com\.au|glassdoor\.com|indeed\.com|granola\.so)$/i
-    const isSenderAutomated = NOTIFICATION_SENDER_DOMAINS.test(senderEmailLower)
-    if (msgCategory === 'action_required' && !isDuplicate && senderType === 'human' && isEmailChannel && !isTransactional && !isSelfEmail && !isSenderAutomated && classification.significance >= 7) {
-      const created = await createTaskForMessage(
-        supabase, orgId, msg, classification, priority, contactId,
-      )
-      if (created) result.tasksCreated++
+    // 7. Auto-task creation is DISABLED by default.
+    // Previously every actionable email (significance >= 7) created a Kanban task,
+    // flooding the board with hundreds of tasks. Task creation from emails should be
+    // an explicit user action (via the inbox UI or an agent directive), not automatic.
+    // To re-enable, set TRIAGE_AUTO_CREATE_TASKS=true in env.
+    if (process.env.TRIAGE_AUTO_CREATE_TASKS === 'true') {
+      const isEmailChannel = (msg.channel as string) === 'gmail' || (msg.channel as string) === 'outlook'
+      const subjectLower = ((msg.subject as string) ?? '').toLowerCase()
+      const senderEmailLower = ((msg.sender_email as string) ?? '').toLowerCase()
+      const notificationFromEmail = (process.env.NOTIFICATION_FROM_EMAIL || 'bitbit@bitbit.chat').toLowerCase()
+      const isSelfEmail = senderEmailLower === notificationFromEmail || senderEmailLower.includes('bitbit')
+      const isTransactional = /(?:password|reset|confirm|verify|sign.?in|log.?in|unsubscribe|no.?reply|noreply|delivery|shipped|tracking|newsletter|bridge test|test from|account.?activ|welcome.?to|receipt|order.?confirm|email.?verif|security.?alert|security.?advisory|vulnerability|two.?factor|2fa|otp|one.?time|subscription|billing.?statement|approval.?needed|alert.?escalation|daily.?digest|weekly.?report|bitbit.?digest|bitbit.?alert|magic.?link|connection.?request|invitation|friend.?suggest|oauth|permission.?update|app.?added|authorized|plan.?change|moved.?to.?(?:basic|free|pro|premium|starter|enterprise)|migration.?reminder|migrate.?to|verification.?code|device.?verif)/i.test(subjectLower)
+      const NOTIFICATION_SENDER_DOMAINS = /(?:@|\.)(?:github\.com|linkedin\.com|facebookmail\.com|facebook\.com|twitter\.com|x\.com|noreply\..*|notifications\..*|accounts\.google\.com|googleusercontent\.com|atlassian\.net|jira\.com|slack\.com|trello\.com|notion\.so|canva\.com|figma\.com|zoom\.us|calendly\.com|stripe\.com|paypal\.com|square\.com|intuit\.com|xero\.com|hubspot\.com|mailchimp\.com|sendgrid\.net|supabase\.io|supabase\.com|vercel\.com|fly\.io|railway\.app|cloudflare\.com|sentry\.io|grill?d\.com\.au|glassdoor\.com|indeed\.com|granola\.so)$/i
+      const isSenderAutomated = NOTIFICATION_SENDER_DOMAINS.test(senderEmailLower)
+      if (msgCategory === 'action_required' && !isDuplicate && senderType === 'human' && isEmailChannel && !isTransactional && !isSelfEmail && !isSenderAutomated && classification.significance >= 9) {
+        const created = await createTaskForMessage(
+          supabase, orgId, msg, classification, priority, contactId,
+        )
+        if (created) result.tasksCreated++
+      }
     }
 
     // 8. Resolve thread status

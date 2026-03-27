@@ -5,6 +5,8 @@ import { canProceed } from '@/lib/agent/cost-guard'
 import { canRoleProceed } from './role-cost-guard'
 import { getReadyWorkflows, resumeWorkflow, startWorkflow, type WorkflowStepDef } from './workflow-executor'
 import { logger } from '@/lib/core/logger'
+import { evaluateScheduledTriggers, getActiveWorkflowRules } from '@/lib/workflows/workflow-rule-engine'
+import { createWorkflowToolBridge, ruleToWorkflowDefinition } from '@/lib/workflows/workflow-tool-bridge'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -427,6 +429,32 @@ export async function executeRoleTick(
       }
     }
 
+    // 11. Evaluate workflow rule triggers (user-defined rules)
+    let workflowRulesTriggered = 0
+    try {
+      // 11a. Check scheduled triggers
+      const scheduledRuleIds = await evaluateScheduledTriggers(supabase, roleConfig.org_id)
+
+      // 11b. Start workflows for matched rules
+      if (scheduledRuleIds.length > 0) {
+        const rules = await getActiveWorkflowRules(supabase, roleConfig.org_id)
+        const bridge = createWorkflowToolBridge(supabase, roleConfig.org_id)
+        for (const ruleId of scheduledRuleIds) {
+          const rule = rules.find(r => r.id === ruleId)
+          if (!rule) continue
+          try {
+            const wfDef = ruleToWorkflowDefinition(rule, bridge, roleConfig.org_id)
+            await startWorkflow(supabase, roleConfig, wfDef)
+            workflowRulesTriggered++
+          } catch (ruleErr) {
+            logger.warn(`${tag} Failed to start workflow for rule ${ruleId}: ${String(ruleErr)}`)
+          }
+        }
+      }
+    } catch (wfRuleErr) {
+      logger.warn(`${tag} Workflow rule evaluation error: ${String(wfRuleErr)}`)
+    }
+
     // Log tick summary
     await logRoleActivity(
       supabase,
@@ -439,6 +467,7 @@ export async function executeRoleTick(
         insights: evaluation.insights.length,
         workflowsStarted,
         workflowsResumed,
+        workflowRulesTriggered,
         durationMs: Date.now() - startMs,
       },
       roleConfig.autonomy_level,
