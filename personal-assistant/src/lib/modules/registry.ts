@@ -37,6 +37,7 @@ export const ALL_MODULES = [
   'activity',
   'admin',
   'monitoring',
+  'beta-admin',
   'sentry',
   'swarm',
 ] as const;
@@ -92,6 +93,7 @@ const TIER_MODULES: Record<string, readonly string[] | 'all'> = {
     'activity',
     'admin',
     'monitoring',
+    'beta-admin',
     'sentry',
     'swarm',
   ],
@@ -162,7 +164,7 @@ export const SIDEBAR_CATEGORIES: SidebarCategory[] = [
   { id: 'messages',     label: 'Messages',     icon: 'MessageSquare',   items: ['chat', 'inbox', 'creator-studio'] },
   { id: 'business',     label: 'Business',     icon: 'Briefcase',       items: ['leads', 'invoices', 'tenders', 'contacts', 'approvals'] },
   { id: 'intelligence', label: 'Intelligence', icon: 'Brain',           items: ['meetings', 'swarm', 'sentry', 'ad-scripts', 'ai-search', 'reports', 'knowledge', 'analytics'] },
-  { id: 'operations',   label: 'Operations',   icon: 'Wrench',          items: ['activity', 'costs', 'admin', 'monitoring', 'medications'] },
+  { id: 'operations',   label: 'Operations',   icon: 'Wrench',          items: ['activity', 'costs', 'admin', 'monitoring', 'beta-admin', 'medications'] },
   { id: 'settings',      label: 'Settings',     icon: 'Settings',        items: ['settings-connections', 'settings-automations', 'settings-appearance', 'settings-billing'] },
 ];
 
