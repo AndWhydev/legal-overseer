@@ -24,17 +24,6 @@ function resolveAuthRedirectOrigin(): string {
   return origin
 }
 
-function useIsDark() {
-  const [dark, setDark] = useState(false)
-  useEffect(() => {
-    const mq = window.matchMedia('(prefers-color-scheme: dark)')
-    setDark(mq.matches || document.documentElement.classList.contains('dark'))
-    const handler = (e: MediaQueryListEvent) => setDark(e.matches)
-    mq.addEventListener('change', handler)
-    return () => mq.removeEventListener('change', handler)
-  }, [])
-  return dark
-}
 
 function Spinner() {
   return (
@@ -48,8 +37,6 @@ function Spinner() {
 function LoginPageContent() {
   const searchParams = useSearchParams()
   const queryError = searchParams.get('error')
-  const isDark = useIsDark()
-
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [status, setStatus] = useState<LoginStatus>(queryError ? 'error' : 'idle')
@@ -241,7 +228,7 @@ function LoginPageContent() {
 
               {/* ── Right: Clawd ambient animation ── */}
               <div className="relative hidden overflow-hidden md:block">
-                <ClawdAmbient className="absolute inset-0" inverted={!isDark} />
+                <ClawdAmbient className="absolute inset-0" />
               </div>
             </CardContent>
           </Card>
