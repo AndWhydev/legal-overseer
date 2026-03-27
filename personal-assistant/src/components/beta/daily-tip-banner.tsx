@@ -1,8 +1,11 @@
 'use client'
 
 import React, { useState, useEffect, useCallback } from 'react'
-import { Lightbulb, X, ArrowRight } from 'lucide-react'
+import { IconBulb, IconX, IconArrowRight } from '@tabler/icons-react'
 import { createClient } from '@/lib/supabase/client'
+import { Card } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -15,60 +18,6 @@ interface DailyTip {
   body: string
   cta_label: string | null
   cta_path: string | null
-}
-
-// ---------------------------------------------------------------------------
-// Styles
-// ---------------------------------------------------------------------------
-
-const bannerContainer: React.CSSProperties = {
-  background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.6))',
-  backdropFilter: 'blur(20px)',
-  border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.06))',
-  borderRadius: 12,
-  padding: '16px 20px',
-  display: 'flex',
-  alignItems: 'flex-start',
-  gap: 12,
-  position: 'relative' as const,
-}
-
-const iconWrapper: React.CSSProperties = {
-  width: 36,
-  height: 36,
-  borderRadius: 10,
-  background: 'rgba(234, 179, 8, 0.12)',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  flexShrink: 0,
-}
-
-const closeBtn: React.CSSProperties = {
-  position: 'absolute' as const,
-  top: 12,
-  right: 12,
-  background: 'none',
-  border: 'none',
-  color: 'var(--text-dim, #475569)',
-  cursor: 'pointer',
-  padding: 4,
-}
-
-const ctaButton: React.CSSProperties = {
-  display: 'inline-flex',
-  alignItems: 'center',
-  gap: 4,
-  padding: '6px 12px',
-  borderRadius: 6,
-  background: 'rgba(255, 255, 255, 0.06)',
-  border: '1px solid rgba(255, 255, 255, 0.08)',
-  color: 'var(--text-primary, #F1F5F9)',
-  fontSize: 13,
-  fontWeight: 500,
-  cursor: 'pointer',
-  textDecoration: 'none',
-  transition: 'background 0.15s ease',
 }
 
 // ---------------------------------------------------------------------------
@@ -150,36 +99,42 @@ export function DailyTipBanner({ onNavigate }: DailyTipBannerProps) {
   if (!loaded || dismissed || !tip) return null
 
   return (
-    <div style={bannerContainer}>
-      <div style={iconWrapper}>
-        <Lightbulb size={18} style={{ color: '#eab308' }} />
+    <Card className="relative flex items-start gap-3 px-5 py-4">
+      <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-amber-500/10">
+        <IconBulb className="size-[18px] text-amber-500" />
       </div>
 
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-          <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary, #F1F5F9)' }}>
+      <div className="min-w-0 flex-1">
+        <div className="mb-1 flex items-center gap-2">
+          <span className="text-sm font-semibold text-foreground">
             {tip.title}
           </span>
-          <span style={{ fontSize: 11, color: 'var(--text-dim, #475569)', fontWeight: 500 }}>
+          <Badge variant="secondary" className="text-[11px]">
             Day {day}
-          </span>
+          </Badge>
         </div>
 
-        <p style={{ fontSize: 14, color: 'var(--text-secondary, #94A3B8)', lineHeight: 1.5, margin: '0 0 8px 0' }}>
+        <p className="mb-2 text-sm leading-relaxed text-muted-foreground">
           {tip.body}
         </p>
 
         {tip.cta_label && tip.cta_path && (
-          <button onClick={handleCta} style={ctaButton}>
+          <Button variant="outline" size="sm" onClick={handleCta}>
             {tip.cta_label}
-            <ArrowRight size={14} />
-          </button>
+            <IconArrowRight className="size-3.5" />
+          </Button>
         )}
       </div>
 
-      <button onClick={handleDismiss} style={closeBtn} aria-label="Dismiss tip">
-        <X size={16} />
-      </button>
-    </div>
+      <Button
+        variant="ghost"
+        size="icon-xs"
+        onClick={handleDismiss}
+        aria-label="Dismiss tip"
+        className="absolute right-3 top-3"
+      >
+        <IconX className="size-4" />
+      </Button>
+    </Card>
   )
 }

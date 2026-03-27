@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { CreditCard, Phone, Loader2, Smartphone, CheckCircle2 } from 'lucide-react'
+import { IconCreditCard, IconPhone, IconLoader2, IconDeviceMobile, IconCircleCheck } from '@tabler/icons-react'
 import {
   Dialog,
   DialogContent,
@@ -96,7 +96,7 @@ function ApiKeyForm({
     <>
       <DialogHeader>
         <DialogTitle className="flex items-center gap-2">
-          <CreditCard className="h-5 w-5 text-[#635BFF]" />
+          <IconCreditCard className="h-5 w-5 text-[#635BFF]" />
           Connect {channelName}
         </DialogTitle>
         <DialogDescription>
@@ -104,7 +104,7 @@ function ApiKeyForm({
         </DialogDescription>
       </DialogHeader>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div>
           <label htmlFor="secret-key" className="text-sm font-medium text-foreground">
             Secret Key
@@ -116,7 +116,7 @@ function ApiKeyForm({
             onChange={e => setSecretKey(e.target.value)}
             placeholder="sk_live_..."
             autoComplete="off"
-            className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-[rgba(255,255,255,0.15)] focus:outline-none focus:ring-1 focus:ring-[rgba(255,255,255,0.15)]"
+            className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-ring focus:ring-1 focus:ring-ring"
           />
           <p className="mt-1 text-xs text-muted-foreground">
             Your key is encrypted and stored securely. We never log or expose API keys.
@@ -127,9 +127,9 @@ function ApiKeyForm({
           <button
             type="submit"
             disabled={submitting || !secretKey.trim()}
-            className="inline-flex items-center gap-2 rounded-lg bg-[#D4A574] px-4 py-2 text-sm font-medium text-background hover:bg-[#D4A574]/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
+            {submitting && <IconLoader2 className="h-4 w-4 animate-spin" />}
             {submitting ? 'Connecting...' : 'Connect'}
           </button>
         </div>
@@ -222,7 +222,7 @@ function WhatsAppQRPanel({
     <>
       <DialogHeader>
         <DialogTitle className="flex items-center gap-2">
-          <Phone className="h-5 w-5 text-[#25D366]" />
+          <IconPhone className="h-5 w-5 text-[#25D366]" />
           Connect {channelName}
         </DialogTitle>
         <DialogDescription>
@@ -230,19 +230,19 @@ function WhatsAppQRPanel({
         </DialogDescription>
       </DialogHeader>
 
-      <div className="space-y-4">
+      <div className="flex flex-col gap-4">
         {/* QR Code display area */}
         <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-border bg-secondary/30 p-8">
           {bridgeStatus === 'connected' ? (
             <>
-              <CheckCircle2 className="h-12 w-12 text-[#25D366]" />
+              <IconCircleCheck className="h-12 w-12 text-[#25D366]" />
               <p className="text-sm font-medium text-foreground">
                 WhatsApp connected successfully
               </p>
             </>
           ) : bridgeStatus === 'starting' ? (
             <>
-              <Loader2 className="h-12 w-12 animate-spin text-muted-foreground" />
+              <IconLoader2 className="h-12 w-12 animate-spin text-muted-foreground" />
               <p className="text-sm text-muted-foreground">
                 Starting WhatsApp bridge...
               </p>
@@ -259,7 +259,7 @@ function WhatsAppQRPanel({
           ) : bridgeStatus === 'pairing' ? (
             <>
               <div className="flex h-40 w-40 items-center justify-center rounded-lg bg-white">
-                <Loader2 className="h-12 w-12 animate-spin text-gray-300" />
+                <IconLoader2 className="h-12 w-12 animate-spin text-gray-300" />
               </div>
               <p className="text-xs text-muted-foreground">
                 Waiting for QR code...
@@ -267,15 +267,15 @@ function WhatsAppQRPanel({
             </>
           ) : bridgeStatus === 'error' ? (
             <>
-              <Smartphone className="h-12 w-12 text-destructive/50" />
-              <p className="text-sm text-destructive text-center">
+              <IconDeviceMobile className="h-12 w-12 text-destructive/50" />
+              <p className="text-center text-sm text-destructive">
                 Failed to start bridge. Try again.
               </p>
             </>
           ) : (
             <>
-              <Smartphone className="h-12 w-12 text-muted-foreground/50" />
-              <p className="text-sm text-muted-foreground text-center">
+              <IconDeviceMobile className="h-12 w-12 text-muted-foreground/50" />
+              <p className="text-center text-sm text-muted-foreground">
                 Click below to start a pairing session
               </p>
             </>
@@ -284,8 +284,8 @@ function WhatsAppQRPanel({
 
         {/* Instructions */}
         <div className="rounded-lg bg-secondary/50 p-3">
-          <p className="text-xs font-medium text-foreground mb-2">How to connect:</p>
-          <ol className="text-xs text-muted-foreground space-y-1 list-decimal list-inside">
+          <p className="mb-2 text-xs font-medium text-foreground">How to connect:</p>
+          <ol className="list-inside list-decimal text-xs text-muted-foreground [&>li+li]:mt-1">
             <li>Open WhatsApp on your phone</li>
             <li>Go to Settings &gt; Linked Devices</li>
             <li>Tap &quot;Link a Device&quot;</li>
@@ -298,9 +298,9 @@ function WhatsAppQRPanel({
           <button
             onClick={handleInitiate}
             disabled={bridgeStatus === 'starting' || bridgeStatus === 'pairing' || bridgeStatus === 'connected'}
-            className="inline-flex items-center gap-2 rounded-lg bg-[#25D366] px-4 py-2 text-sm font-medium text-white hover:bg-[#25D366]/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="inline-flex items-center gap-2 rounded-lg bg-[#25D366] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#25D366]/90 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {bridgeStatus === 'starting' && <Loader2 className="h-4 w-4 animate-spin" />}
+            {bridgeStatus === 'starting' && <IconLoader2 className="h-4 w-4 animate-spin" />}
             {bridgeStatus === 'starting' ? 'Starting...'
               : bridgeStatus === 'pairing' ? 'Waiting for scan...'
               : bridgeStatus === 'connected' ? 'Connected'

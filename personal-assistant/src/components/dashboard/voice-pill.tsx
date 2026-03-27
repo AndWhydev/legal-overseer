@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowUp, FileText, Loader2, Mic, MicOff, Paperclip, X } from 'lucide-react';
+import { IconArrowUp, IconFileText, IconLoader2, IconMicrophone, IconMicrophoneOff, IconPaperclip, IconX } from '@tabler/icons-react';
 import { MiniWaveform } from '../ui/mini-waveform';
 import { useFileUpload, type UploadItem } from '@/hooks/use-file-upload';
 import { useVoiceInput } from '../chat/use-voice-input';
@@ -391,7 +391,7 @@ export function VoicePill({
                   type="button"
                   onClick={handlePaperclipClick}
                 >
-                  <Paperclip size={18} />
+                  <IconPaperclip size={18} />
                 </button>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   {voice.isSupported && (
@@ -414,7 +414,7 @@ export function VoicePill({
                       aria-label={voice.isListening ? 'Stop listening' : 'Start voice input'}
                       type="button"
                     >
-                      {voice.isListening ? <MicOff size={16} /> : <Mic size={16} />}
+                      {voice.isListening ? <IconMicrophoneOff size={16} /> : <IconMicrophone size={16} />}
                     </button>
                   )}
                   <button
@@ -423,7 +423,7 @@ export function VoicePill({
                     aria-label="Send"
                     disabled={!canSend || fileUpload.isUploading}
                   >
-                    <ArrowUp size={18} />
+                    <IconArrowUp size={18} />
                   </button>
                 </div>
               </div>
@@ -469,7 +469,7 @@ export function VoicePill({
                 aria-label="Send"
                 disabled={!textValue.trim()}
               >
-                <ArrowUp size={14} />
+                <IconArrowUp size={14} />
               </button>
             </div>
           )}
@@ -546,7 +546,7 @@ function UploadProgressItem({ item, onRemove }: { item: UploadItem; onRemove: ()
             justifyContent: 'center',
             color: 'var(--bb-color-text-secondary, rgba(255,255,255,0.5))',
           }}>
-            <FileText size={24} />
+            <IconFileText size={24} />
           </div>
         )}
 
@@ -560,7 +560,7 @@ function UploadProgressItem({ item, onRemove }: { item: UploadItem; onRemove: ()
             alignItems: 'center',
             justifyContent: 'center',
           }}>
-            <Loader2
+            <IconLoader2
               size={20}
               style={{
                 color: 'var(--bb-color-accent, #3b82f6)',
@@ -613,7 +613,7 @@ function UploadProgressItem({ item, onRemove }: { item: UploadItem; onRemove: ()
             justifyContent: 'center',
           }}
         >
-          <X size={10} />
+          <IconX size={10} />
         </button>
       </div>
 

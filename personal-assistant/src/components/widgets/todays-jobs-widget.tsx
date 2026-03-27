@@ -2,9 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { Calendar } from 'lucide-react';
+import { IconCalendar } from '@tabler/icons-react';
 import { WidgetCard } from './widget-card';
 import { EmptyState } from '@/components/ui/empty-state';
+import { Badge } from '@/components/ui/badge';
 
 export function TodaysJobsWidget() {
   const [jobs, setJobs] = useState<Record<string, unknown>[]>([]);
@@ -31,14 +32,14 @@ export function TodaysJobsWidget() {
     <WidgetCard
       title="Today's Jobs"
       subtitle={`${jobs.length} job${jobs.length !== 1 ? 's' : ''} scheduled`}
-      icon={<Calendar size={20} style={{ color: 'var(--bb-status-info)' }} />}
+      icon={<IconCalendar size={20} className="text-sky-400" />}
     >
-      <div className="space-y-3">
+      <div className="flex flex-col gap-3">
         {jobs.length === 0 ? (
           <EmptyState title="No jobs today" description="Scheduled jobs will appear here." />
         ) : (
           jobs.map(job => (
-            <div key={job.id as string} className="flex items-center justify-between p-3 rounded-md bg-[var(--bg-elevated)] border border-[var(--border-subtle)]">
+            <div key={job.id as string} className="flex items-center justify-between p-3 rounded-md bg-muted/50 border border-border">
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-sm truncate">{(job.title || job.description || 'Untitled Job') as string}</p>
                 <p className="text-xs text-muted-foreground mt-0.5">
@@ -46,9 +47,9 @@ export function TodaysJobsWidget() {
                   {job.address ? ` · ${(job.address as string).slice(0, 30)}` : ''}
                 </p>
               </div>
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30">
+              <Badge variant="default" className="text-[10px]">
                 {(job.status as string) || 'booked'}
-              </span>
+              </Badge>
             </div>
           ))
         )}

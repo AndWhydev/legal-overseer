@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { Check } from 'lucide-react'
+import { IconCheck } from '@tabler/icons-react'
 import { cn } from '@/lib/utils'
 import { PillIcon } from './pill-icon'
 import type { DaySchedule, Medication } from '@/lib/medications/types'
@@ -69,7 +69,7 @@ export const DayCell = React.memo(function DayCell({
         {/* Complete checkmark */}
         {isComplete && (
           <div className="flex h-4 w-4 items-center justify-center rounded-full bg-success/20">
-            <Check className="h-2.5 w-2.5 text-success" />
+            <IconCheck className="h-2.5 w-2.5 text-success" />
           </div>
         )}
 
@@ -129,7 +129,7 @@ export const DayCell = React.memo(function DayCell({
             'animate-fade-in',
           )}
         >
-          <Check className="h-2.5 w-2.5" />
+          <IconCheck className="h-2.5 w-2.5" />
           Take All
         </button>
       )}

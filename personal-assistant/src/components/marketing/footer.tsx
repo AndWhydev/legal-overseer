@@ -2,7 +2,8 @@
 
 import React, { useState } from 'react'
 import Link from 'next/link'
-import { C } from '@/lib/styles/design-tokens'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 
 const FOOTER_LINKS = {
   product: [
@@ -38,23 +39,10 @@ export default function Footer() {
   }
 
   return (
-    <footer
-      style={{
-        background: '#0a0a0f',
-        borderTop: `1px solid ${C.borderSubtle}`,
-        padding: '60px 20px 40px',
-      }}
-    >
-      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+    <footer className="border-t border-border/30 bg-[#0a0a0f] px-5 pb-10 pt-[60px]">
+      <div className="mx-auto max-w-[1200px]">
         {/* Main Footer Content */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-            gap: '48px',
-            marginBottom: '60px',
-          }}
-        >
+        <div className="mb-[60px] grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-12">
           {/* Product Column */}
           <FooterColumn title="Product" links={FOOTER_LINKS.product} />
 
@@ -66,92 +54,27 @@ export default function Footer() {
 
           {/* Newsletter Column */}
           <div>
-            <h4
-              style={{
-                fontSize: 14,
-                fontWeight: 500,
-                color: C.textPrimary,
-                marginBottom: 20,
-                textTransform: 'uppercase',
-                letterSpacing: '0.04em',
-              }}
-            >
+            <h4 className="mb-5 text-xs font-medium uppercase tracking-[0.04em] text-foreground">
               Stay Updated
             </h4>
-            <p
-              style={{
-                fontSize: 14,
-                color: C.textSecondary,
-                marginBottom: 16,
-                lineHeight: 1.6,
-              }}
-            >
+            <p className="mb-4 text-sm leading-relaxed text-muted-foreground">
               Get updates on new features and tips for AI operations.
             </p>
-            <form onSubmit={handleSubscribe} style={{ marginBottom: 16 }}>
-              <div
-                style={{
-                  display: 'flex',
-                  gap: 8,
-                  marginBottom: 8,
-                }}
-              >
-                <input
+            <form onSubmit={handleSubscribe} className="mb-4">
+              <div className="mb-2 flex gap-2">
+                <Input
                   type="email"
                   placeholder="your@email.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  style={{
-                    flex: 1,
-                    padding: '8px 12px',
-                    borderRadius: 8,
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    border: `1px solid ${C.borderHover}`,
-                    color: C.textPrimary,
-                    fontSize: 14,
-                    transition: 'all 200ms',
-                    outline: 'none',
-                  }}
-                  onFocus={(e) => {
-                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)'
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'
-                  }}
-                  onBlur={(e) => {
-                    e.currentTarget.style.borderColor = C.borderHover
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'
-                  }}
+                  className="flex-1"
                 />
-                <button
-                  type="submit"
-                  style={{
-                    padding: '8px 16px',
-                    borderRadius: 8,
-                    background: C.textPrimary,
-                    border: 'none',
-                    color: '#0a0f1a',
-                    fontSize: 14,
-                    fontWeight: 500,
-                    cursor: 'pointer',
-                    transition: 'all 200ms',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.opacity = '0.9'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.opacity = '1'
-                  }}
-                >
+                <Button type="submit" size="sm">
                   Subscribe
-                </button>
+                </Button>
               </div>
               {subscribed && (
-                <p
-                  style={{
-                    fontSize: 14,
-                    color: C.textSecondary,
-                    margin: 0,
-                  }}
-                >
+                <p className="text-xs text-muted-foreground">
                   Thanks for subscribing!
                 </p>
               )}
@@ -160,40 +83,13 @@ export default function Footer() {
         </div>
 
         {/* Divider */}
-        <div
-          style={{
-            borderTop: `1px solid ${C.borderSubtle}`,
-            paddingTop: 32,
-            marginTop: 32,
-          }}
-        >
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              flexWrap: 'wrap',
-              gap: 24,
-            }}
-          >
+        <div className="mt-8 border-t border-border/30 pt-8">
+          <div className="flex flex-wrap items-center justify-between gap-6">
             <div>
-              <p
-                style={{
-                  fontSize: 14,
-                  color: C.textDim,
-                  margin: 0,
-                  marginBottom: 4,
-                }}
-              >
+              <p className="mb-1 text-xs text-muted-foreground/60">
                 2026 BitBit. All rights reserved.
               </p>
-              <p
-                style={{
-                  fontSize: 14,
-                  color: C.textSecondary,
-                  margin: 0,
-                }}
-              >
+              <p className="text-xs text-muted-foreground">
                 Built in Australia
               </p>
             </div>
@@ -213,36 +109,15 @@ function FooterColumn({
 }) {
   return (
     <div>
-      <h4
-        style={{
-          fontSize: 14,
-          fontWeight: 500,
-          color: C.textPrimary,
-          marginBottom: 20,
-          textTransform: 'uppercase',
-          letterSpacing: '0.04em',
-        }}
-      >
+      <h4 className="mb-5 text-xs font-medium uppercase tracking-[0.04em] text-foreground">
         {title}
       </h4>
-      <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+      <ul className="m-0 list-none p-0">
         {links.map((link) => (
-          <li key={link.name} style={{ marginBottom: 12 }}>
+          <li key={link.name} className="mb-3">
             <Link
               href={link.href}
-              style={{
-                fontSize: 14,
-                color: C.textSecondary,
-                textDecoration: 'none',
-                transition: 'color 200ms',
-                cursor: 'pointer',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.color = C.textPrimary
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.color = C.textSecondary
-              }}
+              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
             >
               {link.name}
             </Link>

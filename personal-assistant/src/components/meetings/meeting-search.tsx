@@ -1,8 +1,8 @@
 'use client'
 
 import React, { useState, useCallback } from 'react'
+import { IconSearch } from '@tabler/icons-react'
 import type { TranscriptSearchResult } from '@/lib/meetings/types'
-import { S, C } from '@/lib/styles/design-tokens'
 
 interface MeetingSearchProps {
   onSelectMeeting: (meetingId: string) => void
@@ -47,59 +47,31 @@ export function MeetingSearch({ onSelectMeeting }: MeetingSearchProps) {
     const parts = text.split(regex)
     return parts.map((part, i) =>
       regex.test(part)
-        ? <mark key={i} style={{ background: C.bgHoverStrong, color: 'var(--text-primary, #E2E8F0)', borderRadius: 8, padding: '0 4px' }}>{part}</mark>
+        ? <mark key={i} className="rounded bg-primary/20 px-1 text-foreground">{part}</mark>
         : part
     )
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+    <div className="flex flex-col gap-3">
       {/* Search input */}
       <div className="flex gap-2">
-        <div style={{ flex: 1, position: 'relative' }}>
-          <svg
-            width="16"
-            height="16"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="var(--text-dim, #475569)"
-            strokeWidth={2}
-            style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)' }}
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
+        <div className="relative flex-1">
+          <IconSearch
+            className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+          />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') handleSearch() }}
             placeholder="Search across all meeting transcripts..."
-            style={{
-              width: '100%',
-              padding: '12px 16px 12px 36px',
-              borderRadius: 12,
-              background: 'var(--bg-input, rgba(13, 17, 23, 0.6))',
-              border: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
-              color: 'var(--text-primary, #F1F5F9)',
-              fontSize: 14,
-              outline: 'none',
-              transition: 'border-color 200ms',
-            }}
+            className="w-full rounded-xl border border-border bg-background py-3 pl-9 pr-4 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-ring"
           />
         </div>
         <button
           onClick={handleSearch}
           disabled={!query.trim() || searching}
-          style={{
-            padding: '12px 20px',
-            borderRadius: 12,
-            background: query.trim() ? '#F1F5F9' : C.bgHoverStrong,
-            border: 'none',
-            color: query.trim() ? '#0a0f1a' : 'rgba(0, 0, 0, 0.5)',
-            fontSize: 14,
-            fontWeight: 500,
-            cursor: query.trim() ? 'pointer' : 'not-allowed',
-            transition: 'all 200ms',
-          }}
+          className="rounded-xl bg-primary px-5 py-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
         >
           Search
         </button>
@@ -107,67 +79,44 @@ export function MeetingSearch({ onSelectMeeting }: MeetingSearchProps) {
 
       {/* Results */}
       {searching && (
-        <div style={{ padding: 20, textAlign: 'center', color: 'var(--text-dim, #475569)', fontSize: 14 }}>
+        <div className="p-5 text-center text-sm text-muted-foreground">
           Searching transcripts...
         </div>
       )}
 
       {!searching && searched && results.length === 0 && (
-        <div style={{ padding: 20, textAlign: 'center', color: 'var(--text-dim, #475569)', fontSize: 14 }}>
+        <div className="p-5 text-center text-sm text-muted-foreground">
           No results found for &ldquo;{query}&rdquo;
         </div>
       )}
 
       {!searching && results.length > 0 && (
-        <div style={{
-          borderRadius: 16,
-          background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.6))',
-          backdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
-          WebkitBackdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
-          border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
-          boxShadow: 'var(--card-shadow, 0 2px 8px rgba(0,0,0,0.3)), var(--card-inset, inset 0 1px 0 rgba(255,255,255,0.06))',
-          overflow: 'hidden',
-        }}>
-          <div style={{
-            padding: '12px 16px',
-            borderBottom: `1px solid ${C.borderSubtle}`,
-            fontSize: 14,
-            color: 'var(--text-dim, #475569)',
-          }}>
+        <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+          <div className="border-b border-border px-4 py-3 text-sm text-muted-foreground">
             {results.length} result{results.length !== 1 ? 's' : ''} across transcripts
           </div>
           {results.map((result, i) => (
             <div
               key={i}
               onClick={() => onSelectMeeting(result.meeting_id)}
-              style={{
-                padding: '12px 16px',
-                borderBottom: i < results.length - 1 ? `1px solid ${C.borderSubtle}` : 'none',
-                cursor: 'pointer',
-                transition: 'background 200ms',
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--hover-bg)' }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
+              className={`cursor-pointer px-4 py-3 transition-colors hover:bg-secondary/50 ${
+                i < results.length - 1 ? 'border-b border-border' : ''
+              }`}
             >
-              <div className="flex items-center gap-2 mb-1">
-                <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary, #E2E8F0)' }}>
+              <div className="mb-1 flex items-center gap-2">
+                <span className="text-sm font-medium text-foreground">
                   {result.meeting_title}
                 </span>
-                <span style={{ fontSize: 14, color: 'var(--text-dim, #475569)', fontFamily: 'var(--font-mono, monospace)' }}>
+                <span className="font-mono text-sm text-muted-foreground">
                   {formatTime(result.start_time_ms)}
                 </span>
                 {result.speaker_label && (
-                  <span style={{ fontSize: 14, color: 'var(--text-dim, #475569)' }}>
+                  <span className="text-sm text-muted-foreground">
                     &middot; {result.speaker_label}
                   </span>
                 )}
               </div>
-              <p style={{
-                fontSize: 14,
-                color: 'var(--text-primary, #F1F5F9)',
-                margin: 0,
-                lineHeight: 1.5,
-              }}>
+              <p className="text-sm leading-normal text-foreground">
                 {highlightText(result.segment_text, query)}
               </p>
             </div>

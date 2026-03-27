@@ -1,9 +1,8 @@
 'use client'
 
 import React, { useState, useCallback } from 'react'
-import { Eye, Users, Rocket } from 'lucide-react'
+import { IconEye, IconUsers, IconRocket } from '@tabler/icons-react'
 import type { RoleType, AutonomyLevel } from '@/lib/bitbit-core'
-import { S, C } from '@/lib/styles/design-tokens'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -21,9 +20,9 @@ interface AutonomyToggleProps {
 // ---------------------------------------------------------------------------
 
 const LEVELS: { level: AutonomyLevel; label: string; icon: React.ElementType; description: string }[] = [
-  { level: 'observer', label: 'Observer', icon: Eye, description: 'Watch and report only' },
-  { level: 'copilot', label: 'Co-pilot', icon: Users, description: 'Suggest actions, ask for approval' },
-  { level: 'autopilot', label: 'Autopilot', icon: Rocket, description: 'Act autonomously within guardrails' },
+  { level: 'observer', label: 'Observer', icon: IconEye, description: 'Watch and report only' },
+  { level: 'copilot', label: 'Co-pilot', icon: IconUsers, description: 'Suggest actions, ask for approval' },
+  { level: 'autopilot', label: 'Autopilot', icon: IconRocket, description: 'Act autonomously within guardrails' },
 ]
 
 const LEVEL_COLORS: Record<AutonomyLevel, string> = {
@@ -72,22 +71,11 @@ export function AutonomyToggle({ roleType, currentLevel, enabled, onLevelChange 
     }
   }, [roleType, optimisticLevel, currentLevel, saving, enabled, onLevelChange])
 
-  const currentIndex = LEVELS.findIndex(l => l.level === optimisticLevel)
-
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+    <div className="flex flex-col gap-2">
       {/* Track */}
-      <div style={{
-        display: 'flex',
-        gap: 0,
-        borderRadius: 12,
-        background: 'var(--bb-surface, rgba(10, 14, 23, 0.5))',
-        padding: 4,
-        position: 'relative',
-        opacity: enabled ? 1 : 0.4,
-        pointerEvents: enabled ? 'auto' : 'none',
-      }}>
-        {LEVELS.map((lvl, idx) => {
+      <div className={`flex rounded-xl bg-muted/50 p-1 ${enabled ? 'opacity-100' : 'opacity-40 pointer-events-none'}`}>
+        {LEVELS.map((lvl) => {
           const isActive = optimisticLevel === lvl.level
           const isHovered = hoveredLevel === lvl.level
           const color = LEVEL_COLORS[lvl.level]
@@ -100,19 +88,10 @@ export function AutonomyToggle({ roleType, currentLevel, enabled, onLevelChange 
               onMouseEnter={() => setHoveredLevel(lvl.level)}
               onMouseLeave={() => setHoveredLevel(null)}
               disabled={saving}
+              className={`flex flex-1 items-center justify-center gap-2 px-3 py-2 rounded-xl border-none text-sm font-medium transition-all ${
+                saving ? 'cursor-wait' : 'cursor-pointer'
+              }`}
               style={{
-                flex: 1,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 8,
-                padding: '8px 12px',
-                borderRadius: 12,
-                border: 'none',
-                fontSize: 14,
-                fontWeight: isActive ? 500 : 500,
-                cursor: saving ? 'wait' : 'pointer',
-                transition: 'all 200ms',
                 background: isActive
                   ? `${color}20`
                   : isHovered
@@ -121,8 +100,8 @@ export function AutonomyToggle({ roleType, currentLevel, enabled, onLevelChange 
                 color: isActive
                   ? color
                   : isHovered
-                    ? 'var(--text-primary, #F1F5F9)'
-                    : 'var(--text-dim, #475569)',
+                    ? 'var(--foreground)'
+                    : 'var(--muted-foreground)',
               }}
             >
               <Icon size={13} />
@@ -134,7 +113,7 @@ export function AutonomyToggle({ roleType, currentLevel, enabled, onLevelChange 
 
       {/* Description */}
       {(hoveredLevel || optimisticLevel) && (
-        <div style={{ fontSize: 14, color: 'var(--text-dim, #475569)', paddingLeft: 4 }}>
+        <div className="text-sm text-muted-foreground pl-1">
           {LEVELS.find(l => l.level === (hoveredLevel ?? optimisticLevel))?.description}
         </div>
       )}

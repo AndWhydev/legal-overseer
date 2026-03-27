@@ -1,8 +1,13 @@
 'use client'
 
 import React, { useState, useEffect, useCallback } from 'react'
-import { GlassDropdown } from '@/components/ui/glass-dropdown'
-import { createClient } from '@/lib/supabase/client'
+import { IconChevronDown } from '@tabler/icons-react'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from '@/components/ui/select'
+import { cn } from '@/lib/utils'
 
 interface WebhookEvent {
   id: string
@@ -25,6 +30,23 @@ interface FilterState {
   event_type: string
   start_date: string
   end_date: string
+}
+
+const STATUS_VARIANT: Record<string, 'default' | 'destructive' | 'secondary' | 'outline'> = {
+  success: 'default',
+  failed: 'destructive',
+  processing: 'secondary',
+  retry: 'outline',
+}
+
+const SOURCE_COLORS: Record<string, string> = {
+  stripe: 'bg-indigo-600',
+  telnyx: 'bg-gray-800',
+  meta: 'bg-blue-600',
+  slack: 'bg-sky-500',
+  calendly: 'bg-teal-600',
+  asana: 'bg-pink-500',
+  email: 'bg-indigo-500',
 }
 
 export default function WebhookEventsWidget() {
@@ -88,29 +110,11 @@ export default function WebhookEventsWidget() {
       })
 
       if (res.ok) {
-        // Refresh events list
         await fetchEvents()
       }
     } catch (err) {
       console.error('Failed to retry event:', err)
     }
-  }
-
-  const statusColors: Record<string, string> = {
-    success: '#22c55e',
-    failed: '#ef4444',
-    processing: '#f59e0b',
-    retry: '#3b82f6',
-  }
-
-  const sourceColors: Record<string, string> = {
-    stripe: '#635bff',
-    telnyx: '#1f2937',
-    meta: '#1877f2',
-    slack: '#36c5f0',
-    calendly: '#00a699',
-    asana: '#f06292',
-    email: '#4f46e5',
   }
 
   const formatDate = (dateStr: string) => {
@@ -124,68 +128,52 @@ export default function WebhookEventsWidget() {
   }
 
   return (
-    <div
-      style={{
-        background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%)',
-        backdropFilter: 'blur(10px)',
-        border: '1px solid rgba(255, 255, 255, 0.03)',
-        borderRadius: '12px',
-        padding: '24px',
-        color: '#1a1a1a',
-      }}
-    >
-      <div style={{ marginBottom: '24px' }}>
-        <h2 style={{ fontSize: '16px', fontWeight: '500', margin: '0 0 16px 0' }}>Webhook Events</h2>
+    <div className="rounded-xl border border-border/30 bg-card/50 p-6 backdrop-blur-sm">
+      <div className="mb-6">
+        <h2 className="mb-4 text-base font-medium">Webhook Events</h2>
 
         {/* Filters */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-            gap: '12px',
-            marginBottom: '16px',
-          }}
-        >
-          <GlassDropdown
-            options={[
-              { value: '', label: 'All Sources' },
-              { value: 'stripe', label: 'Stripe' },
-              { value: 'telnyx', label: 'Telnyx' },
-              { value: 'meta', label: 'Meta' },
-              { value: 'slack', label: 'Slack' },
-              { value: 'calendly', label: 'Calendly' },
-              { value: 'asana', label: 'Asana' },
-              { value: 'email', label: 'Email' },
-            ]}
-            value={filters.source}
-            onChange={(v) => handleFilterChange('source', v)}
-            size="sm"
-          />
+        <div className="mb-4 grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-3">
+          <Select
+            value={filters.source || '_all'}
+            onValueChange={(v) => handleFilterChange('source', v === '_all' ? '' : v)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="All Sources" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="_all">All Sources</SelectItem>
+              <SelectItem value="stripe">Stripe</SelectItem>
+              <SelectItem value="telnyx">Telnyx</SelectItem>
+              <SelectItem value="meta">Meta</SelectItem>
+              <SelectItem value="slack">Slack</SelectItem>
+              <SelectItem value="calendly">Calendly</SelectItem>
+              <SelectItem value="asana">Asana</SelectItem>
+              <SelectItem value="email">Email</SelectItem>
+            </SelectContent>
+          </Select>
 
-          <GlassDropdown
-            options={[
-              { value: '', label: 'All Status' },
-              { value: 'success', label: 'Success' },
-              { value: 'failed', label: 'Failed' },
-              { value: 'processing', label: 'Processing' },
-              { value: 'retry', label: 'Retry' },
-            ]}
-            value={filters.status}
-            onChange={(v) => handleFilterChange('status', v)}
-            size="sm"
-          />
+          <Select
+            value={filters.status || '_all'}
+            onValueChange={(v) => handleFilterChange('status', v === '_all' ? '' : v)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="All Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="_all">All Status</SelectItem>
+              <SelectItem value="success">Success</SelectItem>
+              <SelectItem value="failed">Failed</SelectItem>
+              <SelectItem value="processing">Processing</SelectItem>
+              <SelectItem value="retry">Retry</SelectItem>
+            </SelectContent>
+          </Select>
 
           <input
             type="date"
             value={filters.start_date}
             onChange={(e) => handleFilterChange('start_date', e.target.value)}
-            style={{
-              padding: '8px 12px',
-              borderRadius: '8px',
-              border: '1px solid rgba(0, 0, 0, 0.1)',
-              fontSize: '14px',
-              backgroundColor: '#fff',
-            }}
+            className="rounded-lg border border-border bg-background px-3 py-2 text-sm"
             placeholder="Start Date"
           />
 
@@ -193,180 +181,107 @@ export default function WebhookEventsWidget() {
             type="date"
             value={filters.end_date}
             onChange={(e) => handleFilterChange('end_date', e.target.value)}
-            style={{
-              padding: '8px 12px',
-              borderRadius: '8px',
-              border: '1px solid rgba(0, 0, 0, 0.1)',
-              fontSize: '14px',
-              backgroundColor: '#fff',
-            }}
+            className="rounded-lg border border-border bg-background px-3 py-2 text-sm"
             placeholder="End Date"
           />
         </div>
 
-        <div style={{ fontSize: '14px', color: '#666' }}>
+        <p className="text-sm text-muted-foreground">
           Showing {events.length} of {total} events
-        </div>
+        </p>
       </div>
 
       {loading ? (
-        <div style={{ textAlign: 'center', padding: '40px 20px', color: '#999' }}>Loading events...</div>
+        <div className="py-10 text-center text-sm text-muted-foreground">Loading events...</div>
       ) : events.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '40px 20px', color: '#999' }}>No webhook events found</div>
+        <div className="py-10 text-center text-sm text-muted-foreground">No webhook events found</div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <div className="flex flex-col gap-2">
           {events.map((event) => (
             <div
               key={event.id}
-              style={{
-                background: 'rgba(255, 255, 255, 0.5)',
-                border: '1px solid rgba(0, 0, 0, 0.05)',
-                borderRadius: '8px',
-                padding: '12px',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-              }}
-              onMouseEnter={(e) => {
-                if (e.currentTarget instanceof HTMLElement) {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.7)'
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (e.currentTarget instanceof HTMLElement) {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.5)'
-                }
-              }}
+              className="cursor-pointer rounded-lg border border-border/30 bg-card/60 p-3 transition-colors hover:bg-card/80"
               onClick={() => setExpandedId(expandedId === event.id ? null : event.id)}
             >
               {/* Header */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', justifyContent: 'space-between' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex flex-1 items-center gap-3">
                   {/* Source Badge */}
-                  <div
-                    style={{
-                      background: sourceColors[event.source] || '#9ca3af',
-                      color: '#fff',
-                      padding: '4px 8px',
-                      borderRadius: '4px',
-                      fontSize: '14px',
-                      fontWeight: '500',
-                      minWidth: '60px',
-                      textAlign: 'center',
-                    }}
-                  >
+                  <span className={cn(
+                    'min-w-[60px] rounded px-2 py-1 text-center text-xs font-medium text-white',
+                    SOURCE_COLORS[event.source] || 'bg-gray-500',
+                  )}>
                     {event.source.toUpperCase()}
-                  </div>
+                  </span>
 
                   {/* Event Type */}
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: '14px', fontWeight: '500' }}>{event.event_type}</div>
-                    <div style={{ fontSize: '14px', color: '#666', marginTop: '4px' }}>{formatDate(event.created_at)}</div>
+                  <div className="flex-1">
+                    <div className="text-sm font-medium">{event.event_type}</div>
+                    <div className="mt-1 text-xs text-muted-foreground">{formatDate(event.created_at)}</div>
                   </div>
 
                   {/* Status Badge */}
-                  <div
-                    style={{
-                      background: statusColors[event.status] || '#9ca3af',
-                      color: '#fff',
-                      padding: '4px 12px',
-                      borderRadius: '4px',
-                      fontSize: '14px',
-                      fontWeight: '500',
-                      minWidth: '80px',
-                      textAlign: 'center',
-                    }}
-                  >
+                  <Badge variant={STATUS_VARIANT[event.status] || 'secondary'}>
                     {event.status.charAt(0).toUpperCase() + event.status.slice(1)}
-                  </div>
+                  </Badge>
                 </div>
 
                 {/* Expand Indicator */}
-                <div
-                  style={{
-                    fontSize: '16px',
-                    transition: 'transform 0.2s ease',
-                    transform: expandedId === event.id ? 'rotate(180deg)' : 'rotate(0deg)',
-                  }}
-                >
-                  ▼
-                </div>
+                <IconChevronDown
+                  size={16}
+                  className={cn(
+                    'shrink-0 text-muted-foreground transition-transform',
+                    expandedId === event.id && 'rotate-180',
+                  )}
+                />
               </div>
 
               {/* Expanded Content */}
               {expandedId === event.id && (
-                <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid rgba(0, 0, 0, 0.05)' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+                <div className="mt-3 border-t border-border/30 pt-3">
+                  <div className="mb-3 grid grid-cols-2 gap-3">
                     {event.external_event_id && (
                       <div>
-                        <div style={{ fontSize: '14px', color: '#999', fontWeight: '500' }}>External ID</div>
-                        <div
-                          style={{
-                            fontSize: '14px',
-                            fontFamily: 'monospace',
-                            wordBreak: 'break-all',
-                            marginTop: '4px',
-                          }}
-                        >
-                          {event.external_event_id}
-                        </div>
+                        <div className="text-xs font-medium text-muted-foreground">External ID</div>
+                        <div className="mt-1 break-all font-mono text-xs">{event.external_event_id}</div>
                       </div>
                     )}
 
                     {event.response_code && (
                       <div>
-                        <div style={{ fontSize: '14px', color: '#999', fontWeight: '500' }}>Response Code</div>
-                        <div style={{ fontSize: '14px', marginTop: '4px' }}>{event.response_code}</div>
+                        <div className="text-xs font-medium text-muted-foreground">Response Code</div>
+                        <div className="mt-1 text-xs">{event.response_code}</div>
                       </div>
                     )}
 
                     {event.retry_count > 0 && (
                       <div>
-                        <div style={{ fontSize: '14px', color: '#999', fontWeight: '500' }}>Retry Count</div>
-                        <div style={{ fontSize: '14px', marginTop: '4px' }}>{event.retry_count}</div>
+                        <div className="text-xs font-medium text-muted-foreground">Retry Count</div>
+                        <div className="mt-1 text-xs">{event.retry_count}</div>
                       </div>
                     )}
 
                     {event.processed_at && (
                       <div>
-                        <div style={{ fontSize: '14px', color: '#999', fontWeight: '500' }}>Processed</div>
-                        <div style={{ fontSize: '14px', marginTop: '4px' }}>{formatDate(event.processed_at)}</div>
+                        <div className="text-xs font-medium text-muted-foreground">Processed</div>
+                        <div className="mt-1 text-xs">{formatDate(event.processed_at)}</div>
                       </div>
                     )}
                   </div>
 
                   {/* Payload */}
-                  <div style={{ marginBottom: '12px' }}>
-                    <div style={{ fontSize: '14px', color: '#999', fontWeight: '500', marginBottom: '8px' }}>Payload</div>
-                    <pre
-                      style={{
-                        background: 'rgba(0, 0, 0, 0.02)',
-                        padding: '8px',
-                        borderRadius: '4px',
-                        fontSize: '14px',
-                        fontFamily: 'monospace',
-                        overflow: 'auto',
-                        maxHeight: '200px',
-                        margin: 0,
-                      }}
-                    >
+                  <div className="mb-3">
+                    <div className="mb-2 text-xs font-medium text-muted-foreground">Payload</div>
+                    <pre className="m-0 max-h-[200px] overflow-auto rounded bg-muted/50 p-2 font-mono text-xs">
                       {JSON.stringify(event.payload, null, 2)}
                     </pre>
                   </div>
 
                   {/* Error Message */}
                   {event.error_message && (
-                    <div style={{ marginBottom: '12px' }}>
-                      <div style={{ fontSize: '14px', color: '#999', fontWeight: '500', marginBottom: '8px' }}>Error</div>
-                      <div
-                        style={{
-                          background: 'rgba(239, 68, 68, 0.1)',
-                          color: '#dc2626',
-                          padding: '8px',
-                          borderRadius: '4px',
-                          fontSize: '14px',
-                          wordBreak: 'break-word',
-                        }}
-                      >
+                    <div className="mb-3">
+                      <div className="mb-2 text-xs font-medium text-muted-foreground">Error</div>
+                      <div className="break-words rounded bg-destructive/10 p-2 text-xs text-destructive">
                         {event.error_message}
                       </div>
                     </div>
@@ -374,35 +289,15 @@ export default function WebhookEventsWidget() {
 
                   {/* Actions */}
                   {event.status === 'failed' && (
-                    <button
+                    <Button
+                      size="sm"
                       onClick={(e) => {
                         e.stopPropagation()
                         handleRetry(event.id)
                       }}
-                      style={{
-                        background: '#3b82f6',
-                        color: '#fff',
-                        border: 'none',
-                        padding: '8px 12px',
-                        borderRadius: '4px',
-                        fontSize: '14px',
-                        fontWeight: '500',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease',
-                      }}
-                      onMouseEnter={(e) => {
-                        if (e.currentTarget instanceof HTMLElement) {
-                          e.currentTarget.style.background = '#2563eb'
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (e.currentTarget instanceof HTMLElement) {
-                          e.currentTarget.style.background = '#3b82f6'
-                        }
-                      }}
                     >
                       Retry Event
-                    </button>
+                    </Button>
                   )}
                 </div>
               )}
@@ -413,42 +308,26 @@ export default function WebhookEventsWidget() {
 
       {/* Pagination */}
       {total > limit && (
-        <div style={{ marginTop: '16px', display: 'flex', gap: '8px', justifyContent: 'center' }}>
-          <button
+        <div className="mt-4 flex items-center justify-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => setOffset(Math.max(0, offset - limit))}
             disabled={offset === 0}
-            style={{
-              padding: '8px 12px',
-              borderRadius: '4px',
-              border: '1px solid rgba(0, 0, 0, 0.1)',
-              background: offset === 0 ? '#f3f4f6' : '#fff',
-              cursor: offset === 0 ? 'not-allowed' : 'pointer',
-              fontSize: '14px',
-              fontWeight: '500',
-              opacity: offset === 0 ? 0.5 : 1,
-            }}
           >
             Previous
-          </button>
-          <div style={{ padding: '8px 12px', fontSize: '14px', color: '#666' }}>
+          </Button>
+          <span className="px-3 py-2 text-sm text-muted-foreground">
             Page {Math.floor(offset / limit) + 1} of {Math.ceil(total / limit)}
-          </div>
-          <button
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => setOffset(offset + limit)}
             disabled={offset + limit >= total}
-            style={{
-              padding: '8px 12px',
-              borderRadius: '4px',
-              border: '1px solid rgba(0, 0, 0, 0.1)',
-              background: offset + limit >= total ? '#f3f4f6' : '#fff',
-              cursor: offset + limit >= total ? 'not-allowed' : 'pointer',
-              fontSize: '14px',
-              fontWeight: '500',
-              opacity: offset + limit >= total ? 0.5 : 1,
-            }}
           >
             Next
-          </button>
+          </Button>
         </div>
       )}
     </div>

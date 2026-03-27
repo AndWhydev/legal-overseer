@@ -4,6 +4,9 @@ import { useState, useMemo } from 'react'
 import type { Protocol, Medication } from '@/lib/medications/types'
 import type { Conflict } from '@/lib/medications/protocol-types'
 import { checkConflicts } from '@/lib/medications/protocols'
+import { IconChevronDown } from '@tabler/icons-react'
+import { Card } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 
 interface AbsorptionHintsProps {
@@ -12,12 +15,12 @@ interface AbsorptionHintsProps {
   defaultExpanded?: boolean
 }
 
-const INSTRUCTION_BADGES: Record<string, { icon: string; label: string; color: string }> = {
-  'empty-stomach': { icon: '🫗', label: 'Empty stomach', color: '#D4A574' },
-  'with-food': { icon: '🍽️', label: 'With food', color: '#7CAA85' },
-  'with-fat': { icon: '🧈', label: 'With fat', color: '#E8C49A' },
-  'before-bed': { icon: '🌙', label: 'Before bed', color: '#A78BFA' },
-  'any': { icon: '✓', label: 'Any time', color: '#7A7468' },
+const INSTRUCTION_BADGES: Record<string, { icon: string; label: string; variant: 'default' | 'secondary' | 'outline' | 'destructive' }> = {
+  'empty-stomach': { icon: '\uD83E\uDED7', label: 'Empty stomach', variant: 'secondary' },
+  'with-food': { icon: '\uD83C\uDF7D\uFE0F', label: 'With food', variant: 'secondary' },
+  'with-fat': { icon: '\uD83E\uDDC8', label: 'With fat', variant: 'secondary' },
+  'before-bed': { icon: '\uD83C\uDF19', label: 'Before bed', variant: 'secondary' },
+  'any': { icon: '\u2713', label: 'Any time', variant: 'outline' },
 }
 
 export function AbsorptionHints({
@@ -50,7 +53,7 @@ export function AbsorptionHints({
   }, [protocols, medicationMap])
 
   return (
-    <div className="glass-card rounded-xl overflow-hidden">
+    <Card className="overflow-hidden py-0">
       {/* Toggle header */}
       <button
         onClick={() => setExpanded(!expanded)}
@@ -59,41 +62,35 @@ export function AbsorptionHints({
         <div className="flex items-center gap-2">
           <span className="text-sm font-semibold text-foreground">Absorption Hints</span>
           {conflicts.length > 0 && (
-            <span className="inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-[#C47070]/15 text-[#C47070] border border-[#C47070]/20">
+            <Badge variant="destructive" className="text-[10px]">
               {conflicts.length} conflict{conflicts.length !== 1 ? 's' : ''}
-            </span>
+            </Badge>
           )}
         </div>
-        <svg
+        <IconChevronDown
           className={cn(
-            'w-4 h-4 text-muted-foreground transition-transform duration-200',
+            'h-4 w-4 text-muted-foreground transition-transform duration-200',
             expanded && 'rotate-180'
           )}
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth={2}
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-        </svg>
+        />
       </button>
 
       {expanded && (
-        <div className="px-4 pb-4 space-y-3 border-t border-border/40 pt-3">
+        <div className="flex flex-col gap-3 px-4 pb-4 border-t border-border pt-3">
           {/* Conflict warnings */}
           {conflicts.map((conflict, idx) => (
             <ConflictBanner key={idx} conflict={conflict} medicationMap={medicationMap} />
           ))}
 
           {/* Per-medication instruction badges */}
-          <div className="space-y-1.5">
+          <div className="flex flex-col gap-1.5">
             {activeMeds.map((med) => {
               const instruction = med.instructions ?? 'any'
               const badge = INSTRUCTION_BADGES[instruction] ?? INSTRUCTION_BADGES['any']
               return (
                 <div
                   key={med.id}
-                  className="flex items-center justify-between px-3 py-1.5 rounded-lg bg-background/50"
+                  className="flex items-center justify-between px-3 py-1.5 rounded-lg bg-muted/50"
                 >
                   <div className="flex items-center gap-2">
                     <div
@@ -102,16 +99,9 @@ export function AbsorptionHints({
                     />
                     <span className="text-xs text-foreground">{med.name}</span>
                   </div>
-                  <span
-                    className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded"
-                    style={{
-                      backgroundColor: `${badge.color}15`,
-                      color: badge.color,
-                      border: `1px solid ${badge.color}20`,
-                    }}
-                  >
+                  <Badge variant={badge.variant} className="text-[10px]">
                     {badge.icon} {badge.label}
-                  </span>
+                  </Badge>
                 </div>
               )
             })}
@@ -124,31 +114,30 @@ export function AbsorptionHints({
           )}
         </div>
       )}
-    </div>
+    </Card>
   )
 }
 
 function ConflictBanner({
   conflict,
-  medicationMap,
 }: {
   conflict: Conflict
   medicationMap: Record<string, Medication>
 }) {
   const isDanger = conflict.severity === 'danger'
-  const color = isDanger ? '#C47070' : '#D4A574'
 
   return (
     <div
-      className="flex items-start gap-2 px-3 py-2 rounded-lg text-xs"
-      style={{
-        backgroundColor: `${color}10`,
-        border: `1px solid ${color}25`,
-      }}
+      className={cn(
+        'flex items-start gap-2 px-3 py-2 rounded-lg text-xs',
+        isDanger
+          ? 'bg-destructive/10 border border-destructive/20'
+          : 'bg-warning/10 border border-warning/20'
+      )}
     >
-      <span className="shrink-0 mt-0.5">{isDanger ? '🚫' : '⚠️'}</span>
+      <span className="shrink-0 mt-0.5">{isDanger ? '\uD83D\uDEAB' : '\u26A0\uFE0F'}</span>
       <div>
-        <p style={{ color }} className="font-medium">
+        <p className={cn('font-medium', isDanger ? 'text-destructive' : 'text-warning')}>
           {conflict.type === 'absorption' ? 'Absorption conflict' : 'Timing conflict'}
         </p>
         <p className="text-muted-foreground mt-0.5 leading-relaxed">

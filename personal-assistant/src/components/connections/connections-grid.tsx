@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { ConnectModal, type ConnectModalMode } from '@/components/channels/connect-modal'
-import { EmptyState } from '@/components/ui/empty-state'
+import { Empty, EmptyHeader, EmptyTitle, EmptyDescription } from '@/components/ui/empty'
 import { useToast } from '@/components/ui/toast'
 import { logger } from '@/lib/core/logger'
 
@@ -667,10 +667,12 @@ export function ConnectionsGrid({
       />
 
       {filteredConnections.length === 0 ? (
-        <EmptyState
-          title="No connections configured"
-          description="Connect your services to let BitBit start working for you"
-        />
+        <Empty>
+          <EmptyHeader>
+            <EmptyTitle>No connections configured</EmptyTitle>
+            <EmptyDescription>Connect your services to let BitBit start working for you</EmptyDescription>
+          </EmptyHeader>
+        </Empty>
       ) : null}
     </section>
   )

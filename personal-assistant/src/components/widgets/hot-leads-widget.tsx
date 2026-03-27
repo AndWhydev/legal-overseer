@@ -2,9 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { TrendingUp } from 'lucide-react';
+import { IconTrendingUp } from '@tabler/icons-react';
 import { WidgetCard } from './widget-card';
 import { EmptyState } from '@/components/ui/empty-state';
+import { Badge } from '@/components/ui/badge';
 
 interface LeadRow {
   id: string
@@ -16,10 +17,10 @@ interface LeadRow {
   status: string
 }
 
-const SCORE_COLOR: Record<string, string> = {
-  hot: 'var(--bb-red)',
-  warm: 'var(--bb-amber)',
-  cold: 'var(--bb-blue)',
+const SCORE_VARIANT: Record<string, 'destructive' | 'secondary' | 'outline'> = {
+  hot: 'destructive',
+  warm: 'secondary',
+  cold: 'outline',
 }
 
 export function HotLeadsWidget() {
@@ -41,14 +42,14 @@ export function HotLeadsWidget() {
     <WidgetCard
       title="Hot Leads"
       subtitle="Top opportunities this week"
-      icon={<TrendingUp size={20} style={{ color: 'var(--bb-pink)' }} />}
+      icon={<IconTrendingUp size={20} className="text-pink-400" />}
     >
-      <div className="space-y-3">
+      <div className="flex flex-col gap-3">
         {leads.length === 0 ? (
           <EmptyState title="No active leads" description="New leads will appear here as they come in." />
         ) : (
           leads.map(lead => (
-            <div key={lead.id} className="flex items-center justify-between p-3 rounded-md bg-[var(--bg-elevated)] border border-[var(--border-subtle)]">
+            <div key={lead.id} className="flex items-center justify-between p-3 rounded-md bg-muted/50 border border-border">
               <div className="flex-1">
                 <p className="font-medium text-sm">{lead.prospect_name || lead.source_detail || lead.source_channel || 'Unnamed Lead'}</p>
                 <p className="text-xs text-muted-foreground mt-0.5">
@@ -57,23 +58,13 @@ export function HotLeadsWidget() {
                   {lead.status === 'booked' && 'Booked'}
                 </p>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div className="flex items-center gap-2">
                 {lead.score && (
-                  <span style={{
-                    fontSize: 14,
-                    fontWeight: 500,
-                    textTransform: 'uppercase',
-                    color: SCORE_COLOR[lead.score] ?? 'var(--text-dim)',
-                  }}>
+                  <Badge variant={SCORE_VARIANT[lead.score] ?? 'outline'} className="uppercase text-xs">
                     {lead.score}
-                  </span>
+                  </Badge>
                 )}
-                <span style={{
-                  fontSize: 14,
-                  fontWeight: 500,
-                  fontFamily: 'var(--font-mono)',
-                  color: 'var(--bb-amber)',
-                }}>
+                <span className="text-sm font-medium font-mono text-amber-400">
                   {lead.estimated_value != null ? `$${lead.estimated_value.toLocaleString()}` : '--'}
                 </span>
               </div>

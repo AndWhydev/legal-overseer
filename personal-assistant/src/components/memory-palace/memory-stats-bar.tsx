@@ -2,7 +2,6 @@
 
 import React from 'react'
 import type { MemoryPalaceStats } from '@/lib/memory-palace/types'
-import { S, C } from '@/lib/styles/design-tokens'
 
 interface MemoryStatsBarProps {
   stats: MemoryPalaceStats
@@ -13,16 +12,7 @@ export function MemoryStatsBar({ stats }: MemoryStatsBarProps) {
     stats.avg_confidence > 0.4 ? '#F59E0B' : '#EF4444'
 
   return (
-    <div style={{
-      display: 'flex',
-      gap: '16px',
-      padding: '12px 16px',
-      background: 'var(--bg-card, rgba(15, 20, 30, 0.25))',
-      backdropFilter: 'blur(8px)',
-      borderRadius: '12px',
-      alignItems: 'center',
-      flexWrap: 'wrap',
-    }}>
+    <div className="flex flex-wrap items-center gap-4 rounded-xl bg-card p-3 backdrop-blur-sm">
       {/* Total Memories */}
       <StatPill
         label="Memories"
@@ -82,24 +72,14 @@ function StatPill({
   color: string
 }) {
   return (
-    <div style={{
-      display: 'flex',
-      alignItems: 'center',
-      gap: '8px',
-    }}>
-      <span style={{
-        fontSize: '14px',
-        color: C.textDim,
-        fontWeight: 400,
-      }}>
+    <div className="flex items-center gap-2">
+      <span className="text-sm text-muted-foreground">
         {label}
       </span>
-      <span style={{
-        fontSize: '14px',
-        fontWeight: 500,
-        color,
-        fontVariantNumeric: 'tabular-nums',
-      }}>
+      <span
+        className="text-sm font-medium tabular-nums"
+        style={{ color }}
+      >
         {value}
       </span>
     </div>

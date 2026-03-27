@@ -4,7 +4,7 @@
 // Re-exports the page component logic for use in SPA shell
 
 import React, { useState, useCallback, useMemo } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
 import { TabShell } from '@/components/ui/tab-shell';
 import { MonthlyGrid } from '@/components/medications/monthly-grid';
 import { PillIcon } from '@/components/medications/pill-icon';
@@ -99,11 +99,11 @@ function MedicationsTab() {
           </div>
           <div className="flex items-center gap-2">
             <button onClick={prevMonth} className="rounded-lg p-1.5 text-text-secondary transition-colors hover:bg-elevated hover:text-foreground">
-              <ChevronLeft className="h-4 w-4" />
+              <IconChevronLeft className="h-4 w-4" />
             </button>
             <span className="min-w-[140px] text-center text-sm font-medium">{MONTH_NAMES[month]} {year}</span>
             <button onClick={nextMonth} className="rounded-lg p-1.5 text-text-secondary transition-colors hover:bg-elevated hover:text-foreground">
-              <ChevronRight className="h-4 w-4" />
+              <IconChevronRight className="h-4 w-4" />
             </button>
           </div>
         </header>
@@ -120,11 +120,11 @@ function MedicationsTab() {
                 onTakeAll={handleTakeAll}
               />
             </div>
-            <aside className="hidden xl:block w-72 shrink-0 space-y-4">
+            <aside className="hidden xl:block w-72 shrink-0 flex flex-col gap-4">
               <div className="glass-card rounded-xl p-4">
                 <h3 className="text-sm font-medium text-foreground mb-3">Today&apos;s Schedule</h3>
                 {todaySchedule && todaySchedule.medications.length > 0 ? (
-                  <div className="space-y-2.5">
+                  <div className="flex flex-col gap-2.5">
                     {todaySchedule.medications.map((dosage) => {
                       const med = medicationMap[dosage.medicationId];
                       if (!med) return null;
@@ -150,7 +150,7 @@ function MedicationsTab() {
               </div>
               <div className="glass-card rounded-xl p-4">
                 <h3 className="text-sm font-medium text-foreground mb-3">Active Medications</h3>
-                <div className="space-y-2">
+                <div className="flex flex-col gap-2">
                   {medications.map((med) => (
                     <div key={med.id} className="flex items-center gap-2.5 py-1">
                       <PillIcon style={med.pillStyle} size={12} />

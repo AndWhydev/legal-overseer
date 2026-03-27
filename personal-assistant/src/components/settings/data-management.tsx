@@ -1,9 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Download, Trash2, AlertTriangle, Loader2, Check, X } from 'lucide-react';
+import { IconDownload, IconTrash, IconAlertTriangle, IconLoader2, IconCheck, IconX } from '@tabler/icons-react';
 import { logger } from '@/lib/core/logger';
-import { S, C } from '@/lib/styles/design-tokens'
 
 interface DeletionStatus {
   status: string;
@@ -133,94 +132,49 @@ export function DataManagement() {
     }
   };
 
-  const containerStyle: React.CSSProperties = {
-    padding: '24px',
-    borderRadius: '12px',
-    background: 'var(--glass-pill-bg)',
-    backdropFilter: 'var(--glass-blur)',
-    WebkitBackdropFilter: 'var(--glass-blur)',
-    boxShadow: 'var(--glass-card-inset)',
-    border: 'none',
-    marginBottom: '16px',
-  };
-
-  const buttonStyle: React.CSSProperties = {
-    padding: '12px 16px',
-    borderRadius: '8px',
-    border: 'none',
-    fontSize: '14px',
-    fontWeight: '500',
-    cursor: 'pointer',
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: '8px',
-    transition: 'all 200ms',
-    background: C.bgHoverStrong,
-    color: 'var(--text-primary)',
-  };
-
-  const dangerButtonStyle: React.CSSProperties = {
-    ...buttonStyle,
-    background: C.statusErrorBg,
-    color: '#EF4444',
-  };
-
-  const messageStyle: React.CSSProperties = {
-    padding: '12px 16px',
-    borderRadius: '8px',
-    fontSize: '14px',
-    marginBottom: '16px',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-  };
-
   return (
-    <div style={{ maxWidth: '600px' }}>
+    <div className="max-w-[600px]">
       {message && (
         <div
-          style={{
-            ...messageStyle,
-            background: message.type === 'success' ? 'rgba(34, 197, 94, 0.12)' : C.statusErrorBg,
-            color: message.type === 'success' ? '#22C55E' : '#EF4444',
-          }}
+          className={`flex items-center gap-2 p-3 rounded-lg text-sm mb-4 ${
+            message.type === 'success'
+              ? 'bg-green-500/10 text-green-500'
+              : 'bg-red-500/10 text-red-500'
+          }`}
         >
-          {message.type === 'success' ? <Check size={16} /> : <X size={16} />}
+          {message.type === 'success' ? <IconCheck size={16} /> : <IconX size={16} />}
           {message.text}
         </div>
       )}
 
-      <div style={containerStyle}>
-        <h3 style={{ fontSize: '16px', fontWeight: '500', margin: '0 0 12px 0', color: 'var(--text-primary)' }}>
+      <div className="rounded-xl bg-card backdrop-blur-lg p-6 mb-4">
+        <h3 className="text-base font-medium text-foreground mb-3">
           Export Your Data
         </h3>
-        <p style={{ fontSize: '14px', color: 'var(--text-secondary)', margin: '0 0 16px 0', lineHeight: '1.5' }}>
+        <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
           Download all your data in JSON format, including contacts, tasks, messages, and memories. Limited to 1 export per hour.
         </p>
         <button
           onClick={handleDataExport}
           disabled={exportLoading}
-          style={{
-            ...buttonStyle,
-            opacity: exportLoading ? 0.6 : 1,
-          }}
+          className="inline-flex items-center gap-2 px-4 py-3 rounded-lg border-none text-sm font-medium cursor-pointer transition-all bg-muted text-foreground hover:bg-accent disabled:opacity-60"
         >
-          {exportLoading ? <Loader2 size={16} style={{ animation: 'bb-spin 1s linear infinite' }} /> : <Download size={16} />}
+          {exportLoading ? <IconLoader2 size={16} className="animate-spin" /> : <IconDownload size={16} />}
           {exportLoading ? 'Exporting...' : 'Export My Data'}
         </button>
       </div>
 
       {deletionStatus ? (
-        <div style={{ ...containerStyle, borderColor: C.statusError, background: C.statusErrorBg }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-            <AlertTriangle size={18} style={{ color: '#EF4444', flexShrink: 0 }} />
-            <h3 style={{ fontSize: '16px', fontWeight: '500', margin: 0, color: '#EF4444' }}>
+        <div className="rounded-xl bg-red-500/10 border border-red-500/20 p-6 mb-4">
+          <div className="flex items-center gap-3 mb-3">
+            <IconAlertTriangle size={18} className="text-red-500 shrink-0" />
+            <h3 className="text-base font-medium text-red-500">
               Deletion Pending
             </h3>
           </div>
-          <p style={{ fontSize: '14px', color: 'var(--text-secondary)', margin: '0 0 12px 0', lineHeight: '1.5' }}>
+          <p className="text-sm text-muted-foreground mb-3 leading-relaxed">
             Your account deletion is scheduled. You have until{' '}
-            <strong style={{ color: 'var(--text-primary)' }}>
+            <strong className="text-foreground">
               {new Date(deletionStatus.cancel_until || '').toLocaleDateString()}
             </strong>
             {' '}to cancel this request. After that, all your data will be permanently deleted.
@@ -228,23 +182,18 @@ export function DataManagement() {
           <button
             onClick={handleCancelDeletion}
             disabled={cancelLoading}
-            style={{
-              ...buttonStyle,
-              background: C.statusSuccessBg,
-              color: '#22C55E',
-              opacity: cancelLoading ? 0.6 : 1,
-            }}
+            className="inline-flex items-center gap-2 px-4 py-3 rounded-lg border-none text-sm font-medium cursor-pointer transition-all bg-green-500/10 text-green-500 hover:bg-green-500/20 disabled:opacity-60"
           >
-            {cancelLoading ? <Loader2 size={16} style={{ animation: 'bb-spin 1s linear infinite' }} /> : <Check size={16} />}
+            {cancelLoading ? <IconLoader2 size={16} className="animate-spin" /> : <IconCheck size={16} />}
             {cancelLoading ? 'Cancelling...' : 'Cancel Deletion'}
           </button>
         </div>
       ) : (
-        <div style={containerStyle}>
-          <h3 style={{ fontSize: '16px', fontWeight: '500', margin: '0 0 12px 0', color: 'var(--text-primary)' }}>
+        <div className="rounded-xl bg-card backdrop-blur-lg p-6">
+          <h3 className="text-base font-medium text-foreground mb-3">
             Delete Your Account
           </h3>
-          <p style={{ fontSize: '14px', color: 'var(--text-secondary)', margin: '0 0 16px 0', lineHeight: '1.5' }}>
+          <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
             Permanently delete your account and all associated data. This action cannot be undone, but you will have 30 days to cancel.
           </p>
           <button
@@ -253,75 +202,46 @@ export function DataManagement() {
               setDeleteConfirmation('');
             }}
             disabled={deleteLoading}
-            style={dangerButtonStyle}
+            className="inline-flex items-center gap-2 px-4 py-3 rounded-lg border-none text-sm font-medium cursor-pointer transition-all bg-red-500/10 text-red-500 hover:bg-red-500/20"
           >
-            <Trash2 size={16} />
+            <IconTrash size={16} />
             Delete Account
           </button>
         </div>
       )}
 
       {deleteModalOpen && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center">
           <div
-            style={{
-              position: 'absolute',
-              inset: 0,
-              background: C.bgOverlay,
-              backdropFilter: 'blur(8px)',
-              WebkitBackdropFilter: 'blur(8px)',
-            }}
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             onClick={() => !deleteLoading && setDeleteModalOpen(false)}
           />
-          <div
-            style={{
-              position: 'relative',
-              padding: '32px',
-              borderRadius: '16px',
-              background: 'var(--glass-card-bg)',
-              backdropFilter: 'var(--glass-card-blur)',
-              WebkitBackdropFilter: 'var(--glass-card-blur)',
-              border: '1px solid var(--glass-card-border)',
-              boxShadow: '0 24px 48px rgba(0, 0, 0, 0.4)',
-              maxWidth: '420px',
-              width: '90%',
-            }}
-          >
+          <div className="relative p-8 rounded-2xl bg-card backdrop-blur-xl border border-border shadow-2xl max-w-[420px] w-[90%]">
             <button
               onClick={() => setDeleteModalOpen(false)}
               disabled={deleteLoading}
-              style={{
-                position: 'absolute',
-                top: '16px',
-                right: '16px',
-                background: 'none',
-                border: 'none',
-                color: 'var(--text-secondary)',
-                cursor: deleteLoading ? 'default' : 'pointer',
-                padding: '4px',
-                opacity: deleteLoading ? 0.5 : 1,
-              }}
+              className="absolute top-4 right-4 bg-transparent border-none text-muted-foreground cursor-pointer p-1 disabled:opacity-50 disabled:cursor-default"
             >
-              <X size={18} />
+              <IconX size={18} />
             </button>
 
-            <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '12px' }}>
+            <div className="text-center mb-5">
+              <div className="flex justify-center mb-3">
                 <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
                   <circle cx="20" cy="20" r="20" fill="rgba(239, 68, 68, 0.12)" />
                   <path d="M20 9V24M12 28H28" stroke="#EF4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </div>
-              <h3 style={{ fontSize: '16px', fontWeight: '500', margin: 0, color: 'var(--text-primary)' }}>
+              <h3 className="text-base font-medium text-foreground">
                 Delete Your Account?
               </h3>
-              <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginTop: '4px' }}>
+              <p className="text-sm text-muted-foreground mt-1">
                 This will schedule your account for permanent deletion.
               </p>
             </div>
 
-            <div style={{ marginBottom: '20px' }}>
-              <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '8px', fontWeight: '500' }}>
+            <div className="mb-5">
+              <p className="text-sm text-muted-foreground mb-2 font-medium">
                 Type DELETE to confirm:
               </p>
               <input
@@ -330,46 +250,28 @@ export function DataManagement() {
                 onChange={e => setDeleteConfirmation(e.target.value)}
                 placeholder="Type DELETE"
                 disabled={deleteLoading}
-                style={{
-                  width: '100%',
-                  padding: '12px 12px',
-                  borderRadius: '8px',
-                  background: C.bgHover,
-                  border: `1px solid ${C.borderHover}`,
-                  color: 'var(--text-primary)',
-                  fontSize: '14px',
-                  fontFamily: 'monospace',
-                  opacity: deleteLoading ? 0.5 : 1,
-                }}
+                className="w-full px-3 py-3 rounded-lg bg-muted border border-border text-foreground text-sm font-mono disabled:opacity-50"
               />
             </div>
 
-            <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '20px', lineHeight: '1.5' }}>
+            <p className="text-sm text-muted-foreground mb-5 leading-relaxed">
               You will have 30 days to cancel this request before your data is permanently deleted.
             </p>
 
-            <div style={{ display: 'flex', gap: '12px' }}>
+            <div className="flex gap-3">
               <button
                 onClick={() => setDeleteModalOpen(false)}
                 disabled={deleteLoading}
-                style={{
-                  flex: 1,
-                  ...buttonStyle,
-                  opacity: deleteLoading ? 0.5 : 1,
-                }}
+                className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-none text-sm font-medium cursor-pointer transition-all bg-muted text-foreground disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
                 onClick={handleDeleteAccount}
                 disabled={deleteLoading || deleteConfirmation.toUpperCase() !== 'DELETE'}
-                style={{
-                  flex: 1,
-                  ...dangerButtonStyle,
-                  opacity: deleteLoading || deleteConfirmation.toUpperCase() !== 'DELETE' ? 0.5 : 1,
-                }}
+                className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-none text-sm font-medium cursor-pointer transition-all bg-red-500/10 text-red-500 disabled:opacity-50"
               >
-                {deleteLoading ? <Loader2 size={16} style={{ animation: 'bb-spin 1s linear infinite' }} /> : <Trash2 size={16} />}
+                {deleteLoading ? <IconLoader2 size={16} className="animate-spin" /> : <IconTrash size={16} />}
                 {deleteLoading ? 'Deleting...' : 'Delete'}
               </button>
             </div>

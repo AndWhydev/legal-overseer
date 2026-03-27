@@ -1,8 +1,11 @@
 'use client'
 
 import React, { useState, useCallback, useRef, useEffect } from 'react'
-import { MessageSquarePlus, X, Camera, Send, Check, Loader2 } from 'lucide-react'
+import { IconMessagePlus, IconX, IconCamera, IconSend, IconCheck, IconLoader2 } from '@tabler/icons-react'
 import { createClient } from '@/lib/supabase/client'
+import { Button } from '@/components/ui/button'
+import { Textarea } from '@/components/ui/textarea'
+import { cn } from '@/lib/utils'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -10,118 +13,13 @@ import { createClient } from '@/lib/supabase/client'
 
 type FeedbackCategory = 'bug' | 'feature' | 'ux' | 'performance' | 'other'
 
-const CATEGORIES: { id: FeedbackCategory; label: string; icon: string }[] = [
-  { id: 'bug', label: 'Bug Report', icon: '!' },
-  { id: 'feature', label: 'Feature Request', icon: '+' },
-  { id: 'ux', label: 'UX Feedback', icon: '*' },
-  { id: 'performance', label: 'Performance', icon: '~' },
-  { id: 'other', label: 'Other', icon: '?' },
+const CATEGORIES: { id: FeedbackCategory; label: string }[] = [
+  { id: 'bug', label: 'Bug Report' },
+  { id: 'feature', label: 'Feature Request' },
+  { id: 'ux', label: 'UX Feedback' },
+  { id: 'performance', label: 'Performance' },
+  { id: 'other', label: 'Other' },
 ]
-
-// ---------------------------------------------------------------------------
-// Styles
-// ---------------------------------------------------------------------------
-
-const fabButton: React.CSSProperties = {
-  position: 'fixed',
-  bottom: 24,
-  right: 24,
-  width: 48,
-  height: 48,
-  borderRadius: 9999,
-  background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.8))',
-  backdropFilter: 'blur(20px)',
-  border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.06))',
-  boxShadow: '0 4px 16px rgba(0, 0, 0, 0.4)',
-  color: 'var(--text-primary, #F1F5F9)',
-  cursor: 'pointer',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  zIndex: 9999,
-  transition: 'transform 0.15s ease, box-shadow 0.15s ease',
-}
-
-const modalOverlay: React.CSSProperties = {
-  position: 'fixed',
-  inset: 0,
-  background: 'rgba(0, 0, 0, 0.5)',
-  backdropFilter: 'blur(4px)',
-  zIndex: 10000,
-  display: 'flex',
-  alignItems: 'flex-end',
-  justifyContent: 'flex-end',
-  padding: 24,
-}
-
-const modalContainer: React.CSSProperties = {
-  width: 380,
-  maxHeight: 'calc(100vh - 48px)',
-  background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.95))',
-  backdropFilter: 'blur(24px)',
-  border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.06))',
-  borderRadius: 16,
-  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
-  overflow: 'hidden',
-  display: 'flex',
-  flexDirection: 'column' as const,
-}
-
-const headerStyle: React.CSSProperties = {
-  padding: '16px 20px',
-  borderBottom: '1px solid rgba(255, 255, 255, 0.03)',
-  display: 'flex',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-}
-
-const categoryPill: React.CSSProperties = {
-  padding: '6px 12px',
-  borderRadius: 8,
-  fontSize: 13,
-  cursor: 'pointer',
-  border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.06))',
-  background: 'transparent',
-  color: 'var(--text-secondary, #94A3B8)',
-  transition: 'all 0.15s ease',
-}
-
-const categoryPillActive: React.CSSProperties = {
-  ...categoryPill,
-  background: 'var(--bg-elevated, rgba(25, 35, 50, 0.8))',
-  border: '1px solid rgba(255, 255, 255, 0.12)',
-  color: 'var(--text-primary, #F1F5F9)',
-}
-
-const textareaStyle: React.CSSProperties = {
-  width: '100%',
-  minHeight: 100,
-  padding: 12,
-  borderRadius: 8,
-  background: 'var(--bg-input, rgba(13, 17, 23, 0.6))',
-  border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.06))',
-  color: 'var(--text-primary, #F1F5F9)',
-  fontSize: 14,
-  lineHeight: 1.5,
-  resize: 'vertical' as const,
-  fontFamily: 'inherit',
-  outline: 'none',
-}
-
-const submitButton: React.CSSProperties = {
-  padding: '10px 20px',
-  borderRadius: 8,
-  background: 'var(--btn-primary-bg, #F1F5F9)',
-  color: 'var(--btn-primary-fg, #0a0f1a)',
-  border: 'none',
-  fontWeight: 600,
-  fontSize: 14,
-  cursor: 'pointer',
-  display: 'inline-flex',
-  alignItems: 'center',
-  gap: 8,
-  transition: 'opacity 0.15s ease',
-}
 
 // ---------------------------------------------------------------------------
 // Component
@@ -146,8 +44,6 @@ export function FeedbackWidget() {
   }, [open])
 
   const handleCapture = useCallback(async () => {
-    // Use the browser screenshot API if available (html2canvas pattern)
-    // For MVP, we capture via the File input approach
     setCapturing(true)
     try {
       const input = document.createElement('input')
@@ -157,7 +53,6 @@ export function FeedbackWidget() {
         const file = (e.target as HTMLInputElement).files?.[0]
         if (!file) { setCapturing(false); return }
 
-        // Convert to base64 data URL for simplicity (could upload to storage later)
         const reader = new FileReader()
         reader.onload = () => {
           setScreenshotUrl(reader.result as string)
@@ -241,42 +136,46 @@ export function FeedbackWidget() {
     <>
       {/* Floating action button */}
       {!open && (
-        <button
+        <Button
           onClick={() => setOpen(true)}
-          style={fabButton}
           aria-label="Send feedback"
           title="Send feedback"
+          size="icon-lg"
+          className="fixed bottom-6 right-6 z-[9999] rounded-full shadow-lg"
         >
-          <MessageSquarePlus size={20} />
-        </button>
+          <IconMessagePlus className="size-5" />
+        </Button>
       )}
 
       {/* Modal */}
       {open && (
-        <div style={modalOverlay} onClick={handleClose}>
-          <div style={modalContainer} onClick={(e) => e.stopPropagation()}>
+        <div
+          className="fixed inset-0 z-[10000] flex items-end justify-end bg-black/50 backdrop-blur-sm p-6"
+          onClick={handleClose}
+        >
+          <div
+            className="flex w-[380px] max-h-[calc(100vh-48px)] flex-col overflow-hidden rounded-xl border border-border bg-card shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
             {/* Header */}
-            <div style={headerStyle}>
-              <span style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary, #F1F5F9)' }}>
+            <div className="flex items-center justify-between border-b border-border px-5 py-4">
+              <span className="text-base font-semibold text-foreground">
                 Send Feedback
               </span>
-              <button
-                onClick={handleClose}
-                style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: 4 }}
-              >
-                <X size={18} />
-              </button>
+              <Button variant="ghost" size="icon-xs" onClick={handleClose}>
+                <IconX className="size-4" />
+              </Button>
             </div>
 
             {/* Body */}
-            <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 16, overflowY: 'auto' }}>
+            <div className="flex flex-col gap-4 overflow-y-auto p-5">
               {submitted ? (
-                <div style={{ textAlign: 'center', padding: '32px 0' }}>
-                  <Check size={32} style={{ color: '#22c55e', marginBottom: 12 }} />
-                  <p style={{ fontSize: 16, fontWeight: 500, color: 'var(--text-primary)', margin: 0 }}>
+                <div className="py-8 text-center">
+                  <IconCheck className="mx-auto mb-3 size-8 text-emerald-500" />
+                  <p className="text-base font-medium text-foreground">
                     Thanks for your feedback
                   </p>
-                  <p style={{ fontSize: 14, color: 'var(--text-secondary)', margin: '8px 0 0 0' }}>
+                  <p className="mt-2 text-sm text-muted-foreground">
                     We review every submission.
                   </p>
                 </div>
@@ -284,100 +183,87 @@ export function FeedbackWidget() {
                 <>
                   {/* Categories */}
                   <div>
-                    <label style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)', marginBottom: 8, display: 'block' }}>
+                    <label className="mb-2 block text-xs font-medium text-muted-foreground">
                       Category
                     </label>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                    <div className="flex flex-wrap gap-2">
                       {CATEGORIES.map((c) => (
-                        <button
+                        <Button
                           key={c.id}
+                          variant={category === c.id ? 'secondary' : 'outline'}
+                          size="sm"
                           onClick={() => setCategory(c.id)}
-                          style={category === c.id ? categoryPillActive : categoryPill}
                         >
                           {c.label}
-                        </button>
+                        </Button>
                       ))}
                     </div>
                   </div>
 
                   {/* Message */}
                   <div>
-                    <label style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)', marginBottom: 8, display: 'block' }}>
-                      What's on your mind?
+                    <label className="mb-2 block text-xs font-medium text-muted-foreground">
+                      What&apos;s on your mind?
                     </label>
-                    <textarea
+                    <Textarea
                       ref={textareaRef}
                       value={message}
                       onChange={(e) => setMessage(e.target.value)}
                       placeholder="Describe the issue or suggestion..."
-                      style={textareaStyle}
+                      className="min-h-[100px]"
                       maxLength={5000}
                     />
-                    <div style={{ fontSize: 12, color: 'var(--text-dim)', textAlign: 'right', marginTop: 4 }}>
+                    <div className="mt-1 text-right text-xs text-muted-foreground">
                       {message.length}/5000
                     </div>
                   </div>
 
                   {/* Screenshot */}
                   <div>
-                    <button
+                    <Button
+                      variant="outline"
+                      size="sm"
                       onClick={handleCapture}
                       disabled={capturing}
-                      style={{
-                        ...categoryPill,
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: 6,
-                        opacity: capturing ? 0.5 : 1,
-                      }}
                     >
-                      <Camera size={14} />
+                      <IconCamera className="size-3.5" />
                       {screenshotUrl ? 'Replace Screenshot' : 'Attach Screenshot'}
-                    </button>
+                    </Button>
                     {screenshotUrl && (
-                      <div style={{ marginTop: 8, position: 'relative', display: 'inline-block' }}>
+                      <div className="relative mt-2 inline-block">
                         <img
                           src={screenshotUrl}
                           alt="Screenshot preview"
-                          style={{ maxWidth: '100%', maxHeight: 120, borderRadius: 8, border: '1px solid rgba(255,255,255,0.06)' }}
+                          className="max-h-[120px] max-w-full rounded-lg border border-border"
                         />
-                        <button
+                        <Button
+                          variant="outline"
+                          size="icon-xs"
                           onClick={() => setScreenshotUrl(null)}
-                          style={{
-                            position: 'absolute', top: -6, right: -6,
-                            width: 20, height: 20, borderRadius: 9999,
-                            background: 'var(--bg-card-solid)', border: '1px solid var(--border-subtle)',
-                            color: 'var(--text-secondary)', cursor: 'pointer',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            fontSize: 12,
-                          }}
+                          className="absolute -right-1.5 -top-1.5 rounded-full"
                         >
-                          <X size={12} />
-                        </button>
+                          <IconX className="size-3" />
+                        </Button>
                       </div>
                     )}
                   </div>
 
                   {/* Error */}
                   {error && (
-                    <div style={{ fontSize: 13, color: '#ef4444', padding: '8px 12px', background: 'rgba(239,68,68,0.1)', borderRadius: 8 }}>
+                    <div className="rounded-lg bg-destructive/10 px-3 py-2 text-xs text-destructive">
                       {error}
                     </div>
                   )}
 
                   {/* Submit */}
-                  <button
+                  <Button
                     onClick={handleSubmit}
                     disabled={submitting || !category || message.trim().length < 5}
-                    style={{
-                      ...submitButton,
-                      opacity: submitting || !category || message.trim().length < 5 ? 0.5 : 1,
-                      alignSelf: 'flex-end',
-                    }}
+                    className="self-end"
                   >
-                    {submitting ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+                    {submitting ? <IconLoader2 className="size-4 animate-spin" /> : <IconSend className="size-4" />}
                     {submitting ? 'Sending...' : 'Submit'}
-                  </button>
+                  </Button>
                 </>
               )}
             </div>

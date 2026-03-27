@@ -58,7 +58,7 @@ export function MonthlyGrid({
             key={i}
             className={cn(
               'text-center text-xs font-medium py-1',
-              (i === 0 || i === 6) ? 'text-text-muted' : 'text-text-secondary',
+              (i === 0 || i === 6) ? 'text-muted-foreground/60' : 'text-muted-foreground',
             )}
           >
             {d}

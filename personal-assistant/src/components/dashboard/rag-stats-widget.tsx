@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Database, AlertCircle, Loader2, DollarSign, AlertTriangle } from 'lucide-react'
+import { IconDatabase, IconAlertCircle, IconLoader2, IconCurrencyDollar, IconAlertTriangle } from '@tabler/icons-react'
 import { logger } from '@/lib/core/logger'
 
 interface RagStats {
@@ -63,7 +63,7 @@ function CountUp({ target, suffix = '' }: { target: number; suffix?: string }) {
   }, [target])
 
   return (
-    <span style={{ fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)', fontWeight: 500 }}>
+    <span className="font-mono font-medium">
       {value.toLocaleString()}{suffix}
     </span>
   )
@@ -85,7 +85,6 @@ export function RagStatsWidget({ className = '', showDetails = true }: RagStatsW
         if (!res.ok) throw new Error('Failed to fetch monitoring data')
         const data = (await res.json()) as MonitoringReport
 
-        // Fallback to legacy stats endpoint if monitoring data is empty
         if (!data.stats) {
           const legacyRes = await fetch('/api/rag/stats')
           if (legacyRes.ok) {
@@ -110,137 +109,67 @@ export function RagStatsWidget({ className = '', showDetails = true }: RagStatsW
     fetchMonitoringData()
   }, [])
 
-  const glassCard: React.CSSProperties = {
-    padding: '16px',
-    borderRadius: 12,
-    background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.6))',
-    backdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
-    WebkitBackdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
-    border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
-    boxShadow: 'var(--card-shadow, 0 2px 8px rgba(0,0,0,0.3)), var(--card-inset, inset 0 1px 0 rgba(255,255,255,0.06))',
-  }
-
-  const metricRow: React.CSSProperties = {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 12,
-  }
-
-  const metricLabel: React.CSSProperties = {
-    fontSize: 14,
-    color: 'var(--text-secondary, #94A3B8)',
-    fontWeight: 500,
-  }
-
-  const metricValue: React.CSSProperties = {
-    fontSize: 16,
-    color: 'var(--text-primary, #F1F5F9)',
-    fontWeight: 500,
-  }
-
-  const headerStyle: React.CSSProperties = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 12,
-    paddingBottom: 12,
-    borderBottom: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
-  }
-
-  const titleStyle: React.CSSProperties = {
-    fontSize: 14,
-    fontWeight: 500,
-    color: 'var(--text-primary, #F1F5F9)',
-    margin: 0,
-  }
-
   if (error) {
     return (
-      <div
-        style={{
-          ...glassCard,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-          background: 'rgba(239, 68, 68, 0.1)',
-          border: '1px solid rgba(239, 68, 68, 0.3)',
-          ...{ className },
-        }}
-      >
-        <AlertCircle size={16} style={{ color: '#EF4444', flexShrink: 0 }} />
-        <span style={{ fontSize: 14, color: '#EF4444' }}>{error}</span>
+      <div className={`flex items-center gap-2 rounded-xl border border-red-900/30 bg-red-950/20 p-4 ${className}`}>
+        <IconAlertCircle size={16} className="shrink-0 text-red-500" />
+        <span className="text-sm text-red-500">{error}</span>
       </div>
     )
   }
 
   if (loading || !stats) {
     return (
-      <div style={{ ...glassCard, display: 'flex', alignItems: 'center', gap: 8, ...{ className } }}>
-        <Loader2
-          size={16}
-          style={{
-            color: 'var(--text-secondary)',
-            animation: 'bb-spin 1s linear infinite',
-            flexShrink: 0,
-          }}
-        />
-        <span style={{ fontSize: 14, color: 'var(--text-secondary)' }}>Loading vector stats...</span>
+      <div className={`flex items-center gap-2 rounded-xl border border-border bg-card p-4 ${className}`}>
+        <IconLoader2 size={16} className="shrink-0 animate-spin text-muted-foreground" />
+        <span className="text-sm text-muted-foreground">Loading vector stats...</span>
       </div>
     )
   }
 
-  // Get top channels by vector count
   const topChannels = stats
     ? Object.entries(stats.namespaceVectors)
         .sort(([, a], [, b]) => (b ?? 0) - (a ?? 0))
         .slice(0, 5)
     : []
 
-  // Get critical alerts
   const criticalAlerts = alerts.filter(a => a.level === 'critical')
   const warningAlerts = alerts.filter(a => a.level === 'warning')
 
   return (
-    <div style={glassCard} className={className}>
-      <div style={headerStyle}>
-        <Database size={16} style={{ color: 'var(--text-primary, #F1F5F9)' }} />
-        <h3 style={titleStyle}>Vector Index</h3>
+    <div className={`rounded-xl border border-border bg-card p-4 ${className}`}>
+      <div className="mb-3 flex items-center gap-2 border-b border-border pb-3">
+        <IconDatabase size={16} className="text-foreground" />
+        <h3 className="text-sm font-medium text-foreground">Vector Index</h3>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        {/* Total vectors card */}
-        <div style={metricRow}>
-          <span style={metricLabel}>Total Vectors</span>
-          <span style={metricValue}>
-            {loading ? '–' : <CountUp target={stats?.totalVectors ?? 0} />}
+      <div className="flex flex-col gap-3">
+        {/* Total vectors */}
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-sm font-medium text-muted-foreground">Total Vectors</span>
+          <span className="text-base font-medium text-foreground">
+            {loading ? '\u2013' : <CountUp target={stats?.totalVectors ?? 0} />}
           </span>
         </div>
 
         {/* Index fullness */}
-        <div style={metricRow}>
-          <span style={metricLabel}>Index Capacity</span>
-          <span
-            style={{
-              ...metricValue,
-              color:
-                stats && stats.indexFullness >= 90
-                  ? '#EF4444'
-                  : stats && stats.indexFullness >= 70
-                    ? '#F59E0B'
-                    : 'var(--text-primary, #F1F5F9)',
-            }}
-          >
-            {loading ? '–' : <CountUp target={stats?.indexFullness ?? 0} suffix="%" />}
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-sm font-medium text-muted-foreground">Index Capacity</span>
+          <span className={`text-base font-medium ${
+            stats && stats.indexFullness >= 90 ? 'text-red-500' :
+            stats && stats.indexFullness >= 70 ? 'text-amber-500' :
+            'text-foreground'
+          }`}>
+            {loading ? '\u2013' : <CountUp target={stats?.indexFullness ?? 0} suffix="%" />}
           </span>
         </div>
 
         {/* Monthly cost estimate */}
         {costs && (
-          <div style={metricRow}>
-            <span style={metricLabel}>Est. Monthly Cost</span>
-            <span style={{ ...metricValue, display: 'flex', alignItems: 'center', gap: 4 }}>
-              <DollarSign size={14} style={{ color: '#10B981' }} />
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-sm font-medium text-muted-foreground">Est. Monthly Cost</span>
+            <span className="flex items-center gap-1 text-base font-medium text-foreground">
+              <IconCurrencyDollar size={14} className="text-emerald-500" />
               {costs.monthlyCost.toFixed(2)}
             </span>
           </div>
@@ -248,18 +177,9 @@ export function RagStatsWidget({ className = '', showDetails = true }: RagStatsW
 
         {/* Critical alerts */}
         {criticalAlerts.length > 0 && (
-          <div
-            style={{
-              padding: 8,
-              borderRadius: 8,
-              background: 'rgba(239, 68, 68, 0.1)',
-              border: '1px solid rgba(239, 68, 68, 0.3)',
-              display: 'flex',
-              gap: 8,
-            }}
-          >
-            <AlertTriangle size={14} style={{ color: '#EF4444', flexShrink: 0, marginTop: 4 }} />
-            <span style={{ fontSize: 14, color: '#FCA5A5', lineHeight: 1.4 }}>
+          <div className="flex gap-2 rounded-lg border border-red-900/30 bg-red-950/20 p-2">
+            <IconAlertTriangle size={14} className="mt-1 shrink-0 text-red-500" />
+            <span className="text-sm leading-snug text-red-300">
               {criticalAlerts[0].message}
             </span>
           </div>
@@ -267,49 +187,28 @@ export function RagStatsWidget({ className = '', showDetails = true }: RagStatsW
 
         {/* Warning alerts */}
         {!criticalAlerts.length && warningAlerts.length > 0 && (
-          <div
-            style={{
-              padding: 8,
-              borderRadius: 8,
-              background: 'rgba(245, 158, 11, 0.1)',
-              border: '1px solid rgba(245, 158, 11, 0.3)',
-              display: 'flex',
-              gap: 8,
-            }}
-          >
-            <AlertCircle size={14} style={{ color: '#F59E0B', flexShrink: 0, marginTop: 4 }} />
-            <span style={{ fontSize: 14, color: '#FECACA', lineHeight: 1.4 }}>
+          <div className="flex gap-2 rounded-lg border border-amber-900/30 bg-amber-950/20 p-2">
+            <IconAlertCircle size={14} className="mt-1 shrink-0 text-amber-500" />
+            <span className="text-sm leading-snug text-amber-300">
               {warningAlerts[0].message}
             </span>
           </div>
         )}
 
-        {/* Show details if enabled and we have channel breakdown */}
+        {/* Channel breakdown */}
         {showDetails && topChannels.length > 0 && (
           <>
-            <div
-              style={{
-                marginTop: 8,
-                paddingTop: 8,
-                borderTop: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
-              }}
-            />
-            <div style={{ fontSize: 14, color: 'var(--text-dim, #475569)', fontWeight: 500, marginBottom: 8 }}>
+            <div className="mt-2 border-t border-border pt-2" />
+            <div className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
               TOP CHANNELS
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div className="flex flex-col gap-2">
               {topChannels.map(([channel, count]) => (
-                <div key={channel} style={metricRow}>
-                  <span style={{ ...metricLabel, fontSize: 14, color: 'var(--text-secondary)' }}>
+                <div key={channel} className="flex items-center justify-between gap-3">
+                  <span className="text-sm font-medium text-muted-foreground">
                     {channel}
                   </span>
-                  <span
-                    style={{
-                      ...metricValue,
-                      fontSize: 14,
-                      color: 'var(--text-primary)',
-                    }}
-                  >
+                  <span className="text-sm font-medium text-foreground">
                     {(count ?? 0).toLocaleString()}
                   </span>
                 </div>
@@ -318,15 +217,8 @@ export function RagStatsWidget({ className = '', showDetails = true }: RagStatsW
           </>
         )}
 
-        {/* Last updated timestamp */}
-        <div
-          style={{
-            fontSize: 14,
-            color: 'var(--text-dim, #475569)',
-            marginTop: 8,
-            textAlign: 'right',
-          }}
-        >
+        {/* Last updated */}
+        <div className="mt-2 text-right text-sm text-muted-foreground/60">
           {stats?.lastUpdated ? new Date(stats.lastUpdated).toLocaleTimeString() : 'Loading...'}
         </div>
       </div>

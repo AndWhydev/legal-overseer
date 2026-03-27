@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
-import { X, ChevronDown, Calendar, Tag, Trash2, Pencil } from 'lucide-react'
+import { IconX, IconChevronDown, IconCalendar, IconTag, IconTrash, IconPencil } from '@tabler/icons-react'
 import type { Task, KanbanColumn } from '@/lib/types'
 import { MarkdownRenderer } from './markdown-renderer'
 
@@ -333,7 +333,7 @@ export function TaskDialog({
                     onClick={() => setActiveMenu(activeMenu === 'column' ? null : 'column')}
                   >
                     {selectedColumn?.title || 'Column'}
-                    <ChevronDown size={11} style={{
+                    <IconChevronDown size={11} style={{
                       transition: 'transform 150ms',
                       transform: activeMenu === 'column' ? 'rotate(180deg)' : 'none',
                       opacity: 0.6,
@@ -394,7 +394,7 @@ export function TaskDialog({
                     onClick={() => setActiveMenu(activeMenu === 'priority' ? null : 'priority')}
                   >
                     {selectedPriority?.label || 'Priority'}
-                    <ChevronDown size={11} style={{
+                    <IconChevronDown size={11} style={{
                       transition: 'transform 150ms',
                       transform: activeMenu === 'priority' ? 'rotate(180deg)' : 'none',
                       opacity: 0.6,
@@ -460,7 +460,7 @@ export function TaskDialog({
                         alignItems: 'center',
                       }}
                     >
-                      <X size={10} />
+                      <IconX size={10} />
                     </button>
                   </span>
                 ))}
@@ -479,7 +479,7 @@ export function TaskDialog({
                     }}
                     onClick={() => setActiveMenu(activeMenu === 'tags' ? null : 'tags')}
                   >
-                    <Tag size={11} style={{ opacity: 0.6 }} />
+                    <IconTag size={11} style={{ opacity: 0.6 }} />
                     Tag
                   </button>
                   {activeMenu === 'tags' && (
@@ -536,7 +536,7 @@ export function TaskDialog({
                     }}
                     onClick={() => setActiveMenu(activeMenu === 'deadline' ? null : 'deadline')}
                   >
-                    <Calendar size={11} style={{ opacity: 0.6 }} />
+                    <IconCalendar size={11} style={{ opacity: 0.6 }} />
                     {deadline || 'Date'}
                   </button>
                   {activeMenu === 'deadline' && (
@@ -601,7 +601,7 @@ export function TaskDialog({
                       onMouseEnter={(e) => { e.currentTarget.style.color = '#f87171' }}
                       onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-dim)' }}
                     >
-                      <Trash2 size={13} />
+                      <IconTrash size={13} />
                       Delete
                     </button>
                   )}
@@ -695,7 +695,7 @@ export function TaskDialog({
                   }}
                   title="Edit task"
                 >
-                  <Pencil size={14} />
+                  <IconPencil size={14} />
                 </button>
               </div>
 
@@ -752,7 +752,7 @@ export function TaskDialog({
                 {/* Deadline */}
                 {deadline && (
                   <span style={{ ...readChipStyle, gap: 4 }}>
-                    <Calendar size={11} style={{ opacity: 0.6 }} />
+                    <IconCalendar size={11} style={{ opacity: 0.6 }} />
                     {deadline}
                   </span>
                 )}
@@ -786,7 +786,7 @@ export function TaskDialog({
                       onMouseEnter={(e) => { e.currentTarget.style.color = '#f87171' }}
                       onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-dim)' }}
                     >
-                      <Trash2 size={13} />
+                      <IconTrash size={13} />
                       Delete
                     </button>
                   )}

@@ -1,107 +1,10 @@
 'use client'
 
 import React, { useState } from 'react'
-import { GlassDropdown } from '@/components/ui/glass-dropdown'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useScenarios } from '@/hooks/use-revenue-data'
 import { formatCents } from '@/lib/revenue/types'
 import type { RevenueScenario } from '@/lib/revenue/types'
-import { S, C } from '@/lib/styles/design-tokens'
-
-// ─── Styles ─────────────────────────────────────────────────────────────────
-
-const containerStyle: React.CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  gap: 16,
-}
-
-const formCardStyle: React.CSSProperties = {
-  padding: '20px',
-  borderRadius: 'var(--radius-xl)',
-  background: 'var(--bg-card)',
-  backdropFilter: 'var(--glass-blur)',
-  WebkitBackdropFilter: 'var(--glass-blur)',
-  display: 'flex',
-  flexDirection: 'column',
-  gap: 12,
-}
-
-const inputStyle: React.CSSProperties = {
-  padding: '8px 12px',
-  borderRadius: 'var(--radius-md)',
-  border: 'none',
-  background: 'var(--bg-input)',
-  color: 'var(--text-primary)',
-  fontSize: 14,
-  fontFamily: 'var(--font-sans)',
-  outline: 'none',
-  width: '100%',
-}
-
-const selectStyle: React.CSSProperties = {
-  ...inputStyle,
-  appearance: 'none',
-  cursor: 'pointer',
-}
-
-const buttonStyle: React.CSSProperties = {
-  padding: '12px 20px',
-  borderRadius: 'var(--radius-md)',
-  border: 'none',
-  background: 'var(--bb-orange)',
-  color: 'var(--text-on-accent)',
-  fontSize: 14,
-  fontWeight: 500,
-  cursor: 'pointer',
-  transition: 'opacity var(--duration-fast) var(--ease-default)',
-  alignSelf: 'flex-start',
-}
-
-const labelStyle: React.CSSProperties = {
-  fontSize: 14,
-  color: 'var(--text-secondary)',
-  textTransform: 'uppercase',
-  letterSpacing: '0.04em',
-  fontWeight: 500,
-}
-
-const scenarioCardStyle: React.CSSProperties = {
-  padding: '16px 20px',
-  borderRadius: 'var(--radius-lg)',
-  background: 'var(--bg-card)',
-  backdropFilter: 'var(--glass-blur)',
-  WebkitBackdropFilter: 'var(--glass-blur)',
-  display: 'flex',
-  flexDirection: 'column',
-  gap: 12,
-}
-
-const resultRowStyle: React.CSSProperties = {
-  display: 'grid',
-  gridTemplateColumns: '1fr 1fr 1fr',
-  gap: 16,
-  marginTop: 4,
-}
-
-const resultCellStyle: React.CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  gap: 2,
-}
-
-const resultLabelStyle: React.CSSProperties = {
-  fontSize: 14,
-  color: 'var(--text-secondary)',
-  textTransform: 'uppercase',
-  letterSpacing: '0.04em',
-}
-
-const resultValueStyle: React.CSSProperties = {
-  fontSize: 16,
-  fontWeight: 500,
-  fontFamily: 'var(--font-mono)',
-  letterSpacing: '-0.02em',
-}
 
 // ─── Scenario Type Config ───────────────────────────────────────────────────
 
@@ -165,25 +68,25 @@ export function ScenarioPlannerUI() {
   }
 
   return (
-    <div style={containerStyle}>
+    <div className="flex flex-col gap-4">
       {/* Create button / form */}
       {!formOpen ? (
         <button
-          style={buttonStyle}
+          className="self-start px-5 py-3 rounded-md border-none bg-orange-500 text-white text-sm font-medium cursor-pointer transition-opacity hover:opacity-80"
           onClick={() => setFormOpen(true)}
         >
           + New Scenario
         </button>
       ) : (
-        <div style={formCardStyle}>
-          <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>
+        <div className="flex flex-col gap-3 rounded-xl bg-card backdrop-blur-lg p-5">
+          <span className="text-sm font-medium text-foreground">
             Create What-If Scenario
           </span>
 
           <div>
-            <span style={labelStyle}>Scenario Name</span>
+            <span className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Scenario Name</span>
             <input
-              style={inputStyle}
+              className="w-full mt-1 px-3 py-2 rounded-md border-none bg-input text-foreground text-sm outline-none"
               placeholder="What if I raise rates 15%?"
               value={name}
               onChange={e => setName(e.target.value)}
@@ -191,20 +94,27 @@ export function ScenarioPlannerUI() {
           </div>
 
           <div>
-            <span style={labelStyle}>Type</span>
-            <GlassDropdown
-              options={SCENARIO_TYPES.map(st => ({ value: st.value, label: `${st.label} — ${st.desc}` }))}
-              value={type}
-              onChange={v => setType(v)}
-            />
+            <span className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Type</span>
+            <Select value={type} onValueChange={v => setType(v)}>
+              <SelectTrigger className="mt-1 w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {SCENARIO_TYPES.map(st => (
+                  <SelectItem key={st.value} value={st.value}>
+                    {st.label} — {st.desc}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Type-specific fields */}
           {type === 'rate_change' && (
             <div>
-              <span style={labelStyle}>Rate Change %</span>
+              <span className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Rate Change %</span>
               <input
-                style={inputStyle}
+                className="w-full mt-1 px-3 py-2 rounded-md border-none bg-input text-foreground text-sm outline-none"
                 type="number"
                 value={rateChangePct}
                 onChange={e => setRateChangePct(Number(e.target.value))}
@@ -216,18 +126,18 @@ export function ScenarioPlannerUI() {
           {type === 'new_client' && (
             <>
               <div>
-                <span style={labelStyle}>Est. Monthly Revenue ($)</span>
+                <span className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Est. Monthly Revenue ($)</span>
                 <input
-                  style={inputStyle}
+                  className="w-full mt-1 px-3 py-2 rounded-md border-none bg-input text-foreground text-sm outline-none"
                   type="number"
                   value={monthlyRevenue}
                   onChange={e => setMonthlyRevenue(Number(e.target.value))}
                 />
               </div>
               <div>
-                <span style={labelStyle}>Probability (0-1)</span>
+                <span className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Probability (0-1)</span>
                 <input
-                  style={inputStyle}
+                  className="w-full mt-1 px-3 py-2 rounded-md border-none bg-input text-foreground text-sm outline-none"
                   type="number"
                   step="0.1"
                   min="0"
@@ -241,9 +151,9 @@ export function ScenarioPlannerUI() {
 
           {type === 'capacity_change' && (
             <div>
-              <span style={labelStyle}>Hours Delta (per week)</span>
+              <span className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Hours Delta (per week)</span>
               <input
-                style={inputStyle}
+                className="w-full mt-1 px-3 py-2 rounded-md border-none bg-input text-foreground text-sm outline-none"
                 type="number"
                 value={hoursDelta}
                 onChange={e => setHoursDelta(Number(e.target.value))}
@@ -253,9 +163,9 @@ export function ScenarioPlannerUI() {
 
           {type === 'custom' && (
             <div>
-              <span style={labelStyle}>Revenue Impact ($)</span>
+              <span className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Revenue Impact ($)</span>
               <input
-                style={inputStyle}
+                className="w-full mt-1 px-3 py-2 rounded-md border-none bg-input text-foreground text-sm outline-none"
                 type="number"
                 value={revenueImpact}
                 onChange={e => setRevenueImpact(Number(e.target.value))}
@@ -263,16 +173,16 @@ export function ScenarioPlannerUI() {
             </div>
           )}
 
-          <div style={{ display: 'flex', gap: 8 }}>
+          <div className="flex gap-2">
             <button
-              style={{ ...buttonStyle, opacity: creating ? 0.6 : 1 }}
+              className="px-5 py-3 rounded-md border-none bg-orange-500 text-white text-sm font-medium cursor-pointer transition-opacity hover:opacity-80 disabled:opacity-60"
               onClick={handleSubmit}
               disabled={creating || !name.trim()}
             >
               {creating ? 'Computing...' : 'Run Simulation'}
             </button>
             <button
-              style={{ ...buttonStyle, background: 'var(--bg-input)', color: 'var(--text-secondary)' }}
+              className="px-5 py-3 rounded-md border-none bg-input text-muted-foreground text-sm font-medium cursor-pointer transition-opacity hover:opacity-80"
               onClick={() => setFormOpen(false)}
             >
               Cancel
@@ -283,16 +193,9 @@ export function ScenarioPlannerUI() {
 
       {/* Existing Scenarios */}
       {loading ? (
-        <div style={{ color: 'var(--text-secondary)', fontSize: 14 }}>Loading scenarios...</div>
+        <div className="text-muted-foreground text-sm">Loading scenarios...</div>
       ) : scenarios.length === 0 ? (
-        <div style={{
-          padding: '24px',
-          textAlign: 'center',
-          color: 'var(--text-secondary)',
-          fontSize: 14,
-          borderRadius: 'var(--radius-lg)',
-          background: 'var(--bg-card)',
-        }}>
+        <div className="p-6 text-center text-muted-foreground text-sm rounded-lg bg-card">
           No scenarios yet. Create one to model what-if revenue impacts.
         </div>
       ) : (
@@ -308,65 +211,52 @@ export function ScenarioPlannerUI() {
 
 function ScenarioCard({ scenario }: { scenario: RevenueScenario }) {
   const isPositive = (scenario.revenue_delta_cents ?? 0) >= 0
-  const deltaColor = isPositive ? 'var(--bb-green)' : 'var(--bb-red)'
+  const deltaColor = isPositive ? 'text-green-500' : 'text-red-500'
+  const deltaBg = isPositive ? 'bg-green-500/10' : 'bg-red-500/10'
 
   return (
-    <div style={scenarioCardStyle}>
+    <div className="flex flex-col gap-3 rounded-lg bg-card backdrop-blur-lg p-4">
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>
+      <div className="flex justify-between items-center">
+        <span className="text-sm font-medium text-foreground">
           {scenario.name}
         </span>
-        <span style={{
-          fontSize: 14,
-          fontWeight: 500,
-          padding: '2px 8px',
-          borderRadius: 'var(--radius-sm)',
-          background: `${deltaColor}15`,
-          color: deltaColor,
-          textTransform: 'uppercase',
-        }}>
+        <span className={`text-xs font-medium px-2 py-0.5 rounded uppercase ${deltaBg} ${deltaColor}`}>
           {isPositive ? '+' : ''}{scenario.revenue_delta_pct}%
         </span>
       </div>
 
       {/* Impact summary */}
       {scenario.impact_summary && (
-        <div style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.4 }}>
+        <div className="text-sm text-muted-foreground leading-relaxed">
           {scenario.impact_summary}
         </div>
       )}
 
       {/* Results grid */}
-      <div style={resultRowStyle}>
-        <div style={resultCellStyle}>
-          <span style={resultLabelStyle}>Baseline</span>
-          <span style={{ ...resultValueStyle, color: 'var(--text-secondary)' }}>
+      <div className="grid grid-cols-3 gap-4 mt-1">
+        <div className="flex flex-col gap-0.5">
+          <span className="text-xs text-muted-foreground uppercase tracking-wider">Baseline</span>
+          <span className="text-base font-medium font-mono tracking-tight text-muted-foreground">
             {formatCents(scenario.baseline_revenue_cents ?? 0)}
           </span>
         </div>
-        <div style={resultCellStyle}>
-          <span style={resultLabelStyle}>Projected (P50)</span>
-          <span style={{ ...resultValueStyle, color: deltaColor }}>
+        <div className="flex flex-col gap-0.5">
+          <span className="text-xs text-muted-foreground uppercase tracking-wider">Projected (P50)</span>
+          <span className={`text-base font-medium font-mono tracking-tight ${deltaColor}`}>
             {formatCents(scenario.p50_revenue_cents ?? 0)}
           </span>
         </div>
-        <div style={resultCellStyle}>
-          <span style={resultLabelStyle}>Delta</span>
-          <span style={{ ...resultValueStyle, color: deltaColor }}>
+        <div className="flex flex-col gap-0.5">
+          <span className="text-xs text-muted-foreground uppercase tracking-wider">Delta</span>
+          <span className={`text-base font-medium font-mono tracking-tight ${deltaColor}`}>
             {isPositive ? '+' : ''}{formatCents(scenario.revenue_delta_cents ?? 0)}
           </span>
         </div>
       </div>
 
       {/* P10/P90 range */}
-      <div style={{
-        display: 'flex',
-        gap: 12,
-        fontSize: 14,
-        color: 'var(--text-secondary)',
-        fontFamily: 'var(--font-mono)',
-      }}>
+      <div className="flex gap-3 text-sm text-muted-foreground font-mono">
         <span>P10: {formatCents(scenario.p10_revenue_cents ?? 0)}</span>
         <span>P90: {formatCents(scenario.p90_revenue_cents ?? 0)}</span>
         <span>{scenario.simulation_runs} runs</span>
@@ -374,15 +264,9 @@ function ScenarioCard({ scenario }: { scenario: RevenueScenario }) {
 
       {/* Risk factors */}
       {scenario.risk_factors && scenario.risk_factors.length > 0 && (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+        <div className="flex flex-wrap gap-2">
           {scenario.risk_factors.map((rf, i) => (
-            <span key={i} style={{
-              fontSize: 14,
-              padding: '2px 8px',
-              borderRadius: 'var(--radius-sm)',
-              background: C.statusErrorBg,
-              color: 'var(--bb-red)',
-            }}>
+            <span key={i} className="text-xs px-2 py-0.5 rounded bg-red-500/10 text-red-500">
               {rf}
             </span>
           ))}

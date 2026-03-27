@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Settings, X, ChevronDown, ChevronRight, RotateCcw, LogIn, LogOut, User, Sun, Moon } from 'lucide-react';
+import { IconSettings, IconX, IconChevronDown, IconChevronRight, IconRefresh, IconLogin, IconLogout, IconUser, IconSun, IconMoon } from '@tabler/icons-react';
 import { ALL_MODULES } from '@/lib/modules/registry';
 import {
   useDevOverrides,
@@ -61,7 +61,6 @@ export function DevToolbar() {
 
   const handleIndustry = (industry: string) => {
     setDevOverride('industry', industry);
-    // Reset plan/modules so pack defaults apply
     if (getDevOverrides()?.enabled_modules !== undefined) {
       setDevOverride('enabled_modules', null);
     }
@@ -69,7 +68,6 @@ export function DevToolbar() {
 
   const handlePlan = (plan: string) => {
     setDevOverride('plan', plan);
-    // When switching plan, clear module overrides so tier defaults apply
     if (getDevOverrides()?.enabled_modules !== undefined) {
       setDevOverride('enabled_modules', null);
     }
@@ -106,80 +104,36 @@ export function DevToolbar() {
       {!open && (
         <button
           onClick={() => setOpen(true)}
-          style={{
-            position: 'fixed',
-            bottom: 16,
-            right: 16,
-            zIndex: 9990,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-            padding: '8px 12px',
-            borderRadius: 20,
-            border: '1px solid rgba(255,255,255,0.15)',
-            background: isOverriding
-              ? 'linear-gradient(135deg, #7c3aed, #4f46e5)'
-              : 'rgba(0,0,0,0.75)',
-            color: '#fff',
-            fontSize: 14,
-            fontWeight: 500,
-            fontFamily: 'monospace',
-            cursor: 'pointer',
-            backdropFilter: 'blur(8px)',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
-          }}
+          className={`fixed bottom-4 right-4 z-[9990] flex items-center gap-2 px-3 py-2 rounded-[20px] border border-white/15 text-white text-sm font-medium font-mono cursor-pointer backdrop-blur-sm shadow-md ${
+            isOverriding
+              ? 'bg-gradient-to-br from-violet-600 to-indigo-600'
+              : 'bg-black/75'
+          }`}
         >
-          <Settings size={14} />
+          <IconSettings size={14} />
           Dev
           {isOverriding && (
-            <span style={{
-              width: 8, height: 8, borderRadius: '50%',
-              background: '#34d399', display: 'inline-block',
-            }} />
+            <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block" />
           )}
         </button>
       )}
 
       {/* Expanded panel */}
       {open && (
-        <div style={{
-          position: 'fixed',
-          bottom: 16,
-          right: 16,
-          zIndex: 9990,
-          width: 320,
-          maxHeight: 'calc(100vh - 32px)',
-          overflowY: 'auto',
-          borderRadius: 12,
-          border: '1px solid rgba(255,255,255,0.12)',
-          background: 'rgba(15,15,20,0.95)',
-          backdropFilter: 'blur(12px)',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
-          color: '#e2e8f0',
-          fontSize: 14,
-          fontFamily: 'system-ui, -apple-system, sans-serif',
-        }}>
+        <div className="fixed bottom-4 right-4 z-[9990] w-80 max-h-[calc(100vh-32px)] overflow-y-auto rounded-xl border border-white/[0.12] bg-[rgba(15,15,20,0.95)] backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.5)] text-slate-200 text-sm font-sans">
           {/* Header */}
-          <div style={{
-            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-            padding: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.08)',
-          }}>
-            <span style={{ fontWeight: 500, fontSize: 14, fontFamily: 'monospace' }}>
+          <div className="flex justify-between items-center px-4 py-3 border-b border-white/[0.08]">
+            <span className="font-medium text-sm font-mono">
               BitBit Dev Toolbar
             </span>
-            <button onClick={() => setOpen(false)} style={{
-              background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: 2,
-            }}>
-              <X size={16} />
+            <button onClick={() => setOpen(false)} className="bg-transparent border-none text-slate-400 cursor-pointer p-0.5">
+              <IconX size={16} />
             </button>
           </div>
 
           {/* Seed Data */}
           <Section title="Seed Data">
-            <label style={{
-              display: 'flex', alignItems: 'center', gap: 8,
-              fontSize: 14, color: seedOn ? '#34d399' : '#94a3b8', cursor: 'pointer',
-            }}>
+            <label className={`flex items-center gap-2 text-sm cursor-pointer ${seedOn ? 'text-emerald-400' : 'text-slate-400'}`}>
               <input
                 type="checkbox"
                 checked={seedOn}
@@ -188,7 +142,7 @@ export function DevToolbar() {
                   setSeedOn(next);
                   setSeedActive(next);
                 }}
-                style={{ accentColor: '#34d399' }}
+                className="accent-emerald-400"
               />
               {seedOn ? 'Seed data active' : 'Enable seed data'}
             </label>
@@ -196,23 +150,20 @@ export function DevToolbar() {
 
           {/* Theme */}
           <Section title="Theme">
-            <div style={{ display: 'flex', gap: 4 }}>
+            <div className="flex gap-1">
               {(['midnight', 'aurora', 'light'] as const).map(t => {
                 const active = currentTheme === t;
                 return (
                   <button
                     key={t}
                     onClick={() => handleThemeToggle(t)}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 4,
-                      padding: '4px 12px', borderRadius: 8,
-                      border: active ? '1px solid #7c3aed' : '1px solid rgba(255,255,255,0.1)',
-                      background: active ? 'rgba(124,58,237,0.2)' : 'rgba(255,255,255,0.05)',
-                      color: active ? '#c4b5fd' : '#94a3b8',
-                      fontSize: 14, fontWeight: active ? 500 : 400, cursor: 'pointer',
-                    }}
+                    className={`flex items-center gap-1 px-3 py-1 rounded-lg text-sm cursor-pointer ${
+                      active
+                        ? 'border border-violet-600 bg-violet-600/20 text-violet-300 font-medium'
+                        : 'border border-white/10 bg-white/5 text-slate-400'
+                    }`}
                   >
-                    {t === 'midnight' ? <Moon size={12} /> : <Sun size={12} />}
+                    {t === 'midnight' ? <IconMoon size={12} /> : <IconSun size={12} />}
                     {t}
                   </button>
                 );
@@ -249,21 +200,14 @@ export function DevToolbar() {
 
           {/* Quick Navigate */}
           <Section title="Quick Navigate">
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+            <div className="flex flex-wrap gap-1">
               {TABS.slice(0, 12).map(tab => (
                 <button
                   key={tab.id}
                   onClick={() => handleNavigate(tab.id)}
-                  style={{
-                    padding: '4px 8px',
-                    borderRadius: 8,
-                    border: '1px solid rgba(255,255,255,0.1)',
-                    background: 'rgba(255,255,255,0.05)',
-                    color: modules.includes(tab.id) ? 'var(--text-primary)' : 'var(--text-dim)',
-                    fontSize: 14,
-                    cursor: 'pointer',
-                    textDecoration: modules.includes(tab.id) ? 'none' : 'line-through',
-                  }}
+                  className={`px-2 py-1 rounded-lg border border-white/10 bg-white/5 text-sm cursor-pointer ${
+                    modules.includes(tab.id) ? 'text-foreground' : 'text-muted-foreground line-through'
+                  }`}
                 >
                   {tab.label}
                 </button>
@@ -272,36 +216,29 @@ export function DevToolbar() {
           </Section>
 
           {/* Module Overrides (collapsible) */}
-          <div style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+          <div className="border-b border-white/[0.08]">
             <button
               onClick={() => setShowModules(!showModules)}
-              style={{
-                width: '100%', display: 'flex', alignItems: 'center', gap: 8,
-                padding: '8px 16px', background: 'none', border: 'none',
-                color: '#94a3b8', fontSize: 14, fontWeight: 500, cursor: 'pointer',
-                textTransform: 'uppercase', letterSpacing: '0.05em',
-              }}
+              className="w-full flex items-center gap-2 px-4 py-2 bg-transparent border-none text-slate-400 text-sm font-medium cursor-pointer uppercase tracking-wide"
             >
-              {showModules ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+              {showModules ? <IconChevronDown size={12} /> : <IconChevronRight size={12} />}
               Module Overrides
             </button>
             {showModules && (
-              <div style={{ padding: '0 16px 12px', display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <div className="px-4 pb-3 flex flex-col gap-0.5">
                 {ALL_MODULES.map(mod => {
                   const checked = moduleOverrides
                     ? moduleOverrides.includes(mod)
                     : modules.includes(mod);
                   return (
-                    <label key={mod} style={{
-                      display: 'flex', alignItems: 'center', gap: 8,
-                      fontSize: 14, color: checked ? '#e2e8f0' : '#64748b',
-                      cursor: 'pointer', padding: '2px 0',
-                    }}>
+                    <label key={mod} className={`flex items-center gap-2 text-sm cursor-pointer py-0.5 ${
+                      checked ? 'text-slate-200' : 'text-slate-500'
+                    }`}>
                       <input
                         type="checkbox"
                         checked={checked}
                         onChange={() => handleModuleToggle(mod)}
-                        style={{ accentColor: '#7c3aed' }}
+                        className="accent-violet-600"
                       />
                       {mod}
                     </label>
@@ -315,26 +252,20 @@ export function DevToolbar() {
           <DevAuthSection />
 
           {/* Status + Reset */}
-          <div style={{
-            padding: '12px 16px',
-            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          }}>
-            <span style={{ fontSize: 14, color: '#64748b' }}>
+          <div className="px-4 py-3 flex justify-between items-center">
+            <span className="text-sm text-slate-500">
               {modules.length} modules · {composition.profileId}
             </span>
             <button
               onClick={handleReset}
               disabled={!isOverriding}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 4,
-                padding: '4px 12px', borderRadius: 8,
-                border: '1px solid rgba(255,255,255,0.1)',
-                background: isOverriding ? 'rgba(239,68,68,0.15)' : 'transparent',
-                color: isOverriding ? 'var(--bb-red)' : 'var(--text-dim)',
-                fontSize: 14, fontWeight: 500, cursor: isOverriding ? 'pointer' : 'default',
-              }}
+              className={`flex items-center gap-1 px-3 py-1 rounded-lg border border-white/10 text-sm font-medium ${
+                isOverriding
+                  ? 'bg-red-500/15 text-red-400 cursor-pointer'
+                  : 'bg-transparent text-muted-foreground cursor-default'
+              }`}
             >
-              <RotateCcw size={12} />
+              <IconRefresh size={12} />
               Reset to DB
             </button>
           </div>
@@ -346,11 +277,8 @@ export function DevToolbar() {
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div style={{ padding: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-      <div style={{
-        fontSize: 14, fontWeight: 500, color: '#94a3b8',
-        textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8,
-      }}>
+    <div className="px-4 py-3 border-b border-white/[0.08]">
+      <div className="text-sm font-medium text-slate-400 uppercase tracking-wide mb-2">
         {title}
       </div>
       {children}
@@ -368,25 +296,18 @@ function ChipGroup({
   onChange: (v: string) => void;
 }) {
   return (
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+    <div className="flex flex-wrap gap-1">
       {options.map(opt => {
         const active = value === opt;
         return (
           <button
             key={opt}
             onClick={() => onChange(opt)}
-            style={{
-              padding: '4px 12px',
-              borderRadius: 8,
-              border: active
-                ? '1px solid #7c3aed'
-                : '1px solid rgba(255,255,255,0.1)',
-              background: active ? 'rgba(124,58,237,0.2)' : 'rgba(255,255,255,0.05)',
-              color: active ? '#c4b5fd' : '#94a3b8',
-              fontSize: 14,
-              fontWeight: active ? 500 : 400,
-              cursor: 'pointer',
-            }}
+            className={`px-3 py-1 rounded-lg text-sm cursor-pointer ${
+              active
+                ? 'border border-violet-600 bg-violet-600/20 text-violet-300 font-medium'
+                : 'border border-white/10 bg-white/5 text-slate-400'
+            }`}
           >
             {opt}
           </button>
@@ -437,7 +358,6 @@ function DevAuthSection() {
     setUserEmail(data.user?.email ?? null);
     setStatus('idle');
     setPassword('');
-    // Reload to pick up the new session across all routes
     window.location.reload();
   };
 
@@ -449,49 +369,32 @@ function DevAuthSection() {
     window.location.reload();
   };
 
-  const inputStyle: React.CSSProperties = {
-    width: '100%',
-    padding: '8px 12px',
-    borderRadius: 8,
-    border: '1px solid rgba(255,255,255,0.12)',
-    background: 'rgba(255,255,255,0.06)',
-    color: '#e2e8f0',
-    fontSize: 14,
-    outline: 'none',
-  };
-
   return (
     <Section title="Dev Auth">
       {userEmail ? (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
-            <User size={12} style={{ flexShrink: 0, color: '#34d399' }} />
-            <span style={{ fontSize: 14, color: '#34d399', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <IconUser size={12} className="shrink-0 text-emerald-400" />
+            <span className="text-sm text-emerald-400 overflow-hidden text-ellipsis whitespace-nowrap">
               {userEmail}
             </span>
           </div>
           <button
             onClick={handleLogout}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 4,
-              padding: '4px 8px', borderRadius: 8, flexShrink: 0,
-              border: '1px solid rgba(255,255,255,0.1)',
-              background: 'rgba(239,68,68,0.12)',
-              color: '#f87171', fontSize: 14, fontWeight: 500, cursor: 'pointer',
-            }}
+            className="flex items-center gap-1 px-2 py-1 rounded-lg shrink-0 border border-white/10 bg-red-500/[0.12] text-red-400 text-sm font-medium cursor-pointer"
           >
-            <LogOut size={11} />
+            <IconLogout size={11} />
             Sign out
           </button>
         </div>
       ) : (
-        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <form onSubmit={handleLogin} className="flex flex-col gap-2">
           <input
             type="email"
             placeholder="Email"
             value={email}
             onChange={e => setEmail(e.target.value)}
-            style={inputStyle}
+            className="w-full px-3 py-2 rounded-lg border border-white/[0.12] bg-white/[0.06] text-slate-200 text-sm outline-none"
             autoComplete="email"
           />
           <input
@@ -499,26 +402,19 @@ function DevAuthSection() {
             placeholder="Password"
             value={password}
             onChange={e => setPassword(e.target.value)}
-            style={inputStyle}
+            className="w-full px-3 py-2 rounded-lg border border-white/[0.12] bg-white/[0.06] text-slate-200 text-sm outline-none"
             autoComplete="current-password"
           />
           {status === 'error' && (
-            <span style={{ fontSize: 14, color: '#f87171' }}>{error}</span>
+            <span className="text-sm text-red-400">{error}</span>
           )}
           <button
             type="submit"
             disabled={status === 'loading' || !email.trim() || !password}
-            style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-              padding: '8px 12px', borderRadius: 8,
-              border: '1px solid rgba(124,58,237,0.4)',
-              background: 'rgba(124,58,237,0.2)',
-              color: '#c4b5fd', fontSize: 14, fontWeight: 500,
-              cursor: status === 'loading' ? 'wait' : 'pointer',
-              opacity: (!email.trim() || !password) ? 0.4 : 1,
-            }}
+            className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-violet-600/40 bg-violet-600/20 text-violet-300 text-sm font-medium disabled:opacity-40"
+            style={{ cursor: status === 'loading' ? 'wait' : 'pointer' }}
           >
-            <LogIn size={13} />
+            <IconLogin size={13} />
             {status === 'loading' ? 'Signing in...' : 'Sign in with password'}
           </button>
         </form>

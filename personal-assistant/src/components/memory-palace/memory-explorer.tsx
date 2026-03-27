@@ -10,9 +10,8 @@ import type {
 import { MemoryCard } from './memory-card'
 import { MemoryStatsBar } from './memory-stats-bar'
 import { DecisionLogViewer } from './decision-log-viewer'
-import { S, C } from '@/lib/styles/design-tokens'
 
-// ─── Types ───────────────────────────────────────────────────────────────────
+// --- Types ---
 
 interface MemoryExplorerProps {
   orgId: string
@@ -40,7 +39,7 @@ const CATEGORY_COLORS: Record<MemoryCategory, string> = {
   convention: '#F1F5F9',
 }
 
-// ─── Component ───────────────────────────────────────────────────────────────
+// --- Component ---
 
 export function MemoryExplorer({ orgId }: MemoryExplorerProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('feed')
@@ -57,9 +56,6 @@ export function MemoryExplorer({ orgId }: MemoryExplorerProps) {
     setLoading(true)
     setError(null)
     try {
-      const params = new URLSearchParams()
-      if (activeCategory) params.set('category', activeCategory)
-
       const url = `/api/memory-palace/search?q=*&limit=30${activeCategory ? `&category=${activeCategory}` : ''}`
       const res = await fetch(url)
       if (!res.ok) throw new Error('Failed to load memories')
@@ -118,75 +114,35 @@ export function MemoryExplorer({ orgId }: MemoryExplorerProps) {
   }
 
   return (
-    <div style={{
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '16px',
-      height: '100%',
-      overflow: 'hidden',
-    }}>
+    <div className="flex h-full flex-col gap-4 overflow-hidden">
       {/* Stats Bar */}
       {stats && <MemoryStatsBar stats={stats} />}
 
       {/* Search + Controls */}
-      <div style={{
-        display: 'flex',
-        gap: '12px',
-        alignItems: 'center',
-        padding: '0 4px',
-      }}>
+      <div className="flex items-center gap-3 px-1">
         {/* Search Input */}
-        <div style={{
-          flex: 1,
-          position: 'relative',
-        }}>
+        <div className="flex-1">
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Search memories... (e.g., 'pricing WordPress builds')"
-            style={{
-              width: '100%',
-              padding: '12px 16px',
-              background: 'var(--bg-input, rgba(13, 17, 23, 0.6))',
-              border: `1px solid ${C.borderHover}`,
-              borderRadius: '8px',
-              color: C.textPrimary,
-              fontSize: '14px',
-              outline: 'none',
-            }}
+            className="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-ring"
           />
         </div>
 
         {/* View Mode Toggle */}
-        <div style={{
-          display: 'flex',
-          gap: '2px',
-          background: 'var(--bg-card, rgba(15, 20, 30, 0.35))',
-          borderRadius: '8px',
-          padding: '4px',
-        }}>
+        <div className="flex gap-0.5 rounded-lg bg-card p-1">
           {(['feed', 'decisions'] as ViewMode[]).map(mode => (
             <button
               key={mode}
               onClick={() => setViewMode(mode)}
-              style={{
-                padding: '8px 16px',
-                borderRadius: '8px',
-                border: 'none',
-                background: viewMode === mode
-                  ? C.bgHoverStrong
-                  : 'transparent',
-                color: viewMode === mode
-                  ? '#E2E8F0'
-                  : C.textPlaceholder,
-                fontSize: '14px',
-                fontWeight: viewMode === mode ? 500 : 400,
-                cursor: 'pointer',
-                transition: 'all 0.15s ease',
-                textTransform: 'capitalize',
-              }}
+              className={`rounded-lg px-4 py-2 text-sm capitalize transition-colors ${
+                viewMode === mode
+                  ? 'bg-secondary font-medium text-foreground'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
             >
               {mode}
             </button>
@@ -195,24 +151,14 @@ export function MemoryExplorer({ orgId }: MemoryExplorerProps) {
       </div>
 
       {/* Category Filters */}
-      <div style={{
-        display: 'flex',
-        gap: '8px',
-        padding: '0 4px',
-        overflowX: 'auto',
-      }}>
+      <div className="flex gap-2 overflow-x-auto px-1">
         <button
           onClick={() => { setActiveCategory(null); setViewMode('feed') }}
-          style={{
-            padding: '4px 12px',
-            borderRadius: '12px',
-            border: 'none',
-            background: activeCategory === null ? 'var(--hover-bg-strong)' : 'var(--hover-bg)',
-            color: activeCategory === null ? '#E2E8F0' : C.textPlaceholder,
-            fontSize: '14px',
-            cursor: 'pointer',
-            whiteSpace: 'nowrap',
-          }}
+          className={`whitespace-nowrap rounded-xl px-3 py-1 text-sm ${
+            activeCategory === null
+              ? 'bg-secondary font-medium text-foreground'
+              : 'bg-secondary/50 text-muted-foreground'
+          }`}
         >
           All
         </button>
@@ -220,19 +166,10 @@ export function MemoryExplorer({ orgId }: MemoryExplorerProps) {
           <button
             key={cat}
             onClick={() => { setActiveCategory(cat); setViewMode('feed') }}
+            className="whitespace-nowrap rounded-xl px-3 py-1 text-sm"
             style={{
-              padding: '4px 12px',
-              borderRadius: '12px',
-              border: 'none',
-              background: activeCategory === cat
-                ? `${CATEGORY_COLORS[cat]}22`
-                : 'var(--hover-bg)',
-              color: activeCategory === cat
-                ? CATEGORY_COLORS[cat]
-                : C.textPlaceholder,
-              fontSize: '14px',
-              cursor: 'pointer',
-              whiteSpace: 'nowrap',
+              background: activeCategory === cat ? `${CATEGORY_COLORS[cat]}22` : undefined,
+              color: activeCategory === cat ? CATEGORY_COLORS[cat] : undefined,
             }}
           >
             {CATEGORY_LABELS[cat]}
@@ -242,43 +179,25 @@ export function MemoryExplorer({ orgId }: MemoryExplorerProps) {
 
       {/* Error */}
       {error && (
-        <div style={{
-          padding: '12px',
-          background: C.statusErrorBg,
-          borderRadius: '8px',
-          color: '#EF4444',
-          fontSize: '14px',
-        }}>
+        <div className="rounded-lg bg-destructive/10 px-3 py-3 text-sm text-destructive">
           {error}
         </div>
       )}
 
       {/* Content */}
-      <div style={{
-        flex: 1,
-        overflowY: 'auto',
-        padding: '0 4px',
-      }}>
+      <div className="flex-1 overflow-y-auto px-1">
         {loading && (
-          <div style={{
-            textAlign: 'center',
-            padding: '40px',
-            color: C.textDim,
-          }}>
+          <div className="p-10 text-center text-muted-foreground">
             Loading...
           </div>
         )}
 
         {!loading && viewMode === 'feed' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div className="flex flex-col gap-2">
             {memories.length === 0 ? (
-              <div style={{
-                textAlign: 'center',
-                padding: '60px 20px',
-                color: C.textMuted,
-              }}>
-                <div style={{ fontSize: '16px', marginBottom: '8px' }}>No memories yet</div>
-                <div style={{ fontSize: '14px' }}>
+              <div className="px-5 py-16 text-center text-muted-foreground">
+                <div className="mb-2 text-base">No memories yet</div>
+                <div className="text-sm">
                   BitBit will automatically remember important facts, decisions, and patterns as you interact.
                 </div>
               </div>
@@ -299,12 +218,8 @@ export function MemoryExplorer({ orgId }: MemoryExplorerProps) {
         )}
 
         {!loading && viewMode === 'search' && searchResults && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <div style={{
-              fontSize: '14px',
-              color: C.textDim,
-              padding: '4px 0',
-            }}>
+          <div className="flex flex-col gap-2">
+            <div className="py-1 text-sm text-muted-foreground">
               {searchResults.totalCount} result{searchResults.totalCount !== 1 ? 's' : ''} for &quot;{searchQuery}&quot;
             </div>
             {searchResults.memories.map(memory => (

@@ -1,8 +1,10 @@
 'use client'
 
 import React, { useState, useCallback } from 'react'
-import { Download, Copy, Check, FileText, Code } from 'lucide-react'
+import { IconDownload, IconCopy, IconCheck, IconFileText, IconCode } from '@tabler/icons-react'
 import { motion, AnimatePresence } from 'motion/react'
+import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 
 interface ExportMessage {
   role: 'user' | 'assistant'
@@ -64,80 +66,50 @@ export function ExportMenu({ messages }: ExportMenuProps) {
 
   if (messages.length === 0) return null
 
-  const btnStyle: React.CSSProperties = {
-    display: 'flex', alignItems: 'center', gap: 8, width: '100%',
-    padding: '8px 12px', background: 'none', border: 'none',
-    color: 'var(--text-secondary, #94A3B8)', cursor: 'pointer', fontSize: 13,
-    borderRadius: 0, textAlign: 'left' as const,
-    transition: 'background 100ms',
-  }
-
   return (
-    <div style={{ position: 'relative' }}>
-      <button
+    <div className="relative">
+      <Button
+        variant="ghost"
+        size="icon-xs"
         onClick={() => setOpen(!open)}
-        style={{
-          background: 'none', border: 'none', padding: 4,
-          color: 'var(--text-muted, rgba(255,255,255,0.35))', cursor: 'pointer',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}
         title="Export conversation"
         aria-label="Export conversation"
       >
-        <Download size={16} />
-      </button>
+        <IconDownload className="size-4" />
+      </Button>
       <AnimatePresence>
         {open && (
           <>
             {/* Backdrop to close */}
             <div
               onClick={() => setOpen(false)}
-              style={{ position: 'fixed', inset: 0, zIndex: 49 }}
+              className="fixed inset-0 z-[49]"
             />
             <motion.div
               initial={{ opacity: 0, y: 4, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 4, scale: 0.95 }}
               transition={{ duration: 0.15 }}
-              style={{
-                position: 'absolute',
-                top: '100%',
-                right: 0,
-                marginTop: 4,
-                background: 'var(--bg-card, rgba(15, 20, 30, 0.95))',
-                backdropFilter: 'blur(24px)',
-                border: '1px solid rgba(255,255,255,0.08)',
-                borderRadius: 10,
-                overflow: 'hidden',
-                minWidth: 200,
-                zIndex: 50,
-                boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
-              }}
+              className="absolute right-0 top-full z-50 mt-1 min-w-[200px] overflow-hidden rounded-lg border border-border bg-popover shadow-xl"
             >
               <button
                 onClick={handleCopyMarkdown}
-                style={btnStyle}
-                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)' }}
-                onMouseLeave={e => { e.currentTarget.style.background = 'none' }}
+                className="flex w-full items-center gap-2 px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               >
-                {copied ? <Check size={14} style={{ color: 'var(--bb-green)' }} /> : <Copy size={14} />}
+                {copied ? <IconCheck className="size-3.5 text-emerald-500" /> : <IconCopy className="size-3.5" />}
                 {copied ? 'Copied!' : 'Copy as Markdown'}
               </button>
               <button
                 onClick={handleDownloadMarkdown}
-                style={btnStyle}
-                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)' }}
-                onMouseLeave={e => { e.currentTarget.style.background = 'none' }}
+                className="flex w-full items-center gap-2 px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               >
-                <FileText size={14} /> Download .md
+                <IconFileText className="size-3.5" /> Download .md
               </button>
               <button
                 onClick={handleDownloadJSON}
-                style={btnStyle}
-                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)' }}
-                onMouseLeave={e => { e.currentTarget.style.background = 'none' }}
+                className="flex w-full items-center gap-2 px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               >
-                <Code size={14} /> Download .json
+                <IconCode className="size-3.5" /> Download .json
               </button>
             </motion.div>
           </>

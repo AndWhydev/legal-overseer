@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useRealtimeSubscription } from '@/lib/realtime/supabase-realtime';
-import { Inbox } from 'lucide-react';
+import { IconInbox } from '@tabler/icons-react';
 import { WidgetCard } from './widget-card';
 import { EmptyState } from '@/components/ui/empty-state';
 
@@ -27,15 +27,15 @@ export function UnreadMessagesWidget() {
     <WidgetCard
       title="Unread Messages"
       subtitle={`${messages.length} unread`}
-      icon={<Inbox size={20} style={{ color: 'var(--bb-purple)' }} />}
+      icon={<IconInbox size={20} className="text-violet-400" />}
     >
-      <div className="space-y-3 max-h-64 overflow-y-auto">
+      <div className="flex flex-col gap-3 max-h-64 overflow-y-auto">
         {messages.length === 0 ? (
           <EmptyState title="All caught up" description="No unread messages." />
         ) : (
           messages.map((msg, idx) => (
-            <div key={(msg.id as string) || idx} className="flex items-start gap-3 pb-3 border-b border-[var(--border-subtle)] last:border-0">
-              <div className="w-2 h-2 rounded-full bg-violet-400 mt-2 flex-shrink-0" />
+            <div key={(msg.id as string) || idx} className="flex items-start gap-3 pb-3 border-b border-border last:border-0">
+              <div className="w-2 h-2 rounded-full bg-violet-400 mt-2 shrink-0" />
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-medium truncate">
                   {(msg.sender_name || msg.content || 'New message') as string}

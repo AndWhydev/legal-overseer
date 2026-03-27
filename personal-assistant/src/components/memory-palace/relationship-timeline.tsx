@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useCallback } from 'react'
 import type { MemoryTimelineEvent } from '@/lib/memory-palace/types'
-import { S, C } from '@/lib/styles/design-tokens'
 
 interface RelationshipTimelineProps {
   entityId: string
@@ -48,7 +47,7 @@ export function RelationshipTimeline({ entityId, entityName }: RelationshipTimel
 
   if (loading) {
     return (
-      <div style={{ textAlign: 'center', padding: '40px', color: C.textDim }}>
+      <div className="p-10 text-center text-muted-foreground">
         Loading timeline...
       </div>
     )
@@ -56,11 +55,7 @@ export function RelationshipTimeline({ entityId, entityName }: RelationshipTimel
 
   if (timeline.length === 0) {
     return (
-      <div style={{
-        textAlign: 'center',
-        padding: '40px 20px',
-        color: C.textMuted,
-      }}>
+      <div className="px-5 py-10 text-center text-muted-foreground">
         No timeline events for {displayName}
       </div>
     )
@@ -82,28 +77,13 @@ export function RelationshipTimeline({ entityId, entityName }: RelationshipTimel
   }
 
   return (
-    <div style={{
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '0',
-    }}>
+    <div className="flex flex-col">
       {/* Header */}
-      <div style={{
-        padding: '12px 16px',
-        marginBottom: '16px',
-      }}>
-        <div style={{
-          fontSize: '16px',
-          fontWeight: 500,
-          color: C.textPrimary,
-        }}>
+      <div className="mb-4 px-4 py-3">
+        <div className="text-base font-medium text-foreground">
           {displayName}
         </div>
-        <div style={{
-          fontSize: '14px',
-          color: C.textDim,
-          marginTop: '2px',
-        }}>
+        <div className="mt-0.5 text-sm text-muted-foreground">
           {timeline.length} event{timeline.length !== 1 ? 's' : ''} in relationship history
         </div>
       </div>
@@ -112,14 +92,7 @@ export function RelationshipTimeline({ entityId, entityName }: RelationshipTimel
       {groups.map((group, gi) => (
         <div key={gi}>
           {/* Month Header */}
-          <div style={{
-            fontSize: '14px',
-            fontWeight: 500,
-            color: C.textMuted,
-            padding: '8px 16px',
-            textTransform: 'uppercase',
-            letterSpacing: '1px',
-          }}>
+          <div className="px-4 py-2 text-sm font-medium uppercase tracking-widest text-muted-foreground">
             {group.month}
           </div>
 
@@ -140,116 +113,53 @@ export function RelationshipTimeline({ entityId, entityName }: RelationshipTimel
             return (
               <div
                 key={event.id}
-                style={{
-                  display: 'flex',
-                  gap: '12px',
-                  padding: '8px 16px',
-                  position: 'relative',
-                }}
+                className="relative flex gap-3 px-4 py-2"
               >
                 {/* Timeline Line */}
-                <div style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  width: '24px',
-                  flexShrink: 0,
-                }}>
+                <div className="flex w-6 shrink-0 flex-col items-center">
                   {/* Dot */}
-                  <div style={{
-                    width: '24px',
-                    height: '24px',
-                    borderRadius: '8px',
-                    background: `${color}20`,
-                    color,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '14px',
-                    fontWeight: 500,
-                    flexShrink: 0,
-                  }}>
+                  <div
+                    className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-sm font-medium"
+                    style={{ background: `${color}20`, color }}
+                  >
                     {icon}
                   </div>
                   {/* Connector line */}
                   {!isLast && (
-                    <div style={{
-                      width: '2px',
-                      flex: 1,
-                      minHeight: '16px',
-                      background: 'var(--hover-bg-strong)',
-                      marginTop: '4px',
-                    }} />
+                    <div className="mt-1 min-h-[16px] w-0.5 flex-1 bg-secondary" />
                   )}
                 </div>
 
                 {/* Content */}
-                <div style={{
-                  flex: 1,
-                  paddingBottom: '12px',
-                }}>
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    marginBottom: '4px',
-                  }}>
-                    <span style={{
-                      fontSize: '14px',
-                      fontWeight: 500,
-                      color: C.textPrimary,
-                    }}>
+                <div className="flex-1 pb-3">
+                  <div className="mb-1 flex items-center gap-2">
+                    <span className="text-sm font-medium text-foreground">
                       {event.title}
                     </span>
-                    <span style={{ flex: 1 }} />
-                    <span style={{
-                      fontSize: '14px',
-                      color: C.textMuted,
-                    }}>
+                    <span className="flex-1" />
+                    <span className="text-sm text-muted-foreground">
                       {day} {time}
                     </span>
                   </div>
 
-                  <div style={{
-                    fontSize: '14px',
-                    color: C.textPlaceholder,
-                    lineHeight: '1.5',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    display: '-webkit-box',
-                    WebkitLineClamp: 2,
-                    WebkitBoxOrient: 'vertical' as const,
-                  }}>
+                  <div className="line-clamp-2 text-sm text-muted-foreground">
                     {event.content}
                   </div>
 
                   {/* Confidence indicator */}
                   {event.confidence < 1 && (
-                    <div style={{
-                      marginTop: '4px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                    }}>
-                      <div style={{
-                        width: '40px',
-                        height: '4px',
-                        borderRadius: '2px',
-                        background: 'var(--hover-bg-strong)',
-                        overflow: 'hidden',
-                      }}>
-                        <div style={{
-                          width: `${event.confidence * 100}%`,
-                          height: '100%',
-                          borderRadius: '2px',
-                          background: event.confidence > 0.7 ? '#22C55E' :
-                            event.confidence > 0.4 ? '#F59E0B' : '#EF4444',
-                        }} />
+                    <div className="mt-1 flex items-center gap-2">
+                      <div className="h-1 w-10 overflow-hidden rounded-sm bg-secondary">
+                        <div
+                          className="h-full rounded-sm"
+                          style={{
+                            width: `${event.confidence * 100}%`,
+                            background: event.confidence > 0.7 ? '#22C55E' :
+                              event.confidence > 0.4 ? '#F59E0B' : '#EF4444',
+                          }}
+                        />
                       </div>
-                      <span style={{
-                        fontSize: '14px',
-                        color: C.textMuted,
-                      }}>
+                      <span className="text-sm text-muted-foreground">
                         {Math.round(event.confidence * 100)}%
                       </span>
                     </div>

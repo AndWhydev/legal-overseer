@@ -2,28 +2,28 @@
 
 import React from 'react'
 import { useRealtimeStatus, type RealtimeConnectionStatus } from '@/hooks/use-realtime-status'
-import { Wifi, WifiOff, Loader2 } from 'lucide-react'
+import { IconWifi, IconWifiOff, IconLoader2 } from '@tabler/icons-react'
 
 const STATUS_CONFIG: Record<RealtimeConnectionStatus, {
   icon: React.ElementType
-  color: string
+  colorClass: string
   label: string
   animate?: boolean
 }> = {
   connected: {
-    icon: Wifi,
-    color: 'var(--bb-green)',
+    icon: IconWifi,
+    colorClass: 'text-emerald-500',
     label: 'Live',
   },
   connecting: {
-    icon: Loader2,
-    color: 'var(--bb-amber)',
+    icon: IconLoader2,
+    colorClass: 'text-amber-500',
     label: 'Reconnecting',
     animate: true,
   },
   disconnected: {
-    icon: WifiOff,
-    color: 'var(--bb-red)',
+    icon: IconWifiOff,
+    colorClass: 'text-red-500',
     label: 'Offline',
   },
 }
@@ -35,25 +35,14 @@ export function ConnectionStatus() {
 
   return (
     <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '8px',
-        padding: '4px 8px',
-        borderRadius: '8px',
-        fontSize: '14px',
-        fontWeight: 500,
-        color: config.color,
-        opacity: status === 'connected' ? 0.6 : 1,
-        transition: 'opacity 0.2s',
-      }}
+      className={`flex items-center gap-2 px-2 py-1 rounded-lg text-sm font-medium transition-opacity ${config.colorClass} ${status === 'connected' ? 'opacity-60' : 'opacity-100'}`}
       title={`Realtime: ${config.label}`}
       aria-label={`Connection status: ${config.label}`}
     >
       <Icon
         size={12}
-        strokeWidth={2}
-        style={config.animate ? { animation: 'spin 1s linear infinite' } : undefined}
+        stroke={2}
+        className={config.animate ? 'animate-spin' : ''}
       />
       <span>{config.label}</span>
     </div>

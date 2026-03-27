@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Sparkles, ListTodo, Mail, DollarSign, Calendar, X } from 'lucide-react';
+import { IconSparkles, IconListCheck, IconMail, IconCurrencyDollar, IconCalendar, IconX } from '@tabler/icons-react';
 import { useSeedData } from '@/hooks/use-seed-data';
 
 interface GlanceChip {
@@ -27,11 +27,11 @@ function isDismissedToday(): boolean {
   return val === new Date().toISOString().split('T')[0];
 }
 
-const CHIP_ICONS: Record<GlanceChip['icon'], typeof ListTodo> = {
-  'list-todo': ListTodo,
-  mail: Mail,
-  'dollar-sign': DollarSign,
-  calendar: Calendar,
+const CHIP_ICONS: Record<GlanceChip['icon'], typeof IconListCheck> = {
+  'list-todo': IconListCheck,
+  mail: IconMail,
+  'dollar-sign': IconCurrencyDollar,
+  calendar: IconCalendar,
 };
 
 function formatChipValue(chip: GlanceChip): string {
@@ -85,60 +85,15 @@ export function DailyBrief() {
     }, 300);
   }
 
-  const stripStyle: React.CSSProperties = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 12,
-    flexWrap: 'wrap',
-    padding: '12px 16px',
-    borderRadius: 12,
-    background: 'var(--glass-card-bg)',
-    backdropFilter: 'var(--glass-card-blur)',
-    WebkitBackdropFilter: 'var(--glass-card-blur)',
-    border: '1px solid var(--glass-card-border)',
-    boxShadow: 'var(--card-shadow), var(--card-inset)',
-    borderLeft: '3px solid transparent',
-    borderImage: 'linear-gradient(to bottom, #a78bfa, #3b82f6) 1',
-  };
-
-  const chipStyle: React.CSSProperties = {
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: 8,
-    padding: '4px 12px',
-    borderRadius: 99,
-    background: 'var(--glass-card-bg-light)',
-    border: 'none',
-    fontSize: 14,
-    color: 'var(--text-secondary)',
-    whiteSpace: 'nowrap',
-  };
-
   if (loading) {
     return (
-      <div style={stripStyle}>
-        <Sparkles size={14} style={{ color: '#a78bfa', flexShrink: 0 }} />
-        <span style={{ fontSize: 14, color: 'var(--text-secondary)', fontStyle: 'italic' }}>
+      <div className="flex flex-wrap items-center gap-3 rounded-xl border-l-[3px] border-l-violet-400 bg-card px-4 py-3 shadow-sm">
+        <IconSparkles size={14} className="shrink-0 text-violet-400" />
+        <span className="text-sm italic text-muted-foreground">
           Pulling things together...
         </span>
-        <div
-          style={{
-            width: 80,
-            height: 8,
-            background: 'var(--glass-hover-bg)',
-            borderRadius: 4,
-            overflow: 'hidden',
-          }}
-        >
-          <div
-            style={{
-              width: '40%',
-              height: '100%',
-              background: 'linear-gradient(90deg, #a78bfa, #3b82f6)',
-              borderRadius: 4,
-              animation: 'pulse 2s ease-in-out infinite',
-            }}
-          />
+        <div className="h-2 w-20 overflow-hidden rounded bg-muted">
+          <div className="h-full w-2/5 animate-pulse rounded bg-gradient-to-r from-violet-400 to-blue-500" />
         </div>
       </div>
     );
@@ -149,21 +104,21 @@ export function DailyBrief() {
   const chips = brief.glanceChips;
 
   return (
-    <div style={stripStyle}>
-      <Sparkles size={14} style={{ color: '#a78bfa', flexShrink: 0 }} />
-      <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>
+    <div className="flex flex-wrap items-center gap-3 rounded-xl border-l-[3px] border-l-violet-400 bg-card px-4 py-3 shadow-sm">
+      <IconSparkles size={14} className="shrink-0 text-violet-400" />
+      <span className="whitespace-nowrap text-sm font-medium text-foreground">
         Good morning
       </span>
 
       {chips && chips.length > 0 ? (
         <>
-          <span style={{ width: 1, height: 16, background: 'var(--hover-bg-strong)', flexShrink: 0 }} />
+          <span className="h-4 w-px shrink-0 bg-border" />
           {chips.map((chip, i) => {
-            const Icon = CHIP_ICONS[chip.icon] || ListTodo;
+            const Icon = CHIP_ICONS[chip.icon] || IconListCheck;
             return (
-              <span key={i} style={chipStyle}>
-                <Icon size={12} style={{ color: chip.accent || 'var(--text-secondary)', flexShrink: 0 }} />
-                <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 500, color: 'var(--text-primary)' }}>
+              <span key={i} className="inline-flex items-center gap-2 whitespace-nowrap rounded-full bg-muted/50 px-3 py-1 text-sm text-muted-foreground">
+                <Icon size={12} className="shrink-0" style={{ color: chip.accent || undefined }} />
+                <span className="font-mono font-medium text-foreground">
                   {formatChipValue(chip)}
                 </span>
                 {chip.label}
@@ -172,67 +127,25 @@ export function DailyBrief() {
           })}
         </>
       ) : (
-        <span style={{ fontSize: 14, color: 'var(--text-secondary)', flex: 1 }}>
+        <span className="flex-1 text-sm text-muted-foreground">
           {brief.summary}
         </span>
       )}
 
-      <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0 }}>
+      <div className="ml-auto flex shrink-0 items-center gap-2">
         <button
           onClick={handlePlanMyDay}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 4,
-            padding: '4px 12px',
-            borderRadius: 8,
-            border: '1px solid rgba(167, 139, 250, 0.3)',
-            background: 'rgba(167, 139, 250, 0.1)',
-            color: 'var(--bb-purple)',
-            fontSize: 14,
-            fontWeight: 500,
-            cursor: 'pointer',
-            whiteSpace: 'nowrap',
-            transition: 'background 0.15s, border-color 0.15s',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = 'rgba(167, 139, 250, 0.2)';
-            e.currentTarget.style.borderColor = 'rgba(167, 139, 250, 0.5)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'rgba(167, 139, 250, 0.1)';
-            e.currentTarget.style.borderColor = 'rgba(167, 139, 250, 0.3)';
-          }}
+          className="inline-flex items-center gap-1 whitespace-nowrap rounded-lg border border-violet-400/30 bg-violet-400/10 px-3 py-1 text-sm font-medium text-violet-400 transition-colors hover:border-violet-400/50 hover:bg-violet-400/20"
         >
-          <Sparkles size={11} />
+          <IconSparkles size={11} />
           Plan our day
         </button>
         <button
           onClick={handleDismiss}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: 24,
-            height: 24,
-            borderRadius: 8,
-            border: 'none',
-            background: 'transparent',
-            color: 'var(--text-dim)',
-            cursor: 'pointer',
-            transition: 'color 0.15s, background 0.15s',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.color = 'var(--text-secondary)';
-            e.currentTarget.style.background = 'var(--glass-hover-bg)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.color = 'var(--text-dim)';
-            e.currentTarget.style.background = 'transparent';
-          }}
+          className="inline-flex h-6 w-6 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           aria-label="Dismiss daily brief"
         >
-          <X size={14} />
+          <IconX size={14} />
         </button>
       </div>
     </div>

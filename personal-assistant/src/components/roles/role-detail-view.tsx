@@ -2,23 +2,22 @@
 
 import React, { useState, useEffect, useCallback } from 'react'
 import {
-  ArrowLeft,
-  DollarSign,
-  MessageSquare,
-  TrendingUp,
-  Activity,
-  Zap,
-  Lightbulb,
-  AlertTriangle,
-  Brain,
-  XCircle,
-  Workflow,
-  Clock,
-  Settings,
-} from 'lucide-react'
+  IconArrowLeft,
+  IconCurrencyDollar,
+  IconMessage,
+  IconTrendingUp,
+  IconActivity,
+  IconBolt,
+  IconBulb,
+  IconAlertTriangle,
+  IconBrain,
+  IconCircleX,
+  IconGitBranch,
+  IconClock,
+  IconSettings,
+} from '@tabler/icons-react'
 import type { RoleType, ActivityType, AutonomyLevel } from '@/lib/bitbit-core'
 import { AutonomyToggle } from './autonomy-toggle'
-import { S, C } from '@/lib/styles/design-tokens'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -60,58 +59,23 @@ interface RoleStatus {
 }
 
 // ---------------------------------------------------------------------------
-// Style tokens
-// ---------------------------------------------------------------------------
-
-const glassCard: React.CSSProperties = {
-  padding: '20px',
-  borderRadius: 16,
-  background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.6))',
-  backdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
-  WebkitBackdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
-  border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
-  boxShadow: 'var(--card-shadow, 0 2px 8px rgba(0,0,0,0.3)), var(--card-inset, inset 0 1px 0 rgba(255,255,255,0.06))',
-}
-
-const sectionHeader: React.CSSProperties = {
-  fontSize: 14,
-  fontWeight: 500,
-  letterSpacing: '0.04em',
-  textTransform: 'uppercase' as const,
-  color: 'var(--text-dim, #475569)',
-  marginBottom: 12,
-}
-
-const listRow: React.CSSProperties = {
-  display: 'flex',
-  alignItems: 'flex-start',
-  padding: '12px 16px',
-  borderRadius: 12,
-  background: 'var(--bb-surface, rgba(10, 14, 23, 0.5))',
-  boxShadow: 'var(--card-shadow, 0 2px 8px rgba(0,0,0,0.3)), var(--card-inset, inset 0 1px 0 rgba(255,255,255,0.06))',
-  border: 'none',
-  transition: 'background 200ms',
-  gap: 12,
-}
-
-// ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
 const ROLE_META: Record<RoleType, { label: string; icon: React.ElementType; color: string }> = {
-  finance: { label: 'Finance', icon: DollarSign, color: '#22c55e' },
-  comms: { label: 'Communications', icon: MessageSquare, color: '#3b82f6' },
-  sales: { label: 'Sales', icon: TrendingUp, color: '#F1F5F9' },
-  growth: { label: 'Growth', icon: TrendingUp, color: '#f59e0b' },
+  finance: { label: 'Finance', icon: IconCurrencyDollar, color: '#22c55e' },
+  comms: { label: 'Communications', icon: IconMessage, color: '#3b82f6' },
+  sales: { label: 'Sales', icon: IconTrendingUp, color: '#F1F5F9' },
+  growth: { label: 'Growth', icon: IconTrendingUp, color: '#f59e0b' },
 }
 
 const ACTIVITY_ICONS: Record<ActivityType, React.ElementType> = {
-  action: Zap,
-  insight: Lightbulb,
-  escalation: AlertTriangle,
-  learning: Brain,
-  error: XCircle,
-  workflow_step: Workflow,
+  action: IconBolt,
+  insight: IconBulb,
+  escalation: IconAlertTriangle,
+  learning: IconBrain,
+  error: IconCircleX,
+  workflow_step: IconGitBranch,
 }
 
 const ACTIVITY_COLORS: Record<ActivityType, string> = {
@@ -177,43 +141,26 @@ export function RoleDetailView({ roleType, onBack }: RoleDetailViewProps) {
   }, [fetchData])
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+    <div className="flex flex-col gap-4">
       {/* Back button + header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+      <div className="flex items-center gap-3">
         <button
           onClick={onBack}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: 32,
-            height: 32,
-            borderRadius: 12,
-            border: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
-            background: 'transparent',
-            color: 'var(--text-primary, #F1F5F9)',
-            cursor: 'pointer',
-            transition: 'all 200ms',
-          }}
+          className="flex items-center justify-center h-8 w-8 rounded-xl border border-border bg-transparent text-foreground cursor-pointer transition-all hover:bg-accent"
         >
-          <ArrowLeft size={16} />
+          <IconArrowLeft size={16} />
         </button>
-        <div style={{
-          width: 36,
-          height: 36,
-          borderRadius: 12,
-          background: `${meta.color}15`,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}>
+        <div
+          className="flex h-9 w-9 items-center justify-center rounded-xl"
+          style={{ background: `${meta.color}15` }}
+        >
           <RoleIcon size={18} style={{ color: meta.color }} />
         </div>
         <div>
-          <div style={{ fontSize: 16, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)', letterSpacing: '-0.02em' }}>
+          <div className="text-base font-medium text-foreground tracking-tight">
             {meta.label} Role
           </div>
-          <div style={{ fontSize: 14, color: 'var(--text-secondary, #94A3B8)', marginTop: 2 }}>
+          <div className="text-sm text-muted-foreground mt-0.5">
             Full activity history and configuration
           </div>
         </div>
@@ -221,11 +168,11 @@ export function RoleDetailView({ roleType, onBack }: RoleDetailViewProps) {
 
       {/* Status + Autonomy row */}
       {status && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+        <div className="grid grid-cols-2 gap-3">
           {/* Status card */}
-          <div style={glassCard}>
-            <div style={sectionHeader}>Status</div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div className="rounded-2xl border border-border bg-card/60 backdrop-blur-lg p-5 shadow-sm">
+            <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-3">Status</div>
+            <div className="grid grid-cols-2 gap-3">
               <StatCell label="Last tick" value={timeAgo(status.last_tick_at)} />
               <StatCell label="Active workflows" value={String(status.active_workflows)} mono />
               <StatCell label="Actions (24h)" value={String(status.activity_24h.actions)} mono />
@@ -236,9 +183,9 @@ export function RoleDetailView({ roleType, onBack }: RoleDetailViewProps) {
           </div>
 
           {/* Autonomy card */}
-          <div style={glassCard}>
-            <div style={{ ...sectionHeader, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <Settings size={11} />
+          <div className="rounded-2xl border border-border bg-card/60 backdrop-blur-lg p-5 shadow-sm">
+            <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground mb-3">
+              <IconSettings size={11} />
               Autonomy Level
             </div>
             <AutonomyToggle
@@ -252,34 +199,34 @@ export function RoleDetailView({ roleType, onBack }: RoleDetailViewProps) {
       )}
 
       {/* Activity timeline */}
-      <div style={glassCard}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-          <Activity size={14} style={{ color: meta.color }} />
-          <span style={sectionHeader}>Activity Timeline</span>
-          <span style={{ fontSize: 14, color: 'var(--text-dim, #475569)', marginLeft: 'auto' }}>
+      <div className="rounded-2xl border border-border bg-card/60 backdrop-blur-lg p-5 shadow-sm">
+        <div className="flex items-center gap-2 mb-4">
+          <IconActivity size={14} style={{ color: meta.color }} />
+          <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Activity Timeline</span>
+          <span className="text-sm text-muted-foreground ml-auto">
             {activities.length} events
           </span>
         </div>
 
-        <div style={{ overflowY: 'auto', maxHeight: 'calc(100vh - 450px)', display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div className="overflow-y-auto max-h-[calc(100vh-450px)] flex flex-col gap-2">
           {loading ? (
             Array.from({ length: 6 }, (_, i) => (
-              <div key={i} style={{ ...listRow, opacity: 0.5 }}>
-                <div style={{ width: 24, height: 24, borderRadius: 8, background: C.bgHoverStrong }} />
-                <div style={{ flex: 1 }}>
-                  <div style={{ height: 12, borderRadius: 4, background: C.bgHoverStrong, width: '60%', marginBottom: 8 }} />
-                  <div style={{ height: 10, borderRadius: 4, background: C.bgHover, width: '30%' }} />
+              <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-muted/50 opacity-50">
+                <div className="h-6 w-6 rounded-lg bg-muted" />
+                <div className="flex-1">
+                  <div className="h-3 rounded bg-muted w-3/5 mb-2" />
+                  <div className="h-2.5 rounded bg-muted/50 w-2/5" />
                 </div>
               </div>
             ))
           ) : activities.length === 0 ? (
-            <div style={{ padding: '40px 20px', textAlign: 'center' }}>
-              <Activity size={28} style={{ color: 'var(--text-dim, #475569)', marginBottom: 8 }} />
-              <div style={{ fontSize: 14, color: 'var(--text-secondary, #94A3B8)' }}>No activity yet</div>
+            <div className="py-10 text-center">
+              <IconActivity size={28} className="text-muted-foreground mx-auto mb-2" />
+              <div className="text-sm text-muted-foreground">No activity yet</div>
             </div>
           ) : (
             activities.map(item => {
-              const ItemIcon = ACTIVITY_ICONS[item.activity_type] ?? Activity
+              const ItemIcon = ACTIVITY_ICONS[item.activity_type] ?? IconActivity
               const color = ACTIVITY_COLORS[item.activity_type] ?? '#94A3B8'
               const isHovered = hoveredId === item.id
               const isExpanded = expandedId === item.id
@@ -290,49 +237,36 @@ export function RoleDetailView({ roleType, onBack }: RoleDetailViewProps) {
                     onMouseEnter={() => setHoveredId(item.id)}
                     onMouseLeave={() => setHoveredId(null)}
                     onClick={() => setExpandedId(expandedId === item.id ? null : item.id)}
-                    style={{
-                      ...listRow,
-                      cursor: 'pointer',
-                      background: isHovered ? 'var(--bb-surface-hover, rgba(20, 28, 40, 0.7))' : C.bgListRow,
-                    }}
+                    className={`flex items-start gap-3 p-3 rounded-xl cursor-pointer transition-colors ${
+                      isHovered ? 'bg-accent' : 'bg-muted/30'
+                    }`}
                   >
                     {/* Timeline dot */}
-                    <div style={{
-                      width: 24,
-                      height: 24,
-                      borderRadius: 8,
-                      background: `${color}15`,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0,
-                    }}>
+                    <div
+                      className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg"
+                      style={{ background: `${color}15` }}
+                    >
                       <ItemIcon size={12} style={{ color }} />
                     </div>
 
                     {/* Content */}
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)', lineHeight: 1.4 }}>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium text-foreground leading-relaxed">
                         {item.summary}
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
-                        <span style={{
-                          fontSize: 14,
-                          fontWeight: 500,
-                          padding: '2px 8px',
-                          borderRadius: 4,
-                          background: `${color}15`,
-                          color,
-                          textTransform: 'capitalize' as const,
-                        }}>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span
+                          className="text-xs font-medium px-2 py-0.5 rounded capitalize"
+                          style={{ background: `${color}15`, color }}
+                        >
                           {item.activity_type.replace('_', ' ')}
                         </span>
                         {item.confidence != null && (
-                          <span style={{ fontSize: 14, color: 'var(--text-dim, #475569)', fontFamily: 'var(--font-mono)' }}>
+                          <span className="text-xs text-muted-foreground font-mono">
                             {Math.round(item.confidence * 100)}%
                           </span>
                         )}
-                        <span style={{ fontSize: 14, color: 'var(--text-dim, #475569)' }}>
+                        <span className="text-xs text-muted-foreground">
                           {timeAgo(item.created_at)}
                         </span>
                       </div>
@@ -341,49 +275,27 @@ export function RoleDetailView({ roleType, onBack }: RoleDetailViewProps) {
 
                   {/* Expanded detail */}
                   {isExpanded && (
-                    <div style={{
-                      marginTop: 2,
-                      marginLeft: 36,
-                      padding: '12px 16px',
-                      borderRadius: 12,
-                      background: 'var(--bb-surface, rgba(10, 14, 23, 0.3))',
-                      border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
-                      fontSize: 14,
-                      color: 'var(--text-secondary, #94A3B8)',
-                      lineHeight: 1.6,
-                    }}>
+                    <div className="mt-0.5 ml-9 p-3 rounded-xl bg-muted/30 border border-border text-sm text-muted-foreground leading-relaxed">
                       {item.reasoning && (
-                        <div style={{ marginBottom: 8 }}>
-                          <span style={{ fontWeight: 500, color: 'var(--text-primary, #F1F5F9)' }}>Reasoning: </span>
+                        <div className="mb-2">
+                          <span className="font-medium text-foreground">Reasoning: </span>
                           {item.reasoning}
                         </div>
                       )}
                       {item.autonomy_mode && (
-                        <div style={{ marginBottom: 4 }}>
-                          <span style={{ fontWeight: 500 }}>Mode:</span> {item.autonomy_mode}
+                        <div className="mb-1">
+                          <span className="font-medium">Mode:</span> {item.autonomy_mode}
                         </div>
                       )}
                       {item.reversible != null && (
-                        <div style={{ marginBottom: 4 }}>
-                          <span style={{ fontWeight: 500 }}>Reversible:</span> {item.reversible ? 'Yes' : 'No'}
+                        <div className="mb-1">
+                          <span className="font-medium">Reversible:</span> {item.reversible ? 'Yes' : 'No'}
                         </div>
                       )}
                       {Object.keys(item.details).length > 0 && (
                         <div>
-                          <span style={{ fontWeight: 500 }}>Details:</span>
-                          <pre style={{
-                            marginTop: 4,
-                            padding: '8px 12px',
-                            borderRadius: 8,
-                            background: 'var(--bb-surface, rgba(10, 14, 23, 0.5))',
-                            fontSize: 14,
-                            fontFamily: 'var(--font-mono)',
-                            color: 'var(--text-dim, #475569)',
-                            overflow: 'auto',
-                            maxHeight: 200,
-                            whiteSpace: 'pre-wrap',
-                            wordBreak: 'break-word',
-                          }}>
+                          <span className="font-medium">Details:</span>
+                          <pre className="mt-1 p-2 rounded-lg bg-muted/50 text-xs font-mono text-muted-foreground overflow-auto max-h-[200px] whitespace-pre-wrap break-words">
                             {JSON.stringify(item.details, null, 2)}
                           </pre>
                         </div>
@@ -407,13 +319,8 @@ export function RoleDetailView({ roleType, onBack }: RoleDetailViewProps) {
 function StatCell({ label, value, mono = false }: { label: string; value: string; mono?: boolean }) {
   return (
     <div>
-      <div style={{ fontSize: 14, color: 'var(--text-dim, #475569)', marginBottom: 4 }}>{label}</div>
-      <div style={{
-        fontSize: 14,
-        fontWeight: mono ? 500 : 500,
-        color: 'var(--text-primary, #F1F5F9)',
-        fontFamily: mono ? 'var(--font-mono)' : undefined,
-      }}>
+      <div className="text-xs text-muted-foreground mb-1">{label}</div>
+      <div className={`text-sm font-medium text-foreground ${mono ? 'font-mono' : ''}`}>
         {value}
       </div>
     </div>

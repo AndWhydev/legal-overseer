@@ -1,42 +1,18 @@
 'use client'
 
 import React, { useState, useEffect, useCallback } from 'react'
-import { Calendar } from 'lucide-react'
+import { IconCalendar } from '@tabler/icons-react'
 import type { Meeting, MeetingType } from '@/lib/meetings/types'
-import { EmptyState } from '@/components/ui/empty-state'
-import { S, C } from '@/lib/styles/design-tokens'
-
-// ── Styles ──────────────────────────────────────────────────────────────────
-
-const glassCard: React.CSSProperties = {
-  padding: '20px',
-  borderRadius: 16,
-  background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.6))',
-  backdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
-  WebkitBackdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
-  border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
-  boxShadow: 'var(--card-shadow, 0 2px 8px rgba(0,0,0,0.3)), var(--card-inset, inset 0 1px 0 rgba(255,255,255,0.06))',
-}
-
-const meetingRowStyle: React.CSSProperties = {
-  padding: '16px 20px',
-  borderRadius: 12,
-  background: 'var(--bb-surface, rgba(10, 14, 23, 0.5))',
-  border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
-  cursor: 'pointer',
-  transition: 'all 200ms',
-  display: 'flex',
-  alignItems: 'center',
-  gap: 16,
-}
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from '@/components/ui/empty'
+import { Badge } from '@/components/ui/badge'
 
 const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
-  pending: { bg: C.statusWarningBg, text: '#eab308' },
-  recording: { bg: C.statusErrorBg, text: '#ef4444' },
+  pending: { bg: 'rgba(234, 179, 8, 0.12)', text: '#eab308' },
+  recording: { bg: 'rgba(239, 68, 68, 0.12)', text: '#ef4444' },
   transcribing: { bg: 'rgba(59, 130, 246, 0.12)', text: '#3b82f6' },
   processing: { bg: 'rgba(139, 92, 246, 0.12)', text: '#8b5cf6' },
-  completed: { bg: C.statusSuccessBg, text: '#22c55e' },
-  failed: { bg: C.statusErrorBg, text: '#ef4444' },
+  completed: { bg: 'rgba(34, 197, 94, 0.12)', text: '#22c55e' },
+  failed: { bg: 'rgba(239, 68, 68, 0.12)', text: '#ef4444' },
 }
 
 const TYPE_LABELS: Record<MeetingType, string> = {
@@ -107,42 +83,20 @@ export function MeetingList({ onSelectMeeting, onUpload }: MeetingListProps) {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+    <div className="flex flex-col gap-4">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 style={{
-            fontSize: 16,
-            fontWeight: 500,
-            color: 'var(--text-primary, #F1F5F9)',
-            margin: 0,
-          }}>
+          <h2 className="text-base font-medium text-foreground">
             Meetings
           </h2>
-          <p style={{
-            fontSize: 14,
-            color: 'var(--text-secondary, #94A3B8)',
-            margin: '4px 0 0',
-          }}>
+          <p className="mt-1 text-sm text-muted-foreground">
             {total} meeting{total !== 1 ? 's' : ''} recorded
           </p>
         </div>
         <button
           onClick={onUpload}
-          style={{
-            padding: '8px 16px',
-            borderRadius: 12,
-            background: 'var(--btn-primary-bg, #F1F5F9)',
-            border: 'none',
-            color: 'var(--btn-primary-fg, #0a0f1a)',
-            fontSize: 14,
-            fontWeight: 500,
-            cursor: 'pointer',
-            transition: 'all 200ms',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-          }}
+          className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
         >
           <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
@@ -152,22 +106,16 @@ export function MeetingList({ onSelectMeeting, onUpload }: MeetingListProps) {
       </div>
 
       {/* Type filter pills */}
-      <div className="flex gap-2 flex-wrap">
+      <div className="flex flex-wrap gap-2">
         {(['', 'client_call', 'standup', 'internal', 'sales', 'review'] as const).map(type => (
           <button
             key={type || 'all'}
             onClick={() => setTypeFilter(type as MeetingType | '')}
-            style={{
-              padding: '8px 16px',
-              borderRadius: 20,
-              background: typeFilter === type ? 'var(--hover-bg-strong)' : C.bgListRow,
-              border: typeFilter === type ? `1px solid ${C.borderFocus}` : `1px solid ${C.borderVisible}`,
-              color: typeFilter === type ? '#E2E8F0' : 'var(--text-secondary, #94A3B8)',
-              fontSize: 14,
-              fontWeight: 500,
-              cursor: 'pointer',
-              transition: 'all 200ms',
-            }}
+            className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+              typeFilter === type
+                ? 'border border-ring bg-secondary text-foreground'
+                : 'border border-border bg-background text-muted-foreground hover:text-foreground'
+            }`}
           >
             {type ? TYPE_LABELS[type as MeetingType] : 'All'}
           </button>
@@ -175,110 +123,90 @@ export function MeetingList({ onSelectMeeting, onUpload }: MeetingListProps) {
       </div>
 
       {/* Meeting rows */}
-      <div style={{ ...glassCard, padding: 0, overflow: 'hidden' }}>
+      <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
         {loading ? (
-          <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-dim, #475569)' }}>
+          <div className="p-10 text-center text-sm text-muted-foreground">
             Loading meetings...
           </div>
         ) : meetings.length === 0 ? (
-          <EmptyState
-            icon={<Calendar size={24} />}
-            title="No upcoming meetings"
-            description="Connect your calendar and BitBit will show upcoming meetings with context about each attendee."
-            action={{
-              label: 'Connect calendar',
-              onClick: () => window.dispatchEvent(new CustomEvent('bb-navigate', { detail: { tab: 'settings-connections' } })),
-            }}
-            secondaryAction={{
-              label: 'Upload a recording',
-              onClick: onUpload,
-            }}
-          />
+          <Empty className="py-12">
+            <EmptyMedia>
+              <IconCalendar className="h-6 w-6 text-muted-foreground" />
+            </EmptyMedia>
+            <EmptyHeader>
+              <EmptyTitle>No upcoming meetings</EmptyTitle>
+              <EmptyDescription>
+                Connect your calendar and BitBit will show upcoming meetings with context about each attendee.
+              </EmptyDescription>
+            </EmptyHeader>
+            <div className="flex gap-2">
+              <button
+                onClick={() => window.dispatchEvent(new CustomEvent('bb-navigate', { detail: { tab: 'settings-connections' } }))}
+                className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+              >
+                Connect calendar
+              </button>
+              <button
+                onClick={onUpload}
+                className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground"
+              >
+                Upload a recording
+              </button>
+            </div>
+          </Empty>
         ) : (
-          <div className="bb-stagger" style={{ display: 'flex', flexDirection: 'column' }}>
+          <div className="bb-stagger flex flex-col">
             {meetings.map((meeting, i) => {
               const statusColor = STATUS_COLORS[meeting.status] || STATUS_COLORS.pending
               const isHovered = hoveredId === meeting.id
               return (
                 <div
                   key={meeting.id}
-                  style={{
-                    ...meetingRowStyle,
-                    background: isHovered ? 'var(--hover-bg)' : 'transparent',
-                    borderBottom: i < meetings.length - 1 ? `1px solid ${C.borderSubtle}` : 'none',
-                    borderRadius: 0,
-                    border: 'none',
-                    borderBottomWidth: i < meetings.length - 1 ? 1 : 0,
-                    borderBottomStyle: 'solid',
-                    borderBottomColor: C.bgHover,
-                  }}
+                  className={`flex cursor-pointer items-center gap-4 px-5 py-4 transition-colors ${
+                    isHovered ? 'bg-secondary/50' : 'bg-transparent'
+                  } ${i < meetings.length - 1 ? 'border-b border-border' : ''}`}
                   onClick={() => onSelectMeeting(meeting)}
                   onMouseEnter={() => setHoveredId(meeting.id)}
                   onMouseLeave={() => setHoveredId(null)}
                 >
                   {/* Icon */}
-                  <div style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: 12,
-                    background: 'var(--hover-bg)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                  }}>
-                    <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#F1F5F9" strokeWidth={1.5}>
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-secondary">
+                    <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} className="text-foreground">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z" />
                     </svg>
                   </div>
 
                   {/* Content */}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{
-                      fontSize: 14,
-                      fontWeight: 500,
-                      color: 'var(--text-primary, #F1F5F9)',
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                    }}>
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-sm font-medium text-foreground">
                       {meeting.title}
                     </div>
-                    <div style={{
-                      fontSize: 14,
-                      color: 'var(--text-dim, #475569)',
-                      marginTop: 2,
-                    }}>
+                    <div className="mt-0.5 text-sm text-muted-foreground">
                       {TYPE_LABELS[meeting.meeting_type]} &middot; {formatDuration(meeting.duration_seconds)} &middot; {formatDate(meeting.created_at)}
                     </div>
                   </div>
 
                   {/* Status badge */}
-                  <span style={{
-                    padding: '4px 12px',
-                    borderRadius: 12,
-                    fontSize: 14,
-                    fontWeight: 500,
-                    background: statusColor.bg,
-                    color: statusColor.text,
-                    flexShrink: 0,
-                  }}>
+                  <span
+                    className="shrink-0 rounded-xl px-3 py-1 text-sm font-medium"
+                    style={{ background: statusColor.bg, color: statusColor.text }}
+                  >
                     {meeting.status}
                   </span>
 
                   {/* Sentiment indicator */}
                   {meeting.sentiment_label && (
-                    <div style={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: '50%',
-                      background: meeting.sentiment_score !== null && meeting.sentiment_score > 0.6
-                        ? '#22c55e'
-                        : meeting.sentiment_score !== null && meeting.sentiment_score < 0.4
-                          ? '#ef4444'
-                          : '#eab308',
-                      flexShrink: 0,
-                    }} title={`Sentiment: ${meeting.sentiment_label}`} />
+                    <div
+                      className="h-2 w-2 shrink-0 rounded-full"
+                      style={{
+                        background: meeting.sentiment_score !== null && meeting.sentiment_score > 0.6
+                          ? '#22c55e'
+                          : meeting.sentiment_score !== null && meeting.sentiment_score < 0.4
+                            ? '#ef4444'
+                            : '#eab308',
+                      }}
+                      title={`Sentiment: ${meeting.sentiment_label}`}
+                    />
                   )}
                 </div>
               )

@@ -1,6 +1,6 @@
 'use client'
 
-import { X } from 'lucide-react'
+import { IconX } from '@tabler/icons-react'
 import type { InvoiceRow } from './invoice-list'
 
 interface InvoiceDetailCardProps {
@@ -49,7 +49,7 @@ export function InvoiceDetailCard({ invoice, onClose }: InvoiceDetailCardProps) 
             <div className="bb-invoices-detail__subtitle">{invoice.invoice_number}</div>
           </div>
           <button type="button" onClick={onClose} className="bb-invoices-detail__close">
-            <X size={16} />
+            <IconX size={16} />
           </button>
         </div>
 

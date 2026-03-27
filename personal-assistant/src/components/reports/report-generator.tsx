@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { FileText, Loader2 } from 'lucide-react'
+import { IconFileText, IconLoader2 } from '@tabler/icons-react'
 import { GlassDropdown } from '@/components/ui/glass-dropdown'
 import { useToast } from '@/components/ui/toast'
 
@@ -134,12 +134,12 @@ export function ReportGenerator({ onGenerateStart, onGenerateComplete }: ReportG
             >
               {isGenerating ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <IconLoader2 className="h-4 w-4 animate-spin" />
                   Generating...
                 </>
               ) : (
                 <>
-                  <FileText className="h-4 w-4" />
+                  <IconFileText className="h-4 w-4" />
                   Generate Report
                 </>
               )}

@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react'
 import type { MemoryPalaceEntry } from '@/lib/memory-palace/types'
-import { S, C } from '@/lib/styles/design-tokens'
 
 interface MemoryCardProps {
   memory: MemoryPalaceEntry
@@ -21,128 +20,75 @@ export function MemoryCard({ memory, categoryColor }: MemoryCardProps) {
   return (
     <div
       onClick={() => setExpanded(!expanded)}
-      style={{
-        background: 'var(--bg-card, rgba(15, 20, 30, 0.35))',
-        backdropFilter: 'blur(12px)',
-        borderRadius: '12px',
-        padding: '14px 16px',
-        cursor: 'pointer',
-        transition: 'background 0.15s ease',
-        borderLeft: `3px solid ${categoryColor}`,
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.background = 'var(--bb-surface-hover, rgba(20, 28, 40, 0.5))'
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.background = C.bgCardLight
-      }}
+      className="cursor-pointer rounded-xl bg-card p-3.5 backdrop-blur-[12px] transition-colors hover:bg-secondary/50"
+      style={{ borderLeft: `3px solid ${categoryColor}` }}
     >
       {/* Header Row */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '12px',
-        marginBottom: '6px',
-      }}>
+      <div className="mb-1.5 flex items-center gap-3">
         {/* Category Pill */}
-        <span style={{
-          padding: '2px 8px',
-          borderRadius: '8px',
-          background: `${categoryColor}15`,
-          color: categoryColor,
-          fontSize: '14px',
-          fontWeight: 500,
-          textTransform: 'uppercase',
-          letterSpacing: '0.5px',
-        }}>
+        <span
+          className="rounded-lg px-2 py-px text-sm font-medium uppercase tracking-wide"
+          style={{ background: `${categoryColor}15`, color: categoryColor }}
+        >
           {memory.category}
         </span>
 
         {/* Confidence */}
-        <span style={{
-          fontSize: '14px',
-          color: confidencePct > 70 ? '#22C55E' :
-            confidencePct > 40 ? '#F59E0B' : '#EF4444',
-          fontWeight: 500,
-        }}>
+        <span
+          className="text-sm font-medium"
+          style={{
+            color: confidencePct > 70 ? '#22C55E' :
+              confidencePct > 40 ? '#F59E0B' : '#EF4444',
+          }}
+        >
           {confidencePct}%
         </span>
 
         {/* Source badge */}
         {memory.source === 'user_explicit' && (
-          <span style={{
-            fontSize: '14px',
-            color: 'var(--text-primary, #E2E8F0)',
-            fontWeight: 500,
-          }}>
+          <span className="text-sm font-medium text-foreground">
             USER
           </span>
         )}
 
         {/* Spacer */}
-        <span style={{ flex: 1 }} />
+        <span className="flex-1" />
 
         {/* Age */}
-        <span style={{
-          fontSize: '14px',
-          color: C.textMuted,
-        }}>
+        <span className="text-sm text-muted-foreground">
           {age}
         </span>
       </div>
 
       {/* Title */}
       {memory.title && (
-        <div style={{
-          fontSize: '14px',
-          fontWeight: 500,
-          color: C.textPrimary,
-          marginBottom: '4px',
-        }}>
+        <div className="mb-1 text-sm font-medium text-foreground">
           {memory.title}
         </div>
       )}
 
       {/* Content */}
-      <div style={{
-        fontSize: '14px',
-        color: C.textSecondary,
-        lineHeight: '1.5',
-        overflow: expanded ? 'visible' : 'hidden',
-        textOverflow: expanded ? 'unset' : 'ellipsis',
-        display: expanded ? 'block' : '-webkit-box',
-        WebkitLineClamp: expanded ? undefined : 2,
-        WebkitBoxOrient: expanded ? undefined : 'vertical' as const,
-      }}>
+      <div
+        className={`text-sm leading-normal text-muted-foreground ${
+          expanded ? '' : 'line-clamp-2'
+        }`}
+      >
         {memory.content}
       </div>
 
       {/* Expanded Details */}
       {expanded && (
-        <div style={{
-          marginTop: '12px',
-          paddingTop: '12px',
-          borderTop: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '8px',
-        }}>
+        <div className="mt-3 flex flex-col gap-2 border-t border-border pt-3">
           {/* Entity Names */}
           {memory.entity_names && memory.entity_names.length > 0 && (
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-              <span style={{ fontSize: '14px', color: C.textDim }}>
+            <div className="flex flex-wrap gap-2">
+              <span className="text-sm text-muted-foreground">
                 Entities:
               </span>
               {memory.entity_names.map((name, i) => (
                 <span
                   key={i}
-                  style={{
-                    padding: '1px 8px',
-                    borderRadius: '8px',
-                    background: 'rgba(59, 130, 246, 0.1)',
-                    color: '#3B82F6',
-                    fontSize: '14px',
-                  }}
+                  className="rounded-lg bg-blue-500/10 px-2 py-px text-sm text-blue-500"
                 >
                   {name}
                 </span>
@@ -152,20 +98,14 @@ export function MemoryCard({ memory, categoryColor }: MemoryCardProps) {
 
           {/* Tags */}
           {memory.tags && memory.tags.length > 0 && (
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-              <span style={{ fontSize: '14px', color: C.textDim }}>
+            <div className="flex flex-wrap gap-2">
+              <span className="text-sm text-muted-foreground">
                 Tags:
               </span>
               {memory.tags.map((tag, i) => (
                 <span
                   key={i}
-                  style={{
-                    padding: '4px 8px',
-                    borderRadius: '8px',
-                    background: 'var(--hover-bg)',
-                    color: C.textPlaceholder,
-                    fontSize: '14px',
-                  }}
+                  className="rounded-lg bg-secondary px-2 py-1 text-sm text-muted-foreground"
                 >
                   #{tag}
                 </span>
@@ -174,12 +114,7 @@ export function MemoryCard({ memory, categoryColor }: MemoryCardProps) {
           )}
 
           {/* Metadata row */}
-          <div style={{
-            display: 'flex',
-            gap: '16px',
-            fontSize: '14px',
-            color: C.textMuted,
-          }}>
+          <div className="flex gap-4 text-sm text-muted-foreground">
             <span>{decayLabel}</span>
             {memory.corroboration_count > 0 && (
               <span>Corroborated {memory.corroboration_count}x</span>
@@ -194,7 +129,7 @@ export function MemoryCard({ memory, categoryColor }: MemoryCardProps) {
   )
 }
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+// --- Helpers ---
 
 function getTimeAgo(isoDate: string): string {
   const now = Date.now()

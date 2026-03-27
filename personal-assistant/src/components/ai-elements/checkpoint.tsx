@@ -8,9 +8,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import type { LucideProps } from "lucide-react";
-import { BookmarkIcon } from "lucide-react";
-import type { ComponentProps, HTMLAttributes } from "react";
+import { IconBookmark } from "@tabler/icons-react";
+import type { ComponentProps, HTMLAttributes, ReactNode, SVGAttributes } from "react";
 
 export type CheckpointProps = HTMLAttributes<HTMLDivElement>;
 
@@ -31,15 +30,15 @@ export const Checkpoint = ({
   </div>
 );
 
-export type CheckpointIconProps = LucideProps;
+export type CheckpointIconProps = SVGAttributes<SVGSVGElement> & { size?: number | string };
 
 export const CheckpointIcon = ({
   className,
   children,
   ...props
-}: CheckpointIconProps) =>
+}: CheckpointIconProps & { children?: ReactNode }) =>
   children ?? (
-    <BookmarkIcon className={cn("size-4 shrink-0", className)} {...props} />
+    <IconBookmark className={cn("size-4 shrink-0", className)} {...props} />
   );
 
 export type CheckpointTriggerProps = ComponentProps<typeof Button> & {

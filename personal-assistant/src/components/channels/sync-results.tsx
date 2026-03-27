@@ -1,15 +1,15 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { X, CheckCircle2, AlertCircle, Mail, MessageCircle, CalendarDays, Bell } from 'lucide-react'
+import { IconX, IconCircleCheck, IconAlertCircle, IconMail, IconMessage, IconCalendar, IconBell } from '@tabler/icons-react'
 import { cn } from '@/lib/utils'
 
 const channelIcons: Record<string, React.ElementType> = {
-  gmail: Mail,
-  outlook: Mail,
-  imessage: MessageCircle,
-  calendar: CalendarDays,
-  reminders: Bell,
+  gmail: IconMail,
+  outlook: IconMail,
+  imessage: IconMessage,
+  calendar: IconCalendar,
+  reminders: IconBell,
 }
 
 const channelLabels: Record<string, string> = {
@@ -68,16 +68,16 @@ export function SyncResults({ results, onDismiss, autoDismissMs = 10000 }: SyncR
   return (
     <div className={cn(
       'rounded-xl border bg-card p-4 transition-all duration-300',
-      visible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2',
+      visible ? 'translate-y-0 opacity-100' : '-translate-y-2 opacity-0',
       hasErrors ? 'border-destructive/30' : 'border-[#4ADE80]/20'
     )}>
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           {hasErrors ? (
-            <AlertCircle className="h-4 w-4 text-amber-400" />
+            <IconAlertCircle className="h-4 w-4 text-amber-400" />
           ) : (
-            <CheckCircle2 className="h-4 w-4 text-[#4ADE80]" />
+            <IconCircleCheck className="h-4 w-4 text-[#4ADE80]" />
           )}
           <h3 className="text-sm font-semibold text-foreground">
             Sync Complete
@@ -90,7 +90,7 @@ export function SyncResults({ results, onDismiss, autoDismissMs = 10000 }: SyncR
           onClick={handleDismiss}
           className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
         >
-          <X className="h-3.5 w-3.5" />
+          <IconX className="h-3.5 w-3.5" />
         </button>
       </div>
 
@@ -111,9 +111,9 @@ export function SyncResults({ results, onDismiss, autoDismissMs = 10000 }: SyncR
       </div>
 
       {/* Per-channel breakdown */}
-      <div className="mt-3 space-y-1.5">
+      <div className="mt-3 flex flex-col gap-1.5">
         {results.map((r) => {
-          const Icon = channelIcons[r.channel] || Mail
+          const Icon = channelIcons[r.channel] || IconMail
           const label = channelLabels[r.channel] || r.channel
           const hasChannelErrors = r.errors.length > 0
 

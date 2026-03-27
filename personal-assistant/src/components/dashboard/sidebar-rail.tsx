@@ -3,22 +3,22 @@
 import React, { useRef, useEffect } from 'react';
 import Image from 'next/image';
 import {
-  LayoutDashboard,
-  MessageSquare,
-  Briefcase,
-  Brain,
-  Wrench,
-} from 'lucide-react';
+  IconLayoutDashboard,
+  IconMessageCircle,
+  IconBriefcase,
+  IconBrain,
+  IconTool,
+} from '@tabler/icons-react';
 import type { SidebarCategory } from '@/lib/modules/registry';
 import type { BadgeCounts } from '@/hooks/use-badge-counts';
 import { NotificationBadge } from '@/components/ui/notification-badge';
 
 const CATEGORY_ICON_MAP: Record<string, React.ElementType> = {
-  LayoutDashboard,
-  MessageSquare,
-  Briefcase,
-  Brain,
-  Wrench,
+  LayoutDashboard: IconLayoutDashboard,
+  MessageSquare: IconMessageCircle,
+  Briefcase: IconBriefcase,
+  Brain: IconBrain,
+  Wrench: IconTool,
 };
 
 interface SidebarRailProps {
@@ -110,7 +110,7 @@ export function SidebarRail({
               data-category={cat.id}
               style={{ position: 'relative' }}
             >
-              <Icon size={20} strokeWidth={1.8} />
+              <Icon size={20} stroke={1.8} />
               {badge > 0 && (
                 <NotificationBadge
                   count={badge}

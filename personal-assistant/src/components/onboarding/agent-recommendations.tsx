@@ -2,7 +2,6 @@
 
 import React, { useState, useMemo } from 'react'
 import { motion } from 'motion/react'
-import { S, C } from '@/lib/styles/design-tokens'
 
 interface AgentRecommendation {
   id: string
@@ -26,19 +25,19 @@ export interface ChannelAgentMapping {
 
 // Map channels to recommended agents
 export const CHANNEL_AGENT_MAPPING: Record<string, ChannelAgentMapping> = {
-  gmail: { agent: 'email-triage', emoji: '📧', title: 'Email Triage', description: 'Automatically prioritize emails and flag urgent items' },
-  outlook: { agent: 'email-triage', emoji: '📧', title: 'Email Triage', description: 'Automatically prioritize emails and flag urgent items' },
-  stripe: { agent: 'invoice-flow', emoji: '💳', title: 'Invoice Flow', description: 'Automate invoicing and payment reminders' },
-  whatsapp: { agent: 'client-comms', emoji: '💬', title: 'Client Comms', description: 'Manage client conversations across channels' },
-  calendar: { agent: 'schedule-manager', emoji: '📅', title: 'Schedule Manager', description: 'Auto-schedule meetings and send updates' },
+  gmail: { agent: 'email-triage', emoji: '\u{1F4E7}', title: 'Email Triage', description: 'Automatically prioritize emails and flag urgent items' },
+  outlook: { agent: 'email-triage', emoji: '\u{1F4E7}', title: 'Email Triage', description: 'Automatically prioritize emails and flag urgent items' },
+  stripe: { agent: 'invoice-flow', emoji: '\u{1F4B3}', title: 'Invoice Flow', description: 'Automate invoicing and payment reminders' },
+  whatsapp: { agent: 'client-comms', emoji: '\u{1F4AC}', title: 'Client Comms', description: 'Manage client conversations across channels' },
+  calendar: { agent: 'schedule-manager', emoji: '\u{1F4C5}', title: 'Schedule Manager', description: 'Auto-schedule meetings and send updates' },
 }
 
 // Default recommendations for all users
 const DEFAULT_AGENTS: AgentRecommendation[] = [
-  { id: 'lead-swarm', title: 'Lead Swarm', emoji: '🎯', description: 'Automatically identify and prioritize new leads', recommended: true },
-  { id: 'client-comms', title: 'Client Comms', emoji: '💬', description: 'Manage conversations across all your channels', recommended: false },
-  { id: 'invoice-flow', title: 'Invoice Flow', emoji: '💳', description: 'Automate billing and payment management', recommended: false },
-  { id: 'email-triage', title: 'Email Triage', emoji: '📧', description: 'Automatically prioritize and route emails', recommended: false },
+  { id: 'lead-swarm', title: 'Lead Swarm', emoji: '\u{1F3AF}', description: 'Automatically identify and prioritize new leads', recommended: true },
+  { id: 'client-comms', title: 'Client Comms', emoji: '\u{1F4AC}', description: 'Manage conversations across all your channels', recommended: false },
+  { id: 'invoice-flow', title: 'Invoice Flow', emoji: '\u{1F4B3}', description: 'Automate billing and payment management', recommended: false },
+  { id: 'email-triage', title: 'Email Triage', emoji: '\u{1F4E7}', description: 'Automatically prioritize and route emails', recommended: false },
 ]
 
 export function canRecommendAgent(channel: string): ChannelAgentMapping | null {
@@ -94,24 +93,16 @@ export function AgentRecommendations({
   }
 
   return (
-    <div style={{ display: 'grid', gap: 16 }}>
+    <div className="grid gap-4">
       {/* Header */}
-      <div style={{ marginBottom: 8 }}>
-        <h3 style={{
-          margin: 0,
-          fontSize: 14,
-          fontWeight: 500,
-          color: 'var(--text-primary, #F1F5F9)',
-          textTransform: 'uppercase',
-          letterSpacing: '0.05em',
-          opacity: 0.8,
-        }}>
+      <div className="mb-2">
+        <h3 className="text-sm font-medium text-foreground uppercase tracking-wide opacity-80">
           Activate agents
         </h3>
       </div>
 
       {/* Agents Grid */}
-      <div style={{ display: 'grid', gap: 12, gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))' }}>
+      <div className="grid gap-3 grid-cols-[repeat(auto-fit,minmax(240px,1fr))]">
         {agents.map((agent, index) => (
           <motion.div
             key={agent.id}
@@ -119,110 +110,46 @@ export function AgentRecommendations({
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.06 }}
             onClick={() => handleToggle(agent.id)}
-            style={{
-              padding: 16,
-              borderRadius: 16,
-              background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.6))',
-              backdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
-              WebkitBackdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
-              border: agent.selected
-                ? `1px solid ${C.borderFocus}`
-                : `1px solid ${C.borderSubtle}`,
-              boxShadow: agent.selected
-                ? 'inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 0 20px rgba(255, 255, 255, 0.05)'
-                : 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              position: 'relative',
-            }}
-            onMouseEnter={(e) => {
-              const el = e.currentTarget as HTMLDivElement
-              el.style.background = 'var(--bb-surface-hover, rgba(15, 20, 30, 0.75))'
-              el.style.borderColor = agent.selected
-                ? 'rgba(255, 255, 255, 0.25)'
-                : C.bgHoverStrong
-            }}
-            onMouseLeave={(e) => {
-              const el = e.currentTarget as HTMLDivElement
-              el.style.background = C.bgCard
-              el.style.borderColor = agent.selected
-                ? 'rgba(255, 255, 255, 0.15)'
-                : C.bgHover
-            }}
+            className={`relative p-4 rounded-2xl bg-card border cursor-pointer transition-all duration-200 hover:bg-muted/80 ${
+              agent.selected
+                ? 'border-ring shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_0_20px_rgba(255,255,255,0.05)]'
+                : 'border-border shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]'
+            }`}
           >
             {/* Recommended Badge */}
             {agent.recommended && (
-              <div style={{
-                position: 'absolute',
-                top: 12,
-                right: 12,
-                fontSize: 14,
-                fontWeight: 500,
-                textTransform: 'uppercase',
-                letterSpacing: '0.06em',
-                padding: '4px 8px',
-                borderRadius: 8,
-                background: 'rgba(127, 178, 140, 0.15)',
-                color: '#7fb28c',
-              }}>
+              <div className="absolute top-3 right-3 text-sm font-medium uppercase tracking-wider px-2 py-1 rounded-lg bg-emerald-500/15 text-emerald-400">
                 For you
               </div>
             )}
 
             {/* Toggle Switch */}
-            <div style={{
-              position: 'absolute',
-              top: 12,
-              left: 12,
-              width: 24,
-              height: 24,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}>
+            <div className="absolute top-3 left-3 w-6 h-6 flex items-center justify-center">
               <input
                 type="checkbox"
                 checked={agent.selected}
                 onChange={() => handleToggle(agent.id)}
-                style={{
-                  width: 18,
-                  height: 18,
-                  cursor: 'pointer',
-                  accentColor: '#F1F5F9',
-                }}
+                className="w-[18px] h-[18px] cursor-pointer accent-foreground"
                 onClick={(e) => e.stopPropagation()}
               />
             </div>
 
             {/* Content */}
-            <div style={{ marginTop: 32, paddingTop: 12 }}>
+            <div className="mt-8 pt-3">
               {/* Emoji */}
-              <div style={{
-                fontSize: 16,
-                marginBottom: 12,
-                lineHeight: 1,
-              }}>
+              <div className="text-base mb-3 leading-none">
                 {agent.emoji}
               </div>
 
               {/* Title */}
-              <h4 style={{
-                margin: '0 0 8px',
-                fontSize: 14,
-                fontWeight: 500,
-                color: agent.selected ? '#F1F5F9' : 'var(--text-primary, #F1F5F9)',
-                transition: 'color 0.2s',
-              }}>
+              <h4 className={`mb-2 text-sm font-medium transition-colors ${
+                agent.selected ? 'text-foreground' : 'text-foreground'
+              }`}>
                 {agent.title}
               </h4>
 
               {/* Description */}
-              <p style={{
-                margin: 0,
-                fontSize: 14,
-                lineHeight: 1.5,
-                color: 'var(--text-secondary, #94A3B8)',
-              }}>
+              <p className="text-sm leading-relaxed text-muted-foreground">
                 {agent.description}
               </p>
             </div>
@@ -231,12 +158,7 @@ export function AgentRecommendations({
       </div>
 
       {/* Info Text */}
-      <p style={{
-        margin: '8px 0 0',
-        fontSize: 14,
-        color: 'var(--text-dim, #475569)',
-        lineHeight: 1.5,
-      }}>
+      <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
         You can enable, disable, or customize agents anytime from Settings. We recommend starting with the highlighted agents for your setup.
       </p>
     </div>

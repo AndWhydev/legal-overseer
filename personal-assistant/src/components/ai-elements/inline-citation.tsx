@@ -13,7 +13,7 @@ import {
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
 import { cn } from "@/lib/utils";
-import { ArrowLeftIcon, ArrowRightIcon } from "lucide-react";
+import { IconArrowLeft, IconArrowRight } from "@tabler/icons-react";
 import type { ComponentProps } from "react";
 import {
   createContext,
@@ -127,7 +127,7 @@ export const InlineCitationCarouselItem = ({
   ...props
 }: InlineCitationCarouselItemProps) => (
   <CarouselItem
-    className={cn("w-full space-y-2 p-4 pl-8", className)}
+    className={cn("flex w-full flex-col gap-2 p-4 pl-8", className)}
     {...props}
   />
 );
@@ -215,7 +215,7 @@ export const InlineCitationCarouselPrev = ({
       type="button"
       {...props}
     >
-      <ArrowLeftIcon className="size-4 text-muted-foreground" />
+      <IconArrowLeft className="size-4 text-muted-foreground" />
     </button>
   );
 };
@@ -242,7 +242,7 @@ export const InlineCitationCarouselNext = ({
       type="button"
       {...props}
     >
-      <ArrowRightIcon className="size-4 text-muted-foreground" />
+      <IconArrowRight className="size-4 text-muted-foreground" />
     </button>
   );
 };
@@ -261,7 +261,7 @@ export const InlineCitationSource = ({
   children,
   ...props
 }: InlineCitationSourceProps) => (
-  <div className={cn("space-y-1", className)} {...props}>
+  <div className={cn("flex flex-col gap-1", className)} {...props}>
     {title && (
       <h4 className="truncate font-medium text-sm leading-tight">{title}</h4>
     )}

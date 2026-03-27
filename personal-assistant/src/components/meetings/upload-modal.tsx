@@ -1,9 +1,14 @@
 'use client'
 
 import React, { useState, useRef } from 'react'
-import { GlassDropdown } from '@/components/ui/glass-dropdown'
-import type { MeetingType, ParticipantRole } from '@/lib/meetings/types'
-import { S, C } from '@/lib/styles/design-tokens'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import type { MeetingType } from '@/lib/meetings/types'
 
 const MEETING_TYPES: Array<{ value: MeetingType; label: string }> = [
   { value: 'client_call', label: 'Client Call' },
@@ -108,7 +113,7 @@ export function UploadModal({ open, onClose, onUploadComplete }: UploadModalProp
         setUploadProgress('Complete!')
         onUploadComplete(data.meeting_id)
       } else {
-        // Upload succeeded but processing failed — still navigate
+        // Upload succeeded but processing failed -- still navigate
         onUploadComplete(data.meeting_id)
       }
     } catch (err) {
@@ -124,71 +129,20 @@ export function UploadModal({ open, onClose, onUploadComplete }: UploadModalProp
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
   }
 
-  const inputStyle: React.CSSProperties = {
-    width: '100%',
-    padding: '12px 16px',
-    borderRadius: 12,
-    background: 'var(--bg-input, rgba(13, 17, 23, 0.6))',
-    border: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
-    color: 'var(--text-primary, #F1F5F9)',
-    fontSize: 14,
-    outline: 'none',
-    transition: 'border-color 200ms',
-  }
-
-  const labelStyle: React.CSSProperties = {
-    fontSize: 14,
-    fontWeight: 500,
-    color: 'var(--text-secondary, #94A3B8)',
-    marginBottom: 8,
-    display: 'block',
-  }
-
   return (
     <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 1000,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: C.bgOverlay,
-        backdropFilter: 'blur(8px)',
-      }}
+      className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/60 backdrop-blur-sm"
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
     >
-      <div style={{
-        width: '100%',
-        maxWidth: 520,
-        maxHeight: '90vh',
-        overflow: 'auto',
-        padding: '24px',
-        borderRadius: 20,
-        background: 'var(--glass-bg-heavy, rgba(12, 16, 24, 0.85))',
-        border: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
-        boxShadow: '0 24px 48px rgba(0, 0, 0, 0.4)',
-      }}>
+      <div className="max-h-[90vh] w-full max-w-[520px] overflow-auto rounded-2xl border border-border bg-card p-6 shadow-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between mb-5">
-          <h2 style={{ fontSize: 16, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)', margin: 0 }}>
+        <div className="mb-5 flex items-center justify-between">
+          <h2 className="text-base font-medium text-foreground">
             Upload Meeting Recording
           </h2>
           <button
             onClick={onClose}
-            style={{
-              width: 28,
-              height: 28,
-              borderRadius: 8,
-              background: 'transparent',
-              border: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
-              color: 'var(--text-dim, #475569)',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: 16,
-            }}
+            className="flex h-7 w-7 items-center justify-center rounded-lg border border-border bg-transparent text-muted-foreground hover:text-foreground"
           >
             &times;
           </button>
@@ -200,22 +154,17 @@ export function UploadModal({ open, onClose, onUploadComplete }: UploadModalProp
           onDragLeave={() => setDragOver(false)}
           onDrop={handleDrop}
           onClick={() => fileInputRef.current?.click()}
-          style={{
-            padding: file ? '16px' : '40px 20px',
-            borderRadius: 12,
-            border: `2px dashed ${dragOver ? '#F1F5F9' : C.bgHoverStrong}`,
-            background: dragOver ? 'var(--hover-bg)' : C.bgInput,
-            textAlign: 'center',
-            cursor: 'pointer',
-            transition: 'all 200ms',
-            marginBottom: 16,
-          }}
+          className={`mb-4 cursor-pointer rounded-xl border-2 border-dashed transition-colors ${
+            dragOver
+              ? 'border-foreground bg-secondary/50'
+              : 'border-border bg-background'
+          } ${file ? 'p-4' : 'px-5 py-10'}`}
         >
           <input
             ref={fileInputRef}
             type="file"
             accept="audio/*,video/*"
-            style={{ display: 'none' }}
+            className="hidden"
             onChange={(e) => {
               const f = e.target.files?.[0]
               if (f) handleFileSelect(f)
@@ -223,110 +172,91 @@ export function UploadModal({ open, onClose, onUploadComplete }: UploadModalProp
           />
           {file ? (
             <div className="flex items-center gap-3">
-              <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="#F1F5F9" strokeWidth={1.5}>
+              <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} className="text-foreground">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z" />
               </svg>
-              <div style={{ flex: 1, textAlign: 'left' }}>
-                <div style={{ fontSize: 14, color: 'var(--text-primary, #F1F5F9)', fontWeight: 500 }}>
+              <div className="flex-1 text-left">
+                <div className="text-sm font-medium text-foreground">
                   {file.name}
                 </div>
-                <div style={{ fontSize: 14, color: 'var(--text-dim, #475569)' }}>
+                <div className="text-sm text-muted-foreground">
                   {formatFileSize(file.size)} &middot; {file.type || 'audio'}
                 </div>
               </div>
               <button
                 onClick={(e) => { e.stopPropagation(); setFile(null) }}
-                style={{
-                  padding: '4px 8px',
-                  borderRadius: 8,
-                  background: 'transparent',
-                  border: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
-                  color: 'var(--text-dim, #475569)',
-                  fontSize: 14,
-                  cursor: 'pointer',
-                }}
+                className="rounded-lg border border-border bg-transparent px-2 py-1 text-sm text-muted-foreground hover:text-foreground"
               >
                 Remove
               </button>
             </div>
           ) : (
-            <>
-              <svg width="32" height="32" fill="none" viewBox="0 0 24 24" stroke="var(--text-dim, #475569)" strokeWidth={1.5} style={{ margin: '0 auto 12px' }}>
+            <div className="text-center">
+              <svg width="32" height="32" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} className="mx-auto mb-3 text-muted-foreground">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
               </svg>
-              <p style={{ fontSize: 14, color: 'var(--text-secondary, #94A3B8)', margin: '0 0 4px' }}>
+              <p className="mb-1 text-sm text-muted-foreground">
                 Drop audio or video file here
               </p>
-              <p style={{ fontSize: 14, color: 'var(--text-dim, #475569)', margin: 0 }}>
+              <p className="text-sm text-muted-foreground/70">
                 MP3, WAV, M4A, OGG, MP4, WebM (up to 500MB)
               </p>
-            </>
+            </div>
           )}
         </div>
 
         {/* Form fields */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div className="flex flex-col gap-4">
           <div>
-            <label style={labelStyle}>Meeting Title *</label>
+            <label className="mb-2 block text-sm font-medium text-muted-foreground">Meeting Title *</label>
             <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g., Client Review — AWU Homepage"
-              style={inputStyle}
+              placeholder="e.g., Client Review -- AWU Homepage"
+              className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-ring"
             />
           </div>
 
           <div>
-            <label style={labelStyle}>Meeting Type</label>
-            <GlassDropdown
-              options={MEETING_TYPES.map(t => ({ value: t.value, label: t.label }))}
-              value={meetingType}
-              onChange={v => setMeetingType(v as MeetingType)}
-            />
+            <label className="mb-2 block text-sm font-medium text-muted-foreground">Meeting Type</label>
+            <Select value={meetingType} onValueChange={v => setMeetingType(v as MeetingType)}>
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {MEETING_TYPES.map(t => (
+                  <SelectItem key={t.value} value={t.value}>
+                    {t.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div>
-            <label style={labelStyle}>Description (optional)</label>
+            <label className="mb-2 block text-sm font-medium text-muted-foreground">Description (optional)</label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Brief context about the meeting..."
-              style={{ ...inputStyle, minHeight: 60, resize: 'vertical' }}
+              className="min-h-[60px] w-full resize-y rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-ring"
             />
           </div>
 
           {/* Participants */}
           <div>
-            <label style={labelStyle}>Participants (optional)</label>
+            <label className="mb-2 block text-sm font-medium text-muted-foreground">Participants (optional)</label>
             {participants.length > 0 && (
-              <div className="flex flex-wrap gap-2 mb-2">
+              <div className="mb-2 flex flex-wrap gap-2">
                 {participants.map((p, i) => (
                   <span
                     key={i}
-                    style={{
-                      padding: '4px 12px',
-                      borderRadius: 16,
-                      background: 'var(--bb-surface, rgba(10, 14, 23, 0.5))',
-                      border: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
-                      fontSize: 14,
-                      color: 'var(--text-secondary, #94A3B8)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 8,
-                    }}
+                    className="flex items-center gap-2 rounded-full border border-border bg-secondary/50 px-3 py-1 text-sm text-muted-foreground"
                   >
                     {p.name}
                     <button
                       onClick={() => handleRemoveParticipant(i)}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        color: 'var(--text-dim, #475569)',
-                        cursor: 'pointer',
-                        padding: 0,
-                        fontSize: 14,
-                        lineHeight: 1,
-                      }}
+                      className="text-sm leading-none text-muted-foreground hover:text-foreground"
                     >
                       &times;
                     </button>
@@ -339,27 +269,19 @@ export function UploadModal({ open, onClose, onUploadComplete }: UploadModalProp
                 value={newParticipant.name}
                 onChange={(e) => setNewParticipant(p => ({ ...p, name: e.target.value }))}
                 placeholder="Name"
-                style={{ ...inputStyle, flex: 1 }}
+                className="flex-1 rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-ring"
                 onKeyDown={(e) => { if (e.key === 'Enter') handleAddParticipant() }}
               />
               <input
                 value={newParticipant.email}
                 onChange={(e) => setNewParticipant(p => ({ ...p, email: e.target.value }))}
                 placeholder="Email (optional)"
-                style={{ ...inputStyle, flex: 1 }}
+                className="flex-1 rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-ring"
                 onKeyDown={(e) => { if (e.key === 'Enter') handleAddParticipant() }}
               />
               <button
                 onClick={handleAddParticipant}
-                style={{
-                  padding: '0 12px',
-                  borderRadius: 12,
-                  background: 'transparent',
-                  border: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
-                  color: 'var(--text-secondary, #94A3B8)',
-                  fontSize: 16,
-                  cursor: 'pointer',
-                }}
+                className="rounded-xl border border-border bg-transparent px-3 text-base text-muted-foreground hover:text-foreground"
               >
                 +
               </button>
@@ -369,78 +291,32 @@ export function UploadModal({ open, onClose, onUploadComplete }: UploadModalProp
 
         {/* Error */}
         {error && (
-          <div style={{
-            marginTop: 12,
-            padding: '12px 16px',
-            borderRadius: 12,
-            background: C.statusErrorBg,
-            border: `1px solid ${C.statusError}`,
-            fontSize: 14,
-            color: '#ef4444',
-          }}>
+          <div className="mt-3 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
             {error}
           </div>
         )}
 
         {/* Progress */}
         {uploading && uploadProgress && (
-          <div style={{
-            marginTop: 12,
-            padding: '12px 16px',
-            borderRadius: 12,
-            background: 'rgba(59, 130, 246, 0.1)',
-            border: `1px solid rgba(59, 130, 246, 0.2)`,
-            fontSize: 14,
-            color: '#3b82f6',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-          }}>
-            <div style={{
-              width: 14,
-              height: 14,
-              border: '2px solid rgba(59, 130, 246, 0.3)',
-              borderTopColor: '#3b82f6',
-              borderRadius: '50%',
-              animation: 'spin 1s linear infinite',
-            }} />
+          <div className="mt-3 flex items-center gap-2 rounded-xl border border-blue-500/20 bg-blue-500/10 px-4 py-3 text-sm text-blue-500">
+            <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-blue-500/30 border-t-blue-500" />
             {uploadProgress}
           </div>
         )}
 
         {/* Actions */}
-        <div className="flex gap-3 mt-5 justify-end">
+        <div className="mt-5 flex justify-end gap-3">
           <button
             onClick={onClose}
             disabled={uploading}
-            style={{
-              padding: '12px 20px',
-              borderRadius: 12,
-              background: 'transparent',
-              border: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
-              color: 'var(--text-secondary, #94A3B8)',
-              fontSize: 14,
-              fontWeight: 500,
-              cursor: uploading ? 'not-allowed' : 'pointer',
-              transition: 'all 200ms',
-            }}
+            className="rounded-xl border border-border bg-transparent px-5 py-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary disabled:cursor-not-allowed"
           >
             Cancel
           </button>
           <button
             onClick={handleUpload}
             disabled={uploading || !file || !title.trim()}
-            style={{
-              padding: '12px 20px',
-              borderRadius: 12,
-              background: (!file || !title.trim() || uploading) ? C.bgHoverStrong : 'var(--btn-primary-bg, #F1F5F9)',
-              border: 'none',
-              color: (!file || !title.trim() || uploading) ? 'var(--text-dim, rgba(0, 0, 0, 0.5))' : 'var(--btn-primary-fg, #0a0f1a)',
-              fontSize: 14,
-              fontWeight: 500,
-              cursor: (!file || !title.trim() || uploading) ? 'not-allowed' : 'pointer',
-              transition: 'all 200ms',
-            }}
+            className="rounded-xl bg-primary px-5 py-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {uploading ? 'Processing...' : 'Upload & Process'}
           </button>

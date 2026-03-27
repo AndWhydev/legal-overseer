@@ -1,86 +1,7 @@
 'use client';
 
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { BUILTIN_TEMPLATES } from '@/lib/swarm/templates';
-import { S, C } from '@/lib/styles/design-tokens';
-
-// ── Styles ──────────────────────────────────────────────────────────────────
-
-const styles = {
-  container: {
-    position: 'relative' as const,
-  },
-  inputWrapper: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12px',
-    background: C.bgCard,
-    backdropFilter: 'blur(20px)',
-    borderRadius: '12px',
-    padding: '12px 16px',
-    border: `1px solid ${C.borderSubtle}`,
-    transition: 'border-color 0.15s ease',
-  },
-  inputWrapperFocused: {
-    borderColor: C.borderFocus,
-  },
-  input: {
-    flex: 1,
-    background: 'transparent',
-    border: 'none',
-    outline: 'none',
-    color: C.textPrimary,
-    fontSize: '14px',
-    fontFamily: 'inherit',
-    letterSpacing: '-0.01em',
-  },
-  triggerButton: {
-    padding: '8px 16px',
-    borderRadius: '8px',
-    fontSize: '14px',
-    fontWeight: 500,
-    cursor: 'pointer',
-    border: 'none',
-    background: 'var(--btn-primary-bg, #F1F5F9)',
-    color: 'var(--btn-primary-fg, #0a0f1a)',
-    transition: 'all 0.15s ease',
-    whiteSpace: 'nowrap' as const,
-  },
-  triggerButtonDisabled: {
-    opacity: 0.4,
-    cursor: 'not-allowed',
-  },
-  templatesRow: {
-    display: 'flex',
-    gap: '6px',
-    marginTop: '8px',
-    flexWrap: 'wrap' as const,
-  },
-  templateChip: {
-    padding: '4px 12px',
-    borderRadius: '8px',
-    fontSize: '14px',
-    fontWeight: 500,
-    cursor: 'pointer',
-    border: `1px solid ${C.borderSubtle}`,
-    background: C.bgHover,
-    color: C.textSecondary,
-    transition: 'all 0.15s ease',
-  },
-  templateChipHover: {
-    background: C.bgHoverStrong,
-    color: C.textPrimary,
-    borderColor: C.borderHover,
-  },
-  label: {
-    fontSize: '14px',
-    color: C.textMuted,
-    marginBottom: '8px',
-    fontWeight: 500,
-    textTransform: 'uppercase' as const,
-    letterSpacing: '0.05em',
-  },
-};
 
 // ── Component ───────────────────────────────────────────────────────────────
 
@@ -107,7 +28,6 @@ export function SwarmTriggerInput({ onTrigger }: SwarmTriggerInputProps) {
   }, [value, submitting, onTrigger]);
 
   const handleTemplateClick = useCallback((slug: string, name: string) => {
-    // Pre-fill the input with a natural language trigger
     const prompts: Record<string, string> = {
       'pitch-prep': 'Prepare pitch for ',
       'client-onboarding': 'Onboard ',
@@ -126,17 +46,16 @@ export function SwarmTriggerInput({ onTrigger }: SwarmTriggerInputProps) {
   }, [handleSubmit]);
 
   return (
-    <div style={styles.container}>
-      <div style={styles.label}>Command your team</div>
+    <div className="relative">
+      <div className="text-xs text-muted-foreground mb-2 font-medium uppercase tracking-widest">Command your team</div>
       <div
-        style={{
-          ...styles.inputWrapper,
-          ...(focused ? styles.inputWrapperFocused : {}),
-        }}
+        className={`flex items-center gap-3 rounded-xl bg-card backdrop-blur-lg px-4 py-3 border transition-colors ${
+          focused ? 'border-ring' : 'border-border'
+        }`}
       >
         <input
           ref={inputRef}
-          style={styles.input}
+          className="flex-1 bg-transparent border-none outline-none text-foreground text-sm tracking-tight"
           placeholder='Try "Prepare pitch for Thomson" or "Run end of month"'
           value={value}
           onChange={e => setValue(e.target.value)}
@@ -146,10 +65,11 @@ export function SwarmTriggerInput({ onTrigger }: SwarmTriggerInputProps) {
           disabled={submitting}
         />
         <button
-          style={{
-            ...styles.triggerButton,
-            ...((!value.trim() || submitting) ? styles.triggerButtonDisabled : {}),
-          }}
+          className={`px-4 py-2 rounded-lg text-sm font-medium border-none whitespace-nowrap transition-all ${
+            !value.trim() || submitting
+              ? 'bg-primary/40 text-primary-foreground cursor-not-allowed opacity-40'
+              : 'bg-primary text-primary-foreground cursor-pointer hover:opacity-90'
+          }`}
           onClick={handleSubmit}
           disabled={!value.trim() || submitting}
         >
@@ -158,14 +78,15 @@ export function SwarmTriggerInput({ onTrigger }: SwarmTriggerInputProps) {
       </div>
 
       {/* Quick template buttons */}
-      <div style={styles.templatesRow}>
+      <div className="flex gap-1.5 mt-2 flex-wrap">
         {BUILTIN_TEMPLATES.map(template => (
           <button
             key={template.slug}
-            style={{
-              ...styles.templateChip,
-              ...(hoveredTemplate === template.slug ? styles.templateChipHover : {}),
-            }}
+            className={`px-3 py-1 rounded-lg text-xs font-medium border cursor-pointer transition-all ${
+              hoveredTemplate === template.slug
+                ? 'bg-muted text-foreground border-border'
+                : 'bg-muted/50 text-muted-foreground border-border/50 hover:bg-muted hover:text-foreground'
+            }`}
             onClick={() => handleTemplateClick(template.slug, template.name)}
             onMouseEnter={() => setHoveredTemplate(template.slug)}
             onMouseLeave={() => setHoveredTemplate(null)}

@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useCallback } from 'react'
 import type { DecisionLogEntry } from '@/lib/memory-palace/types'
-import { S, C } from '@/lib/styles/design-tokens'
 
 interface DecisionLogViewerProps {
   orgId: string
@@ -13,7 +12,7 @@ const IMPACT_COLORS: Record<string, string> = {
   critical: '#EF4444',
   high: '#F59E0B',
   medium: '#3B82F6',
-  low: C.textDim,
+  low: 'var(--text-dim, #475569)',
 }
 
 const DOMAIN_ICONS: Record<string, string> = {
@@ -54,7 +53,7 @@ export function DecisionLogViewer({ orgId, entityId }: DecisionLogViewerProps) {
 
   if (loading) {
     return (
-      <div style={{ textAlign: 'center', padding: '40px', color: C.textDim }}>
+      <div className="p-10 text-center text-muted-foreground">
         Loading decisions...
       </div>
     )
@@ -62,13 +61,9 @@ export function DecisionLogViewer({ orgId, entityId }: DecisionLogViewerProps) {
 
   if (decisions.length === 0) {
     return (
-      <div style={{
-        textAlign: 'center',
-        padding: '60px 20px',
-        color: C.textMuted,
-      }}>
-        <div style={{ fontSize: '16px', marginBottom: '8px' }}>No decisions recorded</div>
-        <div style={{ fontSize: '14px' }}>
+      <div className="px-5 py-16 text-center text-muted-foreground">
+        <div className="mb-2 text-base">No decisions recorded</div>
+        <div className="text-sm">
           Decision reasoning chains are captured automatically when BitBit makes or recommends significant choices.
         </div>
       </div>
@@ -76,7 +71,7 @@ export function DecisionLogViewer({ orgId, entityId }: DecisionLogViewerProps) {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+    <div className="flex flex-col gap-1.5">
       {decisions.map(decision => {
         const isExpanded = expandedId === decision.id
         const impactColor = IMPACT_COLORS[decision.impact] ?? 'rgba(255, 255, 255, 0.4)'
@@ -91,112 +86,57 @@ export function DecisionLogViewer({ orgId, entityId }: DecisionLogViewerProps) {
           <div
             key={decision.id}
             onClick={() => setExpandedId(isExpanded ? null : decision.id)}
-            style={{
-              background: 'var(--bg-card, rgba(15, 20, 30, 0.35))',
-              backdropFilter: 'blur(12px)',
-              borderRadius: '12px',
-              padding: '14px 16px',
-              cursor: 'pointer',
-              transition: 'background 0.15s ease',
-              borderLeft: `3px solid ${impactColor}`,
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'var(--bb-surface-hover, rgba(20, 28, 40, 0.5))'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = C.bgCardLight
-            }}
+            className="cursor-pointer rounded-xl bg-card p-3.5 backdrop-blur-[12px] transition-colors hover:bg-secondary/50"
+            style={{ borderLeft: `3px solid ${impactColor}` }}
           >
             {/* Header */}
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              marginBottom: '6px',
-            }}>
+            <div className="mb-1.5 flex items-center gap-3">
               {/* Domain Icon */}
-              <span style={{
-                width: '22px',
-                height: '22px',
-                borderRadius: '8px',
-                background: `${impactColor}15`,
-                color: impactColor,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '14px',
-                fontWeight: 500,
-              }}>
+              <span
+                className="flex h-[22px] w-[22px] items-center justify-center rounded-lg text-sm font-medium"
+                style={{ background: `${impactColor}15`, color: impactColor }}
+              >
                 {domainIcon}
               </span>
 
               {/* Impact */}
-              <span style={{
-                fontSize: '14px',
-                fontWeight: 500,
-                color: impactColor,
-                textTransform: 'uppercase',
-                letterSpacing: '0.5px',
-              }}>
+              <span
+                className="text-sm font-medium uppercase tracking-wide"
+                style={{ color: impactColor }}
+              >
                 {decision.impact}
               </span>
 
-              <span style={{ flex: 1 }} />
+              <span className="flex-1" />
 
-              <span style={{ fontSize: '14px', color: C.textMuted }}>
+              <span className="text-sm text-muted-foreground">
                 {dateStr}
               </span>
             </div>
 
             {/* Title */}
-            <div style={{
-              fontSize: '14px',
-              fontWeight: 500,
-              color: C.textPrimary,
-              marginBottom: '4px',
-            }}>
+            <div className="mb-1 text-sm font-medium text-foreground">
               {decision.title}
             </div>
 
             {/* Decision summary */}
-            <div style={{
-              fontSize: '14px',
-              color: C.textSecondary,
-              lineHeight: '1.5',
-              overflow: isExpanded ? 'visible' : 'hidden',
-              textOverflow: isExpanded ? 'unset' : 'ellipsis',
-              display: isExpanded ? 'block' : '-webkit-box',
-              WebkitLineClamp: isExpanded ? undefined : 2,
-              WebkitBoxOrient: isExpanded ? undefined : 'vertical' as const,
-            }}>
+            <div
+              className={`text-sm leading-normal text-muted-foreground ${
+                isExpanded ? '' : 'line-clamp-2'
+              }`}
+            >
               {decision.decision}
             </div>
 
             {/* Expanded: Reasoning Chain */}
             {isExpanded && (
-              <div style={{
-                marginTop: '12px',
-                paddingTop: '12px',
-                borderTop: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '12px',
-              }}>
+              <div className="mt-3 flex flex-col gap-3 border-t border-border pt-3">
                 {/* Reasoning */}
                 <div>
-                  <div style={{
-                    fontSize: '14px',
-                    color: C.textDim,
-                    marginBottom: '4px',
-                    fontWeight: 500,
-                  }}>
+                  <div className="mb-1 text-sm font-medium text-muted-foreground">
                     REASONING
                   </div>
-                  <div style={{
-                    fontSize: '14px',
-                    color: C.textSecondary,
-                    lineHeight: '1.5',
-                  }}>
+                  <div className="text-sm leading-normal text-muted-foreground">
                     {decision.reasoning}
                   </div>
                 </div>
@@ -204,22 +144,12 @@ export function DecisionLogViewer({ orgId, entityId }: DecisionLogViewerProps) {
                 {/* Alternatives */}
                 {decision.alternatives && (decision.alternatives as { option: string; pros: string[]; cons: string[] }[]).length > 0 && (
                   <div>
-                    <div style={{
-                      fontSize: '14px',
-                      color: C.textDim,
-                      marginBottom: '4px',
-                      fontWeight: 500,
-                    }}>
+                    <div className="mb-1 text-sm font-medium text-muted-foreground">
                       ALTERNATIVES CONSIDERED
                     </div>
                     {(decision.alternatives as { option: string; pros: string[]; cons: string[] }[]).map((alt, i) => (
-                      <div key={i} style={{
-                        padding: '8px 12px',
-                        background: 'var(--hover-bg)',
-                        borderRadius: '8px',
-                        marginBottom: '4px',
-                      }}>
-                        <div style={{ fontSize: '14px', color: C.textSecondary }}>
+                      <div key={i} className="mb-1 rounded-lg bg-secondary/50 px-3 py-2">
+                        <div className="text-sm text-muted-foreground">
                           {alt.option}
                         </div>
                       </div>
@@ -230,19 +160,10 @@ export function DecisionLogViewer({ orgId, entityId }: DecisionLogViewerProps) {
                 {/* Outcome */}
                 {decision.outcome && (
                   <div>
-                    <div style={{
-                      fontSize: '14px',
-                      color: C.textDim,
-                      marginBottom: '4px',
-                      fontWeight: 500,
-                    }}>
+                    <div className="mb-1 text-sm font-medium text-muted-foreground">
                       OUTCOME
                     </div>
-                    <div style={{
-                      fontSize: '14px',
-                      color: '#22C55E',
-                      lineHeight: '1.5',
-                    }}>
+                    <div className="text-sm leading-normal text-green-500">
                       {decision.outcome}
                     </div>
                   </div>
@@ -251,19 +172,10 @@ export function DecisionLogViewer({ orgId, entityId }: DecisionLogViewerProps) {
                 {/* Lessons */}
                 {decision.lessons_learned && (
                   <div>
-                    <div style={{
-                      fontSize: '14px',
-                      color: C.textDim,
-                      marginBottom: '4px',
-                      fontWeight: 500,
-                    }}>
+                    <div className="mb-1 text-sm font-medium text-muted-foreground">
                       LESSONS LEARNED
                     </div>
-                    <div style={{
-                      fontSize: '14px',
-                      color: '#F59E0B',
-                      lineHeight: '1.5',
-                    }}>
+                    <div className="text-sm leading-normal text-amber-500">
                       {decision.lessons_learned}
                     </div>
                   </div>
@@ -271,15 +183,9 @@ export function DecisionLogViewer({ orgId, entityId }: DecisionLogViewerProps) {
 
                 {/* Entity names */}
                 {decision.entity_names && decision.entity_names.length > 0 && (
-                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  <div className="flex flex-wrap gap-2">
                     {decision.entity_names.map((name, i) => (
-                      <span key={i} style={{
-                        padding: '1px 8px',
-                        borderRadius: '8px',
-                        background: 'rgba(59, 130, 246, 0.1)',
-                        color: '#3B82F6',
-                        fontSize: '14px',
-                      }}>
+                      <span key={i} className="rounded-lg bg-blue-500/10 px-2 py-px text-sm text-blue-500">
                         {name}
                       </span>
                     ))}
@@ -288,7 +194,7 @@ export function DecisionLogViewer({ orgId, entityId }: DecisionLogViewerProps) {
 
                 {/* Decided by */}
                 {decision.decided_by && (
-                  <div style={{ fontSize: '14px', color: C.textMuted }}>
+                  <div className="text-sm text-muted-foreground">
                     Decided by: {decision.decided_by}
                   </div>
                 )}

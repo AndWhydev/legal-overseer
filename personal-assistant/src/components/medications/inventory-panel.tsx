@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { Package, ChevronDown, ChevronRight, ArrowUpDown } from 'lucide-react'
+import { IconPackage, IconChevronDown, IconChevronRight, IconArrowsSort } from '@tabler/icons-react'
 import { cn } from '@/lib/utils'
 import { StockIndicator } from './stock-indicator'
 import { getInventoryStatus, type InventoryStatus } from '@/lib/medications/inventory'
@@ -40,11 +40,11 @@ function CollapsibleSection({ title, count, children, defaultOpen = true }: Coll
         onClick={() => setOpen(!open)}
         className="flex items-center gap-1.5 w-full px-1 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
       >
-        {open ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+        {open ? <IconChevronDown className="h-3 w-3" /> : <IconChevronRight className="h-3 w-3" />}
         {title}
         <span className="text-text-muted ml-auto">{count}</span>
       </button>
-      {open && <div className="space-y-1">{children}</div>}
+      {open && <div className="flex flex-col gap-1">{children}</div>}
     </div>
   )
 }
@@ -131,7 +131,7 @@ export function InventoryPanel({ className }: { className?: string }) {
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <Package className="h-4 w-4 text-primary" />
+          <IconPackage className="h-4 w-4 text-primary" />
           <h3 className="text-sm font-semibold text-foreground">Inventory</h3>
           {urgentCount > 0 && (
             <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-destructive/15 text-destructive font-medium">
@@ -154,13 +154,13 @@ export function InventoryPanel({ className }: { className?: string }) {
           }}
           className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors"
         >
-          <ArrowUpDown className="h-3 w-3" />
+          <IconArrowsSort className="h-3 w-3" />
           {sortMode}
         </button>
       </div>
 
       {/* Item list */}
-      <div className="space-y-0.5 max-h-[400px] overflow-y-auto">
+      <div className="flex flex-col gap-0.5 max-h-[400px] overflow-y-auto">
         {grouped
           ? Object.entries(grouped)
               .sort(([a], [b]) => categoryOrder[a] - categoryOrder[b])

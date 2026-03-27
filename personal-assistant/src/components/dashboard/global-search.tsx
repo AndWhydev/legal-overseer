@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Search, X, User, FileText, DollarSign, Briefcase, Building2 } from 'lucide-react';
+import { IconSearch, IconX, IconUser, IconFileText, IconCurrencyDollar, IconBriefcase, IconBuilding } from '@tabler/icons-react';
 
 interface SearchResult {
   type: string;
@@ -16,11 +16,11 @@ interface GlobalSearchProps {
 }
 
 const TYPE_META: Record<string, { label: string; icon: React.ReactNode; tab: string }> = {
-  contact:  { label: 'Contacts',  icon: <User size={14} />,       tab: 'contacts' },
-  lead:     { label: 'Leads',     icon: <Briefcase size={14} />,   tab: 'leads' },
-  invoice:  { label: 'Invoices',  icon: <DollarSign size={14} />,  tab: 'invoices' },
-  proposal: { label: 'Proposals', icon: <FileText size={14} />,    tab: 'approvals' },
-  tender:   { label: 'Tenders',   icon: <Building2 size={14} />,   tab: 'tenders' },
+  contact:  { label: 'Contacts',  icon: <IconUser size={14} />,          tab: 'contacts' },
+  lead:     { label: 'Leads',     icon: <IconBriefcase size={14} />,     tab: 'leads' },
+  invoice:  { label: 'Invoices',  icon: <IconCurrencyDollar size={14} />,tab: 'invoices' },
+  proposal: { label: 'Proposals', icon: <IconFileText size={14} />,      tab: 'approvals' },
+  tender:   { label: 'Tenders',   icon: <IconBuilding size={14} />,      tab: 'tenders' },
 };
 
 const RECENT_KEY = 'bitbit-recent-searches';
@@ -147,7 +147,7 @@ export function GlobalSearch({ onNavigate }: GlobalSearchProps) {
       >
         {/* Search input */}
         <div className="bb-search-input-row">
-          <Search size={18} />
+          <IconSearch size={18} />
           <input
             ref={inputRef}
             type="text"
@@ -159,7 +159,7 @@ export function GlobalSearch({ onNavigate }: GlobalSearchProps) {
           />
           {query && (
             <button onClick={() => setQuery('')} className="bb-search-clear">
-              <X size={16} />
+              <IconX size={16} />
             </button>
           )}
           <button

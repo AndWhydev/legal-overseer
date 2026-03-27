@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import { GlassDropdown } from '@/components/ui/glass-dropdown'
+import { Badge } from '@/components/ui/badge'
 import type { PortalRequest } from '@/lib/portal/types'
 
 interface PortalRequestsViewProps {
@@ -19,18 +20,26 @@ const REQUEST_TYPES = [
 ]
 
 const PRIORITY_OPTIONS = [
-  { value: 'low', label: 'Low', color: '#6B7280' },
-  { value: 'medium', label: 'Medium', color: '#D97706' },
-  { value: 'high', label: 'High', color: '#DC2626' },
-  { value: 'urgent', label: 'Urgent', color: '#7C3AED' },
+  { value: 'low', label: 'Low', color: 'text-gray-500' },
+  { value: 'medium', label: 'Medium', color: 'text-amber-600' },
+  { value: 'high', label: 'High', color: 'text-red-600' },
+  { value: 'urgent', label: 'Urgent', color: 'text-violet-600' },
 ]
 
-const STATUS_CONFIG: Record<string, { bg: string; text: string; label: string }> = {
-  submitted: { bg: '#EFF6FF', text: '#2563EB', label: 'Submitted' },
-  reviewed: { bg: '#FEF3C7', text: '#D97706', label: 'Reviewed' },
-  in_progress: { bg: '#F0FDF4', text: '#16A34A', label: 'In Progress' },
-  completed: { bg: '#ECFDF5', text: '#059669', label: 'Completed' },
-  closed: { bg: '#F3F4F6', text: '#6B7280', label: 'Closed' },
+const STATUS_VARIANT: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
+  submitted: 'default',
+  reviewed: 'secondary',
+  in_progress: 'default',
+  completed: 'default',
+  closed: 'outline',
+}
+
+const STATUS_LABEL: Record<string, string> = {
+  submitted: 'Submitted',
+  reviewed: 'Reviewed',
+  in_progress: 'In Progress',
+  completed: 'Completed',
+  closed: 'Closed',
 }
 
 export function PortalRequestsView({ initialRequests, primaryColor }: PortalRequestsViewProps) {
@@ -71,22 +80,16 @@ export function PortalRequestsView({ initialRequests, primaryColor }: PortalRequ
 
   return (
     <div>
-      <div className="flex items-center justify-between" style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: 16, fontWeight: 500, color: '#111827', margin: 0, letterSpacing: '-0.02em' }}>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-base font-medium text-gray-900 tracking-tight">
           Requests
         </h1>
         <button
           onClick={() => setShowForm(!showForm)}
+          className="px-5 py-3 rounded-lg text-sm font-medium border-none transition-all"
           style={{
-            padding: '12px 20px',
-            borderRadius: 8,
             background: showForm ? '#F3F4F6' : primaryColor,
             color: showForm ? '#374151' : '#FFFFFF',
-            fontSize: 14,
-            fontWeight: 500,
-            border: 'none',
-            cursor: 'pointer',
-            transition: 'all 150ms',
           }}
         >
           {showForm ? 'Cancel' : 'New Request'}
@@ -95,37 +98,37 @@ export function PortalRequestsView({ initialRequests, primaryColor }: PortalRequ
 
       {/* New Request Form */}
       {showForm && (
-        <form onSubmit={handleSubmit} style={{ ...cardStyle, padding: 24, marginBottom: 24 }}>
-          <h2 style={{ fontSize: 16, fontWeight: 500, color: '#111827', margin: '0 0 20px' }}>
+        <form onSubmit={handleSubmit} className="rounded-xl border border-gray-200 bg-white p-6 mb-6">
+          <h2 className="text-base font-medium text-gray-900 mb-5">
             Submit a Request
           </h2>
 
-          <div style={{ marginBottom: 16 }}>
-            <label style={labelStyle}>Title *</label>
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Title *</label>
             <input
               type="text"
               value={formData.title}
               onChange={e => setFormData(prev => ({ ...prev, title: e.target.value }))}
               placeholder="Brief summary of your request"
               required
-              style={inputStyle}
+              className="w-full px-4 py-3 rounded-lg border border-gray-300 text-sm text-gray-900 bg-white outline-none transition-colors focus:border-blue-500"
             />
           </div>
 
-          <div style={{ marginBottom: 16 }}>
-            <label style={labelStyle}>Description</label>
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
             <textarea
               value={formData.description}
               onChange={e => setFormData(prev => ({ ...prev, description: e.target.value }))}
               placeholder="Provide details about what you need..."
               rows={4}
-              style={{ ...inputStyle, resize: 'vertical', minHeight: 100 }}
+              className="w-full px-4 py-3 rounded-lg border border-gray-300 text-sm text-gray-900 bg-white outline-none transition-colors focus:border-blue-500 resize-y min-h-[100px]"
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4" style={{ marginBottom: 20 }}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
             <div>
-              <label style={labelStyle}>Type</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Type</label>
               <GlassDropdown
                 options={REQUEST_TYPES.map(t => ({ value: t.value, label: t.label }))}
                 value={formData.request_type}
@@ -133,7 +136,7 @@ export function PortalRequestsView({ initialRequests, primaryColor }: PortalRequ
               />
             </div>
             <div>
-              <label style={labelStyle}>Priority</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Priority</label>
               <GlassDropdown
                 options={PRIORITY_OPTIONS.map(p => ({ value: p.value, label: p.label }))}
                 value={formData.priority}
@@ -145,18 +148,8 @@ export function PortalRequestsView({ initialRequests, primaryColor }: PortalRequ
           <button
             type="submit"
             disabled={submitting || !formData.title.trim()}
-            style={{
-              padding: '12px 24px',
-              borderRadius: 8,
-              background: primaryColor,
-              color: '#FFFFFF',
-              fontSize: 14,
-              fontWeight: 500,
-              border: 'none',
-              cursor: submitting ? 'wait' : 'pointer',
-              opacity: submitting || !formData.title.trim() ? 0.6 : 1,
-              transition: 'opacity 150ms',
-            }}
+            className="px-6 py-3 rounded-lg text-sm text-white font-medium border-none transition-opacity disabled:opacity-60 disabled:cursor-not-allowed"
+            style={{ background: primaryColor }}
           >
             {submitting ? 'Submitting...' : 'Submit Request'}
           </button>
@@ -165,62 +158,49 @@ export function PortalRequestsView({ initialRequests, primaryColor }: PortalRequ
 
       {/* Requests List */}
       {requests.length === 0 ? (
-        <div style={{ ...cardStyle, padding: 64, textAlign: 'center' }}>
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#D1D5DB" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ margin: '0 auto 16px' }}>
+        <div className="rounded-xl border border-gray-200 bg-white px-16 py-16 text-center">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#D1D5DB" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mx-auto mb-4">
             <circle cx="12" cy="12" r="10" />
             <line x1="12" y1="8" x2="12" y2="12" />
             <line x1="12" y1="16" x2="12.01" y2="16" />
           </svg>
-          <p style={{ fontSize: 16, color: '#6B7280' }}>No requests yet</p>
-          <p style={{ fontSize: 14, color: '#9CA3AF', marginTop: 4 }}>
+          <p className="text-base text-gray-500">No requests yet</p>
+          <p className="text-sm text-gray-400 mt-1">
             Submit a request to get help from your team.
           </p>
         </div>
       ) : (
-        <div style={cardStyle}>
+        <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
           {requests.map((req, i) => {
-            const sc = STATUS_CONFIG[req.status] ?? STATUS_CONFIG.submitted
             const priority = PRIORITY_OPTIONS.find(p => p.value === req.priority)
             const typeLabel = REQUEST_TYPES.find(t => t.value === req.request_type)?.label ?? req.request_type
 
             return (
               <div
                 key={req.id}
-                style={{
-                  padding: '20px 20px',
-                  borderBottom: i < requests.length - 1 ? '1px solid #F3F4F6' : 'none',
-                }}
+                className={`px-5 py-5 ${i < requests.length - 1 ? 'border-b border-gray-100' : ''}`}
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
-                    <div className="flex items-center gap-2 flex-wrap" style={{ marginBottom: 8 }}>
-                      <h3 style={{ fontSize: 16, fontWeight: 500, color: '#111827', margin: 0 }}>
+                    <div className="flex items-center gap-2 flex-wrap mb-2">
+                      <h3 className="text-base font-medium text-gray-900">
                         {req.title}
                       </h3>
-                      <span
-                        style={{
-                          fontSize: 14,
-                          fontWeight: 500,
-                          padding: '2px 8px',
-                          borderRadius: 4,
-                          background: sc.bg,
-                          color: sc.text,
-                        }}
-                      >
-                        {sc.label}
-                      </span>
+                      <Badge variant={STATUS_VARIANT[req.status] ?? 'secondary'}>
+                        {STATUS_LABEL[req.status] ?? req.status}
+                      </Badge>
                     </div>
                     {req.description && (
-                      <p style={{ fontSize: 14, color: '#6B7280', margin: '0 0 8px', lineHeight: 1.5 }}>
+                      <p className="text-sm text-gray-500 mb-2 leading-relaxed">
                         {req.description.length > 200 ? `${req.description.slice(0, 200)}...` : req.description}
                       </p>
                     )}
                     <div className="flex items-center gap-3">
-                      <span style={{ fontSize: 14, color: '#9CA3AF' }}>{typeLabel}</span>
-                      <span style={{ fontSize: 14, color: priority?.color ?? '#6B7280', fontWeight: 500 }}>
+                      <span className="text-sm text-gray-400">{typeLabel}</span>
+                      <span className={`text-sm font-medium ${priority?.color ?? 'text-gray-500'}`}>
                         {priority?.label ?? req.priority}
                       </span>
-                      <span style={{ fontSize: 14, color: '#9CA3AF' }}>
+                      <span className="text-sm text-gray-400">
                         {new Date(req.created_at).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })}
                       </span>
                     </div>
@@ -233,32 +213,4 @@ export function PortalRequestsView({ initialRequests, primaryColor }: PortalRequ
       )}
     </div>
   )
-}
-
-const cardStyle: React.CSSProperties = {
-  background: '#FFFFFF',
-  borderRadius: 12,
-  border: '1px solid #E5E7EB',
-  overflow: 'hidden',
-}
-
-const labelStyle: React.CSSProperties = {
-  display: 'block',
-  fontSize: 14,
-  fontWeight: 500,
-  color: '#374151',
-  marginBottom: 8,
-}
-
-const inputStyle: React.CSSProperties = {
-  width: '100%',
-  padding: '12px 16px',
-  borderRadius: 8,
-  border: '1px solid #D1D5DB',
-  fontSize: 14,
-  color: '#111827',
-  background: '#FFFFFF',
-  outline: 'none',
-  transition: 'border-color 150ms',
-  fontFamily: 'inherit',
 }

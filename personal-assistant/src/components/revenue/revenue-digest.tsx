@@ -1,8 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Calendar, ArrowUp, ArrowDown, Minus, FileText, RefreshCw } from 'lucide-react'
-import { S, C } from '@/lib/styles/design-tokens'
+import { IconCalendar, IconArrowUp, IconArrowDown, IconMinus, IconRefresh } from '@tabler/icons-react'
 
 interface Digest {
   id: string
@@ -20,15 +19,6 @@ interface Digest {
   created_at: string
 }
 
-const card: React.CSSProperties = {
-  borderRadius: 12,
-  background: 'var(--glass-bg)',
-  backdropFilter: 'var(--glass-blur)',
-  WebkitBackdropFilter: 'var(--glass-blur)',
-  boxShadow: 'var(--card-shadow), var(--card-inset)',
-  padding: '20px',
-}
-
 function fmt(cents: number): string {
   return new Intl.NumberFormat('en-AU', {
     style: 'currency', currency: 'AUD',
@@ -36,15 +26,15 @@ function fmt(cents: number): string {
   }).format(cents / 100)
 }
 
-const highlightIcons: Record<string, typeof ArrowUp> = {
-  positive: ArrowUp,
-  negative: ArrowDown,
-  neutral: Minus,
+const highlightIcons: Record<string, typeof IconArrowUp> = {
+  positive: IconArrowUp,
+  negative: IconArrowDown,
+  neutral: IconMinus,
 }
 const highlightColors: Record<string, string> = {
-  positive: 'var(--bb-green)',
-  negative: 'var(--bb-red)',
-  neutral: 'var(--text-dim)',
+  positive: 'text-green-500',
+  negative: 'text-red-500',
+  neutral: 'text-muted-foreground',
 }
 
 export function RevenueDigestCard() {
@@ -83,11 +73,11 @@ export function RevenueDigestCard() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div style={card}>
-        <div className="flex items-center justify-between" style={{ marginBottom: 12 }}>
+      <div className="rounded-xl bg-card backdrop-blur-lg shadow-sm p-5">
+        <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <Calendar size={14} color="var(--text-primary, #F1F5F9)" />
-            <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+            <IconCalendar size={14} className="text-foreground" />
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
               Revenue Digest
             </span>
           </div>
@@ -96,16 +86,11 @@ export function RevenueDigestCard() {
               <button
                 key={p}
                 onClick={() => setPeriod(p)}
-                style={{
-                  fontSize: 14,
-                  fontWeight: 500,
-                  padding: '4px 12px',
-                  borderRadius: 8,
-                  border: 'none',
-                  cursor: 'pointer',
-                  background: period === p ? C.bgHoverStrong : C.bgHover,
-                  color: period === p ? 'var(--text-primary, #F1F5F9)' : 'var(--text-dim)',
-                }}
+                className={`text-xs font-medium px-3 py-1 rounded-lg border-none cursor-pointer transition-colors ${
+                  period === p
+                    ? 'bg-muted text-foreground'
+                    : 'bg-muted/50 text-muted-foreground hover:bg-muted'
+                }`}
               >
                 {p}
               </button>
@@ -113,86 +98,61 @@ export function RevenueDigestCard() {
             <button
               onClick={generate}
               disabled={generating}
-              style={{
-                background: 'none',
-                border: 'none',
-                cursor: generating ? 'wait' : 'pointer',
-                color: 'var(--text-dim)',
-                padding: 4,
-              }}
+              className="bg-transparent border-none cursor-pointer text-muted-foreground p-1 disabled:cursor-wait"
             >
-              <RefreshCw size={14} style={generating ? { animation: 'spin 1s linear infinite' } : undefined} />
+              <IconRefresh size={14} className={generating ? 'animate-spin' : ''} />
             </button>
           </div>
         </div>
 
         {loading ? (
-          <div style={{ textAlign: 'center', color: 'var(--text-dim)', fontSize: 14, padding: 20 }}>
+          <div className="text-center text-muted-foreground text-sm py-5">
             Loading...
           </div>
         ) : !latest ? (
-          <div style={{ textAlign: 'center', padding: 20 }}>
-            <div style={{ color: 'var(--text-dim)', fontSize: 14, marginBottom: 8 }}>
+          <div className="text-center py-5">
+            <div className="text-muted-foreground text-sm mb-2">
               No {period} digest yet
             </div>
             <button
               onClick={generate}
-              style={{
-                background: 'var(--btn-primary-bg, #F1F5F9)',
-                color: 'var(--btn-primary-fg, #0a0f1a)',
-                border: 'none',
-                borderRadius: 8,
-                padding: '8px 16px',
-                fontSize: 14,
-                fontWeight: 500,
-                cursor: 'pointer',
-              }}
+              className="bg-primary text-primary-foreground border-none rounded-lg px-4 py-2 text-sm font-medium cursor-pointer hover:opacity-90 transition-opacity"
             >
               Generate Now
             </button>
           </div>
         ) : (
           <>
-            <div style={{ fontSize: 14, color: 'var(--text-dim)', marginBottom: 12 }}>
+            <div className="text-sm text-muted-foreground mb-3">
               {latest.period_start} — {latest.period_end}
             </div>
 
-            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4" style={{ marginBottom: 12 }}>
+            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 mb-3">
               {[
                 { label: 'Invoiced', value: fmt(latest.invoiced_cents), sub: `${latest.invoices_sent} sent` },
-                { label: 'Received', value: fmt(latest.received_cents), sub: `${latest.invoices_paid} paid`, color: 'var(--bb-green)' },
-                { label: 'Overdue', value: fmt(latest.overdue_cents), color: latest.overdue_cents > 0 ? 'var(--bb-red)' : undefined },
+                { label: 'Received', value: fmt(latest.received_cents), sub: `${latest.invoices_paid} paid`, color: 'text-green-500' },
+                { label: 'Overdue', value: fmt(latest.overdue_cents), color: latest.overdue_cents > 0 ? 'text-red-500' : undefined },
                 { label: '30d Outlook', value: fmt(latest.projected_30d_cents) },
               ].map(m => (
-                <div key={m.label} style={{
-                  padding: '12px 12px',
-                  borderRadius: 8,
-                  background: C.bgHover,
-                }}>
-                  <div style={{ fontSize: 14, color: 'var(--text-dim)', marginBottom: 4 }}>{m.label}</div>
-                  <div style={{
-                    fontSize: 16,
-                    fontWeight: 500,
-                    fontFamily: 'var(--font-mono)',
-                    letterSpacing: '-0.02em',
-                    color: m.color ?? 'var(--text-primary)',
-                  }}>
+                <div key={m.label} className="p-3 rounded-lg bg-muted/50">
+                  <div className="text-xs text-muted-foreground mb-1">{m.label}</div>
+                  <div className={`text-base font-medium font-mono tracking-tight ${m.color ?? 'text-foreground'}`}>
                     {m.value}
                   </div>
-                  {m.sub && <div style={{ fontSize: 14, color: 'var(--text-dim)' }}>{m.sub}</div>}
+                  {m.sub && <div className="text-xs text-muted-foreground">{m.sub}</div>}
                 </div>
               ))}
             </div>
 
             {/* Highlights */}
             {latest.highlights.length > 0 && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div className="flex flex-col gap-2">
                 {latest.highlights.map((h, i) => {
-                  const Icon = highlightIcons[h.type] ?? Minus
+                  const Icon = highlightIcons[h.type] ?? IconMinus
                   return (
-                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0' }}>
-                      <Icon size={12} color={highlightColors[h.type]} />
-                      <span style={{ fontSize: 14, color: 'var(--text-primary)' }}>{h.text}</span>
+                    <div key={i} className="flex items-center gap-2 py-2">
+                      <Icon size={12} className={highlightColors[h.type]} />
+                      <span className="text-sm text-foreground">{h.text}</span>
                     </div>
                   )
                 })}

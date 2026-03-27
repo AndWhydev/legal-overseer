@@ -3,6 +3,7 @@
 import { useMemo } from 'react'
 import type { Protocol, Medication } from '@/lib/medications/types'
 import { applyCyclePattern } from '@/lib/medications/protocols'
+import { Card } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 
 interface CyclingTimelineProps {
@@ -63,9 +64,9 @@ export function CyclingTimeline({
 
   if (rows.length === 0) {
     return (
-      <div className="glass-card rounded-xl p-4 text-center text-sm text-muted-foreground">
+      <Card className="p-4 text-center text-sm text-muted-foreground">
         No active protocols with cycling patterns
-      </div>
+      </Card>
     )
   }
 
@@ -79,7 +80,7 @@ export function CyclingTimeline({
   const todayIndex = dates.indexOf(today)
 
   return (
-    <div className="glass-card rounded-xl p-4 space-y-3">
+    <Card className="flex flex-col gap-3 p-4">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-foreground">Cycling Timeline</h3>
         <span className="text-xs text-muted-foreground">
@@ -106,7 +107,7 @@ export function CyclingTimeline({
           {rows.map((row, rowIdx) => (
             <div key={rowIdx} className="flex items-center gap-2 mb-1">
               {/* Label */}
-              <div className="w-[112px] shrink-0 truncate text-xs text-text-secondary" title={row.medName}>
+              <div className="w-[112px] shrink-0 truncate text-xs text-muted-foreground" title={row.medName}>
                 {row.medName}
               </div>
 
@@ -117,14 +118,13 @@ export function CyclingTimeline({
                     key={dayIdx}
                     className={cn(
                       'flex-1 rounded-[2px] transition-colors',
-                      dayIdx === todayIndex && 'ring-1 ring-primary/60'
+                      dayIdx === todayIndex && 'ring-1 ring-primary/60',
+                      !active && 'bg-muted/40 opacity-30'
                     )}
-                    style={{
-                      backgroundColor: active
-                        ? row.medColor
-                        : 'rgba(31, 31, 34, 0.4)',
-                      opacity: active ? 0.85 : 0.3,
-                    }}
+                    style={active ? {
+                      backgroundColor: row.medColor,
+                      opacity: 0.85,
+                    } : undefined}
                     title={`${row.medName} — ${dates[dayIdx]} ${active ? '(active)' : '(off)'}`}
                   />
                 ))}
@@ -141,7 +141,7 @@ export function CyclingTimeline({
           )}
         </div>
       </div>
-    </div>
+    </Card>
   )
 }
 

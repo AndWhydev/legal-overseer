@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Download, RefreshCw } from 'lucide-react'
+import { IconDownload, IconRefresh } from '@tabler/icons-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { EmptyState } from '@/components/ui/empty-state'
 import { useToast } from '@/components/ui/toast'
@@ -118,7 +118,7 @@ export function ReportList({ onRefresh }: { onRefresh?: () => void }) {
   if (isLoading) {
     return (
       <div className="overflow-hidden rounded-xl border border-border bg-card">
-        <div className="space-y-0">
+        <div className="flex flex-col">
           {Array.from({ length: 5 }).map((_, row) => (
             <div key={row} className="flex gap-4 border-b border-border/70 px-4 py-3 last:border-b-0">
               {Array.from({ length: 5 }).map((_, col) => (
@@ -158,7 +158,7 @@ export function ReportList({ onRefresh }: { onRefresh?: () => void }) {
           disabled={isRefreshing}
           className="rounded-md border border-border bg-secondary px-2 py-1.5 text-xs font-medium text-foreground hover:bg-secondary/80 disabled:opacity-60"
         >
-          <RefreshCw className={`inline-block h-3 w-3 ${isRefreshing ? 'animate-spin' : ''}`} />
+          <IconRefresh className={`inline-block h-3 w-3 ${isRefreshing ? 'animate-spin' : ''}`} />
         </button>
       </div>
 
@@ -195,7 +195,7 @@ export function ReportList({ onRefresh }: { onRefresh?: () => void }) {
                       onClick={() => void handleDownload(report.id)}
                       className="inline-flex items-center gap-1.5 rounded-md border border-sky-500/40 px-2 py-1 text-xs font-medium text-sky-300 hover:bg-sky-500/20"
                     >
-                      <Download className="h-3 w-3" />
+                      <IconDownload className="h-3 w-3" />
                       Download
                     </button>
                   </td>

@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
-import { Briefcase } from 'lucide-react'
+import { IconBriefcase } from '@tabler/icons-react'
 import { TabShell } from '@/components/ui/tab-shell'
 import { EmptyState } from '@/components/ui/empty-state'
 import { createClient } from '@/lib/supabase/client'
@@ -93,7 +93,7 @@ function JobsTab() {
       <TabShell>
         <div className="grid grid-cols-5 gap-4 mt-4">
           {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="space-y-3">
+            <div key={i} className="flex flex-col gap-3">
               <Skeleton className="h-6 w-24" />
               <Skeleton className="h-24 w-full" />
               <Skeleton className="h-24 w-full" />
@@ -108,7 +108,7 @@ function JobsTab() {
     return (
       <TabShell>
         <EmptyState
-          icon={<Briefcase size={24} />}
+          icon={<IconBriefcase size={24} />}
           title="No active jobs"
           description="Jobs track ongoing work for your clients. They appear here as BitBit identifies active projects from your communications."
           action={{
@@ -133,7 +133,7 @@ function JobsTab() {
                 </span>
                 <span className="text-xs text-muted-foreground">{col.length}</span>
               </div>
-              <div className="space-y-2">
+              <div className="flex flex-col gap-2">
                 {col.map((job) => (
                   <JobCard key={job.id} job={job} />
                 ))}

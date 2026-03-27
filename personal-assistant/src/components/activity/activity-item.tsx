@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { ChevronDown, ChevronRight } from 'lucide-react'
+import { IconChevronDown, IconChevronRight } from '@tabler/icons-react'
 import { cn } from '@/lib/utils'
 
 interface Activity {
@@ -52,9 +52,9 @@ export function ActivityItem({ activity }: { activity: Activity }) {
       >
         <span className="mt-0.5 text-muted-foreground">
           {expanded ? (
-            <ChevronDown className="size-3.5" />
+            <IconChevronDown className="size-3.5" />
           ) : (
-            <ChevronRight className="size-3.5" />
+            <IconChevronRight className="size-3.5" />
           )}
         </span>
 

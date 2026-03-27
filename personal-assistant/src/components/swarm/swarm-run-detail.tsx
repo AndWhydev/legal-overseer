@@ -2,217 +2,6 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import type { SwarmRunRow, SwarmStepRow, SwarmMessageRow } from '@/lib/swarm/types';
-import { S, C } from '@/lib/styles/design-tokens'
-
-// ── Styles ──────────────────────────────────────────────────────────────────
-
-const s = {
-  container: {
-    display: 'flex',
-    flexDirection: 'column' as const,
-    gap: '20px',
-    padding: '24px',
-    height: '100%',
-    overflow: 'auto',
-  },
-  backRow: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    cursor: 'pointer',
-    color: C.textSecondary,
-    fontSize: '14px',
-    width: 'fit-content',
-  },
-  header: {
-    display: 'flex',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    gap: '16px',
-  },
-  title: {
-    fontSize: '16px',
-    fontWeight: 500,
-    color: C.textPrimary,
-    letterSpacing: '-0.02em',
-  },
-  triggerText: {
-    fontSize: '14px',
-    color: C.textPlaceholder,
-    marginTop: '4px',
-  },
-  metaRow: {
-    display: 'flex',
-    gap: '16px',
-    flexWrap: 'wrap' as const,
-    marginTop: '6px',
-  },
-  metaPill: {
-    padding: '4px 12px',
-    borderRadius: '9999px',
-    fontSize: '14px',
-    fontWeight: 500,
-    background: 'var(--hover-bg)',
-    color: C.textDim,
-  },
-  rollbackBtn: {
-    padding: '8px 16px',
-    borderRadius: '8px',
-    fontSize: '14px',
-    fontWeight: 500,
-    cursor: 'pointer',
-    border: `1px solid ${C.statusError}`,
-    background: C.statusErrorBg,
-    color: '#EF4444',
-    transition: 'all 0.15s ease',
-  },
-  sectionLabel: {
-    fontSize: '14px',
-    fontWeight: 500,
-    color: C.textMuted,
-    textTransform: 'uppercase' as const,
-    letterSpacing: '0.06em',
-    marginBottom: '8px',
-  },
-  timeline: {
-    display: 'flex',
-    flexDirection: 'column' as const,
-    gap: '2px',
-    position: 'relative' as const,
-  },
-  stepCard: (status: string) => {
-    const border: Record<string, string> = {
-      completed: C.statusSuccessBg,
-      executing: C.bgHoverStrong,
-      failed: 'rgba(239, 68, 68, 0.15)',
-      negotiating: 'rgba(139, 92, 246, 0.15)',
-      skipped: C.bgHover,
-      blocked: C.bgHover,
-      pending: C.bgHover,
-      ready: 'rgba(59, 130, 246, 0.1)',
-      rolled_back: C.bgHover,
-    };
-    return {
-      background: 'var(--bg-card, rgba(15, 20, 30, 0.4))',
-      backdropFilter: 'blur(12px)',
-      borderRadius: '12px',
-      padding: '16px 16px',
-      borderLeft: `3px solid ${border[status] || border.pending}`,
-    };
-  },
-  stepTopRow: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: '8px',
-  },
-  stepLabel: {
-    fontSize: '14px',
-    fontWeight: 500,
-    color: C.textPrimary,
-  },
-  stepRole: {
-    fontSize: '14px',
-    fontWeight: 500,
-    padding: '2px 8px',
-    borderRadius: '8px',
-    background: 'var(--hover-bg)',
-    color: C.textDim,
-  },
-  stepStatus: (status: string) => {
-    const colors: Record<string, string> = {
-      completed: '#22C55E',
-      executing: 'var(--text-primary, #E2E8F0)',
-      failed: '#EF4444',
-      negotiating: '#8B5CF6',
-      skipped: C.textMuted,
-      blocked: C.textMuted,
-      pending: C.textMuted,
-      ready: '#3B82F6',
-      rolled_back: C.textMuted,
-    };
-    return {
-      fontSize: '14px',
-      fontWeight: 500,
-      color: colors[status] || colors.pending,
-    };
-  },
-  stepMeta: {
-    display: 'flex',
-    gap: '12px',
-    marginTop: '6px',
-    fontSize: '14px',
-    color: C.textMuted,
-  },
-  stepOutput: {
-    marginTop: '8px',
-    padding: '8px 12px',
-    borderRadius: '8px',
-    background: C.bgOverlay,
-    fontSize: '14px',
-    fontFamily: 'var(--font-mono, monospace)',
-    color: C.textPlaceholder,
-    maxHeight: '120px',
-    overflow: 'auto',
-    whiteSpace: 'pre-wrap' as const,
-    wordBreak: 'break-word' as const,
-  },
-  messagesSection: {
-    display: 'flex',
-    flexDirection: 'column' as const,
-    gap: '6px',
-  },
-  messageCard: (type: string) => {
-    const bg: Record<string, string> = {
-      finding: 'rgba(59, 130, 246, 0.06)',
-      warning: C.statusWarningBg,
-      blocker: C.statusErrorBg,
-      completion: C.statusSuccessBg,
-      negotiation: 'rgba(139, 92, 246, 0.06)',
-      status: C.bgHover,
-      handoff: C.bgHover,
-    };
-    return {
-      padding: '8px 12px',
-      borderRadius: '8px',
-      background: bg[type] || bg.status,
-      fontSize: '14px',
-      color: C.textSecondary,
-    };
-  },
-  msgFrom: {
-    fontSize: '14px',
-    fontWeight: 500,
-    color: C.textMuted,
-    textTransform: 'uppercase' as const,
-    letterSpacing: '0.04em',
-    marginBottom: '2px',
-  },
-  msgType: (type: string) => {
-    const colors: Record<string, string> = {
-      finding: '#3B82F6',
-      warning: '#F59E0B',
-      blocker: '#EF4444',
-      completion: '#22C55E',
-      negotiation: '#8B5CF6',
-      status: C.textDim,
-      handoff: C.textDim,
-    };
-    return {
-      fontSize: '14px',
-      fontWeight: 500,
-      color: colors[type] || colors.status,
-      textTransform: 'uppercase' as const,
-    };
-  },
-  loadingState: {
-    display: 'flex',
-    justifyContent: 'center',
-    padding: '40px',
-    color: C.textMuted,
-    fontSize: '14px',
-  },
-};
 
 // ── Status Icons ────────────────────────────────────────────────────────────
 
@@ -235,6 +24,50 @@ const ROLE_LABELS: Record<string, string> = {
   operations: 'Ops',
   research: 'Research',
   coordinator: 'Coordinator',
+};
+
+const statusBorderColors: Record<string, string> = {
+  completed: 'border-l-green-500/40',
+  executing: 'border-l-muted',
+  failed: 'border-l-red-500/40',
+  negotiating: 'border-l-purple-500/40',
+  skipped: 'border-l-border',
+  blocked: 'border-l-border',
+  pending: 'border-l-border',
+  ready: 'border-l-blue-500/30',
+  rolled_back: 'border-l-border',
+};
+
+const statusTextColors: Record<string, string> = {
+  completed: 'text-green-500',
+  executing: 'text-foreground',
+  failed: 'text-red-500',
+  negotiating: 'text-purple-500',
+  skipped: 'text-muted-foreground',
+  blocked: 'text-muted-foreground',
+  pending: 'text-muted-foreground',
+  ready: 'text-blue-500',
+  rolled_back: 'text-muted-foreground',
+};
+
+const messageTypeColors: Record<string, string> = {
+  finding: 'text-blue-500',
+  warning: 'text-amber-500',
+  blocker: 'text-red-500',
+  completion: 'text-green-500',
+  negotiation: 'text-purple-500',
+  status: 'text-muted-foreground',
+  handoff: 'text-muted-foreground',
+};
+
+const messageBgColors: Record<string, string> = {
+  finding: 'bg-blue-500/[0.06]',
+  warning: 'bg-amber-500/10',
+  blocker: 'bg-red-500/10',
+  completion: 'bg-green-500/10',
+  negotiation: 'bg-purple-500/[0.06]',
+  status: 'bg-muted/50',
+  handoff: 'bg-muted/50',
 };
 
 // ── Component ───────────────────────────────────────────────────────────────
@@ -289,63 +122,54 @@ export function SwarmRunDetail({ runId, onBack, onRollback }: SwarmRunDetailProp
   }, [run?.duration_ms]);
 
   const filteredMessages = useMemo(() => {
-    // Exclude completion messages to reduce noise — those are shown in step cards
     return messages.filter(m => m.message_type !== 'completion' && m.message_type !== 'status');
   }, [messages]);
 
   if (loading) {
-    return <div style={s.loadingState}>Loading swarm details...</div>;
+    return <div className="flex justify-center p-10 text-muted-foreground text-sm">Loading swarm details...</div>;
   }
 
   if (!run) {
-    return <div style={s.loadingState}>Swarm run not found</div>;
+    return <div className="flex justify-center p-10 text-muted-foreground text-sm">Swarm run not found</div>;
   }
 
   return (
-    <div style={s.container}>
+    <div className="flex flex-col gap-5 p-6 h-full overflow-auto">
       {/* Back button */}
-      <div style={s.backRow} onClick={onBack}>
+      <div
+        className="flex items-center gap-2 cursor-pointer text-muted-foreground text-sm w-fit hover:text-foreground transition-colors"
+        onClick={onBack}
+      >
         &larr; Back to swarms
       </div>
 
       {/* Header */}
-      <div style={s.header}>
+      <div className="flex items-start justify-between gap-4">
         <div>
-          <div style={s.title}>
+          <div className="text-base font-medium text-foreground tracking-tight">
             {run.template_slug
               ? run.template_slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
               : 'Custom Swarm'}
           </div>
-          <div style={s.triggerText}>{run.trigger_input}</div>
-          <div style={s.metaRow}>
-            <span style={s.metaPill}>{run.status.replace('_', ' ')}</span>
-            {durationLabel && <span style={s.metaPill}>{durationLabel}</span>}
-            <span style={s.metaPill}>{steps.length} steps</span>
+          <div className="text-sm text-muted-foreground mt-1">{run.trigger_input}</div>
+          <div className="flex gap-4 flex-wrap mt-1.5">
+            <span className="px-3 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground">{run.status.replace('_', ' ')}</span>
+            {durationLabel && <span className="px-3 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground">{durationLabel}</span>}
+            <span className="px-3 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground">{steps.length} steps</span>
           </div>
           <button
             onClick={() => setShowDetails(d => !d)}
-            style={{
-              marginTop: '8px',
-              padding: '4px 12px',
-              borderRadius: '8px',
-              fontSize: '14px',
-              fontWeight: 500,
-              background: 'var(--hover-bg)',
-              color: C.textDim,
-              border: 'none',
-              cursor: 'pointer',
-              transition: 'color 0.15s ease',
-            }}
+            className="mt-2 px-3 py-1 rounded-lg text-xs font-medium bg-muted text-muted-foreground border-none cursor-pointer transition-colors hover:text-foreground"
           >
             {showDetails ? 'Hide details' : 'Show details'}
           </button>
           {showDetails && (
-            <div style={{ ...s.metaRow, marginTop: '8px' }}>
+            <div className="flex gap-4 flex-wrap mt-2">
               {run.total_cost > 0 && (
-                <span style={s.metaPill}>${run.total_cost.toFixed(4)}</span>
+                <span className="px-3 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground">${run.total_cost.toFixed(4)}</span>
               )}
               {run.total_tokens_in + run.total_tokens_out > 0 && (
-                <span style={s.metaPill}>
+                <span className="px-3 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground">
                   {((run.total_tokens_in + run.total_tokens_out) / 1000).toFixed(1)}k tokens
                 </span>
               )}
@@ -353,7 +177,10 @@ export function SwarmRunDetail({ runId, onBack, onRollback }: SwarmRunDetailProp
           )}
         </div>
         {canRollback && (
-          <button style={s.rollbackBtn} onClick={onRollback}>
+          <button
+            className="px-4 py-2 rounded-lg text-sm font-medium cursor-pointer border border-red-500 bg-red-500/10 text-red-500 transition-all hover:bg-red-500/20"
+            onClick={onRollback}
+          >
             Rollback
           </button>
         )}
@@ -361,88 +188,85 @@ export function SwarmRunDetail({ runId, onBack, onRollback }: SwarmRunDetailProp
 
       {/* Execution Timeline */}
       {showDetails && (
-      <div>
-        <div style={s.sectionLabel}>Execution Timeline</div>
-        <div style={s.timeline}>
-          {steps.map(step => (
-            <div
-              key={step.id}
-              style={s.stepCard(step.status)}
-              onClick={() => setExpandedStep(expandedStep === step.step_key ? null : step.step_key)}
-            >
-              <div style={s.stepTopRow}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={s.stepStatus(step.status)}>
-                    {STATUS_ICONS[step.status] || STATUS_ICONS.pending}
-                  </span>
-                  <span style={s.stepLabel}>{step.step_key.replace(/_/g, ' ')}</span>
-                  {step.agent_role && (
-                    <span style={s.stepRole}>
-                      {ROLE_LABELS[step.agent_role] || step.agent_role}
+        <div>
+          <div className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-2">Execution Timeline</div>
+          <div className="flex flex-col gap-0.5 relative">
+            {steps.map(step => (
+              <div
+                key={step.id}
+                className={`rounded-xl bg-card backdrop-blur-sm p-4 border-l-[3px] cursor-pointer ${statusBorderColors[step.status] || 'border-l-border'}`}
+                onClick={() => setExpandedStep(expandedStep === step.step_key ? null : step.step_key)}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className={`text-sm font-medium ${statusTextColors[step.status] || 'text-muted-foreground'}`}>
+                      {STATUS_ICONS[step.status] || STATUS_ICONS.pending}
+                    </span>
+                    <span className="text-sm font-medium text-foreground">{step.step_key.replace(/_/g, ' ')}</span>
+                    {step.agent_role && (
+                      <span className="text-xs font-medium px-2 py-0.5 rounded-lg bg-muted text-muted-foreground">
+                        {ROLE_LABELS[step.agent_role] || step.agent_role}
+                      </span>
+                    )}
+                  </div>
+                  <span className={`text-sm font-medium ${statusTextColors[step.status] || 'text-muted-foreground'}`}>{step.status}</span>
+                </div>
+
+                <div className="flex gap-3 mt-1.5 text-xs text-muted-foreground">
+                  {step.duration_ms != null && step.duration_ms > 0 && (
+                    <span>{step.duration_ms < 1000 ? `${step.duration_ms}ms` : `${(step.duration_ms / 1000).toFixed(1)}s`}</span>
+                  )}
+                  {step.cost_estimate > 0 && (
+                    <span>${step.cost_estimate.toFixed(4)}</span>
+                  )}
+                  {step.model_used && (
+                    <span>{step.model_used.replace('claude-', '').split('-')[0]}</span>
+                  )}
+                  {step.error_message && (
+                    <span className="text-red-500">
+                      {step.error_message.slice(0, 80)}
                     </span>
                   )}
                 </div>
-                <span style={s.stepStatus(step.status)}>{step.status}</span>
-              </div>
 
-              <div style={s.stepMeta}>
-                {step.duration_ms != null && step.duration_ms > 0 && (
-                  <span>{step.duration_ms < 1000 ? `${step.duration_ms}ms` : `${(step.duration_ms / 1000).toFixed(1)}s`}</span>
-                )}
-                {step.cost_estimate > 0 && (
-                  <span>${step.cost_estimate.toFixed(4)}</span>
-                )}
-                {step.model_used && (
-                  <span>{step.model_used.replace('claude-', '').split('-')[0]}</span>
-                )}
-                {step.error_message && (
-                  <span style={{ color: '#EF4444' }}>
-                    {step.error_message.slice(0, 80)}
-                  </span>
-                )}
-              </div>
-
-              {/* Expanded output */}
-              {expandedStep === step.step_key && step.output_data && (
-                <div style={s.stepOutput}>
-                  {JSON.stringify(step.output_data, null, 2)}
-                </div>
-              )}
-
-              {/* Negotiation display */}
-              {step.negotiation && (
-                <div style={{
-                  ...s.stepOutput,
-                  borderLeft: '2px solid rgba(139, 92, 246, 0.3)',
-                }}>
-                  <div style={{ color: '#8B5CF6', marginBottom: '4px', fontWeight: 500 }}>
-                    Agent Pushback
+                {/* Expanded output */}
+                {expandedStep === step.step_key && step.output_data && (
+                  <div className="mt-2 p-2 rounded-lg bg-muted/50 text-xs font-mono text-muted-foreground max-h-[120px] overflow-auto whitespace-pre-wrap break-words">
+                    {JSON.stringify(step.output_data, null, 2)}
                   </div>
-                  {(step.negotiation as { counterProposal?: string }).counterProposal || 'Negotiation in progress'}
-                </div>
-              )}
-            </div>
-          ))}
+                )}
+
+                {/* Negotiation display */}
+                {step.negotiation && (
+                  <div className="mt-2 p-2 rounded-lg bg-muted/50 text-xs font-mono text-muted-foreground max-h-[120px] overflow-auto whitespace-pre-wrap break-words border-l-2 border-l-purple-500/30">
+                    <div className="text-purple-500 mb-1 font-medium font-sans">
+                      Agent Pushback
+                    </div>
+                    {(step.negotiation as { counterProposal?: string }).counterProposal || 'Negotiation in progress'}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
       )}
 
       {/* Inter-Agent Messages */}
       {filteredMessages.length > 0 && (
         <div>
-          <div style={s.sectionLabel}>Agent Communications ({filteredMessages.length})</div>
-          <div style={s.messagesSection}>
+          <div className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-2">Agent Communications ({filteredMessages.length})</div>
+          <div className="flex flex-col gap-1.5">
             {filteredMessages.map(msg => (
-              <div key={msg.id} style={s.messageCard(msg.message_type)}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px' }}>
-                  <span style={s.msgFrom}>
+              <div key={msg.id} className={`p-2 rounded-lg text-sm text-muted-foreground ${messageBgColors[msg.message_type] || 'bg-muted/50'}`}>
+                <div className="flex items-center gap-2 mb-0.5">
+                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     {msg.from_step_key.replace(/_/g, ' ')}
                   </span>
-                  <span style={s.msgType(msg.message_type)}>
+                  <span className={`text-xs font-medium uppercase ${messageTypeColors[msg.message_type] || 'text-muted-foreground'}`}>
                     {msg.message_type}
                   </span>
                   {msg.to_step_key && (
-                    <span style={{ ...s.msgFrom, color: C.textMuted }}>
+                    <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       &rarr; {msg.to_step_key.replace(/_/g, ' ')}
                     </span>
                   )}
@@ -457,16 +281,8 @@ export function SwarmRunDetail({ runId, onBack, onRollback }: SwarmRunDetailProp
       {/* Result Summary */}
       {run.result_summary && (
         <div>
-          <div style={s.sectionLabel}>Result Summary</div>
-          <div style={{
-            padding: '12px 16px',
-            borderRadius: '12px',
-            background: 'var(--bg-card, rgba(15, 20, 30, 0.4))',
-            fontSize: '14px',
-            color: C.textSecondary,
-            lineHeight: 1.6,
-            whiteSpace: 'pre-wrap' as const,
-          }}>
+          <div className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-2">Result Summary</div>
+          <div className="p-3 rounded-xl bg-card text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
             {run.result_summary}
           </div>
         </div>

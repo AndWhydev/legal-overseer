@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react'
 import type { Medication } from '@/lib/medications/types'
 import type { MedicationCurve } from '@/lib/medications/protocol-types'
 import { buildMedicationCurves } from '@/lib/medications/protocols'
+import { Card } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 
 interface HalfLifeChartProps {
@@ -93,7 +94,7 @@ export function HalfLifeChart({
   }
 
   return (
-    <div className={cn('glass-card rounded-xl p-4', className)}>
+    <Card className={cn('p-4', className)}>
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold text-foreground">Active Blood Levels</h3>
         <span className="text-xs text-muted-foreground">24h pharmacokinetic estimate</span>
@@ -115,7 +116,7 @@ export function HalfLifeChart({
               className="w-2.5 h-2.5 rounded-full"
               style={{ backgroundColor: curve.color }}
             />
-            <span className="text-text-secondary">{curve.name}</span>
+            <span className="text-muted-foreground">{curve.name}</span>
           </button>
         ))}
       </div>
@@ -135,7 +136,7 @@ export function HalfLifeChart({
               y1={y((pct / 100) * maxConc)}
               x2={CHART_W - PAD.right}
               y2={y((pct / 100) * maxConc)}
-              stroke="#1F1F22"
+              className="stroke-border"
               strokeWidth={1}
             />
             <text
@@ -158,7 +159,7 @@ export function HalfLifeChart({
               y1={PAD.top}
               x2={x(hour)}
               y2={CHART_H - PAD.bottom}
-              stroke="#1F1F22"
+              className="stroke-border"
               strokeWidth={1}
               strokeDasharray="2,4"
             />
@@ -214,7 +215,7 @@ export function HalfLifeChart({
               y1={PAD.top}
               x2={x(hoverHour)}
               y2={CHART_H - PAD.bottom}
-              stroke="#D4A574"
+              className="stroke-primary"
               strokeWidth={1}
               strokeDasharray="3,3"
               opacity={0.5}
@@ -233,7 +234,7 @@ export function HalfLifeChart({
                     cy={y(conc)}
                     r={3}
                     fill={curve.color}
-                    stroke="#0A0A0B"
+                    className="stroke-background"
                     strokeWidth={1.5}
                   />
                 )
@@ -252,7 +253,7 @@ export function HalfLifeChart({
           />
         )}
       </svg>
-    </div>
+    </Card>
   )
 }
 
@@ -296,9 +297,8 @@ function HoverTooltip({
         width={tooltipW}
         height={tooltipH}
         rx={6}
-        fill="#111113"
+        className="fill-popover stroke-border"
         fillOpacity={0.95}
-        stroke="#1F1F22"
         strokeWidth={1}
       />
       <text
@@ -317,7 +317,7 @@ function HoverTooltip({
             x={tx + 20}
             y={PAD.top + 27 + i * 14}
             fontSize={9}
-            className="fill-text-secondary"
+            className="fill-muted-foreground"
           >
             {c.name}
           </text>

@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { cn } from '@/lib/utils';
 
 export interface TopbarConfig {
   title: string;
@@ -18,18 +19,18 @@ export function Topbar({ config }: TopbarProps) {
   if (!config || config.hidden) return null;
 
   return (
-    <header className="bb-topbar">
-      <div className="bb-topbar__left">
-        <h1 className="bb-topbar__title">{config.title}</h1>
+    <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-card/60 backdrop-blur-md px-6">
+      <div className="flex items-center gap-3">
+        <h1 className="text-base font-semibold text-foreground">{config.title}</h1>
         {config.breadcrumb && (
-          <div className="bb-topbar__breadcrumb">{config.breadcrumb}</div>
+          <div className="text-sm text-muted-foreground">{config.breadcrumb}</div>
         )}
       </div>
       {config.centerContent && (
-        <div className="bb-topbar__center">{config.centerContent}</div>
+        <div className="flex items-center">{config.centerContent}</div>
       )}
       {config.rightContent && (
-        <div className="bb-topbar__right">{config.rightContent}</div>
+        <div className="flex items-center gap-2">{config.rightContent}</div>
       )}
     </header>
   );

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { X, ArrowRight, ArrowLeft, Gauge, Handshake, ShieldCheck, Settings } from 'lucide-react';
+import { IconX, IconArrowRight, IconArrowLeft, IconGauge, IconHandStop, IconShieldCheck, IconSettings } from '@tabler/icons-react';
 
 // ── Tour Steps ──────────────────────────────────────────────────────────────
 
@@ -19,14 +19,14 @@ const TOUR_STEPS: TourStep[] = [
     id: 'welcome',
     title: 'Welcome to BitBit',
     description: 'Quick tour — 30 seconds and you\'ll know where everything is.',
-    icon: Gauge,
+    icon: IconGauge,
     position: 'center',
   },
   {
     id: 'command-center',
     title: 'Dashboard',
     description: 'Approvals, tasks, leads, and anything that needs attention — all here.',
-    icon: Gauge,
+    icon: IconGauge,
     tabId: 'dashboard',
     position: 'center',
   },
@@ -34,7 +34,7 @@ const TOUR_STEPS: TourStep[] = [
     id: 'chat',
     title: 'Chat',
     description: 'We can draft emails, check invoices, look things up — across all connected tools.',
-    icon: Handshake,
+    icon: IconHandStop,
     tabId: 'chat',
     position: 'center',
   },
@@ -42,7 +42,7 @@ const TOUR_STEPS: TourStep[] = [
     id: 'approvals',
     title: 'Approvals',
     description: 'Before sending anything or taking action, decisions that need sign-off come here first.',
-    icon: ShieldCheck,
+    icon: IconShieldCheck,
     tabId: 'approvals',
     position: 'center',
   },
@@ -50,7 +50,7 @@ const TOUR_STEPS: TourStep[] = [
     id: 'settings',
     title: 'Connections & Settings',
     description: 'Add or remove connected services, and adjust how BitBit works.',
-    icon: Settings,
+    icon: IconSettings,
     tabId: 'settings-connections',
     position: 'center',
   },
@@ -202,7 +202,7 @@ export function OnboardingTour({ onNavigate }: OnboardingTourProps) {
             }}
             aria-label="Close tour"
           >
-            <X size={18} />
+            <IconX size={18} />
           </button>
 
           {/* Icon */}
@@ -296,7 +296,7 @@ export function OnboardingTour({ onNavigate }: OnboardingTourProps) {
                     (e.currentTarget as HTMLElement).style.background = 'transparent';
                   }}
                 >
-                  <ArrowLeft size={14} /> Back
+                  <IconArrowLeft size={14} /> Back
                 </button>
               )}
               <button
@@ -322,7 +322,7 @@ export function OnboardingTour({ onNavigate }: OnboardingTourProps) {
                   (e.currentTarget as HTMLElement).style.opacity = '1';
                 }}
               >
-                {isLast ? "Let's go!" : 'Next'} {!isLast && <ArrowRight size={14} />}
+                {isLast ? "Let's go!" : 'Next'} {!isLast && <IconArrowRight size={14} />}
               </button>
             </div>
           </div>

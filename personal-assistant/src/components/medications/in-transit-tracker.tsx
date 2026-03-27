@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Truck, ChevronDown, ChevronRight, Check } from 'lucide-react'
+import { IconTruck, IconChevronDown, IconChevronRight, IconCheck } from '@tabler/icons-react'
 import { cn } from '@/lib/utils'
 import { inTransitItems as initialItems } from '@/lib/medications/inventory-seed'
 import type { InTransitItem } from '@/lib/medications/types'
@@ -31,7 +31,7 @@ export function InTransitTracker({ className }: { className?: string }) {
         className="flex items-center justify-between w-full"
       >
         <div className="flex items-center gap-2">
-          <Truck className="h-4 w-4 text-primary" />
+          <IconTruck className="h-4 w-4 text-primary" />
           <h3 className="text-sm font-semibold text-foreground">In Transit</h3>
           {pending.length > 0 && (
             <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/15 text-primary font-medium tabular-nums">
@@ -40,12 +40,12 @@ export function InTransitTracker({ className }: { className?: string }) {
           )}
         </div>
         {expanded
-          ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
-          : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />}
+          ? <IconChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+          : <IconChevronRight className="h-3.5 w-3.5 text-muted-foreground" />}
       </button>
 
       {expanded && (
-        <div className="mt-3 space-y-1.5">
+        <div className="mt-3 flex flex-col gap-1.5">
           {pending.map(item => (
             <div
               key={item.medicationId}
@@ -72,7 +72,7 @@ export function InTransitTracker({ className }: { className?: string }) {
                 className="shrink-0 flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium
                   bg-success/10 text-success hover:bg-success/20 transition-colors"
               >
-                <Check className="h-3 w-3" />
+                <IconCheck className="h-3 w-3" />
                 Arrived
               </button>
             </div>
@@ -88,7 +88,7 @@ export function InTransitTracker({ className }: { className?: string }) {
                   key={item.medicationId}
                   className="flex items-center gap-3 px-3 py-1.5 rounded-lg opacity-60"
                 >
-                  <Check className="h-3 w-3 text-success shrink-0" />
+                  <IconCheck className="h-3 w-3 text-success shrink-0" />
                   <span className="text-sm text-foreground truncate">{item.name}</span>
                   <span className="text-[11px] text-muted-foreground ml-auto tabular-nums">
                     {item.quantity} units

@@ -6,7 +6,20 @@ import { createClient } from '@/lib/supabase/client';
 import { TabShell } from '@/components/ui/tab-shell';
 import { TabSkeleton } from './tab-skeleton';
 import { AlertBanner } from '@/components/ui/alert-banner';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { cn } from '@/lib/utils';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { IconLoader2 } from '@tabler/icons-react';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -76,66 +89,6 @@ interface SmokeTestReport {
 }
 
 // ---------------------------------------------------------------------------
-// Styles
-// ---------------------------------------------------------------------------
-
-const glassCard: React.CSSProperties = {
-  background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.6))',
-  backdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
-  border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
-  boxShadow: 'var(--card-shadow, 0 2px 8px rgba(0,0,0,0.3)), var(--card-inset, inset 0 1px 0 rgba(255,255,255,0.06))',
-  borderRadius: 16,
-};
-
-const cardHeader: React.CSSProperties = {
-  padding: '16px 20px',
-  borderBottom: '1px solid rgba(255, 255, 255, 0.03)',
-  display: 'flex',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-};
-
-const cardTitle: React.CSSProperties = {
-  fontSize: 16,
-  fontWeight: 500,
-  color: 'var(--text-primary, #F1F5F9)',
-};
-
-const STATUS_COLORS: Record<string, string> = {
-  healthy: '#22c55e',
-  pass: '#22c55e',
-  degraded: '#f59e0b',
-  partial: '#f59e0b',
-  skip: '#94a3b8',
-  down: '#ef4444',
-  fail: '#ef4444',
-};
-
-const btnPrimary: React.CSSProperties = {
-  padding: '8px 16px',
-  borderRadius: 8,
-  fontSize: 14,
-  fontWeight: 500,
-  background: 'var(--btn-primary-bg, #F1F5F9)',
-  color: 'var(--btn-primary-fg, #0a0f1a)',
-  border: 'none',
-  cursor: 'pointer',
-  display: 'inline-flex',
-  alignItems: 'center',
-  gap: 8,
-};
-
-const btnSecondary: React.CSSProperties = {
-  padding: '8px 16px',
-  borderRadius: 8,
-  fontSize: 14,
-  background: 'var(--bg-elevated)',
-  color: 'var(--text-primary)',
-  border: '1px solid var(--border)',
-  cursor: 'pointer',
-};
-
-// ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
@@ -153,17 +106,32 @@ function relativeTime(iso: string | null): string {
   return `${Math.floor(diff / 86_400_000)}d ago`;
 }
 
+function statusVariant(status: string): 'default' | 'secondary' | 'destructive' | 'outline' {
+  switch (status) {
+    case 'healthy':
+    case 'pass':
+      return 'default';
+    case 'degraded':
+    case 'partial':
+    case 'skip':
+      return 'outline';
+    case 'down':
+    case 'fail':
+      return 'destructive';
+    default:
+      return 'secondary';
+  }
+}
+
 function StatusDot({ status }: { status: string }) {
-  const color = STATUS_COLORS[status] || '#888';
   return (
-    <div style={{
-      width: 10,
-      height: 10,
-      borderRadius: 9999,
-      background: color,
-      boxShadow: `0 0 6px ${color}40`,
-      flexShrink: 0,
-    }} />
+    <div className={cn(
+      'size-2.5 shrink-0 rounded-full',
+      (status === 'healthy' || status === 'pass') && 'bg-emerald-500 shadow-[0_0_6px_rgba(34,197,94,0.25)]',
+      (status === 'degraded' || status === 'partial') && 'bg-amber-500 shadow-[0_0_6px_rgba(245,158,11,0.25)]',
+      status === 'skip' && 'bg-muted-foreground',
+      (status === 'down' || status === 'fail') && 'bg-destructive shadow-[0_0_6px_rgba(239,68,68,0.25)]',
+    )} />
   );
 }
 
@@ -253,7 +221,7 @@ export default function MonitoringTab() {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const report: SmokeTestReport = await res.json();
       setSmokeReport(report);
-    } catch (err) {
+    } catch {
       setSmokeReport({
         overall: 'fail',
         channels: [],
@@ -280,11 +248,11 @@ export default function MonitoringTab() {
   if (!isAdmin) {
     return (
       <TabShell>
-        <div style={{ padding: 32 }}>
+        <div className="p-8">
           <AlertBanner variant="error">
             <div>
-              <h2 style={{ color: 'var(--text-primary)', fontSize: 16, marginBottom: 4, fontWeight: 500 }}>Access Denied</h2>
-              <p style={{ color: 'var(--text-secondary)' }}>Admin role required to access the monitoring dashboard.</p>
+              <h2 className="text-base font-medium text-foreground">Access Denied</h2>
+              <p className="text-sm text-muted-foreground">Admin role required to access the monitoring dashboard.</p>
             </div>
           </AlertBanner>
         </div>
@@ -301,196 +269,150 @@ export default function MonitoringTab() {
 
   return (
     <TabShell>
-      <div style={{ padding: 24, maxWidth: 1100, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 24 }}>
+      <div className="mx-auto flex max-w-[1100px] flex-col gap-6 p-6">
 
         {/* Error banner */}
         {error && (
           <AlertBanner variant="warning">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+            <div className="flex w-full items-center justify-between">
               <span>Failed to load monitoring data: {error}</span>
-              <button onClick={fetchData} style={btnSecondary}>Retry</button>
+              <Button variant="outline" size="sm" onClick={fetchData}>Retry</Button>
             </div>
           </AlertBanner>
         )}
 
-        {/* ── Section 1: System Health Overview ──────────────────────────── */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
-          {/* Cron Success Rate */}
-          <div style={glassCard}>
-            <div style={{ padding: 20 }}>
-              <div style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 8 }}>Cron Success Rate</div>
-              <div style={{
-                fontSize: 32,
-                fontWeight: 600,
-                color: cronSuccessRate >= 90 ? '#22c55e' : cronSuccessRate >= 70 ? '#f59e0b' : '#ef4444',
-                fontVariantNumeric: 'tabular-nums',
-              }}>
+        {/* Section 1: System Health Overview */}
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4">
+          <Card className="py-4">
+            <CardContent className="flex flex-col gap-1">
+              <div className="text-sm text-muted-foreground">Cron Success Rate</div>
+              <div className={cn(
+                'text-3xl font-semibold tabular-nums',
+                cronSuccessRate >= 90 ? 'text-emerald-500' : cronSuccessRate >= 70 ? 'text-amber-500' : 'text-destructive'
+              )}>
                 {loading ? '--' : `${cronSuccessRate}%`}
               </div>
-              <div style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 4 }}>
-                {data?.cron_stats.length ?? 0} routes monitored
-              </div>
-            </div>
-          </div>
+              <div className="text-sm text-muted-foreground">{data?.cron_stats.length ?? 0} routes monitored</div>
+            </CardContent>
+          </Card>
 
-          {/* Agent p95 Latency */}
-          <div style={glassCard}>
-            <div style={{ padding: 20 }}>
-              <div style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 8 }}>Agent p95 Latency</div>
-              <div style={{
-                fontSize: 32,
-                fontWeight: 600,
-                color: 'var(--text-primary)',
-                fontVariantNumeric: 'tabular-nums',
-              }}>
+          <Card className="py-4">
+            <CardContent className="flex flex-col gap-1">
+              <div className="text-sm text-muted-foreground">Agent p95 Latency</div>
+              <div className="text-3xl font-semibold tabular-nums text-foreground">
                 {loading ? '--' : `${(data?.agent_latency.p95_ms ?? 0).toLocaleString()}ms`}
               </div>
-              <div style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 4 }}>
-                {data?.agent_latency.total_runs ?? 0} runs (24h)
-              </div>
-            </div>
-          </div>
+              <div className="text-sm text-muted-foreground">{data?.agent_latency.total_runs ?? 0} runs (24h)</div>
+            </CardContent>
+          </Card>
 
-          {/* Active Channels */}
-          <div style={glassCard}>
-            <div style={{ padding: 20 }}>
-              <div style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 8 }}>Active Channels</div>
-              <div style={{
-                fontSize: 32,
-                fontWeight: 600,
-                color: activeChannels > 0 ? '#22c55e' : 'var(--text-primary)',
-                fontVariantNumeric: 'tabular-nums',
-              }}>
+          <Card className="py-4">
+            <CardContent className="flex flex-col gap-1">
+              <div className="text-sm text-muted-foreground">Active Channels</div>
+              <div className={cn(
+                'text-3xl font-semibold tabular-nums',
+                activeChannels > 0 ? 'text-emerald-500' : 'text-foreground'
+              )}>
                 {loading ? '--' : activeChannels}
               </div>
-              <div style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 4 }}>
-                of {data?.channel_health?.length ?? 0} configured
-              </div>
-            </div>
-          </div>
+              <div className="text-sm text-muted-foreground">of {data?.channel_health?.length ?? 0} configured</div>
+            </CardContent>
+          </Card>
 
-          {/* DLQ Items */}
-          <div style={glassCard}>
-            <div style={{ padding: 20 }}>
-              <div style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 8 }}>DLQ Items</div>
-              <div style={{
-                fontSize: 32,
-                fontWeight: 600,
-                color: dlqCount > 0 ? '#ef4444' : '#22c55e',
-                fontVariantNumeric: 'tabular-nums',
-              }}>
+          <Card className="py-4">
+            <CardContent className="flex flex-col gap-1">
+              <div className="text-sm text-muted-foreground">DLQ Items</div>
+              <div className={cn(
+                'text-3xl font-semibold tabular-nums',
+                dlqCount > 0 ? 'text-destructive' : 'text-emerald-500'
+              )}>
                 {loading ? '--' : dlqCount}
               </div>
-              <div style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 4 }}>
-                unresolved errors
-              </div>
-            </div>
-          </div>
+              <div className="text-sm text-muted-foreground">unresolved errors</div>
+            </CardContent>
+          </Card>
         </div>
 
-        {/* ── Section 2: Cron Route Status ───────────────────────────────── */}
-        <div style={glassCard}>
-          <div style={cardHeader}>
-            <span style={cardTitle}>Cron Route Status</span>
-            <span style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
+        {/* Section 2: Cron Route Status */}
+        <Card className="py-0">
+          <CardHeader className="flex-row items-center justify-between border-b border-border py-4">
+            <CardTitle className="text-base">Cron Route Status</CardTitle>
+            <span className="text-sm text-muted-foreground">
               {data ? `Updated ${relativeTime(data.generated_at)}` : ''}
             </span>
-          </div>
-          <div style={{ padding: 0, overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
-              <thead>
-                <tr style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.06)' }}>
-                  <th style={{ padding: '12px 16px', textAlign: 'left', color: 'var(--text-secondary)', fontWeight: 500 }}>Route</th>
-                  <th style={{ padding: '12px 16px', textAlign: 'left', color: 'var(--text-secondary)', fontWeight: 500 }}>Last Run</th>
-                  <th style={{ padding: '12px 16px', textAlign: 'right', color: 'var(--text-secondary)', fontWeight: 500 }}>Success</th>
-                  <th style={{ padding: '12px 16px', textAlign: 'right', color: 'var(--text-secondary)', fontWeight: 500 }}>Avg Duration</th>
-                  <th style={{ padding: '12px 16px', textAlign: 'right', color: 'var(--text-secondary)', fontWeight: 500 }}>Errors</th>
-                  <th style={{ padding: '12px 8px', textAlign: 'center', color: 'var(--text-secondary)', fontWeight: 500 }}>Status</th>
-                </tr>
-              </thead>
-              <tbody>
+          </CardHeader>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Route</TableHead>
+                  <TableHead>Last Run</TableHead>
+                  <TableHead className="text-right">Success</TableHead>
+                  <TableHead className="text-right">Avg Duration</TableHead>
+                  <TableHead className="text-right">Errors</TableHead>
+                  <TableHead className="text-center">Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {(data?.cron_stats ?? [])
                   .slice()
                   .sort((a, b) => b.error_count_24h - a.error_count_24h)
                   .map(cron => {
                     const status = cron.error_count_24h > 0 ? 'down' : cron.success_rate_24h >= 90 ? 'healthy' : cron.success_rate_24h > 0 ? 'degraded' : 'down';
                     return (
-                      <tr key={cron.route} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.03)' }}>
-                        <td style={{ padding: '10px 16px', color: 'var(--text-primary)', fontFamily: 'monospace', fontSize: 13 }}>
-                          {cron.route}
-                        </td>
-                        <td style={{ padding: '10px 16px', color: 'var(--text-secondary)' }}>
-                          {relativeTime(cron.last_run)}
-                        </td>
-                        <td style={{
-                          padding: '10px 16px',
-                          textAlign: 'right',
-                          fontVariantNumeric: 'tabular-nums',
-                          color: cron.success_rate_24h >= 90 ? '#22c55e' : cron.success_rate_24h >= 70 ? '#f59e0b' : '#ef4444',
-                        }}>
+                      <TableRow key={cron.route}>
+                        <TableCell className="font-mono text-xs">{cron.route}</TableCell>
+                        <TableCell className="text-muted-foreground">{relativeTime(cron.last_run)}</TableCell>
+                        <TableCell className={cn(
+                          'text-right tabular-nums',
+                          cron.success_rate_24h >= 90 ? 'text-emerald-500' : cron.success_rate_24h >= 70 ? 'text-amber-500' : 'text-destructive'
+                        )}>
                           {cron.success_rate_24h}%
-                        </td>
-                        <td style={{ padding: '10px 16px', textAlign: 'right', color: 'var(--text-secondary)', fontVariantNumeric: 'tabular-nums' }}>
+                        </TableCell>
+                        <TableCell className="text-right tabular-nums text-muted-foreground">
                           {cron.avg_duration_ms > 0 ? `${cron.avg_duration_ms.toLocaleString()}ms` : '--'}
-                        </td>
-                        <td style={{
-                          padding: '10px 16px',
-                          textAlign: 'right',
-                          fontVariantNumeric: 'tabular-nums',
-                          color: cron.error_count_24h > 0 ? '#ef4444' : 'var(--text-secondary)',
-                          fontWeight: cron.error_count_24h > 0 ? 600 : 400,
-                        }}>
+                        </TableCell>
+                        <TableCell className={cn(
+                          'text-right tabular-nums',
+                          cron.error_count_24h > 0 ? 'font-semibold text-destructive' : 'text-muted-foreground'
+                        )}>
                           {cron.error_count_24h}
-                        </td>
-                        <td style={{ padding: '10px 8px', textAlign: 'center' }}>
-                          <StatusDot status={status} />
-                        </td>
-                      </tr>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <div className="flex justify-center">
+                            <StatusDot status={status} />
+                          </div>
+                        </TableCell>
+                      </TableRow>
                     );
                   })}
                 {loading && (
-                  <tr>
-                    <td colSpan={6} style={{ padding: 32, textAlign: 'center', color: 'var(--text-secondary)' }}>
+                  <TableRow>
+                    <TableCell colSpan={6} className="py-8 text-center text-muted-foreground">
                       Loading cron data...
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 )}
-              </tbody>
-            </table>
-          </div>
-        </div>
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
 
-        {/* ── Section 3: Channel Health + Smoke Tests ────────────────────── */}
-        <div style={glassCard}>
-          <div style={cardHeader}>
-            <span style={cardTitle}>Channel Health</span>
-            <button
-              onClick={runSmokeTests}
-              disabled={smokeLoading}
-              style={{
-                ...btnPrimary,
-                opacity: smokeLoading ? 0.6 : 1,
-              }}
-            >
+        {/* Section 3: Channel Health + Smoke Tests */}
+        <Card className="py-0">
+          <CardHeader className="flex-row items-center justify-between border-b border-border py-4">
+            <CardTitle className="text-base">Channel Health</CardTitle>
+            <Button onClick={runSmokeTests} disabled={smokeLoading}>
               {smokeLoading ? (
                 <>
-                  <span style={{
-                    width: 14,
-                    height: 14,
-                    border: '2px solid transparent',
-                    borderTopColor: 'currentColor',
-                    borderRadius: '50%',
-                    animation: 'spin 0.8s linear infinite',
-                    display: 'inline-block',
-                  }} />
+                  <IconLoader2 className="size-3.5 animate-spin" />
                   Running...
                 </>
               ) : 'Run Smoke Tests'}
-            </button>
-          </div>
-          <div style={{ padding: 20 }}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 12 }}>
-              {/* Render from smoke report if available, otherwise from monitoring data */}
+            </Button>
+          </CardHeader>
+          <CardContent className="p-5">
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-3">
               {(() => {
                 const channels = smokeReport
                   ? smokeReport.channels.map(ch => ({
@@ -512,42 +434,28 @@ export default function MonitoringTab() {
 
                 if (channels.length === 0 && !loading) {
                   return (
-                    <div style={{ color: 'var(--text-secondary)', fontSize: 14, gridColumn: '1 / -1' }}>
+                    <div className="col-span-full text-sm text-muted-foreground">
                       No channel health data. Run smoke tests to check channel status.
                     </div>
                   );
                 }
 
                 return channels.map(ch => (
-                  <div key={ch.channel} style={{
-                    padding: 16,
-                    borderRadius: 12,
-                    background: 'var(--bg-elevated)',
-                    border: '1px solid var(--border)',
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                  <div key={ch.channel} className="rounded-xl border border-border bg-muted/50 p-4">
+                    <div className="mb-2 flex items-center gap-2">
                       <StatusDot status={ch.status} />
-                      <span style={{ fontWeight: 500, fontSize: 14, color: 'var(--text-primary)', textTransform: 'capitalize' }}>
+                      <span className="text-sm font-medium capitalize text-foreground">
                         {ch.channel}
                       </span>
-                      <span style={{
-                        marginLeft: 'auto',
-                        padding: '2px 8px',
-                        borderRadius: 6,
-                        fontSize: 12,
-                        fontWeight: 500,
-                        background: `${STATUS_COLORS[ch.status] || '#888'}20`,
-                        color: STATUS_COLORS[ch.status] || '#888',
-                        textTransform: 'uppercase',
-                      }}>
+                      <Badge variant={statusVariant(ch.status)} className="ml-auto uppercase">
                         {ch.status}
-                      </span>
+                      </Badge>
                     </div>
-                    <div style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                    <div className="flex flex-col gap-0.5 text-sm text-muted-foreground">
                       <div>Latency: {ch.latency_ms}ms</div>
                       <div>Last check: {relativeTime(ch.last_sync)}</div>
-                      {ch.message && <div style={{ marginTop: 4, fontSize: 13, color: 'var(--text-secondary)' }}>{ch.message}</div>}
-                      {ch.error && <div style={{ marginTop: 4, fontSize: 13, color: '#ef4444' }}>{ch.error}</div>}
+                      {ch.message && <div className="mt-1 text-xs">{ch.message}</div>}
+                      {ch.error && <div className="mt-1 text-xs text-destructive">{ch.error}</div>}
                     </div>
                   </div>
                 ));
@@ -556,21 +464,19 @@ export default function MonitoringTab() {
 
             {/* Smoke test summary */}
             {smokeReport && (
-              <div style={{
-                marginTop: 16,
-                padding: '12px 16px',
-                borderRadius: 8,
-                background: `${STATUS_COLORS[smokeReport.overall] || '#888'}10`,
-                border: `1px solid ${STATUS_COLORS[smokeReport.overall] || '#888'}30`,
-                fontSize: 14,
-                color: 'var(--text-secondary)',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-              }}>
+              <div className={cn(
+                'mt-4 flex items-center justify-between rounded-lg border p-3 text-sm text-muted-foreground',
+                smokeReport.overall === 'pass' && 'border-emerald-500/30 bg-emerald-500/10',
+                smokeReport.overall === 'partial' && 'border-amber-500/30 bg-amber-500/10',
+                smokeReport.overall === 'fail' && 'border-destructive/30 bg-destructive/10',
+              )}>
                 <span>
                   Smoke test result:{' '}
-                  <strong style={{ color: STATUS_COLORS[smokeReport.overall] || '#888' }}>
+                  <strong className={cn(
+                    smokeReport.overall === 'pass' && 'text-emerald-500',
+                    smokeReport.overall === 'partial' && 'text-amber-500',
+                    smokeReport.overall === 'fail' && 'text-destructive',
+                  )}>
                     {smokeReport.overall.toUpperCase()}
                   </strong>
                 </span>
@@ -579,20 +485,23 @@ export default function MonitoringTab() {
                 </span>
               </div>
             )}
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
-        {/* ── Section 4: Error Log ───────────────────────────────────────── */}
-        <div style={glassCard}>
-          <div style={cardHeader}>
-            <span style={cardTitle}>Error Log (DLQ)</span>
-            <span style={{ fontSize: 14, color: dlqCount > 0 ? '#ef4444' : 'var(--text-secondary)', fontWeight: dlqCount > 0 ? 600 : 400 }}>
+        {/* Section 4: Error Log */}
+        <Card className="py-0">
+          <CardHeader className="flex-row items-center justify-between border-b border-border py-4">
+            <CardTitle className="text-base">Error Log (DLQ)</CardTitle>
+            <span className={cn(
+              'text-sm',
+              dlqCount > 0 ? 'font-semibold text-destructive' : 'text-muted-foreground'
+            )}>
               {dlqCount} unresolved
             </span>
-          </div>
-          <div style={{ padding: 0 }}>
+          </CardHeader>
+          <CardContent className="p-0">
             {(data?.error_summary ?? []).length === 0 && !loading ? (
-              <div style={{ padding: 20, color: 'var(--text-secondary)', fontSize: 14, textAlign: 'center' }}>
+              <div className="p-5 text-center text-sm text-muted-foreground">
                 No errors in the last 24 hours
               </div>
             ) : (
@@ -600,137 +509,95 @@ export default function MonitoringTab() {
                 {(data?.error_summary ?? []).map((entry, idx) => (
                   <div
                     key={`${entry.agent_type}-${idx}`}
-                    style={{
-                      padding: '12px 20px',
-                      borderBottom: '1px solid rgba(255, 255, 255, 0.03)',
-                      cursor: 'pointer',
-                    }}
+                    className="cursor-pointer border-b border-border px-5 py-3 last:border-b-0"
                     onClick={() => toggleError(idx)}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <span style={{
-                        padding: '2px 8px',
-                        borderRadius: 6,
-                        fontSize: 12,
-                        fontWeight: 500,
-                        background: '#ef444420',
-                        color: '#ef4444',
-                        flexShrink: 0,
-                      }}>
+                    <div className="flex items-center gap-3">
+                      <Badge variant="destructive" className="shrink-0">
                         {entry.count}x
-                      </span>
-                      <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)', fontFamily: 'monospace' }}>
+                      </Badge>
+                      <span className="font-mono text-sm font-medium text-foreground">
                         {entry.agent_type}
                       </span>
-                      <span style={{ marginLeft: 'auto', fontSize: 14, color: 'var(--text-secondary)', flexShrink: 0 }}>
+                      <span className="ml-auto shrink-0 text-sm text-muted-foreground">
                         {relativeTime(entry.latest_at)}
                       </span>
                     </div>
-                    <div style={{
-                      fontSize: 14,
-                      color: 'var(--text-secondary)',
-                      marginTop: 4,
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: expandedErrors.has(idx) ? 'pre-wrap' : 'nowrap',
-                      maxHeight: expandedErrors.has(idx) ? 'none' : '1.4em',
-                    }}>
+                    <div className={cn(
+                      'mt-1 text-sm text-muted-foreground',
+                      expandedErrors.has(idx) ? 'whitespace-pre-wrap' : 'truncate'
+                    )}>
                       {entry.latest_error}
                     </div>
                   </div>
                 ))}
               </div>
             )}
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
-        {/* ── Section 5: Token Spend ─────────────────────────────────────── */}
-        <div style={glassCard}>
-          <div style={cardHeader}>
-            <span style={cardTitle}>Token Spend (24h)</span>
-          </div>
-          <div style={{ padding: 0 }}>
+        {/* Section 5: Token Spend */}
+        <Card className="py-0">
+          <CardHeader className="border-b border-border py-4">
+            <CardTitle className="text-base">Token Spend (24h)</CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
             {(data?.token_spend ?? []).length === 0 && !loading ? (
-              <div style={{ padding: 20, color: 'var(--text-secondary)', fontSize: 14, textAlign: 'center' }}>
+              <div className="p-5 text-center text-sm text-muted-foreground">
                 No token usage in the last 24 hours
               </div>
             ) : (
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
-                <thead>
-                  <tr style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.06)' }}>
-                    <th style={{ padding: '12px 16px', textAlign: 'left', color: 'var(--text-secondary)', fontWeight: 500 }}>Org</th>
-                    <th style={{ padding: '12px 16px', textAlign: 'right', color: 'var(--text-secondary)', fontWeight: 500 }}>Tokens</th>
-                    <th style={{ padding: '12px 16px', textAlign: 'right', color: 'var(--text-secondary)', fontWeight: 500 }}>Cost (USD)</th>
-                    <th style={{ padding: '12px 16px', textAlign: 'right', color: 'var(--text-secondary)', fontWeight: 500 }}>Bar</th>
-                  </tr>
-                </thead>
-                <tbody>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Org</TableHead>
+                    <TableHead className="text-right">Tokens</TableHead>
+                    <TableHead className="text-right">Cost (USD)</TableHead>
+                    <TableHead className="text-right">Bar</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {(data?.token_spend ?? []).map(org => {
                     const maxCost = Math.max(...(data?.token_spend ?? []).map(o => o.total_cost_24h), 0.01);
                     const barWidth = Math.round((org.total_cost_24h / maxCost) * 100);
                     return (
-                      <tr key={org.org_id} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.03)' }}>
-                        <td style={{ padding: '10px 16px', color: 'var(--text-primary)', fontFamily: 'monospace', fontSize: 13 }}>
-                          {org.org_name}
-                        </td>
-                        <td style={{ padding: '10px 16px', textAlign: 'right', color: 'var(--text-secondary)', fontVariantNumeric: 'tabular-nums' }}>
+                      <TableRow key={org.org_id}>
+                        <TableCell className="font-mono text-xs">{org.org_name}</TableCell>
+                        <TableCell className="text-right tabular-nums text-muted-foreground">
                           {formatTokenCount(org.total_tokens_24h)}
-                        </td>
-                        <td style={{ padding: '10px 16px', textAlign: 'right', color: 'var(--text-primary)', fontVariantNumeric: 'tabular-nums', fontWeight: 500 }}>
+                        </TableCell>
+                        <TableCell className="text-right tabular-nums font-medium">
                           ${org.total_cost_24h.toFixed(4)}
-                        </td>
-                        <td style={{ padding: '10px 16px', textAlign: 'right' }}>
-                          <div style={{
-                            height: 8,
-                            borderRadius: 4,
-                            background: 'var(--bg-elevated)',
-                            overflow: 'hidden',
-                            minWidth: 80,
-                          }}>
-                            <div style={{
-                              width: `${barWidth}%`,
-                              height: '100%',
-                              borderRadius: 4,
-                              background: 'var(--accent-subtle, #3b82f6)',
-                              transition: 'width 0.3s ease',
-                            }} />
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="ml-auto h-2 min-w-[80px] overflow-hidden rounded-full bg-muted">
+                            <div
+                              className="h-full rounded-full bg-primary transition-all duration-300"
+                              style={{ width: `${barWidth}%` }}
+                            />
                           </div>
-                        </td>
-                      </tr>
+                        </TableCell>
+                      </TableRow>
                     );
                   })}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             )}
 
             {/* Total cost */}
             {(data?.token_spend ?? []).length > 0 && (
-              <div style={{
-                padding: '12px 16px',
-                display: 'flex',
-                justifyContent: 'flex-end',
-                gap: 24,
-                fontSize: 14,
-                borderTop: '1px solid rgba(255, 255, 255, 0.06)',
-              }}>
-                <span style={{ color: 'var(--text-secondary)' }}>
-                  Total: <strong style={{ color: 'var(--text-primary)' }}>
+              <div className="flex justify-end border-t border-border px-4 py-3 text-sm">
+                <span className="text-muted-foreground">
+                  Total: <strong className="text-foreground">
                     ${(data?.token_spend ?? []).reduce((sum, o) => sum + o.total_cost_24h, 0).toFixed(4)}
                   </strong>
                 </span>
               </div>
             )}
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
       </div>
-
-      {/* Spinner animation */}
-      <style>{`
-        @keyframes spin {
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
     </TabShell>
   );
 }

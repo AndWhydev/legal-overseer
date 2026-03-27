@@ -1,11 +1,15 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Loader2, X } from 'lucide-react';
+import { IconLoader2, IconX } from '@tabler/icons-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 import { BRAND_ICONS } from './integration-icons';
 import type { Integration } from '@/lib/integrations/types';
 
-// ─── Apple Pay-style success tick ────────────────────────────────────────────
+// ---- Apple Pay-style success tick ----
 
 function SuccessTick({ visible }: { visible: boolean }) {
   if (!visible) return null;
@@ -15,7 +19,7 @@ function SuccessTick({ visible }: { visible: boolean }) {
       height={18}
       viewBox="0 0 24 24"
       fill="none"
-      style={{ flexShrink: 0 }}
+      className="shrink-0"
     >
       <style>{`
         @keyframes bb-tick-circle {
@@ -60,25 +64,6 @@ interface IntegrationCardProps {
   style?: React.CSSProperties;
 }
 
-// Shared glass button base
-const glassBtn: React.CSSProperties = {
-  padding: '4px 12px',
-  borderRadius: 12,
-  background: 'var(--hover-bg-strong, rgba(255, 255, 255, 0.06))',
-  backdropFilter: 'blur(12px)',
-  WebkitBackdropFilter: 'blur(12px)',
-  border: '1px solid var(--hover-bg-strong, rgba(255, 255, 255, 0.08))',
-  fontSize: 14,
-  fontWeight: 500,
-  cursor: 'pointer',
-  transition: 'all 180ms ease',
-  flexShrink: 0,
-  display: 'flex',
-  alignItems: 'center',
-  gap: 4,
-  lineHeight: 1.4,
-};
-
 export function IntegrationCard({ integration, isConnected = false, onStatusChange, onWhatsAppConnect, style: externalStyle }: IntegrationCardProps) {
   const BrandIcon = BRAND_ICONS[integration.id];
   const isComingSoon = integration.status === 'coming_soon';
@@ -86,15 +71,13 @@ export function IntegrationCard({ integration, isConnected = false, onStatusChan
   const [apiKey, setApiKey] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [hovered, setHovered] = useState(false);
-  const [inputFocused, setInputFocused] = useState(false);
   const [connectingFeedback, setConnectingFeedback] = useState(false);
   const [showTick, setShowTick] = useState(false);
   const prevConnectedRef = useRef(isConnected);
 
   const connected = isConnected || integration.status === 'connected';
 
-  // Detect transition from disconnected → connected and show success tick
+  // Detect transition from disconnected -> connected and show success tick
   useEffect(() => {
     if (isConnected && !prevConnectedRef.current) {
       setShowTick(true);
@@ -167,237 +150,124 @@ export function IntegrationCard({ integration, isConnected = false, onStatusChan
   return (
     <>
       <div
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 12,
-          padding: '12px 16px',
-          borderRadius: 12,
-          background: hovered && !isComingSoon
-            ? 'rgba(255, 255, 255, 0.04)'
-            : 'var(--glass-pill-bg)',
-          backdropFilter: 'var(--glass-blur)',
-          WebkitBackdropFilter: 'var(--glass-blur)',
-          border: '1px solid var(--glass-card-border)',
-          boxShadow: 'var(--glass-card-inset)',
-          transition: 'all 300ms cubic-bezier(0.2, 0.9, 0.3, 1)',
-          opacity: isComingSoon ? 0.5 : 1,
-          ...externalStyle,
-        }}
+        className={cn(
+          'flex items-center gap-3 rounded-xl border border-border/30 bg-card/50 px-4 py-3 backdrop-blur-sm transition-colors',
+          !isComingSoon && 'hover:bg-card/70',
+          isComingSoon && 'opacity-50',
+        )}
+        style={externalStyle}
       >
         {/* App Icon */}
-        <div style={{
-          width: 36,
-          height: 36,
-          borderRadius: 8,
-          overflow: 'hidden',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          flexShrink: 0,
-        }}>
+        <div className="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-lg">
           {BrandIcon
             ? <BrandIcon size={36} />
-            : <div style={{ width: 36, height: 36, borderRadius: 8, background: `${integration.color}20` }} />
+            : <div className="size-9 rounded-lg" style={{ background: `${integration.color}20` }} />
           }
         </div>
 
         {/* Info */}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>
-              {integration.name}
-            </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium">{integration.name}</span>
             <SuccessTick visible={showTick} />
             {isComingSoon && (
-              <span style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                padding: '1px 8px',
-                borderRadius: 8,
-                fontSize: 14,
-                fontWeight: 500,
-                background: 'var(--glass-hover-bg)',
-                color: 'var(--text-dim)',
-              }}>
-                Soon
-              </span>
+              <Badge variant="secondary">Soon</Badge>
             )}
           </div>
-          <p style={{
-            fontSize: 14,
-            color: 'var(--text-secondary)',
-            margin: '1px 0 0',
-            lineHeight: 1.35,
-          }}>
+          <p className="mt-0.5 text-xs leading-snug text-muted-foreground">
             {integration.description}
           </p>
         </div>
 
-        {/* Action button — glass style for all states */}
+        {/* Action button */}
         {!isComingSoon && (
           connected ? (
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={(e) => { e.stopPropagation(); handleDisconnect(); }}
               disabled={isLoading}
-              onMouseEnter={e => {
-                e.currentTarget.style.background = 'var(--hover-bg-strong, rgba(255, 255, 255, 0.1))';
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.background = 'var(--hover-bg-strong, rgba(255, 255, 255, 0.06))';
-              }}
-              style={{
-                ...glassBtn,
-                color: 'var(--text-secondary)',
-                cursor: isLoading ? 'not-allowed' : 'pointer',
-                opacity: isLoading ? 0.5 : 1,
-              }}
             >
               {isLoading
-                ? <Loader2 size={11} style={{ animation: 'bb-spin 1s linear infinite' }} />
+                ? <IconLoader2 size={14} className="animate-spin" />
                 : 'Disconnect'
               }
-            </button>
+            </Button>
           ) : (
-            <button
+            <Button
+              variant="outline"
+              size="sm"
               onClick={(e) => { e.stopPropagation(); handleConnect(); }}
               disabled={isLoading || connectingFeedback}
-              onMouseEnter={e => {
-                if (!connectingFeedback) {
-                  e.currentTarget.style.background = 'var(--hover-bg-strong, rgba(255, 255, 255, 0.12))';
-                }
-              }}
-              onMouseLeave={e => {
-                if (!connectingFeedback) {
-                  e.currentTarget.style.background = 'var(--hover-bg-strong, rgba(255, 255, 255, 0.06))';
-                }
-              }}
-              style={{
-                ...glassBtn,
-                color: connectingFeedback ? 'var(--text-secondary)' : 'var(--text-primary)',
-                cursor: (isLoading || connectingFeedback) ? 'not-allowed' : 'pointer',
-                opacity: (isLoading || connectingFeedback) ? 0.7 : 1,
-              }}
             >
               {connectingFeedback
-                ? <><Loader2 size={11} style={{ animation: 'bb-spin 1s linear infinite' }} /> Connecting</>
+                ? <><IconLoader2 size={14} className="animate-spin" /> Connecting</>
                 : 'Connect'
               }
-            </button>
+            </Button>
           )
         )}
       </div>
 
-      {/* API Key Dialog (glassmorphic modal) */}
+      {/* API Key Dialog */}
       {apiKeyDialogOpen && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center">
           <div
-            style={{ position: 'absolute', inset: 0, background: 'rgba(0, 0, 0, 0.6)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             onClick={() => { setApiKeyDialogOpen(false); setError(''); }}
           />
-          <div style={{
-            position: 'relative',
-            padding: 24,
-            borderRadius: 16,
-            background: 'var(--glass-card-bg)',
-            backdropFilter: 'var(--glass-card-blur)',
-            WebkitBackdropFilter: 'var(--glass-card-blur)',
-            border: '1px solid var(--glass-card-border)',
-            boxShadow: '0 24px 48px rgba(0, 0, 0, 0.4)',
-            maxWidth: 420,
-            width: '90%',
-          }}>
+          <div className="relative w-[90%] max-w-[420px] rounded-2xl border border-border bg-card p-6 shadow-2xl">
             <button
               onClick={() => { setApiKeyDialogOpen(false); setError(''); }}
-              style={{ position: 'absolute', top: 16, right: 16, background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: 4 }}
+              className="absolute right-4 top-4 p-1 text-muted-foreground hover:text-foreground"
             >
-              <X size={16} />
+              <IconX size={16} />
             </button>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
-              <div style={{
-                width: 36, height: 36, borderRadius: 8, overflow: 'hidden',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>
+            <div className="mb-5 flex items-center gap-3">
+              <div className="flex size-9 items-center justify-center overflow-hidden rounded-lg">
                 {BrandIcon && <BrandIcon size={36} />}
               </div>
               <div>
-                <h3 style={{ fontSize: 16, fontWeight: 500, color: 'var(--text-primary)', margin: 0 }}>
+                <h3 className="text-base font-medium">
                   Connect {integration.name}
                 </h3>
-                <p style={{ fontSize: 14, color: 'var(--text-secondary)', margin: '2px 0 0' }}>
+                <p className="mt-0.5 text-sm text-muted-foreground">
                   Enter your API key to connect.
                 </p>
               </div>
             </div>
 
             {error && (
-              <div style={{
-                padding: '12px 16px', borderRadius: 12,
-                background: 'rgba(239, 68, 68, 0.1)', color: '#EF4444',
-                fontSize: 14, marginBottom: 16,
-              }}>
+              <div className="mb-4 rounded-xl bg-destructive/10 px-4 py-3 text-sm text-destructive">
                 {error}
               </div>
             )}
 
-            <input
+            <Input
               type="password"
               placeholder="Enter API key"
               value={apiKey}
               onChange={e => setApiKey(e.target.value)}
               disabled={isLoading}
-              onFocus={() => setInputFocused(true)}
-              onBlur={() => setInputFocused(false)}
               onKeyDown={e => { if (e.key === 'Enter' && apiKey.trim()) handleApiKeySubmit(); }}
-              style={{
-                width: '100%',
-                padding: '12px 16px',
-                borderRadius: 12,
-                background: 'var(--bg-input, rgba(13, 17, 23, 0.6))',
-                border: inputFocused
-                  ? '1px solid rgba(255, 255, 255, 0.2)'
-                  : '1px solid var(--glass-interactive-border)',
-                color: 'var(--text-primary)',
-                fontSize: 14,
-                outline: 'none',
-                transition: 'border-color 200ms',
-                marginBottom: 16,
-                boxSizing: 'border-box',
-              }}
+              className="mb-4"
             />
 
-            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-              <button
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="ghost"
                 onClick={() => { setApiKeyDialogOpen(false); setError(''); }}
                 disabled={isLoading}
-                style={{
-                  ...glassBtn,
-                  padding: '8px 16px',
-                  fontSize: 14,
-                  color: 'var(--text-primary)',
-                }}
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={handleApiKeySubmit}
                 disabled={isLoading || !apiKey.trim()}
-                style={{
-                  ...glassBtn,
-                  padding: '8px 16px',
-                  fontSize: 14,
-                  fontWeight: 500,
-                  background: 'var(--hover-bg-strong, rgba(255, 255, 255, 0.12))',
-                  color: 'var(--text-primary)',
-                  cursor: isLoading || !apiKey.trim() ? 'not-allowed' : 'pointer',
-                  opacity: isLoading || !apiKey.trim() ? 0.5 : 1,
-                }}
               >
-                {isLoading ? <><Loader2 size={12} style={{ animation: 'bb-spin 1s linear infinite' }} /> Connecting</> : 'Connect'}
-              </button>
+                {isLoading ? <><IconLoader2 size={14} className="animate-spin" /> Connecting</> : 'Connect'}
+              </Button>
             </div>
           </div>
         </div>

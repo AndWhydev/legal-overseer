@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { TrendingUp } from 'lucide-react';
+import { IconTrendingUp } from '@tabler/icons-react';
 import { WidgetCard } from './widget-card';
 
 export function RevenueWeekWidget() {
@@ -31,7 +31,7 @@ export function RevenueWeekWidget() {
     <WidgetCard
       title="Revenue This Week"
       subtitle={`${count} paid invoice${count !== 1 ? 's' : ''}`}
-      icon={<TrendingUp size={20} style={{ color: 'var(--bb-status-success)' }} />}
+      icon={<IconTrendingUp size={20} className="text-emerald-400" />}
     >
       <div className="flex items-center justify-center py-6">
         <p className="text-3xl font-bold">${total.toLocaleString()}</p>

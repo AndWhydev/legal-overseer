@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Bell, CheckCircle2, Zap, AlertTriangle, Check } from 'lucide-react';
+import { IconBell, IconCircleCheck, IconBolt, IconAlertTriangle } from '@tabler/icons-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { createClient } from '@/lib/supabase/client';
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -68,13 +68,13 @@ function formatTimeAgo(date: Date): string {
 function getNotificationIcon(type: 'approval' | 'lead' | 'invoice' | 'task') {
   switch (type) {
     case 'approval':
-      return CheckCircle2;
+      return IconCircleCheck;
     case 'lead':
-      return Zap;
+      return IconBolt;
     case 'invoice':
-      return AlertTriangle;
+      return IconAlertTriangle;
     default:
-      return Bell;
+      return IconBell;
   }
 }
 
@@ -327,7 +327,7 @@ export function NotificationCenter({ onTabChange }: NotificationCenterProps) {
           transition={{ duration: 0.3, ease: 'easeInOut' }}
           style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
         >
-          <Bell size={18} strokeWidth={1.8} />
+          <IconBell size={18} stroke={1.8} />
         </motion.div>
 
         {/* Unread dot badge */}

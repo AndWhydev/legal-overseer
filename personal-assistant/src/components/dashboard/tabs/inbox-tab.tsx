@@ -8,26 +8,25 @@ import { useInboxKeyboard } from '@/hooks/use-inbox-keyboard';
 import { InboxShortcutsOverlay } from '@/components/dashboard/inbox-shortcuts-overlay';
 import { TabShell } from '@/components/ui/tab-shell';
 import { EmptyState } from '@/components/ui/empty-state';
-import { GlassDropdown } from '@/components/ui/glass-dropdown';
-import { S, C } from '@/lib/styles/design-tokens';
+import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
 import { logger } from '@/lib/core/logger';
 import { type ThreadMessageItem } from '@/components/dashboard/inbox-drawer';
 import {
-  CheckCircle2,
-  ChevronDown,
-  ChevronRight,
-  RefreshCw,
-  Calendar as CalendarIcon,
-  X,
-  Archive,
-  Clock,
-  Reply,
-  Forward,
-  AlertTriangle,
-  Star,
-  ArrowUp,
-  Trash2,
-} from 'lucide-react';
+  IconCircleCheck,
+  IconChevronDown,
+  IconChevronRight,
+  IconRefresh,
+  IconCalendar,
+  IconX,
+  IconArchive,
+  IconClock,
+  IconArrowBackUp,
+  IconArrowForwardUp,
+  IconAlertTriangle,
+  IconStar,
+  IconArrowUp,
+  IconTrash,
+} from '@tabler/icons-react';
 import { resolveAvatar, resolveAvatarSync, type AvatarResult } from '@/lib/avatar/resolver';
 
 // ---------------------------------------------------------------------------
@@ -227,7 +226,7 @@ function StripeIcon({ size = 15 }: { size?: number }) {
 }
 
 function CalendlyIcon({ size = 15 }: { size?: number }) {
-  return <CalendarIcon size={size} />;
+  return <IconCalendar size={size} />;
 }
 
 const CHANNEL_ICONS: Record<string, React.FC<{ size?: number }>> = {
@@ -965,7 +964,7 @@ function InboxTab() {
                 if (!refreshing) e.currentTarget.style.color = 'var(--text-secondary)';
               }}
             >
-              <RefreshCw size={13} style={{ animation: refreshing ? 'spin 1s linear infinite' : 'none' }} />
+              <IconRefresh size={13} style={{ animation: refreshing ? 'spin 1s linear infinite' : 'none' }} />
               {refreshing ? 'Syncing...' : 'Refresh'}
             </button>
           </div>
@@ -1134,7 +1133,7 @@ function InboxTab() {
               >
                 {loadingMore ? (
                   <>
-                    <RefreshCw size={13} style={{ animation: 'spin 1s linear infinite' }} />
+                    <IconRefresh size={13} style={{ animation: 'spin 1s linear infinite' }} />
                     Loading...
                   </>
                 ) : (
@@ -1163,7 +1162,7 @@ function InboxTab() {
           WebkitBackdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
           border: '1px solid var(--glass-card-border)',
           borderRadius: 12,
-          boxShadow: `0 8px 32px ${C.bgOverlay}, 0 2px 8px rgba(0, 0, 0, 0.3)`,
+          boxShadow: `0 8px 32px ${'var(--bg-overlay, rgba(0, 0, 0, 0.6))'}, 0 2px 8px rgba(0, 0, 0, 0.3)`,
           zIndex: 50,
           animation: 'fadeSlideUp 160ms cubic-bezier(0.16, 1, 0.3, 1)',
         }}>
@@ -1174,12 +1173,12 @@ function InboxTab() {
             onClick={handleBulkArchive}
             onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--hover-bg-strong)'; }}
             onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--hover-bg)'; }}
-          ><Archive size={13} /> Archive</button>
+          ><IconArchive size={13} /> Archive</button>
           <button style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 12px', borderRadius: 8, border: '1px solid var(--glass-divider)', background: 'var(--hover-bg)', color: 'var(--text-secondary)', fontSize: 14, fontWeight: 500, cursor: 'pointer', transition: 'all 150ms ease' }}
             onClick={handleBulkDone}
             onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--hover-bg-strong)'; }}
             onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--hover-bg)'; }}
-          ><CheckCircle2 size={13} /> Done</button>
+          ><IconCircleCheck size={13} /> Done</button>
           <button style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 12px', borderRadius: 8, border: '1px solid var(--glass-divider)', background: 'var(--hover-bg)', color: 'var(--text-secondary)', fontSize: 14, fontWeight: 500, cursor: 'pointer', transition: 'all 150ms ease' }}
             onClick={(e) => {
               const rect = e.currentTarget.getBoundingClientRect();
@@ -1188,17 +1187,17 @@ function InboxTab() {
             }}
             onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--hover-bg-strong)'; }}
             onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--hover-bg)'; }}
-          ><Clock size={13} /> Snooze</button>
+          ><IconClock size={13} /> Snooze</button>
           <button style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 12px', borderRadius: 8, border: '1px solid var(--glass-divider)', background: 'var(--hover-bg)', color: 'var(--text-secondary)', fontSize: 14, fontWeight: 500, cursor: 'pointer', transition: 'all 150ms ease' }}
             onClick={handleBulkSpam}
             onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--hover-bg-strong)'; }}
             onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--hover-bg)'; }}
-          ><AlertTriangle size={13} /> Spam</button>
+          ><IconAlertTriangle size={13} /> Spam</button>
           <button style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 24, height: 24, borderRadius: 8, border: '1px solid var(--glass-divider)', background: 'var(--hover-bg)', color: 'var(--text-secondary)', fontSize: 14, cursor: 'pointer', padding: 0, transition: 'all 150ms ease' }}
             onClick={clearSelection}
             onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--hover-bg-strong)'; }}
             onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--hover-bg)'; }}
-          ><X size={12} /></button>
+          ><IconX size={12} /></button>
         </div>
       )}
 
@@ -1313,7 +1312,7 @@ function FilterDropdown({
       backdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
       WebkitBackdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
       border: '1px solid var(--glass-card-border)',
-      boxShadow: `0 8px 32px ${C.bgOverlay}`,
+      boxShadow: `0 8px 32px ${'var(--bg-overlay, rgba(0, 0, 0, 0.6))'}`,
       animation: 'fadeSlideUp 120ms cubic-bezier(0.16, 1, 0.3, 1)',
     }}>
       {options.map((opt) => {
@@ -1343,7 +1342,7 @@ function FilterDropdown({
           >
             {opt.color && <span style={{ width: 6, height: 6, borderRadius: '50%', background: opt.color, flexShrink: 0 }} />}
             {opt.label}
-            {isSelected && <CheckCircle2 size={11} style={{ marginLeft: 'auto', opacity: 0.6 }} />}
+            {isSelected && <IconCircleCheck size={11} style={{ marginLeft: 'auto', opacity: 0.6 }} />}
           </button>
         );
       })}
@@ -1374,7 +1373,7 @@ function FilterDropdown({
       >
         {selected?.color && <span style={{ width: 6, height: 6, borderRadius: '50%', background: selected.color, flexShrink: 0 }} />}
         {selected?.label || label}
-        <ChevronDown size={11} style={{ opacity: 0.5, transition: 'transform 150ms', transform: open ? 'rotate(180deg)' : 'none' }} />
+        <IconChevronDown size={11} style={{ opacity: 0.5, transition: 'transform 150ms', transform: open ? 'rotate(180deg)' : 'none' }} />
       </button>
 
       {typeof document !== 'undefined' && dropdownMenu && createPortal(dropdownMenu, document.body)}
@@ -1440,13 +1439,13 @@ function UnifiedFilterBar({
               fontSize: 14,
               fontWeight: 500,
               background: isActive
-                ? C.bgHoverStrong
+                ? 'var(--hover-bg-strong, rgba(255, 255, 255, 0.08))'
                 : 'var(--pill-inactive-bg, rgba(10, 14, 23, 0.42))',
               backdropFilter: 'blur(22px) saturate(1.2)',
               WebkitBackdropFilter: 'blur(22px) saturate(1.2)',
               boxShadow: isActive
                 ? 'var(--toggle-active-shadow, none)'
-                : `inset 0 1px 0 ${C.borderVisible}`,
+                : `inset 0 1px 0 ${'var(--glass-border, rgba(255, 255, 255, 0.06))'}`,
               color: isActive
                 ? 'var(--text-primary, #F1F5F9)'
                 : 'var(--text-secondary, #94A3B8)',
@@ -1493,23 +1492,31 @@ function UnifiedFilterBar({
           onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--text-primary, #F1F5F9)' }}
           onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-dim, #475569)' }}
         >
-          <X size={14} />
+          <IconX size={14} />
         </button>
       )}
 
       {/* Channel + Priority dropdowns */}
-      <GlassDropdown
-        options={CHANNEL_OPTIONS.map(o => ({ value: o.value, label: o.label }))}
-        value={channelFilter}
-        onChange={onChannelChange}
-        placeholder="Channel"
-      />
-      <GlassDropdown
-        options={PRIORITY_OPTIONS.map(o => ({ value: o.value, label: o.label }))}
-        value={priorityFilter}
-        onChange={onPriorityChange}
-        placeholder="Priority"
-      />
+      <Select value={channelFilter} onValueChange={onChannelChange}>
+        <SelectTrigger className="w-auto">
+          <SelectValue placeholder="Channel" />
+        </SelectTrigger>
+        <SelectContent>
+          {CHANNEL_OPTIONS.map(o => (
+            <SelectItem key={o.value} value={o.value || '_all'}>{o.label}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <Select value={priorityFilter} onValueChange={onPriorityChange}>
+        <SelectTrigger className="w-auto">
+          <SelectValue placeholder="Priority" />
+        </SelectTrigger>
+        <SelectContent>
+          {PRIORITY_OPTIONS.map(o => (
+            <SelectItem key={o.value} value={o.value || '_all'}>{o.label}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     </div>
   );
 }
@@ -1555,7 +1562,7 @@ function UndoToastStack({
             backdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
             WebkitBackdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
             border: '1px solid var(--glass-card-border)',
-            boxShadow: `0 8px 32px ${C.bgOverlay}`,
+            boxShadow: `0 8px 32px ${'var(--bg-overlay, rgba(0, 0, 0, 0.6))'}`,
             pointerEvents: 'auto',
             animation: 'fadeSlideUp 160ms cubic-bezier(0.16, 1, 0.3, 1)',
           }}
@@ -1569,16 +1576,16 @@ function UndoToastStack({
             style={{
               padding: '4px 12px',
               borderRadius: 8,
-              border: `1px solid ${C.borderFocus}`,
-              background: C.bgHoverStrong,
+              border: `1px solid ${'var(--border-focus-ring, rgba(255, 255, 255, 0.2))'}`,
+              background: 'var(--hover-bg-strong, rgba(255, 255, 255, 0.08))',
               color: 'var(--text-primary, #E2E8F0)',
               fontSize: 14,
               fontWeight: 500,
               cursor: 'pointer',
               transition: 'all 150ms ease',
             }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = C.borderHover; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = C.bgHoverStrong; }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--border-active, rgba(255, 255, 255, 0.1))'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--hover-bg-strong, rgba(255, 255, 255, 0.08))'; }}
           >
             Undo
           </button>
@@ -1591,7 +1598,7 @@ function UndoToastStack({
               cursor: 'pointer', padding: 0,
             }}
           >
-            <X size={12} />
+            <IconX size={12} />
           </button>
         </div>
       ))}
@@ -1628,7 +1635,7 @@ function SnoozePickerPopover({
         border: '1px solid var(--glass-card-border)',
         borderRadius: 12,
         padding: 8,
-        boxShadow: `0 8px 32px ${C.bgOverlay}`,
+        boxShadow: `0 8px 32px ${'var(--bg-overlay, rgba(0, 0, 0, 0.6))'}`,
         minWidth: 200,
         animation: 'fadeSlideUp 140ms cubic-bezier(0.16, 1, 0.3, 1)',
       }}
@@ -1660,7 +1667,7 @@ function SnoozePickerPopover({
           onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
         >
           <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Clock size={13} style={{ color: 'var(--text-dim)', flexShrink: 0 }} />
+            <IconClock size={13} style={{ color: 'var(--text-dim)', flexShrink: 0 }} />
             {opt.label}
           </span>
           <span style={{ fontSize: 14, color: 'var(--text-dim)', flexShrink: 0 }}>
@@ -2107,7 +2114,7 @@ function ExpandedMessageRow({
                   >
                     <div style={{
                       width: 22, height: 22, borderRadius: '50%',
-                      background: tm.isSelf ? C.borderHover : C.bgHoverStrong,
+                      background: tm.isSelf ? 'var(--border-active, rgba(255, 255, 255, 0.1))' : 'var(--hover-bg-strong, rgba(255, 255, 255, 0.08))',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       fontSize: 9, fontWeight: 500,
                       color: tm.isSelf ? '#E2E8F0' : 'var(--text-secondary)', flexShrink: 0,
@@ -2127,7 +2134,7 @@ function ExpandedMessageRow({
                     </span>
                     {!isLatest && (
                       <span style={{ color: 'var(--text-dim)', flexShrink: 0 }}>
-                        {isExpTh ? <ChevronDown size={11} /> : <ChevronRight size={11} />}
+                        {isExpTh ? <IconChevronDown size={11} /> : <IconChevronRight size={11} />}
                       </span>
                     )}
                   </div>
@@ -2153,8 +2160,8 @@ function ExpandedMessageRow({
         animationDelay: aiResult ? '0ms' : '600ms',
       }}>
         <div style={{
-          background: C.bgInput,
-          border: `1px solid ${C.borderSubtle}`,
+          background: 'var(--bg-input, rgba(13, 17, 23, 0.6))',
+          border: `1px solid ${'var(--border-subtle, rgba(255, 255, 255, 0.03))'}`,
           borderRadius: 20,
           padding: '4px 4px 4px 16px',
         }}>
@@ -2249,7 +2256,7 @@ function ExpandedMessageRow({
                 transform: replyText.trim() ? 'scale(1)' : 'scale(0.85)',
               }}
             >
-              <ArrowUp size={14} strokeWidth={2.5} />
+              <IconArrowUp size={14} stroke={2.5} />
             </button>
           </div>
         </div>
@@ -2262,14 +2269,14 @@ function ExpandedMessageRow({
         animation: 'composerSlideIn 300ms cubic-bezier(0.25, 1, 0.5, 1) both',
         animationDelay: '50ms',
       }}>
-        <IconActionBtn icon={<Reply size={16} />} title="Reply" onClick={() => textareaRef.current?.focus()} />
-        <IconActionBtn icon={<Archive size={16} />} title="Archive" onClick={() => onArchive(message.id)} />
-        <IconActionBtn icon={<CheckCircle2 size={16} />} title="Done" onClick={() => onDone(message.id)} />
-        <IconActionBtn icon={<Clock size={16} />} title="Snooze" onClick={() => handleNavigateLocal('snooze')} data-snooze-trigger />
-        <IconActionBtn icon={<Forward size={16} />} title="Forward" onClick={() => {/* placeholder */}} />
-        <IconActionBtn icon={<AlertTriangle size={16} />} title="Spam" onClick={() => onSpam(message.id)} isSpam />
+        <IconActionBtn icon={<IconArrowBackUp size={16} />} title="Reply" onClick={() => textareaRef.current?.focus()} />
+        <IconActionBtn icon={<IconArchive size={16} />} title="Archive" onClick={() => onArchive(message.id)} />
+        <IconActionBtn icon={<IconCircleCheck size={16} />} title="Done" onClick={() => onDone(message.id)} />
+        <IconActionBtn icon={<IconClock size={16} />} title="Snooze" onClick={() => handleNavigateLocal('snooze')} data-snooze-trigger />
+        <IconActionBtn icon={<IconArrowForwardUp size={16} />} title="Forward" onClick={() => {/* placeholder */}} />
+        <IconActionBtn icon={<IconAlertTriangle size={16} />} title="Spam" onClick={() => onSpam(message.id)} isSpam />
         <div style={{ flex: 1 }} />
-        <IconActionBtn icon={<X size={16} />} title="Close" onClick={onClose} />
+        <IconActionBtn icon={<IconX size={16} />} title="Close" onClick={onClose} />
       </div>
     </div>
   );
@@ -2437,7 +2444,7 @@ function GroupRow({
             title="Delete all"
             onClick={(e) => { e.stopPropagation(); onDelete(); }}
           >
-            <Trash2 size={12} />
+            <IconTrash size={12} />
           </button>
         )}
       </div>
@@ -2570,7 +2577,7 @@ function MessageRow({
       {/* Right: time + delete */}
       <div className="bb-inbox-row__meta">
         <div className="bb-inbox-row__meta-default">
-          {starred && <Star size={11} style={{ color: '#f59e0b', fill: '#f59e0b', marginRight: 4 }} />}
+          {starred && <IconStar size={11} style={{ color: '#f59e0b', fill: '#f59e0b', marginRight: 4 }} />}
           <span className="bb-inbox-row__time" title={absTime}>{timeAgo}</span>
           {onDelete && (
             <button
@@ -2578,7 +2585,7 @@ function MessageRow({
               title="Delete"
               onClick={(e) => { e.stopPropagation(); onDelete(message.id); }}
             >
-              <Trash2 size={12} />
+              <IconTrash size={12} />
             </button>
           )}
         </div>

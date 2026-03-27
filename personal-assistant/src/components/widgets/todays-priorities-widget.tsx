@@ -2,9 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { Zap } from 'lucide-react';
+import { IconBolt } from '@tabler/icons-react';
 import { WidgetCard } from './widget-card';
 import { EmptyState } from '@/components/ui/empty-state';
+import { Badge } from '@/components/ui/badge';
 
 export function TodaysPrioritiesWidget() {
   const [priorities, setPriorities] = useState<{ id: string; title: string; priority: string; status: string }[]>([]);
@@ -23,21 +24,20 @@ export function TodaysPrioritiesWidget() {
   return (
     <WidgetCard
       title="Today's Priorities"
-      icon={<Zap size={20} style={{ color: 'var(--bb-status-warning)' }} />}
+      icon={<IconBolt size={20} className="text-amber-400" />}
     >
-      <div className="space-y-3">
+      <div className="flex flex-col gap-3">
         {priorities.length === 0 ? (
           <EmptyState title="No high-priority tasks" description="Enjoy the calm — nothing urgent right now." />
         ) : (
           priorities.map(task => (
-            <div key={task.id} className="flex items-center gap-3 p-2 rounded-md bg-[var(--bg-elevated)] border border-[var(--border-subtle)]">
-              <span className={`text-[10px] px-1.5 py-0.5 rounded border ${
-                task.priority === 'critical'
-                  ? 'bg-red-500/20 text-red-400 border-red-500/30'
-                  : 'bg-amber-500/20 text-amber-400 border-amber-500/30'
-              }`}>
+            <div key={task.id} className="flex items-center gap-3 p-2 rounded-md bg-muted/50 border border-border">
+              <Badge
+                variant={task.priority === 'critical' ? 'destructive' : 'secondary'}
+                className="text-[10px]"
+              >
                 {task.priority}
-              </span>
+              </Badge>
               <p className="text-xs font-medium truncate flex-1">{task.title}</p>
             </div>
           ))

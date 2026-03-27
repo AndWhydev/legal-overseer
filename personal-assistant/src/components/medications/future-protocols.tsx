@@ -4,6 +4,8 @@ import { useState, useMemo } from 'react'
 import type { Protocol, Medication } from '@/lib/medications/types'
 import type { Conflict } from '@/lib/medications/protocol-types'
 import { checkConflicts } from '@/lib/medications/protocols'
+import { IconCheck } from '@tabler/icons-react'
+import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -30,7 +32,7 @@ export function FutureProtocols({
   }
 
   return (
-    <div className="glass-card rounded-xl p-4 space-y-3">
+    <Card className="flex flex-col gap-3 p-4">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-foreground">Future Protocols</h3>
         <Badge variant="secondary" className="text-[10px]">
@@ -48,7 +50,7 @@ export function FutureProtocols({
           onActivate={onActivate}
         />
       ))}
-    </div>
+    </Card>
   )
 }
 
@@ -78,7 +80,7 @@ function DraftCard({
   }
 
   return (
-    <div className="rounded-lg bg-background/50 border border-border/40 p-3 space-y-2">
+    <div className="flex flex-col gap-2 rounded-lg bg-muted/50 border border-border p-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium text-foreground">{protocol.name}</span>
@@ -91,7 +93,7 @@ function DraftCard({
       )}
 
       {/* Medication list */}
-      <div className="space-y-1">
+      <div className="flex flex-col gap-1">
         {protocol.entries.map((entry) => {
           const med = medicationMap[entry.medicationId]
           return (
@@ -100,11 +102,11 @@ function DraftCard({
                 className="w-2 h-2 rounded-full"
                 style={{ backgroundColor: med?.pillStyle.primaryColor ?? '#555' }}
               />
-              <span className="text-text-secondary">
+              <span className="text-muted-foreground">
                 {med?.name ?? entry.medicationId}
                 {med ? ` ${med.doseMg}mg` : ''}
               </span>
-              <span className="text-muted-foreground">
+              <span className="text-muted-foreground/70">
                 {entry.dosesPerDay}x {entry.timing}
               </span>
             </div>
@@ -116,7 +118,7 @@ function DraftCard({
       <div className="flex items-center gap-2 pt-1">
         <Button
           variant="outline"
-          size="xs"
+          size="sm"
           onClick={runConflictCheck}
         >
           Conflict Check
@@ -124,7 +126,7 @@ function DraftCard({
         {onActivate && (
           <Button
             variant="outline"
-            size="xs"
+            size="sm"
             onClick={() => onActivate(protocol.id)}
           >
             Activate
@@ -134,12 +136,10 @@ function DraftCard({
 
       {/* Conflict results */}
       {showConflicts && (
-        <div className="pt-2 border-t border-border/40 space-y-1.5">
+        <div className="flex flex-col gap-1.5 pt-2 border-t border-border">
           {conflicts.length === 0 ? (
             <div className="flex items-center gap-1.5 text-xs text-success">
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-              </svg>
+              <IconCheck className="h-3.5 w-3.5" />
               No conflicts with active protocols
             </div>
           ) : (
@@ -149,11 +149,11 @@ function DraftCard({
                 className={cn(
                   'flex items-start gap-1.5 text-xs px-2 py-1.5 rounded',
                   conflict.severity === 'danger'
-                    ? 'bg-[#C47070]/10 text-[#C47070]'
-                    : 'bg-[#D4A574]/10 text-[#D4A574]'
+                    ? 'bg-destructive/10 text-destructive'
+                    : 'bg-warning/10 text-warning'
                 )}
               >
-                <span className="shrink-0">{conflict.severity === 'danger' ? '🚫' : '⚠️'}</span>
+                <span className="shrink-0">{conflict.severity === 'danger' ? '\uD83D\uDEAB' : '\u26A0\uFE0F'}</span>
                 <span>{conflict.description}</span>
               </div>
             ))

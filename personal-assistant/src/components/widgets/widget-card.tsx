@@ -1,6 +1,8 @@
 'use client';
 
 import React from 'react';
+import { cn } from '@/lib/utils';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface WidgetCardProps {
   title: string;
@@ -13,19 +15,19 @@ interface WidgetCardProps {
 
 export function WidgetCard({ title, subtitle, icon, action, className, children }: WidgetCardProps) {
   return (
-    <div className={`bb-card ${className ?? ''}`}>
-      <div className="p-4 border-b border-[var(--border-subtle)]">
+    <Card className={cn(className)}>
+      <CardHeader className="border-b border-border">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-medium flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2 text-lg">
             {icon} {title}
-          </h2>
+          </CardTitle>
           {action}
         </div>
         {subtitle && <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>}
-      </div>
-      <div className="p-4">
+      </CardHeader>
+      <CardContent>
         {children}
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }

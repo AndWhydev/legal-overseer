@@ -1,8 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { HelpCircle, X } from 'lucide-react';
-import { S, C } from '@/lib/styles/design-tokens'
+import { IconHelpCircle, IconX } from '@tabler/icons-react';
 
 interface HelpTooltipProps {
   tooltipKey: string;
@@ -68,70 +67,26 @@ export function HelpTooltip({
 
   if (!isVisible) return <>{children}</>;
 
-  // Compute tooltip position styles
-  const getTooltipStyles = (): React.CSSProperties => {
-    const baseStyles: React.CSSProperties = {
-      position: 'absolute',
-      zIndex: 50,
-      background: 'var(--glass-bg-heavy, rgba(15, 20, 30, 0.95))',
-      backdropFilter: 'blur(20px)',
-      WebkitBackdropFilter: 'blur(20px)',
-      border: `1px solid ${C.borderSubtle}`,
-      borderRadius: 12,
-      padding: '12px 16px',
-      minWidth: '240px',
-      maxWidth: '320px',
-      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
-      pointerEvents: 'auto',
-    };
-
+  // Compute tooltip position classes
+  const getTooltipPositionClasses = (): string => {
     switch (placement) {
       case 'top':
-        return {
-          ...baseStyles,
-          bottom: '100%',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          marginBottom: 8,
-        };
+        return 'bottom-full left-1/2 -translate-x-1/2 mb-2';
       case 'bottom':
-        return {
-          ...baseStyles,
-          top: '100%',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          marginTop: 8,
-        };
+        return 'top-full left-1/2 -translate-x-1/2 mt-2';
       case 'left':
-        return {
-          ...baseStyles,
-          right: '100%',
-          top: '50%',
-          transform: 'translateY(-50%)',
-          marginRight: 8,
-        };
+        return 'right-full top-1/2 -translate-y-1/2 mr-2';
       case 'right':
-        return {
-          ...baseStyles,
-          left: '100%',
-          top: '50%',
-          transform: 'translateY(-50%)',
-          marginLeft: 8,
-        };
+        return 'left-full top-1/2 -translate-y-1/2 ml-2';
       default:
-        return baseStyles;
+        return '';
     }
   };
 
   return (
     <div
       ref={containerRef}
-      style={{
-        position: 'relative',
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 8,
-      }}
+      className="relative inline-flex items-center gap-2"
       onMouseEnter={() => setShowTooltip(true)}
       onMouseLeave={() => setShowTooltip(false)}
     >
@@ -140,35 +95,15 @@ export function HelpTooltip({
       {/* Pulsing indicator dot */}
       <button
         onClick={() => setShowTooltip(!showTooltip)}
-        style={{
-          position: 'relative',
-          width: 20,
-          height: 20,
-          padding: 0,
-          background: 'none',
-          border: 'none',
-          cursor: 'pointer',
-          display: 'inline-flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          flexShrink: 0,
-        }}
+        className="relative w-5 h-5 p-0 bg-transparent border-none cursor-pointer inline-flex items-center justify-center shrink-0"
         aria-label={`Help: ${title}`}
         title={title}
       >
         {/* Pulsing background */}
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            borderRadius: '50%',
-            background: C.bgHoverStrong,
-            animation: 'bitbit-help-pulse 2s ease-in-out infinite',
-          }}
-        />
+        <div className="absolute inset-0 rounded-full bg-secondary animate-[bitbit-help-pulse_2s_ease-in-out_infinite]" />
         {/* Icon */}
-        <div style={{ position: 'relative', zIndex: 1 }}>
-          {icon || <HelpCircle size={16} style={{ color: 'var(--text-primary, #F1F5F9)' }} />}
+        <div className="relative z-10">
+          {icon || <IconHelpCircle size={16} className="text-foreground" />}
         </div>
       </button>
 
@@ -176,87 +111,33 @@ export function HelpTooltip({
       {showTooltip && (
         <div
           ref={tooltipRef}
-          style={getTooltipStyles()}
+          className={`absolute z-50 bg-popover backdrop-blur-xl border border-border rounded-xl px-4 py-3 min-w-60 max-w-80 shadow-lg pointer-events-auto ${getTooltipPositionClasses()}`}
           onMouseEnter={() => setShowTooltip(true)}
           onMouseLeave={() => setShowTooltip(false)}
         >
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'flex-start',
-              gap: 8,
-              marginBottom: 8,
-            }}
-          >
-            <h4
-              style={{
-                margin: 0,
-                fontSize: 14,
-                fontWeight: 500,
-                color: 'var(--text-primary, #F1F5F9)',
-              }}
-            >
+          <div className="flex justify-between items-start gap-2 mb-2">
+            <h4 className="text-sm font-medium text-foreground">
               {title}
             </h4>
             <button
               onClick={handleDismiss}
-              style={{
-                background: 'none',
-                border: 'none',
-                padding: 0,
-                cursor: 'pointer',
-                color: 'var(--text-secondary, #94A3B8)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                transition: 'color 0.15s ease',
-                flexShrink: 0,
-              }}
-              onMouseEnter={(e) => {
-                (e.target as HTMLElement).style.color = 'var(--text-primary, #F1F5F9)';
-              }}
-              onMouseLeave={(e) => {
-                (e.target as HTMLElement).style.color = 'var(--text-secondary, #94A3B8)';
-              }}
+              className="bg-transparent border-none p-0 cursor-pointer text-muted-foreground hover:text-foreground transition-colors shrink-0 flex items-center justify-center"
               aria-label="Close help"
             >
-              <X size={14} />
+              <IconX size={14} />
             </button>
           </div>
 
-          <p
-            style={{
-              margin: '0 0 12px',
-              fontSize: 14,
-              lineHeight: 1.5,
-              color: 'var(--text-secondary, #94A3B8)',
-            }}
-          >
+          <p className="mb-3 text-sm leading-relaxed text-muted-foreground">
             {description}
           </p>
 
-          <label
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              fontSize: 14,
-              color: 'var(--text-secondary, #94A3B8)',
-              cursor: 'pointer',
-              userSelect: 'none',
-            }}
-          >
+          <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer select-none">
             <input
               type="checkbox"
               checked={isDontShowAgain}
               onChange={(e) => setIsDontShowAgain(e.target.checked)}
-              style={{
-                width: 14,
-                height: 14,
-                cursor: 'pointer',
-                accentColor: 'var(--text-primary, #F1F5F9)',
-              }}
+              className="w-3.5 h-3.5 cursor-pointer accent-foreground"
             />
             Don't show again
           </label>

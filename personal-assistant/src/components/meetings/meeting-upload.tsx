@@ -1,9 +1,8 @@
 'use client'
 
 import { useState, useRef, useCallback } from 'react'
-import { Upload, X, Mic, Loader2, FileAudio } from 'lucide-react'
+import { IconUpload, IconX, IconLoader2, IconFileMusic } from '@tabler/icons-react'
 import { ALLOWED_MIME_TYPES, MAX_RECORDING_SIZE } from '@/lib/meetings/types'
-import { S, C } from '@/lib/styles/design-tokens'
 
 interface MeetingUploadProps {
   onUploaded: (meetingId: string) => void
@@ -82,35 +81,18 @@ export function MeetingUpload({ onUploaded, onCancel }: MeetingUploadProps) {
   }
 
   return (
-    <div style={{
-      position: 'fixed',
-      inset: 0,
-      background: 'var(--bg-overlay)',
-      backdropFilter: 'blur(8px)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 100,
-    }}>
-      <div style={{
-        background: 'var(--bg-elevated)',
-        borderRadius: 'var(--radius-xl)',
-        padding: '24px',
-        width: '100%',
-        maxWidth: '480px',
-        backdropFilter: 'blur(40px)',
-        boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
-      }}>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+      <div className="w-full max-w-[480px] rounded-2xl bg-card p-6 shadow-2xl backdrop-blur-[40px]">
         {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-          <h2 style={{ fontSize: '16px', fontWeight: 500, color: 'var(--text-primary)', margin: 0 }}>
+        <div className="mb-5 flex items-center justify-between">
+          <h2 className="text-base font-medium text-foreground">
             Upload Meeting Recording
           </h2>
           <button
             onClick={onCancel}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-dim)', padding: '4px' }}
+            className="rounded-md bg-transparent p-1 text-muted-foreground hover:text-foreground"
           >
-            <X size={18} />
+            <IconX className="h-[18px] w-[18px]" />
           </button>
         </div>
 
@@ -120,22 +102,17 @@ export function MeetingUpload({ onUploaded, onCancel }: MeetingUploadProps) {
           onDragLeave={() => setDragOver(false)}
           onDrop={handleDrop}
           onClick={() => fileInputRef.current?.click()}
-          style={{
-            border: `2px dashed ${dragOver ? 'var(--text-primary, #F1F5F9)' : C.borderHover}`,
-            borderRadius: 'var(--radius-lg)',
-            padding: '32px',
-            textAlign: 'center',
-            cursor: 'pointer',
-            background: dragOver ? 'var(--hover-bg)' : 'transparent',
-            transition: 'all 0.15s var(--ease-default)',
-            marginBottom: '16px',
-          }}
+          className={`mb-4 cursor-pointer rounded-xl border-2 border-dashed p-8 text-center transition-colors ${
+            dragOver
+              ? 'border-foreground bg-secondary/50'
+              : 'border-border bg-transparent'
+          }`}
         >
           <input
             ref={fileInputRef}
             type="file"
             accept="audio/*,video/*"
-            style={{ display: 'none' }}
+            className="hidden"
             onChange={e => {
               const f = e.target.files?.[0]
               if (f) handleFileSelect(f)
@@ -144,21 +121,21 @@ export function MeetingUpload({ onUploaded, onCancel }: MeetingUploadProps) {
 
           {file ? (
             <div>
-              <FileAudio size={32} style={{ color: 'var(--text-primary, #F1F5F9)', margin: '0 auto 8px' }} />
-              <div style={{ fontSize: '14px', color: 'var(--text-primary)', fontWeight: 500 }}>
+              <IconFileMusic className="mx-auto mb-2 h-8 w-8 text-foreground" />
+              <div className="text-sm font-medium text-foreground">
                 {file.name}
               </div>
-              <div style={{ fontSize: '14px', color: 'var(--text-dim)', marginTop: '4px' }}>
+              <div className="mt-1 text-sm text-muted-foreground">
                 {(file.size / (1024 * 1024)).toFixed(1)}MB
               </div>
             </div>
           ) : (
             <div>
-              <Upload size={32} style={{ color: 'var(--text-dim)', margin: '0 auto 8px', opacity: 0.5 }} />
-              <div style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
+              <IconUpload className="mx-auto mb-2 h-8 w-8 text-muted-foreground opacity-50" />
+              <div className="text-sm text-muted-foreground">
                 Drop audio/video file here or click to browse
               </div>
-              <div style={{ fontSize: '14px', color: 'var(--text-dim)', marginTop: '4px' }}>
+              <div className="mt-1 text-sm text-muted-foreground/70">
                 MP3, WAV, M4A, MP4, WebM, OGG, FLAC (max 500MB)
               </div>
             </div>
@@ -166,8 +143,8 @@ export function MeetingUpload({ onUploaded, onCancel }: MeetingUploadProps) {
         </div>
 
         {/* Title input */}
-        <div style={{ marginBottom: '12px' }}>
-          <label style={{ fontSize: '14px', color: 'var(--text-dim)', marginBottom: '4px', display: 'block' }}>
+        <div className="mb-3">
+          <label className="mb-1 block text-sm text-muted-foreground">
             Meeting Title
           </label>
           <input
@@ -175,24 +152,13 @@ export function MeetingUpload({ onUploaded, onCancel }: MeetingUploadProps) {
             value={title}
             onChange={e => setTitle(e.target.value)}
             placeholder="e.g., Client Strategy Meeting"
-            style={{
-              width: '100%',
-              padding: '8px 12px',
-              background: 'var(--bg-input)',
-              border: 'none',
-              borderRadius: 'var(--radius-md)',
-              color: 'var(--text-primary)',
-              fontSize: '14px',
-              outline: 'none',
-              fontFamily: 'var(--font-sans)',
-              boxSizing: 'border-box',
-            }}
+            className="w-full rounded-lg border-none bg-background px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground"
           />
         </div>
 
         {/* Participants input */}
-        <div style={{ marginBottom: '16px' }}>
-          <label style={{ fontSize: '14px', color: 'var(--text-dim)', marginBottom: '4px', display: 'block' }}>
+        <div className="mb-4">
+          <label className="mb-1 block text-sm text-muted-foreground">
             Participants (comma-separated, optional)
           </label>
           <input
@@ -200,76 +166,38 @@ export function MeetingUpload({ onUploaded, onCancel }: MeetingUploadProps) {
             value={participants}
             onChange={e => setParticipants(e.target.value)}
             placeholder="e.g., Andy, Sarah, Mike"
-            style={{
-              width: '100%',
-              padding: '8px 12px',
-              background: 'var(--bg-input)',
-              border: 'none',
-              borderRadius: 'var(--radius-md)',
-              color: 'var(--text-primary)',
-              fontSize: '14px',
-              outline: 'none',
-              fontFamily: 'var(--font-sans)',
-              boxSizing: 'border-box',
-            }}
+            className="w-full rounded-lg border-none bg-background px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground"
           />
         </div>
 
         {/* Error */}
         {error && (
-          <div style={{
-            fontSize: '14px',
-            color: 'var(--bb-red)',
-            marginBottom: '12px',
-            padding: '8px',
-            background: C.statusErrorBg,
-            borderRadius: 'var(--radius-sm)',
-          }}>
+          <div className="mb-3 rounded-md bg-destructive/10 p-2 text-sm text-destructive">
             {error}
           </div>
         )}
 
         {/* Actions */}
-        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+        <div className="flex justify-end gap-2">
           <button
             onClick={onCancel}
-            style={{
-              padding: '8px 16px',
-              background: 'var(--bg-input)',
-              color: 'var(--text-secondary)',
-              borderRadius: 'var(--radius-md)',
-              border: 'none',
-              cursor: 'pointer',
-              fontSize: '14px',
-            }}
+            className="rounded-lg bg-secondary px-4 py-2 text-sm text-muted-foreground"
           >
             Cancel
           </button>
           <button
             onClick={handleUpload}
             disabled={!file || uploading}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '8px 20px',
-              background: !file || uploading ? 'var(--hover-bg-strong, rgba(255,255,255,0.12))' : 'var(--btn-primary-bg, #F1F5F9)',
-              color: 'var(--btn-primary-fg, #0a0f1a)',
-              borderRadius: 'var(--radius-md)',
-              border: 'none',
-              cursor: !file || uploading ? 'not-allowed' : 'pointer',
-              fontSize: '14px',
-              fontWeight: 500,
-            }}
+            className="flex items-center gap-2 rounded-lg bg-primary px-5 py-2 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-50"
           >
             {uploading ? (
               <>
-                <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} />
+                <IconLoader2 className="h-3.5 w-3.5 animate-spin" />
                 Uploading...
               </>
             ) : (
               <>
-                <Upload size={14} />
+                <IconUpload className="h-3.5 w-3.5" />
                 Upload
               </>
             )}

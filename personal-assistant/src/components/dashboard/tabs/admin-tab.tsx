@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/client';
 import { TabShell } from '@/components/ui/tab-shell';
 import { TabSkeleton } from './tab-skeleton';
 import { AlertBanner } from '@/components/ui/alert-banner';
-import { GlassDropdown } from '@/components/ui/glass-dropdown';
+import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 // ---------------------------------------------------------------------------
@@ -242,12 +242,16 @@ export default function AdminTab() {
         </div>
         <div style={{ padding: 20 }}>
           <div style={{ display: 'flex', gap: 12, marginBottom: 12, flexWrap: 'wrap', alignItems: 'center' }}>
-            <GlassDropdown
-              options={IMPORT_ENTITIES.map(e => ({ value: e, label: e }))}
-              value={importEntity}
-              onChange={v => setImportEntity(v)}
-              size="sm"
-            />
+            <Select value={importEntity} onValueChange={v => setImportEntity(v)}>
+              <SelectTrigger className="w-auto">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {IMPORT_ENTITIES.map(e => (
+                  <SelectItem key={e} value={e}>{e}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <input type="file" accept=".json" onChange={handleFileUpload} style={{ fontSize: 14 }} />
           </div>
           <textarea
@@ -295,12 +299,16 @@ export default function AdminTab() {
         </div>
         <div style={{ padding: 20 }}>
           <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
-            <GlassDropdown
-              options={EXPORT_ENTITIES.map(e => ({ value: e, label: e }))}
-              value={exportEntity}
-              onChange={v => setExportEntity(v)}
-              size="sm"
-            />
+            <Select value={exportEntity} onValueChange={v => setExportEntity(v)}>
+              <SelectTrigger className="w-auto">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {EXPORT_ENTITIES.map(e => (
+                  <SelectItem key={e} value={e}>{e}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <div style={{ display: 'flex', gap: 4 }}>
               {(['csv', 'json'] as const).map(f => (
                 <button

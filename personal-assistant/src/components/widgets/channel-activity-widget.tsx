@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { Users } from 'lucide-react';
+import { IconUsers } from '@tabler/icons-react';
 import { WidgetCard } from './widget-card';
 import { EmptyState } from '@/components/ui/empty-state';
 
@@ -21,15 +21,15 @@ export function ChannelActivityWidget() {
     <WidgetCard
       title="Recent Channel Activity"
       subtitle="Latest messages across all channels"
-      icon={<Users size={20} style={{ color: 'var(--bb-cyan)' }} />}
+      icon={<IconUsers size={20} className="text-cyan-400" />}
     >
-      <div className="space-y-3 max-h-64 overflow-y-auto">
+      <div className="flex flex-col gap-3 max-h-64 overflow-y-auto">
         {activity.length === 0 ? (
           <EmptyState title="No recent activity" description="Channel messages will appear here." />
         ) : (
           activity.map((item, idx) => (
-            <div key={(item.id as string) || idx} className="flex items-start gap-3 pb-3 border-b border-[var(--border-subtle)] last:border-0">
-              <div className="w-2 h-2 rounded-full bg-[var(--accent)] mt-2 flex-shrink-0" />
+            <div key={(item.id as string) || idx} className="flex items-start gap-3 pb-3 border-b border-border last:border-0">
+              <div className="w-2 h-2 rounded-full bg-accent mt-2 shrink-0" />
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-medium truncate">
                   {(item.sender_name || item.content || item.message || 'Activity Update') as string}

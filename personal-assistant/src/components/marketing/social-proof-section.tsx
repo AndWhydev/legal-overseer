@@ -1,8 +1,9 @@
 'use client'
 
 import Link from 'next/link'
-import { ArrowRight } from 'lucide-react'
-import { C, S } from '@/lib/styles/design-tokens'
+import { IconArrowRight } from '@tabler/icons-react'
+import { Card, CardContent } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 
 const CASE_STUDY_STATS = [
   { value: '2,400+', label: 'Messages triaged' },
@@ -29,124 +30,45 @@ const TESTIMONIALS = [
 
 export default function SocialProofSection() {
   return (
-    <section style={{ padding: '100px 20px', position: 'relative' }}>
-      <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+    <section className="py-24 px-5 relative">
+      <div className="max-w-[1100px] mx-auto">
         {/* Section header */}
-        <div style={{ textAlign: 'center', marginBottom: '64px' }}>
-          <h2
-            style={{
-              fontSize: 'clamp(24px, 4vw, 36px)',
-              fontWeight: 500,
-              marginBottom: '16px',
-              letterSpacing: '-0.02em',
-              color: C.textPrimary,
-            }}
-          >
+        <div className="text-center mb-16">
+          <h2 className="text-[clamp(24px,4vw,36px)] font-medium mb-4 tracking-tight text-foreground">
             Real results, not demos
           </h2>
-          <p
-            style={{
-              fontSize: 16,
-              color: C.textSecondary,
-              maxWidth: '600px',
-              margin: '0 auto',
-              lineHeight: 1.6,
-            }}
-          >
+          <p className="text-base text-muted-foreground max-w-[600px] mx-auto leading-relaxed">
             BitBit is already running operations for Australian businesses.
           </p>
         </div>
 
         {/* AWU Case Study Card */}
-        <div
-          style={{
-            ...S.card,
-            padding: '40px 32px',
-            marginBottom: '48px',
-          }}
-        >
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '32px',
-            }}
-          >
+        <Card className="px-8 py-10 mb-12">
+          <CardContent className="p-0 flex flex-col gap-8">
             {/* Case study header */}
             <div>
-              <p
-                style={{
-                  fontSize: 13,
-                  fontWeight: 500,
-                  letterSpacing: '0.06em',
-                  textTransform: 'uppercase',
-                  color: C.textDim,
-                  marginBottom: 8,
-                }}
-              >
+              <p className="text-xs font-medium tracking-widest uppercase text-muted-foreground/60 mb-2">
                 Case Study
               </p>
-              <h3
-                style={{
-                  fontSize: 'clamp(18px, 3vw, 24px)',
-                  fontWeight: 500,
-                  color: C.textPrimary,
-                  marginBottom: 8,
-                }}
-              >
+              <h3 className="text-[clamp(18px,3vw,24px)] font-medium text-foreground mb-2">
                 All Webbed Up -- How a Brisbane agency automated their operations
               </h3>
-              <p
-                style={{
-                  fontSize: 14,
-                  color: C.textSecondary,
-                  lineHeight: 1.6,
-                  maxWidth: '640px',
-                }}
-              >
+              <p className="text-sm text-muted-foreground leading-relaxed max-w-[640px]">
                 &quot;Andy put it simply: this thing can be sold to a marketing agency worldwide and they&apos;d probably jump at it.&quot;
               </p>
             </div>
 
             {/* Stat boxes */}
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
-                gap: '16px',
-              }}
-            >
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(160px,1fr))] gap-4">
               {CASE_STUDY_STATS.map(({ value, label }) => (
                 <div
                   key={label}
-                  style={{
-                    padding: '20px 16px',
-                    borderRadius: 12,
-                    background: 'rgba(255, 255, 255, 0.02)',
-                    border: `1px solid ${C.borderSubtle}`,
-                    textAlign: 'center',
-                  }}
+                  className="p-5 px-4 rounded-xl bg-muted/30 border border-border text-center"
                 >
-                  <div
-                    style={{
-                      fontSize: 'clamp(20px, 3vw, 28px)',
-                      fontWeight: 500,
-                      color: C.textPrimary,
-                      marginBottom: 4,
-                      fontFamily: 'var(--font-mono, monospace)',
-                      letterSpacing: '-0.02em',
-                    }}
-                  >
+                  <div className="text-[clamp(20px,3vw,28px)] font-medium text-foreground mb-1 font-mono tracking-tight">
                     {value}
                   </div>
-                  <div
-                    style={{
-                      fontSize: 13,
-                      color: C.textDim,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.04em',
-                    }}
-                  >
+                  <div className="text-xs text-muted-foreground/60 uppercase tracking-wider">
                     {label}
                   </div>
                 </div>
@@ -155,95 +77,37 @@ export default function SocialProofSection() {
 
             {/* CTA */}
             <div>
-              <Link
-                href="/case-study"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  fontSize: 14,
-                  fontWeight: 500,
-                  color: C.textPrimary,
-                  textDecoration: 'none',
-                  transition: 'opacity 200ms',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.opacity = '0.7'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.opacity = '1'
-                }}
-              >
-                Read the full case study
-                <ArrowRight size={16} />
-              </Link>
+              <Button asChild variant="link" className="p-0 h-auto gap-2 text-sm font-medium">
+                <Link href="/case-study">
+                  Read the full case study
+                  <IconArrowRight size={16} />
+                </Link>
+              </Button>
             </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
         {/* Testimonial cards */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-            gap: '24px',
-          }}
-        >
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-6">
           {TESTIMONIALS.map((t) => (
-            <div
+            <Card
               key={t.name}
-              style={{
-                ...S.card,
-                padding: '32px 24px',
-                display: 'flex',
-                flexDirection: 'column',
-                transition: 'all 300ms',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = C.bgCardHeavy
-                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)'
-                e.currentTarget.style.transform = 'translateY(-4px)'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = C.bgCard
-                e.currentTarget.style.borderColor = C.borderSubtle
-                e.currentTarget.style.transform = 'translateY(0)'
-              }}
+              className="py-8 px-6 transition-all duration-300 hover:bg-muted/50 hover:border-border/80 hover:-translate-y-1"
             >
-              <p
-                style={{
-                  fontSize: 16,
-                  color: C.textPrimary,
-                  lineHeight: 1.6,
-                  marginBottom: 24,
-                  fontStyle: 'italic',
-                  flex: 1,
-                }}
-              >
-                &quot;{t.quote}&quot;
-              </p>
-              <div>
-                <p
-                  style={{
-                    fontSize: 14,
-                    fontWeight: 500,
-                    color: C.textPrimary,
-                    margin: '0 0 2px 0',
-                  }}
-                >
-                  {t.name}
+              <CardContent className="p-0 flex flex-col h-full">
+                <p className="text-base text-foreground leading-relaxed mb-6 italic flex-1">
+                  &quot;{t.quote}&quot;
                 </p>
-                <p
-                  style={{
-                    fontSize: 14,
-                    color: C.textSecondary,
-                    margin: 0,
-                  }}
-                >
-                  {t.role} at {t.company}
-                </p>
-              </div>
-            </div>
+                <div>
+                  <p className="text-sm font-medium text-foreground mb-0.5">
+                    {t.name}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {t.role} at {t.company}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
           ))}
         </div>
       </div>

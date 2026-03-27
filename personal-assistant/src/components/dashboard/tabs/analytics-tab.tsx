@@ -5,17 +5,17 @@ import { createClient } from '@/lib/supabase/client'
 import { TabShell } from '@/components/ui/tab-shell'
 import { EmptyState } from '@/components/ui/empty-state'
 import {
-  DollarSign,
-  Users,
-  TrendingDown,
-  TrendingUp,
-  Cpu,
-  AlertTriangle,
-} from 'lucide-react'
+  IconCurrencyDollar,
+  IconUsers,
+  IconTrendingDown,
+  IconTrendingUp,
+  IconCpu,
+  IconAlertTriangle,
+} from '@tabler/icons-react'
 import type { CohortMatrix } from '@/app/api/analytics/cohorts/route'
 import type { TrendsResponse, AnomalySummary } from '@/app/api/analytics/trends/route'
 import type { TrendSeries, DataPoint, AnomalyPoint, ForecastPoint } from '@/lib/analytics/forecasting'
-import { S as DS, C } from '@/lib/styles/design-tokens'
+// Design token references replaced with Tailwind/CSS vars inline
 
 // ---------------------------------------------------------------------------
 // Types
@@ -75,7 +75,13 @@ interface AnalyticsData {
 // ---------------------------------------------------------------------------
 
 const glassCard: React.CSSProperties = {
-  ...DS.card,
+  padding: 20,
+  borderRadius: 16,
+  background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.6))',
+  backdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
+  WebkitBackdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
+  border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
+  boxShadow: 'var(--card-shadow, 0 2px 8px rgba(0,0,0,0.3)), var(--card-inset, inset 0 1px 0 rgba(255, 255, 255, 0.05))',
 }
 
 const listRow: React.CSSProperties = {
@@ -123,7 +129,7 @@ const badge = (color: string): React.CSSProperties => ({
 
 const skeletonStyle: React.CSSProperties = {
   borderRadius: 8,
-  background: `linear-gradient(90deg, ${C.borderSubtle} 25%, ${C.borderVisible} 50%, ${C.borderSubtle} 75%)`,
+  background: `linear-gradient(90deg, ${'var(--border-subtle, rgba(255, 255, 255, 0.03))'} 25%, ${'var(--glass-border, rgba(255, 255, 255, 0.06))'} 50%, ${'var(--border-subtle, rgba(255, 255, 255, 0.03))'} 75%)`,
   backgroundSize: '200% 100%',
   animation: 'shimmer 1.5s ease infinite',
 }
@@ -133,7 +139,7 @@ const skeletonStyle: React.CSSProperties = {
 // ---------------------------------------------------------------------------
 
 function retentionColor(pct: number): string {
-  if (pct === 0) return C.bgHover
+  if (pct === 0) return 'var(--hover-bg, rgba(255, 255, 255, 0.04))'
   if (pct >= 80) return 'rgba(99,235,163,0.55)'
   if (pct >= 60) return 'rgba(99,235,163,0.35)'
   if (pct >= 40) return 'rgba(245,197,84,0.40)'
@@ -269,7 +275,7 @@ function TrendChart({
               y1={y}
               x2={width - padding}
               y2={y}
-              stroke={C.borderVisible}
+              stroke={'var(--glass-border, rgba(255, 255, 255, 0.06))'}
               strokeWidth={1}
             />
           )
@@ -519,14 +525,14 @@ function CohortHeatmap({ matrix }: { matrix: CohortMatrix }) {
                   title={pct !== null ? `${pct}%` : 'N/A'}
                   style={{
                     borderRadius: 8,
-                    background: pct !== null ? retentionColor(pct) : C.borderSubtle,
+                    background: pct !== null ? retentionColor(pct) : 'var(--border-subtle, rgba(255, 255, 255, 0.03))',
                     height: 32,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     fontSize: 14,
                     fontWeight: 500,
-                    color: pct !== null && pct >= 40 ? C.textPrimary : C.textMuted,
+                    color: pct !== null && pct >= 40 ? 'var(--text-primary, #F1F5F9)' : 'var(--text-dim, rgba(255, 255, 255, 0.3))',
                     fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
                   }}
                 >
@@ -554,7 +560,7 @@ function CohortHeatmap({ matrix }: { matrix: CohortMatrix }) {
                   height: 16,
                   borderRadius: 4,
                   background: retentionColor(pct),
-                  border: `1px solid ${C.bgHoverStrong}`,
+                  border: `1px solid ${'var(--hover-bg-strong, rgba(255, 255, 255, 0.08))'}`,
                 }}
               />
               <span style={{ fontSize: 14, color: 'var(--text-dim)' }}>{label}</span>
@@ -644,10 +650,10 @@ function AnalyticsTab() {
         <section>
           <h3 style={sectionHeader}>Monthly Recurring Revenue</h3>
           <div className="bb-stagger" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 16 }}>
-            <StatCard icon={DollarSign} label="Total MRR" value={`$${mrr.totalMRR.toLocaleString()}`} />
-            <StatCard icon={Users} label="Active Subs" value={String(mrr.activeSubscriptions)} />
-            <StatCard icon={TrendingDown} label="Churn Rate" value={`${mrr.churnRate}%`} alert={mrr.churnRate > 5} />
-            <StatCard icon={TrendingUp} label="Net New MRR" value={`$${mrr.netNewMRR.toLocaleString()}`} />
+            <StatCard icon={IconCurrencyDollar} label="Total MRR" value={`$${mrr.totalMRR.toLocaleString()}`} />
+            <StatCard icon={IconUsers} label="Active Subs" value={String(mrr.activeSubscriptions)} />
+            <StatCard icon={IconTrendingDown} label="Churn Rate" value={`${mrr.churnRate}%`} alert={mrr.churnRate > 5} />
+            <StatCard icon={IconTrendingUp} label="Net New MRR" value={`$${mrr.netNewMRR.toLocaleString()}`} />
           </div>
 
           {/* MRR by Tier */}
@@ -663,13 +669,13 @@ function AnalyticsTab() {
                     <span style={{ fontSize: 14, minWidth: 80, textTransform: 'capitalize', color: 'var(--text-primary)' }}>
                       {tier}
                     </span>
-                    <div style={{ flex: 1, height: 8, borderRadius: 4, background: C.bgHoverStrong, overflow: 'hidden' }}>
+                    <div style={{ flex: 1, height: 8, borderRadius: 4, background: 'var(--hover-bg-strong, rgba(255, 255, 255, 0.08))', overflow: 'hidden' }}>
                       <div
                         style={{
                           height: '100%',
                           borderRadius: 4,
                           width: `${pct}%`,
-                          background: C.borderFocus,
+                          background: 'var(--border-focus-ring, rgba(255, 255, 255, 0.2))',
                           transition: 'width 300ms ease',
                         }}
                       />
@@ -741,8 +747,8 @@ function AnalyticsTab() {
           <section>
             <h3 style={sectionHeader}>Token Usage &amp; Costs</h3>
             <div className="bb-stagger" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 16 }}>
-              <StatCard icon={Cpu} label="Total Tokens" value={formatTokens(usage.totalTokens)} />
-              <StatCard icon={DollarSign} label="Total Cost" value={`$${usage.totalCostUSD.toFixed(2)}`} />
+              <StatCard icon={IconCpu} label="Total Tokens" value={formatTokens(usage.totalTokens)} />
+              <StatCard icon={IconCurrencyDollar} label="Total Cost" value={`$${usage.totalCostUSD.toFixed(2)}`} />
             </div>
 
             {/* By Agent */}
@@ -853,7 +859,7 @@ function AnalyticsTab() {
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-                      <AlertTriangle
+                      <IconAlertTriangle
                         size={18}
                         style={{
                           color: riskColor,
@@ -889,7 +895,7 @@ function AnalyticsTab() {
                                     width: 4,
                                     height: 4,
                                     borderRadius: '50%',
-                                    background: C.borderFocus,
+                                    background: 'var(--border-focus-ring, rgba(255, 255, 255, 0.2))',
                                     flexShrink: 0,
                                   }}
                                 />

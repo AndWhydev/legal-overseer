@@ -2,17 +2,17 @@
 
 import React from 'react';
 import { TimelineBar } from '@/components/ui/data-viz';
-import { Clock, Calendar } from 'lucide-react';
+import { IconClock, IconCalendar } from '@tabler/icons-react';
 import { WidgetCard } from './widget-card';
 
 export function TodaysScheduleWidget() {
   return (
     <WidgetCard
       title="Today's Schedule"
-      icon={<Clock size={20} style={{ color: 'var(--bb-status-info)' }} />}
+      icon={<IconClock size={20} className="text-sky-400" />}
     >
       <div className="text-xs text-muted-foreground mb-4 flex items-center gap-2">
-        <Calendar size={14} />
+        <IconCalendar size={14} />
         <span>Connect Google Calendar to see your schedule</span>
       </div>
       <TimelineBar

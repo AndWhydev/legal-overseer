@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { GlassDropdown } from '@/components/ui/glass-dropdown'
-import { S, C } from '@/lib/styles/design-tokens'
+import { Badge } from '@/components/ui/badge'
 
 interface PortalAccessRow {
   id: string
@@ -144,7 +144,7 @@ export function PortalManagement() {
 
   if (loading) {
     return (
-      <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-secondary, #94A3B8)' }}>
+      <div className="p-10 text-center text-muted-foreground">
         Loading portal settings...
       </div>
     )
@@ -153,23 +153,16 @@ export function PortalManagement() {
   return (
     <div>
       {/* Tabs */}
-      <div className="flex items-center gap-1" style={{ marginBottom: 24 }}>
+      <div className="flex items-center gap-1 mb-6">
         {(['access', 'branding'] as const).map(t => (
           <button
             key={t}
             onClick={() => setTab(t)}
-            style={{
-              padding: '8px 20px',
-              borderRadius: 8,
-              fontSize: 14,
-              fontWeight: tab === t ? 500 : 400,
-              background: tab === t ? 'var(--hover-bg-strong)' : 'transparent',
-              color: tab === t ? 'var(--text-primary, #F1F5F9)' : 'var(--text-secondary, #94A3B8)',
-              border: tab === t ? `1px solid ${C.borderHover}` : '1px solid transparent',
-              cursor: 'pointer',
-              transition: 'all 150ms',
-              textTransform: 'capitalize',
-            }}
+            className={`px-5 py-2 rounded-lg text-sm capitalize transition-all ${
+              tab === t
+                ? 'font-medium bg-secondary text-foreground border border-border'
+                : 'text-muted-foreground border border-transparent hover:text-foreground'
+            }`}
           >
             {t === 'access' ? 'Client Access' : 'Portal Branding'}
           </button>
@@ -179,13 +172,13 @@ export function PortalManagement() {
       {tab === 'access' && (
         <div>
           {/* Invite Form */}
-          <form onSubmit={handleInvite} style={{ ...glassCard, padding: 20, marginBottom: 24 }}>
-            <h3 style={{ fontSize: 16, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)', margin: '0 0 16px' }}>
+          <form onSubmit={handleInvite} className="rounded-2xl border border-border bg-card p-5 mb-6">
+            <h3 className="text-base font-medium text-foreground mb-4">
               Invite Client to Portal
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label style={darkLabelStyle}>Contact</label>
+                <label className="block text-sm font-medium text-muted-foreground mb-2">Contact</label>
                 <GlassDropdown
                   options={[{ value: '', label: 'Select contact...' }, ...contacts.map(c => ({ value: c.id, label: c.name }))]}
                   value={inviteForm.contact_id}
@@ -199,32 +192,20 @@ export function PortalManagement() {
                 />
               </div>
               <div>
-                <label style={darkLabelStyle}>Email</label>
+                <label className="block text-sm font-medium text-muted-foreground mb-2">Email</label>
                 <input
                   type="email"
                   value={inviteForm.email}
                   onChange={e => setInviteForm(prev => ({ ...prev, email: e.target.value }))}
                   placeholder={selectedContact?.emails?.[0] ?? 'client@example.com'}
-                  style={darkInputStyle}
+                  className="w-full px-4 py-3 rounded-lg border border-border bg-input text-foreground text-sm outline-none transition-colors focus:border-ring"
                 />
               </div>
               <div className="flex items-end">
                 <button
                   type="submit"
                   disabled={inviting || !inviteForm.contact_id || !inviteForm.email}
-                  style={{
-                    padding: '12px 20px',
-                    borderRadius: 8,
-                    background: 'var(--btn-primary-bg, #F1F5F9)',
-                    color: 'var(--btn-primary-fg, #0a0f1a)',
-                    fontSize: 14,
-                    fontWeight: 500,
-                    border: 'none',
-                    cursor: inviting ? 'wait' : 'pointer',
-                    opacity: inviting || !inviteForm.contact_id ? 0.6 : 1,
-                    transition: 'opacity 150ms',
-                    width: '100%',
-                  }}
+                  className="w-full px-5 py-3 rounded-lg bg-primary text-primary-foreground text-sm font-medium transition-opacity disabled:opacity-60 disabled:cursor-not-allowed hover:opacity-90"
                 >
                   {inviting ? 'Sending...' : 'Send Invite'}
                 </button>
@@ -233,66 +214,52 @@ export function PortalManagement() {
           </form>
 
           {/* Access List */}
-          <div style={glassCard}>
-            <div style={{ padding: '12px 20px', borderBottom: `1px solid ${C.borderSubtle}` }}>
-              <h3 style={{ fontSize: 16, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)', margin: 0 }}>
+          <div className="rounded-2xl border border-border bg-card overflow-hidden">
+            <div className="px-5 py-3 border-b border-border">
+              <h3 className="text-base font-medium text-foreground">
                 Portal Access ({accessList.length})
               </h3>
             </div>
             {accessList.length === 0 ? (
-              <div style={{ padding: '32px 20px', textAlign: 'center', color: 'var(--text-dim, #475569)' }}>
+              <div className="px-5 py-8 text-center text-muted-foreground">
                 No clients invited yet
               </div>
             ) : (
               accessList.map((access, i) => (
                 <div
                   key={access.id}
-                  className="flex items-center justify-between"
-                  style={{
-                    padding: '12px 20px',
-                    borderBottom: i < accessList.length - 1 ? `1px solid ${C.borderSubtle}` : 'none',
-                  }}
+                  className={`flex items-center justify-between px-5 py-3 ${
+                    i < accessList.length - 1 ? 'border-b border-border' : ''
+                  }`}
                 >
                   <div>
-                    <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)', margin: 0 }}>
+                    <p className="text-sm font-medium text-foreground">
                       {access.contacts?.name ?? access.email}
                     </p>
-                    <p style={{ fontSize: 14, color: 'var(--text-secondary, #94A3B8)', margin: '2px 0 0' }}>
+                    <p className="text-sm text-muted-foreground mt-0.5">
                       {access.email}
                     </p>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span
-                      style={{
-                        fontSize: 14,
-                        fontWeight: 500,
-                        padding: '4px 12px',
-                        borderRadius: 8,
-                        background: access.status === 'active' ? 'rgba(34, 197, 94, 0.12)' : access.status === 'invited' ? 'rgba(234, 179, 8, 0.12)' : C.statusErrorBg,
-                        color: access.status === 'active' ? '#22c55e' : access.status === 'invited' ? '#eab308' : '#ef4444',
-                        textTransform: 'capitalize',
-                      }}
+                    <Badge
+                      variant={
+                        access.status === 'active' ? 'default' :
+                        access.status === 'invited' ? 'secondary' :
+                        'destructive'
+                      }
+                      className="capitalize"
                     >
                       {access.status}
-                    </span>
+                    </Badge>
                     {access.last_login_at && (
-                      <span style={{ fontSize: 14, color: 'var(--text-dim, #475569)' }}>
+                      <span className="text-sm text-muted-foreground">
                         Last login: {new Date(access.last_login_at).toLocaleDateString('en-AU')}
                       </span>
                     )}
                     {access.status !== 'revoked' && (
                       <button
                         onClick={() => handleRevoke(access.id)}
-                        style={{
-                          padding: '8px 12px',
-                          borderRadius: 8,
-                          background: 'transparent',
-                          border: `1px solid ${C.statusError}`,
-                          color: '#ef4444',
-                          fontSize: 14,
-                          cursor: 'pointer',
-                          transition: 'all 150ms',
-                        }}
+                        className="px-3 py-2 rounded-lg text-sm text-destructive border border-destructive/50 hover:bg-destructive/10 transition-colors"
                       >
                         Revoke
                       </button>
@@ -306,159 +273,142 @@ export function PortalManagement() {
       )}
 
       {tab === 'branding' && (
-        <form onSubmit={handleSaveBranding} style={glassCard}>
-          <div style={{ padding: '12px 20px', borderBottom: `1px solid ${C.borderSubtle}` }}>
-            <h3 style={{ fontSize: 16, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)', margin: 0 }}>
+        <form onSubmit={handleSaveBranding} className="rounded-2xl border border-border bg-card overflow-hidden">
+          <div className="px-5 py-3 border-b border-border">
+            <h3 className="text-base font-medium text-foreground">
               Portal Branding
             </h3>
-            <p style={{ fontSize: 14, color: 'var(--text-secondary, #94A3B8)', margin: '4px 0 0' }}>
+            <p className="text-sm text-muted-foreground mt-1">
               Customize how your client portal looks
             </p>
           </div>
 
-          <div style={{ padding: 20 }}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4" style={{ marginBottom: 20 }}>
+          <div className="p-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
               <div>
-                <label style={darkLabelStyle}>Company Name</label>
+                <label className="block text-sm font-medium text-muted-foreground mb-2">Company Name</label>
                 <input
                   type="text"
                   value={branding.company_name}
                   onChange={e => setBranding(prev => ({ ...prev, company_name: e.target.value }))}
                   placeholder="Your Agency Name"
-                  style={darkInputStyle}
+                  className="w-full px-4 py-3 rounded-lg border border-border bg-input text-foreground text-sm outline-none transition-colors focus:border-ring"
                 />
               </div>
               <div>
-                <label style={darkLabelStyle}>Logo URL</label>
+                <label className="block text-sm font-medium text-muted-foreground mb-2">Logo URL</label>
                 <input
                   type="url"
                   value={branding.logo_url}
                   onChange={e => setBranding(prev => ({ ...prev, logo_url: e.target.value }))}
                   placeholder="https://..."
-                  style={darkInputStyle}
+                  className="w-full px-4 py-3 rounded-lg border border-border bg-input text-foreground text-sm outline-none transition-colors focus:border-ring"
                 />
               </div>
               <div>
-                <label style={darkLabelStyle}>Primary Color</label>
+                <label className="block text-sm font-medium text-muted-foreground mb-2">Primary Color</label>
                 <div className="flex items-center gap-2">
                   <input
                     type="color"
                     value={branding.primary_color}
                     onChange={e => setBranding(prev => ({ ...prev, primary_color: e.target.value }))}
-                    style={{ width: 40, height: 36, border: 'none', borderRadius: 8, cursor: 'pointer' }}
+                    className="w-10 h-9 border-none rounded-lg cursor-pointer"
                   />
                   <input
                     type="text"
                     value={branding.primary_color}
                     onChange={e => setBranding(prev => ({ ...prev, primary_color: e.target.value }))}
-                    style={{ ...darkInputStyle, flex: 1 }}
+                    className="flex-1 px-4 py-3 rounded-lg border border-border bg-input text-foreground text-sm outline-none transition-colors focus:border-ring"
                   />
                 </div>
               </div>
               <div>
-                <label style={darkLabelStyle}>Accent Color</label>
+                <label className="block text-sm font-medium text-muted-foreground mb-2">Accent Color</label>
                 <div className="flex items-center gap-2">
                   <input
                     type="color"
                     value={branding.accent_color}
                     onChange={e => setBranding(prev => ({ ...prev, accent_color: e.target.value }))}
-                    style={{ width: 40, height: 36, border: 'none', borderRadius: 8, cursor: 'pointer' }}
+                    className="w-10 h-9 border-none rounded-lg cursor-pointer"
                   />
                   <input
                     type="text"
                     value={branding.accent_color}
                     onChange={e => setBranding(prev => ({ ...prev, accent_color: e.target.value }))}
-                    style={{ ...darkInputStyle, flex: 1 }}
+                    className="flex-1 px-4 py-3 rounded-lg border border-border bg-input text-foreground text-sm outline-none transition-colors focus:border-ring"
                   />
                 </div>
               </div>
               <div>
-                <label style={darkLabelStyle}>Support Email</label>
+                <label className="block text-sm font-medium text-muted-foreground mb-2">Support Email</label>
                 <input
                   type="email"
                   value={branding.support_email}
                   onChange={e => setBranding(prev => ({ ...prev, support_email: e.target.value }))}
                   placeholder="support@agency.com"
-                  style={darkInputStyle}
+                  className="w-full px-4 py-3 rounded-lg border border-border bg-input text-foreground text-sm outline-none transition-colors focus:border-ring"
                 />
               </div>
               <div>
-                <label style={darkLabelStyle}>Background Color</label>
+                <label className="block text-sm font-medium text-muted-foreground mb-2">Background Color</label>
                 <div className="flex items-center gap-2">
                   <input
                     type="color"
                     value={branding.background_color}
                     onChange={e => setBranding(prev => ({ ...prev, background_color: e.target.value }))}
-                    style={{ width: 40, height: 36, border: 'none', borderRadius: 8, cursor: 'pointer' }}
+                    className="w-10 h-9 border-none rounded-lg cursor-pointer"
                   />
                   <input
                     type="text"
                     value={branding.background_color}
                     onChange={e => setBranding(prev => ({ ...prev, background_color: e.target.value }))}
-                    style={{ ...darkInputStyle, flex: 1 }}
+                    className="flex-1 px-4 py-3 rounded-lg border border-border bg-input text-foreground text-sm outline-none transition-colors focus:border-ring"
                   />
                 </div>
               </div>
             </div>
 
-            <div style={{ marginBottom: 20 }}>
-              <label style={darkLabelStyle}>Welcome Message</label>
+            <div className="mb-5">
+              <label className="block text-sm font-medium text-muted-foreground mb-2">Welcome Message</label>
               <textarea
                 value={branding.welcome_message}
                 onChange={e => setBranding(prev => ({ ...prev, welcome_message: e.target.value }))}
                 placeholder="Welcome to your project hub..."
                 rows={3}
-                style={{ ...darkInputStyle, resize: 'vertical', minHeight: 80 }}
+                className="w-full px-4 py-3 rounded-lg border border-border bg-input text-foreground text-sm outline-none transition-colors focus:border-ring resize-y min-h-20"
               />
             </div>
 
             {/* Preview */}
-            <div style={{ marginBottom: 20 }}>
-              <label style={darkLabelStyle}>Preview</label>
+            <div className="mb-5">
+              <label className="block text-sm font-medium text-muted-foreground mb-2">Preview</label>
               <div
-                style={{
-                  padding: 24,
-                  borderRadius: 12,
-                  background: branding.background_color || '#FAFAFA',
-                  border: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
-                }}
+                className="p-6 rounded-xl border border-border"
+                style={{ background: branding.background_color || '#FAFAFA' }}
               >
-                <div className="flex items-center gap-3" style={{ marginBottom: 16 }}>
+                <div className="flex items-center gap-3 mb-4">
                   {branding.logo_url ? (
-                    <img src={branding.logo_url} alt="" style={{ height: 32, objectFit: 'contain' }} />
+                    <img src={branding.logo_url} alt="" className="h-8 object-contain" />
                   ) : (
                     <div
-                      style={{
-                        width: 32,
-                        height: 32,
-                        borderRadius: 8,
-                        background: branding.primary_color,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: '#FFFFFF',
-                        fontSize: 14,
-                        fontWeight: 500,
-                      }}
+                      className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-medium"
+                      style={{ background: branding.primary_color }}
                     >
                       {(branding.company_name || 'A').charAt(0)}
                     </div>
                   )}
-                  <span style={{ fontSize: 16, fontWeight: 500, color: '#111827' }}>
+                  <span className="text-base font-medium text-gray-900">
                     {branding.company_name || 'Your Agency'}
                   </span>
                 </div>
-                <div style={{ display: 'flex', gap: 12 }}>
+                <div className="flex gap-3">
                   {['Dashboard', 'Projects', 'Invoices'].map((item, idx) => (
                     <span
                       key={item}
+                      className={`px-4 py-2 rounded-lg text-sm ${idx === 0 ? 'font-medium' : ''}`}
                       style={{
-                        padding: '8px 16px',
-                        borderRadius: 8,
-                        fontSize: 14,
                         color: idx === 0 ? branding.primary_color : '#6B7280',
                         background: idx === 0 ? `${branding.primary_color}0D` : 'transparent',
-                        fontWeight: idx === 0 ? 500 : 400,
                       }}
                     >
                       {item}
@@ -471,18 +421,7 @@ export function PortalManagement() {
             <button
               type="submit"
               disabled={savingBranding}
-              style={{
-                padding: '12px 24px',
-                borderRadius: 8,
-                background: 'var(--btn-primary-bg, #F1F5F9)',
-                color: 'var(--btn-primary-fg, #0a0f1a)',
-                fontSize: 14,
-                fontWeight: 500,
-                border: 'none',
-                cursor: savingBranding ? 'wait' : 'pointer',
-                opacity: savingBranding ? 0.6 : 1,
-                transition: 'opacity 150ms',
-              }}
+              className="px-6 py-3 rounded-lg bg-primary text-primary-foreground text-sm font-medium transition-opacity disabled:opacity-60 disabled:cursor-not-allowed hover:opacity-90"
             >
               {savingBranding ? 'Saving...' : 'Save Branding'}
             </button>
@@ -491,35 +430,4 @@ export function PortalManagement() {
       )}
     </div>
   )
-}
-
-const glassCard: React.CSSProperties = {
-  borderRadius: 16,
-  background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.6))',
-  backdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
-  WebkitBackdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
-  border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
-  boxShadow: 'var(--card-shadow, 0 2px 8px rgba(0,0,0,0.3)), var(--card-inset, inset 0 1px 0 rgba(255,255,255,0.06))',
-  overflow: 'hidden',
-}
-
-const darkLabelStyle: React.CSSProperties = {
-  display: 'block',
-  fontSize: 14,
-  fontWeight: 500,
-  color: 'var(--text-secondary, #94A3B8)',
-  marginBottom: 8,
-}
-
-const darkInputStyle: React.CSSProperties = {
-  width: '100%',
-  padding: '12px 16px',
-  borderRadius: 8,
-  border: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
-  fontSize: 14,
-  color: 'var(--text-primary, #F1F5F9)',
-  background: 'var(--bg-input, rgba(13, 17, 23, 0.6))',
-  outline: 'none',
-  transition: 'border-color 150ms',
-  fontFamily: 'inherit',
 }

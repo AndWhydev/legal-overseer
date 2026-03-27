@@ -1,8 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Play, TrendingUp, TrendingDown, Minus, BarChart3 } from 'lucide-react'
-import { S, C } from '@/lib/styles/design-tokens'
+import { IconPlayerPlay, IconTrendingUp, IconTrendingDown, IconMinus, IconChartBar } from '@tabler/icons-react'
 
 interface ScenarioResult {
   id: string
@@ -16,26 +15,6 @@ interface ScenarioResult {
     percentiles?: { p10: number; p25: number; p50: number; p75: number; p90: number }
   }
   computed_at: string
-}
-
-const card: React.CSSProperties = {
-  borderRadius: 12,
-  background: 'var(--glass-bg)',
-  backdropFilter: 'var(--glass-blur)',
-  WebkitBackdropFilter: 'var(--glass-blur)',
-  boxShadow: 'var(--card-shadow), var(--card-inset)',
-  padding: '20px',
-}
-
-const input: React.CSSProperties = {
-  background: 'var(--bg-input)',
-  border: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
-  borderRadius: 8,
-  padding: '8px 12px',
-  color: 'var(--text-primary)',
-  fontSize: 14,
-  width: '100%',
-  outline: 'none',
 }
 
 function fmt(cents: number): string {
@@ -85,11 +64,11 @@ export function ScenarioPlanner() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div style={card}>
-        <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 12 }}>
+      <div className="rounded-xl bg-card backdrop-blur-lg shadow-sm p-5">
+        <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">
           Scenario Planner
         </div>
-        <div style={{ fontSize: 14, color: 'var(--text-dim)', marginBottom: 12 }}>
+        <div className="text-sm text-muted-foreground mb-3">
           Run "what-if" simulations using Monte Carlo analysis with client-specific churn probability.
         </div>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
@@ -98,25 +77,13 @@ export function ScenarioPlanner() {
               key={preset.name}
               onClick={() => runScenario(preset.name, preset.type, preset.params)}
               disabled={running}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                padding: '12px 16px',
-                borderRadius: 8,
-                background: activePreset === preset.name
-                  ? C.bgHoverStrong
-                  : C.bgHover,
-                border: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
-                color: 'var(--text-primary)',
-                cursor: running ? 'wait' : 'pointer',
-                fontSize: 14,
-                fontWeight: 500,
-                transition: 'all 150ms',
-                textAlign: 'left',
-              }}
+              className={`flex items-center gap-2 px-4 py-3 rounded-lg border border-border text-sm font-medium text-foreground text-left transition-all ${
+                activePreset === preset.name
+                  ? 'bg-muted'
+                  : 'bg-muted/50 hover:bg-muted'
+              } ${running ? 'cursor-wait' : 'cursor-pointer'}`}
             >
-              <Play size={12} color="var(--text-primary, #F1F5F9)" />
+              <IconPlayerPlay size={12} className="text-foreground" />
               {preset.name}
             </button>
           ))}
@@ -129,48 +96,40 @@ export function ScenarioPlanner() {
         const p = result.results.percentiles
 
         return (
-          <div key={result.id} style={card}>
-            <div className="flex items-center justify-between" style={{ marginBottom: 8 }}>
+          <div key={result.id} className="rounded-xl bg-card backdrop-blur-lg shadow-sm p-5">
+            <div className="flex items-center justify-between mb-2">
               <div>
-                <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>
+                <div className="text-sm font-medium text-foreground">
                   {result.name}
                 </div>
-                <div style={{ fontSize: 14, color: 'var(--text-dim)' }}>
+                <div className="text-sm text-muted-foreground">
                   1,000 simulations • {new Date(result.computed_at).toLocaleString()}
                 </div>
               </div>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 4,
-                color: isPositive ? 'var(--bb-green)' : 'var(--bb-red)',
-              }}>
-                {isPositive ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
-                <span style={{ fontSize: 16, fontWeight: 500, fontFamily: 'var(--font-mono)' }}>
+              <div className={`flex items-center gap-1 ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
+                {isPositive ? <IconTrendingUp size={16} /> : <IconTrendingDown size={16} />}
+                <span className="text-base font-medium font-mono">
                   {isPositive ? '+' : ''}{fmt(result.delta_cents ?? 0)}
                 </span>
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-3" style={{ marginBottom: 8 }}>
+            <div className="grid grid-cols-3 gap-3 mb-2">
               <div>
-                <div style={{ fontSize: 14, color: 'var(--text-dim)' }}>Current Annual</div>
-                <div style={{ fontSize: 16, fontWeight: 500, fontFamily: 'var(--font-mono)', color: 'var(--text-primary)' }}>
+                <div className="text-sm text-muted-foreground">Current Annual</div>
+                <div className="text-base font-medium font-mono text-foreground">
                   {fmt(result.current_annual_cents ?? 0)}
                 </div>
               </div>
               <div>
-                <div style={{ fontSize: 14, color: 'var(--text-dim)' }}>Projected Annual</div>
-                <div style={{
-                  fontSize: 16, fontWeight: 500, fontFamily: 'var(--font-mono)',
-                  color: isPositive ? 'var(--bb-green)' : 'var(--bb-red)',
-                }}>
+                <div className="text-sm text-muted-foreground">Projected Annual</div>
+                <div className={`text-base font-medium font-mono ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
                   {fmt(result.projected_annual_cents ?? 0)}
                 </div>
               </div>
               <div>
-                <div style={{ fontSize: 14, color: 'var(--text-dim)' }}>Positive Outcome</div>
-                <div style={{ fontSize: 16, fontWeight: 500, fontFamily: 'var(--font-mono)', color: 'var(--text-primary)' }}>
+                <div className="text-sm text-muted-foreground">Positive Outcome</div>
+                <div className="text-base font-medium font-mono text-foreground">
                   {Math.round((result.probability_positive ?? 0) * 100)}%
                 </div>
               </div>
@@ -179,34 +138,19 @@ export function ScenarioPlanner() {
             {/* Percentile distribution bar */}
             {p && (
               <div>
-                <div style={{ fontSize: 14, color: 'var(--text-dim)', marginBottom: 8 }}>
+                <div className="text-sm text-muted-foreground mb-2">
                   Distribution (P10 → P90)
                 </div>
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 2,
-                  height: 24,
-                  borderRadius: 8,
-                  overflow: 'hidden',
-                  background: C.bgHover,
-                }}>
+                <div className="flex items-center gap-0.5 h-6 rounded-lg overflow-hidden bg-muted/50">
                   {[
-                    { label: 'P10', value: p.p10, color: 'rgba(239, 68, 68, 0.3)' },
-                    { label: 'P25', value: p.p25, color: 'rgba(245, 158, 11, 0.3)' },
-                    { label: 'P50', value: p.p50, color: 'rgba(59, 130, 246, 0.4)' },
-                    { label: 'P75', value: p.p75, color: 'rgba(34, 197, 94, 0.3)' },
-                    { label: 'P90', value: p.p90, color: 'rgba(34, 197, 94, 0.4)' },
+                    { label: 'P10', value: p.p10, color: 'bg-red-500/30' },
+                    { label: 'P25', value: p.p25, color: 'bg-amber-500/30' },
+                    { label: 'P50', value: p.p50, color: 'bg-blue-500/40' },
+                    { label: 'P75', value: p.p75, color: 'bg-green-500/30' },
+                    { label: 'P90', value: p.p90, color: 'bg-green-500/40' },
                   ].map(({ label, value, color }) => (
-                    <div key={label} style={{
-                      flex: 1,
-                      height: '100%',
-                      background: color,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}>
-                      <span style={{ fontSize: 14, color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>
+                    <div key={label} className={`flex flex-1 h-full items-center justify-center ${color}`}>
+                      <span className="text-xs text-muted-foreground font-mono">
                         {fmt(value)}
                       </span>
                     </div>

@@ -1690,7 +1690,7 @@ export function InvoiceList() {
           </DialogHeader>
 
           <div className="flex flex-col gap-4">
-            <div className="space-y-2">
+            <div className="flex flex-col gap-2">
               <Label htmlFor="inv-client">Client Name</Label>
               <Input
                 id="inv-client"
@@ -1701,7 +1701,7 @@ export function InvoiceList() {
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="flex flex-col gap-2">
               <Label htmlFor="inv-desc">Description</Label>
               <Input
                 id="inv-desc"
@@ -1712,7 +1712,7 @@ export function InvoiceList() {
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
+              <div className="flex flex-col gap-2">
                 <Label htmlFor="inv-amount">Amount (AUD)</Label>
                 <Input
                   id="inv-amount"
@@ -1727,7 +1727,7 @@ export function InvoiceList() {
                   inputMode="decimal"
                 />
               </div>
-              <div className="space-y-2">
+              <div className="flex flex-col gap-2">
                 <Label htmlFor="inv-due">Due Date</Label>
                 <Input
                   id="inv-due"

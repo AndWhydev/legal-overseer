@@ -3,22 +3,29 @@
 import React, { useState } from 'react'
 import type { RevenueInsight, InsightType, InsightSeverity } from '@/lib/revenue/types'
 import { formatCents } from '@/lib/revenue/types'
-import { S, C } from '@/lib/styles/design-tokens'
+import { Badge } from '@/components/ui/badge'
 
 // ─── Severity + Type Config ─────────────────────────────────────────────────
 
+const SEVERITY_VARIANTS: Record<InsightSeverity, 'destructive' | 'secondary' | 'outline'> = {
+  critical: 'destructive',
+  high: 'secondary',
+  medium: 'outline',
+  low: 'outline',
+}
+
 const SEVERITY_COLORS: Record<InsightSeverity, string> = {
-  critical: 'var(--bb-red)',
-  high: 'var(--text-primary, #F1F5F9)',
-  medium: 'var(--bb-amber)',
-  low: 'var(--bb-blue)',
+  critical: 'text-red-500',
+  high: 'text-foreground',
+  medium: 'text-amber-500',
+  low: 'text-blue-500',
 }
 
 const SEVERITY_BG: Record<InsightSeverity, string> = {
-  critical: C.statusErrorBg,
-  high: C.bgHoverStrong,
-  medium: C.statusWarningBg,
-  low: 'rgba(59, 130, 246, 0.08)',
+  critical: 'bg-red-500/10',
+  high: 'bg-muted',
+  medium: 'bg-amber-500/10',
+  low: 'bg-blue-500/10',
 }
 
 const TYPE_LABELS: Record<InsightType, string> = {
@@ -53,106 +60,6 @@ const TYPE_ICONS: Record<InsightType, string> = {
   cash_flow_warning: 'W',
 }
 
-// ─── Styles ─────────────────────────────────────────────────────────────────
-
-const cardStyle: React.CSSProperties = {
-  padding: '12px 16px',
-  borderRadius: 'var(--radius-lg)',
-  background: 'var(--bg-card)',
-  backdropFilter: 'var(--glass-blur)',
-  WebkitBackdropFilter: 'var(--glass-blur)',
-  display: 'flex',
-  alignItems: 'flex-start',
-  gap: 12,
-  cursor: 'pointer',
-  transition: 'background var(--duration-fast) var(--ease-default)',
-}
-
-const iconStyle = (severity: InsightSeverity): React.CSSProperties => ({
-  width: 32,
-  height: 32,
-  borderRadius: 'var(--radius-md)',
-  background: SEVERITY_BG[severity],
-  color: SEVERITY_COLORS[severity],
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  fontSize: 14,
-  fontWeight: 500,
-  fontFamily: 'var(--font-mono)',
-  flexShrink: 0,
-})
-
-const bodyStyle: React.CSSProperties = {
-  flex: 1,
-  display: 'flex',
-  flexDirection: 'column',
-  gap: 4,
-  minWidth: 0,
-}
-
-const titleRowStyle: React.CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: 8,
-}
-
-const titleTextStyle: React.CSSProperties = {
-  fontSize: 14,
-  fontWeight: 500,
-  color: 'var(--text-primary)',
-  whiteSpace: 'nowrap',
-  overflow: 'hidden',
-  textOverflow: 'ellipsis',
-}
-
-const badgeStyle = (severity: InsightSeverity): React.CSSProperties => ({
-  fontSize: 14,
-  fontWeight: 500,
-  color: SEVERITY_COLORS[severity],
-  background: SEVERITY_BG[severity],
-  padding: '2px 8px',
-  borderRadius: 'var(--radius-sm)',
-  textTransform: 'uppercase',
-  letterSpacing: '0.03em',
-  flexShrink: 0,
-})
-
-const descStyle: React.CSSProperties = {
-  fontSize: 14,
-  color: 'var(--text-secondary)',
-  lineHeight: 1.4,
-  display: '-webkit-box',
-  WebkitLineClamp: 2,
-  WebkitBoxOrient: 'vertical' as const,
-  overflow: 'hidden',
-}
-
-const actionRowStyle: React.CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: 8,
-  marginTop: 4,
-}
-
-const actionBtnStyle: React.CSSProperties = {
-  fontSize: 14,
-  fontWeight: 500,
-  padding: '4px 12px',
-  borderRadius: 'var(--radius-sm)',
-  border: 'none',
-  cursor: 'pointer',
-  transition: 'opacity var(--duration-fast) var(--ease-default)',
-}
-
-const amountStyle: React.CSSProperties = {
-  fontSize: 14,
-  fontWeight: 500,
-  fontFamily: 'var(--font-mono)',
-  color: 'var(--text-primary, #F1F5F9)',
-  flexShrink: 0,
-}
-
 // ─── Component ──────────────────────────────────────────────────────────────
 
 interface InsightCardProps {
@@ -166,60 +73,46 @@ export function RevenueInsightCard({ insight, onAction }: InsightCardProps) {
 
   return (
     <div
-      style={{
-        ...cardStyle,
-        background: hovering ? 'var(--bb-surface-hover)' : 'var(--bg-card)',
-      }}
+      className={`flex items-start gap-3 rounded-lg p-3 backdrop-blur-lg cursor-pointer transition-colors ${
+        hovering ? 'bg-accent' : 'bg-card'
+      }`}
       onClick={() => setExpanded(!expanded)}
       onMouseEnter={() => setHovering(true)}
       onMouseLeave={() => setHovering(false)}
     >
       {/* Severity Icon */}
-      <div style={iconStyle(insight.severity)}>
+      <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md font-mono text-sm font-medium ${SEVERITY_BG[insight.severity]} ${SEVERITY_COLORS[insight.severity]}`}>
         {TYPE_ICONS[insight.insight_type] ?? '?'}
       </div>
 
       {/* Body */}
-      <div style={bodyStyle}>
-        <div style={titleRowStyle}>
-          <span style={titleTextStyle}>{insight.title}</span>
-          <span style={badgeStyle(insight.severity)}>
+      <div className="flex flex-1 flex-col gap-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium text-foreground truncate">{insight.title}</span>
+          <Badge variant={SEVERITY_VARIANTS[insight.severity]} className="shrink-0 uppercase text-xs tracking-wide">
             {TYPE_LABELS[insight.insight_type] ?? insight.insight_type}
-          </span>
+          </Badge>
         </div>
 
-        <div style={descStyle}>{insight.description}</div>
+        <div className="text-sm text-muted-foreground line-clamp-2">{insight.description}</div>
 
         {/* Expanded: show recommended action + action buttons */}
         {expanded && (
           <>
             {insight.recommended_action && (
-              <div style={{
-                fontSize: 14,
-                color: 'var(--bb-green)',
-                marginTop: 4,
-                fontWeight: 500,
-              }}>
+              <div className="text-sm text-green-500 mt-1 font-medium">
                 Recommended: {insight.recommended_action}
               </div>
             )}
-            <div style={actionRowStyle}>
+            <div className="flex items-center gap-2 mt-1">
               <button
-                style={{
-                  ...actionBtnStyle,
-                  background: 'var(--bb-green)',
-                  color: '#000',
-                }}
+                className="text-sm font-medium px-3 py-1 rounded bg-green-500 text-black border-none cursor-pointer transition-opacity hover:opacity-80"
                 onClick={(e) => { e.stopPropagation(); onAction(insight.id, 'actioned') }}
               >
                 Mark Done
               </button>
               <button
-                style={{
-                  ...actionBtnStyle,
-                  background: 'var(--bb-surface-hover)',
-                  color: 'var(--text-secondary)',
-                }}
+                className="text-sm font-medium px-3 py-1 rounded bg-accent text-muted-foreground border-none cursor-pointer transition-opacity hover:opacity-80"
                 onClick={(e) => { e.stopPropagation(); onAction(insight.id, 'dismissed') }}
               >
                 Dismiss
@@ -231,7 +124,7 @@ export function RevenueInsightCard({ insight, onAction }: InsightCardProps) {
 
       {/* Amount */}
       {insight.amount_cents > 0 && (
-        <span style={amountStyle}>{formatCents(insight.amount_cents)}</span>
+        <span className="shrink-0 font-mono font-medium text-sm text-foreground">{formatCents(insight.amount_cents)}</span>
       )}
     </div>
   )

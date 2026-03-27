@@ -153,7 +153,7 @@ function ProposalsKanban() {
         {BOARD_COLUMNS.map((col) => (
           <div key={col.id} className="rounded-xl p-4 animate-pulse" style={{ background: 'var(--glass-card-bg)' }}>
             <div className="h-5 w-24 rounded bg-muted mb-4" />
-            <div className="space-y-3">
+            <div className="flex flex-col gap-3">
               <div className="h-24 rounded-lg bg-muted" />
               <div className="h-24 rounded-lg bg-muted" />
             </div>
@@ -187,7 +187,7 @@ function ProposalsKanban() {
               </span>
             </div>
 
-            <div className="space-y-3">
+            <div className="flex flex-col gap-3">
               {items.map((p) => {
                 const total = parsePricingTotal(p.pricing)
                 const options = moveOptionsFor(p.status)

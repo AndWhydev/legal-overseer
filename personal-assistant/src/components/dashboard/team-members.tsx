@@ -4,8 +4,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { GlassDropdown } from '@/components/ui/glass-dropdown';
-import { Users, Mail, Trash2, Loader2, UserPlus, Shield } from 'lucide-react';
+import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
+import { IconUsers, IconMail, IconTrash, IconLoader2, IconUserPlus, IconShield } from '@tabler/icons-react';
 
 interface Member {
   id: string;
@@ -148,7 +148,7 @@ export function TeamMembers() {
       <Card className="border-border/50">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <UserPlus size={16} />
+            <IconUserPlus size={16} />
             Invite Team Member
           </CardTitle>
           <CardDescription>Send an invitation to join your organization.</CardDescription>
@@ -168,18 +168,22 @@ export function TeamMembers() {
               onKeyDown={e => e.key === 'Enter' && handleInvite()}
               className="flex-1"
             />
-            <GlassDropdown
-              options={ROLE_OPTIONS.map(r => ({ value: r, label: r.charAt(0).toUpperCase() + r.slice(1) }))}
-              value={inviteRole}
-              onChange={v => setInviteRole(v)}
-              size="sm"
-            />
+            <Select value={inviteRole} onValueChange={v => setInviteRole(v)}>
+              <SelectTrigger className="w-auto">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {ROLE_OPTIONS.map(r => (
+                  <SelectItem key={r} value={r}>{r.charAt(0).toUpperCase() + r.slice(1)}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <button
               onClick={handleInvite}
               disabled={sending || !inviteEmail}
               className="flex items-center gap-1.5 rounded-lg bg-[var(--btn-primary-bg,#F1F5F9)] h-10 px-5 text-sm font-medium text-[var(--btn-primary-fg,#0a0f1a)] transition-opacity hover:opacity-90 disabled:opacity-50"
             >
-              {sending ? <Loader2 size={14} className="animate-spin" /> : <Mail size={14} />}
+              {sending ? <IconLoader2 size={14} className="animate-spin" /> : <IconMail size={14} />}
               Invite
             </button>
           </div>
@@ -190,7 +194,7 @@ export function TeamMembers() {
       <Card className="border-border/50">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <Users size={16} />
+            <IconUsers size={16} />
             Team Members
             <Badge variant="outline" className="ml-auto text-xs">{members.length}</Badge>
           </CardTitle>
@@ -198,7 +202,7 @@ export function TeamMembers() {
         <CardContent className="flex flex-col gap-2">
           {loading ? (
             <div className="flex items-center justify-center py-8 text-muted-foreground">
-              <Loader2 size={20} className="animate-spin" />
+              <IconLoader2 size={20} className="animate-spin" />
             </div>
           ) : members.length === 0 ? (
             <p className="py-4 text-center text-sm text-muted-foreground">No team members yet.</p>
@@ -221,15 +225,19 @@ export function TeamMembers() {
                 <div className="flex items-center gap-2">
                   {member.role === 'owner' ? (
                     <Badge className={`text-xs ${roleBadgeColor.owner}`}>
-                      <Shield size={10} className="mr-1" /> Owner
+                      <IconShield size={10} className="mr-1" /> Owner
                     </Badge>
                   ) : (
-                    <GlassDropdown
-                      options={ROLE_OPTIONS.map(r => ({ value: r, label: r.charAt(0).toUpperCase() + r.slice(1) }))}
-                      value={member.role}
-                      onChange={v => handleRoleChange(member.id, v)}
-                      size="sm"
-                    />
+                    <Select value={member.role} onValueChange={v => handleRoleChange(member.id, v)}>
+                      <SelectTrigger className="w-auto">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {ROLE_OPTIONS.map(r => (
+                          <SelectItem key={r} value={r}>{r.charAt(0).toUpperCase() + r.slice(1)}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   )}
                   {member.role !== 'owner' && (
                     <button
@@ -237,7 +245,7 @@ export function TeamMembers() {
                       className="text-muted-foreground transition-colors hover:text-destructive"
                       title="Remove member"
                     >
-                      <Trash2 size={14} />
+                      <IconTrash size={14} />
                     </button>
                   )}
                 </div>
@@ -252,7 +260,7 @@ export function TeamMembers() {
         <Card className="border-border/50">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
-              <Mail size={16} />
+              <IconMail size={16} />
               Pending Invitations
               <Badge variant="outline" className="ml-auto text-xs">{invites.length}</Badge>
             </CardTitle>

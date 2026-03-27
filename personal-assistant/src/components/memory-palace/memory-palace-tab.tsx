@@ -2,15 +2,14 @@
 
 import React, { useState, useCallback, useEffect } from 'react';
 import {
-  Search, Brain, Lightbulb, DollarSign, Users, MessageSquare,
-  TrendingUp, Shield, Clock, ChevronRight, Trash2, Plus,
-  BarChart3, AlertTriangle,
-} from 'lucide-react';
+  IconSearch, IconBrain, IconBulb, IconCurrencyDollar, IconUsers, IconMessage,
+  IconTrendingUp, IconShield, IconClock, IconChevronRight, IconTrash, IconPlus,
+  IconChartBar, IconAlertTriangle,
+} from '@tabler/icons-react';
 import { TabShell } from '@/components/ui/tab-shell';
-import { EmptyState } from '@/components/ui/empty-state';
-import { S, C } from '@/lib/styles/design-tokens'
+import { Empty, EmptyHeader, EmptyTitle, EmptyDescription } from '@/components/ui/empty';
 
-// ─── Types ──────────────────────────────────────────────────────────────────
+// --- Types ---
 
 interface MemoryEntry {
   id: string;
@@ -48,77 +47,32 @@ interface MemoryStats {
   recentDecisions: number;
 }
 
-// ─── Style Constants ────────────────────────────────────────────────────────
-
-const glassCard: React.CSSProperties = {
-  padding: '20px',
-  borderRadius: 16,
-  background: 'var(--glass-card-bg)',
-  backdropFilter: 'var(--glass-card-blur)',
-  WebkitBackdropFilter: 'var(--glass-card-blur)',
-  border: '1px solid var(--glass-card-border)',
-  boxShadow: 'var(--glass-card-inset)',
-};
-
-const glassInput: React.CSSProperties = {
-  width: '100%',
-  padding: '12px 16px',
-  paddingLeft: '40px',
-  borderRadius: 12,
-  background: 'var(--bg-input, rgba(13, 17, 23, 0.6))',
-  border: '1px solid var(--glass-interactive-border)',
-  color: 'var(--text-primary)',
-  fontSize: '14px',
-  outline: 'none',
-};
-
-const badge: React.CSSProperties = {
-  display: 'inline-flex',
-  alignItems: 'center',
-  gap: 4,
-  padding: '2px 8px',
-  borderRadius: 8,
-  fontSize: 14,
-  fontWeight: 500,
-  letterSpacing: '0.03em',
-  textTransform: 'uppercase' as const,
-};
-
-// ─── Memory Type Config ─────────────────────────────────────────────────────
+// --- Memory Type Config ---
 
 const TYPE_CONFIG: Record<string, { icon: React.ElementType; color: string; label: string }> = {
-  conversation: { icon: MessageSquare, color: '#3B82F6', label: 'Conversation' },
-  decision: { icon: Lightbulb, color: '#F59E0B', label: 'Decision' },
-  pattern: { icon: TrendingUp, color: '#8B5CF6', label: 'Pattern' },
-  fact: { icon: Brain, color: '#22C55E', label: 'Fact' },
-  relationship: { icon: Users, color: '#EC4899', label: 'Relationship' },
-  pricing: { icon: DollarSign, color: '#F1F5F9', label: 'Pricing' },
-  lesson_learned: { icon: Shield, color: '#14B8A6', label: 'Lesson' },
+  conversation: { icon: IconMessage, color: '#3B82F6', label: 'Conversation' },
+  decision: { icon: IconBulb, color: '#F59E0B', label: 'Decision' },
+  pattern: { icon: IconTrendingUp, color: '#8B5CF6', label: 'Pattern' },
+  fact: { icon: IconBrain, color: '#22C55E', label: 'Fact' },
+  relationship: { icon: IconUsers, color: '#EC4899', label: 'Relationship' },
+  pricing: { icon: IconCurrencyDollar, color: '#F1F5F9', label: 'Pricing' },
+  lesson_learned: { icon: IconShield, color: '#14B8A6', label: 'Lesson' },
 };
 
-// ─── Sub-Components ─────────────────────────────────────────────────────────
+// --- Sub-Components ---
 
 function ConfidenceBar({ value }: { value: number }) {
   const pct = Math.round(value * 100);
   const color = value > 0.7 ? '#22C55E' : value > 0.3 ? '#F59E0B' : '#EF4444';
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-      <div style={{
-        width: 60,
-        height: 4,
-        borderRadius: 2,
-        background: 'var(--hover-bg-strong)',
-        overflow: 'hidden',
-      }}>
-        <div style={{
-          width: `${pct}%`,
-          height: '100%',
-          borderRadius: 2,
-          background: color,
-          transition: 'width 0.3s ease',
-        }} />
+    <div className="flex items-center gap-1.5">
+      <div className="h-1 w-[60px] overflow-hidden rounded-sm bg-secondary">
+        <div
+          className="h-full rounded-sm transition-all duration-300"
+          style={{ width: `${pct}%`, background: color }}
+        />
       </div>
-      <span style={{ fontSize: 14, color: C.textPlaceholder }}>{pct}%</span>
+      <span className="text-sm text-muted-foreground">{pct}%</span>
     </div>
   );
 }
@@ -131,64 +85,33 @@ function MemoryCard({ memory }: { memory: MemoryEntry }) {
   });
 
   return (
-    <div style={{
-      ...glassCard,
-      padding: '14px 16px',
-      display: 'flex',
-      gap: 12,
-      alignItems: 'flex-start',
-      cursor: 'pointer',
-      transition: 'background 0.15s ease',
-    }}>
-      <div style={{
-        width: 32,
-        height: 32,
-        borderRadius: 8,
-        background: `${config.color}15`,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        flexShrink: 0,
-      }}>
+    <div className="flex cursor-pointer gap-3 rounded-2xl border border-border bg-card p-3.5 shadow-sm transition-colors hover:bg-secondary/50">
+      <div
+        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
+        style={{ background: `${config.color}15` }}
+      >
         <Icon size={16} color={config.color} />
       </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-          <span style={{
-            ...badge,
-            background: `${config.color}18`,
-            color: config.color,
-          }}>
+      <div className="min-w-0 flex-1">
+        <div className="mb-1 flex items-center gap-2">
+          <span
+            className="rounded-lg px-2 py-px text-xs font-medium uppercase tracking-wider"
+            style={{ background: `${config.color}18`, color: config.color }}
+          >
             {config.label}
           </span>
-          <span style={{ fontSize: 14, color: C.textDim }}>{date}</span>
+          <span className="text-sm text-muted-foreground">{date}</span>
         </div>
-        <div style={{
-          fontSize: 14,
-          fontWeight: 500,
-          color: 'var(--text-primary)',
-          marginBottom: 4,
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap' as const,
-        }}>
+        <div className="truncate text-sm font-medium text-foreground">
           {memory.title}
         </div>
-        <div style={{
-          fontSize: 14,
-          color: C.textSecondary,
-          lineHeight: 1.4,
-          display: '-webkit-box',
-          WebkitLineClamp: 2,
-          WebkitBoxOrient: 'vertical' as const,
-          overflow: 'hidden',
-        }}>
+        <div className="line-clamp-2 text-sm leading-snug text-muted-foreground">
           {memory.content}
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 6 }}>
+        <div className="mt-1.5 flex items-center gap-3">
           <ConfidenceBar value={memory.confidence} />
           {memory.entity_names.length > 0 && (
-            <span style={{ fontSize: 14, color: C.textDim }}>
+            <span className="text-sm text-muted-foreground">
               {memory.entity_names.slice(0, 2).join(', ')}
             </span>
           )}
@@ -202,23 +125,23 @@ function StatsCard({ stats }: { stats: MemoryStats | null }) {
   if (!stats) return null;
 
   const items = [
-    { label: 'Active Memories', value: stats.totalActive, icon: Brain, color: '#22C55E' },
-    { label: 'Avg Confidence', value: `${Math.round(stats.avgConfidence * 100)}%`, icon: BarChart3, color: '#3B82F6' },
-    { label: 'Recent Decisions', value: stats.recentDecisions, icon: Lightbulb, color: '#F59E0B' },
-    { label: 'Archived', value: stats.totalArchived, icon: Clock, color: C.textDim },
+    { label: 'Active Memories', value: stats.totalActive, icon: IconBrain, color: '#22C55E' },
+    { label: 'Avg Confidence', value: `${Math.round(stats.avgConfidence * 100)}%`, icon: IconChartBar, color: '#3B82F6' },
+    { label: 'Recent Decisions', value: stats.recentDecisions, icon: IconBulb, color: '#F59E0B' },
+    { label: 'Archived', value: stats.totalArchived, icon: IconClock, color: 'var(--text-dim)' },
   ];
 
   return (
-    <div className="bb-stagger" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+    <div className="bb-stagger grid grid-cols-4 gap-3">
       {items.map(item => {
         const Icon = item.icon;
         return (
-          <div key={item.label} style={{ ...glassCard, padding: '14px 16px', textAlign: 'center' as const }}>
-            <Icon size={18} color={item.color} style={{ marginBottom: 6 }} />
-            <div style={{ fontSize: 16, fontWeight: 500, color: 'var(--text-primary)' }}>
+          <div key={item.label} className="rounded-2xl border border-border bg-card p-3.5 text-center shadow-sm">
+            <Icon size={18} color={item.color} className="mx-auto mb-1.5" />
+            <div className="text-base font-medium text-foreground">
               {item.value}
             </div>
-            <div style={{ fontSize: 14, color: C.textPlaceholder, marginTop: 2 }}>
+            <div className="mt-0.5 text-sm text-muted-foreground">
               {item.label}
             </div>
           </div>
@@ -240,17 +163,14 @@ function TypeFilter({
   const types = Object.entries(TYPE_CONFIG);
 
   return (
-    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' as const }}>
+    <div className="flex flex-wrap gap-1.5">
       <button
         onClick={() => onTypeChange(null)}
-        style={{
-          ...badge,
-          background: !activeType ? 'var(--btn-primary-bg, #F1F5F9)' : 'var(--hover-bg-strong)',
-          color: !activeType ? 'var(--btn-primary-fg, #0a0f1a)' : C.textSecondary,
-          cursor: 'pointer',
-          border: 'none',
-          padding: '4px 12px',
-        }}
+        className={`rounded-lg px-3 py-1 text-sm font-medium transition-colors ${
+          !activeType
+            ? 'bg-primary text-primary-foreground'
+            : 'bg-secondary text-muted-foreground'
+        }`}
       >
         All
       </button>
@@ -258,13 +178,10 @@ function TypeFilter({
         <button
           key={key}
           onClick={() => onTypeChange(activeType === key ? null : key)}
+          className="rounded-lg px-3 py-1 text-sm font-medium transition-colors"
           style={{
-            ...badge,
-            background: activeType === key ? `${config.color}30` : 'var(--hover-bg-strong)',
-            color: activeType === key ? config.color : C.textPlaceholder,
-            cursor: 'pointer',
-            border: 'none',
-            padding: '4px 12px',
+            background: activeType === key ? `${config.color}30` : undefined,
+            color: activeType === key ? config.color : undefined,
           }}
         >
           {config.label} {counts[key] ? `(${counts[key]})` : ''}
@@ -274,7 +191,7 @@ function TypeFilter({
   );
 }
 
-// ─── Main Component ─────────────────────────────────────────────────────────
+// --- Main Component ---
 
 export function MemoryPalaceTab() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -327,47 +244,33 @@ export function MemoryPalaceTab() {
 
   return (
     <TabShell>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: '0 4px' }}>
+      <div className="flex flex-col gap-4 px-1">
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <Brain size={22} color="var(--text-primary, #F1F5F9)" />
-            <h2 style={{
-              fontSize: 16,
-              fontWeight: 500,
-              color: 'var(--text-primary)',
-              letterSpacing: '-0.02em',
-              margin: 0,
-            }}>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <IconBrain className="h-[22px] w-[22px] text-foreground" />
+            <h2 className="text-base font-medium tracking-tight text-foreground">
               Memory Palace
             </h2>
           </div>
-          <div style={{ display: 'flex', gap: 6 }}>
+          <div className="flex gap-1.5">
             <button
               onClick={() => setView('search')}
-              style={{
-                ...badge,
-                background: view === 'search' ? 'var(--btn-primary-bg, #F1F5F9)' : 'var(--hover-bg-strong)',
-                color: view === 'search' ? 'var(--btn-primary-fg, #0a0f1a)' : C.textSecondary,
-                cursor: 'pointer',
-                border: 'none',
-                padding: '4px 12px',
-                fontSize: 14,
-              }}
+              className={`rounded-lg px-3 py-1 text-sm font-medium transition-colors ${
+                view === 'search'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-secondary text-muted-foreground'
+              }`}
             >
               Search
             </button>
             <button
               onClick={() => setView('decisions')}
-              style={{
-                ...badge,
-                background: view === 'decisions' ? 'var(--btn-primary-bg, #F1F5F9)' : 'var(--hover-bg-strong)',
-                color: view === 'decisions' ? 'var(--btn-primary-fg, #0a0f1a)' : C.textSecondary,
-                cursor: 'pointer',
-                border: 'none',
-                padding: '4px 12px',
-                fontSize: 14,
-              }}
+              className={`rounded-lg px-3 py-1 text-sm font-medium transition-colors ${
+                view === 'decisions'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-secondary text-muted-foreground'
+              }`}
             >
               Decisions
             </button>
@@ -378,11 +281,9 @@ export function MemoryPalaceTab() {
         <StatsCard stats={stats} />
 
         {/* Search */}
-        <div style={{ position: 'relative' }}>
-          <Search
-            size={16}
-            color="rgba(255,255,255,0.35)"
-            style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)' }}
+        <div className="relative">
+          <IconSearch
+            className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
           />
           <input
             type="text"
@@ -390,7 +291,7 @@ export function MemoryPalaceTab() {
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             onKeyDown={handleKeyDown}
-            style={glassInput}
+            className="w-full rounded-xl border border-border bg-background py-3 pl-10 pr-4 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-ring"
           />
         </div>
 
@@ -402,23 +303,27 @@ export function MemoryPalaceTab() {
         />
 
         {/* Results */}
-        <div className="bb-stagger" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div className="bb-stagger flex flex-col gap-2">
           {loading && (
-            <div style={{ textAlign: 'center', padding: 32, color: C.textDim }}>
+            <div className="p-8 text-center text-muted-foreground">
               Searching memories...
             </div>
           )}
           {!loading && memories.length === 0 && searchQuery && (
-            <EmptyState
-              title="No memories found"
-              description="Try different keywords or broaden your search"
-            />
+            <Empty>
+              <EmptyHeader>
+                <EmptyTitle>No memories found</EmptyTitle>
+                <EmptyDescription>Try different keywords or broaden your search</EmptyDescription>
+              </EmptyHeader>
+            </Empty>
           )}
           {!loading && memories.length === 0 && !searchQuery && (
-            <EmptyState
-              title="Institutional Memory"
-              description="Search across all conversations, decisions, pricing history, and lessons learned"
-            />
+            <Empty>
+              <EmptyHeader>
+                <EmptyTitle>Institutional Memory</EmptyTitle>
+                <EmptyDescription>Search across all conversations, decisions, pricing history, and lessons learned</EmptyDescription>
+              </EmptyHeader>
+            </Empty>
           )}
           {memories.map(mem => (
             <MemoryCard key={mem.id} memory={mem} />

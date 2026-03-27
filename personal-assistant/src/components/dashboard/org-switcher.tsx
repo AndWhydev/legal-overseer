@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { ChevronDown, Building2, Check } from 'lucide-react';
+import { IconChevronDown, IconBuilding, IconCheck } from '@tabler/icons-react';
 import { createClient } from '@/lib/supabase/client';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
@@ -91,14 +91,14 @@ export function OrgSwitcher({ onOrgChange }: OrgSwitcherProps) {
         onClick={() => setOpen(!open)}
         className="flex w-full items-center gap-2 rounded-md border border-border/30 bg-muted/20 px-3 py-2 text-left transition-colors hover:bg-muted/40"
       >
-        <Building2 size={16} className="shrink-0 text-muted-foreground" />
+        <IconBuilding size={16} className="shrink-0 text-muted-foreground" />
         <div className="flex-1 min-w-0">
           <p className="truncate text-sm font-medium text-foreground">{activeOrg.name}</p>
           <p className={`text-xs capitalize ${tierColors[activeOrg.plan_tier] ?? 'text-muted-foreground'}`}>
             {activeOrg.plan_tier || 'Free'} plan
           </p>
         </div>
-        <ChevronDown
+        <IconChevronDown
           size={14}
           className="shrink-0 text-muted-foreground transition-transform"
           style={{ transform: open ? 'rotate(180deg)' : 'rotate(0deg)' }}
@@ -120,7 +120,7 @@ export function OrgSwitcher({ onOrgChange }: OrgSwitcherProps) {
                 </p>
               </div>
               {org.id === activeOrg.id && (
-                <Check size={14} className="shrink-0 text-[#F1F5F9]" />
+                <IconCheck size={14} className="shrink-0 text-[#F1F5F9]" />
               )}
             </button>
           ))}

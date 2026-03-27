@@ -1,11 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import { Plus, Mic } from 'lucide-react'
+import { IconPlus, IconMicrophone } from '@tabler/icons-react'
 import { MeetingList } from './meeting-list'
 import { MeetingDetail } from './meeting-detail'
 import { MeetingUpload } from './meeting-upload'
-import { S, C } from '@/lib/styles/design-tokens'
 
 export function MeetingsPage() {
   const [selectedMeetingId, setSelectedMeetingId] = useState<string | null>(null)
@@ -19,56 +18,22 @@ export function MeetingsPage() {
   }
 
   return (
-    <div style={{
-      display: 'flex',
-      height: '100%',
-      background: 'var(--bg-primary)',
-      overflow: 'hidden',
-    }}>
-      {/* Left panel — Meeting list */}
-      <div style={{
-        width: '340px',
-        borderRight: `1px solid ${C.borderVisible}`,
-        display: 'flex',
-        flexDirection: 'column',
-        flexShrink: 0,
-      }}>
+    <div className="flex h-full overflow-hidden bg-background">
+      {/* Left panel -- Meeting list */}
+      <div className="flex w-[340px] shrink-0 flex-col border-r border-border">
         {/* Header with upload button */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '16px',
-          borderBottom: `1px solid ${C.borderVisible}`,
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Mic size={16} style={{ color: 'var(--bb-orange)' }} />
-            <h1 style={{
-              fontSize: '14px',
-              fontWeight: 500,
-              color: 'var(--text-primary)',
-              margin: 0,
-            }}>
+        <div className="flex items-center justify-between border-b border-border p-4">
+          <div className="flex items-center gap-2">
+            <IconMicrophone className="h-4 w-4 text-primary" />
+            <h1 className="text-sm font-medium text-foreground">
               Meetings
             </h1>
           </div>
           <button
             onClick={() => setShowUpload(true)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
-              padding: '8px 12px',
-              background: 'var(--bb-orange)',
-              color: '#000',
-              borderRadius: 'var(--radius-md)',
-              border: 'none',
-              cursor: 'pointer',
-              fontSize: '14px',
-              fontWeight: 500,
-            }}
+            className="flex items-center gap-1 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground"
           >
-            <Plus size={14} />
+            <IconPlus className="h-3.5 w-3.5" />
             Upload
           </button>
         </div>
@@ -79,8 +44,8 @@ export function MeetingsPage() {
         />
       </div>
 
-      {/* Right panel — Meeting detail */}
-      <div style={{ flex: 1, overflow: 'hidden' }}>
+      {/* Right panel -- Meeting detail */}
+      <div className="flex-1 overflow-hidden">
         {selectedMeetingId ? (
           <MeetingDetail
             key={selectedMeetingId}
@@ -88,18 +53,10 @@ export function MeetingsPage() {
             onBack={() => setSelectedMeetingId(null)}
           />
         ) : (
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            height: '100%',
-            color: 'var(--text-dim)',
-            gap: '12px',
-          }}>
-            <Mic size={48} style={{ opacity: 0.15 }} />
-            <p style={{ fontSize: '14px' }}>Select a meeting or upload a recording</p>
-            <p style={{ fontSize: '14px', opacity: 0.6 }}>
+          <div className="flex h-full flex-col items-center justify-center gap-3 text-muted-foreground">
+            <IconMicrophone className="h-12 w-12 opacity-15" />
+            <p className="text-sm">Select a meeting or upload a recording</p>
+            <p className="text-sm opacity-60">
               Upload recordings to auto-transcribe, extract action items, and generate summaries
             </p>
           </div>
