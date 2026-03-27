@@ -1,6 +1,7 @@
 import { Tabs } from 'expo-router';
 import { View, Text, StyleSheet } from 'react-native';
 import { useNotifications } from '@/hooks/useNotifications';
+import { useApprovals } from '@/hooks/useApprovals';
 
 function TabIcon({ label, focused }: { label: string; focused: boolean }) {
   return (
@@ -18,6 +19,24 @@ function ActivityTabIcon({ focused }: { focused: boolean }) {
         <View style={styles.badge}>
           <Text style={styles.badgeText}>
             {unreadCount > 99 ? '99+' : unreadCount}
+          </Text>
+        </View>
+      )}
+    </View>
+  );
+}
+
+function ApprovalsTabIcon({ focused }: { focused: boolean }) {
+  const { approvals } = useApprovals();
+  const count = approvals.length;
+
+  return (
+    <View>
+      <Text style={{ fontSize: 20, opacity: focused ? 1 : 0.5 }}>{'\u2705'}</Text>
+      {count > 0 && (
+        <View style={styles.badge}>
+          <Text style={styles.badgeText}>
+            {count > 99 ? '99+' : count}
           </Text>
         </View>
       )}
@@ -52,7 +71,7 @@ export default function TabLayout() {
         name="approvals"
         options={{
           title: 'Approvals',
-          tabBarIcon: ({ focused }) => <TabIcon label={'\u2705'} focused={focused} />,
+          tabBarIcon: ({ focused }) => <ApprovalsTabIcon focused={focused} />,
         }}
       />
       <Tabs.Screen
