@@ -4,6 +4,7 @@ import { processWhatsAppMessage } from '@/lib/channels/whatsapp-parser'
 import { transcribeVoiceNote, downloadWhatsAppMedia } from '@/lib/channels/whatsapp-voice'
 import { verifyHmacSignature } from '@/lib/security/webhook-verification'
 import { resolveChannelIdentity } from '@/lib/conversation/identity-resolver'
+import { enrichInboundMessage } from '@/lib/conversation/inbound-enrichment'
 import { logger } from '@/lib/core/logger';
 
 const VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN
@@ -191,8 +192,24 @@ export async function POST(request: Request) {
 
                     if (!error && insertedMsg) {
                         const processStartMs = Date.now()
-                        // Background process the message intent
-                        // Do not await this, let Meta Webhook receive 200 OK fast
+
+                        // Fire-and-forget: enrich with entity resolution, timeline,
+                        // relationship linking (unified pipeline intelligence layer)
+                        enrichInboundMessage(supabase, {
+                            messageId: insertedMsg.id as string,
+                            orgId: targetOrgId,
+                            channel: 'whatsapp',
+                            senderIdentifier: phone,
+                            senderName: name,
+                            subject: null,
+                            body: text,
+                            priority: 'medium',
+                        }).catch(e => {
+                            logger.error('WhatsApp enrichment failed (non-fatal):', e)
+                        })
+
+                        // Background process the message intent (existing flow:
+                        // command parser -> conversation manager -> agent dispatch)
                         processWhatsAppMessage(supabase, targetOrgId, insertedMsg, text)
                             .catch(e => {
                                 logger.error('Failed processing WhatsApp Message:', e)

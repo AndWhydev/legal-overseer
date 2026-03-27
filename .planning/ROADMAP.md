@@ -5,7 +5,8 @@
 - v1.0 MVP -- Phases 1-6 (shipped 2026-02-21)
 - v1.1 Agent Runtime + First Agents -- Phases 7-12 (shipped 2026-02-22)
 - v1.2 Battle-Testing & Sellability -- Phases 13-19 (shipped 2026-03-02)
-- v1.4 Media, Billing & Growth Roles -- Phases 20-29 (in progress)
+- v1.4 Media, Billing & Growth Roles -- Phases 20-29 (in progress, gap closure phases 27-29 pending)
+- v1.5 Beta Launch & First Revenue -- Phases 30-36 (planned)
 
 ## Phases
 
@@ -416,6 +417,20 @@ Plans:
   3. Tender scanning executes on a scheduled tick (via role evaluate() or dedicated cron)
   4. New tender matches detected by scheduled scan trigger proactive notification to user
 **Plans**: TBD (run `/gsd:plan-phase 29`)
+
+### v1.5 Beta Launch & First Revenue
+
+**Milestone Goal:** Close every gap between feature-complete dogfood and real paying users. Ship onboarding, verify production channels, build the marketing funnel, launch beta, add premium features.
+
+- [ ] **Phase 30: Onboarding E2E & First-Run Experience** — Verify all onboarding FRs, first-run channel discovery, empty state guidance, welcome conversation
+- [ ] **Phase 31: Channel Smoke Tests & Production Hardening** — Live credential tests, concurrent load, cron resilience, monitoring dashboard
+- [ ] **Phase 32: Marketing Site & Checkout Flow** — Product landing page, industry pages, AWU case study, pricing with Stripe Checkout, SEO
+- [ ] **Phase 33: Beta Program Infrastructure** — Invite flow, guided onboarding, feedback collection, usage monitoring, beta user admin
+- [ ] **Phase 34: Builder Role (Premium Differentiator)** — Website generation via chat, template library, WordPress/Elementor integration, staging preview
+- [ ] **Phase 35: Proactive Workflows & Standing Orders** — NL workflow rules, multi-step sequences, cross-role orchestration, workflow dashboard
+- [ ] **Phase 36: Mobile-First Experience** — React Native/Expo app, push notifications, voice input, offline queue, quick actions
+
+**Dependency Graph:** Phases 30-32 parallel → Phase 33 → Phase 34 → Phases 35-36
 
 ## Progress
 
