@@ -1948,10 +1948,11 @@ export function ChatInterface({ userName }: { userName?: string }) {
       if (cmdId === 'clear') handleNewConversation()
       if (cmdId === 'search') setDrawerOpen(true) // Drawer will show search
       if (cmdId === 'memory') {
-        // TODO: navigate to memory tab or open search panel
+        window.dispatchEvent(new CustomEvent('bb-navigate', { detail: { tab: 'knowledge' } }))
       }
       if (cmdId === 'export') {
-        // TODO: trigger export menu
+        const btn = document.querySelector<HTMLButtonElement>('[aria-label="Export conversation"]')
+        btn?.click()
       }
     }
     window.addEventListener(CHAT_COMMAND_EVENT, handler)

@@ -52,16 +52,23 @@ export async function activate(
       return []
     }
 
-    // Update seed node's fire_count and last_fired_at
+    // Increment seed node's fire_count and update last_fired_at
+    // Read-then-write: slightly racy but acceptable for non-critical counters
     const now = new Date().toISOString()
-    await supabase
+    const { data: seedNode } = await supabase
       .from('kg_nodes')
-      .update({
-        fire_count: supabase.rpc('increment_counter'),
-        last_fired_at: now,
-      })
+      .select('fire_count')
       .eq('org_id', orgId)
-      .eq('entity_id', seedEntityId) // non-critical, fire and forget
+      .eq('entity_id', seedEntityId)
+      .maybeSingle()
+
+    if (seedNode) {
+      await supabase
+        .from('kg_nodes')
+        .update({ fire_count: (seedNode.fire_count ?? 0) + 1, last_fired_at: now })
+        .eq('org_id', orgId)
+        .eq('entity_id', seedEntityId)
+    }
 
     // Map RPC result to ActivationResult[]
     const results = (data ?? []) as Array<{

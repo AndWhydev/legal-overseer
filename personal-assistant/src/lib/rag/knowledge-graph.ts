@@ -128,7 +128,7 @@ export class KnowledgeGraphClient {
           entity_id: person.id,
           name: person.name,
           metadata: { email: person.email, phone: person.phone },
-        }, { onConflict: 'org_id,node_type,entity_id' })
+        }, { onConflict: 'org_id,entity_id' })
 
       this.invalidateEdgeCache()
     } catch (error) {
@@ -146,7 +146,7 @@ export class KnowledgeGraphClient {
           entity_id: org.id,
           name: org.name,
           metadata: { domain: org.domain },
-        }, { onConflict: 'org_id,node_type,entity_id' })
+        }, { onConflict: 'org_id,entity_id' })
 
       this.invalidateEdgeCache()
     } catch (error) {
@@ -164,7 +164,7 @@ export class KnowledgeGraphClient {
           entity_id: topic.id,
           name: topic.name,
           metadata: { first_seen: topic.first_seen, last_seen: topic.last_seen },
-        }, { onConflict: 'org_id,node_type,entity_id' })
+        }, { onConflict: 'org_id,entity_id' })
 
       this.invalidateEdgeCache()
     } catch (error) {
