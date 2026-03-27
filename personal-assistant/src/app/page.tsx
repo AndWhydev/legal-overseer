@@ -17,15 +17,54 @@ export const metadata: Metadata = {
   },
 }
 
+const organizationJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: 'BitBit',
+  url: 'https://bitbit.chat',
+  logo: 'https://bitbit.chat/bitbit-app-icon-192.png',
+  description:
+    'AI operations platform for digital agencies, trades, and professional services',
+  sameAs: [],
+}
+
+const softwareJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: 'BitBit',
+  applicationCategory: 'BusinessApplication',
+  operatingSystem: 'Web',
+  url: 'https://bitbit.chat',
+  description:
+    'Autonomous AI agents that handle invoicing, lead capture, client communications, and business operations',
+  offers: {
+    '@type': 'AggregateOffer',
+    lowPrice: '0',
+    highPrice: '599',
+    priceCurrency: 'AUD',
+    offerCount: '4',
+  },
+}
+
 export default function LandingPage() {
   return (
-    <div style={{ background: '#0a0a0f', color: '#F1F5F9', overflow: 'hidden' }}>
-      <HeroSection />
-      <FeaturesSection />
-      <RolesSection />
-      <SocialProofSection />
-      <CTASection />
-      <Footer />
-    </div>
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareJsonLd) }}
+      />
+      <div style={{ background: '#0a0a0f', color: '#F1F5F9', overflow: 'hidden' }}>
+        <HeroSection />
+        <FeaturesSection />
+        <RolesSection />
+        <SocialProofSection />
+        <CTASection />
+        <Footer />
+      </div>
+    </>
   )
 }

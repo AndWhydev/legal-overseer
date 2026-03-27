@@ -11,11 +11,37 @@ export const metadata: Metadata = {
   title: 'BitBit for Trades & Services',
   description:
     'AI operations for tradies. Invoice from the job site, automate follow-ups, and stop doing admin at 9pm. WhatsApp-first, voice-ready.',
+  keywords: [
+    'trades business automation',
+    'tradie invoicing AI',
+    'job site automation',
+    'WhatsApp business assistant',
+  ],
+  openGraph: {
+    title: 'BitBit for Trades & Services',
+    description:
+      'AI operations for tradies. Invoice from the job site, automate follow-ups, and stop doing admin at 9pm.',
+    url: 'https://bitbit.chat/industries/trades',
+  },
+}
+
+const webPageJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebPage',
+  name: 'BitBit for Trades & Services',
+  description:
+    'AI operations for tradies. Invoice from the job site, automate follow-ups, and stop doing admin at 9pm. WhatsApp-first, voice-ready.',
+  url: 'https://bitbit.chat/industries/trades',
 }
 
 export default function TradesPage() {
   return (
-    <IndustryPageTemplate
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageJsonLd) }}
+      />
+      <IndustryPageTemplate
       industry="Trades & Services"
       headline="Invoice from the job site, not the office"
       subheadline="Tradies do real work during the day and admin at night. BitBit handles invoicing, follow-ups, and scheduling while your hands are dirty. WhatsApp-first, works from your phone."
@@ -71,5 +97,6 @@ export default function TradesPage() {
       recommendedTier="Starter"
       tierPrice="$199/mo"
     />
+    </>
   )
 }

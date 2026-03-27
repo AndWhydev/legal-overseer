@@ -11,11 +11,37 @@ export const metadata: Metadata = {
   title: 'BitBit for Professional Services',
   description:
     'AI operations for accountants, lawyers, consultants, and service firms. Manage client relationships, automate follow-ups, and keep every relationship healthy.',
+  keywords: [
+    'professional services AI',
+    'client management automation',
+    'accountant AI assistant',
+    'law firm automation',
+  ],
+  openGraph: {
+    title: 'BitBit for Professional Services',
+    description:
+      'AI operations for accountants, lawyers, consultants, and service firms. Manage client relationships and automate follow-ups.',
+    url: 'https://bitbit.chat/industries/professional-services',
+  },
+}
+
+const webPageJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebPage',
+  name: 'BitBit for Professional Services',
+  description:
+    'AI operations for accountants, lawyers, consultants, and service firms. Manage client relationships, automate follow-ups, and keep every relationship healthy.',
+  url: 'https://bitbit.chat/industries/professional-services',
 }
 
 export default function ProfessionalServicesPage() {
   return (
-    <IndustryPageTemplate
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageJsonLd) }}
+      />
+      <IndustryPageTemplate
       industry="Professional Services"
       headline="Your AI back-office that never sleeps"
       subheadline="Accountants, lawyers, dentists, consultants -- anyone managing many client relationships, appointments, and follow-ups. BitBit keeps every relationship healthy and every detail remembered."
@@ -78,5 +104,6 @@ export default function ProfessionalServicesPage() {
       recommendedTier="Growth"
       tierPrice="$349/mo"
     />
+    </>
   )
 }

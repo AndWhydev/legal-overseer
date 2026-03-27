@@ -11,11 +11,37 @@ export const metadata: Metadata = {
   title: 'BitBit for Marketing Agencies',
   description:
     'AI operations built for agencies. Automate proposals, triage client messages, manage invoices, and nurture leads -- all in one platform.',
+  keywords: [
+    'marketing agency automation',
+    'agency AI operations',
+    'digital agency AI assistant',
+    'agency proposal automation',
+  ],
+  openGraph: {
+    title: 'BitBit for Marketing Agencies',
+    description:
+      'AI operations built for agencies. Automate proposals, triage client messages, manage invoices, and nurture leads.',
+    url: 'https://bitbit.chat/industries/agencies',
+  },
+}
+
+const webPageJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebPage',
+  name: 'BitBit for Marketing Agencies',
+  description:
+    'AI operations built for marketing agencies. Automate proposals, triage client messages, manage invoices, and nurture leads.',
+  url: 'https://bitbit.chat/industries/agencies',
 }
 
 export default function AgenciesPage() {
   return (
-    <IndustryPageTemplate
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageJsonLd) }}
+      />
+      <IndustryPageTemplate
       industry="Marketing Agencies"
       headline="Stop drowning in client admin"
       subheadline="Agencies juggle multiple client accounts, proposals, content calendars, and reporting. BitBit handles the admin across all of them so your team can focus on the creative work that actually wins clients."
@@ -85,5 +111,6 @@ export default function AgenciesPage() {
       recommendedTier="Growth"
       tierPrice="$349/mo"
     />
+    </>
   )
 }
