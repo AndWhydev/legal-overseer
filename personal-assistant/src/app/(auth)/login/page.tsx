@@ -229,9 +229,9 @@ function LoginPageContent() {
               </form>
 
               {/* ── Right: Clawd ambient animation ── */}
-              <div className="relative hidden overflow-hidden md:block">
+              <div className="relative hidden overflow-hidden rounded-r-xl md:block">
                 <ClawdAmbient className="absolute inset-0" />
-                <CrtOverlay vignette scanlines grain glitch />
+                <CrtOverlay vignette scanlines grain glitch={false} />
               </div>
             </CardContent>
           </Card>
