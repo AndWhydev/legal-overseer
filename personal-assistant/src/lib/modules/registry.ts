@@ -36,6 +36,7 @@ export const ALL_MODULES = [
   'analytics',
   'activity',
   'admin',
+  'monitoring',
   'sentry',
   'swarm',
 ] as const;
@@ -90,6 +91,7 @@ const TIER_MODULES: Record<string, readonly string[] | 'all'> = {
     'analytics',
     'activity',
     'admin',
+    'monitoring',
     'sentry',
     'swarm',
   ],
@@ -160,7 +162,7 @@ export const SIDEBAR_CATEGORIES: SidebarCategory[] = [
   { id: 'messages',     label: 'Messages',     icon: 'MessageSquare',   items: ['chat', 'inbox', 'creator-studio'] },
   { id: 'business',     label: 'Business',     icon: 'Briefcase',       items: ['leads', 'invoices', 'tenders', 'contacts', 'approvals'] },
   { id: 'intelligence', label: 'Intelligence', icon: 'Brain',           items: ['meetings', 'swarm', 'sentry', 'ad-scripts', 'ai-search', 'reports', 'knowledge', 'analytics'] },
-  { id: 'operations',   label: 'Operations',   icon: 'Wrench',          items: ['activity', 'costs', 'admin', 'medications'] },
+  { id: 'operations',   label: 'Operations',   icon: 'Wrench',          items: ['activity', 'costs', 'admin', 'monitoring', 'medications'] },
   { id: 'settings',      label: 'Settings',     icon: 'Settings',        items: ['settings-connections', 'settings-automations', 'settings-appearance', 'settings-billing'] },
 ];
 
@@ -203,7 +205,7 @@ export const FULL_COMPOSITION: UIComposition = {
   profileId: 'full',
   visibleModules: [...ALL_MODULES],
   primaryModules: ['command-center', 'dashboard', 'chat', 'inbox', 'leads', 'invoices', 'tenders', 'contacts', 'approvals'],
-  advancedModules: ['creator-studio', 'medications', 'meetings', 'sentry', 'costs', 'activity', 'admin', 'knowledge', 'analytics', 'ad-scripts', 'ai-search', 'reports'],
+  advancedModules: ['creator-studio', 'medications', 'meetings', 'sentry', 'costs', 'activity', 'admin', 'monitoring', 'knowledge', 'analytics', 'ad-scripts', 'ai-search', 'reports'],
   categories: SIDEBAR_CATEGORIES.filter(c => c.id !== 'settings'),
   defaultTab: 'dashboard',
   sidebarStyle: 'full',

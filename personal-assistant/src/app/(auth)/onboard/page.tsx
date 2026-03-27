@@ -27,6 +27,7 @@ import {
   requiresWorkspaceConfirmation,
 } from '@/lib/onboarding/state'
 import { trackOnboardingEvent } from '@/lib/onboarding/analytics'
+import type { FirstRunDiscoveryResult } from '@/lib/onboarding/first-run-discovery'
 
 /** Best-effort persist current onboarding stage to server preferences */
 function persistOnboardingStage(newStage: string) {
@@ -46,7 +47,8 @@ const INDUSTRIES = [
   { value: 'other', label: 'Other' },
 ]
 
-const SYNC_LINES = [
+/** Fallback sync lines when discovery is not running */
+const SYNC_LINES_FALLBACK = [
   'Pulling in recent messages and events',
   'Mapping people and conversations',
   'Building your operational picture',
@@ -212,6 +214,9 @@ export default function OnboardPage() {
     type: string; headline: string; detail: string; source: string
   } | null>(null)
   const [selectedAgents, setSelectedAgents] = useState<string[]>([])
+  const [discoveryResult, setDiscoveryResult] = useState<FirstRunDiscoveryResult | null>(null)
+  const [discoveryLines, setDiscoveryLines] = useState<string[]>(SYNC_LINES_FALLBACK)
+  const [discoveryError, setDiscoveryError] = useState(false)
 
   const connectedNames = useMemo(
     () => connectedIds.map((id) => getConnectionDisplayName(id)),
@@ -308,7 +313,9 @@ export default function OnboardPage() {
   useEffect(() => {
     if (stage !== 'sync') return
 
-    // Fire sync request but allow continuing regardless of outcome (FR-10)
+    let cancelled = false
+
+    // Fire legacy channel sync in parallel (still useful for populating channel_messages)
     fetch('/api/channels/sync', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -316,29 +323,80 @@ export default function OnboardPage() {
         since: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
       }),
     }).catch(() => {
-      // Sync failure is non-blocking -- user can still proceed
       trackOnboardingEvent('onboarding_error', { stage: 'sync', error: 'sync_request_failed' })
     })
 
-    const interval = window.setInterval(() => {
-      setSyncStep((current) => {
-        if (current >= SYNC_LINES.length - 1) {
-          window.clearInterval(interval)
-          return current
-        }
-        return current + 1
-      })
-    }, 1000)
+    // Fire discovery scan -- shows real progress
+    const runDiscovery = async () => {
+      try {
+        setDiscoveryLines([`Scanning ${connectedNames.join(' and ') || 'channels'}...`])
+        setSyncStep(0)
 
-    const exitTimer = window.setTimeout(() => {
-      setStage('agents')
-      persistOnboardingStage('agents')
-      trackOnboardingEvent('agents_viewed')
-    }, 3600)
+        const res = await fetch('/api/onboarding/discovery', { method: 'POST' })
+
+        if (!res.ok) {
+          throw new Error(`Discovery failed: ${res.status}`)
+        }
+
+        const { result } = await res.json() as { result: FirstRunDiscoveryResult }
+
+        if (cancelled) return
+
+        // Build dynamic progress lines from real data
+        const lines: string[] = []
+        const channelNames = Object.keys(result.stats.channelBreakdown)
+        lines.push(`Scanned ${channelNames.join(', ') || 'channels'}`)
+        lines.push(`Found ${result.stats.totalMessages} messages`)
+        if (result.topContacts.length > 0) {
+          lines.push(`Identified ${result.topContacts.length} key contacts`)
+        }
+        if (result.activeThreads.length > 0) {
+          lines.push(`Mapped ${result.activeThreads.length} active threads`)
+        }
+        if (result.insights.emailsNeedingReply > 0) {
+          lines.push(`${result.insights.emailsNeedingReply} emails need a reply`)
+        }
+
+        setDiscoveryLines(lines)
+        setSyncStep(lines.length - 1)
+        setDiscoveryResult(result)
+
+        trackOnboardingEvent('discovery_completed', {
+          totalMessages: result.stats.totalMessages,
+          contacts: result.topContacts.length,
+          threads: result.activeThreads.length,
+          durationMs: result.stats.scanDurationMs,
+        })
+
+        // Auto-transition to agents stage after a brief pause
+        await new Promise(resolve => setTimeout(resolve, 1500))
+        if (!cancelled) {
+          setStage('agents')
+          persistOnboardingStage('agents')
+          trackOnboardingEvent('agents_viewed')
+        }
+      } catch (err) {
+        if (cancelled) return
+        const error = err instanceof Error ? err.message : String(err)
+        trackOnboardingEvent('onboarding_error', { stage: 'sync', error })
+        setDiscoveryError(true)
+        setDiscoveryLines(SYNC_LINES_FALLBACK)
+        setSyncStep(SYNC_LINES_FALLBACK.length - 1)
+      }
+    }
+
+    void runDiscovery()
+
+    // Safety timeout: if discovery takes > 90 seconds, allow user to skip
+    const safetyTimeout = window.setTimeout(() => {
+      if (!discoveryResult) {
+        setDiscoveryError(true)
+      }
+    }, 90_000)
 
     return () => {
-      window.clearInterval(interval)
-      window.clearTimeout(exitTimer)
+      cancelled = true
+      window.clearTimeout(safetyTimeout)
     }
   }, [stage])
 
@@ -617,7 +675,7 @@ export default function OnboardPage() {
           {stage === 'sync' && (
             <StageShell
               title="Scanning your history"
-              subtitle="BitBit is pulling the last 30 days. This runs in the background — you won't need to wait."
+              subtitle="BitBit is pulling the last 30 days. This runs in the background -- you won't need to wait."
               mascotSide="left"
               progress={progress}
               mascot={<AmbientAvatar side="left" />}
@@ -626,27 +684,29 @@ export default function OnboardPage() {
                 <div className="rounded-[30px] border border-white/45 bg-[linear-gradient(180deg,rgba(255,255,255,0.42),rgba(255,255,255,0.16))] p-6 shadow-[0_18px_56px_rgba(45,71,117,0.12),inset_0_1px_0_rgba(255,255,255,0.68)] backdrop-blur-[28px]">
                   <div className="mb-6 flex items-center justify-between gap-3">
                     <div>
-                      <p className="text-xs uppercase tracking-[0.22em] text-[#7186a4]">Syncing</p>
+                      <p className="text-xs uppercase tracking-[0.22em] text-[#7186a4]">Discovering</p>
                       <p className="mt-2 text-lg font-medium text-[#173357]">
-                        Reading from {connectedNames.join(' and ') || 'your first connection'}
+                        {discoveryResult
+                          ? `Found ${discoveryResult.stats.totalMessages} messages across ${Object.keys(discoveryResult.stats.channelBreakdown).join(', ')}`
+                          : `Scanning ${connectedNames.join(' and ') || 'your first connection'}`}
                       </p>
                     </div>
                     <div className="rounded-full bg-white/54 px-3 py-1 text-xs font-medium text-[#49698f]">
-                      {Math.min(syncStep + 1, SYNC_LINES.length)} of {SYNC_LINES.length}
+                      {Math.min(syncStep + 1, discoveryLines.length)} of {discoveryLines.length}
                     </div>
                   </div>
 
                   <div className="relative h-3 overflow-hidden rounded-full bg-white/42">
                     <motion.div
                       className="absolute inset-y-0 left-0 rounded-full bg-[linear-gradient(90deg,#87b3de_0%,#d0e7ff_52%,#f7d8bf_100%)]"
-                      animate={{ width: `${((syncStep + 1) / SYNC_LINES.length) * 100}%` }}
+                      animate={{ width: `${((syncStep + 1) / discoveryLines.length) * 100}%` }}
                       transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
                     />
                   </div>
                 </div>
 
                 <div className="grid gap-3">
-                  {SYNC_LINES.map((line, index) => {
+                  {discoveryLines.map((line, index) => {
                     const active = index <= syncStep
                     return (
                       <motion.div
@@ -667,6 +727,27 @@ export default function OnboardPage() {
                     )
                   })}
                 </div>
+
+                {discoveryError && (
+                  <div className="flex flex-col items-center gap-3">
+                    <p className="text-sm text-[#7186a4]">
+                      Discovery is taking longer than expected.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        trackOnboardingEvent('discovery_skipped')
+                        setStage('agents')
+                        persistOnboardingStage('agents')
+                        trackOnboardingEvent('agents_viewed')
+                      }}
+                      className="inline-flex items-center gap-2 rounded-full bg-[#163357] px-5 py-3 text-sm font-medium text-white shadow-[0_18px_48px_rgba(29,65,114,0.28)] transition duration-200 hover:translate-y-[-1px] hover:bg-[#214674]"
+                    >
+                      Skip and finish setup
+                      <ArrowRight size={16} />
+                    </button>
+                  </div>
+                )}
               </div>
             </StageShell>
           )}
@@ -739,7 +820,9 @@ export default function OnboardPage() {
                       animate={{ opacity: 1, y: 0 }}
                       className="rounded-[24px] bg-white/42 px-4 py-4 text-sm leading-7 text-[#24415f]"
                     >
-                      {ownerName ? `Set up for ${ownerName}` : 'Workspace owner confirmed'}
+                      {discoveryResult
+                        ? `Found ${discoveryResult.topContacts.length} contacts across ${discoveryResult.stats.totalMessages} messages`
+                        : ownerName ? `Set up for ${ownerName}` : 'Workspace owner confirmed'}
                     </motion.div>
                     <motion.div
                       initial={{ opacity: 0, y: 14 }}
@@ -747,7 +830,9 @@ export default function OnboardPage() {
                       transition={{ delay: 0.12 }}
                       className="rounded-[24px] bg-white/38 px-4 py-4 text-sm leading-7 text-[#24415f]"
                     >
-                      {orgName ? `${orgName} workspace active` : 'Workspace ready'}
+                      {discoveryResult && discoveryResult.activeThreads.length > 0
+                        ? `Active threads: ${discoveryResult.activeThreads.slice(0, 3).map(t => t.subject).join(', ')}`
+                        : orgName ? `${orgName} workspace active` : 'Workspace ready'}
                     </motion.div>
                     <motion.div
                       initial={{ opacity: 0, y: 14 }}
@@ -755,9 +840,11 @@ export default function OnboardPage() {
                       transition={{ delay: 0.24 }}
                       className="rounded-[24px] bg-white/36 px-4 py-4 text-sm leading-7 text-[#24415f]"
                     >
-                      {connectedNames.length > 0
-                        ? `Reading from ${connectedNames.join(' and ')}. Add more sources anytime from Settings.`
-                        : 'Initial scan done. Add sources from Settings whenever you want.'}
+                      {discoveryResult && discoveryResult.insights.emailsNeedingReply > 0
+                        ? `${discoveryResult.insights.emailsNeedingReply} emails need a reply`
+                        : connectedNames.length > 0
+                          ? `Reading from ${connectedNames.join(' and ')}. Add more sources anytime from Settings.`
+                          : 'Initial scan done. Add sources from Settings whenever you want.'}
                     </motion.div>
                   </div>
                 </div>

@@ -14,8 +14,11 @@ export default function robots(): MetadataRoute.Robots {
           '/pricing',
           '/privacy',
           '/terms',
-          '/docs',
           '/onboard',
+          '/case-study',
+          '/industries/agencies',
+          '/industries/trades',
+          '/industries/professional-services',
         ],
         disallow: [
           '/dashboard',

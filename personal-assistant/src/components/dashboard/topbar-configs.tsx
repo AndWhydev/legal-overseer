@@ -27,6 +27,7 @@ import {
   Zap,
   Puzzle,
   Palette,
+  Activity,
 } from 'lucide-react';
 import type { TopbarConfig } from './topbar';
 
@@ -196,6 +197,10 @@ export const TOPBAR_CONFIGS: Record<string, TopbarConfig> = {
   admin: {
     title: 'Admin',
     breadcrumb: <IconBreadcrumb icon={Shield} text="System tools" />,
+  },
+  monitoring: {
+    title: 'Monitoring',
+    breadcrumb: <IconBreadcrumb icon={Activity} text="Production health" />,
   },
   'settings-connections': {
     title: 'Settings',

@@ -7,6 +7,8 @@ type OnboardingEvent =
   | 'connection_succeeded'
   | 'connections_skipped'
   | 'sync_started'
+  | 'discovery_completed'
+  | 'discovery_skipped'
   | 'agents_viewed'
   | 'agents_completed'
   | 'value_viewed'

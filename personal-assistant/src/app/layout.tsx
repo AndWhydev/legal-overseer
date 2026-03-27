@@ -36,18 +36,22 @@ const ebGaramond = EB_Garamond({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://bitbit.chat"),
   title: {
     default: "BitBit - AI Operations Platform",
     template: "%s | BitBit",
   },
-  description: "Agentic AI operations platform for digital agencies. Automate leads, invoices, communications, and tenders with intelligent agents.",
+  description:
+    "Autonomous AI agents that handle invoicing, lead capture, client comms, and tenders. Built for agencies, trades, and professional services.",
   keywords: [
-    "AI operations",
-    "digital agency",
-    "automation",
+    "AI business assistant",
+    "automated invoicing",
+    "lead management AI",
+    "AI operations platform",
+    "agency automation",
+    "trades business automation",
     "AI agents",
-    "leads management",
-    "invoice automation",
+    "digital agency",
     "business automation",
     "operations platform",
   ],
@@ -63,12 +67,13 @@ export const metadata: Metadata = {
     apple: "/apple-touch-icon.png",
   },
   openGraph: {
-    type: "website",
-    siteName: "BitBit",
-    title: "BitBit - AI Operations Platform",
-    description: "Agentic AI operations platform for digital agencies. Automate leads, invoices, communications, and tenders.",
-    locale: "en_AU",
+    title: "BitBit - AI Operations That Actually Work",
+    description:
+      "Autonomous AI agents that handle invoicing, lead capture, client comms, and tenders. Built for agencies, trades, and professional services.",
     url: "https://bitbit.chat",
+    siteName: "BitBit",
+    locale: "en_AU",
+    type: "website",
     images: [
       {
         url: "https://bitbit.chat/og-image.png",
@@ -80,8 +85,10 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "BitBit - AI Operations Platform",
-    description: "Agentic AI operations platform for digital agencies.",
+    title: "BitBit - AI Operations That Actually Work",
+    description:
+      "Autonomous AI agents for agencies, trades, and professional services.",
+    images: ["https://bitbit.chat/og-image.png"],
     site: "@bitbitchat",
   },
   robots: {
@@ -96,7 +103,7 @@ export const metadata: Metadata = {
     },
   },
   alternates: {
-    canonical: "https://bitbit.chat",
+    canonical: "/",
   },
 };
 
@@ -121,13 +128,9 @@ export default function RootLayout({
                   "@id": "https://bitbit.chat/#organization",
                   "name": "BitBit",
                   "url": "https://bitbit.chat",
-                  "logo": "https://bitbit.chat/logo.png",
-                  "description": "Agentic AI operations platform for digital agencies",
-                  "sameAs": [
-                    "https://twitter.com/bitbitchat",
-                    "https://github.com/bitbit",
-                    "https://linkedin.com/company/bitbit",
-                  ],
+                  "logo": "https://bitbit.chat/bitbit-app-icon-192.png",
+                  "description": "AI operations platform for digital agencies, trades, and professional services",
+                  "sameAs": [],
                   "contactPoint": {
                     "@type": "ContactPoint",
                     "contactType": "Customer Service",
@@ -141,26 +144,21 @@ export default function RootLayout({
                   "applicationCategory": "BusinessApplication",
                   "operatingSystem": "Web",
                   "url": "https://bitbit.chat",
-                  "description": "AI operations platform that automates leads, invoices, communications, and tenders with intelligent agents",
+                  "description": "Autonomous AI agents that handle invoicing, lead capture, client communications, and business operations",
                   "offers": {
                     "@type": "AggregateOffer",
-                    "priceCurrency": "USD",
-                    "lowPrice": "29",
-                    "highPrice": "299",
-                    "offerCount": 3,
-                  },
-                  "aggregateRating": {
-                    "@type": "AggregateRating",
-                    "ratingValue": "4.8",
-                    "ratingCount": "150",
-                    "bestRating": "5",
-                    "worstRating": "1",
+                    "priceCurrency": "AUD",
+                    "lowPrice": "0",
+                    "highPrice": "599",
+                    "offerCount": "4",
                   },
                   "featureList": [
-                    "Semantic Memory",
-                    "Smart Triage",
-                    "Approval Queue",
-                    "Kanban + CRM",
+                    "Autonomous Agent Operations",
+                    "Smart Email Triage",
+                    "Invoice Automation",
+                    "Lead Management",
+                    "Content Creation",
+                    "SEO Monitoring",
                   ],
                 },
               ],
