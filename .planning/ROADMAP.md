@@ -331,6 +331,25 @@ Plans:
 - [ ] 35-02-PLAN.md -- Cross-role tool bridge, channel triage + role runtime trigger wiring
 - [ ] 35-03-PLAN.md -- Workflow CRUD API routes + dashboard tab UI
 
+### Phase 36: Mobile-First Experience
+**Goal**: Users can interact with BitBit on the go via a React Native/Expo mobile app -- chat with streaming responses, approve agent actions with swipe gestures, receive push notifications for alerts, use voice input hands-free, and queue messages offline that sync when reconnected
+**Depends on**: Phase 35 (proactive workflows complete, all features available)
+**Requirements**: MOB-01, MOB-02, MOB-03, MOB-04, MOB-05
+**Success Criteria** (what must be TRUE):
+  1. Expo app builds and runs on iOS and Android with Supabase auth
+  2. Chat messages stream token-by-token via SSE from existing /api/agent/chat
+  3. Push notifications fire for new approvals and workflow completions
+  4. Voice recording transcribes via existing /api/ai/voice and sends as chat message
+  5. Messages queued offline sync automatically when connectivity returns
+  6. Swipe-to-approve/reject works on approval cards with haptic feedback
+**Plans**: 4 plans (3 waves)
+
+Plans:
+- [ ] 36-01-PLAN.md -- Expo project scaffold, Supabase auth, Bearer token API adapter, tab navigation
+- [ ] 36-02-PLAN.md -- Chat screen with SSE streaming + voice input
+- [ ] 36-03-PLAN.md -- Push notifications backend + DB migration + mobile registration
+- [ ] 36-04-PLAN.md -- Offline queue + swipeable approvals + end-to-end verification
+
 ## Progress
 
 **Execution Order:**
@@ -376,5 +395,6 @@ Phase 20 first (no dependencies), then 21 (billing before growth roles), then 22
 | 33. Beta Program Infrastructure | v1.5 | 1/1 | Complete | 2026-03-27 |
 | 34. Builder Role | v1.5 | 4/4 | Complete | 2026-03-27 |
 | 35. Proactive Workflows | 3/3 | Complete   | 2026-03-27 | - |
+| 36. Mobile-First Experience | v1.5 | 0/4 | Planned | - |
 
-**Overall:** 57/57 plans complete for v1.0+v1.1+v1.2 (100%). v1.4: 24/28 plans (Phases 20-27 complete, 28-29 pending). v1.5: Phases 30-34 complete, Phase 35 planned (3 plans).
+**Overall:** 57/57 plans complete for v1.0+v1.1+v1.2 (100%). v1.4: 24/28 plans (Phases 20-27 complete, 28-29 pending). v1.5: Phases 30-35 complete, Phase 36 planned (4 plans).
