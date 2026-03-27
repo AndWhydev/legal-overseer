@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Media, Billing & Growth Roles
 status: executing
-stopped_at: Completed 35-01-PLAN.md (Workflow Rules Foundation)
-last_updated: "2026-03-28T15:47:17Z"
-last_activity: "2026-03-28 - Completed 35-01: Workflow Rules Foundation"
+stopped_at: Completed 35-02-PLAN.md
+last_updated: "2026-03-27T16:10:14.025Z"
+last_activity: "2026-03-28 - Completed 35-02: Trigger Wiring & Cross-Role Tool Bridge"
 progress:
-  total_phases: 20
-  completed_phases: 12
-  total_plans: 34
-  completed_plans: 33
-  percent: 100
+  total_phases: 21
+  completed_phases: 13
+  total_plans: 37
+  completed_plans: 37
+  percent: 33
 ---
 
 # Project State
@@ -26,9 +26,9 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 ## Current Position
 
 Phase: 35 of 36 (Proactive Workflows)
-Plan: 1 of 3 in current phase
+Plan: 2 of 3 in current phase
 Status: Executing
-Last activity: 2026-03-28 - Completed 35-01: Workflow Rules Foundation
+Last activity: 2026-03-28 - Completed 35-02: Trigger Wiring & Cross-Role Tool Bridge
 
 Progress: v1.0 ======== | v1.1 ======== | v1.2 ======== | v1.4 ======== | v1.5 ========== | v1.6 ===--- 33%
 
@@ -78,8 +78,9 @@ Progress: v1.0 ======== | v1.1 ======== | v1.2 ======== | v1.4 ======== | v1.5 =
 
 | Phase | Plans | Status |
 |-------|-------|--------|
-| 35. Proactive Workflows | 3 | IN PROGRESS (1/3) |
+| 35. Proactive Workflows | 3 | IN PROGRESS (2/3) |
 | Phase 35 P01 | 27min | 2 tasks | 7 files |
+| Phase 35 P02 | 15min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -171,6 +172,8 @@ See PROJECT.md Key Decisions table.
 - [Phase 35-01]: Migration uses timestamp format (20260328000001) matching existing convention not plan-specified 151_ prefix
 - [Phase 35-01]: vi.hoisted() for Anthropic SDK mock in Vitest ESM mode -- vi.mock factory hoisted before variable declarations
 - [Phase 35-01]: matchesCronPattern uses 5-minute tolerance window matching role tick interval for HH:MM patterns
+- [Phase 35]: [Phase 35-02]: WorkflowToolBridge uses TOOL_GROUPS registry for resolution -- org-level canProceed for cross-role budget guard
+- [Phase 35]: [Phase 35-02]: Event triggers in triage only evaluate/record; workflow starting deferred to role tick for budget control
 
 ### Roadmap Evolution
 
@@ -196,6 +199,6 @@ See PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-03-28T15:47:17Z
-Stopped at: Completed 35-01-PLAN.md (Workflow Rules Foundation)
+Last session: 2026-03-27T16:10:14.004Z
+Stopped at: Completed 35-02-PLAN.md
 Resume file: None
