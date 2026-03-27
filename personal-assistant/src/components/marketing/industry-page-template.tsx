@@ -315,7 +315,7 @@ export default function IndustryPageTemplate({
               }}
             >
               <Link
-                href="/onboard"
+                href={`/login?redirect=/dashboard&checkout_tier=${recommendedTier.toLowerCase()}`}
                 style={{
                   height: 48,
                   padding: '0 32px',

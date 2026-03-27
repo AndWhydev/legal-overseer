@@ -1,4 +1,5 @@
-import type { Metadata } from 'next'
+'use client'
+
 import {
   UserX,
   CalendarDays,
@@ -6,24 +7,6 @@ import {
   UserPlus,
 } from 'lucide-react'
 import IndustryPageTemplate from '@/components/marketing/industry-page-template'
-
-export const metadata: Metadata = {
-  title: 'BitBit for Professional Services',
-  description:
-    'AI operations for accountants, lawyers, consultants, and service firms. Manage client relationships, automate follow-ups, and keep every relationship healthy.',
-  keywords: [
-    'professional services AI',
-    'client management automation',
-    'accountant AI assistant',
-    'law firm automation',
-  ],
-  openGraph: {
-    title: 'BitBit for Professional Services',
-    description:
-      'AI operations for accountants, lawyers, consultants, and service firms. Manage client relationships and automate follow-ups.',
-    url: 'https://bitbit.chat/industries/professional-services',
-  },
-}
 
 const webPageJsonLd = {
   '@context': 'https://schema.org',
