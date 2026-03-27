@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useCallback } from 'react';
+import React, { useRef, useEffect, useCallback, useState } from 'react';
 import {
   View,
   FlatList,
@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useChat, type ChatMessage } from '@/hooks/useChat';
+import { useVoice } from '@/hooks/useVoice';
 import { ChatBubble } from '@/components/ChatBubble';
 import { ChatInput } from '@/components/ChatInput';
 
@@ -28,6 +29,16 @@ export default function ThreadScreen() {
     sendMessage,
     isLoadingHistory,
   } = useChat(isNewChat ? null : threadId);
+
+  // Voice recording integration
+  const [transcribedText, setTranscribedText] = useState<string | undefined>();
+  const voice = useVoice({
+    onTranscript: (text) => {
+      setTranscribedText(text);
+      // Reset after applying so the effect triggers on repeated transcriptions
+      setTimeout(() => setTranscribedText(undefined), 100);
+    },
+  });
 
   // Auto-scroll to bottom on new messages or streaming
   useEffect(() => {
@@ -130,8 +141,20 @@ export default function ThreadScreen() {
         />
       )}
 
-      {/* Input */}
-      <ChatInput onSend={sendMessage} disabled={isStreaming} />
+      {/* Input with voice */}
+      <ChatInput
+        onSend={sendMessage}
+        disabled={isStreaming}
+        transcribedText={transcribedText}
+        voice={{
+          isRecording: voice.isRecording,
+          isTranscribing: voice.isTranscribing,
+          duration: voice.duration,
+          onStart: voice.startRecording,
+          onStop: voice.stopAndTranscribe,
+          onCancel: voice.cancel,
+        }}
+      />
     </SafeAreaView>
   );
 }

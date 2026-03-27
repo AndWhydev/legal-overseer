@@ -1,45 +1,81 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import {
   View,
   TextInput,
   TouchableOpacity,
+  Pressable,
   Text,
   StyleSheet,
   Platform,
   KeyboardAvoidingView,
+  ActivityIndicator,
+  Animated,
 } from 'react-native';
+import * as Haptics from 'expo-haptics';
 
 interface ChatInputProps {
   onSend: (text: string) => void;
   disabled?: boolean;
-  /** Placeholder for microphone button -- wired in Task 2 */
-  onMicPress?: () => void;
-  /** Whether voice recording is active */
-  isRecording?: boolean;
+  /** Voice recording controls */
+  voice?: {
+    isRecording: boolean;
+    isTranscribing: boolean;
+    duration: number;
+    onStart: () => void;
+    onStop: () => void;
+    onCancel: () => void;
+  };
   /** Text injected from voice transcription */
   transcribedText?: string;
 }
 
 /**
- * Chat text input bar with send button.
- * Multiline input that grows up to maxHeight.
- * Microphone button placeholder for voice input (Task 2).
+ * Chat text input bar with send + voice buttons.
+ *
+ * Normal mode: text input + mic button + send button.
+ * Recording mode: pulsing red indicator + duration timer + stop button.
+ * Transcribing mode: spinner with "Transcribing..." text.
+ * Long-press mic for push-to-talk (release = stop + transcribe).
  */
 export function ChatInput({
   onSend,
   disabled,
-  onMicPress,
-  isRecording,
+  voice,
   transcribedText,
 }: ChatInputProps) {
   const [text, setText] = useState('');
+  const pulseAnim = useRef(new Animated.Value(1)).current;
 
-  // Apply transcribed text when it changes
-  React.useEffect(() => {
+  // Apply transcribed text when it arrives
+  useEffect(() => {
     if (transcribedText) {
       setText(transcribedText);
     }
   }, [transcribedText]);
+
+  // Pulse animation for recording indicator
+  useEffect(() => {
+    if (voice?.isRecording) {
+      const pulse = Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, {
+            toValue: 0.4,
+            duration: 600,
+            useNativeDriver: true,
+          }),
+          Animated.timing(pulseAnim, {
+            toValue: 1,
+            duration: 600,
+            useNativeDriver: true,
+          }),
+        ]),
+      );
+      pulse.start();
+      return () => pulse.stop();
+    } else {
+      pulseAnim.setValue(1);
+    }
+  }, [voice?.isRecording, pulseAnim]);
 
   const handleSend = useCallback(() => {
     const trimmed = text.trim();
@@ -48,26 +84,115 @@ export function ChatInput({
     setText('');
   }, [text, disabled, onSend]);
 
-  const canSend = text.trim().length > 0 && !disabled;
+  const handleMicPress = useCallback(() => {
+    if (!voice) return;
+    if (voice.isRecording) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      voice.onStop();
+    } else {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      voice.onStart();
+    }
+  }, [voice]);
 
+  const handleMicLongPress = useCallback(() => {
+    if (!voice || voice.isRecording) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    voice.onStart();
+  }, [voice]);
+
+  const handleMicRelease = useCallback(() => {
+    // Push-to-talk: release stops recording if it was started via long press
+    // Only trigger if recording for at least 500ms to differentiate from tap
+    if (voice?.isRecording && voice.duration >= 1) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      voice.onStop();
+    }
+  }, [voice]);
+
+  const canSend = text.trim().length > 0 && !disabled;
+  const isRecording = voice?.isRecording ?? false;
+  const isTranscribing = voice?.isTranscribing ?? false;
+
+  // Recording mode UI
+  if (isRecording) {
+    return (
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+      >
+        <View style={styles.container}>
+          {/* Cancel button */}
+          <TouchableOpacity
+            onPress={voice?.onCancel}
+            style={styles.cancelButton}
+            accessibilityLabel="Cancel recording"
+          >
+            <Text style={styles.cancelText}>Cancel</Text>
+          </TouchableOpacity>
+
+          {/* Recording indicator */}
+          <View style={styles.recordingInfo}>
+            <Animated.View
+              style={[styles.recordingDot, { opacity: pulseAnim }]}
+            />
+            <Text style={styles.recordingTime}>
+              {formatDuration(voice?.duration ?? 0)}
+            </Text>
+          </View>
+
+          {/* Stop button */}
+          <TouchableOpacity
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              voice?.onStop();
+            }}
+            style={styles.stopButton}
+            accessibilityLabel="Stop recording and transcribe"
+          >
+            <View style={styles.stopSquare} />
+          </TouchableOpacity>
+        </View>
+      </KeyboardAvoidingView>
+    );
+  }
+
+  // Transcribing mode UI
+  if (isTranscribing) {
+    return (
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+      >
+        <View style={styles.container}>
+          <View style={styles.transcribingContainer}>
+            <ActivityIndicator color="#2563eb" size="small" />
+            <Text style={styles.transcribingText}>Transcribing...</Text>
+          </View>
+        </View>
+      </KeyboardAvoidingView>
+    );
+  }
+
+  // Normal text input mode
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
     >
       <View style={styles.container}>
-        {/* Mic button */}
-        {onMicPress && (
-          <TouchableOpacity
-            onPress={onMicPress}
-            style={[
-              styles.iconButton,
-              isRecording && styles.iconButtonRecording,
-            ]}
-            accessibilityLabel={isRecording ? 'Stop recording' : 'Start voice recording'}
+        {/* Mic button with long-press for push-to-talk */}
+        {voice && (
+          <Pressable
+            onPress={handleMicPress}
+            onLongPress={handleMicLongPress}
+            onPressOut={handleMicRelease}
+            delayLongPress={300}
+            style={styles.iconButton}
+            accessibilityLabel="Start voice recording"
           >
-            <Text style={styles.iconText}>{isRecording ? '\u23F9' : '\uD83C\uDF99'}</Text>
-          </TouchableOpacity>
+            <Text style={styles.micIcon}>{'\uD83C\uDF99'}</Text>
+          </Pressable>
         )}
 
         {/* Text input */}
@@ -79,7 +204,7 @@ export function ChatInput({
           placeholderTextColor="#52525b"
           multiline
           maxLength={4000}
-          editable={!disabled && !isRecording}
+          editable={!disabled}
           onSubmitEditing={handleSend}
           blurOnSubmit={false}
         />
@@ -92,10 +217,7 @@ export function ChatInput({
           accessibilityLabel="Send message"
         >
           <Text
-            style={[
-              styles.sendIcon,
-              canSend && styles.sendIconActive,
-            ]}
+            style={[styles.sendIcon, canSend && styles.sendIconActive]}
           >
             {'\u2191'}
           </Text>
@@ -103,6 +225,12 @@ export function ChatInput({
       </View>
     </KeyboardAvoidingView>
   );
+}
+
+function formatDuration(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
 const styles = StyleSheet.create({
@@ -137,10 +265,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  iconButtonRecording: {
-    backgroundColor: '#dc2626',
-  },
-  iconText: {
+  micIcon: {
     fontSize: 18,
   },
   sendButton: {
@@ -161,5 +286,60 @@ const styles = StyleSheet.create({
   },
   sendIconActive: {
     color: '#fff',
+  },
+  // Recording mode
+  cancelButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  cancelText: {
+    fontSize: 14,
+    color: '#a1a1aa',
+  },
+  recordingInfo: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  recordingDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#dc2626',
+  },
+  recordingTime: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fafafa',
+    fontVariant: ['tabular-nums'],
+  },
+  stopButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#dc2626',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stopSquare: {
+    width: 14,
+    height: 14,
+    borderRadius: 2,
+    backgroundColor: '#fff',
+  },
+  // Transcribing mode
+  transcribingContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    gap: 8,
+  },
+  transcribingText: {
+    fontSize: 14,
+    color: '#a1a1aa',
   },
 });
