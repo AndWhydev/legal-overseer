@@ -3,6 +3,7 @@ import type { AgentToolHandler, ToolResult } from '../tools'
 import type { WebsiteCategory } from '@/lib/builder/types'
 import { generateWebsite, reviseWebsite } from '@/lib/builder/generator'
 import { listTemplates } from '@/lib/builder/templates'
+import { deployToWordPress } from '@/lib/builder/deploy'
 
 // ---------------------------------------------------------------------------
 // Tool Definitions
@@ -93,6 +94,41 @@ export const builderToolDefinitions: Anthropic.Tool[] = [
         },
       },
       required: ['project_id', 'instruction'],
+    },
+  },
+  {
+    name: 'deploy_website',
+    description:
+      'Deploy a generated website to a connected WordPress site. Requires the project to have a deploy_target configured. The site will be pushed as a WordPress page (with Elementor formatting if Elementor is detected on the target site). Returns the live URL.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        project_id: {
+          type: 'string',
+          description: 'The website project ID to deploy',
+        },
+        publish: {
+          type: 'boolean',
+          description:
+            'If true, publish the page immediately. Defaults to false (saves as draft)',
+        },
+      },
+      required: ['project_id'],
+    },
+  },
+  {
+    name: 'preview_website',
+    description:
+      'Get the preview URL for a generated website. The preview is a live, sharable link that shows the current state of the site.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        project_id: {
+          type: 'string',
+          description: 'The website project ID to preview',
+        },
+      },
+      required: ['project_id'],
     },
   },
 ]
@@ -213,6 +249,120 @@ export const builderToolHandlers: Record<string, AgentToolHandler> = {
       return {
         success: false,
         error: `Failed to revise website: ${error instanceof Error ? error.message : String(error)}`,
+      }
+    }
+  },
+
+  async deploy_website(input, orgId, supabase): Promise<ToolResult> {
+    try {
+      const projectId = input.project_id as string
+
+      // Check project exists and has a deploy target
+      const { data: project, error: loadError } = await supabase
+        .from('website_projects')
+        .select('id, name, deploy_target, html_content')
+        .eq('id', projectId)
+        .eq('org_id', orgId)
+        .single()
+
+      if (loadError || !project) {
+        return {
+          success: false,
+          error: 'Website project not found or access denied.',
+        }
+      }
+
+      if (!project.html_content) {
+        return {
+          success: false,
+          error: 'This project has no generated content yet. Generate the website first.',
+        }
+      }
+
+      if (!project.deploy_target || (project.deploy_target as { type?: string }).type !== 'wordpress') {
+        return {
+          success: false,
+          error:
+            "This project doesn't have a WordPress site connected. Ask the user to configure the WordPress connection first with their site URL and application password.",
+        }
+      }
+
+      const result = await deployToWordPress(projectId, orgId, supabase)
+
+      if (!result.success) {
+        return {
+          success: false,
+          error: result.error ?? 'Deployment failed for an unknown reason.',
+        }
+      }
+
+      return {
+        success: true,
+        data: {
+          project_id: projectId,
+          project_name: project.name,
+          page_url: result.pageUrl,
+          page_id: result.pageId,
+          elementor_used: result.elementorUsed ?? false,
+          status: 'deployed',
+        },
+      }
+    } catch (error) {
+      return {
+        success: false,
+        error: `Deployment failed: ${error instanceof Error ? error.message : String(error)}`,
+      }
+    }
+  },
+
+  async preview_website(input, orgId, supabase): Promise<ToolResult> {
+    try {
+      const projectId = input.project_id as string
+
+      const { data: project, error: loadError } = await supabase
+        .from('website_projects')
+        .select('id, name, status, created_at, html_content')
+        .eq('id', projectId)
+        .eq('org_id', orgId)
+        .single()
+
+      if (loadError || !project) {
+        return {
+          success: false,
+          error: 'Website project not found or access denied.',
+        }
+      }
+
+      if (!project.html_content) {
+        return {
+          success: false,
+          error: 'This project has no generated content yet. Generate the website first.',
+        }
+      }
+
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || ''
+      const previewUrl = `${appUrl}/api/builder/preview/${projectId}`
+
+      // Update preview_url on the project
+      await supabase
+        .from('website_projects')
+        .update({ preview_url: previewUrl })
+        .eq('id', projectId)
+        .eq('org_id', orgId)
+
+      return {
+        success: true,
+        data: {
+          preview_url: previewUrl,
+          status: project.status,
+          name: project.name,
+          created_at: project.created_at,
+        },
+      }
+    } catch (error) {
+      return {
+        success: false,
+        error: `Failed to get preview: ${error instanceof Error ? error.message : String(error)}`,
       }
     }
   },

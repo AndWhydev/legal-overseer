@@ -107,7 +107,7 @@ export const TOOL_GROUPS: Record<ToolGroup, ToolGroupMeta> = {
     id: 'builder',
     label: 'Website Builder',
     description: 'Generate, preview, and deploy professional websites from templates or descriptions',
-    tools: ['generate_website', 'list_website_templates', 'revise_website'],
+    tools: ['generate_website', 'list_website_templates', 'revise_website', 'deploy_website', 'preview_website'],
   },
 }
 
@@ -202,6 +202,10 @@ export const JIT_INSTRUCTIONS: Record<string, string> = {
   generate_website: 'Website generated and shown as a live HTML preview artifact in the chat. Do NOT repeat the HTML code. Confirm briefly: "Generated [business_name] website using [template/custom design]. You can see the live preview on the right. Tell me what you want to change." The user can see the full responsive preview in the artifact panel.',
   list_website_templates: 'Present the available templates as a concise list showing name, category, and a brief description. If the user seems interested in one, suggest using generate_website with that template_id.',
   revise_website: 'Website updated with the requested changes. The revised preview is shown in the artifact panel. Confirm briefly what changed: "Updated [change summary]. Preview is refreshed on the right." Do not repeat HTML.',
+
+  // Deploy & Preview
+  deploy_website: 'Website deployed. Confirm the live URL and whether it was published or saved as a draft. If Elementor was used, mention that the client can edit it in the Elementor editor. If deployment failed, explain the error clearly and suggest next steps.',
+  preview_website: 'Share the preview URL with the user. Mention they can share this link with clients for review. Format as a clickable link.',
 }
 
 /** Get JIT instruction for a tool, if one exists. */

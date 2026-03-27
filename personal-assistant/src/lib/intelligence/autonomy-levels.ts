@@ -86,6 +86,13 @@ export const TOOL_AUTONOMY_MAP: Record<string, AutonomyLevel> = {
   generate_blog: 'L3_notify',      // Generates content via LLM, no external publish
   content_calendar: 'L4_silent',   // Read-only listing
 
+  // Website Builder tools: generate and deploy websites
+  generate_website: 'L3_notify',       // Generates content via LLM, persists to DB
+  list_website_templates: 'L4_silent', // Read-only listing
+  revise_website: 'L3_notify',        // Revises content via LLM, persists to DB
+  deploy_website: 'L2_propose',       // Deploys to external WordPress site — consequential
+  preview_website: 'L4_silent',       // Read-only preview URL construction
+
   // L1: Financial / irreversible — always require approval
   // (future: invoice_send, payment_process, contract_sign)
 }
