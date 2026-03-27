@@ -511,21 +511,21 @@ function InlineApprovalCard({
 
       {isResolving && (
         <div style={{ ...resolvedBadgeStyle, background: 'var(--hover-bg, rgba(255, 255, 255, 0.04))', color: 'var(--text-secondary, #94A3B8)' }}>
-          <Loader2 size={12} style={{ animation: 'spin 1s linear infinite' }} />
+          <IconLoader2 size={12} style={{ animation: 'spin 1s linear infinite' }} />
           Resolving...
         </div>
       )}
 
       {isApproved && !isResolving && (
         <div style={resolvedBadgeStyle}>
-          <Check size={12} />
+          <IconCheck size={12} />
           Approved. Sending...
         </div>
       )}
 
       {isRejected && !isResolving && (
         <div style={resolvedBadgeStyle}>
-          <X size={12} />
+          <IconX size={12} />
           Rejected.
         </div>
       )}
@@ -2056,7 +2056,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
         onClick={handleOpenDrawer}
         title="Conversations"
       >
-        <Menu size={18} strokeWidth={1.8} />
+        <IconMenu2 size={18} stroke={1.8} />
       </button>
 
       {/* Export menu — vertically centered in topbar, offset left to avoid notification bell */}
@@ -2273,7 +2273,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
               onClick={smartScroll.scrollToBottom}
               aria-label="Scroll to bottom"
             >
-              <ChevronDown size={18} />
+              <IconChevronDown size={18} />
             </motion.button>
           )}
         </AnimatePresence>
