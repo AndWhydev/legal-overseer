@@ -48,6 +48,7 @@ export const TABS: TabDef[] = [
   { id: 'chat', label: 'Chat', path: '/dashboard/chat' },
   { id: 'inbox', label: 'Inbox', path: '/dashboard/inbox' },
   { id: 'creator-studio', label: 'Creator Studio', path: '/dashboard/creator-studio' },
+  { id: 'tasks', label: 'Tasks', path: '/dashboard/tasks' },
 
   { id: 'medications', label: 'Medications', path: '/dashboard/medications' },
   { id: 'contacts', label: 'Contacts', path: '/dashboard/contacts' },
@@ -59,6 +60,7 @@ export const TABS: TabDef[] = [
   { id: 'meetings', label: 'Meetings', path: '/dashboard/meetings' },
   { id: 'sentry', label: 'Sentry', path: '/dashboard/sentry' },
   { id: 'swarm', label: 'Swarm', path: '/dashboard/swarm' },
+  { id: 'workflows', label: 'Workflows', path: '/dashboard/workflows' },
   { id: 'approvals', label: 'Approvals', path: '/dashboard/approvals' },
   { id: 'ad-scripts', label: 'Ad Scripts', path: '/dashboard/ad-scripts' },
   { id: 'ai-search', label: 'AI Search', path: '/dashboard/ai-search' },
@@ -83,6 +85,7 @@ const tabImports: Record<string, Promise<{ default: React.ComponentType }>> = {
   chat: import('./tabs/chat-tab'),
   inbox: import('./tabs/inbox-tab'),
   'creator-studio': import('./tabs/creator-studio-tab'),
+  tasks: import('./tabs/tasks-tab'),
 
   medications: import('./tabs/medications-tab'),
   contacts: import('./tabs/contacts-tab'),
@@ -94,6 +97,7 @@ const tabImports: Record<string, Promise<{ default: React.ComponentType }>> = {
   meetings: import('./tabs/meetings-tab'),
   sentry: import('./tabs/sentry-tab'),
   swarm: import('./tabs/swarm-tab'),
+  workflows: import('./tabs/workflows-tab'),
   approvals: import('./tabs/approvals-tab'),
   'ad-scripts': import('./tabs/ad-scripts-tab'),
   'ai-search': import('./tabs/ai-search-tab'),
@@ -128,6 +132,7 @@ const TabComponents: Record<string, React.LazyExoticComponent<React.ComponentTyp
   meetings: lazy(() => tabImports.meetings),
   sentry: lazy(() => tabImports.sentry),
   swarm: lazy(() => tabImports.swarm),
+  workflows: lazy(() => tabImports.workflows),
   approvals: lazy(() => tabImports.approvals),
   'ad-scripts': lazy(() => tabImports['ad-scripts']),
   'ai-search': lazy(() => tabImports['ai-search']),
@@ -181,19 +186,13 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
   const { composition } = enabledModulesState;
   const visibleTabs = TABS.filter(t => enabledModulesState.modules.includes(t.id));
 
-  // Track visited tabs for keep-alive
-  const PRIORITY_TABS = new Set(['dashboard', 'chat', 'inbox']);
+  // Track visited tabs for keep-alive — only mount tabs the user actually navigates to
+  const PRIORITY_TABS = new Set(['dashboard']);
   const [visitedTabs, setVisitedTabs] = useState<Set<string>>(() => new Set(PRIORITY_TABS));
 
   useEffect(() => {
     Promise.all(Object.values(tabImports)).then(() => setTabsReady(true));
   }, []);
-
-  // Once code + data are ready, pre-mount ALL tabs behind the splash screen
-  useEffect(() => {
-    if (!tabsReady || !dataReady) return;
-    setVisitedTabs(new Set(TABS.map(t => t.id)));
-  }, [tabsReady, dataReady]);
 
   // State: active tab and slide-animation direction
   const [activeNavIndex, setActiveNavIndex] = useState(0);
@@ -396,7 +395,7 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
                 }
 
                 return (
-                  <header className="flex h-(--header-height) shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height) px-4 lg:px-6">
+                  <header className="relative flex h-(--header-height) shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height) px-4 lg:px-6">
                     <SidebarTrigger className="-ml-1" />
                     <div className="mx-2 h-4 w-px shrink-0 bg-border" />
                     <Topbar config={topbarConfig} />
@@ -411,10 +410,10 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
                 className="relative flex-1 overflow-hidden"
                 tabIndex={-1}
               >
-                {TABS.map((tab, index) => {
-                  const isActive = index === activeNavIndex;
+                {(() => {
+                  const tab = TABS[activeNavIndex];
+                  if (!tab) return null;
                   const Comp = TabComponents[tab.id];
-
                   return (
                     <div
                       key={tab.id}
@@ -422,23 +421,18 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
                       role="tabpanel"
                       id={`tabpanel-${tab.id}`}
                       aria-labelledby={`tab-${tab.id}`}
-                      tabIndex={isActive ? 0 : -1}
-                      data-active={isActive}
-                      data-dir={isActive && transitionDir ? transitionDir : undefined}
-                      aria-hidden={!isActive}
-                      hidden={!isActive}
-                      style={!isActive ? { display: 'none', pointerEvents: 'none' } : undefined}
+                      tabIndex={0}
+                      data-active={true}
+                      data-dir={transitionDir ?? undefined}
                     >
-                      {(isActive || visitedTabs.has(tab.id)) ? (
-                        <ErrorBoundary>
-                          <Suspense fallback={<TabFallback />}>
-                            <Comp />
-                          </Suspense>
-                        </ErrorBoundary>
-                      ) : null}
+                      <ErrorBoundary>
+                        <Suspense fallback={<TabFallback />}>
+                          <Comp />
+                        </Suspense>
+                      </ErrorBoundary>
                     </div>
                   );
-                })}
+                })()}
               </main>
 
               {/* Mobile bottom nav */}

@@ -40,6 +40,8 @@ export const ALL_MODULES = [
   'beta-admin',
   'sentry',
   'swarm',
+  'workflows',
+  'tasks',
 ] as const;
 
 export type ModuleId = (typeof ALL_MODULES)[number];
@@ -57,6 +59,7 @@ const TIER_MODULES: Record<string, readonly string[] | 'all'> = {
     'meetings',
     'ad-scripts',
     'ai-search',
+    'workflows',
   ],
   starter: [
     ...CORE_MODULES,
@@ -74,6 +77,7 @@ const TIER_MODULES: Record<string, readonly string[] | 'all'> = {
     'meetings',
     'ad-scripts',
     'ai-search',
+    'workflows',
   ],
   scale: [
     ...CORE_MODULES,
@@ -96,6 +100,7 @@ const TIER_MODULES: Record<string, readonly string[] | 'all'> = {
     'beta-admin',
     'sentry',
     'swarm',
+    'workflows',
   ],
   enterprise: 'all',
 };
@@ -161,9 +166,9 @@ export interface SidebarCategory {
 
 export const SIDEBAR_CATEGORIES: SidebarCategory[] = [
   { id: 'home',         label: 'Home',         icon: 'LayoutDashboard', items: ['dashboard', 'command-center'], directNav: 'dashboard' },
-  { id: 'messages',     label: 'Messages',     icon: 'MessageSquare',   items: ['chat', 'inbox', 'creator-studio'] },
+  { id: 'messages',     label: 'Messages',     icon: 'MessageSquare',   items: ['chat', 'inbox', 'creator-studio', 'tasks'] },
   { id: 'business',     label: 'Business',     icon: 'Briefcase',       items: ['leads', 'invoices', 'tenders', 'contacts', 'approvals'] },
-  { id: 'intelligence', label: 'Intelligence', icon: 'Brain',           items: ['meetings', 'swarm', 'sentry', 'ad-scripts', 'ai-search', 'reports', 'knowledge', 'analytics'] },
+  { id: 'intelligence', label: 'Intelligence', icon: 'Brain',           items: ['meetings', 'swarm', 'workflows', 'sentry', 'ad-scripts', 'ai-search', 'reports', 'knowledge', 'analytics'] },
   { id: 'operations',   label: 'Operations',   icon: 'Wrench',          items: ['activity', 'costs', 'admin', 'monitoring', 'beta-admin', 'medications'] },
   { id: 'settings',      label: 'Settings',     icon: 'Settings',        items: ['settings-connections', 'settings-automations', 'settings-appearance', 'settings-billing'] },
 ];
@@ -189,8 +194,8 @@ export interface UIComposition {
 
 export const ESSENTIAL_COMPOSITION: UIComposition = {
   profileId: 'essential',
-  visibleModules: ['command-center', 'inbox', 'approvals', 'contacts', 'settings-connections', 'settings-automations', 'settings-appearance', 'chat', 'leads', 'invoices', 'channels'],
-  primaryModules: ['command-center', 'inbox', 'approvals', 'contacts'],
+  visibleModules: ['command-center', 'inbox', 'approvals', 'contacts', 'settings-connections', 'settings-automations', 'settings-appearance', 'chat', 'leads', 'invoices', 'channels', 'tasks'],
+  primaryModules: ['command-center', 'inbox', 'approvals', 'contacts', 'tasks'],
   advancedModules: ['chat', 'leads', 'invoices', 'channels'],
   categories: [
     SIDEBAR_CATEGORIES[0], // Home

@@ -38,6 +38,7 @@ import {
   IconSelector,
   IconCheck,
   IconPlus,
+  IconBolt,
 } from '@tabler/icons-react';
 import type { TabDef } from './spa-shell';
 import type { SidebarCategory } from '@/lib/modules/registry';
@@ -96,6 +97,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
   meetings: IconMicrophone,
   sentry: IconShield,
   swarm: IconSwarm,
+  workflows: IconBolt,
   approvals: IconShieldCheck,
   'ad-scripts': IconMovie,
   'ai-search': IconSearch,
@@ -287,7 +289,7 @@ export function SidebarNav({
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <SidebarMenuButton size="lg" className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
-                  <div className="flex size-8 shrink-0 items-center justify-center rounded-lg overflow-hidden bg-sidebar-primary">
+                  <div className="relative flex aspect-square size-8 items-center justify-center rounded-lg overflow-hidden bg-sidebar-primary text-sidebar-primary-foreground shadow-[0_2px_4px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.15)]">
                     <Image
                       src="/bitbit-app-icon.png"
                       alt="BitBit"
@@ -295,6 +297,8 @@ export function SidebarNav({
                       height={32}
                       priority
                     />
+                    <div className="pointer-events-none absolute inset-0 rounded-lg bg-gradient-to-b from-white/20 via-transparent to-black/10" />
+                    <div className="pointer-events-none absolute inset-0 rounded-lg ring-1 ring-inset ring-white/10" />
                   </div>
                   <div className="grid flex-1 text-left text-sm leading-tight">
                     <span className="truncate font-semibold">BitBit</span>
@@ -402,7 +406,7 @@ export function SidebarNav({
                         />
                       </SidebarMenuButton>
                     </CollapsibleTrigger>
-                    <CollapsibleContent className="animate-collapsible-content">
+                    <CollapsibleContent>
                       <SidebarMenuSub>
                         {visibleItems.map(tabId => {
                           const isActive = tabId === activeTabId;
@@ -477,7 +481,7 @@ export function SidebarNav({
                   size="lg"
                   className="data-open:bg-sidebar-accent data-open:text-sidebar-accent-foreground"
                 >
-                  <Avatar className="size-8 rounded-lg">
+                  <Avatar className="h-8 w-8 rounded-lg">
                     {avatarUrl && <AvatarImage src={avatarUrl} alt="User avatar" />}
                     <AvatarFallback className="rounded-lg">{avatarFallback}</AvatarFallback>
                   </Avatar>

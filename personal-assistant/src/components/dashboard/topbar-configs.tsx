@@ -28,6 +28,7 @@ import {
   IconPuzzle,
   IconPalette,
   IconActivity,
+  IconLayoutKanban,
 } from '@tabler/icons-react';
 import type { TopbarConfig } from './topbar';
 import FlipClock from '@/components/ui/flip-clock';
@@ -78,6 +79,10 @@ export const TOPBAR_CONFIGS: Record<string, TopbarConfig> = {
     title: 'Creator Studio',
     breadcrumb: <IconBreadcrumb icon={IconBellRinging} text="Content proof assets" />,
   },
+  tasks: {
+    title: 'Tasks',
+    breadcrumb: <IconBreadcrumb icon={IconLayoutKanban} text="Kanban board" />,
+  },
   connections: {
     title: 'Connections',
     breadcrumb: <IconBreadcrumb icon={IconRadio} text="Connected channels" />,
@@ -117,6 +122,10 @@ export const TOPBAR_CONFIGS: Record<string, TopbarConfig> = {
   swarm: {
     title: 'Swarm',
     breadcrumb: <IconBreadcrumb icon={IconBolt} text="Multi-agent teams" />,
+  },
+  workflows: {
+    title: 'Workflows',
+    breadcrumb: <IconBreadcrumb icon={IconBolt} text="Automation rules" />,
   },
   approvals: {
     title: 'Approvals',
