@@ -12,6 +12,7 @@ type OnboardingEvent =
   | 'value_viewed'
   | 'onboarding_completed'
   | 'onboarding_abandoned'
+  | 'onboarding_error'
 
 export function trackOnboardingEvent(
   event: OnboardingEvent,

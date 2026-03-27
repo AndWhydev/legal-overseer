@@ -168,7 +168,7 @@ export function HelpTooltip({
         />
         {/* Icon */}
         <div style={{ position: 'relative', zIndex: 1 }}>
-          {icon || <HelpCircle size={16} style={{ color: '#F1F5F9' }} />}
+          {icon || <HelpCircle size={16} style={{ color: 'var(--text-primary, #F1F5F9)' }} />}
         </div>
       </button>
 
@@ -255,7 +255,7 @@ export function HelpTooltip({
                 width: 14,
                 height: 14,
                 cursor: 'pointer',
-                accentColor: '#F1F5F9',
+                accentColor: 'var(--text-primary, #F1F5F9)',
               }}
             />
             Don't show again

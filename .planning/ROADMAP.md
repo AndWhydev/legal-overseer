@@ -193,7 +193,7 @@ Plans:
 - [x] **Phase 24b: Intelligence Layer** - Revenue radar, client health scoring, cash flow projections, capacity oracle, cron recomputation, and API routes (completed 2026-03-26)
 - [x] **Phase 25: Role Dashboard** - Unified role activity feed, status cards, autonomy controls, attention view, intelligence widgets, and dashboard integration (completed 2026-03-26)
 - [x] **Phase 26: SOTA Response Drafter** - Wire ContextAssembler + RAG + Memory Palace + entity briefings into the response drafter for contextually rich, business-aware reply generation (completed 2026-03-26)
-- [ ] **Phase 27: Role Runtime Import Fix** - Fix critical role domain module imports so cron-triggered role execution actually fires (gap closure)
+- [x] **Phase 27: Role Runtime Import Fix** - Fix critical role domain module imports so cron-triggered role execution actually fires (gap closure, completed 2026-03-27)
 - [ ] **Phase 28: Intelligence Dashboard Wiring** - Wire IntelligenceWidgets to correct API endpoints so dashboard displays live data (gap closure)
 - [ ] **Phase 29: SEO/Tender Scheduled Monitoring** - Add scheduled ticks and alert pathways for SEO and Tender tools (gap closure)
 
@@ -209,7 +209,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 27-01-PLAN.md -- Side-effect imports for domain role registration + revenue-intelligence cron entry
+- [x] 27-01-PLAN.md -- Side-effect imports for domain role registration + revenue-intelligence cron entry
 
 ### Phase 28: Intelligence Dashboard Wiring
 **Goal**: IntelligenceWidgets fetches from the correct /api/intelligence/[metric] endpoints and displays live business intelligence data instead of permanent "Gathering data..." state
@@ -327,11 +327,11 @@ Phase 20 first (no dependencies), then 21 (billing before growth roles), then 22
 | 24b. Intelligence Layer | v1.4 | 3/3 | Complete | 2026-03-26 |
 | 25. Role Dashboard | v1.4 | 3/3 | Complete | 2026-03-26 |
 | 26. SOTA Response Drafter | v1.4 | 2/2 | Complete | 2026-03-26 |
-| 27. Role Runtime Import Fix | v1.4 | 0/1 | Planned | - |
+| 27. Role Runtime Import Fix | v1.4 | 1/1 | Complete | 2026-03-27 |
 | 28. Intelligence Dashboard Wiring | v1.4 | 0/0 | Pending | - |
 | 29. SEO/Tender Scheduled Monitoring | v1.4 | 0/0 | Pending | - |
 | 30. Onboarding E2E & First-Run Experience | v1.5 | 0/3 | Planned | - |
 | 31. Channel Smoke Tests & Production Hardening | v1.5 | 0/3 | Planned | - |
 | 32. Marketing Site & Checkout Flow | v1.5 | 0/3 | Planned | - |
 
-**Overall:** 57/57 plans complete for v1.0+v1.1+v1.2 (100%). v1.4: 23/26 plans (Phases 20-26) + 3 gap closure phases (27-29) pending. v1.5: Phases 30-32 planned (9 plans).
+**Overall:** 57/57 plans complete for v1.0+v1.1+v1.2 (100%). v1.4: 24/27 plans (Phases 20-27 complete, 28-29 pending). v1.5: Phases 30-32 planned (9 plans).

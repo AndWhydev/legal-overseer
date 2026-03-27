@@ -28,6 +28,15 @@ import {
 } from '@/lib/onboarding/state'
 import { trackOnboardingEvent } from '@/lib/onboarding/analytics'
 
+/** Best-effort persist current onboarding stage to server preferences */
+function persistOnboardingStage(newStage: string) {
+  fetch('/api/profile/preferences', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ onboarding_stage: newStage }),
+  }).catch(() => {}) // best effort
+}
+
 const INDUSTRIES = [
   { value: 'digital-agency', label: 'Digital agency' },
   { value: 'ecommerce', label: 'E commerce' },
@@ -259,8 +268,17 @@ export default function OnboardPage() {
         )
 
         setWorkspaceReady(!needsWorkspace)
-        setStage(needsWorkspace ? 'workspace' : 'connections')
-        trackOnboardingEvent('onboarding_started', { industry })
+
+        // Resume from saved stage if mid-wizard progress was persisted (ONBD-04)
+        const savedStage = (profile?.preferences as Record<string, unknown> | null)?.onboarding_stage as string | undefined
+        const validStages = ['workspace', 'connections', 'sync', 'agents', 'value'] as const
+        const isValidSavedStage = savedStage && validStages.includes(savedStage as typeof validStages[number])
+        const resumeStage = isValidSavedStage && savedStage !== 'value'
+          ? savedStage as OnboardingStage
+          : needsWorkspace ? 'workspace' : 'connections'
+
+        setStage(resumeStage)
+        trackOnboardingEvent('onboarding_started', { industry, resumedFrom: savedStage || null })
 
         const params = new URLSearchParams(window.location.search)
         const justConnected = params.get('connected')
@@ -290,13 +308,17 @@ export default function OnboardPage() {
   useEffect(() => {
     if (stage !== 'sync') return
 
-    const syncRequest = fetch('/api/channels/sync', {
+    // Fire sync request but allow continuing regardless of outcome (FR-10)
+    fetch('/api/channels/sync', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         since: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
       }),
-    }).catch(() => null)
+    }).catch(() => {
+      // Sync failure is non-blocking -- user can still proceed
+      trackOnboardingEvent('onboarding_error', { stage: 'sync', error: 'sync_request_failed' })
+    })
 
     const interval = window.setInterval(() => {
       setSyncStep((current) => {
@@ -308,12 +330,11 @@ export default function OnboardPage() {
       })
     }, 1000)
 
-    const exitTimer = window.setTimeout(async () => {
+    const exitTimer = window.setTimeout(() => {
       setStage('agents')
+      persistOnboardingStage('agents')
       trackOnboardingEvent('agents_viewed')
     }, 3600)
-
-    void syncRequest
 
     return () => {
       window.clearInterval(interval)
@@ -349,27 +370,37 @@ export default function OnboardPage() {
       setStatus('ready')
       trackOnboardingEvent('workspace_completed', { orgName: orgName.trim(), industry })
       setStage('connections')
+      persistOnboardingStage('connections')
     } catch (error) {
       setStatus('error')
-      setErrorMsg(error instanceof Error ? error.message : 'Couldn\'t save your workspace. Try again.')
+      const msg = error instanceof Error ? error.message : 'Couldn\'t save your workspace. Try again.'
+      setErrorMsg(msg)
+      trackOnboardingEvent('onboarding_error', { stage: 'workspace', error: msg })
     }
   }
 
   async function completeOnboarding() {
     setFinishing(true)
+    setErrorMsg('')
     trackOnboardingEvent('onboarding_completed')
     try {
-      await fetch('/api/profile/preferences', {
+      const res = await fetch('/api/profile/preferences', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           onboarding_completed: true,
+          onboarding_stage: 'complete',
         }),
       })
-    } catch {
-      // best effort
-    } finally {
+      if (!res.ok) {
+        throw new Error('Could not save onboarding completion')
+      }
       router.replace('/dashboard')
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : 'Something went wrong finishing setup. Try again.'
+      setErrorMsg(msg)
+      setFinishing(false)
+      trackOnboardingEvent('onboarding_error', { stage: 'value', error: msg })
     }
   }
 
@@ -528,6 +559,7 @@ export default function OnboardPage() {
                         setSyncStep(0)
                         trackOnboardingEvent('sync_started', { connectedCount: connectedIds.length })
                         setStage('sync')
+                        persistOnboardingStage('sync')
                       }}
                       disabled={!hasConnection}
                       className="ml-auto inline-flex items-center gap-2 rounded-full bg-[#163357] px-5 py-3 text-sm font-medium text-white shadow-[0_18px_48px_rgba(29,65,114,0.28)] transition duration-200 hover:translate-y-[-1px] hover:bg-[#214674] disabled:cursor-not-allowed disabled:opacity-35"
@@ -537,13 +569,14 @@ export default function OnboardPage() {
                     </button>
                   </div>
 
-                  <div style={{ display: 'flex', justifyContent: 'center' }}>
+                  <div style={{ display: 'flex', justifyContent: 'center', gap: 16, alignItems: 'center' }}>
                     <button
                       type="button"
                       onClick={() => {
                         setSyncStep(0)
                         trackOnboardingEvent('connections_skipped')
                         setStage('sync')
+                        persistOnboardingStage('sync')
                       }}
                       style={{
                         background: 'none',
@@ -562,8 +595,19 @@ export default function OnboardPage() {
                         (e.target as HTMLButtonElement).style.color = '#47627f'
                       }}
                     >
-                      Skip for now →
+                      Skip for now
                     </button>
+                    <a
+                      href="mailto:hi@bitbit.chat?subject=Connection trouble during onboarding"
+                      style={{
+                        color: '#7f93ad',
+                        fontSize: 13,
+                        textDecoration: 'none',
+                        transition: 'color 0.2s',
+                      }}
+                    >
+                      Having trouble?
+                    </a>
                   </div>
                 </div>
               </div>
@@ -657,9 +701,11 @@ export default function OnboardPage() {
                             }
                           }
                         } catch {
-                          // best effort
+                          // best effort — fallback is shown in UI when firstValue is null
                         }
                         setStage('value')
+                        persistOnboardingStage('value')
+                        trackOnboardingEvent('value_viewed')
                       }
                       void fetchFirstValue()
                     }}
@@ -716,25 +762,25 @@ export default function OnboardPage() {
                   </div>
                 </div>
 
-                {firstValue && (
-                  <div style={{
-                    background: 'rgba(127, 178, 140, 0.08)',
-                    border: '1px solid rgba(127, 178, 140, 0.2)',
-                    borderRadius: 12,
-                    padding: '16px 20px',
-                    marginTop: 16,
-                  }}>
-                    <div style={{ fontSize: 14, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#7fb28c', marginBottom: 8 }}>
-                      BitBit already found
-                    </div>
-                    <div style={{ fontSize: 16, fontWeight: 500, color: 'var(--text-primary)' }}>
-                      {firstValue.headline}
-                    </div>
-                    <div style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 2 }}>
-                      {firstValue.detail} — via {firstValue.source}
-                    </div>
+                <div style={{
+                  background: firstValue ? 'rgba(127, 178, 140, 0.08)' : 'rgba(143, 181, 223, 0.08)',
+                  border: firstValue ? '1px solid rgba(127, 178, 140, 0.2)' : '1px solid rgba(143, 181, 223, 0.2)',
+                  borderRadius: 12,
+                  padding: '16px 20px',
+                  marginTop: 16,
+                }}>
+                  <div style={{ fontSize: 14, textTransform: 'uppercase', letterSpacing: '0.05em', color: firstValue ? '#7fb28c' : '#6b8fb5', marginBottom: 8 }}>
+                    {firstValue ? 'BitBit already found' : 'Getting started'}
                   </div>
-                )}
+                  <div style={{ fontSize: 16, fontWeight: 500, color: 'var(--text-primary)' }}>
+                    {firstValue ? firstValue.headline : 'BitBit is warming up'}
+                  </div>
+                  <div style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 2 }}>
+                    {firstValue
+                      ? `${firstValue.detail} — via ${firstValue.source}`
+                      : 'Real insights will appear as BitBit processes your connected sources. Check back in a few minutes.'}
+                  </div>
+                </div>
 
                 <div className="grid gap-3 sm:grid-cols-3">
                   {[

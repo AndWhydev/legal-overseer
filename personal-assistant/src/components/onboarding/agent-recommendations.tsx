@@ -137,7 +137,7 @@ export function AgentRecommendations({
             }}
             onMouseEnter={(e) => {
               const el = e.currentTarget as HTMLDivElement
-              el.style.background = 'rgba(15, 20, 30, 0.75)'
+              el.style.background = 'var(--bb-surface-hover, rgba(15, 20, 30, 0.75))'
               el.style.borderColor = agent.selected
                 ? 'rgba(255, 255, 255, 0.25)'
                 : C.bgHoverStrong

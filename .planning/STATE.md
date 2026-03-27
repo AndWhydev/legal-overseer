@@ -21,21 +21,21 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-18)
 
 **Core value:** BitBit understands the business better than the business owner -- when Andy says "Invoice Sezer for the White House RE work", BitBit knows who Sezer is, what the work was, the rate, and whether it's already been invoiced.
-**Current focus:** v1.5 SOTA Response Drafter
+**Current focus:** v1.6 Beta Launch & First Revenue
 
 ## Current Position
 
-Phase: 26 of 26 (SOTA Response Drafter)
-Plan: 2 of 2 in current phase (COMPLETE)
-Status: Complete
-Last activity: 2026-03-27 - Completed 26-02: Context-Enriched Drafting & Evaluation Harness
+Phase: 31 of 36 (Channel Smoke Tests)
+Plan: 1 of 3 in current phase
+Status: In Progress
+Last activity: 2026-03-27 - Completed 31-01: Channel Adapter Smoke Tests
 
 Progress: v1.0 ======== | v1.1 ======== | v1.2 ======== | v1.4 ======== | v1.5 ========== 100%
 
 ## Performance Metrics
 
 **Delivery totals:**
-- Total plans completed: 81 (v1.0: 19, v1.1: 16, v1.2: 22, v1.4: 22, v1.5: 2)
+- Total plans completed: 83 (v1.0: 19, v1.1: 16, v1.2: 22, v1.4: 23, v1.5: 2, v1.6: 1)
 - Milestones shipped: v1.0 (2026-02-21), v1.1 (2026-02-22), v1.2 (2026-03-02), v1.4 (2026-03-26)
 
 **v1.4 Phases:**
@@ -51,6 +51,7 @@ Progress: v1.0 ======== | v1.1 ======== | v1.2 ======== | v1.4 ======== | v1.5 =
 | 23b. Sales Role | 3 | COMPLETE |
 | 24b. Intelligence Layer | 3 | COMPLETE |
 | 25. Role Dashboard | 3 | COMPLETE |
+| 27. Role Runtime Fix | 1 | COMPLETE |
 
 **v1.5 Phases:**
 
@@ -109,6 +110,7 @@ See PROJECT.md Key Decisions table.
 - [26-02] assembleDraftContext called inside draftReply (not from callers) -- preserves external API stability
 - [26-02] Tone adaptation (learnClientTone + adaptDraft) applied as post-processing after LLM generation, not as prompt instruction
 - [26-02] Context assembly and tone adaptation wrapped in try/catch with fallback -- zero crash risk from new features
+- [27-01] Direct domain role imports in cron path over barrel import -- avoids cold-start bundle bloat while ensuring registerRole() side effects fire
 
 ### Roadmap Evolution
 
@@ -135,5 +137,5 @@ See PROJECT.md Key Decisions table.
 ## Session Continuity
 
 Last session: 2026-03-27
-Stopped at: Completed 26-02-PLAN.md (Context-Enriched Drafting & Evaluation)
+Stopped at: Completed 27-01-PLAN.md (Role Runtime Import Fix)
 Resume file: None
