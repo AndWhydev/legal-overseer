@@ -234,7 +234,7 @@ Plans:
 
 **Milestone Goal:** Close every gap between feature-complete dogfood and real paying users. Ship onboarding, verify production channels, build the marketing funnel, launch beta, add premium features.
 
-- [ ] **Phase 30: Onboarding E2E & First-Run Experience** — Verify all onboarding FRs, first-run channel discovery, empty state guidance, welcome conversation
+- [x] **Phase 30: Onboarding E2E & First-Run Experience** — Verify all onboarding FRs, first-run channel discovery, empty state guidance, welcome conversation (completed 2026-03-27)
 - [ ] **Phase 31: Channel Smoke Tests & Production Hardening** — Live credential tests, concurrent load, cron resilience, monitoring dashboard
 - [ ] **Phase 32: Marketing Site & Checkout Flow** — Product landing page, industry pages, AWU case study, pricing with Stripe Checkout, SEO
 - [x] **Phase 33: Beta Program Infrastructure** — Invite flow, guided onboarding, feedback collection, usage monitoring, beta user admin (completed 2026-03-27)
@@ -352,7 +352,7 @@ Phase 20 first (no dependencies), then 21 (billing before growth roles), then 22
 | 27. Role Runtime Import Fix | v1.4 | Complete    | 2026-03-27 | 2026-03-27 |
 | 28. Intelligence Dashboard Wiring | 1/1 | Complete    | 2026-03-27 | - |
 | 29. SEO/Tender Scheduled Monitoring | 1/1 | Complete   | 2026-03-27 | - |
-| 30. Onboarding E2E & First-Run Experience | 2/3 | In Progress|  | - |
+| 30. Onboarding E2E & First-Run Experience | 3/3 | Complete   | 2026-03-27 | - |
 | 31. Channel Smoke Tests & Production Hardening | v1.5 | 0/3 | Planned | - |
 | 32. Marketing Site & Checkout Flow | 1/3 | In Progress|  | - |
 | 33. Beta Program Infrastructure | v1.5 | 1/1 | Complete | 2026-03-27 |
