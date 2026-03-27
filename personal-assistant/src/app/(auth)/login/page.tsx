@@ -232,11 +232,11 @@ function LoginPageContent() {
               <div className="relative hidden overflow-hidden md:block">
                 <ClawdAmbient className="absolute inset-0" />
                 <BorderBeam
-                  size={120}
-                  duration={8}
-                  colorFrom="rgba(229, 229, 229, 0.5)"
+                  size={40}
+                  duration={10}
+                  colorFrom="rgba(229, 229, 229, 0.3)"
                   colorTo="rgba(229, 229, 229, 0)"
-                  borderWidth={2}
+                  borderWidth={1}
                   delay={2}
                 />
               </div>
