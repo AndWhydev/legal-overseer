@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import {
   IconCalendarEvent,
   IconInbox,
@@ -30,6 +30,7 @@ import {
   IconActivity,
 } from '@tabler/icons-react';
 import type { TopbarConfig } from './topbar';
+import FlipClock from '@/components/ui/flip-clock';
 
 function DashboardBreadcrumb() {
   const dateStr = new Date().toLocaleDateString('en-AU', {
@@ -46,53 +47,8 @@ function DashboardBreadcrumb() {
   );
 }
 
-const TIMELINE_HOURS = [
-  { label: '6 AM', hour: 6 },
-  { label: '7', hour: 7 },
-  { label: '8', hour: 8 },
-  { label: '9', hour: 9 },
-  { label: '10', hour: 10 },
-  { label: '11', hour: 11 },
-  { label: '12 PM', hour: 12 },
-  { label: '1', hour: 13 },
-  { label: '2', hour: 14 },
-  { label: '3', hour: 15 },
-  { label: '4', hour: 16 },
-  { label: '5', hour: 17 },
-  { label: '6', hour: 18 },
-];
-
-function TimelineStrip() {
-  const [currentHour, setCurrentHour] = useState<number | null>(null);
-
-  useEffect(() => {
-    setCurrentHour(new Date().getHours());
-    const id = setInterval(() => setCurrentHour(new Date().getHours()), 60_000);
-    return () => clearInterval(id);
-  }, []);
-
-  return (
-    <div className="bb-timeline" role="status" aria-label="Daily timeline">
-      {TIMELINE_HOURS.map(({ label, hour }) => {
-        const isNow = currentHour === hour;
-        const isNext = currentHour !== null && hour === currentHour + 1;
-        const isPast = currentHour !== null && hour < currentHour;
-        return (
-          <span
-            key={label}
-            className={[
-              'bb-timeline__tick',
-              isNow && 'bb-timeline__tick--now',
-              isNext && 'bb-timeline__tick--next',
-            ].filter(Boolean).join(' ')}
-            style={isPast && !isNow ? { opacity: 0.35 } : undefined}
-          >
-            {label}
-          </span>
-        );
-      })}
-    </div>
-  );
+function HeaderClock() {
+  return <FlipClock size="sm" variant="muted" />;
 }
 
 function IconBreadcrumb({ icon: Icon, text }: { icon: React.ElementType; text: string }) {
@@ -108,7 +64,7 @@ export const TOPBAR_CONFIGS: Record<string, TopbarConfig> = {
   dashboard: {
     title: 'Dashboard',
     breadcrumb: <DashboardBreadcrumb />,
-    centerContent: <TimelineStrip />,
+    rightContent: <HeaderClock />,
   },
   chat: {
     title: 'Chat',
