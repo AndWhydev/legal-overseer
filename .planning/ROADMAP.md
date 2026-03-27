@@ -6,7 +6,7 @@
 - v1.1 Agent Runtime + First Agents -- Phases 7-12 (shipped 2026-02-22)
 - v1.2 Battle-Testing & Sellability -- Phases 13-19 (shipped 2026-03-02)
 - v1.4 Media, Billing & Growth Roles -- Phases 20-29 (in progress, gap closure phases 27-29 pending)
-- v1.5 Beta Launch & First Revenue -- Phases 30-36 (planned)
+- v1.5 Beta Launch & First Revenue -- Phases 30-36 (in progress)
 
 ## Phases
 
@@ -233,6 +233,24 @@ Plans:
 
 **Dependency Graph:** Phases 30-32 parallel --> Phase 33 --> Phase 34 --> Phases 35-36
 
+
+### Phase 30: Onboarding E2E & First-Run Experience
+**Goal**: New users can sign up, connect Gmail, and have BitBit working within 5 minutes. Every dashboard page has contextual empty states. First-run channel discovery auto-builds user context.
+**Depends on**: Phase 26 (current codebase)
+**Requirements**: ONBD-01, ONBD-02, ONBD-03, ONBD-04, ONBD-05
+**Success Criteria** (what must be TRUE):
+  1. All 12 T010 functional requirements pass end-to-end
+  2. First-run channel discovery scans last 30 days, builds identity + contacts + threads in 60 seconds
+  3. Every dashboard page shows contextual empty state guidance, not blank screens
+  4. Connection wizard persists progress across browser refresh
+  5. Welcome conversation uses real user data from discovery scan
+**Plans**: 3 plans (2 waves)
+
+Plans:
+- [ ] 30-01-PLAN.md -- T010 FR verification, onboarding wizard hardening, E2E test update
+- [ ] 30-02-PLAN.md -- Contextual empty states for all dashboard pages
+- [ ] 30-03-PLAN.md -- First-run channel discovery pipeline and welcome conversation
+
 ### Phase 31: Channel Smoke Tests & Production Hardening
 **Goal**: All production channels verified working with real credentials. System handles concurrent load and cron failures gracefully. Monitoring dashboard shows production health.
 **Depends on**: Phase 30 (parallel, no hard dependency)
@@ -308,7 +326,8 @@ Phase 20 first (no dependencies), then 21 (billing before growth roles), then 22
 | 27. Role Runtime Import Fix | v1.4 | 0/0 | Pending | - |
 | 28. Intelligence Dashboard Wiring | v1.4 | 0/0 | Pending | - |
 | 29. SEO/Tender Scheduled Monitoring | v1.4 | 0/0 | Pending | - |
+| 30. Onboarding E2E & First-Run Experience | v1.5 | 0/3 | Planned | - |
 | 31. Channel Smoke Tests & Production Hardening | v1.5 | 0/3 | Planned | - |
 | 32. Marketing Site & Checkout Flow | v1.5 | 0/3 | Planned | - |
 
-**Overall:** 57/57 plans complete for v1.0+v1.1+v1.2 (100%). v1.4: 23/25 plans (Phases 20-26) + 3 gap closure phases (27-29) pending. v1.5: Phases 31-32 planned (6 plans).
+**Overall:** 57/57 plans complete for v1.0+v1.1+v1.2 (100%). v1.4: 23/25 plans (Phases 20-26) + 3 gap closure phases (27-29) pending. v1.5: Phases 30-32 planned (9 plans).
