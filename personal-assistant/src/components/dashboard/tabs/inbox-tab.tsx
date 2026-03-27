@@ -890,6 +890,20 @@ function InboxTab() {
     );
   }
 
+  if (!error && messages.length === 0 && !useSeeded) {
+    return (
+      <TabShell>
+        <Empty>
+          <EmptyTitle>No messages yet</EmptyTitle>
+          <EmptyDescription>Messages from your connected channels appear here. Connect email or WhatsApp to start receiving messages.</EmptyDescription>
+          <EmptyContent>
+            <button type="button" onClick={() => window.dispatchEvent(new CustomEvent('bb-navigate', { detail: { tab: 'settings-connections' } }))} className="mt-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 transition-opacity">Connect a channel</button>
+          </EmptyContent>
+        </Empty>
+      </TabShell>
+    );
+  }
+
   const unreadCount = displayed.filter(m => m.status === 'unread').length;
   const actionableCount = displayed.filter(m => m.category === 'action_required').length;
   const waitingCount = displayed.filter(m => m.threadStatus === 'waiting_on_you').length;

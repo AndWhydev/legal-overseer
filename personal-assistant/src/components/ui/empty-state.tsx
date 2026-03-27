@@ -37,6 +37,7 @@ export function EmptyState({ icon, title, description, action, secondaryAction }
         textAlign: 'center',
       }}
       role="status"
+      data-testid="empty-state"
     >
       {showDefaultLogo ? (
         <div
