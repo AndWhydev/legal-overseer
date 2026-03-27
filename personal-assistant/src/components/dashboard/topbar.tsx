@@ -19,9 +19,9 @@ export function Topbar({ config }: TopbarProps) {
   if (!config || config.hidden) return null;
 
   return (
-    <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-card/60 backdrop-blur-md px-6">
+    <div className="flex flex-1 items-center justify-between">
       <div className="flex items-center gap-3">
-        <h1 className="text-base font-semibold text-foreground">{config.title}</h1>
+        <h1 className="text-base font-medium">{config.title}</h1>
         {config.breadcrumb && (
           <div className="text-sm text-muted-foreground">{config.breadcrumb}</div>
         )}
@@ -32,6 +32,6 @@ export function Topbar({ config }: TopbarProps) {
       {config.rightContent && (
         <div className="flex items-center gap-2">{config.rightContent}</div>
       )}
-    </header>
+    </div>
   );
 }
