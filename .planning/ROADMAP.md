@@ -236,7 +236,7 @@ Plans:
 
 - [x] **Phase 30: Onboarding E2E & First-Run Experience** — Verify all onboarding FRs, first-run channel discovery, empty state guidance, welcome conversation (completed 2026-03-27)
 - [ ] **Phase 31: Channel Smoke Tests & Production Hardening** — Live credential tests, concurrent load, cron resilience, monitoring dashboard
-- [ ] **Phase 32: Marketing Site & Checkout Flow** — Product landing page, industry pages, AWU case study, pricing with Stripe Checkout, SEO
+- [x] **Phase 32: Marketing Site & Checkout Flow** — Product landing page, industry pages, AWU case study, pricing with Stripe Checkout, SEO
 - [x] **Phase 33: Beta Program Infrastructure** — Invite flow, guided onboarding, feedback collection, usage monitoring, beta user admin (completed 2026-03-27)
 - [ ] **Phase 34: Builder Role (Premium Differentiator)** — Website generation via chat, template library, WordPress/Elementor integration, staging preview
 - [ ] **Phase 35: Proactive Workflows & Standing Orders** — NL workflow rules, multi-step sequences, cross-role orchestration, workflow dashboard
@@ -294,9 +294,9 @@ Plans:
 **Plans**: 3 plans (2 waves)
 
 Plans:
-- [ ] 32-01-PLAN.md -- Product landing page (hero, features, roles, social proof, CTA) + 3 industry pages + NavBar/Footer updates
-- [ ] 32-02-PLAN.md -- Pricing page enhancement (comparison matrix, Free tier, FAQ) + AWU case study page
-- [ ] 32-03-PLAN.md -- SEO foundation (sitemap, robots, Open Graph, JSON-LD structured data)
+- [x] 32-01-PLAN.md -- Product landing page (hero, features, roles, social proof, CTA) + 3 industry pages + NavBar/Footer updates
+- [x] 32-02-PLAN.md -- Pricing page enhancement (comparison matrix, Free tier, FAQ) + AWU case study page
+- [x] 32-03-PLAN.md -- SEO foundation (sitemap, robots, Open Graph, JSON-LD structured data)
 
 ### Phase 33: Beta Program Infrastructure
 **Goal**: Admin can invite waitlist users to beta, beta users get guided onboarding with daily tips and feedback collection, admin can monitor per-org usage metrics
@@ -354,7 +354,7 @@ Phase 20 first (no dependencies), then 21 (billing before growth roles), then 22
 | 29. SEO/Tender Scheduled Monitoring | 1/1 | Complete   | 2026-03-27 | - |
 | 30. Onboarding E2E & First-Run Experience | 3/3 | Complete   | 2026-03-27 | - |
 | 31. Channel Smoke Tests & Production Hardening | v1.5 | 2/3 | In Progress | - |
-| 32. Marketing Site & Checkout Flow | 1/3 | In Progress|  | - |
+| 32. Marketing Site & Checkout Flow | 3/3 | Complete | 2026-03-27 | - |
 | 33. Beta Program Infrastructure | v1.5 | 1/1 | Complete | 2026-03-27 |
 
 **Overall:** 57/57 plans complete for v1.0+v1.1+v1.2 (100%). v1.4: 24/28 plans (Phases 20-27 complete, 28-29 pending). v1.5: Phase 33 complete (1/1), Phases 30-32 planned (9 plans).
