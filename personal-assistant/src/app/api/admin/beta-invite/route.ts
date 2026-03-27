@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Service unavailable' }, { status: 503 })
   }
 
-  const admin = await verifyAdmin(supabase, token)
+  const admin = await verifyAdmin(supabase as any, token)
   if (!admin) {
     return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
   }
@@ -157,7 +157,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Service unavailable' }, { status: 503 })
   }
 
-  const admin = await verifyAdmin(supabase, token)
+  const admin = await verifyAdmin(supabase as any, token)
   if (!admin) {
     return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
   }
