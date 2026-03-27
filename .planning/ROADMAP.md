@@ -277,8 +277,8 @@ Plans:
 **Plans**: 3 plans (2 waves)
 
 Plans:
-- [ ] 31-01-PLAN.md -- Channel adapter smoke tests (Gmail, Outlook, WhatsApp, SMS live connectivity verification)
-- [ ] 31-02-PLAN.md -- Load testing (10 concurrent agents) + cron resilience utilities (retry, backoff, batch processing)
+- [x] 31-01-PLAN.md -- Channel adapter smoke tests (Gmail, Outlook, WhatsApp, SMS live connectivity verification)
+- [x] 31-02-PLAN.md -- Load testing (10 concurrent agents) + cron resilience utilities (retry, backoff, batch processing)
 - [ ] 31-03-PLAN.md -- Production monitoring dashboard (API + MonitoringTab UI + smoke test trigger)
 
 ### Phase 32: Marketing Site & Checkout Flow
@@ -353,7 +353,7 @@ Phase 20 first (no dependencies), then 21 (billing before growth roles), then 22
 | 28. Intelligence Dashboard Wiring | 1/1 | Complete    | 2026-03-27 | - |
 | 29. SEO/Tender Scheduled Monitoring | 1/1 | Complete   | 2026-03-27 | - |
 | 30. Onboarding E2E & First-Run Experience | 3/3 | Complete   | 2026-03-27 | - |
-| 31. Channel Smoke Tests & Production Hardening | v1.5 | 0/3 | Planned | - |
+| 31. Channel Smoke Tests & Production Hardening | v1.5 | 2/3 | In Progress | - |
 | 32. Marketing Site & Checkout Flow | 1/3 | In Progress|  | - |
 | 33. Beta Program Infrastructure | v1.5 | 1/1 | Complete | 2026-03-27 |
 

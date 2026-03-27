@@ -25,10 +25,10 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 
 ## Current Position
 
-Phase: 30 of 36 (Onboarding E2E Verification)
-Plan: 1 of 3 in current phase
+Phase: 31 of 36 (Channel Smoke Tests)
+Plan: 2 of 3 in current phase
 Status: In Progress
-Last activity: 2026-03-27 - Completed 30-01: Onboarding E2E Verification Plan 01
+Last activity: 2026-03-27 - Completed 31-02: Concurrent Load + Cron Resilience
 
 Progress: v1.0 ======== | v1.1 ======== | v1.2 ======== | v1.4 ======== | v1.5 ========== 100%
 
@@ -65,6 +65,8 @@ Progress: v1.0 ======== | v1.1 ======== | v1.2 ======== | v1.4 ======== | v1.5 =
 | Phase 29 P01 | 15min | 3 tasks | 10 files |
 | Phase 30 P02 | 13min | 2 tasks | 5 files |
 | Phase 30 P01 | 20min | 3 tasks | 4 files |
+| Phase 31 P01 | 9min | 2 tasks | 5 files |
+| Phase 31 P02 | 7min | 2 tasks | 1 file |
 
 ## Accumulated Context
 
@@ -130,6 +132,9 @@ See PROJECT.md Key Decisions table.
 - [Phase 29]: Single growth role wraps both SEO and tender monitoring with independent 24h sub-interval gating
 - [Phase 30 P01]: All 12 T010 FRs pass without code changes -- Plan 03 already implemented all requirements including ONBD-04 progress persistence
 - [Phase 30]: Added role=status and data-testid to shadcn Empty component for testability instead of migrating to old EmptyState
+- [Phase 31-02]: Task 1 code pre-existing from 31-01 -- verified all 12 resilience tests pass, no new code needed
+- [Phase 31-02]: Per-org concurrent scheduler invocations for true concurrency testing rather than single all-org call
+- [Phase 31-02]: Pool-tracking Supabase mock with increment/decrement and simulated latency for connection limit verification
 
 ### Roadmap Evolution
 
@@ -155,6 +160,6 @@ See PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-03-27T06:56:00Z
-Stopped at: Completed 30-01-PLAN.md (Onboarding E2E Verification)
+Last session: 2026-03-27T07:27:00Z
+Stopped at: Completed 31-02-PLAN.md (Concurrent Load + Cron Resilience)
 Resume file: None
