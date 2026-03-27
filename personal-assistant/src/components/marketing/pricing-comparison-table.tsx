@@ -196,7 +196,7 @@ export default function PricingComparisonTable() {
                         position: 'sticky',
                         left: 0,
                         zIndex: 1,
-                        background: rowIdx % 2 === 0 ? C.bgCard : 'rgba(15, 20, 30, 0.7)',
+                        background: rowIdx % 2 === 0 ? C.bgCard : C.bgCardHeavy,
                         padding: '10px 20px',
                         fontSize: 14,
                         color: C.textSecondary,

@@ -438,7 +438,7 @@ export function WatchManager() {
               onChange={(event) => setForm((prev) => ({ ...prev, description: event.target.value }))}
               placeholder="Example: monitor failed payment logs"
               onFocus={(e) => {
-                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)'
+                e.currentTarget.style.borderColor = 'var(--border-focus-ring, rgba(255, 255, 255, 0.2))'
                 e.currentTarget.style.boxShadow = '0 0 0 2px rgba(255, 255, 255, 0.08)'
               }}
               onBlur={(e) => {
@@ -459,7 +459,7 @@ export function WatchManager() {
               value={form.conditions}
               onChange={(event) => setForm((prev) => ({ ...prev, conditions: event.target.value }))}
               onFocus={(e) => {
-                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)'
+                e.currentTarget.style.borderColor = 'var(--border-focus-ring, rgba(255, 255, 255, 0.2))'
                 e.currentTarget.style.boxShadow = '0 0 0 2px rgba(255, 255, 255, 0.08)'
               }}
               onBlur={(e) => {
@@ -480,7 +480,7 @@ export function WatchManager() {
                 setForm((prev) => ({ ...prev, interval_seconds: Number(event.target.value) || 60 }))
               }
               onFocus={(e) => {
-                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)'
+                e.currentTarget.style.borderColor = 'var(--border-focus-ring, rgba(255, 255, 255, 0.2))'
                 e.currentTarget.style.boxShadow = '0 0 0 2px rgba(255, 255, 255, 0.08)'
               }}
               onBlur={(e) => {
@@ -501,7 +501,7 @@ export function WatchManager() {
                 setForm((prev) => ({ ...prev, escalation_minutes: Number(event.target.value) || 1 }))
               }
               onFocus={(e) => {
-                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)'
+                e.currentTarget.style.borderColor = 'var(--border-focus-ring, rgba(255, 255, 255, 0.2))'
                 e.currentTarget.style.boxShadow = '0 0 0 2px rgba(255, 255, 255, 0.08)'
               }}
               onBlur={(e) => {
@@ -607,7 +607,7 @@ export function WatchManager() {
                     onClick={() => void handleToggleWatch(watch)}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.background = 'var(--glass-interactive-bg)'
-                      e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)'
+                      e.currentTarget.style.borderColor = 'var(--border-active, rgba(255, 255, 255, 0.1))'
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.background = 'transparent'
@@ -693,7 +693,7 @@ export function WatchManager() {
                   onClick={() => void handleAcknowledgeAlert(alert.id)}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.background = 'var(--glass-interactive-bg)'
-                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)'
+                    e.currentTarget.style.borderColor = 'var(--border-active, rgba(255, 255, 255, 0.1))'
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.background = 'transparent'

@@ -104,12 +104,12 @@ export default function TestimonialsSection() {
                 flexDirection: 'column',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(15, 20, 30, 0.8)'
+                e.currentTarget.style.background = 'var(--bb-surface-hover, rgba(15, 20, 30, 0.8))'
                 e.currentTarget.style.borderColor = 'rgba(16, 185, 129, 0.2)'
                 e.currentTarget.style.transform = 'translateY(-4px)'
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'rgba(15, 20, 30, 0.6)'
+                e.currentTarget.style.background = 'var(--bg-card-solid, rgba(15, 20, 30, 0.6))'
                 e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.03)'
                 e.currentTarget.style.transform = 'translateY(0)'
               }}
