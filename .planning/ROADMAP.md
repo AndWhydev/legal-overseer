@@ -313,6 +313,24 @@ Plans:
 Plans:
 - [x] 33-01-PLAN.md -- Beta invite flow, feedback widget, admin metrics dashboard, daily tips
 
+### Phase 35: Proactive Workflows & Standing Orders
+**Goal**: Users can define automation rules in plain English that BitBit executes proactively -- "When a new lead comes in, research their company and draft an intro email" becomes a live workflow that fires across roles
+**Depends on**: Phase 34 (builder role complete, all roles registered)
+**Requirements**: WRKF-01, WRKF-02, WRKF-03, WRKF-04
+**Success Criteria** (what must be TRUE):
+  1. User types a natural language rule and BitBit parses it into trigger + conditions + actions
+  2. Workflows chain multiple tool invocations across different roles (e.g., sales research -> comms email)
+  3. Event triggers fire when messages arrive via channel triage
+  4. Schedule triggers fire on role ticks at configured intervals
+  5. Workflow dashboard shows all rules with enable/disable, trigger counts, and run history
+  6. Loop prevention blocks workflow-triggered events from re-triggering other workflows
+**Plans**: 3 plans (2 waves)
+
+Plans:
+- [ ] 35-01-PLAN.md -- Types, DB migration, NL rule parser, trigger engine, Wave 0 tests
+- [ ] 35-02-PLAN.md -- Cross-role tool bridge, channel triage + role runtime trigger wiring
+- [ ] 35-03-PLAN.md -- Workflow CRUD API routes + dashboard tab UI
+
 ## Progress
 
 **Execution Order:**
@@ -356,5 +374,7 @@ Phase 20 first (no dependencies), then 21 (billing before growth roles), then 22
 | 31. Channel Smoke Tests & Production Hardening | v1.5 | 2/3 | In Progress | - |
 | 32. Marketing Site & Checkout Flow | 3/3 | Complete | 2026-03-27 | - |
 | 33. Beta Program Infrastructure | v1.5 | 1/1 | Complete | 2026-03-27 |
+| 34. Builder Role | v1.5 | 4/4 | Complete | 2026-03-27 |
+| 35. Proactive Workflows | v1.5 | 0/3 | Planned | - |
 
-**Overall:** 57/57 plans complete for v1.0+v1.1+v1.2 (100%). v1.4: 24/28 plans (Phases 20-27 complete, 28-29 pending). v1.5: Phase 33 complete (1/1), Phases 30-32 planned (9 plans).
+**Overall:** 57/57 plans complete for v1.0+v1.1+v1.2 (100%). v1.4: 24/28 plans (Phases 20-27 complete, 28-29 pending). v1.5: Phases 30-34 complete, Phase 35 planned (3 plans).
