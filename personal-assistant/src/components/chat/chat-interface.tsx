@@ -474,9 +474,9 @@ function InlineApprovalCard({
       <div style={headerStyle}>
         <div style={iconWrapStyle}>
           {isApproved ? (
-            <Check size={14} color={iconColor} />
+            <IconCheck size={14} color={iconColor} />
           ) : isRejected ? (
-            <X size={14} color={iconColor} />
+            <IconX size={14} color={iconColor} />
           ) : (
             <ToolIcon size={14} color={iconColor} />
           )}
