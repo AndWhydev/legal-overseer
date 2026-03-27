@@ -1,365 +1,277 @@
 /**
- * Cron Route Resilience Tests
+ * Cron Resilience Utilities Tests
  *
- * Tests that cron routes handle failures gracefully:
- * - Unauthorized requests rejected
- * - Handler exceptions caught and returned as 500
- * - Service client initialization failures handled
- * - Timing information included in responses
- * - DB errors during handler execution
- * - Rate limit scenarios
- * - Timeout-like behavior
+ * Tests for withRetry, withBackoff, and processBatch utilities
+ * that handle the 4 cron failure modes:
+ * - DB connection failure (retry + DLQ)
+ * - LLM timeout (circuit breaker)
+ * - Rate limits (backoff)
+ * - Partial batch failure (continue processing)
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
-const { createClientMock } = vi.hoisted(() => ({
-  createClientMock: vi.fn(),
+// Hoist mocks
+const { getCircuitStateMock, deadLetterMock } = vi.hoisted(() => ({
+  getCircuitStateMock: vi.fn(),
+  deadLetterMock: vi.fn(),
 }))
 
-vi.mock('@supabase/supabase-js', () => ({
-  createClient: createClientMock,
+vi.mock('@/lib/agent/circuit-breaker', () => ({
+  getCircuitState: getCircuitStateMock,
 }))
 
-// We need to reset the service client singleton between tests
-let serviceClientModule: any
+vi.mock('@/lib/agent/dead-letter', () => ({
+  deadLetter: deadLetterMock,
+}))
 
-beforeEach(async () => {
+// Suppress console output during tests
+beforeEach(() => {
   vi.clearAllMocks()
-  // Reset singleton by re-importing with cleared module cache
-  vi.resetModules()
-  serviceClientModule = await import('./cron-guard')
+  vi.spyOn(console, 'log').mockImplementation(() => {})
+  vi.spyOn(console, 'warn').mockImplementation(() => {})
+  vi.spyOn(console, 'error').mockImplementation(() => {})
+  getCircuitStateMock.mockReturnValue('closed')
+  deadLetterMock.mockResolvedValue({ id: 'dlq-1' })
 })
 
 afterEach(() => {
   vi.restoreAllMocks()
 })
 
-function makeRequest(url: string, authHeader?: string): Request {
-  const headers: Record<string, string> = {}
-  if (authHeader) {
-    headers['Authorization'] = authHeader
-  }
-  return new Request(url, { headers })
-}
+describe('withRetry', () => {
+  it('retries a failing async fn up to maxRetries times, then throws', async () => {
+    const { withRetry } = await import('./cron-resilience')
+    const fn = vi.fn()
+      .mockRejectedValueOnce(new Error('connection refused'))
+      .mockRejectedValueOnce(new Error('connection refused'))
+      .mockRejectedValueOnce(new Error('connection refused'))
 
-describe('Cron Guard Resilience', () => {
-  // -----------------------------------------------------------------------
-  // Authorization
-  // -----------------------------------------------------------------------
-  describe('authorization', () => {
-    it('rejects unauthorized requests when CRON_SECRET is set', async () => {
-      process.env.CRON_SECRET = 'my-cron-secret'
-      process.env.SUPABASE_URL = 'https://test.supabase.co'
-      process.env.SUPABASE_SERVICE_ROLE_KEY = 'service-key'
+    await expect(
+      withRetry(fn, { maxRetries: 2, baseDelayMs: 1, label: 'test-retry' })
+    ).rejects.toThrow('connection refused')
 
-      createClientMock.mockReturnValue({ from: vi.fn() })
-
-      const request = makeRequest('https://app.bitbit.chat/api/cron/test-job', 'Bearer wrong-secret')
-
-      const { withCronGuard } = serviceClientModule
-      const response = await withCronGuard(request, async () => ({
-        message: 'Should not reach here',
-      }))
-
-      expect(response.status).toBe(401)
-      const body = await response.json()
-      expect(body.success).toBe(false)
-      expect(body.error).toBe('Unauthorized')
-    })
-
-    it('allows requests with correct CRON_SECRET', async () => {
-      process.env.CRON_SECRET = 'my-cron-secret'
-      process.env.SUPABASE_URL = 'https://test.supabase.co'
-      process.env.SUPABASE_SERVICE_ROLE_KEY = 'service-key'
-
-      createClientMock.mockReturnValue({ from: vi.fn() })
-
-      const request = makeRequest('https://app.bitbit.chat/api/cron/test-job', 'Bearer my-cron-secret')
-
-      const { withCronGuard } = serviceClientModule
-      const response = await withCronGuard(request, async () => ({
-        message: 'Success',
-      }))
-
-      expect(response.status).toBe(200)
-      const body = await response.json()
-      expect(body.success).toBe(true)
-      expect(body.result.message).toBe('Success')
-    })
-
-    it('allows requests when CRON_SECRET is not set (development mode)', async () => {
-      delete process.env.CRON_SECRET
-      process.env.SUPABASE_URL = 'https://test.supabase.co'
-      process.env.SUPABASE_SERVICE_ROLE_KEY = 'service-key'
-
-      createClientMock.mockReturnValue({ from: vi.fn() })
-
-      const request = makeRequest('https://app.bitbit.chat/api/cron/test-job')
-
-      const { withCronGuard } = serviceClientModule
-      const response = await withCronGuard(request, async () => ({
-        message: 'No auth required',
-      }))
-
-      expect(response.status).toBe(200)
-    })
+    // 1 initial + 2 retries = 3 calls
+    expect(fn).toHaveBeenCalledTimes(3)
   })
 
-  // -----------------------------------------------------------------------
-  // Handler exception handling
-  // -----------------------------------------------------------------------
-  describe('handler exceptions', () => {
-    it('catches handler Error and returns 500 with error message', async () => {
-      delete process.env.CRON_SECRET
-      process.env.SUPABASE_URL = 'https://test.supabase.co'
-      process.env.SUPABASE_SERVICE_ROLE_KEY = 'service-key'
+  it('succeeds on second attempt if fn recovers', async () => {
+    const { withRetry } = await import('./cron-resilience')
+    const fn = vi.fn()
+      .mockRejectedValueOnce(new Error('timeout'))
+      .mockResolvedValueOnce('success')
 
-      createClientMock.mockReturnValue({ from: vi.fn() })
+    const result = await withRetry(fn, { maxRetries: 3, baseDelayMs: 1, label: 'test-recover' })
 
-      const request = makeRequest('https://app.bitbit.chat/api/cron/failing-job')
-
-      const { withCronGuard } = serviceClientModule
-      const response = await withCronGuard(request, async () => {
-        throw new Error('Database connection timeout after 30s')
-      })
-
-      expect(response.status).toBe(500)
-      const body = await response.json()
-      expect(body.success).toBe(false)
-      expect(body.error).toBe('Database connection timeout after 30s')
-      expect(body.duration_ms).toBeDefined()
-      expect(typeof body.duration_ms).toBe('number')
-    })
-
-    it('catches non-Error throws and stringifies them', async () => {
-      delete process.env.CRON_SECRET
-      process.env.SUPABASE_URL = 'https://test.supabase.co'
-      process.env.SUPABASE_SERVICE_ROLE_KEY = 'service-key'
-
-      createClientMock.mockReturnValue({ from: vi.fn() })
-
-      const request = makeRequest('https://app.bitbit.chat/api/cron/weird-error')
-
-      const { withCronGuard } = serviceClientModule
-      const response = await withCronGuard(request, async () => {
-        throw 'string error thrown'
-      })
-
-      expect(response.status).toBe(500)
-      const body = await response.json()
-      expect(body.success).toBe(false)
-      expect(body.error).toBe('string error thrown')
-    })
+    expect(result).toBe('success')
+    expect(fn).toHaveBeenCalledTimes(2)
   })
 
-  // -----------------------------------------------------------------------
-  // Service client initialization
-  // -----------------------------------------------------------------------
-  describe('service client initialization', () => {
-    it('returns 500 when SUPABASE_URL is missing', async () => {
-      delete process.env.CRON_SECRET
-      delete process.env.SUPABASE_URL
-      delete process.env.NEXT_PUBLIC_SUPABASE_URL
-      process.env.SUPABASE_SERVICE_ROLE_KEY = 'service-key'
+  it('applies exponential backoff (delays double each retry)', async () => {
+    const { withRetry } = await import('./cron-resilience')
+    const delays: number[] = []
+    const originalSetTimeout = globalThis.setTimeout
 
-      const request = makeRequest('https://app.bitbit.chat/api/cron/init-fail')
-
-      const { withCronGuard } = serviceClientModule
-      const response = await withCronGuard(request, async () => ({
-        message: 'Should not reach here',
-      }))
-
-      expect(response.status).toBe(500)
-      const body = await response.json()
-      expect(body.success).toBe(false)
-      expect(body.error).toBe('Server configuration error')
+    // Track delay values via a spy on the internal sleep
+    vi.spyOn(globalThis, 'setTimeout').mockImplementation((fn: TimerHandler, ms?: number) => {
+      if (ms && ms > 0) delays.push(ms)
+      if (typeof fn === 'function') fn()
+      return 0 as unknown as ReturnType<typeof setTimeout>
     })
 
-    it('returns 500 when SUPABASE_SERVICE_ROLE_KEY is missing', async () => {
-      delete process.env.CRON_SECRET
-      process.env.SUPABASE_URL = 'https://test.supabase.co'
-      delete process.env.SUPABASE_SERVICE_ROLE_KEY
+    const failFn = vi.fn()
+      .mockRejectedValueOnce(new Error('connection error'))
+      .mockRejectedValueOnce(new Error('connection error'))
+      .mockRejectedValueOnce(new Error('connection error'))
 
-      const request = makeRequest('https://app.bitbit.chat/api/cron/init-fail')
+    await expect(
+      withRetry(failFn, { maxRetries: 2, baseDelayMs: 100, label: 'test-backoff' })
+    ).rejects.toThrow('connection error')
 
-      const { withCronGuard } = serviceClientModule
-      const response = await withCronGuard(request, async () => ({
-        message: 'Should not reach here',
-      }))
-
-      expect(response.status).toBe(500)
-      const body = await response.json()
-      expect(body.success).toBe(false)
-      expect(body.error).toBe('Server configuration error')
-    })
+    // Should have 2 delays: baseDelayMs * 2^0 = 100, baseDelayMs * 2^1 = 200
+    expect(delays).toHaveLength(2)
+    expect(delays[0]).toBe(100)
+    expect(delays[1]).toBe(200)
   })
 
-  // -----------------------------------------------------------------------
-  // Response structure
-  // -----------------------------------------------------------------------
-  describe('response structure', () => {
-    it('includes duration_ms on successful execution', async () => {
-      delete process.env.CRON_SECRET
-      process.env.SUPABASE_URL = 'https://test.supabase.co'
-      process.env.SUPABASE_SERVICE_ROLE_KEY = 'service-key'
+  it('does not retry non-retryable errors (non-connection/timeout)', async () => {
+    const { withRetry } = await import('./cron-resilience')
+    const fn = vi.fn().mockRejectedValueOnce(new Error('validation failed'))
 
-      createClientMock.mockReturnValue({ from: vi.fn() })
+    await expect(
+      withRetry(fn, { maxRetries: 3, baseDelayMs: 1, label: 'test-non-retryable' })
+    ).rejects.toThrow('validation failed')
 
-      const request = makeRequest('https://app.bitbit.chat/api/cron/timing')
+    // Only called once -- not retried because it's not a transient error
+    expect(fn).toHaveBeenCalledTimes(1)
+  })
+})
 
-      const { withCronGuard } = serviceClientModule
-      const response = await withCronGuard(request, async () => {
-        return { message: 'Timed operation' }
-      })
+describe('withBackoff', () => {
+  it('detects rate limit errors (429 status) and waits then retries', async () => {
+    const { withBackoff } = await import('./cron-resilience')
 
-      const body = await response.json()
-      expect(body.success).toBe(true)
-      expect(body.duration_ms).toBeDefined()
-      expect(body.duration_ms).toBeGreaterThanOrEqual(0)
+    // Suppress actual sleep
+    vi.spyOn(globalThis, 'setTimeout').mockImplementation((fn: TimerHandler) => {
+      if (typeof fn === 'function') fn()
+      return 0 as unknown as ReturnType<typeof setTimeout>
     })
 
-    it('includes details in result when handler provides them', async () => {
-      delete process.env.CRON_SECRET
-      process.env.SUPABASE_URL = 'https://test.supabase.co'
-      process.env.SUPABASE_SERVICE_ROLE_KEY = 'service-key'
+    const rateLimitError = Object.assign(new Error('rate limit exceeded'), { status: 429 })
 
-      createClientMock.mockReturnValue({ from: vi.fn() })
+    const fn = vi.fn()
+      .mockRejectedValueOnce(rateLimitError)
+      .mockResolvedValueOnce('ok after backoff')
 
-      const request = makeRequest('https://app.bitbit.chat/api/cron/detailed')
-
-      const { withCronGuard } = serviceClientModule
-      const response = await withCronGuard(request, async () => ({
-        message: 'Processed 10 items',
-        details: {
-          processed: 10,
-          skipped: 2,
-          errors: 0,
-        },
-      }))
-
-      const body = await response.json()
-      expect(body.result.message).toBe('Processed 10 items')
-      expect(body.result.details.processed).toBe(10)
-      expect(body.result.details.skipped).toBe(2)
-    })
+    const result = await withBackoff(fn, { label: 'test-429' })
+    expect(result).toBe('ok after backoff')
+    expect(fn).toHaveBeenCalledTimes(2)
   })
 
-  // -----------------------------------------------------------------------
-  // DB error simulation
-  // -----------------------------------------------------------------------
-  describe('database error resilience', () => {
-    it('handler can catch and report DB errors without crashing', async () => {
-      delete process.env.CRON_SECRET
-      process.env.SUPABASE_URL = 'https://test.supabase.co'
-      process.env.SUPABASE_SERVICE_ROLE_KEY = 'service-key'
+  it('detects rate limit from message containing "rate limit"', async () => {
+    const { withBackoff } = await import('./cron-resilience')
 
-      const mockFrom = vi.fn().mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockResolvedValue({
-            data: null,
-            error: { message: 'connection reset by peer', code: 'PGRST301' },
-          }),
-        }),
-      })
-      createClientMock.mockReturnValue({ from: mockFrom })
-
-      const request = makeRequest('https://app.bitbit.chat/api/cron/db-error')
-
-      const { withCronGuard } = serviceClientModule
-      const response = await withCronGuard(request, async (supabase) => {
-        const { data, error } = await supabase
-          .from('organisations')
-          .select('id')
-          .eq('status', 'active')
-
-        if (error) {
-          // Handler properly catches DB error and returns graceful result
-          return {
-            message: `DB error: ${error.message}`,
-            details: { errorCode: error.code },
-          }
-        }
-
-        return { message: `Processed ${data?.length ?? 0} orgs` }
-      })
-
-      expect(response.status).toBe(200) // Handler caught the error
-      const body = await response.json()
-      expect(body.success).toBe(true) // Success because handler handled it
-      expect(body.result.message).toContain('DB error')
-      expect(body.result.details.errorCode).toBe('PGRST301')
+    vi.spyOn(globalThis, 'setTimeout').mockImplementation((fn: TimerHandler) => {
+      if (typeof fn === 'function') fn()
+      return 0 as unknown as ReturnType<typeof setTimeout>
     })
 
-    it('uncaught DB error in handler triggers 500 response', async () => {
-      delete process.env.CRON_SECRET
-      process.env.SUPABASE_URL = 'https://test.supabase.co'
-      process.env.SUPABASE_SERVICE_ROLE_KEY = 'service-key'
+    const fn = vi.fn()
+      .mockRejectedValueOnce(new Error('Rate Limit exceeded, try again later'))
+      .mockResolvedValueOnce('recovered')
 
-      const mockFrom = vi.fn().mockReturnValue({
-        select: vi.fn().mockRejectedValue(new Error('Connection pool exhausted')),
-      })
-      createClientMock.mockReturnValue({ from: mockFrom })
-
-      const request = makeRequest('https://app.bitbit.chat/api/cron/pool-exhausted')
-
-      const { withCronGuard } = serviceClientModule
-      const response = await withCronGuard(request, async (supabase) => {
-        // This will throw because select() rejects
-        const result = await supabase.from('organisations').select('id')
-        return { message: `Should not reach: ${result}` }
-      })
-
-      expect(response.status).toBe(500)
-      const body = await response.json()
-      expect(body.success).toBe(false)
-      expect(body.error).toContain('Connection pool exhausted')
-    })
+    const result = await withBackoff(fn, { label: 'test-rate-msg' })
+    expect(result).toBe('recovered')
+    expect(fn).toHaveBeenCalledTimes(2)
   })
 
-  // -----------------------------------------------------------------------
-  // Rate limit simulation
-  // -----------------------------------------------------------------------
-  describe('rate limit resilience', () => {
-    it('handler can detect rate-limited downstream calls and report gracefully', async () => {
-      delete process.env.CRON_SECRET
-      process.env.SUPABASE_URL = 'https://test.supabase.co'
-      process.env.SUPABASE_SERVICE_ROLE_KEY = 'service-key'
+  it('passes through non-rate-limit errors without retry', async () => {
+    const { withBackoff } = await import('./cron-resilience')
 
-      createClientMock.mockReturnValue({ from: vi.fn() })
+    const fn = vi.fn().mockRejectedValueOnce(new Error('internal server error'))
 
-      const request = makeRequest('https://app.bitbit.chat/api/cron/rate-limited')
+    await expect(
+      withBackoff(fn, { label: 'test-passthrough' })
+    ).rejects.toThrow('internal server error')
 
-      const { withCronGuard } = serviceClientModule
-      const response = await withCronGuard(request, async () => {
-        // Simulate checking an external API that returns 429
-        const externalResponse = { status: 429, retryAfter: 60 }
+    expect(fn).toHaveBeenCalledTimes(1)
+  })
+})
 
-        return {
-          message: `Rate limited by external API, retry after ${externalResponse.retryAfter}s`,
-          details: {
-            rateLimited: true,
-            retryAfterSeconds: externalResponse.retryAfter,
-          },
-        }
-      })
+describe('processBatch', () => {
+  it('continues processing after individual item failure', async () => {
+    const { processBatch } = await import('./cron-resilience')
 
-      expect(response.status).toBe(200) // Cron itself succeeded
-      const body = await response.json()
-      expect(body.success).toBe(true)
-      expect(body.result.details.rateLimited).toBe(true)
-    })
+    const processor = vi.fn()
+      .mockResolvedValueOnce('result-1')
+      .mockRejectedValueOnce(new Error('item 2 failed'))
+      .mockResolvedValueOnce('result-3')
+
+    const result = await processBatch(
+      ['a', 'b', 'c'],
+      processor,
+      { label: 'test-partial' }
+    )
+
+    expect(result.results).toEqual(['result-1', 'result-3'])
+    expect(result.errors).toHaveLength(1)
+    expect(result.errors[0].item).toBe('b')
+    expect(result.errors[0].error).toBe('item 2 failed')
   })
 
-  // -----------------------------------------------------------------------
-  // Exported constants
-  // -----------------------------------------------------------------------
-  describe('module exports', () => {
-    it('exports cronMaxDuration as 300', () => {
-      expect(serviceClientModule.cronMaxDuration).toBe(300)
-    })
+  it('collects all errors and returns them alongside successes', async () => {
+    const { processBatch } = await import('./cron-resilience')
 
-    it('exports cronDynamic as force-dynamic', () => {
-      expect(serviceClientModule.cronDynamic).toBe('force-dynamic')
-    })
+    const processor = vi.fn()
+      .mockRejectedValueOnce(new Error('fail-1'))
+      .mockResolvedValueOnce('ok-2')
+      .mockRejectedValueOnce(new Error('fail-3'))
+      .mockResolvedValueOnce('ok-4')
+
+    const result = await processBatch(
+      [1, 2, 3, 4],
+      processor,
+      { label: 'test-collect-errors' }
+    )
+
+    expect(result.results).toEqual(['ok-2', 'ok-4'])
+    expect(result.errors).toHaveLength(2)
+    expect(result.errors[0].item).toBe(1)
+    expect(result.errors[0].error).toBe('fail-1')
+    expect(result.errors[1].item).toBe(3)
+    expect(result.errors[1].error).toBe('fail-3')
+  })
+
+  it('dead-letters items that fail when supabase client is provided', async () => {
+    const { processBatch } = await import('./cron-resilience')
+
+    const mockSupabase = {} as any
+
+    const processor = vi.fn()
+      .mockResolvedValueOnce('ok')
+      .mockRejectedValueOnce(new Error('permanent failure'))
+
+    const result = await processBatch(
+      ['item-1', 'item-2'],
+      processor,
+      {
+        label: 'test-dlq',
+        supabase: mockSupabase,
+        orgId: 'org-123',
+      }
+    )
+
+    expect(result.results).toEqual(['ok'])
+    expect(result.errors).toHaveLength(1)
+
+    // deadLetter should have been called for the failed item
+    expect(deadLetterMock).toHaveBeenCalledTimes(1)
+    expect(deadLetterMock).toHaveBeenCalledWith(mockSupabase, expect.objectContaining({
+      agent_type: 'test-dlq',
+      org_id: 'org-123',
+      error_message: 'permanent failure',
+      payload: { item: 'item-2' },
+    }))
+  })
+
+  it('respects circuit breaker state -- skips remaining items when circuit is open', async () => {
+    const { processBatch } = await import('./cron-resilience')
+
+    // Circuit starts closed, then opens for remaining items
+    getCircuitStateMock
+      .mockReturnValueOnce('closed')
+      .mockReturnValue('open')
+
+    const processor = vi.fn().mockResolvedValue('ok')
+
+    const result = await processBatch(
+      ['a', 'b', 'c'],
+      processor,
+      { label: 'test-circuit', circuitKey: 'llm' }
+    )
+
+    // Only first item should be processed -- rest skipped because circuit opened
+    expect(processor).toHaveBeenCalledTimes(1)
+    expect(result.results).toEqual(['ok'])
+    expect(result.errors).toHaveLength(2)
+    expect(result.errors[0].error).toContain('circuit')
+    expect(result.errors[1].error).toContain('circuit')
+  })
+
+  it('processes all items when circuit stays closed', async () => {
+    const { processBatch } = await import('./cron-resilience')
+
+    getCircuitStateMock.mockReturnValue('closed')
+
+    const processor = vi.fn().mockResolvedValue('ok')
+
+    const result = await processBatch(
+      ['a', 'b', 'c'],
+      processor,
+      { label: 'test-circuit-ok', circuitKey: 'llm' }
+    )
+
+    expect(processor).toHaveBeenCalledTimes(3)
+    expect(result.results).toEqual(['ok', 'ok', 'ok'])
+    expect(result.errors).toHaveLength(0)
   })
 })

@@ -1,7 +1,9 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
+import { Briefcase } from 'lucide-react'
 import { TabShell } from '@/components/ui/tab-shell'
+import { EmptyState } from '@/components/ui/empty-state'
 import { createClient } from '@/lib/supabase/client'
 import { Skeleton } from '@/components/ui/skeleton'
 
@@ -105,13 +107,15 @@ function JobsTab() {
   if (jobs.length === 0) {
     return (
       <TabShell>
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="text-4xl mb-3">🔧</div>
-          <h3 className="text-lg font-medium">No jobs yet</h3>
-          <p className="text-sm text-muted-foreground mt-1">
-            Jobs will appear here when quotes are accepted or you create them manually.
-          </p>
-        </div>
+        <EmptyState
+          icon={<Briefcase size={24} />}
+          title="No active jobs"
+          description="Jobs track ongoing work for your clients. They appear here as BitBit identifies active projects from your communications."
+          action={{
+            label: 'Connect email to start',
+            onClick: () => window.dispatchEvent(new CustomEvent('bb-navigate', { detail: { tab: 'settings-connections' } })),
+          }}
+        />
       </TabShell>
     )
   }

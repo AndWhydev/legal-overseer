@@ -17,6 +17,34 @@ export const cronMaxDuration = 300
 /** Shared dynamic export for all cron routes. */
 export const cronDynamic = 'force-dynamic' as const
 
+/** Options for withCronGuard. */
+export interface CronGuardOptions {
+  /**
+   * When true, retries the handler once on transient DB connection errors
+   * (connection refused, timeout, etc.) after a 2s delay.
+   * Default: false.
+   */
+  resilience?: boolean
+}
+
+/** Check if an error is a transient DB connection error. */
+function isDbConnectionError(err: unknown): boolean {
+  if (err instanceof Error) {
+    const msg = err.message.toLowerCase()
+    return (
+      msg.includes('connection') ||
+      msg.includes('econnrefused') ||
+      msg.includes('timeout') ||
+      msg.includes('econnreset')
+    )
+  }
+  return false
+}
+
+function sleepMs(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
 /**
  * Shared cron endpoint guard and execution wrapper.
  *
@@ -25,10 +53,12 @@ export const cronDynamic = 'force-dynamic' as const
  * - Service-role Supabase client (no user session needed)
  * - Structured JSON response with timing
  * - Error handling and logging
+ * - Optional resilience: retry once on transient DB errors
  */
 export async function withCronGuard(
   request: Request,
   handler: (supabase: SupabaseClient) => Promise<CronResult>,
+  opts?: CronGuardOptions,
 ): Promise<NextResponse> {
   // Extract cron name from URL path for logging
   const url = new URL(request.url)
@@ -59,7 +89,20 @@ export async function withCronGuard(
   logger.info(`${tag} Starting execution`)
 
   try {
-    const result = await handler(supabase)
+    let result: CronResult
+    try {
+      result = await handler(supabase)
+    } catch (firstErr) {
+      // Optional: retry once on transient DB connection errors
+      if (opts?.resilience && isDbConnectionError(firstErr)) {
+        logger.warn(`${tag} Transient DB error, retrying in 2s...`)
+        await sleepMs(2000)
+        result = await handler(supabase)
+      } else {
+        throw firstErr
+      }
+    }
+
     const durationMs = Date.now() - startTime
 
     logger.info(`${tag} Completed in ${durationMs}ms: ${result.message}`)

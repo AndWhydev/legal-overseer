@@ -1,7 +1,9 @@
 'use client'
 
 import React, { useState, useEffect, useCallback } from 'react'
+import { Calendar } from 'lucide-react'
 import type { Meeting, MeetingType } from '@/lib/meetings/types'
+import { EmptyState } from '@/components/ui/empty-state'
 import { S, C } from '@/lib/styles/design-tokens'
 
 // ── Styles ──────────────────────────────────────────────────────────────────
@@ -179,16 +181,21 @@ export function MeetingList({ onSelectMeeting, onUpload }: MeetingListProps) {
             Loading meetings...
           </div>
         ) : meetings.length === 0 ? (
-          <div style={{ padding: 40, textAlign: 'center' }}>
-            <p style={{ color: 'var(--text-secondary, #94A3B8)', fontSize: 14, margin: 0 }}>
-              No meetings yet
-            </p>
-            <p style={{ color: 'var(--text-dim, #475569)', fontSize: 14, margin: '8px 0 0' }}>
-              Upload a recording to get started
-            </p>
-          </div>
+          <EmptyState
+            icon={<Calendar size={24} />}
+            title="No upcoming meetings"
+            description="Connect your calendar and BitBit will show upcoming meetings with context about each attendee."
+            action={{
+              label: 'Connect calendar',
+              onClick: () => window.dispatchEvent(new CustomEvent('bb-navigate', { detail: { tab: 'settings-connections' } })),
+            }}
+            secondaryAction={{
+              label: 'Upload a recording',
+              onClick: onUpload,
+            }}
+          />
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <div className="bb-stagger" style={{ display: 'flex', flexDirection: 'column' }}>
             {meetings.map((meeting, i) => {
               const statusColor = STATUS_COLORS[meeting.status] || STATUS_COLORS.pending
               const isHovered = hoveredId === meeting.id

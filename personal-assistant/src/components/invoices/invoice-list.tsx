@@ -21,7 +21,7 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import {
   Search, Download, ChevronDown, Send, CheckCircle2,
-  Ban, Users, LayoutList, Eye, EyeOff, Plus, X, Loader2,
+  Ban, Users, LayoutList, Eye, EyeOff, Plus, X, Loader2, Receipt,
 } from 'lucide-react'
 import { EmptyState } from '@/components/ui/empty-state'
 import { useToast } from '@/components/ui/toast'
@@ -1626,8 +1626,13 @@ export function InvoiceList() {
         {/* Content */}
         {filtered.length === 0 ? (
           <EmptyState
+            icon={search ? undefined : <Receipt size={24} />}
             title={search ? 'No matching invoices' : 'No invoices yet'}
-            description={search ? 'Try a different search term.' : 'Create your first invoice via chat: "Send invoice to X for $Y"'}
+            description={search ? 'Try a different search term.' : 'Ask BitBit to create an invoice in chat. Say something like "Invoice Dave for the website redesign at $2,500".'}
+            action={search ? undefined : {
+              label: 'Create via chat',
+              onClick: () => window.dispatchEvent(new CustomEvent('bb-navigate', { detail: { tab: 'chat' } })),
+            }}
           />
         ) : groupMode === 'status' ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>

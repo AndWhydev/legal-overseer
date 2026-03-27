@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { AlertCircle, RefreshCw, Loader2 } from 'lucide-react';
+import { AlertCircle, RefreshCw, Loader2, ShieldCheck } from 'lucide-react';
 import { ApprovalCard, type ApprovalItem } from './approval-card';
 import { AlertBanner } from '../ui/alert-banner';
 import { EmptyState } from '../ui/empty-state';
@@ -147,8 +147,8 @@ export function ApprovalQueue() {
   const pillBtnActive: React.CSSProperties = {
     ...pillBtn,
     color: 'var(--text-primary)',
-    background: 'rgba(255, 255, 255, 0.08)',
-    border: '1px solid rgba(255, 255, 255, 0.03)',
+    background: 'var(--hover-bg-strong, rgba(255, 255, 255, 0.08))',
+    border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
   };
 
   const loadingText: React.CSSProperties = {
@@ -249,8 +249,9 @@ export function ApprovalQueue() {
 
       {!loading && visibleApprovals.length === 0 ? (
         <EmptyState
-          title="No approvals pending"
-          description="When something needs sign-off, requests will appear here"
+          icon={<ShieldCheck size={24} />}
+          title="Nothing needs approval"
+          description="When BitBit wants to send an email, create an invoice, or take action on your behalf, it asks here first."
         />
       ) : null}
 

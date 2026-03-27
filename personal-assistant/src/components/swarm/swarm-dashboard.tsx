@@ -1,9 +1,11 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { Zap } from 'lucide-react';
 import { SwarmRunCard } from './swarm-run-card';
 import { SwarmRunDetail } from './swarm-run-detail';
 import { SwarmTriggerInput } from './swarm-trigger-input';
+import { EmptyState } from '@/components/ui/empty-state';
 import { S, C } from '@/lib/styles/design-tokens';
 import type { SwarmRunRow } from '@/lib/swarm/types';
 
@@ -201,14 +203,15 @@ export function SwarmDashboard() {
             <div style={styles.emptyText}>Loading swarms...</div>
           </div>
         ) : runs.length === 0 ? (
-          <div style={styles.emptyState}>
-            <div style={styles.emptyIcon}>&#x1F9E0;</div>
-            <div style={styles.emptyText}>No swarm operations yet</div>
-            <div style={styles.emptyHint}>
-              Try &quot;Prepare pitch for Thomson&quot; or &quot;Onboard Acme Corp&quot; to see
-              coordinated multi-agent teams in action.
-            </div>
-          </div>
+          <EmptyState
+            icon={<Zap size={24} />}
+            title="No swarm activity"
+            description="Lead Swarm automatically qualifies and routes incoming leads. Activity appears here as leads come in."
+            action={{
+              label: 'Connect email',
+              onClick: () => window.dispatchEvent(new CustomEvent('bb-navigate', { detail: { tab: 'settings-connections' } })),
+            }}
+          />
         ) : (
           runs.map(run => (
             <SwarmRunCard

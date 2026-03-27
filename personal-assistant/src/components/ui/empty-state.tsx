@@ -11,10 +11,15 @@ interface EmptyStateProps {
     label: string;
     onClick: () => void;
   };
+  secondaryAction?: {
+    label: string;
+    onClick: () => void;
+  };
 }
 
-export function EmptyState({ icon, title, description, action }: EmptyStateProps) {
+export function EmptyState({ icon, title, description, action, secondaryAction }: EmptyStateProps) {
   const [actionHovered, setActionHovered] = React.useState(false);
+  const [secondaryHovered, setSecondaryHovered] = React.useState(false);
 
   const showDefaultLogo = !icon;
 
@@ -120,6 +125,32 @@ export function EmptyState({ icon, title, description, action }: EmptyStateProps
           }}
         >
           {action.label}
+        </button>
+      )}
+
+      {secondaryAction && (
+        <button
+          type="button"
+          onClick={secondaryAction.onClick}
+          onMouseEnter={() => setSecondaryHovered(true)}
+          onMouseLeave={() => setSecondaryHovered(false)}
+          style={{
+            marginTop: action ? 8 : 16,
+            height: 40,
+            padding: '0 20px',
+            borderRadius: 8,
+            background: 'transparent',
+            border: 'none',
+            color: secondaryHovered
+              ? 'var(--text-primary, #F1F5F9)'
+              : 'var(--text-secondary, #94A3B8)',
+            fontSize: 14,
+            fontWeight: 500,
+            cursor: 'pointer',
+            transition: 'color 200ms ease',
+          }}
+        >
+          {secondaryAction.label}
         </button>
       )}
     </div>

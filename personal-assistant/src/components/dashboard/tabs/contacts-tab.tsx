@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { Search, ChevronRight, Mail, Phone } from 'lucide-react'
+import { Search, ChevronRight, Mail, Phone, Users } from 'lucide-react'
 import { GlassDropdown } from '@/components/ui/glass-dropdown'
 import { EmptyState } from '@/components/ui/empty-state'
 import { S, C } from '@/lib/styles/design-tokens'
@@ -235,8 +235,13 @@ function ContactsTab() {
   if (contacts.length === 0) {
     return (
       <EmptyState
+        icon={<Users size={24} />}
         title="No contacts yet"
-        description="Import or add a contact to get started."
+        description="Contacts are automatically created when BitBit processes emails and messages. Connect your email to start building your contact book."
+        action={{
+          label: 'Connect email',
+          onClick: () => window.dispatchEvent(new CustomEvent('bb-navigate', { detail: { tab: 'settings-connections' } })),
+        }}
       />
     )
   }

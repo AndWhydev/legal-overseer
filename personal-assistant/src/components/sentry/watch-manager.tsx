@@ -1,6 +1,7 @@
 'use client'
 
 import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react'
+import { Shield } from 'lucide-react'
 import { EmptyState } from '@/components/ui/empty-state'
 import { GlassDropdown } from '@/components/ui/glass-dropdown'
 
@@ -540,18 +541,11 @@ export function WatchManager() {
       <section style={glassCard}>
         <h2 style={{ ...cardTitle, fontSize: 16, fontWeight: 500, marginBottom: 20 }}>Configured watches</h2>
         {watches.length === 0 ? (
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '40px 20px',
-              gap: 12,
-            }}
-          >
-            <span style={secondaryText}>No watches yet. Create your first watch above.</span>
-          </div>
+          <EmptyState
+            icon={<Shield size={24} />}
+            title="No watches configured"
+            description="Create your first watch above to start monitoring for issues."
+          />
         ) : (
           <div style={{ display: 'grid', gap: 12, gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))' }}>
             {watches.map((watch) => (
@@ -656,8 +650,9 @@ export function WatchManager() {
         </div>
         {alerts.length === 0 ? (
           <EmptyState
+            icon={<Shield size={24} />}
             title="All clear"
-            description="No errors or alerts to report. Your systems are running smoothly"
+            description="Sentry monitors for issues across your channels and alerts you when something needs attention."
           />
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
