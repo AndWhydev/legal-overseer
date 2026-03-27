@@ -619,4 +619,85 @@ describe('/api/onboarding POST', () => {
       error: 'Onboarding failed',
     })
   })
+
+  it('returns correct shape from workspace creation', async () => {
+    const { POST } = await import('./route')
+
+    const response = await POST(
+      new Request('http://localhost/api/onboarding', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: 'Test Workspace',
+          ownerName: 'Owner',
+          industry: 'consulting',
+        }),
+      }) as any,
+    )
+
+    expect(response.status).toBe(201)
+    const body = await response.json()
+    expect(body).toHaveProperty('orgId')
+    expect(body).toHaveProperty('ownerId')
+    expect(body).toHaveProperty('rlsConfigured', true)
+  })
+
+  it('returns 400 for missing required name field', async () => {
+    const { POST } = await import('./route')
+
+    const response = await POST(
+      new Request('http://localhost/api/onboarding', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ownerName: 'Owner',
+          industry: 'consulting',
+        }),
+      }) as any,
+    )
+
+    expect(response.status).toBe(400)
+    await expect(response.json()).resolves.toMatchObject({
+      error: 'Missing required field: name',
+    })
+  })
+
+  it('returns 400 for invalid JSON body', async () => {
+    const { POST } = await import('./route')
+
+    const response = await POST(
+      new Request('http://localhost/api/onboarding', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: 'not valid json{',
+      }) as any,
+    )
+
+    expect(response.status).toBe(400)
+    await expect(response.json()).resolves.toMatchObject({
+      error: 'Invalid JSON body',
+    })
+  })
+
+  it('returns 401 when not authenticated', async () => {
+    createClientMock.mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: null },
+        }),
+      },
+    })
+
+    const { POST } = await import('./route')
+
+    const response = await POST(
+      new Request('http://localhost/api/onboarding', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: 'Test' }),
+      }) as any,
+    )
+
+    expect(response.status).toBe(401)
+  })
 })

@@ -352,7 +352,7 @@ Phase 20 first (no dependencies), then 21 (billing before growth roles), then 22
 | 27. Role Runtime Import Fix | v1.4 | Complete    | 2026-03-27 | 2026-03-27 |
 | 28. Intelligence Dashboard Wiring | 1/1 | Complete    | 2026-03-27 | - |
 | 29. SEO/Tender Scheduled Monitoring | 1/1 | Complete   | 2026-03-27 | - |
-| 30. Onboarding E2E & First-Run Experience | 1/3 | In Progress|  | - |
+| 30. Onboarding E2E & First-Run Experience | 2/3 | In Progress|  | - |
 | 31. Channel Smoke Tests & Production Hardening | v1.5 | 0/3 | Planned | - |
 | 32. Marketing Site & Checkout Flow | 1/3 | In Progress|  | - |
 | 33. Beta Program Infrastructure | v1.5 | 1/1 | Complete | 2026-03-27 |
