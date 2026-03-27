@@ -25,10 +25,10 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 
 ## Current Position
 
-Phase: 31 of 36 (Channel Smoke Tests)
-Plan: 1 of 3 in current phase
-Status: In Progress
-Last activity: 2026-03-27 - Completed 31-01: Channel Adapter Smoke Tests
+Phase: 33 of 36 (Beta Program Infrastructure)
+Plan: 1 of 1 in current phase
+Status: Completed
+Last activity: 2026-03-27 - Completed 33-01: Beta Program Infrastructure
 
 Progress: v1.0 ======== | v1.1 ======== | v1.2 ======== | v1.4 ======== | v1.5 ========== 100%
 
@@ -58,6 +58,7 @@ Progress: v1.0 ======== | v1.1 ======== | v1.2 ======== | v1.4 ======== | v1.5 =
 | Phase | Plans | Status |
 |-------|-------|--------|
 | 26. SOTA Response Drafter | 2 | COMPLETE (2/2) |
+| 33. Beta Program Infrastructure | 1 | COMPLETE (1/1) |
 
 ## Accumulated Context
 
@@ -111,6 +112,10 @@ See PROJECT.md Key Decisions table.
 - [26-02] Tone adaptation (learnClientTone + adaptDraft) applied as post-processing after LLM generation, not as prompt instruction
 - [26-02] Context assembly and tone adaptation wrapped in try/catch with fallback -- zero crash risk from new features
 - [27-01] Direct domain role imports in cron path over barrel import -- avoids cold-start bundle bloat while ensuring registerRole() side effects fire
+- [33-01] Invite codes expire after 7 days, single-use -- prevents sharing/abuse
+- [33-01] Feedback widget uses file input for screenshots -- simpler than html2canvas, cross-browser
+- [33-01] Daily tips use account age (days since signup) -- stateless, no progress table needed
+- [33-01] Beta metrics aggregate from existing agent_runs + channel_messages -- no new counters
 
 ### Roadmap Evolution
 
@@ -137,5 +142,5 @@ See PROJECT.md Key Decisions table.
 ## Session Continuity
 
 Last session: 2026-03-27
-Stopped at: Completed 27-01-PLAN.md (Role Runtime Import Fix)
+Stopped at: Completed 33-01-PLAN.md (Beta Program Infrastructure)
 Resume file: None
