@@ -8,6 +8,7 @@ import { adToolDefinitions, adToolHandlers } from './tools/ad-tools'
 import { seoToolDefinitions, seoToolHandlers } from './tools/seo-tools'
 import { tenderToolDefinitions, tenderToolHandlers } from './tools/tender-tools'
 import { contentToolDefinitions, contentToolHandlers } from './tools/content-tools'
+import { builderToolDefinitions, builderToolHandlers } from './tools/builder-tools'
 import { spawnAgentToolDefinition, handleSpawnAgent, type SpawnContext } from './tools/spawn-agent'
 import { composeCreatorStudioDeck } from '@/lib/creator-studio'
 import { routeAgentAction } from './confidence-router'
@@ -32,7 +33,7 @@ import { getOrgPlan, checkToolPlanGate, TOOL_PLAN_REQUIREMENTS } from '@/lib/bil
 // Tool Group metadata (for future Tool RAG via pgvector)
 // ---------------------------------------------------------------------------
 
-export type ToolGroup = 'core' | 'memory' | 'channel' | 'web' | 'comms' | 'agentic' | 'ads' | 'seo' | 'tenders' | 'content'
+export type ToolGroup = 'core' | 'memory' | 'channel' | 'web' | 'comms' | 'agentic' | 'ads' | 'seo' | 'tenders' | 'content' | 'builder'
 
 export interface ToolGroupMeta {
   id: ToolGroup
@@ -101,6 +102,12 @@ export const TOOL_GROUPS: Record<ToolGroup, ToolGroupMeta> = {
     label: 'Content & Social',
     description: 'Generate social media posts and blog drafts with platform-specific formatting and brand voice',
     tools: ['schedule_post', 'generate_blog', 'content_calendar'],
+  },
+  builder: {
+    id: 'builder',
+    label: 'Website Builder',
+    description: 'Generate, preview, and deploy professional websites from templates or descriptions',
+    tools: ['generate_website', 'list_website_templates', 'revise_website'],
   },
 }
 
@@ -190,6 +197,11 @@ export const JIT_INSTRUCTIONS: Record<string, string> = {
   schedule_post: 'Social post generated. Present the formatted post to the user with the platform name, character count, and hashtag count. If the post includes hashtags, display them clearly. Ask if they want to adjust the tone, add/remove hashtags, or adapt it for a different platform.',
   generate_blog: 'Blog draft generated. Present the title and meta description first, then the full body in markdown. Mention the word count and which keywords were integrated. Offer to refine specific sections, adjust length, or optimize for additional keywords.',
   content_calendar: 'Present the content items as a list showing topic, platform, and date. If the calendar is empty, suggest creating content with schedule_post or generate_blog. Group items by platform if there are many.',
+
+  // Website Builder
+  generate_website: 'Website generated and shown as a live HTML preview artifact in the chat. Do NOT repeat the HTML code. Confirm briefly: "Generated [business_name] website using [template/custom design]. You can see the live preview on the right. Tell me what you want to change." The user can see the full responsive preview in the artifact panel.',
+  list_website_templates: 'Present the available templates as a concise list showing name, category, and a brief description. If the user seems interested in one, suggest using generate_website with that template_id.',
+  revise_website: 'Website updated with the requested changes. The revised preview is shown in the artifact panel. Confirm briefly what changed: "Updated [change summary]. Preview is refreshed on the right." Do not repeat HTML.',
 }
 
 /** Get JIT instruction for a tool, if one exists. */
@@ -858,13 +870,14 @@ const allHandlers: Record<string, AgentToolHandler> = {
   ...seoToolHandlers,
   ...tenderToolHandlers,
   ...contentToolHandlers,
+  ...builderToolHandlers,
   async generate_invoice(input, orgId, supabase) {
     return handleGenerateInvoice(input as unknown as Parameters<typeof handleGenerateInvoice>[0], orgId, supabase)
   },
 }
 
 export function getAgentTools(groups?: ToolGroup[]): Anthropic.Tool[] {
-  const allTools = [...toolDefinitions, ...channelToolDefinitions, ...superpowerToolDefinitions, ...codeExecutionToolDefinitions, ...adToolDefinitions, ...seoToolDefinitions, ...tenderToolDefinitions, ...contentToolDefinitions, invoiceToolDefinition, spawnAgentToolDefinition]
+  const allTools = [...toolDefinitions, ...channelToolDefinitions, ...superpowerToolDefinitions, ...codeExecutionToolDefinitions, ...adToolDefinitions, ...seoToolDefinitions, ...tenderToolDefinitions, ...contentToolDefinitions, ...builderToolDefinitions, invoiceToolDefinition, spawnAgentToolDefinition]
   if (!groups || groups.length === 0) return allTools
 
   const selectedGroups = new Set<ToolGroup>(['core', ...groups])
