@@ -281,49 +281,33 @@ export function SidebarNav({
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
-      {/* Logo + Org Switcher header */}
+      {/* Header: BitBit + Org Switcher (single button) */}
       <SidebarHeader>
         <SidebarMenu>
-          {/* Logo */}
-          <SidebarMenuItem>
-            <SidebarMenuButton size="lg" className="pointer-events-none">
-              <div className="flex size-8 items-center justify-center rounded-lg overflow-hidden">
-                <Image
-                  src="/bitbit-app-icon.png"
-                  alt="BitBit"
-                  width={32}
-                  height={32}
-                  priority
-                />
-              </div>
-              <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold">BitBit</span>
-                <span className="truncate text-xs text-muted-foreground">AI Operations</span>
-              </div>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-
-          {/* Org / Team Switcher */}
           <SidebarMenuItem>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <SidebarMenuButton size="lg">
-                  <div className="flex size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                    <IconBuilding className="size-4" />
+                <SidebarMenuButton size="lg" className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
+                  <div className="flex size-8 items-center justify-center rounded-lg overflow-hidden">
+                    <Image
+                      src="/bitbit-app-icon.png"
+                      alt="BitBit"
+                      width={32}
+                      height={32}
+                      priority
+                    />
                   </div>
                   <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-semibold">
+                    <span className="truncate font-semibold">BitBit</span>
+                    <span className="truncate text-xs text-muted-foreground">
                       {activeOrg?.name ?? 'Personal'}
                     </span>
-                    <span className="truncate text-xs text-muted-foreground">
-                      {activeOrg?.plan_tier ?? 'Free'}
-                    </span>
                   </div>
-                  <IconSelector className="ml-auto" />
+                  <IconSelector className="ml-auto size-4" />
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent
-                className="w-[--radix-dropdown-menu-trigger-width] min-w-56"
+                className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
                 side="bottom"
                 align="start"
                 sideOffset={4}
@@ -338,18 +322,18 @@ export function SidebarNav({
                     className="gap-2 p-2"
                   >
                     <div className="flex size-6 items-center justify-center rounded-md border bg-background">
-                      <IconBuilding className="size-4" />
+                      <IconBuilding className="size-4 shrink-0" />
                     </div>
-                    {org.name}
+                    <span className="truncate">{org.name}</span>
                     {org.id === activeOrg?.id && (
-                      <IconCheck className="ml-auto size-4" />
+                      <IconCheck className="ml-auto size-4 shrink-0" />
                     )}
                   </DropdownMenuItem>
                 ))}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem className="gap-2 p-2">
                   <div className="flex size-6 items-center justify-center rounded-md border bg-background">
-                    <IconPlus className="size-4" />
+                    <IconPlus className="size-4 shrink-0" />
                   </div>
                   Add team
                 </DropdownMenuItem>
@@ -396,83 +380,67 @@ export function SidebarNav({
           const visibleItems = cat.items.filter(id => enabledModules.includes(id));
 
           return (
-            <Collapsible
-              key={cat.id}
-              open={isOpen}
-              onOpenChange={() => toggleGroup(cat.id)}
-              className="group/collapsible"
-            >
-              <SidebarGroup>
-                <SidebarGroupLabel>{cat.label}</SidebarGroupLabel>
-                <SidebarMenu>
-                  <Collapsible open={isOpen} onOpenChange={() => toggleGroup(cat.id)}>
-                    <SidebarMenuItem>
-                      <CollapsibleTrigger asChild>
-                        <SidebarMenuButton tooltip={cat.label}>
-                          {CatIcon && <CatIcon data-icon />}
-                          <span>{cat.label}</span>
-                          {catBadge > 0 && (
-                            <Badge variant="destructive" className="text-[10px] px-1.5 py-0 mr-1">
-                              {catBadge}
-                            </Badge>
+            <SidebarGroup key={cat.id}>
+              <SidebarMenu>
+                <Collapsible open={isOpen} onOpenChange={() => toggleGroup(cat.id)} className="group/collapsible">
+                  <SidebarMenuItem>
+                    <CollapsibleTrigger asChild>
+                      <SidebarMenuButton tooltip={cat.label}>
+                        {CatIcon && <CatIcon data-icon />}
+                        <span>{cat.label}</span>
+                        {catBadge > 0 && (
+                          <Badge variant="destructive" className="text-[10px] px-1.5 py-0 mr-1">
+                            {catBadge}
+                          </Badge>
+                        )}
+                        <IconChevronRight
+                          className={cn(
+                            'ml-auto transition-transform duration-200',
+                            isOpen && 'rotate-90',
                           )}
-                          <IconChevronRight
-                            className={cn(
-                              'ml-auto transition-transform duration-200',
-                              isOpen && 'rotate-90',
-                            )}
-                          />
-                        </SidebarMenuButton>
-                      </CollapsibleTrigger>
-                      <CollapsibleContent>
-                        <SidebarMenuSub>
-                          {visibleItems.map(tabId => {
-                            const isActive = tabId === activeTabId;
-                            const label =
-                              tabLabels[tabId] ??
-                              tabId
-                                .replace(/-/g, ' ')
-                                .replace(/\b\w/g, c => c.toUpperCase());
+                        />
+                      </SidebarMenuButton>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <SidebarMenuSub>
+                        {visibleItems.map(tabId => {
+                          const isActive = tabId === activeTabId;
+                          const label =
+                            tabLabels[tabId] ??
+                            tabId
+                              .replace(/-/g, ' ')
+                              .replace(/\b\w/g, c => c.toUpperCase());
 
-                            const badgeDef = BADGE_CONFIG[tabId];
-                            const badgeCount = badgeDef
-                              ? (badgeCounts[badgeDef.key] ?? 0)
-                              : 0;
+                          const badgeDef = BADGE_CONFIG[tabId];
+                          const badgeCount = badgeDef
+                            ? (badgeCounts[badgeDef.key] ?? 0)
+                            : 0;
 
-                            return (
-                              <SidebarMenuSubItem key={tabId}>
-                                <SidebarMenuSubButton
-                                  asChild
-                                  isActive={isActive}
-                                >
-                                  <button
-                                    onClick={() => handleItemClick(tabId)}
-                                    role="tab"
-                                    id={`tab-${tabId}`}
-                                    aria-selected={isActive}
-                                    aria-controls={`tabpanel-${tabId}`}
+                          return (
+                            <SidebarMenuSubItem key={tabId}>
+                              <SidebarMenuSubButton
+                                isActive={isActive}
+                                onClick={() => handleItemClick(tabId)}
+                              >
+                                <span>{label}</span>
+                                {badgeCount > 0 && (
+                                  <Badge
+                                    variant="destructive"
+                                    className="text-[10px] px-1.5 py-0 ml-auto"
                                   >
-                                    <span>{label}</span>
-                                    {badgeCount > 0 && (
-                                      <Badge
-                                        variant="destructive"
-                                        className="text-[10px] px-1.5 py-0 ml-auto"
-                                      >
-                                        {badgeCount}
-                                      </Badge>
-                                    )}
-                                  </button>
-                                </SidebarMenuSubButton>
-                              </SidebarMenuSubItem>
-                            );
-                          })}
-                        </SidebarMenuSub>
-                      </CollapsibleContent>
-                    </SidebarMenuItem>
-                  </Collapsible>
-                </SidebarMenu>
-              </SidebarGroup>
-            </Collapsible>
+                                    {badgeCount}
+                                  </Badge>
+                                )}
+                              </SidebarMenuSubButton>
+                            </SidebarMenuSubItem>
+                          );
+                        })}
+                      </SidebarMenuSub>
+                    </CollapsibleContent>
+                  </SidebarMenuItem>
+                </Collapsible>
+              </SidebarMenu>
+            </SidebarGroup>
           );
         })}
 
@@ -535,14 +503,14 @@ export function SidebarNav({
                       {displayName || 'User'}
                     </span>
                     <span className="truncate text-xs text-muted-foreground">
-                      {email || 'Account'}
+                      {activeOrg?.plan_tier ?? 'Free'} plan
                     </span>
                   </div>
                   <IconSelector className="ml-auto size-4" />
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent
-                className="w-[--radix-dropdown-menu-trigger-width] min-w-56"
+                className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
                 side="top"
                 align="start"
                 sideOffset={4}
@@ -558,7 +526,7 @@ export function SidebarNav({
                         {displayName || 'User'}
                       </span>
                       <span className="truncate text-xs text-muted-foreground">
-                        {email || 'Account'}
+                        {activeOrg?.plan_tier ?? 'Free'} plan
                       </span>
                     </div>
                   </div>
