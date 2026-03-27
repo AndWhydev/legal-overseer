@@ -213,7 +213,7 @@ export function UploadModal({ open, onClose, onUploadComplete }: UploadModalProp
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g., Client Review -- AWU Homepage"
-              className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-ring"
+              className="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-ring"
             />
           </div>
 
@@ -239,7 +239,7 @@ export function UploadModal({ open, onClose, onUploadComplete }: UploadModalProp
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Brief context about the meeting..."
-              className="min-h-[60px] w-full resize-y rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-ring"
+              className="min-h-[60px] w-full resize-y rounded-lg border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-ring"
             />
           </div>
 
@@ -269,19 +269,19 @@ export function UploadModal({ open, onClose, onUploadComplete }: UploadModalProp
                 value={newParticipant.name}
                 onChange={(e) => setNewParticipant(p => ({ ...p, name: e.target.value }))}
                 placeholder="Name"
-                className="flex-1 rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-ring"
+                className="flex-1 rounded-lg border border-border bg-background px-4 py-3 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-ring"
                 onKeyDown={(e) => { if (e.key === 'Enter') handleAddParticipant() }}
               />
               <input
                 value={newParticipant.email}
                 onChange={(e) => setNewParticipant(p => ({ ...p, email: e.target.value }))}
                 placeholder="Email (optional)"
-                className="flex-1 rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-ring"
+                className="flex-1 rounded-lg border border-border bg-background px-4 py-3 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-ring"
                 onKeyDown={(e) => { if (e.key === 'Enter') handleAddParticipant() }}
               />
               <button
                 onClick={handleAddParticipant}
-                className="rounded-xl border border-border bg-transparent px-3 text-base text-muted-foreground hover:text-foreground"
+                className="rounded-lg border border-border bg-transparent px-3 text-base text-muted-foreground hover:text-foreground"
               >
                 +
               </button>

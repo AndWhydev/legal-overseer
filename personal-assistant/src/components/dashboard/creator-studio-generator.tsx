@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { IconCopy, IconCheck, IconLoader2, IconTrash, IconPlus, IconSparkles } from '@tabler/icons-react'
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select'
+import { Button } from '@/components/ui/button'
 import { Empty, EmptyMedia, EmptyTitle, EmptyDescription } from '@/components/ui/empty'
 import { logger } from '@/lib/core/logger'
 
@@ -152,7 +153,7 @@ export function CreatorStudioGenerator() {
             placeholder="e.g., SaaS Dashboard Pro"
             value={formInputs.product_name}
             onChange={(e) => setFormInputs({ ...formInputs, product_name: e.target.value })}
-            className="w-full rounded-xl border border-border bg-muted/50 px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground"
+            className="w-full rounded-lg border border-border bg-muted/50 px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground"
           />
         </div>
 
@@ -165,7 +166,7 @@ export function CreatorStudioGenerator() {
             placeholder="e.g., Small business owners"
             value={formInputs.target_audience}
             onChange={(e) => setFormInputs({ ...formInputs, target_audience: e.target.value })}
-            className="w-full rounded-xl border border-border bg-muted/50 px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground"
+            className="w-full rounded-lg border border-border bg-muted/50 px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground"
           />
         </div>
 
@@ -202,10 +203,10 @@ export function CreatorStudioGenerator() {
           </div>
         </div>
 
-        <button
+        <Button
           onClick={handleGenerate}
           disabled={loading || !formInputs.product_name || !formInputs.target_audience}
-          className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-medium text-primary-foreground transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+          className="mt-6 w-full"
         >
           {loading ? (
             <>
@@ -218,7 +219,7 @@ export function CreatorStudioGenerator() {
               Generate Content
             </>
           )}
-        </button>
+        </Button>
       </div>
 
       {/* Right column: History */}

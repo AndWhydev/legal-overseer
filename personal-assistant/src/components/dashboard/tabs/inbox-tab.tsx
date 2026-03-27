@@ -955,7 +955,7 @@ function InboxTab() {
               }}
               disabled={refreshing}
               title="Pull latest messages"
-              className={`inline-flex items-center gap-2 whitespace-nowrap rounded-full border-none bg-muted px-4 py-2 text-sm text-muted-foreground backdrop-blur-sm transition-all hover:text-foreground hover:scale-[1.02] ${refreshing ? 'cursor-default' : 'cursor-pointer'}`}
+              className={`inline-flex items-center gap-2 whitespace-nowrap rounded-lg border-none bg-muted px-4 py-2 text-sm text-muted-foreground backdrop-blur-sm transition-all hover:text-foreground hover:scale-[1.02] ${refreshing ? 'cursor-default' : 'cursor-pointer'}`}
             >
               <IconRefresh size={13} style={{ animation: refreshing ? 'spin 1s linear infinite' : 'none' }} />
               {refreshing ? 'Syncing...' : 'Refresh'}
@@ -1419,7 +1419,7 @@ function UnifiedFilterBar({
             style={{
               height: 40,
               padding: '0 16px',
-              borderRadius: 9999,
+              borderRadius: 8,
               border: 'none',
               cursor: 'pointer',
               display: 'inline-flex',

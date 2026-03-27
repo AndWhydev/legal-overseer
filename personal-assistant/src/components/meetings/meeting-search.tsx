@@ -65,13 +65,13 @@ export function MeetingSearch({ onSelectMeeting }: MeetingSearchProps) {
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') handleSearch() }}
             placeholder="Search across all meeting transcripts..."
-            className="w-full rounded-xl border border-border bg-background py-3 pl-9 pr-4 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-ring"
+            className="w-full rounded-lg border border-border bg-background py-3 pl-9 pr-4 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-ring"
           />
         </div>
         <button
           onClick={handleSearch}
           disabled={!query.trim() || searching}
-          className="rounded-xl bg-primary px-5 py-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+          className="rounded-lg bg-primary px-5 py-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
         >
           Search
         </button>

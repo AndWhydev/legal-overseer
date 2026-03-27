@@ -2683,27 +2683,27 @@ html.light .bb-ai-shine {
 
 .bb-inbox-row__tag--action_required {
   color: #fff !important;
-  background: #E5520E !important;
+  background: #171717 !important;
 }
 
 .bb-inbox-row__tag--fyi {
   color: #fff;
-  background: #4338CA;
+  background: #525252;
 }
 
 .bb-inbox-row__tag--conversation {
   color: #fff;
-  background: #BE185D;
+  background: #525252;
 }
 
 .bb-inbox-row__tag--automated {
-  color: #fff;
-  background: #5B5FC7;
+  color: #171717;
+  background: #a3a3a3;
 }
 
 .bb-inbox-row__tag--marketing {
-  color: #000;
-  background: #FACC15;
+  color: #171717;
+  background: #e5e5e5;
 }
 
 .bb-inbox-row__tag--spam {
@@ -2713,23 +2713,23 @@ html.light .bb-ai-shine {
 
 html.light .bb-inbox-row__tag--action_required {
   color: #fff !important;
-  background: #D9480F !important;
+  background: #171717 !important;
 }
 html.light .bb-inbox-row__tag--fyi {
   color: #fff;
-  background: #4338CA;
+  background: #525252;
 }
 html.light .bb-inbox-row__tag--conversation {
   color: #fff;
-  background: #BE185D;
+  background: #525252;
 }
 html.light .bb-inbox-row__tag--automated {
-  color: #fff;
-  background: #6366F1;
+  color: #171717;
+  background: #a3a3a3;
 }
 html.light .bb-inbox-row__tag--marketing {
-  color: #000;
-  background: #EAB308;
+  color: #171717;
+  background: #e5e5e5;
 }
 html.light .bb-inbox-row__tag--spam {
   color: #fff;
