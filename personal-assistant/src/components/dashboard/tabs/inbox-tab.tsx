@@ -986,7 +986,7 @@ function InboxTab() {
 
       {/* ── Scrollable Message List ── */}
       <div className="bb-inbox-scroll" style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
-      <div className="bb-inbox-list">
+      <div className="bb-inbox-list bb-stagger">
         {displayItems.length === 0 ? (
           <EmptyState
             title="All caught up"
@@ -1571,7 +1571,7 @@ function UndoToastStack({
               borderRadius: 8,
               border: `1px solid ${C.borderFocus}`,
               background: C.bgHoverStrong,
-              color: '#E2E8F0',
+              color: 'var(--text-primary, #E2E8F0)',
               fontSize: 14,
               fontWeight: 500,
               cursor: 'pointer',

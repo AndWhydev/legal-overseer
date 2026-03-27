@@ -64,10 +64,10 @@ interface IntegrationCardProps {
 const glassBtn: React.CSSProperties = {
   padding: '4px 12px',
   borderRadius: 12,
-  background: 'rgba(255, 255, 255, 0.06)',
+  background: 'var(--hover-bg-strong, rgba(255, 255, 255, 0.06))',
   backdropFilter: 'blur(12px)',
   WebkitBackdropFilter: 'blur(12px)',
-  border: '1px solid rgba(255, 255, 255, 0.08)',
+  border: '1px solid var(--hover-bg-strong, rgba(255, 255, 255, 0.08))',
   fontSize: 14,
   fontWeight: 500,
   cursor: 'pointer',
@@ -243,10 +243,10 @@ export function IntegrationCard({ integration, isConnected = false, onStatusChan
               onClick={(e) => { e.stopPropagation(); handleDisconnect(); }}
               disabled={isLoading}
               onMouseEnter={e => {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                e.currentTarget.style.background = 'var(--hover-bg-strong, rgba(255, 255, 255, 0.1))';
               }}
               onMouseLeave={e => {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.06)';
+                e.currentTarget.style.background = 'var(--hover-bg-strong, rgba(255, 255, 255, 0.06))';
               }}
               style={{
                 ...glassBtn,
@@ -266,12 +266,12 @@ export function IntegrationCard({ integration, isConnected = false, onStatusChan
               disabled={isLoading || connectingFeedback}
               onMouseEnter={e => {
                 if (!connectingFeedback) {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.12)';
+                  e.currentTarget.style.background = 'var(--hover-bg-strong, rgba(255, 255, 255, 0.12))';
                 }
               }}
               onMouseLeave={e => {
                 if (!connectingFeedback) {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.06)';
+                  e.currentTarget.style.background = 'var(--hover-bg-strong, rgba(255, 255, 255, 0.06))';
                 }
               }}
               style={{
@@ -390,7 +390,7 @@ export function IntegrationCard({ integration, isConnected = false, onStatusChan
                   padding: '8px 16px',
                   fontSize: 14,
                   fontWeight: 500,
-                  background: 'rgba(255, 255, 255, 0.12)',
+                  background: 'var(--hover-bg-strong, rgba(255, 255, 255, 0.12))',
                   color: 'var(--text-primary)',
                   cursor: isLoading || !apiKey.trim() ? 'not-allowed' : 'pointer',
                   opacity: isLoading || !apiKey.trim() ? 0.5 : 1,

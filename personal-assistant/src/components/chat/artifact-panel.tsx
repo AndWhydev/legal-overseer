@@ -116,7 +116,7 @@ export function ArtifactPanel({ artifact, onClose }: ArtifactPanelProps) {
               padding: '10px 16px',
               borderBottom: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
               minHeight: '52px',
-              backgroundColor: 'rgba(255, 255, 255, 0.02)',
+              backgroundColor: 'var(--hover-bg, rgba(255, 255, 255, 0.02))',
             }}
           >
             <h2
@@ -141,7 +141,7 @@ export function ArtifactPanel({ artifact, onClose }: ArtifactPanelProps) {
                   style={{
                     display: 'inline-flex',
                     gap: '0',
-                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                    backgroundColor: 'var(--hover-bg, rgba(255, 255, 255, 0.05))',
                     borderRadius: '4px',
                     padding: '2px',
                   }}
@@ -155,7 +155,7 @@ export function ArtifactPanel({ artifact, onClose }: ArtifactPanelProps) {
                         fontSize: '11px',
                         fontWeight: 600,
                         backgroundColor:
-                          viewMode === mode ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+                          viewMode === mode ? 'var(--hover-bg-strong, rgba(255, 255, 255, 0.1))' : 'transparent',
                         color:
                           viewMode === mode
                             ? 'var(--text-primary, #F1F5F9)'
@@ -169,7 +169,7 @@ export function ArtifactPanel({ artifact, onClose }: ArtifactPanelProps) {
                       onMouseEnter={e => {
                         if (viewMode !== mode) {
                           ;(e.currentTarget as HTMLButtonElement).style.backgroundColor =
-                            'rgba(255, 255, 255, 0.08)'
+                            'var(--hover-bg-strong, rgba(255, 255, 255, 0.08))'
                         }
                       }}
                       onMouseLeave={e => {
@@ -193,7 +193,7 @@ export function ArtifactPanel({ artifact, onClose }: ArtifactPanelProps) {
                   gap: '4px',
                   fontSize: '11px',
                   padding: '4px 8px',
-                  backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                  backgroundColor: 'var(--hover-bg, rgba(255, 255, 255, 0.05))',
                   color: copied ? 'var(--bb-green, #22C55E)' : 'var(--text-muted, rgba(255, 255, 255, 0.4))',
                   border: 'none',
                   borderRadius: '4px',
@@ -204,7 +204,7 @@ export function ArtifactPanel({ artifact, onClose }: ArtifactPanelProps) {
                 onMouseEnter={e => {
                   if (!copied) {
                     ;(e.currentTarget as HTMLButtonElement).style.backgroundColor =
-                      'rgba(255, 255, 255, 0.08)'
+                      'var(--hover-bg-strong, rgba(255, 255, 255, 0.08))'
                     ;(e.currentTarget as HTMLButtonElement).style.color =
                       'var(--text-primary, #F1F5F9)'
                   }
@@ -212,7 +212,7 @@ export function ArtifactPanel({ artifact, onClose }: ArtifactPanelProps) {
                 onMouseLeave={e => {
                   if (!copied) {
                     ;(e.currentTarget as HTMLButtonElement).style.backgroundColor =
-                      'rgba(255, 255, 255, 0.05)'
+                      'var(--hover-bg, rgba(255, 255, 255, 0.05))'
                     ;(e.currentTarget as HTMLButtonElement).style.color =
                       'var(--text-muted, rgba(255, 255, 255, 0.4))'
                   }
@@ -230,7 +230,7 @@ export function ArtifactPanel({ artifact, onClose }: ArtifactPanelProps) {
                   gap: '4px',
                   fontSize: '11px',
                   padding: '4px 8px',
-                  backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                  backgroundColor: 'var(--hover-bg, rgba(255, 255, 255, 0.05))',
                   color: 'var(--text-muted, rgba(255, 255, 255, 0.4))',
                   border: 'none',
                   borderRadius: '4px',
@@ -240,13 +240,13 @@ export function ArtifactPanel({ artifact, onClose }: ArtifactPanelProps) {
                 }}
                 onMouseEnter={e => {
                   ;(e.currentTarget as HTMLButtonElement).style.backgroundColor =
-                    'rgba(255, 255, 255, 0.08)'
+                    'var(--hover-bg-strong, rgba(255, 255, 255, 0.08))'
                   ;(e.currentTarget as HTMLButtonElement).style.color =
                     'var(--text-primary, #F1F5F9)'
                 }}
                 onMouseLeave={e => {
                   ;(e.currentTarget as HTMLButtonElement).style.backgroundColor =
-                    'rgba(255, 255, 255, 0.05)'
+                    'var(--hover-bg, rgba(255, 255, 255, 0.05))'
                   ;(e.currentTarget as HTMLButtonElement).style.color =
                     'var(--text-muted, rgba(255, 255, 255, 0.4))'
                 }}
@@ -264,7 +264,7 @@ export function ArtifactPanel({ artifact, onClose }: ArtifactPanelProps) {
                   width: '32px',
                   height: '32px',
                   padding: 0,
-                  backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                  backgroundColor: 'var(--hover-bg, rgba(255, 255, 255, 0.05))',
                   color: 'var(--text-muted, rgba(255, 255, 255, 0.4))',
                   border: 'none',
                   borderRadius: '4px',
@@ -274,13 +274,13 @@ export function ArtifactPanel({ artifact, onClose }: ArtifactPanelProps) {
                 }}
                 onMouseEnter={e => {
                   ;(e.currentTarget as HTMLButtonElement).style.backgroundColor =
-                    'rgba(255, 255, 255, 0.08)'
+                    'var(--hover-bg-strong, rgba(255, 255, 255, 0.08))'
                   ;(e.currentTarget as HTMLButtonElement).style.color =
                     'var(--text-primary, #F1F5F9)'
                 }}
                 onMouseLeave={e => {
                   ;(e.currentTarget as HTMLButtonElement).style.backgroundColor =
-                    'rgba(255, 255, 255, 0.05)'
+                    'var(--hover-bg, rgba(255, 255, 255, 0.05))'
                   ;(e.currentTarget as HTMLButtonElement).style.color =
                     'var(--text-muted, rgba(255, 255, 255, 0.4))'
                 }}

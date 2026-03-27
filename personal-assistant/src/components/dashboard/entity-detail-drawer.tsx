@@ -102,7 +102,7 @@ function ContactAvatar({ meta, size = 40 }: { meta: Record<string, unknown>; siz
         fontSize: size * 0.35,
         fontWeight: 500,
         flexShrink: 0,
-        background: 'rgba(255, 255, 255, 0.06)',
+        background: 'var(--hover-bg-strong, rgba(255, 255, 255, 0.06))',
         color: 'var(--text-secondary, #94A3B8)',
       }}
     >
@@ -329,7 +329,7 @@ function EntityDetailDrawer({ open, onClose, entityType, entityId }: EntityDetai
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            borderBottom: '1px solid rgba(255, 255, 255, 0.04)',
+            borderBottom: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.04))',
             padding: '16px 20px',
             flexShrink: 0,
           }}>
@@ -341,7 +341,7 @@ function EntityDetailDrawer({ open, onClose, entityType, entityId }: EntityDetai
                     width: 36,
                     height: 36,
                     borderRadius: 12,
-                    background: 'rgba(255, 255, 255, 0.06)',
+                    background: 'var(--hover-bg-strong, rgba(255, 255, 255, 0.06))',
                     animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
                     flexShrink: 0,
                   }} />
@@ -351,14 +351,14 @@ function EntityDetailDrawer({ open, onClose, entityType, entityId }: EntityDetai
                       height: 14,
                       width: 120,
                       borderRadius: 6,
-                      background: 'rgba(255, 255, 255, 0.06)',
+                      background: 'var(--hover-bg-strong, rgba(255, 255, 255, 0.06))',
                       animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
                     }} />
                     <div style={{
                       height: 12,
                       width: 72,
                       borderRadius: 6,
-                      background: 'rgba(255, 255, 255, 0.04)',
+                      background: 'var(--hover-bg, rgba(255, 255, 255, 0.04))',
                       animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
                       animationDelay: '0.15s',
                     }} />
@@ -416,7 +416,7 @@ function EntityDetailDrawer({ open, onClose, entityType, entityId }: EntityDetai
                 padding: '8px',
                 borderRadius: 12,
                 background: 'transparent',
-                border: '1px solid rgba(255, 255, 255, 0.03)',
+                border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
                 color: 'var(--text-primary)',
                 cursor: 'pointer',
                 display: 'flex',
@@ -426,7 +426,7 @@ function EntityDetailDrawer({ open, onClose, entityType, entityId }: EntityDetai
                 flexShrink: 0,
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.06)';
+                e.currentTarget.style.background = 'var(--hover-bg-strong, rgba(255, 255, 255, 0.06))';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.background = 'transparent';
@@ -459,21 +459,21 @@ function EntityDetailDrawer({ open, onClose, entityType, entityId }: EntityDetai
                   height: 24,
                   width: 192,
                   borderRadius: 8,
-                  background: 'rgba(255, 255, 255, 0.06)',
+                  background: 'var(--hover-bg-strong, rgba(255, 255, 255, 0.06))',
                   marginBottom: '16px',
                 }} />
                 <div style={{
                   height: 16,
                   width: 128,
                   borderRadius: 8,
-                  background: 'rgba(255, 255, 255, 0.06)',
+                  background: 'var(--hover-bg-strong, rgba(255, 255, 255, 0.06))',
                   marginBottom: '16px',
                 }} />
                 <div style={{
                   height: 16,
                   width: 256,
                   borderRadius: 8,
-                  background: 'rgba(255, 255, 255, 0.06)',
+                  background: 'var(--hover-bg-strong, rgba(255, 255, 255, 0.06))',
                 }} />
               </div>
             ) : (

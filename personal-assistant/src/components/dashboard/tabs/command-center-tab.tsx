@@ -637,7 +637,7 @@ function CommandCenterTab() {
   return (
     <TabShell variant="fixed">
       {/* Quick Actions Bar */}
-      <div className="grid grid-cols-2 sm:grid-cols-4" style={{ gap: 12 }}>
+      <div className="grid grid-cols-2 sm:grid-cols-4 bb-stagger" style={{ gap: 12 }}>
         <button
           onClick={() => {
             if (topApprovalId && !topApprovalProcessing) handleApprove(topApprovalId);
@@ -707,7 +707,7 @@ function CommandCenterTab() {
 
       {/* KPI Widgets — driven by industry pack */}
       {kpis.length > 0 && (
-        <div className="grid grid-cols-2 lg:grid-cols-4" style={{ gap: 16 }}>
+        <div className="grid grid-cols-2 lg:grid-cols-4 bb-stagger" style={{ gap: 16 }}>
           {kpis.map((kpi) => {
             const liveValue = kpi.dataKey && stats ? stats[kpi.dataKey] : undefined;
             const displayValue = liveValue !== undefined
@@ -734,7 +734,7 @@ function CommandCenterTab() {
       )}
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3" style={{ gap: 24 }}>
+      <div className="grid grid-cols-1 lg:grid-cols-3 bb-stagger" style={{ gap: 24 }}>
         {/* Approvals - Left Column (spans 2) */}
         <div className="lg:col-span-2" style={S.glassCard}>
           <div style={S.cardHeader}>
@@ -803,7 +803,7 @@ function CommandCenterTab() {
       </div>
 
       {/* Agent Activity Feed + Hot Leads + Schedule */}
-      <div className="grid grid-cols-1 lg:grid-cols-3" style={{ gap: 24 }}>
+      <div className="grid grid-cols-1 lg:grid-cols-3 bb-stagger" style={{ gap: 24 }}>
         {/* Agent Activity Feed */}
         <div style={S.glassCard}>
           <div style={S.cardHeader}>

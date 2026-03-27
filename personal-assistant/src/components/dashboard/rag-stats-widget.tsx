@@ -204,7 +204,7 @@ export function RagStatsWidget({ className = '', showDetails = true }: RagStatsW
   return (
     <div style={glassCard} className={className}>
       <div style={headerStyle}>
-        <Database size={16} style={{ color: '#F1F5F9' }} />
+        <Database size={16} style={{ color: 'var(--text-primary, #F1F5F9)' }} />
         <h3 style={titleStyle}>Vector Index</h3>
       </div>
 

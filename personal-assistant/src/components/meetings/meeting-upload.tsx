@@ -253,7 +253,7 @@ export function MeetingUpload({ onUploaded, onCancel }: MeetingUploadProps) {
               alignItems: 'center',
               gap: '8px',
               padding: '8px 20px',
-              background: !file || uploading ? 'rgba(255,255,255,0.12)' : '#F1F5F9',
+              background: !file || uploading ? 'var(--hover-bg-strong, rgba(255,255,255,0.12))' : 'var(--btn-primary-bg, #F1F5F9)',
               color: 'var(--btn-primary-fg, #0a0f1a)',
               borderRadius: 'var(--radius-md)',
               border: 'none',

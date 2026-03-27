@@ -276,7 +276,7 @@ function KnowledgeTab() {
                   width: 16,
                   height: 16,
                   border: `2px solid ${C.borderHover}`,
-                  borderTopColor: '#F1F5F9',
+                  borderTopColor: 'var(--text-primary, #F1F5F9)',
                   borderRadius: '50%',
                   animation: 'spin 0.8s linear infinite',
                 }}
@@ -465,7 +465,7 @@ function KnowledgeTab() {
                 {graph.edges.length > 0 && (
                   <div>
                     <div style={sectionHeader}>Relationships</div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    <div className="bb-stagger" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                       {graph.edges.map((edge, idx) => {
                         const sourceNode = graph.nodes.find((n) => n.id === edge.source);
                         const targetNode = graph.nodes.find((n) => n.id === edge.target);
@@ -562,6 +562,7 @@ function KnowledgeTab() {
           <div>
             <div style={sectionHeader}>Search Results</div>
             <div
+              className="bb-stagger"
               style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',

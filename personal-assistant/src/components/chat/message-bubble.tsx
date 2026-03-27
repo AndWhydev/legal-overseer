@@ -131,7 +131,7 @@ export function MessageBubble({ message, citations, showAvatar = false, avatarEm
         return (
           <code
             style={{
-              backgroundColor: 'rgba(255, 255, 255, 0.05)',
+              backgroundColor: 'var(--hover-bg, rgba(255, 255, 255, 0.05))',
               color: 'var(--text-primary, #F1F5F9)',
               padding: '2px 6px',
               borderRadius: '4px',

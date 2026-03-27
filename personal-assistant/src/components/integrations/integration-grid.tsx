@@ -170,7 +170,7 @@ export function ConnectionsGrid({ integrations, isLoading, onStatusChange, onWha
                   }}
                   onMouseEnter={e => {
                     if (!isActive) {
-                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)';
+                      e.currentTarget.style.background = 'var(--hover-bg, rgba(255, 255, 255, 0.04))';
                       e.currentTarget.style.color = 'var(--text-primary)';
                     }
                   }}

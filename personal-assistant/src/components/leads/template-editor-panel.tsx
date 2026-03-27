@@ -278,7 +278,7 @@ function TemplateEditorPanelInner({ open, onClose, onSave, initial }: TemplateEd
               onClick={onClose}
               style={{
                 ...saveBtn,
-                background: 'rgba(255, 255, 255, 0.04)',
+                background: 'var(--hover-bg, rgba(255, 255, 255, 0.04))',
                 color: 'var(--text-secondary, #94A3B8)',
               }}
             >

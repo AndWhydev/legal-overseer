@@ -196,7 +196,7 @@ export function MeetingDetail({ meetingId, onBack }: MeetingDetailProps) {
             style={{
               padding: '8px 16px',
               borderRadius: 12,
-              background: processing ? 'rgba(255, 255, 255, 0.2)' : '#F1F5F9',
+              background: processing ? 'var(--hover-bg-strong, rgba(255, 255, 255, 0.2))' : 'var(--btn-primary-bg, #F1F5F9)',
               border: 'none',
               color: 'var(--btn-primary-fg, #0a0f1a)',
               fontSize: 14,
@@ -287,7 +287,7 @@ export function MeetingDetail({ meetingId, onBack }: MeetingDetailProps) {
             >
               {p.name}
               {p.role === 'host' && (
-                <span style={{ color: '#F1F5F9', marginLeft: 4 }}>host</span>
+                <span style={{ color: 'var(--text-primary, #F1F5F9)', marginLeft: 4 }}>host</span>
               )}
             </span>
           ))}
@@ -326,7 +326,7 @@ export function MeetingDetail({ meetingId, onBack }: MeetingDetailProps) {
               <span style={{
                 fontSize: 14,
                 background: 'var(--hover-bg-strong)',
-                color: '#E2E8F0',
+                color: 'var(--text-primary, #E2E8F0)',
                 padding: '0px 8px',
                 borderRadius: 8,
                 fontWeight: 500,
@@ -419,7 +419,7 @@ function TranscriptView({ segments }: { segments: TranscriptSegment[] }) {
               <span style={{
                 fontSize: 14,
                 fontWeight: 500,
-                color: '#E2E8F0',
+                color: 'var(--text-primary, #E2E8F0)',
                 display: 'block',
                 marginBottom: 4,
               }}>

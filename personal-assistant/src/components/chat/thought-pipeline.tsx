@@ -141,9 +141,9 @@ function PipelineStage({
   index: number
 }) {
   const statusStyles = {
-    idle: { opacity: 0.6, borderColor: 'rgba(255, 255, 255, 0.08)' },
-    active: { opacity: 1, borderColor: 'rgba(255, 255, 255, 0.15)' },
-    done: { opacity: 0.5, borderColor: 'rgba(255, 255, 255, 0.08)' },
+    idle: { opacity: 0.6, borderColor: 'var(--hover-bg-strong, rgba(255, 255, 255, 0.08))' },
+    active: { opacity: 1, borderColor: 'var(--border-active, rgba(255, 255, 255, 0.15))' },
+    done: { opacity: 0.5, borderColor: 'var(--hover-bg-strong, rgba(255, 255, 255, 0.08))' },
     error: { opacity: 1, borderColor: 'rgba(239, 68, 68, 0.5)' },
   }
 
@@ -155,8 +155,8 @@ function PipelineStage({
   }
 
   const bgColor = {
-    idle: 'rgba(255, 255, 255, 0.04)',
-    active: 'rgba(255, 255, 255, 0.08)',
+    idle: 'var(--hover-bg, rgba(255, 255, 255, 0.04))',
+    active: 'var(--hover-bg-strong, rgba(255, 255, 255, 0.08))',
     done: 'rgba(34, 197, 94, 0.06)',
     error: 'rgba(239, 68, 68, 0.06)',
   }
@@ -285,8 +285,8 @@ export function ThoughtPipeline({
             gap: '12px',
             padding: '16px',
             borderRadius: '12px',
-            background: 'rgba(255, 255, 255, 0.04)',
-            border: '1px solid rgba(255, 255, 255, 0.03)',
+            background: 'var(--hover-bg, rgba(255, 255, 255, 0.04))',
+            border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
             backdropFilter: 'blur(24px)',
           }}
         >

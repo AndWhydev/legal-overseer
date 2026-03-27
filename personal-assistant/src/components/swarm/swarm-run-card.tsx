@@ -36,7 +36,7 @@ const styles = {
     const colors: Record<string, { bg: string; text: string }> = {
       pending: { bg: 'var(--hover-bg-strong)', text: C.textDim },
       planning: { bg: 'rgba(59, 130, 246, 0.1)', text: '#3B82F6' },
-      executing: { bg: 'var(--hover-bg-strong)', text: '#E2E8F0' },
+      executing: { bg: 'var(--hover-bg-strong)', text: 'var(--text-primary, #E2E8F0)' },
       negotiating: { bg: 'rgba(139, 92, 246, 0.1)', text: '#8B5CF6' },
       completed: { bg: C.statusSuccessBg, text: '#22C55E' },
       partial: { bg: C.statusWarningBg, text: '#F59E0B' },
@@ -81,7 +81,7 @@ const styles = {
     width: '6px',
     height: '6px',
     borderRadius: '50%',
-    background: '#E2E8F0',
+    background: 'var(--text-primary, #E2E8F0)',
     animation: 'pulse 1.5s ease-in-out infinite',
   },
 };

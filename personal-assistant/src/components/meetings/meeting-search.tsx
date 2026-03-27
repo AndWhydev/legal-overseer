@@ -47,7 +47,7 @@ export function MeetingSearch({ onSelectMeeting }: MeetingSearchProps) {
     const parts = text.split(regex)
     return parts.map((part, i) =>
       regex.test(part)
-        ? <mark key={i} style={{ background: C.bgHoverStrong, color: '#E2E8F0', borderRadius: 8, padding: '0 4px' }}>{part}</mark>
+        ? <mark key={i} style={{ background: C.bgHoverStrong, color: 'var(--text-primary, #E2E8F0)', borderRadius: 8, padding: '0 4px' }}>{part}</mark>
         : part
     )
   }
@@ -150,7 +150,7 @@ export function MeetingSearch({ onSelectMeeting }: MeetingSearchProps) {
               onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
             >
               <div className="flex items-center gap-2 mb-1">
-                <span style={{ fontSize: 14, fontWeight: 500, color: '#E2E8F0' }}>
+                <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary, #E2E8F0)' }}>
                   {result.meeting_title}
                 </span>
                 <span style={{ fontSize: 14, color: 'var(--text-dim, #475569)', fontFamily: 'var(--font-mono, monospace)' }}>

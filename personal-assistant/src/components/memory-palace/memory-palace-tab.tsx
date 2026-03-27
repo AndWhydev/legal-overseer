@@ -209,7 +209,7 @@ function StatsCard({ stats }: { stats: MemoryStats | null }) {
   ];
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+    <div className="bb-stagger" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
       {items.map(item => {
         const Icon = item.icon;
         return (
@@ -245,8 +245,8 @@ function TypeFilter({
         onClick={() => onTypeChange(null)}
         style={{
           ...badge,
-          background: !activeType ? '#F1F5F9' : 'var(--hover-bg-strong)',
-          color: !activeType ? '#0a0f1a' : C.textSecondary,
+          background: !activeType ? 'var(--btn-primary-bg, #F1F5F9)' : 'var(--hover-bg-strong)',
+          color: !activeType ? 'var(--btn-primary-fg, #0a0f1a)' : C.textSecondary,
           cursor: 'pointer',
           border: 'none',
           padding: '4px 12px',
@@ -347,8 +347,8 @@ export function MemoryPalaceTab() {
               onClick={() => setView('search')}
               style={{
                 ...badge,
-                background: view === 'search' ? '#F1F5F9' : 'var(--hover-bg-strong)',
-                color: view === 'search' ? '#0a0f1a' : C.textSecondary,
+                background: view === 'search' ? 'var(--btn-primary-bg, #F1F5F9)' : 'var(--hover-bg-strong)',
+                color: view === 'search' ? 'var(--btn-primary-fg, #0a0f1a)' : C.textSecondary,
                 cursor: 'pointer',
                 border: 'none',
                 padding: '4px 12px',
@@ -361,8 +361,8 @@ export function MemoryPalaceTab() {
               onClick={() => setView('decisions')}
               style={{
                 ...badge,
-                background: view === 'decisions' ? '#F1F5F9' : 'var(--hover-bg-strong)',
-                color: view === 'decisions' ? '#0a0f1a' : C.textSecondary,
+                background: view === 'decisions' ? 'var(--btn-primary-bg, #F1F5F9)' : 'var(--hover-bg-strong)',
+                color: view === 'decisions' ? 'var(--btn-primary-fg, #0a0f1a)' : C.textSecondary,
                 cursor: 'pointer',
                 border: 'none',
                 padding: '4px 12px',
@@ -402,7 +402,7 @@ export function MemoryPalaceTab() {
         />
 
         {/* Results */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div className="bb-stagger" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {loading && (
             <div style={{ textAlign: 'center', padding: 32, color: C.textDim }}>
               Searching memories...

@@ -48,14 +48,14 @@ const skeletonPill: React.CSSProperties = {
   width: 80,
   height: 40,
   borderRadius: 9999,
-  background: 'rgba(255, 255, 255, 0.04)',
+  background: 'var(--hover-bg, rgba(255, 255, 255, 0.04))',
   animation: 'pulse 1.5s ease-in-out infinite',
 }
 
 const skeletonSearch: React.CSSProperties = {
   height: 40,
   borderRadius: 8,
-  background: 'rgba(255, 255, 255, 0.04)',
+  background: 'var(--hover-bg, rgba(255, 255, 255, 0.04))',
   animation: 'pulse 1.5s ease-in-out infinite',
 }
 
@@ -91,7 +91,7 @@ const emptyIconWrap: React.CSSProperties = {
   width: 64,
   height: 64,
   borderRadius: 24,
-  background: 'rgba(255, 255, 255, 0.04)',
+  background: 'var(--hover-bg, rgba(255, 255, 255, 0.04))',
   border: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
   color: 'var(--text-dim, #475569)',
 }

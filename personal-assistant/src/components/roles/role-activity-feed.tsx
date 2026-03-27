@@ -231,7 +231,7 @@ export function RoleActivityFeed({ maxHeight = 'calc(100vh - 300px)', limit = 50
       </div>
 
       {/* Activity list */}
-      <div style={{ overflowY: 'auto', maxHeight, display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div className="bb-stagger" style={{ overflowY: 'auto', maxHeight, display: 'flex', flexDirection: 'column', gap: 8 }}>
         {loading ? (
           Array.from({ length: 5 }, (_, i) => (
             <div key={i} style={{ ...listRow, opacity: 0.5 }}>

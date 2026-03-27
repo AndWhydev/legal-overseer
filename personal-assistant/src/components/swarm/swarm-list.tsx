@@ -113,10 +113,11 @@ export function SwarmList({ onSelectRun }: SwarmListProps) {
           </p>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <div className="bb-stagger" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           {runs.map(run => (
             <button
               key={run.id}
+              className="bb-lift"
               onClick={() => onSelectRun?.(run.id)}
               style={{
                 display: 'flex',

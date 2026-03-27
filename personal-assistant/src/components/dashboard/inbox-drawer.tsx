@@ -668,9 +668,9 @@ export default function InboxDrawer({
     gap: 8,
     padding: '8px 12px',
     borderRadius: 8,
-    border: '1px solid rgba(255, 255, 255, 0.08)',
-    background: 'rgba(255, 255, 255, 0.04)',
-    color: 'rgba(255, 255, 255, 0.7)',
+    border: '1px solid var(--hover-bg-strong, rgba(255, 255, 255, 0.08))',
+    background: 'var(--hover-bg, rgba(255, 255, 255, 0.04))',
+    color: 'var(--text-secondary, rgba(255, 255, 255, 0.7))',
     fontSize: 14,
     fontWeight: 500,
     cursor: 'pointer',
@@ -725,7 +725,7 @@ export default function InboxDrawer({
             width: 8,
             cursor: 'col-resize',
             zIndex: 100,
-            background: isResizing ? 'rgba(255, 255, 255, 0.12)' : 'transparent',
+            background: isResizing ? 'var(--hover-bg-strong, rgba(255, 255, 255, 0.12))' : 'transparent',
             transition: 'background 150ms ease',
           }}
         />

@@ -122,7 +122,7 @@ const s = {
   stepStatus: (status: string) => {
     const colors: Record<string, string> = {
       completed: '#22C55E',
-      executing: '#E2E8F0',
+      executing: 'var(--text-primary, #E2E8F0)',
       failed: '#EF4444',
       negotiating: '#8B5CF6',
       skipped: C.textMuted,

@@ -353,7 +353,7 @@ export function NotificationPreferencesTab() {
                 onMouseLeave={e => {
                   if (prefs.digest_mode !== mode.id) {
                     e.currentTarget.style.background = C.bgCard;
-                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.03)';
+                    e.currentTarget.style.borderColor = 'var(--border-subtle, rgba(255, 255, 255, 0.03))';
                   }
                 }}
               >

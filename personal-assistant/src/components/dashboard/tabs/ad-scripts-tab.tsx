@@ -114,10 +114,6 @@ const TONE_COLORS: Record<string, React.CSSProperties> = {
 // Inline styles - Glass patterns from STYLE_GUIDE
 // ---------------------------------------------------------------------------
 
-const glassCard: React.CSSProperties = {
-  ...S.card,
-}
-
 const ghostBtn: React.CSSProperties = {
   ...S.button,
   ...S.buttonGhost,
@@ -136,28 +132,6 @@ const pillBtn: React.CSSProperties = {
   padding: '8px 16px',
   borderRadius: 20,
   height: 'auto',
-}
-
-const glassInput: React.CSSProperties = {
-  ...S.input,
-  padding: '12px 16px',
-  borderRadius: 12,
-}
-
-const glassSelect: React.CSSProperties = {
-  ...S.input,
-  padding: '12px 16px',
-  borderRadius: 12,
-  appearance: 'none' as const,
-  cursor: 'pointer',
-}
-
-const listRow: React.CSSProperties = {
-  ...S.listRow,
-}
-
-const sectionHeader: React.CSSProperties = {
-  ...S.sectionLabel,
 }
 
 // ---------------------------------------------------------------------------
@@ -237,7 +211,7 @@ function StoryboardView({ shots }: { shots: StoryboardShot[] }) {
             <div
               key={shot.shotNumber}
               style={{
-                ...glassCard,
+                ...S.card,
                 padding: 12,
               }}
             >
@@ -283,7 +257,7 @@ function StoryboardView({ shots }: { shots: StoryboardShot[] }) {
 
 function ScriptCard({ script }: { script: AdScript }) {
   return (
-    <div style={glassCard}>
+    <div className="bb-lift" style={S.card}>
       <div
         style={{
           display: 'flex',
@@ -345,7 +319,7 @@ function ScriptCard({ script }: { script: AdScript }) {
 
 function VariationCard({ variation }: { variation: AdScriptVariation }) {
   return (
-    <div style={glassCard}>
+    <div className="bb-lift" style={S.card}>
       <div
         style={{
           display: 'flex',
@@ -429,7 +403,7 @@ function GenerateForm({
     <form
       onSubmit={handleSubmit}
       style={{
-        ...glassCard,
+        ...S.card,
         display: 'flex',
         flexDirection: 'column',
         gap: 16,
@@ -551,8 +525,8 @@ function HistorySection({ batches, onSelect }: { batches: SavedBatch[]; onSelect
 
   return (
     <div>
-      <h2 style={sectionHeader}>History</h2>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <h2 style={S.sectionLabel}>History</h2>
+      <div className="bb-stagger" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {batches.map((b) => (
           <button
             key={b.id}
@@ -560,7 +534,7 @@ function HistorySection({ batches, onSelect }: { batches: SavedBatch[]; onSelect
             onMouseEnter={() => setHoveredId(b.id)}
             onMouseLeave={() => setHoveredId(null)}
             style={{
-              ...listRow,
+              ...S.listRow,
               width: '100%',
               textAlign: 'left',
               background: hoveredId === b.id ? 'var(--bb-surface-hover)' : 'var(--glass-pill-bg)',
@@ -722,11 +696,12 @@ function AdScriptsTab() {
             {/* Current result */}
             {currentResult && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                <h2 style={{ fontSize: 16, fontWeight: 500, color: 'var(--text-primary)' }}>
+                <h2 style={S.title}>
                   Scripts for {currentResult.offerName}
                 </h2>
 
                 <div
+                  className="bb-stagger"
                   style={{
                     display: 'grid',
                     gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))',
@@ -740,10 +715,11 @@ function AdScriptsTab() {
 
                 {currentResult.variations.length > 0 && (
                   <>
-                    <h3 style={{ fontSize: 16, fontWeight: 500, color: 'var(--text-secondary)', marginTop: 8 }}>
+                    <h3 style={{ ...S.title, color: C.textSecondary, marginTop: 8 }}>
                       A/B Variations
                     </h3>
                     <div
+                      className="bb-stagger"
                       style={{
                         display: 'grid',
                         gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',

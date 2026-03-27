@@ -356,7 +356,7 @@ export function SettingsAutomationsTab() {
           <h3 style={{ fontSize: 16, fontWeight: 500, color: 'var(--text-primary)', margin: 0 }}>Plugins</h3>
           <p style={{ fontSize: 14, color: 'var(--text-secondary)', margin: '4px 0 0' }}>Choose what BitBit handles for you.</p>
         </div>
-        <div style={{
+        <div className="bb-stagger" style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
           gap: 8,
@@ -396,7 +396,7 @@ export function SettingsAppearanceTab() {
           <h3 style={{ fontSize: 16, fontWeight: 500, color: 'var(--text-primary)', margin: 0 }}>Theme</h3>
           <p style={{ fontSize: 14, color: 'var(--text-secondary)', margin: '4px 0 0' }}>Choose a visual style.</p>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 12 }}>
+        <div className="bb-stagger" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 12 }}>
           {themes.map(t => {
             const active = currentPalette === t.id;
             return (

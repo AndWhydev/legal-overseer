@@ -309,11 +309,11 @@ export function InvoiceTemplateEditor() {
   const inputStyle: React.CSSProperties = {
     width: '100%',
     background: 'var(--bg-input, rgba(13, 17, 23, 0.6))',
-    border: '1px solid rgba(255,255,255,0.1)',
+    border: '1px solid var(--border-active, rgba(255,255,255,0.1))',
     borderRadius: 8,
     padding: '12px 16px',
     fontSize: 14,
-    color: '#E2E8F0',
+    color: 'var(--text-primary, #E2E8F0)',
     outline: 'none',
     boxSizing: 'border-box',
   }
@@ -321,7 +321,7 @@ export function InvoiceTemplateEditor() {
   if (loading) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 200 }}>
-        <div style={{ width: 24, height: 24, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.1)', borderTopColor: '#E2E8F0', animation: 'spin 0.8s linear infinite' }} />
+        <div style={{ width: 24, height: 24, borderRadius: '50%', border: '2px solid var(--border-active, rgba(255,255,255,0.1))', borderTopColor: 'var(--text-primary, #E2E8F0)', animation: 'spin 0.8s linear infinite' }} />
       </div>
     )
   }
@@ -373,7 +373,7 @@ export function InvoiceTemplateEditor() {
             >
               <div style={{ fontSize: 16, marginBottom: 8 }}>+</div>
               Click to upload logo
-              <div style={{ fontSize: 14, marginTop: 4, color: '#475569' }}>PNG, JPG, SVG · max 500 KB</div>
+              <div style={{ fontSize: 14, marginTop: 4, color: 'var(--text-dim, #475569)' }}>PNG, JPG, SVG · max 500 KB</div>
             </button>
           )}
           <input
@@ -435,7 +435,7 @@ export function InvoiceTemplateEditor() {
                 style={inputStyle}
                 placeholder="e.g. 123 Agency St, Sydney NSW 2000"
               />
-              <p style={{ fontSize: 14, color: '#475569', margin: '4px 0 0' }}>Separate lines with commas</p>
+              <p style={{ fontSize: 14, color: 'var(--text-dim, #475569)', margin: '4px 0 0' }}>Separate lines with commas</p>
             </div>
             <div>
               <label style={{ ...labelStyle, marginBottom: 8 }}>Bank Details</label>
@@ -554,7 +554,7 @@ export function InvoiceTemplateEditor() {
             placeholder="e.g. Payment due within 14 days. BSB: 062-000 Account: 1234 5678"
             maxLength={500}
           />
-          <p style={{ fontSize: 14, color: '#475569', margin: '8px 0 0' }}>
+          <p style={{ fontSize: 14, color: 'var(--text-dim, #475569)', margin: '8px 0 0' }}>
             {(template.footer_text ?? '').length}/500 characters
           </p>
         </div>
@@ -575,7 +575,7 @@ export function InvoiceTemplateEditor() {
             placeholder="e.g. Payment is due within 14 days of invoice date. Late payments incur a 2% monthly fee..."
             maxLength={5000}
           />
-          <p style={{ fontSize: 14, color: '#475569', margin: '8px 0 0' }}>
+          <p style={{ fontSize: 14, color: 'var(--text-dim, #475569)', margin: '8px 0 0' }}>
             {(template.terms ?? '').length}/5,000 characters
           </p>
         </div>
@@ -590,7 +590,7 @@ export function InvoiceTemplateEditor() {
             padding: '0 16px',
             borderRadius: 8,
             border: 'none',
-            background: saving ? 'rgba(241,245,249,0.5)' : '#F1F5F9',
+            background: saving ? 'var(--hover-bg-strong, rgba(241,245,249,0.5))' : 'var(--btn-primary-bg, #F1F5F9)',
             color: 'var(--btn-primary-fg, #0a0f1a)',
             fontWeight: 500,
             fontSize: 14,

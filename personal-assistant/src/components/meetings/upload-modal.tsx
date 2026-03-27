@@ -433,9 +433,9 @@ export function UploadModal({ open, onClose, onUploadComplete }: UploadModalProp
             style={{
               padding: '12px 20px',
               borderRadius: 12,
-              background: (!file || !title.trim() || uploading) ? C.bgHoverStrong : '#F1F5F9',
+              background: (!file || !title.trim() || uploading) ? C.bgHoverStrong : 'var(--btn-primary-bg, #F1F5F9)',
               border: 'none',
-              color: (!file || !title.trim() || uploading) ? 'rgba(0, 0, 0, 0.5)' : '#0a0f1a',
+              color: (!file || !title.trim() || uploading) ? 'var(--text-dim, rgba(0, 0, 0, 0.5))' : 'var(--btn-primary-fg, #0a0f1a)',
               fontSize: 14,
               fontWeight: 500,
               cursor: (!file || !title.trim() || uploading) ? 'not-allowed' : 'pointer',

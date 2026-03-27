@@ -3,6 +3,9 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { S, C } from '@/lib/styles/design-tokens'
 import { TabShell } from '@/components/ui/tab-shell'
+import { GlassToggle } from '@/components/ui/glass-toggle'
+import { StatusPill } from '@/components/ui/status-pill'
+import { EmptyState } from '@/components/ui/empty-state'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -78,15 +81,15 @@ const LENGTH_OPTIONS: Array<{ value: Length; label: string; hint: string }> = [
 ]
 
 const STATUS_COLORS: Record<ContentStatus, string> = {
-  draft: '#94A3B8',
-  scheduled: '#eab308',
-  published: '#22c55e',
+  draft: C.textSecondary,
+  scheduled: C.statusWarning,
+  published: C.statusSuccess,
 }
 
 const STATUS_BG: Record<ContentStatus, string> = {
-  draft: 'rgba(148, 163, 184, 0.12)',
-  scheduled: 'rgba(234, 179, 8, 0.12)',
-  published: 'rgba(34, 197, 94, 0.12)',
+  draft: C.bgHoverStrong,
+  scheduled: C.statusWarningBg,
+  published: C.statusSuccessBg,
 }
 
 const TEMPLATE_LABELS: Record<TemplateType, string> = {
@@ -112,44 +115,23 @@ const glassInput: React.CSSProperties = {
   boxSizing: 'border-box',
 }
 
-const glassSelect: React.CSSProperties = {
-  ...S.input,
-  padding: '12px 16px',
-  borderRadius: 12,
-  cursor: 'pointer',
-  boxSizing: 'border-box',
-}
-
 const accentBtn: React.CSSProperties = {
-  padding: '12px 20px',
-  borderRadius: 12,
-  background: 'var(--btn-primary-bg, #F1F5F9)',
-  border: 'none',
-  color: 'var(--btn-primary-fg, #0a0f1a)',
-  fontSize: 14,
-  fontWeight: 500,
-  cursor: 'pointer',
-  transition: 'all 200ms',
-  display: 'inline-flex',
-  alignItems: 'center',
-  gap: 8,
+  ...S.button,
+  ...S.buttonPrimary,
+  height: 40,
+  padding: '0 20px',
+  borderRadius: 8,
 }
 
 const ghostBtn: React.CSSProperties = {
   ...S.button,
   ...S.buttonGhost,
-  padding: '8px 16px',
-  borderRadius: 12,
-  height: 'auto',
+  height: 40,
 }
 
 const labelStyle: React.CSSProperties = {
+  ...S.sectionLabel,
   display: 'block',
-  fontSize: 14,
-  fontWeight: 500,
-  letterSpacing: '0.04em',
-  textTransform: 'uppercase',
-  color: C.textSecondary,
   marginBottom: 8,
 }
 
@@ -169,13 +151,14 @@ function TemplateCard({
   return (
     <button
       onClick={onClick}
+      className="bb-lift"
       style={{
         padding: 16,
         borderRadius: 12,
         background: selected ? C.bgHoverStrong : C.bgInput,
         border: selected
           ? `1px solid ${C.borderFocus}`
-          : `1px solid ${C.bgHover}`,
+          : `1px solid ${C.borderVisible}`,
         cursor: 'pointer',
         textAlign: 'left',
         transition: 'all 200ms',
@@ -187,7 +170,7 @@ function TemplateCard({
         style={{
           fontSize: 14,
           fontWeight: 500,
-          color: selected ? C.textPrimary : C.textPrimary,
+          color: C.textPrimary,
           marginBottom: 4,
         }}
       >
@@ -200,24 +183,18 @@ function TemplateCard({
   )
 }
 
+const STATUS_VARIANT: Record<ContentStatus, 'neutral' | 'warning' | 'success'> = {
+  draft: 'neutral',
+  scheduled: 'warning',
+  published: 'success',
+}
+
 function StatusBadge({ status }: { status: ContentStatus }) {
   return (
-    <span
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        padding: '4px 12px',
-        borderRadius: 8,
-        fontSize: 14,
-        fontWeight: 500,
-        letterSpacing: '0.03em',
-        background: STATUS_BG[status],
-        color: STATUS_COLORS[status],
-        textTransform: 'capitalize',
-      }}
-    >
-      {status}
-    </span>
+    <StatusPill
+      variant={STATUS_VARIANT[status]}
+      label={status.charAt(0).toUpperCase() + status.slice(1)}
+    />
   )
 }
 
@@ -291,23 +268,23 @@ function CalendarView({
       >
         <button
           onClick={() => setCurrentMonth(new Date(year, month - 1, 1))}
-          style={{ ...ghostBtn, padding: '8px 12px' }}
+          style={ghostBtn}
         >
           ← Prev
         </button>
-        <span style={{ fontWeight: 500, color: C.textPrimary, fontSize: 16 }}>
+        <span style={S.cardTitle}>
           {monthLabel}
         </span>
         <button
           onClick={() => setCurrentMonth(new Date(year, month + 1, 1))}
-          style={{ ...ghostBtn, padding: '8px 12px' }}
+          style={ghostBtn}
         >
           Next →
         </button>
       </div>
 
       {/* Day headers */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2, marginBottom: 2 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4, marginBottom: 4 }}>
         {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
           <div
             key={d}
@@ -326,7 +303,7 @@ function CalendarView({
       </div>
 
       {/* Calendar grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4 }}>
         {/* Empty cells before first day */}
         {Array.from({ length: firstDay }).map((_, i) => (
           <div key={`empty-${i}`} style={{ minHeight: 80 }} />
@@ -356,14 +333,14 @@ function CalendarView({
               <div
                 style={{
                   fontSize: 14,
-                  fontWeight: isToday ? 700 : 500,
+                  fontWeight: 500,
                   color: isToday ? C.textPrimary : C.textSecondary,
                   marginBottom: 4,
                 }}
               >
                 {day}
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 {dayItems.slice(0, 3).map((item) => (
                   <div
                     key={item.id}
@@ -371,7 +348,7 @@ function CalendarView({
                     style={{
                       fontSize: 14,
                       padding: '4px 8px',
-                      borderRadius: 4,
+                      borderRadius: 8,
                       background: STATUS_BG[item.status],
                       color: STATUS_COLORS[item.status],
                       overflow: 'hidden',
@@ -414,7 +391,7 @@ function CalendarView({
               style={{
                 width: 8,
                 height: 8,
-                borderRadius: 2,
+                borderRadius: 9999,
                 background: STATUS_COLORS[s],
               }}
             />
@@ -489,7 +466,7 @@ function HistoryItem({
           >
             {TEMPLATE_LABELS[item.template_type]} — {item.inputs.product_name}
           </div>
-          <div style={{ fontSize: 14, color: C.textDim, marginTop: 2 }}>
+          <div style={{ fontSize: 14, color: C.textDim, marginTop: 4 }}>
             {created} · {item.inputs.tone} · {item.inputs.length}
           </div>
         </div>
@@ -519,7 +496,8 @@ function HistoryItem({
               marginTop: 12,
               padding: 12,
               borderRadius: 12,
-              background: 'rgba(0, 0, 0, 0.3)',
+              background: C.bgInput,
+              border: `1px solid ${C.borderSubtle}`,
               fontSize: 14,
               color: C.textSecondary,
               whiteSpace: 'pre-wrap',
@@ -559,7 +537,7 @@ function HistoryItem({
             {item.status === 'scheduled' && (
               <button
                 onClick={() => onStatusChange(item.id, 'draft')}
-                style={{ ...ghostBtn, color: '#ef4444' }}
+                style={{ ...ghostBtn, ...S.buttonDestructive, border: `1px solid ${C.borderVisible}` }}
               >
                 ✕ Unschedule
               </button>
@@ -568,7 +546,7 @@ function HistoryItem({
             {!scheduling && item.status !== 'published' && (
               <button
                 onClick={() => setScheduling(true)}
-                style={{ ...ghostBtn, fontSize: 14 }}
+                style={ghostBtn}
               >
                 📅 Set date
               </button>
@@ -589,13 +567,13 @@ function HistoryItem({
                     }
                     setScheduling(false)
                   }}
-                  style={{ ...accentBtn, padding: '8px 12px', fontSize: 14 }}
+                  style={accentBtn}
                 >
                   Save
                 </button>
                 <button
                   onClick={() => setScheduling(false)}
-                  style={{ ...ghostBtn, padding: '8px 12px', fontSize: 14 }}
+                  style={ghostBtn}
                 >
                   Cancel
                 </button>
@@ -608,7 +586,7 @@ function HistoryItem({
               style={{
                 marginTop: 12,
                 fontSize: 14,
-                color: STATUS_COLORS.scheduled,
+                color: C.statusWarning,
               }}
             >
               📅 Scheduled for{' '}
@@ -751,11 +729,11 @@ export default function CreatorStudioTab() {
     return history.filter((item) => item.template_type === historyFilter)
   }, [history, historyFilter])
 
-  const VIEW_TABS: Array<{ id: View; label: string }> = [
-    { id: 'generate', label: 'Generate' },
-    { id: 'history', label: 'History' },
-    { id: 'calendar', label: 'Calendar' },
-  ]
+  const VIEW_TOGGLE_OPTIONS = useMemo(() => [
+    { key: 'generate' as View, label: 'Generate' },
+    { key: 'history' as View, label: 'History' },
+    { key: 'calendar' as View, label: 'Calendar' },
+  ], [])
 
   return (
     <TabShell variant="fixed" padding="p-0" className="min-h-0 gap-0">
@@ -764,58 +742,21 @@ export default function CreatorStudioTab() {
 
           {/* Header */}
           <div style={{ marginBottom: 28 }}>
-            <h1
-              style={{
-                fontSize: 16,
-                fontWeight: 500,
-                color: C.textPrimary,
-                margin: 0,
-                marginBottom: 8,
-              }}
-            >
+            <h1 style={{ ...S.title, margin: 0, marginBottom: 8 }}>
               Creator Studio
             </h1>
-            <p style={{ fontSize: 14, color: C.textSecondary, margin: 0 }}>
+            <p style={{ ...S.subtitle, margin: 0 }}>
               Generate marketing content using AI — ad scripts, social posts, emails, and blogs.
             </p>
           </div>
 
           {/* View tabs */}
-          <div
-            style={{
-              display: 'flex',
-              gap: 4,
-              padding: 4,
-              borderRadius: 12,
-              background: C.bgInput,
-              border: `1px solid ${C.borderSubtle}`,
-              width: 'fit-content',
-              marginBottom: 28,
-            }}
-          >
-            {VIEW_TABS.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setView(tab.id)}
-                style={{
-                  padding: '8px 18px',
-                  borderRadius: 8,
-                  border: 'none',
-                  fontSize: 14,
-                  fontWeight: 500,
-                  cursor: 'pointer',
-                  transition: 'all 200ms',
-                  background:
-                    view === tab.id ? C.bgHoverStrong : 'transparent',
-                  color:
-                    view === tab.id
-                      ? C.textPrimary
-                      : C.textSecondary,
-                }}
-              >
-                {tab.label}
-              </button>
-            ))}
+          <div style={{ marginBottom: 28 }}>
+            <GlassToggle<View>
+              options={VIEW_TOGGLE_OPTIONS}
+              value={view}
+              onChange={setView}
+            />
           </div>
 
           {/* ── GENERATE VIEW ─────────────────────────────────────────── */}
@@ -834,6 +775,7 @@ export default function CreatorStudioTab() {
                 <div style={{ ...glassCard, padding: 24 }}>
                   <div style={{ ...labelStyle, marginBottom: 16 }}>Content Type</div>
                   <div
+                    className="bb-lift"
                     style={{
                       display: 'grid',
                       gridTemplateColumns: 'repeat(2, 1fr)',
@@ -887,73 +829,23 @@ export default function CreatorStudioTab() {
                     {/* Tone */}
                     <div>
                       <div style={labelStyle}>Tone</div>
-                      <div style={{ display: 'flex', gap: 8 }}>
-                        {TONE_OPTIONS.map((t) => (
-                          <button
-                            key={t.value}
-                            onClick={() => setTone(t.value)}
-                            style={{
-                              padding: '8px 16px',
-                              borderRadius: 12,
-                              border: tone === t.value
-                                ? `1px solid ${C.borderFocus}`
-                                : `1px solid ${C.borderSubtle}`,
-                              background: tone === t.value
-                                ? C.bgHoverStrong
-                                : C.bgInput,
-                              color: tone === t.value
-                                ? C.textPrimary
-                                : C.textSecondary,
-                              fontSize: 14,
-                              fontWeight: 500,
-                              cursor: 'pointer',
-                              transition: 'all 200ms',
-                            }}
-                          >
-                            {t.label}
-                          </button>
-                        ))}
-                      </div>
+                      <GlassToggle<Tone>
+                        options={TONE_OPTIONS.map((t) => ({ key: t.value, label: t.label }))}
+                        value={tone}
+                        onChange={setTone}
+                        size="sm"
+                      />
                     </div>
 
                     {/* Length */}
                     <div>
                       <div style={labelStyle}>Length</div>
-                      <div style={{ display: 'flex', gap: 8 }}>
-                        {LENGTH_OPTIONS.map((l) => (
-                          <button
-                            key={l.value}
-                            onClick={() => setLength(l.value)}
-                            style={{
-                              padding: '8px 16px',
-                              borderRadius: 12,
-                              border: length === l.value
-                                ? `1px solid ${C.borderFocus}`
-                                : `1px solid ${C.borderSubtle}`,
-                              background: length === l.value
-                                ? C.bgHoverStrong
-                                : C.bgInput,
-                              color: length === l.value
-                                ? C.textPrimary
-                                : C.textSecondary,
-                              fontSize: 14,
-                              cursor: 'pointer',
-                              transition: 'all 200ms',
-                            }}
-                          >
-                            <span style={{ fontWeight: 500 }}>{l.label}</span>
-                            <span
-                              style={{
-                                marginLeft: 8,
-                                fontSize: 14,
-                                opacity: 0.6,
-                              }}
-                            >
-                              {l.hint}
-                            </span>
-                          </button>
-                        ))}
-                      </div>
+                      <GlassToggle<Length>
+                        options={LENGTH_OPTIONS.map((l) => ({ key: l.value, label: `${l.label} ${l.hint}` }))}
+                        value={length}
+                        onChange={setLength}
+                        size="sm"
+                      />
                     </div>
 
                     {generateError && (
@@ -961,9 +853,9 @@ export default function CreatorStudioTab() {
                         style={{
                           padding: '12px 16px',
                           borderRadius: 12,
-                          background: 'rgba(239, 68, 68, 0.1)',
-                          border: '1px solid rgba(239, 68, 68, 0.2)',
-                          color: '#ef4444',
+                          background: C.statusErrorBg,
+                          border: `1px solid ${C.borderVisible}`,
+                          color: C.statusError,
                           fontSize: 14,
                         }}
                       >
@@ -986,11 +878,11 @@ export default function CreatorStudioTab() {
                           <span
                             style={{
                               display: 'inline-block',
-                              width: 14,
-                              height: 14,
-                              borderRadius: '50%',
-                              border: '2px solid rgba(0,0,0,0.3)',
-                              borderTopColor: '#000',
+                              width: 16,
+                              height: 16,
+                              borderRadius: 9999,
+                              border: `2px solid ${C.borderVisible}`,
+                              borderTopColor: C.bgPage,
                               animation: 'spin 0.7s linear infinite',
                             }}
                           />
@@ -1016,10 +908,10 @@ export default function CreatorStudioTab() {
                     }}
                   >
                     <div>
-                      <div style={{ fontSize: 14, fontWeight: 500, color: C.textPrimary }}>
+                      <div style={S.cardTitle}>
                         {TEMPLATE_LABELS[generatedOutput.template_type]}
                       </div>
-                      <div style={{ fontSize: 14, color: C.textDim, marginTop: 2 }}>
+                      <div style={{ ...S.secondary, color: C.textDim, marginTop: 4 }}>
                         {generatedOutput.inputs.product_name} · {generatedOutput.inputs.tone} ·{' '}
                         {generatedOutput.inputs.length}
                       </div>
@@ -1033,7 +925,7 @@ export default function CreatorStudioTab() {
                       margin: 0,
                       padding: 16,
                       borderRadius: 12,
-                      background: 'rgba(0, 0, 0, 0.35)',
+                      background: C.bgInput,
                       border: `1px solid ${C.borderSubtle}`,
                       fontSize: 14,
                       color: C.textSecondary,
@@ -1087,59 +979,16 @@ export default function CreatorStudioTab() {
           {view === 'history' && (
             <div>
               {/* Filter tabs */}
-              <div
-                style={{
-                  display: 'flex',
-                  flexWrap: 'wrap',
-                  gap: 8,
-                  marginBottom: 20,
-                }}
-              >
-                <button
-                  onClick={() => setHistoryFilter('all')}
-                  style={{
-                    padding: '8px 16px',
-                    borderRadius: 20,
-                    border: 'none',
-                    fontSize: 14,
-                    fontWeight: 500,
-                    cursor: 'pointer',
-                    background:
-                      historyFilter === 'all'
-                        ? C.bgHoverStrong
-                        : C.bgInput,
-                    color:
-                      historyFilter === 'all'
-                        ? C.textPrimary
-                        : C.textSecondary,
-                  }}
-                >
-                  All
-                </button>
-                {TEMPLATES.map((t) => (
-                  <button
-                    key={t.id}
-                    onClick={() => setHistoryFilter(t.id)}
-                    style={{
-                      padding: '8px 16px',
-                      borderRadius: 20,
-                      border: 'none',
-                      fontSize: 14,
-                      fontWeight: 500,
-                      cursor: 'pointer',
-                      background:
-                        historyFilter === t.id
-                          ? C.bgHoverStrong
-                          : C.bgInput,
-                      color:
-                        historyFilter === t.id
-                          ? C.textPrimary
-                          : C.textSecondary,
-                    }}
-                  >
-                    {t.icon} {t.label}
-                  </button>
-                ))}
+              <div style={{ marginBottom: 20 }}>
+                <GlassToggle<TemplateType | 'all'>
+                  options={[
+                    { key: 'all', label: 'All' },
+                    ...TEMPLATES.map((t) => ({ key: t.id, label: `${t.icon} ${t.label}` })),
+                  ]}
+                  value={historyFilter}
+                  onChange={setHistoryFilter}
+                  size="sm"
+                />
               </div>
 
               {historyLoading ? (
@@ -1154,33 +1003,15 @@ export default function CreatorStudioTab() {
                   Loading history…
                 </div>
               ) : filteredHistory.length === 0 ? (
-                <div
-                  style={{
-                    ...glassCard,
-                    padding: 48,
-                    textAlign: 'center',
-                  }}
-                >
-                  <div style={{ fontSize: 16, marginBottom: 12 }}>✦</div>
-                  <div
-                    style={{
-                      fontSize: 16,
-                      fontWeight: 500,
-                      color: C.textPrimary,
-                      marginBottom: 8,
-                    }}
-                  >
-                    No content yet
-                  </div>
-                  <div style={{ fontSize: 14, color: C.textSecondary, marginBottom: 20 }}>
-                    Generated content will appear here.
-                  </div>
-                  <button onClick={() => setView('generate')} style={accentBtn}>
-                    Start generating
-                  </button>
+                <div style={{ ...glassCard, padding: 0 }}>
+                  <EmptyState
+                    title="No content yet"
+                    description="Generated content will appear here."
+                    action={{ label: 'Start generating', onClick: () => setView('generate') }}
+                  />
                 </div>
               ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div className="bb-stagger" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {filteredHistory.map((item) => (
                     <HistoryItem
                       key={item.id}
@@ -1198,17 +1029,10 @@ export default function CreatorStudioTab() {
           {view === 'calendar' && (
             <div style={{ ...glassCard, padding: 24 }}>
               <div style={{ marginBottom: 20 }}>
-                <div
-                  style={{
-                    fontSize: 14,
-                    fontWeight: 500,
-                    color: C.textPrimary,
-                    marginBottom: 4,
-                  }}
-                >
+                <div style={{ ...S.cardTitle, marginBottom: 4 }}>
                   Content Calendar
                 </div>
-                <div style={{ fontSize: 14, color: C.textSecondary }}>
+                <div style={S.secondary}>
                   Scheduled and published content across the month. Click a dot to cycle its status.
                 </div>
               </div>

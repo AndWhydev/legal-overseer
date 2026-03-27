@@ -89,7 +89,7 @@ export function InboxShortcutsOverlay({ isOpen, onClose }: InboxShortcutsOverlay
     borderRadius: 16,
     background: 'rgba(20, 20, 22, 0.95)',
     backdropFilter: 'blur(20px)',
-    border: '1px solid rgba(255, 255, 255, 0.03)',
+    border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
     boxShadow: '0 20px 80px rgba(0, 0, 0, 0.5)',
     padding: '32px',
   };
@@ -106,7 +106,7 @@ export function InboxShortcutsOverlay({ isOpen, onClose }: InboxShortcutsOverlay
   const titleStyle: React.CSSProperties = {
     fontSize: 16,
     fontWeight: 500,
-    color: 'rgba(255, 255, 255, 0.95)',
+    color: 'var(--text-primary, rgba(255, 255, 255, 0.95))',
     margin: 0,
   };
 
@@ -118,8 +118,8 @@ export function InboxShortcutsOverlay({ isOpen, onClose }: InboxShortcutsOverlay
     height: 36,
     borderRadius: 8,
     border: 'none',
-    background: 'rgba(255, 255, 255, 0.06)',
-    color: 'rgba(255, 255, 255, 0.6)',
+    background: 'var(--hover-bg-strong, rgba(255, 255, 255, 0.06))',
+    color: 'var(--text-secondary, rgba(255, 255, 255, 0.6))',
     cursor: 'pointer',
     transition: 'all 0.15s ease',
   };
@@ -133,7 +133,7 @@ export function InboxShortcutsOverlay({ isOpen, onClose }: InboxShortcutsOverlay
     fontWeight: 500,
     textTransform: 'uppercase',
     letterSpacing: '0.04em',
-    color: 'rgba(255, 255, 255, 0.4)',
+    color: 'var(--text-dim, rgba(255, 255, 255, 0.4))',
     marginBottom: 16,
     display: 'block',
   };
@@ -150,8 +150,8 @@ export function InboxShortcutsOverlay({ isOpen, onClose }: InboxShortcutsOverlay
     gap: 12,
     padding: '8px 12px',
     borderRadius: 8,
-    background: 'rgba(255, 255, 255, 0.02)',
-    border: '1px solid rgba(255, 255, 255, 0.03)',
+    background: 'var(--hover-bg, rgba(255, 255, 255, 0.02))',
+    border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
     transition: 'all 0.15s ease',
   };
 
@@ -164,9 +164,9 @@ export function InboxShortcutsOverlay({ isOpen, onClose }: InboxShortcutsOverlay
   const keyPillStyle: React.CSSProperties = {
     padding: '4px 8px',
     borderRadius: 4,
-    background: 'rgba(255, 255, 255, 0.08)',
-    border: '1px solid rgba(255, 255, 255, 0.1)',
-    color: 'rgba(255, 255, 255, 0.8)',
+    background: 'var(--hover-bg-strong, rgba(255, 255, 255, 0.08))',
+    border: '1px solid var(--border-active, rgba(255, 255, 255, 0.1))',
+    color: 'var(--text-primary, rgba(255, 255, 255, 0.8))',
     fontSize: 14,
     fontWeight: 500,
     fontFamily: 'ui-monospace, Menlo, Monaco, monospace',
@@ -175,7 +175,7 @@ export function InboxShortcutsOverlay({ isOpen, onClose }: InboxShortcutsOverlay
 
   const descriptionStyle: React.CSSProperties = {
     fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.6)',
+    color: 'var(--text-secondary, rgba(255, 255, 255, 0.6))',
     flex: 1,
   };
 
@@ -211,10 +211,10 @@ export function InboxShortcutsOverlay({ isOpen, onClose }: InboxShortcutsOverlay
             style={closeButtonStyle}
             onClick={onClose}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.12)';
+              e.currentTarget.style.background = 'var(--hover-bg-strong, rgba(255, 255, 255, 0.12))';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.06)';
+              e.currentTarget.style.background = 'var(--hover-bg-strong, rgba(255, 255, 255, 0.06))';
             }}
             aria-label="Close shortcuts overlay"
           >
@@ -233,7 +233,7 @@ export function InboxShortcutsOverlay({ isOpen, onClose }: InboxShortcutsOverlay
                       <React.Fragment key={keyIdx}>
                         <span style={keyPillStyle}>{key}</span>
                         {keyIdx < shortcut.keys.length - 1 && (
-                          <span style={{ color: 'rgba(255, 255, 255, 0.3)', fontSize: 14 }}>
+                          <span style={{ color: 'var(--text-dim, rgba(255, 255, 255, 0.3))', fontSize: 14 }}>
                             +
                           </span>
                         )}

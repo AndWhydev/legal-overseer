@@ -72,7 +72,7 @@ export function MemoryCard({ memory, categoryColor }: MemoryCardProps) {
         {memory.source === 'user_explicit' && (
           <span style={{
             fontSize: '14px',
-            color: '#E2E8F0',
+            color: 'var(--text-primary, #E2E8F0)',
             fontWeight: 500,
           }}>
             USER

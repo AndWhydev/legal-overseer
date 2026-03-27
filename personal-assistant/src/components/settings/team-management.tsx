@@ -145,7 +145,7 @@ function SaveIndicator({ visible, message = 'Saved' }: { visible: boolean; messa
 
 function RoleBadge({ role }: { role: string }) {
   const colors: Record<string, { bg: string; text: string }> = {
-    owner: { bg: C.bgHoverStrong, text: '#F1F5F9' },
+    owner: { bg: C.bgHoverStrong, text: 'var(--text-primary, #F1F5F9)' },
     admin: { bg: 'rgba(168, 85, 247, 0.15)', text: '#A855F7' },
     member: { bg: 'rgba(59, 130, 246, 0.15)', text: '#3B82F6' },
     viewer: { bg: 'rgba(107, 114, 128, 0.15)', text: '#6B7280' },

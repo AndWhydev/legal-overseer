@@ -74,7 +74,7 @@ const WIDGET_DEFS = [
     key: 'revenueRadar',
     label: 'Revenue Radar',
     icon: Radar,
-    color: '#F1F5F9',
+    color: 'var(--text-primary, #F1F5F9)',
     extract: (d: IntelligenceData) => d.revenueRadar,
     format: (data: any) => ({
       value: data.gatheringData ? '--' : `$${(data.totalEstimatedValue / 1000).toFixed(1)}k`,

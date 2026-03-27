@@ -61,10 +61,10 @@ const fileCardStyle: React.CSSProperties = {
   gap: 10,
   padding: '10px 14px',
   borderRadius: 12,
-  background: 'rgba(255, 255, 255, 0.06)',
+  background: 'var(--hover-bg-strong, rgba(255, 255, 255, 0.06))',
   backdropFilter: 'blur(12px)',
   WebkitBackdropFilter: 'blur(12px)',
-  border: '1px solid rgba(255, 255, 255, 0.03)',
+  border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
   cursor: 'pointer',
   transition: 'all 200ms ease',
   maxWidth: 320,
@@ -73,8 +73,8 @@ const fileCardStyle: React.CSSProperties = {
 
 const fileCardHoverStyle: React.CSSProperties = {
   ...fileCardStyle,
-  background: 'rgba(255, 255, 255, 0.1)',
-  border: '1px solid rgba(255, 255, 255, 0.03)',
+  background: 'var(--hover-bg-strong, rgba(255, 255, 255, 0.1))',
+  border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
 }
 
 const filenameStyle: React.CSSProperties = {
@@ -121,7 +121,7 @@ const imageErrorStyle: React.CSSProperties = {
   width: 200,
   height: 140,
   borderRadius: 8,
-  background: 'rgba(255, 255, 255, 0.04)',
+  background: 'var(--hover-bg, rgba(255, 255, 255, 0.04))',
   border: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
   color: 'var(--text-dim, #475569)',
   fontSize: 11,
@@ -237,7 +237,7 @@ function FileCard({ attachmentId, name, type, size }: { attachmentId?: string; n
         width: 36,
         height: 36,
         borderRadius: 8,
-        background: isPdf ? 'rgba(239, 68, 68, 0.12)' : 'rgba(255, 255, 255, 0.06)',
+        background: isPdf ? 'rgba(239, 68, 68, 0.12)' : 'var(--hover-bg-strong, rgba(255, 255, 255, 0.06))',
         flexShrink: 0,
       }}>
         <IconComponent

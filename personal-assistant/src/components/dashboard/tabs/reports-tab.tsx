@@ -347,7 +347,7 @@ export default function ReportsTab() {
               description="Monthly and weekly reports will appear here after the first full week"
             />
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div className="bb-stagger" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {reports.map(r => (
                 <div
                   key={r.id}

@@ -56,6 +56,20 @@
   /* ── Card variant (more opaque glass) ── */
   --bg-card-solid: rgba(255, 255, 255, 0.42);
 
+  /* ── Toggle / Pill / Button tokens ── */
+  --toggle-container-bg: rgba(0, 0, 0, 0.06);
+  --toggle-active-bg: rgba(255, 255, 255, 0.7);
+  --toggle-active-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --toggle-off-bg: rgba(0, 0, 0, 0.1);
+  --pill-active-bg: rgba(255, 255, 255, 0.5);
+  --pill-inactive-bg: rgba(0, 0, 0, 0.04);
+  --btn-primary-bg: #1A1A2E;
+  --btn-primary-fg: #FFFFFF;
+  --btn-primary-hover: #2D2D4E;
+
+  /* ── Empty state icon filter ── */
+  --empty-icon-filter: grayscale(1) brightness(0);
+
   /* ── Accent (monochrome) ── */
   --bb-orange: #94A3B8;
   --bb-orange-light: #94A3B8;

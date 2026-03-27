@@ -16,7 +16,7 @@ const STATUS_COLORS: Record<string, string> = {
 const AGENT_COLORS: Record<string, string> = {
   finance: '#22C55E',
   comms: '#3B82F6',
-  sales: '#F1F5F9',
+  sales: 'var(--text-primary, #F1F5F9)',
   generic: '#8B5CF6',
 }
 
@@ -165,7 +165,7 @@ export function SwarmDetail({ runId, onBack }: SwarmDetailProps) {
           <div style={{
             height: '100%',
             width: `${progress}%`,
-            background: run.status === 'failed' ? '#EF4444' : '#F1F5F9',
+            background: run.status === 'failed' ? '#EF4444' : 'var(--text-primary, #F1F5F9)',
             borderRadius: '8px',
             transition: 'width 0.3s ease',
           }} />

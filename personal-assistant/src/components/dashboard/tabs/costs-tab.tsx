@@ -308,7 +308,7 @@ function CostsTab() {
         {summary && !loading && (
           <>
             {/* Summary Cards */}
-            <div style={summaryGrid}>
+            <div className="bb-stagger" style={summaryGrid}>
               <SummaryCard
                 icon={<DollarSign size={16} />}
                 label="Total Cost"
@@ -334,7 +334,7 @@ function CostsTab() {
             {/* Cost by Agent */}
             <div style={glassCard}>
               <h2 style={sectionHeader}>Cost by Agent</h2>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div className="bb-stagger" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {summary.by_agent.map((entry) => (
                   <div key={entry.agent_type} style={listRow}>
                     <span style={listRowLabel}>{entry.agent_type}</span>
@@ -355,7 +355,7 @@ function CostsTab() {
             {summary.daily_trend.length > 0 && (
               <div style={glassCard}>
                 <h2 style={sectionHeader}>Daily Trend</h2>
-                <div style={dailyTrendContainer}>
+                <div className="bb-stagger" style={dailyTrendContainer}>
                   {summary.daily_trend.map((day) => {
                     const maxCost = Math.max(...summary.daily_trend.map((d) => d.cost_usd), 0.01);
                     const pct = (day.cost_usd / maxCost) * 100;
@@ -414,7 +414,7 @@ function SummaryCard({ icon, label, value }: { icon: React.ReactNode; label: str
   };
 
   return (
-    <div style={glassCard}>
+    <div className="bb-lift" style={glassCard}>
       <div style={labelContainer}>
         <div style={iconStyle}>{icon}</div>
         <span>{label}</span>

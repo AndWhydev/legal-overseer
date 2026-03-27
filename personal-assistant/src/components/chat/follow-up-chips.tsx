@@ -91,8 +91,8 @@ export function FollowUpChips({ suggestions, onSelect }: FollowUpChipsProps) {
             textAlign: 'left',
             lineHeight: 1.4,
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)' }}
-          onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.03)' }}
+          onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--border-active, rgba(255, 255, 255, 0.15))' }}
+          onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border-subtle, rgba(255, 255, 255, 0.03))' }}
         >
           {s}
         </button>

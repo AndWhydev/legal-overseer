@@ -643,7 +643,7 @@ function AnalyticsTab() {
         {/* MRR Stats */}
         <section>
           <h3 style={sectionHeader}>Monthly Recurring Revenue</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 16 }}>
+          <div className="bb-stagger" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 16 }}>
             <StatCard icon={DollarSign} label="Total MRR" value={`$${mrr.totalMRR.toLocaleString()}`} />
             <StatCard icon={Users} label="Active Subs" value={String(mrr.activeSubscriptions)} />
             <StatCard icon={TrendingDown} label="Churn Rate" value={`${mrr.churnRate}%`} alert={mrr.churnRate > 5} />
@@ -702,7 +702,7 @@ function AnalyticsTab() {
               {trendsData.anomalies && trendsData.anomalies.length > 0 && (
                 <AnomalyDigest anomalies={trendsData.anomalies} />
               )}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 16 }}>
+              <div className="bb-stagger" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 16 }}>
                 <TrendChart series={trendsData.messageVolume} label="Message Volume (30d)" />
                 <TrendChart series={trendsData.taskCompletionRate} label="Tasks Completed (30d)" />
                 <TrendChart series={trendsData.agentInvocations} label="Agent Sessions (30d)" />
@@ -740,7 +740,7 @@ function AnalyticsTab() {
         {usage && (
           <section>
             <h3 style={sectionHeader}>Token Usage &amp; Costs</h3>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 16 }}>
+            <div className="bb-stagger" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 16 }}>
               <StatCard icon={Cpu} label="Total Tokens" value={formatTokens(usage.totalTokens)} />
               <StatCard icon={DollarSign} label="Total Cost" value={`$${usage.totalCostUSD.toFixed(2)}`} />
             </div>
@@ -838,7 +838,7 @@ function AnalyticsTab() {
         {churn && churn.risks.length > 0 && (
           <section>
             <h3 style={sectionHeader}>Churn Risk ({churn.atRiskOrgs} orgs)</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div className="bb-stagger" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {churn.risks.map((r) => {
                 const riskColor = r.riskScore >= 70 ? 'var(--bb-red)' : r.riskScore >= 50 ? 'var(--bb-amber)' : 'var(--bb-green)'
                 return (
@@ -910,7 +910,7 @@ function AnalyticsTab() {
         {/* ROI Metrics */}
         <section>
           <h3 style={sectionHeader}>ROI Metrics</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
+          <div className="bb-stagger" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
             <MetricCard
               label="Revenue per Sub"
               value={mrr.activeSubscriptions > 0 ? `$${Math.round(mrr.totalMRR / mrr.activeSubscriptions)}` : '$0'}
@@ -1050,6 +1050,7 @@ function StatCard({
 }) {
   return (
     <div
+      className="bb-lift"
       style={{
         ...glassCard,
         position: 'relative',
@@ -1085,6 +1086,7 @@ function StatCard({
 function MetricCard({ label, value }: { label: string; value: string }) {
   return (
     <div
+      className="bb-lift"
       style={{
         ...glassCard,
         position: 'relative',

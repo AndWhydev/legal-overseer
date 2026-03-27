@@ -159,7 +159,7 @@ export function RoleStatusCards({ onRoleClick }: RoleStatusCardsProps) {
   return (
     <div>
       <div style={sectionHeader}>Role Status</div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 12 }}>
+      <div className="bb-stagger" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 12 }}>
         {allRoleTypes.map(rt => {
           const status = roleMap.get(rt)
           const meta = ROLE_META[rt]
@@ -171,6 +171,7 @@ export function RoleStatusCards({ onRoleClick }: RoleStatusCardsProps) {
           return (
             <div
               key={rt}
+              className="bb-lift"
               onMouseEnter={() => setHoveredRole(rt)}
               onMouseLeave={() => setHoveredRole(null)}
               onClick={() => onRoleClick?.(rt)}

@@ -4,6 +4,8 @@ import React, { useState, useCallback } from 'react'
 import { Search, TrendingUp, TrendingDown, Minus, Copy, Check, Play, Code, FileText, X } from 'lucide-react'
 import { S, C } from '@/lib/styles/design-tokens'
 import { TabShell } from '@/components/ui/tab-shell'
+import { GlassToggle } from '@/components/ui/glass-toggle'
+import { EmptyState } from '@/components/ui/empty-state'
 
 // ---------------------------------------------------------------------------
 // Types (mirrors agent types without importing server code)
@@ -37,35 +39,15 @@ type ActivePanel = 'overview' | 'content' | 'schema'
 // Style Tokens
 // ---------------------------------------------------------------------------
 
-const glassCard: React.CSSProperties = {
-  ...S.card,
-}
-
 const glassInput: React.CSSProperties = {
   ...S.input,
   padding: '12px 16px',
   borderRadius: 12,
 }
 
-const pillBtn: React.CSSProperties = {
-  ...S.pill,
-}
-
 const accentBtn: React.CSSProperties = {
   ...S.button,
   ...S.buttonPrimary,
-}
-
-const ghostBtn: React.CSSProperties = {
-  ...S.button,
-  ...S.buttonGhost,
-  padding: '8px 16px',
-  borderRadius: 12,
-  height: 'auto',
-}
-
-const listRow: React.CSSProperties = {
-  ...S.listRow,
 }
 
 const smallText: React.CSSProperties = {
@@ -143,26 +125,19 @@ function CopyButton({ text }: { text: string }) {
     <button
       onClick={handleCopy}
       style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 8,
+        ...S.button,
+        ...S.buttonGhost,
+        height: 'auto',
         padding: '8px 12px',
-        borderRadius: 8,
-        border: '1px solid var(--glass-interactive-border)',
-        background: 'var(--glass-interactive-bg)',
-        color: copied ? '#22c55e' : 'var(--text-secondary)',
-        cursor: 'pointer',
-        fontSize: 14,
-        fontWeight: 500,
-        transition: 'all 200ms',
+        color: copied ? C.statusSuccess : C.textSecondary,
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.background = 'var(--glass-interactive-border)'
+        e.currentTarget.style.background = C.bgHover
         e.currentTarget.style.borderColor = C.borderHover
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.background = 'var(--glass-interactive-bg)'
-        e.currentTarget.style.borderColor = 'var(--glass-interactive-border)'
+        e.currentTarget.style.background = 'transparent'
+        e.currentTarget.style.borderColor = C.borderVisible
       }}
     >
       {copied ? <Check size={14} /> : <Copy size={14} />}
@@ -341,7 +316,7 @@ function QueryBreakdown({ results }: { results: QueryResult[] }) {
   return (
     <div
       style={{
-        ...glassCard,
+        ...S.card,
         overflow: 'hidden',
         padding: 0,
       }}
@@ -419,7 +394,7 @@ function CompetitorTable({
   return (
     <div
       style={{
-        ...glassCard,
+        ...S.card,
         overflow: 'hidden',
         padding: 0,
       }}
@@ -533,48 +508,26 @@ function SchemaGenerator() {
     }
   }
 
-  const schemaTypeOptions = ['LocalBusiness', 'Service', 'FAQ', 'Organization']
+  const schemaToggleOptions = [
+    { key: 'LocalBusiness', label: 'LocalBusiness' },
+    { key: 'Service', label: 'Service' },
+    { key: 'FAQ', label: 'FAQ' },
+    { key: 'Organization', label: 'Organization' },
+  ]
+
+  const handleSchemaTypeChange = (val: string) => {
+    setSchemaType(val)
+    setResult(null)
+  }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-        {schemaTypeOptions.map((t) => (
-          <button
-            key={t}
-            onClick={() => {
-              setSchemaType(t)
-              setResult(null)
-            }}
-            style={{
-              ...pillBtn,
-              color:
-                schemaType === t
-                  ? 'var(--text-primary)'
-                  : 'var(--text-secondary)',
-              background:
-                schemaType === t
-                  ? C.bgHoverStrong
-                  : 'var(--glass-pill-bg)',
-              borderBottom:
-                schemaType === t
-                  ? `1px solid ${C.borderHover}`
-                  : 'none',
-            }}
-            onMouseEnter={(e) => {
-              if (schemaType !== t) {
-                e.currentTarget.style.background = 'var(--glass-hover-bg)'
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (schemaType !== t) {
-                e.currentTarget.style.background = 'var(--glass-pill-bg)'
-              }
-            }}
-          >
-            {t}
-          </button>
-        ))}
-      </div>
+      <GlassToggle
+        options={schemaToggleOptions}
+        value={schemaType}
+        onChange={handleSchemaTypeChange}
+        size="sm"
+      />
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
         {[
@@ -685,7 +638,7 @@ function SchemaGenerator() {
           </div>
           <pre
             style={{
-              ...glassCard,
+              ...S.card,
               color: 'rgba(165, 243, 252, 0.9)',
               fontSize: 14,
               fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
@@ -720,7 +673,6 @@ function AISearchTab() {
   const [auditResult, setAuditResult] = useState<AuditResult | null>(null)
   const [previousScore] = useState<number | null>(null)
   const [loading, setLoading] = useState(false)
-  const [hoverPanel, setHoverPanel] = useState<ActivePanel | null>(null)
   const [infoDismissed, setInfoDismissed] = useState(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('bb-ai-search-info-dismissed') === '1'
@@ -751,10 +703,10 @@ function AISearchTab() {
     [],
   )
 
-  const panelButtons: Array<{ id: ActivePanel; label: string; icon: React.ReactNode }> = [
-    { id: 'overview', label: 'Visibility Audit', icon: <Search size={16} /> },
-    { id: 'content', label: 'Content Suggestions', icon: <FileText size={16} /> },
-    { id: 'schema', label: 'Schema Markup', icon: <Code size={16} /> },
+  const panelOptions = [
+    { key: 'overview' as const, label: 'Visibility Audit', icon: <Search size={16} /> },
+    { key: 'content' as const, label: 'Content Suggestions', icon: <FileText size={16} /> },
+    { key: 'schema' as const, label: 'Schema Markup', icon: <Code size={16} /> },
   ]
 
   return (
@@ -809,6 +761,7 @@ function AISearchTab() {
         {/* Score overview (shown when audit exists) */}
         {auditResult && (
           <div
+            className="bb-stagger"
             style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
@@ -816,7 +769,7 @@ function AISearchTab() {
             }}
           >
             {/* Overall Score Card */}
-            <div style={{ ...glassCard, position: 'relative' }}>
+            <div style={{ ...S.card, position: 'relative' }}>
               <div style={smallText}>Visibility Score</div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 8 }}>
                 <ScoreBadge score={auditResult.overallScore} />
@@ -826,7 +779,7 @@ function AISearchTab() {
             </div>
 
             {/* Queries Tracked Card */}
-            <div style={{ ...glassCard, position: 'relative' }}>
+            <div style={{ ...S.card, position: 'relative' }}>
               <div style={smallText}>Queries Tracked</div>
               <div
                 style={{
@@ -842,7 +795,7 @@ function AISearchTab() {
             </div>
 
             {/* Mentioned Card */}
-            <div style={{ ...glassCard, position: 'relative' }}>
+            <div style={{ ...S.card, position: 'relative' }}>
               <div style={smallText}>Mentioned</div>
               <div
                 style={{
@@ -858,7 +811,7 @@ function AISearchTab() {
             </div>
 
             {/* Absent Card */}
-            <div style={{ ...glassCard, position: 'relative' }}>
+            <div style={{ ...S.card, position: 'relative' }}>
               <div style={smallText}>Absent</div>
               <div
                 style={{
@@ -875,51 +828,18 @@ function AISearchTab() {
           </div>
         )}
 
-        {/* Panel selector — same pill pattern as leads/inbox */}
-        <nav style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          {panelButtons.map((btn) => {
-            const isActive = activePanel === btn.id
-            return (
-              <button
-                key={btn.id}
-                onClick={() => setActivePanel(btn.id)}
-                style={{
-                  height: 40,
-                  padding: '0 16px',
-                  borderRadius: 9999,
-                  fontSize: 14,
-                  fontWeight: 500,
-                  border: 'none',
-                  cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  transition: 'background 200ms cubic-bezier(0.16, 1, 0.3, 1), color 200ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 200ms',
-                  background: isActive
-                    ? S.pillActive.background
-                    : S.pill.background,
-                  backdropFilter: 'blur(22px) saturate(1.2)',
-                  WebkitBackdropFilter: 'blur(22px) saturate(1.2)',
-                  boxShadow: isActive
-                    ? 'var(--toggle-active-shadow, none)'
-                    : S.pill.boxShadow,
-                  color: isActive
-                    ? C.textPrimary
-                    : C.textSecondary,
-                }}
-              >
-                {btn.icon}
-                {btn.label}
-              </button>
-            )
-          })}
-        </nav>
+        {/* Panel selector */}
+        <GlassToggle
+          options={panelOptions}
+          value={activePanel}
+          onChange={setActivePanel}
+        />
 
         {/* Panels */}
         {activePanel === 'overview' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
             {/* Audit Form Card */}
-            <div style={glassCard}>
+            <div style={S.card}>
               <h3
                 style={{
                   fontSize: 14,
@@ -986,12 +906,12 @@ function AISearchTab() {
                   >
                     Recommendations
                   </h3>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <div className="bb-stagger" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     {auditResult.recommendations.map((rec, i) => (
                       <div
                         key={i}
                         style={{
-                          ...glassCard,
+                          ...S.card,
                           borderLeft: `3px solid ${C.borderVisible}`,
                           padding: '12px 16px',
                         }}
@@ -1023,7 +943,7 @@ function AISearchTab() {
         )}
 
         {activePanel === 'content' && (
-          <div style={glassCard}>
+          <div style={S.card}>
             <h3
               style={{
                 fontSize: 14,
@@ -1048,7 +968,7 @@ function AISearchTab() {
               to cite the business.
             </p>
             {auditResult ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div className="bb-stagger" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 <p style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
                   Based on the audit, focus content on these absent/partial queries:
                 </p>
@@ -1062,7 +982,7 @@ function AISearchTab() {
                   .map((query) => (
                     <div
                       key={query}
-                      style={listRow}
+                      style={S.listRow}
                       onMouseEnter={(e) => {
                         e.currentTarget.style.background = 'var(--bb-surface-hover)'
                       }}
@@ -1077,21 +997,16 @@ function AISearchTab() {
                   ))}
               </div>
             ) : (
-              <p
-                style={{
-                  fontSize: 14,
-                  color: 'var(--text-dim)',
-                  fontStyle: 'italic',
-                }}
-              >
-                Run an audit to see content suggestions.
-              </p>
+              <EmptyState
+                title="No content suggestions yet"
+                description="Run a visibility audit to generate targeted content recommendations."
+              />
             )}
           </div>
         )}
 
         {activePanel === 'schema' && (
-          <div style={glassCard}>
+          <div style={S.card}>
             <h3
               style={{
                 fontSize: 14,

@@ -23,9 +23,9 @@ const BOARD_COLUMNS: Array<{
   color: string
   emptyText: string
 }> = [
-  { id: 'new', label: 'New', color: 'rgba(255, 255, 255, 0.25)', emptyText: 'No new leads -- discover prospects or wait for inbound' },
-  { id: 'qualified', label: 'Qualified', color: 'rgba(255, 255, 255, 0.25)', emptyText: 'Move promising leads here' },
-  { id: 'booked', label: 'Booked', color: 'rgba(255, 255, 255, 0.25)', emptyText: 'Leads with scheduled meetings' },
+  { id: 'new', label: 'New', color: 'var(--text-secondary, rgba(255, 255, 255, 0.25))', emptyText: 'No new leads -- discover prospects or wait for inbound' },
+  { id: 'qualified', label: 'Qualified', color: 'var(--text-secondary, rgba(255, 255, 255, 0.25))', emptyText: 'Move promising leads here' },
+  { id: 'booked', label: 'Booked', color: 'var(--text-secondary, rgba(255, 255, 255, 0.25))', emptyText: 'Leads with scheduled meetings' },
 ]
 
 interface LeadsKanbanViewProps {
@@ -66,7 +66,7 @@ const columnCount: React.CSSProperties = {
 
 const progressTrack: React.CSSProperties = {
   height: 2,
-  background: 'rgba(255, 255, 255, 0.06)',
+  background: 'var(--hover-bg-strong, rgba(255, 255, 255, 0.06))',
   borderRadius: 8,
   overflow: 'hidden',
 }
@@ -237,7 +237,7 @@ function LeadsKanbanViewInner({
       onDragEnd={handleDragEnd}
     >
       <div
-        className="leads-kanban-grid"
+        className="leads-kanban-grid bb-stagger"
         role="application"
         aria-label="Lead pipeline kanban board"
         aria-roledescription="kanban board"
