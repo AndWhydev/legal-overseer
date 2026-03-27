@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Media, Billing & Growth Roles
 status: executing
-stopped_at: Completed 36-01-PLAN.md (Expo scaffold + Bearer auth adapter)
+stopped_at: Completed 36-02-PLAN.md (Chat screen with SSE streaming + voice input)
 last_updated: "2026-03-27T17:00:31.565Z"
 last_activity: "2026-03-28 - Completed 35-03: Workflow CRUD API & Dashboard (Tasks 1-2; Task 3 pending verification)"
 progress:
@@ -25,10 +25,10 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 
 ## Current Position
 
-Phase: 35 of 36 (Proactive Workflows)
-Plan: 3 of 3 in current phase
+Phase: 36 of 36 (Mobile Experience)
+Plan: 2 of 4 in current phase
 Status: Executing
-Last activity: 2026-03-28 - Completed 35-03: Workflow CRUD API & Dashboard (Tasks 1-2; Task 3 pending verification)
+Last activity: 2026-03-28 - Completed 36-02: Chat screen with SSE streaming and voice input
 
 Progress: v1.0 ======== | v1.1 ======== | v1.2 ======== | v1.4 ======== | v1.5 ========== | v1.6 ===--- 33%
 
@@ -83,6 +83,7 @@ Progress: v1.0 ======== | v1.1 ======== | v1.2 ======== | v1.4 ======== | v1.5 =
 | Phase 35 P02 | 15min | 2 tasks | 4 files |
 | Phase 35 P03 | 19min | 2 tasks | 8 files |
 | Phase 36 P01 | 18min | 2 tasks | 17 files |
+| Phase 36 P02 | 14min | 2 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -180,6 +181,9 @@ See PROJECT.md Key Decisions table.
 - [Phase 35]: Workflows gated to growth+ tiers (beta, growth, scale, enterprise) in Intelligence sidebar category
 - [Phase 36]: [Phase 36-01]: Bearer auth tries first, null fallback to cookie for backward-compatible mobile+web dual auth
 - [Phase 36]: [Phase 36-01]: Service client for mobile Bearer path DB ops (no cookie context for RLS)
+- [Phase 36]: [Phase 36-02]: react-native-sse EventSource for SSE streaming (Android fetch broken per RN #28835)
+- [Phase 36]: [Phase 36-02]: expo-audio for voice recording (expo-av deprecated in SDK 55)
+- [Phase 36]: [Phase 36-02]: Push-to-talk via Pressable onLongPress with 300ms delay and 1s minimum recording threshold
 
 ### Roadmap Evolution
 
@@ -205,6 +209,6 @@ See PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-03-27T17:00:31.560Z
-Stopped at: Completed 36-01-PLAN.md (Expo scaffold + Bearer auth adapter)
+Last session: 2026-03-27T17:15:53Z
+Stopped at: Completed 36-02-PLAN.md (Chat screen with SSE streaming + voice input)
 Resume file: None
