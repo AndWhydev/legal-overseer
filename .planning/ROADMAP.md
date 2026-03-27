@@ -351,7 +351,7 @@ Phase 20 first (no dependencies), then 21 (billing before growth roles), then 22
 | 29. SEO/Tender Scheduled Monitoring | v1.4 | 0/0 | Pending | - |
 | 30. Onboarding E2E & First-Run Experience | 1/3 | In Progress|  | - |
 | 31. Channel Smoke Tests & Production Hardening | v1.5 | 0/3 | Planned | - |
-| 32. Marketing Site & Checkout Flow | v1.5 | 0/3 | Planned | - |
+| 32. Marketing Site & Checkout Flow | 1/3 | In Progress|  | - |
 | 33. Beta Program Infrastructure | v1.5 | 1/1 | Complete | 2026-03-27 |
 
 **Overall:** 57/57 plans complete for v1.0+v1.1+v1.2 (100%). v1.4: 24/28 plans (Phases 20-27 complete, 28-29 pending). v1.5: Phase 33 complete (1/1), Phases 30-32 planned (9 plans).

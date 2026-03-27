@@ -146,6 +146,19 @@ Note: `og-image.png` is referenced in Open Graph metadata but does not exist yet
 - Phase 32 (Marketing Site & Checkout Flow) is now complete: landing page, industry pages, case study, pricing with Stripe Checkout, and SEO foundation
 - Ready for Phase 33 (Beta Program Infrastructure)
 
+## Self-Check: PASSED
+
+- All 9 modified files exist on disk
+- Commit 048b8778 (Task 2) found in git history
+- Commit 0f3d8cae (Task 1) found in git history
+- Sitemap has 10 URL entries
+- Robots allows /case-study and /industries/* routes
+- Layout has openGraph and twitter metadata
+- Landing page has 2 JSON-LD script tags (Organization + SoftwareApplication)
+- Pricing page has FAQPage JSON-LD
+- Case study page has Article JSON-LD
+- All industry pages have WebPage JSON-LD
+
 ---
 *Phase: 32-marketing-site-checkout*
 *Completed: 2026-03-27*
