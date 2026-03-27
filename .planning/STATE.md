@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Media, Billing & Growth Roles
 status: executing
-stopped_at: Completed 35-03-PLAN.md (Tasks 1-2; Task 3 pending user verification)
-last_updated: "2026-03-27T16:15:31.337Z"
-last_activity: "2026-03-28 - Completed 35-02: Trigger Wiring & Cross-Role Tool Bridge"
+stopped_at: Completed 36-01-PLAN.md (Expo scaffold + Bearer auth adapter)
+last_updated: "2026-03-27T17:00:31.565Z"
+last_activity: "2026-03-28 - Completed 35-03: Workflow CRUD API & Dashboard (Tasks 1-2; Task 3 pending verification)"
 progress:
-  total_phases: 21
+  total_phases: 22
   completed_phases: 14
-  total_plans: 37
-  completed_plans: 38
+  total_plans: 41
+  completed_plans: 39
   percent: 33
 ---
 
@@ -82,6 +82,7 @@ Progress: v1.0 ======== | v1.1 ======== | v1.2 ======== | v1.4 ======== | v1.5 =
 | Phase 35 P01 | 27min | 2 tasks | 7 files |
 | Phase 35 P02 | 15min | 2 tasks | 4 files |
 | Phase 35 P03 | 19min | 2 tasks | 8 files |
+| Phase 36 P01 | 18min | 2 tasks | 17 files |
 
 ## Accumulated Context
 
@@ -177,6 +178,8 @@ See PROJECT.md Key Decisions table.
 - [Phase 35]: [Phase 35-02]: Event triggers in triage only evaluate/record; workflow starting deferred to role tick for budget control
 - [Phase 35]: Hard-delete workflow rules with active workflow cancellation for clean removal
 - [Phase 35]: Workflows gated to growth+ tiers (beta, growth, scale, enterprise) in Intelligence sidebar category
+- [Phase 36]: [Phase 36-01]: Bearer auth tries first, null fallback to cookie for backward-compatible mobile+web dual auth
+- [Phase 36]: [Phase 36-01]: Service client for mobile Bearer path DB ops (no cookie context for RLS)
 
 ### Roadmap Evolution
 
@@ -202,6 +205,6 @@ See PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-03-27T16:15:31.316Z
-Stopped at: Completed 35-03-PLAN.md (Tasks 1-2; Task 3 pending user verification)
+Last session: 2026-03-27T17:00:31.560Z
+Stopped at: Completed 36-01-PLAN.md (Expo scaffold + Bearer auth adapter)
 Resume file: None

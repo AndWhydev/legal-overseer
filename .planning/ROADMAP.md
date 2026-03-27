@@ -395,6 +395,6 @@ Phase 20 first (no dependencies), then 21 (billing before growth roles), then 22
 | 33. Beta Program Infrastructure | v1.5 | 1/1 | Complete | 2026-03-27 |
 | 34. Builder Role | v1.5 | 4/4 | Complete | 2026-03-27 |
 | 35. Proactive Workflows | 3/3 | Complete   | 2026-03-27 | - |
-| 36. Mobile-First Experience | v1.5 | 0/4 | Planned | - |
+| 36. Mobile-First Experience | 1/4 | In Progress|  | - |
 
 **Overall:** 57/57 plans complete for v1.0+v1.1+v1.2 (100%). v1.4: 24/28 plans (Phases 20-27 complete, 28-29 pending). v1.5: Phases 30-35 complete, Phase 36 planned (4 plans).
