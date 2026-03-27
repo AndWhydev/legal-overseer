@@ -10,6 +10,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
+import { ClawdAmbient } from '@/components/ui/clawd-ambient'
 
 type LoginStatus = 'idle' | 'loading' | 'sent' | 'error'
 type LoginMethod = 'email' | 'google' | 'apple' | null
@@ -229,16 +230,9 @@ function LoginPageContent() {
                 </div>
               </form>
 
-              {/* ── Right: Clawd wake video ── */}
+              {/* ── Right: Clawd ambient animation ── */}
               <div className="relative hidden overflow-hidden bg-black md:block">
-                <video
-                  autoPlay
-                  loop
-                  muted
-                  playsInline
-                  className="absolute inset-0 h-full w-full object-cover"
-                  src="/clawd-wake.mp4"
-                />
+                <ClawdAmbient className="absolute inset-0" />
               </div>
             </CardContent>
           </Card>
