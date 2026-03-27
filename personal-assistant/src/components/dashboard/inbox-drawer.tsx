@@ -2,23 +2,35 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
-  X,
-  Reply,
-  Forward,
-  Archive,
-  CheckCircle2,
-  AlertTriangle,
-  Sparkles,
-  ChevronDown,
-  ChevronRight,
-  ListTodo,
-  Send,
-} from 'lucide-react';
+  IconX,
+  IconArrowBackUp,
+  IconArrowForwardUp,
+  IconArchive,
+  IconCircleCheck,
+  IconAlertTriangle,
+  IconSparkles,
+  IconChevronDown,
+  IconChevronRight,
+  IconChecklist,
+  IconSend,
+} from '@tabler/icons-react';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from '@/components/ui/sheet';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent } from '@/components/ui/card';
 import { resolveAvatarSync, resolveAvatar, type AvatarResult } from '@/lib/avatar/resolver';
 
-// ─────────────────────────────────────────────────────────────────────────────
 // Types
-// ─────────────────────────────────────────────────────────────────────────────
 
 type MessageCategory = 'action_required' | 'fyi' | 'conversation' | 'automated' | 'marketing' | 'spam';
 type ThreadStatus = 'waiting_on_you' | 'waiting_on_them' | 'resolved' | 'new';
@@ -63,9 +75,7 @@ export interface InboxDrawerProps {
   threadMessages?: ThreadMessageItem[];
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Channel Icons & Colors
-// ─────────────────────────────────────────────────────────────────────────────
+// Channel Icons (SVG brand icons)
 
 function GmailIcon({ size = 15 }: { size?: number }) {
   return (
@@ -136,19 +146,7 @@ const CHANNEL_ICONS: Record<string, React.FC<{ size?: number }>> = {
   stripe: StripeIcon,
 };
 
-const CHANNEL_BRAND_COLORS: Record<string, string> = {
-  gmail: '#EA4335',
-  outlook: '#0078D4',
-  whatsapp: '#25D366',
-  imessage: '#34C759',
-  asana: '#F06A6A',
-  calendly: '#006BFF',
-  stripe: '#635BFF',
-};
-
-// ─────────────────────────────────────────────────────────────────────────────
 // Helper Functions
-// ─────────────────────────────────────────────────────────────────────────────
 
 function getCategoryLabel(category: MessageCategory): string {
   const labels: Record<MessageCategory, string> = {
@@ -160,6 +158,18 @@ function getCategoryLabel(category: MessageCategory): string {
     spam: 'Spam',
   };
   return labels[category] || category;
+}
+
+function getCategoryVariant(category: MessageCategory): 'default' | 'secondary' | 'destructive' | 'outline' {
+  const variants: Record<MessageCategory, 'default' | 'secondary' | 'destructive' | 'outline'> = {
+    action_required: 'destructive',
+    fyi: 'secondary',
+    conversation: 'default',
+    automated: 'outline',
+    marketing: 'outline',
+    spam: 'outline',
+  };
+  return variants[category] || 'outline';
 }
 
 function formatDate(dateStr: string): string {
@@ -185,9 +195,7 @@ function formatTimeAgo(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' });
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// AI Summary — Task #13
-// ─────────────────────────────────────────────────────────────────────────────
+// AI Summary
 
 interface AiSummaryResult {
   summary: string;
@@ -199,26 +207,22 @@ function extractSummary(message: InboxMessage): AiSummaryResult {
   const text = (message.subject || '') + ' ' + message.bodyPreview;
   const actionItems: string[] = [];
 
-  // Detect action requests
   const actionMatch = text.match(/want[s]?\s+(?:the\s+)?([^,.!?]{10,60})/i);
   if (actionMatch) actionItems.push(actionMatch[0].trim());
 
-  // Detect deadlines
   const deadlineMatch = text.match(/(due|deadline|by|end of)\s+([^,.!?]{3,40})/i);
   if (deadlineMatch) actionItems.push(`Deadline mentioned: ${deadlineMatch[0].trim()}`);
 
-  // Detect urgency
   if (text.match(/urgent|asap|immediately|critical|error|crash|spike|500/i)) {
-    actionItems.push('Urgent — requires immediate attention');
+    actionItems.push('Urgent -- requires immediate attention');
   }
 
-  // Detect assignments
   if (text.match(/assigned|you have been|please review|please confirm/i)) {
     actionItems.push('Action assigned to you');
   }
 
   const summary = message.bodyPreview.length > 120
-    ? message.bodyPreview.slice(0, 120).trim() + '…'
+    ? message.bodyPreview.slice(0, 120).trim() + '...'
     : message.bodyPreview;
 
   const senderFirstName = (message.contactName || message.senderName || 'there').split(' ')[0];
@@ -244,7 +248,6 @@ function AiSummaryPanel({
   useEffect(() => {
     setLoading(true);
     setResult(null);
-    // Simulate async generation (would be real LLM call in production)
     const timer = setTimeout(() => {
       setResult(extractSummary(message));
       setLoading(false);
@@ -252,117 +255,65 @@ function AiSummaryPanel({
     return () => clearTimeout(timer);
   }, [message.id]);
 
-  const shimmer: React.CSSProperties = {
-    background: 'linear-gradient(90deg, rgba(139,92,246,0.08) 25%, rgba(139,92,246,0.14) 50%, rgba(139,92,246,0.08) 75%)',
-    backgroundSize: '200% 100%',
-    animation: 'shimmer 1.5s ease-in-out infinite',
-    borderRadius: 4,
-  };
-
   return (
-    <div
-      style={{
-        padding: 16,
-        borderRadius: 12,
-        border: '1px solid rgba(99, 102, 241, 0.3)',
-        background: 'rgba(99, 102, 241, 0.05)',
-      }}
-    >
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-        <Sparkles size={14} style={{ color: '#A78BFA', flexShrink: 0 }} />
-        <span style={{ fontSize: 14, fontWeight: 500, color: '#A78BFA', letterSpacing: '0.02em' }}>
-          AI Summary
-        </span>
-      </div>
-
-      {loading ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <div style={{ ...shimmer, height: 12, width: '90%' }} />
-          <div style={{ ...shimmer, height: 12, width: '75%' }} />
-          <div style={{ ...shimmer, height: 12, width: '55%', marginTop: 4 }} />
+    <Card className="border-purple-500/30 bg-purple-500/5 py-4 gap-3">
+      <CardContent className="flex flex-col gap-3">
+        <div className="flex items-center gap-2">
+          <IconSparkles className="size-3.5 text-purple-400 shrink-0" />
+          <span className="text-xs font-medium text-purple-400 tracking-wide">AI Summary</span>
         </div>
-      ) : result ? (
-        <>
-          {/* Summary text */}
-          <p style={{
-            fontSize: 14,
-            color: 'rgba(255,255,255,0.75)',
-            margin: '0 0 10px',
-            lineHeight: 1.5,
-          }}>
-            {result.summary}
-          </p>
 
-          {/* Action items */}
-          {result.actionItems.length > 0 && (
-            <ul style={{ margin: '0 0 12px', padding: '0 0 0 2px', listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 4 }}>
-              {result.actionItems.map((item, i) => (
-                <li key={i} style={{ fontSize: 14, color: 'rgba(167,139,250,0.9)', display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-                  <span style={{ color: '#6366f1', marginTop: 4, flexShrink: 0 }}>›</span>
-                  {item}
-                </li>
-              ))}
-            </ul>
-          )}
-
-          {/* Action buttons */}
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button
-              onClick={() => onCreateTask({
-                subject: message.subject || message.bodyPreview.slice(0, 60),
-                description: message.bodyPreview,
-              })}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 4,
-                padding: '4px 12px',
-                borderRadius: 8,
-                border: '1px solid rgba(99,102,241,0.3)',
-                background: 'rgba(99,102,241,0.1)',
-                color: '#A78BFA',
-                fontSize: 14,
-                fontWeight: 500,
-                cursor: 'pointer',
-                transition: 'all 150ms ease',
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(99,102,241,0.2)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(99,102,241,0.1)'; }}
-            >
-              <ListTodo size={11} /> Create Task
-            </button>
-            <button
-              onClick={() => onDraftReply(result.draftReply)}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 4,
-                padding: '4px 12px',
-                borderRadius: 8,
-                border: '1px solid rgba(255,255,255,0.08)',
-                background: 'rgba(255,255,255,0.04)',
-                color: 'rgba(255,255,255,0.6)',
-                fontSize: 14,
-                fontWeight: 500,
-                cursor: 'pointer',
-                transition: 'all 150ms ease',
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
-            >
-              <Reply size={11} /> Draft Reply
-            </button>
+        {loading ? (
+          <div className="flex flex-col gap-2">
+            <Skeleton className="h-3 w-[90%] bg-purple-500/10" />
+            <Skeleton className="h-3 w-[75%] bg-purple-500/10" />
+            <Skeleton className="h-3 w-[55%] bg-purple-500/10" />
           </div>
-        </>
-      ) : null}
-    </div>
+        ) : result ? (
+          <>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              {result.summary}
+            </p>
+
+            {result.actionItems.length > 0 && (
+              <ul className="flex flex-col gap-1 text-xs">
+                {result.actionItems.map((item, i) => (
+                  <li key={i} className="flex items-start gap-2 text-purple-400/90">
+                    <span className="text-purple-600 mt-0.5 shrink-0">&rsaquo;</span>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="xs"
+                className="border-purple-500/30 bg-purple-500/10 text-purple-400 hover:bg-purple-500/20"
+                onClick={() => onCreateTask({
+                  subject: message.subject || message.bodyPreview.slice(0, 60),
+                  description: message.bodyPreview,
+                })}
+              >
+                <IconChecklist className="size-3" data-icon="inline-start" /> Create Task
+              </Button>
+              <Button
+                variant="outline"
+                size="xs"
+                onClick={() => onDraftReply(result.draftReply)}
+              >
+                <IconArrowBackUp className="size-3" data-icon="inline-start" /> Draft Reply
+              </Button>
+            </div>
+          </>
+        ) : null}
+      </CardContent>
+    </Card>
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Thread View — Task #11
-// ─────────────────────────────────────────────────────────────────────────────
+// Thread View
 
 function ThreadView({
   messages,
@@ -373,9 +324,9 @@ function ThreadView({
 }) {
   if (!messages || messages.length === 0) {
     return (
-      <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', fontStyle: 'italic' }}>
+      <p className="text-sm text-muted-foreground italic">
         No thread messages available
-      </div>
+      </p>
     );
   }
 
@@ -391,11 +342,10 @@ function ThreadView({
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      {/* Thread count header */}
-      <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.3)', marginBottom: 4, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+    <div className="flex flex-col gap-2">
+      <span className="text-xs uppercase tracking-wider text-muted-foreground mb-1">
         {messages.length} messages in thread
-      </div>
+      </span>
 
       {messages.map((msg) => {
         if (!msg || !msg.id) return null;
@@ -403,131 +353,62 @@ function ThreadView({
         const isExpanded = expanded.has(msg.id);
         const isLatest = msg.id === latestId;
         const senderName = msg.senderName || 'Unknown';
-        const bodyPreview = msg.bodyPreview || '';
 
         return (
-          <div
-            key={msg.id}
-            style={{
-              borderRadius: 8,
-              border: `1px solid ${isLatest ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.04)'}`,
-              background: isLatest ? 'rgba(255,255,255,0.03)' : 'transparent',
-              overflow: 'hidden',
-              transition: 'border-color 150ms ease',
-            }}
-          >
-            {/* Message header row */}
+          <Card key={msg.id} className={`py-0 gap-0 overflow-hidden ${isLatest ? 'border-border' : 'border-border/50'}`}>
             <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                padding: '12px 12px',
-                cursor: isLatest ? 'default' : 'pointer',
-                userSelect: 'none',
-              }}
+              className={`flex items-center gap-2 px-3 py-2.5 ${isLatest ? '' : 'cursor-pointer'} select-none`}
               onClick={() => !isLatest && toggle(msg.id)}
             >
-              {/* Avatar */}
-              <div style={{
-                width: 24,
-                height: 24,
-                borderRadius: '50%',
-                background: msg.isSelf ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.1)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: 14,
-                fontWeight: 500,
-                color: msg.isSelf ? '#E2E8F0' : 'rgba(255,255,255,0.7)',
-                flexShrink: 0,
-              }}>
-                {String(senderName[0] || '?').toUpperCase()}
-              </div>
+              <Avatar size="sm">
+                <AvatarFallback className={msg.isSelf ? 'bg-primary/20 text-primary' : ''}>
+                  {String(senderName[0] || '?').toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
 
-              {/* Sender */}
-              <span style={{ fontSize: 14, fontWeight: 500, color: 'rgba(255,255,255,0.85)', flexShrink: 0 }}>
+              <span className="text-sm font-medium text-foreground shrink-0">
                 {msg.isSelf ? 'You' : senderName}
               </span>
 
-              {/* Collapsed preview */}
               {!isExpanded && !isLatest && (
-                <span style={{
-                  fontSize: 14,
-                  color: 'rgba(255,255,255,0.3)',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                  flex: 1,
-                }}>
-                  {String(bodyPreview).slice(0, 70)}
+                <span className="text-xs text-muted-foreground truncate flex-1">
+                  {String(msg.bodyPreview).slice(0, 70)}
                 </span>
               )}
 
-              <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.25)', flexShrink: 0, marginLeft: 'auto' }}>
+              <span className="text-xs text-muted-foreground shrink-0 ml-auto">
                 {formatTimeAgo(msg.receivedAt)}
               </span>
 
               {!isLatest && (
-                <span style={{ color: 'rgba(255,255,255,0.2)', flexShrink: 0 }}>
-                  {isExpanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+                <span className="text-muted-foreground shrink-0">
+                  {isExpanded ? <IconChevronDown className="size-3" /> : <IconChevronRight className="size-3" />}
                 </span>
               )}
             </div>
 
-            {/* Message body */}
             {(isExpanded || isLatest) && (
-              <div style={{
-                padding: '0 12px 12px 44px',
-                fontSize: 14,
-                color: 'rgba(255,255,255,0.75)',
-                lineHeight: 1.6,
-                whiteSpace: 'pre-wrap',
-                wordBreak: 'break-word',
-              }}>
-                {String(bodyPreview)}
+              <div className="px-3 pb-3 pl-10 text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap break-words">
+                {String(msg.bodyPreview)}
               </div>
             )}
-          </div>
+          </Card>
         );
       })}
 
-      {/* Reply prompt */}
-      <button
+      <Button
+        variant="outline"
+        size="sm"
+        className="mt-1 border-dashed text-muted-foreground"
         onClick={onFocusReply}
-        style={{
-          marginTop: 4,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-          padding: '12px 12px',
-          borderRadius: 8,
-          border: '1px dashed rgba(255,255,255,0.08)',
-          background: 'transparent',
-          color: 'rgba(255,255,255,0.3)',
-          fontSize: 14,
-          cursor: 'pointer',
-          transition: 'all 150ms ease',
-          textAlign: 'left',
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)';
-          e.currentTarget.style.color = 'rgba(255,255,255,0.5)';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)';
-          e.currentTarget.style.color = 'rgba(255,255,255,0.3)';
-        }}
       >
-        <Reply size={13} /> Reply to thread…
-      </button>
+        <IconArrowBackUp className="size-3" data-icon="inline-start" /> Reply to thread...
+      </Button>
     </div>
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 // Main Component
-// ─────────────────────────────────────────────────────────────────────────────
 
 export default function InboxDrawer({
   message,
@@ -539,29 +420,8 @@ export default function InboxDrawer({
   onNavigate,
   threadMessages,
 }: InboxDrawerProps) {
-  const [drawerWidth, setDrawerWidth] = useState(55);
-  const [isResizing, setIsResizing] = useState(false);
   const [replyText, setReplyText] = useState('');
-  const [replyFocused, setReplyFocused] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const drawerRef = useRef<HTMLDivElement>(null);
-
-  // Load drawer width from localStorage
-  useEffect(() => {
-    const saved = localStorage.getItem('bb-inbox-drawer-width');
-    if (saved) {
-      const width = parseFloat(saved);
-      if (width >= 40 && width <= 70) setDrawerWidth(width);
-    }
-  }, []);
-
-  // Lock body scroll when open
-  useEffect(() => {
-    if (open) {
-      document.body.style.overflow = 'hidden';
-      return () => { document.body.style.overflow = ''; };
-    }
-  }, [open]);
 
   // Reset reply text when message changes
   useEffect(() => {
@@ -597,27 +457,6 @@ export default function InboxDrawer({
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [open, message, onClose, onNavigate, onArchive, onDone]);
 
-  // Resize logic
-  useEffect(() => {
-    if (!isResizing) return;
-
-    const handleMouseMove = (e: MouseEvent) => {
-      const newWidth = (window.innerWidth - e.clientX) / window.innerWidth * 100;
-      if (newWidth >= 40 && newWidth <= 70) {
-        setDrawerWidth(newWidth);
-        localStorage.setItem('bb-inbox-drawer-width', newWidth.toString());
-      }
-    };
-    const handleMouseUp = () => setIsResizing(false);
-
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [isResizing]);
-
   const handleSendReply = () => {
     if (message && replyText.trim()) {
       onReply(message.id, replyText);
@@ -625,18 +464,7 @@ export default function InboxDrawer({
     }
   };
 
-  const handleAutoExpand = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setReplyText(e.target.value);
-    e.target.style.height = 'auto';
-    e.target.style.height = Math.min(e.target.scrollHeight, 200) + 'px';
-  };
-
-  const focusReply = useCallback(() => {
-    textareaRef.current?.focus();
-    textareaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  }, []);
-
-  // Avatar resolution (must be before conditional return for hooks rules)
+  // Avatar resolution
   const sender = message ? (message.contactName || message.senderName || message.senderEmail || 'Unknown') : '';
   const email = message?.senderEmail ?? null;
   const syncAvatar: AvatarResult = sender ? resolveAvatarSync(sender, email) : { url: null, type: 'initials', initials: '?', color: '#666' };
@@ -651,250 +479,116 @@ export default function InboxDrawer({
     return () => { cancelled = true; };
   }, [email, sender]);
 
-  if (!open || !message) return null;
+  if (!message) return null;
 
   const ChannelIcon = CHANNEL_ICONS[message.channelType] || GmailIcon;
-  const brandColor = CHANNEL_BRAND_COLORS[message.channelType] || 'var(--text-dim)';
-
   const showSummary = message.significance >= 5;
   const hasThread = threadMessages && threadMessages.length > 1;
-
-  // Thread count badge (shown in header)
   const threadCount = threadMessages?.length ?? message.threadCount;
 
-  const btnStyle: React.CSSProperties = {
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: 8,
-    padding: '8px 12px',
-    borderRadius: 8,
-    border: '1px solid var(--hover-bg-strong, rgba(255, 255, 255, 0.08))',
-    background: 'var(--hover-bg, rgba(255, 255, 255, 0.04))',
-    color: 'var(--text-secondary, rgba(255, 255, 255, 0.7))',
-    fontSize: 14,
-    fontWeight: 500,
-    cursor: 'pointer',
-    transition: 'all 150ms ease',
-  };
-
   return (
-    <>
-      {/* Overlay */}
-      <div
-        style={{
-          position: 'fixed',
-          inset: 0,
-          zIndex: 100,
-          background: 'rgba(0, 0, 0, 0.6)',
-          backdropFilter: 'blur(6px)',
-        }}
-        onClick={onClose}
-        aria-hidden="true"
-      />
-
-      {/* Drawer Panel */}
-      <div
-        ref={drawerRef}
-        role="dialog"
-        aria-label={`Reading: ${message.subject || 'Message'}`}
-        aria-modal="true"
-        style={{
-          position: 'fixed',
-          top: 0,
-          right: 0,
-          bottom: 0,
-          width: `${drawerWidth}%`,
-          zIndex: 101,
-          background: 'var(--bg-primary, #0a0f1a)',
-          borderLeft: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
-          display: 'flex',
-          flexDirection: 'column',
-          transform: open ? 'translateX(0)' : 'translateX(100%)',
-          transition: 'transform 300ms cubic-bezier(0.4, 0, 0.2, 1)',
-          boxShadow: '-8px 0 40px rgba(0, 0, 0, 0.5)',
-        }}
+    <Sheet open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
+      <SheetContent
+        side="right"
+        className="w-full sm:max-w-2xl flex flex-col gap-0 p-0"
+        showCloseButton={false}
       >
-        {/* Resize Handle */}
-        <div
-          onMouseDown={() => setIsResizing(true)}
-          style={{
-            position: 'absolute',
-            left: -4,
-            top: 0,
-            bottom: 0,
-            width: 8,
-            cursor: 'col-resize',
-            zIndex: 100,
-            background: isResizing ? 'var(--hover-bg-strong, rgba(255, 255, 255, 0.12))' : 'transparent',
-            transition: 'background 150ms ease',
-          }}
-        />
-
         {/* Header: Actions + Close */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '16px 20px',
-          borderBottom: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
-          flexShrink: 0,
-          gap: 12,
-        }}>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            <button style={btnStyle} onClick={() => focusReply()} title="Reply (R)"
-              onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}>
-              <Reply size={13} /> Reply
-            </button>
-            <button style={btnStyle} onClick={() => {}} title="Forward (F)"
-              onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}>
-              <Forward size={13} /> Forward
-            </button>
-            <button style={btnStyle} onClick={() => onArchive(message.id)} title="Archive (E)"
-              onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}>
-              <Archive size={13} /> Archive
-            </button>
-            <button style={btnStyle} onClick={() => onDone(message.id)} title="Done (D)"
-              onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}>
-              <CheckCircle2 size={13} /> Done
-            </button>
-            <button
-              style={{ ...btnStyle, background: 'rgba(239,68,68,0.08)', color: 'rgba(239,68,68,0.8)' }}
-              onClick={() => {}} title="Spam (!)"
-              onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(239,68,68,0.15)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(239,68,68,0.08)'; }}>
-              <AlertTriangle size={13} /> Spam
-            </button>
+        <div className="flex items-center justify-between px-5 py-3 border-b border-border shrink-0 gap-3">
+          <div className="flex gap-2 flex-wrap">
+            <Button variant="outline" size="sm" onClick={() => textareaRef.current?.focus()} title="Reply (R)">
+              <IconArrowBackUp className="size-3.5" data-icon="inline-start" /> Reply
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => {}} title="Forward (F)">
+              <IconArrowForwardUp className="size-3.5" data-icon="inline-start" /> Forward
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => onArchive(message.id)} title="Archive (E)">
+              <IconArchive className="size-3.5" data-icon="inline-start" /> Archive
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => onDone(message.id)} title="Done (D)">
+              <IconCircleCheck className="size-3.5" data-icon="inline-start" /> Done
+            </Button>
+            <Button variant="destructive" size="sm" onClick={() => {}} title="Spam (!)">
+              <IconAlertTriangle className="size-3.5" data-icon="inline-start" /> Spam
+            </Button>
           </div>
 
-          {/* Thread count + close */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+          <div className="flex items-center gap-2 shrink-0">
             {threadCount && threadCount > 1 && (
-              <span style={{
-                fontSize: 14,
-                fontWeight: 500,
-                color: 'rgba(255,255,255,0.4)',
-                background: 'rgba(255,255,255,0.06)',
-                padding: '4px 8px',
-                borderRadius: 12,
-              }}>
+              <Badge variant="secondary" className="text-xs">
                 {threadCount} messages
-              </span>
+              </Badge>
             )}
-            <button
-              style={{
-                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                width: 32, height: 32, borderRadius: 8, border: 'none',
-                background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.6)',
-                cursor: 'pointer', transition: 'all 150ms ease', flexShrink: 0,
-              }}
-              onClick={onClose} title="Close (Esc)" aria-label="Close drawer"
-              onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.12)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; }}
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={onClose}
+              title="Close (Esc)"
+              aria-label="Close drawer"
             >
-              <X size={16} />
-            </button>
+              <IconX className="size-4" />
+            </Button>
           </div>
         </div>
 
         {/* Meta: Sender, Subject, Badges */}
-        <div style={{
-          padding: '20px 24px',
-          borderBottom: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
-          flexShrink: 0,
-        }}>
-          {/* Sender row */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-            <div style={{ position: 'relative', width: 36, height: 36, flexShrink: 0 }}>
-              {avatar?.url ? (
-                <img src={avatar.url} alt={sender} width={36} height={36}
-                  style={{ borderRadius: '50%', objectFit: 'cover', display: 'block' }} />
-              ) : (
-                <div style={{
-                  width: 36, height: 36, borderRadius: '50%',
-                  background: `${brandColor}20`, display: 'flex',
-                  alignItems: 'center', justifyContent: 'center',
-                  fontSize: 14, fontWeight: 500, color: brandColor,
-                }}>
-                  {sender[0]?.toUpperCase() || '?'}
-                </div>
-              )}
-              <div style={{
-                position: 'absolute', bottom: -2, right: -2,
-                width: 14, height: 14, borderRadius: '50%',
-                background: 'var(--bg-primary, #0a0f1a)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: brandColor,
-              }}>
+        <div className="px-6 py-5 border-b border-border shrink-0">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="relative size-9 shrink-0">
+              <Avatar size="lg">
+                {avatar?.url && <AvatarImage src={avatar.url} alt={sender} />}
+                <AvatarFallback>{sender[0]?.toUpperCase() || '?'}</AvatarFallback>
+              </Avatar>
+              <div className="absolute -bottom-0.5 -right-0.5 size-3.5 rounded-full bg-background flex items-center justify-center text-muted-foreground">
                 <ChannelIcon size={9} />
               </div>
             </div>
 
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 16, fontWeight: 500, color: 'rgba(255,255,255,0.95)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <div className="flex-1 min-w-0">
+              <div className="text-base font-medium text-foreground truncate">
                 {String(sender || '')}
               </div>
               {message.senderEmail && (
-                <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', marginTop: 4 }}>
+                <div className="text-xs text-muted-foreground mt-0.5">
                   {String(message.senderEmail || '')}
                 </div>
               )}
             </div>
 
-            <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.35)', flexShrink: 0, textAlign: 'right' }}>
+            <div className="text-xs text-muted-foreground shrink-0 text-right">
               {formatDate(message.receivedAt)}
             </div>
           </div>
 
-          {/* Subject */}
           {message.subject && (
-            <h2 style={{ fontSize: 16, fontWeight: 500, color: 'rgba(255,255,255,0.95)', margin: '0 0 10px', lineHeight: 1.3 }}>
+            <h2 className="text-base font-medium text-foreground mb-2.5 leading-snug">
               {String(message.subject || '')}
             </h2>
           )}
 
-          {/* Badges */}
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            <span style={{
-              display: 'inline-flex', alignItems: 'center', padding: '4px 12px',
-              borderRadius: 12, fontSize: 14, fontWeight: 500,
-              textTransform: 'uppercase', letterSpacing: '0.04em',
-              background: message.category === 'action_required' ? 'rgba(255,255,255,0.08)' : message.category === 'conversation' ? 'rgba(139,92,246,0.15)' : message.category === 'spam' ? 'rgba(239,68,68,0.15)' : message.category === 'marketing' ? 'rgba(234,179,8,0.12)' : message.category === 'automated' ? 'rgba(79,70,229,0.12)' : 'rgba(255,255,255,0.06)',
-              color: message.category === 'action_required' ? '#E2E8F0' : message.category === 'conversation' ? '#A78BFA' : message.category === 'spam' ? '#F87171' : message.category === 'marketing' ? '#EAB308' : message.category === 'automated' ? '#818CF8' : 'rgba(255,255,255,0.5)',
-            }}>
+          <div className="flex gap-2 flex-wrap">
+            <Badge variant={getCategoryVariant(message.category)} className="uppercase tracking-wide text-[10px]">
               {getCategoryLabel(message.category)}
-            </span>
+            </Badge>
 
             {message.threadStatus && (
-              <span style={{
-                display: 'inline-flex', alignItems: 'center', padding: '4px 12px',
-                borderRadius: 12, fontSize: 14, fontWeight: 500,
-                background: message.threadStatus === 'waiting_on_you' ? 'rgba(59,130,246,0.12)' : 'rgba(255,255,255,0.06)',
-                color: message.threadStatus === 'waiting_on_you' ? '#60A5FA' : 'rgba(255,255,255,0.4)',
-              }}>
+              <Badge
+                variant={message.threadStatus === 'waiting_on_you' ? 'default' : 'secondary'}
+              >
                 {message.threadStatus === 'waiting_on_you' ? 'Waiting on you' :
                  message.threadStatus === 'waiting_on_them' ? 'Waiting on them' :
                  message.threadStatus === 'new' ? 'New' : 'Resolved'}
-              </span>
+              </Badge>
             )}
           </div>
         </div>
 
         {/* Body Content */}
-        <div style={{
-          flex: 1, overflowY: 'auto', padding: '20px 24px',
-          color: 'rgba(255,255,255,0.85)', fontSize: 14, lineHeight: 1.7,
-          display: 'flex', flexDirection: 'column', gap: 16,
-        }}>
-          {/* AI Summary — Task #13 */}
+        <div className="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-4 text-sm text-foreground leading-relaxed">
           {showSummary && (
             <AiSummaryPanel
               message={message}
               onCreateTask={(data) => {
-                // Navigate to kanban with pre-filled task
                 window.dispatchEvent(new CustomEvent('bb:create-task', { detail: data }));
               }}
               onDraftReply={(text) => {
@@ -904,35 +598,26 @@ export default function InboxDrawer({
             />
           )}
 
-          {/* Thread View or Single Message — Task #11 */}
           {hasThread && threadMessages && threadMessages.length > 0 ? (
-            <ThreadView messages={threadMessages} onFocusReply={focusReply} />
+            <ThreadView messages={threadMessages} onFocusReply={() => textareaRef.current?.focus()} />
           ) : (
-            <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
+            <div className="whitespace-pre-wrap break-words font-sans">
               {String(message.bodyPreview || '(No message body)')}
             </div>
           )}
         </div>
 
         {/* Reply Composer */}
-        <div style={{ padding: '16px 20px', borderTop: '1px solid rgba(255,255,255,0.06)', flexShrink: 0 }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'flex-end',
-            gap: 0,
-            background: 'var(--glass-pill-bg, rgba(255,255,255,0.04))',
-            backdropFilter: 'var(--glass-card-blur, blur(20px))',
-            WebkitBackdropFilter: 'var(--glass-card-blur, blur(20px))',
-            borderRadius: 20,
-            padding: '4px 4px 4px 16px',
-            boxShadow: 'var(--glass-pill-inset, inset 0 1px 0 rgba(255,255,255,0.05))',
-          }}>
+        <div className="px-5 py-4 border-t border-border shrink-0">
+          <div className="flex items-end gap-2 rounded-xl border border-input bg-muted/30 px-3 py-2">
             <textarea
               ref={textareaRef}
               value={replyText}
-              onChange={handleAutoExpand}
-              onFocus={() => setReplyFocused(true)}
-              onBlur={() => setReplyFocused(false)}
+              onChange={(e) => {
+                setReplyText(e.target.value);
+                e.target.style.height = 'auto';
+                e.target.style.height = Math.min(e.target.scrollHeight, 200) + 'px';
+              }}
               onKeyDown={(e) => {
                 if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
                   e.preventDefault();
@@ -940,41 +625,25 @@ export default function InboxDrawer({
                 }
               }}
               placeholder="Reply... (Cmd+Enter to send)"
-              style={{
-                flex: 1, padding: '8px 0',
-                background: 'transparent', border: 'none', outline: 'none',
-                color: 'var(--text-primary, #F1F5F9)',
-                fontSize: 14, fontFamily: 'inherit', lineHeight: 1.5,
-                resize: 'none', minHeight: 32, maxHeight: 200,
-                width: '100%',
-              }}
+              className="flex-1 bg-transparent border-none outline-none text-sm text-foreground font-inherit leading-normal resize-none min-h-8 max-h-[200px] w-full placeholder:text-muted-foreground"
             />
-            <button
+            <Button
+              variant="ghost"
+              size="icon-sm"
               onClick={handleSendReply}
               disabled={!replyText.trim()}
-              style={{
-                width: 32, height: 32, borderRadius: '50%',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                border: 'none', flexShrink: 0,
-                cursor: replyText.trim() ? 'pointer' : 'default',
-                transition: 'background 150ms cubic-bezier(0.16, 1, 0.3, 1), color 150ms cubic-bezier(0.16, 1, 0.3, 1), opacity 150ms cubic-bezier(0.16, 1, 0.3, 1)',
-                background: 'transparent',
-                color: replyText.trim() ? 'var(--text-primary, #F1F5F9)' : 'var(--text-dim, rgba(255,255,255,0.25))',
-                opacity: replyText.trim() ? 1 : 0.4,
-              }}
-              onMouseEnter={(e) => { if (replyText.trim()) e.currentTarget.style.background = 'var(--hover-bg-strong, rgba(255,255,255,0.1))'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+              className={replyText.trim() ? 'text-foreground' : 'text-muted-foreground opacity-40'}
             >
-              <Send size={14} />
-            </button>
+              <IconSend className="size-3.5" />
+            </Button>
           </div>
           {replyText && (
-            <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.2)', marginTop: 4, paddingLeft: 16 }}>
-              <kbd style={{ padding: '4px 4px', borderRadius: 3, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', fontSize: 14, fontFamily: 'inherit' }}>Cmd+Enter</kbd> to send
+            <div className="text-xs text-muted-foreground mt-1.5 pl-3">
+              <kbd className="px-1 py-0.5 rounded border border-border bg-background text-[10px] font-mono">Cmd+Enter</kbd> to send
             </div>
           )}
         </div>
-      </div>
-    </>
+      </SheetContent>
+    </Sheet>
   );
 }

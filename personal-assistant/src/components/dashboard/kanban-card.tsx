@@ -3,7 +3,10 @@
 import { memo } from 'react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { X } from 'lucide-react'
+import { IconX } from '@tabler/icons-react'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Separator } from '@/components/ui/separator'
 import type { Task } from '@/lib/types'
 import { MarkdownRenderer } from './markdown-renderer'
 
@@ -13,18 +16,11 @@ interface KanbanCardProps {
   onArchive?: (task: Task) => void
 }
 
-const priorityGlass: Record<string, { bg: string; shadow: string }> = {
-  critical: { bg: 'var(--glass-card-bg-light)', shadow: '0 2px 8px rgba(0, 0, 0, 0.15)' },
-  high:     { bg: 'var(--glass-card-bg-light)', shadow: '0 1px 4px rgba(0, 0, 0, 0.12)' },
-  medium:   { bg: 'var(--bg-card)',  shadow: '0 1px 2px rgba(0, 0, 0, 0.08)' },
-  low:      { bg: 'var(--bg-card)', shadow: '0 1px 1px rgba(0, 0, 0, 0.05)' },
-}
-
-const priorityDot: Record<string, { color: string; label?: string }> = {
-  critical: { color: '#EF4444', label: 'critical' },
-  high:     { color: '#F59E0B', label: 'high' },
-  medium:   { color: 'var(--text-dim)' },
-  low:      { color: 'var(--text-dim)' },
+const priorityVariant: Record<string, 'destructive' | 'secondary' | 'outline'> = {
+  critical: 'destructive',
+  high: 'secondary',
+  medium: 'outline',
+  low: 'outline',
 }
 
 const sourceColors: Record<string, string> = {
@@ -45,7 +41,7 @@ function timeAgo(dateStr: string): string {
   return `${days}d ago`
 }
 
-function getDeadlineStyle(deadline: string): { bg: string; color: string; label: string } | null {
+function getDeadlineInfo(deadline: string): { variant: 'destructive' | 'secondary' | 'outline'; label: string } | null {
   const now = Date.now()
   const due = new Date(deadline).getTime()
   const diffDays = (due - now) / 86_400_000
@@ -53,9 +49,9 @@ function getDeadlineStyle(deadline: string): { bg: string; color: string; label:
   const d = new Date(deadline)
   const label = d.toLocaleDateString('en-AU', { month: 'short', day: 'numeric' })
 
-  if (diffDays < 0) return { bg: 'rgba(239,68,68,0.1)', color: '#f87171', label }
-  if (diffDays <= 2) return { bg: 'rgba(245,158,11,0.08)', color: '#fbbf24', label }
-  return { bg: 'transparent', color: 'var(--text-dim)', label }
+  if (diffDays < 0) return { variant: 'destructive', label }
+  if (diffDays <= 2) return { variant: 'secondary', label }
+  return { variant: 'outline', label }
 }
 
 export const KanbanCard = memo(function KanbanCard({ task, onEdit, onArchive }: KanbanCardProps) {
@@ -68,7 +64,6 @@ export const KanbanCard = memo(function KanbanCard({ task, onEdit, onArchive }: 
     isDragging,
   } = useSortable({ id: task.id })
 
-  // Use Translate instead of Transform to prevent dnd-kit from applying scale changes
   const dndStyle = {
     transform: CSS.Translate.toString(transform),
     transition,
@@ -79,254 +74,127 @@ export const KanbanCard = memo(function KanbanCard({ task, onEdit, onArchive }: 
   const agentStatus = meta.agentStatus as 'working' | 'done' | 'error' | undefined
   const source = meta.source as string | undefined
   const deadline = meta.deadline as string | undefined
-  const glass = priorityGlass[task.priority] || priorityGlass.medium
-  const pri = priorityDot[task.priority] || priorityDot.medium
   const isOptimistic = task.id.startsWith('temp-')
   const isAgentCreated = source === 'bitbit'
   const isAgentWorking = task.assigned_to && agentStatus === 'working'
 
-  const deadlineInfo = deadline ? getDeadlineStyle(deadline) : null
+  const deadlineInfo = deadline ? getDeadlineInfo(deadline) : null
 
   return (
     <div
       ref={setNodeRef}
       {...attributes}
       {...listeners}
-      className="card-lift"
+      className={`card-lift group relative cursor-grab rounded-lg border bg-card p-3 shadow-sm transition-shadow hover:shadow-md active:cursor-grabbing ${
+        isDragging ? 'opacity-30' : isOptimistic ? 'opacity-70' : 'opacity-100'
+      } ${isAgentWorking ? 'animate-pulse border-l-2 border-l-muted-foreground' : 'border-border'}`}
       onClick={() => onEdit?.(task)}
       style={{
-        borderRadius: 12,
-        padding: '12px 12px',
-        borderLeft: isAgentWorking ? '2px solid var(--text-dim)' : undefined,
-        background: glass.bg,
-        backdropFilter: 'var(--glass-card-blur)',
-        WebkitBackdropFilter: 'var(--glass-card-blur)',
-        boxShadow: glass.shadow,
-        cursor: isDragging ? 'grabbing' : 'grab',
-        position: 'relative',
-        opacity: isDragging ? 0.3 : isOptimistic ? 0.7 : 1,
+        ...dndStyle,
+        transition: dndStyle.transition || undefined,
         userSelect: 'none',
         WebkitUserSelect: 'none' as const,
         willChange: transform ? 'transform' : undefined,
         contain: 'layout style',
-        animation: isAgentWorking ? 'bb-card-breathe 3s ease-in-out infinite' : undefined,
-        ...dndStyle,
-        transition: dndStyle.transition || undefined,
       } as React.CSSProperties}
     >
-      {/* Archive (show on hover) */}
+      {/* Archive button (show on hover) */}
       {onArchive && (
-        <div
-          className="kanban-card-actions"
-          style={{
-            position: 'absolute',
-            right: 8,
-            top: 8,
-            opacity: 0,
-            transition: 'opacity 0.15s',
-          }}
-        >
-          <button
+        <div className="kanban-card-actions absolute right-2 top-2 opacity-0 transition-opacity group-hover:opacity-100">
+          <Button
+            variant="ghost"
+            size="icon-xs"
             onClick={(e) => { e.stopPropagation(); onArchive(task) }}
-            style={{
-              borderRadius: 8,
-              padding: 4,
-              border: 'none',
-              background: 'var(--glass-hover-bg)',
-              color: 'var(--text-dim)',
-              cursor: 'pointer',
-              display: 'flex',
-              transition: 'color 0.15s',
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--text-secondary)' }}
-            onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-dim)' }}
+            className="text-muted-foreground hover:text-foreground"
           >
-            <X style={{ width: 11, height: 11 }} />
-          </button>
+            <IconX data-icon className="size-3" />
+          </Button>
         </div>
       )}
 
       {/* Title row with source dot */}
-      <h4 style={{
-        fontSize: 14,
-        fontWeight: 500,
-        color: 'var(--text-primary)',
-        lineHeight: 1.4,
-        display: '-webkit-box',
-        WebkitLineClamp: 2,
-        WebkitBoxOrient: 'vertical',
-        overflow: 'hidden',
-        margin: 0,
-        paddingRight: 20,
-      }}>
+      <h4 className="line-clamp-2 pr-5 text-sm font-medium leading-snug text-foreground">
         {/* Source channel dot */}
         {source && (
           isAgentCreated ? (
-            <span style={{
-              display: 'inline-block',
-              width: 6,
-              height: 6,
-              borderRadius: '50%',
-              background: 'linear-gradient(135deg, #4DAF6B, #9DC74D, #D4C24E, #E0A860, #D8908B)',
-              marginRight: 4,
-              verticalAlign: 'middle',
-              position: 'relative',
-              top: -1,
-            }} />
+            <span
+              className="mr-1 inline-block size-1.5 rounded-full align-middle"
+              style={{ background: 'linear-gradient(135deg, #4DAF6B, #9DC74D, #D4C24E, #E0A860, #D8908B)' }}
+            />
           ) : sourceColors[source] ? (
-            <span style={{
-              display: 'inline-block',
-              width: 6,
-              height: 6,
-              borderRadius: '50%',
-              background: sourceColors[source],
-              marginRight: 4,
-              verticalAlign: 'middle',
-              position: 'relative',
-              top: -1,
-            }} />
+            <span
+              className="mr-1 inline-block size-1.5 rounded-full align-middle"
+              style={{ backgroundColor: sourceColors[source] }}
+            />
           ) : null
         )}
         {task.title}
       </h4>
 
       {task.description && (
-        <div style={{
-          margin: '3px 0 0',
-          display: '-webkit-box',
-          WebkitLineClamp: 2,
-          WebkitBoxOrient: 'vertical' as const,
-          overflow: 'hidden',
-        }}>
+        <div className="mt-1 line-clamp-2">
           <MarkdownRenderer
             content={task.description}
             compact
-            style={{ fontSize: 14, color: 'var(--text-dim)', lineHeight: '1.35' }}
+            style={{ fontSize: '0.875rem', lineHeight: '1.375', color: 'hsl(var(--muted-foreground))' }}
           />
         </div>
       )}
 
-      {/* Metadata row: priority dot + tags + deadline + time */}
-      <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'wrap' }}>
-        {/* Priority dot + optional label */}
-        <span style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: 4,
-          fontSize: 14,
-          fontWeight: 500,
-          padding: '4px 8px',
-          borderRadius: 20,
-          background: 'var(--glass-pill-bg)',
-          boxShadow: 'var(--glass-pill-inset)',
-          color: 'var(--text-secondary)',
-          lineHeight: '15px',
-        }}>
-          <span style={{
-            width: 5,
-            height: 5,
-            borderRadius: '50%',
-            background: pri.color,
-            flexShrink: 0,
-          }} />
-          {pri.label || task.priority}
-        </span>
+      {/* Metadata row: priority + tags + deadline + time */}
+      <div className="mt-2 flex flex-wrap items-center gap-1">
+        <Badge variant={priorityVariant[task.priority] || 'outline'}>
+          {task.priority}
+        </Badge>
 
-        {/* Tags — $client brighter */}
         {tags.map((tag) => (
-          <span
-            key={tag}
-            style={{
-              fontSize: 14,
-              fontWeight: 500,
-              padding: '4px 8px',
-              borderRadius: 20,
-              background: 'var(--glass-pill-bg)',
-              boxShadow: 'var(--glass-pill-inset)',
-              color: tag.startsWith('$') ? 'var(--text-secondary)' : 'var(--text-secondary)',
-              lineHeight: '15px',
-            }}
-          >
+          <Badge key={tag} variant="outline">
             {tag}
-          </span>
+          </Badge>
         ))}
 
-        {/* Deadline pill */}
         {deadlineInfo && (
-          <span style={{
-            fontSize: 14,
-            fontWeight: 500,
-            padding: '4px 8px',
-            borderRadius: 20,
-            background: deadlineInfo.bg,
-            color: deadlineInfo.color,
-            lineHeight: '15px',
-          }}>
+          <Badge variant={deadlineInfo.variant}>
             {deadlineInfo.label}
-          </span>
+          </Badge>
         )}
 
-        {/* Time ago */}
-        <span style={{ fontSize: 14, color: 'rgba(148, 163, 184, 0.5)', marginLeft: 'auto' }}>
+        <span className="ml-auto font-mono text-xs text-muted-foreground/50">
           {timeAgo(task.updated_at)}
         </span>
       </div>
 
-      {/* Agent activity bar — conditional */}
+      {/* Agent activity bar */}
       {task.assigned_to && (
-        <div style={{
-          marginTop: 8,
-          paddingTop: 8,
-          borderTop: '1px solid var(--glass-divider)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 4,
-          fontSize: 14,
-          color: 'var(--text-dim)',
-        }}>
-          {agentStatus === 'working' && (
-            <span style={{
-              width: 4,
-              height: 4,
-              borderRadius: '50%',
-              background: 'var(--text-dim)',
-              animation: 'bb-agent-pulse 2s ease-in-out infinite',
-              flexShrink: 0,
-            }} />
-          )}
-          {agentStatus === 'done' && (
-            <span style={{ color: '#22C55E', fontSize: 14, lineHeight: 1 }}>&#10003;</span>
-          )}
-          {agentStatus === 'error' && (
-            <span style={{ color: '#EF4444', fontSize: 14, lineHeight: 1 }}>&#9888;</span>
-          )}
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 14 }}>
-            {task.assigned_to}
-          </span>
-          <span style={{ color: 'var(--text-dim)' }}>
-            {agentStatus === 'working' && '·\u2009working...'}
-            {agentStatus === 'done' && '·\u2009done'}
-            {agentStatus === 'error' && '·\u2009error'}
-            {!agentStatus && '·\u2009assigned'}
-          </span>
-          {isAgentCreated && (
-            <span style={{
-              marginLeft: 'auto',
-              fontSize: 14,
-              fontWeight: 500,
-              padding: '4px 4px',
-              borderRadius: 4,
-              background: 'var(--glass-interactive-bg)',
-              color: 'var(--text-dim)',
-              letterSpacing: '0.04em',
-            }}>
-              AI
+        <>
+          <Separator className="mt-2" />
+          <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
+            {agentStatus === 'working' && (
+              <span className="size-1 shrink-0 animate-pulse rounded-full bg-muted-foreground" />
+            )}
+            {agentStatus === 'done' && (
+              <span className="text-emerald-500">&#10003;</span>
+            )}
+            {agentStatus === 'error' && (
+              <span className="text-destructive">&#9888;</span>
+            )}
+            <span className="font-mono font-medium">
+              {task.assigned_to}
             </span>
-          )}
-        </div>
+            <span className="text-muted-foreground">
+              {agentStatus === 'working' && '\u00b7\u2009working...'}
+              {agentStatus === 'done' && '\u00b7\u2009done'}
+              {agentStatus === 'error' && '\u00b7\u2009error'}
+              {!agentStatus && '\u00b7\u2009assigned'}
+            </span>
+            {isAgentCreated && (
+              <Badge variant="secondary" className="ml-auto text-[10px]">
+                AI
+              </Badge>
+            )}
+          </div>
+        </>
       )}
-
     </div>
   )
 })
-

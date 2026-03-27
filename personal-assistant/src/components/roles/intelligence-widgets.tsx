@@ -2,15 +2,14 @@
 
 import React, { useState, useEffect, useCallback } from 'react'
 import {
-  Radar,
-  HeartPulse,
-  TrendingUp,
-  Gauge,
-  AlertTriangle,
-  ArrowUpRight,
-  ArrowDownRight,
-} from 'lucide-react'
-import { S, C } from '@/lib/styles/design-tokens'
+  IconRadar,
+  IconHeartbeat,
+  IconTrendingUp,
+  IconGauge,
+  IconAlertTriangle,
+} from '@tabler/icons-react'
+import { Card, CardContent } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -42,30 +41,6 @@ interface IntelligenceData {
 }
 
 // ---------------------------------------------------------------------------
-// Style tokens
-// ---------------------------------------------------------------------------
-
-const widgetCard: React.CSSProperties = {
-  padding: '16px',
-  borderRadius: 12,
-  background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.6))',
-  backdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
-  WebkitBackdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
-  border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
-  boxShadow: 'var(--card-shadow, 0 2px 8px rgba(0,0,0,0.3)), var(--card-inset, inset 0 1px 0 rgba(255,255,255,0.06))',
-  transition: 'all 200ms',
-}
-
-const sectionHeader: React.CSSProperties = {
-  fontSize: 14,
-  fontWeight: 500,
-  letterSpacing: '0.04em',
-  textTransform: 'uppercase' as const,
-  color: 'var(--text-dim, #475569)',
-  marginBottom: 12,
-}
-
-// ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
@@ -73,8 +48,8 @@ const WIDGET_DEFS = [
   {
     key: 'revenueRadar',
     label: 'Revenue Radar',
-    icon: Radar,
-    color: 'var(--text-primary, #F1F5F9)',
+    icon: IconRadar,
+    colorClass: 'text-foreground bg-muted',
     extract: (d: IntelligenceData) => d.revenueRadar,
     format: (data: any) => ({
       value: data.gatheringData ? '--' : `$${(data.totalEstimatedValue / 1000).toFixed(1)}k`,
@@ -85,8 +60,8 @@ const WIDGET_DEFS = [
   {
     key: 'clientHealth',
     label: 'Client Health',
-    icon: HeartPulse,
-    color: '#22c55e',
+    icon: IconHeartbeat,
+    colorClass: 'text-emerald-500 bg-emerald-500/10',
     extract: (d: IntelligenceData) => d.clientHealth,
     format: (data: any) => ({
       value: data.gatheringData ? '--' : `${data.averageScore}`,
@@ -97,8 +72,8 @@ const WIDGET_DEFS = [
   {
     key: 'cashFlow',
     label: 'Cash Flow',
-    icon: TrendingUp,
-    color: '#3b82f6',
+    icon: IconTrendingUp,
+    colorClass: 'text-blue-500 bg-blue-500/10',
     extract: (d: IntelligenceData) => d.cashFlow,
     format: (data: any) => ({
       value: data.gatheringData ? '--' : `$${(data.currentNet / 1000).toFixed(1)}k`,
@@ -109,8 +84,8 @@ const WIDGET_DEFS = [
   {
     key: 'capacity',
     label: 'Capacity',
-    icon: Gauge,
-    color: '#8b5cf6',
+    icon: IconGauge,
+    colorClass: 'text-violet-500 bg-violet-500/10',
     extract: (d: IntelligenceData) => d.capacity,
     format: (data: any) => ({
       value: data.gatheringData ? '--' : `${data.utilizationPercent}%`,
@@ -124,11 +99,6 @@ const WIDGET_DEFS = [
 // Fetch helpers (exported for testability)
 // ---------------------------------------------------------------------------
 
-/**
- * Maps raw API responses from /api/intelligence/[metric] endpoints into the
- * IntelligenceData shape used by the widgets. Each response can be null
- * (fetch threw) or non-ok (endpoint error) -- failures are independent.
- */
 export async function mapIntelligenceResponses(
   revenueRes: Response | null,
   healthRes: Response | null,
@@ -178,7 +148,6 @@ export function IntelligenceWidgets() {
     capacity: null,
   })
   const [loading, setLoading] = useState(true)
-  const [hoveredKey, setHoveredKey] = useState<string | null>(null)
 
   const fetchIntelligence = useCallback(async () => {
     try {
@@ -192,7 +161,7 @@ export function IntelligenceWidgets() {
       const mapped = await mapIntelligenceResponses(revenueRes, healthRes, cashFlowRes, capacityRes)
       setData(mapped)
     } catch {
-      // Silently fail (matches existing codebase pattern)
+      // Silently fail
     } finally {
       setLoading(false)
     }
@@ -200,86 +169,48 @@ export function IntelligenceWidgets() {
 
   useEffect(() => {
     fetchIntelligence()
-    const interval = setInterval(fetchIntelligence, 60000) // refresh every 60s
+    const interval = setInterval(fetchIntelligence, 60000)
     return () => clearInterval(interval)
   }, [fetchIntelligence])
 
   return (
     <div>
-      <div style={sectionHeader}>Intelligence</div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
+      <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-3">Intelligence</h3>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {WIDGET_DEFS.map(widget => {
           const widgetData = widget.extract(data)
           const Icon = widget.icon
-          const isHovered = hoveredKey === widget.key
           const formatted = widgetData ? widget.format(widgetData) : null
 
           return (
-            <div
-              key={widget.key}
-              onMouseEnter={() => setHoveredKey(widget.key)}
-              onMouseLeave={() => setHoveredKey(null)}
-              style={{
-                ...widgetCard,
-                border: isHovered
-                  ? `1px solid ${C.borderHover}`
-                  : `1px solid ${C.borderSubtle}`,
-                background: isHovered
-                  ? 'var(--bb-surface-hover, rgba(20, 28, 40, 0.7))'
-                  : C.bgCard,
-              }}
-            >
-              {/* Header */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-                <div style={{
-                  width: 26,
-                  height: 26,
-                  borderRadius: 8,
-                  background: `${widget.color}15`,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}>
-                  <Icon size={13} style={{ color: widget.color }} />
+            <Card key={widget.key} className="py-4 hover:bg-muted/50 transition-colors">
+              <CardContent>
+                {/* Header */}
+                <div className="flex items-center gap-2 mb-3">
+                  <div className={`w-6.5 h-6.5 rounded-lg flex items-center justify-center ${widget.colorClass}`}>
+                    <Icon size={13} />
+                  </div>
+                  <span className="text-xs font-medium text-muted-foreground">{widget.label}</span>
+                  {formatted?.alert && (
+                    <IconAlertTriangle size={11} className="text-amber-500 ml-auto" />
+                  )}
                 </div>
-                <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-secondary, #94A3B8)' }}>
-                  {widget.label}
-                </span>
-                {formatted?.alert && (
-                  <AlertTriangle size={11} style={{ color: '#eab308', marginLeft: 'auto' }} />
+
+                {/* Value */}
+                {loading || !formatted ? (
+                  <Skeleton className="h-7 w-1/2 mb-2" />
+                ) : (
+                  <div className="text-xl font-medium text-foreground font-mono tracking-tight leading-none mb-2">
+                    {formatted.value}
+                  </div>
                 )}
-              </div>
 
-              {/* Value */}
-              {loading || !formatted ? (
-                <div style={{
-                  height: 28,
-                  borderRadius: 8,
-                  background: C.bgHover,
-                  width: '50%',
-                  marginBottom: 8,
-                }} />
-              ) : (
-                <div style={{
-                  fontSize: 16,
-                  fontWeight: 500,
-                  color: 'var(--text-primary, #F1F5F9)',
-                  fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
-                  letterSpacing: '-0.03em',
-                  lineHeight: 1,
-                  marginBottom: 8,
-                }}>
-                  {formatted.value}
-                </div>
-              )}
-
-              {/* Subtitle */}
-              {formatted && (
-                <div style={{ fontSize: 14, color: 'var(--text-dim, #475569)' }}>
-                  {formatted.subtitle}
-                </div>
-              )}
-            </div>
+                {/* Subtitle */}
+                {formatted && (
+                  <p className="text-xs text-muted-foreground">{formatted.subtitle}</p>
+                )}
+              </CardContent>
+            </Card>
           )
         })}
       </div>

@@ -2,10 +2,17 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useToast } from '@/components/ui/toast'
-import { ToggleSwitch } from '@/components/ui/toggle-switch'
+import { Switch } from '@/components/ui/switch'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Label } from '@/components/ui/label'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { IconLoader2, IconUpload, IconTrash } from '@tabler/icons-react'
 import type { InvoiceTemplate } from '@/lib/invoices/template-types'
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// ---- Helpers ----------------------------------------------------------------
 
 const PRESET_SCHEMES = [
   { label: 'Ocean', primary: '#0EA5E9', accent: '#0284C7' },
@@ -16,18 +23,7 @@ const PRESET_SCHEMES = [
   { label: 'Slate', primary: '#64748B', accent: '#475569' },
 ]
 
-function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
-  const m = hex.replace('#', '').match(/^([0-9a-f]{3}|[0-9a-f]{6})$/i)
-  if (!m) return null
-  const h = m[1].length === 3 ? m[1].split('').map((c) => c + c).join('') : m[1]
-  return {
-    r: parseInt(h.slice(0, 2), 16),
-    g: parseInt(h.slice(2, 4), 16),
-    b: parseInt(h.slice(4, 6), 16),
-  }
-}
-
-// ─── Live Preview ─────────────────────────────────────────────────────────────
+// ---- Live Preview -----------------------------------------------------------
 
 function InvoicePreview({ template, orgName }: { template: InvoiceTemplate; orgName: string }) {
   const primary = template.primary_color ?? '#334155'
@@ -50,135 +46,124 @@ function InvoicePreview({ template, orgName }: { template: InvoiceTemplate; orgN
   return (
     <div
       ref={wrapperRef}
-      style={{
-        width: '100%',
-        padding: 16,
-        height: Math.round(842 * scale) + 32,
-        overflow: 'hidden',
-        borderRadius: 16,
-        background: 'var(--bg-secondary, rgba(0, 0, 0, 0.15))',
-        transition: 'height 0.15s ease',
-        position: 'relative',
-      }}
+      className="relative w-full overflow-hidden rounded-xl bg-muted/50 p-4"
+      style={{ height: Math.round(842 * scale) + 32, transition: 'height 0.15s ease' }}
     >
-    <div
-      style={{
-        width: 595,
-        height: 842,
-        background: '#ffffff',
-        borderRadius: 8,
-        overflow: 'hidden',
-        boxShadow: '0 4px 24px rgba(0, 0, 0, 0.3), 0 1px 4px rgba(0, 0, 0, 0.2)',
-        transformOrigin: 'top left',
-        transform: `scale(${scale})`,
-        fontSize: 14,
-        color: '#1e293b',
-        display: 'flex',
-        flexDirection: 'column',
-        flexShrink: 0,
-        position: 'absolute',
-        top: 0,
-        left: `calc(50% - ${595 * scale / 2}px)`,
-      }}
-    >
-      {/* Invoice header */}
-      <div style={{ background: primary, padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          {template.logo_base64 ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={template.logo_base64} alt="Logo" style={{ height: 32, objectFit: 'contain', maxWidth: 120 }} />
-          ) : (
-            <span style={{ fontWeight: 500, fontSize: 16, color: '#fff' }}>{orgName}</span>
-          )}
-        </div>
-        <div style={{ textAlign: 'right', color: 'rgba(255,255,255,0.85)' }}>
-          <div style={{ fontWeight: 500, fontSize: 16, color: '#fff' }}>INVOICE</div>
-          <div style={{ fontSize: 14, marginTop: 2 }}>#INV-0042</div>
-        </div>
-      </div>
-
-      {/* Body */}
-      <div style={{ padding: '20px 24px', flex: 1 }}>
-        {/* Addresses */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
+      <div
+        style={{
+          width: 595,
+          height: 842,
+          transformOrigin: 'top left',
+          transform: `scale(${scale})`,
+          position: 'absolute',
+          top: 0,
+          left: `calc(50% - ${595 * scale / 2}px)`,
+          background: '#ffffff',
+          borderRadius: 8,
+          overflow: 'hidden',
+          boxShadow: '0 4px 24px rgba(0,0,0,0.12)',
+          fontSize: 14,
+          color: '#1e293b',
+          display: 'flex',
+          flexDirection: 'column',
+          flexShrink: 0,
+        }}
+      >
+        {/* Invoice header */}
+        <div style={{ background: primary, padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <div style={{ fontSize: 14, fontWeight: 500, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>From</div>
-            <div style={{ fontWeight: 500 }}>{orgName}</div>
-            <div style={{ color: '#64748b', lineHeight: 1.5 }}>{(template.address_lines?.length ? template.address_lines : ['123 Agency St', 'Sydney NSW 2000']).join(', ')}</div>
-            {template.abn && <div style={{ color: '#94a3b8', fontSize: 14, marginTop: 2 }}>ABN: {template.abn}</div>}
+            {template.logo_base64 ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={template.logo_base64} alt="Logo" style={{ height: 32, objectFit: 'contain', maxWidth: 120 }} />
+            ) : (
+              <span style={{ fontWeight: 500, fontSize: 16, color: '#fff' }}>{orgName}</span>
+            )}
           </div>
-          <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: 14, fontWeight: 500, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Bill to</div>
-            <div style={{ fontWeight: 500 }}>Acme Corp</div>
-            <div style={{ color: '#64748b', lineHeight: 1.5 }}>456 Client Ave<br />Melbourne VIC 3000</div>
+          <div style={{ textAlign: 'right', color: 'rgba(255,255,255,0.85)' }}>
+            <div style={{ fontWeight: 500, fontSize: 16, color: '#fff' }}>INVOICE</div>
+            <div style={{ fontSize: 14, marginTop: 2 }}>#INV-0042</div>
           </div>
         </div>
 
-        {/* Line items */}
-        <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 16 }}>
-          <thead>
-            <tr style={{ borderBottom: `2px solid ${primary}` }}>
-              <th style={{ textAlign: 'left', padding: '8px 0', fontSize: 14, fontWeight: 500, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Description</th>
-              <th style={{ textAlign: 'right', padding: '8px 0', fontSize: 14, fontWeight: 500, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Qty</th>
-              <th style={{ textAlign: 'right', padding: '8px 0', fontSize: 14, fontWeight: 500, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Unit</th>
-              <th style={{ textAlign: 'right', padding: '8px 0', fontSize: 14, fontWeight: 500, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            {[
-              { desc: 'Website redesign', qty: 1, unit: '$3,500.00', total: '$3,500.00' },
-              { desc: 'SEO optimisation', qty: 3, unit: '$450.00', total: '$1,350.00' },
-              { desc: 'Monthly retainer', qty: 1, unit: '$800.00', total: '$800.00' },
-            ].map((row, i) => (
-              <tr key={i} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                <td style={{ padding: '8px 0', color: '#334155' }}>{row.desc}</td>
-                <td style={{ padding: '8px 0', textAlign: 'right', color: '#64748b' }}>{row.qty}</td>
-                <td style={{ padding: '8px 0', textAlign: 'right', color: '#64748b' }}>{row.unit}</td>
-                <td style={{ padding: '8px 0', textAlign: 'right', fontWeight: 500 }}>{row.total}</td>
+        {/* Body */}
+        <div style={{ padding: '20px 24px', flex: 1 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 500, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>From</div>
+              <div style={{ fontWeight: 500 }}>{orgName}</div>
+              <div style={{ color: '#64748b', lineHeight: 1.5 }}>{(template.address_lines?.length ? template.address_lines : ['123 Agency St', 'Sydney NSW 2000']).join(', ')}</div>
+              {template.abn && <div style={{ color: '#94a3b8', fontSize: 14, marginTop: 2 }}>ABN: {template.abn}</div>}
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontSize: 14, fontWeight: 500, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Bill to</div>
+              <div style={{ fontWeight: 500 }}>Acme Corp</div>
+              <div style={{ color: '#64748b', lineHeight: 1.5 }}>456 Client Ave<br />Melbourne VIC 3000</div>
+            </div>
+          </div>
+
+          <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 16 }}>
+            <thead>
+              <tr style={{ borderBottom: `2px solid ${primary}` }}>
+                <th style={{ textAlign: 'left', padding: '8px 0', fontSize: 14, fontWeight: 500, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Description</th>
+                <th style={{ textAlign: 'right', padding: '8px 0', fontSize: 14, fontWeight: 500, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Qty</th>
+                <th style={{ textAlign: 'right', padding: '8px 0', fontSize: 14, fontWeight: 500, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Unit</th>
+                <th style={{ textAlign: 'right', padding: '8px 0', fontSize: 14, fontWeight: 500, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Total</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {[
+                { desc: 'Website redesign', qty: 1, unit: '$3,500.00', total: '$3,500.00' },
+                { desc: 'SEO optimisation', qty: 3, unit: '$450.00', total: '$1,350.00' },
+                { desc: 'Monthly retainer', qty: 1, unit: '$800.00', total: '$800.00' },
+              ].map((row, i) => (
+                <tr key={i} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                  <td style={{ padding: '8px 0', color: '#334155' }}>{row.desc}</td>
+                  <td style={{ padding: '8px 0', textAlign: 'right', color: '#64748b' }}>{row.qty}</td>
+                  <td style={{ padding: '8px 0', textAlign: 'right', color: '#64748b' }}>{row.unit}</td>
+                  <td style={{ padding: '8px 0', textAlign: 'right', fontWeight: 500 }}>{row.total}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
 
-        {/* Totals */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <div style={{ minWidth: 160 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', color: '#64748b' }}>
-              <span>Subtotal</span><span>$5,650.00</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', color: '#64748b' }}>
-              <span>GST (10%)</span><span>$565.00</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderTop: `2px solid ${primary}`, marginTop: 4, fontWeight: 500, color: primary }}>
-              <span>Total</span><span>$6,215.00</span>
+          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <div style={{ minWidth: 160 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', color: '#64748b' }}>
+                <span>Subtotal</span><span>$5,650.00</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', color: '#64748b' }}>
+                <span>GST (10%)</span><span>$565.00</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderTop: `2px solid ${primary}`, marginTop: 4, fontWeight: 500, color: primary }}>
+                <span>Total</span><span>$6,215.00</span>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Footer */}
-      <div style={{ background: '#f8fafc', borderTop: '1px solid #e2e8f0', padding: '12px 24px' }}>
-        {template.footer_text ? (
-          <p style={{ margin: 0, color: '#64748b', fontSize: 14, lineHeight: 1.5 }}>{template.footer_text}</p>
-        ) : (
-          <p style={{ margin: 0, color: '#94a3b8', fontSize: 14, fontStyle: 'italic' }}>Footer text will appear here.</p>
-        )}
-        {template.terms && (
-          <p style={{ margin: '8px 0 0', color: '#94a3b8', fontSize: 14, lineHeight: 1.4 }}>
-            <strong style={{ color: '#64748b' }}>Terms: </strong>
-            {template.terms.slice(0, 120)}{template.terms.length > 120 ? '…' : ''}
-          </p>
-        )}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}>
-          <div style={{ width: 40, height: 3, borderRadius: 8, background: accent }} />
+        {/* Footer */}
+        <div style={{ background: '#f8fafc', borderTop: '1px solid #e2e8f0', padding: '12px 24px' }}>
+          {template.footer_text ? (
+            <p style={{ margin: 0, color: '#64748b', fontSize: 14, lineHeight: 1.5 }}>{template.footer_text}</p>
+          ) : (
+            <p style={{ margin: 0, color: '#94a3b8', fontSize: 14, fontStyle: 'italic' }}>Footer text will appear here.</p>
+          )}
+          {template.terms && (
+            <p style={{ margin: '8px 0 0', color: '#94a3b8', fontSize: 14, lineHeight: 1.4 }}>
+              <strong style={{ color: '#64748b' }}>Terms: </strong>
+              {template.terms.slice(0, 120)}{template.terms.length > 120 ? '...' : ''}
+            </p>
+          )}
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}>
+            <div style={{ width: 40, height: 3, borderRadius: 8, background: accent }} />
+          </div>
         </div>
       </div>
-    </div>
     </div>
   )
 }
 
-// ─── Main Component ───────────────────────────────────────────────────────────
+// ---- Main Component ---------------------------------------------------------
 
 export function InvoiceTemplateEditor() {
   const { toast } = useToast()
@@ -200,7 +185,6 @@ export function InvoiceTemplateEditor() {
   const [logoPreview, setLogoPreview] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
-  // Load existing template
   useEffect(() => {
     async function load() {
       try {
@@ -219,7 +203,6 @@ export function InvoiceTemplateEditor() {
       }
     }
 
-    // Also load org name from profile
     async function loadProfile() {
       try {
         const res = await fetch('/api/settings')
@@ -286,324 +269,250 @@ export function InvoiceTemplateEditor() {
     }
   }, [template, toast])
 
-  const cardStyle: React.CSSProperties = {
-    background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.6))',
-    backdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
-    WebkitBackdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
-    boxShadow: 'var(--card-shadow, 0 2px 8px rgba(0,0,0,0.3)), var(--card-inset, inset 0 1px 0 rgba(255,255,255,0.06))',
-    border: 'none',
-    borderRadius: 16,
-    padding: '24px',
-  }
-
-  const labelStyle: React.CSSProperties = {
-    display: 'block',
-    fontSize: 14,
-    fontWeight: 500,
-    color: 'var(--text-secondary, #94A3B8)',
-    letterSpacing: '0.04em',
-    textTransform: 'uppercase',
-    marginBottom: 8,
-  }
-
-  const inputStyle: React.CSSProperties = {
-    width: '100%',
-    background: 'var(--bg-input, rgba(13, 17, 23, 0.6))',
-    border: '1px solid var(--border-active, rgba(255,255,255,0.1))',
-    borderRadius: 8,
-    padding: '12px 16px',
-    fontSize: 14,
-    color: 'var(--text-primary, #E2E8F0)',
-    outline: 'none',
-    boxSizing: 'border-box',
-  }
-
   if (loading) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 200 }}>
-        <div style={{ width: 24, height: 24, borderRadius: '50%', border: '2px solid var(--border-active, rgba(255,255,255,0.1))', borderTopColor: 'var(--text-primary, #E2E8F0)', animation: 'spin 0.8s linear infinite' }} />
+      <div className="flex h-[200px] items-center justify-center">
+        <IconLoader2 className="size-6 animate-spin text-muted-foreground" />
       </div>
     )
   }
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, alignItems: 'start' }}>
-      {/* ── Left: Editor ── */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+    <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
+      {/* Left: Editor */}
+      <div className="flex flex-col gap-4">
         {/* Logo upload */}
-        <div style={cardStyle}>
-          <label style={labelStyle}>Logo</label>
-          {logoPreview ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={logoPreview}
-                alt="Logo preview"
-                style={{ height: 48, objectFit: 'contain', maxWidth: 160, background: 'rgba(255,255,255,0.05)', borderRadius: 8, padding: 4 }}
-              />
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm">Logo</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {logoPreview ? (
+              <div className="flex items-center gap-4">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={logoPreview}
+                  alt="Logo preview"
+                  className="h-12 max-w-[160px] rounded-lg bg-muted object-contain p-1"
+                />
+                <Button variant="destructive" size="sm" onClick={removeLogo}>
+                  <IconTrash className="size-3.5" />
+                  Remove
+                </Button>
+              </div>
+            ) : (
               <button
-                onClick={removeLogo}
-                style={{
-                  fontSize: 14,
-                  color: '#EF4444',
-                  background: 'rgba(239,68,68,0.1)',
-                  border: '1px solid rgba(239,68,68,0.2)',
-                  borderRadius: 8,
-                  padding: '4px 12px',
-                  cursor: 'pointer',
-                }}
+                onClick={() => fileRef.current?.click()}
+                className="flex w-full cursor-pointer flex-col items-center gap-2 rounded-lg border border-dashed border-border bg-muted/30 p-6 text-sm text-muted-foreground transition-colors hover:bg-muted/50"
               >
-                Remove
+                <IconUpload className="size-5" />
+                Click to upload logo
+                <span className="text-xs text-muted-foreground/70">PNG, JPG, SVG -- max 500 KB</span>
               </button>
-            </div>
-          ) : (
-            <button
-              onClick={() => fileRef.current?.click()}
-              style={{
-                width: '100%',
-                padding: '20px',
-                border: '1px dashed rgba(255,255,255,0.03)',
-                borderRadius: 8,
-                background: 'rgba(255,255,255,0.02)',
-                color: '#64748B',
-                fontSize: 14,
-                cursor: 'pointer',
-                textAlign: 'center',
-              }}
-            >
-              <div style={{ fontSize: 16, marginBottom: 8 }}>+</div>
-              Click to upload logo
-              <div style={{ fontSize: 14, marginTop: 4, color: 'var(--text-dim, #475569)' }}>PNG, JPG, SVG · max 500 KB</div>
-            </button>
-          )}
-          <input
-            ref={fileRef}
-            type="file"
-            accept="image/*"
-            onChange={handleLogoUpload}
-            style={{ display: 'none' }}
-          />
-        </div>
+            )}
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              onChange={handleLogoUpload}
+              className="hidden"
+            />
+          </CardContent>
+        </Card>
 
         {/* Business details */}
-        <div style={cardStyle}>
-          <label style={labelStyle}>Business Details</label>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <div>
-              <label style={{ ...labelStyle, marginBottom: 8 }}>Company Name</label>
-              <input
-                type="text"
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm">Business Details</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="company_name">Company Name</Label>
+              <Input
+                id="company_name"
                 value={template.company_name ?? ''}
                 onChange={(e) => setTemplate((prev) => ({ ...prev, company_name: e.target.value }))}
-                style={inputStyle}
                 placeholder="e.g. Tor Kay Consulting"
                 maxLength={200}
               />
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-              <div>
-                <label style={{ ...labelStyle, marginBottom: 8 }}>ABN</label>
-                <input
-                  type="text"
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="abn">ABN</Label>
+                <Input
+                  id="abn"
                   value={template.abn ?? ''}
                   onChange={(e) => setTemplate((prev) => ({ ...prev, abn: e.target.value }))}
-                  style={inputStyle}
                   placeholder="e.g. 12 345 678 901"
                   maxLength={30}
                 />
               </div>
-              <div>
-                <label style={{ ...labelStyle, marginBottom: 8 }}>GST Registered</label>
-                <div style={{ display: 'flex', alignItems: 'center', height: 40 }}>
-                  <ToggleSwitch
+              <div className="space-y-2">
+                <Label>GST Registered</Label>
+                <div className="flex h-8 items-center gap-2">
+                  <Switch
                     checked={template.gst_registered ?? false}
-                    onChange={(v) => setTemplate((prev) => ({ ...prev, gst_registered: v }))}
-                    label="GST Registered"
+                    onCheckedChange={(v) => setTemplate((prev) => ({ ...prev, gst_registered: v }))}
                   />
+                  <span className="text-sm text-muted-foreground">
+                    {template.gst_registered ? 'Yes' : 'No'}
+                  </span>
                 </div>
               </div>
             </div>
-            <div>
-              <label style={{ ...labelStyle, marginBottom: 8 }}>Address</label>
-              <input
-                type="text"
+            <div className="space-y-2">
+              <Label htmlFor="address">Address</Label>
+              <Input
+                id="address"
                 value={(template.address_lines ?? []).join(', ')}
                 onChange={(e) => setTemplate((prev) => ({
                   ...prev,
                   address_lines: e.target.value.split(',').map(l => l.trim()).filter(Boolean),
                 }))}
-                style={inputStyle}
                 placeholder="e.g. 123 Agency St, Sydney NSW 2000"
               />
-              <p style={{ fontSize: 14, color: 'var(--text-dim, #475569)', margin: '4px 0 0' }}>Separate lines with commas</p>
+              <p className="text-xs text-muted-foreground">Separate lines with commas</p>
             </div>
-            <div>
-              <label style={{ ...labelStyle, marginBottom: 8 }}>Bank Details</label>
-              <input
-                type="text"
+            <div className="space-y-2">
+              <Label htmlFor="bank">Bank Details</Label>
+              <Input
+                id="bank"
                 value={template.bank_details ?? ''}
                 onChange={(e) => setTemplate((prev) => ({ ...prev, bank_details: e.target.value }))}
-                style={inputStyle}
                 placeholder="e.g. BSB: 062-000, Account: 1234 5678, Name: Tor Kay"
                 maxLength={500}
               />
             </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
         {/* Color scheme */}
-        <div style={cardStyle}>
-          <label style={labelStyle}>Color Scheme</label>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm">Color Scheme</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4">
+            <div className="flex flex-wrap gap-2">
+              {PRESET_SCHEMES.map((preset) => {
+                const active = template.primary_color === preset.primary
+                return (
+                  <Badge
+                    key={preset.label}
+                    variant={active ? 'default' : 'outline'}
+                    className="cursor-pointer gap-1.5 px-3 py-1"
+                    onClick={() => applyPreset(preset.primary, preset.accent)}
+                  >
+                    <span
+                      className="size-2.5 shrink-0 rounded-full"
+                      style={{ background: preset.primary }}
+                    />
+                    {preset.label}
+                  </Badge>
+                )
+              })}
+            </div>
 
-          {/* Preset chips */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
-            {PRESET_SCHEMES.map((preset) => {
-              const active = template.primary_color === preset.primary
-              return (
-                <button
-                  key={preset.label}
-                  onClick={() => applyPreset(preset.primary, preset.accent)}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 8,
-                    padding: '8px 12px',
-                    borderRadius: 20,
-                    border: active ? `2px solid ${preset.primary}` : '1px solid rgba(255,255,255,0.03)',
-                    background: active ? `${preset.primary}22` : 'rgba(255,255,255,0.04)',
-                    cursor: 'pointer',
-                    fontSize: 14,
-                    fontWeight: active ? 500 : 400,
-                    color: active ? preset.primary : '#94A3B8',
-                    transition: 'all 0.15s',
-                  }}
-                >
-                  <span style={{ width: 10, height: 10, borderRadius: '50%', background: preset.primary, flexShrink: 0 }} />
-                  {preset.label}
-                </button>
-              )
-            })}
-          </div>
-
-          {/* Custom color pickers */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-            <div>
-              <label style={{ ...labelStyle, marginBottom: 8 }}>Primary</label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <div style={{ width: 40, height: 40, borderRadius: 8, overflow: 'hidden', border: '1px solid var(--glass-border, rgba(255,255,255,0.03))', flexShrink: 0 }}>
-                  <input
-                    type="color"
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Primary</Label>
+                <div className="flex items-center gap-2">
+                  <div className="size-8 shrink-0 overflow-hidden rounded-md border border-border">
+                    <input
+                      type="color"
+                      value={template.primary_color ?? '#334155'}
+                      onChange={(e) => setTemplate((prev) => ({ ...prev, primary_color: e.target.value }))}
+                      className="size-full cursor-pointer border-none p-0"
+                    />
+                  </div>
+                  <Input
                     value={template.primary_color ?? '#334155'}
                     onChange={(e) => setTemplate((prev) => ({ ...prev, primary_color: e.target.value }))}
-                    style={{ width: '100%', height: '100%', padding: 0, border: 'none', cursor: 'pointer' }}
+                    placeholder="#334155"
+                    className="font-mono text-xs"
                   />
                 </div>
-                <input
-                  type="text"
-                  value={template.primary_color ?? '#334155'}
-                  onChange={(e) => setTemplate((prev) => ({ ...prev, primary_color: e.target.value }))}
-                  style={{ ...inputStyle, width: 'auto', flex: 1, fontFamily: 'monospace', fontSize: 14, height: 40, padding: '0 16px' }}
-                  placeholder="#334155"
-                />
               </div>
-            </div>
-            <div>
-              <label style={{ ...labelStyle, marginBottom: 8 }}>Accent</label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <div style={{ width: 40, height: 40, borderRadius: 8, overflow: 'hidden', border: '1px solid var(--glass-border, rgba(255,255,255,0.03))', flexShrink: 0 }}>
-                  <input
-                    type="color"
+              <div className="space-y-2">
+                <Label>Accent</Label>
+                <div className="flex items-center gap-2">
+                  <div className="size-8 shrink-0 overflow-hidden rounded-md border border-border">
+                    <input
+                      type="color"
+                      value={template.accent_color ?? '#1E293B'}
+                      onChange={(e) => setTemplate((prev) => ({ ...prev, accent_color: e.target.value }))}
+                      className="size-full cursor-pointer border-none p-0"
+                    />
+                  </div>
+                  <Input
                     value={template.accent_color ?? '#1E293B'}
                     onChange={(e) => setTemplate((prev) => ({ ...prev, accent_color: e.target.value }))}
-                    style={{ width: '100%', height: '100%', padding: 0, border: 'none', cursor: 'pointer' }}
+                    placeholder="#1E293B"
+                    className="font-mono text-xs"
                   />
                 </div>
-                <input
-                  type="text"
-                  value={template.accent_color ?? '#1E293B'}
-                  onChange={(e) => setTemplate((prev) => ({ ...prev, accent_color: e.target.value }))}
-                  style={{ ...inputStyle, width: 'auto', flex: 1, fontFamily: 'monospace', fontSize: 14, height: 40, padding: '0 16px' }}
-                  placeholder="#1E293B"
-                />
               </div>
             </div>
-          </div>
 
-          {/* Color swatch preview */}
-          {(() => {
-            const rgb = hexToRgb(template.primary_color ?? '#334155')
-            return (
-              <div
-                style={{
-                  marginTop: 12, height: 6, borderRadius: 8,
-                  background: rgb
-                    ? `linear-gradient(90deg, ${template.primary_color} 0%, ${template.accent_color ?? '#1E293B'} 100%)`
-                    : '#334155',
-                }}
-              />
-            )
-          })()}
-        </div>
+            <div
+              className="h-1.5 rounded-full"
+              style={{
+                background: `linear-gradient(90deg, ${template.primary_color ?? '#334155'} 0%, ${template.accent_color ?? '#1E293B'} 100%)`,
+              }}
+            />
+          </CardContent>
+        </Card>
 
         {/* Footer text */}
-        <div style={cardStyle}>
-          <label style={labelStyle}>Footer Text</label>
-          <input
-            type="text"
-            value={template.footer_text ?? ''}
-            onChange={(e) => setTemplate((prev) => ({ ...prev, footer_text: e.target.value }))}
-            style={inputStyle}
-            placeholder="e.g. Payment due within 14 days. BSB: 062-000 Account: 1234 5678"
-            maxLength={500}
-          />
-          <p style={{ fontSize: 14, color: 'var(--text-dim, #475569)', margin: '8px 0 0' }}>
-            {(template.footer_text ?? '').length}/500 characters
-          </p>
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm">Footer Text</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <Input
+              value={template.footer_text ?? ''}
+              onChange={(e) => setTemplate((prev) => ({ ...prev, footer_text: e.target.value }))}
+              placeholder="e.g. Payment due within 14 days. BSB: 062-000 Account: 1234 5678"
+              maxLength={500}
+            />
+            <p className="text-xs text-muted-foreground">
+              {(template.footer_text ?? '').length}/500 characters
+            </p>
+          </CardContent>
+        </Card>
 
         {/* Terms */}
-        <div style={cardStyle}>
-          <label style={labelStyle}>Terms & Conditions</label>
-          <textarea
-            value={template.terms ?? ''}
-            onChange={(e) => setTemplate((prev) => ({ ...prev, terms: e.target.value }))}
-            style={{
-              ...inputStyle,
-              minHeight: 100,
-              resize: 'vertical',
-              fontFamily: 'inherit',
-              lineHeight: 1.5,
-            }}
-            placeholder="e.g. Payment is due within 14 days of invoice date. Late payments incur a 2% monthly fee..."
-            maxLength={5000}
-          />
-          <p style={{ fontSize: 14, color: 'var(--text-dim, #475569)', margin: '8px 0 0' }}>
-            {(template.terms ?? '').length}/5,000 characters
-          </p>
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm">Terms & Conditions</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <Textarea
+              value={template.terms ?? ''}
+              onChange={(e) => setTemplate((prev) => ({ ...prev, terms: e.target.value }))}
+              placeholder="e.g. Payment is due within 14 days of invoice date. Late payments incur a 2% monthly fee..."
+              maxLength={5000}
+              className="min-h-[100px]"
+            />
+            <p className="text-xs text-muted-foreground">
+              {(template.terms ?? '').length}/5,000 characters
+            </p>
+          </CardContent>
+        </Card>
 
-        {/* Save button */}
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          style={{
-            width: '100%',
-            height: 40,
-            padding: '0 16px',
-            borderRadius: 8,
-            border: 'none',
-            background: saving ? 'var(--hover-bg-strong, rgba(241,245,249,0.5))' : 'var(--btn-primary-bg, #F1F5F9)',
-            color: 'var(--btn-primary-fg, #0a0f1a)',
-            fontWeight: 500,
-            fontSize: 14,
-            cursor: saving ? 'not-allowed' : 'pointer',
-            transition: 'background 0.15s',
-          }}
-        >
-          {saving ? 'Saving…' : 'Save Template'}
-        </button>
+        <Button onClick={handleSave} disabled={saving} className="w-full">
+          {saving ? (
+            <>
+              <IconLoader2 className="size-4 animate-spin" />
+              Saving...
+            </>
+          ) : (
+            'Save Template'
+          )}
+        </Button>
       </div>
 
-      {/* ── Right: Live Preview ── */}
-      <div style={{ position: 'sticky', top: 24, alignSelf: 'start' }}>
+      {/* Right: Live Preview */}
+      <div className="sticky top-6 self-start">
         <InvoicePreview template={template} orgName={template.company_name?.trim() || orgName} />
       </div>
     </div>

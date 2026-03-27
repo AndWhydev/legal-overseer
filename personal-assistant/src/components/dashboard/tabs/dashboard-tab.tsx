@@ -6,6 +6,7 @@ import { DashboardRedesign } from '../dashboard-redesign';
 import { TabSkeleton } from './tab-skeleton';
 import { TabShell } from '@/components/ui/tab-shell';
 import { DailyTipBanner } from '@/components/beta/daily-tip-banner';
+import { Button } from '@/components/ui/button';
 import type { KanbanColumn, Task } from '@/lib/types';
 import { logger } from '@/lib/core/logger';
 
@@ -41,11 +42,11 @@ function DashboardTab() {
   if (error) {
     return (
       <TabShell>
-        <div className="bb-tab-error">
-          <p className="bb-tab-error__text">{error}</p>
-          <button className="bb-btn bb-btn--ghost bb-btn--sm" onClick={() => window.location.reload()}>
+        <div className="flex flex-col items-center justify-center gap-3 py-12">
+          <p className="text-sm text-destructive">{error}</p>
+          <Button variant="outline" size="sm" onClick={() => window.location.reload()}>
             Retry
-          </button>
+          </Button>
         </div>
       </TabShell>
     );
@@ -59,7 +60,7 @@ function DashboardTab() {
 
   return (
     <TabShell variant="fixed" padding="p-0">
-      <div style={{ height: '100%', overflowY: 'auto', padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div className="flex h-full flex-col gap-4 overflow-y-auto p-6">
         <DailyTipBanner />
         <DashboardRedesign
           columns={columns}

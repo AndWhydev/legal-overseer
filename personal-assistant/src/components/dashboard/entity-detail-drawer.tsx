@@ -1,9 +1,28 @@
 'use client';
 
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { X, User, Briefcase, FileText, CheckSquare, DollarSign } from 'lucide-react';
+import {
+  IconUser,
+  IconBriefcase,
+  IconFileText,
+  IconSquareCheck,
+  IconCurrencyDollar,
+} from '@tabler/icons-react';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from '@/components/ui/sheet';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Card, CardContent } from '@/components/ui/card';
+import { Empty, EmptyHeader, EmptyTitle, EmptyDescription, EmptyMedia } from '@/components/ui/empty';
 
-// ─── Types ─────────────────────────────────────────────────────────────────
+// Types
 
 type EntityType = 'contact' | 'project' | 'invoice' | 'task';
 
@@ -35,20 +54,13 @@ interface GraphEdge {
   relationshipType: string;
 }
 
-// ─── Helpers ───────────────────────────────────────────────────────────────
+// Helpers
 
 const TYPE_ICON: Record<EntityType, React.ElementType> = {
-  contact: User,
-  project: Briefcase,
-  invoice: FileText,
-  task: CheckSquare,
-};
-
-const TYPE_COLOR: Record<EntityType, string> = {
-  contact: '#94A3B8',
-  project: '#94A3B8',
-  invoice: '#94A3B8',
-  task: '#94A3B8',
+  contact: IconUser,
+  project: IconBriefcase,
+  invoice: IconFileText,
+  task: IconSquareCheck,
 };
 
 function formatDate(iso: string | null | undefined): string {
@@ -62,66 +74,26 @@ function formatEventType(type: string): string {
   return type.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-// ─── Avatar ───────────────────────────────────────────────────────────────
-
-function ContactAvatar({ meta, size = 40 }: { meta: Record<string, unknown>; size?: number }) {
-  const avatarUrl = meta.avatar_url as string | undefined;
-  const name = String(meta.name ?? 'U');
-  const initials = name
+function getInitials(name: string): string {
+  return name
     .split(' ')
     .map((n) => n[0])
     .join('')
     .toUpperCase()
     .slice(0, 2);
-
-  if (avatarUrl) {
-    return (
-      <img
-        src={avatarUrl}
-        alt={name}
-        style={{
-          width: size,
-          height: size,
-          borderRadius: '50%',
-          objectFit: 'cover',
-          flexShrink: 0,
-        }}
-      />
-    );
-  }
-
-  return (
-    <div
-      style={{
-        width: size,
-        height: size,
-        borderRadius: '50%',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontSize: size * 0.35,
-        fontWeight: 500,
-        flexShrink: 0,
-        background: 'var(--hover-bg-strong, rgba(255, 255, 255, 0.06))',
-        color: 'var(--text-secondary, #94A3B8)',
-      }}
-    >
-      {initials}
-    </div>
-  );
 }
 
-// ─── Detail Sections ───────────────────────────────────────────────────────
+// Detail Sections
 
 function ProjectDetail({ meta }: { meta: Record<string, unknown> }) {
   return (
     <div className="space-y-3">
-      <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Project</h3>
+      <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Project</h3>
       {meta.name ? <div className="text-lg font-medium">{String(meta.name)}</div> : null}
       {meta.status ? (
-        <span className="inline-block rounded-full px-2.5 py-0.5 text-xs font-medium bg-[var(--bg-elevated)] capitalize">
+        <Badge variant="secondary" className="capitalize">
           {String(meta.status)}
-        </span>
+        </Badge>
       ) : null}
       {meta.description ? <p className="text-sm text-muted-foreground">{String(meta.description)}</p> : null}
     </div>
@@ -131,17 +103,17 @@ function ProjectDetail({ meta }: { meta: Record<string, unknown> }) {
 function InvoiceDetail({ meta }: { meta: Record<string, unknown> }) {
   return (
     <div className="space-y-3">
-      <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Invoice</h3>
+      <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Invoice</h3>
       {meta.invoice_number ? <div className="text-lg font-medium">{String(meta.invoice_number)}</div> : null}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3">
         {meta.status ? (
-          <span className="inline-block rounded-full px-2.5 py-0.5 text-xs font-medium bg-[var(--bg-elevated)] capitalize">
+          <Badge variant="secondary" className="capitalize">
             {String(meta.status)}
-          </span>
+          </Badge>
         ) : null}
         {meta.amount != null ? (
           <div className="flex items-center gap-1 text-sm">
-            <DollarSign size={14} className="text-muted-foreground" />
+            <IconCurrencyDollar className="size-3.5 text-muted-foreground" />
             <span>{Number(meta.amount).toLocaleString('en-AU', { minimumFractionDigits: 2 })}</span>
           </div>
         ) : null}
@@ -156,13 +128,13 @@ function InvoiceDetail({ meta }: { meta: Record<string, unknown> }) {
 function TaskDetail({ meta }: { meta: Record<string, unknown> }) {
   return (
     <div className="space-y-3">
-      <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Task</h3>
+      <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Task</h3>
       {meta.title ? <div className="text-lg font-medium">{String(meta.title)}</div> : null}
       <div className="flex items-center gap-3">
         {meta.status ? (
-          <span className="inline-block rounded-full px-2.5 py-0.5 text-xs font-medium bg-[var(--bg-elevated)] capitalize">
+          <Badge variant="secondary" className="capitalize">
             {String(meta.status)}
-          </span>
+          </Badge>
         ) : null}
         {meta.priority ? (
           <span className="text-xs text-muted-foreground capitalize">{String(meta.priority)} priority</span>
@@ -172,7 +144,7 @@ function TaskDetail({ meta }: { meta: Record<string, unknown> }) {
   );
 }
 
-// ─── Main Drawer ───────────────────────────────────────────────────────────
+// Main Drawer
 
 function EntityDetailDrawer({ open, onClose, entityType, entityId }: EntityDetailDrawerProps) {
   const [entity, setEntity] = useState<GraphNode | null>(null);
@@ -180,7 +152,6 @@ function EntityDetailDrawer({ open, onClose, entityType, entityId }: EntityDetai
   const [timeline, setTimeline] = useState<TimelineEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [hasFetched, setHasFetched] = useState(false);
-  const dialogRef = useRef<HTMLDivElement>(null);
 
   const fetchData = useCallback(async () => {
     if (!entityId || !entityType) return;
@@ -222,425 +193,142 @@ function EntityDetailDrawer({ open, onClose, entityType, entityId }: EntityDetai
     }
   }, [open, fetchData]);
 
-  // Lock body scroll when open
-  useEffect(() => {
-    if (!open) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = prev; };
-  }, [open]);
-
-  // Close on Escape
-  useEffect(() => {
-    if (!open) return;
-    const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
-    window.addEventListener('keydown', handleKey);
-    return () => window.removeEventListener('keydown', handleKey);
-  }, [open, onClose]);
-
-  // Trap scroll inside the modal — prevent scroll from leaking to body
-  useEffect(() => {
-    if (!open) return;
-    const dialog = dialogRef.current;
-    if (!dialog) return;
-
-    const handleWheel = (e: WheelEvent) => {
-      const scrollContainer = dialog.querySelector('[data-scroll-content]') as HTMLElement | null;
-      if (!scrollContainer) return;
-
-      const { scrollTop, scrollHeight, clientHeight } = scrollContainer;
-      const atTop = scrollTop <= 0 && e.deltaY < 0;
-      const atBottom = scrollTop + clientHeight >= scrollHeight - 1 && e.deltaY > 0;
-
-      // Only prevent default when scroll would leak outside the container
-      if (atTop || atBottom) {
-        e.preventDefault();
-      }
-    };
-
-    dialog.addEventListener('wheel', handleWheel, { passive: false });
-    return () => dialog.removeEventListener('wheel', handleWheel);
-  }, [open]);
-
-  const Icon = TYPE_ICON[entityType] ?? Briefcase;
+  const Icon = TYPE_ICON[entityType] ?? IconBriefcase;
   const isContact = entityType === 'contact';
   const contactName = entity?.metadata?.name ? String(entity.metadata.name) : null;
   const contactType = entity?.metadata?.type ? String(entity.metadata.type) : null;
-
-  if (!open) return null;
+  const avatarUrl = entity?.metadata?.avatar_url as string | undefined;
 
   return (
-    <>
-      {/* Backdrop — fixed overlay, click to dismiss */}
-      <div
-        style={{
-          position: 'fixed',
-          inset: 0,
-          zIndex: 9998,
-          background: 'rgba(0, 0, 0, 0.5)',
-          backdropFilter: 'blur(4px)',
-          WebkitBackdropFilter: 'blur(4px)',
-          animation: 'modalFadeIn 200ms ease-out',
-        }}
-        onClick={onClose}
-        aria-hidden="true"
-      />
-
-      {/* Modal container — fixed, centered, scroll-isolated */}
-      <div
-        ref={dialogRef}
-        style={{
-          position: 'fixed',
-          inset: 0,
-          zIndex: 9999,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '20px',
-          pointerEvents: 'none',
-          overflow: 'hidden',
-        }}
-        role="dialog"
-        aria-modal="true"
-        aria-label={isContact && contactName ? `${contactName} details` : 'Entity details'}
-      >
-        <div
-          style={{
-            position: 'relative',
-            width: '100%',
-            maxWidth: 560,
-            maxHeight: 'min(80vh, 640px)',
-            borderRadius: 20,
-            background: 'var(--glass-bg-heavy, rgba(15, 20, 30, 0.92))',
-            backdropFilter: 'blur(24px) saturate(1.3)',
-            WebkitBackdropFilter: 'blur(24px) saturate(1.3)',
-            border: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
-            boxShadow: '0 24px 80px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
-            display: 'flex',
-            flexDirection: 'column' as const,
-            minHeight: 0,
-            overflow: 'hidden',
-            pointerEvents: 'auto',
-            animation: 'modalEnter 200ms ease-out',
-          }}
-        >
-          {/* Header — non-scrollable */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            borderBottom: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.04))',
-            padding: '16px 20px',
-            flexShrink: 0,
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
-              {loading ? (
-                <>
-                  {/* Avatar skeleton */}
-                  <div style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: 12,
-                    background: 'var(--hover-bg-strong, rgba(255, 255, 255, 0.06))',
-                    animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-                    flexShrink: 0,
-                  }} />
-                  {/* Text skeleton */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6, minWidth: 0 }}>
-                    <div style={{
-                      height: 14,
-                      width: 120,
-                      borderRadius: 6,
-                      background: 'var(--hover-bg-strong, rgba(255, 255, 255, 0.06))',
-                      animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-                    }} />
-                    <div style={{
-                      height: 12,
-                      width: 72,
-                      borderRadius: 6,
-                      background: 'var(--hover-bg, rgba(255, 255, 255, 0.04))',
-                      animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-                      animationDelay: '0.15s',
-                    }} />
-                  </div>
-                </>
+    <Sheet open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
+      <SheetContent side="right" className="w-full sm:max-w-lg flex flex-col gap-0 p-0" showCloseButton>
+        {/* Header */}
+        <SheetHeader className="p-5 pb-4 border-b border-border">
+          {loading ? (
+            <div className="flex items-center gap-3">
+              <Skeleton className="size-10 rounded-full" />
+              <div className="flex flex-col gap-1.5">
+                <Skeleton className="h-4 w-28" />
+                <Skeleton className="h-3 w-16" />
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center gap-3">
+              {isContact && entity ? (
+                <Avatar size="lg">
+                  {avatarUrl && <AvatarImage src={avatarUrl} alt={contactName || 'Contact'} />}
+                  <AvatarFallback>{getInitials(contactName || 'U')}</AvatarFallback>
+                </Avatar>
               ) : (
+                <div className="flex size-10 items-center justify-center rounded-lg bg-muted text-foreground">
+                  <Icon className="size-5" />
+                </div>
+              )}
+              <div className="min-w-0">
+                <SheetTitle className="truncate">
+                  {isContact && contactName ? contactName : `${entityType.charAt(0).toUpperCase() + entityType.slice(1)} Details`}
+                </SheetTitle>
+                {isContact && contactType && (
+                  <SheetDescription className="capitalize">{contactType}</SheetDescription>
+                )}
+              </div>
+            </div>
+          )}
+        </SheetHeader>
+
+        {/* Scrollable content */}
+        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-5 flex flex-col gap-5">
+          {loading ? (
+            <div className="flex flex-col gap-4">
+              <Skeleton className="h-6 w-48" />
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-4 w-64" />
+            </div>
+          ) : (
+            <>
+              {/* Entity-specific detail (contacts show name/type in header) */}
+              {entity && !isContact && (
                 <>
-                  {isContact && entity ? (
-                    <ContactAvatar meta={entity.metadata} size={36} />
-                  ) : (
-                    <div
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        width: 36,
-                        height: 36,
-                        borderRadius: 12,
-                        backgroundColor: `${TYPE_COLOR[entityType]}20`,
-                        color: TYPE_COLOR[entityType],
-                      }}
-                    >
-                      <Icon size={20} />
-                    </div>
-                  )}
-                  <div style={{ minWidth: 0 }}>
-                    <span style={{
-                      fontSize: 14,
-                      fontWeight: 500,
-                      color: 'var(--text-primary)',
-                      display: 'block',
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                    }}>
-                      {isContact && contactName ? contactName : `${entityType.charAt(0).toUpperCase() + entityType.slice(1)} Details`}
-                    </span>
-                    {isContact && contactType && (
-                      <span style={{
-                        fontSize: 14,
-                        fontWeight: 500,
-                        color: TYPE_COLOR[entityType],
-                        textTransform: 'capitalize',
-                      }}>
-                        {contactType}
-                      </span>
-                    )}
-                  </div>
+                  {entityType === 'project' && <ProjectDetail meta={entity.metadata} />}
+                  {entityType === 'invoice' && <InvoiceDetail meta={entity.metadata} />}
+                  {entityType === 'task' && <TaskDetail meta={entity.metadata} />}
                 </>
               )}
-            </div>
-            <button
-              onClick={onClose}
-              style={{
-                padding: '8px',
-                borderRadius: 12,
-                background: 'transparent',
-                border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
-                color: 'var(--text-primary)',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                transition: 'background 200ms',
-                flexShrink: 0,
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'var(--hover-bg-strong, rgba(255, 255, 255, 0.06))';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'transparent';
-              }}
-              aria-label="Close modal"
-            >
-              <X size={18} />
-            </button>
-          </div>
 
-          {/* Scrollable content — isolated scroll container */}
-          <div
-            data-scroll-content
-            style={{
-              flex: 1,
-              minHeight: 0,
-              overflowY: 'auto',
-              overflowX: 'hidden',
-              overscrollBehavior: 'contain',
-              WebkitOverflowScrolling: 'touch',
-              padding: '16px 20px 20px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '20px',
-            }}
-          >
-            {loading ? (
-              <div style={{ animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' }}>
-                <div style={{
-                  height: 24,
-                  width: 192,
-                  borderRadius: 8,
-                  background: 'var(--hover-bg-strong, rgba(255, 255, 255, 0.06))',
-                  marginBottom: '16px',
-                }} />
-                <div style={{
-                  height: 16,
-                  width: 128,
-                  borderRadius: 8,
-                  background: 'var(--hover-bg-strong, rgba(255, 255, 255, 0.06))',
-                  marginBottom: '16px',
-                }} />
-                <div style={{
-                  height: 16,
-                  width: 256,
-                  borderRadius: 8,
-                  background: 'var(--hover-bg-strong, rgba(255, 255, 255, 0.06))',
-                }} />
-              </div>
-            ) : (
-              <>
-                {/* Entity-specific detail (contacts show name/type in header) */}
-                {entity && !isContact && (
-                  <>
-                    {entityType === 'project' && <ProjectDetail meta={entity.metadata} />}
-                    {entityType === 'invoice' && <InvoiceDetail meta={entity.metadata} />}
-                    {entityType === 'task' && <TaskDetail meta={entity.metadata} />}
-                  </>
-                )}
-
-                {/* Related Entities */}
-                {related.length > 0 && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    <h3 style={{
-                      fontSize: 14,
-                      fontWeight: 500,
-                      letterSpacing: '0.04em',
-                      textTransform: 'uppercase',
-                      color: 'var(--text-dim)',
-                      margin: 0,
-                    }}>
-                      Related ({related.length})
-                    </h3>
-                    {related.map(({ node, edge }) => {
-                      const RelIcon = TYPE_ICON[node.type] ?? Briefcase;
-                      return (
-                        <div
-                          key={`${node.type}-${node.id}`}
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '12px',
-                            borderRadius: 12,
-                            padding: '12px 16px',
-                            background: 'rgba(20, 28, 40, 0.5)',
-                            border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
-                          }}
-                        >
-                          <div
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              width: 28,
-                              height: 28,
-                              borderRadius: 8,
-                              backgroundColor: `${TYPE_COLOR[node.type] ?? '#888'}20`,
-                              color: TYPE_COLOR[node.type] ?? '#888',
-                              flexShrink: 0,
-                            }}
-                          >
-                            <RelIcon size={14} />
+              {/* Related Entities */}
+              {related.length > 0 && (
+                <div className="flex flex-col gap-3">
+                  <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    Related ({related.length})
+                  </h3>
+                  {related.map(({ node, edge }) => {
+                    const RelIcon = TYPE_ICON[node.type] ?? IconBriefcase;
+                    return (
+                      <Card key={`${node.type}-${node.id}`} className="py-3 gap-0">
+                        <CardContent className="flex items-center gap-3">
+                          <div className="flex size-7 items-center justify-center rounded-md bg-muted text-foreground shrink-0">
+                            <RelIcon className="size-3.5" />
                           </div>
-                          <div style={{ minWidth: 0, flex: 1 }}>
-                            <div style={{
-                              fontSize: 14,
-                              fontWeight: 500,
-                              color: 'var(--text-primary)',
-                              whiteSpace: 'nowrap',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                            }}>
+                          <div className="min-w-0 flex-1">
+                            <div className="text-sm font-medium text-foreground truncate">
                               {node.label}
                             </div>
-                            <div style={{
-                              fontSize: 14,
-                              color: 'var(--text-secondary)',
-                              textTransform: 'capitalize',
-                            }}>
+                            <div className="text-xs text-muted-foreground capitalize">
                               {edge?.relationshipType?.replace(/_/g, ' ') ?? node.type}
                             </div>
                           </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              )}
 
-                {/* Timeline */}
-                {timeline.length > 0 && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    <h3 style={{
-                      fontSize: 14,
-                      fontWeight: 500,
-                      letterSpacing: '0.04em',
-                      textTransform: 'uppercase',
-                      color: 'var(--text-dim)',
-                      margin: 0,
-                    }}>
-                      Timeline
-                    </h3>
-                    {timeline.map((event) => (
-                      <div
-                        key={event.id}
-                        style={{
-                          display: 'flex',
-                          gap: '12px',
-                          borderRadius: 12,
-                          padding: '12px 16px',
-                          background: 'rgba(20, 28, 40, 0.5)',
-                          border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
-                        }}
-                      >
-                        <div style={{
-                          marginTop: 4,
-                          width: 6,
-                          height: 6,
-                          borderRadius: '50%',
-                          background: 'var(--bb-cyan)',
-                          flexShrink: 0,
-                        }} />
-                        <div style={{ minWidth: 0, flex: 1 }}>
-                          <div style={{
-                            fontSize: 14,
-                            color: 'var(--text-primary)',
-                          }}>
-                            {formatEventType(event.eventType)}
-                          </div>
-                          <div style={{
-                            fontSize: 14,
-                            color: 'var(--text-secondary)',
-                          }}>
-                            {formatDate(event.occurredAt)}
-                            {event.channelSource && ` via ${event.channelSource}`}
-                          </div>
+              {/* Timeline */}
+              {timeline.length > 0 && (
+                <div className="flex flex-col gap-3">
+                  <Separator />
+                  <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    Timeline
+                  </h3>
+                  {timeline.map((event) => (
+                    <div
+                      key={event.id}
+                      className="flex gap-3 rounded-lg border border-border bg-muted/30 p-3"
+                    >
+                      <div className="mt-1.5 size-1.5 rounded-full bg-primary shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <div className="text-sm text-foreground">
+                          {formatEventType(event.eventType)}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {formatDate(event.occurredAt)}
+                          {event.channelSource && ` via ${event.channelSource}`}
                         </div>
                       </div>
-                    ))}
-                  </div>
-                )}
+                    </div>
+                  ))}
+                </div>
+              )}
 
-                {!entity && !loading && hasFetched && (
-                  <p style={{
-                    fontSize: 14,
-                    color: 'var(--text-secondary)',
-                    textAlign: 'center',
-                    padding: '32px 0',
-                  }}>
-                    Entity not found.
-                  </p>
-                )}
-              </>
-            )}
-          </div>
+              {!entity && !loading && hasFetched && (
+                <Empty className="py-8">
+                  <EmptyHeader>
+                    <EmptyMedia variant="icon">
+                      <Icon className="size-4" />
+                    </EmptyMedia>
+                    <EmptyTitle>Entity not found</EmptyTitle>
+                    <EmptyDescription>
+                      The requested {entityType} could not be loaded.
+                    </EmptyDescription>
+                  </EmptyHeader>
+                </Empty>
+              )}
+            </>
+          )}
         </div>
-      </div>
-
-      <style>{`
-        @keyframes modalFadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        @keyframes modalEnter {
-          from {
-            opacity: 0;
-            transform: scale(0.95) translateY(8px);
-          }
-          to {
-            opacity: 1;
-            transform: scale(1) translateY(0);
-          }
-        }
-      `}</style>
-    </>
+      </SheetContent>
+    </Sheet>
   );
 }
 

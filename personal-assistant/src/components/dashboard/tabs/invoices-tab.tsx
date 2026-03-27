@@ -3,28 +3,24 @@
 import React, { useState } from 'react'
 import { InvoiceList } from '@/components/invoices/invoice-list'
 import { InvoiceTemplateEditor } from '@/components/invoices/invoice-template-editor'
-import { TabShell } from '@/components/ui/tab-shell'
-import { GlassToggle } from '@/components/ui/glass-toggle'
-
-type InvoiceView = 'list' | 'template'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 
 function InvoicesTab() {
-  const [view, setView] = useState<InvoiceView>('list')
-
   return (
-    <TabShell>
-      <div style={{ marginBottom: 16 }}>
-        <GlassToggle
-          options={[
-            { key: 'list' as const, label: 'Invoices' },
-            { key: 'template' as const, label: 'Template' },
-          ]}
-          value={view}
-          onChange={setView}
-        />
-      </div>
-      {view === 'list' ? <InvoiceList /> : <InvoiceTemplateEditor />}
-    </TabShell>
+    <div className="flex flex-col gap-6 p-6">
+      <Tabs defaultValue="list">
+        <TabsList>
+          <TabsTrigger value="list">Invoices</TabsTrigger>
+          <TabsTrigger value="template">Template</TabsTrigger>
+        </TabsList>
+        <TabsContent value="list">
+          <InvoiceList />
+        </TabsContent>
+        <TabsContent value="template">
+          <InvoiceTemplateEditor />
+        </TabsContent>
+      </Tabs>
+    </div>
   )
 }
 

@@ -2,21 +2,17 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  Search,
-  FileSearch,
-  RefreshCw,
-  ChevronRight,
-  CheckCircle2,
-  AlertCircle,
-  MinusCircle,
-  ArrowRight,
-  Plus,
-  X,
-} from 'lucide-react';
-import { TabShell } from '@/components/ui/tab-shell';
+  IconSearch, IconFileSearch, IconRefresh, IconChevronRight,
+  IconCircleCheck, IconAlertCircle, IconCircleMinus, IconArrowRight,
+  IconPlus, IconX,
+} from '@tabler/icons-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/table';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { EmptyState } from '@/components/ui/empty-state';
-import { GlassToggle } from '@/components/ui/glass-toggle';
-import { S, C } from '@/lib/styles/design-tokens';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -90,13 +86,12 @@ function daysUntil(iso: string): number {
   return Math.ceil((new Date(iso).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
 }
 
-function fitScoreColor(score: number | null): string {
-  if (score === null) return C.textSecondary;
-  if (score >= 60) return C.statusSuccess;
-  if (score >= 35) return C.statusWarning;
-  return C.statusError;
+function fitScoreBadgeVariant(score: number | null): 'default' | 'secondary' | 'destructive' {
+  if (score === null) return 'secondary';
+  if (score >= 60) return 'default';
+  if (score >= 35) return 'secondary';
+  return 'destructive';
 }
-
 
 function sourceLabel(source: string): string {
   const map: Record<string, string> = {
@@ -126,57 +121,6 @@ const PIPELINE_STAGES: { key: PipelineStage; label: string }[] = [
 ];
 
 // ---------------------------------------------------------------------------
-// Inline Style Definitions
-// ---------------------------------------------------------------------------
-
-const glassCard: React.CSSProperties = {
-  ...S.card,
-};
-
-const pillBtn: React.CSSProperties = {
-  ...S.pill,
-  padding: '8px 16px',
-  borderRadius: 20,
-};
-
-const accentBtn: React.CSSProperties = {
-  ...S.button,
-  ...S.buttonPrimary,
-};
-
-const ghostBtn: React.CSSProperties = {
-  ...S.button,
-  ...S.buttonGhost,
-  padding: '8px 16px',
-  minHeight: 40,
-  borderRadius: 12,
-};
-
-const listRow: React.CSSProperties = {
-  ...S.listRow,
-  padding: '12px 20px',
-};
-
-const sectionHeader: React.CSSProperties = {
-  ...S.sectionLabel,
-};
-
-const badge: React.CSSProperties = {
-  ...S.badge,
-  letterSpacing: '0.02em',
-};
-
-function coloredBadge(color: string): React.CSSProperties {
-  return {
-    ...S.badge,
-    gap: 8,
-    letterSpacing: '0.02em',
-    background: `${color}15`,
-    color: color,
-  };
-}
-
-// ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
@@ -188,11 +132,10 @@ function TendersTab() {
   const [scanning, setScanning] = useState(false);
   const [selectedTender, setSelectedTender] = useState<Tender | null>(null);
   const [selectedResponse, setSelectedResponse] = useState<TenderResponse | null>(null);
-  const [view, setView] = useState<'list' | 'pipeline' | 'profiles'>('pipeline');
+  const [view, setView] = useState<string>('pipeline');
   const [actionLoading, setActionLoading] = useState<string | null>(null);
-  const [hoveredTender, setHoveredTender] = useState<string | null>(null);
 
-  // ── Data fetching ──────────────────────────────────────────────────────
+  // ---- Data fetching ----
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -210,7 +153,7 @@ function TendersTab() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  // ── Actions ────────────────────────────────────────────────────────────
+  // ---- Actions ----
 
   const handleScan = useCallback(async () => {
     setScanning(true);
@@ -252,7 +195,7 @@ function TendersTab() {
     }
   }, [fetchData]);
 
-  // ── Pipeline view ──────────────────────────────────────────────────────
+  // ---- Pipeline view ----
 
   const pipelineGroups = PIPELINE_STAGES.map((stage) => ({
     ...stage,
@@ -262,139 +205,70 @@ function TendersTab() {
     }),
   }));
 
-  // ── Render ─────────────────────────────────────────────────────────────
+  // ---- Render ----
 
   if (loading) {
     return (
-      <TabShell>
-        <div style={{ padding: '40px 20px', textAlign: 'center' }}>
-          <div
-            style={{
-              display: 'inline-block',
-              width: 20,
-              height: 20,
-              borderRadius: '50%',
-              background: 'linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.03) 75%)',
-              backgroundSize: '200% 100%',
-              animation: 'shimmer 1.5s ease infinite',
-            }}
-          />
-        </div>
-      </TabShell>
+      <div className="flex items-center justify-center p-10">
+        <div className="size-5 animate-pulse rounded-full bg-muted" />
+      </div>
     );
   }
 
   return (
-    <TabShell>
-      {/* Page Header */}
-      <div style={{ marginBottom: 32 }}>
-        {/* View Toggles + Actions */}
-        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-          <GlassToggle
-            options={[
-              { key: 'pipeline' as const, label: 'Pipeline' },
-              { key: 'list' as const, label: 'List' },
-              { key: 'profiles' as const, label: 'Profiles' },
-            ]}
-            value={view}
-            onChange={setView}
-          />
+    <div className="flex flex-col gap-6 p-6">
+      {/* Header */}
+      <div className="flex items-center gap-3">
+        <ToggleGroup type="single" value={view} onValueChange={(v) => v && setView(v)} variant="outline">
+          <ToggleGroupItem value="pipeline">Pipeline</ToggleGroupItem>
+          <ToggleGroupItem value="list">List</ToggleGroupItem>
+          <ToggleGroupItem value="profiles">Profiles</ToggleGroupItem>
+        </ToggleGroup>
 
-          <button
-            onClick={handleScan}
-            disabled={scanning}
-            style={{
-              ...S.button,
-              ...S.buttonSoft,
-              background: C.bgHoverStrong,
-              color: C.textPrimary,
-              opacity: scanning ? 0.5 : 1,
-            }}
-            onMouseEnter={(e) => {
-              if (!scanning) {
-                (e.target as HTMLElement).style.background = C.bgHover;
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (!scanning) {
-                (e.target as HTMLElement).style.background = C.bgHoverStrong;
-              }
-            }}
-          >
-            <RefreshCw
-              size={16}
-              style={{
-                animation: scanning ? 'spin 1s linear infinite' : 'none',
-              }}
-            />
-            {scanning ? 'Scanning...' : 'Scan Now'}
-          </button>
-        </div>
+        <Button variant="secondary" size="sm" onClick={handleScan} disabled={scanning}>
+          <IconRefresh size={16} className={scanning ? 'animate-spin' : ''} />
+          {scanning ? 'Scanning...' : 'Scan Now'}
+        </Button>
       </div>
 
       {/* Pipeline View */}
       {view === 'pipeline' && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 20 }}>
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-5">
           {pipelineGroups.map((stage) => (
-            <div key={stage.key}>
-              <button
-                style={{
-                  ...pillBtn,
-                  width: '100%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  marginBottom: 16,
-                  background: 'var(--hover-bg-strong, rgba(255, 255, 255, 0.08))',
-                  boxShadow: 'var(--glass-pill-inset, none)',
-                  color: 'var(--text-primary)',
-                  fontWeight: 500,
-                }}
-              >
-                <span>{stage.label}</span>
-                <span style={{ fontSize: 14, opacity: 0.7 }}>{stage.tenders.length}</span>
-              </button>
+            <div key={stage.key} className="flex flex-col gap-3">
+              <div className="flex items-center justify-between rounded-lg bg-muted/50 px-4 py-2.5">
+                <span className="text-sm font-medium text-foreground">{stage.label}</span>
+                <Badge variant="secondary" className="text-xs">{stage.tenders.length}</Badge>
+              </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div className="flex flex-col gap-2">
                 {stage.tenders.slice(0, 5).map((tender) => (
-                  <button
+                  <Card
                     key={tender.id}
+                    className="cursor-pointer py-3 transition-colors hover:bg-muted/30"
                     onClick={() => setSelectedTender(tender)}
-                    onMouseEnter={() => setHoveredTender(tender.id)}
-                    onMouseLeave={() => setHoveredTender(null)}
-                    style={{
-                      ...listRow,
-                      flexDirection: 'column',
-                      alignItems: 'flex-start',
-                      background: hoveredTender === tender.id ? 'var(--hover-bg-strong)' : 'var(--bb-surface)',
-                    }}
                   >
-                    <p style={{ fontSize: 14, fontWeight: 500, color: C.textPrimary, marginBottom: 8, lineHeight: 1.4 }}>
-                      {tender.title}
-                    </p>
-                    <div style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 14, color: C.textSecondary, marginBottom: 8, width: '100%' }}>
-                      <span>{sourceLabel(tender.source)}</span>
-                      {tender.value && <span style={{ fontFamily: S.mono.fontFamily, fontWeight: 500 }}>{formatMoney(tender.value)}</span>}
-                    </div>
-                    {tender.fit_score !== null && (
-                      <span style={coloredBadge(fitScoreColor(tender.fit_score))}>
-                        Fit: {tender.fit_score}%
-                      </span>
-                    )}
-                  </button>
+                    <CardContent className="flex flex-col gap-2 px-4">
+                      <p className="text-sm font-medium leading-snug text-foreground">
+                        {tender.title}
+                      </p>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <span>{sourceLabel(tender.source)}</span>
+                        {tender.value && (
+                          <span className="font-mono font-medium">{formatMoney(tender.value)}</span>
+                        )}
+                      </div>
+                      {tender.fit_score !== null && (
+                        <Badge variant={fitScoreBadgeVariant(tender.fit_score)} className="w-fit text-xs">
+                          Fit: {tender.fit_score}%
+                        </Badge>
+                      )}
+                    </CardContent>
+                  </Card>
                 ))}
 
                 {stage.tenders.length === 0 && (
-                  <div
-                    style={{
-                      padding: '20px 16px',
-                      borderRadius: 12,
-                      border: `1px solid ${C.borderSubtle}`,
-                      textAlign: 'center',
-                      fontSize: 14,
-                      color: C.textDim,
-                    }}
-                  >
+                  <div className="rounded-lg border border-dashed border-border p-5 text-center text-xs text-muted-foreground">
                     No tenders
                   </div>
                 )}
@@ -406,132 +280,90 @@ function TendersTab() {
 
       {/* List View */}
       {view === 'list' && (
-        <div style={{ ...glassCard, overflow: 'hidden' }}>
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', fontSize: 14 }}>
-              <thead>
-                <tr style={{ borderBottom: `1px solid ${C.borderSubtle}`, textAlign: 'left' }}>
-                  {['Tender', 'Source', 'Value', 'Closing', 'Fit', 'Actions'].map((h) => (
-                    <th key={h} style={{ ...S.sectionLabel, padding: '12px 16px', marginBottom: 0, letterSpacing: '0.05em' }}>
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
+        <Card>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Tender</TableHead>
+                  <TableHead>Source</TableHead>
+                  <TableHead className="text-right">Value</TableHead>
+                  <TableHead>Closing</TableHead>
+                  <TableHead>Fit</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {tenders.map((tender) => (
-                  <tr
+                  <TableRow
                     key={tender.id}
+                    className="cursor-pointer"
                     onClick={() => setSelectedTender(tender)}
-                    style={{
-                      borderBottom: '1px solid var(--glass-card-border)',
-                      cursor: 'pointer',
-                      transition: 'background 200ms',
-                    }}
-                    onMouseEnter={(e) => {
-                      (e.target as HTMLElement).style.background = 'var(--hover-bg, rgba(255, 255, 255, 0.02))';
-                    }}
-                    onMouseLeave={(e) => {
-                      (e.target as HTMLElement).style.background = 'transparent';
-                    }}
                   >
-                    <td style={{ padding: '12px 16px' }}>
-                      <p style={{ fontWeight: 500, color: C.textPrimary, marginBottom: 4 }}>{tender.title}</p>
-                      <p style={{ fontSize: 14, color: C.textSecondary }}>{tender.tender_number}</p>
-                    </td>
-                    <td style={{ padding: '12px 16px', fontSize: 14, color: C.textSecondary }}>
+                    <TableCell>
+                      <p className="font-medium text-foreground">{tender.title}</p>
+                      <p className="text-xs text-muted-foreground">{tender.tender_number}</p>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
                       {sourceLabel(tender.source)}
-                    </td>
-                    <td style={{ padding: '12px 16px', fontSize: 14, color: C.textSecondary, fontFamily: S.mono.fontFamily, fontWeight: 500 }}>
+                    </TableCell>
+                    <TableCell className="text-right font-mono font-medium text-muted-foreground">
                       {tender.value ? formatMoney(tender.value) : '--'}
-                    </td>
-                    <td style={{ padding: '12px 16px', fontSize: 14, color: C.textSecondary }}>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
                       {tender.deadline ? (
-                        <span style={{ color: daysUntil(tender.deadline) < 7 ? 'var(--bb-red)' : 'inherit' }}>
+                        <span className={daysUntil(tender.deadline) < 7 ? 'text-destructive' : ''}>
                           {formatDate(tender.deadline)} ({daysUntil(tender.deadline)}d)
                         </span>
                       ) : '--'}
-                    </td>
-                    <td style={{ padding: '12px 16px' }}>
+                    </TableCell>
+                    <TableCell>
                       {tender.fit_score !== null ? (
-                        <span style={coloredBadge(fitScoreColor(tender.fit_score))}>
+                        <Badge variant={fitScoreBadgeVariant(tender.fit_score)} className="text-xs">
                           {tender.fit_score}%
-                        </span>
+                        </Badge>
                       ) : (
-                        <span style={{ fontSize: 14, color: C.textDim }}>--</span>
+                        <span className="text-xs text-muted-foreground">--</span>
                       )}
-                    </td>
-                    <td style={{ padding: '12px 16px' }}>
-                      <div style={{ display: 'flex', gap: 8 }}>
-                        <button
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="secondary"
+                          size="xs"
                           onClick={(e) => { e.stopPropagation(); handleAction(tender.id, 'evaluate'); }}
                           disabled={actionLoading === tender.id}
-                          style={{
-                            ...ghostBtn,
-                            fontSize: 14,
-                            padding: '8px 12px',
-                            background: C.bgHoverStrong,
-                            color: C.textSecondary,
-                            opacity: actionLoading === tender.id ? 0.5 : 1,
-                          }}
-                          onMouseEnter={(e) => {
-                            if (actionLoading !== tender.id) {
-                              (e.target as HTMLElement).style.background = C.bgHover;
-                            }
-                          }}
-                          onMouseLeave={(e) => {
-                            if (actionLoading !== tender.id) {
-                              (e.target as HTMLElement).style.background = C.bgHoverStrong;
-                            }
-                          }}
                         >
                           Evaluate
-                        </button>
-                        <button
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="xs"
                           onClick={(e) => { e.stopPropagation(); handleAction(tender.id, 'response'); }}
                           disabled={actionLoading === tender.id}
-                          style={{
-                            ...ghostBtn,
-                            fontSize: 14,
-                            padding: '8px 12px',
-                            background: C.bgHoverStrong,
-                            color: C.textPrimary,
-                            opacity: actionLoading === tender.id ? 0.5 : 1,
-                          }}
-                          onMouseEnter={(e) => {
-                            if (actionLoading !== tender.id) {
-                              (e.target as HTMLElement).style.background = C.bgHover;
-                            }
-                          }}
-                          onMouseLeave={(e) => {
-                            if (actionLoading !== tender.id) {
-                              (e.target as HTMLElement).style.background = C.bgHoverStrong;
-                            }
-                          }}
                         >
                           Draft
-                        </button>
+                        </Button>
                       </div>
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))}
 
                 {tenders.length === 0 && (
-                  <tr>
-                    <td colSpan={6}>
-                      <div style={S.emptyState}>
-                        <FileSearch size={32} style={S.emptyIcon} />
-                        <span style={S.emptyText}>
-                          No tenders found. Click &quot;Scan Now&quot; to search government tender portals.
-                        </span>
-                      </div>
-                    </td>
-                  </tr>
+                  <TableRow>
+                    <TableCell colSpan={6}>
+                      <EmptyState
+                        icon={<IconFileSearch size={32} />}
+                        title="No tenders found"
+                        description='Click "Scan Now" to search government tender portals.'
+                      />
+                    </TableCell>
+                  </TableRow>
                 )}
-              </tbody>
-            </table>
-          </div>
-        </div>
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
       )}
 
       {/* Capability Profiles View */}
@@ -543,358 +375,185 @@ function TendersTab() {
               description="Create profiles to enable smart tender matching and automated evaluations."
             />
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 20 }}>
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-5">
               {profiles.map((profile) => (
-                <div
-                  key={profile.id}
-                  style={{
-                    ...glassCard,
-                  }}
-                >
-                  <h3 style={{ fontSize: 14, fontWeight: 500, color: C.textPrimary, marginBottom: 8 }}>
-                    {profile.name}
-                  </h3>
-                  <p style={{ fontSize: 14, color: C.textSecondary, marginBottom: 12 }}>
-                    {profile.service_category}
-                  </p>
-
-                  {profile.skills.length > 0 && (
-                    <div style={{ marginBottom: 12 }}>
-                      <p style={sectionHeader}>Skills</p>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                        {profile.skills.map((skill) => (
-                          <span key={skill} style={badge}>
-                            {skill}
-                          </span>
-                        ))}
+                <Card key={profile.id}>
+                  <CardHeader>
+                    <CardTitle className="text-sm">{profile.name}</CardTitle>
+                    <p className="text-sm text-muted-foreground">{profile.service_category}</p>
+                  </CardHeader>
+                  <CardContent className="flex flex-col gap-3">
+                    {profile.skills.length > 0 && (
+                      <div>
+                        <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Skills</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {profile.skills.map((skill) => (
+                            <Badge key={skill} variant="secondary" className="text-xs">{skill}</Badge>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  )}
-
-                  {profile.certifications.length > 0 && (
-                    <div style={{ marginBottom: 12 }}>
-                      <p style={sectionHeader}>Certifications</p>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                        {profile.certifications.map((cert) => (
-                          <span key={cert} style={badge}>
-                            {cert}
-                          </span>
-                        ))}
+                    )}
+                    {profile.certifications.length > 0 && (
+                      <div>
+                        <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Certifications</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {profile.certifications.map((cert) => (
+                            <Badge key={cert} variant="secondary" className="text-xs">{cert}</Badge>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  )}
-
-                  {profile.max_contract_value && (
-                    <div style={{ paddingTop: 12, borderTop: `1px solid ${C.borderSubtle}` }}>
-                      <p style={{ fontSize: 14, color: C.textSecondary }}>
-                        Max contract:{' '}
-                        <span style={{ fontFamily: S.mono.fontFamily, fontWeight: 500, color: C.textPrimary }}>
-                          {formatMoney(profile.max_contract_value)}
-                        </span>
-                      </p>
-                    </div>
-                  )}
-                </div>
+                    )}
+                    {profile.max_contract_value && (
+                      <div className="border-t border-border pt-3">
+                        <p className="text-sm text-muted-foreground">
+                          Max contract:{' '}
+                          <span className="font-mono font-medium text-foreground">
+                            {formatMoney(profile.max_contract_value)}
+                          </span>
+                        </p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
               ))}
             </div>
           )}
         </div>
       )}
 
-      {/* Tender Detail Drawer */}
-      {selectedTender && (
-        <TenderDetailDrawer
-          tender={selectedTender}
-          response={selectedResponse}
-          onClose={() => { setSelectedTender(null); setSelectedResponse(null); }}
-          onAction={handleAction}
-          actionLoading={actionLoading}
-        />
-      )}
-    </TabShell>
-  );
-}
+      {/* Tender Detail Sheet */}
+      <Sheet open={!!selectedTender} onOpenChange={(open) => { if (!open) { setSelectedTender(null); setSelectedResponse(null); } }}>
+        <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
+          {selectedTender && (
+            <>
+              <SheetHeader>
+                <SheetTitle>{selectedTender.title}</SheetTitle>
+                <SheetDescription>
+                  {sourceLabel(selectedTender.source)}
+                  {selectedTender.tender_number && ` | ${selectedTender.tender_number}`}
+                </SheetDescription>
+              </SheetHeader>
 
-// ---------------------------------------------------------------------------
-// Tender Detail Drawer
-// ---------------------------------------------------------------------------
-
-interface TenderDetailDrawerProps {
-  tender: Tender;
-  response: TenderResponse | null;
-  onClose: () => void;
-  onAction: (tenderId: string, action: string) => Promise<void>;
-  actionLoading: string | null;
-}
-
-function TenderDetailDrawer({ tender, response, onClose, onAction, actionLoading }: TenderDetailDrawerProps) {
-  const [hoveredBtn, setHoveredBtn] = useState<string | null>(null);
-
-  return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', justifyContent: 'flex-end' }}>
-      <div
-        style={{ position: 'absolute', inset: 0, background: 'var(--bg-overlay)' }}
-        onClick={onClose}
-      />
-      <div
-        style={{
-          position: 'relative',
-          width: '100%',
-          maxWidth: '480px',
-          background: 'var(--bg-card-solid)',
-          backdropFilter: 'var(--glass-card-blur)',
-          WebkitBackdropFilter: 'var(--glass-card-blur)',
-          borderLeft: '1px solid var(--glass-card-border)',
-          overflowY: 'auto',
-          display: 'flex',
-          flexDirection: 'column',
-        }}
-      >
-        <div style={{ padding: '24px', borderBottom: '1px solid var(--glass-card-border)', flexShrink: 0 }}>
-          {/* Header */}
-          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 16 }}>
-            <div style={{ flex: 1 }}>
-              <h2 style={{ ...S.title, marginBottom: 8 }}>
-                {tender.title}
-              </h2>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, color: C.textSecondary }}>
-                <span>{sourceLabel(tender.source)}</span>
-                {tender.tender_number && (
-                  <>
-                    <span>|</span>
-                    <span>{tender.tender_number}</span>
-                  </>
-                )}
+              {/* Key metrics */}
+              <div className="grid grid-cols-3 gap-3 px-4">
+                <Card className="py-3">
+                  <CardContent className="px-3 text-center">
+                    <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Value</p>
+                    <p className="mt-1 font-mono text-sm font-medium text-foreground">
+                      {selectedTender.value ? formatMoney(selectedTender.value) : '--'}
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card className="py-3">
+                  <CardContent className="px-3 text-center">
+                    <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Closing</p>
+                    <p className="mt-1 text-sm font-medium text-foreground">
+                      {selectedTender.deadline ? formatDate(selectedTender.deadline) : '--'}
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card className="py-3">
+                  <CardContent className="px-3 text-center">
+                    <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Fit Score</p>
+                    {selectedTender.fit_score !== null ? (
+                      <Badge variant={fitScoreBadgeVariant(selectedTender.fit_score)} className="mt-1 text-xs">
+                        {selectedTender.fit_score}%
+                      </Badge>
+                    ) : (
+                      <p className="mt-1 text-sm text-muted-foreground">--</p>
+                    )}
+                  </CardContent>
+                </Card>
               </div>
-            </div>
-            <button
-              onClick={onClose}
-              style={{
-                background: 'transparent',
-                border: 'none',
-                color: 'var(--text-secondary)',
-                cursor: 'pointer',
-                padding: 4,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-              onMouseEnter={(e) => {
-                (e.target as HTMLElement).style.color = 'var(--text-primary)';
-              }}
-              onMouseLeave={(e) => {
-                (e.target as HTMLElement).style.color = 'var(--text-secondary)';
-              }}
-            >
-              <X size={20} />
-            </button>
-          </div>
 
-          {/* Key metrics */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
-            <div style={{ ...glassCard, padding: '12px', textAlign: 'center' }}>
-              <p style={{ ...S.sectionLabel, fontSize: 14, marginBottom: 4 }}>
-                Value
-              </p>
-              <p style={{ fontSize: 14, fontWeight: 500, color: C.textPrimary, fontFamily: S.mono.fontFamily }}>
-                {tender.value ? formatMoney(tender.value) : '--'}
-              </p>
-            </div>
-            <div style={{ ...glassCard, padding: '12px', textAlign: 'center' }}>
-              <p style={{ ...S.sectionLabel, fontSize: 14, marginBottom: 4 }}>
-                Closing
-              </p>
-              <p style={{ fontSize: 14, fontWeight: 500, color: C.textPrimary }}>
-                {tender.deadline ? formatDate(tender.deadline) : '--'}
-              </p>
-            </div>
-            <div style={{ ...glassCard, padding: '12px', textAlign: 'center' }}>
-              <p style={{ ...S.sectionLabel, fontSize: 14, marginBottom: 4 }}>
-                Fit Score
-              </p>
-              {tender.fit_score !== null ? (
-                <span style={coloredBadge(fitScoreColor(tender.fit_score))}>
-                  {tender.fit_score}%
-                </span>
-              ) : (
-                <p style={{ fontSize: 14, color: C.textDim }}>--</p>
+              {/* Actions */}
+              <div className="flex flex-col gap-2 px-4">
+                <Button
+                  variant="secondary"
+                  className="w-full"
+                  onClick={() => handleAction(selectedTender.id, 'evaluate')}
+                  disabled={actionLoading === selectedTender.id}
+                >
+                  <IconSearch size={16} />
+                  Evaluate Fit
+                </Button>
+                <Button
+                  variant="secondary"
+                  className="w-full"
+                  onClick={() => handleAction(selectedTender.id, 'compliance')}
+                  disabled={actionLoading === selectedTender.id}
+                >
+                  <IconCircleCheck size={16} />
+                  Compliance
+                </Button>
+                <Button
+                  className="w-full"
+                  onClick={() => handleAction(selectedTender.id, 'response')}
+                  disabled={actionLoading === selectedTender.id}
+                >
+                  <IconArrowRight size={16} />
+                  Draft Response
+                </Button>
+              </div>
+
+              {/* External link */}
+              {selectedTender.url && (
+                <div className="px-4">
+                  <a
+                    href={selectedTender.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    View on {sourceLabel(selectedTender.source)}
+                    <IconChevronRight size={14} />
+                  </a>
+                </div>
               )}
-            </div>
-          </div>
-        </div>
 
-        {/* Scrollable content */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '24px' }}>
-          {/* Actions */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 24 }}>
-            <button
-              onClick={() => onAction(tender.id, 'evaluate')}
-              disabled={actionLoading === tender.id}
-              onMouseEnter={() => setHoveredBtn('evaluate')}
-              onMouseLeave={() => setHoveredBtn(null)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 8,
-                width: '100%',
-                padding: '12px 16px',
-                borderRadius: 8,
-                background: hoveredBtn === 'evaluate' && actionLoading !== tender.id ? 'var(--hover-bg, rgba(255, 255, 255, 0.10))' : 'var(--hover-bg-strong, rgba(255, 255, 255, 0.06))',
-                border: 'none',
-                color: 'var(--text-primary, #F1F5F9)',
-                fontSize: 14,
-                fontWeight: 500,
-                cursor: 'pointer',
-                opacity: actionLoading === tender.id ? 0.5 : 1,
-                transition: 'all 200ms',
-              }}
-            >
-              <Search size={16} />
-              Evaluate Fit
-            </button>
-            <button
-              onClick={() => onAction(tender.id, 'compliance')}
-              disabled={actionLoading === tender.id}
-              onMouseEnter={() => setHoveredBtn('compliance')}
-              onMouseLeave={() => setHoveredBtn(null)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 8,
-                width: '100%',
-                padding: '12px 16px',
-                borderRadius: 8,
-                background: hoveredBtn === 'compliance' && actionLoading !== tender.id ? 'var(--hover-bg, rgba(255, 255, 255, 0.10))' : 'var(--hover-bg-strong, rgba(255, 255, 255, 0.06))',
-                border: 'none',
-                color: 'var(--text-primary, #F1F5F9)',
-                fontSize: 14,
-                fontWeight: 500,
-                cursor: 'pointer',
-                opacity: actionLoading === tender.id ? 0.5 : 1,
-                transition: 'all 200ms',
-              }}
-            >
-              <CheckCircle2 size={16} />
-              Compliance
-            </button>
-            <button
-              onClick={() => onAction(tender.id, 'response')}
-              disabled={actionLoading === tender.id}
-              onMouseEnter={() => setHoveredBtn('response')}
-              onMouseLeave={() => setHoveredBtn(null)}
-              style={{
-                ...accentBtn,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 8,
-                width: '100%',
-                padding: '12px 16px',
-                background: 'var(--btn-primary-bg, #F1F5F9)',
-                color: 'var(--btn-primary-fg, #0a0f1a)',
-                opacity: actionLoading === tender.id ? 0.5 : 1,
-                transform: hoveredBtn === 'response' && actionLoading !== tender.id ? 'translateY(-1px)' : 'translateY(0)',
-              }}
-            >
-              <ArrowRight size={16} />
-              Draft Response
-            </button>
-          </div>
+              {/* Response sections */}
+              {selectedResponse?.content?.sections && selectedResponse.content.sections.length > 0 && (
+                <div className="flex flex-col gap-3 px-4">
+                  <h3 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Draft Response</h3>
+                  {selectedResponse.content.sections.map((section, i) => (
+                    <Card key={i} className="py-3">
+                      <CardContent className="px-4">
+                        <h4 className="mb-2 text-sm font-medium text-foreground">{section.title}</h4>
+                        <p className="whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">{section.content}</p>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
 
-          {/* External link */}
-          {tender.url && (
-            <a
-              href={tender.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 8,
-                fontSize: 14,
-                color: 'var(--text-secondary)',
-                textDecoration: 'none',
-                marginBottom: 24,
-                transition: 'color 200ms',
-              }}
-              onMouseEnter={(e) => {
-                (e.target as HTMLElement).style.color = 'var(--text-primary)';
-              }}
-              onMouseLeave={(e) => {
-                (e.target as HTMLElement).style.color = 'var(--text-secondary)';
-              }}
-            >
-              View on {sourceLabel(tender.source)}
-              <ChevronRight size={14} />
-            </a>
-          )}
-
-          {/* Response sections */}
-          {response?.content?.sections && response.content.sections.length > 0 && (
-            <div style={{ marginBottom: 24 }}>
-              <h3 style={sectionHeader}>Draft Response</h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {response.content.sections.map((section, i) => (
-                  <div key={i} style={{ ...glassCard, padding: '16px' }}>
-                    <h4 style={{ fontSize: 14, fontWeight: 500, color: C.textPrimary, marginBottom: 8 }}>
-                      {section.title}
-                    </h4>
-                    <p style={{ fontSize: 14, color: C.textSecondary, whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>
-                      {section.content}
+              {/* Compliance matrix */}
+              {selectedResponse?.content?.compliance_matrix && selectedResponse.content.compliance_matrix.length > 0 && (
+                <div className="flex flex-col gap-3 px-4">
+                  <div>
+                    <h3 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Compliance Check</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Score: <span className="font-mono font-medium text-foreground">{selectedResponse.compliance_score ?? '--'}%</span>
                     </p>
                   </div>
-                ))}
-              </div>
-            </div>
+                  {selectedResponse.content.compliance_matrix.map((item, i) => (
+                    <Card key={i} className="py-3">
+                      <CardContent className="flex gap-3 px-4">
+                        {item.status === 'met' && <IconCircleCheck size={18} className="mt-0.5 shrink-0 text-emerald-500" />}
+                        {item.status === 'partially_met' && <IconAlertCircle size={18} className="mt-0.5 shrink-0 text-amber-500" />}
+                        {item.status === 'not_met' && <IconCircleMinus size={18} className="mt-0.5 shrink-0 text-destructive" />}
+                        <div>
+                          <p className="text-sm text-foreground">{item.requirement}</p>
+                          <p className="text-sm text-muted-foreground">{item.evidence}</p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </>
           )}
-
-          {/* Compliance matrix */}
-          {response?.content?.compliance_matrix && response.content.compliance_matrix.length > 0 && (
-            <div>
-              <h3 style={sectionHeader}>Compliance Check</h3>
-              <div style={{ marginBottom: 12, fontSize: 14, color: C.textSecondary }}>
-                Score:{' '}
-                <span style={{ fontFamily: S.mono.fontFamily, fontWeight: 500, color: C.textPrimary }}>
-                  {response.compliance_score ?? '--'}%
-                </span>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {response.content.compliance_matrix.map((item, i) => (
-                  <div
-                    key={i}
-                    style={{
-                      ...glassCard,
-                      padding: '12px',
-                      display: 'flex',
-                      gap: 12,
-                    }}
-                  >
-                    {item.status === 'met' && (
-                      <CheckCircle2 size={18} style={{ color: C.statusSuccess, flexShrink: 0, marginTop: 2 }} />
-                    )}
-                    {item.status === 'partially_met' && (
-                      <AlertCircle size={18} style={{ color: C.statusWarning, flexShrink: 0, marginTop: 2 }} />
-                    )}
-                    {item.status === 'not_met' && (
-                      <MinusCircle size={18} style={{ color: C.statusError, flexShrink: 0, marginTop: 2 }} />
-                    )}
-                    <div style={{ flex: 1 }}>
-                      <p style={{ fontSize: 14, color: C.textPrimary, marginBottom: 4 }}>
-                        {item.requirement}
-                      </p>
-                      <p style={{ fontSize: 14, color: C.textSecondary }}>
-                        {item.evidence}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

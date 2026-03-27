@@ -1,15 +1,38 @@
 'use client'
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { Search, ChevronRight, Mail, Phone, Users } from 'lucide-react'
-import { GlassDropdown } from '@/components/ui/glass-dropdown'
-import { EmptyState } from '@/components/ui/empty-state'
-import { S, C } from '@/lib/styles/design-tokens'
+import {
+  IconSearch,
+  IconChevronRight,
+  IconMail,
+  IconPhone,
+  IconUsers,
+} from '@tabler/icons-react'
+import { Input } from '@/components/ui/input'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Card, CardContent } from '@/components/ui/card'
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
+import { Badge } from '@/components/ui/badge'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Separator } from '@/components/ui/separator'
+import { Button } from '@/components/ui/button'
+import {
+  Empty,
+  EmptyHeader,
+  EmptyTitle,
+  EmptyDescription,
+  EmptyMedia,
+} from '@/components/ui/empty'
 import { useDevOverrides } from '@/lib/dev/dev-overrides'
-import { StatusPill, type StatusVariant } from '@/components/ui/status-pill'
 import { EntityDetailDrawer } from '@/components/dashboard/entity-detail-drawer'
 import { ContactsPageTooltip } from '@/components/onboarding/first-run-guide'
-import { logger } from '@/lib/core/logger';
+import { logger } from '@/lib/core/logger'
 
 type ContactType = 'client' | 'partner' | 'lead' | 'vendor' | string
 
@@ -35,9 +58,7 @@ function normalizeContacts(payload: unknown): Contact[] {
   return []
 }
 
-// ---------------------------------------------------------------------------
-// Seed data — activated via dev toolbar
-// ---------------------------------------------------------------------------
+// Seed data -- activated via dev toolbar
 
 const SEED_CONTACTS: Contact[] = [
   {
@@ -74,27 +95,22 @@ const SEED_CONTACTS: Contact[] = [
   },
 ]
 
-// ---------------------------------------------------------------------------
-// Type mapping
-// ---------------------------------------------------------------------------
-
-const CONTACT_TYPE_VARIANT: Record<string, StatusVariant> = {
-  client: 'info',
-  lead: 'orange',
-  partner: 'purple',
-  vendor: 'cyan',
+// Type to badge variant mapping
+const CONTACT_TYPE_VARIANT: Record<string, 'default' | 'secondary' | 'outline' | 'destructive'> = {
+  client: 'default',
+  lead: 'secondary',
+  partner: 'outline',
+  vendor: 'outline',
 }
 
-// ---------------------------------------------------------------------------
 // Component
-// ---------------------------------------------------------------------------
 
 function ContactsTab() {
   const [contacts, setContacts] = useState<Contact[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [search, setSearch] = useState('')
-  const [sort, setSort] = useState<'az' | 'za' | 'recent'>('az')
+  const [sort, setSort] = useState<string>('az')
   const [selectedContactId, setSelectedContactId] = useState<string | null>(null)
 
   const devOverrides = useDevOverrides()
@@ -181,36 +197,19 @@ function ContactsTab() {
 
   if (loading && !useSeeded) {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div className="flex flex-col gap-4">
         {/* Stats skeleton */}
-        <div style={{ display: 'flex', gap: 16, marginBottom: 4 }}>
+        <div className="flex gap-4 mb-1">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} style={{
-              width: 64, height: 20, borderRadius: 8,
-              background: 'linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.03) 75%)',
-              backgroundSize: '200% 100%',
-              animation: 'shimmer 1.5s ease infinite',
-              animationDelay: `${i * 100}ms`,
-            }} />
+            <Skeleton key={i} className="h-5 w-16" />
           ))}
         </div>
         {/* Search skeleton */}
-        <div style={{
-          height: 40, borderRadius: 12,
-          background: 'linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.03) 75%)',
-          backgroundSize: '200% 100%',
-          animation: 'shimmer 1.5s ease infinite',
-        }} />
+        <Skeleton className="h-8 w-full rounded-lg" />
         {/* Card skeletons */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div className="flex flex-col gap-2">
           {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} style={{
-              height: 80, borderRadius: 16,
-              background: 'linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.03) 75%)',
-              backgroundSize: '200% 100%',
-              animation: 'shimmer 1.5s ease infinite',
-              animationDelay: `${i * 100}ms`,
-            }} />
+            <Skeleton key={i} className="h-20 w-full rounded-xl" />
           ))}
         </div>
       </div>
@@ -219,11 +218,19 @@ function ContactsTab() {
 
   if (error && contacts.length === 0) {
     return (
-      <EmptyState
-        title="Couldn't load contacts"
-        description={error}
-        action={{ label: 'Retry', onClick: () => { setError(null); setLoading(true); loadContacts().catch(() => setError('Failed to load contacts')).finally(() => setLoading(false)) } }}
-      />
+      <Empty className="py-12">
+        <EmptyHeader>
+          <EmptyTitle>Couldn't load contacts</EmptyTitle>
+          <EmptyDescription>{error}</EmptyDescription>
+        </EmptyHeader>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => { setError(null); setLoading(true); loadContacts().catch(() => setError('Failed to load contacts')).finally(() => setLoading(false)) }}
+        >
+          Retry
+        </Button>
+      </Empty>
     )
   }
 
@@ -234,15 +241,25 @@ function ContactsTab() {
 
   if (contacts.length === 0) {
     return (
-      <EmptyState
-        icon={<Users size={24} />}
-        title="No contacts yet"
-        description="Contacts are automatically created when BitBit processes emails and messages. Connect your email to start building your contact book."
-        action={{
-          label: 'Connect email',
-          onClick: () => window.dispatchEvent(new CustomEvent('bb-navigate', { detail: { tab: 'settings-connections' } })),
-        }}
-      />
+      <Empty className="py-12">
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <IconUsers className="size-4" />
+          </EmptyMedia>
+          <EmptyTitle>No contacts yet</EmptyTitle>
+          <EmptyDescription>
+            Contacts are automatically created when BitBit processes emails and messages.
+            Connect your email to start building your contact book.
+          </EmptyDescription>
+        </EmptyHeader>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => window.dispatchEvent(new CustomEvent('bb-navigate', { detail: { tab: 'settings-connections' } }))}
+        >
+          Connect email
+        </Button>
+      </Empty>
     )
   }
 
@@ -250,59 +267,62 @@ function ContactsTab() {
     <>
       <ContactsPageTooltip>
         <div className="flex flex-col gap-5">
-          {/* ── Inline Stats ── */}
-          <div className="bb-contacts-stats">
-          <StatPill value={contacts.length} label="total" active={contacts.length > 0} />
-          <span className="bb-contacts-stats__sep" />
-          <StatPill value={clientCount} label="clients" active={clientCount > 0} />
-          <span className="bb-contacts-stats__sep" />
-          <StatPill value={leadCount} label="leads" active={leadCount > 0} />
-          <span className="bb-contacts-stats__sep" />
-          <StatPill value={partnerCount} label="partners" />
-        </div>
-
-        {/* ── Search + Sort ── */}
-        <div className="flex items-center gap-3">
-          <div className="bb-contacts-search">
-            <Search size={14} className="bb-contacts-search__icon" />
-            <input
-              type="text"
-              placeholder="Search contacts..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              className="bb-contacts-search__input bb-glass-input"
-            />
+          {/* Inline Stats */}
+          <div className="flex items-center gap-3 text-sm">
+            <StatPill value={contacts.length} label="total" active={contacts.length > 0} />
+            <Separator orientation="vertical" className="h-4" />
+            <StatPill value={clientCount} label="clients" active={clientCount > 0} />
+            <Separator orientation="vertical" className="h-4" />
+            <StatPill value={leadCount} label="leads" active={leadCount > 0} />
+            <Separator orientation="vertical" className="h-4" />
+            <StatPill value={partnerCount} label="partners" />
           </div>
-          <GlassDropdown
-            value={sort}
-            onChange={v => setSort(v as 'az' | 'za' | 'recent')}
-            options={[
-              { value: 'az', label: 'A \u2192 Z' },
-              { value: 'za', label: 'Z \u2192 A' },
-              { value: 'recent', label: 'Recent' },
-            ]}
-          />
-        </div>
 
-        {/* ── Contact Grid ── */}
-        {filtered.length === 0 ? (
-          <EmptyState
-            title="No matches"
-            description={`No contacts matching "${search}"`}
-          />
-        ) : (
-          <div className="bb-contacts-grid bb-stagger">
-            {filtered.map((contact, index) => (
-              <ContactCard
-                key={String(contact.id ?? `${contact.name ?? 'contact'}-${index}`)}
-                contact={contact}
-                onOpen={() => {
-                  if (contact.id != null) setSelectedContactId(String(contact.id))
-                }}
+          {/* Search + Sort */}
+          <div className="flex items-center gap-3">
+            <div className="relative flex-1">
+              <IconSearch className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" />
+              <Input
+                type="text"
+                placeholder="Search contacts..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                className="pl-8"
               />
-            ))}
+            </div>
+            <Select value={sort} onValueChange={setSort}>
+              <SelectTrigger className="w-28">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="az">A &rarr; Z</SelectItem>
+                <SelectItem value="za">Z &rarr; A</SelectItem>
+                <SelectItem value="recent">Recent</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-        )}
+
+          {/* Contact Grid */}
+          {filtered.length === 0 ? (
+            <Empty className="py-8">
+              <EmptyHeader>
+                <EmptyTitle>No matches</EmptyTitle>
+                <EmptyDescription>No contacts matching "{search}"</EmptyDescription>
+              </EmptyHeader>
+            </Empty>
+          ) : (
+            <div className="flex flex-col gap-2">
+              {filtered.map((contact, index) => (
+                <ContactCard
+                  key={String(contact.id ?? `${contact.name ?? 'contact'}-${index}`)}
+                  contact={contact}
+                  onOpen={() => {
+                    if (contact.id != null) setSelectedContactId(String(contact.id))
+                  }}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </ContactsPageTooltip>
 
@@ -316,25 +336,22 @@ function ContactsTab() {
   )
 }
 
-// ---------------------------------------------------------------------------
 // Stat Pill
-// ---------------------------------------------------------------------------
 
 function StatPill({ value, label, active }: { value: number | string; label: string; active?: boolean }) {
   return (
-    <span className="bb-contacts-stats__item" data-active={active || undefined}>
-      <span className="bb-contacts-stats__value">{value}</span>
-      <span className="bb-contacts-stats__label">{label}</span>
+    <span className="inline-flex items-baseline gap-1">
+      <span className={`text-sm font-semibold tabular-nums ${active ? 'text-foreground' : 'text-muted-foreground'}`}>
+        {value}
+      </span>
+      <span className="text-xs text-muted-foreground">{label}</span>
     </span>
   )
 }
 
-// ---------------------------------------------------------------------------
 // Contact Card
-// ---------------------------------------------------------------------------
 
 function ContactCard({ contact, onOpen }: { contact: Contact; onOpen: () => void }) {
-  const [hovered, setHovered] = useState(false)
   const email = contact.email ?? contact.emails?.[0]
   const phone = contact.phone ?? contact.phones?.[0]
   const contactType = contact.type ?? 'client'
@@ -349,180 +366,67 @@ function ContactCard({ contact, onOpen }: { contact: Contact; onOpen: () => void
     .toUpperCase()
     .slice(0, 2)
 
-  const typeColorMap: Record<string, string> = {
-    client: '#94A3B8',
-    lead: '#94A3B8',
-    partner: '#94A3B8',
-    vendor: '#94A3B8',
-  }
-
-  const typeColor = typeColorMap[contactType] || '#94A3B8'
+  const badgeVariant = CONTACT_TYPE_VARIANT[contactType] || 'outline'
 
   return (
-    <button
-      type="button"
-      data-type={contactType}
-      onClick={onOpen}
-      disabled={!canOpen}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+    <Card
+      className="py-0 gap-0 cursor-pointer transition-all hover:bg-accent/50 hover:-translate-y-px active:translate-y-0"
+      onClick={canOpen ? onOpen : undefined}
+      role={canOpen ? 'button' : undefined}
+      tabIndex={canOpen ? 0 : undefined}
       aria-label={canOpen ? `Open details for ${contact.name ?? 'contact'}` : `${contact.name ?? 'Contact'} has no detail view`}
-      aria-haspopup={canOpen ? 'dialog' : undefined}
-      style={{
-        ...S.card,
-        width: '100%',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '14px',
-        padding: '16px 20px',
-        border: 'none',
-        cursor: canOpen ? 'pointer' : 'default',
-        textAlign: 'left' as const,
-        transition: 'all 200ms ease-out',
-        transform: hovered ? 'translateY(-1px)' : 'translateY(0)',
-        backgroundColor: hovered ? C.bgListRowHover : C.bgCard,
-      }}
+      onKeyDown={(e) => { if (canOpen && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); onOpen(); } }}
     >
-      {contact.avatar_url ? (
-        <img
-          src={contact.avatar_url}
-          alt={contact.name ?? 'Contact'}
-          style={{
-            width: 40,
-            height: 40,
-            borderRadius: '50%',
-            objectFit: 'cover',
-            flexShrink: 0,
-          }}
-        />
-      ) : (
-        <div style={{
-          width: 40,
-          height: 40,
-          borderRadius: '50%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: 14,
-          fontWeight: 500,
-          flexShrink: 0,
-          background: C.bgHoverStrong,
-          color: C.textSecondary,
-        }}>
-          {initials}
-        </div>
-      )}
+      <CardContent className="flex items-center gap-3.5 py-3.5">
+        <Avatar size="lg">
+          {contact.avatar_url && <AvatarImage src={contact.avatar_url} alt={contact.name ?? 'Contact'} />}
+          <AvatarFallback>{initials}</AvatarFallback>
+        </Avatar>
 
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-          <span style={{
-            fontSize: 14,
-            fontWeight: 500,
-            color: 'var(--text-primary)',
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-          }}>
-            {contact.name ?? 'Unnamed contact'}
-          </span>
-          <span style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            padding: '2px 8px',
-            borderRadius: 8,
-            fontSize: 14,
-            fontWeight: 500,
-            textTransform: 'uppercase',
-            background: C.bgHoverStrong,
-            color: C.textSecondary,
-            whiteSpace: 'nowrap',
-            flexShrink: 0,
-          }}>
-            {contactType.charAt(0).toUpperCase() + contactType.slice(1)}
-          </span>
-        </div>
-
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px',
-          marginTop: '4px',
-          flexWrap: 'wrap',
-        }}>
-          {email && (
-            <span style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
-              fontSize: 14,
-              color: 'var(--text-dim)',
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-            }}>
-              <Mail size={16} style={{ color: 'var(--text-dim)', flexShrink: 0 }} />
-              {email}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-0.5">
+            <span className="text-sm font-medium text-foreground truncate">
+              {contact.name ?? 'Unnamed contact'}
             </span>
-          )}
-          {phone && (
-            <span style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
-              fontSize: 14,
-              color: 'var(--text-dim)',
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-            }}>
-              <Phone size={16} style={{ color: 'var(--text-dim)', flexShrink: 0 }} />
-              {phone}
-            </span>
-          )}
-        </div>
+            <Badge variant={badgeVariant} className="capitalize shrink-0">
+              {contactType}
+            </Badge>
+          </div>
 
-        {tags.length > 0 && (
-          <div style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: '4px',
-            marginTop: '6px',
-          }}>
-            {tags.slice(0, 3).map(tag => (
-              <span key={tag} style={{
-                fontSize: 14,
-                fontWeight: 500,
-                padding: '2px 8px',
-                borderRadius: 8,
-                background: C.bgHover,
-                color: 'var(--text-dim)',
-              }}>
-                {tag}
+          <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
+            {email && (
+              <span className="inline-flex items-center gap-1 truncate">
+                <IconMail className="size-3 shrink-0" />
+                {email}
               </span>
-            ))}
-            {tags.length > 3 && (
-              <span style={{
-                fontSize: 14,
-                fontWeight: 500,
-                padding: '2px 8px',
-                borderRadius: 8,
-                background: C.bgHover,
-                color: 'var(--text-dim)',
-              }}>
-                +{tags.length - 3}
+            )}
+            {phone && (
+              <span className="inline-flex items-center gap-1 truncate">
+                <IconPhone className="size-3 shrink-0" />
+                {phone}
               </span>
             )}
           </div>
-        )}
-      </div>
 
-      <ChevronRight size={16} style={{
-        color: 'var(--text-dim)',
-        opacity: hovered ? 0.5 : 0,
-        transition: 'opacity 200ms ease-out',
-        flexShrink: 0,
-      }} />
-    </button>
+          {tags.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-1.5">
+              {tags.slice(0, 3).map(tag => (
+                <Badge key={tag} variant="secondary" className="text-[10px] px-1.5 py-0">
+                  {tag}
+                </Badge>
+              ))}
+              {tags.length > 3 && (
+                <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                  +{tags.length - 3}
+                </Badge>
+              )}
+            </div>
+          )}
+        </div>
+
+        <IconChevronRight className="size-4 text-muted-foreground shrink-0 opacity-0 group-hover:opacity-50 transition-opacity" />
+      </CardContent>
+    </Card>
   )
 }
 

@@ -1,9 +1,17 @@
 'use client'
 
 import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react'
-import { Shield } from 'lucide-react'
-import { EmptyState } from '@/components/ui/empty-state'
-import { GlassDropdown } from '@/components/ui/glass-dropdown'
+import { IconShield, IconPlayerPause, IconPlayerPlay, IconTrash } from '@tabler/icons-react'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Label } from '@/components/ui/label'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert'
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from '@/components/ui/empty'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 type WatchStatus = 'active' | 'paused'
 type WatchType = 'error_keyword' | 'uptime' | 'negative_sentiment'
@@ -57,117 +65,6 @@ function toLocalDate(iso: string | null): string {
   return parsed.toLocaleString()
 }
 
-// Inline style definitions
-const glassCard: React.CSSProperties = {
-  padding: '20px',
-  borderRadius: 16,
-  background: 'var(--glass-card-bg)',
-  backdropFilter: 'var(--glass-card-blur)',
-  WebkitBackdropFilter: 'var(--glass-card-blur)',
-  border: '1px solid var(--glass-card-border)',
-  boxShadow: 'var(--glass-card-inset)',
-}
-
-const lightCard: React.CSSProperties = {
-  padding: '16px',
-  borderRadius: 12,
-  background: 'var(--glass-pill-bg)',
-  backdropFilter: 'var(--glass-card-blur)',
-  WebkitBackdropFilter: 'var(--glass-card-blur)',
-  border: 'none',
-  boxShadow: 'var(--glass-card-inset)',
-}
-
-const glassInput: React.CSSProperties = {
-  width: '100%',
-  padding: '12px 16px',
-  borderRadius: 12,
-  background: 'var(--glass-card-bg)',
-  border: '1px solid var(--glass-interactive-border)',
-  color: 'var(--text-primary)',
-  fontSize: 14,
-  outline: 'none',
-  transition: 'border-color 200ms, box-shadow 200ms',
-}
-
-const glassSelect: React.CSSProperties = {
-  padding: '12px 16px',
-  borderRadius: 12,
-  background: 'var(--glass-card-bg)',
-  border: '1px solid var(--glass-interactive-border)',
-  color: 'var(--text-primary)',
-  fontSize: 14,
-  outline: 'none',
-  appearance: 'none' as const,
-  cursor: 'pointer',
-  transition: 'border-color 200ms',
-}
-
-const accentBtn: React.CSSProperties = {
-  display: 'inline-flex',
-  alignItems: 'center',
-  gap: 8,
-  height: 40,
-  padding: '0 20px',
-  borderRadius: 8,
-  background: 'var(--btn-primary-bg, #F1F5F9)',
-  border: 'none',
-  color: 'var(--btn-primary-fg, #0a0f1a)',
-  fontSize: 14,
-  fontWeight: 500,
-  cursor: 'pointer',
-  transition: 'all 200ms',
-}
-
-const ghostBtn: React.CSSProperties = {
-  padding: '8px 12px',
-  borderRadius: 12,
-  background: 'transparent',
-  border: '1px solid var(--glass-hover-bg)',
-  color: 'var(--text-primary)',
-  fontSize: 14,
-  fontWeight: 500,
-  cursor: 'pointer',
-  transition: 'all 200ms',
-}
-
-const sectionHeader: React.CSSProperties = {
-  fontSize: 14,
-  fontWeight: 500,
-  letterSpacing: '0.04em',
-  textTransform: 'uppercase' as const,
-  color: 'var(--text-dim)',
-  marginBottom: 12,
-}
-
-const cardTitle: React.CSSProperties = {
-  fontSize: 14,
-  fontWeight: 500,
-  color: 'var(--text-primary)',
-}
-
-const bodyText: React.CSSProperties = {
-  fontSize: 14,
-  fontWeight: 400,
-  color: 'var(--text-primary)',
-}
-
-const secondaryText: React.CSSProperties = {
-  fontSize: 14,
-  color: 'var(--text-secondary)',
-}
-
-const dimText: React.CSSProperties = {
-  fontSize: 14,
-  color: 'var(--text-dim)',
-}
-
-// ─── Watch type options for GlassDropdown ───────────────────────────────────
-const watchTypeOptions = (Object.entries(WATCH_LABEL) as [WatchType, string][]).map(([key, label]) => ({
-  value: key,
-  label,
-}))
-
 export function WatchManager() {
   const [watches, setWatches] = useState<SentryWatch[]>([])
   const [alerts, setAlerts] = useState<SentryAlert[]>([])
@@ -176,8 +73,6 @@ export function WatchManager() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [statusMessage, setStatusMessage] = useState<string | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  const [hoveredWatchId, setHoveredWatchId] = useState<string | null>(null)
-  const [hoveredAlertId, setHoveredAlertId] = useState<string | null>(null)
 
   const activeAlertCount = useMemo(
     () => alerts.filter((alert) => alert.status === 'pending' || alert.status === 'escalated').length,
@@ -358,359 +253,253 @@ export function WatchManager() {
 
   if (isLoading) {
     return (
-      <div style={glassCard}>
-        <div style={{ ...dimText }}>Loading sentry watches and alerts...</div>
-      </div>
+      <Card>
+        <CardContent className="space-y-4">
+          <Skeleton className="h-6 w-48" />
+          <Skeleton className="h-32 w-full" />
+          <Skeleton className="h-32 w-full" />
+        </CardContent>
+      </Card>
     )
   }
 
-  // Full-page error state when initial load fails and no data is available
   if (errorMessage && watches.length === 0 && alerts.length === 0) {
     return (
-      <EmptyState
-        title="Something went wrong"
-        description={errorMessage}
-        action={{ label: 'Retry', onClick: () => { setIsLoading(true); setErrorMessage(null); loadData().catch((err) => setErrorMessage(err instanceof Error ? err.message : 'Failed to load sentry data')).finally(() => setIsLoading(false)) } }}
-      />
+      <Empty>
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <IconShield />
+          </EmptyMedia>
+          <EmptyTitle>Something went wrong</EmptyTitle>
+          <EmptyDescription>{errorMessage}</EmptyDescription>
+        </EmptyHeader>
+        <Button variant="outline" onClick={() => { setIsLoading(true); setErrorMessage(null); loadData().catch((err) => setErrorMessage(err instanceof Error ? err.message : 'Failed to load sentry data')).finally(() => setIsLoading(false)) }}>
+          Retry
+        </Button>
+      </Empty>
     )
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-      {statusMessage ? (
-        <div
-          style={{
-            padding: '12px 16px',
-            borderRadius: 12,
-            background: 'rgba(34, 197, 94, 0.12)',
-            border: '1px solid var(--status-success-border)',
-            fontSize: 14,
-            color: 'var(--bb-green)',
-          }}
-        >
-          {statusMessage}
-        </div>
-      ) : null}
-      {errorMessage ? (
-        <div
-          id="sentry-error"
-          role="alert"
-          style={{
-            padding: '12px 16px',
-            borderRadius: 12,
-            background: 'var(--glass-pill-bg, rgba(255, 255, 255, 0.04))',
-            border: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
-            fontSize: 14,
-            color: 'var(--text-secondary, #94A3B8)',
-          }}
-        >
-          {errorMessage}
-        </div>
-      ) : null}
+    <div className="flex flex-col gap-6">
+      {statusMessage && (
+        <Alert>
+          <AlertTitle>Success</AlertTitle>
+          <AlertDescription>{statusMessage}</AlertDescription>
+        </Alert>
+      )}
+      {errorMessage && (
+        <Alert variant="destructive" id="sentry-error" role="alert">
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{errorMessage}</AlertDescription>
+        </Alert>
+      )}
 
-      {/* Create Watch Section */}
-      <section style={glassCard}>
-        <div style={{ marginBottom: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <h2 style={{ ...cardTitle, fontSize: 16, fontWeight: 500 }}>Create watch</h2>
-          <span style={secondaryText}>{watches.length} watches configured</span>
-        </div>
-        <form
-          id="sentry-create-watch-form"
-          style={{ display: 'grid', gap: 16, gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))' }}
-          aria-describedby={errorMessage ? 'sentry-error' : undefined}
-          onSubmit={handleCreateWatch}
-        >
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <span style={dimText}>Watch type</span>
-            <GlassDropdown
-              options={watchTypeOptions}
-              value={form.watch_type}
-              onChange={(val) => setForm((prev) => ({ ...prev, watch_type: val as WatchType }))}
-              placeholder="Select watch type"
-            />
+      {/* Create Watch */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle>Create watch</CardTitle>
+            <span className="text-sm text-muted-foreground">{watches.length} watches configured</span>
           </div>
-          <label style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <span style={dimText}>Description</span>
-            <input
-              style={glassInput}
-              required
-              value={form.description}
-              onChange={(event) => setForm((prev) => ({ ...prev, description: event.target.value }))}
-              placeholder="Example: monitor failed payment logs"
-              onFocus={(e) => {
-                e.currentTarget.style.borderColor = 'var(--border-focus-ring, rgba(255, 255, 255, 0.2))'
-                e.currentTarget.style.boxShadow = '0 0 0 2px rgba(255, 255, 255, 0.08)'
-              }}
-              onBlur={(e) => {
-                e.currentTarget.style.borderColor = 'var(--glass-interactive-border)'
-                e.currentTarget.style.boxShadow = 'none'
-              }}
-            />
-          </label>
-          <label style={{ display: 'flex', flexDirection: 'column', gap: 8, gridColumn: 'span 2' }}>
-            <span style={dimText}>Conditions (JSON)</span>
-            <textarea
-              style={{
-                ...glassInput,
-                minHeight: 80,
-                fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
-                fontSize: 14,
-              }}
-              value={form.conditions}
-              onChange={(event) => setForm((prev) => ({ ...prev, conditions: event.target.value }))}
-              onFocus={(e) => {
-                e.currentTarget.style.borderColor = 'var(--border-focus-ring, rgba(255, 255, 255, 0.2))'
-                e.currentTarget.style.boxShadow = '0 0 0 2px rgba(255, 255, 255, 0.08)'
-              }}
-              onBlur={(e) => {
-                e.currentTarget.style.borderColor = 'var(--glass-interactive-border)'
-                e.currentTarget.style.boxShadow = 'none'
-              }}
-            />
-          </label>
-          <label style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <span style={dimText}>Interval seconds</span>
-            <input
-              style={glassInput}
-              type="number"
-              min={60}
-              max={86400}
-              value={form.interval_seconds}
-              onChange={(event) =>
-                setForm((prev) => ({ ...prev, interval_seconds: Number(event.target.value) || 60 }))
-              }
-              onFocus={(e) => {
-                e.currentTarget.style.borderColor = 'var(--border-focus-ring, rgba(255, 255, 255, 0.2))'
-                e.currentTarget.style.boxShadow = '0 0 0 2px rgba(255, 255, 255, 0.08)'
-              }}
-              onBlur={(e) => {
-                e.currentTarget.style.borderColor = 'var(--glass-interactive-border)'
-                e.currentTarget.style.boxShadow = 'none'
-              }}
-            />
-          </label>
-          <label style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <span style={dimText}>Escalation minutes</span>
-            <input
-              style={glassInput}
-              type="number"
-              min={1}
-              max={1440}
-              value={form.escalation_minutes}
-              onChange={(event) =>
-                setForm((prev) => ({ ...prev, escalation_minutes: Number(event.target.value) || 1 }))
-              }
-              onFocus={(e) => {
-                e.currentTarget.style.borderColor = 'var(--border-focus-ring, rgba(255, 255, 255, 0.2))'
-                e.currentTarget.style.boxShadow = '0 0 0 2px rgba(255, 255, 255, 0.08)'
-              }}
-              onBlur={(e) => {
-                e.currentTarget.style.borderColor = 'var(--glass-interactive-border)'
-                e.currentTarget.style.boxShadow = 'none'
-              }}
-            />
-          </label>
-        </form>
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 20 }}>
-          <button
-            type="submit"
-            form="sentry-create-watch-form"
-            disabled={isSubmitting}
-            style={{
-              ...accentBtn,
-              opacity: isSubmitting ? 0.6 : 1,
-              cursor: isSubmitting ? 'not-allowed' : 'pointer',
-            }}
-            onMouseEnter={(e) => {
-              if (!isSubmitting) {
-                e.currentTarget.style.background = 'var(--btn-primary-hover, #E2E8F0)'
-                e.currentTarget.style.transform = 'translateY(-1px)'
-              }
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'var(--btn-primary-bg, #F1F5F9)'
-              e.currentTarget.style.transform = 'translateY(0)'
-            }}
+        </CardHeader>
+        <CardContent>
+          <form
+            id="sentry-create-watch-form"
+            className="grid gap-4 sm:grid-cols-2"
+            aria-describedby={errorMessage ? 'sentry-error' : undefined}
+            onSubmit={handleCreateWatch}
           >
-            {isSubmitting ? 'Creating...' : 'Create watch'}
-          </button>
-        </div>
-      </section>
-
-      {/* Configured Watches Section */}
-      <section style={glassCard}>
-        <h2 style={{ ...cardTitle, fontSize: 16, fontWeight: 500, marginBottom: 20 }}>Configured watches</h2>
-        {watches.length === 0 ? (
-          <EmptyState
-            icon={<Shield size={24} />}
-            title="No watches configured"
-            description="Create your first watch above to start monitoring for issues."
-          />
-        ) : (
-          <div style={{ display: 'grid', gap: 12, gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))' }}>
-            {watches.map((watch) => (
-              <article
-                key={watch.id}
-                style={{
-                  ...lightCard,
-                  background:
-                    hoveredWatchId === watch.id ? 'var(--glass-hover-bg)' : 'var(--glass-pill-bg)',
-                  transition: 'background 200ms',
-                }}
-                onMouseEnter={() => setHoveredWatchId(watch.id)}
-                onMouseLeave={() => setHoveredWatchId(null)}
+            <div className="flex flex-col gap-2">
+              <Label>Watch type</Label>
+              <Select
+                value={form.watch_type}
+                onValueChange={(val) => setForm((prev) => ({ ...prev, watch_type: val as WatchType }))}
               >
-                <div style={{ marginBottom: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span style={sectionHeader}>{WATCH_LABEL[watch.watch_type]}</span>
-                  <span
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      padding: '4px 12px',
-                      borderRadius: 8,
-                      fontSize: 14,
-                      fontWeight: 500,
-                      letterSpacing: '0.02em',
-                      background:
-                        watch.status === 'active' ? 'rgba(34, 197, 94, 0.12)' : 'var(--glass-hover-bg)',
-                      color: watch.status === 'active' ? 'var(--bb-green)' : 'var(--text-secondary)',
-                    }}
-                  >
-                    {watch.status}
-                  </span>
-                </div>
-                <p style={bodyText}>{watch.description}</p>
-                <p style={{ ...dimText, marginTop: 8 }}>
-                  Every {watch.interval_seconds}s, escalate after {watch.escalation_minutes}m, last checked{' '}
-                  {toLocalDate(watch.last_checked_at)}
-                </p>
-                <pre
-                  style={{
-                    marginTop: 12,
-                    padding: 12,
-                    borderRadius: 12,
-                    background: 'var(--bg-card)',
-                    border: 'none',
-                    overflowX: 'auto',
-                    fontSize: 14,
-                    color: 'var(--text-dim)',
-                    fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
-                    lineHeight: 1.4,
-                  }}
-                >
-                  {JSON.stringify(watch.conditions, null, 2)}
-                </pre>
-                <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
-                  <button
-                    aria-label={watch.status === 'active' ? 'Pause watch' : 'Resume watch'}
-                    style={ghostBtn}
-                    onClick={() => void handleToggleWatch(watch)}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = 'var(--glass-interactive-bg)'
-                      e.currentTarget.style.borderColor = 'var(--border-active, rgba(255, 255, 255, 0.1))'
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = 'transparent'
-                      e.currentTarget.style.borderColor = 'var(--glass-hover-bg)'
-                    }}
-                  >
-                    {watch.status === 'active' ? 'Pause' : 'Resume'}
-                  </button>
-                  <button
-                    aria-label={`Delete watch: ${watch.description}`}
-                    style={{
-                      ...ghostBtn,
-                      color: 'var(--bb-red)',
-                      borderColor: 'rgba(239, 68, 68, 0.3)',
-                    }}
-                    onClick={() => void handleDeleteWatch(watch.id)}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'
-                      e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.5)'
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = 'transparent'
-                      e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.3)'
-                    }}
-                  >
-                    Delete
-                  </button>
-                </div>
-              </article>
-            ))}
-          </div>
-        )}
-      </section>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select watch type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {(Object.entries(WATCH_LABEL) as [WatchType, string][]).map(([key, label]) => (
+                    <SelectItem key={key} value={key}>{label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-      {/* Active Alerts Section */}
-      <section style={glassCard}>
-        <div style={{ marginBottom: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <h2 style={{ ...cardTitle, fontSize: 16, fontWeight: 500 }}>Active alerts</h2>
-          <span style={secondaryText}>{activeAlertCount} pending/escalated</span>
-        </div>
-        {alerts.length === 0 ? (
-          <EmptyState
-            icon={<Shield size={24} />}
-            title="All clear"
-            description="Sentry monitors for issues across your channels and alerts you when something needs attention."
-          />
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {alerts.map((alert) => (
-              <article
-                key={alert.id}
-                style={{
-                  ...lightCard,
-                  background:
-                    hoveredAlertId === alert.id ? 'var(--glass-hover-bg)' : 'var(--glass-pill-bg)',
-                  transition: 'background 200ms',
-                }}
-                onMouseEnter={() => setHoveredAlertId(alert.id)}
-                onMouseLeave={() => setHoveredAlertId(null)}
-              >
-                <div style={{ marginBottom: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span style={sectionHeader}>Alert {alert.id.slice(0, 8)}</span>
-                  <span
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      padding: '4px 12px',
-                      borderRadius: 8,
-                      fontSize: 14,
-                      fontWeight: 500,
-                      letterSpacing: '0.02em',
-                      background: 'rgba(234, 179, 8, 0.12)',
-                      color: 'var(--bb-amber)',
-                    }}
-                  >
-                    {alert.status}
-                  </span>
-                </div>
-                <p style={bodyText}>{alert.evidence ?? 'No evidence text provided'}</p>
-                <p style={{ ...dimText, marginTop: 8 }}>Suggested fix: {alert.remediation_suggestion ?? 'None'}</p>
-                <p style={{ ...dimText, marginTop: 8 }}>Created {toLocalDate(alert.created_at)}</p>
-                <button
-                  onClick={() => void handleAcknowledgeAlert(alert.id)}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'var(--glass-interactive-bg)'
-                    e.currentTarget.style.borderColor = 'var(--border-active, rgba(255, 255, 255, 0.1))'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'transparent'
-                    e.currentTarget.style.borderColor = 'var(--glass-hover-bg)'
-                  }}
-                  style={{
-                    ...ghostBtn,
-                    marginTop: 12,
-                  }}
-                >
-                  Acknowledge
-                </button>
-              </article>
-            ))}
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="watch-desc">Description</Label>
+              <Input
+                id="watch-desc"
+                required
+                value={form.description}
+                onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
+                placeholder="Example: monitor failed payment logs"
+              />
+            </div>
+
+            <div className="flex flex-col gap-2 sm:col-span-2">
+              <Label htmlFor="watch-conditions">Conditions (JSON)</Label>
+              <Textarea
+                id="watch-conditions"
+                className="font-mono text-sm"
+                value={form.conditions}
+                onChange={(e) => setForm((prev) => ({ ...prev, conditions: e.target.value }))}
+              />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="watch-interval">Interval seconds</Label>
+              <Input
+                id="watch-interval"
+                type="number"
+                min={60}
+                max={86400}
+                value={form.interval_seconds}
+                onChange={(e) => setForm((prev) => ({ ...prev, interval_seconds: Number(e.target.value) || 60 }))}
+              />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="watch-escalation">Escalation minutes</Label>
+              <Input
+                id="watch-escalation"
+                type="number"
+                min={1}
+                max={1440}
+                value={form.escalation_minutes}
+                onChange={(e) => setForm((prev) => ({ ...prev, escalation_minutes: Number(e.target.value) || 1 }))}
+              />
+            </div>
+          </form>
+          <div className="mt-4 flex justify-end">
+            <Button type="submit" form="sentry-create-watch-form" disabled={isSubmitting}>
+              {isSubmitting ? 'Creating...' : 'Create watch'}
+            </Button>
           </div>
-        )}
-      </section>
+        </CardContent>
+      </Card>
+
+      {/* Configured Watches */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Configured watches</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {watches.length === 0 ? (
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <IconShield />
+                </EmptyMedia>
+                <EmptyTitle>No watches configured</EmptyTitle>
+                <EmptyDescription>Create your first watch above to start monitoring for issues.</EmptyDescription>
+              </EmptyHeader>
+            </Empty>
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {watches.map((watch) => (
+                <Card key={watch.id} className="gap-3 py-4">
+                  <CardHeader className="pb-0">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                        {WATCH_LABEL[watch.watch_type]}
+                      </span>
+                      <Badge variant={watch.status === 'active' ? 'default' : 'secondary'}>
+                        {watch.status}
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <p className="text-sm">{watch.description}</p>
+                    <p className="text-xs text-muted-foreground">
+                      Every {watch.interval_seconds}s, escalate after {watch.escalation_minutes}m, last checked{' '}
+                      {toLocalDate(watch.last_checked_at)}
+                    </p>
+                    <pre className="overflow-x-auto rounded-md bg-muted p-3 font-mono text-xs text-muted-foreground">
+                      {JSON.stringify(watch.conditions, null, 2)}
+                    </pre>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        aria-label={watch.status === 'active' ? 'Pause watch' : 'Resume watch'}
+                        onClick={() => void handleToggleWatch(watch)}
+                      >
+                        {watch.status === 'active' ? <IconPlayerPause className="size-3.5" /> : <IconPlayerPlay className="size-3.5" />}
+                        {watch.status === 'active' ? 'Pause' : 'Resume'}
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        aria-label={`Delete watch: ${watch.description}`}
+                        onClick={() => void handleDeleteWatch(watch.id)}
+                      >
+                        <IconTrash className="size-3.5" />
+                        Delete
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Active Alerts */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle>Active alerts</CardTitle>
+            <span className="text-sm text-muted-foreground">{activeAlertCount} pending/escalated</span>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {alerts.length === 0 ? (
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <IconShield />
+                </EmptyMedia>
+                <EmptyTitle>All clear</EmptyTitle>
+                <EmptyDescription>
+                  Sentry monitors for issues across your channels and alerts you when something needs attention.
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {alerts.map((alert) => (
+                <Card key={alert.id} className="gap-3 py-4">
+                  <CardHeader className="pb-0">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                        Alert {alert.id.slice(0, 8)}
+                      </span>
+                      <Badge variant={alert.status === 'escalated' ? 'destructive' : 'secondary'}>
+                        {alert.status}
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    <p className="text-sm">{alert.evidence ?? 'No evidence text provided'}</p>
+                    <p className="text-xs text-muted-foreground">Suggested fix: {alert.remediation_suggestion ?? 'None'}</p>
+                    <p className="text-xs text-muted-foreground">Created {toLocalDate(alert.created_at)}</p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => void handleAcknowledgeAlert(alert.id)}
+                    >
+                      Acknowledge
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   )
 }

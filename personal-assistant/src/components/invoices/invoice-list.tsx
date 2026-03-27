@@ -20,10 +20,17 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import {
-  Search, Download, ChevronDown, Send, CheckCircle2,
-  Ban, Users, LayoutList, Eye, EyeOff, Plus, X, Loader2, Receipt,
-} from 'lucide-react'
+  IconSearch, IconDownload, IconChevronDown, IconSend, IconCircleCheck,
+  IconBan, IconUsers, IconLayoutList, IconEye, IconEyeOff, IconPlus, IconX, IconLoader2, IconReceipt,
+} from '@tabler/icons-react'
 import { EmptyState } from '@/components/ui/empty-state'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+} from '@/components/ui/dialog'
 import { useToast } from '@/components/ui/toast'
 import { useSeedData } from '@/hooks/use-seed-data'
 import { InvoiceSummaryBar } from './invoice-summary-bar'
@@ -307,13 +314,13 @@ const AVATAR_PAIRS = [
   ['#CBD5E1', 'rgba(255, 255, 255, 0.08)'],
 ]
 
-const STATUS_COLORS: Record<InvoiceStatus, { dot: string; bg: string; label: string }> = {
-  draft:     { dot: '#94A3B8', bg: 'rgba(148, 163, 184, 0.12)', label: 'Draft' },
-  sent:      { dot: '#F1F5F9', bg: 'rgba(255, 255, 255, 0.08)', label: 'Sent' },
-  viewed:    { dot: '#eab308', bg: 'rgba(234, 179, 8, 0.12)',   label: 'Viewed' },
-  overdue:   { dot: '#ef4444', bg: 'rgba(239, 68, 68, 0.12)',   label: 'Overdue' },
-  paid:      { dot: '#22c55e', bg: 'rgba(34, 197, 94, 0.12)',   label: 'Paid' },
-  cancelled: { dot: '#475569', bg: 'rgba(71, 85, 105, 0.12)',   label: 'Cancelled' },
+const STATUS_COLORS: Record<InvoiceStatus, { dot: string; bg: string; label: string; badgeVariant: 'secondary' | 'default' | 'destructive' | 'outline' }> = {
+  draft:     { dot: '#94A3B8', bg: 'rgba(148, 163, 184, 0.12)', label: 'Draft',     badgeVariant: 'secondary' },
+  sent:      { dot: '#F1F5F9', bg: 'rgba(255, 255, 255, 0.08)', label: 'Sent',      badgeVariant: 'outline' },
+  viewed:    { dot: '#eab308', bg: 'rgba(234, 179, 8, 0.12)',   label: 'Viewed',    badgeVariant: 'outline' },
+  overdue:   { dot: '#ef4444', bg: 'rgba(239, 68, 68, 0.12)',   label: 'Overdue',   badgeVariant: 'destructive' },
+  paid:      { dot: '#22c55e', bg: 'rgba(34, 197, 94, 0.12)',   label: 'Paid',      badgeVariant: 'default' },
+  cancelled: { dot: '#475569', bg: 'rgba(71, 85, 105, 0.12)',   label: 'Cancelled', badgeVariant: 'secondary' },
 }
 
 // ─── Client-Side Invoice PDF Preview ────────────────────────────────────────
@@ -694,8 +701,8 @@ function InvoiceDetailPanel({
 
       {/* Actions row */}
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-        {canSend(invoice.status) && actionBtn('Send', <Send size={14} />, 'sent', 'rgba(56, 189, 248, 0.1)', '#7dd3fc')}
-        {canMarkPaid(invoice.status) && actionBtn('Mark Paid', <CheckCircle2 size={14} />, 'paid', 'rgba(34, 197, 94, 0.1)', '#86efac')}
+        {canSend(invoice.status) && actionBtn('Send', <IconSend size={14} />, 'sent', 'rgba(56, 189, 248, 0.1)', '#7dd3fc')}
+        {canMarkPaid(invoice.status) && actionBtn('Mark Paid', <IconCircleCheck size={14} />, 'paid', 'rgba(34, 197, 94, 0.1)', '#86efac')}
         {canCancel(invoice.status) && (
           <button
             onClick={(e) => { e.stopPropagation(); onAction(invoice.id, 'cancelled') }}
@@ -708,7 +715,7 @@ function InvoiceDetailPanel({
               opacity: busy ? 0.5 : 1, transition: `all 100ms ${SNAP}`,
             }}
           >
-            <Ban size={14} /> Cancel
+            <IconBan size={14} /> Cancel
           </button>
         )}
         <button
@@ -722,7 +729,7 @@ function InvoiceDetailPanel({
             transition: `all 100ms ${SNAP}`,
           }}
         >
-          {showPdf ? <EyeOff size={14} /> : <Eye size={14} />}
+          {showPdf ? <IconEyeOff size={14} /> : <IconEye size={14} />}
           {showPdf ? 'Hide Preview' : 'Preview Invoice'}
         </button>
       </div>
@@ -888,7 +895,7 @@ function InvoiceRowItem({
                   transition: `all 80ms ${SNAP}`,
                 }}
               >
-                <Send size={13} />
+                <IconSend size={13} />
               </button>
             )}
             {canMarkPaid(invoice.status) && (
@@ -904,7 +911,7 @@ function InvoiceRowItem({
                   transition: `all 80ms ${SNAP}`,
                 }}
               >
-                <CheckCircle2 size={13} />
+                <IconCircleCheck size={13} />
               </button>
             )}
           </div>
@@ -1017,7 +1024,7 @@ function InvoiceSection({
           {invoices.length}
         </span>
         <div style={{ flex: 1 }} />
-        <ChevronDown
+        <IconChevronDown
           size={14}
           style={{
             color: 'var(--text-dim)',
@@ -1116,7 +1123,7 @@ function ClientGroupSection({
             {formatMoney(outstandingTotal, invoices[0]?.currency || 'AUD')}
           </span>
         )}
-        <ChevronDown
+        <IconChevronDown
           size={14}
           style={{
             color: 'var(--text-dim)',
@@ -1538,12 +1545,9 @@ export function InvoiceList() {
         {/* Toolbar: Search + Stats + Actions */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <div style={{ position: 'relative', flex: 1 }}>
-            <Search
+            <IconSearch
               size={14}
-              style={{
-                position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)',
-                color: 'var(--text-dim)', pointerEvents: 'none',
-              }}
+              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
             />
             <input
               className="bb-glass-input"
@@ -1577,7 +1581,7 @@ export function InvoiceList() {
               transition: `all 80ms ${SNAP}`,
             }}
           >
-            {groupMode === 'status' ? <Users size={16} /> : <LayoutList size={16} />}
+            {groupMode === 'status' ? <IconUsers size={16} /> : <IconLayoutList size={16} />}
           </button>
 
           <button
@@ -1598,7 +1602,7 @@ export function InvoiceList() {
               e.currentTarget.style.color = 'var(--text-dim)'
             }}
           >
-            <Download size={16} />
+            <IconDownload size={16} />
           </button>
 
           {/* New Invoice CTA */}
@@ -1619,14 +1623,14 @@ export function InvoiceList() {
               e.currentTarget.style.background = 'var(--btn-primary-bg, #F1F5F9)'
             }}
           >
-            <Plus size={14} /> New
+            <IconPlus size={14} /> New
           </button>
         </div>
 
         {/* Content */}
         {filtered.length === 0 ? (
           <EmptyState
-            icon={search ? undefined : <Receipt size={24} />}
+            icon={search ? undefined : <IconReceipt size={24} />}
             title={search ? 'No matching invoices' : 'No invoices yet'}
             description={search ? 'Try a different search term.' : 'Ask BitBit to create an invoice in chat. Say something like "Invoice Dave for the website redesign at $2,500".'}
             action={search ? undefined : {
@@ -1678,216 +1682,78 @@ export function InvoiceList() {
         {activeInvoice ? <DragGhost invoice={activeInvoice} /> : null}
       </DragOverlay>
 
-      {/* ─── Create Invoice Modal ─────────────────────────────────────────── */}
-      {showCreateModal && (
-        <div
-          onClick={e => { if (e.target === e.currentTarget) setShowCreateModal(false) }}
-          style={{
-            position: 'fixed', inset: 0, zIndex: 50,
-            background: 'rgba(0, 0, 0, 0.6)',
-            backdropFilter: 'blur(2px)',
-            display: 'flex', justifyContent: 'center', alignItems: 'center',
-          }}
-        >
-          <div style={{
-            position: 'relative', maxWidth: 480, width: '90%',
-            zIndex: 51,
-            background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.6))',
-            backdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
-            WebkitBackdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
-            border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
-            boxShadow: 'var(--card-shadow, 0 2px 8px rgba(0,0,0,0.3)), var(--card-inset, inset 0 1px 0 rgba(255,255,255,0.06))',
-            borderRadius: 24,
-            display: 'flex', flexDirection: 'column', overflow: 'hidden',
-            animation: 'bb-inv-modal-enter 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)',
-          }}>
-            <style>{`
-              @keyframes bb-inv-modal-enter {
-                from { opacity: 0; transform: scale(0.95) translateY(8px); }
-                to { opacity: 1; transform: scale(1) translateY(0); }
-              }
-            `}</style>
+      {/* ---- Create Invoice Dialog ---- */}
+      <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>New Invoice</DialogTitle>
+          </DialogHeader>
 
-            {/* Header */}
-            <div style={{
-              padding: '20px 24px',
-              borderBottom: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            }}>
-              <h3 style={{
-                fontSize: 16, fontWeight: 500, margin: 0,
-                color: 'var(--text-primary, #F1F5F9)',
-                letterSpacing: '-0.01em',
-              }}>
-                New Invoice
-              </h3>
-              <button
-                onClick={() => setShowCreateModal(false)}
-                style={{
-                  width: 32, height: 32, borderRadius: 8, border: 'none',
-                  background: 'var(--hover-bg, rgba(255, 255, 255, 0.04))',
-                  color: 'var(--text-dim, #475569)',
-                  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}
-              >
-                <X size={16} />
-              </button>
+          <div className="flex flex-col gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="inv-client">Client Name</Label>
+              <Input
+                id="inv-client"
+                value={createForm.client_name}
+                onChange={e => setCreateForm(f => ({ ...f, client_name: e.target.value }))}
+                placeholder="e.g. Acme Corp"
+                autoFocus
+              />
             </div>
 
-            {/* Body */}
-            <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
-              {/* Client Name */}
-              <div>
-                <label style={{
-                  fontSize: 14, fontWeight: 500, color: 'var(--text-dim, #475569)',
-                  display: 'block', marginBottom: 6,
-                }}>
-                  Client Name
-                </label>
-                <input
-                  value={createForm.client_name}
-                  onChange={e => setCreateForm(f => ({ ...f, client_name: e.target.value }))}
-                  placeholder="e.g. Acme Corp"
-                  autoFocus
-                  style={{
-                    width: '100%', height: 40, padding: '0 12px', borderRadius: 8,
-                    border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.05))',
-                    background: 'var(--bg-input, rgba(13, 17, 23, 0.6))',
-                    color: 'var(--text-primary, #F1F5F9)',
-                    fontSize: 14, outline: 'none', fontFamily: 'inherit',
-                    boxSizing: 'border-box',
-                  }}
-                />
-              </div>
-
-              {/* Description */}
-              <div>
-                <label style={{
-                  fontSize: 14, fontWeight: 500, color: 'var(--text-dim, #475569)',
-                  display: 'block', marginBottom: 6,
-                }}>
-                  Description
-                </label>
-                <input
-                  value={createForm.description}
-                  onChange={e => setCreateForm(f => ({ ...f, description: e.target.value }))}
-                  placeholder="e.g. Website redesign — March 2026"
-                  style={{
-                    width: '100%', height: 40, padding: '0 12px', borderRadius: 8,
-                    border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.05))',
-                    background: 'var(--bg-input, rgba(13, 17, 23, 0.6))',
-                    color: 'var(--text-primary, #F1F5F9)',
-                    fontSize: 14, outline: 'none', fontFamily: 'inherit',
-                    boxSizing: 'border-box',
-                  }}
-                />
-              </div>
-
-              {/* Amount + Due Date row */}
-              <div style={{ display: 'flex', gap: 12 }}>
-                {/* Amount */}
-                <div style={{ flex: 1 }}>
-                  <label style={{
-                    fontSize: 14, fontWeight: 500, color: 'var(--text-dim, #475569)',
-                    display: 'block', marginBottom: 6,
-                  }}>
-                    Amount (AUD)
-                  </label>
-                  <input
-                    value={createForm.amount}
-                    onChange={e => {
-                      const val = e.target.value
-                      if (val === '' || /^\d*\.?\d{0,2}$/.test(val)) {
-                        setCreateForm(f => ({ ...f, amount: val }))
-                      }
-                    }}
-                    placeholder="0.00"
-                    inputMode="decimal"
-                    style={{
-                      width: '100%', height: 40, padding: '0 12px', borderRadius: 8,
-                      border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.05))',
-                      background: 'var(--bg-input, rgba(13, 17, 23, 0.6))',
-                      color: 'var(--text-primary, #F1F5F9)',
-                      fontSize: 14, outline: 'none', fontFamily: 'inherit',
-                      boxSizing: 'border-box',
-                    }}
-                  />
-                </div>
-
-                {/* Due Date */}
-                <div style={{ flex: 1 }}>
-                  <label style={{
-                    fontSize: 14, fontWeight: 500, color: 'var(--text-dim, #475569)',
-                    display: 'block', marginBottom: 6,
-                  }}>
-                    Due Date
-                  </label>
-                  <input
-                    type="date"
-                    value={createForm.due_date}
-                    onChange={e => setCreateForm(f => ({ ...f, due_date: e.target.value }))}
-                    min={new Date().toISOString().split('T')[0]}
-                    style={{
-                      width: '100%', height: 40, padding: '0 12px', borderRadius: 8,
-                      border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.05))',
-                      background: 'var(--bg-input, rgba(13, 17, 23, 0.6))',
-                      color: 'var(--text-primary, #F1F5F9)',
-                      fontSize: 14, outline: 'none', fontFamily: 'inherit',
-                      boxSizing: 'border-box',
-                      colorScheme: 'dark',
-                    }}
-                  />
-                </div>
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="inv-desc">Description</Label>
+              <Input
+                id="inv-desc"
+                value={createForm.description}
+                onChange={e => setCreateForm(f => ({ ...f, description: e.target.value }))}
+                placeholder="e.g. Website redesign -- March 2026"
+              />
             </div>
 
-            {/* Footer */}
-            <div style={{
-              padding: '16px 24px',
-              borderTop: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
-              display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8,
-            }}>
-              <button
-                onClick={() => setShowCreateModal(false)}
-                disabled={isCreating}
-                style={{
-                  height: 40, padding: '0 20px', borderRadius: 8,
-                  border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.05))',
-                  background: 'transparent',
-                  color: 'var(--text-secondary, #94A3B8)',
-                  fontSize: 14, fontWeight: 500, cursor: 'pointer',
-                  transition: `all 80ms ${SNAP}`,
-                }}
-                onMouseEnter={e => {
-                  e.currentTarget.style.background = 'var(--hover-bg, rgba(255, 255, 255, 0.04))'
-                }}
-                onMouseLeave={e => {
-                  e.currentTarget.style.background = 'transparent'
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => void handleCreateInvoice()}
-                disabled={isCreating || !createForm.client_name.trim() || !createForm.amount.trim()}
-                style={{
-                  height: 40, padding: '0 24px', borderRadius: 8, border: 'none',
-                  background: (!createForm.client_name.trim() || !createForm.amount.trim())
-                    ? 'rgba(241, 245, 249, 0.3)' : 'var(--btn-primary-bg, #F1F5F9)',
-                  color: 'var(--btn-primary-fg, #0a0f1a)',
-                  fontSize: 14, fontWeight: 500, cursor: isCreating ? 'wait' : 'pointer',
-                  display: 'flex', alignItems: 'center', gap: 8,
-                  transition: `all 80ms ${SNAP}`,
-                  opacity: isCreating ? 0.7 : 1,
-                }}
-              >
-                {isCreating ? <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> : <Plus size={14} />}
-                {isCreating ? 'Creating...' : 'Create Invoice'}
-              </button>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="inv-amount">Amount (AUD)</Label>
+                <Input
+                  id="inv-amount"
+                  value={createForm.amount}
+                  onChange={e => {
+                    const val = e.target.value
+                    if (val === '' || /^\d*\.?\d{0,2}$/.test(val)) {
+                      setCreateForm(f => ({ ...f, amount: val }))
+                    }
+                  }}
+                  placeholder="0.00"
+                  inputMode="decimal"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="inv-due">Due Date</Label>
+                <Input
+                  id="inv-due"
+                  type="date"
+                  value={createForm.due_date}
+                  onChange={e => setCreateForm(f => ({ ...f, due_date: e.target.value }))}
+                  min={new Date().toISOString().split('T')[0]}
+                />
+              </div>
             </div>
           </div>
-        </div>
-      )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCreateModal(false)} disabled={isCreating}>
+              Cancel
+            </Button>
+            <Button
+              onClick={() => void handleCreateInvoice()}
+              disabled={isCreating || !createForm.client_name.trim() || !createForm.amount.trim()}
+            >
+              {isCreating ? <IconLoader2 size={14} className="animate-spin" /> : <IconPlus size={14} />}
+              {isCreating ? 'Creating...' : 'Create Invoice'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </DndContext>
   )
 }

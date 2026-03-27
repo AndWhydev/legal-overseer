@@ -2,10 +2,13 @@
 
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import dynamic from 'next/dynamic';
-import { Search, User, Briefcase, FileText, CheckSquare, ChevronRight, X, Book } from 'lucide-react';
-import { S, C } from '@/lib/styles/design-tokens';
-import { TabShell } from '@/components/ui/tab-shell';
-import { EmptyState } from '@/components/ui/empty-state';
+import { IconSearch, IconUser, IconBriefcase, IconFileText, IconSquareCheck, IconChevronRight, IconX, IconBook } from '@tabler/icons-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from '@/components/ui/empty';
 import type { GraphNode as ViewerNode, GraphEdge as ViewerEdge } from '@/components/knowledge/graph-viewer';
 
 const GraphViewer = dynamic(() => import('@/components/knowledge/graph-viewer'), { ssr: false });
@@ -45,57 +48,17 @@ interface EntityGraph {
 // ─── Icon Map ──────────────────────────────────────────────────────────────
 
 const TYPE_ICON: Record<EntityType, React.ElementType> = {
-  contact: User,
-  project: Briefcase,
-  invoice: FileText,
-  task: CheckSquare,
+  contact: IconUser,
+  project: IconBriefcase,
+  invoice: IconFileText,
+  task: IconSquareCheck,
 };
 
-// Muted color palette for entity types (desaturated versions)
-const TYPE_COLOR: Record<EntityType, string> = {
-  contact: '#6b8fc9',    // muted blue
-  project: '#4ba383',    // muted green
-  invoice: '#c4934a',    // muted amber
-  task: '#9b88b8',       // muted purple
-};
-
-// ─── Style Constants ───────────────────────────────────────────────────────
-
-const glassCard: React.CSSProperties = {
-  ...S.card,
-};
-
-const glassInput: React.CSSProperties = {
-  ...S.input,
-  padding: '12px 16px',
-  paddingLeft: '40px',
-  borderRadius: 12,
-};
-
-const listRow: React.CSSProperties = {
-  ...S.listRow,
-};
-
-const ghostBtn: React.CSSProperties = {
-  ...S.button,
-  ...S.buttonGhost,
-  padding: '8px 8px',
-  borderRadius: 8,
-  height: 'auto',
-  display: 'flex',
-  justifyContent: 'center',
-};
-
-const pillBtn: React.CSSProperties = {
-  ...S.pill,
-  padding: '8px 16px',
-  borderRadius: 20,
-  height: 'auto',
-  fontWeight: 500,
-};
-
-const sectionHeader: React.CSSProperties = {
-  ...S.sectionLabel,
+const TYPE_BADGE_VARIANT: Record<EntityType, 'default' | 'secondary' | 'outline' | 'destructive'> = {
+  contact: 'default',
+  project: 'secondary',
+  invoice: 'outline',
+  task: 'default',
 };
 
 // ─── Component ─────────────────────────────────────────────────────────────
@@ -107,12 +70,9 @@ function KnowledgeTab() {
   const [selectedEntity, setSelectedEntity] = useState<{ type: EntityType; id: string } | null>(null);
   const [graph, setGraph] = useState<EntityGraph | null>(null);
   const [loadingGraph, setLoadingGraph] = useState(false);
-  const [hoveredResult, setHoveredResult] = useState<string | null>(null);
-  const [hoveredNode, setHoveredNode] = useState<string | null>(null);
-  const [closeHovered, setCloseHovered] = useState(false);
   const debounceRef = useRef<NodeJS.Timeout>(undefined);
 
-  // Entity Graph — full org graph loaded on mount
+  // Entity Graph
   const [graphNodes, setGraphNodes] = useState<ViewerNode[]>([]);
   const [graphEdges, setGraphEdges] = useState<ViewerEdge[]>([]);
   const [graphLoading, setGraphLoading] = useState(true);
@@ -138,7 +98,6 @@ function KnowledgeTab() {
   }, []);
 
   const handleGraphNodeClick = useCallback((node: ViewerNode) => {
-    // Extract entity type and id from node id format "type:uuid"
     const [type, ...rest] = node.id.split(':');
     const id = rest.join(':');
     const entityType = type === 'person' ? 'contact' : type as EntityType;
@@ -152,7 +111,6 @@ function KnowledgeTab() {
       .finally(() => setLoadingGraph(false));
   }, []);
 
-  // Search with debounce
   const handleSearch = useCallback((value: string) => {
     setQuery(value);
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -176,7 +134,6 @@ function KnowledgeTab() {
     }, 300);
   }, []);
 
-  // Load graph for selected entity
   const selectEntity = useCallback(async (type: EntityType, id: string) => {
     setSelectedEntity({ type, id });
     setLoadingGraph(true);
@@ -197,19 +154,15 @@ function KnowledgeTab() {
   }, []);
 
   return (
-    <TabShell>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 24, padding: '24px' }}>
-        {/* ─── Entity Graph ───────────────────────────────────────────────────── */}
-        <div style={glassCard}>
-          <div style={{ ...sectionHeader, marginBottom: 12 }}>Entity Graph</div>
+    <div className="flex flex-col gap-6 p-6">
+      {/* Entity Graph */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Entity Graph</CardTitle>
+        </CardHeader>
+        <CardContent>
           {graphLoading ? (
-            <div style={{
-              height: 420,
-              borderRadius: 12,
-              background: 'linear-gradient(90deg, rgba(255,255,255,0.02) 25%, rgba(255,255,255,0.04) 50%, rgba(255,255,255,0.02) 75%)',
-              backgroundSize: '200% 100%',
-              animation: 'shimmer 1.5s ease infinite',
-            }} />
+            <Skeleton className="h-[420px] w-full rounded-lg" />
           ) : graphNodes.length > 0 ? (
             <GraphViewer
               nodes={graphNodes}
@@ -218,243 +171,85 @@ function KnowledgeTab() {
               height={420}
             />
           ) : (
-            <div style={{
-              height: 200,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 8,
-              color: 'var(--text-dim)',
-              fontSize: 14,
-            }}>
-              <Book size={28} style={{ opacity: 0.4 }} />
-              No entities yet. Add contacts and relationships to build the knowledge graph.
-            </div>
+            <Empty className="h-48">
+              <EmptyHeader>
+                <EmptyMedia variant="icon"><IconBook /></EmptyMedia>
+                <EmptyDescription>No entities yet. Add contacts and relationships to build the knowledge graph.</EmptyDescription>
+              </EmptyHeader>
+            </Empty>
           )}
-        </div>
+        </CardContent>
+      </Card>
 
-        {/* ─── Search Bar ───────────────────────────────────────────────────────── */}
-        <div style={{ position: 'relative' }}>
-          <Search
-            size={18}
-            style={{
-              position: 'absolute',
-              left: 12,
-              top: '50%',
-              transform: 'translateY(-50%)',
-              color: 'var(--text-secondary)',
-              pointerEvents: 'none',
-            }}
-          />
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => handleSearch(e.target.value)}
-            placeholder="Search contacts, projects, invoices, tasks..."
-            style={glassInput}
-            onFocus={(e) => {
-              e.currentTarget.style.borderColor = C.borderFocus;
-              e.currentTarget.style.boxShadow = `0 0 0 2px ${C.bgHoverStrong}`;
-            }}
-            onBlur={(e) => {
-              e.currentTarget.style.borderColor = C.borderSubtle;
-              e.currentTarget.style.boxShadow = 'var(--glass-card-inset)';
-            }}
-          />
-          {searching && (
-            <div
-              style={{
-                position: 'absolute',
-                right: 12,
-                top: '50%',
-                transform: 'translateY(-50%)',
-              }}
-            >
-              <div
-                style={{
-                  width: 16,
-                  height: 16,
-                  border: `2px solid ${C.borderHover}`,
-                  borderTopColor: 'var(--text-primary, #F1F5F9)',
-                  borderRadius: '50%',
-                  animation: 'spin 0.8s linear infinite',
-                }}
-              />
+      {/* Search Bar */}
+      <div className="relative">
+        <IconSearch className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          value={query}
+          onChange={(e) => handleSearch(e.target.value)}
+          placeholder="Search contacts, projects, invoices, tasks..."
+          className="pl-9"
+        />
+        {searching && (
+          <div className="absolute right-3 top-1/2 -translate-y-1/2">
+            <div className="size-4 animate-spin rounded-full border-2 border-muted-foreground border-t-foreground" />
+          </div>
+        )}
+      </div>
+
+      {/* Selected Entity Graph */}
+      {selectedEntity && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle>Relationship Graph</CardTitle>
+              <Button variant="ghost" size="icon-sm" onClick={clearSelection} aria-label="Close graph">
+                <IconX className="size-4" />
+              </Button>
             </div>
-          )}
-        </div>
-
-        {/* ─── Selected Entity Graph ─────────────────────────────────────────────── */}
-        {selectedEntity && (
-          <div style={glassCard}>
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                marginBottom: 20,
-              }}
-            >
-              <h2
-                style={{
-                  fontSize: 16,
-                  fontWeight: 500,
-                  color: 'var(--text-primary)',
-                  margin: 0,
-                }}
-              >
-                Relationship Graph
-              </h2>
-              <button
-                onClick={clearSelection}
-                onMouseEnter={() => setCloseHovered(true)}
-                onMouseLeave={() => setCloseHovered(false)}
-                style={{
-                  ...ghostBtn,
-                  background: closeHovered ? 'var(--glass-interactive-bg)' : 'transparent',
-                  borderColor: closeHovered ? C.borderHover : C.borderVisible,
-                }}
-                aria-label="Close graph"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
+          </CardHeader>
+          <CardContent>
             {loadingGraph ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {[1, 2, 3].map((i) => (
-                  <div
-                    key={i}
-                    style={{
-                      height: 60,
-                      borderRadius: 12,
-                      background:
-                        'linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.03) 75%)',
-                      backgroundSize: '200% 100%',
-                      animation: 'shimmer 1.5s ease infinite',
-                    }}
-                  />
-                ))}
+              <div className="space-y-3">
+                {[1, 2, 3].map((i) => <Skeleton key={i} className="h-14 w-full" />)}
               </div>
             ) : graph ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div className="flex flex-col gap-4">
                 {/* Root Entity */}
-                {graph.nodes.length > 0 && (
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 12,
-                      padding: '12px 16px',
-                      borderRadius: 12,
-                      background: 'var(--glass-pill-bg)',
-                      backdropFilter: 'var(--glass-blur)',
-                      WebkitBackdropFilter: 'var(--glass-blur)',
-                      border: 'none',
-                      boxShadow: 'var(--glass-card-inset)',
-                    }}
-                  >
-                    {(() => {
-                      const root = graph.nodes[0];
-                      const Icon = TYPE_ICON[root.type] ?? Briefcase;
-                      const color = TYPE_COLOR[root.type] ?? '#888';
-                      return (
-                        <>
-                          <div
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              width: 40,
-                              height: 40,
-                              borderRadius: 12,
-                              backgroundColor: `${color}20`,
-                              flexShrink: 0,
-                            }}
-                          >
-                            <Icon size={20} style={{ color }} />
-                          </div>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div
-                              style={{
-                                fontSize: 14,
-                                fontWeight: 500,
-                                color: 'var(--text-primary)',
-                                margin: 0,
-                              }}
-                            >
-                              {root.label}
-                            </div>
-                            <div
-                              style={{
-                                fontSize: 14,
-                                color: 'var(--text-secondary)',
-                                marginTop: 4,
-                                textTransform: 'capitalize',
-                              }}
-                            >
-                              {root.type}
-                            </div>
-                          </div>
-                        </>
-                      );
-                    })()}
-                  </div>
-                )}
+                {graph.nodes.length > 0 && (() => {
+                  const root = graph.nodes[0];
+                  const Icon = TYPE_ICON[root.type] ?? IconBriefcase;
+                  return (
+                    <div className="flex items-center gap-3 rounded-lg border bg-muted/50 p-3">
+                      <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                        <Icon className="size-5 text-primary" />
+                      </div>
+                      <div>
+                        <div className="text-sm font-medium">{root.label}</div>
+                        <div className="text-xs capitalize text-muted-foreground">{root.type}</div>
+                      </div>
+                    </div>
+                  );
+                })()}
 
-                {/* Connected Entities Pills */}
+                {/* Connected Entities */}
                 {graph.nodes.length > 1 && (
                   <div>
-                    <div style={sectionHeader}>Connected Entities</div>
-                    <div
-                      style={{
-                        display: 'flex',
-                        flexWrap: 'wrap',
-                        gap: 8,
-                      }}
-                    >
+                    <h3 className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">Connected Entities</h3>
+                    <div className="flex flex-wrap gap-2">
                       {graph.nodes.slice(1).map((node) => {
-                        const Icon = TYPE_ICON[node.type] ?? Briefcase;
-                        const color = TYPE_COLOR[node.type] ?? '#888';
-                        const edge = graph.edges.find(
-                          (e) => e.target === node.id || e.source === node.id
-                        );
-                        const isHovered = hoveredNode === `${node.type}-${node.id}`;
-
+                        const Icon = TYPE_ICON[node.type] ?? IconBriefcase;
                         return (
-                          <button
+                          <Button
                             key={`${node.type}-${node.id}`}
+                            variant="outline"
+                            size="sm"
                             onClick={() => selectEntity(node.type, node.id)}
-                            onMouseEnter={() => setHoveredNode(`${node.type}-${node.id}`)}
-                            onMouseLeave={() => setHoveredNode(null)}
-                            style={{
-                              ...pillBtn,
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: 8,
-                              color: isHovered ? 'var(--text-primary)' : 'var(--text-secondary)',
-                              background: isHovered
-                                ? C.bgHoverStrong
-                                : 'var(--glass-pill-bg)',
-                            }}
+                            className="gap-2"
                           >
-                            <div
-                              style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                width: 20,
-                                height: 20,
-                                borderRadius: 8,
-                                backgroundColor: `${color}20`,
-                                flexShrink: 0,
-                              }}
-                            >
-                              <Icon size={14} style={{ color }} />
-                            </div>
-                            <span style={{ whiteSpace: 'nowrap', fontSize: 14 }}>{node.label}</span>
-                          </button>
+                            <Icon className="size-3.5" />
+                            {node.label}
+                          </Button>
                         );
                       })}
                     </div>
@@ -464,54 +259,22 @@ function KnowledgeTab() {
                 {/* Relationships List */}
                 {graph.edges.length > 0 && (
                   <div>
-                    <div style={sectionHeader}>Relationships</div>
-                    <div className="bb-stagger" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    <h3 className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">Relationships</h3>
+                    <div className="flex flex-col gap-2">
                       {graph.edges.map((edge, idx) => {
                         const sourceNode = graph.nodes.find((n) => n.id === edge.source);
                         const targetNode = graph.nodes.find((n) => n.id === edge.target);
-
                         return (
-                          <div
-                            key={idx}
-                            style={{
-                              ...listRow,
-                              background: hoveredNode === `edge-${idx}` ? 'var(--bb-surface-hover)' : 'var(--glass-pill-bg)',
-                            }}
-                            onMouseEnter={() => setHoveredNode(`edge-${idx}`)}
-                            onMouseLeave={() => setHoveredNode(null)}
-                          >
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                              <div
-                                style={{
-                                  fontSize: 14,
-                                  fontWeight: 500,
-                                  color: 'var(--text-primary)',
-                                  marginBottom: 4,
-                                }}
-                              >
-                                {sourceNode?.label ?? edge.source}
-                              </div>
-                              <div
-                                style={{
-                                  fontSize: 14,
-                                  color: 'var(--text-secondary)',
-                                  textTransform: 'capitalize',
-                                }}
-                              >
-                                {edge.relationshipType?.replace(/_/g, ' ') ?? 'Related'} (strength:{' '}
-                                {(edge.strength * 100).toFixed(0)}%)
+                          <div key={idx} className="flex items-center justify-between rounded-lg border bg-card p-3 transition-colors hover:bg-muted/50">
+                            <div>
+                              <div className="text-sm font-medium">{sourceNode?.label ?? edge.source}</div>
+                              <div className="text-xs capitalize text-muted-foreground">
+                                {edge.relationshipType?.replace(/_/g, ' ') ?? 'Related'} (strength: {(edge.strength * 100).toFixed(0)}%)
                               </div>
                             </div>
-                            <div
-                              style={{
-                                fontSize: 14,
-                                color: 'var(--text-dim)',
-                                flexShrink: 0,
-                                marginLeft: 12,
-                              }}
-                            >
-                              → {targetNode?.label ?? edge.target}
-                            </div>
+                            <span className="text-xs text-muted-foreground">
+                              &rarr; {targetNode?.label ?? edge.target}
+                            </span>
                           </div>
                         );
                       })}
@@ -520,186 +283,78 @@ function KnowledgeTab() {
                 )}
 
                 {graph.nodes.length <= 1 && graph.edges.length === 0 && (
-                  <div
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      padding: '40px 20px',
-                      gap: 12,
-                    }}
-                  >
-                    <ChevronRight size={32} style={{ color: 'var(--text-dim)' }} />
-                    <span style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
-                      No connected entities found.
-                    </span>
-                  </div>
+                  <Empty>
+                    <EmptyHeader>
+                      <EmptyMedia variant="icon"><IconChevronRight /></EmptyMedia>
+                      <EmptyDescription>No connected entities found.</EmptyDescription>
+                    </EmptyHeader>
+                  </Empty>
                 )}
               </div>
             ) : (
-              <div
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  padding: '40px 20px',
-                  gap: 12,
-                }}
-              >
-                <FileText size={32} style={{ color: 'var(--text-dim)' }} />
-                <span style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
-                  Could not load graph data.
-                </span>
-              </div>
+              <Empty>
+                <EmptyHeader>
+                  <EmptyMedia variant="icon"><IconFileText /></EmptyMedia>
+                  <EmptyDescription>Could not load graph data.</EmptyDescription>
+                </EmptyHeader>
+              </Empty>
             )}
-          </div>
-        )}
+          </CardContent>
+        </Card>
+      )}
 
-        {/* ─── Search Results ───────────────────────────────────────────────────── */}
-        {!selectedEntity && results.length > 0 && (
-          <div>
-            <div style={sectionHeader}>Search Results</div>
-            <div
-              className="bb-stagger"
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-                gap: 12,
-              }}
-            >
-              {results.map((result) => {
-                const Icon = TYPE_ICON[result.type] ?? Briefcase;
-                const color = TYPE_COLOR[result.type] ?? '#888';
-                const isHovered = hoveredResult === `${result.type}-${result.id}`;
-
-                return (
-                  <button
-                    key={`${result.type}-${result.id}`}
-                    onClick={() => selectEntity(result.type, result.id)}
-                    onMouseEnter={() => setHoveredResult(`${result.type}-${result.id}`)}
-                    onMouseLeave={() => setHoveredResult(null)}
-                    style={{
-                      ...glassCard,
-                      textAlign: 'left',
-                      background: isHovered
-                        ? 'var(--glass-card-bg)'
-                        : 'var(--glass-card-bg-light)',
-                      border: isHovered
-                        ? '1px solid var(--glass-interactive-border)'
-                        : '1px solid var(--glass-card-border)',
-                      boxShadow: isHovered
-                        ? `inset 0 1px 0 ${C.borderHover}, 0 0 0 1px ${C.borderHover}`
-                        : 'var(--glass-card-inset)',
-                      cursor: 'pointer',
-                      transition: 'all 200ms',
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 12,
-                        marginBottom: 12,
-                      }}
-                    >
-                      <div
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          width: 36,
-                          height: 36,
-                          borderRadius: 12,
-                          backgroundColor: `${color}20`,
-                          flexShrink: 0,
-                        }}
-                      >
-                        <Icon size={18} style={{ color }} />
-                      </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div
-                          style={{
-                            fontSize: 14,
-                            fontWeight: 500,
-                            color: 'var(--text-primary)',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
-                          {result.label}
-                        </div>
-                        <div
-                          style={{
-                            fontSize: 14,
-                            color: 'var(--text-secondary)',
-                            marginTop: 4,
-                            textTransform: 'capitalize',
-                          }}
-                        >
-                          {result.type}
-                        </div>
-                      </div>
+      {/* Search Results */}
+      {!selectedEntity && results.length > 0 && (
+        <div>
+          <h2 className="mb-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">Search Results</h2>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {results.map((result) => {
+              const Icon = TYPE_ICON[result.type] ?? IconBriefcase;
+              return (
+                <Card
+                  key={`${result.type}-${result.id}`}
+                  className="cursor-pointer transition-colors hover:bg-muted/50"
+                  onClick={() => selectEntity(result.type, result.id)}
+                >
+                  <CardContent className="flex items-start gap-3 py-4">
+                    <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                      <Icon className="size-4 text-primary" />
                     </div>
-                    {result.snippet && (
-                      <p
-                        style={{
-                          fontSize: 14,
-                          color: 'var(--text-secondary)',
-                          margin: 0,
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        {result.snippet}
-                      </p>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-sm font-medium">{result.label}</div>
+                      <Badge variant={TYPE_BADGE_VARIANT[result.type]} className="mt-1">{result.type}</Badge>
+                      {result.snippet && (
+                        <p className="mt-2 truncate text-xs text-muted-foreground">{result.snippet}</p>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
-        )}
+        </div>
+      )}
 
-        {/* ─── Empty States ──────────────────────────────────────────────────────── */}
-        {!selectedEntity && !searching && query && results.length === 0 && (
-          <EmptyState
-            title={`No results for "${query}"`}
-            description="Try searching for contacts, projects, invoices, or tasks."
-          />
-        )}
+      {/* Empty States */}
+      {!selectedEntity && !searching && query && results.length === 0 && (
+        <Empty>
+          <EmptyHeader>
+            <EmptyTitle>No results for &quot;{query}&quot;</EmptyTitle>
+            <EmptyDescription>Try searching for contacts, projects, invoices, or tasks.</EmptyDescription>
+          </EmptyHeader>
+        </Empty>
+      )}
 
-        {!selectedEntity && !query && (
-          <EmptyState
-            title="Search the knowledge base"
-            description="Find contacts, projects, invoices, and tasks to see how they connect across the organisation."
-          />
-        )}
-      </div>
-
-      <style>{`
-        @keyframes spin {
-          from {
-            transform: rotate(0deg);
-          }
-          to {
-            transform: rotate(360deg);
-          }
-        }
-
-        @keyframes shimmer {
-          from {
-            background-position: 200% 0;
-          }
-          to {
-            background-position: -200% 0;
-          }
-        }
-      `}</style>
-    </TabShell>
+      {!selectedEntity && !query && (
+        <Empty>
+          <EmptyHeader>
+            <EmptyMedia variant="icon"><IconSearch /></EmptyMedia>
+            <EmptyTitle>Search the knowledge base</EmptyTitle>
+            <EmptyDescription>Find contacts, projects, invoices, and tasks to see how they connect across the organisation.</EmptyDescription>
+          </EmptyHeader>
+        </Empty>
+      )}
+    </div>
   );
 }
 

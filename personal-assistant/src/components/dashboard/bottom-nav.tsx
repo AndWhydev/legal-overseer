@@ -2,35 +2,34 @@
 
 import React from 'react';
 import {
-  MessageSquare,
-  Inbox,
-  Handshake,
-  ShieldCheck,
-  Settings,
-} from 'lucide-react';
+  IconMessage,
+  IconInbox,
+  IconHeartHandshake,
+  IconShieldCheck,
+  IconSettings,
+} from '@tabler/icons-react';
 import type { TabDef } from './spa-shell';
 import { useEnabledModules } from '@/lib/modules/use-enabled-modules';
 import { useBadgeCounts } from '@/hooks/use-badge-counts';
 import type { BadgeCounts } from '@/hooks/use-badge-counts';
-import { NotificationBadge } from '@/components/ui/notification-badge';
+import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
 
-// ─── Fixed bottom nav items (5 most-used) ────────────────────────────────────
-
+// Fixed bottom nav items (5 most-used)
 const BOTTOM_NAV_ITEMS: { id: string; label: string; icon: React.ElementType }[] = [
-  { id: 'chat',      label: 'Chat',      icon: MessageSquare },
-  { id: 'inbox',     label: 'Inbox',     icon: Inbox },
-  { id: 'leads',     label: 'Leads',     icon: Handshake },
-  { id: 'approvals', label: 'Approvals', icon: ShieldCheck },
-  { id: 'settings-connections', label: 'Settings', icon: Settings },
+  { id: 'chat', label: 'Chat', icon: IconMessage },
+  { id: 'inbox', label: 'Inbox', icon: IconInbox },
+  { id: 'leads', label: 'Leads', icon: IconHeartHandshake },
+  { id: 'approvals', label: 'Approvals', icon: IconShieldCheck },
+  { id: 'settings-connections', label: 'Settings', icon: IconSettings },
 ];
 
-const BADGE_CONFIG: Record<string, { key: keyof BadgeCounts; color: string }> = {
-  approvals: { key: 'approvals', color: 'var(--text-primary, #F1F5F9)' },
-  leads:     { key: 'leads',     color: 'var(--bb-blue)' },
+const BADGE_CONFIG: Record<string, { key: keyof BadgeCounts }> = {
+  approvals: { key: 'approvals' },
+  leads: { key: 'leads' },
 };
 
-// ─── Props ──────────────────────────────────────────────────────────────────
-
+// Props
 interface BottomNavProps {
   avatarUrl?: string;
   avatarFallback?: string;
@@ -41,8 +40,7 @@ interface BottomNavProps {
   tabs?: TabDef[];
 }
 
-// ─── Component ──────────────────────────────────────────────────────────────
-
+// Component
 export function BottomNav({
   activeTabId = 'dashboard',
   onTabChange,
@@ -51,32 +49,20 @@ export function BottomNav({
   const badgeCounts = useBadgeCounts('bottom-nav-badge-counts');
 
   // Filter to only enabled modules
-  const visibleItems = BOTTOM_NAV_ITEMS.filter(item => enabledModules.includes(item.id));
+  const visibleItems = BOTTOM_NAV_ITEMS.filter(item =>
+    enabledModules.includes(item.id),
+  );
 
   return (
     <nav
-      className="bb-bottom-nav"
+      className="bb-bottom-nav flex w-full items-stretch justify-around border-t border-border bg-background px-1 pb-[env(safe-area-inset-bottom)]"
       role="tablist"
       aria-label="Dashboard sections"
       aria-orientation="horizontal"
-      style={{
-        display: 'flex',
-        flexDirection: 'row',
-        alignItems: 'stretch',
-        justifyContent: 'space-around',
-        width: '100%',
-        height: '100%',
-        background: 'var(--bg-primary)',
-        borderTop: '1px solid var(--glass-interactive-border)',
-        padding: '0 4px',
-        paddingBottom: 'env(safe-area-inset-bottom)',
-        gap: '4px',
-      }}
     >
       {visibleItems.map(item => {
         const Icon = item.icon;
         const active = item.id === activeTabId;
-        const activeColor = active ? '#F1F5F9' : 'var(--text-secondary)';
         const label = composition.labelOverrides[item.id] ?? item.label;
 
         const badgeDef = BADGE_CONFIG[item.id];
@@ -86,53 +72,37 @@ export function BottomNav({
           <button
             key={item.id}
             onClick={() => onTabChange?.(item.id)}
-            className="bb-bottom-nav__item"
+            className={cn(
+              'bb-bottom-nav__item relative flex flex-1 flex-col items-center justify-center gap-1 bg-transparent border-none cursor-pointer transition-colors',
+              active
+                ? 'text-primary'
+                : 'text-muted-foreground hover:text-foreground',
+            )}
             role="tab"
             id={`bottom-tab-${item.id}`}
             aria-selected={active}
             aria-controls={`tabpanel-${item.id}`}
             aria-label={label}
-            style={{
-              position: 'relative',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '4px',
-              width: '100%',
-              height: '100%',
-              padding: '0',
-              background: 'transparent',
-              border: 'none',
-              cursor: 'pointer',
-              color: activeColor,
-              transition: 'color 0.15s ease',
-            }}
           >
-            <Icon size={20} strokeWidth={1.8} style={{ color: activeColor }} />
+            <div className="relative">
+              <Icon data-icon />
+              {badgeCount > 0 && (
+                <Badge
+                  variant="destructive"
+                  className="absolute -top-2 -right-3 text-[9px] px-1 py-0 min-w-4 h-4 flex items-center justify-center"
+                >
+                  {badgeCount > 99 ? '99+' : badgeCount}
+                </Badge>
+              )}
+            </div>
             <span
-              style={{
-                fontSize: '14px',
-                fontWeight: active ? 600 : 500,
-                color: activeColor,
-                lineHeight: 1,
-                whiteSpace: 'nowrap',
-                textOverflow: 'ellipsis',
-                overflow: 'hidden',
-                maxWidth: '100%',
-              }}
+              className={cn(
+                'text-xs leading-none truncate max-w-full',
+                active ? 'font-semibold' : 'font-medium',
+              )}
             >
               {label}
             </span>
-            {badgeCount > 0 && (
-              <NotificationBadge
-                count={badgeCount}
-                color={badgeDef!.color}
-                size="sm"
-                maxDisplay={99}
-                ariaLabel={`${label}: ${badgeCount} notifications`}
-              />
-            )}
           </button>
         );
       })}

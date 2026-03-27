@@ -1,10 +1,13 @@
 'use client';
 
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { TabSkeleton } from './tab-skeleton';
-import { TabShell } from '@/components/ui/tab-shell';
-import { EmptyState } from '@/components/ui/empty-state';
-import { GlassDropdown } from '@/components/ui/glass-dropdown';
+import { IconLoader2 } from '@tabler/icons-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Empty, EmptyHeader, EmptyTitle, EmptyDescription } from '@/components/ui/empty';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { logger } from '@/lib/core/logger';
 
 // ---------------------------------------------------------------------------
@@ -61,56 +64,39 @@ function formatTimestamp(iso: string): string {
   return d.toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
-// Map actions to data attribute values
-const ACTION_DATA_MAP: Record<string, string> = {
-  created: 'create',
-  approved: 'update',
-  rejected: 'delete',
-  deleted: 'delete',
-  sent: 'update',
-  executed: 'update',
-  escalated: 'update',
-  updated: 'update',
+const ACTION_BADGE_VARIANT: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
+  created: 'default',
+  approved: 'default',
+  updated: 'secondary',
+  sent: 'secondary',
+  executed: 'secondary',
+  escalated: 'outline',
+  rejected: 'destructive',
+  deleted: 'destructive',
 };
 
 // ---------------------------------------------------------------------------
-// Filter option mappings for GlassDropdown
+// Filter option mappings
 // ---------------------------------------------------------------------------
 
-const entityTypeOptions = ENTITY_TYPES.map((v) => ({
-  value: v,
-  label: v === 'all' ? 'All' : v.charAt(0).toUpperCase() + v.slice(1),
-}));
-
-const actorTypeOptions = ACTOR_TYPES.map((v) => ({
-  value: v,
-  label: v === 'all' ? 'All' : v.charAt(0).toUpperCase() + v.slice(1),
-}));
-
-const actionTypeOptions = ACTION_TYPES.map((v) => ({
-  value: v,
-  label: v === 'all' ? 'All' : v.charAt(0).toUpperCase() + v.slice(1),
-}));
+const entityTypeOptions = ENTITY_TYPES.map((v) => ({ value: v, label: v === 'all' ? 'All Entities' : v.charAt(0).toUpperCase() + v.slice(1) }));
+const actorTypeOptions = ACTOR_TYPES.map((v) => ({ value: v, label: v === 'all' ? 'All Actors' : v.charAt(0).toUpperCase() + v.slice(1) }));
+const actionTypeOptions = ACTION_TYPES.map((v) => ({ value: v, label: v === 'all' ? 'All Actions' : v.charAt(0).toUpperCase() + v.slice(1) }));
 
 // ---------------------------------------------------------------------------
 // Entry row
 // ---------------------------------------------------------------------------
 
 function AuditRow({ entry }: { entry: AuditEntry }) {
-  const actionType = ACTION_DATA_MAP[entry.action] ?? 'update';
-
   return (
-    <div className="bb-activity-row" data-action={actionType}>
-      {/* Dot */}
-      <div className="bb-activity-row__dot" data-action={actionType} />
-
-      {/* Content */}
-      <div className="bb-activity-row__content">
-        <div className="bb-activity-row__action">
-          {formatAction(entry)}
-        </div>
+    <div className="flex items-start gap-3 rounded-lg border bg-card p-3 transition-colors hover:bg-muted/50">
+      <Badge variant={ACTION_BADGE_VARIANT[entry.action] ?? 'secondary'} className="mt-0.5 shrink-0">
+        {entry.action}
+      </Badge>
+      <div className="min-w-0 flex-1">
+        <div className="text-sm">{formatAction(entry)}</div>
         {entry.metadata && Object.keys(entry.metadata).length > 0 && (
-          <div className="bb-activity-row__metadata">
+          <div className="mt-1 truncate text-xs text-muted-foreground">
             {Object.entries(entry.metadata)
               .slice(0, 3)
               .map(([k, v]) => `${k}: ${String(v)}`)
@@ -118,11 +104,7 @@ function AuditRow({ entry }: { entry: AuditEntry }) {
           </div>
         )}
       </div>
-
-      {/* Timestamp */}
-      <div className="bb-activity-row__timestamp">
-        {formatTimestamp(entry.created_at)}
-      </div>
+      <span className="shrink-0 text-xs text-muted-foreground">{formatTimestamp(entry.created_at)}</span>
     </div>
   );
 }
@@ -139,7 +121,6 @@ function ActivityTab() {
   const [hasMore, setHasMore] = useState(true);
   const [total, setTotal] = useState(0);
 
-  // Filters
   const [entityType, setEntityType] = useState('all');
   const [actorType, setActorType] = useState('all');
   const [actionType, setActionType] = useState('all');
@@ -159,7 +140,6 @@ function ActivityTab() {
     [entityType, actorType],
   );
 
-  // Initial + filter-change fetch
   useEffect(() => {
     let mounted = true;
     setLoading(true);
@@ -170,7 +150,6 @@ function ActivityTab() {
       .then((data) => {
         if (!mounted) return;
         const fetched = (data.entries ?? []) as AuditEntry[];
-        // Client-side action filter (server doesn't support action filter directly)
         const filtered = actionType !== 'all' ? fetched.filter((e) => e.action === actionType) : fetched;
         setEntries(filtered);
         setTotal(data.total ?? 0);
@@ -188,12 +167,9 @@ function ActivityTab() {
         if (mounted) setLoading(false);
       });
 
-    return () => {
-      mounted = false;
-    };
+    return () => { mounted = false; };
   }, [buildUrl, actionType]);
 
-  // Load more
   const loadMore = useCallback(() => {
     if (loadingMore || !hasMore) return;
     setLoadingMore(true);
@@ -211,7 +187,6 @@ function ActivityTab() {
       .finally(() => setLoadingMore(false));
   }, [buildUrl, actionType, loadingMore, hasMore]);
 
-  // Infinite scroll observer
   useEffect(() => {
     const el = sentinelRef.current;
     if (!el) return;
@@ -227,61 +202,89 @@ function ActivityTab() {
     return () => observer.disconnect();
   }, [loadMore]);
 
-  if (loading) return <TabSkeleton />;
+  if (loading) {
+    return (
+      <div className="flex flex-col gap-4 p-6" aria-busy="true" role="status">
+        <div className="flex items-center gap-3">
+          <Skeleton className="h-9 w-9 rounded-lg" />
+          <div className="space-y-2">
+            <Skeleton className="h-6 w-40" />
+            <Skeleton className="h-3 w-64" />
+          </div>
+        </div>
+        <div className="grid gap-4 md:grid-cols-2">
+          <Skeleton className="h-32 w-full rounded-xl" />
+          <Skeleton className="h-32 w-full rounded-xl" />
+        </div>
+      </div>
+    );
+  }
 
   if (error && entries.length === 0) {
     return (
-      <TabShell>
-        <div className="bb-tab-error">
-          <p className="bb-tab-error__text">{error}</p>
-          <button className="bb-btn bb-btn--ghost bb-btn--sm" onClick={() => { setError(null); setLoading(true); }}>
-            Retry
-          </button>
-        </div>
-      </TabShell>
+      <div className="flex flex-col items-center gap-4 p-12">
+        <p className="text-sm text-destructive">{error}</p>
+        <Button variant="outline" size="sm" onClick={() => { setError(null); setLoading(true); }}>
+          Retry
+        </Button>
+      </div>
     );
   }
 
   return (
-    <TabShell>
-      <div className="bb-activity-main">
-        <div className="bb-activity-header">
-          <span className="bb-activity-header__text">
-            {total} total events
-          </span>
-        </div>
-
-        {/* Filters */}
-        <div className="bb-activity-filters">
-          <GlassDropdown options={entityTypeOptions} value={entityType} onChange={setEntityType} placeholder="Entity" />
-          <GlassDropdown options={actorTypeOptions} value={actorType} onChange={setActorType} placeholder="Actor" />
-          <GlassDropdown options={actionTypeOptions} value={actionType} onChange={setActionType} placeholder="Action" />
-        </div>
-
-        {/* Timeline */}
-        <div className="bb-activity-timeline">
-          {entries.map((entry) => (
-            <AuditRow key={entry.id} entry={entry} />
-          ))}
-
-          {entries.length === 0 && (
-            <EmptyState
-              title="No activity yet"
-              description="Activity will appear here as things get moving"
-            />
-          )}
-
-          {/* Infinite scroll sentinel */}
-          <div ref={sentinelRef} className="bb-activity-sentinel" />
-
-          {loadingMore && (
-            <div className="bb-activity-loading">
-              Loading more...
-            </div>
-          )}
-        </div>
+    <div className="flex flex-col gap-4 p-6">
+      <div className="flex items-center justify-between">
+        <span className="text-sm text-muted-foreground">{total} total events</span>
       </div>
-    </TabShell>
+
+      {/* Filters */}
+      <div className="flex flex-wrap gap-3">
+        <Select value={entityType} onValueChange={setEntityType}>
+          <SelectTrigger><SelectValue placeholder="Entity" /></SelectTrigger>
+          <SelectContent>
+            {entityTypeOptions.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Select value={actorType} onValueChange={setActorType}>
+          <SelectTrigger><SelectValue placeholder="Actor" /></SelectTrigger>
+          <SelectContent>
+            {actorTypeOptions.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Select value={actionType} onValueChange={setActionType}>
+          <SelectTrigger><SelectValue placeholder="Action" /></SelectTrigger>
+          <SelectContent>
+            {actionTypeOptions.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Timeline */}
+      <div className="flex flex-col gap-2">
+        {entries.map((entry) => (
+          <AuditRow key={entry.id} entry={entry} />
+        ))}
+
+        {entries.length === 0 && (
+          <Empty>
+            <EmptyHeader>
+              <EmptyTitle>No activity yet</EmptyTitle>
+              <EmptyDescription>Activity will appear here as things get moving</EmptyDescription>
+            </EmptyHeader>
+          </Empty>
+        )}
+
+        {/* Infinite scroll sentinel */}
+        <div ref={sentinelRef} className="h-1" />
+
+        {loadingMore && (
+          <div className="flex items-center justify-center gap-2 py-4 text-sm text-muted-foreground">
+            <IconLoader2 className="size-4 animate-spin" />
+            Loading more...
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 

@@ -2,7 +2,9 @@
 
 import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import { X, Copy, Check, ExternalLink } from 'lucide-react'
+import { IconX, IconCopy, IconCheck, IconExternalLink } from '@tabler/icons-react'
+import { Button } from '@/components/ui/button'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import type { Artifact } from './use-artifacts'
 
 interface ArtifactPanelProps {
@@ -40,7 +42,6 @@ export function ArtifactPanel({ artifact, onClose }: ArtifactPanelProps) {
       window.open(url, '_blank')
       setTimeout(() => URL.revokeObjectURL(url), 100)
     } else {
-      // For code, open in a new tab with syntax highlighting via a data URL
       const html = `
         <!DOCTYPE html>
         <html>
@@ -48,31 +49,12 @@ export function ArtifactPanel({ artifact, onClose }: ArtifactPanelProps) {
           <meta charset="utf-8">
           <title>${artifact.title}</title>
           <style>
-            body {
-              background: #0a0f1a;
-              color: #f1f5f9;
-              font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-              margin: 0;
-              padding: 16px;
-            }
-            pre {
-              margin: 0;
-              overflow: auto;
-              padding: 16px;
-              background: rgba(13, 17, 23, 0.8);
-              border: 1px solid rgba(255, 255, 255, 0.06);
-              border-radius: 8px;
-              font-size: 13px;
-              line-height: 20px;
-            }
-            code {
-              font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-            }
+            body { background: #0a0f1a; color: #f1f5f9; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; margin: 0; padding: 16px; }
+            pre { margin: 0; overflow: auto; padding: 16px; background: rgba(13, 17, 23, 0.8); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 8px; font-size: 13px; line-height: 20px; }
+            code { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
           </style>
         </head>
-        <body>
-          <pre><code>${escapeHtml(artifact.content)}</code></pre>
-        </body>
+        <body><pre><code>${escapeHtml(artifact.content)}</code></pre></body>
         </html>
       `
       const blob = new Blob([html], { type: 'text/html;charset=utf-8' })
@@ -93,249 +75,68 @@ export function ArtifactPanel({ artifact, onClose }: ArtifactPanelProps) {
           animate={{ x: 0, opacity: 1 }}
           exit={{ x: '100%', opacity: 0 }}
           transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-          style={{
-            position: 'fixed',
-            top: 0,
-            right: 0,
-            height: '100vh',
-            width: 'clamp(400px, 50vw, 700px)',
-            backgroundColor: 'var(--bg-primary, #0a0f1a)',
-            borderLeft: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
-            display: 'flex',
-            flexDirection: 'column',
-            zIndex: 40,
-            boxShadow: '-4px 0 16px rgba(0, 0, 0, 0.4)',
-          }}
+          className="fixed top-0 right-0 h-screen w-[clamp(400px,50vw,700px)] bg-background border-l border-border flex flex-col z-40 shadow-2xl"
         >
           {/* Header */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '10px 16px',
-              borderBottom: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
-              minHeight: '52px',
-              backgroundColor: 'var(--hover-bg, rgba(255, 255, 255, 0.02))',
-            }}
-          >
-            <h2
-              style={{
-                margin: 0,
-                fontSize: '14px',
-                fontWeight: 600,
-                color: 'var(--text-primary, #F1F5F9)',
-                flex: 1,
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-              }}
-            >
+          <div className="flex items-center justify-between px-4 py-2.5 border-b border-border min-h-[52px] bg-muted/30">
+            <h2 className="m-0 text-sm font-semibold text-foreground flex-1 overflow-hidden text-ellipsis whitespace-nowrap">
               {artifact.title}
             </h2>
 
             {/* Controls */}
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginLeft: '12px' }}>
+            <div className="flex gap-2 items-center ml-3">
               {showModeToggle && (
-                <div
-                  style={{
-                    display: 'inline-flex',
-                    gap: '0',
-                    backgroundColor: 'var(--hover-bg, rgba(255, 255, 255, 0.05))',
-                    borderRadius: '4px',
-                    padding: '2px',
-                  }}
-                >
-                  {(['preview', 'code'] as const).map(mode => (
-                    <button
-                      key={mode}
-                      onClick={() => setViewMode(mode)}
-                      style={{
-                        padding: '4px 10px',
-                        fontSize: '11px',
-                        fontWeight: 600,
-                        backgroundColor:
-                          viewMode === mode ? 'var(--hover-bg-strong, rgba(255, 255, 255, 0.1))' : 'transparent',
-                        color:
-                          viewMode === mode
-                            ? 'var(--text-primary, #F1F5F9)'
-                            : 'var(--text-muted, rgba(255, 255, 255, 0.4))',
-                        border: 'none',
-                        borderRadius: '3px',
-                        cursor: 'pointer',
-                        transition: 'all 150ms cubic-bezier(0.4, 0, 0.2, 1)',
-                        textTransform: 'capitalize',
-                      }}
-                      onMouseEnter={e => {
-                        if (viewMode !== mode) {
-                          ;(e.currentTarget as HTMLButtonElement).style.backgroundColor =
-                            'var(--hover-bg-strong, rgba(255, 255, 255, 0.08))'
-                        }
-                      }}
-                      onMouseLeave={e => {
-                        if (viewMode !== mode) {
-                          ;(e.currentTarget as HTMLButtonElement).style.backgroundColor =
-                            'transparent'
-                        }
-                      }}
-                    >
-                      {mode}
-                    </button>
-                  ))}
-                </div>
+                <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as 'preview' | 'code')}>
+                  <TabsList className="h-7">
+                    <TabsTrigger value="preview" className="text-xs px-2.5 h-5">Preview</TabsTrigger>
+                    <TabsTrigger value="code" className="text-xs px-2.5 h-5">Code</TabsTrigger>
+                  </TabsList>
+                </Tabs>
               )}
 
-              <button
+              <Button
+                variant="ghost"
+                size="icon-xs"
                 onClick={handleCopy}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                  fontSize: '11px',
-                  padding: '4px 8px',
-                  backgroundColor: 'var(--hover-bg, rgba(255, 255, 255, 0.05))',
-                  color: copied ? 'var(--bb-green, #22C55E)' : 'var(--text-muted, rgba(255, 255, 255, 0.4))',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  transition: 'all 150ms cubic-bezier(0.4, 0, 0.2, 1)',
-                  fontFamily: 'inherit',
-                }}
-                onMouseEnter={e => {
-                  if (!copied) {
-                    ;(e.currentTarget as HTMLButtonElement).style.backgroundColor =
-                      'var(--hover-bg-strong, rgba(255, 255, 255, 0.08))'
-                    ;(e.currentTarget as HTMLButtonElement).style.color =
-                      'var(--text-primary, #F1F5F9)'
-                  }
-                }}
-                onMouseLeave={e => {
-                  if (!copied) {
-                    ;(e.currentTarget as HTMLButtonElement).style.backgroundColor =
-                      'var(--hover-bg, rgba(255, 255, 255, 0.05))'
-                    ;(e.currentTarget as HTMLButtonElement).style.color =
-                      'var(--text-muted, rgba(255, 255, 255, 0.4))'
-                  }
-                }}
+                className={copied ? 'text-emerald-500' : 'text-muted-foreground'}
                 title={copied ? 'Copied!' : 'Copy content'}
               >
-                {copied ? <Check size={12} /> : <Copy size={12} />}
-              </button>
+                {copied ? <IconCheck size={12} /> : <IconCopy size={12} />}
+              </Button>
 
-              <button
+              <Button
+                variant="ghost"
+                size="icon-xs"
                 onClick={handleOpenInNewTab}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                  fontSize: '11px',
-                  padding: '4px 8px',
-                  backgroundColor: 'var(--hover-bg, rgba(255, 255, 255, 0.05))',
-                  color: 'var(--text-muted, rgba(255, 255, 255, 0.4))',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  transition: 'all 150ms cubic-bezier(0.4, 0, 0.2, 1)',
-                  fontFamily: 'inherit',
-                }}
-                onMouseEnter={e => {
-                  ;(e.currentTarget as HTMLButtonElement).style.backgroundColor =
-                    'var(--hover-bg-strong, rgba(255, 255, 255, 0.08))'
-                  ;(e.currentTarget as HTMLButtonElement).style.color =
-                    'var(--text-primary, #F1F5F9)'
-                }}
-                onMouseLeave={e => {
-                  ;(e.currentTarget as HTMLButtonElement).style.backgroundColor =
-                    'var(--hover-bg, rgba(255, 255, 255, 0.05))'
-                  ;(e.currentTarget as HTMLButtonElement).style.color =
-                    'var(--text-muted, rgba(255, 255, 255, 0.4))'
-                }}
+                className="text-muted-foreground"
                 title="Open in new tab"
               >
-                <ExternalLink size={12} />
-              </button>
+                <IconExternalLink size={12} />
+              </Button>
 
-              <button
+              <Button
+                variant="ghost"
+                size="icon-sm"
                 onClick={onClose}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: '32px',
-                  height: '32px',
-                  padding: 0,
-                  backgroundColor: 'var(--hover-bg, rgba(255, 255, 255, 0.05))',
-                  color: 'var(--text-muted, rgba(255, 255, 255, 0.4))',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  transition: 'all 150ms cubic-bezier(0.4, 0, 0.2, 1)',
-                  fontFamily: 'inherit',
-                }}
-                onMouseEnter={e => {
-                  ;(e.currentTarget as HTMLButtonElement).style.backgroundColor =
-                    'var(--hover-bg-strong, rgba(255, 255, 255, 0.08))'
-                  ;(e.currentTarget as HTMLButtonElement).style.color =
-                    'var(--text-primary, #F1F5F9)'
-                }}
-                onMouseLeave={e => {
-                  ;(e.currentTarget as HTMLButtonElement).style.backgroundColor =
-                    'var(--hover-bg, rgba(255, 255, 255, 0.05))'
-                  ;(e.currentTarget as HTMLButtonElement).style.color =
-                    'var(--text-muted, rgba(255, 255, 255, 0.4))'
-                }}
+                className="text-muted-foreground"
                 aria-label="Close artifact panel"
               >
-                <X size={16} />
-              </button>
+                <IconX size={16} />
+              </Button>
             </div>
           </div>
 
           {/* Content */}
-          <div
-            style={{
-              flex: 1,
-              overflow: 'auto',
-              display: 'flex',
-              flexDirection: 'column',
-            }}
-          >
+          <div className="flex-1 overflow-auto flex flex-col">
             {isHtml && viewMode === 'preview' ? (
-              // HTML Preview
               <iframe
                 srcDoc={artifact.content}
-                style={{
-                  flex: 1,
-                  border: 'none',
-                  backgroundColor: '#ffffff',
-                }}
+                className="flex-1 border-none bg-white"
                 title={artifact.title}
               />
             ) : (
-              // Code view
-              <div
-                style={{
-                  flex: 1,
-                  padding: '14px',
-                  fontSize: '13px',
-                  lineHeight: '20px',
-                  fontFamily: 'ui-monospace, "SF Mono", Menlo, Consolas, monospace',
-                  color: 'var(--text-primary, #F1F5F9)',
-                  overflow: 'auto',
-                  backgroundColor: 'var(--bg-input, rgba(13, 17, 23, 0.4))',
-                }}
-              >
-                <pre
-                  style={{
-                    margin: 0,
-                    padding: 0,
-                    backgroundColor: 'transparent',
-                    fontSize: 'inherit',
-                    lineHeight: 'inherit',
-                    fontFamily: 'inherit',
-                    color: 'inherit',
-                  }}
-                >
+              <div className="flex-1 p-3.5 text-[13px] leading-5 font-mono text-foreground overflow-auto bg-muted/20">
+                <pre className="m-0 p-0 bg-transparent text-inherit leading-inherit font-inherit">
                   <code>{artifact.content}</code>
                 </pre>
               </div>

@@ -1,14 +1,21 @@
 'use client'
 
 import React, { useState, useCallback } from 'react'
-import { Search, TrendingUp, TrendingDown, Minus, Copy, Check, Play, Code, FileText, X } from 'lucide-react'
-import { S, C } from '@/lib/styles/design-tokens'
-import { TabShell } from '@/components/ui/tab-shell'
-import { GlassToggle } from '@/components/ui/glass-toggle'
-import { EmptyState } from '@/components/ui/empty-state'
+import { IconSearch, IconTrendingUp, IconTrendingDown, IconMinus, IconCopy, IconCheck, IconPlayerPlay, IconCode, IconFileText, IconX } from '@tabler/icons-react'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Label } from '@/components/ui/label'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Empty, EmptyHeader, EmptyTitle, EmptyDescription } from '@/components/ui/empty'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 
 // ---------------------------------------------------------------------------
-// Types (mirrors agent types without importing server code)
+// Types
 // ---------------------------------------------------------------------------
 
 interface QueryResult {
@@ -33,36 +40,14 @@ interface SchemaResult {
   validationNotes: string[]
 }
 
-type ActivePanel = 'overview' | 'content' | 'schema'
-
-// ---------------------------------------------------------------------------
-// Style Tokens
-// ---------------------------------------------------------------------------
-
-const glassInput: React.CSSProperties = {
-  ...S.input,
-  padding: '12px 16px',
-  borderRadius: 12,
-}
-
-const accentBtn: React.CSSProperties = {
-  ...S.button,
-  ...S.buttonPrimary,
-}
-
-const smallText: React.CSSProperties = {
-  ...S.sectionLabel,
-  marginBottom: 0,
-}
-
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-const POSITION_COLORS: Record<string, string> = {
-  mentioned: '#22c55e',
-  partial: '#eab308',
-  absent: '#ef4444',
+const POSITION_VARIANT: Record<string, 'default' | 'secondary' | 'destructive'> = {
+  mentioned: 'default',
+  partial: 'secondary',
+  absent: 'destructive',
 }
 
 const POSITION_LABELS: Record<string, string> = {
@@ -72,44 +57,16 @@ const POSITION_LABELS: Record<string, string> = {
 }
 
 function ScoreBadge({ score }: { score: number }) {
-  const getScoreColor = () => {
-    if (score >= 60) return '#22c55e'
-    if (score >= 30) return '#eab308'
-    return '#ef4444'
-  }
-
-  const color = getScoreColor()
-  const bgColor = color === '#22c55e' ? C.statusSuccessBg :
-                  color === '#eab308' ? C.statusWarningBg :
-                  C.statusErrorBg
-
-  return (
-    <span
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        minWidth: 48,
-        padding: '4px 12px',
-        borderRadius: 8,
-        fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
-        fontSize: 16,
-        fontWeight: 500,
-        color,
-        background: bgColor,
-      }}
-    >
-      {score}
-    </span>
-  )
+  const variant = score >= 60 ? 'default' : score >= 30 ? 'secondary' : 'destructive'
+  return <Badge variant={variant} className="text-base font-mono px-3 py-1">{score}</Badge>
 }
 
 function TrendArrow({ current, previous }: { current: number; previous: number | null }) {
-  if (previous === null) return <Minus size={16} style={{ color: C.textMuted }} />
+  if (previous === null) return <IconMinus className="size-4 text-muted-foreground" />
   const diff = current - previous
-  if (diff > 5) return <TrendingUp size={16} style={{ color: '#22c55e' }} />
-  if (diff < -5) return <TrendingDown size={16} style={{ color: '#ef4444' }} />
-  return <Minus size={16} style={{ color: C.textMuted }} />
+  if (diff > 5) return <IconTrendingUp className="size-4 text-green-600" />
+  if (diff < -5) return <IconTrendingDown className="size-4 text-red-600" />
+  return <IconMinus className="size-4 text-muted-foreground" />
 }
 
 function CopyButton({ text }: { text: string }) {
@@ -122,27 +79,10 @@ function CopyButton({ text }: { text: string }) {
   }, [text])
 
   return (
-    <button
-      onClick={handleCopy}
-      style={{
-        ...S.button,
-        ...S.buttonGhost,
-        height: 'auto',
-        padding: '8px 12px',
-        color: copied ? C.statusSuccess : C.textSecondary,
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.background = C.bgHover
-        e.currentTarget.style.borderColor = C.borderHover
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.background = 'transparent'
-        e.currentTarget.style.borderColor = C.borderVisible
-      }}
-    >
-      {copied ? <Check size={14} /> : <Copy size={14} />}
+    <Button variant="ghost" size="sm" onClick={handleCopy}>
+      {copied ? <IconCheck className="size-3.5" /> : <IconCopy className="size-3.5" />}
       {copied ? 'Copied' : 'Copy'}
-    </button>
+    </Button>
   )
 }
 
@@ -154,19 +94,13 @@ function AuditForm({
   onRunAudit,
   loading,
 }: {
-  onRunAudit: (params: {
-    domain: string
-    brandName: string
-    queries: string[]
-    competitors: string[]
-  }) => void
+  onRunAudit: (params: { domain: string; brandName: string; queries: string[]; competitors: string[] }) => void
   loading: boolean
 }) {
   const [domain, setDomain] = useState('')
   const [brandName, setBrandName] = useState('')
   const [queries, setQueries] = useState('')
   const [competitors, setCompetitors] = useState('')
-  const [focusedField, setFocusedField] = useState<string | null>(null)
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -179,129 +113,29 @@ function AuditForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-        <label style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <span style={smallText}>Domain</span>
-          <input
-            type="text"
-            value={domain}
-            onChange={(e) => setDomain(e.target.value)}
-            onFocus={() => setFocusedField('domain')}
-            onBlur={() => setFocusedField(null)}
-            placeholder="example.com.au"
-            required
-            style={{
-              ...glassInput,
-              borderColor:
-                focusedField === 'domain'
-                  ? C.borderFocus
-                  : C.borderSubtle,
-              boxShadow:
-                focusedField === 'domain'
-                  ? `0 0 0 2px ${C.bgHoverStrong}`
-                  : 'none',
-            }}
-          />
-        </label>
-        <label style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <span style={smallText}>Brand Name</span>
-          <input
-            type="text"
-            value={brandName}
-            onChange={(e) => setBrandName(e.target.value)}
-            onFocus={() => setFocusedField('brand')}
-            onBlur={() => setFocusedField(null)}
-            placeholder="Acme Web Design"
-            required
-            style={{
-              ...glassInput,
-              borderColor:
-                focusedField === 'brand'
-                  ? C.borderFocus
-                  : C.borderSubtle,
-              boxShadow:
-                focusedField === 'brand'
-                  ? `0 0 0 2px ${C.bgHoverStrong}`
-                  : 'none',
-            }}
-          />
-        </label>
+    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="audit-domain">Domain</Label>
+          <Input id="audit-domain" value={domain} onChange={(e) => setDomain(e.target.value)} placeholder="example.com.au" required />
+        </div>
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="audit-brand">Brand Name</Label>
+          <Input id="audit-brand" value={brandName} onChange={(e) => setBrandName(e.target.value)} placeholder="Acme Web Design" required />
+        </div>
       </div>
-      <label style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <span style={smallText}>Target Queries (one per line)</span>
-        <textarea
-          value={queries}
-          onChange={(e) => setQueries(e.target.value)}
-          onFocus={() => setFocusedField('queries')}
-          onBlur={() => setFocusedField(null)}
-          placeholder={'best web design agency Brisbane\nweb development company Queensland\naffordable website design near me'}
-          rows={4}
-          required
-          style={{
-            ...glassInput,
-            resize: 'vertical',
-            borderColor:
-              focusedField === 'queries'
-                ? C.borderFocus
-                : C.borderSubtle,
-            boxShadow:
-              focusedField === 'queries'
-                ? `0 0 0 2px ${C.bgHoverStrong}`
-                : 'none',
-          }}
-        />
-      </label>
-      <label style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <span style={smallText}>Competitors (one per line, optional)</span>
-        <textarea
-          value={competitors}
-          onChange={(e) => setCompetitors(e.target.value)}
-          onFocus={() => setFocusedField('competitors')}
-          onBlur={() => setFocusedField(null)}
-          placeholder={'Competitor A\nCompetitor B'}
-          rows={2}
-          style={{
-            ...glassInput,
-            resize: 'vertical',
-            borderColor:
-              focusedField === 'competitors'
-                ? C.borderFocus
-                : C.borderSubtle,
-            boxShadow:
-              focusedField === 'competitors'
-                ? `0 0 0 2px ${C.bgHoverStrong}`
-                : 'none',
-          }}
-        />
-      </label>
-      <button
-        type="submit"
-        disabled={loading}
-        style={{
-          ...accentBtn,
-          display: 'inline-flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 8,
-          alignSelf: 'flex-start',
-          opacity: loading ? 0.6 : 1,
-          cursor: loading ? 'not-allowed' : 'pointer',
-        }}
-        onMouseEnter={(e) => {
-          if (!loading) {
-            e.currentTarget.style.background = 'var(--btn-primary-hover, #E2E8F0)'
-            e.currentTarget.style.transform = 'translateY(-1px)'
-          }
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.background = 'var(--btn-primary-bg, #F1F5F9)'
-          e.currentTarget.style.transform = 'translateY(0)'
-        }}
-      >
-        <Play size={16} />
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="audit-queries">Target Queries (one per line)</Label>
+        <Textarea id="audit-queries" value={queries} onChange={(e) => setQueries(e.target.value)} placeholder={'best web design agency Brisbane\nweb development company Queensland\naffordable website design near me'} rows={4} required />
+      </div>
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="audit-competitors">Competitors (one per line, optional)</Label>
+        <Textarea id="audit-competitors" value={competitors} onChange={(e) => setCompetitors(e.target.value)} placeholder={'Competitor A\nCompetitor B'} rows={2} />
+      </div>
+      <Button type="submit" disabled={loading} className="gap-2 self-start">
+        <IconPlayerPlay className="size-4" />
         {loading ? 'Running Audit...' : 'Run Audit'}
-      </button>
+      </Button>
     </form>
   )
 }
@@ -314,151 +148,72 @@ function QueryBreakdown({ results }: { results: QueryResult[] }) {
   }
 
   return (
-    <div
-      style={{
-        ...S.card,
-        overflow: 'hidden',
-        padding: 0,
-      }}
-    >
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '2fr repeat(4, 1fr)',
-          padding: '12px 16px',
-          fontSize: 14,
-          color: 'var(--text-dim)',
-          textTransform: 'uppercase',
-          letterSpacing: 1,
-          borderBottom: '1px solid var(--glass-interactive-border)',
-          fontWeight: 500,
-        }}
-      >
-        <span>Query</span>
-        <span>Perplexity</span>
-        <span>ChatGPT</span>
-        <span>Gemini</span>
-        <span>Copilot</span>
-      </div>
-      {Array.from(queryMap.entries()).map(([query, sources]) => (
-        <div
-          key={query}
-          style={{
-            display: 'grid',
-            gridTemplateColumns: '2fr repeat(4, 1fr)',
-            padding: '12px 16px',
-            alignItems: 'center',
-            borderBottom: '1px solid var(--glass-divider)',
-            transition: 'background 200ms',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = C.bgHover
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'transparent'
-          }}
-        >
-          <span style={{ fontSize: 14, color: 'var(--text-primary)' }}>{query}</span>
-          {['perplexity', 'chatgpt-search', 'gemini', 'copilot'].map((src) => {
-            const match = sources.find((s) => s.source === src)
-            const pos = match?.position ?? 'absent'
-            return (
-              <span
-                key={src}
-                style={{
-                  fontSize: 14,
-                  fontWeight: 500,
-                  color: POSITION_COLORS[pos],
-                }}
-              >
-                {POSITION_LABELS[pos]}
-              </span>
-            )
-          })}
-        </div>
-      ))}
-    </div>
+    <Card>
+      <CardContent className="p-0">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Query</TableHead>
+              <TableHead>Perplexity</TableHead>
+              <TableHead>ChatGPT</TableHead>
+              <TableHead>Gemini</TableHead>
+              <TableHead>Copilot</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {Array.from(queryMap.entries()).map(([query, sources]) => (
+              <TableRow key={query}>
+                <TableCell className="font-medium">{query}</TableCell>
+                {['perplexity', 'chatgpt-search', 'gemini', 'copilot'].map((src) => {
+                  const match = sources.find((s) => s.source === src)
+                  const pos = match?.position ?? 'absent'
+                  return (
+                    <TableCell key={src}>
+                      <Badge variant={POSITION_VARIANT[pos]}>{POSITION_LABELS[pos]}</Badge>
+                    </TableCell>
+                  )
+                })}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
   )
 }
 
-function CompetitorTable({
-  scores,
-  myScore,
-}: {
-  scores: Record<string, number>
-  myScore: number
-}) {
+function CompetitorTable({ scores, myScore }: { scores: Record<string, number>; myScore: number }) {
   const entries = Object.entries(scores).sort(([, a], [, b]) => b - a)
   if (entries.length === 0) return null
 
   return (
-    <div
-      style={{
-        ...S.card,
-        overflow: 'hidden',
-        padding: 0,
-      }}
-    >
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '2fr 1fr 1fr',
-          padding: '12px 16px',
-          fontSize: 14,
-          color: 'var(--text-dim)',
-          textTransform: 'uppercase',
-          letterSpacing: 1,
-          borderBottom: '1px solid var(--glass-interactive-border)',
-          fontWeight: 500,
-        }}
-      >
-        <span>Competitor</span>
-        <span>Score</span>
-        <span>vs You</span>
-      </div>
-      {entries.map(([name, score]) => {
-        const diff = score - myScore
-        return (
-          <div
-            key={name}
-            style={{
-              display: 'grid',
-              gridTemplateColumns: '2fr 1fr 1fr',
-              padding: '12px 16px',
-              alignItems: 'center',
-              borderBottom: '1px solid var(--glass-divider)',
-              transition: 'background 200ms',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = C.bgHover
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'transparent'
-            }}
-          >
-            <span style={{ fontSize: 14, color: 'var(--text-primary)' }}>{name}</span>
-            <span
-              style={{
-                fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
-                color: 'var(--text-secondary)',
-                fontSize: 14,
-              }}
-            >
-              {score}
-            </span>
-            <span
-              style={{
-                fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
-                color: diff > 0 ? '#ef4444' : diff < 0 ? '#22c55e' : C.textPlaceholder,
-                fontSize: 14,
-              }}
-            >
-              {diff > 0 ? '+' : ''}{diff}
-            </span>
-          </div>
-        )
-      })}
-    </div>
+    <Card>
+      <CardContent className="p-0">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Competitor</TableHead>
+              <TableHead>Score</TableHead>
+              <TableHead>vs You</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {entries.map(([name, score]) => {
+              const diff = score - myScore
+              return (
+                <TableRow key={name}>
+                  <TableCell className="font-medium">{name}</TableCell>
+                  <TableCell className="font-mono">{score}</TableCell>
+                  <TableCell className={`font-mono ${diff > 0 ? 'text-red-600' : diff < 0 ? 'text-green-600' : 'text-muted-foreground'}`}>
+                    {diff > 0 ? '+' : ''}{diff}
+                  </TableCell>
+                </TableRow>
+              )
+            })}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
   )
 }
 
@@ -466,7 +221,6 @@ function SchemaGenerator() {
   const [schemaType, setSchemaType] = useState('LocalBusiness')
   const [result, setResult] = useState<SchemaResult | null>(null)
   const [loading, setLoading] = useState(false)
-  const [focusedField, setFocusedField] = useState<string | null>(null)
 
   const [bizName, setBizName] = useState('')
   const [bizDesc, setBizDesc] = useState('')
@@ -491,13 +245,7 @@ function SchemaGenerator() {
             description: bizDesc,
             url: bizUrl,
             phone: bizPhone,
-            address: {
-              street: bizStreet,
-              city: bizCity,
-              state: bizState,
-              postalCode: bizPostal,
-              country: 'AU',
-            },
+            address: { street: bizStreet, city: bizCity, state: bizState, postalCode: bizPostal, country: 'AU' },
           },
         }),
       })
@@ -508,151 +256,55 @@ function SchemaGenerator() {
     }
   }
 
-  const schemaToggleOptions = [
-    { key: 'LocalBusiness', label: 'LocalBusiness' },
-    { key: 'Service', label: 'Service' },
-    { key: 'FAQ', label: 'FAQ' },
-    { key: 'Organization', label: 'Organization' },
-  ]
-
-  const handleSchemaTypeChange = (val: string) => {
-    setSchemaType(val)
-    setResult(null)
-  }
-
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      <GlassToggle
-        options={schemaToggleOptions}
-        value={schemaType}
-        onChange={handleSchemaTypeChange}
-        size="sm"
-      />
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-2">
+        <Label>Schema Type</Label>
+        <Select value={schemaType} onValueChange={(val) => { setSchemaType(val); setResult(null) }}>
+          <SelectTrigger className="w-full">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="LocalBusiness">LocalBusiness</SelectItem>
+            <SelectItem value="Service">Service</SelectItem>
+            <SelectItem value="FAQ">FAQ</SelectItem>
+            <SelectItem value="Organization">Organization</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+      <div className="grid gap-3 sm:grid-cols-2">
         {[
-          { key: 'bizName', placeholder: 'Business Name', value: bizName, onChange: setBizName },
-          { key: 'bizUrl', placeholder: 'Website URL', value: bizUrl, onChange: setBizUrl },
-          { key: 'bizPhone', placeholder: 'Phone', value: bizPhone, onChange: setBizPhone },
-          {
-            key: 'bizStreet',
-            placeholder: 'Street Address',
-            value: bizStreet,
-            onChange: setBizStreet,
-          },
-          { key: 'bizCity', placeholder: 'City', value: bizCity, onChange: setBizCity },
-          { key: 'bizState', placeholder: 'State', value: bizState, onChange: setBizState },
-          { key: 'bizPostal', placeholder: 'Postal Code', value: bizPostal, onChange: setBizPostal },
-        ].map(({ key, placeholder, value, onChange }) => (
-          <input
-            key={key}
-            type="text"
-            placeholder={placeholder}
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            onFocus={() => setFocusedField(key)}
-            onBlur={() => setFocusedField(null)}
-            style={{
-              ...glassInput,
-              borderColor:
-                focusedField === key
-                  ? C.borderFocus
-                  : C.borderSubtle,
-              boxShadow:
-                focusedField === key
-                  ? `0 0 0 2px ${C.bgHoverStrong}`
-                  : 'none',
-            }}
-          />
+          { id: 'bizName', placeholder: 'Business Name', value: bizName, onChange: setBizName },
+          { id: 'bizUrl', placeholder: 'Website URL', value: bizUrl, onChange: setBizUrl },
+          { id: 'bizPhone', placeholder: 'Phone', value: bizPhone, onChange: setBizPhone },
+          { id: 'bizStreet', placeholder: 'Street Address', value: bizStreet, onChange: setBizStreet },
+          { id: 'bizCity', placeholder: 'City', value: bizCity, onChange: setBizCity },
+          { id: 'bizState', placeholder: 'State', value: bizState, onChange: setBizState },
+          { id: 'bizPostal', placeholder: 'Postal Code', value: bizPostal, onChange: setBizPostal },
+        ].map(({ id, placeholder, value, onChange }) => (
+          <Input key={id} placeholder={placeholder} value={value} onChange={(e) => onChange(e.target.value)} />
         ))}
       </div>
 
-      <textarea
-        placeholder="Description"
-        value={bizDesc}
-        onChange={(e) => setBizDesc(e.target.value)}
-        onFocus={() => setFocusedField('desc')}
-        onBlur={() => setFocusedField(null)}
-        rows={2}
-        style={{
-          ...glassInput,
-          resize: 'vertical',
-          borderColor:
-            focusedField === 'desc'
-              ? C.borderFocus
-              : C.borderSubtle,
-          boxShadow:
-            focusedField === 'desc'
-              ? `0 0 0 2px ${C.bgHoverStrong}`
-              : 'none',
-        }}
-      />
+      <Textarea placeholder="Description" value={bizDesc} onChange={(e) => setBizDesc(e.target.value)} rows={2} />
 
-      <button
-        onClick={handleGenerate}
-        disabled={loading || !bizName}
-        style={{
-          ...accentBtn,
-          display: 'inline-flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 8,
-          alignSelf: 'flex-start',
-          opacity: loading || !bizName ? 0.6 : 1,
-          cursor: loading || !bizName ? 'not-allowed' : 'pointer',
-        }}
-        onMouseEnter={(e) => {
-          if (!loading && bizName) {
-            e.currentTarget.style.background = 'var(--btn-primary-hover, #E2E8F0)'
-            e.currentTarget.style.transform = 'translateY(-1px)'
-          }
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.background = 'var(--btn-primary-bg, #F1F5F9)'
-          e.currentTarget.style.transform = 'translateY(0)'
-        }}
-      >
-        <Code size={16} />
+      <Button onClick={handleGenerate} disabled={loading || !bizName} className="gap-2 self-start">
+        <IconCode className="size-4" />
         {loading ? 'Generating...' : 'Generate Schema'}
-      </button>
+      </Button>
 
       {result && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-            }}
-          >
-            <span
-              style={{
-                fontSize: 14,
-                fontWeight: 500,
-                color: 'var(--text-primary)',
-              }}
-            >
-              {result.schemaType} JSON-LD
-            </span>
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium">{result.schemaType} JSON-LD</span>
             <CopyButton text={result.htmlSnippet} />
           </div>
-          <pre
-            style={{
-              ...S.card,
-              color: 'rgba(165, 243, 252, 0.9)',
-              fontSize: 14,
-              fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
-              overflow: 'auto',
-              maxHeight: 400,
-              whiteSpace: 'pre-wrap',
-              wordBreak: 'break-word',
-              lineHeight: 1.5,
-            }}
-          >
+          <pre className="max-h-96 overflow-auto rounded-lg border bg-muted p-4 font-mono text-xs leading-relaxed">
             {result.htmlSnippet}
           </pre>
           {result.validationNotes.length > 0 && (
-            <div style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
+            <div className="text-sm text-muted-foreground">
               {result.validationNotes.map((note, i) => (
                 <div key={i}>- {note}</div>
               ))}
@@ -669,7 +321,6 @@ function SchemaGenerator() {
 // ---------------------------------------------------------------------------
 
 function AISearchTab() {
-  const [activePanel, setActivePanel] = useState<ActivePanel>('overview')
   const [auditResult, setAuditResult] = useState<AuditResult | null>(null)
   const [previousScore] = useState<number | null>(null)
   const [loading, setLoading] = useState(false)
@@ -681,12 +332,7 @@ function AISearchTab() {
   })
 
   const handleRunAudit = useCallback(
-    async (params: {
-      domain: string
-      brandName: string
-      queries: string[]
-      competitors: string[]
-    }) => {
+    async (params: { domain: string; brandName: string; queries: string[]; competitors: string[] }) => {
       setLoading(true)
       try {
         const res = await fetch('/api/agent/ai-search', {
@@ -703,337 +349,160 @@ function AISearchTab() {
     [],
   )
 
-  const panelOptions = [
-    { key: 'overview' as const, label: 'Visibility Audit', icon: <Search size={16} /> },
-    { key: 'content' as const, label: 'Content Suggestions', icon: <FileText size={16} /> },
-    { key: 'schema' as const, label: 'Schema Markup', icon: <Code size={16} /> },
-  ]
-
   return (
-    <TabShell>
-      <div style={{ padding: 24, maxWidth: 1200, display: 'flex', flexDirection: 'column', gap: 24 }}>
-        {/* Instructional info card when no audit has run yet */}
-        {!auditResult && activePanel === 'overview' && !infoDismissed && (
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 12,
-            padding: '16px 20px',
-            borderRadius: 16,
-            background: C.bgCardLight,
-            backdropFilter: 'var(--glass-blur)',
-            WebkitBackdropFilter: 'var(--glass-blur)',
-            border: 'none',
-            boxShadow: 'var(--card-shadow), var(--card-inset)',
-            animation: 'bb-fade-up 300ms cubic-bezier(0.16, 1, 0.3, 1) both',
-          }}>
-            <p style={{ fontSize: 14, color: 'var(--text-secondary)', margin: 0, lineHeight: 1.6, flex: 1 }}>
-              Run a visibility audit to discover how the website ranks in AI search engines like Perplexity, ChatGPT, and Gemini.
-            </p>
-            <button
-              onClick={() => {
-                setInfoDismissed(true)
-                localStorage.setItem('bb-ai-search-info-dismissed', '1')
-              }}
+    <div className="flex flex-col gap-6 p-6">
+      {/* Info card */}
+      {!auditResult && !infoDismissed && (
+        <Alert>
+          <IconSearch className="size-4" />
+          <AlertDescription className="flex items-center justify-between gap-4">
+            <span>Run a visibility audit to discover how the website ranks in AI search engines like Perplexity, ChatGPT, and Gemini.</span>
+            <Button
+              variant="ghost"
+              size="icon-xs"
+              onClick={() => { setInfoDismissed(true); localStorage.setItem('bb-ai-search-info-dismissed', '1') }}
               aria-label="Dismiss"
-              style={{
-                width: 32,
-                height: 32,
-                borderRadius: 8,
-                background: 'transparent',
-                border: 'none',
-                color: 'var(--text-dim)',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-                transition: 'color 150ms',
-              }}
-              onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-primary)' }}
-              onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-dim)' }}
             >
-              <X size={16} />
-            </button>
-          </div>
-        )}
+              <IconX className="size-3.5" />
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
 
-        {/* Score overview (shown when audit exists) */}
-        {auditResult && (
-          <div
-            className="bb-stagger"
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-              gap: 16,
-            }}
-          >
-            {/* Overall Score Card */}
-            <div style={{ ...S.card, position: 'relative' }}>
-              <div style={smallText}>Visibility Score</div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 8 }}>
-                <ScoreBadge score={auditResult.overallScore} />
-                <TrendArrow current={auditResult.overallScore} previous={previousScore} />
-                <span style={{ fontSize: 14, color: 'var(--text-dim)' }}>/100</span>
-              </div>
-            </div>
-
-            {/* Queries Tracked Card */}
-            <div style={{ ...S.card, position: 'relative' }}>
-              <div style={smallText}>Queries Tracked</div>
-              <div
-                style={{
-                  fontSize: 16,
-                  fontWeight: 500,
-                  color: 'var(--text-primary)',
-                  fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
-                  marginTop: 8,
-                }}
-              >
-                {new Set(auditResult.queryResults.map((r) => r.query)).size}
-              </div>
-            </div>
-
-            {/* Mentioned Card */}
-            <div style={{ ...S.card, position: 'relative' }}>
-              <div style={smallText}>Mentioned</div>
-              <div
-                style={{
-                  fontSize: 16,
-                  fontWeight: 500,
-                  color: '#22c55e',
-                  fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
-                  marginTop: 8,
-                }}
-              >
+      {/* Score overview */}
+      {auditResult && (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardDescription>Visibility Score</CardDescription>
+            </CardHeader>
+            <CardContent className="flex items-center gap-3">
+              <ScoreBadge score={auditResult.overallScore} />
+              <TrendArrow current={auditResult.overallScore} previous={previousScore} />
+              <span className="text-xs text-muted-foreground">/100</span>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2"><CardDescription>Queries Tracked</CardDescription></CardHeader>
+            <CardContent>
+              <span className="font-mono text-lg font-medium">{new Set(auditResult.queryResults.map((r) => r.query)).size}</span>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2"><CardDescription>Mentioned</CardDescription></CardHeader>
+            <CardContent>
+              <span className="font-mono text-lg font-medium text-green-600">
                 {auditResult.queryResults.filter((r) => r.position === 'mentioned').length}
-              </div>
-            </div>
-
-            {/* Absent Card */}
-            <div style={{ ...S.card, position: 'relative' }}>
-              <div style={smallText}>Absent</div>
-              <div
-                style={{
-                  fontSize: 16,
-                  fontWeight: 500,
-                  color: '#ef4444',
-                  fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
-                  marginTop: 8,
-                }}
-              >
+              </span>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2"><CardDescription>Absent</CardDescription></CardHeader>
+            <CardContent>
+              <span className="font-mono text-lg font-medium text-red-600">
                 {auditResult.queryResults.filter((r) => r.position === 'absent').length}
-              </div>
-            </div>
-          </div>
-        )}
+              </span>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
-        {/* Panel selector */}
-        <GlassToggle
-          options={panelOptions}
-          value={activePanel}
-          onChange={setActivePanel}
-        />
+      {/* Panel tabs */}
+      <Tabs defaultValue="overview">
+        <TabsList>
+          <TabsTrigger value="overview"><IconSearch className="size-4" /> Visibility Audit</TabsTrigger>
+          <TabsTrigger value="content"><IconFileText className="size-4" /> Content Suggestions</TabsTrigger>
+          <TabsTrigger value="schema"><IconCode className="size-4" /> Schema Markup</TabsTrigger>
+        </TabsList>
 
-        {/* Panels */}
-        {activePanel === 'overview' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-            {/* Audit Form Card */}
-            <div style={S.card}>
-              <h3
-                style={{
-                  fontSize: 14,
-                  fontWeight: 500,
-                  color: 'var(--text-primary)',
-                  marginTop: 0,
-                  marginBottom: 16,
-                }}
-              >
-                Run Visibility Audit
-              </h3>
+        <TabsContent value="overview" className="flex flex-col gap-6 pt-4">
+          <Card>
+            <CardHeader><CardTitle>Run Visibility Audit</CardTitle></CardHeader>
+            <CardContent>
               <AuditForm onRunAudit={handleRunAudit} loading={loading} />
-            </div>
+            </CardContent>
+          </Card>
 
-            {auditResult && (
-              <>
-                {/* Query Breakdown */}
+          {auditResult && (
+            <>
+              <div>
+                <h3 className="mb-3 text-sm font-medium">Query Breakdown</h3>
+                <QueryBreakdown results={auditResult.queryResults} />
+              </div>
+
+              {Object.keys(auditResult.competitorScores).length > 0 && (
                 <div>
-                  <h3
-                    style={{
-                      fontSize: 14,
-                      fontWeight: 500,
-                      color: 'var(--text-primary)',
-                      marginBottom: 12,
-                      marginTop: 0,
-                    }}
-                  >
-                    Query Breakdown
-                  </h3>
-                  <QueryBreakdown results={auditResult.queryResults} />
+                  <h3 className="mb-3 text-sm font-medium">Competitor Comparison</h3>
+                  <CompetitorTable scores={auditResult.competitorScores} myScore={auditResult.overallScore} />
                 </div>
+              )}
 
-                {/* Competitor Comparison */}
-                {Object.keys(auditResult.competitorScores).length > 0 && (
-                  <div>
-                    <h3
-                      style={{
-                        fontSize: 14,
-                        fontWeight: 500,
-                        color: 'var(--text-primary)',
-                        marginBottom: 12,
-                        marginTop: 0,
-                      }}
-                    >
-                      Competitor Comparison
-                    </h3>
-                    <CompetitorTable
-                      scores={auditResult.competitorScores}
-                      myScore={auditResult.overallScore}
-                    />
-                  </div>
-                )}
+              <div>
+                <h3 className="mb-3 text-sm font-medium">Recommendations</h3>
+                <div className="flex flex-col gap-2">
+                  {auditResult.recommendations.map((rec, i) => (
+                    <Card key={i} className="border-l-4 border-l-primary py-3">
+                      <CardContent className="py-0">
+                        <span className="text-sm text-muted-foreground leading-relaxed">{rec}</span>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+        </TabsContent>
 
-                {/* Recommendations */}
-                <div>
-                  <h3
-                    style={{
-                      fontSize: 14,
-                      fontWeight: 500,
-                      color: 'var(--text-primary)',
-                      marginBottom: 12,
-                      marginTop: 0,
-                    }}
-                  >
-                    Recommendations
-                  </h3>
-                  <div className="bb-stagger" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    {auditResult.recommendations.map((rec, i) => (
-                      <div
-                        key={i}
-                        style={{
-                          ...S.card,
-                          borderLeft: `3px solid ${C.borderVisible}`,
-                          padding: '12px 16px',
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.borderLeftColor = '#F1F5F9'
-                          e.currentTarget.style.background = 'var(--glass-bg-heavy)'
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.borderLeftColor = C.borderVisible
-                          e.currentTarget.style.background = 'var(--glass-card-bg)'
-                        }}
-                      >
-                        <span
-                          style={{
-                            fontSize: 14,
-                            color: 'var(--text-secondary)',
-                            lineHeight: 1.6,
-                          }}
-                        >
-                          {rec}
-                        </span>
+        <TabsContent value="content" className="pt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>AI-Optimized Content Suggestions</CardTitle>
+              <CardDescription>
+                Run a visibility audit first to generate targeted content recommendations. The content
+                generator creates FAQ-structured, entity-rich pages optimized for AI search engines to cite the business.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {auditResult ? (
+                <div className="flex flex-col gap-3">
+                  <p className="text-sm text-muted-foreground">Based on the audit, focus content on these absent/partial queries:</p>
+                  {auditResult.queryResults
+                    .filter((r) => r.position !== 'mentioned')
+                    .reduce<string[]>((acc, r) => { if (!acc.includes(r.query)) acc.push(r.query); return acc }, [])
+                    .slice(0, 5)
+                    .map((query) => (
+                      <div key={query} className="rounded-lg border bg-muted/50 p-3 text-sm text-muted-foreground transition-colors hover:bg-muted">
+                        Create a dedicated FAQ page for: <strong>&quot;{query}&quot;</strong>
                       </div>
                     ))}
-                  </div>
                 </div>
-              </>
-            )}
-          </div>
-        )}
+              ) : (
+                <Empty>
+                  <EmptyHeader>
+                    <EmptyTitle>No content suggestions yet</EmptyTitle>
+                    <EmptyDescription>Run a visibility audit to generate targeted content recommendations.</EmptyDescription>
+                  </EmptyHeader>
+                </Empty>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-        {activePanel === 'content' && (
-          <div style={S.card}>
-            <h3
-              style={{
-                fontSize: 14,
-                fontWeight: 500,
-                color: 'var(--text-primary)',
-                marginTop: 0,
-                marginBottom: 12,
-              }}
-            >
-              AI-Optimized Content Suggestions
-            </h3>
-            <p
-              style={{
-                fontSize: 14,
-                color: 'var(--text-secondary)',
-                marginBottom: 16,
-                lineHeight: 1.6,
-              }}
-            >
-              Run a visibility audit first to generate targeted content recommendations. The content
-              generator creates FAQ-structured, entity-rich pages optimized for AI search engines
-              to cite the business.
-            </p>
-            {auditResult ? (
-              <div className="bb-stagger" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <p style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
-                  Based on the audit, focus content on these absent/partial queries:
-                </p>
-                {auditResult.queryResults
-                  .filter((r) => r.position !== 'mentioned')
-                  .reduce<string[]>((acc, r) => {
-                    if (!acc.includes(r.query)) acc.push(r.query)
-                    return acc
-                  }, [])
-                  .slice(0, 5)
-                  .map((query) => (
-                    <div
-                      key={query}
-                      style={S.listRow}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = 'var(--bb-surface-hover)'
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'var(--glass-pill-bg)'
-                      }}
-                    >
-                      <span style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
-                        Create a dedicated FAQ page for: <strong>&quot;{query}&quot;</strong>
-                      </span>
-                    </div>
-                  ))}
-              </div>
-            ) : (
-              <EmptyState
-                title="No content suggestions yet"
-                description="Run a visibility audit to generate targeted content recommendations."
-              />
-            )}
-          </div>
-        )}
-
-        {activePanel === 'schema' && (
-          <div style={S.card}>
-            <h3
-              style={{
-                fontSize: 14,
-                fontWeight: 500,
-                color: 'var(--text-primary)',
-                marginTop: 0,
-                marginBottom: 12,
-              }}
-            >
-              Schema Markup Generator
-            </h3>
-            <p
-              style={{
-                fontSize: 14,
-                color: 'var(--text-secondary)',
-                marginBottom: 16,
-                lineHeight: 1.6,
-              }}
-            >
-              Generate JSON-LD structured data for client websites. Copy and paste the output
-              into the page &lt;head&gt;.
-            </p>
-            <SchemaGenerator />
-          </div>
-        )}
-      </div>
-    </TabShell>
+        <TabsContent value="schema" className="pt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Schema Markup Generator</CardTitle>
+              <CardDescription>
+                Generate JSON-LD structured data for client websites. Copy and paste the output into the page &lt;head&gt;.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <SchemaGenerator />
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
   )
 }
 

@@ -1,12 +1,20 @@
 'use client'
 
 import React, { memo } from 'react'
-import { Search, LayoutGrid, List } from 'lucide-react'
-import { GlassToggle } from '@/components/ui/glass-toggle'
-import { GlassDropdown } from '@/components/ui/glass-dropdown'
+import { IconSearch, IconLayoutKanban, IconList } from '@tabler/icons-react'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
+import { Button } from '@/components/ui/button'
+import { Separator } from '@/components/ui/separator'
+import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
 import type { LeadFilter, LeadViewMode, PipelineAnalytics } from '@/lib/leads/types'
 import { formatPipelineValue } from '@/lib/leads/utils'
-import { S, C } from '@/lib/styles/design-tokens'
 
 interface LeadsToolbarProps {
   filters: LeadFilter
@@ -20,79 +28,15 @@ interface LeadsToolbarProps {
   searchInputRef: React.RefObject<HTMLInputElement | null>
 }
 
-// ─── Hoisted Styles ─────────────────────────────────────────────────────────
-const toolbarContainer: React.CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: 8,
-  padding: '4px 0',
-}
-
-const searchWrap: React.CSSProperties = {
-  position: 'relative',
-  display: 'inline-flex',
-  alignItems: 'center',
-}
-
-const searchIcon: React.CSSProperties = {
-  position: 'absolute',
-  left: 12,
-  width: 16,
-  height: 16,
-  color: C.textDim,
-  pointerEvents: 'none',
-}
-
-const searchInput: React.CSSProperties = {
-  ...S.input,
-  width: 200,
-  padding: '0 12px 0 36px',
-  border: 'none',
-  fontFamily: 'inherit',
-  transition: 'box-shadow 200ms',
-}
-
-
-const divider: React.CSSProperties = {
-  width: 1,
-  height: 20,
-  background: C.bgHoverStrong,
-}
-
-const metricsContainer: React.CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  fontSize: 14,
-  fontFamily: S.mono.fontFamily,
-  color: C.textDim,
-  gap: 0,
-  whiteSpace: 'nowrap',
-}
-
-const metricDot: React.CSSProperties = {
-  margin: '0 4px',
-  color: C.textDim,
-}
-
-const spacer: React.CSSProperties = {
-  flex: 1,
-}
-
-const discoverBtnStyle: React.CSSProperties = {
-  ...S.button,
-  ...S.buttonPrimary,
-}
-
-// ─── Score Options ──────────────────────────────────────────────────────────
 const scoreOptions = [
-  { value: 'all', label: 'Score' },
+  { value: 'all', label: 'All Scores' },
   { value: 'hot', label: 'Hot' },
   { value: 'warm', label: 'Warm' },
   { value: 'cold', label: 'Cold' },
 ]
 
 const sourceOptions = [
-  { value: 'all', label: 'Source' },
+  { value: 'all', label: 'All Sources' },
   { value: 'email', label: 'Email' },
   { value: 'whatsapp', label: 'WhatsApp' },
   { value: 'web', label: 'Web' },
@@ -100,7 +44,6 @@ const sourceOptions = [
   { value: 'discovery', label: 'Discovery' },
 ]
 
-// ─── Component ──────────────────────────────────────────────────────────────
 function LeadsToolbarInner({
   filters,
   onFiltersChange,
@@ -118,76 +61,85 @@ function LeadsToolbarInner({
   const conversionRate = analytics ? `${analytics.conversionRate}%` : '--'
 
   return (
-    <div style={toolbarContainer} role="toolbar" aria-label="Lead filters">
-
+    <div className="flex items-center gap-2 py-1" role="toolbar" aria-label="Lead filters">
       {/* Search Input */}
-      <div style={searchWrap}>
-        <Search style={searchIcon} aria-hidden="true" />
-        <input
+      <InputGroup className="w-52">
+        <InputGroupAddon>
+          <IconSearch data-icon className="text-muted-foreground" />
+        </InputGroupAddon>
+        <InputGroupInput
           ref={searchInputRef}
           type="text"
-          className="bb-glass-input"
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
           placeholder="Search leads..."
           aria-label="Search leads"
-          style={{
-            ...searchInput,
-          }}
         />
-      </div>
+      </InputGroup>
 
       {/* Score Filter */}
-      <GlassDropdown
+      <Select
         value={filters.score ?? 'all'}
-        options={scoreOptions}
-        onChange={(val) => onFiltersChange({ ...filters, score: val as LeadFilter['score'] })}
-        placeholder="Score"
-      />
+        onValueChange={(val) => onFiltersChange({ ...filters, score: val as LeadFilter['score'] })}
+      >
+        <SelectTrigger size="sm">
+          <SelectValue placeholder="Score" />
+        </SelectTrigger>
+        <SelectContent>
+          {scoreOptions.map((opt) => (
+            <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
 
       {/* Source Filter */}
-      <GlassDropdown
+      <Select
         value={filters.source ?? 'all'}
-        options={sourceOptions}
-        onChange={(val) => onFiltersChange({ ...filters, source: val })}
-        placeholder="Source"
-      />
+        onValueChange={(val) => onFiltersChange({ ...filters, source: val })}
+      >
+        <SelectTrigger size="sm">
+          <SelectValue placeholder="Source" />
+        </SelectTrigger>
+        <SelectContent>
+          {sourceOptions.map((opt) => (
+            <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
 
-      <div style={divider} aria-hidden="true" />
+      <Separator orientation="vertical" className="mx-1 h-5" />
 
       {/* Inline Pipeline Metrics */}
-      <div style={metricsContainer} aria-label="Pipeline metrics">
+      <div className="flex items-center gap-0 text-sm font-mono text-muted-foreground whitespace-nowrap" aria-label="Pipeline metrics">
         <span>{pipelineValue}</span>
-        <span style={metricDot} aria-hidden="true">&middot;</span>
+        <span className="mx-1" aria-hidden="true">&middot;</span>
         <span>{conversionRate}</span>
-        <span style={metricDot} aria-hidden="true">&middot;</span>
+        <span className="mx-1" aria-hidden="true">&middot;</span>
         <span>{speedLabel}</span>
       </div>
 
-      <div style={spacer} />
+      <div className="flex-1" />
 
       {/* View Toggle */}
-      <GlassToggle
-        size="sm"
-        options={[
-          { key: 'kanban' as const, label: 'Kanban', icon: <LayoutGrid size={16} /> },
-          { key: 'list' as const, label: 'List', icon: <List size={16} /> },
-        ]}
+      <ToggleGroup
+        type="single"
         value={viewMode}
-        onChange={onViewModeChange}
-      />
+        onValueChange={(val) => { if (val) onViewModeChange(val as LeadViewMode) }}
+        size="sm"
+      >
+        <ToggleGroupItem value="kanban" aria-label="Kanban view">
+          <IconLayoutKanban data-icon />
+        </ToggleGroupItem>
+        <ToggleGroupItem value="list" aria-label="List view">
+          <IconList data-icon />
+        </ToggleGroupItem>
+      </ToggleGroup>
 
       {/* Discover Button */}
-      <button
-        onClick={onDiscoverClick}
-        style={discoverBtnStyle}
-        aria-label="Discover new prospects"
-        onMouseEnter={e => { e.currentTarget.style.background = 'var(--btn-primary-hover, #E2E8F0)'; e.currentTarget.style.transform = 'translateY(-1px)' }}
-        onMouseLeave={e => { e.currentTarget.style.background = 'var(--btn-primary-bg, #F1F5F9)'; e.currentTarget.style.transform = 'translateY(0)' }}
-      >
-        <Search size={16} />
+      <Button onClick={onDiscoverClick} aria-label="Discover new prospects">
+        <IconSearch data-icon />
         Discover
-      </button>
+      </Button>
     </div>
   )
 }

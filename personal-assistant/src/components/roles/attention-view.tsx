@@ -2,16 +2,18 @@
 
 import React, { useState, useEffect, useCallback } from 'react'
 import {
-  Bell,
-  AlertTriangle,
-  CheckCircle2,
-  XCircle,
-  Clock,
-  Lightbulb,
-  ShieldCheck,
-} from 'lucide-react'
+  IconBell,
+  IconAlertTriangle,
+  IconCircleCheck,
+  IconCircleX,
+  IconBulb,
+  IconShieldCheck,
+} from '@tabler/icons-react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
 import type { RoleType } from '@/lib/bitbit-core'
-import { S, C } from '@/lib/styles/design-tokens'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -34,50 +36,13 @@ interface AttentionViewProps {
 }
 
 // ---------------------------------------------------------------------------
-// Style tokens
-// ---------------------------------------------------------------------------
-
-const glassCard: React.CSSProperties = {
-  padding: '20px',
-  borderRadius: 16,
-  background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.6))',
-  backdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
-  WebkitBackdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
-  border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
-  boxShadow: 'var(--card-shadow, 0 2px 8px rgba(0,0,0,0.3)), var(--card-inset, inset 0 1px 0 rgba(255,255,255,0.06))',
-}
-
-const sectionHeader: React.CSSProperties = {
-  fontSize: 14,
-  fontWeight: 500,
-  letterSpacing: '0.04em',
-  textTransform: 'uppercase' as const,
-  color: 'var(--text-dim, #475569)',
-  marginBottom: 12,
-}
-
-const listRow: React.CSSProperties = {
-  display: 'flex',
-  alignItems: 'flex-start',
-  padding: '12px 16px',
-  borderRadius: 12,
-  background: 'var(--bb-surface, rgba(10, 14, 23, 0.5))',
-  backdropFilter: 'blur(26px) saturate(1.15)',
-  WebkitBackdropFilter: 'blur(26px) saturate(1.15)',
-  boxShadow: 'var(--card-shadow, 0 2px 8px rgba(0,0,0,0.3)), var(--card-inset, inset 0 1px 0 rgba(255,255,255,0.06))',
-  border: 'none',
-  transition: 'background 200ms',
-  gap: 12,
-}
-
-// ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-const SOURCE_META: Record<string, { icon: React.ElementType; color: string; label: string }> = {
-  approval: { icon: ShieldCheck, color: '#F1F5F9', label: 'Approval needed' },
-  escalation: { icon: AlertTriangle, color: '#eab308', label: 'Escalation' },
-  insight: { icon: Lightbulb, color: '#3b82f6', label: 'Needs review' },
+const SOURCE_META: Record<string, { icon: React.ElementType; colorClass: string; label: string }> = {
+  approval: { icon: IconShieldCheck, colorClass: 'text-foreground bg-muted', label: 'Approval needed' },
+  escalation: { icon: IconAlertTriangle, colorClass: 'text-amber-500 bg-amber-500/10', label: 'Escalation' },
+  insight: { icon: IconBulb, colorClass: 'text-blue-500 bg-blue-500/10', label: 'Needs review' },
 }
 
 const ROLE_LABELS: Record<string, string> = {
@@ -87,16 +52,16 @@ const ROLE_LABELS: Record<string, string> = {
 }
 
 const ROLE_COLORS: Record<string, string> = {
-  finance: '#22c55e',
-  comms: '#3b82f6',
-  sales: '#F1F5F9',
+  finance: 'text-emerald-500 bg-emerald-500/10',
+  comms: 'text-blue-500 bg-blue-500/10',
+  sales: 'text-foreground bg-muted',
 }
 
-const PRIORITY_LABELS: Record<number, { label: string; color: string }> = {
-  0: { label: 'Urgent', color: '#ef4444' },
-  1: { label: 'High', color: '#eab308' },
-  2: { label: 'Medium', color: '#94A3B8' },
-  3: { label: 'Low', color: '#475569' },
+const PRIORITY_COLORS: Record<number, { label: string; className: string }> = {
+  0: { label: 'Urgent', className: 'bg-destructive' },
+  1: { label: 'High', className: 'bg-amber-500' },
+  2: { label: 'Medium', className: 'bg-muted-foreground' },
+  3: { label: 'Low', className: 'bg-muted-foreground/50' },
 }
 
 function timeAgo(dateStr: string): string {
@@ -137,7 +102,7 @@ export function AttentionView({ maxHeight = 'calc(100vh - 300px)' }: AttentionVi
 
   useEffect(() => {
     fetchAttention()
-    const interval = setInterval(fetchAttention, 15000) // poll every 15s for attention items
+    const interval = setInterval(fetchAttention, 15000)
     return () => clearInterval(interval)
   }, [fetchAttention])
 
@@ -150,7 +115,6 @@ export function AttentionView({ maxHeight = 'calc(100vh - 300px)' }: AttentionVi
         body: JSON.stringify({ approvalId: sourceId, decision }),
       })
       if (res.ok) {
-        // Remove from list optimistically
         setItems(prev => prev.filter(i => i.source_id !== sourceId))
         setCounts(prev => ({ ...prev, approvals: prev.approvals - 1, total: prev.total - 1 }))
       }
@@ -162,173 +126,112 @@ export function AttentionView({ maxHeight = 'calc(100vh - 300px)' }: AttentionVi
   }, [])
 
   return (
-    <div style={glassCard}>
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <Bell size={14} style={{ color: 'var(--text-primary, #F1F5F9)' }} />
-          <span style={sectionHeader}>Needs Your Attention</span>
-          {counts.total > 0 && (
-            <span style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              minWidth: 20,
-              height: 20,
-              padding: '0 8px',
-              borderRadius: 12,
-              fontSize: 14,
-              fontWeight: 500,
-              background: 'var(--btn-primary-bg, #F1F5F9)',
-              color: 'var(--btn-primary-fg, #0a0f1a)',
-              fontFamily: 'var(--font-mono)',
-            }}>
-              {counts.total}
-            </span>
+    <Card>
+      <CardHeader className="pb-0">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <IconBell size={14} className="text-foreground" />
+            <CardTitle className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              Needs Your Attention
+            </CardTitle>
+            {counts.total > 0 && (
+              <Badge>{counts.total}</Badge>
+            )}
+          </div>
+        </div>
+      </CardHeader>
+
+      <CardContent>
+        <div className="overflow-y-auto flex flex-col gap-2" style={{ maxHeight }}>
+          {loading ? (
+            Array.from({ length: 3 }, (_, i) => (
+              <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-muted/30">
+                <Skeleton className="w-7 h-7 rounded-lg shrink-0" />
+                <div className="flex-1">
+                  <Skeleton className="h-3 w-3/5 mb-2" />
+                  <Skeleton className="h-2.5 w-1/3" />
+                </div>
+              </div>
+            ))
+          ) : items.length === 0 ? (
+            <div className="py-10 text-center">
+              <IconCircleCheck size={28} className="text-emerald-500 mx-auto mb-2" />
+              <p className="text-sm font-medium text-foreground">All clear</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                No items need your attention right now
+              </p>
+            </div>
+          ) : (
+            items.map(item => {
+              const sourceMeta = SOURCE_META[item.source] ?? SOURCE_META.insight
+              const Icon = sourceMeta.icon
+              const priorityMeta = PRIORITY_COLORS[item.priority] ?? PRIORITY_COLORS[2]
+              const isHovered = hoveredId === item.id
+              const isResolving = resolvingId === item.source_id
+
+              return (
+                <div
+                  key={item.id}
+                  onMouseEnter={() => setHoveredId(item.id)}
+                  onMouseLeave={() => setHoveredId(null)}
+                  className={`flex items-start gap-3 p-3 rounded-lg transition-colors ${
+                    isResolving ? 'opacity-50' : ''
+                  } ${isHovered ? 'bg-muted/50' : ''}`}
+                >
+                  {/* Priority indicator */}
+                  <div className={`w-0.5 self-stretch rounded-full shrink-0 ${priorityMeta.className}`} />
+
+                  {/* Icon */}
+                  <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${sourceMeta.colorClass}`}>
+                    <Icon size={14} />
+                  </div>
+
+                  {/* Content */}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground leading-snug">
+                      {item.summary}
+                    </p>
+                    <div className="flex items-center gap-2 mt-1 flex-wrap">
+                      <Badge variant="secondary" className={sourceMeta.colorClass}>
+                        {sourceMeta.label}
+                      </Badge>
+                      {item.role_type && (
+                        <Badge variant="secondary" className={ROLE_COLORS[item.role_type] ?? ''}>
+                          {ROLE_LABELS[item.role_type] ?? item.role_type}
+                        </Badge>
+                      )}
+                      <span className="text-xs text-muted-foreground">
+                        {timeAgo(item.created_at)}
+                      </span>
+                    </div>
+
+                    {/* Action buttons for approvals */}
+                    {item.source === 'approval' && isHovered && !isResolving && (
+                      <div className="flex gap-2 mt-2">
+                        <Button
+                          size="xs"
+                          variant="outline"
+                          className="text-emerald-500 border-emerald-500/30 hover:bg-emerald-500/10"
+                          onClick={(e) => { e.stopPropagation(); handleApproval(item.source_id, 'approved') }}
+                        >
+                          Approve
+                        </Button>
+                        <Button
+                          size="xs"
+                          variant="destructive"
+                          onClick={(e) => { e.stopPropagation(); handleApproval(item.source_id, 'rejected') }}
+                        >
+                          Reject
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )
+            })
           )}
         </div>
-      </div>
-
-      {/* Item list */}
-      <div style={{ overflowY: 'auto', maxHeight, display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {loading ? (
-          Array.from({ length: 3 }, (_, i) => (
-            <div key={i} style={{ ...listRow, opacity: 0.5 }}>
-              <div style={{ width: 28, height: 28, borderRadius: 8, background: C.bgHoverStrong }} />
-              <div style={{ flex: 1 }}>
-                <div style={{ height: 12, borderRadius: 4, background: C.bgHoverStrong, width: '60%', marginBottom: 8 }} />
-                <div style={{ height: 10, borderRadius: 4, background: C.bgHover, width: '35%' }} />
-              </div>
-            </div>
-          ))
-        ) : items.length === 0 ? (
-          <div style={{ padding: '40px 20px', textAlign: 'center' }}>
-            <CheckCircle2 size={28} style={{ color: '#22c55e', marginBottom: 8 }} />
-            <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)' }}>All clear</div>
-            <div style={{ fontSize: 14, color: 'var(--text-dim, #475569)', marginTop: 4 }}>
-              No items need your attention right now
-            </div>
-          </div>
-        ) : (
-          items.map(item => {
-            const sourceMeta = SOURCE_META[item.source] ?? SOURCE_META.insight
-            const Icon = sourceMeta.icon
-            const priorityMeta = PRIORITY_LABELS[item.priority] ?? PRIORITY_LABELS[2]
-            const isHovered = hoveredId === item.id
-            const isResolving = resolvingId === item.source_id
-
-            return (
-              <div
-                key={item.id}
-                onMouseEnter={() => setHoveredId(item.id)}
-                onMouseLeave={() => setHoveredId(null)}
-                style={{
-                  ...listRow,
-                  background: isHovered ? 'var(--bb-surface-hover, rgba(20, 28, 40, 0.7))' : C.bgListRow,
-                  opacity: isResolving ? 0.5 : 1,
-                }}
-              >
-                {/* Priority indicator */}
-                <div style={{
-                  width: 3,
-                  height: '100%',
-                  minHeight: 40,
-                  borderRadius: 2,
-                  background: priorityMeta.color,
-                  flexShrink: 0,
-                  alignSelf: 'stretch',
-                }} />
-
-                {/* Icon */}
-                <div style={{
-                  width: 28,
-                  height: 28,
-                  borderRadius: 8,
-                  background: `${sourceMeta.color}15`,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                }}>
-                  <Icon size={14} style={{ color: sourceMeta.color }} />
-                </div>
-
-                {/* Content */}
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)', lineHeight: 1.4 }}>
-                    {item.summary}
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4, flexWrap: 'wrap' }}>
-                    <span style={{
-                      fontSize: 14,
-                      fontWeight: 500,
-                      padding: '2px 8px',
-                      borderRadius: 4,
-                      background: `${sourceMeta.color}15`,
-                      color: sourceMeta.color,
-                    }}>
-                      {sourceMeta.label}
-                    </span>
-                    {item.role_type && (
-                      <span style={{
-                        fontSize: 14,
-                        fontWeight: 500,
-                        padding: '2px 8px',
-                        borderRadius: 4,
-                        background: `${ROLE_COLORS[item.role_type] ?? '#94A3B8'}15`,
-                        color: ROLE_COLORS[item.role_type] ?? '#94A3B8',
-                      }}>
-                        {ROLE_LABELS[item.role_type] ?? item.role_type}
-                      </span>
-                    )}
-                    <span style={{ fontSize: 14, color: 'var(--text-dim, #475569)' }}>
-                      {timeAgo(item.created_at)}
-                    </span>
-                  </div>
-
-                  {/* Action buttons for approvals */}
-                  {item.source === 'approval' && isHovered && !isResolving && (
-                    <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); handleApproval(item.source_id, 'approved') }}
-                        style={{
-                          padding: '4px 16px',
-                          borderRadius: 8,
-                          border: 'none',
-                          fontSize: 14,
-                          fontWeight: 500,
-                          cursor: 'pointer',
-                          background: C.statusSuccessBg,
-                          color: '#22c55e',
-                          transition: 'all 200ms',
-                        }}
-                      >
-                        Approve
-                      </button>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); handleApproval(item.source_id, 'rejected') }}
-                        style={{
-                          padding: '4px 16px',
-                          borderRadius: 8,
-                          border: 'none',
-                          fontSize: 14,
-                          fontWeight: 500,
-                          cursor: 'pointer',
-                          background: C.statusErrorBg,
-                          color: '#ef4444',
-                          transition: 'all 200ms',
-                        }}
-                      >
-                        Reject
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )
-          })
-        )}
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   )
 }

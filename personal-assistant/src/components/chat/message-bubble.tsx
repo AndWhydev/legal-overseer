@@ -4,7 +4,9 @@ import React, { useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { motion } from 'motion/react'
-import { RefreshCw, ThumbsUp, ThumbsDown, Pencil } from 'lucide-react'
+import { IconRefresh, IconThumbUp, IconThumbDown, IconPencil } from '@tabler/icons-react'
+import { Button } from '@/components/ui/button'
+import { Textarea } from '@/components/ui/textarea'
 import { BitBitFaceAvatar } from './bitbit-face-avatar'
 import { CodeBlock } from './code-block'
 import {
@@ -76,22 +78,19 @@ function renderTextWithCitations(text: string, citations: Citation[]): React.Rea
   let match: RegExpExecArray | null
 
   while ((match = regex.exec(text)) !== null) {
-    // Add text before the marker
     if (match.index > lastIndex) {
       parts.push(text.slice(lastIndex, match.index))
     }
-    // Find matching citation
     const citationIndex = parseInt(match[1])
     const citation = citations.find(c => c.index === citationIndex)
     if (citation) {
       parts.push(<CitationBadge key={`cite-${match.index}`} citation={citation} />)
     } else {
-      parts.push(match[0]) // Keep original text if no matching citation
+      parts.push(match[0])
     }
     lastIndex = regex.lastIndex
   }
 
-  // Add remaining text
   if (lastIndex < text.length) {
     parts.push(text.slice(lastIndex))
   }
@@ -120,42 +119,25 @@ export function MessageBubble({ message, citations, showAvatar = false, avatarEm
   if (!message.content && message.toolCalls?.length) return null
   if (!message.content) return null
 
-  // Base components for code blocks and inline code
   const baseComponents = {
     code: ({ className, children, ...props }: { className?: string; children?: React.ReactNode; [key: string]: any }) => {
-      // Check if it's inline code (no className, no newlines) or a code block
       const isInline = !className || !String(children).includes('\n')
 
       if (isInline) {
-        // Render as styled inline code
         return (
-          <code
-            style={{
-              backgroundColor: 'var(--hover-bg, rgba(255, 255, 255, 0.05))',
-              color: 'var(--text-primary, #F1F5F9)',
-              padding: '2px 6px',
-              borderRadius: '4px',
-              fontFamily: 'ui-monospace, "SF Mono", "Cascadia Code", "Segoe UI Mono", Menlo, Consolas, monospace',
-              fontSize: '0.9em',
-              whiteSpace: 'pre-wrap',
-              wordBreak: 'break-word',
-            }}
-          >
+          <code className="bg-muted px-1.5 py-0.5 rounded text-[0.9em] font-mono whitespace-pre-wrap break-words">
             {children}
           </code>
         )
       }
 
-      // Code block
       return <CodeBlock className={className} onOpenArtifact={onOpenArtifact}>{String(children).replace(/\n$/, '')}</CodeBlock>
     },
     pre: ({ children, ...props }: { children?: React.ReactNode; [key: string]: any }) => {
-      // Just pass children through — CodeBlock handles the pre element
       return <>{children}</>
     },
   }
 
-  // Build custom ReactMarkdown components to inject citation badges
   const citationComponents = msgCitations && msgCitations.length > 0
     ? {
         p: ({ children }: { children?: React.ReactNode }) => {
@@ -181,66 +163,42 @@ export function MessageBubble({ message, citations, showAvatar = false, avatarEm
       }
     : {}
 
-  // Merge base components with citation components
   const markdownComponents = {
     ...baseComponents,
     ...citationComponents,
   }
 
   return (
-    <div className={`bb-chat__msg ${isUser ? 'bb-chat__msg--user' : 'bb-chat__msg--assistant'}`} style={!isUser && showAvatar ? { position: 'relative' } : isUser ? { position: 'relative' } : undefined}>
+    <div className={`bb-chat__msg ${isUser ? 'bb-chat__msg--user' : 'bb-chat__msg--assistant'} relative`}>
       {!isUser && showAvatar && (
         <motion.div
           layoutId="bitbit-chat-avatar"
           transition={{ type: 'spring', stiffness: 400, damping: 30, mass: 0.8 }}
-          style={{ position: 'absolute', left: -52, top: -4, width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          className="absolute -left-[52px] -top-1 w-10 h-10 flex items-center justify-center"
         >
           <BitBitFaceAvatar size={40} emotion={avatarEmotion as any} isThinking={avatarThinking} activity={avatarActivity as any} />
         </motion.div>
       )}
       {/* Edit button for user messages (appears on hover) */}
       {isUser && onEdit && !isEditing && (
-        <button
+        <Button
+          variant="ghost"
+          size="icon-xs"
           onClick={() => setIsEditing(true)}
-          style={{
-            position: 'absolute',
-            left: -28,
-            top: '50%',
-            transform: 'translateY(-50%)',
-            background: 'none',
-            border: 'none',
-            color: 'var(--text-muted, rgba(255,255,255,0.2))',
-            cursor: 'pointer',
-            opacity: 0,
-            transition: 'opacity 150ms',
-            padding: 4,
-          }}
-          className="bb-chat__edit-btn"
+          className="absolute -left-7 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 bb-chat__edit-btn text-muted-foreground hover:text-foreground"
           aria-label="Edit message"
         >
-          <Pencil size={12} />
-        </button>
+          <IconPencil size={12} />
+        </Button>
       )}
       <div className={isUser ? 'bb-chat__bubble--user' : 'bb-chat__bubble--assistant bb-chat__markdown'}>
         {isUser && isEditing ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, width: '100%' }}>
-            <textarea
+          <div className="flex flex-col gap-1.5 w-full">
+            <Textarea
               value={editText}
               onChange={e => setEditText(e.target.value)}
               autoFocus
-              style={{
-                width: '100%',
-                minHeight: 60,
-                padding: '8px 12px',
-                borderRadius: 10,
-                background: 'rgba(255,255,255,0.06)',
-                border: '1px solid rgba(255,255,255,0.1)',
-                color: 'var(--text-primary, #F1F5F9)',
-                fontSize: 14,
-                fontFamily: 'inherit',
-                resize: 'vertical',
-                outline: 'none',
-              }}
+              className="min-h-[60px] resize-y"
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault()
@@ -255,31 +213,25 @@ export function MessageBubble({ message, citations, showAvatar = false, avatarEm
                 }
               }}
             />
-            <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
-              <button
+            <div className="flex gap-1.5 justify-end">
+              <Button
+                variant="outline"
+                size="xs"
                 onClick={() => { setIsEditing(false); setEditText(message.content) }}
-                style={{
-                  padding: '4px 12px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.1)',
-                  background: 'none', color: 'var(--text-secondary)', fontSize: 12, cursor: 'pointer',
-                }}
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
+                size="xs"
                 onClick={() => {
                   if (editText.trim() && onEdit) {
                     onEdit!(message.id, editText.trim())
                     setIsEditing(false)
                   }
                 }}
-                style={{
-                  padding: '4px 12px', borderRadius: 6, border: 'none',
-                  background: 'var(--btn-primary-bg, #F1F5F9)', color: 'var(--btn-primary-fg, #0a0f1a)',
-                  fontSize: 12, fontWeight: 500, cursor: 'pointer',
-                }}
               >
                 Save & Resend
-              </button>
+              </Button>
             </div>
           </div>
         ) : isUser ? (
@@ -294,90 +246,48 @@ export function MessageBubble({ message, citations, showAvatar = false, avatarEm
         )}
       </div>
       {!isUser && (
-        <div style={{ display: 'flex', gap: 2, marginTop: 8, alignItems: 'center' }}>
-          <div style={{ display: 'inline-flex', gap: 2 }}>
-            <motion.button
-              onClick={() => handleFeedback('up')}
+        <div className="flex gap-0.5 mt-2 items-center">
+          <div className="inline-flex gap-0.5">
+            <motion.div
               animate={feedback === 'up' ? { scale: [1, 1.2, 1] } : { scale: 1 }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
-              style={{
-                background: 'none',
-                border: 'none',
-                padding: '3px 6px',
-                borderRadius: 4,
-                color: feedback === 'up' ? 'var(--text-primary, #F1F5F9)' : 'var(--text-muted, rgba(255,255,255,0.25))',
-                cursor: 'pointer',
-                transition: 'color 150ms',
-                display: 'flex',
-                alignItems: 'center',
-              }}
-              onMouseEnter={(e) => {
-                if (feedback !== 'up') {
-                  e.currentTarget.style.color = 'var(--text-secondary, #94A3B8)'
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (feedback !== 'up') {
-                  e.currentTarget.style.color = 'var(--text-muted, rgba(255,255,255,0.25))'
-                }
-              }}
-              aria-label="Good response"
             >
-              <ThumbsUp size={12} fill={feedback === 'up' ? 'currentColor' : 'none'} />
-            </motion.button>
-            <motion.button
-              onClick={() => handleFeedback('down')}
+              <Button
+                variant="ghost"
+                size="icon-xs"
+                onClick={() => handleFeedback('up')}
+                className={feedback === 'up' ? 'text-foreground' : 'text-muted-foreground/40 hover:text-muted-foreground'}
+                aria-label="Good response"
+              >
+                <IconThumbUp size={12} fill={feedback === 'up' ? 'currentColor' : 'none'} />
+              </Button>
+            </motion.div>
+            <motion.div
               animate={feedback === 'down' ? { scale: [1, 1.2, 1] } : { scale: 1 }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
-              style={{
-                background: 'none',
-                border: 'none',
-                padding: '3px 6px',
-                borderRadius: 4,
-                color: feedback === 'down' ? 'var(--text-primary, #F1F5F9)' : 'var(--text-muted, rgba(255,255,255,0.25))',
-                cursor: 'pointer',
-                transition: 'color 150ms',
-                display: 'flex',
-                alignItems: 'center',
-              }}
-              onMouseEnter={(e) => {
-                if (feedback !== 'down') {
-                  e.currentTarget.style.color = 'var(--text-secondary, #94A3B8)'
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (feedback !== 'down') {
-                  e.currentTarget.style.color = 'var(--text-muted, rgba(255,255,255,0.25))'
-                }
-              }}
-              aria-label="Bad response"
             >
-              <ThumbsDown size={12} fill={feedback === 'down' ? 'currentColor' : 'none'} />
-            </motion.button>
+              <Button
+                variant="ghost"
+                size="icon-xs"
+                onClick={() => handleFeedback('down')}
+                className={feedback === 'down' ? 'text-foreground' : 'text-muted-foreground/40 hover:text-muted-foreground'}
+                aria-label="Bad response"
+              >
+                <IconThumbDown size={12} fill={feedback === 'down' ? 'currentColor' : 'none'} />
+              </Button>
+            </motion.div>
           </div>
           {onRegenerate && (
-            <button
+            <Button
+              variant="ghost"
+              size="xs"
               onClick={onRegenerate}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 4,
-                padding: '3px 8px',
-                borderRadius: 6,
-                background: 'none',
-                border: 'none',
-                color: 'var(--text-muted, rgba(255,255,255,0.25))',
-                fontSize: 12,
-                cursor: 'pointer',
-                transition: 'color 150ms',
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--text-secondary, #94A3B8)' }}
-              onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-muted, rgba(255,255,255,0.25))' }}
+              className="text-muted-foreground/40 hover:text-muted-foreground gap-1"
               aria-label="Regenerate response"
             >
-              <RefreshCw size={12} />
+              <IconRefresh size={12} />
               Regenerate
-            </button>
+            </Button>
           )}
         </div>
       )}

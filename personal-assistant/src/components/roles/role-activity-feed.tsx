@@ -2,17 +2,20 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import {
-  Activity,
-  Zap,
-  AlertTriangle,
-  Brain,
-  XCircle,
-  Workflow,
-  Lightbulb,
-  Filter,
-} from 'lucide-react'
+  IconActivity,
+  IconBolt,
+  IconAlertTriangle,
+  IconBrain,
+  IconCircleX,
+  IconSitemap,
+  IconBulb,
+  IconFilter,
+} from '@tabler/icons-react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
 import type { RoleType, ActivityType } from '@/lib/bitbit-core'
-import { S, C } from '@/lib/styles/design-tokens'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -38,83 +41,25 @@ interface RoleActivityFeedProps {
 }
 
 // ---------------------------------------------------------------------------
-// Style tokens
-// ---------------------------------------------------------------------------
-
-const glassCard: React.CSSProperties = {
-  padding: '20px',
-  borderRadius: 16,
-  background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.6))',
-  backdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
-  WebkitBackdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
-  border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
-  boxShadow: 'var(--card-shadow, 0 2px 8px rgba(0,0,0,0.3)), var(--card-inset, inset 0 1px 0 rgba(255,255,255,0.06))',
-}
-
-const sectionHeader: React.CSSProperties = {
-  fontSize: 14,
-  fontWeight: 500,
-  letterSpacing: '0.04em',
-  textTransform: 'uppercase' as const,
-  color: 'var(--text-dim, #475569)',
-  marginBottom: 12,
-}
-
-const listRow: React.CSSProperties = {
-  display: 'flex',
-  alignItems: 'flex-start',
-  padding: '12px 16px',
-  borderRadius: 12,
-  background: 'var(--bb-surface, rgba(10, 14, 23, 0.5))',
-  backdropFilter: 'blur(26px) saturate(1.15)',
-  WebkitBackdropFilter: 'blur(26px) saturate(1.15)',
-  boxShadow: 'var(--card-shadow, 0 2px 8px rgba(0,0,0,0.3)), var(--card-inset, inset 0 1px 0 rgba(255,255,255,0.06))',
-  border: 'none',
-  transition: 'background 200ms',
-  cursor: 'default',
-  gap: 12,
-}
-
-const pillBtn: React.CSSProperties = {
-  padding: '8px 16px',
-  borderRadius: 20,
-  background: 'var(--pill-inactive-bg, rgba(10, 14, 23, 0.42))',
-  backdropFilter: 'blur(22px) saturate(1.2)',
-  WebkitBackdropFilter: 'blur(22px) saturate(1.2)',
-  boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.06)',
-  border: 'none',
-  fontSize: 14,
-  color: 'var(--text-secondary, #94A3B8)',
-  cursor: 'pointer',
-  transition: 'all 200ms',
-}
-
-const activePill: React.CSSProperties = {
-  ...pillBtn,
-  color: 'var(--text-primary, #F1F5F9)',
-  background: C.bgHoverStrong,
-}
-
-// ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
 const ACTIVITY_ICONS: Record<ActivityType, React.ElementType> = {
-  action: Zap,
-  insight: Lightbulb,
-  escalation: AlertTriangle,
-  learning: Brain,
-  error: XCircle,
-  workflow_step: Workflow,
+  action: IconBolt,
+  insight: IconBulb,
+  escalation: IconAlertTriangle,
+  learning: IconBrain,
+  error: IconCircleX,
+  workflow_step: IconSitemap,
 }
 
 const ACTIVITY_COLORS: Record<ActivityType, string> = {
-  action: '#F1F5F9',
-  insight: '#3b82f6',
-  escalation: '#eab308',
-  learning: '#8b5cf6',
-  error: '#ef4444',
-  workflow_step: '#94A3B8',
+  action: 'text-foreground bg-muted',
+  insight: 'text-blue-500 bg-blue-500/10',
+  escalation: 'text-amber-500 bg-amber-500/10',
+  learning: 'text-violet-500 bg-violet-500/10',
+  error: 'text-destructive bg-destructive/10',
+  workflow_step: 'text-muted-foreground bg-muted',
 }
 
 const ROLE_LABELS: Record<RoleType, string> = {
@@ -123,10 +68,10 @@ const ROLE_LABELS: Record<RoleType, string> = {
   sales: 'Sales',
 }
 
-const ROLE_COLORS: Record<RoleType, string> = {
-  finance: '#22c55e',
-  comms: '#3b82f6',
-  sales: '#F1F5F9',
+const ROLE_BADGE_COLORS: Record<RoleType, string> = {
+  finance: 'text-emerald-500 bg-emerald-500/10',
+  comms: 'text-blue-500 bg-blue-500/10',
+  sales: 'text-foreground bg-muted',
 }
 
 function timeAgo(dateStr: string): string {
@@ -150,7 +95,6 @@ export function RoleActivityFeed({ maxHeight = 'calc(100vh - 300px)', limit = 50
   const [error, setError] = useState<string | null>(null)
   const [roleFilter, setRoleFilter] = useState<RoleType | 'all'>('all')
   const [typeFilter, setTypeFilter] = useState<ActivityType | 'all'>('all')
-  const [hoveredId, setHoveredId] = useState<string | null>(null)
 
   const fetchActivity = useCallback(async () => {
     try {
@@ -172,11 +116,10 @@ export function RoleActivityFeed({ maxHeight = 'calc(100vh - 300px)', limit = 50
 
   useEffect(() => {
     fetchActivity()
-    const interval = setInterval(fetchActivity, 30000) // poll every 30s
+    const interval = setInterval(fetchActivity, 30000)
     return () => clearInterval(interval)
   }, [fetchActivity])
 
-  // Priority sort: escalations first, then actions, then insights
   const sortedActivities = useMemo(() => {
     const priority: Record<ActivityType, number> = {
       escalation: 0,
@@ -195,132 +138,109 @@ export function RoleActivityFeed({ maxHeight = 'calc(100vh - 300px)', limit = 50
   }, [activities])
 
   return (
-    <div style={glassCard}>
+    <Card>
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <Activity size={14} style={{ color: 'var(--text-primary, #F1F5F9)' }} />
-          <span style={sectionHeader}>Role Activity</span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <Filter size={12} style={{ color: 'var(--text-dim, #475569)' }} />
-        </div>
-      </div>
-
-      {/* Filter pills */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
-        {(['all', 'finance', 'comms', 'sales'] as const).map(role => (
-          <button
-            key={role}
-            onClick={() => setRoleFilter(role)}
-            style={roleFilter === role ? activePill : pillBtn}
-          >
-            {role === 'all' ? 'All Roles' : ROLE_LABELS[role]}
-          </button>
-        ))}
-        <div style={{ width: 1, background: C.bgHoverStrong, margin: '0 4px' }} />
-        {(['all', 'escalation', 'action', 'insight', 'error'] as const).map(type => (
-          <button
-            key={type}
-            onClick={() => setTypeFilter(type)}
-            style={typeFilter === type ? activePill : pillBtn}
-          >
-            {type === 'all' ? 'All Types' : type.charAt(0).toUpperCase() + type.slice(1) + 's'}
-          </button>
-        ))}
-      </div>
-
-      {/* Activity list */}
-      <div className="bb-stagger" style={{ overflowY: 'auto', maxHeight, display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {loading ? (
-          Array.from({ length: 5 }, (_, i) => (
-            <div key={i} style={{ ...listRow, opacity: 0.5 }}>
-              <div style={{ width: 24, height: 24, borderRadius: 8, background: C.bgHoverStrong }} />
-              <div style={{ flex: 1 }}>
-                <div style={{ height: 12, borderRadius: 4, background: C.bgHoverStrong, width: '70%', marginBottom: 8 }} />
-                <div style={{ height: 10, borderRadius: 4, background: C.bgHover, width: '40%' }} />
-              </div>
-            </div>
-          ))
-        ) : error ? (
-          <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-dim, #475569)', fontSize: 14 }}>
-            Failed to load activity
+      <CardHeader className="pb-0">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <IconActivity size={14} className="text-foreground" />
+            <CardTitle className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Role Activity</CardTitle>
           </div>
-        ) : sortedActivities.length === 0 ? (
-          <div style={{ padding: '40px 20px', textAlign: 'center' }}>
-            <Activity size={28} style={{ color: 'var(--text-dim, #475569)', marginBottom: 8 }} />
-            <div style={{ fontSize: 14, color: 'var(--text-secondary, #94A3B8)' }}>No role activity yet</div>
-            <div style={{ fontSize: 14, color: 'var(--text-dim, #475569)', marginTop: 4 }}>
-              Activity will appear as roles process work
-            </div>
-          </div>
-        ) : (
-          sortedActivities.map(item => {
-            const Icon = ACTIVITY_ICONS[item.activity_type] ?? Activity
-            const color = ACTIVITY_COLORS[item.activity_type] ?? '#94A3B8'
-            const isHovered = hoveredId === item.id
+          <IconFilter size={12} className="text-muted-foreground" />
+        </div>
+      </CardHeader>
 
-            return (
-              <div
-                key={item.id}
-                onMouseEnter={() => setHoveredId(item.id)}
-                onMouseLeave={() => setHoveredId(null)}
-                style={{
-                  ...listRow,
-                  background: isHovered ? 'var(--bb-surface-hover, rgba(20, 28, 40, 0.7))' : C.bgListRow,
-                }}
-              >
-                {/* Icon */}
-                <div style={{
-                  width: 28,
-                  height: 28,
-                  borderRadius: 8,
-                  background: `${color}15`,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                  marginTop: 1,
-                }}>
-                  <Icon size={14} style={{ color }} />
-                </div>
+      <CardContent>
+        {/* Filter pills */}
+        <div className="flex gap-2 mb-3 flex-wrap">
+          {(['all', 'finance', 'comms', 'sales'] as const).map(role => (
+            <Button
+              key={role}
+              variant={roleFilter === role ? 'secondary' : 'ghost'}
+              size="xs"
+              className={`rounded-full ${roleFilter !== role ? 'text-muted-foreground' : ''}`}
+              onClick={() => setRoleFilter(role)}
+            >
+              {role === 'all' ? 'All Roles' : ROLE_LABELS[role]}
+            </Button>
+          ))}
+          <div className="w-px bg-border mx-1" />
+          {(['all', 'escalation', 'action', 'insight', 'error'] as const).map(type => (
+            <Button
+              key={type}
+              variant={typeFilter === type ? 'secondary' : 'ghost'}
+              size="xs"
+              className={`rounded-full ${typeFilter !== type ? 'text-muted-foreground' : ''}`}
+              onClick={() => setTypeFilter(type)}
+            >
+              {type === 'all' ? 'All Types' : type.charAt(0).toUpperCase() + type.slice(1) + 's'}
+            </Button>
+          ))}
+        </div>
 
-                {/* Content */}
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)', lineHeight: 1.4 }}>
-                    {item.summary}
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
-                    {item.role_type && (
-                      <span style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        padding: '2px 8px',
-                        borderRadius: 8,
-                        fontSize: 14,
-                        fontWeight: 500,
-                        letterSpacing: '0.02em',
-                        background: `${ROLE_COLORS[item.role_type]}15`,
-                        color: ROLE_COLORS[item.role_type],
-                      }}>
-                        {ROLE_LABELS[item.role_type]}
-                      </span>
-                    )}
-                    {item.confidence != null && (
-                      <span style={{ fontSize: 14, color: 'var(--text-dim, #475569)', fontFamily: 'var(--font-mono)' }}>
-                        {Math.round(item.confidence * 100)}%
-                      </span>
-                    )}
-                    <span style={{ fontSize: 14, color: 'var(--text-dim, #475569)' }}>
-                      {timeAgo(item.created_at)}
-                    </span>
-                  </div>
+        {/* Activity list */}
+        <div className="overflow-y-auto flex flex-col gap-2" style={{ maxHeight }}>
+          {loading ? (
+            Array.from({ length: 5 }, (_, i) => (
+              <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-muted/30">
+                <Skeleton className="w-7 h-7 rounded-lg shrink-0" />
+                <div className="flex-1">
+                  <Skeleton className="h-3 w-3/4 mb-2" />
+                  <Skeleton className="h-2.5 w-2/5" />
                 </div>
               </div>
-            )
-          })
-        )}
-      </div>
-    </div>
+            ))
+          ) : error ? (
+            <div className="py-10 text-center text-muted-foreground text-sm">
+              Failed to load activity
+            </div>
+          ) : sortedActivities.length === 0 ? (
+            <div className="py-10 text-center">
+              <IconActivity size={28} className="text-muted-foreground mx-auto mb-2" />
+              <p className="text-sm text-muted-foreground">No role activity yet</p>
+              <p className="text-xs text-muted-foreground/70 mt-1">
+                Activity will appear as roles process work
+              </p>
+            </div>
+          ) : (
+            sortedActivities.map(item => {
+              const Icon = ACTIVITY_ICONS[item.activity_type] ?? IconActivity
+              const colorClass = ACTIVITY_COLORS[item.activity_type] ?? 'text-muted-foreground bg-muted'
+
+              return (
+                <div
+                  key={item.id}
+                  className="flex items-start gap-3 p-3 rounded-lg hover:bg-muted/50 transition-colors"
+                >
+                  <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${colorClass}`}>
+                    <Icon size={14} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium text-foreground leading-snug">
+                      {item.summary}
+                    </div>
+                    <div className="flex items-center gap-2 mt-1 flex-wrap">
+                      {item.role_type && (
+                        <Badge variant="secondary" className={ROLE_BADGE_COLORS[item.role_type]}>
+                          {ROLE_LABELS[item.role_type]}
+                        </Badge>
+                      )}
+                      {item.confidence != null && (
+                        <span className="text-xs text-muted-foreground font-mono">
+                          {Math.round(item.confidence * 100)}%
+                        </span>
+                      )}
+                      <span className="text-xs text-muted-foreground">
+                        {timeAgo(item.created_at)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )
+            })
+          )}
+        </div>
+      </CardContent>
+    </Card>
   )
 }

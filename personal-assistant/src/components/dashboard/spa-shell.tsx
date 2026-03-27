@@ -8,7 +8,7 @@ import React, {
   useEffect,
 } from 'react';
 
-import { Menu } from 'lucide-react';
+import { IconMenu2 } from '@tabler/icons-react';
 import { useRouter } from 'next/navigation';
 import { SidebarNav } from './sidebar-nav';
 import { BottomNav } from './bottom-nav';
@@ -31,8 +31,11 @@ import { ThemeProvider } from '@/lib/theme/theme-provider';
 import { useHotkeys, getTabHistory } from '@/hooks/use-hotkeys';
 import { SIDEBAR_CATEGORIES } from '@/lib/modules/registry';
 import { FeedbackWidget } from '@/components/beta/feedback-widget';
+import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
+import { Separator } from '@/components/ui/separator';
+import { TooltipProvider } from '@/components/ui/tooltip';
 
-// ─── Tab definitions ────────────────────────────────────────────────────────
+// ---- Tab definitions ----
 
 export interface TabDef {
   id: string;
@@ -73,9 +76,7 @@ export const TABS: TabDef[] = [
   { id: 'settings-billing', label: 'Billing', path: '/dashboard/settings/billing' },
 ];
 
-// ─── Pre-warm all tab imports immediately ───────────────────────────────────
-// Trigger dynamic imports eagerly so chunks are fetched in the background.
-// The resolved modules feed into React.lazy wrappers below.
+// ---- Pre-warm all tab imports immediately ----
 
 const tabImports: Record<string, Promise<{ default: React.ComponentType }>> = {
   dashboard: import('./tabs/dashboard-tab'),
@@ -144,7 +145,7 @@ const TabComponents: Record<string, React.LazyExoticComponent<React.ComponentTyp
   'settings-billing': lazy(() => tabImports['settings-billing']),
 };
 
-// ─── Helpers ────────────────────────────────────────────────────────────────
+// ---- Helpers ----
 
 function pathToTabIndex(path: string): number {
   const idx = TABS.findIndex(t => t.path === path);
@@ -155,7 +156,7 @@ function TabFallback() {
   return <TabSkeleton />;
 }
 
-// ─── SPA Shell ──────────────────────────────────────────────────────────────
+// ---- SPA Shell ----
 
 interface SPAShellProps {
   displayName: string;
@@ -175,7 +176,7 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
   const [tabsReady, setTabsReady] = useState(false);
   const [dataReady, setDataReady] = useState(false);
 
-  // Module gating — filter tabs by org plan + overrides + composition
+  // Module gating -- filter tabs by org plan + overrides + composition
   const enabledModulesState = useEnabledModulesFetch();
   const { composition } = enabledModulesState;
   const visibleTabs = TABS.filter(t => enabledModulesState.modules.includes(t.id));
@@ -189,7 +190,6 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
   }, []);
 
   // Once code + data are ready, pre-mount ALL tabs behind the splash screen
-  // so every tab is fully rendered before the user sees the app.
   useEffect(() => {
     if (!tabsReady || !dataReady) return;
     setVisitedTabs(new Set(TABS.map(t => t.id)));
@@ -219,25 +219,19 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
 
     const nextIndex = idx >= 0 ? idx : 0;
     setActiveNavIndex(nextIndex);
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Navigate to a tab — immediate switch with CSS slide animation
+  // Navigate to a tab -- immediate switch with CSS slide animation
   const navigateTo = useCallback((index: number) => {
     if (index === activeNavIndex) return;
     const tab = TABS[index];
     if (!tab) return;
 
-    // 1. Set transition direction for CSS animation (before index changes)
     const dir = index > activeNavIndex ? 'down' : 'up';
     setTransitionDir(dir);
-
-    // 2. Switch tab immediately
     setActiveNavIndex(index);
-
-    // 3. Persist tab choice without touching URL bar
     sessionStorage.setItem('bitbit-tab', tab.id);
 
-    // 4. Mark tab as visited for keep-alive
     setVisitedTabs(prev => {
       if (prev.has(tab.id)) return prev;
       const next = new Set(prev);
@@ -245,7 +239,6 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
       return next;
     });
 
-    // Clear transition class after animation completes
     setTimeout(() => setTransitionDir(null), 250);
   }, [activeNavIndex]);
 
@@ -271,14 +264,13 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
       const detail = (e as CustomEvent<{ tab: string }>).detail;
       if (detail?.tab) {
         navigateToId(detail.tab);
-        setSidebarOpen(false);
       }
     };
     window.addEventListener('bb-navigate', handler);
     return () => window.removeEventListener('bb-navigate', handler);
   }, [navigateToId]);
 
-  // Spacebar → navigate home (dashboard) when not typing in an input
+  // Spacebar -> navigate home (dashboard) when not typing in an input
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.code !== 'Space') return;
@@ -293,37 +285,21 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
     return () => window.removeEventListener('keydown', handler);
   }, [activeNavIndex, navigateToId]);
 
-  // Keep the viewport locked to the shell so docked chat input never falls below the fold.
+  // Keep the viewport locked
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
   }, [activeNavIndex]);
 
   const currentPage = TABS[activeNavIndex]?.label || 'Dashboard';
 
-  // Tablet sidebar overlay state
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const closeSidebar = useCallback(() => setSidebarOpen(false), []);
-
-  // Close sidebar on tab change (tablet)
+  // Close sidebar on tab change
   const handleTabChange = useCallback((tabId: string) => {
     navigateToId(tabId);
-    setSidebarOpen(false);
   }, [navigateToId]);
 
-  // ── Power-user hotkeys ──────────────────────────────────────────────────
+  // Power-user hotkeys
   const [focusMode, setFocusMode] = useState(false);
   const [cheatsheetOpen, setCheatsheetOpen] = useState(false);
-
-  // Propagate focus mode to layout DOM
-  useEffect(() => {
-    const layout = document.querySelector('.bb-layout');
-    if (!layout) return;
-    if (focusMode) {
-      layout.setAttribute('data-focus-mode', '');
-    } else {
-      layout.removeAttribute('data-focus-mode');
-    }
-  }, [focusMode]);
 
   useHotkeys({
     activeTabId: TABS[activeNavIndex]?.id ?? 'dashboard',
@@ -331,14 +307,12 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
       navigateToTab: (tabId: string) => handleTabChange(tabId),
 
       navigateToCategory: (index: number) => {
-        // Map 1-6 to visible sidebar categories
         const cats = SIDEBAR_CATEGORIES;
         const cat = cats[index - 1];
         if (!cat) return;
         if (cat.directNav) {
           handleTabChange(cat.directNav);
         } else {
-          // Navigate to first item in category
           const firstItem = cat.items.find(id => enabledModulesState.modules.includes(id));
           if (firstItem) handleTabChange(firstItem);
         }
@@ -363,43 +337,15 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
       },
 
       escapeCascade: () => {
-        // Cascade: if cheatsheet open, close it. Otherwise sidebar-nav handles panel close.
         if (cheatsheetOpen) {
           setCheatsheetOpen(false);
         }
-        // Sidebar panel close is handled by sidebar-nav's own Escape/category logic.
-        // If we're in focus mode, exit it.
         if (focusMode) {
           setFocusMode(false);
         }
       },
     },
   });
-
-  // Any tab navigation path (shortcuts, custom events, browser history) should close tablet drawer.
-  useEffect(() => {
-    setSidebarOpen(false);
-  }, [activeNavIndex]);
-
-  // Escape closes the tablet drawer.
-  useEffect(() => {
-    if (!sidebarOpen) return;
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setSidebarOpen(false);
-    };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [sidebarOpen]);
-
-  // Prevent background scrolling while drawer is open.
-  useEffect(() => {
-    if (!sidebarOpen) return;
-    const previous = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = previous;
-    };
-  }, [sidebarOpen]);
 
   return (
     <ThemeProvider>
@@ -411,32 +357,17 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
       <BitBitOverlay currentPage={currentPage} activeTabId={TABS[activeNavIndex].id}>
         <a
           href="#main-content"
-          className="bb-skip-link"
+          className="sr-only focus:not-sr-only focus:fixed focus:z-50 focus:top-4 focus:left-4 focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground"
         >
           Skip to content
         </a>
-        <div className="bb-layout bb-dot-grid">
-          {/* Tablet sidebar toggle */}
-          <button
-            className="bb-sidebar-toggle"
-            onClick={() => setSidebarOpen(o => !o)}
-            aria-label={sidebarOpen ? 'Close navigation' : 'Open navigation'}
-            aria-expanded={sidebarOpen}
-            aria-controls="bb-dashboard-sidebar"
-            title={sidebarOpen ? 'Close navigation' : 'Open navigation'}
+        <TooltipProvider>
+          <SidebarProvider
+            defaultOpen={true}
+            className="bb-layout"
+            data-focus-mode={focusMode || undefined}
           >
-            <Menu size={20} />
-          </button>
-
-          {/* Tablet backdrop */}
-          <div
-            className="bb-sidebar-backdrop"
-            data-visible={sidebarOpen}
-            onClick={closeSidebar}
-            aria-hidden="true"
-          />
-
-          <div className="bb-sidebar-area" data-open={sidebarOpen} id="bb-dashboard-sidebar">
+            {/* Sidebar (desktop/tablet) */}
             <SidebarNav
               avatarFallback={initials}
               displayName={displayName}
@@ -445,102 +376,86 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
               onTabChange={handleTabChange}
               tabs={visibleTabs}
             />
-            <BottomNav
-              avatarFallback={initials}
-              displayName={displayName}
-              onSignOut={handleSignOut}
-              activeTabId={TABS[activeNavIndex].id}
-              onTabChange={handleTabChange}
-              tabs={visibleTabs}
-            />
-          </div>
 
-          {/* Unified Topbar */}
-          {(() => {
-            const topbarConfig = TOPBAR_CONFIGS[TABS[activeNavIndex]?.id];
-            const isHidden = topbarConfig?.hidden;
-            // Propagate hidden state to layout div for grid collapse
-            const layoutEl = typeof document !== 'undefined'
-              ? document.querySelector('.bb-layout')
-              : null;
-            if (layoutEl) {
-              if (isHidden) layoutEl.setAttribute('data-topbar-hidden', '');
-              else layoutEl.removeAttribute('data-topbar-hidden');
-            }
+            {/* Main content area */}
+            <SidebarInset className="flex flex-col min-h-svh overflow-hidden">
+              {/* Topbar */}
+              {(() => {
+                const topbarConfig = TOPBAR_CONFIGS[TABS[activeNavIndex]?.id];
+                const isHidden = topbarConfig?.hidden;
 
-            if (isHidden) {
-              // No topbar at all — just float the notification center
-              return (
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: 0,
-                    right: 16,
-                    height: 'var(--topbar-height)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    zIndex: 10,
-                    pointerEvents: 'auto',
-                  }}
-                >
-                  <NotificationCenter onTabChange={handleTabChange} />
-                </div>
-              );
-            }
+                if (isHidden) {
+                  return (
+                    <div className="absolute top-0 right-4 z-10 flex h-12 items-center pointer-events-auto">
+                      <NotificationCenter onTabChange={handleTabChange} />
+                    </div>
+                  );
+                }
 
-            return (
-              <div
-                className="bb-topbar-area"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                }}
+                return (
+                  <header className="bb-topbar-area flex h-12 shrink-0 items-center gap-2 border-b border-border bg-background/95 backdrop-blur-sm supports-[backdrop-filter]:bg-background/60 px-4">
+                    <SidebarTrigger className="-ml-1" />
+                    <Separator orientation="vertical" className="mr-2 h-4" />
+                    <div className="flex-1">
+                      <Topbar config={topbarConfig} />
+                    </div>
+                    <div className="shrink-0 pointer-events-auto">
+                      <NotificationCenter onTabChange={handleTabChange} />
+                    </div>
+                  </header>
+                );
+              })()}
+
+              {/* SPA Content Area */}
+              <main
+                id="main-content"
+                className="bb-spa-content relative flex-1 overflow-hidden"
+                tabIndex={-1}
               >
-                <Topbar config={topbarConfig} />
-                <div style={{ flexShrink: 0, paddingRight: '16px', pointerEvents: 'auto' }}>
-                  <NotificationCenter onTabChange={handleTabChange} />
-                </div>
+                {TABS.map((tab, index) => {
+                  const isActive = index === activeNavIndex;
+                  const Comp = TabComponents[tab.id];
+
+                  return (
+                    <div
+                      key={tab.id}
+                      className="bb-tab-panel"
+                      role="tabpanel"
+                      id={`tabpanel-${tab.id}`}
+                      aria-labelledby={`tab-${tab.id}`}
+                      tabIndex={isActive ? 0 : -1}
+                      data-active={isActive}
+                      data-dir={isActive && transitionDir ? transitionDir : undefined}
+                      aria-hidden={!isActive}
+                      hidden={!isActive}
+                      style={!isActive ? { display: 'none', pointerEvents: 'none' } : undefined}
+                    >
+                      {(isActive || visitedTabs.has(tab.id)) ? (
+                        <ErrorBoundary>
+                          <Suspense fallback={<TabFallback />}>
+                            <Comp />
+                          </Suspense>
+                        </ErrorBoundary>
+                      ) : null}
+                    </div>
+                  );
+                })}
+              </main>
+
+              {/* Mobile bottom nav */}
+              <div className="md:hidden">
+                <BottomNav
+                  avatarFallback={initials}
+                  displayName={displayName}
+                  onSignOut={handleSignOut}
+                  activeTabId={TABS[activeNavIndex].id}
+                  onTabChange={handleTabChange}
+                  tabs={visibleTabs}
+                />
               </div>
-            );
-          })()}
-
-          {/* SPA Content Area */}
-          <main
-            id="main-content"
-            className="bb-spa-content"
-            style={{ position: 'relative', overflow: 'hidden' }}
-            tabIndex={-1}
-          >
-            {TABS.map((tab, index) => {
-              const isActive = index === activeNavIndex;
-              const Comp = TabComponents[tab.id];
-
-              return (
-                <div
-                  key={tab.id}
-                  className="bb-tab-panel"
-                  role="tabpanel"
-                  id={`tabpanel-${tab.id}`}
-                  aria-labelledby={`tab-${tab.id}`}
-                  tabIndex={isActive ? 0 : -1}
-                  data-active={isActive}
-                  data-dir={isActive && transitionDir ? transitionDir : undefined}
-                  aria-hidden={!isActive}
-                  hidden={!isActive}
-                  style={!isActive ? { display: 'none', pointerEvents: 'none' } : undefined}
-                >
-                  {(isActive || visitedTabs.has(tab.id)) ? (
-                    <ErrorBoundary>
-                      <Suspense fallback={<TabFallback />}>
-                        <Comp />
-                      </Suspense>
-                    </ErrorBoundary>
-                  ) : null}
-                </div>
-              );
-            })}
-          </main>
-        </div>
+            </SidebarInset>
+          </SidebarProvider>
+        </TooltipProvider>
 
         {/* Global search command palette (Cmd+K or /) */}
         <GlobalSearch onNavigate={handleTabChange} />
@@ -551,10 +466,10 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
         {/* Onboarding tour for returning users */}
         <OnboardingTour onNavigate={handleTabChange} tourVariant={composition.tourVariant} />
 
-        {/* Beta feedback widget — floating button + modal */}
+        {/* Beta feedback widget */}
         <FeedbackWidget />
 
-        {/* Dev toolbar — lazy-loaded, never bundled in production */}
+        {/* Dev toolbar -- lazy-loaded, never bundled in production */}
         {process.env.NODE_ENV === 'development' && (
           <Suspense fallback={null}><DevToolbar /></Suspense>
         )}

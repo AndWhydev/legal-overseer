@@ -3,8 +3,12 @@
 import { useState, useRef, useEffect, memo, useId } from 'react'
 import { useDroppable } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
-import { Plus } from 'lucide-react'
+import { IconPlus } from '@tabler/icons-react'
 import { KanbanCard } from './kanban-card'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Progress } from '@/components/ui/progress'
 import type { Task, KanbanColumn as ColumnType } from '@/lib/types'
 
 interface KanbanColumnProps {
@@ -17,12 +21,6 @@ interface KanbanColumnProps {
 }
 
 const PRIORITY_CYCLE = ['medium', 'high', 'critical', 'low'] as const
-const PRIORITY_DOT_COLOR: Record<string, string> = {
-  critical: '#EF4444',
-  high: '#F59E0B',
-  medium: 'var(--text-dim)',
-  low: 'var(--text-dim)',
-}
 
 export const KanbanColumn = memo(function KanbanColumn({
   column,
@@ -36,7 +34,6 @@ export const KanbanColumn = memo(function KanbanColumn({
   const [isAdding, setIsAdding] = useState(false)
   const [newTitle, setNewTitle] = useState('')
   const [quickPriority, setQuickPriority] = useState<string>('medium')
-  const [ghostHover, setGhostHover] = useState(false)
   const [headerHover, setHeaderHover] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const scrollId = useId().replace(/:/g, '')
@@ -57,50 +54,28 @@ export const KanbanColumn = memo(function KanbanColumn({
 
   return (
     <div
-      style={{
-        display: 'flex',
-        flex: isEmpty && !isOver ? '0 0 auto' : 1,
-        minWidth: isEmpty && !isOver ? 120 : 200,
-        flexDirection: 'column',
-        height: '100%',
-        transition: 'flex 0.15s ease, min-width 0.15s ease',
-      }}
+      className="flex h-full flex-col transition-all duration-150"
+      data-empty={isEmpty && !isOver ? '' : undefined}
       onMouseEnter={() => setHeaderHover(true)}
       onMouseLeave={() => setHeaderHover(false)}
+      /* dynamic flex sizing via inline — layout-only, no design tokens */
+      style={{
+        flex: isEmpty && !isOver ? '0 0 auto' : 1,
+        minWidth: isEmpty && !isOver ? 120 : 200,
+      }}
     >
       {/* Column header */}
-      <div style={{ padding: '0 6px 4px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingBottom: 8 }}>
-          <h3 style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-secondary)', margin: 0, letterSpacing: '0.01em' }}>
+      <div className="px-1.5 pb-1">
+        <div className="flex items-center gap-2 pb-2">
+          <h3 className="text-sm font-medium text-muted-foreground">
             {column.title}
           </h3>
-          <span style={{
-            fontSize: 14,
-            fontWeight: 500,
-            color: 'var(--text-dim)',
-            background: 'var(--glass-interactive-bg)',
-            borderRadius: 99,
-            padding: '4px 8px',
-          }}>
+          <Badge variant="secondary" className="font-mono text-xs">
             {tasks.length}
-          </span>
+          </Badge>
         </div>
-        {/* Progress bar — visible on hover */}
-        <div style={{
-          height: 2,
-          borderRadius: 1,
-          background: 'var(--glass-interactive-bg)',
-          overflow: 'hidden',
-          opacity: headerHover ? 1 : 0,
-          transition: 'opacity 0.2s ease',
-        }}>
-          <div style={{
-            height: '100%',
-            borderRadius: 1,
-            width: `${progressPct}%`,
-            background: `${column.color || '#64748B'}4D`,
-            transition: 'width 0.3s ease',
-          }} />
+        <div className={`transition-opacity duration-200 ${headerHover ? 'opacity-100' : 'opacity-0'}`}>
+          <Progress value={progressPct} className="h-0.5" />
         </div>
       </div>
 
@@ -108,20 +83,11 @@ export const KanbanColumn = memo(function KanbanColumn({
       <div
         ref={setNodeRef}
         data-col-id={column.id}
-        className={`kanban-scroll-${scrollId}${!isEmpty ? ' kanban-col-populated' : ''}`}
-        style={{
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 8,
-          borderRadius: 16,
-          padding: 8,
-          background: isOver ? 'rgba(148, 163, 184, 0.04)' : 'var(--glass-card-border)',
-          outline: isOver ? '1.5px dashed rgba(148, 163, 184, 0.18)' : '1.5px dashed transparent',
-          transition: 'background 0.1s ease, outline-color 0.1s ease',
-          minHeight: 0,
-          overflowY: 'auto',
-        }}
+        className={`kanban-scroll-${scrollId} flex flex-1 flex-col gap-2 overflow-y-auto rounded-xl border p-2 transition-colors duration-100 ${
+          isOver
+            ? 'border-dashed border-primary/30 bg-accent/50'
+            : 'border-transparent bg-muted/30'
+        }${!isEmpty ? ' kanban-col-populated' : ''}`}
       >
         <SortableContext
           items={tasks.map((t) => t.id)}
@@ -139,23 +105,19 @@ export const KanbanColumn = memo(function KanbanColumn({
 
         {/* Inline quick-add */}
         {isAdding ? (
-          <div style={{
-            borderRadius: 12,
-            padding: '12px 16px',
-            background: 'var(--bg-card)',
-            boxShadow: 'var(--card-shadow), var(--card-inset)',
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div className="rounded-lg border border-border bg-card p-3 shadow-sm">
+            <div className="flex items-center gap-2">
               {/* Priority dot indicator */}
-              <span style={{
-                width: 6,
-                height: 6,
-                borderRadius: '50%',
-                background: PRIORITY_DOT_COLOR[quickPriority] || 'var(--text-dim)',
-                flexShrink: 0,
-                transition: 'background 0.15s',
-              }} />
-              <input
+              <span
+                className="size-1.5 shrink-0 rounded-full transition-colors"
+                style={{
+                  backgroundColor:
+                    quickPriority === 'critical' ? '#EF4444' :
+                    quickPriority === 'high' ? '#F59E0B' :
+                    'currentColor',
+                }}
+              />
+              <Input
                 ref={inputRef}
                 value={newTitle}
                 onChange={(e) => setNewTitle(e.target.value)}
@@ -183,48 +145,23 @@ export const KanbanColumn = memo(function KanbanColumn({
                   }
                 }}
                 placeholder="Task title..."
-                style={{
-                  width: '100%',
-                  background: 'transparent',
-                  border: 'none',
-                  outline: 'none',
-                  fontSize: 14,
-                  fontWeight: 500,
-                  color: 'var(--text-primary)',
-                  padding: 0,
-                  fontFamily: 'inherit',
-                }}
+                className="h-auto border-0 bg-transparent p-0 text-sm font-medium shadow-none focus-visible:ring-0"
               />
             </div>
-            <div style={{ marginTop: 4, fontSize: 14, color: 'var(--text-dim)', letterSpacing: '0.02em' }}>
-              ↵ create · tab priority · esc close
-            </div>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Enter create / Tab priority / Esc close
+            </p>
           </div>
         ) : onQuickAdd ? (
-          <button
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => setIsAdding(true)}
-            onMouseEnter={() => setGhostHover(true)}
-            onMouseLeave={() => setGhostHover(false)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 8,
-              borderRadius: 12,
-              padding: isEmpty ? '8px 12px' : 12,
-              border: `1.5px dashed ${ghostHover ? 'rgba(148, 163, 184, 0.25)' : 'rgba(148, 163, 184, 0.12)'}`,
-              background: ghostHover ? 'var(--glass-card-border)' : 'transparent',
-              width: '100%',
-              fontSize: 14,
-              color: 'var(--text-dim)',
-              cursor: 'pointer',
-              transition: 'color 0.15s, background 0.15s, border-color 0.15s',
-              marginTop: isEmpty ? 0 : 'auto',
-            }}
+            className={`w-full gap-1 border border-dashed border-border/50 text-muted-foreground hover:border-border hover:text-foreground ${isEmpty ? '' : 'mt-auto'}`}
           >
-            <Plus style={{ width: 13, height: 13 }} />
+            <IconPlus data-icon className="size-3.5" />
             {!isEmpty && 'Add task'}
-          </button>
+          </Button>
         ) : null}
       </div>
 

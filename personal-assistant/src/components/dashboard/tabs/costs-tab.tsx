@@ -1,11 +1,14 @@
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { DollarSign, TrendingUp, AlertTriangle, BarChart3 } from 'lucide-react';
-import { TabShell } from '@/components/ui/tab-shell';
-import { AlertBanner } from '@/components/ui/alert-banner';
-import { EmptyState } from '@/components/ui/empty-state';
-import { S, C } from '@/lib/styles/design-tokens';
+import { IconCurrencyDollar, IconTrendingUp, IconAlertTriangle, IconChartBar } from '@tabler/icons-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Progress } from '@/components/ui/progress';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription as EmptyDesc } from '@/components/ui/empty';
 
 interface CostEntry {
   model: string;
@@ -73,354 +76,140 @@ function CostsTab() {
     fetchCosts(period);
   }, [period, fetchCosts]);
 
-  // Inline style definitions
-  const containerPadding: React.CSSProperties = {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 24,
-    padding: 24,
-  };
-
-  const periodSelectorContainer: React.CSSProperties = {
-    display: 'flex',
-    gap: 8,
-    padding: 8,
-    borderRadius: 12,
-    background: C.bgInput,
-    backdropFilter: 'var(--glass-card-blur)',
-    WebkitBackdropFilter: 'var(--glass-card-blur)',
-    width: 'fit-content',
-  };
-
-  const pillBtn = (isActive: boolean): React.CSSProperties => ({
-    padding: '8px 16px',
-    borderRadius: 20,
-    background: isActive ? C.bgHoverStrong : 'var(--glass-pill-bg)',
-    backdropFilter: 'var(--glass-card-blur)',
-    WebkitBackdropFilter: 'var(--glass-card-blur)',
-    boxShadow: 'var(--glass-card-inset)',
-    border: 'none',
-    fontSize: 14,
-    color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
-    cursor: 'pointer',
-    transition: 'all 200ms',
-    fontWeight: isActive ? 600 : 500,
-  });
-
-  const budgetAlertStyle: React.CSSProperties = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 12,
-    padding: '16px 20px',
-    borderRadius: 12,
-    background: C.statusWarningBg,
-    backdropFilter: 'var(--glass-card-blur)',
-    WebkitBackdropFilter: 'var(--glass-card-blur)',
-    border: '1px solid rgba(234, 179, 8, 0.3)',
-    boxShadow: 'var(--glass-card-inset)',
-  };
-
-  const budgetAlertText: React.CSSProperties = {
-    fontSize: 14,
-    color: 'var(--text-primary)',
-  };
-
-  const glassCard: React.CSSProperties = {
-    padding: 20,
-    borderRadius: 16,
-    background: 'var(--glass-card-bg)',
-    backdropFilter: 'var(--glass-card-blur)',
-    WebkitBackdropFilter: 'var(--glass-card-blur)',
-    border: '1px solid var(--glass-card-border)',
-    boxShadow: 'var(--glass-card-inset)',
-  };
-
-  const sectionHeader: React.CSSProperties = {
-    fontSize: 14,
-    fontWeight: 500,
-    letterSpacing: '0.04em',
-    textTransform: 'uppercase' as const,
-    color: 'var(--text-dim)',
-    marginBottom: 16,
-  };
-
-  const listRow: React.CSSProperties = {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: '12px 20px',
-    borderRadius: 12,
-    background: 'var(--glass-pill-bg)',
-    backdropFilter: 'var(--glass-blur)',
-    WebkitBackdropFilter: 'var(--glass-blur)',
-    boxShadow: 'var(--glass-card-inset)',
-    border: 'none',
-    transition: 'background 200ms',
-  };
-
-  const loadingContainer: React.CSSProperties = {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingTop: 48,
-    paddingBottom: 48,
-  };
-
-  const loadingText: React.CSSProperties = {
-    fontSize: 14,
-    color: 'var(--text-secondary)',
-    animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-  };
-
-  const summaryGrid: React.CSSProperties = {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-    gap: 16,
-  };
-
-  const dailyTrendContainer: React.CSSProperties = {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 12,
-  };
-
-  const dailyTrendRow: React.CSSProperties = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 16,
-    fontSize: 14,
-  };
-
-  const dailyTrendDate: React.CSSProperties = {
-    width: 80,
-    color: 'var(--text-secondary)',
-    flexShrink: 0,
-  };
-
-  const dailyTrendBarContainer: React.CSSProperties = {
-    flex: 1,
-    height: 16,
-    borderRadius: 8,
-    background: 'var(--glass-pill-bg)',
-    backdropFilter: 'var(--glass-card-blur)',
-    WebkitBackdropFilter: 'var(--glass-card-blur)',
-    overflow: 'hidden',
-    border: '1px solid var(--glass-card-border)',
-  };
-
-  const dailyTrendBar = (pct: number): React.CSSProperties => ({
-    height: '100%',
-    width: `${pct}%`,
-    background: 'rgba(34, 197, 94, 0.4)',
-    borderRadius: 8,
-    transition: 'width 300ms ease-out',
-  });
-
-  const dailyTrendValue: React.CSSProperties = {
-    width: 64,
-    textAlign: 'right',
-    fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
-    fontWeight: 500,
-    color: 'var(--text-primary)',
-    flexShrink: 0,
-  };
-
-  const listRowLabel: React.CSSProperties = {
-    fontSize: 14,
-    color: 'var(--text-primary)',
-  };
-
-  const listRowMeta: React.CSSProperties = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 24,
-    fontSize: 14,
-  };
-
-  const listRowSecondary: React.CSSProperties = {
-    color: 'var(--text-secondary)',
-  };
-
-  const listRowValue: React.CSSProperties = {
-    fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
-    fontWeight: 500,
-    color: 'var(--text-primary)',
-  };
-
-  const emptyState: React.CSSProperties = {
-    fontSize: 14,
-    color: 'var(--text-secondary)',
-    padding: '12px 20px',
-  };
-
   return (
-    <TabShell>
-      <div style={containerPadding}>
-        {/* Period selector */}
-        <div style={periodSelectorContainer}>
-          {(['today', '7d', '30d', 'month'] as Period[]).map((p) => (
-            <button
-              key={p}
-              onClick={() => setPeriod(p)}
-              style={pillBtn(period === p)}
-            >
-              {p === 'today' ? 'Today' : p === 'month' ? 'This Month' : p}
-            </button>
+    <div className="flex flex-col gap-6 p-6">
+      {/* Period selector */}
+      <div className="flex gap-2">
+        {(['today', '7d', '30d', 'month'] as Period[]).map((p) => (
+          <Button
+            key={p}
+            variant={period === p ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setPeriod(p)}
+          >
+            {p === 'today' ? 'Today' : p === 'month' ? 'This Month' : p}
+          </Button>
+        ))}
+      </div>
+
+      {/* Budget Alerts */}
+      {alerts && (alerts.daily_exceeded || alerts.monthly_exceeded) && (
+        <Alert>
+          <IconAlertTriangle className="size-4" />
+          <AlertTitle>Budget Warning</AlertTitle>
+          <AlertDescription>
+            {alerts.daily_exceeded && <p>Daily spend at <strong>{alerts.daily_pct}%</strong> of budget</p>}
+            {alerts.monthly_exceeded && <p>Monthly spend at <strong>{alerts.monthly_pct}%</strong> of budget</p>}
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {loading && (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {[1, 2, 3, 4].map((i) => (
+            <Card key={i}>
+              <CardContent className="space-y-3 pt-6">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-8 w-32" />
+              </CardContent>
+            </Card>
           ))}
         </div>
+      )}
 
-        {/* Budget Alerts */}
-        {alerts && (alerts.daily_exceeded || alerts.monthly_exceeded) && (
-          <div style={budgetAlertStyle}>
-            <AlertTriangle size={20} style={{ color: '#eab308', flexShrink: 0 }} />
-            <div style={budgetAlertText}>
-              {alerts.daily_exceeded && (
-                <p style={{ margin: 0, marginBottom: alerts.monthly_exceeded ? 4 : 0 }}>
-                  Daily spend at <strong>{alerts.daily_pct}%</strong> of budget
-                </p>
-              )}
-              {alerts.monthly_exceeded && (
-                <p style={{ margin: 0 }}>
-                  Monthly spend at <strong>{alerts.monthly_pct}%</strong> of budget
-                </p>
-              )}
-            </div>
+      {error && (
+        <Alert variant="destructive">
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
+      {!summary && !loading && !error && (
+        <Empty>
+          <EmptyHeader>
+            <EmptyMedia variant="icon"><IconCurrencyDollar /></EmptyMedia>
+            <EmptyTitle>No cost data available</EmptyTitle>
+            <EmptyDesc>Cost tracking will appear here once you start using AI agents and models.</EmptyDesc>
+          </EmptyHeader>
+        </Empty>
+      )}
+
+      {summary && !loading && (
+        <>
+          {/* Summary Cards */}
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <SummaryCard icon={<IconCurrencyDollar className="size-4" />} label="Total Cost" value={formatUSD(summary.total_cost_usd)} />
+            <SummaryCard icon={<IconChartBar className="size-4" />} label="Total Runs" value={String(summary.total_runs)} />
+            <SummaryCard icon={<IconTrendingUp className="size-4" />} label="Input Tokens" value={formatTokens(summary.total_input_tokens)} />
+            <SummaryCard icon={<IconTrendingUp className="size-4" />} label="Output Tokens" value={formatTokens(summary.total_output_tokens)} />
           </div>
-        )}
 
-        {loading && (
-          <div style={loadingContainer}>
-            <div style={loadingText}>Loading cost data...</div>
-          </div>
-        )}
-
-        {error && (
-          <AlertBanner variant="error">{error}</AlertBanner>
-        )}
-
-        {!summary && !loading && !error && (
-          <EmptyState
-            title="No cost data available"
-            description="Cost tracking will appear here once you start using AI agents and models."
-          />
-        )}
-
-        {summary && !loading && (
-          <>
-            {/* Summary Cards */}
-            <div className="bb-stagger" style={summaryGrid}>
-              <SummaryCard
-                icon={<DollarSign size={16} />}
-                label="Total Cost"
-                value={formatUSD(summary.total_cost_usd)}
-              />
-              <SummaryCard
-                icon={<BarChart3 size={16} />}
-                label="Total Runs"
-                value={String(summary.total_runs)}
-              />
-              <SummaryCard
-                icon={<TrendingUp size={16} />}
-                label="Input Tokens"
-                value={formatTokens(summary.total_input_tokens)}
-              />
-              <SummaryCard
-                icon={<TrendingUp size={16} />}
-                label="Output Tokens"
-                value={formatTokens(summary.total_output_tokens)}
-              />
-            </div>
-
-            {/* Cost by Agent */}
-            <div style={glassCard}>
-              <h2 style={sectionHeader}>Cost by Agent</h2>
-              <div className="bb-stagger" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {/* Cost by Agent */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Cost by Agent</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col gap-2">
                 {summary.by_agent.map((entry) => (
-                  <div key={entry.agent_type} style={listRow}>
-                    <span style={listRowLabel}>{entry.agent_type}</span>
-                    <div style={listRowMeta}>
-                      <span style={listRowSecondary}>{entry.run_count} runs</span>
-                      <span style={listRowSecondary}>{formatTokens(entry.input_tokens + entry.output_tokens)} tok</span>
-                      <span style={listRowValue}>{formatUSD(entry.cost_usd)}</span>
+                  <div key={entry.agent_type} className="flex items-center justify-between rounded-lg border bg-card p-3 transition-colors hover:bg-muted/50">
+                    <span className="text-sm">{entry.agent_type}</span>
+                    <div className="flex items-center gap-6 text-sm">
+                      <span className="text-muted-foreground">{entry.run_count} runs</span>
+                      <span className="text-muted-foreground">{formatTokens(entry.input_tokens + entry.output_tokens)} tok</span>
+                      <span className="font-mono font-medium">{formatUSD(entry.cost_usd)}</span>
                     </div>
                   </div>
                 ))}
                 {summary.by_agent.length === 0 && (
-                  <p style={emptyState}>No data for this period</p>
+                  <p className="py-3 text-sm text-muted-foreground">No data for this period</p>
                 )}
               </div>
-            </div>
+            </CardContent>
+          </Card>
 
-            {/* Daily Trend */}
-            {summary.daily_trend.length > 0 && (
-              <div style={glassCard}>
-                <h2 style={sectionHeader}>Daily Trend</h2>
-                <div className="bb-stagger" style={dailyTrendContainer}>
+          {/* Daily Trend */}
+          {summary.daily_trend.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Daily Trend</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-col gap-3">
                   {summary.daily_trend.map((day) => {
                     const maxCost = Math.max(...summary.daily_trend.map((d) => d.cost_usd), 0.01);
                     const pct = (day.cost_usd / maxCost) * 100;
                     return (
-                      <div key={day.date} style={dailyTrendRow}>
-                        <span style={dailyTrendDate}>{day.date.slice(5)}</span>
-                        <div style={dailyTrendBarContainer}>
-                          <div style={dailyTrendBar(pct)} />
+                      <div key={day.date} className="flex items-center gap-4 text-sm">
+                        <span className="w-20 shrink-0 text-muted-foreground">{day.date.slice(5)}</span>
+                        <div className="flex-1">
+                          <Progress value={pct} className="h-2" />
                         </div>
-                        <span style={dailyTrendValue}>{formatUSD(day.cost_usd)}</span>
+                        <span className="w-16 shrink-0 text-right font-mono font-medium">{formatUSD(day.cost_usd)}</span>
                       </div>
                     );
                   })}
                 </div>
-              </div>
-            )}
-          </>
-        )}
-      </div>
-    </TabShell>
+              </CardContent>
+            </Card>
+          )}
+        </>
+      )}
+    </div>
   );
 }
 
 function SummaryCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
-  const glassCard: React.CSSProperties = {
-    padding: 20,
-    borderRadius: 16,
-    background: 'var(--glass-card-bg)',
-    backdropFilter: 'var(--glass-card-blur)',
-    WebkitBackdropFilter: 'var(--glass-card-blur)',
-    border: '1px solid var(--glass-card-border)',
-    boxShadow: 'var(--glass-card-inset)',
-  };
-
-  const labelContainer: React.CSSProperties = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 8,
-    color: 'var(--text-secondary)',
-    marginBottom: 12,
-    fontSize: 14,
-    fontWeight: 500,
-  };
-
-  const iconStyle: React.CSSProperties = {
-    color: 'var(--text-secondary)',
-  };
-
-  const valueStyle: React.CSSProperties = {
-    fontSize: 16,
-    fontWeight: 500,
-    color: 'var(--text-primary)',
-    fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
-    letterSpacing: '-0.03em',
-    lineHeight: 1,
-  };
-
   return (
-    <div className="bb-lift" style={glassCard}>
-      <div style={labelContainer}>
-        <div style={iconStyle}>{icon}</div>
-        <span>{label}</span>
-      </div>
-      <p style={valueStyle}>{value}</p>
-    </div>
+    <Card>
+      <CardContent className="pt-6">
+        <div className="mb-3 flex items-center gap-2 text-sm text-muted-foreground">
+          {icon}
+          <span>{label}</span>
+        </div>
+        <p className="font-mono text-lg font-medium">{value}</p>
+      </CardContent>
+    </Card>
   );
 }
 

@@ -1,7 +1,9 @@
 'use client'
 
 import { motion, AnimatePresence } from 'motion/react'
-import { Check, AlertCircle } from 'lucide-react'
+import { IconCheck, IconAlertCircle } from '@tabler/icons-react'
+import { Card, CardContent } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 import type { PlanStage } from '@/lib/agent/planner'
 
 export interface ChatPipelineStage extends PlanStage {
@@ -17,12 +19,12 @@ interface ThoughtPipelineProps {
 /** Animated thinking ellipsis */
 function ThinkingEllipsis() {
   return (
-    <span style={{ display: 'inline-flex', gap: '2px' }}>
+    <span className="inline-flex gap-0.5">
       <motion.span
         initial={{ opacity: 0.4 }}
         animate={{ opacity: [0.4, 1] }}
         transition={{ duration: 0.6, repeat: Infinity }}
-        style={{ display: 'inline-block' }}
+        className="inline-block"
       >
         .
       </motion.span>
@@ -30,7 +32,7 @@ function ThinkingEllipsis() {
         initial={{ opacity: 0.4 }}
         animate={{ opacity: [0.4, 1] }}
         transition={{ duration: 0.6, repeat: Infinity, delay: 0.2 }}
-        style={{ display: 'inline-block' }}
+        className="inline-block"
       >
         .
       </motion.span>
@@ -38,7 +40,7 @@ function ThinkingEllipsis() {
         initial={{ opacity: 0.4 }}
         animate={{ opacity: [0.4, 1] }}
         transition={{ duration: 0.6, repeat: Infinity, delay: 0.4 }}
-        style={{ display: 'inline-block' }}
+        className="inline-block"
       >
         .
       </motion.span>
@@ -54,85 +56,42 @@ function ThinkingIndicator() {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -4 }}
       transition={{ duration: 0.25 }}
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '12px',
-        alignItems: 'center',
-      }}
+      className="flex flex-col gap-3 items-center"
     >
-      {/* Shimmer animation container */}
-      <motion.div
-        style={{
-          position: 'relative',
-          width: '32px',
-          height: '32px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
+      <motion.div className="relative w-8 h-8 flex items-center justify-center">
         {/* Outer pulsing glow */}
         <motion.div
           initial={{ opacity: 0.3 }}
           animate={{ opacity: [0.3, 0.6, 0.3] }}
           transition={{ duration: 2, repeat: Infinity }}
-          style={{
-            position: 'absolute',
-            width: '100%',
-            height: '100%',
-            borderRadius: '50%',
-            background: `radial-gradient(circle, rgba(255, 255, 255, 0.1), transparent)`,
-            boxShadow: '0 0 12px rgba(255, 255, 255, 0.15)',
-          }}
+          className="absolute w-full h-full rounded-full bg-muted-foreground/10 shadow-[0_0_12px_rgba(var(--foreground-rgb),0.15)]"
         />
-
         {/* Inner shimmer particles */}
         {[0, 1, 2].map(i => (
           <motion.div
             key={i}
-            animate={{
-              rotate: 360,
-              scale: [1, 0.6, 1],
-            }}
-            transition={{
-              duration: 3 + i * 0.5,
-              repeat: Infinity,
-              delay: i * 0.3,
-            }}
-            style={{
-              position: 'absolute',
-              width: `${28 - i * 6}px`,
-              height: `${28 - i * 6}px`,
-              borderRadius: '50%',
-              border: `1px solid rgba(255, 255, 255, ${0.2 - i * 0.05})`,
-            }}
+            animate={{ rotate: 360, scale: [1, 0.6, 1] }}
+            transition={{ duration: 3 + i * 0.5, repeat: Infinity, delay: i * 0.3 }}
+            className="absolute rounded-full border border-muted-foreground/15"
+            style={{ width: `${28 - i * 6}px`, height: `${28 - i * 6}px` }}
           />
         ))}
-
         {/* Center sparkle */}
         <motion.div
           initial={{ opacity: 0.6, scale: 1 }}
           animate={{ scale: [1, 1.2, 1], opacity: [0.6, 1, 0.6] }}
           transition={{ duration: 1.5, repeat: Infinity }}
-          style={{
-            width: '4px',
-            height: '4px',
-            borderRadius: '50%',
-            background: 'rgba(255, 255, 255, 0.8)',
-          }}
+          className="w-1 h-1 rounded-full bg-foreground/80"
         />
       </motion.div>
-
-      {/* Thinking text with animated ellipsis */}
-      <div style={{ fontSize: '14px', color: 'var(--text-secondary)', fontWeight: 500 }}>
+      <div className="text-sm text-muted-foreground font-medium">
         Thinking<ThinkingEllipsis />
       </div>
     </motion.div>
   )
 }
 
-/** Individual stage component with smooth animations */
+/** Individual stage component */
 function PipelineStage({
   stage,
   index,
@@ -140,25 +99,11 @@ function PipelineStage({
   stage: ChatPipelineStage
   index: number
 }) {
-  const statusStyles = {
-    idle: { opacity: 0.6, borderColor: 'var(--hover-bg-strong, rgba(255, 255, 255, 0.08))' },
-    active: { opacity: 1, borderColor: 'var(--border-active, rgba(255, 255, 255, 0.15))' },
-    done: { opacity: 0.5, borderColor: 'var(--hover-bg-strong, rgba(255, 255, 255, 0.08))' },
-    error: { opacity: 1, borderColor: 'rgba(239, 68, 68, 0.5)' },
-  }
-
-  const statusColor = {
-    idle: 'var(--text-secondary)',
-    active: 'var(--text-primary)',
-    done: 'var(--bb-green)',
-    error: 'var(--bb-red)',
-  }
-
-  const bgColor = {
-    idle: 'var(--hover-bg, rgba(255, 255, 255, 0.04))',
-    active: 'var(--hover-bg-strong, rgba(255, 255, 255, 0.08))',
-    done: 'rgba(34, 197, 94, 0.06)',
-    error: 'rgba(239, 68, 68, 0.06)',
+  const statusVariant = {
+    idle: 'secondary' as const,
+    active: 'default' as const,
+    done: 'secondary' as const,
+    error: 'destructive' as const,
   }
 
   return (
@@ -169,70 +114,55 @@ function PipelineStage({
       transition={{
         duration: 0.4,
         delay: index * 0.15,
-        ease: [0.34, 1.56, 0.64, 1], // spring easing
+        ease: [0.34, 1.56, 0.64, 1],
       }}
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '12px',
-        padding: '12px 12px',
-        borderRadius: '8px',
-        background: bgColor[stage.status],
-        border: `1px solid ${statusStyles[stage.status].borderColor}`,
-        transition: 'all 0.3s ease',
-      }}
+      className={`flex items-center gap-3 px-3 py-3 rounded-lg border transition-all duration-300 ${
+        stage.status === 'idle' ? 'opacity-60 bg-muted/30 border-border' :
+        stage.status === 'active' ? 'opacity-100 bg-muted/60 border-border' :
+        stage.status === 'done' ? 'opacity-50 bg-emerald-500/5 border-emerald-500/10' :
+        'opacity-100 bg-destructive/5 border-destructive/20'
+      }`}
     >
       {/* Icon or status indicator */}
-      <div style={{ position: 'relative', display: 'flex' }}>
+      <div className="relative flex">
         {stage.status === 'done' ? (
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ duration: 0.3, ease: [0.34, 1.56, 0.64, 1] }}
           >
-            <Check size={16} color="var(--bb-green)" />
+            <IconCheck size={16} className="text-emerald-500" />
           </motion.div>
         ) : stage.status === 'error' ? (
           <motion.div
             animate={{ rotate: [0, -2, 2, -2, 0] }}
             transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 2 }}
           >
-            <AlertCircle size={16} color="var(--bb-red)" />
+            <IconAlertCircle size={16} className="text-destructive" />
           </motion.div>
         ) : (
           <motion.div
-            initial={{ opacity: statusStyles[stage.status].opacity }}
-            animate={stage.status === 'active' ? { opacity: [0.6, 1] } : { opacity: statusStyles[stage.status].opacity }}
+            initial={{ opacity: stage.status === 'idle' ? 0.6 : 1 }}
+            animate={stage.status === 'active' ? { opacity: [0.6, 1] } : {}}
             transition={{ duration: 1, repeat: Infinity }}
-            style={{ opacity: statusStyles[stage.status].opacity }}
           >
-            <span style={{ fontSize: '16px' }}>{stage.icon || '○'}</span>
+            <span className="text-base">{stage.icon || '○'}</span>
           </motion.div>
         )}
       </div>
 
       {/* Text content */}
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div
-          style={{
-            fontSize: '14px',
-            fontWeight: 500,
-            color: statusColor[stage.status],
-            transition: 'color 0.2s ease',
-          }}
-        >
+      <div className="flex-1 min-w-0">
+        <div className={`text-sm font-medium transition-colors duration-200 ${
+          stage.status === 'idle' ? 'text-muted-foreground' :
+          stage.status === 'active' ? 'text-foreground' :
+          stage.status === 'done' ? 'text-emerald-500' :
+          'text-destructive'
+        }`}>
           {stage.label}
         </div>
         {stage.sublabel && (
-          <div
-            style={{
-              fontSize: '14px',
-              color: 'var(--text-muted)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.5px',
-              marginTop: '2px',
-            }}
-          >
+          <div className="text-xs text-muted-foreground uppercase tracking-wide mt-0.5">
             {stage.sublabel}
           </div>
         )}
@@ -244,13 +174,7 @@ function PipelineStage({
           initial={{ opacity: 0.3 }}
           animate={{ opacity: [0.3, 0.6, 0.3] }}
           transition={{ duration: 2, repeat: Infinity }}
-          style={{
-            width: '8px',
-            height: '8px',
-            borderRadius: '50%',
-            background: 'var(--accent-primary)',
-            boxShadow: '0 0 8px var(--accent-primary)',
-          }}
+          className="w-2 h-2 rounded-full bg-primary shadow-[0_0_8px_var(--primary)]"
         />
       )}
     </motion.div>
@@ -273,32 +197,22 @@ export function ThoughtPipeline({
           key={isSkeleton ? 'skeleton' : 'pipeline'}
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: isDone ? 0.5 : 1, y: 0 }}
-          exit={{
-            opacity: 0,
-            y: -4,
-            transition: { duration: 0.2 },
-          }}
+          exit={{ opacity: 0, y: -4, transition: { duration: 0.2 } }}
           transition={{ duration: 0.25 }}
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '12px',
-            padding: '16px',
-            borderRadius: '12px',
-            background: 'var(--hover-bg, rgba(255, 255, 255, 0.04))',
-            border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
-            backdropFilter: 'blur(24px)',
-          }}
         >
-          {isSkeleton ? (
-            <ThinkingIndicator />
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {stages.map((stage, i) => (
-                <PipelineStage key={stage.id} stage={stage} index={i} />
-              ))}
-            </div>
-          )}
+          <Card className="p-4 gap-3">
+            <CardContent className="p-0">
+              {isSkeleton ? (
+                <ThinkingIndicator />
+              ) : (
+                <div className="flex flex-col gap-2">
+                  {stages.map((stage, i) => (
+                    <PipelineStage key={stage.id} stage={stage} index={i} />
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </motion.div>
       )}
     </AnimatePresence>

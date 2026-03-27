@@ -1,7 +1,17 @@
 'use client'
 
 import React, { memo } from 'react'
-import { ExternalLink, MapPin, Phone, Mail, Star } from 'lucide-react'
+import {
+  IconExternalLink,
+  IconMapPin,
+  IconPhone,
+  IconMail,
+  IconStar,
+} from '@tabler/icons-react'
+import { Card, CardContent } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Progress } from '@/components/ui/progress'
 import type { ProspectResult } from '@/lib/leads/types'
 
 interface ProspectCardProps {
@@ -9,96 +19,11 @@ interface ProspectCardProps {
   onImport: (prospect: ProspectResult) => void
 }
 
-// ─── Hoisted Styles ─────────────────────────────────────────────────────────
-const card: React.CSSProperties = {
-  padding: '16px 20px',
-  borderRadius: 16,
-  background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.6))',
-  backdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
-  WebkitBackdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
-  border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
-  boxShadow: 'var(--card-shadow, 0 2px 8px rgba(0,0,0,0.3)), var(--card-inset, inset 0 1px 0 rgba(255,255,255,0.06))',
-  display: 'flex',
-  flexDirection: 'column',
-  gap: 12,
-}
-
-const headerRow: React.CSSProperties = {
-  display: 'flex',
-  alignItems: 'flex-start',
-  justifyContent: 'space-between',
-}
-
-const prospectName: React.CSSProperties = {
-  fontSize: 14,
-  fontWeight: 500,
-  color: 'var(--text-primary, #F1F5F9)',
-  margin: 0,
-}
-
-const domainLink: React.CSSProperties = {
-  fontSize: 14,
-  color: 'var(--text-primary, #F1F5F9)',
-  textDecoration: 'none',
-  display: 'inline-flex',
-  alignItems: 'center',
-  gap: 4,
-}
-
-const scoresRow: React.CSSProperties = {
-  display: 'flex',
-  gap: 12,
-}
-
-const serpBadge: React.CSSProperties = {
-  fontSize: 14,
-  fontWeight: 500,
-  padding: '2px 8px',
-  borderRadius: 8,
-  background: 'rgba(59, 130, 246, 0.1)',
-  color: '#3b82f6',
-  display: 'inline-flex',
-  alignItems: 'center',
-  gap: 4,
-}
-
-const notesText: React.CSSProperties = {
-  fontSize: 14,
-  color: 'var(--text-secondary, #94A3B8)',
-  lineHeight: 1.4,
-  display: '-webkit-box',
-  WebkitLineClamp: 2,
-  WebkitBoxOrient: 'vertical',
-  overflow: 'hidden',
-}
-
-const contactRow: React.CSSProperties = {
-  display: 'flex',
-  gap: 12,
-  fontSize: 14,
-  color: 'var(--text-dim, #475569)',
-  flexWrap: 'wrap',
-}
-
-const contactItem: React.CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: 4,
-}
-
-// ─── Sub-components ─────────────────────────────────────────────────────────
-function ScoreMini({ label, score, color }: { label: string; score: number; color: string }) {
+function ScoreMini({ label, score }: { label: string; score: number }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-      <span style={{ fontSize: 14, color: 'var(--text-dim, #475569)' }}>{label}</span>
-      <span style={{
-        fontSize: 14,
-        fontWeight: 500,
-        fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
-        color,
-      }}>
-        {score}
-      </span>
+    <div className="flex items-center gap-2">
+      <span className="text-xs text-muted-foreground">{label}</span>
+      <span className="text-sm font-medium font-mono text-foreground">{score}</span>
     </div>
   )
 }
@@ -106,103 +31,87 @@ function ScoreMini({ label, score, color }: { label: string; score: number; colo
 function SerpBadge({ label, active, position }: { label: string; active?: boolean; position?: number | null }) {
   if (!active) return null
   return (
-    <span style={serpBadge}>
+    <Badge variant="secondary">
       {label}
-      {position != null && <span style={{ opacity: 0.7 }}>#{position}</span>}
-    </span>
+      {position != null && <span className="ml-1 opacity-70">#{position}</span>}
+    </Badge>
   )
 }
 
-// ─── Component ──────────────────────────────────────────────────────────────
 function ProspectCardInner({ prospect, onImport }: ProspectCardProps) {
-  const importBtn: React.CSSProperties = {
-    alignSelf: 'flex-start',
-    height: 40,
-    padding: '0 20px',
-    display: 'inline-flex',
-    alignItems: 'center',
-    borderRadius: 8,
-    border: 'none',
-    background: prospect.imported
-      ? 'rgba(34, 197, 94, 0.1)'
-      : 'var(--btn-primary-bg, #F1F5F9)',
-    color: prospect.imported ? '#22c55e' : 'var(--btn-primary-fg, #0a0f1a)',
-    fontSize: 14,
-    fontWeight: 500,
-    cursor: prospect.imported ? 'default' : 'pointer',
-    transition: 'all 200ms',
-  }
-
   return (
-    <div style={card}>
-      <div style={headerRow}>
-        <div>
-          <h3 style={prospectName}>{prospect.name}</h3>
-          {prospect.domain && (
-            <a
-              href={prospect.website ?? `https://${prospect.domain}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={domainLink}
-            >
-              <ExternalLink size={16} />
-              {prospect.domain}
-            </a>
+    <Card className="gap-3 py-4">
+      <CardContent className="space-y-3">
+        {/* Header */}
+        <div className="flex items-start justify-between">
+          <div>
+            <h3 className="text-sm font-medium text-foreground">{prospect.name}</h3>
+            {prospect.domain && (
+              <a
+                href={prospect.website ?? `https://${prospect.domain}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-sm text-foreground hover:underline"
+              >
+                <IconExternalLink data-icon className="text-muted-foreground" />
+                {prospect.domain}
+              </a>
+            )}
+          </div>
+
+          <div className="flex gap-3">
+            <ScoreMini label="Fit" score={prospect.fit_score} />
+            <ScoreMini label="Opp" score={prospect.opportunity_score} />
+          </div>
+        </div>
+
+        {/* SERP badges */}
+        <div className="flex flex-wrap gap-1.5">
+          <SerpBadge label="Ads" active={prospect.serp_presence.found_in_ads} />
+          <SerpBadge label="Maps" active={prospect.serp_presence.found_in_maps} position={prospect.serp_presence.maps_position} />
+          <SerpBadge label="Organic" active={prospect.serp_presence.found_in_organic} position={prospect.serp_presence.organic_position} />
+        </div>
+
+        {prospect.opportunity_notes && (
+          <p className="line-clamp-2 text-sm text-muted-foreground">{prospect.opportunity_notes}</p>
+        )}
+
+        {/* Contact info */}
+        <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
+          {prospect.rating != null && (
+            <span className="inline-flex items-center gap-1">
+              <IconStar data-icon className="fill-yellow-500 text-yellow-500" />
+              {prospect.rating} ({prospect.review_count ?? 0})
+            </span>
+          )}
+          {prospect.phone && (
+            <span className="inline-flex items-center gap-1">
+              <IconPhone data-icon /> {prospect.phone}
+            </span>
+          )}
+          {prospect.emails.length > 0 && (
+            <span className="inline-flex items-center gap-1">
+              <IconMail data-icon /> {prospect.emails[0]}
+            </span>
+          )}
+          {prospect.address && (
+            <span className="inline-flex items-center gap-1">
+              <IconMapPin data-icon /> {prospect.address}
+            </span>
           )}
         </div>
 
-        <div style={scoresRow}>
-          <ScoreMini label="Fit" score={prospect.fit_score} color="var(--text-primary, #F1F5F9)" />
-          <ScoreMini label="Opp" score={prospect.opportunity_score} color="var(--text-primary, #F1F5F9)" />
-        </div>
-      </div>
-
-      {/* SERP badges */}
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-        <SerpBadge label="Ads" active={prospect.serp_presence.found_in_ads} />
-        <SerpBadge label="Maps" active={prospect.serp_presence.found_in_maps} position={prospect.serp_presence.maps_position} />
-        <SerpBadge label="Organic" active={prospect.serp_presence.found_in_organic} position={prospect.serp_presence.organic_position} />
-      </div>
-
-      {prospect.opportunity_notes && (
-        <div style={notesText}>{prospect.opportunity_notes}</div>
-      )}
-
-      <div style={contactRow}>
-        {prospect.rating != null && (
-          <span style={contactItem}>
-            <Star size={16} style={{ fill: '#eab308', color: '#eab308' }} />
-            {prospect.rating} ({prospect.review_count ?? 0})
-          </span>
-        )}
-        {prospect.phone && (
-          <span style={contactItem}>
-            <Phone size={16} /> {prospect.phone}
-          </span>
-        )}
-        {prospect.emails.length > 0 && (
-          <span style={contactItem}>
-            <Mail size={16} /> {prospect.emails[0]}
-          </span>
-        )}
-        {prospect.address && (
-          <span style={contactItem}>
-            <MapPin size={16} /> {prospect.address}
-          </span>
-        )}
-      </div>
-
-      <button
-        onClick={() => !prospect.imported && onImport(prospect)}
-        disabled={prospect.imported}
-        style={importBtn}
-        aria-label={prospect.imported ? 'Already imported' : `Import ${prospect.name} to pipeline`}
-        onMouseEnter={e => { if (!prospect.imported) { e.currentTarget.style.background = '#E2E8F0'; e.currentTarget.style.transform = 'translateY(-1px)' } }}
-        onMouseLeave={e => { if (!prospect.imported) { e.currentTarget.style.background = '#F1F5F9'; e.currentTarget.style.transform = 'translateY(0)' } }}
-      >
-        {prospect.imported ? 'Imported' : 'Import to Pipeline'}
-      </button>
-    </div>
+        {/* Import button */}
+        <Button
+          onClick={() => !prospect.imported && onImport(prospect)}
+          disabled={prospect.imported}
+          variant={prospect.imported ? 'secondary' : 'default'}
+          className="self-start"
+        >
+          {prospect.imported ? 'Imported' : 'Import to Pipeline'}
+        </Button>
+      </CardContent>
+    </Card>
   )
 }
 

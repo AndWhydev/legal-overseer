@@ -2,91 +2,22 @@
 
 import React, { useMemo } from 'react';
 import type { SwarmRunRow } from '@/lib/swarm/types';
-import { S, C } from '@/lib/styles/design-tokens'
-
-// ── Styles ──────────────────────────────────────────────────────────────────
-
-const styles = {
-  card: {
-    background: 'var(--bg-card, rgba(15, 20, 30, 0.35))',
-    backdropFilter: 'blur(20px)',
-    borderRadius: '12px',
-    padding: '16px 20px',
-    border: `1px solid ${C.borderSubtle}`,
-    cursor: 'pointer',
-    transition: 'all 0.15s ease',
-  },
-  cardHover: {
-    background: C.bgListRowHover,
-    borderColor: C.bgHover,
-  },
-  topRow: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: '8px',
-  },
-  templateName: {
-    fontSize: '14px',
-    fontWeight: 500,
-    color: C.textPrimary,
-    letterSpacing: '-0.01em',
-  },
-  statusBadge: (status: string) => {
-    const colors: Record<string, { bg: string; text: string }> = {
-      pending: { bg: 'var(--hover-bg-strong)', text: C.textDim },
-      planning: { bg: 'rgba(59, 130, 246, 0.1)', text: '#3B82F6' },
-      executing: { bg: 'var(--hover-bg-strong)', text: 'var(--text-primary, #E2E8F0)' },
-      negotiating: { bg: 'rgba(139, 92, 246, 0.1)', text: '#8B5CF6' },
-      completed: { bg: C.statusSuccessBg, text: '#22C55E' },
-      partial: { bg: C.statusWarningBg, text: '#F59E0B' },
-      failed: { bg: C.statusErrorBg, text: '#EF4444' },
-      rolled_back: { bg: 'var(--hover-bg-strong)', text: C.textDim },
-      cancelled: { bg: 'var(--hover-bg-strong)', text: C.textMuted },
-    };
-    const c = colors[status] || colors.pending;
-    return {
-      padding: '2px 8px',
-      borderRadius: '9999px',
-      fontSize: '14px',
-      fontWeight: 500,
-      background: c.bg,
-      color: c.text,
-    };
-  },
-  triggerText: {
-    fontSize: '14px',
-    color: C.textPlaceholder,
-    lineHeight: 1.5,
-    overflow: 'hidden' as const,
-    textOverflow: 'ellipsis' as const,
-    whiteSpace: 'nowrap' as const,
-  },
-  bottomRow: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '16px',
-    marginTop: '12px',
-  },
-  meta: {
-    fontSize: '14px',
-    color: C.textMuted,
-  },
-  costBadge: {
-    fontSize: '14px',
-    color: C.textPlaceholder,
-    fontFamily: 'var(--font-mono, monospace)',
-  },
-  executingDot: {
-    width: '6px',
-    height: '6px',
-    borderRadius: '50%',
-    background: 'var(--text-primary, #E2E8F0)',
-    animation: 'pulse 1.5s ease-in-out infinite',
-  },
-};
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 
 // ── Component ───────────────────────────────────────────────────────────────
+
+const STATUS_VARIANT: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
+  pending: 'outline',
+  planning: 'secondary',
+  executing: 'default',
+  negotiating: 'secondary',
+  completed: 'secondary',
+  partial: 'outline',
+  failed: 'destructive',
+  rolled_back: 'outline',
+  cancelled: 'outline',
+};
 
 interface SwarmRunCardProps {
   run: SwarmRunRow;
@@ -94,8 +25,6 @@ interface SwarmRunCardProps {
 }
 
 export function SwarmRunCard({ run, onClick }: SwarmRunCardProps) {
-  const [hovered, setHovered] = React.useState(false);
-
   const isActive = ['pending', 'planning', 'executing', 'negotiating'].includes(run.status);
 
   const timeAgo = useMemo(() => {
@@ -114,46 +43,45 @@ export function SwarmRunCard({ run, onClick }: SwarmRunCardProps) {
   }, [run.duration_ms]);
 
   return (
-    <div
-      style={{
-        ...styles.card,
-        ...(hovered ? styles.cardHover : {}),
-      }}
+    <Card
+      className="cursor-pointer hover:bg-muted/50 transition-colors py-4"
       onClick={onClick}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
     >
-      <div style={styles.topRow}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {isActive && <div style={styles.executingDot} />}
-          <span style={styles.templateName}>
-            {run.template_slug
-              ? run.template_slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
-              : 'Custom Swarm'}
-          </span>
+      <CardContent className="py-0">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            {isActive && (
+              <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+            )}
+            <span className="text-sm font-medium text-foreground">
+              {run.template_slug
+                ? run.template_slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+                : 'Custom Swarm'}
+            </span>
+          </div>
+          <Badge variant={STATUS_VARIANT[run.status] ?? 'outline'}>
+            {run.status.replace('_', ' ')}
+          </Badge>
         </div>
-        <span style={styles.statusBadge(run.status)}>
-          {run.status.replace('_', ' ')}
-        </span>
-      </div>
 
-      <div style={styles.triggerText}>
-        {run.trigger_input}
-      </div>
+        <p className="text-sm text-muted-foreground truncate">
+          {run.trigger_input}
+        </p>
 
-      <div style={styles.bottomRow}>
-        <span style={styles.meta}>{timeAgo}</span>
-        {durationLabel && <span style={styles.meta}>{durationLabel}</span>}
-        {run.total_cost > 0 && (
-          <span style={styles.costBadge}>${run.total_cost.toFixed(4)}</span>
-        )}
-        {run.result_summary && (
-          <span style={styles.meta}>
-            {run.result_summary.slice(0, 60)}
-            {run.result_summary.length > 60 ? '...' : ''}
-          </span>
-        )}
-      </div>
-    </div>
+        <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
+          <span>{timeAgo}</span>
+          {durationLabel && <span>{durationLabel}</span>}
+          {run.total_cost > 0 && (
+            <span className="font-mono">${run.total_cost.toFixed(4)}</span>
+          )}
+          {run.result_summary && (
+            <span className="truncate">
+              {run.result_summary.slice(0, 60)}
+              {run.result_summary.length > 60 ? '...' : ''}
+            </span>
+          )}
+        </div>
+      </CardContent>
+    </Card>
   );
 }

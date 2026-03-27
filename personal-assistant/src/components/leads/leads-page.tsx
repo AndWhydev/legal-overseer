@@ -1,8 +1,18 @@
 'use client'
 
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
-import { Handshake, Mail } from 'lucide-react'
-import { GlassToggle } from '@/components/ui/glass-toggle'
+import { IconHandshake, IconMail } from '@tabler/icons-react'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
+import {
+  Empty,
+  EmptyHeader,
+  EmptyTitle,
+  EmptyDescription,
+  EmptyMedia,
+} from '@/components/ui/empty'
 import { useLeads } from '@/hooks/use-leads'
 import { useLeadsAnalytics } from '@/hooks/use-leads-analytics'
 import { LeadsToolbar } from './leads-toolbar'
@@ -12,10 +22,9 @@ import { LeadDetailDrawer } from './lead-detail-drawer'
 import { ProspectDiscoveryPanel } from './prospect-discovery-panel'
 import { OutreachDashboard } from './outreach-dashboard'
 import { CompletionAnimation } from '../dashboard/completion-animation'
-import { EmptyState } from '@/components/ui/empty-state'
 import type { SmartView } from '@/lib/leads/types'
+import { cn } from '@/lib/utils'
 
-// ─── Smart Views (Lead Swarm discoveries moved to source filter) ────────────
 const SMART_VIEWS: Array<{ key: SmartView; label: string }> = [
   { key: 'all', label: 'All' },
   { key: 'hot_followup', label: 'Needs Action' },
@@ -30,119 +39,6 @@ const EMPTY_MSG: Partial<Record<SmartView, { title: string; desc: string }>> = {
   high_value: { title: 'No high-value leads', desc: 'Leads worth $10K+ will appear here.' },
 }
 
-// ─── Hoisted Styles ─────────────────────────────────────────────────────────
-const pageContainer: React.CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  gap: 12,
-  height: '100%',
-}
-
-const pillContainer: React.CSSProperties = {
-  display: 'flex',
-  gap: 8,
-  flexWrap: 'wrap',
-}
-
-const skeletonPill: React.CSSProperties = {
-  width: 80,
-  height: 40,
-  borderRadius: 9999,
-  background: 'var(--hover-bg, rgba(255, 255, 255, 0.04))',
-  animation: 'pulse 1.5s ease-in-out infinite',
-}
-
-const skeletonSearch: React.CSSProperties = {
-  height: 40,
-  borderRadius: 8,
-  background: 'var(--hover-bg, rgba(255, 255, 255, 0.04))',
-  animation: 'pulse 1.5s ease-in-out infinite',
-}
-
-const skeletonCard: React.CSSProperties = {
-  height: 120,
-  borderRadius: 12,
-  background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.6))',
-  animation: 'pulse 1.5s ease-in-out infinite',
-}
-
-const shimmerCard: React.CSSProperties = {
-  height: 120,
-  borderRadius: 12,
-  background: 'linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.03) 75%)',
-  backgroundSize: '200% 100%',
-  animation: 'shimmer 1.5s ease infinite',
-}
-
-const emptyContainer: React.CSSProperties = {
-  flex: 1,
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  justifyContent: 'center',
-  gap: 16,
-  padding: 48,
-}
-
-const emptyIconWrap: React.CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  width: 64,
-  height: 64,
-  borderRadius: 24,
-  background: 'var(--hover-bg, rgba(255, 255, 255, 0.04))',
-  border: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
-  color: 'var(--text-dim, #475569)',
-}
-
-const emptyTitle: React.CSSProperties = {
-  fontSize: 16,
-  fontWeight: 500,
-  color: 'var(--text-primary, #F1F5F9)',
-  margin: 0,
-}
-
-const emptyDesc: React.CSSProperties = {
-  fontSize: 14,
-  color: 'var(--text-dim, #475569)',
-  margin: 0,
-  textAlign: 'center',
-}
-
-const discoverBtn: React.CSSProperties = {
-  height: 40,
-  padding: '0 20px',
-  display: 'inline-flex',
-  alignItems: 'center',
-  gap: 8,
-  borderRadius: 8,
-  border: 'none',
-  background: 'var(--btn-primary-bg, #F1F5F9)',
-  color: 'var(--btn-primary-fg, #0a0f1a)',
-  fontSize: 14,
-  fontWeight: 500,
-  cursor: 'pointer',
-  transition: 'all 200ms',
-}
-
-const emptyFilterMsg: React.CSSProperties = {
-  flex: 1,
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  color: 'var(--text-dim, #475569)',
-  fontSize: 14,
-}
-
-const contentArea: React.CSSProperties = {
-  flex: 1,
-  minHeight: 0,
-  overflowY: 'auto',
-}
-
-
-// ─── Component ──────────────────────────────────────────────────────────────
 export function LeadsPage() {
   const {
     leads, allLeads, grouped, isLoading, error,
@@ -159,15 +55,9 @@ export function LeadsPage() {
   const [activeTab, setActiveTab] = useState<'leads' | 'campaigns'>('leads')
   const [winTrigger, setWinTrigger] = useState(false)
   const [winPos, setWinPos] = useState({ x: 0, y: 0 })
-  const [viewLoading, setViewLoading] = useState(false)
   const searchInputRef = useRef<HTMLInputElement | null>(null)
-  const prevViewRef = useRef<SmartView | undefined>(undefined)
   const activeView = filters.smartView ?? 'all'
 
-  // Smart view changes are now instant (client-side filtering in useLeads)
-  // No artificial skeleton delay needed
-
-  // Counts always computed from full dataset, not filtered view
   const counts = useMemo(() => {
     const oneDayAgo = Date.now() - 86_400_000
     const sevenDaysAgo = Date.now() - 7 * 86_400_000
@@ -207,16 +97,16 @@ export function LeadsPage() {
 
   if (isLoading) {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        <div style={{ display: 'flex', gap: 8 }}>
+      <div className="flex flex-col gap-3">
+        <div className="flex gap-2">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} style={{ ...skeletonPill, animationDelay: `${i * 100}ms` }} />
+            <Skeleton key={i} className="h-9 w-20 rounded-full" />
           ))}
         </div>
-        <div style={skeletonSearch} />
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+        <Skeleton className="h-9 rounded-lg" />
+        <div className="grid grid-cols-3 gap-3">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} style={{ ...skeletonCard, animationDelay: `${i * 100}ms` }} />
+            <Skeleton key={i} className="h-28 rounded-xl" />
           ))}
         </div>
       </div>
@@ -225,11 +115,13 @@ export function LeadsPage() {
 
   if (error) {
     return (
-      <EmptyState
-        title="Something went wrong"
-        description={error}
-        action={{ label: 'Retry', onClick: () => refresh() }}
-      />
+      <Empty className="min-h-64">
+        <EmptyHeader>
+          <EmptyTitle>Something went wrong</EmptyTitle>
+          <EmptyDescription>{error}</EmptyDescription>
+        </EmptyHeader>
+        <Button variant="outline" onClick={() => refresh()}>Retry</Button>
+      </Empty>
     )
   }
 
@@ -237,70 +129,45 @@ export function LeadsPage() {
   const msg = EMPTY_MSG[activeView] ?? EMPTY_MSG.all!
 
   return (
-    <div style={pageContainer}>
+    <div className="flex h-full flex-col gap-3">
       {/* Main Tabs */}
-      <div style={{ paddingBottom: 12, borderBottom: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))' }}>
-        <GlassToggle
-          options={[
-            { key: 'leads' as const, label: 'Leads Pipeline', icon: <Handshake size={16} /> },
-            { key: 'campaigns' as const, label: 'Email Campaigns', icon: <Mail size={16} /> },
-          ]}
-          value={activeTab}
-          onChange={setActiveTab}
-        />
-      </div>
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'leads' | 'campaigns')}>
+        <TabsList>
+          <TabsTrigger value="leads">
+            <IconHandshake data-icon />
+            Leads Pipeline
+          </TabsTrigger>
+          <TabsTrigger value="campaigns">
+            <IconMail data-icon />
+            Email Campaigns
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Leads Tab */}
-      {activeTab === 'leads' && (
-        <>
+        {/* Leads Tab */}
+        <TabsContent value="leads" className="flex flex-col gap-3">
           {/* Smart View Pills */}
-          <nav style={pillContainer} role="tablist" aria-label="Lead views">
+          <nav className="flex flex-wrap gap-2" role="tablist" aria-label="Lead views">
             {SMART_VIEWS.map((sv) => {
               const isActive = activeView === sv.key
               const count = (counts as Record<string, number>)[sv.key]
               return (
-                <button
+                <Button
                   key={sv.key}
                   role="tab"
                   aria-selected={isActive}
                   aria-label={`${sv.label}${count > 0 ? `, ${count} leads` : ''}`}
+                  variant={isActive ? 'secondary' : 'ghost'}
+                  size="sm"
                   onClick={() => setFilters(f => ({ ...f, smartView: sv.key }))}
-                  style={{
-                    height: 40,
-                    padding: '0 16px',
-                    borderRadius: 9999,
-                    fontSize: 14,
-                    fontWeight: 500,
-                    border: 'none',
-                    cursor: 'pointer',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 8,
-                    transition: 'background 200ms cubic-bezier(0.16, 1, 0.3, 1), color 200ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 200ms, transform 200ms cubic-bezier(0.16, 1, 0.3, 1)',
-                    transform: isActive ? 'scale(1.02)' : 'scale(1)',
-                    background: isActive ? 'var(--pill-active-bg, rgba(255, 255, 255, 0.1))' : 'var(--pill-inactive-bg, rgba(10, 14, 23, 0.42))',
-                    backdropFilter: 'blur(22px) saturate(1.2)',
-                    WebkitBackdropFilter: 'blur(22px) saturate(1.2)',
-                    boxShadow: isActive
-                      ? 'var(--toggle-active-shadow, none)'
-                      : 'inset 0 1px 0 rgba(255, 255, 255, 0.06)',
-                    color: isActive ? 'var(--text-primary, #F1F5F9)' : 'var(--text-secondary, #94A3B8)',
-                  }}
+                  className="rounded-full"
                 >
                   {sv.label}
                   {count > 0 && (
-                    <span style={{
-                      fontSize: 14,
-                      fontWeight: 400,
-                      fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
-                      color: isActive
-                        ? 'var(--text-secondary, #94A3B8)'
-                        : 'var(--text-dim, #475569)',
-                    }}>
+                    <Badge variant="secondary" className="ml-1 font-mono">
                       {count}
-                    </span>
+                    </Badge>
                   )}
-                </button>
+                </Button>
               )
             })}
           </nav>
@@ -315,28 +182,25 @@ export function LeadsPage() {
 
           {empty ? (
             activeView !== 'all' ? (
-              <div style={emptyFilterMsg}>
+              <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">
                 {msg.desc}
               </div>
             ) : (
-              <div style={emptyContainer}>
-                <div style={emptyIconWrap}>
-                  <Handshake size={24} />
-                </div>
-                <p style={emptyTitle}>{msg.title}</p>
-                <p style={emptyDesc}>{msg.desc}</p>
-                <button
-                  onClick={() => setDiscoveryOpen(true)}
-                  style={discoverBtn}
-                  onMouseEnter={e => { e.currentTarget.style.background = 'var(--btn-primary-hover, #E2E8F0)'; e.currentTarget.style.transform = 'translateY(-1px)' }}
-                  onMouseLeave={e => { e.currentTarget.style.background = 'var(--btn-primary-bg, #F1F5F9)'; e.currentTarget.style.transform = 'translateY(0)' }}
-                >
+              <Empty className="flex-1">
+                <EmptyHeader>
+                  <EmptyMedia variant="icon">
+                    <IconHandshake data-icon />
+                  </EmptyMedia>
+                  <EmptyTitle>{msg.title}</EmptyTitle>
+                  <EmptyDescription>{msg.desc}</EmptyDescription>
+                </EmptyHeader>
+                <Button onClick={() => setDiscoveryOpen(true)}>
                   Discover Prospects
-                </button>
-              </div>
+                </Button>
+              </Empty>
             )
           ) : (
-            <div style={contentArea} role="tabpanel">
+            <div className="min-h-0 flex-1 overflow-y-auto" role="tabpanel">
               {viewMode === 'kanban' ? (
                 <LeadsKanbanView
                   grouped={grouped} onMoveLead={moveLead}
@@ -352,13 +216,13 @@ export function LeadsPage() {
               )}
             </div>
           )}
-        </>
-      )}
+        </TabsContent>
 
-      {/* Campaigns Tab */}
-      {activeTab === 'campaigns' && (
-        <OutreachDashboard leads={leads} />
-      )}
+        {/* Campaigns Tab */}
+        <TabsContent value="campaigns">
+          <OutreachDashboard leads={leads} />
+        </TabsContent>
+      </Tabs>
 
       <LeadDetailDrawer
         lead={selectedLead} open={!!selectedLead}

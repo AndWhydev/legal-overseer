@@ -1,7 +1,19 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Search, Plus, X, ChevronDown } from 'lucide-react'
+import { IconSearch, IconPlus, IconX, IconChevronDown } from '@tabler/icons-react'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
+import { Separator } from '@/components/ui/separator'
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu'
 
 export interface FilterState {
   priority: string | null
@@ -19,44 +31,6 @@ interface KanbanToolbarProps {
   onCreateClick: () => void
   onOverdueClick: () => void
   searchInputRef: React.RefObject<HTMLInputElement | null>
-}
-
-const chipBase: React.CSSProperties = {
-  display: 'inline-flex',
-  alignItems: 'center',
-  gap: 4,
-  padding: '4px 12px',
-  borderRadius: 20,
-  background: 'var(--bb-surface)',
-  boxShadow: 'var(--card-shadow), var(--card-inset)',
-  border: 'none',
-  fontSize: 14,
-  fontWeight: 500,
-  color: 'var(--text-secondary)',
-  cursor: 'pointer',
-  fontFamily: 'inherit',
-  transition: 'background 0.15s, color 0.15s',
-  whiteSpace: 'nowrap' as const,
-}
-
-const chipActive: React.CSSProperties = {
-  background: 'var(--hover-bg-strong)',
-  color: 'var(--text-primary)',
-}
-
-const menuStyle: React.CSSProperties = {
-  position: 'absolute',
-  top: 'calc(100% + 6px)',
-  left: 0,
-  minWidth: 140,
-  background: 'var(--glass-bg-heavy)',
-  backdropFilter: 'var(--glass-blur)',
-  WebkitBackdropFilter: 'var(--glass-blur)',
-  borderRadius: 12,
-  boxShadow: 'var(--card-shadow-hover), var(--card-inset)',
-  padding: '8px',
-  zIndex: 10,
-  overflow: 'hidden',
 }
 
 const PRIORITY_OPTIONS = [
@@ -85,282 +59,153 @@ export function KanbanToolbar({
   onOverdueClick,
   searchInputRef,
 }: KanbanToolbarProps) {
-  const [openMenu, setOpenMenu] = useState<'priority' | 'source' | null>(null)
-  const [hoveredItem, setHoveredItem] = useState<string | null>(null)
   const [searchExpanded, setSearchExpanded] = useState(false)
-
-  useEffect(() => {
-    function handleClickOutside() { setOpenMenu(null) }
-    if (openMenu) {
-      document.addEventListener('click', handleClickOutside)
-      return () => document.removeEventListener('click', handleClickOutside)
-    }
-  }, [openMenu])
 
   const hasPriorityFilter = filters.priority !== null
   const hasSourceFilter = filters.source !== 'all'
 
   return (
-    <div style={{
-      display: 'flex',
-      alignItems: 'center',
-      gap: 8,
-      paddingBottom: 12,
-      flexShrink: 0,
-    }}>
+    <div className="flex shrink-0 items-center gap-2 pb-3">
       {/* Left: Title + count */}
-      <h2 style={{
-        fontSize: 16,
-        fontWeight: 500,
-        color: 'var(--text-primary)',
-        letterSpacing: '-0.01em',
-        margin: 0,
-      }}>
+      <h2 className="text-base font-semibold tracking-tight text-foreground">
         Tasks
       </h2>
-      <span style={{
-        fontSize: 14,
-        fontWeight: 500,
-        color: 'var(--text-dim)',
-        background: 'var(--border-subtle)',
-        borderRadius: 99,
-        padding: '4px 8px',
-      }}>
+      <Badge variant="secondary" className="font-mono">
         {totalCount}
-      </span>
+      </Badge>
 
-      {/* Overdue badge — B3 redesign: solid red, pill shape, no transparency */}
+      {/* Overdue badge */}
       {overdueCount > 0 && (
-        <button
+        <Badge
+          variant="destructive"
+          className="cursor-pointer"
           onClick={onOverdueClick}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '4px 8px',
-            borderRadius: 12,
-            background: '#EF4444',
-            border: 'none',
-            fontSize: 14,
-            fontWeight: 500,
-            color: '#FFFFFF',
-            cursor: 'pointer',
-            fontFamily: 'inherit',
-            transition: 'background 0.15s, transform 0.15s',
-          }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = '#DC2626'; e.currentTarget.style.transform = 'scale(1.05)' }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = '#EF4444'; e.currentTarget.style.transform = 'scale(1)' }}
-          title="Overdue tasks"
         >
           {overdueCount}
-        </button>
+        </Badge>
       )}
 
-      {/* Separator */}
-      <div style={{ width: 1, height: 16, background: 'var(--border-active)', margin: '0 4px' }} />
+      <Separator orientation="vertical" className="mx-1 h-4" />
 
       {/* Priority filter */}
-      <div style={{ position: 'relative' }} onClick={(e) => e.stopPropagation()}>
-        <button
-          style={{
-            ...chipBase,
-            ...(hasPriorityFilter ? chipActive : {}),
-          }}
-          onClick={() => setOpenMenu(openMenu === 'priority' ? null : 'priority')}
-        >
-          {hasPriorityFilter ? `Priority: ${filters.priority}` : 'Priority'}
-          {hasPriorityFilter ? (
-            <span
-              onClick={(e) => {
-                e.stopPropagation()
-                onFiltersChange({ ...filters, priority: null })
-              }}
-              style={{ display: 'flex', cursor: 'pointer' }}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant={hasPriorityFilter ? 'secondary' : 'outline'} size="sm" className="gap-1">
+            {hasPriorityFilter ? `Priority: ${filters.priority}` : 'Priority'}
+            {hasPriorityFilter ? (
+              <span
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onFiltersChange({ ...filters, priority: null })
+                }}
+                className="flex cursor-pointer"
+              >
+                <IconX data-icon className="size-3" />
+              </span>
+            ) : (
+              <IconChevronDown data-icon className="size-3 opacity-60" />
+            )}
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start">
+          <DropdownMenuLabel>Filter by priority</DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          {PRIORITY_OPTIONS.map((opt) => (
+            <DropdownMenuItem
+              key={opt.label}
+              onClick={() => onFiltersChange({ ...filters, priority: opt.value })}
+              className={filters.priority === opt.value ? 'bg-accent font-semibold' : ''}
             >
-              <X size={10} />
-            </span>
-          ) : (
-            <ChevronDown size={10} style={{ opacity: 0.6 }} />
-          )}
-        </button>
-        {openMenu === 'priority' && (
-          <div style={menuStyle}>
-            {PRIORITY_OPTIONS.map((opt) => {
-              const isActive = opt.value === filters.priority
-              const isHov = hoveredItem === `p-${opt.value}`
-              return (
-                <button
-                  key={opt.label}
-                  onClick={() => { onFiltersChange({ ...filters, priority: opt.value }); setOpenMenu(null) }}
-                  onMouseEnter={() => setHoveredItem(`p-${opt.value}`)}
-                  onMouseLeave={() => setHoveredItem(null)}
-                  style={{
-                    display: 'block',
-                    width: '100%',
-                    padding: '8px 12px',
-                    borderRadius: 8,
-                    border: 'none',
-                    background: isActive ? 'var(--hover-bg-strong)' : isHov ? 'var(--hover-bg)' : 'transparent',
-                    color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
-                    fontSize: 14,
-                    fontWeight: isActive ? 600 : 400,
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                    fontFamily: 'inherit',
-                    transition: 'background 0.1s',
-                  }}
-                >
-                  {opt.label}
-                  {opt.value && (
-                    <span style={{ color: 'var(--text-dim)', fontWeight: 400, marginLeft: 4 }}>
-                      ({priorityCounts[opt.value] || 0})
-                    </span>
-                  )}
-                </button>
-              )
-            })}
-          </div>
-        )}
-      </div>
+              {opt.label}
+              {opt.value && (
+                <span className="ml-auto font-mono text-xs text-muted-foreground">
+                  {priorityCounts[opt.value] || 0}
+                </span>
+              )}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
 
       {/* Source filter */}
-      <div style={{ position: 'relative' }} onClick={(e) => e.stopPropagation()}>
-        <button
-          style={{
-            ...chipBase,
-            ...(hasSourceFilter ? chipActive : {}),
-          }}
-          onClick={() => setOpenMenu(openMenu === 'source' ? null : 'source')}
-        >
-          {hasSourceFilter ? `Source: ${filters.source}` : 'Source'}
-          {hasSourceFilter ? (
-            <span
-              onClick={(e) => {
-                e.stopPropagation()
-                onFiltersChange({ ...filters, source: 'all' })
-              }}
-              style={{ display: 'flex', cursor: 'pointer' }}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant={hasSourceFilter ? 'secondary' : 'outline'} size="sm" className="gap-1">
+            {hasSourceFilter ? `Source: ${filters.source}` : 'Source'}
+            {hasSourceFilter ? (
+              <span
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onFiltersChange({ ...filters, source: 'all' })
+                }}
+                className="flex cursor-pointer"
+              >
+                <IconX data-icon className="size-3" />
+              </span>
+            ) : (
+              <IconChevronDown data-icon className="size-3 opacity-60" />
+            )}
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start">
+          <DropdownMenuLabel>Filter by source</DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          {SOURCE_OPTIONS.map((opt) => (
+            <DropdownMenuItem
+              key={opt.value}
+              onClick={() => onFiltersChange({ ...filters, source: opt.value })}
+              className={filters.source === opt.value ? 'bg-accent font-semibold' : ''}
             >
-              <X size={10} />
-            </span>
-          ) : (
-            <ChevronDown size={10} style={{ opacity: 0.6 }} />
-          )}
-        </button>
-        {openMenu === 'source' && (
-          <div style={menuStyle}>
-            {SOURCE_OPTIONS.map((opt) => {
-              const isActive = opt.value === filters.source
-              const isHov = hoveredItem === `s-${opt.value}`
-              return (
-                <button
-                  key={opt.value}
-                  onClick={() => { onFiltersChange({ ...filters, source: opt.value }); setOpenMenu(null) }}
-                  onMouseEnter={() => setHoveredItem(`s-${opt.value}`)}
-                  onMouseLeave={() => setHoveredItem(null)}
-                  style={{
-                    display: 'block',
-                    width: '100%',
-                    padding: '8px 12px',
-                    borderRadius: 8,
-                    border: 'none',
-                    background: isActive ? 'var(--hover-bg-strong)' : isHov ? 'var(--hover-bg)' : 'transparent',
-                    color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
-                    fontSize: 14,
-                    fontWeight: isActive ? 600 : 400,
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                    fontFamily: 'inherit',
-                    transition: 'background 0.1s',
-                  }}
-                >
-                  {opt.label}
-                </button>
-              )
-            })}
-          </div>
-        )}
-      </div>
+              {opt.label}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
 
       {/* Spacer */}
-      <div style={{ flex: 1 }} />
+      <div className="flex-1" />
 
-      {/* Search with animation — B2: smooth expand/collapse with blur effect */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 4,
-        padding: '4px 12px',
-        borderRadius: 20,
-        background: searchExpanded ? 'var(--glass-bg-heavy)' : 'var(--bb-surface)',
-        backdropFilter: searchExpanded ? 'blur(12px)' : 'none',
-        WebkitBackdropFilter: searchExpanded ? 'blur(12px)' : 'none',
-        boxShadow: 'var(--card-shadow), var(--card-inset)',
-        transition: 'background 0.2s ease, width 0.2s ease-out, backdrop-filter 0.2s ease',
-        width: searchExpanded ? 240 : 36,
-        overflow: 'hidden',
-        cursor: searchExpanded ? 'text' : 'pointer',
-      }}
-        onClick={() => {
-          if (!searchExpanded) {
-            setSearchExpanded(true)
-            setTimeout(() => searchInputRef.current?.focus(), 50)
-          }
-        }}
-      >
-        <Search size={12} style={{ color: 'var(--text-dim)', flexShrink: 0 }} />
+      {/* Search */}
+      <div className="relative flex items-center">
         {searchExpanded ? (
-          <input
-            ref={searchInputRef}
-            value={searchQuery}
-            onChange={(e) => onSearchChange(e.target.value)}
-            onBlur={() => { if (!searchQuery) setSearchExpanded(false) }}
-            onKeyDown={(e) => {
-              if (e.key === 'Escape') {
-                onSearchChange('')
-                setSearchExpanded(false)
-                ;(e.target as HTMLInputElement).blur()
-              }
+          <div className="flex items-center gap-1">
+            <IconSearch data-icon className="size-4 text-muted-foreground" />
+            <Input
+              ref={searchInputRef}
+              value={searchQuery}
+              onChange={(e) => onSearchChange(e.target.value)}
+              onBlur={() => { if (!searchQuery) setSearchExpanded(false) }}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') {
+                  onSearchChange('')
+                  setSearchExpanded(false)
+                  ;(e.target as HTMLInputElement).blur()
+                }
+              }}
+              placeholder="Search..."
+              className="h-7 w-48"
+              autoFocus
+            />
+          </div>
+        ) : (
+          <Button
+            variant="outline"
+            size="icon-sm"
+            onClick={() => {
+              setSearchExpanded(true)
+              setTimeout(() => searchInputRef.current?.focus(), 50)
             }}
-            placeholder="Search..."
-            style={{
-              flex: 1,
-              background: 'transparent',
-              border: 'none',
-              outline: 'none',
-              fontSize: 14,
-              color: 'var(--text-primary)',
-              padding: 0,
-              fontFamily: 'inherit',
-              minWidth: 0,
-              opacity: 1,
-              transition: 'opacity 0.15s ease 0.05s',
-            }}
-          />
-        ) : null}
+          >
+            <IconSearch data-icon />
+          </Button>
+        )}
       </div>
 
       {/* Create button */}
-      <button
-        onClick={onCreateClick}
-        style={{
-          ...chipBase,
-          background: 'var(--hover-bg)',
-          color: 'var(--text-secondary)',
-          padding: '4px 12px',
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.background = 'var(--border-active)'
-          e.currentTarget.style.color = 'var(--text-primary)'
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.background = 'var(--hover-bg)'
-          e.currentTarget.style.color = 'var(--text-secondary)'
-        }}
-      >
-        <Plus size={13} />
+      <Button variant="outline" size="sm" onClick={onCreateClick} className="gap-1">
+        <IconPlus data-icon />
         New
-      </button>
+      </Button>
     </div>
   )
 }

@@ -2,18 +2,21 @@
 
 import React, { useState, useEffect, useCallback } from 'react'
 import {
-  DollarSign,
-  MessageSquare,
-  TrendingUp,
-  Clock,
-  Workflow,
-  Power,
-  AlertCircle,
-  Zap,
-  Lightbulb,
-} from 'lucide-react'
+  IconCurrencyDollar,
+  IconMessageCircle,
+  IconTrendingUp,
+  IconClock,
+  IconSitemap,
+  IconPower,
+  IconAlertCircle,
+  IconBolt,
+  IconBulb,
+} from '@tabler/icons-react'
+import { Card, CardContent } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
 import type { RoleType, AutonomyLevel } from '@/lib/bitbit-core'
-import { S, C } from '@/lib/styles/design-tokens'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -44,44 +47,19 @@ interface RoleStatusCardsProps {
 }
 
 // ---------------------------------------------------------------------------
-// Style tokens
-// ---------------------------------------------------------------------------
-
-const glassCard: React.CSSProperties = {
-  padding: '20px',
-  borderRadius: 16,
-  background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.6))',
-  backdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
-  WebkitBackdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
-  border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
-  boxShadow: 'var(--card-shadow, 0 2px 8px rgba(0,0,0,0.3)), var(--card-inset, inset 0 1px 0 rgba(255,255,255,0.06))',
-  transition: 'all 200ms',
-  cursor: 'pointer',
-}
-
-const sectionHeader: React.CSSProperties = {
-  fontSize: 14,
-  fontWeight: 500,
-  letterSpacing: '0.04em',
-  textTransform: 'uppercase' as const,
-  color: 'var(--text-dim, #475569)',
-  marginBottom: 12,
-}
-
-// ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-const ROLE_META: Record<RoleType, { label: string; icon: React.ElementType; color: string; description: string }> = {
-  finance: { label: 'Finance', icon: DollarSign, color: '#22c55e', description: 'Invoices, payments, cash flow' },
-  comms: { label: 'Communications', icon: MessageSquare, color: '#3b82f6', description: 'Email triage, responses, follow-ups' },
-  sales: { label: 'Sales', icon: TrendingUp, color: '#F1F5F9', description: 'Leads, proposals, pipeline' },
+const ROLE_META: Record<RoleType, { label: string; icon: React.ElementType; colorClass: string; description: string }> = {
+  finance: { label: 'Finance', icon: IconCurrencyDollar, colorClass: 'text-emerald-500 bg-emerald-500/10', description: 'Invoices, payments, cash flow' },
+  comms: { label: 'Communications', icon: IconMessageCircle, colorClass: 'text-blue-500 bg-blue-500/10', description: 'Email triage, responses, follow-ups' },
+  sales: { label: 'Sales', icon: IconTrendingUp, colorClass: 'text-foreground bg-muted', description: 'Leads, proposals, pipeline' },
 }
 
-const AUTONOMY_LABELS: Record<AutonomyLevel, { label: string; color: string }> = {
-  observer: { label: 'Observer', color: '#94A3B8' },
-  copilot: { label: 'Co-pilot', color: '#3b82f6' },
-  autopilot: { label: 'Autopilot', color: '#22c55e' },
+const AUTONOMY_LABELS: Record<AutonomyLevel, { label: string; variant: 'default' | 'secondary' | 'outline' }> = {
+  observer: { label: 'Observer', variant: 'outline' },
+  copilot: { label: 'Co-pilot', variant: 'secondary' },
+  autopilot: { label: 'Autopilot', variant: 'default' },
 }
 
 function timeAgo(dateStr: string | null): string {
@@ -103,7 +81,6 @@ function timeAgo(dateStr: string | null): string {
 export function RoleStatusCards({ onRoleClick }: RoleStatusCardsProps) {
   const [roles, setRoles] = useState<RoleStatus[]>([])
   const [loading, setLoading] = useState(true)
-  const [hoveredRole, setHoveredRole] = useState<string | null>(null)
   const [enabling, setEnabling] = useState<string | null>(null)
 
   const fetchStatus = useCallback(async () => {
@@ -113,7 +90,7 @@ export function RoleStatusCards({ onRoleClick }: RoleStatusCardsProps) {
       const data = await res.json()
       setRoles(data.roles ?? [])
     } catch {
-      // Silently fail — cards show empty state
+      // Silently fail
     } finally {
       setLoading(false)
     }
@@ -135,21 +112,22 @@ export function RoleStatusCards({ onRoleClick }: RoleStatusCardsProps) {
     return () => clearInterval(interval)
   }, [fetchStatus])
 
-  // Ensure all 3 role types appear even if not yet configured
   const allRoleTypes: RoleType[] = ['finance', 'comms', 'sales']
   const roleMap = new Map(roles.map(r => [r.role_type, r]))
 
   if (loading) {
     return (
       <div>
-        <div style={sectionHeader}>Role Status</div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 12 }}>
+        <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-3">Role Status</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {allRoleTypes.map(rt => (
-            <div key={rt} style={{ ...glassCard, opacity: 0.5, cursor: 'default' }}>
-              <div style={{ height: 14, borderRadius: 4, background: C.bgHoverStrong, width: '40%', marginBottom: 12 }} />
-              <div style={{ height: 32, borderRadius: 4, background: C.bgHover, width: '60%', marginBottom: 8 }} />
-              <div style={{ height: 10, borderRadius: 4, background: C.bgHover, width: '80%' }} />
-            </div>
+            <Card key={rt} className="py-5 opacity-50">
+              <CardContent>
+                <Skeleton className="h-4 w-2/5 mb-3" />
+                <Skeleton className="h-8 w-3/5 mb-2" />
+                <Skeleton className="h-3 w-4/5" />
+              </CardContent>
+            </Card>
           ))}
         </div>
       </div>
@@ -158,179 +136,85 @@ export function RoleStatusCards({ onRoleClick }: RoleStatusCardsProps) {
 
   return (
     <div>
-      <div style={sectionHeader}>Role Status</div>
-      <div className="bb-stagger" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 12 }}>
+      <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-3">Role Status</h3>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {allRoleTypes.map(rt => {
           const status = roleMap.get(rt)
           const meta = ROLE_META[rt]
           const Icon = meta.icon
-          const isHovered = hoveredRole === rt
           const isConfigured = !!status
           const autonomy = status ? AUTONOMY_LABELS[status.autonomy_level] : null
 
           return (
-            <div
+            <Card
               key={rt}
-              className="bb-lift"
-              onMouseEnter={() => setHoveredRole(rt)}
-              onMouseLeave={() => setHoveredRole(null)}
+              className="py-5 cursor-pointer hover:bg-muted/50 transition-colors"
               onClick={() => onRoleClick?.(rt)}
-              style={{
-                ...glassCard,
-                border: isHovered
-                  ? `1px solid ${C.borderHover}`
-                  : `1px solid ${C.borderSubtle}`,
-                background: isHovered
-                  ? 'var(--bb-surface-hover, rgba(20, 28, 40, 0.7))'
-                  : C.bgCard,
-              }}
             >
-              {/* Header row */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <div style={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: 12,
-                    background: `${meta.color}15`,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}>
-                    <Icon size={16} style={{ color: meta.color }} />
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)' }}>
-                      {meta.label}
+              <CardContent>
+                {/* Header row */}
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${meta.colorClass}`}>
+                      <Icon size={16} />
                     </div>
-                    <div style={{ fontSize: 14, color: 'var(--text-dim, #475569)', marginTop: 1 }}>
-                      {meta.description}
+                    <div>
+                      <div className="text-sm font-medium text-foreground">{meta.label}</div>
+                      <div className="text-xs text-muted-foreground mt-0.5">{meta.description}</div>
                     </div>
                   </div>
+                  <div className={`w-2 h-2 rounded-full ${
+                    isConfigured && status.enabled ? 'bg-emerald-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]' : 'bg-muted-foreground/40'
+                  }`} />
                 </div>
 
-                {/* Status dot */}
-                <div style={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: '50%',
-                  background: isConfigured && status.enabled ? '#22c55e' : 'var(--text-dim, #475569)',
-                  boxShadow: isConfigured && status.enabled ? '0 0 8px rgba(34, 197, 94, 0.4)' : 'none',
-                }} />
-              </div>
-
-              {!isConfigured ? (
-                <div style={{ padding: '8px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span style={{ fontSize: 14, color: 'var(--text-dim, #475569)' }}>Not configured</span>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); enableRole(rt) }}
-                    disabled={enabling === rt}
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 6,
-                      padding: '6px 14px',
-                      borderRadius: 8,
-                      border: '1px solid rgba(34, 197, 94, 0.3)',
-                      background: enabling === rt ? 'rgba(34, 197, 94, 0.08)' : C.statusSuccessBg,
-                      color: '#22c55e',
-                      fontSize: 13,
-                      fontWeight: 500,
-                      cursor: enabling === rt ? 'wait' : 'pointer',
-                      transition: 'all 200ms',
-                      opacity: enabling === rt ? 0.6 : 1,
-                    }}
-                  >
-                    <Power size={12} />
-                    {enabling === rt ? 'Enabling...' : 'Enable'}
-                  </button>
-                </div>
-              ) : (
-                <>
-                  {/* Autonomy + State */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-                    {autonomy && (
-                      <span style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        padding: '4px 12px',
-                        borderRadius: 8,
-                        fontSize: 14,
-                        fontWeight: 500,
-                        letterSpacing: '0.02em',
-                        background: `${autonomy.color}15`,
-                        color: autonomy.color,
-                      }}>
-                        {autonomy.label}
-                      </span>
-                    )}
-                    {!status.enabled && (
-                      <span style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        padding: '4px 12px',
-                        borderRadius: 8,
-                        fontSize: 14,
-                        fontWeight: 500,
-                        background: C.statusErrorBg,
-                        color: '#ef4444',
-                      }}>
-                        Disabled
-                      </span>
-                    )}
+                {!isConfigured ? (
+                  <div className="flex items-center justify-between py-2">
+                    <span className="text-xs text-muted-foreground">Not configured</span>
+                    <Button
+                      size="xs"
+                      variant="outline"
+                      onClick={(e) => { e.stopPropagation(); enableRole(rt) }}
+                      disabled={enabling === rt}
+                      className="text-emerald-500 border-emerald-500/30 hover:bg-emerald-500/10"
+                    >
+                      <IconPower size={12} />
+                      {enabling === rt ? 'Enabling...' : 'Enable'}
+                    </Button>
                   </div>
-
-                  {/* Metrics row */}
-                  <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: '1fr 1fr',
-                    gap: 8,
-                    padding: '12px 0',
-                    borderTop: `1px solid ${C.borderSubtle}`,
-                  }}>
-                    <MetricCell
-                      icon={<Zap size={11} />}
-                      label="Actions"
-                      value={status.activity_24h.actions}
-                    />
-                    <MetricCell
-                      icon={<Lightbulb size={11} />}
-                      label="Insights"
-                      value={status.activity_24h.insights}
-                    />
-                    <MetricCell
-                      icon={<Workflow size={11} />}
-                      label="Workflows"
-                      value={status.active_workflows}
-                    />
-                    <MetricCell
-                      icon={<Clock size={11} />}
-                      label="Last tick"
-                      value={timeAgo(status.last_tick_at)}
-                      isText
-                    />
-                  </div>
-
-                  {/* Error indicator */}
-                  {status.activity_24h.errors > 0 && (
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 8,
-                      marginTop: 8,
-                      padding: '8px 12px',
-                      borderRadius: 8,
-                      background: C.statusErrorBg,
-                    }}>
-                      <AlertCircle size={12} style={{ color: '#ef4444' }} />
-                      <span style={{ fontSize: 14, color: '#ef4444' }}>
-                        {status.activity_24h.errors} error{status.activity_24h.errors !== 1 ? 's' : ''} in last 24h
-                      </span>
+                ) : (
+                  <>
+                    {/* Autonomy + State */}
+                    <div className="flex items-center gap-2 mb-3">
+                      {autonomy && (
+                        <Badge variant={autonomy.variant}>{autonomy.label}</Badge>
+                      )}
+                      {!status.enabled && (
+                        <Badge variant="destructive">Disabled</Badge>
+                      )}
                     </div>
-                  )}
-                </>
-              )}
-            </div>
+
+                    {/* Metrics row */}
+                    <div className="grid grid-cols-2 gap-2 pt-3 border-t border-border">
+                      <MetricCell icon={<IconBolt size={11} />} label="Actions" value={status.activity_24h.actions} />
+                      <MetricCell icon={<IconBulb size={11} />} label="Insights" value={status.activity_24h.insights} />
+                      <MetricCell icon={<IconSitemap size={11} />} label="Workflows" value={status.active_workflows} />
+                      <MetricCell icon={<IconClock size={11} />} label="Last tick" value={timeAgo(status.last_tick_at)} isText />
+                    </div>
+
+                    {/* Error indicator */}
+                    {status.activity_24h.errors > 0 && (
+                      <div className="flex items-center gap-2 mt-2 px-3 py-2 rounded-lg bg-destructive/5">
+                        <IconAlertCircle size={12} className="text-destructive" />
+                        <span className="text-xs text-destructive">
+                          {status.activity_24h.errors} error{status.activity_24h.errors !== 1 ? 's' : ''} in last 24h
+                        </span>
+                      </div>
+                    )}
+                  </>
+                )}
+              </CardContent>
+            </Card>
           )
         })}
       </div>
@@ -349,19 +233,12 @@ function MetricCell({ icon, label, value, isText = false }: {
   isText?: boolean
 }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-      <span style={{ color: 'var(--text-dim, #475569)', display: 'flex' }}>{icon}</span>
-      <span style={{ fontSize: 14, color: 'var(--text-dim, #475569)' }}>{label}</span>
-      <span style={{
-        fontSize: isText ? 14 : 14,
-        fontWeight: isText ? 400 : 500,
-        color: 'var(--text-primary, #F1F5F9)',
-        fontFamily: isText ? undefined : 'var(--font-mono)',
-        marginLeft: 'auto',
-      }}>
+    <div className="flex items-center gap-2">
+      <span className="text-muted-foreground flex">{icon}</span>
+      <span className="text-xs text-muted-foreground">{label}</span>
+      <span className={`text-sm font-medium text-foreground ml-auto ${!isText ? 'font-mono' : ''}`}>
         {value}
       </span>
     </div>
   )
 }
-

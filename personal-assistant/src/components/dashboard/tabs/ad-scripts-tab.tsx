@@ -1,14 +1,18 @@
 'use client'
 
 import React, { useCallback, useEffect, useState } from 'react'
-import { Copy, Check, Loader2, ChevronDown, ChevronRight, Film } from 'lucide-react'
-import { S, C } from '@/lib/styles/design-tokens'
-import { TabShell } from '@/components/ui/tab-shell'
-import { EmptyState } from '@/components/ui/empty-state'
-import { GlassDropdown } from '@/components/ui/glass-dropdown'
+import { IconCopy, IconCheck, IconLoader2, IconChevronDown, IconChevronRight, IconMovie } from '@tabler/icons-react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Empty, EmptyHeader, EmptyTitle, EmptyDescription } from '@/components/ui/empty'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Label } from '@/components/ui/label'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 
 // ---------------------------------------------------------------------------
-// Types (mirrored from ad-script-gen)
+// Types
 // ---------------------------------------------------------------------------
 
 type Platform = 'reels' | 'tiktok' | 'shorts' | 'feed'
@@ -56,7 +60,7 @@ interface OfferOption {
 }
 
 // ---------------------------------------------------------------------------
-// Constants - Inline styles instead of Tailwind classes
+// Constants
 // ---------------------------------------------------------------------------
 
 const PLATFORM_LABELS: Record<Platform, string> = {
@@ -66,28 +70,11 @@ const PLATFORM_LABELS: Record<Platform, string> = {
   feed: 'Feed',
 }
 
-// Platform colors as inline style objects (muted versions)
-const PLATFORM_COLORS: Record<Platform, React.CSSProperties> = {
-  reels: {
-    background: 'rgba(168, 85, 247, 0.12)',
-    color: '#a855f7',
-    border: '1px solid rgba(168, 85, 247, 0.3)',
-  },
-  tiktok: {
-    background: 'rgba(14, 165, 233, 0.12)',
-    color: '#0ea5e9',
-    border: '1px solid rgba(14, 165, 233, 0.3)',
-  },
-  shorts: {
-    background: 'rgba(239, 68, 68, 0.12)',
-    color: '#ef4444',
-    border: '1px solid rgba(239, 68, 68, 0.3)',
-  },
-  feed: {
-    background: 'rgba(59, 130, 246, 0.12)',
-    color: '#3b82f6',
-    border: '1px solid rgba(59, 130, 246, 0.3)',
-  },
+const PLATFORM_VARIANT: Record<Platform, 'default' | 'secondary' | 'destructive' | 'outline'> = {
+  reels: 'secondary',
+  tiktok: 'default',
+  shorts: 'destructive',
+  feed: 'outline',
 }
 
 const HOOK_LABELS: Record<HookType, string> = {
@@ -97,41 +84,10 @@ const HOOK_LABELS: Record<HookType, string> = {
   'direct-offer': 'Direct Offer',
 }
 
-// Tone colors as inline style objects (muted)
-const TONE_COLORS: Record<string, React.CSSProperties> = {
-  urgent: {
-    color: '#ef4444',
-  },
-  casual: {
-    color: '#22c55e',
-  },
-  professional: {
-    color: '#3b82f6',
-  },
-}
-
-// ---------------------------------------------------------------------------
-// Inline styles - Glass patterns from STYLE_GUIDE
-// ---------------------------------------------------------------------------
-
-const ghostBtn: React.CSSProperties = {
-  ...S.button,
-  ...S.buttonGhost,
-  padding: '8px 16px',
-  borderRadius: 12,
-  height: 'auto',
-}
-
-const accentBtn: React.CSSProperties = {
-  ...S.button,
-  ...S.buttonPrimary,
-}
-
-const pillBtn: React.CSSProperties = {
-  ...S.pill,
-  padding: '8px 16px',
-  borderRadius: 20,
-  height: 'auto',
+const TONE_VARIANT: Record<string, 'destructive' | 'default' | 'outline'> = {
+  urgent: 'destructive',
+  casual: 'default',
+  professional: 'outline',
 }
 
 // ---------------------------------------------------------------------------
@@ -140,7 +96,6 @@ const pillBtn: React.CSSProperties = {
 
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false)
-  const [hovered, setHovered] = useState(false)
 
   const handleCopy = useCallback(async () => {
     try {
@@ -153,25 +108,10 @@ function CopyButton({ text }: { text: string }) {
   }, [text])
 
   return (
-    <button
-      onClick={handleCopy}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      style={{
-        ...ghostBtn,
-        background: hovered ? 'var(--glass-interactive-bg)' : 'transparent',
-        borderColor: hovered ? C.borderHover : C.borderVisible,
-        display: 'flex',
-        alignItems: 'center',
-        gap: 4,
-        paddingRight: 8,
-        paddingLeft: 8,
-      }}
-      title="Copy to clipboard"
-    >
-      {copied ? <Check size={12} /> : <Copy size={12} />}
-      <span style={{ fontSize: 14 }}>{copied ? 'Copied' : 'Copy'}</span>
-    </button>
+    <Button variant="ghost" size="sm" onClick={handleCopy} title="Copy to clipboard">
+      {copied ? <IconCheck className="size-3.5" /> : <IconCopy className="size-3.5" />}
+      {copied ? 'Copied' : 'Copy'}
+    </Button>
   )
 }
 
@@ -183,71 +123,33 @@ function StoryboardView({ shots }: { shots: StoryboardShot[] }) {
   const [expanded, setExpanded] = useState(false)
 
   return (
-    <div style={{ marginTop: 12 }}>
-      <button
-        onClick={() => setExpanded(!expanded)}
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 4,
-          fontSize: 14,
-          color: 'var(--text-secondary)',
-          background: 'transparent',
-          border: 'none',
-          cursor: 'pointer',
-          transition: 'color 200ms',
-          padding: 0,
-        }}
-        onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--text-primary)')}
-        onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-secondary)')}
-      >
-        {expanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
-        Storyboard ({shots.length} shots)
-      </button>
-
-      {expanded && (
-        <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+    <Collapsible open={expanded} onOpenChange={setExpanded} className="mt-3">
+      <CollapsibleTrigger asChild>
+        <Button variant="ghost" size="sm" className="gap-1 px-0 text-muted-foreground hover:text-foreground">
+          {expanded ? <IconChevronDown className="size-3.5" /> : <IconChevronRight className="size-3.5" />}
+          Storyboard ({shots.length} shots)
+        </Button>
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        <div className="mt-3 flex flex-col gap-2">
           {shots.map((shot) => (
-            <div
-              key={shot.shotNumber}
-              style={{
-                ...S.card,
-                padding: 12,
-              }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  marginBottom: 8,
-                }}
-              >
-                <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-secondary)' }}>
-                  Shot {shot.shotNumber}
-                </span>
-                <span style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
-                  {shot.startTime}s - {shot.endTime}s ({shot.duration}s)
-                </span>
+            <div key={shot.shotNumber} className="rounded-md border bg-muted/50 p-3">
+              <div className="mb-2 flex items-center justify-between">
+                <span className="text-sm font-medium text-muted-foreground">Shot {shot.shotNumber}</span>
+                <span className="text-xs text-muted-foreground">{shot.startTime}s - {shot.endTime}s ({shot.duration}s)</span>
               </div>
-              <p style={{ fontSize: 14, marginBottom: 8, color: 'var(--text-primary)' }}>
-                {shot.visual}
-              </p>
+              <p className="mb-2 text-sm">{shot.visual}</p>
               {shot.textOverlay && (
-                <p style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
-                  Text: <span style={{ color: C.textPrimary }}>{shot.textOverlay}</span>
-                </p>
+                <p className="text-xs text-muted-foreground">Text: <span className="text-foreground">{shot.textOverlay}</span></p>
               )}
               {shot.audio && (
-                <p style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
-                  Audio: <span style={{ color: C.textPrimary }}>{shot.audio}</span>
-                </p>
+                <p className="text-xs text-muted-foreground">Audio: <span className="text-foreground">{shot.audio}</span></p>
               )}
             </div>
           ))}
         </div>
-      )}
-    </div>
+      </CollapsibleContent>
+    </Collapsible>
   )
 }
 
@@ -257,59 +159,24 @@ function StoryboardView({ shots }: { shots: StoryboardShot[] }) {
 
 function ScriptCard({ script }: { script: AdScript }) {
   return (
-    <div className="bb-lift" style={S.card}>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: 12,
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span
-            style={{
-              ...pillBtn,
-              ...PLATFORM_COLORS[script.platform],
-              padding: '8px 12px',
-              borderRadius: 16,
-            }}
-          >
-            {PLATFORM_LABELS[script.platform]}
-          </span>
-          <span
-            style={{
-              ...pillBtn,
-              padding: '8px 12px',
-              borderRadius: 16,
-            }}
-          >
-            {HOOK_LABELS[script.hookType]}
-          </span>
-          <span style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
-            {script.duration}s
-          </span>
+    <Card>
+      <CardHeader className="pb-0">
+        <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge variant={PLATFORM_VARIANT[script.platform]}>
+              {PLATFORM_LABELS[script.platform]}
+            </Badge>
+            <Badge variant="outline">{HOOK_LABELS[script.hookType]}</Badge>
+            <span className="text-xs text-muted-foreground">{script.duration}s</span>
+          </div>
+          <CopyButton text={script.script} />
         </div>
-        <CopyButton text={script.script} />
-      </div>
-
-      <pre
-        style={{
-          whiteSpace: 'pre-wrap',
-          fontSize: 14,
-          lineHeight: 1.6,
-          color: C.textPrimary,
-          fontFamily: 'inherit',
-          margin: 0,
-        }}
-      >
-        {script.script}
-      </pre>
-
-      {script.storyboard?.length > 0 && (
-        <StoryboardView shots={script.storyboard} />
-      )}
-    </div>
+      </CardHeader>
+      <CardContent>
+        <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed">{script.script}</pre>
+        {script.storyboard?.length > 0 && <StoryboardView shots={script.storyboard} />}
+      </CardContent>
+    </Card>
   )
 }
 
@@ -319,38 +186,20 @@ function ScriptCard({ script }: { script: AdScript }) {
 
 function VariationCard({ variation }: { variation: AdScriptVariation }) {
   return (
-    <div className="bb-lift" style={S.card}>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: 8,
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>
-            {variation.variantLabel}
-          </span>
-          <span style={{ fontSize: 14, ...TONE_COLORS[variation.tone] }}>
-            {variation.tone}
-          </span>
+    <Card>
+      <CardHeader className="pb-0">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium">{variation.variantLabel}</span>
+            <Badge variant={TONE_VARIANT[variation.tone] ?? 'outline'}>{variation.tone}</Badge>
+          </div>
+          <CopyButton text={variation.script} />
         </div>
-        <CopyButton text={variation.script} />
-      </div>
-      <pre
-        style={{
-          whiteSpace: 'pre-wrap',
-          fontSize: 14,
-          lineHeight: 1.6,
-          color: C.textPrimary,
-          fontFamily: 'inherit',
-          margin: 0,
-        }}
-      >
-        {variation.script}
-      </pre>
-    </div>
+      </CardHeader>
+      <CardContent>
+        <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed">{variation.script}</pre>
+      </CardContent>
+    </Card>
   )
 }
 
@@ -399,118 +248,86 @@ function GenerateForm({
     })
   }
 
+  const canSubmit = !isGenerating && selectedOffer && selectedPlatforms.length > 0 && selectedHooks.length > 0
+
   return (
-    <form
-      onSubmit={handleSubmit}
-      style={{
-        ...S.card,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 16,
-      }}
-    >
-      <div>
-        <label style={{ display: 'block', fontSize: 14, fontWeight: 500, marginBottom: 8, color: 'var(--text-primary)' }}>
-          Service / Offer Package
-        </label>
-        <GlassDropdown
-          options={offers.length === 0 ? [{ value: '', label: 'No offer packages found' }] : offers.map((o) => ({ value: o.id, label: o.name }))}
-          value={selectedOffer}
-          onChange={(v) => setSelectedOffer(v)}
-        />
-      </div>
+    <Card>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+          <div className="flex flex-col gap-2">
+            <Label>Service / Offer Package</Label>
+            <Select value={selectedOffer} onValueChange={setSelectedOffer}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select offer" />
+              </SelectTrigger>
+              <SelectContent>
+                {offers.length === 0 ? (
+                  <SelectItem value="" disabled>No offer packages found</SelectItem>
+                ) : (
+                  offers.map((o) => (
+                    <SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>
+                  ))
+                )}
+              </SelectContent>
+            </Select>
+          </div>
 
-      <div>
-        <label style={{ display: 'block', fontSize: 14, fontWeight: 500, marginBottom: 8, color: 'var(--text-primary)' }}>
-          Platforms
-        </label>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-          {(['reels', 'tiktok', 'shorts', 'feed'] as Platform[]).map((p) => {
-            const isSelected = selectedPlatforms.includes(p)
-            return (
-              <button
-                key={p}
-                type="button"
-                onClick={() => togglePlatform(p)}
-                style={{
-                  ...pillBtn,
-                  ...(isSelected ? PLATFORM_COLORS[p] : {}),
-                  borderColor: isSelected ? undefined : 'var(--glass-interactive-border)',
-                  color: isSelected ? PLATFORM_COLORS[p].color : 'var(--text-secondary)',
-                }}
-              >
-                {PLATFORM_LABELS[p]}
-              </button>
-            )
-          })}
-        </div>
-      </div>
+          <div className="flex flex-col gap-2">
+            <Label>Platforms</Label>
+            <div className="flex flex-wrap gap-2">
+              {(['reels', 'tiktok', 'shorts', 'feed'] as Platform[]).map((p) => {
+                const isSelected = selectedPlatforms.includes(p)
+                return (
+                  <Button
+                    key={p}
+                    type="button"
+                    variant={isSelected ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => togglePlatform(p)}
+                  >
+                    {PLATFORM_LABELS[p]}
+                  </Button>
+                )
+              })}
+            </div>
+          </div>
 
-      <div>
-        <label style={{ display: 'block', fontSize: 14, fontWeight: 500, marginBottom: 8, color: 'var(--text-primary)' }}>
-          Hook Style
-        </label>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-          {(['curiosity', 'problem-agitation', 'social-proof', 'direct-offer'] as HookType[]).map((h) => {
-            const isSelected = selectedHooks.includes(h)
-            return (
-              <button
-                key={h}
-                type="button"
-                onClick={() => toggleHook(h)}
-                style={{
-                  ...pillBtn,
-                  ...(isSelected
-                    ? {
-                        background: 'rgba(168, 85, 247, 0.15)',
-                        color: '#a855f7',
-                      }
-                    : {}),
-                }}
-              >
-                {HOOK_LABELS[h]}
-              </button>
-            )
-          })}
-        </div>
-      </div>
+          <div className="flex flex-col gap-2">
+            <Label>Hook Style</Label>
+            <div className="flex flex-wrap gap-2">
+              {(['curiosity', 'problem-agitation', 'social-proof', 'direct-offer'] as HookType[]).map((h) => {
+                const isSelected = selectedHooks.includes(h)
+                return (
+                  <Button
+                    key={h}
+                    type="button"
+                    variant={isSelected ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => toggleHook(h)}
+                  >
+                    {HOOK_LABELS[h]}
+                  </Button>
+                )
+              })}
+            </div>
+          </div>
 
-      <button
-        type="submit"
-        disabled={isGenerating || !selectedOffer || selectedPlatforms.length === 0 || selectedHooks.length === 0}
-        style={{
-          ...accentBtn,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-          justifyContent: 'center',
-          opacity: isGenerating || !selectedOffer || selectedPlatforms.length === 0 || selectedHooks.length === 0 ? 0.5 : 1,
-          cursor: isGenerating || !selectedOffer || selectedPlatforms.length === 0 || selectedHooks.length === 0 ? 'not-allowed' : 'pointer',
-        }}
-        onMouseEnter={(e) => {
-          if (!isGenerating && selectedOffer && selectedPlatforms.length > 0 && selectedHooks.length > 0) {
-            (e.currentTarget as HTMLButtonElement).style.background = 'var(--btn-primary-hover, #E2E8F0)'
-            ;(e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-1px)'
-          }
-        }}
-        onMouseLeave={(e) => {
-          (e.currentTarget as HTMLButtonElement).style.background = 'var(--btn-primary-bg, #F1F5F9)'
-          ;(e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0)'
-        }}
-      >
-        {isGenerating ? (
-          <>
-            <Loader2 size={16} className="animate-spin" />
-            Generating...
-          </>
-        ) : (
-          <>
-            <Film size={16} />
-            Generate Scripts
-          </>
-        )}
-      </button>
-    </form>
+          <Button type="submit" disabled={!canSubmit} className="gap-2">
+            {isGenerating ? (
+              <>
+                <IconLoader2 className="size-4 animate-spin" />
+                Generating...
+              </>
+            ) : (
+              <>
+                <IconMovie className="size-4" />
+                Generate Scripts
+              </>
+            )}
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
   )
 }
 
@@ -519,46 +336,23 @@ function GenerateForm({
 // ---------------------------------------------------------------------------
 
 function HistorySection({ batches, onSelect }: { batches: SavedBatch[]; onSelect: (b: SavedBatch) => void }) {
-  const [hoveredId, setHoveredId] = useState<string | null>(null)
-
   if (batches.length === 0) return null
 
   return (
     <div>
-      <h2 style={S.sectionLabel}>History</h2>
-      <div className="bb-stagger" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <h2 className="mb-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">History</h2>
+      <div className="flex flex-col gap-2">
         {batches.map((b) => (
           <button
             key={b.id}
             onClick={() => onSelect(b)}
-            onMouseEnter={() => setHoveredId(b.id)}
-            onMouseLeave={() => setHoveredId(null)}
-            style={{
-              ...S.listRow,
-              width: '100%',
-              textAlign: 'left',
-              background: hoveredId === b.id ? 'var(--bb-surface-hover)' : 'var(--glass-pill-bg)',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'flex-start',
-            }}
+            className="w-full rounded-lg border bg-card p-4 text-left transition-colors hover:bg-muted/50"
           >
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                width: '100%',
-              }}
-            >
-              <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>
-                {b.offer_name}
-              </span>
-              <span style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
-                {new Date(b.created_at).toLocaleDateString()}
-              </span>
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium">{b.offer_name}</span>
+              <span className="text-xs text-muted-foreground">{new Date(b.created_at).toLocaleDateString()}</span>
             </div>
-            <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 4 }}>
+            <p className="mt-1 text-xs text-muted-foreground">
               {b.scripts.length} script{b.scripts.length !== 1 ? 's' : ''}
               {b.variations.length > 0 ? ` + ${b.variations.length} variations` : ''}
             </p>
@@ -584,7 +378,6 @@ function AdScriptsTab() {
   const [isGenerating, setIsGenerating] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
 
-  // Fetch offers and history
   useEffect(() => {
     async function load() {
       try {
@@ -626,7 +419,6 @@ function AdScriptsTab() {
         variations: data.variations ?? [],
         offerName: data.offerPackageName ?? '',
       })
-      // Refresh history
       const histRes = await fetch('/api/agent/ad-scripts')
       if (histRes.ok) {
         const histData = await histRes.json()
@@ -649,98 +441,52 @@ function AdScriptsTab() {
 
   if (isLoading) {
     return (
-      <TabShell>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 24, padding: 24 }}>
-          <div
-            style={{
-              height: 32,
-              width: 192,
-              borderRadius: 8,
-              background: 'linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.03) 75%)',
-              backgroundSize: '200% 100%',
-              animation: 'shimmer 1.5s ease infinite',
-            }}
-          />
-          <div
-            style={{
-              height: 192,
-              borderRadius: 16,
-              background: 'linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.03) 75%)',
-              backgroundSize: '200% 100%',
-              animation: 'shimmer 1.5s ease infinite',
-            }}
-          />
-        </div>
-      </TabShell>
+      <div className="flex flex-col gap-6 p-6">
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-48 w-full rounded-xl" />
+      </div>
     )
   }
 
   return (
-    <TabShell>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 24, padding: 24 }}>
-        {/* No offers state */}
-        {offers.length === 0 && !currentResult ? (
-          <EmptyState
-            title="No offer packages found"
-            description="Create offer packages or service tiers to generate ad scripts."
-          />
-        ) : (
-          <>
-            {/* Generate Form */}
-            <GenerateForm
-              offers={offers}
-              onGenerate={handleGenerate}
-              isGenerating={isGenerating}
-            />
+    <div className="flex flex-col gap-6 p-6">
+      {offers.length === 0 && !currentResult ? (
+        <Empty>
+          <EmptyHeader>
+            <EmptyTitle>No offer packages found</EmptyTitle>
+            <EmptyDescription>Create offer packages or service tiers to generate ad scripts.</EmptyDescription>
+          </EmptyHeader>
+        </Empty>
+      ) : (
+        <>
+          <GenerateForm offers={offers} onGenerate={handleGenerate} isGenerating={isGenerating} />
 
-            {/* Current result */}
-            {currentResult && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                <h2 style={S.title}>
-                  Scripts for {currentResult.offerName}
-                </h2>
-
-                <div
-                  className="bb-stagger"
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))',
-                    gap: 16,
-                  }}
-                >
-                  {currentResult.scripts.map((script, i) => (
-                    <ScriptCard key={`${script.platform}-${script.hookType}-${i}`} script={script} />
-                  ))}
-                </div>
-
-                {currentResult.variations.length > 0 && (
-                  <>
-                    <h3 style={{ ...S.title, color: C.textSecondary, marginTop: 8 }}>
-                      A/B Variations
-                    </h3>
-                    <div
-                      className="bb-stagger"
-                      style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-                        gap: 16,
-                      }}
-                    >
-                      {currentResult.variations.map((v, i) => (
-                        <VariationCard key={`var-${i}`} variation={v} />
-                      ))}
-                    </div>
-                  </>
-                )}
+          {currentResult && (
+            <div className="flex flex-col gap-4">
+              <h2 className="text-lg font-semibold">Scripts for {currentResult.offerName}</h2>
+              <div className="grid gap-4 lg:grid-cols-2">
+                {currentResult.scripts.map((script, i) => (
+                  <ScriptCard key={`${script.platform}-${script.hookType}-${i}`} script={script} />
+                ))}
               </div>
-            )}
 
-            {/* History */}
-            <HistorySection batches={batches} onSelect={handleSelectBatch} />
-          </>
-        )}
-      </div>
-    </TabShell>
+              {currentResult.variations.length > 0 && (
+                <>
+                  <h3 className="mt-2 text-base font-medium text-muted-foreground">A/B Variations</h3>
+                  <div className="grid gap-4 lg:grid-cols-2">
+                    {currentResult.variations.map((v, i) => (
+                      <VariationCard key={`var-${i}`} variation={v} />
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
+          <HistorySection batches={batches} onSelect={handleSelectBatch} />
+        </>
+      )}
+    </div>
   )
 }
 

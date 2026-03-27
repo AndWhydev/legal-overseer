@@ -21,6 +21,7 @@ import { KanbanToolbar, type FilterState } from './kanban-toolbar'
 import { KanbanActivityStrip } from './kanban-activity-strip'
 import { CompletionAnimation } from './completion-animation'
 import { TaskDialog } from './task-dialog'
+import { Button } from '@/components/ui/button'
 import type { Task, KanbanColumn as ColumnType } from '@/lib/types'
 import { useRealtime } from '@/hooks/use-realtime'
 
@@ -38,8 +39,6 @@ interface UndoToastState {
 }
 
 export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: KanbanBoardProps) {
-  // Deduplicate columns by title (case-insensitive) to prevent duplicates from being rendered
-  // Database may contain duplicate columns with different IDs but same title
   const deduplicatedColumns = useMemo(() => {
     const seen = new Set<string>()
     return initialColumns.filter(col => {
@@ -57,12 +56,10 @@ export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: Kanb
   const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [defaultColumnId, setDefaultColumnId] = useState<string | undefined>()
 
-  // Filter + search state
   const [filters, setFilters] = useState<FilterState>({ priority: null, source: 'all' })
   const [searchQuery, setSearchQuery] = useState('')
   const searchInputRef = useRef<HTMLInputElement | null>(null)
 
-  // Completion animation state
   const [completionAnim, setCompletionAnim] = useState<{
     trigger: boolean
     x: number
@@ -70,7 +67,6 @@ export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: Kanb
     variant: 'checkmark' | 'confetti' | 'ripple'
   }>({ trigger: false, x: 0, y: 0, variant: 'checkmark' })
 
-  // Undo toast state
   const [undoToast, setUndoToast] = useState<UndoToastState>({
     visible: false,
     message: '',
@@ -84,12 +80,10 @@ export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: Kanb
   const lastOverColumnRef = useRef<string | null>(null)
   const overlayRef = useRef<HTMLDivElement>(null)
 
-  // Resolve the "done" column — explicit prop, or guess by title
   const resolvedDoneId = doneColumnId ?? columns.find(
     (c) => c.title?.toLowerCase() === 'done'
   )?.id
 
-  // Filtered tasks (display-only — DnD always uses full `tasks`)
   const filteredTasks = useMemo(() => {
     let result = tasks
     if (filters.priority) {
@@ -143,7 +137,6 @@ export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: Kanb
         const newTask = payload.new as Task
         setTasks((prev) => {
           if (prev.some((t) => t.id === newTask.id)) return prev
-          // Replace temp task if matching title+column
           const tempIdx = prev.findIndex(t =>
             t.id.startsWith('temp-') && t.title === newTask.title && t.column_id === newTask.column_id
           )
@@ -174,7 +167,6 @@ export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: Kanb
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
   )
 
-  // Pointer-first collision: use cursor position, fall back to closest corners when between gaps
   const collisionDetection: CollisionDetection = useCallback((args) => {
     const pointerHits = pointerWithin(args)
     if (pointerHits.length > 0) return pointerHits
@@ -193,18 +185,14 @@ export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: Kanb
 
   function handleDragStart(event: DragStartEvent) {
     draggingRef.current = true
-    // Measure the source card's width
     const el = (event.activatorEvent as PointerEvent).target as HTMLElement | null
     const card = el?.closest?.('.card-lift') as HTMLElement | null
     const w = card?.offsetWidth ?? 0
     activeWidthRef.current = w
     lastOverColumnRef.current = null
-    // Compute the expanded (flex:1) card width for all columns.
-    // When a column expands from collapsed, it becomes flex:1 like the others.
-    // Find any populated column's card width — that's the expanded target.
     const populatedCol = document.querySelector('[data-col-id].kanban-col-populated') as HTMLElement | null
     expandedColWidthRef.current = populatedCol
-      ? populatedCol.clientWidth - 12  // minus 6px padding each side
+      ? populatedCol.clientWidth - 12
       : w
     const task = tasks.find((t) => t.id === event.active.id)
     if (task) setActiveTask(task)
@@ -223,7 +211,6 @@ export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: Kanb
     const isValidColumn = columns.some((c) => c.id === targetColumnId)
     if (!isValidColumn || !targetColumnId) return
 
-    // Skip if we already moved to this column — prevents re-render loops
     if (lastOverColumnRef.current === targetColumnId) return
     lastOverColumnRef.current = targetColumnId
 
@@ -235,7 +222,6 @@ export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: Kanb
       )
     })
 
-    // Resize overlay via direct DOM mutation — zero re-renders
     const targetWidth = expandedColWidthRef.current
     if (targetWidth > 0 && overlayRef.current) {
       overlayRef.current.style.width = `${targetWidth}px`
@@ -260,7 +246,6 @@ export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: Kanb
 
     let updatedTasks = tasks
 
-    // Same column reorder
     if (overTaskItem && activeTaskItem.column_id === overTaskItem.column_id && activeId !== overId) {
       const columnTasks = tasks
         .filter((t) => t.column_id === activeTaskItem.column_id)
@@ -279,9 +264,6 @@ export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: Kanb
       setTasks(updatedTasks)
     }
 
-    // Completion animation removed — keep drag experience clean and fast
-
-    // Persist changes
     const changedTasks = updatedTasks.filter((t) => {
       const original = initialTasks.find((o) => o.id === t.id)
       return !original || original.column_id !== t.column_id || original.position !== t.position
@@ -331,13 +313,10 @@ export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: Kanb
   }, [])
 
   const handleArchiveTask = useCallback(function handleArchiveTask(task: Task) {
-    // Clear any existing timeout
     if (undoToast.timeoutId) clearTimeout(undoToast.timeoutId)
 
-    // Remove from UI immediately
     setTasks((prev) => prev.filter((t) => t.id !== task.id))
 
-    // Show undo toast with 5-second auto-dismiss
     const timeoutId = setTimeout(() => {
       setUndoToast({ visible: false, message: '', task: null, timeoutId: null })
     }, 5000)
@@ -349,7 +328,6 @@ export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: Kanb
       timeoutId,
     })
 
-    // Persist archive to backend
     fetch(`/api/tasks/${task.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -362,19 +340,15 @@ export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: Kanb
     const { task } = undoToast
     if (!task) return
 
-    // Clear timeout
     if (undoToast.timeoutId) clearTimeout(undoToast.timeoutId)
 
-    // Restore task to board
     setTasks((prev) => {
       if (prev.some((t) => t.id === task.id)) return prev
       return [...prev, task]
     })
 
-    // Hide toast
     setUndoToast({ visible: false, message: '', task: null, timeoutId: null })
 
-    // Restore in backend
     fetch(`/api/tasks/${task.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -452,7 +426,7 @@ export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: Kanb
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+    <div className="flex h-full flex-col">
       <KanbanToolbar
         totalCount={tasks.length}
         overdueCount={overdueCount}
@@ -475,7 +449,7 @@ export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: Kanb
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
       >
-        <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 8, flex: 1, minHeight: 0, alignItems: 'stretch' }}>
+        <div className="flex min-h-0 flex-1 items-stretch gap-2 overflow-x-auto pb-2">
           {columns
             .sort((a, b) => a.position - b.position)
             .map((column) => (
@@ -489,17 +463,14 @@ export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: Kanb
                 onArchiveTask={handleArchiveTask}
               />
             ))}
-
         </div>
 
         <DragOverlay dropAnimation={{ duration: 150, easing: 'cubic-bezier(0.2, 0, 0, 1)' }}>
           {activeTask ? (
             <div
               ref={overlayRef}
-              style={{
-                width: activeWidthRef.current || undefined,
-                transition: 'width 0.15s cubic-bezier(0.25, 0.1, 0.25, 1)',
-              }}
+              className="transition-[width] duration-150"
+              style={{ width: activeWidthRef.current || undefined }}
             >
               <KanbanCard task={{ ...activeTask, id: `_overlay_` }} />
             </div>
@@ -517,55 +488,17 @@ export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: Kanb
 
       {/* Undo Archive Toast */}
       {undoToast.visible && (
-        <div
-          style={{
-            position: 'fixed',
-            bottom: 24,
-            left: '50%',
-            transform: 'translateX(-50%)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 12,
-            padding: '12px 16px',
-            borderRadius: 12,
-            background: 'var(--glass-bg-heavy)',
-            backdropFilter: 'var(--glass-blur)',
-            WebkitBackdropFilter: 'var(--glass-blur)',
-            boxShadow: 'var(--card-shadow-hover), var(--card-inset)',
-            zIndex: 1000,
-            animation: 'slide-up 0.3s ease-out',
-            minWidth: 280,
-            justifyContent: 'space-between',
-          }}
-        >
-          <span style={{
-            fontSize: 14,
-            fontWeight: 500,
-            color: 'var(--text-secondary)',
-            flex: 1,
-          }}>
+        <div className="fixed bottom-6 left-1/2 z-50 flex min-w-[280px] -translate-x-1/2 items-center gap-3 rounded-lg border border-border bg-popover p-3 shadow-lg animate-in slide-in-from-bottom-2">
+          <span className="flex-1 text-sm font-medium text-popover-foreground">
             {undoToast.message}
           </span>
-          <button
+          <Button
+            variant="secondary"
+            size="sm"
             onClick={handleUndoArchive}
-            style={{
-              background: 'var(--hover-bg-strong)',
-              border: 'none',
-              borderRadius: 8,
-              padding: '8px 12px',
-              fontSize: 14,
-              fontWeight: 500,
-              color: 'var(--text-primary)',
-              cursor: 'pointer',
-              flexShrink: 0,
-              transition: 'background 0.15s ease',
-              fontFamily: 'inherit',
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--border-active)' }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--hover-bg-strong)' }}
           >
             Undo
-          </button>
+          </Button>
         </div>
       )}
 
@@ -574,20 +507,6 @@ export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: Kanb
         @keyframes bb-agent-pulse {
           0%, 100% { opacity: 1; transform: scale(1); }
           50% { opacity: 0.4; transform: scale(0.85); }
-        }
-        @keyframes bb-card-breathe {
-          0%, 100% { box-shadow: var(--card-shadow, 0 1px 4px rgba(0,0,0,0.12)), 0 0 12px rgba(148, 163, 184, 0.03); }
-          50% { box-shadow: var(--card-shadow, 0 1px 4px rgba(0,0,0,0.12)), 0 0 12px rgba(148, 163, 184, 0.08); }
-        }
-        @keyframes slide-up {
-          from {
-            opacity: 0;
-            transform: translateX(-50%) translateY(16px);
-          }
-          to {
-            opacity: 1;
-            transform: translateX(-50%) translateY(0);
-          }
         }
       `}</style>
 

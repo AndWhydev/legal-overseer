@@ -1,87 +1,13 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Zap } from 'lucide-react';
+import { IconBolt } from '@tabler/icons-react';
 import { SwarmRunCard } from './swarm-run-card';
 import { SwarmRunDetail } from './swarm-run-detail';
 import { SwarmTriggerInput } from './swarm-trigger-input';
 import { EmptyState } from '@/components/ui/empty-state';
-import { S, C } from '@/lib/styles/design-tokens';
+import { Button } from '@/components/ui/button';
 import type { SwarmRunRow } from '@/lib/swarm/types';
-
-// ── Styles ──────────────────────────────────────────────────────────────────
-
-const styles = {
-  container: {
-    display: 'flex',
-    flexDirection: 'column' as const,
-    gap: '24px',
-    padding: '24px',
-    height: '100%',
-    overflow: 'auto',
-  },
-  header: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: '16px',
-  },
-  title: {
-    fontSize: '16px',
-    fontWeight: 500,
-    color: C.textPrimary,
-    letterSpacing: '-0.02em',
-  },
-  subtitle: {
-    fontSize: '14px',
-    color: C.textSecondary,
-    marginTop: '2px',
-  },
-  filterRow: {
-    display: 'flex',
-    gap: '8px',
-    flexWrap: 'wrap' as const,
-  },
-  filterButton: (active: boolean) => ({
-    padding: '8px 16px',
-    borderRadius: '9999px',
-    fontSize: '14px',
-    fontWeight: 500,
-    cursor: 'pointer',
-    border: 'none',
-    transition: 'all 0.15s ease',
-    background: active ? 'var(--hover-bg-strong)' : 'var(--hover-bg)',
-    color: active ? C.textPrimary : C.textPlaceholder,
-  }),
-  runsList: {
-    display: 'flex',
-    flexDirection: 'column' as const,
-    gap: '12px',
-  },
-  emptyState: {
-    display: 'flex',
-    flexDirection: 'column' as const,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: '60px 24px',
-    gap: '12px',
-  },
-  emptyIcon: {
-    fontSize: '16px',
-    opacity: 0.4,
-  },
-  emptyText: {
-    fontSize: '14px',
-    color: C.textSecondary,
-    textAlign: 'center' as const,
-  },
-  emptyHint: {
-    fontSize: '14px',
-    color: C.textMuted,
-    textAlign: 'center' as const,
-    maxWidth: '400px',
-  },
-};
 
 // ── Filters ─────────────────────────────────────────────────────────────────
 
@@ -127,7 +53,6 @@ export function SwarmDashboard() {
 
   useEffect(() => {
     fetchRuns();
-    // Poll every 10s for active swarms
     const interval = setInterval(fetchRuns, 10000);
     return () => clearInterval(interval);
   }, [fetchRuns]);
@@ -169,42 +94,44 @@ export function SwarmDashboard() {
   }
 
   return (
-    <div style={styles.container}>
+    <div className="flex flex-col gap-6 p-6 h-full overflow-auto">
       {/* Header */}
-      <div style={styles.header}>
-        <div>
-          <div style={styles.title}>Agent Swarms</div>
-          <div style={styles.subtitle}>
-            Coordinate multi-agent teams for complex operations
-          </div>
-        </div>
+      <div>
+        <h2 className="text-base font-medium text-foreground tracking-tight">
+          Agent Swarms
+        </h2>
+        <p className="text-sm text-muted-foreground mt-0.5">
+          Coordinate multi-agent teams for complex operations
+        </p>
       </div>
 
       {/* Trigger Input */}
       <SwarmTriggerInput onTrigger={handleTrigger} />
 
       {/* Filters */}
-      <div style={styles.filterRow}>
+      <div className="flex gap-2 flex-wrap">
         {FILTER_OPTIONS.map(opt => (
-          <button
+          <Button
             key={opt.id}
-            style={styles.filterButton(filter === opt.id)}
+            variant={filter === opt.id ? 'secondary' : 'ghost'}
+            size="sm"
+            className={`rounded-full ${filter !== opt.id ? 'text-muted-foreground' : ''}`}
             onClick={() => setFilter(opt.id)}
           >
             {opt.label}
-          </button>
+          </Button>
         ))}
       </div>
 
       {/* Runs List */}
-      <div style={styles.runsList}>
+      <div className="flex flex-col gap-3">
         {loading ? (
-          <div style={styles.emptyState}>
-            <div style={styles.emptyText}>Loading swarms...</div>
+          <div className="text-center py-16 text-muted-foreground text-sm">
+            Loading swarms...
           </div>
         ) : runs.length === 0 ? (
           <EmptyState
-            icon={<Zap size={24} />}
+            icon={<IconBolt size={24} />}
             title="No swarm activity"
             description="Lead Swarm automatically qualifies and routes incoming leads. Activity appears here as leads come in."
             action={{

@@ -2,16 +2,18 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import type { SwarmRun } from '@/lib/swarm/types'
-import { S, C } from '@/lib/styles/design-tokens'
+import { Card, CardContent } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 
-const STATUS_COLORS: Record<string, string> = {
-  pending: '#F59E0B',
-  running: '#3B82F6',
-  paused: '#8B5CF6',
-  completed: '#22C55E',
-  failed: '#EF4444',
-  cancelled: C.textMuted,
-  rolling_back: '#EC4899',
+const STATUS_VARIANT: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
+  pending: 'outline',
+  running: 'default',
+  paused: 'secondary',
+  completed: 'secondary',
+  failed: 'destructive',
+  cancelled: 'outline',
+  rolling_back: 'destructive',
 }
 
 const STATUS_LABELS: Record<string, string> = {
@@ -48,143 +50,91 @@ export function SwarmList({ onSelectRun }: SwarmListProps) {
 
   useEffect(() => {
     fetchRuns()
-    const interval = setInterval(fetchRuns, 5000) // Poll for updates
+    const interval = setInterval(fetchRuns, 5000)
     return () => clearInterval(interval)
   }, [fetchRuns])
 
   const formatTime = (iso: string | null) => {
-    if (!iso) return '—'
+    if (!iso) return '--'
     const d = new Date(iso)
     return d.toLocaleString('en-AU', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
   }
 
   const formatCost = (cents: number) => {
-    if (cents === 0) return '—'
+    if (cents === 0) return '--'
     return `$${(cents / 100).toFixed(2)}`
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+    <div className="flex flex-col gap-4">
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h2 style={{ fontSize: '16px', fontWeight: 500, color: C.textPrimary, margin: 0 }}>
+      <div className="flex justify-between items-center">
+        <h2 className="text-base font-medium text-foreground">
           Agent Swarms
         </h2>
-        <div style={{ display: 'flex', gap: '6px' }}>
+        <div className="flex gap-1.5">
           {[null, 'running', 'completed', 'failed'].map(s => (
-            <button
+            <Button
               key={s ?? 'all'}
+              variant={filter === s ? 'secondary' : 'ghost'}
+              size="sm"
               onClick={() => setFilter(s)}
-              style={{
-                padding: '4px 12px',
-                borderRadius: '8px',
-                border: 'none',
-                fontSize: '14px',
-                fontWeight: 500,
-                cursor: 'pointer',
-                background: filter === s ? 'var(--hover-bg-strong)' : 'var(--hover-bg)',
-                color: filter === s ? '#F1F5F9' : C.textPlaceholder,
-                transition: 'all 0.15s',
-              }}
+              className={filter === s ? '' : 'text-muted-foreground'}
             >
               {s === null ? 'All' : STATUS_LABELS[s]}
-            </button>
+            </Button>
           ))}
         </div>
       </div>
 
       {/* List */}
       {loading ? (
-        <div style={{ textAlign: 'center', padding: '40px', color: C.textDim }}>
+        <div className="text-center py-10 text-muted-foreground text-sm">
           Loading swarms...
         </div>
       ) : runs.length === 0 ? (
-        <div style={{
-          textAlign: 'center',
-          padding: '60px 20px',
-          color: C.textDim,
-          background: 'var(--bg-card, rgba(15,20,30,0.35))',
-          borderRadius: '12px',
-          backdropFilter: 'blur(20px)',
-        }}>
-          <div style={{ fontSize: '16px', marginBottom: '12px' }}>No swarms yet</div>
-          <p style={{ fontSize: '14px', maxWidth: '300px', margin: '0 auto' }}>
-            Trigger a swarm from chat: &quot;Prepare for Thomson pitch&quot; or &quot;Onboard Acme Corp&quot;
-          </p>
-        </div>
+        <Card>
+          <CardContent className="text-center py-16">
+            <p className="text-base text-muted-foreground mb-3">No swarms yet</p>
+            <p className="text-sm text-muted-foreground/70 max-w-[300px] mx-auto">
+              Trigger a swarm from chat: &quot;Prepare for Thomson pitch&quot; or &quot;Onboard Acme Corp&quot;
+            </p>
+          </CardContent>
+        </Card>
       ) : (
-        <div className="bb-stagger" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <div className="flex flex-col gap-2">
           {runs.map(run => (
             <button
               key={run.id}
-              className="bb-lift"
               onClick={() => onSelectRun?.(run.id)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                padding: '14px 16px',
-                background: 'var(--bg-card, rgba(15,20,30,0.35))',
-                backdropFilter: 'blur(20px)',
-                borderRadius: '12px',
-                border: 'none',
-                cursor: 'pointer',
-                textAlign: 'left',
-                width: '100%',
-                transition: 'background 0.15s',
-              }}
-              onMouseEnter={e => (e.currentTarget.style.background = 'rgba(20,28,40,0.7)')}
-              onMouseLeave={e => (e.currentTarget.style.background = 'rgba(15,20,30,0.35)')}
+              className="flex items-center gap-3 px-4 py-3.5 rounded-xl border border-border bg-card/80 backdrop-blur-sm hover:bg-muted/50 cursor-pointer text-left w-full transition-colors"
             >
               {/* Status dot */}
-              <div style={{
-                width: '8px',
-                height: '8px',
-                borderRadius: '50%',
-                background: STATUS_COLORS[run.status] ?? '#666',
-                boxShadow: run.status === 'running' ? `0 0 8px ${STATUS_COLORS.running}` : undefined,
-                flexShrink: 0,
-              }} />
+              <div className={`w-2 h-2 rounded-full shrink-0 ${
+                run.status === 'running' ? 'bg-primary shadow-[0_0_8px_var(--primary)]' :
+                run.status === 'completed' ? 'bg-emerald-500' :
+                run.status === 'failed' ? 'bg-destructive' :
+                run.status === 'pending' ? 'bg-amber-500' :
+                'bg-muted-foreground'
+              }`} />
 
               {/* Info */}
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{
-                  fontSize: '14px',
-                  fontWeight: 500,
-                  color: C.textPrimary,
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                }}>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-medium text-foreground overflow-hidden text-ellipsis whitespace-nowrap">
                   {run.name}
                 </div>
-                <div style={{ fontSize: '14px', color: C.textDim, marginTop: '2px' }}>
+                <div className="text-xs text-muted-foreground mt-0.5">
                   {formatTime(run.created_at)} · {run.triggered_by}
                 </div>
               </div>
 
               {/* Status badge */}
-              <div style={{
-                padding: '4px 8px',
-                borderRadius: '8px',
-                fontSize: '14px',
-                fontWeight: 500,
-                textTransform: 'uppercase',
-                letterSpacing: '0.5px',
-                color: STATUS_COLORS[run.status] ?? '#666',
-                background: `${STATUS_COLORS[run.status] ?? '#666'}15`,
-              }}>
+              <Badge variant={STATUS_VARIANT[run.status] ?? 'outline'}>
                 {STATUS_LABELS[run.status] ?? run.status}
-              </div>
+              </Badge>
 
               {/* Cost */}
-              <div style={{
-                fontSize: '14px',
-                color: C.textMuted,
-                fontFamily: 'var(--font-mono, monospace)',
-                minWidth: '50px',
-                textAlign: 'right',
-              }}>
+              <div className="text-xs text-muted-foreground font-mono min-w-[50px] text-right">
                 {formatCost(run.total_cost_cents ?? run.total_cost ?? 0)}
               </div>
             </button>

@@ -1,7 +1,14 @@
 'use client';
 
 import React, { useEffect } from 'react';
-import { X } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 
 interface ShortcutItem {
   keys: string[];
@@ -11,8 +18,8 @@ interface ShortcutItem {
 
 const SHORTCUTS: ShortcutItem[] = [
   // Navigation
-  { keys: ['j', '↓'], description: 'Next message', category: 'Navigation' },
-  { keys: ['k', '↑'], description: 'Previous message', category: 'Navigation' },
+  { keys: ['j', '\u2193'], description: 'Next message', category: 'Navigation' },
+  { keys: ['k', '\u2191'], description: 'Previous message', category: 'Navigation' },
   { keys: ['Enter', 'o'], description: 'Open message', category: 'Navigation' },
   { keys: ['g', 'i'], description: 'Go to inbox', category: 'Navigation' },
 
@@ -52,133 +59,6 @@ export interface InboxShortcutsOverlayProps {
 }
 
 export function InboxShortcutsOverlay({ isOpen, onClose }: InboxShortcutsOverlayProps) {
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        onClose();
-      }
-    };
-
-    document.addEventListener('keydown', handleEscape);
-    return () => document.removeEventListener('keydown', handleEscape);
-  }, [isOpen, onClose]);
-
-  if (!isOpen) return null;
-
-  const overlayStyle: React.CSSProperties = {
-    position: 'fixed',
-    inset: 0,
-    zIndex: 100,
-    background: 'rgba(0, 0, 0, 0.6)',
-    backdropFilter: 'blur(6px)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    animation: 'fadeIn 0.2s ease',
-  };
-
-  const cardStyle: React.CSSProperties = {
-    position: 'relative',
-    width: '90vw',
-    maxWidth: 900,
-    maxHeight: '90vh',
-    overflowY: 'auto',
-    borderRadius: 16,
-    background: 'rgba(20, 20, 22, 0.95)',
-    backdropFilter: 'blur(20px)',
-    border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
-    boxShadow: '0 20px 80px rgba(0, 0, 0, 0.5)',
-    padding: '32px',
-  };
-
-  const headerStyle: React.CSSProperties = {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 32,
-    paddingBottom: 16,
-    borderBottom: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
-  };
-
-  const titleStyle: React.CSSProperties = {
-    fontSize: 16,
-    fontWeight: 500,
-    color: 'var(--text-primary, rgba(255, 255, 255, 0.95))',
-    margin: 0,
-  };
-
-  const closeButtonStyle: React.CSSProperties = {
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: 36,
-    height: 36,
-    borderRadius: 8,
-    border: 'none',
-    background: 'var(--hover-bg-strong, rgba(255, 255, 255, 0.06))',
-    color: 'var(--text-secondary, rgba(255, 255, 255, 0.6))',
-    cursor: 'pointer',
-    transition: 'all 0.15s ease',
-  };
-
-  const categoryContainerStyle: React.CSSProperties = {
-    marginBottom: 40,
-  };
-
-  const categoryTitleStyle: React.CSSProperties = {
-    fontSize: 14,
-    fontWeight: 500,
-    textTransform: 'uppercase',
-    letterSpacing: '0.04em',
-    color: 'var(--text-dim, rgba(255, 255, 255, 0.4))',
-    marginBottom: 16,
-    display: 'block',
-  };
-
-  const gridStyle: React.CSSProperties = {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-    gap: 12,
-  };
-
-  const rowStyle: React.CSSProperties = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 12,
-    padding: '8px 12px',
-    borderRadius: 8,
-    background: 'var(--hover-bg, rgba(255, 255, 255, 0.02))',
-    border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
-    transition: 'all 0.15s ease',
-  };
-
-  const keyStyle: React.CSSProperties = {
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: 4,
-  };
-
-  const keyPillStyle: React.CSSProperties = {
-    padding: '4px 8px',
-    borderRadius: 4,
-    background: 'var(--hover-bg-strong, rgba(255, 255, 255, 0.08))',
-    border: '1px solid var(--border-active, rgba(255, 255, 255, 0.1))',
-    color: 'var(--text-primary, rgba(255, 255, 255, 0.8))',
-    fontSize: 14,
-    fontWeight: 500,
-    fontFamily: 'ui-monospace, Menlo, Monaco, monospace',
-    whiteSpace: 'nowrap',
-  };
-
-  const descriptionStyle: React.CSSProperties = {
-    fontSize: 14,
-    color: 'var(--text-secondary, rgba(255, 255, 255, 0.6))',
-    flex: 1,
-  };
-
   // Group shortcuts by category
   const grouped = SHORTCUTS.reduce(
     (acc, shortcut) => {
@@ -196,68 +76,47 @@ export function InboxShortcutsOverlay({ isOpen, onClose }: InboxShortcutsOverlay
   );
 
   return (
-    <>
-      <div style={overlayStyle} onClick={onClose} aria-hidden="true" />
-      <div
-        role="dialog"
-        aria-label="Keyboard shortcuts"
-        aria-modal="true"
-        style={cardStyle}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div style={headerStyle}>
-          <h2 style={titleStyle}>Keyboard Shortcuts</h2>
-          <button
-            style={closeButtonStyle}
-            onClick={onClose}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'var(--hover-bg-strong, rgba(255, 255, 255, 0.12))';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'var(--hover-bg-strong, rgba(255, 255, 255, 0.06))';
-            }}
-            aria-label="Close shortcuts overlay"
-          >
-            <X size={18} />
-          </button>
-        </div>
+    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto" showCloseButton>
+        <DialogHeader>
+          <DialogTitle>Keyboard Shortcuts</DialogTitle>
+        </DialogHeader>
 
-        {sortedCategories.map((category) => (
-          <div key={category} style={categoryContainerStyle}>
-            <span style={categoryTitleStyle}>{category}</span>
-            <div style={gridStyle}>
-              {grouped[category].map((shortcut, idx) => (
-                <div key={`${category}-${idx}`} style={rowStyle}>
-                  <div style={keyStyle}>
-                    {shortcut.keys.map((key, keyIdx) => (
-                      <React.Fragment key={keyIdx}>
-                        <span style={keyPillStyle}>{key}</span>
-                        {keyIdx < shortcut.keys.length - 1 && (
-                          <span style={{ color: 'var(--text-dim, rgba(255, 255, 255, 0.3))', fontSize: 14 }}>
-                            +
-                          </span>
-                        )}
-                      </React.Fragment>
-                    ))}
+        <div className="flex flex-col gap-6">
+          {sortedCategories.map((category, catIdx) => (
+            <div key={category}>
+              {catIdx > 0 && <Separator className="mb-4" />}
+              <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-3">
+                {category}
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {grouped[category].map((shortcut, idx) => (
+                  <div
+                    key={`${category}-${idx}`}
+                    className="flex items-center gap-3 rounded-lg border border-border bg-muted/30 px-3 py-2"
+                  >
+                    <div className="flex items-center gap-1">
+                      {shortcut.keys.map((key, keyIdx) => (
+                        <React.Fragment key={keyIdx}>
+                          <kbd className="inline-flex items-center rounded border border-border bg-background px-1.5 py-0.5 text-xs font-mono font-medium text-foreground">
+                            {key}
+                          </kbd>
+                          {keyIdx < shortcut.keys.length - 1 && (
+                            <span className="text-xs text-muted-foreground">+</span>
+                          )}
+                        </React.Fragment>
+                      ))}
+                    </div>
+                    <span className="text-sm text-muted-foreground flex-1">
+                      {shortcut.description}
+                    </span>
                   </div>
-                  <span style={descriptionStyle}>{shortcut.description}</span>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
-        ))}
-
-        <style>{`
-          @keyframes fadeIn {
-            from {
-              opacity: 0;
-            }
-            to {
-              opacity: 1;
-            }
-          }
-        `}</style>
-      </div>
-    </>
+          ))}
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
