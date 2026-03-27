@@ -279,7 +279,7 @@ export function SidebarNav({
   const email = userEmail || resolvedEmail;
 
   return (
-    <Sidebar collapsible="icon" className="border-r border-sidebar-border">
+    <Sidebar collapsible="icon" variant="inset">
       {/* Header: BitBit + Org Switcher (single button) */}
       <SidebarHeader>
         <SidebarMenu>
@@ -287,7 +287,7 @@ export function SidebarNav({
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <SidebarMenuButton size="lg" className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
-                  <div className="flex size-8 items-center justify-center rounded-lg overflow-hidden">
+                  <div className="flex size-8 shrink-0 items-center justify-center rounded-lg overflow-hidden bg-sidebar-primary">
                     <Image
                       src="/bitbit-app-icon.png"
                       alt="BitBit"

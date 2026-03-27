@@ -365,6 +365,10 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
           <SidebarProvider
             defaultOpen={true}
             data-focus-mode={focusMode || undefined}
+            style={{
+              '--sidebar-width': 'calc(var(--spacing) * 72)',
+              '--header-height': 'calc(var(--spacing) * 12)',
+            } as React.CSSProperties}
           >
             {/* Sidebar (desktop/tablet) */}
             <SidebarNav
@@ -392,7 +396,7 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
                 }
 
                 return (
-                  <header className="bb-topbar-area flex h-12 shrink-0 items-center gap-2 border-b border-border bg-background/95 backdrop-blur-sm supports-[backdrop-filter]:bg-background/60 px-4">
+                  <header className="flex h-(--header-height) shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height) px-4 lg:px-6">
                     <SidebarTrigger className="-ml-1" />
                     <Separator orientation="vertical" className="mr-2 h-4" />
                     <div className="flex-1">
