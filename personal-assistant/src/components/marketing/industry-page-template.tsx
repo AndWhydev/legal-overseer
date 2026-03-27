@@ -3,7 +3,6 @@
 import Link from 'next/link'
 import Footer from '@/components/marketing/footer'
 import { Button } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
 import type { ComponentType } from 'react'
 
 interface PainPoint {
@@ -38,15 +37,12 @@ export default function IndustryPageTemplate({
   tierPrice,
 }: IndustryPageProps) {
   return (
-    <div className="overflow-hidden bg-[#0a0a0f] text-foreground">
+    <div className="overflow-hidden bg-background text-foreground">
       {/* Hero Banner */}
       <section className="relative overflow-hidden bg-gradient-to-br from-[#0a0a0f] via-[#0f1419] to-[#141a23] px-5 pb-20 pt-[120px]">
         {/* Subtle background orb */}
         <div
-          className="pointer-events-none absolute -right-[15%] -top-[30%] h-[500px] w-[500px] rounded-full blur-[80px]"
-          style={{
-            background: 'radial-gradient(circle, rgba(255, 255, 255, 0.04) 0%, transparent 70%)',
-          }}
+          className="pointer-events-none absolute -right-[15%] -top-[30%] h-[500px] w-[500px] rounded-full bg-foreground/[0.04] blur-[80px]"
         />
 
         <div className="relative z-10 mx-auto max-w-[800px]">

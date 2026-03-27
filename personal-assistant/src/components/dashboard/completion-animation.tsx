@@ -49,7 +49,7 @@ function CheckmarkAnimation() {
       {CHECK_PARTICLES.map((p, i) => (
         <div
           key={i}
-          className="absolute left-1/2 top-1/2 h-1.5 w-1.5 rounded-full bg-[#D4A574] animate-particle"
+          className="absolute left-1/2 top-1/2 h-1.5 w-1.5 rounded-full bg-foreground animate-particle"
           style={{
             '--tx': p.tx,
             '--ty': p.ty,

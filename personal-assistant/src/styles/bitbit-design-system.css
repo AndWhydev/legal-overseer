@@ -2968,7 +2968,7 @@ html.light .bb-inbox-row__tag--spam {
   height: 20px;
   padding: 0 6px;
   border-radius: 10px;
-  background: var(--bb-orange, #FF5A1F);
+  background: var(--primary, #171717);
   color: #fff;
   font-size: 11px;
   font-weight: 700;
@@ -7263,7 +7263,7 @@ html.light .bb-chat__scroll-btn {
 
 .bb-chat__tc-icon--spin {
   animation: spin 1s linear infinite;
-  color: #FF5A1F;
+  color: var(--primary, #171717);
 }
 
 .bb-chat__tc-icon--done {
@@ -7759,7 +7759,7 @@ html.light .bb-chat__markdown a:hover {
   padding: 10px 24px;
   border-radius: 10px;
   border: none;
-  background: var(--bb-orange, #FF5A1F);
+  background: var(--primary, #171717);
   color: white;
   cursor: pointer;
   font-size: 14px;
@@ -7919,7 +7919,7 @@ html.light .bb-chat__markdown a:hover {
   padding: 6px 16px;
   border-radius: 8px;
   border: none;
-  background: var(--bb-orange, #FF5A1F);
+  background: var(--primary, #171717);
   color: white;
   cursor: pointer;
   font-size: 13px;

@@ -156,7 +156,7 @@ export function ReportList({ onRefresh }: { onRefresh?: () => void }) {
           type="button"
           onClick={handleRefresh}
           disabled={isRefreshing}
-          className="rounded-md border border-border bg-secondary px-2 py-1.5 text-xs font-medium text-foreground hover:bg-secondary/80 disabled:opacity-60"
+          className="rounded-lg border border-border bg-secondary px-2 py-1.5 text-xs font-medium text-foreground hover:bg-secondary/80 disabled:opacity-60"
         >
           <IconRefresh className={`inline-block h-3 w-3 ${isRefreshing ? 'animate-spin' : ''}`} />
         </button>

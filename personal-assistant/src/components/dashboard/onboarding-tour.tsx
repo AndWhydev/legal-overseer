@@ -153,7 +153,7 @@ export function OnboardingTour({ onNavigate }: OnboardingTourProps) {
         className="fixed left-1/2 top-1/2 z-[9999] box-border w-full max-w-[420px] -translate-x-1/2 -translate-y-1/2 px-4"
       >
         <div
-          className="rounded-2xl border border-border bg-card p-8 shadow-2xl backdrop-blur-3xl"
+          className="rounded-xl border border-border bg-card p-8 shadow-lg"
         >
           {/* Close button */}
           <button

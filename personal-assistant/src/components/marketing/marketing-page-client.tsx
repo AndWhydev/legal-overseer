@@ -68,7 +68,7 @@ export default function MarketingPageClient() {
           </div>
           <div className="mb-20 grid grid-cols-[repeat(auto-fit,minmax(250px,1fr))] gap-6">
             {FEATURES.map((f) => (
-              <div key={f.title} className="bb-feature-card cursor-pointer rounded-2xl border border-white/[0.03] bg-card px-6 py-8 shadow-md backdrop-blur-xl transition-all">
+              <div key={f.title} className="bb-feature-card cursor-pointer rounded-xl border border-border bg-card px-6 py-8 shadow-sm transition-all">
                 <div className="mb-4 text-[40px]">{f.emoji}</div>
                 <h3 className="mb-3 text-base font-medium text-slate-100">{f.title}</h3>
                 <p className="text-sm leading-relaxed text-slate-400">{f.description}</p>

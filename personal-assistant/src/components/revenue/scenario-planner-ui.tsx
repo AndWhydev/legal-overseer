@@ -72,7 +72,7 @@ export function ScenarioPlannerUI() {
       {/* Create button / form */}
       {!formOpen ? (
         <button
-          className="self-start px-5 py-3 rounded-md border-none bg-primary text-primary-foreground text-sm font-medium cursor-pointer transition-opacity hover:opacity-80"
+          className="self-start px-5 py-3 rounded-lg border-none bg-primary text-primary-foreground text-sm font-medium cursor-pointer transition-opacity hover:opacity-80"
           onClick={() => setFormOpen(true)}
         >
           + New Scenario
@@ -86,7 +86,7 @@ export function ScenarioPlannerUI() {
           <div>
             <span className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Scenario Name</span>
             <input
-              className="w-full mt-1 px-3 py-2 rounded-md border-none bg-input text-foreground text-sm outline-none"
+              className="w-full mt-1 px-3 py-2 rounded-lg border-none bg-input text-foreground text-sm outline-none"
               placeholder="What if I raise rates 15%?"
               value={name}
               onChange={e => setName(e.target.value)}
@@ -114,7 +114,7 @@ export function ScenarioPlannerUI() {
             <div>
               <span className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Rate Change %</span>
               <input
-                className="w-full mt-1 px-3 py-2 rounded-md border-none bg-input text-foreground text-sm outline-none"
+                className="w-full mt-1 px-3 py-2 rounded-lg border-none bg-input text-foreground text-sm outline-none"
                 type="number"
                 value={rateChangePct}
                 onChange={e => setRateChangePct(Number(e.target.value))}
@@ -128,7 +128,7 @@ export function ScenarioPlannerUI() {
               <div>
                 <span className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Est. Monthly Revenue ($)</span>
                 <input
-                  className="w-full mt-1 px-3 py-2 rounded-md border-none bg-input text-foreground text-sm outline-none"
+                  className="w-full mt-1 px-3 py-2 rounded-lg border-none bg-input text-foreground text-sm outline-none"
                   type="number"
                   value={monthlyRevenue}
                   onChange={e => setMonthlyRevenue(Number(e.target.value))}
@@ -137,7 +137,7 @@ export function ScenarioPlannerUI() {
               <div>
                 <span className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Probability (0-1)</span>
                 <input
-                  className="w-full mt-1 px-3 py-2 rounded-md border-none bg-input text-foreground text-sm outline-none"
+                  className="w-full mt-1 px-3 py-2 rounded-lg border-none bg-input text-foreground text-sm outline-none"
                   type="number"
                   step="0.1"
                   min="0"
@@ -153,7 +153,7 @@ export function ScenarioPlannerUI() {
             <div>
               <span className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Hours Delta (per week)</span>
               <input
-                className="w-full mt-1 px-3 py-2 rounded-md border-none bg-input text-foreground text-sm outline-none"
+                className="w-full mt-1 px-3 py-2 rounded-lg border-none bg-input text-foreground text-sm outline-none"
                 type="number"
                 value={hoursDelta}
                 onChange={e => setHoursDelta(Number(e.target.value))}
@@ -165,7 +165,7 @@ export function ScenarioPlannerUI() {
             <div>
               <span className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Revenue Impact ($)</span>
               <input
-                className="w-full mt-1 px-3 py-2 rounded-md border-none bg-input text-foreground text-sm outline-none"
+                className="w-full mt-1 px-3 py-2 rounded-lg border-none bg-input text-foreground text-sm outline-none"
                 type="number"
                 value={revenueImpact}
                 onChange={e => setRevenueImpact(Number(e.target.value))}
@@ -175,14 +175,14 @@ export function ScenarioPlannerUI() {
 
           <div className="flex gap-2">
             <button
-              className="px-5 py-3 rounded-md border-none bg-primary text-primary-foreground text-sm font-medium cursor-pointer transition-opacity hover:opacity-80 disabled:opacity-60"
+              className="px-5 py-3 rounded-lg border-none bg-primary text-primary-foreground text-sm font-medium cursor-pointer transition-opacity hover:opacity-80 disabled:opacity-60"
               onClick={handleSubmit}
               disabled={creating || !name.trim()}
             >
               {creating ? 'Computing...' : 'Run Simulation'}
             </button>
             <button
-              className="px-5 py-3 rounded-md border-none bg-input text-muted-foreground text-sm font-medium cursor-pointer transition-opacity hover:opacity-80"
+              className="px-5 py-3 rounded-lg border-none bg-input text-muted-foreground text-sm font-medium cursor-pointer transition-opacity hover:opacity-80"
               onClick={() => setFormOpen(false)}
             >
               Cancel

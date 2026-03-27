@@ -57,7 +57,7 @@ export default function LandingPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareJsonLd) }}
       />
-      <div style={{ background: '#0a0a0f', color: '#F1F5F9', overflow: 'hidden' }}>
+      <div className="overflow-hidden bg-background text-foreground">
         <HeroSection />
         <FeaturesSection />
         <RolesSection />

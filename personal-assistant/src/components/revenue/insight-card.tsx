@@ -81,7 +81,7 @@ export function RevenueInsightCard({ insight, onAction }: InsightCardProps) {
       onMouseLeave={() => setHovering(false)}
     >
       {/* Severity Icon */}
-      <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md font-mono text-sm font-medium ${SEVERITY_BG[insight.severity]} ${SEVERITY_COLORS[insight.severity]}`}>
+      <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg font-mono text-sm font-medium ${SEVERITY_BG[insight.severity]} ${SEVERITY_COLORS[insight.severity]}`}>
         {TYPE_ICONS[insight.insight_type] ?? '?'}
       </div>
 

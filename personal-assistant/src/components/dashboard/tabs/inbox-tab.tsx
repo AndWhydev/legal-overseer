@@ -9,6 +9,11 @@ import { InboxShortcutsOverlay } from '@/components/dashboard/inbox-shortcuts-ov
 import { TabShell } from '@/components/ui/tab-shell';
 import { Empty, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from '@/components/ui/empty';
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
+import {
+  Tabs as AnimTabs,
+  TabsList as AnimTabsList,
+  TabsTrigger as AnimTabsTrigger,
+} from '@/components/animate-ui/components/radix/tabs';
 import { logger } from '@/lib/core/logger';
 import { type ThreadMessageItem } from '@/components/dashboard/inbox-drawer';
 import {
@@ -1396,100 +1401,36 @@ function UnifiedFilterBar({
   const hasActiveFilters = channelFilter || priorityFilter;
 
   return (
-    <div style={{
-      display: 'flex',
-      alignItems: 'center',
-      gap: 4,
-      padding: '8px 0 8px',
-      overflowX: 'visible',
-      flexShrink: 0,
-      minHeight: 40,
-      flexWrap: 'wrap',
-    }}>
-      {/* Category pills — primary filter */}
-      {PILL_ORDER.map((pill) => {
-        const cfg = PILL_CONFIG[pill];
-        const isActive = activePill === pill;
-        const isPriority = pill === 'action';
+    <div className="flex shrink-0 flex-wrap items-center gap-2 py-2">
+      <AnimTabs value={activePill} onValueChange={(v) => onPillSelect(v as CategoryPillType)}>
+        <AnimTabsList>
+          {PILL_ORDER.map((pill) => {
+            const cfg = PILL_CONFIG[pill];
+            return (
+              <AnimTabsTrigger key={pill} value={pill}>
+                {cfg.label}
+                {pill !== 'all' && pillCounts[pill] > 0 && (
+                  <span className="text-muted-foreground">{pillCounts[pill]}</span>
+                )}
+              </AnimTabsTrigger>
+            );
+          })}
+        </AnimTabsList>
+      </AnimTabs>
 
-        return (
-          <button
-            key={pill}
-            onClick={() => onPillSelect(pill)}
-            style={{
-              height: 40,
-              padding: '0 16px',
-              borderRadius: 8,
-              border: 'none',
-              cursor: 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 8,
-              transition: 'background 200ms cubic-bezier(0.16, 1, 0.3, 1), color 200ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 200ms, transform 200ms cubic-bezier(0.16, 1, 0.3, 1)',
-              transform: isActive ? 'scale(1.02)' : 'scale(1)',
-              whiteSpace: 'nowrap',
-              flexShrink: 0,
-              fontSize: 14,
-              fontWeight: 500,
-              background: isActive
-                ? 'var(--hover-bg-strong, rgba(255, 255, 255, 0.08))'
-                : 'var(--pill-inactive-bg, rgba(10, 14, 23, 0.42))',
-              backdropFilter: 'blur(22px) saturate(1.2)',
-              WebkitBackdropFilter: 'blur(22px) saturate(1.2)',
-              boxShadow: isActive
-                ? 'var(--toggle-active-shadow, none)'
-                : `inset 0 1px 0 ${'var(--glass-border, rgba(255, 255, 255, 0.06))'}`,
-              color: isActive
-                ? 'var(--text-primary, #F1F5F9)'
-                : 'var(--text-secondary, #94A3B8)',
-            }}
-          >
-            {cfg.label}
-            {pill !== 'all' && pillCounts[pill] > 0 && (
-              <span style={{
-                fontSize: 14,
-                fontWeight: 400,
-                color: isActive
-                  ? 'var(--text-secondary, #94A3B8)'
-                  : 'var(--text-dim, #475569)',
-              }}>
-                {pillCounts[pill]}
-              </span>
-            )}
-          </button>
-        );
-      })}
+      <div className="flex-1" />
 
-      {/* Spacer pushes filter dropdowns to the right */}
-      <div style={{ flex: 1 }} />
-
-      {/* Clear filters — just an X, no background, before the dropdowns */}
       {hasActiveFilters && (
-        <button
+        <Button
+          variant="ghost"
+          size="icon-xs"
           onClick={() => { onChannelChange(''); onPriorityChange(''); }}
           aria-label="Clear filters"
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: 32,
-            height: 32,
-            borderRadius: 8,
-            border: 'none',
-            background: 'transparent',
-            color: 'var(--text-dim, #475569)',
-            cursor: 'pointer',
-            transition: 'color 150ms',
-            flexShrink: 0,
-          }}
-          onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--text-primary, #F1F5F9)' }}
-          onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-dim, #475569)' }}
         >
           <IconX size={14} />
-        </button>
+        </Button>
       )}
 
-      {/* Channel + Priority dropdowns */}
       <Select value={channelFilter} onValueChange={onChannelChange}>
         <SelectTrigger className="w-auto">
           <SelectValue placeholder="Channel" />
