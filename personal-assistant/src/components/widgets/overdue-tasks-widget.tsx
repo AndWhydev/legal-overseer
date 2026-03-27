@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { IconAlertCircle } from '@tabler/icons-react';
 import { WidgetCard } from './widget-card';
-import { EmptyState } from '@/components/ui/empty-state';
+import { Empty, EmptyTitle, EmptyDescription } from '@/components/ui/empty';
 import { Badge } from '@/components/ui/badge';
 
 export function OverdueTasksWidget() {
@@ -28,7 +28,7 @@ export function OverdueTasksWidget() {
     >
       <div className="flex flex-col gap-3">
         {tasks.length === 0 ? (
-          <EmptyState title="No overdue tasks" description="You're all caught up." />
+          <Empty><EmptyTitle>No overdue tasks</EmptyTitle><EmptyDescription>You're all caught up.</EmptyDescription></Empty>
         ) : (
           tasks.map(task => (
             <div key={task.id as string} className="flex items-center justify-between p-3 rounded-md bg-muted/50 border border-border">

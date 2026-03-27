@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react'
 import { IconBriefcase } from '@tabler/icons-react'
 import { TabShell } from '@/components/ui/tab-shell'
-import { EmptyState } from '@/components/ui/empty-state'
+import { Empty, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from '@/components/ui/empty'
 import { createClient } from '@/lib/supabase/client'
 import { Skeleton } from '@/components/ui/skeleton'
 
@@ -107,15 +107,14 @@ function JobsTab() {
   if (jobs.length === 0) {
     return (
       <TabShell>
-        <EmptyState
-          icon={<IconBriefcase size={24} />}
-          title="No active jobs"
-          description="Jobs track ongoing work for your clients. They appear here as BitBit identifies active projects from your communications."
-          action={{
-            label: 'Connect email to start',
-            onClick: () => window.dispatchEvent(new CustomEvent('bb-navigate', { detail: { tab: 'settings-connections' } })),
-          }}
-        />
+        <Empty>
+          <EmptyMedia><IconBriefcase size={24} /></EmptyMedia>
+          <EmptyTitle>No active jobs</EmptyTitle>
+          <EmptyDescription>Jobs track ongoing work for your clients. They appear here as BitBit identifies active projects from your communications.</EmptyDescription>
+          <EmptyContent>
+            <button type="button" onClick={() => window.dispatchEvent(new CustomEvent('bb-navigate', { detail: { tab: 'settings-connections' } }))} className="mt-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 transition-opacity">Connect email to start</button>
+          </EmptyContent>
+        </Empty>
       </TabShell>
     )
   }

@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useRealtimeSubscription } from '@/lib/realtime/supabase-realtime';
 import { IconActivity } from '@tabler/icons-react';
 import { WidgetCard } from './widget-card';
-import { EmptyState } from '@/components/ui/empty-state';
+import { Empty, EmptyTitle, EmptyDescription } from '@/components/ui/empty';
 
 interface AgentRun {
   id: string;
@@ -37,7 +37,7 @@ export function AgentActivityWidget() {
     >
       <div className="flex flex-col gap-3 max-h-64 overflow-y-auto">
         {runs.length === 0 ? (
-          <EmptyState title="No recent agent activity" description="Agents will appear here when they run." />
+          <Empty><EmptyTitle>No recent agent activity</EmptyTitle><EmptyDescription>Agents will appear here when they run.</EmptyDescription></Empty>
         ) : (
           runs.map(run => (
             <div key={run.id} className="flex items-start gap-3 pb-3 border-b border-border last:border-0">

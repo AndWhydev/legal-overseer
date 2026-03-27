@@ -5,7 +5,7 @@ import { IconBolt } from '@tabler/icons-react';
 import { SwarmRunCard } from './swarm-run-card';
 import { SwarmRunDetail } from './swarm-run-detail';
 import { SwarmTriggerInput } from './swarm-trigger-input';
-import { EmptyState } from '@/components/ui/empty-state';
+import { Empty, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from '@/components/ui/empty';
 import { Button } from '@/components/ui/button';
 import type { SwarmRunRow } from '@/lib/swarm/types';
 
@@ -130,15 +130,14 @@ export function SwarmDashboard() {
             Loading swarms...
           </div>
         ) : runs.length === 0 ? (
-          <EmptyState
-            icon={<IconBolt size={24} />}
-            title="No swarm activity"
-            description="Lead Swarm automatically qualifies and routes incoming leads. Activity appears here as leads come in."
-            action={{
-              label: 'Connect email',
-              onClick: () => window.dispatchEvent(new CustomEvent('bb-navigate', { detail: { tab: 'settings-connections' } })),
-            }}
-          />
+          <Empty>
+            <EmptyMedia><IconBolt size={24} /></EmptyMedia>
+            <EmptyTitle>No swarm activity</EmptyTitle>
+            <EmptyDescription>Lead Swarm automatically qualifies and routes incoming leads. Activity appears here as leads come in.</EmptyDescription>
+            <EmptyContent>
+              <button type="button" onClick={() => window.dispatchEvent(new CustomEvent('bb-navigate', { detail: { tab: 'settings-connections' } }))} className="mt-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 transition-opacity">Connect email</button>
+            </EmptyContent>
+          </Empty>
         ) : (
           runs.map(run => (
             <SwarmRunCard

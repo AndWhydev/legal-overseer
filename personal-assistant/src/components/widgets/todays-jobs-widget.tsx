@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { IconCalendar } from '@tabler/icons-react';
 import { WidgetCard } from './widget-card';
-import { EmptyState } from '@/components/ui/empty-state';
+import { Empty, EmptyTitle, EmptyDescription } from '@/components/ui/empty';
 import { Badge } from '@/components/ui/badge';
 
 export function TodaysJobsWidget() {
@@ -36,7 +36,7 @@ export function TodaysJobsWidget() {
     >
       <div className="flex flex-col gap-3">
         {jobs.length === 0 ? (
-          <EmptyState title="No jobs today" description="Scheduled jobs will appear here." />
+          <Empty><EmptyTitle>No jobs today</EmptyTitle><EmptyDescription>Scheduled jobs will appear here.</EmptyDescription></Empty>
         ) : (
           jobs.map(job => (
             <div key={job.id as string} className="flex items-center justify-between p-3 rounded-md bg-muted/50 border border-border">

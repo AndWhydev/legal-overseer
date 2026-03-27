@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { GlassDropdown } from '@/components/ui/glass-dropdown'
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 
 interface PortalAccessRow {
@@ -179,17 +179,20 @@ export function PortalManagement() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium text-muted-foreground mb-2">Contact</label>
-                <GlassDropdown
-                  options={[{ value: '', label: 'Select contact...' }, ...contacts.map(c => ({ value: c.id, label: c.name }))]}
-                  value={inviteForm.contact_id}
-                  onChange={v => {
+                <Select value={inviteForm.contact_id} onValueChange={v => {
                     const contact = contacts.find(c => c.id === v)
                     setInviteForm({
                       contact_id: v,
                       email: contact?.emails?.[0] ?? '',
                     })
-                  }}
-                />
+                  }}>
+                  <SelectTrigger><SelectValue placeholder="Select contact..." /></SelectTrigger>
+                  <SelectContent>
+                    {contacts.map(c => (
+                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div>
                 <label className="block text-sm font-medium text-muted-foreground mb-2">Email</label>

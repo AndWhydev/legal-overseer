@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/table';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
-import { EmptyState } from '@/components/ui/empty-state';
+import { Empty, EmptyMedia, EmptyTitle, EmptyDescription } from '@/components/ui/empty';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -352,11 +352,11 @@ function TendersTab() {
                 {tenders.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={6}>
-                      <EmptyState
-                        icon={<IconFileSearch size={32} />}
-                        title="No tenders found"
-                        description='Click "Scan Now" to search government tender portals.'
-                      />
+                      <Empty>
+                        <EmptyMedia><IconFileSearch size={32} /></EmptyMedia>
+                        <EmptyTitle>No tenders found</EmptyTitle>
+                        <EmptyDescription>Click &quot;Scan Now&quot; to search government tender portals.</EmptyDescription>
+                      </Empty>
                     </TableCell>
                   </TableRow>
                 )}
@@ -370,10 +370,10 @@ function TendersTab() {
       {view === 'profiles' && (
         <div>
           {profiles.length === 0 ? (
-            <EmptyState
-              title="No capability profiles yet"
-              description="Create profiles to enable smart tender matching and automated evaluations."
-            />
+            <Empty>
+              <EmptyTitle>No capability profiles yet</EmptyTitle>
+              <EmptyDescription>Create profiles to enable smart tender matching and automated evaluations.</EmptyDescription>
+            </Empty>
           ) : (
             <div className="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-5">
               {profiles.map((profile) => (

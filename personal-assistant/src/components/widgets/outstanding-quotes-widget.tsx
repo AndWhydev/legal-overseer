@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { IconFileText } from '@tabler/icons-react';
 import { WidgetCard } from './widget-card';
-import { EmptyState } from '@/components/ui/empty-state';
+import { Empty, EmptyTitle, EmptyDescription } from '@/components/ui/empty';
 import { Badge } from '@/components/ui/badge';
 
 export function OutstandingQuotesWidget() {
@@ -28,7 +28,7 @@ export function OutstandingQuotesWidget() {
     >
       <div className="flex flex-col gap-3">
         {quotes.length === 0 ? (
-          <EmptyState title="No outstanding quotes" description="Draft and sent quotes will appear here." />
+          <Empty><EmptyTitle>No outstanding quotes</EmptyTitle><EmptyDescription>Draft and sent quotes will appear here.</EmptyDescription></Empty>
         ) : (
           quotes.map(quote => (
             <div key={quote.id as string} className="flex items-center justify-between p-3 rounded-md bg-muted/50 border border-border">

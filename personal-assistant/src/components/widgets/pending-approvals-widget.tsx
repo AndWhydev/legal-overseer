@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useRealtimeSubscription } from '@/lib/realtime/supabase-realtime';
 import { IconShieldCheck } from '@tabler/icons-react';
 import { WidgetCard } from './widget-card';
-import { EmptyState } from '@/components/ui/empty-state';
+import { Empty, EmptyTitle, EmptyDescription } from '@/components/ui/empty';
 
 export function PendingApprovalsWidget() {
   const [approvals, setApprovals] = useState<Record<string, unknown>[]>([]);
@@ -45,7 +45,7 @@ export function PendingApprovalsWidget() {
     >
       <div className="flex flex-col gap-4">
         {approvals.length === 0 ? (
-          <EmptyState title="No pending approvals" description="All actions have been reviewed." />
+          <Empty><EmptyTitle>No pending approvals</EmptyTitle><EmptyDescription>All actions have been reviewed.</EmptyDescription></Empty>
         ) : (
           approvals.map(app => (
             <div key={app.id as string} className="flex items-center justify-between p-3 rounded-md bg-muted/50 border border-border">

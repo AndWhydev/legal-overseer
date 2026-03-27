@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { GlassDropdown } from '@/components/ui/glass-dropdown'
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import type { PortalRequest } from '@/lib/portal/types'
 
@@ -129,19 +129,25 @@ export function PortalRequestsView({ initialRequests, primaryColor }: PortalRequ
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Type</label>
-              <GlassDropdown
-                options={REQUEST_TYPES.map(t => ({ value: t.value, label: t.label }))}
-                value={formData.request_type}
-                onChange={v => setFormData(prev => ({ ...prev, request_type: v }))}
-              />
+              <Select value={formData.request_type} onValueChange={v => setFormData(prev => ({ ...prev, request_type: v }))}>
+                <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
+                <SelectContent>
+                  {REQUEST_TYPES.map(t => (
+                    <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Priority</label>
-              <GlassDropdown
-                options={PRIORITY_OPTIONS.map(p => ({ value: p.value, label: p.label }))}
-                value={formData.priority}
-                onChange={v => setFormData(prev => ({ ...prev, priority: v }))}
-              />
+              <Select value={formData.priority} onValueChange={v => setFormData(prev => ({ ...prev, priority: v }))}>
+                <SelectTrigger><SelectValue placeholder="Select priority" /></SelectTrigger>
+                <SelectContent>
+                  {PRIORITY_OPTIONS.map(p => (
+                    <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 

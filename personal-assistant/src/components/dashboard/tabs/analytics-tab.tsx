@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { TabShell } from '@/components/ui/tab-shell'
-import { EmptyState } from '@/components/ui/empty-state'
+import { Empty, EmptyTitle, EmptyDescription } from '@/components/ui/empty'
 import {
   IconCurrencyDollar,
   IconUsers,
@@ -632,10 +632,10 @@ function AnalyticsTab() {
   if (error || !data) {
     return (
       <TabShell>
-        <EmptyState
-          title="No analytics data available"
-          description={error ? error : 'Connect billing to see MRR metrics, usage, and churn analysis.'}
-        />
+        <Empty>
+          <EmptyTitle>No analytics data available</EmptyTitle>
+          <EmptyDescription>{error ? error : 'Connect billing to see MRR metrics, usage, and churn analysis.'}</EmptyDescription>
+        </Empty>
       </TabShell>
     )
   }

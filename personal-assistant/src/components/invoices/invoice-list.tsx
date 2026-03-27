@@ -23,7 +23,7 @@ import {
   IconSearch, IconDownload, IconChevronDown, IconSend, IconCircleCheck,
   IconBan, IconUsers, IconLayoutList, IconEye, IconEyeOff, IconPlus, IconX, IconLoader2, IconReceipt,
 } from '@tabler/icons-react'
-import { EmptyState } from '@/components/ui/empty-state'
+import { Empty, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from '@/components/ui/empty'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -1629,15 +1629,16 @@ export function InvoiceList() {
 
         {/* Content */}
         {filtered.length === 0 ? (
-          <EmptyState
-            icon={search ? undefined : <IconReceipt size={24} />}
-            title={search ? 'No matching invoices' : 'No invoices yet'}
-            description={search ? 'Try a different search term.' : 'Ask BitBit to create an invoice in chat. Say something like "Invoice Dave for the website redesign at $2,500".'}
-            action={search ? undefined : {
-              label: 'Create via chat',
-              onClick: () => window.dispatchEvent(new CustomEvent('bb-navigate', { detail: { tab: 'chat' } })),
-            }}
-          />
+          <Empty>
+            {!search && <EmptyMedia><IconReceipt size={24} /></EmptyMedia>}
+            <EmptyTitle>{search ? 'No matching invoices' : 'No invoices yet'}</EmptyTitle>
+            <EmptyDescription>{search ? 'Try a different search term.' : 'Ask BitBit to create an invoice in chat. Say something like "Invoice Dave for the website redesign at $2,500".'}</EmptyDescription>
+            {!search && (
+              <EmptyContent>
+                <button type="button" onClick={() => window.dispatchEvent(new CustomEvent('bb-navigate', { detail: { tab: 'chat' } }))} className="mt-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 transition-opacity">Create via chat</button>
+              </EmptyContent>
+            )}
+          </Empty>
         ) : groupMode === 'status' ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {SECTIONS.map((s, i) => (

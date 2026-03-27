@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import { IconFileText, IconLoader2 } from '@tabler/icons-react'
-import { GlassDropdown } from '@/components/ui/glass-dropdown'
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select'
 import { useToast } from '@/components/ui/toast'
 
 type ReportType = 'monthly' | 'agent-roi' | 'pipeline'
@@ -103,12 +103,14 @@ export function ReportGenerator({ onGenerateStart, onGenerateComplete }: ReportG
             <label htmlFor="report-type" className="block text-xs font-medium text-muted-foreground mb-1.5 uppercase">
               Report Type
             </label>
-            <GlassDropdown
-              options={REPORT_TYPES.map((type) => ({ value: type.value, label: type.label }))}
-              value={reportType}
-              onChange={(v) => setReportType(v as ReportType)}
-              size="sm"
-            />
+            <Select value={reportType} onValueChange={(v) => setReportType(v as ReportType)}>
+              <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
+              <SelectContent>
+                {REPORT_TYPES.map((type) => (
+                  <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Period Selector */}
@@ -116,12 +118,14 @@ export function ReportGenerator({ onGenerateStart, onGenerateComplete }: ReportG
             <label htmlFor="period" className="block text-xs font-medium text-muted-foreground mb-1.5 uppercase">
               Period
             </label>
-            <GlassDropdown
-              options={periods.map((period, idx) => ({ value: String(idx), label: period.label }))}
-              value={String(periodIndex)}
-              onChange={(v) => setPeriodIndex(Number(v))}
-              size="sm"
-            />
+            <Select value={String(periodIndex)} onValueChange={(v) => setPeriodIndex(Number(v))}>
+              <SelectTrigger><SelectValue placeholder="Select period" /></SelectTrigger>
+              <SelectContent>
+                {periods.map((period, idx) => (
+                  <SelectItem key={idx} value={String(idx)}>{period.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Generate Button */}

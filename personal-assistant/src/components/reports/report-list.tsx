@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { IconDownload, IconRefresh } from '@tabler/icons-react'
 import { Skeleton } from '@/components/ui/skeleton'
-import { EmptyState } from '@/components/ui/empty-state'
+import { Empty, EmptyTitle, EmptyDescription } from '@/components/ui/empty'
 import { useToast } from '@/components/ui/toast'
 
 type ReportType = 'monthly' | 'agent-roi' | 'pipeline'
@@ -141,10 +141,10 @@ export function ReportList({ onRefresh }: { onRefresh?: () => void }) {
 
   if (reports.length === 0) {
     return (
-      <EmptyState
-        title="No reports generated"
-        description="Generate your first report to see it listed here."
-      />
+      <Empty>
+        <EmptyTitle>No reports generated</EmptyTitle>
+        <EmptyDescription>Generate your first report to see it listed here.</EmptyDescription>
+      </Empty>
     )
   }
 

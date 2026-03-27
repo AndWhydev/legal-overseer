@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useRealtimeSubscription } from '@/lib/realtime/supabase-realtime';
 import { IconInbox } from '@tabler/icons-react';
 import { WidgetCard } from './widget-card';
-import { EmptyState } from '@/components/ui/empty-state';
+import { Empty, EmptyTitle, EmptyDescription } from '@/components/ui/empty';
 
 export function UnreadMessagesWidget() {
   const [messages, setMessages] = useState<Record<string, unknown>[]>([]);
@@ -31,7 +31,7 @@ export function UnreadMessagesWidget() {
     >
       <div className="flex flex-col gap-3 max-h-64 overflow-y-auto">
         {messages.length === 0 ? (
-          <EmptyState title="All caught up" description="No unread messages." />
+          <Empty><EmptyTitle>All caught up</EmptyTitle><EmptyDescription>No unread messages.</EmptyDescription></Empty>
         ) : (
           messages.map((msg, idx) => (
             <div key={(msg.id as string) || idx} className="flex items-start gap-3 pb-3 border-b border-border last:border-0">

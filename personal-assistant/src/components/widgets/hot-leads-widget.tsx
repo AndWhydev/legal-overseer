@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { IconTrendingUp } from '@tabler/icons-react';
 import { WidgetCard } from './widget-card';
-import { EmptyState } from '@/components/ui/empty-state';
+import { Empty, EmptyTitle, EmptyDescription } from '@/components/ui/empty';
 import { Badge } from '@/components/ui/badge';
 
 interface LeadRow {
@@ -46,7 +46,7 @@ export function HotLeadsWidget() {
     >
       <div className="flex flex-col gap-3">
         {leads.length === 0 ? (
-          <EmptyState title="No active leads" description="New leads will appear here as they come in." />
+          <Empty><EmptyTitle>No active leads</EmptyTitle><EmptyDescription>New leads will appear here as they come in.</EmptyDescription></Empty>
         ) : (
           leads.map(lead => (
             <div key={lead.id} className="flex items-center justify-between p-3 rounded-md bg-muted/50 border border-border">

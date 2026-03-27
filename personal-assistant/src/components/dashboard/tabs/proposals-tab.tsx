@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { TabShell } from '@/components/ui/tab-shell'
-import { EmptyState } from '@/components/ui/empty-state'
+import { Empty, EmptyTitle, EmptyDescription } from '@/components/ui/empty'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -165,10 +165,10 @@ function ProposalsKanban() {
 
   if (proposals.length === 0) {
     return (
-      <EmptyState
-        title="No proposals yet"
-        description="Proposals generated from meeting transcripts will show up here"
-      />
+      <Empty>
+        <EmptyTitle>No proposals yet</EmptyTitle>
+        <EmptyDescription>Proposals generated from meeting transcripts will show up here</EmptyDescription>
+      </Empty>
     )
   }
 

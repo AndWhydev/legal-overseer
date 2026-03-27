@@ -9,7 +9,7 @@ import { getPack } from '@/lib/industry/registry';
 import type { KPIConfig } from '@/lib/industry/types';
 import { TabSkeleton } from './tab-skeleton';
 import { TabShell } from '@/components/ui/tab-shell';
-import { EmptyState } from '@/components/ui/empty-state';
+import { Empty, EmptyTitle, EmptyDescription } from '@/components/ui/empty';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -306,7 +306,7 @@ function CommandCenterTab() {
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
             {approvals.length === 0 ? (
-              <EmptyState title="No pending approvals" description="Great work! All actions have been reviewed." />
+              <Empty><EmptyTitle>No pending approvals</EmptyTitle><EmptyDescription>Great work! All actions have been reviewed.</EmptyDescription></Empty>
             ) : (
               approvals.map(app => {
                 const isProcessing = processingIds.has(app.id as string);
@@ -350,7 +350,7 @@ function CommandCenterTab() {
           </CardHeader>
           <CardContent className="flex flex-col gap-2">
             {todaysPriorities.length === 0 ? (
-              <EmptyState title="No high-priority tasks" description="Enjoy the calm -- nothing urgent right now." />
+              <Empty><EmptyTitle>No high-priority tasks</EmptyTitle><EmptyDescription>Enjoy the calm -- nothing urgent right now.</EmptyDescription></Empty>
             ) : (
               todaysPriorities.map(task => (
                 <div key={task.id} className="flex items-center gap-3 rounded-lg border border-border bg-muted/50 p-2.5">
@@ -380,7 +380,7 @@ function CommandCenterTab() {
           </CardHeader>
           <CardContent className="flex max-h-64 flex-col gap-3 overflow-y-auto">
             {agentRuns.length === 0 ? (
-              <EmptyState title="No recent agent activity" description="Agents will appear here when they run." />
+              <Empty><EmptyTitle>No recent agent activity</EmptyTitle><EmptyDescription>Agents will appear here when they run.</EmptyDescription></Empty>
             ) : (
               agentRuns.map((run, idx) => (
                 <React.Fragment key={run.id}>
@@ -416,7 +416,7 @@ function CommandCenterTab() {
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
             {leads.length === 0 ? (
-              <EmptyState title="No active leads" description="New leads will appear here as they come in." />
+              <Empty><EmptyTitle>No active leads</EmptyTitle><EmptyDescription>New leads will appear here as they come in.</EmptyDescription></Empty>
             ) : (
               leads.map(lead => (
                 <div key={lead.id as string} className="flex items-center justify-between rounded-lg border border-border bg-muted/50 p-3">
@@ -472,7 +472,7 @@ function CommandCenterTab() {
         </CardHeader>
         <CardContent className="flex max-h-64 flex-col gap-3 overflow-y-auto">
           {recentActivity.length === 0 ? (
-            <EmptyState title="No recent activity" description="Channel messages will appear here." />
+            <Empty><EmptyTitle>No recent activity</EmptyTitle><EmptyDescription>Channel messages will appear here.</EmptyDescription></Empty>
           ) : (
             recentActivity.map((activity, idx) => (
               <React.Fragment key={(activity.id as string) || idx}>

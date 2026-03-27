@@ -7,7 +7,7 @@ import { useDevOverrides } from '@/lib/dev/dev-overrides';
 import { useInboxKeyboard } from '@/hooks/use-inbox-keyboard';
 import { InboxShortcutsOverlay } from '@/components/dashboard/inbox-shortcuts-overlay';
 import { TabShell } from '@/components/ui/tab-shell';
-import { EmptyState } from '@/components/ui/empty-state';
+import { Empty, EmptyTitle, EmptyDescription, EmptyContent } from '@/components/ui/empty';
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
 import { logger } from '@/lib/core/logger';
 import { type ThreadMessageItem } from '@/components/dashboard/inbox-drawer';
@@ -879,11 +879,13 @@ function InboxTab() {
   if (error && messages.length === 0) {
     return (
       <TabShell>
-        <EmptyState
-          title="Couldn't load inbox"
-          description={error}
-          action={{ label: 'Retry', onClick: () => fetchInbox() }}
-        />
+        <Empty>
+          <EmptyTitle>Couldn&apos;t load inbox</EmptyTitle>
+          <EmptyDescription>{error}</EmptyDescription>
+          <EmptyContent>
+            <button type="button" onClick={() => fetchInbox()} className="mt-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 transition-opacity">Retry</button>
+          </EmptyContent>
+        </Empty>
       </TabShell>
     );
   }
@@ -987,10 +989,10 @@ function InboxTab() {
       <div className="bb-inbox-scroll" style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
       <div className="bb-inbox-list bb-stagger">
         {displayItems.length === 0 ? (
-          <EmptyState
-            title="All caught up"
-            description="No messages to show. Adjust filters or wait for new messages."
-          />
+          <Empty>
+            <EmptyTitle>All caught up</EmptyTitle>
+            <EmptyDescription>No messages to show. Adjust filters or wait for new messages.</EmptyDescription>
+          </Empty>
         ) : (
           <>
             {displayItems.map((item, idx) => {

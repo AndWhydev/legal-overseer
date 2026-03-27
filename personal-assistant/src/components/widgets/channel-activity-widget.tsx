@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { IconUsers } from '@tabler/icons-react';
 import { WidgetCard } from './widget-card';
-import { EmptyState } from '@/components/ui/empty-state';
+import { Empty, EmptyTitle, EmptyDescription } from '@/components/ui/empty';
 
 export function ChannelActivityWidget() {
   const [activity, setActivity] = useState<Record<string, unknown>[]>([]);
@@ -25,7 +25,7 @@ export function ChannelActivityWidget() {
     >
       <div className="flex flex-col gap-3 max-h-64 overflow-y-auto">
         {activity.length === 0 ? (
-          <EmptyState title="No recent activity" description="Channel messages will appear here." />
+          <Empty><EmptyTitle>No recent activity</EmptyTitle><EmptyDescription>Channel messages will appear here.</EmptyDescription></Empty>
         ) : (
           activity.map((item, idx) => (
             <div key={(item.id as string) || idx} className="flex items-start gap-3 pb-3 border-b border-border last:border-0">

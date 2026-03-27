@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { IconBolt } from '@tabler/icons-react';
 import { WidgetCard } from './widget-card';
-import { EmptyState } from '@/components/ui/empty-state';
+import { Empty, EmptyTitle, EmptyDescription } from '@/components/ui/empty';
 import { Badge } from '@/components/ui/badge';
 
 export function TodaysPrioritiesWidget() {
@@ -28,7 +28,7 @@ export function TodaysPrioritiesWidget() {
     >
       <div className="flex flex-col gap-3">
         {priorities.length === 0 ? (
-          <EmptyState title="No high-priority tasks" description="Enjoy the calm — nothing urgent right now." />
+          <Empty><EmptyTitle>No high-priority tasks</EmptyTitle><EmptyDescription>Enjoy the calm — nothing urgent right now.</EmptyDescription></Empty>
         ) : (
           priorities.map(task => (
             <div key={task.id} className="flex items-center gap-3 p-2 rounded-md bg-muted/50 border border-border">
