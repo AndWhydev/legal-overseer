@@ -1,9 +1,13 @@
 'use client'
 
-import React, { useState, useEffect, useCallback } from 'react'
-import { Copy, Check, Loader2, Trash2, Plus, Eye, EyeOff } from 'lucide-react'
+import React, { useState, useEffect } from 'react'
+import { IconCopy, IconCheck, IconLoader2, IconTrash, IconPlus, IconEye, IconEyeOff } from '@tabler/icons-react'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Badge } from '@/components/ui/badge'
 import { logger } from '@/lib/core/logger'
-import { S, C } from '@/lib/styles/design-tokens'
 
 interface ApiKey {
   id: string
@@ -23,88 +27,6 @@ interface NewKeyResponse {
   scopes: string[]
   createdAt: string
   warning: string
-}
-
-const sectionWrapper: React.CSSProperties = {
-  padding: '24px',
-  overflow: 'auto',
-  height: '100%',
-}
-
-const sectionTitle: React.CSSProperties = {
-  fontSize: 16,
-  fontWeight: 500,
-  color: 'var(--text-primary, #F1F5F9)',
-  marginBottom: 8,
-}
-
-const sectionDesc: React.CSSProperties = {
-  fontSize: 14,
-  color: 'var(--text-secondary, #94A3B8)',
-  marginBottom: 16,
-}
-
-const glassCard: React.CSSProperties = {
-  padding: '16px',
-  borderRadius: 12,
-  background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.6))',
-  backdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
-  WebkitBackdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
-  border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
-  boxShadow: 'var(--card-shadow, 0 2px 8px rgba(0,0,0,0.3)), var(--card-inset, inset 0 1px 0 rgba(255,255,255,0.06))',
-  marginBottom: 12,
-}
-
-const inputStyle: React.CSSProperties = {
-  width: '100%',
-  padding: '12px 16px',
-  borderRadius: 12,
-  background: 'var(--bb-surface, rgba(10, 14, 23, 0.5))',
-  border: `1px solid ${C.borderHover}`,
-  color: 'var(--text-primary, #F1F5F9)',
-  fontSize: 14,
-  fontFamily: 'inherit',
-}
-
-const buttonStyle: React.CSSProperties = {
-  padding: '12px 20px',
-  borderRadius: 12,
-  background: 'var(--btn-primary-bg, #F1F5F9)',
-  border: 'none',
-  color: 'var(--btn-primary-fg, #0a0f1a)',
-  fontSize: 14,
-  fontWeight: 500,
-  cursor: 'pointer',
-  transition: 'all 200ms',
-  display: 'inline-flex',
-  alignItems: 'center',
-  gap: 8,
-}
-
-const secondaryButtonStyle: React.CSSProperties = {
-  ...buttonStyle,
-  background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.6))',
-  color: 'var(--text-primary, #F1F5F9)',
-  border: `1px solid ${C.borderHover}`,
-}
-
-const dangerButtonStyle: React.CSSProperties = {
-  ...buttonStyle,
-  background: C.statusErrorBg,
-  color: '#ef4444',
-  border: `1px solid ${C.statusError}`,
-  padding: '8px 12px',
-  fontSize: 14,
-}
-
-const listRow: React.CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  padding: '12px',
-  borderRadius: 12,
-  background: 'var(--bb-surface, rgba(10, 14, 23, 0.5))',
-  border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
-  marginBottom: 12,
 }
 
 export function ApiKeyManagement() {
@@ -206,208 +128,162 @@ export function ApiKeyManagement() {
   }
 
   return (
-    <div style={sectionWrapper}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: 24 }}>
+    <div className="space-y-6 overflow-auto p-6">
+      {/* Header */}
+      <div className="flex items-start justify-between">
         <div>
-          <h2 style={sectionTitle}>API Keys</h2>
-          <p style={sectionDesc}>Manage API keys for partner integrations and automations</p>
+          <h2 className="text-base font-medium text-foreground">API Keys</h2>
+          <p className="mt-1 text-sm text-muted-foreground">Manage API keys for partner integrations and automations</p>
         </div>
         {!showNewKey && (
-          <button
-            onClick={() => setShowNewKey(true)}
-            style={{ ...buttonStyle, marginBottom: 0 }}
-          >
-            <Plus size={16} />
+          <Button onClick={() => setShowNewKey(true)}>
+            <IconPlus className="size-4" />
             Generate Key
-          </button>
+          </Button>
         )}
       </div>
 
+      {/* New Key Form */}
       {showNewKey && (
-        <div style={{ ...glassCard, padding: 20, marginBottom: 24 }}>
-          <h3 style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)', marginBottom: 16 }}>
-            Generate New API Key
-          </h3>
-          <div style={{ marginBottom: 16 }}>
-            <label style={{ display: 'block', marginBottom: 8, fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>
-              Key Name
-            </label>
-            <input
-              type="text"
-              placeholder="e.g., Production API Key"
-              value={newKeyForm.name}
-              onChange={(e) => setNewKeyForm({ name: e.target.value })}
-              style={inputStyle}
-            />
-            <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 8 }}>
-              Use a descriptive name to identify where this key is used
-            </p>
-          </div>
-          <div style={{ display: 'flex', gap: 12 }}>
-            <button
-              onClick={handleGenerateKey}
-              disabled={loading || !newKeyForm.name.trim()}
-              style={{
-                ...buttonStyle,
-                opacity: loading || !newKeyForm.name.trim() ? 0.5 : 1,
-                cursor: loading || !newKeyForm.name.trim() ? 'not-allowed' : 'pointer',
-              }}
-            >
-              {loading ? (
-                <>
-                  <Loader2 size={16} className="animate-spin" />
-                  Generating...
-                </>
-              ) : (
-                'Create Key'
-              )}
-            </button>
-            <button
-              onClick={() => setShowNewKey(false)}
-              style={secondaryButtonStyle}
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
-
-      {newKeyDisplay && (
-        <div
-          style={{
-            ...glassCard,
-            padding: 20,
-            marginBottom: 24,
-            background: 'rgba(16, 185, 129, 0.08)',
-            border: '1px solid rgba(16, 185, 129, 0.2)',
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: 16 }}>
-            <h3 style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)', margin: 0 }}>
-              Your API Key
-            </h3>
-            <button
-              onClick={() => setNewKeyDisplay(null)}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: 'var(--text-secondary)',
-                cursor: 'pointer',
-                fontSize: 14,
-              }}
-            >
-              Dismiss
-            </button>
-          </div>
-          <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 12 }}>
-            {newKeyDisplay.warning}
-          </p>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              padding: 12,
-              borderRadius: 8,
-              background: 'var(--bb-surface, rgba(10, 14, 23, 0.5))',
-              border: `1px solid ${C.borderSubtle}`,
-              marginBottom: 12,
-              fontFamily: 'monospace',
-              fontSize: 14,
-              wordBreak: 'break-all',
-            }}
-          >
-            <span style={{ flex: 1, color: 'var(--text-primary)' }}>{newKeyDisplay.key}</span>
-            <button
-              onClick={() => handleCopyKey(newKeyDisplay.key)}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: 'var(--text-secondary)',
-                cursor: 'pointer',
-                padding: '4px 8px',
-                flexShrink: 0,
-              }}
-              title="Copy to clipboard"
-            >
-              {copyState ? (
-                <Check size={14} style={{ color: '#10b981' }} />
-              ) : (
-                <Copy size={14} />
-              )}
-            </button>
-          </div>
-        </div>
-      )}
-
-      <h3 style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)', marginBottom: 12, marginTop: 24 }}>
-        Active Keys
-      </h3>
-
-      {keys.length === 0 ? (
-        <div
-          style={{
-            ...glassCard,
-            textAlign: 'center',
-            padding: 32,
-          }}
-        >
-          <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>No API keys yet. Generate one to get started.</p>
-        </div>
-      ) : (
-        <div>
-          {keys.map((key) => (
-            <div key={key.id} style={listRow}>
-              <div style={{ flex: 1 }}>
-                <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)', marginBottom: 4 }}>
-                  {key.name}
-                </p>
-                <div style={{ display: 'flex', gap: 16, fontSize: 14, color: 'var(--text-secondary)' }}>
-                  <span>Key: {key.displayKey}</span>
-                  {key.lastUsedAt && <span>Last used: {new Date(key.lastUsedAt).toLocaleDateString()}</span>}
-                  <span>Created: {new Date(key.createdAt).toLocaleDateString()}</span>
-                  {key.isRevoked && (
-                    <span style={{ color: '#ef4444' }}>Revoked</span>
-                  )}
-                </div>
-              </div>
-              {!key.isRevoked && (
-                <div style={{ display: 'flex', gap: 8 }}>
-                  {revokeConfirm === key.id ? (
-                    <>
-                      <button
-                        onClick={() => handleRevokeKey(key.id)}
-                        disabled={loading}
-                        style={{
-                          ...dangerButtonStyle,
-                          opacity: loading ? 0.5 : 1,
-                          cursor: loading ? 'not-allowed' : 'pointer',
-                        }}
-                      >
-                        {loading ? 'Revoking...' : 'Confirm Revoke'}
-                      </button>
-                      <button
-                        onClick={() => setRevokeConfirm(null)}
-                        style={secondaryButtonStyle}
-                      >
-                        Cancel
-                      </button>
-                    </>
-                  ) : (
-                    <button
-                      onClick={() => setRevokeConfirm(key.id)}
-                      style={dangerButtonStyle}
-                    >
-                      <Trash2 size={12} />
-                      Revoke
-                    </button>
-                  )}
-                </div>
-              )}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm">Generate New API Key</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="key-name">Key Name</Label>
+              <Input
+                id="key-name"
+                type="text"
+                placeholder="e.g., Production API Key"
+                value={newKeyForm.name}
+                onChange={(e) => setNewKeyForm({ name: e.target.value })}
+              />
+              <p className="text-xs text-muted-foreground">
+                Use a descriptive name to identify where this key is used
+              </p>
             </div>
-          ))}
-        </div>
+            <div className="flex gap-3">
+              <Button
+                onClick={handleGenerateKey}
+                disabled={loading || !newKeyForm.name.trim()}
+              >
+                {loading ? (
+                  <>
+                    <IconLoader2 className="size-4 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  'Create Key'
+                )}
+              </Button>
+              <Button variant="outline" onClick={() => setShowNewKey(false)}>
+                Cancel
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       )}
+
+      {/* New Key Display */}
+      {newKeyDisplay && (
+        <Card className="border-emerald-500/20 bg-emerald-500/5">
+          <CardHeader>
+            <div className="flex items-start justify-between">
+              <CardTitle className="text-sm">Your API Key</CardTitle>
+              <Button variant="ghost" size="sm" onClick={() => setNewKeyDisplay(null)}>
+                Dismiss
+              </Button>
+            </div>
+            <CardDescription>{newKeyDisplay.warning}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/50 p-3 font-mono text-sm break-all">
+              <span className="flex-1 text-foreground">{newKeyDisplay.key}</span>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-8 shrink-0"
+                onClick={() => handleCopyKey(newKeyDisplay.key)}
+                title="Copy to clipboard"
+              >
+                {copyState ? (
+                  <IconCheck className="size-3.5 text-emerald-500" />
+                ) : (
+                  <IconCopy className="size-3.5" />
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Active Keys */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm">Active Keys</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {keys.length === 0 ? (
+            <p className="py-6 text-center text-sm text-muted-foreground">
+              No API keys yet. Generate one to get started.
+            </p>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {keys.map((key) => (
+                <div
+                  key={key.id}
+                  className="flex items-center rounded-lg border border-border bg-card p-3"
+                >
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-foreground">{key.name}</p>
+                    <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                      <span className="font-mono">Key: {key.displayKey}</span>
+                      {key.lastUsedAt && <span>Last used: {new Date(key.lastUsedAt).toLocaleDateString()}</span>}
+                      <span>Created: {new Date(key.createdAt).toLocaleDateString()}</span>
+                      {key.isRevoked && (
+                        <Badge variant="destructive" className="text-[10px]">Revoked</Badge>
+                      )}
+                    </div>
+                  </div>
+                  {!key.isRevoked && (
+                    <div className="flex gap-2">
+                      {revokeConfirm === key.id ? (
+                        <>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => handleRevokeKey(key.id)}
+                            disabled={loading}
+                          >
+                            {loading ? 'Revoking...' : 'Confirm Revoke'}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setRevokeConfirm(null)}
+                          >
+                            Cancel
+                          </Button>
+                        </>
+                      ) : (
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => setRevokeConfirm(key.id)}
+                        >
+                          <IconTrash className="size-3" />
+                          Revoke
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   )
 }

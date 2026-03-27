@@ -1,7 +1,9 @@
 'use client'
 
 import { useRef, useCallback, useEffect } from 'react'
-import { Send } from 'lucide-react'
+import { IconSend } from '@tabler/icons-react'
+import { Button } from '@/components/ui/button'
+import { Textarea } from '@/components/ui/textarea'
 
 interface ChatInputProps {
   onSend: (text: string) => void
@@ -17,7 +19,6 @@ export function ChatInput({
 }: ChatInputProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const value = useRef('')
-  const [, forceUpdate] = [0, () => {}] // we'll use uncontrolled + ref
 
   // Auto-focus on mount
   useEffect(() => {
@@ -45,25 +46,27 @@ export function ChatInput({
   )
 
   return (
-    <div className="bb-chat-input">
-      <div className="bb-chat-input__card">
-        <textarea
+    <div className="px-4 pb-4 pt-2">
+      <div className="flex items-center gap-2 rounded-xl border border-border bg-card/80 backdrop-blur-sm p-2">
+        <Textarea
           ref={textareaRef}
-          className="bb-chat-input__textarea"
+          className="min-h-[36px] max-h-[120px] resize-none border-0 bg-transparent text-sm focus-visible:ring-0 focus-visible:ring-offset-0"
           placeholder={placeholder}
           onKeyDown={handleKeyDown}
           onChange={(e) => { value.current = e.target.value }}
           disabled={disabled}
           rows={1}
         />
-        <button
-          className="bb-chat-input__send"
+        <Button
+          size="icon"
+          variant="ghost"
+          className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
           onClick={handleSubmit}
           disabled={disabled}
           aria-label="Send message"
         >
-          <Send size={18} />
-        </button>
+          <IconSend size={18} />
+        </Button>
       </div>
     </div>
   )

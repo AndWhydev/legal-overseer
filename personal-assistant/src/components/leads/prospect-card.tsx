@@ -80,7 +80,7 @@ function ProspectCardInner({ prospect, onImport }: ProspectCardProps) {
         <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
           {prospect.rating != null && (
             <span className="inline-flex items-center gap-1">
-              <IconStar data-icon className="fill-yellow-500 text-yellow-500" />
+              <IconStar data-icon className="fill-warning text-warning" />
               {prospect.rating} ({prospect.review_count ?? 0})
             </span>
           )}

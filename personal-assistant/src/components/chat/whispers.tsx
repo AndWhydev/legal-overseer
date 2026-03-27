@@ -2,7 +2,9 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
+import { IconX } from '@tabler/icons-react'
 import type { Whisper } from '@/lib/whispers/types'
+import { Button } from '@/components/ui/button'
 
 const MAX_VISIBLE = 3
 
@@ -63,13 +65,7 @@ export function Whispers({ onTapWhisper, visible }: WhispersProps) {
     <AnimatePresence>
       {visible && (
         <motion.div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: 8,
-            marginTop: 24,
-          }}
+          className="flex flex-col items-center gap-2 mt-6"
           initial={{ opacity: 1 }}
           animate={{ opacity: 1 }}
           exit={{
@@ -82,21 +78,7 @@ export function Whispers({ onTapWhisper, visible }: WhispersProps) {
             <motion.button
               key={`${whisper.source}-${index}`}
               onClick={() => handleTap(whisper)}
-              style={{
-                position: 'relative',
-                background: 'var(--glass-hover-bg, rgba(255, 255, 255, 0.04))',
-                border: '1px solid var(--glass-card-border, rgba(255, 255, 255, 0.06))',
-                padding: '4px 28px 4px 12px',
-                borderRadius: 8,
-                cursor: 'pointer',
-                fontSize: 14,
-                fontWeight: 400,
-                color: 'var(--text-secondary, #94A3B8)',
-                lineHeight: '20px',
-                textAlign: 'center',
-                whiteSpace: 'nowrap',
-                transition: 'color 200ms, background 200ms',
-              }}
+              className="relative rounded-lg border border-border bg-muted/50 px-7 pl-3 py-1 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors text-center whitespace-nowrap cursor-pointer"
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -4, transition: { duration: 0.15 } }}
@@ -105,50 +87,18 @@ export function Whispers({ onTapWhisper, visible }: WhispersProps) {
                 duration: 0.35,
                 ease: [0.25, 1, 0.5, 1],
               }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.color = 'var(--text-primary, #F1F5F9)'
-                e.currentTarget.style.background =
-                  'var(--glass-hover-bg, rgba(255, 255, 255, 0.06))'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.color = 'var(--text-secondary, #94A3B8)'
-                e.currentTarget.style.background =
-                  'var(--glass-hover-bg, rgba(255, 255, 255, 0.04))'
-              }}
             >
               {whisper.text}
               {/* Dismiss button */}
-              <span
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute right-1 top-1/2 -translate-y-1/2 h-4 w-4 opacity-50 hover:opacity-100"
                 onClick={(e) => handleDismiss(index, e)}
-                style={{
-                  position: 'absolute',
-                  right: 8,
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  fontSize: 14,
-                  lineHeight: '16px',
-                  width: 16,
-                  height: 16,
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  borderRadius: 8,
-                  color: 'var(--text-dim, #64748B)',
-                  cursor: 'pointer',
-                  opacity: 0.5,
-                  transition: 'opacity 150ms',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.opacity = '1'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.opacity = '0.5'
-                }}
-                role="button"
                 aria-label="Dismiss whisper"
               >
-                &times;
-              </span>
+                <IconX size={10} />
+              </Button>
             </motion.button>
           ))}
         </motion.div>

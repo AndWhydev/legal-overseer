@@ -1,11 +1,19 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Sun, Moon, Monitor, Loader2, Smartphone, Check, X } from 'lucide-react';
-import { S, C } from '@/lib/styles/design-tokens';
+import {
+  IconSun, IconMoon, IconDeviceDesktop, IconLoader2, IconCheck, IconX,
+} from '@tabler/icons-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
 import { BillingSettings } from '@/components/settings/billing-settings';
 import { QrAuthConnect } from '@/components/ui/qr-auth-connect';
-import { ToggleSwitch } from '@/components/ui/toggle-switch';
 import { ConnectionsGrid } from '@/components/integrations/integration-grid';
 import { RagStatsWidget } from '@/components/dashboard/rag-stats-widget';
 import { createClient } from '@/lib/supabase/client';
@@ -13,7 +21,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { logger } from '@/lib/core/logger';
 import { useTheme, type ThemeName } from '@/lib/theme/theme-provider';
 
-// ─── Plugin types ────────────────────────────────────────────────────────────
+// ---- Plugin types ----
 
 const AUTOMATION_TYPES = [
   { id: 'lead_swarm', label: 'Lead Generation', description: 'Automatically find and score new leads' },
@@ -28,7 +36,7 @@ const AUTOMATION_TYPES = [
   { id: 'tender_hunter', label: 'Tenders', description: 'Find and respond to government tenders' },
 ] as const;
 
-// ─── Types ───────────────────────────────────────────────────────────────────
+// ---- Types ----
 
 interface OrgSettings {
   enabled_agents: string[];
@@ -42,20 +50,7 @@ interface OrgIntegration {
   metadata: Record<string, unknown>;
 }
 
-// ─── Inline Styles ───────────────────────────────────────────────────────────
-
-const sectionWrapper: React.CSSProperties = {
-  overflow: 'auto',
-  padding: 24,
-  height: '100%',
-};
-
-const listRow: React.CSSProperties = {
-  ...S.listRow,
-  padding: '12px 16px',
-};
-
-// ─── WhatsApp Wizard Modal ───────────────────────────────────────────────────
+// ---- WhatsApp Wizard Modal ----
 
 function WhatsAppWizardModal({ onClose, onConnected }: { onClose: () => void; onConnected: () => void }) {
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -70,7 +65,6 @@ function WhatsAppWizardModal({ onClose, onConnected }: { onClose: () => void; on
       setStarting(true);
       setError(null);
       try {
-        // Check if already connected
         const statusRes = await fetch('/api/channels/whatsapp/bridge');
         if (statusRes.ok) {
           const s = await statusRes.json() as { status?: string; running?: boolean };
@@ -83,7 +77,6 @@ function WhatsAppWizardModal({ onClose, onConnected }: { onClose: () => void; on
             return;
           }
         }
-        // Not connected — start pairing
         const response = await fetch('/api/channels/whatsapp/bridge', { method: 'POST' });
         if (!response.ok) throw new Error('Failed to start WhatsApp bridge');
         const data = await response.json() as { sessionId?: string; message?: string };
@@ -105,121 +98,99 @@ function WhatsAppWizardModal({ onClose, onConnected }: { onClose: () => void; on
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const glassCard: React.CSSProperties = {
-    ...S.card,
-  };
-
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <div className="fixed inset-0 z-[1000] flex items-center justify-center">
       <div
-        style={{ position: 'absolute', inset: 0, background: C.bgOverlay, backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}
+        className="absolute inset-0 bg-background/80 backdrop-blur-sm"
         onClick={onClose}
       />
-      <div style={{
-        position: 'relative',
-        ...glassCard,
-        maxWidth: 420,
-        width: '90%',
-        padding: 32,
-        boxShadow: '0 24px 48px rgba(0, 0, 0, 0.4)',
-      }}>
-        <button
+      <Card className="relative z-10 w-[90%] max-w-[420px] shadow-2xl">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="absolute right-3 top-3"
           onClick={onClose}
-          style={{ position: 'absolute', top: 16, right: 16, background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: 4 }}
         >
-          <X size={18} />
-        </button>
+          <IconX className="size-4" />
+        </Button>
 
-        <div style={{ textAlign: 'center', marginBottom: 20 }}>
+        <CardContent className="pt-8 pb-6 text-center">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/icons/integrations/whatsapp.png" alt="" width={48} height={48}
-            style={{ borderRadius: 12, objectFit: 'cover', display: 'block', margin: '0 auto 12px' }} />
-          <h3 style={{ fontSize: 16, fontWeight: 500, color: 'var(--text-primary)', margin: 0 }}>
+          <img
+            src="/icons/integrations/whatsapp.png"
+            alt=""
+            width={48}
+            height={48}
+            className="mx-auto mb-3 rounded-xl object-cover"
+          />
+          <h3 className="text-base font-medium text-foreground">
             {alreadyConnected ? 'WhatsApp Connected' : 'Connect WhatsApp'}
           </h3>
-          <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 4 }}>
+          <p className="mt-1 text-sm text-muted-foreground">
             {alreadyConnected ? 'Connected and receiving messages' : 'Link WhatsApp to start receiving messages'}
           </p>
-        </div>
 
-        {error && (
-          <div style={{
-            padding: '12px 16px', borderRadius: 12,
-            background: C.statusErrorBg, color: C.statusError,
-            fontSize: 14, marginBottom: 16, textAlign: 'center',
-          }}>
-            {error}
-            <button
-              onClick={() => window.location.reload()}
-              style={{
-                display: 'block', margin: '8px auto 0', padding: '8px 16px', borderRadius: 8,
-                background: C.bgHoverStrong, border: `1px solid ${C.borderVisible}`,
-                color: 'var(--text-primary)', fontSize: 14, cursor: 'pointer',
-              }}
-            >
-              Try Again
-            </button>
-          </div>
-        )}
+          {error && (
+            <Alert variant="destructive" className="mt-4 text-left">
+              <AlertDescription>
+                {error}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-2 w-full"
+                  onClick={() => window.location.reload()}
+                >
+                  Try Again
+                </Button>
+              </AlertDescription>
+            </Alert>
+          )}
 
-        {alreadyConnected && (
-          <div style={{ display: 'flex', justifyContent: 'center', padding: '16px 0 8px' }}>
-            <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
-              <circle cx="20" cy="20" r="20" fill="rgba(34, 197, 94, 0.12)" />
-              <path d="M13 20.5L18 25.5L27 16.5" stroke="#22C55E" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </div>
-        )}
+          {alreadyConnected && (
+            <div className="flex justify-center pt-4 pb-2">
+              <div className="flex size-10 items-center justify-center rounded-full bg-emerald-500/10">
+                <IconCheck className="size-5 text-emerald-500" />
+              </div>
+            </div>
+          )}
 
-        {starting && !error && !alreadyConnected && (
-          <div style={{ display: 'flex', justifyContent: 'center', padding: 32 }}>
-            <Loader2 size={24} style={{ animation: 'bb-spin 1s linear infinite', color: 'var(--text-secondary)' }} />
-          </div>
-        )}
+          {starting && !error && !alreadyConnected && (
+            <div className="flex justify-center py-8">
+              <IconLoader2 className="size-6 animate-spin text-muted-foreground" />
+            </div>
+          )}
 
-        {sessionId && !error && !alreadyConnected && (
-          <QrAuthConnect
-            sessionId={sessionId}
-            serviceName="WhatsApp"
-            onConnected={() => onConnected()}
-            onError={(err) => setError(err)}
-          />
-        )}
-      </div>
+          {sessionId && !error && !alreadyConnected && (
+            <QrAuthConnect
+              sessionId={sessionId}
+              serviceName="WhatsApp"
+              onConnected={() => onConnected()}
+              onError={(err) => setError(err)}
+            />
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
 
-// ─── Save Indicator ──────────────────────────────────────────────────────────
+// ---- Save Indicator ----
 
 function SaveIndicator({ visible }: { visible: boolean }) {
   return (
-    <div style={{
-      position: 'fixed',
-      top: 80,
-      right: 24,
-      display: 'flex',
-      alignItems: 'center',
-      gap: 8,
-      padding: '8px 16px',
-      borderRadius: 8,
-      background: C.statusSuccessBg,
-      color: C.statusSuccess,
-      fontSize: 14,
-      fontWeight: 500,
-      opacity: visible ? 1 : 0,
-      transform: visible ? 'translateY(0)' : 'translateY(-8px)',
-      transition: 'opacity 300ms, transform 300ms',
-      pointerEvents: 'none',
-      zIndex: 50,
-    }}>
-      <Check size={14} />
+    <div
+      className={cn(
+        'fixed right-6 top-20 z-50 flex items-center gap-2 rounded-lg bg-emerald-500/10 px-4 py-2 text-sm font-medium text-emerald-500 transition-all duration-300 pointer-events-none',
+        visible ? 'translate-y-0 opacity-100' : '-translate-y-2 opacity-0'
+      )}
+    >
+      <IconCheck className="size-3.5" />
       Saved
     </div>
   );
 }
 
-// ─── Connections Tab ──────────────────────────────────────────────────────────
+// ---- Connections Tab ----
 
 export function SettingsConnectionsTab() {
   const [integrations, setIntegrations] = useState<OrgIntegration[]>([]);
@@ -245,30 +216,28 @@ export function SettingsConnectionsTab() {
   }, [fetchIntegrations]);
 
   return (
-    <div style={sectionWrapper}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-        {/* RAG Stats Widget */}
-        <div>
-          <h3 style={{ fontSize: 16, fontWeight: 500, color: 'var(--text-primary)', margin: 0 }}>Data & Synchronization</h3>
-          <p style={{ fontSize: 14, color: 'var(--text-secondary)', margin: '4px 0 0' }}>Vector index and channel sync status</p>
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 12 }}>
-          <RagStatsWidget showDetails={true} />
-        </div>
+    <div className="flex h-full flex-col gap-5 overflow-auto p-6">
+      {/* RAG Stats Widget */}
+      <div>
+        <h3 className="text-base font-medium text-foreground">Data & Synchronization</h3>
+        <p className="mt-1 text-sm text-muted-foreground">Vector index and channel sync status</p>
+      </div>
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-3">
+        <RagStatsWidget showDetails={true} />
+      </div>
 
-        {/* Connections Grid */}
-        <div>
-          <h3 style={{ fontSize: 16, fontWeight: 500, color: 'var(--text-primary)', margin: 0 }}>Integrations</h3>
-          <p style={{ fontSize: 14, color: 'var(--text-secondary)', margin: '4px 0 0' }}>Connect communication channels</p>
-        </div>
-        <div>
-          <ConnectionsGrid
-            integrations={integrations}
-            isLoading={integrationsLoading}
-            onStatusChange={fetchIntegrations}
-            onWhatsAppConnect={() => setWhatsappModalOpen(true)}
-          />
-        </div>
+      {/* Connections Grid */}
+      <div>
+        <h3 className="text-base font-medium text-foreground">Integrations</h3>
+        <p className="mt-1 text-sm text-muted-foreground">Connect communication channels</p>
+      </div>
+      <div>
+        <ConnectionsGrid
+          integrations={integrations}
+          isLoading={integrationsLoading}
+          onStatusChange={fetchIntegrations}
+          onWhatsAppConnect={() => setWhatsappModalOpen(true)}
+        />
       </div>
 
       {whatsappModalOpen && (
@@ -284,7 +253,7 @@ export function SettingsConnectionsTab() {
   );
 }
 
-// ─── Plugins Tab ─────────────────────────────────────────────────────────────
+// ---- Plugins Tab ----
 
 export function SettingsAutomationsTab() {
   const [supabase, setSupabase] = useState<SupabaseClient | null>(null);
@@ -349,105 +318,85 @@ export function SettingsAutomationsTab() {
   };
 
   return (
-    <div style={sectionWrapper}>
+    <div className="flex h-full flex-col gap-5 overflow-auto p-6">
       <SaveIndicator visible={saveIndicatorVisible} />
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-        <div>
-          <h3 style={{ fontSize: 16, fontWeight: 500, color: 'var(--text-primary)', margin: 0 }}>Plugins</h3>
-          <p style={{ fontSize: 14, color: 'var(--text-secondary)', margin: '4px 0 0' }}>Choose what BitBit handles for you.</p>
-        </div>
-        <div className="bb-stagger" style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-          gap: 8,
-        }}>
-          {AUTOMATION_TYPES.map(a => (
-            <div key={a.id} style={{ ...listRow, justifyContent: 'space-between', gap: 12 }}>
-              <div style={{ minWidth: 0 }}>
-                <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)', margin: 0 }}>{a.label}</p>
-                <p style={{ fontSize: 14, color: 'var(--text-secondary)', margin: '1px 0 0' }}>{a.description}</p>
-              </div>
-              <ToggleSwitch checked={settings.enabled_agents.includes(a.id)} onChange={() => handleToggle(a.id)} label={a.label} />
-            </div>
-          ))}
-        </div>
+      <div>
+        <h3 className="text-base font-medium text-foreground">Plugins</h3>
+        <p className="mt-1 text-sm text-muted-foreground">Choose what BitBit handles for you.</p>
+      </div>
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-2">
+        {AUTOMATION_TYPES.map(a => {
+          const isEnabled = settings.enabled_agents.includes(a.id);
+          return (
+            <Card key={a.id} className="py-0">
+              <CardContent className="flex items-center justify-between gap-3 py-3.5 px-4">
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-foreground">{a.label}</p>
+                  <p className="text-sm text-muted-foreground">{a.description}</p>
+                </div>
+                <Switch
+                  checked={isEnabled}
+                  onCheckedChange={() => handleToggle(a.id)}
+                  aria-label={a.label}
+                />
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
     </div>
   );
 }
 
-// ─── Appearance Tab ───────────────────────────────────────────────────────────
+// ---- Appearance Tab ----
 
 export function SettingsAppearanceTab() {
   const { theme: currentPalette, setTheme: setPalette } = useTheme();
 
-  const isDev = process.env.NODE_ENV === 'development'
+  const isDev = process.env.NODE_ENV === 'development';
   const themes = [
-    { id: 'midnight' as ThemeName, label: 'Midnight', desc: 'Deep dark', bg: 'linear-gradient(135deg, #0a0f1a 0%, #141b2d 100%)', border: 'rgba(255,255,255,0.08)', icon: <Moon size={20} />, previewText: 'rgba(255,255,255,0.6)' },
-    // Aurora is still WIP — only show in dev mode
-    ...(isDev ? [{ id: 'aurora' as ThemeName, label: 'Aurora', desc: 'Glassmorphic', bg: 'linear-gradient(135deg, #F5E6D8 0%, #AFCADF 100%)', border: 'rgba(0,0,0,0.08)', icon: <Sun size={20} />, previewText: 'rgba(0,0,0,0.5)' }] : []),
-    { id: 'light' as ThemeName, label: 'Light', desc: 'Clean & minimal', bg: 'linear-gradient(135deg, #FAFAF9 0%, #F0F0EE 100%)', border: 'rgba(0,0,0,0.08)', icon: <Monitor size={20} />, previewText: 'rgba(0,0,0,0.5)' },
+    { id: 'midnight' as ThemeName, label: 'Midnight', desc: 'Deep dark', bg: 'bg-gradient-to-br from-[#0a0f1a] to-[#141b2d]', icon: <IconMoon className="size-5" /> },
+    ...(isDev ? [{ id: 'aurora' as ThemeName, label: 'Aurora', desc: 'Glassmorphic', bg: 'bg-gradient-to-br from-[#F5E6D8] to-[#AFCADF]', icon: <IconSun className="size-5" /> }] : []),
+    { id: 'light' as ThemeName, label: 'Light', desc: 'Clean & minimal', bg: 'bg-gradient-to-br from-[#FAFAF9] to-[#F0F0EE]', icon: <IconDeviceDesktop className="size-5" /> },
   ];
 
   return (
-    <div style={sectionWrapper}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-        <div>
-          <h3 style={{ fontSize: 16, fontWeight: 500, color: 'var(--text-primary)', margin: 0 }}>Theme</h3>
-          <p style={{ fontSize: 14, color: 'var(--text-secondary)', margin: '4px 0 0' }}>Choose a visual style.</p>
-        </div>
-        <div className="bb-stagger" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 12 }}>
-          {themes.map(t => {
-            const active = currentPalette === t.id;
-            return (
-              <button
-                key={t.id}
-                onClick={() => setPalette(t.id)}
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: 12,
-                  padding: 16,
-                  borderRadius: 12,
-                  border: active ? '2px solid #22C55E' : `1px solid ${t.border}`,
-                  background: 'var(--bg-card)',
-                  cursor: 'pointer',
-                  transition: 'all 200ms',
-                  position: 'relative',
-                  overflow: 'hidden',
-                }}
-                onMouseEnter={e => {
-                  if (!active) e.currentTarget.style.borderColor = C.borderHover;
-                }}
-                onMouseLeave={e => {
-                  if (!active) e.currentTarget.style.borderColor = t.border;
-                }}
-              >
-                <div style={{
-                  width: '100%', height: 72, borderRadius: 12, background: t.bg,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', color: t.previewText,
-                }}>
-                  {t.icon}
+    <div className="flex h-full flex-col gap-5 overflow-auto p-6">
+      <div>
+        <h3 className="text-base font-medium text-foreground">Theme</h3>
+        <p className="mt-1 text-sm text-muted-foreground">Choose a visual style.</p>
+      </div>
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-3">
+        {themes.map(t => {
+          const active = currentPalette === t.id;
+          return (
+            <button
+              key={t.id}
+              onClick={() => setPalette(t.id)}
+              className={cn(
+                'relative flex flex-col items-center gap-3 overflow-hidden rounded-xl p-4 transition-all',
+                'border bg-card hover:bg-accent/50',
+                active ? 'border-2 border-emerald-500' : 'border-border'
+              )}
+            >
+              <div className={cn(
+                'flex h-[72px] w-full items-center justify-center rounded-xl text-muted-foreground',
+                t.bg,
+              )}>
+                {t.icon}
+              </div>
+              <div className="text-center">
+                <p className="text-sm font-medium text-foreground">{t.label}</p>
+                <p className="mt-0.5 text-sm text-muted-foreground">{t.desc}</p>
+              </div>
+              {active && (
+                <div className="absolute right-2.5 top-2.5 flex size-5 items-center justify-center rounded-full bg-emerald-500">
+                  <IconCheck className="size-3 text-white" strokeWidth={2.5} />
                 </div>
-                <div style={{ textAlign: 'center' }}>
-                  <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)', margin: 0 }}>{t.label}</p>
-                  <p style={{ fontSize: 14, color: 'var(--text-secondary)', margin: '2px 0 0' }}>{t.desc}</p>
-                </div>
-                {active && (
-                  <div style={{
-                    position: 'absolute', top: 10, right: 10,
-                    width: 20, height: 20, borderRadius: '50%',
-                    background: '#22C55E',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}>
-                    <Check size={12} color="#fff" strokeWidth={2.5} />
-                  </div>
-                )}
-              </button>
-            );
-          })}
-        </div>
+              )}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
@@ -455,7 +404,7 @@ export function SettingsAppearanceTab() {
 
 export function SettingsBillingTab() {
   return (
-    <div style={sectionWrapper}>
+    <div className="h-full overflow-auto p-6">
       <BillingSettings />
     </div>
   );

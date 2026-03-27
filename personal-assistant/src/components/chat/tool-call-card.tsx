@@ -2,7 +2,9 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import { ChevronDown, Check, X, Activity } from 'lucide-react'
+import { IconChevronDown, IconCheck, IconX, IconActivity } from '@tabler/icons-react'
+import { Badge } from '@/components/ui/badge'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 
 interface ToolCall {
   name: string
@@ -32,83 +34,46 @@ export function ToolCallSummary({ toolCalls }: { toolCalls: ToolCall[] }) {
   if (toolCalls.length === 0) return null
 
   return (
-    <div style={{ marginTop: 4 }}>
-      <button
-        onClick={() => setExpanded(!expanded)}
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: 8,
-          padding: '4px 0',
-          background: 'none',
-          border: 'none',
-          cursor: 'pointer',
-          color: 'var(--text-dim)',
-          fontSize: 14,
-          fontFamily: 'inherit',
-          transition: 'color 0.15s ease',
-        }}
-        onMouseEnter={e => (e.currentTarget.style.color = 'var(--text-secondary)')}
-        onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-dim)')}
-      >
-        <Activity size={12} />
-        <span>
-          {toolCalls.length} tool{toolCalls.length !== 1 ? 's' : ''} used
-          {failed.length > 0 && <span style={{ color: 'var(--bb-red)' }}> · {failed.length} failed</span>}
-        </span>
-        <motion.div
-          animate={{ rotate: expanded ? 180 : 0 }}
-          transition={{ duration: 0.15 }}
-        >
-          <ChevronDown size={12} />
-        </motion.div>
-      </button>
-
-      <AnimatePresence>
-        {expanded && (
+    <Collapsible open={expanded} onOpenChange={setExpanded} className="mt-1">
+      <CollapsibleTrigger asChild>
+        <button className="inline-flex items-center gap-2 py-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
+          <IconActivity size={12} />
+          <span>
+            {toolCalls.length} tool{toolCalls.length !== 1 ? 's' : ''} used
+            {failed.length > 0 && <span className="text-destructive"> · {failed.length} failed</span>}
+          </span>
           <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
+            animate={{ rotate: expanded ? 180 : 0 }}
             transition={{ duration: 0.15 }}
-            style={{ overflow: 'hidden' }}
           >
-            <div style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 2,
-              padding: '4px 0 4px 18px',
-            }}>
-              {toolCalls.map((tc, i) => {
-                const display = toolDisplayNames[tc.name]
-                return (
-                  <div
-                    key={i}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 8,
-                      fontSize: 14,
-                      color: 'var(--text-dim)',
-                      lineHeight: 1.5,
-                    }}
-                  >
-                    {tc.status === 'done' ? (
-                      <Check size={11} style={{ color: 'var(--text-secondary)', flexShrink: 0 }} />
-                    ) : tc.status === 'error' ? (
-                      <X size={11} style={{ color: 'var(--text-secondary)', flexShrink: 0 }} />
-                    ) : (
-                      <span style={{ width: 11, height: 11, flexShrink: 0 }} />
-                    )}
-                    <span>{display?.label || tc.name}</span>
-                  </div>
-                )
-              })}
-            </div>
+            <IconChevronDown size={12} />
           </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+        </button>
+      </CollapsibleTrigger>
+
+      <CollapsibleContent>
+        <div className="flex flex-col gap-0.5 pl-4.5 py-1">
+          {toolCalls.map((tc, i) => {
+            const display = toolDisplayNames[tc.name]
+            return (
+              <div
+                key={i}
+                className="flex items-center gap-2 text-sm text-muted-foreground leading-relaxed"
+              >
+                {tc.status === 'done' ? (
+                  <IconCheck size={11} className="text-muted-foreground shrink-0" />
+                ) : tc.status === 'error' ? (
+                  <IconX size={11} className="text-muted-foreground shrink-0" />
+                ) : (
+                  <span className="w-[11px] h-[11px] shrink-0" />
+                )}
+                <span>{display?.label || tc.name}</span>
+              </div>
+            )
+          })}
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
   )
 }
 
@@ -116,9 +81,9 @@ export function ToolCallSummary({ toolCalls }: { toolCalls: ToolCall[] }) {
 export function ToolCallCard({ toolCall }: { toolCall: ToolCall }) {
   const display = toolDisplayNames[toolCall.name]
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, color: 'var(--text-dim)' }}>
-      {toolCall.status === 'done' && <Check size={11} color="var(--bb-green)" />}
-      {toolCall.status === 'error' && <X size={11} color="var(--bb-red)" />}
+    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+      {toolCall.status === 'done' && <IconCheck size={11} className="text-emerald-500" />}
+      {toolCall.status === 'error' && <IconX size={11} className="text-destructive" />}
       <span>{display?.label || toolCall.name}</span>
     </div>
   )

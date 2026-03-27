@@ -10,15 +10,15 @@ interface WebsiteSignalsPanelProps {
 }
 
 function TriState({ value, label }: { value: boolean | null | undefined; label: string }) {
-  if (value === true) return <IconCheck data-icon className="text-emerald-500" aria-label={`${label}: yes`} />
+  if (value === true) return <IconCheck data-icon className="text-success" aria-label={`${label}: yes`} />
   if (value === false) return <IconX data-icon className="text-destructive" aria-label={`${label}: no`} />
   return <IconQuestionMark data-icon className="text-muted-foreground" aria-label={`${label}: unknown`} />
 }
 
 function loadTimeColor(ms: number | null | undefined): string {
   if (ms == null) return 'text-muted-foreground'
-  if (ms < 1500) return 'text-emerald-500'
-  if (ms < 3000) return 'text-yellow-500'
+  if (ms < 1500) return 'text-success'
+  if (ms < 3000) return 'text-warning'
   return 'text-destructive'
 }
 

@@ -1,8 +1,11 @@
 'use client'
 
 import React, { useState } from 'react'
-import { Plus, X, Search } from 'lucide-react'
+import { IconPlus, IconX, IconSearch } from '@tabler/icons-react'
 import { motion, AnimatePresence } from 'motion/react'
+import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { ConversationSearch } from './conversation-search'
 
 export interface Thread {
@@ -81,46 +84,36 @@ export function ConversationDrawer({
 
   const searchActive = searchOpen && searchQuery.trim().length >= 2
 
-  if (!isOpen) return null
-
   return (
-    <>
-      {/* Backdrop */}
-      <div
-        className="bb-chat__drawer-backdrop"
-        onClick={onClose}
-      />
-
-      {/* Drawer panel */}
-      <div className="bb-chat__drawer">
-        {/* Header — matches sidebar panel header style */}
-        <div className="bb-chat__drawer-header">
-          <span className="bb-chat__drawer-title">Conversations</span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <button
-              onClick={() => setSearchOpen(!searchOpen)}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: searchOpen ? 'var(--text-primary)' : 'var(--text-muted)',
-                cursor: 'pointer',
-                padding: '4px',
-              }}
-              aria-label="Search conversations"
-            >
-              <Search size={14} strokeWidth={1.8} />
-            </button>
-            <button
-              className="bb-chat__drawer-close"
-              onClick={onClose}
-              aria-label="Close drawer"
-            >
-              <X size={14} strokeWidth={1.8} />
-            </button>
+    <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <SheetContent side="left" className="w-[320px] p-0 flex flex-col">
+        <SheetHeader className="px-4 py-3 border-b border-border">
+          <div className="flex items-center justify-between">
+            <SheetTitle className="text-sm font-medium">Conversations</SheetTitle>
+            <div className="flex items-center gap-1.5">
+              <Button
+                variant="ghost"
+                size="icon"
+                className={`h-7 w-7 ${searchOpen ? 'text-foreground' : 'text-muted-foreground'}`}
+                onClick={() => setSearchOpen(!searchOpen)}
+                aria-label="Search conversations"
+              >
+                <IconSearch size={14} />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 text-muted-foreground"
+                onClick={onClose}
+                aria-label="Close drawer"
+              >
+                <IconX size={14} />
+              </Button>
+            </div>
           </div>
-        </div>
+        </SheetHeader>
 
-        {/* Search box — slide-down + fade animation */}
+        {/* Search box -- slide-down + fade animation */}
         <AnimatePresence>
           {searchOpen && (
             <motion.div
@@ -129,7 +122,7 @@ export function ConversationDrawer({
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.18, ease: [0.25, 0.1, 0.25, 1] }}
-              style={{ overflow: 'hidden' }}
+              className="overflow-hidden"
             >
               <ConversationSearch
                 threads={threads}
@@ -144,100 +137,95 @@ export function ConversationDrawer({
           )}
         </AnimatePresence>
 
-        {/* New chat — compact pill (hidden when search active) */}
+        {/* New chat (hidden when search active) */}
         {!searchActive && (
-          <div style={{ padding: '10px 12px 10px' }}>
-            <button
-              className="bb-chat__drawer-new-btn"
+          <div className="px-3 pt-2.5 pb-1">
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full justify-start gap-2 text-xs"
               onClick={() => {
                 onNewConversation()
                 onClose()
               }}
             >
-              <Plus size={12} />
+              <IconPlus size={12} />
               New chat
-            </button>
+            </Button>
           </div>
         )}
 
         {/* Thread list (hidden when search active) */}
-        {!searchActive && <div className="bb-chat__drawer-list">
-          {isLoading ? (
-            <>
-              {[1, 2, 3].map(i => (
-                <div key={i} className="bb-chat__drawer-card" style={{ opacity: 0.3 }}>
-                  <div style={{
-                    height: 12, width: `${50 + i * 15}%`,
-                    background: 'var(--text-muted, rgba(255,255,255,0.15))',
-                    borderRadius: 8,
-                    animation: 'shimmer-pulse 1.5s ease-in-out infinite',
-                  }} />
-                  <div style={{
-                    height: 12, width: '75%', marginTop: 4,
-                    background: 'var(--text-muted, rgba(255,255,255,0.1))',
-                    borderRadius: 8,
-                    animation: 'shimmer-pulse 1.5s ease-in-out infinite',
-                    animationDelay: `${i * 0.2}s`,
-                  }} />
-                </div>
-              ))}
-            </>
-          ) : threads.length === 0 ? (
-            <div className="bb-chat__drawer-empty">No conversations yet</div>
-          ) : (
-            threads.map(thread => (
-              <div
-                key={thread.id}
-                className={`bb-chat__drawer-card${
-                  thread.id === activeThreadId ? ' bb-chat__drawer-card--active' : ''
-                }`}
-                onClick={() => {
-                  onSelectThread(thread.id)
-                  onClose()
-                }}
-                role="button"
-                tabIndex={0}
-                onKeyDown={e => {
-                  if (e.key === 'Enter' || e.key === ' ') {
+        {!searchActive && (
+          <div className="flex-1 overflow-y-auto px-3 py-2 flex flex-col gap-1">
+            {isLoading ? (
+              <>
+                {[1, 2, 3].map(i => (
+                  <div key={i} className="rounded-lg p-3 opacity-40">
+                    <Skeleton className="h-3 mb-2" style={{ width: `${50 + i * 15}%` }} />
+                    <Skeleton className="h-3 w-3/4" />
+                  </div>
+                ))}
+              </>
+            ) : threads.length === 0 ? (
+              <div className="text-center text-xs text-muted-foreground py-8">
+                No conversations yet
+              </div>
+            ) : (
+              threads.map(thread => (
+                <div
+                  key={thread.id}
+                  className={`group relative rounded-lg px-3 py-2.5 cursor-pointer transition-colors hover:bg-muted/50 ${
+                    thread.id === activeThreadId ? 'bg-muted/80' : ''
+                  }`}
+                  onClick={() => {
                     onSelectThread(thread.id)
                     onClose()
-                  }
-                }}
-              >
-                {/* Delete button — visible on hover */}
-                <button
-                  className="bb-chat__drawer-card-x"
-                  onClick={(e) => { e.stopPropagation(); onDeleteThread(thread.id) }}
-                  aria-label="Delete conversation"
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      onSelectThread(thread.id)
+                      onClose()
+                    }
+                  }}
                 >
-                  <X size={11} />
-                </button>
+                  {/* Delete button -- visible on hover */}
+                  <button
+                    className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity h-5 w-5 flex items-center justify-center rounded text-muted-foreground hover:text-foreground"
+                    onClick={(e) => { e.stopPropagation(); onDeleteThread(thread.id) }}
+                    aria-label="Delete conversation"
+                  >
+                    <IconX size={11} />
+                  </button>
 
-                {/* Title */}
-                <div className="bb-chat__drawer-card-title">
-                  {thread.title || 'Untitled'}
-                </div>
-
-                {/* Preview — stripped of markdown */}
-                {thread.preview && (
-                  <div className="bb-chat__drawer-card-preview">
-                    {(() => {
-                      const clean = stripMarkdown(thread.preview)
-                      return clean.length > 55 ? clean.slice(0, 55) + '...' : clean
-                    })()}
+                  {/* Title */}
+                  <div className="text-sm font-medium text-foreground truncate pr-6">
+                    {thread.title || 'Untitled'}
                   </div>
-                )}
 
-                {/* Meta row */}
-                <div className="bb-chat__drawer-card-meta">
-                  <span>{thread.messageCount} message{thread.messageCount !== 1 ? 's' : ''}</span>
-                  <span style={{ marginLeft: 'auto' }}>{relativeTime(thread.lastActivity)}</span>
+                  {/* Preview -- stripped of markdown */}
+                  {thread.preview && (
+                    <div className="text-xs text-muted-foreground mt-0.5 truncate">
+                      {(() => {
+                        const clean = stripMarkdown(thread.preview)
+                        return clean.length > 55 ? clean.slice(0, 55) + '...' : clean
+                      })()}
+                    </div>
+                  )}
+
+                  {/* Meta row */}
+                  <div className="flex items-center text-[11px] text-muted-foreground mt-1">
+                    <span>{thread.messageCount} message{thread.messageCount !== 1 ? 's' : ''}</span>
+                    <span className="ml-auto">{relativeTime(thread.lastActivity)}</span>
+                  </div>
                 </div>
-              </div>
-            ))
-          )}
-        </div>}
-      </div>
-    </>
+              ))
+            )}
+          </div>
+        )}
+      </SheetContent>
+    </Sheet>
   )
 }

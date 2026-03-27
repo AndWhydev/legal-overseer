@@ -1,7 +1,9 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { Copy, Check, PanelRightOpen } from 'lucide-react'
+import { IconCopy, IconCheck, IconLayoutSidebarRight } from '@tabler/icons-react'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 
 interface CodeBlockProps {
   children: string
@@ -63,136 +65,51 @@ export function CodeBlock({ children, className, onOpenArtifact }: CodeBlockProp
   const showArtifactButton = onOpenArtifact && lineCount > 20
 
   return (
-    <div
-      style={{
-        borderRadius: '8px',
-        overflow: 'hidden',
-        backgroundColor: 'var(--glass-bg-heavy, rgba(13, 17, 23, 0.8))',
-        border: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
-        marginBlock: '12px',
-      }}
-    >
+    <div className="rounded-lg overflow-hidden border border-border bg-card/80 my-3">
       {/* Header */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '10px 14px',
-          backgroundColor: 'var(--hover-bg, rgba(255, 255, 255, 0.03))',
-          borderBottom: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
-          minHeight: '40px',
-        }}
-      >
+      <div className="flex items-center justify-between px-3.5 py-2.5 bg-muted/50 border-b border-border min-h-[40px]">
         {/* Language badge (left) */}
-        <span
-          style={{
-            fontSize: '12px',
-            fontWeight: 600,
-            color: 'var(--text-muted, rgba(255, 255, 255, 0.4))',
-            textTransform: 'uppercase',
-            letterSpacing: '0.05em',
-          }}
-        >
+        <Badge variant="outline" className="text-[11px] uppercase tracking-wider font-semibold">
           {language || 'code'}
-        </span>
+        </Badge>
 
         {/* Controls (right) */}
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+        <div className="flex gap-1.5 items-center">
           {showArtifactButton && (
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
               onClick={() => onOpenArtifact(codeContent, language)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-                fontSize: '12px',
-                padding: '6px 8px',
-                backgroundColor: 'var(--hover-bg, rgba(255, 255, 255, 0.05))',
-                color: 'var(--text-muted, rgba(255, 255, 255, 0.4))',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                transition: 'all 150ms cubic-bezier(0.4, 0, 0.2, 1)',
-                fontFamily: 'inherit',
-              }}
-              onMouseEnter={e => {
-                (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'var(--hover-bg-strong, rgba(255, 255, 255, 0.08))'
-                ;(e.currentTarget as HTMLButtonElement).style.color = 'var(--text-primary, #F1F5F9)'
-              }}
-              onMouseLeave={e => {
-                (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'var(--hover-bg, rgba(255, 255, 255, 0.05))'
-                ;(e.currentTarget as HTMLButtonElement).style.color = 'var(--text-muted, rgba(255, 255, 255, 0.4))'
-              }}
             >
-              <PanelRightOpen size={14} />
+              <IconLayoutSidebarRight size={14} />
               Panel
-            </button>
+            </Button>
           )}
 
-          <button
+          <Button
+            variant="ghost"
+            size="sm"
+            className={`h-7 px-2 text-xs ${copied ? 'text-emerald-500' : 'text-muted-foreground hover:text-foreground'}`}
             onClick={handleCopy}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
-              fontSize: '12px',
-              padding: '6px 8px',
-              backgroundColor: 'var(--hover-bg, rgba(255, 255, 255, 0.05))',
-              color: copied ? 'var(--bb-green, #22C55E)' : 'var(--text-muted, rgba(255, 255, 255, 0.4))',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              transition: 'all 150ms cubic-bezier(0.4, 0, 0.2, 1)',
-              fontFamily: 'inherit',
-            }}
-            onMouseEnter={e => {
-              if (!copied) {
-                (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'var(--hover-bg-strong, rgba(255, 255, 255, 0.08))'
-                ;(e.currentTarget as HTMLButtonElement).style.color = 'var(--text-primary, #F1F5F9)'
-              }
-            }}
-            onMouseLeave={e => {
-              if (!copied) {
-                (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'var(--hover-bg, rgba(255, 255, 255, 0.05))'
-                ;(e.currentTarget as HTMLButtonElement).style.color = 'var(--text-muted, rgba(255, 255, 255, 0.4))'
-              }
-            }}
           >
-            {copied ? <Check size={14} /> : <Copy size={14} />}
+            {copied ? <IconCheck size={14} /> : <IconCopy size={14} />}
             {copied ? 'Copied' : 'Copy'}
-          </button>
+          </Button>
         </div>
       </div>
 
       {/* Code */}
-      <div
-        style={{
-          maxHeight: '400px',
-          overflowY: 'auto',
-          overflowX: 'auto',
-          fontSize: '13px',
-          lineHeight: '20px',
-          fontFamily: 'ui-monospace, "SF Mono", "Cascadia Code", "Segoe UI Mono", Menlo, Consolas, monospace',
-          color: 'var(--text-primary, #F1F5F9)',
-        }}
-      >
+      <div className="max-h-[400px] overflow-auto text-[13px] leading-5 font-mono text-foreground">
         {isLoading || !highlighted ? (
           // Fallback plain monospace
-          <pre
-            style={{
-              margin: 0,
-              padding: '14px',
-              backgroundColor: 'transparent',
-            }}
-          >
+          <pre className="m-0 p-3.5 bg-transparent">
             <code>{codeContent}</code>
           </pre>
         ) : (
           // Shiki highlighted output
           <div
-            className="bb-shiki-output"
-            style={{ padding: '14px' }}
+            className="bb-shiki-output p-3.5"
             dangerouslySetInnerHTML={{ __html: highlighted }}
           />
         )}

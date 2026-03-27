@@ -80,12 +80,11 @@ const KanbanDropColumn = memo(function KanbanDropColumn({
       <div
         ref={setNodeRef}
         className={cn(
-          'flex flex-1 flex-col gap-2.5 rounded-xl p-2 transition-colors',
+          'flex min-h-[120px] flex-1 flex-col gap-2.5 rounded-xl p-2 transition-colors',
           isOver
             ? 'border border-dashed border-ring/30 bg-muted/50'
             : 'border border-dashed border-transparent'
         )}
-        style={{ minHeight: 120 }}
         aria-label={`Drop zone for ${label}`}
       >
         <SortableContext items={leads.map((l) => l.id)} strategy={verticalListSortingStrategy}>
@@ -155,11 +154,10 @@ function LeadsKanbanViewInner({
       onDragEnd={handleDragEnd}
     >
       <div
-        className="grid flex-1 auto-rows-fr grid-cols-1 gap-4 overflow-x-auto sm:grid-cols-2 lg:grid-cols-3"
+        className="grid min-h-0 flex-1 auto-rows-fr grid-cols-1 gap-4 overflow-x-auto sm:grid-cols-2 lg:grid-cols-3"
         role="application"
         aria-label="Lead pipeline kanban board"
         aria-roledescription="kanban board"
-        style={{ minHeight: 0 }}
       >
         {BOARD_COLUMNS.map((column) => (
           <KanbanDropColumn
@@ -176,7 +174,7 @@ function LeadsKanbanViewInner({
 
       <DragOverlay dropAnimation={null}>
         {activeLead ? (
-          <div className="w-64 opacity-90 drop-shadow-lg" style={{ pointerEvents: 'none' }}>
+          <div className="pointer-events-none w-64 opacity-90 drop-shadow-lg">
             <LeadCard lead={activeLead} />
           </div>
         ) : null}

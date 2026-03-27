@@ -1,28 +1,39 @@
-'use client';
+'use client'
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Check, Trash2, Copy, Loader2 } from 'lucide-react';
-import { GlassDropdown } from '@/components/ui/glass-dropdown';
-import { logger } from '@/lib/core/logger';
-import { S, C } from '@/lib/styles/design-tokens'
+import React, { useState, useEffect, useCallback } from 'react'
+import { IconCheck, IconTrash, IconLoader2 } from '@tabler/icons-react'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { logger } from '@/lib/core/logger'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 interface TeamMember {
-  id: string;
-  email: string;
-  display_name: string | null;
-  role: 'owner' | 'admin' | 'member' | 'viewer';
-  created_at: string;
+  id: string
+  email: string
+  display_name: string | null
+  role: 'owner' | 'admin' | 'member' | 'viewer'
+  created_at: string
 }
 
 interface TeamInvite {
-  id: string;
-  email: string;
-  role: 'owner' | 'admin' | 'member' | 'viewer';
-  status: 'pending' | 'accepted' | 'rejected' | 'expired';
-  created_at: string;
-  expires_at: string;
+  id: string
+  email: string
+  role: 'owner' | 'admin' | 'member' | 'viewer'
+  status: 'pending' | 'accepted' | 'rejected' | 'expired'
+  created_at: string
+  expires_at: string
 }
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -32,657 +43,326 @@ const ROLE_OPTIONS = [
   { id: 'admin', label: 'Admin', desc: 'Full access except billing' },
   { id: 'member', label: 'Member', desc: 'Can view and edit content' },
   { id: 'viewer', label: 'Viewer', desc: 'Read-only access' },
-] as const;
-
-// ─── Inline Styles ───────────────────────────────────────────────────────────
-
-const sectionWrapper: React.CSSProperties = {
-  padding: '24px',
-  overflow: 'auto',
-  height: '100%',
-};
-
-const sectionTitle: React.CSSProperties = {
-  fontSize: 16,
-  fontWeight: 500,
-  color: 'var(--text-primary, #F1F5F9)',
-  margin: 0,
-};
-
-const sectionDesc: React.CSSProperties = {
-  fontSize: 14,
-  color: 'var(--text-secondary, #94A3B8)',
-  margin: '4px 0 16px',
-};
-
-const glassCard: React.CSSProperties = {
-  padding: '16px',
-  borderRadius: 12,
-  background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.6))',
-  backdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
-  WebkitBackdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
-  border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
-  boxShadow: 'var(--card-shadow, 0 2px 8px rgba(0,0,0,0.3)), var(--card-inset, inset 0 1px 0 rgba(255,255,255,0.06))',
-};
-
-const listRow: React.CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  padding: '12px 16px',
-  borderRadius: 12,
-  background: 'var(--bb-surface, rgba(10, 14, 23, 0.5))',
-  border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
-};
-
-const ghostBtn: React.CSSProperties = {
-  padding: '8px 16px',
-  borderRadius: 8,
-  background: 'transparent',
-  border: `1px solid ${C.borderHover}`,
-  color: 'var(--text-primary, #F1F5F9)',
-  fontSize: 14,
-  fontWeight: 500,
-  cursor: 'pointer',
-  transition: 'all 200ms',
-};
-
-const accentBtn: React.CSSProperties = {
-  padding: '8px 16px',
-  borderRadius: 8,
-  background: 'var(--btn-primary-bg, #F1F5F9)',
-  border: 'none',
-  color: 'var(--btn-primary-fg, #0a0f1a)',
-  fontSize: 14,
-  fontWeight: 500,
-  cursor: 'pointer',
-  transition: 'all 200ms',
-};
-
-const dangerBtn: React.CSSProperties = {
-  padding: '8px 12px',
-  borderRadius: 8,
-  background: C.statusErrorBg,
-  border: `1px solid ${C.statusError}`,
-  color: '#EF4444',
-  fontSize: 14,
-  fontWeight: 500,
-  cursor: 'pointer',
-  transition: 'all 200ms',
-};
-
-// ─── Save Indicator ──────────────────────────────────────────────────────────
-
-function SaveIndicator({ visible, message = 'Saved' }: { visible: boolean; message?: string }) {
-  return (
-    <div
-      style={{
-        position: 'fixed',
-        top: 80,
-        right: 24,
-        display: 'flex',
-        alignItems: 'center',
-        gap: 8,
-        padding: '8px 16px',
-        borderRadius: 8,
-        background: C.statusSuccessBg,
-        color: '#22C55E',
-        fontSize: 14,
-        fontWeight: 500,
-        opacity: visible ? 1 : 0,
-        transform: visible ? 'translateY(0)' : 'translateY(-8px)',
-        transition: 'opacity 300ms, transform 300ms',
-        pointerEvents: 'none',
-        zIndex: 50,
-      }}
-    >
-      <Check size={14} />
-      {message}
-    </div>
-  );
-}
+] as const
 
 // ─── Role Badge ──────────────────────────────────────────────────────────────
 
 function RoleBadge({ role }: { role: string }) {
-  const colors: Record<string, { bg: string; text: string }> = {
-    owner: { bg: C.bgHoverStrong, text: 'var(--text-primary, #F1F5F9)' },
-    admin: { bg: 'rgba(168, 85, 247, 0.15)', text: '#A855F7' },
-    member: { bg: 'rgba(59, 130, 246, 0.15)', text: '#3B82F6' },
-    viewer: { bg: 'rgba(107, 114, 128, 0.15)', text: '#6B7280' },
-  };
-
-  const color = colors[role] || colors.member;
+  const variant = role === 'owner'
+    ? 'default' as const
+    : role === 'admin'
+      ? 'secondary' as const
+      : 'outline' as const
 
   return (
-    <span
-      style={{
-        display: 'inline-block',
-        padding: '4px 12px',
-        borderRadius: 8,
-        background: color.bg,
-        color: color.text,
-        fontSize: 14,
-        fontWeight: 500,
-        textTransform: 'capitalize',
-      }}
-    >
+    <Badge variant={variant} className="capitalize">
       {role}
-    </span>
-  );
-}
-
-// ─── Role Dropdown ───────────────────────────────────────────────────────────
-
-function RoleDropdown({
-  currentRole,
-  onRoleChange,
-  disabled = false,
-}: {
-  currentRole: string;
-  onRoleChange: (role: string) => void;
-  disabled?: boolean;
-}) {
-  const [isOpen, setIsOpen] = useState(false);
-
-  return (
-    <div style={{ position: 'relative' }}>
-      <button
-        onClick={() => !disabled && setIsOpen(!isOpen)}
-        disabled={disabled}
-        style={{
-          ...ghostBtn,
-          opacity: disabled ? 0.5 : 1,
-        }}
-        onMouseEnter={e => {
-          if (!disabled) {
-            e.currentTarget.style.background = C.bgHoverStrong;
-            e.currentTarget.style.borderColor = C.borderFocus;
-          }
-        }}
-        onMouseLeave={e => {
-          if (!disabled) {
-            e.currentTarget.style.background = 'transparent';
-            e.currentTarget.style.borderColor = C.borderHover;
-          }
-        }}
-      >
-        <div style={{ textTransform: 'capitalize' }}>{currentRole}</div>
-      </button>
-
-      {isOpen && (
-        <div
-          style={{
-            position: 'absolute',
-            top: '100%',
-            right: 0,
-            marginTop: 4,
-            width: 200,
-            background: 'var(--glass-bg-heavy, rgba(12, 16, 24, 0.85))',
-            border: `1px solid ${C.borderSubtle}`,
-            borderRadius: 12,
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
-            zIndex: 1000,
-            boxShadow: '0 12px 24px rgba(0, 0, 0, 0.3)',
-          }}
-        >
-          {ROLE_OPTIONS.map(option => (
-            <button
-              key={option.id}
-              onClick={() => {
-                onRoleChange(option.id);
-                setIsOpen(false);
-              }}
-              style={{
-                display: 'block',
-                width: '100%',
-                padding: '8px 12px',
-                textAlign: 'left',
-                background: currentRole === option.id ? C.bgHoverStrong : 'transparent',
-                border: 'none',
-                color: currentRole === option.id ? 'var(--text-primary, #F1F5F9)' : 'var(--text-primary, #F1F5F9)',
-                fontSize: 14,
-                fontWeight: 500,
-                cursor: 'pointer',
-                transition: 'background 150ms',
-              }}
-              onMouseEnter={e => {
-                if (currentRole !== option.id) {
-                  e.currentTarget.style.background = C.bgHoverStrong;
-                }
-              }}
-              onMouseLeave={e => {
-                if (currentRole !== option.id) {
-                  e.currentTarget.style.background = 'transparent';
-                }
-              }}
-            >
-              <div style={{ fontWeight: 500, marginBottom: 2 }}>{option.label}</div>
-              <div style={{ fontSize: 14, color: 'var(--text-secondary, #94A3B8)' }}>
-                {option.desc}
-              </div>
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── Confirmation Dialog ──────────────────────────────────────────────────────
-
-function ConfirmDialog({
-  title,
-  message,
-  confirmLabel = 'Confirm',
-  cancelLabel = 'Cancel',
-  onConfirm,
-  onCancel,
-  isDanger = false,
-}: {
-  title: string;
-  message: string;
-  confirmLabel?: string;
-  cancelLabel?: string;
-  onConfirm: () => void;
-  onCancel: () => void;
-  isDanger?: boolean;
-}) {
-  return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 2000,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-      onClick={onCancel}
-    >
-      <div
-        style={{
-          position: 'absolute',
-          inset: 0,
-          background: C.bgOverlay,
-          backdropFilter: 'blur(8px)',
-          WebkitBackdropFilter: 'blur(8px)',
-        }}
-      />
-      <div
-        style={{
-          ...glassCard,
-          position: 'relative',
-          maxWidth: 380,
-          width: '90%',
-          padding: '24px',
-          boxShadow: '0 24px 48px rgba(0, 0, 0, 0.4)',
-        }}
-        onClick={e => e.stopPropagation()}
-      >
-        <h3 style={{ fontSize: 16, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)', margin: 0 }}>
-          {title}
-        </h3>
-        <p style={{ fontSize: 14, color: 'var(--text-secondary, #94A3B8)', margin: '8px 0 16px' }}>
-          {message}
-        </p>
-
-        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-          <button
-            onClick={onCancel}
-            style={{
-              ...ghostBtn,
-            }}
-            onMouseEnter={e => {
-              e.currentTarget.style.background = C.bgHoverStrong;
-              e.currentTarget.style.borderColor = C.borderFocus;
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.background = 'transparent';
-              e.currentTarget.style.borderColor = C.borderHover;
-            }}
-          >
-            {cancelLabel}
-          </button>
-          <button
-            onClick={onConfirm}
-            style={{
-              ...(isDanger ? dangerBtn : accentBtn),
-            }}
-            onMouseEnter={e => {
-              if (isDanger) {
-                e.currentTarget.style.background = C.statusErrorBg;
-              } else {
-                e.currentTarget.style.background = '#E2E8F0';
-                e.currentTarget.style.transform = 'translateY(-1px)';
-              }
-            }}
-            onMouseLeave={e => {
-              if (isDanger) {
-                e.currentTarget.style.background = C.statusErrorBg;
-              } else {
-                e.currentTarget.style.background = '#F1F5F9';
-                e.currentTarget.style.transform = 'translateY(0)';
-              }
-            }}
-          >
-            {confirmLabel}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
+    </Badge>
+  )
 }
 
 // ─── Team Management Component ────────────────────────────────────────────────
 
 export function TeamManagementTab() {
-  const [members, setMembers] = useState<TeamMember[]>([]);
-  const [invites, setInvites] = useState<TeamInvite[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [members, setMembers] = useState<TeamMember[]>([])
+  const [invites, setInvites] = useState<TeamInvite[]>([])
+  const [isLoading, setIsLoading] = useState(true)
 
-  const [inviteEmail, setInviteEmail] = useState('');
-  const [inviteRole, setInviteRole] = useState<'member' | 'admin' | 'viewer'>('member');
-  const [isInviting, setIsInviting] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState('')
+  const [inviteRole, setInviteRole] = useState<'member' | 'admin' | 'viewer'>('member')
+  const [isInviting, setIsInviting] = useState(false)
 
-  const [saveIndicatorVisible, setSaveIndicatorVisible] = useState(false);
+  const [saveIndicatorVisible, setSaveIndicatorVisible] = useState(false)
   const [confirmDialog, setConfirmDialog] = useState<{
-    type: 'delete' | 'role-change';
-    memberId: string;
-    email: string;
-    newRole?: string;
-  } | null>(null);
+    type: 'delete' | 'role-change'
+    memberId: string
+    email: string
+    newRole?: string
+  } | null>(null)
 
   // Load team data
   useEffect(() => {
     const fetchTeam = async () => {
       try {
-        setIsLoading(true);
-        const res = await fetch('/api/team');
-        if (!res.ok) throw new Error('Failed to fetch team');
-        const data = await res.json() as { members: TeamMember[]; invites: TeamInvite[] };
-        setMembers(data.members);
-        setInvites(data.invites);
+        setIsLoading(true)
+        const res = await fetch('/api/team')
+        if (!res.ok) throw new Error('Failed to fetch team')
+        const data = await res.json() as { members: TeamMember[]; invites: TeamInvite[] }
+        setMembers(data.members)
+        setInvites(data.invites)
       } catch (err) {
-        logger.error('Failed to load team:', err);
+        logger.error('Failed to load team:', err)
       } finally {
-        setIsLoading(false);
+        setIsLoading(false)
       }
-    };
+    }
 
-    fetchTeam();
-  }, []);
+    fetchTeam()
+  }, [])
 
   // Send invite
   const handleInvite = async () => {
-    if (!inviteEmail.trim()) return;
+    if (!inviteEmail.trim()) return
 
     try {
-      setIsInviting(true);
+      setIsInviting(true)
       const res = await fetch('/api/team', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: inviteEmail.trim(), role: inviteRole }),
-      });
-      if (!res.ok) throw new Error('Failed to send invite');
-      const data = await res.json() as { invite: TeamInvite };
-      setInvites([...invites, data.invite]);
-      setInviteEmail('');
-      setSaveIndicatorVisible(true);
-      setTimeout(() => setSaveIndicatorVisible(false), 1500);
+      })
+      if (!res.ok) throw new Error('Failed to send invite')
+      const data = await res.json() as { invite: TeamInvite }
+      setInvites([...invites, data.invite])
+      setInviteEmail('')
+      setSaveIndicatorVisible(true)
+      setTimeout(() => setSaveIndicatorVisible(false), 1500)
     } catch (err) {
-      logger.error('Failed to send invite:', err);
+      logger.error('Failed to send invite:', err)
     } finally {
-      setIsInviting(false);
+      setIsInviting(false)
     }
-  };
+  }
 
   // Update member role
   const handleRoleChange = async (memberId: string, newRole: string) => {
-    const member = members.find(m => m.id === memberId);
-    if (!member) return;
-    setConfirmDialog({ type: 'role-change', memberId, email: member.email, newRole });
-  };
+    const member = members.find(m => m.id === memberId)
+    if (!member) return
+    setConfirmDialog({ type: 'role-change', memberId, email: member.email, newRole })
+  }
 
   const confirmRoleChange = async () => {
-    if (!confirmDialog || confirmDialog.type !== 'role-change' || !confirmDialog.newRole) return;
+    if (!confirmDialog || confirmDialog.type !== 'role-change' || !confirmDialog.newRole) return
 
     try {
       const res = await fetch(`/api/team/${confirmDialog.memberId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ role: confirmDialog.newRole }),
-      });
-      if (!res.ok) throw new Error('Failed to update role');
+      })
+      if (!res.ok) throw new Error('Failed to update role')
       setMembers(
         members.map(m =>
           m.id === confirmDialog.memberId ? { ...m, role: confirmDialog.newRole as typeof m.role } : m
         )
-      );
-      setSaveIndicatorVisible(true);
-      setTimeout(() => setSaveIndicatorVisible(false), 1500);
-      setConfirmDialog(null);
+      )
+      setSaveIndicatorVisible(true)
+      setTimeout(() => setSaveIndicatorVisible(false), 1500)
+      setConfirmDialog(null)
     } catch (err) {
-      logger.error('Failed to update role:', err);
-      setConfirmDialog(null);
+      logger.error('Failed to update role:', err)
+      setConfirmDialog(null)
     }
-  };
+  }
 
   // Remove member
   const handleRemoveMember = (memberId: string, email: string) => {
-    setConfirmDialog({ type: 'delete', memberId, email });
-  };
+    setConfirmDialog({ type: 'delete', memberId, email })
+  }
 
   const confirmRemoveMember = async () => {
-    if (!confirmDialog || confirmDialog.type !== 'delete') return;
+    if (!confirmDialog || confirmDialog.type !== 'delete') return
 
     try {
-      const res = await fetch(`/api/team/${confirmDialog.memberId}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error('Failed to remove member');
-      setMembers(members.filter(m => m.id !== confirmDialog.memberId));
-      setSaveIndicatorVisible(true);
-      setTimeout(() => setSaveIndicatorVisible(false), 1500);
-      setConfirmDialog(null);
+      const res = await fetch(`/api/team/${confirmDialog.memberId}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error('Failed to remove member')
+      setMembers(members.filter(m => m.id !== confirmDialog.memberId))
+      setSaveIndicatorVisible(true)
+      setTimeout(() => setSaveIndicatorVisible(false), 1500)
+      setConfirmDialog(null)
     } catch (err) {
-      logger.error('Failed to remove member:', err);
-      setConfirmDialog(null);
+      logger.error('Failed to remove member:', err)
+      setConfirmDialog(null)
     }
-  };
+  }
 
   if (isLoading) {
     return (
-      <div style={sectionWrapper}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-          <div style={{ textAlign: 'center', color: 'var(--text-secondary, #94A3B8)' }}>
-            <Loader2 size={24} style={{ animation: 'bb-spin 1s linear infinite', marginBottom: 12 }} />
-            <div style={{ fontSize: 14 }}>Loading team...</div>
-          </div>
+      <div className="flex h-full items-center justify-center p-6">
+        <div className="flex flex-col items-center gap-3 text-muted-foreground">
+          <IconLoader2 className="size-6 animate-spin" />
+          <span className="text-sm">Loading team...</span>
         </div>
       </div>
-    );
+    )
   }
 
   return (
-    <div style={sectionWrapper}>
-      <SaveIndicator visible={saveIndicatorVisible} />
+    <div className="space-y-6 overflow-auto p-6">
+      {/* Save indicator */}
+      {saveIndicatorVisible && (
+        <div className="fixed right-6 top-20 z-50 flex items-center gap-2 rounded-lg bg-emerald-500/10 px-4 py-2 text-sm font-medium text-emerald-500 animate-in fade-in slide-in-from-top-2">
+          <IconCheck className="size-3.5" />
+          Saved
+        </div>
+      )}
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
-        {/* Invite New Member */}
-        <div>
-          <h3 style={sectionTitle}>Invite Team Member</h3>
-          <p style={sectionDesc}>Add new members to your organization</p>
-          <div style={{ ...glassCard, display: 'flex', gap: 8 }}>
-            <input
+      {/* Invite New Member */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Invite Team Member</CardTitle>
+          <CardDescription>Add new members to your organization</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex gap-2">
+            <Input
               type="email"
               placeholder="user@example.com"
               value={inviteEmail}
               onChange={e => setInviteEmail(e.target.value)}
-              onKeyPress={e => e.key === 'Enter' && handleInvite()}
-              style={{
-                flex: 1,
-                padding: '12px 12px',
-                borderRadius: 8,
-                background: 'var(--bg-input, rgba(13, 17, 23, 0.6))',
-                border: `1px solid ${C.borderHover}`,
-                color: 'var(--text-primary, #F1F5F9)',
-                fontSize: 14,
-                transition: 'border-color 200ms',
-              }}
-              onFocus={e => {
-                e.currentTarget.style.borderColor = C.borderFocus;
-              }}
-              onBlur={e => {
-                e.currentTarget.style.borderColor = C.borderHover;
-              }}
+              onKeyDown={e => e.key === 'Enter' && handleInvite()}
+              className="flex-1"
             />
-
-            <GlassDropdown
-              options={ROLE_OPTIONS.filter(r => r.id !== 'owner').map(r => ({ value: r.id, label: r.label }))}
-              value={inviteRole}
-              onChange={v => setInviteRole(v as typeof inviteRole)}
-            />
-
-            <button
+            <Select value={inviteRole} onValueChange={v => setInviteRole(v as typeof inviteRole)}>
+              <SelectTrigger className="w-[130px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {ROLE_OPTIONS.filter(r => r.id !== 'owner').map(r => (
+                  <SelectItem key={r.id} value={r.id}>{r.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button
               onClick={handleInvite}
               disabled={!inviteEmail.trim() || isInviting}
-              style={{
-                ...accentBtn,
-                opacity: !inviteEmail.trim() || isInviting ? 0.5 : 1,
-              }}
-              onMouseEnter={e => {
-                if (inviteEmail.trim() && !isInviting) {
-                  e.currentTarget.style.background = '#E2E8F0';
-                  e.currentTarget.style.transform = 'translateY(-1px)';
-                }
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.background = '#F1F5F9';
-                e.currentTarget.style.transform = 'translateY(0)';
-              }}
             >
-              {isInviting ? <Loader2 size={14} style={{ animation: 'bb-spin 1s linear infinite' }} /> : 'Send Invite'}
-            </button>
+              {isInviting ? <IconLoader2 className="size-4 animate-spin" /> : 'Send Invite'}
+            </Button>
           </div>
-        </div>
+        </CardContent>
+      </Card>
 
-        {/* Team Members */}
-        <div>
-          <h3 style={sectionTitle}>Team Members ({members.length})</h3>
-          <p style={sectionDesc}>Manage access and roles</p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {members.length === 0 ? (
-              <div style={{ ...glassCard, textAlign: 'center', padding: '24px' }}>
-                <p style={{ fontSize: 14, color: 'var(--text-secondary, #94A3B8)', margin: 0 }}>
-                  No team members yet
-                </p>
-              </div>
-            ) : (
-              members.map(member => (
-                <div key={member.id} style={{ ...listRow, justifyContent: 'space-between' }}>
-                  <div style={{ minWidth: 0, flex: 1 }}>
-                    <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)', margin: 0 }}>
+      {/* Team Members */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Team Members ({members.length})</CardTitle>
+          <CardDescription>Manage access and roles</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {members.length === 0 ? (
+            <p className="py-6 text-center text-sm text-muted-foreground">
+              No team members yet
+            </p>
+          ) : (
+            <div className="flex flex-col gap-2">
+              {members.map(member => (
+                <div
+                  key={member.id}
+                  className="flex items-center justify-between rounded-lg border border-border bg-card p-3"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-foreground">
                       {member.display_name || member.email}
                     </p>
-                    <p style={{ fontSize: 14, color: 'var(--text-secondary, #94A3B8)', margin: '2px 0 0' }}>
+                    <p className="text-xs text-muted-foreground">
                       {member.email}
                     </p>
                   </div>
-
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div className="flex items-center gap-3">
                     <RoleBadge role={member.role} />
-                    <RoleDropdown
-                      currentRole={member.role}
-                      onRoleChange={newRole => handleRoleChange(member.id, newRole)}
+                    <Select
+                      value={member.role}
+                      onValueChange={newRole => handleRoleChange(member.id, newRole)}
                       disabled={member.role === 'owner'}
-                    />
-                    <button
+                    >
+                      <SelectTrigger className="h-8 w-[110px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {ROLE_OPTIONS.map(option => (
+                          <SelectItem key={option.id} value={option.id}>
+                            <div>
+                              <div className="font-medium">{option.label}</div>
+                              <div className="text-xs text-muted-foreground">{option.desc}</div>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      variant="destructive"
+                      size="icon"
+                      className="size-8"
                       onClick={() => handleRemoveMember(member.id, member.email)}
                       disabled={member.role === 'owner'}
-                      style={{
-                        ...dangerBtn,
-                        opacity: member.role === 'owner' ? 0.3 : 1,
-                      }}
-                      onMouseEnter={e => {
-                        if (member.role !== 'owner') {
-                          e.currentTarget.style.background = C.statusErrorBg;
-                        }
-                      }}
-                      onMouseLeave={e => {
-                        if (member.role !== 'owner') {
-                          e.currentTarget.style.background = C.statusErrorBg;
-                        }
-                      }}
                       title={member.role === 'owner' ? 'Cannot remove owner' : 'Remove member'}
                     >
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-
-        {/* Pending Invites */}
-        {invites.length > 0 && (
-          <div>
-            <h3 style={sectionTitle}>Pending Invitations ({invites.length})</h3>
-            <p style={sectionDesc}>Waiting for response from invitees</p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {invites.map(invite => (
-                <div key={invite.id} style={{ ...listRow, justifyContent: 'space-between', opacity: 0.7 }}>
-                  <div style={{ minWidth: 0, flex: 1 }}>
-                    <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)', margin: 0 }}>
-                      {invite.email}
-                    </p>
-                    <p style={{ fontSize: 14, color: 'var(--text-secondary, #94A3B8)', margin: '2px 0 0' }}>
-                      Invited {new Date(invite.created_at).toLocaleDateString()}
-                    </p>
-                  </div>
-
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <RoleBadge role={invite.role} />
-                    <span
-                      style={{
-                        display: 'inline-block',
-                        padding: '4px 12px',
-                        borderRadius: 8,
-                        background: C.statusWarningBg,
-                        color: '#FBBF24',
-                        fontSize: 14,
-                        fontWeight: 500,
-                        textTransform: 'capitalize',
-                      }}
-                    >
-                      {invite.status}
-                    </span>
+                      <IconTrash className="size-3.5" />
+                    </Button>
                   </div>
                 </div>
               ))}
             </div>
-          </div>
-        )}
-      </div>
+          )}
+        </CardContent>
+      </Card>
 
-      {confirmDialog && (
-        <ConfirmDialog
-          title={
-            confirmDialog.type === 'delete'
-              ? 'Remove Team Member?'
-              : `Change Role to ${confirmDialog.newRole?.charAt(0).toUpperCase()}${confirmDialog.newRole?.slice(1)}?`
-          }
-          message={
-            confirmDialog.type === 'delete'
-              ? `${confirmDialog.email} will lose access to your organization.`
-              : `${confirmDialog.email} will have ${confirmDialog.newRole} permissions.`
-          }
-          confirmLabel={confirmDialog.type === 'delete' ? 'Remove' : 'Change Role'}
-          cancelLabel="Cancel"
-          isDanger={confirmDialog.type === 'delete'}
-          onConfirm={confirmDialog.type === 'delete' ? confirmRemoveMember : confirmRoleChange}
-          onCancel={() => setConfirmDialog(null)}
-        />
+      {/* Pending Invites */}
+      {invites.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Pending Invitations ({invites.length})</CardTitle>
+            <CardDescription>Waiting for response from invitees</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col gap-2">
+              {invites.map(invite => (
+                <div
+                  key={invite.id}
+                  className="flex items-center justify-between rounded-lg border border-border bg-card p-3 opacity-70"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-foreground">
+                      {invite.email}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Invited {new Date(invite.created_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <RoleBadge role={invite.role} />
+                    <Badge variant="outline" className="capitalize text-amber-500 border-amber-500/30 bg-amber-500/10">
+                      {invite.status}
+                    </Badge>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       )}
+
+      {/* Confirm Dialog */}
+      <Dialog open={!!confirmDialog} onOpenChange={open => { if (!open) setConfirmDialog(null) }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {confirmDialog?.type === 'delete'
+                ? 'Remove Team Member?'
+                : `Change Role to ${confirmDialog?.newRole?.charAt(0).toUpperCase()}${confirmDialog?.newRole?.slice(1)}?`
+              }
+            </DialogTitle>
+            <DialogDescription>
+              {confirmDialog?.type === 'delete'
+                ? `${confirmDialog?.email} will lose access to your organization.`
+                : `${confirmDialog?.email} will have ${confirmDialog?.newRole} permissions.`
+              }
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmDialog(null)}>
+              Cancel
+            </Button>
+            <Button
+              variant={confirmDialog?.type === 'delete' ? 'destructive' : 'default'}
+              onClick={confirmDialog?.type === 'delete' ? confirmRemoveMember : confirmRoleChange}
+            >
+              {confirmDialog?.type === 'delete' ? 'Remove' : 'Change Role'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
-  );
+  )
 }

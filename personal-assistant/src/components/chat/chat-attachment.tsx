@@ -1,7 +1,9 @@
 'use client'
 
 import React, { useState, useCallback } from 'react'
-import { FileText, File, ImageOff, Download, ExternalLink } from 'lucide-react'
+import { IconFileText, IconFile, IconPhotoOff, IconDownload, IconExternalLink } from '@tabler/icons-react'
+import { Card } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -52,82 +54,6 @@ async function fetchSignedUrl(attachmentId: string): Promise<{ signedUrl: string
 }
 
 // ---------------------------------------------------------------------------
-// Styles
-// ---------------------------------------------------------------------------
-
-const fileCardStyle: React.CSSProperties = {
-  display: 'inline-flex',
-  alignItems: 'center',
-  gap: 10,
-  padding: '10px 14px',
-  borderRadius: 12,
-  background: 'var(--hover-bg-strong, rgba(255, 255, 255, 0.06))',
-  backdropFilter: 'blur(12px)',
-  WebkitBackdropFilter: 'blur(12px)',
-  border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
-  cursor: 'pointer',
-  transition: 'all 200ms ease',
-  maxWidth: 320,
-  textDecoration: 'none',
-}
-
-const fileCardHoverStyle: React.CSSProperties = {
-  ...fileCardStyle,
-  background: 'var(--hover-bg-strong, rgba(255, 255, 255, 0.1))',
-  border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
-}
-
-const filenameStyle: React.CSSProperties = {
-  fontSize: 13,
-  fontWeight: 500,
-  color: 'var(--text-primary, #F1F5F9)',
-  lineHeight: 1.3,
-  overflow: 'hidden',
-  textOverflow: 'ellipsis',
-  whiteSpace: 'nowrap',
-}
-
-const fileSizeStyle: React.CSSProperties = {
-  fontSize: 11,
-  color: 'var(--text-dim, #475569)',
-  marginTop: 1,
-}
-
-const downloadLabelStyle: React.CSSProperties = {
-  fontSize: 11,
-  color: 'var(--text-secondary, #94A3B8)',
-  display: 'inline-flex',
-  alignItems: 'center',
-  gap: 4,
-  marginTop: 2,
-}
-
-const imageSkeletonStyle: React.CSSProperties = {
-  width: 200,
-  height: 140,
-  borderRadius: 8,
-  background: 'linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.03) 75%)',
-  backgroundSize: '200% 100%',
-  animation: 'shimmer 1.5s ease infinite',
-  border: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
-}
-
-const imageErrorStyle: React.CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  justifyContent: 'center',
-  gap: 6,
-  width: 200,
-  height: 140,
-  borderRadius: 8,
-  background: 'var(--hover-bg, rgba(255, 255, 255, 0.04))',
-  border: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
-  color: 'var(--text-dim, #475569)',
-  fontSize: 11,
-}
-
-// ---------------------------------------------------------------------------
 // ImageAttachment
 // ---------------------------------------------------------------------------
 
@@ -164,15 +90,15 @@ function ImageAttachment({ attachmentId, name }: { attachmentId?: string; name: 
 
   if (status === 'error') {
     return (
-      <div style={imageErrorStyle}>
-        <ImageOff size={20} />
+      <div className="flex flex-col items-center justify-center gap-1.5 w-[200px] h-[140px] rounded-lg bg-muted/50 border border-border text-muted-foreground text-xs">
+        <IconPhotoOff size={20} />
         <span>{truncateFilename(name, 24)}</span>
       </div>
     )
   }
 
   if (!signedUrl) {
-    return <div style={imageSkeletonStyle} />
+    return <Skeleton className="w-[200px] h-[140px] rounded-lg" />
   }
 
   return (
@@ -183,16 +109,9 @@ function ImageAttachment({ attachmentId, name }: { attachmentId?: string; name: 
       onError={() => setStatus('error')}
       onClick={handleClick}
       title={`${name} — Click to open full size`}
-      style={{
-        maxWidth: 300,
-        maxHeight: 200,
-        borderRadius: 8,
-        border: '1px solid rgba(255, 255, 255, 0.03)',
-        cursor: 'pointer',
-        objectFit: 'cover',
-        display: status === 'loaded' ? 'block' : 'none',
-        transition: 'opacity 200ms ease',
-      }}
+      className={`max-w-[300px] max-h-[200px] rounded-lg border border-border cursor-pointer object-cover transition-opacity duration-200 ${
+        status === 'loaded' ? 'block' : 'hidden'
+      }`}
     />
   )
 }
@@ -202,10 +121,8 @@ function ImageAttachment({ attachmentId, name }: { attachmentId?: string; name: 
 // ---------------------------------------------------------------------------
 
 function FileCard({ attachmentId, name, type, size }: { attachmentId?: string; name: string; type: string; size?: number }) {
-  const [hovered, setHovered] = useState(false)
   const [downloading, setDownloading] = useState(false)
   const isPdf = type === 'application/pdf'
-  const IconComponent = isPdf ? FileText : File
 
   const handleClick = useCallback(async () => {
     if (!attachmentId || downloading) return
@@ -221,46 +138,41 @@ function FileCard({ attachmentId, name, type, size }: { attachmentId?: string; n
   }, [attachmentId, downloading])
 
   return (
-    <div
+    <Card
+      className="inline-flex items-center gap-2.5 px-3.5 py-2.5 max-w-[320px] cursor-pointer hover:bg-muted/50 transition-colors"
       role="button"
       tabIndex={0}
       onClick={handleClick}
       onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') handleClick() }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      style={hovered ? fileCardHoverStyle : fileCardStyle}
     >
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        width: 36,
-        height: 36,
-        borderRadius: 8,
-        background: isPdf ? 'rgba(239, 68, 68, 0.12)' : 'var(--hover-bg-strong, rgba(255, 255, 255, 0.06))',
-        flexShrink: 0,
-      }}>
-        <IconComponent
-          size={18}
-          style={{ color: isPdf ? '#ef4444' : 'var(--text-secondary, #94A3B8)' }}
-        />
+      <div className={`flex items-center justify-center w-9 h-9 rounded-lg shrink-0 ${
+        isPdf ? 'bg-destructive/10' : 'bg-muted'
+      }`}>
+        {isPdf
+          ? <IconFileText size={18} className="text-destructive" />
+          : <IconFile size={18} className="text-muted-foreground" />
+        }
       </div>
-      <div style={{ minWidth: 0, flex: 1 }}>
-        <div style={filenameStyle}>{truncateFilename(name)}</div>
-        {size && size > 0 && <div style={fileSizeStyle}>{formatFileSize(size)}</div>}
-        <div style={downloadLabelStyle}>
+      <div className="min-w-0 flex-1">
+        <div className="text-sm font-medium text-foreground truncate">
+          {truncateFilename(name)}
+        </div>
+        {size && size > 0 && (
+          <div className="text-[11px] text-muted-foreground mt-0.5">{formatFileSize(size)}</div>
+        )}
+        <div className="inline-flex items-center gap-1 text-[11px] text-muted-foreground mt-0.5">
           {downloading ? (
             <span>Opening...</span>
           ) : (
             <>
-              <Download size={10} />
+              <IconDownload size={10} />
               <span>{isPdf ? 'Open PDF' : 'Download'}</span>
             </>
           )}
         </div>
       </div>
-      <ExternalLink size={14} style={{ color: 'var(--text-dim, #475569)', flexShrink: 0 }} />
-    </div>
+      <IconExternalLink size={14} className="text-muted-foreground shrink-0" />
+    </Card>
   )
 }
 
@@ -290,7 +202,7 @@ export function ChatAttachmentList({ attachments }: ChatAttachmentListProps) {
   const files = attachments.filter(a => !a.type.startsWith('image/'))
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 6 }}>
+    <div className="flex flex-col gap-2 mb-1.5">
       {images.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {images.map((att, i) => (

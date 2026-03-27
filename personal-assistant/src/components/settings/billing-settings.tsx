@@ -1,8 +1,11 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { CreditCard, ExternalLink, AlertTriangle, Clock } from 'lucide-react'
-import { S, C } from '@/lib/styles/design-tokens'
+import { IconCreditCard, IconExternalLink, IconAlertTriangle, IconClock } from '@tabler/icons-react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Progress } from '@/components/ui/progress'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -66,43 +69,19 @@ function UsageBar({
   unit: string
 }) {
   const pct = limit > 0 ? Math.min(100, (used / limit) * 100) : 0
-  const barColor =
-    pct > 80 ? C.statusError : pct > 60 ? C.statusWarning : C.statusSuccess
 
   return (
-    <div style={{ marginBottom: 16 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-        <span style={{ color: C.textSecondary, fontSize: 14 }}>
-          {label}
-        </span>
-        <span
-          style={{
-            color: C.textSecondary,
-            fontSize: 14,
-            fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
-          }}
-        >
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <span className="text-sm text-muted-foreground">{label}</span>
+        <span className="font-mono text-sm text-muted-foreground">
           {formatNumber(used)} / {formatNumber(limit)} {unit}
         </span>
       </div>
-      <div
-        style={{
-          height: 8,
-          borderRadius: 8,
-          background: C.bgHoverStrong,
-          overflow: 'hidden',
-        }}
-      >
-        <div
-          style={{
-            height: '100%',
-            width: `${pct}%`,
-            borderRadius: 8,
-            background: barColor,
-            transition: 'width 0.5s ease',
-          }}
-        />
-      </div>
+      <Progress
+        value={pct}
+        className={`h-2 ${pct > 80 ? '[&>div]:bg-destructive' : pct > 60 ? '[&>div]:bg-amber-500' : '[&>div]:bg-emerald-500'}`}
+      />
     </div>
   )
 }
@@ -114,20 +93,15 @@ function formatNumber(n: number): string {
 }
 
 // ---------------------------------------------------------------------------
-// Status badge helper (monochrome -- no blue)
+// Status helpers
 // ---------------------------------------------------------------------------
 
-function getStatusStyle(status: string): React.CSSProperties {
+function getStatusVariant(status: string): 'default' | 'secondary' | 'destructive' | 'outline' {
   switch (status) {
-    case 'active':
-      return { background: C.statusSuccessBg, color: C.statusSuccess }
-    case 'trialing':
-      // Monochrome: white-on-dark badge for trial instead of blue
-      return { background: C.bgHoverStrong, color: C.textPrimary }
-    case 'past_due':
-      return { background: C.statusErrorBg, color: C.statusError }
-    default:
-      return { background: C.bgHoverStrong, color: C.textSecondary }
+    case 'active': return 'default'
+    case 'trialing': return 'secondary'
+    case 'past_due': return 'destructive'
+    default: return 'outline'
   }
 }
 
@@ -195,10 +169,8 @@ export function BillingSettings() {
 
   if (loading) {
     return (
-      <div style={{ padding: 32, textAlign: 'center' }}>
-        <span style={{ ...S.secondary }}>
-          Loading billing information...
-        </span>
+      <div className="flex items-center justify-center p-8">
+        <span className="text-sm text-muted-foreground">Loading billing information...</span>
       </div>
     )
   }
@@ -213,235 +185,148 @@ export function BillingSettings() {
   const agentRunLimit = PLAN_AGENT_RUN_LIMITS[plan] ?? 50
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+    <div className="flex flex-col gap-5">
       {/* Past Due Warning Banner */}
       {isPastDue && (
-        <div
-          style={{
-            background: C.statusErrorBg,
-            border: `1px solid rgba(239, 68, 68, 0.3)`,
-            borderRadius: 12,
-            padding: '16px 20px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 12,
-          }}
-        >
-          <AlertTriangle size={20} style={{ color: C.statusError, flexShrink: 0 }} />
-          <div style={{ flex: 1 }}>
-            <p style={{ color: C.statusError, fontWeight: 500, fontSize: 14, margin: 0 }}>
-              Payment past due
-            </p>
-            <p style={{ color: C.textSecondary, fontSize: 14, margin: '4px 0 0 0' }}>
-              Last payment failed. Update the payment method to avoid service interruption.
-            </p>
-          </div>
-          <button
-            onClick={handlePortalRedirect}
-            disabled={portalLoading}
-            style={{
-              ...S.button,
-              ...S.buttonDestructive,
-              height: 40,
-              padding: '0 16px',
-              cursor: portalLoading ? 'wait' : 'pointer',
-              opacity: portalLoading ? 0.6 : 1,
-              whiteSpace: 'nowrap',
-            }}
-          >
-            Update Payment
-          </button>
-        </div>
+        <Card className="border-destructive/30 bg-destructive/5">
+          <CardContent className="flex items-center gap-3 px-5 py-4">
+            <IconAlertTriangle className="size-5 shrink-0 text-destructive" />
+            <div className="flex-1">
+              <p className="text-sm font-medium text-destructive">Payment past due</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Last payment failed. Update the payment method to avoid service interruption.
+              </p>
+            </div>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handlePortalRedirect}
+              disabled={portalLoading}
+            >
+              Update Payment
+            </Button>
+          </CardContent>
+        </Card>
       )}
 
       {/* Current Plan Card */}
-      <div
-        style={{
-          ...S.card,
-          padding: 24,
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <CreditCard size={20} style={{ color: C.textSecondary }} />
-            <h3 style={{ ...S.cardTitle, margin: 0 }}>
-              Current Plan
-            </h3>
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <IconCreditCard className="size-5 text-muted-foreground" />
+              <CardTitle className="text-base">Current Plan</CardTitle>
+            </div>
+            <Badge variant={getStatusVariant(status)}>
+              {getStatusLabel(status)}
+            </Badge>
           </div>
-          <span
-            style={{
-              ...S.badge,
-              fontSize: 14,
-              borderRadius: 8,
-              ...getStatusStyle(status),
-            }}
-          >
-            {getStatusLabel(status)}
-          </span>
-        </div>
+        </CardHeader>
+        <CardContent>
+          <p className="font-mono text-lg font-medium capitalize">{plan}</p>
+          {subscription?.currentPeriodEnd && (
+            <p className="mt-2 text-sm text-muted-foreground">
+              {isTrialing ? 'Trial ends' : 'Billing period ends'}:{' '}
+              {new Date(subscription.currentPeriodEnd).toLocaleDateString('en-AU', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric',
+              })}
+            </p>
+          )}
+        </CardContent>
+      </Card>
 
-        <div style={{ marginBottom: 12 }}>
-          <span
-            style={{
-              ...S.mono,
-              fontSize: 16,
-            }}
-          >
-            {plan.charAt(0).toUpperCase() + plan.slice(1)}
-          </span>
-        </div>
-
-        {subscription?.currentPeriodEnd && (
-          <p style={{ color: C.textSecondary, fontSize: 14, margin: 0 }}>
-            {isTrialing ? 'Trial ends' : 'Billing period ends'}:{' '}
-            {new Date(subscription.currentPeriodEnd).toLocaleDateString('en-AU', {
-              day: 'numeric',
-              month: 'long',
-              year: 'numeric',
-            })}
-          </p>
-        )}
-      </div>
-
-      {/* Trial Status (only when trialing) -- monochrome, no blue */}
+      {/* Trial Status */}
       {isTrialing && trialEndsAt && (
-        <div
-          style={{
-            background: C.bgHover,
-            border: `1px solid ${C.borderHover}`,
-            borderRadius: 12,
-            padding: '16px 20px',
-            display: 'flex',
-            alignItems: 'flex-start',
-            gap: 12,
-          }}
-        >
-          <Clock size={20} style={{ color: C.textSecondary, flexShrink: 0, marginTop: 2 }} />
-          <div>
-            <p style={{ color: C.textPrimary, fontWeight: 500, fontSize: 14, margin: '0 0 4px 0' }}>
-              Trial Period
-            </p>
-            <p style={{ color: C.textSecondary, fontSize: 14, margin: 0, lineHeight: 1.5 }}>
-              {subscription?.daysRemaining != null && subscription.daysRemaining > 0 ? (
-                <>
-                  <strong style={{ color: C.textPrimary }}>
-                    {subscription.daysRemaining} day{subscription.daysRemaining !== 1 ? 's' : ''} remaining
-                  </strong>
-                  {' -- Trial ends on '}
-                  {new Date(trialEndsAt).toLocaleDateString('en-AU', {
-                    day: 'numeric',
-                    month: 'long',
-                    year: 'numeric',
-                  })}
-                </>
-              ) : (
-                'Your trial has expired. Subscribe to keep using paid features.'
-              )}
-            </p>
-          </div>
-        </div>
+        <Card className="border-border">
+          <CardContent className="flex items-start gap-3 px-5 py-4">
+            <IconClock className="mt-0.5 size-5 shrink-0 text-muted-foreground" />
+            <div>
+              <p className="text-sm font-medium text-foreground">Trial Period</p>
+              <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                {subscription?.daysRemaining != null && subscription.daysRemaining > 0 ? (
+                  <>
+                    <strong className="text-foreground">
+                      {subscription.daysRemaining} day{subscription.daysRemaining !== 1 ? 's' : ''} remaining
+                    </strong>
+                    {' -- Trial ends on '}
+                    {new Date(trialEndsAt).toLocaleDateString('en-AU', {
+                      day: 'numeric',
+                      month: 'long',
+                      year: 'numeric',
+                    })}
+                  </>
+                ) : (
+                  'Your trial has expired. Subscribe to keep using paid features.'
+                )}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       {/* Usage Dashboard */}
-      <div
-        style={{
-          ...S.card,
-          padding: 24,
-        }}
-      >
-        <h3
-          style={{
-            ...S.cardTitle,
-            margin: '0 0 20px 0',
-          }}
-        >
-          Usage This Period
-        </h3>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Usage This Period</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <UsageBar
+            label="AI Tokens"
+            used={usage?.totalTokens ?? 0}
+            limit={tokenLimit}
+            unit="tokens"
+          />
+          <UsageBar
+            label="Agent Runs"
+            used={usage?.totalAgentRuns ?? 0}
+            limit={agentRunLimit}
+            unit="runs"
+          />
+          <UsageBar
+            label="Storage"
+            used={usage?.totalStorageMB ?? 0}
+            limit={storageLimit}
+            unit="MB"
+          />
 
-        <UsageBar
-          label="AI Tokens"
-          used={usage?.totalTokens ?? 0}
-          limit={tokenLimit}
-          unit="tokens"
-        />
-        <UsageBar
-          label="Agent Runs"
-          used={usage?.totalAgentRuns ?? 0}
-          limit={agentRunLimit}
-          unit="runs"
-        />
-        <UsageBar
-          label="Storage"
-          used={usage?.totalStorageMB ?? 0}
-          limit={storageLimit}
-          unit="MB"
-        />
-
-        {usage?.estimatedCostUSD != null && usage.estimatedCostUSD > 0 && (
-          <p style={{ color: C.textDim, fontSize: 14, margin: '8px 0 0 0' }}>
-            Estimated AI cost this period: ${usage.estimatedCostUSD.toFixed(2)} USD
-          </p>
-        )}
-      </div>
+          {usage?.estimatedCostUSD != null && usage.estimatedCostUSD > 0 && (
+            <p className="text-xs text-muted-foreground">
+              Estimated AI cost this period: ${usage.estimatedCostUSD.toFixed(2)} USD
+            </p>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Manage Subscription */}
-      <div
-        style={{
-          ...S.card,
-          padding: 24,
-        }}
-      >
-        <h3
-          style={{
-            ...S.cardTitle,
-            margin: '0 0 16px 0',
-          }}
-        >
-          Manage Subscription
-        </h3>
-
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
-          <button
-            onClick={handlePortalRedirect}
-            disabled={portalLoading}
-            style={{
-              ...S.button,
-              ...S.buttonPrimary,
-              cursor: portalLoading ? 'wait' : 'pointer',
-              opacity: portalLoading ? 0.6 : 1,
-            }}
-          >
-            <ExternalLink size={16} />
-            {portalLoading ? 'Opening...' : 'Manage Billing'}
-          </button>
-
-          <a
-            href="/pricing"
-            style={{
-              ...S.button,
-              ...S.buttonGhost,
-              textDecoration: 'none',
-            }}
-          >
-            View Plans
-          </a>
-        </div>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Manage Subscription</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-3">
+            <Button
+              onClick={handlePortalRedirect}
+              disabled={portalLoading}
+            >
+              <IconExternalLink className="size-4" />
+              {portalLoading ? 'Opening...' : 'Manage Billing'}
+            </Button>
+            <Button variant="outline" asChild>
+              <a href="/pricing">View Plans</a>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Error display */}
       {error && (
-        <div
-          style={{
-            background: C.statusErrorBg,
-            border: `1px solid rgba(239, 68, 68, 0.2)`,
-            borderRadius: 12,
-            padding: '12px 16px',
-            color: C.statusError,
-            fontSize: 14,
-          }}
-        >
-          {error}
-        </div>
+        <Card className="border-destructive/20 bg-destructive/5">
+          <CardContent className="px-4 py-3">
+            <p className="text-sm text-destructive">{error}</p>
+          </CardContent>
+        </Card>
       )}
     </div>
   )

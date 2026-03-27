@@ -1,7 +1,9 @@
 'use client'
 
 import React, { useState, useMemo } from 'react'
-import { Search, X } from 'lucide-react'
+import { IconSearch, IconX } from '@tabler/icons-react'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
 
 interface Thread {
   id: string
@@ -39,80 +41,39 @@ export function ConversationSearch({ threads, onSelectThread, onClose, onQueryCh
   const showNoResults = query.trim().length >= 2 && filtered.length === 0
 
   return (
-    <div style={{ padding: '4px 12px 0' }}>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-          padding: '6px 10px',
-          borderRadius: 8,
-          background: 'rgba(255,255,255,0.04)',
-          border: '1px solid var(--glass-border, rgba(255,255,255,0.03))',
-        }}
-      >
-        <Search size={14} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
-        <input
+    <div className="px-3 pt-1">
+      <div className="flex items-center gap-2 rounded-lg bg-muted/50 border border-border px-2.5 py-1.5">
+        <IconSearch size={14} className="text-muted-foreground shrink-0" />
+        <Input
           type="text"
-          className="bb-naked-input"
           value={query}
           onChange={e => updateQuery(e.target.value)}
           placeholder="Search conversations..."
           autoFocus
-          style={{
-            flex: 1,
-            background: 'transparent',
-            border: 'none',
-            outline: 'none',
-            color: 'var(--text-primary, #F1F5F9)',
-            fontSize: 13,
-          }}
+          className="h-auto border-0 bg-transparent p-0 text-sm focus-visible:ring-0 focus-visible:ring-offset-0"
         />
-        <button
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-5 w-5 shrink-0"
           onClick={onClose}
-          style={{
-            background: 'none',
-            border: 'none',
-            color: 'var(--text-muted)',
-            cursor: 'pointer',
-            padding: 2,
-          }}
         >
-          <X size={12} />
-        </button>
+          <IconX size={12} />
+        </Button>
       </div>
       {filtered.length > 0 && (
-        <div style={{ marginTop: 8, maxHeight: 300, overflow: 'auto' }}>
+        <div className="mt-2 max-h-[300px] overflow-auto">
           {filtered.map(t => (
             <button
               key={t.id}
               onClick={() => onSelectThread(t.id)}
-              style={{
-                display: 'block',
-                width: '100%',
-                textAlign: 'left',
-                padding: '8px 10px',
-                borderRadius: 6,
-                border: 'none',
-                background: 'transparent',
-                cursor: 'pointer',
-                color: 'var(--text-secondary, #94A3B8)',
-                fontSize: 12,
-                marginBottom: 2,
-                transition: 'background 100ms',
-              }}
-              onMouseEnter={e => {
-                e.currentTarget.style.background = 'rgba(255,255,255,0.04)'
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.background = 'transparent'
-              }}
+              className="block w-full text-left px-2.5 py-2 rounded-md hover:bg-muted/50 transition-colors mb-0.5"
             >
-              <div style={{ color: 'var(--text-primary)', fontSize: 13, fontWeight: 600, marginBottom: 2 }}>
+              <div className="text-sm font-semibold text-foreground mb-0.5">
                 {t.title || 'Untitled'}
               </div>
               {t.preview && (
-                <div style={{ color: 'var(--text-muted)', fontSize: 11, lineHeight: 1.4 }}>
+                <div className="text-[11px] text-muted-foreground leading-snug">
                   {t.preview.length > 80 ? t.preview.slice(0, 77) + '...' : t.preview}
                 </div>
               )}
@@ -121,7 +82,7 @@ export function ConversationSearch({ threads, onSelectThread, onClose, onQueryCh
         </div>
       )}
       {showNoResults && (
-        <div style={{ marginTop: 8, fontSize: 12, color: 'var(--text-muted)' }}>
+        <div className="mt-2 text-xs text-muted-foreground">
           No results
         </div>
       )}

@@ -5,6 +5,7 @@ import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { cn } from '@/lib/utils'
 import type { EnhancedLeadData } from '@/lib/leads/types'
 import { relativeTime } from '@/lib/leads/utils'
 
@@ -55,11 +56,11 @@ function LeadCardInner({ lead, onClick }: LeadCardProps) {
           onClick?.(lead)
         }
       }}
-      className="cursor-grab gap-2 py-3 transition-shadow hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-2 focus-visible:outline-ring active:cursor-grabbing"
-      style={{
-        ...dndStyle,
-        opacity: isDragging ? 0.5 : 1,
-      }}
+      className={cn(
+        'cursor-grab gap-2 py-3 transition-shadow hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-2 focus-visible:outline-ring active:cursor-grabbing',
+        isDragging && 'opacity-50'
+      )}
+      style={dndStyle}
     >
       <CardContent className="space-y-2">
         {/* Company name */}

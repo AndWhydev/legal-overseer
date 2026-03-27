@@ -1,283 +1,148 @@
-'use client';
+'use client'
 
-import { Loader2 } from 'lucide-react';
-import { useState } from 'react';
+import { IconLoader2 } from '@tabler/icons-react'
+import { Card, CardContent } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 
 export interface ApprovalItem {
-  id: string;
-  action_summary: string;
-  action_type: string;
-  confidence_score: number;
-  routing_decision: 'ask' | 'escalate';
-  priority: 'urgent' | 'normal' | 'low';
-  created_at: string;
-  context_snapshot: Record<string, unknown>;
-  agent_name?: string | null;
+  id: string
+  action_summary: string
+  action_type: string
+  confidence_score: number
+  routing_decision: 'ask' | 'escalate'
+  priority: 'urgent' | 'normal' | 'low'
+  created_at: string
+  context_snapshot: Record<string, unknown>
+  agent_name?: string | null
 }
 
 interface ApprovalCardProps {
-  approval: ApprovalItem;
-  isResolving?: boolean;
-  onApprove: (approvalId: string) => void;
-  onReject: (approvalId: string) => void;
+  approval: ApprovalItem
+  isResolving?: boolean
+  onApprove: (approvalId: string) => void
+  onReject: (approvalId: string) => void
 }
 
-const relTime = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
+const relTime = new Intl.RelativeTimeFormat('en', { numeric: 'auto' })
 
 function formatRelativeTime(timestamp: string): string {
-  const createdAt = new Date(timestamp).getTime();
-  const deltaSec = Math.round((createdAt - Date.now()) / 1000);
-  const absSec = Math.abs(deltaSec);
+  const createdAt = new Date(timestamp).getTime()
+  const deltaSec = Math.round((createdAt - Date.now()) / 1000)
+  const absSec = Math.abs(deltaSec)
 
-  if (absSec < 60) return relTime.format(deltaSec, 'second');
+  if (absSec < 60) return relTime.format(deltaSec, 'second')
 
-  const deltaMin = Math.round(deltaSec / 60);
-  if (Math.abs(deltaMin) < 60) return relTime.format(deltaMin, 'minute');
+  const deltaMin = Math.round(deltaSec / 60)
+  if (Math.abs(deltaMin) < 60) return relTime.format(deltaMin, 'minute')
 
-  const deltaHour = Math.round(deltaMin / 60);
-  if (Math.abs(deltaHour) < 24) return relTime.format(deltaHour, 'hour');
+  const deltaHour = Math.round(deltaMin / 60)
+  if (Math.abs(deltaHour) < 24) return relTime.format(deltaHour, 'hour')
 
-  const deltaDay = Math.round(deltaHour / 24);
-  return relTime.format(deltaDay, 'day');
+  const deltaDay = Math.round(deltaHour / 24)
+  return relTime.format(deltaDay, 'day')
 }
 
-function getConfidenceColor(confidence: number): string {
-  if (confidence < 0.55) return 'var(--bb-red)'; // error red
-  if (confidence <= 0.85) return 'var(--bb-amber)'; // warning yellow
-  return 'var(--bb-green)'; // success green
+function getConfidenceVariant(confidence: number): 'destructive' | 'outline' | 'default' {
+  if (confidence < 0.55) return 'destructive'
+  if (confidence <= 0.85) return 'outline'
+  return 'default'
 }
 
-function getPriorityColor(priority: ApprovalItem['priority']): string {
-  if (priority === 'urgent') return 'var(--bb-red)'; // error red
-  if (priority === 'normal') return 'var(--bb-amber)'; // warning yellow
-  return 'var(--text-secondary)'; // neutral
+function getPriorityVariant(priority: ApprovalItem['priority']): 'destructive' | 'outline' | 'secondary' {
+  if (priority === 'urgent') return 'destructive'
+  if (priority === 'normal') return 'outline'
+  return 'secondary'
 }
 
 function toPrettyLabel(value: string): string {
   return value
     .replace(/_/g, ' ')
-    .replace(/\b\w/g, (char) => char.toUpperCase());
+    .replace(/\b\w/g, (char) => char.toUpperCase())
 }
 
 function extractContext(approval: ApprovalItem): Array<{ label: string; value: string }> {
-  const snapshot = approval.context_snapshot ?? {};
+  const snapshot = approval.context_snapshot ?? {}
 
   const candidates: Array<[string, unknown]> = [
     ['Contact', snapshot.contact_name ?? snapshot.contactName],
     ['Project', snapshot.project_name ?? snapshot.projectName ?? snapshot.project],
     ['Amount', snapshot.amount_formatted ?? snapshot.amount],
     ['Invoice', snapshot.invoice_number ?? snapshot.invoiceNumber],
-  ];
+  ]
 
   return candidates
     .filter(([, value]) => value !== undefined && value !== null && `${value}`.trim().length > 0)
-    .map(([label, value]) => ({ label, value: String(value) }));
+    .map(([label, value]) => ({ label, value: String(value) }))
 }
 
 export function ApprovalCard({ approval, isResolving = false, onApprove, onReject }: ApprovalCardProps) {
-  const [hovered, setHovered] = useState(false);
-  const contextRows = extractContext(approval);
-  const confidencePct = Math.round(approval.confidence_score * 100);
-  const confidenceColor = getConfidenceColor(approval.confidence_score);
-  const priorityColor = getPriorityColor(approval.priority);
-
-  const glassCard: React.CSSProperties = {
-    padding: '20px',
-    borderRadius: 16,
-    background: hovered ? 'var(--bb-surface-hover)' : 'var(--glass-card-bg)',
-    backdropFilter: 'var(--glass-card-blur)',
-    WebkitBackdropFilter: 'var(--glass-card-blur)',
-    border: '1px solid var(--glass-card-border)',
-    boxShadow: 'var(--glass-card-inset)',
-    transition: 'all 200ms',
-  };
-
-  const badge: React.CSSProperties = {
-    display: 'inline-flex',
-    alignItems: 'center',
-    padding: '4px 12px',
-    borderRadius: 8,
-    fontSize: 14,
-    fontWeight: 500,
-    letterSpacing: '0.02em',
-    background: 'var(--glass-hover-bg)',
-    color: 'var(--text-secondary)',
-  };
-
-  const coloredBadge = (color: string): React.CSSProperties => ({
-    display: 'inline-flex',
-    alignItems: 'center',
-    padding: '4px 12px',
-    borderRadius: 8,
-    fontSize: 14,
-    fontWeight: 500,
-    letterSpacing: '0.02em',
-    background: `${color}15`,
-    color: color,
-  });
-
-  const badgesContainer: React.CSSProperties = {
-    display: 'flex',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 12,
-  };
-
-  const titleContainer: React.CSSProperties = {
-    marginBottom: 4,
-  };
-
-  const cardTitle: React.CSSProperties = {
-    fontSize: 16,
-    fontWeight: 500,
-    color: 'var(--text-primary)',
-    lineHeight: 1.4,
-    margin: 0,
-  };
-
-  const subtitle: React.CSSProperties = {
-    fontSize: 14,
-    color: 'var(--text-secondary)',
-    margin: '4px 0 0 0',
-  };
-
-  const contextSection: React.CSSProperties = {
-    marginTop: 16,
-    paddingTop: 16,
-    borderTop: '1px solid var(--glass-divider)',
-  };
-
-  const sectionLabel: React.CSSProperties = {
-    fontSize: 14,
-    fontWeight: 500,
-    letterSpacing: '0.04em',
-    textTransform: 'uppercase' as const,
-    color: 'var(--text-dim)',
-    marginBottom: 8,
-    display: 'block',
-  };
-
-  const definitionList: React.CSSProperties = {
-    display: 'grid',
-    gap: 8,
-  };
-
-  const definitionRow: React.CSSProperties = {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 8,
-  };
-
-  const definitionTerm: React.CSSProperties = {
-    fontSize: 14,
-    color: 'var(--text-secondary)',
-  };
-
-  const definitionData: React.CSSProperties = {
-    fontSize: 14,
-    fontWeight: 500,
-    color: 'var(--text-primary)',
-    textAlign: 'right' as const,
-  };
-
-  const buttonContainer: React.CSSProperties = {
-    display: 'flex',
-    gap: 8,
-    marginTop: 16,
-  };
-
-  const approveBtn: React.CSSProperties = {
-    flex: 1,
-    height: 40,
-    padding: '0 20px',
-    borderRadius: 8,
-    background: 'var(--btn-primary-bg, #F1F5F9)',
-    border: 'none',
-    color: 'var(--btn-primary-fg, #0a0f1a)',
-    fontSize: 14,
-    fontWeight: 500,
-    cursor: isResolving ? 'not-allowed' : 'pointer',
-    transition: 'all 200ms',
-    opacity: isResolving ? 0.6 : 1,
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-  };
-
-  const rejectBtn: React.CSSProperties = {
-    flex: 1,
-    height: 40,
-    padding: '0 20px',
-    borderRadius: 12,
-    background: 'transparent',
-    border: '1px solid var(--status-error-border)',
-    color: 'var(--bb-red)',
-    fontSize: 14,
-    fontWeight: 500,
-    cursor: isResolving ? 'not-allowed' : 'pointer',
-    transition: 'all 200ms',
-    opacity: isResolving ? 0.6 : 1,
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-  };
+  const contextRows = extractContext(approval)
+  const confidencePct = Math.round(approval.confidence_score * 100)
 
   return (
-    <div
-      style={glassCard}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-    >
-      <div style={badgesContainer}>
-        <span style={badge}>{approval.agent_name ?? 'Agent'}</span>
-        <span style={coloredBadge(confidenceColor)}>{confidencePct}% confidence</span>
-        <span style={coloredBadge(priorityColor)}>{toPrettyLabel(approval.priority)}</span>
-        <span style={badge}>{toPrettyLabel(approval.routing_decision)}</span>
-      </div>
-
-      <div style={titleContainer}>
-        <p style={cardTitle}>{approval.action_summary}</p>
-        <p style={subtitle}>
-          {toPrettyLabel(approval.action_type)} · {formatRelativeTime(approval.created_at)}
-        </p>
-      </div>
-
-      {contextRows.length > 0 ? (
-        <div style={contextSection}>
-          <label style={sectionLabel}>Context</label>
-          <dl style={definitionList}>
-            {contextRows.map((row) => (
-              <div key={row.label} style={definitionRow}>
-                <dt style={definitionTerm}>{row.label}</dt>
-                <dd style={definitionData}>{row.value}</dd>
-              </div>
-            ))}
-          </dl>
+    <Card className="transition-colors hover:bg-muted/30">
+      <CardContent className="flex flex-col gap-3 p-5">
+        {/* Badges */}
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge variant="secondary">{approval.agent_name ?? 'Agent'}</Badge>
+          <Badge variant={getConfidenceVariant(approval.confidence_score)}>
+            {confidencePct}% confidence
+          </Badge>
+          <Badge variant={getPriorityVariant(approval.priority)}>
+            {toPrettyLabel(approval.priority)}
+          </Badge>
+          <Badge variant="secondary">{toPrettyLabel(approval.routing_decision)}</Badge>
         </div>
-      ) : null}
 
-      <div style={buttonContainer}>
-        <button
-          style={approveBtn}
-          disabled={isResolving}
-          onClick={() => onApprove(approval.id)}
-        >
-          {isResolving ? <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> : null}
-          Approve
-        </button>
-        <button
-          style={rejectBtn}
-          disabled={isResolving}
-          onClick={() => onReject(approval.id)}
-        >
-          {isResolving ? <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> : null}
-          Reject
-        </button>
-      </div>
-    </div>
-  );
+        {/* Title */}
+        <div>
+          <p className="text-base font-medium leading-snug text-foreground">
+            {approval.action_summary}
+          </p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {toPrettyLabel(approval.action_type)} · {formatRelativeTime(approval.created_at)}
+          </p>
+        </div>
+
+        {/* Context */}
+        {contextRows.length > 0 && (
+          <div className="border-t border-border pt-3">
+            <span className="mb-2 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              Context
+            </span>
+            <dl className="grid gap-2">
+              {contextRows.map((row) => (
+                <div key={row.label} className="flex items-center justify-between gap-2">
+                  <dt className="text-sm text-muted-foreground">{row.label}</dt>
+                  <dd className="text-right text-sm font-medium text-foreground">{row.value}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+        )}
+
+        {/* Actions */}
+        <div className="flex gap-2 pt-1">
+          <Button
+            className="flex-1"
+            disabled={isResolving}
+            onClick={() => onApprove(approval.id)}
+          >
+            {isResolving && <IconLoader2 className="size-4 animate-spin" />}
+            Approve
+          </Button>
+          <Button
+            variant="destructive"
+            className="flex-1"
+            disabled={isResolving}
+            onClick={() => onReject(approval.id)}
+          >
+            {isResolving && <IconLoader2 className="size-4 animate-spin" />}
+            Reject
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  )
 }

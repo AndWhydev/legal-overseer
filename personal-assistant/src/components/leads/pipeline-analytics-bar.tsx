@@ -21,8 +21,8 @@ interface PipelineAnalyticsBarProps {
 
 function getSpeedColor(minutes: number | null): string {
   if (minutes == null) return 'text-muted-foreground'
-  if (minutes <= 5) return 'text-emerald-500'
-  if (minutes <= 30) return 'text-yellow-500'
+  if (minutes <= 5) return 'text-success'
+  if (minutes <= 30) return 'text-warning'
   return 'text-destructive'
 }
 
@@ -47,7 +47,7 @@ function PipelineAnalyticsBarInner({ analytics, isLoading }: PipelineAnalyticsBa
     { icon: IconTarget, label: 'Conversion Rate', value: `${analytics.conversionRate}%`, color: '' },
     { icon: IconClock, label: 'Avg Days in Stage', value: `${analytics.avgDaysInStage}d`, color: '' },
     { icon: IconBolt, label: 'Speed-to-Lead', value: speedDisplay, color: getSpeedColor(speedMinutes) },
-    { icon: IconAlertTriangle, label: 'Stale Leads', value: String(analytics.staleCount), color: analytics.staleCount > 0 ? 'text-yellow-500' : '' },
+    { icon: IconAlertTriangle, label: 'Stale Leads', value: String(analytics.staleCount), color: analytics.staleCount > 0 ? 'text-warning' : '' },
   ]
 
   return (

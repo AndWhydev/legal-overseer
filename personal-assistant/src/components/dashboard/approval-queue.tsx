@@ -1,261 +1,164 @@
-'use client';
+'use client'
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { AlertCircle, RefreshCw, Loader2, ShieldCheck } from 'lucide-react';
-import { ApprovalCard, type ApprovalItem } from './approval-card';
-import { AlertBanner } from '../ui/alert-banner';
-import { EmptyState } from '../ui/empty-state';
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import { IconAlertCircle, IconRefresh, IconLoader2, IconShieldCheck } from '@tabler/icons-react'
+import { ApprovalCard, type ApprovalItem } from './approval-card'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { EmptyState } from '../ui/empty-state'
 
-type FilterKey = 'all' | 'urgent' | 'normal';
+type FilterKey = 'all' | 'urgent' | 'normal'
 
 const FILTERS: Array<{ key: FilterKey; label: string }> = [
   { key: 'all', label: 'All' },
   { key: 'urgent', label: 'Urgent' },
   { key: 'normal', label: 'Normal' },
-];
+]
 
 interface ApprovalsResponse {
-  approvals?: ApprovalItem[];
-  error?: string;
+  approvals?: ApprovalItem[]
+  error?: string
 }
 
 export function ApprovalQueue() {
-  const [approvals, setApprovals] = useState<ApprovalItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [activeFilter, setActiveFilter] = useState<FilterKey>('all');
-  const [resolvingId, setResolvingId] = useState<string | null>(null);
-  const [hoveredFilter, setHoveredFilter] = useState<FilterKey | null>(null);
+  const [approvals, setApprovals] = useState<ApprovalItem[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [activeFilter, setActiveFilter] = useState<FilterKey>('all')
+  const [resolvingId, setResolvingId] = useState<string | null>(null)
 
   const fetchApprovals = useCallback(async (silent = false) => {
     if (!silent) {
-      setLoading(true);
+      setLoading(true)
     }
 
     try {
       const response = await fetch('/api/agent/approvals', {
         method: 'GET',
         cache: 'no-store',
-      });
-      const payload = (await response.json()) as ApprovalsResponse;
+      })
+      const payload = (await response.json()) as ApprovalsResponse
 
       if (!response.ok) {
-        throw new Error(payload.error ?? 'Failed to load pending approvals');
+        throw new Error(payload.error ?? 'Failed to load pending approvals')
       }
 
-      setApprovals(payload.approvals ?? []);
-      setError(null);
+      setApprovals(payload.approvals ?? [])
+      setError(null)
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to load pending approvals';
-      setError(message);
+      const message = err instanceof Error ? err.message : 'Failed to load pending approvals'
+      setError(message)
     } finally {
       if (!silent) {
-        setLoading(false);
+        setLoading(false)
       }
     }
-  }, []);
+  }, [])
 
   useEffect(() => {
-    fetchApprovals();
+    fetchApprovals()
 
     const refreshTimer = window.setInterval(() => {
-      fetchApprovals(true);
-    }, 30_000);
+      fetchApprovals(true)
+    }, 30_000)
 
     return () => {
-      window.clearInterval(refreshTimer);
-    };
-  }, [fetchApprovals]);
+      window.clearInterval(refreshTimer)
+    }
+  }, [fetchApprovals])
 
   const visibleApprovals = useMemo(() => {
     if (activeFilter === 'all') {
-      return approvals;
+      return approvals
     }
-    return approvals.filter((approval) => approval.priority === activeFilter);
-  }, [activeFilter, approvals]);
+    return approvals.filter((approval) => approval.priority === activeFilter)
+  }, [activeFilter, approvals])
 
   const resolveApproval = useCallback(
     async (approvalId: string, decision: 'approved' | 'rejected') => {
-      const target = approvals.find((approval) => approval.id === approvalId);
+      const target = approvals.find((approval) => approval.id === approvalId)
       if (!target) {
-        return;
+        return
       }
 
-      setResolvingId(approvalId);
-      setError(null);
-      setApprovals((prev) => prev.filter((approval) => approval.id !== approvalId));
+      setResolvingId(approvalId)
+      setError(null)
+      setApprovals((prev) => prev.filter((approval) => approval.id !== approvalId))
 
       try {
         const response = await fetch('/api/agent/approvals', {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ approvalId, decision }),
-        });
+        })
 
         if (!response.ok) {
-          const payload = (await response.json()) as { error?: string };
-          throw new Error(payload.error ?? `Failed to ${decision === 'approved' ? 'approve' : 'reject'} action`);
+          const payload = (await response.json()) as { error?: string }
+          throw new Error(payload.error ?? `Failed to ${decision === 'approved' ? 'approve' : 'reject'} action`)
         }
       } catch (err) {
-        const message = err instanceof Error ? err.message : 'Failed to resolve approval';
-        setError(message);
-        setApprovals((prev) => [target, ...prev]);
+        const message = err instanceof Error ? err.message : 'Failed to resolve approval'
+        setError(message)
+        setApprovals((prev) => [target, ...prev])
       } finally {
-        setResolvingId(null);
+        setResolvingId(null)
       }
     },
     [approvals],
-  );
-
-  const pageTitle: React.CSSProperties = {
-    fontSize: 16,
-    fontWeight: 500,
-    color: 'var(--text-primary)',
-    letterSpacing: '-0.02em',
-  };
-
-  const countBadge: React.CSSProperties = {
-    display: 'inline-flex',
-    alignItems: 'center',
-    padding: '4px 12px',
-    borderRadius: 8,
-    fontSize: 14,
-    fontWeight: 500,
-    letterSpacing: '0.02em',
-    background: 'var(--glass-hover-bg)',
-    color: 'var(--text-secondary)',
-  };
-
-  const pillBtn: React.CSSProperties = {
-    height: 40,
-    padding: '0 20px',
-    borderRadius: 20,
-    background: 'var(--glass-pill-bg)',
-    backdropFilter: 'var(--glass-card-blur)',
-    WebkitBackdropFilter: 'var(--glass-card-blur)',
-    boxShadow: 'var(--glass-pill-inset)',
-    border: 'none',
-    fontSize: 14,
-    fontWeight: 500,
-    color: 'var(--text-secondary)',
-    cursor: 'pointer',
-    transition: 'all 200ms',
-    display: 'inline-flex',
-    alignItems: 'center',
-  };
-
-  const pillBtnActive: React.CSSProperties = {
-    ...pillBtn,
-    color: 'var(--text-primary)',
-    background: 'var(--hover-bg-strong, rgba(255, 255, 255, 0.08))',
-    border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
-  };
-
-  const loadingText: React.CSSProperties = {
-    fontSize: 14,
-    color: 'var(--text-secondary)',
-    display: 'flex',
-    alignItems: 'center',
-    gap: 8,
-  };
-
-  const headerContainer: React.CSSProperties = {
-    display: 'flex',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 12,
-  };
-
-  const titleContainer: React.CSSProperties = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 8,
-  };
-
-  const filtersContainer: React.CSSProperties = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 8,
-  };
-
-  const contentContainer: React.CSSProperties = {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 12,
-    flex: 1,
-    minHeight: 0,
-  };
+  )
 
   return (
-    <div style={contentContainer}>
-      <div style={headerContainer}>
-        <div style={titleContainer}>
-          <h2 style={pageTitle}>Pending Actions</h2>
-          <span style={countBadge}>{approvals.length}</span>
+    <div className="flex min-h-0 flex-1 flex-col gap-3">
+      {/* Header */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <h2 className="text-base font-medium tracking-tight text-foreground">Pending Actions</h2>
+          <Badge variant="secondary">{approvals.length}</Badge>
         </div>
-
-        <div style={filtersContainer}>
+        <div className="flex items-center gap-2">
           {FILTERS.map((filter) => (
-            <button
+            <Button
               key={filter.key}
-              style={activeFilter === filter.key ? pillBtnActive : pillBtn}
-              onMouseEnter={() => setHoveredFilter(filter.key)}
-              onMouseLeave={() => setHoveredFilter(null)}
+              variant={activeFilter === filter.key ? 'default' : 'outline'}
+              size="sm"
               onClick={() => setActiveFilter(filter.key)}
             >
               {filter.label}
-            </button>
+            </Button>
           ))}
         </div>
       </div>
 
-      {error ? (
-        <AlertBanner variant="error">
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <p>{error}</p>
-            <button
-              style={{
-                height: 40,
-                padding: '0 20px',
-                borderRadius: 12,
-                background: 'transparent',
-                border: '1px solid var(--glass-hover-bg)',
-                color: 'var(--text-primary)',
-                fontSize: 14,
-                fontWeight: 500,
-                cursor: 'pointer',
-                transition: 'all 200ms',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 8,
-                width: 'fit-content',
-              }}
-              onClick={() => fetchApprovals()}
-            >
-              <RefreshCw size={16} />
-              Retry
-            </button>
-          </div>
-        </AlertBanner>
-      ) : null}
+      {/* Error */}
+      {error && (
+        <div className="flex flex-col gap-2 rounded-lg border border-destructive/20 bg-destructive/5 p-4">
+          <p className="text-sm text-destructive">{error}</p>
+          <Button variant="outline" size="sm" className="w-fit" onClick={() => fetchApprovals()}>
+            <IconRefresh className="size-4" />
+            Retry
+          </Button>
+        </div>
+      )}
 
-      {loading ? (
-        <div style={loadingText}>
-          <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} />
+      {/* Loading */}
+      {loading && (
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <IconLoader2 className="size-4 animate-spin" />
           Loading pending approvals...
         </div>
-      ) : null}
+      )}
 
-      {!loading && visibleApprovals.length === 0 ? (
+      {/* Empty */}
+      {!loading && visibleApprovals.length === 0 && (
         <EmptyState
-          icon={<ShieldCheck size={24} />}
+          icon={<IconShieldCheck size={24} />}
           title="Nothing needs approval"
           description="When BitBit wants to send an email, create an invoice, or take action on your behalf, it asks here first."
         />
-      ) : null}
+      )}
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      {/* Cards */}
+      <div className="flex flex-col gap-3">
         {visibleApprovals.map((approval) => (
           <ApprovalCard
             key={approval.id}
@@ -267,5 +170,5 @@ export function ApprovalQueue() {
         ))}
       </div>
     </div>
-  );
+  )
 }

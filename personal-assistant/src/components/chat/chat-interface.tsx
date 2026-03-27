@@ -3,7 +3,11 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { MessageBubble } from './message-bubble'
-import { ChevronDown, Search, PlusCircle, Pencil, Eye, FileText, Mail, Brain, Zap, AlertCircle, Globe, BookOpen, Calendar, Receipt, Users, MessageSquare, Loader2, Check, X, Menu } from 'lucide-react'
+import {
+  IconChevronDown, IconSearch, IconCirclePlus, IconPencil, IconEye, IconFileText, IconMail,
+  IconBrain, IconBolt, IconAlertCircle, IconWorld, IconBook, IconCalendar, IconReceipt,
+  IconUsers, IconMessage, IconLoader2, IconCheck, IconX, IconMenu2,
+} from '@tabler/icons-react'
 import { ConversationDrawer, type Thread } from './conversation-drawer'
 import { BitBitFaceAvatar } from './bitbit-face-avatar'
 import { useAvatarEmotion } from './use-avatar-emotion'
@@ -257,38 +261,38 @@ function extractResultSummary(name: string, result?: unknown, success?: boolean)
 function getToolIcon(name: string): React.ElementType {
   // Exact matches first
   const ICON_MAP: Record<string, React.ElementType> = {
-    browse_website: Globe,
-    search_memory: Brain,
-    add_memory: Brain,
-    find_messages: Search,
-    read_message: Mail,
-    send_email: Mail,
-    compose_creator_notification_mockup: Mail,
-    search_contacts: Users,
-    get_contact: Users,
-    search_leads: Users,
-    update_lead: Users,
-    search_tasks: FileText,
-    create_task: PlusCircle,
-    update_task: Pencil,
-    get_calendar: Calendar,
-    create_invoice: Receipt,
-    generate_invoice: Receipt,
-    log_activity: BookOpen,
-    draft_reply: Pencil,
+    browse_website: IconWorld,
+    search_memory: IconBrain,
+    add_memory: IconBrain,
+    find_messages: IconSearch,
+    read_message: IconMail,
+    send_email: IconMail,
+    compose_creator_notification_mockup: IconMail,
+    search_contacts: IconUsers,
+    get_contact: IconUsers,
+    search_leads: IconUsers,
+    update_lead: IconUsers,
+    search_tasks: IconFileText,
+    create_task: IconCirclePlus,
+    update_task: IconPencil,
+    get_calendar: IconCalendar,
+    create_invoice: IconReceipt,
+    generate_invoice: IconReceipt,
+    log_activity: IconBook,
+    draft_reply: IconPencil,
   }
   if (ICON_MAP[name]) return ICON_MAP[name]
   // Pattern fallbacks
-  if (name.startsWith('search') || name.startsWith('find')) return Search
-  if (name.startsWith('browse') || name.includes('website') || name.includes('url')) return Globe
-  if (name.startsWith('create')) return PlusCircle
-  if (name.startsWith('update')) return Pencil
-  if (name.startsWith('get') || name.startsWith('look')) return Eye
-  if (name.startsWith('log')) return BookOpen
-  if (name.startsWith('compose') || name.startsWith('send')) return Mail
-  if (name.includes('memory')) return Brain
-  if (name.includes('message') || name.includes('email')) return MessageSquare
-  return Zap
+  if (name.startsWith('search') || name.startsWith('find')) return IconSearch
+  if (name.startsWith('browse') || name.includes('website') || name.includes('url')) return IconWorld
+  if (name.startsWith('create')) return IconCirclePlus
+  if (name.startsWith('update')) return IconPencil
+  if (name.startsWith('get') || name.startsWith('look')) return IconEye
+  if (name.startsWith('log')) return IconBook
+  if (name.startsWith('compose') || name.startsWith('send')) return IconMail
+  if (name.includes('memory')) return IconBrain
+  if (name.includes('message') || name.includes('email')) return IconMessage
+  return IconBolt
 }
 
 /** Build a human-readable action summary from a tool call for approval cards */

@@ -1,15 +1,23 @@
 'use client'
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react'
-import { S, C } from '@/lib/styles/design-tokens'
+import { IconLoader2, IconCopy, IconCheck, IconCalendar, IconChevronDown } from '@tabler/icons-react'
 import { TabShell } from '@/components/ui/tab-shell'
-import { GlassToggle } from '@/components/ui/glass-toggle'
-import { StatusPill } from '@/components/ui/status-pill'
-import { EmptyState } from '@/components/ui/empty-state'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Empty, EmptyHeader, EmptyTitle, EmptyDescription } from '@/components/ui/empty'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
+import { cn } from '@/lib/utils'
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Types
-// ─────────────────────────────────────────────────────────────────────────────
+// ---- Types ----
 
 type TemplateType = 'ad_scripts' | 'social_posts' | 'email_campaigns' | 'blog_posts'
 type Tone = 'professional' | 'casual' | 'playful'
@@ -32,9 +40,7 @@ interface GeneratedItem {
   created_at: string
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Constants
-// ─────────────────────────────────────────────────────────────────────────────
+// ---- Constants ----
 
 const TEMPLATES: Array<{
   id: TemplateType
@@ -68,30 +74,6 @@ const TEMPLATES: Array<{
   },
 ]
 
-const TONE_OPTIONS: Array<{ value: Tone; label: string }> = [
-  { value: 'professional', label: 'Professional' },
-  { value: 'casual', label: 'Casual' },
-  { value: 'playful', label: 'Playful' },
-]
-
-const LENGTH_OPTIONS: Array<{ value: Length; label: string; hint: string }> = [
-  { value: 'short', label: 'Short', hint: '~100 words' },
-  { value: 'medium', label: 'Medium', hint: '~300 words' },
-  { value: 'long', label: 'Long', hint: '~600+ words' },
-]
-
-const STATUS_COLORS: Record<ContentStatus, string> = {
-  draft: C.textSecondary,
-  scheduled: C.statusWarning,
-  published: C.statusSuccess,
-}
-
-const STATUS_BG: Record<ContentStatus, string> = {
-  draft: C.bgHoverStrong,
-  scheduled: C.statusWarningBg,
-  published: C.statusSuccessBg,
-}
-
 const TEMPLATE_LABELS: Record<TemplateType, string> = {
   ad_scripts: 'Ad Script',
   social_posts: 'Social Post',
@@ -99,45 +81,13 @@ const TEMPLATE_LABELS: Record<TemplateType, string> = {
   blog_posts: 'Blog Post',
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Inline styles
-// ─────────────────────────────────────────────────────────────────────────────
-
-const glassCard: React.CSSProperties = {
-  ...S.card,
-  padding: undefined,
+const STATUS_VARIANT: Record<ContentStatus, 'secondary' | 'outline' | 'default'> = {
+  draft: 'secondary',
+  scheduled: 'outline',
+  published: 'default',
 }
 
-const glassInput: React.CSSProperties = {
-  ...S.input,
-  padding: '12px 16px',
-  borderRadius: 12,
-  boxSizing: 'border-box',
-}
-
-const accentBtn: React.CSSProperties = {
-  ...S.button,
-  ...S.buttonPrimary,
-  height: 40,
-  padding: '0 20px',
-  borderRadius: 8,
-}
-
-const ghostBtn: React.CSSProperties = {
-  ...S.button,
-  ...S.buttonGhost,
-  height: 40,
-}
-
-const labelStyle: React.CSSProperties = {
-  ...S.sectionLabel,
-  display: 'block',
-  marginBottom: 8,
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Sub-components
-// ─────────────────────────────────────────────────────────────────────────────
+// ---- Sub-components ----
 
 function TemplateCard({
   template,
@@ -151,50 +101,27 @@ function TemplateCard({
   return (
     <button
       onClick={onClick}
-      className="bb-lift"
-      style={{
-        padding: 16,
-        borderRadius: 12,
-        background: selected ? C.bgHoverStrong : C.bgInput,
-        border: selected
-          ? `1px solid ${C.borderFocus}`
-          : `1px solid ${C.borderVisible}`,
-        cursor: 'pointer',
-        textAlign: 'left',
-        transition: 'all 200ms',
-        outline: 'none',
-      }}
+      className={cn(
+        'rounded-xl border p-4 text-left transition-all',
+        selected
+          ? 'border-primary bg-muted'
+          : 'border-border bg-card hover:bg-accent/50'
+      )}
     >
-      <div style={{ fontSize: 16, marginBottom: 8 }}>{template.icon}</div>
-      <div
-        style={{
-          fontSize: 14,
-          fontWeight: 500,
-          color: C.textPrimary,
-          marginBottom: 4,
-        }}
-      >
-        {template.label}
-      </div>
-      <div style={{ fontSize: 14, color: C.textSecondary, lineHeight: 1.5 }}>
+      <div className="mb-2 text-base">{template.icon}</div>
+      <div className="text-sm font-medium text-foreground">{template.label}</div>
+      <div className="mt-1 text-sm leading-relaxed text-muted-foreground">
         {template.description}
       </div>
     </button>
   )
 }
 
-const STATUS_VARIANT: Record<ContentStatus, 'neutral' | 'warning' | 'success'> = {
-  draft: 'neutral',
-  scheduled: 'warning',
-  published: 'success',
-}
-
 function StatusBadge({ status }: { status: ContentStatus }) {
   return (
-    <StatusPill
-      variant={STATUS_VARIANT[status]}
-      label={status.charAt(0).toUpperCase() + status.slice(1)}
-    />
+    <Badge variant={STATUS_VARIANT[status]} className="capitalize">
+      {status}
+    </Badge>
   )
 }
 
@@ -212,15 +139,17 @@ function CopyButton({ text }: { text: string }) {
   }
 
   return (
-    <button onClick={copy} style={ghostBtn}>
-      {copied ? '✓ Copied' : '⎘ Copy'}
-    </button>
+    <Button variant="outline" size="sm" onClick={copy}>
+      {copied ? (
+        <><IconCheck className="size-3.5" /> Copied</>
+      ) : (
+        <><IconCopy className="size-3.5" /> Copy</>
+      )}
+    </Button>
   )
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Calendar View
-// ─────────────────────────────────────────────────────────────────────────────
+// ---- Calendar View ----
 
 function CalendarView({
   items,
@@ -258,58 +187,31 @@ function CalendarView({
   return (
     <div>
       {/* Month nav */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: 20,
-        }}
-      >
-        <button
-          onClick={() => setCurrentMonth(new Date(year, month - 1, 1))}
-          style={ghostBtn}
-        >
-          ← Prev
-        </button>
-        <span style={S.cardTitle}>
-          {monthLabel}
-        </span>
-        <button
-          onClick={() => setCurrentMonth(new Date(year, month + 1, 1))}
-          style={ghostBtn}
-        >
-          Next →
-        </button>
+      <div className="mb-5 flex items-center justify-between">
+        <Button variant="ghost" size="sm" onClick={() => setCurrentMonth(new Date(year, month - 1, 1))}>
+          Prev
+        </Button>
+        <span className="text-sm font-medium text-foreground">{monthLabel}</span>
+        <Button variant="ghost" size="sm" onClick={() => setCurrentMonth(new Date(year, month + 1, 1))}>
+          Next
+        </Button>
       </div>
 
       {/* Day headers */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4, marginBottom: 4 }}>
+      <div className="mb-1 grid grid-cols-7 gap-1">
         {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
-          <div
-            key={d}
-            style={{
-              textAlign: 'center',
-              fontSize: 14,
-              fontWeight: 500,
-              letterSpacing: '0.04em',
-              color: C.textDim,
-              padding: '8px 0',
-            }}
-          >
+          <div key={d} className="py-2 text-center text-xs font-medium uppercase tracking-wide text-muted-foreground">
             {d}
           </div>
         ))}
       </div>
 
       {/* Calendar grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4 }}>
-        {/* Empty cells before first day */}
+      <div className="grid grid-cols-7 gap-1">
         {Array.from({ length: firstDay }).map((_, i) => (
-          <div key={`empty-${i}`} style={{ minHeight: 80 }} />
+          <div key={`empty-${i}`} className="min-h-[80px]" />
         ))}
 
-        {/* Day cells */}
         {Array.from({ length: daysInMonth }).map((_, i) => {
           const day = i + 1
           const dayItems = scheduledByDate[day.toString()] || []
@@ -318,57 +220,36 @@ function CalendarView({
           return (
             <div
               key={day}
-              style={{
-                minHeight: 80,
-                padding: 8,
-                borderRadius: 8,
-                background: isToday
-                  ? C.bgHover
-                  : C.bgInput,
-                border: isToday
-                  ? `1px solid ${C.borderHover}`
-                  : `1px solid ${C.borderSubtle}`,
-              }}
+              className={cn(
+                'min-h-[80px] rounded-lg border p-2',
+                isToday ? 'border-primary/30 bg-muted/50' : 'border-border bg-card'
+              )}
             >
-              <div
-                style={{
-                  fontSize: 14,
-                  fontWeight: 500,
-                  color: isToday ? C.textPrimary : C.textSecondary,
-                  marginBottom: 4,
-                }}
-              >
+              <div className={cn(
+                'mb-1 text-xs font-medium',
+                isToday ? 'text-foreground' : 'text-muted-foreground'
+              )}>
                 {day}
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <div className="flex flex-col gap-1">
                 {dayItems.slice(0, 3).map((item) => (
-                  <div
+                  <button
                     key={item.id}
                     title={`${TEMPLATE_LABELS[item.template_type]}: ${item.inputs.product_name}`}
-                    style={{
-                      fontSize: 14,
-                      padding: '4px 8px',
-                      borderRadius: 8,
-                      background: STATUS_BG[item.status],
-                      color: STATUS_COLORS[item.status],
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                      cursor: 'pointer',
-                    }}
+                    className="cursor-pointer truncate rounded-md px-1.5 py-0.5 text-xs transition-colors"
                     onClick={() => {
                       const next: ContentStatus =
                         item.status === 'scheduled' ? 'published' : item.status === 'draft' ? 'scheduled' : 'draft'
                       onStatusChange(item.id, next)
                     }}
                   >
-                    {item.inputs.product_name || TEMPLATE_LABELS[item.template_type]}
-                  </div>
+                    <Badge variant={STATUS_VARIANT[item.status]} className="text-[10px]">
+                      {item.inputs.product_name || TEMPLATE_LABELS[item.template_type]}
+                    </Badge>
+                  </button>
                 ))}
                 {dayItems.length > 3 && (
-                  <div style={{ fontSize: 14, color: C.textDim }}>
-                    +{dayItems.length - 3} more
-                  </div>
+                  <span className="text-xs text-muted-foreground">+{dayItems.length - 3} more</span>
                 )}
               </div>
             </div>
@@ -377,27 +258,11 @@ function CalendarView({
       </div>
 
       {/* Legend */}
-      <div
-        style={{
-          marginTop: 16,
-          display: 'flex',
-          gap: 16,
-          justifyContent: 'flex-end',
-        }}
-      >
+      <div className="mt-4 flex justify-end gap-4">
         {(['draft', 'scheduled', 'published'] as ContentStatus[]).map((s) => (
-          <div key={s} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14 }}>
-            <div
-              style={{
-                width: 8,
-                height: 8,
-                borderRadius: 9999,
-                background: STATUS_COLORS[s],
-              }}
-            />
-            <span style={{ color: C.textSecondary, textTransform: 'capitalize' }}>
-              {s}
-            </span>
+          <div key={s} className="flex items-center gap-2 text-xs">
+            <Badge variant={STATUS_VARIANT[s]} className="size-2 rounded-full p-0" />
+            <span className="capitalize text-muted-foreground">{s}</span>
           </div>
         ))}
       </div>
@@ -405,9 +270,7 @@ function CalendarView({
   )
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// History list
-// ─────────────────────────────────────────────────────────────────────────────
+// ---- History list ----
 
 function HistoryItem({
   item,
@@ -433,181 +296,114 @@ function HistoryItem({
   })
 
   return (
-    <div
-      style={{
-        borderRadius: 12,
-        background: C.bgInput,
-        border: `1px solid ${C.borderSubtle}`,
-        overflow: 'hidden',
-      }}
-    >
-      {/* Header row */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 12,
-          padding: '12px 16px',
-          cursor: 'pointer',
-        }}
-        onClick={() => setExpanded((e) => !e)}
-      >
-        <span style={{ fontSize: 16 }}>{template?.icon ?? '📄'}</span>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div
-            style={{
-              fontSize: 14,
-              fontWeight: 500,
-              color: C.textPrimary,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {TEMPLATE_LABELS[item.template_type]} — {item.inputs.product_name}
-          </div>
-          <div style={{ fontSize: 14, color: C.textDim, marginTop: 4 }}>
-            {created} · {item.inputs.tone} · {item.inputs.length}
-          </div>
-        </div>
-        <StatusBadge status={item.status} />
-        <span
-          style={{
-            color: C.textDim,
-            fontSize: 14,
-            transition: 'transform 200ms',
-            transform: expanded ? 'rotate(180deg)' : 'none',
-          }}
-        >
-          ▾
-        </span>
-      </div>
+    <Collapsible open={expanded} onOpenChange={setExpanded}>
+      <Card className="gap-0 py-0 overflow-hidden">
+        <CollapsibleTrigger asChild>
+          <CardContent className="flex cursor-pointer items-center gap-3 py-3 px-4">
+            <span className="text-base">{template?.icon ?? '📄'}</span>
+            <div className="min-w-0 flex-1">
+              <div className="truncate text-sm font-medium text-foreground">
+                {TEMPLATE_LABELS[item.template_type]} — {item.inputs.product_name}
+              </div>
+              <div className="mt-1 text-xs text-muted-foreground">
+                {created} · {item.inputs.tone} · {item.inputs.length}
+              </div>
+            </div>
+            <StatusBadge status={item.status} />
+            <IconChevronDown className={cn(
+              'size-4 text-muted-foreground transition-transform',
+              expanded && 'rotate-180'
+            )} />
+          </CardContent>
+        </CollapsibleTrigger>
 
-      {/* Expanded content */}
-      {expanded && (
-        <div
-          style={{
-            padding: '0 16px 16px',
-            borderTop: `1px solid ${C.borderSubtle}`,
-          }}
-        >
-          <pre
-            style={{
-              marginTop: 12,
-              padding: 12,
-              borderRadius: 12,
-              background: C.bgInput,
-              border: `1px solid ${C.borderSubtle}`,
-              fontSize: 14,
-              color: C.textSecondary,
-              whiteSpace: 'pre-wrap',
-              wordBreak: 'break-word',
-              lineHeight: 1.6,
-              fontFamily: 'inherit',
-            }}
-          >
-            {item.output}
-          </pre>
+        <CollapsibleContent>
+          <div className="border-t border-border px-4 pb-4">
+            <pre className="mt-3 whitespace-pre-wrap rounded-xl border border-border bg-muted/50 p-3 font-sans text-sm leading-relaxed text-muted-foreground">
+              {item.output}
+            </pre>
 
-          <div
-            style={{
-              marginTop: 12,
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: 8,
-              alignItems: 'center',
-            }}
-          >
-            <CopyButton text={item.output} />
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <CopyButton text={item.output} />
 
-            {item.status !== 'published' && (
-              <button
-                onClick={() =>
-                  onStatusChange(
-                    item.id,
-                    item.status === 'draft' ? 'scheduled' : 'published'
-                  )
-                }
-                style={ghostBtn}
-              >
-                {item.status === 'draft' ? '📅 Schedule' : '✓ Mark Published'}
-              </button>
-            )}
-
-            {item.status === 'scheduled' && (
-              <button
-                onClick={() => onStatusChange(item.id, 'draft')}
-                style={{ ...ghostBtn, ...S.buttonDestructive, border: `1px solid ${C.borderVisible}` }}
-              >
-                ✕ Unschedule
-              </button>
-            )}
-
-            {!scheduling && item.status !== 'published' && (
-              <button
-                onClick={() => setScheduling(true)}
-                style={ghostBtn}
-              >
-                📅 Set date
-              </button>
-            )}
-
-            {scheduling && (
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                <input
-                  type="datetime-local"
-                  value={dateValue}
-                  onChange={(e) => setDateValue(e.target.value)}
-                  style={{ ...glassInput, width: 'auto', fontSize: 14, padding: '8px 12px' }}
-                />
-                <button
-                  onClick={() => {
-                    if (dateValue) {
-                      onSchedule(item.id, new Date(dateValue).toISOString())
-                    }
-                    setScheduling(false)
-                  }}
-                  style={accentBtn}
+              {item.status !== 'published' && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    onStatusChange(
+                      item.id,
+                      item.status === 'draft' ? 'scheduled' : 'published'
+                    )
+                  }
                 >
-                  Save
-                </button>
-                <button
-                  onClick={() => setScheduling(false)}
-                  style={ghostBtn}
+                  {item.status === 'draft' ? 'Schedule' : 'Mark Published'}
+                </Button>
+              )}
+
+              {item.status === 'scheduled' && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onStatusChange(item.id, 'draft')}
+                  className="text-destructive"
                 >
-                  Cancel
-                </button>
+                  Unschedule
+                </Button>
+              )}
+
+              {!scheduling && item.status !== 'published' && (
+                <Button variant="outline" size="sm" onClick={() => setScheduling(true)}>
+                  <IconCalendar className="size-3.5" /> Set date
+                </Button>
+              )}
+
+              {scheduling && (
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="datetime-local"
+                    value={dateValue}
+                    onChange={(e) => setDateValue(e.target.value)}
+                    className="w-auto text-sm"
+                  />
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      if (dateValue) {
+                        onSchedule(item.id, new Date(dateValue).toISOString())
+                      }
+                      setScheduling(false)
+                    }}
+                  >
+                    Save
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => setScheduling(false)}>
+                    Cancel
+                  </Button>
+                </div>
+              )}
+            </div>
+
+            {item.scheduled_for && (
+              <div className="mt-3 text-sm text-amber-500">
+                Scheduled for{' '}
+                {new Date(item.scheduled_for).toLocaleString('en', {
+                  weekday: 'short',
+                  month: 'short',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
               </div>
             )}
           </div>
-
-          {item.scheduled_for && (
-            <div
-              style={{
-                marginTop: 12,
-                fontSize: 14,
-                color: C.statusWarning,
-              }}
-            >
-              📅 Scheduled for{' '}
-              {new Date(item.scheduled_for).toLocaleString('en', {
-                weekday: 'short',
-                month: 'short',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-              })}
-            </div>
-          )}
-        </div>
-      )}
-    </div>
+        </CollapsibleContent>
+      </Card>
+    </Collapsible>
   )
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Main tab
-// ─────────────────────────────────────────────────────────────────────────────
+// ---- Main tab ----
 
 export default function CreatorStudioTab() {
   const [view, setView] = useState<View>('generate')
@@ -729,289 +525,217 @@ export default function CreatorStudioTab() {
     return history.filter((item) => item.template_type === historyFilter)
   }, [history, historyFilter])
 
-  const VIEW_TOGGLE_OPTIONS = useMemo(() => [
-    { key: 'generate' as View, label: 'Generate' },
-    { key: 'history' as View, label: 'History' },
-    { key: 'calendar' as View, label: 'Calendar' },
-  ], [])
-
   return (
     <TabShell variant="fixed" padding="p-0" className="min-h-0 gap-0">
-      <div style={{ height: '100%', overflowY: 'auto', padding: 28 }}>
-        <div style={{ maxWidth: 960, margin: '0 auto' }}>
+      <div className="h-full overflow-y-auto p-7">
+        <div className="mx-auto max-w-[960px]">
 
           {/* Header */}
-          <div style={{ marginBottom: 28 }}>
-            <h1 style={{ ...S.title, margin: 0, marginBottom: 8 }}>
-              Creator Studio
-            </h1>
-            <p style={{ ...S.subtitle, margin: 0 }}>
+          <div className="mb-7">
+            <h1 className="text-lg font-semibold text-foreground">Creator Studio</h1>
+            <p className="mt-1 text-sm text-muted-foreground">
               Generate marketing content using AI — ad scripts, social posts, emails, and blogs.
             </p>
           </div>
 
           {/* View tabs */}
-          <div style={{ marginBottom: 28 }}>
-            <GlassToggle<View>
-              options={VIEW_TOGGLE_OPTIONS}
-              value={view}
-              onChange={setView}
-            />
-          </div>
+          <Tabs value={view} onValueChange={(v) => setView(v as View)} className="mb-7">
+            <TabsList>
+              <TabsTrigger value="generate">Generate</TabsTrigger>
+              <TabsTrigger value="history">History</TabsTrigger>
+              <TabsTrigger value="calendar">Calendar</TabsTrigger>
+            </TabsList>
+          </Tabs>
 
-          {/* ── GENERATE VIEW ─────────────────────────────────────────── */}
+          {/* GENERATE VIEW */}
           {view === 'generate' && (
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: generatedOutput ? '1fr 1fr' : '1fr',
-                gap: 24,
-              }}
-            >
+            <div className={cn(
+              'grid gap-6',
+              generatedOutput ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1'
+            )}>
               {/* Left: form */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-
+              <div className="flex flex-col gap-6">
                 {/* Template selector */}
-                <div style={{ ...glassCard, padding: 24 }}>
-                  <div style={{ ...labelStyle, marginBottom: 16 }}>Content Type</div>
-                  <div
-                    className="bb-lift"
-                    style={{
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(2, 1fr)',
-                      gap: 12,
-                    }}
-                  >
-                    {TEMPLATES.map((t) => (
-                      <TemplateCard
-                        key={t.id}
-                        template={t}
-                        selected={selectedTemplate === t.id}
-                        onClick={() => setSelectedTemplate(t.id)}
-                      />
-                    ))}
-                  </div>
-                </div>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Content Type</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 gap-3">
+                      {TEMPLATES.map((t) => (
+                        <TemplateCard
+                          key={t.id}
+                          template={t}
+                          selected={selectedTemplate === t.id}
+                          onClick={() => setSelectedTemplate(t.id)}
+                        />
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
 
                 {/* Generation form */}
-                <div style={{ ...glassCard, padding: 24 }}>
-                  <div style={{ ...labelStyle, marginBottom: 20 }}>Content Details</div>
-
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Content Details</CardTitle>
+                  </CardHeader>
+                  <CardContent className="flex flex-col gap-4">
                     <div>
-                      <label style={labelStyle} htmlFor="cs-product">
-                        Product / Service Name
-                      </label>
-                      <input
+                      <Label htmlFor="cs-product">Product / Service Name</Label>
+                      <Input
                         id="cs-product"
                         type="text"
                         placeholder="e.g. BitBit AI Platform"
                         value={productName}
                         onChange={(e) => setProductName(e.target.value)}
-                        style={glassInput}
+                        className="mt-1.5"
                       />
                     </div>
 
                     <div>
-                      <label style={labelStyle} htmlFor="cs-audience">
-                        Target Audience
-                      </label>
-                      <input
+                      <Label htmlFor="cs-audience">Target Audience</Label>
+                      <Input
                         id="cs-audience"
                         type="text"
                         placeholder="e.g. Small business owners aged 30-50"
                         value={targetAudience}
                         onChange={(e) => setTargetAudience(e.target.value)}
-                        style={glassInput}
+                        className="mt-1.5"
                       />
                     </div>
 
                     {/* Tone */}
                     <div>
-                      <div style={labelStyle}>Tone</div>
-                      <GlassToggle<Tone>
-                        options={TONE_OPTIONS.map((t) => ({ key: t.value, label: t.label }))}
+                      <Label>Tone</Label>
+                      <ToggleGroup
+                        type="single"
                         value={tone}
-                        onChange={setTone}
-                        size="sm"
-                      />
+                        onValueChange={(v) => v && setTone(v as Tone)}
+                        variant="outline"
+                        className="mt-1.5"
+                      >
+                        <ToggleGroupItem value="professional">Professional</ToggleGroupItem>
+                        <ToggleGroupItem value="casual">Casual</ToggleGroupItem>
+                        <ToggleGroupItem value="playful">Playful</ToggleGroupItem>
+                      </ToggleGroup>
                     </div>
 
                     {/* Length */}
                     <div>
-                      <div style={labelStyle}>Length</div>
-                      <GlassToggle<Length>
-                        options={LENGTH_OPTIONS.map((l) => ({ key: l.value, label: `${l.label} ${l.hint}` }))}
+                      <Label>Length</Label>
+                      <ToggleGroup
+                        type="single"
                         value={length}
-                        onChange={setLength}
-                        size="sm"
-                      />
+                        onValueChange={(v) => v && setLength(v as Length)}
+                        variant="outline"
+                        className="mt-1.5"
+                      >
+                        <ToggleGroupItem value="short">Short ~100w</ToggleGroupItem>
+                        <ToggleGroupItem value="medium">Medium ~300w</ToggleGroupItem>
+                        <ToggleGroupItem value="long">Long ~600w+</ToggleGroupItem>
+                      </ToggleGroup>
                     </div>
 
                     {generateError && (
-                      <div
-                        style={{
-                          padding: '12px 16px',
-                          borderRadius: 12,
-                          background: C.statusErrorBg,
-                          border: `1px solid ${C.borderVisible}`,
-                          color: C.statusError,
-                          fontSize: 14,
-                        }}
-                      >
-                        {generateError}
-                      </div>
+                      <Alert variant="destructive">
+                        <AlertDescription>{generateError}</AlertDescription>
+                      </Alert>
                     )}
 
-                    <button
-                      onClick={handleGenerate}
-                      disabled={generating}
-                      style={{
-                        ...accentBtn,
-                        justifyContent: 'center',
-                        opacity: generating ? 0.7 : 1,
-                        cursor: generating ? 'not-allowed' : 'pointer',
-                      }}
-                    >
+                    <Button onClick={handleGenerate} disabled={generating} className="w-full">
                       {generating ? (
-                        <>
-                          <span
-                            style={{
-                              display: 'inline-block',
-                              width: 16,
-                              height: 16,
-                              borderRadius: 9999,
-                              border: `2px solid ${C.borderVisible}`,
-                              borderTopColor: C.bgPage,
-                              animation: 'spin 0.7s linear infinite',
-                            }}
-                          />
-                          Generating…
-                        </>
+                        <><IconLoader2 className="size-4 animate-spin" /> Generating...</>
                       ) : (
-                        <>✦ Generate Content</>
+                        'Generate Content'
                       )}
-                    </button>
-                  </div>
-                </div>
+                    </Button>
+                  </CardContent>
+                </Card>
               </div>
 
               {/* Right: preview panel */}
               {generatedOutput && (
-                <div style={{ ...glassCard, padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      marginBottom: 4,
-                    }}
-                  >
-                    <div>
-                      <div style={S.cardTitle}>
-                        {TEMPLATE_LABELS[generatedOutput.template_type]}
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle>{TEMPLATE_LABELS[generatedOutput.template_type]}</CardTitle>
+                        <CardDescription className="mt-1">
+                          {generatedOutput.inputs.product_name} · {generatedOutput.inputs.tone} · {generatedOutput.inputs.length}
+                        </CardDescription>
                       </div>
-                      <div style={{ ...S.secondary, color: C.textDim, marginTop: 4 }}>
-                        {generatedOutput.inputs.product_name} · {generatedOutput.inputs.tone} ·{' '}
-                        {generatedOutput.inputs.length}
-                      </div>
+                      <StatusBadge status={generatedOutput.status} />
                     </div>
-                    <StatusBadge status={generatedOutput.status} />
-                  </div>
+                  </CardHeader>
+                  <CardContent className="flex flex-col gap-4">
+                    <pre className="max-h-[420px] overflow-y-auto whitespace-pre-wrap rounded-xl border border-border bg-muted/50 p-4 font-sans text-sm leading-relaxed text-muted-foreground">
+                      {generatedOutput.output}
+                    </pre>
 
-                  <pre
-                    style={{
-                      flex: 1,
-                      margin: 0,
-                      padding: 16,
-                      borderRadius: 12,
-                      background: C.bgInput,
-                      border: `1px solid ${C.borderSubtle}`,
-                      fontSize: 14,
-                      color: C.textSecondary,
-                      whiteSpace: 'pre-wrap',
-                      wordBreak: 'break-word',
-                      lineHeight: 1.65,
-                      fontFamily: 'inherit',
-                      overflowY: 'auto',
-                      maxHeight: 420,
-                    }}
-                  >
-                    {generatedOutput.output}
-                  </pre>
-
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                    <CopyButton text={generatedOutput.output} />
-                    <button
-                      onClick={() => {
-                        setView('history')
-                        loadHistory()
-                      }}
-                      style={ghostBtn}
-                    >
-                      View History
-                    </button>
-                    {generatedOutput.status === 'draft' && (
-                      <button
-                        onClick={() => handleStatusChange(generatedOutput.id, 'scheduled')}
-                        style={ghostBtn}
+                    <div className="flex flex-wrap gap-2">
+                      <CopyButton text={generatedOutput.output} />
+                      <Button variant="outline" size="sm" onClick={() => { setView('history'); loadHistory(); }}>
+                        View History
+                      </Button>
+                      {generatedOutput.status === 'draft' && (
+                        <Button variant="outline" size="sm" onClick={() => handleStatusChange(generatedOutput.id, 'scheduled')}>
+                          <IconCalendar className="size-3.5" /> Schedule
+                        </Button>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="ml-auto"
+                        onClick={() => {
+                          setGeneratedOutput(null)
+                          setProductName('')
+                          setTargetAudience('')
+                        }}
                       >
-                        📅 Schedule
-                      </button>
-                    )}
-                    <button
-                      onClick={() => {
-                        setGeneratedOutput(null)
-                        setProductName('')
-                        setTargetAudience('')
-                      }}
-                      style={{ ...ghostBtn, marginLeft: 'auto' }}
-                    >
-                      + New
-                    </button>
-                  </div>
-                </div>
+                        + New
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
               )}
             </div>
           )}
 
-          {/* ── HISTORY VIEW ──────────────────────────────────────────── */}
+          {/* HISTORY VIEW */}
           {view === 'history' && (
             <div>
-              {/* Filter tabs */}
-              <div style={{ marginBottom: 20 }}>
-                <GlassToggle<TemplateType | 'all'>
-                  options={[
-                    { key: 'all', label: 'All' },
-                    ...TEMPLATES.map((t) => ({ key: t.id, label: `${t.icon} ${t.label}` })),
-                  ]}
-                  value={historyFilter}
-                  onChange={setHistoryFilter}
-                  size="sm"
-                />
+              <div className="mb-5">
+                <Select value={historyFilter} onValueChange={(v) => setHistoryFilter(v as TemplateType | 'all')}>
+                  <SelectTrigger className="w-48">
+                    <SelectValue placeholder="Filter type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All</SelectItem>
+                    {TEMPLATES.map((t) => (
+                      <SelectItem key={t.id} value={t.id}>{t.icon} {t.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               {historyLoading ? (
-                <div
-                  style={{
-                    textAlign: 'center',
-                    padding: 60,
-                    color: C.textDim,
-                    fontSize: 14,
-                  }}
-                >
-                  Loading history…
+                <div className="flex flex-col gap-3">
+                  {[1, 2, 3].map((i) => (
+                    <Skeleton key={i} className="h-20 w-full rounded-xl" />
+                  ))}
                 </div>
               ) : filteredHistory.length === 0 ? (
-                <div style={{ ...glassCard, padding: 0 }}>
-                  <EmptyState
-                    title="No content yet"
-                    description="Generated content will appear here."
-                    action={{ label: 'Start generating', onClick: () => setView('generate') }}
-                  />
-                </div>
+                <Empty className="py-12">
+                  <EmptyHeader>
+                    <EmptyTitle>No content yet</EmptyTitle>
+                    <EmptyDescription>Generated content will appear here.</EmptyDescription>
+                  </EmptyHeader>
+                  <Button variant="outline" size="sm" onClick={() => setView('generate')}>
+                    Start generating
+                  </Button>
+                </Empty>
               ) : (
-                <div className="bb-stagger" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div className="flex flex-col gap-2">
                   {filteredHistory.map((item) => (
                     <HistoryItem
                       key={item.id}
@@ -1025,42 +749,31 @@ export default function CreatorStudioTab() {
             </div>
           )}
 
-          {/* ── CALENDAR VIEW ─────────────────────────────────────────── */}
+          {/* CALENDAR VIEW */}
           {view === 'calendar' && (
-            <div style={{ ...glassCard, padding: 24 }}>
-              <div style={{ marginBottom: 20 }}>
-                <div style={{ ...S.cardTitle, marginBottom: 4 }}>
-                  Content Calendar
-                </div>
-                <div style={S.secondary}>
+            <Card>
+              <CardHeader>
+                <CardTitle>Content Calendar</CardTitle>
+                <CardDescription>
                   Scheduled and published content across the month. Click a dot to cycle its status.
-                </div>
-              </div>
-
-              {historyLoading ? (
-                <div
-                  style={{
-                    textAlign: 'center',
-                    padding: 40,
-                    color: C.textDim,
-                    fontSize: 14,
-                  }}
-                >
-                  Loading…
-                </div>
-              ) : (
-                <CalendarView
-                  items={history}
-                  onStatusChange={handleStatusChange}
-                />
-              )}
-            </div>
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {historyLoading ? (
+                  <div className="flex items-center justify-center py-10">
+                    <IconLoader2 className="size-5 animate-spin text-muted-foreground" />
+                  </div>
+                ) : (
+                  <CalendarView
+                    items={history}
+                    onStatusChange={handleStatusChange}
+                  />
+                )}
+              </CardContent>
+            </Card>
           )}
         </div>
       </div>
-
-      {/* Spinning animation */}
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </TabShell>
   )
 }
