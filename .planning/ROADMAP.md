@@ -205,7 +205,11 @@ Plans:
 **Goal**: Role domain modules are imported in the cron runtime path so scheduled role execution actually fires -- finance, comms, and sales roles execute on their 5-minute tick
 **Depends on**: Phase 26 (current codebase)
 **Gap Closure**: Closes critical integration gap + "Role scheduled execution" broken flow from audit
-**Plans**: TBD (run `/gsd:plan-phase 27`)
+**Requirements**: ROLE-RUNTIME-01, ROLE-RUNTIME-02
+**Plans**: 1 plan
+
+Plans:
+- [ ] 27-01-PLAN.md -- Side-effect imports for domain role registration + revenue-intelligence cron entry
 
 ### Phase 28: Intelligence Dashboard Wiring
 **Goal**: IntelligenceWidgets fetches from the correct /api/intelligence/[metric] endpoints and displays live business intelligence data instead of permanent "Gathering data..." state
@@ -323,11 +327,11 @@ Phase 20 first (no dependencies), then 21 (billing before growth roles), then 22
 | 24b. Intelligence Layer | v1.4 | 3/3 | Complete | 2026-03-26 |
 | 25. Role Dashboard | v1.4 | 3/3 | Complete | 2026-03-26 |
 | 26. SOTA Response Drafter | v1.4 | 2/2 | Complete | 2026-03-26 |
-| 27. Role Runtime Import Fix | v1.4 | 0/0 | Pending | - |
+| 27. Role Runtime Import Fix | v1.4 | 0/1 | Planned | - |
 | 28. Intelligence Dashboard Wiring | v1.4 | 0/0 | Pending | - |
 | 29. SEO/Tender Scheduled Monitoring | v1.4 | 0/0 | Pending | - |
 | 30. Onboarding E2E & First-Run Experience | v1.5 | 0/3 | Planned | - |
 | 31. Channel Smoke Tests & Production Hardening | v1.5 | 0/3 | Planned | - |
 | 32. Marketing Site & Checkout Flow | v1.5 | 0/3 | Planned | - |
 
-**Overall:** 57/57 plans complete for v1.0+v1.1+v1.2 (100%). v1.4: 23/25 plans (Phases 20-26) + 3 gap closure phases (27-29) pending. v1.5: Phases 30-32 planned (9 plans).
+**Overall:** 57/57 plans complete for v1.0+v1.1+v1.2 (100%). v1.4: 23/26 plans (Phases 20-26) + 3 gap closure phases (27-29) pending. v1.5: Phases 30-32 planned (9 plans).
