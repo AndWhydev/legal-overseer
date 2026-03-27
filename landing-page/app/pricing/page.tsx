@@ -2,10 +2,19 @@ import { Metadata } from "next";
 import { BlurFade } from "@/components/ui/blur-fade";
 import Link from "next/link";
 import { Check } from "lucide-react";
+import MarketingNav from "@/components/marketing/marketing-nav";
+import MarketingFooter from "@/components/marketing/marketing-footer";
+import PricingComparisonTable from "@/components/marketing/pricing-comparison-table";
 
 export const metadata: Metadata = {
   title: "Pricing — BitBit",
   description: "Simple, transparent pricing for BitBit. Choose from Starter, Growth, Pro, or Enterprise plans.",
+  keywords: [
+    "AI business assistant pricing",
+    "automated invoicing plans",
+    "agency automation pricing",
+    "AI operations cost",
+  ],
   openGraph: {
     title: "Pricing — BitBit",
     description: "Simple, transparent pricing. Start free, scale as you grow.",
@@ -22,34 +31,46 @@ export const metadata: Metadata = {
   },
 };
 
-function PricingNav() {
-  return (
-    <nav className="fixed top-0 left-0 right-0 z-50 border-b border-[#e8e4dc] bg-[#faf9f0]/90 backdrop-blur-xl">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
-        <Link href="/" className="flex items-center gap-2.5">
-          <span className="font-[var(--font-serif)] text-2xl font-semibold tracking-tight text-[#1a1a1a]" style={{ fontFamily: "var(--font-serif)" }}>
-            BitBit
-          </span>
-        </Link>
+const faqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: [
+    {
+      "@type": "Question",
+      name: "What happens after my free trial?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "After 30 days, your account downgrades to the Free plan automatically. You keep all your data, contacts, and configuration -- you just lose access to paid agents and higher token limits. Upgrade anytime to pick up where you left off.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Can I change plans?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Yes. Upgrade or downgrade anytime from your billing settings. Upgrades take effect immediately with prorated billing. Downgrades apply at the end of your current billing cycle.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "What are AI tokens?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Tokens power every agent operation -- each message triage, invoice generation, lead qualification, and content creation uses tokens. The monthly allocation resets each billing cycle. Most agencies on Growth never hit their limit.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Is there a setup fee?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "No. Connect your email, WhatsApp, and other services, configure your agents, and you are running. Most teams are fully operational within an hour.",
+      },
+    },
+  ],
+};
 
-        <div className="hidden items-center gap-8 text-[13px] text-[#6b6560] md:flex">
-          <Link href="/" className="transition-colors hover:text-[#1a1a1a]">Home</Link>
-          <Link href="/about" className="transition-colors hover:text-[#1a1a1a]">About</Link>
-          <Link href="/pricing" className="transition-colors hover:text-[#1a1a1a] font-medium text-[#1a1a1a]">Pricing</Link>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <Link
-            href="https://app.bitbit.chat/login"
-            className="inline-flex h-9 items-center gap-1.5 rounded-md bg-[#FF5A1F] px-4 text-[13px] font-medium text-white transition-colors hover:bg-[#E44E17] bb-orange-fill-noise"
-          >
-            Get started
-          </Link>
-        </div>
-      </div>
-    </nav>
-  );
-}
+/* Nav and Footer imported from shared marketing components */
 
 function PricingHero() {
   return (
@@ -319,39 +340,32 @@ function PricingCTA() {
   );
 }
 
-function PricingFooter() {
+function PricingComparison() {
   return (
-    <footer className="border-t border-[#e8e4dc] py-12 px-6">
-      <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-6 sm:flex-row">
-        <span className="text-sm font-semibold text-[#1a1a1a]" style={{ fontFamily: "var(--font-serif)" }}>
-          BitBit
-        </span>
-
-        <div className="flex items-center gap-6 text-[13px] text-[#6b6560]">
-          <Link href="/" className="transition-colors hover:text-[#1a1a1a]">Home</Link>
-          <Link href="/about" className="transition-colors hover:text-[#1a1a1a]">About</Link>
-          <Link href="/pricing" className="transition-colors hover:text-[#1a1a1a]">Pricing</Link>
-          <a href="/privacy" className="transition-colors hover:text-[#1a1a1a]">Privacy</a>
-          <a href="/terms" className="transition-colors hover:text-[#1a1a1a]">Terms</a>
-        </div>
-
-        <p className="text-[12px] text-[#8b6f47]">
-          &copy; 2026 BitBit
-        </p>
+    <section className="border-t border-[#e8e4dc] px-6 py-20">
+      <div className="mx-auto max-w-7xl">
+        <PricingComparisonTable />
       </div>
-    </footer>
+    </section>
   );
 }
 
 export default function PricingPage() {
   return (
-    <main className="min-h-screen bg-[#faf9f0]">
-      <PricingNav />
-      <PricingHero />
-      <PricingCards />
-      <PricingFAQ />
-      <PricingCTA />
-      <PricingFooter />
-    </main>
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+      />
+      <main className="min-h-screen bg-[#faf9f0]">
+        <MarketingNav active="Pricing" />
+        <PricingHero />
+        <PricingCards />
+        <PricingComparison />
+        <PricingFAQ />
+        <PricingCTA />
+        <MarketingFooter />
+      </main>
+    </>
   );
 }
