@@ -1,4 +1,5 @@
-import type { Metadata } from 'next'
+'use client'
+
 import {
   FileText,
   Clock,
@@ -6,24 +7,6 @@ import {
   Receipt,
 } from 'lucide-react'
 import IndustryPageTemplate from '@/components/marketing/industry-page-template'
-
-export const metadata: Metadata = {
-  title: 'BitBit for Marketing Agencies',
-  description:
-    'AI operations built for agencies. Automate proposals, triage client messages, manage invoices, and nurture leads -- all in one platform.',
-  keywords: [
-    'marketing agency automation',
-    'agency AI operations',
-    'digital agency AI assistant',
-    'agency proposal automation',
-  ],
-  openGraph: {
-    title: 'BitBit for Marketing Agencies',
-    description:
-      'AI operations built for agencies. Automate proposals, triage client messages, manage invoices, and nurture leads.',
-    url: 'https://bitbit.chat/industries/agencies',
-  },
-}
 
 const webPageJsonLd = {
   '@context': 'https://schema.org',
