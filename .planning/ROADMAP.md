@@ -225,7 +225,10 @@ Plans:
 **Goal**: SEO and Tender tools run on scheduled ticks and proactively alert users of ranking drops and new tender matches without requiring chat invocation
 **Depends on**: Phase 27 (role runtime must work for role-based scheduling)
 **Requirements**: SEO-03, SEO-04, TNDR-03, TNDR-04
-**Plans**: TBD (run `/gsd:plan-phase 29`)
+**Plans**: 1 plan
+
+Plans:
+- [ ] 29-01-PLAN.md -- Growth role implementation (DB migration, type extension, SEO/Tender monitor wrappers, cron wiring, tests)
 
 ### v1.5 Beta Launch & First Revenue
 
@@ -348,7 +351,7 @@ Phase 20 first (no dependencies), then 21 (billing before growth roles), then 22
 | 26. SOTA Response Drafter | v1.4 | 2/2 | Complete | 2026-03-26 |
 | 27. Role Runtime Import Fix | v1.4 | Complete    | 2026-03-27 | 2026-03-27 |
 | 28. Intelligence Dashboard Wiring | 1/1 | Complete    | 2026-03-27 | - |
-| 29. SEO/Tender Scheduled Monitoring | v1.4 | 0/0 | Pending | - |
+| 29. SEO/Tender Scheduled Monitoring | v1.4 | 0/1 | Planned | - |
 | 30. Onboarding E2E & First-Run Experience | 1/3 | In Progress|  | - |
 | 31. Channel Smoke Tests & Production Hardening | v1.5 | 0/3 | Planned | - |
 | 32. Marketing Site & Checkout Flow | 1/3 | In Progress|  | - |
