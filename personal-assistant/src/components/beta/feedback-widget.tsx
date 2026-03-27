@@ -154,7 +154,7 @@ export function FeedbackWidget() {
           onClick={handleClose}
         >
           <div
-            className="flex w-[380px] max-h-[calc(100vh-48px)] flex-col overflow-hidden rounded-xl border border-border bg-card shadow-xl"
+            className="flex w-[380px] max-h-[calc(100vh-48px)] flex-col overflow-hidden rounded-xl border border-border bg-card shadow-lg"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}

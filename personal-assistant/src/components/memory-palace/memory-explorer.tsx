@@ -1,6 +1,9 @@
 'use client'
 
 import React, { useState, useEffect, useCallback } from 'react'
+import { IconAlertCircle, IconBrain } from '@tabler/icons-react'
+import { Button } from '@/components/ui/button'
+import { Empty, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from '@/components/ui/empty'
 import type {
   MemoryPalaceEntry,
   MemoryCategory,
@@ -179,9 +182,14 @@ export function MemoryExplorer({ orgId }: MemoryExplorerProps) {
 
       {/* Error */}
       {error && (
-        <div className="rounded-lg bg-destructive/10 px-3 py-3 text-sm text-destructive">
-          {error}
-        </div>
+        <Empty>
+          <EmptyMedia variant="icon"><IconAlertCircle size={20} /></EmptyMedia>
+          <EmptyTitle>Something went wrong</EmptyTitle>
+          <EmptyDescription>{error}</EmptyDescription>
+          <EmptyContent>
+            <Button variant="outline" size="sm" onClick={() => { setError(null); loadMemories(); }}>Retry</Button>
+          </EmptyContent>
+        </Empty>
       )}
 
       {/* Content */}
@@ -195,12 +203,11 @@ export function MemoryExplorer({ orgId }: MemoryExplorerProps) {
         {!loading && viewMode === 'feed' && (
           <div className="flex flex-col gap-2">
             {memories.length === 0 ? (
-              <div className="px-5 py-16 text-center text-muted-foreground">
-                <div className="mb-2 text-base">No memories yet</div>
-                <div className="text-sm">
-                  BitBit will automatically remember important facts, decisions, and patterns as you interact.
-                </div>
-              </div>
+              <Empty className="py-16">
+                <EmptyMedia variant="icon"><IconBrain size={20} /></EmptyMedia>
+                <EmptyTitle>No memories yet</EmptyTitle>
+                <EmptyDescription>BitBit will automatically remember important facts, decisions, and patterns as you interact.</EmptyDescription>
+              </Empty>
             ) : (
               memories.map(memory => (
                 <MemoryCard

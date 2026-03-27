@@ -7,6 +7,8 @@ import { TabSkeleton } from './tab-skeleton';
 import { TabShell } from '@/components/ui/tab-shell';
 import { DailyTipBanner } from '@/components/beta/daily-tip-banner';
 import { Button } from '@/components/ui/button';
+import { Empty, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from '@/components/ui/empty';
+import { IconAlertCircle } from '@tabler/icons-react';
 import type { KanbanColumn, Task } from '@/lib/types';
 import { logger } from '@/lib/core/logger';
 
@@ -42,12 +44,14 @@ function DashboardTab() {
   if (error) {
     return (
       <TabShell>
-        <div className="flex flex-col items-center justify-center gap-3 py-12">
-          <p className="text-sm text-destructive">{error}</p>
-          <Button variant="outline" size="sm" onClick={() => window.location.reload()}>
-            Retry
-          </Button>
-        </div>
+        <Empty className="py-12">
+          <EmptyMedia variant="icon"><IconAlertCircle size={20} /></EmptyMedia>
+          <EmptyTitle>Something went wrong</EmptyTitle>
+          <EmptyDescription>{error}</EmptyDescription>
+          <EmptyContent>
+            <Button variant="outline" size="sm" onClick={() => window.location.reload()}>Retry</Button>
+          </EmptyContent>
+        </Empty>
       </TabShell>
     );
   }

@@ -170,7 +170,7 @@ export function RoleDetailView({ roleType, onBack }: RoleDetailViewProps) {
       {status && (
         <div className="grid grid-cols-2 gap-3">
           {/* Status card */}
-          <div className="rounded-2xl border border-border bg-card/60 backdrop-blur-lg p-5 shadow-sm">
+          <div className="rounded-xl border border-border bg-card/60 backdrop-blur-lg p-5 shadow-sm">
             <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-3">Status</div>
             <div className="grid grid-cols-2 gap-3">
               <StatCell label="Last tick" value={timeAgo(status.last_tick_at)} />
@@ -183,7 +183,7 @@ export function RoleDetailView({ roleType, onBack }: RoleDetailViewProps) {
           </div>
 
           {/* Autonomy card */}
-          <div className="rounded-2xl border border-border bg-card/60 backdrop-blur-lg p-5 shadow-sm">
+          <div className="rounded-xl border border-border bg-card/60 backdrop-blur-lg p-5 shadow-sm">
             <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground mb-3">
               <IconSettings size={11} />
               Autonomy Level
@@ -199,7 +199,7 @@ export function RoleDetailView({ roleType, onBack }: RoleDetailViewProps) {
       )}
 
       {/* Activity timeline */}
-      <div className="rounded-2xl border border-border bg-card/60 backdrop-blur-lg p-5 shadow-sm">
+      <div className="rounded-xl border border-border bg-card/60 backdrop-blur-lg p-5 shadow-sm">
         <div className="flex items-center gap-2 mb-4">
           <IconActivity size={14} style={{ color: meta.color }} />
           <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Activity Timeline</span>

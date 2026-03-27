@@ -25,7 +25,7 @@ const TREND_COLORS: Record<TrendDirection, string> = {
 const RISK_COLORS: Record<RiskLevel, string> = {
   low: 'text-green-500',
   medium: 'text-amber-500',
-  high: 'text-orange-500',
+  high: 'text-destructive',
   critical: 'text-red-500',
 }
 

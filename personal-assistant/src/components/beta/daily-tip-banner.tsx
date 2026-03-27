@@ -100,8 +100,8 @@ export function DailyTipBanner({ onNavigate }: DailyTipBannerProps) {
 
   return (
     <Card className="relative flex items-start gap-3 px-5 py-4">
-      <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-amber-500/10">
-        <IconBulb className="size-[18px] text-amber-500" />
+      <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted">
+        <IconBulb className="size-[18px] text-foreground" />
       </div>
 
       <div className="min-w-0 flex-1">

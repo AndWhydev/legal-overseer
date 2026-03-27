@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { IconDatabase, IconAlertCircle, IconLoader2, IconCurrencyDollar, IconAlertTriangle } from '@tabler/icons-react'
+import { Empty, EmptyMedia, EmptyTitle, EmptyDescription } from '@/components/ui/empty'
 import { logger } from '@/lib/core/logger'
 
 interface RagStats {
@@ -111,10 +112,11 @@ export function RagStatsWidget({ className = '', showDetails = true }: RagStatsW
 
   if (error) {
     return (
-      <div className={`flex items-center gap-2 rounded-xl border border-red-900/30 bg-red-950/20 p-4 ${className}`}>
-        <IconAlertCircle size={16} className="shrink-0 text-red-500" />
-        <span className="text-sm text-red-500">{error}</span>
-      </div>
+      <Empty className={className}>
+        <EmptyMedia variant="icon"><IconAlertCircle size={20} /></EmptyMedia>
+        <EmptyTitle>{"Couldn't load vector stats"}</EmptyTitle>
+        <EmptyDescription>{error}</EmptyDescription>
+      </Empty>
     )
   }
 

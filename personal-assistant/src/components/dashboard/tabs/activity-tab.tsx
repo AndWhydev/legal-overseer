@@ -1,12 +1,12 @@
 'use client';
 
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { IconLoader2 } from '@tabler/icons-react';
+import { IconLoader2, IconAlertCircle } from '@tabler/icons-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Empty, EmptyHeader, EmptyTitle, EmptyDescription } from '@/components/ui/empty';
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from '@/components/ui/empty';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { logger } from '@/lib/core/logger';
 
@@ -222,12 +222,14 @@ function ActivityTab() {
 
   if (error && entries.length === 0) {
     return (
-      <div className="flex flex-col items-center gap-4 p-12">
-        <p className="text-sm text-destructive">{error}</p>
-        <Button variant="outline" size="sm" onClick={() => { setError(null); setLoading(true); }}>
-          Retry
-        </Button>
-      </div>
+      <Empty className="p-12">
+        <EmptyMedia variant="icon"><IconAlertCircle size={20} /></EmptyMedia>
+        <EmptyTitle>Something went wrong</EmptyTitle>
+        <EmptyDescription>{error}</EmptyDescription>
+        <EmptyContent>
+          <Button variant="outline" size="sm" onClick={() => { setError(null); setLoading(true); }}>Retry</Button>
+        </EmptyContent>
+      </Empty>
     );
   }
 

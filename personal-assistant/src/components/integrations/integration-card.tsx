@@ -216,7 +216,7 @@ export function IntegrationCard({ integration, isConnected = false, onStatusChan
             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             onClick={() => { setApiKeyDialogOpen(false); setError(''); }}
           />
-          <div className="relative w-[90%] max-w-[420px] rounded-2xl border border-border bg-card p-6 shadow-2xl">
+          <div className="relative w-[90%] max-w-[420px] rounded-xl border border-border bg-card p-6 shadow-lg">
             <button
               onClick={() => { setApiKeyDialogOpen(false); setError(''); }}
               className="absolute right-4 top-4 p-1 text-muted-foreground hover:text-foreground"

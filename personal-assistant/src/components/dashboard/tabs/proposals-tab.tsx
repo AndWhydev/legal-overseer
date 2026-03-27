@@ -151,7 +151,7 @@ function ProposalsKanban() {
     return (
       <div className="grid grid-cols-4 gap-4">
         {BOARD_COLUMNS.map((col) => (
-          <div key={col.id} className="rounded-xl p-4 animate-pulse" style={{ background: 'var(--glass-card-bg)' }}>
+          <div key={col.id} className="rounded-xl bg-card p-4 animate-pulse">
             <div className="h-5 w-24 rounded bg-muted mb-4" />
             <div className="flex flex-col gap-3">
               <div className="h-24 rounded-lg bg-muted" />
@@ -177,7 +177,7 @@ function ProposalsKanban() {
       {BOARD_COLUMNS.map((col) => {
         const items = grouped.get(col.id) || []
         return (
-          <div key={col.id} className="rounded-xl p-4" style={{ background: 'var(--glass-card-bg)', border: '1px solid var(--glass-card-border)' }}>
+          <div key={col.id} className="rounded-xl border border-border bg-card p-4">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
                 {col.label}
@@ -224,10 +224,7 @@ function ProposalsKanban() {
                         {options.map((opt) => (
                           <button
                             key={opt}
-                            className="rounded px-2 py-0.5 text-xs transition-colors"
-                            style={{ background: 'var(--glass-interactive-border)', }}
-                            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.2)' }}
-                            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--glass-interactive-border)' }}
+                            className="rounded bg-muted px-2 py-0.5 text-xs transition-colors hover:bg-white/20"
                             onClick={() => moveProposal(p.id, opt)}
                             disabled={isMoving}
                           >

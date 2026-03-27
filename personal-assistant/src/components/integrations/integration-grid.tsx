@@ -101,7 +101,7 @@ export function ConnectionsGrid({ integrations, isLoading, onStatusChange, onWha
       <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-3">
         {isLoading ? (
           Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton key={i} className="h-[76px] rounded-2xl" />
+            <Skeleton key={i} className="h-[76px] rounded-xl" />
           ))
         ) : (
           sorted.map((integration, idx) => (

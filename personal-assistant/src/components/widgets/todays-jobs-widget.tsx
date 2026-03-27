@@ -39,7 +39,7 @@ export function TodaysJobsWidget() {
           <Empty><EmptyTitle>No jobs today</EmptyTitle><EmptyDescription>Scheduled jobs will appear here.</EmptyDescription></Empty>
         ) : (
           jobs.map(job => (
-            <div key={job.id as string} className="flex items-center justify-between p-3 rounded-md bg-muted/50 border border-border">
+            <div key={job.id as string} className="flex items-center justify-between p-3 rounded-xl bg-muted/50 border border-border">
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-sm truncate">{(job.title || job.description || 'Untitled Job') as string}</p>
                 <p className="text-xs text-muted-foreground mt-0.5">

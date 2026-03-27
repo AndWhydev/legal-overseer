@@ -216,7 +216,7 @@ export function DataManagement() {
             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             onClick={() => !deleteLoading && setDeleteModalOpen(false)}
           />
-          <div className="relative p-8 rounded-2xl bg-card backdrop-blur-xl border border-border shadow-2xl max-w-[420px] w-[90%]">
+          <div className="relative p-8 rounded-xl bg-card backdrop-blur-xl border border-border shadow-lg max-w-[420px] w-[90%]">
             <button
               onClick={() => setDeleteModalOpen(false)}
               disabled={deleteLoading}

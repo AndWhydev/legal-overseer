@@ -478,23 +478,13 @@ function PdfPreviewPanel({ invoice }: { invoice: InvoiceRow }) {
   const html = useMemo(() => generateInvoicePreviewHtml(invoice), [invoice])
 
   return (
-    <div style={{
-      marginTop: 8,
-      borderRadius: 12,
-      overflow: 'hidden',
-      border: '1px solid var(--glass-divider)',
-    }}>
+    <div className="mt-2 overflow-hidden rounded-xl border border-border">
       <iframe
         srcDoc={html}
         title={`Preview ${invoice.invoice_number}`}
         sandbox="allow-same-origin"
-        style={{
-          width: '100%',
-          height: 380,
-          border: 'none',
-          borderRadius: 12,
-          background: 'var(--bg-primary)',
-        }}
+        className="w-full rounded-xl border-none bg-background"
+        style={{ height: 380 }}
       />
     </div>
   )
@@ -1630,12 +1620,12 @@ export function InvoiceList() {
         {/* Content */}
         {filtered.length === 0 ? (
           <Empty>
-            {!search && <EmptyMedia><IconReceipt size={24} /></EmptyMedia>}
+            {!search && <EmptyMedia variant="icon"><IconReceipt size={20} /></EmptyMedia>}
             <EmptyTitle>{search ? 'No matching invoices' : 'No invoices yet'}</EmptyTitle>
             <EmptyDescription>{search ? 'Try a different search term.' : 'Ask BitBit to create an invoice in chat. Say something like "Invoice Dave for the website redesign at $2,500".'}</EmptyDescription>
             {!search && (
               <EmptyContent>
-                <button type="button" onClick={() => window.dispatchEvent(new CustomEvent('bb-navigate', { detail: { tab: 'chat' } }))} className="mt-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 transition-opacity">Create via chat</button>
+                <Button variant="outline" size="sm" onClick={() => window.dispatchEvent(new CustomEvent('bb-navigate', { detail: { tab: 'chat' } }))}>Create via chat</Button>
               </EmptyContent>
             )}
           </Empty>

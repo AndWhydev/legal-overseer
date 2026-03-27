@@ -242,8 +242,8 @@ function TrendChart({
 
   return (
     <div style={{ ...glassCard, position: 'relative' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-        <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>{label}</span>
+      <div className="mb-3 flex items-center justify-between">
+        <span className="text-sm font-medium text-foreground">{label}</span>
         <span
           style={{
             fontSize: 14,
@@ -342,7 +342,7 @@ function TrendChart({
       </svg>
 
       {/* Legend */}
-      <div style={{ display: 'flex', gap: 16, marginTop: 8 }}>
+      <div className="mt-2 flex gap-4">
         <LegendItem color="rgba(99,180,235,0.85)" label="Actual" />
         <LegendItem color="rgba(99,180,235,0.45)" label="Forecast" dashed />
         {anomalyPoints.length > 0 && (
@@ -365,7 +365,7 @@ function LegendItem({
   circle?: boolean
 }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 14, color: 'var(--text-dim)' }}>
+    <div className="flex items-center gap-1 text-sm text-muted-foreground">
       {circle ? (
         <svg width={10} height={10} viewBox="0 0 10 10">
           <circle cx={5} cy={5} r={4} fill="none" stroke={color} strokeWidth={1.5} />
@@ -402,40 +402,21 @@ const METRIC_LABELS: Record<string, string> = {
 function AnomalyDigest({ anomalies }: { anomalies: AnomalySummary[] }) {
   const top = anomalies.slice(0, 5)
   return (
-    <div
-      style={{
-        borderRadius: 12,
-        background: 'rgba(245,107,84,0.06)',
-        border: '1px solid rgba(245,107,84,0.22)',
-        padding: '12px 20px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 8,
-      }}
-    >
-      <div style={{ fontSize: 14, fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(245,107,84,0.9)' }}>
+    <div className="flex flex-col gap-2 rounded-xl border border-red-500/20 bg-red-500/5 px-5 py-3">
+      <div className="text-sm font-medium uppercase tracking-wider text-red-500/90">
         {anomalies.length} anomaly{anomalies.length !== 1 ? 'ies' : ''} detected
       </div>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+      <div className="flex flex-wrap gap-2">
         {top.map((a, i) => (
           <div
             key={i}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              padding: '4px 10px',
-              borderRadius: 8,
-              background: 'rgba(245,107,84,0.10)',
-              fontSize: 14,
-              color: 'var(--text-secondary)',
-            }}
+            className="flex items-center gap-2 rounded-lg bg-red-500/10 px-2.5 py-1 text-sm text-muted-foreground"
           >
-            <span style={{ color: 'rgba(245,107,84,0.85)', fontWeight: 500 }}>
+            <span className="font-medium text-red-500/85">
               {a.zScore > 0 ? '+' : ''}{a.zScore}σ
             </span>
             <span>{METRIC_LABELS[a.metric] ?? a.metric}</span>
-            <span style={{ color: 'var(--text-dim)' }}>{a.date}</span>
+            <span className="text-muted-foreground">{a.date}</span>
           </div>
         ))}
       </div>

@@ -7,7 +7,7 @@ import { useDevOverrides } from '@/lib/dev/dev-overrides';
 import { useInboxKeyboard } from '@/hooks/use-inbox-keyboard';
 import { InboxShortcutsOverlay } from '@/components/dashboard/inbox-shortcuts-overlay';
 import { TabShell } from '@/components/ui/tab-shell';
-import { Empty, EmptyTitle, EmptyDescription, EmptyContent } from '@/components/ui/empty';
+import { Empty, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from '@/components/ui/empty';
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
 import { logger } from '@/lib/core/logger';
 import { type ThreadMessageItem } from '@/components/dashboard/inbox-drawer';
@@ -23,10 +23,12 @@ import {
   IconArrowBackUp,
   IconArrowForwardUp,
   IconAlertTriangle,
+  IconAlertCircle,
   IconStar,
   IconArrowUp,
   IconTrash,
 } from '@tabler/icons-react';
+import { Button } from '@/components/ui/button';
 import { resolveAvatar, resolveAvatarSync, type AvatarResult } from '@/lib/avatar/resolver';
 
 // ---------------------------------------------------------------------------
@@ -880,10 +882,11 @@ function InboxTab() {
     return (
       <TabShell>
         <Empty>
-          <EmptyTitle>Couldn&apos;t load inbox</EmptyTitle>
+          <EmptyMedia variant="icon"><IconAlertCircle size={20} /></EmptyMedia>
+          <EmptyTitle>{"Couldn't load inbox"}</EmptyTitle>
           <EmptyDescription>{error}</EmptyDescription>
           <EmptyContent>
-            <button type="button" onClick={() => fetchInbox()} className="mt-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 transition-opacity">Retry</button>
+            <Button variant="outline" size="sm" onClick={() => fetchInbox()}>Retry</Button>
           </EmptyContent>
         </Empty>
       </TabShell>
@@ -931,7 +934,7 @@ function InboxTab() {
 
           <div className="bb-inbox-toolbar__actions">
             {newMessageAlert && (
-              <button onClick={() => setNewMessageAlert(false)} className="bb-btn bb-btn--ghost bb-btn--sm" style={{ color: 'var(--bb-green)' }}>
+              <button onClick={() => setNewMessageAlert(false)} className="bb-btn bb-btn--ghost bb-btn--sm text-emerald-500">
                 <span className="bb-inbox-pulse" />
                 New messages
               </button>
@@ -952,33 +955,7 @@ function InboxTab() {
               }}
               disabled={refreshing}
               title="Pull latest messages"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 8,
-                padding: '8px 16px',
-                borderRadius: 20,
-                border: 'none',
-                background: 'var(--glass-pill-bg)',
-                backdropFilter: 'var(--glass-card-blur)',
-                WebkitBackdropFilter: 'var(--glass-card-blur)',
-                boxShadow: 'var(--glass-pill-inset)',
-                color: 'var(--text-secondary)',
-                fontSize: 14,
-                cursor: refreshing ? 'default' : 'pointer',
-                transition: 'all 150ms ease',
-                whiteSpace: 'nowrap',
-              }}
-              onMouseEnter={(e) => {
-                if (!refreshing) {
-                  e.currentTarget.style.transform = 'scale(1.02)';
-                  e.currentTarget.style.color = 'var(--text-primary)';
-                }
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'scale(1)';
-                if (!refreshing) e.currentTarget.style.color = 'var(--text-secondary)';
-              }}
+              className={`inline-flex items-center gap-2 whitespace-nowrap rounded-full border-none bg-muted px-4 py-2 text-sm text-muted-foreground backdrop-blur-sm transition-all hover:text-foreground hover:scale-[1.02] ${refreshing ? 'cursor-default' : 'cursor-pointer'}`}
             >
               <IconRefresh size={13} style={{ animation: refreshing ? 'spin 1s linear infinite' : 'none' }} />
               {refreshing ? 'Syncing...' : 'Refresh'}

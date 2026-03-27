@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
+import { Empty, EmptyMedia, EmptyTitle, EmptyDescription } from '@/components/ui/empty';
 import { IconUsers, IconMail, IconTrash, IconLoader2, IconUserPlus, IconShield } from '@tabler/icons-react';
 
 interface Member {
@@ -205,7 +206,11 @@ export function TeamMembers() {
               <IconLoader2 size={20} className="animate-spin" />
             </div>
           ) : members.length === 0 ? (
-            <p className="py-4 text-center text-sm text-muted-foreground">No team members yet.</p>
+            <Empty className="py-4">
+              <EmptyMedia variant="icon"><IconUsers size={20} /></EmptyMedia>
+              <EmptyTitle>No team members yet</EmptyTitle>
+              <EmptyDescription>Invite someone to get started.</EmptyDescription>
+            </Empty>
           ) : (
             members.map(member => (
               <div key={member.id} className="flex items-center justify-between rounded-md border border-border/30 bg-muted/20 px-4 py-3">

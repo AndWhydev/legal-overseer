@@ -15,42 +15,17 @@ export function KanbanActivityStrip({ tasks }: KanbanActivityStripProps) {
   if (activeTasks.length === 0) return null
 
   return (
-    <div style={{
-      borderTop: '1px solid transparent',
-      borderImage: 'linear-gradient(90deg, rgba(255,255,255,0.12), rgba(255,255,255,0.12), rgba(255,255,255,0.12), rgba(255,255,255,0.12), rgba(255,255,255,0.12)) 1',
-      padding: '6px 0',
-      display: 'flex',
-      alignItems: 'center',
-      gap: 16,
-      overflowX: 'auto',
-      flexShrink: 0,
-      marginBottom: 4,
-    }}>
+    <div className="mb-1 flex shrink-0 items-center gap-4 overflow-x-auto border-t border-white/10 py-1.5">
       {activeTasks.map((task) => (
         <div
           key={task.id}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-            fontSize: 14,
-            color: 'var(--text-dim)',
-            whiteSpace: 'nowrap',
-            flexShrink: 0,
-          }}
+          className="flex shrink-0 items-center gap-2 whitespace-nowrap text-sm text-muted-foreground"
         >
-          <span style={{
-            width: 5,
-            height: 5,
-            borderRadius: '50%',
-            background: 'var(--btn-primary-bg, #F1F5F9)',
-            animation: 'bb-pulse 2s ease-in-out infinite',
-            flexShrink: 0,
-          }} />
-          <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 500 }}>
+          <span className="size-[5px] shrink-0 rounded-full bg-primary" style={{ animation: 'bb-pulse 2s ease-in-out infinite' }} />
+          <span className="font-mono font-medium">
             BitBit
           </span>
-          <span style={{ color: 'var(--text-dim)' }}>
+          <span className="text-muted-foreground">
             working on &ldquo;{task.title.length > 40 ? task.title.slice(0, 40) + '...' : task.title}&rdquo;
           </span>
         </div>

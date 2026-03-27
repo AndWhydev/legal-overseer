@@ -3,7 +3,9 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { ConnectModal, type ConnectModalMode } from '@/components/channels/connect-modal'
-import { Empty, EmptyHeader, EmptyTitle, EmptyDescription } from '@/components/ui/empty'
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from '@/components/ui/empty'
+import { IconAlertCircle } from '@tabler/icons-react'
+import { Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/toast'
 import { logger } from '@/lib/core/logger'
 
@@ -588,18 +590,14 @@ export function ConnectionsGrid({
   return (
     <section className={containerClassName}>
       {error ? (
-        <div className="rounded-[20px] border border-[#f1c9c3] bg-[#fff3f0] px-4 py-3 text-sm text-[#91574c]">
-          <div className="flex items-center justify-between gap-4">
-            <span>{error}</span>
-            <button
-              type="button"
-              onClick={() => setError(null)}
-              className="rounded-full border border-[#e9c3be] bg-white/70 px-3 py-1 text-xs font-medium text-[#8f5b53]"
-            >
-              Close
-            </button>
-          </div>
-        </div>
+        <Empty>
+          <EmptyMedia variant="icon"><IconAlertCircle size={20} /></EmptyMedia>
+          <EmptyTitle>Something went wrong</EmptyTitle>
+          <EmptyDescription>{error}</EmptyDescription>
+          <EmptyContent>
+            <Button variant="outline" size="sm" onClick={() => { setError(null); void fetchStatuses(); }}>Retry</Button>
+          </EmptyContent>
+        </Empty>
       ) : null}
 
       {showHeader ? (

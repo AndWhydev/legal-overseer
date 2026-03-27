@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import {
   IconActivity,
+  IconAlertCircle,
   IconBolt,
   IconAlertTriangle,
   IconBrain,
@@ -15,6 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Empty, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from '@/components/ui/empty'
 import type { RoleType, ActivityType } from '@/lib/bitbit-core'
 
 // ---------------------------------------------------------------------------
@@ -73,7 +75,7 @@ const ROLE_BADGE_COLORS: Record<RoleType, string> = {
   finance: 'text-emerald-500 bg-emerald-500/10',
   comms: 'text-blue-500 bg-blue-500/10',
   sales: 'text-foreground bg-muted',
-  growth: 'text-amber-500 bg-amber-500/10',
+  growth: 'text-foreground bg-muted',
 }
 
 function timeAgo(dateStr: string): string {
@@ -193,17 +195,20 @@ export function RoleActivityFeed({ maxHeight = 'calc(100vh - 300px)', limit = 50
               </div>
             ))
           ) : error ? (
-            <div className="py-10 text-center text-muted-foreground text-sm">
-              Failed to load activity
-            </div>
+            <Empty className="py-10">
+              <EmptyMedia variant="icon"><IconAlertCircle size={20} /></EmptyMedia>
+              <EmptyTitle>{"Couldn't load activity"}</EmptyTitle>
+              <EmptyDescription>Could not load role activity. Please try again.</EmptyDescription>
+              <EmptyContent>
+                <Button variant="outline" size="sm" onClick={() => fetchActivity()}>Retry</Button>
+              </EmptyContent>
+            </Empty>
           ) : sortedActivities.length === 0 ? (
-            <div className="py-10 text-center">
-              <IconActivity size={28} className="text-muted-foreground mx-auto mb-2" />
-              <p className="text-sm text-muted-foreground">No role activity yet</p>
-              <p className="text-xs text-muted-foreground/70 mt-1">
-                Activity will appear as roles process work
-              </p>
-            </div>
+            <Empty className="py-10">
+              <EmptyMedia variant="icon"><IconActivity size={20} /></EmptyMedia>
+              <EmptyTitle>No role activity yet</EmptyTitle>
+              <EmptyDescription>Activity will appear as roles process work</EmptyDescription>
+            </Empty>
           ) : (
             sortedActivities.map(item => {
               const Icon = ACTIVITY_ICONS[item.activity_type] ?? IconActivity

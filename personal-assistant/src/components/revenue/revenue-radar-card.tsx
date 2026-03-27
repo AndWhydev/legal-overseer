@@ -175,7 +175,7 @@ export function RevenueRadarCard() {
 
         {hasRecoverable ? (
           <div>
-            <div className="text-sm text-amber-500 font-medium mb-1">
+            <div className="text-sm text-foreground font-medium mb-1">
               Recoverable Revenue
             </div>
             <div className="text-base font-medium font-mono tracking-tight text-foreground leading-none">

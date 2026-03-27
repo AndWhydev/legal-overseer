@@ -415,15 +415,7 @@ const GraphViewer: React.FC<Props> = ({ nodes, edges, onNodeClick, height = 420 
   const simNodes = renderKey >= 0 ? simRef.current.nodes : []
 
   return (
-    <div style={{
-      position: 'relative',
-      width: '100%',
-      height,
-      borderRadius: 12,
-      overflow: 'hidden',
-      background: 'rgba(10, 14, 20, 0.7)',
-      border: '1px solid rgba(148, 163, 184, 0.08)',
-    }}>
+    <div className="relative w-full overflow-hidden rounded-xl border border-slate-400/[0.08] bg-[rgba(10,14,20,0.7)]" style={{ height }}>
       <svg
         ref={svgRef}
         style={{ width: '100%', height: '100%', cursor: 'grab' }}
@@ -492,35 +484,21 @@ const GraphViewer: React.FC<Props> = ({ nodes, edges, onNodeClick, height = 420 
       </svg>
 
       {/* Legend */}
-      <div style={{
-        position: 'absolute',
-        bottom: 12,
-        left: 12,
-        display: 'flex',
-        gap: 12,
-        fontSize: 14,
-        color: '#94a3b8',
-      }}>
+      <div className="absolute bottom-3 left-3 flex gap-3 text-sm text-slate-400">
         {[
           { type: 'Person', color: '#6b8fc9' },
           { type: 'Organization', color: '#4ba383' },
           { type: 'Topic', color: '#c4934a' },
         ].map(({ type, color }) => (
-          <div key={type} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <div style={{ width: 6, height: 6, borderRadius: '50%', background: color }} />
+          <div key={type} className="flex items-center gap-1">
+            <div className="size-1.5 rounded-full" style={{ background: color }} />
             {type}
           </div>
         ))}
       </div>
 
       {/* Stats */}
-      <div style={{
-        position: 'absolute',
-        bottom: 12,
-        right: 12,
-        fontSize: 14,
-        color: '#475569',
-      }}>
+      <div className="absolute bottom-3 right-3 text-sm text-slate-600">
         {nodes.length} nodes · {edges.length} edges
       </div>
     </div>

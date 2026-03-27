@@ -37,7 +37,7 @@ export const DayCell = React.memo(function DayCell({
         'group relative flex flex-col rounded-xl border p-2 transition-all duration-200 min-h-[100px]',
         // Base styles
         'bg-card/50',
-        // Today: amber glow
+        // Today: highlight glow
         isToday && 'border-primary/60 shadow-[0_0_12px_rgba(212,165,116,0.2)]',
         // Past + complete: settled
         isPast && isComplete && 'border-border/40 opacity-70',

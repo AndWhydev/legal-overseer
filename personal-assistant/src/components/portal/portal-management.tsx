@@ -172,7 +172,7 @@ export function PortalManagement() {
       {tab === 'access' && (
         <div>
           {/* Invite Form */}
-          <form onSubmit={handleInvite} className="rounded-2xl border border-border bg-card p-5 mb-6">
+          <form onSubmit={handleInvite} className="rounded-xl border border-border bg-card p-5 mb-6">
             <h3 className="text-base font-medium text-foreground mb-4">
               Invite Client to Portal
             </h3>
@@ -217,7 +217,7 @@ export function PortalManagement() {
           </form>
 
           {/* Access List */}
-          <div className="rounded-2xl border border-border bg-card overflow-hidden">
+          <div className="rounded-xl border border-border bg-card overflow-hidden">
             <div className="px-5 py-3 border-b border-border">
               <h3 className="text-base font-medium text-foreground">
                 Portal Access ({accessList.length})
@@ -276,7 +276,7 @@ export function PortalManagement() {
       )}
 
       {tab === 'branding' && (
-        <form onSubmit={handleSaveBranding} className="rounded-2xl border border-border bg-card overflow-hidden">
+        <form onSubmit={handleSaveBranding} className="rounded-xl border border-border bg-card overflow-hidden">
           <div className="px-5 py-3 border-b border-border">
             <h3 className="text-base font-medium text-foreground">
               Portal Branding

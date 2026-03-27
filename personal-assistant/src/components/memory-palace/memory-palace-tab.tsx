@@ -85,7 +85,7 @@ function MemoryCard({ memory }: { memory: MemoryEntry }) {
   });
 
   return (
-    <div className="flex cursor-pointer gap-3 rounded-2xl border border-border bg-card p-3.5 shadow-sm transition-colors hover:bg-secondary/50">
+    <div className="flex cursor-pointer gap-3 rounded-xl border border-border bg-card p-3.5 shadow-sm transition-colors hover:bg-secondary/50">
       <div
         className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
         style={{ background: `${config.color}15` }}
@@ -136,7 +136,7 @@ function StatsCard({ stats }: { stats: MemoryStats | null }) {
       {items.map(item => {
         const Icon = item.icon;
         return (
-          <div key={item.label} className="rounded-2xl border border-border bg-card p-3.5 text-center shadow-sm">
+          <div key={item.label} className="rounded-xl border border-border bg-card p-3.5 text-center shadow-sm">
             <Icon size={18} color={item.color} className="mx-auto mb-1.5" />
             <div className="text-base font-medium text-foreground">
               {item.value}

@@ -7,6 +7,7 @@ import {
   IconMail,
   IconPhone,
   IconUsers,
+  IconAlertCircle,
 } from '@tabler/icons-react'
 import { Input } from '@/components/ui/input'
 import {
@@ -28,6 +29,7 @@ import {
   EmptyTitle,
   EmptyDescription,
   EmptyMedia,
+  EmptyContent,
 } from '@/components/ui/empty'
 import { useDevOverrides } from '@/lib/dev/dev-overrides'
 import { EntityDetailDrawer } from '@/components/dashboard/entity-detail-drawer'
@@ -219,17 +221,18 @@ function ContactsTab() {
   if (error && contacts.length === 0) {
     return (
       <Empty className="py-12">
-        <EmptyHeader>
-          <EmptyTitle>Couldn't load contacts</EmptyTitle>
-          <EmptyDescription>{error}</EmptyDescription>
-        </EmptyHeader>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => { setError(null); setLoading(true); loadContacts().catch(() => setError('Failed to load contacts')).finally(() => setLoading(false)) }}
-        >
-          Retry
-        </Button>
+        <EmptyMedia variant="icon"><IconAlertCircle size={20} /></EmptyMedia>
+        <EmptyTitle>{"Couldn't load contacts"}</EmptyTitle>
+        <EmptyDescription>{error}</EmptyDescription>
+        <EmptyContent>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => { setError(null); setLoading(true); loadContacts().catch(() => setError('Failed to load contacts')).finally(() => setLoading(false)) }}
+          >
+            Retry
+          </Button>
+        </EmptyContent>
       </Empty>
     )
   }

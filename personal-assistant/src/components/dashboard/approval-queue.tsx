@@ -5,7 +5,7 @@ import { IconAlertCircle, IconRefresh, IconLoader2, IconShieldCheck } from '@tab
 import { ApprovalCard, type ApprovalItem } from './approval-card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Empty, EmptyMedia, EmptyTitle, EmptyDescription } from '@/components/ui/empty'
+import { Empty, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from '@/components/ui/empty'
 
 type FilterKey = 'all' | 'urgent' | 'normal'
 
@@ -131,13 +131,14 @@ export function ApprovalQueue() {
 
       {/* Error */}
       {error && (
-        <div className="flex flex-col gap-2 rounded-lg border border-destructive/20 bg-destructive/5 p-4">
-          <p className="text-sm text-destructive">{error}</p>
-          <Button variant="outline" size="sm" className="w-fit" onClick={() => fetchApprovals()}>
-            <IconRefresh className="size-4" />
-            Retry
-          </Button>
-        </div>
+        <Empty>
+          <EmptyMedia variant="icon"><IconAlertCircle size={20} /></EmptyMedia>
+          <EmptyTitle>Something went wrong</EmptyTitle>
+          <EmptyDescription>{error}</EmptyDescription>
+          <EmptyContent>
+            <Button variant="outline" size="sm" onClick={() => fetchApprovals()}>Retry</Button>
+          </EmptyContent>
+        </Empty>
       )}
 
       {/* Loading */}
@@ -151,7 +152,7 @@ export function ApprovalQueue() {
       {/* Empty */}
       {!loading && visibleApprovals.length === 0 && (
         <Empty>
-          <EmptyMedia><IconShieldCheck size={24} /></EmptyMedia>
+          <EmptyMedia variant="icon"><IconShieldCheck size={20} /></EmptyMedia>
           <EmptyTitle>Nothing needs approval</EmptyTitle>
           <EmptyDescription>When BitBit wants to send an email, create an invoice, or take action on your behalf, it asks here first.</EmptyDescription>
         </Empty>

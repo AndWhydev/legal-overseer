@@ -112,7 +112,7 @@ export function ChannelCard({
       onClick={handleCardClick}
       className={cn(
         'transition-all duration-300',
-        isActive && 'cursor-pointer hover:shadow-md',
+        isActive && 'cursor-pointer',
         !isActive && 'opacity-70',
         isConnected && 'border-emerald-500/20',
       )}

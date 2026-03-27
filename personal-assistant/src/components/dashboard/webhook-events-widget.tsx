@@ -1,9 +1,10 @@
 'use client'
 
 import React, { useState, useEffect, useCallback } from 'react'
-import { IconChevronDown } from '@tabler/icons-react'
+import { IconChevronDown, IconWebhook } from '@tabler/icons-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Empty, EmptyMedia, EmptyTitle, EmptyDescription } from '@/components/ui/empty'
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
@@ -194,7 +195,11 @@ export default function WebhookEventsWidget() {
       {loading ? (
         <div className="py-10 text-center text-sm text-muted-foreground">Loading events...</div>
       ) : events.length === 0 ? (
-        <div className="py-10 text-center text-sm text-muted-foreground">No webhook events found</div>
+        <Empty className="py-10">
+          <EmptyMedia variant="icon"><IconWebhook size={20} /></EmptyMedia>
+          <EmptyTitle>No webhook events found</EmptyTitle>
+          <EmptyDescription>Webhook events will appear here as they are received.</EmptyDescription>
+        </Empty>
       ) : (
         <div className="flex flex-col gap-2">
           {events.map((event) => (

@@ -6,6 +6,8 @@ import { createClient } from '@/lib/supabase/client';
 import { TabShell } from '@/components/ui/tab-shell';
 import { TabSkeleton } from './tab-skeleton';
 import { AlertBanner } from '@/components/ui/alert-banner';
+import { Empty, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from '@/components/ui/empty';
+import { IconAlertCircle, IconLoader2 } from '@tabler/icons-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -19,7 +21,6 @@ import {
 } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { IconLoader2 } from '@tabler/icons-react';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -273,12 +274,14 @@ export default function MonitoringTab() {
 
         {/* Error banner */}
         {error && (
-          <AlertBanner variant="warning">
-            <div className="flex w-full items-center justify-between">
-              <span>Failed to load monitoring data: {error}</span>
+          <Empty>
+            <EmptyMedia variant="icon"><IconAlertCircle size={20} /></EmptyMedia>
+            <EmptyTitle>{"Couldn't load monitoring data"}</EmptyTitle>
+            <EmptyDescription>{error}</EmptyDescription>
+            <EmptyContent>
               <Button variant="outline" size="sm" onClick={fetchData}>Retry</Button>
-            </div>
-          </AlertBanner>
+            </EmptyContent>
+          </Empty>
         )}
 
         {/* Section 1: System Health Overview */}

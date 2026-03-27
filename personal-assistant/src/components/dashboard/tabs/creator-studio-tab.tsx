@@ -385,7 +385,7 @@ function HistoryItem({
             </div>
 
             {item.scheduled_for && (
-              <div className="mt-3 text-sm text-amber-500">
+              <div className="mt-3 text-sm text-muted-foreground">
                 Scheduled for{' '}
                 {new Date(item.scheduled_for).toLocaleString('en', {
                   weekday: 'short',

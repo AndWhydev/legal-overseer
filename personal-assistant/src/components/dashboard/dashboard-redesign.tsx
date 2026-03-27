@@ -192,23 +192,18 @@ export function DashboardRedesign({ columns, tasks, messages, completedToday, to
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 20, height: '100%', minHeight: 0 }}>
+    <div className="flex h-full min-h-0 flex-col gap-5">
       {/* KPI Row — driven by industry pack */}
       <div
-        className="bb-stagger"
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-          gap: 16,
-        }}
+        className="bb-stagger grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4"
       >
         {loading ? (
           Array.from({ length: 4 }, (_, i) => (
             <article key={i} aria-label="Loading" style={skeletonStyle}>
-              <div style={{ height: 12, background: 'var(--hover-bg-strong)', borderRadius: 4, width: '50%' }} />
-              <div style={{ height: 36, background: 'var(--hover-bg-strong)', borderRadius: 4, width: '35%' }} />
-              <div style={{ height: 32, background: 'var(--hover-bg)', borderRadius: 4, width: '100%' }} />
-              <div style={{ height: 10, background: 'var(--hover-bg)', borderRadius: 4, width: '60%' }} />
+              <div className="h-3 w-1/2 rounded bg-muted" />
+              <div className="h-9 w-[35%] rounded bg-muted" />
+              <div className="h-8 w-full rounded bg-muted/50" />
+              <div className="h-2.5 w-3/5 rounded bg-muted/50" />
             </article>
           ))
         ) : (
@@ -246,8 +241,8 @@ export function DashboardRedesign({ columns, tasks, messages, completedToday, to
       ) : (
         <>
           {/* Roles Section — status cards + attention + intelligence */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }} className="dashboard-roles-grid">
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div className="dashboard-roles-grid grid grid-cols-2 gap-4">
+            <div className="flex flex-col gap-4">
               <RoleStatusCards onRoleClick={(rt) => setSelectedRole(rt)} />
               <IntelligenceWidgets />
             </div>
@@ -261,24 +256,11 @@ export function DashboardRedesign({ columns, tasks, messages, completedToday, to
 
       {/* Kanban + Inbox side-by-side */}
       <div
-        style={{
-          display: 'flex',
-          gap: 20,
-          flex: 1,
-          minHeight: 0,
-          overflow: 'hidden',
-        }}
-        className="dashboard-main-grid"
+        className="dashboard-main-grid flex flex-1 gap-5 overflow-hidden"
+        style={{ minHeight: 0 }}
       >
         {/* Kanban Board */}
-        <div style={{
-          overflow: 'hidden',
-          display: 'flex',
-          flexDirection: 'column',
-          flex: 1,
-          minHeight: 0,
-          transition: 'margin-right 0.3s cubic-bezier(0.25, 0.1, 0.25, 1)',
-        }}>
+        <div className="flex flex-1 flex-col overflow-hidden transition-[margin-right] duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1)]" style={{ minHeight: 0 }}>
           <KanbanBoard
             initialColumns={displayColumns}
             initialTasks={displayTasks}

@@ -197,8 +197,8 @@ function CommandCenterTab() {
           disabled={topApprovalDisabled}
         >
           <span className="flex items-center gap-2">
-            <span className="flex size-8 items-center justify-center rounded-lg bg-amber-500/10">
-              <IconShieldCheck data-icon className="text-amber-500" />
+            <span className="flex size-8 items-center justify-center rounded-lg bg-muted">
+              <IconShieldCheck data-icon className="text-foreground" />
             </span>
             <span className="text-sm font-medium text-foreground">Approve Next</span>
           </span>
@@ -299,7 +299,7 @@ function CommandCenterTab() {
         <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <IconShieldCheck data-icon className="text-amber-500" />
+              <IconShieldCheck data-icon className="text-foreground" />
               Action Required
             </CardTitle>
             <CardDescription>{approvals.length} pending approvals</CardDescription>
@@ -344,7 +344,7 @@ function CommandCenterTab() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <IconBolt data-icon className="text-amber-500" />
+              <IconBolt data-icon className="text-foreground" />
               Today&apos;s Priorities
             </CardTitle>
           </CardHeader>

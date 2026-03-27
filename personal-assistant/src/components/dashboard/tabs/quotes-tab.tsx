@@ -84,7 +84,7 @@ function QuotesTab() {
           <button onClick={() => setSelected(null)} className="text-sm text-primary hover:underline mb-4">
             ← Back to list
           </button>
-          <div className="rounded-xl p-6 backdrop-blur-sm" style={{ border: '1px solid var(--glass-card-border)', background: 'var(--glass-card-bg)' }}>
+          <div className="rounded-xl border border-border bg-card p-6 backdrop-blur-sm">
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h3 className="text-lg font-semibold">
@@ -111,7 +111,7 @@ function QuotesTab() {
               </thead>
               <tbody>
                 {(selected.line_items ?? []).map((item, i) => (
-                  <tr key={i} className="border-b" style={{ borderColor: 'var(--glass-divider)' }}>
+                  <tr key={i} className="border-b border-border">
                     <td className="py-2">{item.description}</td>
                     <td className="py-2 text-right">{item.qty}</td>
                     <td className="py-2 text-right">${Number(item.unit).toLocaleString('en-AU')}</td>
@@ -150,8 +150,7 @@ function QuotesTab() {
             <button
               key={q.id}
               onClick={() => setSelected(q)}
-              className="w-full flex items-center justify-between rounded-lg p-4 transition-colors text-left bb-card-hover"
-              style={{ border: '1px solid var(--glass-card-border)', background: 'var(--glass-card-bg)' }}
+              className="w-full flex items-center justify-between rounded-lg border border-border bg-card p-4 transition-colors text-left bb-card-hover"
             >
               <div>
                 <p className="font-medium text-sm">{q.contact?.name ?? 'Unknown Customer'}</p>

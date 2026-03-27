@@ -43,16 +43,8 @@ export function PortalShell({ branding, orgName, contactName, orgSlug, accessId,
   return (
     <div style={{ minHeight: '100vh', background: bgColor, fontFamily: branding?.font_family ?? 'Inter, system-ui, sans-serif' }}>
       {/* Top Header */}
-      <header
-        style={{
-          position: 'sticky',
-          top: 0,
-          zIndex: 50,
-          background: '#FFFFFF',
-          borderBottom: '1px solid #E5E7EB',
-          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
-        }}
-      >
+      <header className="sticky top-0 z-50 border-b border-gray-200 bg-white shadow-sm">
+
         <div className="flex items-center justify-between" style={{ maxWidth: 1280, margin: '0 auto', padding: '0 24px', height: 64 }}>
           {/* Left: Logo + Company Name */}
           <Link href={basePath} className="flex items-center gap-3" style={{ textDecoration: 'none' }}>
@@ -76,7 +68,7 @@ export function PortalShell({ branding, orgName, contactName, orgSlug, accessId,
                 {companyName.charAt(0)}
               </div>
             )}
-            <span style={{ fontSize: 16, fontWeight: 500, color: '#111827', letterSpacing: '-0.01em' }}>
+            <span className="text-base font-medium tracking-tight text-gray-900">
               {companyName}
             </span>
           </Link>
@@ -196,21 +188,21 @@ export function PortalShell({ branding, orgName, contactName, orgSlug, accessId,
       </header>
 
       {/* Page Content */}
-      <main style={{ maxWidth: 1280, margin: '0 auto', padding: '32px 24px' }}>
+      <main className="mx-auto max-w-[1280px] px-6 py-8">
         {children}
       </main>
 
       {/* Footer */}
-      <footer style={{ borderTop: '1px solid #E5E7EB', padding: '24px 0', marginTop: 48 }}>
-        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 24px', textAlign: 'center' }}>
-          <p style={{ fontSize: 14, color: '#9CA3AF' }}>
+      <footer className="mt-12 border-t border-gray-200 py-6">
+        <div className="mx-auto max-w-[1280px] px-6 text-center">
+          <p className="text-sm text-gray-400">
             {branding?.support_email && (
               <>
-                Need help? <a href={`mailto:${branding.support_email}`} style={{ color: primaryColor, textDecoration: 'none' }}>{branding.support_email}</a>
+                Need help? <a href={`mailto:${branding.support_email}`} className="no-underline" style={{ color: primaryColor }}>{branding.support_email}</a>
                 {' · '}
               </>
             )}
-            Powered by <span style={{ fontWeight: 500, color: '#6B7280' }}>BitBit</span>
+            Powered by <span className="font-medium text-gray-500">BitBit</span>
           </p>
         </div>
       </footer>

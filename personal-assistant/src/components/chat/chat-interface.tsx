@@ -456,18 +456,7 @@ function InlineApprovalCard({
     gap: 8,
   }
 
-  const resolvedBadgeStyle: React.CSSProperties = {
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: 4,
-    padding: '4px 12px',
-    borderRadius: 8,
-    fontSize: 14,
-    fontWeight: 500,
-    marginTop: 12,
-    background: isApproved ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)',
-    color: isApproved ? 'var(--bb-green, #22C55E)' : 'var(--bb-red, #EF4444)',
-  }
+  const resolvedBadgeCls = `mt-3 inline-flex items-center gap-1 rounded-lg px-3 py-1 text-sm font-medium ${isApproved ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`
 
   return (
     <div style={cardStyle}>
@@ -510,21 +499,21 @@ function InlineApprovalCard({
       )}
 
       {isResolving && (
-        <div style={{ ...resolvedBadgeStyle, background: 'var(--hover-bg, rgba(255, 255, 255, 0.04))', color: 'var(--text-secondary, #94A3B8)' }}>
+        <div className="mt-3 inline-flex items-center gap-1 rounded-lg bg-muted px-3 py-1 text-sm font-medium text-muted-foreground">
           <IconLoader2 size={12} style={{ animation: 'spin 1s linear infinite' }} />
           Resolving...
         </div>
       )}
 
       {isApproved && !isResolving && (
-        <div style={resolvedBadgeStyle}>
+        <div className={resolvedBadgeCls}>
           <IconCheck size={12} />
           Approved. Sending...
         </div>
       )}
 
       {isRejected && !isResolving && (
-        <div style={resolvedBadgeStyle}>
+        <div className={resolvedBadgeCls}>
           <IconX size={12} />
           Rejected.
         </div>
@@ -1495,14 +1484,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
             status={tc0.status === 'running' ? 'active' : 'complete'}
           >
             {narrationAfter && (
-              <span style={{
-                display: 'block',
-                fontSize: 14,
-                color: 'var(--text-muted)',
-                fontStyle: 'italic',
-                fontWeight: 400,
-                lineHeight: '20px',
-              }}>
+              <span className="block text-sm italic text-muted-foreground leading-5">
                 {narrationAfter}
               </span>
             )}
@@ -1540,34 +1522,12 @@ export function ChatInterface({ userName }: { userName?: string }) {
               return (
                 <div
                   key={`${keyPrefix}-sub-${gIdx}-${cIdx}`}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 8,
-                    paddingBottom: 4,
-                    fontSize: 14,
-                    color: 'var(--text-dim)',
-                  }}
+                  className="flex items-center gap-2 pb-1 text-sm text-muted-foreground"
                 >
-                  <div style={{
-                    width: 4,
-                    height: 4,
-                    borderRadius: '50%',
-                    backgroundColor: tc.status === 'running'
-                      ? 'var(--text-secondary)'
-                      : 'var(--text-muted)',
-                    flexShrink: 0,
-                  }} />
+                  <div className={`size-1 shrink-0 rounded-full ${tc.status === 'running' ? 'bg-muted-foreground' : 'bg-muted-foreground/50'}`} />
                   <span>{detail || formatToolName(group.name)}</span>
                   {!detail && (
-                    <span style={{
-                      display: 'inline-flex',
-                      padding: '1px 8px',
-                      borderRadius: 8,
-                      background: 'var(--hover-bg)',
-                      fontSize: 14,
-                      color: 'var(--text-muted)',
-                    }}>
+                    <span className="inline-flex rounded-lg bg-muted px-2 py-px text-sm text-muted-foreground">
                       {`#${cIdx + 1}`}
                     </span>
                   )}

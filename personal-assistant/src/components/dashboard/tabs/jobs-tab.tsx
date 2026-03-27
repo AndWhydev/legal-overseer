@@ -44,7 +44,7 @@ function statusColor(s: string): React.CSSProperties {
 
 function JobCard({ job }: { job: Job }) {
   return (
-    <div className="rounded-lg p-3 bb-card-hover" style={{ border: '1px solid var(--glass-card-border)', background: 'var(--glass-card-bg)' }}>
+    <div className="rounded-lg border border-border bg-card p-3 bb-card-hover">
       <p className="font-medium text-sm truncate">{job.title}</p>
       {job.contact?.name && (
         <p className="text-xs text-muted-foreground mt-1">{job.contact.name}</p>

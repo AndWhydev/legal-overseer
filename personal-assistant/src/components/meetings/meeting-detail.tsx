@@ -150,7 +150,7 @@ export function MeetingDetail({ meetingId, onBack }: MeetingDetailProps) {
 
       {/* Summary card (if completed) */}
       {meeting.summary && (
-        <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+        <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
           <h3 className="mb-3 flex items-center gap-2 text-sm font-medium text-foreground">
             <IconFileText className="h-4 w-4" />
             Summary
@@ -233,16 +233,16 @@ export function MeetingDetail({ meetingId, onBack }: MeetingDetailProps) {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="transcript" className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+        <TabsContent value="transcript" className="rounded-xl border border-border bg-card p-5 shadow-sm">
           <TranscriptView segments={meeting.transcript_segments} />
         </TabsContent>
-        <TabsContent value="actions" className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+        <TabsContent value="actions" className="rounded-xl border border-border bg-card p-5 shadow-sm">
           <ActionItemsView
             items={meeting.action_items}
             onConvertToTasks={handleConvertToTasks}
           />
         </TabsContent>
-        <TabsContent value="follow-up" className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+        <TabsContent value="follow-up" className="rounded-xl border border-border bg-card p-5 shadow-sm">
           <FollowUpView
             followUps={meeting.follow_ups}
             onApprove={handleApproveFollowUp}

@@ -38,7 +38,7 @@ export function ReportPreview({ html, isLoading = false, onClose, onDownload }: 
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-      <div className="flex h-[90vh] w-[90vw] max-w-6xl flex-col rounded-xl border border-border bg-card shadow-xl">
+      <div className="flex h-[90vh] w-[90vw] max-w-6xl flex-col rounded-xl border border-border bg-card shadow-lg">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border/50 px-6 py-4">
           <h2 className="text-lg font-semibold text-foreground">Report Preview</h2>

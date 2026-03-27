@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { IconCircleCheck, IconFlame, IconRadio, IconAlertCircle } from '@tabler/icons-react'
+import { Empty, EmptyMedia, EmptyTitle, EmptyDescription } from '@/components/ui/empty'
 import { createClient } from '@/lib/supabase/client'
 import { logger } from '@/lib/core/logger'
 
@@ -148,10 +149,11 @@ export function StatsWidget({ className }: StatsWidgetProps) {
 
   if (error) {
     return (
-      <div className={`flex items-center gap-2 px-3 py-2 rounded-lg bg-red-950/20 border border-red-900/30 ${className ?? ''}`}>
-        <IconAlertCircle className="h-4 w-4 text-red-400 shrink-0" />
-        <span className="text-xs text-red-300">{error}</span>
-      </div>
+      <Empty className={className}>
+        <EmptyMedia variant="icon"><IconAlertCircle size={20} /></EmptyMedia>
+        <EmptyTitle>{"Couldn't load statistics"}</EmptyTitle>
+        <EmptyDescription>{error}</EmptyDescription>
+      </Empty>
     )
   }
 

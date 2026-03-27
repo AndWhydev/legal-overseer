@@ -54,7 +54,7 @@ const ROLE_META: Record<RoleType, { label: string; icon: React.ElementType; colo
   finance: { label: 'Finance', icon: IconCurrencyDollar, colorClass: 'text-emerald-500 bg-emerald-500/10', description: 'Invoices, payments, cash flow' },
   comms: { label: 'Communications', icon: IconMessageCircle, colorClass: 'text-blue-500 bg-blue-500/10', description: 'Email triage, responses, follow-ups' },
   sales: { label: 'Sales', icon: IconTrendingUp, colorClass: 'text-foreground bg-muted', description: 'Leads, proposals, pipeline' },
-  growth: { label: 'Growth', icon: IconTrendingUp, colorClass: 'text-amber-500 bg-amber-500/10', description: 'SEO monitoring, tender hunting' },
+  growth: { label: 'Growth', icon: IconTrendingUp, colorClass: 'text-foreground bg-muted', description: 'SEO monitoring, tender hunting' },
 }
 
 const AUTONOMY_LABELS: Record<AutonomyLevel, { label: string; variant: 'default' | 'secondary' | 'outline' }> = {

@@ -43,18 +43,18 @@ export function PortalProjectsView({ projects, primaryColor }: PortalProjectsVie
 
   return (
     <div>
-      <h1 style={{ fontSize: 16, fontWeight: 500, color: '#111827', margin: '0 0 24px', letterSpacing: '-0.02em' }}>
+      <h1 className="mb-6 text-base font-medium tracking-tight text-gray-900">
         Projects
       </h1>
 
       {projects.length === 0 ? (
-        <div style={{ ...cardStyle, padding: 64, textAlign: 'center' }}>
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#D1D5DB" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ margin: '0 auto 16px' }}>
+        <div style={cardStyle} className="p-16 text-center">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#D1D5DB" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mx-auto mb-4">
             <path d="M2 20a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8l-7-6H4a2 2 0 0 0-2 2z" />
             <path d="M14 2v6h6" />
           </svg>
-          <p style={{ fontSize: 16, color: '#6B7280' }}>No projects yet</p>
-          <p style={{ fontSize: 14, color: '#9CA3AF', marginTop: 4 }}>Your projects will appear here once they are set up.</p>
+          <p className="text-base text-gray-500">No projects yet</p>
+          <p className="mt-1 text-sm text-gray-400">Your projects will appear here once they are set up.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -76,8 +76,8 @@ export function PortalProjectsView({ projects, primaryColor }: PortalProjectsVie
                     transition: 'all 200ms ease',
                   }}
                 >
-                  <div className="flex items-center justify-between" style={{ marginBottom: 12 }}>
-                    <h3 style={{ fontSize: 16, fontWeight: 500, color: '#111827', margin: 0 }}>
+                  <div className="mb-3 flex items-center justify-between">
+                    <h3 className="text-base font-medium text-gray-900">
                       {project.title}
                     </h3>
                     <span

@@ -57,7 +57,7 @@ function LeadCardInner({ lead, onClick }: LeadCardProps) {
         }
       }}
       className={cn(
-        'cursor-grab gap-2 py-3 transition-shadow hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-2 focus-visible:outline-ring active:cursor-grabbing',
+        'cursor-grab gap-2 py-3 transition-shadow hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-ring active:cursor-grabbing',
         isDragging && 'opacity-50'
       )}
       style={dndStyle}

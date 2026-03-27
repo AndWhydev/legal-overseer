@@ -123,7 +123,7 @@ export function MeetingList({ onSelectMeeting, onUpload }: MeetingListProps) {
       </div>
 
       {/* Meeting rows */}
-      <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+      <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
         {loading ? (
           <div className="p-10 text-center text-sm text-muted-foreground">
             Loading meetings...

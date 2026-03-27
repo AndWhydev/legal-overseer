@@ -57,7 +57,7 @@ export function PortalNotificationBell({ accessId, primaryColor }: PortalNotific
   }
 
   return (
-    <div style={{ position: 'relative' }}>
+    <div className="relative">
       <button
         onClick={() => {
           setOpen(!open)
@@ -66,15 +66,7 @@ export function PortalNotificationBell({ accessId, primaryColor }: PortalNotific
             if (unreadIds.length > 0) markRead(unreadIds)
           }
         }}
-        style={{
-          position: 'relative',
-          padding: 8,
-          background: 'none',
-          border: 'none',
-          cursor: 'pointer',
-          color: '#6B7280',
-          transition: 'color 150ms',
-        }}
+        className="relative cursor-pointer border-none bg-transparent p-2 text-gray-500 transition-colors"
         aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
       >
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -83,22 +75,8 @@ export function PortalNotificationBell({ accessId, primaryColor }: PortalNotific
         </svg>
         {unreadCount > 0 && (
           <span
-            style={{
-              position: 'absolute',
-              top: 4,
-              right: 4,
-              width: 16,
-              height: 16,
-              borderRadius: '50%',
-              background: primaryColor,
-              color: '#FFFFFF',
-              fontSize: 14,
-              fontWeight: 500,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              lineHeight: 1,
-            }}
+            className="absolute right-1 top-1 flex size-4 items-center justify-center rounded-full text-xs font-medium leading-none text-white"
+            style={{ background: primaryColor }}
           >
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
@@ -111,46 +89,28 @@ export function PortalNotificationBell({ accessId, primaryColor }: PortalNotific
           {/* Backdrop */}
           <div
             onClick={() => setOpen(false)}
-            style={{ position: 'fixed', inset: 0, zIndex: 40 }}
+            className="fixed inset-0 z-40"
           />
-          <div
-            style={{
-              position: 'absolute',
-              right: 0,
-              top: '100%',
-              marginTop: 8,
-              width: 360,
-              maxHeight: 400,
-              overflowY: 'auto',
-              background: '#FFFFFF',
-              border: '1px solid #E5E7EB',
-              borderRadius: 12,
-              boxShadow: '0 10px 25px rgba(0, 0, 0, 0.08)',
-              zIndex: 50,
-            }}
-          >
-            <div style={{ padding: '12px 16px', borderBottom: '1px solid #F3F4F6', fontWeight: 500, fontSize: 14, color: '#111827' }}>
+          <div className="absolute right-0 top-full z-50 mt-2 w-[360px] max-h-[400px] overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-lg">
+            <div className="border-b border-gray-100 px-4 py-3 text-sm font-medium text-gray-900">
               Notifications
             </div>
             {notifications.length === 0 ? (
-              <div style={{ padding: '32px 16px', textAlign: 'center', color: '#9CA3AF', fontSize: 14 }}>
+              <div className="px-4 py-8 text-center text-sm text-gray-400">
                 No notifications yet
               </div>
             ) : (
               notifications.slice(0, 20).map(n => (
                 <div
                   key={n.id}
-                  style={{
-                    padding: '12px 16px',
-                    borderBottom: '1px solid #F9FAFB',
-                    background: n.read ? 'transparent' : `${primaryColor}05`,
-                  }}
+                  className="border-b border-gray-50 px-4 py-3"
+                  style={{ background: n.read ? 'transparent' : `${primaryColor}05` }}
                 >
-                  <p style={{ fontSize: 14, fontWeight: n.read ? 400 : 500, color: '#111827', margin: 0 }}>
+                  <p className={`text-sm text-gray-900 ${n.read ? '' : 'font-medium'}`}>
                     {n.title}
                   </p>
                   {n.body && (
-                    <p style={{ fontSize: 14, color: '#6B7280', margin: '4px 0 0' }}>{n.body}</p>
+                    <p className="mt-1 text-sm text-gray-500">{n.body}</p>
                   )}
                   <p style={{ fontSize: 14, color: '#9CA3AF', margin: '8px 0 0' }}>
                     {formatRelative(n.created_at)}

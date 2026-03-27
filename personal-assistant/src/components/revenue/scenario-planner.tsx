@@ -144,7 +144,7 @@ export function ScenarioPlanner() {
                 <div className="flex items-center gap-0.5 h-6 rounded-lg overflow-hidden bg-muted/50">
                   {[
                     { label: 'P10', value: p.p10, color: 'bg-red-500/30' },
-                    { label: 'P25', value: p.p25, color: 'bg-amber-500/30' },
+                    { label: 'P25', value: p.p25, color: 'bg-yellow-500/30' },
                     { label: 'P50', value: p.p50, color: 'bg-blue-500/40' },
                     { label: 'P75', value: p.p75, color: 'bg-green-500/30' },
                     { label: 'P90', value: p.p90, color: 'bg-green-500/40' },

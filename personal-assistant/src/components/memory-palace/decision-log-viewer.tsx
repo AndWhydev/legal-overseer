@@ -175,7 +175,7 @@ export function DecisionLogViewer({ orgId, entityId }: DecisionLogViewerProps) {
                     <div className="mb-1 text-sm font-medium text-muted-foreground">
                       LESSONS LEARNED
                     </div>
-                    <div className="text-sm leading-normal text-amber-500">
+                    <div className="text-sm leading-normal text-muted-foreground">
                       {decision.lessons_learned}
                     </div>
                   </div>

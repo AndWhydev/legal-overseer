@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert'
-import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from '@/components/ui/empty'
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from '@/components/ui/empty'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 type WatchStatus = 'active' | 'paused'
@@ -266,16 +266,12 @@ export function WatchManager() {
   if (errorMessage && watches.length === 0 && alerts.length === 0) {
     return (
       <Empty>
-        <EmptyHeader>
-          <EmptyMedia variant="icon">
-            <IconShield />
-          </EmptyMedia>
-          <EmptyTitle>Something went wrong</EmptyTitle>
-          <EmptyDescription>{errorMessage}</EmptyDescription>
-        </EmptyHeader>
-        <Button variant="outline" onClick={() => { setIsLoading(true); setErrorMessage(null); loadData().catch((err) => setErrorMessage(err instanceof Error ? err.message : 'Failed to load sentry data')).finally(() => setIsLoading(false)) }}>
-          Retry
-        </Button>
+        <EmptyMedia variant="icon"><IconShield size={20} /></EmptyMedia>
+        <EmptyTitle>Something went wrong</EmptyTitle>
+        <EmptyDescription>{errorMessage}</EmptyDescription>
+        <EmptyContent>
+          <Button variant="outline" size="sm" onClick={() => { setIsLoading(true); setErrorMessage(null); loadData().catch((err) => setErrorMessage(err instanceof Error ? err.message : 'Failed to load sentry data')).finally(() => setIsLoading(false)) }}>Retry</Button>
+        </EmptyContent>
       </Empty>
     )
   }

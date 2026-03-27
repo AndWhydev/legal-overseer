@@ -75,25 +75,15 @@ export function PortalFilesView({ initialFiles, primaryColor }: PortalFilesViewP
 
   return (
     <div>
-      <div className="flex items-center justify-between" style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: 16, fontWeight: 500, color: '#111827', margin: 0, letterSpacing: '-0.02em' }}>
+      <div className="mb-6 flex items-center justify-between">
+        <h1 className="text-base font-medium tracking-tight text-gray-900">
           Files
         </h1>
         <button
           onClick={() => fileInputRef.current?.click()}
           disabled={uploading}
-          style={{
-            padding: '12px 20px',
-            borderRadius: 8,
-            background: primaryColor,
-            color: '#FFFFFF',
-            fontSize: 14,
-            fontWeight: 500,
-            border: 'none',
-            cursor: uploading ? 'wait' : 'pointer',
-            opacity: uploading ? 0.6 : 1,
-            transition: 'opacity 150ms',
-          }}
+          className="rounded-lg border-none px-5 py-3 text-sm font-medium text-white transition-opacity disabled:opacity-60"
+          style={{ background: primaryColor, cursor: uploading ? 'wait' : 'pointer' }}
         >
           {uploading ? 'Uploading...' : 'Upload File'}
         </button>
@@ -108,7 +98,7 @@ export function PortalFilesView({ initialFiles, primaryColor }: PortalFilesViewP
 
       {/* Category Filters */}
       {categories.length > 1 && (
-        <div className="flex items-center gap-2" style={{ marginBottom: 16, overflowX: 'auto' }}>
+        <div className="mb-4 flex items-center gap-2 overflow-x-auto">
           <button
             onClick={() => setFilter('all')}
             style={{

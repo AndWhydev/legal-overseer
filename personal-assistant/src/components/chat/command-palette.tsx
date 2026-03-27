@@ -44,7 +44,7 @@ export function CommandPalette({ query, commands, onSelect }: CommandPaletteProp
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 8 }}
       transition={{ duration: 0.15 }}
-      className="absolute bottom-full left-0 right-0 z-[60] mb-1 max-h-[300px] overflow-hidden rounded-xl border border-border bg-popover shadow-xl"
+      className="absolute bottom-full left-0 right-0 z-[60] mb-1 max-h-[300px] overflow-hidden rounded-xl border border-border bg-popover shadow-lg"
     >
       {filtered.map((cmd, i) => {
         const Icon = cmd.icon

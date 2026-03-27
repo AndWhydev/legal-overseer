@@ -1,8 +1,9 @@
 'use client'
 
 import React, { useState, useEffect, useCallback } from 'react'
-import { IconCopy, IconCheck, IconLoader2, IconTrash, IconPlus } from '@tabler/icons-react'
+import { IconCopy, IconCheck, IconLoader2, IconTrash, IconPlus, IconSparkles } from '@tabler/icons-react'
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select'
+import { Empty, EmptyMedia, EmptyTitle, EmptyDescription } from '@/components/ui/empty'
 import { logger } from '@/lib/core/logger'
 
 interface Template {
@@ -226,9 +227,11 @@ export function CreatorStudioGenerator() {
         <p className="mb-4 text-sm text-muted-foreground">Generated content appears here</p>
 
         {history.length === 0 ? (
-          <div className="mt-6 rounded-xl border border-border bg-card p-8 text-center">
-            <p className="text-sm text-muted-foreground">Nothing generated yet.</p>
-          </div>
+          <Empty className="mt-6">
+            <EmptyMedia variant="icon"><IconSparkles size={20} /></EmptyMedia>
+            <EmptyTitle>Nothing generated yet</EmptyTitle>
+            <EmptyDescription>Generated content will appear here.</EmptyDescription>
+          </Empty>
         ) : (
           <div className="flex flex-col gap-3">
             {history.map((item) => (

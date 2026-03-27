@@ -42,31 +42,13 @@ export function MeetingsTab({ initialMeetingId }: MeetingsTabProps) {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16, height: '100%' }}>
+    <div className="flex h-full flex-col gap-4">
       {/* Section toggle (only visible when not in detail view) */}
       {view !== 'detail' && (
-        <div className="flex gap-1" style={{
-          background: 'var(--bb-surface, rgba(10, 14, 23, 0.5))',
-          borderRadius: 12,
-          padding: 4,
-          alignSelf: 'flex-start',
-        }}>
+        <div className="flex self-start gap-1 rounded-xl bg-muted/50 p-1">
           <button
             onClick={() => { setActiveSection('meetings'); setView('list') }}
-            style={{
-              padding: '8px 16px',
-              borderRadius: 8,
-              background: activeSection === 'meetings' ? 'var(--hover-bg-strong)' : 'transparent',
-              border: 'none',
-              color: activeSection === 'meetings' ? 'var(--text-primary, #F1F5F9)' : 'var(--text-dim, #475569)',
-              fontSize: 14,
-              fontWeight: 500,
-              cursor: 'pointer',
-              transition: 'all 200ms',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-            }}
+            className={`flex cursor-pointer items-center gap-2 rounded-lg border-none px-4 py-2 text-sm font-medium transition-all ${activeSection === 'meetings' ? 'bg-muted text-foreground' : 'bg-transparent text-muted-foreground'}`}
           >
             <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z" />
@@ -75,20 +57,7 @@ export function MeetingsTab({ initialMeetingId }: MeetingsTabProps) {
           </button>
           <button
             onClick={() => { setActiveSection('search'); setView('search') }}
-            style={{
-              padding: '8px 16px',
-              borderRadius: 8,
-              background: activeSection === 'search' ? 'var(--hover-bg-strong)' : 'transparent',
-              border: 'none',
-              color: activeSection === 'search' ? 'var(--text-primary, #F1F5F9)' : 'var(--text-dim, #475569)',
-              fontSize: 14,
-              fontWeight: 500,
-              cursor: 'pointer',
-              transition: 'all 200ms',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-            }}
+            className={`flex cursor-pointer items-center gap-2 rounded-lg border-none px-4 py-2 text-sm font-medium transition-all ${activeSection === 'search' ? 'bg-muted text-foreground' : 'bg-transparent text-muted-foreground'}`}
           >
             <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />

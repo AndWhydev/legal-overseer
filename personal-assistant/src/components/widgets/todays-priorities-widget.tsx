@@ -24,14 +24,14 @@ export function TodaysPrioritiesWidget() {
   return (
     <WidgetCard
       title="Today's Priorities"
-      icon={<IconBolt size={20} className="text-amber-400" />}
+      icon={<IconBolt size={20} className="text-muted-foreground" />}
     >
       <div className="flex flex-col gap-3">
         {priorities.length === 0 ? (
           <Empty><EmptyTitle>No high-priority tasks</EmptyTitle><EmptyDescription>Enjoy the calm — nothing urgent right now.</EmptyDescription></Empty>
         ) : (
           priorities.map(task => (
-            <div key={task.id} className="flex items-center gap-3 p-2 rounded-md bg-muted/50 border border-border">
+            <div key={task.id} className="flex items-center gap-3 p-2 rounded-xl bg-muted/50 border border-border">
               <Badge
                 variant={task.priority === 'critical' ? 'destructive' : 'secondary'}
                 className="text-[10px]"

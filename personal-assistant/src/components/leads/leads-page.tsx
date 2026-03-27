@@ -12,6 +12,7 @@ import {
   EmptyTitle,
   EmptyDescription,
   EmptyMedia,
+  EmptyContent,
 } from '@/components/ui/empty'
 import { useLeads } from '@/hooks/use-leads'
 import { useLeadsAnalytics } from '@/hooks/use-leads-analytics'
@@ -116,11 +117,12 @@ export function LeadsPage() {
   if (error) {
     return (
       <Empty className="min-h-64">
-        <EmptyHeader>
-          <EmptyTitle>Something went wrong</EmptyTitle>
-          <EmptyDescription>{error}</EmptyDescription>
-        </EmptyHeader>
-        <Button variant="outline" onClick={() => refresh()}>Retry</Button>
+        <EmptyMedia variant="icon"><IconHeartHandshake size={20} /></EmptyMedia>
+        <EmptyTitle>Something went wrong</EmptyTitle>
+        <EmptyDescription>{error}</EmptyDescription>
+        <EmptyContent>
+          <Button variant="outline" size="sm" onClick={() => refresh()}>Retry</Button>
+        </EmptyContent>
       </Empty>
     )
   }

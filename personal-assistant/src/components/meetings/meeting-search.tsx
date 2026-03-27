@@ -91,7 +91,7 @@ export function MeetingSearch({ onSelectMeeting }: MeetingSearchProps) {
       )}
 
       {!searching && results.length > 0 && (
-        <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+        <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
           <div className="border-b border-border px-4 py-3 text-sm text-muted-foreground">
             {results.length} result{results.length !== 1 ? 's' : ''} across transcripts
           </div>

@@ -29,17 +29,17 @@ export function PortalDashboard({
   return (
     <div>
       {/* Welcome Header */}
-      <div style={{ marginBottom: 32 }}>
-        <h1 style={{ fontSize: 16, fontWeight: 500, color: '#111827', margin: 0, letterSpacing: '-0.02em' }}>
+      <div className="mb-8">
+        <h1 className="text-base font-medium tracking-tight text-gray-900">
           {greeting}, {contactName.split(' ')[0]}
         </h1>
         {welcomeMessage && (
-          <p style={{ fontSize: 16, color: '#6B7280', marginTop: 8 }}>{welcomeMessage}</p>
+          <p className="mt-2 text-base text-gray-500">{welcomeMessage}</p>
         )}
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4" style={{ marginBottom: 40 }}>
+      <div className="mb-10 grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatCard
           label="Active Projects"
           value={stats.activeProjects}
@@ -74,19 +74,19 @@ export function PortalDashboard({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Projects */}
         <div className="lg:col-span-2">
-          <div className="flex items-center justify-between" style={{ marginBottom: 16 }}>
-            <h2 style={{ fontSize: 16, fontWeight: 500, color: '#111827', margin: 0 }}>Your Projects</h2>
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-base font-medium text-gray-900">Your Projects</h2>
             <Link
               href={`${basePath}/projects`}
-              style={{ fontSize: 14, color: primaryColor, textDecoration: 'none', fontWeight: 500 }}
+              className="text-sm font-medium no-underline" style={{ color: primaryColor }}
             >
               View all
             </Link>
           </div>
 
           {projects.length === 0 ? (
-            <div style={{ ...cardStyle, padding: 48, textAlign: 'center' }}>
-              <p style={{ color: '#9CA3AF', fontSize: 16 }}>No projects yet</p>
+            <div style={cardStyle} className="p-12 text-center">
+              <p className="text-base text-gray-400">No projects yet</p>
             </div>
           ) : (
             <div className="flex flex-col gap-3">
@@ -104,21 +104,18 @@ export function PortalDashboard({
 
         {/* Activity Feed */}
         <div>
-          <h2 style={{ fontSize: 16, fontWeight: 500, color: '#111827', margin: '0 0 16px' }}>Recent Activity</h2>
+          <h2 className="mb-4 text-base font-medium text-gray-900">Recent Activity</h2>
 
           {activity.length === 0 ? (
-            <div style={{ ...cardStyle, padding: 48, textAlign: 'center' }}>
-              <p style={{ color: '#9CA3AF', fontSize: 16 }}>No activity yet</p>
+            <div style={cardStyle} className="p-12 text-center">
+              <p className="text-base text-gray-400">No activity yet</p>
             </div>
           ) : (
             <div style={cardStyle}>
               {activity.map((item, i) => (
                 <div
                   key={item.id}
-                  style={{
-                    padding: '12px 16px',
-                    borderBottom: i < activity.length - 1 ? '1px solid #F3F4F6' : 'none',
-                  }}
+                  className={`px-4 py-3 ${i < activity.length - 1 ? 'border-b border-gray-100' : ''}`}
                 >
                   <div className="flex items-start gap-3">
                     <div

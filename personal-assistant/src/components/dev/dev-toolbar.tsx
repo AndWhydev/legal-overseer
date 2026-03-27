@@ -104,7 +104,7 @@ export function DevToolbar() {
       {!open && (
         <button
           onClick={() => setOpen(true)}
-          className={`fixed bottom-4 right-4 z-[9990] flex items-center gap-2 px-3 py-2 rounded-[20px] border border-white/15 text-white text-sm font-medium font-mono cursor-pointer backdrop-blur-sm shadow-md ${
+          className={`fixed bottom-4 right-4 z-[9990] flex items-center gap-2 px-3 py-2 rounded-[20px] border border-white/15 text-white text-sm font-medium font-mono cursor-pointer backdrop-blur-sm ${
             isOverriding
               ? 'bg-gradient-to-br from-violet-600 to-indigo-600'
               : 'bg-black/75'

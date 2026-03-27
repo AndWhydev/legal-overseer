@@ -144,183 +144,64 @@ export function OnboardingTour({ onNavigate }: OnboardingTourProps) {
     <>
       {/* Overlay backdrop */}
       <div
-        style={{
-          position: 'fixed',
-          inset: 0,
-          zIndex: 9998,
-          background: 'var(--bg-overlay)',
-          backdropFilter: 'blur(4px)',
-          WebkitBackdropFilter: 'blur(4px)',
-        }}
+        className="fixed inset-0 z-[9998] bg-black/50 backdrop-blur-sm"
         onClick={completeTour}
       />
 
       {/* Tour card */}
       <div
-        style={{
-          position: 'fixed',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          zIndex: 9999,
-          width: '100%',
-          maxWidth: '420px',
-          padding: '0 16px',
-          boxSizing: 'border-box',
-        }}
+        className="fixed left-1/2 top-1/2 z-[9999] box-border w-full max-w-[420px] -translate-x-1/2 -translate-y-1/2 px-4"
       >
         <div
-          style={{
-            background: 'var(--bg-card)',
-            backdropFilter: 'blur(24px)',
-            WebkitBackdropFilter: 'blur(24px)',
-            border: '1px solid var(--border-subtle)',
-            borderRadius: '16px',
-            padding: '32px',
-            boxShadow: '0 25px 50px rgba(0, 0, 0, 0.3)',
-          }}
+          className="rounded-2xl border border-border bg-card p-8 shadow-2xl backdrop-blur-3xl"
         >
           {/* Close button */}
           <button
             onClick={completeTour}
-            style={{
-              position: 'absolute',
-              top: '16px',
-              right: '16px',
-              background: 'none',
-              border: 'none',
-              color: 'var(--text-secondary)',
-              cursor: 'pointer',
-              padding: '4px',
-              transition: 'color 0.15s ease',
-            }}
-            onMouseEnter={(e) => {
-              (e.currentTarget as HTMLElement).style.color = 'var(--text-primary)';
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLElement).style.color = 'var(--text-secondary)';
-            }}
+            className="absolute right-4 top-4 cursor-pointer border-none bg-transparent p-1 text-muted-foreground transition-colors hover:text-foreground"
             aria-label="Close tour"
           >
             <IconX size={18} />
           </button>
 
           {/* Icon */}
-          <div
-            style={{
-              width: '48px',
-              height: '48px',
-              borderRadius: '12px',
-              background: 'rgba(255, 107, 53, 0.15)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginBottom: '20px',
-            }}
-          >
-            <Icon size={24} style={{ color: 'var(--bb-orange)' }} />
+          <div className="mb-5 flex size-12 items-center justify-center rounded-xl bg-card">
+            <Icon size={24} className="text-foreground" />
           </div>
 
           {/* Content */}
-          <h3
-            style={{
-              margin: '0 0 8px',
-              fontSize: '16px',
-              fontWeight: 500,
-              color: 'var(--text-primary)',
-            }}
-          >
+          <h3 className="mb-2 text-base font-medium text-foreground">
             {step.title}
           </h3>
-          <p
-            style={{
-              margin: '0 0 24px',
-              fontSize: '14px',
-              lineHeight: 1.6,
-              color: 'var(--text-secondary)',
-            }}
-          >
+          <p className="mb-6 text-sm leading-relaxed text-muted-foreground">
             {step.description}
           </p>
 
           {/* Progress + Navigation */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
-          >
+          <div className="flex items-center justify-between">
             {/* Step dots */}
-            <div style={{ display: 'flex', gap: '8px' }}>
+            <div className="flex gap-2">
               {TOUR_STEPS.map((_, i) => (
                 <div
                   key={i}
-                  style={{
-                    width: i === stepIndex ? '20px' : '6px',
-                    height: '6px',
-                    borderRadius: '8px',
-                    background:
-                      i === stepIndex
-                        ? 'var(--bb-orange)'
-                        : 'rgba(255, 255, 255, 0.2)',
-                    transition: 'all 0.2s ease',
-                  }}
+                  className={`h-1.5 rounded-lg transition-all duration-200 ${i === stepIndex ? 'w-5 bg-foreground' : 'w-1.5 bg-white/20'}`}
                 />
               ))}
             </div>
 
             {/* Buttons */}
-            <div style={{ display: 'flex', gap: '8px' }}>
+            <div className="flex gap-2">
               {stepIndex > 0 && (
                 <button
                   onClick={prevStep}
-                  style={{
-                    padding: '8px 16px',
-                    borderRadius: '8px',
-                    border: '1px solid var(--border-subtle)',
-                    background: 'transparent',
-                    color: 'var(--text-primary)',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    fontWeight: 500,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                    transition: 'all 0.15s ease',
-                  }}
-                  onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLElement).style.background = 'var(--glass-hover-bg)';
-                  }}
-                  onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLElement).style.background = 'transparent';
-                  }}
+                  className="flex cursor-pointer items-center gap-1 rounded-lg border border-border bg-transparent px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted"
                 >
                   <IconArrowLeft size={14} /> Back
                 </button>
               )}
               <button
                 onClick={nextStep}
-                style={{
-                  padding: '8px 20px',
-                  borderRadius: '8px',
-                  border: 'none',
-                  background: 'var(--btn-primary-bg, #F1F5F9)',
-                  color: 'var(--btn-primary-fg, #0a0f1a)',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: 500,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                  transition: 'opacity 0.15s ease',
-                }}
-                onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLElement).style.opacity = '0.9';
-                }}
-                onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLElement).style.opacity = '1';
-                }}
+                className="flex cursor-pointer items-center gap-1 rounded-lg border-none bg-primary px-5 py-2 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
               >
                 {isLast ? "Let's go!" : 'Next'} {!isLast && <IconArrowRight size={14} />}
               </button>
@@ -330,22 +211,7 @@ export function OnboardingTour({ onNavigate }: OnboardingTourProps) {
           {/* Skip link */}
           <button
             onClick={completeTour}
-            style={{
-              display: 'block',
-              margin: '16px auto 0',
-              background: 'none',
-              border: 'none',
-              color: 'var(--text-secondary)',
-              cursor: 'pointer',
-              fontSize: '14px',
-              transition: 'color 0.15s ease',
-            }}
-            onMouseEnter={(e) => {
-              (e.currentTarget as HTMLElement).style.color = 'var(--text-primary)';
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLElement).style.color = 'var(--text-secondary)';
-            }}
+            className="mx-auto mt-4 block cursor-pointer border-none bg-transparent text-sm text-muted-foreground transition-colors hover:text-foreground"
           >
             Skip tour
           </button>

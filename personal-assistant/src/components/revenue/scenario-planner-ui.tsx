@@ -72,7 +72,7 @@ export function ScenarioPlannerUI() {
       {/* Create button / form */}
       {!formOpen ? (
         <button
-          className="self-start px-5 py-3 rounded-md border-none bg-orange-500 text-white text-sm font-medium cursor-pointer transition-opacity hover:opacity-80"
+          className="self-start px-5 py-3 rounded-md border-none bg-primary text-primary-foreground text-sm font-medium cursor-pointer transition-opacity hover:opacity-80"
           onClick={() => setFormOpen(true)}
         >
           + New Scenario
@@ -175,7 +175,7 @@ export function ScenarioPlannerUI() {
 
           <div className="flex gap-2">
             <button
-              className="px-5 py-3 rounded-md border-none bg-orange-500 text-white text-sm font-medium cursor-pointer transition-opacity hover:opacity-80 disabled:opacity-60"
+              className="px-5 py-3 rounded-md border-none bg-primary text-primary-foreground text-sm font-medium cursor-pointer transition-opacity hover:opacity-80 disabled:opacity-60"
               onClick={handleSubmit}
               disabled={creating || !name.trim()}
             >

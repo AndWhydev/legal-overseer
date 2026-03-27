@@ -10,49 +10,30 @@ interface PortalHeaderProps {
 
 export function PortalHeader({ orgName, contactName, logoUrl, primaryColor, tagline }: PortalHeaderProps) {
   return (
-    <header style={{
-      backgroundColor: '#ffffff',
-      borderBottom: '1px solid #e5e7eb',
-      padding: '0 24px',
-    }}>
-      <div style={{
-        maxWidth: 1200,
-        margin: '0 auto',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        height: 64,
-      }}>
+    <header className="border-b border-gray-200 bg-white px-6">
+      <div className="mx-auto flex h-16 max-w-[1200px] items-center justify-between">
         {/* Logo / Brand */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div className="flex items-center gap-3">
           {logoUrl ? (
             <img
               src={logoUrl}
               alt={orgName}
-              style={{ height: 36, width: 'auto', objectFit: 'contain' }}
+              className="h-9 w-auto object-contain"
             />
           ) : (
-            <div style={{
-              width: 36,
-              height: 36,
-              borderRadius: 8,
-              backgroundColor: primaryColor,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#ffffff',
-              fontWeight: 500,
-              fontSize: 16,
-            }}>
+            <div
+              className="flex size-9 items-center justify-center rounded-lg text-base font-medium text-white"
+              style={{ backgroundColor: primaryColor }}
+            >
               {orgName.charAt(0).toUpperCase()}
             </div>
           )}
           <div>
-            <div style={{ fontSize: 16, fontWeight: 500, color: '#1a1a2e', lineHeight: 1.2 }}>
+            <div className="text-base font-medium leading-tight text-gray-900">
               {orgName}
             </div>
             {tagline && (
-              <div style={{ fontSize: 14, color: '#9ca3af', lineHeight: 1.2 }}>
+              <div className="text-sm leading-tight text-gray-400">
                 {tagline}
               </div>
             )}
@@ -60,23 +41,15 @@ export function PortalHeader({ orgName, contactName, logoUrl, primaryColor, tagl
         </div>
 
         {/* User info */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: 14, fontWeight: 500, color: '#374151' }}>{contactName}</div>
-            <div style={{ fontSize: 14, color: '#9ca3af' }}>Client Portal</div>
+        <div className="flex items-center gap-3">
+          <div className="text-right">
+            <div className="text-sm font-medium text-gray-700">{contactName}</div>
+            <div className="text-sm text-gray-400">Client Portal</div>
           </div>
-          <div style={{
-            width: 36,
-            height: 36,
-            borderRadius: '50%',
-            backgroundColor: `${primaryColor}15`,
-            color: primaryColor,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontWeight: 500,
-            fontSize: 14,
-          }}>
+          <div
+            className="flex size-9 items-center justify-center rounded-full text-sm font-medium"
+            style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}
+          >
             {contactName.charAt(0).toUpperCase()}
           </div>
         </div>

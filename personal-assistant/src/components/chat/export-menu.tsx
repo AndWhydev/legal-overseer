@@ -90,7 +90,7 @@ export function ExportMenu({ messages }: ExportMenuProps) {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 4, scale: 0.95 }}
               transition={{ duration: 0.15 }}
-              className="absolute right-0 top-full z-50 mt-1 min-w-[200px] overflow-hidden rounded-lg border border-border bg-popover shadow-xl"
+              className="absolute right-0 top-full z-50 mt-1 min-w-[200px] overflow-hidden rounded-lg border border-border bg-popover shadow-lg"
             >
               <button
                 onClick={handleCopyMarkdown}

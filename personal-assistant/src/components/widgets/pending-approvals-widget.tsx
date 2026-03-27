@@ -41,14 +41,14 @@ export function PendingApprovalsWidget() {
     <WidgetCard
       title="Action Required"
       subtitle={`${approvals.length} pending approvals`}
-      icon={<IconShieldCheck size={20} className="text-amber-400" />}
+      icon={<IconShieldCheck size={20} className="text-muted-foreground" />}
     >
       <div className="flex flex-col gap-4">
         {approvals.length === 0 ? (
           <Empty><EmptyTitle>No pending approvals</EmptyTitle><EmptyDescription>All actions have been reviewed.</EmptyDescription></Empty>
         ) : (
           approvals.map(app => (
-            <div key={app.id as string} className="flex items-center justify-between p-3 rounded-md bg-muted/50 border border-border">
+            <div key={app.id as string} className="flex items-center justify-between p-3 rounded-xl bg-muted/50 border border-border">
               <div>
                 <p className="font-medium text-sm">{(app.title || app.action_type || 'Approval Request') as string}</p>
                 <p className="text-xs text-muted-foreground mt-1">{app.description as string}</p>
@@ -57,14 +57,14 @@ export function PendingApprovalsWidget() {
                 <button
                   onClick={() => handleAction(app.id as string, 'rejected')}
                   disabled={processingIds.has(app.id as string)}
-                  className="px-3 py-1 text-xs font-medium rounded-md bg-secondary hover:bg-secondary/80 border border-border disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="px-3 py-1 text-xs font-medium rounded-lg bg-secondary hover:bg-secondary/80 border border-border disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   {processingIds.has(app.id as string) ? 'Processing...' : 'Dismiss'}
                 </button>
                 <button
                   onClick={() => handleAction(app.id as string, 'approved')}
                   disabled={processingIds.has(app.id as string)}
-                  className="px-3 py-1 text-xs font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="px-3 py-1 text-xs font-medium rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   {processingIds.has(app.id as string) ? 'Processing...' : 'Approve'}
                 </button>

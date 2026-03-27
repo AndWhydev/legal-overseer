@@ -49,7 +49,7 @@ export function HotLeadsWidget() {
           <Empty><EmptyTitle>No active leads</EmptyTitle><EmptyDescription>New leads will appear here as they come in.</EmptyDescription></Empty>
         ) : (
           leads.map(lead => (
-            <div key={lead.id} className="flex items-center justify-between p-3 rounded-md bg-muted/50 border border-border">
+            <div key={lead.id} className="flex items-center justify-between p-3 rounded-xl bg-muted/50 border border-border">
               <div className="flex-1">
                 <p className="font-medium text-sm">{lead.prospect_name || lead.source_detail || lead.source_channel || 'Unnamed Lead'}</p>
                 <p className="text-xs text-muted-foreground mt-0.5">
@@ -64,7 +64,7 @@ export function HotLeadsWidget() {
                     {lead.score}
                   </Badge>
                 )}
-                <span className="text-sm font-medium font-mono text-amber-400">
+                <span className="text-sm font-medium font-mono text-foreground">
                   {lead.estimated_value != null ? `$${lead.estimated_value.toLocaleString()}` : '--'}
                 </span>
               </div>

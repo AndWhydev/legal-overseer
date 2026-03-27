@@ -110,7 +110,7 @@ export function AgentRecommendations({
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.06 }}
             onClick={() => handleToggle(agent.id)}
-            className={`relative p-4 rounded-2xl bg-card border cursor-pointer transition-all duration-200 hover:bg-muted/80 ${
+            className={`relative p-4 rounded-xl bg-card border cursor-pointer transition-all duration-200 hover:bg-muted/80 ${
               agent.selected
                 ? 'border-ring shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_0_20px_rgba(255,255,255,0.05)]'
                 : 'border-border shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]'

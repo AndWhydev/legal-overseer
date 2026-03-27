@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useCallback, useEffect, memo } from 'react'
-import { IconSearch } from '@tabler/icons-react'
+import { IconSearch, IconAlertCircle } from '@tabler/icons-react'
 import { useProspectDiscovery } from '@/hooks/use-prospect-discovery'
 import { ProspectCard } from './prospect-card'
 import {
@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Progress } from '@/components/ui/progress'
 import { Spinner } from '@/components/ui/spinner'
+import { Empty, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from '@/components/ui/empty'
 
 interface ProspectDiscoveryPanelProps {
   open: boolean
@@ -116,12 +117,14 @@ function ProspectDiscoveryPanelInner({ open, onClose }: ProspectDiscoveryPanelPr
 
           {/* Error State */}
           {job?.status === 'error' && (
-            <div className="py-6 text-center">
-              <div className="mb-3 text-sm text-destructive">{job.error}</div>
-              <Button variant="outline" onClick={reset}>
-                Try Again
-              </Button>
-            </div>
+            <Empty className="py-6">
+              <EmptyMedia variant="icon"><IconAlertCircle size={20} /></EmptyMedia>
+              <EmptyTitle>Something went wrong</EmptyTitle>
+              <EmptyDescription>{job.error}</EmptyDescription>
+              <EmptyContent>
+                <Button variant="outline" size="sm" onClick={reset}>Retry</Button>
+              </EmptyContent>
+            </Empty>
           )}
 
           {/* Results */}

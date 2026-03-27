@@ -24,14 +24,14 @@ export function OutstandingQuotesWidget() {
     <WidgetCard
       title="Outstanding Quotes"
       subtitle={`${quotes.length} quote${quotes.length !== 1 ? 's' : ''} pending`}
-      icon={<IconFileText size={20} className="text-amber-400" />}
+      icon={<IconFileText size={20} className="text-muted-foreground" />}
     >
       <div className="flex flex-col gap-3">
         {quotes.length === 0 ? (
           <Empty><EmptyTitle>No outstanding quotes</EmptyTitle><EmptyDescription>Draft and sent quotes will appear here.</EmptyDescription></Empty>
         ) : (
           quotes.map(quote => (
-            <div key={quote.id as string} className="flex items-center justify-between p-3 rounded-md bg-muted/50 border border-border">
+            <div key={quote.id as string} className="flex items-center justify-between p-3 rounded-xl bg-muted/50 border border-border">
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-sm truncate">{(quote.title || quote.description || 'Untitled Quote') as string}</p>
                 <p className="text-xs text-muted-foreground mt-0.5">

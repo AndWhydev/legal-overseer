@@ -75,7 +75,7 @@ export function ArtifactPanel({ artifact, onClose }: ArtifactPanelProps) {
           animate={{ x: 0, opacity: 1 }}
           exit={{ x: '100%', opacity: 0 }}
           transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-          className="fixed top-0 right-0 h-screen w-[clamp(400px,50vw,700px)] bg-background border-l border-border flex flex-col z-40 shadow-2xl"
+          className="fixed top-0 right-0 h-screen w-[clamp(400px,50vw,700px)] bg-background border-l border-border flex flex-col z-40 shadow-lg"
         >
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-2.5 border-b border-border min-h-[52px] bg-muted/30">

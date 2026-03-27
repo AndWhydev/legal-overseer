@@ -82,7 +82,7 @@ export function MeetingUpload({ onUploaded, onCancel }: MeetingUploadProps) {
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="w-full max-w-[480px] rounded-2xl bg-card p-6 shadow-2xl backdrop-blur-[40px]">
+      <div className="w-full max-w-[480px] rounded-xl bg-card p-6 shadow-lg backdrop-blur-[40px]">
         {/* Header */}
         <div className="mb-5 flex items-center justify-between">
           <h2 className="text-base font-medium text-foreground">

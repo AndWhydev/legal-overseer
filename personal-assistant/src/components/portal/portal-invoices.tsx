@@ -33,32 +33,32 @@ export function PortalInvoicesView({ invoices, primaryColor }: PortalInvoicesVie
 
   return (
     <div>
-      <h1 style={{ fontSize: 16, fontWeight: 500, color: '#111827', margin: '0 0 24px', letterSpacing: '-0.02em' }}>
+      <h1 className="mb-6 text-base font-medium tracking-tight text-gray-900">
         Invoices
       </h1>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4" style={{ marginBottom: 24 }}>
-        <div style={{ ...cardStyle, padding: 20 }}>
-          <p style={{ fontSize: 14, color: '#6B7280', margin: '0 0 4px' }}>Outstanding</p>
-          <p style={{ fontSize: 16, fontWeight: 500, color: '#DC2626', margin: 0 }}>
+      <div className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div style={cardStyle} className="p-5">
+          <p className="mb-1 text-sm text-gray-500">Outstanding</p>
+          <p className="text-base font-medium text-red-600">
             ${totalOutstanding.toLocaleString('en-AU', { minimumFractionDigits: 2 })}
           </p>
         </div>
-        <div style={{ ...cardStyle, padding: 20 }}>
-          <p style={{ fontSize: 14, color: '#6B7280', margin: '0 0 4px' }}>Paid</p>
-          <p style={{ fontSize: 16, fontWeight: 500, color: '#059669', margin: 0 }}>
+        <div style={cardStyle} className="p-5">
+          <p className="mb-1 text-sm text-gray-500">Paid</p>
+          <p className="text-base font-medium text-emerald-600">
             ${totalPaid.toLocaleString('en-AU', { minimumFractionDigits: 2 })}
           </p>
         </div>
-        <div style={{ ...cardStyle, padding: 20 }}>
-          <p style={{ fontSize: 14, color: '#6B7280', margin: '0 0 4px' }}>Total Invoices</p>
-          <p style={{ fontSize: 16, fontWeight: 500, color: '#111827', margin: 0 }}>{invoices.length}</p>
+        <div style={cardStyle} className="p-5">
+          <p className="mb-1 text-sm text-gray-500">Total Invoices</p>
+          <p className="text-base font-medium text-gray-900">{invoices.length}</p>
         </div>
       </div>
 
       {/* Filter Tabs */}
-      <div className="flex items-center gap-2" style={{ marginBottom: 16, overflowX: 'auto' }}>
+      <div className="mb-4 flex items-center gap-2 overflow-x-auto">
         {(['all', 'sent', 'viewed', 'overdue', 'paid'] as StatusFilter[]).map(f => (
           <button
             key={f}
@@ -83,30 +83,21 @@ export function PortalInvoicesView({ invoices, primaryColor }: PortalInvoicesVie
 
       {/* Invoice List */}
       {filtered.length === 0 ? (
-        <div style={{ ...cardStyle, padding: 48, textAlign: 'center' }}>
-          <p style={{ fontSize: 16, color: '#9CA3AF' }}>No invoices found</p>
+        <div style={cardStyle} className="p-12 text-center">
+          <p className="text-base text-gray-400">No invoices found</p>
         </div>
       ) : (
         <div style={cardStyle}>
           {/* Header */}
           <div
-            className="hidden md:grid"
-            style={{
-              gridTemplateColumns: '1fr 100px 120px 120px 100px',
-              padding: '12px 20px',
-              borderBottom: '1px solid #E5E7EB',
-              fontSize: 14,
-              fontWeight: 500,
-              color: '#6B7280',
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em',
-            }}
+            className="hidden border-b border-gray-200 px-5 py-3 text-sm font-medium uppercase tracking-wider text-gray-500 md:grid"
+            style={{ gridTemplateColumns: '1fr 100px 120px 120px 100px' }}
           >
             <div>Invoice</div>
             <div>Status</div>
-            <div style={{ textAlign: 'right' }}>Amount</div>
-            <div style={{ textAlign: 'right' }}>Due Date</div>
-            <div style={{ textAlign: 'right' }}>Actions</div>
+            <div className="text-right">Amount</div>
+            <div className="text-right">Due Date</div>
+            <div className="text-right">Actions</div>
           </div>
 
           {filtered.map((inv, i) => {

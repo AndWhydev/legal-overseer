@@ -85,7 +85,7 @@ export const KanbanCard = memo(function KanbanCard({ task, onEdit, onArchive }: 
       ref={setNodeRef}
       {...attributes}
       {...listeners}
-      className={`card-lift group relative cursor-grab rounded-lg border bg-card p-3 shadow-sm transition-shadow hover:shadow-md active:cursor-grabbing ${
+      className={`card-lift group relative cursor-grab rounded-lg border bg-card p-3 shadow-sm transition-shadow active:cursor-grabbing ${
         isDragging ? 'opacity-30' : isOptimistic ? 'opacity-70' : 'opacity-100'
       } ${isAgentWorking ? 'animate-pulse border-l-2 border-l-muted-foreground' : 'border-border'}`}
       onClick={() => onEdit?.(task)}

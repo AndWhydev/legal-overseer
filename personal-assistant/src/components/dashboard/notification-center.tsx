@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { IconBell, IconCircleCheck, IconBolt, IconAlertTriangle } from '@tabler/icons-react';
+import { IconBell, IconCircleCheck, IconBolt, IconAlertTriangle, IconAlertCircle } from '@tabler/icons-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { Empty, EmptyMedia, EmptyTitle, EmptyDescription } from '@/components/ui/empty';
 import { createClient } from '@/lib/supabase/client';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { logger } from '@/lib/core/logger';
@@ -462,53 +463,27 @@ export function NotificationCenter({ onTabChange }: NotificationCenterProps) {
               )}
 
               {error && (
-                <div
-                  style={{
-                    padding: '12px 14px',
-                    margin: 6,
-                    background: 'rgba(239, 68, 68, 0.08)',
-                    border: '1px solid rgba(239, 68, 68, 0.2)',
-                    borderRadius: 6,
-                    color: 'var(--bb-red, #ef4444)',
-                    fontSize: 12,
-                  }}
-                >
-                  {error}
-                </div>
+                <Empty className="py-4 px-2">
+                  <EmptyMedia variant="icon"><IconAlertCircle size={20} /></EmptyMedia>
+                  <EmptyTitle>Something went wrong</EmptyTitle>
+                  <EmptyDescription>{error}</EmptyDescription>
+                </Empty>
               )}
 
               {/* Empty state: no notifications at all */}
               {!isLoading && !error && notifications.length === 0 && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.3 }}
-                  style={{
-                    padding: '28px 14px',
-                    textAlign: 'center',
-                    color: 'var(--text-muted, rgba(255,255,255,0.35))',
-                    fontSize: 12,
-                  }}
-                >
-                  No notifications yet
-                </motion.div>
+                <Empty className="py-6">
+                  <EmptyMedia variant="icon"><IconBell size={20} /></EmptyMedia>
+                  <EmptyTitle>No notifications yet</EmptyTitle>
+                </Empty>
               )}
 
               {/* Empty state: all read */}
               {!isLoading && !error && unreadCount === 0 && notifications.length > 0 && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.3 }}
-                  style={{
-                    padding: '28px 14px',
-                    textAlign: 'center',
-                    color: 'var(--text-muted, rgba(255,255,255,0.35))',
-                    fontSize: 12,
-                  }}
-                >
-                  All caught up
-                </motion.div>
+                <Empty className="py-6">
+                  <EmptyMedia variant="icon"><IconCircleCheck size={20} /></EmptyMedia>
+                  <EmptyTitle>All caught up</EmptyTitle>
+                </Empty>
               )}
 
               {/* Notification items — flat list, staggered fade-in */}

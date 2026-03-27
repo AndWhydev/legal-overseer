@@ -138,10 +138,11 @@ export function RevenueRadar() {
           <span style={{
             fontSize: 14,
             fontWeight: 500,
-            color: 'var(--bb-orange)',
-            background: 'var(--bb-orange-glow)',
+            color: 'var(--text-primary)',
+            background: 'var(--bg-card)',
             padding: '4px 12px',
             borderRadius: 'var(--radius-full)',
+            border: '1px solid var(--border-subtle)',
           }}>
             {formatCents(recoverable)} recoverable
           </span>
@@ -172,7 +173,7 @@ export function RevenueRadar() {
 
         <div style={kpiCardStyle}>
           <span style={kpiLabelStyle}>Outstanding</span>
-          <span style={{ ...kpiValueStyle, color: 'var(--bb-amber)' }}>
+          <span style={{ ...kpiValueStyle, color: 'var(--text-primary)' }}>
             {snapshot ? formatCents(snapshot.total_outstanding_cents) : '$0.00'}
           </span>
           <span style={kpiSubStyle}>
@@ -221,7 +222,7 @@ export function RevenueRadar() {
             No active revenue insights. Revenue intelligence is running in the background.
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div className="flex flex-col gap-2">
             {insights.slice(0, 8).map(insight => (
               <RevenueInsightCard
                 key={insight.id}

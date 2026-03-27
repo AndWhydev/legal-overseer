@@ -175,8 +175,8 @@ export default function AdminTab() {
         <div style={{ padding: 32 }}>
           <AlertBanner variant="error">
             <div>
-              <h2 style={{ color: 'var(--text-primary)', fontSize: 16, marginBottom: 4, fontWeight: 500 }}>Access Denied</h2>
-              <p style={{ color: 'var(--text-secondary)' }}>Admin role required to access this panel.</p>
+              <h2 className="text-base font-medium mb-1 text-foreground">Access Denied</h2>
+              <p className="text-muted-foreground">Admin role required to access this panel.</p>
             </div>
           </AlertBanner>
         </div>
@@ -186,50 +186,43 @@ export default function AdminTab() {
 
   return (
     <TabShell>
-      <div style={{ padding: 24, maxWidth: 900, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 24 }}>
+      <div className="mx-auto flex max-w-[900px] flex-col gap-6 p-6">
 
       {/* System Health */}
       <div style={glassCard}>
-        <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(255, 255, 255, 0.03)' }}>
-          <div style={{ fontSize: 16, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="border-b border-white/[0.03] px-5 py-4">
+          <div className="flex items-center justify-between text-base font-medium text-foreground">
             <span>System Health</span>
             <button
               onClick={runHealthCheck}
               disabled={healthLoading}
-              style={{
-                padding: '8px 16px', borderRadius: 8, fontSize: 14,
-                background: 'var(--bg-elevated)', color: 'var(--text-primary)',
-                border: '1px solid var(--border)', cursor: 'pointer',
-              }}
+              className="cursor-pointer rounded-lg border border-border bg-muted px-4 py-2 text-sm text-foreground"
             >
               {healthLoading ? 'Checking...' : 'Refresh'}
             </button>
           </div>
         </div>
-        <div style={{ padding: 20 }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 12 }}>
+        <div className="p-5">
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-3">
             {health.map(h => (
-              <div key={h.service} style={{
-                padding: 16, borderRadius: 8, background: 'var(--bg-elevated)',
-                border: '1px solid var(--border)',
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                  <div style={{
-                    width: 12, height: 12, borderRadius: 9999,
-                    background: STATUS_COLORS[h.status] || '#888',
-                  }} />
-                  <span style={{ fontWeight: 500, fontSize: 14, color: 'var(--text-primary)', textTransform: 'capitalize' }}>
+              <div key={h.service} className="rounded-lg border border-border bg-muted p-4">
+                <div className="mb-1 flex items-center gap-2">
+                  <div
+                    className="size-3 rounded-full"
+                    style={{ background: STATUS_COLORS[h.status] || '#888' }}
+                  />
+                  <span className="text-sm font-medium capitalize text-foreground">
                     {h.service}
                   </span>
                 </div>
-                <div style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
+                <div className="text-sm text-muted-foreground">
                   {h.status} &middot; {h.latency_ms}ms
                 </div>
-                {h.error && <div style={{ fontSize: 14, color: 'var(--bb-red)', marginTop: 4 }}>{h.error}</div>}
+                {h.error && <div className="mt-1 text-sm text-destructive">{h.error}</div>}
               </div>
             ))}
             {health.length === 0 && !healthLoading && (
-              <div style={{ color: 'var(--text-secondary)', fontSize: 14 }}>No data yet</div>
+              <div className="text-sm text-muted-foreground">No data yet</div>
             )}
           </div>
         </div>
@@ -237,11 +230,11 @@ export default function AdminTab() {
 
       {/* Import */}
       <div style={glassCard}>
-        <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(255, 255, 255, 0.03)' }}>
-          <div style={{ fontSize: 16, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)' }}>Import Data</div>
+        <div className="border-b border-white/[0.03] px-5 py-4">
+          <div className="text-base font-medium text-foreground">Import Data</div>
         </div>
-        <div style={{ padding: 20 }}>
-          <div style={{ display: 'flex', gap: 12, marginBottom: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+        <div className="p-5">
+          <div className="mb-3 flex flex-wrap items-center gap-3">
             <Select value={importEntity} onValueChange={v => setImportEntity(v)}>
               <SelectTrigger className="w-auto">
                 <SelectValue />
@@ -252,40 +245,31 @@ export default function AdminTab() {
                 ))}
               </SelectContent>
             </Select>
-            <input type="file" accept=".json" onChange={handleFileUpload} style={{ fontSize: 14 }} />
+            <input type="file" accept=".json" onChange={handleFileUpload} className="text-sm" />
           </div>
           <textarea
             value={importText}
             onChange={e => setImportText(e.target.value)}
             placeholder='Paste JSON array, e.g. [{"name":"Acme","email":"a@b.com"}]'
             rows={6}
-            style={{
-              width: '100%', padding: 12, borderRadius: 8, fontFamily: 'monospace', fontSize: 14,
-              background: 'var(--bg-elevated)', color: 'var(--text-primary)', border: '1px solid var(--border)',
-              resize: 'vertical',
-            }}
+            className="w-full resize-y rounded-lg border border-border bg-muted p-3 font-mono text-sm text-foreground"
           />
-          <div style={{ marginTop: 12, display: 'flex', gap: 12, alignItems: 'center' }}>
+          <div className="mt-3 flex items-center gap-3">
             <button
               onClick={handleImport}
               disabled={importing || !importText.trim()}
-              style={{
-                padding: '8px 20px', borderRadius: 8, fontWeight: 500, fontSize: 14,
-                background: 'var(--btn-primary-bg, #F1F5F9)', color: 'var(--btn-primary-fg, #0a0f1a)', border: 'none', cursor: 'pointer',
-                display: 'inline-flex', alignItems: 'center', gap: 8,
-                opacity: importing || !importText.trim() ? 0.5 : 1,
-              }}
+              className="inline-flex cursor-pointer items-center gap-2 rounded-lg border-none bg-primary px-5 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
             >
               {importing ? 'Importing...' : 'Import'}
             </button>
             {importResult && (
-              <span style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
+              <span className="text-sm text-muted-foreground">
                 {importResult.imported} imported, {importResult.skipped} skipped, {importResult.errors.length} errors
               </span>
             )}
           </div>
           {importResult && importResult.errors.length > 0 && (
-            <div style={{ marginTop: 8, fontSize: 14, color: 'var(--bb-red)', maxHeight: 120, overflow: 'auto' }}>
+            <div className="mt-2 max-h-[120px] overflow-auto text-sm text-destructive">
               {importResult.errors.map((e, i) => <div key={i}>Row {e.row}: {e.message}</div>)}
             </div>
           )}
@@ -294,11 +278,11 @@ export default function AdminTab() {
 
       {/* Export */}
       <div style={glassCard}>
-        <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(255, 255, 255, 0.03)' }}>
-          <div style={{ fontSize: 16, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)' }}>Export Data</div>
+        <div className="border-b border-white/[0.03] px-5 py-4">
+          <div className="text-base font-medium text-foreground">Export Data</div>
         </div>
-        <div style={{ padding: 20 }}>
-          <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+        <div className="p-5">
+          <div className="flex flex-wrap items-center gap-3">
             <Select value={exportEntity} onValueChange={v => setExportEntity(v)}>
               <SelectTrigger className="w-auto">
                 <SelectValue />
@@ -309,17 +293,12 @@ export default function AdminTab() {
                 ))}
               </SelectContent>
             </Select>
-            <div style={{ display: 'flex', gap: 4 }}>
+            <div className="flex gap-1">
               {(['csv', 'json'] as const).map(f => (
                 <button
                   key={f}
                   onClick={() => setExportFormat(f)}
-                  style={{
-                    padding: '8px 16px', borderRadius: 8, fontSize: 14, cursor: 'pointer',
-                    background: exportFormat === f ? 'var(--btn-primary-bg, #F1F5F9)' : 'var(--bg-elevated)',
-                    color: exportFormat === f ? 'var(--btn-primary-fg, #0a0f1a)' : 'var(--text-primary)',
-                    border: '1px solid var(--border)',
-                  }}
+                  className={`cursor-pointer rounded-lg border border-border px-4 py-2 text-sm ${exportFormat === f ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground'}`}
                 >
                   {f.toUpperCase()}
                 </button>
@@ -328,12 +307,7 @@ export default function AdminTab() {
             <button
               onClick={handleExport}
               disabled={exporting}
-              style={{
-                padding: '8px 20px', borderRadius: 8, fontWeight: 500, fontSize: 14,
-                background: 'var(--btn-primary-bg, #F1F5F9)', color: 'var(--btn-primary-fg, #0a0f1a)', border: 'none', cursor: 'pointer',
-                display: 'inline-flex', alignItems: 'center', gap: 8,
-                opacity: exporting ? 0.5 : 1,
-              }}
+              className="inline-flex cursor-pointer items-center gap-2 rounded-lg border-none bg-primary px-5 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
             >
               {exporting ? 'Exporting...' : 'Download'}
             </button>
