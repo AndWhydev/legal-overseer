@@ -87,9 +87,8 @@ export function FollowUpChips({ suggestions, onSelect }: FollowUpChipsProps) {
             fontSize: 13,
             cursor: 'pointer',
             transition: 'all 150ms',
-            whiteSpace: 'normal',
+            whiteSpace: 'nowrap',
             textAlign: 'left',
-            maxWidth: 320,
             lineHeight: 1.4,
           }}
           onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)' }}

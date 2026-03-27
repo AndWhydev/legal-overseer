@@ -2241,7 +2241,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
               ))}
 
               {/* Follow-up suggestions */}
-              {!isLoading && followUps.length > 0 && messages.length > 0 && (
+              {!isLoading && !smoothStream.isBuffering && followUps.length > 0 && messages.length > 0 && (
                 <FollowUpChips
                   suggestions={followUps}
                   onSelect={(text) => handleSend(text)}

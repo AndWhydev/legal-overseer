@@ -1,7 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Whisper } from '../types'
 
-function truncateWhisper(text: string, max = 45): string {
+function truncateWhisper(text: string, max = 50): string {
   if (text.length <= max) return text
   const cut = text.lastIndexOf(' ', max - 3)
   return (cut > 0 ? text.slice(0, cut) : text.slice(0, max - 3)) + '...'
@@ -41,11 +41,8 @@ export async function whisperUnfinishedMomentum(
     const recency = Math.max(0, 1 - hoursSince / 48)
     const score = 0.3 + recency * 0.5
 
-    // Truncate topic for display -- 28 chars leaves room for "You were working on " prefix (20 chars)
-    const displayTopic = topic.length > 28 ? topic.slice(0, 25) + '...' : topic
-
     whispers.push({
-      text: truncateWhisper(`You were working on ${displayTopic}`),
+      text: truncateWhisper(`Continue ${topic}`),
       score,
       source: 'unfinished_momentum',
       context: {

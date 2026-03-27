@@ -68,7 +68,6 @@ export function Whispers({ onTapWhisper, visible }: WhispersProps) {
             flexDirection: 'column',
             alignItems: 'center',
             gap: 8,
-            maxWidth: 360,
             marginTop: 24,
           }}
           initial={{ opacity: 1 }}
@@ -95,8 +94,8 @@ export function Whispers({ onTapWhisper, visible }: WhispersProps) {
                 color: 'var(--text-secondary, #94A3B8)',
                 lineHeight: '20px',
                 textAlign: 'center',
+                whiteSpace: 'nowrap',
                 transition: 'color 200ms, background 200ms',
-                maxWidth: '100%',
               }}
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}

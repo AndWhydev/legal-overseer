@@ -12,7 +12,7 @@ import { StatCard, MiniSparkline, MiniBarChart, MiniDonut, MiniGauge } from '@/c
 import { DailyBrief } from './daily-brief';
 import { KanbanBoard } from './kanban-board';
 import { InboxFeed } from './inbox-feed';
-import { RoleStatusCards, AttentionView, RoleDetailView, IntelligenceWidgets } from '@/components/roles';
+import { RoleStatusCards, RoleActivityFeed, AttentionView, RoleDetailView, IntelligenceWidgets } from '@/components/roles';
 import type { RoleType } from '@/lib/bitbit-core';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -253,6 +253,9 @@ export function DashboardRedesign({ columns, tasks, messages, completedToday, to
             </div>
             <AttentionView maxHeight="380px" />
           </div>
+
+          {/* Role Activity Feed — unified timeline across all roles */}
+          <RoleActivityFeed maxHeight="400px" />
         </>
       )}
 

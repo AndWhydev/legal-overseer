@@ -8,6 +8,7 @@ interface UseSmoothStreamResult {
   reset: () => void
   /** Returns all content (displayed + still buffered) without mutating state */
   getFullContent: () => string
+  /** True while the RAF loop is still draining characters from the buffer */
   isBuffering: boolean
 }
 
@@ -24,6 +25,7 @@ interface UseSmoothStreamResult {
  */
 export function useSmoothStream(): UseSmoothStreamResult {
   const [displayed, setDisplayed] = useState('')
+  const [buffering, setBuffering] = useState(false)
   const bufferRef = useRef('')
   const displayedRef = useRef('')
   const rafRef = useRef<number | null>(null)
@@ -34,6 +36,7 @@ export function useSmoothStream(): UseSmoothStreamResult {
       // Buffer empty -- stop loop, will resume when new content arrives
       isRunningRef.current = false
       rafRef.current = null
+      setBuffering(false)
       return
     }
 
@@ -63,6 +66,7 @@ export function useSmoothStream(): UseSmoothStreamResult {
   const feedContent = useCallback(
     (chunk: string) => {
       bufferRef.current += chunk
+      setBuffering(true)
 
       // Start the RAF loop if not already running
       if (!isRunningRef.current) {
@@ -82,6 +86,7 @@ export function useSmoothStream(): UseSmoothStreamResult {
     bufferRef.current = ''
     displayedRef.current = ''
     setDisplayed('')
+    setBuffering(false)
     if (rafRef.current) {
       cancelAnimationFrame(rafRef.current)
       rafRef.current = null
@@ -98,7 +103,5 @@ export function useSmoothStream(): UseSmoothStreamResult {
     }
   }, [])
 
-  const isBuffering = bufferRef.current.length > 0
-
-  return { displayedContent: displayed, feedContent, reset, getFullContent, isBuffering }
+  return { displayedContent: displayed, feedContent, reset, getFullContent, isBuffering: buffering }
 }

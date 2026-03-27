@@ -103,6 +103,7 @@ export function RoleStatusCards({ onRoleClick }: RoleStatusCardsProps) {
   const [roles, setRoles] = useState<RoleStatus[]>([])
   const [loading, setLoading] = useState(true)
   const [hoveredRole, setHoveredRole] = useState<string | null>(null)
+  const [enabling, setEnabling] = useState<string | null>(null)
 
   const fetchStatus = useCallback(async () => {
     try {
@@ -116,6 +117,16 @@ export function RoleStatusCards({ onRoleClick }: RoleStatusCardsProps) {
       setLoading(false)
     }
   }, [])
+
+  const enableRole = useCallback(async (roleType: RoleType) => {
+    setEnabling(roleType)
+    try {
+      const res = await fetch(`/api/roles/${roleType}/enable`, { method: 'POST' })
+      if (res.ok) await fetchStatus()
+    } finally {
+      setEnabling(null)
+    }
+  }, [fetchStatus])
 
   useEffect(() => {
     fetchStatus()
@@ -207,8 +218,30 @@ export function RoleStatusCards({ onRoleClick }: RoleStatusCardsProps) {
               </div>
 
               {!isConfigured ? (
-                <div style={{ fontSize: 14, color: 'var(--text-dim, #475569)', padding: '8px 0' }}>
-                  Not configured
+                <div style={{ padding: '8px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: 14, color: 'var(--text-dim, #475569)' }}>Not configured</span>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); enableRole(rt) }}
+                    disabled={enabling === rt}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      padding: '6px 14px',
+                      borderRadius: 8,
+                      border: '1px solid rgba(34, 197, 94, 0.3)',
+                      background: enabling === rt ? 'rgba(34, 197, 94, 0.08)' : 'rgba(34, 197, 94, 0.12)',
+                      color: '#22c55e',
+                      fontSize: 13,
+                      fontWeight: 500,
+                      cursor: enabling === rt ? 'wait' : 'pointer',
+                      transition: 'all 200ms',
+                      opacity: enabling === rt ? 0.6 : 1,
+                    }}
+                  >
+                    <Power size={12} />
+                    {enabling === rt ? 'Enabling...' : 'Enable'}
+                  </button>
                 </div>
               ) : (
                 <>
