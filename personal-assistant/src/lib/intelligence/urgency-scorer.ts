@@ -307,6 +307,9 @@ const DOLLAR_PATTERN = /\$\s*([\d,]+(?:\.\d{1,2})?)/g
 /** Financial keywords that boost urgency even without an explicit amount */
 const FINANCIAL_KEYWORDS = /\b(?:invoice|invoiced|payment|overdue|billing|billed|outstanding\s+balance|past\s+due|remittance|accounts?\s+(?:receivable|payable))\b/i
 
+/** Payment failure keywords — these are always high urgency regardless of amount */
+const FINANCIAL_FAILURE_KEYWORDS = /\b(?:unsuccessful|failed|declined|rejected|expired|bounced|could\s+not\s+(?:be\s+)?process|unable\s+to\s+(?:process|charge)|payment\s+error|charge\s+failed|transaction\s+failed|card\s+declined)\b/i
+
 function scoreFinancial(text: string): { score: number; detail: string | null } {
   // Extract dollar amounts
   const amounts: number[] = []
@@ -322,7 +325,17 @@ function scoreFinancial(text: string): { score: number; detail: string | null } 
   const maxAmount = amounts.length > 0 ? Math.max(...amounts) : 0
   let score = maxAmount > 0 ? Math.min(1.0, maxAmount / 5000) : 0.0
 
-  // Financial keyword boost
+  // Payment failure = always high urgency — service disruption risk
+  const hasFailure = FINANCIAL_FAILURE_KEYWORDS.test(text)
+  if (hasFailure && FINANCIAL_KEYWORDS.test(text)) {
+    score = Math.max(score, 0.85)
+    const detail = maxAmount > 0
+      ? `PAYMENT FAILURE: $${maxAmount.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`
+      : 'PAYMENT FAILURE detected'
+    return { score, detail }
+  }
+
+  // Financial keyword boost (non-failure)
   if (FINANCIAL_KEYWORDS.test(text)) {
     score += 0.3
   }

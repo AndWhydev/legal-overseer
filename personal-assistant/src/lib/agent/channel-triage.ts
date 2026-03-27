@@ -299,6 +299,12 @@ function synthesizeTaskTitle(msg: Record<string, unknown>): string {
   // Strip Re:/Fwd:/FW: prefixes
   subject = subject.replace(/^(re|fw|fwd)\s*:\s*/gi, '').trim()
 
+  // Strip channel prefixes like [gmail], [outlook]
+  subject = subject.replace(/^\[(?:gmail|outlook|whatsapp|sms|imessage)\]\s*/i, '').trim()
+
+  // Redact inline codes/tokens from title (e.g., "Your code is 260510")
+  subject = subject.replace(/\b\d{4,8}\b/g, '[***]')
+
   // If no subject, derive from sender
   if (!subject) {
     const sender = (msg.sender as string) || 'Unknown'
@@ -313,6 +319,24 @@ function synthesizeTaskTitle(msg: Record<string, unknown>): string {
   }
 
   return subject
+}
+
+/**
+ * Redact sensitive data from text: OTP codes, magic links, auth tokens, API keys.
+ * Prevents leaking credentials into task descriptions or logs.
+ */
+function redactSensitiveData(text: string): string {
+  return text
+    // OTP/verification codes: 4-8 digit codes near trigger words
+    .replace(/(?:code|otp|pin|token|verification)\s*(?:is|:)?\s*\d{4,8}\b/gi, (m) =>
+      m.replace(/\d{4,8}/, '[REDACTED]'))
+    // Standalone 6-digit codes on their own line or after colon
+    .replace(/(?:^|:\s*)\b(\d{6})\b(?:\s*$)/gm, (m) =>
+      m.replace(/\d{6}/, '[REDACTED]'))
+    // Magic links and auth URLs
+    .replace(/https?:\/\/[^\s]*(?:magic[_-]?link|token|auth|verify|confirm|reset|callback)[^\s]*/gi, '[REDACTED_URL]')
+    // API keys and long hex/base64 tokens (32+ chars)
+    .replace(/(?:key|token|secret|password|api[_-]?key)\s*(?:=|:)\s*["']?[A-Za-z0-9+/=_-]{32,}["']?/gi, '[REDACTED_CREDENTIAL]')
 }
 
 /**
@@ -334,15 +358,16 @@ function synthesizeTaskDescription(
     parts.push(`**Action**: ${classification.recommendedActions.join(', ')}`)
   }
 
-  // Prefer AI summary over raw body
+  // Prefer AI summary over raw body — redact sensitive data from both
   if (classification.summary) {
     parts.push('')
-    parts.push(classification.summary)
+    parts.push(redactSensitiveData(classification.summary))
   } else {
     const body = String(msg.body || '').trim()
     if (body) {
       parts.push('')
-      parts.push(body.length > 200 ? body.slice(0, 200) + '...' : body)
+      const truncated = body.length > 200 ? body.slice(0, 200) + '...' : body
+      parts.push(redactSensitiveData(truncated))
     }
   }
 
@@ -750,8 +775,12 @@ export async function runTriage(
     const senderEmailLower = ((msg.sender_email as string) ?? '').toLowerCase()
     const notificationFromEmail = (process.env.NOTIFICATION_FROM_EMAIL || 'bitbit@bitbit.chat').toLowerCase()
     const isSelfEmail = senderEmailLower === notificationFromEmail || senderEmailLower.includes('bitbit')
-    const isTransactional = /(?:password|reset|confirm|verify|sign.?in|log.?in|unsubscribe|no.?reply|noreply|delivery|shipped|tracking|newsletter|bridge test|test from|account.?activ|welcome.?to|receipt|order.?confirm|email.?verif|security.?alert|two.?factor|2fa|otp|one.?time|subscription|billing.?statement|approval.?needed|alert.?escalation|daily.?digest|weekly.?report|bitbit.?digest|bitbit.?alert)/i.test(subjectLower)
-    if (msgCategory === 'action_required' && !isDuplicate && senderType === 'human' && isEmailChannel && !isTransactional && !isSelfEmail && classification.significance >= 7) {
+    const isTransactional = /(?:password|reset|confirm|verify|sign.?in|log.?in|unsubscribe|no.?reply|noreply|delivery|shipped|tracking|newsletter|bridge test|test from|account.?activ|welcome.?to|receipt|order.?confirm|email.?verif|security.?alert|security.?advisory|vulnerability|two.?factor|2fa|otp|one.?time|subscription|billing.?statement|approval.?needed|alert.?escalation|daily.?digest|weekly.?report|bitbit.?digest|bitbit.?alert|magic.?link|connection.?request|invitation|friend.?suggest|oauth|permission.?update|app.?added|authorized|plan.?change|moved.?to.?(?:basic|free|pro|premium|starter|enterprise)|migration.?reminder|migrate.?to|verification.?code|device.?verif)/i.test(subjectLower)
+    // Secondary sender domain check: block notifications from known automated platforms
+    // even when header classification misses them (e.g., missing headers in metadata)
+    const NOTIFICATION_SENDER_DOMAINS = /(?:@|\.)(?:github\.com|linkedin\.com|facebookmail\.com|facebook\.com|twitter\.com|x\.com|noreply\..*|notifications\..*|accounts\.google\.com|googleusercontent\.com|atlassian\.net|jira\.com|slack\.com|trello\.com|notion\.so|canva\.com|figma\.com|zoom\.us|calendly\.com|stripe\.com|paypal\.com|square\.com|intuit\.com|xero\.com|hubspot\.com|mailchimp\.com|sendgrid\.net|supabase\.io|supabase\.com|vercel\.com|fly\.io|railway\.app|cloudflare\.com|sentry\.io|grill?d\.com\.au|glassdoor\.com|indeed\.com|granola\.so)$/i
+    const isSenderAutomated = NOTIFICATION_SENDER_DOMAINS.test(senderEmailLower)
+    if (msgCategory === 'action_required' && !isDuplicate && senderType === 'human' && isEmailChannel && !isTransactional && !isSelfEmail && !isSenderAutomated && classification.significance >= 7) {
       const created = await createTaskForMessage(
         supabase, orgId, msg, classification, priority, contactId,
       )
