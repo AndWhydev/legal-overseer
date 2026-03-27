@@ -10,7 +10,7 @@ import {
   IconBriefcase,
   IconBrain,
   IconTool,
-  IconChevronRight,
+  IconChevronDown,
   IconInbox,
   IconBell,
   IconUsers,
@@ -62,7 +62,6 @@ import {
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
-  SidebarSeparator,
   useSidebar,
 } from '@/components/animate-ui/components/radix/sidebar';
 import {
@@ -344,45 +343,47 @@ export function SidebarNav({
       </SidebarHeader>
 
       <SidebarContent>
-        {visibleCategories.map(cat => {
+        {/* Home — standalone, no section label */}
+        {visibleCategories.filter(c => c.directNav).map(cat => {
           const CatIcon = CATEGORY_ICON_MAP[cat.icon];
-          const isOpen = openGroups.has(cat.id);
           const catBadge = getCategoryBadge(cat);
-
-          // Direct-nav categories (Home) navigate directly — no collapsible
-          if (cat.directNav) {
-            return (
-              <SidebarGroup key={cat.id}>
-                <SidebarMenu>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton
-                      isActive={activeTabId === cat.directNav}
-                      onClick={() => handleItemClick(cat.directNav!)}
-                      tooltip={cat.label}
-                    >
-                      {CatIcon && <CatIcon data-icon />}
-                      <span>{cat.label}</span>
-                    </SidebarMenuButton>
-                    {catBadge > 0 && (
-                      <SidebarMenuBadge>
-                        <Badge variant="destructive" className="text-[10px] px-1.5 py-0">
-                          {catBadge}
-                        </Badge>
-                      </SidebarMenuBadge>
-                    )}
-                  </SidebarMenuItem>
-                </SidebarMenu>
-              </SidebarGroup>
-            );
-          }
-
-          // Collapsible category groups with sub-items
-          const visibleItems = cat.items.filter(id => enabledModules.includes(id));
-
           return (
-            <SidebarGroup key={cat.id}>
+            <SidebarGroup key={cat.id} className="py-0">
               <SidebarMenu>
-                <Collapsible open={isOpen} onOpenChange={() => toggleGroup(cat.id)} className="group/collapsible">
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    isActive={activeTabId === cat.directNav}
+                    onClick={() => handleItemClick(cat.directNav!)}
+                    tooltip={cat.label}
+                  >
+                    {CatIcon && <CatIcon data-icon />}
+                    <span>{cat.label}</span>
+                  </SidebarMenuButton>
+                  {catBadge > 0 && (
+                    <SidebarMenuBadge>
+                      <Badge variant="destructive" className="text-[10px] px-1.5 py-0">
+                        {catBadge}
+                      </Badge>
+                    </SidebarMenuBadge>
+                  )}
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroup>
+          );
+        })}
+
+        {/* Platform — collapsible groups with section label */}
+        <SidebarGroup>
+          <SidebarGroupLabel>Platform</SidebarGroupLabel>
+          <SidebarMenu>
+            {visibleCategories.filter(c => !c.directNav && c.id !== 'settings').map(cat => {
+              const CatIcon = CATEGORY_ICON_MAP[cat.icon];
+              const isOpen = openGroups.has(cat.id);
+              const catBadge = getCategoryBadge(cat);
+              const visibleItems = cat.items.filter(id => enabledModules.includes(id));
+
+              return (
+                <Collapsible key={cat.id} open={isOpen} onOpenChange={() => toggleGroup(cat.id)} className="group/collapsible">
                   <SidebarMenuItem>
                     <CollapsibleTrigger asChild>
                       <SidebarMenuButton tooltip={cat.label}>
@@ -393,28 +394,23 @@ export function SidebarNav({
                             {catBadge}
                           </Badge>
                         )}
-                        <IconChevronRight
+                        <IconChevronDown
                           className={cn(
                             'ml-auto transition-transform duration-200',
-                            isOpen && 'rotate-90',
+                            !isOpen && '-rotate-90',
                           )}
                         />
                       </SidebarMenuButton>
                     </CollapsibleTrigger>
-                    <CollapsibleContent>
+                    <CollapsibleContent className="animate-collapsible-content">
                       <SidebarMenuSub>
                         {visibleItems.map(tabId => {
                           const isActive = tabId === activeTabId;
                           const label =
                             tabLabels[tabId] ??
-                            tabId
-                              .replace(/-/g, ' ')
-                              .replace(/\b\w/g, c => c.toUpperCase());
-
+                            tabId.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
                           const badgeDef = BADGE_CONFIG[tabId];
-                          const badgeCount = badgeDef
-                            ? (badgeCounts[badgeDef.key] ?? 0)
-                            : 0;
+                          const badgeCount = badgeDef ? (badgeCounts[badgeDef.key] ?? 0) : 0;
 
                           return (
                             <SidebarMenuSubItem key={tabId}>
@@ -424,10 +420,7 @@ export function SidebarNav({
                               >
                                 <span>{label}</span>
                                 {badgeCount > 0 && (
-                                  <Badge
-                                    variant="destructive"
-                                    className="text-[10px] px-1.5 py-0 ml-auto"
-                                  >
+                                  <Badge variant="destructive" className="text-[10px] px-1.5 py-0 ml-auto">
                                     {badgeCount}
                                   </Badge>
                                 )}
@@ -439,48 +432,38 @@ export function SidebarNav({
                     </CollapsibleContent>
                   </SidebarMenuItem>
                 </Collapsible>
-              </SidebarMenu>
-            </SidebarGroup>
-          );
-        })}
+              );
+            })}
+          </SidebarMenu>
+        </SidebarGroup>
 
-        {/* Settings group -- always at bottom of content */}
-        <SidebarSeparator />
+        {/* Settings — flat items with section label */}
         <SidebarGroup>
           <SidebarGroupLabel>Settings</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {SIDEBAR_CATEGORIES.find(c => c.id === 'settings')
-                ?.items.filter(id => enabledModules.includes(id))
-                .map(tabId => {
-                  const Icon = ICON_MAP[tabId];
-                  const isActive = tabId === activeTabId;
-                  const label =
-                    tabLabels[tabId] ??
-                    tabId
-                      .replace(/^settings-/, '')
-                      .replace(/-/g, ' ')
-                      .replace(/\b\w/g, c => c.toUpperCase());
+          <SidebarMenu>
+            {SIDEBAR_CATEGORIES.find(c => c.id === 'settings')
+              ?.items.filter(id => enabledModules.includes(id))
+              .map(tabId => {
+                const Icon = ICON_MAP[tabId];
+                const isActive = tabId === activeTabId;
+                const label =
+                  tabLabels[tabId] ??
+                  tabId.replace(/^settings-/, '').replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 
-                  return (
-                    <SidebarMenuItem key={tabId}>
-                      <SidebarMenuButton
-                        isActive={isActive}
-                        onClick={() => handleItemClick(tabId)}
-                        tooltip={label}
-                        role="tab"
-                        id={`tab-${tabId}`}
-                        aria-selected={isActive}
-                        aria-controls={`tabpanel-${tabId}`}
-                      >
-                        {Icon && <Icon data-icon />}
-                        <span>{label}</span>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  );
-                })}
-            </SidebarMenu>
-          </SidebarGroupContent>
+                return (
+                  <SidebarMenuItem key={tabId}>
+                    <SidebarMenuButton
+                      isActive={isActive}
+                      onClick={() => handleItemClick(tabId)}
+                      tooltip={label}
+                    >
+                      {Icon && <Icon data-icon />}
+                      <span>{label}</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
+          </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>
 
