@@ -48,6 +48,7 @@ import { randomUUID } from 'crypto'
 import { logSessionHealth } from './whatsapp-monitor'
 import type { WhatsAppSessionStatus } from './whatsapp-monitor'
 import { processWhatsAppMessage } from './whatsapp-parser'
+import { enrichInboundMessage } from '@/lib/conversation/inbound-enrichment'
 import { logger } from '@/lib/core/logger';
 
 // ---------------------------------------------------------------------------
@@ -527,6 +528,23 @@ export class BaileysBridge {
 
     if (insertedMsg) {
       const processStartMs = Date.now()
+      const senderPhone = jid.replace('@s.whatsapp.net', '')
+
+      // Fire-and-forget: enrich with entity resolution, timeline,
+      // relationship linking (unified pipeline intelligence layer)
+      enrichInboundMessage(this.supabase, {
+        messageId: insertedMsg.id as string,
+        orgId: this.orgId,
+        channel: 'whatsapp',
+        senderIdentifier: senderPhone,
+        senderName: pushName,
+        subject: null,
+        body,
+        priority: 'medium',
+      }).catch(err => {
+        logger.error('[baileys-bridge] Enrichment failed (non-fatal):', err)
+      })
+
       // Process through the same pipeline as webhook messages
       processWhatsAppMessage(this.supabase, this.orgId, insertedMsg, body)
         .catch(err => {

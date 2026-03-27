@@ -74,7 +74,7 @@ describe('KnowledgeGraphClient', () => {
           entity_id: 'person-1',
           name: 'John Doe',
         }),
-        { onConflict: 'org_id,node_type,entity_id' }
+        { onConflict: 'org_id,entity_id' }
       )
     })
 
