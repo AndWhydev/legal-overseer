@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { Download, RefreshCw } from 'lucide-react'
-import { SkeletonTable } from '@/components/ui/skeleton'
+import { Skeleton } from '@/components/ui/skeleton'
 import { EmptyState } from '@/components/ui/empty-state'
 import { useToast } from '@/components/ui/toast'
 
@@ -116,7 +116,19 @@ export function ReportList({ onRefresh }: { onRefresh?: () => void }) {
   }
 
   if (isLoading) {
-    return <SkeletonTable rows={5} cols={5} />
+    return (
+      <div className="overflow-hidden rounded-xl border border-border bg-card">
+        <div className="space-y-0">
+          {Array.from({ length: 5 }).map((_, row) => (
+            <div key={row} className="flex gap-4 border-b border-border/70 px-4 py-3 last:border-b-0">
+              {Array.from({ length: 5 }).map((_, col) => (
+                <Skeleton key={col} className="h-4 flex-1" />
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+    )
   }
 
   if (error) {

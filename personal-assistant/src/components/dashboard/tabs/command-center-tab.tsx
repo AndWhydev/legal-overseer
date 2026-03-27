@@ -492,9 +492,9 @@ function CommandCenterTab() {
                           minute: '2-digit'
                         })
                       ) : 'Just now'}
-                      {activity.channel_type && (
+                      {activity.channel_type ? (
                         <span className="ml-2 opacity-60">via {String(activity.channel_type)}</span>
-                      )}
+                      ) : null}
                     </p>
                   </div>
                 </div>

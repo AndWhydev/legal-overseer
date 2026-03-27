@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
-import { IconHandshake, IconMail } from '@tabler/icons-react'
+import { IconHeartHandshake, IconMail } from '@tabler/icons-react'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -134,7 +134,7 @@ export function LeadsPage() {
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'leads' | 'campaigns')}>
         <TabsList>
           <TabsTrigger value="leads">
-            <IconHandshake data-icon />
+            <IconHeartHandshake data-icon />
             Leads Pipeline
           </TabsTrigger>
           <TabsTrigger value="campaigns">
@@ -189,7 +189,7 @@ export function LeadsPage() {
               <Empty className="flex-1">
                 <EmptyHeader>
                   <EmptyMedia variant="icon">
-                    <IconHandshake data-icon />
+                    <IconHeartHandshake data-icon />
                   </EmptyMedia>
                   <EmptyTitle>{msg.title}</EmptyTitle>
                   <EmptyDescription>{msg.desc}</EmptyDescription>
