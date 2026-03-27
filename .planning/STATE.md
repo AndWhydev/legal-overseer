@@ -26,9 +26,9 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 ## Current Position
 
 Phase: 36 of 36 (Mobile Experience)
-Plan: 3 of 4 in current phase
-Status: Executing
-Last activity: 2026-03-28 - Completed 36-03: Push notifications end-to-end (Expo Push dispatcher + mobile registration + activity feed)
+Plan: 4 of 4 in current phase
+Status: Executing (Task 3 pending verification)
+Last activity: 2026-03-28 - Completed 36-04: Offline queue and swipeable approvals (Tasks 1-2; Task 3 pending verification)
 
 Progress: v1.0 ======== | v1.1 ======== | v1.2 ======== | v1.4 ======== | v1.5 ========== | v1.6 ===--- 33%
 
@@ -85,6 +85,7 @@ Progress: v1.0 ======== | v1.1 ======== | v1.2 ======== | v1.4 ======== | v1.5 =
 | Phase 36 P01 | 18min | 2 tasks | 17 files |
 | Phase 36 P02 | 14min | 2 tasks | 9 files |
 | Phase 36 P03 | 22min | 2 tasks | 12 files |
+| Phase 36 P04 | 10min | 2 tasks | 12 files |
 
 ## Accumulated Context
 
@@ -189,6 +190,10 @@ See PROJECT.md Key Decisions table.
 - [Phase 36]: [Phase 36-03]: Fire-and-forget push wiring via lazy dynamic import in approval-queue and workflow-executor
 - [Phase 36]: [Phase 36-03]: NotificationProvider only mounts when authenticated (conditional in AuthGuard)
 - [Phase 36]: [Phase 36-03]: Notifications persisted to AsyncStorage with 100-item cap for offline survival
+- [Phase 36]: [Phase 36-04]: Offline chat uses useMutation with onlineManager check -- SSE for online, mutation queue for offline
+- [Phase 36]: [Phase 36-04]: configurePersistentMutations at QueryClient level for mutation resume after app restart
+- [Phase 36]: [Phase 36-04]: Swipeable onSwipeableOpen direction: 'left' = swiped right = approve, 'right' = swiped left = reject
+- [Phase 36]: [Phase 36-04]: Approval badge uses useApprovals array length (not separate count endpoint)
 
 ### Roadmap Evolution
 
@@ -214,6 +219,6 @@ See PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-03-27T17:23:44Z
-Stopped at: Completed 36-03-PLAN.md (Push notifications end-to-end)
+Last session: 2026-03-27T17:38:20Z
+Stopped at: Completed 36-04-PLAN.md (Offline queue and swipeable approvals, Task 3 pending verification)
 Resume file: None
