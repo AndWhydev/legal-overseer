@@ -453,7 +453,22 @@ export default function OnboardPage() {
       if (!res.ok) {
         throw new Error('Could not save onboarding completion')
       }
-      router.replace('/dashboard')
+
+      // Create the welcome conversation
+      let redirectUrl = '/dashboard'
+      try {
+        const welcomeRes = await fetch('/api/chat/welcome', { method: 'POST' })
+        if (welcomeRes.ok) {
+          const { conversationId } = await welcomeRes.json() as { conversationId?: string }
+          if (conversationId) {
+            redirectUrl = `/dashboard?tab=chat&conversation=${conversationId}`
+          }
+        }
+      } catch {
+        // Welcome conversation failure is non-blocking -- fall back to plain dashboard
+      }
+
+      router.replace(redirectUrl)
     } catch (error) {
       const msg = error instanceof Error ? error.message : 'Something went wrong finishing setup. Try again.'
       setErrorMsg(msg)

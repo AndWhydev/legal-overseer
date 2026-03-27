@@ -215,7 +215,11 @@ Plans:
 **Goal**: IntelligenceWidgets fetches from the correct /api/intelligence/[metric] endpoints and displays live business intelligence data instead of permanent "Gathering data..." state
 **Depends on**: Phase 27 (role runtime must work to produce intelligence data)
 **Gap Closure**: Closes major integration gap + "Intelligence dashboard display" broken flow from audit
-**Plans**: TBD (run `/gsd:plan-phase 28`)
+**Requirements**: INT-WIRE-01, INT-WIRE-02, INT-WIRE-03, INT-WIRE-04
+**Plans**: 1 plan
+
+Plans:
+- [ ] 28-01-PLAN.md -- Rewire widget fetch to /api/intelligence/[metric] endpoints with response shape mapping
 
 ### Phase 29: SEO/Tender Scheduled Monitoring
 **Goal**: SEO and Tender tools run on scheduled ticks and proactively alert users of ranking drops and new tender matches without requiring chat invocation
@@ -328,10 +332,10 @@ Phase 20 first (no dependencies), then 21 (billing before growth roles), then 22
 | 25. Role Dashboard | v1.4 | 3/3 | Complete | 2026-03-26 |
 | 26. SOTA Response Drafter | v1.4 | 2/2 | Complete | 2026-03-26 |
 | 27. Role Runtime Import Fix | v1.4 | Complete    | 2026-03-27 | 2026-03-27 |
-| 28. Intelligence Dashboard Wiring | v1.4 | 0/0 | Pending | - |
+| 28. Intelligence Dashboard Wiring | v1.4 | 0/1 | Planned | - |
 | 29. SEO/Tender Scheduled Monitoring | v1.4 | 0/0 | Pending | - |
 | 30. Onboarding E2E & First-Run Experience | v1.5 | 0/3 | Planned | - |
 | 31. Channel Smoke Tests & Production Hardening | v1.5 | 0/3 | Planned | - |
 | 32. Marketing Site & Checkout Flow | v1.5 | 0/3 | Planned | - |
 
-**Overall:** 57/57 plans complete for v1.0+v1.1+v1.2 (100%). v1.4: 24/27 plans (Phases 20-27 complete, 28-29 pending). v1.5: Phases 30-32 planned (9 plans).
+**Overall:** 57/57 plans complete for v1.0+v1.1+v1.2 (100%). v1.4: 24/28 plans (Phases 20-27 complete, 28-29 pending). v1.5: Phases 30-32 planned (9 plans).
