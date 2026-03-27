@@ -10,7 +10,7 @@ import {
   IconBriefcase,
   IconBrain,
   IconTool,
-  IconChevronDown,
+  IconChevronRight,
   IconInbox,
   IconBell,
   IconUsers,
@@ -34,6 +34,10 @@ import {
   IconPill,
   IconBug,
   IconUsers as IconSwarm,
+  IconBuilding,
+  IconSelector,
+  IconCheck,
+  IconPlus,
 } from '@tabler/icons-react';
 import type { TabDef } from './spa-shell';
 import type { SidebarCategory } from '@/lib/modules/registry';
@@ -42,6 +46,7 @@ import { useEnabledModules } from '@/lib/modules/use-enabled-modules';
 import { useBadgeCounts } from '@/hooks/use-badge-counts';
 import type { BadgeCounts } from '@/hooks/use-badge-counts';
 import { cn } from '@/lib/utils';
+import { createClient } from '@/lib/supabase/client';
 import {
   Sidebar,
   SidebarContent,
@@ -54,6 +59,9 @@ import {
   SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
   SidebarSeparator,
   useSidebar,
 } from '@/components/animate-ui/components/radix/sidebar';
@@ -124,12 +132,21 @@ const BADGE_CONFIG: Record<string, { key: keyof BadgeCounts }> = {
   invoices: { key: 'invoices' },
 };
 
+// ---- Org type (inlined from org-switcher) ----
+
+interface Org {
+  id: string;
+  name: string;
+  plan_tier: string;
+}
+
 // ---- Props ----
 
 interface SidebarNavProps {
   avatarUrl?: string;
   avatarFallback?: string;
   displayName?: string;
+  userEmail?: string;
   onSignOut?: () => void;
   activeTabId?: string;
   onTabChange?: (tabId: string) => void;
@@ -142,6 +159,7 @@ export function SidebarNav({
   avatarUrl,
   avatarFallback = 'U',
   displayName,
+  userEmail,
   onSignOut,
   activeTabId = 'dashboard',
   onTabChange,
@@ -149,6 +167,60 @@ export function SidebarNav({
 }: SidebarNavProps) {
   const { modules: enabledModules, composition } = useEnabledModules();
   const badgeCounts = useBadgeCounts('sidebar-badge-counts');
+
+  // ---- Org switcher state (inlined from org-switcher.tsx) ----
+  const [orgs, setOrgs] = useState<Org[]>([]);
+  const [activeOrg, setActiveOrg] = useState<Org | null>(null);
+  const [resolvedEmail, setResolvedEmail] = useState<string | undefined>(userEmail);
+
+  useEffect(() => {
+    const supabase = createClient();
+    if (!supabase) return;
+
+    let cancelled = false;
+
+    async function fetchOrgs() {
+      const { data: { user } } = await supabase!.auth.getUser();
+      if (!user || cancelled) return;
+
+      // Resolve email client-side if not provided via props
+      if (!userEmail && user.email) {
+        setResolvedEmail(user.email);
+      }
+
+      const { data: profile } = await supabase!
+        .from('profiles')
+        .select('org_id')
+        .eq('id', user.id)
+        .single();
+
+      const { data: userOrgs } = await supabase!
+        .from('organisations')
+        .select('id, name, plan_tier')
+        .order('name');
+
+      if (userOrgs && !cancelled) {
+        setOrgs(userOrgs);
+        const current = userOrgs.find(o => o.id === profile?.org_id) ?? userOrgs[0] ?? null;
+        setActiveOrg(current);
+      }
+    }
+
+    fetchOrgs();
+    return () => { cancelled = true; };
+  }, [userEmail]);
+
+  const switchOrg = useCallback(async (orgId: string) => {
+    const supabase = createClient();
+    if (!supabase) return;
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    await supabase.from('profiles').update({ org_id: orgId }).eq('id', user.id);
+    const switched = orgs.find(o => o.id === orgId) ?? null;
+    setActiveOrg(switched);
+  }, [orgs]);
 
   // Track which category groups are open
   const activeCategory = getCategoryForTab(activeTabId) ?? 'home';
@@ -204,21 +276,24 @@ export function SidebarNav({
     }, 0);
   };
 
+  // Resolve display email
+  const email = userEmail || resolvedEmail;
+
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
-      {/* Logo header */}
+      {/* Logo + Org Switcher header */}
       <SidebarHeader>
         <SidebarMenu>
+          {/* Logo */}
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" className="pointer-events-none">
-              <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+              <div className="flex size-8 items-center justify-center rounded-lg overflow-hidden">
                 <Image
-                  src="/bitbit-logo.svg"
+                  src="/bitbit-app-icon.png"
                   alt="BitBit"
-                  width={20}
-                  height={20}
+                  width={32}
+                  height={32}
                   priority
-                  className="invert dark:invert-0"
                 />
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
@@ -226,6 +301,60 @@ export function SidebarNav({
                 <span className="truncate text-xs text-muted-foreground">AI Operations</span>
               </div>
             </SidebarMenuButton>
+          </SidebarMenuItem>
+
+          {/* Org / Team Switcher */}
+          <SidebarMenuItem>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <SidebarMenuButton size="lg">
+                  <div className="flex size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+                    <IconBuilding className="size-4" />
+                  </div>
+                  <div className="grid flex-1 text-left text-sm leading-tight">
+                    <span className="truncate font-semibold">
+                      {activeOrg?.name ?? 'Personal'}
+                    </span>
+                    <span className="truncate text-xs text-muted-foreground">
+                      {activeOrg?.plan_tier ?? 'Free'}
+                    </span>
+                  </div>
+                  <IconSelector className="ml-auto" />
+                </SidebarMenuButton>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                className="w-[--radix-dropdown-menu-trigger-width] min-w-56"
+                side="bottom"
+                align="start"
+                sideOffset={4}
+              >
+                <DropdownMenuLabel className="text-xs text-muted-foreground">
+                  Teams
+                </DropdownMenuLabel>
+                {orgs.map((org) => (
+                  <DropdownMenuItem
+                    key={org.id}
+                    onClick={() => switchOrg(org.id)}
+                    className="gap-2 p-2"
+                  >
+                    <div className="flex size-6 items-center justify-center rounded-md border bg-background">
+                      <IconBuilding className="size-4" />
+                    </div>
+                    {org.name}
+                    {org.id === activeOrg?.id && (
+                      <IconCheck className="ml-auto size-4" />
+                    )}
+                  </DropdownMenuItem>
+                ))}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="gap-2 p-2">
+                  <div className="flex size-6 items-center justify-center rounded-md border bg-background">
+                    <IconPlus className="size-4" />
+                  </div>
+                  Add team
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
@@ -236,7 +365,7 @@ export function SidebarNav({
           const isOpen = openGroups.has(cat.id);
           const catBadge = getCategoryBadge(cat);
 
-          // Direct-nav categories (Home) navigate directly
+          // Direct-nav categories (Home) navigate directly — no collapsible
           if (cat.directNav) {
             return (
               <SidebarGroup key={cat.id}>
@@ -263,7 +392,9 @@ export function SidebarNav({
             );
           }
 
-          // Collapsible category groups
+          // Collapsible category groups with sub-items
+          const visibleItems = cat.items.filter(id => enabledModules.includes(id));
+
           return (
             <Collapsible
               key={cat.id}
@@ -272,73 +403,74 @@ export function SidebarNav({
               className="group/collapsible"
             >
               <SidebarGroup>
-                <SidebarGroupLabel asChild>
-                  <CollapsibleTrigger className="flex w-full items-center gap-2">
-                    {CatIcon && <CatIcon data-icon />}
-                    <span className="flex-1 text-left">{cat.label}</span>
-                    {catBadge > 0 && (
-                      <Badge variant="destructive" className="text-[10px] px-1.5 py-0 mr-1">
-                        {catBadge}
-                      </Badge>
-                    )}
-                    <IconChevronDown
-                      data-icon
-                      className={cn(
-                        'transition-transform duration-200',
-                        isOpen && 'rotate-180',
-                      )}
-                    />
-                  </CollapsibleTrigger>
-                </SidebarGroupLabel>
-                <CollapsibleContent>
-                  <SidebarGroupContent>
-                    <SidebarMenu>
-                      {cat.items
-                        .filter(id => enabledModules.includes(id))
-                        .map(tabId => {
-                          const Icon = ICON_MAP[tabId];
-                          const isActive = tabId === activeTabId;
-                          const label =
-                            tabLabels[tabId] ??
-                            tabId
-                              .replace(/-/g, ' ')
-                              .replace(/\b\w/g, c => c.toUpperCase());
+                <SidebarGroupLabel>{cat.label}</SidebarGroupLabel>
+                <SidebarMenu>
+                  <Collapsible open={isOpen} onOpenChange={() => toggleGroup(cat.id)}>
+                    <SidebarMenuItem>
+                      <CollapsibleTrigger asChild>
+                        <SidebarMenuButton tooltip={cat.label}>
+                          {CatIcon && <CatIcon data-icon />}
+                          <span>{cat.label}</span>
+                          {catBadge > 0 && (
+                            <Badge variant="destructive" className="text-[10px] px-1.5 py-0 mr-1">
+                              {catBadge}
+                            </Badge>
+                          )}
+                          <IconChevronRight
+                            className={cn(
+                              'ml-auto transition-transform duration-200',
+                              isOpen && 'rotate-90',
+                            )}
+                          />
+                        </SidebarMenuButton>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent>
+                        <SidebarMenuSub>
+                          {visibleItems.map(tabId => {
+                            const isActive = tabId === activeTabId;
+                            const label =
+                              tabLabels[tabId] ??
+                              tabId
+                                .replace(/-/g, ' ')
+                                .replace(/\b\w/g, c => c.toUpperCase());
 
-                          const badgeDef = BADGE_CONFIG[tabId];
-                          const badgeCount = badgeDef
-                            ? (badgeCounts[badgeDef.key] ?? 0)
-                            : 0;
+                            const badgeDef = BADGE_CONFIG[tabId];
+                            const badgeCount = badgeDef
+                              ? (badgeCounts[badgeDef.key] ?? 0)
+                              : 0;
 
-                          return (
-                            <SidebarMenuItem key={tabId}>
-                              <SidebarMenuButton
-                                isActive={isActive}
-                                onClick={() => handleItemClick(tabId)}
-                                tooltip={label}
-                                role="tab"
-                                id={`tab-${tabId}`}
-                                aria-selected={isActive}
-                                aria-controls={`tabpanel-${tabId}`}
-                              >
-                                {Icon && <Icon data-icon />}
-                                <span>{label}</span>
-                              </SidebarMenuButton>
-                              {badgeCount > 0 && (
-                                <SidebarMenuBadge>
-                                  <Badge
-                                    variant="destructive"
-                                    className="text-[10px] px-1.5 py-0"
+                            return (
+                              <SidebarMenuSubItem key={tabId}>
+                                <SidebarMenuSubButton
+                                  asChild
+                                  isActive={isActive}
+                                >
+                                  <button
+                                    onClick={() => handleItemClick(tabId)}
+                                    role="tab"
+                                    id={`tab-${tabId}`}
+                                    aria-selected={isActive}
+                                    aria-controls={`tabpanel-${tabId}`}
                                   >
-                                    {badgeCount}
-                                  </Badge>
-                                </SidebarMenuBadge>
-                              )}
-                            </SidebarMenuItem>
-                          );
-                        })}
-                    </SidebarMenu>
-                  </SidebarGroupContent>
-                </CollapsibleContent>
+                                    <span>{label}</span>
+                                    {badgeCount > 0 && (
+                                      <Badge
+                                        variant="destructive"
+                                        className="text-[10px] px-1.5 py-0 ml-auto"
+                                      >
+                                        {badgeCount}
+                                      </Badge>
+                                    )}
+                                  </button>
+                                </SidebarMenuSubButton>
+                              </SidebarMenuSubItem>
+                            );
+                          })}
+                        </SidebarMenuSub>
+                      </CollapsibleContent>
+                    </SidebarMenuItem>
+                  </Collapsible>
+                </SidebarMenu>
               </SidebarGroup>
             </Collapsible>
           );
@@ -347,10 +479,7 @@ export function SidebarNav({
         {/* Settings group -- always at bottom of content */}
         <SidebarSeparator />
         <SidebarGroup>
-          <SidebarGroupLabel>
-            <IconSettings data-icon />
-            <span>Settings</span>
-          </SidebarGroupLabel>
+          <SidebarGroupLabel>Settings</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {SIDEBAR_CATEGORIES.find(c => c.id === 'settings')
@@ -397,19 +526,19 @@ export function SidebarNav({
                   size="lg"
                   className="data-open:bg-sidebar-accent data-open:text-sidebar-accent-foreground"
                 >
-                  <Avatar size="sm">
+                  <Avatar className="size-8 rounded-lg">
                     {avatarUrl && <AvatarImage src={avatarUrl} alt="User avatar" />}
-                    <AvatarFallback>{avatarFallback}</AvatarFallback>
+                    <AvatarFallback className="rounded-lg">{avatarFallback}</AvatarFallback>
                   </Avatar>
                   <div className="grid flex-1 text-left text-sm leading-tight">
                     <span className="truncate font-semibold">
                       {displayName || 'User'}
                     </span>
                     <span className="truncate text-xs text-muted-foreground">
-                      Account
+                      {email || 'Account'}
                     </span>
                   </div>
-                  <IconChevronDown data-icon className="ml-auto" />
+                  <IconSelector className="ml-auto size-4" />
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent
@@ -418,29 +547,43 @@ export function SidebarNav({
                 align="start"
                 sideOffset={4}
               >
-                <DropdownMenuLabel className="font-normal">
-                  <div className="flex flex-col gap-1">
-                    <p className="text-sm font-medium leading-none">
-                      {displayName || 'User'}
-                    </p>
-                    <p className="text-xs leading-none text-muted-foreground">
-                      Account settings
-                    </p>
+                <DropdownMenuLabel className="p-0 font-normal">
+                  <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
+                    <Avatar className="size-8 rounded-lg">
+                      {avatarUrl && <AvatarImage src={avatarUrl} alt="User avatar" />}
+                      <AvatarFallback className="rounded-lg">{avatarFallback}</AvatarFallback>
+                    </Avatar>
+                    <div className="grid flex-1 text-left text-sm leading-tight">
+                      <span className="truncate font-semibold">
+                        {displayName || 'User'}
+                      </span>
+                      <span className="truncate text-xs text-muted-foreground">
+                        {email || 'Account'}
+                      </span>
+                    </div>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
-                  onClick={() => {
-                    onTabChange?.('settings-connections');
-                  }}
+                  onClick={() => onTabChange?.('settings-connections')}
                 >
-                  <IconSettings data-icon />
+                  <IconSettings className="size-4" />
                   Settings
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => onTabChange?.('settings-billing')}
+                >
+                  <IconCurrencyDollar className="size-4" />
+                  Billing
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <IconBell className="size-4" />
+                  Notifications
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => onSignOut?.()}>
-                  <IconLogout data-icon />
-                  Sign out
+                  <IconLogout className="size-4" />
+                  Log out
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
