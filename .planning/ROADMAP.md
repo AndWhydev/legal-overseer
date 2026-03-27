@@ -5,7 +5,7 @@
 - v1.0 MVP -- Phases 1-6 (shipped 2026-02-21)
 - v1.1 Agent Runtime + First Agents -- Phases 7-12 (shipped 2026-02-22)
 - v1.2 Battle-Testing & Sellability -- Phases 13-19 (shipped 2026-03-02)
-- v1.4 Media, Billing & Growth Roles -- Phases 20-24 (in progress)
+- v1.4 Media, Billing & Growth Roles -- Phases 20-29 (in progress)
 
 ## Phases
 
@@ -244,6 +244,9 @@ Plans:
 - [x] **Phase 24b: Intelligence Layer** - Revenue radar, client health scoring, cash flow projections, capacity oracle, cron recomputation, and API routes (completed 2026-03-26)
 - [x] **Phase 25: Role Dashboard** - Unified role activity feed, status cards, autonomy controls, attention view, intelligence widgets, and dashboard integration (completed 2026-03-26)
 - [x] **Phase 26: SOTA Response Drafter** - Wire ContextAssembler + RAG + Memory Palace + entity briefings into the response drafter for contextually rich, business-aware reply generation (completed 2026-03-26)
+- [ ] **Phase 27: Role Runtime Import Fix** - Fix critical role domain module imports so cron-triggered role execution actually fires (gap closure)
+- [ ] **Phase 28: Intelligence Dashboard Wiring** - Wire IntelligenceWidgets to correct API endpoints so dashboard displays live data (gap closure)
+- [ ] **Phase 29: SEO/Tender Scheduled Monitoring** - Add scheduled ticks and alert pathways for SEO and Tender tools (gap closure)
 
 ## Phase Details
 
@@ -382,6 +385,38 @@ Plans:
 - [ ] 26-01-PLAN.md -- DraftContextAssembler with parallel context fetching and context-depth confidence scoring
 - [ ] 26-02-PLAN.md -- Wire assembler into client-comms.ts draftReply, tone adaptation, blind comparison evaluation harness
 
+### Phase 27: Role Runtime Import Fix
+**Goal**: Role domain modules are imported in the cron runtime path so scheduled role execution actually fires -- finance, comms, and sales roles execute on their 5-minute tick
+**Depends on**: Phase 26 (current codebase)
+**Gap Closure**: Closes critical integration gap + "Role scheduled execution" broken flow from audit
+**Success Criteria** (what must be TRUE):
+  1. role-tick cron imports all domain role modules (finance, comms, sales) triggering registerRole() side effects
+  2. getRole() returns a valid role implementation for finance, comms, and sales at cron runtime
+  3. /api/cron/revenue-intelligence added to vercel.json cron configuration
+**Plans**: TBD (run `/gsd:plan-phase 27`)
+
+### Phase 28: Intelligence Dashboard Wiring
+**Goal**: IntelligenceWidgets fetches from the correct /api/intelligence/[metric] endpoints and displays live business intelligence data instead of permanent "Gathering data..." state
+**Depends on**: Phase 27 (role runtime must work to produce intelligence data)
+**Gap Closure**: Closes major integration gap + "Intelligence dashboard display" broken flow from audit
+**Success Criteria** (what must be TRUE):
+  1. IntelligenceWidgets calls /api/intelligence/{metric} for each of the 4 widgets (revenue, client-health, cash-flow, capacity)
+  2. Dashboard intelligence section renders actual computed data when role data exists
+  3. Loading/empty states handled gracefully when intelligence data is not yet computed
+**Plans**: TBD (run `/gsd:plan-phase 28`)
+
+### Phase 29: SEO/Tender Scheduled Monitoring
+**Goal**: SEO and Tender tools run on scheduled ticks and proactively alert users of ranking drops and new tender matches without requiring chat invocation
+**Depends on**: Phase 27 (role runtime must work for role-based scheduling)
+**Requirements**: SEO-03, SEO-04, TNDR-03, TNDR-04
+**Gap Closure**: Closes 4 partial requirements + "SEO/Tender scheduled monitoring" broken flow from audit
+**Success Criteria** (what must be TRUE):
+  1. SEO scanning executes on a scheduled tick (via role evaluate() or dedicated cron)
+  2. Ranking drops detected by scheduled scan trigger proactive alert to user
+  3. Tender scanning executes on a scheduled tick (via role evaluate() or dedicated cron)
+  4. New tender matches detected by scheduled scan trigger proactive notification to user
+**Plans**: TBD (run `/gsd:plan-phase 29`)
+
 ## Progress
 
 **Execution Order:**
@@ -418,5 +453,8 @@ Phase 20 first (no dependencies), then 21 (billing before growth roles), then 22
 | 24b. Intelligence Layer | v1.4 | 3/3 | Complete | 2026-03-26 |
 | 25. Role Dashboard | v1.4 | 3/3 | Complete | 2026-03-26 |
 | 26. SOTA Response Drafter | 2/2 | Complete    | 2026-03-26 | - |
+| 27. Role Runtime Import Fix | v1.4 | 0/0 | Pending | - |
+| 28. Intelligence Dashboard Wiring | v1.4 | 0/0 | Pending | - |
+| 29. SEO/Tender Scheduled Monitoring | v1.4 | 0/0 | Pending | - |
 
-**Overall:** 57/57 plans complete for v1.0+v1.1+v1.2 (100%). v1.4: 23/25 plans (Phases 20-26).
+**Overall:** 57/57 plans complete for v1.0+v1.1+v1.2 (100%). v1.4: 23/25 plans (Phases 20-26) + 3 gap closure phases (27-29) pending.

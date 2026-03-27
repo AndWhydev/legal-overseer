@@ -367,17 +367,75 @@ export function isDataForSEOConfigured(): boolean {
 }
 
 /**
- * Get remaining API credits (placeholder for future implementation)
+ * Get account balance and usage data from DataForSEO
  *
- * Note: DataForSEO provides account balance info via a separate endpoint.
- * This can be implemented when needed for monitoring costs.
+ * Calls GET /v3/appendix/user_data to retrieve current balance,
+ * rate limits, and usage statistics for the authenticated account.
+ *
+ * @returns Account balance and currency, or null if credentials are missing
+ * @throws DataForSEOError on API failure
+ *
+ * @example
+ * ```typescript
+ * const info = await getAccountBalance();
+ * if (info) {
+ *   console.log(`Balance: ${info.balance} ${info.currency}`);
+ * }
+ * ```
  */
 export async function getAccountBalance(): Promise<{
   balance: number;
   currency: string;
 } | null> {
-  // TODO: Implement balance check endpoint
-  // GET https://api.dataforseo.com/v3/appendix/user_data
-  logger.warn('DataForSEO balance check not yet implemented');
-  return null;
+  if (!isDataForSEOConfigured()) {
+    logger.warn('DataForSEO not configured, cannot check balance');
+    return null;
+  }
+
+  const { login, password } = getCredentials();
+  const authHeader = createAuthHeader(login, password);
+
+  try {
+    const response = await fetch(DATAFORSEO_ENDPOINTS.userData, {
+      method: 'GET',
+      headers: {
+        Authorization: authHeader,
+      },
+      signal: AbortSignal.timeout(DEFAULT_DATAFORSEO_CONFIG.timeout),
+    });
+
+    if (!response.ok) {
+      const body = await response.text().catch(() => undefined);
+      throw DataForSEOError.fromResponse(response, body);
+    }
+
+    const data = await response.json();
+
+    if (data.status_code !== 20000 || !data.tasks?.[0]?.result?.[0]) {
+      throw DataForSEOError.fromAPIError(
+        data.status_code,
+        data.status_message ?? 'Failed to retrieve user data'
+      );
+    }
+
+    const result = data.tasks[0].result[0];
+    return {
+      balance: result.money?.balance ?? 0,
+      currency: result.money?.currency ?? 'USD',
+    };
+  } catch (error) {
+    if (error instanceof DataForSEOError) {
+      throw error;
+    }
+
+    if (error instanceof DOMException && error.name === 'TimeoutError') {
+      throw new DataForSEOError('Balance check timed out', 0, true);
+    }
+
+    throw new DataForSEOError(
+      `Failed to check balance: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      0,
+      false
+    );
+  }
 }

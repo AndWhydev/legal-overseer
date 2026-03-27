@@ -277,6 +277,9 @@ export const DATAFORSEO_ENDPOINTS = {
   /** Keywords for site endpoint */
   keywordsForSite:
     'https://api.dataforseo.com/v3/keywords_data/google_ads/keywords_for_site/live',
+
+  /** Account/user data endpoint (balance, limits) */
+  userData: 'https://api.dataforseo.com/v3/appendix/user_data',
 } as const;
 
 /**

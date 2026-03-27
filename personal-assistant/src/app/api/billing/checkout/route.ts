@@ -26,10 +26,25 @@ export async function POST(req: NextRequest) {
   }
 
   const tier = body.tier as string
-  const orgId = body.orgId as string
+  let orgId = body.orgId as string | undefined
 
-  if (!tier || !orgId) {
-    return NextResponse.json({ error: 'Missing tier or orgId' }, { status: 400 })
+  if (!tier) {
+    return NextResponse.json({ error: 'Missing tier' }, { status: 400 })
+  }
+
+  // Resolve orgId from user profile if not provided in body
+  if (!orgId) {
+    const { data: profile } = await client
+      .from('profiles')
+      .select('org_id')
+      .eq('id', user.id)
+      .single()
+
+    orgId = (profile?.org_id as string) ?? undefined
+  }
+
+  if (!orgId) {
+    return NextResponse.json({ error: 'No organisation found for user' }, { status: 404 })
   }
 
   if (!['starter', 'growth', 'scale'].includes(tier)) {

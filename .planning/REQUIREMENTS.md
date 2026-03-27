@@ -107,16 +107,16 @@ Requirements for Media, Billing & Growth Roles. Closes the media gap, adds billi
 
 - [x] **SEO-01**: SEO tools registered as agent tool group (wraps existing ai-search-optimizer.ts)
 - [x] **SEO-02**: User can check keyword rankings via chat command
-- [x] **SEO-03**: SEO monitor runs on scheduled tick to detect ranking changes
-- [x] **SEO-04**: Ranking drops trigger alert with diagnosis and suggested fixes
+- [ ] **SEO-03**: SEO monitor runs on scheduled tick to detect ranking changes
+- [ ] **SEO-04**: Ranking drops trigger alert with diagnosis and suggested fixes
 - [x] **SEO-05**: SEO tools are plan-gated (growth and scale tiers only)
 
 ### Growth Role: Tender Hunter
 
 - [x] **TNDR-01**: Tender Hunter registered as agent tool group (wraps existing tender-hunter.ts)
 - [x] **TNDR-02**: User can search government tenders by keyword, category, and location via chat
-- [x] **TNDR-03**: Tender Hunter runs on scheduled tick to find new matching opportunities
-- [x] **TNDR-04**: New tender matches trigger notification with qualification assessment
+- [ ] **TNDR-03**: Tender Hunter runs on scheduled tick to find new matching opportunities
+- [ ] **TNDR-04**: New tender matches trigger notification with qualification assessment
 - [x] **TNDR-05**: Tender tools are plan-gated (scale tier only)
 
 ### Growth Role: Content Creator
@@ -230,13 +230,13 @@ Requirements for Media, Billing & Growth Roles. Closes the media gap, adds billi
 | ADS-04 | Phase 22 | Complete |
 | SEO-01 | Phase 23 | Complete |
 | SEO-02 | Phase 23 | Complete |
-| SEO-03 | Phase 23 | Complete |
-| SEO-04 | Phase 23 | Complete |
+| SEO-03 | Phase 23 -> Phase 29 | Pending |
+| SEO-04 | Phase 23 -> Phase 29 | Pending |
 | SEO-05 | Phase 23 | Complete |
 | TNDR-01 | Phase 23 | Complete |
 | TNDR-02 | Phase 23 | Complete |
-| TNDR-03 | Phase 23 | Complete |
-| TNDR-04 | Phase 23 | Complete |
+| TNDR-03 | Phase 23 -> Phase 29 | Pending |
+| TNDR-04 | Phase 23 -> Phase 29 | Pending |
 | TNDR-05 | Phase 23 | Complete |
 | CONT-01 | Phase 24 | Complete |
 | CONT-02 | Phase 24 | Complete |
@@ -245,7 +245,7 @@ Requirements for Media, Billing & Growth Roles. Closes the media gap, adds billi
 
 **Coverage:**
 - v1.2 requirements: 37 satisfied
-- v1.4 requirements: 42 total, 0 satisfied
+- v1.4 requirements: 42 total, 38 satisfied, 4 pending (SEO-03, SEO-04, TNDR-03, TNDR-04 -> Phase 29)
 - Mapped to phases: 42/42 (100%)
 
 ---
