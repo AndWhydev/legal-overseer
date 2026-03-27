@@ -2,12 +2,16 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { C } from '@/lib/styles/design-tokens'
+
+/** Routes where the NavBar should NOT render */
+const HIDDEN_PREFIXES = ['/dashboard', '/login', '/onboard', '/callback', '/chat']
 
 export function NavBar() {
   const pathname = usePathname()
-  const isLanding = pathname === '/'
 
-  if (!isLanding) {
+  // Hide on dashboard, auth, and app routes
+  if (HIDDEN_PREFIXES.some((p) => pathname.startsWith(p))) {
     return null
   }
 
@@ -17,11 +21,11 @@ export function NavBar() {
         position: 'sticky',
         top: 0,
         zIndex: 1000,
-        padding: '16px 20px',
-        background: 'rgba(10, 10, 15, 0.8)',
+        padding: '12px 20px',
+        background: 'rgba(10, 10, 15, 0.85)',
         backdropFilter: 'blur(20px)',
         WebkitBackdropFilter: 'blur(20px)',
-        borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+        borderBottom: `1px solid ${C.borderSubtle}`,
       }}
     >
       <div
@@ -37,16 +41,16 @@ export function NavBar() {
         <Link
           href="/"
           style={{
-            fontSize: '16px',
+            fontSize: 16,
             fontWeight: 500,
-            color: '#F1F5F9',
+            color: C.textPrimary,
             textDecoration: 'none',
             display: 'flex',
             alignItems: 'center',
-            gap: '8px',
+            gap: 8,
+            letterSpacing: '-0.01em',
           }}
         >
-          <span style={{ fontSize: '16px' }}>🤖</span>
           BitBit
         </Link>
 
@@ -54,82 +58,31 @@ export function NavBar() {
         <div
           style={{
             display: 'flex',
-            gap: '32px',
+            gap: 28,
             alignItems: 'center',
           }}
         >
-          <a
-            href="#features"
-            style={{
-              color: '#94A3B8',
-              textDecoration: 'none',
-              fontSize: '14px',
-              fontWeight: 500,
-              transition: 'color 200ms',
-              cursor: 'pointer',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.color = '#F1F5F9'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.color = '#94A3B8'
-            }}
-          >
-            Features
-          </a>
-          <a
-            href="#pricing"
-            style={{
-              color: '#94A3B8',
-              textDecoration: 'none',
-              fontSize: '14px',
-              fontWeight: 500,
-              transition: 'color 200ms',
-              cursor: 'pointer',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.color = '#F1F5F9'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.color = '#94A3B8'
-            }}
-          >
-            Pricing
-          </a>
-          <a
-            href="/docs"
-            style={{
-              color: '#94A3B8',
-              textDecoration: 'none',
-              fontSize: '14px',
-              fontWeight: 500,
-              transition: 'color 200ms',
-              cursor: 'pointer',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.color = '#F1F5F9'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.color = '#94A3B8'
-            }}
-          >
-            Docs
-          </a>
+          <NavLink href="/industries/agencies">Industries</NavLink>
+          <NavLink href="/pricing">Pricing</NavLink>
+          <NavLink href="/case-study">Case Study</NavLink>
 
-          <div style={{ display: 'flex', gap: '12px' }}>
+          <div style={{ display: 'flex', gap: 12, marginLeft: 4 }}>
             <Link
               href="/login"
               style={{
-                padding: '8px 16px',
-                borderRadius: '8px',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                color: '#F1F5F9',
+                height: 36,
+                padding: '0 16px',
+                borderRadius: 8,
+                border: `1px solid ${C.borderHover}`,
+                color: C.textPrimary,
                 textDecoration: 'none',
-                fontSize: '14px',
+                fontSize: 14,
                 fontWeight: 500,
                 transition: 'all 200ms',
                 cursor: 'pointer',
-                display: 'inline-block',
+                display: 'inline-flex',
+                alignItems: 'center',
+                background: 'transparent',
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'
@@ -137,7 +90,7 @@ export function NavBar() {
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.background = 'transparent'
-                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)'
+                e.currentTarget.style.borderColor = C.borderHover
               }}
             >
               Log In
@@ -145,23 +98,25 @@ export function NavBar() {
             <Link
               href="/onboard"
               style={{
-                padding: '8px 16px',
-                borderRadius: '8px',
-                background: '#10b981',
-                color: '#000',
+                height: 36,
+                padding: '0 16px',
+                borderRadius: 8,
+                background: C.textPrimary,
+                color: '#0a0f1a',
                 textDecoration: 'none',
-                fontSize: '14px',
+                fontSize: 14,
                 fontWeight: 500,
                 transition: 'all 200ms',
                 cursor: 'pointer',
-                display: 'inline-block',
+                display: 'inline-flex',
+                alignItems: 'center',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = '#059669'
+                e.currentTarget.style.opacity = '0.9'
                 e.currentTarget.style.transform = 'translateY(-1px)'
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = '#10b981'
+                e.currentTarget.style.opacity = '1'
                 e.currentTarget.style.transform = 'translateY(0)'
               }}
             >
@@ -171,5 +126,29 @@ export function NavBar() {
         </div>
       </div>
     </nav>
+  )
+}
+
+function NavLink({ href, children }: { href: string; children: React.ReactNode }) {
+  return (
+    <Link
+      href={href}
+      style={{
+        color: C.textSecondary,
+        textDecoration: 'none',
+        fontSize: 14,
+        fontWeight: 500,
+        transition: 'color 200ms',
+        cursor: 'pointer',
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.color = C.textPrimary
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.color = C.textSecondary
+      }}
+    >
+      {children}
+    </Link>
   )
 }

@@ -1,30 +1,26 @@
 'use client'
 
 import React, { useState } from 'react'
+import Link from 'next/link'
+import { C } from '@/lib/styles/design-tokens'
 
 const FOOTER_LINKS = {
   product: [
-    { name: 'Features', href: '#features' },
-    { name: 'Pricing', href: '#pricing' },
-    { name: 'Security', href: '#' },
-    { name: 'Roadmap', href: '#' },
+    { name: 'Features', href: '/#features' },
+    { name: 'Pricing', href: '/pricing' },
+    { name: 'For Agencies', href: '/industries/agencies' },
+    { name: 'For Trades', href: '/industries/trades' },
+    { name: 'For Professional Services', href: '/industries/professional-services' },
   ],
   company: [
-    { name: 'About', href: '#' },
-    { name: 'Blog', href: '#' },
-    { name: 'Careers', href: '#' },
-    { name: 'Contact', href: '#' },
+    { name: 'About', href: '/about' },
+    { name: 'Case Study', href: '/case-study' },
+    { name: 'Blog', href: '/blog' },
+    { name: 'Contact', href: 'mailto:support@bitbit.chat' },
   ],
   legal: [
     { name: 'Privacy Policy', href: '/privacy' },
     { name: 'Terms of Service', href: '/terms' },
-    { name: 'Cookie Policy', href: '#' },
-    { name: 'Compliance', href: '#' },
-  ],
-  connect: [
-    { name: 'Twitter', icon: '𝕏', href: '#' },
-    { name: 'GitHub', icon: '🐙', href: '#' },
-    { name: 'LinkedIn', icon: '🔗', href: '#' },
   ],
 }
 
@@ -45,7 +41,7 @@ export default function Footer() {
     <footer
       style={{
         background: '#0a0a0f',
-        borderTop: '1px solid rgba(255, 255, 255, 0.05)',
+        borderTop: `1px solid ${C.borderSubtle}`,
         padding: '60px 20px 40px',
       }}
     >
@@ -60,155 +56,44 @@ export default function Footer() {
           }}
         >
           {/* Product Column */}
-          <div>
-            <h4
-              style={{
-                fontSize: '14px',
-                fontWeight: 500,
-                color: '#F1F5F9',
-                marginBottom: '20px',
-                textTransform: 'uppercase',
-                letterSpacing: '0.04em',
-              }}
-            >
-              Product
-            </h4>
-            <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-              {FOOTER_LINKS.product.map((link) => (
-                <li key={link.name} style={{ marginBottom: '12px' }}>
-                  <a
-                    href={link.href}
-                    style={{
-                      fontSize: '14px',
-                      color: '#94A3B8',
-                      textDecoration: 'none',
-                      transition: 'color 200ms',
-                      cursor: 'pointer',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.color = '#10b981'
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.color = '#94A3B8'
-                    }}
-                  >
-                    {link.name}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
+          <FooterColumn title="Product" links={FOOTER_LINKS.product} />
 
           {/* Company Column */}
-          <div>
-            <h4
-              style={{
-                fontSize: '14px',
-                fontWeight: 500,
-                color: '#F1F5F9',
-                marginBottom: '20px',
-                textTransform: 'uppercase',
-                letterSpacing: '0.04em',
-              }}
-            >
-              Company
-            </h4>
-            <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-              {FOOTER_LINKS.company.map((link) => (
-                <li key={link.name} style={{ marginBottom: '12px' }}>
-                  <a
-                    href={link.href}
-                    style={{
-                      fontSize: '14px',
-                      color: '#94A3B8',
-                      textDecoration: 'none',
-                      transition: 'color 200ms',
-                      cursor: 'pointer',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.color = '#10b981'
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.color = '#94A3B8'
-                    }}
-                  >
-                    {link.name}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
+          <FooterColumn title="Company" links={FOOTER_LINKS.company} />
 
           {/* Legal Column */}
-          <div>
-            <h4
-              style={{
-                fontSize: '14px',
-                fontWeight: 500,
-                color: '#F1F5F9',
-                marginBottom: '20px',
-                textTransform: 'uppercase',
-                letterSpacing: '0.04em',
-              }}
-            >
-              Legal
-            </h4>
-            <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-              {FOOTER_LINKS.legal.map((link) => (
-                <li key={link.name} style={{ marginBottom: '12px' }}>
-                  <a
-                    href={link.href}
-                    style={{
-                      fontSize: '14px',
-                      color: '#94A3B8',
-                      textDecoration: 'none',
-                      transition: 'color 200ms',
-                      cursor: 'pointer',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.color = '#10b981'
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.color = '#94A3B8'
-                    }}
-                  >
-                    {link.name}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
+          <FooterColumn title="Legal" links={FOOTER_LINKS.legal} />
 
           {/* Newsletter Column */}
           <div>
             <h4
               style={{
-                fontSize: '14px',
+                fontSize: 14,
                 fontWeight: 500,
-                color: '#F1F5F9',
-                marginBottom: '20px',
+                color: C.textPrimary,
+                marginBottom: 20,
                 textTransform: 'uppercase',
                 letterSpacing: '0.04em',
               }}
             >
-              Connect
+              Stay Updated
             </h4>
             <p
               style={{
-                fontSize: '14px',
-                color: '#94A3B8',
-                marginBottom: '16px',
+                fontSize: 14,
+                color: C.textSecondary,
+                marginBottom: 16,
                 lineHeight: 1.6,
               }}
             >
               Get updates on new features and tips for AI operations.
             </p>
-            <form onSubmit={handleSubscribe} style={{ marginBottom: '16px' }}>
+            <form onSubmit={handleSubscribe} style={{ marginBottom: 16 }}>
               <div
                 style={{
                   display: 'flex',
-                  gap: '8px',
-                  marginBottom: '8px',
+                  gap: 8,
+                  marginBottom: 8,
                 }}
               >
                 <input
@@ -219,19 +104,20 @@ export default function Footer() {
                   style={{
                     flex: 1,
                     padding: '8px 12px',
-                    borderRadius: '8px',
+                    borderRadius: 8,
                     background: 'rgba(255, 255, 255, 0.05)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                    color: '#F1F5F9',
-                    fontSize: '14px',
+                    border: `1px solid ${C.borderHover}`,
+                    color: C.textPrimary,
+                    fontSize: 14,
                     transition: 'all 200ms',
+                    outline: 'none',
                   }}
                   onFocus={(e) => {
-                    e.currentTarget.style.borderColor = 'rgba(16, 185, 129, 0.3)'
+                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)'
                     e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'
                   }}
                   onBlur={(e) => {
-                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)'
+                    e.currentTarget.style.borderColor = C.borderHover
                     e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'
                   }}
                 />
@@ -239,20 +125,20 @@ export default function Footer() {
                   type="submit"
                   style={{
                     padding: '8px 16px',
-                    borderRadius: '8px',
-                    background: '#10b981',
+                    borderRadius: 8,
+                    background: C.textPrimary,
                     border: 'none',
-                    color: '#000',
-                    fontSize: '14px',
+                    color: '#0a0f1a',
+                    fontSize: 14,
                     fontWeight: 500,
                     cursor: 'pointer',
                     transition: 'all 200ms',
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.background = '#059669'
+                    e.currentTarget.style.opacity = '0.9'
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.background = '#10b981'
+                    e.currentTarget.style.opacity = '1'
                   }}
                 >
                   Subscribe
@@ -261,8 +147,8 @@ export default function Footer() {
               {subscribed && (
                 <p
                   style={{
-                    fontSize: '14px',
-                    color: '#10b981',
+                    fontSize: 14,
+                    color: C.textSecondary,
                     margin: 0,
                   }}
                 >
@@ -270,103 +156,99 @@ export default function Footer() {
                 </p>
               )}
             </form>
-
-            {/* Social Links */}
-            <div
-              style={{
-                display: 'flex',
-                gap: '12px',
-                marginTop: '16px',
-              }}
-            >
-              {FOOTER_LINKS.connect.map((link) => (
-                <a
-                  key={link.name}
-                  href={link.href}
-                  title={link.name}
-                  style={{
-                    width: '36px',
-                    height: '36px',
-                    borderRadius: '8px',
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '16px',
-                    textDecoration: 'none',
-                    transition: 'all 200ms',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'rgba(16, 185, 129, 0.15)'
-                    e.currentTarget.style.borderColor = 'rgba(16, 185, 129, 0.3)'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'
-                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)'
-                  }}
-                >
-                  {link.icon}
-                </a>
-              ))}
-            </div>
           </div>
         </div>
 
         {/* Divider */}
         <div
           style={{
-            borderTop: '1px solid rgba(255, 255, 255, 0.05)',
-            paddingTop: '32px',
-            marginTop: '32px',
+            borderTop: `1px solid ${C.borderSubtle}`,
+            paddingTop: 32,
+            marginTop: 32,
           }}
         >
-          {/* Bottom Footer */}
           <div
             style={{
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
               flexWrap: 'wrap',
-              gap: '24px',
+              gap: 24,
             }}
           >
             <div>
               <p
                 style={{
-                  fontSize: '14px',
-                  color: '#475569',
+                  fontSize: 14,
+                  color: C.textDim,
                   margin: 0,
-                  marginBottom: '8px',
+                  marginBottom: 4,
                 }}
               >
-                © 2026 BitBit. All rights reserved.
+                2026 BitBit. All rights reserved.
               </p>
-              <div
+              <p
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  fontSize: '14px',
-                  color: '#94A3B8',
+                  fontSize: 14,
+                  color: C.textSecondary,
+                  margin: 0,
                 }}
               >
-                <span>🇦🇺</span>
-                <span>Built in Australia</span>
-              </div>
-            </div>
-
-            <div
-              style={{
-                fontSize: '14px',
-                color: '#94A3B8',
-              }}
-            >
-              Made with 💚 for operations teams
+                Built in Australia
+              </p>
             </div>
           </div>
         </div>
       </div>
     </footer>
+  )
+}
+
+function FooterColumn({
+  title,
+  links,
+}: {
+  title: string
+  links: Array<{ name: string; href: string }>
+}) {
+  return (
+    <div>
+      <h4
+        style={{
+          fontSize: 14,
+          fontWeight: 500,
+          color: C.textPrimary,
+          marginBottom: 20,
+          textTransform: 'uppercase',
+          letterSpacing: '0.04em',
+        }}
+      >
+        {title}
+      </h4>
+      <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+        {links.map((link) => (
+          <li key={link.name} style={{ marginBottom: 12 }}>
+            <Link
+              href={link.href}
+              style={{
+                fontSize: 14,
+                color: C.textSecondary,
+                textDecoration: 'none',
+                transition: 'color 200ms',
+                cursor: 'pointer',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = C.textPrimary
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = C.textSecondary
+              }}
+            >
+              {link.name}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </div>
   )
 }

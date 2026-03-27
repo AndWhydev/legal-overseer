@@ -79,7 +79,7 @@ export function CodeBlock({ children, className, onOpenArtifact }: CodeBlockProp
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '10px 14px',
-          backgroundColor: 'rgba(255, 255, 255, 0.03)',
+          backgroundColor: 'var(--hover-bg, rgba(255, 255, 255, 0.03))',
           borderBottom: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
           minHeight: '40px',
         }}
@@ -108,7 +108,7 @@ export function CodeBlock({ children, className, onOpenArtifact }: CodeBlockProp
                 gap: '4px',
                 fontSize: '12px',
                 padding: '6px 8px',
-                backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                backgroundColor: 'var(--hover-bg, rgba(255, 255, 255, 0.05))',
                 color: 'var(--text-muted, rgba(255, 255, 255, 0.4))',
                 border: 'none',
                 borderRadius: '4px',
@@ -117,11 +117,11 @@ export function CodeBlock({ children, className, onOpenArtifact }: CodeBlockProp
                 fontFamily: 'inherit',
               }}
               onMouseEnter={e => {
-                (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'rgba(255, 255, 255, 0.08)'
+                (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'var(--hover-bg-strong, rgba(255, 255, 255, 0.08))'
                 ;(e.currentTarget as HTMLButtonElement).style.color = 'var(--text-primary, #F1F5F9)'
               }}
               onMouseLeave={e => {
-                (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'rgba(255, 255, 255, 0.05)'
+                (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'var(--hover-bg, rgba(255, 255, 255, 0.05))'
                 ;(e.currentTarget as HTMLButtonElement).style.color = 'var(--text-muted, rgba(255, 255, 255, 0.4))'
               }}
             >
@@ -138,7 +138,7 @@ export function CodeBlock({ children, className, onOpenArtifact }: CodeBlockProp
               gap: '4px',
               fontSize: '12px',
               padding: '6px 8px',
-              backgroundColor: 'rgba(255, 255, 255, 0.05)',
+              backgroundColor: 'var(--hover-bg, rgba(255, 255, 255, 0.05))',
               color: copied ? 'var(--bb-green, #22C55E)' : 'var(--text-muted, rgba(255, 255, 255, 0.4))',
               border: 'none',
               borderRadius: '4px',
@@ -148,13 +148,13 @@ export function CodeBlock({ children, className, onOpenArtifact }: CodeBlockProp
             }}
             onMouseEnter={e => {
               if (!copied) {
-                (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'rgba(255, 255, 255, 0.08)'
+                (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'var(--hover-bg-strong, rgba(255, 255, 255, 0.08))'
                 ;(e.currentTarget as HTMLButtonElement).style.color = 'var(--text-primary, #F1F5F9)'
               }
             }}
             onMouseLeave={e => {
               if (!copied) {
-                (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'rgba(255, 255, 255, 0.05)'
+                (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'var(--hover-bg, rgba(255, 255, 255, 0.05))'
                 ;(e.currentTarget as HTMLButtonElement).style.color = 'var(--text-muted, rgba(255, 255, 255, 0.4))'
               }
             }}
