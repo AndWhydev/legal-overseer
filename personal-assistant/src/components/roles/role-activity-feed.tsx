@@ -66,12 +66,14 @@ const ROLE_LABELS: Record<RoleType, string> = {
   finance: 'Finance',
   comms: 'Comms',
   sales: 'Sales',
+  growth: 'Growth',
 }
 
 const ROLE_BADGE_COLORS: Record<RoleType, string> = {
   finance: 'text-emerald-500 bg-emerald-500/10',
   comms: 'text-blue-500 bg-blue-500/10',
   sales: 'text-foreground bg-muted',
+  growth: 'text-amber-500 bg-amber-500/10',
 }
 
 function timeAgo(dateStr: string): string {

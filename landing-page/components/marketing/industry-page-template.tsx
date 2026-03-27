@@ -3,6 +3,11 @@
 import Link from "next/link";
 import MarketingNav from "./marketing-nav";
 import MarketingFooter from "./marketing-footer";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { BlurFade } from "@/components/ui/blur-fade";
 import type { LucideIcon } from "lucide-react";
 
 interface PainPoint {
@@ -37,7 +42,7 @@ export default function IndustryPageTemplate({
   tierPrice,
 }: IndustryPageProps) {
   return (
-    <div className="min-h-screen bg-[#faf9f0] text-[#1a1a1a]">
+    <div className="min-h-screen bg-background text-foreground">
       <MarketingNav />
 
       {/* Hero Banner */}
@@ -45,128 +50,130 @@ export default function IndustryPageTemplate({
         {/* Decorative background */}
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
           <svg
-            className="absolute -right-32 -top-20 h-[600px] w-[600px] animate-spin-slow opacity-[0.04]"
+            className="absolute -right-32 -top-20 size-[600px] animate-spin-slow opacity-[0.04]"
             viewBox="0 0 400 400"
             fill="none"
           >
-            <circle cx="200" cy="200" r="180" stroke="#d97757" strokeWidth="1" strokeDasharray="8 6" />
-            <circle cx="200" cy="200" r="120" stroke="#8b6f47" strokeWidth="0.8" strokeDasharray="4 8" />
+            <circle cx="200" cy="200" r="180" stroke="currentColor" strokeWidth="1" strokeDasharray="8 6" className="text-primary" />
+            <circle cx="200" cy="200" r="120" stroke="currentColor" strokeWidth="0.8" strokeDasharray="4 8" className="text-muted-foreground" />
           </svg>
         </div>
 
         <div className="relative z-10 mx-auto max-w-3xl">
-          <p className="mb-4 text-[13px] font-medium uppercase tracking-wide text-[#8b6f47]">
-            BitBit for {industry}
-          </p>
-          <h1
-            className="mb-6 text-[clamp(2rem,5vw,3.5rem)] leading-[1.1] tracking-[-0.02em] text-[#1a1a1a]"
-            style={{ fontFamily: "var(--font-serif)" }}
-          >
-            {headline}
-          </h1>
-          <p className="max-w-xl text-lg leading-relaxed text-[#6b6560]">
-            {subheadline}
-          </p>
+          <BlurFade delay={0.1} inView>
+            <Badge variant="secondary" className="mb-4 text-xs uppercase tracking-wide">
+              BitBit for {industry}
+            </Badge>
+          </BlurFade>
+          <BlurFade delay={0.2} inView>
+            <h1 className="mb-6 font-serif text-[clamp(2rem,5vw,3.5rem)] leading-[1.1] tracking-tight text-foreground">
+              {headline}
+            </h1>
+          </BlurFade>
+          <BlurFade delay={0.3} inView>
+            <p className="max-w-xl text-lg leading-relaxed text-muted-foreground">
+              {subheadline}
+            </p>
+          </BlurFade>
         </div>
       </section>
 
       {/* Pain Points Grid */}
-      <section className="border-t border-[#e8e4dc] px-6 py-20">
+      <section className="px-6 py-20">
+        <Separator className="mb-20" />
         <div className="mx-auto max-w-5xl">
-          <h2
-            className="mb-12 text-center text-[clamp(1.5rem,3.5vw,2.25rem)] tracking-[-0.02em] text-[#1a1a1a]"
-            style={{ fontFamily: "var(--font-serif)" }}
-          >
-            Problems you know too well
-          </h2>
+          <BlurFade delay={0.1} inView>
+            <h2 className="mb-12 text-center font-serif text-[clamp(1.5rem,3.5vw,2.25rem)] tracking-tight text-foreground">
+              Problems you know too well
+            </h2>
+          </BlurFade>
           <div className="grid gap-6 sm:grid-cols-2">
-            {painPoints.map(({ icon: Icon, title, description }) => (
-              <div
-                key={title}
-                className="rounded-lg border border-[#e8e4dc] bg-white p-7 transition-all hover:border-[#d4cfc6] hover:-translate-y-1"
-              >
-                <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-lg border border-[#e8e4dc] bg-[#f5f3ea]">
-                  <Icon size={20} className="text-[#8b6f47]" />
-                </div>
-                <h3 className="mb-2 text-base font-semibold text-[#1a1a1a]">
-                  {title}
-                </h3>
-                <p className="text-[14px] leading-relaxed text-[#6b6560]">
-                  {description}
-                </p>
-              </div>
+            {painPoints.map(({ icon: Icon, title, description }, i) => (
+              <BlurFade key={title} delay={0.2 + i * 0.08} inView>
+                <Card className="transition-all hover:-translate-y-1 hover:shadow-md">
+                  <CardContent>
+                    <div className="mb-4 flex size-11 items-center justify-center rounded-lg border border-border bg-secondary">
+                      <Icon size={20} className="text-muted-foreground" />
+                    </div>
+                    <h3 className="mb-2 text-base font-semibold text-foreground">
+                      {title}
+                    </h3>
+                    <p className="text-sm leading-relaxed text-muted-foreground">
+                      {description}
+                    </p>
+                  </CardContent>
+                </Card>
+              </BlurFade>
             ))}
           </div>
         </div>
       </section>
 
       {/* How BitBit Helps - Roles */}
-      <section className="border-t border-[#e8e4dc] bg-[#f5f3ea] px-6 py-20">
+      <section className="bg-secondary px-6 py-20">
+        <Separator className="mb-20" />
         <div className="mx-auto max-w-3xl">
-          <h2
-            className="mb-12 text-center text-[clamp(1.5rem,3.5vw,2.25rem)] tracking-[-0.02em] text-[#1a1a1a]"
-            style={{ fontFamily: "var(--font-serif)" }}
-          >
-            How BitBit helps
-          </h2>
+          <BlurFade delay={0.1} inView>
+            <h2 className="mb-12 text-center font-serif text-[clamp(1.5rem,3.5vw,2.25rem)] tracking-tight text-foreground">
+              How BitBit helps
+            </h2>
+          </BlurFade>
           <div className="flex flex-col gap-5">
-            {roles.map(({ name, description, example }) => (
-              <div
-                key={name}
-                className="flex flex-col gap-3 rounded-lg border border-[#e8e4dc] bg-white p-6"
-              >
-                <h3 className="text-base font-semibold text-[#1a1a1a]">
-                  {name}
-                </h3>
-                <p className="text-[14px] leading-relaxed text-[#6b6560]">
-                  {description}
-                </p>
-                <div className="rounded-md border border-[#e8e4dc] bg-[#faf9f0] px-4 py-3 text-[14px] italic leading-relaxed text-[#8b6f47]">
-                  {example}
-                </div>
-              </div>
+            {roles.map(({ name, description, example }, i) => (
+              <BlurFade key={name} delay={0.2 + i * 0.1} inView>
+                <Card>
+                  <CardContent className="flex flex-col gap-3">
+                    <h3 className="text-base font-semibold text-foreground">
+                      {name}
+                    </h3>
+                    <p className="text-sm leading-relaxed text-muted-foreground">
+                      {description}
+                    </p>
+                    <div className="rounded-md border border-border bg-background px-4 py-3 text-sm italic leading-relaxed text-muted-foreground">
+                      {example}
+                    </div>
+                  </CardContent>
+                </Card>
+              </BlurFade>
             ))}
           </div>
         </div>
       </section>
 
       {/* Recommended Tier */}
-      <section className="border-t border-[#e8e4dc] px-6 py-20">
+      <section className="px-6 py-20">
+        <Separator className="mb-20" />
         <div className="mx-auto max-w-xl">
-          <div className="rounded-lg border border-[#e8e4dc] bg-white p-10 text-center">
-            <p className="mb-3 text-[13px] font-medium uppercase tracking-wide text-[#8b6f47]">
-              Recommended for {industry}
-            </p>
-            <h3
-              className="mb-2 text-[clamp(1.5rem,3vw,2.25rem)] tracking-[-0.02em] text-[#1a1a1a]"
-              style={{ fontFamily: "var(--font-serif)" }}
-            >
-              {recommendedTier} Plan
-            </h3>
-            <p
-              className="mb-2 text-[clamp(2rem,4vw,3rem)] font-semibold tracking-[-0.02em] text-[#1a1a1a]"
-              style={{ fontFamily: "var(--font-mono)" }}
-            >
-              {tierPrice}
-            </p>
-            <p className="mb-8 text-[14px] text-[#6b6560]">
-              30-day free trial. No credit card required.
-            </p>
-            <div className="flex flex-wrap items-center justify-center gap-4">
-              <Link
-                href="https://app.bitbit.chat/login"
-                className="inline-flex h-11 items-center rounded-md bg-[#FF5A1F] px-8 text-[14px] font-medium text-white transition-colors hover:bg-[#E44E17] bb-orange-fill-noise"
-              >
-                Start Free Trial
-              </Link>
-              <Link
-                href="/pricing"
-                className="inline-flex h-11 items-center rounded-md border border-[#e8e4dc] px-8 text-[14px] font-medium text-[#1a1a1a] transition-colors hover:border-[#d4cfc6] hover:bg-[#f5f3ea]"
-              >
-                Compare All Plans
-              </Link>
-            </div>
-          </div>
+          <BlurFade delay={0.1} inView>
+            <Card className="py-10 text-center">
+              <CardContent className="flex flex-col items-center gap-2">
+                <Badge variant="secondary" className="mb-1 text-xs uppercase tracking-wide">
+                  Recommended for {industry}
+                </Badge>
+                <h3 className="font-serif text-[clamp(1.5rem,3vw,2.25rem)] tracking-tight text-foreground">
+                  {recommendedTier} Plan
+                </h3>
+                <p className="font-mono text-[clamp(2rem,4vw,3rem)] font-semibold tracking-tight text-foreground">
+                  {tierPrice}
+                </p>
+                <p className="mb-6 text-sm text-muted-foreground">
+                  30-day free trial. No credit card required.
+                </p>
+                <div className="flex flex-wrap items-center justify-center gap-4">
+                  <Button asChild size="lg" className="bb-orange-fill-noise bg-[#FF5A1F] hover:bg-[#E44E17]">
+                    <Link href="https://app.bitbit.chat/login">
+                      Start Free Trial
+                    </Link>
+                  </Button>
+                  <Button asChild variant="outline" size="lg">
+                    <Link href="/pricing">
+                      Compare All Plans
+                    </Link>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </BlurFade>
         </div>
       </section>
 

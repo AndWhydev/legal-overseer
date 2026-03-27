@@ -40,6 +40,18 @@ const ROLE_DEFAULTS: Record<RoleType, {
     config: { lead_scoring: true, follow_up_reminders: true },
     linked_agent_types: ['lead-swarm', 'proposal-bot'],
   },
+  growth: {
+    tick_interval_seconds: 3600,   // Check hourly (sub-intervals gate actual work)
+    daily_budget_cents: 200,       // $2/day
+    autonomy_level: 'copilot',
+    config: {
+      seo_enabled: true,
+      tender_enabled: true,
+      seo_audit_interval_hours: 24,
+      tender_scan_interval_hours: 24,
+    },
+    linked_agent_types: ['ai-search-optimizer', 'tender-hunter'],
+  },
 }
 
 // ---------------------------------------------------------------------------

@@ -1,4 +1,10 @@
+"use client";
+
 import { Check, Minus } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { BlurFade } from "@/components/ui/blur-fade";
 
 type CellValue = boolean | string;
 
@@ -73,10 +79,7 @@ const PLAN_KEYS = ["free", "starter", "growth", "scale", "enterprise"] as const;
 function CellContent({ value }: { value: CellValue }) {
   if (typeof value === "string") {
     return (
-      <span
-        className="text-[13px] font-medium text-[#1a1a1a]"
-        style={{ fontFamily: "var(--font-mono)" }}
-      >
+      <span className="font-mono text-xs font-medium text-foreground">
         {value}
       </span>
     );
@@ -84,84 +87,92 @@ function CellContent({ value }: { value: CellValue }) {
   if (value === true) {
     return <Check size={16} className="text-[#FF5A1F]" />;
   }
-  return <Minus size={14} className="text-[#d4cfc6]" />;
+  return <Minus size={14} className="text-muted-foreground/40" />;
 }
 
 export default function PricingComparisonTable() {
   return (
-    <div className="mt-16">
-      <h2
-        className="mb-8 text-center text-2xl font-semibold text-[#1a1a1a]"
-        style={{ fontFamily: "var(--font-serif)" }}
-      >
-        Compare all features
-      </h2>
+    <BlurFade delay={0.2} inView>
+      <div className="mt-16">
+        <h2 className="mb-8 text-center font-serif text-2xl font-semibold text-foreground">
+          Compare all features
+        </h2>
 
-      <div className="overflow-auto rounded-lg border border-[#e8e4dc] bg-white">
-        <table className="w-full min-w-[640px] border-collapse">
-          <thead>
-            <tr>
-              <th className="sticky left-0 z-[2] min-w-[180px] border-b border-[#e8e4dc] bg-[#f5f3ea] px-5 py-3.5 text-left text-[14px] font-medium text-[#8b6f47]">
-                Feature
-              </th>
-              {PLAN_NAMES.map((plan, i) => (
-                <th
-                  key={plan}
-                  className={`min-w-[90px] border-b border-[#e8e4dc] px-4 py-3.5 text-center text-[14px] ${
-                    plan === "Growth"
-                      ? "font-semibold text-[#FF5A1F]"
-                      : "font-medium text-[#6b6560]"
-                  } ${i === 0 ? "border-l border-[#e8e4dc]" : ""}`}
-                >
-                  {plan}
-                </th>
-              ))}
-            </tr>
-          </thead>
-
-          <tbody>
-            {COMPARISON_DATA.map((section) => (
-              <>
-                <tr key={`cat-${section.category}`}>
-                  <td
-                    colSpan={6}
-                    className="sticky left-0 z-[1] border-b border-[#e8e4dc] bg-[#f5f3ea] px-5 pb-2 pt-3 text-[13px] font-medium uppercase tracking-wide text-[#8b6f47]"
-                  >
-                    {section.category}
-                  </td>
-                </tr>
-
-                {section.rows.map((row, rowIdx) => (
-                  <tr
-                    key={row.name}
-                    className={rowIdx % 2 === 0 ? "bg-white" : "bg-[#faf9f0]"}
-                  >
-                    <td
-                      className={`sticky left-0 z-[1] border-b border-[#e8e4dc] px-5 py-2.5 text-[14px] text-[#6b6560] ${
-                        rowIdx % 2 === 0 ? "bg-white" : "bg-[#faf9f0]"
-                      }`}
+        <Card className="overflow-hidden p-0">
+          <CardContent className="overflow-auto p-0">
+            <table className="w-full min-w-[640px] border-collapse">
+              <thead>
+                <tr>
+                  <th className="sticky left-0 z-[2] min-w-[180px] border-b border-border bg-secondary px-5 py-3.5 text-left text-sm font-medium text-muted-foreground">
+                    Feature
+                  </th>
+                  {PLAN_NAMES.map((plan, i) => (
+                    <th
+                      key={plan}
+                      className={`min-w-[90px] border-b border-border px-4 py-3.5 text-center text-sm ${
+                        plan === "Growth"
+                          ? "font-semibold text-[#FF5A1F]"
+                          : "font-medium text-muted-foreground"
+                      } ${i === 0 ? "border-l border-border" : ""}`}
                     >
-                      {row.name}
-                    </td>
-                    {PLAN_KEYS.map((key, i) => (
+                      <div className="flex flex-col items-center gap-1">
+                        {plan}
+                        {plan === "Growth" && (
+                          <Badge className="bg-[#FF5A1F] text-[10px] hover:bg-[#FF5A1F]">
+                            Popular
+                          </Badge>
+                        )}
+                      </div>
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+
+              <tbody>
+                {COMPARISON_DATA.map((section) => (
+                  <>
+                    <tr key={`cat-${section.category}`}>
                       <td
-                        key={key}
-                        className={`border-b border-[#e8e4dc] px-4 py-2.5 text-center ${
-                          i === 0 ? "border-l border-[#e8e4dc]" : ""
-                        }`}
+                        colSpan={6}
+                        className="sticky left-0 z-[1] border-b border-border bg-secondary px-5 pb-2 pt-3 text-xs font-medium uppercase tracking-wide text-muted-foreground"
                       >
-                        <div className="flex items-center justify-center">
-                          <CellContent value={row[key]} />
-                        </div>
+                        {section.category}
                       </td>
+                    </tr>
+
+                    {section.rows.map((row, rowIdx) => (
+                      <tr
+                        key={row.name}
+                        className={rowIdx % 2 === 0 ? "bg-card" : "bg-background"}
+                      >
+                        <td
+                          className={`sticky left-0 z-[1] border-b border-border px-5 py-2.5 text-sm text-muted-foreground ${
+                            rowIdx % 2 === 0 ? "bg-card" : "bg-background"
+                          }`}
+                        >
+                          {row.name}
+                        </td>
+                        {PLAN_KEYS.map((key, i) => (
+                          <td
+                            key={key}
+                            className={`border-b border-border px-4 py-2.5 text-center ${
+                              i === 0 ? "border-l border-border" : ""
+                            }`}
+                          >
+                            <div className="flex items-center justify-center">
+                              <CellContent value={row[key]} />
+                            </div>
+                          </td>
+                        ))}
+                      </tr>
                     ))}
-                  </tr>
+                  </>
                 ))}
-              </>
-            ))}
-          </tbody>
-        </table>
+              </tbody>
+            </table>
+          </CardContent>
+        </Card>
       </div>
-    </div>
+    </BlurFade>
   );
 }

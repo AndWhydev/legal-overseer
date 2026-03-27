@@ -35,7 +35,7 @@ export default function CaseStudyPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
       />
-      <main className="min-h-screen bg-[#faf9f0]">
+      <main className="min-h-screen bg-background">
         <MarketingNav active="Case Study" />
         <div className="pt-16">
           <CaseStudyContent />

@@ -339,7 +339,7 @@ export interface ChannelAdapter {
 
 // --- Role System ---
 
-export type RoleType = 'finance' | 'comms' | 'sales'
+export type RoleType = 'finance' | 'comms' | 'sales' | 'growth'
 export type AutonomyLevel = 'observer' | 'copilot' | 'autopilot'
 
 export interface RoleConfig {

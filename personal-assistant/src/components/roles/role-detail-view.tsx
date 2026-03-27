@@ -102,6 +102,7 @@ const ROLE_META: Record<RoleType, { label: string; icon: React.ElementType; colo
   finance: { label: 'Finance', icon: DollarSign, color: '#22c55e' },
   comms: { label: 'Communications', icon: MessageSquare, color: '#3b82f6' },
   sales: { label: 'Sales', icon: TrendingUp, color: '#F1F5F9' },
+  growth: { label: 'Growth', icon: TrendingUp, color: '#f59e0b' },
 }
 
 const ACTIVITY_ICONS: Record<ActivityType, React.ElementType> = {
