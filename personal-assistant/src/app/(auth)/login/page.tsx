@@ -228,7 +228,7 @@ function LoginPageContent() {
               </form>
 
               {/* ── Right: Clawd ambient animation ── */}
-              <div className="relative hidden overflow-hidden rounded-r-xl md:block">
+              <div className="relative hidden min-h-[400px] overflow-hidden rounded-r-xl bg-black md:block">
                 <ClawdAmbient className="absolute inset-0" />
               </div>
             </CardContent>
