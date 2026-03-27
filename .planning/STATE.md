@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Media, Billing & Growth Roles
 status: completed
-stopped_at: Completed 28-01-PLAN.md (Intelligence Dashboard Wiring)
-last_updated: "2026-03-27T04:14:37.506Z"
+stopped_at: Completed 29-01-PLAN.md (SEO/Tender Scheduled Monitoring)
+last_updated: "2026-03-27T05:32:43.744Z"
 last_activity: "2026-03-27 - Completed 33-01: Beta Program Infrastructure"
 progress:
   total_phases: 20
-  completed_phases: 9
-  total_plans: 33
-  completed_plans: 28
+  completed_phases: 10
+  total_plans: 34
+  completed_plans: 29
   percent: 100
 ---
 
@@ -62,6 +62,7 @@ Progress: v1.0 ======== | v1.1 ======== | v1.2 ======== | v1.4 ======== | v1.5 =
 | 33. Beta Program Infrastructure | 1 | COMPLETE (1/1) |
 | Phase 30 P03 | 25min | 2 tasks | 6 files |
 | Phase 32 P03 | 26 | 2 tasks | 9 files |
+| Phase 29 P01 | 15min | 3 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -123,6 +124,8 @@ See PROJECT.md Key Decisions table.
 - [Phase 30]: Pure data extraction for discovery (no LLM) to hit <60s target; template-based welcome message references real contact names and thread subjects
 - [Phase 32]: JSON-LD via dangerouslySetInnerHTML in server components for page-specific structured data (Organization, FAQPage, Article, WebPage)
 - [Phase 32]: metadataBase + relative canonical for Next.js URL resolution; AUD pricing in structured data matching actual tiers
+- [Phase 29]: Uses detectVisibilityChanges (pure function) not checkVisibilityChanges (notification side-effect) to prevent double-notify
+- [Phase 29]: Single growth role wraps both SEO and tender monitoring with independent 24h sub-interval gating
 
 ### Roadmap Evolution
 
@@ -148,6 +151,6 @@ See PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-03-27T03:48:55Z
-Stopped at: Completed 28-01-PLAN.md (Intelligence Dashboard Wiring)
+Last session: 2026-03-27T05:32:43.740Z
+Stopped at: Completed 29-01-PLAN.md (SEO/Tender Scheduled Monitoring)
 Resume file: None
