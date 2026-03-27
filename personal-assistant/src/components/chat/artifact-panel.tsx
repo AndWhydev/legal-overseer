@@ -130,6 +130,7 @@ export function ArtifactPanel({ artifact, onClose }: ArtifactPanelProps) {
           <div className="flex-1 overflow-auto flex flex-col">
             {isHtml && viewMode === 'preview' ? (
               <iframe
+                sandbox="allow-scripts"
                 srcDoc={artifact.content}
                 className="flex-1 border-none bg-white"
                 title={artifact.title}
