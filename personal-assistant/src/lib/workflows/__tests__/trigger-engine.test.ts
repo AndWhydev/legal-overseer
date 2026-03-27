@@ -1,58 +1,61 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import type { WorkflowEvent, WorkflowRule } from '../workflow-rule-types'
+import { describe, it, expect, vi } from 'vitest'
+import type { WorkflowEvent, WorkflowCondition } from '../workflow-rule-types'
 import {
   evaluateEventTriggers,
   evaluateScheduledTriggers,
   evaluateConditions,
   matchesCronPattern,
-  getActiveWorkflowRules,
 } from '../workflow-rule-engine'
 
 // ---------------------------------------------------------------------------
-// Supabase mock
+// Supabase mock -- simulates chained query builder
 // ---------------------------------------------------------------------------
 
-function createMockSupabase(rows: Partial<WorkflowRule>[] = []) {
-  const updateMock = vi.fn().mockReturnValue({
-    eq: vi.fn().mockResolvedValue({ error: null }),
-  })
+function createMockSupabase(rows: Record<string, unknown>[] = []) {
+  // Create a chainable query builder that resolves to { data, error }
+  function makeQuery(resolvedRows: Record<string, unknown>[]) {
+    const q: Record<string, unknown> = {}
+    q.select = vi.fn().mockReturnValue(q)
+    q.eq = vi.fn().mockReturnValue(q)
+    q.is = vi.fn().mockReturnValue(q)
+    // When awaited (via .then), resolve to { data, error }
+    q.then = (resolve: (v: unknown) => void) =>
+      resolve({ data: resolvedRows, error: null })
+    return q
+  }
+
+  const updateQuery = {} as Record<string, unknown>
+  updateQuery.eq = vi.fn().mockReturnValue(updateQuery)
+  updateQuery.then = (resolve: (v: unknown) => void) =>
+    resolve({ error: null })
 
   const rpcMock = vi.fn().mockResolvedValue({ error: null })
 
-  const fromMock = vi.fn().mockReturnValue({
-    select: vi.fn().mockReturnValue({
-      eq: vi.fn().mockImplementation((_col: string, _val: unknown) => ({
-        eq: vi.fn().mockImplementation(() => ({
-          eq: vi.fn().mockResolvedValue({ data: rows, error: null }),
-        })),
-        is: vi.fn().mockResolvedValue({ data: rows, error: null }),
-      })),
-    }),
-    update: updateMock,
-  })
-
   return {
-    from: fromMock,
+    from: vi.fn().mockImplementation(() => ({
+      select: vi.fn().mockReturnValue(makeQuery(rows)),
+      update: vi.fn().mockReturnValue(updateQuery),
+    })),
     rpc: rpcMock,
-    _updateMock: updateMock,
-    _fromMock: fromMock,
   }
 }
 
 // ---------------------------------------------------------------------------
-// Test data
+// Test data helpers
 // ---------------------------------------------------------------------------
 
 const ORG_ID = '7abcbfb1-0000-0000-0000-000000000000'
 
-function makeRule(overrides: Partial<WorkflowRule> = {}): WorkflowRule {
+/** Create a DB-style row (as it would come from Supabase). */
+function makeDbRow(overrides: Record<string, unknown> = {}) {
   return {
     id: 'rule-1',
     org_id: ORG_ID,
     name: 'Test Rule',
     description: 'Test',
-    trigger: { type: 'event', event: 'new_lead' },
-    conditions: [],
+    trigger_type: 'event',
+    trigger_config: { event: 'new_lead' },
+    conditions: [] as WorkflowCondition[],
     actions: [{
       step_id: 'step1',
       name: 'Do thing',
@@ -76,9 +79,8 @@ function makeRule(overrides: Partial<WorkflowRule> = {}): WorkflowRule {
 
 describe('evaluateEventTriggers', () => {
   it('matches rules by event type', async () => {
-    const rule = makeRule({ trigger: { type: 'event', event: 'new_lead' } })
-    // Mock that returns our rule for the matching event query
-    const supabase = createMockSupabase([rule])
+    const row = makeDbRow({ trigger_type: 'event', trigger_config: { event: 'new_lead' } })
+    const supabase = createMockSupabase([row])
 
     const event: WorkflowEvent = {
       event: 'new_lead',
@@ -90,8 +92,8 @@ describe('evaluateEventTriggers', () => {
   })
 
   it('skips events with triggered_by_workflow=true (loop prevention)', async () => {
-    const rule = makeRule()
-    const supabase = createMockSupabase([rule])
+    const row = makeDbRow()
+    const supabase = createMockSupabase([row])
 
     const event: WorkflowEvent = {
       event: 'new_lead',
@@ -104,8 +106,8 @@ describe('evaluateEventTriggers', () => {
   })
 
   it('skips disabled rules', async () => {
-    const rule = makeRule({ enabled: false })
-    const supabase = createMockSupabase([rule])
+    const row = makeDbRow({ enabled: false })
+    const supabase = createMockSupabase([row])
 
     const event: WorkflowEvent = {
       event: 'new_lead',
@@ -117,10 +119,10 @@ describe('evaluateEventTriggers', () => {
   })
 
   it('evaluates conditions against event data', async () => {
-    const rule = makeRule({
+    const row = makeDbRow({
       conditions: [{ field: 'estimated_value', operator: 'gt', value: 5000 }],
     })
-    const supabase = createMockSupabase([rule])
+    const supabase = createMockSupabase([row])
 
     // Event that does NOT satisfy the condition
     const event: WorkflowEvent = {
@@ -133,10 +135,10 @@ describe('evaluateEventTriggers', () => {
   })
 
   it('matches rules when conditions are satisfied', async () => {
-    const rule = makeRule({
+    const row = makeDbRow({
       conditions: [{ field: 'estimated_value', operator: 'gt', value: 5000 }],
     })
-    const supabase = createMockSupabase([rule])
+    const supabase = createMockSupabase([row])
 
     const event: WorkflowEvent = {
       event: 'new_lead',
@@ -148,8 +150,11 @@ describe('evaluateEventTriggers', () => {
   })
 
   it('does not match rules with wrong event type', async () => {
-    const rule = makeRule({ trigger: { type: 'event', event: 'invoice_overdue' } })
-    const supabase = createMockSupabase([rule])
+    const row = makeDbRow({
+      trigger_type: 'event',
+      trigger_config: { event: 'invoice_overdue' },
+    })
+    const supabase = createMockSupabase([row])
 
     const event: WorkflowEvent = {
       event: 'new_lead',
@@ -168,12 +173,13 @@ describe('evaluateEventTriggers', () => {
 describe('evaluateScheduledTriggers', () => {
   it('finds rules with interval triggers due for execution', async () => {
     const oneHourAgo = new Date(Date.now() - 3600 * 1000).toISOString()
-    const rule = makeRule({
+    const row = makeDbRow({
       id: 'sched-1',
-      trigger: { type: 'schedule', schedule: { interval_seconds: 1800 } },
+      trigger_type: 'schedule',
+      trigger_config: { schedule: { interval_seconds: 1800 } },
       last_triggered_at: oneHourAgo,
     })
-    const supabase = createMockSupabase([rule])
+    const supabase = createMockSupabase([row])
 
     const matched = await evaluateScheduledTriggers(supabase as any, ORG_ID)
     expect(matched).toContain('sched-1')
@@ -181,24 +187,26 @@ describe('evaluateScheduledTriggers', () => {
 
   it('skips interval rules not yet due', async () => {
     const justNow = new Date().toISOString()
-    const rule = makeRule({
+    const row = makeDbRow({
       id: 'sched-2',
-      trigger: { type: 'schedule', schedule: { interval_seconds: 3600 } },
+      trigger_type: 'schedule',
+      trigger_config: { schedule: { interval_seconds: 3600 } },
       last_triggered_at: justNow,
     })
-    const supabase = createMockSupabase([rule])
+    const supabase = createMockSupabase([row])
 
     const matched = await evaluateScheduledTriggers(supabase as any, ORG_ID)
     expect(matched).not.toContain('sched-2')
   })
 
   it('triggers interval rules with null last_triggered_at (first run)', async () => {
-    const rule = makeRule({
+    const row = makeDbRow({
       id: 'sched-3',
-      trigger: { type: 'schedule', schedule: { interval_seconds: 600 } },
+      trigger_type: 'schedule',
+      trigger_config: { schedule: { interval_seconds: 600 } },
       last_triggered_at: null,
     })
-    const supabase = createMockSupabase([rule])
+    const supabase = createMockSupabase([row])
 
     const matched = await evaluateScheduledTriggers(supabase as any, ORG_ID)
     expect(matched).toContain('sched-3')

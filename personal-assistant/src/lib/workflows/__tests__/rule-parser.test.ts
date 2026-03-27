@@ -1,24 +1,19 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { WorkflowRuleSchema, SUPPORTED_EVENTS } from '../workflow-rule-types'
+import { SUPPORTED_EVENTS } from '../workflow-rule-types'
 
-// Mock Anthropic SDK
-vi.mock('@anthropic-ai/sdk', () => {
-  const createMock = vi.fn()
-  return {
-    default: class {
-      messages = { create: createMock }
-    },
-    __createMock: createMock,
-  }
-})
+// Use vi.hoisted so the mock is available during vi.mock factory (hoisted above imports)
+const { createMock } = vi.hoisted(() => ({
+  createMock: vi.fn(),
+}))
 
-// Import after mock
+vi.mock('@anthropic-ai/sdk', () => ({
+  default: class MockAnthropic {
+    messages = { create: createMock }
+  },
+}))
+
+// Import after mock setup
 import { parseWorkflowRule, RULE_PARSER_SYSTEM_PROMPT } from '../workflow-rule-parser'
-
-function getCreateMock() {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (vi.mocked(require('@anthropic-ai/sdk') as any).__createMock) as ReturnType<typeof vi.fn>
-}
 
 const ORG_CONTEXT = {
   roles: ['sales', 'finance'],
@@ -26,7 +21,6 @@ const ORG_CONTEXT = {
 }
 
 function mockLLMResponse(json: Record<string, unknown>) {
-  const createMock = getCreateMock()
   createMock.mockResolvedValueOnce({
     content: [{ type: 'text', text: JSON.stringify(json) }],
   })
@@ -168,7 +162,6 @@ describe('parseWorkflowRule', () => {
   })
 
   it('returns error state when LLM call fails', async () => {
-    const createMock = getCreateMock()
     createMock.mockRejectedValueOnce(new Error('API timeout'))
 
     const result = await parseWorkflowRule(
