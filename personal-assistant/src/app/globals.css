@@ -1,18 +1,10 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "../styles/bitbit-design-system.css";
+@import "../styles/theme-midnight.css";
+@import "../styles/theme-aurora.css";
+@import "../styles/theme-light.css";
 @import "shadcn/tailwind.css";
-
-/*
-  OLD STYLE SYSTEM — REMOVED 2026-03-27
-  These files contained 266 !important rules that bulldozed all Shadcn/Tailwind
-  component styling. The entire UI is migrating to Shadcn components.
-  Dashboard pages may have visual regressions until the Shadcn redesign completes.
-
-  @import "../styles/bitbit-design-system.css";
-  @import "../styles/theme-midnight.css";
-  @import "../styles/theme-aurora.css";
-  @import "../styles/theme-light.css";
-*/
 
 @custom-variant dark (&:is(.dark *));
 
