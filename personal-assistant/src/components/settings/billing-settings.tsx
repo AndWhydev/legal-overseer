@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { CreditCard, ExternalLink, AlertTriangle } from 'lucide-react'
+import { CreditCard, ExternalLink, AlertTriangle, Clock } from 'lucide-react'
+import { S, C } from '@/lib/styles/design-tokens'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -66,22 +67,28 @@ function UsageBar({
 }) {
   const pct = limit > 0 ? Math.min(100, (used / limit) * 100) : 0
   const barColor =
-    pct > 80 ? '#ef4444' : pct > 60 ? '#eab308' : '#22c55e'
+    pct > 80 ? C.statusError : pct > 60 ? C.statusWarning : C.statusSuccess
 
   return (
     <div style={{ marginBottom: 16 }}>
-      <div className="flex justify-between" style={{ marginBottom: 6 }}>
-        <span style={{ color: 'var(--text-secondary, #94A3B8)', fontSize: 13 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+        <span style={{ color: C.textSecondary, fontSize: 14 }}>
           {label}
         </span>
-        <span style={{ color: 'var(--text-secondary, #94A3B8)', fontSize: 13 }}>
+        <span
+          style={{
+            color: C.textSecondary,
+            fontSize: 14,
+            fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
+          }}
+        >
           {formatNumber(used)} / {formatNumber(limit)} {unit}
         </span>
       </div>
       <div
         style={{
           height: 8,
-          borderRadius: 4,
+          borderRadius: 8,
           background: 'rgba(255, 255, 255, 0.06)',
           overflow: 'hidden',
         }}
@@ -90,7 +97,7 @@ function UsageBar({
           style={{
             height: '100%',
             width: `${pct}%`,
-            borderRadius: 4,
+            borderRadius: 8,
             background: barColor,
             transition: 'width 0.5s ease',
           }}
@@ -104,6 +111,33 @@ function formatNumber(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
   if (n >= 1_000) return `${(n / 1_000).toFixed(1)}k`
   return n.toFixed(0)
+}
+
+// ---------------------------------------------------------------------------
+// Status badge helper (monochrome -- no blue)
+// ---------------------------------------------------------------------------
+
+function getStatusStyle(status: string): React.CSSProperties {
+  switch (status) {
+    case 'active':
+      return { background: C.statusSuccessBg, color: C.statusSuccess }
+    case 'trialing':
+      // Monochrome: white-on-dark badge for trial instead of blue
+      return { background: 'rgba(255, 255, 255, 0.08)', color: C.textPrimary }
+    case 'past_due':
+      return { background: C.statusErrorBg, color: C.statusError }
+    default:
+      return { background: 'rgba(255, 255, 255, 0.06)', color: C.textSecondary }
+  }
+}
+
+function getStatusLabel(status: string): string {
+  switch (status) {
+    case 'active': return 'Active'
+    case 'trialing': return 'Trial'
+    case 'past_due': return 'Past Due'
+    default: return 'No Plan'
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -132,7 +166,7 @@ export function BillingSettings() {
       if (usageRes.ok) {
         setUsage((await usageRes.json()) as UsageData)
       }
-    } catch (err) {
+    } catch {
       setError('Failed to load billing data')
     } finally {
       setLoading(false)
@@ -162,7 +196,7 @@ export function BillingSettings() {
   if (loading) {
     return (
       <div style={{ padding: 32, textAlign: 'center' }}>
-        <span style={{ color: 'var(--text-secondary, #94A3B8)', fontSize: 14 }}>
+        <span style={{ ...S.secondary }}>
           Loading billing information...
         </span>
       </div>
@@ -184,8 +218,8 @@ export function BillingSettings() {
       {isPastDue && (
         <div
           style={{
-            background: 'rgba(239, 68, 68, 0.12)',
-            border: '1px solid rgba(239, 68, 68, 0.3)',
+            background: C.statusErrorBg,
+            border: `1px solid rgba(239, 68, 68, 0.3)`,
             borderRadius: 12,
             padding: '16px 20px',
             display: 'flex',
@@ -193,12 +227,12 @@ export function BillingSettings() {
             gap: 12,
           }}
         >
-          <AlertTriangle size={20} style={{ color: '#ef4444', flexShrink: 0 }} />
+          <AlertTriangle size={20} style={{ color: C.statusError, flexShrink: 0 }} />
           <div style={{ flex: 1 }}>
-            <p style={{ color: '#ef4444', fontWeight: 500, fontSize: 14, margin: 0 }}>
+            <p style={{ color: C.statusError, fontWeight: 500, fontSize: 14, margin: 0 }}>
               Payment past due
             </p>
-            <p style={{ color: 'var(--text-secondary, #94A3B8)', fontSize: 13, margin: '4px 0 0 0' }}>
+            <p style={{ color: C.textSecondary, fontSize: 14, margin: '4px 0 0 0' }}>
               Last payment failed. Update the payment method to avoid service interruption.
             </p>
           </div>
@@ -206,13 +240,10 @@ export function BillingSettings() {
             onClick={handlePortalRedirect}
             disabled={portalLoading}
             style={{
-              background: '#ef4444',
-              color: 'white',
-              border: 'none',
-              borderRadius: 8,
-              padding: '8px 16px',
-              fontSize: 13,
-              fontWeight: 500,
+              ...S.button,
+              ...S.buttonDestructive,
+              height: 40,
+              padding: '0 16px',
               cursor: portalLoading ? 'wait' : 'pointer',
               opacity: portalLoading ? 0.6 : 1,
               whiteSpace: 'nowrap',
@@ -226,46 +257,42 @@ export function BillingSettings() {
       {/* Current Plan Card */}
       <div
         style={{
-          background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.6))',
-          border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
-          borderRadius: 12,
+          ...S.card,
           padding: 24,
         }}
       >
-        <div className="flex items-center justify-between" style={{ marginBottom: 16 }}>
-          <div className="flex items-center" style={{ gap: 10 }}>
-            <CreditCard size={18} style={{ color: 'var(--text-secondary, #94A3B8)' }} />
-            <h3 style={{ color: 'var(--text-primary, #F1F5F9)', fontSize: 16, fontWeight: 500, margin: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <CreditCard size={20} style={{ color: C.textSecondary }} />
+            <h3 style={{ ...S.cardTitle, margin: 0 }}>
               Current Plan
             </h3>
           </div>
           <span
             style={{
-              fontSize: 12,
-              fontWeight: 500,
-              padding: '4px 10px',
-              borderRadius: 20,
-              ...(status === 'active'
-                ? { background: 'rgba(34, 197, 94, 0.12)', color: '#22c55e' }
-                : status === 'trialing'
-                  ? { background: 'rgba(59, 130, 246, 0.12)', color: '#3b82f6' }
-                  : status === 'past_due'
-                    ? { background: 'rgba(239, 68, 68, 0.12)', color: '#ef4444' }
-                    : { background: 'rgba(255, 255, 255, 0.06)', color: 'var(--text-secondary, #94A3B8)' }),
+              ...S.badge,
+              fontSize: 14,
+              borderRadius: 8,
+              ...getStatusStyle(status),
             }}
           >
-            {status === 'trialing' ? 'Trial' : status === 'past_due' ? 'Past Due' : status === 'active' ? 'Active' : 'No Plan'}
+            {getStatusLabel(status)}
           </span>
         </div>
 
         <div style={{ marginBottom: 12 }}>
-          <span style={{ color: 'var(--text-primary, #F1F5F9)', fontSize: 28, fontWeight: 500 }}>
+          <span
+            style={{
+              ...S.mono,
+              fontSize: 16,
+            }}
+          >
             {plan.charAt(0).toUpperCase() + plan.slice(1)}
           </span>
         </div>
 
         {subscription?.currentPeriodEnd && (
-          <p style={{ color: 'var(--text-secondary, #94A3B8)', fontSize: 13, margin: 0 }}>
+          <p style={{ color: C.textSecondary, fontSize: 14, margin: 0 }}>
             {isTrialing ? 'Trial ends' : 'Billing period ends'}:{' '}
             {new Date(subscription.currentPeriodEnd).toLocaleDateString('en-AU', {
               day: 'numeric',
@@ -276,53 +303,55 @@ export function BillingSettings() {
         )}
       </div>
 
-      {/* Trial Status (only when trialing) */}
+      {/* Trial Status (only when trialing) -- monochrome, no blue */}
       {isTrialing && trialEndsAt && (
         <div
           style={{
-            background: 'rgba(59, 130, 246, 0.08)',
-            border: '1px solid rgba(59, 130, 246, 0.2)',
+            background: 'rgba(255, 255, 255, 0.04)',
+            border: `1px solid ${C.borderHover}`,
             borderRadius: 12,
             padding: '16px 20px',
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: 12,
           }}
         >
-          <p style={{ color: '#3b82f6', fontWeight: 500, fontSize: 14, margin: '0 0 6px 0' }}>
-            Trial Period
-          </p>
-          <p style={{ color: 'var(--text-secondary, #94A3B8)', fontSize: 13, margin: 0 }}>
-            {subscription?.daysRemaining != null && subscription.daysRemaining > 0 ? (
-              <>
-                <strong style={{ color: 'var(--text-primary, #F1F5F9)' }}>
-                  {subscription.daysRemaining} day{subscription.daysRemaining !== 1 ? 's' : ''} remaining
-                </strong>
-                {' '}-- Trial ends on{' '}
-                {new Date(trialEndsAt).toLocaleDateString('en-AU', {
-                  day: 'numeric',
-                  month: 'long',
-                  year: 'numeric',
-                })}
-              </>
-            ) : (
-              'Your trial has expired. Subscribe to keep using paid features.'
-            )}
-          </p>
+          <Clock size={20} style={{ color: C.textSecondary, flexShrink: 0, marginTop: 2 }} />
+          <div>
+            <p style={{ color: C.textPrimary, fontWeight: 500, fontSize: 14, margin: '0 0 4px 0' }}>
+              Trial Period
+            </p>
+            <p style={{ color: C.textSecondary, fontSize: 14, margin: 0, lineHeight: 1.5 }}>
+              {subscription?.daysRemaining != null && subscription.daysRemaining > 0 ? (
+                <>
+                  <strong style={{ color: C.textPrimary }}>
+                    {subscription.daysRemaining} day{subscription.daysRemaining !== 1 ? 's' : ''} remaining
+                  </strong>
+                  {' -- Trial ends on '}
+                  {new Date(trialEndsAt).toLocaleDateString('en-AU', {
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric',
+                  })}
+                </>
+              ) : (
+                'Your trial has expired. Subscribe to keep using paid features.'
+              )}
+            </p>
+          </div>
         </div>
       )}
 
       {/* Usage Dashboard */}
       <div
         style={{
-          background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.6))',
-          border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
-          borderRadius: 12,
+          ...S.card,
           padding: 24,
         }}
       >
         <h3
           style={{
-            color: 'var(--text-primary, #F1F5F9)',
-            fontSize: 16,
-            fontWeight: 500,
+            ...S.cardTitle,
             margin: '0 0 20px 0',
           }}
         >
@@ -349,7 +378,7 @@ export function BillingSettings() {
         />
 
         {usage?.estimatedCostUSD != null && usage.estimatedCostUSD > 0 && (
-          <p style={{ color: 'var(--text-dim, #475569)', fontSize: 12, margin: '8px 0 0 0' }}>
+          <p style={{ color: C.textDim, fontSize: 14, margin: '8px 0 0 0' }}>
             Estimated AI cost this period: ${usage.estimatedCostUSD.toFixed(2)} USD
           </p>
         )}
@@ -358,63 +387,40 @@ export function BillingSettings() {
       {/* Manage Subscription */}
       <div
         style={{
-          background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.6))',
-          border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
-          borderRadius: 12,
+          ...S.card,
           padding: 24,
         }}
       >
         <h3
           style={{
-            color: 'var(--text-primary, #F1F5F9)',
-            fontSize: 16,
-            fontWeight: 500,
+            ...S.cardTitle,
             margin: '0 0 16px 0',
           }}
         >
           Manage Subscription
         </h3>
 
-        <div className="flex flex-wrap" style={{ gap: 12 }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
           <button
             onClick={handlePortalRedirect}
             disabled={portalLoading}
             style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 8,
-              background: 'var(--btn-primary-bg, #F1F5F9)',
-              color: 'var(--btn-primary-fg, #0a0f1a)',
-              border: 'none',
-              borderRadius: 8,
-              padding: '10px 20px',
-              fontSize: 14,
-              fontWeight: 500,
+              ...S.button,
+              ...S.buttonPrimary,
               cursor: portalLoading ? 'wait' : 'pointer',
               opacity: portalLoading ? 0.6 : 1,
-              transition: 'opacity 0.2s',
             }}
           >
-            <ExternalLink size={14} />
+            <ExternalLink size={16} />
             {portalLoading ? 'Opening...' : 'Manage Billing'}
           </button>
 
           <a
             href="/pricing"
             style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 8,
-              background: 'rgba(255, 255, 255, 0.06)',
-              color: 'var(--text-primary, #F1F5F9)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              borderRadius: 8,
-              padding: '10px 20px',
-              fontSize: 14,
-              fontWeight: 500,
+              ...S.button,
+              ...S.buttonGhost,
               textDecoration: 'none',
-              cursor: 'pointer',
-              transition: 'background 0.2s',
             }}
           >
             View Plans
@@ -426,12 +432,12 @@ export function BillingSettings() {
       {error && (
         <div
           style={{
-            background: 'rgba(239, 68, 68, 0.12)',
-            border: '1px solid rgba(239, 68, 68, 0.2)',
+            background: C.statusErrorBg,
+            border: `1px solid rgba(239, 68, 68, 0.2)`,
             borderRadius: 12,
             padding: '12px 16px',
-            color: '#ef4444',
-            fontSize: 13,
+            color: C.statusError,
+            fontSize: 14,
           }}
         >
           {error}
