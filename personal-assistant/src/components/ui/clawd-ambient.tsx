@@ -8,7 +8,7 @@ import { useEffect, useRef, useCallback } from 'react'
  * then transitions to idle animation playlist (emotions, breathing, blinking).
  * Pure canvas — no DOM manipulation, no videos, no external deps.
  */
-export function ClawdAmbient({ className }: { className?: string }) {
+export function ClawdAmbient({ className, inverted = false }: { className?: string; inverted?: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const animRef = useRef<number>(0)
 
@@ -27,7 +27,7 @@ export function ClawdAmbient({ className }: { className?: string }) {
     const W = rect.width
     const H = rect.height
 
-    const EYE_COLOR = '#e5e5e5'
+    const EYE_COLOR = inverted ? '#1a1a1a' : '#e5e5e5'
     const EYE_W = W * 0.065
     const EYE_H = W * 0.09
     const EYE_GAP = W * 0.12
@@ -239,7 +239,7 @@ export function ClawdAmbient({ className }: { className?: string }) {
     <canvas
       ref={canvasRef}
       className={className}
-      style={{ width: '100%', height: '100%', display: 'block', background: '#000' }}
+      style={{ width: '100%', height: '100%', display: 'block', background: inverted ? '#fafafa' : '#000' }}
     />
   )
 }

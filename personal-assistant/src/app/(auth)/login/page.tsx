@@ -4,7 +4,6 @@ import { Suspense, useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { extractAuthCallbackPayload } from '@/lib/auth/callback'
-import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -13,7 +12,7 @@ import { Separator } from '@/components/ui/separator'
 import { ClawdAmbient } from '@/components/ui/clawd-ambient'
 
 type LoginStatus = 'idle' | 'loading' | 'sent' | 'error'
-type LoginMethod = 'email' | 'google' | 'apple' | null
+type LoginMethod = 'password' | 'google' | 'apple' | null
 type OAuthProvider = 'google' | 'apple'
 
 function resolveAuthRedirectOrigin(): string {
@@ -23,6 +22,18 @@ function resolveAuthRedirectOrigin(): string {
   if (hostname === 'app.bitbit.chat') return 'https://app.bitbit.chat'
   if (hostname === 'bitbit.chat' || hostname.endsWith('.bitbit.chat')) return 'https://app.bitbit.chat'
   return origin
+}
+
+function useIsDark() {
+  const [dark, setDark] = useState(false)
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-color-scheme: dark)')
+    setDark(mq.matches || document.documentElement.classList.contains('dark'))
+    const handler = (e: MediaQueryListEvent) => setDark(e.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
+  return dark
 }
 
 function Spinner() {
@@ -37,17 +48,18 @@ function Spinner() {
 function LoginPageContent() {
   const searchParams = useSearchParams()
   const queryError = searchParams.get('error')
+  const isDark = useIsDark()
 
   const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [status, setStatus] = useState<LoginStatus>(queryError ? 'error' : 'idle')
   const [activeMethod, setActiveMethod] = useState<LoginMethod>(null)
   const [errorMessage, setErrorMessage] = useState(
     queryError ? "Couldn't complete sign-in. Use the email linked to your BitBit invite." : ''
   )
-  const [sentTo, setSentTo] = useState('')
 
   const isBusy = activeMethod !== null
-  const canSubmit = email.trim().length > 3 && !isBusy
+  const canSubmit = email.trim().length > 3 && password.length > 0 && !isBusy
 
   useEffect(() => {
     const payload = extractAuthCallbackPayload(window.location.href)
@@ -82,65 +94,41 @@ function LoginPageContent() {
     }
   }
 
-  async function handleEmailSignIn(e: React.FormEvent<HTMLFormElement>) {
+  async function handlePasswordSignIn(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     const normalizedEmail = email.trim().toLowerCase()
-    if (!normalizedEmail || isBusy) return
+    if (!normalizedEmail || !password || isBusy) return
 
-    setActiveMethod('email')
+    setActiveMethod('password')
     setStatus('loading')
     setErrorMessage('')
-    const redirectOrigin = resolveAuthRedirectOrigin()
 
-    try {
-      const res = await fetch('/api/auth/magic-link', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: normalizedEmail, redirectTo: `${redirectOrigin}/callback` }),
-      })
-
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({ error: 'Unknown error' }))
-        setStatus('error')
-        setErrorMessage(
-          data.error === 'not_registered'
-            ? 'No invite found for this email. Try the address you were invited with, or ask your admin.'
-            : data.error || "Couldn't send the sign-in link. Try again."
-        )
-        setActiveMethod(null)
-        return
-      }
-    } catch {
+    const supabase = createClient()
+    if (!supabase) {
       setStatus('error')
-      setErrorMessage('Network issue. Try again.')
+      setErrorMessage('Supabase is not configured for this environment')
       setActiveMethod(null)
       return
     }
 
-    setSentTo(normalizedEmail)
-    setStatus('sent')
-    setActiveMethod(null)
-  }
+    const { error } = await supabase.auth.signInWithPassword({
+      email: normalizedEmail,
+      password,
+    })
 
-  // ── Magic link sent state ──
-  if (status === 'sent') {
-    return (
-      <div className="flex min-h-svh items-center justify-center bg-background p-6">
-        <Card className="w-full max-w-md p-8 text-center">
-          <div className="mb-6 text-4xl">Check your inbox</div>
-          <p className="mb-2 text-sm text-muted-foreground">
-            We sent a sign-in link to
-          </p>
-          <p className="mb-6 font-mono text-sm font-medium">{sentTo}</p>
-          <Button
-            variant="outline"
-            onClick={() => { setStatus('idle'); setActiveMethod(null); setSentTo('') }}
-          >
-            Use a different email
-          </Button>
-        </Card>
-      </div>
-    )
+    if (error) {
+      setStatus('error')
+      setErrorMessage(
+        error.message === 'Invalid login credentials'
+          ? 'Invalid email or password.'
+          : error.message
+      )
+      setActiveMethod(null)
+      return
+    }
+
+    // Redirect to dashboard on success
+    window.location.replace('/dashboard')
   }
 
   return (
@@ -150,12 +138,12 @@ function LoginPageContent() {
           <Card className="overflow-hidden p-0">
             <CardContent className="grid p-0 md:grid-cols-2">
               {/* ── Left: Login form ── */}
-              <form className="p-6 md:p-8" onSubmit={handleEmailSignIn}>
+              <form className="p-6 md:p-8" onSubmit={handlePasswordSignIn}>
                 <div className="flex flex-col gap-6">
                   <div className="flex flex-col items-center gap-2 text-center">
                     <h1 className="text-2xl font-bold">Welcome back</h1>
                     <p className="text-balance text-sm text-muted-foreground">
-                      Sign in to your BitBit account
+                      Login to your BitBit account
                     </p>
                   </div>
 
@@ -170,7 +158,8 @@ function LoginPageContent() {
                     <Input
                       id="email"
                       type="email"
-                      placeholder="you@company.com"
+                      placeholder="m@example.com"
+                      autoComplete="email"
                       required
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
@@ -178,12 +167,32 @@ function LoginPageContent() {
                     />
                   </div>
 
+                  <div className="grid gap-2">
+                    <div className="flex items-center">
+                      <Label htmlFor="password">Password</Label>
+                      <a
+                        href="/forgot-password"
+                        className="ml-auto text-sm underline-offset-4 hover:underline"
+                      >
+                        Forgot your password?
+                      </a>
+                    </div>
+                    <Input
+                      id="password"
+                      type="password"
+                      autoComplete="current-password"
+                      required
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      disabled={isBusy}
+                    />
+                  </div>
+
                   <Button type="submit" disabled={!canSubmit} className="w-full">
-                    {activeMethod === 'email' ? <Spinner /> : 'Send magic link'}
+                    {activeMethod === 'password' ? <Spinner /> : 'Login'}
                   </Button>
 
-                  <div className="relative text-center text-sm">
-                    <Separator className="absolute top-1/2 w-full" />
+                  <div className="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-border">
                     <span className="relative z-10 bg-card px-2 text-muted-foreground">
                       Or continue with
                     </span>
@@ -231,8 +240,8 @@ function LoginPageContent() {
               </form>
 
               {/* ── Right: Clawd ambient animation ── */}
-              <div className="relative hidden overflow-hidden bg-black md:block">
-                <ClawdAmbient className="absolute inset-0" />
+              <div className="relative hidden overflow-hidden md:block">
+                <ClawdAmbient className="absolute inset-0" inverted={!isDark} />
               </div>
             </CardContent>
           </Card>
