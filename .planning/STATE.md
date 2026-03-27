@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Media, Billing & Growth Roles
 status: completed
-stopped_at: Completed 32-03-PLAN.md (SEO Foundation)
-last_updated: "2026-03-27T03:36:56.524Z"
-last_activity: "2026-03-27 - Completed 33-01: Beta Program Infrastructure"
+stopped_at: Completed 28-01-PLAN.md (Intelligence Dashboard Wiring)
+last_updated: "2026-03-27T03:48:55Z"
+last_activity: "2026-03-27 - Completed 28-01: Intelligence Dashboard Wiring"
 progress:
   total_phases: 20
   completed_phases: 8
   total_plans: 33
-  completed_plans: 27
+  completed_plans: 28
   percent: 100
 ---
 
@@ -35,7 +35,7 @@ Progress: v1.0 ======== | v1.1 ======== | v1.2 ======== | v1.4 ======== | v1.5 =
 ## Performance Metrics
 
 **Delivery totals:**
-- Total plans completed: 83 (v1.0: 19, v1.1: 16, v1.2: 22, v1.4: 23, v1.5: 2, v1.6: 1)
+- Total plans completed: 84 (v1.0: 19, v1.1: 16, v1.2: 22, v1.4: 24, v1.5: 2, v1.6: 1)
 - Milestones shipped: v1.0 (2026-02-21), v1.1 (2026-02-22), v1.2 (2026-03-02), v1.4 (2026-03-26)
 
 **v1.4 Phases:**
@@ -52,6 +52,7 @@ Progress: v1.0 ======== | v1.1 ======== | v1.2 ======== | v1.4 ======== | v1.5 =
 | 24b. Intelligence Layer | 3 | COMPLETE |
 | 25. Role Dashboard | 3 | COMPLETE |
 | 27. Role Runtime Fix | 1 | COMPLETE |
+| 28. Intelligence Dashboard Wiring | 1 | COMPLETE |
 
 **v1.5 Phases:**
 
@@ -114,6 +115,7 @@ See PROJECT.md Key Decisions table.
 - [26-02] Tone adaptation (learnClientTone + adaptDraft) applied as post-processing after LLM generation, not as prompt instruction
 - [26-02] Context assembly and tone adaptation wrapped in try/catch with fallback -- zero crash risk from new features
 - [27-01] Direct domain role imports in cron path over barrel import -- avoids cold-start bundle bloat while ensuring registerRole() side effects fire
+- [28-01] Extracted mapIntelligenceResponses as pure exported function for testability -- avoids jsdom/React render overhead in unit tests
 - [33-01] Invite codes expire after 7 days, single-use -- prevents sharing/abuse
 - [33-01] Feedback widget uses file input for screenshots -- simpler than html2canvas, cross-browser
 - [33-01] Daily tips use account age (days since signup) -- stateless, no progress table needed
@@ -146,6 +148,6 @@ See PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-03-27T03:36:56.502Z
-Stopped at: Completed 32-03-PLAN.md (SEO Foundation)
+Last session: 2026-03-27T03:48:55Z
+Stopped at: Completed 28-01-PLAN.md (Intelligence Dashboard Wiring)
 Resume file: None

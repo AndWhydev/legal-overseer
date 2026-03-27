@@ -194,7 +194,7 @@ Plans:
 - [x] **Phase 25: Role Dashboard** - Unified role activity feed, status cards, autonomy controls, attention view, intelligence widgets, and dashboard integration (completed 2026-03-26)
 - [x] **Phase 26: SOTA Response Drafter** - Wire ContextAssembler + RAG + Memory Palace + entity briefings into the response drafter for contextually rich, business-aware reply generation (completed 2026-03-26)
 - [x] **Phase 27: Role Runtime Import Fix** - Fix critical role domain module imports so cron-triggered role execution actually fires (gap closure, completed 2026-03-27)
-- [ ] **Phase 28: Intelligence Dashboard Wiring** - Wire IntelligenceWidgets to correct API endpoints so dashboard displays live data (gap closure)
+- [x] **Phase 28: Intelligence Dashboard Wiring** - Wire IntelligenceWidgets to correct API endpoints so dashboard displays live data (gap closure) (completed 2026-03-27)
 - [ ] **Phase 29: SEO/Tender Scheduled Monitoring** - Add scheduled ticks and alert pathways for SEO and Tender tools (gap closure)
 
 ## Phase Details
@@ -347,7 +347,7 @@ Phase 20 first (no dependencies), then 21 (billing before growth roles), then 22
 | 25. Role Dashboard | v1.4 | 3/3 | Complete | 2026-03-26 |
 | 26. SOTA Response Drafter | v1.4 | 2/2 | Complete | 2026-03-26 |
 | 27. Role Runtime Import Fix | v1.4 | Complete    | 2026-03-27 | 2026-03-27 |
-| 28. Intelligence Dashboard Wiring | v1.4 | 0/1 | Planned | - |
+| 28. Intelligence Dashboard Wiring | 1/1 | Complete   | 2026-03-27 | - |
 | 29. SEO/Tender Scheduled Monitoring | v1.4 | 0/0 | Pending | - |
 | 30. Onboarding E2E & First-Run Experience | 1/3 | In Progress|  | - |
 | 31. Channel Smoke Tests & Production Hardening | v1.5 | 0/3 | Planned | - |
