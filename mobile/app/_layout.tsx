@@ -1,10 +1,12 @@
 import { Slot, useRouter, useSegments } from 'expo-router';
 import { useEffect } from 'react';
+import { View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StatusBar } from 'expo-status-bar';
 import { AuthProvider, useAuth } from '@/providers/AuthProvider';
 import { QueryProvider } from '@/providers/QueryProvider';
 import { NotificationProvider } from '@/providers/NotificationProvider';
+import { OfflineBanner } from '@/components/OfflineBanner';
 
 function AuthGuard({ children }: { children: React.ReactNode }) {
   const { session, loading } = useAuth();
@@ -30,7 +32,10 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
   if (session) {
     return (
       <NotificationProvider>
-        {children}
+        <View style={{ flex: 1 }}>
+          <OfflineBanner />
+          {children}
+        </View>
       </NotificationProvider>
     );
   }

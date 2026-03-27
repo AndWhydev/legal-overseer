@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
+import { onlineManager } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api';
 import { streamChat, type ChatEvent } from '@/lib/sse';
 
@@ -8,6 +9,8 @@ export interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   timestamp: string;
+  /** True when message is queued offline and not yet confirmed by server */
+  pending?: boolean;
 }
 
 interface ThreadListItem {
@@ -34,6 +37,10 @@ interface HistoryResponse {
 
 /**
  * Hook for managing chat state: messages, streaming, and history.
+ *
+ * When online: uses SSE streaming for real-time token-by-token responses.
+ * When offline: queues the message via useMutation with mutationKey ['sendMessage']
+ * so it persists in AsyncStorage and replays on reconnect.
  */
 export function useChat(initialThreadId?: string | null) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -81,15 +88,60 @@ export function useChat(initialThreadId?: string | null) {
     }
   }, [historyQuery.data]);
 
+  // Offline message queue mutation -- uses the ['sendMessage'] key registered
+  // in configurePersistentMutations so it can resume after app restart
+  const offlineMutation = useMutation({
+    mutationKey: ['sendMessage'],
+    onMutate: async (variables: { message: string; threadId: string | null }) => {
+      // Optimistic: add user message with pending indicator
+      const pendingMsg: ChatMessage = {
+        id: `pending-${Date.now()}`,
+        role: 'user',
+        content: variables.message,
+        timestamp: new Date().toISOString(),
+        pending: true,
+      };
+      setMessages((prev) => [...prev, pendingMsg]);
+      return { pendingMsg };
+    },
+    onSettled: () => {
+      // Invalidate conversation caches so list and history refresh
+      queryClient.invalidateQueries({ queryKey: ['conversations'] });
+      if (currentThreadId) {
+        queryClient.invalidateQueries({
+          queryKey: ['chat-history', currentThreadId],
+        });
+      }
+    },
+    onSuccess: () => {
+      // Clear the pending indicator from all user messages
+      setMessages((prev) =>
+        prev.map((m) => (m.pending ? { ...m, pending: false } : m)),
+      );
+    },
+  });
+
   const sendMessage = useCallback(
     (text: string) => {
       if (isStreaming || !text.trim()) return;
 
-      // Add user message immediately
+      const trimmed = text.trim();
+      const isOnline = onlineManager.isOnline();
+
+      if (!isOnline) {
+        // Queue via mutation for offline persistence + replay
+        offlineMutation.mutate({
+          message: trimmed,
+          threadId: currentThreadId,
+        });
+        return;
+      }
+
+      // Online path: use SSE streaming for real-time response
       const userMsg: ChatMessage = {
         id: `user-${Date.now()}`,
         role: 'user',
-        content: text.trim(),
+        content: trimmed,
         timestamp: new Date().toISOString(),
       };
       setMessages((prev) => [...prev, userMsg]);
@@ -99,24 +151,21 @@ export function useChat(initialThreadId?: string | null) {
       let accumulatedText = '';
       let resolvedThreadId = currentThreadId;
 
-      const cleanup = streamChat(text.trim(), currentThreadId, {
+      const cleanup = streamChat(trimmed, currentThreadId, {
         onEvent: (event: ChatEvent) => {
           switch (event.type) {
             case 'thread': {
-              // Server tells us the thread ID (created on first message)
               const threadData = event.data as { threadId: string };
               resolvedThreadId = threadData.threadId;
               setCurrentThreadId(threadData.threadId);
               break;
             }
             case 'content_delta': {
-              // Streaming text token
               accumulatedText += event.data as string;
               setStreamingText(accumulatedText);
               break;
             }
             case 'message': {
-              // Final compiled message (fallback if content_delta not used)
               if (!accumulatedText) {
                 accumulatedText = event.data as string;
                 setStreamingText(accumulatedText);
@@ -124,7 +173,6 @@ export function useChat(initialThreadId?: string | null) {
               break;
             }
             case 'error': {
-              // Show error as assistant message
               const errorText =
                 typeof event.data === 'string'
                   ? event.data
@@ -133,11 +181,9 @@ export function useChat(initialThreadId?: string | null) {
               setStreamingText(errorText);
               break;
             }
-            // Ignore: stage, thinking_*, tool_call, plan, etc. for now
           }
         },
         onDone: () => {
-          // Convert streaming text to a final assistant message
           if (accumulatedText) {
             const assistantMsg: ChatMessage = {
               id: `assistant-${Date.now()}`,
@@ -151,7 +197,6 @@ export function useChat(initialThreadId?: string | null) {
           setIsStreaming(false);
           cleanupRef.current = null;
 
-          // Invalidate thread list so new threads appear
           queryClient.invalidateQueries({ queryKey: ['conversations'] });
           if (resolvedThreadId) {
             queryClient.invalidateQueries({
@@ -175,7 +220,7 @@ export function useChat(initialThreadId?: string | null) {
 
       cleanupRef.current = cleanup;
     },
-    [isStreaming, currentThreadId, queryClient],
+    [isStreaming, currentThreadId, queryClient, offlineMutation],
   );
 
   const clearChat = useCallback(() => {
@@ -186,6 +231,9 @@ export function useChat(initialThreadId?: string | null) {
     setCurrentThreadId(null);
   }, []);
 
+  // Count pending messages for UI indicator
+  const pendingCount = messages.filter((m) => m.pending).length;
+
   return {
     messages,
     isStreaming,
@@ -194,6 +242,10 @@ export function useChat(initialThreadId?: string | null) {
     sendMessage,
     clearChat,
     isLoadingHistory: historyQuery.isLoading,
+    /** Number of messages queued offline, not yet confirmed */
+    pendingCount,
+    /** Whether any offline mutation is in progress */
+    isPending: offlineMutation.isPending,
   };
 }
 

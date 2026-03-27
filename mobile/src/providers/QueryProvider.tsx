@@ -5,6 +5,10 @@ import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persi
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
 import { onlineManager } from '@tanstack/react-query';
+import {
+  configurePersistentMutations,
+  offlineMutationDefaults,
+} from '@/lib/offline-queue';
 
 // Wire NetInfo to TanStack Query's online manager
 onlineManager.setEventListener((setOnline) => {
@@ -16,8 +20,7 @@ onlineManager.setEventListener((setOnline) => {
 const queryClient = new QueryClient({
   defaultOptions: {
     mutations: {
-      retry: 3,
-      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+      ...offlineMutationDefaults,
     },
     queries: {
       staleTime: 1000 * 60 * 5, // 5 min
@@ -25,6 +28,9 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+// Register mutation defaults so persisted mutations can resume after app restart
+configurePersistentMutations(queryClient);
 
 const persister = createAsyncStoragePersister({
   storage: AsyncStorage,
@@ -35,7 +41,10 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
   return (
     <PersistQueryClientProvider
       client={queryClient}
-      persistOptions={{ persister, maxAge: 1000 * 60 * 60 * 24 }}
+      persistOptions={{
+        persister,
+        maxAge: 1000 * 60 * 60 * 24,
+      }}
     >
       {children}
     </PersistQueryClientProvider>
