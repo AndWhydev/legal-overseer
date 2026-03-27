@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { ClawdAmbient } from '@/components/ui/clawd-ambient'
+import { ForceFieldBackground } from '@/components/ui/force-field-background'
 
 type LoginStatus = 'idle' | 'loading' | 'sent' | 'error'
 type LoginMethod = 'password' | 'google' | 'apple' | null
@@ -119,8 +120,18 @@ function LoginPageContent() {
   }
 
   return (
-    <div className="flex min-h-svh flex-col items-center justify-center bg-background p-6 md:p-10">
-      <div className="w-full max-w-sm md:max-w-4xl">
+    <div className="relative flex min-h-svh flex-col items-center justify-center bg-background p-6 md:p-10">
+      <ForceFieldBackground
+        spacing={16}
+        minStroke={1}
+        maxStroke={2}
+        forceStrength={14}
+        magnifierRadius={160}
+        friction={0.88}
+        restoreSpeed={0.04}
+        particleRgb="255,255,255"
+      />
+      <div className="relative z-10 w-full max-w-sm md:max-w-4xl">
         <div className="flex flex-col gap-6">
           <Card className="overflow-hidden p-0">
             <CardContent className="grid p-0 md:grid-cols-2">
