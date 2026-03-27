@@ -4,6 +4,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StatusBar } from 'expo-status-bar';
 import { AuthProvider, useAuth } from '@/providers/AuthProvider';
 import { QueryProvider } from '@/providers/QueryProvider';
+import { NotificationProvider } from '@/providers/NotificationProvider';
 
 function AuthGuard({ children }: { children: React.ReactNode }) {
   const { session, loading } = useAuth();
@@ -23,6 +24,17 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
   }, [session, segments, loading]);
 
   if (loading) return null;
+
+  // NotificationProvider registers push token and handles notifications
+  // Only mount when authenticated (needs Bearer token for API calls)
+  if (session) {
+    return (
+      <NotificationProvider>
+        {children}
+      </NotificationProvider>
+    );
+  }
+
   return <>{children}</>;
 }
 
