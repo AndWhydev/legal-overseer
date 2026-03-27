@@ -3,9 +3,8 @@ import type { CrawlResult, CrawledMessage, CrawlProgress } from './intelligence-
 
 // ---- Mocks ------------------------------------------------------------------
 
-const crawlAllChannelsMock = vi.fn<
-  (...args: unknown[]) => Promise<CrawlResult>
->()
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const crawlAllChannelsMock = vi.fn<any>()
 
 vi.mock('./intelligence-crawl', () => ({
   crawlAllChannels: (...args: unknown[]) => crawlAllChannelsMock(...args),
