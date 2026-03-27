@@ -306,8 +306,8 @@ export function SidebarNav({
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent
-                className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
-                side="bottom"
+                className="min-w-56 rounded-lg"
+                side="right"
                 align="start"
                 sideOffset={4}
               >
@@ -493,9 +493,9 @@ export function SidebarNav({
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent
-                className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
-                side="top"
-                align="start"
+                className="min-w-56 rounded-lg"
+                side="right"
+                align="end"
                 sideOffset={4}
               >
                 <DropdownMenuLabel className="p-0 font-normal">
