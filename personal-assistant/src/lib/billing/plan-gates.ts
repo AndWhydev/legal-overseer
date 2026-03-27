@@ -59,7 +59,7 @@ export const PLAN_FEATURES: Record<PlanName, PlanFeatures> = {
       'client-comms',
       'proposal-bot',
     ],
-    growthRoles: ['seo', 'content', 'ad-script'],
+    growthRoles: ['seo', 'content', 'ad-script', 'builder'],
     fileAttachments: true,
     whatsapp: true,
     proposals: true,
@@ -152,6 +152,12 @@ export const TOOL_PLAN_REQUIREMENTS: Record<string, PlanName> = {
   schedule_post: 'growth',
   generate_blog: 'growth',
   content_calendar: 'growth',
+  // Builder tools (growth+)
+  generate_website: 'growth',
+  list_website_templates: 'growth',
+  revise_website: 'growth',
+  deploy_website: 'growth',
+  preview_website: 'growth',
   // Tender tools (scale only)
   search_tenders: 'scale',
   score_tender: 'scale',

@@ -11,6 +11,7 @@ import {
   IconAlertCircle,
   IconBolt,
   IconBulb,
+  IconCode,
 } from '@tabler/icons-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -55,6 +56,7 @@ const ROLE_META: Record<RoleType, { label: string; icon: React.ElementType; colo
   comms: { label: 'Communications', icon: IconMessageCircle, colorClass: 'text-blue-500 bg-blue-500/10', description: 'Email triage, responses, follow-ups' },
   sales: { label: 'Sales', icon: IconTrendingUp, colorClass: 'text-foreground bg-muted', description: 'Leads, proposals, pipeline' },
   growth: { label: 'Growth', icon: IconTrendingUp, colorClass: 'text-foreground bg-muted', description: 'SEO monitoring, tender hunting' },
+  builder: { label: 'Builder', icon: IconCode, colorClass: 'text-violet-500 bg-violet-500/10', description: 'Website generation, templates, deployment' },
 }
 
 const AUTONOMY_LABELS: Record<AutonomyLevel, { label: string; variant: 'default' | 'secondary' | 'outline' }> = {

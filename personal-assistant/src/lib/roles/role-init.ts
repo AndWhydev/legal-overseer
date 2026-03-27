@@ -52,6 +52,17 @@ const ROLE_DEFAULTS: Record<RoleType, {
     },
     linked_agent_types: ['ai-search-optimizer', 'tender-hunter'],
   },
+  builder: {
+    tick_interval_seconds: 3600,   // Hourly check (builder is mostly chat-driven)
+    daily_budget_cents: 200,       // $2/day
+    autonomy_level: 'copilot',
+    config: {
+      auto_preview: true,
+      default_template: null,
+      wordpress_sites: [],
+    },
+    linked_agent_types: [],
+  },
 }
 
 // ---------------------------------------------------------------------------

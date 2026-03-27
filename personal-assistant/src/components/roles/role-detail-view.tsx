@@ -15,6 +15,7 @@ import {
   IconGitBranch,
   IconClock,
   IconSettings,
+  IconCode,
 } from '@tabler/icons-react'
 import type { RoleType, ActivityType, AutonomyLevel } from '@/lib/bitbit-core'
 import { AutonomyToggle } from './autonomy-toggle'
@@ -67,6 +68,7 @@ const ROLE_META: Record<RoleType, { label: string; icon: React.ElementType; colo
   comms: { label: 'Communications', icon: IconMessage, color: '#3b82f6' },
   sales: { label: 'Sales', icon: IconTrendingUp, color: '#F1F5F9' },
   growth: { label: 'Growth', icon: IconTrendingUp, color: '#f59e0b' },
+  builder: { label: 'Builder', icon: IconCode, color: '#8b5cf6' },
 }
 
 const ACTIVITY_ICONS: Record<ActivityType, React.ElementType> = {
