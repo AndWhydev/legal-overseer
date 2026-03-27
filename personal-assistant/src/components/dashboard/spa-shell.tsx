@@ -30,6 +30,7 @@ import { KeyboardShortcuts } from './keyboard-shortcuts';
 import { ThemeProvider } from '@/lib/theme/theme-provider';
 import { useHotkeys, getTabHistory } from '@/hooks/use-hotkeys';
 import { SIDEBAR_CATEGORIES } from '@/lib/modules/registry';
+import { FeedbackWidget } from '@/components/beta/feedback-widget';
 
 // ─── Tab definitions ────────────────────────────────────────────────────────
 
@@ -546,6 +547,9 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
 
         {/* Onboarding tour for returning users */}
         <OnboardingTour onNavigate={handleTabChange} tourVariant={composition.tourVariant} />
+
+        {/* Beta feedback widget — floating button + modal */}
+        <FeedbackWidget />
 
         {/* Dev toolbar — lazy-loaded, never bundled in production */}
         {process.env.NODE_ENV === 'development' && (

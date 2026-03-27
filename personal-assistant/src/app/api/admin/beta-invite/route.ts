@@ -21,7 +21,7 @@ async function verifyAdmin(supabase: ReturnType<typeof createClient>, token: str
     .from('profiles')
     .select('role')
     .eq('id', user.id)
-    .single()
+    .single<{ role: string }>()
 
   if (profile?.role !== 'admin') return null
   return user
