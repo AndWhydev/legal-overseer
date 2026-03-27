@@ -238,7 +238,7 @@ Plans:
 - [ ] **Phase 31: Channel Smoke Tests & Production Hardening** — Live credential tests, concurrent load, cron resilience, monitoring dashboard
 - [x] **Phase 32: Marketing Site & Checkout Flow** — Product landing page, industry pages, AWU case study, pricing with Stripe Checkout, SEO
 - [x] **Phase 33: Beta Program Infrastructure** — Invite flow, guided onboarding, feedback collection, usage monitoring, beta user admin (completed 2026-03-27)
-- [ ] **Phase 34: Builder Role (Premium Differentiator)** — Website generation via chat, template library, WordPress/Elementor integration, staging preview
+- [x] **Phase 34: Builder Role (Premium Differentiator)** — Website generation via chat, template library, WordPress/Elementor integration, staging preview (completed 2026-03-27)
 - [ ] **Phase 35: Proactive Workflows & Standing Orders** — NL workflow rules, multi-step sequences, cross-role orchestration, workflow dashboard
 - [ ] **Phase 36: Mobile-First Experience** — React Native/Expo app, push notifications, voice input, offline queue, quick actions
 

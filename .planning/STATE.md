@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Media, Billing & Growth Roles
 status: executing
-stopped_at: Completed 34-03-PLAN.md (WordPress & Elementor Integration)
-last_updated: "2026-03-27T13:42:26Z"
-last_activity: "2026-03-27 - Completed 34-03: WordPress & Elementor Integration"
+stopped_at: Completed 34-04-PLAN.md (Preview, Deploy Tools & Builder Dashboard)
+last_updated: "2026-03-27T13:59:45Z"
+last_activity: "2026-03-27 - Completed 34-04: Preview, Deploy Tools & Builder Dashboard"
 progress:
   total_phases: 20
   completed_phases: 12
@@ -26,9 +26,9 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 ## Current Position
 
 Phase: 34 of 36 (Builder Role)
-Plan: 3 of 4 in current phase
-Status: In Progress
-Last activity: 2026-03-27 - Completed 34-03: WordPress & Elementor Integration
+Plan: 4 of 4 in current phase
+Status: Complete (pending Task 3 human verification)
+Last activity: 2026-03-27 - Completed 34-04: Preview, Deploy Tools & Builder Dashboard
 
 Progress: v1.0 ======== | v1.1 ======== | v1.2 ======== | v1.4 ======== | v1.5 ========== 100%
 
@@ -72,6 +72,7 @@ Progress: v1.0 ======== | v1.1 ======== | v1.2 ======== | v1.4 ======== | v1.5 =
 | Phase 34 P01 | 20min | 3 tasks | 17 files |
 | Phase 34 P02 | 9min | 2 tasks | 5 files |
 | Phase 34 P03 | 15min | 2 tasks | 4 files |
+| Phase 34 P04 | 12min | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -155,6 +156,10 @@ See PROJECT.md Key Decisions table.
 - [Phase 34-03]: Blob wrapper for Buffer/Uint8Array in WordPress uploadMedia -- TS DOM lib type bridge
 - [Phase 34-03]: Elementor HTML fallback widget for forms and unrecognised elements instead of skipping
 - [Phase 34-03]: Inline WordPress credentials for now; encrypted org_integrations store deferred to Plan 04
+- [Phase 34-04]: deploy_website at L2_propose (external WP push); generate/revise at L3_notify; list/preview at L4_silent
+- [Phase 34-04]: Preview route allows unauthenticated access for preview/deployed status (shareable client links)
+- [Phase 34-04]: Deploy action on dashboard redirects to chat with suggested message (simpler than direct API call for v1)
+- [Phase 34-04]: iframe thumbnail uses 400% oversize with scale-25 CSS transform for miniature preview rendering
 
 ### Roadmap Evolution
 
@@ -180,6 +185,6 @@ See PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-03-27T13:42:26Z
-Stopped at: Completed 34-03-PLAN.md (WordPress & Elementor Integration)
+Last session: 2026-03-27T13:59:45Z
+Stopped at: Completed 34-04-PLAN.md (Preview, Deploy Tools & Builder Dashboard)
 Resume file: None
