@@ -53,7 +53,7 @@ function isRateLimitError(error: unknown): boolean {
       return true
     }
     // Check for status property on error (e.g. from HTTP clients)
-    const status = (error as Record<string, unknown>).status
+    const status = (error as unknown as Record<string, unknown>).status
     if (status === 429) {
       return true
     }
