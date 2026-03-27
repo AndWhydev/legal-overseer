@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Media, Billing & Growth Roles
 status: executing
-stopped_at: Completed 36-02-PLAN.md (Chat screen with SSE streaming + voice input)
+stopped_at: Completed 36-03-PLAN.md (Push notifications end-to-end)
 last_updated: "2026-03-27T17:00:31.565Z"
 last_activity: "2026-03-28 - Completed 35-03: Workflow CRUD API & Dashboard (Tasks 1-2; Task 3 pending verification)"
 progress:
@@ -26,9 +26,9 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 ## Current Position
 
 Phase: 36 of 36 (Mobile Experience)
-Plan: 2 of 4 in current phase
+Plan: 3 of 4 in current phase
 Status: Executing
-Last activity: 2026-03-28 - Completed 36-02: Chat screen with SSE streaming and voice input
+Last activity: 2026-03-28 - Completed 36-03: Push notifications end-to-end (Expo Push dispatcher + mobile registration + activity feed)
 
 Progress: v1.0 ======== | v1.1 ======== | v1.2 ======== | v1.4 ======== | v1.5 ========== | v1.6 ===--- 33%
 
@@ -84,6 +84,7 @@ Progress: v1.0 ======== | v1.1 ======== | v1.2 ======== | v1.4 ======== | v1.5 =
 | Phase 35 P03 | 19min | 2 tasks | 8 files |
 | Phase 36 P01 | 18min | 2 tasks | 17 files |
 | Phase 36 P02 | 14min | 2 tasks | 9 files |
+| Phase 36 P03 | 22min | 2 tasks | 12 files |
 
 ## Accumulated Context
 
@@ -184,6 +185,10 @@ See PROJECT.md Key Decisions table.
 - [Phase 36]: [Phase 36-02]: react-native-sse EventSource for SSE streaming (Android fetch broken per RN #28835)
 - [Phase 36]: [Phase 36-02]: expo-audio for voice recording (expo-av deprecated in SDK 55)
 - [Phase 36]: [Phase 36-02]: Push-to-talk via Pressable onLongPress with 300ms delay and 1s minimum recording threshold
+- [Phase 36]: [Phase 36-03]: Static import for getServiceClient in push-dispatcher (not dynamic) for vi.mock testability
+- [Phase 36]: [Phase 36-03]: Fire-and-forget push wiring via lazy dynamic import in approval-queue and workflow-executor
+- [Phase 36]: [Phase 36-03]: NotificationProvider only mounts when authenticated (conditional in AuthGuard)
+- [Phase 36]: [Phase 36-03]: Notifications persisted to AsyncStorage with 100-item cap for offline survival
 
 ### Roadmap Evolution
 
@@ -209,6 +214,6 @@ See PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-03-27T17:15:53Z
-Stopped at: Completed 36-02-PLAN.md (Chat screen with SSE streaming + voice input)
+Last session: 2026-03-27T17:23:44Z
+Stopped at: Completed 36-03-PLAN.md (Push notifications end-to-end)
 Resume file: None

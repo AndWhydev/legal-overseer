@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { createPortal } from 'react-dom';
 import { useRealtimeSubscription } from '@/lib/realtime/supabase-realtime';
 import { useDevOverrides } from '@/lib/dev/dev-overrides';
 import { useInboxKeyboard } from '@/hooks/use-inbox-keyboard';
@@ -32,8 +31,27 @@ import {
   IconStar,
   IconArrowUp,
   IconTrash,
+  IconDots,
+  IconSparkles,
 } from '@tabler/icons-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Skeleton } from '@/components/ui/skeleton';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
+} from '@/components/ui/dropdown-menu';
+import { cn } from '@/lib/utils';
 import { resolveAvatar, resolveAvatarSync, type AvatarResult } from '@/lib/avatar/resolver';
 
 // ---------------------------------------------------------------------------
@@ -134,7 +152,6 @@ function groupMessages(messages: InboxMessage[], activePill: CategoryPillType): 
     if (typeof entry === 'string') {
       const msgs = groupMap.get(entry)!;
       if (msgs.length < 2) {
-        // Single message — dissolve back to individual
         items.push({ type: 'individual', message: msgs[0] });
       } else {
         msgs.sort((a, b) => new Date(b.receivedAt).getTime() - new Date(a.receivedAt).getTime());
@@ -153,7 +170,6 @@ function groupMessages(messages: InboxMessage[], activePill: CategoryPillType): 
     }
   }
 
-  // Sort by most-recent timestamp
   items.sort((a, b) => {
     const aTime = a.type === 'group' ? a.newestAt : a.message.receivedAt;
     const bTime = b.type === 'group' ? b.newestAt : b.message.receivedAt;
@@ -247,13 +263,13 @@ const CHANNEL_ICONS: Record<string, React.FC<{ size?: number }>> = {
 };
 
 const CHANNEL_BRAND_COLORS: Record<string, string> = {
-  gmail: '#EA4335',
-  outlook: '#0078D4',
-  whatsapp: '#25D366',
-  imessage: '#34C759',
-  asana: '#F06A6A',
-  calendly: '#006BFF',
-  stripe: '#635BFF',
+  gmail: 'text-red-500',
+  outlook: 'text-blue-500',
+  whatsapp: 'text-green-500',
+  imessage: 'text-green-400',
+  asana: 'text-rose-400',
+  calendly: 'text-blue-600',
+  stripe: 'text-violet-500',
 };
 
 // ---------------------------------------------------------------------------
@@ -262,7 +278,6 @@ const CHANNEL_BRAND_COLORS: Record<string, string> = {
 
 function sanitizeText(text: string): string {
   if (!text) return '';
-  // SSR-safe: decode common HTML entities manually
   let result = text
     .replace(/&amp;/g, '&')
     .replace(/&lt;/g, '<')
@@ -283,9 +298,7 @@ function sanitizeText(text: string): string {
     .replace(/&nbsp;/g, '\u00A0')
     .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(parseInt(n, 10)))
     .replace(/&#x([0-9a-fA-F]+);/g, (_, h) => String.fromCharCode(parseInt(h, 16)));
-  // Strip remaining HTML tags
   result = result.replace(/<[^>]*>/g, '');
-  // Normalize whitespace
   result = result.replace(/[\t ]+/g, ' ').trim();
   return result;
 }
@@ -367,14 +380,13 @@ const SEED_MESSAGES: InboxMessage[] = [
   {
     id: 's8', channelType: 'whatsapp', senderName: 'Jess Reilly', senderEmail: null,
     subject: null, bodyPreview: 'Lunch tomorrow? That new ramen place on Crown St just opened',
-    fullBody: 'Lunch tomorrow? That new ramen place on Crown St just opened 🍜\n\nApparently the tonkotsu is insane. 12:30 work?',
+    fullBody: 'Lunch tomorrow? That new ramen place on Crown St just opened\n\nApparently the tonkotsu is insane. 12:30 work?',
     aiSummary: 'Lunch invite for tomorrow at new ramen place on Crown St.',
     category: 'conversation', priority: 'low', significance: 3, contactId: 'c4', contactName: 'Jess Reilly',
     threadStatus: 'waiting_on_you', deduplicatedWith: null,
     receivedAt: new Date(Date.now() - 8 * 3600000).toISOString(),
     processedAt: new Date().toISOString(), status: 'unread',
   },
-  // Generate 42 more seed messages to reach 50 total for realistic testing
   ...Array.from({ length: 42 }, (_, i) => {
     const names = ['Alex Kim', 'Maria Lopez', 'James Wilson', 'Emma Davis', 'Raj Patel', 'Lisa Zhang', 'Ben O\'Brien', 'Natasha Roy'];
     const channels: InboxMessage['channelType'][] = ['gmail', 'outlook', 'whatsapp', 'asana', 'stripe', 'slack', 'calendly'];
@@ -459,6 +471,31 @@ function getSnoozeOptions(): { label: string; sublabel: string; value: string }[
 }
 
 // ---------------------------------------------------------------------------
+// Category badge helpers
+// ---------------------------------------------------------------------------
+
+const CATEGORY_VARIANT: Record<MessageCategory, 'default' | 'secondary' | 'destructive' | 'outline'> = {
+  action_required: 'destructive',
+  fyi: 'secondary',
+  conversation: 'default',
+  automated: 'outline',
+  marketing: 'outline',
+  spam: 'outline',
+};
+
+function getCategoryLabel(category: MessageCategory): string {
+  const labels: Record<MessageCategory, string> = {
+    action_required: 'Action Required',
+    fyi: 'FYI',
+    conversation: 'Personal',
+    automated: 'Notification',
+    marketing: 'Newsletter',
+    spam: 'Spam',
+  };
+  return labels[category] || category;
+}
+
+// ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
@@ -475,11 +512,10 @@ function InboxTab() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [newMessageAlert, setNewMessageAlert] = useState(false);
 
-  // New state for P2-5, P2-2, P4-5
   const [activePill, setActivePill] = useState<CategoryPillType>('action');
   const [undoToasts, setUndoToasts] = useState<ToastEntry[]>([]);
   const [snoozeTargetId, setSnoozeTargetId] = useState<string | null>(null);
-  const [snoozeAnchor, setSnoozeAnchor] = useState<{ top: number; right: number } | null>(null);
+  const [snoozeOpen, setSnoozeOpen] = useState(false);
   const [starredIds, setStarredIds] = useState<Set<string>>(new Set());
   const [snoozedIds, setSnoozedIds] = useState<Set<string>>(new Set());
   const lastClickedIndexRef = useRef<number>(-1);
@@ -543,14 +579,11 @@ function InboxTab() {
     setExpandedGroups(prev => {
       const next = new Set(prev);
       if (next.has(groupKey)) {
-        // Collapse with animation
         next.delete(groupKey);
         setCollapsingGroupKey(groupKey);
         if (collapsingGroupRef.current) clearTimeout(collapsingGroupRef.current);
-        // Stagger out takes ~220ms (last child delay + duration), container 180ms
         collapsingGroupRef.current = setTimeout(() => setCollapsingGroupKey(null), 250);
       } else {
-        // Expand — cancel any in-progress collapse
         if (collapsingGroupKey) {
           clearTimeout(collapsingGroupRef.current);
           setCollapsingGroupKey(null);
@@ -588,7 +621,6 @@ function InboxTab() {
 
     try {
       const params = new URLSearchParams();
-      // Channel + priority filtering is done client-side (no re-fetch needed)
       params.set('limit', String(PAGE_SIZE));
       if (loadMore) params.set('offset', String(messagesRef.current.length));
 
@@ -632,20 +664,6 @@ function InboxTab() {
     if (!useSeeded) fetchInbox({ isRefresh: true });
   });
 
-  // Close snooze picker when clicking outside
-  useEffect(() => {
-    if (!snoozeTargetId) return;
-    const handler = (e: MouseEvent) => {
-      if (snoozeAnchor && !(e.target as Element).closest('[data-snooze-picker]')) {
-        setSnoozeTargetId(null);
-        setSnoozeAnchor(null);
-      }
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [snoozeTargetId, snoozeAnchor]);
-
-
   // ── Toast system ──
   const addToast = useCallback((message: string, undo: () => void) => {
     const id = Math.random().toString(36).slice(2);
@@ -680,7 +698,7 @@ function InboxTab() {
   const handleSnooze = useCallback(async (id: string, snoozedUntil: string) => {
     setSnoozedIds(prev => new Set([...prev, id]));
     setSnoozeTargetId(null);
-    setSnoozeAnchor(null);
+    setSnoozeOpen(false);
     addToast('Message snoozed', () => {
       setSnoozedIds(prev => { const s = new Set(prev); s.delete(id); return s; });
       fetch(`/api/agent/inbox/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'unsnooze' }) });
@@ -821,7 +839,6 @@ function InboxTab() {
 
   const handleRowClick = useCallback((id: string, index: number, e: React.MouseEvent) => {
     if (e.shiftKey && index >= 0) {
-      // Range select from lastClickedIndex to current (group-aware)
       e.preventDefault();
       const start = Math.min(lastClickedIndexRef.current >= 0 ? lastClickedIndexRef.current : index, index);
       const end = Math.max(lastClickedIndexRef.current >= 0 ? lastClickedIndexRef.current : index, index);
@@ -840,7 +857,6 @@ function InboxTab() {
       });
       lastClickedIndexRef.current = index;
     } else if (e.metaKey || e.ctrlKey) {
-      // Toggle individual selection
       e.preventDefault();
       keyboard.setSelectedIds((prev: Set<string>) => {
         const next = new Set(prev);
@@ -849,12 +865,10 @@ function InboxTab() {
       });
       lastClickedIndexRef.current = index;
     } else {
-      // Plain click — toggle inline expansion with collapse animation
       lastClickedIndexRef.current = index;
       if (expandedId === id) {
         closeExpanded();
       } else {
-        // Cancel any in-progress collapse
         if (collapsingId) {
           clearTimeout(collapseTimeoutRef.current);
           setCollapsingId(null);
@@ -905,7 +919,14 @@ function InboxTab() {
           <EmptyTitle>No messages yet</EmptyTitle>
           <EmptyDescription>Messages from your connected channels appear here. Connect email or WhatsApp to start receiving messages.</EmptyDescription>
           <EmptyContent>
-            <button type="button" onClick={() => window.dispatchEvent(new CustomEvent('bb-navigate', { detail: { tab: 'settings-connections' } }))} className="mt-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 transition-opacity">Connect a channel</button>
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => window.dispatchEvent(new CustomEvent('bb-navigate', { detail: { tab: 'settings-connections' } }))}
+              className="mt-2"
+            >
+              Connect a channel
+            </Button>
           </EmptyContent>
         </Empty>
       </TabShell>
@@ -919,32 +940,33 @@ function InboxTab() {
 
   return (
     <TabShell scrollable={false} variant="fixed">
-      {/* ── Fixed Header: toolbar + filters (doesn't scroll with messages) ── */}
-      <div style={{
-        flexShrink: 0,
-        zIndex: 10,
-        paddingBottom: 8,
-      }}>
+      {/* ── Fixed Header: toolbar + filters ── */}
+      <div className="shrink-0 z-10 pb-2">
         {/* ── Toolbar ── */}
-        <div className="bb-inbox-toolbar">
-          <div className="bb-inbox-stats">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
             <StatPill value={unreadCount} label="unread" active={unreadCount > 0} />
-            <span className="bb-inbox-stats__sep" />
+            <Separator orientation="vertical" className="h-4" />
             <StatPill value={actionableCount} label="action needed" active={actionableCount > 0} />
-            <span className="bb-inbox-stats__sep" />
+            <Separator orientation="vertical" className="h-4" />
             <StatPill value={waitingCount} label="needs reply" active={waitingCount > 0} />
-            <span className="bb-inbox-stats__sep" />
+            <Separator orientation="vertical" className="h-4" />
             <StatPill value={totalCount} label="total" />
           </div>
 
-          <div className="bb-inbox-toolbar__actions">
+          <div className="flex items-center gap-2">
             {newMessageAlert && (
-              <button onClick={() => setNewMessageAlert(false)} className="bb-btn bb-btn--ghost bb-btn--sm text-emerald-500">
-                <span className="bb-inbox-pulse" />
+              <Button variant="ghost" size="sm" onClick={() => setNewMessageAlert(false)} className="text-emerald-500">
+                <span className="relative mr-1.5 flex size-2">
+                  <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                  <span className="relative inline-flex size-2 rounded-full bg-emerald-500" />
+                </span>
                 New messages
-              </button>
+              </Button>
             )}
-            <button
+            <Button
+              variant="secondary"
+              size="sm"
               onClick={async () => {
                 setRefreshing(true);
                 try {
@@ -959,12 +981,10 @@ function InboxTab() {
                 setRefreshing(false);
               }}
               disabled={refreshing}
-              title="Pull latest messages"
-              className={`inline-flex items-center gap-2 whitespace-nowrap rounded-lg border-none bg-muted px-4 py-2 text-sm text-muted-foreground backdrop-blur-sm transition-all hover:text-foreground hover:scale-[1.02] ${refreshing ? 'cursor-default' : 'cursor-pointer'}`}
             >
-              <IconRefresh size={13} style={{ animation: refreshing ? 'spin 1s linear infinite' : 'none' }} />
+              <IconRefresh size={13} className={cn(refreshing && 'animate-spin')} data-icon="inline-start" />
               {refreshing ? 'Syncing...' : 'Refresh'}
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -982,233 +1002,187 @@ function InboxTab() {
       </div>
 
       {/* ── Scrollable Message List ── */}
-      <div className="bb-inbox-scroll" style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
-      <div className="bb-inbox-list bb-stagger">
-        {displayItems.length === 0 ? (
-          <Empty>
-            <EmptyTitle>All caught up</EmptyTitle>
-            <EmptyDescription>No messages to show. Adjust filters or wait for new messages.</EmptyDescription>
-          </Empty>
-        ) : (
-          <>
-            {displayItems.map((item, idx) => {
-              if (item.type === 'group') {
-                const isGroupExpanded = expandedGroups.has(item.groupKey);
-                const isGroupCollapsing = collapsingGroupKey === item.groupKey;
-                const showChildren = isGroupExpanded || isGroupCollapsing;
-                return (
-                  <div key={item.groupKey} className="bb-inbox-group-wrapper">
-                    <GroupRow
-                      item={item}
-                      index={idx}
-                      expanded={isGroupExpanded || isGroupCollapsing}
-                      focused={idx === keyboard.selectedIndex}
-                      selected={item.messages.every(m => keyboard.selectedIds.has(m.id))}
-                      onClick={() => handleGroupClick(item.groupKey)}
-                      onDelete={() => item.messages.forEach(m => handleDelete(m.id))}
-                    />
-                    {showChildren && (
-                      <div
-                        className={`bb-inbox-group__children${isGroupCollapsing ? ' is-collapsing' : ''}`}
-                        style={{ pointerEvents: isGroupCollapsing ? 'none' : 'auto' }}
-                      >
-                        {item.messages.map((msg, childIdx) => (
-                          <div
-                            key={msg.id}
-                            className="bb-inbox-group__item"
-                            style={{ '--stagger': childIdx } as React.CSSProperties}
-                          >
-                            <MessageRow
-                              message={msg}
-                              index={idx}
-                              expanded={expandedId === msg.id || collapsingId === msg.id}
-                              onArchive={handleArchive}
-                              onDone={handleDone}
-                              onDelete={handleDelete}
-                              onSnooze={(id, e) => {
-                                const rect = (e.currentTarget as HTMLButtonElement).getBoundingClientRect();
-                                setSnoozeTargetId(id);
-                                setSnoozeAnchor({ top: rect.bottom + 8, right: window.innerWidth - rect.right });
-                              }}
-                              onReply={() => setExpandedId(msg.id)}
-                              onStar={handleStar}
-                              onRowClick={handleRowClick}
-                              focused={false}
-                              selected={keyboard.selectedIds.has(msg.id)}
-                              starred={starredIds.has(msg.id)}
-                              insideGroup
-                            />
-                            {(expandedId === msg.id || collapsingId === msg.id) && (
-                              <ExpandedMessageRow
+      <ScrollArea className="flex-1 min-h-0">
+        <div className="flex flex-col gap-0.5">
+          {displayItems.length === 0 ? (
+            <Empty>
+              <EmptyTitle>All caught up</EmptyTitle>
+              <EmptyDescription>No messages to show. Adjust filters or wait for new messages.</EmptyDescription>
+            </Empty>
+          ) : (
+            <>
+              {displayItems.map((item, idx) => {
+                if (item.type === 'group') {
+                  const isGroupExpanded = expandedGroups.has(item.groupKey);
+                  const isGroupCollapsing = collapsingGroupKey === item.groupKey;
+                  const showChildren = isGroupExpanded || isGroupCollapsing;
+                  return (
+                    <div key={item.groupKey}>
+                      <GroupRow
+                        item={item}
+                        index={idx}
+                        expanded={isGroupExpanded || isGroupCollapsing}
+                        focused={idx === keyboard.selectedIndex}
+                        selected={item.messages.every(m => keyboard.selectedIds.has(m.id))}
+                        onClick={() => handleGroupClick(item.groupKey)}
+                        onDelete={() => item.messages.forEach(m => handleDelete(m.id))}
+                      />
+                      {showChildren && (
+                        <div className={cn(
+                          'ml-6 border-l border-border pl-2 flex flex-col gap-0.5',
+                          isGroupCollapsing && 'pointer-events-none animate-out fade-out-0 duration-200'
+                        )}>
+                          {item.messages.map((msg) => (
+                            <div key={msg.id}>
+                              <MessageRow
                                 message={msg}
-                                threadMessages={SEED_THREAD_MESSAGES[msg.id]}
-                                onArchive={(id) => { handleArchive(id); setExpandedId(null); }}
-                                onDone={(id) => { handleDone(id); setExpandedId(null); }}
-                                onSpam={(id) => { handleSpam(id); setExpandedId(null); }}
-                                onReply={handleReply}
-                                onClose={closeExpanded}
-                                isCollapsing={collapsingId === msg.id}
+                                index={idx}
+                                expanded={expandedId === msg.id || collapsingId === msg.id}
+                                onArchive={handleArchive}
+                                onDone={handleDone}
+                                onDelete={handleDelete}
+                                onSnooze={(id) => {
+                                  setSnoozeTargetId(id);
+                                  setSnoozeOpen(true);
+                                }}
+                                onReply={() => setExpandedId(msg.id)}
+                                onStar={handleStar}
+                                onRowClick={handleRowClick}
+                                focused={false}
+                                selected={keyboard.selectedIds.has(msg.id)}
+                                starred={starredIds.has(msg.id)}
                                 insideGroup
                               />
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                );
-              }
+                              {(expandedId === msg.id || collapsingId === msg.id) && (
+                                <ExpandedMessageRow
+                                  message={msg}
+                                  threadMessages={SEED_THREAD_MESSAGES[msg.id]}
+                                  onArchive={(id) => { handleArchive(id); setExpandedId(null); }}
+                                  onDone={(id) => { handleDone(id); setExpandedId(null); }}
+                                  onSpam={(id) => { handleSpam(id); setExpandedId(null); }}
+                                  onReply={handleReply}
+                                  onClose={closeExpanded}
+                                  isCollapsing={collapsingId === msg.id}
+                                  insideGroup
+                                />
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
 
-              const msg = item.message;
-              return (
-                <React.Fragment key={msg.id}>
-                  <MessageRow
-                    message={msg}
-                    index={idx}
-                    expanded={expandedId === msg.id || collapsingId === msg.id}
-                    onArchive={handleArchive}
-                    onDone={handleDone}
-                    onDelete={handleDelete}
-                    onSnooze={(id, e) => {
-                      const rect = (e.currentTarget as HTMLButtonElement).getBoundingClientRect();
-                      setSnoozeTargetId(id);
-                      setSnoozeAnchor({ top: rect.bottom + 8, right: window.innerWidth - rect.right });
-                    }}
-                    onReply={() => setExpandedId(msg.id)}
-                    onStar={handleStar}
-                    onRowClick={handleRowClick}
-                    focused={idx === keyboard.selectedIndex}
-                    selected={keyboard.selectedIds.has(msg.id)}
-                    starred={starredIds.has(msg.id)}
-                  />
-                  {(expandedId === msg.id || collapsingId === msg.id) && (
-                    <ExpandedMessageRow
+                const msg = item.message;
+                return (
+                  <React.Fragment key={msg.id}>
+                    <MessageRow
                       message={msg}
-                      threadMessages={SEED_THREAD_MESSAGES[msg.id]}
-                      onArchive={(id) => { handleArchive(id); setExpandedId(null); }}
-                      onDone={(id) => { handleDone(id); setExpandedId(null); }}
-                      onSpam={(id) => { handleSpam(id); setExpandedId(null); }}
-                      onReply={handleReply}
-                      onClose={closeExpanded}
-                      isCollapsing={collapsingId === msg.id}
+                      index={idx}
+                      expanded={expandedId === msg.id || collapsingId === msg.id}
+                      onArchive={handleArchive}
+                      onDone={handleDone}
+                      onDelete={handleDelete}
+                      onSnooze={(id) => {
+                        setSnoozeTargetId(id);
+                        setSnoozeOpen(true);
+                      }}
+                      onReply={() => setExpandedId(msg.id)}
+                      onStar={handleStar}
+                      onRowClick={handleRowClick}
+                      focused={idx === keyboard.selectedIndex}
+                      selected={keyboard.selectedIds.has(msg.id)}
+                      starred={starredIds.has(msg.id)}
                     />
+                    {(expandedId === msg.id || collapsingId === msg.id) && (
+                      <ExpandedMessageRow
+                        message={msg}
+                        threadMessages={SEED_THREAD_MESSAGES[msg.id]}
+                        onArchive={(id) => { handleArchive(id); setExpandedId(null); }}
+                        onDone={(id) => { handleDone(id); setExpandedId(null); }}
+                        onSpam={(id) => { handleSpam(id); setExpandedId(null); }}
+                        onReply={handleReply}
+                        onClose={closeExpanded}
+                        isCollapsing={collapsingId === msg.id}
+                      />
+                    )}
+                  </React.Fragment>
+                );
+              })}
+              {/* Pagination: Load more */}
+              {hasMore && !useSeeded && displayed.length > 0 && (
+                <Button
+                  variant="ghost"
+                  className="w-full mt-1"
+                  onClick={() => fetchInbox({ loadMore: true })}
+                  disabled={loadingMore}
+                >
+                  {loadingMore ? (
+                    <>
+                      <IconRefresh size={13} className="animate-spin" data-icon="inline-start" />
+                      Loading...
+                    </>
+                  ) : (
+                    <>Load more {total > messages.length ? `(${total - messages.length} remaining)` : ''}</>
                   )}
-                </React.Fragment>
-              );
-            })}
-            {/* Pagination: Load more (server-side) */}
-            {hasMore && !useSeeded && displayed.length > 0 && (
-              <button
-                onClick={() => fetchInbox({ loadMore: true })}
-                disabled={loadingMore}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 8,
-                  width: '100%',
-                  padding: '12px 0',
-                  marginTop: 4,
-                  borderRadius: 12,
-                  border: 'none',
-                  background: 'var(--hover-bg)',
-                  color: loadingMore ? 'var(--text-dim)' : 'var(--text-secondary)',
-                  fontSize: 14,
-                  fontWeight: 500,
-                  cursor: loadingMore ? 'default' : 'pointer',
-                  transition: 'all 150ms cubic-bezier(0.16, 1, 0.3, 1)',
-                }}
-                onMouseEnter={(e) => {
-                  if (!loadingMore) {
-                    e.currentTarget.style.background = 'var(--hover-bg-strong)';
-                    e.currentTarget.style.color = 'var(--text-primary)';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'var(--hover-bg)';
-                  if (!loadingMore) e.currentTarget.style.color = 'var(--text-secondary)';
-                }}
-              >
-                {loadingMore ? (
-                  <>
-                    <IconRefresh size={13} style={{ animation: 'spin 1s linear infinite' }} />
-                    Loading...
-                  </>
-                ) : (
-                  <>Load more {total > messages.length ? `(${total - messages.length} remaining)` : ''}</>
-                )}
-              </button>
-            )}
-          </>
-        )}
-      </div>
-      </div>{/* end scrollable wrapper */}
+                </Button>
+              )}
+            </>
+          )}
+        </div>
+      </ScrollArea>
 
       {/* ── Floating Bulk Action Bar ── */}
       {keyboard.selectedIds.size > 0 && (
-        <div style={{
-          position: 'fixed',
-          bottom: 80,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 12,
-          padding: '12px 16px',
-          background: 'var(--bg-card-solid)',
-          backdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
-          WebkitBackdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
-          border: '1px solid var(--glass-card-border)',
-          borderRadius: 12,
-          boxShadow: `0 8px 32px ${'var(--bg-overlay, rgba(0, 0, 0, 0.6))'}, 0 2px 8px rgba(0, 0, 0, 0.3)`,
-          zIndex: 50,
-          animation: 'fadeSlideUp 160ms cubic-bezier(0.16, 1, 0.3, 1)',
-        }}>
-          <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>
+        <div className="fixed bottom-20 left-1/2 z-50 -translate-x-1/2 flex items-center gap-3 rounded-xl border border-border bg-popover px-4 py-3 shadow-lg animate-in slide-in-from-bottom-2 fade-in-0 duration-150">
+          <span className="text-sm font-medium text-foreground">
             {keyboard.selectedIds.size} selected
           </span>
-          <button style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 12px', borderRadius: 8, border: '1px solid var(--glass-divider)', background: 'var(--hover-bg)', color: 'var(--text-secondary)', fontSize: 14, fontWeight: 500, cursor: 'pointer', transition: 'all 150ms ease' }}
-            onClick={handleBulkArchive}
-            onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--hover-bg-strong)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--hover-bg)'; }}
-          ><IconArchive size={13} /> Archive</button>
-          <button style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 12px', borderRadius: 8, border: '1px solid var(--glass-divider)', background: 'var(--hover-bg)', color: 'var(--text-secondary)', fontSize: 14, fontWeight: 500, cursor: 'pointer', transition: 'all 150ms ease' }}
-            onClick={handleBulkDone}
-            onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--hover-bg-strong)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--hover-bg)'; }}
-          ><IconCircleCheck size={13} /> Done</button>
-          <button style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 12px', borderRadius: 8, border: '1px solid var(--glass-divider)', background: 'var(--hover-bg)', color: 'var(--text-secondary)', fontSize: 14, fontWeight: 500, cursor: 'pointer', transition: 'all 150ms ease' }}
-            onClick={(e) => {
-              const rect = e.currentTarget.getBoundingClientRect();
-              setSnoozeTargetId(Array.from(keyboard.selectedIds)[0]);
-              setSnoozeAnchor({ top: rect.top - 200, right: window.innerWidth - rect.right });
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--hover-bg-strong)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--hover-bg)'; }}
-          ><IconClock size={13} /> Snooze</button>
-          <button style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 12px', borderRadius: 8, border: '1px solid var(--glass-divider)', background: 'var(--hover-bg)', color: 'var(--text-secondary)', fontSize: 14, fontWeight: 500, cursor: 'pointer', transition: 'all 150ms ease' }}
-            onClick={handleBulkSpam}
-            onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--hover-bg-strong)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--hover-bg)'; }}
-          ><IconAlertTriangle size={13} /> Spam</button>
-          <button style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 24, height: 24, borderRadius: 8, border: '1px solid var(--glass-divider)', background: 'var(--hover-bg)', color: 'var(--text-secondary)', fontSize: 14, cursor: 'pointer', padding: 0, transition: 'all 150ms ease' }}
-            onClick={clearSelection}
-            onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--hover-bg-strong)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--hover-bg)'; }}
-          ><IconX size={12} /></button>
+          <Separator orientation="vertical" className="h-5" />
+          <Button variant="outline" size="xs" onClick={handleBulkArchive}>
+            <IconArchive size={13} data-icon="inline-start" /> Archive
+          </Button>
+          <Button variant="outline" size="xs" onClick={handleBulkDone}>
+            <IconCircleCheck size={13} data-icon="inline-start" /> Done
+          </Button>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="xs">
+                <IconClock size={13} data-icon="inline-start" /> Snooze
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-56 p-1" side="top" align="center">
+              <SnoozePickerContent
+                onSnooze={(time) => {
+                  keyboard.selectedIds.forEach(id => handleSnooze(id, time));
+                  clearSelection();
+                }}
+              />
+            </PopoverContent>
+          </Popover>
+          <Button variant="outline" size="xs" onClick={handleBulkSpam}>
+            <IconAlertTriangle size={13} data-icon="inline-start" /> Spam
+          </Button>
+          <Button variant="ghost" size="icon-xs" onClick={clearSelection} aria-label="Clear selection">
+            <IconX size={12} />
+          </Button>
         </div>
       )}
 
-      {/* ── Snooze Picker — Task #7 ── */}
-      {snoozeTargetId && snoozeAnchor && (
-        <SnoozePickerPopover
-          anchor={snoozeAnchor}
-          onSnooze={(time) => handleSnooze(snoozeTargetId, time)}
-          onClose={() => { setSnoozeTargetId(null); setSnoozeAnchor(null); }}
-        />
+      {/* ── Snooze Picker Popover (for individual messages) ── */}
+      {snoozeTargetId && (
+        <Popover open={snoozeOpen} onOpenChange={(o) => { if (!o) { setSnoozeOpen(false); setSnoozeTargetId(null); } }}>
+          <PopoverTrigger className="sr-only" />
+          <PopoverContent className="w-56 p-1" side="bottom" align="end">
+            <SnoozePickerContent
+              onSnooze={(time) => handleSnooze(snoozeTargetId, time)}
+            />
+          </PopoverContent>
+        </Popover>
       )}
 
-      {/* ── Undo Toast Stack — Task #7 ── */}
+      {/* ── Undo Toast Stack ── */}
       <UndoToastStack
         toasts={undoToasts}
         onDismiss={(id) => setUndoToasts(prev => prev.filter(t => t.id !== id))}
@@ -1225,159 +1199,28 @@ function InboxTab() {
 }
 
 // ---------------------------------------------------------------------------
-// Unified Filter Bar — single row with smart categories + dropdowns
+// Unified Filter Bar
 // ---------------------------------------------------------------------------
 
 const PILL_ORDER: CategoryPillType[] = ['all', 'action', 'waiting', 'direct', 'email', 'notifications', 'billing'];
 
 const CHANNEL_OPTIONS = [
-  { value: '', label: 'All channels', icon: null },
-  { value: 'gmail', label: 'Gmail', color: '#EA4335' },
-  { value: 'outlook', label: 'Outlook', color: '#0078D4' },
-  { value: 'whatsapp', label: 'WhatsApp', color: '#25D366' },
-  { value: 'asana', label: 'Asana', color: '#F06A6A' },
-  { value: 'calendly', label: 'Calendly', color: '#006BFF' },
-  { value: 'stripe', label: 'Stripe', color: '#635BFF' },
+  { value: '', label: 'All channels' },
+  { value: 'gmail', label: 'Gmail' },
+  { value: 'outlook', label: 'Outlook' },
+  { value: 'whatsapp', label: 'WhatsApp' },
+  { value: 'asana', label: 'Asana' },
+  { value: 'calendly', label: 'Calendly' },
+  { value: 'stripe', label: 'Stripe' },
 ];
 
 const PRIORITY_OPTIONS = [
   { value: '', label: 'Any priority' },
-  { value: 'critical', label: 'Critical', color: '#FF3B30' },
-  { value: 'high', label: 'High', color: '#FF9500' },
-  { value: 'medium', label: 'Medium', color: '#FFCC00' },
-  { value: 'low', label: 'Low', color: 'var(--text-dim)' },
+  { value: 'critical', label: 'Critical' },
+  { value: 'high', label: 'High' },
+  { value: 'medium', label: 'Medium' },
+  { value: 'low', label: 'Low' },
 ];
-
-function FilterDropdown({
-  options,
-  value,
-  onChange,
-  label,
-}: {
-  options: { value: string; label: string; color?: string }[];
-  value: string;
-  onChange: (v: string) => void;
-  label: string;
-}) {
-  const [open, setOpen] = useState(false);
-  const [dropdownPos, setDropdownPos] = useState<{ top: number; left: number } | null>(null);
-  const ref = useRef<HTMLDivElement>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const selected = options.find(o => o.value === value);
-  const isFiltered = value !== '';
-
-  const toggleOpen = useCallback(() => {
-    setOpen(prev => {
-      if (!prev && ref.current) {
-        const rect = ref.current.getBoundingClientRect();
-        setDropdownPos({ top: rect.bottom + 4, left: rect.left });
-      }
-      return !prev;
-    });
-  }, []);
-
-  // Click-outside: check both the trigger ref AND the portal dropdown ref
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node) &&
-          dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [open]);
-
-  // Close on scroll of the tab panel (clipping ancestor)
-  useEffect(() => {
-    if (!open) return;
-    const tabPanel = ref.current?.closest('.bb-tab-panel');
-    if (!tabPanel) return;
-    const handleScroll = () => setOpen(false);
-    tabPanel.addEventListener('scroll', handleScroll, { passive: true });
-    return () => tabPanel.removeEventListener('scroll', handleScroll);
-  }, [open]);
-
-  const dropdownMenu = open && dropdownPos ? (
-    <div ref={dropdownRef} style={{
-      position: 'fixed',
-      top: dropdownPos.top,
-      left: dropdownPos.left,
-      zIndex: 9999,
-      minWidth: 160,
-      padding: 4,
-      borderRadius: 12,
-      background: 'var(--bg-card-solid)',
-      backdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
-      WebkitBackdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
-      border: '1px solid var(--glass-card-border)',
-      boxShadow: `0 8px 32px ${'var(--bg-overlay, rgba(0, 0, 0, 0.6))'}`,
-      animation: 'fadeSlideUp 120ms cubic-bezier(0.16, 1, 0.3, 1)',
-    }}>
-      {options.map((opt) => {
-        const isSelected = opt.value === value;
-        return (
-          <button
-            key={opt.value}
-            onClick={() => { onChange(opt.value); setOpen(false); }}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              width: '100%',
-              padding: '8px 12px',
-              borderRadius: 8,
-              border: 'none',
-              background: isSelected ? 'var(--hover-bg-strong)' : 'transparent',
-              color: isSelected ? 'var(--text-primary)' : 'var(--text-secondary)',
-              fontSize: 14,
-              fontWeight: isSelected ? 600 : 400,
-              cursor: 'pointer',
-              transition: 'background 100ms ease',
-              textAlign: 'left',
-            }}
-            onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.background = 'var(--hover-bg)'; }}
-            onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.background = 'transparent'; }}
-          >
-            {opt.color && <span style={{ width: 6, height: 6, borderRadius: '50%', background: opt.color, flexShrink: 0 }} />}
-            {opt.label}
-            {isSelected && <IconCircleCheck size={11} style={{ marginLeft: 'auto', opacity: 0.6 }} />}
-          </button>
-        );
-      })}
-    </div>
-  ) : null;
-
-  return (
-    <div ref={ref} style={{ position: 'relative', flexShrink: 0 }}>
-      <button
-        onClick={toggleOpen}
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: 8,
-          padding: '4px 12px 4px 12px',
-          borderRadius: 8,
-          border: isFiltered ? '1px solid var(--glass-card-border)' : '1px solid var(--glass-divider)',
-          background: isFiltered ? 'var(--hover-bg-strong)' : 'var(--hover-bg)',
-          color: isFiltered ? 'var(--text-primary)' : 'var(--text-dim)',
-          fontSize: 14,
-          fontWeight: isFiltered ? 600 : 400,
-          cursor: 'pointer',
-          transition: 'all 150ms ease',
-          whiteSpace: 'nowrap',
-        }}
-        onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--hover-bg-strong)'; e.currentTarget.style.color = 'var(--text-primary)'; }}
-        onMouseLeave={(e) => { e.currentTarget.style.background = isFiltered ? 'var(--hover-bg-strong)' : 'var(--hover-bg)'; e.currentTarget.style.color = isFiltered ? 'var(--text-primary)' : 'var(--text-dim)'; }}
-      >
-        {selected?.color && <span style={{ width: 6, height: 6, borderRadius: '50%', background: selected.color, flexShrink: 0 }} />}
-        {selected?.label || label}
-        <IconChevronDown size={11} style={{ opacity: 0.5, transition: 'transform 150ms', transform: open ? 'rotate(180deg)' : 'none' }} />
-      </button>
-
-      {typeof document !== 'undefined' && dropdownMenu && createPortal(dropdownMenu, document.body)}
-    </div>
-  );
-}
 
 function UnifiedFilterBar({
   activePill,
@@ -1431,7 +1274,7 @@ function UnifiedFilterBar({
         </Button>
       )}
 
-      <Select value={channelFilter} onValueChange={onChannelChange}>
+      <Select value={channelFilter} onValueChange={(v) => onChannelChange(v === '_all' ? '' : v)}>
         <SelectTrigger className="w-auto">
           <SelectValue placeholder="Channel" />
         </SelectTrigger>
@@ -1441,7 +1284,7 @@ function UnifiedFilterBar({
           ))}
         </SelectContent>
       </Select>
-      <Select value={priorityFilter} onValueChange={onPriorityChange}>
+      <Select value={priorityFilter} onValueChange={(v) => onPriorityChange(v === '_all' ? '' : v)}>
         <SelectTrigger className="w-auto">
           <SelectValue placeholder="Priority" />
         </SelectTrigger>
@@ -1456,7 +1299,7 @@ function UnifiedFilterBar({
 }
 
 // ---------------------------------------------------------------------------
-// Undo Toast Stack — Task #7
+// Undo Toast Stack
 // ---------------------------------------------------------------------------
 
 function UndoToastStack({
@@ -1471,69 +1314,19 @@ function UndoToastStack({
   if (toasts.length === 0) return null;
 
   return (
-    <div style={{
-      position: 'fixed',
-      bottom: 24,
-      left: '50%',
-      transform: 'translateX(-50%)',
-      display: 'flex',
-      flexDirection: 'column',
-      gap: 8,
-      zIndex: 200,
-      alignItems: 'center',
-      pointerEvents: 'none',
-    }}>
+    <div className="fixed bottom-6 left-1/2 z-[200] -translate-x-1/2 flex flex-col items-center gap-2 pointer-events-none">
       {toasts.map((toast) => (
         <div
           key={toast.id}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 12,
-            padding: '12px 16px',
-            borderRadius: 12,
-            background: 'var(--bg-card-solid)',
-            backdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
-            WebkitBackdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
-            border: '1px solid var(--glass-card-border)',
-            boxShadow: `0 8px 32px ${'var(--bg-overlay, rgba(0, 0, 0, 0.6))'}`,
-            pointerEvents: 'auto',
-            animation: 'fadeSlideUp 160ms cubic-bezier(0.16, 1, 0.3, 1)',
-          }}
+          className="pointer-events-auto flex items-center gap-3 rounded-xl border border-border bg-popover px-4 py-3 shadow-lg animate-in slide-in-from-bottom-2 fade-in-0 duration-150"
         >
-          <style>{`@keyframes fadeSlideUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }`}</style>
-          <span style={{ fontSize: 14, color: 'var(--text-primary)', fontWeight: 400 }}>
-            {toast.message}
-          </span>
-          <button
-            onClick={() => onUndo(toast)}
-            style={{
-              padding: '4px 12px',
-              borderRadius: 8,
-              border: `1px solid ${'var(--border-focus-ring, rgba(255, 255, 255, 0.2))'}`,
-              background: 'var(--hover-bg-strong, rgba(255, 255, 255, 0.08))',
-              color: 'var(--text-primary, #E2E8F0)',
-              fontSize: 14,
-              fontWeight: 500,
-              cursor: 'pointer',
-              transition: 'all 150ms ease',
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--border-active, rgba(255, 255, 255, 0.1))'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--hover-bg-strong, rgba(255, 255, 255, 0.08))'; }}
-          >
+          <span className="text-sm text-foreground">{toast.message}</span>
+          <Button variant="outline" size="xs" onClick={() => onUndo(toast)}>
             Undo
-          </button>
-          <button
-            onClick={() => onDismiss(toast.id)}
-            style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              width: 20, height: 20, borderRadius: 4, border: 'none',
-              background: 'transparent', color: 'var(--text-dim)',
-              cursor: 'pointer', padding: 0,
-            }}
-          >
+          </Button>
+          <Button variant="ghost" size="icon-xs" onClick={() => onDismiss(toast.id)} aria-label="Dismiss">
             <IconX size={12} />
-          </button>
+          </Button>
         </div>
       ))}
     </div>
@@ -1541,127 +1334,76 @@ function UndoToastStack({
 }
 
 // ---------------------------------------------------------------------------
-// Snooze Picker Popover — Task #7
+// Snooze Picker Content (reusable for Popover)
 // ---------------------------------------------------------------------------
 
-function SnoozePickerPopover({
-  anchor,
-  onSnooze,
-  onClose,
-}: {
-  anchor: { top: number; right: number };
-  onSnooze: (time: string) => void;
-  onClose: () => void;
-}) {
+function SnoozePickerContent({ onSnooze }: { onSnooze: (time: string) => void }) {
   const options = getSnoozeOptions();
-
   return (
-    <div
-      data-snooze-picker="true"
-      style={{
-        position: 'fixed',
-        top: anchor.top,
-        right: anchor.right,
-        zIndex: 150,
-        background: 'var(--bg-card-solid)',
-        backdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
-        WebkitBackdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
-        border: '1px solid var(--glass-card-border)',
-        borderRadius: 12,
-        padding: 8,
-        boxShadow: `0 8px 32px ${'var(--bg-overlay, rgba(0, 0, 0, 0.6))'}`,
-        minWidth: 200,
-        animation: 'fadeSlideUp 140ms cubic-bezier(0.16, 1, 0.3, 1)',
-      }}
-    >
-      <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.04em', padding: '8px 12px 4px' }}>
+    <div className="flex flex-col">
+      <span className="px-3 py-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
         Snooze until
-      </div>
+      </span>
       {options.map((opt) => (
         <button
           key={opt.value}
           onClick={() => onSnooze(opt.value)}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            width: '100%',
-            padding: '8px 10px',
-            borderRadius: 8,
-            border: 'none',
-            background: 'transparent',
-            color: 'var(--text-primary)',
-            fontSize: 14,
-            cursor: 'pointer',
-            transition: 'background 100ms ease',
-            textAlign: 'left',
-            gap: 16,
-          }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--hover-bg-strong)'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+          className="flex items-center justify-between gap-4 rounded-md px-3 py-2 text-sm text-foreground hover:bg-accent hover:text-accent-foreground transition-colors text-left"
         >
-          <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <IconClock size={13} style={{ color: 'var(--text-dim)', flexShrink: 0 }} />
+          <span className="flex items-center gap-2">
+            <IconClock size={13} className="text-muted-foreground shrink-0" />
             {opt.label}
           </span>
-          <span style={{ fontSize: 14, color: 'var(--text-dim)', flexShrink: 0 }}>
-            {opt.sublabel}
-          </span>
+          <span className="text-xs text-muted-foreground shrink-0">{opt.sublabel}</span>
         </button>
       ))}
     </div>
   );
 }
 
-
 // ---------------------------------------------------------------------------
 // Inbox Skeleton
 // ---------------------------------------------------------------------------
 
-const shimmer: React.CSSProperties = {
-  background: 'linear-gradient(90deg, var(--border-subtle) 25%, var(--hover-bg) 50%, var(--border-subtle) 75%)',
-  backgroundSize: '200% 100%',
-  animation: 'shimmer 1.5s ease-in-out infinite',
-  borderRadius: 8,
-};
-
 function InboxSkeleton() {
   return (
     <TabShell>
-      <div aria-busy="true" role="status" style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-        <div className="bb-inbox-toolbar">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+      <div aria-busy="true" role="status" className="flex flex-col gap-0">
+        {/* Toolbar skeleton */}
+        <div className="flex items-center justify-between py-2">
+          <div className="flex items-center gap-4">
             {[80, 100, 90, 60].map((w, i) => (
               <React.Fragment key={i}>
-                {i > 0 && <span className="bb-inbox-stats__sep" />}
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-                  <div style={{ ...shimmer, width: 24, height: 20 }} />
-                  <div style={{ ...shimmer, width: w - 24, height: 12 }} />
+                {i > 0 && <Separator orientation="vertical" className="h-4" />}
+                <div className="flex items-baseline gap-2">
+                  <Skeleton className="h-5 w-6" />
+                  <Skeleton className="h-3" style={{ width: w - 24 }} />
                 </div>
               </React.Fragment>
             ))}
           </div>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <div style={{ ...shimmer, width: 72, height: 32, borderRadius: 8 }} />
-            <div style={{ ...shimmer, width: 96, height: 32, borderRadius: 8 }} />
+          <div className="flex gap-2">
+            <Skeleton className="h-8 w-18 rounded-lg" />
+            <Skeleton className="h-8 w-24 rounded-lg" />
           </div>
         </div>
-        <div className="bb-inbox-list">
+        {/* Message list skeleton */}
+        <div className="flex flex-col gap-1 mt-2">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="bb-inbox-row" style={{ opacity: 1 - i * 0.1 }}>
-              <div className="bb-inbox-row__col1">
-                <div style={{ ...shimmer, width: 28, height: 28, borderRadius: 8 }} />
-                <div style={{ ...shimmer, width: 80 + (i % 3) * 20, height: 13 }} />
-              </div>
-              <div className="bb-inbox-row__col2" style={{ gap: 8 }}>
-                <div style={{ ...shimmer, width: 56, height: 18, borderRadius: 12 }} />
-                <div style={{ ...shimmer, width: 140 + (i % 4) * 30, height: 13 }} />
-                <div style={{ ...shimmer, width: 200 + (i % 3) * 40, height: 11 }} />
-              </div>
-              <div className="bb-inbox-row__meta">
-                <div style={{ ...shimmer, width: 24, height: 12 }} />
-              </div>
-            </div>
+            <Card key={i} size="sm" className={cn('opacity-100', i > 0 && `opacity-${100 - i * 10}`)}>
+              <CardContent className="flex items-center gap-3 py-3">
+                <Skeleton className="size-8 rounded-full shrink-0" />
+                <div className="flex-1 min-w-0 flex flex-col gap-1.5">
+                  <div className="flex items-center gap-2">
+                    <Skeleton className="h-3 w-20" />
+                    <Skeleton className="h-4 w-14 rounded-full" />
+                  </div>
+                  <Skeleton className="h-3 w-3/4" />
+                  <Skeleton className="h-2.5 w-1/2" />
+                </div>
+                <Skeleton className="h-3 w-8 shrink-0" />
+              </CardContent>
+            </Card>
           ))}
         </div>
         <span className="sr-only">Loading inbox...</span>
@@ -1676,26 +1418,28 @@ function InboxSkeleton() {
 
 function StatPill({ value, label, active }: { value: number; label: string; active?: boolean }) {
   return (
-    <span className="bb-inbox-stats__item" data-active={active || undefined}>
-      <span className="bb-inbox-stats__value">{value}</span>
-      <span className="bb-inbox-stats__label">{label}</span>
+    <span className="flex items-baseline gap-1.5">
+      <span className={cn(
+        'text-sm font-semibold tabular-nums',
+        active ? 'text-foreground' : 'text-muted-foreground'
+      )}>
+        {value}
+      </span>
+      <span className="text-xs text-muted-foreground">{label}</span>
     </span>
   );
 }
 
-
 // ---------------------------------------------------------------------------
-// Expanded Message Row — inline content panel (replaces drawer)
+// Expanded Message Row — inline content panel
 // ---------------------------------------------------------------------------
 
 function generateContextualDraft(message: InboxMessage): string | null {
-  // No draft for non-actionable categories
   if (['automated', 'marketing', 'spam', 'fyi'].includes(message.category)) return null;
 
   const senderFirstName = (message.contactName || message.senderName || 'there').split(' ')[0];
   const text = ((message.subject || '') + ' ' + (message.fullBody || message.bodyPreview)).toLowerCase();
 
-  // Conversation category — casual tone
   if (message.category === 'conversation') {
     if (text.match(/lunch|dinner|coffee|drinks|catch up|hang out|ramen/)) {
       return `Hey ${senderFirstName}! Sounds great, I'm in. Let me check my calendar and confirm the time.`;
@@ -1703,7 +1447,6 @@ function generateContextualDraft(message: InboxMessage): string | null {
     return `Hey ${senderFirstName}, thanks for the message! I'll get back to you on this shortly.`;
   }
 
-  // Action required — contextual based on content
   if (text.match(/error|crash|spike|500|bug|broke|down|outage|sentry|incident/)) {
     return `Hi ${senderFirstName},\n\nOn it — I'll investigate and report back with findings shortly.`;
   }
@@ -1726,7 +1469,6 @@ function generateContextualDraft(message: InboxMessage): string | null {
     return `Hi ${senderFirstName},\n\nI'll take a look and get back to you with my review.`;
   }
 
-  // Fallback for action_required with no specific match
   return `Hi ${senderFirstName},\n\nThanks for this. I'll look into it and follow up shortly.`;
 }
 
@@ -1734,7 +1476,6 @@ function extractSummaryInline(message: InboxMessage): { summary: string; actionI
   const body = message.fullBody || message.bodyPreview;
   const text = (message.subject || '') + ' ' + body;
   const actionItems: string[] = [];
-  // Only extract actions for action_required messages
   if (message.category === 'action_required') {
     const actionMatch = text.match(/(?:can you|could you|please)\s+([^,.!?]{10,60})/i);
     if (actionMatch) actionItems.push(actionMatch[1].trim());
@@ -1747,7 +1488,6 @@ function extractSummaryInline(message: InboxMessage): { summary: string; actionI
       actionItems.push('Action assigned to you');
     }
   }
-  // Summary: first 2-3 sentences, not arbitrarily truncated
   const sentences = body.match(/[^.!?\n]+[.!?]+/g);
   const summary = sentences && sentences.length > 0
     ? sentences.slice(0, 3).join(' ').trim()
@@ -1756,7 +1496,7 @@ function extractSummaryInline(message: InboxMessage): { summary: string; actionI
   return { summary, actionItems: actionItems.slice(0, 3), draftReply };
 }
 
-// AI result cache — avoids re-simulating loading on re-open
+// AI result cache
 const aiResultCache = new Map<string, { summary: string; actionItems: string[]; draftReply: string | null }>();
 
 function ExpandedMessageRow({
@@ -1786,7 +1526,6 @@ function ExpandedMessageRow({
   const expandedRef = useRef<HTMLDivElement>(null);
   const [aiResult, setAiResult] = useState<{ summary: string; actionItems: string[]; draftReply: string | null } | null>(null);
   const [aiLoading, setAiLoading] = useState(true);
-  // Track whether AI result was freshly computed (not cached) for shimmer transition
   const [aiJustResolved, setAiJustResolved] = useState(false);
 
   // Ghost draft state
@@ -1808,7 +1547,7 @@ function ExpandedMessageRow({
     }, 50);
   }, []);
 
-  // AI summary — check cache first, simulate load only on first open
+  // AI summary — check cache first
   useEffect(() => {
     if (!showSummary) { setAiLoading(false); return; }
     const cached = aiResultCache.get(message.id);
@@ -1876,17 +1615,9 @@ function ExpandedMessageRow({
     }
   };
 
-  const handleNavigateLocal = (action: string) => {
-    if (action === 'snooze') {
-      // Dispatch snooze event for parent to handle
-      const btn = expandedRef.current?.querySelector('[data-snooze-trigger]') as HTMLButtonElement | null;
-      if (btn) btn.click();
-    }
-  };
-
   const sender = message.contactName || message.senderName || message.senderEmail || 'Unknown';
   const ChannelIcon = CHANNEL_ICONS[message.channelType] || GmailIcon;
-  const brandColor = CHANNEL_BRAND_COLORS[message.channelType] || 'var(--text-dim)';
+  const channelColorClass = CHANNEL_BRAND_COLORS[message.channelType] || 'text-muted-foreground';
   const fullDate = new Date(message.receivedAt).toLocaleString('en-AU', {
     weekday: 'short', day: 'numeric', month: 'short', year: 'numeric',
     hour: '2-digit', minute: '2-digit',
@@ -1901,231 +1632,175 @@ function ExpandedMessageRow({
   };
 
   return (
-    <div
+    <Card
       ref={expandedRef}
-      style={{
-        borderRadius: insideGroup ? '0 0 8px 8px' : '0 0 12px 12px',
-        marginTop: insideGroup ? 0 : -6,
-        background: 'var(--bg-card)',
-        backdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
-        WebkitBackdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
-        overflow: 'hidden',
-        animation: isCollapsing
-          ? 'collapseOut 180ms cubic-bezier(0.4, 0, 1, 1) forwards'
-          : 'expandIn 200ms cubic-bezier(0.16, 1, 0.3, 1)',
-        pointerEvents: isCollapsing ? 'none' : 'auto',
-      }}
+      className={cn(
+        'overflow-hidden border-t-0 gap-0 py-0',
+        insideGroup ? 'rounded-t-none rounded-b-lg' : 'rounded-t-none rounded-b-xl -mt-1',
+        isCollapsing && 'animate-out fade-out-0 slide-out-to-top-1 duration-150 pointer-events-none',
+        !isCollapsing && 'animate-in fade-in-0 slide-in-from-top-1 duration-200',
+      )}
     >
-      <style>{`
-        @keyframes expandIn {
-          from { opacity: 0; max-height: 0; transform: translateY(-4px); }
-          to { opacity: 1; max-height: 2000px; transform: translateY(0); }
-        }
-        @keyframes collapseOut {
-          from { opacity: 1; max-height: 2000px; transform: translateY(0); }
-          to { opacity: 0; max-height: 0; transform: translateY(-4px); }
-        }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-      `}</style>
-
       {/* Header -- sender + email on one line */}
-      <div style={{ padding: '16px 20px 0' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{ width: 14, height: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', color: brandColor, flexShrink: 0 }}>
+      <div className="px-5 pt-4">
+        <div className="flex items-center gap-2">
+          <span className={cn('shrink-0', channelColorClass)}>
             <ChannelIcon size={13} />
-          </div>
-          <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>
+          </span>
+          <span className="text-sm font-medium text-foreground">
             {sanitizeText(String(sender))}
           </span>
           {message.senderEmail && (
             <>
-              <span style={{ color: 'var(--text-dim)', margin: '0 2px' }}>&middot;</span>
-              <span style={{ fontSize: 14, color: 'var(--text-dim)', fontWeight: 400 }}>
+              <span className="text-muted-foreground">&middot;</span>
+              <span className="text-sm text-muted-foreground">
                 {String(message.senderEmail)}
               </span>
             </>
           )}
-          <span style={{ fontSize: 14, color: 'var(--text-dim)', marginLeft: 'auto', flexShrink: 0 }}>
+          <span className="text-xs text-muted-foreground ml-auto shrink-0">
             {fullDate}
           </span>
         </div>
       </div>
 
       {/* Content area with max-height scroll */}
-      <div style={{
-        padding: '16px 20px',
-        display: 'flex', flexDirection: 'column', gap: 16,
-        maxHeight: '60vh',
-        overflowY: 'auto',
-        scrollbarWidth: 'thin',
-        scrollbarColor: 'var(--hover-bg-strong) transparent',
-      }}>
+      <CardContent className="flex flex-col gap-4 max-h-[60vh] overflow-y-auto pt-4">
         {/* Subject */}
         {message.subject && (
-          <h3 style={{
-            fontSize: 16, fontWeight: 500, color: 'var(--text-primary)',
-            margin: 0, lineHeight: 1.3,
-          }}>
+          <h3 className="text-base font-medium text-foreground leading-snug">
             {sanitizeText(String(message.subject))}
           </h3>
         )}
 
-        {/* Content: crossfade from raw body → AI summary with shimmer */}
-        <div style={{ position: 'relative', minHeight: 20 }}>
-          {/* Raw body — visible while AI loading, fades out when AI arrives */}
-          <div style={{
-            fontSize: 14, color: 'var(--text-primary)', lineHeight: 1.7,
-            whiteSpace: 'pre-wrap', wordBreak: 'break-word',
-            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-            transition: 'opacity 300ms cubic-bezier(0.25, 1, 0.5, 1), filter 300ms cubic-bezier(0.25, 1, 0.5, 1)',
-            opacity: (showSummary && aiResult && !aiLoading) ? 0 : 1,
-            filter: (showSummary && aiResult && !aiLoading) ? 'blur(2px)' : 'none',
-            position: (showSummary && aiResult && !aiLoading) ? 'absolute' : 'relative',
-            pointerEvents: (showSummary && aiResult && !aiLoading) ? 'none' : 'auto',
-            top: 0, left: 0, right: 0,
-          }}>
+        {/* Content: crossfade from raw body to AI summary */}
+        <div className="relative min-h-5">
+          {/* Raw body */}
+          <div className={cn(
+            'text-sm text-foreground leading-relaxed whitespace-pre-wrap break-words transition-opacity duration-300',
+            showSummary && aiResult && !aiLoading && 'absolute inset-x-0 top-0 opacity-0 pointer-events-none',
+          )}>
             {sanitizeText(String(message.fullBody || message.bodyPreview || '(No message body)'))}
           </div>
 
-          {/* AI summary — fades in with shimmer when resolved */}
+          {/* AI summary */}
           {showSummary && aiResult && !aiLoading && (
-            <p className={aiJustResolved ? 'bb-ai-shine' : undefined} style={{
-              fontSize: 14, color: 'var(--text-primary)', lineHeight: 1.6,
-              margin: 0,
-              animation: aiJustResolved
-                ? 'aiContentIn 400ms cubic-bezier(0.25, 1, 0.5, 1) both, bb-ai-shine 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.15s forwards'
-                : undefined,
-            }}>
+            <p className={cn(
+              'text-sm text-foreground leading-relaxed',
+              aiJustResolved && 'animate-in fade-in-0 duration-300',
+            )}>
               {sanitizeText(aiResult.summary)}
             </p>
           )}
+
+          {/* AI Loading shimmer */}
+          {showSummary && aiLoading && (
+            <div className="flex flex-col gap-2">
+              <Skeleton className="h-3 w-[90%]" />
+              <Skeleton className="h-3 w-[75%]" />
+              <Skeleton className="h-3 w-[55%]" />
+            </div>
+          )}
         </div>
 
-        {/* Action items — subtle metadata line joined with separator */}
+        {/* Action items */}
         {aiResult && aiResult.actionItems.length > 0 && (
-          <div style={{
-            fontSize: 14, fontStyle: 'italic', color: 'var(--text-secondary)',
-            lineHeight: 1.5,
-            animation: aiJustResolved ? 'aiContentIn 300ms cubic-bezier(0.25, 1, 0.5, 1) both' : undefined,
-            animationDelay: aiJustResolved ? '150ms' : undefined,
-          }}>
+          <p className={cn(
+            'text-sm italic text-muted-foreground leading-relaxed',
+            aiJustResolved && 'animate-in fade-in-0 duration-300 delay-150',
+          )}>
             {aiResult.actionItems.map((item, i) => (
               <React.Fragment key={i}>
-                {i > 0 && <span style={{ margin: '0 6px', color: 'var(--text-dim)' }}>&middot;</span>}
+                {i > 0 && <span className="mx-1.5 text-muted-foreground/50">&middot;</span>}
                 {sanitizeText(item)}
               </React.Fragment>
             ))}
+          </p>
+        )}
+
+        {/* AI Summary badge */}
+        {showSummary && aiResult && (
+          <div className="flex items-center gap-1.5">
+            <IconSparkles className="size-3 text-purple-400" />
+            <span className="text-[10px] font-medium text-purple-400 uppercase tracking-wide">AI Summary</span>
           </div>
         )}
 
-        {/* Attachment pills stub */}
-        <AttachmentPills attachments={undefined} />
-
         {/* Thread view */}
         {hasThread && threadMessages && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <div style={{ fontSize: 14, color: 'var(--text-dim)', marginBottom: 2, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+          <div className="flex flex-col gap-1">
+            <span className="text-xs uppercase tracking-wider text-muted-foreground mb-1">
               {threadMessages.length} messages in thread
-            </div>
+            </span>
             {threadMessages.map((tm) => {
               if (!tm || !tm.id) return null;
               const isExpTh = expandedThreadIds.has(tm.id);
               const isLatest = tm.id === latestThreadId;
               const tmSender = tm.senderName || 'Unknown';
               return (
-                <div key={tm.id} style={{
-                  borderRadius: 8,
-                  border: `1px solid ${isLatest ? 'var(--glass-card-border)' : 'var(--glass-divider)'}`,
-                  background: isLatest ? 'var(--hover-bg)' : 'transparent',
-                  overflow: 'hidden',
-                }}>
+                <Card key={tm.id} size="sm" className={cn(
+                  'py-0 gap-0 overflow-hidden',
+                  isLatest ? 'ring-1 ring-border' : 'ring-1 ring-border/50',
+                )}>
                   <div
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px',
-                      cursor: isLatest ? 'default' : 'pointer', userSelect: 'none',
-                    }}
+                    className={cn(
+                      'flex items-center gap-2 px-3 py-2.5 select-none',
+                      !isLatest && 'cursor-pointer hover:bg-muted/50',
+                    )}
                     onClick={() => !isLatest && toggleThread(tm.id)}
                   >
-                    <div style={{
-                      width: 22, height: 22, borderRadius: '50%',
-                      background: tm.isSelf ? 'var(--border-active, rgba(255, 255, 255, 0.1))' : 'var(--hover-bg-strong, rgba(255, 255, 255, 0.08))',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: 9, fontWeight: 500,
-                      color: tm.isSelf ? '#E2E8F0' : 'var(--text-secondary)', flexShrink: 0,
-                    }}>
-                      {String(tmSender[0] || '?').toUpperCase()}
-                    </div>
-                    <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)', flexShrink: 0 }}>
+                    <Avatar size="sm">
+                      <AvatarFallback className={tm.isSelf ? 'bg-primary/20 text-primary' : ''}>
+                        {String(tmSender[0] || '?').toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="text-sm font-medium text-foreground shrink-0">
                       {tm.isSelf ? 'You' : tmSender}
                     </span>
                     {!isExpTh && !isLatest && (
-                      <span style={{ fontSize: 14, color: 'var(--text-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
+                      <span className="text-xs text-muted-foreground truncate flex-1">
                         {sanitizeText(String(tm.bodyPreview || '').slice(0, 70))}
                       </span>
                     )}
-                    <span style={{ fontSize: 14, color: 'var(--text-dim)', flexShrink: 0, marginLeft: 'auto' }}>
+                    <span className="text-xs text-muted-foreground shrink-0 ml-auto">
                       {formatTimeAgo(tm.receivedAt)}
                     </span>
                     {!isLatest && (
-                      <span style={{ color: 'var(--text-dim)', flexShrink: 0 }}>
+                      <span className="text-muted-foreground shrink-0">
                         {isExpTh ? <IconChevronDown size={11} /> : <IconChevronRight size={11} />}
                       </span>
                     )}
                   </div>
                   {(isExpTh || isLatest) && (
-                    <div style={{
-                      padding: '0 12px 10px 42px', fontSize: 14, color: 'var(--text-secondary)',
-                      lineHeight: 1.6, whiteSpace: 'pre-wrap', wordBreak: 'break-word',
-                    }}>
+                    <div className="px-3 pb-3 pl-10 text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap break-words">
                       {sanitizeText(String(tm.bodyPreview || ''))}
                     </div>
                   )}
-                </div>
+                </Card>
               );
             })}
           </div>
         )}
-      </div>
+      </CardContent>
 
-      {/* Chat-style reply composer — slides up smoothly */}
-      <div style={{
-        padding: '12px 20px 16px',
-        animation: 'composerSlideIn 350ms cubic-bezier(0.25, 1, 0.5, 1) both',
-        animationDelay: aiResult ? '0ms' : '600ms',
-      }}>
-        <div style={{
-          background: 'var(--bg-input, rgba(13, 17, 23, 0.6))',
-          border: `1px solid ${'var(--border-subtle, rgba(255, 255, 255, 0.03))'}`,
-          borderRadius: 20,
-          padding: '4px 4px 4px 16px',
-        }}>
-          <div style={{ position: 'relative', minHeight: 32 }}>
-            {/* Ghost draft — in-flow element that sizes the container, textarea overlays it */}
+      {/* Chat-style reply composer */}
+      <div className="px-5 pb-4 pt-2">
+        <div className="rounded-2xl border border-input bg-muted/30 px-4 py-1">
+          <div className="relative min-h-8">
+            {/* Ghost draft */}
             {ghostVisible && !replyText && aiResult?.draftReply && (
               <div
-                className={aiJustResolved ? 'bb-ai-shine' : undefined}
                 aria-hidden="true"
-                style={{
-                  padding: '8px 0',
-                  color: 'var(--text-dim)',
-                  fontStyle: 'italic',
-                  fontSize: 14,
-                  fontFamily: 'inherit',
-                  lineHeight: 1.5,
-                  whiteSpace: 'pre-wrap',
-                  pointerEvents: 'none',
-                  maxHeight: 200,
-                  overflow: 'hidden',
-                  animation: aiJustResolved ? 'aiContentIn 400ms cubic-bezier(0.25, 1, 0.5, 1) both' : undefined,
-                  animationDelay: aiJustResolved ? '100ms' : undefined,
-                }}
+                className={cn(
+                  'py-2 text-sm italic text-muted-foreground leading-relaxed whitespace-pre-wrap pointer-events-none max-h-[200px] overflow-hidden',
+                  aiJustResolved && 'animate-in fade-in-0 duration-300',
+                )}
               >
                 {sanitizeText(aiResult.draftReply)}
               </div>
             )}
             <textarea
               ref={textareaRef}
-              className="bb-inbox-reply-textarea"
               value={replyText}
               onChange={handleAutoExpand}
               onFocus={() => setReplyFocused(true)}
@@ -2151,134 +1826,123 @@ function ExpandedMessageRow({
                 }
               }}
               placeholder={ghostVisible && aiResult?.draftReply ? '' : 'Reply... (Cmd+Enter to send)'}
-              style={{
-                position: ghostVisible && !replyText && aiResult?.draftReply ? 'absolute' : 'relative',
-                top: 0, left: 0,
-                width: '100%',
-                height: ghostVisible && !replyText && aiResult?.draftReply ? '100%' : undefined,
-                padding: '8px 0',
-                color: 'var(--text-primary)',
-                fontSize: 14, fontFamily: 'inherit', lineHeight: 1.5,
-                resize: 'none', minHeight: ghostVisible && !replyText && aiResult?.draftReply ? undefined : 32,
-                maxHeight: 200,
-                zIndex: 2,
-              }}
+              className={cn(
+                'w-full bg-transparent border-none outline-none text-sm text-foreground leading-relaxed resize-none min-h-8 max-h-[200px] py-2 placeholder:text-muted-foreground',
+                ghostVisible && !replyText && aiResult?.draftReply && 'absolute inset-0 z-10',
+              )}
             />
           </div>
-          {/* Bottom row: hint left, send button right — all inside the pill */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '2px 0 4px' }}>
-            <div style={{ fontSize: 14, color: 'var(--text-dim)' }}>
+          {/* Bottom row: hint left, send button right */}
+          <div className="flex items-center justify-between pb-1">
+            <span className="text-xs text-muted-foreground">
               {ghostVisible && !replyText && aiResult?.draftReply ? (
-                <span><kbd style={{ fontSize: 14, color: 'var(--text-dim)', padding: '2px 6px', borderRadius: 4, background: 'var(--hover-bg)', fontFamily: 'inherit' }}>Tab</kbd> to use suggested reply</span>
+                <><kbd className="rounded border border-border bg-background px-1 py-0.5 text-[10px] font-mono">Tab</kbd> to use suggested reply</>
               ) : (
-                <span><kbd style={{ fontSize: 14, color: 'var(--text-dim)', padding: '2px 6px', borderRadius: 4, background: 'var(--hover-bg)', fontFamily: 'inherit' }}>Cmd+Enter</kbd> to send</span>
+                <><kbd className="rounded border border-border bg-background px-1 py-0.5 text-[10px] font-mono">Cmd+Enter</kbd> to send</>
               )}
-            </div>
-            <button
+            </span>
+            <Button
+              variant="default"
+              size="icon-xs"
               onClick={handleSendReply}
               disabled={!replyText.trim()}
-              style={{
-                width: 32, height: 32, borderRadius: 9999,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                padding: 0,
-                border: 'none', cursor: replyText.trim() ? 'pointer' : 'default',
-                flexShrink: 0,
-                transition: 'opacity 200ms cubic-bezier(0.25, 1, 0.5, 1), transform 200ms cubic-bezier(0.25, 1, 0.5, 1)',
-                background: 'var(--btn-primary-bg, #F1F5F9)',
-                color: 'var(--btn-primary-fg, #0a0f1a)',
-                opacity: replyText.trim() ? 1 : 0.25,
-                transform: replyText.trim() ? 'scale(1)' : 'scale(0.85)',
-              }}
+              className={cn(
+                'rounded-full',
+                !replyText.trim() && 'opacity-25',
+              )}
             >
-              <IconArrowUp size={14} stroke={2.5} />
-            </button>
+              <IconArrowUp size={14} />
+            </Button>
           </div>
         </div>
       </div>
 
       {/* Icon-only action bar */}
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 4,
-        padding: '8px 20px 12px',
-        animation: 'composerSlideIn 300ms cubic-bezier(0.25, 1, 0.5, 1) both',
-        animationDelay: '50ms',
-      }}>
-        <IconActionBtn icon={<IconArrowBackUp size={16} />} title="Reply" onClick={() => textareaRef.current?.focus()} />
-        <IconActionBtn icon={<IconArchive size={16} />} title="Archive" onClick={() => onArchive(message.id)} />
-        <IconActionBtn icon={<IconCircleCheck size={16} />} title="Done" onClick={() => onDone(message.id)} />
-        <IconActionBtn icon={<IconClock size={16} />} title="Snooze" onClick={() => handleNavigateLocal('snooze')} data-snooze-trigger />
-        <IconActionBtn icon={<IconArrowForwardUp size={16} />} title="Forward" onClick={() => {/* placeholder */}} />
-        <IconActionBtn icon={<IconAlertTriangle size={16} />} title="Spam" onClick={() => onSpam(message.id)} isSpam />
-        <div style={{ flex: 1 }} />
-        <IconActionBtn icon={<IconX size={16} />} title="Close" onClick={onClose} />
+      <div className="flex items-center gap-1 px-5 pb-3">
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon-xs" onClick={() => textareaRef.current?.focus()}>
+                <IconArrowBackUp size={16} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Reply</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon-xs" onClick={() => onArchive(message.id)}>
+                <IconArchive size={16} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Archive</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon-xs" onClick={() => onDone(message.id)}>
+                <IconCircleCheck size={16} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Done</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon-xs" onClick={() => {}}>
+                <IconClock size={16} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Snooze</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon-xs" onClick={() => {}}>
+                <IconArrowForwardUp size={16} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Forward</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon-xs" className="text-destructive hover:text-destructive" onClick={() => onSpam(message.id)}>
+                <IconAlertTriangle size={16} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Spam</TooltipContent>
+          </Tooltip>
+          <div className="flex-1" />
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon-xs" onClick={onClose}>
+                <IconX size={16} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Close</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
-    </div>
+    </Card>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Attachment Pills (structural stub — renders nothing when no data)
+// Attachment Pills (structural stub)
 // ---------------------------------------------------------------------------
 
 function AttachmentPills({ attachments }: { attachments?: { name: string; size: string; type: string }[] }) {
   if (!attachments || attachments.length === 0) return null;
   return (
-    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+    <div className="flex gap-2 flex-wrap">
       {attachments.map((att, i) => (
-        <div key={i} style={{
-          display: 'inline-flex', alignItems: 'center', gap: 8,
-          height: 32, padding: '0 10px', borderRadius: 8,
-          background: 'var(--hover-bg)',
-          border: '1px solid var(--glass-divider)',
-          fontSize: 14, color: 'var(--text-secondary)',
-          cursor: 'pointer', transition: 'all 150ms ease',
-        }}>
-          <span style={{ maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {att.name}
-          </span>
-          <span style={{ fontSize: 14, color: 'var(--text-dim)' }}>{att.size}</span>
-        </div>
+        <Badge key={i} variant="outline" className="cursor-pointer gap-2 h-8 px-2.5">
+          <span className="max-w-[180px] truncate">{att.name}</span>
+          <span className="text-muted-foreground text-xs">{att.size}</span>
+        </Badge>
       ))}
     </div>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Icon Action Button — minimal icon-only for expanded row
-// ---------------------------------------------------------------------------
-
-function IconActionBtn({
-  icon, title, onClick, isSpam, ...rest
-}: {
-  icon: React.ReactNode;
-  title: string;
-  onClick: () => void;
-  isSpam?: boolean;
-  'data-snooze-trigger'?: boolean;
-}) {
-  return (
-    <button
-      title={title}
-      onClick={onClick}
-      style={{
-        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-        width: 32, height: 32, borderRadius: 8,
-        background: 'transparent', border: 'none',
-        color: 'var(--text-dim)', cursor: 'pointer',
-        transform: 'scale(1)',
-        transition: 'color 150ms, transform 150ms cubic-bezier(0.34, 1.56, 0.64, 1)',
-      }}
-      onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.transform = 'scale(1.1)'; }}
-      onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-dim)'; e.currentTarget.style.transform = 'scale(1)'; }}
-      {...rest}
-    >
-      {icon}
-    </button>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Group Row — Apple Intelligence style collapsed notification group
+// Group Row
 // ---------------------------------------------------------------------------
 
 function GroupRow({
@@ -2299,7 +1963,7 @@ function GroupRow({
   onDelete?: () => void;
 }) {
   const ChannelIcon = CHANNEL_ICONS[item.channelType] || GmailIcon;
-  const brandColor = CHANNEL_BRAND_COLORS[item.channelType] || 'var(--text-dim)';
+  const channelColorClass = CHANNEL_BRAND_COLORS[item.channelType] || 'text-muted-foreground';
   const newestMsg = item.messages[0];
   const preview = newestMsg?.aiSummary || newestMsg?.subject || newestMsg?.bodyPreview || '';
   const relTime = formatTimeAgo(item.newestAt);
@@ -2310,76 +1974,64 @@ function GroupRow({
 
   return (
     <div
-      className="bb-inbox-group"
-      data-expanded={expanded || undefined}
-      data-focused={focused || undefined}
-      data-selected={selected || undefined}
+      className={cn(
+        'flex items-center gap-3 rounded-lg px-3 py-2.5 cursor-pointer transition-colors',
+        'hover:bg-muted/50',
+        focused && 'bg-muted ring-1 ring-border',
+        selected && 'bg-primary/5 ring-1 ring-primary/20',
+      )}
       onClick={onClick}
       role="button"
       tabIndex={0}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } }}
-      style={{ cursor: 'pointer' }}
     >
-      {/* Chevron — rotating like chain-of-thought dropdown */}
-      <svg
-        width={13}
-        height={13}
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        style={{
-          flexShrink: 0,
-          color: 'var(--text-dim)',
-          transition: 'transform 0.25s cubic-bezier(0.25, 1, 0.5, 1)',
-          transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
-        }}
-      >
-        <polyline points="6 9 12 15 18 9" />
-      </svg>
+      {/* Chevron */}
+      <IconChevronDown
+        size={13}
+        className={cn(
+          'shrink-0 text-muted-foreground transition-transform duration-200',
+          !expanded && '-rotate-90',
+        )}
+      />
 
       {/* Channel icon */}
-      <div style={{ flexShrink: 0, width: 28, height: 28, borderRadius: 8, background: 'var(--hover-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: brandColor }}>
+      <div className={cn('shrink-0 flex size-7 items-center justify-center rounded-md bg-muted', channelColorClass)}>
         <ChannelIcon size={14} />
       </div>
 
       {/* Count badge */}
-      <span className="bb-inbox-group__count">
+      <Badge variant="secondary" className="shrink-0 tabular-nums">
         {item.messages.length}
-      </span>
+      </Badge>
 
       {/* Label */}
-      <span className="bb-inbox-group__label">
+      <span className="text-sm font-medium text-foreground shrink-0">
         {item.label}
       </span>
 
-      {/* Preview of newest message */}
-      <span className="bb-inbox-group__preview">
+      {/* Preview */}
+      <span className="text-xs text-muted-foreground truncate flex-1 min-w-0">
         {sanitizeText(String(preview))}
       </span>
 
       {/* Right side: unread dot + time + delete */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, marginLeft: 'auto' }}>
+      <div className="flex items-center gap-2 shrink-0 ml-auto">
         {item.hasUnread && (
-          <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--bb-blue, #3B82F6)', flexShrink: 0 }} />
+          <span className="size-1.5 rounded-full bg-blue-500 shrink-0" />
         )}
-        <span
-          className="bb-inbox-row__time"
-          title={absTime}
-          style={{ whiteSpace: 'nowrap' }}
-        >
+        <span className="text-xs text-muted-foreground whitespace-nowrap" title={absTime}>
           {relTime}
         </span>
         {onDelete && (
-          <button
-            className="bb-inbox-group__delete"
-            title="Delete all"
+          <Button
+            variant="ghost"
+            size="icon-xs"
+            className="opacity-0 group-hover:opacity-100 hover:opacity-100 text-muted-foreground hover:text-destructive"
             onClick={(e) => { e.stopPropagation(); onDelete(); }}
+            aria-label="Delete all"
           >
             <IconTrash size={12} />
-          </button>
+          </Button>
         )}
       </div>
     </div>
@@ -2387,7 +2039,7 @@ function GroupRow({
 }
 
 // ---------------------------------------------------------------------------
-// Message Row — time always visible, no hover actions
+// Message Row
 // ---------------------------------------------------------------------------
 
 function MessageRow({
@@ -2396,7 +2048,7 @@ function MessageRow({
   message: InboxMessage;
   onArchive?: (id: string) => void;
   onDone?: (id: string) => void;
-  onSnooze?: (id: string, e: React.MouseEvent<HTMLButtonElement>) => void;
+  onSnooze?: (id: string) => void;
   onReply?: (id: string) => void;
   onStar?: (id: string) => void;
   onDelete?: (id: string) => void;
@@ -2409,19 +2061,14 @@ function MessageRow({
   insideGroup?: boolean;
 }) {
   const ChannelIcon = CHANNEL_ICONS[message.channelType] || GmailIcon;
-  const brandColor = CHANNEL_BRAND_COLORS[message.channelType] || 'var(--text-dim)';
+  const channelColorClass = CHANNEL_BRAND_COLORS[message.channelType] || 'text-muted-foreground';
   const isUnread = message.status === 'unread';
-  const isImportant = message.significance >= 7;
   const timeAgo = formatTimeAgo(message.receivedAt);
   const absTime = new Date(message.receivedAt).toLocaleString('en-AU', {
     weekday: 'short', day: 'numeric', month: 'short',
     hour: '2-digit', minute: '2-digit',
   });
   const sender = message.contactName || message.senderName || message.senderEmail || 'Unknown';
-
-  const level = message.significance >= 8 ? 'critical' :
-    message.significance >= 6 ? 'high' :
-    message.significance >= 5 ? 'medium' : undefined;
 
   const email = message.senderEmail;
   const syncAvatar = resolveAvatarSync(sender, email);
@@ -2435,94 +2082,113 @@ function MessageRow({
 
   return (
     <div
-      className="bb-inbox-row"
-      data-unread={isUnread || undefined}
-      data-important={isImportant || undefined}
-      data-level={level}
-      data-focused={focused || undefined}
-      data-selected={selected || undefined}
-      data-inside-group={insideGroup || undefined}
+      className={cn(
+        'group/row flex items-center gap-3 rounded-lg px-3 py-2.5 cursor-pointer transition-colors',
+        'hover:bg-muted/50',
+        focused && 'bg-muted ring-1 ring-border',
+        selected && 'bg-primary/5 ring-1 ring-primary/20',
+        expanded && 'rounded-b-none bg-muted/30',
+        insideGroup && 'py-2',
+      )}
       onClick={(e) => onRowClick?.(message.id, index, e)}
       role="button"
       tabIndex={0}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onRowClick?.(message.id, index, e as unknown as React.MouseEvent); } }}
-      style={{
-        '--channel-color': brandColor,
-        cursor: 'pointer',
-        ...(expanded ? { borderRadius: '12px 12px 0 0' } : {}),
-        ...(focused ? { background: 'var(--hover-bg)', outline: '1px solid var(--glass-card-border)' } : {}),
-      } as React.CSSProperties}
     >
-      {/* Col 1: Avatar + sender */}
-      <div className="bb-inbox-row__col1">
-        <div style={{ position: 'relative', width: 32, height: 32, flexShrink: 0 }}>
-          {avatar?.url ? (
-            <img src={avatar.url} alt={sender} width={32} height={32}
-              style={{ borderRadius: '50%', objectFit: 'cover', display: 'block' }} />
-          ) : (
-            <div style={{
-              width: 32, height: 32, borderRadius: '50%',
-              background: 'var(--border-subtle)', display: 'flex', alignItems: 'center',
-              justifyContent: 'center', fontSize: 14, fontWeight: 500, color: 'var(--text-secondary)',
-            }}>
-              {sender[0]?.toUpperCase() || '?'}
-            </div>
-          )}
-          <div style={{
-            position: 'absolute', bottom: -2, right: -2,
-            width: 14, height: 14, borderRadius: '50%',
-            background: 'var(--card-bg, #1a1a2e)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: brandColor,
-          }}>
-            <ChannelIcon size={9} />
-          </div>
+      {/* Avatar with channel badge overlay */}
+      <div className="relative shrink-0">
+        <Avatar size={insideGroup ? 'sm' : 'default'}>
+          {avatar?.url && <AvatarImage src={avatar.url} alt={sender} />}
+          <AvatarFallback>{sender[0]?.toUpperCase() || '?'}</AvatarFallback>
+        </Avatar>
+        <div className={cn(
+          'absolute -bottom-0.5 -right-0.5 flex items-center justify-center rounded-full bg-background',
+          insideGroup ? 'size-3' : 'size-3.5',
+          channelColorClass,
+        )}>
+          <ChannelIcon size={insideGroup ? 7 : 9} />
         </div>
-        <span className="bb-inbox-row__sender">{String(sender || '')}</span>
       </div>
 
-      {/* Col 2: Tag + subject + preview */}
-      <div className="bb-inbox-row__col2">
-        <span
-          className={`bb-inbox-row__tag bb-inbox-row__tag--${message.category}`}
-          style={TAG_COLORS[message.category]}
-        >
-          {getCategoryLabel(message.category)}
-        </span>
+      {/* Sender name */}
+      <span className={cn(
+        'text-sm shrink-0 truncate max-w-[120px]',
+        isUnread ? 'font-semibold text-foreground' : 'font-medium text-foreground/80',
+      )}>
+        {String(sender || '')}
+      </span>
+
+      {/* Category tag */}
+      <Badge variant={CATEGORY_VARIANT[message.category]} className="shrink-0 text-[10px] uppercase tracking-wide">
+        {getCategoryLabel(message.category)}
+      </Badge>
+
+      {/* Subject + preview */}
+      <div className="flex-1 min-w-0 flex flex-col gap-0.5">
         {message.subject && (
-          <span className="bb-inbox-row__subject">
+          <span className={cn(
+            'text-sm truncate',
+            isUnread ? 'font-medium text-foreground' : 'text-foreground/80',
+          )}>
             {String(message.subject || '')}
             {message.threadCount && message.threadCount > 1 && (
-              <span style={{ marginLeft: 8, fontSize: 14, color: 'var(--text-dim)', fontWeight: 400 }}>
+              <span className="ml-1.5 text-xs text-muted-foreground font-normal">
                 ({message.threadCount})
               </span>
             )}
           </span>
         )}
-        <span className="bb-inbox-row__preview">
-          {message.aiSummary ? (
-            <>{sanitizeText(String(message.aiSummary || ''))}</>
-          ) : (
-            sanitizeText(String(message.bodyPreview || ''))
-          )}
+        <span className="text-xs text-muted-foreground truncate">
+          {message.aiSummary
+            ? sanitizeText(String(message.aiSummary || ''))
+            : sanitizeText(String(message.bodyPreview || ''))}
         </span>
       </div>
 
-      {/* Right: time + delete */}
-      <div className="bb-inbox-row__meta">
-        <div className="bb-inbox-row__meta-default">
-          {starred && <IconStar size={11} style={{ color: '#f59e0b', fill: '#f59e0b', marginRight: 4 }} />}
-          <span className="bb-inbox-row__time" title={absTime}>{timeAgo}</span>
-          {onDelete && (
-            <button
-              className="bb-inbox-row__delete"
-              title="Delete"
-              onClick={(e) => { e.stopPropagation(); onDelete(message.id); }}
+      {/* Right: star + time + actions */}
+      <div className="flex items-center gap-1.5 shrink-0 ml-auto">
+        {starred && <IconStar size={11} className="text-amber-500 fill-amber-500" />}
+        <span className="text-xs text-muted-foreground whitespace-nowrap" title={absTime}>
+          {timeAgo}
+        </span>
+
+        {/* Context menu on hover */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon-xs"
+              className="opacity-0 group-hover/row:opacity-100 transition-opacity"
+              onClick={(e) => e.stopPropagation()}
+              aria-label="Actions"
             >
-              <IconTrash size={12} />
-            </button>
-          )}
-        </div>
+              <IconDots size={14} />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-44">
+            <DropdownMenuLabel className="text-xs">Actions</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => onArchive?.(message.id)}>
+              <IconArchive size={14} /> Archive
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onDone?.(message.id)}>
+              <IconCircleCheck size={14} /> Mark Done
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onSnooze?.(message.id)}>
+              <IconClock size={14} /> Snooze
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onStar?.(message.id)}>
+              <IconStar size={14} /> {starred ? 'Unstar' : 'Star'}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onReply?.(message.id)}>
+              <IconArrowBackUp size={14} /> Reply
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem variant="destructive" onClick={() => onDelete?.(message.id)}>
+              <IconTrash size={14} /> Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   );
@@ -2541,28 +2207,6 @@ function formatTimeAgo(dateStr: string): string {
   if (hours < 24) return `${hours}h`;
   const days = Math.floor(hours / 24);
   return `${days}d`;
-}
-
-// Inline style fallbacks — guarantees tag background regardless of CSS cascade
-const TAG_COLORS: Record<MessageCategory, React.CSSProperties> = {
-  action_required: { background: '#E5520E', color: '#fff' },
-  fyi: { background: '#4338CA', color: '#fff' },
-  conversation: { background: '#BE185D', color: '#fff' },
-  automated: { background: '#5B5FC7', color: '#fff' },
-  marketing: { background: '#FACC15', color: '#000' },
-  spam: { background: '#4B5563', color: '#fff' },
-};
-
-function getCategoryLabel(category: MessageCategory): string {
-  const labels: Record<MessageCategory, string> = {
-    action_required: 'Action Required',
-    fyi: 'FYI',
-    conversation: 'Personal',
-    automated: 'Notification',
-    marketing: 'Newsletter',
-    spam: 'Spam',
-  };
-  return labels[category] || category;
 }
 
 export default React.memo(InboxTab);
