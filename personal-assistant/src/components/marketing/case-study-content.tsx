@@ -262,8 +262,8 @@ export default function CaseStudyContent() {
 
         <div className="flex gap-3 flex-wrap">
           <Button asChild size="lg">
-            <Link href="/pricing">
-              See pricing
+            <Link href="/industries/agencies">
+              See how BitBit works for agencies
               <IconArrowRight size={16} />
             </Link>
           </Button>
