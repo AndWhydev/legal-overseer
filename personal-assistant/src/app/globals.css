@@ -4,19 +4,6 @@
 @import "../styles/theme-midnight.css";
 @import "../styles/theme-aurora.css";
 @import "../styles/theme-light.css";
-@import "../styles/temp-settings.css";
-@import "../styles/temp-approvals.css";
-@import "../styles/temp-channels.css";
-@import "../styles/temp-sentry.css";
-@import "../styles/temp-medications.css";
-@import "../styles/temp-ad-scripts.css";
-@import "../styles/temp-ai-search.css";
-@import "../styles/temp-reports.css";
-@import "../styles/temp-knowledge.css";
-@import "../styles/temp-costs.css";
-@import "../styles/temp-analytics.css";
-@import "../styles/temp-activity.css";
-@import "../styles/temp-admin.css";
 @import "shadcn/tailwind.css";
 
 @custom-variant dark (&:is(.dark *));
