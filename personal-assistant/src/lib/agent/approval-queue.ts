@@ -145,6 +145,27 @@ export async function createApproval(
     logger.warn('[approval-queue] notifyApproval failed:', err)
   })
 
+  // Send push notification to user's mobile devices (lazy import to avoid circular deps)
+  import('@/lib/notifications/push-dispatcher').then(({ sendPushToUser }) => {
+    // Look up org owner to send push
+    supabase
+      .from('profiles')
+      .select('id')
+      .eq('org_id', params.org_id)
+      .then(({ data: profiles }) => {
+        for (const profile of profiles ?? []) {
+          sendPushToUser(profile.id, {
+            title: 'Approval Needed',
+            body: params.action_summary,
+            data: { type: 'approval', id: record.id },
+          }).catch(() => {})
+        }
+      })
+      .catch(() => {})
+  }).catch(err => {
+    logger.warn('[approval-queue] Push notification failed:', err)
+  })
+
   return record
 }
 

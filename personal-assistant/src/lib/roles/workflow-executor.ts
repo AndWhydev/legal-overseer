@@ -336,6 +336,9 @@ async function executeNextStep(
       await logWorkflowActivity(supabase, roleConfig, completedWf, 'workflow_step', `Step completed: ${stepDef.name}`)
       await logWorkflowActivity(supabase, roleConfig, completedWf, 'workflow_step', `Workflow completed: ${workflow.workflow_type}`)
 
+      // Send push notification on workflow completion (fire-and-forget)
+      notifyWorkflowComplete(roleConfig.org_id, workflow.workflow_type, workflow.id)
+
       logger.info(`${tag} Workflow completed`)
       return completedWf
     }
@@ -417,6 +420,9 @@ async function completeWorkflow(
 
   await logWorkflowActivity(supabase, roleConfig, result, 'workflow_step', `Workflow completed: ${workflow.workflow_type}`)
 
+  // Send push notification to org users on workflow completion (fire-and-forget)
+  notifyWorkflowComplete(roleConfig.org_id, workflow.workflow_type, result.id)
+
   logger.info(`[workflow:${workflow.workflow_type}:${workflow.id.slice(0, 8)}] Workflow completed`)
   return result
 }
@@ -469,6 +475,34 @@ async function failWorkflow(
 // ---------------------------------------------------------------------------
 // Internal: Activity logging helper
 // ---------------------------------------------------------------------------
+
+/**
+ * Send push notification when a workflow completes.
+ * Uses lazy import + fire-and-forget -- workflow execution must not fail if push fails.
+ */
+function notifyWorkflowComplete(orgId: string, workflowType: string, workflowId: string): void {
+  import('@/lib/notifications/push-dispatcher').then(async ({ sendPushToUser }) => {
+    const { getServiceClient } = await import('@/lib/supabase/service-client')
+    const supabase = getServiceClient()
+
+    // Find org users to notify
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('org_id', orgId)
+
+    const cleanType = workflowType.replace(/^workflow_rule:/, '')
+    for (const profile of profiles ?? []) {
+      sendPushToUser(profile.id, {
+        title: 'Workflow Complete',
+        body: `${cleanType} finished`,
+        data: { type: 'workflow', id: workflowId },
+      }).catch(() => {})
+    }
+  }).catch((err) => {
+    logger.warn('[workflow-executor] Push notification for workflow completion failed', { err })
+  })
+}
 
 async function logWorkflowActivity(
   supabase: SupabaseClient,
