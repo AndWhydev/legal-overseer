@@ -347,7 +347,7 @@ Phase 20 first (no dependencies), then 21 (billing before growth roles), then 22
 | 25. Role Dashboard | v1.4 | 3/3 | Complete | 2026-03-26 |
 | 26. SOTA Response Drafter | v1.4 | 2/2 | Complete | 2026-03-26 |
 | 27. Role Runtime Import Fix | v1.4 | Complete    | 2026-03-27 | 2026-03-27 |
-| 28. Intelligence Dashboard Wiring | 1/1 | Complete   | 2026-03-27 | - |
+| 28. Intelligence Dashboard Wiring | 1/1 | Complete    | 2026-03-27 | - |
 | 29. SEO/Tender Scheduled Monitoring | v1.4 | 0/0 | Pending | - |
 | 30. Onboarding E2E & First-Run Experience | 1/3 | In Progress|  | - |
 | 31. Channel Smoke Tests & Production Hardening | v1.5 | 0/3 | Planned | - |

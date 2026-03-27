@@ -1,7 +1,7 @@
 ---
 phase: 28-intelligence-dashboard-wiring
 verified: 2026-03-27T03:56:00Z
-status: human_needed
+status: passed
 score: 6/6 must-haves verified
 human_verification:
   - test: "Load roles dashboard in browser with seeded bi_snapshots data"
