@@ -398,11 +398,9 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
                 return (
                   <header className="flex h-(--header-height) shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height) px-4 lg:px-6">
                     <SidebarTrigger className="-ml-1" />
-                    <Separator orientation="vertical" className="mx-2 data-[orientation=vertical]:h-4" />
+                    <Separator orientation="vertical" className="mr-2 data-[orientation=vertical]:h-4" />
                     <Topbar config={topbarConfig} />
-                    <div className="shrink-0">
-                      <NotificationCenter onTabChange={handleTabChange} />
-                    </div>
+                    <NotificationCenter onTabChange={handleTabChange} />
                   </header>
                 );
               })()}

@@ -19,19 +19,21 @@ export function Topbar({ config }: TopbarProps) {
   if (!config || config.hidden) return null;
 
   return (
-    <div className="flex flex-1 items-center justify-between">
-      <div className="flex items-center gap-3">
+    <>
+      <div className="flex items-center gap-2">
         <h1 className="text-base font-medium">{config.title}</h1>
         {config.breadcrumb && (
-          <div className="text-sm text-muted-foreground">{config.breadcrumb}</div>
+          <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+            {config.breadcrumb}
+          </div>
         )}
       </div>
-      {config.centerContent && (
-        <div className="flex items-center">{config.centerContent}</div>
-      )}
+      <div className="flex flex-1 items-center justify-center">
+        {config.centerContent}
+      </div>
       {config.rightContent && (
         <div className="flex items-center gap-2">{config.rightContent}</div>
       )}
-    </div>
+    </>
   );
 }

@@ -64,7 +64,7 @@ export const TOPBAR_CONFIGS: Record<string, TopbarConfig> = {
   dashboard: {
     title: 'Dashboard',
     breadcrumb: <DashboardBreadcrumb />,
-    rightContent: <HeaderClock />,
+    centerContent: <HeaderClock />,
   },
   chat: {
     title: 'Chat',
