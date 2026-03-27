@@ -121,6 +121,52 @@ const WIDGET_DEFS = [
 ] as const
 
 // ---------------------------------------------------------------------------
+// Fetch helpers (exported for testability)
+// ---------------------------------------------------------------------------
+
+/**
+ * Maps raw API responses from /api/intelligence/[metric] endpoints into the
+ * IntelligenceData shape used by the widgets. Each response can be null
+ * (fetch threw) or non-ok (endpoint error) -- failures are independent.
+ */
+export async function mapIntelligenceResponses(
+  revenueRes: Response | null,
+  healthRes: Response | null,
+  cashFlowRes: Response | null,
+  capacityRes: Response | null,
+): Promise<IntelligenceData> {
+  const revenue = revenueRes?.ok ? (await revenueRes.json()).data : null
+  const health = healthRes?.ok ? (await healthRes.json()).data : null
+  const cashFlow = cashFlowRes?.ok ? (await cashFlowRes.json()).data : null
+  const capacity = capacityRes?.ok ? (await capacityRes.json()).data : null
+
+  return {
+    revenueRadar: revenue ? {
+      totalEstimatedValue: revenue.totalEstimatedValue ?? 0,
+      opportunities: Array.isArray(revenue.opportunities) ? revenue.opportunities.length : 0,
+      clientsAnalyzed: revenue.clientsAnalyzed ?? 0,
+      gatheringData: revenue.gatheringData ?? true,
+    } : null,
+    clientHealth: health ? {
+      averageScore: health.averageScore ?? 0,
+      clientsScored: health.clientsScored ?? 0,
+      gatheringData: health.gatheringData ?? true,
+    } : null,
+    cashFlow: cashFlow ? {
+      currentNet: cashFlow.currentMonth?.net ?? 0,
+      alerts: Array.isArray(cashFlow.alerts) ? cashFlow.alerts.length : 0,
+      gatheringData: cashFlow.gatheringData ?? true,
+    } : null,
+    capacity: capacity ? {
+      utilizationPercent: capacity.utilizationPercent ?? 0,
+      status: capacity.status ?? 'unknown',
+      alerts: Array.isArray(capacity.alerts) ? capacity.alerts.length : 0,
+      gatheringData: capacity.gatheringData ?? true,
+    } : null,
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
@@ -136,21 +182,17 @@ export function IntelligenceWidgets() {
 
   const fetchIntelligence = useCallback(async () => {
     try {
-      // Fetch bi_snapshots from the intelligence cron cache
-      const res = await fetch('/api/roles/status')
-      if (!res.ok) return
+      const [revenueRes, healthRes, cashFlowRes, capacityRes] = await Promise.all([
+        fetch('/api/intelligence/revenue-radar').catch(() => null),
+        fetch('/api/intelligence/client-health').catch(() => null),
+        fetch('/api/intelligence/cash-flow').catch(() => null),
+        fetch('/api/intelligence/capacity').catch(() => null),
+      ])
 
-      // For now, use placeholder data structure
-      // Intelligence data comes from bi_snapshots via the intelligence cron
-      // This could be a dedicated API but status gives us role context
-      setData({
-        revenueRadar: { totalEstimatedValue: 0, opportunities: 0, clientsAnalyzed: 0, gatheringData: true },
-        clientHealth: { averageScore: 0, clientsScored: 0, gatheringData: true },
-        cashFlow: { currentNet: 0, alerts: 0, gatheringData: true },
-        capacity: { utilizationPercent: 0, status: 'unknown', alerts: 0, gatheringData: true },
-      })
+      const mapped = await mapIntelligenceResponses(revenueRes, healthRes, cashFlowRes, capacityRes)
+      setData(mapped)
     } catch {
-      // Silently fail
+      // Silently fail (matches existing codebase pattern)
     } finally {
       setLoading(false)
     }
