@@ -5,7 +5,7 @@ import { IconAlertCircle, IconRefresh, IconLoader2, IconShieldCheck } from '@tab
 import { ApprovalCard, type ApprovalItem } from './approval-card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { EmptyState } from '../ui/empty-state'
+import { Empty, EmptyIcon, EmptyTitle, EmptyDescription } from '@/components/ui/empty'
 
 type FilterKey = 'all' | 'urgent' | 'normal'
 
@@ -150,11 +150,11 @@ export function ApprovalQueue() {
 
       {/* Empty */}
       {!loading && visibleApprovals.length === 0 && (
-        <EmptyState
-          icon={<IconShieldCheck size={24} />}
-          title="Nothing needs approval"
-          description="When BitBit wants to send an email, create an invoice, or take action on your behalf, it asks here first."
-        />
+        <Empty>
+          <EmptyIcon><IconShieldCheck size={24} /></EmptyIcon>
+          <EmptyTitle>Nothing needs approval</EmptyTitle>
+          <EmptyDescription>When BitBit wants to send an email, create an invoice, or take action on your behalf, it asks here first.</EmptyDescription>
+        </Empty>
       )}
 
       {/* Cards */}
