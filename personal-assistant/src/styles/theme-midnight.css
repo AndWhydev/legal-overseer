@@ -361,17 +361,7 @@
    Midnight: Inputs / Select
    -------------------------------------------------------------------------- */
 
-[data-theme="midnight"] select,
-[data-theme="midnight"] input[type="text"]:not(.bb-search-input):not(.bb-naked-input),
-[data-theme="midnight"] input[type="email"]:not(.bb-naked-input),
-[data-theme="midnight"] input[type="url"]:not(.bb-naked-input),
-[data-theme="midnight"] input[type="number"]:not(.bb-naked-input),
-[data-theme="midnight"] input[type="search"]:not(.bb-search-input):not(.bb-naked-input),
-[data-theme="midnight"] textarea {
-  background: rgba(13, 17, 23, 0.6) !important;
-  border: none !important;
-  color: #F5F0E8 !important;
-}
+/* REMOVED: theme input overrides — now handled by Shadcn Input component */
 
 [data-theme="midnight"] select option {
   background: #1A1A1D;
