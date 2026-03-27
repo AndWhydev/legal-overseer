@@ -62,12 +62,27 @@ vi.mock('@/lib/intelligence/revenue-radar', () => ({
   analyzeRevenueOpportunities: vi.fn(),
 }))
 
+// Growth transitive deps
+vi.mock('@/lib/agent/ai-visibility-audit', () => ({
+  runVisibilityAudit: vi.fn(),
+  getPreviousAudits: vi.fn(),
+  detectVisibilityChanges: vi.fn(),
+}))
+vi.mock('@/lib/agent/tender-hunter', () => ({
+  runTenderHunterTick: vi.fn(),
+  filterTenders: vi.fn(),
+}))
+vi.mock('@/lib/notifications/dispatcher', () => ({
+  dispatchNotification: vi.fn(),
+}))
+
 // ---------------------------------------------------------------------------
 // Imports — domain role modules (side-effect: calls registerRole() at load)
 // ---------------------------------------------------------------------------
 import '@/lib/roles/finance/finance-role'
 import '@/lib/roles/comms/comms-role'
 import '@/lib/roles/sales/sales-role'
+import '@/lib/roles/growth/growth-role'
 
 import { getRole, getRegisteredRoleTypes } from '@/lib/roles/role-registry'
 
@@ -106,11 +121,22 @@ describe('Role Registration (side-effect imports)', () => {
     expect(sales!.defaultConfig).toBeTypeOf('function')
   })
 
-  it('should have all 3 domain role types registered', () => {
+  it('should register growth role via side-effect import', () => {
+    const growth = getRole('growth')
+    expect(growth).toBeDefined()
+    expect(growth!.type).toBe('growth')
+    expect(growth!.name).toBeTruthy()
+    expect(growth!.evaluate).toBeTypeOf('function')
+    expect(growth!.hasChanges).toBeTypeOf('function')
+    expect(growth!.defaultConfig).toBeTypeOf('function')
+  })
+
+  it('should have all 4 domain role types registered', () => {
     const types = getRegisteredRoleTypes()
     expect(types).toContain('finance')
     expect(types).toContain('comms')
     expect(types).toContain('sales')
-    expect(types.length).toBeGreaterThanOrEqual(3)
+    expect(types).toContain('growth')
+    expect(types.length).toBeGreaterThanOrEqual(4)
   })
 })

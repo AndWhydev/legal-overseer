@@ -88,6 +88,7 @@ function createMockContext(overrides?: {
       version: 1,
       last_tick_at: null,
       next_tick_at: null,
+      updated_at: new Date().toISOString(),
     } as RoleState,
     supabase: {} as RoleContext['supabase'],
     orgId: 'org-test-123',
