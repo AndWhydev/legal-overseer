@@ -145,7 +145,7 @@ function LoginPageContent() {
                     <Input
                       id="email"
                       type="email"
-                      placeholder="m@example.com"
+                      placeholder="you@company.com"
                       autoComplete="email"
                       required
                       value={email}
@@ -167,6 +167,7 @@ function LoginPageContent() {
                     <Input
                       id="password"
                       type="password"
+                      placeholder="Enter your password"
                       autoComplete="current-password"
                       required
                       value={password}
