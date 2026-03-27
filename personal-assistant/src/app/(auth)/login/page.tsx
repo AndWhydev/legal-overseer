@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { ClawdAmbient } from '@/components/ui/clawd-ambient'
+import { BorderBeam } from '@/components/ui/border-beam'
 
 type LoginStatus = 'idle' | 'loading' | 'sent' | 'error'
 type LoginMethod = 'password' | 'google' | 'apple' | null
@@ -230,6 +231,14 @@ function LoginPageContent() {
               {/* ── Right: Clawd ambient animation ── */}
               <div className="relative hidden overflow-hidden md:block">
                 <ClawdAmbient className="absolute inset-0" />
+                <BorderBeam
+                  size={120}
+                  duration={8}
+                  colorFrom="rgba(229, 229, 229, 0.5)"
+                  colorTo="rgba(229, 229, 229, 0)"
+                  borderWidth={2}
+                  delay={2}
+                />
               </div>
             </CardContent>
           </Card>
