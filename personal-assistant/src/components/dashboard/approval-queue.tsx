@@ -5,7 +5,7 @@ import { IconAlertCircle, IconRefresh, IconLoader2, IconShieldCheck } from '@tab
 import { ApprovalCard, type ApprovalItem } from './approval-card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Empty, EmptyIcon, EmptyTitle, EmptyDescription } from '@/components/ui/empty'
+import { Empty, EmptyMedia, EmptyTitle, EmptyDescription } from '@/components/ui/empty'
 
 type FilterKey = 'all' | 'urgent' | 'normal'
 
@@ -151,7 +151,7 @@ export function ApprovalQueue() {
       {/* Empty */}
       {!loading && visibleApprovals.length === 0 && (
         <Empty>
-          <EmptyIcon><IconShieldCheck size={24} /></EmptyIcon>
+          <EmptyMedia><IconShieldCheck size={24} /></EmptyMedia>
           <EmptyTitle>Nothing needs approval</EmptyTitle>
           <EmptyDescription>When BitBit wants to send an email, create an invoice, or take action on your behalf, it asks here first.</EmptyDescription>
         </Empty>
