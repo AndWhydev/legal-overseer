@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Play, TrendingUp, TrendingDown, Minus, BarChart3 } from 'lucide-react'
+import { S, C } from '@/lib/styles/design-tokens'
 
 interface ScenarioResult {
   id: string
@@ -104,8 +105,8 @@ export function ScenarioPlanner() {
                 padding: '12px 16px',
                 borderRadius: 8,
                 background: activePreset === preset.name
-                  ? 'rgba(255, 255, 255, 0.08)'
-                  : 'rgba(255, 255, 255, 0.03)',
+                  ? C.bgHoverStrong
+                  : C.bgHover,
                 border: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
                 color: 'var(--text-primary)',
                 cursor: running ? 'wait' : 'pointer',
@@ -188,7 +189,7 @@ export function ScenarioPlanner() {
                   height: 24,
                   borderRadius: 8,
                   overflow: 'hidden',
-                  background: 'rgba(255, 255, 255, 0.03)',
+                  background: C.bgHover,
                 }}>
                   {[
                     { label: 'P10', value: p.p10, color: 'rgba(239, 68, 68, 0.3)' },

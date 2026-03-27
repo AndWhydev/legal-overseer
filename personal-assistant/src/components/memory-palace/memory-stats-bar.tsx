@@ -2,6 +2,7 @@
 
 import React from 'react'
 import type { MemoryPalaceStats } from '@/lib/memory-palace/types'
+import { S, C } from '@/lib/styles/design-tokens'
 
 interface MemoryStatsBarProps {
   stats: MemoryPalaceStats
@@ -88,7 +89,7 @@ function StatPill({
     }}>
       <span style={{
         fontSize: '14px',
-        color: 'rgba(255, 255, 255, 0.4)',
+        color: C.textDim,
         fontWeight: 400,
       }}>
         {label}

@@ -3,6 +3,7 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { Search, User, Briefcase, FileText, CheckSquare, ChevronRight, X, Book } from 'lucide-react';
+import { S, C } from '@/lib/styles/design-tokens';
 import { TabShell } from '@/components/ui/tab-shell';
 import { EmptyState } from '@/components/ui/empty-state';
 import type { GraphNode as ViewerNode, GraphEdge as ViewerEdge } from '@/components/knowledge/graph-viewer';
@@ -61,79 +62,40 @@ const TYPE_COLOR: Record<EntityType, string> = {
 // ─── Style Constants ───────────────────────────────────────────────────────
 
 const glassCard: React.CSSProperties = {
-  padding: '20px',
-  borderRadius: 16,
-  background: 'var(--glass-card-bg)',
-  backdropFilter: 'var(--glass-card-blur)',
-  WebkitBackdropFilter: 'var(--glass-card-blur)',
-  border: '1px solid var(--glass-card-border)',
-  boxShadow: 'var(--glass-card-inset)',
+  ...S.card,
 };
 
 const glassInput: React.CSSProperties = {
-  width: '100%',
+  ...S.input,
   padding: '12px 16px',
   paddingLeft: '40px',
   borderRadius: 12,
-  background: 'var(--bg-input, rgba(13, 17, 23, 0.6))',
-  border: '1px solid var(--glass-interactive-border)',
-  color: 'var(--text-primary)',
-  fontSize: 14,
-  outline: 'none',
-  transition: 'border-color 200ms, box-shadow 200ms',
 };
 
 const listRow: React.CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  padding: '12px 20px',
-  borderRadius: 12,
-  background: 'var(--glass-pill-bg)',
-  backdropFilter: 'var(--glass-blur)',
-  WebkitBackdropFilter: 'var(--glass-blur)',
-  boxShadow: 'var(--glass-card-inset)',
-  border: 'none',
-  transition: 'background 200ms',
-  cursor: 'pointer',
+  ...S.listRow,
 };
 
 const ghostBtn: React.CSSProperties = {
+  ...S.button,
+  ...S.buttonGhost,
   padding: '8px 8px',
   borderRadius: 8,
-  background: 'transparent',
-  border: '1px solid var(--glass-interactive-border)',
-  color: 'var(--text-primary)',
-  fontSize: 14,
-  fontWeight: 500,
-  cursor: 'pointer',
-  transition: 'all 200ms',
+  height: 'auto',
   display: 'flex',
-  alignItems: 'center',
   justifyContent: 'center',
 };
 
 const pillBtn: React.CSSProperties = {
+  ...S.pill,
   padding: '8px 16px',
   borderRadius: 20,
-  background: 'var(--glass-pill-bg)',
-  backdropFilter: 'var(--glass-card-blur)',
-  WebkitBackdropFilter: 'var(--glass-card-blur)',
-  boxShadow: 'var(--glass-card-inset)',
-  border: 'none',
-  fontSize: 14,
-  color: 'var(--text-secondary)',
-  cursor: 'pointer',
-  transition: 'all 200ms',
+  height: 'auto',
   fontWeight: 500,
 };
 
 const sectionHeader: React.CSSProperties = {
-  fontSize: 14,
-  fontWeight: 500,
-  letterSpacing: '0.04em',
-  textTransform: 'uppercase' as const,
-  color: 'var(--text-dim)',
-  marginBottom: 12,
+  ...S.sectionLabel,
 };
 
 // ─── Component ─────────────────────────────────────────────────────────────
@@ -292,11 +254,11 @@ function KnowledgeTab() {
             placeholder="Search contacts, projects, invoices, tasks..."
             style={glassInput}
             onFocus={(e) => {
-              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
-              e.currentTarget.style.boxShadow = '0 0 0 2px rgba(255, 255, 255, 0.08)';
+              e.currentTarget.style.borderColor = C.borderFocus;
+              e.currentTarget.style.boxShadow = `0 0 0 2px ${C.bgHoverStrong}`;
             }}
             onBlur={(e) => {
-              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.05)';
+              e.currentTarget.style.borderColor = C.borderSubtle;
               e.currentTarget.style.boxShadow = 'var(--glass-card-inset)';
             }}
           />
@@ -313,7 +275,7 @@ function KnowledgeTab() {
                 style={{
                   width: 16,
                   height: 16,
-                  border: '2px solid rgba(255, 255, 255, 0.12)',
+                  border: `2px solid ${C.borderHover}`,
                   borderTopColor: '#F1F5F9',
                   borderRadius: '50%',
                   animation: 'spin 0.8s linear infinite',
@@ -351,7 +313,7 @@ function KnowledgeTab() {
                 style={{
                   ...ghostBtn,
                   background: closeHovered ? 'var(--glass-interactive-bg)' : 'transparent',
-                  borderColor: closeHovered ? 'rgba(255, 255, 255, 0.1)' : 'var(--glass-interactive-border)',
+                  borderColor: closeHovered ? C.borderHover : C.borderVisible,
                 }}
                 aria-label="Close graph"
               >
@@ -473,7 +435,7 @@ function KnowledgeTab() {
                               gap: 8,
                               color: isHovered ? 'var(--text-primary)' : 'var(--text-secondary)',
                               background: isHovered
-                                ? 'rgba(255, 255, 255, 0.08)'
+                                ? C.bgHoverStrong
                                 : 'var(--glass-pill-bg)',
                             }}
                           >
@@ -627,7 +589,7 @@ function KnowledgeTab() {
                         ? '1px solid var(--glass-interactive-border)'
                         : '1px solid var(--glass-card-border)',
                       boxShadow: isHovered
-                        ? 'inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 0 0 1px rgba(255, 255, 255, 0.1)'
+                        ? `inset 0 1px 0 ${C.borderHover}, 0 0 0 1px ${C.borderHover}`
                         : 'var(--glass-card-inset)',
                       cursor: 'pointer',
                       transition: 'all 200ms',

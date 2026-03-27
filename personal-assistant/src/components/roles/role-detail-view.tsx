@@ -18,6 +18,7 @@ import {
 } from 'lucide-react'
 import type { RoleType, ActivityType, AutonomyLevel } from '@/lib/bitbit-core'
 import { AutonomyToggle } from './autonomy-toggle'
+import { S, C } from '@/lib/styles/design-tokens'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -263,10 +264,10 @@ export function RoleDetailView({ roleType, onBack }: RoleDetailViewProps) {
           {loading ? (
             Array.from({ length: 6 }, (_, i) => (
               <div key={i} style={{ ...listRow, opacity: 0.5 }}>
-                <div style={{ width: 24, height: 24, borderRadius: 8, background: 'rgba(255,255,255,0.06)' }} />
+                <div style={{ width: 24, height: 24, borderRadius: 8, background: C.bgHoverStrong }} />
                 <div style={{ flex: 1 }}>
-                  <div style={{ height: 12, borderRadius: 4, background: 'rgba(255,255,255,0.06)', width: '60%', marginBottom: 8 }} />
-                  <div style={{ height: 10, borderRadius: 4, background: 'rgba(255,255,255,0.04)', width: '30%' }} />
+                  <div style={{ height: 12, borderRadius: 4, background: C.bgHoverStrong, width: '60%', marginBottom: 8 }} />
+                  <div style={{ height: 10, borderRadius: 4, background: C.bgHover, width: '30%' }} />
                 </div>
               </div>
             ))
@@ -291,7 +292,7 @@ export function RoleDetailView({ roleType, onBack }: RoleDetailViewProps) {
                     style={{
                       ...listRow,
                       cursor: 'pointer',
-                      background: isHovered ? 'var(--bb-surface-hover, rgba(20, 28, 40, 0.7))' : 'rgba(10, 14, 23, 0.5)',
+                      background: isHovered ? 'var(--bb-surface-hover, rgba(20, 28, 40, 0.7))' : C.bgListRow,
                     }}
                   >
                     {/* Timeline dot */}

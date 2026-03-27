@@ -10,6 +10,7 @@ import type {
 import { MemoryCard } from './memory-card'
 import { MemoryStatsBar } from './memory-stats-bar'
 import { DecisionLogViewer } from './decision-log-viewer'
+import { S, C } from '@/lib/styles/design-tokens'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -149,9 +150,9 @@ export function MemoryExplorer({ orgId }: MemoryExplorerProps) {
               width: '100%',
               padding: '12px 16px',
               background: 'var(--bg-input, rgba(13, 17, 23, 0.6))',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
+              border: `1px solid ${C.borderHover}`,
               borderRadius: '8px',
-              color: 'rgba(255, 255, 255, 0.9)',
+              color: C.textPrimary,
               fontSize: '14px',
               outline: 'none',
             }}
@@ -175,11 +176,11 @@ export function MemoryExplorer({ orgId }: MemoryExplorerProps) {
                 borderRadius: '8px',
                 border: 'none',
                 background: viewMode === mode
-                  ? 'rgba(255, 255, 255, 0.12)'
+                  ? C.bgHoverStrong
                   : 'transparent',
                 color: viewMode === mode
                   ? '#E2E8F0'
-                  : 'rgba(255, 255, 255, 0.5)',
+                  : C.textPlaceholder,
                 fontSize: '14px',
                 fontWeight: viewMode === mode ? 500 : 400,
                 cursor: 'pointer',
@@ -207,7 +208,7 @@ export function MemoryExplorer({ orgId }: MemoryExplorerProps) {
             borderRadius: '12px',
             border: 'none',
             background: activeCategory === null ? 'var(--hover-bg-strong)' : 'var(--hover-bg)',
-            color: activeCategory === null ? '#E2E8F0' : 'rgba(255, 255, 255, 0.5)',
+            color: activeCategory === null ? '#E2E8F0' : C.textPlaceholder,
             fontSize: '14px',
             cursor: 'pointer',
             whiteSpace: 'nowrap',
@@ -228,7 +229,7 @@ export function MemoryExplorer({ orgId }: MemoryExplorerProps) {
                 : 'var(--hover-bg)',
               color: activeCategory === cat
                 ? CATEGORY_COLORS[cat]
-                : 'rgba(255, 255, 255, 0.5)',
+                : C.textPlaceholder,
               fontSize: '14px',
               cursor: 'pointer',
               whiteSpace: 'nowrap',
@@ -243,7 +244,7 @@ export function MemoryExplorer({ orgId }: MemoryExplorerProps) {
       {error && (
         <div style={{
           padding: '12px',
-          background: 'rgba(239, 68, 68, 0.1)',
+          background: C.statusErrorBg,
           borderRadius: '8px',
           color: '#EF4444',
           fontSize: '14px',
@@ -262,7 +263,7 @@ export function MemoryExplorer({ orgId }: MemoryExplorerProps) {
           <div style={{
             textAlign: 'center',
             padding: '40px',
-            color: 'rgba(255, 255, 255, 0.4)',
+            color: C.textDim,
           }}>
             Loading...
           </div>
@@ -274,7 +275,7 @@ export function MemoryExplorer({ orgId }: MemoryExplorerProps) {
               <div style={{
                 textAlign: 'center',
                 padding: '60px 20px',
-                color: 'rgba(255, 255, 255, 0.3)',
+                color: C.textMuted,
               }}>
                 <div style={{ fontSize: '16px', marginBottom: '8px' }}>No memories yet</div>
                 <div style={{ fontSize: '14px' }}>
@@ -301,7 +302,7 @@ export function MemoryExplorer({ orgId }: MemoryExplorerProps) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <div style={{
               fontSize: '14px',
-              color: 'rgba(255, 255, 255, 0.4)',
+              color: C.textDim,
               padding: '4px 0',
             }}>
               {searchResults.totalCount} result{searchResults.totalCount !== 1 ? 's' : ''} for &quot;{searchQuery}&quot;

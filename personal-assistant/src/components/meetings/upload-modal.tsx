@@ -1,7 +1,9 @@
 'use client'
 
 import React, { useState, useRef } from 'react'
+import { GlassDropdown } from '@/components/ui/glass-dropdown'
 import type { MeetingType, ParticipantRole } from '@/lib/meetings/types'
+import { S, C } from '@/lib/styles/design-tokens'
 
 const MEETING_TYPES: Array<{ value: MeetingType; label: string }> = [
   { value: 'client_call', label: 'Client Call' },
@@ -151,7 +153,7 @@ export function UploadModal({ open, onClose, onUploadComplete }: UploadModalProp
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'rgba(0, 0, 0, 0.6)',
+        background: C.bgOverlay,
         backdropFilter: 'blur(8px)',
       }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
@@ -201,8 +203,8 @@ export function UploadModal({ open, onClose, onUploadComplete }: UploadModalProp
           style={{
             padding: file ? '16px' : '40px 20px',
             borderRadius: 12,
-            border: `2px dashed ${dragOver ? '#F1F5F9' : 'rgba(255, 255, 255, 0.08)'}`,
-            background: dragOver ? 'var(--hover-bg)' : 'rgba(13, 17, 23, 0.4)',
+            border: `2px dashed ${dragOver ? '#F1F5F9' : C.bgHoverStrong}`,
+            background: dragOver ? 'var(--hover-bg)' : C.bgInput,
             textAlign: 'center',
             cursor: 'pointer',
             transition: 'all 200ms',
@@ -276,15 +278,11 @@ export function UploadModal({ open, onClose, onUploadComplete }: UploadModalProp
 
           <div>
             <label style={labelStyle}>Meeting Type</label>
-            <select
+            <GlassDropdown
+              options={MEETING_TYPES.map(t => ({ value: t.value, label: t.label }))}
               value={meetingType}
-              onChange={(e) => setMeetingType(e.target.value as MeetingType)}
-              style={{ ...inputStyle, cursor: 'pointer' }}
-            >
-              {MEETING_TYPES.map(t => (
-                <option key={t.value} value={t.value}>{t.label}</option>
-              ))}
-            </select>
+              onChange={v => setMeetingType(v as MeetingType)}
+            />
           </div>
 
           <div>
@@ -375,8 +373,8 @@ export function UploadModal({ open, onClose, onUploadComplete }: UploadModalProp
             marginTop: 12,
             padding: '12px 16px',
             borderRadius: 12,
-            background: 'rgba(239, 68, 68, 0.1)',
-            border: '1px solid rgba(239, 68, 68, 0.2)',
+            background: C.statusErrorBg,
+            border: `1px solid ${C.statusError}`,
             fontSize: 14,
             color: '#ef4444',
           }}>
@@ -391,7 +389,7 @@ export function UploadModal({ open, onClose, onUploadComplete }: UploadModalProp
             padding: '12px 16px',
             borderRadius: 12,
             background: 'rgba(59, 130, 246, 0.1)',
-            border: '1px solid rgba(59, 130, 246, 0.2)',
+            border: `1px solid rgba(59, 130, 246, 0.2)`,
             fontSize: 14,
             color: '#3b82f6',
             display: 'flex',
@@ -435,7 +433,7 @@ export function UploadModal({ open, onClose, onUploadComplete }: UploadModalProp
             style={{
               padding: '12px 20px',
               borderRadius: 12,
-              background: (!file || !title.trim() || uploading) ? 'rgba(255, 255, 255, 0.12)' : '#F1F5F9',
+              background: (!file || !title.trim() || uploading) ? C.bgHoverStrong : '#F1F5F9',
               border: 'none',
               color: (!file || !title.trim() || uploading) ? 'rgba(0, 0, 0, 0.5)' : '#0a0f1a',
               fontSize: 14,

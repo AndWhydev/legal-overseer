@@ -20,6 +20,7 @@ import {
   CreditCard,
   Phone,
 } from 'lucide-react'
+import { GlassDropdown } from '@/components/ui/glass-dropdown'
 import { cn } from '@/lib/utils'
 
 const SYNC_FREQUENCY_OPTIONS = [
@@ -259,16 +260,13 @@ export function ChannelConfigDrawer({
                   Select which Asana workspace to sync
                 </p>
                 {config.workspaces && config.workspaces.length > 0 ? (
-                  <select
-                    value={config.workspace_id || ''}
-                    onChange={e => updateConfig({ workspace_id: e.target.value })}
-                    className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-[rgba(255,255,255,0.15)] focus:outline-none focus:ring-1 focus:ring-[rgba(255,255,255,0.15)]"
-                  >
-                    <option value="">All workspaces</option>
-                    {config.workspaces.map(ws => (
-                      <option key={ws.id} value={ws.id}>{ws.name}</option>
-                    ))}
-                  </select>
+                  <div className="mt-1.5">
+                    <GlassDropdown
+                      options={[{ value: '', label: 'All workspaces' }, ...config.workspaces.map(ws => ({ value: ws.id, label: ws.name }))]}
+                      value={config.workspace_id || ''}
+                      onChange={v => updateConfig({ workspace_id: v })}
+                    />
+                  </div>
                 ) : (
                   <input
                     type="text"

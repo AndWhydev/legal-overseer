@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useToast } from '@/components/ui/toast'
+import { ToggleSwitch } from '@/components/ui/toggle-switch'
 import type { InvoiceTemplate } from '@/lib/invoices/template-types'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -414,42 +415,11 @@ export function InvoiceTemplateEditor() {
               <div>
                 <label style={{ ...labelStyle, marginBottom: 8 }}>GST Registered</label>
                 <div style={{ display: 'flex', alignItems: 'center', height: 40 }}>
-                  <button
-                    role="switch"
-                    aria-checked={template.gst_registered}
-                    aria-label="GST Registered"
-                    onClick={() => setTemplate((prev) => ({ ...prev, gst_registered: !prev.gst_registered }))}
-                    style={{
-                      position: 'relative',
-                      display: 'inline-flex',
-                      height: 24,
-                      width: 44,
-                      flexShrink: 0,
-                      cursor: 'pointer',
-                      borderRadius: 12,
-                      transition: 'background-color 200ms ease',
-                      border: 'none',
-                      background: template.gst_registered ? '#22C55E' : 'var(--toggle-off-bg, rgba(255, 255, 255, 0.1))',
-                      outline: 'none',
-                    }}
-                    onFocus={e => { e.currentTarget.style.boxShadow = '0 0 0 2px rgba(34, 197, 94, 0.3)' }}
-                    onBlur={e => { e.currentTarget.style.boxShadow = 'none' }}
-                  >
-                    <span
-                      style={{
-                        pointerEvents: 'none',
-                        display: 'inline-block',
-                        height: 20,
-                        width: 20,
-                        borderRadius: 9999,
-                        background: '#FFFFFF',
-                        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.3)',
-                        transition: 'transform 200ms ease',
-                        transform: template.gst_registered ? 'translateX(20px)' : 'translateX(2px)',
-                        marginTop: 2,
-                      }}
-                    />
-                  </button>
+                  <ToggleSwitch
+                    checked={template.gst_registered ?? false}
+                    onChange={(v) => setTemplate((prev) => ({ ...prev, gst_registered: v }))}
+                    label="GST Registered"
+                  />
                 </div>
               </div>
             </div>

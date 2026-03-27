@@ -10,6 +10,7 @@ import {
   ArrowUpRight,
   ArrowDownRight,
 } from 'lucide-react'
+import { S, C } from '@/lib/styles/design-tokens'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -179,11 +180,11 @@ export function IntelligenceWidgets() {
               style={{
                 ...widgetCard,
                 border: isHovered
-                  ? '1px solid rgba(255, 255, 255, 0.1)'
-                  : '1px solid rgba(255, 255, 255, 0.03)',
+                  ? `1px solid ${C.borderHover}`
+                  : `1px solid ${C.borderSubtle}`,
                 background: isHovered
                   ? 'var(--bb-surface-hover, rgba(20, 28, 40, 0.7))'
-                  : 'rgba(15, 20, 30, 0.6)',
+                  : C.bgCard,
               }}
             >
               {/* Header */}
@@ -212,7 +213,7 @@ export function IntelligenceWidgets() {
                 <div style={{
                   height: 28,
                   borderRadius: 8,
-                  background: 'rgba(255,255,255,0.04)',
+                  background: C.bgHover,
                   width: '50%',
                   marginBottom: 8,
                 }} />

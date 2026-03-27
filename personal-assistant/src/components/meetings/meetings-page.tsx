@@ -5,6 +5,7 @@ import { Plus, Mic } from 'lucide-react'
 import { MeetingList } from './meeting-list'
 import { MeetingDetail } from './meeting-detail'
 import { MeetingUpload } from './meeting-upload'
+import { S, C } from '@/lib/styles/design-tokens'
 
 export function MeetingsPage() {
   const [selectedMeetingId, setSelectedMeetingId] = useState<string | null>(null)
@@ -27,7 +28,7 @@ export function MeetingsPage() {
       {/* Left panel — Meeting list */}
       <div style={{
         width: '340px',
-        borderRight: '1px solid rgba(255,255,255,0.06)',
+        borderRight: `1px solid ${C.borderVisible}`,
         display: 'flex',
         flexDirection: 'column',
         flexShrink: 0,
@@ -38,7 +39,7 @@ export function MeetingsPage() {
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '16px',
-          borderBottom: '1px solid rgba(255,255,255,0.06)',
+          borderBottom: `1px solid ${C.borderVisible}`,
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <Mic size={16} style={{ color: 'var(--bb-orange)' }} />

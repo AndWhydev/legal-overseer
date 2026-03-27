@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Download, Trash2, AlertTriangle, Loader2, Check, X } from 'lucide-react';
 import { logger } from '@/lib/core/logger';
+import { S, C } from '@/lib/styles/design-tokens'
 
 interface DeletionStatus {
   status: string;
@@ -154,13 +155,13 @@ export function DataManagement() {
     alignItems: 'center',
     gap: '8px',
     transition: 'all 200ms',
-    background: 'rgba(255, 255, 255, 0.08)',
+    background: C.bgHoverStrong,
     color: 'var(--text-primary)',
   };
 
   const dangerButtonStyle: React.CSSProperties = {
     ...buttonStyle,
-    background: 'rgba(239, 68, 68, 0.12)',
+    background: C.statusErrorBg,
     color: '#EF4444',
   };
 
@@ -180,7 +181,7 @@ export function DataManagement() {
         <div
           style={{
             ...messageStyle,
-            background: message.type === 'success' ? 'rgba(34, 197, 94, 0.12)' : 'rgba(239, 68, 68, 0.12)',
+            background: message.type === 'success' ? 'rgba(34, 197, 94, 0.12)' : C.statusErrorBg,
             color: message.type === 'success' ? '#22C55E' : '#EF4444',
           }}
         >
@@ -210,7 +211,7 @@ export function DataManagement() {
       </div>
 
       {deletionStatus ? (
-        <div style={{ ...containerStyle, borderColor: 'rgba(239, 68, 68, 0.3)', background: 'rgba(239, 68, 68, 0.05)' }}>
+        <div style={{ ...containerStyle, borderColor: C.statusError, background: C.statusErrorBg }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
             <AlertTriangle size={18} style={{ color: '#EF4444', flexShrink: 0 }} />
             <h3 style={{ fontSize: '16px', fontWeight: '500', margin: 0, color: '#EF4444' }}>
@@ -229,7 +230,7 @@ export function DataManagement() {
             disabled={cancelLoading}
             style={{
               ...buttonStyle,
-              background: 'rgba(34, 197, 94, 0.12)',
+              background: C.statusSuccessBg,
               color: '#22C55E',
               opacity: cancelLoading ? 0.6 : 1,
             }}
@@ -266,7 +267,7 @@ export function DataManagement() {
             style={{
               position: 'absolute',
               inset: 0,
-              background: 'rgba(0, 0, 0, 0.6)',
+              background: C.bgOverlay,
               backdropFilter: 'blur(8px)',
               WebkitBackdropFilter: 'blur(8px)',
             }}
@@ -333,8 +334,8 @@ export function DataManagement() {
                   width: '100%',
                   padding: '12px 12px',
                   borderRadius: '8px',
-                  background: 'rgba(255, 255, 255, 0.05)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  background: C.bgHover,
+                  border: `1px solid ${C.borderHover}`,
                   color: 'var(--text-primary)',
                   fontSize: '14px',
                   fontFamily: 'monospace',

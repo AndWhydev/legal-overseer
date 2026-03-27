@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback } from 'react'
 import { Upload, X, Mic, Loader2, FileAudio } from 'lucide-react'
 import { ALLOWED_MIME_TYPES, MAX_RECORDING_SIZE } from '@/lib/meetings/types'
+import { S, C } from '@/lib/styles/design-tokens'
 
 interface MeetingUploadProps {
   onUploaded: (meetingId: string) => void
@@ -120,7 +121,7 @@ export function MeetingUpload({ onUploaded, onCancel }: MeetingUploadProps) {
           onDrop={handleDrop}
           onClick={() => fileInputRef.current?.click()}
           style={{
-            border: `2px dashed ${dragOver ? 'var(--text-primary, #F1F5F9)' : 'rgba(255,255,255,0.1)'}`,
+            border: `2px dashed ${dragOver ? 'var(--text-primary, #F1F5F9)' : C.borderHover}`,
             borderRadius: 'var(--radius-lg)',
             padding: '32px',
             textAlign: 'center',
@@ -221,7 +222,7 @@ export function MeetingUpload({ onUploaded, onCancel }: MeetingUploadProps) {
             color: 'var(--bb-red)',
             marginBottom: '12px',
             padding: '8px',
-            background: 'rgba(239,68,68,0.1)',
+            background: C.statusErrorBg,
             borderRadius: 'var(--radius-sm)',
           }}>
             {error}

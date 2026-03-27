@@ -120,8 +120,9 @@ RETURNS TABLE (
   path text[]
 )
 LANGUAGE plpgsql
-STABLE
+VOLATILE
 AS $$
+#variable_conflict use_column
 DECLARE
   v_current_depth int := 0;
 BEGIN

@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useCallback } from 'react'
+import { GlassDropdown } from '@/components/ui/glass-dropdown'
 import { createClient } from '@/lib/supabase/client'
 
 interface WebhookEvent {
@@ -145,44 +146,34 @@ export default function WebhookEventsWidget() {
             marginBottom: '16px',
           }}
         >
-          <select
+          <GlassDropdown
+            options={[
+              { value: '', label: 'All Sources' },
+              { value: 'stripe', label: 'Stripe' },
+              { value: 'telnyx', label: 'Telnyx' },
+              { value: 'meta', label: 'Meta' },
+              { value: 'slack', label: 'Slack' },
+              { value: 'calendly', label: 'Calendly' },
+              { value: 'asana', label: 'Asana' },
+              { value: 'email', label: 'Email' },
+            ]}
             value={filters.source}
-            onChange={(e) => handleFilterChange('source', e.target.value)}
-            style={{
-              padding: '8px 12px',
-              borderRadius: '8px',
-              border: '1px solid rgba(0, 0, 0, 0.1)',
-              fontSize: '14px',
-              backgroundColor: '#fff',
-            }}
-          >
-            <option value="">All Sources</option>
-            <option value="stripe">Stripe</option>
-            <option value="telnyx">Telnyx</option>
-            <option value="meta">Meta</option>
-            <option value="slack">Slack</option>
-            <option value="calendly">Calendly</option>
-            <option value="asana">Asana</option>
-            <option value="email">Email</option>
-          </select>
+            onChange={(v) => handleFilterChange('source', v)}
+            size="sm"
+          />
 
-          <select
+          <GlassDropdown
+            options={[
+              { value: '', label: 'All Status' },
+              { value: 'success', label: 'Success' },
+              { value: 'failed', label: 'Failed' },
+              { value: 'processing', label: 'Processing' },
+              { value: 'retry', label: 'Retry' },
+            ]}
             value={filters.status}
-            onChange={(e) => handleFilterChange('status', e.target.value)}
-            style={{
-              padding: '8px 12px',
-              borderRadius: '8px',
-              border: '1px solid rgba(0, 0, 0, 0.1)',
-              fontSize: '14px',
-              backgroundColor: '#fff',
-            }}
-          >
-            <option value="">All Status</option>
-            <option value="success">Success</option>
-            <option value="failed">Failed</option>
-            <option value="processing">Processing</option>
-            <option value="retry">Retry</option>
-          </select>
+            onChange={(v) => handleFilterChange('status', v)}
+            size="sm"
+          />
 
           <input
             type="date"

@@ -13,6 +13,7 @@ import { TabSkeleton } from './tab-skeleton';
 import { TabShell } from '@/components/ui/tab-shell';
 import { SectionCard } from '@/components/ui/section-card';
 import { EmptyState } from '@/components/ui/empty-state';
+import { S as DS, C } from '@/lib/styles/design-tokens';
 import { logger } from '@/lib/core/logger';
 
 /* ─── Interfaces ─── */
@@ -61,25 +62,19 @@ const S = {
 
   /* Glass card */
   glassCard: {
-    background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.6))',
-    backdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
-    WebkitBackdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
-    border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
-    boxShadow: 'var(--card-shadow, 0 2px 8px rgba(0,0,0,0.3)), var(--card-inset, inset 0 1px 0 rgba(255,255,255,0.06))',
-    borderRadius: 16,
-    overflow: 'hidden',
+    ...DS.cardFlush,
   } as React.CSSProperties,
 
   /* Card header */
   cardHeader: {
     padding: 16,
-    borderBottom: '1px solid rgba(255, 255, 255, 0.03)',
+    borderBottom: `1px solid ${C.borderSubtle}`,
   } as React.CSSProperties,
 
   cardHeaderTitle: {
     fontSize: 16,
     fontWeight: 500,
-    color: 'var(--text-primary, #F1F5F9)',
+    color: C.textPrimary,
     display: 'flex',
     alignItems: 'center',
     gap: 8,
@@ -88,7 +83,7 @@ const S = {
 
   cardHeaderSub: {
     fontSize: 14,
-    color: 'var(--text-secondary, #94A3B8)',
+    color: C.textSecondary,
     marginTop: 4,
   } as React.CSSProperties,
 
@@ -123,8 +118,8 @@ const S = {
     gap: 12,
     padding: 12,
     borderRadius: 16,
-    border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
-    background: 'rgba(25, 35, 50, 0.8)',
+    border: `1px solid ${C.borderSubtle}`,
+    background: C.bgElevated,
     cursor: 'pointer',
     textAlign: 'left',
     minHeight: 40,
@@ -140,8 +135,8 @@ const S = {
     gap: 12,
     padding: 12,
     borderRadius: 16,
-    border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
-    background: 'rgba(25, 35, 50, 0.8)',
+    border: `1px solid ${C.borderSubtle}`,
+    background: C.bgElevated,
     cursor: 'not-allowed',
     textAlign: 'left',
     minHeight: 40,
@@ -156,7 +151,7 @@ const S = {
     width: 36,
     height: 36,
     borderRadius: 12,
-    background: 'rgba(234, 179, 8, 0.12)',
+    background: C.statusWarningBg,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -167,7 +162,7 @@ const S = {
     width: 36,
     height: 36,
     borderRadius: 12,
-    background: 'rgba(34, 197, 94, 0.12)',
+    background: C.statusSuccessBg,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -178,7 +173,7 @@ const S = {
     width: 36,
     height: 36,
     borderRadius: 12,
-    background: 'rgba(255, 255, 255, 0.08)',
+    background: C.bgHoverStrong,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -189,7 +184,7 @@ const S = {
     width: 36,
     height: 36,
     borderRadius: 12,
-    background: 'rgba(239, 68, 68, 0.12)',
+    background: C.statusErrorBg,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -204,7 +199,7 @@ const S = {
   qaTitle: {
     fontSize: 14,
     fontWeight: 500,
-    color: 'var(--text-primary, #F1F5F9)',
+    color: C.textPrimary,
     overflow: 'hidden',
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap',
@@ -213,7 +208,7 @@ const S = {
 
   qaSub: {
     fontSize: 14,
-    color: 'var(--text-secondary, #94A3B8)',
+    color: C.textSecondary,
     margin: 0,
   } as React.CSSProperties,
 
@@ -224,20 +219,20 @@ const S = {
     justifyContent: 'space-between',
     padding: 12,
     borderRadius: 12,
-    background: 'rgba(25, 35, 50, 0.8)',
-    border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
+    background: C.bgElevated,
+    border: `1px solid ${C.borderSubtle}`,
   } as React.CSSProperties,
 
   approvalTitle: {
     fontSize: 14,
     fontWeight: 500,
-    color: 'var(--text-primary, #F1F5F9)',
+    color: C.textPrimary,
     margin: 0,
   } as React.CSSProperties,
 
   approvalDesc: {
     fontSize: 14,
-    color: 'var(--text-secondary, #94A3B8)',
+    color: C.textSecondary,
     marginTop: 4,
   } as React.CSSProperties,
 
@@ -251,9 +246,9 @@ const S = {
     fontSize: 14,
     fontWeight: 500,
     borderRadius: 12,
-    background: 'var(--bg-input, rgba(13, 17, 23, 0.6))',
-    border: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
-    color: 'var(--text-secondary, #94A3B8)',
+    background: C.bgInput,
+    border: `1px solid ${C.borderSubtle}`,
+    color: C.textSecondary,
     cursor: 'pointer',
     minHeight: 40,
     transition: 'background 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
@@ -264,9 +259,9 @@ const S = {
     fontSize: 14,
     fontWeight: 500,
     borderRadius: 12,
-    background: 'var(--bg-input, rgba(13, 17, 23, 0.6))',
-    border: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
-    color: 'var(--text-secondary, #94A3B8)',
+    background: C.bgInput,
+    border: `1px solid ${C.borderSubtle}`,
+    color: C.textSecondary,
     cursor: 'not-allowed',
     minHeight: 40,
     opacity: 0.5,
@@ -305,8 +300,8 @@ const S = {
     gap: 12,
     padding: 8,
     borderRadius: 12,
-    background: 'rgba(25, 35, 50, 0.8)',
-    border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
+    background: C.bgElevated,
+    border: `1px solid ${C.borderSubtle}`,
   } as React.CSSProperties,
 
   priorityBadgeCritical: {
@@ -314,7 +309,7 @@ const S = {
     fontWeight: 500,
     padding: '4px 8px',
     borderRadius: 8,
-    background: 'rgba(239, 68, 68, 0.12)',
+    background: C.statusErrorBg,
     color: 'rgba(248, 113, 113, 1)',
     border: '1px solid rgba(239, 68, 68, 0.2)',
     whiteSpace: 'nowrap',
@@ -325,7 +320,7 @@ const S = {
     fontWeight: 500,
     padding: '4px 8px',
     borderRadius: 8,
-    background: 'rgba(234, 179, 8, 0.12)',
+    background: C.statusWarningBg,
     color: 'rgba(250, 204, 21, 1)',
     border: '1px solid rgba(234, 179, 8, 0.2)',
     whiteSpace: 'nowrap',
@@ -334,7 +329,7 @@ const S = {
   priorityTitle: {
     fontSize: 14,
     fontWeight: 500,
-    color: 'var(--text-primary, #F1F5F9)',
+    color: C.textPrimary,
     overflow: 'hidden',
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap',
@@ -348,7 +343,7 @@ const S = {
     alignItems: 'flex-start',
     gap: 12,
     paddingBottom: 12,
-    borderBottom: '1px solid rgba(255, 255, 255, 0.03)',
+    borderBottom: `1px solid ${C.borderSubtle}`,
   } as React.CSSProperties,
 
   feedRowLast: {
@@ -374,7 +369,7 @@ const S = {
   feedTitle: {
     fontSize: 14,
     fontWeight: 500,
-    color: 'var(--text-primary, #F1F5F9)',
+    color: C.textPrimary,
     overflow: 'hidden',
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap',
@@ -383,7 +378,7 @@ const S = {
 
   feedSub: {
     fontSize: 14,
-    color: 'var(--text-secondary, #94A3B8)',
+    color: C.textSecondary,
     overflow: 'hidden',
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap',
@@ -392,7 +387,7 @@ const S = {
 
   feedTime: {
     fontSize: 14,
-    color: 'var(--text-dim, #475569)',
+    color: C.textDim,
     marginTop: 4,
   } as React.CSSProperties,
 
@@ -400,7 +395,7 @@ const S = {
     marginLeft: 8,
     fontSize: 14,
     opacity: 0.6,
-    color: 'var(--text-dim, #475569)',
+    color: C.textDim,
   } as React.CSSProperties,
 
   /* Lead row */
@@ -410,33 +405,33 @@ const S = {
     justifyContent: 'space-between',
     padding: 12,
     borderRadius: 12,
-    background: 'rgba(25, 35, 50, 0.8)',
-    border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
+    background: C.bgElevated,
+    border: `1px solid ${C.borderSubtle}`,
   } as React.CSSProperties,
 
   leadName: {
     fontSize: 14,
     fontWeight: 500,
-    color: 'var(--text-primary, #F1F5F9)',
+    color: C.textPrimary,
     margin: 0,
   } as React.CSSProperties,
 
   leadStatus: {
     fontSize: 14,
-    color: 'var(--text-secondary, #94A3B8)',
+    color: C.textSecondary,
     marginTop: 4,
   } as React.CSSProperties,
 
   leadValue: {
     fontSize: 14,
     fontWeight: 500,
-    color: 'var(--text-primary, #F1F5F9)',
+    color: C.textPrimary,
   } as React.CSSProperties,
 
   /* Schedule section */
   scheduleHint: {
     fontSize: 14,
-    color: 'var(--text-secondary, #94A3B8)',
+    color: C.textSecondary,
     marginBottom: 16,
     display: 'flex',
     alignItems: 'center',
@@ -651,7 +646,7 @@ function CommandCenterTab() {
           style={topApprovalDisabled ? S.quickActionBtnDisabled : S.quickActionBtn}
         >
           <div style={S.iconBoxWarning}>
-            <ShieldCheck size={18} style={{ color: 'rgba(234, 179, 8, 1)' }} />
+            <ShieldCheck size={18} style={{ color: C.statusWarning }} />
           </div>
           <div style={S.qaTextWrap}>
             <p style={S.qaTitle}>Approve Next</p>
@@ -668,7 +663,7 @@ function CommandCenterTab() {
           style={S.quickActionBtn}
         >
           <div style={S.iconBoxSuccess}>
-            <ReceiptText size={18} style={{ color: 'rgba(34, 197, 94, 1)' }} />
+            <ReceiptText size={18} style={{ color: C.statusSuccess }} />
           </div>
           <div style={S.qaTextWrap}>
             <p style={S.qaTitle}>New Invoice</p>
@@ -699,7 +694,7 @@ function CommandCenterTab() {
           style={topApprovalDisabled ? S.quickActionBtnDisabled : S.quickActionBtn}
         >
           <div style={S.iconBoxError}>
-            <BellOff size={18} style={{ color: 'rgba(239, 68, 68, 1)' }} />
+            <BellOff size={18} style={{ color: C.statusError }} />
           </div>
           <div style={S.qaTextWrap}>
             <p style={S.qaTitle}>Dismiss Top</p>
@@ -744,7 +739,7 @@ function CommandCenterTab() {
         <div className="lg:col-span-2" style={S.glassCard}>
           <div style={S.cardHeader}>
             <h2 style={S.cardHeaderTitle}>
-              <ShieldCheck size={20} style={{ color: 'rgba(234, 179, 8, 1)' }} /> Action Required
+              <ShieldCheck size={20} style={{ color: C.statusWarning }} /> Action Required
             </h2>
             <p style={S.cardHeaderSub}>{approvals.length} pending approvals</p>
           </div>
@@ -787,7 +782,7 @@ function CommandCenterTab() {
         <div style={S.glassCard}>
           <div style={S.cardHeader}>
             <h2 style={S.cardHeaderTitle}>
-              <Zap size={20} style={{ color: 'rgba(234, 179, 8, 1)' }} /> Today&apos;s Priorities
+              <Zap size={20} style={{ color: C.statusWarning }} /> Today&apos;s Priorities
             </h2>
           </div>
           <div style={S.cardBodyCompact}>

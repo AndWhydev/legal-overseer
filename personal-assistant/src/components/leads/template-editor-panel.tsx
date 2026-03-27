@@ -2,6 +2,7 @@
 
 import React, { useState, useCallback, memo } from 'react'
 import { X, Plus, Variable } from 'lucide-react'
+import { GlassDropdown } from '@/components/ui/glass-dropdown'
 
 interface TemplateEditorPanelProps {
   open: boolean
@@ -225,15 +226,11 @@ function TemplateEditorPanelInner({ open, onClose, onSave, initial }: TemplateEd
 
           <div>
             <label style={fieldLabel}>Category</label>
-            <select
+            <GlassDropdown
+              options={CATEGORIES.map(c => ({ value: c.value, label: c.label }))}
               value={category}
-              onChange={e => setCategory(e.target.value)}
-              style={selectStyle}
-            >
-              {CATEGORIES.map(c => (
-                <option key={c.value} value={c.value}>{c.label}</option>
-              ))}
-            </select>
+              onChange={v => setCategory(v)}
+            />
           </div>
 
           <div>

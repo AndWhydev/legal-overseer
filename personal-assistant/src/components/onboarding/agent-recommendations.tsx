@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo } from 'react'
 import { motion } from 'motion/react'
+import { S, C } from '@/lib/styles/design-tokens'
 
 interface AgentRecommendation {
   id: string
@@ -125,8 +126,8 @@ export function AgentRecommendations({
               backdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
               WebkitBackdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
               border: agent.selected
-                ? '1px solid rgba(255, 255, 255, 0.15)'
-                : '1px solid rgba(255, 255, 255, 0.03)',
+                ? `1px solid ${C.borderFocus}`
+                : `1px solid ${C.borderSubtle}`,
               boxShadow: agent.selected
                 ? 'inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 0 20px rgba(255, 255, 255, 0.05)'
                 : 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
@@ -139,14 +140,14 @@ export function AgentRecommendations({
               el.style.background = 'rgba(15, 20, 30, 0.75)'
               el.style.borderColor = agent.selected
                 ? 'rgba(255, 255, 255, 0.25)'
-                : 'rgba(255, 255, 255, 0.08)'
+                : C.bgHoverStrong
             }}
             onMouseLeave={(e) => {
               const el = e.currentTarget as HTMLDivElement
-              el.style.background = 'rgba(15, 20, 30, 0.6)'
+              el.style.background = C.bgCard
               el.style.borderColor = agent.selected
                 ? 'rgba(255, 255, 255, 0.15)'
-                : 'rgba(255, 255, 255, 0.03)'
+                : C.bgHover
             }}
           >
             {/* Recommended Badge */}

@@ -8,6 +8,7 @@ import {
 import type { SlackEventPayload } from '@/lib/channels/slack'
 import { logger } from '@/lib/core/logger'
 import { resolveOrgFromWebhook } from '@/lib/core/resolve-org'
+import { enrichInboundMessage } from '@/lib/conversation/inbound-enrichment'
 
 /**
  * Slack webhook endpoint.
@@ -177,7 +178,7 @@ async function handleMessageEvent(
     return NextResponse.json({ received: true })
   }
 
-  const { error } = await supabase.from('channel_messages').insert({
+  const { data: insertedMsg, error } = await supabase.from('channel_messages').insert({
     org_id: orgId,
     channel: 'slack',
     external_id: `slack-${event.channel}-${event.ts}`,
@@ -196,7 +197,7 @@ async function handleMessageEvent(
       ts: event.ts,
       thread_ts: event.thread_ts,
     },
-  })
+  }).select('id').single()
 
   if (error) {
     // Unique constraint violation means duplicate — skip silently
@@ -207,6 +208,23 @@ async function handleMessageEvent(
     }
   } else {
     logger.info('[webhook/slack] Message event persisted:', event.ts)
+
+    // Fire-and-forget: enrich with entity resolution, timeline,
+    // relationship linking (unified pipeline intelligence layer)
+    if (insertedMsg) {
+      enrichInboundMessage(supabase, {
+        messageId: insertedMsg.id as string,
+        orgId,
+        channel: 'slack',
+        senderIdentifier: event.user!,
+        senderName: event.user!,
+        subject: `#${event.channel}`,
+        body: event.text!.slice(0, 2000).trim(),
+        priority: 'medium',
+      }).catch(err => {
+        logger.error('[webhook/slack] Enrichment failed (non-fatal):', err)
+      })
+    }
   }
 
   return NextResponse.json({ received: true, event_type: 'message', persisted: !error })

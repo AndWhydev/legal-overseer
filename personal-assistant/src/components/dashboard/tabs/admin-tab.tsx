@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client';
 import { TabShell } from '@/components/ui/tab-shell';
 import { TabSkeleton } from './tab-skeleton';
 import { AlertBanner } from '@/components/ui/alert-banner';
+import { GlassDropdown } from '@/components/ui/glass-dropdown';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 // ---------------------------------------------------------------------------
@@ -241,13 +242,12 @@ export default function AdminTab() {
         </div>
         <div style={{ padding: 20 }}>
           <div style={{ display: 'flex', gap: 12, marginBottom: 12, flexWrap: 'wrap', alignItems: 'center' }}>
-            <select
+            <GlassDropdown
+              options={IMPORT_ENTITIES.map(e => ({ value: e, label: e }))}
               value={importEntity}
-              onChange={e => setImportEntity(e.target.value)}
-              style={{ padding: '8px 12px', borderRadius: 8, background: 'var(--bg-elevated)', color: 'var(--text-primary)', border: '1px solid var(--border)' }}
-            >
-              {IMPORT_ENTITIES.map(e => <option key={e} value={e}>{e}</option>)}
-            </select>
+              onChange={v => setImportEntity(v)}
+              size="sm"
+            />
             <input type="file" accept=".json" onChange={handleFileUpload} style={{ fontSize: 14 }} />
           </div>
           <textarea
@@ -295,13 +295,12 @@ export default function AdminTab() {
         </div>
         <div style={{ padding: 20 }}>
           <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
-            <select
+            <GlassDropdown
+              options={EXPORT_ENTITIES.map(e => ({ value: e, label: e }))}
               value={exportEntity}
-              onChange={e => setExportEntity(e.target.value)}
-              style={{ padding: '8px 12px', borderRadius: 8, background: 'var(--bg-elevated)', color: 'var(--text-primary)', border: '1px solid var(--border)' }}
-            >
-              {EXPORT_ENTITIES.map(e => <option key={e} value={e}>{e}</option>)}
-            </select>
+              onChange={v => setExportEntity(v)}
+              size="sm"
+            />
             <div style={{ display: 'flex', gap: 4 }}>
               {(['csv', 'json'] as const).map(f => (
                 <button

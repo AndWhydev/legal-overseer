@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { Search, ChevronRight, Mail, Phone } from 'lucide-react'
 import { GlassDropdown } from '@/components/ui/glass-dropdown'
 import { EmptyState } from '@/components/ui/empty-state'
+import { S, C } from '@/lib/styles/design-tokens'
 import { useDevOverrides } from '@/lib/dev/dev-overrides'
 import { StatusPill, type StatusVariant } from '@/components/ui/status-pill'
 import { EntityDetailDrawer } from '@/components/dashboard/entity-detail-drawer'
@@ -363,22 +364,18 @@ function ContactCard({ contact, onOpen }: { contact: Contact; onOpen: () => void
       aria-label={canOpen ? `Open details for ${contact.name ?? 'contact'}` : `${contact.name ?? 'Contact'} has no detail view`}
       aria-haspopup={canOpen ? 'dialog' : undefined}
       style={{
+        ...S.card,
         width: '100%',
         display: 'flex',
         alignItems: 'center',
         gap: '14px',
         padding: '16px 20px',
-        borderRadius: 16,
-        background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.6))',
-        backdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
-        WebkitBackdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
         border: 'none',
-        boxShadow: 'var(--card-shadow, 0 2px 8px rgba(0,0,0,0.3)), var(--card-inset, inset 0 1px 0 rgba(255,255,255,0.06))',
         cursor: canOpen ? 'pointer' : 'default',
         textAlign: 'left' as const,
         transition: 'all 200ms ease-out',
         transform: hovered ? 'translateY(-1px)' : 'translateY(0)',
-        backgroundColor: hovered ? 'var(--bb-surface-hover, rgba(20, 28, 40, 0.7))' : 'rgba(15, 20, 30, 0.6)',
+        backgroundColor: hovered ? C.bgListRowHover : C.bgCard,
       }}
     >
       {contact.avatar_url ? (
@@ -404,8 +401,8 @@ function ContactCard({ contact, onOpen }: { contact: Contact; onOpen: () => void
           fontSize: 14,
           fontWeight: 500,
           flexShrink: 0,
-          background: 'rgba(255, 255, 255, 0.06)',
-          color: 'var(--text-secondary)',
+          background: C.bgHoverStrong,
+          color: C.textSecondary,
         }}>
           {initials}
         </div>
@@ -431,8 +428,8 @@ function ContactCard({ contact, onOpen }: { contact: Contact; onOpen: () => void
             fontSize: 14,
             fontWeight: 500,
             textTransform: 'uppercase',
-            background: 'rgba(255, 255, 255, 0.06)',
-            color: 'var(--text-secondary, #94A3B8)',
+            background: C.bgHoverStrong,
+            color: C.textSecondary,
             whiteSpace: 'nowrap',
             flexShrink: 0,
           }}>
@@ -492,7 +489,7 @@ function ContactCard({ contact, onOpen }: { contact: Contact; onOpen: () => void
                 fontWeight: 500,
                 padding: '2px 8px',
                 borderRadius: 8,
-                background: 'rgba(255, 255, 255, 0.04)',
+                background: C.bgHover,
                 color: 'var(--text-dim)',
               }}>
                 {tag}
@@ -504,7 +501,7 @@ function ContactCard({ contact, onOpen }: { contact: Contact; onOpen: () => void
                 fontWeight: 500,
                 padding: '2px 8px',
                 borderRadius: 8,
-                background: 'rgba(255, 255, 255, 0.04)',
+                background: C.bgHover,
                 color: 'var(--text-dim)',
               }}>
                 +{tags.length - 3}

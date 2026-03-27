@@ -11,6 +11,7 @@ import {
   ShieldCheck,
 } from 'lucide-react'
 import type { RoleType } from '@/lib/bitbit-core'
+import { S, C } from '@/lib/styles/design-tokens'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -193,10 +194,10 @@ export function AttentionView({ maxHeight = 'calc(100vh - 300px)' }: AttentionVi
         {loading ? (
           Array.from({ length: 3 }, (_, i) => (
             <div key={i} style={{ ...listRow, opacity: 0.5 }}>
-              <div style={{ width: 28, height: 28, borderRadius: 8, background: 'rgba(255,255,255,0.06)' }} />
+              <div style={{ width: 28, height: 28, borderRadius: 8, background: C.bgHoverStrong }} />
               <div style={{ flex: 1 }}>
-                <div style={{ height: 12, borderRadius: 4, background: 'rgba(255,255,255,0.06)', width: '60%', marginBottom: 8 }} />
-                <div style={{ height: 10, borderRadius: 4, background: 'rgba(255,255,255,0.04)', width: '35%' }} />
+                <div style={{ height: 12, borderRadius: 4, background: C.bgHoverStrong, width: '60%', marginBottom: 8 }} />
+                <div style={{ height: 10, borderRadius: 4, background: C.bgHover, width: '35%' }} />
               </div>
             </div>
           ))
@@ -223,7 +224,7 @@ export function AttentionView({ maxHeight = 'calc(100vh - 300px)' }: AttentionVi
                 onMouseLeave={() => setHoveredId(null)}
                 style={{
                   ...listRow,
-                  background: isHovered ? 'var(--bb-surface-hover, rgba(20, 28, 40, 0.7))' : 'rgba(10, 14, 23, 0.5)',
+                  background: isHovered ? 'var(--bb-surface-hover, rgba(20, 28, 40, 0.7))' : C.bgListRow,
                   opacity: isResolving ? 0.5 : 1,
                 }}
               >
@@ -297,7 +298,7 @@ export function AttentionView({ maxHeight = 'calc(100vh - 300px)' }: AttentionVi
                           fontSize: 14,
                           fontWeight: 500,
                           cursor: 'pointer',
-                          background: 'rgba(34, 197, 94, 0.15)',
+                          background: C.statusSuccessBg,
                           color: '#22c55e',
                           transition: 'all 200ms',
                         }}
@@ -313,7 +314,7 @@ export function AttentionView({ maxHeight = 'calc(100vh - 300px)' }: AttentionVi
                           fontSize: 14,
                           fontWeight: 500,
                           cursor: 'pointer',
-                          background: 'rgba(239, 68, 68, 0.12)',
+                          background: C.statusErrorBg,
                           color: '#ef4444',
                           transition: 'all 200ms',
                         }}

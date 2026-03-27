@@ -2,8 +2,10 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Sun, Moon, Monitor, Loader2, Smartphone, Check, X } from 'lucide-react';
+import { S, C } from '@/lib/styles/design-tokens';
 import { BillingSettings } from '@/components/settings/billing-settings';
 import { QrAuthConnect } from '@/components/ui/qr-auth-connect';
+import { ToggleSwitch } from '@/components/ui/toggle-switch';
 import { ConnectionsGrid } from '@/components/integrations/integration-grid';
 import { RagStatsWidget } from '@/components/dashboard/rag-stats-widget';
 import { createClient } from '@/lib/supabase/client';
@@ -49,60 +51,9 @@ const sectionWrapper: React.CSSProperties = {
 };
 
 const listRow: React.CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
+  ...S.listRow,
   padding: '12px 16px',
-  borderRadius: 12,
-  background: 'var(--glass-pill-bg)',
-  backdropFilter: 'var(--glass-blur)',
-  WebkitBackdropFilter: 'var(--glass-blur)',
-  boxShadow: 'var(--glass-card-inset)',
-  border: 'none',
-  transition: 'background 200ms',
 };
-
-// ─── Toggle Switch ───────────────────────────────────────────────────────────
-
-function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label: string }) {
-  return (
-    <button
-      onClick={() => onChange(!checked)}
-      style={{
-        position: 'relative',
-        display: 'inline-flex',
-        height: 24,
-        width: 44,
-        flexShrink: 0,
-        cursor: 'pointer',
-        borderRadius: 12,
-        transition: 'background-color 200ms ease',
-        border: 'none',
-        background: checked ? '#22C55E' : 'var(--toggle-off-bg, rgba(255, 255, 255, 0.1))',
-        outline: 'none',
-      }}
-      role="switch"
-      aria-checked={checked}
-      aria-label={label}
-      onFocus={e => { e.currentTarget.style.boxShadow = '0 0 0 2px rgba(34, 197, 94, 0.3)'; }}
-      onBlur={e => { e.currentTarget.style.boxShadow = 'none'; }}
-    >
-      <span
-        style={{
-          pointerEvents: 'none',
-          display: 'inline-block',
-          height: 20,
-          width: 20,
-          borderRadius: 9999,
-          background: '#FFFFFF',
-          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.3)',
-          transition: 'transform 200ms ease',
-          transform: checked ? 'translateX(20px)' : 'translateX(2px)',
-          marginTop: 2,
-        }}
-      />
-    </button>
-  );
-}
 
 // ─── WhatsApp Wizard Modal ───────────────────────────────────────────────────
 
@@ -155,19 +106,13 @@ function WhatsAppWizardModal({ onClose, onConnected }: { onClose: () => void; on
   }, []);
 
   const glassCard: React.CSSProperties = {
-    padding: '20px',
-    borderRadius: 16,
-    background: 'var(--glass-card-bg)',
-    backdropFilter: 'var(--glass-card-blur)',
-    WebkitBackdropFilter: 'var(--glass-card-blur)',
-    border: '1px solid var(--glass-card-border)',
-    boxShadow: 'var(--glass-card-inset)',
+    ...S.card,
   };
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div
-        style={{ position: 'absolute', inset: 0, background: 'rgba(0, 0, 0, 0.6)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}
+        style={{ position: 'absolute', inset: 0, background: C.bgOverlay, backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}
         onClick={onClose}
       />
       <div style={{
@@ -200,7 +145,7 @@ function WhatsAppWizardModal({ onClose, onConnected }: { onClose: () => void; on
         {error && (
           <div style={{
             padding: '12px 16px', borderRadius: 12,
-            background: 'rgba(239, 68, 68, 0.1)', color: '#EF4444',
+            background: C.statusErrorBg, color: C.statusError,
             fontSize: 14, marginBottom: 16, textAlign: 'center',
           }}>
             {error}
@@ -208,7 +153,7 @@ function WhatsAppWizardModal({ onClose, onConnected }: { onClose: () => void; on
               onClick={() => window.location.reload()}
               style={{
                 display: 'block', margin: '8px auto 0', padding: '8px 16px', borderRadius: 8,
-                background: 'rgba(255, 255, 255, 0.08)', border: '1px solid var(--glass-interactive-border)',
+                background: C.bgHoverStrong, border: `1px solid ${C.borderVisible}`,
                 color: 'var(--text-primary)', fontSize: 14, cursor: 'pointer',
               }}
             >
@@ -258,8 +203,8 @@ function SaveIndicator({ visible }: { visible: boolean }) {
       gap: 8,
       padding: '8px 16px',
       borderRadius: 8,
-      background: 'rgba(34, 197, 94, 0.12)',
-      color: '#22C55E',
+      background: C.statusSuccessBg,
+      color: C.statusSuccess,
       fontSize: 14,
       fontWeight: 500,
       opacity: visible ? 1 : 0,
@@ -422,7 +367,7 @@ export function SettingsAutomationsTab() {
                 <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)', margin: 0 }}>{a.label}</p>
                 <p style={{ fontSize: 14, color: 'var(--text-secondary)', margin: '1px 0 0' }}>{a.description}</p>
               </div>
-              <Toggle checked={settings.enabled_agents.includes(a.id)} onChange={() => handleToggle(a.id)} label={a.label} />
+              <ToggleSwitch checked={settings.enabled_agents.includes(a.id)} onChange={() => handleToggle(a.id)} label={a.label} />
             </div>
           ))}
         </div>
@@ -473,7 +418,7 @@ export function SettingsAppearanceTab() {
                   overflow: 'hidden',
                 }}
                 onMouseEnter={e => {
-                  if (!active) e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+                  if (!active) e.currentTarget.style.borderColor = C.borderHover;
                 }}
                 onMouseLeave={e => {
                   if (!active) e.currentTarget.style.borderColor = t.border;

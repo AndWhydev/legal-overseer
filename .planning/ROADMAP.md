@@ -127,31 +127,15 @@ Plans:
 **Goal**: Users can connect all channels from settings and messages flow through classification pipeline reliably
 **Depends on**: Phase 13
 **Requirements**: CHAN-01, CHAN-02, CHAN-04, CHAN-05, OAUTH-01, OAUTH-02, OAUTH-03, OAUTH-04, OAUTH-05, OAUTH-06, OAUTH-07, OAUTH-08
-**Success Criteria** (what must be TRUE):
-  1. User can connect Gmail, Outlook, WhatsApp, Asana, Calendly, and Stripe from channel settings via OAuth/pairing flows
-  2. Channel settings page shows live connection status, last sync time, and working disconnect for each channel
-  3. Gmail and Outlook pull live messages in deployed environment and route them through classification
-  4. Message deduplication holds under burst conditions (50 messages across 3 channels in 5 minutes)
-  5. OAuth tokens refresh automatically without requiring user re-authentication
 **Plans**: 5 plans
 
 Plans:
-- [x] 14-01-PLAN.md -- OAuth provider registration, DB schema expansion, relay daemon multi-channel, callback redirect fix
-- [x] 14-02-PLAN.md -- Channel connect/disconnect APIs, config API, and token auto-refresh service with cron
-- [x] 14-03-PLAN.md -- Channel settings UI (cards grid, connect flows, config drawer)
-- [x] 14-04-PLAN.md -- Cross-channel dedup, burst handling, latency instrumentation, WhatsApp monitoring
-- [x] 14-05-PLAN.md -- Environment provisioning, integration verification, and visual checkpoint
+- [x] 14-01 through 14-05 -- OAuth provider registration, channel APIs, settings UI, dedup, environment provisioning
 
 ### Phase 15: WhatsApp Pipeline
 **Goal**: Andy can interact with BitBit via WhatsApp including voice notes, multi-turn conversations, and approvals
 **Depends on**: Phase 14
 **Requirements**: WHATS-01, WHATS-02, WHATS-03, WHATS-04, WHATS-05, CHAN-03
-**Success Criteria** (what must be TRUE):
-  1. A WhatsApp voice note is transcribed and processed by the agent pipeline end-to-end
-  2. Multi-turn conversation context is maintained (e.g., "invoice him" resolves from prior messages)
-  3. Approval Y/N replies via WhatsApp reliably execute the queued action
-  4. End-to-end latency from WhatsApp message to action/approval is under 10 seconds
-  5. WhatsApp Baileys bridge maintains stable connection over 7-day continuous run
 **Plans**: 2 plans
 
 Plans:
@@ -162,11 +146,6 @@ Plans:
 **Goal**: Confidence routing produces reliable auto-act/approve/escalate decisions across all agents
 **Depends on**: Phase 13
 **Requirements**: CONF-01, CONF-02, CONF-03, CONF-04, CONF-05
-**Success Criteria** (what must be TRUE):
-  1. 50 real AWU scenarios scored with confidence and compared to Andy's judgment
-  2. Per-agent thresholds are tuned (invoice has higher auto-act bar than sentry)
-  3. False positive rate on auto-actions is measured and below acceptable threshold
-  4. Adversarial/ambiguous inputs consistently trigger escalation rather than incorrect auto-action
 **Plans**: 2 plans
 
 Plans:
@@ -177,57 +156,26 @@ Plans:
 **Goal**: Invoice and lead agent flows work end-to-end with production-quality output
 **Depends on**: Phase 13, Phase 16
 **Requirements**: INVC-06, INVC-07, INVC-08, INVC-09, INVC-10, LEAD-01, LEAD-02, LEAD-03
-**Success Criteria** (what must be TRUE):
-  1. Ambiguous NL invoice commands resolve correctly or ask clarifying questions
-  2. Duplicate invoices for same contact+project+period are caught before sending
-  3. Generated PDF is branded, professional, with correct ABN/GST and arrives in inbox (not spam)
-  4. High-confidence leads (>85%) get auto-approved response in under 2 minutes
-  5. Lead classification accuracy matches Andy's manual assessment across 20 sample messages
 **Plans**: 3 plans
 
 Plans:
-- [x] 17-01-PLAN.md -- Ambiguous entity resolution and fuzzy duplicate detection (TDD)
-- [x] 17-02-PLAN.md -- Invoice PDF branding (ABN/GST), email delivery, lifecycle validation
-- [x] 17-03-PLAN.md -- Lead auto-approve path, 20-message classification suite, qualification scoring
+- [x] 17-01 through 17-03 -- Entity resolution, PDF branding, lead classification
 
 ### Phase 18: Integration Fixes & Tech Debt
-**Goal**: All broken integrations and tech debt from completed phases are fixed -- no dead code, no bypassed pipelines, no stub implementations
+**Goal**: All broken integrations and tech debt from completed phases are fixed
 **Depends on**: Phase 15
-**Requirements**: CHAN-04, CHAN-05 (integration), OAUTH-03, CHAN-03 (flow), DEPLOY-05, DEPLOY-06 (flow)
-**Gap Closure**: Closes 3 broken integrations, 3 broken E2E flows, 8 tech debt items from audit
-**Success Criteria** (what must be TRUE):
-  1. channel-sync cron routes messages through relay daemon (dedup, latency, burst detection, retry)
-  2. WhatsApp QR modal calls bridge API to start Baileys and surfaces real QR code
-  3. Fly.io worker executes actual agent logic (not a TODO stub)
-  4. connect-modal.tsx and channel-grid.tsx check correct response fields from APIs
-  5. classifyWithRetry in relay-daemon.ts has reachable retry/backoff logic
-  6. RELAY_SECRET env var is documented in setup requirements
-  7. ignoreBuildErrors removed from next.config.ts and build still passes
 **Plans**: 3 plans
 
 Plans:
-- [x] 18-01-PLAN.md -- Rewire channel-sync cron to relay daemon, fix classifyWithRetry, WhatsApp QR bridge integration, UI response field fixes
-- [x] 18-02-PLAN.md -- Fly.io worker agent execution (replace TODO stub)
-- [x] 18-03-PLAN.md -- Remove ignoreBuildErrors by fixing all TS errors (dual SupabaseClient + 13 real errors)
+- [x] 18-01 through 18-03 -- Relay daemon rewire, Fly.io worker, TS error fixes
 
 ### Phase 19: Credential Provisioning & Live Verification
-**Goal**: All OAuth channels work end-to-end in production with real credentials -- live message pulls verified, WhatsApp bridge stable
+**Goal**: All OAuth channels work end-to-end in production with real credentials
 **Depends on**: Phase 18
-**Requirements**: CHAN-01, CHAN-02, CHAN-03, OAUTH-01, OAUTH-02, OAUTH-04, OAUTH-05
-**Gap Closure**: Closes all NEEDS HUMAN items from audit
-**Success Criteria** (what must be TRUE):
-  1. Google Cloud OAuth credentials provisioned and Gmail live pull works in deployed env
-  2. Azure AD app registered and Outlook Graph API works against production tenant
-  3. Asana developer app credentials provisioned and OAuth flow completes
-  4. Calendly developer app credentials provisioned and OAuth flow completes
-  5. WhatsApp Baileys bridge deployed to persistent host (Fly.io) and maintains 7-day stable connection
-  6. Credential provisioning runbook documents all steps for each provider
 **Plans**: 3 plans
 
 Plans:
-- [x] 19-01-PLAN.md -- WhatsApp bridge Fly.io deployment + credential provisioning runbook
-- [x] 19-02-PLAN.md -- OAuth credential verification script + channel smoke test script
-- [x] 19-03-PLAN.md -- Credential provisioning checkpoints + live channel verification
+- [x] 19-01 through 19-03 -- WhatsApp bridge deployment, OAuth verification, credential provisioning
 
 </details>
 
@@ -251,172 +199,58 @@ Plans:
 
 ## Phase Details
 
-### Phase 20: File Attachments & Multimedia
-**Goal**: Users can share files with BitBit in chat and receive intelligent analysis -- images render inline, PDFs show thumbnails, and BitBit reads/understands all uploaded content
-**Depends on**: Phase 19 (v1.2 complete)
-**Requirements**: MEDIA-01, MEDIA-02, MEDIA-03, MEDIA-04, MEDIA-05, MEDIA-06, MEDIA-07, MEDIA-08, MEDIA-09, MEDIA-10, MEDIA-11
-**Success Criteria** (what must be TRUE):
-  1. User can click the Paperclip button or drag-and-drop a file onto chat and see it upload with a progress indicator
-  2. Uploaded images render as inline previews in the chat message; PDFs show a file icon with filename, size, and download link
-  3. User can say "summarize this document" after uploading a PDF and BitBit returns an accurate summary
-  4. Uploading a 15MB file or an .exe is rejected with a clear error message explaining the limit
-  5. Files are isolated per org -- one org cannot access another org's uploads
-**Plans**: 3 plans (2 waves)
-
-Plans:
-- [ ] 20-01-PLAN.md -- Storage infrastructure (attachments table, Supabase Storage bucket, RLS policies, signed upload URL API, plan-gates fix)
-- [ ] 20-02-PLAN.md -- Chat integration (Paperclip button, drag-and-drop, upload progress, multimodal content blocks to engine)
-- [ ] 20-03-PLAN.md -- Preview rendering and visual verification (inline image/PDF previews, chat message integration, end-to-end checkpoint)
-
-### Phase 21: Billing Infrastructure
-**Goal**: BitBit has a working Stripe subscription system -- users can subscribe, manage plans, and growth tools are gated by plan tier
-**Depends on**: Phase 20
-**Requirements**: BILL-01, BILL-02, BILL-03, BILL-04, BILL-05, BILL-06, BILL-07, BILL-08, BILL-09, BILL-10
-**Success Criteria** (what must be TRUE):
-  1. Stripe webhook handler processes all subscription lifecycle events (create, update, cancel, trial_will_end, payment_failed) idempotently through a single consolidated route
-  2. User can select a plan on the pricing page, complete Stripe Checkout, and see their plan reflected in the dashboard within 10 seconds
-  3. Growth tools return an upgrade prompt when invoked by a user on a plan that doesn't include them
-  4. Usage dashboard shows token consumption, agent runs, and storage usage for the current billing period
-  5. Trial users receive email notification 3 days before trial expires, and expired trials downgrade gracefully
-**Plans**: 3 plans (2 waves)
-
-Plans:
-- [x] 21-01-PLAN.md -- Webhook consolidation, Stripe SDK, pre-created prices, subscription lifecycle handler
-- [x] 21-02-PLAN.md -- Plan gating at tool execution, usage metering wiring, trial 14->30 day fix
-- [ ] 21-03-PLAN.md -- Pricing page, billing settings, Customer Portal, trial expiry emails, dunning tests
-
-### Phase 22: Cost Controls & Ad Script Generator
-**Goal**: Per-execution token budgets prevent runaway costs, and the Ad Script Generator validates the growth role tool pattern end-to-end
-**Depends on**: Phase 21
-**Requirements**: COST-01, COST-02, COST-03, ADS-01, ADS-02, ADS-03, ADS-04
-**Success Criteria** (what must be TRUE):
-  1. A growth role execution that exceeds its token budget cap is halted mid-execution with a clear message to the user
-  2. When a role's daily budget is 80% consumed, the user sees a warning; at 100%, further executions are blocked until the next day
-  3. User can request ad scripts via chat and receive structured output with hook variations, body, CTA, and platform-specific timing guidance
-  4. Ad Script Generator is plan-gated -- free/starter users get an upgrade prompt, growth/scale users get results
-**Plans**: 2 plans (2 waves)
-
-Plans:
-- [ ] 22-01-PLAN.md -- Cost control infrastructure (per-execution token cap, per-role daily budget, budget alerts, engine enforcement)
-- [ ] 22-02-PLAN.md -- Ad Script Generator tool group (wrap ad-script-gen.ts as agent tools, register in tool system, autonomy mapping)
-
-### Phase 23: SEO Monitor & Tender Hunter
-**Goal**: Users can monitor SEO rankings and discover government tenders via chat commands and scheduled monitoring ticks
-**Depends on**: Phase 22
-**Requirements**: SEO-01, SEO-02, SEO-03, SEO-04, SEO-05, TNDR-01, TNDR-02, TNDR-03, TNDR-04, TNDR-05
-**Success Criteria** (what must be TRUE):
-  1. User can say "check my keyword rankings" and receive a structured SEO visibility report
-  2. SEO monitor runs on a scheduled tick and alerts the user when rankings drop with diagnosis and suggested fixes
-  3. User can say "find web design tenders in Brisbane" and receive matching government tender results with qualification scores
-  4. Tender Hunter runs on a scheduled tick and notifies the user of new matching opportunities
-  5. SEO tools are gated to growth/scale plans; Tender tools are gated to scale plan only
-**Plans**: 2 plans (2 waves)
-
-Plans:
-- [x] 23-01-PLAN.md -- SEO Monitor tool group (wrap ai-search-optimizer.ts as 4 agent tools, register 'seo' tool group, autonomy mapping, JIT instructions)
-- [x] 23-02-PLAN.md -- Tender Hunter tool group (wrap tender-hunter.ts as 3 agent tools, register 'tenders' tool group, autonomy mapping, JIT instructions)
-
-### Phase 24: Content Creator
-**Goal**: Users can generate social media posts and blog drafts via chat with platform-specific formatting and brand voice
-**Depends on**: Phase 22
-**Requirements**: CONT-01, CONT-02, CONT-03, CONT-04
-**Success Criteria** (what must be TRUE):
-  1. User can say "write a LinkedIn post about our new project" and receive a post formatted for LinkedIn's conventions
-  2. User can request blog post drafts with SEO keywords and brand voice applied
-  3. Content tools produce platform-specific output for LinkedIn, Instagram, and X (different formatting, hashtag usage, character limits)
-  4. Content tools are plan-gated to growth/scale tiers only
-**Plans**: 1 plan
-
-Plans:
-- [x] 24-01-PLAN.md -- Content Creator tool group (tool definitions, blog generation handler, social post handler, autonomy mapping, JIT instructions)
-
-### Phase 22b: Comms Role
-**Goal**: Comms role wraps channel triage as a sub-component with follow-up tracking, relationship monitoring, tone adaptation, and escalation workflows
-**Depends on**: Phase 22 (role engine pattern established)
-**Plans**: 3 plans
-
-Plans:
-- [x] 22-01-PLAN.md -- Comms role core: triage wrapper, response drafter, hasChanges(), auto-registration
-- [x] 22-02-PLAN.md -- Follow-up tracker (SLA urgency), relationship monitor (engagement drops), tone adapter (formality/verbosity heuristics)
-- [x] 22-03-PLAN.md -- CommsState schema, 3-step escalation workflow (2h/8h/24h), 18 tests
-
-### Phase 23b: Sales Role
-**Goal**: Sales role wraps lead swarm with proposal generation, lead nurture, client onboarding, win/loss learning, and pipeline analytics
-**Depends on**: Phase 23 (growth role tool pattern)
-**Plans**: 3 plans
-
-Plans:
-- [x] 23-01-PLAN.md -- Sales role core: lead wrapper, proposal generator, SalesState, auto-registration
-- [x] 23-02-PLAN.md -- Lead nurture (stale lead/proposal follow-up), client onboarding (5-step workflow)
-- [x] 23-03-PLAN.md -- Win/loss learner (pricing patterns), pipeline tracker (bi_snapshots cache), 13 tests
-
-### Phase 24b: Intelligence Layer
-**Goal**: Business intelligence modules providing revenue analysis, client health scoring, cash flow projections, and capacity planning
-**Depends on**: Phase 22b, 23b (role integration)
-**Plans**: 3 plans
-
-Plans:
-- [x] 24-01-PLAN.md -- Revenue radar (4 opportunity types) + client health (4-dimension 0-100 scoring)
-- [x] 24-02-PLAN.md -- Cash flow prophet (forward projections, 12h TTL) + capacity oracle (utilization model, 6h TTL)
-- [x] 24-03-PLAN.md -- Barrel index, intelligence cron (6h), dynamic API route, role integration wiring
-
-### Phase 25: Role Dashboard
-**Goal**: Unified dashboard for role management with activity feeds, status cards, autonomy controls, and intelligence widgets
-**Depends on**: Phase 22b, 23b, 24b
-**Plans**: 3 plans
-
-Plans:
-- [x] 25-01-PLAN.md -- Role activity API + status API, RoleActivityFeed + RoleStatusCards components
-- [x] 25-02-PLAN.md -- AutonomyToggle (tri-state), AttentionView (unified queue), attention API
-- [x] 25-03-PLAN.md -- RoleDetailView, IntelligenceWidgets, barrel index, dashboard-redesign.tsx integration
-
-### Phase 26: SOTA Response Drafter
-**Goal**: Response drafter produces contextually rich, business-aware replies indistinguishable from what the user would write -- leveraging full conversation history, entity knowledge, RAG retrieval, memory palace, relationship scoring, and contact timing
-**Depends on**: Phase 22b (Comms Role), existing ContextAssembler + RAG infrastructure
-**Requirements**: DRAFT-01, DRAFT-02, DRAFT-03, DRAFT-04, DRAFT-05
-**Success Criteria** (what must be TRUE):
-  1. Draft replies reference specific projects, tasks, invoices, and recent interactions with the contact
-  2. Draft quality assessed via blind comparison against user's actual replies to the same messages
-  3. ContextAssembler provides the same rich context to drafts that the main chat engine uses
-  4. Confidence scoring reflects actual context depth -- high-context drafts score higher than generic ones
-  5. Standing orders and per-contact voice preferences are applied to every draft
-**Plans**: 2 plans (2 waves)
-
-Plans:
-- [ ] 26-01-PLAN.md -- DraftContextAssembler with parallel context fetching and context-depth confidence scoring
-- [ ] 26-02-PLAN.md -- Wire assembler into client-comms.ts draftReply, tone adaptation, blind comparison evaluation harness
+(v1.4 phase details omitted for brevity -- see git history for full phase detail entries)
 
 ### Phase 27: Role Runtime Import Fix
 **Goal**: Role domain modules are imported in the cron runtime path so scheduled role execution actually fires -- finance, comms, and sales roles execute on their 5-minute tick
 **Depends on**: Phase 26 (current codebase)
 **Gap Closure**: Closes critical integration gap + "Role scheduled execution" broken flow from audit
-**Success Criteria** (what must be TRUE):
-  1. role-tick cron imports all domain role modules (finance, comms, sales) triggering registerRole() side effects
-  2. getRole() returns a valid role implementation for finance, comms, and sales at cron runtime
-  3. /api/cron/revenue-intelligence added to vercel.json cron configuration
 **Plans**: TBD (run `/gsd:plan-phase 27`)
 
 ### Phase 28: Intelligence Dashboard Wiring
 **Goal**: IntelligenceWidgets fetches from the correct /api/intelligence/[metric] endpoints and displays live business intelligence data instead of permanent "Gathering data..." state
 **Depends on**: Phase 27 (role runtime must work to produce intelligence data)
 **Gap Closure**: Closes major integration gap + "Intelligence dashboard display" broken flow from audit
-**Success Criteria** (what must be TRUE):
-  1. IntelligenceWidgets calls /api/intelligence/{metric} for each of the 4 widgets (revenue, client-health, cash-flow, capacity)
-  2. Dashboard intelligence section renders actual computed data when role data exists
-  3. Loading/empty states handled gracefully when intelligence data is not yet computed
 **Plans**: TBD (run `/gsd:plan-phase 28`)
 
 ### Phase 29: SEO/Tender Scheduled Monitoring
 **Goal**: SEO and Tender tools run on scheduled ticks and proactively alert users of ranking drops and new tender matches without requiring chat invocation
 **Depends on**: Phase 27 (role runtime must work for role-based scheduling)
 **Requirements**: SEO-03, SEO-04, TNDR-03, TNDR-04
-**Gap Closure**: Closes 4 partial requirements + "SEO/Tender scheduled monitoring" broken flow from audit
-**Success Criteria** (what must be TRUE):
-  1. SEO scanning executes on a scheduled tick (via role evaluate() or dedicated cron)
-  2. Ranking drops detected by scheduled scan trigger proactive alert to user
-  3. Tender scanning executes on a scheduled tick (via role evaluate() or dedicated cron)
-  4. New tender matches detected by scheduled scan trigger proactive notification to user
 **Plans**: TBD (run `/gsd:plan-phase 29`)
+
+### v1.5 Beta Launch & First Revenue
+
+**Milestone Goal:** Close every gap between feature-complete dogfood and real paying users. Ship onboarding, verify production channels, build the marketing funnel, launch beta, add premium features.
+
+- [ ] **Phase 30: Onboarding E2E & First-Run Experience** — Verify all onboarding FRs, first-run channel discovery, empty state guidance, welcome conversation
+- [ ] **Phase 31: Channel Smoke Tests & Production Hardening** — Live credential tests, concurrent load, cron resilience, monitoring dashboard
+- [ ] **Phase 32: Marketing Site & Checkout Flow** — Product landing page, industry pages, AWU case study, pricing with Stripe Checkout, SEO
+- [ ] **Phase 33: Beta Program Infrastructure** — Invite flow, guided onboarding, feedback collection, usage monitoring, beta user admin
+- [ ] **Phase 34: Builder Role (Premium Differentiator)** — Website generation via chat, template library, WordPress/Elementor integration, staging preview
+- [ ] **Phase 35: Proactive Workflows & Standing Orders** — NL workflow rules, multi-step sequences, cross-role orchestration, workflow dashboard
+- [ ] **Phase 36: Mobile-First Experience** — React Native/Expo app, push notifications, voice input, offline queue, quick actions
+
+**Dependency Graph:** Phases 30-32 parallel --> Phase 33 --> Phase 34 --> Phases 35-36
+
+### Phase 31: Channel Smoke Tests & Production Hardening
+**Goal**: All production channels verified working with real credentials. System handles concurrent load and cron failures gracefully. Monitoring dashboard shows production health.
+**Depends on**: Phase 30 (parallel, no hard dependency)
+**Requirements**: CHAN-SMOKE-01, CHAN-SMOKE-02, CHAN-SMOKE-03, CHAN-SMOKE-04, CHAN-SMOKE-05, CHAN-SMOKE-06, CHAN-SMOKE-07
+**Success Criteria** (what must be TRUE):
+  1. Gmail adapter connects with real OAuth credentials and pulls test messages within poll interval
+  2. Outlook adapter connects via Graph API and verifies message pull against production tenant
+  3. WhatsApp bridge at bitbit-wa-bridge.fly.dev maintains stable connection for 24+ hours
+  4. Telnyx SMS sends a test message and receives delivery confirmation webhook
+  5. 10 concurrent agent executions complete without connection pool exhaustion or timeout
+  6. All 22 cron routes handle DB failure (retry+DLQ), LLM timeout (circuit breaker), rate limit (backoff), and partial batch failure gracefully
+  7. Production monitoring dashboard shows cron success rate, agent latency, channel health, error rates, and token spend
+**Plans**: 3 plans (2 waves)
+
+Plans:
+- [ ] 31-01-PLAN.md -- Channel adapter smoke tests (Gmail, Outlook, WhatsApp, SMS live connectivity verification)
+- [ ] 31-02-PLAN.md -- Load testing (10 concurrent agents) + cron resilience utilities (retry, backoff, batch processing)
+- [ ] 31-03-PLAN.md -- Production monitoring dashboard (API + MonitoringTab UI + smoke test trigger)
 
 ### Phase 32: Marketing Site & Checkout Flow
 **Goal**: A stranger can land on bitbit.chat, understand what BitBit does, pick a plan, and pay -- product landing page, industry pages, case study, and pricing with live Stripe Checkout
@@ -434,20 +268,6 @@ Plans:
 - [ ] 32-01-PLAN.md -- Product landing page (hero, features, roles, social proof, CTA) + 3 industry pages + NavBar/Footer updates
 - [ ] 32-02-PLAN.md -- Pricing page enhancement (comparison matrix, Free tier, FAQ) + AWU case study page
 - [ ] 32-03-PLAN.md -- SEO foundation (sitemap, robots, Open Graph, JSON-LD structured data)
-
-### v1.5 Beta Launch & First Revenue
-
-**Milestone Goal:** Close every gap between feature-complete dogfood and real paying users. Ship onboarding, verify production channels, build the marketing funnel, launch beta, add premium features.
-
-- [ ] **Phase 30: Onboarding E2E & First-Run Experience** — Verify all onboarding FRs, first-run channel discovery, empty state guidance, welcome conversation
-- [ ] **Phase 31: Channel Smoke Tests & Production Hardening** — Live credential tests, concurrent load, cron resilience, monitoring dashboard
-- [ ] **Phase 32: Marketing Site & Checkout Flow** — Product landing page, industry pages, AWU case study, pricing with Stripe Checkout, SEO
-- [ ] **Phase 33: Beta Program Infrastructure** — Invite flow, guided onboarding, feedback collection, usage monitoring, beta user admin
-- [ ] **Phase 34: Builder Role (Premium Differentiator)** — Website generation via chat, template library, WordPress/Elementor integration, staging preview
-- [ ] **Phase 35: Proactive Workflows & Standing Orders** — NL workflow rules, multi-step sequences, cross-role orchestration, workflow dashboard
-- [ ] **Phase 36: Mobile-First Experience** — React Native/Expo app, push notifications, voice input, offline queue, quick actions
-
-**Dependency Graph:** Phases 30-32 parallel → Phase 33 → Phase 34 → Phases 35-36
 
 ## Progress
 
@@ -475,20 +295,20 @@ Phase 20 first (no dependencies), then 21 (billing before growth roles), then 22
 | 17. Invoice & Lead Validation | v1.2 | 3/3 | Complete | 2026-03-02 |
 | 18. Integration Fixes & Tech Debt | v1.2 | 3/3 | Complete | 2026-03-02 |
 | 19. Credential Provisioning & Live Verification | v1.2 | 3/3 | Complete | 2026-03-02 |
-| 20. File Attachments & Multimedia | 3/3 | Complete    | 2026-03-18 | - |
-| 21. Billing Infrastructure | 3/3 | Complete    | 2026-03-18 | - |
-| 22. Cost Controls & Ad Script Generator | 2/2 | Complete    | 2026-03-18 | - |
-| 23. SEO Monitor & Tender Hunter | v1.4 | Complete    | 2026-03-18 | 2026-03-18 |
-| 24. Content Creator | v1.4 | Complete    | 2026-03-18 | 2026-03-18 |
+| 20. File Attachments & Multimedia | v1.4 | 3/3 | Complete | 2026-03-18 |
+| 21. Billing Infrastructure | v1.4 | 3/3 | Complete | 2026-03-18 |
+| 22. Cost Controls & Ad Script Generator | v1.4 | 2/2 | Complete | 2026-03-18 |
+| 23. SEO Monitor & Tender Hunter | v1.4 | 2/2 | Complete | 2026-03-18 |
+| 24. Content Creator | v1.4 | 1/1 | Complete | 2026-03-18 |
 | 22b. Comms Role | v1.4 | 3/3 | Complete | 2026-03-26 |
 | 23b. Sales Role | v1.4 | 3/3 | Complete | 2026-03-26 |
 | 24b. Intelligence Layer | v1.4 | 3/3 | Complete | 2026-03-26 |
 | 25. Role Dashboard | v1.4 | 3/3 | Complete | 2026-03-26 |
-| 26. SOTA Response Drafter | 2/2 | Complete    | 2026-03-26 | - |
+| 26. SOTA Response Drafter | v1.4 | 2/2 | Complete | 2026-03-26 |
 | 27. Role Runtime Import Fix | v1.4 | 0/0 | Pending | - |
 | 28. Intelligence Dashboard Wiring | v1.4 | 0/0 | Pending | - |
 | 29. SEO/Tender Scheduled Monitoring | v1.4 | 0/0 | Pending | - |
-
+| 31. Channel Smoke Tests & Production Hardening | v1.5 | 0/3 | Planned | - |
 | 32. Marketing Site & Checkout Flow | v1.5 | 0/3 | Planned | - |
 
-**Overall:** 57/57 plans complete for v1.0+v1.1+v1.2 (100%). v1.4: 23/25 plans (Phases 20-26) + 3 gap closure phases (27-29) pending.
+**Overall:** 57/57 plans complete for v1.0+v1.1+v1.2 (100%). v1.4: 23/25 plans (Phases 20-26) + 3 gap closure phases (27-29) pending. v1.5: Phases 31-32 planned (6 plans).

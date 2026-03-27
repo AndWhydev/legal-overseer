@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react'
+import { S, C } from '@/lib/styles/design-tokens'
 import { TabShell } from '@/components/ui/tab-shell'
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -100,36 +101,21 @@ const TEMPLATE_LABELS: Record<TemplateType, string> = {
 // ─────────────────────────────────────────────────────────────────────────────
 
 const glassCard: React.CSSProperties = {
-  borderRadius: 16,
-  background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.6))',
-  backdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
-  WebkitBackdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
-  border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
-  boxShadow: 'var(--card-shadow, 0 2px 8px rgba(0,0,0,0.3)), var(--card-inset, inset 0 1px 0 rgba(255,255,255,0.06))',
+  ...S.card,
+  padding: undefined,
 }
 
 const glassInput: React.CSSProperties = {
-  width: '100%',
+  ...S.input,
   padding: '12px 16px',
   borderRadius: 12,
-  background: 'var(--bg-input, rgba(13, 17, 23, 0.6))',
-  border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.05))',
-  color: 'var(--text-primary, #F1F5F9)',
-  fontSize: 14,
-  outline: 'none',
-  transition: 'border-color 200ms, box-shadow 200ms',
   boxSizing: 'border-box',
 }
 
 const glassSelect: React.CSSProperties = {
-  width: '100%',
+  ...S.input,
   padding: '12px 16px',
   borderRadius: 12,
-  background: 'var(--bg-input, rgba(13, 17, 23, 0.6))',
-  border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.05))',
-  color: 'var(--text-primary, #F1F5F9)',
-  fontSize: 14,
-  outline: 'none',
   cursor: 'pointer',
   boxSizing: 'border-box',
 }
@@ -150,18 +136,11 @@ const accentBtn: React.CSSProperties = {
 }
 
 const ghostBtn: React.CSSProperties = {
+  ...S.button,
+  ...S.buttonGhost,
   padding: '8px 16px',
   borderRadius: 12,
-  background: 'transparent',
-  border: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
-  color: 'var(--text-primary, #F1F5F9)',
-  fontSize: 14,
-  fontWeight: 500,
-  cursor: 'pointer',
-  transition: 'all 200ms',
-  display: 'inline-flex',
-  alignItems: 'center',
-  gap: 8,
+  height: 'auto',
 }
 
 const labelStyle: React.CSSProperties = {
@@ -170,7 +149,7 @@ const labelStyle: React.CSSProperties = {
   fontWeight: 500,
   letterSpacing: '0.04em',
   textTransform: 'uppercase',
-  color: 'var(--text-secondary, #94A3B8)',
+  color: C.textSecondary,
   marginBottom: 8,
 }
 
@@ -193,10 +172,10 @@ function TemplateCard({
       style={{
         padding: 16,
         borderRadius: 12,
-        background: selected ? 'rgba(255, 255, 255, 0.06)' : 'rgba(13, 17, 23, 0.5)',
+        background: selected ? C.bgHoverStrong : C.bgInput,
         border: selected
-          ? '1px solid rgba(255, 255, 255, 0.2)'
-          : '1px solid rgba(255, 255, 255, 0.04)',
+          ? `1px solid ${C.borderFocus}`
+          : `1px solid ${C.bgHover}`,
         cursor: 'pointer',
         textAlign: 'left',
         transition: 'all 200ms',
@@ -208,13 +187,13 @@ function TemplateCard({
         style={{
           fontSize: 14,
           fontWeight: 500,
-          color: selected ? 'var(--text-primary, #F1F5F9)' : 'var(--text-primary, #F1F5F9)',
+          color: selected ? C.textPrimary : C.textPrimary,
           marginBottom: 4,
         }}
       >
         {template.label}
       </div>
-      <div style={{ fontSize: 14, color: 'var(--text-secondary, #94A3B8)', lineHeight: 1.5 }}>
+      <div style={{ fontSize: 14, color: C.textSecondary, lineHeight: 1.5 }}>
         {template.description}
       </div>
     </button>
@@ -316,7 +295,7 @@ function CalendarView({
         >
           ← Prev
         </button>
-        <span style={{ fontWeight: 500, color: 'var(--text-primary, #F1F5F9)', fontSize: 16 }}>
+        <span style={{ fontWeight: 500, color: C.textPrimary, fontSize: 16 }}>
           {monthLabel}
         </span>
         <button
@@ -337,7 +316,7 @@ function CalendarView({
               fontSize: 14,
               fontWeight: 500,
               letterSpacing: '0.04em',
-              color: 'var(--text-dim, #475569)',
+              color: C.textDim,
               padding: '8px 0',
             }}
           >
@@ -367,18 +346,18 @@ function CalendarView({
                 padding: 8,
                 borderRadius: 8,
                 background: isToday
-                  ? 'rgba(255, 255, 255, 0.05)'
-                  : 'rgba(13, 17, 23, 0.4)',
+                  ? C.bgHover
+                  : C.bgInput,
                 border: isToday
-                  ? '1px solid rgba(255, 255, 255, 0.15)'
-                  : '1px solid rgba(255, 255, 255, 0.03)',
+                  ? `1px solid ${C.borderHover}`
+                  : `1px solid ${C.borderSubtle}`,
               }}
             >
               <div
                 style={{
                   fontSize: 14,
                   fontWeight: isToday ? 700 : 500,
-                  color: isToday ? 'var(--text-primary, #F1F5F9)' : 'var(--text-secondary, #94A3B8)',
+                  color: isToday ? C.textPrimary : C.textSecondary,
                   marginBottom: 4,
                 }}
               >
@@ -410,7 +389,7 @@ function CalendarView({
                   </div>
                 ))}
                 {dayItems.length > 3 && (
-                  <div style={{ fontSize: 14, color: 'var(--text-dim, #475569)' }}>
+                  <div style={{ fontSize: 14, color: C.textDim }}>
                     +{dayItems.length - 3} more
                   </div>
                 )}
@@ -439,7 +418,7 @@ function CalendarView({
                 background: STATUS_COLORS[s],
               }}
             />
-            <span style={{ color: 'var(--text-secondary, #94A3B8)', textTransform: 'capitalize' }}>
+            <span style={{ color: C.textSecondary, textTransform: 'capitalize' }}>
               {s}
             </span>
           </div>
@@ -480,8 +459,8 @@ function HistoryItem({
     <div
       style={{
         borderRadius: 12,
-        background: 'var(--bg-input, rgba(13, 17, 23, 0.5))',
-        border: '1px solid rgba(255, 255, 255, 0.03)',
+        background: C.bgInput,
+        border: `1px solid ${C.borderSubtle}`,
         overflow: 'hidden',
       }}
     >
@@ -502,7 +481,7 @@ function HistoryItem({
             style={{
               fontSize: 14,
               fontWeight: 500,
-              color: 'var(--text-primary, #F1F5F9)',
+              color: C.textPrimary,
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',
@@ -510,14 +489,14 @@ function HistoryItem({
           >
             {TEMPLATE_LABELS[item.template_type]} — {item.inputs.product_name}
           </div>
-          <div style={{ fontSize: 14, color: 'var(--text-dim, #475569)', marginTop: 2 }}>
+          <div style={{ fontSize: 14, color: C.textDim, marginTop: 2 }}>
             {created} · {item.inputs.tone} · {item.inputs.length}
           </div>
         </div>
         <StatusBadge status={item.status} />
         <span
           style={{
-            color: 'var(--text-dim, #475569)',
+            color: C.textDim,
             fontSize: 14,
             transition: 'transform 200ms',
             transform: expanded ? 'rotate(180deg)' : 'none',
@@ -532,7 +511,7 @@ function HistoryItem({
         <div
           style={{
             padding: '0 16px 16px',
-            borderTop: '1px solid rgba(255, 255, 255, 0.03)',
+            borderTop: `1px solid ${C.borderSubtle}`,
           }}
         >
           <pre
@@ -542,7 +521,7 @@ function HistoryItem({
               borderRadius: 12,
               background: 'rgba(0, 0, 0, 0.3)',
               fontSize: 14,
-              color: 'var(--text-secondary, #94A3B8)',
+              color: C.textSecondary,
               whiteSpace: 'pre-wrap',
               wordBreak: 'break-word',
               lineHeight: 1.6,
@@ -789,14 +768,14 @@ export default function CreatorStudioTab() {
               style={{
                 fontSize: 16,
                 fontWeight: 500,
-                color: 'var(--text-primary, #F1F5F9)',
+                color: C.textPrimary,
                 margin: 0,
                 marginBottom: 8,
               }}
             >
               Creator Studio
             </h1>
-            <p style={{ fontSize: 14, color: 'var(--text-secondary, #94A3B8)', margin: 0 }}>
+            <p style={{ fontSize: 14, color: C.textSecondary, margin: 0 }}>
               Generate marketing content using AI — ad scripts, social posts, emails, and blogs.
             </p>
           </div>
@@ -808,8 +787,8 @@ export default function CreatorStudioTab() {
               gap: 4,
               padding: 4,
               borderRadius: 12,
-              background: 'var(--bg-input, rgba(13, 17, 23, 0.6))',
-              border: '1px solid rgba(255, 255, 255, 0.03)',
+              background: C.bgInput,
+              border: `1px solid ${C.borderSubtle}`,
               width: 'fit-content',
               marginBottom: 28,
             }}
@@ -827,11 +806,11 @@ export default function CreatorStudioTab() {
                   cursor: 'pointer',
                   transition: 'all 200ms',
                   background:
-                    view === tab.id ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
+                    view === tab.id ? C.bgHoverStrong : 'transparent',
                   color:
                     view === tab.id
-                      ? 'var(--text-primary, #F1F5F9)'
-                      : 'var(--text-secondary, #94A3B8)',
+                      ? C.textPrimary
+                      : C.textSecondary,
                 }}
               >
                 {tab.label}
@@ -917,14 +896,14 @@ export default function CreatorStudioTab() {
                               padding: '8px 16px',
                               borderRadius: 12,
                               border: tone === t.value
-                                ? '1px solid rgba(255, 255, 255, 0.2)'
-                                : '1px solid rgba(255, 255, 255, 0.05)',
+                                ? `1px solid ${C.borderFocus}`
+                                : `1px solid ${C.borderSubtle}`,
                               background: tone === t.value
-                                ? 'rgba(255, 255, 255, 0.06)'
-                                : 'rgba(13, 17, 23, 0.5)',
+                                ? C.bgHoverStrong
+                                : C.bgInput,
                               color: tone === t.value
-                                ? 'var(--text-primary, #F1F5F9)'
-                                : 'var(--text-secondary, #94A3B8)',
+                                ? C.textPrimary
+                                : C.textSecondary,
                               fontSize: 14,
                               fontWeight: 500,
                               cursor: 'pointer',
@@ -949,14 +928,14 @@ export default function CreatorStudioTab() {
                               padding: '8px 16px',
                               borderRadius: 12,
                               border: length === l.value
-                                ? '1px solid rgba(255, 255, 255, 0.2)'
-                                : '1px solid rgba(255, 255, 255, 0.05)',
+                                ? `1px solid ${C.borderFocus}`
+                                : `1px solid ${C.borderSubtle}`,
                               background: length === l.value
-                                ? 'rgba(255, 255, 255, 0.06)'
-                                : 'rgba(13, 17, 23, 0.5)',
+                                ? C.bgHoverStrong
+                                : C.bgInput,
                               color: length === l.value
-                                ? 'var(--text-primary, #F1F5F9)'
-                                : 'var(--text-secondary, #94A3B8)',
+                                ? C.textPrimary
+                                : C.textSecondary,
                               fontSize: 14,
                               cursor: 'pointer',
                               transition: 'all 200ms',
@@ -1037,10 +1016,10 @@ export default function CreatorStudioTab() {
                     }}
                   >
                     <div>
-                      <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)' }}>
+                      <div style={{ fontSize: 14, fontWeight: 500, color: C.textPrimary }}>
                         {TEMPLATE_LABELS[generatedOutput.template_type]}
                       </div>
-                      <div style={{ fontSize: 14, color: 'var(--text-dim, #475569)', marginTop: 2 }}>
+                      <div style={{ fontSize: 14, color: C.textDim, marginTop: 2 }}>
                         {generatedOutput.inputs.product_name} · {generatedOutput.inputs.tone} ·{' '}
                         {generatedOutput.inputs.length}
                       </div>
@@ -1055,9 +1034,9 @@ export default function CreatorStudioTab() {
                       padding: 16,
                       borderRadius: 12,
                       background: 'rgba(0, 0, 0, 0.35)',
-                      border: '1px solid rgba(255, 255, 255, 0.03)',
+                      border: `1px solid ${C.borderSubtle}`,
                       fontSize: 14,
-                      color: 'var(--text-secondary, #94A3B8)',
+                      color: C.textSecondary,
                       whiteSpace: 'pre-wrap',
                       wordBreak: 'break-word',
                       lineHeight: 1.65,
@@ -1127,12 +1106,12 @@ export default function CreatorStudioTab() {
                     cursor: 'pointer',
                     background:
                       historyFilter === 'all'
-                        ? 'rgba(255, 255, 255, 0.08)'
-                        : 'rgba(13, 17, 23, 0.5)',
+                        ? C.bgHoverStrong
+                        : C.bgInput,
                     color:
                       historyFilter === 'all'
-                        ? 'var(--text-primary, #F1F5F9)'
-                        : 'var(--text-secondary, #94A3B8)',
+                        ? C.textPrimary
+                        : C.textSecondary,
                   }}
                 >
                   All
@@ -1150,12 +1129,12 @@ export default function CreatorStudioTab() {
                       cursor: 'pointer',
                       background:
                         historyFilter === t.id
-                          ? 'rgba(255, 255, 255, 0.08)'
-                          : 'rgba(13, 17, 23, 0.5)',
+                          ? C.bgHoverStrong
+                          : C.bgInput,
                       color:
                         historyFilter === t.id
-                          ? 'var(--text-primary, #F1F5F9)'
-                          : 'var(--text-secondary, #94A3B8)',
+                          ? C.textPrimary
+                          : C.textSecondary,
                     }}
                   >
                     {t.icon} {t.label}
@@ -1168,7 +1147,7 @@ export default function CreatorStudioTab() {
                   style={{
                     textAlign: 'center',
                     padding: 60,
-                    color: 'var(--text-dim, #475569)',
+                    color: C.textDim,
                     fontSize: 14,
                   }}
                 >
@@ -1187,13 +1166,13 @@ export default function CreatorStudioTab() {
                     style={{
                       fontSize: 16,
                       fontWeight: 500,
-                      color: 'var(--text-primary, #F1F5F9)',
+                      color: C.textPrimary,
                       marginBottom: 8,
                     }}
                   >
                     No content yet
                   </div>
-                  <div style={{ fontSize: 14, color: 'var(--text-secondary, #94A3B8)', marginBottom: 20 }}>
+                  <div style={{ fontSize: 14, color: C.textSecondary, marginBottom: 20 }}>
                     Generated content will appear here.
                   </div>
                   <button onClick={() => setView('generate')} style={accentBtn}>
@@ -1223,13 +1202,13 @@ export default function CreatorStudioTab() {
                   style={{
                     fontSize: 14,
                     fontWeight: 500,
-                    color: 'var(--text-primary, #F1F5F9)',
+                    color: C.textPrimary,
                     marginBottom: 4,
                   }}
                 >
                   Content Calendar
                 </div>
-                <div style={{ fontSize: 14, color: 'var(--text-secondary, #94A3B8)' }}>
+                <div style={{ fontSize: 14, color: C.textSecondary }}>
                   Scheduled and published content across the month. Click a dot to cycle its status.
                 </div>
               </div>
@@ -1239,7 +1218,7 @@ export default function CreatorStudioTab() {
                   style={{
                     textAlign: 'center',
                     padding: 40,
-                    color: 'var(--text-dim, #475569)',
+                    color: C.textDim,
                     fontSize: 14,
                   }}
                 >

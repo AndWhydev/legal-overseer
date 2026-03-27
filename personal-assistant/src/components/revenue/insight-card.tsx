@@ -3,6 +3,7 @@
 import React, { useState } from 'react'
 import type { RevenueInsight, InsightType, InsightSeverity } from '@/lib/revenue/types'
 import { formatCents } from '@/lib/revenue/types'
+import { S, C } from '@/lib/styles/design-tokens'
 
 // ─── Severity + Type Config ─────────────────────────────────────────────────
 
@@ -14,9 +15,9 @@ const SEVERITY_COLORS: Record<InsightSeverity, string> = {
 }
 
 const SEVERITY_BG: Record<InsightSeverity, string> = {
-  critical: 'rgba(239, 68, 68, 0.12)',
-  high: 'rgba(255, 255, 255, 0.06)',
-  medium: 'rgba(245, 158, 11, 0.1)',
+  critical: C.statusErrorBg,
+  high: C.bgHoverStrong,
+  medium: C.statusWarningBg,
   low: 'rgba(59, 130, 246, 0.08)',
 }
 

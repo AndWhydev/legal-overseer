@@ -2,6 +2,7 @@
 
 import React, { useState, useCallback } from 'react'
 import type { TranscriptSearchResult } from '@/lib/meetings/types'
+import { S, C } from '@/lib/styles/design-tokens'
 
 interface MeetingSearchProps {
   onSelectMeeting: (meetingId: string) => void
@@ -46,7 +47,7 @@ export function MeetingSearch({ onSelectMeeting }: MeetingSearchProps) {
     const parts = text.split(regex)
     return parts.map((part, i) =>
       regex.test(part)
-        ? <mark key={i} style={{ background: 'rgba(255, 255, 255, 0.12)', color: '#E2E8F0', borderRadius: 8, padding: '0 4px' }}>{part}</mark>
+        ? <mark key={i} style={{ background: C.bgHoverStrong, color: '#E2E8F0', borderRadius: 8, padding: '0 4px' }}>{part}</mark>
         : part
     )
   }
@@ -91,7 +92,7 @@ export function MeetingSearch({ onSelectMeeting }: MeetingSearchProps) {
           style={{
             padding: '12px 20px',
             borderRadius: 12,
-            background: query.trim() ? '#F1F5F9' : 'rgba(255, 255, 255, 0.12)',
+            background: query.trim() ? '#F1F5F9' : C.bgHoverStrong,
             border: 'none',
             color: query.trim() ? '#0a0f1a' : 'rgba(0, 0, 0, 0.5)',
             fontSize: 14,
@@ -129,7 +130,7 @@ export function MeetingSearch({ onSelectMeeting }: MeetingSearchProps) {
         }}>
           <div style={{
             padding: '12px 16px',
-            borderBottom: '1px solid rgba(255, 255, 255, 0.03)',
+            borderBottom: `1px solid ${C.borderSubtle}`,
             fontSize: 14,
             color: 'var(--text-dim, #475569)',
           }}>
@@ -141,7 +142,7 @@ export function MeetingSearch({ onSelectMeeting }: MeetingSearchProps) {
               onClick={() => onSelectMeeting(result.meeting_id)}
               style={{
                 padding: '12px 16px',
-                borderBottom: i < results.length - 1 ? '1px solid rgba(255, 255, 255, 0.03)' : 'none',
+                borderBottom: i < results.length - 1 ? `1px solid ${C.borderSubtle}` : 'none',
                 cursor: 'pointer',
                 transition: 'background 200ms',
               }}

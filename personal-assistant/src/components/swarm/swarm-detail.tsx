@@ -2,13 +2,14 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import type { SwarmRun, SwarmStep, SwarmMessage } from '@/lib/swarm/types'
+import { S, C } from '@/lib/styles/design-tokens'
 
 const STATUS_COLORS: Record<string, string> = {
   pending: '#F59E0B',
   running: '#3B82F6',
   completed: '#22C55E',
   failed: '#EF4444',
-  skipped: 'rgba(255,255,255,0.2)',
+  skipped: C.textMuted,
   rolled_back: '#EC4899',
 }
 
@@ -75,7 +76,7 @@ export function SwarmDetail({ runId, onBack }: SwarmDetailProps) {
 
   if (loading) {
     return (
-      <div style={{ textAlign: 'center', padding: '60px', color: 'rgba(255,255,255,0.4)' }}>
+      <div style={{ textAlign: 'center', padding: '60px', color: C.textDim }}>
         Loading swarm details...
       </div>
     )
@@ -83,7 +84,7 @@ export function SwarmDetail({ runId, onBack }: SwarmDetailProps) {
 
   if (!run) {
     return (
-      <div style={{ textAlign: 'center', padding: '60px', color: 'rgba(255,255,255,0.4)' }}>
+      <div style={{ textAlign: 'center', padding: '60px', color: C.textDim }}>
         Swarm not found
       </div>
     )
@@ -105,7 +106,7 @@ export function SwarmDetail({ runId, onBack }: SwarmDetailProps) {
               border: 'none',
               borderRadius: '8px',
               padding: '8px 12px',
-              color: 'rgba(255,255,255,0.6)',
+              color: C.textSecondary,
               cursor: 'pointer',
               fontSize: '14px',
             }}
@@ -114,10 +115,10 @@ export function SwarmDetail({ runId, onBack }: SwarmDetailProps) {
           </button>
         )}
         <div style={{ flex: 1 }}>
-          <h2 style={{ fontSize: '16px', fontWeight: 500, color: 'rgba(255,255,255,0.95)', margin: 0 }}>
+          <h2 style={{ fontSize: '16px', fontWeight: 500, color: C.textPrimary, margin: 0 }}>
             {run.trigger_input}
           </h2>
-          <div style={{ fontSize: '14px', color: 'rgba(255,255,255,0.4)', marginTop: '2px' }}>
+          <div style={{ fontSize: '14px', color: C.textDim, marginTop: '2px' }}>
             {run.trigger_type} · {formatDuration(run.started_at, run.completed_at)}
           </div>
         </div>
@@ -128,7 +129,7 @@ export function SwarmDetail({ runId, onBack }: SwarmDetailProps) {
               padding: '8px 16px',
               borderRadius: '8px',
               border: 'none',
-              background: 'rgba(239,68,68,0.15)',
+              background: C.statusErrorBg,
               color: '#EF4444',
               fontSize: '14px',
               fontWeight: 500,
@@ -148,10 +149,10 @@ export function SwarmDetail({ runId, onBack }: SwarmDetailProps) {
         backdropFilter: 'blur(20px)',
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-          <span style={{ fontSize: '14px', color: 'rgba(255,255,255,0.7)' }}>
+          <span style={{ fontSize: '14px', color: C.textSecondary }}>
             {completedSteps}/{totalSteps} steps
           </span>
-          <span style={{ fontSize: '14px', color: 'rgba(255,255,255,0.4)' }}>
+          <span style={{ fontSize: '14px', color: C.textDim }}>
             {progress}%
           </span>
         </div>
@@ -174,7 +175,7 @@ export function SwarmDetail({ runId, onBack }: SwarmDetailProps) {
           gap: '16px',
           marginTop: '12px',
           fontSize: '14px',
-          color: 'rgba(255,255,255,0.4)',
+          color: C.textDim,
         }}>
           <span>Cost: ${(run.total_cost / 100).toFixed(2)}</span>
           <span>Tokens: {(run.total_tokens_in + run.total_tokens_out).toLocaleString()}</span>
@@ -188,7 +189,7 @@ export function SwarmDetail({ runId, onBack }: SwarmDetailProps) {
         padding: '16px',
         backdropFilter: 'blur(20px)',
       }}>
-        <h3 style={{ fontSize: '14px', fontWeight: 500, color: 'rgba(255,255,255,0.7)', margin: '0 0 12px' }}>
+        <h3 style={{ fontSize: '14px', fontWeight: 500, color: C.textSecondary, margin: '0 0 12px' }}>
           Execution Timeline
         </h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
@@ -199,7 +200,7 @@ export function SwarmDetail({ runId, onBack }: SwarmDetailProps) {
                 display: 'flex',
                 gap: '12px',
                 padding: '12px 0',
-                borderBottom: i < steps.length - 1 ? '1px solid rgba(255,255,255,0.04)' : undefined,
+                borderBottom: i < steps.length - 1 ? `1px solid ${C.borderSubtle}` : undefined,
               }}
             >
               {/* Timeline line + dot */}
@@ -233,7 +234,7 @@ export function SwarmDetail({ runId, onBack }: SwarmDetailProps) {
                   <span style={{
                     fontSize: '14px',
                     fontWeight: 500,
-                    color: 'rgba(255,255,255,0.9)',
+                    color: C.textPrimary,
                   }}>
                     {step.step_key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                   </span>
@@ -260,7 +261,7 @@ export function SwarmDetail({ runId, onBack }: SwarmDetailProps) {
                   <details style={{ marginTop: '8px' }}>
                     <summary style={{
                       fontSize: '14px',
-                      color: 'rgba(255,255,255,0.4)',
+                      color: C.textDim,
                       cursor: 'pointer',
                       listStyle: 'none',
                     }}>
@@ -268,8 +269,8 @@ export function SwarmDetail({ runId, onBack }: SwarmDetailProps) {
                     </summary>
                     <pre style={{
                       fontSize: '14px',
-                      color: 'rgba(255,255,255,0.5)',
-                      background: 'rgba(0,0,0,0.2)',
+                      color: C.textPlaceholder,
+                      background: C.bgOverlay,
                       padding: '8px',
                       borderRadius: '8px',
                       marginTop: '4px',
@@ -285,7 +286,7 @@ export function SwarmDetail({ runId, onBack }: SwarmDetailProps) {
               {/* Duration + cost */}
               <div style={{
                 fontSize: '14px',
-                color: 'rgba(255,255,255,0.3)',
+                color: C.textMuted,
                 textAlign: 'right',
                 whiteSpace: 'nowrap',
               }}>
@@ -309,7 +310,7 @@ export function SwarmDetail({ runId, onBack }: SwarmDetailProps) {
           padding: '16px',
           backdropFilter: 'blur(20px)',
         }}>
-          <h3 style={{ fontSize: '14px', fontWeight: 500, color: 'rgba(255,255,255,0.7)', margin: '0 0 12px' }}>
+          <h3 style={{ fontSize: '14px', fontWeight: 500, color: C.textSecondary, margin: '0 0 12px' }}>
             Agent Messages ({messages.length})
           </h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -333,19 +334,19 @@ export function SwarmDetail({ runId, onBack }: SwarmDetailProps) {
                   }}>
                     {msg.from_step_id}
                   </span>
-                  <span style={{ color: 'rgba(255,255,255,0.3)' }}>
+                  <span style={{ color: C.textMuted }}>
                     {msg.to_step_id ? `to ${msg.to_step_id}` : 'broadcast'}
                   </span>
                   <span style={{
                     padding: '0 4px',
                     borderRadius: '8px',
                     background: 'var(--hover-bg)',
-                    color: 'rgba(255,255,255,0.4)',
+                    color: C.textDim,
                   }}>
                     {msg.message_type}
                   </span>
                 </div>
-                <div style={{ fontSize: '14px', color: 'rgba(255,255,255,0.6)' }}>
+                <div style={{ fontSize: '14px', color: C.textSecondary }}>
                   {typeof msg.content === 'string'
                     ? msg.content
                     : (msg.content as Record<string, unknown>).summary as string

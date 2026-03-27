@@ -2,7 +2,9 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Check, Trash2, Copy, Loader2 } from 'lucide-react';
+import { GlassDropdown } from '@/components/ui/glass-dropdown';
 import { logger } from '@/lib/core/logger';
+import { S, C } from '@/lib/styles/design-tokens'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -76,7 +78,7 @@ const ghostBtn: React.CSSProperties = {
   padding: '8px 16px',
   borderRadius: 8,
   background: 'transparent',
-  border: '1px solid rgba(255, 255, 255, 0.1)',
+  border: `1px solid ${C.borderHover}`,
   color: 'var(--text-primary, #F1F5F9)',
   fontSize: 14,
   fontWeight: 500,
@@ -99,8 +101,8 @@ const accentBtn: React.CSSProperties = {
 const dangerBtn: React.CSSProperties = {
   padding: '8px 12px',
   borderRadius: 8,
-  background: 'rgba(239, 68, 68, 0.1)',
-  border: '1px solid rgba(239, 68, 68, 0.3)',
+  background: C.statusErrorBg,
+  border: `1px solid ${C.statusError}`,
   color: '#EF4444',
   fontSize: 14,
   fontWeight: 500,
@@ -122,7 +124,7 @@ function SaveIndicator({ visible, message = 'Saved' }: { visible: boolean; messa
         gap: 8,
         padding: '8px 16px',
         borderRadius: 8,
-        background: 'rgba(34, 197, 94, 0.12)',
+        background: C.statusSuccessBg,
         color: '#22C55E',
         fontSize: 14,
         fontWeight: 500,
@@ -143,7 +145,7 @@ function SaveIndicator({ visible, message = 'Saved' }: { visible: boolean; messa
 
 function RoleBadge({ role }: { role: string }) {
   const colors: Record<string, { bg: string; text: string }> = {
-    owner: { bg: 'rgba(255, 255, 255, 0.08)', text: '#F1F5F9' },
+    owner: { bg: C.bgHoverStrong, text: '#F1F5F9' },
     admin: { bg: 'rgba(168, 85, 247, 0.15)', text: '#A855F7' },
     member: { bg: 'rgba(59, 130, 246, 0.15)', text: '#3B82F6' },
     viewer: { bg: 'rgba(107, 114, 128, 0.15)', text: '#6B7280' },
@@ -193,14 +195,14 @@ function RoleDropdown({
         }}
         onMouseEnter={e => {
           if (!disabled) {
-            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.06)';
-            e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+            e.currentTarget.style.background = C.bgHoverStrong;
+            e.currentTarget.style.borderColor = C.borderFocus;
           }
         }}
         onMouseLeave={e => {
           if (!disabled) {
             e.currentTarget.style.background = 'transparent';
-            e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+            e.currentTarget.style.borderColor = C.borderHover;
           }
         }}
       >
@@ -216,7 +218,7 @@ function RoleDropdown({
             marginTop: 4,
             width: 200,
             background: 'var(--glass-bg-heavy, rgba(12, 16, 24, 0.85))',
-            border: '1px solid rgba(255, 255, 255, 0.03)',
+            border: `1px solid ${C.borderSubtle}`,
             borderRadius: 12,
             backdropFilter: 'blur(20px)',
             WebkitBackdropFilter: 'blur(20px)',
@@ -236,7 +238,7 @@ function RoleDropdown({
                 width: '100%',
                 padding: '8px 12px',
                 textAlign: 'left',
-                background: currentRole === option.id ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
+                background: currentRole === option.id ? C.bgHoverStrong : 'transparent',
                 border: 'none',
                 color: currentRole === option.id ? 'var(--text-primary, #F1F5F9)' : 'var(--text-primary, #F1F5F9)',
                 fontSize: 14,
@@ -246,7 +248,7 @@ function RoleDropdown({
               }}
               onMouseEnter={e => {
                 if (currentRole !== option.id) {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.06)';
+                  e.currentTarget.style.background = C.bgHoverStrong;
                 }
               }}
               onMouseLeave={e => {
@@ -302,7 +304,7 @@ function ConfirmDialog({
         style={{
           position: 'absolute',
           inset: 0,
-          background: 'rgba(0, 0, 0, 0.6)',
+          background: C.bgOverlay,
           backdropFilter: 'blur(8px)',
           WebkitBackdropFilter: 'blur(8px)',
         }}
@@ -332,12 +334,12 @@ function ConfirmDialog({
               ...ghostBtn,
             }}
             onMouseEnter={e => {
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.06)';
-              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+              e.currentTarget.style.background = C.bgHoverStrong;
+              e.currentTarget.style.borderColor = C.borderFocus;
             }}
             onMouseLeave={e => {
               e.currentTarget.style.background = 'transparent';
-              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+              e.currentTarget.style.borderColor = C.borderHover;
             }}
           >
             {cancelLabel}
@@ -349,7 +351,7 @@ function ConfirmDialog({
             }}
             onMouseEnter={e => {
               if (isDanger) {
-                e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)';
+                e.currentTarget.style.background = C.statusErrorBg;
               } else {
                 e.currentTarget.style.background = '#E2E8F0';
                 e.currentTarget.style.transform = 'translateY(-1px)';
@@ -357,7 +359,7 @@ function ConfirmDialog({
             }}
             onMouseLeave={e => {
               if (isDanger) {
-                e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)';
+                e.currentTarget.style.background = C.statusErrorBg;
               } else {
                 e.currentTarget.style.background = '#F1F5F9';
                 e.currentTarget.style.transform = 'translateY(0)';
@@ -521,45 +523,24 @@ export function TeamManagementTab() {
                 padding: '12px 12px',
                 borderRadius: 8,
                 background: 'var(--bg-input, rgba(13, 17, 23, 0.6))',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
+                border: `1px solid ${C.borderHover}`,
                 color: 'var(--text-primary, #F1F5F9)',
                 fontSize: 14,
                 transition: 'border-color 200ms',
               }}
               onFocus={e => {
-                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+                e.currentTarget.style.borderColor = C.borderFocus;
               }}
               onBlur={e => {
-                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+                e.currentTarget.style.borderColor = C.borderHover;
               }}
             />
 
-            <select
+            <GlassDropdown
+              options={ROLE_OPTIONS.filter(r => r.id !== 'owner').map(r => ({ value: r.id, label: r.label }))}
               value={inviteRole}
-              onChange={e => setInviteRole(e.target.value as typeof inviteRole)}
-              style={{
-                padding: '12px 12px',
-                borderRadius: 8,
-                background: 'var(--bg-input, rgba(13, 17, 23, 0.6))',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                color: 'var(--text-primary, #F1F5F9)',
-                fontSize: 14,
-                cursor: 'pointer',
-                transition: 'border-color 200ms',
-              }}
-              onFocus={e => {
-                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
-              }}
-              onBlur={e => {
-                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
-              }}
-            >
-              {ROLE_OPTIONS.filter(r => r.id !== 'owner').map(r => (
-                <option key={r.id} value={r.id}>
-                  {r.label}
-                </option>
-              ))}
-            </select>
+              onChange={v => setInviteRole(v as typeof inviteRole)}
+            />
 
             <button
               onClick={handleInvite}
@@ -623,12 +604,12 @@ export function TeamManagementTab() {
                       }}
                       onMouseEnter={e => {
                         if (member.role !== 'owner') {
-                          e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)';
+                          e.currentTarget.style.background = C.statusErrorBg;
                         }
                       }}
                       onMouseLeave={e => {
                         if (member.role !== 'owner') {
-                          e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)';
+                          e.currentTarget.style.background = C.statusErrorBg;
                         }
                       }}
                       title={member.role === 'owner' ? 'Cannot remove owner' : 'Remove member'}
@@ -666,7 +647,7 @@ export function TeamManagementTab() {
                         display: 'inline-block',
                         padding: '4px 12px',
                         borderRadius: 8,
-                        background: 'rgba(251, 191, 36, 0.15)',
+                        background: C.statusWarningBg,
                         color: '#FBBF24',
                         fontSize: 14,
                         fontWeight: 500,

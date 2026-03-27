@@ -89,7 +89,7 @@ function UsageBar({
         style={{
           height: 8,
           borderRadius: 8,
-          background: 'rgba(255, 255, 255, 0.06)',
+          background: C.bgHoverStrong,
           overflow: 'hidden',
         }}
       >
@@ -123,11 +123,11 @@ function getStatusStyle(status: string): React.CSSProperties {
       return { background: C.statusSuccessBg, color: C.statusSuccess }
     case 'trialing':
       // Monochrome: white-on-dark badge for trial instead of blue
-      return { background: 'rgba(255, 255, 255, 0.08)', color: C.textPrimary }
+      return { background: C.bgHoverStrong, color: C.textPrimary }
     case 'past_due':
       return { background: C.statusErrorBg, color: C.statusError }
     default:
-      return { background: 'rgba(255, 255, 255, 0.06)', color: C.textSecondary }
+      return { background: C.bgHoverStrong, color: C.textSecondary }
   }
 }
 
@@ -307,7 +307,7 @@ export function BillingSettings() {
       {isTrialing && trialEndsAt && (
         <div
           style={{
-            background: 'rgba(255, 255, 255, 0.04)',
+            background: C.bgHover,
             border: `1px solid ${C.borderHover}`,
             borderRadius: 12,
             padding: '16px 20px',

@@ -13,6 +13,7 @@ import {
   Lightbulb,
 } from 'lucide-react'
 import type { RoleType, AutonomyLevel } from '@/lib/bitbit-core'
+import { S, C } from '@/lib/styles/design-tokens'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -145,9 +146,9 @@ export function RoleStatusCards({ onRoleClick }: RoleStatusCardsProps) {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 12 }}>
           {allRoleTypes.map(rt => (
             <div key={rt} style={{ ...glassCard, opacity: 0.5, cursor: 'default' }}>
-              <div style={{ height: 14, borderRadius: 4, background: 'rgba(255,255,255,0.06)', width: '40%', marginBottom: 12 }} />
-              <div style={{ height: 32, borderRadius: 4, background: 'rgba(255,255,255,0.04)', width: '60%', marginBottom: 8 }} />
-              <div style={{ height: 10, borderRadius: 4, background: 'rgba(255,255,255,0.04)', width: '80%' }} />
+              <div style={{ height: 14, borderRadius: 4, background: C.bgHoverStrong, width: '40%', marginBottom: 12 }} />
+              <div style={{ height: 32, borderRadius: 4, background: C.bgHover, width: '60%', marginBottom: 8 }} />
+              <div style={{ height: 10, borderRadius: 4, background: C.bgHover, width: '80%' }} />
             </div>
           ))}
         </div>
@@ -176,11 +177,11 @@ export function RoleStatusCards({ onRoleClick }: RoleStatusCardsProps) {
               style={{
                 ...glassCard,
                 border: isHovered
-                  ? '1px solid rgba(255, 255, 255, 0.1)'
-                  : '1px solid rgba(255, 255, 255, 0.03)',
+                  ? `1px solid ${C.borderHover}`
+                  : `1px solid ${C.borderSubtle}`,
                 background: isHovered
                   ? 'var(--bb-surface-hover, rgba(20, 28, 40, 0.7))'
-                  : 'rgba(15, 20, 30, 0.6)',
+                  : C.bgCard,
               }}
             >
               {/* Header row */}
@@ -230,7 +231,7 @@ export function RoleStatusCards({ onRoleClick }: RoleStatusCardsProps) {
                       padding: '6px 14px',
                       borderRadius: 8,
                       border: '1px solid rgba(34, 197, 94, 0.3)',
-                      background: enabling === rt ? 'rgba(34, 197, 94, 0.08)' : 'rgba(34, 197, 94, 0.12)',
+                      background: enabling === rt ? 'rgba(34, 197, 94, 0.08)' : C.statusSuccessBg,
                       color: '#22c55e',
                       fontSize: 13,
                       fontWeight: 500,
@@ -270,7 +271,7 @@ export function RoleStatusCards({ onRoleClick }: RoleStatusCardsProps) {
                         borderRadius: 8,
                         fontSize: 14,
                         fontWeight: 500,
-                        background: 'rgba(239, 68, 68, 0.12)',
+                        background: C.statusErrorBg,
                         color: '#ef4444',
                       }}>
                         Disabled
@@ -284,7 +285,7 @@ export function RoleStatusCards({ onRoleClick }: RoleStatusCardsProps) {
                     gridTemplateColumns: '1fr 1fr',
                     gap: 8,
                     padding: '12px 0',
-                    borderTop: '1px solid rgba(255, 255, 255, 0.03)',
+                    borderTop: `1px solid ${C.borderSubtle}`,
                   }}>
                     <MetricCell
                       icon={<Zap size={11} />}
@@ -318,7 +319,7 @@ export function RoleStatusCards({ onRoleClick }: RoleStatusCardsProps) {
                       marginTop: 8,
                       padding: '8px 12px',
                       borderRadius: 8,
-                      background: 'rgba(239, 68, 68, 0.08)',
+                      background: C.statusErrorBg,
                     }}>
                       <AlertCircle size={12} style={{ color: '#ef4444' }} />
                       <span style={{ fontSize: 14, color: '#ef4444' }}>

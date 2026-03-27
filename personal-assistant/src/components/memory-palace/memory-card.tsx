@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react'
 import type { MemoryPalaceEntry } from '@/lib/memory-palace/types'
+import { S, C } from '@/lib/styles/design-tokens'
 
 interface MemoryCardProps {
   memory: MemoryPalaceEntry
@@ -33,7 +34,7 @@ export function MemoryCard({ memory, categoryColor }: MemoryCardProps) {
         e.currentTarget.style.background = 'var(--bb-surface-hover, rgba(20, 28, 40, 0.5))'
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.background = 'rgba(15, 20, 30, 0.35)'
+        e.currentTarget.style.background = C.bgCardLight
       }}
     >
       {/* Header Row */}
@@ -84,7 +85,7 @@ export function MemoryCard({ memory, categoryColor }: MemoryCardProps) {
         {/* Age */}
         <span style={{
           fontSize: '14px',
-          color: 'rgba(255, 255, 255, 0.3)',
+          color: C.textMuted,
         }}>
           {age}
         </span>
@@ -95,7 +96,7 @@ export function MemoryCard({ memory, categoryColor }: MemoryCardProps) {
         <div style={{
           fontSize: '14px',
           fontWeight: 500,
-          color: 'rgba(255, 255, 255, 0.9)',
+          color: C.textPrimary,
           marginBottom: '4px',
         }}>
           {memory.title}
@@ -105,7 +106,7 @@ export function MemoryCard({ memory, categoryColor }: MemoryCardProps) {
       {/* Content */}
       <div style={{
         fontSize: '14px',
-        color: 'rgba(255, 255, 255, 0.7)',
+        color: C.textSecondary,
         lineHeight: '1.5',
         overflow: expanded ? 'visible' : 'hidden',
         textOverflow: expanded ? 'unset' : 'ellipsis',
@@ -129,7 +130,7 @@ export function MemoryCard({ memory, categoryColor }: MemoryCardProps) {
           {/* Entity Names */}
           {memory.entity_names && memory.entity_names.length > 0 && (
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-              <span style={{ fontSize: '14px', color: 'rgba(255, 255, 255, 0.4)' }}>
+              <span style={{ fontSize: '14px', color: C.textDim }}>
                 Entities:
               </span>
               {memory.entity_names.map((name, i) => (
@@ -152,7 +153,7 @@ export function MemoryCard({ memory, categoryColor }: MemoryCardProps) {
           {/* Tags */}
           {memory.tags && memory.tags.length > 0 && (
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-              <span style={{ fontSize: '14px', color: 'rgba(255, 255, 255, 0.4)' }}>
+              <span style={{ fontSize: '14px', color: C.textDim }}>
                 Tags:
               </span>
               {memory.tags.map((tag, i) => (
@@ -162,7 +163,7 @@ export function MemoryCard({ memory, categoryColor }: MemoryCardProps) {
                     padding: '4px 8px',
                     borderRadius: '8px',
                     background: 'var(--hover-bg)',
-                    color: 'rgba(255, 255, 255, 0.5)',
+                    color: C.textPlaceholder,
                     fontSize: '14px',
                   }}
                 >
@@ -177,7 +178,7 @@ export function MemoryCard({ memory, categoryColor }: MemoryCardProps) {
             display: 'flex',
             gap: '16px',
             fontSize: '14px',
-            color: 'rgba(255, 255, 255, 0.3)',
+            color: C.textMuted,
           }}>
             <span>{decayLabel}</span>
             {memory.corroboration_count > 0 && (

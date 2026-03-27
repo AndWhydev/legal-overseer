@@ -1,9 +1,11 @@
 'use client'
 
 import React, { useState } from 'react'
+import { GlassDropdown } from '@/components/ui/glass-dropdown'
 import { useScenarios } from '@/hooks/use-revenue-data'
 import { formatCents } from '@/lib/revenue/types'
 import type { RevenueScenario } from '@/lib/revenue/types'
+import { S, C } from '@/lib/styles/design-tokens'
 
 // ─── Styles ─────────────────────────────────────────────────────────────────
 
@@ -190,15 +192,11 @@ export function ScenarioPlannerUI() {
 
           <div>
             <span style={labelStyle}>Type</span>
-            <select
-              style={selectStyle}
+            <GlassDropdown
+              options={SCENARIO_TYPES.map(st => ({ value: st.value, label: `${st.label} — ${st.desc}` }))}
               value={type}
-              onChange={e => setType(e.target.value)}
-            >
-              {SCENARIO_TYPES.map(st => (
-                <option key={st.value} value={st.value}>{st.label} — {st.desc}</option>
-              ))}
-            </select>
+              onChange={v => setType(v)}
+            />
           </div>
 
           {/* Type-specific fields */}
@@ -382,7 +380,7 @@ function ScenarioCard({ scenario }: { scenario: RevenueScenario }) {
               fontSize: 14,
               padding: '2px 8px',
               borderRadius: 'var(--radius-sm)',
-              background: 'rgba(239, 68, 68, 0.08)',
+              background: C.statusErrorBg,
               color: 'var(--bb-red)',
             }}>
               {rf}

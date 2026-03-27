@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { SwarmRunCard } from './swarm-run-card';
 import { SwarmRunDetail } from './swarm-run-detail';
 import { SwarmTriggerInput } from './swarm-trigger-input';
+import { S, C } from '@/lib/styles/design-tokens';
 import type { SwarmRunRow } from '@/lib/swarm/types';
 
 // ── Styles ──────────────────────────────────────────────────────────────────
@@ -26,12 +27,12 @@ const styles = {
   title: {
     fontSize: '16px',
     fontWeight: 500,
-    color: 'rgba(255, 255, 255, 0.95)',
+    color: C.textPrimary,
     letterSpacing: '-0.02em',
   },
   subtitle: {
     fontSize: '14px',
-    color: 'rgba(255, 255, 255, 0.45)',
+    color: C.textSecondary,
     marginTop: '2px',
   },
   filterRow: {
@@ -48,7 +49,7 @@ const styles = {
     border: 'none',
     transition: 'all 0.15s ease',
     background: active ? 'var(--hover-bg-strong)' : 'var(--hover-bg)',
-    color: active ? '#F1F5F9' : 'rgba(255, 255, 255, 0.5)',
+    color: active ? C.textPrimary : C.textPlaceholder,
   }),
   runsList: {
     display: 'flex',
@@ -69,12 +70,12 @@ const styles = {
   },
   emptyText: {
     fontSize: '14px',
-    color: 'rgba(255, 255, 255, 0.35)',
+    color: C.textSecondary,
     textAlign: 'center' as const,
   },
   emptyHint: {
     fontSize: '14px',
-    color: 'rgba(255, 255, 255, 0.25)',
+    color: C.textMuted,
     textAlign: 'center' as const,
     maxWidth: '400px',
   },

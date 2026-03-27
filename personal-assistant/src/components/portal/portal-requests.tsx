@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
+import { GlassDropdown } from '@/components/ui/glass-dropdown'
 import type { PortalRequest } from '@/lib/portal/types'
 
 interface PortalRequestsViewProps {
@@ -125,27 +126,19 @@ export function PortalRequestsView({ initialRequests, primaryColor }: PortalRequ
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4" style={{ marginBottom: 20 }}>
             <div>
               <label style={labelStyle}>Type</label>
-              <select
+              <GlassDropdown
+                options={REQUEST_TYPES.map(t => ({ value: t.value, label: t.label }))}
                 value={formData.request_type}
-                onChange={e => setFormData(prev => ({ ...prev, request_type: e.target.value }))}
-                style={inputStyle}
-              >
-                {REQUEST_TYPES.map(t => (
-                  <option key={t.value} value={t.value}>{t.label}</option>
-                ))}
-              </select>
+                onChange={v => setFormData(prev => ({ ...prev, request_type: v }))}
+              />
             </div>
             <div>
               <label style={labelStyle}>Priority</label>
-              <select
+              <GlassDropdown
+                options={PRIORITY_OPTIONS.map(p => ({ value: p.value, label: p.label }))}
                 value={formData.priority}
-                onChange={e => setFormData(prev => ({ ...prev, priority: e.target.value }))}
-                style={inputStyle}
-              >
-                {PRIORITY_OPTIONS.map(p => (
-                  <option key={p.value} value={p.value}>{p.label}</option>
-                ))}
-              </select>
+                onChange={v => setFormData(prev => ({ ...prev, priority: v }))}
+              />
             </div>
           </div>
 

@@ -3,6 +3,7 @@
 import React, { useState, useCallback } from 'react'
 import { Eye, Users, Rocket } from 'lucide-react'
 import type { RoleType, AutonomyLevel } from '@/lib/bitbit-core'
+import { S, C } from '@/lib/styles/design-tokens'
 
 // ---------------------------------------------------------------------------
 // Types

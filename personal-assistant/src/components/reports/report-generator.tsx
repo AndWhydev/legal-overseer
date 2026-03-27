@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import { FileText, Loader2 } from 'lucide-react'
+import { GlassDropdown } from '@/components/ui/glass-dropdown'
 import { useToast } from '@/components/ui/toast'
 
 type ReportType = 'monthly' | 'agent-roi' | 'pipeline'
@@ -102,19 +103,12 @@ export function ReportGenerator({ onGenerateStart, onGenerateComplete }: ReportG
             <label htmlFor="report-type" className="block text-xs font-medium text-muted-foreground mb-1.5 uppercase">
               Report Type
             </label>
-            <select
-              id="report-type"
+            <GlassDropdown
+              options={REPORT_TYPES.map((type) => ({ value: type.value, label: type.label }))}
               value={reportType}
-              onChange={(e) => setReportType(e.target.value as ReportType)}
-              disabled={isGenerating}
-              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder-muted-foreground hover:border-border/80 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-60"
-            >
-              {REPORT_TYPES.map((type) => (
-                <option key={type.value} value={type.value}>
-                  {type.label}
-                </option>
-              ))}
-            </select>
+              onChange={(v) => setReportType(v as ReportType)}
+              size="sm"
+            />
           </div>
 
           {/* Period Selector */}
@@ -122,19 +116,12 @@ export function ReportGenerator({ onGenerateStart, onGenerateComplete }: ReportG
             <label htmlFor="period" className="block text-xs font-medium text-muted-foreground mb-1.5 uppercase">
               Period
             </label>
-            <select
-              id="period"
-              value={periodIndex}
-              onChange={(e) => setPeriodIndex(Number(e.target.value))}
-              disabled={isGenerating}
-              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder-muted-foreground hover:border-border/80 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-60"
-            >
-              {periods.map((period, idx) => (
-                <option key={idx} value={idx}>
-                  {period.label}
-                </option>
-              ))}
-            </select>
+            <GlassDropdown
+              options={periods.map((period, idx) => ({ value: String(idx), label: period.label }))}
+              value={String(periodIndex)}
+              onChange={(v) => setPeriodIndex(Number(v))}
+              size="sm"
+            />
           </div>
 
           {/* Generate Button */}

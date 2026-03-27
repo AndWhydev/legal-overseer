@@ -2,6 +2,7 @@
 
 import React, { useMemo } from 'react';
 import type { SwarmRunRow } from '@/lib/swarm/types';
+import { S, C } from '@/lib/styles/design-tokens'
 
 // ── Styles ──────────────────────────────────────────────────────────────────
 
@@ -11,13 +12,13 @@ const styles = {
     backdropFilter: 'blur(20px)',
     borderRadius: '12px',
     padding: '16px 20px',
-    border: '1px solid rgba(255, 255, 255, 0.03)',
+    border: `1px solid ${C.borderSubtle}`,
     cursor: 'pointer',
     transition: 'all 0.15s ease',
   },
   cardHover: {
-    background: 'rgba(20, 28, 40, 0.5)',
-    borderColor: 'rgba(255, 255, 255, 0.03)',
+    background: C.bgListRowHover,
+    borderColor: C.bgHover,
   },
   topRow: {
     display: 'flex',
@@ -28,20 +29,20 @@ const styles = {
   templateName: {
     fontSize: '14px',
     fontWeight: 500,
-    color: 'rgba(255, 255, 255, 0.9)',
+    color: C.textPrimary,
     letterSpacing: '-0.01em',
   },
   statusBadge: (status: string) => {
     const colors: Record<string, { bg: string; text: string }> = {
-      pending: { bg: 'var(--hover-bg-strong)', text: 'rgba(255, 255, 255, 0.4)' },
+      pending: { bg: 'var(--hover-bg-strong)', text: C.textDim },
       planning: { bg: 'rgba(59, 130, 246, 0.1)', text: '#3B82F6' },
       executing: { bg: 'var(--hover-bg-strong)', text: '#E2E8F0' },
       negotiating: { bg: 'rgba(139, 92, 246, 0.1)', text: '#8B5CF6' },
-      completed: { bg: 'rgba(34, 197, 94, 0.1)', text: '#22C55E' },
-      partial: { bg: 'rgba(245, 158, 11, 0.1)', text: '#F59E0B' },
-      failed: { bg: 'rgba(239, 68, 68, 0.1)', text: '#EF4444' },
-      rolled_back: { bg: 'var(--hover-bg-strong)', text: 'rgba(255, 255, 255, 0.4)' },
-      cancelled: { bg: 'var(--hover-bg-strong)', text: 'rgba(255, 255, 255, 0.3)' },
+      completed: { bg: C.statusSuccessBg, text: '#22C55E' },
+      partial: { bg: C.statusWarningBg, text: '#F59E0B' },
+      failed: { bg: C.statusErrorBg, text: '#EF4444' },
+      rolled_back: { bg: 'var(--hover-bg-strong)', text: C.textDim },
+      cancelled: { bg: 'var(--hover-bg-strong)', text: C.textMuted },
     };
     const c = colors[status] || colors.pending;
     return {
@@ -55,7 +56,7 @@ const styles = {
   },
   triggerText: {
     fontSize: '14px',
-    color: 'rgba(255, 255, 255, 0.5)',
+    color: C.textPlaceholder,
     lineHeight: 1.5,
     overflow: 'hidden' as const,
     textOverflow: 'ellipsis' as const,
@@ -69,11 +70,11 @@ const styles = {
   },
   meta: {
     fontSize: '14px',
-    color: 'rgba(255, 255, 255, 0.3)',
+    color: C.textMuted,
   },
   costBadge: {
     fontSize: '14px',
-    color: 'rgba(255, 255, 255, 0.5)',
+    color: C.textPlaceholder,
     fontFamily: 'var(--font-mono, monospace)',
   },
   executingDot: {

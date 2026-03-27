@@ -9,6 +9,7 @@ import { InboxShortcutsOverlay } from '@/components/dashboard/inbox-shortcuts-ov
 import { TabShell } from '@/components/ui/tab-shell';
 import { EmptyState } from '@/components/ui/empty-state';
 import { GlassDropdown } from '@/components/ui/glass-dropdown';
+import { S, C } from '@/lib/styles/design-tokens';
 import { logger } from '@/lib/core/logger';
 import { type ThreadMessageItem } from '@/components/dashboard/inbox-drawer';
 import {
@@ -1162,7 +1163,7 @@ function InboxTab() {
           WebkitBackdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
           border: '1px solid var(--glass-card-border)',
           borderRadius: 12,
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.3)',
+          boxShadow: `0 8px 32px ${C.bgOverlay}, 0 2px 8px rgba(0, 0, 0, 0.3)`,
           zIndex: 50,
           animation: 'fadeSlideUp 160ms cubic-bezier(0.16, 1, 0.3, 1)',
         }}>
@@ -1312,7 +1313,7 @@ function FilterDropdown({
       backdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
       WebkitBackdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
       border: '1px solid var(--glass-card-border)',
-      boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+      boxShadow: `0 8px 32px ${C.bgOverlay}`,
       animation: 'fadeSlideUp 120ms cubic-bezier(0.16, 1, 0.3, 1)',
     }}>
       {options.map((opt) => {
@@ -1439,13 +1440,13 @@ function UnifiedFilterBar({
               fontSize: 14,
               fontWeight: 500,
               background: isActive
-                ? 'var(--pill-active-bg, rgba(255, 255, 255, 0.1))'
+                ? C.bgHoverStrong
                 : 'var(--pill-inactive-bg, rgba(10, 14, 23, 0.42))',
               backdropFilter: 'blur(22px) saturate(1.2)',
               WebkitBackdropFilter: 'blur(22px) saturate(1.2)',
               boxShadow: isActive
                 ? 'var(--toggle-active-shadow, none)'
-                : 'inset 0 1px 0 rgba(255, 255, 255, 0.06)',
+                : `inset 0 1px 0 ${C.borderVisible}`,
               color: isActive
                 ? 'var(--text-primary, #F1F5F9)'
                 : 'var(--text-secondary, #94A3B8)',
@@ -1554,7 +1555,7 @@ function UndoToastStack({
             backdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
             WebkitBackdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
             border: '1px solid var(--glass-card-border)',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+            boxShadow: `0 8px 32px ${C.bgOverlay}`,
             pointerEvents: 'auto',
             animation: 'fadeSlideUp 160ms cubic-bezier(0.16, 1, 0.3, 1)',
           }}
@@ -1568,16 +1569,16 @@ function UndoToastStack({
             style={{
               padding: '4px 12px',
               borderRadius: 8,
-              border: '1px solid rgba(255,255,255,0.2)',
-              background: 'rgba(255,255,255,0.08)',
+              border: `1px solid ${C.borderFocus}`,
+              background: C.bgHoverStrong,
               color: '#E2E8F0',
               fontSize: 14,
               fontWeight: 500,
               cursor: 'pointer',
               transition: 'all 150ms ease',
             }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.12)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = C.borderHover; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = C.bgHoverStrong; }}
           >
             Undo
           </button>
@@ -1627,7 +1628,7 @@ function SnoozePickerPopover({
         border: '1px solid var(--glass-card-border)',
         borderRadius: 12,
         padding: 8,
-        boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+        boxShadow: `0 8px 32px ${C.bgOverlay}`,
         minWidth: 200,
         animation: 'fadeSlideUp 140ms cubic-bezier(0.16, 1, 0.3, 1)',
       }}
@@ -2106,7 +2107,7 @@ function ExpandedMessageRow({
                   >
                     <div style={{
                       width: 22, height: 22, borderRadius: '50%',
-                      background: tm.isSelf ? 'rgba(255,255,255,0.12)' : 'var(--hover-bg-strong)',
+                      background: tm.isSelf ? C.borderHover : C.bgHoverStrong,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       fontSize: 9, fontWeight: 500,
                       color: tm.isSelf ? '#E2E8F0' : 'var(--text-secondary)', flexShrink: 0,
@@ -2152,8 +2153,8 @@ function ExpandedMessageRow({
         animationDelay: aiResult ? '0ms' : '600ms',
       }}>
         <div style={{
-          background: 'var(--bg-input, rgba(13, 17, 23, 0.6))',
-          border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
+          background: C.bgInput,
+          border: `1px solid ${C.borderSubtle}`,
           borderRadius: 20,
           padding: '4px 4px 4px 16px',
         }}>

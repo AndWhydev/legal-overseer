@@ -2,6 +2,7 @@
 
 import React, { useState, useCallback } from 'react'
 import { Search, TrendingUp, TrendingDown, Minus, Copy, Check, Play, Code, FileText, X } from 'lucide-react'
+import { S, C } from '@/lib/styles/design-tokens'
 import { TabShell } from '@/components/ui/tab-shell'
 
 // ---------------------------------------------------------------------------
@@ -37,89 +38,39 @@ type ActivePanel = 'overview' | 'content' | 'schema'
 // ---------------------------------------------------------------------------
 
 const glassCard: React.CSSProperties = {
-  padding: '20px',
-  borderRadius: 16,
-  background: 'var(--glass-card-bg)',
-  backdropFilter: 'var(--glass-card-blur)',
-  WebkitBackdropFilter: 'var(--glass-card-blur)',
-  border: '1px solid var(--glass-card-border)',
-  boxShadow: 'var(--glass-card-inset)',
+  ...S.card,
 }
 
 const glassInput: React.CSSProperties = {
-  width: '100%',
+  ...S.input,
   padding: '12px 16px',
   borderRadius: 12,
-  background: 'var(--bg-input, rgba(13, 17, 23, 0.6))',
-  border: '1px solid var(--glass-interactive-border)',
-  color: 'var(--text-primary)',
-  fontSize: 14,
-  outline: 'none',
-  transition: 'border-color 200ms, box-shadow 200ms',
 }
 
 const pillBtn: React.CSSProperties = {
-  padding: '8px 16px',
-  borderRadius: 20,
-  background: 'var(--glass-pill-bg)',
-  backdropFilter: 'var(--glass-card-blur)',
-  WebkitBackdropFilter: 'var(--glass-card-blur)',
-  boxShadow: 'var(--glass-card-inset)',
-  border: 'none',
-  fontSize: 14,
-  color: 'var(--text-secondary)',
-  cursor: 'pointer',
-  transition: 'all 200ms',
+  ...S.pill,
 }
 
 const accentBtn: React.CSSProperties = {
-  height: 40,
-  padding: '0 20px',
-  borderRadius: 8,
-  background: 'var(--btn-primary-bg, #F1F5F9)',
-  border: 'none',
-  color: 'var(--btn-primary-fg, #0a0f1a)',
-  fontSize: 14,
-  fontWeight: 500,
-  cursor: 'pointer',
-  transition: 'all 200ms',
-  display: 'inline-flex',
-  alignItems: 'center',
-  gap: 8,
+  ...S.button,
+  ...S.buttonPrimary,
 }
 
 const ghostBtn: React.CSSProperties = {
+  ...S.button,
+  ...S.buttonGhost,
   padding: '8px 16px',
   borderRadius: 12,
-  background: 'transparent',
-  border: '1px solid var(--glass-interactive-border)',
-  color: 'var(--text-primary)',
-  fontSize: 14,
-  fontWeight: 500,
-  cursor: 'pointer',
-  transition: 'all 200ms',
+  height: 'auto',
 }
 
 const listRow: React.CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  padding: '12px 20px',
-  borderRadius: 12,
-  background: 'var(--glass-pill-bg)',
-  backdropFilter: 'var(--glass-blur)',
-  WebkitBackdropFilter: 'var(--glass-blur)',
-  boxShadow: 'var(--glass-card-inset)',
-  border: 'none',
-  transition: 'background 200ms',
-  cursor: 'pointer',
+  ...S.listRow,
 }
 
 const smallText: React.CSSProperties = {
-  fontSize: 14,
-  fontWeight: 500,
-  letterSpacing: '0.04em',
-  textTransform: 'uppercase' as const,
-  color: 'var(--text-dim)',
+  ...S.sectionLabel,
+  marginBottom: 0,
 }
 
 // ---------------------------------------------------------------------------
@@ -146,9 +97,9 @@ function ScoreBadge({ score }: { score: number }) {
   }
 
   const color = getScoreColor()
-  const bgColor = color === '#22c55e' ? 'rgba(34, 197, 94, 0.12)' :
-                  color === '#eab308' ? 'rgba(234, 179, 8, 0.12)' :
-                  'rgba(239, 68, 68, 0.12)'
+  const bgColor = color === '#22c55e' ? C.statusSuccessBg :
+                  color === '#eab308' ? C.statusWarningBg :
+                  C.statusErrorBg
 
   return (
     <span
@@ -172,11 +123,11 @@ function ScoreBadge({ score }: { score: number }) {
 }
 
 function TrendArrow({ current, previous }: { current: number; previous: number | null }) {
-  if (previous === null) return <Minus size={16} style={{ color: 'rgba(255,255,255,0.4)' }} />
+  if (previous === null) return <Minus size={16} style={{ color: C.textMuted }} />
   const diff = current - previous
   if (diff > 5) return <TrendingUp size={16} style={{ color: '#22c55e' }} />
   if (diff < -5) return <TrendingDown size={16} style={{ color: '#ef4444' }} />
-  return <Minus size={16} style={{ color: 'rgba(255,255,255,0.4)' }} />
+  return <Minus size={16} style={{ color: C.textMuted }} />
 }
 
 function CopyButton({ text }: { text: string }) {
@@ -207,7 +158,7 @@ function CopyButton({ text }: { text: string }) {
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.background = 'var(--glass-interactive-border)'
-        e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'
+        e.currentTarget.style.borderColor = C.borderHover
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.background = 'var(--glass-interactive-bg)'
@@ -269,11 +220,11 @@ function AuditForm({
               ...glassInput,
               borderColor:
                 focusedField === 'domain'
-                  ? 'rgba(255, 255, 255, 0.2)'
-                  : 'rgba(255, 255, 255, 0.05)',
+                  ? C.borderFocus
+                  : C.borderSubtle,
               boxShadow:
                 focusedField === 'domain'
-                  ? '0 0 0 2px rgba(255, 255, 255, 0.08)'
+                  ? `0 0 0 2px ${C.bgHoverStrong}`
                   : 'none',
             }}
           />
@@ -292,11 +243,11 @@ function AuditForm({
               ...glassInput,
               borderColor:
                 focusedField === 'brand'
-                  ? 'rgba(255, 255, 255, 0.2)'
-                  : 'rgba(255, 255, 255, 0.05)',
+                  ? C.borderFocus
+                  : C.borderSubtle,
               boxShadow:
                 focusedField === 'brand'
-                  ? '0 0 0 2px rgba(255, 255, 255, 0.08)'
+                  ? `0 0 0 2px ${C.bgHoverStrong}`
                   : 'none',
             }}
           />
@@ -317,11 +268,11 @@ function AuditForm({
             resize: 'vertical',
             borderColor:
               focusedField === 'queries'
-                ? 'rgba(255, 255, 255, 0.2)'
-                : 'rgba(255, 255, 255, 0.05)',
+                ? C.borderFocus
+                : C.borderSubtle,
             boxShadow:
               focusedField === 'queries'
-                ? '0 0 0 2px rgba(255, 255, 255, 0.08)'
+                ? `0 0 0 2px ${C.bgHoverStrong}`
                 : 'none',
           }}
         />
@@ -340,11 +291,11 @@ function AuditForm({
             resize: 'vertical',
             borderColor:
               focusedField === 'competitors'
-                ? 'rgba(255, 255, 255, 0.2)'
-                : 'rgba(255, 255, 255, 0.05)',
+                ? C.borderFocus
+                : C.borderSubtle,
             boxShadow:
               focusedField === 'competitors'
-                ? '0 0 0 2px rgba(255, 255, 255, 0.08)'
+                ? `0 0 0 2px ${C.bgHoverStrong}`
                 : 'none',
           }}
         />
@@ -426,7 +377,7 @@ function QueryBreakdown({ results }: { results: QueryResult[] }) {
             transition: 'background 200ms',
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.02)'
+            e.currentTarget.style.background = C.bgHover
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.background = 'transparent'
@@ -504,7 +455,7 @@ function CompetitorTable({
               transition: 'background 200ms',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.02)'
+              e.currentTarget.style.background = C.bgHover
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.background = 'transparent'
@@ -523,7 +474,7 @@ function CompetitorTable({
             <span
               style={{
                 fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
-                color: diff > 0 ? '#ef4444' : diff < 0 ? '#22c55e' : 'rgba(255,255,255,0.5)',
+                color: diff > 0 ? '#ef4444' : diff < 0 ? '#22c55e' : C.textPlaceholder,
                 fontSize: 14,
               }}
             >
@@ -602,11 +553,11 @@ function SchemaGenerator() {
                   : 'var(--text-secondary)',
               background:
                 schemaType === t
-                  ? 'rgba(255, 255, 255, 0.08)'
+                  ? C.bgHoverStrong
                   : 'var(--glass-pill-bg)',
               borderBottom:
                 schemaType === t
-                  ? '1px solid rgba(255, 255, 255, 0.12)'
+                  ? `1px solid ${C.borderHover}`
                   : 'none',
             }}
             onMouseEnter={(e) => {
@@ -652,11 +603,11 @@ function SchemaGenerator() {
               ...glassInput,
               borderColor:
                 focusedField === key
-                  ? 'rgba(255, 255, 255, 0.2)'
-                  : 'rgba(255, 255, 255, 0.05)',
+                  ? C.borderFocus
+                  : C.borderSubtle,
               boxShadow:
                 focusedField === key
-                  ? '0 0 0 2px rgba(255, 255, 255, 0.08)'
+                  ? `0 0 0 2px ${C.bgHoverStrong}`
                   : 'none',
             }}
           />
@@ -675,11 +626,11 @@ function SchemaGenerator() {
           resize: 'vertical',
           borderColor:
             focusedField === 'desc'
-              ? 'rgba(255, 255, 255, 0.2)'
-              : 'rgba(255, 255, 255, 0.05)',
+              ? C.borderFocus
+              : C.borderSubtle,
           boxShadow:
             focusedField === 'desc'
-              ? '0 0 0 2px rgba(255, 255, 255, 0.08)'
+              ? `0 0 0 2px ${C.bgHoverStrong}`
               : 'none',
         }}
       />
@@ -817,7 +768,7 @@ function AISearchTab() {
             gap: 12,
             padding: '16px 20px',
             borderRadius: 16,
-            background: 'var(--bg-card, rgba(15, 20, 30, 0.35))',
+            background: C.bgCardLight,
             backdropFilter: 'var(--glass-blur)',
             WebkitBackdropFilter: 'var(--glass-blur)',
             border: 'none',
@@ -945,16 +896,16 @@ function AISearchTab() {
                   gap: 8,
                   transition: 'background 200ms cubic-bezier(0.16, 1, 0.3, 1), color 200ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 200ms',
                   background: isActive
-                    ? 'var(--pill-active-bg, rgba(255, 255, 255, 0.08))'
-                    : 'var(--pill-inactive-bg, rgba(10, 14, 23, 0.42))',
+                    ? S.pillActive.background
+                    : S.pill.background,
                   backdropFilter: 'blur(22px) saturate(1.2)',
                   WebkitBackdropFilter: 'blur(22px) saturate(1.2)',
                   boxShadow: isActive
                     ? 'var(--toggle-active-shadow, none)'
-                    : 'inset 0 1px 0 rgba(255, 255, 255, 0.06)',
+                    : S.pill.boxShadow,
                   color: isActive
-                    ? 'var(--text-primary, #F1F5F9)'
-                    : 'var(--text-secondary, #94A3B8)',
+                    ? C.textPrimary
+                    : C.textSecondary,
                 }}
               >
                 {btn.icon}
@@ -1041,7 +992,7 @@ function AISearchTab() {
                         key={i}
                         style={{
                           ...glassCard,
-                          borderLeft: '3px solid rgba(255, 255, 255, 0.06)',
+                          borderLeft: `3px solid ${C.borderVisible}`,
                           padding: '12px 16px',
                         }}
                         onMouseEnter={(e) => {
@@ -1049,7 +1000,7 @@ function AISearchTab() {
                           e.currentTarget.style.background = 'var(--glass-bg-heavy)'
                         }}
                         onMouseLeave={(e) => {
-                          e.currentTarget.style.borderLeftColor = 'rgba(255, 255, 255, 0.06)'
+                          e.currentTarget.style.borderLeftColor = C.borderVisible
                           e.currentTarget.style.background = 'var(--glass-card-bg)'
                         }}
                       >

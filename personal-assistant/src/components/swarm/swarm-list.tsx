@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import type { SwarmRun } from '@/lib/swarm/types'
+import { S, C } from '@/lib/styles/design-tokens'
 
 const STATUS_COLORS: Record<string, string> = {
   pending: '#F59E0B',
@@ -9,7 +10,7 @@ const STATUS_COLORS: Record<string, string> = {
   paused: '#8B5CF6',
   completed: '#22C55E',
   failed: '#EF4444',
-  cancelled: 'rgba(255,255,255,0.3)',
+  cancelled: C.textMuted,
   rolling_back: '#EC4899',
 }
 
@@ -66,7 +67,7 @@ export function SwarmList({ onSelectRun }: SwarmListProps) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h2 style={{ fontSize: '16px', fontWeight: 500, color: 'rgba(255,255,255,0.95)', margin: 0 }}>
+        <h2 style={{ fontSize: '16px', fontWeight: 500, color: C.textPrimary, margin: 0 }}>
           Agent Swarms
         </h2>
         <div style={{ display: 'flex', gap: '6px' }}>
@@ -82,7 +83,7 @@ export function SwarmList({ onSelectRun }: SwarmListProps) {
                 fontWeight: 500,
                 cursor: 'pointer',
                 background: filter === s ? 'var(--hover-bg-strong)' : 'var(--hover-bg)',
-                color: filter === s ? '#F1F5F9' : 'rgba(255,255,255,0.5)',
+                color: filter === s ? '#F1F5F9' : C.textPlaceholder,
                 transition: 'all 0.15s',
               }}
             >
@@ -94,14 +95,14 @@ export function SwarmList({ onSelectRun }: SwarmListProps) {
 
       {/* List */}
       {loading ? (
-        <div style={{ textAlign: 'center', padding: '40px', color: 'rgba(255,255,255,0.4)' }}>
+        <div style={{ textAlign: 'center', padding: '40px', color: C.textDim }}>
           Loading swarms...
         </div>
       ) : runs.length === 0 ? (
         <div style={{
           textAlign: 'center',
           padding: '60px 20px',
-          color: 'rgba(255,255,255,0.4)',
+          color: C.textDim,
           background: 'var(--bg-card, rgba(15,20,30,0.35))',
           borderRadius: '12px',
           backdropFilter: 'blur(20px)',
@@ -149,14 +150,14 @@ export function SwarmList({ onSelectRun }: SwarmListProps) {
                 <div style={{
                   fontSize: '14px',
                   fontWeight: 500,
-                  color: 'rgba(255,255,255,0.9)',
+                  color: C.textPrimary,
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
                 }}>
                   {run.name}
                 </div>
-                <div style={{ fontSize: '14px', color: 'rgba(255,255,255,0.4)', marginTop: '2px' }}>
+                <div style={{ fontSize: '14px', color: C.textDim, marginTop: '2px' }}>
                   {formatTime(run.created_at)} · {run.triggered_by}
                 </div>
               </div>
@@ -178,7 +179,7 @@ export function SwarmList({ onSelectRun }: SwarmListProps) {
               {/* Cost */}
               <div style={{
                 fontSize: '14px',
-                color: 'rgba(255,255,255,0.3)',
+                color: C.textMuted,
                 fontFamily: 'var(--font-mono, monospace)',
                 minWidth: '50px',
                 textAlign: 'right',

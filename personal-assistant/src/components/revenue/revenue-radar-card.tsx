@@ -5,6 +5,7 @@ import {
   DollarSign, TrendingUp, TrendingDown, AlertTriangle, ArrowRight,
   RefreshCw, CheckCircle2, XCircle, Clock, Eye,
 } from 'lucide-react'
+import { S, C } from '@/lib/styles/design-tokens'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -91,7 +92,7 @@ const insightRow: React.CSSProperties = {
   gap: 12,
   padding: '12px 12px',
   borderRadius: 8,
-  background: 'rgba(255, 255, 255, 0.02)',
+  background: C.bgHover,
   cursor: 'pointer',
   transition: 'background 150ms',
 }
@@ -361,7 +362,7 @@ export function RevenueRadarCard() {
                 gap: 12,
                 padding: '8px 12px',
                 borderRadius: 8,
-                background: i === 0 ? 'rgba(255, 255, 255, 0.04)' : 'rgba(255, 255, 255, 0.02)',
+                background: i === 0 ? 'rgba(255, 255, 255, 0.04)' : C.bgHover,
               }}>
                 <div style={{
                   width: 28,
@@ -412,7 +413,7 @@ export function RevenueRadarCard() {
               gap: 8,
               padding: '8px 12px',
               borderRadius: 8,
-              background: 'rgba(245, 158, 11, 0.06)',
+              background: C.statusWarningBg,
             }}>
               <AlertTriangle size={14} color="#F59E0B" />
               <div style={{ flex: 1 }}>

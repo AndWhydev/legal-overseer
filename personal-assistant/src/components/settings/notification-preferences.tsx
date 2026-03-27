@@ -3,6 +3,8 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Check, Clock } from 'lucide-react';
 import { logger } from '@/lib/core/logger';
+import { ToggleSwitch } from '@/components/ui/toggle-switch';
+import { S, C } from '@/lib/styles/design-tokens'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -99,57 +101,6 @@ const toggleContainer: React.CSSProperties = {
   gap: 12,
 };
 
-// ─── Toggle Component ────────────────────────────────────────────────────────
-
-function Toggle({ checked, onChange, label, disabled = false }: { checked: boolean; onChange: (v: boolean) => void; label: string; disabled?: boolean }) {
-  return (
-    <button
-      onClick={() => !disabled && onChange(!checked)}
-      disabled={disabled}
-      style={{
-        position: 'relative',
-        display: 'inline-flex',
-        height: 24,
-        width: 44,
-        flexShrink: 0,
-        cursor: disabled ? 'not-allowed' : 'pointer',
-        borderRadius: 12,
-        transition: 'background-color 200ms ease',
-        border: 'none',
-        background: checked && !disabled ? '#22C55E' : 'rgba(255, 255, 255, 0.1)',
-        outline: 'none',
-        opacity: disabled ? 0.5 : 1,
-      }}
-      role="switch"
-      aria-checked={checked}
-      aria-label={label}
-      onFocus={e => {
-        if (!disabled) {
-          e.currentTarget.style.boxShadow = checked ? '0 0 0 2px rgba(34, 197, 94, 0.3)' : '0 0 0 2px rgba(255, 255, 255, 0.1)';
-        }
-      }}
-      onBlur={e => {
-        e.currentTarget.style.boxShadow = 'none';
-      }}
-    >
-      <span
-        style={{
-          pointerEvents: 'none',
-          display: 'inline-block',
-          height: 20,
-          width: 20,
-          borderRadius: 9999,
-          background: '#FFFFFF',
-          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.3)',
-          transition: 'transform 200ms ease',
-          transform: checked ? 'translateX(20px)' : 'translateX(2px)',
-          marginTop: 2,
-        }}
-      />
-    </button>
-  );
-}
-
 // ─── Save Indicator ──────────────────────────────────────────────────────────
 
 function SaveIndicator({ visible }: { visible: boolean }) {
@@ -164,7 +115,7 @@ function SaveIndicator({ visible }: { visible: boolean }) {
         gap: 8,
         padding: '8px 16px',
         borderRadius: 8,
-        background: 'rgba(34, 197, 94, 0.12)',
+        background: C.statusSuccessBg,
         color: '#22C55E',
         fontSize: 14,
         fontWeight: 500,
@@ -193,17 +144,17 @@ function TimeInput({ value, onChange }: { value: string; onChange: (v: string) =
         padding: '8px 12px',
         borderRadius: 8,
         background: 'var(--bg-input, rgba(13, 17, 23, 0.6))',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
+        border: `1px solid ${C.borderHover}`,
         color: 'var(--text-primary, #F1F5F9)',
         fontSize: 14,
         cursor: 'pointer',
         transition: 'border-color 200ms',
       }}
       onFocus={e => {
-        e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+        e.currentTarget.style.borderColor = C.borderFocus;
       }}
       onBlur={e => {
-        e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+        e.currentTarget.style.borderColor = C.borderHover;
       }}
     />
   );
@@ -341,7 +292,7 @@ export function NotificationPreferencesTab() {
                     {event.desc}
                   </p>
                 </div>
-                <Toggle
+                <ToggleSwitch
                   checked={prefs.events[event.id as keyof typeof prefs.events]}
                   onChange={v => updateEvent(event.id as keyof typeof prefs.events, v)}
                   label={event.label}
@@ -366,7 +317,7 @@ export function NotificationPreferencesTab() {
                     {channel.desc}
                   </p>
                 </div>
-                <Toggle
+                <ToggleSwitch
                   checked={prefs.channels[channel.id as keyof typeof prefs.channels]}
                   onChange={v => updateChannel(channel.id as keyof typeof prefs.channels, v)}
                   label={channel.label}
@@ -390,18 +341,18 @@ export function NotificationPreferencesTab() {
                   ...glassCard,
                   padding: '12px 16px',
                   cursor: 'pointer',
-                  border: prefs.digest_mode === mode.id ? '2px solid rgba(255, 255, 255, 0.3)' : '1px solid rgba(255, 255, 255, 0.03)',
+                  border: prefs.digest_mode === mode.id ? `2px solid ${C.borderFocus}` : `1px solid ${C.borderSubtle}`,
                   transition: 'all 200ms',
                 }}
                 onMouseEnter={e => {
                   if (prefs.digest_mode !== mode.id) {
-                    e.currentTarget.style.background = 'rgba(15, 20, 30, 0.8)';
-                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
+                    e.currentTarget.style.background = C.bgCardHeavy;
+                    e.currentTarget.style.borderColor = C.bgHoverStrong;
                   }
                 }}
                 onMouseLeave={e => {
                   if (prefs.digest_mode !== mode.id) {
-                    e.currentTarget.style.background = 'rgba(15, 20, 30, 0.6)';
+                    e.currentTarget.style.background = C.bgCard;
                     e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.03)';
                   }
                 }}
@@ -431,7 +382,7 @@ export function NotificationPreferencesTab() {
                   Notifications will be silenced during this time
                 </p>
               </div>
-              <Toggle
+              <ToggleSwitch
                 checked={prefs.quiet_hours.enabled}
                 onChange={v => updateQuietHours('enabled', v)}
                 label="Enable Quiet Hours"
@@ -439,7 +390,7 @@ export function NotificationPreferencesTab() {
             </div>
 
             {prefs.quiet_hours.enabled && (
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, paddingTop: 12, borderTop: '1px solid rgba(255, 255, 255, 0.05)' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, paddingTop: 12, borderTop: `1px solid ${C.borderSubtle}` }}>
                 <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8 }}>
                   <div style={{ flex: 1 }}>
                     <label style={{ fontSize: 14, color: 'var(--text-secondary, #94A3B8)', display: 'block', marginBottom: 4 }}>

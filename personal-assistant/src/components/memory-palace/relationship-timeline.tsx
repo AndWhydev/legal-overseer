@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react'
 import type { MemoryTimelineEvent } from '@/lib/memory-palace/types'
+import { S, C } from '@/lib/styles/design-tokens'
 
 interface RelationshipTimelineProps {
   entityId: string
@@ -47,7 +48,7 @@ export function RelationshipTimeline({ entityId, entityName }: RelationshipTimel
 
   if (loading) {
     return (
-      <div style={{ textAlign: 'center', padding: '40px', color: 'rgba(255, 255, 255, 0.4)' }}>
+      <div style={{ textAlign: 'center', padding: '40px', color: C.textDim }}>
         Loading timeline...
       </div>
     )
@@ -58,7 +59,7 @@ export function RelationshipTimeline({ entityId, entityName }: RelationshipTimel
       <div style={{
         textAlign: 'center',
         padding: '40px 20px',
-        color: 'rgba(255, 255, 255, 0.3)',
+        color: C.textMuted,
       }}>
         No timeline events for {displayName}
       </div>
@@ -94,13 +95,13 @@ export function RelationshipTimeline({ entityId, entityName }: RelationshipTimel
         <div style={{
           fontSize: '16px',
           fontWeight: 500,
-          color: 'rgba(255, 255, 255, 0.9)',
+          color: C.textPrimary,
         }}>
           {displayName}
         </div>
         <div style={{
           fontSize: '14px',
-          color: 'rgba(255, 255, 255, 0.4)',
+          color: C.textDim,
           marginTop: '2px',
         }}>
           {timeline.length} event{timeline.length !== 1 ? 's' : ''} in relationship history
@@ -114,7 +115,7 @@ export function RelationshipTimeline({ entityId, entityName }: RelationshipTimel
           <div style={{
             fontSize: '14px',
             fontWeight: 500,
-            color: 'rgba(255, 255, 255, 0.3)',
+            color: C.textMuted,
             padding: '8px 16px',
             textTransform: 'uppercase',
             letterSpacing: '1px',
@@ -196,14 +197,14 @@ export function RelationshipTimeline({ entityId, entityName }: RelationshipTimel
                     <span style={{
                       fontSize: '14px',
                       fontWeight: 500,
-                      color: 'rgba(255, 255, 255, 0.85)',
+                      color: C.textPrimary,
                     }}>
                       {event.title}
                     </span>
                     <span style={{ flex: 1 }} />
                     <span style={{
                       fontSize: '14px',
-                      color: 'rgba(255, 255, 255, 0.3)',
+                      color: C.textMuted,
                     }}>
                       {day} {time}
                     </span>
@@ -211,7 +212,7 @@ export function RelationshipTimeline({ entityId, entityName }: RelationshipTimel
 
                   <div style={{
                     fontSize: '14px',
-                    color: 'rgba(255, 255, 255, 0.5)',
+                    color: C.textPlaceholder,
                     lineHeight: '1.5',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
@@ -247,7 +248,7 @@ export function RelationshipTimeline({ entityId, entityName }: RelationshipTimel
                       </div>
                       <span style={{
                         fontSize: '14px',
-                        color: 'rgba(255, 255, 255, 0.3)',
+                        color: C.textMuted,
                       }}>
                         {Math.round(event.confidence * 100)}%
                       </span>

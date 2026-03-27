@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import type { SwarmRunRow, SwarmStepRow, SwarmMessageRow } from '@/lib/swarm/types';
+import { S, C } from '@/lib/styles/design-tokens'
 
 // ── Styles ──────────────────────────────────────────────────────────────────
 
@@ -19,7 +20,7 @@ const s = {
     alignItems: 'center',
     gap: '8px',
     cursor: 'pointer',
-    color: 'rgba(255, 255, 255, 0.45)',
+    color: C.textSecondary,
     fontSize: '14px',
     width: 'fit-content',
   },
@@ -32,12 +33,12 @@ const s = {
   title: {
     fontSize: '16px',
     fontWeight: 500,
-    color: 'rgba(255, 255, 255, 0.95)',
+    color: C.textPrimary,
     letterSpacing: '-0.02em',
   },
   triggerText: {
     fontSize: '14px',
-    color: 'rgba(255, 255, 255, 0.5)',
+    color: C.textPlaceholder,
     marginTop: '4px',
   },
   metaRow: {
@@ -52,7 +53,7 @@ const s = {
     fontSize: '14px',
     fontWeight: 500,
     background: 'var(--hover-bg)',
-    color: 'rgba(255, 255, 255, 0.4)',
+    color: C.textDim,
   },
   rollbackBtn: {
     padding: '8px 16px',
@@ -60,15 +61,15 @@ const s = {
     fontSize: '14px',
     fontWeight: 500,
     cursor: 'pointer',
-    border: '1px solid rgba(239, 68, 68, 0.3)',
-    background: 'rgba(239, 68, 68, 0.08)',
+    border: `1px solid ${C.statusError}`,
+    background: C.statusErrorBg,
     color: '#EF4444',
     transition: 'all 0.15s ease',
   },
   sectionLabel: {
     fontSize: '14px',
     fontWeight: 500,
-    color: 'rgba(255, 255, 255, 0.3)',
+    color: C.textMuted,
     textTransform: 'uppercase' as const,
     letterSpacing: '0.06em',
     marginBottom: '8px',
@@ -81,15 +82,15 @@ const s = {
   },
   stepCard: (status: string) => {
     const border: Record<string, string> = {
-      completed: 'rgba(34, 197, 94, 0.15)',
-      executing: 'rgba(255, 255, 255, 0.12)',
+      completed: C.statusSuccessBg,
+      executing: C.bgHoverStrong,
       failed: 'rgba(239, 68, 68, 0.15)',
       negotiating: 'rgba(139, 92, 246, 0.15)',
-      skipped: 'rgba(255, 255, 255, 0.04)',
-      blocked: 'rgba(255, 255, 255, 0.04)',
-      pending: 'rgba(255, 255, 255, 0.04)',
+      skipped: C.bgHover,
+      blocked: C.bgHover,
+      pending: C.bgHover,
       ready: 'rgba(59, 130, 246, 0.1)',
-      rolled_back: 'rgba(255, 255, 255, 0.04)',
+      rolled_back: C.bgHover,
     };
     return {
       background: 'var(--bg-card, rgba(15, 20, 30, 0.4))',
@@ -108,7 +109,7 @@ const s = {
   stepLabel: {
     fontSize: '14px',
     fontWeight: 500,
-    color: 'rgba(255, 255, 255, 0.85)',
+    color: C.textPrimary,
   },
   stepRole: {
     fontSize: '14px',
@@ -116,7 +117,7 @@ const s = {
     padding: '2px 8px',
     borderRadius: '8px',
     background: 'var(--hover-bg)',
-    color: 'rgba(255, 255, 255, 0.4)',
+    color: C.textDim,
   },
   stepStatus: (status: string) => {
     const colors: Record<string, string> = {
@@ -124,11 +125,11 @@ const s = {
       executing: '#E2E8F0',
       failed: '#EF4444',
       negotiating: '#8B5CF6',
-      skipped: 'rgba(255,255,255,0.3)',
-      blocked: 'rgba(255,255,255,0.25)',
-      pending: 'rgba(255,255,255,0.2)',
+      skipped: C.textMuted,
+      blocked: C.textMuted,
+      pending: C.textMuted,
       ready: '#3B82F6',
-      rolled_back: 'rgba(255,255,255,0.3)',
+      rolled_back: C.textMuted,
     };
     return {
       fontSize: '14px',
@@ -141,16 +142,16 @@ const s = {
     gap: '12px',
     marginTop: '6px',
     fontSize: '14px',
-    color: 'rgba(255, 255, 255, 0.3)',
+    color: C.textMuted,
   },
   stepOutput: {
     marginTop: '8px',
     padding: '8px 12px',
     borderRadius: '8px',
-    background: 'rgba(0, 0, 0, 0.2)',
+    background: C.bgOverlay,
     fontSize: '14px',
     fontFamily: 'var(--font-mono, monospace)',
-    color: 'rgba(255, 255, 255, 0.5)',
+    color: C.textPlaceholder,
     maxHeight: '120px',
     overflow: 'auto',
     whiteSpace: 'pre-wrap' as const,
@@ -164,25 +165,25 @@ const s = {
   messageCard: (type: string) => {
     const bg: Record<string, string> = {
       finding: 'rgba(59, 130, 246, 0.06)',
-      warning: 'rgba(245, 158, 11, 0.06)',
-      blocker: 'rgba(239, 68, 68, 0.08)',
-      completion: 'rgba(34, 197, 94, 0.04)',
+      warning: C.statusWarningBg,
+      blocker: C.statusErrorBg,
+      completion: C.statusSuccessBg,
       negotiation: 'rgba(139, 92, 246, 0.06)',
-      status: 'rgba(255, 255, 255, 0.02)',
-      handoff: 'rgba(255, 255, 255, 0.02)',
+      status: C.bgHover,
+      handoff: C.bgHover,
     };
     return {
       padding: '8px 12px',
       borderRadius: '8px',
       background: bg[type] || bg.status,
       fontSize: '14px',
-      color: 'rgba(255, 255, 255, 0.6)',
+      color: C.textSecondary,
     };
   },
   msgFrom: {
     fontSize: '14px',
     fontWeight: 500,
-    color: 'rgba(255, 255, 255, 0.3)',
+    color: C.textMuted,
     textTransform: 'uppercase' as const,
     letterSpacing: '0.04em',
     marginBottom: '2px',
@@ -194,8 +195,8 @@ const s = {
       blocker: '#EF4444',
       completion: '#22C55E',
       negotiation: '#8B5CF6',
-      status: 'rgba(255,255,255,0.35)',
-      handoff: 'rgba(255,255,255,0.35)',
+      status: C.textDim,
+      handoff: C.textDim,
     };
     return {
       fontSize: '14px',
@@ -208,7 +209,7 @@ const s = {
     display: 'flex',
     justifyContent: 'center',
     padding: '40px',
-    color: 'rgba(255, 255, 255, 0.3)',
+    color: C.textMuted,
     fontSize: '14px',
   },
 };
@@ -330,7 +331,7 @@ export function SwarmRunDetail({ runId, onBack, onRollback }: SwarmRunDetailProp
               fontSize: '14px',
               fontWeight: 500,
               background: 'var(--hover-bg)',
-              color: 'rgba(255, 255, 255, 0.4)',
+              color: C.textDim,
               border: 'none',
               cursor: 'pointer',
               transition: 'color 0.15s ease',
@@ -441,7 +442,7 @@ export function SwarmRunDetail({ runId, onBack, onRollback }: SwarmRunDetailProp
                     {msg.message_type}
                   </span>
                   {msg.to_step_key && (
-                    <span style={{ ...s.msgFrom, color: 'rgba(255,255,255,0.2)' }}>
+                    <span style={{ ...s.msgFrom, color: C.textMuted }}>
                       &rarr; {msg.to_step_key.replace(/_/g, ' ')}
                     </span>
                   )}
@@ -462,7 +463,7 @@ export function SwarmRunDetail({ runId, onBack, onRollback }: SwarmRunDetailProp
             borderRadius: '12px',
             background: 'var(--bg-card, rgba(15, 20, 30, 0.4))',
             fontSize: '14px',
-            color: 'rgba(255, 255, 255, 0.65)',
+            color: C.textSecondary,
             lineHeight: 1.6,
             whiteSpace: 'pre-wrap' as const,
           }}>

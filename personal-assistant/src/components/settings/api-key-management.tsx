@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { Copy, Check, Loader2, Trash2, Plus, Eye, EyeOff } from 'lucide-react'
 import { logger } from '@/lib/core/logger'
+import { S, C } from '@/lib/styles/design-tokens'
 
 interface ApiKey {
   id: string
@@ -59,7 +60,7 @@ const inputStyle: React.CSSProperties = {
   padding: '12px 16px',
   borderRadius: 12,
   background: 'var(--bb-surface, rgba(10, 14, 23, 0.5))',
-  border: '1px solid rgba(255, 255, 255, 0.08)',
+  border: `1px solid ${C.borderHover}`,
   color: 'var(--text-primary, #F1F5F9)',
   fontSize: 14,
   fontFamily: 'inherit',
@@ -84,14 +85,14 @@ const secondaryButtonStyle: React.CSSProperties = {
   ...buttonStyle,
   background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.6))',
   color: 'var(--text-primary, #F1F5F9)',
-  border: '1px solid rgba(255, 255, 255, 0.1)',
+  border: `1px solid ${C.borderHover}`,
 }
 
 const dangerButtonStyle: React.CSSProperties = {
   ...buttonStyle,
-  background: 'rgba(239, 68, 68, 0.1)',
+  background: C.statusErrorBg,
   color: '#ef4444',
-  border: '1px solid rgba(239, 68, 68, 0.3)',
+  border: `1px solid ${C.statusError}`,
   padding: '8px 12px',
   fontSize: 14,
 }
@@ -309,7 +310,7 @@ export function ApiKeyManagement() {
               padding: 12,
               borderRadius: 8,
               background: 'var(--bb-surface, rgba(10, 14, 23, 0.5))',
-              border: '1px solid rgba(255, 255, 255, 0.03)',
+              border: `1px solid ${C.borderSubtle}`,
               marginBottom: 12,
               fontFamily: 'monospace',
               fontSize: 14,

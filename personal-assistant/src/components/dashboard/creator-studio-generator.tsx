@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react'
 import { Copy, Check, Loader2, Trash2, Plus } from 'lucide-react'
+import { GlassDropdown } from '@/components/ui/glass-dropdown'
 import { logger } from '@/lib/core/logger'
 
 interface Template {
@@ -200,17 +201,11 @@ export function CreatorStudioGenerator() {
           <label style={{ display: 'block', marginBottom: 8, fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>
             Template Type
           </label>
-          <select
+          <GlassDropdown
+            options={templates.map((t) => ({ value: t.id, label: t.label }))}
             value={selectedTemplate}
-            onChange={(e) => setSelectedTemplate(e.target.value)}
-            style={selectStyle}
-          >
-            {templates.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.label}
-              </option>
-            ))}
-          </select>
+            onChange={(v) => setSelectedTemplate(v)}
+          />
           {templates.find((t) => t.id === selectedTemplate)?.description && (
             <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 8 }}>
               {templates.find((t) => t.id === selectedTemplate)?.description}
@@ -249,29 +244,29 @@ export function CreatorStudioGenerator() {
             <label style={{ display: 'block', marginBottom: 8, fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>
               Tone
             </label>
-            <select
+            <GlassDropdown
+              options={[
+                { value: 'professional', label: 'Professional' },
+                { value: 'casual', label: 'Casual' },
+                { value: 'playful', label: 'Playful' },
+              ]}
               value={formInputs.tone}
-              onChange={(e) => setFormInputs({ ...formInputs, tone: e.target.value as any })}
-              style={selectStyle}
-            >
-              <option value="professional">Professional</option>
-              <option value="casual">Casual</option>
-              <option value="playful">Playful</option>
-            </select>
+              onChange={(v) => setFormInputs({ ...formInputs, tone: v as any })}
+            />
           </div>
           <div>
             <label style={{ display: 'block', marginBottom: 8, fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>
               Length
             </label>
-            <select
+            <GlassDropdown
+              options={[
+                { value: 'short', label: 'Short' },
+                { value: 'medium', label: 'Medium' },
+                { value: 'long', label: 'Long' },
+              ]}
               value={formInputs.length}
-              onChange={(e) => setFormInputs({ ...formInputs, length: e.target.value as any })}
-              style={selectStyle}
-            >
-              <option value="short">Short</option>
-              <option value="medium">Medium</option>
-              <option value="long">Long</option>
-            </select>
+              onChange={(v) => setFormInputs({ ...formInputs, length: v as any })}
+            />
           </div>
         </div>
 

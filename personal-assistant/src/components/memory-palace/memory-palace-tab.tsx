@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { TabShell } from '@/components/ui/tab-shell';
 import { EmptyState } from '@/components/ui/empty-state';
+import { S, C } from '@/lib/styles/design-tokens'
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -117,7 +118,7 @@ function ConfidenceBar({ value }: { value: number }) {
           transition: 'width 0.3s ease',
         }} />
       </div>
-      <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)' }}>{pct}%</span>
+      <span style={{ fontSize: 14, color: C.textPlaceholder }}>{pct}%</span>
     </div>
   );
 }
@@ -160,7 +161,7 @@ function MemoryCard({ memory }: { memory: MemoryEntry }) {
           }}>
             {config.label}
           </span>
-          <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)' }}>{date}</span>
+          <span style={{ fontSize: 14, color: C.textDim }}>{date}</span>
         </div>
         <div style={{
           fontSize: 14,
@@ -175,7 +176,7 @@ function MemoryCard({ memory }: { memory: MemoryEntry }) {
         </div>
         <div style={{
           fontSize: 14,
-          color: 'rgba(255,255,255,0.55)',
+          color: C.textSecondary,
           lineHeight: 1.4,
           display: '-webkit-box',
           WebkitLineClamp: 2,
@@ -187,7 +188,7 @@ function MemoryCard({ memory }: { memory: MemoryEntry }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 6 }}>
           <ConfidenceBar value={memory.confidence} />
           {memory.entity_names.length > 0 && (
-            <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)' }}>
+            <span style={{ fontSize: 14, color: C.textDim }}>
               {memory.entity_names.slice(0, 2).join(', ')}
             </span>
           )}
@@ -204,7 +205,7 @@ function StatsCard({ stats }: { stats: MemoryStats | null }) {
     { label: 'Active Memories', value: stats.totalActive, icon: Brain, color: '#22C55E' },
     { label: 'Avg Confidence', value: `${Math.round(stats.avgConfidence * 100)}%`, icon: BarChart3, color: '#3B82F6' },
     { label: 'Recent Decisions', value: stats.recentDecisions, icon: Lightbulb, color: '#F59E0B' },
-    { label: 'Archived', value: stats.totalArchived, icon: Clock, color: 'rgba(255,255,255,0.4)' },
+    { label: 'Archived', value: stats.totalArchived, icon: Clock, color: C.textDim },
   ];
 
   return (
@@ -217,7 +218,7 @@ function StatsCard({ stats }: { stats: MemoryStats | null }) {
             <div style={{ fontSize: 16, fontWeight: 500, color: 'var(--text-primary)' }}>
               {item.value}
             </div>
-            <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>
+            <div style={{ fontSize: 14, color: C.textPlaceholder, marginTop: 2 }}>
               {item.label}
             </div>
           </div>
@@ -245,7 +246,7 @@ function TypeFilter({
         style={{
           ...badge,
           background: !activeType ? '#F1F5F9' : 'var(--hover-bg-strong)',
-          color: !activeType ? '#0a0f1a' : 'rgba(255,255,255,0.6)',
+          color: !activeType ? '#0a0f1a' : C.textSecondary,
           cursor: 'pointer',
           border: 'none',
           padding: '4px 12px',
@@ -260,7 +261,7 @@ function TypeFilter({
           style={{
             ...badge,
             background: activeType === key ? `${config.color}30` : 'var(--hover-bg-strong)',
-            color: activeType === key ? config.color : 'rgba(255,255,255,0.5)',
+            color: activeType === key ? config.color : C.textPlaceholder,
             cursor: 'pointer',
             border: 'none',
             padding: '4px 12px',
@@ -347,7 +348,7 @@ export function MemoryPalaceTab() {
               style={{
                 ...badge,
                 background: view === 'search' ? '#F1F5F9' : 'var(--hover-bg-strong)',
-                color: view === 'search' ? '#0a0f1a' : 'rgba(255,255,255,0.6)',
+                color: view === 'search' ? '#0a0f1a' : C.textSecondary,
                 cursor: 'pointer',
                 border: 'none',
                 padding: '4px 12px',
@@ -361,7 +362,7 @@ export function MemoryPalaceTab() {
               style={{
                 ...badge,
                 background: view === 'decisions' ? '#F1F5F9' : 'var(--hover-bg-strong)',
-                color: view === 'decisions' ? '#0a0f1a' : 'rgba(255,255,255,0.6)',
+                color: view === 'decisions' ? '#0a0f1a' : C.textSecondary,
                 cursor: 'pointer',
                 border: 'none',
                 padding: '4px 12px',
@@ -403,7 +404,7 @@ export function MemoryPalaceTab() {
         {/* Results */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {loading && (
-            <div style={{ textAlign: 'center', padding: 32, color: 'rgba(255,255,255,0.4)' }}>
+            <div style={{ textAlign: 'center', padding: 32, color: C.textDim }}>
               Searching memories...
             </div>
           )}

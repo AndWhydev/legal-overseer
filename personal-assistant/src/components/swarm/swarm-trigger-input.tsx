@@ -2,6 +2,7 @@
 
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { BUILTIN_TEMPLATES } from '@/lib/swarm/templates';
+import { S, C } from '@/lib/styles/design-tokens';
 
 // ── Styles ──────────────────────────────────────────────────────────────────
 
@@ -13,22 +14,22 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     gap: '12px',
-    background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.5))',
+    background: C.bgCard,
     backdropFilter: 'blur(20px)',
     borderRadius: '12px',
     padding: '12px 16px',
-    border: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
+    border: `1px solid ${C.borderSubtle}`,
     transition: 'border-color 0.15s ease',
   },
   inputWrapperFocused: {
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: C.borderFocus,
   },
   input: {
     flex: 1,
     background: 'transparent',
     border: 'none',
     outline: 'none',
-    color: 'rgba(255, 255, 255, 0.9)',
+    color: C.textPrimary,
     fontSize: '14px',
     fontFamily: 'inherit',
     letterSpacing: '-0.01em',
@@ -61,19 +62,19 @@ const styles = {
     fontSize: '14px',
     fontWeight: 500,
     cursor: 'pointer',
-    border: '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
-    background: 'var(--hover-bg)',
-    color: 'rgba(255, 255, 255, 0.45)',
+    border: `1px solid ${C.borderSubtle}`,
+    background: C.bgHover,
+    color: C.textSecondary,
     transition: 'all 0.15s ease',
   },
   templateChipHover: {
-    background: 'var(--hover-bg-strong)',
-    color: 'rgba(255, 255, 255, 0.7)',
-    borderColor: 'rgba(255, 255, 255, 0.12)',
+    background: C.bgHoverStrong,
+    color: C.textPrimary,
+    borderColor: C.borderHover,
   },
   label: {
     fontSize: '14px',
-    color: 'rgba(255, 255, 255, 0.25)',
+    color: C.textMuted,
     marginBottom: '8px',
     fontWeight: 500,
     textTransform: 'uppercase' as const,

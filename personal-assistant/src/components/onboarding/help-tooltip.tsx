@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { HelpCircle, X } from 'lucide-react';
+import { S, C } from '@/lib/styles/design-tokens'
 
 interface HelpTooltipProps {
   tooltipKey: string;
@@ -75,7 +76,7 @@ export function HelpTooltip({
       background: 'var(--glass-bg-heavy, rgba(15, 20, 30, 0.95))',
       backdropFilter: 'blur(20px)',
       WebkitBackdropFilter: 'blur(20px)',
-      border: '1px solid rgba(255, 255, 255, 0.03)',
+      border: `1px solid ${C.borderSubtle}`,
       borderRadius: 12,
       padding: '12px 16px',
       minWidth: '240px',
@@ -161,7 +162,7 @@ export function HelpTooltip({
             position: 'absolute',
             inset: 0,
             borderRadius: '50%',
-            background: 'rgba(255, 255, 255, 0.12)',
+            background: C.bgHoverStrong,
             animation: 'bitbit-help-pulse 2s ease-in-out infinite',
           }}
         />

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react'
 import type { DecisionLogEntry } from '@/lib/memory-palace/types'
+import { S, C } from '@/lib/styles/design-tokens'
 
 interface DecisionLogViewerProps {
   orgId: string
@@ -12,7 +13,7 @@ const IMPACT_COLORS: Record<string, string> = {
   critical: '#EF4444',
   high: '#F59E0B',
   medium: '#3B82F6',
-  low: 'rgba(255, 255, 255, 0.4)',
+  low: C.textDim,
 }
 
 const DOMAIN_ICONS: Record<string, string> = {
@@ -53,7 +54,7 @@ export function DecisionLogViewer({ orgId, entityId }: DecisionLogViewerProps) {
 
   if (loading) {
     return (
-      <div style={{ textAlign: 'center', padding: '40px', color: 'rgba(255, 255, 255, 0.4)' }}>
+      <div style={{ textAlign: 'center', padding: '40px', color: C.textDim }}>
         Loading decisions...
       </div>
     )
@@ -64,7 +65,7 @@ export function DecisionLogViewer({ orgId, entityId }: DecisionLogViewerProps) {
       <div style={{
         textAlign: 'center',
         padding: '60px 20px',
-        color: 'rgba(255, 255, 255, 0.3)',
+        color: C.textMuted,
       }}>
         <div style={{ fontSize: '16px', marginBottom: '8px' }}>No decisions recorded</div>
         <div style={{ fontSize: '14px' }}>
@@ -103,7 +104,7 @@ export function DecisionLogViewer({ orgId, entityId }: DecisionLogViewerProps) {
               e.currentTarget.style.background = 'var(--bb-surface-hover, rgba(20, 28, 40, 0.5))'
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'rgba(15, 20, 30, 0.35)'
+              e.currentTarget.style.background = C.bgCardLight
             }}
           >
             {/* Header */}
@@ -142,7 +143,7 @@ export function DecisionLogViewer({ orgId, entityId }: DecisionLogViewerProps) {
 
               <span style={{ flex: 1 }} />
 
-              <span style={{ fontSize: '14px', color: 'rgba(255, 255, 255, 0.3)' }}>
+              <span style={{ fontSize: '14px', color: C.textMuted }}>
                 {dateStr}
               </span>
             </div>
@@ -151,7 +152,7 @@ export function DecisionLogViewer({ orgId, entityId }: DecisionLogViewerProps) {
             <div style={{
               fontSize: '14px',
               fontWeight: 500,
-              color: 'rgba(255, 255, 255, 0.9)',
+              color: C.textPrimary,
               marginBottom: '4px',
             }}>
               {decision.title}
@@ -160,7 +161,7 @@ export function DecisionLogViewer({ orgId, entityId }: DecisionLogViewerProps) {
             {/* Decision summary */}
             <div style={{
               fontSize: '14px',
-              color: 'rgba(255, 255, 255, 0.6)',
+              color: C.textSecondary,
               lineHeight: '1.5',
               overflow: isExpanded ? 'visible' : 'hidden',
               textOverflow: isExpanded ? 'unset' : 'ellipsis',
@@ -185,7 +186,7 @@ export function DecisionLogViewer({ orgId, entityId }: DecisionLogViewerProps) {
                 <div>
                   <div style={{
                     fontSize: '14px',
-                    color: 'rgba(255, 255, 255, 0.4)',
+                    color: C.textDim,
                     marginBottom: '4px',
                     fontWeight: 500,
                   }}>
@@ -193,7 +194,7 @@ export function DecisionLogViewer({ orgId, entityId }: DecisionLogViewerProps) {
                   </div>
                   <div style={{
                     fontSize: '14px',
-                    color: 'rgba(255, 255, 255, 0.7)',
+                    color: C.textSecondary,
                     lineHeight: '1.5',
                   }}>
                     {decision.reasoning}
@@ -205,7 +206,7 @@ export function DecisionLogViewer({ orgId, entityId }: DecisionLogViewerProps) {
                   <div>
                     <div style={{
                       fontSize: '14px',
-                      color: 'rgba(255, 255, 255, 0.4)',
+                      color: C.textDim,
                       marginBottom: '4px',
                       fontWeight: 500,
                     }}>
@@ -218,7 +219,7 @@ export function DecisionLogViewer({ orgId, entityId }: DecisionLogViewerProps) {
                         borderRadius: '8px',
                         marginBottom: '4px',
                       }}>
-                        <div style={{ fontSize: '14px', color: 'rgba(255, 255, 255, 0.7)' }}>
+                        <div style={{ fontSize: '14px', color: C.textSecondary }}>
                           {alt.option}
                         </div>
                       </div>
@@ -231,7 +232,7 @@ export function DecisionLogViewer({ orgId, entityId }: DecisionLogViewerProps) {
                   <div>
                     <div style={{
                       fontSize: '14px',
-                      color: 'rgba(255, 255, 255, 0.4)',
+                      color: C.textDim,
                       marginBottom: '4px',
                       fontWeight: 500,
                     }}>
@@ -252,7 +253,7 @@ export function DecisionLogViewer({ orgId, entityId }: DecisionLogViewerProps) {
                   <div>
                     <div style={{
                       fontSize: '14px',
-                      color: 'rgba(255, 255, 255, 0.4)',
+                      color: C.textDim,
                       marginBottom: '4px',
                       fontWeight: 500,
                     }}>
@@ -287,7 +288,7 @@ export function DecisionLogViewer({ orgId, entityId }: DecisionLogViewerProps) {
 
                 {/* Decided by */}
                 {decision.decided_by && (
-                  <div style={{ fontSize: '14px', color: 'rgba(255, 255, 255, 0.3)' }}>
+                  <div style={{ fontSize: '14px', color: C.textMuted }}>
                     Decided by: {decision.decided_by}
                   </div>
                 )}

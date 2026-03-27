@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react'
 import type { Meeting, MeetingType } from '@/lib/meetings/types'
+import { S, C } from '@/lib/styles/design-tokens'
 
 // ── Styles ──────────────────────────────────────────────────────────────────
 
@@ -28,12 +29,12 @@ const meetingRowStyle: React.CSSProperties = {
 }
 
 const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
-  pending: { bg: 'rgba(234, 179, 8, 0.12)', text: '#eab308' },
-  recording: { bg: 'rgba(239, 68, 68, 0.12)', text: '#ef4444' },
+  pending: { bg: C.statusWarningBg, text: '#eab308' },
+  recording: { bg: C.statusErrorBg, text: '#ef4444' },
   transcribing: { bg: 'rgba(59, 130, 246, 0.12)', text: '#3b82f6' },
   processing: { bg: 'rgba(139, 92, 246, 0.12)', text: '#8b5cf6' },
-  completed: { bg: 'rgba(34, 197, 94, 0.12)', text: '#22c55e' },
-  failed: { bg: 'rgba(239, 68, 68, 0.12)', text: '#ef4444' },
+  completed: { bg: C.statusSuccessBg, text: '#22c55e' },
+  failed: { bg: C.statusErrorBg, text: '#ef4444' },
 }
 
 const TYPE_LABELS: Record<MeetingType, string> = {
@@ -157,8 +158,8 @@ export function MeetingList({ onSelectMeeting, onUpload }: MeetingListProps) {
             style={{
               padding: '8px 16px',
               borderRadius: 20,
-              background: typeFilter === type ? 'var(--hover-bg-strong)' : 'rgba(10, 14, 23, 0.42)',
-              border: typeFilter === type ? '1px solid rgba(255, 255, 255, 0.15)' : '1px solid rgba(255, 255, 255, 0.06)',
+              background: typeFilter === type ? 'var(--hover-bg-strong)' : C.bgListRow,
+              border: typeFilter === type ? `1px solid ${C.borderFocus}` : `1px solid ${C.borderVisible}`,
               color: typeFilter === type ? '#E2E8F0' : 'var(--text-secondary, #94A3B8)',
               fontSize: 14,
               fontWeight: 500,
@@ -197,12 +198,12 @@ export function MeetingList({ onSelectMeeting, onUpload }: MeetingListProps) {
                   style={{
                     ...meetingRowStyle,
                     background: isHovered ? 'var(--hover-bg)' : 'transparent',
-                    borderBottom: i < meetings.length - 1 ? '1px solid rgba(255, 255, 255, 0.03)' : 'none',
+                    borderBottom: i < meetings.length - 1 ? `1px solid ${C.borderSubtle}` : 'none',
                     borderRadius: 0,
                     border: 'none',
                     borderBottomWidth: i < meetings.length - 1 ? 1 : 0,
                     borderBottomStyle: 'solid',
-                    borderBottomColor: 'rgba(255, 255, 255, 0.03)',
+                    borderBottomColor: C.bgHover,
                   }}
                   onClick={() => onSelectMeeting(meeting)}
                   onMouseEnter={() => setHoveredId(meeting.id)}

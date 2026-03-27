@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import type { MeetingWithDetails, MeetingActionItem, MeetingFollowUp, TranscriptSegment } from '@/lib/meetings/types'
+import { S, C } from '@/lib/styles/design-tokens'
 
 // ── Styles ──────────────────────────────────────────────────────────────────
 
@@ -469,7 +470,7 @@ function ActionItemsView({
               padding: '8px 16px',
               borderRadius: 8,
               background: 'var(--hover-bg-strong)',
-              border: '1px solid rgba(255, 255, 255, 0.15)',
+              border: `1px solid ${C.borderFocus}`,
               color: '#E2E8F0',
               fontSize: 14,
               fontWeight: 500,
@@ -558,7 +559,7 @@ function ActionItemsView({
               color: 'var(--text-dim, #475569)',
               fontStyle: 'italic',
               paddingLeft: 20,
-              borderLeft: '2px solid rgba(255, 255, 255, 0.12)',
+              borderLeft: `2px solid ${C.borderHover}`,
               marginLeft: 8,
             }}>
               &ldquo;{item.source_quote}&rdquo;
@@ -618,7 +619,7 @@ function FollowUpView({
               borderRadius: 12,
               fontSize: 14,
               fontWeight: 500,
-              background: fu.status === 'approved' ? 'rgba(34, 197, 94, 0.12)' : fu.status === 'sent' ? 'rgba(59, 130, 246, 0.12)' : 'rgba(234, 179, 8, 0.12)',
+              background: fu.status === 'approved' ? 'rgba(34, 197, 94, 0.12)' : fu.status === 'sent' ? 'rgba(59, 130, 246, 0.12)' : C.statusWarningBg,
               color: fu.status === 'approved' ? '#22c55e' : fu.status === 'sent' ? '#3b82f6' : '#eab308',
             }}>
               {fu.status}

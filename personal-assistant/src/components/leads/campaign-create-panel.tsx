@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo, memo } from 'react'
 import { X, Send, Users, Mail, Check } from 'lucide-react'
+import { GlassDropdown } from '@/components/ui/glass-dropdown'
 import type { EnhancedLeadData } from '@/lib/leads/types'
 import type { EmailTemplate } from '@/hooks/use-campaigns'
 
@@ -273,16 +274,11 @@ function CampaignCreatePanelInner({
           <div>
             <label style={fieldLabel}>Email Template</label>
             {templates.length > 0 ? (
-              <select
+              <GlassDropdown
+                options={[{ value: '', label: 'Select a template' }, ...templates.map(t => ({ value: t.id, label: `${t.name} (${t.category})` }))]}
                 value={templateId}
-                onChange={e => setTemplateId(e.target.value)}
-                style={selectStyle}
-              >
-                <option value="">Select a template</option>
-                {templates.map(t => (
-                  <option key={t.id} value={t.id}>{t.name} ({t.category})</option>
-                ))}
-              </select>
+                onChange={v => setTemplateId(v)}
+              />
             ) : (
               <div style={noTemplateBox}>
                 No templates yet. Create one first.

@@ -2,8 +2,10 @@
 
 import React, { useCallback, useEffect, useState } from 'react'
 import { Copy, Check, Loader2, ChevronDown, ChevronRight, Film } from 'lucide-react'
+import { S, C } from '@/lib/styles/design-tokens'
 import { TabShell } from '@/components/ui/tab-shell'
 import { EmptyState } from '@/components/ui/empty-state'
+import { GlassDropdown } from '@/components/ui/glass-dropdown'
 
 // ---------------------------------------------------------------------------
 // Types (mirrored from ad-script-gen)
@@ -113,103 +115,49 @@ const TONE_COLORS: Record<string, React.CSSProperties> = {
 // ---------------------------------------------------------------------------
 
 const glassCard: React.CSSProperties = {
-  padding: '20px',
-  borderRadius: 16,
-  background: 'var(--glass-card-bg)',
-  backdropFilter: 'var(--glass-card-blur)',
-  WebkitBackdropFilter: 'var(--glass-card-blur)',
-  border: '1px solid var(--glass-card-border)',
-  boxShadow: 'var(--glass-card-inset)',
+  ...S.card,
 }
 
 const ghostBtn: React.CSSProperties = {
+  ...S.button,
+  ...S.buttonGhost,
   padding: '8px 16px',
   borderRadius: 12,
-  background: 'transparent',
-  border: '1px solid var(--glass-interactive-border)',
-  color: 'var(--text-primary)',
-  fontSize: 14,
-  fontWeight: 500,
-  cursor: 'pointer',
-  transition: 'all 200ms',
+  height: 'auto',
 }
 
 const accentBtn: React.CSSProperties = {
-  display: 'inline-flex',
-  alignItems: 'center',
-  gap: 8,
-  height: 40,
-  padding: '0 20px',
-  borderRadius: 8,
-  background: 'var(--btn-primary-bg, #F1F5F9)',
-  border: 'none',
-  color: 'var(--btn-primary-fg, #0a0f1a)',
-  fontSize: 14,
-  fontWeight: 500,
-  cursor: 'pointer',
-  transition: 'all 200ms',
+  ...S.button,
+  ...S.buttonPrimary,
 }
 
 const pillBtn: React.CSSProperties = {
+  ...S.pill,
   padding: '8px 16px',
   borderRadius: 20,
-  background: 'var(--glass-pill-bg)',
-  backdropFilter: 'var(--glass-card-blur)',
-  WebkitBackdropFilter: 'var(--glass-card-blur)',
-  boxShadow: 'var(--glass-card-inset)',
-  border: 'none',
-  fontSize: 14,
-  color: 'var(--text-secondary)',
-  cursor: 'pointer',
-  transition: 'all 200ms',
+  height: 'auto',
 }
 
 const glassInput: React.CSSProperties = {
-  width: '100%',
+  ...S.input,
   padding: '12px 16px',
   borderRadius: 12,
-  background: 'var(--bg-input, rgba(13, 17, 23, 0.6))',
-  border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.05))',
-  color: 'var(--text-primary)',
-  fontSize: 14,
-  outline: 'none',
-  transition: 'border-color 200ms, box-shadow 200ms',
 }
 
 const glassSelect: React.CSSProperties = {
-  width: '100%',
+  ...S.input,
   padding: '12px 16px',
   borderRadius: 12,
-  background: 'var(--bg-input, rgba(13, 17, 23, 0.6))',
-  border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.05))',
-  color: 'var(--text-primary)',
-  fontSize: 14,
-  outline: 'none',
   appearance: 'none' as const,
   cursor: 'pointer',
 }
 
 const listRow: React.CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  padding: '12px 20px',
-  borderRadius: 12,
-  background: 'var(--glass-pill-bg)',
-  backdropFilter: 'var(--glass-blur)',
-  WebkitBackdropFilter: 'var(--glass-blur)',
-  boxShadow: 'var(--glass-card-inset)',
-  border: 'none',
-  transition: 'background 200ms',
-  cursor: 'pointer',
+  ...S.listRow,
 }
 
 const sectionHeader: React.CSSProperties = {
-  fontSize: 14,
-  fontWeight: 500,
-  letterSpacing: '0.04em',
-  textTransform: 'uppercase' as const,
-  color: 'var(--text-dim)',
-  marginBottom: 12,
+  ...S.sectionLabel,
 }
 
 // ---------------------------------------------------------------------------
@@ -238,7 +186,7 @@ function CopyButton({ text }: { text: string }) {
       style={{
         ...ghostBtn,
         background: hovered ? 'var(--glass-interactive-bg)' : 'transparent',
-        borderColor: hovered ? 'rgba(255, 255, 255, 0.1)' : 'var(--glass-interactive-border)',
+        borderColor: hovered ? C.borderHover : C.borderVisible,
         display: 'flex',
         alignItems: 'center',
         gap: 4,
@@ -313,12 +261,12 @@ function StoryboardView({ shots }: { shots: StoryboardShot[] }) {
               </p>
               {shot.textOverlay && (
                 <p style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
-                  Text: <span style={{ color: 'rgba(241, 245, 249, 0.8)' }}>{shot.textOverlay}</span>
+                  Text: <span style={{ color: C.textPrimary }}>{shot.textOverlay}</span>
                 </p>
               )}
               {shot.audio && (
                 <p style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
-                  Audio: <span style={{ color: 'rgba(241, 245, 249, 0.8)' }}>{shot.audio}</span>
+                  Audio: <span style={{ color: C.textPrimary }}>{shot.audio}</span>
                 </p>
               )}
             </div>
@@ -376,7 +324,7 @@ function ScriptCard({ script }: { script: AdScript }) {
           whiteSpace: 'pre-wrap',
           fontSize: 14,
           lineHeight: 1.6,
-          color: 'rgba(241, 245, 249, 0.9)',
+          color: C.textPrimary,
           fontFamily: 'inherit',
           margin: 0,
         }}
@@ -421,7 +369,7 @@ function VariationCard({ variation }: { variation: AdScriptVariation }) {
           whiteSpace: 'pre-wrap',
           fontSize: 14,
           lineHeight: 1.6,
-          color: 'rgba(241, 245, 249, 0.8)',
+          color: C.textPrimary,
           fontFamily: 'inherit',
           margin: 0,
         }}
@@ -491,16 +439,11 @@ function GenerateForm({
         <label style={{ display: 'block', fontSize: 14, fontWeight: 500, marginBottom: 8, color: 'var(--text-primary)' }}>
           Service / Offer Package
         </label>
-        <select
+        <GlassDropdown
+          options={offers.length === 0 ? [{ value: '', label: 'No offer packages found' }] : offers.map((o) => ({ value: o.id, label: o.name }))}
           value={selectedOffer}
-          onChange={(e) => setSelectedOffer(e.target.value)}
-          style={glassSelect}
-        >
-          {offers.length === 0 && <option value="">No offer packages found</option>}
-          {offers.map((o) => (
-            <option key={o.id} value={o.id}>{o.name}</option>
-          ))}
-        </select>
+          onChange={(v) => setSelectedOffer(v)}
+        />
       </div>
 
       <div>

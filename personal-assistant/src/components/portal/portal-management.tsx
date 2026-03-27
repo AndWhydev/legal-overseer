@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { GlassDropdown } from '@/components/ui/glass-dropdown'
+import { S, C } from '@/lib/styles/design-tokens'
 
 interface PortalAccessRow {
   id: string
@@ -163,7 +165,7 @@ export function PortalManagement() {
               fontWeight: tab === t ? 500 : 400,
               background: tab === t ? 'var(--hover-bg-strong)' : 'transparent',
               color: tab === t ? 'var(--text-primary, #F1F5F9)' : 'var(--text-secondary, #94A3B8)',
-              border: tab === t ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid transparent',
+              border: tab === t ? `1px solid ${C.borderHover}` : '1px solid transparent',
               cursor: 'pointer',
               transition: 'all 150ms',
               textTransform: 'capitalize',
@@ -184,22 +186,17 @@ export function PortalManagement() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label style={darkLabelStyle}>Contact</label>
-                <select
+                <GlassDropdown
+                  options={[{ value: '', label: 'Select contact...' }, ...contacts.map(c => ({ value: c.id, label: c.name }))]}
                   value={inviteForm.contact_id}
-                  onChange={e => {
-                    const contact = contacts.find(c => c.id === e.target.value)
+                  onChange={v => {
+                    const contact = contacts.find(c => c.id === v)
                     setInviteForm({
-                      contact_id: e.target.value,
+                      contact_id: v,
                       email: contact?.emails?.[0] ?? '',
                     })
                   }}
-                  style={darkInputStyle}
-                >
-                  <option value="">Select contact...</option>
-                  {contacts.map(c => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
-                  ))}
-                </select>
+                />
               </div>
               <div>
                 <label style={darkLabelStyle}>Email</label>
@@ -237,7 +234,7 @@ export function PortalManagement() {
 
           {/* Access List */}
           <div style={glassCard}>
-            <div style={{ padding: '12px 20px', borderBottom: '1px solid rgba(255, 255, 255, 0.03)' }}>
+            <div style={{ padding: '12px 20px', borderBottom: `1px solid ${C.borderSubtle}` }}>
               <h3 style={{ fontSize: 16, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)', margin: 0 }}>
                 Portal Access ({accessList.length})
               </h3>
@@ -253,7 +250,7 @@ export function PortalManagement() {
                   className="flex items-center justify-between"
                   style={{
                     padding: '12px 20px',
-                    borderBottom: i < accessList.length - 1 ? '1px solid rgba(255, 255, 255, 0.03)' : 'none',
+                    borderBottom: i < accessList.length - 1 ? `1px solid ${C.borderSubtle}` : 'none',
                   }}
                 >
                   <div>
@@ -271,7 +268,7 @@ export function PortalManagement() {
                         fontWeight: 500,
                         padding: '4px 12px',
                         borderRadius: 8,
-                        background: access.status === 'active' ? 'rgba(34, 197, 94, 0.12)' : access.status === 'invited' ? 'rgba(234, 179, 8, 0.12)' : 'rgba(239, 68, 68, 0.12)',
+                        background: access.status === 'active' ? 'rgba(34, 197, 94, 0.12)' : access.status === 'invited' ? 'rgba(234, 179, 8, 0.12)' : C.statusErrorBg,
                         color: access.status === 'active' ? '#22c55e' : access.status === 'invited' ? '#eab308' : '#ef4444',
                         textTransform: 'capitalize',
                       }}
@@ -290,7 +287,7 @@ export function PortalManagement() {
                           padding: '8px 12px',
                           borderRadius: 8,
                           background: 'transparent',
-                          border: '1px solid rgba(239, 68, 68, 0.3)',
+                          border: `1px solid ${C.statusError}`,
                           color: '#ef4444',
                           fontSize: 14,
                           cursor: 'pointer',
@@ -310,7 +307,7 @@ export function PortalManagement() {
 
       {tab === 'branding' && (
         <form onSubmit={handleSaveBranding} style={glassCard}>
-          <div style={{ padding: '12px 20px', borderBottom: '1px solid rgba(255, 255, 255, 0.03)' }}>
+          <div style={{ padding: '12px 20px', borderBottom: `1px solid ${C.borderSubtle}` }}>
             <h3 style={{ fontSize: 16, fontWeight: 500, color: 'var(--text-primary, #F1F5F9)', margin: 0 }}>
               Portal Branding
             </h3>

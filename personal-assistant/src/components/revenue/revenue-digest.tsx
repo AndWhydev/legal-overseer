@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Calendar, ArrowUp, ArrowDown, Minus, FileText, RefreshCw } from 'lucide-react'
+import { S, C } from '@/lib/styles/design-tokens'
 
 interface Digest {
   id: string
@@ -102,7 +103,7 @@ export function RevenueDigestCard() {
                   borderRadius: 8,
                   border: 'none',
                   cursor: 'pointer',
-                  background: period === p ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.04)',
+                  background: period === p ? C.bgHoverStrong : C.bgHover,
                   color: period === p ? 'var(--text-primary, #F1F5F9)' : 'var(--text-dim)',
                 }}
               >
@@ -166,7 +167,7 @@ export function RevenueDigestCard() {
                 <div key={m.label} style={{
                   padding: '12px 12px',
                   borderRadius: 8,
-                  background: 'rgba(255, 255, 255, 0.02)',
+                  background: C.bgHover,
                 }}>
                   <div style={{ fontSize: 14, color: 'var(--text-dim)', marginBottom: 4 }}>{m.label}</div>
                   <div style={{

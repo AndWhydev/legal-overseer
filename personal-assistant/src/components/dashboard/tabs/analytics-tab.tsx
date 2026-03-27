@@ -15,6 +15,7 @@ import {
 import type { CohortMatrix } from '@/app/api/analytics/cohorts/route'
 import type { TrendsResponse, AnomalySummary } from '@/app/api/analytics/trends/route'
 import type { TrendSeries, DataPoint, AnomalyPoint, ForecastPoint } from '@/lib/analytics/forecasting'
+import { S as DS, C } from '@/lib/styles/design-tokens'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -74,13 +75,7 @@ interface AnalyticsData {
 // ---------------------------------------------------------------------------
 
 const glassCard: React.CSSProperties = {
-  padding: '20px',
-  borderRadius: 16,
-  background: 'var(--glass-card-bg)',
-  backdropFilter: 'var(--glass-card-blur)',
-  WebkitBackdropFilter: 'var(--glass-card-blur)',
-  border: '1px solid var(--glass-card-border)',
-  boxShadow: 'var(--glass-card-inset)',
+  ...DS.card,
 }
 
 const listRow: React.CSSProperties = {
@@ -128,7 +123,7 @@ const badge = (color: string): React.CSSProperties => ({
 
 const skeletonStyle: React.CSSProperties = {
   borderRadius: 8,
-  background: 'linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.03) 75%)',
+  background: `linear-gradient(90deg, ${C.borderSubtle} 25%, ${C.borderVisible} 50%, ${C.borderSubtle} 75%)`,
   backgroundSize: '200% 100%',
   animation: 'shimmer 1.5s ease infinite',
 }
@@ -138,7 +133,7 @@ const skeletonStyle: React.CSSProperties = {
 // ---------------------------------------------------------------------------
 
 function retentionColor(pct: number): string {
-  if (pct === 0) return 'rgba(255,255,255,0.04)'
+  if (pct === 0) return C.bgHover
   if (pct >= 80) return 'rgba(99,235,163,0.55)'
   if (pct >= 60) return 'rgba(99,235,163,0.35)'
   if (pct >= 40) return 'rgba(245,197,84,0.40)'
@@ -274,7 +269,7 @@ function TrendChart({
               y1={y}
               x2={width - padding}
               y2={y}
-              stroke="rgba(255,255,255,0.06)"
+              stroke={C.borderVisible}
               strokeWidth={1}
             />
           )
@@ -524,14 +519,14 @@ function CohortHeatmap({ matrix }: { matrix: CohortMatrix }) {
                   title={pct !== null ? `${pct}%` : 'N/A'}
                   style={{
                     borderRadius: 8,
-                    background: pct !== null ? retentionColor(pct) : 'rgba(255,255,255,0.02)',
+                    background: pct !== null ? retentionColor(pct) : C.borderSubtle,
                     height: 32,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     fontSize: 14,
                     fontWeight: 500,
-                    color: pct !== null && pct >= 40 ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.45)',
+                    color: pct !== null && pct >= 40 ? C.textPrimary : C.textMuted,
                     fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
                   }}
                 >
@@ -559,7 +554,7 @@ function CohortHeatmap({ matrix }: { matrix: CohortMatrix }) {
                   height: 16,
                   borderRadius: 4,
                   background: retentionColor(pct),
-                  border: '1px solid rgba(255,255,255,0.08)',
+                  border: `1px solid ${C.bgHoverStrong}`,
                 }}
               />
               <span style={{ fontSize: 14, color: 'var(--text-dim)' }}>{label}</span>
@@ -668,13 +663,13 @@ function AnalyticsTab() {
                     <span style={{ fontSize: 14, minWidth: 80, textTransform: 'capitalize', color: 'var(--text-primary)' }}>
                       {tier}
                     </span>
-                    <div style={{ flex: 1, height: 8, borderRadius: 4, background: 'rgba(255, 255, 255, 0.08)', overflow: 'hidden' }}>
+                    <div style={{ flex: 1, height: 8, borderRadius: 4, background: C.bgHoverStrong, overflow: 'hidden' }}>
                       <div
                         style={{
                           height: '100%',
                           borderRadius: 4,
                           width: `${pct}%`,
-                          background: 'rgba(255, 255, 255, 0.2)',
+                          background: C.borderFocus,
                           transition: 'width 300ms ease',
                         }}
                       />
@@ -894,7 +889,7 @@ function AnalyticsTab() {
                                     width: 4,
                                     height: 4,
                                     borderRadius: '50%',
-                                    background: 'rgba(255, 255, 255, 0.2)',
+                                    background: C.borderFocus,
                                     flexShrink: 0,
                                   }}
                                 />

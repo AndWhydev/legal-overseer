@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { GlassDropdown } from '@/components/ui/glass-dropdown';
 import { Users, Mail, Trash2, Loader2, UserPlus, Shield } from 'lucide-react';
 
 interface Member {
@@ -167,15 +168,12 @@ export function TeamMembers() {
               onKeyDown={e => e.key === 'Enter' && handleInvite()}
               className="flex-1"
             />
-            <select
+            <GlassDropdown
+              options={ROLE_OPTIONS.map(r => ({ value: r, label: r.charAt(0).toUpperCase() + r.slice(1) }))}
               value={inviteRole}
-              onChange={e => setInviteRole(e.target.value)}
-              className="rounded-md border border-border/50 bg-background px-3 py-2 text-sm text-foreground"
-            >
-              {ROLE_OPTIONS.map(r => (
-                <option key={r} value={r}>{r.charAt(0).toUpperCase() + r.slice(1)}</option>
-              ))}
-            </select>
+              onChange={v => setInviteRole(v)}
+              size="sm"
+            />
             <button
               onClick={handleInvite}
               disabled={sending || !inviteEmail}
@@ -226,15 +224,12 @@ export function TeamMembers() {
                       <Shield size={10} className="mr-1" /> Owner
                     </Badge>
                   ) : (
-                    <select
+                    <GlassDropdown
+                      options={ROLE_OPTIONS.map(r => ({ value: r, label: r.charAt(0).toUpperCase() + r.slice(1) }))}
                       value={member.role}
-                      onChange={e => handleRoleChange(member.id, e.target.value)}
-                      className={`rounded-md border-0 bg-transparent px-2 py-1 text-xs ${roleBadgeColor[member.role] ?? ''}`}
-                    >
-                      {ROLE_OPTIONS.map(r => (
-                        <option key={r} value={r}>{r.charAt(0).toUpperCase() + r.slice(1)}</option>
-                      ))}
-                    </select>
+                      onChange={v => handleRoleChange(member.id, v)}
+                      size="sm"
+                    />
                   )}
                   {member.role !== 'owner' && (
                     <button

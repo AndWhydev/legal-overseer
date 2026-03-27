@@ -4,6 +4,8 @@ import React, { useState, useEffect, useCallback } from 'react'
 import { FileText, Download, Loader2, RefreshCw } from 'lucide-react'
 import { TabShell } from '@/components/ui/tab-shell'
 import { EmptyState } from '@/components/ui/empty-state'
+import { S, C } from '@/lib/styles/design-tokens'
+import { GlassDropdown } from '@/components/ui/glass-dropdown'
 import { logger } from '@/lib/core/logger';
 
 type ReportType = 'monthly' | 'agent-roi' | 'pipeline'
@@ -122,21 +124,16 @@ export default function ReportsTab() {
   }
 
   const glassCard: React.CSSProperties = {
-    padding: '20px',
-    borderRadius: 16,
-    background: 'var(--glass-card-bg)',
-    backdropFilter: 'var(--glass-card-blur)',
-    WebkitBackdropFilter: 'var(--glass-card-blur)',
-    border: '1px solid var(--glass-card-border)',
-    boxShadow: 'var(--glass-card-inset)',
+    ...S.card,
+    overflow: 'hidden' as const,
   }
 
   const glassSelect: React.CSSProperties = {
     padding: '12px 16px',
     borderRadius: 12,
-    background: 'var(--bg-input, rgba(13, 17, 23, 0.6))',
-    border: '1px solid var(--glass-interactive-border)',
-    color: 'var(--text-primary)',
+    background: C.bgInput,
+    border: `1px solid ${C.borderSubtle}`,
+    color: C.textPrimary,
     fontSize: 14,
     outline: 'none' as const,
     appearance: 'none' as const,
@@ -211,30 +208,22 @@ export default function ReportsTab() {
               <label style={sectionHeader}>
                 Report Type
               </label>
-              <select
+              <GlassDropdown
+                options={Object.entries(REPORT_LABELS).map(([k, v]) => ({ value: k, label: v }))}
                 value={reportType}
-                onChange={e => setReportType(e.target.value as ReportType)}
-                style={glassSelect}
-              >
-                {Object.entries(REPORT_LABELS).map(([k, v]) => (
-                  <option key={k} value={k}>{v}</option>
-                ))}
-              </select>
+                onChange={v => setReportType(v as ReportType)}
+              />
             </div>
 
             <div style={{ flex: 1, minWidth: 160 }}>
               <label style={sectionHeader}>
                 Period
               </label>
-              <select
-                value={periodIndex}
-                onChange={e => setPeriodIndex(Number(e.target.value))}
-                style={glassSelect}
-              >
-                {periods.map((p, i) => (
-                  <option key={i} value={i}>{p.label}</option>
-                ))}
-              </select>
+              <GlassDropdown
+                options={periods.map((p, i) => ({ value: String(i), label: p.label }))}
+                value={String(periodIndex)}
+                onChange={v => setPeriodIndex(Number(v))}
+              />
             </div>
 
             <button
@@ -270,12 +259,12 @@ export default function ReportsTab() {
               <button
                 onClick={handlePrintPreview}
                 onMouseEnter={(e) => {
-                  (e.target as HTMLButtonElement).style.background = 'rgba(255, 255, 255, 0.04)'
-                  ;(e.target as HTMLButtonElement).style.borderColor = 'rgba(255, 255, 255, 0.1)'
+                  (e.target as HTMLButtonElement).style.background = C.bgHover
+                  ;(e.target as HTMLButtonElement).style.borderColor = C.borderHover
                 }}
                 onMouseLeave={(e) => {
                   (e.target as HTMLButtonElement).style.background = 'transparent'
-                  ;(e.target as HTMLButtonElement).style.borderColor = 'rgba(255, 255, 255, 0.06)'
+                  ;(e.target as HTMLButtonElement).style.borderColor = C.borderVisible
                 }}
                 style={{
                   ...ghostBtn,
@@ -389,12 +378,12 @@ export default function ReportsTab() {
                   <button
                     onClick={() => handleDownload(r.id)}
                     onMouseEnter={(e) => {
-                      (e.target as HTMLButtonElement).style.background = 'rgba(255, 255, 255, 0.04)'
-                      ;(e.target as HTMLButtonElement).style.borderColor = 'rgba(255, 255, 255, 0.1)'
+                      (e.target as HTMLButtonElement).style.background = C.bgHover
+                      ;(e.target as HTMLButtonElement).style.borderColor = C.borderHover
                     }}
                     onMouseLeave={(e) => {
                       (e.target as HTMLButtonElement).style.background = 'transparent'
-                      ;(e.target as HTMLButtonElement).style.borderColor = 'rgba(255, 255, 255, 0.06)'
+                      ;(e.target as HTMLButtonElement).style.borderColor = C.borderVisible
                     }}
                     style={{
                       ...ghostBtn,

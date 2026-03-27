@@ -5,6 +5,7 @@ import { DollarSign, TrendingUp, AlertTriangle, BarChart3 } from 'lucide-react';
 import { TabShell } from '@/components/ui/tab-shell';
 import { AlertBanner } from '@/components/ui/alert-banner';
 import { EmptyState } from '@/components/ui/empty-state';
+import { S, C } from '@/lib/styles/design-tokens';
 
 interface CostEntry {
   model: string;
@@ -85,7 +86,7 @@ function CostsTab() {
     gap: 8,
     padding: 8,
     borderRadius: 12,
-    background: 'var(--bg-input, rgba(13, 17, 23, 0.6))',
+    background: C.bgInput,
     backdropFilter: 'var(--glass-card-blur)',
     WebkitBackdropFilter: 'var(--glass-card-blur)',
     width: 'fit-content',
@@ -94,7 +95,7 @@ function CostsTab() {
   const pillBtn = (isActive: boolean): React.CSSProperties => ({
     padding: '8px 16px',
     borderRadius: 20,
-    background: isActive ? 'rgba(255, 255, 255, 0.08)' : 'var(--glass-pill-bg)',
+    background: isActive ? C.bgHoverStrong : 'var(--glass-pill-bg)',
     backdropFilter: 'var(--glass-card-blur)',
     WebkitBackdropFilter: 'var(--glass-card-blur)',
     boxShadow: 'var(--glass-card-inset)',
@@ -112,7 +113,7 @@ function CostsTab() {
     gap: 12,
     padding: '16px 20px',
     borderRadius: 12,
-    background: 'rgba(234, 179, 8, 0.12)',
+    background: C.statusWarningBg,
     backdropFilter: 'var(--glass-card-blur)',
     WebkitBackdropFilter: 'var(--glass-card-blur)',
     border: '1px solid rgba(234, 179, 8, 0.3)',

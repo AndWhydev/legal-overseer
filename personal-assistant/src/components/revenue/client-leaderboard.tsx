@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import type { ClientRevenueScore, TrendDirection, RiskLevel } from '@/lib/revenue/types'
 import { formatCents } from '@/lib/revenue/types'
+import { S, C } from '@/lib/styles/design-tokens'
 
 // ─── Visual Config ──────────────────────────────────────────────────────────
 
@@ -58,7 +59,7 @@ const headerRowStyle: React.CSSProperties = {
   textTransform: 'uppercase',
   letterSpacing: '0.04em',
   fontWeight: 500,
-  background: 'rgba(255,255,255,0.02)',
+  background: C.bgHover,
 }
 
 const scoreCircleStyle = (score: number): React.CSSProperties => {

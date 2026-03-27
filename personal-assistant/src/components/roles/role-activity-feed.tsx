@@ -12,6 +12,7 @@ import {
   Filter,
 } from 'lucide-react'
 import type { RoleType, ActivityType } from '@/lib/bitbit-core'
+import { S, C } from '@/lib/styles/design-tokens'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -91,7 +92,7 @@ const pillBtn: React.CSSProperties = {
 const activePill: React.CSSProperties = {
   ...pillBtn,
   color: 'var(--text-primary, #F1F5F9)',
-  background: 'rgba(255, 255, 255, 0.08)',
+  background: C.bgHoverStrong,
 }
 
 // ---------------------------------------------------------------------------
@@ -217,7 +218,7 @@ export function RoleActivityFeed({ maxHeight = 'calc(100vh - 300px)', limit = 50
             {role === 'all' ? 'All Roles' : ROLE_LABELS[role]}
           </button>
         ))}
-        <div style={{ width: 1, background: 'rgba(255,255,255,0.06)', margin: '0 4px' }} />
+        <div style={{ width: 1, background: C.bgHoverStrong, margin: '0 4px' }} />
         {(['all', 'escalation', 'action', 'insight', 'error'] as const).map(type => (
           <button
             key={type}
@@ -234,10 +235,10 @@ export function RoleActivityFeed({ maxHeight = 'calc(100vh - 300px)', limit = 50
         {loading ? (
           Array.from({ length: 5 }, (_, i) => (
             <div key={i} style={{ ...listRow, opacity: 0.5 }}>
-              <div style={{ width: 24, height: 24, borderRadius: 8, background: 'rgba(255,255,255,0.06)' }} />
+              <div style={{ width: 24, height: 24, borderRadius: 8, background: C.bgHoverStrong }} />
               <div style={{ flex: 1 }}>
-                <div style={{ height: 12, borderRadius: 4, background: 'rgba(255,255,255,0.06)', width: '70%', marginBottom: 8 }} />
-                <div style={{ height: 10, borderRadius: 4, background: 'rgba(255,255,255,0.04)', width: '40%' }} />
+                <div style={{ height: 12, borderRadius: 4, background: C.bgHoverStrong, width: '70%', marginBottom: 8 }} />
+                <div style={{ height: 10, borderRadius: 4, background: C.bgHover, width: '40%' }} />
               </div>
             </div>
           ))
@@ -266,7 +267,7 @@ export function RoleActivityFeed({ maxHeight = 'calc(100vh - 300px)', limit = 50
                 onMouseLeave={() => setHoveredId(null)}
                 style={{
                   ...listRow,
-                  background: isHovered ? 'var(--bb-surface-hover, rgba(20, 28, 40, 0.7))' : 'rgba(10, 14, 23, 0.5)',
+                  background: isHovered ? 'var(--bb-surface-hover, rgba(20, 28, 40, 0.7))' : C.bgListRow,
                 }}
               >
                 {/* Icon */}

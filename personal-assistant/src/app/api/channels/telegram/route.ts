@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { handleTelegramMessage } from '@/lib/channels/telegram-handler'
 import { timingSafeCompare } from '@/lib/security/webhook-verification'
 import { resolveOrgFromWebhook } from '@/lib/core/resolve-org'
+import { enrichInboundMessage } from '@/lib/conversation/inbound-enrichment'
 import { after } from 'next/server'
 import { logger } from '@/lib/core/logger'
 
@@ -62,11 +63,13 @@ export async function POST(request: NextRequest) {
   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
   if (supabaseUrl && supabaseKey) {
     const supabase = createClient(supabaseUrl, supabaseKey)
-    await supabase.from('channel_messages').insert({
+    const senderName = message.from?.first_name || message.from?.username || chatId
+
+    const { data: insertedMsg } = await supabase.from('channel_messages').insert({
       org_id: orgId,
       channel: 'telegram',
       external_id: messageId,
-      sender: message.from?.first_name || message.from?.username || chatId,
+      sender: senderName,
       sender_email: chatId, // used for reply routing
       body: text,
       received_at: new Date().toISOString(),
@@ -74,7 +77,24 @@ export async function POST(request: NextRequest) {
         chat_id: chatId,
         from: message.from,
       },
-    })
+    }).select('id').single()
+
+    // Fire-and-forget: enrich with entity resolution, timeline,
+    // relationship linking (unified pipeline intelligence layer)
+    if (insertedMsg) {
+      enrichInboundMessage(supabase, {
+        messageId: insertedMsg.id as string,
+        orgId,
+        channel: 'telegram',
+        senderIdentifier: chatId,
+        senderName,
+        subject: null,
+        body: text,
+        priority: 'medium',
+      }).catch(err => {
+        logger.error('[webhook/telegram] Enrichment failed (non-fatal):', err)
+      })
+    }
   }
 
   // Use next/server after() to keep the function alive after returning 200.
