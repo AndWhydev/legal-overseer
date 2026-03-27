@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useEffect, useState } from 'react'
+import { Suspense, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { extractAuthCallbackPayload } from '@/lib/auth/callback'
@@ -10,7 +10,6 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { ClawdAmbient } from '@/components/ui/clawd-ambient'
-import { CrtOverlay } from '@/components/ui/crt-overlay'
 
 type LoginStatus = 'idle' | 'loading' | 'sent' | 'error'
 type LoginMethod = 'password' | 'google' | 'apple' | null
@@ -231,7 +230,6 @@ function LoginPageContent() {
               {/* ── Right: Clawd ambient animation ── */}
               <div className="relative hidden overflow-hidden rounded-r-xl md:block">
                 <ClawdAmbient className="absolute inset-0" />
-                <CrtOverlay vignette scanlines grain glitch={false} />
               </div>
             </CardContent>
           </Card>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useCallback } from 'react'
+import { useEffect, useRef, useCallback, useState } from 'react'
 
 /**
  * Clawd Ambient — the BitBit eyes animation.
@@ -11,6 +11,22 @@ import { useEffect, useRef, useCallback } from 'react'
 export function ClawdAmbient({ className }: { className?: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const animRef = useRef<number>(0)
+
+  // Detect light/dark mode
+  const [isDark, setIsDark] = useState(true)
+  useEffect(() => {
+    const check = () => {
+      const dark = document.documentElement.classList.contains('dark') ||
+        window.matchMedia('(prefers-color-scheme: dark)').matches
+      setIsDark(dark)
+    }
+    check()
+    const mq = window.matchMedia('(prefers-color-scheme: dark)')
+    mq.addEventListener('change', check)
+    const obs = new MutationObserver(check)
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
+    return () => { mq.removeEventListener('change', check); obs.disconnect() }
+  }, [])
 
   const draw = useCallback(() => {
     const canvas = canvasRef.current
@@ -27,12 +43,35 @@ export function ClawdAmbient({ className }: { className?: string }) {
     const W = rect.width
     const H = rect.height
 
-    const EYE_COLOR = '#e5e5e5'
+    const EYE_COLOR = isDark ? '#e5e5e5' : '#1a1a1a'
+    const BG_COLOR = isDark ? '#000000' : '#fafafa'
+
+    // Fill background
+    ctx.fillStyle = BG_COLOR
+    ctx.fillRect(0, 0, W, H)
     const EYE_W = W * 0.065
     const EYE_H = W * 0.09
     const EYE_GAP = W * 0.12
     const CX = W / 2
     const CY = H / 2
+    const SCANLINE_GAP = 3
+
+    // Draw a single eye with scanlines + glow baked in
+    function drawEye(x: number, y: number, w: number, h: number) {
+      // Outer glow
+      ctx.shadowColor = EYE_COLOR
+      ctx.shadowBlur = 16
+      ctx.fillStyle = EYE_COLOR
+      ctx.fillRect(x, y, w, h)
+      ctx.shadowBlur = 0
+
+      // Scanlines clipped to the eye rect
+      const lineColor = isDark ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.25)'
+      ctx.fillStyle = lineColor
+      for (let ly = y; ly < y + h; ly += SCANLINE_GAP * 2) {
+        ctx.fillRect(x, ly, w, 1)
+      }
+    }
 
     // ── State machine ──
     const state = stateRef.current
@@ -77,14 +116,11 @@ export function ClawdAmbient({ className }: { className?: string }) {
 
       // Left eye
       ctx.globalAlpha = opL
-      ctx.shadowColor = EYE_COLOR
-      ctx.shadowBlur = 12
-      ctx.fillStyle = EYE_COLOR
-      ctx.fillRect(-EYE_GAP / 2 - slimW, -slimH / 2, slimW, slimH)
+      drawEye(-EYE_GAP / 2 - slimW, -slimH / 2, slimW, slimH)
 
       // Right eye
       ctx.globalAlpha = opR
-      ctx.fillRect(EYE_GAP / 2, -slimH / 2, slimW, slimH)
+      drawEye(EYE_GAP / 2, -slimH / 2, slimW, slimH)
 
       ctx.restore()
     } else if (elapsed < SCENE_3_END) {
@@ -101,12 +137,9 @@ export function ClawdAmbient({ className }: { className?: string }) {
       ctx.translate(CX, CY)
       ctx.rotate(headAngle)
       ctx.globalAlpha = 1
-      ctx.shadowColor = EYE_COLOR
-      ctx.shadowBlur = 12 + 8 * ease
-      ctx.fillStyle = EYE_COLOR
 
-      ctx.fillRect(-EYE_GAP / 2 - eyeW, -eyeH / 2, eyeW, eyeH)
-      ctx.fillRect(EYE_GAP / 2, -eyeH / 2, eyeW, eyeH)
+      drawEye(-EYE_GAP / 2 - eyeW, -eyeH / 2, eyeW, eyeH)
+      drawEye(EYE_GAP / 2, -eyeH / 2, eyeW, eyeH)
 
       ctx.restore()
     } else if (elapsed < SCENE_4_END) {
@@ -120,12 +153,9 @@ export function ClawdAmbient({ className }: { className?: string }) {
       ctx.save()
       ctx.translate(CX, CY)
       ctx.globalAlpha = 1
-      ctx.shadowColor = EYE_COLOR
-      ctx.shadowBlur = 20
-      ctx.fillStyle = EYE_COLOR
 
-      ctx.fillRect(-EYE_GAP / 2 - eyeW, -eyeH / 2, eyeW, eyeH)
-      ctx.fillRect(EYE_GAP / 2, -eyeH / 2, eyeW, eyeH)
+      drawEye(-EYE_GAP / 2 - eyeW, -eyeH / 2, eyeW, eyeH)
+      drawEye(EYE_GAP / 2, -eyeH / 2, eyeW, eyeH)
       ctx.restore()
     } else if (elapsed < SCENE_5_END) {
       // Scene 5: Double blink
@@ -145,13 +175,9 @@ export function ClawdAmbient({ className }: { className?: string }) {
       ctx.save()
       ctx.translate(CX, CY)
       ctx.globalAlpha = 1
-      ctx.shadowColor = EYE_COLOR
-      ctx.shadowBlur = 20
-      ctx.fillStyle = EYE_COLOR
-
       const h = EYE_H * eyeScale
-      ctx.fillRect(-EYE_GAP / 2 - EYE_W, -h / 2, EYE_W, h)
-      ctx.fillRect(EYE_GAP / 2, -h / 2, EYE_W, h)
+      drawEye(-EYE_GAP / 2 - EYE_W, -h / 2, EYE_W, h)
+      drawEye(EYE_GAP / 2, -h / 2, EYE_W, h)
       ctx.restore()
     } else {
       // Scene 6: Idle animation
@@ -210,12 +236,9 @@ export function ClawdAmbient({ className }: { className?: string }) {
       ctx.translate(CX, CY + breathY)
       ctx.rotate(headTilt * transT)
       ctx.globalAlpha = 1
-      ctx.shadowColor = EYE_COLOR
-      ctx.shadowBlur = 16
-      ctx.fillStyle = EYE_COLOR
 
-      ctx.fillRect(-EYE_GAP / 2 - finalEyeW + finalShift, -finalEyeH / 2, finalEyeW, finalEyeH)
-      ctx.fillRect(EYE_GAP / 2 + finalShift, -finalEyeH / 2, finalEyeW, finalEyeH)
+      drawEye(-EYE_GAP / 2 - finalEyeW + finalShift, -finalEyeH / 2, finalEyeW, finalEyeH)
+      drawEye(EYE_GAP / 2 + finalShift, -finalEyeH / 2, finalEyeW, finalEyeH)
 
       ctx.restore()
     }
@@ -239,7 +262,7 @@ export function ClawdAmbient({ className }: { className?: string }) {
     <canvas
       ref={canvasRef}
       className={className}
-      style={{ width: '100%', height: '100%', display: 'block', background: '#000' }}
+      style={{ width: '100%', height: '100%', display: 'block' }}
     />
   )
 }
