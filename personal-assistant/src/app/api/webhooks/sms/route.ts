@@ -5,6 +5,7 @@ import { logger } from '@/lib/core/logger'
 import { resolveOrgFromWebhook } from '@/lib/core/resolve-org'
 import { getServiceClient } from '@/lib/supabase/service-client'
 import { runPipelineToCompletion } from '@/lib/conversation/pipeline-helpers'
+import { enrichInboundMessage } from '@/lib/conversation/inbound-enrichment'
 
 /**
  * Telnyx SMS webhook endpoint.
@@ -82,6 +83,10 @@ export async function POST(request: NextRequest) {
 /**
  * Process inbound SMS through the unified conversation pipeline,
  * then send the agent's response back as an SMS reply.
+ *
+ * Also writes to channel_messages for unified inbox visibility
+ * and runs intelligence-layer enrichment (entity resolution,
+ * timeline writing, relationship linking).
  */
 async function processSMSThroughPipeline(
   supabase: ReturnType<typeof getServiceClient>,
@@ -91,6 +96,43 @@ async function processSMSThroughPipeline(
   messageId: string,
 ): Promise<void> {
   logger.info('[webhook/sms] Processing through unified pipeline', { fromPhone, orgId, messageId })
+
+  // Write to channel_messages for unified inbox visibility.
+  // Use upsert on external_id to prevent duplicates from Telnyx retries.
+  const { data: channelMsg } = await supabase
+    .from('channel_messages')
+    .upsert({
+      org_id: orgId,
+      channel: 'sms',
+      external_id: messageId,
+      sender: fromPhone,
+      sender_email: fromPhone,
+      subject: 'SMS Message',
+      body: text,
+      received_at: new Date().toISOString(),
+      is_actionable: true,
+      priority: 'medium',
+      metadata: { source: 'telnyx' },
+    }, { onConflict: 'org_id,channel,external_id' })
+    .select('id')
+    .single()
+
+  // Fire-and-forget: enrich with entity resolution, timeline,
+  // relationship linking (unified pipeline intelligence layer)
+  if (channelMsg) {
+    enrichInboundMessage(supabase, {
+      messageId: channelMsg.id as string,
+      orgId,
+      channel: 'sms',
+      senderIdentifier: fromPhone,
+      senderName: null,
+      subject: null,
+      body: text,
+      priority: 'medium',
+    }).catch(err => {
+      logger.error('[webhook/sms] Enrichment failed (non-fatal):', err)
+    })
+  }
 
   const result = await runPipelineToCompletion(supabase, {
     content: text,

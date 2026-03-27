@@ -418,6 +418,23 @@ Plans:
   4. New tender matches detected by scheduled scan trigger proactive notification to user
 **Plans**: TBD (run `/gsd:plan-phase 29`)
 
+### Phase 32: Marketing Site & Checkout Flow
+**Goal**: A stranger can land on bitbit.chat, understand what BitBit does, pick a plan, and pay -- product landing page, industry pages, case study, and pricing with live Stripe Checkout
+**Depends on**: None (parallel with Phases 30, 31)
+**Requirements**: MKTG-01, MKTG-02, MKTG-03, MKTG-04, MKTG-05
+**Success Criteria** (what must be TRUE):
+  1. bitbit.chat shows professional product landing page with hero, features, roles, social proof, pricing CTA
+  2. Three industry pages exist: Marketing Agencies, Trades & Services, Professional Services
+  3. AWU case study page with problem, solution, results (real metrics), and Andy quote
+  4. Pricing page with feature comparison matrix and working Stripe Checkout for all tiers
+  5. SEO foundation: structured data, meta tags, Open Graph, sitemap, robots
+**Plans**: 3 plans (2 waves)
+
+Plans:
+- [ ] 32-01-PLAN.md -- Product landing page (hero, features, roles, social proof, CTA) + 3 industry pages + NavBar/Footer updates
+- [ ] 32-02-PLAN.md -- Pricing page enhancement (comparison matrix, Free tier, FAQ) + AWU case study page
+- [ ] 32-03-PLAN.md -- SEO foundation (sitemap, robots, Open Graph, JSON-LD structured data)
+
 ### v1.5 Beta Launch & First Revenue
 
 **Milestone Goal:** Close every gap between feature-complete dogfood and real paying users. Ship onboarding, verify production channels, build the marketing funnel, launch beta, add premium features.
@@ -471,5 +488,7 @@ Phase 20 first (no dependencies), then 21 (billing before growth roles), then 22
 | 27. Role Runtime Import Fix | v1.4 | 0/0 | Pending | - |
 | 28. Intelligence Dashboard Wiring | v1.4 | 0/0 | Pending | - |
 | 29. SEO/Tender Scheduled Monitoring | v1.4 | 0/0 | Pending | - |
+
+| 32. Marketing Site & Checkout Flow | v1.5 | 0/3 | Planned | - |
 
 **Overall:** 57/57 plans complete for v1.0+v1.1+v1.2 (100%). v1.4: 23/25 plans (Phases 20-26) + 3 gap closure phases (27-29) pending.
