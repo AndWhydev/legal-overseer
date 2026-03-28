@@ -58,6 +58,7 @@ export function ClawdAmbient({ className }: { className?: string }) {
 
     // Draw a single eye with scanlines + glow baked in
     function drawEye(x: number, y: number, w: number, h: number) {
+      if (!ctx) return
       // Outer glow
       ctx.shadowColor = EYE_COLOR
       ctx.shadowBlur = 16

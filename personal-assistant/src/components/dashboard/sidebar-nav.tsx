@@ -39,6 +39,9 @@ import {
   IconCheck,
   IconPlus,
   IconBolt,
+  IconCalendar,
+  IconMessageChatbot,
+  IconCheckbox,
 } from '@tabler/icons-react';
 import type { TabDef } from './spa-shell';
 import type { SidebarCategory } from '@/lib/modules/registry';
@@ -80,6 +83,8 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
 
 // ---- Icon map: tab/module ID -> Tabler icon ----
 
@@ -94,7 +99,8 @@ const ICON_MAP: Record<string, React.ElementType> = {
   leads: IconHeartHandshake,
   invoices: IconReceipt,
   tenders: IconFileSearch,
-  meetings: IconMicrophone,
+  tasks: IconCheckbox,
+  meetings: IconCalendar,
   sentry: IconShield,
   swarm: IconSwarm,
   workflows: IconBolt,
@@ -132,6 +138,193 @@ const BADGE_CONFIG: Record<string, { key: keyof BadgeCounts }> = {
   leads: { key: 'leads' },
   invoices: { key: 'invoices' },
 };
+
+// ─── Flat nav order — direct page links, no collapsible groups ───────────────
+
+const NAV_ITEMS = [
+  // Core
+  { id: 'dashboard', label: 'Dashboard' },
+  { id: 'inbox', label: 'Inbox' },
+  { id: 'chat', label: 'Chat' },
+  { id: 'tasks', label: 'Tasks' },
+  // Business
+  { id: 'leads', label: 'Leads' },
+  { id: 'contacts', label: 'Contacts' },
+  { id: 'invoices', label: 'Invoices' },
+  { id: 'tenders', label: 'Tenders' },
+  { id: 'meetings', label: 'Meetings' },
+  { id: 'approvals', label: 'Approvals' },
+  // Intelligence
+  { id: 'workflows', label: 'Workflows' },
+  { id: 'swarm', label: 'Swarm' },
+  { id: 'sentry', label: 'Sentry' },
+  { id: 'analytics', label: 'Analytics' },
+  { id: 'knowledge', label: 'Knowledge' },
+  { id: 'ai-search', label: 'AI Search' },
+  { id: 'ad-scripts', label: 'Ad Scripts' },
+  { id: 'reports', label: 'Reports' },
+  // Operations
+  { id: 'activity', label: 'Activity' },
+  { id: 'costs', label: 'Costs' },
+  { id: 'monitoring', label: 'Monitoring' },
+  { id: 'admin', label: 'Admin' },
+  { id: 'beta-admin', label: 'Beta Program' },
+];
+
+// ─── Context panel configs (GAIA-style) ──────────────────────────────────────
+
+interface ContextItem {
+  icon?: React.ElementType;
+  label: string;
+  count?: number;
+  dot?: string;
+}
+
+interface ContextConfig {
+  cta?: { label: string; icon: React.ElementType };
+  items: ContextItem[];
+  sections?: { label: string; items: ContextItem[] }[];
+}
+
+function getContextConfig(tabId: string): ContextConfig | null {
+  switch (tabId) {
+    case 'inbox':
+      return {
+        cta: { label: 'New Message', icon: IconPlus },
+        items: [
+          { icon: IconInbox, label: 'Inbox', count: 0 },
+          { label: 'Starred' },
+          { label: 'Snoozed' },
+          { label: 'Archived' },
+        ],
+        sections: [{
+          label: 'Channels',
+          items: [
+            { label: 'Email' },
+            { label: 'WhatsApp' },
+            { label: 'SMS' },
+            { label: 'Web Chat' },
+          ],
+        }],
+      };
+    case 'leads':
+      return {
+        cta: { label: 'New Lead', icon: IconPlus },
+        items: [
+          { label: 'All Leads' },
+          { label: 'New' },
+          { label: 'Contacted' },
+          { label: 'Qualified' },
+          { label: 'Won' },
+          { label: 'Lost' },
+        ],
+        sections: [{
+          label: 'Sources',
+          items: [
+            { label: 'Organic' },
+            { label: 'Referral' },
+            { label: 'Paid' },
+            { label: 'Social' },
+          ],
+        }],
+      };
+    case 'tasks':
+      return {
+        cta: { label: 'New Task', icon: IconPlus },
+        items: [
+          { icon: IconInbox, label: 'Inbox', count: 0 },
+          { icon: IconCalendar, label: 'Today', count: 0 },
+          { label: 'Upcoming', count: 0 },
+          { label: 'Completed', count: 0 },
+        ],
+        sections: [{
+          label: 'Priorities',
+          items: [
+            { label: 'High Priority', dot: 'bg-red-500' },
+            { label: 'Medium Priority', dot: 'bg-amber-500' },
+            { label: 'Low Priority', dot: 'bg-blue-500' },
+          ],
+        }],
+      };
+    case 'invoices':
+      return {
+        cta: { label: 'New Invoice', icon: IconPlus },
+        items: [
+          { label: 'All' },
+          { label: 'Draft' },
+          { label: 'Sent' },
+          { label: 'Overdue' },
+          { label: 'Paid' },
+        ],
+      };
+    case 'meetings':
+      return {
+        cta: { label: 'New Event', icon: IconPlus },
+        items: [
+          { label: 'Today' },
+          { label: 'This Week' },
+          { label: 'Upcoming' },
+        ],
+        sections: [{
+          label: 'Your Calendars',
+          items: [
+            { label: 'Primary', dot: 'bg-blue-500' },
+            { label: 'Work', dot: 'bg-purple-500' },
+            { label: 'Personal', dot: 'bg-green-500' },
+          ],
+        }],
+      };
+    case 'chat':
+      return {
+        cta: { label: 'New Chat', icon: IconPlus },
+        items: [
+          { label: 'All Chats' },
+          { label: 'Unread' },
+          { label: 'Starred' },
+        ],
+      };
+    case 'workflows':
+      return {
+        cta: { label: 'New Workflow', icon: IconPlus },
+        items: [
+          { label: 'All Workflows' },
+          { label: 'Active' },
+          { label: 'Paused' },
+          { label: 'Draft' },
+        ],
+        sections: [{
+          label: 'Categories',
+          items: [
+            { label: 'Lead Nurture' },
+            { label: 'Follow-up' },
+            { label: 'Onboarding' },
+            { label: 'Notifications' },
+          ],
+        }],
+      };
+    case 'contacts':
+      return {
+        cta: { label: 'New Contact', icon: IconPlus },
+        items: [
+          { label: 'All Contacts' },
+          { label: 'Clients' },
+          { label: 'Prospects' },
+          { label: 'Vendors' },
+        ],
+      };
+    case 'monitoring':
+      return {
+        items: [
+          { label: 'Overview' },
+          { label: 'Agents' },
+          { label: 'API Health' },
+          { label: 'Errors' },
+        ],
+      };
+    default:
+      return null;
+  }
+}
 
 // ---- Org type (inlined from org-switcher) ----
 
@@ -281,7 +474,7 @@ export function SidebarNav({
   const email = userEmail || resolvedEmail;
 
   return (
-    <Sidebar collapsible="icon" variant="inset">
+    <Sidebar collapsible="offcanvas" variant="inset">
       {/* Header: BitBit + Org Switcher (single button) */}
       <SidebarHeader>
         <SidebarMenu>
@@ -347,128 +540,91 @@ export function SidebarNav({
       </SidebarHeader>
 
       <SidebarContent>
-        {/* Home — standalone, no section label */}
-        {visibleCategories.filter(c => c.directNav).map(cat => {
-          const CatIcon = CATEGORY_ICON_MAP[cat.icon];
-          const catBadge = getCategoryBadge(cat);
-          return (
-            <SidebarGroup key={cat.id} className="py-0">
-              <SidebarMenu>
-                <SidebarMenuItem>
+        {/* Flat nav — direct page links (GAIA-style) */}
+        <SidebarGroup>
+          <SidebarMenu>
+            {NAV_ITEMS.filter(item => enabledModules.includes(item.id)).map(item => {
+              const Icon = ICON_MAP[item.id];
+              const isActive = item.id === activeTabId;
+              const label = tabLabels[item.id] ?? item.label;
+              const badgeDef = BADGE_CONFIG[item.id];
+              const badgeCount = badgeDef ? (badgeCounts[badgeDef.key] ?? 0) : 0;
+
+              return (
+                <SidebarMenuItem key={item.id}>
                   <SidebarMenuButton
-                    isActive={activeTabId === cat.directNav}
-                    onClick={() => handleItemClick(cat.directNav!)}
-                    tooltip={cat.label}
+                    isActive={isActive}
+                    onClick={() => handleItemClick(item.id)}
+                    tooltip={label}
                   >
-                    {CatIcon && <CatIcon data-icon />}
-                    <span>{cat.label}</span>
+                    {Icon && <Icon data-icon />}
+                    <span>{label}</span>
                   </SidebarMenuButton>
-                  {catBadge > 0 && (
+                  {badgeCount > 0 && (
                     <SidebarMenuBadge>
                       <Badge variant="destructive" className="text-[10px] px-1.5 py-0">
-                        {catBadge}
+                        {badgeCount}
                       </Badge>
                     </SidebarMenuBadge>
                   )}
                 </SidebarMenuItem>
-              </SidebarMenu>
-            </SidebarGroup>
-          );
-        })}
-
-        {/* Platform — collapsible groups with section label */}
-        <SidebarGroup>
-          <SidebarGroupLabel>Platform</SidebarGroupLabel>
-          <SidebarMenu>
-            {visibleCategories.filter(c => !c.directNav && c.id !== 'settings').map(cat => {
-              const CatIcon = CATEGORY_ICON_MAP[cat.icon];
-              const isOpen = openGroups.has(cat.id);
-              const catBadge = getCategoryBadge(cat);
-              const visibleItems = cat.items.filter(id => enabledModules.includes(id));
-
-              return (
-                <Collapsible key={cat.id} open={isOpen} onOpenChange={() => toggleGroup(cat.id)} className="group/collapsible">
-                  <SidebarMenuItem>
-                    <CollapsibleTrigger asChild>
-                      <SidebarMenuButton tooltip={cat.label}>
-                        {CatIcon && <CatIcon data-icon />}
-                        <span>{cat.label}</span>
-                        {catBadge > 0 && (
-                          <Badge variant="destructive" className="text-[10px] px-1.5 py-0 mr-1">
-                            {catBadge}
-                          </Badge>
-                        )}
-                        <IconChevronDown
-                          className={cn(
-                            'ml-auto transition-transform duration-200',
-                            !isOpen && '-rotate-90',
-                          )}
-                        />
-                      </SidebarMenuButton>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent>
-                      <SidebarMenuSub>
-                        {visibleItems.map(tabId => {
-                          const isActive = tabId === activeTabId;
-                          const label =
-                            tabLabels[tabId] ??
-                            tabId.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-                          const badgeDef = BADGE_CONFIG[tabId];
-                          const badgeCount = badgeDef ? (badgeCounts[badgeDef.key] ?? 0) : 0;
-
-                          return (
-                            <SidebarMenuSubItem key={tabId}>
-                              <SidebarMenuSubButton
-                                isActive={isActive}
-                                onClick={() => handleItemClick(tabId)}
-                              >
-                                <span>{label}</span>
-                                {badgeCount > 0 && (
-                                  <Badge variant="destructive" className="text-[10px] px-1.5 py-0 ml-auto">
-                                    {badgeCount}
-                                  </Badge>
-                                )}
-                              </SidebarMenuSubButton>
-                            </SidebarMenuSubItem>
-                          );
-                        })}
-                      </SidebarMenuSub>
-                    </CollapsibleContent>
-                  </SidebarMenuItem>
-                </Collapsible>
               );
             })}
           </SidebarMenu>
         </SidebarGroup>
 
-        {/* Settings — flat items with section label */}
-        <SidebarGroup>
-          <SidebarGroupLabel>Settings</SidebarGroupLabel>
-          <SidebarMenu>
-            {SIDEBAR_CATEGORIES.find(c => c.id === 'settings')
-              ?.items.filter(id => enabledModules.includes(id))
-              .map(tabId => {
-                const Icon = ICON_MAP[tabId];
-                const isActive = tabId === activeTabId;
-                const label =
-                  tabLabels[tabId] ??
-                  tabId.replace(/^settings-/, '').replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-
-                return (
-                  <SidebarMenuItem key={tabId}>
-                    <SidebarMenuButton
-                      isActive={isActive}
-                      onClick={() => handleItemClick(tabId)}
-                      tooltip={label}
-                    >
-                      {Icon && <Icon data-icon />}
-                      <span>{label}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-          </SidebarMenu>
-        </SidebarGroup>
+        {/* Contextual panel — GAIA-style, changes per active tab */}
+        {(() => {
+          const ctx = getContextConfig(activeTabId);
+          if (!ctx) return null;
+          return (
+            <>
+              <Separator className="mx-2" />
+              <SidebarGroup>
+                {ctx.cta && (
+                  <SidebarMenu>
+                    <SidebarMenuItem>
+                      <Button variant="default" size="sm" className="w-full justify-start gap-2 mb-1">
+                        <ctx.cta.icon className="size-4" />
+                        {ctx.cta.label}
+                      </Button>
+                    </SidebarMenuItem>
+                  </SidebarMenu>
+                )}
+                <SidebarMenu>
+                  {ctx.items.map(item => (
+                    <SidebarMenuItem key={item.label}>
+                      <SidebarMenuButton onClick={() => {}}>
+                        {item.dot && <span className={cn('size-2 rounded-full shrink-0', item.dot)} />}
+                        {item.icon && <item.icon className="size-4" />}
+                        <span>{item.label}</span>
+                        {item.count !== undefined && (
+                          <span className="ml-auto text-xs text-muted-foreground tabular-nums">{item.count}</span>
+                        )}
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+                {ctx.sections?.map(section => (
+                  <React.Fragment key={section.label}>
+                    <SidebarGroupLabel>{section.label}</SidebarGroupLabel>
+                    <SidebarMenu>
+                      {section.items.map(item => (
+                        <SidebarMenuItem key={item.label}>
+                          <SidebarMenuButton onClick={() => {}}>
+                            {item.dot && <span className={cn('size-2 rounded-full shrink-0', item.dot)} />}
+                            {item.icon && <item.icon className="size-4" />}
+                            <span>{item.label}</span>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      ))}
+                    </SidebarMenu>
+                  </React.Fragment>
+                ))}
+              </SidebarGroup>
+            </>
+          );
+        })()}
       </SidebarContent>
 
       {/* Footer: user profile dropdown */}
