@@ -6,7 +6,7 @@
 - v1.1 Agent Runtime + First Agents -- Phases 7-12 (shipped 2026-02-22)
 - v1.2 Battle-Testing & Sellability -- Phases 13-19 (shipped 2026-03-02)
 - v1.4 Media, Billing & Growth Roles -- Phases 20-29 (in progress, gap closure phases 27-29 pending)
-- v1.5 Beta Launch & First Revenue -- Phases 30-36 (in progress)
+- ✅ v1.5 Beta Launch & First Revenue — Phases 29-36 (shipped 2026-03-28)
 
 ## Phases
 
@@ -230,130 +230,25 @@ Plans:
 Plans:
 - [ ] 29-01-PLAN.md -- Growth role implementation (DB migration, type extension, SEO/Tender monitor wrappers, cron wiring, tests)
 
-### v1.5 Beta Launch & First Revenue
+<details>
+<summary>v1.5 Beta Launch & First Revenue (Phases 29-36) -- SHIPPED 2026-03-28</summary>
 
 **Milestone Goal:** Close every gap between feature-complete dogfood and real paying users. Ship onboarding, verify production channels, build the marketing funnel, launch beta, add premium features.
 
+- [x] **Phase 29: SEO/Tender Scheduled Monitoring** — Proactive SEO/Tender monitoring via growth role on scheduled ticks (completed 2026-03-27)
 - [x] **Phase 30: Onboarding E2E & First-Run Experience** — Verify all onboarding FRs, first-run channel discovery, empty state guidance, welcome conversation (completed 2026-03-27)
-- [ ] **Phase 31: Channel Smoke Tests & Production Hardening** — Live credential tests, concurrent load, cron resilience, monitoring dashboard
-- [x] **Phase 32: Marketing Site & Checkout Flow** — Product landing page, industry pages, AWU case study, pricing with Stripe Checkout, SEO
+- [x] **Phase 31: Channel Smoke Tests & Production Hardening** — Live credential tests, concurrent load, cron resilience, monitoring dashboard (completed 2026-03-27)
+- [x] **Phase 32: Marketing Site & Checkout Flow** — Product landing page, industry pages, AWU case study, pricing with Stripe Checkout, SEO (completed 2026-03-27)
 - [x] **Phase 33: Beta Program Infrastructure** — Invite flow, guided onboarding, feedback collection, usage monitoring, beta user admin (completed 2026-03-27)
 - [x] **Phase 34: Builder Role (Premium Differentiator)** — Website generation via chat, template library, WordPress/Elementor integration, staging preview (completed 2026-03-27)
 - [x] **Phase 35: Proactive Workflows & Standing Orders** — NL workflow rules, multi-step sequences, cross-role orchestration, workflow dashboard (completed 2026-03-27)
-- [x] **Phase 36: Mobile-First Experience** — React Native/Expo app, push notifications, voice input, offline queue, quick actions (completed 2026-03-27)
+- [x] **Phase 36: Mobile-First Experience** — React Native/Expo app, push notifications, voice input, offline queue, quick actions (completed 2026-03-28)
 
-**Dependency Graph:** Phases 30-32 parallel --> Phase 33 --> Phase 34 --> Phases 35-36
+**Dependency Graph:** Phases 29-32 parallel --> Phase 33 --> Phase 34 --> Phases 35-36
 
-
-### Phase 30: Onboarding E2E & First-Run Experience
-**Goal**: New users can sign up, connect Gmail, and have BitBit working within 5 minutes. Every dashboard page has contextual empty states. First-run channel discovery auto-builds user context.
-**Depends on**: Phase 26 (current codebase)
-**Requirements**: ONBD-01, ONBD-02, ONBD-03, ONBD-04, ONBD-05
-**Success Criteria** (what must be TRUE):
-  1. All 12 T010 functional requirements pass end-to-end
-  2. First-run channel discovery scans last 30 days, builds identity + contacts + threads in 60 seconds
-  3. Every dashboard page shows contextual empty state guidance, not blank screens
-  4. Connection wizard persists progress across browser refresh
-  5. Welcome conversation uses real user data from discovery scan
-**Plans**: 3 plans (2 waves)
-
-Plans:
-- [ ] 30-01-PLAN.md -- T010 FR verification, onboarding wizard hardening, E2E test update
-- [ ] 30-02-PLAN.md -- Contextual empty states for all dashboard pages
-- [ ] 30-03-PLAN.md -- First-run channel discovery pipeline and welcome conversation
-
-### Phase 31: Channel Smoke Tests & Production Hardening
-**Goal**: All production channels verified working with real credentials. System handles concurrent load and cron failures gracefully. Monitoring dashboard shows production health.
-**Depends on**: Phase 30 (parallel, no hard dependency)
-**Requirements**: CHAN-SMOKE-01, CHAN-SMOKE-02, CHAN-SMOKE-03, CHAN-SMOKE-04, CHAN-SMOKE-05, CHAN-SMOKE-06, CHAN-SMOKE-07
-**Success Criteria** (what must be TRUE):
-  1. Gmail adapter connects with real OAuth credentials and pulls test messages within poll interval
-  2. Outlook adapter connects via Graph API and verifies message pull against production tenant
-  3. WhatsApp bridge at bitbit-wa-bridge.fly.dev maintains stable connection for 24+ hours
-  4. Telnyx SMS sends a test message and receives delivery confirmation webhook
-  5. 10 concurrent agent executions complete without connection pool exhaustion or timeout
-  6. All 22 cron routes handle DB failure (retry+DLQ), LLM timeout (circuit breaker), rate limit (backoff), and partial batch failure gracefully
-  7. Production monitoring dashboard shows cron success rate, agent latency, channel health, error rates, and token spend
-**Plans**: 3 plans (2 waves)
-
-Plans:
-- [x] 31-01-PLAN.md -- Channel adapter smoke tests (Gmail, Outlook, WhatsApp, SMS live connectivity verification)
-- [x] 31-02-PLAN.md -- Load testing (10 concurrent agents) + cron resilience utilities (retry, backoff, batch processing)
-- [ ] 31-03-PLAN.md -- Production monitoring dashboard (API + MonitoringTab UI + smoke test trigger)
-
-### Phase 32: Marketing Site & Checkout Flow
-**Goal**: A stranger can land on bitbit.chat, understand what BitBit does, pick a plan, and pay -- product landing page, industry pages, case study, and pricing with live Stripe Checkout
-**Depends on**: None (parallel with Phases 30, 31)
-**Requirements**: MKTG-01, MKTG-02, MKTG-03, MKTG-04, MKTG-05
-**Success Criteria** (what must be TRUE):
-  1. bitbit.chat shows professional product landing page with hero, features, roles, social proof, pricing CTA
-  2. Three industry pages exist: Marketing Agencies, Trades & Services, Professional Services
-  3. AWU case study page with problem, solution, results (real metrics), and Andy quote
-  4. Pricing page with feature comparison matrix and working Stripe Checkout for all tiers
-  5. SEO foundation: structured data, meta tags, Open Graph, sitemap, robots
-**Plans**: 3 plans (2 waves)
-
-Plans:
-- [x] 32-01-PLAN.md -- Product landing page (hero, features, roles, social proof, CTA) + 3 industry pages + NavBar/Footer updates
-- [x] 32-02-PLAN.md -- Pricing page enhancement (comparison matrix, Free tier, FAQ) + AWU case study page
-- [x] 32-03-PLAN.md -- SEO foundation (sitemap, robots, Open Graph, JSON-LD structured data)
-
-### Phase 33: Beta Program Infrastructure
-**Goal**: Admin can invite waitlist users to beta, beta users get guided onboarding with daily tips and feedback collection, admin can monitor per-org usage metrics
-**Depends on**: Phases 30-32 (parallel)
-**Requirements**: BETA-01, BETA-02, BETA-03, BETA-04, BETA-05
-**Success Criteria** (what must be TRUE):
-  1. Admin can select waitlist entries and send invite emails with unique setup links
-  2. Beta users receive daily tips based on account age
-  3. In-app feedback widget captures category, free text, and optional screenshot
-  4. Admin dashboard shows per-org metrics (active days, messages, agent runs, tokens, errors)
-  5. System supports 10 concurrent beta orgs without degradation
-**Plans**: 1 plan
-
-Plans:
-- [x] 33-01-PLAN.md -- Beta invite flow, feedback widget, admin metrics dashboard, daily tips
-
-### Phase 35: Proactive Workflows & Standing Orders
-**Goal**: Users can define automation rules in plain English that BitBit executes proactively -- "When a new lead comes in, research their company and draft an intro email" becomes a live workflow that fires across roles
-**Depends on**: Phase 34 (builder role complete, all roles registered)
-**Requirements**: WRKF-01, WRKF-02, WRKF-03, WRKF-04
-**Success Criteria** (what must be TRUE):
-  1. User types a natural language rule and BitBit parses it into trigger + conditions + actions
-  2. Workflows chain multiple tool invocations across different roles (e.g., sales research -> comms email)
-  3. Event triggers fire when messages arrive via channel triage
-  4. Schedule triggers fire on role ticks at configured intervals
-  5. Workflow dashboard shows all rules with enable/disable, trigger counts, and run history
-  6. Loop prevention blocks workflow-triggered events from re-triggering other workflows
-**Plans**: 3 plans (2 waves)
-
-Plans:
-- [ ] 35-01-PLAN.md -- Types, DB migration, NL rule parser, trigger engine, Wave 0 tests
-- [ ] 35-02-PLAN.md -- Cross-role tool bridge, channel triage + role runtime trigger wiring
-- [ ] 35-03-PLAN.md -- Workflow CRUD API routes + dashboard tab UI
-
-### Phase 36: Mobile-First Experience
-**Goal**: Users can interact with BitBit on the go via a React Native/Expo mobile app -- chat with streaming responses, approve agent actions with swipe gestures, receive push notifications for alerts, use voice input hands-free, and queue messages offline that sync when reconnected
-**Depends on**: Phase 35 (proactive workflows complete, all features available)
-**Requirements**: MOB-01, MOB-02, MOB-03, MOB-04, MOB-05
-**Success Criteria** (what must be TRUE):
-  1. Expo app builds and runs on iOS and Android with Supabase auth
-  2. Chat messages stream token-by-token via SSE from existing /api/agent/chat
-  3. Push notifications fire for new approvals and workflow completions
-  4. Voice recording transcribes via existing /api/ai/voice and sends as chat message
-  5. Messages queued offline sync automatically when connectivity returns
-  6. Swipe-to-approve/reject works on approval cards with haptic feedback
-**Plans**: 4 plans (3 waves)
-
-Plans:
-- [ ] 36-01-PLAN.md -- Expo project scaffold, Supabase auth, Bearer token API adapter, tab navigation
-- [ ] 36-02-PLAN.md -- Chat screen with SSE streaming + voice input
-- [ ] 36-03-PLAN.md -- Push notifications backend + DB migration + mobile registration
-- [ ] 36-04-PLAN.md -- Offline queue + swipeable approvals + end-to-end verification
+</details>
 
 ## Progress
-
-**Execution Order:**
-Phase 20 first (no dependencies), then 21 (billing before growth roles), then 22 (cost controls + first growth role), then 23 and 24 can run in parallel (both depend on 22).
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
@@ -386,15 +281,15 @@ Phase 20 first (no dependencies), then 21 (billing before growth roles), then 22
 | 24b. Intelligence Layer | v1.4 | 3/3 | Complete | 2026-03-26 |
 | 25. Role Dashboard | v1.4 | 3/3 | Complete | 2026-03-26 |
 | 26. SOTA Response Drafter | v1.4 | 2/2 | Complete | 2026-03-26 |
-| 27. Role Runtime Import Fix | v1.4 | Complete    | 2026-03-27 | 2026-03-27 |
-| 28. Intelligence Dashboard Wiring | 1/1 | Complete    | 2026-03-27 | - |
-| 29. SEO/Tender Scheduled Monitoring | 1/1 | Complete   | 2026-03-27 | - |
-| 30. Onboarding E2E & First-Run Experience | 3/3 | Complete   | 2026-03-27 | - |
-| 31. Channel Smoke Tests & Production Hardening | v1.5 | 2/3 | In Progress | - |
-| 32. Marketing Site & Checkout Flow | 3/3 | Complete | 2026-03-27 | - |
+| 27. Role Runtime Import Fix | v1.4 | 1/1 | Complete | 2026-03-27 |
+| 28. Intelligence Dashboard Wiring | v1.4 | 1/1 | Complete | 2026-03-27 |
+| 29. SEO/Tender Scheduled Monitoring | v1.5 | 1/1 | Complete | 2026-03-27 |
+| 30. Onboarding E2E & First-Run Experience | v1.5 | 3/3 | Complete | 2026-03-27 |
+| 31. Channel Smoke Tests & Production Hardening | v1.5 | 3/3 | Complete | 2026-03-27 |
+| 32. Marketing Site & Checkout Flow | v1.5 | 3/3 | Complete | 2026-03-27 |
 | 33. Beta Program Infrastructure | v1.5 | 1/1 | Complete | 2026-03-27 |
 | 34. Builder Role | v1.5 | 4/4 | Complete | 2026-03-27 |
-| 35. Proactive Workflows | 3/3 | Complete   | 2026-03-27 | - |
-| 36. Mobile-First Experience | 4/4 | Complete   | 2026-03-27 | - |
+| 35. Proactive Workflows | v1.5 | 3/3 | Complete | 2026-03-27 |
+| 36. Mobile-First Experience | v1.5 | 4/4 | Complete | 2026-03-28 |
 
-**Overall:** 57/57 plans complete for v1.0+v1.1+v1.2 (100%). v1.4: 24/28 plans (Phases 20-27 complete, 28-29 pending). v1.5: Phases 30-35 complete, Phase 36 planned (4 plans).
+**Overall:** 57/57 plans complete for v1.0+v1.1+v1.2 (100%). v1.4: 28/28 plans complete (100%). v1.5: 22/22 plans complete (100%).

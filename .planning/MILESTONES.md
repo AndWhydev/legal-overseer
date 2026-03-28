@@ -43,3 +43,25 @@
 
 ---
 
+## v1.5 Beta Launch & First Revenue
+
+**Shipped:** 2026-03-28
+**Phases:** 29-36 (8 phases, 22 plans)
+**Timeline:** 2 days (2026-03-27 → 2026-03-28)
+**Stats:** 99 commits, 354 files changed, 35,316 insertions
+
+### Delivered
+- Proactive SEO/Tender monitoring via growth role on scheduled ticks
+- Onboarding E2E: 5-stage wizard, first-run discovery, welcome conversation, empty states
+- Channel smoke tests, concurrent load testing, cron resilience, production monitoring dashboard
+- Marketing site: landing page, 3 industry pages, pricing with Stripe Checkout, AWU case study
+- Beta program: invite flow, daily tips, feedback widget, admin usage dashboard
+- Builder role: website generation via chat, template library, WordPress/Elementor export, preview sandbox
+- Proactive workflows: NL rule parser, trigger engine, cross-role tool bridge, workflow dashboard
+- Mobile app: Expo/React Native, chat with streaming, voice input, push notifications, offline queue, quick actions
+
+### Known Gaps (Tech Debt)
+- og-image.png missing for social sharing previews
+- Nyquist validation incomplete on phases 29, 31, 32, 33, 35, 36
+- 3 visual checkpoints pending (builder, workflows, mobile)
+

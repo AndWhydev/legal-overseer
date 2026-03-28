@@ -1,11 +1,11 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.4
-milestone_name: Media, Billing & Growth Roles
-status: executing
-stopped_at: Completed 36-03-PLAN.md (Push notifications end-to-end)
-last_updated: "2026-03-27T17:00:31.565Z"
-last_activity: "2026-03-28 - Completed 35-03: Workflow CRUD API & Dashboard (Tasks 1-2; Task 3 pending verification)"
+milestone: v1.5
+milestone_name: Beta Launch & First Revenue
+status: shipped
+stopped_at: v1.5 milestone archived
+last_updated: "2026-03-28T12:00:00.000Z"
+last_activity: "2026-03-28 - Archived v1.5 milestone (8 phases, 22 plans shipped)"
 progress:
   total_phases: 22
   completed_phases: 14
@@ -21,22 +21,22 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-18)
 
 **Core value:** BitBit understands the business better than the business owner -- when Andy says "Invoice Sezer for the White House RE work", BitBit knows who Sezer is, what the work was, the rate, and whether it's already been invoiced.
-**Current focus:** v1.6 Beta Launch & First Revenue
+**Current focus:** v1.5 complete, next milestone TBD
 
 ## Current Position
 
-Phase: 36 of 36 (Mobile Experience)
-Plan: 4 of 4 in current phase
-Status: Executing (Task 3 pending verification)
-Last activity: 2026-03-28 - Completed 36-04: Offline queue and swipeable approvals (Tasks 1-2; Task 3 pending verification)
+Phase: v1.5 complete (all 36 phases shipped)
+Plan: N/A (milestone archived)
+Status: v1.5 shipped 2026-03-28
+Last activity: 2026-03-28 - Archived v1.5 milestone
 
-Progress: v1.0 ======== | v1.1 ======== | v1.2 ======== | v1.4 ======== | v1.5 ========== | v1.6 ===--- 33%
+Progress: v1.0 ======== | v1.1 ======== | v1.2 ======== | v1.4 ======== | v1.5 ======== | 100%
 
 ## Performance Metrics
 
 **Delivery totals:**
-- Total plans completed: 84 (v1.0: 19, v1.1: 16, v1.2: 22, v1.4: 24, v1.5: 2, v1.6: 1)
-- Milestones shipped: v1.0 (2026-02-21), v1.1 (2026-02-22), v1.2 (2026-03-02), v1.4 (2026-03-26)
+- Total plans completed: 106 (v1.0: 19, v1.1: 16, v1.2: 22, v1.4: 28, v1.5: 22)
+- Milestones shipped: v1.0 (2026-02-21), v1.1 (2026-02-22), v1.2 (2026-03-02), v1.4 (2026-03-26), v1.5 (2026-03-28)
 
 **v1.4 Phases:**
 
@@ -54,12 +54,18 @@ Progress: v1.0 ======== | v1.1 ======== | v1.2 ======== | v1.4 ======== | v1.5 =
 | 27. Role Runtime Fix | 1 | COMPLETE |
 | 28. Intelligence Dashboard Wiring | 1 | COMPLETE |
 
-**v1.5 Phases:**
+**v1.5 Phases (SHIPPED 2026-03-28):**
 
 | Phase | Plans | Status |
 |-------|-------|--------|
-| 26. SOTA Response Drafter | 2 | COMPLETE (2/2) |
-| 33. Beta Program Infrastructure | 1 | COMPLETE (1/1) |
+| 29. SEO/Tender Scheduled Monitoring | 1 | COMPLETE |
+| 30. Onboarding E2E | 3 | COMPLETE |
+| 31. Channel Smoke Tests | 3 | COMPLETE |
+| 32. Marketing Site & Checkout | 3 | COMPLETE |
+| 33. Beta Program Infrastructure | 1 | COMPLETE |
+| 34. Builder Role | 4 | COMPLETE |
+| 35. Proactive Workflows | 3 | COMPLETE |
+| 36. Mobile-First Experience | 4 | COMPLETE |
 | Phase 30 P03 | 25min | 2 tasks | 6 files |
 | Phase 32 P03 | 26 | 2 tasks | 9 files |
 | Phase 29 P01 | 15min | 3 tasks | 10 files |
@@ -73,19 +79,13 @@ Progress: v1.0 ======== | v1.1 ======== | v1.2 ======== | v1.4 ======== | v1.5 =
 | Phase 34 P02 | 9min | 2 tasks | 5 files |
 | Phase 34 P03 | 15min | 2 tasks | 4 files |
 | Phase 34 P04 | 12min | 2 tasks | 7 files |
-
-**v1.6 Phases:**
-
-| Phase | Plans | Status |
-|-------|-------|--------|
-| 35. Proactive Workflows | 3 | IN PROGRESS (3/3, Task 3 pending verify) |
 | Phase 35 P01 | 27min | 2 tasks | 7 files |
 | Phase 35 P02 | 15min | 2 tasks | 4 files |
 | Phase 35 P03 | 19min | 2 tasks | 8 files |
 | Phase 36 P01 | 18min | 2 tasks | 17 files |
 | Phase 36 P02 | 14min | 2 tasks | 9 files |
 | Phase 36 P03 | 22min | 2 tasks | 12 files |
-| Phase 36 P04 | 10min | 2 tasks | 12 files |
+| Phase 36 P04 | 10min | 3 tasks | 9 files |
 
 ## Accumulated Context
 
