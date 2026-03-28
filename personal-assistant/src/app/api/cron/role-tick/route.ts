@@ -7,6 +7,7 @@ import '@/lib/roles/finance/finance-role'
 import '@/lib/roles/comms/comms-role'
 import '@/lib/roles/sales/sales-role'
 import '@/lib/roles/growth/growth-role'
+import '@/lib/roles/builder/builder-role'
 
 export const maxDuration = 300
 export const dynamic = 'force-dynamic'

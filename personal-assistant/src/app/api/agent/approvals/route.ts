@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { getServiceClient } from '@/lib/supabase/service-client'
+import { authenticateBearer } from '@/lib/supabase/bearer-auth'
 import { getPendingApprovals, resolveApproval } from '@/lib/agent/approval-queue'
 import { executeApprovedAction } from '@/lib/agent/action-executor'
 import { logAuditEvent } from '@/lib/audit/logger'
@@ -8,7 +10,29 @@ type Decision = 'approved' | 'rejected'
 
 const VALID_PRIORITIES = new Set(['urgent', 'normal', 'low'])
 
-async function getUserOrgId() {
+async function getUserOrgId(request?: NextRequest) {
+  // Try Bearer token auth first (mobile clients)
+  if (request) {
+    let bearerAuth: Awaited<ReturnType<typeof authenticateBearer>> = null
+    try {
+      bearerAuth = await authenticateBearer(request)
+    } catch (err) {
+      if (err instanceof Response) {
+        return { error: err as Response }
+      }
+      return { error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) as Response }
+    }
+
+    if (bearerAuth) {
+      return {
+        supabase: getServiceClient(),
+        userId: bearerAuth.user.id,
+        orgId: bearerAuth.orgId,
+      }
+    }
+  }
+
+  // Fall back to cookie-based auth (web)
   const supabase = await createClient()
   if (!supabase) {
     return { error: NextResponse.json({ error: 'Not configured' }, { status: 503 }) as Response }
@@ -36,7 +60,7 @@ async function getUserOrgId() {
 }
 
 export async function GET(request: NextRequest) {
-  const auth = await getUserOrgId()
+  const auth = await getUserOrgId(request)
   if ('error' in auth) {
     return auth.error
   }
@@ -71,7 +95,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function PATCH(request: NextRequest) {
-  const auth = await getUserOrgId()
+  const auth = await getUserOrgId(request)
   if ('error' in auth) {
     return auth.error
   }
