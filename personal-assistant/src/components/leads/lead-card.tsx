@@ -1,8 +1,6 @@
 'use client'
 
 import React, { memo } from 'react'
-import { useSortable } from '@dnd-kit/sortable'
-import { CSS } from '@dnd-kit/utilities'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
@@ -22,27 +20,10 @@ const SCORE_VARIANT = {
 } as const
 
 function LeadCardInner({ lead, onClick }: LeadCardProps) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: lead.id })
-
-  const dndStyle = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  }
-
   const displayName = lead.prospect_name ?? lead.source_detail ?? `Lead ${lead.id.slice(0, 8)}`
 
   return (
     <Card
-      ref={setNodeRef}
-      {...attributes}
-      {...listeners}
       onClick={(e) => {
         e.stopPropagation()
         onClick?.(lead)
@@ -57,10 +38,8 @@ function LeadCardInner({ lead, onClick }: LeadCardProps) {
         }
       }}
       className={cn(
-        'cursor-grab gap-2 py-3 transition-shadow hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-ring active:cursor-grabbing',
-        isDragging && 'opacity-50'
+        'cursor-grab gap-2 py-3 transition-shadow hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-ring active:cursor-grabbing select-none',
       )}
-      style={dndStyle}
     >
       <CardContent className="space-y-2">
         {/* Company name */}
