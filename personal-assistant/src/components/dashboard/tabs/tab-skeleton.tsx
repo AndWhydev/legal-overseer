@@ -211,6 +211,49 @@ function TimelineSkeleton() {
 }
 
 // ---------------------------------------------------------------------------
+// Variant: inbox (message list with stats bar + filter pills + message rows)
+// ---------------------------------------------------------------------------
+
+function InboxSkeleton() {
+  return (
+    <div className="flex flex-col gap-4 p-6" aria-busy="true" role="status">
+      {/* Stats bar */}
+      <div className="flex items-center gap-6">
+        <Skeleton className="h-4 w-16" />
+        <Skeleton className="h-4 w-24" />
+        <Skeleton className="h-4 w-20" />
+        <Skeleton className="h-4 w-16" />
+        <div className="ml-auto flex gap-2">
+          <Skeleton className="h-8 w-20 rounded-lg" />
+          <Skeleton className="h-8 w-20 rounded-lg" />
+        </div>
+      </div>
+      {/* Filter pills */}
+      <div className="flex gap-2">
+        {Array.from({ length: 7 }).map((_, i) => (
+          <Skeleton key={i} className="h-8 w-20 rounded-full" />
+        ))}
+      </div>
+      {/* Message rows */}
+      <div className="flex flex-col gap-1">
+        {Array.from({ length: 8 }).map((_, i) => (
+          <div key={i} className="flex items-center gap-3 rounded-lg px-3 py-3">
+            <Skeleton className="h-9 w-9 shrink-0 rounded-full" />
+            <div className="flex flex-1 items-center gap-3 min-w-0">
+              <Skeleton className="h-4 w-28 shrink-0" />
+              <Skeleton className="h-5 w-20 shrink-0 rounded-full" />
+              <Skeleton className="h-4 w-32 shrink-0" />
+              <Skeleton className="h-3 flex-1 min-w-0" />
+              <Skeleton className="h-3 w-8 shrink-0 ml-auto" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Default (original generic skeleton)
 // ---------------------------------------------------------------------------
 
@@ -238,7 +281,7 @@ function DefaultSkeleton() {
 // Public API
 // ---------------------------------------------------------------------------
 
-export type TabSkeletonVariant = 'default' | 'table' | 'cards-grid' | 'kanban' | 'chart' | 'detail' | 'timeline';
+export type TabSkeletonVariant = 'default' | 'table' | 'cards-grid' | 'kanban' | 'chart' | 'detail' | 'timeline' | 'inbox';
 
 const VARIANT_MAP: Record<TabSkeletonVariant, React.FC> = {
   default: DefaultSkeleton,
@@ -248,6 +291,7 @@ const VARIANT_MAP: Record<TabSkeletonVariant, React.FC> = {
   chart: ChartSkeleton,
   detail: DetailSkeleton,
   timeline: TimelineSkeleton,
+  inbox: InboxSkeleton,
 };
 
 export function TabSkeleton({ variant = 'default' }: { variant?: TabSkeletonVariant } = {}) {
