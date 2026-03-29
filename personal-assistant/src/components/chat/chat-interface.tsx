@@ -675,12 +675,14 @@ export function ChatInterface({ userName }: { userName?: string }) {
       ]
     })
     smartScroll.onContentUpdate()
-  }, [smoothStream.displayedContent, smartScroll])
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- smartScroll uses refs, stable identity not needed
+  }, [smoothStream.displayedContent])
 
   // Auto-scroll on thinking content changes
   useEffect(() => {
     smartScroll.onContentUpdate()
-  }, [thinkingContent, isThinkingStreaming, smartScroll])
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- smartScroll uses refs, stable identity not needed
+  }, [thinkingContent, isThinkingStreaming])
 
   const handleOpenArtifact = useCallback((content: string, lang: string) => {
     const isHtml = lang === 'html' || (content.includes('<!DOCTYPE') || content.includes('<html'))
