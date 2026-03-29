@@ -4,10 +4,11 @@ import React, { useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { motion } from 'motion/react'
-import { IconRefresh, IconThumbUp, IconThumbDown, IconPencil } from '@tabler/icons-react'
+import { IconRefresh, IconThumbUp, IconThumbDown, IconPencil, IconCopy, IconCheck } from '@tabler/icons-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { BitBitAsciiAvatar } from '@/components/ui/bitbit-ascii-avatar'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { CodeBlock } from './code-block'
 import {
   InlineCitation,
@@ -104,6 +105,13 @@ export function MessageBubble({ message, citations, showAvatar = false, avatarEm
   const [feedback, setFeedback] = useState<'up' | 'down' | null>(message.feedback || null)
   const [isEditing, setIsEditing] = useState(false)
   const [editText, setEditText] = useState(message.content)
+  const [copied, setCopied] = useState(false)
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(message.content).catch(() => {})
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
 
   const handleFeedback = (type: 'up' | 'down') => {
     const next = feedback === type ? null : type
@@ -170,11 +178,6 @@ export function MessageBubble({ message, citations, showAvatar = false, avatarEm
 
   return (
     <div className={`bb-chat__msg ${isUser ? 'bb-chat__msg--user' : 'bb-chat__msg--assistant'} relative`}>
-      {!isUser && showAvatar && (
-        <div className="bb-chat__assistant-icon">
-          <BitBitAsciiAvatar size={48} emotion={avatarEmotion as any} isThinking={avatarThinking} />
-        </div>
-      )}
       {/* Edit button for user messages (appears on hover) */}
       {isUser && onEdit && !isEditing && (
         <Button
@@ -187,103 +190,144 @@ export function MessageBubble({ message, citations, showAvatar = false, avatarEm
           <IconPencil size={12} />
         </Button>
       )}
-      <div className={isUser ? 'rounded-2xl rounded-br-sm bg-primary text-primary-foreground px-4 py-2.5 max-w-[85%] ml-auto' : 'bb-chat__bubble--assistant bb-chat__markdown'}>
-        {isUser && isEditing ? (
-          <div className="flex flex-col gap-1.5 w-full">
-            <Textarea
-              value={editText}
-              onChange={e => setEditText(e.target.value)}
-              autoFocus
-              className="min-h-[60px] resize-y"
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault()
-                  if (editText.trim() && onEdit) {
-                    onEdit!(message.id, editText.trim())
-                    setIsEditing(false)
+      {!isUser ? (
+        <div className="flex flex-col w-full">
+          {/* Avatar + label header */}
+          {showAvatar && (
+            <div className="flex items-center gap-2 mb-1.5">
+              <BitBitAsciiAvatar size={32} emotion={avatarEmotion as any} isThinking={avatarThinking} />
+              <span className="text-sm font-medium text-foreground">BitBit</span>
+            </div>
+          )}
+          {/* Message content */}
+          <div className="bb-chat__bubble--assistant bb-chat__markdown">
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              components={markdownComponents as any}
+            >
+              {patchIncomplete(message.content)}
+            </ReactMarkdown>
+          </div>
+          {/* Action bar */}
+          <TooltipProvider>
+            <div className="flex gap-1 mt-2 items-center">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <motion.div
+                    animate={feedback === 'up' ? { scale: [1, 1.2, 1] } : { scale: 1 }}
+                    transition={{ duration: 0.2, ease: 'easeOut' }}
+                  >
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      onClick={() => handleFeedback('up')}
+                      className={`size-8 ${feedback === 'up' ? 'text-foreground' : 'text-muted-foreground/50 hover:text-muted-foreground'}`}
+                      aria-label="Good response"
+                    >
+                      <IconThumbUp size={18} fill={feedback === 'up' ? 'currentColor' : 'none'} />
+                    </Button>
+                  </motion.div>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">Good response</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <motion.div
+                    animate={feedback === 'down' ? { scale: [1, 1.2, 1] } : { scale: 1 }}
+                    transition={{ duration: 0.2, ease: 'easeOut' }}
+                  >
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      onClick={() => handleFeedback('down')}
+                      className={`size-8 ${feedback === 'down' ? 'text-foreground' : 'text-muted-foreground/50 hover:text-muted-foreground'}`}
+                      aria-label="Bad response"
+                    >
+                      <IconThumbDown size={18} fill={feedback === 'down' ? 'currentColor' : 'none'} />
+                    </Button>
+                  </motion.div>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">Bad response</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={handleCopy}
+                    className="size-8 text-muted-foreground/50 hover:text-muted-foreground"
+                    aria-label="Copy message"
+                  >
+                    {copied ? <IconCheck size={18} /> : <IconCopy size={18} />}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">{copied ? 'Copied' : 'Copy'}</TooltipContent>
+              </Tooltip>
+              {onRegenerate && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      onClick={onRegenerate}
+                      className="size-8 text-muted-foreground/50 hover:text-muted-foreground"
+                      aria-label="Regenerate response"
+                    >
+                      <IconRefresh size={18} />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">Regenerate</TooltipContent>
+                </Tooltip>
+              )}
+            </div>
+          </TooltipProvider>
+        </div>
+      ) : (
+        <div className={`rounded-2xl rounded-br-sm bg-primary text-primary-foreground px-5 py-3 max-w-[90%] ml-auto text-[15px] leading-relaxed`}>
+          {isEditing ? (
+            <div className="flex flex-col gap-1.5 w-full">
+              <Textarea
+                value={editText}
+                onChange={e => setEditText(e.target.value)}
+                autoFocus
+                className="min-h-[60px] resize-y"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault()
+                    if (editText.trim() && onEdit) {
+                      onEdit!(message.id, editText.trim())
+                      setIsEditing(false)
+                    }
                   }
-                }
-                if (e.key === 'Escape') {
-                  setIsEditing(false)
-                  setEditText(message.content)
-                }
-              }}
-            />
-            <div className="flex gap-1.5 justify-end">
-              <Button
-                variant="outline"
-                size="xs"
-                onClick={() => { setIsEditing(false); setEditText(message.content) }}
-              >
-                Cancel
-              </Button>
-              <Button
-                size="xs"
-                onClick={() => {
-                  if (editText.trim() && onEdit) {
-                    onEdit!(message.id, editText.trim())
+                  if (e.key === 'Escape') {
                     setIsEditing(false)
+                    setEditText(message.content)
                   }
                 }}
-              >
-                Save & Resend
-              </Button>
+              />
+              <div className="flex gap-1.5 justify-end">
+                <Button
+                  variant="outline"
+                  size="xs"
+                  onClick={() => { setIsEditing(false); setEditText(message.content) }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  size="xs"
+                  onClick={() => {
+                    if (editText.trim() && onEdit) {
+                      onEdit!(message.id, editText.trim())
+                      setIsEditing(false)
+                    }
+                  }}
+                >
+                  Save & Resend
+                </Button>
+              </div>
             </div>
-          </div>
-        ) : isUser ? (
-          message.content
-        ) : (
-          <ReactMarkdown
-            remarkPlugins={[remarkGfm]}
-            components={markdownComponents as any}
-          >
-            {patchIncomplete(message.content)}
-          </ReactMarkdown>
-        )}
-      </div>
-      {!isUser && (
-        <div className="flex gap-0.5 mt-2 items-center">
-          <div className="inline-flex gap-0.5">
-            <motion.div
-              animate={feedback === 'up' ? { scale: [1, 1.2, 1] } : { scale: 1 }}
-              transition={{ duration: 0.2, ease: 'easeOut' }}
-            >
-              <Button
-                variant="ghost"
-                size="icon-xs"
-                onClick={() => handleFeedback('up')}
-                className={feedback === 'up' ? 'text-foreground' : 'text-muted-foreground/40 hover:text-muted-foreground'}
-                aria-label="Good response"
-              >
-                <IconThumbUp size={12} fill={feedback === 'up' ? 'currentColor' : 'none'} />
-              </Button>
-            </motion.div>
-            <motion.div
-              animate={feedback === 'down' ? { scale: [1, 1.2, 1] } : { scale: 1 }}
-              transition={{ duration: 0.2, ease: 'easeOut' }}
-            >
-              <Button
-                variant="ghost"
-                size="icon-xs"
-                onClick={() => handleFeedback('down')}
-                className={feedback === 'down' ? 'text-foreground' : 'text-muted-foreground/40 hover:text-muted-foreground'}
-                aria-label="Bad response"
-              >
-                <IconThumbDown size={12} fill={feedback === 'down' ? 'currentColor' : 'none'} />
-              </Button>
-            </motion.div>
-          </div>
-          {onRegenerate && (
-            <Button
-              variant="ghost"
-              size="xs"
-              onClick={onRegenerate}
-              className="text-muted-foreground/40 hover:text-muted-foreground gap-1"
-              aria-label="Regenerate response"
-            >
-              <IconRefresh size={12} />
-              Regenerate
-            </Button>
+          ) : (
+            message.content
           )}
         </div>
       )}

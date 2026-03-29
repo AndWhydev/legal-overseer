@@ -292,12 +292,13 @@ export function VoicePill({
           'relative z-auto',
           'flex flex-col items-stretch',
           'w-full max-w-[860px] mx-auto',
-          'rounded-[26px] border border-border bg-card',
+          'rounded-2xl border border-border bg-card',
+          'shadow-sm',
           'opacity-100 visible pointer-events-auto',
           'transition-[min-height,padding] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)]',
         ],
-        docked && compactDocked && !isDockedExpanded && 'min-h-[94px] px-[18px] pt-3 pb-2.5',
-        docked && (!compactDocked || isDockedExpanded) && 'min-h-[128px] px-[18px] pt-4 pb-3.5',
+        docked && compactDocked && !isDockedExpanded && 'min-h-[88px] px-4 pt-3 pb-2.5',
+        docked && (!compactDocked || isDockedExpanded) && 'min-h-[120px] px-4 pt-3.5 pb-3',
 
         // ── Floating visible ──
         !docked && isVisible && !isExiting && [
@@ -451,48 +452,50 @@ export function VoicePill({
               {/* Action buttons row */}
               <div className={cn(
                 'flex items-center justify-between',
-                compactDocked && !isDockedExpanded ? 'pt-2' : 'pt-2.5',
+                compactDocked && !isDockedExpanded ? 'pt-1.5' : 'pt-2',
               )}>
                 <Button
                   variant="ghost"
-                  size="icon-sm"
-                  className="text-muted-foreground hover:text-foreground"
+                  size="icon"
+                  className="rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/80"
                   aria-label="Attach file"
                   type="button"
                   onClick={handlePaperclipClick}
                 >
-                  <IconPaperclip size={18} />
+                  <IconPaperclip size={20} />
                 </Button>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
                   {voice.isSupported && (
                     <Button
                       variant="ghost"
-                      size="icon-sm"
+                      size="icon"
                       className={cn(
                         'rounded-full',
                         voice.isListening
-                          ? 'text-destructive hover:text-destructive'
-                          : 'text-muted-foreground hover:text-foreground',
+                          ? 'text-destructive hover:text-destructive hover:bg-destructive/10'
+                          : 'text-muted-foreground hover:text-foreground hover:bg-muted/80',
                       )}
                       onClick={voice.toggleListening}
                       aria-label={voice.isListening ? 'Stop listening' : 'Start voice input'}
                       type="button"
                     >
-                      {voice.isListening ? <IconMicrophoneOff size={16} /> : <IconMicrophone size={16} />}
+                      {voice.isListening ? <IconMicrophoneOff size={20} /> : <IconMicrophone size={20} />}
                     </Button>
                   )}
                   <Button
-                    variant="ghost"
-                    size="icon-sm"
+                    variant={canSend && !fileUpload.isUploading ? 'default' : 'ghost'}
+                    size="icon"
                     className={cn(
-                      'text-muted-foreground',
-                      canSend && !fileUpload.isUploading && 'text-foreground hover:text-foreground',
+                      'rounded-full',
+                      canSend && !fileUpload.isUploading
+                        ? 'bg-foreground text-background hover:bg-foreground/90'
+                        : 'text-muted-foreground',
                     )}
                     onClick={handleSubmit}
                     aria-label="Send"
                     disabled={!canSend || fileUpload.isUploading}
                   >
-                    <IconArrowUp size={18} />
+                    <IconArrowUp size={20} />
                   </Button>
                 </div>
               </div>

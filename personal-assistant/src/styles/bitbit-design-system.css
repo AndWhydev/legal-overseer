@@ -6674,7 +6674,7 @@ html.light .bb-pill__shimmer-dots span {
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 16px 16px 228px;
+  padding: 16px 16px 172px;
   scroll-behavior: smooth;
   position: relative;
   z-index: 1;
@@ -6713,7 +6713,7 @@ html.light .bb-pill__shimmer-dots span {
 .bb-chat__msg-list {
   width: var(--bb-chat-lane-width);
   margin: 0 auto;
-  padding: 0 4px 0 72px;
+  padding: 0 4px;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -6827,9 +6827,9 @@ html.light .bb-pill__shimmer-dots span {
 }
 
 .bb-chat__assistant-icon {
-  width: 48px;
-  height: 48px;
-  margin-bottom: 4px;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
 }
 
 /* ── Chain of Thought — hide thread segment on last step ── */
@@ -6904,8 +6904,8 @@ html.light .bb-chat__scroll-btn {
 
 .bb-chat__bubble--assistant {
   color: var(--text-primary);
-  font-size: 15px;
-  line-height: 1.6;
+  font-size: 16px;
+  line-height: 1.65;
   padding: 4px 0;
   overflow-wrap: break-word;
   word-break: break-word;
@@ -7009,18 +7009,20 @@ html.light .bb-chat__scroll-btn {
   line-height: 1.3;
 }
 
-.bb-chat__markdown h1 { font-size: 18px; }
-.bb-chat__markdown h2 { font-size: 16px; }
-.bb-chat__markdown h3 { font-size: 14px; }
+.bb-chat__markdown h1 { font-size: 20px; font-weight: 700; margin: 16px 0 8px; }
+.bb-chat__markdown h2 { font-size: 18px; font-weight: 600; margin: 14px 0 6px; }
+.bb-chat__markdown h3 { font-size: 16px; font-weight: 600; margin: 12px 0 4px; }
+.bb-chat__markdown h4 { font-size: 15px; font-weight: 600; margin: 10px 0 4px; }
 
 .bb-chat__markdown a {
-  color: #FF8C3C;
+  color: var(--text-primary);
   text-decoration: underline;
   text-underline-offset: 2px;
+  font-weight: 500;
 }
 
 .bb-chat__markdown blockquote {
-  border-left: 2px solid rgba(255, 140, 60, 0.4);
+  border-left: 2px solid var(--border-subtle, rgba(255, 255, 255, 0.15));
   padding-left: 12px;
   margin: 8px 0;
   color: var(--text-secondary);
@@ -7312,7 +7314,7 @@ html.light .bb-chat__scroll-btn {
   justify-content: center;
   position: absolute;
   left: 50%;
-  bottom: 24px;
+  bottom: 16px;
   transform: translateX(-50%);
   z-index: 6;
   pointer-events: none;
@@ -7329,7 +7331,7 @@ html.light .bb-chat__scroll-btn {
 }
 
 .bb-chat__input-area--bottom {
-  bottom: 24px;
+  bottom: 16px;
 }
 
 .bb-chat__input-area #pill-dock {
