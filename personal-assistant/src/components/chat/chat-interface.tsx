@@ -20,11 +20,12 @@ import { FollowUpChips } from './follow-up-chips'
 import type { Whisper } from '@/lib/whispers/types'
 import { Shimmer } from '@/components/ai-elements/shimmer'
 import {
-  ChainOfThought,
-  ChainOfThoughtHeader,
-  ChainOfThoughtContent,
-  ChainOfThoughtStep,
-} from '@/components/ai-elements/chain-of-thought'
+  Steps,
+  StepsTrigger,
+  StepsContent,
+  StepsItem,
+} from '@/components/ui/steps'
+import { Tool } from '@/components/ui/tool'
 import { Checkpoint, CheckpointIcon } from '@/components/ai-elements/checkpoint'
 import { InvoiceArtifact } from './invoice-artifact'
 import { ChatAttachmentList } from './chat-attachment'
@@ -1450,7 +1451,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
     return firstSentence.length > 100 ? firstSentence.slice(0, 97) + '...' : firstSentence
   }
 
-  /** Build chain-of-thought steps JSX for a subset of tool calls with their narrations */
+  /** Build tool step JSX for a subset of tool calls with their narrations using prompt-kit Tool components */
   const buildToolStepsJSX = (tools: ToolCall[], narrations: string[], keyPrefix: string): React.ReactNode[] => {
     // Group consecutive same-name tool calls into collapsed steps
     const groups: { name: string; calls: ToolCall[] }[] = []
@@ -1468,7 +1469,6 @@ export function ChatInterface({ userName }: { userName?: string }) {
       const ToolIcon = getToolIcon(group.name)
       const count = group.calls.length
       const anyRunning = group.calls.some(tc => tc.status === 'running')
-      const status = anyRunning ? 'active' as const : 'complete' as const
 
       const narrationAfter = gIdx < narrations.length
         ? formatNarration(narrations[gIdx])
@@ -1477,20 +1477,22 @@ export function ChatInterface({ userName }: { userName?: string }) {
       if (count === 1) {
         const tc0 = group.calls[0]
         const detail = extractToolDetail(group.name, tc0.input, tc0.result)
+        const summary = extractResultSummary(group.name, tc0.result, tc0.success)
         elements.push(
-          <ChainOfThoughtStep
+          <Tool
             key={`${keyPrefix}-tool-${gIdx}`}
             icon={ToolIcon}
-            label={formatToolName(group.name)}
+            name={formatToolName(group.name)}
             detail={detail ?? undefined}
-            status={tc0.status === 'running' ? 'active' : 'complete'}
+            status={tc0.status}
+            resultSummary={summary ?? undefined}
           >
-            {narrationAfter && (
-              <span className="block text-sm italic text-muted-foreground leading-5">
+            {narrationAfter ? (
+              <StepsItem className="italic">
                 {narrationAfter}
-              </span>
-            )}
-          </ChainOfThoughtStep>
+              </StepsItem>
+            ) : undefined}
+          </Tool>
         )
       } else {
         const COLLAPSED_LABELS: Record<string, (n: number) => string> = {
@@ -1512,44 +1514,32 @@ export function ChatInterface({ userName }: { userName?: string }) {
           : labelFn ? labelFn(count) : `${formatToolName(group.name)} (${count})`
 
         elements.push(
-          <ChainOfThoughtStep
+          <Tool
             key={`${keyPrefix}-tool-${gIdx}`}
             icon={ToolIcon}
-            label={label}
-            status={status}
-            expandable
+            name={label}
+            status={anyRunning ? 'running' : 'done'}
+            defaultOpen={anyRunning}
           >
             {group.calls.map((tc, cIdx) => {
               const detail = extractToolDetail(group.name, tc.input, tc.result)
+              const summary = extractResultSummary(group.name, tc.result, tc.success)
               return (
-                <div
+                <Tool
                   key={`${keyPrefix}-sub-${gIdx}-${cIdx}`}
-                  className="flex items-center gap-2 pb-1 text-sm text-muted-foreground"
-                >
-                  <div className={`size-1 shrink-0 rounded-full ${tc.status === 'running' ? 'bg-muted-foreground' : 'bg-muted-foreground/50'}`} />
-                  <span>{detail || formatToolName(group.name)}</span>
-                  {!detail && (
-                    <span className="inline-flex rounded-lg bg-muted px-2 py-px text-sm text-muted-foreground">
-                      {`#${cIdx + 1}`}
-                    </span>
-                  )}
-                </div>
+                  name={detail || formatToolName(group.name)}
+                  detail={!detail ? `#${cIdx + 1}` : undefined}
+                  status={tc.status}
+                  resultSummary={summary ?? undefined}
+                />
               )
             })}
             {narrationAfter && (
-              <span style={{
-                display: 'block',
-                fontSize: 14,
-                color: 'var(--text-muted)',
-                fontStyle: 'italic',
-                fontWeight: 400,
-                lineHeight: '20px',
-                marginTop: 2,
-              }}>
+              <StepsItem className="italic">
                 {narrationAfter}
-              </span>
+              </StepsItem>
             )}
-          </ChainOfThoughtStep>
+          </Tool>
         )
       }
     })
@@ -1572,7 +1562,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
 
   // Build segment-aware chain-of-thought JSX for the current streaming response.
   // When there are multiple segments (text interleaved between tool batches),
-  // each tools segment gets its own ChainOfThought block.
+  // each tools segment gets its own Steps block.
   // When there's only a single tools segment, render the classic single block.
   const buildSegmentedReasoningJSX = (): React.ReactNode[] | null => {
     if (!showReasoningChain) return null
@@ -1595,13 +1585,17 @@ export function ChatInterface({ userName }: { userName?: string }) {
         return parts.join(' \u00B7 ')
       })()
 
+      const statusIcon = isReasoningActive
+        ? <IconLoader2 className="size-4 animate-spin" />
+        : <IconCheck className="size-4" />
+
       return [
-        <ChainOfThought key="cot-single" open={reasoningOpen} onOpenChange={setReasoningOpen}>
-          <ChainOfThoughtHeader hideChevron={!hasChainContent}>{segHeaderText}</ChainOfThoughtHeader>
-          {hasChainContent && <ChainOfThoughtContent>
+        <Steps key="cot-single" open={reasoningOpen} onOpenChange={setReasoningOpen}>
+          <StepsTrigger leftIcon={statusIcon}>{segHeaderText}</StepsTrigger>
+          {hasChainContent && <StepsContent>
             {buildToolStepsJSX(currentToolCalls, interToolNarrations, 'single')}
-          </ChainOfThoughtContent>}
-        </ChainOfThought>
+          </StepsContent>}
+        </Steps>
       ]
     }
 
@@ -1623,7 +1617,6 @@ export function ChatInterface({ userName }: { userName?: string }) {
           <Shimmer duration={1}>Thinking</Shimmer>
         ) : (() => {
           const parts: string[] = []
-          // Only show thinking duration on the first tools segment
           if (toolSegIdx === 0) {
             if (thinkingDuration !== undefined && thinkingDuration > 0) {
               parts.push(`Thought for ${thinkingDuration}s`)
@@ -1637,26 +1630,30 @@ export function ChatInterface({ userName }: { userName?: string }) {
           return parts.join(' \u00B7 ')
         })()
 
-        // Each tools segment gets its own ChainOfThought.
+        const segStatusIcon = segIsActive
+          ? <IconLoader2 className="size-4 animate-spin" />
+          : <IconCheck className="size-4" />
+
+        // Each tools segment gets its own Steps block.
         // Current active segment: controlled open state via reasoningOpen.
         // Past segments: uncontrolled (defaultOpen=false), user can click to expand.
         const isCurrentSegment = isLastToolSeg && isLoading
         elements.push(
           <div key={`seg-tools-${sIdx}`} style={{ marginBottom: 4 }}>
             {isCurrentSegment ? (
-              <ChainOfThought open={reasoningOpen} onOpenChange={setReasoningOpen}>
-                <ChainOfThoughtHeader>{segHeader}</ChainOfThoughtHeader>
-                <ChainOfThoughtContent>
+              <Steps open={reasoningOpen} onOpenChange={setReasoningOpen}>
+                <StepsTrigger leftIcon={segStatusIcon}>{segHeader}</StepsTrigger>
+                <StepsContent>
                   {buildToolStepsJSX(tools, seg.narrations, `seg-${sIdx}`)}
-                </ChainOfThoughtContent>
-              </ChainOfThought>
+                </StepsContent>
+              </Steps>
             ) : (
-              <ChainOfThought defaultOpen={false}>
-                <ChainOfThoughtHeader>{segHeader}</ChainOfThoughtHeader>
-                <ChainOfThoughtContent>
+              <Steps defaultOpen={false}>
+                <StepsTrigger leftIcon={segStatusIcon}>{segHeader}</StepsTrigger>
+                <StepsContent>
                   {buildToolStepsJSX(tools, seg.narrations, `seg-${sIdx}`)}
-                </ChainOfThoughtContent>
-              </ChainOfThought>
+                </StepsContent>
+              </Steps>
             )}
           </div>
         )
@@ -1667,7 +1664,6 @@ export function ChatInterface({ userName }: { userName?: string }) {
         const isLastSegment = sIdx === streamSegments.length - 1
         if (!isLastSegment && seg.content.trim()) {
           // Intermediate text between tool batches — smooth-stream typing effect
-          // Uses the same RAF adaptive speed as the final response's useSmoothStream
           const trimmed = seg.content.trim()
           elements.push(
             <div
@@ -2098,27 +2094,28 @@ export function ChatInterface({ userName }: { userName?: string }) {
                     {/* Past response — collapsed reasoning chain */}
                     {!isCurrentResponse && msg.role === 'assistant' && msg.toolCalls && msg.toolCalls.length > 0 && (
                       <div style={{ marginBottom: 4 }}>
-                        <ChainOfThought defaultOpen={false}>
-                          <ChainOfThoughtHeader>
+                        <Steps defaultOpen={false}>
+                          <StepsTrigger leftIcon={<IconCheck className="size-4" />}>
                             {`Thought for a few seconds \u00B7 ${msg.toolCalls.length} tool${msg.toolCalls.length !== 1 ? 's' : ''} used`}
-                          </ChainOfThoughtHeader>
-                          <ChainOfThoughtContent>
+                          </StepsTrigger>
+                          <StepsContent>
                             {msg.toolCalls.map((tc, tcIdx) => {
                               const ToolIcon = getToolIcon(tc.name)
                               const detail = extractToolDetail(tc.name, tc.input, tc.result)
                               const summary = extractResultSummary(tc.name, tc.result, tc.success)
                               return (
-                                <ChainOfThoughtStep
+                                <Tool
                                   key={tcIdx}
                                   icon={ToolIcon}
-                                  label={formatToolName(tc.name)}
+                                  name={formatToolName(tc.name)}
                                   detail={detail ?? undefined}
-                                                  status="complete"
+                                  status={tc.status}
+                                  resultSummary={summary ?? undefined}
                                 />
                               )
                             })}
-                          </ChainOfThoughtContent>
-                        </ChainOfThought>
+                          </StepsContent>
+                        </Steps>
                       </div>
                     )}
                     {/* Inline attachment previews — rendered above message text */}
