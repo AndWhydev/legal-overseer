@@ -2089,13 +2089,9 @@ export function ChatInterface({ userName }: { userName?: string }) {
                     {/* Live reasoning chain — segmented (interleaved tools/text) */}
                     {isCurrentResponse && segmentedReasoningJSX && (
                       <div style={{ position: 'relative', marginBottom: 4 }}>
-                        <motion.div
-                          layoutId="bitbit-chat-avatar"
-                          transition={{ type: 'spring', stiffness: 400, damping: 30, mass: 0.8 }}
-                          style={{ position: 'absolute', left: -108, top: -12, width: 96, height: 96, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                        >
-                          <BitBitAsciiAvatar size={96} emotion={avatarEmotion} isThinking={isThinkingStreaming} />
-                        </motion.div>
+                        <div className="bb-chat__assistant-icon">
+                          <BitBitAsciiAvatar size={64} emotion={avatarEmotion} isThinking={isThinkingStreaming} />
+                        </div>
                         {segmentedReasoningJSX}
                       </div>
                     )}
@@ -2156,7 +2152,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
                         }
                         return { ...msg, content: cleaned }
                       })()}
-                      showAvatar={isLastAssistantOverall && !(isCurrentResponse && segmentedReasoningJSX)}
+                      showAvatar={isLastAssistantOverall && !segmentedReasoningJSX && !showReasoningChain}
                       avatarEmotion={isCurrentResponse ? avatarEmotion : 'neutral'}
                       avatarThinking={isCurrentResponse ? isThinkingStreaming : false}
                       avatarActivity={isCurrentResponse ? avatarActivity : 'idle'}
@@ -2179,13 +2175,9 @@ export function ChatInterface({ userName }: { userName?: string }) {
               {/* Standalone reasoning chain (before assistant message exists) */}
               {showReasoningChain && !currentResponseMsg && segmentedReasoningJSX && (
                 <div style={{ position: 'relative', marginBottom: 4 }}>
-                  <motion.div
-                    layoutId="bitbit-chat-avatar"
-                    transition={{ type: 'spring', stiffness: 400, damping: 30, mass: 0.8 }}
-                    style={{ position: 'absolute', left: -52, top: -4, width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                  >
-                    <BitBitAsciiAvatar size={48} emotion={avatarEmotion} isThinking={isThinkingStreaming} />
-                  </motion.div>
+                  <div className="bb-chat__assistant-icon">
+                    <BitBitAsciiAvatar size={64} emotion={avatarEmotion} isThinking={isThinkingStreaming} />
+                  </div>
                   {segmentedReasoningJSX}
                 </div>
               )}

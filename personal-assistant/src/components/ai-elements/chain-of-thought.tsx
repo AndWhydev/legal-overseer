@@ -288,7 +288,7 @@ export const ChainOfThoughtStep = memo(
             {detail && (
               <span
                 style={{
-                  display: "inline-flex",
+                  display: "inline-block",
                   padding: "2px 8px",
                   borderRadius: 6,
                   background: "var(--hover-bg)",
@@ -298,6 +298,10 @@ export const ChainOfThoughtStep = memo(
                   fontWeight: 400,
                   letterSpacing: "0.01em",
                   lineHeight: "18px",
+                  maxWidth: "min(200px, 40vw)",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
                 }}
               >
                 {detail}

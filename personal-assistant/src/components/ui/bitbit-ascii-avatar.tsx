@@ -667,8 +667,8 @@ export function BitBitAsciiAvatar({
     const hiSample = hiSampleRef.current
 
     // Internal ASCII grid — same resolution as the login face
-    const iCols = 35
-    const iRows = 24
+    const iCols = 20
+    const iRows = 14
     hiRes.width = iCols * 5
     hiRes.height = iRows * 5
     hiSample.width = iCols
@@ -726,16 +726,22 @@ export function BitBitAsciiAvatar({
 
       // 3. Rasterize ASCII characters onto the visible canvas
       ctx.clearRect(0, 0, s, s)
-      ctx.font = `${fontSize}px 'Courier New', monospace`
+      ctx.font = `bold ${fontSize * 1.2}px 'Courier New', monospace`
       ctx.textBaseline = 'top'
-      ctx.fillStyle = faceColor
+      ctx.fillStyle = isDark ? '#ffffff' : '#000000'
+      ctx.shadowColor = isDark ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.6)'
+      ctx.shadowBlur = 2
 
       for (let row = 0; row < lines.length; row++) {
         const line = lines[row]
         if (!line) continue
         for (let col = 0; col < line.length; col++) {
           if (line[col] !== ' ') {
-            ctx.fillText(line[col], col * charW, row * charH)
+            const x = col * charW
+            const y = row * charH
+            // Double draw for extra brightness/visibility
+            ctx.fillText(line[col], x, y)
+            ctx.fillText(line[col], x, y)
           }
         }
       }

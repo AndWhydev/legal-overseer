@@ -171,14 +171,9 @@ export function MessageBubble({ message, citations, showAvatar = false, avatarEm
   return (
     <div className={`bb-chat__msg ${isUser ? 'bb-chat__msg--user' : 'bb-chat__msg--assistant'} relative`}>
       {!isUser && showAvatar && (
-        <motion.div
-          layoutId="bitbit-chat-avatar"
-          transition={{ type: 'spring', stiffness: 400, damping: 30, mass: 0.8 }}
-          className="absolute -left-[108px] -top-3 flex items-center justify-center"
-          style={{ width: 96, height: 96 }}
-        >
-          <BitBitAsciiAvatar size={96} emotion={avatarEmotion as any} isThinking={avatarThinking} />
-        </motion.div>
+        <div className="bb-chat__assistant-icon">
+          <BitBitAsciiAvatar size={64} emotion={avatarEmotion as any} isThinking={avatarThinking} />
+        </div>
       )}
       {/* Edit button for user messages (appears on hover) */}
       {isUser && onEdit && !isEditing && (

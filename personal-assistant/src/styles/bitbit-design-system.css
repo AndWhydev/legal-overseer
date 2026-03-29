@@ -6713,7 +6713,7 @@ html.light .bb-pill__shimmer-dots span {
 .bb-chat__msg-list {
   width: var(--bb-chat-lane-width);
   margin: 0 auto;
-  padding: 0 4px;
+  padding: 0 4px 0 72px;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -6827,15 +6827,11 @@ html.light .bb-pill__shimmer-dots span {
 }
 
 .bb-chat__assistant-icon {
-  flex-shrink: 0;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  align-self: flex-start;
-  margin-top: 2px;
-  overflow: visible;
+  position: absolute;
+  left: -72px;
+  top: -16px;
+  width: 64px;
+  height: 64px;
 }
 
 /* ── Chain of Thought — hide thread segment on last step ── */
@@ -7056,10 +7052,7 @@ html.light .bb-chat__scroll-btn {
 }
 
 /* CSS containment for smooth streaming */
-.bb-chat__msg {
-  contain: layout paint;
-  content-visibility: auto;
-}
+/* content-visibility removed — breaks absolutely positioned avatar */
 
 .bb-chat__thinking {
   font-size: 13px;
