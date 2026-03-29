@@ -4,6 +4,18 @@ import React, { useState, useEffect, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { TabShell } from '@/components/ui/tab-shell'
 import { Empty, EmptyTitle, EmptyDescription } from '@/components/ui/empty'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Progress } from '@/components/ui/progress'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 import {
   IconCurrencyDollar,
   IconUsers,
@@ -15,7 +27,6 @@ import {
 import type { CohortMatrix } from '@/app/api/analytics/cohorts/route'
 import type { TrendsResponse, AnomalySummary } from '@/app/api/analytics/trends/route'
 import type { TrendSeries, DataPoint, AnomalyPoint, ForecastPoint } from '@/lib/analytics/forecasting'
-// Design token references replaced with Tailwind/CSS vars inline
 
 // ---------------------------------------------------------------------------
 // Types
@@ -71,80 +82,16 @@ interface AnalyticsData {
 }
 
 // ---------------------------------------------------------------------------
-// Style Constants
-// ---------------------------------------------------------------------------
-
-const glassCard: React.CSSProperties = {
-  padding: 20,
-  borderRadius: 16,
-  background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.6))',
-  backdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
-  WebkitBackdropFilter: 'var(--glass-blur, blur(20px) saturate(1.2))',
-  border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
-  boxShadow: 'var(--card-shadow, 0 2px 8px rgba(0,0,0,0.3)), var(--card-inset, inset 0 1px 0 rgba(255, 255, 255, 0.05))',
-}
-
-const listRow: React.CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  padding: '12px 20px',
-  borderRadius: 12,
-  background: 'var(--glass-pill-bg)',
-  backdropFilter: 'var(--glass-blur)',
-  WebkitBackdropFilter: 'var(--glass-blur)',
-  boxShadow: 'var(--glass-card-inset)',
-  border: 'none',
-  transition: 'background 200ms',
-}
-
-const sectionHeader: React.CSSProperties = {
-  fontSize: 14,
-  fontWeight: 500,
-  letterSpacing: '0.04em',
-  textTransform: 'uppercase' as const,
-  color: 'var(--text-dim)',
-  marginBottom: 12,
-}
-
-const bigNumber: React.CSSProperties = {
-  fontSize: 16,
-  fontWeight: 500,
-  color: 'var(--text-primary)',
-  fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
-  letterSpacing: '-0.03em',
-  lineHeight: 1,
-}
-
-const badge = (color: string): React.CSSProperties => ({
-  display: 'inline-flex',
-  alignItems: 'center',
-  padding: '4px 12px',
-  borderRadius: 8,
-  fontSize: 14,
-  fontWeight: 500,
-  letterSpacing: '0.02em',
-  background: `${color}15`,
-  color: color,
-})
-
-const skeletonStyle: React.CSSProperties = {
-  borderRadius: 8,
-  background: `linear-gradient(90deg, ${'var(--border-subtle, rgba(255, 255, 255, 0.03))'} 25%, ${'var(--glass-border, rgba(255, 255, 255, 0.06))'} 50%, ${'var(--border-subtle, rgba(255, 255, 255, 0.03))'} 75%)`,
-  backgroundSize: '200% 100%',
-  animation: 'shimmer 1.5s ease infinite',
-}
-
-// ---------------------------------------------------------------------------
-// Retention heatmap colour scale  (0% → transparent, 100% → bright accent)
+// Retention heatmap colour scale
 // ---------------------------------------------------------------------------
 
 function retentionColor(pct: number): string {
-  if (pct === 0) return 'var(--hover-bg, rgba(255, 255, 255, 0.04))'
-  if (pct >= 80) return 'rgba(99,235,163,0.55)'
-  if (pct >= 60) return 'rgba(99,235,163,0.35)'
-  if (pct >= 40) return 'rgba(245,197,84,0.40)'
-  if (pct >= 20) return 'rgba(245,197,84,0.22)'
-  return 'rgba(245,107,84,0.22)'
+  if (pct === 0) return 'hsl(var(--muted))'
+  if (pct >= 80) return 'hsl(142 71% 65% / 0.55)'
+  if (pct >= 60) return 'hsl(142 71% 65% / 0.35)'
+  if (pct >= 40) return 'hsl(43 96% 65% / 0.40)'
+  if (pct >= 20) return 'hsl(43 96% 65% / 0.22)'
+  return 'hsl(6 85% 65% / 0.22)'
 }
 
 // ---------------------------------------------------------------------------
@@ -176,7 +123,6 @@ function buildSVGPaths(
   const scaleX = (i: number) => padding + (i / (points.length - 1)) * innerW
   const scaleY = (v: number) => padding + innerH - ((v - minV) / range) * innerH
 
-  // Solid line for real data, dashed for forecasts
   const solidPoints = points.filter((p) => !('forecast' in p) || !(p as ForecastPoint).forecast)
   const forecastPoints = points.filter((p) => ('forecast' in p) && (p as ForecastPoint).forecast)
 
@@ -191,20 +137,19 @@ function buildSVGPaths(
 
   const paths: LinePath[] = []
   if (solidIndices.length >= 2) {
-    paths.push({ d: buildD(solidIndices), color: 'rgba(99,180,235,0.85)' })
+    paths.push({ d: buildD(solidIndices), color: 'hsl(var(--primary))' })
   }
   if (forecastIndices.length >= 2) {
-    // Include last solid point so line is continuous
     const lastSolid = solidIndices[solidIndices.length - 1]
     const indices = lastSolid !== undefined ? [lastSolid, ...forecastIndices] : forecastIndices
-    paths.push({ d: buildD(indices), color: 'rgba(99,180,235,0.45)', dashed: true })
+    paths.push({ d: buildD(indices), color: 'hsl(var(--primary) / 0.45)', dashed: true })
   }
 
   return { paths, scaleX, scaleY }
 }
 
 // ---------------------------------------------------------------------------
-// TrendChart component — inline SVG line chart with anomaly markers
+// TrendChart component
 // ---------------------------------------------------------------------------
 
 function TrendChart({
@@ -219,7 +164,6 @@ function TrendChart({
   const width = 400
   const padding = 28
 
-  // Combine real + forecast for the chart
   const allPoints: Array<DataPoint | ForecastPoint | AnomalyPoint> = [
     ...series.anomalies,
     ...series.forecast,
@@ -233,123 +177,116 @@ function TrendChart({
 
   const anomalyPoints = series.anomalies.filter((p) => p.isAnomaly)
 
-  const trendColor =
-    series.trend === 'up'
-      ? 'var(--bb-green, #63eba3)'
-      : series.trend === 'down'
-        ? 'var(--bb-red, #f56b54)'
-        : 'var(--text-dim)'
-
   return (
-    <div style={{ ...glassCard, position: 'relative' }}>
-      <div className="mb-3 flex items-center justify-between">
-        <span className="text-sm font-medium text-foreground">{label}</span>
-        <span
-          style={{
-            fontSize: 14,
-            fontWeight: 500,
-            color: trendColor,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 4,
-          }}
+    <Card>
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-sm">{label}</CardTitle>
+          <Badge
+            variant={series.trend === 'up' ? 'secondary' : series.trend === 'down' ? 'destructive' : 'outline'}
+          >
+            {series.trend === 'up' ? (
+              <IconTrendingUp className="mr-1 size-3" />
+            ) : series.trend === 'down' ? (
+              <IconTrendingDown className="mr-1 size-3" />
+            ) : null}
+            {series.trendPct > 0 ? '+' : ''}{series.trendPct}%
+          </Badge>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <svg
+          width="100%"
+          viewBox={`0 0 ${width} ${height}`}
+          className="block overflow-visible"
+          aria-label={`${label} trend chart`}
         >
-          {series.trend === 'up' ? '▲' : series.trend === 'down' ? '▼' : '—'}{' '}
-          {series.trendPct > 0 ? '+' : ''}{series.trendPct}%
-        </span>
-      </div>
-
-      <svg
-        width="100%"
-        viewBox={`0 0 ${width} ${height}`}
-        style={{ overflow: 'visible', display: 'block' }}
-        aria-label={`${label} trend chart`}
-      >
-        {/* Grid lines */}
-        {[0, 0.25, 0.5, 0.75, 1].map((f) => {
-          const y = padding + (1 - f) * (height - padding * 2)
-          return (
-            <line
-              key={f}
-              x1={padding}
-              y1={y}
-              x2={width - padding}
-              y2={y}
-              stroke={'var(--glass-border, rgba(255, 255, 255, 0.06))'}
-              strokeWidth={1}
-            />
-          )
-        })}
-
-        {/* Forecast band (upper/lower) */}
-        {series.forecast.length >= 2 && (() => {
-          const fPoints = series.forecast
-          const upperD = fPoints
-            .map((p, i) => {
-              const xi = series.anomalies.length + i
-              return `${i === 0 ? 'M' : 'L'}${scaleX(xi).toFixed(1)},${scaleY(p.upper ?? p.value).toFixed(1)}`
-            })
-            .join(' ')
-          const lowerD = fPoints
-            .map((p, i) => {
-              const xi = series.anomalies.length + i
-              return `${i === 0 ? 'M' : 'L'}${scaleX(xi).toFixed(1)},${scaleY(p.lower ?? p.value).toFixed(1)}`
-            })
-            .join(' ')
-          const bandD = upperD + ' ' + lowerD.replace('M', 'L') + ' Z'
-          return (
-            <path
-              d={bandD}
-              fill="rgba(99,180,235,0.07)"
-              stroke="none"
-            />
-          )
-        })()}
-
-        {/* Data + forecast paths */}
-        {paths.map((p, i) => (
-          <path
-            key={i}
-            d={p.d}
-            fill="none"
-            stroke={p.color}
-            strokeWidth={1.5}
-            strokeDasharray={p.dashed ? '4,4' : undefined}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        ))}
-
-        {/* Anomaly markers */}
-        {anomalyPoints.map((p) => {
-          const idx = series.anomalies.indexOf(p)
-          const cx = scaleX(idx)
-          const cy = scaleY(p.value)
-          return (
-            <g key={idx}>
-              <circle
-                cx={cx}
-                cy={cy}
-                r={5}
-                fill="rgba(245,107,84,0.15)"
-                stroke="rgba(245,107,84,0.8)"
-                strokeWidth={1.5}
+          {/* Grid lines */}
+          {[0, 0.25, 0.5, 0.75, 1].map((f) => {
+            const y = padding + (1 - f) * (height - padding * 2)
+            return (
+              <line
+                key={f}
+                x1={padding}
+                y1={y}
+                x2={width - padding}
+                y2={y}
+                stroke="hsl(var(--border))"
+                strokeWidth={1}
               />
-              <circle cx={cx} cy={cy} r={2} fill="rgba(245,107,84,0.9)" />
-            </g>
-          )
-        })}
-      </svg>
+            )
+          })}
 
-      {/* Legend */}
-      <div className="mt-2 flex gap-4">
-        <LegendItem color="rgba(99,180,235,0.85)" label="Actual" />
-        <LegendItem color="rgba(99,180,235,0.45)" label="Forecast" dashed />
-        {anomalyPoints.length > 0 && (
-          <LegendItem color="rgba(245,107,84,0.8)" label={`${anomalyPoints.length} anomaly`} circle />
-        )}
-      </div>
-    </div>
+          {/* Forecast band */}
+          {series.forecast.length >= 2 && (() => {
+            const fPoints = series.forecast
+            const upperD = fPoints
+              .map((p, i) => {
+                const xi = series.anomalies.length + i
+                return `${i === 0 ? 'M' : 'L'}${scaleX(xi).toFixed(1)},${scaleY(p.upper ?? p.value).toFixed(1)}`
+              })
+              .join(' ')
+            const lowerD = fPoints
+              .map((p, i) => {
+                const xi = series.anomalies.length + i
+                return `${i === 0 ? 'M' : 'L'}${scaleX(xi).toFixed(1)},${scaleY(p.lower ?? p.value).toFixed(1)}`
+              })
+              .join(' ')
+            const bandD = upperD + ' ' + lowerD.replace('M', 'L') + ' Z'
+            return (
+              <path
+                d={bandD}
+                fill="hsl(var(--primary) / 0.07)"
+                stroke="none"
+              />
+            )
+          })()}
+
+          {/* Data + forecast paths */}
+          {paths.map((p, i) => (
+            <path
+              key={i}
+              d={p.d}
+              fill="none"
+              stroke={p.color}
+              strokeWidth={1.5}
+              strokeDasharray={p.dashed ? '4,4' : undefined}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          ))}
+
+          {/* Anomaly markers */}
+          {anomalyPoints.map((p) => {
+            const idx = series.anomalies.indexOf(p)
+            const cx = scaleX(idx)
+            const cy = scaleY(p.value)
+            return (
+              <g key={idx}>
+                <circle
+                  cx={cx}
+                  cy={cy}
+                  r={5}
+                  fill="hsl(var(--destructive) / 0.15)"
+                  stroke="hsl(var(--destructive) / 0.8)"
+                  strokeWidth={1.5}
+                />
+                <circle cx={cx} cy={cy} r={2} fill="hsl(var(--destructive) / 0.9)" />
+              </g>
+            )
+          })}
+        </svg>
+
+        {/* Legend */}
+        <div className="mt-2 flex gap-4">
+          <LegendItem color="hsl(var(--primary))" label="Actual" />
+          <LegendItem color="hsl(var(--primary) / 0.45)" label="Forecast" dashed />
+          {anomalyPoints.length > 0 && (
+            <LegendItem color="hsl(var(--destructive) / 0.8)" label={`${anomalyPoints.length} anomaly`} circle />
+          )}
+        </div>
+      </CardContent>
+    </Card>
   )
 }
 
@@ -365,7 +302,7 @@ function LegendItem({
   circle?: boolean
 }) {
   return (
-    <div className="flex items-center gap-1 text-sm text-muted-foreground">
+    <div className="flex items-center gap-1 text-xs text-muted-foreground">
       {circle ? (
         <svg width={10} height={10} viewBox="0 0 10 10">
           <circle cx={5} cy={5} r={4} fill="none" stroke={color} strokeWidth={1.5} />
@@ -402,25 +339,25 @@ const METRIC_LABELS: Record<string, string> = {
 function AnomalyDigest({ anomalies }: { anomalies: AnomalySummary[] }) {
   const top = anomalies.slice(0, 5)
   return (
-    <div className="flex flex-col gap-2 rounded-xl border border-red-500/20 bg-red-500/5 px-5 py-3">
-      <div className="text-sm font-medium uppercase tracking-wider text-red-500/90">
-        {anomalies.length} anomaly{anomalies.length !== 1 ? 'ies' : ''} detected
-      </div>
-      <div className="flex flex-wrap gap-2">
-        {top.map((a, i) => (
-          <div
-            key={i}
-            className="flex items-center gap-2 rounded-lg bg-red-500/10 px-2.5 py-1 text-sm text-muted-foreground"
-          >
-            <span className="font-medium text-red-500/85">
-              {a.zScore > 0 ? '+' : ''}{a.zScore}σ
-            </span>
-            <span>{METRIC_LABELS[a.metric] ?? a.metric}</span>
-            <span className="text-muted-foreground">{a.date}</span>
-          </div>
-        ))}
-      </div>
-    </div>
+    <Card className="border-destructive/20 bg-destructive/5">
+      <CardContent className="flex flex-col gap-2 py-3">
+        <div className="flex items-center gap-2 text-sm font-medium text-destructive">
+          <IconAlertTriangle className="size-4" />
+          {anomalies.length} anomal{anomalies.length !== 1 ? 'ies' : 'y'} detected
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {top.map((a, i) => (
+            <Badge key={i} variant="destructive" className="gap-1.5">
+              <span className="font-medium">
+                {a.zScore > 0 ? '+' : ''}{a.zScore}s
+              </span>
+              <span>{METRIC_LABELS[a.metric] ?? a.metric}</span>
+              <span className="text-destructive-foreground/60">{a.date}</span>
+            </Badge>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
   )
 }
 
@@ -431,9 +368,11 @@ function AnomalyDigest({ anomalies }: { anomalies: AnomalySummary[] }) {
 function CohortHeatmap({ matrix }: { matrix: CohortMatrix }) {
   if (matrix.cohorts.length === 0) {
     return (
-      <div style={{ ...glassCard, textAlign: 'center', color: 'var(--text-dim)', fontSize: 14, padding: 40 }}>
-        Not enough data to compute cohort retention yet.
-      </div>
+      <Card>
+        <CardContent className="py-10 text-center text-sm text-muted-foreground">
+          Not enough data to compute cohort retention yet.
+        </CardContent>
+      </Card>
     )
   }
 
@@ -442,114 +381,85 @@ function CohortHeatmap({ matrix }: { matrix: CohortMatrix }) {
   )
 
   return (
-    <div style={{ ...glassCard, overflowX: 'auto' }}>
-      <div style={{ minWidth: 500 }}>
-        {/* Header row */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: `120px repeat(${weekHeaders.length}, 1fr)`,
-            gap: 4,
-            marginBottom: 4,
-          }}
-        >
-          <div style={{ fontSize: 14, color: 'var(--text-dim)', fontWeight: 500, padding: '4px 0' }}>
-            Cohort
-          </div>
-          {weekHeaders.map((w) => (
-            <div
-              key={w}
-              style={{
-                fontSize: 14,
-                color: 'var(--text-dim)',
-                textAlign: 'center',
-                fontWeight: 500,
-                padding: '4px 0',
-              }}
-            >
-              {w}
-            </div>
-          ))}
-        </div>
-
-        {/* Data rows */}
-        {matrix.cohorts.map((cohort) => (
+    <Card>
+      <CardContent className="overflow-x-auto">
+        <div className="min-w-[500px]">
+          {/* Header row */}
           <div
-            key={cohort.cohortLabel}
-            style={{
-              display: 'grid',
-              gridTemplateColumns: `120px repeat(${weekHeaders.length}, 1fr)`,
-              gap: 4,
-              marginBottom: 4,
-            }}
+            className="mb-1 grid gap-1"
+            style={{ gridTemplateColumns: `120px repeat(${weekHeaders.length}, 1fr)` }}
           >
-            <div
-              style={{
-                fontSize: 14,
-                color: 'var(--text-secondary)',
-                padding: '8px 4px',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 2,
-              }}
-            >
-              <span style={{ fontWeight: 500 }}>{cohort.cohortLabel}</span>
-              <span style={{ fontSize: 14, color: 'var(--text-dim)' }}>
-                {cohort.orgCount} org{cohort.orgCount !== 1 ? 's' : ''}
-              </span>
+            <div className="py-1 text-xs font-medium text-muted-foreground">
+              Cohort
             </div>
-            {weekHeaders.map((_, wi) => {
-              const pct = cohort.retention[wi] ?? null
-              return (
-                <div
-                  key={wi}
-                  title={pct !== null ? `${pct}%` : 'N/A'}
-                  style={{
-                    borderRadius: 8,
-                    background: pct !== null ? retentionColor(pct) : 'var(--border-subtle, rgba(255, 255, 255, 0.03))',
-                    height: 32,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: 14,
-                    fontWeight: 500,
-                    color: pct !== null && pct >= 40 ? 'var(--text-primary, #F1F5F9)' : 'var(--text-dim, rgba(255, 255, 255, 0.3))',
-                    fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
-                  }}
-                >
-                  {pct !== null ? `${pct}%` : '—'}
-                </div>
-              )
-            })}
-          </div>
-        ))}
-
-        {/* Colour scale legend */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--glass-card-border)' }}>
-          <span style={{ fontSize: 14, color: 'var(--text-dim)' }}>Retention:</span>
-          {[
-            { pct: 0, label: '0%' },
-            { pct: 25, label: '25%' },
-            { pct: 50, label: '50%' },
-            { pct: 75, label: '75%' },
-            { pct: 100, label: '100%' },
-          ].map(({ pct, label }) => (
-            <div key={pct} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            {weekHeaders.map((w) => (
               <div
-                style={{
-                  width: 16,
-                  height: 16,
-                  borderRadius: 4,
-                  background: retentionColor(pct),
-                  border: `1px solid ${'var(--hover-bg-strong, rgba(255, 255, 255, 0.08))'}`,
-                }}
-              />
-              <span style={{ fontSize: 14, color: 'var(--text-dim)' }}>{label}</span>
+                key={w}
+                className="py-1 text-center text-xs font-medium text-muted-foreground"
+              >
+                {w}
+              </div>
+            ))}
+          </div>
+
+          {/* Data rows */}
+          {matrix.cohorts.map((cohort) => (
+            <div
+              key={cohort.cohortLabel}
+              className="mb-1 grid gap-1"
+              style={{ gridTemplateColumns: `120px repeat(${weekHeaders.length}, 1fr)` }}
+            >
+              <div className="flex flex-col gap-0.5 px-1 py-2">
+                <span className="text-sm font-medium text-foreground">{cohort.cohortLabel}</span>
+                <span className="text-xs text-muted-foreground">
+                  {cohort.orgCount} org{cohort.orgCount !== 1 ? 's' : ''}
+                </span>
+              </div>
+              {weekHeaders.map((_, wi) => {
+                const pct = cohort.retention[wi] ?? null
+                return (
+                  <div
+                    key={wi}
+                    title={pct !== null ? `${pct}%` : 'N/A'}
+                    className="flex h-8 items-center justify-center rounded-md font-mono text-xs font-medium"
+                    style={{
+                      backgroundColor: pct !== null ? retentionColor(pct) : undefined,
+                      color: pct !== null && pct >= 40 ? 'hsl(var(--foreground))' : undefined,
+                    }}
+                  >
+                    {pct !== null ? (
+                      <span className={pct < 40 ? 'text-muted-foreground' : ''}>{pct}%</span>
+                    ) : (
+                      <span className="text-muted-foreground/50">&mdash;</span>
+                    )}
+                  </div>
+                )
+              })}
             </div>
           ))}
+
+          {/* Colour scale legend */}
+          <div className="mt-3 flex items-center gap-2 border-t pt-3">
+            <span className="text-xs text-muted-foreground">Retention:</span>
+            {[
+              { pct: 0, label: '0%' },
+              { pct: 25, label: '25%' },
+              { pct: 50, label: '50%' },
+              { pct: 75, label: '75%' },
+              { pct: 100, label: '100%' },
+            ].map(({ pct, label }) => (
+              <div key={pct} className="flex items-center gap-1">
+                <div
+                  className="size-4 rounded border"
+                  style={{ backgroundColor: retentionColor(pct) }}
+                />
+                <span className="text-xs text-muted-foreground">{label}</span>
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   )
 }
 
@@ -574,7 +484,6 @@ function AnalyticsTab() {
       return
     }
 
-    // Fetch all three endpoints in parallel
     Promise.all([
       fetch('/api/analytics?type=all')
         .then((res) => {
@@ -625,12 +534,14 @@ function AnalyticsTab() {
 
   return (
     <TabShell>
-      <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: 32, color: 'var(--text-primary)' }}>
+      <div className="flex flex-col gap-8 p-6 text-foreground">
 
         {/* MRR Stats */}
-        <section>
-          <h3 style={sectionHeader}>Monthly Recurring Revenue</h3>
-          <div className="bb-stagger" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 16 }}>
+        <section className="flex flex-col gap-4">
+          <h3 className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
+            Monthly Recurring Revenue
+          </h3>
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4">
             <StatCard icon={IconCurrencyDollar} label="Total MRR" value={`$${mrr.totalMRR.toLocaleString()}`} />
             <StatCard icon={IconUsers} label="Active Subs" value={String(mrr.activeSubscriptions)} />
             <StatCard icon={IconTrendingDown} label="Churn Rate" value={`${mrr.churnRate}%`} alert={mrr.churnRate > 5} />
@@ -638,182 +549,156 @@ function AnalyticsTab() {
           </div>
 
           {/* MRR by Tier */}
-          <div style={{ ...glassCard, position: 'relative' }}>
-            <h4 style={{ fontSize: 14, fontWeight: 500, marginBottom: 16, color: 'var(--text-primary)' }}>
-              Revenue by Tier
-            </h4>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm">Revenue by Tier</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-3">
               {Object.entries(mrr.byTier).map(([tier, info]) => {
                 const pct = mrr.totalMRR > 0 ? (info.mrr / mrr.totalMRR) * 100 : 0
                 return (
-                  <div key={tier} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <span style={{ fontSize: 14, minWidth: 80, textTransform: 'capitalize', color: 'var(--text-primary)' }}>
+                  <div key={tier} className="flex items-center gap-3">
+                    <span className="min-w-20 text-sm capitalize text-foreground">
                       {tier}
                     </span>
-                    <div style={{ flex: 1, height: 8, borderRadius: 4, background: 'var(--hover-bg-strong, rgba(255, 255, 255, 0.08))', overflow: 'hidden' }}>
-                      <div
-                        style={{
-                          height: '100%',
-                          borderRadius: 4,
-                          width: `${pct}%`,
-                          background: 'var(--border-focus-ring, rgba(255, 255, 255, 0.2))',
-                          transition: 'width 300ms ease',
-                        }}
-                      />
-                    </div>
-                    <span style={{ fontSize: 14, minWidth: 100, textAlign: 'right', color: 'var(--text-secondary)' }}>
+                    <Progress value={pct} className="h-2 flex-1" />
+                    <span className="min-w-24 text-right text-sm text-muted-foreground">
                       ${info.mrr} ({info.count})
                     </span>
                   </div>
                 )
               })}
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         </section>
 
         {/* Trend Forecasting */}
-        <section>
-          <h3 style={sectionHeader}>Activity Trends &amp; Forecasting</h3>
+        <section className="flex flex-col gap-4">
+          <h3 className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
+            Activity Trends &amp; Forecasting
+          </h3>
           {trendsLoading ? (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 16 }}>
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(320px,1fr))] gap-4">
               {[1, 2, 3].map((i) => (
-                <div key={i} style={{ ...glassCard, position: 'relative' }}>
-                  <div style={{ ...skeletonStyle, height: 14, width: '40%', marginBottom: 12 }} />
-                  <div style={{ ...skeletonStyle, height: 120, width: '100%' }} />
-                </div>
+                <Card key={i}>
+                  <CardContent className="space-y-3 pt-4">
+                    <Skeleton className="h-3.5 w-2/5" />
+                    <Skeleton className="h-[120px] w-full" />
+                  </CardContent>
+                </Card>
               ))}
             </div>
           ) : trendsData ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              {/* Anomaly digest banner */}
+            <div className="flex flex-col gap-4">
               {trendsData.anomalies && trendsData.anomalies.length > 0 && (
                 <AnomalyDigest anomalies={trendsData.anomalies} />
               )}
-              <div className="bb-stagger" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 16 }}>
+              <div className="grid grid-cols-[repeat(auto-fit,minmax(320px,1fr))] gap-4">
                 <TrendChart series={trendsData.messageVolume} label="Message Volume (30d)" />
                 <TrendChart series={trendsData.taskCompletionRate} label="Tasks Completed (30d)" />
                 <TrendChart series={trendsData.agentInvocations} label="Agent Sessions (30d)" />
               </div>
             </div>
           ) : (
-            <div style={{ ...glassCard, textAlign: 'center', color: 'var(--text-dim)', fontSize: 14, padding: 32 }}>
-              Trend data unavailable
-            </div>
+            <Card>
+              <CardContent className="py-8 text-center text-sm text-muted-foreground">
+                Trend data unavailable
+              </CardContent>
+            </Card>
           )}
         </section>
 
         {/* Cohort Retention */}
-        <section>
-          <h3 style={sectionHeader}>Cohort Retention</h3>
-          <p style={{ fontSize: 14, color: 'var(--text-dim)', marginBottom: 12, marginTop: -6 }}>
-            Weekly cohorts — % of orgs still active N weeks after signup
-          </p>
+        <section className="flex flex-col gap-4">
+          <div>
+            <h3 className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
+              Cohort Retention
+            </h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Weekly cohorts -- % of orgs still active N weeks after signup
+            </p>
+          </div>
           {cohortLoading ? (
-            <div style={{ ...glassCard, position: 'relative' }}>
-              {[1, 2, 3, 4].map((i) => (
-                <div key={i} style={{ ...skeletonStyle, height: 32, marginBottom: 8 }} />
-              ))}
-            </div>
+            <Card>
+              <CardContent className="space-y-2 pt-4">
+                {[1, 2, 3, 4].map((i) => (
+                  <Skeleton key={i} className="h-8 w-full" />
+                ))}
+              </CardContent>
+            </Card>
           ) : cohortData ? (
             <CohortHeatmap matrix={cohortData} />
           ) : (
-            <div style={{ ...glassCard, textAlign: 'center', color: 'var(--text-dim)', fontSize: 14, padding: 32 }}>
-              Cohort data unavailable
-            </div>
+            <Card>
+              <CardContent className="py-8 text-center text-sm text-muted-foreground">
+                Cohort data unavailable
+              </CardContent>
+            </Card>
           )}
         </section>
 
         {/* Token Usage */}
         {usage && (
-          <section>
-            <h3 style={sectionHeader}>Token Usage &amp; Costs</h3>
-            <div className="bb-stagger" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 16 }}>
+          <section className="flex flex-col gap-4">
+            <h3 className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
+              Token Usage &amp; Costs
+            </h3>
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4">
               <StatCard icon={IconCpu} label="Total Tokens" value={formatTokens(usage.totalTokens)} />
               <StatCard icon={IconCurrencyDollar} label="Total Cost" value={`$${usage.totalCostUSD.toFixed(2)}`} />
             </div>
 
             {/* By Agent */}
-            <div style={{ ...glassCard, position: 'relative', marginBottom: 16, overflowX: 'auto' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <div
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: '1fr 1fr 1fr 1fr',
-                    gap: 16,
-                    padding: '12px 0',
-                    borderBottom: '1px solid var(--glass-interactive-border)',
-                  }}
-                >
-                  <div style={{ fontSize: 14, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-dim)' }}>
-                    Agent
-                  </div>
-                  <div style={{ fontSize: 14, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-dim)', textAlign: 'right' }}>
-                    Invocations
-                  </div>
-                  <div style={{ fontSize: 14, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-dim)', textAlign: 'right' }}>
-                    Tokens
-                  </div>
-                  <div style={{ fontSize: 14, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-dim)', textAlign: 'right' }}>
-                    Cost
-                  </div>
-                </div>
-                {usage.byAgent.map((a) => (
-                  <div
-                    key={a.agentType}
-                    style={{
-                      display: 'grid',
-                      gridTemplateColumns: '1fr 1fr 1fr 1fr',
-                      gap: 16,
-                      padding: '12px 0',
-                      borderBottom: '1px solid var(--glass-card-border)',
-                      fontSize: 14,
-                      color: 'var(--text-primary)',
-                    }}
-                  >
-                    <div style={{ textTransform: 'capitalize' }}>{a.agentType.replace(/-/g, ' ')}</div>
-                    <div style={{ textAlign: 'right' }}>{a.invocations}</div>
-                    <div style={{ textAlign: 'right', fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)' }}>
-                      {formatTokens(a.inputTokens + a.outputTokens)}
-                    </div>
-                    <div style={{ textAlign: 'right', fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)' }}>
-                      ${a.costUSD.toFixed(2)}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <Card>
+              <CardContent className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Agent</TableHead>
+                      <TableHead className="text-right">Invocations</TableHead>
+                      <TableHead className="text-right">Tokens</TableHead>
+                      <TableHead className="text-right">Cost</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {usage.byAgent.map((a) => (
+                      <TableRow key={a.agentType}>
+                        <TableCell className="capitalize">{a.agentType.replace(/-/g, ' ')}</TableCell>
+                        <TableCell className="text-right">{a.invocations}</TableCell>
+                        <TableCell className="text-right font-mono">
+                          {formatTokens(a.inputTokens + a.outputTokens)}
+                        </TableCell>
+                        <TableCell className="text-right font-mono">
+                          ${a.costUSD.toFixed(2)}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
 
             {/* By Client */}
             {usage.byClient.length > 0 && (
-              <div style={{ marginTop: 16 }}>
-                <h4 style={{ fontSize: 14, fontWeight: 500, marginBottom: 12, color: 'var(--text-primary)' }}>
+              <div className="flex flex-col gap-3">
+                <h4 className="text-sm font-medium text-foreground">
                   Cost per Client
                 </h4>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div className="flex flex-col gap-2">
                   {usage.byClient
                     .sort((a, b) => b.costUSD - a.costUSD)
                     .slice(0, 10)
                     .map((c) => (
-                      <div
-                        key={c.clientName}
-                        style={{
-                          ...listRow,
-                          justifyContent: 'space-between',
-                        }}
-                      >
-                        <span style={{ fontSize: 14, color: 'var(--text-primary)' }}>
-                          {c.clientName}
-                        </span>
-                        <span
-                          style={{
-                            fontSize: 14,
-                            color: 'var(--text-secondary)',
-                            fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
-                          }}
-                        >
-                          ${c.costUSD.toFixed(2)} ({c.actions} actions)
-                        </span>
-                      </div>
+                      <Card key={c.clientName} size="sm">
+                        <CardContent className="flex items-center justify-between">
+                          <span className="text-sm text-foreground">
+                            {c.clientName}
+                          </span>
+                          <span className="font-mono text-sm text-muted-foreground">
+                            ${c.costUSD.toFixed(2)} ({c.actions} actions)
+                          </span>
+                        </CardContent>
+                      </Card>
                     ))}
                 </div>
               </div>
@@ -823,81 +708,58 @@ function AnalyticsTab() {
 
         {/* Churn Risk */}
         {churn && churn.risks.length > 0 && (
-          <section>
-            <h3 style={sectionHeader}>Churn Risk ({churn.atRiskOrgs} orgs)</h3>
-            <div className="bb-stagger" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {churn.risks.map((r) => {
-                const riskColor = r.riskScore >= 70 ? 'var(--bb-red)' : r.riskScore >= 50 ? 'var(--bb-amber)' : 'var(--bb-green)'
-                return (
-                  <div
-                    key={r.orgId}
-                    style={{
-                      ...glassCard,
-                      position: 'relative',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: 12,
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-                      <IconAlertTriangle
-                        size={18}
-                        style={{
-                          color: riskColor,
-                          flexShrink: 0,
-                          marginTop: 2,
-                        }}
-                      />
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 8 }}>
-                          <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>
-                            {r.orgName}
-                          </span>
-                          <span style={badge(riskColor)}>
-                            Risk: {r.riskScore}
-                          </span>
-                        </div>
-                        {r.signals.length > 0 && (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                            {r.signals.map((s, idx) => (
-                              <div
-                                key={idx}
-                                style={{
-                                  fontSize: 14,
-                                  color: 'var(--text-secondary)',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: 8,
-                                }}
-                              >
-                                <span
-                                  style={{
-                                    display: 'inline-block',
-                                    width: 4,
-                                    height: 4,
-                                    borderRadius: '50%',
-                                    background: 'var(--border-focus-ring, rgba(255, 255, 255, 0.2))',
-                                    flexShrink: 0,
-                                  }}
-                                />
-                                {s.description}
-                              </div>
-                            ))}
-                          </div>
-                        )}
+          <section className="flex flex-col gap-4">
+            <h3 className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
+              Churn Risk ({churn.atRiskOrgs} orgs)
+            </h3>
+            <div className="flex flex-col gap-3">
+              {churn.risks.map((r) => (
+                <Card key={r.orgId}>
+                  <CardContent className="flex gap-3 pt-4">
+                    <IconAlertTriangle
+                      className={`mt-0.5 size-4.5 shrink-0 ${
+                        r.riskScore >= 70 ? 'text-destructive' :
+                        r.riskScore >= 50 ? 'text-amber-500' : 'text-emerald-500'
+                      }`}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="mb-2 flex items-center justify-between gap-2">
+                        <span className="text-sm font-medium text-foreground">
+                          {r.orgName}
+                        </span>
+                        <Badge
+                          variant={r.riskScore >= 70 ? 'destructive' : r.riskScore >= 50 ? 'secondary' : 'outline'}
+                        >
+                          Risk: {r.riskScore}
+                        </Badge>
                       </div>
+                      {r.signals.length > 0 && (
+                        <div className="flex flex-col gap-1">
+                          {r.signals.map((s, idx) => (
+                            <div
+                              key={idx}
+                              className="flex items-center gap-2 text-sm text-muted-foreground"
+                            >
+                              <span className="inline-block size-1 shrink-0 rounded-full bg-border" />
+                              {s.description}
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                  </div>
-                )
-              })}
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           </section>
         )}
 
         {/* ROI Metrics */}
-        <section>
-          <h3 style={sectionHeader}>ROI Metrics</h3>
-          <div className="bb-stagger" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
+        <section className="flex flex-col gap-4">
+          <h3 className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
+            ROI Metrics
+          </h3>
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4">
             <MetricCard
               label="Revenue per Sub"
               value={mrr.activeSubscriptions > 0 ? `$${Math.round(mrr.totalMRR / mrr.activeSubscriptions)}` : '$0'}
@@ -932,80 +794,90 @@ function AnalyticsTab() {
 function LoadingSkeleton() {
   return (
     <TabShell>
-      <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: 32 }}>
-        {/* MRR Section Skeleton */}
-        <section>
-          <h3 style={sectionHeader}>Monthly Recurring Revenue</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 16 }}>
+      <div className="flex flex-col gap-8 p-6">
+        {/* MRR */}
+        <section className="flex flex-col gap-4">
+          <Skeleton className="h-3 w-48" />
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} style={{ ...glassCard, position: 'relative' }}>
-                <div style={{ ...skeletonStyle, height: 16, width: '60%', marginBottom: 12 }} />
-                <div style={{ ...skeletonStyle, height: 36, width: '80%' }} />
-              </div>
+              <Card key={i}>
+                <CardContent className="space-y-3 pt-4">
+                  <Skeleton className="h-4 w-3/5" />
+                  <Skeleton className="h-9 w-4/5" />
+                </CardContent>
+              </Card>
             ))}
           </div>
-          <div style={{ ...glassCard, position: 'relative' }}>
-            <div style={{ ...skeletonStyle, height: 16, width: '40%', marginBottom: 16 }} />
+          <Card>
+            <CardContent className="space-y-3 pt-4">
+              <Skeleton className="h-4 w-2/5" />
+              {[1, 2, 3].map((i) => (
+                <Skeleton key={i} className="h-5 w-full" />
+              ))}
+            </CardContent>
+          </Card>
+        </section>
+
+        {/* Trends */}
+        <section className="flex flex-col gap-4">
+          <Skeleton className="h-3 w-36" />
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(320px,1fr))] gap-4">
             {[1, 2, 3].map((i) => (
-              <div key={i} style={{ marginBottom: 12 }}>
-                <div style={{ ...skeletonStyle, height: 20, width: '100%' }} />
-              </div>
+              <Card key={i}>
+                <CardContent className="space-y-3 pt-4">
+                  <Skeleton className="h-3.5 w-2/5" />
+                  <Skeleton className="h-[120px] w-full" />
+                </CardContent>
+              </Card>
             ))}
           </div>
         </section>
 
-        {/* Trends Skeleton */}
-        <section>
-          <h3 style={sectionHeader}>Activity Trends</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 16 }}>
-            {[1, 2, 3].map((i) => (
-              <div key={i} style={{ ...glassCard, position: 'relative' }}>
-                <div style={{ ...skeletonStyle, height: 14, width: '40%', marginBottom: 12 }} />
-                <div style={{ ...skeletonStyle, height: 120, width: '100%' }} />
-              </div>
-            ))}
-          </div>
+        {/* Cohort */}
+        <section className="flex flex-col gap-4">
+          <Skeleton className="h-3 w-32" />
+          <Card>
+            <CardContent className="space-y-2 pt-4">
+              {[1, 2, 3, 4].map((i) => (
+                <Skeleton key={i} className="h-8 w-full" />
+              ))}
+            </CardContent>
+          </Card>
         </section>
 
-        {/* Cohort Skeleton */}
-        <section>
-          <h3 style={sectionHeader}>Cohort Retention</h3>
-          <div style={{ ...glassCard, position: 'relative' }}>
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} style={{ ...skeletonStyle, height: 32, marginBottom: 8 }} />
-            ))}
-          </div>
-        </section>
-
-        {/* Usage Section Skeleton */}
-        <section>
-          <h3 style={sectionHeader}>Token Usage &amp; Costs</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 16 }}>
+        {/* Usage */}
+        <section className="flex flex-col gap-4">
+          <Skeleton className="h-3 w-40" />
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4">
             {[1, 2].map((i) => (
-              <div key={i} style={{ ...glassCard, position: 'relative' }}>
-                <div style={{ ...skeletonStyle, height: 16, width: '60%', marginBottom: 12 }} />
-                <div style={{ ...skeletonStyle, height: 36, width: '80%' }} />
-              </div>
+              <Card key={i}>
+                <CardContent className="space-y-3 pt-4">
+                  <Skeleton className="h-4 w-3/5" />
+                  <Skeleton className="h-9 w-4/5" />
+                </CardContent>
+              </Card>
             ))}
           </div>
-          <div style={{ ...glassCard, position: 'relative' }}>
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} style={{ marginBottom: 12 }}>
-                <div style={{ ...skeletonStyle, height: 20, width: '100%' }} />
-              </div>
-            ))}
-          </div>
+          <Card>
+            <CardContent className="space-y-3 pt-4">
+              {[1, 2, 3, 4].map((i) => (
+                <Skeleton key={i} className="h-5 w-full" />
+              ))}
+            </CardContent>
+          </Card>
         </section>
 
-        {/* ROI Section Skeleton */}
-        <section>
-          <h3 style={sectionHeader}>ROI Metrics</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
+        {/* ROI */}
+        <section className="flex flex-col gap-4">
+          <Skeleton className="h-3 w-24" />
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4">
             {[1, 2, 3].map((i) => (
-              <div key={i} style={{ ...glassCard, position: 'relative' }}>
-                <div style={{ ...skeletonStyle, height: 16, width: '60%', marginBottom: 12 }} />
-                <div style={{ ...skeletonStyle, height: 28, width: '80%' }} />
-              </div>
+              <Card key={i}>
+                <CardContent className="space-y-3 pt-4">
+                  <Skeleton className="h-4 w-3/5" />
+                  <Skeleton className="h-7 w-4/5" />
+                </CardContent>
+              </Card>
             ))}
           </div>
         </section>
@@ -1036,67 +908,34 @@ function StatCard({
   alert?: boolean
 }) {
   return (
-    <div
-      className="bb-lift"
-      style={{
-        ...glassCard,
-        position: 'relative',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 8,
-      }}
-    >
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-          fontSize: 14,
-          color: 'var(--text-secondary)',
-        }}
-      >
-        <Icon size={14} style={{ color: 'var(--text-dim)' }} />
-        {label}
-      </div>
-      <div
-        style={{
-          ...bigNumber,
-          color: alert ? 'var(--bb-red)' : 'var(--text-primary)',
-        }}
-      >
-        {value}
-      </div>
-    </div>
+    <Card>
+      <CardContent className="flex flex-col gap-2 pt-4">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Icon className="size-3.5" />
+          {label}
+        </div>
+        <div className={`font-mono text-base font-medium leading-none tracking-tight ${
+          alert ? 'text-destructive' : 'text-foreground'
+        }`}>
+          {value}
+        </div>
+      </CardContent>
+    </Card>
   )
 }
 
 function MetricCard({ label, value }: { label: string; value: string }) {
   return (
-    <div
-      className="bb-lift"
-      style={{
-        ...glassCard,
-        position: 'relative',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 12,
-        textAlign: 'center',
-      }}
-    >
-      <div style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
-        {label}
-      </div>
-      <div
-        style={{
-          fontSize: 16,
-          fontWeight: 500,
-          color: 'var(--text-primary)',
-          fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
-        }}
-      >
-        {value}
-      </div>
-    </div>
+    <Card>
+      <CardContent className="flex flex-col items-center gap-3 pt-4 text-center">
+        <div className="text-sm text-muted-foreground">
+          {label}
+        </div>
+        <div className="font-mono text-base font-medium text-foreground">
+          {value}
+        </div>
+      </CardContent>
+    </Card>
   )
 }
 
