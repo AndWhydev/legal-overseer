@@ -7,7 +7,9 @@ import {
   IconFileText,
   IconSquareCheck,
   IconCurrencyDollar,
+  IconArrowUpRight,
 } from '@tabler/icons-react';
+import { motion, type Transition } from 'motion/react';
 import {
   Sheet,
   SheetContent,
@@ -144,6 +146,105 @@ function TaskDetail({ meta }: { meta: Record<string, unknown> }) {
   );
 }
 
+// Related Entities Stack (notification-list pattern)
+
+const stackTransition: Transition = {
+  type: 'spring',
+  stiffness: 300,
+  damping: 26,
+};
+
+const getStackVariants = (i: number) => ({
+  collapsed: {
+    marginTop: i === 0 ? 0 : -36,
+    scaleX: 1 - i * 0.03,
+    opacity: i > 2 ? 0 : 1,
+  },
+  expanded: {
+    marginTop: i === 0 ? 0 : 8,
+    scaleX: 1,
+    opacity: 1,
+  },
+});
+
+function RelatedEntitiesStack({
+  related,
+  typeIcon,
+}: {
+  related: { node: GraphNode; edge: GraphEdge }[];
+  typeIcon: Record<EntityType, React.ElementType>;
+}) {
+  return (
+    <div className="flex flex-col gap-3">
+      <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+        Related ({related.length})
+      </h3>
+      <motion.div
+        className="rounded-xl bg-muted/30 p-3 space-y-0"
+        initial="collapsed"
+        whileHover="expanded"
+      >
+        <div>
+          {related.map(({ node, edge }, i) => {
+            const RelIcon = typeIcon[node.type] ?? IconBriefcase;
+            return (
+              <motion.div
+                key={`${node.type}-${node.id}`}
+                className="relative rounded-xl border border-border bg-card px-4 py-3 shadow-sm hover:shadow-md transition-shadow"
+                variants={getStackVariants(i)}
+                transition={stackTransition}
+                style={{ zIndex: related.length - i }}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex size-7 items-center justify-center rounded-md bg-muted text-foreground shrink-0">
+                    <RelIcon className="size-3.5" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-medium text-foreground truncate">
+                      {node.label}
+                    </div>
+                    <div className="text-xs text-muted-foreground capitalize">
+                      {edge?.relationshipType?.replace(/_/g, ' ') ?? node.type}
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+
+        <div className="mt-2 flex items-center gap-2 pt-1">
+          <div className="flex size-5 items-center justify-center rounded-full bg-muted text-xs font-medium text-muted-foreground">
+            {related.length}
+          </div>
+          <span className="grid">
+            <motion.span
+              className="text-xs font-medium text-muted-foreground row-start-1 col-start-1"
+              variants={{
+                collapsed: { opacity: 1, y: 0 },
+                expanded: { opacity: 0, y: -12 },
+              }}
+              transition={{ duration: 0.22, ease: 'easeInOut' }}
+            >
+              Related entities
+            </motion.span>
+            <motion.span
+              className="text-xs font-medium text-muted-foreground flex items-center gap-1 cursor-pointer select-none row-start-1 col-start-1"
+              variants={{
+                collapsed: { opacity: 0, y: 12 },
+                expanded: { opacity: 1, y: 0 },
+              }}
+              transition={{ duration: 0.22, ease: 'easeInOut' }}
+            >
+              View all <IconArrowUpRight className="size-3" />
+            </motion.span>
+          </span>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
 // Main Drawer
 
 function EntityDetailDrawer({ open, onClose, entityType, entityId }: EntityDetailDrawerProps) {
@@ -255,33 +356,12 @@ function EntityDetailDrawer({ open, onClose, entityType, entityId }: EntityDetai
                 </>
               )}
 
-              {/* Related Entities */}
+              {/* Related Entities (notification-list style) */}
               {related.length > 0 && (
-                <div className="flex flex-col gap-3">
-                  <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                    Related ({related.length})
-                  </h3>
-                  {related.map(({ node, edge }) => {
-                    const RelIcon = TYPE_ICON[node.type] ?? IconBriefcase;
-                    return (
-                      <Card key={`${node.type}-${node.id}`} className="py-3 gap-0">
-                        <CardContent className="flex items-center gap-3">
-                          <div className="flex size-7 items-center justify-center rounded-md bg-muted text-foreground shrink-0">
-                            <RelIcon className="size-3.5" />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="text-sm font-medium text-foreground truncate">
-                              {node.label}
-                            </div>
-                            <div className="text-xs text-muted-foreground capitalize">
-                              {edge?.relationshipType?.replace(/_/g, ' ') ?? node.type}
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
-                </div>
+                <RelatedEntitiesStack
+                  related={related}
+                  typeIcon={TYPE_ICON}
+                />
               )}
 
               {/* Timeline */}
