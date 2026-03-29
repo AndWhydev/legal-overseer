@@ -6827,11 +6827,9 @@ html.light .bb-pill__shimmer-dots span {
 }
 
 .bb-chat__assistant-icon {
-  position: absolute;
-  left: -72px;
-  top: -16px;
-  width: 64px;
-  height: 64px;
+  width: 48px;
+  height: 48px;
+  margin-bottom: 4px;
 }
 
 /* ── Chain of Thought — hide thread segment on last step ── */

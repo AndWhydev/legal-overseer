@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Geist_Mono, JetBrains_Mono, EB_Garamond } from "next/font/google";
+import { DM_Sans, Geist_Mono, JetBrains_Mono, Libre_Baskerville } from "next/font/google";
 import "./globals.css";
 import "@/styles/animations.css";
 import "@/styles/splash.css";
@@ -10,10 +10,10 @@ import {
 } from "@/lib/theme/defaults";
 import { NavBar } from "@/components/marketing/nav-bar";
 
-const inter = Inter({
-  variable: "--font-inter",
+const dmSans = DM_Sans({
+  variable: "--font-dm-sans",
   subsets: ["latin"],
-  weight: ["400", "500"],
+  weight: ["400", "500", "600", "700"],
   display: "swap",
 });
 
@@ -28,10 +28,11 @@ const jetbrainsMono = JetBrains_Mono({
   display: "swap",
 });
 
-const ebGaramond = EB_Garamond({
+const libreBaskerville = Libre_Baskerville({
   variable: "--font-serif",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["400", "700"],
+  style: ["normal", "italic"],
   display: "swap",
 });
 
@@ -195,7 +196,7 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
       </head>
       <body
-        className={`${inter.variable} ${geistMono.variable} ${jetbrainsMono.variable} ${ebGaramond.variable} antialiased bg-background text-foreground`}
+        className={`${dmSans.variable} ${geistMono.variable} ${jetbrainsMono.variable} ${libreBaskerville.variable} antialiased bg-background text-foreground`}
       >
         <NavBar />
         {children}

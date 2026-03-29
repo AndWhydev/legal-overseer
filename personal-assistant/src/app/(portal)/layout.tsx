@@ -1,9 +1,9 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
+import { DM_Sans } from 'next/font/google'
 import '../globals.css'
 
-const inter = Inter({
-  variable: '--font-inter',
+const dmSans = DM_Sans({
+  variable: '--font-dm-sans',
   subsets: ['latin'],
   weight: ['300', '400', '500', '600'],
   display: 'swap',
@@ -26,7 +26,7 @@ export default function PortalRootLayout({
         <meta name="theme-color" content="#FAFAFA" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </head>
-      <body className={`${inter.variable} antialiased`} style={{ background: '#FAFAFA' }}>
+      <body className={`${dmSans.variable} antialiased`} style={{ background: '#FAFAFA' }}>
         {children}
       </body>
     </html>

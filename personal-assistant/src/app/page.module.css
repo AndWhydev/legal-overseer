@@ -43,7 +43,7 @@
 }
 
 .home :global(.landing-stack) {
-  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-family: var(--font-dm-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
 }
 
 .home :global(.landing-stack .motion-reduce-safe) {

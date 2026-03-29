@@ -172,7 +172,7 @@ export function MessageBubble({ message, citations, showAvatar = false, avatarEm
     <div className={`bb-chat__msg ${isUser ? 'bb-chat__msg--user' : 'bb-chat__msg--assistant'} relative`}>
       {!isUser && showAvatar && (
         <div className="bb-chat__assistant-icon">
-          <BitBitAsciiAvatar size={64} emotion={avatarEmotion as any} isThinking={avatarThinking} />
+          <BitBitAsciiAvatar size={48} emotion={avatarEmotion as any} isThinking={avatarThinking} />
         </div>
       )}
       {/* Edit button for user messages (appears on hover) */}
