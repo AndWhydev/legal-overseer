@@ -3,6 +3,7 @@ import type { RoleConfig, AutonomyLevel } from '@/lib/bitbit-core'
 import type { RoleAction } from './role-registry'
 import { routeThroughAutonomyGate, type GateResult } from './autonomy-gate'
 import { createApproval } from '@/lib/agent/approval-queue'
+import { executeApprovedAction } from '@/lib/agent/action-executor'
 import { formatActivityForAutonomy } from './output-formatter'
 import { logger } from '@/lib/core/logger'
 
@@ -62,13 +63,46 @@ export async function dispatchRoleAction(
     case 'execute': {
       logger.info(`${tag} Executing action: ${action.summary} (confidence ${action.confidence})`)
 
-      // Log execution to role_activity
-      activityId = await logDispatchActivity(supabase, roleConfig, action, gateResult, 'action')
+      // Create a synthetic approval record to reuse the existing transport executor.
+      // This gives us retry logic, idempotency, notifications, and reflection for free.
+      try {
+        const approval = await createApproval(supabase, {
+          org_id: roleConfig.org_id,
+          agent_config_id: roleConfig.id,
+          action_type: action.type,
+          action_payload: action.payload,
+          action_summary: action.summary,
+          confidence_score: action.confidence,
+          routing_decision: 'act',
+          priority: 'normal',
+          context_snapshot: {
+            autonomy_mode: roleConfig.autonomy_level,
+            role_type: roleConfig.role_type,
+            role_config_id: roleConfig.id,
+            gate_reasoning: gateResult.reasoning,
+            reversible: action.reversible,
+            auto_executed: true,
+          },
+          role_config_id: roleConfig.id,
+          autonomy_mode: roleConfig.autonomy_level,
+        })
 
-      // For now, execution is a placeholder -- role implementations handle
-      // the actual work. This records that the gate APPROVED execution.
-      // Future: wire to executeApprovedAction pattern.
-      executionResult = { status: 'executed', actionId }
+        // Immediately approve and execute through the transport map
+        await supabase
+          .from('approval_queue')
+          .update({ status: 'approved' })
+          .eq('id', approval.id)
+
+        executionResult = await executeApprovedAction(supabase, { ...approval, status: 'approved' })
+        approvalId = approval.id
+      } catch (execErr) {
+        const execMsg = execErr instanceof Error ? execErr.message : String(execErr)
+        logger.error(`${tag} Auto-execution failed: ${execMsg}`)
+        executionResult = { success: false, error: execMsg }
+      }
+
+      // Log execution to role_activity
+      activityId = await logDispatchActivity(supabase, roleConfig, action, gateResult, 'action', approvalId)
       break
     }
 

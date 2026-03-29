@@ -4,6 +4,7 @@ import { getRole, type RoleImplementation, type RoleEvaluation } from './role-re
 import { canProceed } from '@/lib/agent/cost-guard'
 import { canRoleProceed } from './role-cost-guard'
 import { getReadyWorkflows, resumeWorkflow, startWorkflow, type WorkflowStepDef } from './workflow-executor'
+import { dispatchRoleActions } from './action-dispatcher'
 import { logger } from '@/lib/core/logger'
 import { evaluateScheduledTriggers, getActiveWorkflowRules } from '@/lib/workflows/workflow-rule-engine'
 import { createWorkflowToolBridge, ruleToWorkflowDefinition } from '@/lib/workflows/workflow-tool-bridge'
@@ -361,21 +362,32 @@ export async function executeRoleTick(
 
     const savedState = await saveRoleState(supabase, state)
 
-    // 8. Log activity for actions
-    for (const action of evaluation.actions) {
-      await logRoleActivity(
-        supabase,
-        roleConfig.id,
-        roleConfig.org_id,
-        'action',
-        action.summary,
-        { type: action.type, payload: action.payload, confidence: action.confidence, reversible: action.reversible },
-        roleConfig.autonomy_level,
-        action.confidence,
-      )
+    // 8. Dispatch actions through autonomy gate (execute/queue/log/escalate)
+    let actionsExecuted = 0
+    let actionsQueued = 0
+    if (evaluation.actions.length > 0) {
+      try {
+        const dispatchResults = await dispatchRoleActions(supabase, roleConfig, evaluation.actions)
+        for (const dr of dispatchResults) {
+          if (dr.gateResult.decision === 'execute') actionsExecuted++
+          if (dr.gateResult.decision === 'queue_approval') actionsQueued++
+        }
+        logger.info(`${tag} Dispatched ${evaluation.actions.length} actions: ${actionsExecuted} executed, ${actionsQueued} queued`)
+      } catch (dispatchErr) {
+        const dispatchMsg = dispatchErr instanceof Error ? dispatchErr.message : String(dispatchErr)
+        logger.error(`${tag} Action dispatch failed: ${dispatchMsg}`)
+        // Fallback: log actions directly so they aren't lost
+        for (const action of evaluation.actions) {
+          await logRoleActivity(
+            supabase, roleConfig.id, roleConfig.org_id, 'action', action.summary,
+            { type: action.type, payload: action.payload, confidence: action.confidence, reversible: action.reversible, dispatch_error: dispatchMsg },
+            roleConfig.autonomy_level, action.confidence,
+          )
+        }
+      }
     }
 
-    // Log activity for insights
+    // Log insights (these are always informational, no dispatch needed)
     for (const insight of evaluation.insights) {
       await logRoleActivity(
         supabase,
@@ -461,9 +473,11 @@ export async function executeRoleTick(
       roleConfig.id,
       roleConfig.org_id,
       'action',
-      `Tick completed: ${evaluation.actions.length} actions, ${evaluation.insights.length} insights`,
+      `Tick completed: ${evaluation.actions.length} actions (${actionsExecuted} executed, ${actionsQueued} queued), ${evaluation.insights.length} insights`,
       {
         actions: evaluation.actions.length,
+        actionsExecuted,
+        actionsQueued,
         insights: evaluation.insights.length,
         workflowsStarted,
         workflowsResumed,
