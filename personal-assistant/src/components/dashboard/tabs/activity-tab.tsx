@@ -5,7 +5,7 @@ import { IconLoader2, IconAlertCircle } from '@tabler/icons-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
+import { TabSkeleton } from './tab-skeleton';
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from '@/components/ui/empty';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { logger } from '@/lib/core/logger';
@@ -203,21 +203,7 @@ function ActivityTab() {
   }, [loadMore]);
 
   if (loading) {
-    return (
-      <div className="flex flex-col gap-4 p-6" aria-busy="true" role="status">
-        <div className="flex items-center gap-3">
-          <Skeleton className="h-9 w-9 rounded-lg" />
-          <div className="space-y-2">
-            <Skeleton className="h-6 w-40" />
-            <Skeleton className="h-3 w-64" />
-          </div>
-        </div>
-        <div className="grid gap-4 md:grid-cols-2">
-          <Skeleton className="h-32 w-full rounded-xl" />
-          <Skeleton className="h-32 w-full rounded-xl" />
-        </div>
-      </div>
-    );
+    return <TabSkeleton variant="timeline" />;
   }
 
   if (error && entries.length === 0) {

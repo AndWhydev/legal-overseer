@@ -35,7 +35,7 @@ function TasksTab() {
     });
   }, []);
 
-  if (loading) return <TabSkeleton />;
+  if (loading) return <TabSkeleton variant="kanban" />;
 
   if (error) {
     return (

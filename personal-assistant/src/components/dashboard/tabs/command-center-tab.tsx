@@ -181,7 +181,7 @@ function CommandCenterTab() {
     }
   };
 
-  if (loading) return <TabSkeleton />;
+  if (loading) return <TabSkeleton variant="chart" />;
 
   return (
     <TabShell variant="fixed">

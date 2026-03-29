@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { TabSkeleton } from './tab-skeleton';
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/table';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { Empty, EmptyMedia, EmptyTitle, EmptyDescription } from '@/components/ui/empty';
@@ -208,11 +209,7 @@ function TendersTab() {
   // ---- Render ----
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center p-10">
-        <div className="size-5 animate-pulse rounded-full bg-muted" />
-      </div>
-    );
+    return <TabSkeleton variant="kanban" />;
   }
 
   return (

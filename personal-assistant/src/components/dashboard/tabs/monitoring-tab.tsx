@@ -245,7 +245,7 @@ export default function MonitoringTab() {
   }, []);
 
   // Guard
-  if (isAdmin === null) return <TabSkeleton />;
+  if (isAdmin === null) return <TabSkeleton variant="table" />;
   if (!isAdmin) {
     return (
       <TabShell>

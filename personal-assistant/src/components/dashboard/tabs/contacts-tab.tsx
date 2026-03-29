@@ -20,7 +20,7 @@ import {
 import { Card, CardContent } from '@/components/ui/card'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
-import { Skeleton } from '@/components/ui/skeleton'
+import { TabSkeleton } from './tab-skeleton'
 import { Separator } from '@/components/ui/separator'
 import { Button } from '@/components/ui/button'
 import {
@@ -198,24 +198,7 @@ function ContactsTab() {
   }, [contacts, search, sort])
 
   if (loading && !useSeeded) {
-    return (
-      <div className="flex flex-col gap-4">
-        {/* Stats skeleton */}
-        <div className="flex gap-4 mb-1">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-5 w-16" />
-          ))}
-        </div>
-        {/* Search skeleton */}
-        <Skeleton className="h-8 w-full rounded-lg" />
-        {/* Card skeletons */}
-        <div className="flex flex-col gap-2">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <Skeleton key={i} className="h-20 w-full rounded-xl" />
-          ))}
-        </div>
-      </div>
-    )
+    return <TabSkeleton variant="cards-grid" />
   }
 
   if (error && contacts.length === 0) {

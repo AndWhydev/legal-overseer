@@ -5,7 +5,7 @@ import { IconCopy, IconCheck, IconLoader2, IconChevronDown, IconChevronRight, Ic
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Skeleton } from '@/components/ui/skeleton'
+import { TabSkeleton } from './tab-skeleton'
 import { Empty, EmptyHeader, EmptyTitle, EmptyDescription } from '@/components/ui/empty'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
@@ -440,12 +440,7 @@ function AdScriptsTab() {
   }, [])
 
   if (isLoading) {
-    return (
-      <div className="flex flex-col gap-6 p-6">
-        <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-48 w-full rounded-xl" />
-      </div>
-    )
+    return <TabSkeleton variant="cards-grid" />
   }
 
   return (
