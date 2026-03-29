@@ -25,7 +25,7 @@ import { logAgentRun, estimateRunCost } from '@/lib/agent/run-logger'
 import { generatePlan, stageFromToolName, isTrivialMessage, type PlanStage, type PlanOutput } from '@/lib/agent/planner'
 import { withCircuitBreaker, CircuitOpenError } from '@/lib/agent/circuit-breaker'
 import { writeToDeadLetterQueue } from '@/lib/agent/dlq'
-import { detectLeak, scrubLeaks } from '@/lib/agent/response-guard'
+import { detectLeak, scrubLeaks, guardAndHumanize } from '@/lib/agent/response-guard'
 import { logger } from '@/lib/core/logger'
 import { detectTopicShift } from '@/lib/agent/citation-extractor'
 
@@ -434,13 +434,13 @@ export async function* runTAORLoop(
         .filter((b): b is Anthropic.TextBlock => b.type === 'text')
         .map(b => b.text)
         .join('\n')
-      const scrubbedText = scrubLeaks(text)
+      const humanizedText = guardAndHumanize(text)
       const leak = detectLeak(text)
       if (leak.leaked) {
         logger.warn('response_leak_detected', { patterns: leak.patterns })
       }
-      finalMessage = scrubbedText
-      yield { type: 'message', data: scrubbedText }
+      finalMessage = humanizedText
+      yield { type: 'message', data: humanizedText }
 
       // Mark remaining plan stages as done
       for (const stage of planStages) {

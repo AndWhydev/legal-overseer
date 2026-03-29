@@ -11,6 +11,7 @@ import {
   type WeeklyReportData,
 } from './email-templates'
 import { sendMessage as sendWhatsAppMessage } from '../channels/whatsapp'
+import { humanize } from '@/lib/agent/response-guard'
 import { logger } from '@/lib/core/logger';
 
 export type NotificationType =
@@ -49,6 +50,9 @@ export async function dispatchNotification(
 ): Promise<DispatchResult> {
   const urgency = params.urgency ?? 'normal'
   const result: DispatchResult = { dashboard: false, whatsapp: false, email: false }
+
+  // Humanize all outbound notification text
+  params = { ...params, title: humanize(params.title), body: humanize(params.body) }
 
   // Determine which channels to use
   let channels = params.channels ?? ['dashboard', 'email', 'whatsapp']

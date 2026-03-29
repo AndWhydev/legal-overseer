@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { detectLeak, scrubLeaks } from './response-guard'
+import { detectLeak, scrubLeaks, humanize, guardAndHumanize } from './response-guard'
 
 describe('response-guard', () => {
   describe('detectLeak', () => {
@@ -118,6 +118,78 @@ describe('response-guard', () => {
     it('scrubs case-insensitively (uppercase)', () => {
       expect(scrubLeaks('I am CLAUDE.')).toBe('I am BitBit.')
       expect(scrubLeaks('ANTHROPIC made me.')).toBe('BitBit made me.')
+    })
+  })
+
+  describe('humanize', () => {
+    it('strips AI openers', () => {
+      expect(humanize('Certainly! Here are the results.')).toBe('Here are the results.')
+      expect(humanize('Of course! Let me check.')).toBe('Let me check.')
+      expect(humanize('Absolutely! Three emails came in.')).toBe('Three emails came in.')
+      expect(humanize('Great question! The invoice is overdue.')).toBe('The invoice is overdue.')
+      expect(humanize("I'd be happy to help! Checking now.")).toBe('Checking now.')
+    })
+
+    it('strips AI fillers', () => {
+      expect(humanize("It's important to note that Steve owes us.")).toBe('Steve owes us.')
+      expect(humanize("Furthermore, the deadline is Friday.")).toBe('The deadline is Friday.')
+      expect(humanize("Additionally, Maya confirmed.")).toBe('Maya confirmed.')
+    })
+
+    it('strips forbidden tail phrases', () => {
+      expect(humanize('Done. Let me know if you need anything else.')).toBe('Done.')
+      expect(humanize('Invoice sent. Is there anything else I can help with?')).toBe('Invoice sent.')
+      expect(humanize("All sorted. Don't hesitate to ask if you need more.")).toBe('All sorted.')
+      expect(humanize("Updated. Feel free to reach out.")).toBe('Updated.')
+      expect(humanize("Handled. Happy to help!")).toBe('Handled.')
+    })
+
+    it('enforces collective voice', () => {
+      expect(humanize('Your tasks are up to date.')).toBe('Our tasks are up to date.')
+      expect(humanize('Your inbox has 3 new messages.')).toBe('Our inbox has 3 new messages.')
+      expect(humanize('Your pipeline is at $15K.')).toBe('Our pipeline is at $15K.')
+      expect(humanize("You've got 5 leads.")).toBe("We've got 5 leads.")
+      expect(humanize('You have 3 overdue invoices.')).toBe('We have 3 overdue invoices.')
+    })
+
+    it('removes self-referential framing', () => {
+      expect(humanize('I checked the inbox.')).toBe('Checked the inbox.')
+      expect(humanize("I've searched for Steve.")).toBe('Searched for Steve.')
+      expect(humanize('I found 3 matching emails.')).toBe('Found 3 matching emails.')
+    })
+
+    it('removes em-dashes', () => {
+      expect(humanize('Steve—the one from Brisbane—sent an email.')).toBe('Steve, the one from Brisbane, sent an email.')
+    })
+
+    it('tames excessive exclamation marks', () => {
+      expect(humanize('Done!!!')).toBe('Done!')
+    })
+
+    it('preserves clean text', () => {
+      const clean = 'Three emails came in. Two are noise, one from Steve needs a reply.'
+      expect(humanize(clean)).toBe(clean)
+    })
+
+    it('handles empty input', () => {
+      expect(humanize('')).toBe('')
+    })
+
+    it('handles combined issues', () => {
+      const input = "Certainly! I've searched your inbox. Furthermore, your tasks are all done. Let me know if you need anything!"
+      const expected = "Searched our inbox. Our tasks are all done."
+      expect(humanize(input)).toBe(expected)
+    })
+  })
+
+  describe('guardAndHumanize', () => {
+    it('combines leak scrubbing and humanization', () => {
+      const input = 'Certainly! As Claude, I checked your inbox.'
+      const result = guardAndHumanize(input)
+      expect(result).not.toContain('Certainly')
+      expect(result).not.toContain('Claude')
+      expect(result).toContain('BitBit')
+      expect(result).toContain('our inbox')
     })
   })
 })
