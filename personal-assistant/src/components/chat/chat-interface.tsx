@@ -2088,9 +2088,9 @@ export function ChatInterface({ userName }: { userName?: string }) {
                     {/* Pre-tool narration is now included in streamSegments as the first text segment */}
                     {/* Live reasoning chain — segmented (interleaved tools/text) */}
                     {isCurrentResponse && segmentedReasoningJSX && (
-                      <div style={{ position: 'relative', marginBottom: 4 }}>
+                      <div style={{ marginBottom: 4 }}>
                         <div className="bb-chat__assistant-icon">
-                          <BitBitAsciiAvatar size={64} emotion={avatarEmotion} isThinking={isThinkingStreaming} />
+                          <BitBitAsciiAvatar size={48} emotion={avatarEmotion} isThinking={isThinkingStreaming} />
                         </div>
                         {segmentedReasoningJSX}
                       </div>
