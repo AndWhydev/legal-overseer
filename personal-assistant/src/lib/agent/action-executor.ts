@@ -250,6 +250,14 @@ const TRANSPORT_MAP: Record<ActionType, TransportHandler> = {
   invoice_create: invoiceTransport,
   invoice_send: invoiceSendTransport,
   schedule_reminder: reminderTransport,
+  // Role-specific aliases — map to standard transports
+  draft_invoice: invoiceTransport,
+  collection_reminder: emailTransport,
+  nurture_email: emailTransport,
+  draft_response: emailTransport,
+  cash_flow_alert: taskTransport,
+  tender_match: taskTransport,
+  seo_ranking_drop: taskTransport,
 }
 
 // ─── Core Executor ──────────────────────────────────────────────────────────
@@ -274,10 +282,16 @@ export async function executeApprovedAction(
   const handler = TRANSPORT_MAP[actionType]
 
   if (!handler) {
-    const error = `No transport handler for action type: ${actionType}`
-    logger.error('[action-executor] ' + error)
-    await updateExecutionStatus(supabase, approval.id, 'failed', undefined, error)
-    return { success: false, error }
+    // Fallback: unmapped action types create a task for human visibility
+    logger.warn(`[action-executor] No transport handler for ${actionType}, falling back to create_task`)
+    const fallbackHandler = taskTransport
+    const result = await executeWithRetry(supabase, approval, fallbackHandler)
+    if (result.success) {
+      await updateExecutionStatus(supabase, approval.id, 'completed', result)
+    } else {
+      await updateExecutionStatus(supabase, approval.id, 'failed', undefined, result.error)
+    }
+    return result
   }
 
   // 1. Atomic transition: approved → executing (idempotency guard)

@@ -209,6 +209,14 @@ export type ActionType =
   | 'invoice_create'
   | 'invoice_send'
   | 'schedule_reminder'
+  // Role-specific aliases (mapped to standard transports in action-executor)
+  | 'draft_invoice'
+  | 'collection_reminder'
+  | 'cash_flow_alert'
+  | 'nurture_email'
+  | 'draft_response'
+  | 'tender_match'
+  | 'seo_ranking_drop'
 
 export type TransportHandler = (
   supabase: import('@supabase/supabase-js').SupabaseClient,

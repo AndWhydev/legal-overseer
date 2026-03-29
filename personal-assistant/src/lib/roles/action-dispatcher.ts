@@ -5,6 +5,7 @@ import { routeThroughAutonomyGate, type GateResult } from './autonomy-gate'
 import { createApproval } from '@/lib/agent/approval-queue'
 import { executeApprovedAction } from '@/lib/agent/action-executor'
 import { formatActivityForAutonomy } from './output-formatter'
+import { dispatchNotification } from '@/lib/notifications/dispatcher'
 import { logger } from '@/lib/core/logger'
 
 // ---------------------------------------------------------------------------
@@ -152,6 +153,15 @@ export async function dispatchRoleAction(
         supabase, roleConfig, action, gateResult, 'insight',
         undefined, formatted.details,
       )
+
+      // Surface insights via dashboard notification so they're visible
+      dispatchNotification(supabase, {
+        org_id: roleConfig.org_id,
+        title: `${roleConfig.role_type} insight`,
+        body: action.summary,
+        urgency: 'low',
+        channels: ['dashboard'],
+      }).catch(() => {/* fire and forget */})
       break
     }
 
@@ -160,6 +170,15 @@ export async function dispatchRoleAction(
 
       // Log escalation to role_activity
       activityId = await logDispatchActivity(supabase, roleConfig, action, gateResult, 'escalation')
+
+      // Escalations are urgent — notify all channels
+      dispatchNotification(supabase, {
+        org_id: roleConfig.org_id,
+        title: `${roleConfig.role_type} needs attention`,
+        body: action.summary,
+        urgency: 'high',
+        channels: ['dashboard', 'email'],
+      }).catch(() => {/* fire and forget */})
       break
     }
   }
