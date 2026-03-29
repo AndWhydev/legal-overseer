@@ -1,27 +1,24 @@
 'use client'
 
-import { useState, useCallback, useRef, useMemo, useEffect } from 'react'
+import { useState, useCallback, useRef, useMemo } from 'react'
+import type { UniqueIdentifier } from '@dnd-kit/core'
 import {
-  DndContext,
-  DragEndEvent,
-  DragOverlay,
-  DragStartEvent,
-  DragOverEvent,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  pointerWithin,
-  closestCorners,
-  type CollisionDetection,
-} from '@dnd-kit/core'
-import { arrayMove } from '@dnd-kit/sortable'
-import { KanbanColumn } from './kanban-column'
+  Kanban,
+  KanbanBoard as KanbanBoardPrimitive,
+  KanbanColumn,
+  KanbanItem,
+  KanbanOverlay,
+} from '@/components/ui/kanban'
 import { KanbanCard } from './kanban-card'
 import { KanbanToolbar, type FilterState } from './kanban-toolbar'
 import { KanbanActivityStrip } from './kanban-activity-strip'
 import { CompletionAnimation } from './completion-animation'
 import { TaskDialog } from './task-dialog'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
+import { Progress } from '@/components/ui/progress'
+import { IconPlus } from '@tabler/icons-react'
 import type { Task, KanbanColumn as ColumnType } from '@/lib/types'
 import { useRealtime } from '@/hooks/use-realtime'
 
@@ -38,6 +35,8 @@ interface UndoToastState {
   timeoutId: NodeJS.Timeout | null
 }
 
+const PRIORITY_CYCLE = ['medium', 'high', 'critical', 'low'] as const
+
 export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: KanbanBoardProps) {
   const deduplicatedColumns = useMemo(() => {
     const seen = new Set<string>()
@@ -51,7 +50,6 @@ export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: Kanb
 
   const [columns] = useState(deduplicatedColumns)
   const [tasks, setTasks] = useState(initialTasks)
-  const [activeTask, setActiveTask] = useState<Task | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [defaultColumnId, setDefaultColumnId] = useState<string | undefined>()
@@ -75,10 +73,6 @@ export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: Kanb
   })
 
   const draggingRef = useRef(false)
-  const activeWidthRef = useRef(0)
-  const expandedColWidthRef = useRef(0)
-  const lastOverColumnRef = useRef<string | null>(null)
-  const overlayRef = useRef<HTMLDivElement>(null)
 
   const resolvedDoneId = doneColumnId ?? columns.find(
     (c) => c.title?.toLowerCase() === 'done'
@@ -129,6 +123,18 @@ export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: Kanb
     return counts
   }, [tasks])
 
+  // Build the kanban value: Record<UniqueIdentifier, Task[]>
+  const kanbanValue = useMemo(() => {
+    const source = isFiltered ? filteredTasks : tasks
+    const record: Record<UniqueIdentifier, Task[]> = {}
+    for (const col of columns) {
+      record[col.id] = source
+        .filter((t) => t.column_id === col.id)
+        .sort((a, b) => a.position - b.position)
+    }
+    return record
+  }, [columns, tasks, filteredTasks, isFiltered])
+
   useRealtime({
     table: 'tasks',
     onChange: (payload) => {
@@ -163,15 +169,38 @@ export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: Kanb
     },
   })
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
-  )
+  const handleKanbanValueChange = useCallback((newValue: Record<UniqueIdentifier, Task[]>) => {
+    // Flatten back to task array with updated column_id and position
+    const updatedTasks: Task[] = []
+    const changedTasks: Array<{ id: string; column_id: string; position: number }> = []
 
-  const collisionDetection: CollisionDetection = useCallback((args) => {
-    const pointerHits = pointerWithin(args)
-    if (pointerHits.length > 0) return pointerHits
-    return closestCorners(args)
-  }, [])
+    for (const [colId, colTasks] of Object.entries(newValue)) {
+      colTasks.forEach((task, idx) => {
+        const updated = { ...task, column_id: colId, position: idx }
+        updatedTasks.push(updated)
+
+        // Track changes for API
+        const original = tasks.find((t) => t.id === task.id)
+        if (!original || original.column_id !== colId || original.position !== idx) {
+          changedTasks.push({ id: task.id, column_id: colId, position: idx })
+        }
+      })
+    }
+
+    // Also keep tasks not in any visible column
+    const columnIds = new Set(Object.keys(newValue))
+    const orphanedTasks = tasks.filter((t) => !columnIds.has(t.column_id ?? ''))
+    setTasks([...updatedTasks, ...orphanedTasks])
+
+    // Persist changes
+    if (changedTasks.length > 0) {
+      fetch('/api/tasks/reorder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ updates: changedTasks }),
+      })
+    }
+  }, [tasks])
 
   const getColumnTasks = useCallback(
     (columnId: string) => {
@@ -182,106 +211,6 @@ export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: Kanb
     },
     [tasks, filteredTasks, isFiltered]
   )
-
-  function handleDragStart(event: DragStartEvent) {
-    draggingRef.current = true
-    const el = (event.activatorEvent as PointerEvent).target as HTMLElement | null
-    const card = el?.closest?.('.card-lift') as HTMLElement | null
-    const w = card?.offsetWidth ?? 0
-    activeWidthRef.current = w
-    lastOverColumnRef.current = null
-    const populatedCol = document.querySelector('[data-col-id].kanban-col-populated') as HTMLElement | null
-    expandedColWidthRef.current = populatedCol
-      ? populatedCol.clientWidth - 12
-      : w
-    const task = tasks.find((t) => t.id === event.active.id)
-    if (task) setActiveTask(task)
-  }
-
-  function handleDragOver(event: DragOverEvent) {
-    const { active, over } = event
-    if (!over) return
-
-    const activeId = active.id as string
-    const overId = over.id as string
-
-    const overTask = tasks.find((t) => t.id === overId)
-    const targetColumnId = overTask ? overTask.column_id : overId
-
-    const isValidColumn = columns.some((c) => c.id === targetColumnId)
-    if (!isValidColumn || !targetColumnId) return
-
-    if (lastOverColumnRef.current === targetColumnId) return
-    lastOverColumnRef.current = targetColumnId
-
-    setTasks((prev) => {
-      const current = prev.find((t) => t.id === activeId)
-      if (!current || current.column_id === targetColumnId) return prev
-      return prev.map((t) =>
-        t.id === activeId ? { ...t, column_id: targetColumnId } : t
-      )
-    })
-
-    const targetWidth = expandedColWidthRef.current
-    if (targetWidth > 0 && overlayRef.current) {
-      overlayRef.current.style.width = `${targetWidth}px`
-    }
-  }
-
-  function handleDragEnd(event: DragEndEvent) {
-    draggingRef.current = false
-    lastOverColumnRef.current = null
-    const draggedTask = activeTask
-    setActiveTask(null)
-    const { active, over } = event
-    if (!over) return
-
-    const activeId = active.id as string
-    const overId = over.id as string
-
-    const activeTaskItem = tasks.find((t) => t.id === activeId)
-    if (!activeTaskItem) return
-
-    const overTaskItem = tasks.find((t) => t.id === overId)
-
-    let updatedTasks = tasks
-
-    if (overTaskItem && activeTaskItem.column_id === overTaskItem.column_id && activeId !== overId) {
-      const columnTasks = tasks
-        .filter((t) => t.column_id === activeTaskItem.column_id)
-        .sort((a, b) => a.position - b.position)
-
-      const oldIndex = columnTasks.findIndex((t) => t.id === activeId)
-      const newIndex = columnTasks.findIndex((t) => t.id === overId)
-      const reordered = arrayMove(columnTasks, oldIndex, newIndex).map(
-        (t, i) => ({ ...t, position: i })
-      )
-
-      const otherTasks = tasks.filter(
-        (t) => t.column_id !== activeTaskItem.column_id
-      )
-      updatedTasks = [...otherTasks, ...reordered]
-      setTasks(updatedTasks)
-    }
-
-    const changedTasks = updatedTasks.filter((t) => {
-      const original = initialTasks.find((o) => o.id === t.id)
-      return !original || original.column_id !== t.column_id || original.position !== t.position
-    })
-
-    if (changedTasks.length > 0) {
-      const updates = changedTasks.map((t) => ({
-        id: t.id,
-        column_id: t.column_id!,
-        position: t.position,
-      }))
-      fetch('/api/tasks/reorder', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ updates }),
-      })
-    }
-  }
 
   const handleQuickAddTask = useCallback(function handleQuickAddTask(columnId: string, title: string, priority?: string) {
     const tempId = `temp-${Date.now()}`
@@ -425,6 +354,8 @@ export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: Kanb
     fetch(`/api/tasks/${taskId}`, { method: 'DELETE' })
   }
 
+  const totalTaskCount = isFiltered ? filteredTasks.length : tasks.length
+
   return (
     <div className="flex h-full flex-col">
       <KanbanToolbar
@@ -442,41 +373,80 @@ export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: Kanb
 
       <KanbanActivityStrip tasks={tasks} />
 
-      <DndContext
-        sensors={sensors}
-        collisionDetection={collisionDetection}
-        onDragStart={handleDragStart}
-        onDragOver={handleDragOver}
-        onDragEnd={handleDragEnd}
+      <Kanban<Task>
+        value={kanbanValue}
+        onValueChange={handleKanbanValueChange}
+        getItemValue={(task) => task.id}
+        flatCursor
       >
-        <div className="flex min-h-0 flex-1 items-stretch gap-2 overflow-x-auto pb-2">
+        <KanbanBoardPrimitive className="flex min-h-0 flex-1 items-stretch gap-2 overflow-x-auto pb-2">
           {columns
             .sort((a, b) => a.position - b.position)
-            .map((column) => (
-              <KanbanColumn
-                key={column.id}
-                column={column}
-                tasks={getColumnTasks(column.id)}
-                totalTaskCount={isFiltered ? filteredTasks.length : tasks.length}
-                onQuickAdd={handleQuickAddTask}
-                onEditTask={handleEditTask}
-                onArchiveTask={handleArchiveTask}
-              />
-            ))}
-        </div>
+            .map((column) => {
+              const colTasks = kanbanValue[column.id] ?? []
+              const isEmpty = colTasks.length === 0
+              const progressPct = totalTaskCount > 0 ? (colTasks.length / totalTaskCount) * 100 : 0
 
-        <DragOverlay dropAnimation={{ duration: 150, easing: 'cubic-bezier(0.2, 0, 0, 1)' }}>
-          {activeTask ? (
-            <div
-              ref={overlayRef}
-              className="transition-[width] duration-150"
-              style={{ width: activeWidthRef.current || undefined }}
-            >
-              <KanbanCard task={{ ...activeTask, id: `_overlay_` }} />
-            </div>
-          ) : null}
-        </DragOverlay>
-      </DndContext>
+              return (
+                <KanbanColumn
+                  key={column.id}
+                  value={column.id}
+                  className="flex h-full flex-col transition-all duration-150"
+                  style={{
+                    flex: isEmpty ? '0 0 auto' : 1,
+                    minWidth: isEmpty ? 120 : 200,
+                  }}
+                >
+                  {/* Column header */}
+                  <div className="px-1.5 pb-1">
+                    <div className="flex items-center gap-2 pb-2">
+                      <h3 className="text-sm font-medium text-muted-foreground">
+                        {column.title}
+                      </h3>
+                      <Badge variant="secondary" className="font-mono text-xs">
+                        {colTasks.length}
+                      </Badge>
+                    </div>
+                    <Progress value={progressPct} className="h-0.5 opacity-0 transition-opacity group-hover/card:opacity-100" />
+                  </div>
+
+                  {/* Droppable area */}
+                  <div
+                    className={`flex flex-1 flex-col gap-2 overflow-y-auto rounded-xl border p-2 transition-colors duration-100 scrollbar-none ${
+                      isEmpty ? 'border-transparent bg-muted/30' : 'border-transparent bg-muted/30'
+                    }`}
+                  >
+                    {colTasks.map((task) => (
+                      <KanbanItem key={task.id} value={task.id} asHandle>
+                        <KanbanCard
+                          task={task}
+                          onEdit={handleEditTask}
+                          onArchive={handleArchiveTask}
+                        />
+                      </KanbanItem>
+                    ))}
+
+                    {/* Quick add button */}
+                    <QuickAddInline
+                      columnId={column.id}
+                      isEmpty={isEmpty}
+                      onQuickAdd={handleQuickAddTask}
+                    />
+                  </div>
+                </KanbanColumn>
+              )
+            })}
+        </KanbanBoardPrimitive>
+
+        <KanbanOverlay>
+          {({ value, variant }) => {
+            if (variant === 'column') return null
+            const task = tasks.find((t) => t.id === value)
+            if (!task) return null
+            return <KanbanCard task={{ ...task, id: `_overlay_` }} />
+          }}
+        </KanbanOverlay>
+      </Kanban>
 
       <CompletionAnimation
         trigger={completionAnim.trigger}
@@ -502,14 +472,6 @@ export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: Kanb
         </div>
       )}
 
-      <style>{`
-        .card-lift:hover .kanban-card-actions { opacity: 1 !important; }
-        @keyframes bb-agent-pulse {
-          0%, 100% { opacity: 1; transform: scale(1); }
-          50% { opacity: 0.4; transform: scale(0.85); }
-        }
-      `}</style>
-
       <TaskDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
@@ -520,5 +482,95 @@ export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: Kanb
         onDelete={handleDeleteTask}
       />
     </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Inline quick-add component (extracted from KanbanColumn)
+// ---------------------------------------------------------------------------
+
+function QuickAddInline({
+  columnId,
+  isEmpty,
+  onQuickAdd,
+}: {
+  columnId: string
+  isEmpty: boolean
+  onQuickAdd: (columnId: string, title: string, priority?: string) => void
+}) {
+  const [isAdding, setIsAdding] = useState(false)
+  const [newTitle, setNewTitle] = useState('')
+  const [quickPriority, setQuickPriority] = useState<string>('medium')
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  function handleCreate() {
+    if (!newTitle.trim()) return
+    onQuickAdd(columnId, newTitle.trim(), quickPriority)
+    setNewTitle('')
+    setQuickPriority('medium')
+  }
+
+  if (isAdding) {
+    return (
+      <div className="rounded-lg border border-border bg-card p-3 shadow-sm">
+        <div className="flex items-center gap-2">
+          <span
+            className="size-1.5 shrink-0 rounded-full transition-colors"
+            style={{
+              backgroundColor:
+                quickPriority === 'critical' ? 'hsl(var(--destructive))' :
+                quickPriority === 'high' ? 'hsl(43 96% 56%)' :
+                'currentColor',
+            }}
+          />
+          <Input
+            ref={inputRef}
+            value={newTitle}
+            onChange={(e) => setNewTitle(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                handleCreate()
+              }
+              if (e.key === 'Tab') {
+                e.preventDefault()
+                const idx = PRIORITY_CYCLE.indexOf(quickPriority as typeof PRIORITY_CYCLE[number])
+                setQuickPriority(PRIORITY_CYCLE[(idx + 1) % PRIORITY_CYCLE.length])
+              }
+              if (e.key === 'Escape') {
+                setIsAdding(false)
+                setNewTitle('')
+                setQuickPriority('medium')
+              }
+            }}
+            onBlur={() => {
+              if (!newTitle.trim()) {
+                setIsAdding(false)
+                setNewTitle('')
+                setQuickPriority('medium')
+              }
+            }}
+            placeholder="Task title..."
+            className="h-auto border-0 bg-transparent p-0 text-sm font-medium shadow-none focus-visible:ring-0"
+            autoFocus
+          />
+        </div>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Enter create / Tab priority / Esc close
+        </p>
+      </div>
+    )
+  }
+
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      onClick={() => setIsAdding(true)}
+      className={`w-full gap-1 border border-dashed border-border/50 text-muted-foreground hover:border-border hover:text-foreground ${isEmpty ? '' : 'mt-auto'}`}
+    >
+      <IconPlus data-icon className="size-3.5" />
+      {!isEmpty && 'Add task'}
+    </Button>
   )
 }

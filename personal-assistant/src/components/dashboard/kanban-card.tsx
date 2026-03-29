@@ -1,14 +1,11 @@
 'use client'
 
 import { memo } from 'react'
-import { useSortable } from '@dnd-kit/sortable'
-import { CSS } from '@dnd-kit/utilities'
 import { IconX } from '@tabler/icons-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import type { Task } from '@/lib/types'
-import { MarkdownRenderer } from './markdown-renderer'
 
 interface KanbanCardProps {
   task: Task
@@ -24,10 +21,10 @@ const priorityVariant: Record<string, 'destructive' | 'secondary' | 'outline'> =
 }
 
 const sourceColors: Record<string, string> = {
-  email: '#3B82F6',
-  slack: '#E9A820',
-  sms: '#22C55E',
-  whatsapp: '#22C55E',
+  email: 'hsl(217 91% 60%)',
+  slack: 'hsl(43 80% 52%)',
+  sms: 'hsl(142 71% 45%)',
+  whatsapp: 'hsl(142 71% 45%)',
 }
 
 function timeAgo(dateStr: string): string {
@@ -55,20 +52,6 @@ function getDeadlineInfo(deadline: string): { variant: 'destructive' | 'secondar
 }
 
 export const KanbanCard = memo(function KanbanCard({ task, onEdit, onArchive }: KanbanCardProps) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: task.id })
-
-  const dndStyle = {
-    transform: CSS.Translate.toString(transform),
-    transition,
-  }
-
   const meta = (task.metadata || {}) as Record<string, unknown>
   const tags = (meta.tags as string[]) || []
   const agentStatus = meta.agentStatus as 'working' | 'done' | 'error' | undefined
@@ -82,21 +65,11 @@ export const KanbanCard = memo(function KanbanCard({ task, onEdit, onArchive }: 
 
   return (
     <div
-      ref={setNodeRef}
-      {...attributes}
-      {...listeners}
-      className={`card-lift group relative cursor-grab rounded-lg border bg-card p-3 shadow-sm transition-shadow active:cursor-grabbing ${
-        isDragging ? 'opacity-30' : isOptimistic ? 'opacity-70' : 'opacity-100'
+      className={`card-lift group relative cursor-grab rounded-lg border bg-card p-3 shadow-sm transition-shadow select-none active:cursor-grabbing ${
+        isOptimistic ? 'opacity-70' : 'opacity-100'
       } ${isAgentWorking ? 'animate-pulse border-l-2 border-l-muted-foreground' : 'border-border'}`}
       onClick={() => onEdit?.(task)}
-      style={{
-        ...dndStyle,
-        transition: dndStyle.transition || undefined,
-        userSelect: 'none',
-        WebkitUserSelect: 'none' as const,
-        willChange: transform ? 'transform' : undefined,
-        contain: 'layout style',
-      } as React.CSSProperties}
+      style={{ contain: 'layout style' }}
     >
       {/* Archive button (show on hover) */}
       {onArchive && (
@@ -114,12 +87,10 @@ export const KanbanCard = memo(function KanbanCard({ task, onEdit, onArchive }: 
 
       {/* Title row with source dot */}
       <h4 className="line-clamp-2 pr-5 text-sm font-medium leading-snug text-foreground">
-        {/* Source channel dot */}
         {source && (
           isAgentCreated ? (
             <span
-              className="mr-1 inline-block size-1.5 rounded-full align-middle"
-              style={{ background: 'linear-gradient(135deg, #4DAF6B, #9DC74D, #D4C24E, #E0A860, #D8908B)' }}
+              className="mr-1 inline-block size-1.5 rounded-full align-middle bg-gradient-to-br from-emerald-500 via-lime-400 to-amber-400"
             />
           ) : sourceColors[source] ? (
             <span
@@ -132,13 +103,9 @@ export const KanbanCard = memo(function KanbanCard({ task, onEdit, onArchive }: 
       </h4>
 
       {task.description && (
-        <div className="mt-1 line-clamp-2">
-          <MarkdownRenderer
-            content={task.description}
-            compact
-            style={{ fontSize: '0.875rem', lineHeight: '1.375', color: 'hsl(var(--muted-foreground))' }}
-          />
-        </div>
+        <p className="mt-1 line-clamp-2 text-sm leading-snug text-muted-foreground">
+          {task.description}
+        </p>
       )}
 
       {/* Metadata row: priority + tags + deadline + time */}
