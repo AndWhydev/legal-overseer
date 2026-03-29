@@ -158,9 +158,21 @@ function pathToTabIndex(path: string): number {
   return idx >= 0 ? idx : 0;
 }
 
-function TabFallback() {
-  return <TabSkeleton />;
-}
+const TAB_SKELETON_VARIANTS: Record<string, import('./tabs/tab-skeleton').TabSkeletonVariant> = {
+  leads: 'kanban',
+  tasks: 'kanban',
+  invoices: 'table',
+  contacts: 'cards-grid',
+  inbox: 'inbox',
+  analytics: 'chart',
+  activity: 'timeline',
+  meetings: 'detail',
+  tenders: 'table',
+  jobs: 'table',
+  quotes: 'table',
+  reports: 'chart',
+  knowledge: 'cards-grid',
+};
 
 // ---- SPA Shell ----
 
@@ -427,7 +439,7 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
                       data-dir={transitionDir ?? undefined}
                     >
                       <ErrorBoundary>
-                        <Suspense fallback={<TabFallback />}>
+                        <Suspense fallback={<TabSkeleton variant={TAB_SKELETON_VARIANTS[tab.id]} />}>
                           <Comp />
                         </Suspense>
                       </ErrorBoundary>

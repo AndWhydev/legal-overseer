@@ -5,6 +5,7 @@ import { TabShell } from '@/components/ui/tab-shell'
 import { Empty, EmptyTitle, EmptyDescription } from '@/components/ui/empty'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { TabSkeleton } from '@/components/dashboard/tabs/tab-skeleton'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -159,19 +160,7 @@ function ProposalsKanban() {
   }, [proposals])
 
   if (isLoading) {
-    return (
-      <div className="grid grid-cols-4 gap-4">
-        {BOARD_COLUMNS.map((col) => (
-          <div key={col.id} className="rounded-xl bg-card p-4 animate-pulse">
-            <div className="h-5 w-24 rounded bg-muted mb-4" />
-            <div className="flex flex-col gap-3">
-              <div className="h-24 rounded-lg bg-muted" />
-              <div className="h-24 rounded-lg bg-muted" />
-            </div>
-          </div>
-        ))}
-      </div>
-    )
+    return <TabSkeleton variant="kanban" />
   }
 
   if (proposals.length === 0) {

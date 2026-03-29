@@ -2174,9 +2174,9 @@ export function ChatInterface({ userName }: { userName?: string }) {
 
               {/* Standalone reasoning chain (before assistant message exists) */}
               {showReasoningChain && !currentResponseMsg && segmentedReasoningJSX && (
-                <div style={{ position: 'relative', marginBottom: 4 }}>
+                <div style={{ marginBottom: 4 }}>
                   <div className="bb-chat__assistant-icon">
-                    <BitBitAsciiAvatar size={64} emotion={avatarEmotion} isThinking={isThinkingStreaming} />
+                    <BitBitAsciiAvatar size={48} emotion={avatarEmotion} isThinking={isThinkingStreaming} />
                   </div>
                   {segmentedReasoningJSX}
                 </div>

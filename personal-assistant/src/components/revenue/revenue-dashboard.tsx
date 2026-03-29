@@ -35,7 +35,7 @@ const tabStyle = (active: boolean): React.CSSProperties => ({
   border: 'none',
   cursor: 'pointer',
   transition: 'all var(--duration-fast) var(--ease-default)',
-  fontFamily: 'var(--font-sans)',
+  fontFamily: 'var(--font-dm-sans), system-ui, sans-serif',
   letterSpacing: '0.01em',
 })
 

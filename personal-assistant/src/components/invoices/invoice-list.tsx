@@ -34,6 +34,7 @@ import {
 import { useToast } from '@/components/ui/toast'
 import { useSeedData } from '@/hooks/use-seed-data'
 import { InvoiceSummaryBar } from './invoice-summary-bar'
+import { TabSkeleton } from '@/components/dashboard/tabs/tab-skeleton'
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -1502,7 +1503,7 @@ export function InvoiceList() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [expandedId, showCreateModal])
 
-  if (isLoading) return <InvoiceSkeleton />
+  if (isLoading) return <TabSkeleton variant="table" />
 
   return (
     <DndContext

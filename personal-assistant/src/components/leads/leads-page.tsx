@@ -5,7 +5,7 @@ import { IconHeartHandshake, IconMail } from '@tabler/icons-react'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Skeleton } from '@/components/ui/skeleton'
+import { TabSkeleton } from '@/components/dashboard/tabs/tab-skeleton'
 import {
   Empty,
   EmptyHeader,
@@ -97,21 +97,7 @@ export function LeadsPage() {
   }, [setSelectedLeadId, setFilters])
 
   if (isLoading) {
-    return (
-      <div className="flex flex-col gap-3">
-        <div className="flex gap-2">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-9 w-20 rounded-full" />
-          ))}
-        </div>
-        <Skeleton className="h-9 rounded-lg" />
-        <div className="grid grid-cols-3 gap-3">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton key={i} className="h-28 rounded-xl" />
-          ))}
-        </div>
-      </div>
-    )
+    return <TabSkeleton variant="kanban" />
   }
 
   if (error) {

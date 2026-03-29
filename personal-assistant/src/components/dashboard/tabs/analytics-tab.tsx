@@ -7,6 +7,7 @@ import { Empty, EmptyTitle, EmptyDescription } from '@/components/ui/empty'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
+import { TabSkeleton } from '@/components/dashboard/tabs/tab-skeleton'
 import { Progress } from '@/components/ui/progress'
 import {
   Table,
@@ -517,7 +518,7 @@ function AnalyticsTab() {
     ])
   }, [])
 
-  if (loading) return <LoadingSkeleton />
+  if (loading) return <TabSkeleton variant="chart" />
 
   if (error || !data) {
     return (

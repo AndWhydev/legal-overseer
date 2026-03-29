@@ -6,6 +6,7 @@ import { TabShell } from '@/components/ui/tab-shell'
 import { Empty, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from '@/components/ui/empty'
 import { createClient } from '@/lib/supabase/client'
 import { Skeleton } from '@/components/ui/skeleton'
+import { TabSkeleton } from '@/components/dashboard/tabs/tab-skeleton'
 import { Badge } from '@/components/ui/badge'
 
 interface Job {
@@ -90,19 +91,7 @@ function JobsTab() {
   }, [])
 
   if (loading) {
-    return (
-      <TabShell>
-        <div className="grid grid-cols-5 gap-4 mt-4">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="flex flex-col gap-3">
-              <Skeleton className="h-6 w-24" />
-              <Skeleton className="h-24 w-full" />
-              <Skeleton className="h-24 w-full" />
-            </div>
-          ))}
-        </div>
-      </TabShell>
-    )
+    return <TabSkeleton variant="kanban" />
   }
 
   if (jobs.length === 0) {

@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react'
 import { TabShell } from '@/components/ui/tab-shell'
 import { createClient } from '@/lib/supabase/client'
 import { Skeleton } from '@/components/ui/skeleton'
+import { TabSkeleton } from '@/components/dashboard/tabs/tab-skeleton'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
@@ -56,15 +57,7 @@ function QuotesTab() {
   }, [])
 
   if (loading) {
-    return (
-      <TabShell>
-        <div className="space-y-3 mt-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-14 w-full" />
-          ))}
-        </div>
-      </TabShell>
-    )
+    return <TabSkeleton variant="table" />
   }
 
   if (quotes.length === 0) {

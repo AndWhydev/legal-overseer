@@ -14,7 +14,7 @@ export default function NotFound() {
       background: 'var(--bg-primary, #0a0f1a)',
       padding: '24px',
       gap: 24,
-      fontFamily: 'var(--font-inter, Inter, sans-serif)',
+      fontFamily: 'var(--font-dm-sans, DM Sans, sans-serif)',
     }}>
       {/* Mascot image — theme-aware color via CSS filter */}
       <motion.div

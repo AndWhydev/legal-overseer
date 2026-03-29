@@ -39,6 +39,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
+import { TabSkeleton } from '@/components/dashboard/tabs/tab-skeleton';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
@@ -895,7 +896,7 @@ function InboxTab() {
     clearSelection();
   }, [keyboard.selectedIds, handleSpam, clearSelection]);
 
-  if (loading && !useSeeded) return <InboxSkeleton />;
+  if (loading && !useSeeded) return <TabSkeleton variant="inbox" />;
 
   if (error && messages.length === 0) {
     return (

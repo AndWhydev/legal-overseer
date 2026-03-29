@@ -19,6 +19,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
+import { TabSkeleton } from '@/components/dashboard/tabs/tab-skeleton';
 import {
   Dialog,
   DialogContent,
@@ -378,15 +379,7 @@ function WorkflowsTab() {
   }, []);
 
   if (loading) {
-    return (
-      <TabShell>
-        <div className="space-y-4">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <Skeleton key={i} className="h-24 w-full rounded-lg" />
-          ))}
-        </div>
-      </TabShell>
-    );
+    return <TabSkeleton variant="table" />;
   }
 
   if (error) {
